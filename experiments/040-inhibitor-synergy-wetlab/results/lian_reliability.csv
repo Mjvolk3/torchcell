@@ -1,0 +1,10 @@
+mode,mode_label,round,round_label,parent_edits,measures_a_perturbation_alone,n_genes_both_halves,split_half_spearman,split_half_lo,split_half_hi,spearman_brown_reliability
+d,CRISPRd (deletion),r1,"round 1, bAID parent, 5 mM furfural",,True,4061,0.04426367403976834,0.03101452296904365,0.05850108315559975,0.08477489955871559
+d,CRISPRd (deletion),r2,"round 2, R1 parent (SIZ1i integrated), 10 mM furfural",SIZ1i (interference),False,4136,0.030444797900729757,0.011522483209122088,0.04386674568041335,0.05909059459129362
+d,CRISPRd (deletion),r3,"round 3, R2 parent (SIZ1i + NAT1a integrated), 15 mM furfural",SIZ1i (interference) + NAT1a (activation),False,4152,0.014657365722066145,-0.0013338608730854183,0.029976153977647295,0.028891261655870294
+i,CRISPRi (interference),r1,"round 1, bAID parent, 5 mM furfural",,True,4885,0.2039294775688539,0.18870864713352545,0.21956796496801487,0.33877312810823007
+i,CRISPRi (interference),r2,"round 2, R1 parent (SIZ1i integrated), 10 mM furfural",SIZ1i (interference),False,4893,0.25059991993679603,0.23240344583319433,0.2648835828525277,0.40076752915426556
+i,CRISPRi (interference),r3,"round 3, R2 parent (SIZ1i + NAT1a integrated), 15 mM furfural",SIZ1i (interference) + NAT1a (activation),False,4901,0.27736652467396344,0.26380171559343435,0.290175532050005,0.43427868088958854
+a,CRISPRa (activation),r1,"round 1, bAID parent, 5 mM furfural",,True,4830,0.024274341200820428,0.008830306082516346,0.04074835666118588,0.04739812416341917
+a,CRISPRa (activation),r2,"round 2, R1 parent (SIZ1i integrated), 10 mM furfural",SIZ1i (interference),False,4825,0.026510582913203896,0.009723015591672997,0.043580023830944475,0.05165184529898896
+a,CRISPRa (activation),r3,"round 3, R2 parent (SIZ1i + NAT1a integrated), 15 mM furfural",SIZ1i (interference) + NAT1a (activation),False,4816,0.0008502876915546326,-0.012908575241983024,0.02700202030876478,0.0016991306332454733

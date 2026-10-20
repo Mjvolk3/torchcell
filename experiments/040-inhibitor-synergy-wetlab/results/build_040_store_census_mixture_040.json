@@ -1,0 +1,459 @@
+{
+ "generated_by": "experiments/040-inhibitor-synergy-wetlab/scripts/build_040_store.py",
+ "manifest": {
+  "experiment": "040-inhibitor-synergy-wetlab",
+  "store_tag": "mixture_040",
+  "dataset_root": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/040-inhibitor-synergy-wetlab/mixture_040",
+  "built_at": "2026-10-20T02:06:12-0500",
+  "host": "gilahyper",
+  "slurm_job_id": "5959",
+  "build_seconds": 3.1718082427978516,
+  "neo4j_uri": "bolt://localhost:7687",
+  "kg_release": "2026.10.17-4295f7ca",
+  "kg_version": "4.0",
+  "kg_torchcell_version": "1.8.3",
+  "torchcell_src": "/home/michaelvolk/Documents/projects/torchcell.worktrees/build/kg-4-0-v1-8-0",
+  "torchcell_commit": "4295f7ca958f0153ca630569b0ced2153cfa7294",
+  "torchcell_version": "1.8.3",
+  "query_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/040-kg4-store/experiments/040-inhibitor-synergy-wetlab/queries/env_chemgen_mixture_040.cql",
+  "query_sha256": "bce171fda67fad51f8b158a2da1a9c58052078bfe5ac1ad231ed7e775f020dab",
+  "gene_set_size": 6607,
+  "smoke_genes": null,
+  "counts": [
+   {
+    "dataset": "EnvChemgenVanacloig2022Dataset",
+    "served": 164205,
+    "admitted": 161595,
+    "returned": 161595,
+    "dropped": 2610,
+    "outside_gene_set": {
+     "YAL043C-A": 45,
+     "YAL058C-A": 45,
+     "YAR037W": 45,
+     "YAR040C": 45,
+     "YAR043C": 45,
+     "YAR044W": 45,
+     "YBR075W": 45,
+     "YBR090C-A": 45,
+     "YBR100W": 45,
+     "YCL006C": 45,
+     "YCL012W": 45,
+     "YCL013W": 45,
+     "YCL026C": 45,
+     "YCL062W": 45,
+     "YCL074W": 45,
+     "YCL075W": 45,
+     "YCR062W": 45,
+     "YDL038C": 45,
+     "YDR134C": 45,
+     "YDR474C": 45,
+     "YER108C": 45,
+     "YER109C": 45,
+     "YFL006W": 45,
+     "YFL035C-B": 45,
+     "YFL043C": 45,
+     "YFL056C": 45,
+     "YFR024C": 45,
+     "YGL046W": 45,
+     "YHR079C-B": 45,
+     "YIL015C-A": 45,
+     "YIL167W": 45,
+     "YIL168W": 45,
+     "YIL170W": 45,
+     "YIR020W-B": 45,
+     "YIR043C": 45,
+     "YIR044C": 45,
+     "YJL021C": 45,
+     "YJL206C-A": 45,
+     "YJR026W": 45,
+     "YKL199C": 45,
+     "YKL200C": 45,
+     "YLL016W": 45,
+     "YLL017W": 45,
+     "YLR391W": 45,
+     "YML010C-B": 45,
+     "YML013C-A": 45,
+     "YML033W": 45,
+     "YML035C-A": 45,
+     "YML048W-A": 45,
+     "YML058C-A": 45,
+     "YML117W-A": 45,
+     "YMR158C-B": 45,
+     "YMR158W-A": 45,
+     "YOL053C-A": 45,
+     "YOL153C": 45,
+     "YOR031W": 45,
+     "YOR088W": 45,
+     "YOR240W": 45
+    },
+    "empty_genotype": 0
+   },
+   {
+    "dataset": "EnvChemgenHoepfner2014Dataset",
+    "served": 3127814,
+    "admitted": 3084244,
+    "returned": 3084244,
+    "dropped": 43570,
+    "outside_gene_set": {
+     "YAL043C-A": 606,
+     "YAL058C-A": 606,
+     "YAR037W": 606,
+     "YAR040C": 606,
+     "YAR043C": 606,
+     "YAR044W": 606,
+     "YBR075W": 606,
+     "YBR090C-A": 606,
+     "YBR100W": 606,
+     "YCL006C": 606,
+     "YCL012W": 606,
+     "YCL013W": 606,
+     "YCL026C": 606,
+     "YCL060C": 606,
+     "YCL062W": 606,
+     "YCL074W": 606,
+     "YCL075W": 606,
+     "YCR062W": 606,
+     "YDL038C": 606,
+     "YDL134C-A": 606,
+     "YDR134C": 606,
+     "YDR474C": 606,
+     "YER108C": 606,
+     "YFL006W": 606,
+     "YFL035C-B": 606,
+     "YFL043C": 606,
+     "YFL056C": 606,
+     "YFR024C": 606,
+     "YGL046W": 606,
+     "YGR272C": 606,
+     "YHR079C-B": 606,
+     "YIL015C-A": 606,
+     "YIL167W": 606,
+     "YIL168W": 606,
+     "YIL170W": 606,
+     "YIR020W-B": 606,
+     "YIR043C": 606,
+     "YIR044C": 606,
+     "YJL017W": 606,
+     "YJL021C": 606,
+     "YJL206C-A": 606,
+     "YJR026W": 606,
+     "YKL158W": 606,
+     "YKL199C": 606,
+     "YLL016W": 606,
+     "YLL017W": 606,
+     "YLR391W": 606,
+     "YML010C-B": 606,
+     "YML010W-A": 606,
+     "YML013C-A": 606,
+     "YML033W": 606,
+     "YML035C-A": 606,
+     "YML048W-A": 606,
+     "YML058C-A": 606,
+     "YML095C-A": 606,
+     "YML102C-A": 606,
+     "YML117W-A": 606,
+     "YMR158C-B": 606,
+     "YMR158W-A": 606,
+     "YOL053C-A": 606,
+     "YOL153C": 606,
+     "YOR031W": 606,
+     "YOR088W": 606,
+     "YOR240W": 606,
+     "YPR090W": 606,
+     "YHR039C-B": 597,
+     "YKL200C": 565,
+     "YER109C": 562,
+     "YFL035C": 313,
+     "YFL035C-A": 309,
+     "YIL171W": 309,
+     "YJL018W": 309,
+     "YAL035C-A": 304,
+     "YCL003W": 304,
+     "YCL053C": 304,
+     "YFL018W-A": 304
+    },
+    "empty_genotype": 0
+   },
+   {
+    "dataset": "HetHillenmeyer2008Dataset",
+    "served": 2963683,
+    "admitted": 2925614,
+    "returned": 2925614,
+    "dropped": 38069,
+    "outside_gene_set": {
+     "YBR075W": 517,
+     "YAL035C-A": 511,
+     "YAL043C-A": 511,
+     "YAL058C-A": 511,
+     "YAR037W": 511,
+     "YAR040C": 511,
+     "YAR043C": 511,
+     "YAR044W": 511,
+     "YBR090C-A": 511,
+     "YBR100W": 511,
+     "YCL003W": 511,
+     "YCL006C": 511,
+     "YCL012W": 511,
+     "YCL013W": 511,
+     "YCL026C": 511,
+     "YCL053C": 511,
+     "YCL060C": 511,
+     "YCL062W": 511,
+     "YCL074W": 511,
+     "YCL075W": 511,
+     "YCR062W": 511,
+     "YDL038C": 511,
+     "YDL134C-A": 511,
+     "YDR134C": 511,
+     "YDR474C": 511,
+     "YER108C": 511,
+     "YER109C": 511,
+     "YFL006W": 511,
+     "YFL018W-A": 511,
+     "YFL035C": 511,
+     "YFL035C-A": 511,
+     "YFL035C-B": 511,
+     "YFL043C": 511,
+     "YFL056C": 511,
+     "YFR024C": 511,
+     "YGL046W": 511,
+     "YGR272C": 511,
+     "YHR039C-B": 511,
+     "YHR079C-B": 511,
+     "YIL015C-A": 511,
+     "YIL167W": 511,
+     "YIL168W": 511,
+     "YIL170W": 511,
+     "YIL171W": 511,
+     "YIR020W-B": 511,
+     "YIR043C": 511,
+     "YIR044C": 511,
+     "YJL017W": 511,
+     "YJL018W": 511,
+     "YJL021C": 511,
+     "YJL206C-A": 511,
+     "YJR026W": 511,
+     "YKL158W": 511,
+     "YKL199C": 511,
+     "YLL016W": 511,
+     "YLL017W": 511,
+     "YLR391W": 511,
+     "YML010C-B": 511,
+     "YML010W-A": 511,
+     "YML013C-A": 511,
+     "YML033W": 511,
+     "YML035C-A": 511,
+     "YML048W-A": 511,
+     "YML058C-A": 511,
+     "YML095C-A": 511,
+     "YML102C-A": 511,
+     "YML117W-A": 511,
+     "YMR158C-B": 511,
+     "YMR158W-A": 511,
+     "YOL053C-A": 511,
+     "YOR031W": 511,
+     "YOR088W": 511,
+     "YOR240W": 511,
+     "YPR090W": 511,
+     "YOL153C": 229,
+     "YKL200C": 20
+    },
+    "empty_genotype": 0
+   },
+   {
+    "dataset": "EnvChemgenWildenhain2015Dataset",
+    "served": 448655,
+    "admitted": 446716,
+    "returned": 446716,
+    "dropped": 1939,
+    "outside_gene_set": {},
+    "empty_genotype": 1939
+   },
+   {
+    "dataset": "InhibitorBioscreenVolk2021Dataset",
+    "served": 977,
+    "admitted": 977,
+    "returned": 977,
+    "dropped": 0,
+    "outside_gene_set": {},
+    "empty_genotype": 977
+   }
+  ],
+  "n_raw_records": 6619146,
+  "n_processed_entries": 6619146,
+  "data_mdb_bytes": 260284248064,
+  "data_mdb_sha256": "1782ae6cc187263b60f498750cdc9bcfe42b2c31aac95a256f811b3efff2f4c1"
+ },
+ "n_records_by_dataset_index": {
+  "EnvChemgenHoepfner2014Dataset": 3084244,
+  "EnvChemgenVanacloig2022Dataset": 161595,
+  "EnvChemgenWildenhain2015Dataset": 446716,
+  "HetHillenmeyer2008Dataset": 2925614,
+  "InhibitorBioscreenVolk2021Dataset": 977
+ },
+ "n_records_by_label": {
+  "environment_response": 6619146
+ },
+ "first_sample_by_dataset": {
+  "EnvChemgenHoepfner2014Dataset": {
+   "index": 7,
+   "dataset_name": "EnvChemgenHoepfner2014Dataset",
+   "experiment_type": "strain_environment_response",
+   "label_name": "environment_response",
+   "n_perturbations": 1,
+   "perturbation_types": {
+    "barcoded_kanmx_deletion": 1
+   },
+   "compounds": [
+    {
+     "name": "Chondramide",
+     "inchikey": "SRZJEPUYAKAFIE-KNTRCKAVSA-N",
+     "smiles": "COC3C(=O)OC(C)C(C)/C=C(\\C)/CC(C)C(=O)NC(C)C(=O)N(C)C(CC1=C(Cl)Nc2ccccc12)C(=O)NC3c4ccc(O)cc4",
+     "concentration": {
+      "value": 90.0,
+      "unit": "uM",
+      "basis": "IC30"
+     }
+    }
+   ],
+   "media": "YPD (yeast extract / peptone / dextrose), liquid",
+   "temperature": {
+    "value": 30.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[1],\n    perturbation_indices=[1],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[1],\n    phenotype_type_indices=[1],\n    phenotype_sample_indices=[1],\n    phenotype_types=[1],\n    phenotype_stat_values=[0],\n    phenotype_stat_type_indices=[0],\n    phenotype_stat_sample_indices=[0],\n    phenotype_stat_types=[1],\n  }\n)",
+   "perturbation_indices_length": 1,
+   "pert_mask_sum": 1,
+   "phenotype_types": [
+    "environment_response"
+   ]
+  },
+  "EnvChemgenVanacloig2022Dataset": {
+   "index": 0,
+   "dataset_name": "EnvChemgenVanacloig2022Dataset",
+   "experiment_type": "strain_environment_response",
+   "label_name": "environment_response",
+   "n_perturbations": 1,
+   "perturbation_types": {
+    "barcoded_kanmx_deletion": 1
+   },
+   "compounds": [
+    {
+     "name": "4'-hydroxyacetophenone",
+     "inchikey": "TXFPEBPIARQUIG-UHFFFAOYSA-N",
+     "smiles": "CC(=O)C1=CC=C(C=C1)O",
+     "concentration": {
+      "value": 5.0,
+      "unit": "mM",
+      "basis": "IC30"
+     }
+    }
+   ],
+   "media": "SynBase (SynH3- minus acetamide/sodium acetate/cellobiose, MSG for ammonium sulfate)",
+   "temperature": {
+    "value": 30.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[1],\n    perturbation_indices=[1],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[1],\n    phenotype_type_indices=[1],\n    phenotype_sample_indices=[1],\n    phenotype_types=[1],\n    phenotype_stat_values=[1],\n    phenotype_stat_type_indices=[1],\n    phenotype_stat_sample_indices=[1],\n    phenotype_stat_types=[1],\n  }\n)",
+   "perturbation_indices_length": 1,
+   "pert_mask_sum": 1,
+   "phenotype_types": [
+    "environment_response"
+   ]
+  },
+  "EnvChemgenWildenhain2015Dataset": {
+   "index": 5746063,
+   "dataset_name": "EnvChemgenWildenhain2015Dataset",
+   "experiment_type": "strain_environment_response",
+   "label_name": "environment_response",
+   "n_perturbations": 1,
+   "perturbation_types": {
+    "barcoded_kanmx_deletion": 1
+   },
+   "compounds": [
+    {
+     "name": "nabumetone",
+     "inchikey": "BLXXJMDCKKHMKV-UHFFFAOYSA-N",
+     "smiles": "CC(=O)CCC1=CC2=C(C=C1)C=C(C=C2)OC",
+     "concentration": {
+      "value": 20.0,
+      "unit": "uM",
+      "basis": null
+     }
+    }
+   ],
+   "media": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+   "temperature": {
+    "value": 30.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[1],\n    perturbation_indices=[1],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[1],\n    phenotype_type_indices=[1],\n    phenotype_sample_indices=[1],\n    phenotype_types=[1],\n    phenotype_stat_values=[0],\n    phenotype_stat_type_indices=[0],\n    phenotype_stat_sample_indices=[0],\n    phenotype_stat_types=[1],\n  }\n)",
+   "perturbation_indices_length": 1,
+   "pert_mask_sum": 1,
+   "phenotype_types": [
+    "environment_response"
+   ]
+  },
+  "HetHillenmeyer2008Dataset": {
+   "index": 2495380,
+   "dataset_name": "HetHillenmeyer2008Dataset",
+   "experiment_type": "strain_environment_response",
+   "label_name": "environment_response",
+   "n_perturbations": 1,
+   "perturbation_types": {
+    "heterozygous_deletion": 1
+   },
+   "compounds": [
+    {
+     "name": "dyclonine",
+     "inchikey": "BZEWSEKUUPWQDQ-UHFFFAOYSA-N",
+     "smiles": "CCCCOC1=CC=C(C=C1)C(=O)CCN2CCCCC2",
+     "concentration": {
+      "value": 500.0,
+      "unit": "uM",
+      "basis": null
+     }
+    }
+   ],
+   "media": "YPD (yeast extract / peptone / dextrose), liquid",
+   "temperature": null,
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[1],\n    perturbation_indices=[1],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[1],\n    phenotype_type_indices=[1],\n    phenotype_sample_indices=[1],\n    phenotype_types=[1],\n    phenotype_stat_values=[1],\n    phenotype_stat_type_indices=[1],\n    phenotype_stat_sample_indices=[1],\n    phenotype_stat_types=[1],\n  }\n)",
+   "perturbation_indices_length": 1,
+   "pert_mask_sum": 1,
+   "phenotype_types": [
+    "environment_response"
+   ]
+  },
+  "InhibitorBioscreenVolk2021Dataset": {
+   "index": 6242413,
+   "dataset_name": "InhibitorBioscreenVolk2021Dataset",
+   "experiment_type": "strain_environment_response",
+   "label_name": "environment_response",
+   "n_perturbations": 0,
+   "perturbation_types": {},
+   "compounds": [
+    {
+     "name": "furfural",
+     "inchikey": "HYBBIBNJHNGZAN-UHFFFAOYSA-N",
+     "smiles": "C1=COC(=C1)C=O",
+     "concentration": {
+      "value": 1.333,
+      "unit": "g/L",
+      "basis": "fixed"
+     }
+    }
+   ],
+   "media": "YPD (yeast extract / peptone / dextrose), liquid",
+   "temperature": {
+    "value": 30.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[0],\n    perturbation_indices=[0],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[1],\n    phenotype_type_indices=[1],\n    phenotype_sample_indices=[1],\n    phenotype_types=[1],\n    phenotype_stat_values=[0],\n    phenotype_stat_type_indices=[0],\n    phenotype_stat_sample_indices=[0],\n    phenotype_stat_types=[1],\n  }\n)",
+   "perturbation_indices_length": 0,
+   "pert_mask_sum": 0,
+   "phenotype_types": [
+    "environment_response"
+   ]
+  }
+ }
+}

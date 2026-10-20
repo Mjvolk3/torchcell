@@ -1,0 +1,25 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+"2,2'-bipyridine",raw,3488,0.005592802331228207,0.023472429770829258,0.933492750710942,0,seed0,r10smoke_vanhop_cell_bliss_doff_dose
+"2,2'-bipyridine",centered,3486,0.00559408810866144,0.015151484475609737,0.9563816885746026,0,seed0,r10smoke_vanhop_cell_bliss_doff_dose
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.010568285184836754,-0.008336101680998754,0.9115685305555769,0,seed0,r10smoke_vanhop_cell_bliss_doff_dose
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.010884748727669842,0.01537375029854579,0.8721587526514974,0,seed0,r10smoke_vanhop_cell_bliss_doff_dose
+acetosyringone,raw,3496,0.008709511275748651,-0.004262210006901811,0.8957051853886657,0,seed0,r10smoke_vanhop_cell_bliss_doff_dose
+acetosyringone,centered,3491,0.007863938294156584,-0.014794006134552394,0.8621258971956102,0,seed0,r10smoke_vanhop_cell_bliss_doff_dose
+acetovanillone,raw,3508,-0.0013366450959140263,-0.005967001819218634,0.912907133190153,0,seed0,r10smoke_vanhop_cell_bliss_doff_dose
+acetovanillone,centered,3507,-0.018036891340708985,-0.02374227635127048,0.8921575536150955,0,seed0,r10smoke_vanhop_cell_bliss_doff_dose
+furfural,raw,3492,-0.0076332538526890405,0.00989991332784137,0.8770802207938314,0,seed0,r10smoke_vanhop_cell_bliss_doff_dose
+furfural,centered,3491,-0.01630145644266568,-0.00799808392546155,0.893722287283485,0,seed0,r10smoke_vanhop_cell_bliss_doff_dose
+vanillin,raw,3504,-0.00031465167295625414,0.0025344200484968722,0.8077135748399356,0,seed0,r10smoke_vanhop_cell_bliss_doff_dose
+vanillin,centered,3502,-0.021721304996904788,-0.026512615497266995,0.71557075481543,0,seed0,r10smoke_vanhop_cell_bliss_doff_dose
+"2,2'-bipyridine",raw,3488,0.005592802331228207,0.023472429770829258,0.933492750710942,0,ensemble,r10smoke_vanhop_cell_bliss_doff_dose
+"2,2'-bipyridine",centered,3486,0.00559408810866144,0.015151484475609737,0.9563816885746026,0,ensemble,r10smoke_vanhop_cell_bliss_doff_dose
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.010568285184836754,-0.008336101680998754,0.9115685305555769,0,ensemble,r10smoke_vanhop_cell_bliss_doff_dose
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.010884748727669842,0.01537375029854579,0.8721587526514974,0,ensemble,r10smoke_vanhop_cell_bliss_doff_dose
+acetosyringone,raw,3496,0.008709511275748651,-0.004262210006901811,0.8957051853886657,0,ensemble,r10smoke_vanhop_cell_bliss_doff_dose
+acetosyringone,centered,3491,0.007863938294156584,-0.014794006134552394,0.8621258971956102,0,ensemble,r10smoke_vanhop_cell_bliss_doff_dose
+acetovanillone,raw,3508,-0.0013366450959140263,-0.005967001819218634,0.912907133190153,0,ensemble,r10smoke_vanhop_cell_bliss_doff_dose
+acetovanillone,centered,3507,-0.018036891340708985,-0.02374227635127048,0.8921575536150955,0,ensemble,r10smoke_vanhop_cell_bliss_doff_dose
+furfural,raw,3492,-0.0076332538526890405,0.00989991332784137,0.8770802207938314,0,ensemble,r10smoke_vanhop_cell_bliss_doff_dose
+furfural,centered,3491,-0.01630145644266568,-0.00799808392546155,0.893722287283485,0,ensemble,r10smoke_vanhop_cell_bliss_doff_dose
+vanillin,raw,3504,-0.00031465167295625414,0.0025344200484968722,0.8077135748399356,0,ensemble,r10smoke_vanhop_cell_bliss_doff_dose
+vanillin,centered,3502,-0.021721304996904788,-0.026512615497266995,0.71557075481543,0,ensemble,r10smoke_vanhop_cell_bliss_doff_dose

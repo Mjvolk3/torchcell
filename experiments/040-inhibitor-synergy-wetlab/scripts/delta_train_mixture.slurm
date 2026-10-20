@@ -7,10 +7,10 @@
 # gh_train_mixture.slurm, written from experiment 038's delta_train_factorized.slurm.
 # What differs is the machine: the code tree is a plain rsync of the 040 worktree on
 # /scratch (no git), the data root is the Delta scratch tree, the interpreter is the
-# /work/hdd env called by its absolute path, and the three inputs that live at GilaHyper
-# absolute paths (the 033 cell table, the 031 embedding tables, the Vanacloig dev store)
-# are pointed at their rsynced copies through TC040_CELL_TABLE, TC040_EMBEDDING_DIR and
-# TC040_VANACLOIG_STORE.
+# /work/hdd env called by its absolute path, and the ONE data directory the trainer reads
+# beside the standard roots, the 040 store (build_040_store.py: the KG 4.0 query's
+# processed LMDB and its manifest), is pointed at its rsynced copy through TC040_STORE.
+# The store's bytes are checked against the manifest's sha256 before training.
 #
 #   SWEEP     path relative to the experiment folder (conf/mixture/<round>.yaml)
 #   ONLY      optional space-separated config names (PARALLEL=1 only)
@@ -24,12 +24,11 @@
 #
 # THE mkdir IS NOT OPTIONAL: slurm will not create the --output directory.
 #
-# RSYNC THE TREE FIRST. The 040 tree needs, beside the worktree itself: the 033 cell
-# table at $DATA_ROOT/experiments/033-env-chemgen-pooled/cell_table_002/, the 031
-# embedding tables into experiments/031-env-chemgen-inhibitor-tolerance/results/embeddings
-# inside the tree (as the 038 tree carries them), the Vanacloig dev store's processed
-# directory (lmdb + interned, about 310 KB of interned environments beside the records),
-# and the genome, GO, STRING and TFLink roots under $DATA_ROOT/data.
+# RSYNC THE TREE FIRST. The 040 tree needs, beside the worktree itself: the 040 store's
+# processed directory (processed/lmdb/data.mdb and processed/store_manifest.json) at
+# $DATA_ROOT/data/torchcell/experiments/040-inhibitor-synergy-wetlab/mixture_040/, and
+# the genome, GO, STRING and TFLink roots under $DATA_ROOT/data. The manifest's sha256
+# is what the preflight below and the trainer check the copy against.
 #
 # ACCOUNT: bfjt-delta-gpu, the GPU account with no running campaign on 2026-10-10
 # (bgcg carries the 031/032 packs). Override with --account.
@@ -53,8 +52,15 @@ set -u
 
 # Absolute, never SLURM_SUBMIT_DIR: `ssh delta 'sbatch ...'` submits from $HOME.
 PROJECT_ROOT="/scratch/bbub/mjvolk3/torchcell-040"
-DELTA_DATA_ROOT="${DELTA_DATA_ROOT:-/scratch/bbub/mjvolk3/torchcell}"
-DELTA_PY="${DELTA_PY:-/work/hdd/bbub/miniconda3/envs/torchcell/bin/python}"
+# FROM ROUND 11 (2026-10-17) the data root and the interpreter are 040's own. Lustre
+# target 106 (dltawork-OST006a) stopped answering on 2026-10-16, which left about one
+# file in a hundred unreadable in the shared env (5,863 files), the shared data root
+# (1,026) and the old tree (213); any job that touches one hangs to its time limit. The
+# env was rebuilt package for package (33 conda builds, 263 pip pins) into
+# envs/torchcell-r11, and the inputs were copied fresh from GilaHyper into
+# torchcell-040-data. The shared paths are untouched for the other Delta trees.
+DELTA_DATA_ROOT="${DELTA_DATA_ROOT:-/scratch/bbub/mjvolk3/torchcell-040-data}"
+DELTA_PY="${DELTA_PY:-/scratch/bbub/mjvolk3/envs/torchcell-r11/bin/python}"
 # The W&B settings of the Delta trees live in the 031 tree's env file (written at its
 # setup with the Delta roots); the roots below are exported after it so they win.
 DELTA_ENV_FILE="${DELTA_ENV_FILE:-/scratch/bbub/mjvolk3/torchcell-031/.env}"
@@ -64,9 +70,8 @@ set -a; . "$DELTA_ENV_FILE"; set +a
 export DATA_ROOT="$DELTA_DATA_ROOT"
 export EXPERIMENT_ROOT="$PROJECT_ROOT/experiments"
 export PYTHONPATH="$PROJECT_ROOT:${PYTHONPATH:-}"
-export TC040_CELL_TABLE="$DATA_ROOT/experiments/033-env-chemgen-pooled/cell_table_002/cell_table.parquet"
-export TC040_EMBEDDING_DIR="$PROJECT_ROOT/experiments/031-env-chemgen-inhibitor-tolerance/results/embeddings"
-export TC040_VANACLOIG_STORE="$DATA_ROOT/data/torchcell/env_chemgen_vanacloig2022/processed"
+export TC040_STORE="${TC040_STORE:-$DATA_ROOT/data/torchcell/experiments/040-inhibitor-synergy-wetlab/mixture_040}"
+export TC040_WORKERS="${TC040_WORKERS:-${SLURM_CPUS_PER_TASK:-8}}"
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export PYTHONUNBUFFERED=1
 export PYTHONWARNINGS=ignore
@@ -88,6 +93,7 @@ echo "host        : $(hostname)   job ${SLURM_JOB_ID:-none}   $(date -Is)"
 echo "project     : $PROJECT_ROOT"
 echo "DATA_ROOT   : $DATA_ROOT"
 echo "python      : $DELTA_PY"
+echo "store       : $TC040_STORE"
 echo "sweep       : $SWEEP ONLY=$ONLY PARALLEL=$PARALLEL"
 echo "SLURM_JOB_GPUS=${SLURM_JOB_GPUS:-} CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-}"
 echo "=========================================================="
@@ -97,8 +103,8 @@ echo "=========================================================="
 for required in \
   "$DATA_ROOT/data/sgd/genome/data.db" \
   "$DATA_ROOT/data/go/go.obo" \
-  "$TC040_CELL_TABLE" \
-  "$TC040_EMBEDDING_DIR/fcfp4_count.npz" \
+  "$TC040_STORE/processed/store_manifest.json" \
+  "$TC040_STORE/processed/lmdb/data.mdb" \
   "$EXP/conf/mixture/cgt_model.yaml" \
   "$EXP/results/wetlab_wells.csv" \
   "$EXP/results/mixture_scores.csv" \
@@ -108,11 +114,12 @@ for required in \
 done
 for required_dir in \
   "$DATA_ROOT/data/string" \
-  "$DATA_ROOT/data/tflink" \
-  "$TC040_VANACLOIG_STORE/interned" \
-  "$TC040_VANACLOIG_STORE/lmdb"; do
+  "$DATA_ROOT/data/tflink"; do
   [[ -d "$required_dir" ]] || { echo "ERROR: required tree missing: $required_dir" >&2; exit 1; }
 done
+# The store's bytes against its manifest (size, then sha256). A copy that Lustre damaged
+# fails here, in seconds of CPU, instead of hanging a card to the time limit.
+"$DELTA_PY" -c "import sys; sys.path.insert(0, '$EXP/scripts'); from store_manifest_040 import verify_store; m = verify_store('$TC040_STORE'); print('store verified:', m.kg_release, m.n_processed_entries, 'records', m.data_mdb_sha256[:12])" || exit 1
 # The top-level package is not enough. This env carries an EDITABLE install of the stale
 # checkout /projects/bbub/mjvolk3/torchcell, and its finder answers for any torchcell.X
 # that PathFinder cannot resolve under PYTHONPATH. An rsync whose bare --exclude 'data'
@@ -122,12 +129,18 @@ done
 nvidia-smi --query-gpu=index,name,memory.total --format=csv,noheader
 
 if [ "$PARALLEL" -eq 1 ]; then
+  # THE JOB'S STATE IS THE TRAINER'S. Until round 11 this branch ended on the final echo,
+  # so a trainer that died on a Lustre I/O error still left the job COMPLETED (13 of
+  # round 11's jobs, 2026-10-17); the exit status is now carried out of the script.
   if [ -n "$ONLY" ]; then
     # shellcheck disable=SC2086
     "$DELTA_PY" "$EXP/scripts/train_mixture.py" --sweep "$EXP/$SWEEP" --only $ONLY
   else
     "$DELTA_PY" "$EXP/scripts/train_mixture.py" --sweep "$EXP/$SWEEP"
   fi
+  status=$?
+  echo "finished at $(date -Is) status $status"
+  exit $status
 else
   NAMES=$("$DELTA_PY" -c "import yaml,sys; print(' '.join(c['name'] for c in yaml.safe_load(open(sys.argv[1]))))" "$EXP/$SWEEP")
   read -r -a ALL <<< "$NAMES"

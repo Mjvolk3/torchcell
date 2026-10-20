@@ -39,27 +39,22 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export PYTHONUNBUFFERED=1
 
 # Every input, checked before a card is spent on it: the sweep, the model config, the
-# cell table, the 031 fingerprints, the wet-lab wells, the model-free references, and the
-# Vanacloig dev store the IC30 doses are read from.
+# wet-lab wells and the model-free references.
 for required in \
   "$EXP/$SWEEP" \
   "$EXP/conf/mixture/cgt_model.yaml" \
   "$EXP/results/wetlab_wells.csv" \
   "$EXP/results/mixture_scores.csv" \
-  "$EXP/results/isobole_summary.csv" \
-  "${TC040_CELL_TABLE:-/scratch/projects/torchcell-scratch/experiments/033-env-chemgen-pooled/cell_table_002/cell_table.parquet}"; do
+  "$EXP/results/isobole_summary.csv"; do
   [[ -f "$required" ]] || { echo "ERROR: required file missing: $required" >&2; exit 1; }
 done
-for required_dir in \
-  "${TC040_EMBEDDING_DIR:-/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/031-env-chemgen-vanacloig-hillenmeyer/experiments/031-env-chemgen-inhibitor-tolerance/results/embeddings}" \
-  "${TC040_VANACLOIG_STORE:-/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_vanacloig2022/processed}/interned"; do
-  [[ -d "$required_dir" ]] || { echo "ERROR: required tree missing: $required_dir" >&2; exit 1; }
-done
-# Ask the PROGRAM which paths it will use and check those, rather than the shell defaults
-# above. The two are not the same thing: jobs 3711 and 3712 passed the shell checks and
-# then died at step zero because mixture_data resolved its store relative to an empty
-# DATA_ROOT, so the preflight had proved a path the program never read.
-"$PYTHON" -c "import os.path as osp, sys; sys.path.insert(0, '$EXP/scripts'); import torchcell, mixture_data as m; print('torchcell from', torchcell.__file__); [print(n, '->', p) for n, p in (('cell table', m.CELL_TABLE), ('embeddings', m.EMBEDDING_DIR), ('vanacloig store', m.VANACLOIG_STORE))]; bad = [p for p in (m.CELL_TABLE, m.EMBEDDING_DIR, m.VANACLOIG_STORE) if not osp.exists(p)]; sys.exit('ERROR: the program resolves missing paths: ' + ', '.join(bad)) if bad else None"
+export TC040_WORKERS="${TC040_WORKERS:-${SLURM_CPUS_PER_TASK:-8}}"
+# Ask the PROGRAM which store it will read and verify THAT (size, then sha256 against
+# the manifest), rather than a shell default. The two are not the same thing: jobs 3711
+# and 3712 passed shell checks and then died at step zero because mixture_data resolved
+# its store relative to an empty DATA_ROOT, so the preflight had proved a path the
+# program never read.
+"$PYTHON" -c "import sys; sys.path.insert(0, '$EXP/scripts'); import torchcell, mixture_data as m; from store_manifest_040 import verify_store; print('torchcell from', torchcell.__file__); print('store ->', m.STORE); mf = verify_store(m.STORE); print('store verified:', mf.kg_release, mf.n_processed_entries, 'records', mf.data_mdb_sha256[:12])"
 nvidia-smi --query-gpu=index,name,memory.total --format=csv,noheader
 
 if [ "$PARALLEL" -eq 1 ]; then

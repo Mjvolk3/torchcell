@@ -1,0 +1,4 @@
+gene,mode,mode_label,round,lian_score,lian_percentile_in_its_mode,n_genes_in_mode,in_vanacloig_profile,vanacloig_centered
+SAP30,d,CRISPRd (deletion),r1,2.977760296930616,100.0,5182,True,-0.336029029007179
+SLX5,i,CRISPRi (interference),r1,3.6165444821132446,100.0,5206,True,-0.2053203106978796
+PDR1,i,CRISPRi (interference),r3,3.6463977449861176,100.0,5206,False,

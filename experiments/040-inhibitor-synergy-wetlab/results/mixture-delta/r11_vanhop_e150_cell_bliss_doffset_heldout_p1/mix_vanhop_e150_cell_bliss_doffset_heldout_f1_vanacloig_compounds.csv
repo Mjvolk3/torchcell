@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+"2,6-dimethylpyrazine",raw,3503,0.04987890995101198,0.024772137489779744,0.8722364335473455,1,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+"2,6-dimethylpyrazine",centered,3502,0.06818503483164835,0.06581338058841113,0.8694398077612701,1,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+4-hydroxybenzaldehyde,raw,3491,0.5732231565588002,0.6755286286358815,0.8164700407712783,1,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+4-hydroxybenzaldehyde,centered,3491,0.4110845764432243,0.5196118970901915,0.7296121595509025,1,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+crystal violet,raw,3386,-0.06256161953019922,0.10114437602824033,0.9536661486896061,1,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+crystal violet,centered,3385,-0.04878962504382651,-0.17283252179025274,0.9518117649143478,1,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+nonylacridine orange,raw,3505,0.30923034793699866,0.2494565779084708,0.8837382582661709,1,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+nonylacridine orange,centered,3505,0.3493684396237681,0.198554773821774,0.8804111395280323,1,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+sinapic acid,raw,3493,0.43136151290245167,0.6154338714062056,0.5900613638043121,1,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+sinapic acid,centered,3491,0.27609912340290044,0.43400991292017266,0.0,1,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+vanillic acid,raw,3484,0.41411410826641576,0.4310273757129111,0.873157041192053,1,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+vanillic acid,centered,3484,0.31484367107449523,0.23918071168556915,0.8174900818014917,1,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+"2,6-dimethylpyrazine",raw,3503,-0.2874291917522831,-0.2037515712940559,0.8722364335473455,1,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+"2,6-dimethylpyrazine",centered,3502,-0.2955928101980285,-0.15404003238230746,0.8694398077612701,1,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+4-hydroxybenzaldehyde,raw,3491,0.48372962693530874,0.5607091769426967,0.8164700407712783,1,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+4-hydroxybenzaldehyde,centered,3491,0.29557837597165265,0.33753245971819584,0.7296121595509025,1,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+crystal violet,raw,3386,0.17684464044579967,0.0028536356148205384,0.9536661486896061,1,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+crystal violet,centered,3385,0.28891962789319736,-0.15685302079575664,0.9518117649143478,1,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+nonylacridine orange,raw,3505,0.2860986320811091,0.06984079696677396,0.8837382582661709,1,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+nonylacridine orange,centered,3505,0.33581725240626953,0.10019909201686515,0.8804111395280323,1,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+sinapic acid,raw,3493,0.4863955448447064,0.6579616847746699,0.5900613638043121,1,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+sinapic acid,centered,3491,0.30721652925590703,0.4475293928035909,0.0,1,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+vanillic acid,raw,3484,0.429279957372636,0.5122870887485178,0.873157041192053,1,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+vanillic acid,centered,3484,0.30310902122013844,0.2667664994353089,0.8174900818014917,1,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+"2,6-dimethylpyrazine",raw,3503,-0.1670267900513442,-0.12447136404886236,0.8722364335473455,1,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+"2,6-dimethylpyrazine",centered,3502,-0.04583370011211206,-0.0028231187716781458,0.8694398077612701,1,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+4-hydroxybenzaldehyde,raw,3491,0.5282251131759497,0.5835492619654483,0.8164700407712783,1,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+4-hydroxybenzaldehyde,centered,3491,0.31544787137443386,0.3637434647652281,0.7296121595509025,1,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+crystal violet,raw,3386,-0.1536506723976406,0.23379277610388252,0.9536661486896061,1,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+crystal violet,centered,3385,-0.21465220860849565,0.01292678018372716,0.9518117649143478,1,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+nonylacridine orange,raw,3505,-0.007524621551254126,0.21235722180955377,0.8837382582661709,1,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+nonylacridine orange,centered,3505,-0.15142535021716266,0.023082832865264826,0.8804111395280323,1,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+sinapic acid,raw,3493,0.4998286390883575,0.6607150754023076,0.5900613638043121,1,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+sinapic acid,centered,3491,0.31532346129174166,0.46350067053859584,0.0,1,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+vanillic acid,raw,3484,0.4215979819882498,0.4807728081069148,0.873157041192053,1,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+vanillic acid,centered,3484,0.3121581970785788,0.27729364108091875,0.8174900818014917,1,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+"2,6-dimethylpyrazine",raw,3503,-0.1666999994370011,-0.11049209468140546,0.8722364335473455,1,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+"2,6-dimethylpyrazine",centered,3502,-0.10330643156530604,-0.025446054165648956,0.8694398077612701,1,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+4-hydroxybenzaldehyde,raw,3491,0.5672778126734994,0.647224730287431,0.8164700407712783,1,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+4-hydroxybenzaldehyde,centered,3491,0.40717964961201875,0.479036723911345,0.7296121595509025,1,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+crystal violet,raw,3386,-0.020636530434738468,0.14756026615036222,0.9536661486896061,1,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+crystal violet,centered,3385,-0.009534041115768884,-0.1913201742968303,0.9518117649143478,1,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+nonylacridine orange,raw,3505,0.221479878959184,0.24332986420902866,0.8837382582661709,1,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+nonylacridine orange,centered,3505,0.31063481249008357,0.17617912203837335,0.8804111395280323,1,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+sinapic acid,raw,3493,0.4951824414041976,0.6610559100447305,0.5900613638043121,1,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+sinapic acid,centered,3491,0.3192161938151336,0.4646943744173115,0.0,1,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+vanillic acid,raw,3484,0.4387136279049706,0.49188303720402726,0.873157041192053,1,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f1
+vanillic acid,centered,3484,0.3322122167032446,0.27464228935929264,0.8174900818014917,1,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f1

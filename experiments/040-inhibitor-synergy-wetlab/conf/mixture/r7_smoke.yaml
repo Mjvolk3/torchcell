@@ -1,0 +1,60 @@
+# experiments/040-inhibitor-synergy-wetlab/conf/mixture/r7_smoke.yaml
+#
+# Smoke of the one code path round 7 adds to train_mixture.py: ``readout: cell``, every
+# record a cell read through one head, the host the record with the empty genotype.
+# Four steps on one GPU per config; the numbers are noise by construction and what the
+# smoke checks is that the shared head runs for the gene-level records and for the host
+# (train step, evaluation, the fine-tune stage, the checkpoint) and that the scores table
+# is written. NOT A CPU SMOKE (see r3w2_smoke.yaml).
+#
+#   sbatch --job-name=040-r7-smoke --cpus-per-task=2 --mem=12G --time=01:00:00 \
+#     --export=ALL,SWEEP=conf/mixture/r7_smoke.yaml,PARALLEL=1 \
+#     experiments/040-inhibitor-synergy-wetlab/scripts/gh_train_mixture.slurm
+- name: r7smoke_van_cell
+  sources: [vanacloig]
+  readout: cell
+  host_train: anchors+ex21
+  dose: "off"
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: true
+- name: r7smoke_vanhop_cell_film
+  sources: [vanacloig, hoepfner_hop]
+  readout: cell
+  aux_holdout: compound
+  host_train: anchors+ex21
+  dose: film
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  cond_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: false
+- name: r7smoke_van_cell_finetune
+  sources: [vanacloig]
+  readout: cell
+  host_train: finetune_ex21
+  finetune_epochs: 1
+  dose: "off"
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: false

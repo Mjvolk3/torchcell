@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+"2,2'-bipyridine",raw,3488,-0.07227947530502891,-0.424874189281958,0.933492750710942,0,seed0,mix_van_e150_cell_anchors_bliss_film_f0
+"2,2'-bipyridine",centered,3486,0.4021025176222268,0.3704811860390432,0.9563816885746026,0,seed0,mix_van_e150_cell_anchors_bliss_film_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.2248072996587167,0.44174613521808326,0.9115685305555769,0,seed0,mix_van_e150_cell_anchors_bliss_film_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.3075813151448997,0.19333274045680587,0.8721587526514974,0,seed0,mix_van_e150_cell_anchors_bliss_film_f0
+acetosyringone,raw,3496,0.12342558700952069,0.47609075027014464,0.8957051853886657,0,seed0,mix_van_e150_cell_anchors_bliss_film_f0
+acetosyringone,centered,3491,-0.0525915926346042,-0.11331718594489855,0.8621258971956102,0,seed0,mix_van_e150_cell_anchors_bliss_film_f0
+acetovanillone,raw,3508,0.1791590026065707,0.34300549280785747,0.912907133190153,0,seed0,mix_van_e150_cell_anchors_bliss_film_f0
+acetovanillone,centered,3507,0.032323087484161094,0.061028315295226905,0.8921575536150955,0,seed0,mix_van_e150_cell_anchors_bliss_film_f0
+furfural,raw,3492,-0.019947113393486333,0.016440878322930088,0.8770802207938314,0,seed0,mix_van_e150_cell_anchors_bliss_film_f0
+furfural,centered,3491,0.3085817761369513,0.28448895588721607,0.893722287283485,0,seed0,mix_van_e150_cell_anchors_bliss_film_f0
+vanillin,raw,3504,0.21701627386932654,0.41184259781925503,0.8077135748399356,0,seed0,mix_van_e150_cell_anchors_bliss_film_f0
+vanillin,centered,3502,0.1628270025760472,0.07516473457633006,0.71557075481543,0,seed0,mix_van_e150_cell_anchors_bliss_film_f0
+"2,2'-bipyridine",raw,3488,0.04397662673767067,0.08875873579208507,0.933492750710942,0,seed1,mix_van_e150_cell_anchors_bliss_film_f0
+"2,2'-bipyridine",centered,3486,0.47638154037214725,0.6239547665629605,0.9563816885746026,0,seed1,mix_van_e150_cell_anchors_bliss_film_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.5916944804525655,0.6848924439066828,0.9115685305555769,0,seed1,mix_van_e150_cell_anchors_bliss_film_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.5283162385034161,0.5263005084415611,0.8721587526514974,0,seed1,mix_van_e150_cell_anchors_bliss_film_f0
+acetosyringone,raw,3496,0.25414083365800866,0.5331780154706456,0.8957051853886657,0,seed1,mix_van_e150_cell_anchors_bliss_film_f0
+acetosyringone,centered,3491,0.10279220360559745,0.2889603248744335,0.8621258971956102,0,seed1,mix_van_e150_cell_anchors_bliss_film_f0
+acetovanillone,raw,3508,0.5588037021494139,0.664624287479328,0.912907133190153,0,seed1,mix_van_e150_cell_anchors_bliss_film_f0
+acetovanillone,centered,3507,0.48349205905106846,0.5641711119387711,0.8921575536150955,0,seed1,mix_van_e150_cell_anchors_bliss_film_f0
+furfural,raw,3492,0.10570561479038208,0.0005205722201893255,0.8770802207938314,0,seed1,mix_van_e150_cell_anchors_bliss_film_f0
+furfural,centered,3491,0.3222214299985279,0.3041610393015411,0.893722287283485,0,seed1,mix_van_e150_cell_anchors_bliss_film_f0
+vanillin,raw,3504,0.48250953595883217,0.5858241889481253,0.8077135748399356,0,seed1,mix_van_e150_cell_anchors_bliss_film_f0
+vanillin,centered,3502,0.39737831135615814,0.3496832887237235,0.71557075481543,0,seed1,mix_van_e150_cell_anchors_bliss_film_f0
+"2,2'-bipyridine",raw,3488,-0.050153313382918584,-0.15280275136580107,0.933492750710942,0,seed2,mix_van_e150_cell_anchors_bliss_film_f0
+"2,2'-bipyridine",centered,3486,0.3683638557528154,0.49904821823911577,0.9563816885746026,0,seed2,mix_van_e150_cell_anchors_bliss_film_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.5871058732274939,0.6802508078822525,0.9115685305555769,0,seed2,mix_van_e150_cell_anchors_bliss_film_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.4745454487106511,0.5048405164605694,0.8721587526514974,0,seed2,mix_van_e150_cell_anchors_bliss_film_f0
+acetosyringone,raw,3496,0.015168902036595005,0.3655477659800052,0.8957051853886657,0,seed2,mix_van_e150_cell_anchors_bliss_film_f0
+acetosyringone,centered,3491,-0.16592444090422698,0.013822971525646708,0.8621258971956102,0,seed2,mix_van_e150_cell_anchors_bliss_film_f0
+acetovanillone,raw,3508,0.40269057885037846,0.5427943750037889,0.912907133190153,0,seed2,mix_van_e150_cell_anchors_bliss_film_f0
+acetovanillone,centered,3507,0.2830651535218645,0.3665099681038779,0.8921575536150955,0,seed2,mix_van_e150_cell_anchors_bliss_film_f0
+furfural,raw,3492,0.09005976854547454,-0.026309117849184282,0.8770802207938314,0,seed2,mix_van_e150_cell_anchors_bliss_film_f0
+furfural,centered,3491,0.3287145383552163,0.28963772653630665,0.893722287283485,0,seed2,mix_van_e150_cell_anchors_bliss_film_f0
+vanillin,raw,3504,0.47450631325682596,0.5781416522794087,0.8077135748399356,0,seed2,mix_van_e150_cell_anchors_bliss_film_f0
+vanillin,centered,3502,0.39125278366218486,0.34962987358962283,0.71557075481543,0,seed2,mix_van_e150_cell_anchors_bliss_film_f0
+"2,2'-bipyridine",raw,3488,-0.04135903565808006,-0.2304094489306231,0.933492750710942,0,ensemble,mix_van_e150_cell_anchors_bliss_film_f0
+"2,2'-bipyridine",centered,3486,0.4522359673235519,0.5879867474139995,0.9563816885746026,0,ensemble,mix_van_e150_cell_anchors_bliss_film_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.6068270175952859,0.6999816885119724,0.9115685305555769,0,ensemble,mix_van_e150_cell_anchors_bliss_film_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.5347887092952023,0.5413783178511632,0.8721587526514974,0,ensemble,mix_van_e150_cell_anchors_bliss_film_f0
+acetosyringone,raw,3496,0.1450514402861111,0.5008314098420334,0.8957051853886657,0,ensemble,mix_van_e150_cell_anchors_bliss_film_f0
+acetosyringone,centered,3491,-0.0448445142406903,0.14939947949686075,0.8621258971956102,0,ensemble,mix_van_e150_cell_anchors_bliss_film_f0
+acetovanillone,raw,3508,0.49342920507512533,0.6155075577466973,0.912907133190153,0,ensemble,mix_van_e150_cell_anchors_bliss_film_f0
+acetovanillone,centered,3507,0.4099124785048981,0.4940033309691856,0.8921575536150955,0,ensemble,mix_van_e150_cell_anchors_bliss_film_f0
+furfural,raw,3492,0.0988081551994448,-0.0066339425656569626,0.8770802207938314,0,ensemble,mix_van_e150_cell_anchors_bliss_film_f0
+furfural,centered,3491,0.33448180561973806,0.31266617012430425,0.893722287283485,0,ensemble,mix_van_e150_cell_anchors_bliss_film_f0
+vanillin,raw,3504,0.4850721021420607,0.598956497234986,0.8077135748399356,0,ensemble,mix_van_e150_cell_anchors_bliss_film_f0
+vanillin,centered,3502,0.399733622311772,0.35417549179987584,0.71557075481543,0,ensemble,mix_van_e150_cell_anchors_bliss_film_f0

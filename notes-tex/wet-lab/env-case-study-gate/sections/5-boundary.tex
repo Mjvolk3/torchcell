@@ -1,0 +1,271 @@
+%% notes-tex/wet-lab/env-case-study-gate/sections/5-boundary.tex
+%% SOURCE: the two figures are written by experiments/040-inhibitor-synergy-wetlab/
+%% scripts/mixture_rules.py (the isobole grids with both fronts) and rule_choice.py (which
+%% rule each pair follows, leave-one-pair-out); every number is a macro of
+%% tables/gate_numbers.tex written by figure_gate_panels.py from results/
+%% isobole_boundary.csv, rule_choice_pairs.csv, rule_choice_lopo.csv,
+%% rule_choice_higher_orders.csv and the round-one score files under results/mixture/.
+%% The arm table and the decision list are hand-authored around those macros.
+
+\clearpage
+\section{The boundary readout, and what the first model arms say\secstatus{todo}}
+\label{sec:boundary}
+
+For several inhibitors the useful prediction is the shape in dose space inside which the
+host still grows, the line between alive and dead at each concentration. The
+fixed-dose combination plate gives one point per combination, so the boundary lives in
+the three isobole grids and in the single-agent curves that fix where it meets the axes.
+Bliss multiplies surviving fractions, two independent hits; Loewe adds doses as
+fractions of each compound's own dose for the same effect, one shared capacity. With the
+steep single-agent curves of this host the two fronts sit far apart, so which one a pair
+follows is a large, visible difference, and it is scored here directly: a rule's alive
+region is the interior cells where its prediction clears the grid's growth threshold,
+compared with the observed alive region by the overlap of the two sets (the Jaccard
+index), the cells wrong in each direction, and the growth edge, the highest dose called
+alive in each column, in grid steps.
+
+\pfstep{Post-processing the observed region} A dose-response boundary is monotone: more
+inhibitor never rescues growth. A grown cell sitting above a dead one is therefore a call
+error, and the observed region is closed downward before it is scored (a cell stays alive
+only if every cell with lower doses on both axes is alive). The furfural and formic acid
+grids are already monotone. The 5-HMF grid, flagged since the processor round for its
+growth islands, loses \hydbndexTwoEightislands{} interior cells to the closure, going
+from \hydbndexTwoEightaliveRaw{} alive cells to \hydbndexTwoEightaliveMonotone{}; the
+figure marks each dropped cell with a cross. Any predicted surface gets the same closure
+before it is scored as a boundary.
+
+\clearpage
+\tcfig{\figBoundary}{\textbf{No single rule draws the boundary.}
+\textbf{a} to \textbf{c}, Observed fitness over each isobole grid (no growth drawn as
+zero), the black outline around the monotone closure of the cells that grew, a cross on
+each grown cell the closure drops, and the two fronts at the grid's growth threshold:
+Loewe additivity dashed in blue, Bliss independence dotted in orange. Furfural with
+acetic acid follows Bliss, overlap \hydbndexTwoSixmonotoneblissjaccard{} against
+\hydbndexTwoSixmonotoneloewejaccard{} for Loewe, which calls
+\hydbndexTwoSixmonotoneloewedeadAlive{} grown cells dead. Formic with acetic acid
+follows Loewe, overlap \hydbndexTwoSevenmonotoneloewejaccard{} against
+\hydbndexTwoSevenmonotoneblissjaccard{} for Bliss, which keeps
+\hydbndexTwoSevenmonotoneblissaliveDead{} dead cells alive. 5-HMF with acetic acid
+follows Bliss, overlap \hydbndexTwoEightmonotoneblissjaccard{} against
+\hydbndexTwoEightmonotoneloewejaccard{}. The growth edge along acetic acid tracks the
+winning rule within \hydbndexTwoSixmonotoneblissedgeMae{} (furfural),
+\hydbndexTwoSevenmonotoneloeweedgeMae{} (formic acid) and
+\hydbndexTwoEightmonotoneblissedgeMae{} (5-HMF) steps on average.
+\status{todo}\,\fstat{file}
+\textbf{d} to \textbf{f}, Observed minus the empirical Bliss surface on a symmetric
+scale, with the Loewe front dashed. \status{todo}\,\fstat{file}}{fig:boundary}
+
+\clearpage
+
+{\footnotesize\noindent
+\begin{tabular}{@{}p{8mm}p{168mm}@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:boundary}}} \\
+\midrule
+a--c & \file{isobole_cells.csv} (observed, Bliss and Loewe per cell, the raw and the
+monotone growth call), \file{isobole_boundary.csv} (the overlap, the cells wrong each
+way and the edge error per grid, rule and observed region), \file{single_agent_fits.csv}
+(the axis Hill fits the Loewe front is drawn from). Served growth call; the isobole runs
+carry no software call. Status: on file. \\
+d--f & \file{isobole_cells.csv}, \file{isobole_summary.csv} (the mean excess over Bliss
+and its bootstrap interval, printed in \cref{sec:mockups}). Status: on file. \\
+\bottomrule
+\end{tabular}}
+
+\clearpage
+\tcfig{\figRulechoice}{\textbf{Which rule a pair follows, and whether anything
+predicts the choice.} \textbf{a}, Each of the \hydrcnPairs{} fixed-dose pairs: observed
+fitness (no growth drawn as zero) against Bliss and Loewe from the titration fits,
+grouped by chemical class, the dotted line the growth threshold. All
+\hydrcacidacidn{} acid pairs follow Loewe. The \hydrcacidaldehyden{} aldehyde and acid
+pairs split \hydrcacidaldehydebliss{} to \hydrcacidaldehydeloewe{}, by the acid and not
+by the class: with acetic or formic acid the aldehyde follows Bliss, with lactic or
+levulinic acid it follows Loewe, and 5-HMF with either of those two grew in no well,
+which Loewe calls and Bliss does not. \status{todo}\,\fstat{file}
+\textbf{b}, Leave-one-pair-out: each predictor gives a Loewe weight for the held-out
+pair, fitted on the other pairs, and the pair's fitness is that weight on Loewe plus its
+complement on Bliss. Mean absolute error over the held-out pairs, with the Spearman
+over the \hydrcnGrown{} grown pairs beside each bar. Pure Loewe has the lowest error,
+\hydlopoloewemae{}; pure Bliss the best ranking of the grown pairs,
+\hydlopoblissspGrown{}, because its error is a level bias that leaves their order intact.
+The growth call is not shown: with \hydrcnGrown{} of \hydrcnPairs{} pairs grown, Bliss
+scores \hydlopoblissacc{} by predicting growth for every pair, a majority-class readout. A fitted global weight (\hydlopoglobalWmae{}), the class rule
+(\hydlopoclassRulemae{}), a fitted class weight (\hydlopoclassWmae{}) and profile
+similarity with the best available profiles (\hydloposimBestmae{}) or the all-predicted
+ones (\hydloposimPredmae{}) all land between the two rules. Nothing on file predicts the
+choice; with \hydrcnPairs{} pairs that is a small-sample statement.
+\status{todo}\,\fstat{file}}{fig:rulechoice}
+
+\clearpage
+
+{\footnotesize\noindent
+\begin{tabular}{@{}p{8mm}p{168mm}@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:rulechoice}}} \\
+\midrule
+a & \file{rule_choice_pairs.csv} from \file{mixture_combinations.csv} (served call) and
+\file{profile_similarity.csv}; the class of a pair is the chemical class of its two
+members. Status: on file. \\
+b & \file{rule_choice_lopo.csv} and \file{rule_choice_lopo_pairs.csv}; the class
+hierarchy over all combinations (Loewe within a class, Bliss across) is in
+\file{rule_choice_higher_orders.csv}: growth AUROC \hydordershierauroc{} against Loewe's
+\hydordersloeweauroc{}, with the smallest fitness error over the grown combinations
+(\hydordershierrmse{} against \hydordersloewermse{}). Status: on file. \\
+\bottomrule
+\end{tabular}}
+
+\pfstep{What the figure now claims} The boundary is model-free and it is not one rule:
+Loewe for the acids, Bliss for the short acids with an aldehyde. The rule choice is the
+quantity a learned model would have to supply, and the leave-one-pair-out test is the
+bar it has to clear. That replaces "Loewe wins overall" as the statement of the bottom
+row.
+
+\pfstep{The first model arms} The mixture trainer of this experiment ran its first
+round: the environment-encoder recipe of the corrected-store campaign with one compound
+token per inhibitor, a log-molar dose modulation (FiLM) that can be switched off, and a
+host head read at the mean over genes, fitted on the published dose anchors alone or on the
+anchors with the titration run, five compound-cold folds of one fold seed with three
+seeds each. The combination plate and the isobole grids are never trained on.
+\hydarmsscored{} arms have score files here; two more, the dose-off pair, finished on
+Delta and await an rsync, and three are running there. Every arm sits below the
+model-free rules on every wet-lab readout.
+
+%% SOURCE: hand-authored around macros of tables/gate_numbers.tex; one row per round-one
+%% arm whose score files are under results/mixture/r1_*/ (median over the folds on file of
+%% the three-seed ensemble, served call). The two-layer arm was still writing folds when
+%% the table was drawn and its fold count says so.
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \caption[]{Round-one arms against the model-free bars, served growth call, median
+  over the folds on file. The reference for growth is Loewe from the titration fits,
+  AUROC \hydloeweAuroc{}; for the worst-scenario ranking over all combinations, Loewe,
+  \hydordersloeweworst{}; for fitness over the combinations that grew, Bliss from the
+  observed singles, \hydblissSpearman{}; for the furfural grid, the mean of observed
+  minus Bliss, \hydisoboleExTwoSixExcess{}; on the published side, nested ridge,
+  \hydladderRidge{}. A negative grid residual means the arm predicts more growth than
+  was seen.}
+  \label{tab:arms}
+  \begin{tabular}{@{}p{46mm}p{8mm}p{18mm}p{22mm}p{22mm}p{22mm}p{22mm}@{}}
+    \toprule
+    arm & folds & growth AUROC & worst-scenario Spearman & fitness Spearman, grown &
+    furfural grid, observed minus arm & published, centered Spearman \\
+    \midrule
+    joint, anchors and titration, dose FiLM & \hydarmjointFilmfolds{} &
+      \hydarmjointFilmauroc{} & \hydarmjointFilmworst{} & \hydarmjointFilmfitGrown{} &
+      \hydarmjointFilmisoTwoSix{} & \hydarmjointFilmvan{} \\
+    anchors only, dose FiLM & \hydarmanchorsFilmfolds{} &
+      \hydarmanchorsFilmauroc{} & \hydarmanchorsFilmworst{} &
+      \hydarmanchorsFilmfitGrown{} & \hydarmanchorsFilmisoTwoSix{} &
+      \hydarmanchorsFilmvan{} \\
+    two-stage, head fine-tuned on the titration & \hydarmftHeadfolds{} &
+      \hydarmftHeadauroc{} & \hydarmftHeadworst{} & \hydarmftHeadfitGrown{} &
+      \hydarmftHeadisoTwoSix{} & \hydarmftHeadvan{} \\
+    two-stage, head and environment encoder fine-tuned & \hydarmftEnvfolds{} &
+      \hydarmftEnvauroc{} & \hydarmftEnvworst{} & \hydarmftEnvfitGrown{} &
+      \hydarmftEnvisoTwoSix{} & \hydarmftEnvvan{} \\
+    joint, two environment layers (still writing) & \hydarmjointTwoLayerfolds{} &
+      \hydarmjointTwoLayerauroc{} & \hydarmjointTwoLayerworst{} &
+      \hydarmjointTwoLayerfitGrown{} & \hydarmjointTwoLayerisoTwoSix{} &
+      \hydarmjointTwoLayervan{} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\pfstep{What the arms say} The dose-aware joint arm fits the titration wells it trains on
+and then predicts the combinations at chance; the anchors-only arm, the zero-shot host,
+is below chance and ranks the grown combinations the wrong way. Switching the dose
+modulation off raises the growth AUROC in both host regimes (the Delta pair, recorded in
+the experiment note until its files arrive), which is the opposite of what a dose-aware
+model is for. Every arm's grid residual is negative: the arms predict more growth in the
+interior cells than was seen, and the dose-aware arms predict the most. Hypothesis
+(untested): the host head composes inhibitors near-additively or less, so each added
+inhibitor lowers predicted fitness by less than it lowers observed fitness, and the
+sharper the single-agent fit the larger that gap. On the published side every arm reads
+within a few hundredths of the earlier campaign's encoder and below ridge, so the wet-lab
+failure is not a model that was working elsewhere.
+
+\pfstep{Where a learned model can still earn the panel} The rules need the single-agent
+curves. The regimes in which they have no prediction, or one they cannot improve with
+data, are the model's territory, and each needs its own baseline. Zero-shot singles: no
+Bioscreen well in training, the six titration curves predicted from published screens; the
+honest readout is the pooled ranking over all titration wells, since within one compound
+fitness falls with dose and any dose-aware model scores near perfectly there; on file the
+anchors arm reads weakly and the dose-off anchors arm reads nothing. One inhibitor
+unknown: five curves and the anchors known, the sixth withheld, the model predicts its
+curve and every combination that contains it; the baseline is the hybrid, the model's
+curve fitted as a Hill and fed to Loewe. Singles and pairs known, higher orders predicted:
+the fifteen pairs become training data and the forty-eight higher-order combinations the
+test; the baseline is a rule with one interaction parameter fitted on the pairs. Leave one
+pair out: the same, with the fifteenth pair as the test and the rule choice as the
+quantity learned.
+
+\pfstep{Open decisions} First, whether the boundary readout, the overlap
+of alive regions and the edge error under the monotone closure, replaces growth AUROC as
+the primary wet-lab statistic of the bottom row; this document already scores both.
+Second, whether the fifteen pairs may become training data in the two regimes that need
+them; that breaks the pre-registered rule that the combination plate is never trained on,
+for those arms only, and the note would say so. Third, whether the bottom row ships with
+the model beside the rules, as the arm table shows it, or with the rules alone until an
+arm clears one of the bars. The first two are open; the third follows from whatever the
+queued rounds return.
+
+\pfstep{Round three, read over both machines} The screen that followed round one
+(\cref{fig:sifour}) was read on 2026.10.12 with every arm scored on Delta and most of them
+on GilaHyper as well. Three readings. The same config at the same seed differs between the
+machines by a median of \hydrThreemachinesmedianAbsDiff{} and by up to
+\hydrThreemachinesmaxAbsDiff{} on the published score, so no single-seed difference in the
+screen is a finding. Over every run so far the one-, two- and three-source arms read
+\hydrThreeonegenemean{}, \hydrThreetwogenemean{} and \hydrThreethreegenemean{} on the
+published side and \hydrThreeonegrowthmean{}, \hydrThreetwogrowthmean{} and
+\hydrThreethreegrowthmean{} on the growth call: adding the published screens does not lift
+either readout, and the arms predict a cold compound on those screens at
+\hydrThreesrchoepfnercgt{} (Hoepfner) and \hydrThreesrchillenmeyercgt{} (Hillenmeyer)
+against the chemistry-feature learners' \hydrThreesrchoepfnerridge{} and
+\hydrThreesrchillenmeyerridge{}. The dose modulation learns a held-out published dose
+(\hydrThreesrchoepfnerdose{}) and lowers the growth call on
+\hydrThreedosepairsfilmLower{} of \hydrThreedosepairs{} paired comparisons, which is round
+one's reading again under a protocol that selects on a held-out signal. Round four, six
+seeds on five folds of the three source-set arms, is what will turn the first reading
+into a measured null or a difference.
+
+\pfstep{Rounds seven to ten, read over both machines} Round four returned the measured
+null: the three source-set arms at six seeds sit inside one spread on both readouts
+(\cref{fig:sifour}). Rounds seven to nine changed what a record is. Under the cell
+readout every record is a cell, the host the record with the empty genotype read through
+the shared head, and the published score did not move; what moved the private readout was
+the composition. With the compound tokens of a medium averaged, every arm read one
+fitness at one, two and three inhibitors (growth AUROC 0.48 to 0.57 over six runs);
+summed, the medium read fitter than its singles (0.27); read one inhibitor at a time and
+composed as Bliss independence, the same model orders the combinations at
+\hydmodelAuroc{} fitted over \hydmodelRuns{} runs and \hydrOneZerozsOnegrowthmean{}
+zero-shot, and its predicted fitness falls with the inhibitor count. Round ten
+(\cref{fig:sieight}) put three seeds on the questions. Sources: no published screen lifts
+the target, and the four-source arm is the lowest (\hydrOneZeroonegenemean{} to
+\hydrOneZerofourgenemean{}); the fitted wet-lab readout does not move with sources; the
+zero-shot readout does, \hydrOneZerozsOnegrowthmean{}, \hydrOneZerozsTwogrowthmean{} and
+\hydrOneZerozsThreegrowthmean{} on one, two and three sources, three runs each and the
+steps inside the spread. Dose: FiLM on the tokens reads the titration
+(\hydrOneZerodosefilmtitration{}) and costs the host (\hydrOneZerodosefilmauroc{}
+against \hydrOneZerodoseoffauroc{} with no channel), its published cost of the single-seed
+rounds being seed noise; the dose offset reads the titration at
+\hydrOneZerodosedofftitration{} at no published cost and composes at
+\hydrOneZerodosedoffauroc{}; the titration fine-tune with FiLM composes at
+\hydrOneZerodoseftauroc{}.
+
+What the published screens themselves can be predicted at is a narrower statement than it
+may read. The held-out compound score is the only thing measured on them: a compound the
+model never saw, its predicted profile across the HOP strains against the measured one,
+\hydrOneZerosrchoepfnercgt{} over the round-ten arms against ridge's
+\hydrOneZerosrchoepfnerridge{}, and across the Hillenmeyer HET strains
+\hydrOneZerosrchillenmeyercgt{} against \hydrOneZerosrchillenmeyerridge{}, the HET
+training loss rising rather than falling in every round. A seen compound at a held-out
+dose is a different question and is predicted (\hydrOneZerosrchoepfnerdose{}). A held-out
+strain with every compound seen, the gene-cold split, has been run on Vanacloig alone,
+where it read near zero, and not on HOP or HET, so whether a new HOP or HET strain's
+response can be predicted is unmeasured rather than negative; the honest experiment is a
+gene-cold split on each screen scored as hit recovery over the strains called sick rather
+than a rank over every strain. Hoepfner's HIP arm is not in the pool at all, only its HOP
+arm and Hillenmeyer's HET arm. Hypothesis (untested): haploinsufficiency profiles are
+sparse, so a rank over all strains is a poor target for HET and a hit-level call would
+read differently.

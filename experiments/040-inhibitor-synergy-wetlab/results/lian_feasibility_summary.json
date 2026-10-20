@@ -1,0 +1,20 @@
+{
+  "generated_by": "experiments/040-inhibitor-synergy-wetlab/scripts/lian_validation_feasibility.py",
+  "generated_at": "2026-10-11-02-00-38",
+  "lian_table": "/scratch/projects/torchcell-scratch/torchcell-raw/lianMultifunctionalGenomewideCRISPR2019/data/guide_enrichment_final.tsv",
+  "compound": "furfural",
+  "vanacloig_measured_reliability": 0.769269713707756,
+  "representable_fraction_of_guides": 0.24658354712159478,
+  "deletion_mode_reliability_round1": 0.08477489955871559,
+  "interference_mode_reliability_round1": 0.33877312810823007,
+  "deletion_round1_spearman_vs_vanacloig": 0.024535064002095167,
+  "only_comparable_round": "r1, the bAID parent; rounds 2 and 3 screen engineered parents and measure effects conditional on the integrated edits",
+  "best_agreement_any_mode_round": {
+    "mode": "i",
+    "round": "r1",
+    "target": "raw",
+    "spearman": 0.041735357613317786,
+    "attenuation_ceiling": 0.5104977054519433
+  },
+  "n_shared_genes": 2666
+}

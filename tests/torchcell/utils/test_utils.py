@@ -32,6 +32,7 @@ from typing import Any
 
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 import pytest
 
 from torchcell.utils.utils import (
@@ -352,3 +353,63 @@ def test_format_scientific_notation_drops_fractional_digits() -> None:
     """
     assert format_scientific_notation(1234.5) == "1.234e03"
     assert format_scientific_notation(99.9) == "1e01"
+
+
+def test_acs_structure_draws_at_the_acs_bond_length(tmp_path: Path) -> None:
+    """A structure drawn by ``acs_structure`` is a set of vector paths in points: the
+    bond is the ACS 1996 fixed length (10.8 pt, 0.381 cm), the line 0.6 pt, and the
+    atom labels are glyph outlines, so the panel needs no font to render them.
+    """
+    pytest.importorskip("rdkit")
+    from matplotlib.colors import to_rgba
+    from matplotlib.patches import PathPatch
+
+    from torchcell.utils import ACS_BOND_PT, ACS_LINE_PT, acs_structure
+
+    apply_paper_style()
+    fig = plt.figure(figsize=(mm_to_in(57.8), mm_to_in(30)))
+    ax = fig.add_subplot(111)
+    ax.set_xlim(0, 100)
+    ax.set_ylim(0, 50)
+    box, width_pt, height_pt = acs_structure(ax, "OC=O", (50, 25))
+    patches = [
+        a for a in box.get_children()[0].get_children() if isinstance(a, PathPatch)
+    ]
+    alpha = {id(p): to_rgba(p.get_facecolor())[3] for p in patches}
+    stroked = [p for p in patches if alpha[id(p)] == 0.0]
+    glyphs = [p for p in patches if alpha[id(p)] == 1.0]
+    # a bond is a two-point stroked path; RDKit also strokes a three-point join cap
+    # at every unlabeled vertex, which is not a bond
+    vertices = {id(p): np.asarray(p.get_path().vertices) for p in stroked}
+    bonds = [p for p in stroked if len(vertices[id(p)]) == 2]
+    assert bonds and glyphs, "a bond is a stroked path, a label a filled outline"
+    assert all(p.get_linewidth() == ACS_LINE_PT for p in stroked)
+    # each bond runs the ACS length minus the clearance RDKit leaves at a labeled
+    # end, so it is shorter than the bond length and longer than half of it
+    lengths = [
+        float(np.hypot(*(vertices[id(p)][1] - vertices[id(p)][0]))) for p in bonds
+    ]
+    assert all(ACS_BOND_PT / 2 < length <= ACS_BOND_PT for length in lengths)
+    assert 0 < width_pt < 60 and 0 < height_pt < 30
+    fig.savefig(tmp_path / "formic.pdf")
+    plt.close(fig)
+
+
+def test_text_clashes_reports_overlap_and_the_edge_only() -> None:
+    import matplotlib.pyplot as plt
+
+    from torchcell.utils import text_clashes
+
+    fig = plt.figure(figsize=(3, 2), dpi=100)
+    fig.text(0.1, 0.5, "first label", fontsize=8)
+    fig.text(0.12, 0.5, "second label", fontsize=8)  # starts inside the first
+    fig.text(0.1, 0.1, "clear of both", fontsize=8)
+    fig.text(0.95, 0.8, "runs off the right edge", fontsize=8)
+    fig.text(0.5, 0.9, "✗", fontsize=8)  # a status mark is never a clash
+    fig.text(0.5, 0.9, "", fontsize=8)  # nor is an empty string
+    clashes = text_clashes(fig)
+    plt.close(fig)
+    assert ("first label", "second label") in clashes
+    assert ("runs off the right edge", "<figure edge>") in clashes
+    assert not any("clear of both" in pair for pair in clashes)
+    assert len(clashes) == 2

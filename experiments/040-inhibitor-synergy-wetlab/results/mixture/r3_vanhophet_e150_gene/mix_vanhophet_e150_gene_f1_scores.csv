@@ -1,0 +1,45 @@
+task,subset,metric,value,n,reference_rule,reference_value,call,fold,member,name,fold_seed,training_call,beats_reference
+vanacloig,test_genes,gene_centered_spearman_median,0.04852018694315285,28,,,both,1,seed0,mix_vanhophet_e150_gene_f1,0,served,
+vanacloig,test_genes,raw_spearman_median,0.05086916033661151,28,,,both,1,seed0,mix_vanhophet_e150_gene_f1,0,served,
+hoepfner_hop,heldout_compound,centered_spearman_median,0.038777182786534165,25,,,both,1,seed0,mix_vanhophet_e150_gene_f1,0,served,
+hoepfner_hop,heldout_compound,raw_spearman_median,0.19341245215841865,25,,,both,1,seed0,mix_vanhophet_e150_gene_f1,0,served,
+hillenmeyer_het,heldout_compound,centered_spearman_median,0.007694801148477947,41,,,both,1,seed0,mix_vanhophet_e150_gene_f1,0,served,
+hillenmeyer_het,heldout_compound,raw_spearman_median,0.24347439109945693,41,,,both,1,seed0,mix_vanhophet_e150_gene_f1,0,served,
+ex21,all_wells,fitness_spearman_train_fit,0.4329681366507696,180,,,both,1,seed0,mix_vanhophet_e150_gene_f1,0,served,
+ex21,5-(hydroxymethyl)furfural,fitness_spearman_train_fit,,27,,,both,1,seed0,mix_vanhophet_e150_gene_f1,0,served,
+ex21,acetic acid,fitness_spearman_train_fit,,27,,,both,1,seed0,mix_vanhophet_e150_gene_f1,0,served,
+ex21,formic acid,fitness_spearman_train_fit,,27,,,both,1,seed0,mix_vanhophet_e150_gene_f1,0,served,
+ex21,furfural,fitness_spearman_train_fit,,27,,,both,1,seed0,mix_vanhophet_e150_gene_f1,0,served,
+ex21,lactic acid,fitness_spearman_train_fit,,27,,,both,1,seed0,mix_vanhophet_e150_gene_f1,0,served,
+ex21,levulinic acid,fitness_spearman_train_fit,,27,,,both,1,seed0,mix_vanhophet_e150_gene_f1,0,served,
+ex23,combinations,growth_auroc,0.5119047619047619,63,loewe_ex21,0.9580498866213152,served,1,seed0,mix_vanhophet_e150_gene_f1,0,served,below
+ex23,combinations,worst_scenario_spearman,0.06943065434796769,63,"loewe_ex21 (all 63, no growth 0)",0.7721221654788084,served,1,seed0,mix_vanhophet_e150_gene_f1,0,served,below
+ex23,combinations_that_grew,fitness_spearman,0.32618590381633483,21,bliss_ex23,0.5727272727272726,served,1,seed0,mix_vanhophet_e150_gene_f1,0,served,below
+isobole_ex26,interior_cells,mean_observed_minus_predicted,-0.44994861319013413,81,bliss_ex21,-0.0819865762791027,served,1,seed0,mix_vanhophet_e150_gene_f1,0,served,further
+isobole_ex27,interior_cells,mean_observed_minus_predicted,-0.4466263348550704,81,bliss_ex21,-0.4464534611740319,served,1,seed0,mix_vanhophet_e150_gene_f1,0,served,further
+isobole_ex28,interior_cells,mean_observed_minus_predicted,-0.52537568562705,81,bliss_ex21,-0.017328758933014,served,1,seed0,mix_vanhophet_e150_gene_f1,0,served,further
+ex23,combinations,growth_auroc,0.4463157894736843,63,loewe_ex21,0.9515789473684212,software,1,seed0,mix_vanhophet_e150_gene_f1,0,served,below
+ex23,combinations,worst_scenario_spearman,0.009621633031364258,63,"loewe_ex21 (all 63, no growth 0)",0.7998212253100504,software,1,seed0,mix_vanhophet_e150_gene_f1,0,served,below
+ex23,combinations_that_grew,fitness_spearman,0.4729652510165778,25,bliss_ex23,0.8646153846153846,software,1,seed0,mix_vanhophet_e150_gene_f1,0,served,below
+vanacloig,test_genes,gene_centered_spearman_median,0.04852018694315285,28,,,both,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,
+vanacloig,test_genes,raw_spearman_median,0.05086916033661151,28,,,both,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,
+hoepfner_hop,heldout_compound,centered_spearman_median,0.038777182786534165,25,,,both,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,
+hoepfner_hop,heldout_compound,raw_spearman_median,0.19341245215841865,25,,,both,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,
+hillenmeyer_het,heldout_compound,centered_spearman_median,0.007694801148477947,41,,,both,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,
+hillenmeyer_het,heldout_compound,raw_spearman_median,0.24347439109945693,41,,,both,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,
+ex21,all_wells,fitness_spearman_train_fit,0.4329681366507696,180,,,both,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,
+ex21,5-(hydroxymethyl)furfural,fitness_spearman_train_fit,,27,,,both,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,
+ex21,acetic acid,fitness_spearman_train_fit,,27,,,both,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,
+ex21,formic acid,fitness_spearman_train_fit,,27,,,both,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,
+ex21,furfural,fitness_spearman_train_fit,,27,,,both,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,
+ex21,lactic acid,fitness_spearman_train_fit,,27,,,both,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,
+ex21,levulinic acid,fitness_spearman_train_fit,,27,,,both,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,
+ex23,combinations,growth_auroc,0.5119047619047619,63,loewe_ex21,0.9580498866213152,served,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,below
+ex23,combinations,worst_scenario_spearman,0.06943065434796769,63,"loewe_ex21 (all 63, no growth 0)",0.7721221654788084,served,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,below
+ex23,combinations_that_grew,fitness_spearman,0.32618590381633483,21,bliss_ex23,0.5727272727272726,served,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,below
+isobole_ex26,interior_cells,mean_observed_minus_predicted,-0.44994861319013413,81,bliss_ex21,-0.0819865762791027,served,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,further
+isobole_ex27,interior_cells,mean_observed_minus_predicted,-0.4466263348550704,81,bliss_ex21,-0.4464534611740319,served,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,further
+isobole_ex28,interior_cells,mean_observed_minus_predicted,-0.52537568562705,81,bliss_ex21,-0.017328758933014,served,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,further
+ex23,combinations,growth_auroc,0.4463157894736843,63,loewe_ex21,0.9515789473684212,software,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,below
+ex23,combinations,worst_scenario_spearman,0.009621633031364258,63,"loewe_ex21 (all 63, no growth 0)",0.7998212253100504,software,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,below
+ex23,combinations_that_grew,fitness_spearman,0.4729652510165778,25,bliss_ex23,0.8646153846153846,software,1,ensemble,mix_vanhophet_e150_gene_f1,0,served,below

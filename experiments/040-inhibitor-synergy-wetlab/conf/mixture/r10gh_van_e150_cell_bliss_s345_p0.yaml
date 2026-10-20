@@ -1,0 +1,87 @@
+# experiments/040-inhibitor-synergy-wetlab/conf/mixture/r10gh_van_e150_cell_bliss_s345_p0.yaml
+#
+# ROUND 10, GILAHYPER, ARM van_e150_cell_bliss_s345, folds [0, 1, 2] of fold seed 0, seeds [3, 4, 5]. The Bliss headline arm's partition twins (fold seeds 1 and 2) and
+# its seed ensemble (seeds 3 to 5 on folds 0 to 4), the cells Delta's round 10 does not carry.
+# Sources: vanacloig. Epochs: 150.
+#
+#   sbatch --job-name=040-r10gh_van_e150_cell_bliss_s345_p0 --cpus-per-task=2 --mem=6500 --time=12:00:00 \
+#     --export=ALL,SWEEP=conf/mixture/r10gh_van_e150_cell_bliss_s345_p0.yaml,PARALLEL=1 experiments/040-inhibitor-synergy-wetlab/scripts/gh_train_mixture.slurm
+- cgt_layers: 1
+  cgt_lambda: 0.0
+  eval_epochs: 5
+  select: val
+  fit_on: train
+  gene_batch: 128
+  env_chunk: 16
+  host_batch: 16
+  cond_batch: 24
+  seeds: &id001
+  - 3
+  - 4
+  - 5
+  host_train: anchors+ex21
+  dose: 'off'
+  env_layers: 1
+  lambda_host: 1.0
+  checkpoint: true
+  name: mix_van_e150_cell_bliss_s345_f0
+  sources: &id002
+  - vanacloig
+  epochs: 150
+  fold_seed: 0
+  split: compound
+  aux_holdout: none
+  folds:
+  - 0
+  readout: cell
+  compound_pool: bliss
+- cgt_layers: 1
+  cgt_lambda: 0.0
+  eval_epochs: 5
+  select: val
+  fit_on: train
+  gene_batch: 128
+  env_chunk: 16
+  host_batch: 16
+  cond_batch: 24
+  seeds: *id001
+  host_train: anchors+ex21
+  dose: 'off'
+  env_layers: 1
+  lambda_host: 1.0
+  checkpoint: true
+  name: mix_van_e150_cell_bliss_s345_f1
+  sources: *id002
+  epochs: 150
+  fold_seed: 0
+  split: compound
+  aux_holdout: none
+  folds:
+  - 1
+  readout: cell
+  compound_pool: bliss
+- cgt_layers: 1
+  cgt_lambda: 0.0
+  eval_epochs: 5
+  select: val
+  fit_on: train
+  gene_batch: 128
+  env_chunk: 16
+  host_batch: 16
+  cond_batch: 24
+  seeds: *id001
+  host_train: anchors+ex21
+  dose: 'off'
+  env_layers: 1
+  lambda_host: 1.0
+  checkpoint: true
+  name: mix_van_e150_cell_bliss_s345_f2
+  sources: *id002
+  epochs: 150
+  fold_seed: 0
+  split: compound
+  aux_holdout: none
+  folds:
+  - 2
+  readout: cell
+  compound_pool: bliss

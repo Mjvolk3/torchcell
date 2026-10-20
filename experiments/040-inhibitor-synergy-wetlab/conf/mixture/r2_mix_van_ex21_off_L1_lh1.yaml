@@ -1,0 +1,22 @@
+# experiments/040-inhibitor-synergy-wetlab/conf/mixture/r2_mix_van_ex21_off_L1_lh1.yaml
+#
+# ROUND 2, ARM mix_van_ex21_off_L1_lh1 REPLICATED ON FOLD SEEDS 1 AND 2.
+# The dose-off joint arm was the round-1 arm with the highest ex23 growth AUROC (0.586
+# on fold seed 0, Delta 22788113; the dose-FiLM joint arm read 0.475). Round 1 scored
+# fold seed 0 only; this file is the replication on fold seeds 1 and 2 that 038 round
+# 10 reports (five folds x three seeds x three fold seeds), ten configs at PARALLEL=2.
+# Every field other than fold_seed and name is the round-1 file's.
+#
+#   sbatch --job-name=040-r2-van_ex21_off --mem=24G --export=ALL,SWEEP=conf/mixture/r2_mix_van_ex21_off_L1_lh1.yaml,PARALLEL=2 \
+#     experiments/040-inhibitor-synergy-wetlab/scripts/gh_train_mixture.slurm
+
+- {name: mix_van_ex21_off_L1_lh1_s1_f0, folds: [0], cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, gene_batch: 128, env_chunk: 16, host_batch: 16, cond_batch: 24, seeds: [0, 1, 2], fold_seed: 1, sources: [vanacloig], host_train: anchors+ex21, dose: "off", env_layers: 1, lambda_host: 1.0}
+- {name: mix_van_ex21_off_L1_lh1_s1_f1, folds: [1], cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, gene_batch: 128, env_chunk: 16, host_batch: 16, cond_batch: 24, seeds: [0, 1, 2], fold_seed: 1, sources: [vanacloig], host_train: anchors+ex21, dose: "off", env_layers: 1, lambda_host: 1.0}
+- {name: mix_van_ex21_off_L1_lh1_s1_f2, folds: [2], cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, gene_batch: 128, env_chunk: 16, host_batch: 16, cond_batch: 24, seeds: [0, 1, 2], fold_seed: 1, sources: [vanacloig], host_train: anchors+ex21, dose: "off", env_layers: 1, lambda_host: 1.0}
+- {name: mix_van_ex21_off_L1_lh1_s1_f3, folds: [3], cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, gene_batch: 128, env_chunk: 16, host_batch: 16, cond_batch: 24, seeds: [0, 1, 2], fold_seed: 1, sources: [vanacloig], host_train: anchors+ex21, dose: "off", env_layers: 1, lambda_host: 1.0}
+- {name: mix_van_ex21_off_L1_lh1_s1_f4, folds: [4], cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, gene_batch: 128, env_chunk: 16, host_batch: 16, cond_batch: 24, seeds: [0, 1, 2], fold_seed: 1, sources: [vanacloig], host_train: anchors+ex21, dose: "off", env_layers: 1, lambda_host: 1.0}
+- {name: mix_van_ex21_off_L1_lh1_s2_f0, folds: [0], cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, gene_batch: 128, env_chunk: 16, host_batch: 16, cond_batch: 24, seeds: [0, 1, 2], fold_seed: 2, sources: [vanacloig], host_train: anchors+ex21, dose: "off", env_layers: 1, lambda_host: 1.0}
+- {name: mix_van_ex21_off_L1_lh1_s2_f1, folds: [1], cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, gene_batch: 128, env_chunk: 16, host_batch: 16, cond_batch: 24, seeds: [0, 1, 2], fold_seed: 2, sources: [vanacloig], host_train: anchors+ex21, dose: "off", env_layers: 1, lambda_host: 1.0}
+- {name: mix_van_ex21_off_L1_lh1_s2_f2, folds: [2], cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, gene_batch: 128, env_chunk: 16, host_batch: 16, cond_batch: 24, seeds: [0, 1, 2], fold_seed: 2, sources: [vanacloig], host_train: anchors+ex21, dose: "off", env_layers: 1, lambda_host: 1.0}
+- {name: mix_van_ex21_off_L1_lh1_s2_f3, folds: [3], cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, gene_batch: 128, env_chunk: 16, host_batch: 16, cond_batch: 24, seeds: [0, 1, 2], fold_seed: 2, sources: [vanacloig], host_train: anchors+ex21, dose: "off", env_layers: 1, lambda_host: 1.0}
+- {name: mix_van_ex21_off_L1_lh1_s2_f4, folds: [4], cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, gene_batch: 128, env_chunk: 16, host_batch: 16, cond_batch: 24, seeds: [0, 1, 2], fold_seed: 2, sources: [vanacloig], host_train: anchors+ex21, dose: "off", env_layers: 1, lambda_host: 1.0}

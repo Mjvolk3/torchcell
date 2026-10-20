@@ -1,0 +1,46 @@
+# experiments/040-inhibitor-synergy-wetlab/conf/mixture/r10_smoke.yaml
+#
+# Smoke of ``dose: offset`` under the Bliss cell readout: the dose enters as a gain on
+# the medium offset alone (gene path and host path, split media under Bliss), on the
+# single-source arm with the titration fitted and on the two-source arm with a
+# held-out Hoepfner dose (the multi-dose public records run through the gain in
+# training and in the held-out evaluation). Four steps on one GPU per config; the
+# numbers are noise.
+#
+#   sbatch --job-name=040-r10-smoke --cpus-per-task=2 --mem=7800 --time=01:00:00 \
+#     --export=ALL,SWEEP=conf/mixture/r10_smoke.yaml,PARALLEL=1 \
+#     experiments/040-inhibitor-synergy-wetlab/scripts/gh_train_mixture.slurm
+- name: r10smoke_van_cell_bliss_doff
+  sources: [vanacloig]
+  readout: cell
+  compound_pool: bliss
+  host_train: anchors+ex21
+  dose: offset
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: true
+- name: r10smoke_vanhop_cell_bliss_doff_dose
+  sources: [vanacloig, hoepfner_hop]
+  readout: cell
+  compound_pool: bliss
+  aux_holdout: dose
+  host_train: anchors
+  dose: offset
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  cond_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: false

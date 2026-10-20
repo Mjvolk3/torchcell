@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+"2,2'-bipyridine",raw,3488,0.14399320267262253,0.3515652416738446,0.933492750710942,0,seed0,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+"2,2'-bipyridine",centered,3486,0.42541255767227826,0.7713400195346595,0.9563816885746026,0,seed0,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.573909772346057,0.6753580243195682,0.9115685305555769,0,seed0,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.4972675178070022,0.5043516761291348,0.8721587526514974,0,seed0,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+acetosyringone,raw,3496,-0.020332900532081127,0.3982585188132575,0.8957051853886657,0,seed0,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+acetosyringone,centered,3491,-0.15612252505637061,-0.004214582958230136,0.8621258971956102,0,seed0,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+acetovanillone,raw,3508,0.2769802810137849,0.48785564586978514,0.912907133190153,0,seed0,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+acetovanillone,centered,3507,0.1348547984370578,0.2714730020405678,0.8921575536150955,0,seed0,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+furfural,raw,3492,0.06591753888700815,-0.01944365760506223,0.8770802207938314,0,seed0,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+furfural,centered,3491,0.26028294428814136,0.29890891319767615,0.893722287283485,0,seed0,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+vanillin,raw,3504,0.48579016782575113,0.5871653040097132,0.8077135748399356,0,seed0,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+vanillin,centered,3502,0.40127651830556105,0.3510233797975247,0.71557075481543,0,seed0,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+"2,2'-bipyridine",raw,3488,0.050268404125808734,0.2563611919830768,0.933492750710942,0,seed1,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+"2,2'-bipyridine",centered,3486,0.4393882532000778,0.7758674025030193,0.9563816885746026,0,seed1,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.5704310946774034,0.6581691359425068,0.9115685305555769,0,seed1,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.48380593289788204,0.4555062847343483,0.8721587526514974,0,seed1,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+acetosyringone,raw,3496,0.08051879019048057,0.5058965113428165,0.8957051853886657,0,seed1,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+acetosyringone,centered,3491,-0.06948631843594455,0.2128642188460159,0.8621258971956102,0,seed1,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+acetovanillone,raw,3508,0.2260051727312521,0.4440933224295475,0.912907133190153,0,seed1,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+acetovanillone,centered,3507,0.044307789550327714,0.187190101690383,0.8921575536150955,0,seed1,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+furfural,raw,3492,0.04845980688670625,0.007092340464990397,0.8770802207938314,0,seed1,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+furfural,centered,3491,0.2911432181626738,0.33771928368569826,0.893722287283485,0,seed1,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+vanillin,raw,3504,0.4933473998919642,0.5835703218233035,0.8077135748399356,0,seed1,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+vanillin,centered,3502,0.4172748952446042,0.364351377084903,0.71557075481543,0,seed1,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+"2,2'-bipyridine",raw,3488,-0.11077029551198729,-0.20249522409305482,0.933492750710942,0,seed2,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+"2,2'-bipyridine",centered,3486,0.24476851050656145,0.4731731408926625,0.9563816885746026,0,seed2,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.5328277049614899,0.6719962741314985,0.9115685305555769,0,seed2,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.49138422546383625,0.5115288126167564,0.8721587526514974,0,seed2,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+acetosyringone,raw,3496,0.11518490682200293,0.5061790904764082,0.8957051853886657,0,seed2,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+acetosyringone,centered,3491,-0.035607365841410665,0.13382379892776297,0.8621258971956102,0,seed2,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+acetovanillone,raw,3508,0.5523289889897159,0.6372314022598493,0.912907133190153,0,seed2,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+acetovanillone,centered,3507,0.4430319601182327,0.5093199105127909,0.8921575536150955,0,seed2,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+furfural,raw,3492,0.10529270906957358,-0.027119237674363975,0.8770802207938314,0,seed2,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+furfural,centered,3491,0.30202775991710795,0.2927378932656739,0.893722287283485,0,seed2,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+vanillin,raw,3504,0.5149981353281304,0.6217346520307183,0.8077135748399356,0,seed2,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+vanillin,centered,3502,0.4357138638229964,0.37698730278666853,0.71557075481543,0,seed2,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+"2,2'-bipyridine",raw,3488,0.02315297609475859,0.12218506239168446,0.933492750710942,0,ensemble,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+"2,2'-bipyridine",centered,3486,0.3731844217466505,0.7041363404696286,0.9563816885746026,0,ensemble,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.599140195365842,0.6991436107266681,0.9115685305555769,0,ensemble,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3482,0.5304852573725019,0.5360320236020096,0.8721587526514974,0,ensemble,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+acetosyringone,raw,3496,0.051724777879200115,0.4838072649919969,0.8957051853886657,0,ensemble,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+acetosyringone,centered,3491,-0.09168801495541004,0.11050550848314016,0.8621258971956102,0,ensemble,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+acetovanillone,raw,3508,0.4327097530043411,0.5538575912377058,0.912907133190153,0,ensemble,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+acetovanillone,centered,3507,0.3034659366701669,0.39019574465797907,0.8921575536150955,0,ensemble,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+furfural,raw,3492,0.07718218357037421,-0.017744452457751064,0.8770802207938314,0,ensemble,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+furfural,centered,3491,0.2956809303993424,0.3161941222540497,0.893722287283485,0,ensemble,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+vanillin,raw,3504,0.5130931154189495,0.6136689422031507,0.8077135748399356,0,ensemble,mix_vanhet_e150_cell_bliss_hill_loewe_f0
+vanillin,centered,3502,0.43918585381816627,0.3873306878206068,0.71557075481543,0,ensemble,mix_vanhet_e150_cell_bliss_hill_loewe_f0

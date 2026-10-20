@@ -1,0 +1,14 @@
+job,sweep,arm,sources,n_sources,epochs,split,aux_holdout,fold_seed,folds,configs,estimated_hours,time_limit_hours,overrides
+1,r7_van_e150_cell,van_e150_cell,vanacloig,1,150,compound,none,0,0 1 2,3,3.3,12,readout=cell
+2,r7_van_e150_cell_film,van_e150_cell_film,vanacloig,1,150,compound,none,0,0 1 2,3,3.3,12,"readout=cell, dose=film"
+3,r7_van_e150_cell_lh3,van_e150_cell_lh3,vanacloig,1,150,compound,none,0,0 1 2,3,3.3,12,"readout=cell, lambda_host=3.0"
+4,r7_vanhop_e150_cell,vanhop_e150_cell,vanacloig hoepfner_hop,2,150,compound,compound,0,0 1 2,3,6.3,12,readout=cell
+5,r7_vanhophet_e150_cell,vanhophet_e150_cell,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,0 1 2,3,8.7,12,readout=cell
+6,r7_van_e150_cell_s12,van_e150_cell,vanacloig,1,150,compound,none,0,0 1 2,3,6.6,12,"readout=cell, seeds=[1, 2]"
+7,r7_van_e150_cell_film_s12,van_e150_cell_film,vanacloig,1,150,compound,none,0,0 1 2,3,6.6,12,"readout=cell, seeds=[1, 2], dose=film"
+8,r7_van_e150_cell_lh3_s12,van_e150_cell_lh3,vanacloig,1,150,compound,none,0,0 1 2,3,6.6,12,"readout=cell, seeds=[1, 2], lambda_host=3.0"
+9,r7_vanhop_e150_cell_s12_p0,vanhop_e150_cell,vanacloig hoepfner_hop,2,150,compound,compound,0,0 1,2,8.4,12,"readout=cell, seeds=[1, 2]"
+10,r7_vanhop_e150_cell_s12_p1,vanhop_e150_cell,vanacloig hoepfner_hop,2,150,compound,compound,0,2,1,4.2,12,"readout=cell, seeds=[1, 2]"
+11,r7_vanhophet_e150_cell_s12_p0,vanhophet_e150_cell,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,0,1,5.8,12,"readout=cell, seeds=[1, 2]"
+12,r7_vanhophet_e150_cell_s12_p1,vanhophet_e150_cell,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,1,1,5.8,12,"readout=cell, seeds=[1, 2]"
+13,r7_vanhophet_e150_cell_s12_p2,vanhophet_e150_cell,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,2,1,5.8,12,"readout=cell, seeds=[1, 2]"

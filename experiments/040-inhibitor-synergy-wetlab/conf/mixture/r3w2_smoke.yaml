@@ -1,0 +1,68 @@
+# experiments/040-inhibitor-synergy-wetlab/conf/mixture/r3w2_smoke.yaml
+#
+# Smoke of the one code path round 3's second wave adds to train_mixture.py: the
+# learning curve under the held-out protocol (``n_fit_compounds`` with ``fit_on: train``
+# and ``select: val``). Four steps on one GPU; the numbers are noise by construction and
+# what the smoke checks is that the subsample, the centering and the selection all run
+# and the scores table is written with the fitted-compound count it claims.
+#
+# NOT A CPU SMOKE. Without flash attention the cell-graph attention materializes the
+# gene-by-gene matrix per head and per batch element: on the login node the first attempt
+# at gene_batch 32 reached 71 GB resident before it was killed, and gene_batch 2 under a
+# 48 GB virtual cap still failed a 1.5 GB allocation inside the wild-type pass. The index
+# logic itself is tested directly (fitted and centering sets on all five folds); this file
+# is the end-to-end check, run on a card.
+#
+#   sbatch --job-name=040-r3w2-smoke --mem=24G --time=01:00:00 \
+#     --export=ALL,SWEEP=conf/mixture/r3w2_smoke.yaml,PARALLEL=1 \
+#     experiments/040-inhibitor-synergy-wetlab/scripts/gh_train_mixture.slurm
+- name: r3w2smoke_curve_n5_train_val
+  sources: [vanacloig]
+  host_train: anchors+ex21
+  dose: "off"
+  fit_on: train
+  select: val
+  n_fit_compounds: 5
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: false
+# The gene-cold split under the held-out protocol, added after job 3897 died at
+# "no step was selected": gene folds now carry validation genes, and select: val reads
+# them. One single-source and one two-source config, four steps each.
+- name: r3w2smoke_gene_split_van_train_val
+  sources: [vanacloig]
+  split: gene
+  host_train: anchors+ex21
+  dose: "off"
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: false
+- name: r3w2smoke_gene_split_vanhop_train_val
+  sources: [vanacloig, hoepfner_hop]
+  split: gene
+  aux_holdout: compound
+  host_train: anchors+ex21
+  dose: "off"
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  cond_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: false

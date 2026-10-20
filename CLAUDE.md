@@ -700,6 +700,13 @@ them to the best of the plot's ability (some plots legitimately deviate — say 
   the "Ontology" heading. The tool widens a grown label in proportion, but only for cells
   with no stroke and no fill, where a wider box is invisible. **Always re-render and look
   after a size change; the audit passing is not evidence the figure is intact.**
+- **Panel letters must stay inside the canvas, and the export will not tell you.** A letter
+  placed above a panel whose title already touches the top edge lands at y > 1 in figure
+  units, and the true-size export (no `bbox_inches="tight"`, by design) clips it silently.
+  Never place a letter with a bare `fig.text` above a panel: use a helper that shrinks the
+  top margin until every letter fits and raises if any text extent leaves the canvas
+  (`panel_letters` in `experiments/040-inhibitor-synergy-wetlab/scripts/mixture_rules.py`),
+  then look at the PNG's top edge before reporting.
 - **Export true-size SVG** via `torchcell.utils.savefig_true_size_svg(fig, path)` so it
   imports at true mm in draw.io (it rescales matplotlib's 72-dpi points to draw.io's
   100-units/inch). Do NOT pass `bbox_inches="tight"` on a fixed-width panel — it
@@ -709,6 +716,21 @@ them to the best of the plot's ability (some plots legitimately deviate — say 
   that goes into draw.io, so the note shows exactly what the figure will be. The `.png` stays
   on disk as a raster fallback: Dendron/VSCode preview renders SVG crisply, but GitHub's
   markdown viewer renders relative-path SVGs inconsistently. So save both, embed the SVG.
+- **Chemical structures follow the ACS 1996 drawing standard, drawn by
+  `torchcell.utils.acs_structure(ax, smiles, xy)`.** That is ChemDraw's "ACS Document
+  1996" template, which Nature and the ACS journals accept as submitted: a fixed bond
+  length of 0.381 cm (10.8 pt), a 0.021 cm (0.6 pt) line, double bonds spaced at 18
+  percent of the bond, Arial labels at the figure-text size (6 pt), implicit hydrogens
+  shown on heteroatoms only (HO, OH, NH), no labels on the carbon skeleton, black on
+  nothing. RDKit's `SetACS1996Mode` implements the template; the helper rescales its
+  14.4 pt bond to the ACS length, sets Arial, and converts the SVG into matplotlib
+  paths in a `DrawingArea` in POINTS, so the structure keeps its physical size whatever
+  the axes' data scale and every bond on a sheet is the same length. Consequences: a
+  structure cannot be scaled to fit a slot, so lay the slot out from the structure's
+  width (`acs_structure_svg` returns it); anchor with `xycoords="axes fraction"` and
+  put the name under it with an `offset points` annotation; never hand-draw bonds as
+  `ax.plot` lines or type atom labels as `ax.text`. Reference: `draw_molecules` in
+  `experiments/040-inhibitor-synergy-wetlab/scripts/figure_gate_panels.py`.
 - **Reference prior work:** match the look of already-approved paper figures in
   `notes/assets/images/*_palette.svg` where reasonable.
 

@@ -5,15 +5,20 @@
 
 TWO TASKS SHARE ONE COMPOUND REPRESENTATION.
 
-1. THE GENE-LEVEL CHEMOGENOMIC TASK. One or more pooled-screen sources from build 002 of
-   the 033 cell table. A CONDITION is one compound at one served dose; a CELL is one
-   deletion strain in one condition. Each source is a genes-by-conditions matrix.
+1. THE GENE-LEVEL CHEMOGENOMIC TASK. One or more pooled-screen sources, read from the
+   040 store: the KG 4.0 query ``queries/env_chemgen_mixture_040.cql`` built by
+   ``build_040_store.py`` into ``$DATA_ROOT/data/torchcell/experiments/
+   040-inhibitor-synergy-wetlab/mixture_040`` (``TC040_STORE`` points a copy elsewhere).
+   One processed entry is one served record; :func:`load_cells` reads every entry once
+   per process and :func:`verify_store` checks the LMDB's bytes against the store
+   manifest first. A CONDITION is one compound at one served dose; a CELL is one deletion
+   strain in one condition. Each source is a genes-by-conditions matrix.
 
    ``vanacloig``        Vanacloig 2022, haploid barcoded deletions on the PDR1/PDR3/SNQ2
-                        sensitized host, anaerobic SynBase, 48 h, 32 published compounds
-                        (``EXCLUDED_CONDITIONS`` drops DMSO and MBO as experiment 038
-                        does). Its served ``conc_values`` are empty, so the dose comes
-                        from the rebuilt dev store (:func:`vanacloig_doses`).
+                        sensitized host, anaerobic SynBase, 48 h, every served compound
+                        at its Table S1 IC30 (``EXCLUDED_CONDITIONS`` drops DMSO and MBO
+                        as experiment 038 does). KG 4.0 serves the doses, so the dev
+                        store the earlier rounds read them from is no longer an input.
    ``hoepfner_hop``     Hoepfner 2014's HOMOZYGOUS arm (``barcoded_kanmx_deletion``,
                         copy number 0 of 2), YPD, 30 C, adjusted MADL sensitivity, every
                         served (compound, concentration) its own condition.
@@ -39,16 +44,21 @@ TWO TASKS SHARE ONE COMPOUND REPRESENTATION.
    combinations at 85 h; ``ex26`` to ``ex28`` are pairwise isobole grids, 81 interior
    cells each. ex23 and the isoboles are NEVER trained on: they are the test.
 
-DOSES ENTER AS LOG10 MOLAR. mM, uM and ug/mL convert (ug/mL through the RDKit molecular
-weight of the curated-identity SMILES); a percent dose states no basis or density, so it
-does not convert, and such a compound is dropped from the panel when the trainer asks for
-molar doses (``require_molar_dose``) and counted in :func:`vanacloig_doses`.
+DOSES ENTER AS LOG10 MOLAR, under ONE rule for every source (:func:`log10_molar_dose`):
+M, mM, uM and nM by their factor; ug/mL, mg/mL and g/L through the RDKit molecular weight
+of the compound's SMILES; a percent dose states no basis or density, so it does not
+convert, and such a compound is dropped from the Vanacloig panel when the trainer asks for
+molar doses (``require_molar_dose``). Until the store move only Vanacloig (through the
+dev store) converted mass units; the 033 table left a ug/mL dose of an auxiliary source
+without a molar value, so an auxiliary ug/mL condition now carries a dose where it
+carried NaN. The counts table reports ``n_conditions_with_molar_dose`` per source.
 
-FINGERPRINTS are FCFP4 counts from the 031 table, keyed by InChIKey. Formic and lactic
-acid have no row there (the private loader carries an identity gap for both), so they are
-featurized from SMILES with the recipe ``inhibitor_profiles.py`` verified reproduces every
-npz row exactly. Acetic acid, which that script also featurizes from SMILES, DOES have a
-row (QTBSBXVTEAMEQO-UHFFFAOYSA-N) and is taken from the table.
+FINGERPRINTS are FCFP4 counts computed from SMILES (:func:`fcfp4_count`, the recipe
+``inhibitor_profiles.py`` verified reproduces every row of the 031 ``fcfp4_count.npz``
+exactly), keyed by InChIKey. The SMILES is the curated identity table's where the
+InChIKey has a row there (the structure 031 featurized), else the served record's; formic
+and lactic acid carry an identity gap in the private loader and use
+``IDENTITY_GAP_SMILES``. The 031 embedding tables are no longer an input.
 
 ATTRIBUTION: ``VanacloigCells``, ``Fold``, ``load_cells``, ``make_folds``,
 ``subsample_pool``, ``ceiling`` and ``score_compounds`` are experiment 038's
@@ -61,10 +71,13 @@ compound-cold folds and the centered score are the same objects experiment 038 r
 from __future__ import annotations
 
 import json
+import math
 import os
 import os.path as osp
-import pickle
-from typing import Literal
+import warnings
+from functools import cache
+from multiprocessing import get_context
+from typing import Any, Literal
 
 import lmdb
 import numpy as np
@@ -76,6 +89,7 @@ from pydantic import BaseModel, ConfigDict
 from rdkit import Chem
 from rdkit.Chem import Descriptors, rdFingerprintGenerator
 from scipy.stats import pearsonr, spearmanr
+from store_manifest_040 import StoreManifest, verify_store
 
 from torchcell.datamodels.compound_identity import _TABLE_PATH
 
@@ -90,34 +104,25 @@ load_dotenv()
 VANACLOIG = "EnvChemgenVanacloig2022Dataset"
 HOEPFNER = "EnvChemgenHoepfner2014Dataset"
 HILLENMEYER = "HetHillenmeyer2008Dataset"
+WILDENHAIN = "EnvChemgenWildenhain2015Dataset"
 
-#: Build 002 of the 033 pooled store, as experiment 038 reads it. On Delta the launcher
-#: points TC040_CELL_TABLE at the rsynced copy.
-CELL_TABLE = os.getenv(
-    "TC040_CELL_TABLE",
-    "/scratch/projects/torchcell-scratch/experiments/033-env-chemgen-pooled/"
-    "cell_table_002/cell_table.parquet",
-)
-#: The 031 embedding tables; TC040_EMBEDDING_DIR points at the rsynced copy on Delta.
-EMBEDDING_DIR = os.getenv(
-    "TC040_EMBEDDING_DIR",
-    "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/"
-    "031-env-chemgen-vanacloig-hillenmeyer/experiments/"
-    "031-env-chemgen-inhibitor-tolerance/results/embeddings",
-)
-FCFP4_NPZ = osp.join(EMBEDDING_DIR, "fcfp4_count.npz")
-#: The rebuilt Vanacloig dev store, whose interned environments hold the Table S1 IC30
-#: doses the served cell table leaves empty. TC040_VANACLOIG_STORE overrides it.
-VANACLOIG_STORE = os.getenv(
-    "TC040_VANACLOIG_STORE",
+#: The 040 store (``build_040_store.py``): the KG 4.0 query's processed LMDB and its
+#: manifest. On Delta the launcher points TC040_STORE at the rsynced copy. It is the ONE
+#: data directory a run needs beside the genome, GO, STRING and TFLink roots.
+STORE = os.getenv(
+    "TC040_STORE",
     osp.join(
         os.environ.get("DATA_ROOT", ""),
         "data",
         "torchcell",
-        "env_chemgen_vanacloig2022",
-        "processed",
+        "experiments",
+        "040-inhibitor-synergy-wetlab",
+        "mixture_040",
     ),
 )
+#: Processes that read the store (``TC040_WORKERS``, default the CPUs this process may
+#: run on): one full pass over the processed LMDB per process, by key-prefix bucket.
+WORKERS = int(os.getenv("TC040_WORKERS", str(len(os.sched_getaffinity(0)))))
 #: The three efflux-regulator deletions of the Vanacloig sensitized host (PDR1, PDR3,
 #: SNQ2), on the reference's StrainReferenceGenome rather than in the genotype; the cell
 #: lacks them all the same, as experiments 035 and 038 model it.
@@ -125,7 +130,9 @@ HOST_GENES: tuple[str, str, str] = ("YGL013C", "YBL005W", "YDR011W")
 EXCLUDED_CONDITIONS: frozenset[str] = frozenset(
     {"dimethyl sulfoxide", "2-methyl-3-buten-2-ol"}
 )
-COUNT_FINGERPRINTS = ("fcfp4_count", "ecfp4_count")
+#: The one compound representation the data layer computes; a config naming another
+#: table stops the run (the 031 tables were files, and are no longer an input).
+EMBEDDINGS = ("fcfp4_count",)
 MIN_GENES = 10
 CONSTANT_SD = 1e-10
 #: Host fitness of an IC30 anchor: IC30 is the dose at 30 percent growth inhibition.
@@ -167,8 +174,26 @@ ABBREVIATION = {
 }
 #: Molar-convertible served units and the factor to molar.
 MOLAR_FACTOR = {"M": 1.0, "mM": 1e-3, "uM": 1e-6, "nM": 1e-9}
+#: Mass-per-volume served units and the factor to g/L; molar through the molecular weight.
+MASS_FACTOR = {"ug/mL": 1e-3, "mg/mL": 1.0, "g/L": 1.0}
+#: Served units that state no basis or density (ConcentrationUnit.percent, #764) or a
+#: percent basis without a density; no molar dose.
+PERCENT_UNITS = frozenset({"percent", "percent_v/v", "percent_w/v"})
 
-GeneSourceName = Literal["vanacloig", "hoepfner_hop", "hillenmeyer_het"]
+GeneSourceName = Literal["vanacloig", "hoepfner_hop", "hillenmeyer_het", "wildenhain"]
+#: The typed attributes a source carries, for the attribute-token encoding of the source
+#: (``train_mixture.MixtureConfig.source_encoding``). Values are shared across sources, so
+#: two sources that agree on an attribute share that token: Hoepfner HOP and Vanacloig
+#: share ``deletion`` and ``barcode`` but not the medium, the ploidy or the label. The
+#: values are the cell table's own (033 ``store_axes.csv``), collapsed to one per source:
+#: Hillenmeyer's three media are pooled behind YPD, which carries 99 percent of its cells.
+SOURCE_ATTRIBUTES: tuple[str, ...] = (
+    "ploidy",
+    "perturbation",
+    "medium",
+    "label",
+    "assay",
+)
 
 
 # ---- fingerprints ---------------------------------------------------------- #
@@ -210,7 +235,8 @@ class CompoundTable(BaseModel):
 
     names: list[str]
     inchikeys: list[str]
-    #: "031 fcfp4_count.npz" or "SMILES (identity gap)"
+    #: where the SMILES the fingerprint was computed from came from: "identity table",
+    #: "served record" or "SMILES (identity gap)"
     feature_source: list[str]
     x_raw: NDArray[np.float64]  # [n_compounds, n_features]
 
@@ -220,151 +246,219 @@ class CompoundTable(BaseModel):
 
 
 def compound_table(
-    names: list[str], inchikeys: list[str], embeddings: list[str], pca_dim: int | None
+    names: list[str],
+    inchikeys: list[str],
+    smiles_of: dict[str, str],
+    embeddings: list[str],
+    pca_dim: int | None,
 ) -> CompoundTable:
-    """Concatenate the named 031 embedding tables for ``names``, before standardization.
+    """FCFP4 count fingerprints of every compound, log1p, before standardization.
 
-    A compound with no row in a table is featurized from its curated SMILES when that
-    table is a count fingerprint and the compound is one of ``IDENTITY_GAP_SMILES``;
-    anything else missing stops the run.
+    ``smiles_of`` maps an InChIKey to the SMILES the fingerprint is computed from
+    (:func:`compound_smiles`). ``pca_dim`` projects onto the leading components of the
+    standardized panel itself (the 031 tables, which the earlier rounds fitted the
+    projection on, are no longer an input; no round used ``pca_dim``).
     """
     assert len(names) == len(inchikeys)
     assert len(set(inchikeys)) == len(inchikeys), "an InChIKey is listed twice"
-    blocks = []
-    sources = ["031 " + ", ".join(f"{n}.npz" for n in embeddings)] * len(names)
-    for table in embeddings:
-        data = np.load(osp.join(EMBEDDING_DIR, f"{table}.npz"), allow_pickle=True)
-        x_all = data["X"].astype(np.float64)
-        x_all = x_all[:, np.isfinite(x_all).all(axis=0)]
-        if table in COUNT_FINGERPRINTS:
-            x_all = np.log1p(x_all)
-        row = {key: i for i, key in enumerate(data["inchikey"])}
-        missing = [n for n, k in zip(names, inchikeys, strict=True) if k not in row]
-        bad = [n for n in missing if n not in IDENTITY_GAP_SMILES]
-        assert not bad, f"{table} has no embedding and no curated SMILES for {bad}"
-        assert table == "fcfp4_count" or not missing, (
-            f"only fcfp4_count can be re-featurized from SMILES; {table} lacks {missing}"
-        )
-        raw = []
-        for i, (name, key) in enumerate(zip(names, inchikeys, strict=True)):
-            if key in row:
-                raw.append(x_all[row[key]])
-                continue
-            vector = np.log1p(fcfp4_count(IDENTITY_GAP_SMILES[name]).astype(np.float64))
-            assert vector.shape[0] == x_all.shape[1], (
-                f"{name}: the SMILES fingerprint is {vector.shape[0]} wide, the table "
-                f"{x_all.shape[1]}"
-            )
-            raw.append(vector)
-            sources[i] = f"SMILES (identity gap): {IDENTITY_GAP_SMILES[name]}"
-        block = np.stack(raw)
-        if pca_dim is not None and pca_dim < x_all.shape[1]:
-            mu, sd = x_all.mean(0), x_all.std(0)
-            scale = np.where(sd > 0, sd, 1.0)
-            z = (x_all - mu) / scale
-            _, _, vt = np.linalg.svd(z - z.mean(0), full_matrices=False)
-            block = ((block - mu) / scale) @ vt[:pca_dim].T
-        blocks.append(block)
+    assert tuple(embeddings) == EMBEDDINGS, (
+        f"the data layer computes {EMBEDDINGS}; {embeddings} was asked for"
+    )
+    identity = identity_smiles()
+    sources, raw = [], []
+    for name, key in zip(names, inchikeys, strict=True):
+        smiles = smiles_of[key]
+        if name in IDENTITY_GAP_SMILES:
+            sources.append(f"SMILES (identity gap): {smiles}")
+        elif identity.get(key) == smiles:
+            sources.append("identity table")
+        else:
+            sources.append("served record")
+        raw.append(np.log1p(fcfp4_count(smiles).astype(np.float64)))
+    block = np.stack(raw)
+    if pca_dim is not None and pca_dim < block.shape[1]:
+        mu, sd = block.mean(0), block.std(0)
+        scale = np.where(sd > 0, sd, 1.0)
+        z = (block - mu) / scale
+        _, _, vt = np.linalg.svd(z - z.mean(0), full_matrices=False)
+        block = z @ vt[:pca_dim].T
     return CompoundTable(
-        names=names,
-        inchikeys=inchikeys,
-        feature_source=sources,
-        x_raw=np.concatenate(blocks, axis=1),
+        names=names, inchikeys=inchikeys, feature_source=sources, x_raw=block
     )
 
 
-# ---- the Vanacloig doses the served table leaves empty --------------------- #
-class VanacloigDose(BaseModel):
-    """One Vanacloig condition's Table S1 dose, as the rebuilt dev store holds it."""
-
-    compound: str
-    inchikey: str
-    value: float
-    unit: str
-    basis: str
-    mM: float | None
-    log10_molar: float | None
-    molar_source: str
-    record_index: int
-    n_records: int
+def compound_smiles(
+    inchikeys: list[str], served: dict[str, str | None], names: dict[str, str]
+) -> dict[str, str]:
+    """InChIKey -> the SMILES to fingerprint: identity table, else served, else gap."""
+    identity = identity_smiles()
+    out = {}
+    for key in inchikeys:
+        name = names[key]
+        smiles = identity.get(key) or served.get(key) or IDENTITY_GAP_SMILES.get(name)
+        assert smiles is not None, f"{name} ({key}): no SMILES anywhere"
+        out[key] = smiles
+    return out
 
 
-def vanacloig_doses(store: str = VANACLOIG_STORE) -> list[VanacloigDose]:
-    """Every Vanacloig condition's dose, read from the rebuilt dev LMDB.
+# ---- the store: one row per served record ---------------------------------- #
+#: The processed-store columns :func:`load_cells` reads off each record.
+CELL_COLUMNS = (
+    "index",
+    "dataset",
+    "genes",
+    "query_gene",
+    "perturbation_type",
+    "n_perturbations",
+    "n_compounds",
+    "compound_names",
+    "inchikeys",
+    "smiles",
+    "conc_values",
+    "conc_units",
+    "conc_bases",
+    "log10_molar",
+    "response",
+    "response_se",
+    "screen_id",
+)
 
-    The store interns its environments, so each condition appears once in
-    ``processed/interned`` and the records in ``processed/lmdb`` point at it by content
-    hash. One record per compound is located by scanning the records for the first that
-    references each environment, so a dose is reported with the record it was read from.
+
+def log10_molar_dose(concentration: dict[str, Any] | None, smiles: str | None) -> float:
+    """log10 molar of a served concentration, NaN where no molar value follows.
+
+    One rule for every source. A served unit outside ``MOLAR_FACTOR``, ``MASS_FACTOR``
+    and ``PERCENT_UNITS`` stops the run rather than reading as NaN.
     """
-    interned_dir, records_dir = osp.join(store, "interned"), osp.join(store, "lmdb")
-    assert osp.isdir(interned_dir), f"no interned store at {interned_dir}"
-    env = lmdb.open(interned_dir, readonly=True, lock=False, subdir=True)
-    with env.begin() as txn:
-        interned = {k.decode(): pickle.loads(v) for k, v in txn.cursor()}
-    env.close()
+    if concentration is None or concentration["value"] is None:
+        return float("nan")
+    value = float(concentration["value"])
+    unit = concentration["unit"]
+    if value <= 0.0 or unit in PERCENT_UNITS:
+        return float("nan")
+    if unit in MOLAR_FACTOR:
+        return math.log10(value * MOLAR_FACTOR[unit])
+    assert unit in MASS_FACTOR, f"served unit {unit!r} has no conversion rule"
+    assert smiles, f"{unit} dose with no structure to take a molecular weight from"
+    weight = Descriptors.MolWt(Chem.MolFromSmiles(smiles))
+    return math.log10(value * MASS_FACTOR[unit] / weight)
 
-    first: dict[str, int] = {}
-    count: dict[str, int] = {}
-    env = lmdb.open(records_dir, readonly=True, lock=False, subdir=True)
-    with env.begin() as txn:
-        for key, value in txn.cursor():
-            ref = pickle.loads(value)["experiment"]["environment"]["$ref"]
-            count[ref] = count.get(ref, 0) + 1
-            first.setdefault(ref, int(key.decode()))
-    env.close()
 
-    weights = {
-        k: Descriptors.MolWt(Chem.MolFromSmiles(s))
-        for k, s in identity_smiles().items()
+def _cell_row(index: int, record: dict[str, Any]) -> dict[str, Any]:
+    """The row of one processed entry (one served record under ``RecordAggregator``)."""
+    experiment = record["experiment"]
+    perturbations = experiment["genotype"]["perturbations"]
+    query = [p for p in perturbations if p["systematic_gene_name"] not in HOST_GENES]
+    if len(perturbations) == 1:
+        query = perturbations
+    assert len(query) == 1, f"entry {index} has {len(query)} queried genes"
+    q = query[0]
+    small = [
+        p
+        for p in experiment["environment"]["perturbations"]
+        if p["perturbation_type"] == "small_molecule"
+    ]
+    concentrations = [p["concentration"] for p in small]
+    keys = [p["compound"]["inchikey"] for p in small]
+    smiles = [p["compound"]["smiles"] for p in small]
+    phenotype = experiment["phenotype"]
+    return {
+        "index": index,
+        "dataset": experiment["dataset_name"],
+        "genes": ";".join(sorted(p["systematic_gene_name"] for p in perturbations)),
+        "query_gene": q["systematic_gene_name"],
+        "perturbation_type": q["perturbation_type"],
+        "n_perturbations": len(perturbations),
+        "n_compounds": len(small),
+        "compound_names": "|".join(p["compound"]["name"] for p in small),
+        "inchikeys": "|".join(k if k is not None else "" for k in keys),
+        "smiles": "|".join(x if x is not None else "" for x in smiles),
+        "conc_values": "|".join(
+            "" if c is None or c["value"] is None else repr(float(c["value"]))
+            for c in concentrations
+        ),
+        "conc_units": "|".join(
+            "" if c is None or c["unit"] is None else c["unit"] for c in concentrations
+        ),
+        "conc_bases": "|".join(
+            "" if c is None or c["basis"] is None else c["basis"]
+            for c in concentrations
+        ),
+        "log10_molar": (
+            log10_molar_dose(concentrations[0], smiles[0])
+            if len(small) == 1
+            else float("nan")
+        ),
+        "response": phenotype["environment_response"],
+        "response_se": phenotype["environment_response_se"],
+        "screen_id": phenotype["screen_id"],
     }
-    out = []
-    for ref, obj in interned.items():
-        if "perturbations" not in obj:
-            continue
-        small = [p for p in obj["perturbations"] if p.get("compound")]
-        assert len(small) == 1, (
-            f"{ref}: {len(small)} compounds in one Vanacloig condition"
-        )
-        compound = small[0]["compound"]
-        conc = small[0]["concentration"]
-        unit = str(getattr(conc["unit"], "value", conc["unit"]))
-        value = float(conc["value"])
-        if unit in MOLAR_FACTOR:
-            molar: float | None = value * MOLAR_FACTOR[unit]
-            molar_source = f"{unit} -> molar"
-        elif unit == "ug/mL":
-            weight = weights[compound["inchikey"]]
-            molar = value * 1e-3 / weight
-            molar_source = f"ug/mL / MolWt {weight:.2f} g/mol (curated SMILES)"
-        else:
-            molar, molar_source = (
-                None,
-                f"{unit} states no basis or density; no molar dose",
-            )
-        out.append(
-            VanacloigDose(
-                compound=compound["name"],
-                inchikey=compound["inchikey"],
-                value=value,
-                unit=unit,
-                basis=str(getattr(conc["basis"], "value", conc["basis"])),
-                mM=None if molar is None else molar * 1e3,
-                log10_molar=None if molar is None else float(np.log10(molar)),
-                molar_source=molar_source,
-                record_index=first[ref],
-                n_records=count[ref],
-            )
-        )
-    return sorted(out, key=lambda d: d.compound)
 
 
-def write_vanacloig_doses(path: str, store: str = VANACLOIG_STORE) -> pd.DataFrame:
-    doses = vanacloig_doses(store)
-    frame = pd.DataFrame([d.model_dump() for d in doses])
-    frame["in_panel"] = ~frame["compound"].isin(EXCLUDED_CONDITIONS)
-    frame.to_csv(path, index=False)
-    return frame
+def _key_buckets() -> list[str]:
+    """Key prefixes that partition the processed store's keys ``"0"`` .. ``"N-1"``.
+
+    LMDB keys sort as bytes, so a two-character prefix is one contiguous key range:
+    bucket ``"1"`` holds the key ``"1"`` alone, bucket ``"10"`` every key that starts
+    ``"10"``. One cursor walk per bucket reads the store sequentially.
+    """
+    digits = "0123456789"
+    return list(digits) + [a + b for a in digits for b in digits]
+
+
+def _read_bucket(args: tuple[str, str, frozenset[str]]) -> pd.DataFrame:
+    """Every record of ``datasets`` whose key starts with ``bucket``, as rows."""
+    path, bucket, datasets = args
+    env = lmdb.open(
+        path, readonly=True, lock=False, readahead=True, meminit=False, subdir=True
+    )
+    rows = []
+    with env.begin() as txn:
+        cursor = txn.cursor()
+        if cursor.set_range(bucket.encode()):
+            for key, value in cursor:
+                name = key.decode()
+                if name[:2] != bucket:
+                    break
+                entry = json.loads(value)
+                assert len(entry) == 1, f"entry {name} folds {len(entry)} records"
+                record = entry[0]
+                if record["experiment"]["dataset_name"] not in datasets:
+                    continue
+                rows.append(_cell_row(int(name), record))
+    env.close()
+    return pd.DataFrame(rows, columns=list(CELL_COLUMNS))
+
+
+@cache
+def load_cells(
+    store: str, datasets: frozenset[str], workers: int = WORKERS
+) -> pd.DataFrame:
+    """One row per served record of ``datasets``, from the verified store.
+
+    The store's bytes are verified against its manifest first (:func:`verify_store`),
+    then ``workers`` processes each walk their key-prefix buckets. Cached per process:
+    a sweep of several configs reads the store once.
+    """
+    manifest = verify_store(store)
+    path = osp.join(store, "processed", "lmdb")
+    jobs = [(path, bucket, datasets) for bucket in _key_buckets()]
+    with get_context("fork").Pool(workers) as pool:
+        frames = pool.map(_read_bucket, jobs, chunksize=1)
+    # a bucket whose records carry no standard error has an all-None column, which pandas
+    # warns it will one day type differently; every column is typed where it is read
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", FutureWarning)
+        cells = pd.concat([f for f in frames if len(f)], ignore_index=True).sort_values(
+            "index", ignore_index=True
+        )
+    expected = sum(manifest.returned(d) for d in datasets)
+    assert len(cells) == expected, (
+        f"read {len(cells):,} records of {sorted(datasets)}; the manifest records "
+        f"{expected:,}"
+    )
+    assert cells["index"].is_unique
+    return cells
 
 
 # ---- the gene-level sources ------------------------------------------------ #
@@ -380,12 +474,21 @@ class SourceSpec(BaseModel):
     orientation: str
     #: genes deleted in every strain of this source beside the queried one
     extra_genes: tuple[str, ...]
-    #: doses come from the served table, or from the dev store (Vanacloig)
-    dose_from: Literal["table", "dev_store"]
     #: "single" asserts one measurement per cell (Vanacloig, as 038 asserts); "mean"
     #: averages the cell's served measurements, which for Hoepfner and Hillenmeyer are
     #: the same (compound, concentration, gene) read in different screens or scanners
     label_policy: Literal["single", "mean"]
+    #: one value per ``SOURCE_ATTRIBUTES`` entry
+    attributes: dict[str, str]
+    #: whether this source's served dose IS an IC30, which is what licenses reading it as
+    #: a host anchor at fitness 0.70. A source dosed at a FIXED concentration carries no
+    #: such reading: most of its compounds are inactive at that concentration, so an
+    #: anchor would assert a 30 percent growth defect that was never measured.
+    #: Measured basis per source, 033 ``store_axes.csv`` column ``dose_basis``:
+    #: Vanacloig IC30 for 136,237 of 143,218 cells, Hoepfner IC30 for all 2,880,165,
+    #: Hillenmeyer fixed or unstated for all 2,591,199, Wildenhain unstated (one
+    #: screening concentration of 20 uM for all 5,170 compounds).
+    anchors_are_ic30: bool
 
 
 SPECS: dict[str, SourceSpec] = {
@@ -400,8 +503,15 @@ SPECS: dict[str, SourceSpec] = {
             "+ 1)); negative = sick deletion, kept as served"
         ),
         extra_genes=HOST_GENES,
-        dose_from="dev_store",
         label_policy="single",
+        attributes={
+            "ploidy": "haploid",
+            "perturbation": "deletion",
+            "medium": "SYNH3_anaerobic",
+            "label": "log2_ratio",
+            "assay": "barcode",
+        },
+        anchors_are_ic30=True,
     ),
     "hoepfner_hop": SourceSpec(
         name="hoepfner_hop",
@@ -413,8 +523,15 @@ SPECS: dict[str, SourceSpec] = {
             "hypersensitive, positive = resistant' (hoepfner2014.py), kept as served"
         ),
         extra_genes=(),
-        dose_from="table",
         label_policy="mean",
+        attributes={
+            "ploidy": "diploid",
+            "perturbation": "deletion",
+            "medium": "YPD",
+            "label": "sensitivity_score",
+            "assay": "barcode",
+        },
+        anchors_are_ic30=True,
     ),
     "hillenmeyer_het": SourceSpec(
         name="hillenmeyer_het",
@@ -426,10 +543,43 @@ SPECS: dict[str, SourceSpec] = {
             "intensity) (hillenmeyer2008.py); POSITIVE = sick, so the value is NEGATED"
         ),
         extra_genes=(),
-        dose_from="table",
         label_policy="mean",
+        attributes={
+            "ploidy": "diploid",
+            "perturbation": "heterozygous",
+            "medium": "YPD",
+            "label": "log2_ratio",
+            "assay": "barcode",
+        },
+        anchors_are_ic30=False,
+    ),
+    "wildenhain": SourceSpec(
+        name="wildenhain",
+        dataset=WILDENHAIN,
+        # the 22,407 conditional-allele cells are left out: the deletion operator is the
+        # only genotype operator the encoder has
+        perturbation_type="barcoded_kanmx_deletion",
+        sign=1.0,
+        orientation=(
+            "released PubChem AID 1159580 z_score of growth inhibition, 0 = the strain's "
+            "own plate-median growth, scale = the screen's IQR (wildenhain2015.py); "
+            "'negative = growth inhibition', kept as served"
+        ),
+        extra_genes=(),
+        # 17 of 428,189 cells fold two measurements (033 label_policy.csv)
+        label_policy="mean",
+        attributes={
+            "ploidy": "haploid",
+            "perturbation": "deletion",
+            "medium": "SC",
+            "label": "z_score",
+            "assay": "liquid_od",
+        },
+        anchors_are_ic30=False,
     ),
 }
+for _spec in SPECS.values():
+    assert tuple(_spec.attributes) == SOURCE_ATTRIBUTES, _spec.name
 
 
 class GeneSource(BaseModel):
@@ -470,29 +620,17 @@ class GeneSource(BaseModel):
         )
 
 
-def _condition_frame(spec: SourceSpec, cell_table: str) -> pd.DataFrame:
-    """The source's single-compound cells, with a condition key per compound and dose."""
-    filters = [("dataset", "==", spec.dataset)]
+def _condition_frame(spec: SourceSpec, cells: pd.DataFrame) -> pd.DataFrame:
+    """The source's single-compound records, with a condition key per compound and dose.
+
+    One row per served record; ``n_total`` is the source's record count before the
+    filters (one compound, an InChIKey, not an excluded condition).
+    """
+    table = cells[cells["dataset"] == spec.dataset]
     if spec.perturbation_type is not None:
-        filters.append(("perturbation_type", "==", spec.perturbation_type))
-    table = pd.read_parquet(
-        cell_table,
-        columns=[
-            "query_gene",
-            "genes",
-            "n_measurements",
-            "n_compounds",
-            "compound_names",
-            "inchikeys",
-            "conc_values",
-            "conc_units",
-            "log10_molar",
-            "responses",
-            "response_ses",
-        ],
-        filters=filters,
-    ).reset_index(drop=True)
-    assert len(table), f"{spec.name}: no cells matched {filters}"
+        table = table[table["perturbation_type"] == spec.perturbation_type]
+    table = table.reset_index(drop=True)
+    assert len(table), f"{spec.name}: no records of {spec.dataset} in the store"
     total = len(table)
     table = table[table["n_compounds"] == 1].reset_index(drop=True)
     table = table[table["inchikeys"].astype(bool)].reset_index(drop=True)
@@ -502,53 +640,52 @@ def _condition_frame(spec: SourceSpec, cell_table: str) -> pd.DataFrame:
     assert (table["genes"] == table["query_gene"]).all(), (
         f"{spec.name}: a strain carries more than its screened deletion"
     )
-    if spec.label_policy == "single":
-        assert (table["n_measurements"] == 1).all(), (
-            f"{spec.name}: a cell folds measurements"
-        )
     table["condition"] = (
         table["compound_names"] + "|" + table["conc_values"].astype(str)
     )
-    table["response"] = table["responses"].map(lambda r: float(np.mean(r))) * spec.sign
-    table["response_se"] = table["response_ses"].map(lambda s: float(np.mean(s)))
+    table["response"] = table["response"].astype(float) * spec.sign
+    table["response_se"] = table["response_se"].astype(float)
     return table.assign(n_total=total)
 
 
 def load_gene_source(
-    spec: SourceSpec,
-    index: int,
-    cell_table: str,
-    doses: dict[str, float] | None,
-    compounds: CompoundTable,
+    spec: SourceSpec, index: int, cells: pd.DataFrame, compounds: CompoundTable
 ) -> GeneSource:
     """``spec``'s matrix, with every condition's dose as log10 molar.
 
-    ``doses`` maps a compound name to its log10 molar dose and is required when the
-    source's doses come from the dev store; a compound missing from it carries NaN.
+    A CELL is one gene in one condition; the records of a cell are folded by the
+    source's label policy (``single`` asserts there is one, ``mean`` averages the
+    responses and their standard errors). ``n_cells`` counts cells, ``n_dropped_cells``
+    the source's records the condition filters removed.
     """
-    table = _condition_frame(spec, cell_table)
-    genes = sorted(table["query_gene"].unique())
+    table = _condition_frame(spec, cells)
+    folded = (
+        table.groupby(["query_gene", "condition"], sort=True)
+        .agg(
+            response=("response", "mean"),
+            response_se=("response_se", "mean"),
+            n_measurements=("response", "size"),
+        )
+        .reset_index()
+    )
+    if spec.label_policy == "single":
+        assert (folded["n_measurements"] == 1).all(), (
+            f"{spec.name}: a cell folds measurements"
+        )
+    genes = sorted(folded["query_gene"].unique())
     keys = (
-        table[["condition", "compound_names", "inchikeys", "log10_molar"]]
+        table[["condition", "compound_names", "inchikeys", "smiles", "log10_molar"]]
         .drop_duplicates("condition")
         .sort_values("condition", ignore_index=True)
     )
     gene_index = {g: i for i, g in enumerate(genes)}
     cond_index = {c: i for i, c in enumerate(keys["condition"])}
-    rows = table["query_gene"].map(gene_index).to_numpy(dtype=np.int64)
-    cols = table["condition"].map(cond_index).to_numpy(dtype=np.int64)
+    rows = folded["query_gene"].map(gene_index).to_numpy(dtype=np.int64)
+    cols = folded["condition"].map(cond_index).to_numpy(dtype=np.int64)
     y = np.full((len(genes), len(keys)), np.nan)
     se = np.full((len(genes), len(keys)), np.nan)
-    y[rows, cols] = table["response"].to_numpy()
-    se[rows, cols] = table["response_se"].to_numpy()
-
-    if spec.dose_from == "dev_store":
-        assert doses is not None, f"{spec.name} needs the dev-store doses"
-        log10_molar = np.array(
-            [doses.get(name, np.nan) for name in keys["compound_names"]]
-        )
-    else:
-        log10_molar = keys["log10_molar"].to_numpy(dtype=np.float64)
+    y[rows, cols] = folded["response"].to_numpy()
+    se[rows, cols] = folded["response_se"].to_numpy()
     compound_row = np.array(
         [compounds.row(key) for key in keys["inchikeys"]], dtype=np.int64
     )
@@ -559,10 +696,10 @@ def load_gene_source(
         compounds=list(keys["compound_names"]),
         inchikeys=list(keys["inchikeys"]),
         compound_row=compound_row,
-        log10_molar=log10_molar,
+        log10_molar=keys["log10_molar"].to_numpy(dtype=np.float64),
         y=y,
         se=se,
-        n_cells=int(len(table)),
+        n_cells=int(len(folded)),
         n_dropped_cells=int(table["n_total"].iloc[0]) - int(len(table)),
     )
 
@@ -597,6 +734,129 @@ def make_folds(n_compounds: int, n_folds: int, n_val: int, seed: int) -> list[Fo
     tested = sorted(i for f in folds for i in f.test)
     assert tested == list(range(n_compounds)), "a compound is tested twice or never"
     return folds
+
+
+def make_gene_folds(
+    n_genes: int, n_folds: int, seed: int, val_frac: float = 0.1
+) -> list[Fold]:
+    """Gene-cold folds: every Vanacloig gene is tested exactly once.
+
+    The indices are rows of the Vanacloig matrix. Every compound is fitted; what is held
+    out is the strain, so the model has never seen any response of that deletion and has
+    to predict its whole profile from the gene's place in the cell graph. The seed is
+    offset from the compound folds' so the two partitions are not the same draw.
+
+    A tenth of the fold's non-test genes are validation genes, so a run that selects on
+    a held-out signal (``select: val``) has one under this split too; the first gene-cold
+    arm of round 3 (job 3897) died at "no step was selected" because the folds carried
+    none. Under ``fit_on: pool`` they are fitted with the rest, as the validation
+    compounds are under the compound split.
+    """
+    rng = np.random.default_rng([seed, 101])
+    groups = np.array_split(rng.permutation(n_genes), n_folds)
+    folds = []
+    for k, test in enumerate(groups):
+        rest = rng.permutation(
+            np.concatenate([g for j, g in enumerate(groups) if j != k])
+        )
+        n_val = int(round(val_frac * len(rest)))
+        folds.append(
+            Fold(
+                fold=k,
+                train=sorted(int(i) for i in rest[n_val:]),
+                val=sorted(int(i) for i in rest[:n_val]),
+                test=sorted(int(i) for i in test),
+            )
+        )
+    tested = sorted(i for f in folds for i in f.test)
+    assert tested == list(range(n_genes)), "a gene is tested twice or never"
+    return folds
+
+
+def holdout_conditions(
+    source: GeneSource,
+    conditions: list[int],
+    mode: Literal["none", "compound", "dose"],
+    frac: float,
+    seed: int,
+) -> tuple[list[int], list[int]]:
+    """(fitted, held out) conditions of an auxiliary source.
+
+    ``compound`` holds out a fraction of the source's COMPOUNDS with every dose they were
+    served at, so the held-out score is compound-cold like the Vanacloig one. ``dose``
+    holds out ONE served dose of every compound served at two or more, chosen at random,
+    so the held-out score asks whether the model interpolates along a compound's own dose
+    series (Hoepfner has 83 such compounds, Hillenmeyer HET 66). The draw is seeded by the
+    fold seed and the source, not by the Vanacloig fold, so every fold of a run holds out
+    the same auxiliary conditions and their scores are comparable across folds.
+    """
+    if mode == "none" or not conditions:
+        return list(conditions), []
+    rng = np.random.default_rng([seed, source.index, 7])
+    by_compound: dict[int, list[int]] = {}
+    for j in conditions:
+        by_compound.setdefault(int(source.compound_row[j]), []).append(j)
+    held: set[int] = set()
+    if mode == "compound":
+        rows = sorted(by_compound)
+        n = max(1, int(round(frac * len(rows))))
+        for row in rng.choice(rows, size=n, replace=False):
+            held.update(by_compound[int(row)])
+    else:
+        for row in sorted(by_compound):
+            doses = by_compound[row]
+            if len(doses) >= 2:
+                held.add(int(rng.choice(doses)))
+    assert held and len(held) < len(conditions), (
+        f"{source.spec.name}: hold-out {mode} left {len(held)} of {len(conditions)}"
+    )
+    return [j for j in conditions if j not in held], sorted(held)
+
+
+def score_genes(
+    source: GeneSource, prediction: NDArray[np.float64], test_genes: list[int]
+) -> pd.DataFrame:
+    """One row per compound and target for the gene-cold split.
+
+    ``raw``: Spearman over the held-out genes of the predicted against the measured
+    profile of the compound. ``gene_centered``: both sides minus their own per-gene mean
+    over every compound, which removes the held-out gene's general sickness and asks for
+    the compound-specific part of a profile the model has never seen a row of. The gene
+    mean on the measured side is computed from the held-out values themselves, so it is
+    a description of the target and never training information.
+    """
+    rows_idx = np.array(test_genes)
+    measured = source.y[rows_idx]
+    pred = prediction[rows_idx]
+    m_center = measured - np.nanmean(measured, axis=1, keepdims=True)
+    p_center = pred - np.nanmean(pred, axis=1, keepdims=True)
+    rows = []
+    for j in range(len(source.compounds)):
+        for target, obs, est in (
+            ("raw", measured[:, j], pred[:, j]),
+            ("gene_centered", m_center[:, j], p_center[:, j]),
+        ):
+            ok = np.isfinite(obs) & np.isfinite(est)
+            constant = ok.sum() < MIN_GENES or np.std(est[ok]) < CONSTANT_SD
+            rows.append(
+                {
+                    "compound": source.compounds[j],
+                    "target": target,
+                    "n_genes": int(ok.sum()),
+                    "spearman": (
+                        float("nan")
+                        if constant
+                        else float(spearmanr(est[ok], obs[ok])[0])
+                    ),
+                    "pearson": (
+                        float("nan")
+                        if constant
+                        else float(pearsonr(est[ok], obs[ok])[0])
+                    ),
+                    "ceiling": ceiling(obs, source.se[rows_idx, j]),
+                }
+            )
+    return pd.DataFrame(rows)
 
 
 def subsample_pool(fold: Fold, fold_seed: int, n: int | None) -> list[int]:
@@ -799,6 +1059,13 @@ def anchor_records(
     A compound served at several concentrations in one source has no unambiguous IC30
     among them, so it is left out; ``results/mixture/<name>_host_records.csv`` counts how
     many each source contributed.
+
+    ONLY A SOURCE WHOSE DOSE IS AN IC30 CONTRIBUTES (``anchors_are_ic30``). Reading a
+    fixed screening concentration as an IC30 asserts a growth defect that was never
+    measured, and it is not a small error of bookkeeping: Wildenhain's single 20 uM
+    concentration would add 5,170 such anchors, a hundred times the 55 wet-lab titration
+    records the host head is meant to learn from, and most of its compounds are inactive
+    at that concentration.
     """
     records = [
         HostRecord(
@@ -816,6 +1083,8 @@ def anchor_records(
         )
     ]
     for source in sources:
+        if not source.spec.anchors_are_ic30:
+            continue
         served = pd.Series(source.compounds).value_counts()
         for j, name in enumerate(source.compounds):
             if served[name] != 1 or not np.isfinite(source.log10_molar[j]):
@@ -940,6 +1209,8 @@ class MixtureData(BaseModel):
     dropped_compounds: dict[str, str]
     inchikey_of_inhibitor: dict[str, str]
     counts: pd.DataFrame
+    #: the store every gene-level record came from, as its manifest records it
+    store: StoreManifest
 
     def source(self, name: str) -> GeneSource:
         """The loaded source called ``name``."""
@@ -953,8 +1224,7 @@ def assemble(
     pca_dim: int | None,
     require_molar_dose: bool,
     call: Literal["served", "software"] = "served",
-    cell_table: str = CELL_TABLE,
-    vanacloig_store: str = VANACLOIG_STORE,
+    store: str = STORE,
 ) -> MixtureData:
     """Load every source, the wet-lab wells and one shared compound feature matrix.
 
@@ -967,26 +1237,27 @@ def assemble(
         f"vanacloig is the scored source and must come first: {source_names}"
     )
     assert len(set(source_names)) == len(source_names), "a source is named twice"
-    doses = {
-        d.compound: d.log10_molar
-        for d in vanacloig_doses(vanacloig_store)
-        if d.log10_molar is not None
-    }
-    frames = {name: _condition_frame(SPECS[name], cell_table) for name in source_names}
+    cells = load_cells(store, frozenset(SPECS[name].dataset for name in source_names))
+    frames = {name: _condition_frame(SPECS[name], cells) for name in source_names}
     inchikey_of = wetlab_inhibitors()
     keys: dict[str, str] = {}
+    served_smiles: dict[str, str | None] = {}
     for frame in frames.values():
-        for name, key in zip(frame["compound_names"], frame["inchikeys"], strict=True):
+        for name, key, smiles in zip(
+            frame["compound_names"], frame["inchikeys"], frame["smiles"], strict=True
+        ):
             keys.setdefault(key, name)
+            served_smiles.setdefault(key, smiles or None)
     for name, key in inchikey_of.items():
         keys.setdefault(key, name)
     inchikeys = sorted(keys)
+    smiles_of = compound_smiles(inchikeys, served_smiles, keys)
     compounds = compound_table(
-        [keys[k] for k in inchikeys], inchikeys, embeddings, pca_dim
+        [keys[k] for k in inchikeys], inchikeys, smiles_of, embeddings, pca_dim
     )
 
     sources = [
-        load_gene_source(SPECS[name], i, cell_table, doses, compounds)
+        load_gene_source(SPECS[name], i, cells, compounds)
         for i, name in enumerate(source_names)
     ]
     vanacloig = sources[0]
@@ -1080,4 +1351,48 @@ def assemble(
         dropped_compounds=dropped,
         inchikey_of_inhibitor=inchikey_of,
         counts=counts,
+        store=verify_store(store),
     )
+
+
+# ---- the history table, under the keys the trainer logs since round 9 ---------- #
+#: round 1 to 8 history columns -> the shared keys logged since round 9 (the W&B key
+#: and the CSV column are the same string). ``gene_loss`` (the target plus aux_weight
+#: times the auxiliary sources) has no single successor; a single-source run's
+#: ``train_loss/vanacloig`` is filled from it when no ``loss_vanacloig`` column exists.
+HISTORY_RENAMES: dict[str, str] = {
+    "loss_vanacloig": "train_loss/vanacloig",
+    "loss_hoepfner_hop": "train_loss/hoepfner_hop",
+    "loss_hillenmeyer_het": "train_loss/hillenmeyer_het",
+    "loss_wildenhain": "train_loss/wildenhain",
+    "host_loss": "train_loss/host",
+    "total_loss": "train_loss/total",
+    "graph_penalty": "train_loss/graph_penalty",
+    "val_loss_vanacloig": "val_loss/vanacloig",
+    "heldout_loss_vanacloig": "test_loss/vanacloig",
+    "heldout_loss_hoepfner_hop": "test_loss/hoepfner_hop",
+    "heldout_loss_hillenmeyer_het": "test_loss/hillenmeyer_het",
+    "heldout_loss_wildenhain": "test_loss/wildenhain",
+    "val_centered_mean": "score/val_centered_spearman",
+    "test_centered_mean": "score/test_centered_spearman",
+    "grad_norm": "opt/grad_norm",
+    "lr": "opt/lr",
+    "seconds": "sys/seconds",
+    "gpu_peak_gb": "sys/gpu_peak_gb",
+}
+
+
+def read_history(path: str) -> pd.DataFrame:
+    """One run's ``*_history.csv`` with every column under its round-9 name.
+
+    A table written before round 9 is renamed on read; one written since is returned
+    as is. ``train_loss/total`` is derived for a round-1 to round-5 table that
+    predates the column (gene loss plus ``lambda_host`` times host loss is not
+    recoverable without the config, so it is left absent there).
+    """
+    history = pd.read_csv(path)
+    present = {old: new for old, new in HISTORY_RENAMES.items() if old in history}
+    history = history.rename(columns=present)
+    if "train_loss/vanacloig" not in history and "gene_loss" in history:
+        history["train_loss/vanacloig"] = history["gene_loss"]
+    return history

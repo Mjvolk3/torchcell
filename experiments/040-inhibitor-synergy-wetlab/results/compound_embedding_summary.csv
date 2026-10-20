@@ -1,0 +1,6 @@
+source,label,n_compounds,n_with_fingerprint,median_tanimoto_within,median_tanimoto_to_this_study,max_tanimoto_to_this_study
+vanacloig,Vanacloig 2022,32,32,0.12746614962816238,0.1315789520740509,1.0
+hoepfner_hop,Hoepfner 2014 HOP,146,146,0.09459459781646729,0.0849260725080967,0.5
+hillenmeyer_het,Hillenmeyer 2008 HET,287,287,0.1071428582072258,0.09090909361839294,0.4333333373069763
+wildenhain,Wildenhain 2015,5170,5170,0.11627907305955887,0.09090909361839294,1.0
+this_study,this study,6,6,0.1538461595773697,1.0,1.0

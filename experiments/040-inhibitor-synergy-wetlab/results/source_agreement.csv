@@ -1,0 +1,7 @@
+a,b,shared_genes,shared_compounds,shared_pairs,spearman_oriented
+Hillenmeyer HET,Hoepfner,5805,30,170903,0.1183288010434719
+Hillenmeyer HET,Wildenhain,238,123,17218,0.0178769324322205
+Vanacloig,Hoepfner,3592,2,6977,0.0131127168916204
+Vanacloig,Hillenmeyer HET,3571,2,6852,0.0227244526330462
+Hoepfner,Wildenhain,237,34,4787,0.0611772361574963
+Vanacloig,Wildenhain,153,10,761,0.0779505231463606

@@ -1,0 +1,225 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+1-butyl-3-methylimidazolium chloride,raw,695,0.04897075006360525,0.05274156393280194,0.842295875297211,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+1-butyl-3-methylimidazolium chloride,gene_centered,695,0.043551614429379215,0.0111626032090784,0.8774691894229134,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+1-ethyl-3-methylimidazolium chloride,raw,699,0.023546232253875875,0.010087928930995568,0.8865824477910849,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+1-ethyl-3-methylimidazolium chloride,gene_centered,699,0.03563270055666361,-0.007013110962563471,0.910010838716527,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2,2'-bipyridine",raw,695,0.014612900648724189,-0.016702499753118282,0.9295645781705107,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2,2'-bipyridine",gene_centered,695,0.006555248695806347,-0.03453610924695332,0.9530886547886793,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2,6-dimethylpyrazine",raw,700,-0.04751270308698363,-0.004017279889637226,0.8526775767654313,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2,6-dimethylpyrazine",gene_centered,700,-0.01111053618280398,-0.01854183880135107,0.8560557157168827,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,695,-0.018496917397128214,-0.05144960762865464,0.9155311566334142,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",gene_centered,695,-0.021647809641415643,-0.03147383079978589,0.8740850145817064,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4'-hydroxyacetophenone,raw,700,-0.00664775004768358,-0.013299646313682613,0.8430898189302368,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4'-hydroxyacetophenone,gene_centered,700,-0.006413400899769191,-0.01361497472236298,0.7751829827455334,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4-hydroxybenzaldehyde,raw,699,-0.04219825070311645,-0.01648470871787214,0.842965827290406,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4-hydroxybenzaldehyde,gene_centered,699,-0.05093600446942244,-0.020914646119713283,0.7603195875731451,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4-hydroxybenzoic acid,raw,705,-0.0742206202367494,-0.04697187318379222,0.5999280940106783,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4-hydroxybenzoic acid,gene_centered,705,-0.043072061090627896,-0.05517874931404268,0.6397288376253213,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+5-(hydroxymethyl)furfural,raw,698,-0.015705107749115012,-0.01870109829614434,0.0,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+5-(hydroxymethyl)furfural,gene_centered,698,0.04723837214431264,0.006890915000251518,0.537578911434948,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetamide,raw,698,0.058831082916933154,0.049908855362312925,0.5820072636278042,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetamide,gene_centered,698,0.05736594415874055,0.029053648408106796,0.7469702538180553,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetosyringone,raw,697,-0.0670983357520416,-0.06944344580476333,0.8799965254296067,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetosyringone,gene_centered,697,-0.08580926882285324,-0.08281738794607754,0.8202176743460575,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetovanillone,raw,702,-0.006618127247234702,-0.008107127148645681,0.9073543802481358,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetovanillone,gene_centered,702,-0.012908575375047367,-0.004033775703386386,0.8678367954592104,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+azelaic acid,raw,698,-0.024973666209248215,-0.06568371815201206,0.8636114218726367,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+azelaic acid,gene_centered,698,-0.06865185269769666,-0.06264951952680307,0.8190912320157656,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+benomyl,raw,698,0.008433458208013398,0.031092790166724373,0.84704369274089,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+benomyl,gene_centered,698,0.0071893040939776465,0.011220191039029447,0.8920565388540215,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+benzoic acid,raw,699,0.011737791091977414,-0.0199563863915142,0.723780813156675,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+benzoic acid,gene_centered,699,0.011298920893288614,-0.018868210751886924,0.7803282314034493,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+cinnamic acid,raw,700,-0.010365327270320515,0.019916364362235196,0.7719489699201129,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+cinnamic acid,gene_centered,700,-0.10528835942034116,-0.11766777858441217,0.7571242864273962,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+crystal violet,raw,673,-0.017864826211883872,0.01624881369934461,0.9554841575147675,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+crystal violet,gene_centered,673,-0.017668218583062435,0.011212316071185694,0.94851382255478,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+ferulamide,raw,698,-0.05222398490346679,-0.05645319541491539,0.8764971350931124,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+ferulamide,gene_centered,698,-0.07038044019553354,-0.05685985299529248,0.8232596441825694,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+ferulic acid,raw,700,0.04890956100656788,0.017600031187652534,0.9184685682944385,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+ferulic acid,gene_centered,700,0.033562810194521474,0.03080692161855803,0.8905730141657519,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+furfural,raw,697,0.02276281420909019,0.028977206750463558,0.8691160428283626,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+furfural,gene_centered,697,-0.015969325111358137,-0.014872305184465629,0.8754008215689021,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+methylglyoxal,raw,694,0.021658119700241552,0.021840426285476777,0.9328420256657889,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+methylglyoxal,gene_centered,694,-0.0036341809023010055,-0.012502222088723838,0.9377263267281024,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+nonylacridine orange,raw,700,-0.037582978687198655,-0.02454839688041171,0.8648314629511985,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+nonylacridine orange,gene_centered,700,-0.040924526668130214,-0.03459088941474374,0.8286038565420331,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+p-coumaric acid,raw,701,-0.0024128148955060726,-0.0034299077331346925,0.0,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+p-coumaric acid,gene_centered,701,-0.006871049800628006,0.022831152699804343,0.0,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+sinapic acid,raw,697,-0.00922251163719092,-0.02447243709534554,0.6076715505511766,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+sinapic acid,gene_centered,697,-0.02568156080870329,-0.012533997700330098,0.19636040028477306,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+syringaldehyde,raw,701,-0.024201312246471447,-0.00829920448469444,0.8622885267823495,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+syringaldehyde,gene_centered,701,-0.009466574415172405,-0.007652954928637014,0.8221536354872176,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+syringic acid,raw,698,-0.020234559900093894,0.0015299428031682726,0.8679443973704812,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+syringic acid,gene_centered,698,-0.037493823876616005,-0.02709810101208718,0.851924671294749,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+vanillic acid,raw,694,-0.029191642676770962,-0.05442084041629058,0.864416430905352,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+vanillic acid,gene_centered,694,-0.04001320178968565,-0.02665566648992544,0.7947530130004311,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+vanillin,raw,699,-0.0036453198041402506,-0.016487109790699235,0.8025406896336195,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+vanillin,gene_centered,699,-0.02526925577920822,-0.01741383931928329,0.6732697465869516,2,seed0,mix_van_e150_cell_bliss_attend_dev_gene_f2
+1-butyl-3-methylimidazolium chloride,raw,695,-0.0346430312550091,-0.022577351656132047,0.842295875297211,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+1-butyl-3-methylimidazolium chloride,gene_centered,695,-0.08051212972089376,-0.04676952808347073,0.8774691894229134,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+1-ethyl-3-methylimidazolium chloride,raw,699,-0.0604007729568026,-0.07031162267297866,0.8865824477910849,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+1-ethyl-3-methylimidazolium chloride,gene_centered,699,-0.08245217271048053,-0.09467901264572265,0.910010838716527,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2,2'-bipyridine",raw,695,-0.026506012705095956,-0.03499991165635392,0.9295645781705107,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2,2'-bipyridine",gene_centered,695,-0.05131781517973709,-0.047666594976802784,0.9530886547886793,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2,6-dimethylpyrazine",raw,700,-0.030672809462838933,-0.035072424911600446,0.8526775767654313,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2,6-dimethylpyrazine",gene_centered,700,0.03836194786970218,0.032436439105789736,0.8560557157168827,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,695,-0.05243243765861641,-0.06281681582524994,0.9155311566334142,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",gene_centered,695,0.006582165804112114,-0.014535394877751419,0.8740850145817064,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4'-hydroxyacetophenone,raw,700,-0.04516345618066834,-0.00953762757788958,0.8430898189302368,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4'-hydroxyacetophenone,gene_centered,700,-0.01812969376889519,0.03761437377438593,0.7751829827455334,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4-hydroxybenzaldehyde,raw,699,-0.09853803829212451,-0.096289834388492,0.842965827290406,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4-hydroxybenzaldehyde,gene_centered,699,0.013425448204261848,-0.0007121556511008584,0.7603195875731451,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4-hydroxybenzoic acid,raw,705,-0.017728805245368743,-0.026016236854742893,0.5999280940106783,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4-hydroxybenzoic acid,gene_centered,705,0.015098088310579875,0.004495720765296618,0.6397288376253213,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+5-(hydroxymethyl)furfural,raw,698,0.026635026452197286,-0.011024236246418604,0.0,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+5-(hydroxymethyl)furfural,gene_centered,698,0.002622995547509788,-0.03144550820266752,0.537578911434948,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetamide,raw,698,-0.03818947884342735,-0.009464502750386636,0.5820072636278042,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetamide,gene_centered,698,-0.02822685410842921,-0.033448774073476226,0.7469702538180553,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetosyringone,raw,697,0.023018040631159184,-0.01995194708946366,0.8799965254296067,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetosyringone,gene_centered,697,0.034354451636533175,-0.008195187986223321,0.8202176743460575,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetovanillone,raw,702,-0.014412659215008982,0.011879868595248961,0.9073543802481358,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetovanillone,gene_centered,702,0.01457037593749324,0.04563291941223069,0.8678367954592104,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+azelaic acid,raw,698,-0.017931920674477637,-0.020875270765056464,0.8636114218726367,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+azelaic acid,gene_centered,698,0.010643028689175072,0.003016137070458742,0.8190912320157656,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+benomyl,raw,698,0.012422721696939388,0.03228920522101539,0.84704369274089,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+benomyl,gene_centered,698,-0.02359663928529245,-0.03529277799862219,0.8920565388540215,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+benzoic acid,raw,699,-0.05131686986878499,-0.051598320150983784,0.723780813156675,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+benzoic acid,gene_centered,699,0.003846832745415165,-0.008945544205761533,0.7803282314034493,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+cinnamic acid,raw,700,-0.036465162279010574,-0.04989283032739468,0.7719489699201129,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+cinnamic acid,gene_centered,700,0.04271974554905353,0.05683833551808663,0.7571242864273962,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+crystal violet,raw,673,0.08118556469067915,0.06346117527080401,0.9554841575147675,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+crystal violet,gene_centered,673,0.09558682595475088,0.07205590896927733,0.94851382255478,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+ferulamide,raw,698,-0.05625996247867042,-0.076993589080741,0.8764971350931124,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+ferulamide,gene_centered,698,-0.033918289840637536,-0.05056314556580628,0.8232596441825694,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+ferulic acid,raw,700,-0.014455649927000967,-0.025837612016420222,0.9184685682944385,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+ferulic acid,gene_centered,700,-0.0034027767130282503,0.011252205635673425,0.8905730141657519,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+furfural,raw,697,0.048853310421785985,0.03572835620768586,0.8691160428283626,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+furfural,gene_centered,697,0.024303614952016044,0.007582550326209553,0.8754008215689021,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+methylglyoxal,raw,694,0.006190555445728673,0.018625283026327915,0.9328420256657889,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+methylglyoxal,gene_centered,694,-0.02365957676420674,-0.006639716794005793,0.9377263267281024,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+nonylacridine orange,raw,700,0.04763885747723532,0.02959731581229482,0.8648314629511985,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+nonylacridine orange,gene_centered,700,0.02997034157160685,0.011477853853627597,0.8286038565420331,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+p-coumaric acid,raw,701,-0.05195671623779571,-0.07122858687781033,0.0,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+p-coumaric acid,gene_centered,701,0.016585377765866216,0.015463544452743972,0.0,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+sinapic acid,raw,697,0.005694082048992468,-0.031946700461906855,0.6076715505511766,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+sinapic acid,gene_centered,697,0.06334975600336631,0.04093426030851896,0.19636040028477306,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+syringaldehyde,raw,701,-0.04934200605158912,-0.08189493186393454,0.8622885267823495,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+syringaldehyde,gene_centered,701,0.02887227463925388,0.0027655609857775,0.8221536354872176,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+syringic acid,raw,698,-0.029245724732166217,-0.042268720208339196,0.8679443973704812,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+syringic acid,gene_centered,698,0.0354664423865914,0.0487509521506898,0.851924671294749,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+vanillic acid,raw,694,-0.09100678772731072,-0.10328699824714453,0.864416430905352,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+vanillic acid,gene_centered,694,-0.026170440718660586,-0.03634407403359044,0.7947530130004311,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+vanillin,raw,699,-0.05785936532770427,-0.05429674677794844,0.8025406896336195,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+vanillin,gene_centered,699,0.006954459019522849,0.0008915404479317798,0.6732697465869516,2,seed1,mix_van_e150_cell_bliss_attend_dev_gene_f2
+1-butyl-3-methylimidazolium chloride,raw,695,0.045681955626025283,0.08701742165173626,0.842295875297211,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+1-butyl-3-methylimidazolium chloride,gene_centered,695,0.004341640470789421,0.06066740151070536,0.8774691894229134,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+1-ethyl-3-methylimidazolium chloride,raw,699,0.029220821827806054,0.05016442978468966,0.8865824477910849,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+1-ethyl-3-methylimidazolium chloride,gene_centered,699,0.0054142782076343045,0.023005299631052023,0.910010838716527,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2,2'-bipyridine",raw,695,0.07016313329589664,0.07355741743914623,0.9295645781705107,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2,2'-bipyridine",gene_centered,695,0.02508235928546487,0.045851033120695106,0.9530886547886793,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2,6-dimethylpyrazine",raw,700,-0.0021042226342239526,-0.009306405322331896,0.8526775767654313,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2,6-dimethylpyrazine",gene_centered,700,-0.04186362625918923,-0.033305854737820925,0.8560557157168827,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,695,-0.019029952756229904,0.026588098990065468,0.9155311566334142,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",gene_centered,695,-0.008587142165993489,0.04062685754723068,0.8740850145817064,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4'-hydroxyacetophenone,raw,700,-0.011430833027893213,0.055794947468785584,0.8430898189302368,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4'-hydroxyacetophenone,gene_centered,700,0.06993176954005445,0.08904716662695471,0.7751829827455334,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4-hydroxybenzaldehyde,raw,699,0.003103428296999029,0.050788359382052777,0.842965827290406,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4-hydroxybenzaldehyde,gene_centered,699,-0.00976560901043743,0.022874824163654266,0.7603195875731451,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4-hydroxybenzoic acid,raw,705,-0.0288072190951726,0.002195604615866496,0.5999280940106783,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4-hydroxybenzoic acid,gene_centered,705,0.02562659012941156,-0.00834174208801334,0.6397288376253213,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+5-(hydroxymethyl)furfural,raw,698,-0.007523986720138863,-0.016632990115484053,0.0,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+5-(hydroxymethyl)furfural,gene_centered,698,-0.050338502021985705,-0.044296032801199876,0.537578911434948,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetamide,raw,698,0.015187684223409456,-0.00013742074104587383,0.5820072636278042,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetamide,gene_centered,698,-0.08081395468341473,-0.07595793427343954,0.7469702538180553,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetosyringone,raw,697,-0.07439919210309368,-0.018402231218957225,0.8799965254296067,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetosyringone,gene_centered,697,-0.025585235947627294,0.010831985287589984,0.8202176743460575,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetovanillone,raw,702,-0.009449805782066606,0.014927912559645578,0.9073543802481358,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetovanillone,gene_centered,702,0.05598097053398535,0.050109598559959195,0.8678367954592104,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+azelaic acid,raw,698,-0.024954813276619227,-0.004305789483206465,0.8636114218726367,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+azelaic acid,gene_centered,698,0.003272595513932548,0.007207308447459052,0.8190912320157656,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+benomyl,raw,698,0.0745350134523145,0.05801050592925793,0.84704369274089,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+benomyl,gene_centered,698,-0.021454746007128805,0.033655418415656994,0.8920565388540215,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+benzoic acid,raw,699,0.035091658906076774,0.01848068547610974,0.723780813156675,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+benzoic acid,gene_centered,699,-0.10869099781790485,-0.11470036034133241,0.7803282314034493,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+cinnamic acid,raw,700,0.039220739344491926,0.03963989034700414,0.7719489699201129,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+cinnamic acid,gene_centered,700,-0.020362153054964954,-0.027431636741384016,0.7571242864273962,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+crystal violet,raw,673,-0.012842376510885259,-0.04714222120673928,0.9554841575147675,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+crystal violet,gene_centered,673,-0.0050736737744290624,-0.042135447511486235,0.94851382255478,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+ferulamide,raw,698,0.04893404175656253,0.05120271925341602,0.8764971350931124,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+ferulamide,gene_centered,698,0.0657779812353122,0.06781867250894741,0.8232596441825694,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+ferulic acid,raw,700,0.022883885075864446,0.024119570698176312,0.9184685682944385,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+ferulic acid,gene_centered,700,0.06126309878766515,0.0549341003317972,0.8905730141657519,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+furfural,raw,697,0.0373849873336705,0.05282779949652246,0.8691160428283626,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+furfural,gene_centered,697,0.056374787595205623,0.072228608754033,0.8754008215689021,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+methylglyoxal,raw,694,0.028869346288907867,0.01820022647130953,0.9328420256657889,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+methylglyoxal,gene_centered,694,0.037396950211828,0.042701977151223924,0.9377263267281024,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+nonylacridine orange,raw,700,-0.007525101807354269,-0.022676326891345838,0.8648314629511985,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+nonylacridine orange,gene_centered,700,-0.0005452139502071395,-0.012216835031220584,0.8286038565420331,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+p-coumaric acid,raw,701,-0.03336124178564717,-0.03508006284693175,0.0,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+p-coumaric acid,gene_centered,701,-0.02216942848233057,-0.009885898997981576,0.0,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+sinapic acid,raw,697,0.011257706710311536,-0.0045652551513718324,0.6076715505511766,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+sinapic acid,gene_centered,697,-0.00583086344313547,-0.004022604235897816,0.19636040028477306,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+syringaldehyde,raw,701,-0.01820893874905909,-0.007732172081919462,0.8622885267823495,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+syringaldehyde,gene_centered,701,-0.028133697511033392,-0.010021943764652218,0.8221536354872176,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+syringic acid,raw,698,-0.0024333715324130847,-0.005020639448447828,0.8679443973704812,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+syringic acid,gene_centered,698,0.0037652033224173597,-0.011830102133063986,0.851924671294749,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+vanillic acid,raw,694,-0.03852359520218295,0.004338606812516034,0.864416430905352,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+vanillic acid,gene_centered,694,-0.019664304485899665,0.04235282698180485,0.7947530130004311,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+vanillin,raw,699,-0.0037227529943781455,-0.007422241926813818,0.8025406896336195,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+vanillin,gene_centered,699,0.02517512613928142,0.013936249412708027,0.6732697465869516,2,seed2,mix_van_e150_cell_bliss_attend_dev_gene_f2
+1-butyl-3-methylimidazolium chloride,raw,695,0.040301590662139494,0.08268376350820783,0.842295875297211,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+1-butyl-3-methylimidazolium chloride,gene_centered,695,-0.0077310068868288034,0.027352784770854708,0.8774691894229134,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+1-ethyl-3-methylimidazolium chloride,raw,699,0.012354066023066532,0.012242764353762462,0.8865824477910849,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+1-ethyl-3-methylimidazolium chloride,gene_centered,699,-0.015230939368072214,-0.03179650366362322,0.910010838716527,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2,2'-bipyridine",raw,695,0.031431302230230614,0.01963884311772038,0.9295645781705107,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2,2'-bipyridine",gene_centered,695,-0.009786081586956147,-0.009552095887923162,0.9530886547886793,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2,6-dimethylpyrazine",raw,700,-0.00964977103094043,-0.026183485600294255,0.8526775767654313,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2,6-dimethylpyrazine",gene_centered,700,-0.022373468400664377,-0.01271718844903072,0.8560557157168827,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,695,-0.05152345021687566,-0.0485435105641477,0.9155311566334142,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",gene_centered,695,-0.00631911058030649,-0.0023608443493367244,0.8740850145817064,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4'-hydroxyacetophenone,raw,700,-0.025707938232616995,0.010926175131367089,0.8430898189302368,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4'-hydroxyacetophenone,gene_centered,700,0.015790177997447807,0.03707724320785456,0.7751829827455334,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4-hydroxybenzaldehyde,raw,699,-0.06304177321293696,-0.02538004055345413,0.842965827290406,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4-hydroxybenzaldehyde,gene_centered,699,-0.02026285138057584,-0.003147849647108404,0.7603195875731451,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4-hydroxybenzoic acid,raw,705,-0.036588127606207825,-0.025438043559688542,0.5999280940106783,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+4-hydroxybenzoic acid,gene_centered,705,-0.013989889096498103,-0.042410545573385416,0.6397288376253213,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+5-(hydroxymethyl)furfural,raw,698,-0.007658960703828369,-0.027071175684200192,0.0,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+5-(hydroxymethyl)furfural,gene_centered,698,-0.023876816714027534,-0.04064633827101159,0.537578911434948,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetamide,raw,698,0.020543608942134587,0.023490355437441504,0.5820072636278042,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetamide,gene_centered,698,-0.03098817170490919,-0.03977419476561794,0.7469702538180553,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetosyringone,raw,697,-0.07862238899106276,-0.06911512903192697,0.8799965254296067,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetosyringone,gene_centered,697,-0.06149365985775843,-0.0635718984200523,0.8202176743460575,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetovanillone,raw,702,-0.011266046948772195,0.0072045053813599574,0.9073543802481358,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+acetovanillone,gene_centered,702,0.027055089071756987,0.037754322288304255,0.8678367954592104,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+azelaic acid,raw,698,-0.05392415285206017,-0.045645147501226134,0.8636114218726367,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+azelaic acid,gene_centered,698,-0.029222829051407887,-0.0240819106813347,0.8190912320157656,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+benomyl,raw,698,0.04346063415289163,0.06415076591132973,0.84704369274089,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+benomyl,gene_centered,698,-0.016408585991705523,0.011162699616596893,0.8920565388540215,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+benzoic acid,raw,699,0.00874079869928705,-0.024804661894904143,0.723780813156675,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+benzoic acid,gene_centered,699,-0.05280435168893125,-0.07572204143781619,0.7803282314034493,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+cinnamic acid,raw,700,0.01009030254458639,0.005867340164377422,0.7719489699201129,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+cinnamic acid,gene_centered,700,-0.06957712219450993,-0.06663121745988175,0.7571242864273962,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+crystal violet,raw,673,0.020243086594655162,0.006921401432815662,0.9554841575147675,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+crystal violet,gene_centered,673,0.036702447457084786,0.013034266423527768,0.94851382255478,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+ferulamide,raw,698,-0.033941745668051394,-0.05197681239443658,0.8764971350931124,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+ferulamide,gene_centered,698,-0.030794921672271526,-0.036045032377947525,0.8232596441825694,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+ferulic acid,raw,700,0.035793008846177775,0.008451001734172327,0.9184685682944385,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+ferulic acid,gene_centered,700,0.06150894185498337,0.05475790508553558,0.8905730141657519,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+furfural,raw,697,0.06719752038517582,0.06265326094519168,0.8691160428283626,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+furfural,gene_centered,697,0.025075744184038844,0.039940716193363375,0.8754008215689021,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+methylglyoxal,raw,694,0.02989037184951585,0.03367791044942558,0.9328420256657889,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+methylglyoxal,gene_centered,694,0.012934956873753964,0.018868851476812935,0.9377263267281024,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+nonylacridine orange,raw,700,0.018089509041091145,-0.00765076518715516,0.8648314629511985,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+nonylacridine orange,gene_centered,700,0.01757580263283336,-0.017026778665356238,0.8286038565420331,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+p-coumaric acid,raw,701,-0.05028546426238276,-0.06765410455551149,0.0,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+p-coumaric acid,gene_centered,701,0.0135559352677755,0.0160528773499006,0.0,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+sinapic acid,raw,697,0.0013869516031951826,-0.033646468390259636,0.6076715505511766,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+sinapic acid,gene_centered,697,0.029189135704744476,0.01683150117273863,0.19636040028477306,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+syringaldehyde,raw,701,-0.03141503939015158,-0.05116603761888691,0.8622885267823495,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+syringaldehyde,gene_centered,701,-0.008111384644223452,-0.010298878866959323,0.8221536354872176,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+syringic acid,raw,698,-0.009793842744671249,-0.02861464171722452,0.8679443973704812,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+syringic acid,gene_centered,698,0.006407183209886293,0.0036831155349584207,0.851924671294749,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+vanillic acid,raw,694,-0.09586692919722335,-0.08257223858335049,0.864416430905352,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+vanillic acid,gene_centered,694,-0.024149925914278125,-0.0032329977161349036,0.7947530130004311,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+vanillin,raw,699,-0.026766067713668136,-0.0443111219026656,0.8025406896336195,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2
+vanillin,gene_centered,699,0.014912485483728456,-0.0016491237506563714,0.6732697465869516,2,ensemble,mix_van_e150_cell_bliss_attend_dev_gene_f2

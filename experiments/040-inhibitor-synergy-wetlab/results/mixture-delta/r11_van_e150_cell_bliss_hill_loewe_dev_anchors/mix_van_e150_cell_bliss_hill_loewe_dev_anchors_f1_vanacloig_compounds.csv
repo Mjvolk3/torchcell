@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+"2,6-dimethylpyrazine",raw,3503,-0.09203551769118813,-0.09133078075175811,0.8722364335473455,1,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+"2,6-dimethylpyrazine",centered,3502,0.011681910105739888,-0.004243670208664639,0.8694398077612701,1,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+4-hydroxybenzaldehyde,raw,3491,0.5723237557030385,0.6572799203744266,0.8164700407712783,1,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+4-hydroxybenzaldehyde,centered,3491,0.4054079978215529,0.48767672476672647,0.7296121595509025,1,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+crystal violet,raw,3386,-0.04453273629310772,-0.2624219545609897,0.9536661486896061,1,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+crystal violet,centered,3385,-0.02294659184223008,-0.37983268565679934,0.9518117649143478,1,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+nonylacridine orange,raw,3505,0.259002841261852,0.02682137373191638,0.8837382582661709,1,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+nonylacridine orange,centered,3505,0.27867179930293834,0.0590816384413818,0.8804111395280323,1,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+sinapic acid,raw,3493,0.4842204366844233,0.6639769059912821,0.5900613638043121,1,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+sinapic acid,centered,3491,0.32207535058374065,0.4717796033658852,0.0,1,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+vanillic acid,raw,3484,0.41913006927376545,0.4141130940740354,0.873157041192053,1,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+vanillic acid,centered,3484,0.3052708587954849,0.19564779910905936,0.8174900818014917,1,seed0,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+"2,6-dimethylpyrazine",raw,3503,0.15735988910022705,0.059616241222605185,0.8722364335473455,1,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+"2,6-dimethylpyrazine",centered,3502,0.31034041654614064,0.1552176829601876,0.8694398077612701,1,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+4-hydroxybenzaldehyde,raw,3491,0.5977144282958746,0.6871299958356036,0.8164700407712783,1,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+4-hydroxybenzaldehyde,centered,3491,0.4236519461932218,0.5288422903538923,0.7296121595509025,1,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+crystal violet,raw,3386,0.19563577064878873,-0.24738935169805581,0.9536661486896061,1,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+crystal violet,centered,3385,0.19824783507466037,-0.3206373891627559,0.9518117649143478,1,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+nonylacridine orange,raw,3505,0.33394351068151096,0.09799745685480216,0.8837382582661709,1,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+nonylacridine orange,centered,3505,0.3384190730304479,0.11866969542526185,0.8804111395280323,1,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+sinapic acid,raw,3493,0.4594612759628786,0.647405755928177,0.5900613638043121,1,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+sinapic acid,centered,3491,0.29708379479759056,0.4559801486447034,0.0,1,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+vanillic acid,raw,3484,0.41658195656802277,0.42358171377134957,0.873157041192053,1,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+vanillic acid,centered,3484,0.31842184386977684,0.22345576420575394,0.8174900818014917,1,seed1,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+"2,6-dimethylpyrazine",raw,3503,-0.048287425264021154,0.12880895285560823,0.8722364335473455,1,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+"2,6-dimethylpyrazine",centered,3502,0.05516867764509599,0.07702733799425873,0.8694398077612701,1,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+4-hydroxybenzaldehyde,raw,3491,0.4785504741942883,0.4834307126979328,0.8164700407712783,1,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+4-hydroxybenzaldehyde,centered,3491,0.16499670283505588,0.16117818682819632,0.7296121595509025,1,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+crystal violet,raw,3386,-0.07426747625669775,0.19725582795842672,0.9536661486896061,1,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+crystal violet,centered,3385,0.08000000847726635,0.24161611008327122,0.9518117649143478,1,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+nonylacridine orange,raw,3505,-0.09300746167653672,-0.13931753470331587,0.8837382582661709,1,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+nonylacridine orange,centered,3505,0.2044214591209633,0.0503061990913115,0.8804111395280323,1,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+sinapic acid,raw,3493,0.47902566538209107,0.5379759397728586,0.5900613638043121,1,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+sinapic acid,centered,3491,0.13520644969615758,0.19497515359762313,0.0,1,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+vanillic acid,raw,3484,0.4383577271781142,0.47139897907958567,0.873157041192053,1,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+vanillic acid,centered,3484,0.1500527197410304,0.1787917237840437,0.8174900818014917,1,seed2,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+"2,6-dimethylpyrazine",raw,3503,0.012677623744656811,-0.02637399363028333,0.8722364335473455,1,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+"2,6-dimethylpyrazine",centered,3502,0.12335754422143737,0.07271830641664725,0.8694398077612701,1,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+4-hydroxybenzaldehyde,raw,3491,0.5851919070508583,0.6685505221249617,0.8164700407712783,1,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+4-hydroxybenzaldehyde,centered,3491,0.4021228799532053,0.4918619166983251,0.7296121595509025,1,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+crystal violet,raw,3386,0.01666332475736623,-0.19341933456156626,0.9536661486896061,1,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+crystal violet,centered,3385,0.11191497603832605,-0.3587780900780603,0.9518117649143478,1,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+nonylacridine orange,raw,3505,0.3052647502260962,0.05976621055697667,0.8837382582661709,1,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+nonylacridine orange,centered,3505,0.3101984338463569,0.09018743028433013,0.8804111395280323,1,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+sinapic acid,raw,3493,0.5073079865566426,0.6751141463320955,0.5900613638043121,1,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+sinapic acid,centered,3491,0.30516656440388246,0.4596698790779271,0.0,1,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+vanillic acid,raw,3484,0.46565468105753066,0.4808567829484723,0.873157041192053,1,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1
+vanillic acid,centered,3484,0.3270294479089847,0.2309546641288021,0.8174900818014917,1,ensemble,mix_van_e150_cell_bliss_hill_loewe_dev_anchors_f1

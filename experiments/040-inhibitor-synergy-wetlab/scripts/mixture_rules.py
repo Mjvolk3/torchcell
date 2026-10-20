@@ -44,6 +44,17 @@ the two plate wells per cell), the Loewe additive front at the run's growth thre
 from the axis Hill fits, and counts of interior cells that contradict Loewe in each
 direction. HMF x AA (ex28) is analyzed but flagged: one run, growth islands at HMF
 2.0 g/L (039).
+
+BOUNDARY (``results/isobole_boundary.csv``). The alive / dead boundary of each grid is
+what the multi-inhibitor question asks for: the shape in dose space inside which the
+host still grows. Each rule's predicted alive region (prediction >= tau on the 81
+interior cells) is scored against the observed one by the Jaccard overlap, the cells
+wrong in each direction, and the growth edge (highest dose called alive) column by
+column and row by row in grid steps, against the raw observed region and against its
+MONOTONE CLOSURE (a cell is alive only if every cell with lower doses on both axes is
+alive; growth islands above dead cells are call errors and are dropped). The isobole
+figure outlines the closed region, marks the dropped cells with an x, and draws the
+Loewe front (dashed) and the Bliss front (dotted, the Bliss level set at tau).
 """
 
 from __future__ import annotations
@@ -51,13 +62,14 @@ from __future__ import annotations
 import os
 import os.path as osp
 from itertools import combinations
+from typing import Any
 
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
+from matplotlib.colors import LinearSegmentedColormap, Normalize
 from matplotlib.ticker import MultipleLocator
 from pydantic import BaseModel
 from scipy.optimize import brentq
@@ -97,7 +109,20 @@ ISOBOLES = {"ex26": ("FF", 0.3333), "ex27": ("FA", 0.2), "ex28": ("HMF", 0.504)}
 AA_STEP = 0.4
 N_BOOT = 2000
 SEED = 0
-RED, DARK_RED, BLUE = PLOT_PALETTE[1], PLOT_PALETTE[7], PLOT_PALETTE[4]
+ORANGE, RED, DARK_RED, BLUE = (
+    PLOT_PALETTE[0],
+    PLOT_PALETTE[1],
+    PLOT_PALETTE[7],
+    PLOT_PALETTE[4],
+)
+SHORT = {
+    "FF": "furfural",
+    "AA": "acetic acid",
+    "HMF": "5-HMF",
+    "FA": "formic acid",
+    "LVA": "levulinic acid",
+    "LA": "lactic acid",
+}
 FITNESS_CMAP = LinearSegmentedColormap.from_list(
     "fitness", [(0.0, DARK_RED), (0.55, RED), (1.0, "#FFFFFF")]
 )
@@ -167,6 +192,47 @@ def box(ax: plt.Axes) -> None:
     for side in ("top", "right", "bottom", "left"):
         ax.spines[side].set_visible(True)
         ax.spines[side].set_linewidth(0.5)
+
+
+def panel_letters(fig: plt.Figure, axes: list[plt.Axes] | np.ndarray) -> None:
+    """Nature panel letters: 8 pt bold lowercase, outside each panel's top-left.
+
+    THE GOTCHA THIS GUARDS. A letter placed above a panel whose title already touches
+    the canvas top lands OUTSIDE the figure, and the export (true size, no tight
+    bounding box, by design) clips it without a warning. So the top margin is
+    shrunk until every letter fits, and the extents are checked after placement:
+    a letter outside the canvas raises instead of disappearing.
+    """
+    flat = list(np.ravel(axes))
+    letter_h = (
+        8.0 / 72.0 / fig.get_figheight() * 1.4
+    )  # 8 pt plus leading, in figure units
+    boxes: list[Any] = []
+    for _ in range(8):
+        fig.canvas.draw()
+        inv = fig.transFigure.inverted()
+        boxes = [
+            ax.get_tightbbox(fig.canvas.get_renderer()).transformed(inv) for ax in flat
+        ]
+        overflow = max(b.y1 for b in boxes) + letter_h - 1.0
+        if overflow <= 0:
+            break
+        fig.subplots_adjust(top=fig.subplotpars.top - overflow - 0.005)
+    texts = [
+        fig.text(
+            b.x0, b.y1, letter, fontsize=8, fontweight="bold", ha="left", va="bottom"
+        )
+        for letter, b in zip("abcdefghijklmnop", boxes, strict=False)
+    ]
+    fig.canvas.draw()
+    inv = fig.transFigure.inverted()
+    for t in texts:
+        ext = t.get_window_extent(fig.canvas.get_renderer()).transformed(inv)
+        if ext.y1 > 1.0 or ext.x0 < 0.0:
+            raise RuntimeError(
+                f"panel letter {t.get_text()!r} lies outside the canvas "
+                f"(x0 {ext.x0:.3f}, y1 {ext.y1:.3f}); widen the top margin"
+            )
 
 
 def tenth_grid(ax: plt.Axes, axis: str) -> None:
@@ -564,6 +630,7 @@ def isobole_analysis(
                         "acetic_acid_g_per_l": ad,
                         "observed_mean": mean[i, j],
                         "grew_any_plate": bool(grew[i, j]),
+                        "grew_monotone": bool(monotone_alive(grew)[i, j]),
                         "bliss": bliss[i, j],
                         "excess_over_bliss": excess[i, j],
                         "loewe": loewe_pred[i, j],
@@ -572,13 +639,104 @@ def isobole_analysis(
         surfaces[run] = {
             "mean": mean,
             "grew": grew,
+            "grew_monotone": monotone_alive(grew),
             "excess": excess,
+            "bliss": bliss,
+            "loewe": loewe_pred,
+            "tau": np.array(grid.tau),
             "x": np.asarray(grid.x_doses),
             "a": np.asarray(grid.a_doses),
             "dx": np.array(dx),
             "da": np.array(da),
         }
     return summary, pd.DataFrame(cells), surfaces
+
+
+BOUNDARY_RULES = ("bliss", "loewe")
+
+
+def monotone_alive(grew: np.ndarray) -> np.ndarray:
+    """The downward-closed part of an alive mask: more inhibitor never rescues growth.
+
+    A cell is alive only if every cell with a dose no higher on BOTH axes is alive, so
+    an alive cell above a dead one (a growth island) is dropped. This is the
+    post-processing a dose-response boundary licenses: the observed call near the
+    boundary is noisy, and the one direction the biology forbids is growth returning
+    as dose rises. The origin (no inhibitor) is always alive.
+    """
+    out = np.zeros_like(grew, dtype=bool)
+    for i in range(grew.shape[0]):
+        for j in range(grew.shape[1]):
+            below = out[i - 1, j] if i else True
+            left = out[i, j - 1] if j else True
+            out[i, j] = bool(grew[i, j]) and bool(below) and bool(left)
+    return out
+
+
+def growth_edge(alive: np.ndarray) -> np.ndarray:
+    """Per column of an [rows, cols] alive mask: the highest alive row index, 0 if none.
+
+    Rows are inhibitor doses in grid steps, so the edge is the highest inhibitor dose
+    (in steps) at which growth is called in that acetic acid column; a column with no
+    alive cell has edge 0. Islands count: the edge is the highest alive row, not the
+    first dead one, so a grid with an island above a dead band reads the island.
+    """
+    rows = np.arange(alive.shape[0])[:, None]
+    return np.where(alive, rows, 0).max(axis=0)
+
+
+def boundary_scores(surfaces: dict[str, dict[str, np.ndarray]]) -> pd.DataFrame:
+    """How well each rule draws the alive / dead boundary of each isobole grid.
+
+    The boundary is scored on the 81 interior cells. A cell is alive under a rule when
+    the rule's predicted fitness is at least the grid's tau, the same call the observed
+    cells get. Three readouts per rule: the Jaccard overlap of the predicted and
+    observed alive regions; the cells wrong in each direction (predicted alive but
+    dead, predicted dead but alive); and the growth edge, the highest dose at which
+    growth is called, compared column by column along acetic acid (edge in inhibitor
+    steps) and row by row along the inhibitor (edge in acetic acid steps), as the mean
+    absolute and mean signed error in grid steps. One step is the grid's dose
+    increment (``ISOBOLES`` for the inhibitor, ``AA_STEP`` for acetic acid).
+    """
+    rows = []
+    for run, s in surfaces.items():
+        tau = float(s["tau"])
+        for observed, rule in (
+            (o, r) for o in ("raw", "monotone") for r in BOUNDARY_RULES
+        ):
+            obs = (s["grew"] if observed == "raw" else s["grew_monotone"])[1:, 1:]
+            pred = (s[rule] >= tau)[1:, 1:]
+            inter = int((pred & obs).sum())
+            union = int((pred | obs).sum())
+            col_obs, col_pred = growth_edge(obs), growth_edge(pred)
+            row_obs, row_pred = growth_edge(obs.T), growth_edge(pred.T)
+            rows.append(
+                {
+                    "run": run,
+                    "pair": f"{NAMES['AA']}|{NAMES[ISOBOLES[run][0]]}",
+                    "observed": observed,
+                    "rule": rule,
+                    "tau": tau,
+                    "n_islands_dropped": int(
+                        (s["grew"] & ~s["grew_monotone"])[1:, 1:].sum()
+                    ),
+                    "n_interior_cells": int(obs.size),
+                    "n_alive_observed": int(obs.sum()),
+                    "n_alive_predicted": int(pred.sum()),
+                    "jaccard_alive": inter / union if union else np.nan,
+                    "n_predicted_alive_observed_dead": int((pred & ~obs).sum()),
+                    "n_predicted_dead_observed_alive": int((~pred & obs).sum()),
+                    "edge_by_column_mae_steps": float(
+                        np.abs(col_pred - col_obs).mean()
+                    ),
+                    "edge_by_column_signed_steps": float((col_pred - col_obs).mean()),
+                    "edge_by_row_mae_steps": float(np.abs(row_pred - row_obs).mean()),
+                    "edge_by_row_signed_steps": float((row_pred - row_obs).mean()),
+                    "inhibitor_step_g_per_l": ISOBOLES[run][1],
+                    "acetic_acid_step_g_per_l": AA_STEP,
+                }
+            )
+    return pd.DataFrame(rows)
 
 
 # --------------------------------------------------------------------------- #
@@ -660,14 +818,13 @@ def plot_isoboles(
     fig, axes = plt.subplots(
         2, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(120))
     )
-    by_run = {s["run"]: s for s in summary}
     for c, run in enumerate(ISOBOLES):
         s = surfaces[run]
         inhibitor, step = ISOBOLES[run]
         for r, (key, cmap, norm) in enumerate(
             (
                 ("mean", FITNESS_CMAP, None),
-                ("excess", EXCESS_CMAP, TwoSlopeNorm(vmin=-1.0, vcenter=0.0, vmax=0.5)),
+                ("excess", EXCESS_CMAP, Normalize(vmin=-1.0, vmax=1.0)),
             )
         ):
             ax = axes[r, c]
@@ -677,7 +834,9 @@ def plot_isoboles(
                 origin="lower",
                 **({"vmin": 0, "vmax": 1} if norm is None else {"norm": norm}),
             )
-            grew = s["grew"]
+            grew = s["grew_monotone"]
+            for i, j in zip(*np.nonzero(s["grew"] & ~grew), strict=True):
+                ax.plot(j, i, marker="x", color="black", markersize=3, linestyle="none")
             for i in range(grew.shape[0]):
                 for j in range(grew.shape[1]):
                     if not grew[i, j]:
@@ -697,38 +856,58 @@ def plot_isoboles(
             ax.plot(
                 [0, float(s["da"]) / AA_STEP],
                 [float(s["dx"]) / step, 0],
-                color=BLUE if r == 0 else "black",
+                color=BLUE,
                 linewidth=1.0,
                 linestyle="--",
             )
+            # Bliss front at tau: the level set of the empirical Bliss surface. Drawn
+            # on the fitness row only; the excess row already shows Bliss as its zero.
+            if r == 0:
+                ax.contour(
+                    np.arange(grew.shape[1]),
+                    np.arange(grew.shape[0]),
+                    s["bliss"],
+                    levels=[float(s["tau"])],
+                    colors=[ORANGE],
+                    linewidths=1.0,
+                    linestyles=":",
+                )
             ax.set_xlim(-0.5, 9.5)
             ax.set_ylim(-0.5, 9.5)
             ax.set_xticks(range(10))
             ax.set_yticks(range(10))
-            ax.set_xticklabels([f"{v:g}" for v in s["a"]], rotation=60, fontsize=5)
-            ax.set_yticklabels([f"{v:g}" for v in s["x"]], fontsize=5)
+            ax.set_xticklabels([f"{v:.1f}" for v in s["a"]], rotation=90)
+            ax.set_yticklabels([f"{v:.2f}" for v in s["x"]])
             ax.set_xlabel("acetic acid (g/L)")
-            ax.set_ylabel(f"{NAMES[inhibitor]} (g/L)")
-            sm = by_run[run]
-            if r == 0:
-                flag = " (flagged)" if run == "ex28" else ""
-                ax.set_title(f"{run}{flag}: observed fitness")
-            else:
-                ax.set_title(
-                    f"excess over Bliss, mean {sm['mean_excess_over_bliss']:.2f} "
-                    f"[{sm['mean_excess_lo']:.2f}, {sm['mean_excess_hi']:.2f}]"
-                )
+            ax.set_ylabel(f"{SHORT[inhibitor]} (g/L)")
+            flag = ", flagged" if run == "ex28" else ""
+            pair = f"{SHORT[inhibitor]} x acetic acid ({run}{flag})"
+            ax.set_title(pair if r == 0 else "observed minus Bliss")
             box(ax)
             if c == 2:
-                cax = fig.add_axes([0.93, 0.56 if r == 0 else 0.1, 0.01, 0.33])
+                cax = fig.add_axes([0.92, 0.6 if r == 0 else 0.2, 0.01, 0.3])
                 cbar = fig.colorbar(im, cax=cax)
                 cbar.set_label(
-                    "fitness (no growth = 0)" if r == 0 else "observed - Bliss"
+                    "fitness (no growth = 0)" if r == 0 else "observed minus Bliss"
                 )
                 cbar.outline.set_linewidth(0.5)
+    handles = [
+        plt.Line2D([], [], color="black", linewidth=0.9),
+        plt.Line2D([], [], marker="x", color="black", markersize=3, linestyle="none"),
+        plt.Line2D([], [], color=BLUE, linewidth=1.0, linestyle="--"),
+        plt.Line2D([], [], color=ORANGE, linewidth=1.0, linestyle=":"),
+    ]
+    labels = [
+        "observed alive region, monotone closure",
+        "grew, dropped by the closure (island)",
+        "Loewe additive front at tau",
+        "Bliss independence front at tau",
+    ]
+    fig.legend(handles, labels, loc="lower center", ncol=4, frameon=False)
     fig.subplots_adjust(
-        left=0.07, right=0.9, top=0.95, bottom=0.1, hspace=0.45, wspace=0.45
+        left=0.07, right=0.9, top=0.95, bottom=0.14, hspace=0.5, wspace=0.45
     )
+    panel_letters(fig, axes.ravel())
     return save(fig, "mixture_rules_isoboles")
 
 
@@ -836,6 +1015,28 @@ def main() -> None:
     pd.DataFrame(summary).to_csv(osp.join(RESULTS, "isobole_summary.csv"), index=False)
     cells.to_csv(osp.join(RESULTS, "isobole_cells.csv"), index=False)
     print(pd.DataFrame(summary).drop(columns="flag").round(3).T.to_string())
+    boundary = boundary_scores(surfaces)
+    boundary.to_csv(osp.join(RESULTS, "isobole_boundary.csv"), index=False)
+    print(
+        boundary[
+            [
+                "run",
+                "observed",
+                "rule",
+                "n_islands_dropped",
+                "n_alive_observed",
+                "n_alive_predicted",
+                "jaccard_alive",
+                "n_predicted_alive_observed_dead",
+                "n_predicted_dead_observed_alive",
+                "edge_by_column_mae_steps",
+                "edge_by_column_signed_steps",
+                "edge_by_row_mae_steps",
+            ]
+        ]
+        .round(3)
+        .to_string(index=False)
+    )
 
     written = plot_rules(table) + plot_isoboles(surfaces, summary) + plot_pairs(pairs)
     print("\n".join(written))

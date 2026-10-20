@@ -60,6 +60,16 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
   (full 179 / wide 118.9 / half 88 / third 57.8 / sixth 28.3 mm) + `mm_to_in`; height
   `<= MAX_HEIGHT_MM` (170). Box all four spines (~0.5 pt). Arial 6 pt, `svg.fonttype: none`.
 - Tenth gridlines on 0--1 axes (`MultipleLocator(0.2)` major + `0.1` minor, minor ticks hidden).
+- **Chemical structures: the ACS 1996 drawing standard, via
+  `torchcell.utils.acs_structure`** (2026.10.15). ChemDraw's "ACS Document 1996"
+  template is what Nature and the ACS journals accept: bond 0.381 cm (10.8 pt), line
+  0.021 cm (0.6 pt), double-bond spacing 18 percent of the bond, Arial labels at the
+  figure-text size (6 pt), implicit hydrogens on heteroatoms only, no terminal-carbon
+  labels. The helper runs RDKit's `SetACS1996Mode`, rescales the bond to 10.8 pt, sets
+  Arial, and places the drawing as vector paths in points, so a structure never scales
+  with its axes and every bond on a sheet is the same length. Lay the slot out from the
+  structure's width (`acs_structure_svg`), anchor in axes fraction, name it with an
+  offset-points annotation. First use: panel a of the environment case-study gate.
 - Export true-size via `torchcell.utils.savefig_true_size_svg` (rescales 72 -> 100 dpi for
   draw.io); do NOT pass `bbox_inches="tight"` on a fixed-width panel.
 - Compose in draw.io at Nature print size (180 mm full / 88 mm column, `<= 170` mm tall);
@@ -302,3 +312,82 @@ Related: [[paper.proof-writing-standard]], [[paper.nature-biotech.figures]],
 - Any artifact used in the paper or `notes/` (figure, table, derived number) MUST be produced
   by a committed script that reads the real result files, and the artifact should point to its
   generating script.
+
+## 2026.10.19 - Chemical structures follow Nature's ChemDraw stylesheet, not ACS 1996
+
+Owner, 2026-10-19: the default for every drawn structure is Nature's own ChemDraw
+stylesheet (`nr-chemdraw-stylesheet.cds`, the "Nature" preset): Arial or Helvetica atom
+labels at 6 pt, a fixed bond length of 0.381 cm (10.8 pt), double-bond spacing at 18
+percent of the bond, a 0.021 cm (0.60 pt) line, bold width 0.055 cm, margin width 0.042
+cm, hash spacing 0.060 cm, a 120 degree chain angle, no labels on terminal carbons,
+implicit hydrogens shown on heteroatoms, regular-weight labels (bold only for compound
+numbers). "ACS Document 1996" is a different preset (0.508 cm bond, 10 pt labels) and is
+not ours. RDKit has only the ACS 1996 preset built in, so `torchcell.utils.acs_structure`
+draws in that mode and sets the bond, the label size and the font to Nature's values
+(`NATURE_BOND_PT`, `NATURE_FONT_PT`, `NATURE_LINE_PT`); the two presets agree on the
+rest of what RDKit exposes, and Nature's bold, hash and margin widths matter only for
+stereo drawings, which RDKit cannot be told. A sheet may draw structures smaller to pack
+them (the 040 gate sheet uses 0.55 of the bond length) and says so in its caption; the
+bond length and the atom label scale TOGETHER and the line width does not. See the
+correction of 2026.10.19 below: holding the label at 6 pt while the bond shrinks is
+what breaks a small structure.
+
+**Verified against the file, 2026-10-19.** `NR_chemdraw_stylesheet.cds` (ChemDraw 16.0.1.4,
+served at `https://www.nature.com/authors/guides/NR_chemdraw_stylesheet.cds`, the file the
+Communications Physics style guide names as "the Nature Chemistry template") carries, in its
+CDX document settings: chain angle 120 degrees, bond spacing 18.0 percent, bond length
+10.80 pt (0.381 cm), line width 0.595 pt (0.021 cm), bold width 1.56 pt (0.055 cm), margin
+width 1.19 pt (0.042 cm), hash spacing 1.70 pt (0.060 cm), one font (Helvetica), label and
+caption styles at 6 pt. ChemDraw's "ACS Document 1996" preset is 14.4 pt (0.508 cm) bonds
+with 10 pt labels, so the two differ in exactly the sizes that matter beside 6 pt figure
+text. The Nature Chemistry and Nature Chemical Biology structure guides (`nchemstyleguide.pdf`,
+`NChB_StructureGuide`) give drawing rules (discrete bonds, consistent lengths, labels only on
+heteroatoms, Me/Et abbreviations) and point to the template; neither names ACS 1996. The
+Communications Physics guide adds the scaling rule our sheets follow: structures drawn with
+the template "should, however, be scaled in proportion to fit our Figure dimensions, without
+changing the bond thickness." The downloaded file and the parsed settings are in the 040
+experiment note's record of 2026-10-19.
+
+## 2026.10.19 - Scaling a structure, and the math face inside a panel
+
+Two corrections from the 040 gate sheet's main figure, both found by the owner reading
+the rendered panel rather than the code.
+
+**A reduced structure scales its label with its bond.** The sheet drew the bond at 45
+percent of Nature's stylesheet and left the atom label at the stylesheet's 6 pt, so the
+label stood above the bond: a ratio of 0.81 where the stylesheet's own is 1.80. Small
+molecules collapsed under their own labels. Formic acid read as two labels joined by a
+stub, with no visible carbonyl, and the sodium of an acetate sat on top of the carbonyl
+oxygen. The rule, which the Communications Physics guide states and we now follow, is
+that a template structure "should be scaled in proportion ... without changing the bond
+thickness": bond and label scale together, line width is held. `acs_structure_svg` takes
+`bond_pt` and `font_pt` separately, so a caller that passes only `bond_pt` silently
+breaks the proportion. Pass both.
+
+The scale a panel can carry is set by the panel, not by taste. At the stylesheet's
+proportion a label at Nature's 5 pt floor needs a 9 pt bond, and a nine-carbon diacid is
+then about 33 mm wide, which no column of a four-panel row can hold. The 040 sheet runs
+at 0.55 (bond 5.94 pt, label 3.30 pt), the largest scale whose six rows fit its panel.
+An atom label inside a scaled drawing is part of the drawing, not free-standing figure
+text, so it is allowed under the 5 pt floor; a panel's own labels are not.
+
+**Computer Modern is too thin for a figure panel.** Mathematics set with `usetex` in
+Computer Modern at figure sizes prints as hairlines next to the Arial around it, which
+is what the owner saw: "the LaTeX ... text is extremely thin." Load `mathptmx` so the
+math is Times, which is both heavier and about a fifth narrower at the same size; the
+width it frees is what lets an equation hold a larger size. The roman default is still
+set to Helvetica AFTER `mathptmx`, because `mathptmx` sets it to Times and matplotlib
+wraps `usetex` text in `\rmfamily`, so the words in an equation stay sans beside the
+panel's Arial while the symbols read as LaTeX.
+
+```python
+plt.rcParams["text.latex.preamble"] = (
+    r"\usepackage{amsmath}\usepackage{mathptmx}\usepackage{helvet}"
+    r"\renewcommand{\rmdefault}{phv}"
+)
+```
+
+A `usetex` size is quantized by LaTeX's font selection, so width does not scale smoothly
+with the number asked for: the same equation measured 34.5 mm at 4.6 pt, 46.3 mm at
+5.0 pt and 39.0 mm at 5.2 pt. Measure the string at the size you intend to use rather
+than scaling a measurement.

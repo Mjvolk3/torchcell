@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+1-butyl-3-methylimidazolium chloride,raw,3483,0.4152192267426284,0.5014838668625803,0.8198231470383691,2,seed0,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.5387030356016219,0.7144680943387962,0.8765957711615572,2,seed0,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+"2,2'-bipyridine",raw,3488,-0.03396574551449086,-0.10340268582801389,0.933492750710942,2,seed0,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+"2,2'-bipyridine",centered,3486,0.5324327815864242,0.7547765051993197,0.9607605764794224,2,seed0,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+acetosyringone,raw,3496,0.16882381328373636,0.4363698722751918,0.8957051853886657,2,seed0,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+acetosyringone,centered,3491,-0.05783729282936764,-0.016641968626313237,0.8590077390738247,2,seed0,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+acetovanillone,raw,3508,0.29893646242236077,0.44243614270170006,0.912907133190153,2,seed0,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+acetovanillone,centered,3507,0.07366990244948411,0.11412032428979182,0.8892234638379066,2,seed0,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+benomyl,raw,3490,-0.21775605103046816,-0.15062463717909103,0.8675155610064766,2,seed0,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+benomyl,centered,3489,-0.1286875668337967,-0.2247524670532749,0.9183172142282519,2,seed0,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+sinapic acid,raw,3493,0.5198373878902605,0.6631669584042653,0.5900613638043121,2,seed0,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+sinapic acid,centered,3491,0.28862143902991777,0.3024889596714506,0.0,2,seed0,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+1-butyl-3-methylimidazolium chloride,raw,3483,0.431278552139741,0.587091886413701,0.8198231470383691,2,seed1,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.5699020074487536,0.7420513823717714,0.8765957711615572,2,seed1,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+"2,2'-bipyridine",raw,3488,-0.0921206289452552,-0.27859721857555964,0.933492750710942,2,seed1,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+"2,2'-bipyridine",centered,3486,0.4781400938256085,0.7755206680531433,0.9607605764794224,2,seed1,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+acetosyringone,raw,3496,0.17174600424676154,0.49251448197305603,0.8957051853886657,2,seed1,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+acetosyringone,centered,3491,-0.0232895337568149,0.061588427654782535,0.8590077390738247,2,seed1,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+acetovanillone,raw,3508,0.2698762840854882,0.45317283049365115,0.912907133190153,2,seed1,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+acetovanillone,centered,3507,0.04901009373206155,0.11051370411456898,0.8892234638379066,2,seed1,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+benomyl,raw,3490,-0.11575328530565054,-0.1255258907521851,0.8675155610064766,2,seed1,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+benomyl,centered,3489,0.3304884906277186,0.5007833938271796,0.9183172142282519,2,seed1,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+sinapic acid,raw,3493,0.5399155666490388,0.6696809117070343,0.5900613638043121,2,seed1,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+sinapic acid,centered,3491,0.310403827249254,0.31339534312878153,0.0,2,seed1,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+1-butyl-3-methylimidazolium chloride,raw,3483,0.48603787883595523,0.6055683304937275,0.8198231470383691,2,seed2,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.588369683351951,0.7498217598920038,0.8765957711615572,2,seed2,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+"2,2'-bipyridine",raw,3488,-0.13213845248354725,-0.28834221892648443,0.933492750710942,2,seed2,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+"2,2'-bipyridine",centered,3486,0.4117398636694647,0.7445387430285783,0.9607605764794224,2,seed2,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+acetosyringone,raw,3496,0.08899660214887571,0.45758220948784045,0.8957051853886657,2,seed2,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+acetosyringone,centered,3491,-0.08818489950776531,0.018752552782530886,0.8590077390738247,2,seed2,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+acetovanillone,raw,3508,0.1776715673981497,0.42506436411982734,0.912907133190153,2,seed2,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+acetovanillone,centered,3507,-0.032037488101712676,0.07034855947800896,0.8892234638379066,2,seed2,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+benomyl,raw,3490,-0.018698821719720055,-0.10709175516213695,0.8675155610064766,2,seed2,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+benomyl,centered,3489,0.3137184239238819,0.009133317575958658,0.9183172142282519,2,seed2,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+sinapic acid,raw,3493,0.45482208541592584,0.6400434499023384,0.5900613638043121,2,seed2,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+sinapic acid,centered,3491,0.23218687067923588,0.27180286632179135,0.0,2,seed2,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+1-butyl-3-methylimidazolium chloride,raw,3483,0.4650670797934869,0.5883009031456627,0.8198231470383691,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.5839973481083786,0.7472684247481393,0.8765957711615572,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+"2,2'-bipyridine",raw,3488,-0.10138900252819788,-0.2536811481345011,0.933492750710942,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+"2,2'-bipyridine",centered,3486,0.48965075254719476,0.7706985168690266,0.9607605764794224,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+acetosyringone,raw,3496,0.14045923560433032,0.47114032647381493,0.8957051853886657,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+acetosyringone,centered,3491,-0.057933130431265766,0.023250599712501714,0.8590077390738247,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+acetovanillone,raw,3508,0.25452343586377524,0.4456533219309737,0.912907133190153,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+acetovanillone,centered,3507,0.03566419288616445,0.1002262450351949,0.8892234638379066,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+benomyl,raw,3490,-0.15773627730677933,-0.1349588686097215,0.8675155610064766,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+benomyl,centered,3489,0.210661213430782,0.1681174774554519,0.9183172142282519,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+sinapic acid,raw,3493,0.5063454197282254,0.6645368445130114,0.5900613638043121,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs2_f2
+sinapic acid,centered,3491,0.2746139385631683,0.3001460285794065,0.0,2,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs2_f2

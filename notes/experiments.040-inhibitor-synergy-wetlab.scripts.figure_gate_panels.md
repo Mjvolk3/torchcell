@@ -50,8 +50,25 @@ directories are globbed, so a panel fills in as that round writes.
 - `$ASSET_IMAGES_DIR/040-inhibitor-synergy-wetlab/gate_*.png` and `.svg` (true size)
 - `experiments/040-inhibitor-synergy-wetlab/results/figure_gate_manifest.json`
 - `experiments/040-inhibitor-synergy-wetlab/results/figure_gate_numbers.json`
-- `notes-tex/wet-lab/hydrolysate-figure-gate/tables/gate_numbers.tex` and
+- `notes-tex/wet-lab/env-case-study-gate/tables/gate_numbers.tex` and
   `gate_figure_names.tex`
 
-The document that places them is `notes-tex/wet-lab/hydrolysate-figure-gate/`; run
+The document that places them is `notes-tex/wet-lab/env-case-study-gate/`; run
 `make numbers plots all check` there.
+
+## 2026.10.12 - Supplement four: the mixture rounds, read over both machines
+
+A sixth sheet, `gate_si4_rounds`, reads every round-3 and round-4 score file on
+GilaHyper (`results/mixture/r3*`, `r4*`) and pulled from Delta
+(`results/mixture-delta/r3*`) through `Reads.round_scores`, which keeps a `machine`
+column because the same config at the same seed was run on both for twenty-two arms. Six
+panels: the one-, two- and three-source arms on the public side and on the growth call
+(mean over every run on fold seed 0, the ridge and Loewe bars beside them); the dose
+channel paired on and off per arm and machine; the per-source held-out compound and dose
+scores beside the chemistry-feature learners' from `source_basis.csv`; the same config
+and seed on the two machines as a scatter; and the three fold seeds per source-set arm.
+The panels whose runs are still writing (round 4's seeds 3 to 5, the three-source arm on
+fold seeds 1 and 2) carry the half circle. The gate document places it as Supplement
+four with a source table, and the boundary section's "Round three" step reads it.
+
+![](./assets/images/040-inhibitor-synergy-wetlab/gate_si4_rounds_2026-10-12-03-54-56.svg)

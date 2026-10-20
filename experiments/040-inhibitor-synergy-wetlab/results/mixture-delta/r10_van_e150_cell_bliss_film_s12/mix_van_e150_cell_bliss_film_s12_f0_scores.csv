@@ -1,0 +1,55 @@
+task,subset,metric,value,n,reference_rule,reference_value,call,fold,member,name,fold_seed,training_call,beats_reference
+vanacloig,test_compounds,centered_spearman_median,0.35064915373736827,6,"nested ridge FCFP4 counts, 32 compounds",0.359,both,0,seed1,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+vanacloig,test_compounds,raw_spearman_median,0.27191316914804375,6,,,both,0,seed1,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,all_wells,fitness_spearman_train_fit,0.9567687007045576,180,,,both,0,seed1,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,5-(hydroxymethyl)furfural,fitness_spearman_train_fit,0.9330147569055341,27,,,both,0,seed1,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,acetic acid,fitness_spearman_train_fit,0.9503642048645214,27,,,both,0,seed1,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,formic acid,fitness_spearman_train_fit,0.9569305598236798,27,,,both,0,seed1,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,furfural,fitness_spearman_train_fit,0.8658085366800108,27,,,both,0,seed1,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,lactic acid,fitness_spearman_train_fit,0.9310870404656467,27,,,both,0,seed1,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,levulinic acid,fitness_spearman_train_fit,0.9281909617845142,27,,,both,0,seed1,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex23,combinations,growth_auroc,0.5918367346938775,63,loewe_ex21,0.9580498866213152,served,0,seed1,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+ex23,combinations,worst_scenario_spearman,0.15824098478076512,63,"loewe_ex21 (all 63, no growth 0)",0.7721221654788084,served,0,seed1,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+ex23,combinations_that_grew,fitness_spearman,0.1935064935064935,21,bliss_ex23,0.5727272727272726,served,0,seed1,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+isobole_ex26,interior_cells,mean_observed_minus_predicted,-0.7550718731819094,81,bliss_ex21,-0.0819865762791027,served,0,seed1,mix_van_e150_cell_bliss_film_s12_f0,0,served,further
+isobole_ex27,interior_cells,mean_observed_minus_predicted,-0.944887155208543,81,bliss_ex21,-0.4464534611740319,served,0,seed1,mix_van_e150_cell_bliss_film_s12_f0,0,served,further
+isobole_ex28,interior_cells,mean_observed_minus_predicted,-0.454696200427054,81,bliss_ex21,-0.017328758933014,served,0,seed1,mix_van_e150_cell_bliss_film_s12_f0,0,served,further
+ex23,combinations,growth_auroc,0.4842105263157895,63,loewe_ex21,0.9515789473684212,software,0,seed1,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+ex23,combinations,worst_scenario_spearman,0.08901994210308171,63,"loewe_ex21 (all 63, no growth 0)",0.7998212253100504,software,0,seed1,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+ex23,combinations_that_grew,fitness_spearman,0.6161538461538462,25,bliss_ex23,0.8646153846153846,software,0,seed1,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+vanacloig,test_compounds,centered_spearman_median,0.21581278663663012,6,"nested ridge FCFP4 counts, 32 compounds",0.359,both,0,seed2,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+vanacloig,test_compounds,raw_spearman_median,0.1057938344817186,6,,,both,0,seed2,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,all_wells,fitness_spearman_train_fit,0.9456946527503024,180,,,both,0,seed2,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,5-(hydroxymethyl)furfural,fitness_spearman_train_fit,0.9349424733454218,27,,,both,0,seed2,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,acetic acid,fitness_spearman_train_fit,0.9407256226650842,27,,,both,0,seed2,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,formic acid,fitness_spearman_train_fit,0.934414546651358,27,,,both,0,seed2,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,furfural,fitness_spearman_train_fit,0.8844280751032368,27,,,both,0,seed2,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,lactic acid,fitness_spearman_train_fit,0.7845805910341993,27,,,both,0,seed2,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,levulinic acid,fitness_spearman_train_fit,0.7513926833493687,27,,,both,0,seed2,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex23,combinations,growth_auroc,0.6156462585034014,63,loewe_ex21,0.9580498866213152,served,0,seed2,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+ex23,combinations,worst_scenario_spearman,0.21051114916233407,63,"loewe_ex21 (all 63, no growth 0)",0.7721221654788084,served,0,seed2,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+ex23,combinations_that_grew,fitness_spearman,0.2701298701298701,21,bliss_ex23,0.5727272727272726,served,0,seed2,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+isobole_ex26,interior_cells,mean_observed_minus_predicted,-0.6680217479950834,81,bliss_ex21,-0.0819865762791027,served,0,seed2,mix_van_e150_cell_bliss_film_s12_f0,0,served,further
+isobole_ex27,interior_cells,mean_observed_minus_predicted,-0.9331322082643887,81,bliss_ex21,-0.4464534611740319,served,0,seed2,mix_van_e150_cell_bliss_film_s12_f0,0,served,further
+isobole_ex28,interior_cells,mean_observed_minus_predicted,-0.49135245866390076,81,bliss_ex21,-0.017328758933014,served,0,seed2,mix_van_e150_cell_bliss_film_s12_f0,0,served,further
+ex23,combinations,growth_auroc,0.5136842105263159,63,loewe_ex21,0.9515789473684212,software,0,seed2,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+ex23,combinations,worst_scenario_spearman,0.13916666566801578,63,"loewe_ex21 (all 63, no growth 0)",0.7998212253100504,software,0,seed2,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+ex23,combinations_that_grew,fitness_spearman,0.6323076923076923,25,bliss_ex23,0.8646153846153846,software,0,seed2,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+vanacloig,test_compounds,centered_spearman_median,0.31745251945168773,6,"nested ridge FCFP4 counts, 32 compounds",0.359,both,0,ensemble,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+vanacloig,test_compounds,raw_spearman_median,0.20577127169894338,6,,,both,0,ensemble,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,all_wells,fitness_spearman_train_fit,0.9535171985971224,180,,,both,0,ensemble,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,5-(hydroxymethyl)furfural,fitness_spearman_train_fit,0.9330147569055341,27,,,both,0,ensemble,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,acetic acid,fitness_spearman_train_fit,0.9503642048645214,27,,,both,0,ensemble,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,formic acid,fitness_spearman_train_fit,0.9569305598236798,27,,,both,0,ensemble,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,furfural,fitness_spearman_train_fit,0.8844280751032368,27,,,both,0,ensemble,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,lactic acid,fitness_spearman_train_fit,0.8944604281077848,27,,,both,0,ensemble,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex21,levulinic acid,fitness_spearman_train_fit,0.8545250124365369,27,,,both,0,ensemble,mix_van_e150_cell_bliss_film_s12_f0,0,served,
+ex23,combinations,growth_auroc,0.6009070294784581,63,loewe_ex21,0.9580498866213152,served,0,ensemble,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+ex23,combinations,worst_scenario_spearman,0.17964113965619674,63,"loewe_ex21 (all 63, no growth 0)",0.7721221654788084,served,0,ensemble,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+ex23,combinations_that_grew,fitness_spearman,0.24285714285714283,21,bliss_ex23,0.5727272727272726,served,0,ensemble,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+isobole_ex26,interior_cells,mean_observed_minus_predicted,-0.7115468105884964,81,bliss_ex21,-0.0819865762791027,served,0,ensemble,mix_van_e150_cell_bliss_film_s12_f0,0,served,further
+isobole_ex27,interior_cells,mean_observed_minus_predicted,-0.9390096817364659,81,bliss_ex21,-0.4464534611740319,served,0,ensemble,mix_van_e150_cell_bliss_film_s12_f0,0,served,further
+isobole_ex28,interior_cells,mean_observed_minus_predicted,-0.47302432954547735,81,bliss_ex21,-0.017328758933014,served,0,ensemble,mix_van_e150_cell_bliss_film_s12_f0,0,served,further
+ex23,combinations,growth_auroc,0.4957894736842105,63,loewe_ex21,0.9515789473684212,software,0,ensemble,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+ex23,combinations,worst_scenario_spearman,0.10866028941480833,63,"loewe_ex21 (all 63, no growth 0)",0.7998212253100504,software,0,ensemble,mix_van_e150_cell_bliss_film_s12_f0,0,served,below
+ex23,combinations_that_grew,fitness_spearman,0.6346153846153846,25,bliss_ex23,0.8646153846153846,software,0,ensemble,mix_van_e150_cell_bliss_film_s12_f0,0,served,below

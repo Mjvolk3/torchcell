@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+"2,6-dimethylpyrazine",raw,3503,0.15195477213520187,0.08007058613935032,0.8722364335473455,1,seed0,mix_van_e150_cell_bliss_displace_doff_f1
+"2,6-dimethylpyrazine",centered,3502,0.12829243344870153,0.021832645076507767,0.8694398077612701,1,seed0,mix_van_e150_cell_bliss_displace_doff_f1
+4-hydroxybenzaldehyde,raw,3491,0.6077932730400059,0.6832616845580061,0.8164700407712783,1,seed0,mix_van_e150_cell_bliss_displace_doff_f1
+4-hydroxybenzaldehyde,centered,3491,0.43286060068589416,0.527302294282233,0.7296121595509025,1,seed0,mix_van_e150_cell_bliss_displace_doff_f1
+crystal violet,raw,3386,0.045100368324800535,-0.13569241847188976,0.9536661486896061,1,seed0,mix_van_e150_cell_bliss_displace_doff_f1
+crystal violet,centered,3385,0.1786935525210366,-0.2283782286772047,0.9518117649143478,1,seed0,mix_van_e150_cell_bliss_displace_doff_f1
+nonylacridine orange,raw,3505,0.24360439095956604,0.055157924706974774,0.8837382582661709,1,seed0,mix_van_e150_cell_bliss_displace_doff_f1
+nonylacridine orange,centered,3505,0.3095970227224029,0.10708206281327863,0.8804111395280323,1,seed0,mix_van_e150_cell_bliss_displace_doff_f1
+sinapic acid,raw,3493,0.4362391352987478,0.631161018389803,0.5900613638043121,1,seed0,mix_van_e150_cell_bliss_displace_doff_f1
+sinapic acid,centered,3491,0.2722670135182028,0.44479697413766256,0.0,1,seed0,mix_van_e150_cell_bliss_displace_doff_f1
+vanillic acid,raw,3484,0.4302712443150688,0.4334283558976759,0.873157041192053,1,seed0,mix_van_e150_cell_bliss_displace_doff_f1
+vanillic acid,centered,3484,0.2686030897180282,0.18080301729818812,0.8174900818014917,1,seed0,mix_van_e150_cell_bliss_displace_doff_f1
+"2,6-dimethylpyrazine",raw,3503,0.09242688586177127,0.042076901606826735,0.8722364335473455,1,seed1,mix_van_e150_cell_bliss_displace_doff_f1
+"2,6-dimethylpyrazine",centered,3502,0.0911779657414885,0.009879906852189806,0.8694398077612701,1,seed1,mix_van_e150_cell_bliss_displace_doff_f1
+4-hydroxybenzaldehyde,raw,3491,0.5598925271883219,0.641275215378002,0.8164700407712783,1,seed1,mix_van_e150_cell_bliss_displace_doff_f1
+4-hydroxybenzaldehyde,centered,3491,0.3666706848030666,0.45213530520163975,0.7296121595509025,1,seed1,mix_van_e150_cell_bliss_displace_doff_f1
+crystal violet,raw,3386,0.06206020894324975,0.14447884664497054,0.9536661486896061,1,seed1,mix_van_e150_cell_bliss_displace_doff_f1
+crystal violet,centered,3385,0.15700703082812356,-0.005428985593343287,0.9518117649143478,1,seed1,mix_van_e150_cell_bliss_displace_doff_f1
+nonylacridine orange,raw,3505,0.2329321978601072,0.03967276316877898,0.8837382582661709,1,seed1,mix_van_e150_cell_bliss_displace_doff_f1
+nonylacridine orange,centered,3505,0.29204928921968654,0.09024257180033052,0.8804111395280323,1,seed1,mix_van_e150_cell_bliss_displace_doff_f1
+sinapic acid,raw,3493,0.43962656495333124,0.6408182178907966,0.5900613638043121,1,seed1,mix_van_e150_cell_bliss_displace_doff_f1
+sinapic acid,centered,3491,0.270706498915931,0.4549638311279058,0.0,1,seed1,mix_van_e150_cell_bliss_displace_doff_f1
+vanillic acid,raw,3484,0.4162722293752439,0.4037531638273279,0.873157041192053,1,seed1,mix_van_e150_cell_bliss_displace_doff_f1
+vanillic acid,centered,3484,0.30126579603979897,0.19965039634994497,0.8174900818014917,1,seed1,mix_van_e150_cell_bliss_displace_doff_f1
+"2,6-dimethylpyrazine",raw,3503,0.20473889157503025,0.10570863511638061,0.8722364335473455,1,seed2,mix_van_e150_cell_bliss_displace_doff_f1
+"2,6-dimethylpyrazine",centered,3502,0.13289272279201408,0.04249913858665087,0.8694398077612701,1,seed2,mix_van_e150_cell_bliss_displace_doff_f1
+4-hydroxybenzaldehyde,raw,3491,0.6339362213778921,0.7139790092083169,0.8164700407712783,1,seed2,mix_van_e150_cell_bliss_displace_doff_f1
+4-hydroxybenzaldehyde,centered,3491,0.46080141914259654,0.5691380365627917,0.7296121595509025,1,seed2,mix_van_e150_cell_bliss_displace_doff_f1
+crystal violet,raw,3386,-0.17011649523414732,0.19389679000925814,0.9536661486896061,1,seed2,mix_van_e150_cell_bliss_displace_doff_f1
+crystal violet,centered,3385,-0.06461354593653759,0.04331616092819952,0.9518117649143478,1,seed2,mix_van_e150_cell_bliss_displace_doff_f1
+nonylacridine orange,raw,3505,0.31002783540133627,0.1044749465154092,0.8837382582661709,1,seed2,mix_van_e150_cell_bliss_displace_doff_f1
+nonylacridine orange,centered,3505,0.33862732508266974,0.15483196130409094,0.8804111395280323,1,seed2,mix_van_e150_cell_bliss_displace_doff_f1
+sinapic acid,raw,3493,0.4869457411477819,0.6639389522024328,0.5900613638043121,1,seed2,mix_van_e150_cell_bliss_displace_doff_f1
+sinapic acid,centered,3491,0.3119276661544267,0.4760219914457508,0.0,1,seed2,mix_van_e150_cell_bliss_displace_doff_f1
+vanillic acid,raw,3484,0.4161178217766253,0.41455599179583796,0.873157041192053,1,seed2,mix_van_e150_cell_bliss_displace_doff_f1
+vanillic acid,centered,3484,0.29147331645285673,0.19244044235186153,0.8174900818014917,1,seed2,mix_van_e150_cell_bliss_displace_doff_f1
+"2,6-dimethylpyrazine",raw,3503,0.15379139560089522,0.07815449686234686,0.8722364335473455,1,ensemble,mix_van_e150_cell_bliss_displace_doff_f1
+"2,6-dimethylpyrazine",centered,3502,0.12063871689780942,0.025496363050548,0.8694398077612701,1,ensemble,mix_van_e150_cell_bliss_displace_doff_f1
+4-hydroxybenzaldehyde,raw,3491,0.6158436723567695,0.6965102494489598,0.8164700407712783,1,ensemble,mix_van_e150_cell_bliss_displace_doff_f1
+4-hydroxybenzaldehyde,centered,3491,0.44313508799985263,0.5408216302823028,0.7296121595509025,1,ensemble,mix_van_e150_cell_bliss_displace_doff_f1
+crystal violet,raw,3386,-0.014178807584531064,0.07744067143872699,0.9536661486896061,1,ensemble,mix_van_e150_cell_bliss_displace_doff_f1
+crystal violet,centered,3385,0.11682513152556064,-0.10705904458912155,0.9518117649143478,1,ensemble,mix_van_e150_cell_bliss_displace_doff_f1
+nonylacridine orange,raw,3505,0.272293350256268,0.06537927744930318,0.8837382582661709,1,ensemble,mix_van_e150_cell_bliss_displace_doff_f1
+nonylacridine orange,centered,3505,0.3194942716322312,0.11743540074007414,0.8804111395280323,1,ensemble,mix_van_e150_cell_bliss_displace_doff_f1
+sinapic acid,raw,3493,0.45704744699855165,0.6482842088694262,0.5900613638043121,1,ensemble,mix_van_e150_cell_bliss_displace_doff_f1
+sinapic acid,centered,3491,0.28506858257367185,0.46127923696400713,0.0,1,ensemble,mix_van_e150_cell_bliss_displace_doff_f1
+vanillic acid,raw,3484,0.42400386510180216,0.41977464439548057,0.873157041192053,1,ensemble,mix_van_e150_cell_bliss_displace_doff_f1
+vanillic acid,centered,3484,0.2924993010387001,0.19489551759764667,0.8174900818014917,1,ensemble,mix_van_e150_cell_bliss_displace_doff_f1

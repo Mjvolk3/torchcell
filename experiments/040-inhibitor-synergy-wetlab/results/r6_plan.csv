@@ -1,0 +1,3 @@
+job,sweep,arm,sources,n_sources,epochs,split,aux_holdout,fold_seed,folds,configs,estimated_hours,time_limit_hours,overrides
+1,r6_van_e150_cgt0p1,van_e150_cgt0p1,vanacloig,1,150,compound,none,0,0 1 2,3,9.9,12,"seeds=[0, 1, 2], cgt_lambda=0.1"
+2,r6_van_e150_cgt1,van_e150_cgt1,vanacloig,1,150,compound,none,0,0 1 2,3,9.9,12,"seeds=[0, 1, 2], cgt_lambda=1.0"

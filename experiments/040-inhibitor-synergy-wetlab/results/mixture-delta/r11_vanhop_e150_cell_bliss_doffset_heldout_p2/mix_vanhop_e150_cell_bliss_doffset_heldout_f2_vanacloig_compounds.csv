@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+1-butyl-3-methylimidazolium chloride,raw,3483,0.5800068240725124,0.710967045872044,0.8198231470383691,2,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.6301689553485866,0.8116400886287708,0.8734729503384993,2,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+5-(hydroxymethyl)furfural,raw,3503,0.31022240145901514,0.21203190083428755,0.0,2,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+5-(hydroxymethyl)furfural,centered,3503,0.49232544657919985,0.572268767323903,0.6420614542017117,2,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+azelaic acid,raw,3495,0.3230470544099448,0.2524434728512284,0.8666732262919424,2,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+azelaic acid,centered,3494,-0.04649382461324988,-0.21501006807867376,0.8436186178533334,2,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+benomyl,raw,3490,-0.18643483002011813,-0.18308444180429925,0.8675155610064766,2,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+benomyl,centered,3489,-0.5571384684830393,-0.590935016016122,0.917096881665478,2,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+ferulic acid,raw,3498,0.4457785652584746,0.6448203401889171,0.9219505587175544,2,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+ferulic acid,centered,3497,0.37639943364135936,0.5029638888042898,0.8958024751441768,2,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+methylglyoxal,raw,3482,-0.2446326889780246,-0.09430806331860561,0.9198342493438169,2,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+methylglyoxal,centered,3479,0.06230674682825593,0.3487079160507941,0.9375811386650508,2,seed0,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+1-butyl-3-methylimidazolium chloride,raw,3483,0.4708666528588805,0.5659306181023837,0.8198231470383691,2,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.5369701358792232,0.7067175976020771,0.8734729503384993,2,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+5-(hydroxymethyl)furfural,raw,3503,0.19501697544960023,0.035542485939527454,0.0,2,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+5-(hydroxymethyl)furfural,centered,3503,0.45574367664228027,0.5353250643734361,0.6420614542017117,2,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+azelaic acid,raw,3495,0.3838590261605202,0.35909318344415775,0.8666732262919424,2,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+azelaic acid,centered,3494,-0.022618791264992378,-0.13829358509865397,0.8436186178533334,2,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+benomyl,raw,3490,-0.11954499866769579,-0.1322711476877518,0.8675155610064766,2,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+benomyl,centered,3489,-0.4570540405623424,-0.5371908650520583,0.917096881665478,2,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+ferulic acid,raw,3498,0.42306713008691543,0.5652249372505066,0.9219505587175544,2,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+ferulic acid,centered,3497,0.2678667279794727,0.35171938687114335,0.8958024751441768,2,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+methylglyoxal,raw,3482,-0.10208849171881755,-0.07819367567364849,0.9198342493438169,2,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+methylglyoxal,centered,3479,0.032384456220207344,0.2874817132759887,0.9375811386650508,2,seed1,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+1-butyl-3-methylimidazolium chloride,raw,3483,0.5974397269849226,0.7213414620191277,0.8198231470383691,2,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.5980814945760597,0.7900031773294547,0.8734729503384993,2,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+5-(hydroxymethyl)furfural,raw,3503,0.34131659971729433,0.291764302941409,0.0,2,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+5-(hydroxymethyl)furfural,centered,3503,0.46861759929179186,0.504783841393635,0.6420614542017117,2,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+azelaic acid,raw,3495,0.3244318571857421,0.22391501254990384,0.8666732262919424,2,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+azelaic acid,centered,3494,0.027788276107081334,-0.20793680561929417,0.8436186178533334,2,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+benomyl,raw,3490,-0.04034198200730266,-0.035420770627662634,0.8675155610064766,2,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+benomyl,centered,3489,-0.22027997273521444,-0.3388402549152004,0.917096881665478,2,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+ferulic acid,raw,3498,0.48255346449332853,0.6476942140659958,0.9219505587175544,2,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+ferulic acid,centered,3497,0.35482540053208217,0.45349009306796995,0.8958024751441768,2,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+methylglyoxal,raw,3482,-0.29669236406957583,-0.123101329047862,0.9198342493438169,2,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+methylglyoxal,centered,3479,-0.10712742021777454,0.13640130190753352,0.9375811386650508,2,seed2,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+1-butyl-3-methylimidazolium chloride,raw,3483,0.6006128569377226,0.7236119496691762,0.8198231470383691,2,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.6530503037980033,0.8201903196119907,0.8734729503384993,2,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+5-(hydroxymethyl)furfural,raw,3503,0.3150494141814255,0.20442989331375983,0.0,2,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+5-(hydroxymethyl)furfural,centered,3503,0.4920655108026345,0.5569238490483818,0.6420614542017117,2,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+azelaic acid,raw,3495,0.3577606637172577,0.2924115089682322,0.8666732262919424,2,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+azelaic acid,centered,3494,0.0005652117935241955,-0.22129420761209836,0.8436186178533334,2,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+benomyl,raw,3490,-0.1206138063029163,-0.12028611865495582,0.8675155610064766,2,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+benomyl,centered,3489,-0.49451882261124647,-0.537136478552114,0.917096881665478,2,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+ferulic acid,raw,3498,0.4643584269782727,0.6355021743859912,0.9219505587175544,2,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+ferulic acid,centered,3497,0.3721064976935271,0.4977222904387862,0.8958024751441768,2,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+methylglyoxal,raw,3482,-0.24297020380705567,-0.10627689777000837,0.9198342493438169,2,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f2
+methylglyoxal,centered,3479,-0.003123054835014045,0.2773829198921742,0.9375811386650508,2,ensemble,mix_vanhop_e150_cell_bliss_doffset_heldout_f2

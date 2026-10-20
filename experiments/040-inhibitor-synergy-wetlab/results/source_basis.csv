@@ -1,0 +1,5 @@
+source,scheme,folds,best_features,best_model,spearman_median,ceiling_median,fraction_of_ceiling,null_random_neighbor
+Hoepfner,10fold_compound_grouped,10,fcfp4_count,ridge,0.1890305165789572,,,0.0226193146958508
+Hillenmeyer HET,10fold_compound_grouped,10,maccs,knn1,0.126463720971306,0.7857001463863328,0.1609567231888018,0.0028408151822574
+Wildenhain,10fold_compound_grouped,10,ecfp4_count,knn5,0.394215120255397,0.8693775389487153,0.4534452554779563,0.1675836672029053
+Vanacloig,leave_one_compound_out,41,fcfp4_count,ridge,0.3110575153691954,0.8350222755582468,0.3725140328277358,0.0278154397640426

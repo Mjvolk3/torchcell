@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+"2,2'-bipyridine",raw,3488,0.3406289796330142,0.2231044458550216,0.933492750710942,2,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f2
+"2,2'-bipyridine",centered,3486,0.42801423681291234,0.3114262580167636,0.9501327502644268,2,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f2
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.28223277758378995,0.39035638190056354,0.9115685305555769,2,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f2
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3483,0.1371436645562936,0.08440123148317398,0.8720771893156393,2,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f2
+acetosyringone,raw,3496,0.4988541562377506,0.7316133128097125,0.8957051853886657,2,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f2
+acetosyringone,centered,3491,0.314648296760183,0.6248523566984783,0.8628274801538771,2,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f2
+azelaic acid,raw,3495,0.3181889475535445,0.3931483020414861,0.8666732262919424,2,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f2
+azelaic acid,centered,3494,0.11560718938756535,0.1767237941179561,0.8348127183954164,2,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f2
+crystal violet,raw,3386,0.58860304676859,0.7198580456958027,0.9536661486896061,2,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f2
+crystal violet,centered,3385,0.5779696465724329,0.7035703393679611,0.9505538633617162,2,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f2
+syringic acid,raw,3499,0.4746286949069847,0.4457084202001348,0.8780958331339587,2,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f2
+syringic acid,centered,3498,0.42610882093774854,0.3149753099274449,0.8599345287479178,2,seed0,mix_van_e150_cell_bliss_displace_co_fs1_f2
+"2,2'-bipyridine",raw,3488,0.3164669673030104,0.18373907660746608,0.933492750710942,2,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f2
+"2,2'-bipyridine",centered,3486,0.4226471472070153,0.27785565392521666,0.9501327502644268,2,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f2
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.505928129144383,0.6357194028507405,0.9115685305555769,2,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f2
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3483,0.4514335523013863,0.43453489836270426,0.8720771893156393,2,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f2
+acetosyringone,raw,3496,0.6443592419900691,0.7727766157790955,0.8957051853886657,2,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f2
+acetosyringone,centered,3491,0.5156104249389655,0.6806536405786346,0.8628274801538771,2,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f2
+azelaic acid,raw,3495,0.43564037655068244,0.4437605121518784,0.8666732262919424,2,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f2
+azelaic acid,centered,3494,0.2812200516275394,0.26412600810381914,0.8348127183954164,2,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f2
+crystal violet,raw,3386,0.6160116302261227,0.7313175846818417,0.9536661486896061,2,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f2
+crystal violet,centered,3385,0.6147423794960148,0.708335318105234,0.9505538633617162,2,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f2
+syringic acid,raw,3499,0.46420036613534493,0.43831973821101067,0.8780958331339587,2,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f2
+syringic acid,centered,3498,0.42586258754589335,0.3112582314921032,0.8599345287479178,2,seed1,mix_van_e150_cell_bliss_displace_co_fs1_f2
+"2,2'-bipyridine",raw,3488,0.32174172311471766,0.2487319912941566,0.933492750710942,2,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f2
+"2,2'-bipyridine",centered,3486,0.48357728583544196,0.41451643734902827,0.9501327502644268,2,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f2
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.5389181403015774,0.6641655570522652,0.9115685305555769,2,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f2
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3483,0.4952662233454351,0.49515832569784174,0.8720771893156393,2,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f2
+acetosyringone,raw,3496,0.5264345466935838,0.6982848910878109,0.8957051853886657,2,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f2
+acetosyringone,centered,3491,0.3237632121301666,0.5541443142440178,0.8628274801538771,2,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f2
+azelaic acid,raw,3495,0.4138406306898375,0.4302215543658873,0.8666732262919424,2,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f2
+azelaic acid,centered,3494,0.22077029419842187,0.23611530728269306,0.8348127183954164,2,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f2
+crystal violet,raw,3386,0.4044632063521631,0.620649991683153,0.9536661486896061,2,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f2
+crystal violet,centered,3385,0.39921260087351357,0.6222293687497965,0.9505538633617162,2,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f2
+syringic acid,raw,3499,0.4648284367872391,0.462264603484526,0.8780958331339587,2,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f2
+syringic acid,centered,3498,0.4441472420591816,0.3529834915776437,0.8599345287479178,2,seed2,mix_van_e150_cell_bliss_displace_co_fs1_f2
+"2,2'-bipyridine",raw,3488,0.3351573969036105,0.22014397155870344,0.933492750710942,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f2
+"2,2'-bipyridine",centered,3486,0.4531460878519216,0.3373781335025992,0.9501327502644268,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f2
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.4775956952962141,0.6128615081325433,0.9115685305555769,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f2
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3483,0.4046277060722751,0.3745766913402762,0.8720771893156393,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f2
+acetosyringone,raw,3496,0.5837301880084662,0.7547705186188758,0.8957051853886657,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f2
+acetosyringone,centered,3491,0.4175745611451699,0.648949893312352,0.8628274801538771,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f2
+azelaic acid,raw,3495,0.41496107120025505,0.4508482761084032,0.8666732262919424,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f2
+azelaic acid,centered,3494,0.2403527280914652,0.2509379803019634,0.8348127183954164,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f2
+crystal violet,raw,3386,0.5756424625146898,0.7252626543397186,0.9536661486896061,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f2
+crystal violet,centered,3385,0.57513279250973,0.7146505357761042,0.9505538633617162,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f2
+syringic acid,raw,3499,0.4773392881040889,0.45671459909370027,0.8780958331339587,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f2
+syringic acid,centered,3498,0.44402518205424196,0.3336084190871929,0.8599345287479178,2,ensemble,mix_van_e150_cell_bliss_displace_co_fs1_f2

@@ -1,0 +1,41 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+1-ethyl-3-methylimidazolium chloride,raw,3490,0.5243542764067628,0.5921961781210685,0.8997525277118116,4,seed0,mix_van_ftenv_film_L1_lh1_s2_f4
+1-ethyl-3-methylimidazolium chloride,centered,3489,0.39917016351977386,0.691540546716096,0.9216439793845335,4,seed0,mix_van_ftenv_film_L1_lh1_s2_f4
+"2,6-dimethylpyrazine",raw,3503,-0.33573972333846247,-0.24447754326211027,0.8722364335473455,4,seed0,mix_van_ftenv_film_L1_lh1_s2_f4
+"2,6-dimethylpyrazine",centered,3502,0.023809481988709424,0.06667273830522685,0.8830159243469143,4,seed0,mix_van_ftenv_film_L1_lh1_s2_f4
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.4653256402888645,0.6527430709654405,0.9115685305555769,4,seed0,mix_van_ftenv_film_L1_lh1_s2_f4
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3483,0.35747303794439045,0.39425390433888213,0.8599736553412327,4,seed0,mix_van_ftenv_film_L1_lh1_s2_f4
+5-(hydroxymethyl)furfural,raw,3503,-0.005112286066947919,-0.06900067783917099,0.0,4,seed0,mix_van_ftenv_film_L1_lh1_s2_f4
+5-(hydroxymethyl)furfural,centered,3503,0.35718767547819374,0.38317059136027937,0.6355433064470166,4,seed0,mix_van_ftenv_film_L1_lh1_s2_f4
+nonylacridine orange,raw,3505,0.3355496233490661,0.593629583531548,0.8837382582661709,4,seed0,mix_van_ftenv_film_L1_lh1_s2_f4
+nonylacridine orange,centered,3505,0.18517389431278206,0.4849625542931318,0.8655197252344989,4,seed0,mix_van_ftenv_film_L1_lh1_s2_f4
+1-ethyl-3-methylimidazolium chloride,raw,3490,0.514554384573202,0.5676042413659175,0.8997525277118116,4,seed1,mix_van_ftenv_film_L1_lh1_s2_f4
+1-ethyl-3-methylimidazolium chloride,centered,3489,0.4474714894435639,0.6779889901402343,0.9216439793845335,4,seed1,mix_van_ftenv_film_L1_lh1_s2_f4
+"2,6-dimethylpyrazine",raw,3503,0.04653044867139383,-0.10239799293825497,0.8722364335473455,4,seed1,mix_van_ftenv_film_L1_lh1_s2_f4
+"2,6-dimethylpyrazine",centered,3502,0.27219168979095415,0.18648466381487022,0.8830159243469143,4,seed1,mix_van_ftenv_film_L1_lh1_s2_f4
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.5540857715278062,0.68932659224673,0.9115685305555769,4,seed1,mix_van_ftenv_film_L1_lh1_s2_f4
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3483,0.4241516171169362,0.4455912578227691,0.8599736553412327,4,seed1,mix_van_ftenv_film_L1_lh1_s2_f4
+5-(hydroxymethyl)furfural,raw,3503,0.14056246618182,-0.015613125773313882,0.0,4,seed1,mix_van_ftenv_film_L1_lh1_s2_f4
+5-(hydroxymethyl)furfural,centered,3503,0.42500951712351825,0.38936953420298975,0.6355433064470166,4,seed1,mix_van_ftenv_film_L1_lh1_s2_f4
+nonylacridine orange,raw,3505,-0.03190585710347624,0.2804300071757622,0.8837382582661709,4,seed1,mix_van_ftenv_film_L1_lh1_s2_f4
+nonylacridine orange,centered,3505,-0.17115055080487182,-0.0069948024361767575,0.8655197252344989,4,seed1,mix_van_ftenv_film_L1_lh1_s2_f4
+1-ethyl-3-methylimidazolium chloride,raw,3490,0.470066523558411,0.6009148338048691,0.8997525277118116,4,seed2,mix_van_ftenv_film_L1_lh1_s2_f4
+1-ethyl-3-methylimidazolium chloride,centered,3489,0.3844444313409144,0.7084674895616909,0.9216439793845335,4,seed2,mix_van_ftenv_film_L1_lh1_s2_f4
+"2,6-dimethylpyrazine",raw,3503,-0.18730371830868162,-0.20087214713741922,0.8722364335473455,4,seed2,mix_van_ftenv_film_L1_lh1_s2_f4
+"2,6-dimethylpyrazine",centered,3502,0.18204832634544038,0.14092001908543753,0.8830159243469143,4,seed2,mix_van_ftenv_film_L1_lh1_s2_f4
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.4831317347133911,0.6912006631436544,0.9115685305555769,4,seed2,mix_van_ftenv_film_L1_lh1_s2_f4
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3483,0.353656386104115,0.4445011165513075,0.8599736553412327,4,seed2,mix_van_ftenv_film_L1_lh1_s2_f4
+5-(hydroxymethyl)furfural,raw,3503,0.0786046663236541,-0.03613413530509241,0.0,4,seed2,mix_van_ftenv_film_L1_lh1_s2_f4
+5-(hydroxymethyl)furfural,centered,3503,0.4089313344794833,0.5197983879939945,0.6355433064470166,4,seed2,mix_van_ftenv_film_L1_lh1_s2_f4
+nonylacridine orange,raw,3505,0.6798493053673769,0.7234303625301041,0.8837382582661709,4,seed2,mix_van_ftenv_film_L1_lh1_s2_f4
+nonylacridine orange,centered,3505,0.6254628478083287,0.6363732377628541,0.8655197252344989,4,seed2,mix_van_ftenv_film_L1_lh1_s2_f4
+1-ethyl-3-methylimidazolium chloride,raw,3490,0.5284554552617061,0.6002105630469162,0.8997525277118116,4,ensemble,mix_van_ftenv_film_L1_lh1_s2_f4
+1-ethyl-3-methylimidazolium chloride,centered,3489,0.4280062277468061,0.702286446475816,0.9216439793845335,4,ensemble,mix_van_ftenv_film_L1_lh1_s2_f4
+"2,6-dimethylpyrazine",raw,3503,-0.22670758878565464,-0.2008363683667268,0.8722364335473455,4,ensemble,mix_van_ftenv_film_L1_lh1_s2_f4
+"2,6-dimethylpyrazine",centered,3502,0.16505307394824814,0.13313728539344488,0.8830159243469143,4,ensemble,mix_van_ftenv_film_L1_lh1_s2_f4
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3483,0.5173266975500315,0.686864215902136,0.9115685305555769,4,ensemble,mix_van_ftenv_film_L1_lh1_s2_f4
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3483,0.39804871334953845,0.4379313363155047,0.8599736553412327,4,ensemble,mix_van_ftenv_film_L1_lh1_s2_f4
+5-(hydroxymethyl)furfural,raw,3503,0.09587203911442904,-0.043191286456358655,0.0,4,ensemble,mix_van_ftenv_film_L1_lh1_s2_f4
+5-(hydroxymethyl)furfural,centered,3503,0.42677022545331245,0.44977769317074884,0.6355433064470166,4,ensemble,mix_van_ftenv_film_L1_lh1_s2_f4
+nonylacridine orange,raw,3505,0.6460329957541763,0.6870263147474134,0.8837382582661709,4,ensemble,mix_van_ftenv_film_L1_lh1_s2_f4
+nonylacridine orange,centered,3505,0.5806129736596224,0.6144793706304165,0.8655197252344989,4,ensemble,mix_van_ftenv_film_L1_lh1_s2_f4

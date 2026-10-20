@@ -1,0 +1,4 @@
+checkpoint,fold,seed,source,medium,genotype,order,predicted_response,every_gene_fitted
+r3smoke_gene_split_van_fold0_fs0_seed0,0,0,vanacloig,acetic acid=2.0mM (unfitted) + furfural=1.5mM,YAL005C,1,-1.1195726979546516,True
+r3smoke_gene_split_van_fold0_fs0_seed0,0,0,vanacloig,acetic acid=2.0mM (unfitted) + furfural=1.5mM,YAL005C YBR009C,2,-1.114724009138847,True
+r3smoke_gene_split_van_fold0_fs0_seed0,0,0,vanacloig,acetic acid=2.0mM (unfitted) + furfural=1.5mM,YAL005C YBR009C YOR202W,3,-1.1098753203230425,True

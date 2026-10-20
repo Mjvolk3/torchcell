@@ -1,0 +1,101 @@
+compound,target,n_genes,spearman,pearson,ceiling,condition,source,fold,member,name
+"Ascosteroside, MK6059",raw,4461,0.012252298728096637,8.47772035046797e-05,,"Ascosteroside, MK6059|-7.699",hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+"Ascosteroside, MK6059",centered,4461,-0.004786630039143191,-0.007497172021907339,,"Ascosteroside, MK6059|-7.699",hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Bafilomycin A1,raw,4461,0.009227462988460264,-0.003172888189661055,,Bafilomycin A1|-4.360,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Bafilomycin A1,centered,4461,0.007499266675944719,-0.0039877474223975855,,Bafilomycin A1|-4.360,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Benzothiazole derivative,raw,4469,-0.029530275666717103,-0.006326419325426953,,Benzothiazole derivative|-5.301,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Benzothiazole derivative,centered,4469,0.02500295746945724,0.020384973906961416,,Benzothiazole derivative|-5.301,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+CMB1509,raw,4454,0.004510343430607741,-0.00925341330575543,,CMB1509|-5.412,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+CMB1509,centered,4454,-0.000519436169284818,-0.0042861053343082895,,CMB1509|-5.412,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Concanamycin A Derivative,raw,4470,-0.0037751413877003598,0.0007167664049757542,,Concanamycin A Derivative|-6.324,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Concanamycin A Derivative,centered,4470,-0.007358569431338638,-0.009372252373531932,,Concanamycin A Derivative|-6.324,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+D-Sorbitol,raw,4469,0.008892758523782919,0.0030326714238243456,,D-Sorbitol|-0.260,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+D-Sorbitol,centered,4469,0.005039142222161653,0.01221425678817423,,D-Sorbitol|-0.260,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+D-Sorbitol,raw,4469,1.937093706863768e-05,-0.003124468887176176,,D-Sorbitol|-0.187,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+D-Sorbitol,centered,4469,-0.018574107310290612,-0.0028558446603342345,,D-Sorbitol|-0.187,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Ethidium Bromide,raw,4454,0.015909114372178092,0.016293210867485624,,Ethidium Bromide|-4.155,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Ethidium Bromide,centered,4454,0.007933979050770255,0.003148398729551399,,Ethidium Bromide|-4.155,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Ethidium Bromide,raw,4466,0.004295075553862157,-0.001360230259025547,,Ethidium Bromide|-4.086,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Ethidium Bromide,centered,4466,-0.00023264155318532877,0.0036639652377419936,,Ethidium Bromide|-4.086,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Methylmercury,raw,4413,-0.0022712014289843732,-0.0014133596456123363,,Methylmercury|-7.000,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Methylmercury,centered,4413,0.01841995548386729,0.01767440990005729,,Methylmercury|-7.000,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Methylmercury,raw,4413,0.002087011047115392,0.012187374352431455,,Methylmercury|-6.602,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Methylmercury,centered,4413,0.015223911969623518,0.0226367995642767,,Methylmercury|-6.602,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Methylmercury,raw,4413,0.004167915892446452,-0.007716180567402797,,Methylmercury|-6.301,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Methylmercury,centered,4413,-0.0046812199224576904,0.009720223307511646,,Methylmercury|-6.301,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Peptolide SDZ 90-215,raw,4454,0.03381236081385307,0.02939039918561656,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Peptolide SDZ 90-215,centered,4454,0.0015686996317211966,0.023139258838086534,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Peptolide SDZ 90-215,raw,4454,0.025645054649465808,0.03117566288681356,,Peptolide SDZ 90-215|-5.398,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Peptolide SDZ 90-215,centered,4454,0.03299739325232628,0.04840020412838906,,Peptolide SDZ 90-215|-5.398,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Peptolide SDZ 90-215,raw,4454,0.0025618838775015116,0.02265341182647241,,Peptolide SDZ 90-215|-5.222,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Peptolide SDZ 90-215,centered,4454,0.029349575921161764,0.04985207371687697,,Peptolide SDZ 90-215|-5.222,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+"Ps-341, Velcade, Bortezomib",raw,4466,0.009665125528376445,-0.025263163147599417,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+"Ps-341, Velcade, Bortezomib",centered,4466,-0.015125840117595787,-0.0028468318919030212,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+"Ps-341, Velcade, Bortezomib",raw,4466,0.011191698398528278,-0.014786360775943357,,"Ps-341, Velcade, Bortezomib|-3.523",hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+"Ps-341, Velcade, Bortezomib",centered,4466,0.012094662458863632,-0.004425698396345285,,"Ps-341, Velcade, Bortezomib|-3.523",hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Sodium Dodecyl Sulfate (SDS),raw,4462,-0.00681079842382118,-0.012112069611604845,,Sodium Dodecyl Sulfate (SDS)|-3.824,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Sodium Dodecyl Sulfate (SDS),centered,4462,-0.014464659098528853,-0.026228138605177066,,Sodium Dodecyl Sulfate (SDS)|-3.824,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Sodium Dodecyl Sulfate (SDS),raw,4438,0.001693114043238376,-0.019453247431415358,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Sodium Dodecyl Sulfate (SDS),centered,4438,-0.01807053501634338,-0.02450827742805853,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Sodium Hydroxide,raw,4469,-0.024570795191625354,-0.005567863427587563,,Sodium Hydroxide|-2.000,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Sodium Hydroxide,centered,4469,-0.017895044927834617,-0.03554759089695539,,Sodium Hydroxide|-2.000,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Sodium Hydroxide,raw,4469,-0.001437478563282795,-0.009846718784297966,,Sodium Hydroxide|-2.097,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Sodium Hydroxide,centered,4469,-0.00316809137520516,-0.011902390887475155,,Sodium Hydroxide|-2.097,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Soraphen A,raw,4441,-0.017291144294530672,-0.011991463394397724,,Soraphen A|-6.301,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+Soraphen A,centered,4441,-0.004896121050155773,0.0046994499286611095,,Soraphen A|-6.301,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+TAN-999,raw,4467,-0.02729787344532793,-0.018682772872030653,,TAN-999|-7.000,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+TAN-999,centered,4467,0.014626983279491267,0.004465927570588981,,TAN-999|-7.000,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+TAN-999,raw,4467,0.037225567299212683,0.029753567274011142,,TAN-999|-6.000,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+TAN-999,centered,4467,-0.0002655611066269825,0.0040131316563223355,,TAN-999|-6.000,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+amitriptyline,raw,4462,-0.03614948754032865,-0.015926909882435208,,amitriptyline|-4.301,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+amitriptyline,centered,4462,-0.020996338733297155,-0.006513802708801169,,amitriptyline|-4.301,hoepfner_hop,0,seed0,r3w2smoke_gene_split_vanhop_train_val
+"Ascosteroside, MK6059",raw,4461,0.012252298728096637,8.47772035046797e-05,,"Ascosteroside, MK6059|-7.699",hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+"Ascosteroside, MK6059",centered,4461,-0.004786630039143191,-0.007497172021907339,,"Ascosteroside, MK6059|-7.699",hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Bafilomycin A1,raw,4461,0.009227462988460264,-0.003172888189661055,,Bafilomycin A1|-4.360,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Bafilomycin A1,centered,4461,0.007499266675944719,-0.0039877474223975855,,Bafilomycin A1|-4.360,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Benzothiazole derivative,raw,4469,-0.029530275666717103,-0.006326419325426953,,Benzothiazole derivative|-5.301,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Benzothiazole derivative,centered,4469,0.02500295746945724,0.020384973906961416,,Benzothiazole derivative|-5.301,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+CMB1509,raw,4454,0.004510343430607741,-0.00925341330575543,,CMB1509|-5.412,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+CMB1509,centered,4454,-0.000519436169284818,-0.0042861053343082895,,CMB1509|-5.412,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Concanamycin A Derivative,raw,4470,-0.0037751413877003598,0.0007167664049757542,,Concanamycin A Derivative|-6.324,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Concanamycin A Derivative,centered,4470,-0.007358569431338638,-0.009372252373531932,,Concanamycin A Derivative|-6.324,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+D-Sorbitol,raw,4469,0.008892758523782919,0.0030326714238243456,,D-Sorbitol|-0.260,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+D-Sorbitol,centered,4469,0.005039142222161653,0.01221425678817423,,D-Sorbitol|-0.260,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+D-Sorbitol,raw,4469,1.937093706863768e-05,-0.003124468887176176,,D-Sorbitol|-0.187,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+D-Sorbitol,centered,4469,-0.018574107310290612,-0.0028558446603342345,,D-Sorbitol|-0.187,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Ethidium Bromide,raw,4454,0.015909114372178092,0.016293210867485624,,Ethidium Bromide|-4.155,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Ethidium Bromide,centered,4454,0.007933979050770255,0.003148398729551399,,Ethidium Bromide|-4.155,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Ethidium Bromide,raw,4466,0.004295075553862157,-0.001360230259025547,,Ethidium Bromide|-4.086,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Ethidium Bromide,centered,4466,-0.00023264155318532877,0.0036639652377419936,,Ethidium Bromide|-4.086,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Methylmercury,raw,4413,-0.0022712014289843732,-0.0014133596456123363,,Methylmercury|-7.000,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Methylmercury,centered,4413,0.01841995548386729,0.01767440990005729,,Methylmercury|-7.000,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Methylmercury,raw,4413,0.002087011047115392,0.012187374352431455,,Methylmercury|-6.602,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Methylmercury,centered,4413,0.015223911969623518,0.0226367995642767,,Methylmercury|-6.602,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Methylmercury,raw,4413,0.004167915892446452,-0.007716180567402797,,Methylmercury|-6.301,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Methylmercury,centered,4413,-0.0046812199224576904,0.009720223307511646,,Methylmercury|-6.301,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Peptolide SDZ 90-215,raw,4454,0.03381236081385307,0.02939039918561656,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Peptolide SDZ 90-215,centered,4454,0.0015686996317211966,0.023139258838086534,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Peptolide SDZ 90-215,raw,4454,0.025645054649465808,0.03117566288681356,,Peptolide SDZ 90-215|-5.398,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Peptolide SDZ 90-215,centered,4454,0.03299739325232628,0.04840020412838906,,Peptolide SDZ 90-215|-5.398,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Peptolide SDZ 90-215,raw,4454,0.0025618838775015116,0.02265341182647241,,Peptolide SDZ 90-215|-5.222,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Peptolide SDZ 90-215,centered,4454,0.029349575921161764,0.04985207371687697,,Peptolide SDZ 90-215|-5.222,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+"Ps-341, Velcade, Bortezomib",raw,4466,0.009665125528376445,-0.025263163147599417,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+"Ps-341, Velcade, Bortezomib",centered,4466,-0.015125840117595787,-0.0028468318919030212,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+"Ps-341, Velcade, Bortezomib",raw,4466,0.011191698398528278,-0.014786360775943357,,"Ps-341, Velcade, Bortezomib|-3.523",hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+"Ps-341, Velcade, Bortezomib",centered,4466,0.012094662458863632,-0.004425698396345285,,"Ps-341, Velcade, Bortezomib|-3.523",hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Sodium Dodecyl Sulfate (SDS),raw,4462,-0.00681079842382118,-0.012112069611604845,,Sodium Dodecyl Sulfate (SDS)|-3.824,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Sodium Dodecyl Sulfate (SDS),centered,4462,-0.014464659098528853,-0.026228138605177066,,Sodium Dodecyl Sulfate (SDS)|-3.824,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Sodium Dodecyl Sulfate (SDS),raw,4438,0.001693114043238376,-0.019453247431415358,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Sodium Dodecyl Sulfate (SDS),centered,4438,-0.01807053501634338,-0.02450827742805853,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Sodium Hydroxide,raw,4469,-0.024570795191625354,-0.005567863427587563,,Sodium Hydroxide|-2.000,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Sodium Hydroxide,centered,4469,-0.017895044927834617,-0.03554759089695539,,Sodium Hydroxide|-2.000,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Sodium Hydroxide,raw,4469,-0.001437478563282795,-0.009846718784297966,,Sodium Hydroxide|-2.097,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Sodium Hydroxide,centered,4469,-0.00316809137520516,-0.011902390887475155,,Sodium Hydroxide|-2.097,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Soraphen A,raw,4441,-0.017291144294530672,-0.011991463394397724,,Soraphen A|-6.301,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+Soraphen A,centered,4441,-0.004896121050155773,0.0046994499286611095,,Soraphen A|-6.301,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+TAN-999,raw,4467,-0.02729787344532793,-0.018682772872030653,,TAN-999|-7.000,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+TAN-999,centered,4467,0.014626983279491267,0.004465927570588981,,TAN-999|-7.000,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+TAN-999,raw,4467,0.037225567299212683,0.029753567274011142,,TAN-999|-6.000,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+TAN-999,centered,4467,-0.0002655611066269825,0.0040131316563223355,,TAN-999|-6.000,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+amitriptyline,raw,4462,-0.03614948754032865,-0.015926909882435208,,amitriptyline|-4.301,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val
+amitriptyline,centered,4462,-0.020996338733297155,-0.006513802708801169,,amitriptyline|-4.301,hoepfner_hop,0,ensemble,r3w2smoke_gene_split_vanhop_train_val

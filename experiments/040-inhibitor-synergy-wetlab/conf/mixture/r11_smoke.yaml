@@ -1,0 +1,130 @@
+# experiments/040-inhibitor-synergy-wetlab/conf/mixture/r11_smoke.yaml
+#
+# Smoke of every code path round 11 adds, four steps each, on one GPU. The numbers are
+# noise; what is checked is that each path runs forward and backward, scores the wet-lab
+# wells and writes its table. The CPU checks of the pieces themselves (the Loewe solver
+# against its own equation, the Hill curve's fall with dose, the three rules' ordering,
+# the zero-started deviation and displacement) are in
+# scratchpad/check_r11_pieces.py and all nineteen pass.
+#
+#   1  the operator: a compound token displaces the gene embeddings, the head reads the
+#      perturbed cell alone, and the dose gain scales the displacement
+#   2  the functional form, zero-shot: a Hill curve per compound, composed by Loewe
+#   3  the Hill curve beside the dose gain, fitted on the titration
+#   4  the deviation term where it can actually be fitted (Hillenmeyer HET's pairs)
+#   5  the highest single agent on the plain head
+#   6  the gene-cold split under the displacement and the deviation term
+#
+#   sbatch --job-name=040-r11-smoke --partition=gpuA40x4-interactive --time=01:00:00 \
+#     --export=ALL,SWEEP=conf/mixture/r11_smoke.yaml,PARALLEL=1 \
+#     experiments/040-inhibitor-synergy-wetlab/scripts/delta_train_mixture.slurm
+- name: r11smoke_displace_co_doff
+  sources: [vanacloig]
+  readout: cell
+  compound_pool: bliss
+  env_mode: displace
+  cell_only: true
+  dose: offset
+  host_train: anchors+ex21
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: false
+- name: r11smoke_hill_loewe_anchors
+  sources: [vanacloig]
+  readout: cell
+  compound_pool: bliss
+  host_form: hill
+  compose: loewe
+  host_train: anchors
+  dose: "off"
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: false
+- name: r11smoke_hill_doff
+  sources: [vanacloig]
+  readout: cell
+  compound_pool: bliss
+  host_form: hill
+  compose: bliss
+  host_train: anchors+ex21
+  dose: offset
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: false
+- name: r11smoke_vanhet_dev
+  sources: [vanacloig, hillenmeyer_het]
+  readout: cell
+  compound_pool: bliss
+  deviation: pair
+  host_train: anchors+ex21
+  dose: "off"
+  aux_holdout: compound
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  cond_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: false
+- name: r11smoke_head_hsa
+  sources: [vanacloig]
+  readout: cell
+  compound_pool: bliss
+  host_form: head
+  compose: hsa
+  host_train: anchors+ex21
+  dose: "off"
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: false
+- name: r11smoke_displace_dev_gene
+  sources: [vanacloig]
+  readout: cell
+  compound_pool: bliss
+  env_mode: displace
+  deviation: pair
+  split: gene
+  host_train: anchors+ex21
+  dose: "off"
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: false

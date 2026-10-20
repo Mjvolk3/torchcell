@@ -323,6 +323,192 @@ def savefig_true_size_svg(
         f.write(svg)
 
 
+# --- Chemical structures at Nature's ChemDraw stylesheet -------------------------
+#
+# The publication standard for a drawn structure here is Nature's own ChemDraw
+# stylesheet (``nr-chemdraw-stylesheet.cds``, the "Nature" preset; owner, 2026-10-19:
+# the default for every plot): Arial or Helvetica atom labels at 6 pt, a fixed bond
+# length of 0.381 cm (10.8 pt), double-bond spacing at 18 percent of the bond, a
+# 0.021 cm (0.60 pt) line, a 120 degree chain angle, no labels on terminal carbons,
+# implicit hydrogens shown on heteroatoms (HO, OH, NH). It is NOT ChemDraw's "ACS
+# Document 1996" preset, whose bond is 0.508 cm (14.4 pt) with 10 pt labels. RDKit has
+# only the ACS 1996 preset built in (``SetACS1996Mode``: bond 14.4 pt, line 0.6 pt,
+# offset 0.18, monochrome, 10 pt labels, 120 degree chains), so a structure is drawn
+# in that mode and the bond, the label size and the font are then set to Nature's
+# values; the two presets agree on everything else RDKit exposes. Nature's bold width
+# (1.56 pt, for bold bonds), hash spacing (1.70 pt, for hashed wedges) and margin
+# width (1.19 pt) have no RDKit option and matter only for stereo drawings.
+NATURE_BOND_PT = 10.8  # 0.381 cm, Nature's fixed bond length
+NATURE_LINE_PT = 0.6  # 0.021 cm, Nature's line width (the same in ACS 1996)
+NATURE_FONT_PT = 6.0  # atom labels, Nature's 6 pt Arial
+#: the older names, kept for the scripts that import them; the values are Nature's
+ACS_BOND_PT = NATURE_BOND_PT
+ACS_LINE_PT = NATURE_LINE_PT
+ACS_FONT_PT = NATURE_FONT_PT
+
+_SVG_NUMBER = re.compile(r"[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?")
+_SVG_COMMAND = re.compile(r"([MLQCZ])([^MLQCZ]*)")
+
+
+def _svg_path(d: str) -> Any:
+    """An absolute SVG path (M, L, Q, C, Z) as a matplotlib :class:`Path`.
+
+    RDKit writes nothing else: bonds are ``M x,y L x,y`` lines and FreeType glyph
+    outlines are ``M``, ``L``, ``Q`` and ``Z`` runs. A relative command is a
+    malformed input here and raises.
+    """
+    from matplotlib.path import Path
+
+    verts: list[tuple[float, float]] = []
+    codes: list[Any] = []
+    for cmd, body in _SVG_COMMAND.findall(d):
+        nums = [float(x) for x in _SVG_NUMBER.findall(body)]
+        if cmd == "M":
+            verts.append((nums[0], nums[1]))
+            codes.append(Path.MOVETO)
+            for p in zip(nums[2::2], nums[3::2], strict=True):
+                verts.append(p)
+                codes.append(Path.LINETO)
+        elif cmd == "L":
+            for p in zip(nums[0::2], nums[1::2], strict=True):
+                verts.append(p)
+                codes.append(Path.LINETO)
+        elif cmd == "Q":
+            for i in range(0, len(nums), 4):
+                verts.extend([(nums[i], nums[i + 1]), (nums[i + 2], nums[i + 3])])
+                codes.extend([Path.CURVE3, Path.CURVE3])
+        elif cmd == "C":
+            for i in range(0, len(nums), 6):
+                verts.extend(
+                    [
+                        (nums[i], nums[i + 1]),
+                        (nums[i + 2], nums[i + 3]),
+                        (nums[i + 4], nums[i + 5]),
+                    ]
+                )
+                codes.extend([Path.CURVE4] * 3)
+        else:
+            verts.append(verts[-1])
+            codes.append(Path.CLOSEPOLY)
+    return Path(verts, codes)
+
+
+def acs_structure_svg(
+    smiles: str,
+    bond_pt: float = ACS_BOND_PT,
+    font_pt: float = ACS_FONT_PT,
+    line_pt: float = ACS_LINE_PT,
+) -> tuple[str, float, float]:
+    """The structure of ``smiles`` at Nature's ChemDraw stylesheet, as SVG text with
+    its width and height.
+
+    RDKit's ACS 1996 mode is the base (the only preset it has); the bond, the label
+    size and the font are Nature's by default. The canvas is flexible (RDKit sizes it
+    to the molecule), one SVG pixel is one point, the bond is ``bond_pt`` long, the
+    labels are set in Arial at ``font_pt`` as glyph outlines (so the drawing needs no
+    font at render time), and the line is ``line_pt`` wide. Returns ``(svg, width_pt,
+    height_pt)``.
+    """
+    from matplotlib import font_manager
+    from rdkit import Chem
+    from rdkit.Chem import rdDepictor
+    from rdkit.Chem.Draw import rdMolDraw2D
+
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        raise ValueError(f"acs_structure_svg: RDKit cannot parse {smiles!r}")
+    rdDepictor.Compute2DCoords(mol)
+    drawer = rdMolDraw2D.MolDraw2DSVG(-1, -1)
+    # RDKit's stub types every attribute of the options object as the object itself,
+    # so the assignments below are typed through Any
+    opts: Any = drawer.drawOptions()
+    mean_bond = rdMolDraw2D.MeanBondLength(mol)
+    rdMolDraw2D.SetACS1996Mode(opts, mean_bond)
+    opts.scalingFactor = bond_pt / mean_bond
+    opts.fixedFontSize = int(round(font_pt))
+    opts.bondLineWidth = line_pt
+    opts.fontFile = font_manager.findfont("Arial")
+    opts.padding = 0.02
+    drawer.DrawMolecule(mol)
+    drawer.FinishDrawing()
+    svg = drawer.GetDrawingText()
+    m = re.search(r"width='([\d.]+)px' height='([\d.]+)px'", svg)
+    if m is None:
+        raise ValueError("acs_structure_svg: RDKit wrote no pixel size")
+    return svg, float(m.group(1)), float(m.group(2))
+
+
+def acs_structure_box(smiles: str, **kwargs: Any) -> Any:
+    """The structure at Nature's stylesheet as a :class:`DrawingArea` in points, black
+    on nothing.
+
+    Every RDKit path becomes a matplotlib patch: a stroked path for a bond (its
+    ``stroke-width`` kept, butt caps, miter joins, as RDKit draws it) and a filled
+    path for a glyph outline. The area has no background, so it sits on a panel's
+    own fill. ``kwargs`` go to :func:`acs_structure_svg`.
+    """
+    from matplotlib.offsetbox import DrawingArea
+    from matplotlib.patches import PathPatch
+    from matplotlib.transforms import Affine2D
+
+    svg, w, h = acs_structure_svg(smiles, **kwargs)
+    area = DrawingArea(w, h, 0, 0)
+    flip = Affine2D().scale(1, -1).translate(0, h)  # SVG y runs down
+    for m in re.finditer(r"<path([^>]*)/>", svg):
+        attrs = m.group(1)
+        m_d = re.search(r"d='([^']*)'", attrs)
+        if m_d is None:
+            continue
+        path = _svg_path(m_d.group(1)).transformed(flip)
+        m_style = re.search(r"style='([^']*)'", attrs)
+        style = m_style.group(1) if m_style else ""
+        if "fill:none" in style:
+            m_lw = re.search(r"stroke-width:([\d.]+)px", style)
+            lw = float(m_lw.group(1)) if m_lw else ACS_LINE_PT
+            area.add_artist(
+                PathPatch(
+                    path,
+                    facecolor="none",
+                    edgecolor="black",
+                    linewidth=lw,
+                    capstyle="butt",
+                    joinstyle="miter",
+                )
+            )
+        else:
+            area.add_artist(
+                PathPatch(path, facecolor="black", edgecolor="none", linewidth=0)
+            )
+    return area
+
+
+def acs_structure(
+    ax: "Axes",
+    smiles: str,
+    xy: tuple[float, float],
+    xycoords: str = "data",
+    box_alignment: tuple[float, float] = (0.5, 0.5),
+    **kwargs: Any,
+) -> tuple[Any, float, float]:
+    """Draw ``smiles`` at Nature's ChemDraw stylesheet, anchored at ``xy`` on ``ax``.
+
+    The structure keeps its physical size whatever the axes' data scale, because the
+    drawing area is in points, so two structures on one sheet have the same bond
+    length, which is what the standard fixes. ``box_alignment`` is the point of the
+    structure's box that sits on ``xy`` (``(0.5, 0.5)`` its center). Returns the
+    :class:`AnnotationBbox` and the structure's width and height in points, so the
+    caller can place a name under it. ``kwargs`` go to :func:`acs_structure_svg`.
+    """
+    from matplotlib.offsetbox import AnnotationBbox
+
+    area = acs_structure_box(smiles, **kwargs)
+    box = AnnotationBbox(
+        area, xy, xycoords=xycoords, frameon=False, pad=0.0, box_alignment=box_alignment
+    )
+    ax.add_artist(box)
+    return box, float(area.width), float(area.height)
+
+
 def format_scientific_notation(num: float) -> str:
     """Format a number into scientific notation, preserving all significant digits.
 
@@ -357,3 +543,80 @@ def format_scientific_notation(num: float) -> str:
     mantissa_str = mantissa_str.rstrip("0").rstrip(".")
 
     return f"{sign}{mantissa_str}e{exponent:02d}"
+
+
+#: Text that is meant to sit against its neighbor and is never a clash: the status
+#: marks the figure gates print after a panel letter.
+CLASH_EXEMPT_TEXT = frozenset({"✗", "●", "○", "◐", "✓"})
+
+
+def text_clashes(fig: Any, min_overlap_pt: float = 0.5) -> list[tuple[str, str]]:
+    """Every pair of visible text artists of ``fig`` whose rendered boxes overlap.
+
+    A figure is checked after it is drawn and before it is saved, so a label that runs
+    into another (a panel letter on the x label of the row above, a title past the
+    sheet's edge, a y label into a neighbor's x label) is reported by the script rather
+    than found in review. Two boxes clash when they overlap by more than
+    ``min_overlap_pt`` points in BOTH directions; text of a single artist (a multi-line
+    label) is one box. Empty strings and ``CLASH_EXEMPT_TEXT`` are skipped. Text that
+    runs off the figure is reported against ``"<figure edge>"``.
+
+    Only text that is drawn is read: a tick label whose tick lies outside the axis'
+    view is kept by matplotlib but never drawn, and is skipped. Two labels that are both
+    rotated off the horizontal and vertical (slanted tick labels) are not compared,
+    because their axis-aligned boxes overlap where the glyphs do not; a clash between
+    two slanted labels is therefore not reported.
+
+    It sees text only: a filled patch or a drawn structure behind a label is not text
+    and is not checked here.
+
+    It works on any backend: the figure is laid out without rasterizing it, and the
+    boxes are measured with the figure's own renderer, so a sheet that carries real
+    LaTeX text (``usetex``) under the PDF backend, where Agg cannot draw it without
+    dvipng, is checked the same way.
+    """
+    from matplotlib.text import Text
+
+    fig.draw_without_rendering()
+    renderer = fig._get_renderer()
+    scale = 72.0 / fig.dpi
+    edge = fig.bbox
+    undrawn: set[int] = set()
+    for ax in fig.get_axes():
+        for axis in (ax.xaxis, ax.yaxis):
+            drawn = {id(tick) for tick in axis._update_ticks()}
+            for tick in axis.get_major_ticks() + axis.get_minor_ticks():
+                if id(tick) not in drawn:
+                    undrawn.update((id(tick.label1), id(tick.label2)))
+    boxes = []
+    for artist in fig.findobj(Text):
+        text = artist.get_text().strip()
+        if (
+            not artist.get_visible()
+            or not text
+            or text in CLASH_EXEMPT_TEXT
+            or id(artist) in undrawn
+        ):
+            continue
+        box = artist.get_window_extent(renderer)
+        if box.width <= 0 or box.height <= 0:
+            continue
+        slanted = artist.get_rotation() % 90 != 0
+        boxes.append((text, box, slanted))
+    out = []
+    for i, (text_a, a, slanted_a) in enumerate(boxes):
+        if (
+            (edge.x0 - a.x0) * scale > min_overlap_pt
+            or (a.x1 - edge.x1) * scale > min_overlap_pt
+            or (edge.y0 - a.y0) * scale > min_overlap_pt
+            or (a.y1 - edge.y1) * scale > min_overlap_pt
+        ):
+            out.append((text_a, "<figure edge>"))
+        for text_b, b, slanted_b in boxes[i + 1 :]:
+            if slanted_a and slanted_b:
+                continue
+            width = (min(a.x1, b.x1) - max(a.x0, b.x0)) * scale
+            height = (min(a.y1, b.y1) - max(a.y0, b.y0)) * scale
+            if width > min_overlap_pt and height > min_overlap_pt:
+                out.append((text_a, text_b))
+    return out

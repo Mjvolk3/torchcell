@@ -1,0 +1,4 @@
+run,pair,jaccard_bliss,jaccard_loewe,closer_rule,pair_class
+ex26,acetic acid|furfural,0.7333333333333333,0.2857142857142857,bliss,acid|aldehyde
+ex27,acetic acid|formic acid,0.4363636363636363,0.875,loewe,acid|acid
+ex28,acetic acid|5-(hydroxymethyl)furfural,0.7647058823529411,0.3846153846153846,bliss,acid|aldehyde

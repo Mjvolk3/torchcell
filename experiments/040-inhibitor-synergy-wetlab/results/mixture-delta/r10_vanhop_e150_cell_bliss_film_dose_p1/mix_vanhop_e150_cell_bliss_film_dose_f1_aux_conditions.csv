@@ -1,0 +1,593 @@
+compound,target,n_genes,spearman,pearson,ceiling,condition,source,fold,member,name
+2-Deoxy-D-Glucose,raw,4449,0.18968854410285557,0.3344006800322434,,2-Deoxy-D-Glucose|-3.301,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+2-Deoxy-D-Glucose,centered,4449,0.24055196260608402,0.3403518520737472,,2-Deoxy-D-Glucose|-3.301,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Alamathecin, Peptaibol Derivative",raw,4465,0.09485069411831547,0.053128039212146504,,"Alamathecin, Peptaibol Derivative|-5.511",hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Alamathecin, Peptaibol Derivative",centered,4465,0.017466935361379592,0.26545804585816163,,"Alamathecin, Peptaibol Derivative|-5.511",hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Amiodarone Hydrochloride,raw,4467,0.3123136661236795,0.466906400047707,,Amiodarone Hydrochloride|-4.872,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Amiodarone Hydrochloride,centered,4467,0.010678948442264344,0.20185072547561073,,Amiodarone Hydrochloride|-4.872,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Antibiotic X-206,raw,4465,0.3788097619620015,0.7461626100117976,,Antibiotic X-206|-6.000,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Antibiotic X-206,centered,4465,0.0050270930595217745,0.6713621319751806,,Antibiotic X-206|-6.000,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Bleomycin A2,raw,4464,0.2573039222824018,0.6349114543097646,,Bleomycin A2|-7.301,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Bleomycin A2,centered,4464,0.23316838842950768,0.4691871919191499,,Bleomycin A2|-7.301,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB107,raw,4459,-0.08159218973339502,-0.08474262689858525,,CMB107|-8.000,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB107,centered,4459,0.4303871601031692,0.49621766430273506,,CMB107|-8.000,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB1257,raw,4465,0.26457815719721134,0.4116326241860947,,CMB1257|-4.368,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB1257,centered,4465,-0.02965276713577986,0.13912525788944258,,CMB1257|-4.368,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB1356,raw,4451,0.2650342272450598,0.32540415017885077,,CMB1356|-5.523,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB1356,centered,4451,0.22198981212725882,0.26744462528706,,CMB1356|-5.523,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB2112,raw,4462,0.1321077004313659,0.08914475112059164,,CMB2112|-4.444,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB2112,centered,4462,0.17446668598998674,-0.23151096166357316,,CMB2112|-4.444,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB3701,raw,4469,0.33774746130077954,0.5822544371150545,,CMB3701|-3.824,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB3701,centered,4469,0.21133936597899713,0.2953852312714566,,CMB3701|-3.824,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Calcium Chloride,raw,4469,0.2782241214601758,0.41088774594774563,,Calcium Chloride|-1.284,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Calcium Chloride,centered,4469,0.08557366284097771,0.12895760834256634,,Calcium Chloride|-1.284,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Chondramide,raw,4437,0.44565083488174495,0.6939574588392224,,Chondramide|-3.959,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Chondramide,centered,4437,0.2702343734867396,0.6082024898474138,,Chondramide|-3.959,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cleisthantin derivative,raw,4467,0.367138881921974,0.5880330002368508,,Cleisthantin derivative|-4.921,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cleisthantin derivative,centered,4467,-0.017674347038987483,0.2970971694424098,,Cleisthantin derivative|-4.921,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cleisthantin derivative,raw,4470,0.2293124590250657,0.5010964154157649,,Cleisthantin derivative|-4.918,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cleisthantin derivative,centered,4470,0.11160192615783206,0.18689213817718237,,Cleisthantin derivative|-4.918,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cobalt(Il)-Chlorid,raw,4461,0.04241487785666213,0.10813913375145709,,Cobalt(Il)-Chlorid|-3.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cobalt(Il)-Chlorid,centered,4461,0.22202516014048632,0.13016963483120633,,Cobalt(Il)-Chlorid|-3.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Concanamycin A (Fermentation batch 1),raw,4466,0.2249435538564428,0.6041416123509613,,Concanamycin A (Fermentation batch 1)|-6.959,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Concanamycin A (Fermentation batch 1),centered,4466,-0.23485491402726574,0.356319124933797,,Concanamycin A (Fermentation batch 1)|-6.959,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Copper(II)Sulfate,raw,4461,-0.02307314288138985,-0.04437404357403414,,Copper(II)Sulfate|-4.301,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Copper(II)Sulfate,centered,4461,0.4858127793684792,0.5310721236465732,,Copper(II)Sulfate|-4.301,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+D-Sorbitol,raw,4469,0.08706319479870502,0.15386382375674076,,D-Sorbitol|-0.187,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+D-Sorbitol,centered,4469,0.410796121519636,0.4794396423500627,,D-Sorbitol|-0.187,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Deferasirox, Exjade",raw,4466,0.39436558989404924,0.5394904647367871,,"Deferasirox, Exjade|-3.398",hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Deferasirox, Exjade",centered,4466,-0.008217337554140712,-0.010629407318880964,,"Deferasirox, Exjade|-3.398",hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Deferiprone, Ferriprox",raw,4462,0.2597972084244092,0.42049994590132495,,"Deferiprone, Ferriprox|-3.523",hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Deferiprone, Ferriprox",centered,4462,0.18978848018416594,0.17216050242421183,,"Deferiprone, Ferriprox|-3.523",hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Dequalinium chloride,raw,4465,0.11752052890661503,0.18349006949340638,,Dequalinium chloride|-7.000,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Dequalinium chloride,centered,4465,0.4884224900124113,0.6091846350132333,,Dequalinium chloride|-7.000,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Desferrioxamine, Deferoxamine",raw,4462,0.0033943333082934323,0.0053475226715988195,,"Desferrioxamine, Deferoxamine|-3.699",hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Desferrioxamine, Deferoxamine",centered,4462,0.4818194371722789,0.5491375926463751,,"Desferrioxamine, Deferoxamine|-3.699",hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Dihydrosphingosine,raw,4428,0.04362753097881718,0.07588863971487673,,Dihydrosphingosine|-4.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Dihydrosphingosine,centered,4428,0.42521039590799253,0.42142348666191065,,Dihydrosphingosine|-4.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+EDTA,raw,4456,0.042608859746527526,0.08837862903833671,,EDTA|-4.000,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+EDTA,centered,4456,0.22076018071026224,0.2376140690716553,,EDTA|-4.000,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Echinocandin C Derivative,raw,4466,0.31356768139975505,0.43510697795208375,,Echinocandin C Derivative|-8.000,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Echinocandin C Derivative,centered,4466,-0.0636805063953083,0.13538243248636794,,Echinocandin C Derivative|-8.000,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Enniatin A1,raw,4445,0.5078332460835651,0.6862902363984196,,Enniatin A1|-4.824,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Enniatin A1,centered,4445,-0.09597917985611307,0.41709104176838563,,Enniatin A1|-4.824,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Enniatin derivative (Fermentation batch 2),raw,4392,0.08209931011185441,0.2839101069412791,,Enniatin derivative (Fermentation batch 2)|-5.097,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Enniatin derivative (Fermentation batch 2),centered,4392,-0.20650006064050846,-0.14400092102696146,,Enniatin derivative (Fermentation batch 2)|-5.097,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Epothilon B Derivative,raw,4465,0.1489618938079153,0.23578680276339864,,Epothilon B Derivative|-5.301,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Epothilon B Derivative,centered,4465,-0.34610010097848387,-0.259020568879065,,Epothilon B Derivative|-5.301,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ergokonin A,raw,4466,0.2820549539794579,0.47669871050015244,,Ergokonin A|-6.041,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ergokonin A,centered,4466,-0.022089986365859765,0.1456884821841198,,Ergokonin A|-6.041,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ethidium Bromide,raw,4466,0.2838464090512261,0.4432181359102205,,Ethidium Bromide|-4.086,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ethidium Bromide,centered,4466,0.20467349039762775,0.25430014119355776,,Ethidium Bromide|-4.086,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Hoechst 33258,raw,4468,-0.0232244602532766,-0.05881293585155905,,Hoechst 33258|-4.523,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Hoechst 33258,centered,4468,0.3341381539132039,0.3026574433179596,,Hoechst 33258|-4.523,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Latrunculin A,raw,4456,0.42788163126887563,0.5299565574848736,,Latrunculin A|-6.155,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Latrunculin A,centered,4456,0.08156015062356087,0.31642735162616126,,Latrunculin A|-6.155,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Lysolipin X,raw,4464,0.4196292619789098,0.47668886890392076,,Lysolipin X|-5.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Lysolipin X,centered,4464,0.04630353379218579,0.028467287410985163,,Lysolipin X|-5.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Manganese(II) Chloride,raw,4461,0.06756980816393789,0.09564448500007876,,Manganese(II) Chloride|-5.000,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Manganese(II) Chloride,centered,4461,0.41040659873684465,0.24985978205410758,,Manganese(II) Chloride|-5.000,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Mercury(II) chloride,raw,4413,0.13472893866679161,0.13998950709495347,,Mercury(II) chloride|-4.456,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Mercury(II) chloride,centered,4413,0.3835601051639231,0.4009367583189588,,Mercury(II) chloride|-4.456,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Methylmercury,raw,4413,0.134153055941118,0.16489958169315994,,Methylmercury|-6.301,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Methylmercury,centered,4413,0.426001800569372,0.5000084599733587,,Methylmercury|-6.301,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Mycophenolic Acid (Myfortic),raw,4465,0.32483056447443276,0.5489698489238213,,Mycophenolic Acid (Myfortic)|-4.000,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Mycophenolic Acid (Myfortic),centered,4465,0.26033373778610946,0.23924774525581832,,Mycophenolic Acid (Myfortic)|-4.000,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Nigericin,raw,4441,0.5503010857240981,0.755212756067412,,Nigericin|-4.921,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Nigericin,centered,4441,0.32737066606714393,0.6663843227798473,,Nigericin|-4.921,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Peptolide SDZ 90-215,raw,4454,0.26379303015145655,0.5789465207322576,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Peptolide SDZ 90-215,centered,4454,0.0636948101001285,0.3569785186060223,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Potassium Chloride,raw,4469,0.21652424844631057,0.3387310649236303,,Potassium Chloride|-0.357,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Potassium Chloride,centered,4469,0.31109414692305304,0.2850078635299204,,Potassium Chloride|-0.357,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Ps-341, Velcade, Bortezomib",raw,4466,0.12147504182551945,0.20748234225015108,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Ps-341, Velcade, Bortezomib",centered,4466,0.30828524476294056,0.3529221676887023,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Quinacrine,raw,4469,0.27147899282742494,0.3912658115614658,,Quinacrine|-3.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Quinacrine,centered,4469,0.3438375670157844,0.428691821750201,,Quinacrine|-3.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Radicicol,raw,4465,0.5048771167186613,0.6394276149872461,,Radicicol|-4.125,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Radicicol,centered,4465,0.24843938948262898,0.40229849292999253,,Radicicol|-4.125,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Rapamycin Derivative,raw,4462,0.22916049226281107,0.5729168302214197,,Rapamycin Derivative|-7.523,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Rapamycin Derivative,centered,4462,0.22041438897016624,-0.15730990278865511,,Rapamycin Derivative|-7.523,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ravidomycin,raw,4462,0.3328210502671098,0.43910354270372687,,Ravidomycin|-4.894,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ravidomycin,centered,4462,0.14316043265392078,0.2589080281981088,,Ravidomycin|-4.894,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Scalaradial,raw,4454,0.0814342361562638,0.15918260803248369,,Scalaradial|-5.301,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Scalaradial,centered,4454,0.24286391455425593,0.32937372405818377,,Scalaradial|-5.301,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sinefungin,raw,4470,0.1893023598022628,0.28587645932337347,,Sinefungin|-5.824,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sinefungin,centered,4470,0.18557239017297966,0.25741782474255687,,Sinefungin|-5.824,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sodium Dodecyl Sulfate (SDS),raw,4438,0.19449923362433247,0.28692825874948313,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sodium Dodecyl Sulfate (SDS),centered,4438,0.3020538101955619,0.1540042224586811,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sodium Hydroxide,raw,4469,0.279215110872084,0.4179850295852254,,Sodium Hydroxide|-2.097,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sodium Hydroxide,centered,4469,0.19770546307713527,0.2153934822399068,,Sodium Hydroxide|-2.097,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+TAN-999,raw,4467,0.03607277481364192,0.049611656050292836,,TAN-999|-7.000,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+TAN-999,centered,4467,0.0027445922928333514,0.05166988427234005,,TAN-999|-7.000,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+TOFA,raw,4471,0.038768130085726576,0.038756420002563866,,TOFA|-6.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+TOFA,centered,4471,0.4545684473201091,0.5483659036152021,,TOFA|-6.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Trapoxin A,raw,4392,0.2894718334246741,0.3782174407939926,,Trapoxin A|-3.824,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Trapoxin A,centered,4392,-0.04875298723409896,0.101792866931108,,Trapoxin A|-3.824,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Tunicamycin B,raw,4457,0.41465957245208823,0.5163478014339017,,Tunicamycin B|-6.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Tunicamycin B,centered,4457,0.14671550757375648,0.22257765486874356,,Tunicamycin B|-6.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Valinomycin Derivative,raw,4463,0.36996829688242844,0.6086807280847402,,Valinomycin Derivative|-5.523,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Valinomycin Derivative,centered,4463,0.16950559425308664,0.6014742504260604,,Valinomycin Derivative|-5.523,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Valinomycin Derivative,raw,4452,0.36423649721926415,0.6114921195412278,,Valinomycin Derivative|-5.398,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+Valinomycin Derivative,centered,4452,0.24763867859158617,0.5246451660037449,,Valinomycin Derivative|-5.398,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+YW3548/BE49385A,raw,4454,0.36503996540001993,0.456087320781942,,YW3548/BE49385A|-6.757,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+YW3548/BE49385A,centered,4454,0.07428491332696215,0.15286277150648733,,YW3548/BE49385A|-6.757,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Zeocin, Zeomycin",raw,4465,0.16600199046185438,0.5954787171213192,,"Zeocin, Zeomycin|-8.000",hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Zeocin, Zeomycin",centered,4465,0.36019135593376345,0.42335683183741274,,"Zeocin, Zeomycin|-8.000",hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+caffeine,raw,4466,0.11395514748887084,0.12717099356366335,,caffeine|-2.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+caffeine,centered,4466,0.3352246074989915,0.2641748282998386,,caffeine|-2.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+calmidazolium,raw,4442,0.21492953159820033,0.2949295717000484,,calmidazolium|-5.347,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+calmidazolium,centered,4442,-0.13122437137202803,-0.02408791314728698,,calmidazolium|-5.347,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+cerulenin,raw,4466,0.12745077926172332,0.15532613224187267,,cerulenin|-5.678,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+cerulenin,centered,4466,0.3305349855830238,0.22535641228102363,,cerulenin|-5.678,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+chlorpromazine,raw,4467,0.18398047856173744,0.3434878835599357,,chlorpromazine|-4.597,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+chlorpromazine,centered,4467,0.06235114430096071,-0.0933550993449502,,chlorpromazine|-4.597,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+curcumin,raw,4469,0.28391128295636425,0.43638091461476775,,curcumin|-4.125,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+curcumin,centered,4469,0.16861035115527856,0.11194755402236221,,curcumin|-4.125,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+cycloheximide,raw,4470,0.08766635649496737,0.22487881187179176,,cycloheximide|-7.523,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+cycloheximide,centered,4470,0.3471858720263803,0.3368234280642693,,cycloheximide|-7.523,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+fluconazole,raw,4461,0.08076716655493,0.19882123189196835,,fluconazole|-4.523,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+fluconazole,centered,4461,-0.3324607350154017,-0.19101813919809,,fluconazole|-4.523,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+geldanamycin,raw,4460,0.38851423884239017,0.6760287546514825,,geldanamycin|-3.824,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+geldanamycin,centered,4460,0.12929090580165697,0.527987948604929,,geldanamycin|-3.824,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+hydrochloric acid,raw,4469,0.24423273736782777,0.595250750788526,,hydrochloric acid|-1.222,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+hydrochloric acid,centered,4469,0.08866219354280731,0.47710603404251456,,hydrochloric acid|-1.222,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+hydroxyurea,raw,4456,0.04257277404921218,0.04304794607785009,,hydroxyurea|-3.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+hydroxyurea,centered,4456,0.48359654025254184,0.5344943940738662,,hydroxyurea|-3.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+nocodazole,raw,4460,0.16591986616793292,0.21461172462839334,,nocodazole|-5.097,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+nocodazole,centered,4460,-0.22096394148548787,-0.010540979070922213,,nocodazole|-5.097,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+rapamycin,raw,4462,0.27770174043592133,0.7134940023112907,,rapamycin|-9.097,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+rapamycin,centered,4462,0.24472105895515137,0.49844448655688073,,rapamycin|-9.097,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+sodium acetate,raw,4469,0.21696327317804914,0.4134553989884062,,sodium acetate|-0.824,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+sodium acetate,centered,4469,0.2635483015524154,0.24201826158583994,,sodium acetate|-0.824,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+sodium chloride,raw,4469,0.2245010064862784,0.3584799775216661,,sodium chloride|-0.444,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+sodium chloride,centered,4469,0.2794984000551544,0.2162891478750879,,sodium chloride|-0.444,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+triclosan,raw,4436,0.14348872774780766,0.39317492082220784,,triclosan|-5.222,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+triclosan,centered,4436,0.32252092979235486,0.5076611006488351,,triclosan|-5.222,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+verrucarin a,raw,4454,0.36795814836317897,0.5246496389208087,,verrucarin a|-5.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+verrucarin a,centered,4454,0.17833035330315336,0.44784021278938224,,verrucarin a|-5.699,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+zinc chloride,raw,4469,0.3062661973693608,0.5430210140081212,,zinc chloride|-1.398,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+zinc chloride,centered,4469,-0.120022265141441,-0.3142512968862722,,zinc chloride|-1.398,hoepfner_hop,1,seed0,mix_vanhop_e150_cell_bliss_film_dose_f1
+2-Deoxy-D-Glucose,raw,4449,0.22124336313261286,0.3959644091681844,,2-Deoxy-D-Glucose|-3.301,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+2-Deoxy-D-Glucose,centered,4449,0.2580950716859896,0.3800446148379546,,2-Deoxy-D-Glucose|-3.301,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Alamathecin, Peptaibol Derivative",raw,4465,0.09765553498900989,0.05851114974974907,,"Alamathecin, Peptaibol Derivative|-5.511",hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Alamathecin, Peptaibol Derivative",centered,4465,0.2592989955260712,0.49041397223831196,,"Alamathecin, Peptaibol Derivative|-5.511",hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Amiodarone Hydrochloride,raw,4467,0.33457103764742846,0.4593084022831584,,Amiodarone Hydrochloride|-4.872,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Amiodarone Hydrochloride,centered,4467,0.06441841336236745,0.19283572400709198,,Amiodarone Hydrochloride|-4.872,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Antibiotic X-206,raw,4465,0.4372384081876524,0.8119521801690522,,Antibiotic X-206|-6.000,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Antibiotic X-206,centered,4465,0.1293552629785996,0.7536628891357902,,Antibiotic X-206|-6.000,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Bleomycin A2,raw,4464,0.2971127299925657,0.6393261535083226,,Bleomycin A2|-7.301,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Bleomycin A2,centered,4464,0.24335500588190637,0.4725090307359402,,Bleomycin A2|-7.301,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB107,raw,4459,-0.01043343820674007,-0.023978105988686004,,CMB107|-8.000,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB107,centered,4459,0.43981364701034853,0.4956626744342923,,CMB107|-8.000,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB1257,raw,4465,0.27420027748201264,0.4190397194102604,,CMB1257|-4.368,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB1257,centered,4465,0.10143486342080772,0.19003474156814443,,CMB1257|-4.368,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB1356,raw,4451,0.2723508857930419,0.40885551710716356,,CMB1356|-5.523,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB1356,centered,4451,0.2601387619060366,0.35165608697572437,,CMB1356|-5.523,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB2112,raw,4462,0.14493373599780165,0.12312075158086253,,CMB2112|-4.444,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB2112,centered,4462,0.1402748077483803,-0.258154204064046,,CMB2112|-4.444,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB3701,raw,4469,0.3704034138430888,0.6003670773108046,,CMB3701|-3.824,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB3701,centered,4469,0.2898783629219659,0.3545723276634399,,CMB3701|-3.824,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Calcium Chloride,raw,4469,0.2882067980409452,0.44616864430227887,,Calcium Chloride|-1.284,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Calcium Chloride,centered,4469,0.14690691471394116,0.1964639448417438,,Calcium Chloride|-1.284,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Chondramide,raw,4437,0.40692102048712303,0.6923046266915226,,Chondramide|-3.959,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Chondramide,centered,4437,0.27069515110464953,0.5929130978967059,,Chondramide|-3.959,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cleisthantin derivative,raw,4467,0.35043965947705713,0.577946079789104,,Cleisthantin derivative|-4.921,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cleisthantin derivative,centered,4467,0.0295830893145787,0.27966553885389045,,Cleisthantin derivative|-4.921,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cleisthantin derivative,raw,4470,0.2576498629311226,0.5064305585613519,,Cleisthantin derivative|-4.918,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cleisthantin derivative,centered,4470,0.20650469055975265,0.2579112684847905,,Cleisthantin derivative|-4.918,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cobalt(Il)-Chlorid,raw,4461,0.05208546422210733,0.14350584342614756,,Cobalt(Il)-Chlorid|-3.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cobalt(Il)-Chlorid,centered,4461,0.3278620128205657,0.21425783715880958,,Cobalt(Il)-Chlorid|-3.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Concanamycin A (Fermentation batch 1),raw,4466,0.23944046250485562,0.6341931527008609,,Concanamycin A (Fermentation batch 1)|-6.959,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Concanamycin A (Fermentation batch 1),centered,4466,-0.12771949669827537,0.40692805087845185,,Concanamycin A (Fermentation batch 1)|-6.959,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Copper(II)Sulfate,raw,4461,0.03152012211063046,0.03414836855633867,,Copper(II)Sulfate|-4.301,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Copper(II)Sulfate,centered,4461,0.4868017978211385,0.5545506796672354,,Copper(II)Sulfate|-4.301,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+D-Sorbitol,raw,4469,0.2623930144109928,0.2853443115547974,,D-Sorbitol|-0.187,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+D-Sorbitol,centered,4469,0.45669564840893734,0.5198011659477986,,D-Sorbitol|-0.187,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Deferasirox, Exjade",raw,4466,0.4281569797787386,0.5814822535972322,,"Deferasirox, Exjade|-3.398",hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Deferasirox, Exjade",centered,4466,0.08285911743673445,0.04303383773069741,,"Deferasirox, Exjade|-3.398",hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Deferiprone, Ferriprox",raw,4462,0.28905855954063586,0.44270426544411934,,"Deferiprone, Ferriprox|-3.523",hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Deferiprone, Ferriprox",centered,4462,0.19822585975154577,0.187468651329806,,"Deferiprone, Ferriprox|-3.523",hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Dequalinium chloride,raw,4465,0.1620006459801703,0.25295872380126433,,Dequalinium chloride|-7.000,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Dequalinium chloride,centered,4465,0.4789462265589834,0.6704388822876881,,Dequalinium chloride|-7.000,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Desferrioxamine, Deferoxamine",raw,4462,-0.006826392633566755,0.06267466210339401,,"Desferrioxamine, Deferoxamine|-3.699",hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Desferrioxamine, Deferoxamine",centered,4462,0.4802677975574799,0.5619212733647844,,"Desferrioxamine, Deferoxamine|-3.699",hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Dihydrosphingosine,raw,4428,0.06233983955147574,0.134335592350884,,Dihydrosphingosine|-4.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Dihydrosphingosine,centered,4428,0.38226170427959477,0.4191086238756271,,Dihydrosphingosine|-4.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+EDTA,raw,4456,0.05101727831595399,0.12228287664558087,,EDTA|-4.000,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+EDTA,centered,4456,0.41155726924438846,0.37235571898527803,,EDTA|-4.000,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Echinocandin C Derivative,raw,4466,0.35118930972202367,0.4406398107490984,,Echinocandin C Derivative|-8.000,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Echinocandin C Derivative,centered,4466,0.031378966817703004,0.13704664704808564,,Echinocandin C Derivative|-8.000,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Enniatin A1,raw,4445,0.4755311626397698,0.6850817680297103,,Enniatin A1|-4.824,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Enniatin A1,centered,4445,-0.22213491511231062,0.20435808184345935,,Enniatin A1|-4.824,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Enniatin derivative (Fermentation batch 2),raw,4392,0.11112220013121674,0.2986944285771403,,Enniatin derivative (Fermentation batch 2)|-5.097,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Enniatin derivative (Fermentation batch 2),centered,4392,0.14706244578382127,-0.0004335334805447588,,Enniatin derivative (Fermentation batch 2)|-5.097,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Epothilon B Derivative,raw,4465,0.17755331864062227,0.29940670487707427,,Epothilon B Derivative|-5.301,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Epothilon B Derivative,centered,4465,-0.27774976342882446,-0.11919267181545881,,Epothilon B Derivative|-5.301,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ergokonin A,raw,4466,0.3501866179841405,0.4906010981195198,,Ergokonin A|-6.041,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ergokonin A,centered,4466,-0.0015980337306130893,0.20516782304305164,,Ergokonin A|-6.041,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ethidium Bromide,raw,4466,0.40472575371222386,0.4805134682408146,,Ethidium Bromide|-4.086,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ethidium Bromide,centered,4466,0.30534257783363883,0.34987028356848476,,Ethidium Bromide|-4.086,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Hoechst 33258,raw,4468,0.022531285481038072,-0.013190818462779344,,Hoechst 33258|-4.523,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Hoechst 33258,centered,4468,0.3523329289659896,0.3333603524978541,,Hoechst 33258|-4.523,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Latrunculin A,raw,4456,0.46116175094288653,0.5730575098729573,,Latrunculin A|-6.155,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Latrunculin A,centered,4456,0.12646703859703082,0.4018534404535495,,Latrunculin A|-6.155,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Lysolipin X,raw,4464,0.4056687350918231,0.492374452432652,,Lysolipin X|-5.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Lysolipin X,centered,4464,0.11439241761678658,0.10754051655558805,,Lysolipin X|-5.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Manganese(II) Chloride,raw,4461,0.053689261550367795,0.13197008667096857,,Manganese(II) Chloride|-5.000,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Manganese(II) Chloride,centered,4461,0.40477479326487364,0.27367252149272653,,Manganese(II) Chloride|-5.000,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Mercury(II) chloride,raw,4413,0.15642223366601266,0.20616168246705174,,Mercury(II) chloride|-4.456,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Mercury(II) chloride,centered,4413,0.38272429362444377,0.437915256412187,,Mercury(II) chloride|-4.456,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Methylmercury,raw,4413,0.13680647788563016,0.1916534505070196,,Methylmercury|-6.301,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Methylmercury,centered,4413,0.423813548253592,0.49893131843098004,,Methylmercury|-6.301,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Mycophenolic Acid (Myfortic),raw,4465,0.3836011398247605,0.5748370212759241,,Mycophenolic Acid (Myfortic)|-4.000,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Mycophenolic Acid (Myfortic),centered,4465,0.35100908545366544,0.346180092617377,,Mycophenolic Acid (Myfortic)|-4.000,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Nigericin,raw,4441,0.5943056971803525,0.8249968564736478,,Nigericin|-4.921,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Nigericin,centered,4441,0.3955584107410236,0.755330472332079,,Nigericin|-4.921,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Peptolide SDZ 90-215,raw,4454,0.2614592806576314,0.5999180122184337,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Peptolide SDZ 90-215,centered,4454,0.007847810532861836,0.3829773378666817,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Potassium Chloride,raw,4469,0.2953750745925515,0.3825856071601612,,Potassium Chloride|-0.357,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Potassium Chloride,centered,4469,0.3870309271961461,0.3480079221525263,,Potassium Chloride|-0.357,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Ps-341, Velcade, Bortezomib",raw,4466,0.13873109025836938,0.22342942722126669,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Ps-341, Velcade, Bortezomib",centered,4466,0.1378529002235646,0.32956656905363846,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Quinacrine,raw,4469,0.33197434411906546,0.4066405437627147,,Quinacrine|-3.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Quinacrine,centered,4469,0.3699045285925865,0.470458035839445,,Quinacrine|-3.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Radicicol,raw,4465,0.5082571845301865,0.6557120610459132,,Radicicol|-4.125,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Radicicol,centered,4465,0.25587272146949624,0.41448589938746166,,Radicicol|-4.125,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Rapamycin Derivative,raw,4462,0.2387887245150899,0.5849026388598485,,Rapamycin Derivative|-7.523,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Rapamycin Derivative,centered,4462,0.2045753520613946,-0.013115435607979498,,Rapamycin Derivative|-7.523,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ravidomycin,raw,4462,0.3554253596668068,0.4911080088253145,,Ravidomycin|-4.894,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ravidomycin,centered,4462,0.156542817208884,0.240049604926191,,Ravidomycin|-4.894,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Scalaradial,raw,4454,0.10881373347868945,0.18245782574565214,,Scalaradial|-5.301,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Scalaradial,centered,4454,-0.05055658089634367,0.01811320662520905,,Scalaradial|-5.301,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sinefungin,raw,4470,0.21731654245917764,0.327568251934573,,Sinefungin|-5.824,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sinefungin,centered,4470,0.22598510190378795,0.3216316149859474,,Sinefungin|-5.824,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sodium Dodecyl Sulfate (SDS),raw,4438,0.16750352748851985,0.26169599681022493,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sodium Dodecyl Sulfate (SDS),centered,4438,0.32586286013563903,0.23830119018335377,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sodium Hydroxide,raw,4469,0.27102895261632853,0.42117436566629834,,Sodium Hydroxide|-2.097,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sodium Hydroxide,centered,4469,0.1362307625015042,0.21427438674274338,,Sodium Hydroxide|-2.097,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+TAN-999,raw,4467,0.04248070985395715,0.06239218230843831,,TAN-999|-7.000,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+TAN-999,centered,4467,0.18859102236491,0.16530178311081292,,TAN-999|-7.000,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+TOFA,raw,4471,0.0895831566443805,0.12268184467060793,,TOFA|-6.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+TOFA,centered,4471,0.38213187226420336,0.5054167015070272,,TOFA|-6.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Trapoxin A,raw,4392,0.30312196637312805,0.40682865286955794,,Trapoxin A|-3.824,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Trapoxin A,centered,4392,0.02996536399957032,0.1674167641628488,,Trapoxin A|-3.824,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Tunicamycin B,raw,4457,0.4471566034215493,0.6204195214304513,,Tunicamycin B|-6.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Tunicamycin B,centered,4457,0.2914111486159847,0.4130857492014987,,Tunicamycin B|-6.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Valinomycin Derivative,raw,4463,0.5105180355899546,0.6924752482810893,,Valinomycin Derivative|-5.523,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Valinomycin Derivative,centered,4463,0.3959668850479152,0.6762398576415463,,Valinomycin Derivative|-5.523,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Valinomycin Derivative,raw,4452,0.5140798271701904,0.7099100966321817,,Valinomycin Derivative|-5.398,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+Valinomycin Derivative,centered,4452,0.459198293556051,0.6398745207385662,,Valinomycin Derivative|-5.398,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+YW3548/BE49385A,raw,4454,0.40518098189689045,0.4933775946682336,,YW3548/BE49385A|-6.757,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+YW3548/BE49385A,centered,4454,0.09969009225894819,0.22835106030123317,,YW3548/BE49385A|-6.757,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Zeocin, Zeomycin",raw,4465,0.2269110808856351,0.6462144790996809,,"Zeocin, Zeomycin|-8.000",hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Zeocin, Zeomycin",centered,4465,0.3688811687187386,0.4396434123252665,,"Zeocin, Zeomycin|-8.000",hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+caffeine,raw,4466,0.12384595712675932,0.14821444995155938,,caffeine|-2.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+caffeine,centered,4466,0.3477895542985436,0.27920579177670174,,caffeine|-2.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+calmidazolium,raw,4442,0.22645581621007152,0.3145206224657185,,calmidazolium|-5.347,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+calmidazolium,centered,4442,0.020028525348563295,0.1005143320090328,,calmidazolium|-5.347,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+cerulenin,raw,4466,0.11969089209807224,0.2743042199269946,,cerulenin|-5.678,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+cerulenin,centered,4466,0.28408541709081664,0.260283302922497,,cerulenin|-5.678,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+chlorpromazine,raw,4467,0.1841207244861041,0.3990861436914801,,chlorpromazine|-4.597,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+chlorpromazine,centered,4467,0.10210373540962366,0.13820969566809807,,chlorpromazine|-4.597,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+curcumin,raw,4469,0.304792266531228,0.4266057089515103,,curcumin|-4.125,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+curcumin,centered,4469,0.23198991009113734,0.19362921763750185,,curcumin|-4.125,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+cycloheximide,raw,4470,0.11461472742630097,0.27224515543154043,,cycloheximide|-7.523,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+cycloheximide,centered,4470,0.22852440209599356,0.2937895835175817,,cycloheximide|-7.523,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+fluconazole,raw,4461,0.09646035953106473,0.26148677238675494,,fluconazole|-4.523,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+fluconazole,centered,4461,-0.2833836430448088,-0.09831441215202914,,fluconazole|-4.523,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+geldanamycin,raw,4460,0.3291488272602439,0.6702219434618083,,geldanamycin|-3.824,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+geldanamycin,centered,4460,0.05935690055269715,0.2855066377831505,,geldanamycin|-3.824,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+hydrochloric acid,raw,4469,0.2891532392052055,0.5775602135656762,,hydrochloric acid|-1.222,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+hydrochloric acid,centered,4469,0.19042116062158845,0.4466354630553392,,hydrochloric acid|-1.222,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+hydroxyurea,raw,4456,0.033701067673529046,0.03804420053927241,,hydroxyurea|-3.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+hydroxyurea,centered,4456,0.4922021098296774,0.5559201824648408,,hydroxyurea|-3.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+nocodazole,raw,4460,0.16454198601551867,0.32655638882510957,,nocodazole|-5.097,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+nocodazole,centered,4460,-0.049274203083886706,0.22401025662984428,,nocodazole|-5.097,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+rapamycin,raw,4462,0.3121779522021965,0.722827041594529,,rapamycin|-9.097,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+rapamycin,centered,4462,0.2769882023006233,0.5636567358228228,,rapamycin|-9.097,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+sodium acetate,raw,4469,0.3214092017379815,0.4537781860766029,,sodium acetate|-0.824,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+sodium acetate,centered,4469,0.3274433525998124,0.30352185063785586,,sodium acetate|-0.824,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+sodium chloride,raw,4469,0.27463980369800456,0.40494441644562446,,sodium chloride|-0.444,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+sodium chloride,centered,4469,0.36230962558219987,0.290090825626482,,sodium chloride|-0.444,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+triclosan,raw,4436,0.20216619241477587,0.43788207369477394,,triclosan|-5.222,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+triclosan,centered,4436,0.2592415695036546,0.551085135348636,,triclosan|-5.222,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+verrucarin a,raw,4454,0.39392115198721167,0.5909262848396574,,verrucarin a|-5.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+verrucarin a,centered,4454,0.27448541556415335,0.5267974812792298,,verrucarin a|-5.699,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+zinc chloride,raw,4469,0.4052589606799664,0.5809774642828887,,zinc chloride|-1.398,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+zinc chloride,centered,4469,0.07460532940846079,-0.11029980015759627,,zinc chloride|-1.398,hoepfner_hop,1,seed1,mix_vanhop_e150_cell_bliss_film_dose_f1
+2-Deoxy-D-Glucose,raw,4449,0.21816665983509495,0.3615240745896197,,2-Deoxy-D-Glucose|-3.301,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+2-Deoxy-D-Glucose,centered,4449,0.25381197845787407,0.35425365596952185,,2-Deoxy-D-Glucose|-3.301,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Alamathecin, Peptaibol Derivative",raw,4465,0.09549459392257847,0.05806179159941159,,"Alamathecin, Peptaibol Derivative|-5.511",hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Alamathecin, Peptaibol Derivative",centered,4465,0.17460674630617093,0.4401805571112128,,"Alamathecin, Peptaibol Derivative|-5.511",hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Amiodarone Hydrochloride,raw,4467,0.328119935818419,0.43295156805798035,,Amiodarone Hydrochloride|-4.872,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Amiodarone Hydrochloride,centered,4467,0.0681906153409824,0.18346125392812684,,Amiodarone Hydrochloride|-4.872,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Antibiotic X-206,raw,4465,0.3938908355577928,0.8078841181678164,,Antibiotic X-206|-6.000,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Antibiotic X-206,centered,4465,0.12116370815394986,0.7378093374278327,,Antibiotic X-206|-6.000,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Bleomycin A2,raw,4464,0.3260103866505445,0.6505424623797499,,Bleomycin A2|-7.301,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Bleomycin A2,centered,4464,0.22882149849449962,0.47830287784844405,,Bleomycin A2|-7.301,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB107,raw,4459,-0.10796378729639729,-0.0592910077752461,,CMB107|-8.000,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB107,centered,4459,0.3738032510187153,0.4983536482183884,,CMB107|-8.000,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB1257,raw,4465,0.29142144847750295,0.42969973277716983,,CMB1257|-4.368,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB1257,centered,4465,0.1328801513891084,0.17569257250374168,,CMB1257|-4.368,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB1356,raw,4451,0.269922590686314,0.39131801713136105,,CMB1356|-5.523,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB1356,centered,4451,0.30306563049644875,0.34980686363991426,,CMB1356|-5.523,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB2112,raw,4462,0.15606503163529173,0.15999178985650192,,CMB2112|-4.444,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB2112,centered,4462,0.1562673042411641,-0.25444480031923006,,CMB2112|-4.444,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB3701,raw,4469,0.4008919800256761,0.606496937779389,,CMB3701|-3.824,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB3701,centered,4469,0.2965444696897586,0.36548133605049743,,CMB3701|-3.824,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Calcium Chloride,raw,4469,0.30908228881593824,0.4415370333342055,,Calcium Chloride|-1.284,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Calcium Chloride,centered,4469,0.17514681464511297,0.20043688945217733,,Calcium Chloride|-1.284,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Chondramide,raw,4437,0.4085650653335729,0.694204031643979,,Chondramide|-3.959,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Chondramide,centered,4437,0.23590488195383696,0.6081307349699261,,Chondramide|-3.959,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cleisthantin derivative,raw,4467,0.3773731843830772,0.6003529320090647,,Cleisthantin derivative|-4.921,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cleisthantin derivative,centered,4467,0.1110755519948491,0.3116817216081443,,Cleisthantin derivative|-4.921,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cleisthantin derivative,raw,4470,0.26357395993459665,0.5256191657524846,,Cleisthantin derivative|-4.918,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cleisthantin derivative,centered,4470,0.15986380497392022,0.2214913097918368,,Cleisthantin derivative|-4.918,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cobalt(Il)-Chlorid,raw,4461,0.06090051614311632,0.12346557802976743,,Cobalt(Il)-Chlorid|-3.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cobalt(Il)-Chlorid,centered,4461,0.3066147496463819,0.19392325121058493,,Cobalt(Il)-Chlorid|-3.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Concanamycin A (Fermentation batch 1),raw,4466,0.24592089028731964,0.6395237257859473,,Concanamycin A (Fermentation batch 1)|-6.959,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Concanamycin A (Fermentation batch 1),centered,4466,-0.012382629148795824,0.419576063178961,,Concanamycin A (Fermentation batch 1)|-6.959,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Copper(II)Sulfate,raw,4461,0.02377776529185151,0.05104410077884679,,Copper(II)Sulfate|-4.301,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Copper(II)Sulfate,centered,4461,0.48683992794821823,0.5625838692164808,,Copper(II)Sulfate|-4.301,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+D-Sorbitol,raw,4469,0.2415446219304993,0.29415702081361633,,D-Sorbitol|-0.187,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+D-Sorbitol,centered,4469,0.4537983021495757,0.524336887138373,,D-Sorbitol|-0.187,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Deferasirox, Exjade",raw,4466,0.432934501717496,0.5677522054014476,,"Deferasirox, Exjade|-3.398",hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Deferasirox, Exjade",centered,4466,0.1011749612111385,-0.0339960484651283,,"Deferasirox, Exjade|-3.398",hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Deferiprone, Ferriprox",raw,4462,0.26770892787265405,0.4111112646715978,,"Deferiprone, Ferriprox|-3.523",hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Deferiprone, Ferriprox",centered,4462,0.17983089985604375,0.1572090507666917,,"Deferiprone, Ferriprox|-3.523",hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Dequalinium chloride,raw,4465,0.17216640773482575,0.2247490350053606,,Dequalinium chloride|-7.000,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Dequalinium chloride,centered,4465,0.4467684772688029,0.6190623817293043,,Dequalinium chloride|-7.000,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Desferrioxamine, Deferoxamine",raw,4462,0.02815068908192143,0.0612092170818598,,"Desferrioxamine, Deferoxamine|-3.699",hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Desferrioxamine, Deferoxamine",centered,4462,0.4820082677014742,0.5660542208937548,,"Desferrioxamine, Deferoxamine|-3.699",hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Dihydrosphingosine,raw,4428,0.06739011430265303,0.1301596639128794,,Dihydrosphingosine|-4.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Dihydrosphingosine,centered,4428,0.36636104186256224,0.422777258743429,,Dihydrosphingosine|-4.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+EDTA,raw,4456,0.06041477586916789,0.11183048728788937,,EDTA|-4.000,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+EDTA,centered,4456,0.2524233822379801,0.16417761903625366,,EDTA|-4.000,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Echinocandin C Derivative,raw,4466,0.30922930513230806,0.415412588301421,,Echinocandin C Derivative|-8.000,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Echinocandin C Derivative,centered,4466,0.014383857209494439,0.16440090744727107,,Echinocandin C Derivative|-8.000,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Enniatin A1,raw,4445,0.43450391682123257,0.6647319073449572,,Enniatin A1|-4.824,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Enniatin A1,centered,4445,-0.24331833191516505,0.2539290315649384,,Enniatin A1|-4.824,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Enniatin derivative (Fermentation batch 2),raw,4392,0.1243853566556273,0.3114925732697263,,Enniatin derivative (Fermentation batch 2)|-5.097,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Enniatin derivative (Fermentation batch 2),centered,4392,0.238147460552286,0.032320775898548065,,Enniatin derivative (Fermentation batch 2)|-5.097,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Epothilon B Derivative,raw,4465,0.17936116259757554,0.29921084038897605,,Epothilon B Derivative|-5.301,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Epothilon B Derivative,centered,4465,-0.25011738696353086,-0.0896641715651234,,Epothilon B Derivative|-5.301,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ergokonin A,raw,4466,0.37924234998469025,0.5387073232475226,,Ergokonin A|-6.041,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ergokonin A,centered,4466,0.12380242480802811,0.34796858585627166,,Ergokonin A|-6.041,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ethidium Bromide,raw,4466,0.3859765551128709,0.4778525864103525,,Ethidium Bromide|-4.086,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ethidium Bromide,centered,4466,0.35837715112197455,0.36099702242456216,,Ethidium Bromide|-4.086,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Hoechst 33258,raw,4468,0.0065707733519303375,-0.008291990889000674,,Hoechst 33258|-4.523,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Hoechst 33258,centered,4468,0.27391848270958663,0.3023504346642952,,Hoechst 33258|-4.523,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Latrunculin A,raw,4456,0.4807273856719005,0.5813363732129665,,Latrunculin A|-6.155,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Latrunculin A,centered,4456,0.15717438289061247,0.38451913272165295,,Latrunculin A|-6.155,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Lysolipin X,raw,4464,0.4239079413167901,0.482321965044342,,Lysolipin X|-5.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Lysolipin X,centered,4464,0.12186289402097361,0.1115097326599068,,Lysolipin X|-5.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Manganese(II) Chloride,raw,4461,0.062170553887153056,0.09014819939878488,,Manganese(II) Chloride|-5.000,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Manganese(II) Chloride,centered,4461,0.4066483847348033,0.26718827023910285,,Manganese(II) Chloride|-5.000,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Mercury(II) chloride,raw,4413,0.16224234394280987,0.23250685324398174,,Mercury(II) chloride|-4.456,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Mercury(II) chloride,centered,4413,0.4059741443347909,0.44657200881134634,,Mercury(II) chloride|-4.456,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Methylmercury,raw,4413,0.12014727068995532,0.1803677417234044,,Methylmercury|-6.301,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Methylmercury,centered,4413,0.4157990916444627,0.4989239578266414,,Methylmercury|-6.301,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Mycophenolic Acid (Myfortic),raw,4465,0.40661449485438306,0.5933846064084266,,Mycophenolic Acid (Myfortic)|-4.000,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Mycophenolic Acid (Myfortic),centered,4465,0.35087360001402956,0.38945741696883335,,Mycophenolic Acid (Myfortic)|-4.000,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Nigericin,raw,4441,0.5411856694718613,0.7967495095490417,,Nigericin|-4.921,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Nigericin,centered,4441,0.34633923602448446,0.719987721263946,,Nigericin|-4.921,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Peptolide SDZ 90-215,raw,4454,0.27475677506020874,0.6105219265312117,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Peptolide SDZ 90-215,centered,4454,0.11282481377109391,0.4014244655942834,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Potassium Chloride,raw,4469,0.3425298484183037,0.41139711991765204,,Potassium Chloride|-0.357,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Potassium Chloride,centered,4469,0.4160743125567573,0.3502490256251139,,Potassium Chloride|-0.357,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Ps-341, Velcade, Bortezomib",raw,4466,0.14343020169900136,0.2587527882537027,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Ps-341, Velcade, Bortezomib",centered,4466,0.1823178798580784,0.36804408712226044,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Quinacrine,raw,4469,0.31764843583471986,0.4175450465598576,,Quinacrine|-3.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Quinacrine,centered,4469,0.39106870415868816,0.4513065234466929,,Quinacrine|-3.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Radicicol,raw,4465,0.5017027226767861,0.6585214134823579,,Radicicol|-4.125,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Radicicol,centered,4465,0.2648842644205477,0.4189309991877778,,Radicicol|-4.125,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Rapamycin Derivative,raw,4462,0.22361412799176328,0.6387546455924377,,Rapamycin Derivative|-7.523,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Rapamycin Derivative,centered,4462,0.2251639561536079,0.14061596833410686,,Rapamycin Derivative|-7.523,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ravidomycin,raw,4462,0.35748433627081455,0.48650017912869953,,Ravidomycin|-4.894,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ravidomycin,centered,4462,0.23910047417027308,0.27160508348891266,,Ravidomycin|-4.894,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Scalaradial,raw,4454,0.10401771809090339,0.2261644428786511,,Scalaradial|-5.301,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Scalaradial,centered,4454,0.35232813626030174,0.39820281706950034,,Scalaradial|-5.301,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sinefungin,raw,4470,0.2286998947414762,0.3459666355861941,,Sinefungin|-5.824,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sinefungin,centered,4470,0.20802535401032074,0.31108198168410744,,Sinefungin|-5.824,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sodium Dodecyl Sulfate (SDS),raw,4438,0.16365996200719946,0.18490323463326253,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sodium Dodecyl Sulfate (SDS),centered,4438,0.3005285538023646,0.20545381336377505,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sodium Hydroxide,raw,4469,0.3014372503348823,0.4193786935849847,,Sodium Hydroxide|-2.097,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sodium Hydroxide,centered,4469,0.1598403075230964,0.19455650573667563,,Sodium Hydroxide|-2.097,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+TAN-999,raw,4467,0.05486890507730001,0.06741582127403802,,TAN-999|-7.000,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+TAN-999,centered,4467,0.13449236417691304,0.02445405629239922,,TAN-999|-7.000,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+TOFA,raw,4471,0.07476515864736091,0.08802129456750425,,TOFA|-6.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+TOFA,centered,4471,0.40125680253531215,0.5002203717420505,,TOFA|-6.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Trapoxin A,raw,4392,0.2958444365188918,0.3984636410637245,,Trapoxin A|-3.824,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Trapoxin A,centered,4392,-0.004000184612595569,0.14085273966540018,,Trapoxin A|-3.824,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Tunicamycin B,raw,4457,0.4537122108864545,0.5965445601835706,,Tunicamycin B|-6.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Tunicamycin B,centered,4457,0.31520075046796087,0.438918489681987,,Tunicamycin B|-6.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Valinomycin Derivative,raw,4463,0.4723101039766312,0.6953338371407484,,Valinomycin Derivative|-5.523,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Valinomycin Derivative,centered,4463,0.349860838964242,0.6811721325550784,,Valinomycin Derivative|-5.523,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Valinomycin Derivative,raw,4452,0.48240303753013536,0.7055047102687949,,Valinomycin Derivative|-5.398,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+Valinomycin Derivative,centered,4452,0.4467555409033143,0.6549865825327286,,Valinomycin Derivative|-5.398,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+YW3548/BE49385A,raw,4454,0.38929094402067577,0.4921401363026506,,YW3548/BE49385A|-6.757,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+YW3548/BE49385A,centered,4454,0.11484277690131155,0.23983355353542676,,YW3548/BE49385A|-6.757,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Zeocin, Zeomycin",raw,4465,0.2545609933677675,0.656579596550901,,"Zeocin, Zeomycin|-8.000",hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Zeocin, Zeomycin",centered,4465,0.31353828582424614,0.5344070612505916,,"Zeocin, Zeomycin|-8.000",hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+caffeine,raw,4466,0.15420487312748518,0.22115355094450168,,caffeine|-2.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+caffeine,centered,4466,0.3387046724266992,0.27350330387798705,,caffeine|-2.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+calmidazolium,raw,4442,0.2279964843441086,0.3433454637799647,,calmidazolium|-5.347,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+calmidazolium,centered,4442,-0.008981478324381453,0.15295281040586664,,calmidazolium|-5.347,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+cerulenin,raw,4466,0.13096065455311218,0.2840621484089968,,cerulenin|-5.678,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+cerulenin,centered,4466,0.290103816568504,0.28483958347088445,,cerulenin|-5.678,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+chlorpromazine,raw,4467,0.22226529789952368,0.4421495080734041,,chlorpromazine|-4.597,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+chlorpromazine,centered,4467,0.16167211031914844,0.22819143139274256,,chlorpromazine|-4.597,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+curcumin,raw,4469,0.30084629650994466,0.45234128050315536,,curcumin|-4.125,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+curcumin,centered,4469,0.18949982805407614,0.20273638251242046,,curcumin|-4.125,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+cycloheximide,raw,4470,0.08097325142323483,0.2558683469128119,,cycloheximide|-7.523,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+cycloheximide,centered,4470,0.30845795256625613,0.35984994515104574,,cycloheximide|-7.523,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+fluconazole,raw,4461,0.10244330660490078,0.25719817412030055,,fluconazole|-4.523,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+fluconazole,centered,4461,-0.25165112047418003,-0.06152164173762093,,fluconazole|-4.523,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+geldanamycin,raw,4460,0.36277015570079174,0.6926356069559124,,geldanamycin|-3.824,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+geldanamycin,centered,4460,0.10520985103877291,0.520300517951967,,geldanamycin|-3.824,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+hydrochloric acid,raw,4469,0.30645294082478175,0.5872970073956711,,hydrochloric acid|-1.222,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+hydrochloric acid,centered,4469,0.19559535021243668,0.4575934898385611,,hydrochloric acid|-1.222,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+hydroxyurea,raw,4456,0.04972225035462459,0.07629771341022627,,hydroxyurea|-3.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+hydroxyurea,centered,4456,0.4663243162504204,0.5438533256646229,,hydroxyurea|-3.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+nocodazole,raw,4460,0.13017342715650534,0.30423776886057496,,nocodazole|-5.097,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+nocodazole,centered,4460,-0.045051085347414754,0.1840003035478,,nocodazole|-5.097,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+rapamycin,raw,4462,0.29982347681871124,0.7312157876586626,,rapamycin|-9.097,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+rapamycin,centered,4462,0.24647258292853946,0.6217553991749497,,rapamycin|-9.097,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+sodium acetate,raw,4469,0.36180076478859075,0.48299059310042425,,sodium acetate|-0.824,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+sodium acetate,centered,4469,0.36356402878446686,0.32678500973310026,,sodium acetate|-0.824,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+sodium chloride,raw,4469,0.363805318022975,0.4167706451851539,,sodium chloride|-0.444,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+sodium chloride,centered,4469,0.39635505308718055,0.2831209361879203,,sodium chloride|-0.444,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+triclosan,raw,4436,0.19642302297157427,0.4542488787159322,,triclosan|-5.222,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+triclosan,centered,4436,0.21659388012427308,0.5407939794342211,,triclosan|-5.222,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+verrucarin a,raw,4454,0.4118794153302355,0.6045110525294772,,verrucarin a|-5.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+verrucarin a,centered,4454,0.27761900078072455,0.5394578980601845,,verrucarin a|-5.699,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+zinc chloride,raw,4469,0.3612601983666937,0.5324022451956361,,zinc chloride|-1.398,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+zinc chloride,centered,4469,0.0814035787460213,-0.16041963905059328,,zinc chloride|-1.398,hoepfner_hop,1,seed2,mix_vanhop_e150_cell_bliss_film_dose_f1
+2-Deoxy-D-Glucose,raw,4449,0.21538534506859275,0.3834227080922255,,2-Deoxy-D-Glucose|-3.301,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+2-Deoxy-D-Glucose,centered,4449,0.26818033419794507,0.3714371624450505,,2-Deoxy-D-Glucose|-3.301,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Alamathecin, Peptaibol Derivative",raw,4465,0.09742642303061555,0.05776045771625445,,"Alamathecin, Peptaibol Derivative|-5.511",hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Alamathecin, Peptaibol Derivative",centered,4465,0.16706097402276557,0.4481678104609147,,"Alamathecin, Peptaibol Derivative|-5.511",hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Amiodarone Hydrochloride,raw,4467,0.33390375539776146,0.46726906103070265,,Amiodarone Hydrochloride|-4.872,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Amiodarone Hydrochloride,centered,4467,0.05080035483653723,0.20121277237147284,,Amiodarone Hydrochloride|-4.872,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Antibiotic X-206,raw,4465,0.43118955957440175,0.8098911972916363,,Antibiotic X-206|-6.000,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Antibiotic X-206,centered,4465,0.1035397231241936,0.7486805703582256,,Antibiotic X-206|-6.000,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Bleomycin A2,raw,4464,0.33516726505297195,0.6563079828155073,,Bleomycin A2|-7.301,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Bleomycin A2,centered,4464,0.2639018011732527,0.4933824956638696,,Bleomycin A2|-7.301,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB107,raw,4459,-0.10090698676697206,-0.0592295747837264,,CMB107|-8.000,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB107,centered,4459,0.43435711894495205,0.5094350693478321,,CMB107|-8.000,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB1257,raw,4465,0.28273210509529445,0.42617695441917136,,CMB1257|-4.368,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB1257,centered,4465,0.09884370069872313,0.17964388902804027,,CMB1257|-4.368,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB1356,raw,4451,0.28089782719342665,0.3942143123135107,,CMB1356|-5.523,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB1356,centered,4451,0.28298092132149244,0.3618605289198334,,CMB1356|-5.523,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB2112,raw,4462,0.15471104414754555,0.13500286213440038,,CMB2112|-4.444,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB2112,centered,4462,0.17044842624698858,-0.2536288815273431,,CMB2112|-4.444,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB3701,raw,4469,0.38210247889940446,0.6142853356281281,,CMB3701|-3.824,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+CMB3701,centered,4469,0.29367767375804044,0.3644836034292889,,CMB3701|-3.824,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Calcium Chloride,raw,4469,0.30960713463126055,0.4425080629796194,,Calcium Chloride|-1.284,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Calcium Chloride,centered,4469,0.16505441098323637,0.18415176190265548,,Calcium Chloride|-1.284,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Chondramide,raw,4437,0.47427906887068527,0.7066329425406846,,Chondramide|-3.959,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Chondramide,centered,4437,0.28576369240905614,0.6179693926334842,,Chondramide|-3.959,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cleisthantin derivative,raw,4467,0.37814894628320994,0.5976425538236987,,Cleisthantin derivative|-4.921,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cleisthantin derivative,centered,4467,0.05136900246715426,0.3069445940105632,,Cleisthantin derivative|-4.921,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cleisthantin derivative,raw,4470,0.26294985623335004,0.5208900611966965,,Cleisthantin derivative|-4.918,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cleisthantin derivative,centered,4470,0.181560021650355,0.2417581646561051,,Cleisthantin derivative|-4.918,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cobalt(Il)-Chlorid,raw,4461,0.05552042449594856,0.13236262156249873,,Cobalt(Il)-Chlorid|-3.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Cobalt(Il)-Chlorid,centered,4461,0.3562503702427305,0.19192662974627894,,Cobalt(Il)-Chlorid|-3.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Concanamycin A (Fermentation batch 1),raw,4466,0.24918743255757586,0.6398061869278505,,Concanamycin A (Fermentation batch 1)|-6.959,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Concanamycin A (Fermentation batch 1),centered,4466,-0.09754265771451485,0.4114984230932476,,Concanamycin A (Fermentation batch 1)|-6.959,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Copper(II)Sulfate,raw,4461,0.024371722053767125,0.02105842264273191,,Copper(II)Sulfate|-4.301,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Copper(II)Sulfate,centered,4461,0.5029712581233122,0.5592460362563088,,Copper(II)Sulfate|-4.301,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+D-Sorbitol,raw,4469,0.25653756730283367,0.2950258033965741,,D-Sorbitol|-0.187,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+D-Sorbitol,centered,4469,0.4660656677000381,0.5226603081295199,,D-Sorbitol|-0.187,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Deferasirox, Exjade",raw,4466,0.42762204864529785,0.577796031364465,,"Deferasirox, Exjade|-3.398",hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Deferasirox, Exjade",centered,4466,0.06769005648776633,-0.0033412173693387567,,"Deferasirox, Exjade|-3.398",hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Deferiprone, Ferriprox",raw,4462,0.28609082805909947,0.4405478611993773,,"Deferiprone, Ferriprox|-3.523",hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Deferiprone, Ferriprox",centered,4462,0.20022220202752655,0.17786776551407144,,"Deferiprone, Ferriprox|-3.523",hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Dequalinium chloride,raw,4465,0.18470326387310165,0.2340512498503338,,Dequalinium chloride|-7.000,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Dequalinium chloride,centered,4465,0.4978308561134819,0.6497135314051683,,Dequalinium chloride|-7.000,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Desferrioxamine, Deferoxamine",raw,4462,0.007820767132266196,0.05555356827740095,,"Desferrioxamine, Deferoxamine|-3.699",hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Desferrioxamine, Deferoxamine",centered,4462,0.49447960079618886,0.5686614712889623,,"Desferrioxamine, Deferoxamine|-3.699",hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Dihydrosphingosine,raw,4428,0.06197761098234276,0.12550057810900886,,Dihydrosphingosine|-4.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Dihydrosphingosine,centered,4428,0.42378975593296503,0.4517705140834193,,Dihydrosphingosine|-4.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+EDTA,raw,4456,0.050119678976148684,0.1122808540574925,,EDTA|-4.000,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+EDTA,centered,4456,0.3352501299057843,0.30663121855651443,,EDTA|-4.000,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Echinocandin C Derivative,raw,4466,0.3451980255776241,0.44811476251536,,Echinocandin C Derivative|-8.000,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Echinocandin C Derivative,centered,4466,0.0007534797767157282,0.16100673991108422,,Echinocandin C Derivative|-8.000,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Enniatin A1,raw,4445,0.4997446644014532,0.692145393891412,,Enniatin A1|-4.824,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Enniatin A1,centered,4445,-0.2224829958529022,0.31780881560830043,,Enniatin A1|-4.824,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Enniatin derivative (Fermentation batch 2),raw,4392,0.1087314596003582,0.30161277277252063,,Enniatin derivative (Fermentation batch 2)|-5.097,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Enniatin derivative (Fermentation batch 2),centered,4392,0.11886638086739768,-0.05590540940703028,,Enniatin derivative (Fermentation batch 2)|-5.097,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Epothilon B Derivative,raw,4465,0.17257837404457324,0.28525546938570173,,Epothilon B Derivative|-5.301,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Epothilon B Derivative,centered,4465,-0.3128196537800589,-0.16485753644445264,,Epothilon B Derivative|-5.301,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ergokonin A,raw,4466,0.3684064652491234,0.5164952948281457,,Ergokonin A|-6.041,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ergokonin A,centered,4466,0.04390927319142216,0.2669985613037661,,Ergokonin A|-6.041,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ethidium Bromide,raw,4466,0.4042098800338946,0.49247553015317524,,Ethidium Bromide|-4.086,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ethidium Bromide,centered,4466,0.30847763279749546,0.33486527366609936,,Ethidium Bromide|-4.086,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Hoechst 33258,raw,4468,0.01229736880140965,-0.026405222569971572,,Hoechst 33258|-4.523,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Hoechst 33258,centered,4468,0.3464770617342086,0.32240589084949384,,Hoechst 33258|-4.523,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Latrunculin A,raw,4456,0.4693498827837365,0.5749081051470316,,Latrunculin A|-6.155,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Latrunculin A,centered,4456,0.1279885148675654,0.388677491184007,,Latrunculin A|-6.155,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Lysolipin X,raw,4464,0.4368452474654186,0.4934967990461724,,Lysolipin X|-5.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Lysolipin X,centered,4464,0.14057906477641124,0.0875424304560849,,Lysolipin X|-5.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Manganese(II) Chloride,raw,4461,0.06826987158402963,0.11702887253409956,,Manganese(II) Chloride|-5.000,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Manganese(II) Chloride,centered,4461,0.42527398124268756,0.2714702458099462,,Manganese(II) Chloride|-5.000,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Mercury(II) chloride,raw,4413,0.1629822571481999,0.2072028018175418,,Mercury(II) chloride|-4.456,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Mercury(II) chloride,centered,4413,0.4033550593230792,0.44282924576376115,,Mercury(II) chloride|-4.456,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Methylmercury,raw,4413,0.14276632284066915,0.1993749347402306,,Methylmercury|-6.301,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Methylmercury,centered,4413,0.43967822405445445,0.5094709833578808,,Methylmercury|-6.301,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Mycophenolic Acid (Myfortic),raw,4465,0.3985276818243209,0.5941873305734584,,Mycophenolic Acid (Myfortic)|-4.000,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Mycophenolic Acid (Myfortic),centered,4465,0.37391143853765,0.3775939987547825,,Mycophenolic Acid (Myfortic)|-4.000,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Nigericin,raw,4441,0.6035974589392046,0.8090549935956727,,Nigericin|-4.921,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Nigericin,centered,4441,0.3963041217123126,0.7346301455838928,,Nigericin|-4.921,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Peptolide SDZ 90-215,raw,4454,0.27777164919756137,0.6049875380862042,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Peptolide SDZ 90-215,centered,4454,0.0821483943241892,0.38954524532980195,,Peptolide SDZ 90-215|-5.523,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Potassium Chloride,raw,4469,0.331727239791127,0.39677380340081914,,Potassium Chloride|-0.357,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Potassium Chloride,centered,4469,0.41699347165863265,0.36483265360310135,,Potassium Chloride|-0.357,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Ps-341, Velcade, Bortezomib",raw,4466,0.15015209922015005,0.24898808482473928,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Ps-341, Velcade, Bortezomib",centered,4466,0.2540191219802418,0.3843513382622089,,"Ps-341, Velcade, Bortezomib|-3.699",hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Quinacrine,raw,4469,0.33528007550990163,0.4212730017288381,,Quinacrine|-3.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Quinacrine,centered,4469,0.4008854425540321,0.46488791491006803,,Quinacrine|-3.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Radicicol,raw,4465,0.516614332032826,0.6610783290365642,,Radicicol|-4.125,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Radicicol,centered,4465,0.2719659273230679,0.4250143345349367,,Radicicol|-4.125,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Rapamycin Derivative,raw,4462,0.24311805526897903,0.6265241540248181,,Rapamycin Derivative|-7.523,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Rapamycin Derivative,centered,4462,0.21836018146184086,-0.03457527748848475,,Rapamycin Derivative|-7.523,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ravidomycin,raw,4462,0.36514097056616235,0.4964637549329517,,Ravidomycin|-4.894,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Ravidomycin,centered,4462,0.2240369653207156,0.2694253984874959,,Ravidomycin|-4.894,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Scalaradial,raw,4454,0.10546009792343627,0.19402260738651486,,Scalaradial|-5.301,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Scalaradial,centered,4454,0.2391976412463199,0.27945192165130645,,Scalaradial|-5.301,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sinefungin,raw,4470,0.23556348584675527,0.3423971620621167,,Sinefungin|-5.824,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sinefungin,centered,4470,0.2091438978460809,0.3070805059578371,,Sinefungin|-5.824,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sodium Dodecyl Sulfate (SDS),raw,4438,0.18845290810562745,0.28276905710392386,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sodium Dodecyl Sulfate (SDS),centered,4438,0.3492358102925462,0.21907355074974538,,Sodium Dodecyl Sulfate (SDS)|-3.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sodium Hydroxide,raw,4469,0.29760914168412833,0.44677569491357416,,Sodium Hydroxide|-2.097,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Sodium Hydroxide,centered,4469,0.18880752036104453,0.2270831226871092,,Sodium Hydroxide|-2.097,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+TAN-999,raw,4467,0.04792690427882985,0.061870614469444946,,TAN-999|-7.000,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+TAN-999,centered,4467,0.10006477626251045,0.09181532642218965,,TAN-999|-7.000,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+TOFA,raw,4471,0.08119369094879306,0.10095405928137409,,TOFA|-6.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+TOFA,centered,4471,0.4497551636571346,0.5398347324202477,,TOFA|-6.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Trapoxin A,raw,4392,0.3026686576693344,0.4066677887036249,,Trapoxin A|-3.824,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Trapoxin A,centered,4392,-0.007041953922823166,0.14966433367292345,,Trapoxin A|-3.824,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Tunicamycin B,raw,4457,0.45863841092296054,0.6018484208355208,,Tunicamycin B|-6.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Tunicamycin B,centered,4457,0.3187385854056843,0.4405152793287364,,Tunicamycin B|-6.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Valinomycin Derivative,raw,4463,0.5032259802913387,0.6995276667893545,,Valinomycin Derivative|-5.523,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Valinomycin Derivative,centered,4463,0.4061889808456311,0.6833602065942738,,Valinomycin Derivative|-5.523,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Valinomycin Derivative,raw,4452,0.5044611011249818,0.7111350812107782,,Valinomycin Derivative|-5.398,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+Valinomycin Derivative,centered,4452,0.49331755376472186,0.639468265091707,,Valinomycin Derivative|-5.398,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+YW3548/BE49385A,raw,4454,0.40081046724166897,0.4954038175374547,,YW3548/BE49385A|-6.757,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+YW3548/BE49385A,centered,4454,0.10864691128773478,0.2319622262119221,,YW3548/BE49385A|-6.757,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Zeocin, Zeomycin",raw,4465,0.24213558951543918,0.652432472148618,,"Zeocin, Zeomycin|-8.000",hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+"Zeocin, Zeomycin",centered,4465,0.37924174219292467,0.5037226095826459,,"Zeocin, Zeomycin|-8.000",hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+caffeine,raw,4466,0.14928616567972955,0.19732997328679253,,caffeine|-2.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+caffeine,centered,4466,0.3525310412123862,0.2772186640557731,,caffeine|-2.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+calmidazolium,raw,4442,0.22898682211716317,0.32559773001684067,,calmidazolium|-5.347,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+calmidazolium,centered,4442,-0.056208336537649096,0.0919794370808884,,calmidazolium|-5.347,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+cerulenin,raw,4466,0.14279994489541878,0.2760018555374878,,cerulenin|-5.678,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+cerulenin,centered,4466,0.32363995596840345,0.2680427102708149,,cerulenin|-5.678,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+chlorpromazine,raw,4467,0.21060842313267797,0.4102630638331431,,chlorpromazine|-4.597,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+chlorpromazine,centered,4467,0.11419944947313464,0.14018720395594084,,chlorpromazine|-4.597,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+curcumin,raw,4469,0.30863038406787474,0.4573208360785093,,curcumin|-4.125,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+curcumin,centered,4469,0.2403242258154324,0.18915366562370406,,curcumin|-4.125,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+cycloheximide,raw,4470,0.10290262285465533,0.26745443217850234,,cycloheximide|-7.523,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+cycloheximide,centered,4470,0.3304797283558414,0.3768874093196655,,cycloheximide|-7.523,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+fluconazole,raw,4461,0.09668872784933671,0.24589691141551662,,fluconazole|-4.523,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+fluconazole,centered,4461,-0.2926009146360169,-0.12171843533011703,,fluconazole|-4.523,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+geldanamycin,raw,4460,0.3902177871369023,0.6953945280775157,,geldanamycin|-3.824,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+geldanamycin,centered,4460,0.1211016597865521,0.4950057121384844,,geldanamycin|-3.824,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+hydrochloric acid,raw,4469,0.3015561310804246,0.6002596510317372,,hydrochloric acid|-1.222,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+hydrochloric acid,centered,4469,0.19509840637253673,0.48583885842723273,,hydrochloric acid|-1.222,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+hydroxyurea,raw,4456,0.048384512408666626,0.0603220477759031,,hydroxyurea|-3.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+hydroxyurea,centered,4456,0.49945447552262173,0.5554208396930254,,hydroxyurea|-3.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+nocodazole,raw,4460,0.16060806139130537,0.2949515758884438,,nocodazole|-5.097,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+nocodazole,centered,4460,-0.1110819623460676,0.167964359855899,,nocodazole|-5.097,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+rapamycin,raw,4462,0.32284489196663707,0.7349347392253687,,rapamycin|-9.097,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+rapamycin,centered,4462,0.2865165521328337,0.5913466955283104,,rapamycin|-9.097,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+sodium acetate,raw,4469,0.3496648461805793,0.47242427676083015,,sodium acetate|-0.824,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+sodium acetate,centered,4469,0.35153876990855576,0.3173169414065756,,sodium acetate|-0.824,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+sodium chloride,raw,4469,0.33459193727847664,0.4127927586062609,,sodium chloride|-0.444,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+sodium chloride,centered,4469,0.3821458333946467,0.29754606728310884,,sodium chloride|-0.444,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+triclosan,raw,4436,0.19588510595541606,0.44599466015022143,,triclosan|-5.222,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+triclosan,centered,4436,0.28816764691045943,0.5515973555277878,,triclosan|-5.222,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+verrucarin a,raw,4454,0.42998826957389935,0.6037990393474787,,verrucarin a|-5.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+verrucarin a,centered,4454,0.2816694124984243,0.5393452117819391,,verrucarin a|-5.699,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+zinc chloride,raw,4469,0.4203378563463362,0.5980871110806838,,zinc chloride|-1.398,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1
+zinc chloride,centered,4469,0.04056441097749544,-0.19705682893041518,,zinc chloride|-1.398,hoepfner_hop,1,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f1

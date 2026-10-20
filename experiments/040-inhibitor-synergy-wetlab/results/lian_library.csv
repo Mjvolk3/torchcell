@@ -1,0 +1,4 @@
+mode,mode_label,representable_by_a_deletion_operator,n_guides,n_genes,guides_per_gene_median,guides_per_gene_min,guides_per_gene_max
+d,CRISPRd (deletion),True,24702,5197,4.0,1,530
+i,CRISPRi (interference),False,37764,5206,6.0,1,878
+a,CRISPRa (activation),False,37711,5178,6.0,1,948

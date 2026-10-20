@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+1-butyl-3-methylimidazolium chloride,raw,3483,0.5904909156951622,0.7314620259996703,0.8198231470383691,2,seed0,mix_vanhop_e150_cell_bliss_film_dose_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.6200830043249764,0.8119645953482253,0.8734729503384993,2,seed0,mix_vanhop_e150_cell_bliss_film_dose_f2
+5-(hydroxymethyl)furfural,raw,3503,0.2966368359129852,0.24195160498448054,0.0,2,seed0,mix_vanhop_e150_cell_bliss_film_dose_f2
+5-(hydroxymethyl)furfural,centered,3503,0.4482396854602653,0.5052021231973816,0.6420614542017117,2,seed0,mix_vanhop_e150_cell_bliss_film_dose_f2
+azelaic acid,raw,3495,-0.09309086739405029,0.0313643855555178,0.8666732262919424,2,seed0,mix_vanhop_e150_cell_bliss_film_dose_f2
+azelaic acid,centered,3494,-0.1677468022026432,-0.06137808649262713,0.8436186178533334,2,seed0,mix_vanhop_e150_cell_bliss_film_dose_f2
+benomyl,raw,3490,-0.10295197306337703,-0.0030034304631430535,0.8675155610064766,2,seed0,mix_vanhop_e150_cell_bliss_film_dose_f2
+benomyl,centered,3489,0.26661695120187895,0.2689407898708483,0.917096881665478,2,seed0,mix_vanhop_e150_cell_bliss_film_dose_f2
+ferulic acid,raw,3498,0.5318644605904228,0.7152407258212284,0.9219505587175544,2,seed0,mix_vanhop_e150_cell_bliss_film_dose_f2
+ferulic acid,centered,3497,0.46861370867854774,0.5832885395368841,0.8958024751441768,2,seed0,mix_vanhop_e150_cell_bliss_film_dose_f2
+methylglyoxal,raw,3482,-0.16070301525420044,-0.0448979896631077,0.9198342493438169,2,seed0,mix_vanhop_e150_cell_bliss_film_dose_f2
+methylglyoxal,centered,3479,0.09093332062843927,0.23413541888142628,0.9375811386650508,2,seed0,mix_vanhop_e150_cell_bliss_film_dose_f2
+1-butyl-3-methylimidazolium chloride,raw,3483,0.5591079281410062,0.6857496403115284,0.8198231470383691,2,seed1,mix_vanhop_e150_cell_bliss_film_dose_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.5829060873992132,0.7736209524947173,0.8734729503384993,2,seed1,mix_vanhop_e150_cell_bliss_film_dose_f2
+5-(hydroxymethyl)furfural,raw,3503,0.32005022215175155,0.32244754024847405,0.0,2,seed1,mix_vanhop_e150_cell_bliss_film_dose_f2
+5-(hydroxymethyl)furfural,centered,3503,0.3836004290577476,0.44968166847825797,0.6420614542017117,2,seed1,mix_vanhop_e150_cell_bliss_film_dose_f2
+azelaic acid,raw,3495,-0.044447158176902556,0.09756708068532548,0.8666732262919424,2,seed1,mix_vanhop_e150_cell_bliss_film_dose_f2
+azelaic acid,centered,3494,-0.1481274995922629,8.234317266155548e-05,0.8436186178533334,2,seed1,mix_vanhop_e150_cell_bliss_film_dose_f2
+benomyl,raw,3490,-0.23969440587709923,-0.217721613282747,0.8675155610064766,2,seed1,mix_vanhop_e150_cell_bliss_film_dose_f2
+benomyl,centered,3489,-0.13073315327990573,-0.2767308259079102,0.917096881665478,2,seed1,mix_vanhop_e150_cell_bliss_film_dose_f2
+ferulic acid,raw,3498,0.5237276265297187,0.7369744402850099,0.9219505587175544,2,seed1,mix_vanhop_e150_cell_bliss_film_dose_f2
+ferulic acid,centered,3497,0.42403015849980163,0.6004363205550396,0.8958024751441768,2,seed1,mix_vanhop_e150_cell_bliss_film_dose_f2
+methylglyoxal,raw,3482,-0.05383712640059711,0.024757011909095714,0.9198342493438169,2,seed1,mix_vanhop_e150_cell_bliss_film_dose_f2
+methylglyoxal,centered,3479,0.13596304141143242,0.2624312614782997,0.9375811386650508,2,seed1,mix_vanhop_e150_cell_bliss_film_dose_f2
+1-butyl-3-methylimidazolium chloride,raw,3483,0.5620017571001553,0.6970363467908604,0.8198231470383691,2,seed2,mix_vanhop_e150_cell_bliss_film_dose_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.5931069619035108,0.7878577812702982,0.8734729503384993,2,seed2,mix_vanhop_e150_cell_bliss_film_dose_f2
+5-(hydroxymethyl)furfural,raw,3503,0.34409197823373766,0.3286109208305974,0.0,2,seed2,mix_vanhop_e150_cell_bliss_film_dose_f2
+5-(hydroxymethyl)furfural,centered,3503,0.4309054641129465,0.4911588019924602,0.6420614542017117,2,seed2,mix_vanhop_e150_cell_bliss_film_dose_f2
+azelaic acid,raw,3495,-0.11409827667819832,0.02943158860838231,0.8666732262919424,2,seed2,mix_vanhop_e150_cell_bliss_film_dose_f2
+azelaic acid,centered,3494,-0.14057755293461288,0.03293679376903158,0.8436186178533334,2,seed2,mix_vanhop_e150_cell_bliss_film_dose_f2
+benomyl,raw,3490,-0.21069253015314657,-0.2029619078691639,0.8675155610064766,2,seed2,mix_vanhop_e150_cell_bliss_film_dose_f2
+benomyl,centered,3489,0.0883880505291808,0.15742469586140642,0.917096881665478,2,seed2,mix_vanhop_e150_cell_bliss_film_dose_f2
+ferulic acid,raw,3498,0.6127811735995999,0.7675995167964378,0.9219505587175544,2,seed2,mix_vanhop_e150_cell_bliss_film_dose_f2
+ferulic acid,centered,3497,0.5626512368303586,0.662458797301539,0.8958024751441768,2,seed2,mix_vanhop_e150_cell_bliss_film_dose_f2
+methylglyoxal,raw,3482,-0.19960173524048305,-0.059109834520174244,0.9198342493438169,2,seed2,mix_vanhop_e150_cell_bliss_film_dose_f2
+methylglyoxal,centered,3479,-0.012451257683915555,0.22361444176064307,0.9375811386650508,2,seed2,mix_vanhop_e150_cell_bliss_film_dose_f2
+1-butyl-3-methylimidazolium chloride,raw,3483,0.5777487286819459,0.7113273421592824,0.8198231470383691,2,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f2
+1-butyl-3-methylimidazolium chloride,centered,3482,0.6069646097496302,0.7972527893142171,0.8734729503384993,2,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f2
+5-(hydroxymethyl)furfural,raw,3503,0.33652251394082133,0.3176798108941826,0.0,2,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f2
+5-(hydroxymethyl)furfural,centered,3503,0.43615442765784485,0.49964139980664457,0.6420614542017117,2,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f2
+azelaic acid,raw,3495,-0.09078741065101469,0.05727065362404784,0.8666732262919424,2,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f2
+azelaic acid,centered,3494,-0.16451009360130975,-0.0077728062719305685,0.8436186178533334,2,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f2
+benomyl,raw,3490,-0.21418420008044525,-0.1677354763210385,0.8675155610064766,2,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f2
+benomyl,centered,3489,0.0771365244513867,0.0334155925487567,0.917096881665478,2,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f2
+ferulic acid,raw,3498,0.579716409507311,0.7607614579988748,0.9219505587175544,2,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f2
+ferulic acid,centered,3497,0.5150305987191846,0.6469114725112509,0.8958024751441768,2,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f2
+methylglyoxal,raw,3482,-0.15197756515943076,-0.027630702434094663,0.9198342493438169,2,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f2
+methylglyoxal,centered,3479,0.0731087157760182,0.2602357646234085,0.9375811386650508,2,ensemble,mix_vanhop_e150_cell_bliss_film_dose_f2

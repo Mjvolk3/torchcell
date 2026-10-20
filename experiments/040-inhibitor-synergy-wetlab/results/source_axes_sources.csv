@@ -1,0 +1,6 @@
+table,read
+source_basis,/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/031-env-chemgen-vanacloig-hillenmeyer/experiments/031-env-chemgen-inhibitor-tolerance/results/per_dataset_baselines_summary.csv
+source_agreement,/home/michaelvolk/Documents/projects/torchcell.worktrees/033-build-002/experiments/033-env-chemgen-pooled/results/cross_source_cells.csv
+dose_reference,/home/michaelvolk/Documents/projects/torchcell.worktrees/033-build-002/experiments/033-env-chemgen-pooled/results/within_cell_reliability.csv
+dose_structure,/scratch/projects/torchcell-scratch/experiments/033-env-chemgen-pooled/cell_table_002/cell_table.parquet
+store_axes (dose basis quoted in mixture_data),/home/michaelvolk/Documents/projects/torchcell.worktrees/033-build-002/experiments/033-env-chemgen-pooled/results/store_axes.csv

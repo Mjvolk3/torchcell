@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+"2,6-dimethylpyrazine",raw,3503,0.18273815164482465,0.26487338930974635,0.8722364335473455,1,seed0,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+"2,6-dimethylpyrazine",centered,3502,0.023621554757425226,0.030615617288311324,0.8694398077612701,1,seed0,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+4-hydroxybenzaldehyde,raw,3491,0.4701884181377287,0.47912418598659967,0.8164700407712783,1,seed0,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+4-hydroxybenzaldehyde,centered,3491,0.15197944362596486,0.1487811268947187,0.7296121595509025,1,seed0,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+crystal violet,raw,3386,-0.09325383284309172,0.1202224537281739,0.9536661486896061,1,seed0,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+crystal violet,centered,3385,-0.1804253840886946,-0.02939108945065077,0.9518117649143478,1,seed0,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+nonylacridine orange,raw,3505,-0.04430451956793458,0.11333489342186141,0.8837382582661709,1,seed0,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+nonylacridine orange,centered,3505,-0.22380275495460375,-0.0350803293712487,0.8804111395280323,1,seed0,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+sinapic acid,raw,3493,0.485607846720077,0.559730759891722,0.5900613638043121,1,seed0,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+sinapic acid,centered,3491,0.1477976177651647,0.20065879432748326,0.0,1,seed0,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+vanillic acid,raw,3484,0.46496703404019013,0.488033252564436,0.873157041192053,1,seed0,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+vanillic acid,centered,3484,0.18124874756590778,0.19060286188970826,0.8174900818014917,1,seed0,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+"2,6-dimethylpyrazine",raw,3503,0.15839681153509655,0.19406453804368673,0.8722364335473455,1,seed1,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+"2,6-dimethylpyrazine",centered,3502,0.07157981294631002,0.11066597406657895,0.8694398077612701,1,seed1,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+4-hydroxybenzaldehyde,raw,3491,0.3945387513219565,0.44911373449444675,0.8164700407712783,1,seed1,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+4-hydroxybenzaldehyde,centered,3491,0.14541239618934496,0.200717791387761,0.7296121595509025,1,seed1,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+crystal violet,raw,3386,-0.17375885795716295,0.29964750683088476,0.9536661486896061,1,seed1,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+crystal violet,centered,3385,-0.27807190920959013,0.23912370574503156,0.9518117649143478,1,seed1,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+nonylacridine orange,raw,3505,-0.1991035916341588,0.05121721301148671,0.8837382582661709,1,seed1,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+nonylacridine orange,centered,3505,-0.27584311472951817,-0.11277035397796721,0.8804111395280323,1,seed1,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+sinapic acid,raw,3493,0.44679487025815234,0.6395645764568265,0.5900613638043121,1,seed1,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+sinapic acid,centered,3491,0.22596887235700072,0.40165772512194087,0.0,1,seed1,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+vanillic acid,raw,3484,0.4700280515385366,0.5166931299859068,0.873157041192053,1,seed1,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+vanillic acid,centered,3484,0.23624721606594984,0.13965033821155198,0.8174900818014917,1,seed1,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+"2,6-dimethylpyrazine",raw,3503,0.15548670243656415,0.22951894253876637,0.8722364335473455,1,seed2,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+"2,6-dimethylpyrazine",centered,3502,0.3000068099174085,0.26425818252025274,0.8694398077612701,1,seed2,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+4-hydroxybenzaldehyde,raw,3491,0.5506670257710837,0.552327981087764,0.8164700407712783,1,seed2,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+4-hydroxybenzaldehyde,centered,3491,0.2759801286316422,0.29712281888816244,0.7296121595509025,1,seed2,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+crystal violet,raw,3386,-0.13629935743639293,0.3112368299165383,0.9536661486896061,1,seed2,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+crystal violet,centered,3385,-0.23563034179047931,0.2335672288659195,0.9518117649143478,1,seed2,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+nonylacridine orange,raw,3505,-0.0563244626749553,0.20179854075458187,0.8837382582661709,1,seed2,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+nonylacridine orange,centered,3505,-0.2443726524842985,0.055083908833846486,0.8804111395280323,1,seed2,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+sinapic acid,raw,3493,0.5370194410428556,0.6401611276116235,0.5900613638043121,1,seed2,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+sinapic acid,centered,3491,0.2470873796960476,0.34487844811745205,0.0,1,seed2,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+vanillic acid,raw,3484,0.4680182783939799,0.5240325062124468,0.873157041192053,1,seed2,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+vanillic acid,centered,3484,0.12245405298181548,0.11499879985809924,0.8174900818014917,1,seed2,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+"2,6-dimethylpyrazine",raw,3503,0.1783417625616794,0.26531694249346155,0.8722364335473455,1,ensemble,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+"2,6-dimethylpyrazine",centered,3502,0.1341137281585337,0.14408075884848345,0.8694398077612701,1,ensemble,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+4-hydroxybenzaldehyde,raw,3491,0.49879872222718113,0.5278279640368344,0.8164700407712783,1,ensemble,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+4-hydroxybenzaldehyde,centered,3491,0.21467522498693944,0.2598503635004291,0.7296121595509025,1,ensemble,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+crystal violet,raw,3386,-0.15907419084936977,0.278118601887734,0.9536661486896061,1,ensemble,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+crystal violet,centered,3385,-0.2861006976350859,0.20810924023628646,0.9518117649143478,1,ensemble,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+nonylacridine orange,raw,3505,-0.13041050007330035,0.13409653937654706,0.8837382582661709,1,ensemble,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+nonylacridine orange,centered,3505,-0.29843591951193515,-0.03580392433518157,0.8804111395280323,1,ensemble,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+sinapic acid,raw,3493,0.5225730087763208,0.6668067223691678,0.5900613638043121,1,ensemble,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+sinapic acid,centered,3491,0.2436194720018154,0.38948568712383935,0.0,1,ensemble,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+vanillic acid,raw,3484,0.5022464803956066,0.5496914941521858,0.873157041192053,1,ensemble,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1
+vanillic acid,centered,3484,0.2603199900936967,0.17062593617828561,0.8174900818014917,1,ensemble,mix_vanhophetwil_e150_cell_bliss_hill_loewe_f1

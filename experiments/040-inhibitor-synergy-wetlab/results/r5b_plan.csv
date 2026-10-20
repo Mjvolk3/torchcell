@@ -1,0 +1,16 @@
+job,sweep,arm,sources,n_sources,epochs,split,aux_holdout,fold_seed,folds,configs,estimated_hours,time_limit_hours,overrides
+1,r5b_vanhophet_e150_aw3_cb96_p0,vanhophet_e150_aw3_cb96,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,0,1,9.28,12,"seeds=[0, 1], aux_weight=3.0, cond_batch=96"
+2,r5b_vanhophet_e150_aw3_cb96_p1,vanhophet_e150_aw3_cb96,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,1,1,9.28,12,"seeds=[0, 1], aux_weight=3.0, cond_batch=96"
+3,r5b_vanhophet_e150_aw3_cb96_p2,vanhophet_e150_aw3_cb96,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,2,1,9.28,12,"seeds=[0, 1], aux_weight=3.0, cond_batch=96"
+4,r5b_vanhophet_e150_aw10_cb96_p0,vanhophet_e150_aw10_cb96,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,0,1,9.28,12,"seeds=[0, 1], aux_weight=10.0, cond_batch=96"
+5,r5b_vanhophet_e150_aw10_cb96_p1,vanhophet_e150_aw10_cb96,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,1,1,9.28,12,"seeds=[0, 1], aux_weight=10.0, cond_batch=96"
+6,r5b_vanhophet_e150_aw10_cb96_p2,vanhophet_e150_aw10_cb96,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,2,1,9.28,12,"seeds=[0, 1], aux_weight=10.0, cond_batch=96"
+7,r5b_vanhet_e150_p0,vanhet_e150,vanacloig hillenmeyer_het,2,150,compound,compound,0,0,1,6.3,12,"seeds=[0, 1, 2]"
+8,r5b_vanhet_e150_p1,vanhet_e150,vanacloig hillenmeyer_het,2,150,compound,compound,0,1,1,6.3,12,"seeds=[0, 1, 2]"
+9,r5b_vanhet_e150_p2,vanhet_e150,vanacloig hillenmeyer_het,2,150,compound,compound,0,2,1,6.3,12,"seeds=[0, 1, 2]"
+10,r5b_vanhet_e150_aw3_cb96_p0,vanhet_e150_aw3_cb96,vanacloig hillenmeyer_het,2,150,compound,compound,0,0,1,10.08,12,"seeds=[0, 1, 2], aux_weight=3.0, cond_batch=96"
+11,r5b_vanhet_e150_aw3_cb96_p1,vanhet_e150_aw3_cb96,vanacloig hillenmeyer_het,2,150,compound,compound,0,1,1,10.08,12,"seeds=[0, 1, 2], aux_weight=3.0, cond_batch=96"
+12,r5b_vanhet_e150_aw3_cb96_p2,vanhet_e150_aw3_cb96,vanacloig hillenmeyer_het,2,150,compound,compound,0,2,1,10.08,12,"seeds=[0, 1, 2], aux_weight=3.0, cond_batch=96"
+13,r5b_vanwil_e300_p0,vanwil_e300,vanacloig wildenhain,2,300,compound,compound,0,0 1,2,8.4,12,
+14,r5b_vanwil_e300_p1,vanwil_e300,vanacloig wildenhain,2,300,compound,compound,0,2,1,4.2,12,
+15,r5b_vanwil_e150_cb96,vanwil_e150_cb96,vanacloig wildenhain,2,150,compound,compound,0,0 1 2,3,10.08,12,cond_batch=96

@@ -1,0 +1,609 @@
+{
+  "view": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab?nw=n94xqhmif86",
+  "groups": {
+    "mix_van_ex21_film_L1_lh1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_ex21_film_L1_lh1",
+      "run_ids": [
+        "q0nho5ky",
+        "akivv1rs",
+        "1th34s39",
+        "tahoxszw",
+        "j6ler48w"
+      ]
+    },
+    "mix_van_anchors_film_L1_lh1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_anchors_film_L1_lh1",
+      "run_ids": [
+        "zmd6c0g3",
+        "tn0f82v0",
+        "ogq3goqa",
+        "rl5kisbw",
+        "udna0mtz"
+      ]
+    },
+    "mix_van_ex21_off_L1_lh1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_ex21_off_L1_lh1",
+      "run_ids": [
+        "0m9c9gbn",
+        "noitzjlc",
+        "2394dujn",
+        "ql3giy2p",
+        "fth0vgr6",
+        "yvi5gx0s",
+        "1ynsxxq1",
+        "dlngd5kh",
+        "c0t89ahg",
+        "dcybes8q",
+        "jsf68c5t",
+        "wwytb8bf",
+        "gufhz74a",
+        "nwf54vai",
+        "3lnhad87"
+      ]
+    },
+    "mix_van_anchors_off_L1_lh1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_anchors_off_L1_lh1",
+      "run_ids": [
+        "15h2zz6r",
+        "qp51ewip",
+        "0448w797",
+        "su0cx87k",
+        "492fofii"
+      ]
+    },
+    "mix_van_ft_film_L1_lh1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_ft_film_L1_lh1",
+      "run_ids": [
+        "n9u11up1",
+        "atwjs3x4",
+        "u8ffi86o",
+        "gb609a9i",
+        "0q81f2en",
+        "ax90kpry",
+        "f7x2u5tc",
+        "5ol7kgid",
+        "r2vln9an",
+        "btnl11my"
+      ]
+    },
+    "mix_van_ftenv_film_L1_lh1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_ftenv_film_L1_lh1",
+      "run_ids": [
+        "kh8zj3ww",
+        "khdg422q",
+        "a5yics6r",
+        "uu2gh4g0",
+        "d4y6xtxa",
+        "5ptdce7f",
+        "yoqsmnkb",
+        "p6qleqxc",
+        "vogcuk5j",
+        "1rcwffi1",
+        "5grt7mya",
+        "jwceprnk",
+        "h9ax230t",
+        "612qnjk3",
+        "0i1fc983",
+        "v0pw8r3g",
+        "kp853stg",
+        "h0hd7je2",
+        "tkfb2rwk",
+        "ajpe6zzk"
+      ]
+    },
+    "mix_van_ex21_film_L2_lh1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_ex21_film_L2_lh1",
+      "run_ids": [
+        "rgti88pm",
+        "8mvycax2",
+        "0rp24blc",
+        "6ze206in",
+        "l8b81m9a",
+        "i8wg1vx4",
+        "06v0o2xx",
+        "l3fmuqr4",
+        "q7ham8k1",
+        "1mglbelh"
+      ]
+    },
+    "mix_van_ex21_film_L1_lh0p1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_ex21_film_L1_lh0p1",
+      "run_ids": [
+        "91dogz66",
+        "pixafxli",
+        "hod2xl64",
+        "uti73061",
+        "aqc5xh8b"
+      ]
+    },
+    "mix_vanhop_ex21_film_L1_lh1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhop_ex21_film_L1_lh1",
+      "run_ids": [
+        "ho094l4v",
+        "qvzhyk0s",
+        "hd47ugzi",
+        "ofda3ull",
+        "dwlmw3ws"
+      ]
+    },
+    "mix_vanhophet_ex21_film_L1_lh1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_ex21_film_L1_lh1",
+      "run_ids": [
+        "0nun8htb",
+        "dd27jt1i",
+        "8311yks6",
+        "v3hh0au6",
+        "xr9q5ymh"
+      ]
+    },
+    "mix_vanhop_e150_film_dose": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhop_e150_film_dose",
+      "run_ids": [
+        "2lacgu27",
+        "0skibz0n",
+        "ctid50g6",
+        "iyoelfdq",
+        "v32s0910",
+        "ljxefd91"
+      ]
+    },
+    "mix_vanhophet_e150": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_e150",
+      "run_ids": [
+        "1ccu2v9b",
+        "bwqa5lqt",
+        "k8l89pax",
+        "eptfsirv",
+        "97xg4vrf",
+        "epip780w",
+        "uc2gphsc",
+        "76adi7em",
+        "wvygevjp",
+        "2ah7157y",
+        "az0yi0jd",
+        "opmx5gba",
+        "poz8mxmb",
+        "eucneijs"
+      ]
+    },
+    "mix_vanhophet_e150_attr": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_e150_attr",
+      "run_ids": [
+        "d1xmf71z",
+        "go6xdkcr",
+        "9u894421",
+        "ttxhp33o",
+        "b1hgpkbx",
+        "u2rwwfoy"
+      ]
+    },
+    "mix_van_e150": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_e150",
+      "run_ids": [
+        "amflkxpj",
+        "ssbxauhh",
+        "07bco8yn",
+        "k7mqaswb",
+        "ldy9rgvo",
+        "wrmrwpho",
+        "rtodoj2r",
+        "x7l8w5n3",
+        "9xkxnzuk",
+        "m6tn25yi",
+        "t40eh7ce",
+        "fazp6j7t",
+        "lc1a9lwa",
+        "873vnxwl",
+        "13j26vne",
+        "3ehp6j3h",
+        "ezfudfj4",
+        "mnjffnvs",
+        "apg0fkau"
+      ]
+    },
+    "mix_vanhop_e150": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhop_e150",
+      "run_ids": [
+        "augf72b1",
+        "4xf7uspd",
+        "0lvo8ixs",
+        "b1qqj8ng",
+        "zpfn0gko",
+        "fgvjt306",
+        "eosyq41s",
+        "gre6lc81",
+        "vtfeoh81",
+        "dxq0z7qn",
+        "j8wzxz0q",
+        "pvcp6eys",
+        "sdj22c68",
+        "llhbvbrl"
+      ]
+    },
+    "mix_van_e150_ft": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_e150_ft",
+      "run_ids": [
+        "tqnrlp1m",
+        "d29evein",
+        "gmtlp238",
+        "832bqqmv",
+        "1d6p850r",
+        "adoqdqzt"
+      ]
+    },
+    "mix_van_e150_ftenv": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_e150_ftenv",
+      "run_ids": [
+        "3mjsanfg",
+        "nwphoyd4",
+        "7inlsi5k",
+        "64fp5ois",
+        "0quau8qs",
+        "ezjqv9so"
+      ]
+    },
+    "mix_van_e150_anchors": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_e150_anchors",
+      "run_ids": [
+        "hylkujg9",
+        "416oe0pj",
+        "qkyofi9q",
+        "7k6s6hz8",
+        "vj5v1n29",
+        "hf1u6bu8"
+      ]
+    },
+    "mix_van_e150_lh0p1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_e150_lh0p1",
+      "run_ids": [
+        "w1iyqp8q",
+        "c1f4vyhb",
+        "u0anfkod",
+        "ggu4lprz",
+        "s8wv8ela",
+        "b0j87wgb"
+      ]
+    },
+    "mix_van_e150_film": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_e150_film",
+      "run_ids": [
+        "i4clc5v5",
+        "ou2ka0zk",
+        "aaww984u",
+        "677rc4q8",
+        "d53h51cd",
+        "jvi4n986"
+      ]
+    },
+    "mix_van_e150_n5": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_e150_n5",
+      "run_ids": [
+        "vhytgegn",
+        "8rdfarqi",
+        "69sio97c",
+        "69op4ir1",
+        "m74i36ls",
+        "x5xuk9xt"
+      ]
+    },
+    "mix_van_e150_n10": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_e150_n10",
+      "run_ids": [
+        "u4gr4rgt",
+        "8pel67ov",
+        "mg3n3gdu",
+        "7611p6eg",
+        "0ipbb5j9",
+        "s84jap9v"
+      ]
+    },
+    "mix_van_e150_gene": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_e150_gene",
+      "run_ids": [
+        "ut8vqmyb",
+        "qoth4a7m",
+        "aooxqg0k"
+      ]
+    },
+    "mix_vanhop_e150_gene": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhop_e150_gene",
+      "run_ids": [
+        "k2y8uwed",
+        "daau0j05",
+        "kty6vod3"
+      ]
+    },
+    "mix_vanhop_e50": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhop_e50",
+      "run_ids": [
+        "7vdla4u7",
+        "m8mykujp",
+        "mq1a8ga6"
+      ]
+    },
+    "mix_vanwil_e150": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanwil_e150",
+      "run_ids": [
+        "xhcvjw0a",
+        "8fddcg1j",
+        "mr1478hk"
+      ]
+    },
+    "mix_vanhophetwil_e150": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophetwil_e150",
+      "run_ids": [
+        "z08b18g3",
+        "e84ka162",
+        "uow74jpg"
+      ]
+    },
+    "mix_vanhophet_e150_attr_head": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_e150_attr_head",
+      "run_ids": [
+        "1yli0p44",
+        "w2dhwgtf",
+        "2fxdfaj0"
+      ]
+    },
+    "mix_vanhophet_e150_aw0p3": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_e150_aw0p3",
+      "run_ids": [
+        "ho27qiuf",
+        "v6w4ggyl",
+        "niqe7l27",
+        "ammmeqea",
+        "rmkl0vcm",
+        "a3yix6ri"
+      ]
+    },
+    "mix_vanhophet_e150_head": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_e150_head",
+      "run_ids": [
+        "nm6ksiu0",
+        "9opibjqq",
+        "6e7sxx6p",
+        "5zoyz0w1",
+        "yvld0itn",
+        "5t8ybp7u"
+      ]
+    },
+    "mix_vanhophet_e150_cb96": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_e150_cb96",
+      "run_ids": [
+        "018tb0tt",
+        "izqe1vbr",
+        "w8wjgfdt",
+        "epm87una",
+        "xw5yigip"
+      ]
+    },
+    "mix_vanhophet_e150_film_dose": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_e150_film_dose",
+      "run_ids": [
+        "i1d2cdox",
+        "1z5mgw36",
+        "q3fvle6p",
+        "24c8053z",
+        "vpdxh1cd",
+        "eccbv2wh"
+      ]
+    },
+    "mix_vanhophet_e150_cgt2": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_e150_cgt2",
+      "run_ids": [
+        "1zy5m1mc",
+        "l37cqv7n",
+        "3czh6xfd"
+      ]
+    },
+    "mix_vanhophet_e150_L2": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_e150_L2",
+      "run_ids": [
+        "fpp9xyvg",
+        "35per2s6"
+      ]
+    },
+    "mix_vanhophet_e150_wide": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_e150_wide",
+      "run_ids": [
+        "jqbwa3xg",
+        "zv1o7bmt",
+        "szvsoh09"
+      ]
+    },
+    "mix_van_e150_fs1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_e150_fs1",
+      "run_ids": [
+        "nw6p6q9s",
+        "4ri85vcm",
+        "1sa31wi9"
+      ]
+    },
+    "mix_vanhop_e150_film": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhop_e150_film",
+      "run_ids": [
+        "uy1r5btu",
+        "6e1kad7o",
+        "brdh1h5m",
+        "47kmizia",
+        "0m59rmco",
+        "bscnfjaz"
+      ]
+    },
+    "mix_vanhop_e150_fs2": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhop_e150_fs2",
+      "run_ids": [
+        "8d36e7z8",
+        "ezm2moww",
+        "my89s1cb"
+      ]
+    },
+    "mix_van_e150_fs2": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_e150_fs2",
+      "run_ids": [
+        "uz3l8xh8",
+        "7mpza3jv",
+        "fabarq1a"
+      ]
+    },
+    "mix_vanhop_e150_fs1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhop_e150_fs1",
+      "run_ids": [
+        "yzh2f1n9",
+        "n072v7ka",
+        "bdm3lrx2"
+      ]
+    },
+    "mix_vanhophet_e150_fs2": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_e150_fs2",
+      "run_ids": [
+        "8at1bgwl",
+        "ovcs8z5k",
+        "joeu224f"
+      ]
+    },
+    "mix_vanhophet_e150_n5": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_e150_n5",
+      "run_ids": [
+        "9dutjvqn",
+        "d2jnzfnc",
+        "immgu62p"
+      ]
+    },
+    "mix_vanhop_e150_n10": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhop_e150_n10",
+      "run_ids": [
+        "dxewcbuo",
+        "gyma1h9a",
+        "zytmi1ci"
+      ]
+    },
+    "mix_vanhophet_e150_ftenv": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_e150_ftenv",
+      "run_ids": [
+        "ik9cqvd1",
+        "nlpp6em6",
+        "qb1e36a8"
+      ]
+    },
+    "mix_vanhophet_e150_film": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_e150_film",
+      "run_ids": [
+        "irl2dyz2",
+        "38sko2kx",
+        "3j8se7km"
+      ]
+    },
+    "mix_vanhop_e150_n5": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhop_e150_n5",
+      "run_ids": [
+        "n0ctfigt",
+        "vojj0u43",
+        "1m5yxr67"
+      ]
+    },
+    "mix_vanhophet_e150_fs1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_e150_fs1",
+      "run_ids": [
+        "nd0wcpqk",
+        "1vz9jnpr",
+        "zb29620l"
+      ]
+    },
+    "mix_vanhophet_e150_n10": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_e150_n10",
+      "run_ids": [
+        "v6faf6ee",
+        "3rqimbtu",
+        "v2zzodum"
+      ]
+    },
+    "mix_vanhophet_e150_gene": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_e150_gene",
+      "run_ids": [
+        "3zf4v6dg",
+        "71abyxeo",
+        "ssjdz5ur"
+      ]
+    },
+    "mix_van_e150_cell": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_e150_cell",
+      "run_ids": [
+        "h0s2u8a3",
+        "yrpweb70",
+        "952clxf1"
+      ]
+    },
+    "mix_vanhop_e150_cell": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhop_e150_cell",
+      "run_ids": [
+        "3d8pmdiw",
+        "ord7zfz5",
+        "h4qiaosw"
+      ]
+    },
+    "mix_van_e150_cell_lh3": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_e150_cell_lh3",
+      "run_ids": [
+        "26awpzgb",
+        "36xeoo3z",
+        "3h1fjyjz"
+      ]
+    },
+    "mix_van_e150_cell_film": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_e150_cell_film",
+      "run_ids": [
+        "ogui2nzh",
+        "9jnykhti",
+        "zj3she9q"
+      ]
+    },
+    "mix_van_e150_cell_anchors": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_e150_cell_anchors",
+      "run_ids": [
+        "cfvdkslp",
+        "6wr6627i",
+        "dtuts4dz"
+      ]
+    },
+    "mix_vanhophet_e150_cell": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhophet_e150_cell",
+      "run_ids": [
+        "z29opse8",
+        "0n92blb9",
+        "1dyvmek9"
+      ]
+    },
+    "mix_van_e150_cell_ft": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_e150_cell_ft",
+      "run_ids": [
+        "tzf69zij",
+        "d3rj1ou9",
+        "lw6t1yls"
+      ]
+    },
+    "mix_van_e150_cell_fs1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_e150_cell_fs1",
+      "run_ids": [
+        "sqwugzde",
+        "gqa2ulwv",
+        "kq97nd8s"
+      ]
+    },
+    "mix_van_e150_cell_fs2": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_e150_cell_fs2",
+      "run_ids": [
+        "d2qpjkba",
+        "zghq6ux5",
+        "jyy6wgv3"
+      ]
+    },
+    "mix_vanhop_e150_cell_cb96": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_vanhop_e150_cell_cb96",
+      "run_ids": [
+        "3wl0kxki",
+        "f1r82vw5"
+      ]
+    }
+  }
+}

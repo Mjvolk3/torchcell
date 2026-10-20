@@ -1,0 +1,49 @@
+compound,target,n_genes,spearman,pearson,ceiling,fold,member,name
+1-ethyl-3-methylimidazolium chloride,raw,3490,0.4665760612612408,0.5680955180333404,0.8997525277118116,0,seed0,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+1-ethyl-3-methylimidazolium chloride,centered,3489,0.47897396330966885,0.6727811923292096,0.9231860633959543,0,seed0,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+"2,6-dimethylpyrazine",raw,3503,0.1559259466785562,0.06831740285992506,0.8722364335473455,0,seed0,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+"2,6-dimethylpyrazine",centered,3502,0.1937661193485642,0.1519207582310882,0.8804500636674485,0,seed0,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+methylglyoxal,raw,3482,-0.02939291345290003,-0.09617807421488637,0.9198342493438169,0,seed0,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+methylglyoxal,centered,3479,0.07669308781927268,-0.28022327292039245,0.9343894844796992,0,seed0,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+nonylacridine orange,raw,3505,0.17800018942934745,0.1788798657893113,0.8837382582661709,0,seed0,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+nonylacridine orange,centered,3505,0.2892980542418947,0.21358439245409422,0.8654297857589744,0,seed0,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+syringaldehyde,raw,3512,0.5709577787189867,0.6221846687993123,0.8430944025495708,0,seed0,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+syringaldehyde,centered,3512,0.5298795682749542,0.5070170442858779,0.8235698160496793,0,seed0,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+vanillic acid,raw,3484,0.43790192065963124,0.41982447369899917,0.873157041192053,0,seed0,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+vanillic acid,centered,3484,0.28609754946925653,0.1492458962885717,0.8134720487648535,0,seed0,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+1-ethyl-3-methylimidazolium chloride,raw,3490,0.49287554628448166,0.6049274924232977,0.8997525277118116,0,seed1,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+1-ethyl-3-methylimidazolium chloride,centered,3489,0.4991939340892615,0.6981117926248678,0.9231860633959543,0,seed1,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+"2,6-dimethylpyrazine",raw,3503,0.07418881428536382,-0.015200477339151792,0.8722364335473455,0,seed1,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+"2,6-dimethylpyrazine",centered,3502,0.13244126379772744,0.13858626483214184,0.8804500636674485,0,seed1,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+methylglyoxal,raw,3482,0.04225262362774211,-0.1224762447184885,0.9198342493438169,0,seed1,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+methylglyoxal,centered,3479,0.16208427664570269,-0.1716931248233136,0.9343894844796992,0,seed1,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+nonylacridine orange,raw,3505,0.0613175894652357,0.17428027701346982,0.8837382582661709,0,seed1,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+nonylacridine orange,centered,3505,0.2153504192688237,0.1482405336062043,0.8654297857589744,0,seed1,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+syringaldehyde,raw,3512,0.5166123810016068,0.5828033547056999,0.8430944025495708,0,seed1,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+syringaldehyde,centered,3512,0.43970433095124506,0.4302979298170942,0.8235698160496793,0,seed1,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+vanillic acid,raw,3484,0.4215884596651676,0.4156933405247378,0.873157041192053,0,seed1,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+vanillic acid,centered,3484,0.2956630195315153,0.18821717164592217,0.8134720487648535,0,seed1,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+1-ethyl-3-methylimidazolium chloride,raw,3490,0.505005034551228,0.6150805083159244,0.8997525277118116,0,seed2,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+1-ethyl-3-methylimidazolium chloride,centered,3489,0.5130449527089644,0.7037683739941041,0.9231860633959543,0,seed2,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+"2,6-dimethylpyrazine",raw,3503,0.11987901250992847,-0.006501845236796351,0.8722364335473455,0,seed2,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+"2,6-dimethylpyrazine",centered,3502,0.13118322592543868,0.1353869063943902,0.8804500636674485,0,seed2,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+methylglyoxal,raw,3482,-0.01126352107220306,-0.11945386916672467,0.9198342493438169,0,seed2,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+methylglyoxal,centered,3479,0.0006951985355052327,-0.26353309161716487,0.9343894844796992,0,seed2,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+nonylacridine orange,raw,3505,0.06755699008059293,0.11571247074679859,0.8837382582661709,0,seed2,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+nonylacridine orange,centered,3505,0.17128449239149607,0.07922861413921445,0.8654297857589744,0,seed2,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+syringaldehyde,raw,3512,0.4443708175904263,0.5580301301814055,0.8430944025495708,0,seed2,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+syringaldehyde,centered,3512,0.316244550429865,0.38209822312994657,0.8235698160496793,0,seed2,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+vanillic acid,raw,3484,0.4119829869359888,0.3977350843522218,0.873157041192053,0,seed2,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+vanillic acid,centered,3484,0.30975613146995734,0.1959025476331839,0.8134720487648535,0,seed2,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+1-ethyl-3-methylimidazolium chloride,raw,3490,0.4922457020101416,0.5990884101193267,0.8997525277118116,0,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+1-ethyl-3-methylimidazolium chloride,centered,3489,0.5000924882875726,0.6940937686274508,0.9231860633959543,0,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+"2,6-dimethylpyrazine",raw,3503,0.1166528113747031,0.011988594785248004,0.8722364335473455,0,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+"2,6-dimethylpyrazine",centered,3502,0.15220713443105305,0.1462000348327895,0.8804500636674485,0,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+methylglyoxal,raw,3482,0.012894348868220573,-0.11664295515652184,0.9198342493438169,0,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+methylglyoxal,centered,3479,0.10596862461505936,-0.2678481353145188,0.9343894844796992,0,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+nonylacridine orange,raw,3505,0.11762606775006995,0.1612695256504822,0.8837382582661709,0,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+nonylacridine orange,centered,3505,0.24234871784713286,0.16642154249556554,0.8654297857589744,0,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+syringaldehyde,raw,3512,0.5170141244517555,0.5956376214084462,0.8430944025495708,0,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+syringaldehyde,centered,3512,0.44224799210468085,0.4493070861185066,0.8235698160496793,0,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+vanillic acid,raw,3484,0.4284707897539605,0.41435507975092106,0.873157041192053,0,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs1_f0
+vanillic acid,centered,3484,0.30392346086213345,0.18224672849758555,0.8134720487648535,0,ensemble,mix_van_e150_cell_bliss_hill_loewe_fs1_f0

@@ -20,8 +20,13 @@ document's sections. Inputs, each recorded with its sha256 in ``tables/provenanc
   shapes of every dataset (t12-shapes-rows.tex) and the record counts of the plan
   (t11-plan.tex).
 
-t13-decisions-rows.tex is the owner-decision checklist, condensed from the decision lists
-of sections/input-design.tex and sections/output-design.tex (``DECISIONS``).
+* ``results/distinct_alleles.json`` (count_distinct_alleles.py): distinct CDS and
+  protein alleles of the Peter 2018 gene-keyed tarball and its isolate ids.
+
+t13-decisions-rows.tex is the owner-decision checklist after the 2026-10-20 review pass
+(``DECISIONS``; numbers in ``<<key>>`` tokens from ``facts()``), and
+t14-data-per-part.tex counts the data that trains each part of the model
+(``data_per_part()``).
 
 Hand-entered text in this script is descriptive only (readout wording, environment
 names, genotype-class wording), each item sourced to the loader module docstring named
@@ -198,9 +203,11 @@ def _tex(cell: str) -> str:
     return cell.replace(" x ", " $\\times$ ")
 
 
-def _tab(spec: str, header: list[str], rows: list[list[str]]) -> str:
+def _tab(
+    spec: str, header: list[str], rows: list[list[str]], source: str = HEADER
+) -> str:
     out = [
-        HEADER,
+        source,
         f"\\begin{{tabular}}{{{spec}}}",
         "\\toprule",
         " & ".join(header) + " \\\\",
@@ -263,27 +270,28 @@ def ceiling_cells(
     }
 
 
-# The owner's direction of 2026-10-19 (experiment note, dated section "Design pass"):
-# every gene-level readout trains together except Sameith Sm (Kemmeren's arrays);
-# Vaishnav stays in as the promoter signal; Ohya is a probe of the frozen latent; split A
-# holds out Kemmeren singles by gene, split B every Sameith double, split C a fifth of
-# the Muenzner proteome isolates (the fractions are output-design.tex's proposal).
+# The owner's direction of 2026-10-19 (experiment note, dated section "Design pass") with
+# the splits of the 2026-10-20 review pass: every gene-level readout trains together
+# except Sameith Sm (Kemmeren's arrays); Ohya is a probe of the frozen latent; split A is
+# gene fold 0 of the global fold file, out of every deletion dataset; split B every
+# Sameith double; split C isolate fold 0; splits D and E fold 0 of the segregants within
+# cross and of the promoters (output-design.tex, the evaluation protocol).
 ROLES: dict[str, str] = {
-    "MicroarrayKemmeren2014Dataset": "train; split A holds out 10\\% of genes",
+    "MicroarrayKemmeren2014Dataset": "train; split A, gene fold 0 out",
     "SmMicroarraySameith2015Dataset": "dropped: Kemmeren's arrays",
     "DmMicroarraySameith2015Dataset": "split B: every double held out",
-    "MicroarrayScoreHu2007Dataset": "train",
-    "TfDeletionPseudobulkJackson2020Dataset": "train",
-    "NadalRibellesPerturbSeq2025Dataset": "train",
-    "ProteomeMessner2023Dataset": "train",
-    "ProteomeZelezniak2018Dataset": "train",
+    "MicroarrayScoreHu2007Dataset": "train; gene fold 0 out",
+    "TfDeletionPseudobulkJackson2020Dataset": "train; gene fold 0 out",
+    "NadalRibellesPerturbSeq2025Dataset": "train; gene fold 0 out",
+    "ProteomeMessner2023Dataset": "train; gene fold 0 out",
+    "ProteomeZelezniak2018Dataset": "train; gene fold 0 out",
     "ScmdOhya2005Dataset": "probe only, frozen latent",
-    "CaudalPanTranscriptome2024Dataset": "train; split C isolates held out",
-    "ProteomeMuenzner2024Dataset": "train; split C holds out a fifth of isolates",
-    "ProteinTurnoverMuenzner2024Dataset": "train; split C isolates held out",
-    "Boocock2025Dataset": "train",
-    "Nguessan2025Dataset": "train",
-    "PooledPromoterExpressionVaishnav2022Dataset": "train, promoter signal",
+    "CaudalPanTranscriptome2024Dataset": "train; split C, isolate fold 0 out",
+    "ProteomeMuenzner2024Dataset": "train; split C, isolate fold 0 out",
+    "ProteinTurnoverMuenzner2024Dataset": "train; split C, isolate fold 0 out",
+    "Boocock2025Dataset": "train; split D, fold 0 within cross out",
+    "Nguessan2025Dataset": "train; split D, fold 0 out",
+    "PooledPromoterExpressionVaishnav2022Dataset": "train once the plasmid window exists; split E, fold 0 out",
 }
 NAME = {key: name for key, name, _, _ in DATASETS}
 
@@ -304,45 +312,85 @@ def _g(x: float) -> str:
     return f"{float(f'{x:.3g}'):g}".replace("-", "$-$")
 
 
-def plan_table(sd: dict[str, Any]) -> str:
-    """The sets of the plan with their datasets and record counts."""
+def plan_table(sd: dict[str, Any], census: dict[str, Any]) -> str:
+    """The sets of the plan with their datasets and the expected fold-0 sizes.
+
+    The global fold file is not yet written, so a split's size is its expected share
+    under the stratified draw: a tenth of each dataset's deletion genotypes (Kemmeren
+    after the Sameith singles are pinned to training), a fifth of the isolates by strain
+    name, of each segregant panel and of the promoter variants.
+    """
 
     def recs(keys: list[str]) -> int:
         return sum(sd[k]["records_in_pass"] for k in keys)
 
+    cg = census["datasets"]
+    iso = census["colocation"]["isolate_overlap_by_strain_name"]
+    union = iso["caudal"] + iso["muenzner_proteome"] - iso["caudal_and_proteome"]
     train = [k for k, r in ROLES.items() if r.startswith("train")]
     kem = sd["MicroarrayKemmeren2014Dataset"]["records_in_pass"]
-    mue = sd["ProteomeMuenzner2024Dataset"]["records_in_pass"]
+    sm = sd["SmMicroarraySameith2015Dataset"]["perturbed_gene_names_by_type"][
+        "sga_kanmx_deletion"
+    ]["distinct_in_gene_set"]
+    others = [
+        "ProteomeMessner2023Dataset",
+        "NadalRibellesPerturbSeq2025Dataset",
+        "MicroarrayScoreHu2007Dataset",
+        "ProteomeZelezniak2018Dataset",
+        "ScmdOhya2005Dataset",
+    ]
+    boo = sd["Boocock2025Dataset"]["records_in_pass"]
+    ngu = sd["Nguessan2025Dataset"]["records_in_pass"]
+    prom = sd["PooledPromoterExpressionVaishnav2022Dataset"]["promoter"][
+        "distinct_promoter_variant_ids"
+    ]
     rows = [
         [
             "Training, every gene-level readout",
             ", ".join(NAME[k] for k in train),
             _n(recs(train)),
-            "trained together; splits A and C are carved out of these records",
+            "trained together; fold 0 of each key space is carved out of these records, fold 1 validates",
         ],
         [
-            "Split A, Kemmeren by gene",
-            "Kemmeren 2014",
-            _n(round(kem / 10)),
-            "10\\% of the deletion genes, out of every deletion dataset",
+            "Split A, deletion genes",
+            "every deletion dataset",
+            _n(round((kem - sm) / 10)),
+            f"gene fold 0: about a tenth of Kemmeren's {_n(kem - sm)} genes outside the "
+            f"{_n(sm)} pinned Sameith singles; also "
+            + ", ".join(
+                f"{NAME[k]} about {_n(round(cg[k]['genotypes'] / 10))}" for k in others
+            ),
         ],
         [
             "Split B, Sameith doubles",
             "Sameith 2015 Dm",
             _n(recs(["DmMicroarraySameith2015Dataset"])),
-            "every double; scored against the additive null of its two Kemmeren singles",
+            "every double; scored against the per-gene mean, the stronger single, the additive null and the fitted combination of its singles",
         ],
         [
-            "Split C, Muenzner isolates",
-            "Muenzner 2024 protein (with Caudal 2024 and Muenzner 2024 turnover)",
-            _n(round(mue / 5)),
-            "a fifth of the isolates, out of every readout of that isolate",
+            "Split C, isolates",
+            "Caudal 2024, Muenzner 2024 protein and turnover",
+            _n(round(union / 5)),
+            f"isolate fold 0 of {_n(union)} strains: about {_n(round(iso['muenzner_proteome'] / 5))} "
+            f"Muenzner and {_n(round(iso['muenzner_turnover'] / 5))} turnover isolates, out of every readout",
+        ],
+        [
+            "Split D, segregants",
+            "Boocock 2025, N'Guessan 2025",
+            _n(round(boo / 5) + round(ngu / 5)),
+            f"fold 0 within each cross: about {_n(round(boo / 5))} Boocock and {_n(round(ngu / 5))} N'Guessan records",
+        ],
+        [
+            "Split E, promoters",
+            "Vaishnav 2022",
+            _n(round(prom / 5)),
+            f"fold 0 of {_n(prom)} promoter variants; linear evaluations first",
         ],
         [
             "Probe",
             "Ohya 2005",
             _n(recs(["ScmdOhya2005Dataset"])),
-            "ridge from the frozen latent to the CalMorph features; never trained",
+            "ridge from the frozen latent to the CalMorph features, raw and growth-residualized; never trained",
         ],
         [
             "Dropped",
@@ -352,9 +400,9 @@ def plan_table(sd: dict[str, Any]) -> str:
         ],
     ]
     return _tab(
-        ">{\\raggedright\\arraybackslash}p{32mm}>{\\raggedright\\arraybackslash}p{62mm}"
-        ">{\\raggedleft\\arraybackslash}p{14mm}>{\\raggedright\\arraybackslash}p{62mm}",
-        ["Set", "Datasets", "Records or strains, n", "Role"],
+        ">{\\raggedright\\arraybackslash}p{30mm}>{\\raggedright\\arraybackslash}p{52mm}"
+        ">{\\raggedleft\\arraybackslash}p{16mm}>{\\raggedright\\arraybackslash}p{72mm}",
+        ["Set", "Datasets", "Records or held-out units, n (expected)", "Role"],
         rows,
     )
 
@@ -413,137 +461,139 @@ def shapes_rows(sd: dict[str, Any], shapes: dict[str, Any]) -> str:
     return "\n".join(out)
 
 
-# The owner decisions of input-design.tex (I) and output-design.tex (O), condensed, plus
-# two that only appear once the plan is put together (P). Each "measured fact" is the one
-# its section cites, with the section's source; "proposed" is the section's proposal, or
-# "open" where the section makes none. Columns: id, decision, option 1, option 2,
-# measured fact, proposed, section label.
+# The owner decisions after the 2026-10-20 review pass: input side (I), output side (O),
+# the plan (P), the protocol added by the review (S), the data per model part (D) and the
+# isolate embedding plan (E). Each row: id, decision, option 1, option 2, measured fact,
+# the reconciled proposal (main option first, then its named alternatives), section
+# label. A ``<<key>>`` token in a cell is filled from ``facts()``, which reads the result
+# files; numbers measured in other experiments (019, 030, 031, 035) are quoted with their
+# run and are not in this experiment's result files.
 DECISIONS: list[tuple[str, str, str, str, str, str, str]] = [
     (
         "I1",
         "Base gene token",
+        "composite frozen sequence token: FUDT upstream 1,003 bp and downstream 300 bp (768 each), ProtT5-XL (1,024), CaLM (768); per-block LayerNorm and projection, summed, plus the position term",
         "learned identity table (the 019 model)",
-        "frozen sequence encoder (ProtT5, nucleotide-transformer windows, FUDT)",
-        "every encoder is already a per-gene row on main; the 019 campaign used none; no comparison on expression measured",
-        "open",
-        "sec:input-decisions",
+        "030 composite, trigenic, validation interaction Pearson 0.5655 at convergence (one seed); 031 betaxanthin composite 0.219 against ProtT5 alone 0.216; a one-hot row is not a function of sequence, so an unseen allele, accessory ORF or heterologous gene has no token",
+        "composite; the identity table survives only as the transductive-ceiling ablation and enters no claim. Alternatives: nucleotide-transformer windows in place of FUDT (hosts with no FUDT species token; one yeast arm), ESM2 650M in place of ProtT5 (cost only)",
+        "sec:input-token",
     ),
     (
         "I2",
         "Absence and deletion",
-        "one change type",
         "two change types",
-        "135 natural absences per Caudal isolate; the similarity is measurable after training as the cosine of the two embeddings",
-        "two",
-        "sec:input-decisions",
+        "one change type",
+        "<<caudal_abs>> natural absences per Caudal record (median); the similarity is measurable after training as the cosine of the two embeddings",
+        "two; report the cosine after training",
+        "sec:input-changes",
     ),
     (
         "I3",
-        "Isolate marks in the mask",
-        "every type, M about 5,565",
-        "loss of function and absence, M about 518",
-        "operator cost scales with the largest M in a batch; within-isolate mRNA-protein agreement 0.208 does not separate the two",
-        "open",
-        "sec:input-decisions",
+        "Isolates",
+        "own reference context: token matrix from the isolate's allele embeddings, encoded once and cached, <<iso_union>> contexts; the operator carries only engineered edits (the HO deletion)",
+        "perturbation of S288C: loss-of-function plus absence marks, M about 518, allele tokens on the variant rows",
+        "a Caudal record carries <<caudal_pert>> perturbations (median), <<caudal_var>> of them sequence variants; HO deletion on <<caudal_ho>> of <<caudal_n>> Caudal records",
+        "option 1 is the main design; option 2 is the interim arm for a first run if the owner keeps the S288C route (owner question 1)",
+        "sec:input-isolates",
     ),
     (
         "I4",
         "Segregant gene membership",
-        "whole gene inside a block",
+        "whole gene inside a block of posterior 0.9 or more, with the parent's real allele token when the parent is a collection member",
         "gene midpoint inside a block",
-        "blocks end at marker positions and the crossover lies in the gap; straddling genes per segregant not counted",
-        "whole gene (the prototype)",
-        "sec:input-decisions",
+        "<<parents_members>> non-BY parents carry a Peter id in the loaders that is one of the <<isolates_seen>> isolates of the gene-keyed allele tarball; straddling genes per segregant not counted",
+        "whole gene, parent allele tokens from the tarball (owner question 4 confirms)",
+        "sec:input-changes",
     ),
     (
         "I5",
         "Chromosomal position",
-        "on for every genotype class",
-        "on only when segregants enter",
-        "no run bears on it; nearest-genotype deviation $r$ 0.113 against 0.070 is the only segregant signal",
-        "open",
+        "on for every class: reference coordinates, chromosome embedding scaled by chromosome copy number, Fourier features of the relative midpoint, the gene's pangenome copy number",
+        "off, or on only when segregants enter",
+        "Peter 2018: 342 aneuploidies in 193 isolates (19.1%), no translocation fraction reported; assemblies short-read, median N50 136 kb, 3,259 contigs, no per-isolate GFF",
+        "on for every class; isolate-own coordinates deferred to chromosome-scale assemblies; conserved gene order is a hypothesis",
         "sec:input-position",
     ),
     (
         "I6",
-        "Strain tokens",
-        "extra keys of the operator",
-        "added to the CLS row",
-        "at M = 1 an extra key makes M = 2 and changes the softmax, which confounds a comparison with 019",
-        "extra keys (the prototype's layout)",
-        "sec:input-decisions",
+        "Context tokens",
+        "split by kind: allele parent on the gene token; environment and experiment type read by the head; dataset only as the per-dataset bias at the head",
+        "every context as an extra key of the operator (the prototype)",
+        "a dataset key the trunk can read lets the latent learn dataset-specific states, and the morphology probe reads that latent for genotypes with no dataset token",
+        "option 1; dataset identity never enters the trunk or the operator in any arm",
+        "sec:input-strain",
     ),
     (
         "I7",
         "Operator normalization at large M",
         "softmax, magnitude fixed",
         "sigmoid gate, magnitude grows with M",
-        "operator A run at M = 1 to 3 only; sigmoid gate 0.200 against 0.210, one seed; nothing at M of 10 or more",
-        "open",
-        "sec:input-decisions",
+        "operator A run at M = 1 to 3 only; sigmoid gate 0.200 against 0.210, one seed",
+        "moot under I3 main, where M is 2 or less outside the segregants; softmax stays; the gate only if a class with M of 10 or more remains",
+        "sec:input-operator",
     ),
     (
         "I8",
         "Accessory ORFs and the Vaishnav reporter",
-        "encode each as an extra token",
+        "extra off-graph tokens from the same composite encoders",
         "report and skip",
-        "84 accessory presences per Caudal isolate; one reporter (YFP) for 71,158 Vaishnav records",
-        "skip accessory ORFs; encode the reporter, since Vaishnav trains",
-        "sec:input-decisions",
+        "<<caudal_pres>> accessory presences per Caudal record (median), <<pres_orfs>> distinct pangenome ORFs; Vaishnav <<vai_n>> records, one reporter (YFP)",
+        "option 1; the reporter's promoter block is the frozen FUDT upstream encoder on the construct window, which needs Addgene 127546 in the constructs tier (owner question 2)",
+        "sec:input-token",
     ),
     (
         "O1",
         "Heads",
-        "joined by readout type, 6 heads with 15 per-dataset affines",
-        "one head per dataset, 15 heads",
-        "same-type agreement 0.002 to 0.107 (expression), 0.049 (protein); an affine cannot raise a correlation; no joint training scored",
-        "joined; split as the control arm",
-        "sec:output-decisions",
+        "one head per readout level (gene-level, record-level), shared across readout types and conditioned by the type token; targets standardized per dataset; per-dataset learned bias",
+        "six heads by readout type",
+        "same-type agreement 0.002 to 0.107 (expression), 0.049 (protein); an affine map cannot raise a correlation; no joint training scored",
+        "option 1; the six-heads-by-type form is the control arm",
+        "sec:output-heads",
     ),
     (
         "O2",
         "Experiment-type token",
-        "flat id",
-        "ontology path",
+        "ontology path with a modeling-side grouping (expression, protein, promoter, fitness, interaction, metabolite, morphology)",
+        "flat class id",
         "the served ontology is flat, 34 leaves under phenotype",
-        "flat now, path when the ontology carries one",
-        "sec:output-decisions",
+        "path token (the owner's tokenizing of the ontology); flat id as the ablation",
+        "sec:output-tokens",
     ),
     (
         "O3",
         "Where the tokens enter",
-        "at the head only",
-        "on the CLS row, or as an attended token",
-        "experiment 035: $-0.007$, $-0.025$, $+0.008$ against ridge for the three forms, every CI through zero",
-        "head only; attended token as an arm",
-        "sec:output-decisions",
+        "at the head: type, dataset and environment tokens concatenated to the gene state, with the per-dataset bias",
+        "type and environment attended in one layer after the operator",
+        "030 dim-8 per-entry readout token: validation interaction Pearson 0.5655 at convergence, one seed; 035 attended token +0.008 against ridge, CI through zero",
+        "head as main; the attended layer as arm 1 (the form a compound-structured environment will need); no token as the ablation; dataset never in the trunk",
+        "sec:output-tokens",
     ),
     (
         "O4",
         "Loss",
-        "MSE",
-        "19-quantile pinball",
-        "019 morphology: MSE on z_S escaped 12 of 12 runs, pinball 8 of 10",
-        "MSE; pinball as an arm",
-        "sec:output-decisions",
+        "HL-Gauss binned prediction on standardized targets, K = 32 over [-4, 4] z, sigma 0.75 bin widths, expectation as the point",
+        "19-quantile pinball; MSE",
+        "019 morphology on z_S: MSE escaped 12 of 12 runs, pinball 8 of 10; no binned head has run here",
+        "bins as main; pinball as arm 1 (the owner's preference over MSE); one MSE cell as the reference; every gain a hypothesis",
+        "sec:output-losses",
     ),
     (
         "O5",
         "Dataset weighting",
         "equal per dataset",
-        "by ceiling, or by record count",
-        "Boocock and Vaishnav hold 87% of the records; Kemmeren holds 1,482",
-        "equal, agreement-weighted for the low-agreement sets; record count as an arm",
-        "sec:output-decisions",
+        "record count; agreement weighting",
+        "Boocock holds <<boocock_share>>% of the gene-level values (records times the median keys on the index)",
+        "equal; agreement weighting dropped; record count as an arm; P1 decides whether the de novo cells train",
+        "sec:output-losses",
     ),
     (
         "O6",
         "Nadal-Ribelles sentinels",
-        "|log2 FC| > 20 set to missing",
+        "|log2 FC| > 20 set to missing before standardization",
         "keep the stored value",
         "20.2% of cells are sentinels",
-        "missing",
-        "sec:output-decisions",
+        "missing, before the standardization statistics are fitted",
+        "sec:output-losses",
     ),
     (
         "O7",
@@ -551,76 +601,511 @@ DECISIONS: list[tuple[str, str, str, str, str, str, str]] = [
         "deletion effect against the HO control of the same environment",
         "absolute log2(CPM+1) with the environment token",
         "construction pairs agree at 0.129 against 0.095 on the effect; one genotype across environments at 0.010",
-        "the effect",
-        "sec:output-decisions",
+        "the effect; Jackson not scored alone",
+        "sec:output-protocol",
     ),
     (
         "O8",
         "Split A leakage rule",
-        "held-out gene out of every deletion dataset",
+        "held-out gene out of every deletion dataset, from the global fold file",
         "out of the expression datasets only",
-        "the arm without the natural-genome datasets measures the isolate and segregant side either way",
-        "every deletion dataset",
-        "sec:output-decisions",
+        "Kemmeren different-mutant floor <<kem_null>> per strain; the 82 Sameith singles must stay in training for split B",
+        "every deletion dataset, by the fold file (S1)",
+        "sec:output-protocol",
     ),
     (
         "O9",
-        "Split C size",
-        "a fifth of the isolates, 159",
-        "another fraction",
-        "no Muenzner ceiling; Caudal against Muenzner 0.208 per isolate is the reference",
-        "a fifth",
-        "sec:output-decisions",
+        "Split C",
+        "fold 0 of the 5-fold isolate partition",
+        "a fifth of the Muenzner isolates alone",
+        "<<iso_union>> Caudal and Muenzner strains, <<iso_shared>> shared, <<turn_n>> with turnover; Caudal against Muenzner <<cxm_iso>> per isolate",
+        "fold 0, about <<iso_fold>> isolates (about <<mue_fold>> Muenzner, about <<turn_fold>> turnover)",
+        "sec:output-protocol",
     ),
     (
         "O10",
         "Budget and window",
-        "019's 500 epochs read over 400 to 499",
-        "a longer budget",
-        "019's 1,000-epoch runs scored lower over 900 to 999 than over 400 to 499 in 7 of 8",
-        "declare with the launch",
-        "sec:output-decisions",
+        "declared with the launch; alone and joint matched on optimizer steps",
+        "epochs, with validation selecting the epoch",
+        "019's 1,000-epoch runs scored lower over 900 to 999 than over 400 to 499 in 7 of 8; 031 epoch selection on validation null (-0.009)",
+        "option 1; validation never selects the epoch; test read once",
+        "sec:output-protocol",
     ),
     (
         "P1",
         "Boocock de novo cells",
-        "train all 79,123 single cells under the posterior rule",
-        "train the 393 pooled segregants only",
-        "de novo cells: median 2,000 to 4,000 UMIs, 24 to 35% of markers below posterior 0.9",
+        "train all de novo single cells under the posterior rule",
+        "train the pooled segregants only",
+        "de novo cells: median 2,000 to 4,000 UMIs, 24 to 35% of markers below posterior 0.9; Boocock is <<boocock_share>>% of gene-level values",
         "open; the every-readout direction includes them",
         "sec:proposal",
     ),
     (
         "P2",
         "Split A against split B",
-        "draw split A from Kemmeren genes outside the 82 Sameith singles",
-        "draw split A from all 1,482",
-        "split B's additive null needs both singles of each double in training; the overlap of a random draw is not counted",
-        "draw outside the Sameith singles",
+        "pin the 82 Sameith singles to the training folds",
+        "draw split A from all <<kem_n>> Kemmeren genes",
+        "split B's additive null needs both singles of each double in training",
+        "pin the singles (kept)",
         "sec:proposal",
+    ),
+    (
+        "S1",
+        "Global split file",
+        "one file, conf/splits/global_split_v1.json (pydantic GlobalSplit043, seed 0, store sha256): genes 10-fold, isolates 5-fold, segregants 5-fold within cross, promoters 5-fold; fold 0 test, fold 1 validation",
+        "separate draws per split",
+        "alone and joint runs must read the same held-out records; Kemmeren keeps <<kem_eligible>> eligible genes after pinning",
+        "one file; an alone run is the joint config with one dataset listed; a clade-disjoint isolate file as the hard split (owner question 6)",
+        "sec:output-protocol",
+    ),
+    (
+        "S2",
+        "Decision rule",
+        "gain of 0.02 or more, 5 of 6 paired seeds up, 95% interval over held-out strains excluding zero",
+        "seed count alone",
+        "019 seed sd 0.006 (expression) and 0.008 (proteome); 031 pin sampling sd 0.041 equaled the seed sd",
+        "option 1, committed before the first GPU run; 9 of 12 when fold 1 runs as a second split",
+        "sec:output-protocol",
+    ),
+    (
+        "S3",
+        "Linear evaluations first",
+        "CPU ladder from the frozen tokens before any card is used",
+        "train first",
+        "031 operator audit: the single-deletion score is an affine read of the deleted gene's own token, ridge on raw ProtT5 0.082; the token ridge has never been measured on expression",
+        "option 1: per-gene mean, ridge and kNN, GBLUP for isolates, marker ridge for segregants, k-mer ridge for Vaishnav, the four-rung double ladder",
+        "sec:output-linear",
+    ),
+    (
+        "S4",
+        "Per-strain statistic",
+        "centered on the training-mean profile, raw beside it",
+        "raw only",
+        "Kemmeren different-mutant pairs agree at <<kem_null>> per strain (job 5893)",
+        "centered, with the floor quoted beside any raw number (owner question 7)",
+        "sec:output-protocol",
+    ),
+    (
+        "S5",
+        "Transfer statistic",
+        "joint minus alone per dataset, paired by seed, strain-resampled interval",
+        "joint score alone",
+        "alone runs see fewer records per epoch, so equal epochs are not equal budgets",
+        "option 1, matched on optimizer steps",
+        "sec:output-protocol",
+    ),
+    (
+        "S6",
+        "Morphology probe control",
+        "ridge from frozen h, z_S, mean H and their concatenation, raw and growth-residualized; fold-0-gene subgroup",
+        "raw probe only",
+        "measured-input ridge bars Kemmeren <<morph_kem>>, Messner <<morph_mes>>, Hu <<morph_hu>> (job 5892); growth matrices predict morphology nearly as well as the proteome (019 screen)",
+        "option 1; the 019 head 0.149 is the inductive bar",
+        "sec:output-protocol",
+    ),
+    (
+        "S7",
+        "Reporting",
+        "Spearman beside Pearson; calibration slope named by population",
+        "Pearson only",
+        "010 calibration slope 0.88 on the whole test split, 1.59 inside the predicted top 100",
+        "option 1, for every head",
+        "sec:output-protocol",
+    ),
+    (
+        "D1",
+        "Data per model part",
+        "count the data each part trains on before the run (Table tab:data-per-part)",
+        "count after",
+        "<<del_events>> deletion events against <<var_events>> variant events; <<distinct_prot>> distinct protein alleles over <<allele_records>> allele records",
+        "option 1, regenerated with the store",
+        "sec:data-per-part",
+    ),
+    (
+        "E1",
+        "Isolate embedding plan",
+        "dedup by sequence hash, four encoders, CPU alignment first, GPU when the cards free",
+        "embed every (isolate, gene) pair",
+        "<<distinct_prot>> distinct proteins and <<distinct_cds>> distinct CDS over <<isolates_seen>> isolates (count_distinct_alleles.py)",
+        "option 1; ProtT5 about 2.7 h on two cards under stated throughput assumptions (hypothesis), ESM2 a third of that (owner question 3)",
+        "sec:input-embeddings",
     ),
 ]
 
 
-def decisions_rows() -> str:
-    """Rows of the owner-decision longtable."""
+#: The 11 gene-level training datasets (every training dataset except Vaishnav, whose
+#: label is one scalar per record and touches no gene of the index).
+GENE_LEVEL_TRAIN = [
+    "MicroarrayKemmeren2014Dataset",
+    "MicroarrayScoreHu2007Dataset",
+    "TfDeletionPseudobulkJackson2020Dataset",
+    "NadalRibellesPerturbSeq2025Dataset",
+    "ProteomeMessner2023Dataset",
+    "ProteomeZelezniak2018Dataset",
+    "CaudalPanTranscriptome2024Dataset",
+    "ProteomeMuenzner2024Dataset",
+    "ProteinTurnoverMuenzner2024Dataset",
+    "Boocock2025Dataset",
+    "Nguessan2025Dataset",
+]
+ISOLATE_SETS = [
+    "CaudalPanTranscriptome2024Dataset",
+    "ProteomeMuenzner2024Dataset",
+    "ProteinTurnoverMuenzner2024Dataset",
+]
+SEGREGANT_SETS = ["Boocock2025Dataset", "Nguessan2025Dataset"]
+#: The store's perturbation types grouped by change type (genotype_tokens_043.py,
+#: PERTURBATION_TYPE_TO_CHANGE).
+CHANGE_OF_TYPE = {
+    "kanmx_deletion": "deletion",
+    "sga_kanmx_deletion": "deletion",
+    "sga_natmx_deletion": "deletion",
+    "barcoded_kanmx_deletion": "deletion",
+    "marker_deletion": "deletion",
+    "deletion": "deletion",
+    "sequence_variant": "variant",
+    "natural_loss_of_function": "loss of function",
+    "natural_gene_absence": "absent",
+    "natural_gene_presence": "present",
+    "variable_promoter_reporter": "promoter",
+}
+#: Segregant parent label -> Peter 2018 strain id, as the loaders pin them
+#: (torchcell/datasets/scerevisiae/bloom2019.py PARENT_PETER_ID, read through
+#: boocock2025.BLOOM_LABEL and nguessan2025's RMx entry). BY sits on the S288C reference.
+SEGREGANT_PARENT_PETER = {
+    "RM": "AAA",
+    "YJM145": "AAS",
+    "YPS163": "ACD",
+    "CBS2888": "ABL",
+    "YJM981": "ADI",
+}
+
+
+def _parents(sd: dict[str, Any]) -> set[str]:
+    """Distinct segregant parents, BY4741 and RM11-1a folded onto BY and RM."""
+    out: set[str] = set()
+    for key in SEGREGANT_SETS:
+        for pair in sd[key]["segregant"]["parent_pairs"]:
+            for p in pair.split(" x "):
+                out.add(
+                    "BY" if p.startswith("BY") else "RM" if p.startswith("RM") else p
+                )
+    return out
+
+
+def _values(d: dict[str, Any]) -> float:
+    """Gene-level values of a dataset: records times the median keys on the index."""
+    on = d["label_keys_in_gene_set_per_record_after_map"]
+    return d["records_in_pass"] * on["median"]
+
+
+def _labeled_genes(d: dict[str, Any]) -> int:
+    after = d.get("label_keys_distinct_in_gene_set_after_map")
+    return after if after is not None else d["label_keys_distinct_in_gene_set_raw_name"]
+
+
+def _events(sd: dict[str, Any], keys: list[str] | None = None) -> dict[str, int]:
+    """Stored perturbations summed by change type over the given datasets."""
+    out: dict[str, int] = {}
+    for key, d in sd.items():
+        if keys is not None and key not in keys:
+            continue
+        for t, s in d["perturbations_per_record_by_type"].items():
+            c = CHANGE_OF_TYPE[t]
+            out[c] = out.get(c, 0) + int(s["total"])
+    return out
+
+
+def facts(
+    sd: dict[str, Any],
+    census: dict[str, Any],
+    within: dict[str, Any],
+    cross: dict[str, Any],
+    alleles: dict[str, Any],
+) -> dict[str, str]:
+    """Every number the decision rows quote from this experiment's result files."""
+    cau = sd["CaudalPanTranscriptome2024Dataset"]
+    by = cau["perturbations_per_record_by_type"]
+    iso = census["colocation"]["isolate_overlap_by_strain_name"]
+    union = iso["caudal"] + iso["muenzner_proteome"] - iso["caudal_and_proteome"]
+    vals = {k: _values(sd[k]) for k in GENE_LEVEL_TRAIN}
+    ev = _events(sd)
+    members = set(alleles["isolates"])
+    in_tar = [p for p, pid in SEGREGANT_PARENT_PETER.items() if pid in members]
+    non_by = sorted(_parents(sd) - {"BY"})
+    if sorted(SEGREGANT_PARENT_PETER) != non_by:
+        raise RuntimeError(f"segregant parents {non_by} differ from the Peter map")
+    kem = sd["MicroarrayKemmeren2014Dataset"]["records_in_pass"]
+    sm = sd["SmMicroarraySameith2015Dataset"]["perturbed_gene_names_by_type"][
+        "sga_kanmx_deletion"
+    ]["distinct_in_gene_set"]
+    m = cross["morphology"]["moving_features"]
+    cxm = cross["pairs"]["09a_caudal_x_muenzner_proteome"]
+    pres = max(
+        sd[k]["perturbed_gene_names_by_type"]["natural_gene_presence"][
+            "distinct_outside_gene_set"
+        ]
+        for k in ISOLATE_SETS[:1]
+    )
+    return {
+        "caudal_abs": _n(by["natural_gene_absence"]["median"]),
+        "caudal_pert": _n(cau["perturbations_per_record"]["median"]),
+        "caudal_var": _n(by["sequence_variant"]["median"]),
+        "caudal_pres": _n(by["natural_gene_presence"]["median"]),
+        "caudal_ho": _n(by["deletion"]["records_with_type"]),
+        "caudal_n": _n(cau["records_in_pass"]),
+        "pres_orfs": _n(pres),
+        "iso_union": _n(union),
+        "iso_shared": _n(iso["caudal_and_proteome"]),
+        "turn_n": _n(iso["muenzner_turnover"]),
+        "iso_fold": _n(round(union / 5)),
+        "mue_fold": _n(round(iso["muenzner_proteome"] / 5)),
+        "turn_fold": _n(round(iso["muenzner_turnover"] / 5)),
+        "cxm_iso": _f(cxm["A_per_genotype_pearson"]["median"], 3),
+        "parents_members": f"{len(in_tar)} of {len(SEGREGANT_PARENT_PETER)}",
+        "isolates_seen": _n(alleles["isolates_seen"]),
+        "vai_n": _n(
+            sd["PooledPromoterExpressionVaishnav2022Dataset"]["records_in_pass"]
+        ),
+        "boocock_share": f"{100 * vals['Boocock2025Dataset'] / sum(vals.values()):.0f}",
+        "kem_null": _f(
+            within["kemmeren2014"]["per_strain_null_different_mutants"]["median"], 3
+        ),
+        "kem_n": _n(kem),
+        "kem_eligible": _n(kem - sm),
+        "morph_kem": _f(m["kemmeren"]["median_r_over_features"], 3),
+        "morph_mes": _f(m["messner"]["median_r_over_features"], 3),
+        "morph_hu": _f(m["hu"]["median_r_over_features"], 3),
+        "del_events": _n(ev["deletion"]),
+        "var_events": _n(ev["variant"]),
+        "distinct_prot": _n(alleles["distinct_protein_alleles_total"]),
+        "distinct_cds": _n(alleles["distinct_cds_alleles_total"]),
+        "allele_records": _n(alleles["isolate_gene_records"]),
+    }
+
+
+def data_per_part(
+    sd: dict[str, Any], census: dict[str, Any], alleles: dict[str, Any], gene_set_n: int
+) -> str:
+    """Records, genotypes or contexts, gene-level values and distinct genes per model part."""
+    cg = census["datasets"]
+    iso = census["colocation"]["isolate_overlap_by_strain_name"]
+    union = iso["caudal"] + iso["muenzner_proteome"] - iso["caudal_and_proteome"]
+    non_by = sorted(_parents(sd) - {"BY"})
+
+    def recs(keys: list[str]) -> int:
+        return sum(sd[k]["records_in_pass"] for k in keys)
+
+    def geno(keys: list[str]) -> int:
+        return sum(cg[k]["genotypes"] for k in keys)
+
+    def vals(keys: list[str]) -> float:
+        return sum(_values(sd[k]) for k in keys)
+
+    def sci(x: float) -> str:
+        e = len(str(int(x))) - 1
+        return f"${x / 10**e:.1f}\\times10^{{{e}}}$"
+
+    allv = vals(GENE_LEVEL_TRAIN)
+    top = sorted(GENE_LEVEL_TRAIN, key=lambda k: -_values(sd[k]))[:3]
+    big = max(GENE_LEVEL_TRAIN, key=lambda k: _labeled_genes(sd[k]))
+    ev = _events(sd)
+    pg = alleles["per_gene"].values()
+    med = lambda xs: sorted(xs)[len(xs) // 2]  # noqa: E731
+    cds = [g["distinct_cds"] for g in pg]
+    prot = [g["distinct_protein"] for g in pg]
+    boo = sd["Boocock2025Dataset"]["segregant"]["crosses"]
+
+    def dist(t: str, keys: list[str], outside: bool = False) -> str:
+        f = "distinct_outside_gene_set" if outside else "distinct_in_gene_set"
+        return ", ".join(
+            f"{NAME[k].replace(' 2024', '').replace(' protein', '')} "
+            f"{_n(sd[k]['perturbed_gene_names_by_type'][t][f])}"
+            for k in keys
+            if t in sd[k]["perturbed_gene_names_by_type"]
+        )
+
+    del_keys = [
+        k
+        for k, d in sd.items()
+        if any(
+            CHANGE_OF_TYPE[t] == "deletion" and k not in ISOLATE_SETS
+            for t in d["perturbations_per_record_by_type"]
+        )
+    ]
+    del_genes = "; ".join(
+        f"{NAME[k]} {_n(sum(v['distinct_in_gene_set'] for t, v in sd[k]['perturbed_gene_names_by_type'].items() if CHANGE_OF_TYPE[t] == 'deletion'))}"
+        for k in del_keys
+    )
+    rows = [
+        [
+            "Gene tokens ($W_k$, $T$, $P$) and the gene-level head",
+            "the 11 gene-level training datasets",
+            _n(recs(GENE_LEVEL_TRAIN)),
+            _n(geno(GENE_LEVEL_TRAIN)) + " genotypes",
+            f"{sci(allv)}; "
+            + ", ".join(f"{NAME[k]} {100 * _values(sd[k]) / allv:.0f}%" for k in top),
+            f"at least {_n(_labeled_genes(sd[big]))} labeled genes ({NAME[big]}); union not computed",
+        ],
+        [
+            "Isolate reference contexts (I3 main) or isolate strain tokens",
+            "Caudal 2024, Muenzner 2024 protein and turnover",
+            _n(recs(ISOLATE_SETS)),
+            f"{_n(union)} isolates by strain name ({_n(iso['caudal'])} Caudal, "
+            f"{_n(iso['muenzner_proteome'])} Muenzner, {_n(iso['caudal_and_proteome'])} shared)",
+            sci(vals(ISOLATE_SETS)),
+            "label keys on the index per record (median): "
+            + ", ".join(
+                f"{NAME[k]} {_n(sd[k]['label_keys_in_gene_set_per_record_after_map']['median'])}"
+                for k in ISOLATE_SETS
+            ),
+        ],
+        [
+            "Segregant genotypes (parent allele tokens)",
+            "Boocock 2025, N'Guessan 2025",
+            _n(recs(SEGREGANT_SETS)),
+            "Boocock crosses "
+            + ", ".join(f"{c} {_n(v)}" for c, v in boo.items())
+            + f"; N'Guessan {_n(sd['Nguessan2025Dataset']['records_in_pass'])}; "
+            f"{len(non_by) + 1} distinct parents",
+            sci(vals(SEGREGANT_SETS)),
+            "label keys on the index per record (median): "
+            + ", ".join(
+                f"{NAME[k]} {_n(sd[k]['label_keys_in_gene_set_per_record_after_map']['median'])}"
+                for k in SEGREGANT_SETS
+            ),
+        ],
+        [
+            "Reference encoder, distinct reference cells",
+            "all",
+            "",
+            f"today 1 (S288C); under I3 main {_n(union)} isolates plus "
+            f"{len(non_by)} non-BY parents, {_n(union + len(non_by))} contexts, each encoded once",
+            "",
+            f"S288C index {_n(gene_set_n)}; {_n(alleles['gene_files'])} reference genes per isolate in the allele tarball",
+        ],
+        [
+            "Operator: deletion",
+            "deletion sets and the isolates' HO deletions",
+            _n(ev["deletion"]) + " events",
+            "",
+            "",
+            "distinct deleted genes: " + del_genes,
+        ],
+        [
+            "Operator or reference context: variant",
+            "isolates",
+            _n(ev["variant"]) + " events",
+            _n(recs(ISOLATE_SETS)) + " records",
+            "",
+            f"genes with a variant: {dist('sequence_variant', ISOLATE_SETS[:1])}; "
+            f"{_n(alleles['isolate_gene_records'])} allele records over "
+            f"{_n(alleles['isolates_seen'])} isolates and {_n(alleles['gene_files'])} genes, "
+            f"{_n(alleles['distinct_cds_alleles_total'])} distinct CDS, "
+            f"{_n(alleles['distinct_protein_alleles_total'])} distinct proteins; per gene median "
+            f"{_n(med(cds))} CDS, {_n(med(prot))} proteins, max {_n(max(cds))} and {_n(max(prot))}",
+        ],
+        [
+            "Operator or reference context: loss of function",
+            "isolates",
+            _n(ev["loss of function"]) + " events",
+            "",
+            "",
+            "genes: " + dist("natural_loss_of_function", ISOLATE_SETS[:2]),
+        ],
+        [
+            "Operator or reference context: absent",
+            "isolates",
+            _n(ev["absent"]) + " events",
+            "",
+            "",
+            "genes: " + dist("natural_gene_absence", ISOLATE_SETS[:2]),
+        ],
+        [
+            "Extra tokens: present accessory ORF",
+            "isolates",
+            _n(ev["present"]) + " events",
+            "",
+            "",
+            "pangenome ORFs off the index: "
+            + dist("natural_gene_presence", ISOLATE_SETS[:2], outside=True),
+        ],
+        [
+            "Extra token: promoter reporter",
+            "Vaishnav 2022",
+            _n(ev["promoter"]) + " events",
+            _n(
+                sd["PooledPromoterExpressionVaishnav2022Dataset"]["promoter"][
+                    "distinct_promoter_variant_ids"
+                ]
+            )
+            + " promoter variants",
+            _n(
+                sd["PooledPromoterExpressionVaishnav2022Dataset"]["value_range_finite"][
+                    "n_values_sampled"
+                ]
+            )
+            + " scalars, none on the index",
+            "1 reporter (YFP)",
+        ],
+    ]
+    return _tab(
+        ">{\\raggedright\\arraybackslash}p{30mm}>{\\raggedright\\arraybackslash}p{24mm}"
+        ">{\\raggedleft\\arraybackslash}p{16mm}>{\\raggedright\\arraybackslash}p{30mm}"
+        ">{\\raggedright\\arraybackslash}p{24mm}>{\\raggedright\\arraybackslash}p{44mm}",
+        [
+            "Part of the model",
+            "Trained by",
+            "Records or events, n",
+            "Genotypes or reference contexts, n",
+            "Gene-level values, n (records times median keys on the index)",
+            "Distinct genes or alleles, n",
+        ],
+        rows,
+        source=(
+            "%% GENERATED by experiments/043-expression-proteome-morphology/scripts/"
+            "primer_043_tables.py (data_per_part)\n"
+            "%% SOURCE: results/data_shapes_043.json (slurm job 5902), results/store_census.json,\n"
+            "%% results/distinct_alleles.json (count_distinct_alleles.py). Do not edit by hand.\n"
+        ),
+    )
+
+
+def decisions_rows(fx: dict[str, str]) -> str:
+    """Rows of the owner-decision longtable, with ``<<key>>`` tokens filled from ``fx``."""
     out = [
         "%% GENERATED by experiments/043-expression-proteome-morphology/scripts/"
         "primer_043_tables.py",
-        "%% SOURCE: the owner-decision lists of sections/input-design.tex and",
-        "%% sections/output-design.tex, condensed in DECISIONS. Do not edit by hand.",
+        "%% SOURCE: DECISIONS (the reconciled decisions of the 2026-10-20 review pass);",
+        "%% numbers in <<key>> tokens from results/data_shapes_043.json, store_census.json,",
+        "%% within_dataset_ceilings.json, cross_dataset_correlation.json and",
+        "%% distinct_alleles.json. Do not edit by hand.",
     ]
-    for i, dec, o1, o2, fact, prop, ref in DECISIONS:
-        fact = fact.replace("%", "\\%").replace("z_S", "$z_S$")
-        fact = fact.replace("M = ", "$M={}$").replace(" M ", " $M$ ")
-        cells = [i, dec, o1, o2, fact, prop, f"\\ref{{{ref}}}"]
+    for row in DECISIONS:
+        cells = list(row[:6])
+        for k, v in fx.items():
+            cells = [c.replace(f"<<{k}>>", v) for c in cells]
+        left = [c for c in cells if "<<" in c]
+        if left:
+            raise KeyError(f"unfilled token in {row[0]}: {left}")
         cells = [
-            c.replace("|log2 FC|", "$|\\log_2\\mathrm{FC}|$").replace(
-                "log2(CPM+1)", "$\\log_2(\\mathrm{CPM}+1)$"
+            c.replace("z_S", "$z_S$")
+            .replace(" M about", " $M\\approx$")
+            .replace("M = ", "$M={}$")
+            .replace(" M ", " $M$ ")
+            .replace("|log2 FC|", "$|\\log_2\\mathrm{FC}|$")
+            .replace("log2(CPM+1)", "$\\log_2(\\mathrm{CPM}+1)$")
+            .replace(
+                "conf/splits/global_split_v1.json",
+                "\\file{conf/splits/global_split_v1.json}",
             )
+            .replace("count_distinct_alleles.py", "\\file{count_distinct_alleles.py}")
+            .replace("GlobalSplit043", "\\texttt{GlobalSplit043}")
+            .replace("Table tab:data-per-part", "Table~\\ref{tab:data-per-part}")
+            .replace("[-4, 4]", "$[-4,4]$")
             for c in cells
         ]
-        cells = [c.replace(" M about", " $M\\approx$") for c in cells]
+        cells.append(f"\\ref{{{row[6]}}}")
         out.append(" & ".join(_tex(c) for c in cells) + " \\\\")
     out += ["\\bottomrule", ""]
     return "\n".join(out)
@@ -987,11 +1472,16 @@ def main() -> None:
     prov["results/data_shapes_043.json"] = s6
     sd = shapes["datasets"]
     with open(osp.join(out, "t11-plan.tex"), "w") as f:
-        f.write(plan_table(sd))
+        f.write(plan_table(sd, census))
     with open(osp.join(out, "t12-shapes-rows.tex"), "w") as f:
         f.write(shapes_rows(sd, shapes))
+    alleles, s7 = _load(osp.join(results, "distinct_alleles.json"))
+    prov["results/distinct_alleles.json"] = s7
+    fx = facts(sd, census, within, cross, alleles)
     with open(osp.join(out, "t13-decisions-rows.tex"), "w") as f:
-        f.write(decisions_rows())
+        f.write(decisions_rows(fx))
+    with open(osp.join(out, "t14-data-per-part.tex"), "w") as f:
+        f.write(data_per_part(sd, census, alleles, shapes["gene_set"]["n"]))
     with open(osp.join(out, "provenance.json"), "w") as f:
         json.dump(
             {

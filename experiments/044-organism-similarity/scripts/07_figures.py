@@ -218,7 +218,7 @@ FIG6_COLUMN = {
 FIG6_LABELS = {
     "spar_cbs432": "S. paradoxus",
     "seub_fm1318": "S. eubayanus",
-    "pkud_sd108": "P. kudriavzevii SD108 (this study)",
+    "pkud_sd108": "P. kudriavzevii SD108\n(this study)",
     "pkud_cbs573": "P. kudriavzevii CBS573",
     "ecoli_mg1655": "E. coli",
     "pput_kt2440": "P. putida",
@@ -231,15 +231,22 @@ FIG6_LABELS = {
     "cgri_cho": "hamster",
     "ggal": "chicken",
 }
-#: Fig 6 S288C-side label positions: (x offset from the column, divergence %, alignment).
-FIG6_LABEL_XY = {
-    "S. paradoxus": (0.3, 4.0, "left"),
-    "S. eubayanus": (0.3, 9.0, "left"),
-    "P. kudriavzevii SD108 (this study)": (-0.45, 30.0, "left"),
-    "P. kudriavzevii CBS573": (-0.45, 21.0, "left"),
-    "E. coli": (0.3, 12.0, "right"),
-    "P. putida": (0.3, 17.0, "right"),
+#: Fig 6 label stacks: per column, the x offset of the label edge nearest the points, the
+#: label slots top to bottom (divergence %), and the alignment. The offset may be a list,
+#: one per slot (bacteria: the top label's edge sits nearer its point than the lower
+#: label's, so the two leaders stay apart). Within a stack the point farthest from the
+#: label edge takes the top slot, which keeps the leaders from crossing.
+FIG6_STACKS = {
+    "saccharomyces": (0.3, [4.0, 9.0], "left"),
+    "saccharomycotina": (0.25, [22.0, 38.0], "left"),
+    "bacteria": ([-0.15, -0.3], [7.0, 9.5], "right"),
 }
+#: Human column: these three sit in one cluster and get a fanned stack (decades from the
+#: cluster's mean); chimp, gorilla, orangutan and macaque are spread at their own heights;
+#: chicken is labeled on its own baseline.
+FIG6_HUMAN_CLUSTER = ["cgri_cho", "mmus_c57bl6j", "rnor"]
+FIG6_HUMAN_CLUSTER_DEC = [-0.2, -0.07, 0.06]
+FIG6_HUMAN_SPREAD = ["ptro", "ggor", "pabe", "mmul"]
 
 #: Fig 1 label positions (x = category index, y = divergence %) and alignment.
 FIG1_LABEL_XY = {
@@ -1247,50 +1254,68 @@ def fig6(d: dict) -> tuple[str, str, dict]:
                 lw=0.8 if hi else 0.3,
                 zorder=4 if hi else 3,
             )
-            if r.organism in FIG6_LABELS and (
-                col == "human_vs" or FIG6_LABELS[r.organism] in FIG6_LABEL_XY
-            ):
+            if r.organism in FIG6_LABELS and (col == "human_vs" or col in FIG6_STACKS):
                 labels.setdefault(col, []).append(
-                    (
-                        x0 + dx,
-                        100.0 - r.aai_mean,
-                        FIG6_LABELS[r.organism],
-                        r.aai_mean,
-                        hi,
-                    )
+                    {
+                        "x": x0 + dx,
+                        "y": 100.0 - r.aai_mean,
+                        "org": r.organism,
+                        "text": f"{FIG6_LABELS[r.organism]} {r.aai_mean:.1f}%",
+                        "hi": hi,
+                    }
                 )
 
     for col in cols[1:-1]:
         plot_column(s[s.column == col], col, xs[col])
     plot_column(h.reset_index(), "human_vs", xs["human_vs"])
-    # S288C-side labels at hand-placed positions in the empty space above the points;
-    # the human column's labels sit to its right, pushed apart on the log axis
-    for col, items in labels.items():
-        if col == "human_vs":
-            items = sorted(items, key=lambda t: t[1])
-            ly = spread_log([t[1] for t in items], 0.17)
-            place = [(xs[col] + 0.36, yl, "left") for yl in ly]
-        else:
-            place = [
-                (
-                    xs[col] + FIG6_LABEL_XY[name][0],
-                    FIG6_LABEL_XY[name][1],
-                    FIG6_LABEL_XY[name][2],
-                )
-                for _, _, name, _, _ in items
-            ]
-        for (xv, yv, name, aai, hi), (tx, ty, ha) in zip(items, place):
-            ax.annotate(
-                f"{name} {aai:.1f}%",
-                xy=(xv, yv),
-                xytext=(tx, ty),
-                textcoords="data",
-                fontsize=FS,
-                fontweight="bold" if hi else "normal",
-                ha=ha,
-                va="center",
-                arrowprops={"arrowstyle": "-", "lw": 0.3, "color": "black"},
-            )
+
+    # Labels. Every leader runs from the label edge nearest the points to the point's
+    # center (shrink 0); within a stack the farthest point takes the top slot.
+    def leader(it: dict, tx: float, ty: float, ha: str) -> None:
+        ax.annotate(
+            it["text"],
+            xy=(it["x"], it["y"]),
+            xytext=(tx, ty),
+            textcoords="data",
+            fontsize=FS,
+            fontweight="bold" if it["hi"] else "normal",
+            ha=ha,
+            va="center",
+            arrowprops={
+                "arrowstyle": "-",
+                "lw": 0.3,
+                "color": "black",
+                "shrinkA": 0,
+                "shrinkB": 0,
+                "relpos": (0.0, 0.5) if ha == "left" else (1.0, 0.5),
+            },
+        )
+
+    def stack(items: list[dict], txs: list[float], slots: list[float], ha: str) -> None:
+        assert len(items) == len(slots) == len(txs), (items, slots, txs)
+        mid = float(np.mean(txs))
+        far = sorted(items, key=lambda it: -abs(it["x"] - mid))
+        for it, tx_, ty in zip(far, txs, slots):
+            leader(it, tx_, ty, ha)
+
+    for col, (dx, slots, ha) in FIG6_STACKS.items():
+        dxs = dx if isinstance(dx, list) else [dx] * len(slots)
+        stack(labels[col], [xs[col] + v for v in dxs], slots, ha)
+    hum = {it["org"]: it for it in labels["human_vs"]}
+    tx = xs["human_vs"] + 0.36
+    spread = [hum[o] for o in FIG6_HUMAN_SPREAD]
+    for it, ty in zip(spread, spread_log([it["y"] for it in spread], 0.13)):
+        leader(it, tx, ty, "left")
+    cluster = [hum[o] for o in FIG6_HUMAN_CLUSTER]
+    cy = float(np.mean(np.log10([it["y"] for it in cluster])))
+    stack(
+        cluster,
+        [tx] * len(cluster),
+        [10 ** (cy + dd) for dd in FIG6_HUMAN_CLUSTER_DEC],
+        "left",
+    )
+    ck = hum["ggal"]
+    ax.text(ck["x"] + 0.1, ck["y"], ck["text"], fontsize=FS, ha="left", va="center")
     ax.axvline(xs["human_vs"] - 0.62, color="black", lw=0.5, ls="--")
     lo, hi_band = d["lit"]["protein_identity_vs_reference"]
     ax.axhspan(

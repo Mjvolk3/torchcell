@@ -123,11 +123,11 @@
   "seub_aai": 83.54716491699219
  },
  "paths": {
-  "fig1": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/044-organism-similarity-figures/notes/assets/images/044-organism-similarity/fig1_claim_protein_divergence_2026-10-19-20-33-31.svg",
-  "fig2": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/044-organism-similarity-figures/notes/assets/images/044-organism-similarity/fig2_cladogram_heatmaps_2026-10-19-20-33-31.svg",
-  "fig3": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/044-organism-similarity-figures/notes/assets/images/044-organism-similarity/fig3_taxonomy_vs_aai_nj_2026-10-19-20-33-31.svg",
-  "fig4": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/044-organism-similarity-figures/notes/assets/images/044-organism-similarity/fig4_clade_tree_within_distance_2026-10-19-20-33-31.svg",
-  "fig5": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/044-organism-similarity-figures/notes/assets/images/044-organism-similarity/fig5_ortholog_fraction_vs_aai_2026-10-19-20-33-31.svg",
-  "fig6": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/044-organism-similarity-figures/notes/assets/images/044-organism-similarity/fig6_main_transfer_ladder_2026-10-19-20-33-31.svg"
+  "fig1": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/044-organism-similarity-figures/notes/assets/images/044-organism-similarity/fig1_claim_protein_divergence_2026-10-19-20-40-14.svg",
+  "fig2": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/044-organism-similarity-figures/notes/assets/images/044-organism-similarity/fig2_cladogram_heatmaps_2026-10-19-20-40-14.svg",
+  "fig3": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/044-organism-similarity-figures/notes/assets/images/044-organism-similarity/fig3_taxonomy_vs_aai_nj_2026-10-19-20-40-14.svg",
+  "fig4": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/044-organism-similarity-figures/notes/assets/images/044-organism-similarity/fig4_clade_tree_within_distance_2026-10-19-20-40-14.svg",
+  "fig5": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/044-organism-similarity-figures/notes/assets/images/044-organism-similarity/fig5_ortholog_fraction_vs_aai_2026-10-19-20-40-14.svg",
+  "fig6": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/044-organism-similarity-figures/notes/assets/images/044-organism-similarity/fig6_main_transfer_ladder_2026-10-19-20-40-14.svg"
  }
 }

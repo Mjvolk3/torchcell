@@ -141,21 +141,26 @@ compounds of Vanacloig and Hoepfner, and the compound-free medium), read as host
 at a fitness of \hydicThirtyFitness{} by the definition of IC30, the dose that inhibits
 the wild type's growth by 30 percent, and at 1 for the compound-free medium: asserted
 from the screens' dosing, never measured in this study (\file{scripts/mixture_data.py},
-\texttt{anchor\_records}). Right, what a label is. A screen's row is a histogram of the value
+\texttt{anchor\_records}). They are the only host records an arm trains on when it fits
+no wet-lab well, and an anchor naming a held-out compound is dropped so the folds stay
+compound-cold (\texttt{host\_training\_records} of \file{scripts/train_mixture.py}).
+Because they are the screens' doses, the rule on both halves
+of b runs below the anchors: above it, what comes from the published screens; below it,
+this study's wells. Right, what a label is. A screen's row is a histogram of the value
 the trainer reads before it standardizes the source: one deletion strain's growth under
 one compound at one dose, relative to that screen's control, oriented so that a sick
 deletion is negative, on the screen's own scale (Vanacloig a log2 ratio to the
 inhibitor-free control, Hoepfner a MAD-scaled sensitivity score, Hillenmeyer a negated
 fitness-defect log2 ratio, Wildenhain a z-score in IQR units), the band spanning its
 0.5th to 99.5th percentile with zero marked. This study's rows draw the labels as they
-are, on one fitness scale of 0 to 1.6 with 1 ticked: the six titration curves with their
-wells, the \hydnCombinations{} combinations as bars sorted by fitness with no growth at
-zero, and the three isobole grids as cells; no growth in a share of
+are, on one fitness scale of 0 to 1.6: the six titration curves with their wells, the
+\hydnCombinations{} combinations as bars sorted by fitness, of which the row names how
+many grew (the rest sit at zero and draw no bar), and the three isobole grids as cells; no growth in a share of
 \hydlabelNoGrowthHostexTwoOne{} of the titration wells,
 \hydlabelNoGrowthHostexTwoThree{} of the combination wells and
 \hydlabelNoGrowthHostisobole{} of the isobole wells. The anchors' row is a sketch of
-what is asserted and never measured: fitness 1 with no compound and
-\hydicThirtyFitness{} at a screen's IC30 dose. The anchors and the titration are
+what is asserted and never measured: fitness 1 untreated and \hydicThirtyFitness{} at a
+screen's IC30 dose. The anchors and the titration are
 trained on; the combinations and the isobole grids never. \status{todo}\,\fstat{file}
 \textbf{c}, What the sources share and what is trained on and tested on, as three
 drawings. Genes: every screen is a deletion collection of the same genes, so one table
@@ -174,14 +179,15 @@ every value is a
 growth reading, a screen's of a strain against its control and this study's of the
 wild type, and an IC30 dose asserts the wild type at \hydicThirtyFitness{}, the marked
 point of the sketch, which is what ties a screen's dose scale to the host's. The split,
-in the fills of b: the trainer sees every screen, with Vanacloig in compound-cold folds
-(one of five held out, \hydnVanacloigCompounds{} compounds), the \hydnAnchorsFour{}
-anchors and the titration (\hydnTitrationConditions{} conditions,
-\hydnTitrationWells{} wells); it is tested on the held-out compounds' profiles
+in the fills of b and with b's rows: the published row holds every screen, with Vanacloig
+in compound-cold folds (one of five held out, \hydnVanacloigCompounds{} compounds), and
+the \hydnAnchorsFour{} anchors, all trained on; this study's row holds the titration,
+trained on (\hydnTitrationConditions{} conditions, \hydnTitrationWells{} wells), and the
+combinations, never; it is tested on the held-out compounds' profiles
 (centered Spearman over genes) and on this study's \hydnCombinations{} combinations
 (growth AUROC, fitness Spearman) and \hydnIsoboleWells{} isobole wells (the growth
 front). A layout; the counts are the trainer's. \status{todo}\,\fstat{idea}
-\textbf{d}, The model in three stages, its equations the trainer's
+\textbf{d}, The model in three stages, i to iii, its equations the trainer's
 (\texttt{MixtureModel} of \file{scripts/train_mixture.py}), set by LaTeX with each
 component named under its brace. One inhibitor $m_i$ (furfural, drawn as in a) is
 featurized as its \hydnFingerprintBits{} FCFP4 counts and passed through the compound

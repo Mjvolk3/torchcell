@@ -26,9 +26,14 @@ first (slurm 5905).
 Writes `processed/store_manifest.json`
 ([[experiments.040-inhibitor-synergy-wetlab.scripts.store_manifest_040]]): release id and
 version from the `KgRelease` node, torchcell commit and version imported, query file and
-sha256, gene set size, returned against served per dataset, processed entry count, and the
-size and sha256 of `processed/lmdb/data.mdb`. A full build asserts returned equals served for
-every dataset. The census `results/build_040_store_census_<tag>.json` adds the index counts
+sha256, gene set size, per dataset the served count, what the block's clause admits (the
+same clause run as a count on the server, `generate_040_cql.count_query`), the count the raw
+stage returned and the served records per perturbed gene outside the gene set, the
+processed entry count, and the size and sha256 of `processed/lmdb/data.mdb`. The build
+asserts returned equals admitted for every block, in a smoke build as in a full one; the
+first full build (slurm 5910) had asserted returned equals served instead and stopped on the
+gene clause's own exclusions (1.4 percent of Hoepfner, one record per condition of each
+dubious ORF outside the gene set), which the count now explains rather than forbids. The census `results/build_040_store_census_<tag>.json` adds the index counts
 and, per dataset, the first record's compounds, doses and what `dataset[i]` returns.
 
 Smoke: `TC040_GENES` (space- or semicolon-separated; sbatch splits `--export` on commas, which

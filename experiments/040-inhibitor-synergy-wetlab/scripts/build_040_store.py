@@ -28,7 +28,10 @@ THE MANIFEST. ``processed/store_manifest.json`` (``StoreManifest``) records what
 store was built from and what it holds: the release id and version read from the
 ``KgRelease`` node of the store it was queried from, the torchcell commit and version the
 build imported, the query file and its sha256, the gene set size, the records returned per
-dataset against the counts the release serves, the processed entry count, and the sha256
+dataset against the counts the release serves and against what each block's clause admits
+(a count run on the server with the same clause text; the build asserts returned equals
+admitted, so the gap to the served count is the clause's exclusion, listed per perturbed
+gene outside the gene set), the processed entry count, and the sha256
 and byte size of ``processed/lmdb/data.mdb``. The launchers verify that sha256 before a
 training job starts, which is what turns a damaged copy (Delta's Lustre target 106 left
 about one file in a hundred unreadable on 2026-10-16, and a job that touched one hung to
@@ -64,10 +67,19 @@ from typing import Any
 
 import lmdb
 from dotenv import load_dotenv
+from neo4j import GraphDatabase
 
 load_dotenv()
 
-from generate_040_cql import RELEASE, SERVED_COUNTS, query_path  # noqa: E402
+from generate_040_cql import (  # noqa: E402
+    BLOCKS,
+    RELEASE,
+    SERVED_COUNTS,
+    count_query,
+    empty_genotype_query,
+    outside_gene_set_query,
+    query_path,
+)
 from store_manifest_040 import (  # noqa: E402
     DatasetCount,
     StoreManifest,
@@ -138,6 +150,49 @@ def _raw_dataset_counts(path: str) -> dict[str, int]:
             counts[json.loads(value)["experiment"]["dataset_name"]] += 1
     env.close()
     return dict(sorted(counts.items()))
+
+
+def _clause_counts(
+    uri: str, username: str, password: str, database: str, gene_set: GeneSet
+) -> tuple[dict[str, int], dict[str, dict[str, int]], dict[str, int]]:
+    """Per block: what its clause admits, the genes it excludes, the empty genotypes.
+
+    The same clause text the query carries (``generate_040_cql.count_query``), run as a
+    count against the same store, so the number the raw stage is held to was produced by
+    the server and not by this script.
+    """
+    genes = sorted(gene_set)
+    admitted: dict[str, int] = {}
+    outside: dict[str, dict[str, int]] = {}
+    empty: dict[str, int] = {}
+    driver = GraphDatabase.driver(uri, auth=(username, password))
+    try:
+        with driver.session(database=database) as session:
+            for dataset, _, clause in BLOCKS:
+                t0 = time.time()
+                record = session.run(
+                    count_query(dataset, clause), gene_set=genes
+                ).single()
+                assert record is not None
+                admitted[dataset] = int(record["n"])
+                outside[dataset] = {
+                    r["gene"]: int(r["n"])
+                    for r in session.run(
+                        outside_gene_set_query(dataset), gene_set=genes
+                    )
+                }
+                record = session.run(empty_genotype_query(dataset)).single()
+                assert record is not None
+                empty[dataset] = int(record["n"])
+                print(
+                    f"{dataset}: clause admits {admitted[dataset]:,}, "
+                    f"{len(outside[dataset])} perturbed genes outside the gene set, "
+                    f"{empty[dataset]:,} empty genotypes ({time.time() - t0:.0f} s)",
+                    flush=True,
+                )
+    finally:
+        driver.close()
+    return admitted, outside, empty
 
 
 def _first_record(path: str, index: int) -> dict[str, Any]:
@@ -283,25 +338,33 @@ def main() -> None:
     returned = _raw_dataset_counts(raw_path)
     unexpected = sorted(set(returned) - set(SERVED_COUNTS))
     assert not unexpected, f"the query returned datasets it does not name: {unexpected}"
+    admitted, outside, empty = _clause_counts(
+        settings.uri, settings.username, settings.password, database, gene_set
+    )
     counts = [
         DatasetCount(
             dataset=name,
             served=served,
+            admitted=admitted[name],
             returned=returned.get(name, 0),
             dropped=served - returned.get(name, 0),
+            outside_gene_set=outside[name],
+            empty_genotype=empty[name],
         )
         for name, served in SERVED_COUNTS.items()
     ]
     for c in counts:
         print(
-            f"{c.dataset}: returned {c.returned:,} of {c.served:,} served", flush=True
+            f"{c.dataset}: returned {c.returned:,} of {c.served:,} served, "
+            f"clause admits {c.admitted:,}",
+            flush=True,
         )
-    if smoke_genes is None:
-        loss = [c for c in counts if c.dropped != 0]
-        assert not loss, (
-            "a full build returned fewer records than the release serves: "
-            + ", ".join(f"{c.dataset} {c.returned:,}/{c.served:,}" for c in loss)
-        )
+    lost = [c for c in counts if c.returned != c.admitted]
+    assert not lost, (
+        "the raw stage returned a different count than the clause admits in the "
+        "served graph (records lost or duplicated between the partitions): "
+        + ", ".join(f"{c.dataset} {c.returned:,}/{c.admitted:,}" for c in lost)
+    )
 
     data_mdb = osp.join(processed_path, "data.mdb")
     manifest = StoreManifest(

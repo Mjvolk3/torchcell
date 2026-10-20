@@ -2033,7 +2033,7 @@ partition marker was counted as a second marker (5906).
 cancelled a minute in to correct the query header (the comment claimed four Vanacloig
 perturbations), and 5909 refused the `raw/lmdb.partial` it left behind
 (`StaleStagingStoreError`, the honest refusal); the partial directory was removed and 5910
-submitted. Result recorded below when it finishes. The work sits on worktree `exp/040-kg4-store`, branched
+submitted. The work sits on worktree `exp/040-kg4-store`, branched
 from `exp/040-inhibitor-synergy-wetlab` at 7ffb61bf6 (that worktree had a live session
 editing figure 2, so it was not rebased under it); the branch is 715 commits behind main and
 the build needs the 4.0 pair, which is why the build imports the release worktree rather
@@ -2041,3 +2041,50 @@ than this one. Not done: the Delta copy of the store (rsync `processed/` and ver
 trainer still batches genes by conditions as matrices (the per-sample `dataset[i]` path is
 verified in the census, not used by the trainer), and the general `neo4j_cell` path still
 writes no manifest beside `processed/lmdb` (this experiment's manifest is experiment-local).
+
+**Full build result (5910 built; 5953 verified; 5959 verified again with the empty-genotype
+count and wrote the manifest that stands): 6,619,146 records,
+one per served (Experiment, ExperimentReference) pair, 66.6 min for the raw and aggregation
+stages at 16 CPUs (1,285 partitions, 39.6 min of fetch), `processed/lmdb/data.mdb`
+260,284,248,064 bytes (sha256 `1782ae6cc187263b...`), 39 KB of JSON per record.** 5910 ended
+on the build's own full-build assertion, which demanded returned equal served; every screen
+came back short of the served count (Vanacloig 161,595 of 164,205; Hoepfner 3,084,244 of
+3,127,814; HET 2,925,614 of 2,963,683; Wildenhain 446,716 of 448,655; the private wells 977 of
+977). That assertion assumed the gap away in one direction and the pasted plan in the other,
+so it was replaced by a measurement: the build now runs each block's clause as a count on the
+server (`generate_040_cql.count_query`, the same clause text) and asserts the raw stage
+returned exactly what the clause admits, and it lists the served records per perturbed gene
+outside the gene set (`outside_gene_set_query`). 5953 reopened the finished store (the
+processed stage is skipped when it exists; 0.1 min) and passed: returned equals admitted for
+all five blocks, so the partitioned fetch lost and duplicated nothing. The gap is the query's
+gene clause, a modeling-time selection against the 6,607-gene set: Vanacloig 2,610 records
+over 58 genes, Hoepfner 43,570 over 76, HET 38,069 over 76, and in each the per-gene counts
+sum to the drop exactly (dubious ORFs such as YAL043C-A, YAL058C-A, YAR037W at 45 records
+each in Vanacloig and 606 each in Hoepfner, one record per condition). Wildenhain drops 1,939
+with no gene outside the set, which a separate count explains below. The manifest records
+`served`, `admitted`, `returned`, `dropped` and `outside_gene_set` per dataset, so a reader of
+the store can see what was left out and why without the graph.
+
+**The loader on the full store (slurm 5957, 16 workers, 96 GB requested): the four sources
+assemble in 1,063 s (17.7 min wall, 9.1 GB peak RSS, 245 percent CPU, so the walk is bound
+by the 260 GB read, not by the parsing).** Vanacloig 132,867 cells over 3,591 genes and 37
+conditions, every condition with a molar dose; Hoepfner 1,226,777 cells, 4,895 genes, 275
+conditions (145 compounds) all molar; HET 2,289,744 cells, 5,788 genes, 404 conditions (290
+compounds), 395 molar; Wildenhain 428,884 cells, 242 genes, 5,173 conditions all molar;
+5,467 compounds in the shared table (5,378 SMILES from the identity table, 87 from the served
+record, 2 identity gaps); 531 host records. `n_cells_dropped` is the source's served records
+the condition filters remove (more than one compound, no InChIKey, an excluded condition, and
+for Vanacloig the four percent-dose compounds): 28,728 Vanacloig, 8,876 Hoepfner, 447,289 HET,
+0 Wildenhain. Seventeen minutes at every trainer start is the price of reading served
+records instead of a derived table; a cache of the folded cell frame keyed by the manifest's
+sha256 would cut it to seconds and is the obvious next step, not taken here because it
+reintroduces a second artifact the manifest does not cover.
+
+**The Wildenhain gap (slurm 5958, a count on the served graph): all 1,939 records have a
+genotype of no perturbations; none lacks a genotype or reference node, none carries a null
+gene name.** They are the released `orf=NULL / wild type` rows, the BY4741 background screened
+alone, which the loader serves as the empty genotype and the gene clause's at-least-one-
+perturbation condition excludes, as the 033 query excluded them. The trainer has no gene for
+a wild-type row, so the exclusion is the right modeling-time selection; the manifest now
+records `empty_genotype` per dataset beside `outside_gene_set`, and for every screen
+`dropped` equals the two together.

@@ -22,4 +22,9 @@ clause at all. Every block carries one partition marker for the partitioned raw 
 header must not spell the marker, because the raw stage counts it per block (the first smoke,
 slurm 5906, failed on a header that did).
 
+Two more queries the build runs beside the store query, never written to the `.cql`:
+`count_query(dataset, clause)` is a block's clause as `count(DISTINCT e)`, the number the raw
+stage is held to, and `outside_gene_set_query(dataset)` lists the served records per
+perturbed gene outside `$gene_set`, the explanation of what the clause left out.
+
 Edit the generator, never the `.cql`.

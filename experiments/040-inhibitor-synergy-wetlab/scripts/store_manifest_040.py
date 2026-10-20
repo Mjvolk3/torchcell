@@ -28,14 +28,28 @@ MANIFEST_NAME = "store_manifest.json"
 
 
 class DatasetCount(BaseModel):
-    """Records returned by the query for one dataset against the count the release serves."""
+    """Records returned by the query for one dataset against the count the release serves.
+
+    ``served`` is the release's count; ``admitted`` is what the block's clause admits,
+    counted directly in the served graph (``generate_040_cql.count_query``); ``returned``
+    is what the raw stage wrote. The build asserts ``returned == admitted``, so
+    ``dropped`` is the clause's exclusion and nothing else: a perturbed gene outside the
+    gene set (``outside_gene_set``, served records per such gene; in a smoke build every
+    gene but the smoke list), or a genotype of no perturbations (``empty_genotype``, a
+    released wild-type screen; the private wells' block has no genotype clause and keeps
+    its 977).
+    """
 
     dataset: str
     served: int
+    admitted: int
     returned: int
-    #: ``served - returned``; a dataset gene outside the gene set drops its records, and
-    #: a smoke build drops nearly everything
+    #: ``served - returned``
     dropped: int
+    #: served records per perturbed gene outside the gene set, most records first
+    outside_gene_set: dict[str, int]
+    #: served records whose genotype has no perturbation
+    empty_genotype: int
 
 
 class StoreManifest(BaseModel):

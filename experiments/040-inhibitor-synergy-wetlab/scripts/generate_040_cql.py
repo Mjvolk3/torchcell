@@ -141,6 +141,50 @@ def block(dataset: str, comment: str, clause: GeneClause) -> str:
     )
 
 
+def count_query(dataset: str, clause: GeneClause) -> str:
+    """The block's clause as one count: how many served records it admits.
+
+    The build asserts the raw stage returned exactly this many, which is what proves the
+    partitioned fetch lost nothing and that every record short of the served count was
+    excluded by the clause (a perturbed gene outside ``$gene_set``), not by the build.
+    """
+    clause_text = GENE_CLAUSE_ALL if clause == "all" else GENE_CLAUSE_NONE
+    return (
+        "MATCH (dataset:Dataset)<-[:ExperimentMemberOf]-(e:Experiment)\n"
+        f"WHERE dataset.id = '{dataset}'\n"
+        f"{clause_text}"
+        "RETURN count(DISTINCT e) AS n\n"
+    )
+
+
+def outside_gene_set_query(dataset: str) -> str:
+    """Served records of ``dataset`` per perturbed gene outside ``$gene_set``."""
+    return (
+        "MATCH (dataset:Dataset)<-[:ExperimentMemberOf]-(e:Experiment)\n"
+        f"WHERE dataset.id = '{dataset}'\n"
+        "MATCH (e)<-[:GenotypeMemberOf]-(g:Genotype)<-[:PerturbationMemberOf]-(p)\n"
+        "WHERE NOT p.systematic_gene_name IN $gene_set\n"
+        "RETURN p.systematic_gene_name AS gene, count(DISTINCT e) AS n\n"
+        " ORDER BY n DESC, gene\n"
+    )
+
+
+def empty_genotype_query(dataset: str) -> str:
+    """Served records of ``dataset`` with a genotype of no perturbations.
+
+    The screens' clause asks for at least one perturbation, so a released wild-type
+    screen (Wildenhain's ``orf=NULL / wild type`` rows, the BY4741 background alone) is
+    excluded by it; the private wells, all empty-genotype, have no such clause.
+    """
+    return (
+        "MATCH (dataset:Dataset)<-[:ExperimentMemberOf]-(e:Experiment)\n"
+        f"WHERE dataset.id = '{dataset}'\n"
+        "MATCH (e)<-[:GenotypeMemberOf]-(g:Genotype)\n"
+        "WHERE SIZE([(g)<-[:PerturbationMemberOf]-(p) | p]) = 0\n"
+        "RETURN count(DISTINCT e) AS n\n"
+    )
+
+
 def query_text() -> str:
     """The whole query."""
     blocks = [block(*b) for b in BLOCKS]

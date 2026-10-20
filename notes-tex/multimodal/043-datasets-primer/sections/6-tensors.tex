@@ -75,3 +75,41 @@ Dataset & Role in the plan & Records, n & Genotype class (records) & Perturbatio
 \input{tables/t12-shapes-rows}
 \end{longtable}
 \end{landscape}
+
+\subsection{Data per model part\secstatus{todo}}
+\label{sec:data-per-part}
+
+Each part of the model trains on a different slice of the store, and
+Table~\ref{tab:data-per-part} counts it before any run. Two readings follow from it. First,
+the operator's training signal for engineered edits is 18{,}476 deletion events over at
+most 6{,}607 genes, dominated by Nadal-Ribelles (6{,}118 records, agreement with Kemmeren
+0.002) and Messner (4{,}624, proteome); the clean expression deletions are Kemmeren's
+1{,}482. The nine million variant events are natural variation, whose home under the main
+isolate design is the reference context (Sec.~\ref{sec:input-isolates}) rather than the
+operator. Second, the gene-level value count is dominated by Boocock's single cells, 52\%
+of the training values at a median of 962 labeled genes per cell, so Boocock sets the
+gradient volume unless the equal per-dataset weighting of Sec.~\ref{sec:output-losses} or
+decision P1 limits it. The distinct allele counts set the isolate embedding bill: 775{,}856
+proteins, not 6.1 million (Sec.~\ref{sec:input-embeddings}). Segregant marks under the
+definite rule are not in the census; on the six debugger records a segregant marks 1{,}415
+to 3{,}158 genes, so hypothesis (untested): the 82{,}467 segregant records carry on the
+order of $10^{8}$ marks in all.
+
+%% SOURCE: experiments/043-expression-proteome-morphology/scripts/primer_043_tables.py
+%% -> tables/t14-data-per-part.tex (results/data_shapes_043.json, results/store_census.json,
+%% results/distinct_alleles.json from count_distinct_alleles.py)
+\begin{table}[htbp]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\caption[]{\textbf{The data that trains each part of the model.} Records, events and
+genotypes from the full shape pass (\file{data_shapes_043.py}, slurm job 5902) and the
+store census; isolates counted by strain name. Gene-level values are records times the
+per-record median of label keys on the 6{,}607-gene index, so they are approximate. An
+event is one stored perturbation; deletion events include the isolates' HO deletions, the
+Ohya probe and both Sameith sets. Allele counts are one pass over the Peter 2018 gene-keyed
+tarball over all 1{,}011 isolates (\file{count_distinct_alleles.py}); a protein allele is
+the translation of a distinct CDS truncated to whole codons.}
+\label{tab:data-per-part}
+\input{tables/t14-data-per-part}
+\end{table}

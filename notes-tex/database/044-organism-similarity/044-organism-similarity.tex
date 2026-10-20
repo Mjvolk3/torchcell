@@ -1,0 +1,54 @@
+%% notes-tex/database/044-organism-similarity/044-organism-similarity.tex
+%% [[experiments.044-organism-similarity]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/044-organism-similarity/044-organism-similarity.tex
+%% SOURCE: experiments/044-organism-similarity/scripts/08_notes_tex_numbers.py (numbers.tex, figures.tex, tables/)
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\input{numbers}
+\input{figures}
+
+\title{\vspace{-1.5em}Organism Similarity: Is There More Genetic Difference Within Yeast
+Than Within Mammals?}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\noindent
+Yes, at the genus and the subphylum, which is where the claim is made (Peris et al. 2023,
+Fig.~3c), and the data here reproduce it (terms in Table~\ref{tab:vocab}). Within
+\org{Saccharomyces}, S288C/\org{S. paradoxus} AAI is \aaiShortScerSpar\% and
+S288C/\org{S. eubayanus} \aaiShortScerSeub\%, so the genus spans the distance from
+human/macaque (\aaiShortHumMacaque\%) to human/mouse (\aaiShortHumMouse\%). The median of
+the \nYcotina{} Saccharomycotina pairs outside the genus is \aaiMedianYcotina\% AAI, below
+every one of the \nVertPairs{} vertebrate pairs (lowest \minVertAai\%). Within
+\org{S.~cerevisiae}, an isolate's typical ORF is \isoMedMedId\% identical to S288C at the
+protein level (median over the \nIsolates{} isolates of each isolate's per-ORF median), and
+\isoMedMeanId\% when every frameshifted or indel-bearing ORF is charged in full; one human
+genome differs from GRCh38 at \litIdLo{} to \litIdHi\% protein identity, a literature value
+not computed here. Measured: AAI and ortholog fraction over reciprocal best mmseqs2 hits for
+the \nPairs{} pairs of \nProteomes{} per-gene proteomes, EC-4 repertoires from one
+eggNOG-mapper run, isolate protein identity from Peter et al. 2018's reference-inferred
+alleles, and the clade structure of Peter's SNP distance matrix. For carrying a model
+trained on the isolates to \org{P. kudriavzevii} SD108, the numbers that matter are
+Figure~\ref{fig:transfer}'s: SD108 is \sdAai\% AAI from S288C, beyond every vertebrate
+pair, and \sdOfPct\% of its genes have a one-to-one ortholog in S288C.
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/vocabulary}
+\input{sections/figures}
+\input{sections/headline}
+\input{sections/organisms}
+\input{sections/notdone}
+
+\end{document}

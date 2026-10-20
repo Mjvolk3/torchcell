@@ -1,0 +1,24 @@
+%% notes-tex/database/044-organism-similarity/sections/notdone.tex
+%% [[experiments.044-organism-similarity]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/044-organism-similarity/sections/notdone.tex
+%% SOURCE: notes/experiments.044-organism-similarity.md, section "What was not done"
+
+\section{What was not done\secstatus{todo}}\label{sec:notdone}
+
+\begin{itemize}
+\item \textbf{BUSCO itself.} The BUSCO-restricted AAI is the single-copy OG proxy;
+  compleasm and a current busco were not installable in the experiment's environment.
+\item \textbf{\org{A. limacinum}.} No annotated assembly exists at NCBI for
+  \org{Aurantiochytrium limacinum} or \org{Schizochytrium}; the organism stays on the
+  cladogram (Figure~\ref{fig:heatmaps}) and is excluded from every proteome axis.
+\item \textbf{\org{Z. bailii} CLIB 213.} Its GenBank annotation is partial, so the same
+  species' strain IST302, with a complete annotation, stands in; a strain substitution, not
+  a species one, and the figure labels say IST302.
+\item \textbf{CLEAN for EC annotation} is not run; eggNOG-mapper is the annotator.
+\item \textbf{Isolates through the mmseqs2 RBH pipeline.} Isolate identity comes from a
+  global alignment that charges every gap column, species AAI from local alignments of
+  reciprocal best hits; the isolate proteomes were not run through the species pipeline.
+\item \textbf{One AAI-matched isolate statistic.} The mean and the median over ORFs are
+  both reported and bracket the comparison with species AAI; neither is the same statistic
+  as AAI.
+\end{itemize}

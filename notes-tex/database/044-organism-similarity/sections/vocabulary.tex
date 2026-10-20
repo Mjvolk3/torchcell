@@ -1,0 +1,39 @@
+%% notes-tex/database/044-organism-similarity/sections/vocabulary.tex
+%% [[experiments.044-organism-similarity]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/044-organism-similarity/sections/vocabulary.tex
+%% SOURCE: definitions as implemented in experiments/044-organism-similarity/scripts/03_mmseqs_rbh.py, 04_emapper.py, 05_trees.py, 06_isolate_protein_identity.py
+
+\section{Controlled vocabulary\secstatus{todo}}\label{sec:vocab}
+
+\begin{table}[H]\centering\footnotesize
+\caption[]{Terms used in the figures and tables, in alphabetical order.}
+\label{tab:vocab}
+\begin{tabular}{@{}L{38mm} L{140mm}@{}}
+\toprule
+Term & Definition \\
+\midrule
+AAI & Average amino-acid identity: the mean percent identity over the reciprocal best hits
+of two per-gene proteomes (mmseqs2 local alignments, \texttt{03\_mmseqs\_rbh.py}). \\
+Amniote & In this organism set, a mammal or the chicken. \\
+EC-4 Jaccard & Jaccard index of the sets of complete, four-level EC numbers that one
+eggNOG-mapper run assigns to the two proteomes (\texttt{04\_emapper.py}). \\
+Ortholog fraction & Reciprocal best hits over the gene count of the smaller per-gene
+proteome, $n_\mathrm{RBH}/\min(n_i, n_j)$: the share of the smaller organism's genes that
+have a one-to-one ortholog in the other. \\
+Ortholog Jaccard & Reciprocal best hits over the union of the two per-gene proteomes,
+$n_\mathrm{RBH}/(n_i + n_j - n_\mathrm{RBH})$. \\
+Per-gene proteome & One protein per gene, the longest, keyed by NCBI GeneID where the
+annotation carries it (\texttt{02\_proteome\_prep.py}). \\
+Peter clade & The clade an isolate carries in Peter et al. 2018's Supplementary Table 1,
+with the Wine/European subclades merged; isolates the table gives no clade form one more
+group. \\
+Reciprocal best hit (RBH) & A pair of proteins, one from each proteome, each the other's
+best mmseqs2 hit; the proxy for a one-to-one ortholog. \\
+Single-copy OG proxy & AAI restricted to Eukaryota-level eggNOG orthologous groups that
+hold exactly one protein in each member of the pair; stands in for Peris et al. 2023's
+BUSCO-restricted AAI. \\
+SNP distance & Percent non-identical bases between two isolates in Peter et al. 2018's
+released distance matrix, heterozygous differences half-weighted. \\
+\bottomrule
+\end{tabular}
+\end{table}

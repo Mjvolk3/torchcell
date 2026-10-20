@@ -1,0 +1,108 @@
+%% notes-tex/database/044-organism-similarity/sections/figures.tex
+%% [[experiments.044-organism-similarity]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/044-organism-similarity/sections/figures.tex
+%% SOURCE: experiments/044-organism-similarity/scripts/07_figures.py (panels), 08_notes_tex_numbers.py (every number)
+
+\clearpage
+\section{Figures\secstatus{todo}}\label{sec:figures}
+
+\src{07\_figures.py fig6\_main\_transfer\_ladder; s288c\_centered.csv}
+\tcfig{\figTransfer}{%
+\textbf{The training isolates reach human/chimp protein divergence from S288C;
+\org{P. kudriavzevii} SD108 lies beyond every vertebrate pair, with \sdOfPct\% of its
+genes in one-to-one orthology with \org{S. cerevisiae}.}
+(a) Protein divergence from S288C (100 minus identity, log scale, inverted; identity on the
+right), columns ordered by distance, colored by the partner's taxonomic group (legend).
+SD108 (large point, black edge) is \sdAai\% AAI from S288C, below the lowest of the
+\nVertPairs{} vertebrate pairs (\minVertAai\%; human/chicken \aaiShortHumChicken\%). The
+\nIsolates{} isolates appear twice: circles are each isolate's median over ORFs of protein
+identity to S288C (median over isolates \isoMedMedId\%), triangles its mean over ORFs, which
+charges every gap column of a frameshifted or indel-bearing ORF (median \isoMedMeanId\%,
+lowest \isoMinMeanId\%, against human/chimp AAI \aaiHumChimp\%). The other \nYco{}
+Saccharomycotina hosts sit at \ycoAaiMin{} to \ycoAaiMax\% AAI, the \nAnimal{} mammals and
+chicken at \animAaiMin{} to \animAaiMax\%, the \nBac{} bacteria at \bacAaiMin{} to
+\bacAaiMax\%. Right of the dashed line, the same axis measured from human over \nYard{}
+partners, as a yardstick (mammals blue, chicken gray). Gray band: one human genome vs GRCh38
+at peptide-altering sites (1000 Genomes Project 2015; literature value).
+(b) Ortholog fraction with S288C for the organisms of (a) without the isolates, same order
+and colors. SD108 shares \sdRbh{} reciprocal best hits with S288C, \sdOfPct\% of its
+\sdGenes{} genes; the other Saccharomycotina range from \ycoOfMin{} to \ycoOfMax{}, and no
+bacterium exceeds \bacOfMax{}.}{fig:transfer}
+
+\clearpage
+\src{07\_figures.py fig1\_claim\_protein\_divergence}
+\tcfig{\figClaim}{%
+\textbf{\org{Saccharomyces} reaches the human/mouse distance, and the median
+Saccharomycotina pair lies beyond human/chicken.}
+Each point is a pair; the y axis is 100 minus protein identity (log scale, inverted;
+identity on the right). Within \org{Saccharomyces} AAI runs from \aaiMinGenus{} to
+\aaiMaxGenus\% (\nGenus{} pairs), within mammals from \aaiMinMammals{} to \aaiMaxMammals\%
+(\nMammals{} pairs), mammal vs chicken \aaiMinMammalBird{} to \aaiMaxMammalBird\%
+(\nMammalBird{}); the \nYcotina{} Saccharomycotina pairs outside the genus have a median of
+\aaiMedianYcotina\%, the \nBacteria{} bacterial pairs \aaiMedianBacteria\% and the
+\nYeastBacteria{} Saccharomycotina--bacteria pairs \aaiMedianYeastBacteria\%. Within
+\org{S. cerevisiae} (\nIsolates{} isolates), each point is the mean over S288C ORFs of an
+isolate's protein identity to S288C with every gap column charged; the per-isolate median
+over ORFs gives a median divergence of \isoMedMedDiv\%. Every other column is AAI over
+reciprocal best hits. Open diamonds: the single-copy OG proxy. Point face and edge colors
+are the taxonomic groups of the two members, so a within-group pair is one solid color and
+a cross-group pair carries both. Gray band: one human genome differs from GRCh38 at
+\litSitesLo{} to \litSitesHi{} peptide-altering sites (1000 Genomes Project 2015; literature
+value), divided by the \litResiduesM{} million residues of the human per-gene proteome.}{fig:claim}
+
+\clearpage
+\src{07\_figures.py fig2\_cladogram\_heatmaps}
+\tcfig{\figHeatmaps}{%
+\textbf{The \nOrganisms{} organisms on three similarity axes, in NCBI taxonomy order.}
+Left: NCBI taxonomy cladogram (topology only; ete3 NCBITaxa, \texttt{05\_trees.py}); the
+color strip is each organism's first group in the experiment plan (legend: reference,
+established host, emerging host, CABBI, \org{Saccharomyces}, mammal, outgroup). Heatmaps,
+rows and columns in cladogram order: AAI, ortholog Jaccard and EC-4 Jaccard (eggNOG-mapper
+on eggNOG 5.0.2, \texttt{04\_emapper.py}); color scales above each map. Gray: no proteome
+(\org{A. limacinum} has no annotated assembly at NCBI) or the diagonal.}{fig:heatmaps}
+
+\clearpage
+\src{07\_figures.py fig3\_taxonomy\_vs\_aai\_nj}
+\tcfig{\figTangle}{%
+\textbf{NCBI taxonomy and AAI agree on the large groups.}
+Left: NCBI taxonomy cladogram (topology only) over the \nProteomes{} organisms with a
+proteome. Right: neighbor-joining tree (Biopython) on $d = -\ln(\mathrm{AAI}/100)$, rooted
+on the bacteria, drawn as topology with children rotated to follow the left tree. Lines join
+the same organism and take its taxonomic group's color (\texttt{05\_trees.py}).}{fig:tangle}
+
+\clearpage
+\src{07\_figures.py fig4\_clade\_tree\_within\_distance; clade\_snp\_distance.csv, clades\_nj.nwk, clade\_distance\_summary.csv}
+\tcfig{\figClades}{%
+\textbf{Every named \org{S. cerevisiae} clade but one is tighter than the species as a
+whole.}
+(a) Neighbor-joining tree (Biopython) over \nLeaves{} groups of Peter et al. 2018's
+\nIsolates{} isolates: the \nNamedClades{} Peter clades and the \nNoClade{} isolates with no
+clade. The distance between two groups is the mean SNP distance over every pair of their
+members; midpoint rooted, branch lengths in percent. Bold leaf and black dot: the clade
+holding \nearestStrain{}, the isolate with the lowest mean per-ORF nucleotide divergence from
+S288C in experiment 018 (\nearestDiv\%); S288C itself is not in Peter's matrix.
+(b) SNP distance between every pair of isolates within a group, same rows. \nBelow{} of the
+\nNamedWithPairs{} named clades with at least one pair have a median below the median over
+all \nAllPairs{} isolate pairs (\medAllPairs\%, dashed gray line); the exception is
+\cladeMedMaxName{} (\cladeMedMax\%). Clade medians start at \cladeMedMin\%
+(\cladeMedMinName{}), and their median is \medCladeMed\%. The isolates with no clade, a
+mixed group, have a median of \noCladeMed\%. Boxes (groups with at least \minBoxPairs{}
+pairs): median, quartiles and whiskers at one and a half times the interquartile range,
+outliers not drawn; points: every pair of a smaller group. One color for every group, since
+color carries no category here. Log axis.}{fig:clades}
+
+\clearpage
+\src{07\_figures.py fig5\_ortholog\_fraction\_vs\_aai}
+\tcfig{\figOrthologs}{%
+\textbf{Shared orthologs fall with AAI.}
+Each point is one of the \nPairs{} pairs of the \nProteomes{} proteomes: AAI against the
+ortholog fraction (\texttt{03\_mmseqs\_rbh.py}). Color is the pair class, \nClasses{} in
+all (n pairs in the legend): within \org{Saccharomyces} \nClsGenus{}, within mammals
+\nClsMammals{}, mammal vs chicken \nClsMammalBird{}, within Saccharomycotina
+\nClsYcotina{}, within bacteria \nClsBacteria{}, Saccharomycotina vs bacteria
+\nClsYeastBacteria{}, Saccharomycotina vs amniote \nClsYeastAnimal{}, amniote vs bacteria
+\nClsAnimalBacteria{}, \org{R. toruloides} vs Saccharomycotina \nClsBasidioYeast{}, vs
+amniote \nClsBasidioAnimal{} and vs bacteria \nClsBasidioBacteria{}. A within-group class
+takes that group's color in Figure~\ref{fig:claim}; a cross-group class takes a palette
+color no group uses. Points are drawn largest class first, and the cross-kingdom pairs at
+the lowest AAI overlap.}{fig:orthologs}

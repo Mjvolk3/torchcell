@@ -109,6 +109,16 @@ CYCLE_STORES = [
 
 DBTL_TOKEN = re.compile(r"DBTL\s*\d")
 
+# Carruthers' own four stores. The question the transfer table answers is which OTHER
+# served data can help that campaign, so the campaign is the thing joined to and never
+# a row of it.
+CARRUTHERS_STORES = {
+    "isoprenol_titer_carruthers2025",
+    "campaign_proteome_carruthers2025",
+    "proteome_carruthers2025",
+    "proteome_fold_change_carruthers2025",
+}
+
 # The two pooled transposon compendia, which between them hold almost every record
 # in the row set. Named so the share in tables/counts.tex is generated rather than
 # written out and left to drift.
@@ -580,10 +590,17 @@ def probe_isoprenol_roles(store_dir: Path, pooled: bool) -> dict[str, Any]:
     namespaces: set[str] = set()
     label_names: set[str] = set()
     units: set[str] = set()
+    # Genes the isoprenol records perturb, and genes they report a value for. Kept
+    # apart because only the first gives a target a second measurement of its effect.
+    perturbed: set[str] = set()
+    measured: set[str] = set()
 
     def note_genotype(genotype: dict[str, Any]) -> None:
-        """Record one isoprenol record's strain identity and target namespace."""
+        """Record one isoprenol record's strain identity, namespace and genes."""
         perts = genotype["perturbations"]
+        for pert in perts:
+            if pert.get("systematic_gene_name"):
+                perturbed.add(pert["systematic_gene_name"])
         strains.add(
             stable_hash(
                 sorted(
@@ -597,7 +614,11 @@ def probe_isoprenol_roles(store_dir: Path, pooled: bool) -> dict[str, Any]:
                 namespaces.add(pert["gene_namespace"])
 
     def note_phenotype(pheno: dict[str, Any]) -> None:
-        """Record what one isoprenol label is and the unit it carries."""
+        """Record what one isoprenol label is, its unit, and the loci it keys by."""
+        for field in ("protein_abundance", "protein_fold_change"):
+            keys = pheno.get(field)
+            if isinstance(keys, dict):
+                measured.update(keys)
         label_names.add(str(pheno.get("label_name")))
         unit = pheno.get("titer_unit") or pheno.get("measurement_type")
         units.add(str(unit))
@@ -636,6 +657,8 @@ def probe_isoprenol_roles(store_dir: Path, pooled: bool) -> dict[str, Any]:
             "namespaces": sorted(namespaces),
             "label_names": sorted(label_names),
             "units": sorted(units),
+            "genes_perturbed": sorted(perturbed),
+            "genes_measured": sorted(measured),
         }
 
     with env.begin() as txn:
@@ -681,6 +704,8 @@ def probe_isoprenol_roles(store_dir: Path, pooled: bool) -> dict[str, Any]:
         "namespaces": sorted(namespaces),
         "label_names": sorted(label_names),
         "units": sorted(units),
+        "genes_perturbed": sorted(perturbed),
+        "genes_measured": sorted(measured),
     }
 
 
@@ -1247,6 +1272,14 @@ class IsoprenolPick(BaseModel):
     split: str = Field(description="The held-out unit a score would be read on.")
     alternates: list[str] = Field(description="Served datasets posing the same task.")
     why: str = Field(description="Why this row, in one or two sentences.")
+    helps: str = Field(
+        default="",
+        description=(
+            "What this dataset does for the Carruthers campaign, in one sentence. "
+            "Empty for Carruthers' own stores, which are joined to rather than "
+            "listed."
+        ),
+    )
 
 
 PICKS: list[IsoprenolPick] = [
@@ -1276,6 +1309,11 @@ PICKS: list[IsoprenolPick] = [
             "rows: it bounds label reproducibility and tests whether a ranking "
             "transfers across conditions."
         ),
+        helps=(
+            "A second titer for 120 of the 135 targets, in another medium and "
+            "temperature. Bounds how reproducible the label is, and tests whether a "
+            "target ranking learned on the early cycles survives a condition change."
+        ),
     ),
     IsoprenolPick(
         store="isoprenyl_acetate_titer_kang2026",
@@ -1287,6 +1325,10 @@ PICKS: list[IsoprenolPick] = [
             "An ester campaign on the isoprenol chassis, so its isoprenol records are "
             "the upstream intermediate rather than the target. Useful as the one "
             "served case where draining the isoprenol pool is the intent."
+        ),
+        helps=(
+            "One shared target. Its value is the design rather than the overlap: the one "
+            "served case where draining the isoprenol pool on purpose is the goal."
         ),
     ),
     IsoprenolPick(
@@ -1301,6 +1343,10 @@ PICKS: list[IsoprenolPick] = [
             "the article prose against the pinned OCR, since no measurement table was "
             "released."
         ),
+        helps=(
+            "Three shared targets, and a set of deletions and pathway swaps the campaign "
+            "never tried. Useful as an out-of-design check, not as training rows."
+        ),
     ),
     IsoprenolPick(
         store="isoprenol_titer_desiqueira2025",
@@ -1312,6 +1358,11 @@ PICKS: list[IsoprenolPick] = [
             "Acetate-tolerized isolates of a catabolism-deficient parent, with a "
             "resequenced genotype per isolate. The one served row where the strain "
             "difference is an evolved variant call rather than a designed edit."
+        ),
+        helps=(
+            "Two shared targets on evolved isolates with resequenced genotypes, so it "
+            "says what tolerization does to titer where the campaign only varies "
+            "knockdowns."
         ),
     ),
     IsoprenolPick(
@@ -1326,6 +1377,11 @@ PICKS: list[IsoprenolPick] = [
             "consuming its own product, and it is the largest isoprenol block in the "
             "served data by three orders of magnitude."
         ),
+        helps=(
+            "The same prior over a slightly different locus set, and the arm that names "
+            "the catabolism genes: deleting one stops the chassis consuming the product "
+            "the campaign is optimizing."
+        ),
     ),
     IsoprenolPick(
         store="rbtnseq_fitness_browser_putida",
@@ -1338,6 +1394,11 @@ PICKS: list[IsoprenolPick] = [
             "locus set, and the only one of the two carrying a per-record t statistic, "
             "so a gene measured in a sparse pool can be down-weighted."
         ),
+        helps=(
+            "A growth-on-isoprenol fitness value for 86 of the 135 targets, with a "
+            "moderated t so a weakly measured gene can be down-weighted. A per-target "
+            "prior that needs no new experiment."
+        ),
     ),
     IsoprenolPick(
         store="isoprenol_tolerance_lim2025",
@@ -1348,6 +1409,10 @@ PICKS: list[IsoprenolPick] = [
         why=(
             "The only served alcohol tolerance growth phenotype. Three records, so it "
             "is a check on a tolerance model rather than training data for one."
+        ),
+        helps=(
+            "One shared target. Three records, so it is a sanity check on whether a "
+            "high-titer strain is tolerating its own product, not a source of signal."
         ),
     ),
     IsoprenolPick(
@@ -1360,6 +1425,10 @@ PICKS: list[IsoprenolPick] = [
             "The feature side of the tolerance phenotype above, on the same lineages, "
             "so the pair supports a proteome-to-tolerance map at three points."
         ),
+        helps=(
+            "Abundances for 111 of the 135 targets under isoprenol stress, so a target's "
+            "protein level is known in a condition the campaign never ran."
+        ),
     ),
     IsoprenolPick(
         store="proteome_fold_change_lim2025",
@@ -1370,6 +1439,10 @@ PICKS: list[IsoprenolPick] = [
         why=(
             "The stress response as a contrast rather than a level, which is the "
             "closest served analog of a solvent tolerance signature."
+        ),
+        helps=(
+            "The same 111 targets as a stress contrast, which separates a target that "
+            "responds to isoprenol from one that is merely abundant."
         ),
     ),
     IsoprenolPick(
@@ -1394,6 +1467,10 @@ PICKS: list[IsoprenolPick] = [
             "Growth-coupled selection, so it scales where a titer assay does not. The "
             "loader is explicit that the titer it proxies is not measured per clone, "
             "so it is a ranking label and never a quantitative one."
+        ),
+        helps=(
+            "No shared target, but a growth-coupled assay that scales past what a titer "
+            "campaign can measure, so it is the route to a target list larger than 135."
         ),
     ),
     IsoprenolPick(
@@ -1429,6 +1506,10 @@ PICKS: list[IsoprenolPick] = [
             "distinct environments rather than one condition, so the phase is "
             "queryable instead of implied."
         ),
+        helps=(
+            "Abundances for 100 of the 135 targets split by growth and production phase, "
+            "which is the axis the campaign's single endpoint cannot resolve."
+        ),
     ),
     IsoprenolPick(
         store="metabolite_growth_menasalvas2025",
@@ -1439,6 +1520,11 @@ PICKS: list[IsoprenolPick] = [
         why=(
             "Pathway intermediates rather than the product, which is where a flux "
             "model is checked against something other than the titer."
+        ),
+        helps=(
+            "Four shared targets, and pathway intermediates rather than product, which is "
+            "where a flux explanation of a knockdown can be checked against something "
+            "other than titer."
         ),
     ),
     IsoprenolPick(
@@ -1451,8 +1537,127 @@ PICKS: list[IsoprenolPick] = [
             "The phase the titer campaigns actually sample, so it is the arm that "
             "says what the cell looks like while it is making product."
         ),
+        helps=(
+            "The same four targets in the phase the campaign actually samples, so it is "
+            "the closer of the two to the campaign's own condition."
+        ),
     ),
 ]
+
+
+def render_carruthers_transfer(cache: dict[str, Any]) -> str:
+    """What can help the Carruthers campaign, ranked by how much of it it covers.
+
+    Carruthers' own four stores are the thing joined to, so none of them is a row.
+    The ranking key is the larger of the two coverage counts, because a dataset is
+    useful here in proportion to how much of the campaign's target set it reaches,
+    by either route.
+    """
+    roles = cache["isoprenol_roles"]
+    picks = {p.store: p for p in PICKS}
+    targets = set(cache["isoprenol"]["campaigns"]["Carruthers 2025"]["crispri_targets"])
+
+    rows = []
+    for store, probed in roles.items():
+        if store in CARRUTHERS_STORES or not any(probed["roles"].values()):
+            continue
+        pick = picks[store]
+        role = next(k for k in ROLE_ORDER if probed["roles"].get(k))
+        perturbed = len(set(probed["genes_perturbed"]) & targets)
+        measured = len(set(probed["genes_measured"]) & targets)
+        rows.append(
+            (
+                max(perturbed, measured),
+                probed["roles"][role],
+                store,
+                pick,
+                probed,
+                role,
+                perturbed,
+                measured,
+            )
+        )
+    rows.sort(key=lambda r: (-r[0], -r[1]))
+    blank = [r[2] for r in rows if not r[3].helps]
+    if blank:
+        raise RuntimeError(f"transfer rows with no 'helps' text: {blank}")
+
+    cols = (
+        r"@{}r >{\raggedright\arraybackslash}p{29mm} r "
+        r">{\raggedright\arraybackslash}p{40mm} r r "
+        r">{\raggedright\arraybackslash}p{88mm}@{}"
+    )
+    hdr = (
+        r"\# & Dataset & Rec. & What one row gives you & Pert. & Meas. & "
+        r"How it helps the campaign \\"
+    )
+    head = (
+        r"""\begin{landscape}
+\begingroup
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{"""
+        + cols
+        + r"""}
+\caption[]{The served \org{P. putida} isoprenol data that is NOT Carruthers', ranked by
+how much of that campaign's target set it reaches. \emph{Rec.} is the dataset's
+isoprenol records. \emph{Pert.} and \emph{Meas.} count, of the """
+        + str(len(targets))
+        + r""" CRISPRi targets
+the campaign knocks down, how many this dataset also perturbs and how many it reports a
+value for, such as a proteome keyed by locus tag. The two are kept apart because only
+the first gives a target a second measurement of its effect; the second gives it a
+feature. All four columns are read from a full scan. \emph{What one row gives you} and
+\emph{How it helps the campaign} are the pick list in the generating script.}
+\label{tab:pcstransfer}\\
+\toprule
+"""
+        + hdr
+        + r"""
+\midrule
+\endfirsthead
+\multicolumn{7}{@{}l}{\footnotesize\emph{Table~\ref{tab:pcstransfer}, continued}}\\
+\toprule
+"""
+        + hdr
+        + r"""
+\midrule
+\endhead
+\bottomrule
+\endfoot
+"""
+    )
+    lines = []
+    for i, (_, iso, store, pick, probed, role, perturbed, measured) in enumerate(
+        rows, start=1
+    ):
+        lines.append(
+            " & ".join(
+                [
+                    str(i),
+                    class_tex(str(probed["dataset_name"]).removesuffix("Dataset")),
+                    f"{iso:,}",
+                    tex_escape(pick.label),
+                    f"{perturbed:,}",
+                    f"{measured:,}",
+                    tex_escape(pick.helps),
+                ]
+            )
+            + r" \\"
+        )
+        lines.append(r"\addlinespace[2pt]")
+    total = sum(r[1] for r in rows)
+    lines.append(r"\midrule")
+    lines.append(
+        r" & \textbf{All "
+        + str(len(rows))
+        + r" datasets} & \textbf{"
+        + f"{total:,}"
+        + r"} & & & & \\"
+    )
+    return (
+        head + "\n".join(lines) + "\n\\end{longtable}\n\\endgroup\n\\end{landscape}\n"
+    )
 
 
 def render_isoprenol_datasets(cache: dict[str, Any]) -> str:
@@ -1631,6 +1836,7 @@ def main() -> None:
     write(TEX_DIR / "counts.tex", render_counts(cache))
     write(TEX_DIR / "isoprenol.tex", render_isoprenol(cache))
     write(TEX_DIR / "cycle-label.tex", render_cycle_label(cache))
+    write(TEX_DIR / "carruthers-transfer.tex", render_carruthers_transfer(cache))
     write(TEX_DIR / "isoprenol-datasets.tex", render_isoprenol_datasets(cache))
 
 

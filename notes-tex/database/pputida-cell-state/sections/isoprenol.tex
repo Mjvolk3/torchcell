@@ -11,6 +11,38 @@ of the Carruthers isoprenol campaign from its earlier rounds, using whatever oth
 isoprenol data is served. Carruthers is a collaborator, so the campaign's own data is
 available; the question is which single dataset from outside it helps.
 
+\subsection{What can help the campaign\secstatus{todo}}\label{sec:iso-transfer}
+
+Table~\ref{tab:pcstransfer} is the answer in one page. It holds the thirteen served
+isoprenol datasets that are not Carruthers', ranked by how much of that campaign's
+target set each one reaches. Carruthers' own four stores are the thing joined to, so
+none of them is a row.
+
+The ranking column is a join, not a size. Of the 135 CRISPRi targets the campaign
+knocks down, it counts how many each dataset also \emph{perturbs} and how many it
+reports a value \emph{for}, and the two are kept apart because they buy different
+things. A perturbed target gives a second measurement of that target's effect, which
+is what tests a model. A measured target gives that target a feature, which is what
+feeds one.
+
+Three groups come out of it, and the order is not the order of record counts:
+
+\begin{itemize}[nosep,leftmargin=1.4em]
+\item \textbf{Yunus 2026 alone perturbs the target set}, 120 of 135, which is why it
+is the transfer dataset (Sec.~\ref{sec:iso-yunus}).
+\item \textbf{Three proteome datasets measure most of it}, 111, 111 and 100 targets,
+in conditions the campaign never ran. They are feature sources, not labels.
+\item \textbf{The two transposon compendia cover 86 targets} with a fitness value for
+growth on isoprenol, which is a per-target prior available without a new experiment,
+and separately name the catabolism genes (Sec.~\ref{sec:transposon}).
+\end{itemize}
+
+Everything below those reaches four targets or fewer. Those rows earn their place by
+design rather than by overlap, and the last column says which.
+
+\clearpage
+\input{tables/carruthers-transfer}
+
 \subsection{What the served data holds on isoprenol\secstatus{todo}}\label{sec:iso-all}
 
 Seventeen of the 32 served \org{P. putida} datasets carry isoprenol, over 2.59 million

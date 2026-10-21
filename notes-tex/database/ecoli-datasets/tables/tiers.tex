@@ -1,0 +1,22 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_ecoli_genslm_benchmark_table.py
+%% off experiments/database/results/pre-build/2026-10-21/ecoli_datasets.json
+\begin{table}[H]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\caption{\emph{E. coli} datasets and instances per sequence-only fit tier, as \texttt{sequence\_fit} in the probe script derives it from where the label sits and the modal edit count of the genotype sample.}
+\label{tab:tiers}
+\begin{tabular}{@{}l r r >{\raggedright\arraybackslash}p{88mm}@{}}
+\toprule
+Sequence-only fit & Datasets & Instances & What the tier means \\
+\midrule
+best & 35 & 639,394 & the label sits on one gene, a gene pair or triple, or one inserted construct \\
+good & 29 & 3,921,964 & readout entity x perturbed gene(s), or gene x condition \\
+weak & 1 & 72 & a multi-edit strain, only its heterologous genes carry a sequence \\
+no & 3 & 435 & a natural genome, or a whole-strain readout with no single edit \\
+\midrule
+\textbf{Total} & \textbf{68} & \textbf{4,561,865} &  \\
+\bottomrule
+\end{tabular}
+\end{table}

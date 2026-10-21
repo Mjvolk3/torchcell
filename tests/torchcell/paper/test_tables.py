@@ -463,3 +463,52 @@ def test_signal_cache_recomputes_on_a_changed_fingerprint(tmp_path: Path) -> Non
     n, _, hit = cache.get_or_compute("ds", d, log=lambda s: None)
     assert (n, hit) == (1, False)
     assert re.fullmatch(r"\d+:\d+", cache.entries["ds"].key)
+
+
+def test_to_latex_longtable_repeats_the_header_and_wraps_in_a_group() -> None:
+    r"""``table_env="longtable"`` is a page-breaking table: no float, the caption
+    and label in the first head, a *continued* line plus the header on every later
+    page, the footer after a ``\midrule`` inside the body, and a footnote as a full-
+    width row before ``\end{longtable}``; the size group closes with ``\endgroup``.
+    """
+    tex = _table().to_latex(
+        caption="Cap",
+        label="tab:x",
+        table_env="longtable",
+        size="scriptsize",
+        colsep_pt=3,
+        footnote="fn.",
+    )
+    assert tex == "\n".join(
+        [
+            r"\begingroup",
+            r"\scriptsize",
+            r"\setlength{\tabcolsep}{3pt}",
+            r"\begin{longtable}{@{}l r@{}}",
+            r"\caption{Cap}\label{tab:x}\\",
+            r"\toprule",
+            r"Dataset & N \& n \\",
+            r"\midrule",
+            r"\endfirsthead",
+            r"\multicolumn{2}{@{}l}{\footnotesize\emph{Table~\ref{tab:x}, continued}}\\",
+            r"\toprule",
+            r"Dataset & N \& n \\",
+            r"\midrule",
+            r"\endhead",
+            r"\multicolumn{2}{@{}l}{\textbf{Fitness}} \\",
+            r"smf\_a & 1 \\",
+            r"dmf & 3 \\",
+            r"loose & 2 \\",
+            r"\addlinespace",
+            r"\multicolumn{2}{@{}l}{\textbf{Expr}} \\",
+            r"\textbf{kem} &  \\",
+            r"\midrule",
+            r"\textbf{Total} & \textbf{6} \\",
+            r"\bottomrule",
+            r"\multicolumn{2}{@{}p{\linewidth}@{}}{\footnotesize fn.}\\",
+            r"\end{longtable}",
+            r"\endgroup",
+            "",
+        ]
+    )
+    assert "table*" not in tex

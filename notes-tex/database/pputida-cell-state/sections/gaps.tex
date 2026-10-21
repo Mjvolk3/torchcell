@@ -1,0 +1,46 @@
+%% notes-tex/database/pputida-cell-state/sections/gaps.tex
+%% [[experiments.database.pputida-cell-state]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/pputida-cell-state/sections/gaps.tex
+%% SOURCE: hand-authored from the loader drop rules and schema greps named inline.
+
+\section{What is released and not served\secstatus{todo}}\label{sec:gaps}
+
+One group of samples bearing directly on cell state is in no served dataset, and it is
+worth recording because a query cannot discover its absence.
+
+\notesec{The dropped reactor arms} Borchert 2024 releases 332 RB-TnSeq samples and the
+loader stores 310. The 22 it drops are the bioreactor and adaptation samples, under the
+rule \sym{reactor\_process\_not\_representable}: they differ by dissolved-oxygen set
+point, batch or fed-batch feed rate, sampling time, solvent overlay and adaptation day,
+and the loader's position is that collapsing distinct conditions into one environment
+is worse than not serving them. The arithmetic confirms which samples are served, since
+$310 \times 4{,}732$ is exactly the record count Table~\ref{tab:pcsrows} reports for
+that row.
+
+\notesec{The residue is narrower than that rule implies} \texttt{Environment} already
+carries dissolved oxygen as a physical factor, plus \texttt{duration\_hours},
+\texttt{duration\_generations} and \texttt{dilution\_rate\_per\_hour}, so the oxygen set
+point, the sampling time and the adaptation day are representable on fields that exist
+today. Three things remain:
+
+\begin{itemize}[nosep,leftmargin=1.4em]
+\item \textbf{The solvent overlay has no representation.} A search of
+\file{torchcell/datamodels/schema.py} for overlay, two-phase, biphasic, dodecane and
+oleyl alcohol returns nothing. This affects 3 of the 22 samples, and it is the axis
+closest to in-situ product recovery for an alcohol, so it is the one worth a schema
+discussion.
+\item \textbf{Fed-batch feed rate is only partly covered.}
+\texttt{dilution\_rate\_per\_hour} is documented as the controlled variable of a
+continuous chemostat, so reading a discontinuous fed-batch feed into it is a judgment
+call rather than a given.
+\item \textbf{The other 19 samples look admissible on existing fields.} That is a
+reading of the schema against the release metadata and not a verified admission. It
+needs owner sign-off and a rerun of the admission check before anyone acts on it.
+\end{itemize}
+
+\notesec{What the Fitness Browser row leaves out} Of the deposit's 314 \org{P. putida}
+experiments the loader stores 234. It drops the 34 with an empty \texttt{pubId}, which
+includes the bioreactor series, and all 46 \texttt{VillalobosEscobedo23} samples,
+because every one is on R2A and the media library has no entry for it. The second
+exclusion is worth knowing when reading that row's agent count: the stress panel and
+methanol arms that deposit carries are not in the served set.

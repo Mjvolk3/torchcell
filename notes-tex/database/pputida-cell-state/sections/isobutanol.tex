@@ -1,0 +1,31 @@
+%% notes-tex/database/pputida-cell-state/sections/isobutanol.tex
+%% [[experiments.database.pputida-cell-state]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/pputida-cell-state/sections/isobutanol.tex
+%% SOURCE: hand-authored from greps and store reads recorded in the section itself.
+
+\section{There is no served \org{P. putida} isobutanol data\secstatus{todo}}\label{sec:isobutanol}
+
+This is the first thing to establish, because the release does contain isobutanol
+datasets and they are the wrong organism.
+
+\notesec{The loaders} A case-insensitive search for \emph{isobutanol} across the
+fifteen loader modules under \file{torchcell/datasets/pputida/} returns no file.
+
+\notesec{The release} The two isobutanol datasets in KG 4.0,
+\sym{IsobutanolScreenLopez2024} and \sym{IsobutanolValidatedLopez2024}, resolve
+in the build manifest to \file{torchcell/datasets/scerevisiae/lopez2024.py}. They are
+\org{S. cerevisiae}.
+
+\notesec{The Fitness Browser deposit} The deposit's own database carries no isobutanol
+experiment for any organism, so the gap is upstream of our ingest rather than something
+a loader dropped.
+
+\notesec{One false positive to know about} A text search for \emph{isobutyr} in the
+Borchert 2024 environment agents hits DL-3-aminoisobutyric acid, which is an amino acid
+fed as a nitrogen source. Matching on compound name rather than on structure is what
+produces that hit; the InChIKey does not.
+
+The closest served alcohols are the nine alcohol and diol carbon sources the transposon
+compendia carry, 2-methyl-1-butanol among them, and the butanol and isopentanol arms of
+Lim 2022. None is isobutanol. A query that needs isobutanol in \org{P. putida} is a
+query for a dataset we have not ingested, not one for a filter over what is served.

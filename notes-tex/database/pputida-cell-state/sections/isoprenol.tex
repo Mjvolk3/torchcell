@@ -1,0 +1,88 @@
+%% notes-tex/database/pputida-cell-state/sections/isoprenol.tex
+%% [[experiments.database.pputida-cell-state]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/pputida-cell-state/sections/isoprenol.tex
+%% SOURCE: experiments/database/scripts/build_pputida_cell_state_table.py
+%% (Tables pcsiso, pcscycle and pcsrawcycle); the prose is hand-authored.
+
+\section{Predicting the last Carruthers round\secstatus{todo}}\label{sec:isoprenol}
+
+The task these rows were surveyed for: predict the final design-build-test-learn round
+of the Carruthers isoprenol campaign from its earlier rounds, using whatever other
+isoprenol data is served. Carruthers is a collaborator, so the campaign's own data is
+available; the question is which single dataset from outside it helps.
+
+\subsection{The dataset: Yunus 2026\secstatus{todo}}\label{sec:iso-yunus}
+
+\texttt{IsoprenolTiterYunus2026} is the answer, and Table~\ref{tab:pcsiso} is why.
+Yunus 2026 (doi:\allowbreak 10.1016/\allowbreak j.ymben.\allowbreak 2025.11.007)
+selects CRISPRi knockdown targets by FluxRETAP against intuition, in the engineered
+isoprenol-producing strain IY1452, and Carruthers is a co-author. Four things line up
+and one does not.
+
+\notesec{The target sets nearly coincide} Every target in the Yunus campaign but one
+is also a Carruthers target (Table~\ref{tab:pcsiso}). That is what makes the dataset
+unusual: it is not a different experiment that happens to share a product, it is a
+second measurement of nearly the same target set.
+
+\notesec{The readout is the same quantity} Same product, same unit, same
+quantification method, same 48 hour culture. No unit conversion and no method bridge
+stands between the two campaigns. The replicate structure is the one readout axis that
+differs: Carruthers varies from 2 to 6 biological replicates per strain and every
+record carries a sample standard deviation, while Yunus is uniformly 3 and no record
+carries a dispersion at all (Table~\ref{tab:pcsiso}).
+
+\notesec{The chassis and the modality are the same} Both repress a native gene by
+CRISPRi in an isoprenol-producing strain, so a target's effect means the same thing in
+both.
+
+\notesec{The paired features exist} \sym{CrispriPanelProteomeYunus2026} carries an
+absolute Top3 proteome over 253 accessions on the same strains, which is the same
+feature modality as \sym{CampaignProteomeCarruthers2025} in
+Table~\ref{tab:pcsrows}. A proteome-to-titer map can be fit on both.
+
+\notesec{The conditions differ, and this decides how it is used} Carruthers runs at
+24\,\textdegree C in M9-NREL with 20 g/L glucose; Yunus runs at 30\,\textdegree C in
+plain M9 salts. The titer ranges differ accordingly, and the Yunus records carry no
+uncertainty, because only one number per strain was released and the loader records
+that as a typed gap rather than inventing a dispersion.
+
+So Yunus is not extra training rows for absolute titer. Two uses survive the condition
+difference, and both are worth more than 125 rows would be:
+
+\begin{itemize}[nosep,leftmargin=1.4em]
+\item \textbf{A held-out condition.} If a model trained on the earlier Carruthers
+cycles ranks targets correctly in Yunus, the ranking is a property of the biology
+rather than of the campaign. Test rank agreement, not absolute error, since the scales
+differ.
+\item \textbf{A reproducibility bound on the label.} Two independent measurements of
+nearly the same target set say how much of the titer variation is real. That ceilings
+what any model can achieve on this data, and it is the first thing to compute.
+\end{itemize}
+
+The runner-up is \sym{IsoprenolSelectionMenasalvas2025} in
+Table~\ref{tab:pcsrows}, the only other CRISPRi and isoprenol pairing. Its readout is a
+categorical biosensor enrichment call rather than a titer, so it is a weaker label and
+not the first choice.
+
+\subsection{The blocker: the cycle label is not in the graph\secstatus{todo}}\label{sec:iso-cycle}
+
+The task needs a cycle label, to train on the earlier rounds and test on the last one.
+No served Carruthers record carries one. Table~\ref{tab:pcscycle} searches every record
+in all four Carruthers stores for a DBTL token anywhere in its serialization and finds
+none, and \texttt{screen\_id} is empty throughout.
+
+The loader's record identity is one per construct and DBTL cycle, so the cycle is
+implied by the record set and was never written onto a record. From the graph alone the
+final round cannot be separated from the earlier ones, which means the task as stated
+cannot be set up from a query.
+
+It is recoverable. The raw mirror's Dryad culture metadata carries a
+\texttt{DBTL\_Cycle} column, and Table~\ref{tab:pcsrawcycle} gives its distribution.
+The join is on the construct name, so recovering the label is a preprocessing step
+rather than a re-ingest. It is still a loader gap worth filing: a campaign whose entire
+structure is the cycle should not lose the cycle on ingest.
+
+\clearpage
+\input{tables/isoprenol}
+
+\input{tables/cycle-label}

@@ -1,0 +1,58 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_pputida_cell_state_table.py
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{@{}L{34mm} r@{\hspace{5pt}} r@{\hspace{5pt}} L{48mm} r@{\hspace{5pt}} L{26mm}@{}}
+\caption[]{The environment axis of each row in Table~\ref{tab:pcsrows}. \emph{Env.} is
+distinct \texttt{Environment} objects and \emph{Media} distinct media names.
+\emph{Factors} counts the environment perturbations carrying each factor, summed over
+records, so a dataset of many records shows large counts for a few conditions.
+\emph{Agents} is distinct compounds resolved to an InChIKey and a PubChem identifier,
+which is what makes an alcohol arm queryable by structure rather than by string.
+\emph{Temperature} prints every value the store holds, a typed absence included.}
+\label{tab:pcsenv}\\
+\toprule
+\textbf{Dataset} & \textbf{Env.} & \textbf{Media} & \textbf{Factors (perturbations carrying each)} & \textbf{Agents} & \textbf{Temperature} \\
+\midrule
+\endfirsthead
+\multicolumn{6}{@{}l}{\footnotesize\emph{Table~\ref{tab:pcsenv}, continued}}\\
+\toprule
+\textbf{Dataset} & \textbf{Env.} & \textbf{Media} & \textbf{Factors (perturbations carrying each)} & \textbf{Agents} & \textbf{Temperature} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Rb\allowbreak Tnseq\allowbreak Borchert2024 & 155 & 4 & carbon 974,792, nitrogen 492,128, dropout 89,908, small mol. 492,128 & 108 & 30\,\textdegree C \\
+\addlinespace[3pt]
+Fitness\allowbreak Browser\allowbreak Putida & 146 & 3 & carbon 621,140, nitrogen 496,912, dropout 90,782, small mol. 277,124 & 97 & 30\,\textdegree C \\
+\addlinespace[3pt]
+Fitness\allowbreak Contrast\allowbreak Borchert2023 & 12 & 1 & carbon 64,853, small mol. 64,853 & 13 & 30\,\textdegree C \\
+\addlinespace[3pt]
+Env\allowbreak Metal\allowbreak Tnseq\allowbreak Royet2025 & 4 & 1 & small mol. 21,583 & 4 & 28\,\textdegree C \\
+\addlinespace[3pt]
+Graded\allowbreak Gene\allowbreak Essentiality\allowbreak Royet2025 & 2 & 2 & none & 0 & 28\,\textdegree C \\
+\addlinespace[3pt]
+Rb\allowbreak Tnseq\allowbreak Borchert2023 & 32 & 1 & carbon 10,824, small mol. 9,417 & 13 & 30\,\textdegree C \\
+\addlinespace[3pt]
+Campaign\allowbreak Proteome\allowbreak Carruthers2025 & 1 & 1 & small mol. 465 & 1 & 24\,\textdegree C \\
+\addlinespace[3pt]
+Putida\allowbreak Precise321\allowbreak Lim2022 & 118 & 115 & carbon 15 & 3 & not reported \\
+\addlinespace[3pt]
+Isoprenol\allowbreak Selection\allowbreak Menasalvas2025 & 1 & 1 & pH 58, small mol. 116 & 2 & not reported \\
+\addlinespace[3pt]
+Proteome\allowbreak Menasalvas2025 & 2 & 1 & pH 6, small mol. 6 & 1 & not reported \\
+\addlinespace[3pt]
+Proteome\allowbreak Fold\allowbreak Change\allowbreak Lim2025 & 2 & 1 & small mol. 2 & 1 & not reported \\
+\addlinespace[3pt]
+Isoprenol\allowbreak Tolerance\allowbreak Lim2025 & 2 & 1 & small mol. 3 & 1 & not reported \\
+\addlinespace[3pt]
+Proteome\allowbreak Lim2025 & 1 & 1 & small mol. 3 & 1 & not reported \\
+\addlinespace[3pt]
+Metabolite\allowbreak Growth\allowbreak Phase\allowbreak Menasalvas2025 & 1 & 1 & pH 3, small mol. 3 & 1 & not reported \\
+\addlinespace[3pt]
+Metabolite\allowbreak Production\allowbreak Phase\allowbreak Menasalvas2025 & 1 & 1 & pH 3, small mol. 3 & 1 & not reported \\
+\addlinespace[3pt]
+\end{longtable}
+\endgroup

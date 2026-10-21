@@ -1,0 +1,34 @@
+%% notes-tex/database/pputida-cell-state/sections/candidates.tex
+%% [[experiments.database.pputida-cell-state]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/pputida-cell-state/sections/candidates.tex
+%% SOURCE: experiments/database/scripts/build_pputida_cell_state_table.py
+
+\section{The fifteen rows\secstatus{todo}}\label{sec:candidates}
+
+Table~\ref{tab:pcsrows} is the row table and Table~\ref{tab:pcscounts} its totals. Two
+distinctions decide whether a row answers a given question, and neither is a stored
+field, so both are stated here rather than read off the table.
+
+\notesec{Catabolism is not tolerance} In the transposon compendia the alcohol arms are
+carbon-source perturbations: the alcohol is the sole carbon source at 10 mM, and the
+fitness value says whether disrupting a gene impairs growth \emph{on} that alcohol. In
+Lim 2022 and Lim 2025 the alcohol is a stressor added to a glucose medium, and the
+readout says whether the strain tolerates it. A query that filters on the compound
+alone returns both and they answer different questions.
+
+\notesec{Scale is not information} Almost every record in
+Table~\ref{tab:pcscounts} is in the two pooled compendia, which that table reports as
+a share, because a pooled screen multiplies one condition by several thousand genes. The engineering rows at the bottom of the table hold single
+digits of records and carry the phenotype the strain-design work actually targets. The
+record count is a cost estimate, not a ranking.
+
+\notesec{The environment axis is the narrow one} Fifteen datasets, and the distinct
+environment counts in Table~\ref{tab:pcsenv} are dominated by the two compendia's
+carbon and nitrogen source panels. Outside them the condition axis is one or two
+environments per dataset, so almost every row is a genotype series measured in a single
+condition.
+
+\clearpage
+\input{tables/candidates}
+
+\input{tables/counts}

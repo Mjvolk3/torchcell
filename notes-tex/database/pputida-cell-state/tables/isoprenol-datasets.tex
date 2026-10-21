@@ -2,67 +2,64 @@
 %% SOURCE: experiments/database/scripts/build_pputida_cell_state_table.py
 \begin{landscape}
 \begingroup
-\footnotesize
+\scriptsize
 \setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.15}
-\begin{longtable}{@{}L{44mm} r@{\hspace{5pt}} r@{\hspace{5pt}} L{96mm}@{}}
-\caption[]{Every served \org{P. putida} dataset in which isoprenol appears, and the
-role it plays, grouped by role. \emph{Isoprenol} counts the records in which it
-appears in that role. A compound is matched on its InChIKey rather than its name, so
-a record spelling it 3-methyl-3-buten-1-ol is found and DL-3-aminoisobutyric acid is
-not; the pathway role is the exception, since a heterologous cassette names the
-product it makes rather than carrying its structure. The 15 served \org{P. putida}
-datasets in which isoprenol never appears are not listed.}
+\begin{longtable}{@{}r >{\raggedright\arraybackslash}p{27mm} >{\raggedright\arraybackslash}p{22mm} >{\raggedright\arraybackslash}p{36mm} r r r r >{\raggedright\arraybackslash}p{23mm} >{\raggedright\arraybackslash}p{29mm} >{\raggedright\arraybackslash}p{64mm}@{}}
+\caption[]{The served \org{P. putida} isoprenol data as a modeling short list, banded
+by the role isoprenol plays in each store. \emph{Rec.}, \emph{Iso.}, \emph{Strains}
+and \emph{Env} are read from a full scan: records in the store, records in which
+isoprenol plays that role, distinct genotypes among those records, and distinct stored
+environments among them. \emph{Task}, \emph{Label}, \emph{Split}, \emph{Same task}
+and \emph{Why} are the pick list in the generating script. A compound is matched on
+its InChIKey, so a record spelling it 3-methyl-3-buten-1-ol is found and
+DL-3-aminoisobutyric acid is not; the pathway band is the exception, since a cassette
+names the product it makes rather than carrying its structure. The 15 served
+\org{P. putida} datasets in which isoprenol never appears are not listed. \\emph{Rec.} and
+\\emph{Iso.} are summed per band and overall; \\emph{Strains} and \\emph{Env} are
+not, since each counts distinct values inside one store and two stores can hold the
+same strain or the same condition.}
 \label{tab:pcsisodata}\\
 \toprule
-\textbf{Dataset} & \textbf{Records} & \textbf{Isoprenol} & \textbf{What it measures} \\
+\# & Dataset & Task & Label & Rec. & Iso. & Strains & Env & Split & Same task & Why \\
 \midrule
 \endfirsthead
-\multicolumn{4}{@{}l}{\footnotesize\emph{Table~\ref{tab:pcsisodata}, continued}}\\
+\multicolumn{11}{@{}l}{\footnotesize\emph{Table~\ref{tab:pcsisodata}, continued}}\\
 \toprule
-\textbf{Dataset} & \textbf{Records} & \textbf{Isoprenol} & \textbf{What it measures} \\
+\# & Dataset & Task & Label & Rec. & Iso. & Strains & Env & Split & Same task & Why \\
 \midrule
 \endhead
 \bottomrule
 \endfoot
-\multicolumn{4}{@{}l}{\textbf{Isoprenol as the measured product}}\\[2pt]
-\textbf{Isoprenol\allowbreak Titer\allowbreak Carruthers2025} & 502 & 502 & six automated DBTL cycles of CRISPRi arrays \\
-\addlinespace[4pt]
-\textbf{Isoprenol\allowbreak Titer\allowbreak Yunus2026} & 125 & 125 & FluxRETAP targets against intuition in IY1452 \\
-\addlinespace[4pt]
-\textbf{Isoprenyl\allowbreak Acetate\allowbreak Titer\allowbreak Kang2026} & 26 & 7 & an isoprenyl acetate campaign on the isoprenol chassis; both products in one store \\
-\addlinespace[4pt]
-\textbf{Isoprenol\allowbreak Titer\allowbreak Banerjee2024} & 20 & 20 & GSMM-guided campaign; every number read from the article prose \\
-\addlinespace[4pt]
-\textbf{Isoprenol\allowbreak Titer\allowbreak De\allowbreak Siqueira2025} & 10 & 10 & acetate-tolerized isolates of the catabolism-deficient parent \\
-\addlinespace[4pt]
-\midrule \multicolumn{4}{@{}l}{\textbf{Isoprenol as the sole carbon source}}\\ \midrule
-\textbf{Fitness\allowbreak Browser\allowbreak Putida} & 1,118,052 & 9,556 & the same panel in the Fitness Browser deposit, with a moderated t per record \\
-\addlinespace[4pt]
-\textbf{Rb\allowbreak Tnseq\allowbreak Borchert2024} & 1,466,920 & 9,464 & genome-wide fitness for growth on isoprenol, 10 mM, in the Thompson 2020 alcohol panel \\
-\addlinespace[4pt]
-\midrule \multicolumn{4}{@{}l}{\textbf{Isoprenol as the stressor in the medium}}\\ \midrule
-\textbf{Isoprenol\allowbreak Tolerance\allowbreak Lim2025} & 3 & 3 & growth rate of a tolerized lineage against wild type at the same dose \\
-\addlinespace[4pt]
-\textbf{Proteome\allowbreak Lim2025} & 3 & 3 & absolute abundances on those tolerized lineages \\
-\addlinespace[4pt]
-\textbf{Proteome\allowbreak Fold\allowbreak Change\allowbreak Lim2025} & 4 & 2 & the stress proteome as a log2 fold change with a Welch test \\
-\addlinespace[4pt]
-\midrule \multicolumn{4}{@{}l}{\textbf{Isoprenol as the pathway the strain carries}}\\ \midrule
-\textbf{Campaign\allowbreak Proteome\allowbreak Carruthers2025} & 465 & 465 & the proteome beside the titer campaign, cycle by cycle \\
-\addlinespace[4pt]
-\textbf{Isoprenol\allowbreak Selection\allowbreak Menasalvas2025} & 58 & 58 & biosensor enrichment; the titer it proxies is not measured per clone \\
-\addlinespace[4pt]
-\textbf{Proteome\allowbreak Carruthers2025} & 21 & 21 & absolute proteome of the campaign strains \\
-\addlinespace[4pt]
-\textbf{Proteome\allowbreak Fold\allowbreak Change\allowbreak Carruthers2025} & 16 & 16 & fold change against the per-cycle control \\
-\addlinespace[4pt]
-\textbf{Proteome\allowbreak Menasalvas2025} & 6 & 6 & growth phase against production phase \\
-\addlinespace[4pt]
-\textbf{Metabolite\allowbreak Growth\allowbreak Phase\allowbreak Menasalvas2025} & 3 & 3 & intracellular pools in growth phase \\
-\addlinespace[4pt]
-\textbf{Metabolite\allowbreak Production\allowbreak Phase\allowbreak Menasalvas2025} & 3 & 3 & the paired production-phase pools \\
-\addlinespace[4pt]
+\multicolumn{11}{@{}l}{\textbf{Isoprenol is the measured product}} \\
+1 & Isoprenol\allowbreak Titer\allowbreak Carruthers2025 & regression, strain x cycle & isoprenol titer in ug/mL per (CRISPRi construct, DBTL cycle) & 502 & 502 & 432 & 2 & held-out cycle, the last of six & Isoprenol\allowbreak Titer\allowbreak Yunus2026 & The target campaign. The only served isoprenol data with a repeated design-build-test-learn structure, and the only one carrying a per-record sample SD, so a model can be weighted by measurement precision. The cycle the split needs is not on the record (Table~\ref{tab:pcscycle}). \\
+2 & Isoprenol\allowbreak Titer\allowbreak Yunus2026 & regression, strain & isoprenol titer in ug/mL per CRISPRi strain & 125 & 125 & 121 & 1 & held-out condition, against Carruthers & Isoprenol\allowbreak Titer\allowbreak Carruthers2025 & All but one of its targets are Carruthers targets, on the same chassis and the same GC-FID readout, in a different medium and temperature. That makes it a second measurement of the same target set rather than more rows: it bounds label reproducibility and tests whether a ranking transfers across conditions. \\
+3 & Isoprenyl\allowbreak Acetate\allowbreak Titer\allowbreak Kang2026 & regression, strain & titer in ug/mL per strain, isoprenol on 7 records and the ester on 19 & 26 & 7 & 11 & 13 & held-out strains & Isoprenol\allowbreak Titer\allowbreak Banerjee2024, Isoprenol\allowbreak Titer\allowbreak De\allowbreak Siqueira2025 & An ester campaign on the isoprenol chassis, so its isoprenol records are the upstream intermediate rather than the target. Useful as the one served case where draining the isoprenol pool is the intent. \\
+4 & Isoprenol\allowbreak Titer\allowbreak Banerjee2024 & regression, strain x medium & isoprenol titer in ug/mL per (strain, condition family) & 20 & 20 & 12 & 9 & held-out strains & Isoprenol\allowbreak Titer\allowbreak De\allowbreak Siqueira2025, Isoprenyl\allowbreak Acetate\allowbreak Titer\allowbreak Kang2026 & Model-guided deletions and pathway swaps rather than CRISPRi, so it shares no target set with the campaigns above. Every number is read from the article prose against the pinned OCR, since no measurement table was released. \\
+5 & Isoprenol\allowbreak Titer\allowbreak De\allowbreak Siqueira2025 & regression, strain & isoprenol titer in ug/mL per tolerized isolate & 10 & 10 & 5 & 2 & held-out strains & Isoprenol\allowbreak Titer\allowbreak Banerjee2024 & Acetate-tolerized isolates of a catabolism-deficient parent, with a resequenced genotype per isolate. The one served row where the strain difference is an evolved variant call rather than a designed edit. \\
+\cmidrule(l{2pt}r{2pt}){5-6} & \multicolumn{3}{@{}l}{\emph{Product subtotal}} & \emph{683} & \emph{664} & & & & & \\
+\addlinespace[3pt]
+\multicolumn{11}{@{}l}{\textbf{Isoprenol is the carbon source: catabolism, not production}} \\
+6 & Rb\allowbreak Tnseq\allowbreak Borchert2024 & regression, gene & log2 fitness per gene, growing on isoprenol as the sole carbon source & 1,466,920 & 9,464 & 4,732 & 1 & held-out genes & Fitness\allowbreak Browser\allowbreak Putida & Genome-wide loss-of-function fitness on isoprenol at 10 mM. It names the catabolism genes, which is the deletion target for stopping a producer consuming its own product, and it is the largest isoprenol block in the served data by three orders of magnitude. \\
+7 & Fitness\allowbreak Browser\allowbreak Putida & regression, gene & log2 fitness per locus on the same panel, with a moderated t & 1,118,052 & 9,556 & 4,778 & 2 & held-out genes & Rb\allowbreak Tnseq\allowbreak Borchert2024 & The same arm in the Fitness Browser deposit over a slightly different locus set, and the only one of the two carrying a per-record t statistic, so a gene measured in a sparse pool can be down-weighted. \\
+\cmidrule(l{2pt}r{2pt}){5-6} & \multicolumn{3}{@{}l}{\emph{Carbon-source subtotal}} & \emph{2,584,972} & \emph{19,020} & & & & & \\
+\addlinespace[3pt]
+\multicolumn{11}{@{}l}{\textbf{Isoprenol is the stressor}} \\
+8 & Isoprenol\allowbreak Tolerance\allowbreak Lim2025 & regression, strain & log2 growth rate against wild type at the same isoprenol dose & 3 & 3 & 3 & 2 & held-out strains & Proteome\allowbreak Lim2025, Proteome\allowbreak Fold\allowbreak Change\allowbreak Lim2025 & The only served alcohol tolerance growth phenotype. Three records, so it is a check on a tolerance model rather than training data for one. \\
+9 & Proteome\allowbreak Lim2025 & regression, protein x strain & absolute Top3 abundance per protein in a tolerized lineage & 3 & 3 & 3 & 1 & held-out strains & Proteome\allowbreak Fold\allowbreak Change\allowbreak Lim2025, Proteome\allowbreak Menasalvas2025 & The feature side of the tolerance phenotype above, on the same lineages, so the pair supports a proteome-to-tolerance map at three points. \\
+10 & Proteome\allowbreak Fold\allowbreak Change\allowbreak Lim2025 & regression, protein x strain & log2 fold change per protein under isoprenol stress, with a Welch test & 4 & 2 & 2 & 1 & held-out strains & Proteome\allowbreak Lim2025 & The stress response as a contrast rather than a level, which is the closest served analog of a solvent tolerance signature. \\
+\cmidrule(l{2pt}r{2pt}){5-6} & \multicolumn{3}{@{}l}{\emph{Stressor subtotal}} & \emph{10} & \emph{8} & & & & & \\
+\addlinespace[3pt]
+\multicolumn{11}{@{}l}{\textbf{Isoprenol is the pathway the strain carries, and something else is measured}} \\
+11 & Campaign\allowbreak Proteome\allowbreak Carruthers2025 & regression, protein x strain & DIA-NN Top3 percent of proteome per protein and campaign strain & 465 & 465 & 401 & 1 & held-out cycle & Crispri\allowbreak Panel\allowbreak Proteome\allowbreak Yunus2026, Proteome\allowbreak Carruthers2025 & The features paired with the target campaign, cycle by cycle. The natural input to a titer model, and the row whose cycle label is missing for the same reason the titer's is. \\
+12 & Isoprenol\allowbreak Selection\allowbreak Menasalvas2025 & binary classification & enriched or not, one biosensor call per CRISPRi target and round & 58 & 58 & 58 & 1 & held-out targets & Isoprenol\allowbreak Titer\allowbreak Carruthers2025 & Growth-coupled selection, so it scales where a titer assay does not. The loader is explicit that the titer it proxies is not measured per clone, so it is a ranking label and never a quantitative one. \\
+13 & Proteome\allowbreak Carruthers2025 & regression, protein x strain & absolute abundance per protein and campaign strain & 21 & 21 & 17 & 2 & held-out strains & Campaign\allowbreak Proteome\allowbreak Carruthers2025 & The absolute-scale companion to the campaign proteome, on 21 records. A calibration check rather than a feature table. \\
+14 & Proteome\allowbreak Fold\allowbreak Change\allowbreak Carruthers2025 & regression, protein x strain & log2 fold change per protein against the per-cycle control & 16 & 16 & 16 & 1 & held-out strains & Proteome\allowbreak Fold\allowbreak Change\allowbreak Lim2025 & The campaign proteome as a contrast against the controls the cycles carry, which is the form a knockdown effect is read in. \\
+15 & Proteome\allowbreak Menasalvas2025 & regression, protein x phase & summed DIA protein counts per protein, growth or production phase & 6 & 6 & 3 & 2 & held-out phase & Proteome\allowbreak Carruthers2025 & The phase contrast over 2,090 loci, with the two phases stored as distinct environments rather than one condition, so the phase is queryable instead of implied. \\
+16 & Metabolite\allowbreak Growth\allowbreak Phase\allowbreak Menasalvas2025 & regression, metabolite x phase & intracellular concentration in uM per metabolite, growth phase & 3 & 3 & 3 & 1 & held-out phase & Metabolite\allowbreak Production\allowbreak Phase\allowbreak Menasalvas2025 & Pathway intermediates rather than the product, which is where a flux model is checked against something other than the titer. \\
+17 & Metabolite\allowbreak Production\allowbreak Phase\allowbreak Menasalvas2025 & regression, metabolite x phase & the same pools in production phase, the paired environment & 3 & 3 & 3 & 1 & held-out phase & Metabolite\allowbreak Growth\allowbreak Phase\allowbreak Menasalvas2025 & The phase the titer campaigns actually sample, so it is the arm that says what the cell looks like while it is making product. \\
+\cmidrule(l{2pt}r{2pt}){5-6} & \multicolumn{3}{@{}l}{\emph{Pathway subtotal}} & \emph{572} & \emph{572} & & & & & \\
+\midrule
+ & \multicolumn{3}{@{}l}{\textbf{All 17 datasets}} & \textbf{2,586,237} & \textbf{20,264} & & & & & \\
 \end{longtable}
 \endgroup
 \end{landscape}

@@ -64,7 +64,7 @@ from typing import Any
 
 import lmdb
 from dotenv import load_dotenv
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 SCRIPT = Path(__file__).resolve()
 REPO = SCRIPT.parents[3]
@@ -573,6 +573,34 @@ def probe_isoprenol_roles(store_dir: Path, pooled: bool) -> dict[str, Any]:
     )
     roles = {"product": 0, "carbon_source": 0, "stressor": 0, "pathway": 0}
     dataset_name = None
+    # Collected over the isoprenol records only, since that is the subset a model
+    # would train on: a store's other records answer another question.
+    strains: set[str] = set()
+    environments: set[str] = set()
+    namespaces: set[str] = set()
+    label_names: set[str] = set()
+    units: set[str] = set()
+
+    def note_genotype(genotype: dict[str, Any]) -> None:
+        """Record one isoprenol record's strain identity and target namespace."""
+        perts = genotype["perturbations"]
+        strains.add(
+            stable_hash(
+                sorted(
+                    (p.get("systematic_gene_name"), p["perturbation_type"])
+                    for p in perts
+                )
+            )
+        )
+        for pert in perts:
+            if pert.get("gene_namespace"):
+                namespaces.add(pert["gene_namespace"])
+
+    def note_phenotype(pheno: dict[str, Any]) -> None:
+        """Record what one isoprenol label is and the unit it carries."""
+        label_names.add(str(pheno.get("label_name")))
+        unit = pheno.get("titer_unit") or pheno.get("measurement_type")
+        units.add(str(unit))
 
     if pooled:
         refs = set()
@@ -591,17 +619,23 @@ def probe_isoprenol_roles(store_dir: Path, pooled: bool) -> dict[str, Any]:
                 dataset_name = dataset_name or rec["experiment"].get("dataset_name")
                 ref = rec["experiment"]["environment"].get("$ref")
                 factor = by_digest.get(ref)
-                if factor == "carbon_source":
-                    roles["carbon_source"] += 1
-                elif factor:
-                    roles["stressor"] += 1
+                if factor is None:
+                    continue
+                roles["carbon_source" if factor == "carbon_source" else "stressor"] += 1
+                environments.add(ref)
+                note_genotype(splice(rec["experiment"]["genotype"], table))
+                note_phenotype(splice(rec["experiment"]["phenotype"], table))
         env.close()
         return {
             "records": total,
             "roles": roles,
             "dataset_name": dataset_name,
             "decided_on": "interned_table",
-            "isoprenol_environments": len(refs),
+            "strains": len(strains),
+            "environments": len(environments),
+            "namespaces": sorted(namespaces),
+            "label_names": sorted(label_names),
+            "units": sorted(units),
         }
 
     with env.begin() as txn:
@@ -611,10 +645,12 @@ def probe_isoprenol_roles(store_dir: Path, pooled: bool) -> dict[str, Any]:
             experiment = rec["experiment"]
             dataset_name = dataset_name or experiment.get("dataset_name")
             pheno = experiment["phenotype"]
+            matched = False
             if ISOPRENOL_INCHIKEY in str(
                 (pheno.get("product") or {}).get("inchikey") or ""
             ):
                 roles["product"] += 1
+                matched = True
             for pert in experiment["environment"].get("perturbations") or []:
                 agent = pert.get("compound") or pert.get("agent") or {}
                 if ISOPRENOL_INCHIKEY in str(agent.get("inchikey") or ""):
@@ -624,17 +660,27 @@ def probe_isoprenol_roles(store_dir: Path, pooled: bool) -> dict[str, Any]:
                         else "stressor"
                     )
                     roles[key] += 1
+                    matched = True
             if any(
                 mentions_isoprenol(p) for p in experiment["genotype"]["perturbations"]
             ):
                 roles["pathway"] += 1
+                matched = True
+            if matched:
+                environments.add(stable_hash(experiment["environment"]))
+                note_genotype(experiment["genotype"])
+                note_phenotype(pheno)
     env.close()
     return {
         "records": total,
         "roles": roles,
         "dataset_name": dataset_name,
         "decided_on": "every_record",
-        "isoprenol_environments": None,
+        "strains": len(strains),
+        "environments": len(environments),
+        "namespaces": sorted(namespaces),
+        "label_names": sorted(label_names),
+        "units": sorted(units),
     }
 
 
@@ -1171,67 +1217,298 @@ def render_cycle_label(cache: dict[str, Any]) -> str:
 
 
 ROLE_LABEL = {
-    "product": "measured product",
-    "carbon_source": "sole carbon source",
-    "stressor": "stressor in the medium",
-    "pathway": "pathway the strain carries",
+    "product": "Isoprenol is the measured product",
+    "carbon_source": "Isoprenol is the carbon source: catabolism, not production",
+    "stressor": "Isoprenol is the stressor",
+    "pathway": "Isoprenol is the pathway the strain carries, and something else is measured",
+}
+ROLE_ORDER = ["product", "carbon_source", "stressor", "pathway"]
+
+# The subtotal label that closes each band.
+ROLE_TOTAL = {
+    "product": "Product subtotal",
+    "carbon_source": "Carbon-source subtotal",
+    "stressor": "Stressor subtotal",
+    "pathway": "Pathway subtotal",
 }
 
-# What each isoprenol-bearing dataset actually measures, in a few words. Curation:
-# the probe sees the role, not the design.
-ROLE_NOTE = {
-    "isoprenol_titer_carruthers2025": "six automated DBTL cycles of CRISPRi arrays",
-    "isoprenol_titer_yunus2026": "FluxRETAP targets against intuition in IY1452",
-    "isoprenol_titer_banerjee2024": "GSMM-guided campaign; every number read from the article prose",
-    "isoprenol_titer_desiqueira2025": "acetate-tolerized isolates of the catabolism-deficient parent",
-    "isoprenyl_acetate_titer_kang2026": "an isoprenyl acetate campaign on the isoprenol chassis; both products in one store",
-    "rbtnseq_borchert2024": "genome-wide fitness for growth on isoprenol, 10 mM, in the Thompson 2020 alcohol panel",
-    "rbtnseq_fitness_browser_putida": "the same panel in the Fitness Browser deposit, with a moderated t per record",
-    "isoprenol_tolerance_lim2025": "growth rate of a tolerized lineage against wild type at the same dose",
-    "proteome_lim2025": "absolute abundances on those tolerized lineages",
-    "proteome_fold_change_lim2025": "the stress proteome as a log2 fold change with a Welch test",
-    "campaign_proteome_carruthers2025": "the proteome beside the titer campaign, cycle by cycle",
-    "isoprenol_selection_menasalvas2025": "biosensor enrichment; the titer it proxies is not measured per clone",
-    "proteome_carruthers2025": "absolute proteome of the campaign strains",
-    "proteome_fold_change_carruthers2025": "fold change against the per-cycle control",
-    "proteome_menasalvas2025": "growth phase against production phase",
-    "metabolite_growth_menasalvas2025": "intracellular pools in growth phase",
-    "metabolite_production_menasalvas2025": "the paired production-phase pools",
-}
+
+class IsoprenolPick(BaseModel):
+    """One isoprenol dataset and the modeling problem it poses.
+
+    The same shape as the E. coli benchmark short list: what is derived from
+    the store stays out of this object, and what is a judgment call lives here so it
+    is versioned beside the numbers it sits next to.
+    """
+
+    store: str
+    task: str = Field(description="The prediction problem, in a few words.")
+    label: str = Field(description="What one label is, and what it attaches to.")
+    split: str = Field(description="The held-out unit a score would be read on.")
+    alternates: list[str] = Field(description="Served datasets posing the same task.")
+    why: str = Field(description="Why this row, in one or two sentences.")
+
+
+PICKS: list[IsoprenolPick] = [
+    IsoprenolPick(
+        store="isoprenol_titer_carruthers2025",
+        task="regression, strain x cycle",
+        label="isoprenol titer in ug/mL per (CRISPRi construct, DBTL cycle)",
+        split="held-out cycle, the last of six",
+        alternates=["IsoprenolTiterYunus2026"],
+        why=(
+            "The target campaign. The only served isoprenol data with a repeated "
+            "design-build-test-learn structure, and the only one carrying a per-record "
+            "sample SD, so a model can be weighted by measurement precision. The cycle "
+            "the split needs is not on the record (Table~\\ref{tab:pcscycle})."
+        ),
+    ),
+    IsoprenolPick(
+        store="isoprenol_titer_yunus2026",
+        task="regression, strain",
+        label="isoprenol titer in ug/mL per CRISPRi strain",
+        split="held-out condition, against Carruthers",
+        alternates=["IsoprenolTiterCarruthers2025"],
+        why=(
+            "All but one of its targets are Carruthers targets, on the same chassis "
+            "and the same GC-FID readout, in a different medium and temperature. That "
+            "makes it a second measurement of the same target set rather than more "
+            "rows: it bounds label reproducibility and tests whether a ranking "
+            "transfers across conditions."
+        ),
+    ),
+    IsoprenolPick(
+        store="isoprenyl_acetate_titer_kang2026",
+        task="regression, strain",
+        label="titer in ug/mL per strain, isoprenol on 7 records and the ester on 19",
+        split="held-out strains",
+        alternates=["IsoprenolTiterBanerjee2024", "IsoprenolTiterDeSiqueira2025"],
+        why=(
+            "An ester campaign on the isoprenol chassis, so its isoprenol records are "
+            "the upstream intermediate rather than the target. Useful as the one "
+            "served case where draining the isoprenol pool is the intent."
+        ),
+    ),
+    IsoprenolPick(
+        store="isoprenol_titer_banerjee2024",
+        task="regression, strain x medium",
+        label="isoprenol titer in ug/mL per (strain, condition family)",
+        split="held-out strains",
+        alternates=["IsoprenolTiterDeSiqueira2025", "IsoprenylAcetateTiterKang2026"],
+        why=(
+            "Model-guided deletions and pathway swaps rather than CRISPRi, so it "
+            "shares no target set with the campaigns above. Every number is read from "
+            "the article prose against the pinned OCR, since no measurement table was "
+            "released."
+        ),
+    ),
+    IsoprenolPick(
+        store="isoprenol_titer_desiqueira2025",
+        task="regression, strain",
+        label="isoprenol titer in ug/mL per tolerized isolate",
+        split="held-out strains",
+        alternates=["IsoprenolTiterBanerjee2024"],
+        why=(
+            "Acetate-tolerized isolates of a catabolism-deficient parent, with a "
+            "resequenced genotype per isolate. The one served row where the strain "
+            "difference is an evolved variant call rather than a designed edit."
+        ),
+    ),
+    IsoprenolPick(
+        store="rbtnseq_borchert2024",
+        task="regression, gene",
+        label="log2 fitness per gene, growing on isoprenol as the sole carbon source",
+        split="held-out genes",
+        alternates=["FitnessBrowserPutida"],
+        why=(
+            "Genome-wide loss-of-function fitness on isoprenol at 10 mM. It names the "
+            "catabolism genes, which is the deletion target for stopping a producer "
+            "consuming its own product, and it is the largest isoprenol block in the "
+            "served data by three orders of magnitude."
+        ),
+    ),
+    IsoprenolPick(
+        store="rbtnseq_fitness_browser_putida",
+        task="regression, gene",
+        label="log2 fitness per locus on the same panel, with a moderated t",
+        split="held-out genes",
+        alternates=["RbTnseqBorchert2024"],
+        why=(
+            "The same arm in the Fitness Browser deposit over a slightly different "
+            "locus set, and the only one of the two carrying a per-record t statistic, "
+            "so a gene measured in a sparse pool can be down-weighted."
+        ),
+    ),
+    IsoprenolPick(
+        store="isoprenol_tolerance_lim2025",
+        task="regression, strain",
+        label="log2 growth rate against wild type at the same isoprenol dose",
+        split="held-out strains",
+        alternates=["ProteomeLim2025", "ProteomeFoldChangeLim2025"],
+        why=(
+            "The only served alcohol tolerance growth phenotype. Three records, so it "
+            "is a check on a tolerance model rather than training data for one."
+        ),
+    ),
+    IsoprenolPick(
+        store="proteome_lim2025",
+        task="regression, protein x strain",
+        label="absolute Top3 abundance per protein in a tolerized lineage",
+        split="held-out strains",
+        alternates=["ProteomeFoldChangeLim2025", "ProteomeMenasalvas2025"],
+        why=(
+            "The feature side of the tolerance phenotype above, on the same lineages, "
+            "so the pair supports a proteome-to-tolerance map at three points."
+        ),
+    ),
+    IsoprenolPick(
+        store="proteome_fold_change_lim2025",
+        task="regression, protein x strain",
+        label="log2 fold change per protein under isoprenol stress, with a Welch test",
+        split="held-out strains",
+        alternates=["ProteomeLim2025"],
+        why=(
+            "The stress response as a contrast rather than a level, which is the "
+            "closest served analog of a solvent tolerance signature."
+        ),
+    ),
+    IsoprenolPick(
+        store="campaign_proteome_carruthers2025",
+        task="regression, protein x strain",
+        label="DIA-NN Top3 percent of proteome per protein and campaign strain",
+        split="held-out cycle",
+        alternates=["CrispriPanelProteomeYunus2026", "ProteomeCarruthers2025"],
+        why=(
+            "The features paired with the target campaign, cycle by cycle. The natural "
+            "input to a titer model, and the row whose cycle label is missing for the "
+            "same reason the titer's is."
+        ),
+    ),
+    IsoprenolPick(
+        store="isoprenol_selection_menasalvas2025",
+        task="binary classification",
+        label="enriched or not, one biosensor call per CRISPRi target and round",
+        split="held-out targets",
+        alternates=["IsoprenolTiterCarruthers2025"],
+        why=(
+            "Growth-coupled selection, so it scales where a titer assay does not. The "
+            "loader is explicit that the titer it proxies is not measured per clone, "
+            "so it is a ranking label and never a quantitative one."
+        ),
+    ),
+    IsoprenolPick(
+        store="proteome_carruthers2025",
+        task="regression, protein x strain",
+        label="absolute abundance per protein and campaign strain",
+        split="held-out strains",
+        alternates=["CampaignProteomeCarruthers2025"],
+        why=(
+            "The absolute-scale companion to the campaign proteome, on 21 records. A "
+            "calibration check rather than a feature table."
+        ),
+    ),
+    IsoprenolPick(
+        store="proteome_fold_change_carruthers2025",
+        task="regression, protein x strain",
+        label="log2 fold change per protein against the per-cycle control",
+        split="held-out strains",
+        alternates=["ProteomeFoldChangeLim2025"],
+        why=(
+            "The campaign proteome as a contrast against the controls the cycles "
+            "carry, which is the form a knockdown effect is read in."
+        ),
+    ),
+    IsoprenolPick(
+        store="proteome_menasalvas2025",
+        task="regression, protein x phase",
+        label="summed DIA protein counts per protein, growth or production phase",
+        split="held-out phase",
+        alternates=["ProteomeCarruthers2025"],
+        why=(
+            "The phase contrast over 2,090 loci, with the two phases stored as "
+            "distinct environments rather than one condition, so the phase is "
+            "queryable instead of implied."
+        ),
+    ),
+    IsoprenolPick(
+        store="metabolite_growth_menasalvas2025",
+        task="regression, metabolite x phase",
+        label="intracellular concentration in uM per metabolite, growth phase",
+        split="held-out phase",
+        alternates=["MetaboliteProductionPhaseMenasalvas2025"],
+        why=(
+            "Pathway intermediates rather than the product, which is where a flux "
+            "model is checked against something other than the titer."
+        ),
+    ),
+    IsoprenolPick(
+        store="metabolite_production_menasalvas2025",
+        task="regression, metabolite x phase",
+        label="the same pools in production phase, the paired environment",
+        split="held-out phase",
+        alternates=["MetaboliteGrowthPhaseMenasalvas2025"],
+        why=(
+            "The phase the titer campaigns actually sample, so it is the arm that "
+            "says what the cell looks like while it is making product."
+        ),
+    ),
+]
 
 
 def render_isoprenol_datasets(cache: dict[str, Any]) -> str:
-    """Every served P. putida dataset that touches isoprenol, by the role it plays."""
-    roles = cache["isoprenol_roles"]
-    order = ["product", "carbon_source", "stressor", "pathway"]
-    rows: list[tuple[str, str, dict[str, Any]]] = []
-    for store, probed in roles.items():
-        hit = {k: v for k, v in probed["roles"].items() if v}
-        if hit:
-            rows.append((next(k for k in order if k in hit), store, probed))
-    rows.sort(key=lambda r: (order.index(r[0]), -max(r[2]["roles"].values())))
+    """The isoprenol short list, in the shape of the E. coli benchmark table.
 
-    cols = r"@{}L{44mm} r@{\hspace{5pt}} r@{\hspace{5pt}} L{96mm}@{}"
+    Banded by the role isoprenol plays, because the role decides what the dataset can
+    be used for: only the product band holds a titer label, and the carbon-source band
+    answers the opposite engineering question.
+    """
+    roles = cache["isoprenol_roles"]
+    picks = {p.store: p for p in PICKS}
+    rows: list[tuple[str, IsoprenolPick, dict[str, Any]]] = []
+    for pick in PICKS:
+        probed = roles[pick.store]
+        hit = {k: v for k, v in probed["roles"].items() if v}
+        rows.append((next(k for k in ROLE_ORDER if k in hit), pick, probed))
+    rows.sort(key=lambda r: ROLE_ORDER.index(r[0]))
+    missing = sorted(
+        s for s, p in roles.items() if any(p["roles"].values()) and s not in picks
+    )
+    if missing:
+        raise RuntimeError(f"isoprenol datasets with no pick entry: {missing}")
+
+    cols = (
+        r"@{}r >{\raggedright\arraybackslash}p{27mm} "
+        r">{\raggedright\arraybackslash}p{22mm} "
+        r">{\raggedright\arraybackslash}p{36mm} r r r r "
+        r">{\raggedright\arraybackslash}p{23mm} "
+        r">{\raggedright\arraybackslash}p{29mm} "
+        r">{\raggedright\arraybackslash}p{64mm}@{}"
+    )
     hdr = (
-        r"\textbf{Dataset} & \textbf{Records} & \textbf{Isoprenol} & "
-        r"\textbf{What it measures} \\"
+        r"\# & Dataset & Task & Label & Rec. & Iso. & Strains & Env & Split & "
+        r"Same task & Why \\"
     )
     head = (
         r"""\begin{landscape}
 \begingroup
-\footnotesize
+\scriptsize
 \setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.15}
 \begin{longtable}{"""
         + cols
         + r"""}
-\caption[]{Every served \org{P. putida} dataset in which isoprenol appears, and the
-role it plays, grouped by role. \emph{Isoprenol} counts the records in which it
-appears in that role. A compound is matched on its InChIKey rather than its name, so
-a record spelling it 3-methyl-3-buten-1-ol is found and DL-3-aminoisobutyric acid is
-not; the pathway role is the exception, since a heterologous cassette names the
-product it makes rather than carrying its structure. The 15 served \org{P. putida}
-datasets in which isoprenol never appears are not listed.}
+\caption[]{The served \org{P. putida} isoprenol data as a modeling short list, banded
+by the role isoprenol plays in each store. \emph{Rec.}, \emph{Iso.}, \emph{Strains}
+and \emph{Env} are read from a full scan: records in the store, records in which
+isoprenol plays that role, distinct genotypes among those records, and distinct stored
+environments among them. \emph{Task}, \emph{Label}, \emph{Split}, \emph{Same task}
+and \emph{Why} are the pick list in the generating script. A compound is matched on
+its InChIKey, so a record spelling it 3-methyl-3-buten-1-ol is found and
+DL-3-aminoisobutyric acid is not; the pathway band is the exception, since a cassette
+names the product it makes rather than carrying its structure. The 15 served
+\org{P. putida} datasets in which isoprenol never appears are not listed. \\emph{Rec.} and
+\\emph{Iso.} are summed per band and overall; \\emph{Strains} and \\emph{Env} are
+not, since each counts distinct values inside one store and two stores can hold the
+same strain or the same condition.}
 \label{tab:pcsisodata}\\
 \toprule
 """
@@ -1239,7 +1516,7 @@ datasets in which isoprenol never appears are not listed.}
         + r"""
 \midrule
 \endfirsthead
-\multicolumn{4}{@{}l}{\footnotesize\emph{Table~\ref{tab:pcsisodata}, continued}}\\
+\multicolumn{11}{@{}l}{\footnotesize\emph{Table~\ref{tab:pcsisodata}, continued}}\\
 \toprule
 """
         + hdr
@@ -1250,34 +1527,73 @@ datasets in which isoprenol never appears are not listed.}
 \endfoot
 """
     )
-    lines = []
-    seen_role = None
-    for role, store, probed in rows:
-        if role != seen_role:
+    lines: list[str] = []
+    seen = None
+    band_records = 0
+    band_isoprenol = 0
+
+    def band_total(role: str) -> str:
+        """The subtotal line that closes a band.
+
+        Records and isoprenol records sum; strains and environments do not, because
+        each is a count of distinct values within one store and two stores can hold
+        the same strain or the same condition.
+        """
+        return (
+            r"\cmidrule(l{2pt}r{2pt}){5-6}"
+            + r" & \multicolumn{3}{@{}l}{\emph{"
+            + ROLE_TOTAL[role]
+            + r"}} & \emph{"
+            + f"{band_records:,}"
+            + r"} & \emph{"
+            + f"{band_isoprenol:,}"
+            + r"} & & & & & \\"
+        )
+
+    for i, (role, pick, probed) in enumerate(rows, start=1):
+        if role != seen:
+            if seen is not None:
+                lines.append(band_total(seen))
+                lines.append(r"\addlinespace[3pt]")
+            band_records = 0
+            band_isoprenol = 0
             lines.append(
-                r"\midrule \multicolumn{4}{@{}l}{\textbf{Isoprenol as the "
-                + ROLE_LABEL[role]
-                + r"}}\\ \midrule"
-                if seen_role is not None
-                else r"\multicolumn{4}{@{}l}{\textbf{Isoprenol as the "
-                + ROLE_LABEL[role]
-                + r"}}\\[2pt]"
+                r"\multicolumn{11}{@{}l}{\textbf{" + ROLE_LABEL[role] + r"}} \\"
             )
-            seen_role = role
+            seen = role
+        band_records += probed["records"]
+        band_isoprenol += probed["roles"][role]
         lines.append(
             " & ".join(
                 [
-                    r"\textbf{"
-                    + class_tex(str(probed["dataset_name"]).removesuffix("Dataset"))
-                    + r"}",
+                    str(i),
+                    class_tex(str(probed["dataset_name"]).removesuffix("Dataset")),
+                    tex_escape(pick.task),
+                    tex_escape(pick.label),
                     f"{probed['records']:,}",
                     f"{probed['roles'][role]:,}",
-                    tex_escape(ROLE_NOTE[store]),
+                    f"{probed['strains']:,}",
+                    f"{probed['environments']:,}",
+                    tex_escape(pick.split),
+                    ", ".join(class_tex(a) for a in pick.alternates) or "--",
+                    pick.why,
                 ]
             )
             + r" \\"
         )
-        lines.append(r"\addlinespace[4pt]")
+    lines.append(band_total(seen))
+    total_records = sum(p["records"] for _, _, p in rows)
+    total_isoprenol = sum(p["roles"][r] for r, _, p in rows)
+    lines.append(r"\midrule")
+    lines.append(
+        r" & \multicolumn{3}{@{}l}{\textbf{All "
+        + str(len(rows))
+        + r" datasets}} & \textbf{"
+        + f"{total_records:,}"
+        + r"} & \textbf{"
+        + f"{total_isoprenol:,}"
+        + r"} & & & & & \\"
+    )
     return (
         head + "\n".join(lines) + "\n\\end{longtable}\n\\endgroup\n\\end{landscape}\n"
     )

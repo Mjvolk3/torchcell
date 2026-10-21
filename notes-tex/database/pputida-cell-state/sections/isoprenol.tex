@@ -27,9 +27,14 @@ second measurement of nearly the same target set.
 \notesec{The readout is the same quantity} Same product, same unit, same
 quantification method, same 48 hour culture. No unit conversion and no method bridge
 stands between the two campaigns. The replicate structure is the one readout axis that
-differs: Carruthers varies from 2 to 6 biological replicates per strain and every
-record carries a sample standard deviation, while Yunus is uniformly 3 and no record
-carries a dispersion at all (Table~\ref{tab:pcsiso}).
+differs, and the difference is in what was released rather than in what was run.
+Carruthers reports a per-strain count, 2 to 6 biological replicates, and every record
+carries a sample standard deviation. Yunus releases one number per strain with the
+replicate count given only as a 3-to-6 range and the dispersion only as error bars, so
+the loader stores the conservative lower end of that range and records the missing
+dispersion as a typed gap. The uniform 3 in Table~\ref{tab:pcsiso} is therefore a
+resolved lower bound, not a reported count, and a weighting scheme must not read it as
+one.
 
 \notesec{The chassis and the modality are the same} Both repress a native gene by
 CRISPRi in an isoprenol-producing strain, so a target's effect means the same thing in

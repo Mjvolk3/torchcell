@@ -1,0 +1,33 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_ecoli_genslm_benchmark_table.py
+%% off experiments/database/results/pre-build/2026-10-21/ecoli_datasets.json
+\begin{landscape}
+\begingroup
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}r >{\raggedright\arraybackslash}p{25mm} >{\raggedright\arraybackslash}p{20mm} >{\raggedright\arraybackslash}p{29mm} r r r >{\raggedright\arraybackslash}p{25mm} >{\raggedright\arraybackslash}p{23mm} >{\raggedright\arraybackslash}p{29mm} >{\raggedright\arraybackslash}p{46mm}@{}}
+\caption{The short list for a gene-sequence encoding benchmark. \emph{Genes}, \emph{Labels}, \emph{Env} and \emph{Gene identifier} are read from a full scan of each store: distinct gene ids carrying a label, gene-attached numeric or boolean values, distinct stored environments, and the namespace the store keys genes by. \emph{Task}, \emph{Label}, \emph{Split}, \emph{Same task} and \emph{Why} are the pick list in the generating script.}\label{tab:shortlist}\\
+\toprule
+\# & Dataset & Task & Label & Genes & Labels & Env & Gene identifier & Split & Same task & Why \\
+\midrule
+\endfirsthead
+\multicolumn{11}{@{}l}{\footnotesize\emph{Table~\ref{tab:shortlist}, continued}}\\
+\toprule
+\# & Dataset & Task & Label & Genes & Labels & Env & Gene identifier & Split & Same task & Why \\
+\midrule
+\endhead
+\multicolumn{11}{@{}l}{\textbf{Core}} \\
+1 & Gene\allowbreak{}Essentiality\allowbreak{}Goodall2018 & binary classification & essential or not, one TraDIS call per gene and medium & 4,181 & 8,309 & 2 & BW25113 locus tag, released as gene symbol & held-out genes & Gene\allowbreak{}Essentiality\allowbreak{}Baba2006, Gene\allowbreak{}Essentiality\allowbreak{}Gerdes2003, Gene\allowbreak{}Essentiality\allowbreak{}Price2018\allowbreak{}Ecoli & The simplest gene-level label in the host, and the one with three independent calls to agree with (Keio construction, genetic footprinting, TnSeq). A classifier on one vector per gene is the whole model. \\
+2 & Env\allowbreak{}Chemgen\allowbreak{}Nichols2011 & regression, gene x condition & a colony-size S-score per (deletion, condition) & 3,949 & 1,286,962 & 324 & BW25113 locus tag, released as ECK accession & held-out genes, every condition & Rb\allowbreak{}Tnseq\allowbreak{}Price2018\allowbreak{}Ecoli, Env\allowbreak{}Chemgen\allowbreak{}Shiver2016, Carbon\allowbreak{}Source\allowbreak{}Tong2020, Env\allowbreak{}Chemgen\allowbreak{}Girgis2009 & The widest condition panel on one gene set. A held-out gene's whole profile is the target, and the condition enters as a second input the gene encoding does not have to carry. \\
+3 & Proteome\allowbreak{}Schmidt2016 & regression, protein x condition & absolute copies per cell of one protein in one growth condition & 2,359 & 48,335 & 21 & gene symbol (readout key) & held-out genes, every condition & Proteome\allowbreak{}Mori2021, Proteome\allowbreak{}Caglar2017, Proteome\allowbreak{}Ishii2007 & A molecular level of the gene's own product, unperturbed, across conditions. Expected (untested) to be where a codon model separates from a one-hot control, because the input is the coding sequence whose product is measured. \\
+4 & Gene\allowbreak{}Interaction\allowbreak{}Babu2014 & regression, gene pair & a signed colony-size S score per (query, array) deletion pair & 3,880 & 42,705 & 1 & MG1655 b-number, released as Keio JW number; b-number with a Keio sub-number; gene symbol & held-out genes (both pair members unseen), and one member unseen & Gene\allowbreak{}Interaction\allowbreak{}Butland2008, Crispri\allowbreak{}Cross\allowbreak{}Rachwalski2024 & The only pairwise label at scale in the host. It asks whether two gene vectors compose, which no single-gene task does. \\
+\addlinespace
+\multicolumn{11}{@{}l}{\textbf{Second tier}} \\
+5 & Protein\allowbreak{}Synthesis\allowbreak{}Rate\allowbreak{}Li2014 & regression, gene x medium & absolute protein synthesis rate per gene from ribosome profiling & 3,410 & 8,644 & 3 & gene symbol (readout key) & held-out genes & Protein\allowbreak{}Turnover\allowbreak{}Gupta2024 & The phenotype closest to what a codon model reads: translation of the coding sequence itself, in three media. \\
+6 & Rnaseq\allowbreak{}Lamoureux2023 & regression, gene x library & TPM of one gene in one RNA-seq library & 4,257 & 4,405,995 & 119 & b-number (readout key) & held-out genes, every library & Rnaseq\allowbreak{}Public\allowbreak{}K12\allowbreak{}Lamoureux2023, Rnaseq\allowbreak{}Caglar2017 & The transcript-level counterpart of the proteome pick, over a thousand libraries, so the per-gene target is a long expression profile. \\
+7 & Morphology\allowbreak{}Campos2018 & multi-output regression & a vector of cell-shape and cell-cycle features per deletion & 3,664 & 53,508 & 1 & BW25113 locus tag & held-out genes & Growth\allowbreak{}Rate\allowbreak{}Campos2018 & The one imaging phenotype in the host: a different label family from growth and abundance, on the same Keio gene set. \\
+8 & Crispri\allowbreak{}Gene\allowbreak{}Fitness\allowbreak{}Wang2018 & regression, gene x screen & gene-level CRISPRi fitness per (gene, screen) & 4,223 & 20,158 & 5 & MG1655 b-number & held-out genes & Crispri\allowbreak{}Knockdown\allowbreak{}Cui2018, Crispri\allowbreak{}Chemgen\allowbreak{}Choe2025, Mismatch\allowbreak{}Crispri\allowbreak{}Fitness\allowbreak{}Hawkins2020 & The knockdown counterpart of the deletion screens, already aggregated to the gene by its authors, so it covers essential genes the deletion collections cannot. \\
+\bottomrule
+\end{longtable}
+\endgroup
+\end{landscape}

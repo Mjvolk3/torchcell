@@ -1,0 +1,117 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_ecoli_genslm_benchmark_table.py
+%% off experiments/database/results/pre-build/2026-10-21/ecoli_datasets.json
+\begin{landscape}
+\begingroup
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}l r r r >{\raggedright\arraybackslash}p{34mm} l l r l >{\raggedright\arraybackslash}p{40mm}@{}}
+\caption{The \emph{E. coli} datasets served from the dev tree, snapshot 2026-10-21, grouped by phenotype family. \emph{Genotypes} and \emph{Env} count distinct stored genotype and environment payloads; \emph{Instances} is the record count; \emph{Signal} the gzip size in bits of the concatenated stored instances (perturbation, environment and phenotype). \emph{Seq.\ fit} is the sequence-only fit tier of Table~\ref{tab:tiers} and \emph{Label unit} what one label attaches to without the cell graph, both read from the genotype of 400 evenly spaced records per store.}\label{tab:ecoli-datasets}\\
+\toprule
+Dataset & Genotypes & Env & Instances & Phenotype & Shape & Role & Signal (bits) & Seq. fit & Label unit \\
+\midrule
+\endfirsthead
+\multicolumn{10}{@{}l}{\footnotesize\emph{Table~\ref{tab:ecoli-datasets}, continued}}\\
+\toprule
+Dataset & Genotypes & Env & Instances & Phenotype & Shape & Role & Signal (bits) & Seq. fit & Label unit \\
+\midrule
+\endhead
+\multicolumn{10}{@{}l}{\textbf{Environmental / chemogenomic response}} \\
+CrisprPineneToleranceNiu2019 & 54 & 1 & 54 & environment\_\allowbreak{}response (log2\_\allowbreak{}ratio) & scalar & global & $4.1\times10^{4}$ & best & 1 gene (1-6 edits) \\
+CrispriChemgenChoe2025 & 39,291 & 12 & 470,502 & environment\_\allowbreak{}response (log2\_\allowbreak{}ratio) & scalar & global & $2.4\times10^{8}$ & good & 1 gene x condition \\
+CrispriGeneFitnessWang2018 & 13,641 & 5 & 20,158 & environment\_\allowbreak{}response (log2\_\allowbreak{}ratio) & scalar & global & $1.5\times10^{7}$ & good & 1 gene x condition (1-7 edits) \\
+CrispriGuideFfaEnrichmentFang2025 & 15,711 & 1 & 15,711 & environment\_\allowbreak{}response (log2\_\allowbreak{}ratio) & scalar & global & $7.3\times10^{6}$ & best & 1 gene (1-5 edits) \\
+CrispriGuideFitnessWang2018 & 53,203 & 5 & 240,481 & environment\_\allowbreak{}response (log2\_\allowbreak{}ratio) & scalar & global & $1.6\times10^{8}$ & good & 1 gene x condition \\
+CrispriKnockdownCui2018 & 71,696 & 1 & 143,392 & environment\_\allowbreak{}response (log2\_\allowbreak{}ratio) & scalar & global & $7.3\times10^{7}$ & best & 1 gene (1-7 edits) \\
+CrispriScreenRousset2018 & 40,592 & 4 & 92,252 & environment\_\allowbreak{}response (log2\_\allowbreak{}ratio) & scalar & global & $4.2\times10^{7}$ & good & 1 gene x condition \\
+DoublingTimeCaglar2017 & 1 & 16 & 55 & environment\_\allowbreak{}response (growth\_\allowbreak{}rate) & scalar & global & $3.2\times10^{4}$ & no & unperturbed strain readout x condition \\
+EnvChemgenGirgis2009 & 3,976 & 17 & 66,287 & environment\_\allowbreak{}response (z\_\allowbreak{}score) & scalar & global & $3.7\times10^{7}$ & good & 1 gene x condition \\
+EnvChemgenNichols2011 & 3,967 & 324 & 1,286,962 & environment\_\allowbreak{}response (z\_\allowbreak{}score) & scalar & global & $4.1\times10^{8}$ & good & 1 gene x condition \\
+EnvChemgenShiver2016 & 3,846 & 51 & 210,998 & environment\_\allowbreak{}response (z\_\allowbreak{}score) & scalar & global & $9.9\times10^{7}$ & good & 1 gene x condition \\
+EnvChemgenWang2015 & 46 & 1 & 46 & environment\_\allowbreak{}response (log2\_\allowbreak{}ratio) & scalar & global & $3.0\times10^{4}$ & best & 1 gene \\
+EnvChemgenWang2024 & 4,419 & 6 & 26,514 & environment\_\allowbreak{}response (log2\_\allowbreak{}ratio) & scalar & global & $9.3\times10^{6}$ & good & 1 gene x condition \\
+FitnessBrowserEcoli & 3,789 & 3 & 22,734 & environment\_\allowbreak{}response (log2\_\allowbreak{}ratio) & scalar & global & $1.1\times10^{7}$ & good & 1 gene x condition \\
+GrowthRateLamoureux2023 & 21 & 54 & 354 & environment\_\allowbreak{}response (growth\_\allowbreak{}rate) & scalar & global & $2.1\times10^{5}$ & no & unperturbed strain readout x condition (0-1 edits) \\
+GrowthRateS23Schmidt2016 & 1 & 22 & 26 & environment\_\allowbreak{}response (growth\_\allowbreak{}rate) & scalar & global & $2.0\times10^{4}$ & no & unperturbed strain readout x condition \\
+GrowthYieldBaba2006 & 3,912 & 3 & 11,735 & environment\_\allowbreak{}response (optical\_\allowbreak{}density) & scalar & global & $3.3\times10^{6}$ & good & 1 gene x condition \\
+MismatchCrispriFitnessHawkins2020 & 24,186 & 1 & 24,186 & environment\_\allowbreak{}response (relative\_\allowbreak{}growth\_\allowbreak{}rate) & scalar & global & $1.4\times10^{7}$ & best & 1 gene \\
+PhageRbTnseqMutalik2020 & 3,716 & 71 & 287,815 & environment\_\allowbreak{}response (log2\_\allowbreak{}ratio) & scalar & global & $2.1\times10^{8}$ & good & 1 gene x condition \\
+RbTnseqPrice2018Ecoli & 3,789 & 104 & 598,662 & environment\_\allowbreak{}response (log2\_\allowbreak{}ratio) & scalar & global & $4.0\times10^{8}$ & good & 1 gene x condition \\
+RbTnseqTeteneva2024 & 3,691 & 18 & 66,162 & environment\_\allowbreak{}response (log2\_\allowbreak{}ratio) & scalar & global & $2.7\times10^{7}$ & good & 1 gene x condition \\
+RbTnseqWetmore2015 & 3,646 & 85 & 353,662 & environment\_\allowbreak{}response (log2\_\allowbreak{}ratio) & scalar & global & $2.4\times10^{8}$ & good & 1 gene x condition \\
+\addlinespace
+\multicolumn{10}{@{}l}{\textbf{Expression (RNA-seq)}} \\
+MrnaFractionBalakrishnan2022 & 3 & 14 & 28 & mrna\_\allowbreak{}number\_\allowbreak{}fraction (rnaseq\_\allowbreak{}mrna\_\allowbreak{}number\_\allowbreak{}fraction) & vector (4342) & node & $7.2\times10^{6}$ & best & 1 gene, unperturbed strain x condition (0-2 edits) \\
+RnaseqCaglar2017 & 1 & 57 & 152 & expression\_\allowbreak{}tpm (rnaseq\_\allowbreak{}tpm) & vector (4196) & node & $6.7\times10^{7}$ & best & 1 gene, unperturbed strain x condition \\
+RnaseqGuzman2018 & 7 & 2 & 14 & expression\_\allowbreak{}tpm (rnaseq\_\allowbreak{}tpm) & vector (4329) & node & $4.5\times10^{6}$ & good & readout gene x 3 perturbed gene(s) x condition (0-5 edits) \\
+RnaseqLamoureux2023 & 74 & 119 & 1,035 & expression\_\allowbreak{}tpm (rnaseq\_\allowbreak{}tpm) & vector (4257) & node & $5.8\times10^{8}$ & best & 1 gene, unperturbed strain x condition (0-3 edits) \\
+RnaseqPublicK12Lamoureux2023 & 72 & 198 & 1,675 & expression\_\allowbreak{}tpm (rnaseq\_\allowbreak{}tpm\_\allowbreak{}from\_\allowbreak{}released\_\allowbreak{}counts) & vector (4355) & node & $9.5\times10^{8}$ & best & 1 gene, unperturbed strain x condition (0-4 edits) \\
+\addlinespace
+\multicolumn{10}{@{}l}{\textbf{Fitness}} \\
+CarbonSourceTong2020 & 3,714 & 30 & 111,420 & fitness & scalar & global & $4.8\times10^{7}$ & good & 1 gene x condition \\
+CrispriCrossRachwalski2024 & 14,209 & 15 & 48,900 & fitness & scalar & global & $1.9\times10^{7}$ & good & gene pair, strain readout x condition (1-2 edits) \\
+GrowthAucRapp2026 & 1,515 & 1 & 1,515 & fitness & scalar & global & $7.6\times10^{5}$ & best & 1 gene \\
+GrowthRateCampos2018 & 3,664 & 1 & 3,664 & fitness & scalar & global & $1.1\times10^{6}$ & best & 1 gene \\
+GrowthRateChoe2019 & 6 & 1 & 8 & fitness & scalar & global & $1.1\times10^{4}$ & best & 1 gene (0-21 edits) \\
+GrowthRateSchmidt2016 & 3 & 2 & 6 & fitness & scalar & global & $8.5\times10^{3}$ & good & 1 gene x condition \\
+GrowthWang2015 & 46 & 1 & 46 & fitness & scalar & global & $2.2\times10^{4}$ & best & 1 gene \\
+TranscriptionFactorKnockoutChoe2019 & 2 & 1 & 2 & fitness & scalar & global & $5.8\times10^{3}$ & best & 1 gene \\
+\addlinespace
+\multicolumn{10}{@{}l}{\textbf{Flux}} \\
+FluxIshii2007 & 25 & 5 & 28 & net\_\allowbreak{}flux (c13\_\allowbreak{}mfa\_\allowbreak{}net\_\allowbreak{}flux\_\allowbreak{}percent\_\allowbreak{}of\_\allowbreak{}specific\_\allowbreak{}glucose\_\allowbreak{}uptake) & vector (42) & bipartite node & $6.0\times10^{4}$ & good & reaction x 1 perturbed gene(s) x condition (0-1 edits) \\
+FluxLi2021 & 3 & 1 & 3 & net\_\allowbreak{}flux (c13\_\allowbreak{}mfa\_\allowbreak{}net\_\allowbreak{}flux\_\allowbreak{}mmol\_\allowbreak{}per\_\allowbreak{}gdw\_\allowbreak{}per\_\allowbreak{}h) & vector (99) & bipartite node & $5.7\times10^{4}$ & good & reaction x 1 perturbed gene(s) \\
+\addlinespace
+\multicolumn{10}{@{}l}{\textbf{Gene interaction}} \\
+GeneInteractionBabu2014 & 42,703 & 1 & 42,705 & gene\_\allowbreak{}interaction & scalar & edge & $1.2\times10^{7}$ & best & gene pair \\
+GeneInteractionButland2008 & 314,769 & 1 & 314,769 & gene\_\allowbreak{}interaction & scalar & edge & $8.2\times10^{7}$ & best & gene pair \\
+\addlinespace
+\multicolumn{10}{@{}l}{\textbf{Metabolite}} \\
+ExometaboliteBrunk2016 & 9 & 28 & 126 & metabolite\_\allowbreak{}level (hplc\_\allowbreak{}extracellular\_\allowbreak{}concentration\_\allowbreak{}g\_\allowbreak{}per\_\allowbreak{}l) & vector (6) & bipartite node & $2.3\times10^{5}$ & good & metabolite x 9 perturbed gene(s) x condition (0-10 edits) \\
+MetaboliteIntensityRapp2026 & 407 & 1 & 407 & metabolite\_\allowbreak{}level (fi\_\allowbreak{}ms\_\allowbreak{}annotated\_\allowbreak{}feature\_\allowbreak{}absolute\_\allowbreak{}intensity\_\allowbreak{}mean\_\allowbreak{}of\_\allowbreak{}2\_\allowbreak{}plates) & vector (2) & bipartite node & $3.9\times10^{5}$ & good & metabolite x 1 perturbed gene(s) \\
+MetabolomeBrunk2016 & 9 & 26 & 117 & metabolite\_\allowbreak{}level (lc\_\allowbreak{}ms\_\allowbreak{}concentration\_\allowbreak{}um) & vector (51) & bipartite node & $4.5\times10^{5}$ & good & metabolite x 9 perturbed gene(s) x condition (0-10 edits) \\
+MetabolomeFuhrer2017 & 3,806 & 1 & 3,806 & metabolite\_\allowbreak{}level (fia\_\allowbreak{}tof\_\allowbreak{}ms\_\allowbreak{}ion\_\allowbreak{}modified\_\allowbreak{}z\_\allowbreak{}score) & vector (7534) & bipartite node & $1.9\times10^{9}$ & good & metabolite x 1 perturbed gene(s) \\
+MetabolomeIshii2007 & 25 & 5 & 28 & metabolite\_\allowbreak{}level (ce\_\allowbreak{}tofms\_\allowbreak{}intracellular\_\allowbreak{}concentration\_\allowbreak{}mm) & vector (130) & bipartite node & $4.9\times10^{5}$ & good & metabolite x 1 perturbed gene(s) x condition (0-1 edits) \\
+MetabolomeRapp2026 & 1,497 & 1 & 1,497 & metabolite\_\allowbreak{}level (fi\_\allowbreak{}ms\_\allowbreak{}iml1515\_\allowbreak{}feature\_\allowbreak{}fold\_\allowbreak{}change\_\allowbreak{}vs\_\allowbreak{}batch\_\allowbreak{}median\_\allowbreak{}mean\_\allowbreak{}of\_\allowbreak{}2\_\allowbreak{}plates) & vector (1321) & bipartite node & $5.6\times10^{8}$ & good & metabolite x 1 perturbed gene(s) \\
+MetabolomeSchastnaya2021 & 103 & 5 & 200 & metabolite\_\allowbreak{}level (fia\_\allowbreak{}tof\_\allowbreak{}ms\_\allowbreak{}ion\_\allowbreak{}log2\_\allowbreak{}fold\_\allowbreak{}change\_\allowbreak{}vs\_\allowbreak{}wild\_\allowbreak{}type) & vector (284) & bipartite node & $3.6\times10^{6}$ & good & metabolite x 1 perturbed gene(s) x condition \\
+TargetedMetabolomeRapp2026 & 407 & 1 & 407 & metabolite\_\allowbreak{}level (lc\_\allowbreak{}msms\_\allowbreak{}eic\_\allowbreak{}peak\_\allowbreak{}height\_\allowbreak{}fold\_\allowbreak{}change\_\allowbreak{}vs\_\allowbreak{}library\_\allowbreak{}median) & vector (2) & bipartite node & $3.6\times10^{5}$ & good & metabolite x 1 perturbed gene(s) \\
+\addlinespace
+\multicolumn{10}{@{}l}{\textbf{Morphology}} \\
+MorphologyCampos2018 & 3,664 & 1 & 3,664 & morphology & vector (15) & global & $8.5\times10^{6}$ & best & 1 gene \\
+\addlinespace
+\multicolumn{10}{@{}l}{\textbf{Phosphoproteome}} \\
+PhosphositeIntensityPotel2018 & 1 & 2 & 12 & phosphosite\_\allowbreak{}intensity (fe3\_\allowbreak{}imac\_\allowbreak{}lc\_\allowbreak{}msms\_\allowbreak{}maxquant\_\allowbreak{}summed\_\allowbreak{}xic) & vector (989) & node & $1.3\times10^{7}$ & best & 1 gene, unperturbed strain x condition \\
+\addlinespace
+\multicolumn{10}{@{}l}{\textbf{Product titer}} \\
+BiofuelTiterBrunk2016 & 8 & 18 & 72 & titer & scalar & global & $1.5\times10^{5}$ & weak & set of 9 edits incl. heterologous genes (7-10 edits) \\
+IsopentenolTiterFoo2014 & 9 & 1 & 9 & titer & scalar & global & $1.7\times10^{4}$ & best & 1 heterologous construct \\
+PineneFoldChangeNiu2019 & 40 & 1 & 40 & titer & scalar & global & $2.3\times10^{4}$ & best & 1 gene (1-6 edits) \\
+\addlinespace
+\multicolumn{10}{@{}l}{\textbf{Promoter activity}} \\
+PromoterReporterMohiuddin2022 & 1,809 & 27 & 69,480 & promoter\_\allowbreak{}activity & scalar & node & $3.3\times10^{7}$ & best & inserted DNA (promoter or reporter) x condition \\
+\addlinespace
+\multicolumn{10}{@{}l}{\textbf{Protein abundance}} \\
+ProteinFoldChangeCaglar2017 & 1 & 8 & 8 & protein\_\allowbreak{}fold\_\allowbreak{}change (deseq2\_\allowbreak{}wald\_\allowbreak{}log2\_\allowbreak{}fold\_\allowbreak{}change\_\allowbreak{}design\_\allowbreak{}batch\_\allowbreak{}plus\_\allowbreak{}condition) & vector (4180) & node & $1.1\times10^{7}$ & best & 1 gene, unperturbed strain x condition \\
+ProteomeBrunk2016 & 9 & 18 & 81 & protein\_\allowbreak{}abundance (srm\_\allowbreak{}protein\_\allowbreak{}peak\_\allowbreak{}area) & vector (68) & node & $4.2\times10^{5}$ & good & readout gene x 9 perturbed gene(s) x condition (0-10 edits) \\
+ProteomeCaglar2017 & 1 & 40 & 105 & protein\_\allowbreak{}abundance (lcmsms\_\allowbreak{}spectral\_\allowbreak{}count\_\allowbreak{}deseq2\_\allowbreak{}size\_\allowbreak{}factor\_\allowbreak{}normalized) & vector (4196) & node & $2.5\times10^{7}$ & best & 1 gene, unperturbed strain x condition \\
+ProteomeIshii2007 & 25 & 5 & 28 & protein\_\allowbreak{}abundance (lc\_\allowbreak{}ms\_\allowbreak{}ms\_\allowbreak{}absolute\_\allowbreak{}mg\_\allowbreak{}protein\_\allowbreak{}per\_\allowbreak{}g\_\allowbreak{}dry\_\allowbreak{}cell\_\allowbreak{}weight) & vector (57) & node & $2.9\times10^{5}$ & best & 1 gene, its own label x condition (0-1 edits) \\
+ProteomeMori2021 & 1 & 1 & 7 & protein\_\allowbreak{}abundance (absolute\_\allowbreak{}protein\_\allowbreak{}mass\_\allowbreak{}fraction\_\allowbreak{}xtop\_\allowbreak{}dia\_\allowbreak{}swath\_\allowbreak{}riboprofiling\_\allowbreak{}scaled) & vector (1897) & node & $1.1\times10^{6}$ & best & 1 gene, unperturbed strain \\
+ProteomeSchmidt2016 & 1 & 21 & 21 & protein\_\allowbreak{}abundance (absolute\_\allowbreak{}protein\_\allowbreak{}copies\_\allowbreak{}per\_\allowbreak{}cell\_\allowbreak{}label\_\allowbreak{}free\_\allowbreak{}sid\_\allowbreak{}anchored) & vector (2359) & node & $1.1\times10^{7}$ & best & 1 gene, unperturbed strain x condition \\
+ProteomeSrmSet1Schmidt2016 & 1 & 18 & 18 & protein\_\allowbreak{}abundance (absolute\_\allowbreak{}protein\_\allowbreak{}copies\_\allowbreak{}per\_\allowbreak{}cell\_\allowbreak{}srm\_\allowbreak{}sid\_\allowbreak{}dataset1\_\allowbreak{}technical\_\allowbreak{}sd) & vector (41) & node & $1.5\times10^{5}$ & best & 1 gene, unperturbed strain x condition \\
+ProteomeSrmSet2Schmidt2016 & 1 & 21 & 21 & protein\_\allowbreak{}abundance (absolute\_\allowbreak{}protein\_\allowbreak{}copies\_\allowbreak{}per\_\allowbreak{}cell\_\allowbreak{}srm\_\allowbreak{}sid\_\allowbreak{}dataset2\_\allowbreak{}biological\_\allowbreak{}sd) & vector (31) & node & $1.3\times10^{5}$ & best & 1 gene, unperturbed strain x condition \\
+\addlinespace
+\multicolumn{10}{@{}l}{\textbf{Protein synthesis / turnover}} \\
+ProteinSynthesisRateLi2014 & 1 & 3 & 3 & synthesis\_\allowbreak{}rate (ribosome\_\allowbreak{}profiling\_\allowbreak{}footprint\_\allowbreak{}density\_\allowbreak{}absolute\_\allowbreak{}synthesis\_\allowbreak{}rate) & vector (3041) & node & $3.7\times10^{5}$ & best & 1 gene, unperturbed strain x condition \\
+ProteinTurnoverGupta2024 & 6 & 8 & 13 & degradation\_\allowbreak{}rate (n15\_\allowbreak{}ammonium\_\allowbreak{}tmtproc\_\allowbreak{}total\_\allowbreak{}turnover\_\allowbreak{}rate\_\allowbreak{}per\_\allowbreak{}hour) & vector (2553) & node & $1.1\times10^{7}$ & best & 1 gene, unperturbed strain x condition (0-3 edits) \\
+\addlinespace
+\multicolumn{10}{@{}l}{\textbf{Viability}} \\
+GeneEssentialityBaba2006 & 4,288 & 1 & 4,288 & is\_\allowbreak{}essential & scalar & node & $1.8\times10^{6}$ & best & 1 gene, its own label \\
+GeneEssentialityGerdes2003 & 3,739 & 1 & 3,739 & is\_\allowbreak{}essential & scalar & node & $2.0\times10^{6}$ & best & 1 gene, its own label \\
+GeneEssentialityGoodall2018 & 8,309 & 2 & 8,309 & is\_\allowbreak{}essential & scalar & node & $5.2\times10^{6}$ & best & 1 gene, its own label x condition \\
+GeneEssentialityPrice2018Ecoli & 324 & 1 & 324 & is\_\allowbreak{}essential & scalar & node & $2.6\times10^{5}$ & best & 1 gene, its own label \\
+GradedGeneEssentialityGoodall2018 & 317 & 2 & 317 & essentiality\_\allowbreak{}call & scalar & node & $2.2\times10^{5}$ & best & 1 gene, its own label x condition \\
+\midrule
+\textbf{Total (68 datasets)} &  &  & \textbf{4,561,865} &  &  &  & \textbf{$6.4\times10^{9}$} &  &  \\
+\bottomrule
+\end{longtable}
+\endgroup
+\end{landscape}

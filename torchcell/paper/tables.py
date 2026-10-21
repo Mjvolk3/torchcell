@@ -429,22 +429,47 @@ class PaperTable(BaseModel):
         footnote: str | None = None,
         header_comment: str | None = None,
     ) -> str:
-        """Render as a booktabs LaTeX table; sections become bold multicolumn rows."""
+        """Render as a booktabs LaTeX table; sections become bold multicolumn rows.
+
+        ``table_env="longtable"`` renders a page-breaking ``longtable`` instead of a
+        float: the caption sits in the first head, every later page repeats the
+        column headers under a *continued* line, and the body is wrapped in a group
+        that sets ``size`` and the column separation (``position`` is unused).
+        """
         colspec = "@{}" + " ".join(c.tex_spec() for c in self.columns) + "@{}"
         ncol = len(self.columns)
+        header_row = " & ".join(tex_escape(c.header) for c in self.columns) + r" \\"
         out: list[str] = []
         if header_comment:
             out.extend(f"% {ln}" for ln in header_comment.splitlines())
-        out.append(rf"\begin{{{table_env}}}[{position}]")
-        out.append(r"\centering")
-        out.append(rf"\{size}")
-        out.append(rf"\setlength{{\tabcolsep}}{{{colsep_pt}pt}}")
-        out.append(rf"\caption{{{caption}}}")
-        out.append(rf"\label{{{label}}}")
-        out.append(rf"\begin{{tabular}}{{{colspec}}}")
-        out.append(r"\toprule")
-        out.append(" & ".join(tex_escape(c.header) for c in self.columns) + r" \\")
-        out.append(r"\midrule")
+        if table_env == "longtable":
+            out.append(r"\begingroup")
+            out.append(rf"\{size}")
+            out.append(rf"\setlength{{\tabcolsep}}{{{colsep_pt}pt}}")
+            out.append(rf"\begin{{longtable}}{{{colspec}}}")
+            out.append(rf"\caption{{{caption}}}\label{{{label}}}\\")
+            out.append(r"\toprule")
+            out.append(header_row)
+            out.append(r"\midrule")
+            out.append(r"\endfirsthead")
+            out.append(
+                rf"\multicolumn{{{ncol}}}{{@{{}}l}}{{\footnotesize\emph{{Table~\ref{{{label}}}, continued}}}}\\"
+            )
+            out.append(r"\toprule")
+            out.append(header_row)
+            out.append(r"\midrule")
+            out.append(r"\endhead")
+        else:
+            out.append(rf"\begin{{{table_env}}}[{position}]")
+            out.append(r"\centering")
+            out.append(rf"\{size}")
+            out.append(rf"\setlength{{\tabcolsep}}{{{colsep_pt}pt}}")
+            out.append(rf"\caption{{{caption}}}")
+            out.append(rf"\label{{{label}}}")
+            out.append(rf"\begin{{tabular}}{{{colspec}}}")
+            out.append(r"\toprule")
+            out.append(header_row)
+            out.append(r"\midrule")
 
         def emit(rows: list[Row]) -> None:
             for r in rows:
@@ -471,10 +496,18 @@ class PaperTable(BaseModel):
             out.append(r"\midrule")
             emit([self.footer])
         out.append(r"\bottomrule")
-        out.append(r"\end{tabular}")
-        if footnote:
-            out.append(rf"\\[2pt]{{\footnotesize {footnote}}}")
-        out.append(rf"\end{{{table_env}}}")
+        if table_env == "longtable":
+            if footnote:
+                out.append(
+                    rf"\multicolumn{{{ncol}}}{{@{{}}p{{\linewidth}}@{{}}}}{{\footnotesize {footnote}}}\\"
+                )
+            out.append(r"\end{longtable}")
+            out.append(r"\endgroup")
+        else:
+            out.append(r"\end{tabular}")
+            if footnote:
+                out.append(rf"\\[2pt]{{\footnotesize {footnote}}}")
+            out.append(rf"\end{{{table_env}}}")
         out.append("")
         return "\n".join(out)
 

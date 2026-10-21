@@ -1,0 +1,50 @@
+%% notes-tex/database/ecoli-datasets/ecoli-datasets.tex
+%% [[experiments.database.ecoli-datasets]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/ecoli-datasets/ecoli-datasets.tex
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{pdflscape}
+
+%% Every number the prose quotes is a macro generated from the snapshot.
+\input{tables/numbers}
+
+\title{\vspace{-1.5em}The \emph{E. coli} Datasets, and the Short List That Can
+Benchmark a Gene-Sequence Encoding}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\noindent
+The dev tree serves \ecoliDatasetCount{} \org{Escherichia coli} datasets holding
+\ecoliInstanceTotal{} records, built as LMDBs from their own releases and read here from
+the snapshot of \snapshotDate{} (Table~\ref{tab:ecoli-datasets}). Every column of that
+table is read from a built store; nothing in it is typed by hand.
+
+A \term{gene-sequence encoding} is one vector per coding sequence and nothing else: no
+cell graph, no annotation, no gene identity beyond what the sequence carries. GenSLM is
+the instance at hand, a codon language model pretrained on prokaryotic genes, and
+\file{torchcell/datasets/genslm.py} already builds such a store for any genome whose
+genes expose a coding sequence. Benchmarking that encoding means asking, dataset by
+dataset, whether the vector of a gene the model has not been fit on predicts that gene's
+label. Of the \ecoliDatasetCount{} datasets, \ecoliBestCount{} attach a label to one gene,
+one gene pair or one inserted construct (Table~\ref{tab:tiers}); far fewer carry enough
+labeled genes, on a task worth scoring, to make a benchmark. Sec.~\ref{sec:benchmark}
+sets the rule and gives the short list (Table~\ref{tab:shortlist}): \coreCount{} core
+datasets, one per task family, each with between \coreGenesMin{} and \coreGenesMax{}
+labeled genes, and a second tier of the same size. Sec.~\ref{sec:caveats} names what a
+score on any of them does not show.
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/datasets}
+\input{sections/benchmark}
+\input{sections/caveats}
+
+\end{document}

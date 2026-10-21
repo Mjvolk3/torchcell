@@ -1,0 +1,68 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_pputida_cell_state_table.py
+\begin{landscape}
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{@{}L{44mm} r@{\hspace{5pt}} r@{\hspace{5pt}} L{96mm}@{}}
+\caption[]{Every served \org{P. putida} dataset in which isoprenol appears, and the
+role it plays, grouped by role. \emph{Isoprenol} counts the records in which it
+appears in that role. A compound is matched on its InChIKey rather than its name, so
+a record spelling it 3-methyl-3-buten-1-ol is found and DL-3-aminoisobutyric acid is
+not; the pathway role is the exception, since a heterologous cassette names the
+product it makes rather than carrying its structure. The 15 served \org{P. putida}
+datasets in which isoprenol never appears are not listed.}
+\label{tab:pcsisodata}\\
+\toprule
+\textbf{Dataset} & \textbf{Records} & \textbf{Isoprenol} & \textbf{What it measures} \\
+\midrule
+\endfirsthead
+\multicolumn{4}{@{}l}{\footnotesize\emph{Table~\ref{tab:pcsisodata}, continued}}\\
+\toprule
+\textbf{Dataset} & \textbf{Records} & \textbf{Isoprenol} & \textbf{What it measures} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\multicolumn{4}{@{}l}{\textbf{Isoprenol as the measured product}}\\[2pt]
+\textbf{Isoprenol\allowbreak Titer\allowbreak Carruthers2025} & 502 & 502 & six automated DBTL cycles of CRISPRi arrays \\
+\addlinespace[4pt]
+\textbf{Isoprenol\allowbreak Titer\allowbreak Yunus2026} & 125 & 125 & FluxRETAP targets against intuition in IY1452 \\
+\addlinespace[4pt]
+\textbf{Isoprenyl\allowbreak Acetate\allowbreak Titer\allowbreak Kang2026} & 26 & 7 & an isoprenyl acetate campaign on the isoprenol chassis; both products in one store \\
+\addlinespace[4pt]
+\textbf{Isoprenol\allowbreak Titer\allowbreak Banerjee2024} & 20 & 20 & GSMM-guided campaign; every number read from the article prose \\
+\addlinespace[4pt]
+\textbf{Isoprenol\allowbreak Titer\allowbreak De\allowbreak Siqueira2025} & 10 & 10 & acetate-tolerized isolates of the catabolism-deficient parent \\
+\addlinespace[4pt]
+\midrule \multicolumn{4}{@{}l}{\textbf{Isoprenol as the sole carbon source}}\\ \midrule
+\textbf{Fitness\allowbreak Browser\allowbreak Putida} & 1,118,052 & 9,556 & the same panel in the Fitness Browser deposit, with a moderated t per record \\
+\addlinespace[4pt]
+\textbf{Rb\allowbreak Tnseq\allowbreak Borchert2024} & 1,466,920 & 9,464 & genome-wide fitness for growth on isoprenol, 10 mM, in the Thompson 2020 alcohol panel \\
+\addlinespace[4pt]
+\midrule \multicolumn{4}{@{}l}{\textbf{Isoprenol as the stressor in the medium}}\\ \midrule
+\textbf{Isoprenol\allowbreak Tolerance\allowbreak Lim2025} & 3 & 3 & growth rate of a tolerized lineage against wild type at the same dose \\
+\addlinespace[4pt]
+\textbf{Proteome\allowbreak Lim2025} & 3 & 3 & absolute abundances on those tolerized lineages \\
+\addlinespace[4pt]
+\textbf{Proteome\allowbreak Fold\allowbreak Change\allowbreak Lim2025} & 4 & 2 & the stress proteome as a log2 fold change with a Welch test \\
+\addlinespace[4pt]
+\midrule \multicolumn{4}{@{}l}{\textbf{Isoprenol as the pathway the strain carries}}\\ \midrule
+\textbf{Campaign\allowbreak Proteome\allowbreak Carruthers2025} & 465 & 465 & the proteome beside the titer campaign, cycle by cycle \\
+\addlinespace[4pt]
+\textbf{Isoprenol\allowbreak Selection\allowbreak Menasalvas2025} & 58 & 58 & biosensor enrichment; the titer it proxies is not measured per clone \\
+\addlinespace[4pt]
+\textbf{Proteome\allowbreak Carruthers2025} & 21 & 21 & absolute proteome of the campaign strains \\
+\addlinespace[4pt]
+\textbf{Proteome\allowbreak Fold\allowbreak Change\allowbreak Carruthers2025} & 16 & 16 & fold change against the per-cycle control \\
+\addlinespace[4pt]
+\textbf{Proteome\allowbreak Menasalvas2025} & 6 & 6 & growth phase against production phase \\
+\addlinespace[4pt]
+\textbf{Metabolite\allowbreak Growth\allowbreak Phase\allowbreak Menasalvas2025} & 3 & 3 & intracellular pools in growth phase \\
+\addlinespace[4pt]
+\textbf{Metabolite\allowbreak Production\allowbreak Phase\allowbreak Menasalvas2025} & 3 & 3 & the paired production-phase pools \\
+\addlinespace[4pt]
+\end{longtable}
+\endgroup
+\end{landscape}

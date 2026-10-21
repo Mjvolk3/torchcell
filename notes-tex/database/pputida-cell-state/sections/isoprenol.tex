@@ -11,6 +11,34 @@ of the Carruthers isoprenol campaign from its earlier rounds, using whatever oth
 isoprenol data is served. Carruthers is a collaborator, so the campaign's own data is
 available; the question is which single dataset from outside it helps.
 
+\subsection{What the served data holds on isoprenol\secstatus{todo}}\label{sec:iso-all}
+
+Seventeen of the 32 served \org{P. putida} datasets carry isoprenol, in four distinct
+roles, and Table~\ref{tab:pcsisodata} lists them all. The grouping matters more than
+the count, because the roles answer different questions and only one of them is a
+label for this task:
+
+\begin{itemize}[nosep,leftmargin=1.4em]
+\item \textbf{As the measured product}, in five titer campaigns. These are the only
+candidate labels. Kang 2026 is in this group on a technicality worth knowing: it is an
+isoprenyl acetate campaign built on the isoprenol chassis, and 7 of its 26 records
+carry isoprenol as the product while 19 carry the ester.
+\item \textbf{As the sole carbon source}, in both transposon compendia, which is the
+largest isoprenol block in the served data and measures catabolism rather than
+production (Sec.~\ref{sec:transposon}).
+\item \textbf{As a stressor}, in the three Lim 2025 datasets.
+\item \textbf{As the pathway the strain carries}, in the proteome, metabolite and
+selection datasets, which measure something else on a strain whose genotype names the
+cassette. These join to a campaign by strain rather than carrying a titer.
+\end{itemize}
+
+Of the four titer campaigns outside Carruthers, three are ruled out before any
+comparison of conditions. Banerjee 2024 holds 20 records across five condition
+families, and none of its strains is a CRISPRi knockdown, so there is no target set to
+share. de Siqueira 2025 holds 10 records on acetate-tolerized isolates, again not
+CRISPRi. Kang 2026's 7 isoprenol records are controls in an ester campaign. That
+leaves one.
+
 \subsection{The dataset: Yunus 2026\secstatus{todo}}\label{sec:iso-yunus}
 
 \texttt{IsoprenolTiterYunus2026} is the answer, and Table~\ref{tab:pcsiso} is why.
@@ -86,6 +114,9 @@ It is recoverable. The raw mirror's Dryad culture metadata carries a
 The join is on the construct name, so recovering the label is a preprocessing step
 rather than a re-ingest. It is still a loader gap worth filing: a campaign whose entire
 structure is the cycle should not lose the cycle on ingest.
+
+\clearpage
+\input{tables/isoprenol-datasets}
 
 \clearpage
 \input{tables/isoprenol}

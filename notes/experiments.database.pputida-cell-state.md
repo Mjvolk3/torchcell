@@ -38,6 +38,17 @@ campaign.
   structure and duration. Conditions differ (24 C in M9-NREL with 20 g/L glucose
   against 30 C in plain M9 salts), so it is a held-out condition and a reproducibility
   bound on the label, not extra training rows for absolute titer.
+- **Seventeen of the 32 served datasets carry isoprenol, in four roles.** Matched on
+  the InChIKey `CPJRRXSHAYUTGL`, not the name. Five measure it as a product
+  (Carruthers 502, Yunus 125, Kang 7 of 26, Banerjee 2024 20, de Siqueira 10); two
+  measure growth **on** it as the sole carbon source (Borchert 2024 9,464 and Fitness
+  Browser 9,556 records at 10 mM); three carry it as a stressor (Lim 2025); seven
+  carry the pathway on the genotype while measuring something else.
+- **The carbon-source arm was the miss.** It is the largest isoprenol block by three
+  orders of magnitude and it names the catabolism genes, which is the deletion
+  target for stopping a producer from eating its own product. Easy to overlook
+  because a cell-state survey filters it out and a product-name search finds it only
+  if you also search the environment, not just the phenotype.
 - **Blocker: the DBTL cycle label is not in the served graph.** A permissive regex
   over the full serialization of every record in all four Carruthers stores finds no
   DBTL token, and `screen_id` is empty throughout. The loader's record identity is

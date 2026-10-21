@@ -114,6 +114,63 @@ DBTL_TOKEN = re.compile(r"DBTL\s*\d")
 # written out and left to drift.
 COMPENDIA_STORES = ["rbtnseq_borchert2024", "rbtnseq_fitness_browser_putida"]
 
+# Isoprenol, by structure. Matching on the name alone would both miss a record that
+# spells it 3-methyl-3-buten-1-ol and hit DL-3-aminoisobutyric acid on a looser stem,
+# so the InChIKey skeleton decides and the names are only a secondary net.
+ISOPRENOL_INCHIKEY = "CPJRRXSHAYUTGL"
+ISOPRENOL_NAMES = ("isoprenol", "3-methyl-3-buten-1-ol")
+
+# Every served P. putida store, to answer "which of these touch isoprenol" over the
+# whole organism rather than over the cell-state row set.
+PPUTIDA_STORES = [
+    "campaign_proteome_carruthers2025",
+    "crispri_array_yunus2026",
+    "crispri_differential_proteome_yunus2026",
+    "crispri_knockdown_yunus2026",
+    "crispri_panel_proteome_yunus2026",
+    "fitness_contrast_borchert2023",
+    "graded_gene_essentiality_royet2025",
+    "isoprenol_selection_menasalvas2025",
+    "isoprenol_titer_banerjee2024",
+    "isoprenol_titer_carruthers2025",
+    "isoprenol_titer_desiqueira2025",
+    "isoprenol_titer_yunus2026",
+    "isoprenol_tolerance_lim2025",
+    "isoprenyl_acetate_titer_kang2026",
+    "lactam_growth_rate_thompson2019",
+    "metabolite_growth_menasalvas2025",
+    "metabolite_production_menasalvas2025",
+    "pputida_env_metal_tnseq_royet2025",
+    "proteome_banerjee2025",
+    "proteome_carruthers2025",
+    "proteome_desiqueira2025",
+    "proteome_fold_change_carruthers2025",
+    "proteome_fold_change_lim2025",
+    "proteome_lim2025",
+    "proteome_log10_percent_desiqueira2025",
+    "proteome_menasalvas2025",
+    "proteome_percent_desiqueira2025",
+    "putida_precise321_lim2022",
+    "rbtnseq_borchert2023",
+    "rbtnseq_borchert2024",
+    "rbtnseq_fitness_browser_putida",
+    "valerolactam_titer_thompson2019",
+]
+
+# The pooled screens, decided on their interned table rather than record by record.
+# A store that interns its Environment holds every compound it uses as an interned
+# constant, so a compound absent from that table is absent from the store. Reading
+# five million records to learn which of a few hundred environments carry one
+# compound is the same answer at a hundred times the cost.
+POOLED_STORES = {
+    "rbtnseq_borchert2024",
+    "rbtnseq_fitness_browser_putida",
+    "rbtnseq_borchert2023",
+    "fitness_contrast_borchert2023",
+    "pputida_env_metal_tnseq_royet2025",
+    "graded_gene_essentiality_royet2025",
+}
+
 # The Dryad deposit's culture metadata, relative to DATA_ROOT. It carries the cycle
 # label the served records do not.
 RAW_CYCLE_CSV = Path(
@@ -490,6 +547,97 @@ def probe_titer(store_dir: Path) -> dict[str, Any]:
     }
 
 
+def mentions_isoprenol(obj: Any) -> bool:
+    """Whether a spliced object names isoprenol by structure or by name."""
+    blob = json.dumps(obj, default=str)
+    return ISOPRENOL_INCHIKEY in blob or any(n in blob.lower() for n in ISOPRENOL_NAMES)
+
+
+def probe_isoprenol_roles(store_dir: Path, pooled: bool) -> dict[str, Any]:
+    """The four roles isoprenol can play in one store, counted by record.
+
+    ``product`` is the compound a titer measures, ``carbon_source`` the substrate the
+    pool was grown on, ``stressor`` a compound added to the medium, and ``pathway``
+    the heterologous cassette the strain carries. The first three are decided on the
+    InChIKey; ``pathway`` is decided on the genotype text, since a cassette names the
+    product it makes rather than carrying its structure.
+
+    A pooled store is decided on its interned table: see ``POOLED_STORES``. For one
+    that does carry isoprenol, the records are then counted by matching each record's
+    environment reference against the interned environments that hold it, which is
+    one cheap pass rather than a splice per record.
+    """
+    table = interned_table(store_dir)
+    env = lmdb.open(
+        str(store_dir / "processed" / "lmdb"), readonly=True, lock=False, subdir=True
+    )
+    roles = {"product": 0, "carbon_source": 0, "stressor": 0, "pathway": 0}
+    dataset_name = None
+
+    if pooled:
+        refs = set()
+        for digest, const in table.items():
+            if not (isinstance(const, dict) and "media" in const):
+                continue
+            for pert in const.get("perturbations") or []:
+                agent = pert.get("agent") or pert.get("compound") or {}
+                if ISOPRENOL_INCHIKEY in str(agent.get("inchikey") or ""):
+                    refs.add((digest, pert.get("factor") or pert["perturbation_type"]))
+        by_digest = {d: f for d, f in refs}
+        with env.begin() as txn:
+            total = txn.stat()["entries"]
+            for _, value in txn.cursor():
+                rec = pickle.loads(value)
+                dataset_name = dataset_name or rec["experiment"].get("dataset_name")
+                ref = rec["experiment"]["environment"].get("$ref")
+                factor = by_digest.get(ref)
+                if factor == "carbon_source":
+                    roles["carbon_source"] += 1
+                elif factor:
+                    roles["stressor"] += 1
+        env.close()
+        return {
+            "records": total,
+            "roles": roles,
+            "dataset_name": dataset_name,
+            "decided_on": "interned_table",
+            "isoprenol_environments": len(refs),
+        }
+
+    with env.begin() as txn:
+        total = txn.stat()["entries"]
+        for _, value in txn.cursor():
+            rec = splice(pickle.loads(value), table)
+            experiment = rec["experiment"]
+            dataset_name = dataset_name or experiment.get("dataset_name")
+            pheno = experiment["phenotype"]
+            if ISOPRENOL_INCHIKEY in str(
+                (pheno.get("product") or {}).get("inchikey") or ""
+            ):
+                roles["product"] += 1
+            for pert in experiment["environment"].get("perturbations") or []:
+                agent = pert.get("compound") or pert.get("agent") or {}
+                if ISOPRENOL_INCHIKEY in str(agent.get("inchikey") or ""):
+                    key = (
+                        "carbon_source"
+                        if pert.get("factor") == "carbon_source"
+                        else "stressor"
+                    )
+                    roles[key] += 1
+            if any(
+                mentions_isoprenol(p) for p in experiment["genotype"]["perturbations"]
+            ):
+                roles["pathway"] += 1
+    env.close()
+    return {
+        "records": total,
+        "roles": roles,
+        "dataset_name": dataset_name,
+        "decided_on": "every_record",
+        "isoprenol_environments": None,
+    }
+
+
 def probe_cycle_label(store_dir: Path) -> dict[str, Any]:
     """Whether a served Carruthers record names the DBTL cycle it came from.
 
@@ -588,6 +736,19 @@ def run_probe_isoprenol() -> dict[str, Any]:
         ),
     }
     out["cycle_label"] = {"served": cycles, "raw": probe_raw_cycles()}
+    _save(out)
+    return out
+
+
+def run_probe_roles() -> dict[str, Any]:
+    """Ask every served P. putida store what role isoprenol plays in it."""
+    base = data_root()
+    out = json.loads(CACHE.read_text()) if CACHE.exists() else {}
+    roles: dict[str, Any] = {}
+    for store in PPUTIDA_STORES:
+        print(f"probing isoprenol roles {store} ...", flush=True)
+        roles[store] = probe_isoprenol_roles(base / store, store in POOLED_STORES)
+    out["isoprenol_roles"] = roles
     _save(out)
     return out
 
@@ -1009,6 +1170,119 @@ def render_cycle_label(cache: dict[str, Any]) -> str:
     return "\n".join(body) + "\n"
 
 
+ROLE_LABEL = {
+    "product": "measured product",
+    "carbon_source": "sole carbon source",
+    "stressor": "stressor in the medium",
+    "pathway": "pathway the strain carries",
+}
+
+# What each isoprenol-bearing dataset actually measures, in a few words. Curation:
+# the probe sees the role, not the design.
+ROLE_NOTE = {
+    "isoprenol_titer_carruthers2025": "six automated DBTL cycles of CRISPRi arrays",
+    "isoprenol_titer_yunus2026": "FluxRETAP targets against intuition in IY1452",
+    "isoprenol_titer_banerjee2024": "GSMM-guided campaign; every number read from the article prose",
+    "isoprenol_titer_desiqueira2025": "acetate-tolerized isolates of the catabolism-deficient parent",
+    "isoprenyl_acetate_titer_kang2026": "an isoprenyl acetate campaign on the isoprenol chassis; both products in one store",
+    "rbtnseq_borchert2024": "genome-wide fitness for growth on isoprenol, 10 mM, in the Thompson 2020 alcohol panel",
+    "rbtnseq_fitness_browser_putida": "the same panel in the Fitness Browser deposit, with a moderated t per record",
+    "isoprenol_tolerance_lim2025": "growth rate of a tolerized lineage against wild type at the same dose",
+    "proteome_lim2025": "absolute abundances on those tolerized lineages",
+    "proteome_fold_change_lim2025": "the stress proteome as a log2 fold change with a Welch test",
+    "campaign_proteome_carruthers2025": "the proteome beside the titer campaign, cycle by cycle",
+    "isoprenol_selection_menasalvas2025": "biosensor enrichment; the titer it proxies is not measured per clone",
+    "proteome_carruthers2025": "absolute proteome of the campaign strains",
+    "proteome_fold_change_carruthers2025": "fold change against the per-cycle control",
+    "proteome_menasalvas2025": "growth phase against production phase",
+    "metabolite_growth_menasalvas2025": "intracellular pools in growth phase",
+    "metabolite_production_menasalvas2025": "the paired production-phase pools",
+}
+
+
+def render_isoprenol_datasets(cache: dict[str, Any]) -> str:
+    """Every served P. putida dataset that touches isoprenol, by the role it plays."""
+    roles = cache["isoprenol_roles"]
+    order = ["product", "carbon_source", "stressor", "pathway"]
+    rows: list[tuple[str, str, dict[str, Any]]] = []
+    for store, probed in roles.items():
+        hit = {k: v for k, v in probed["roles"].items() if v}
+        if hit:
+            rows.append((next(k for k in order if k in hit), store, probed))
+    rows.sort(key=lambda r: (order.index(r[0]), -max(r[2]["roles"].values())))
+
+    cols = r"@{}L{44mm} r@{\hspace{5pt}} r@{\hspace{5pt}} L{96mm}@{}"
+    hdr = (
+        r"\textbf{Dataset} & \textbf{Records} & \textbf{Isoprenol} & "
+        r"\textbf{What it measures} \\"
+    )
+    head = (
+        r"""\begin{landscape}
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{"""
+        + cols
+        + r"""}
+\caption[]{Every served \org{P. putida} dataset in which isoprenol appears, and the
+role it plays, grouped by role. \emph{Isoprenol} counts the records in which it
+appears in that role. A compound is matched on its InChIKey rather than its name, so
+a record spelling it 3-methyl-3-buten-1-ol is found and DL-3-aminoisobutyric acid is
+not; the pathway role is the exception, since a heterologous cassette names the
+product it makes rather than carrying its structure. The 15 served \org{P. putida}
+datasets in which isoprenol never appears are not listed.}
+\label{tab:pcsisodata}\\
+\toprule
+"""
+        + hdr
+        + r"""
+\midrule
+\endfirsthead
+\multicolumn{4}{@{}l}{\footnotesize\emph{Table~\ref{tab:pcsisodata}, continued}}\\
+\toprule
+"""
+        + hdr
+        + r"""
+\midrule
+\endhead
+\bottomrule
+\endfoot
+"""
+    )
+    lines = []
+    seen_role = None
+    for role, store, probed in rows:
+        if role != seen_role:
+            lines.append(
+                r"\midrule \multicolumn{4}{@{}l}{\textbf{Isoprenol as the "
+                + ROLE_LABEL[role]
+                + r"}}\\ \midrule"
+                if seen_role is not None
+                else r"\multicolumn{4}{@{}l}{\textbf{Isoprenol as the "
+                + ROLE_LABEL[role]
+                + r"}}\\[2pt]"
+            )
+            seen_role = role
+        lines.append(
+            " & ".join(
+                [
+                    r"\textbf{"
+                    + class_tex(str(probed["dataset_name"]).removesuffix("Dataset"))
+                    + r"}",
+                    f"{probed['records']:,}",
+                    f"{probed['roles'][role]:,}",
+                    tex_escape(ROLE_NOTE[store]),
+                ]
+            )
+            + r" \\"
+        )
+        lines.append(r"\addlinespace[4pt]")
+    return (
+        head + "\n".join(lines) + "\n\\end{longtable}\n\\endgroup\n\\end{landscape}\n"
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -1021,12 +1295,19 @@ def main() -> None:
         action="store_true",
         help="re-read the isoprenol campaigns and the cycle-label question, and update the cache",
     )
+    parser.add_argument(
+        "--probe-roles",
+        action="store_true",
+        help="ask every served P. putida store what role isoprenol plays in it",
+    )
     args = parser.parse_args()
 
     if args.probe:
         run_probe()
     if args.probe_isoprenol:
         run_probe_isoprenol()
+    if args.probe_roles:
+        run_probe_roles()
     cache = json.loads(CACHE.read_text())
 
     write(TEX_DIR / "candidates.tex", render_candidates(cache))
@@ -1034,6 +1315,7 @@ def main() -> None:
     write(TEX_DIR / "counts.tex", render_counts(cache))
     write(TEX_DIR / "isoprenol.tex", render_isoprenol(cache))
     write(TEX_DIR / "cycle-label.tex", render_cycle_label(cache))
+    write(TEX_DIR / "isoprenol-datasets.tex", render_isoprenol_datasets(cache))
 
 
 if __name__ == "__main__":

@@ -38,14 +38,28 @@ standard error as $\sqrt{(f/t)^2 - 0.1^2}$, where $f$ is the fitness value. That
 it the one compendium row where a per-record weight is available, which matters for any
 model that should down-weight a gene measured in a sparse pool.
 
-\notesec{Why these rows are a feature source and not labels} For the isoprenol task of
-Sec.~\ref{sec:isoprenol}, three differences rule them out as training labels.
-The readout is competitive growth, not product titer, and a gene that raises titer can
-be fitness-neutral or fitness-costly. The perturbation differs in kind: a transposon
-insertion is a full disruption while CRISPRi is partial repression of a gene that is
-still present, so the sign may agree but the magnitudes share no scale. And the chassis
-differs, since the libraries are wild-type KT2440 and carry neither the mevalonate
-pathway nor its flux burden.
+\notesec{Both compendia do measure isoprenol, as a substrate} The alcohol panel
+includes isoprenol itself as the sole carbon source at 10 mM, in MOPS minimal medium.
+Table~\ref{tab:pcsisodata} gives the record counts, which are the largest isoprenol
+block in the served data by three orders of magnitude. Each record is one gene's
+fitness when the pool has nothing but isoprenol to grow on, so the arm names the
+catabolism genes: a gene whose disruption impairs growth on isoprenol is a gene the
+host uses to consume it.
+
+That makes the arm an engineering target in its own right and in the opposite
+direction from a titer campaign. A producing strain that also catabolizes its product
+loses yield to its own metabolism, and deleting a catabolism gene is how that is
+stopped, which is the design de Siqueira 2025's parent strain already embodies. The
+compendia are where the candidate genes are, genome-wide, without a new experiment.
+
+\notesec{For titer prediction they are features, not labels} The substrate arm does
+not make these rows training data for Sec.~\ref{sec:isoprenol}'s task, and three
+differences are why. The readout is competitive growth, not product titer, and a gene
+that raises titer can be fitness-neutral or fitness-costly. The perturbation differs in
+kind: a transposon insertion is a full disruption while CRISPRi is partial repression
+of a gene that is still present, so the sign may agree but the magnitudes share no
+scale. And the chassis differs, since the libraries are wild-type KT2440 and carry
+neither the mevalonate pathway nor its flux burden.
 
 What they can supply is a descriptor. A gene's fitness across the compendium's many
 carbon and nitrogen sources is a cheap, genome-wide measure of how essential or

@@ -14,7 +14,7 @@ First use: the affine source-calibration test. Two 1-GPU jobs on the 1/4 S3Q fra
 
 | job | config | source enters as |
 |---|---|---|
-| 6110 `030-tok-q4-s1` | `cgt_030_s3_q_tok_embfit_004` | 8-dim token in both head inputs (control) |
-| 6111 `030-aff-q4-s1` | `cgt_030_s3_q_tok_affine_005` | per-source scale and shift on the head outputs |
+| 6112 `030-tok-q4-s1` | `cgt_030_s3_q_tok_embfit_004` | 8-dim token in both head inputs (control) |
+| 6113 `030-aff-q4-s1` | `cgt_030_s3_q_tok_affine_005` | per-source scale and shift on the head outputs |
 
 Read at matched epoch: pooled `val/gene_interaction/Pearson` (both arms can learn the between-screen offset), `val/token/TmiKuzmin2018Dataset/...` and `.../2020/...` (the within-screen read), `val/crosstoken/...`, and the learned `cal/gene_interaction/<source>/{scale,shift}` of the affine arm.

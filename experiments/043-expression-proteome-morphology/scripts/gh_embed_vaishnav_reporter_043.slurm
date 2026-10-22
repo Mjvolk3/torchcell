@@ -14,9 +14,10 @@
 #
 #   sbatch --dependency=afterany:6106 experiments/043-expression-proteome-morphology/scripts/gh_embed_vaishnav_reporter_043.slurm
 #
-# --time 1.5 h. 71,158 FUDT upstream windows at an ASSUMED 150-300 per s (hypothesis, the
-# rate 6106 will measure first) is 4 to 8 min; the four reference checks and model loads
-# add about 10 min. A job cut by the limit is resumed by resubmitting (done rows skip).
+# --time 1.5 h. Job 6106 measured FUDT upstream at 73.9 windows per s on one RTX 6000
+# (76,800 windows in 1,040 s), so 71,158 windows take about 16 min; the four reference
+# checks and model loads add about 10 min. A job cut by the limit is resumed by
+# resubmitting (done rows skip).
 #SBATCH -p main
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32g

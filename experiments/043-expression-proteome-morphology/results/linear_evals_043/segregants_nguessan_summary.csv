@@ -1,0 +1,3 @@
+panel,model,n_test_units,fold0_median_per_gene_pearson,fold0_median_per_gene_pearson_ci95,fold0_median_per_gene_spearman,fold0_median_centered_per_unit_pearson,fold0_median_centered_per_unit_pearson_ci95,fold0_median_centered_per_unit_spearman,fold0_median_raw_per_unit_pearson,foldmean_median_per_gene_pearson,foldmean_median_centered_per_unit_pearson
+nguessan,N0,590,0.0,,0.0,0.0,,0.0,0.6652129805980668,0.0,0.0
+nguessan,ridge_parent_of_origin,590,0.15544661994723252,"[0.13329029941078757, 0.17719298242166626]",0.09697398422061927,0.055792847469659713,"[0.051668649211112784, 0.06169575241369288]",0.04524948393099362,0.6626341697455562,0.13208795731928036,0.055639177935594475

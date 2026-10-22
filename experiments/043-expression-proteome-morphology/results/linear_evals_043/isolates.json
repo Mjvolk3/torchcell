@@ -1,0 +1,1155 @@
+{
+ "panels": {
+  "caudal": {
+   "name": "caudal",
+   "n_units": 943,
+   "n_columns": 6019,
+   "folds": {
+    "0": {
+     "n_test": 188,
+     "n_train": 755,
+     "n_val": 189,
+     "log10_lambda_rel": {
+      "gblup_kinship": 0.5,
+      "ridge_lof_absence_indicator": 0.0
+     },
+     "models": {
+      "N0": {
+       "median_gene_pearson": 0.0,
+       "mean_gene_pearson": 0.0,
+       "n_gene_pearson": 6019,
+       "median_gene_spearman": 0.0,
+       "mean_gene_spearman": 0.0,
+       "n_gene_spearman": 6019,
+       "median_unit_centered_pearson": 0.0,
+       "mean_unit_centered_pearson": 0.0,
+       "n_unit_centered_pearson": 188,
+       "median_unit_centered_spearman": 0.0,
+       "mean_unit_centered_spearman": 0.0,
+       "n_unit_centered_spearman": 188,
+       "median_unit_raw_pearson": 0.9552655795749524,
+       "mean_unit_raw_pearson": 0.9511810406389886,
+       "n_unit_raw_pearson": 188
+      },
+      "gblup_kinship": {
+       "median_gene_pearson": 0.36891954247557013,
+       "mean_gene_pearson": 0.3777183207332817,
+       "n_gene_pearson": 6019,
+       "median_gene_spearman": 0.350486809810965,
+       "mean_gene_spearman": 0.3593987071476134,
+       "n_gene_spearman": 6019,
+       "median_unit_centered_pearson": 0.44277054224314527,
+       "mean_unit_centered_pearson": 0.44449684124466077,
+       "n_unit_centered_pearson": 188,
+       "median_unit_centered_spearman": 0.3730319460996645,
+       "mean_unit_centered_spearman": 0.3707907498231774,
+       "n_unit_centered_spearman": 188,
+       "median_unit_raw_pearson": 0.9649481874823064,
+       "mean_unit_raw_pearson": 0.9605817683327414,
+       "n_unit_raw_pearson": 188
+      },
+      "ridge_lof_absence_indicator": {
+       "median_gene_pearson": 0.35667199669553973,
+       "mean_gene_pearson": 0.36775867086552116,
+       "n_gene_pearson": 6019,
+       "median_gene_spearman": 0.3374600646190133,
+       "mean_gene_spearman": 0.348104789267616,
+       "n_gene_spearman": 6019,
+       "median_unit_centered_pearson": 0.4456211198356764,
+       "mean_unit_centered_pearson": 0.4400836100283289,
+       "n_unit_centered_pearson": 188,
+       "median_unit_centered_spearman": 0.3713276453129457,
+       "mean_unit_centered_spearman": 0.3634391474901693,
+       "n_unit_centered_spearman": 188,
+       "median_unit_raw_pearson": 0.9659650211448343,
+       "mean_unit_raw_pearson": 0.9610714491327661,
+       "n_unit_raw_pearson": 188
+      }
+     }
+    },
+    "1": {
+     "n_test": 189,
+     "n_train": 754,
+     "n_val": 189,
+     "log10_lambda_rel": {
+      "gblup_kinship": 0.0,
+      "ridge_lof_absence_indicator": 0.0
+     },
+     "models": {
+      "N0": {
+       "median_gene_pearson": 0.0,
+       "mean_gene_pearson": 0.0,
+       "n_gene_pearson": 6019,
+       "median_gene_spearman": 0.0,
+       "mean_gene_spearman": 0.0,
+       "n_gene_spearman": 6019,
+       "median_unit_centered_pearson": 0.0,
+       "mean_unit_centered_pearson": 0.0,
+       "n_unit_centered_pearson": 189,
+       "median_unit_centered_spearman": 0.0,
+       "mean_unit_centered_spearman": 0.0,
+       "n_unit_centered_spearman": 189,
+       "median_unit_raw_pearson": 0.9508604191920225,
+       "mean_unit_raw_pearson": 0.9476180358535988,
+       "n_unit_raw_pearson": 189
+      },
+      "gblup_kinship": {
+       "median_gene_pearson": 0.3722110492290233,
+       "mean_gene_pearson": 0.37899732309185086,
+       "n_gene_pearson": 6019,
+       "median_gene_spearman": 0.352408241185507,
+       "mean_gene_spearman": 0.3597871408776546,
+       "n_gene_spearman": 6019,
+       "median_unit_centered_pearson": 0.46408623938718796,
+       "mean_unit_centered_pearson": 0.44743038544812924,
+       "n_unit_centered_pearson": 189,
+       "median_unit_centered_spearman": 0.39209988469215457,
+       "mean_unit_centered_spearman": 0.3662876212905159,
+       "n_unit_centered_spearman": 189,
+       "median_unit_raw_pearson": 0.9611505795848307,
+       "mean_unit_raw_pearson": 0.9588081722011922,
+       "n_unit_raw_pearson": 189
+      },
+      "ridge_lof_absence_indicator": {
+       "median_gene_pearson": 0.34084975520917254,
+       "mean_gene_pearson": 0.35057476581093117,
+       "n_gene_pearson": 6019,
+       "median_gene_spearman": 0.3338648038536056,
+       "mean_gene_spearman": 0.3399384554327299,
+       "n_gene_spearman": 6019,
+       "median_unit_centered_pearson": 0.43830551380026866,
+       "mean_unit_centered_pearson": 0.43160894948045025,
+       "n_unit_centered_pearson": 189,
+       "median_unit_centered_spearman": 0.3501830401872806,
+       "mean_unit_centered_spearman": 0.3489840809268236,
+       "n_unit_centered_spearman": 189,
+       "median_unit_raw_pearson": 0.9607239615091554,
+       "mean_unit_raw_pearson": 0.957707077633839,
+       "n_unit_raw_pearson": 189
+      }
+     }
+    },
+    "2": {
+     "n_test": 189,
+     "n_train": 754,
+     "n_val": 189,
+     "log10_lambda_rel": {
+      "gblup_kinship": -0.5,
+      "ridge_lof_absence_indicator": 0.5
+     },
+     "models": {
+      "N0": {
+       "median_gene_pearson": 0.0,
+       "mean_gene_pearson": 0.0,
+       "n_gene_pearson": 6019,
+       "median_gene_spearman": 0.0,
+       "mean_gene_spearman": 0.0,
+       "n_gene_spearman": 6019,
+       "median_unit_centered_pearson": 0.0,
+       "mean_unit_centered_pearson": 0.0,
+       "n_unit_centered_pearson": 189,
+       "median_unit_centered_spearman": 0.0,
+       "mean_unit_centered_spearman": 0.0,
+       "n_unit_centered_spearman": 189,
+       "median_unit_raw_pearson": 0.9537529538698211,
+       "mean_unit_raw_pearson": 0.9467202513230296,
+       "n_unit_raw_pearson": 189
+      },
+      "gblup_kinship": {
+       "median_gene_pearson": 0.360246844663546,
+       "mean_gene_pearson": 0.3700230430421165,
+       "n_gene_pearson": 6019,
+       "median_gene_spearman": 0.33921150393714783,
+       "mean_gene_spearman": 0.3472040216090791,
+       "n_gene_spearman": 6019,
+       "median_unit_centered_pearson": 0.453319680308762,
+       "mean_unit_centered_pearson": 0.4325037791895414,
+       "n_unit_centered_pearson": 189,
+       "median_unit_centered_spearman": 0.3687212033513374,
+       "mean_unit_centered_spearman": 0.35239968227081253,
+       "n_unit_centered_spearman": 189,
+       "median_unit_raw_pearson": 0.9643223169385848,
+       "mean_unit_raw_pearson": 0.957704845415371,
+       "n_unit_raw_pearson": 189
+      },
+      "ridge_lof_absence_indicator": {
+       "median_gene_pearson": 0.364689537855086,
+       "mean_gene_pearson": 0.37096370973038945,
+       "n_gene_pearson": 6019,
+       "median_gene_spearman": 0.3446470786896319,
+       "mean_gene_spearman": 0.3514232770960953,
+       "n_gene_spearman": 6019,
+       "median_unit_centered_pearson": 0.4434323954500411,
+       "mean_unit_centered_pearson": 0.43433466851644215,
+       "n_unit_centered_pearson": 189,
+       "median_unit_centered_spearman": 0.3712503197520209,
+       "mean_unit_centered_spearman": 0.357115540321568,
+       "n_unit_centered_spearman": 189,
+       "median_unit_raw_pearson": 0.9633825727529424,
+       "mean_unit_raw_pearson": 0.9574903786084186,
+       "n_unit_raw_pearson": 189
+      }
+     }
+    },
+    "3": {
+     "n_test": 189,
+     "n_train": 754,
+     "n_val": 188,
+     "log10_lambda_rel": {
+      "gblup_kinship": 0.0,
+      "ridge_lof_absence_indicator": 0.5
+     },
+     "models": {
+      "N0": {
+       "median_gene_pearson": 0.0,
+       "mean_gene_pearson": 0.0,
+       "n_gene_pearson": 6019,
+       "median_gene_spearman": 0.0,
+       "mean_gene_spearman": 0.0,
+       "n_gene_spearman": 6019,
+       "median_unit_centered_pearson": 0.0,
+       "mean_unit_centered_pearson": 0.0,
+       "n_unit_centered_pearson": 189,
+       "median_unit_centered_spearman": 0.0,
+       "mean_unit_centered_spearman": 0.0,
+       "n_unit_centered_spearman": 189,
+       "median_unit_raw_pearson": 0.9515638695046144,
+       "mean_unit_raw_pearson": 0.9448665753438737,
+       "n_unit_raw_pearson": 189
+      },
+      "gblup_kinship": {
+       "median_gene_pearson": 0.38523239705761203,
+       "mean_gene_pearson": 0.39327591669521544,
+       "n_gene_pearson": 6019,
+       "median_gene_spearman": 0.3765921896940934,
+       "mean_gene_spearman": 0.3820669028122248,
+       "n_gene_spearman": 6019,
+       "median_unit_centered_pearson": 0.4586825900619253,
+       "mean_unit_centered_pearson": 0.4532947739098424,
+       "n_unit_centered_pearson": 189,
+       "median_unit_centered_spearman": 0.3838205612605849,
+       "mean_unit_centered_spearman": 0.38574232444678463,
+       "n_unit_centered_spearman": 189,
+       "median_unit_raw_pearson": 0.9614835286761021,
+       "mean_unit_raw_pearson": 0.9570279348810352,
+       "n_unit_raw_pearson": 189
+      },
+      "ridge_lof_absence_indicator": {
+       "median_gene_pearson": 0.3666301143858018,
+       "mean_gene_pearson": 0.3724247688207382,
+       "n_gene_pearson": 6019,
+       "median_gene_spearman": 0.360408112479781,
+       "mean_gene_spearman": 0.3644929012826961,
+       "n_gene_spearman": 6019,
+       "median_unit_centered_pearson": 0.45151787870856036,
+       "mean_unit_centered_pearson": 0.4339257500649144,
+       "n_unit_centered_pearson": 189,
+       "median_unit_centered_spearman": 0.36477881325962064,
+       "mean_unit_centered_spearman": 0.36964048646123643,
+       "n_unit_centered_spearman": 189,
+       "median_unit_raw_pearson": 0.9600059666474503,
+       "mean_unit_raw_pearson": 0.955249454962669,
+       "n_unit_raw_pearson": 189
+      }
+     }
+    },
+    "4": {
+     "n_test": 188,
+     "n_train": 755,
+     "n_val": 188,
+     "log10_lambda_rel": {
+      "gblup_kinship": 0.0,
+      "ridge_lof_absence_indicator": 0.0
+     },
+     "models": {
+      "N0": {
+       "median_gene_pearson": 0.0,
+       "mean_gene_pearson": 0.0,
+       "n_gene_pearson": 6019,
+       "median_gene_spearman": 0.0,
+       "mean_gene_spearman": 0.0,
+       "n_gene_spearman": 6019,
+       "median_unit_centered_pearson": 0.0,
+       "mean_unit_centered_pearson": 0.0,
+       "n_unit_centered_pearson": 188,
+       "median_unit_centered_spearman": 0.0,
+       "mean_unit_centered_spearman": 0.0,
+       "n_unit_centered_spearman": 188,
+       "median_unit_raw_pearson": 0.9537628380154064,
+       "mean_unit_raw_pearson": 0.9490871149625686,
+       "n_unit_raw_pearson": 188
+      },
+      "gblup_kinship": {
+       "median_gene_pearson": 0.3500916422617321,
+       "mean_gene_pearson": 0.3622288754609165,
+       "n_gene_pearson": 6019,
+       "median_gene_spearman": 0.33025408745058304,
+       "mean_gene_spearman": 0.34109372114460174,
+       "n_gene_spearman": 6019,
+       "median_unit_centered_pearson": 0.4528146620994931,
+       "mean_unit_centered_pearson": 0.43182349270756215,
+       "n_unit_centered_pearson": 188,
+       "median_unit_centered_spearman": 0.3676999112764191,
+       "mean_unit_centered_spearman": 0.34752749164722524,
+       "n_unit_centered_spearman": 188,
+       "median_unit_raw_pearson": 0.9628740705713004,
+       "mean_unit_raw_pearson": 0.958893624918777,
+       "n_unit_raw_pearson": 188
+      },
+      "ridge_lof_absence_indicator": {
+       "median_gene_pearson": 0.34726512238591767,
+       "mean_gene_pearson": 0.35622326581684527,
+       "n_gene_pearson": 6019,
+       "median_gene_spearman": 0.3258979929818478,
+       "mean_gene_spearman": 0.33360504433764415,
+       "n_gene_spearman": 6019,
+       "median_unit_centered_pearson": 0.44855189473407464,
+       "mean_unit_centered_pearson": 0.4180847763723479,
+       "n_unit_centered_pearson": 188,
+       "median_unit_centered_spearman": 0.37313488017793456,
+       "mean_unit_centered_spearman": 0.332856801108554,
+       "n_unit_centered_spearman": 188,
+       "median_unit_raw_pearson": 0.9629503075524564,
+       "mean_unit_raw_pearson": 0.9585358800941138,
+       "n_unit_raw_pearson": 188
+      }
+     }
+    }
+   },
+   "fold_mean": {
+    "N0": {
+     "median_gene_pearson": 0.0,
+     "median_unit_centered_pearson": 0.0,
+     "median_unit_raw_pearson": 0.9530411320313632,
+     "median_gene_spearman": 0.0,
+     "median_unit_centered_spearman": 0.0
+    },
+    "gblup_kinship": {
+     "median_gene_pearson": 0.3673402951374968,
+     "median_unit_centered_pearson": 0.4543347428201027,
+     "median_unit_raw_pearson": 0.9629557366506247,
+     "median_gene_spearman": 0.34979056641565925,
+     "median_unit_centered_spearman": 0.3770747013360321
+    },
+    "ridge_lof_absence_indicator": {
+     "median_gene_pearson": 0.3552213053063036,
+     "median_unit_centered_pearson": 0.4454857605057242,
+     "median_unit_raw_pearson": 0.9626055659213677,
+     "median_gene_spearman": 0.3404556105247759,
+     "median_unit_centered_spearman": 0.36613493973796046
+    }
+   },
+   "n_folds_scored": 5,
+   "fold0_bootstrap": {
+    "gblup_kinship_vs_N0": {
+     "ci_median_gene_pearson": [
+      0.34027266663631767,
+      0.404359495934382
+     ],
+     "ci_median_unit_centered_pearson": [
+      0.4139650890381674,
+      0.46348801422812613
+     ]
+    },
+    "ridge_lof_absence_indicator_vs_N0": {
+     "ci_median_gene_pearson": [
+      0.3211562103761468,
+      0.39732890293525264
+     ],
+     "ci_median_unit_centered_pearson": [
+      0.41632927463547753,
+      0.47698967782282714
+     ]
+    },
+    "gblup_kinship_vs_ridge_lof_absence_indicator": {
+     "ci_median_gene_pearson": [
+      0.34027266663631767,
+      0.404359495934382
+     ],
+     "ci_median_unit_centered_pearson": [
+      0.4139650890381674,
+      0.46348801422812613
+     ],
+     "ci_diff_median_gene_pearson": [
+      -0.006448427088091745,
+      0.030287170467402175
+     ],
+     "ci_diff_median_unit_centered_pearson": [
+      -0.02684773588627483,
+      0.01336687432205144
+     ]
+    }
+   },
+   "n_kinship_columns": 11233,
+   "n_indicator_columns": 4423
+  },
+  "muenzner": {
+   "name": "muenzner",
+   "n_units": 795,
+   "n_columns": 1576,
+   "folds": {
+    "0": {
+     "n_test": 160,
+     "n_train": 635,
+     "n_val": 159,
+     "log10_lambda_rel": {
+      "gblup_kinship": 0.0,
+      "ridge_lof_absence_indicator": 0.0
+     },
+     "models": {
+      "N0": {
+       "median_gene_pearson": 0.0,
+       "mean_gene_pearson": 0.0,
+       "n_gene_pearson": 1576,
+       "median_gene_spearman": 0.0,
+       "mean_gene_spearman": 0.0,
+       "n_gene_spearman": 1576,
+       "median_unit_centered_pearson": 0.0,
+       "mean_unit_centered_pearson": 0.0,
+       "n_unit_centered_pearson": 160,
+       "median_unit_centered_spearman": 0.0,
+       "mean_unit_centered_spearman": 0.0,
+       "n_unit_centered_spearman": 160,
+       "median_unit_raw_pearson": 0.9768776362406041,
+       "mean_unit_raw_pearson": 0.974770459037031,
+       "n_unit_raw_pearson": 160
+      },
+      "gblup_kinship": {
+       "median_gene_pearson": 0.4229443264515649,
+       "mean_gene_pearson": 0.41079985163379673,
+       "n_gene_pearson": 1576,
+       "median_gene_spearman": 0.41996068162580436,
+       "mean_gene_spearman": 0.40872149740002994,
+       "n_gene_spearman": 1576,
+       "median_unit_centered_pearson": 0.49708910628050007,
+       "mean_unit_centered_pearson": 0.4458643777039411,
+       "n_unit_centered_pearson": 160,
+       "median_unit_centered_spearman": 0.4612547457475349,
+       "mean_unit_centered_spearman": 0.41983274432911,
+       "n_unit_centered_spearman": 160,
+       "median_unit_raw_pearson": 0.9825347704739755,
+       "mean_unit_raw_pearson": 0.9799782540201978,
+       "n_unit_raw_pearson": 160
+      },
+      "ridge_lof_absence_indicator": {
+       "median_gene_pearson": 0.408375651807765,
+       "mean_gene_pearson": 0.3968336012058878,
+       "n_gene_pearson": 1576,
+       "median_gene_spearman": 0.40503339974217734,
+       "mean_gene_spearman": 0.3938711690680135,
+       "n_gene_spearman": 1576,
+       "median_unit_centered_pearson": 0.47758889984936037,
+       "mean_unit_centered_pearson": 0.42851045332205595,
+       "n_unit_centered_pearson": 160,
+       "median_unit_centered_spearman": 0.44338811646881654,
+       "mean_unit_centered_spearman": 0.4053985227958366,
+       "n_unit_centered_spearman": 160,
+       "median_unit_raw_pearson": 0.9819559231776909,
+       "mean_unit_raw_pearson": 0.979658312064282,
+       "n_unit_raw_pearson": 160
+      }
+     }
+    },
+    "1": {
+     "n_test": 159,
+     "n_train": 636,
+     "n_val": 159,
+     "log10_lambda_rel": {
+      "gblup_kinship": 0.0,
+      "ridge_lof_absence_indicator": 0.5
+     },
+     "models": {
+      "N0": {
+       "median_gene_pearson": 0.0,
+       "mean_gene_pearson": 0.0,
+       "n_gene_pearson": 1576,
+       "median_gene_spearman": 0.0,
+       "mean_gene_spearman": 0.0,
+       "n_gene_spearman": 1576,
+       "median_unit_centered_pearson": 0.0,
+       "mean_unit_centered_pearson": 0.0,
+       "n_unit_centered_pearson": 159,
+       "median_unit_centered_spearman": 0.0,
+       "mean_unit_centered_spearman": 0.0,
+       "n_unit_centered_spearman": 159,
+       "median_unit_raw_pearson": 0.9775942465675664,
+       "mean_unit_raw_pearson": 0.9748678692482156,
+       "n_unit_raw_pearson": 159
+      },
+      "gblup_kinship": {
+       "median_gene_pearson": 0.4709916985679032,
+       "mean_gene_pearson": 0.4511332109228537,
+       "n_gene_pearson": 1576,
+       "median_gene_spearman": 0.463716563171722,
+       "mean_gene_spearman": 0.445309342181586,
+       "n_gene_spearman": 1576,
+       "median_unit_centered_pearson": 0.49233021795505233,
+       "mean_unit_centered_pearson": 0.47066372397078016,
+       "n_unit_centered_pearson": 159,
+       "median_unit_centered_spearman": 0.47030745355297243,
+       "mean_unit_centered_spearman": 0.44808804588308515,
+       "n_unit_centered_spearman": 159,
+       "median_unit_raw_pearson": 0.9834875557570424,
+       "mean_unit_raw_pearson": 0.9807848208203052,
+       "n_unit_raw_pearson": 159
+      },
+      "ridge_lof_absence_indicator": {
+       "median_gene_pearson": 0.44768122937206334,
+       "mean_gene_pearson": 0.43152305141403396,
+       "n_gene_pearson": 1576,
+       "median_gene_spearman": 0.4481758988944542,
+       "mean_gene_spearman": 0.43203121769030167,
+       "n_gene_spearman": 1576,
+       "median_unit_centered_pearson": 0.47382791160921867,
+       "mean_unit_centered_pearson": 0.45845229822602135,
+       "n_unit_centered_pearson": 159,
+       "median_unit_centered_spearman": 0.446278040846865,
+       "mean_unit_centered_spearman": 0.43635902474740373,
+       "n_unit_centered_spearman": 159,
+       "median_unit_raw_pearson": 0.9828344606490887,
+       "mean_unit_raw_pearson": 0.9800540946509,
+       "n_unit_raw_pearson": 159
+      }
+     }
+    },
+    "2": {
+     "n_test": 159,
+     "n_train": 636,
+     "n_val": 159,
+     "log10_lambda_rel": {
+      "gblup_kinship": 0.0,
+      "ridge_lof_absence_indicator": 0.5
+     },
+     "models": {
+      "N0": {
+       "median_gene_pearson": 0.0,
+       "mean_gene_pearson": 0.0,
+       "n_gene_pearson": 1576,
+       "median_gene_spearman": 0.0,
+       "mean_gene_spearman": 0.0,
+       "n_gene_spearman": 1576,
+       "median_unit_centered_pearson": 0.0,
+       "mean_unit_centered_pearson": 0.0,
+       "n_unit_centered_pearson": 159,
+       "median_unit_centered_spearman": 0.0,
+       "mean_unit_centered_spearman": 0.0,
+       "n_unit_centered_spearman": 159,
+       "median_unit_raw_pearson": 0.9790668900786561,
+       "mean_unit_raw_pearson": 0.9758966368268506,
+       "n_unit_raw_pearson": 159
+      },
+      "gblup_kinship": {
+       "median_gene_pearson": 0.4391477972722395,
+       "mean_gene_pearson": 0.4305833082455631,
+       "n_gene_pearson": 1576,
+       "median_gene_spearman": 0.42092771588448374,
+       "mean_gene_spearman": 0.41487558752219644,
+       "n_gene_spearman": 1576,
+       "median_unit_centered_pearson": 0.4603958681359636,
+       "mean_unit_centered_pearson": 0.4524328720911713,
+       "n_unit_centered_pearson": 159,
+       "median_unit_centered_spearman": 0.4213742885220327,
+       "mean_unit_centered_spearman": 0.42362200570033864,
+       "n_unit_centered_spearman": 159,
+       "median_unit_raw_pearson": 0.9842051099051268,
+       "mean_unit_raw_pearson": 0.9813119825237502,
+       "n_unit_raw_pearson": 159
+      },
+      "ridge_lof_absence_indicator": {
+       "median_gene_pearson": 0.43965762512085926,
+       "mean_gene_pearson": 0.4299052381260191,
+       "n_gene_pearson": 1576,
+       "median_gene_spearman": 0.42009255264203665,
+       "mean_gene_spearman": 0.41289634719225543,
+       "n_gene_spearman": 1576,
+       "median_unit_centered_pearson": 0.46181504870677154,
+       "mean_unit_centered_pearson": 0.44557388330198683,
+       "n_unit_centered_pearson": 159,
+       "median_unit_centered_spearman": 0.423599886380738,
+       "mean_unit_centered_spearman": 0.41955057577284677,
+       "n_unit_centered_spearman": 159,
+       "median_unit_raw_pearson": 0.9838766550738665,
+       "mean_unit_raw_pearson": 0.9808456937956812,
+       "n_unit_raw_pearson": 159
+      }
+     }
+    },
+    "3": {
+     "n_test": 159,
+     "n_train": 636,
+     "n_val": 158,
+     "log10_lambda_rel": {
+      "gblup_kinship": 0.0,
+      "ridge_lof_absence_indicator": 0.5
+     },
+     "models": {
+      "N0": {
+       "median_gene_pearson": 0.0,
+       "mean_gene_pearson": 0.0,
+       "n_gene_pearson": 1576,
+       "median_gene_spearman": 0.0,
+       "mean_gene_spearman": 0.0,
+       "n_gene_spearman": 1576,
+       "median_unit_centered_pearson": 0.0,
+       "mean_unit_centered_pearson": 0.0,
+       "n_unit_centered_pearson": 159,
+       "median_unit_centered_spearman": 0.0,
+       "mean_unit_centered_spearman": 0.0,
+       "n_unit_centered_spearman": 159,
+       "median_unit_raw_pearson": 0.976917822176112,
+       "mean_unit_raw_pearson": 0.9746016814563702,
+       "n_unit_raw_pearson": 159
+      },
+      "gblup_kinship": {
+       "median_gene_pearson": 0.42215509151124575,
+       "mean_gene_pearson": 0.4083599344910416,
+       "n_gene_pearson": 1576,
+       "median_gene_spearman": 0.41782059917031633,
+       "mean_gene_spearman": 0.4079052400551989,
+       "n_gene_spearman": 1576,
+       "median_unit_centered_pearson": 0.4491279247689865,
+       "mean_unit_centered_pearson": 0.4328382056743546,
+       "n_unit_centered_pearson": 159,
+       "median_unit_centered_spearman": 0.4053180344411269,
+       "mean_unit_centered_spearman": 0.41158201946997336,
+       "n_unit_centered_spearman": 159,
+       "median_unit_raw_pearson": 0.9823350516869431,
+       "mean_unit_raw_pearson": 0.9797396064521177,
+       "n_unit_raw_pearson": 159
+      },
+      "ridge_lof_absence_indicator": {
+       "median_gene_pearson": 0.4018198002057044,
+       "mean_gene_pearson": 0.39451901775302517,
+       "n_gene_pearson": 1576,
+       "median_gene_spearman": 0.4009075710532601,
+       "mean_gene_spearman": 0.3951566724077484,
+       "n_gene_spearman": 1576,
+       "median_unit_centered_pearson": 0.4254270266586717,
+       "mean_unit_centered_pearson": 0.4164906627172261,
+       "n_unit_centered_pearson": 159,
+       "median_unit_centered_spearman": 0.4071512572810298,
+       "mean_unit_centered_spearman": 0.39691703025078784,
+       "n_unit_centered_spearman": 159,
+       "median_unit_raw_pearson": 0.9816767525440833,
+       "mean_unit_raw_pearson": 0.9790132272913602,
+       "n_unit_raw_pearson": 159
+      }
+     }
+    },
+    "4": {
+     "n_test": 158,
+     "n_train": 637,
+     "n_val": 160,
+     "log10_lambda_rel": {
+      "gblup_kinship": 0.0,
+      "ridge_lof_absence_indicator": 0.0
+     },
+     "models": {
+      "N0": {
+       "median_gene_pearson": 0.0,
+       "mean_gene_pearson": 0.0,
+       "n_gene_pearson": 1576,
+       "median_gene_spearman": 0.0,
+       "mean_gene_spearman": 0.0,
+       "n_gene_spearman": 1576,
+       "median_unit_centered_pearson": 0.0,
+       "mean_unit_centered_pearson": 0.0,
+       "n_unit_centered_pearson": 158,
+       "median_unit_centered_spearman": 0.0,
+       "mean_unit_centered_spearman": 0.0,
+       "n_unit_centered_spearman": 158,
+       "median_unit_raw_pearson": 0.9790515238908992,
+       "mean_unit_raw_pearson": 0.9751719657705434,
+       "n_unit_raw_pearson": 158
+      },
+      "gblup_kinship": {
+       "median_gene_pearson": 0.411594563909195,
+       "mean_gene_pearson": 0.4062036507257266,
+       "n_gene_pearson": 1576,
+       "median_gene_spearman": 0.402825548900981,
+       "mean_gene_spearman": 0.3985225384210102,
+       "n_gene_spearman": 1576,
+       "median_unit_centered_pearson": 0.4564577528213162,
+       "mean_unit_centered_pearson": 0.4348602825568917,
+       "n_unit_centered_pearson": 158,
+       "median_unit_centered_spearman": 0.41789697835560435,
+       "mean_unit_centered_spearman": 0.4046133844183406,
+       "n_unit_centered_spearman": 158,
+       "median_unit_raw_pearson": 0.9830626768938975,
+       "mean_unit_raw_pearson": 0.9802355000841804,
+       "n_unit_raw_pearson": 158
+      },
+      "ridge_lof_absence_indicator": {
+       "median_gene_pearson": 0.4011432435085899,
+       "mean_gene_pearson": 0.3945688516210549,
+       "n_gene_pearson": 1576,
+       "median_gene_spearman": 0.39323032263408597,
+       "mean_gene_spearman": 0.38957729971394206,
+       "n_gene_spearman": 1576,
+       "median_unit_centered_pearson": 0.4365230736631507,
+       "mean_unit_centered_pearson": 0.4235072257806607,
+       "n_unit_centered_pearson": 158,
+       "median_unit_centered_spearman": 0.41147895533115986,
+       "mean_unit_centered_spearman": 0.3962734106663718,
+       "n_unit_centered_spearman": 158,
+       "median_unit_raw_pearson": 0.9830987377311584,
+       "mean_unit_raw_pearson": 0.9799892784877601,
+       "n_unit_raw_pearson": 158
+      }
+     }
+    }
+   },
+   "fold_mean": {
+    "N0": {
+     "median_gene_pearson": 0.0,
+     "median_unit_centered_pearson": 0.0,
+     "median_unit_raw_pearson": 0.9779016237907676,
+     "median_gene_spearman": 0.0,
+     "median_unit_centered_spearman": 0.0
+    },
+    "gblup_kinship": {
+     "median_gene_pearson": 0.4333666955424297,
+     "median_unit_centered_pearson": 0.4710801739923638,
+     "median_unit_raw_pearson": 0.983125032943397,
+     "median_gene_spearman": 0.4250502217506614,
+     "median_unit_centered_spearman": 0.4352303001238543
+    },
+    "ridge_lof_absence_indicator": {
+     "median_gene_pearson": 0.41973551000299636,
+     "median_unit_centered_pearson": 0.4550363920974346,
+     "median_unit_raw_pearson": 0.9826885058351774,
+     "median_gene_spearman": 0.4134879489932029,
+     "median_unit_centered_spearman": 0.4263792512617218
+    }
+   },
+   "n_folds_scored": 5,
+   "fold0_bootstrap": {
+    "gblup_kinship_vs_N0": {
+     "ci_median_gene_pearson": [
+      0.38063038532826365,
+      0.4632139475405566
+     ],
+     "ci_median_unit_centered_pearson": [
+      0.4484925913824846,
+      0.5306587509193555
+     ]
+    },
+    "ridge_lof_absence_indicator_vs_N0": {
+     "ci_median_gene_pearson": [
+      0.3677768134814366,
+      0.44922284204410057
+     ],
+     "ci_median_unit_centered_pearson": [
+      0.4215987683086122,
+      0.4992093358460288
+     ]
+    },
+    "gblup_kinship_vs_ridge_lof_absence_indicator": {
+     "ci_median_gene_pearson": [
+      0.38063038532826365,
+      0.4632139475405566
+     ],
+     "ci_median_unit_centered_pearson": [
+      0.4484925913824846,
+      0.5306587509193555
+     ],
+     "ci_diff_median_gene_pearson": [
+      0.003238452434633772,
+      0.02579373381746178
+     ],
+     "ci_diff_median_unit_centered_pearson": [
+      0.0020709904037629566,
+      0.05316071465565283
+     ]
+    }
+   },
+   "n_kinship_columns": 11073,
+   "n_indicator_columns": 4257
+  },
+  "turnover": {
+   "name": "turnover",
+   "n_units": 55,
+   "n_columns": 1022,
+   "folds": {
+    "0": {
+     "n_test": 11,
+     "n_train": 44,
+     "n_val": 11,
+     "log10_lambda_rel": {
+      "gblup_kinship": -3.0,
+      "ridge_lof_absence_indicator": 3.0
+     },
+     "models": {
+      "N0": {
+       "median_gene_pearson": 0.0,
+       "mean_gene_pearson": 0.0,
+       "n_gene_pearson": 1021,
+       "median_gene_spearman": 0.0,
+       "mean_gene_spearman": 0.0,
+       "n_gene_spearman": 1021,
+       "median_unit_centered_pearson": 0.0,
+       "mean_unit_centered_pearson": 0.0,
+       "n_unit_centered_pearson": 11,
+       "median_unit_centered_spearman": 0.0,
+       "mean_unit_centered_spearman": 0.0,
+       "n_unit_centered_spearman": 11,
+       "median_unit_raw_pearson": 0.7163036664658214,
+       "mean_unit_raw_pearson": 0.7147133550163839,
+       "n_unit_raw_pearson": 11
+      },
+      "gblup_kinship": {
+       "median_gene_pearson": -0.024900101922767093,
+       "mean_gene_pearson": -0.003073360248381286,
+       "n_gene_pearson": 1021,
+       "median_gene_spearman": 0.05454545454545454,
+       "mean_gene_spearman": 0.04300766161686828,
+       "n_gene_spearman": 1021,
+       "median_unit_centered_pearson": 0.07790658562349828,
+       "mean_unit_centered_pearson": 0.03081447063282472,
+       "n_unit_centered_pearson": 11,
+       "median_unit_centered_spearman": 0.01112705214727969,
+       "mean_unit_centered_spearman": 0.012872637571797086,
+       "n_unit_centered_spearman": 11,
+       "median_unit_raw_pearson": 0.6556504369381312,
+       "mean_unit_raw_pearson": 0.661552814086302,
+       "n_unit_raw_pearson": 11
+      },
+      "ridge_lof_absence_indicator": {
+       "median_gene_pearson": 0.23634837163039457,
+       "mean_gene_pearson": 0.18457752593363408,
+       "n_gene_pearson": 1021,
+       "median_gene_spearman": 0.17272727272727273,
+       "mean_gene_spearman": 0.14503203293604858,
+       "n_gene_spearman": 1021,
+       "median_unit_centered_pearson": 0.01890593386169945,
+       "mean_unit_centered_pearson": 0.028907439312753937,
+       "n_unit_centered_pearson": 11,
+       "median_unit_centered_spearman": -0.020288131038399777,
+       "mean_unit_centered_spearman": 0.0030623568229341787,
+       "n_unit_centered_spearman": 11,
+       "median_unit_raw_pearson": 0.7162434793939039,
+       "mean_unit_raw_pearson": 0.714771588514737,
+       "n_unit_raw_pearson": 11
+      }
+     }
+    },
+    "1": {
+     "n_test": 11,
+     "n_train": 44,
+     "n_val": 11,
+     "log10_lambda_rel": {
+      "gblup_kinship": 1.0,
+      "ridge_lof_absence_indicator": 3.0
+     },
+     "models": {
+      "N0": {
+       "median_gene_pearson": 0.0,
+       "mean_gene_pearson": 0.0,
+       "n_gene_pearson": 1021,
+       "median_gene_spearman": 0.0,
+       "mean_gene_spearman": 0.0,
+       "n_gene_spearman": 1021,
+       "median_unit_centered_pearson": 0.0,
+       "mean_unit_centered_pearson": 0.0,
+       "n_unit_centered_pearson": 11,
+       "median_unit_centered_spearman": 0.0,
+       "mean_unit_centered_spearman": 0.0,
+       "n_unit_centered_spearman": 11,
+       "median_unit_raw_pearson": 0.690773884045113,
+       "mean_unit_raw_pearson": 0.6510278170509078,
+       "n_unit_raw_pearson": 11
+      },
+      "gblup_kinship": {
+       "median_gene_pearson": 0.11316381240212024,
+       "mean_gene_pearson": 0.09064339401698353,
+       "n_gene_pearson": 1021,
+       "median_gene_spearman": 0.1,
+       "mean_gene_spearman": 0.0753060194783995,
+       "n_gene_spearman": 1021,
+       "median_unit_centered_pearson": 0.0540463529651169,
+       "mean_unit_centered_pearson": 0.058969662154921304,
+       "n_unit_centered_pearson": 11,
+       "median_unit_centered_spearman": 0.05069081241429446,
+       "mean_unit_centered_spearman": 0.05778360627786432,
+       "n_unit_centered_spearman": 11,
+       "median_unit_raw_pearson": 0.6894725226942386,
+       "mean_unit_raw_pearson": 0.6529570797565113,
+       "n_unit_raw_pearson": 11
+      },
+      "ridge_lof_absence_indicator": {
+       "median_gene_pearson": 0.10398947969377008,
+       "mean_gene_pearson": 0.0913038956087521,
+       "n_gene_pearson": 1021,
+       "median_gene_spearman": 0.12727272727272726,
+       "mean_gene_spearman": 0.10616427320638877,
+       "n_gene_spearman": 1021,
+       "median_unit_centered_pearson": 0.06451275676241276,
+       "mean_unit_centered_pearson": 0.04011313375676289,
+       "n_unit_centered_pearson": 11,
+       "median_unit_centered_spearman": 0.05027975558634408,
+       "mean_unit_centered_spearman": 0.04421312565505012,
+       "n_unit_centered_spearman": 11,
+       "median_unit_raw_pearson": 0.6907512484660712,
+       "mean_unit_raw_pearson": 0.6510812838920568,
+       "n_unit_raw_pearson": 11
+      }
+     }
+    },
+    "2": {
+     "n_test": 11,
+     "n_train": 44,
+     "n_val": 11,
+     "log10_lambda_rel": {
+      "gblup_kinship": -3.0,
+      "ridge_lof_absence_indicator": -1.0
+     },
+     "models": {
+      "N0": {
+       "median_gene_pearson": 0.0,
+       "mean_gene_pearson": 0.0,
+       "n_gene_pearson": 1021,
+       "median_gene_spearman": 0.0,
+       "mean_gene_spearman": 0.0,
+       "n_gene_spearman": 1021,
+       "median_unit_centered_pearson": 0.0,
+       "mean_unit_centered_pearson": 0.0,
+       "n_unit_centered_pearson": 11,
+       "median_unit_centered_spearman": 0.0,
+       "mean_unit_centered_spearman": 0.0,
+       "n_unit_centered_spearman": 11,
+       "median_unit_raw_pearson": 0.6814827325104565,
+       "mean_unit_raw_pearson": 0.673959845770747,
+       "n_unit_raw_pearson": 11
+      },
+      "gblup_kinship": {
+       "median_gene_pearson": 0.0956787658724364,
+       "mean_gene_pearson": 0.0962720814026665,
+       "n_gene_pearson": 1021,
+       "median_gene_spearman": 0.19090909090909092,
+       "mean_gene_spearman": 0.15392493565853016,
+       "n_gene_spearman": 1021,
+       "median_unit_centered_pearson": 0.026943466125468607,
+       "mean_unit_centered_pearson": -0.015716644641765358,
+       "n_unit_centered_pearson": 11,
+       "median_unit_centered_spearman": 0.030073965798428654,
+       "mean_unit_centered_spearman": 0.008669082481256158,
+       "n_unit_centered_spearman": 11,
+       "median_unit_raw_pearson": 0.648565173357417,
+       "mean_unit_raw_pearson": 0.6118692732244172,
+       "n_unit_raw_pearson": 11
+      },
+      "ridge_lof_absence_indicator": {
+       "median_gene_pearson": 0.005098265996126858,
+       "mean_gene_pearson": 0.021795596264581066,
+       "n_gene_pearson": 1021,
+       "median_gene_spearman": 0.18787878787878787,
+       "mean_gene_spearman": 0.14420672373659638,
+       "n_gene_spearman": 1021,
+       "median_unit_centered_pearson": 0.001091157786563736,
+       "mean_unit_centered_pearson": -0.025471806944510386,
+       "n_unit_centered_pearson": 11,
+       "median_unit_centered_spearman": 0.0457199725786995,
+       "mean_unit_centered_spearman": 0.008160148962586655,
+       "n_unit_centered_spearman": 11,
+       "median_unit_raw_pearson": 0.6392978537268357,
+       "mean_unit_raw_pearson": 0.6186038546637294,
+       "n_unit_raw_pearson": 11
+      }
+     }
+    },
+    "3": {
+     "n_test": 11,
+     "n_train": 44,
+     "n_val": 11,
+     "log10_lambda_rel": {
+      "gblup_kinship": -3.0,
+      "ridge_lof_absence_indicator": -3.0
+     },
+     "models": {
+      "N0": {
+       "median_gene_pearson": 0.0,
+       "mean_gene_pearson": 0.0,
+       "n_gene_pearson": 1022,
+       "median_gene_spearman": 0.0,
+       "mean_gene_spearman": 0.0,
+       "n_gene_spearman": 1022,
+       "median_unit_centered_pearson": 0.0,
+       "mean_unit_centered_pearson": 0.0,
+       "n_unit_centered_pearson": 11,
+       "median_unit_centered_spearman": 0.0,
+       "mean_unit_centered_spearman": 0.0,
+       "n_unit_centered_spearman": 11,
+       "median_unit_raw_pearson": 0.729177483468891,
+       "mean_unit_raw_pearson": 0.7070595967438565,
+       "n_unit_raw_pearson": 11
+      },
+      "gblup_kinship": {
+       "median_gene_pearson": 0.500545581779734,
+       "mean_gene_pearson": 0.41013531263725345,
+       "n_gene_pearson": 1022,
+       "median_gene_spearman": 0.41818181818181815,
+       "mean_gene_spearman": 0.3551532941943901,
+       "n_gene_spearman": 1022,
+       "median_unit_centered_pearson": 0.06986613615326497,
+       "mean_unit_centered_pearson": 0.08621513225942078,
+       "n_unit_centered_pearson": 11,
+       "median_unit_centered_spearman": 0.04456172136486931,
+       "mean_unit_centered_spearman": 0.07685374239657629,
+       "n_unit_centered_spearman": 11,
+       "median_unit_raw_pearson": 0.7080165038791271,
+       "mean_unit_raw_pearson": 0.6932920016224497,
+       "n_unit_raw_pearson": 11
+      },
+      "ridge_lof_absence_indicator": {
+       "median_gene_pearson": 0.43975925340388666,
+       "mean_gene_pearson": 0.36177674741866706,
+       "n_gene_pearson": 1022,
+       "median_gene_spearman": 0.4090909090909091,
+       "mean_gene_spearman": 0.3525150159690277,
+       "n_gene_spearman": 1022,
+       "median_unit_centered_pearson": 0.06849840873280127,
+       "mean_unit_centered_pearson": 0.08065131787597529,
+       "n_unit_centered_pearson": 11,
+       "median_unit_centered_spearman": 0.05331642649205623,
+       "mean_unit_centered_spearman": 0.07050700427987919,
+       "n_unit_centered_spearman": 11,
+       "median_unit_raw_pearson": 0.6979504056388202,
+       "mean_unit_raw_pearson": 0.6770209632153775,
+       "n_unit_raw_pearson": 11
+      }
+     }
+    },
+    "4": {
+     "n_test": 11,
+     "n_train": 44,
+     "n_val": 11,
+     "log10_lambda_rel": {
+      "gblup_kinship": 3.0,
+      "ridge_lof_absence_indicator": 3.0
+     },
+     "models": {
+      "N0": {
+       "median_gene_pearson": 0.0,
+       "mean_gene_pearson": 0.0,
+       "n_gene_pearson": 1022,
+       "median_gene_spearman": 0.0,
+       "mean_gene_spearman": 0.0,
+       "n_gene_spearman": 1022,
+       "median_unit_centered_pearson": 0.0,
+       "mean_unit_centered_pearson": 0.0,
+       "n_unit_centered_pearson": 11,
+       "median_unit_centered_spearman": 0.0,
+       "mean_unit_centered_spearman": 0.0,
+       "n_unit_centered_spearman": 11,
+       "median_unit_raw_pearson": 0.6752659257775769,
+       "mean_unit_raw_pearson": 0.673693210414905,
+       "n_unit_raw_pearson": 11
+      },
+      "gblup_kinship": {
+       "median_gene_pearson": 0.0022444908269696477,
+       "mean_gene_pearson": 0.02202776006231177,
+       "n_gene_pearson": 1022,
+       "median_gene_spearman": -0.012878787878787877,
+       "mean_gene_spearman": 0.010388763226336611,
+       "n_gene_spearman": 1022,
+       "median_unit_centered_pearson": 0.03787440110734121,
+       "mean_unit_centered_pearson": 0.07221367239286171,
+       "n_unit_centered_pearson": 11,
+       "median_unit_centered_spearman": 0.03739362390760993,
+       "mean_unit_centered_spearman": 0.06128191247692504,
+       "n_unit_centered_spearman": 11,
+       "median_unit_raw_pearson": 0.6752934042317659,
+       "mean_unit_raw_pearson": 0.6737663038327951,
+       "n_unit_raw_pearson": 11
+      },
+      "ridge_lof_absence_indicator": {
+       "median_gene_pearson": -0.01554658117183875,
+       "mean_gene_pearson": 0.0005670868513921619,
+       "n_gene_pearson": 1022,
+       "median_gene_spearman": 0.0,
+       "mean_gene_spearman": 0.02039439686210723,
+       "n_gene_spearman": 1022,
+       "median_unit_centered_pearson": 0.08153434652296321,
+       "mean_unit_centered_pearson": 0.06894703612986842,
+       "n_unit_centered_pearson": 11,
+       "median_unit_centered_spearman": 0.04284515963182187,
+       "mean_unit_centered_spearman": 0.06117602618403847,
+       "n_unit_centered_spearman": 11,
+       "median_unit_raw_pearson": 0.6752876092771991,
+       "mean_unit_raw_pearson": 0.6737467079189039,
+       "n_unit_raw_pearson": 11
+      }
+     }
+    }
+   },
+   "fold_mean": {
+    "N0": {
+     "median_gene_pearson": 0.0,
+     "median_unit_centered_pearson": 0.0,
+     "median_unit_raw_pearson": 0.6986007384535717,
+     "median_gene_spearman": 0.0,
+     "median_unit_centered_spearman": 0.0
+    },
+    "gblup_kinship": {
+     "median_gene_pearson": 0.13734650979169866,
+     "median_unit_centered_pearson": 0.05332738839493799,
+     "median_unit_raw_pearson": 0.6753996082201359,
+     "median_gene_spearman": 0.15015151515151517,
+     "median_unit_centered_spearman": 0.034769435126496405
+    },
+    "ridge_lof_absence_indicator": {
+     "median_gene_pearson": 0.15392975791046787,
+     "median_unit_centered_pearson": 0.046908520733288085,
+     "median_unit_raw_pearson": 0.683906119300566,
+     "median_gene_spearman": 0.17939393939393938,
+     "median_unit_centered_spearman": 0.03437463665010438
+    }
+   },
+   "n_folds_scored": 5,
+   "fold0_bootstrap": {
+    "gblup_kinship_vs_N0": {
+     "ci_median_gene_pearson": [
+      -0.5358423383075234,
+      0.6003838396669223
+     ],
+     "ci_median_unit_centered_pearson": [
+      -0.16852241921664157,
+      0.19241585501080752
+     ]
+    },
+    "ridge_lof_absence_indicator_vs_N0": {
+     "ci_median_gene_pearson": [
+      -0.3457182981547868,
+      0.7091246802138064
+     ],
+     "ci_median_unit_centered_pearson": [
+      -0.1427138274031846,
+      0.2333567280840157
+     ]
+    },
+    "gblup_kinship_vs_ridge_lof_absence_indicator": {
+     "ci_median_gene_pearson": [
+      -0.5358423383075234,
+      0.6003838396669223
+     ],
+     "ci_median_unit_centered_pearson": [
+      -0.16852241921664157,
+      0.19241585501080752
+     ],
+     "ci_diff_median_gene_pearson": [
+      -0.4252340795492211,
+      -0.024986652756568563
+     ],
+     "ci_diff_median_unit_centered_pearson": [
+      -0.08636628486387449,
+      0.21275207306410343
+     ]
+    }
+   },
+   "n_kinship_columns": 5819,
+   "n_indicator_columns": 1828
+  }
+ },
+ "note": "GBLUP kinship from per-gene call indicators (variant, loss of function, absence; the records carry no variant positions); indicator ridge on the 0/1 LoF + absence vector",
+ "slurm_job_id": "6065"
+}

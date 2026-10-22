@@ -19,6 +19,8 @@
 #   sbatch --export=ALL,ARM=alone_kemmeren --dependency=afterany:<smoke> .../gh_train_043_smoke.slurm
 #   sbatch --export=ALL,LOSS=pinball --dependency=afterany:<previous> .../gh_train_043_smoke.slurm
 #   sbatch --export=ALL,LOSS=mse --dependency=afterany:<previous> .../gh_train_043_smoke.slurm
+# Dataset-balanced sampler (data.sampler=balanced; W&B group joint_9_balanced_hlgauss_equal):
+#   sbatch --export=ALL,SAMPLER=balanced --job-name=043-train-smoke-bal --dependency=afterany:6122 .../gh_train_043_smoke.slurm
 #
 # --mem: host-side peak is the prepared store (measured at prepare time) plus one encoder's
 # full h5 embedding array while the compact table is gathered (FUDT upstream 1.21 M x 768
@@ -48,12 +50,13 @@ ARM="${ARM:-joint_9}"
 LOSS="${LOSS:-hlgauss}"
 WEIGHTING="${WEIGHTING:-equal}"
 SEED="${SEED:-0}"
+SAMPLER="${SAMPLER:-records}"
 echo "host $(hostname)  commit $(git rev-parse --short HEAD)  $(date)"
-echo "arm $ARM  loss $LOSS  weighting $WEIGHTING  seed $SEED"
+echo "arm $ARM  loss $LOSS  weighting $WEIGHTING  sampler $SAMPLER  seed $SEED"
 nvidia-smi --query-gpu=index,name,memory.total,memory.used --format=csv
 python experiments/043-expression-proteome-morphology/scripts/train_043.py \
   arm="$ARM" loss="$LOSS" weighting="$WEIGHTING" seed="$SEED" \
-  data.batch_size=8 data.num_workers=4 \
+  data.batch_size=8 data.num_workers=4 data.sampler="$SAMPLER" \
   budget.max_epochs=50 budget.time_budget_hours=7.6 budget.time_margin_minutes=20 \
   "wandb.tags=[smoke]"
 echo "done $(date)"

@@ -320,6 +320,12 @@ class DataConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     route: Literal["A", "B"] = "A"
+    sampler: Literal["records", "balanced"] = Field(
+        default="records",
+        description="records: uniform over training records (the per-record extreme); "
+        "balanced: each batch slot draws a dataset uniformly, then a record uniformly "
+        "within it. Composes with weighting (the loss-side knob).",
+    )
     batch_size: int = Field(default=16, gt=0)
     num_workers: int = Field(default=4, ge=0)
     mark_cap: int | None = Field(
@@ -480,7 +486,8 @@ class TrainConfig043(BaseModel):
     @property
     def arm_label(self) -> str:
         """``<arm>_<loss>_<weighting>``: the W&B group."""
-        return f"{self.arm.name}_{self.loss.kind}_{self.weighting.kind}"
+        sampler = "_balanced" if self.data.sampler == "balanced" else ""
+        return f"{self.arm.name}{sampler}_{self.loss.kind}_{self.weighting.kind}"
 
     @property
     def run_name(self) -> str:
@@ -1239,18 +1246,51 @@ class _BatchList(torch.utils.data.Dataset[tuple[Batch043, Targets043]]):
         return make_batch(self.view, self.batches[i].tolist())
 
 
+def balanced_batches(
+    view: TrainingView, positions: npt.NDArray[np.int64], batch_size: int, seed: int
+) -> list[npt.NDArray[np.int64]]:
+    """One epoch of dataset-balanced batches over ``positions``.
+
+    The epoch has as many batches as the uniform sampler would
+    (``ceil(len(positions) / batch_size)``); every slot of every batch draws a dataset
+    uniformly among the datasets with a position, then a position uniformly within that
+    dataset (with replacement), from a generator seeded by ``seed``. Small datasets are
+    revisited within an epoch and large ones are subsampled.
+    """
+    by_dataset = [
+        positions[view.local_dataset[positions] == d] for d in range(len(view.datasets))
+    ]
+    pools = [p for p in by_dataset if len(p)]
+    if not pools:
+        raise ValueError("no training positions to sample")
+    rng = np.random.default_rng(seed)
+    n_batches = math.ceil(len(positions) / batch_size)
+    which = rng.integers(0, len(pools), size=(n_batches, batch_size))
+    out = np.empty((n_batches, batch_size), np.int64)
+    for k, pool in enumerate(pools):
+        sel = which == k
+        out[sel] = pool[rng.integers(0, len(pool), size=int(sel.sum()))]
+    return list(out)
+
+
 def batch_loader(
     view: TrainingView,
     positions: npt.NDArray[np.int64],
     batch_size: int,
     shuffle_seed: int | None,
     num_workers: int,
+    sampler: Literal["records", "balanced"] = "records",
 ) -> torch.utils.data.DataLoader[tuple[Batch043, Targets043]]:
-    """Batches of ``positions`` (shuffled with ``shuffle_seed`` when given)."""
-    order = positions.copy()
-    if shuffle_seed is not None:
-        np.random.default_rng(shuffle_seed).shuffle(order)
-    chunks = [order[i : i + batch_size] for i in range(0, len(order), batch_size)]
+    """Batches of ``positions``: in order, shuffled (``records``) or ``balanced``."""
+    if sampler == "balanced":
+        if shuffle_seed is None:
+            raise ValueError("the balanced sampler needs a seed")
+        chunks = balanced_batches(view, positions, batch_size, shuffle_seed)
+    else:
+        order = positions.copy()
+        if shuffle_seed is not None:
+            np.random.default_rng(shuffle_seed).shuffle(order)
+        chunks = [order[i : i + batch_size] for i in range(0, len(order), batch_size)]
     return torch.utils.data.DataLoader(
         _BatchList(view, chunks),
         batch_size=None,
@@ -1751,6 +1791,7 @@ def train(
             cfg.data.batch_size,
             cfg.seed * 100003 + epoch,
             cfg.data.num_workers,
+            cfg.data.sampler,
         )
         t_probe = None
         for i, (batch, tg) in enumerate(loader):

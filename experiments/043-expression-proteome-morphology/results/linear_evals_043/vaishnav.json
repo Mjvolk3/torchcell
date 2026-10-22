@@ -1,0 +1,135 @@
+{
+ "n_records": 71054,
+ "n_records_level_missing": 104,
+ "n_distinct_80mers": 71054,
+ "libraries": {
+  "NBT_S288CdU_SCUra": 5327,
+  "None": 65727
+ },
+ "models": {
+  "kmer_1_6_ridge": {
+   "n_features": 5461,
+   "folds": {
+    "0": {
+     "n_test": 14206,
+     "pearson": 0.8838666109182436,
+     "spearman": 0.8930613831902583,
+     "log10_lambda_rel": -2.0,
+     "per_library_pearson": {
+      "NBT_S288CdU_SCUra": 0.6956177623271017,
+      "None": 0.8934611086825395
+     },
+     "pearson_ci95": [
+      0.8798857881003235,
+      0.8879947184825607
+     ]
+    },
+    "1": {
+     "n_test": 14208,
+     "pearson": 0.8845925079989774,
+     "spearman": 0.8949715695704742,
+     "log10_lambda_rel": -2.0,
+     "per_library_pearson": {
+      "NBT_S288CdU_SCUra": 0.6606952309446058,
+      "None": 0.8943878600740718
+     }
+    },
+    "2": {
+     "n_test": 14221,
+     "pearson": 0.8840945020763565,
+     "spearman": 0.8943238912003842,
+     "log10_lambda_rel": -2.0,
+     "per_library_pearson": {
+      "NBT_S288CdU_SCUra": 0.7057357454861604,
+      "None": 0.8925917486572913
+     }
+    },
+    "3": {
+     "n_test": 14205,
+     "pearson": 0.8849840289272743,
+     "spearman": 0.8950160281879895,
+     "log10_lambda_rel": -2.0,
+     "per_library_pearson": {
+      "NBT_S288CdU_SCUra": 0.6982848321587435,
+      "None": 0.8939379424560087
+     }
+    },
+    "4": {
+     "n_test": 14214,
+     "pearson": 0.883499973735596,
+     "spearman": 0.894224402818763,
+     "log10_lambda_rel": -2.0,
+     "per_library_pearson": {
+      "NBT_S288CdU_SCUra": 0.6873184523261746,
+      "None": 0.8925325063578534
+     }
+    }
+   },
+   "fold_mean_pearson": 0.8842075247312895,
+   "fold_mean_spearman": 0.8943194549935738
+  },
+  "onehot_80mer_ridge": {
+   "n_features": 321,
+   "folds": {
+    "0": {
+     "n_test": 14206,
+     "pearson": 0.4639061020573287,
+     "spearman": 0.46619230994145705,
+     "log10_lambda_rel": 1.0,
+     "per_library_pearson": {
+      "NBT_S288CdU_SCUra": 0.3863197836979483,
+      "None": 0.46834150924899837
+     },
+     "pearson_ci95": [
+      0.45005361377864,
+      0.47669314253706513
+     ]
+    },
+    "1": {
+     "n_test": 14208,
+     "pearson": 0.4589666124985241,
+     "spearman": 0.4601141309014711,
+     "log10_lambda_rel": 0.5,
+     "per_library_pearson": {
+      "NBT_S288CdU_SCUra": 0.39200784385856774,
+      "None": 0.4623971802328925
+     }
+    },
+    "2": {
+     "n_test": 14221,
+     "pearson": 0.4632167790082932,
+     "spearman": 0.4658091920980392,
+     "log10_lambda_rel": 1.0,
+     "per_library_pearson": {
+      "NBT_S288CdU_SCUra": 0.43507817951336397,
+      "None": 0.46515213213681744
+     }
+    },
+    "3": {
+     "n_test": 14205,
+     "pearson": 0.4704342036571571,
+     "spearman": 0.4730964566729239,
+     "log10_lambda_rel": 1.0,
+     "per_library_pearson": {
+      "NBT_S288CdU_SCUra": 0.4067891806223333,
+      "None": 0.4737783949417366
+     }
+    },
+    "4": {
+     "n_test": 14214,
+     "pearson": 0.4680994222554039,
+     "spearman": 0.46867007547825545,
+     "log10_lambda_rel": 1.5,
+     "per_library_pearson": {
+      "NBT_S288CdU_SCUra": 0.4617025950579108,
+      "None": 0.4685533194618307
+     }
+    }
+   },
+   "fold_mean_pearson": 0.4649246238953414,
+   "fold_mean_spearman": 0.4667764330184293
+  }
+ },
+ "N0_note": "N0 (the training mean) is constant across promoters; its Pearson is 0 by construction",
+ "slurm_job_id": "6067"
+}

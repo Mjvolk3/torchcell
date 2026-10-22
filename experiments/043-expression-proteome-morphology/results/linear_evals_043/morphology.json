@@ -1,0 +1,288 @@
+{
+ "n_ohya_genotypes": 4678,
+ "n_ohya_multi_gene_records_skipped": 0,
+ "n_moving_features": 116,
+ "n_smf_genes": 4581,
+ "moving_features_source": {
+  "path": "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/experiments/019-simb-multimodal/results/calmorph_moving_features.json",
+  "sha256": "312fd7a6d3d786fc8aa18bcbc51a3fb4d91b6885f250133db46f54d09feb17d4"
+ },
+ "smf_source": "smf_costanzo2016 dev store, mean over the gene's single-deletion records",
+ "inputs": {
+  "token_composite": {
+   "raw_all": {
+    "n_genotypes": 4678,
+    "n_input_features": 3328,
+    "median_r_over_116": 0.12088451087845781,
+    "mean_r_over_116": 0.11357292672869211,
+    "fold0_gene_subgroup_n": 459,
+    "fold0_gene_subgroup_median_r": 0.1367637570972829
+   },
+   "raw_smf_subset": {
+    "n_genotypes": 4167,
+    "n_input_features": 3328,
+    "median_r_over_116": 0.09965914406578788,
+    "mean_r_over_116": 0.09237501202366567,
+    "fold0_gene_subgroup_n": 405,
+    "fold0_gene_subgroup_median_r": 0.12765885305958555
+   },
+   "residualized": {
+    "n_genotypes": 4167,
+    "n_input_features": 3328,
+    "median_r_over_116": 0.0832597888308591,
+    "mean_r_over_116": 0.0788816524377017,
+    "fold0_gene_subgroup_n": 405,
+    "fold0_gene_subgroup_median_r": 0.08795043207771819
+   }
+  },
+  "token_fudt_up": {
+   "raw_all": {
+    "n_genotypes": 4678,
+    "n_input_features": 768,
+    "median_r_over_116": 0.01984870626199271,
+    "mean_r_over_116": 0.024992648045249363,
+    "fold0_gene_subgroup_n": 459,
+    "fold0_gene_subgroup_median_r": 0.03446065371153498
+   },
+   "raw_smf_subset": {
+    "n_genotypes": 4167,
+    "n_input_features": 768,
+    "median_r_over_116": 0.028269633924949845,
+    "mean_r_over_116": 0.029654845911045592,
+    "fold0_gene_subgroup_n": 405,
+    "fold0_gene_subgroup_median_r": 0.0599192395420767
+   },
+   "residualized": {
+    "n_genotypes": 4167,
+    "n_input_features": 768,
+    "median_r_over_116": 0.006415224297693222,
+    "mean_r_over_116": 0.008521315868709639,
+    "fold0_gene_subgroup_n": 405,
+    "fold0_gene_subgroup_median_r": 0.04473307338769911
+   }
+  },
+  "token_fudt_down": {
+   "raw_all": {
+    "n_genotypes": 4678,
+    "n_input_features": 768,
+    "median_r_over_116": 0.03272554766628256,
+    "mean_r_over_116": 0.027273565313731315,
+    "fold0_gene_subgroup_n": 459,
+    "fold0_gene_subgroup_median_r": 0.01425674365750074
+   },
+   "raw_smf_subset": {
+    "n_genotypes": 4167,
+    "n_input_features": 768,
+    "median_r_over_116": 0.013557679276132637,
+    "mean_r_over_116": 0.012241951053946352,
+    "fold0_gene_subgroup_n": 405,
+    "fold0_gene_subgroup_median_r": -0.012609663720520907
+   },
+   "residualized": {
+    "n_genotypes": 4167,
+    "n_input_features": 768,
+    "median_r_over_116": 0.011188352363759271,
+    "mean_r_over_116": 0.009728661189913723,
+    "fold0_gene_subgroup_n": 405,
+    "fold0_gene_subgroup_median_r": -0.018331278133600054
+   }
+  },
+  "token_prott5": {
+   "raw_all": {
+    "n_genotypes": 4678,
+    "n_input_features": 1024,
+    "median_r_over_116": 0.12691440339127769,
+    "mean_r_over_116": 0.11973845634241531,
+    "fold0_gene_subgroup_n": 459,
+    "fold0_gene_subgroup_median_r": 0.14528416353288193
+   },
+   "raw_smf_subset": {
+    "n_genotypes": 4167,
+    "n_input_features": 1024,
+    "median_r_over_116": 0.10083767917627905,
+    "mean_r_over_116": 0.09779750024588386,
+    "fold0_gene_subgroup_n": 405,
+    "fold0_gene_subgroup_median_r": 0.14912977587134152
+   },
+   "residualized": {
+    "n_genotypes": 4167,
+    "n_input_features": 1024,
+    "median_r_over_116": 0.08703029610762994,
+    "mean_r_over_116": 0.08491369947338417,
+    "fold0_gene_subgroup_n": 405,
+    "fold0_gene_subgroup_median_r": 0.11410526844913485
+   }
+  },
+  "token_calm": {
+   "raw_all": {
+    "n_genotypes": 4678,
+    "n_input_features": 768,
+    "median_r_over_116": 0.11596285647217065,
+    "mean_r_over_116": 0.1088453502474704,
+    "fold0_gene_subgroup_n": 459,
+    "fold0_gene_subgroup_median_r": 0.11942419566914109
+   },
+   "raw_smf_subset": {
+    "n_genotypes": 4167,
+    "n_input_features": 768,
+    "median_r_over_116": 0.09626712098825811,
+    "mean_r_over_116": 0.09077550455483067,
+    "fold0_gene_subgroup_n": 405,
+    "fold0_gene_subgroup_median_r": 0.12533711066964448
+   },
+   "residualized": {
+    "n_genotypes": 4167,
+    "n_input_features": 768,
+    "median_r_over_116": 0.08047680625622283,
+    "mean_r_over_116": 0.07741374262047455,
+    "fold0_gene_subgroup_n": 405,
+    "fold0_gene_subgroup_median_r": 0.08349909343561196
+   }
+  },
+  "measured_kemmeren": {
+   "raw_all": {
+    "n_genotypes": 1437,
+    "n_input_features": 6127,
+    "median_r_over_116": 0.3475906630877513,
+    "mean_r_over_116": 0.32624829332865773,
+    "fold0_gene_subgroup_n": 135,
+    "fold0_gene_subgroup_median_r": 0.34928313523387233
+   },
+   "raw_smf_subset": {
+    "n_genotypes": 1317,
+    "n_input_features": 6127,
+    "median_r_over_116": 0.3308333093063319,
+    "mean_r_over_116": 0.310519208758699,
+    "fold0_gene_subgroup_n": 125,
+    "fold0_gene_subgroup_median_r": 0.3995720641476044
+   },
+   "residualized": {
+    "n_genotypes": 1317,
+    "n_input_features": 6127,
+    "median_r_over_116": 0.2671031849565145,
+    "mean_r_over_116": 0.2584984550858388,
+    "fold0_gene_subgroup_n": 125,
+    "fold0_gene_subgroup_median_r": 0.29113666395983906
+   }
+  },
+  "measured_messner": {
+   "raw_all": {
+    "n_genotypes": 4279,
+    "n_input_features": 1850,
+    "median_r_over_116": 0.2782777748880522,
+    "mean_r_over_116": 0.25261379820013546,
+    "fold0_gene_subgroup_n": 421,
+    "fold0_gene_subgroup_median_r": 0.3496811144854107
+   },
+   "raw_smf_subset": {
+    "n_genotypes": 3875,
+    "n_input_features": 1850,
+    "median_r_over_116": 0.27031008950462315,
+    "mean_r_over_116": 0.24600132516643278,
+    "fold0_gene_subgroup_n": 380,
+    "fold0_gene_subgroup_median_r": 0.2937170955939955
+   },
+   "residualized": {
+    "n_genotypes": 3875,
+    "n_input_features": 1850,
+    "median_r_over_116": 0.24275183089767455,
+    "mean_r_over_116": 0.22052216826059726,
+    "fold0_gene_subgroup_n": 380,
+    "fold0_gene_subgroup_median_r": 0.25330891417914025
+   }
+  },
+  "measured_hu": {
+   "raw_all": {
+    "n_genotypes": 259,
+    "n_input_features": 5876,
+    "median_r_over_116": 0.23135214094135464,
+    "mean_r_over_116": 0.2084589436755241,
+    "fold0_gene_subgroup_n": 19,
+    "fold0_gene_subgroup_median_r": 0.17784424210178496
+   },
+   "raw_smf_subset": {
+    "n_genotypes": 232,
+    "n_input_features": 5876,
+    "median_r_over_116": 0.22441939044445092,
+    "mean_r_over_116": 0.2422186065505747,
+    "fold0_gene_subgroup_n": 15,
+    "fold0_gene_subgroup_median_r": 0.2969606042084736
+   },
+   "residualized": {
+    "n_genotypes": 232,
+    "n_input_features": 5876,
+    "median_r_over_116": 0.19808787645644177,
+    "mean_r_over_116": 0.22660656791284473,
+    "fold0_gene_subgroup_n": 15,
+    "fold0_gene_subgroup_median_r": 0.35689239114178195
+   }
+  },
+  "fitness_only": {
+   "raw_smf_subset": {
+    "n_genotypes": 4167,
+    "n_input_features": 1,
+    "median_r_over_116": 0.1321689152720379,
+    "mean_r_over_116": 0.11977871721854542,
+    "fold0_gene_subgroup_n": 405,
+    "fold0_gene_subgroup_median_r": 0.1647333900356493
+   }
+  }
+ },
+ "bootstrap": {
+  "token_composite_vs_measured_kemmeren|raw_smf_subset": {
+   "n_common_genotypes": 1317,
+   "diff_median_r": -0.23061812898426534,
+   "ci95": [
+    -0.28620858707909747,
+    -0.17396593124214133
+   ],
+   "note": "each side's out-of-fold predictions from its own fit; scored on the common genotypes"
+  },
+  "token_composite_vs_measured_kemmeren|residualized": {
+   "n_common_genotypes": 1317,
+   "diff_median_r": -0.20321703828554444,
+   "ci95": [
+    -0.2624795815899136,
+    -0.1350409227754774
+   ],
+   "note": "each side's out-of-fold predictions from its own fit; scored on the common genotypes"
+  },
+  "token_composite_vs_measured_messner|raw_smf_subset": {
+   "n_common_genotypes": 3875,
+   "diff_median_r": -0.1725160187405036,
+   "ci95": [
+    -0.20822601354809495,
+    -0.13865673653326124
+   ],
+   "note": "each side's out-of-fold predictions from its own fit; scored on the common genotypes"
+  },
+  "token_composite_vs_measured_messner|residualized": {
+   "n_common_genotypes": 3875,
+   "diff_median_r": -0.16115647709650896,
+   "ci95": [
+    -0.1916099015769649,
+    -0.12726776218857971
+   ],
+   "note": "each side's out-of-fold predictions from its own fit; scored on the common genotypes"
+  },
+  "token_composite_vs_measured_hu|raw_smf_subset": {
+   "n_common_genotypes": 232,
+   "diff_median_r": -0.1331714865143963,
+   "ci95": [
+    -0.25613508933886975,
+    -0.02426506724114773
+   ],
+   "note": "each side's out-of-fold predictions from its own fit; scored on the common genotypes"
+  },
+  "token_composite_vs_measured_hu|residualized": {
+   "n_common_genotypes": 232,
+   "diff_median_r": -0.1574228567827669,
+   "ci95": [
+    -0.2846952087828406,
+    -0.06551333802816964
+   ],
+   "note": "each side's out-of-fold predictions from its own fit; scored on the common genotypes"
+  }
+ },
+ "slurm_job_id": "6068"
+}

@@ -1,8 +1,8 @@
 {
  "generated_by": "experiments/043-expression-proteome-morphology/scripts/verify_representation_043.py",
- "created_at": "2026-10-22T03:23:58+00:00",
- "slurm_job_id": "6120",
- "wall_seconds": 208.0,
+ "created_at": "2026-10-22T19:21:32+00:00",
+ "slurm_job_id": "6133",
+ "wall_seconds": 240.7,
  "records": 173617,
  "limit": null,
  "config": "RepresentationConfig(route='A'), isolates also under route='B'; segregant rule confident_run at posterior >= 0.9",
@@ -32,10 +32,10 @@
     "max": 0.0
    },
    "genes_with_gap_per_record": {
-    "min": 571.0,
-    "median": 2858.5,
-    "mean": 2886.49,
-    "max": 5809.0
+    "min": 575.0,
+    "median": 2881.0,
+    "mean": 2909.01,
+    "max": 5816.0
    },
    "marks_by_change_type_mean": {
     "variant": 3288.28
@@ -84,6 +84,15 @@
       "median": 2494.0,
       "mean": 2507.99,
       "max": 5671.0
+     }
+    },
+    "ambiguous_sequence": {
+     "records_with": 79516,
+     "genes_per_record": {
+      "min": 1.0,
+      "median": 39.0,
+      "mean": 38.5,
+      "max": 95.0
      }
     }
    },
@@ -160,10 +169,10 @@
     "max": 352.0
    },
    "genes_with_gap_per_record": {
-    "min": 879.0,
-    "median": 988.0,
-    "mean": 1090.51,
-    "max": 2832.0
+    "min": 934.0,
+    "median": 1489.0,
+    "mean": 2218.61,
+    "max": 6294.0
    },
    "marks_by_change_type_mean": {
     "deletion": 0.07,
@@ -225,6 +234,15 @@
       "mean": 132.1,
       "max": 450.0
      }
+    },
+    "ambiguous_sequence": {
+     "records_with": 943,
+     "genes_per_record": {
+      "min": 54.0,
+      "median": 536.0,
+      "mean": 1311.29,
+      "max": 5488.0
+     }
     }
    },
    "extra_token_gaps": {
@@ -270,16 +288,16 @@
      "max": 1955.0
     },
     "genes_route_a_keys_differ_s288c_per_record": {
-     "min": 481.0,
-     "median": 5686.0,
-     "mean": 5645.94,
-     "max": 5870.0
+     "min": 436.0,
+     "median": 5484.0,
+     "mean": 5445.03,
+     "max": 5842.0
     },
     "route_b_genes_with_gap_per_record": {
-     "min": 11.0,
-     "median": 216.0,
-     "mean": 317.17,
-     "max": 2093.0
+     "min": 12.0,
+     "median": 704.0,
+     "mean": 1426.35,
+     "max": 5516.0
     }
    }
   },
@@ -494,10 +512,10 @@
     "max": 0.0
    },
    "genes_with_gap_per_record": {
-    "min": 588.0,
-    "median": 908.0,
-    "mean": 1149.7,
-    "max": 3705.0
+    "min": 603.0,
+    "median": 926.0,
+    "mean": 1164.65,
+    "max": 3713.0
    },
    "marks_by_change_type_mean": {
     "variant": 2875.54
@@ -546,6 +564,15 @@
       "median": 585.0,
       "mean": 845.49,
       "max": 3569.0
+     }
+    },
+    "ambiguous_sequence": {
+     "records_with": 2951,
+     "genes_per_record": {
+      "min": 5.0,
+      "median": 22.0,
+      "mean": 21.91,
+      "max": 43.0
      }
     }
    },
@@ -667,10 +694,10 @@
     "max": 334.0
    },
    "genes_with_gap_per_record": {
-    "min": 879.0,
-    "median": 996.0,
-    "mean": 1035.47,
-    "max": 1381.0
+    "min": 992.0,
+    "median": 1934.0,
+    "mean": 2254.02,
+    "max": 5508.0
    },
    "marks_by_change_type_mean": {
     "deletion": 0.05,
@@ -732,6 +759,15 @@
       "mean": 131.6,
       "max": 331.0
      }
+    },
+    "ambiguous_sequence": {
+     "records_with": 55,
+     "genes_per_record": {
+      "min": 98.0,
+      "median": 1025.0,
+      "mean": 1351.22,
+      "max": 4686.0
+     }
     }
    },
    "extra_token_gaps": {
@@ -773,16 +809,16 @@
      "max": 1908.0
     },
     "genes_route_a_keys_differ_s288c_per_record": {
-     "min": 5427.0,
-     "median": 5672.0,
-     "mean": 5665.18,
-     "max": 5857.0
+     "min": 5016.0,
+     "median": 5483.0,
+     "mean": 5515.04,
+     "max": 5822.0
     },
     "route_b_genes_with_gap_per_record": {
-     "min": 148.0,
-     "median": 223.0,
-     "mean": 261.98,
-     "max": 641.0
+     "min": 225.0,
+     "median": 1163.0,
+     "mean": 1461.05,
+     "max": 4756.0
     }
    }
   },
@@ -856,10 +892,10 @@
     "max": 352.0
    },
    "genes_with_gap_per_record": {
-    "min": 879.0,
-    "median": 984.0,
-    "mean": 1080.59,
-    "max": 2832.0
+    "min": 934.0,
+    "median": 1387.5,
+    "mean": 2188.73,
+    "max": 6294.0
    },
    "marks_by_change_type_mean": {
     "deletion": 0.06,
@@ -921,6 +957,15 @@
       "mean": 130.38,
       "max": 418.0
      }
+    },
+    "ambiguous_sequence": {
+     "records_with": 794,
+     "genes_per_record": {
+      "min": 54.0,
+      "median": 429.0,
+      "mean": 1286.03,
+      "max": 5484.0
+     }
     }
    },
    "extra_token_gaps": {
@@ -962,16 +1007,16 @@
      "max": 1954.0
     },
     "genes_route_a_keys_differ_s288c_per_record": {
-     "min": 481.0,
-     "median": 5673.0,
-     "mean": 5640.44,
-     "max": 5870.0
+     "min": 436.0,
+     "median": 5480.0,
+     "mean": 5441.61,
+     "max": 5842.0
     },
     "route_b_genes_with_gap_per_record": {
-     "min": 11.0,
-     "median": 214.0,
-     "mean": 308.33,
-     "max": 2093.0
+     "min": 12.0,
+     "median": 566.5,
+     "mean": 1396.89,
+     "max": 5512.0
     }
    }
   },

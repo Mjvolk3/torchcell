@@ -1,8 +1,8 @@
 {
  "generated_by": "experiments/043-expression-proteome-morphology/scripts/resolve_segregant_alleles_043.py",
- "created_at": "2026-10-22T03:13:08+00:00",
- "slurm_job_id": "6118",
- "wall_seconds": 179.0,
+ "created_at": "2026-10-22T19:17:23+00:00",
+ "slurm_job_id": "6130",
+ "wall_seconds": 161.5,
  "rule": "whole-gene containment in one confident run (consecutive blocks of one parent, every block posterior >= 0.9); single_block = the literal one-block form",
  "coordinates": "gene spans: SGD R64-4-1 GFF; blocks: the loaders' marker positions on the S288C reference",
  "n_genes": 6607,
@@ -29,10 +29,10 @@
     "max": 6001
    },
    "n_non_reference_allele_differs_from_s288c": {
-    "mean": 2821.2,
-    "median": 2889.0,
-    "min": 573,
-    "max": 5191
+    "mean": 2798.6,
+    "median": 2865.0,
+    "min": 569,
+    "max": 5151
    },
    "n_non_reference_without_allele": {
     "mean": 270.8,
@@ -92,10 +92,10 @@
     "max": 4416
    },
    "n_non_reference_allele_differs_from_s288c": {
-    "mean": 2442.3,
-    "median": 2472.0,
-    "min": 954,
-    "max": 3737
+    "mean": 2427.3,
+    "median": 2459.0,
+    "min": 948,
+    "max": 3715
    },
    "n_non_reference_without_allele": {
     "mean": 228.6,
@@ -161,10 +161,10 @@
     "max": 6001
    },
    "n_non_reference_allele_differs_from_s288c": {
-    "mean": 3492.4,
-    "median": 3776.0,
-    "min": 773,
-    "max": 5191
+    "mean": 3466.6,
+    "median": 3749.0,
+    "min": 766,
+    "max": 5151
    },
    "n_non_reference_without_allele": {
     "mean": 336.5,
@@ -228,10 +228,10 @@
     "max": 4184
    },
    "n_non_reference_allele_differs_from_s288c": {
-    "mean": 1820.2,
-    "median": 1801.0,
-    "min": 573,
-    "max": 3527
+    "mean": 1808.1,
+    "median": 1789.0,
+    "min": 569,
+    "max": 3508
    },
    "n_non_reference_without_allele": {
     "mean": 177.4,
@@ -295,10 +295,10 @@
     "max": 5850
    },
    "n_non_reference_allele_differs_from_s288c": {
-    "mean": 3351.2,
-    "median": 3291.0,
-    "min": 1598,
-    "max": 5057
+    "mean": 3322.6,
+    "median": 3263.0,
+    "min": 1586,
+    "max": 5024
    },
    "n_non_reference_without_allele": {
     "mean": 319.8,
@@ -362,10 +362,10 @@
     "max": 4416
    },
    "n_non_reference_allele_differs_from_s288c": {
-    "mean": 2442.3,
-    "median": 2472.0,
-    "min": 954,
-    "max": 3737
+    "mean": 2427.3,
+    "median": 2459.0,
+    "min": 948,
+    "max": 3715
    },
    "n_non_reference_without_allele": {
     "mean": 228.6,
@@ -408,38 +408,38 @@
  "distinct_parent_alleles_used": {
   "AAA": {
    "genes_ever_assigned": 6446,
-   "genes_with_all_four_keys": 5689,
-   "distinct_protein_keys": 5879,
-   "distinct_calm_keys": 5905,
-   "genes_whose_allele_differs_from_s288c": 5394
+   "genes_with_all_four_keys": 5647,
+   "distinct_protein_keys": 5847,
+   "distinct_calm_keys": 5860,
+   "genes_whose_allele_differs_from_s288c": 5352
   },
   "AAS": {
    "genes_ever_assigned": 6439,
-   "genes_with_all_four_keys": 5639,
-   "distinct_protein_keys": 5874,
-   "distinct_calm_keys": 5896,
-   "genes_whose_allele_differs_from_s288c": 5366
+   "genes_with_all_four_keys": 5578,
+   "distinct_protein_keys": 5836,
+   "distinct_calm_keys": 5843,
+   "genes_whose_allele_differs_from_s288c": 5305
   },
   "ABL": {
    "genes_ever_assigned": 6419,
-   "genes_with_all_four_keys": 5626,
-   "distinct_protein_keys": 5862,
-   "distinct_calm_keys": 5885,
-   "genes_whose_allele_differs_from_s288c": 5623
+   "genes_with_all_four_keys": 5574,
+   "distinct_protein_keys": 5833,
+   "distinct_calm_keys": 5840,
+   "genes_whose_allele_differs_from_s288c": 5571
   },
   "ACD": {
    "genes_ever_assigned": 6439,
-   "genes_with_all_four_keys": 5694,
-   "distinct_protein_keys": 5870,
-   "distinct_calm_keys": 5896,
-   "genes_whose_allele_differs_from_s288c": 5685
+   "genes_with_all_four_keys": 5655,
+   "distinct_protein_keys": 5820,
+   "distinct_calm_keys": 5825,
+   "genes_whose_allele_differs_from_s288c": 5646
   },
   "ADI": {
    "genes_ever_assigned": 6419,
-   "genes_with_all_four_keys": 5696,
-   "distinct_protein_keys": 5861,
-   "distinct_calm_keys": 5884,
-   "genes_whose_allele_differs_from_s288c": 5410
+   "genes_with_all_four_keys": 5660,
+   "distinct_protein_keys": 5835,
+   "distinct_calm_keys": 5847,
+   "genes_whose_allele_differs_from_s288c": 5374
   }
  }
 }

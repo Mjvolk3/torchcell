@@ -785,6 +785,7 @@ Tests: 13 for the loss, 13 for the model, 10 for the trainer end to end on synth
 | arm | training datasets | training records | split B doubles | loss, weighting | status |
 |---|---|---:|---:|---|---|
 | `joint_9_hlgauss_equal` | Kemmeren, Messner, Zelezniak, Caudal, Muenzner protein, Muenzner turnover, Boocock pooled, N'Guessan, Vaishnav | 50,767 | 72 | HL-Gauss, equal | smoke, job 6124, pending on 6122 |
+| `joint_9_balanced_hlgauss_equal` | as joint_9, dataset-balanced sampler | 50,767 | 72 | HL-Gauss, equal | smoke, job 6125, pending on 6122 |
 | `alone_kemmeren_hlgauss_equal` | Kemmeren | 1,202 | 72 | HL-Gauss, equal | prepared, not submitted |
 | `joint_9_pinball_equal` | as joint_9 | 50,767 | 72 | pinball, equal | prepared, not submitted |
 | `joint_9_mse_equal` | as joint_9 | 50,767 | 72 | MSE, equal | prepared, not submitted |
@@ -803,7 +804,7 @@ https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology
 Decisions taken here that the design left open (each is a choice, untested):
 
 - Segregant genes the definite rule leaves unassigned are not marks; they read the S288C state in the trunk. The alternative is an `unknown` mark.
-- Batches are uniform over training records, so Vaishnav fills 84% of training records (42,694 of 50,767) and a batch of 8 carries about 1.3 gene-level records; equal weighting gives each dataset present in the batch the same loss weight. A dataset-balanced sampler is the alternative.
+- Batches are uniform over training records by default (`data.sampler: records`), so Vaishnav fills 84% of training records (42,694 of 50,767) and a batch of 8 carries about 1.3 gene-level records; equal weighting gives each dataset present in the batch the same loss weight. The dataset-balanced sampler (`data.sampler: balanced`: each batch slot draws a dataset uniformly, then a record within it, same batches per epoch) is the other extreme the owner asked for, and runs as the second smoke, job 6125. Sampler (batch side) and weighting (loss side) compose.
 - The null key of the operator is always present (019's null sink, value zero, learned key).
 - Muenzner's FY4 reference record trains as an S288C-context record with no marks.
 - Trunk: width 144, 9 heads, 4 layers, graph mask on layer 1 with one relation per head (019 used width 90 and 6 layers); head dimension 16 keeps the fused attention kernels.

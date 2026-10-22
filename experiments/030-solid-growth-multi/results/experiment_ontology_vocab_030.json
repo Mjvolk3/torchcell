@@ -1,0 +1,1060 @@
+{
+ "nodes": [
+  {
+   "name": "BiologicPerturbation",
+   "kind": "class",
+   "parents": [
+    "EnvironmentPerturbation",
+    "Environment"
+   ]
+  },
+  {
+   "name": "CalMorphExperiment",
+   "kind": "class",
+   "parents": [
+    "Experiment"
+   ]
+  },
+  {
+   "name": "CalMorphExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ExperimentReference"
+   ]
+  },
+  {
+   "name": "CalMorphPhenotype",
+   "kind": "class",
+   "parents": [
+    "Phenotype",
+    "CalMorphExperimentReference",
+    "CalMorphExperiment"
+   ]
+  },
+  {
+   "name": "Compound",
+   "kind": "class",
+   "parents": [
+    "Solvent",
+    "MediaComponent",
+    "Media",
+    "SmallMoleculePerturbation",
+    "EnvironmentPhysicalPerturbation"
+   ]
+  },
+  {
+   "name": "CompoundIdentityRecord",
+   "kind": "class",
+   "parents": []
+  },
+  {
+   "name": "CompoundIdentityResolution",
+   "kind": "class",
+   "parents": []
+  },
+  {
+   "name": "Concentration",
+   "kind": "class",
+   "parents": [
+    "MediaComponent",
+    "SmallMoleculePerturbation",
+    "EnvironmentPhysicalPerturbation",
+    "BiologicPerturbation"
+   ]
+  },
+  {
+   "name": "Environment",
+   "kind": "class",
+   "parents": [
+    "Experiment"
+   ]
+  },
+  {
+   "name": "Environment.aerobicity:aerobic",
+   "kind": "value",
+   "parents": [
+    "Environment"
+   ]
+  },
+  {
+   "name": "Environment.aerobicity:anaerobic",
+   "kind": "value",
+   "parents": [
+    "Environment"
+   ]
+  },
+  {
+   "name": "Environment.aerobicity:microaerobic",
+   "kind": "value",
+   "parents": [
+    "Environment"
+   ]
+  },
+  {
+   "name": "EnvironmentPerturbation",
+   "kind": "class",
+   "parents": []
+  },
+  {
+   "name": "EnvironmentPhysicalPerturbation",
+   "kind": "class",
+   "parents": [
+    "EnvironmentPerturbation",
+    "Environment"
+   ]
+  },
+  {
+   "name": "EnvironmentResponseExperiment",
+   "kind": "class",
+   "parents": [
+    "Experiment"
+   ]
+  },
+  {
+   "name": "EnvironmentResponseExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ExperimentReference"
+   ]
+  },
+  {
+   "name": "EnvironmentResponsePhenotype",
+   "kind": "class",
+   "parents": [
+    "Phenotype",
+    "EnvironmentResponseExperimentReference",
+    "EnvironmentResponseExperiment"
+   ]
+  },
+  {
+   "name": "Experiment",
+   "kind": "class",
+   "parents": []
+  },
+  {
+   "name": "ExperimentReference",
+   "kind": "class",
+   "parents": []
+  },
+  {
+   "name": "FitnessExperiment",
+   "kind": "class",
+   "parents": [
+    "Experiment"
+   ]
+  },
+  {
+   "name": "FitnessExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ExperimentReference"
+   ]
+  },
+  {
+   "name": "FitnessPhenotype",
+   "kind": "class",
+   "parents": [
+    "Phenotype",
+    "FitnessExperimentReference",
+    "FitnessExperiment"
+   ]
+  },
+  {
+   "name": "GeneEssentialityExperiment",
+   "kind": "class",
+   "parents": [
+    "Experiment"
+   ]
+  },
+  {
+   "name": "GeneEssentialityExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ExperimentReference"
+   ]
+  },
+  {
+   "name": "GeneEssentialityPhenotype",
+   "kind": "class",
+   "parents": [
+    "Phenotype",
+    "GeneEssentialityExperimentReference",
+    "GeneEssentialityExperiment"
+   ]
+  },
+  {
+   "name": "GeneInteractionExperiment",
+   "kind": "class",
+   "parents": [
+    "Experiment"
+   ]
+  },
+  {
+   "name": "GeneInteractionExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ExperimentReference"
+   ]
+  },
+  {
+   "name": "GeneInteractionPhenotype",
+   "kind": "class",
+   "parents": [
+    "Phenotype",
+    "GeneInteractionExperimentReference",
+    "GeneInteractionExperiment"
+   ]
+  },
+  {
+   "name": "Media",
+   "kind": "class",
+   "parents": [
+    "Environment"
+   ]
+  },
+  {
+   "name": "Media.base_medium:SC",
+   "kind": "value",
+   "parents": [
+    "Media"
+   ]
+  },
+  {
+   "name": "Media.base_medium:SD",
+   "kind": "value",
+   "parents": [
+    "Media"
+   ]
+  },
+  {
+   "name": "Media.base_medium:SD_MSG",
+   "kind": "value",
+   "parents": [
+    "Media"
+   ]
+  },
+  {
+   "name": "Media.base_medium:YNB",
+   "kind": "value",
+   "parents": [
+    "Media"
+   ]
+  },
+  {
+   "name": "Media.base_medium:YPD",
+   "kind": "value",
+   "parents": [
+    "Media"
+   ]
+  },
+  {
+   "name": "Media.dropout:L-arginine",
+   "kind": "value",
+   "parents": [
+    "Media"
+   ]
+  },
+  {
+   "name": "Media.dropout:L-histidine",
+   "kind": "value",
+   "parents": [
+    "Media"
+   ]
+  },
+  {
+   "name": "Media.dropout:L-lysine",
+   "kind": "value",
+   "parents": [
+    "Media"
+   ]
+  },
+  {
+   "name": "Media.dropout:uracil",
+   "kind": "value",
+   "parents": [
+    "Media"
+   ]
+  },
+  {
+   "name": "Media.is_synthetic:false",
+   "kind": "value",
+   "parents": [
+    "Media"
+   ]
+  },
+  {
+   "name": "Media.is_synthetic:true",
+   "kind": "value",
+   "parents": [
+    "Media"
+   ]
+  },
+  {
+   "name": "Media.state:liquid",
+   "kind": "value",
+   "parents": [
+    "Media"
+   ]
+  },
+  {
+   "name": "Media.state:solid",
+   "kind": "value",
+   "parents": [
+    "Media"
+   ]
+  },
+  {
+   "name": "MediaComponent",
+   "kind": "class",
+   "parents": [
+    "Media"
+   ]
+  },
+  {
+   "name": "MediaComponent:4-aminobenzoic acid:vitamin",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:D-glucose:carbon_source",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:G418 (geneticin):selection_agent",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-alanine:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-arginine:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-asparagine:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-aspartic acid:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-canavanine:selection_agent",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-cysteine:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-glutamic acid:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-glutamine:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-histidine:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-isoleucine:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-leucine:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-lysine:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-methionine:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-phenylalanine:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-proline:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-serine:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-threonine:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-tryptophan:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-tyrosine:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:L-valine:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:SC amino-acid supplement powder (DO -His/Arg/Lys):amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:adenine:nucleobase",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:agar:gelling_agent",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:ammonium sulfate:nitrogen_source",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:biotin:vitamin",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:calcium pantothenate:vitamin",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:folic acid:vitamin",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:glycine:amino_acid",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:monosodium L-glutamate:nitrogen_source",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:myo-inositol:vitamin",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:niacin:vitamin",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:nourseothricin (clonNAT):selection_agent",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:peptone:complex_ingredient",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:pyridoxine hydrochloride:vitamin",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:riboflavin:vitamin",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:thialysine (S-(2-aminoethyl)-L-cysteine):selection_agent",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:thiamine hydrochloride:vitamin",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:uracil:nucleobase",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:yeast extract:complex_ingredient",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:yeast nitrogen base (w/o amino acids and ammonium sulfate):other",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MediaComponent:yeast nitrogen base (w/o amino acids):other",
+   "kind": "value",
+   "parents": [
+    "MediaComponent"
+   ]
+  },
+  {
+   "name": "MetaboliteExperiment",
+   "kind": "class",
+   "parents": [
+    "Experiment"
+   ]
+  },
+  {
+   "name": "MetaboliteExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ExperimentReference"
+   ]
+  },
+  {
+   "name": "MetabolitePhenotype",
+   "kind": "class",
+   "parents": [
+    "Phenotype",
+    "MetaboliteExperimentReference",
+    "MetaboliteExperiment"
+   ]
+  },
+  {
+   "name": "MicroarrayExpressionExperiment",
+   "kind": "class",
+   "parents": [
+    "Experiment"
+   ]
+  },
+  {
+   "name": "MicroarrayExpressionExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ExperimentReference"
+   ]
+  },
+  {
+   "name": "MicroarrayExpressionPhenotype",
+   "kind": "class",
+   "parents": [
+    "Phenotype",
+    "MicroarrayExpressionExperimentReference",
+    "MicroarrayExpressionExperiment"
+   ]
+  },
+  {
+   "name": "Phenotype",
+   "kind": "class",
+   "parents": [
+    "Experiment"
+   ]
+  },
+  {
+   "name": "ProteinAbundanceExperiment",
+   "kind": "class",
+   "parents": [
+    "Experiment"
+   ]
+  },
+  {
+   "name": "ProteinAbundanceExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ExperimentReference"
+   ]
+  },
+  {
+   "name": "ProteinAbundancePhenotype",
+   "kind": "class",
+   "parents": [
+    "Phenotype",
+    "ProteinAbundanceExperimentReference",
+    "ProteinAbundanceExperiment"
+   ]
+  },
+  {
+   "name": "PseudobulkExpressionExperiment",
+   "kind": "class",
+   "parents": [
+    "Experiment"
+   ]
+  },
+  {
+   "name": "PseudobulkExpressionExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ExperimentReference"
+   ]
+  },
+  {
+   "name": "PseudobulkExpressionPhenotype",
+   "kind": "class",
+   "parents": [
+    "Phenotype",
+    "PseudobulkExpressionExperimentReference",
+    "PseudobulkExpressionExperiment"
+   ]
+  },
+  {
+   "name": "RNASeqExpressionExperiment",
+   "kind": "class",
+   "parents": [
+    "Experiment"
+   ]
+  },
+  {
+   "name": "RNASeqExpressionExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ExperimentReference"
+   ]
+  },
+  {
+   "name": "RNASeqExpressionPhenotype",
+   "kind": "class",
+   "parents": [
+    "Phenotype",
+    "RNASeqExpressionExperimentReference",
+    "RNASeqExpressionExperiment"
+   ]
+  },
+  {
+   "name": "SmallMoleculePerturbation",
+   "kind": "class",
+   "parents": [
+    "EnvironmentPerturbation",
+    "Environment"
+   ]
+  },
+  {
+   "name": "Solvent",
+   "kind": "class",
+   "parents": [
+    "SmallMoleculePerturbation"
+   ]
+  },
+  {
+   "name": "SyntheticLethalityExperiment",
+   "kind": "class",
+   "parents": [
+    "Experiment"
+   ]
+  },
+  {
+   "name": "SyntheticLethalityExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ExperimentReference"
+   ]
+  },
+  {
+   "name": "SyntheticLethalityPhenotype",
+   "kind": "class",
+   "parents": [
+    "Phenotype",
+    "SyntheticLethalityExperimentReference",
+    "SyntheticLethalityExperiment"
+   ]
+  },
+  {
+   "name": "SyntheticRescueExperiment",
+   "kind": "class",
+   "parents": [
+    "Experiment"
+   ]
+  },
+  {
+   "name": "SyntheticRescueExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ExperimentReference"
+   ]
+  },
+  {
+   "name": "SyntheticRescuePhenotype",
+   "kind": "class",
+   "parents": [
+    "Phenotype",
+    "SyntheticRescueExperimentReference",
+    "SyntheticRescueExperiment"
+   ]
+  },
+  {
+   "name": "Temperature",
+   "kind": "class",
+   "parents": [
+    "Environment"
+   ]
+  },
+  {
+   "name": "Temperature.unit:Celsius",
+   "kind": "value",
+   "parents": [
+    "Temperature"
+   ]
+  },
+  {
+   "name": "Temperature.unit:Fahrenheit",
+   "kind": "value",
+   "parents": [
+    "Temperature"
+   ]
+  },
+  {
+   "name": "Temperature.unit:Kelvin",
+   "kind": "value",
+   "parents": [
+    "Temperature"
+   ]
+  },
+  {
+   "name": "Temperature.value",
+   "kind": "numeric",
+   "parents": [
+    "Temperature"
+   ]
+  },
+  {
+   "name": "VisualScoreExperiment",
+   "kind": "class",
+   "parents": [
+    "Experiment"
+   ]
+  },
+  {
+   "name": "VisualScoreExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ExperimentReference"
+   ]
+  },
+  {
+   "name": "VisualScorePhenotype",
+   "kind": "class",
+   "parents": [
+    "Phenotype",
+    "VisualScoreExperimentReference",
+    "VisualScoreExperiment"
+   ]
+  },
+  {
+   "name": "ref:CalMorphExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ref:ExperimentReference"
+   ]
+  },
+  {
+   "name": "ref:CalMorphPhenotype",
+   "kind": "class",
+   "parents": [
+    "ref:Phenotype"
+   ]
+  },
+  {
+   "name": "ref:EnvironmentResponseExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ref:ExperimentReference"
+   ]
+  },
+  {
+   "name": "ref:EnvironmentResponsePhenotype",
+   "kind": "class",
+   "parents": [
+    "ref:Phenotype"
+   ]
+  },
+  {
+   "name": "ref:ExperimentReference",
+   "kind": "class",
+   "parents": [
+    "Experiment"
+   ]
+  },
+  {
+   "name": "ref:FitnessExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ref:ExperimentReference"
+   ]
+  },
+  {
+   "name": "ref:FitnessPhenotype",
+   "kind": "class",
+   "parents": [
+    "ref:Phenotype"
+   ]
+  },
+  {
+   "name": "ref:GeneEssentialityExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ref:ExperimentReference"
+   ]
+  },
+  {
+   "name": "ref:GeneEssentialityPhenotype",
+   "kind": "class",
+   "parents": [
+    "ref:Phenotype"
+   ]
+  },
+  {
+   "name": "ref:GeneInteractionExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ref:ExperimentReference"
+   ]
+  },
+  {
+   "name": "ref:GeneInteractionPhenotype",
+   "kind": "class",
+   "parents": [
+    "ref:Phenotype"
+   ]
+  },
+  {
+   "name": "ref:MetaboliteExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ref:ExperimentReference"
+   ]
+  },
+  {
+   "name": "ref:MetabolitePhenotype",
+   "kind": "class",
+   "parents": [
+    "ref:Phenotype"
+   ]
+  },
+  {
+   "name": "ref:MicroarrayExpressionExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ref:ExperimentReference"
+   ]
+  },
+  {
+   "name": "ref:MicroarrayExpressionPhenotype",
+   "kind": "class",
+   "parents": [
+    "ref:Phenotype"
+   ]
+  },
+  {
+   "name": "ref:Phenotype",
+   "kind": "class",
+   "parents": [
+    "ref:ExperimentReference"
+   ]
+  },
+  {
+   "name": "ref:ProteinAbundanceExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ref:ExperimentReference"
+   ]
+  },
+  {
+   "name": "ref:ProteinAbundancePhenotype",
+   "kind": "class",
+   "parents": [
+    "ref:Phenotype"
+   ]
+  },
+  {
+   "name": "ref:PseudobulkExpressionExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ref:ExperimentReference"
+   ]
+  },
+  {
+   "name": "ref:PseudobulkExpressionPhenotype",
+   "kind": "class",
+   "parents": [
+    "ref:Phenotype"
+   ]
+  },
+  {
+   "name": "ref:RNASeqExpressionExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ref:ExperimentReference"
+   ]
+  },
+  {
+   "name": "ref:RNASeqExpressionPhenotype",
+   "kind": "class",
+   "parents": [
+    "ref:Phenotype"
+   ]
+  },
+  {
+   "name": "ref:SyntheticLethalityExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ref:ExperimentReference"
+   ]
+  },
+  {
+   "name": "ref:SyntheticLethalityPhenotype",
+   "kind": "class",
+   "parents": [
+    "ref:Phenotype"
+   ]
+  },
+  {
+   "name": "ref:SyntheticRescueExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ref:ExperimentReference"
+   ]
+  },
+  {
+   "name": "ref:SyntheticRescuePhenotype",
+   "kind": "class",
+   "parents": [
+    "ref:Phenotype"
+   ]
+  },
+  {
+   "name": "ref:VisualScoreExperimentReference",
+   "kind": "class",
+   "parents": [
+    "ref:ExperimentReference"
+   ]
+  },
+  {
+   "name": "ref:VisualScorePhenotype",
+   "kind": "class",
+   "parents": [
+    "ref:Phenotype"
+   ]
+  }
+ ],
+ "root": "Experiment"
+}

@@ -583,7 +583,11 @@ class RegressionTask(L.LightningModule):
                 )
                 metric.reset()
                 self._token_counts[stage][label][i] = 0
-        if self._crosstoken_pair is not None and stage != "train":
+        if (
+            self._crosstoken_pair is not None
+            and stage != "train"
+            and not getattr(self.model, "uses_entry_annotation", False)
+        ):
             metric = getattr(self, f"{stage}_crosstoken_metric")
             for key, value in self._compute_metrics_safely(
                 MetricCollection({"Pearson": metric})

@@ -1,0 +1,61 @@
+{
+  "backbone_reach": {
+    "downstream_backbone_bp_per_window": 300,
+    "downstream_windows_entering_backbone": 71158,
+    "downstream_windows_wrapping_the_origin": 0,
+    "upstream_backbone_bp_per_window": 893,
+    "upstream_backbone_breakdown_bp": {
+      "between_the_13bp_flank_and_the_start_codon": 84,
+      "the_start_codon_itself": 3,
+      "upstream_of_the_17bp_flank": 806
+    },
+    "upstream_released_bp_per_window": 110,
+    "upstream_windows_entering_backbone": 71158,
+    "upstream_windows_wrapping_the_origin": 0
+  },
+  "construct_set": "vaishnav2022_addgene_127546",
+  "contig": {
+    "handle": "d9efd0825e6b",
+    "length_bp": 8218,
+    "variant_length_bp": 8294
+  },
+  "counts": {
+    "distinct_downstream_windows": 1,
+    "distinct_inserts": 71158,
+    "distinct_seq110": 71158,
+    "distinct_upstream_windows": 71158,
+    "variants": 71158
+  },
+  "site": {
+    "contig_handle": "d9efd0825e6b",
+    "contig_length": 8218,
+    "five_prime_flank_end": 1858,
+    "five_prime_flank_start": 1842,
+    "reporter_end": 2676,
+    "reporter_start": 1960,
+    "site_end": 1862,
+    "site_sequence": "TCGA",
+    "site_start": 1859,
+    "three_prime_flank_end": 1875,
+    "three_prime_flank_start": 1863
+  },
+  "window_geometry": {
+    "downstream": "300 bp beginning with the reporter stop codon (window_three_prime(300, include_stop_codon=True))",
+    "downstream_starts_with": "TAA",
+    "upstream": "1,003 bp ending with and including the reporter start codon (window_five_prime(1003, include_start_codon=True))",
+    "upstream_ends_with": "ATG"
+  },
+  "window_length_checks": {
+    "downstream_bp": 300,
+    "downstream_bp_all_equal": true,
+    "undersize_windows": 0,
+    "upstream_bp": 1003,
+    "upstream_bp_all_equal": true
+  },
+  "window_spec": {
+    "downstream_bp": 300,
+    "include_start_codon": true,
+    "include_stop_codon": true,
+    "upstream_bp": 1003
+  }
+}

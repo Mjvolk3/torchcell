@@ -1,0 +1,26 @@
+# experiments/030-solid-growth-multi/conf/cgt_030_s3_r_tok_affine_006.yaml
+#
+# THE CLOSURE ARM ON THE RANDOM SPLIT, COMPOSITE, PER ENTRY, AFFINE SOURCE CALIBRATION.
+# cgt_030_s3_r_tok_embfit_003 with the source entering as a per-dataset scale and shift
+# on the head outputs instead of the 8-dim readout token; see cgt_030_s3_q_tok_affine_005
+# for the arm and what to read. The random-split twin of that config, so the two splits
+# carry the same comparison: seed 1, one A100, batch 512, beside the readout-token seed-1
+# runs 2429088 (Q) and 2429090 (R) on IGB mmli.
+#
+#   PROJECT_ROOT=<worktree> sbatch --gres=gpu:1 --cpus-per-task=8 --mem=100g --time=30-00:00:00 \
+#       --export=ALL,PROJECT_ROOT=<worktree>,GPUS=1,STAGE_SHM=1,POOL_STORE_REL=data/torchcell/experiments/030-solid-growth-multi/001-multi-build-s3r \
+#       -J 030-r1w3-r-aff-s1 experiments/030-solid-growth-multi/scripts/igb_mmli_cgt_030.slurm \
+#       cgt_030_s3_r_tok_affine_006 +seed=1 trainer.devices=1 data_module.batch_size=512 trainer.max_epochs=1200
+defaults:
+  - cgt_030_s3_r_tok_embfit_003
+  - _self_
+
+wandb:
+  tags: [s3, split_R, graph_reg_kl, fitness_joint, closure_doubles, unpinned_to_train, seq_embedding, full_gene_composite, param_matched, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, per_entry, dataset_token, no_holdout, token_affine, igb_mmli]
+
+model:
+  dataset_token:
+    enabled: true
+    mode: affine
+    scale: true
+    shift: true

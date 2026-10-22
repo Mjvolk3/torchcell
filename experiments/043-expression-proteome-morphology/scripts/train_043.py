@@ -1494,7 +1494,10 @@ def batch_loss(
     else:
         w = nrec * present
         total = (means * w).sum() / w.sum()
-    logs = {int(i): float(means[i]) for i in torch.nonzero(present).flatten().tolist()}
+    detached = means.detach()
+    logs = {
+        int(i): float(detached[i]) for i in torch.nonzero(present).flatten().tolist()
+    }
     return total, logs
 
 

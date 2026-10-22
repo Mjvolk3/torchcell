@@ -2259,12 +2259,16 @@ class CellGraphTransformer(nn.Module):
                 raise NotImplementedError(
                     "dataset_token.mode='input' is the deferred ablation; use 'readout'"
                 )
-            if mode not in ("readout", "affine"):
+            if mode not in ("readout", "affine", "none"):
                 raise ValueError(
-                    f"dataset_token.mode must be 'readout' or 'affine', got {mode!r}"
+                    "dataset_token.mode must be 'readout', 'affine' or 'none', "
+                    f"got {mode!r}"
                 )
-            source = str(token_cfg.get("source", "name"))
-            if source not in ("name", "ontology"):
+            # "none": per-entry rows with NO source information at all; both heads
+            # read the genotype alone and every entry of a genotype gets the same
+            # value (the A0 arm of plan.030-ontology-conditioning).
+            source = "none" if mode == "none" else str(token_cfg.get("source", "name"))
+            if source not in ("name", "ontology", "none"):
                 raise ValueError(
                     f"dataset_token.source must be 'name' or 'ontology', got {source!r}"
                 )
@@ -2276,7 +2280,9 @@ class CellGraphTransformer(nn.Module):
             token_dim = int(token_cfg.get("dim", 8))
             if token_dim < 1:
                 raise ValueError("dataset_token needs dim >= 1")
-            if source == "ontology":
+            if mode == "none":
+                pass
+            elif source == "ontology":
                 from torchcell.data.experiment_ontology import OntologyDagEncoder
 
                 vocabulary = token_cfg.get("vocabulary")
@@ -2289,7 +2295,9 @@ class CellGraphTransformer(nn.Module):
                 self.ontology_encoder = OntologyDagEncoder(
                     vocabulary, state_dim=state_dim, token_dim=token_dim
                 )
-            if mode == "readout":
+            if mode == "none":
+                pass  # no token, no calibration: the genotype alone
+            elif mode == "readout":
                 self.dataset_token_dim = token_dim
                 if source == "name":
                     self.token_proj = nn.Linear(

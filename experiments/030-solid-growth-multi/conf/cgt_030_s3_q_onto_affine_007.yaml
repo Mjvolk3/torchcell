@@ -1,0 +1,30 @@
+# experiments/030-solid-growth-multi/conf/cgt_030_s3_q_onto_affine_007.yaml
+#
+# plan.030-ontology-conditioning.2026.10.22, arm A1: the experiment's ontology annotation (DAG-propagated) as a per-entry scale and shift.
+# cgt_030_s3_q_tok_embfit_004 (the closure arm on the query-pair-disjoint split) with
+# dataset_token changed; everything else identical, so the three arms and the readout-name
+# control (embfit_004) differ only in what the readouts know about the experiment.
+#
+# First run (2026.10.22): GilaHyper, one RTX 6000 Ada per arm, the 1/4 S3Q fraction, seed 1,
+# 40 epochs, batch 256:
+#   sbatch -J 030-q4-onto_affine-s1 experiments/030-solid-growth-multi/scripts/gh_cgt_030.slurm \
+#       cgt_030_s3_q_onto_affine_007 +seed=1 \
+#       subset.indices=subset_S3Q_frac4_indices_030.json.gz transforms.fit_stats_strict=false \
+#       trainer.max_epochs=40
+defaults:
+  - cgt_030_s3_q_tok_embfit_004
+  - _self_
+
+wandb:
+  tags: [s3, s3_strict, split_Q, query_pair_disjoint, graph_reg_kl, fitness_joint, closure_doubles, unpinned_to_train, seq_embedding, full_gene_composite, param_matched, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, per_entry, dataset_token, no_holdout, token_affine, source_ontology, gilahyper]
+
+model:
+  dataset_token:
+    enabled: true
+    mode: affine
+    source: ontology
+    dim: 8
+    scale: true
+    shift: true
+    ontology:
+      state_dim: 8

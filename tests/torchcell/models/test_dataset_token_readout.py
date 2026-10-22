@@ -278,3 +278,31 @@ def test_ontology_source_reads_the_annotation_and_never_the_source_index(
             entry_dataset=entry_dataset,
         )
     assert model.num_parameters["dataset_token"] > 0
+
+
+def test_mode_none_gives_per_entry_rows_with_no_source_information() -> None:
+    model = _model(dataset_token={"enabled": True, "vocab_size": VOCAB, "mode": "none"})
+    model.eval()
+    assert model.entry_mode == "none" and model.entry_source == "none"
+    assert model.token_proj is None and model.entry_affine is None
+    assert "dataset_token" not in model.num_parameters
+    assert cast(Any, model.perturbation_head).mlp[0].in_features == 2 * HIDDEN
+    entry_batch = torch.tensor([0, 0, 1, 2, 2])
+    entry_dataset = torch.tensor([0, 1, 2, 0, 1])
+    with torch.no_grad():
+        pred, reps = model(
+            _cell_graph(),
+            _batch(),
+            entry_batch=entry_batch,
+            entry_dataset=entry_dataset,
+        )
+    assert pred.shape == (5, 1) and reps["head_outputs"]["global"].shape == (5, 1)
+    # every entry of a genotype reads the same value, whatever its source
+    assert torch.allclose(pred[0], pred[1]) and torch.allclose(pred[3], pred[4])
+    # and it is the plain model's per-genotype value
+    plain = _model(dataset_token={"enabled": False})
+    plain.load_state_dict(model.state_dict())
+    plain.eval()
+    with torch.no_grad():
+        per_genotype, _ = plain(_cell_graph(), _batch())
+    assert torch.allclose(pred.view(-1), per_genotype.view(-1)[entry_batch], atol=1e-6)

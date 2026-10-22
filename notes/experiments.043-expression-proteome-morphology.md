@@ -812,3 +812,25 @@ Decisions taken here that the design left open (each is a choice, untested):
 - Counts never detected in a training row of Boocock or N'Guessan are not targets.
 
 Not done: no GPU run has started (chained behind the embedding jobs); epochs per hour unmeasured; the Ohya morphology probe is not wired into the trainer; route B, the attended-token head (form c), the flat-type ablation and the six-heads-by-type control are not implemented; Boocock de novo cells are excluded (P1 open); Hu, Jackson and Nadal-Ribelles have no specs in the trainer.
+
+## 2026.10.22 - Isolate embeddings: ambiguity codes are a typed gap
+
+Job 6106 finished FUDT upstream for every isolate window (1,131,360 rows, 76.0 per s) and then
+died in CaLM on `KeyError: 'UAM'`, a codon carrying the IUPAC code M of a heterozygous site;
+resumes 6121 and 6122 died the same way, and the smokes 6124 and 6125 failed at startup on the
+missing downstream vectors (357,802 of 364,360).
+
+Rule: an input with a character outside its encoder's alphabet is the typed gap
+`ambiguous_sequence` (`GapKind.AMBIGUOUS_SEQUENCE = 11` in `torchcell/data/representation_043.py`,
+its own learned gap row in `cell_model_043.py`), never resolved and never embedded. The
+trainer's key check is unchanged and still fails on a missing vector; the gapped slots carry no
+key. Measured (job 6126): untokenizable isolate-gene rows FUDT upstream 138,408 (2.4%), FUDT
+downstream 71,495 (1.2%), CaLM 1,281,220 (20.8%), ProtT5 992,159 (16.1%). FUDT and ProtT5 map
+such characters to an unknown token without failing, so 111,641 upstream windows had already
+been embedded through `[UNK]`; they are relabelled and unreferenced. Every ProtT5 input, S288C
+included, ends in `*`, read as `<unk>`: the trained convention, kept.
+
+New jobs: A 6127 (downstream, CaLM) with resume 6131; B 6138 (ProtT5; 6128 stopped on a padded
+batch, fixed) with resume 6139; isolate verify 6135; representation rebuild 6129, 6130, 6133 and
+trainer prepare 6134; smokes 6136 and 6137 (balanced), after both resumes and the prepare.
+Details and the per-code counts: [[experiments.043-expression-proteome-morphology.scripts.compute_isolate_composite]].

@@ -165,3 +165,84 @@ Runner: `experiments/embeddings/compute_isolate_embeddings.py` (main).
 
 Release job 6106 when a card frees (`scontrol release 6106`); it ends with the verify stage,
 which then reports `embedding_complete`.
+
+## 2026.10.22 - Untokenizable inputs are a typed gap: ambiguous_sequence
+
+### The failure
+
+Job 6106 ran 4 h 08 min. FUDT upstream finished: 1,131,360 computed rows in
+`alleles/fudt_species_upstream.h5` (14,889 s, 76.0 windows per s on one RTX 6000 Ada, fp32,
+batch 64). The next encoder, CaLM, raised `KeyError: 'UAM'` in `calm/alphabet.py encode`: a codon
+holding the IUPAC code M (A or C, a heterozygous site in a diploid isolate's inferred allele).
+Resumes 6121 and 6122 hit the same error in 36 s.
+
+### What each encoder does with a character outside its vocabulary (measured from the tokenizers)
+
+| encoder | vocabulary | behavior on anything else |
+|---|---|---|
+| CaLM | the 64 ACGU codons | `encode` indexes `tok_to_idx` directly and raises (fails loudly; no fallback) |
+| FUDT up and down (SpeciesLM) | the 4,096 ACGT 6-mers | the 6-mer becomes `[UNK]` (id 1) silently: a fallback inside the encoder |
+| ProtT5 | 20 amino acids plus B, O, U, X, Z | the wrapper maps U, Z, O, B to X; `*` and J become `<unk>` silently |
+
+Findings that follow:
+
+- FUDT upstream in job 6106 embedded 111,641 distinct windows (138,408 isolate-gene rows) that
+  contain N, an IUPAC code or soft-masked lowercase bases, each offending 6-mer read as
+  `[UNK]`. Those h5 rows are now labelled `untokenizable` in the `source` column and nothing in
+  the index points at them.
+- Every ProtT5 input, the 6,607 S288C rows the composite trained on included, ends in `*`,
+  which ProtT5 reads as `<unk>`. That is the trained convention and is kept: the protein
+  alphabet is the 20 amino acids plus `*`.
+- A protein with many internal stops tokenizes SHORTER than one token per residue (in 20,000
+  tokenizable proteins, 461 were shorter by 1 to 30): sentencepiece merges runs around `*`.
+  Job 6128 bucketed by `len + 1`, formed a padded batch and the no-padding assertion stopped
+  it; batches now bucket by the tokenizer's own count (commit 4fd4a4f98).
+- An ambiguous codon translates to X (or B, Z, J for two-way ambiguities); a codon whose
+  ambiguity is synonymous translates to its amino acid, so a protein can be clean where the
+  CaLM input is not.
+- The lowercase a, c, g, t, n codes are soft-masked assembly bases, not ambiguities. Under the
+  rule they are gaps (about 3% of the distinct untokenizable windows). Hypothesis (untested): uppercasing
+  at slice time would recover them; that is a change of the stored window string and needs the
+  owner's call and an align plus merge rerun (both a few minutes).
+
+### The rule
+
+An input with any character outside its encoder's alphabet (`ENCODER_ALPHABET`: ACGT for CaLM
+and both FUDT windows; the 20 amino acids plus `*` for ProtT5) is a typed gap
+`ambiguous_sequence`: never resolved to a base, never embedded. `--stage alphabet` (job 6126,
+1:26 wall, 9.1 GB) writes it into `index/isolate_gene.parquet` per encoder (`protein_gap`,
+`calm_gap`, `up_gap`, `down_gap`; protein and CaLM no longer share `cds_gap`), with the
+offending codes (`<kind>_untokenizable_codes`) and the hash moved to `<col>_untokenizable`, so
+a row still holds a key XOR a gap; lists the inputs in `sequences/untokenizable_<kind>.parquet`;
+and records the counts in the manifest (`representation_gaps`) and
+`results/compute_isolate_composite_alphabet.json`. `--stage embed` skips and counts such inputs
+before any batch, and `Embedder.__call__` raises if one reaches the model. No S288C reference
+input is affected.
+
+### Counts (job 6126)
+
+| encoder | distinct inputs | distinct untokenizable | isolate-gene rows untokenizable | of rows with an input | codes (rows) |
+|---|---|---|---|---|---|
+| FUDT upstream | 1,137,931 | 111,641 | 138,408 | 2.4% | N 128,500; lowercase a/c/g/t/n 2,035 to 3,601 each; R 2,063, Y 2,057, W 626, K 455, M 447, S 337 |
+| FUDT downstream | 413,606 | 48,211 | 71,495 | 1.2% | N 65,872; lowercase 1,106 to 2,399 each; Y 672, R 657, W 283, S 186, K 170, M 141 |
+| CaLM | 1,163,337 | 580,786 | 1,281,220 | 20.8% | R 906,282, Y 905,712, W 316,113, M 308,503, S 287,950, K 265,003, N 654 |
+| ProtT5 | 757,720 | 384,755 | 992,159 | 16.1% | X 966,332, B 101,169, J 33,309, Z 28,703 |
+
+All 1,011 isolates are touched for every encoder. A row can carry several codes, so the code
+counts overlap.
+
+### Jobs (two cards, both resumable)
+
+| job | what | id | measured |
+|---|---|---|---|
+| A | `--encoders fudt_species_downstream,calm`, 4 h | 6127 | downstream 358,838 to compute at 265 to 267 per s (about 23 min); CaLM 576,007 to compute at about 285 per s on the shortest CDSs, about 49,000 codon tokens per s |
+| A resume | same line, afterany 6127, 4 h | 6131 | |
+| B | `--encoders prot_t5_xl_uniref50` | 6128 failed (padded batch), 6138, 6 h | 366,429 to compute; about 75 per s on proteins under 311 aa, about 24,500 tokens per s |
+| B resume | same line, afterany 6138, 4 h | 6132 failed with 6128, 6139 | |
+| verify | CPU, afterany 6131 and 6139 (reads every table, so it waits for both writers) | 6135 | |
+| representation | build 6129 (done), segregant pass 6130, verify 6133, trainer prepare 6134 | | |
+| smokes | `gh_train_043_smoke.slurm` (6124's line) 6136; with `SAMPLER=balanced` 6137; afterany 6131 and 6139, afterok 6134 | | |
+
+Time projections (hypothesis from token mass, linear in tokens; attention makes the long tail
+slower): CaLM 3.17e8 codon tokens left after the first 45,329 inputs, about 1.8 h; ProtT5 2.16e8
+residue tokens left after the first 77,522, about 2.4 h.

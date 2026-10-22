@@ -31,3 +31,5 @@ On IGB mmli the two seed-2 readout-token jobs (2429089 Q at epoch 52, 2429091 R 
 | R | 2429090 `030-r1w2-r-emb-s1` | 2430656 `030-r1w3-r-aff-s1` (`cgt_030_s3_r_tok_affine_006`) |
 
 IGB worktree `~/projects/torchcell.worktrees/030-token-affine` at 6400bfca5. The controls lead by their head start (Q by about 52 epochs, R by about an hour), so the read is at matched epoch, not matched date.
+
+Outcome the same night: xliu254's pending job (two cards, unlimited time) took both freed cards, so the affine jobs could not start. The random-split control 2429090 was cancelled at epoch 0 to free one card: 2430655 (Q affine) runs beside 2429088 (Q readout, epoch 52 at the time); 2430656 (R affine) stays pending with no card available, and the random split has no control running. The smoke 6114 passed (run zrjpi07q): every `cal/` key logged, the interaction shifts after 120 batches already carry the screen offset's sign (2018 -0.020, 2020 +0.011, normalized units), and identity cells stay at (1, 0).

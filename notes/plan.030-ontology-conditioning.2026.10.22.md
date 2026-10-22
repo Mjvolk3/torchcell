@@ -90,3 +90,17 @@ Intended collapses: year (2018 vs 2020) is nowhere in the record; perturbation o
 Owner: "since these come from other databases we can't really do anything about furthering the schematization. I think converted from good for now." Built (commit 65b365a4c): `CONVERTED_FROM` declares, per dataset name, the experiment class the composite-fitness converter rewrote the record from (SGD essentiality from `GeneEssentialityExperiment`, SynthLethDb from `SyntheticLethalityExperiment`); the annotation adds `Experiment.converted_from:<class>` as a value node under the root. The name is the lookup key only; what the model sees is the origin class. The vocabulary is 149 nodes; the check script's condition (4) asserts the two converted sources differ by the origin node and nothing else (PASS on the S3Q store). A build that writes the origin on the record replaces the table, which is also the mechanism to keep if a source never reaches us in its native form.
 
 "Order" in the profile table means the interaction order, the NUMBER of perturbed genes (single, double, triple), never a sequence. The genotype is a set: the gene encoder pools the perturbed genes with a sum (Deep Sets, permutation-invariant), and nothing in the record, the annotation or the token encodes which gene came first or which was the query. The profile does not carry the count either; it is read from the genotype by the gene encoder.
+
+## 2026.10.22 - A0, A1, A2 launched on GilaHyper; how the two Kuzmin screens are told apart
+
+Owner: "you can run them on the ghyper gpus." Submitted (commit 968514b36), one RTX 6000 Ada each, the 1/4 S3Q fraction (244,402 training records), seed 1, 40 epochs, batch 256, `transforms.fit_stats_strict=false`:
+
+| job | arm | config |
+|---|---|---|
+| 6146 | A0 none: per-entry rows, no source information (`dataset_token.mode none`, new) | `cgt_030_s3_q_none_009` |
+| 6144 | A1 ontology, affine | `cgt_030_s3_q_onto_affine_007` |
+| 6145 | A2 ontology, readout | `cgt_030_s3_q_onto_readout_008` |
+
+The readout-NAME control at this budget is the cancelled 6112 (epoch 0); its floor is known from the full-pool mmli run 2429088 (epoch-0 pooled val Pearson 0.36 to 0.37, the per-screen-mean floor). Read at matched epoch: pooled and per-screen val Pearson, and for A1 the learned `cal/` table is replaced by the per-entry map (log the two Kuzmin rows' coefficients if needed).
+
+Kuzmin 2018 vs 2020, measured on the 376,732 S3 triples (`lower_order_features_030.parquet`): query pairs 182 vs 239 with ONE shared; query genes 359 vs 478 with two shared; array genes 1,180 vs 4,259 with 1,177 shared (the 2018 array sits inside the 2020 array); 807 triples carry the same gene set in both screens; mean tau -0.048 vs +0.005. Under the ontology token the two screens get the SAME token exactly; the only route left is the query genes, which are almost disjoint between the screens, so a query gene seen only in 2018 rows can carry the offset in its embedding. That route is the accepted one. The 807 shared triples are identical inputs with two labels: the loss decides what the one prediction means (D3). Scratch diagram `scratch.2026.10.22.kuzmin-2018-vs-2020-mermaid`.

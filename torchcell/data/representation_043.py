@@ -14,7 +14,8 @@ carries its gap, and what to do with it is a modeling decision.
 
 The resolution per genotype class:
 
-* Engineered deletions and the promoter reporter: context ``S288C``; every gene carries
+* Engineered deletions, the reference strain (an empty perturbation list, class
+  ``reference``) and the promoter reporter: context ``S288C``; every gene carries
   its S288C keys; deletions are ``deletion`` marks; the reporter is an extra token whose
   upstream key is the variant's 1,003 bp construct window.
 * Natural isolates, route ``A`` (the main design): context = the isolate; every gene
@@ -489,7 +490,7 @@ class RecordRepresentation(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True, arbitrary_types_allowed=True)
 
-    genotype_class: Literal["deletion", "isolate", "segregant", "promoter"]
+    genotype_class: Literal["reference", "deletion", "isolate", "segregant", "promoter"]
     context_id: str
     route: Literal["A", "B", "na"]
     key_ids: IntArray  # [G, 4], -1 = gap
@@ -540,7 +541,7 @@ class RepresentationResolver:
 
     def _base(
         self,
-        cls: Literal["deletion", "isolate", "segregant", "promoter"],
+        cls: Literal["reference", "deletion", "isolate", "segregant", "promoter"],
         context_id: str,
         route: Literal["A", "B", "na"],
         key_ids: IntArray,
@@ -587,11 +588,11 @@ class RepresentationResolver:
     def deletion(
         self, marks: Sequence[tuple[int, ChangeType]], outside: int = 0
     ) -> RecordRepresentation:
-        """Engineered deletions on S288C."""
+        """Engineered deletions on S288C; no mark at all is the reference strain."""
         change = resolve_change_types(marks, self.n_genes)
         keys, gaps = self._ctx(self.s288c)
         return self._base(
-            "deletion",
+            "deletion" if marks or outside else "reference",
             S288C_CONTEXT,
             "na",
             keys,

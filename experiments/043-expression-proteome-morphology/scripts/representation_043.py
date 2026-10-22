@@ -452,6 +452,19 @@ def vector_stores(data_root: str) -> dict[str, AlleleVectorStore]:
     }
 
 
+def gene_vectors(
+    r: RecordRepresentation, stores: dict[str, AlleleVectorStore]
+) -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    """Per encoder, (gene indices with a key, their fp16 vectors). Gaps are not filled;
+    a key whose vector is not in the table raises (``AlleleVectorStore.vectors``).
+    """
+    out = {}
+    for e, enc in enumerate(ENCODERS):
+        idx = np.nonzero(r.key_ids[:, e] >= 0)[0]
+        out[enc] = (idx, stores[enc].vectors(r.key_ids[idx, e]))
+    return out
+
+
 def isolate_context(name: str, context_ids: tuple[str, ...]) -> str:
     """A record's isolate name -> its context id (the index writes 93 as ``SACE_*``)."""
     if name in context_ids:

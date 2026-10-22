@@ -6,7 +6,7 @@ updated: 1792638814585
 created: 1792638814585
 ---
 
-## 2026.10.22 - Resolver of the 043 input side, keys first
+## 2026.10.21 - Resolver of the 043 input side, keys first
 
 Module: `torchcell/data/representation_043.py`; test `tests/torchcell/data/test_representation_043.py` (8 tests). Store binding: [[experiments.043-expression-proteome-morphology.scripts.representation_043]]. Design: the primer's input section (`notes-tex/multimodal/043-datasets-primer/sections/input-design.tex`).
 

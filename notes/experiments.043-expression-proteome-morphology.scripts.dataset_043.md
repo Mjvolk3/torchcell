@@ -109,3 +109,11 @@ shape and are left out above; the full 45 lines print on every run.)
 Debugger entry points are the three `# BREAKPOINT:` comments in `__main__`: the config,
 the per-sample dict, the mixed batch through `collate_043`, and the alternative isolate
 rule on the same Caudal record.
+
+## 2026.10.21 - The full input representation in every sample
+
+`Dataset043Config.representation` (a `RepresentationConfig` from [[torchcell.data.representation_043]], `route="A"` or `"B"`) makes `__getitem__` add `sample["representation"]`, a `RecordRepresentation` built by `representation_043.resolve_genotype` ([[experiments.043-expression-proteome-morphology.scripts.representation_043]]); `collate_043` passes the list through. The tables come from `representation_043.py --stage build` and are loaded once in `__init__`, so DataLoader workers forked after construction share them.
+
+The `__main__` block now also prints one representation per dataset (context, route, marks, operator mask, extra tokens, gap slots by kind), the fourth `# BREAKPOINT:`. Measured on the first record of each dataset: Caudal CCP has 5,575 marks, 0 operator genes and 91 extra tokens under route A; the first Boocock cell has 4,265 marks and 9,368 unassigned slots; the first Vaishnav record has 0 gap slots and 1 reporter token.
+
+The prototype fields (`gene_index`, `pert_type`, `allele_parent`) are unchanged, including their midpoint segregant rule. The representation's whole-gene containment rule supersedes it for training.

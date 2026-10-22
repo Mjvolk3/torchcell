@@ -8,7 +8,9 @@ annotation itself must show that (1) the two Kuzmin trigenic screens of one meas
 type annotate IDENTICALLY, so no token can tell them apart, (2) Costanzo and Kuzmin
 interaction rows differ only by the uracil dropout and the temperature, the two record
 facts that separate the plates, and (3) fitness and interaction rows of one screen
-differ in their phenotype and experiment classes. Reads ``per_dataset`` records of every
+differ in their phenotype and experiment classes, (4) the two converted sources (SGD
+essentiality, SynthLethDb) differ by their origin class (``CONVERTED_FROM``) and nothing
+else. Reads ``per_dataset`` records of every
 source straight from the store, builds the vocabulary exactly as the training script
 does, prints every source's distinct profiles and exits non-zero on a failed check.
 
@@ -35,6 +37,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--store", required=True)
     ap.add_argument("--per-dataset", type=int, default=25)
+    ap.add_argument("--write-vocab", default=None, help="write the vocabulary JSON here")
     args = ap.parse_args()
 
     scanned = scan_store_records(args.store, per_dataset=args.per_dataset)
@@ -85,6 +88,23 @@ def main() -> int:
         print(f"TmfKuzmin2018 vs TmiKuzmin2018: {sorted(diff)}")
         if not any("Phenotype" in d for d in diff):
             failures.append("fitness and interaction rows share their phenotype class")
+    # (4) the two converted sources differ by their origin class and nothing else
+    if (
+        "GeneEssentialitySgdDataset" in profiles
+        and "SynthLethalityYeastSynthLethDbDataset" in profiles
+    ):
+        diff = one("GeneEssentialitySgdDataset") ^ one(
+            "SynthLethalityYeastSynthLethDbDataset"
+        )
+        print(f"GeneEssentialitySgd vs SynthLethDb: {sorted(diff)}")
+        if diff != {
+            "Experiment.converted_from:GeneEssentialityExperiment",
+            "Experiment.converted_from:SyntheticLethalityExperiment",
+        }:
+            failures.append(f"converted sources differ beyond their origin: {sorted(diff)}")
+    if args.write_vocab:
+        vocab.to_json(args.write_vocab)
+        print(f"vocabulary written: {args.write_vocab}")
     # the encoder runs and separates what the annotation separates
     enc = OntologyDagEncoder(vocab, state_dim=8, token_dim=8)
     x = torch.stack([vocab.vector(e, r) for _, e, r in scanned])

@@ -101,6 +101,16 @@ def _records() -> list[dict[str, Any]]:
         _fitness(
             "SmfSgdDataset", Media(name="YEPD", state="solid", is_synthetic=False), 30.0
         ),
+        _fitness(
+            "GeneEssentialitySgdDataset",
+            Media(name="YEPD", state="solid", is_synthetic=False),
+            30.0,
+        ),
+        _fitness(
+            "SynthLethalityYeastSynthLethDbDataset",
+            Media(name="YEPD", state="solid", is_synthetic=False),
+            30.0,
+        ),
     ]
 
 
@@ -147,6 +157,15 @@ def test_annotation_never_carries_the_dataset_name_and_collapses_the_two_screens
     # a plain YEPD record has no components and no dropouts, and still annotates
     s = set(describe_annotation(vocab, vec["SmfSgdDataset"]))
     assert "Media.is_synthetic:false" in s and "MediaComponent" not in s
+    # converted sources carry their origin class, so SGD essentiality and the
+    # synthetic-lethality calls no longer share a profile; a plain record has none
+    ess = set(describe_annotation(vocab, vec["GeneEssentialitySgdDataset"]))
+    syn = set(describe_annotation(vocab, vec["SynthLethalityYeastSynthLethDbDataset"]))
+    assert ess ^ syn == {
+        "Experiment.converted_from:GeneEssentialityExperiment",
+        "Experiment.converted_from:SyntheticLethalityExperiment",
+    }
+    assert not any(n.startswith("Experiment.converted_from") for n in s)
 
 
 def test_vocabulary_is_a_dag_with_the_experiment_root_deepest_and_rejects_unknown_values() -> (
@@ -187,7 +206,7 @@ def test_encoder_is_deterministic_on_the_annotation_and_zero_for_absent_subtrees
         [vocab.vector(r["experiment"], r["experiment_reference"]) for r in recs]
     )
     tok = enc(x)
-    assert tok.shape == (5, 4)
+    assert tok.shape == (7, 4)
     assert torch.allclose(tok[0], tok[1])  # the two Kuzmin screens
     assert (
         tok[0] - tok[2]
@@ -221,7 +240,9 @@ def test_processor_emits_the_annotation_beside_every_value_and_batches_by_rows()
     cg["gene"].node_ids = list(GENES)
     names = [
         "DmiCostanzo2016Dataset",
+        "GeneEssentialitySgdDataset",
         "SmfSgdDataset",
+        "SynthLethalityYeastSynthLethDbDataset",
         "TmfKuzmin2018Dataset",
         "TmiKuzmin2018Dataset",
         "TmiKuzmin2020Dataset",
@@ -234,6 +255,6 @@ def test_processor_emits_the_annotation_beside_every_value_and_batches_by_rows()
     assert torch.equal(a["gene"].phenotype_ontology[0], a["gene"].phenotype_ontology[1])
     batch = Batch.from_data_list([a, b])
     g = batch["gene"]
-    assert g.phenotype_ontology.shape == (5, len(vocab))
+    assert g.phenotype_ontology.shape == (7, len(vocab))
     assert g.phenotype_ontology.shape[0] == g.phenotype_values.shape[0]
-    assert g.phenotype_dataset_indices.shape[0] == 5
+    assert g.phenotype_dataset_indices.shape[0] == 7

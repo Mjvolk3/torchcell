@@ -65,6 +65,19 @@ from torchcell.datamodels.schema import (
 
 ROOT = "Experiment"
 REF_PREFIX = "ref:"
+# Sources whose records the composite-fitness converter REWROTE into FitnessExperiment at
+# build time (gene_essentiality_to_fitness_conversion, synthetic_lethality_to_fitness_
+# conversion). The stored record keeps no trace of the class it came from, and the
+# schema has no assay field, so without this the SGD essentiality annotation and the
+# curated synthetic-lethality calls annotate identically (both: fitness in bare YEPD at
+# 30 C). The origin is declared here per dataset name, the name being the lookup key
+# only; what reaches the model is the ORIGIN CLASS as a value node under Experiment.
+# Owner 2026-10-22: "converted from good for now"; a build that writes the origin on
+# the record replaces this table.
+CONVERTED_FROM: dict[str, str] = {
+    "GeneEssentialitySgdDataset": "GeneEssentialityExperiment",
+    "SynthLethalityYeastSynthLethDbDataset": "SyntheticLethalityExperiment",
+}
 LANES = frozenset({"experiment", "phenotype", "environment"})
 # Base classes that carry configuration, not ontology; a class whose parent is one
 # of these is a lane root.
@@ -92,6 +105,12 @@ class ExperimentOntologyVocabulary(BaseModel):
 
     nodes: list[OntologyNode]
     root: str = ROOT
+    converted_from: dict[str, str] = Field(
+        default_factory=dict,
+        description="dataset name -> the experiment class the stored record was "
+        "converted from (see CONVERTED_FROM); annotated as "
+        "Experiment.converted_from:<class>",
+    )
     _index: dict[str, int] = PrivateAttr(default_factory=dict)
 
     # ---- structure -------------------------------------------------------------
@@ -154,6 +173,9 @@ class ExperimentOntologyVocabulary(BaseModel):
         if reference is not None:
             self._chain(out, REF_PREFIX + type(reference).__name__)
             self._chain(out, REF_PREFIX + type(reference.phenotype_reference).__name__)
+        origin = self.converted_from.get(experiment.dataset_name)
+        if origin is not None:
+            out[_checked(self, f"Experiment.converted_from:{origin}")] = 1.0
         return out
 
     def vector(
@@ -248,6 +270,7 @@ def _value_nodes_of_media(media: Media) -> dict[str, str]:
 
 def build_experiment_ontology_vocabulary(
     records: Iterable[tuple[Experiment, ExperimentReference | None]] = (),
+    converted_from: dict[str, str] | None = None,
 ) -> ExperimentOntologyVocabulary:
     """The node set from the live schema graph, the media library and ``records``.
 
@@ -306,6 +329,11 @@ def build_experiment_ontology_vocabulary(
     add(REF_PREFIX + "ExperimentReference", "class", ROOT)
     # Numeric and fixed value nodes.
     add("Temperature.value", "numeric", "Temperature")
+    origins = dict(CONVERTED_FROM if converted_from is None else converted_from)
+    for origin in sorted(set(origins.values())):
+        if origin not in lane_classes:
+            raise ValueError(f"converted_from origin {origin!r} is not a schema class")
+        add(f"Experiment.converted_from:{origin}", "value", ROOT)
     # Value nodes from the media library and the scanned records.
     for media in _media_library():
         for name, parent in _value_nodes_of_media(media).items():
@@ -324,7 +352,8 @@ def build_experiment_ontology_vocabulary(
         raise ValueError(f"vocabulary parents without nodes: {sorted(missing)}")
     names = sorted(kinds)
     return ExperimentOntologyVocabulary(
-        nodes=[OntologyNode(name=n, kind=kinds[n], parents=parents[n]) for n in names]
+        nodes=[OntologyNode(name=n, kind=kinds[n], parents=parents[n]) for n in names],
+        converted_from=origins,
     )
 
 

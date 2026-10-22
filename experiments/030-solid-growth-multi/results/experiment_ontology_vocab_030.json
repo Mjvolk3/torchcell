@@ -132,6 +132,20 @@
    "parents": []
   },
   {
+   "name": "Experiment.converted_from:GeneEssentialityExperiment",
+   "kind": "value",
+   "parents": [
+    "Experiment"
+   ]
+  },
+  {
+   "name": "Experiment.converted_from:SyntheticLethalityExperiment",
+   "kind": "value",
+   "parents": [
+    "Experiment"
+   ]
+  },
+  {
    "name": "ExperimentReference",
    "kind": "class",
    "parents": []
@@ -1056,5 +1070,9 @@
    ]
   }
  ],
- "root": "Experiment"
+ "root": "Experiment",
+ "converted_from": {
+  "GeneEssentialitySgdDataset": "GeneEssentialityExperiment",
+  "SynthLethalityYeastSynthLethDbDataset": "SyntheticLethalityExperiment"
+ }
 }

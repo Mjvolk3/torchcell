@@ -2058,9 +2058,13 @@ class Embedder:
             return len(s) - 5 + 3
         if self.spec.name == "calm":
             return (len(s) + 2) // 3 + 2
-        # one token per residue ('*' and 'J' are one <unk> each) plus </s>; measured on
-        # the ProtT5 tokenizer, and every batch still asserts it carries no padding
-        return len(s) + 1
+        # the tokenizer's own count: one token per residue plus </s> holds for most
+        # proteins, but sentencepiece merges some runs around '*' (<unk>), so a protein
+        # with many internal stops tokenizes shorter (measured on 20,000 tokenizable
+        # proteins: 461 shorter by 1 to 30); bucketing by len(s) + 1 padded a batch in
+        # job 6128, which the batch assertion stopped
+        prepared = self.pt5._prepare_sequence(s)
+        return len(self.pt5.tokenizer(prepared, add_special_tokens=True)["input_ids"])
 
 
 def batches(

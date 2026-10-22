@@ -1987,7 +1987,11 @@ class Perturbation(GraphProcessor):
     Uses COO format for phenotypes and does not copy the base graph structure.
     """
 
-    def __init__(self, dataset_vocabulary: list[str] | None = None) -> None:
+    def __init__(
+        self,
+        dataset_vocabulary: list[str] | None = None,
+        ontology_vocabulary: Any | None = None,
+    ) -> None:
         """Initialize the CPU device used for tensor construction.
 
         ``dataset_vocabulary`` is the ordered list of source dataset names of the
@@ -1999,10 +2003,19 @@ class Perturbation(GraphProcessor):
         table is sized to the pool, and a record from an unlisted source is a config
         error, not a case to absorb. ``None`` emits nothing new, so every existing
         dataset keeps its exact tensors.
+
+        ``ontology_vocabulary`` (an ``ExperimentOntologyVocabulary``,
+        :mod:`torchcell.data.experiment_ontology`) adds ``phenotype_ontology``
+        ``[E, n_nodes]`` beside every value: the record's annotation to the schema
+        DAG (its experiment, phenotype and environment classes and values, its
+        reference), computed from the experiment and reference objects of the
+        entry and carrying nothing that names the dataset. A record whose value is
+        outside the vocabulary raises, as above.
         """
         super().__init__()
         # Always use CPU for pin_memory compatibility
         self.device = torch.device("cpu")
+        self.ontology_vocabulary = ontology_vocabulary
         self.dataset_vocabulary: list[str] | None = (
             list(dataset_vocabulary) if dataset_vocabulary is not None else None
         )
@@ -2095,6 +2108,7 @@ class Perturbation(GraphProcessor):
         all_type_indices = []
         all_sample_indices = []
         all_dataset_indices: list[int] = []
+        all_annotations: list[torch.Tensor] = []
         phenotype_types = []
 
         # Initialize storage for statistic values
@@ -2126,6 +2140,11 @@ class Perturbation(GraphProcessor):
                         f"of {len(self.dataset_vocabulary)} names"
                     )
                 dataset_idx = self._dataset_to_index[dataset_name]
+            annotation: torch.Tensor | None = None
+            if self.ontology_vocabulary is not None:
+                annotation = self.ontology_vocabulary.vector(
+                    experiment, item.get("experiment_reference")
+                )
 
             # Process each phenotype type
             for type_idx, field_name in enumerate(phenotype_types):
@@ -2147,6 +2166,8 @@ class Perturbation(GraphProcessor):
                     all_type_indices.extend([type_idx] * len(values))
                     all_sample_indices.extend([item_idx] * len(values))
                     all_dataset_indices.extend([dataset_idx] * len(values))
+                    if annotation is not None:
+                        all_annotations.extend([annotation] * len(values))
 
             # Process statistics in the same way
             for stat_type_idx, stat_field_name in enumerate(stat_types):
@@ -2184,6 +2205,11 @@ class Perturbation(GraphProcessor):
                 integrated_subgraph["gene"]["phenotype_dataset_indices"] = torch.tensor(
                     all_dataset_indices, dtype=torch.long, device=self.device
                 )
+            if self.ontology_vocabulary is not None:
+                # [E, n_nodes], parallel to phenotype_values; collated along rows.
+                integrated_subgraph["gene"]["phenotype_ontology"] = torch.stack(
+                    all_annotations
+                )
         else:
             # Handle empty case with placeholder values
             integrated_subgraph["gene"]["phenotype_values"] = torch.tensor(
@@ -2202,6 +2228,10 @@ class Perturbation(GraphProcessor):
                 # batch mixes samples with and without it).
                 integrated_subgraph["gene"]["phenotype_dataset_indices"] = torch.tensor(
                     [0], dtype=torch.long, device=self.device
+                )
+            if self.ontology_vocabulary is not None:
+                integrated_subgraph["gene"]["phenotype_ontology"] = torch.zeros(
+                    1, len(self.ontology_vocabulary), dtype=torch.float32
                 )
 
         # Store statistic data in the graph. ALWAYS emit the four stat keys so the

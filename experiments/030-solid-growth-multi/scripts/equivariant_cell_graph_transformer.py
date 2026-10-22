@@ -156,6 +156,9 @@ def main(cfg: DictConfig) -> None:
         # readout (the dim-vector in the head inputs) or affine (per-source scale
         # and shift on the head outputs); see CellGraphTransformer.dataset_token.
         f"token_{wandb_cfg['model']['dataset_token'].get('mode', 'readout')}",
+        # name (the dataset's index) or ontology (the record's annotation to the
+        # schema DAG); see torchcell.data.experiment_ontology.
+        f"source_{wandb_cfg['model']['dataset_token'].get('source', 'name')}",
     ] + (
         ["smoke", "smoke_control" if smoke_cfg.get("control") else "smoke_token"]
         if smoke_on
@@ -236,6 +239,50 @@ def main(cfg: DictConfig) -> None:
         query = f.read()
     dataset_root = osp.join(DATA_ROOT, wandb_cfg["dataset"]["root_rel"])
     print(f"dataset_root: {dataset_root}")
+
+    # === The experiment ontology vocabulary (dataset_token.source: ontology) ===
+    # Built from the live schema graph, the media library and a scan of records of
+    # every source in the store; written beside the results for provenance and
+    # passed to the processor (annotation per entry) and the model (DAG encoder).
+    token_cfg_raw = dict(wandb_cfg["model"]["dataset_token"])
+    ontology_vocabulary = None
+    if token_cfg_raw.get("enabled") and token_cfg_raw.get("source") == "ontology":
+        from torchcell.data.experiment_ontology import (
+            build_experiment_ontology_vocabulary,
+            describe_annotation,
+            scan_store_records,
+        )
+
+        scanned = scan_store_records(dataset_root, per_dataset=25)
+        ontology_vocabulary = build_experiment_ontology_vocabulary(
+            (e, r) for _, e, r in scanned
+        )
+        profiles: dict[str, set[tuple[str, ...]]] = {}
+        for name, e, r in scanned:
+            profiles.setdefault(name, set()).add(
+                tuple(describe_annotation(ontology_vocabulary, ontology_vocabulary.vector(e, r)))
+            )
+        distinct = len({p for ps in profiles.values() for p in ps})
+        print(
+            f"experiment ontology: {len(ontology_vocabulary)} nodes, max depth "
+            f"{max(ontology_vocabulary.depths())}, {len(scanned)} records scanned over "
+            f"{len(profiles)} sources, {distinct} distinct annotation profiles"
+        )
+        for name in sorted(profiles):
+            print(f"  {name}: {len(profiles[name])} profile(s)")
+        if rank == 0:
+            vocab_path = osp.join(
+                EXPERIMENT_ROOT, EXPERIMENT, "results", "experiment_ontology_vocab_030.json"
+            )
+            ontology_vocabulary.to_json(vocab_path)
+            print(f"experiment ontology vocabulary written: {vocab_path}")
+        wandb.log(
+            {
+                "ontology/n_nodes": len(ontology_vocabulary),
+                "ontology/n_profiles": distinct,
+            }
+        )
+
     dataset, genome, gene_multigraph, node_embeddings = build_dataset(
         data_root=DATA_ROOT,
         dataset_root=dataset_root,
@@ -245,6 +292,7 @@ def main(cfg: DictConfig) -> None:
         phenotype_labels=phenotype_labels,
         dataset_vocabulary=arm.dataset_vocabulary,
         rank=rank,
+        ontology_vocabulary=ontology_vocabulary,
     )
     print(
         f"Dataset Length: {len(dataset)}; embeddings: {list(node_embeddings) or 'learnable'}"
@@ -356,6 +404,8 @@ def main(cfg: DictConfig) -> None:
     print(
         f"Instantiating CellGraphTransformer ({timestamp()}); dataset_token={token_cfg}"
     )
+    if ontology_vocabulary is not None:
+        token_cfg["vocabulary"] = ontology_vocabulary
     model = CellGraphTransformer(
         gene_num=wandb.config["model"]["gene_num"],
         hidden_channels=wandb.config["model"]["hidden_channels"],

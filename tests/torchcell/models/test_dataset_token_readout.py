@@ -214,3 +214,67 @@ def test_affine_frozen_factor_gets_no_gradient_and_stays_identity() -> None:
                 "shift": False,
             }
         )
+
+
+def _ontology_vocab() -> Any:
+    from torchcell.data.experiment_ontology import build_experiment_ontology_vocabulary
+
+    return build_experiment_ontology_vocabulary()
+
+
+@pytest.mark.parametrize("mode", ["readout", "affine"])
+def test_ontology_source_reads_the_annotation_and_never_the_source_index(
+    mode: str,
+) -> None:
+    vocab = _ontology_vocab()
+    model = _model(
+        dataset_token={
+            "enabled": True,
+            "vocab_size": VOCAB,
+            "mode": mode,
+            "source": "ontology",
+            "dim": 4,
+            "ontology": {"state_dim": 6},
+            "vocabulary": vocab,
+        }
+    )
+    model.eval()
+    assert model.uses_entry_annotation and model.token_proj is None
+    entry_batch = torch.tensor([0, 0, 1, 2, 2])
+    entry_dataset = torch.tensor([0, 1, 2, 0, 0])
+    n = len(vocab)
+    ann = torch.zeros(5, n)
+    for i in range(5):
+        ann[i, vocab.index("Experiment")] = 1.0
+        ann[i, vocab.index("Phenotype")] = 1.0
+        ann[i, vocab.index("FitnessPhenotype")] = 1.0
+    ann[2, vocab.index("Temperature.value")] = 0.3  # one row differs by a value
+    with torch.no_grad():
+        pred, reps = model(
+            _cell_graph(),
+            _batch(),
+            entry_batch=entry_batch,
+            entry_dataset=entry_dataset,
+            entry_annotation=ann,
+        )
+        # the SAME annotation under two source indices: identical predictions
+        assert torch.allclose(pred[0], pred[1], atol=1e-6)
+        swapped = entry_dataset.clone()
+        swapped[0], swapped[1] = 2, 2
+        again, _ = model.entry_readout(reps, _batch(), entry_batch, swapped, ann)
+        assert torch.allclose(again, pred, atol=1e-6)
+    assert pred.shape == (5, 1)
+    if mode == "affine":
+        # zero-initialized map: the start is the identity calibration for every row
+        assert cast(Any, model.perturbation_head).mlp[0].in_features == 2 * HIDDEN
+        assert torch.allclose(pred[3], pred[4], atol=1e-6)
+    else:
+        assert cast(Any, model.perturbation_head).mlp[0].in_features == 2 * HIDDEN + 4
+    with pytest.raises(ValueError, match="needs entry_annotation"):
+        model(
+            _cell_graph(),
+            _batch(),
+            entry_batch=entry_batch,
+            entry_dataset=entry_dataset,
+        )
+    assert model.num_parameters["dataset_token"] > 0

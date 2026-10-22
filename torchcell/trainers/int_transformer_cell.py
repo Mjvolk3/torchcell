@@ -1998,11 +1998,19 @@ class RegressionTask(L.LightningModule):
         batch_size = self._get_batch_size(batch)
         entry_batch = gene.phenotype_values_batch
         entry_dataset = gene.phenotype_dataset_indices
+        # The record's ontology annotation, emitted by the processor when the arm
+        # conditions on the experiment rather than the source name.
+        entry_annotation = getattr(gene, "phenotype_ontology", None)
+        uses_annotation = bool(getattr(self.model, "uses_entry_annotation", False))
+        model_kwargs: dict[str, Any] = {}
+        if uses_annotation:
+            model_kwargs["entry_annotation"] = entry_annotation
         predictions, representations = self(
             batch,
             return_attention=False,
             entry_batch=entry_batch,
             entry_dataset=entry_dataset,
+            **model_kwargs,
         )  # predictions [E, 1]
 
         rows, vals, orig, toks, sel = self._entry_rows(batch, "gene_interaction")
@@ -2027,7 +2035,13 @@ class RegressionTask(L.LightningModule):
 
         # Cross-token ablation: the Kuzmin 2018 rows re-read under the 2020 token and
         # the 2020 rows under the 2018 token, on the encoder outputs already computed.
-        if self._crosstoken_pair is not None and stage != "train":
+        # Under the ontology source the model never reads the source index, so the
+        # swap is the identity by construction and is not logged.
+        if (
+            self._crosstoken_pair is not None
+            and stage != "train"
+            and not uses_annotation
+        ):
             a, b = self._crosstoken_pair
             swap = (toks == a) | (toks == b)
             if bool(swap.any()):

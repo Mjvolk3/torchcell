@@ -214,8 +214,12 @@ def build_dataset(
     phenotype_labels: list[str],
     dataset_vocabulary: list[str],
     rank: int = 0,
+    ontology_vocabulary: Any | None = None,
 ) -> tuple[Any, Any, Any, dict[str, Any]]:
     """The 030 dataset with the per-entry processor: (dataset, genome, graph, embeddings).
+
+    ``ontology_vocabulary`` (``ExperimentOntologyVocabulary``) makes the processor emit
+    each entry's annotation to the schema DAG beside its source index.
 
     The same construction for training and for the cache warmer; the deduplicator is
     ``None`` because the 030 build merged nothing, and the processed store is what is
@@ -260,7 +264,10 @@ def build_dataset(
         converter=None,
         deduplicator=None,
         aggregator=GenotypeAggregator,
-        graph_processor=Perturbation(dataset_vocabulary=dataset_vocabulary),
+        graph_processor=Perturbation(
+            dataset_vocabulary=dataset_vocabulary,
+            ontology_vocabulary=ontology_vocabulary,
+        ),
         transform=None,
         phenotype_labels=phenotype_labels,
     )

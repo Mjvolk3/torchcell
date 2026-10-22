@@ -2013,8 +2013,20 @@ class CellGraphTransformer(nn.Module):
                 quantity: the model can match a screen's level and gain but cannot
                 reorder genotypes per source, which the readout token can.
                 ``"input"`` (the token as an encoder token) is reserved for an
-                ablation and raises until it is built. Disabled or ``None``: no
-                parameters, no new keys, the forward is the pre-change one.
+                ablation and raises until it is built. ``source`` picks what the
+                token is made of: ``"name"`` (default) is the one-hot of the source
+                dataset's index; ``"ontology"`` is the record's annotation to the
+                schema DAG (``torchcell.data.experiment_ontology``), propagated to
+                the Experiment root by an :class:`OntologyDagEncoder` built from
+                ``vocabulary`` (an ``ExperimentOntologyVocabulary``) with
+                ``ontology.state_dim`` per node; the forward then needs
+                ``entry_annotation`` ``[E, n_nodes]`` and never reads
+                ``entry_dataset``, so the model cannot tell two sources apart unless
+                their records differ. In affine mode with the ontology source the
+                scale and shift are a zero-initialized linear map of the token, so
+                the identity calibration is the starting point there too. Disabled
+                or ``None``: no parameters, no new keys, the forward is the
+                pre-change one.
             perturb_cls: Send the CLS token through ``EquivariantPerturbationTransform``
                 as one more query beside the N gene tokens, over the same deleted-gene
                 keys. Today the encoder runs once on the wild-type graph and h_CLS is
@@ -2236,8 +2248,11 @@ class CellGraphTransformer(nn.Module):
         # "affine" = one prediction per ENTRY row, the source entering as described
         # in the __init__ docstring.
         self.entry_mode: str | None = None
+        self.entry_source: str = "name"
         self.token_proj: nn.Linear | None = None
+        self.ontology_encoder: nn.Module | None = None
         self.entry_affine: nn.Parameter | None = None
+        self.entry_affine_proj: nn.Linear | None = None
         if token_cfg.get("enabled", False):
             mode = str(token_cfg.get("mode", "readout"))
             if mode == "input":
@@ -2248,16 +2263,52 @@ class CellGraphTransformer(nn.Module):
                 raise ValueError(
                     f"dataset_token.mode must be 'readout' or 'affine', got {mode!r}"
                 )
+            source = str(token_cfg.get("source", "name"))
+            if source not in ("name", "ontology"):
+                raise ValueError(
+                    f"dataset_token.source must be 'name' or 'ontology', got {source!r}"
+                )
             self.entry_mode = mode
+            self.entry_source = source
             self.dataset_vocab_size = int(token_cfg["vocab_size"])
             if self.dataset_vocab_size < 1:
                 raise ValueError("dataset_token needs vocab_size >= 1")
+            token_dim = int(token_cfg.get("dim", 8))
+            if token_dim < 1:
+                raise ValueError("dataset_token needs dim >= 1")
+            if source == "ontology":
+                from torchcell.data.experiment_ontology import OntologyDagEncoder
+
+                vocabulary = token_cfg.get("vocabulary")
+                if vocabulary is None:
+                    raise ValueError(
+                        "dataset_token.source='ontology' needs the vocabulary "
+                        "(an ExperimentOntologyVocabulary) in the config"
+                    )
+                state_dim = int((token_cfg.get("ontology") or {}).get("state_dim", 8))
+                self.ontology_encoder = OntologyDagEncoder(
+                    vocabulary, state_dim=state_dim, token_dim=token_dim
+                )
             if mode == "readout":
-                self.dataset_token_dim = int(token_cfg.get("dim", 8))
-                if self.dataset_token_dim < 1:
-                    raise ValueError("dataset_token.readout needs dim >= 1")
-                self.token_proj = nn.Linear(
-                    self.dataset_vocab_size, self.dataset_token_dim, bias=False
+                self.dataset_token_dim = token_dim
+                if source == "name":
+                    self.token_proj = nn.Linear(
+                        self.dataset_vocab_size, self.dataset_token_dim, bias=False
+                    )
+            elif source == "ontology":
+                use_scale = bool(token_cfg.get("scale", True))
+                use_shift = bool(token_cfg.get("shift", True))
+                if not (use_scale or use_shift):
+                    raise ValueError("dataset_token.affine needs scale or shift")
+                # (scale, shift) deviations for both heads from the ontology token,
+                # zero-initialized so training starts at the identity calibration.
+                self.entry_affine_proj = nn.Linear(token_dim, 4)
+                nn.init.zeros_(self.entry_affine_proj.weight)
+                nn.init.zeros_(self.entry_affine_proj.bias)
+                self.register_buffer(
+                    "entry_affine_mask",
+                    torch.tensor([float(use_scale), float(use_shift)]),
+                    persistent=False,
                 )
             else:
                 use_scale = bool(token_cfg.get("scale", True))
@@ -2277,7 +2328,7 @@ class CellGraphTransformer(nn.Module):
                     torch.tensor([float(use_scale), float(use_shift)]),
                     persistent=False,
                 )
-        if self.entry_affine is None:
+        if self.entry_affine is None and self.entry_affine_proj is None:
             self.entry_affine_mask: torch.Tensor | None = None
 
         # Perturbation readout head (Type II Virtual Instrument). `pooling` is read once
@@ -2846,6 +2897,7 @@ class CellGraphTransformer(nn.Module):
         observed_mask: torch.Tensor | None = None,
         entry_batch: torch.Tensor | None = None,
         entry_dataset: torch.Tensor | None = None,
+        entry_annotation: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """Forward pass of Equivariant Cell Graph Transformer.
 
@@ -2860,6 +2912,9 @@ class CellGraphTransformer(nn.Module):
             entry_dataset: [E] source-dataset index of each entry
                 (``phenotype_dataset_indices``); same rule. With the token the
                 predictions and the ``global`` head output are ``[E, 1]``, one per entry.
+            entry_annotation: [E, n_nodes] the record's annotation to the schema DAG
+                (``phenotype_ontology``); required when ``dataset_token.source`` is
+                ``"ontology"``, forbidden otherwise.
             observed_values: [batch, N] partially observed measured labels for masked
                 prediction, or None. Only consumed when the model was built with an
                 ``observed_label_config``.
@@ -3088,7 +3143,13 @@ class CellGraphTransformer(nn.Module):
                     "entry_dataset (phenotype_values_batch, phenotype_dataset_indices)"
                 )
             predictions, global_entries = self.entry_heads(
-                h_CLS, h_CLS_pert, H_genes_pert, batch, entry_batch, entry_dataset
+                h_CLS,
+                h_CLS_pert,
+                H_genes_pert,
+                batch,
+                entry_batch,
+                entry_dataset,
+                entry_annotation,
             )
             if global_entries is not None:
                 head_outputs["global"] = global_entries
@@ -3208,6 +3269,7 @@ class CellGraphTransformer(nn.Module):
         batch: HeteroData,
         entry_batch: torch.Tensor,
         entry_dataset: torch.Tensor,
+        entry_annotation: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor | None]:
         """Both readouts on ENTRY rows under the source token of each row.
 
@@ -3225,12 +3287,32 @@ class CellGraphTransformer(nn.Module):
                 f"entry_dataset holds index {int(entry_dataset.max())} but the "
                 f"vocabulary has {self.dataset_vocab_size} names"
             )
+        ontology_token: torch.Tensor | None = None
+        if self.ontology_encoder is not None:
+            if entry_annotation is None:
+                raise ValueError(
+                    "dataset_token.source='ontology': forward needs entry_annotation "
+                    "(phenotype_ontology, [E, n_nodes])"
+                )
+            if entry_annotation.shape[0] != entry_batch.shape[0]:
+                raise ValueError(
+                    f"entry_annotation has {entry_annotation.shape[0]} rows for "
+                    f"{entry_batch.shape[0]} entries"
+                )
+            ontology_token = self.ontology_encoder(entry_annotation).to(
+                H_genes_pert.dtype
+            )  # [E, dim]
+        elif entry_annotation is not None:
+            raise ValueError("entry_annotation was given but the source is 'name'")
         if self.token_proj is not None:
             token = self.token_proj(
                 nn.functional.one_hot(entry_dataset, self.dataset_vocab_size).to(
                     H_genes_pert.dtype
                 )
             )  # [E, dim]
+        elif self.entry_mode == "readout":
+            assert ontology_token is not None
+            token = ontology_token
         else:
             # Affine: nothing enters the heads; the source acts on their output.
             token = H_genes_pert.new_zeros(entry_batch.shape[0], 0)
@@ -3259,19 +3341,43 @@ class CellGraphTransformer(nn.Module):
             interaction = self._entry_calibrate(interaction, entry_dataset, 0)
             if fitness is not None:
                 fitness = self._entry_calibrate(fitness, entry_dataset, 1)
+        elif self.entry_affine_proj is not None:
+            assert ontology_token is not None
+            dev = self.entry_affine_proj(ontology_token).view(-1, 2, 2)  # [E, head, 2]
+            interaction = self._entry_calibrate(
+                interaction, entry_dataset, 0, dev[:, 0]
+            )
+            if fitness is not None:
+                fitness = self._entry_calibrate(fitness, entry_dataset, 1, dev[:, 1])
         return interaction, fitness
 
+    @property
+    def uses_entry_annotation(self) -> bool:
+        """True when the per-entry token is the record's ontology annotation."""
+        return self.ontology_encoder is not None
+
     def _entry_calibrate(
-        self, y: torch.Tensor, entry_dataset: torch.Tensor, head: int
+        self,
+        y: torch.Tensor,
+        entry_dataset: torch.Tensor,
+        head: int,
+        deviation: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        """``scale[d] * y + shift[d]`` per entry row, frozen factors held at (1, 0)."""
-        assert self.entry_affine is not None and self.entry_affine_mask is not None
+        """``scale * y + shift`` per entry row, frozen factors held at (1, 0).
+
+        The (scale, shift) deviation from the identity comes from the per-source
+        table (``entry_affine[head][entry_dataset]``) or, given, from ``deviation``
+        ``[E, 2]`` (the ontology path).
+        """
+        assert self.entry_affine_mask is not None
         identity = torch.tensor([1.0, 0.0], device=y.device, dtype=y.dtype)
         mask = self.entry_affine_mask.to(y.dtype)
-        # identity + masked deviation: a frozen factor's parameter gets a zero
-        # gradient and the effective coefficient stays at its identity value.
-        effective = identity + mask * self.entry_affine[head].to(y.dtype)
-        coef = effective[entry_dataset]  # [E, 2]
+        if deviation is None:
+            assert self.entry_affine is not None
+            deviation = self.entry_affine[head][entry_dataset]
+        # identity + masked deviation: a frozen factor gets a zero gradient and the
+        # effective coefficient stays at its identity value.
+        coef = identity + mask * deviation.to(y.dtype)  # [E, 2]
         return coef[:, :1] * y + coef[:, 1:]
 
     def entry_calibration(self) -> dict[str, torch.Tensor] | None:
@@ -3290,6 +3396,7 @@ class CellGraphTransformer(nn.Module):
         batch: HeteroData,
         entry_batch: torch.Tensor,
         entry_dataset: torch.Tensor,
+        entry_annotation: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor | None]:
         """:meth:`entry_heads` from a previous forward's returned representations."""
         return self.entry_heads(
@@ -3299,6 +3406,7 @@ class CellGraphTransformer(nn.Module):
             batch,
             entry_batch,
             entry_dataset,
+            entry_annotation,
         )
 
     @property
@@ -3338,6 +3446,12 @@ class CellGraphTransformer(nn.Module):
             counts["dataset_token"] = count_params(self.token_proj)
         if self.entry_affine is not None:
             counts["dataset_token"] = self.entry_affine.numel()
+        if self.ontology_encoder is not None:
+            counts["dataset_token"] = count_params(self.ontology_encoder) + (
+                count_params(self.entry_affine_proj)
+                if self.entry_affine_proj is not None
+                else 0
+            )
         counts["total"] = sum(counts.values())
         return counts
 

@@ -1,0 +1,32 @@
+# experiments/030-solid-growth-multi/conf/cgt_030_smoke_onto_affine_000.yaml
+#
+# SMOKE: the per-entry arm conditioned on the EXPERIMENT ONTOLOGY instead of the dataset
+# name, mode affine. cgt_030_s3_q_tok_embfit_004 with dataset_token.source ontology: the
+# processor emits each entry's annotation to the schema DAG (experiment, phenotype and
+# environment classes and values, the reference; never the dataset name), an
+# OntologyDagEncoder propagates it to the Experiment root, and the token enters the
+# heads (readout) or sets a per-entry scale and shift from a zero-initialized map
+# (affine). plan.030-ontology-conditioning.2026.10.22, D1/D2 revised.
+#
+# Run as a smoke on GilaHyper (1/64 fraction, 2 epochs x 60 batches):
+#   sbatch -J 030-onto-affine-smoke experiments/030-solid-growth-multi/scripts/gh_cgt_030.slurm \
+#       cgt_030_smoke_onto_affine_000 +seed=1 \
+#       subset.indices=subset_S3Q_frac64_indices_030.json.gz transforms.fit_stats_strict=false \
+#       trainer.max_epochs=2 trainer.limit_train_batches=60 trainer.limit_val_batches=60
+defaults:
+  - cgt_030_s3_q_tok_embfit_004
+  - _self_
+
+wandb:
+  tags: [s3, s3_strict, split_Q, query_pair_disjoint, graph_reg_kl, fitness_joint, closure_doubles, unpinned_to_train, seq_embedding, full_gene_composite, param_matched, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, per_entry, dataset_token, no_holdout, token_affine, token_ontology, smoke]
+
+model:
+  dataset_token:
+    enabled: true
+    mode: affine
+    source: ontology
+    dim: 8
+    scale: true
+    shift: true
+    ontology:
+      state_dim: 8

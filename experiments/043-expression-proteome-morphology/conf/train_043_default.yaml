@@ -1,0 +1,92 @@
+# experiments/043-expression-proteome-morphology/conf/train_043_default.yaml
+# [[experiments.043-expression-proteome-morphology.conf.train_043_default]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/conf/train_043_default.yaml
+#
+# The 043 trainer (scripts/train_043.py). Validated into the pydantic TrainConfig043.
+# Arms compose from three groups: arm (which datasets), loss (hlgauss | pinball | mse) and
+# weighting (equal | records). W&B group = <arm>_<loss>_<weighting>, name = <group>_s<seed>.
+#
+# REGISTERED WINDOW (decision O10), declared here before any launch: the read-out is the
+# mean over the last 20% of the run's epochs (budget.registered_window, start_frac 0.8,
+# end_frac 1.0). Validation is logged every epoch and never selects an epoch; the test fold
+# (fold 0) is never loaded by the trainer. Alone and joint runs are to be matched on
+# optimizer steps (S5); the smoke is time-budgeted instead and says so.
+defaults:
+  - arm: joint_9
+  - loss: hlgauss
+  - weighting: equal
+  - _self_
+
+seed: 0
+device: auto
+
+data:
+  route: A
+  batch_size: 16
+  num_workers: 4
+  # SMOKE ONLY: at most this many marks per record enter the operator (select_marks: the
+  # absent / deletion / loss-of-function marks first, then a fixed per-record random subset).
+  # The design has no cap; Boocock segregants carry median 3,351 marks.
+  mark_cap: 1024
+  val_max_records_per_dataset: 2000
+  traineval_max_records_per_dataset: 256
+  min_strains_per_gene: 3
+
+model:
+  hidden_dim: 144
+  num_heads: 9
+  num_layers: 4
+  dropout: 0.1
+  mask_layers: [1]
+  head_graphs:
+    0: physical
+    1: regulatory
+    2: tflink
+    3: string12_0_neighborhood
+    4: string12_0_fusion
+    5: string12_0_cooccurence
+    6: string12_0_coexpression
+    7: string12_0_experimental
+    8: string12_0_database
+  fourier_frequencies: 8
+  operator_ffn_mult: 4
+  type_token_dim: 16
+  env_token_dim: 16
+  dataset_token_dim: 8
+  head_hidden: 128
+  exp_type_mode: dag
+
+optim:
+  lr: 3.0e-4
+  weight_decay: 1.0e-8
+  warmup_steps: 500
+  clip_grad_norm: 10.0
+
+budget:
+  max_epochs: 50
+  time_budget_hours: null
+  time_margin_minutes: 20.0
+  probe_steps: 30
+  eval_every_epochs: 1
+  registered_window:
+    start_frac: 0.8
+    end_frac: 1.0
+
+wandb:
+  project: torchcell_043-expression-proteome-morphology
+  entity: null
+  mode: online
+  tags: []
+
+paths:
+  data_root: ${oc.env:DATA_ROOT}
+  split_file: ${oc.env:EXPERIMENT_ROOT}/043-expression-proteome-morphology/conf/splits/global_split_v1.json
+  prep_dir: null
+  representation_root: null
+  alleles_root: null
+  checkpoint_root: null
+
+hydra:
+  run:
+    dir: ${oc.env:DATA_ROOT}/experiments/043-expression-proteome-morphology/hydra/${now:%Y-%m-%d_%H-%M-%S}
+  output_subdir: null

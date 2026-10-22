@@ -1,0 +1,8 @@
+# experiments/043-expression-proteome-morphology/conf/arm/joint_9.yaml
+# The headline arm: nine training datasets; Sameith 2015 Dm read as split B through
+# Kemmeren's dataset token and standardization (the same arrays). Hu 2007, Jackson 2020 and
+# Nadal-Ribelles 2025 are excluded (owner, 2026-10-21); Ohya 2005 is the morphology probe,
+# never a target. Boocock 2025 contributes the 393 pooled (SM medium) records only.
+name: joint_9
+datasets: [kemmeren, messner, zelezniak, caudal, muenzner, turnover, boocock, nguessan, vaishnav]
+doubles: true

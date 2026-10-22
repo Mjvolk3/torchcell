@@ -59,6 +59,19 @@ Genotype classes:
   between blocks, or under a block below the posterior threshold, are not marked; their
   counts are returned (``segregant_coverage``). Probabilistic marking is a later step.
 
+The full input (``config.representation`` set): ``sample["representation"]`` is the
+``RecordRepresentation`` of ``torchcell.data.representation_043`` built by
+``representation_043.resolve_genotype``: the reference context (S288C, or the isolate under
+route A), per gene the key ids of the four composite encoders (-1 = typed gap), the
+change-type vector under the precedence rule, the allele parent, the operator mask, the
+position features (chromosome index, relative midpoint, chromosome copy number, gene copy
+number), the extra off-graph tokens (accessory ORFs, the Vaishnav reporter) and every typed
+gap. Segregants there use whole-gene containment in a confident run of one parent, which
+supersedes the midpoint rule of the prototype fields above (``gene_index`` / ``pert_type``
+/ ``allele_parent`` are kept unchanged for the scripts that read them). Vectors are read
+with ``representation_043.gene_vectors`` through the lazy h5 readers; a missing vector
+raises.
+
 No fallbacks: an unexpected perturbation type, experiment type, parent name, dataset name
 or label name raises.
 
@@ -72,6 +85,7 @@ import hashlib
 import json
 import os
 import os.path as osp
+import sys
 from enum import IntEnum, StrEnum
 from typing import Any
 
@@ -81,7 +95,11 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from torch.utils.data import Dataset
 
-from torchcell.datasets.scerevisiae.messner2023 import (
+sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
+import representation_043 as rep043  # noqa: E402
+
+from torchcell.data.representation_043 import RepresentationConfig  # noqa: E402
+from torchcell.datasets.scerevisiae.messner2023 import (  # noqa: E402
     _sgd_gff_path,
     build_orf_to_gene_name_map,
     build_uniprot_to_orf_map,
@@ -250,6 +268,11 @@ class Dataset043Config(BaseModel):
     max_records_per_dataset: int | None = Field(
         default=None, description="truncate each dataset (debugging)"
     )
+    representation: RepresentationConfig | None = Field(
+        default=None,
+        description="when set, every sample carries its full input representation "
+        "(representation_043.py --stage build must have run)",
+    )
 
     @property
     def store_root(self) -> str:
@@ -327,6 +350,17 @@ class Raw043Dataset(Dataset):
         self.parent_id = {p: i for i, p in enumerate(config.segregant_parent_vocab)}
         self.calmorph_features: list[str] | None = None
         self._env: lmdb.Environment | None = None
+        self.resolver = (
+            None
+            if config.representation is None
+            else rep043.load_resolver(
+                config.data_root,
+                config.representation,
+                config.segregant_parent_vocab,
+                self.genes,
+                _sgd_gff_path(config.data_root),
+            )
+        )
 
     # ------------------------------------------------------------------ LMDB access
 
@@ -606,6 +640,11 @@ class Raw043Dataset(Dataset):
         sample["n_label_keys_outside_index"] = outside_keys
         sample["label_key"] = label_key
 
+        if self.resolver is not None:
+            sample["representation"] = rep043.resolve_genotype(
+                self.resolver, genotype, self._gene_idx
+            )
+
         if self.config.include_reference:
             ref_value = record["experiment_reference"]["phenotype_reference"][label_key]
             y_ref = torch.full((self.n_genes,), float("nan"))
@@ -655,6 +694,8 @@ def collate_043(samples: list[dict[str, Any]]) -> dict[str, Any]:
         "y_global": torch.stack([s["y_global"] for s in samples]),
         "strain": [s["strain"] for s in samples],
     }
+    if "representation" in samples[0]:
+        out["representation"] = [s["representation"] for s in samples]
     if "y_ref" in samples[0]:
         out["y_ref"] = torch.stack([s["y_ref"] for s in samples])
         out["y_ref_scalar"] = torch.tensor([s["y_ref_scalar"] for s in samples])
@@ -725,6 +766,30 @@ if __name__ == "__main__":
         f"  y measured per row: {batch['y_mask'].sum(1).tolist()}; "
         f"marked genes per row: {batch['n_marked'].tolist()}"
     )
+
+    # BREAKPOINT: the full input of one record per dataset (keys; vectors read lazily).
+    from torchcell.data.representation_043 import GapKind
+
+    rep_config = config.model_copy(
+        update={
+            "representation": RepresentationConfig(route="A"),
+            "max_records_per_dataset": 1,
+            "include_reference": False,
+        }
+    )
+    rep_dataset = Raw043Dataset(rep_config)
+    for i in range(len(rep_dataset)):
+        r = rep_dataset[i]["representation"]
+        gaps = {
+            GapKind(k).name: int((r.key_gap == k).sum())
+            for k in sorted(set(r.key_gap.ravel().tolist()))
+            if k
+        }
+        print(
+            f"{rep_dataset.items[i][0]}: {r.genotype_class} context {r.context_id} "
+            f"route {r.route} | marks {len(r.marked)} operator {int(r.operator_mask.sum())} "
+            f"| extra tokens {len(r.extra_tokens)} | gap slots {gaps}"
+        )
 
     # BREAKPOINT: the other isolate marking rule on the same Caudal record.
     lof_config = config.model_copy(

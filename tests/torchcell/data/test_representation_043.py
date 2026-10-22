@@ -51,6 +51,15 @@ def test_key_vocabulary_ids_and_unknown_key() -> None:
         vocab.ids([sha(3)])
 
 
+def test_index_gap_maps_ambiguous_sequence() -> None:
+    """The isolate index's ``ambiguous_sequence`` gap string resolves to its own kind."""
+    from torchcell.data.representation_043 import INDEX_GAP
+
+    assert INDEX_GAP["ambiguous_sequence"] is GapKind.AMBIGUOUS_SEQUENCE
+    assert int(GapKind.AMBIGUOUS_SEQUENCE) == 11
+    assert len(set(INDEX_GAP.values())) == len(INDEX_GAP)
+
+
 def test_change_type_precedence() -> None:
     marks = [
         (0, ChangeType.variant),

@@ -6,7 +6,7 @@ updated: 1792637963406
 created: 1792637963406
 ---
 
-## 2026.10.22 - Vaishnav windows and the reporter into the allele tables
+## 2026.10.21 - Vaishnav windows and the reporter into the allele tables
 
 Script: `experiments/043-expression-proteome-morphology/scripts/embed_vaishnav_reporter_043.py`; GPU launcher [[experiments.043-expression-proteome-morphology.scripts.gh_embed_vaishnav_reporter_043]].
 
@@ -14,7 +14,7 @@ The reporter token of the primer (Eq. input-reporter) reads FUDT upstream on the
 
 Plan and state:
 
-- `--stage inputs` (CPU, ran 2026-10-22 in the session, 1.1 s): rebuilt all 71,158 upstream windows from the Addgene 127546 contig with `vaishnav_promoter_window.py`'s functions; every sha256 equals `results/vaishnav_promoter_windows.parquet`. One distinct downstream window. Reporter (SnapGene label `yeGFP`, depositor name yEVenus): 717 bp CDS, 239 aa protein with the trailing `*` (the ProtT5 convention), CaLM input = the CDS (under 3,072 nt). Written to `$DATA_ROOT/data/scerevisiae/isolate_embeddings/peter2018_1011/sequences/vaishnav2022_inputs.parquet` (71,161 rows: 71,158 FUDT upstream, 1 each for the other three encoders) and `vaishnav2022_inputs.json`.
+- `--stage inputs` (CPU, ran 2026-10-21 in the session, 1.1 s): rebuilt all 71,158 upstream windows from the Addgene 127546 contig with `vaishnav_promoter_window.py`'s functions; every sha256 equals `results/vaishnav_promoter_windows.parquet`. One distinct downstream window. Reporter (SnapGene label `yeGFP`, depositor name yEVenus): 717 bp CDS, 239 aa protein with the trailing `*` (the ProtT5 convention), CaLM input = the CDS (under 3,072 nt). Written to `$DATA_ROOT/data/scerevisiae/isolate_embeddings/peter2018_1011/sequences/vaishnav2022_inputs.parquet` (71,161 rows: 71,158 FUDT upstream, 1 each for the other three encoders) and `vaishnav2022_inputs.json`.
 - `--stage embed` + `--stage verify` (GPU): job 6115, submitted `--dependency=afterany:6106` so only one 043 GPU job holds a card and no two jobs append to one h5 file. Writes `results/embed_vaishnav_reporter_043.json`. Not run yet at the time of writing.
 - A CPU smoke check of the batch path on two inputs (FUDT upstream and CaLM) returned (2, 768) and (1, 768); no reference check was run on CPU.
 

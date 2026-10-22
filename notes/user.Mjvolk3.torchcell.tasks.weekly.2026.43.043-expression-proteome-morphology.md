@@ -25,3 +25,14 @@ created: 1792393327949
 - [x] 043 review pass: reconciled representation and objective decisions folded into the primer (composite token, isolates as reference contexts, heads per level, HL-Gauss, one fold file, linear ladder first, decision rule, data per model part, isolate embedding plan); 29-row decision table; diagrams redrawn [[experiments.043-expression-proteome-morphology]]
 - [x] Distinct alleles of the Peter 2018 tarball: 775,856 proteins, 1,198,539 CDS over 1,011 isolates [[experiments.043-expression-proteome-morphology.scripts.count_distinct_alleles]]
 - [ ] Owner answers to the seven 043 questions (primer Sec. 5) [[experiments.043-expression-proteome-morphology]]
+
+## 2026.10.21
+
+- [x] 043 input representation complete: every one of the 173,617 raw-store records resolves to its token inputs (keys for the four composite encoders, change types, position, extra tokens, typed gaps), verified store-wide (job 6120) [[experiments.043-expression-proteome-morphology]]
+- [x] Resolver library with routes A and B and the segregant definite rule over confident runs [[torchcell.data.representation_043]]
+- [x] Per-context key tables built from the isolate index (job 6117) [[experiments.043-expression-proteome-morphology.scripts.representation_043]]
+- [x] All 82,467 segregant records resolved to parent alleles (job 6118) [[experiments.043-expression-proteome-morphology.scripts.resolve_segregant_alleles_043]]
+- [x] Store-wide verification script [[experiments.043-expression-proteome-morphology.scripts.verify_representation_043]]
+- [x] dataset_043 serves the representation [[experiments.043-expression-proteome-morphology.scripts.dataset_043]]
+- [ ] Vaishnav windows and the reporter through the encoders, job 6115, chained after 6106 [[experiments.043-expression-proteome-morphology.scripts.embed_vaishnav_reporter_043]]
+- [ ] Vector-level check of the representation once 6106 and 6115 finish

@@ -6,7 +6,7 @@ updated: 1792638765530
 created: 1792638765530
 ---
 
-## 2026.10.22 - Context tables built
+## 2026.10.21 - Context tables built
 
 Script: `experiments/043-expression-proteome-morphology/scripts/representation_043.py`; library [[torchcell.data.representation_043]]; launcher [[experiments.043-expression-proteome-morphology.scripts.gh_representation_043_build]].
 

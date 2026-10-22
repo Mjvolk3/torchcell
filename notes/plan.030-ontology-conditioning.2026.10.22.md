@@ -68,3 +68,19 @@ Owner's direction: the annotation of an experiment to the ontology is a DAG; enc
 **Also opened, separately (D5).** The same propagation on the genotype lane encodes HOW each gene is perturbed (deletion vs ts allele vs DAmP, marker) into the perturbation operator; the model currently reads gene indices only and drops the perturbation class. That is a genotype-side change and a separate arm.
 
 **Caveat stated.** The experiment DAG is three or four levels deep against GO's dozens, so the DCell semantics of subsystems carry less here; what the structure buys is principled parameter sharing across experiments by subtree, and a representation per subtree (an Environment embedding shared by a fitness and an interaction row from the same screen).
+
+## 2026.10.22 - What the smokes measured: cost, and the seven profiles
+
+Cost (GilaHyper RTX 6000 Ada, 60 training batches of 256 on the 1/64 fraction, identity-affine smoke 6114 vs ontology smokes 6142/6143): training 0.31 vs 0.30 batches/s, validation 4.31 vs 3.95 batches/s, peak allocated 27.61 GiB in all three, same startup. The encoder is 13k parameters over 147 nodes in five depth steps; the validation difference is the per-record annotation walk in the loader workers. Upper bound at the full-pool pace of 166 min/epoch: a few minutes per epoch.
+
+The S3Q store's 15 sources fall into SEVEN annotation profiles (10 nodes shared by all: the roots, aerobic, Celsius, solid):
+
+| profile | sources | what separates it |
+|---|---|---|
+| P1 / P2 | Smf + Dmf Costanzo 2016 at 30 C / at 26 C | fitness classes, DM selection medium, temperature |
+| P3 | Smf, Dmf, Tmf Kuzmin 2018 and 2020 | fitness classes, TM selection medium (uracil dropout), 26 C |
+| P4 / P5 | Dmi Costanzo 2016 at 30 C / at 26 C | interaction classes, DM medium, temperature |
+| P6 | Dmi, Tmi Kuzmin 2018 and 2020 | interaction classes, TM medium, 26 C |
+| P7 | GeneEssentialitySgd, SynthLethalityYeastSynthLethDb | fitness classes, bare YEPD (no composition), 30 C |
+
+Intended collapses: year (2018 vs 2020) is nowhere in the record; perturbation order (single, double, triple) is in the genotype, not the token. NOT intended: P7 merges the SGD essentiality annotation with the curated synthetic-lethality calls. Both reach the build as converted `FitnessExperiment` records in a bare `Media(name="YEPD")` with no components, and the schema carries no assay or technology field, so the DAG cannot tell a curated viability annotation from a curated synthetic-lethality call. Options, in order: (a) accept for S3 (1,140 + 13,990 records, both binary viability calls in rich medium, arguably one measurement kind); (b) give the converted record a node for what it was converted from, written at build time; (c) an assay node in the schema, which is a schema change with its record. Also not encoded yet: component concentrations, the genotype's perturbation class (D5), the reference environment (assumed equal to the experiment's).

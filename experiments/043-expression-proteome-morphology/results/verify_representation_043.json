@@ -1,0 +1,1219 @@
+{
+ "generated_by": "experiments/043-expression-proteome-morphology/scripts/verify_representation_043.py",
+ "created_at": "2026-10-22T03:23:58+00:00",
+ "slurm_job_id": "6120",
+ "wall_seconds": 208.0,
+ "records": 173617,
+ "limit": null,
+ "config": "RepresentationConfig(route='A'), isolates also under route='B'; segregant rule confident_run at posterior >= 0.9",
+ "complete_definition": "no gene slot of the four encoders and no extra token carries a typed gap (position gaps are reported separately)",
+ "records_complete": 89358,
+ "per_dataset_class": {
+  "Boocock2025Dataset | segregant": {
+   "records": 79516,
+   "records_complete": 0,
+   "records_with_any_gap": 79516,
+   "marks_per_record": {
+    "min": 662.0,
+    "median": 3351.0,
+    "mean": 3288.28,
+    "max": 6001.0
+   },
+   "operator_mask_per_record": {
+    "min": 662.0,
+    "median": 3351.0,
+    "mean": 3288.28,
+    "max": 6001.0
+   },
+   "extra_tokens_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "genes_with_gap_per_record": {
+    "min": 571.0,
+    "median": 2858.5,
+    "mean": 2886.49,
+    "max": 5809.0
+   },
+   "marks_by_change_type_mean": {
+    "variant": 3288.28
+   },
+   "gene_gaps": {
+    "no_isolate_allele": {
+     "records_with": 79516,
+     "genes_per_record": {
+      "min": 43.0,
+      "median": 274.0,
+      "mean": 270.79,
+      "max": 501.0
+     }
+    },
+    "locus_gap": {
+     "records_with": 79516,
+     "genes_per_record": {
+      "min": 4.0,
+      "median": 66.0,
+      "mean": 66.92,
+      "max": 149.0
+     }
+    },
+    "flank_short": {
+     "records_with": 79516,
+     "genes_per_record": {
+      "min": 4.0,
+      "median": 39.0,
+      "mean": 39.89,
+      "max": 91.0
+     }
+    },
+    "splice_unverified": {
+     "records_with": 54677,
+     "genes_per_record": {
+      "min": 0.0,
+      "median": 1.0,
+      "mean": 0.9,
+      "max": 2.0
+     }
+    },
+    "segregant_unassigned": {
+     "records_with": 79516,
+     "genes_per_record": {
+      "min": 351.0,
+      "median": 2494.0,
+      "mean": 2507.99,
+      "max": 5671.0
+     }
+    }
+   },
+   "extra_token_gaps": {
+    "accessory_without_row": {
+     "records_with": 0,
+     "tokens_total": 0
+    },
+    "missing_reporter_window": {
+     "records_with": 0,
+     "tokens_total": 0
+    }
+   },
+   "position_gaps": {
+    "copy_number_unreleased": {
+     "records_with": 79516,
+     "genes_per_record_mean": 411.65
+    },
+    "segregant_unassigned": {
+     "records_with": 79516,
+     "genes_per_record_mean": 2507.99
+    }
+   },
+   "records_with_chromosome_copy_not_one": 0,
+   "marks_outside_index_total": 0,
+   "contexts": 1,
+   "segregant_rule": {
+    "assigned": {
+     "min": 936.0,
+     "median": 4113.0,
+     "mean": 4099.01,
+     "max": 6256.0
+    },
+    "no_block": {
+     "min": 304.0,
+     "median": 1450.0,
+     "mean": 1437.88,
+     "max": 2925.0
+    },
+    "low_posterior": {
+     "min": 0.0,
+     "median": 908.0,
+     "mean": 988.19,
+     "max": 4008.0
+    },
+    "straddle": {
+     "min": 25.0,
+     "median": 80.0,
+     "mean": 81.92,
+     "max": 190.0
+    }
+   }
+  },
+  "CaudalPanTranscriptome2024Dataset | isolate": {
+   "records": 943,
+   "records_complete": 0,
+   "records_with_any_gap": 943,
+   "marks_per_record": {
+    "min": 148.0,
+    "median": 5162.0,
+    "mean": 5148.18,
+    "max": 5993.0
+   },
+   "operator_mask_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.07,
+    "max": 1.0
+   },
+   "extra_tokens_per_record": {
+    "min": 34.0,
+    "median": 78.0,
+    "mean": 83.79,
+    "max": 352.0
+   },
+   "genes_with_gap_per_record": {
+    "min": 879.0,
+    "median": 988.0,
+    "mean": 1090.51,
+    "max": 2832.0
+   },
+   "marks_by_change_type_mean": {
+    "deletion": 0.07,
+    "variant": 4783.33,
+    "loss_of_function": 232.68,
+    "absent": 132.1
+   },
+   "gene_gaps": {
+    "no_isolate_allele": {
+     "records_with": 943,
+     "genes_per_record": {
+      "min": 522.0,
+      "median": 571.0,
+      "mean": 569.75,
+      "max": 588.0
+     }
+    },
+    "locus_gap": {
+     "records_with": 943,
+     "genes_per_record": {
+      "min": 140.0,
+      "median": 199.0,
+      "mean": 267.98,
+      "max": 1683.0
+     }
+    },
+    "flank_short": {
+     "records_with": 943,
+     "genes_per_record": {
+      "min": 33.0,
+      "median": 87.0,
+      "mean": 118.7,
+      "max": 860.0
+     }
+    },
+    "splice_unverified": {
+     "records_with": 943,
+     "genes_per_record": {
+      "min": 2.0,
+      "median": 2.0,
+      "mean": 2.0,
+      "max": 2.0
+     }
+    },
+    "exon_boundary_in_gap": {
+     "records_with": 49,
+     "genes_per_record": {
+      "min": 0.0,
+      "median": 0.0,
+      "mean": 0.05,
+      "max": 2.0
+     }
+    },
+    "absent_in_context": {
+     "records_with": 943,
+     "genes_per_record": {
+      "min": 41.0,
+      "median": 123.0,
+      "mean": 132.1,
+      "max": 450.0
+     }
+    }
+   },
+   "extra_token_gaps": {
+    "accessory_without_row": {
+     "records_with": 0,
+     "tokens_total": 0
+    },
+    "missing_reporter_window": {
+     "records_with": 0,
+     "tokens_total": 0
+    }
+   },
+   "position_gaps": {
+    "copy_number_unreleased": {
+     "records_with": 943,
+     "genes_per_record_mean": 945.03
+    },
+    "ploidy_unreported": {
+     "records_with": 1,
+     "genes_per_record_mean": 6.98
+    }
+   },
+   "records_with_chromosome_copy_not_one": 200,
+   "marks_outside_index_total": 7323,
+   "contexts": 943,
+   "route_a_vs_b": {
+    "route_b_edit_list_per_record": {
+     "min": 52.0,
+     "median": 5038.0,
+     "mean": 5016.01,
+     "max": 5838.0
+    },
+    "route_b_operator_per_record": {
+     "min": 148.0,
+     "median": 5162.0,
+     "mean": 5148.18,
+     "max": 5993.0
+    },
+    "genes_differ_route_a_b_per_record": {
+     "min": 769.0,
+     "median": 1417.0,
+     "mean": 1422.69,
+     "max": 1955.0
+    },
+    "genes_route_a_keys_differ_s288c_per_record": {
+     "min": 481.0,
+     "median": 5686.0,
+     "mean": 5645.94,
+     "max": 5870.0
+    },
+    "route_b_genes_with_gap_per_record": {
+     "min": 11.0,
+     "median": 216.0,
+     "mean": 317.17,
+     "max": 2093.0
+    }
+   }
+  },
+  "DmMicroarraySameith2015Dataset | deletion": {
+   "records": 72,
+   "records_complete": 72,
+   "records_with_any_gap": 0,
+   "marks_per_record": {
+    "min": 2.0,
+    "median": 2.0,
+    "mean": 2.0,
+    "max": 2.0
+   },
+   "operator_mask_per_record": {
+    "min": 2.0,
+    "median": 2.0,
+    "mean": 2.0,
+    "max": 2.0
+   },
+   "extra_tokens_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "genes_with_gap_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "marks_by_change_type_mean": {
+    "deletion": 2.0
+   },
+   "gene_gaps": {},
+   "extra_token_gaps": {
+    "accessory_without_row": {
+     "records_with": 0,
+     "tokens_total": 0
+    },
+    "missing_reporter_window": {
+     "records_with": 0,
+     "tokens_total": 0
+    }
+   },
+   "position_gaps": {},
+   "records_with_chromosome_copy_not_one": 0,
+   "marks_outside_index_total": 0,
+   "contexts": 1
+  },
+  "MicroarrayKemmeren2014Dataset | deletion": {
+   "records": 1482,
+   "records_complete": 1482,
+   "records_with_any_gap": 0,
+   "marks_per_record": {
+    "min": 1.0,
+    "median": 1.0,
+    "mean": 1.0,
+    "max": 1.0
+   },
+   "operator_mask_per_record": {
+    "min": 1.0,
+    "median": 1.0,
+    "mean": 1.0,
+    "max": 1.0
+   },
+   "extra_tokens_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "genes_with_gap_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "marks_by_change_type_mean": {
+    "deletion": 1.0
+   },
+   "gene_gaps": {},
+   "extra_token_gaps": {
+    "accessory_without_row": {
+     "records_with": 0,
+     "tokens_total": 0
+    },
+    "missing_reporter_window": {
+     "records_with": 0,
+     "tokens_total": 0
+    }
+   },
+   "position_gaps": {},
+   "records_with_chromosome_copy_not_one": 0,
+   "marks_outside_index_total": 0,
+   "contexts": 1
+  },
+  "MicroarrayScoreHu2007Dataset | deletion": {
+   "records": 262,
+   "records_complete": 262,
+   "records_with_any_gap": 0,
+   "marks_per_record": {
+    "min": 1.0,
+    "median": 1.0,
+    "mean": 1.0,
+    "max": 1.0
+   },
+   "operator_mask_per_record": {
+    "min": 1.0,
+    "median": 1.0,
+    "mean": 1.0,
+    "max": 1.0
+   },
+   "extra_tokens_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "genes_with_gap_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "marks_by_change_type_mean": {
+    "deletion": 1.0
+   },
+   "gene_gaps": {},
+   "extra_token_gaps": {
+    "accessory_without_row": {
+     "records_with": 0,
+     "tokens_total": 0
+    },
+    "missing_reporter_window": {
+     "records_with": 0,
+     "tokens_total": 0
+    }
+   },
+   "position_gaps": {},
+   "records_with_chromosome_copy_not_one": 0,
+   "marks_outside_index_total": 0,
+   "contexts": 1
+  },
+  "NadalRibellesPerturbSeq2025Dataset | deletion": {
+   "records": 6118,
+   "records_complete": 6118,
+   "records_with_any_gap": 0,
+   "marks_per_record": {
+    "min": 1.0,
+    "median": 1.0,
+    "mean": 1.0,
+    "max": 1.0
+   },
+   "operator_mask_per_record": {
+    "min": 1.0,
+    "median": 1.0,
+    "mean": 1.0,
+    "max": 1.0
+   },
+   "extra_tokens_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "genes_with_gap_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "marks_by_change_type_mean": {
+    "deletion": 1.0
+   },
+   "gene_gaps": {},
+   "extra_token_gaps": {
+    "accessory_without_row": {
+     "records_with": 0,
+     "tokens_total": 0
+    },
+    "missing_reporter_window": {
+     "records_with": 0,
+     "tokens_total": 0
+    }
+   },
+   "position_gaps": {},
+   "records_with_chromosome_copy_not_one": 0,
+   "marks_outside_index_total": 0,
+   "contexts": 1
+  },
+  "Nguessan2025Dataset | segregant": {
+   "records": 2951,
+   "records_complete": 0,
+   "records_with_any_gap": 2951,
+   "marks_per_record": {
+    "min": 1095.0,
+    "median": 2910.0,
+    "mean": 2875.54,
+    "max": 4416.0
+   },
+   "operator_mask_per_record": {
+    "min": 1095.0,
+    "median": 2910.0,
+    "mean": 2875.54,
+    "max": 4416.0
+   },
+   "extra_tokens_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "genes_with_gap_per_record": {
+    "min": 588.0,
+    "median": 908.0,
+    "mean": 1149.7,
+    "max": 3705.0
+   },
+   "marks_by_change_type_mean": {
+    "variant": 2875.54
+   },
+   "gene_gaps": {
+    "no_isolate_allele": {
+     "records_with": 2951,
+     "genes_per_record": {
+      "min": 84.0,
+      "median": 230.0,
+      "mean": 228.59,
+      "max": 356.0
+     }
+    },
+    "locus_gap": {
+     "records_with": 2951,
+     "genes_per_record": {
+      "min": 9.0,
+      "median": 45.0,
+      "mean": 44.29,
+      "max": 75.0
+     }
+    },
+    "flank_short": {
+     "records_with": 2951,
+     "genes_per_record": {
+      "min": 5.0,
+      "median": 31.0,
+      "mean": 30.42,
+      "max": 58.0
+     }
+    },
+    "splice_unverified": {
+     "records_with": 2107,
+     "genes_per_record": {
+      "min": 0.0,
+      "median": 1.0,
+      "mean": 0.92,
+      "max": 2.0
+     }
+    },
+    "segregant_unassigned": {
+     "records_with": 2951,
+     "genes_per_record": {
+      "min": 352.0,
+      "median": 585.0,
+      "mean": 845.49,
+      "max": 3569.0
+     }
+    }
+   },
+   "extra_token_gaps": {
+    "accessory_without_row": {
+     "records_with": 0,
+     "tokens_total": 0
+    },
+    "missing_reporter_window": {
+     "records_with": 0,
+     "tokens_total": 0
+    }
+   },
+   "position_gaps": {
+    "copy_number_unreleased": {
+     "records_with": 2951,
+     "genes_per_record_mean": 343.2
+    },
+    "segregant_unassigned": {
+     "records_with": 2951,
+     "genes_per_record_mean": 845.49
+    }
+   },
+   "records_with_chromosome_copy_not_one": 0,
+   "marks_outside_index_total": 0,
+   "contexts": 1,
+   "segregant_rule": {
+    "assigned": {
+     "min": 3038.0,
+     "median": 6022.0,
+     "mean": 5761.51,
+     "max": 6255.0
+    },
+    "no_block": {
+     "min": 295.0,
+     "median": 380.0,
+     "mean": 412.1,
+     "max": 754.0
+    },
+    "low_posterior": {
+     "min": 1.0,
+     "median": 155.0,
+     "mean": 380.25,
+     "max": 2986.0
+    },
+    "straddle": {
+     "min": 28.0,
+     "median": 52.0,
+     "mean": 53.14,
+     "max": 109.0
+    }
+   }
+  },
+  "PooledPromoterExpressionVaishnav2022Dataset | promoter": {
+   "records": 71158,
+   "records_complete": 71158,
+   "records_with_any_gap": 0,
+   "marks_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "operator_mask_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "extra_tokens_per_record": {
+    "min": 1.0,
+    "median": 1.0,
+    "mean": 1.0,
+    "max": 1.0
+   },
+   "genes_with_gap_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "marks_by_change_type_mean": {},
+   "gene_gaps": {},
+   "extra_token_gaps": {
+    "accessory_without_row": {
+     "records_with": 0,
+     "tokens_total": 0
+    },
+    "missing_reporter_window": {
+     "records_with": 0,
+     "tokens_total": 0
+    }
+   },
+   "position_gaps": {},
+   "records_with_chromosome_copy_not_one": 0,
+   "marks_outside_index_total": 0,
+   "contexts": 1
+  },
+  "ProteinTurnoverMuenzner2024Dataset | isolate": {
+   "records": 55,
+   "records_complete": 0,
+   "records_with_any_gap": 55,
+   "marks_per_record": {
+    "min": 4551.0,
+    "median": 5198.0,
+    "mean": 5157.67,
+    "max": 5747.0
+   },
+   "operator_mask_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.05,
+    "max": 1.0
+   },
+   "extra_tokens_per_record": {
+    "min": 49.0,
+    "median": 78.0,
+    "mean": 89.82,
+    "max": 334.0
+   },
+   "genes_with_gap_per_record": {
+    "min": 879.0,
+    "median": 996.0,
+    "mean": 1035.47,
+    "max": 1381.0
+   },
+   "marks_by_change_type_mean": {
+    "deletion": 0.05,
+    "variant": 4799.55,
+    "loss_of_function": 226.47,
+    "absent": 131.6
+   },
+   "gene_gaps": {
+    "no_isolate_allele": {
+     "records_with": 55,
+     "genes_per_record": {
+      "min": 553.0,
+      "median": 571.0,
+      "mean": 570.51,
+      "max": 581.0
+     }
+    },
+    "locus_gap": {
+     "records_with": 55,
+     "genes_per_record": {
+      "min": 160.0,
+      "median": 207.0,
+      "mean": 227.44,
+      "max": 423.0
+     }
+    },
+    "flank_short": {
+     "records_with": 55,
+     "genes_per_record": {
+      "min": 54.0,
+      "median": 85.0,
+      "mean": 103.93,
+      "max": 273.0
+     }
+    },
+    "splice_unverified": {
+     "records_with": 55,
+     "genes_per_record": {
+      "min": 2.0,
+      "median": 2.0,
+      "mean": 2.0,
+      "max": 2.0
+     }
+    },
+    "exon_boundary_in_gap": {
+     "records_with": 1,
+     "genes_per_record": {
+      "min": 0.0,
+      "median": 0.0,
+      "mean": 0.02,
+      "max": 1.0
+     }
+    },
+    "absent_in_context": {
+     "records_with": 55,
+     "genes_per_record": {
+      "min": 67.0,
+      "median": 126.0,
+      "mean": 131.6,
+      "max": 331.0
+     }
+    }
+   },
+   "extra_token_gaps": {
+    "accessory_without_row": {
+     "records_with": 0,
+     "tokens_total": 0
+    },
+    "missing_reporter_window": {
+     "records_with": 0,
+     "tokens_total": 0
+    }
+   },
+   "position_gaps": {
+    "copy_number_unreleased": {
+     "records_with": 55,
+     "genes_per_record_mean": 946.0
+    }
+   },
+   "records_with_chromosome_copy_not_one": 45,
+   "marks_outside_index_total": 415,
+   "contexts": 55,
+   "route_a_vs_b": {
+    "route_b_edit_list_per_record": {
+     "min": 4396.0,
+     "median": 5068.0,
+     "mean": 5026.02,
+     "max": 5604.0
+    },
+    "route_b_operator_per_record": {
+     "min": 4551.0,
+     "median": 5198.0,
+     "mean": 5157.67,
+     "max": 5747.0
+    },
+    "genes_differ_route_a_b_per_record": {
+     "min": 991.0,
+     "median": 1405.0,
+     "mean": 1430.75,
+     "max": 1908.0
+    },
+    "genes_route_a_keys_differ_s288c_per_record": {
+     "min": 5427.0,
+     "median": 5672.0,
+     "mean": 5665.18,
+     "max": 5857.0
+    },
+    "route_b_genes_with_gap_per_record": {
+     "min": 148.0,
+     "median": 223.0,
+     "mean": 261.98,
+     "max": 641.0
+    }
+   }
+  },
+  "ProteomeMessner2023Dataset | deletion": {
+   "records": 4624,
+   "records_complete": 4624,
+   "records_with_any_gap": 0,
+   "marks_per_record": {
+    "min": 1.0,
+    "median": 1.0,
+    "mean": 1.0,
+    "max": 1.0
+   },
+   "operator_mask_per_record": {
+    "min": 1.0,
+    "median": 1.0,
+    "mean": 1.0,
+    "max": 1.0
+   },
+   "extra_tokens_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "genes_with_gap_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "marks_by_change_type_mean": {
+    "deletion": 1.0
+   },
+   "gene_gaps": {},
+   "extra_token_gaps": {
+    "accessory_without_row": {
+     "records_with": 0,
+     "tokens_total": 0
+    },
+    "missing_reporter_window": {
+     "records_with": 0,
+     "tokens_total": 0
+    }
+   },
+   "position_gaps": {},
+   "records_with_chromosome_copy_not_one": 0,
+   "marks_outside_index_total": 0,
+   "contexts": 1
+  },
+  "ProteomeMuenzner2024Dataset | isolate": {
+   "records": 794,
+   "records_complete": 0,
+   "records_with_any_gap": 794,
+   "marks_per_record": {
+    "min": 148.0,
+    "median": 5127.0,
+    "mean": 5122.61,
+    "max": 5990.0
+   },
+   "operator_mask_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.06,
+    "max": 1.0
+   },
+   "extra_tokens_per_record": {
+    "min": 34.0,
+    "median": 78.0,
+    "mean": 84.33,
+    "max": 352.0
+   },
+   "genes_with_gap_per_record": {
+    "min": 879.0,
+    "median": 984.0,
+    "mean": 1080.59,
+    "max": 2832.0
+   },
+   "marks_by_change_type_mean": {
+    "deletion": 0.06,
+    "variant": 4763.44,
+    "loss_of_function": 228.73,
+    "absent": 130.38
+   },
+   "gene_gaps": {
+    "no_isolate_allele": {
+     "records_with": 794,
+     "genes_per_record": {
+      "min": 533.0,
+      "median": 571.0,
+      "mean": 570.05,
+      "max": 588.0
+     }
+    },
+    "locus_gap": {
+     "records_with": 794,
+     "genes_per_record": {
+      "min": 140.0,
+      "median": 197.0,
+      "mean": 263.63,
+      "max": 1683.0
+     }
+    },
+    "flank_short": {
+     "records_with": 794,
+     "genes_per_record": {
+      "min": 33.0,
+      "median": 86.0,
+      "mean": 114.55,
+      "max": 502.0
+     }
+    },
+    "splice_unverified": {
+     "records_with": 794,
+     "genes_per_record": {
+      "min": 2.0,
+      "median": 2.0,
+      "mean": 2.0,
+      "max": 2.0
+     }
+    },
+    "exon_boundary_in_gap": {
+     "records_with": 40,
+     "genes_per_record": {
+      "min": 0.0,
+      "median": 0.0,
+      "mean": 0.05,
+      "max": 2.0
+     }
+    },
+    "absent_in_context": {
+     "records_with": 794,
+     "genes_per_record": {
+      "min": 41.0,
+      "median": 122.0,
+      "mean": 130.38,
+      "max": 418.0
+     }
+    }
+   },
+   "extra_token_gaps": {
+    "accessory_without_row": {
+     "records_with": 0,
+     "tokens_total": 0
+    },
+    "missing_reporter_window": {
+     "records_with": 0,
+     "tokens_total": 0
+    }
+   },
+   "position_gaps": {
+    "copy_number_unreleased": {
+     "records_with": 794,
+     "genes_per_record_mean": 946.0
+    }
+   },
+   "records_with_chromosome_copy_not_one": 168,
+   "marks_outside_index_total": 6182,
+   "contexts": 794,
+   "route_a_vs_b": {
+    "route_b_edit_list_per_record": {
+     "min": 52.0,
+     "median": 5000.5,
+     "mean": 4992.17,
+     "max": 5838.0
+    },
+    "route_b_operator_per_record": {
+     "min": 148.0,
+     "median": 5127.0,
+     "mean": 5122.61,
+     "max": 5990.0
+    },
+    "genes_differ_route_a_b_per_record": {
+     "min": 769.0,
+     "median": 1459.5,
+     "mean": 1439.6,
+     "max": 1954.0
+    },
+    "genes_route_a_keys_differ_s288c_per_record": {
+     "min": 481.0,
+     "median": 5673.0,
+     "mean": 5640.44,
+     "max": 5870.0
+    },
+    "route_b_genes_with_gap_per_record": {
+     "min": 11.0,
+     "median": 214.0,
+     "mean": 308.33,
+     "max": 2093.0
+    }
+   }
+  },
+  "ProteomeMuenzner2024Dataset | reference": {
+   "records": 1,
+   "records_complete": 1,
+   "records_with_any_gap": 0,
+   "marks_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "operator_mask_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "extra_tokens_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "genes_with_gap_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "marks_by_change_type_mean": {},
+   "gene_gaps": {},
+   "extra_token_gaps": {
+    "accessory_without_row": {
+     "records_with": 0,
+     "tokens_total": 0
+    },
+    "missing_reporter_window": {
+     "records_with": 0,
+     "tokens_total": 0
+    }
+   },
+   "position_gaps": {},
+   "records_with_chromosome_copy_not_one": 0,
+   "marks_outside_index_total": 0,
+   "contexts": 1
+  },
+  "ProteomeZelezniak2018Dataset | deletion": {
+   "records": 97,
+   "records_complete": 97,
+   "records_with_any_gap": 0,
+   "marks_per_record": {
+    "min": 1.0,
+    "median": 1.0,
+    "mean": 1.0,
+    "max": 1.0
+   },
+   "operator_mask_per_record": {
+    "min": 1.0,
+    "median": 1.0,
+    "mean": 1.0,
+    "max": 1.0
+   },
+   "extra_tokens_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "genes_with_gap_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "marks_by_change_type_mean": {
+    "deletion": 1.0
+   },
+   "gene_gaps": {},
+   "extra_token_gaps": {
+    "accessory_without_row": {
+     "records_with": 0,
+     "tokens_total": 0
+    },
+    "missing_reporter_window": {
+     "records_with": 0,
+     "tokens_total": 0
+    }
+   },
+   "position_gaps": {},
+   "records_with_chromosome_copy_not_one": 0,
+   "marks_outside_index_total": 0,
+   "contexts": 1
+  },
+  "ScmdOhya2005Dataset | deletion": {
+   "records": 4678,
+   "records_complete": 4678,
+   "records_with_any_gap": 0,
+   "marks_per_record": {
+    "min": 1.0,
+    "median": 1.0,
+    "mean": 1.0,
+    "max": 1.0
+   },
+   "operator_mask_per_record": {
+    "min": 1.0,
+    "median": 1.0,
+    "mean": 1.0,
+    "max": 1.0
+   },
+   "extra_tokens_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "genes_with_gap_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "marks_by_change_type_mean": {
+    "deletion": 1.0
+   },
+   "gene_gaps": {},
+   "extra_token_gaps": {
+    "accessory_without_row": {
+     "records_with": 0,
+     "tokens_total": 0
+    },
+    "missing_reporter_window": {
+     "records_with": 0,
+     "tokens_total": 0
+    }
+   },
+   "position_gaps": {},
+   "records_with_chromosome_copy_not_one": 0,
+   "marks_outside_index_total": 0,
+   "contexts": 1
+  },
+  "SmMicroarraySameith2015Dataset | deletion": {
+   "records": 82,
+   "records_complete": 82,
+   "records_with_any_gap": 0,
+   "marks_per_record": {
+    "min": 1.0,
+    "median": 1.0,
+    "mean": 1.0,
+    "max": 1.0
+   },
+   "operator_mask_per_record": {
+    "min": 1.0,
+    "median": 1.0,
+    "mean": 1.0,
+    "max": 1.0
+   },
+   "extra_tokens_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "genes_with_gap_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "marks_by_change_type_mean": {
+    "deletion": 1.0
+   },
+   "gene_gaps": {},
+   "extra_token_gaps": {
+    "accessory_without_row": {
+     "records_with": 0,
+     "tokens_total": 0
+    },
+    "missing_reporter_window": {
+     "records_with": 0,
+     "tokens_total": 0
+    }
+   },
+   "position_gaps": {},
+   "records_with_chromosome_copy_not_one": 0,
+   "marks_outside_index_total": 0,
+   "contexts": 1
+  },
+  "TfDeletionPseudobulkJackson2020Dataset | deletion": {
+   "records": 784,
+   "records_complete": 784,
+   "records_with_any_gap": 0,
+   "marks_per_record": {
+    "min": 1.0,
+    "median": 1.0,
+    "mean": 1.0,
+    "max": 1.0
+   },
+   "operator_mask_per_record": {
+    "min": 1.0,
+    "median": 1.0,
+    "mean": 1.0,
+    "max": 1.0
+   },
+   "extra_tokens_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "genes_with_gap_per_record": {
+    "min": 0.0,
+    "median": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+   },
+   "marks_by_change_type_mean": {
+    "deletion": 1.0
+   },
+   "gene_gaps": {},
+   "extra_token_gaps": {
+    "accessory_without_row": {
+     "records_with": 0,
+     "tokens_total": 0
+    },
+    "missing_reporter_window": {
+     "records_with": 0,
+     "tokens_total": 0
+    }
+   },
+   "position_gaps": {},
+   "records_with_chromosome_copy_not_one": 0,
+   "marks_outside_index_total": 0,
+   "contexts": 1
+  }
+ },
+ "segregant_cross_check": {
+  "records": 82467,
+  "missing_from_parquet": 0,
+  "assigned_mismatch": 0,
+  "marks_mismatch": 0,
+  "unassigned_mismatch": 0
+ }
+}

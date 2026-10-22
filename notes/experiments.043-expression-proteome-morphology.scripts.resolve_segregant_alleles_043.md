@@ -6,7 +6,7 @@ updated: 1792638781908
 created: 1792638781908
 ---
 
-## 2026.10.22 - Every segregant record resolved to parent alleles
+## 2026.10.21 - Every segregant record resolved to parent alleles
 
 Script: `experiments/043-expression-proteome-morphology/scripts/resolve_segregant_alleles_043.py`; launcher [[experiments.043-expression-proteome-morphology.scripts.gh_resolve_segregant_alleles_043]]; rule in [[torchcell.data.representation_043]].
 

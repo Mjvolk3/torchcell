@@ -625,3 +625,103 @@ pass counts 794 distinct isolate descriptors in Muenzner's 795 records, 978 in a
 Primer: 34 pages, `make check` 0 errors 0 warnings; published to Zotero
 `torchcell/notes-tex/multimodal/043-datasets-primer` as
 `043-datasets-primer_2026-10-20-00-33-36_5a419cba.pdf` (built at commit 81400eea9).
+
+## 2026.10.21 - Global split and linear evaluations
+
+Owner direction 2026-10-21: run every linear evaluation first; the headline arms drop Hu 2007,
+Jackson 2020 and Nadal-Ribelles 2025, so those are reported separately and the joint reference
+set below is Kemmeren 2014, Messner 2023 and Zelezniak 2018; dataset weighting (none, then
+uniform) is a later training question and does not enter here; the Nadal sentinel rule
+(`|log2 FC| > 20` set missing) is applied.
+
+**Fold file.** `conf/splits/global_split_v1.json` (`GlobalSplit043`, seed 0, store index sha256
+`4bd3e6d4...`), written by [[make_global_split_043|experiments.043-expression-proteome-morphology.scripts.make_global_split_043]],
+job 6046 (4 min). Fold-0 test units realized against the primer's expected shares: Kemmeren 140
+(about 140), Messner 441 genes (about 448), Nadal-Ribelles 302 genes (about 306), Hu 19 (about 26),
+Zelezniak 9 (about 10), isolates 196 with 160 Muenzner and 11 turnover (about 196, 159, 11),
+Boocock 15,904 records (about 15,903), N'Guessan 590 (about 590), promoters 14,232 (about 14,232).
+Jackson 2020 has no gene in fold 0 or 1 (6 of its 12 genes pinned as Sameith singles or HO, the
+other 6 dealt into folds 2 to 9), so Jackson is not scored by the ladder, and under v1 cannot be
+scored on split A by any arm.
+
+**Ladder.** [[linear_evals_043|experiments.043-expression-proteome-morphology.scripts.linear_evals_043]];
+extraction job 6051 (3 min 50 s), Kemmeren 6059 (5 min 45 s), Sameith doubles 6060 (32 s),
+Zelezniak 6061 (20 s), Hu 6062 (50 s), Nadal-Ribelles 6063 (21 min), Messner 6064 (7 min 54 s),
+isolates 6065 (1 min 32 s), segregants 6066 (1 min 1 s), Vaishnav 6067 (3 min 11 s), morphology
+6068 (1 min 57 s), report 6109. All folds fitted; fold 0 reported with the 95% paired bootstrap
+over held-out strains (1,000 resamples, seed 0). N0 (the training-mean profile) scores 0 by
+construction on the per-gene and centered per-strain statistics, so the interval of a model's
+median is its interval against N0.
+
+Split A, fold 0, frozen token of the deleted gene (ridge with inner-fold penalty; kNN k = 10):
+
+| dataset | test genes | ridge composite, median per-gene Pearson r [95% CI] | best single-block ridge, median per-gene Pearson r | kNN 10 composite, median per-gene Pearson r | ridge composite, median centered per-strain Pearson r [95% CI] | N0, median raw per-strain Pearson r | ridge composite, median per-gene Spearman rho |
+|---|---|---|---|---|---|---|---|
+| Kemmeren 2014 | 140 | 0.125 [0.097, 0.157] | ProtT5 0.129 | 0.110 | 0.161 [0.095, 0.206] | 0.514 | 0.117 |
+| Messner 2023 | 441 | 0.083 [0.060, 0.111] | ProtT5 0.086 | 0.073 | 0.037 [0.025, 0.054] | 0.044 | 0.062 |
+| Zelezniak 2018 | 9 | -0.117 [-0.360, 0.114] | FUDT down 0.052 | -0.027 | -0.110 [-0.414, 0.140] | 0.754 | -0.117 |
+| Hu 2007 (reported separately) | 19 | -0.023 [-0.098, 0.058] | FUDT up 0.013 | -0.014 | -0.044 [-0.133, 0.035] | 0.460 | -0.019 |
+| Nadal-Ribelles YPD (separately) | 298 | 0.088 [0.059, 0.119] | CaLM 0.085 | 0.028 | 0.031 [0.021, 0.040] | 0.500 | 0.057 |
+| Nadal-Ribelles YPD + 0.4 M NaCl (separately) | 299 | 0.065 [0.038, 0.093] | ProtT5 0.062 | 0.025 | 0.029 [0.019, 0.042] | 0.529 | 0.045 |
+
+Fold means over the ten folds (median per-gene Pearson r, ridge composite): Kemmeren 0.120,
+Messner 0.077, Zelezniak 0.032, Hu 0.035, Nadal YPD 0.072, NaCl 0.058. Composite against ProtT5
+alone is inside zero on every dataset (Kemmeren difference interval [-0.026, 0.018] on the
+per-gene median); composite beats FUDT upstream and FUDT downstream alone on Kemmeren and Messner
+with intervals clear of zero. The Kemmeren different-mutant raw floor is 0.284 (job 5893); the N0
+raw per-strain value here, 0.514, is higher because the training mean averages 1,342 profiles.
+Against the reference points: the token ridge on Kemmeren (0.125 per gene, 0.161 centered per
+strain) sits below the 019 by-strain window mean 0.180 and far below the 0.729 ceiling (different
+splits and statistics, references, not paired bars).
+
+Split B, the 72 Sameith doubles (median centered per-double Pearson r; all 6,127 genes / genes
+with `|M_xy - (M_x + M_y)| > log2 1.5`, median 100 per double): per-gene mean 0 / 0 by
+construction; stronger single 0.484 / 0.292; `M_x + M_y` 0.440 / 0.239; fitted
+`a M_strong + b M_weak + c`, leave one out, 0.494 / 0.300 (a 0.638, b 0.312, c 0.005); inductive
+`f(x_a) + f(x_b)` from the single-fit ridge, composite 0.136 / 0.140, ProtT5 0.135 / 0.095. The
+fitted rung beats the additive null on all genes (difference of medians 0.055, interval
+[0.004, 0.101]) and is inside zero against the stronger single (single minus fitted -0.010,
+[-0.050, 0.033]). Calibration slope of measured on predicted (centered, all entries): additive 0.44,
+fitted 0.97.
+
+Split C, isolates, fold 0 (median per-gene Pearson r [95% CI]; centered per-isolate Pearson r):
+Caudal 188 isolates GBLUP 0.369 [0.340, 0.404], 0.443; LoF + absence ridge 0.357, 0.446. Muenzner
+protein 160 isolates GBLUP 0.423 [0.381, 0.463], 0.497; indicator ridge 0.408, 0.478. Turnover,
+the fold average over five folds (11 isolates per fold): GBLUP 0.137, indicator ridge 0.154
+(fold 0 alone: -0.025 and 0.236 with intervals spanning -0.5 to 0.7). Kinship is identity by state
+over gene-level calls (variant, loss of function, absence); the records carry no variant
+positions. The random isolate fold leaves relatives in training, so these are the easy-split bars.
+
+Split D, segregants, fold 0 (parent-of-origin marker ridge; median per-gene Pearson r [95% CI];
+centered per-segregant): Boocock pooled, 79 segregants, 0.058 [0.018, 0.100], 0.026; N'Guessan,
+590, 0.155 [0.133, 0.177], 0.056. Boocock's 79,123 de novo cells were not read in this pass.
+
+Split E, Vaishnav, fold 0 (71,054 promoters with a level; 104 records carry none): k-mer (k 1 to
+6) ridge Pearson r 0.884 [0.880, 0.888], Spearman 0.893; one-hot 80-mer ridge 0.464
+[0.450, 0.477]. Within the 65,727-record unnamed library the k-mer ridge reads 0.893, so the
+library indicator does not carry it. Sequence similarity between folds was not checked.
+
+Morphology probe (Ohya 2005, 116 moving features, 5-fold out-of-fold ridge, median Pearson r over
+features; raw on the 4,167 genotypes with a Costanzo 2016 fitness / growth-residualized):
+token composite 0.100 / 0.083 (0.121 raw on all 4,678; 0.137 on the 459 genotypes whose gene is in
+fold 0); ProtT5 0.101 / 0.087; CaLM 0.096 / 0.080; FUDT up 0.028 / 0.006; FUDT down 0.014 / 0.011;
+measured Kemmeren 0.331 / 0.267 (1,317; 0.348 on all 1,437, reproducing job 5892); Messner
+0.270 / 0.243 (3,875; 0.278 on all); Hu 0.224 / 0.198 (232; 0.231 on all 259, against 0.235 in
+job 5892); fitness alone 0.132. The composite token sits below the Kemmeren ridge raw (difference
+-0.231, [-0.286, -0.174]) and residualized (-0.203, [-0.262, -0.135]) on their shared genotypes,
+and below fitness alone. Fitness source: the `smf_costanzo2016` dev store, the gene's mean over
+its single-deletion records, the source the 019 morphology screen used.
+
+Not run: Jackson 2020 (no held-out gene under v1); Boocock de novo cells; the isolate
+change-type-weighted token sum and the `[x_a + x_b ; x_a * x_b]` doubles input (no double trains);
+the frozen promoter-window ridge (needs the Addgene 127546 window).
+
+Figures:
+
+![](assets/images/043-expression-proteome-morphology/linear_evals_split_a_ladder_2026-10-21-21-30-18.svg)
+
+![](assets/images/043-expression-proteome-morphology/linear_evals_doubles_ladder_2026-10-21-21-30-19.svg)
+
+![](assets/images/043-expression-proteome-morphology/linear_evals_morphology_probe_2026-10-21-21-30-19.svg)
+
+![](assets/images/043-expression-proteome-morphology/linear_evals_isolates_segregants_promoters_2026-10-21-21-30-19.svg)

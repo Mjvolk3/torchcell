@@ -1,0 +1,73 @@
+%% notes-tex/database/pputida-cell-state/pputida-cell-state.tex
+%% [[experiments.database.pputida-cell-state]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/pputida-cell-state/pputida-cell-state.tex
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+
+\usepackage{pdflscape}
+
+%% A schema symbol in prose, for the long ones. \texttt refuses to break, and these
+%% are 28 to 35 characters: \texttt{TransposonInsertionPerturbation} alone ran 48 pt
+%% past the text block. \file breaks at a slash or an underscore and so does not help
+%% a CamelCase class name, which has neither, so seqsplit offers a break between any
+%% two characters. Short identifiers stay in \texttt.
+\usepackage{seqsplit}
+\newcommand{\sym}[1]{\texttt{\seqsplit{#1}}}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\title{\vspace{-1.5em}Alcohol Exposure and Cell State in the Served
+\org{Pseudomonas putida} Data}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\noindent
+KG 4.0 serves 32 \org{P. putida} datasets. Fifteen of them carry an alcohol growth or
+tolerance arm, or a perturbation of cell state, and Table~\ref{tab:pcsrows} gives each
+one's genotype, environment, phenotype and genome as the served store holds them, with
+the environment axis broken out in Table~\ref{tab:pcsenv}. Every count in both tables
+is read off the store rather than off a loader docstring (Sec.~\ref{sec:method}).
+
+Two findings come before the table. First, no served \org{P. putida} dataset measures
+isobutanol. A search of every loader module under \file{torchcell/datasets/pputida/}
+returns no match, and the two isobutanol datasets in the release are Lopez 2024, which
+is \org{S. cerevisiae}
+(Sec.~\ref{sec:isobutanol}). Second, the alcohol arms that do exist split into two
+kinds that a query must not merge: the transposon compendia feed an alcohol as the sole
+carbon source, which measures catabolism, while Lim 2022 and Lim 2025 apply one as a
+stressor (Sec.~\ref{sec:candidates}).
+
+Four of the fifteen rows are transposon screens, and they are the largest by three
+orders of magnitude. Sec.~\ref{sec:transposon} sets out what a transposon record means
+here, since the genotype is deliberately a gene-level aggregate rather than a clone and
+the phenotype deliberately avoids the fitness class.
+
+Sec.~\ref{sec:isoprenol} turns to the task these rows were surveyed for: predicting the
+final design-build-test-learn round of the Carruthers isoprenol campaign from its
+earlier rounds. It first lists all seventeen served datasets in which isoprenol
+appears, grouped by the role it plays, because only one of those roles is a label for
+this task and the largest block by far is another. It then tests whether any served
+gene-level readout tracks the campaign's per-target titer effect. None does reliably,
+including Yunus 2026, which shares 120 of the campaign's 135 targets. It closes on a
+blocker, which is that the cycle label is absent from every served Carruthers record. Sec.~\ref{sec:gaps} closes with
+what the schema cannot yet hold.
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/method}
+\input{sections/isobutanol}
+\input{sections/candidates}
+\input{sections/environment}
+\input{sections/transposon}
+\input{sections/isoprenol}
+\input{sections/gaps}
+
+\end{document}

@@ -1,0 +1,215 @@
+%% notes-tex/database/pputida-cell-state/sections/isoprenol.tex
+%% [[experiments.database.pputida-cell-state]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/pputida-cell-state/sections/isoprenol.tex
+%% SOURCE: experiments/database/scripts/build_pputida_cell_state_table.py
+%% (Tables pcstransfer, pcsisodata, pcsiso, pcscorr, pcspriors, pcscycle and
+%% pcsrawcycle); the prose is hand-authored.
+
+\section{Predicting the last Carruthers round\secstatus{todo}}\label{sec:isoprenol}
+
+The task these rows were surveyed for: predict the final design-build-test-learn round
+of the Carruthers isoprenol campaign from its earlier rounds, using whatever other
+isoprenol data is served. Carruthers is a collaborator, so the campaign's own data is
+available; the question is which single dataset from outside it helps.
+
+\subsection{What can help the campaign\secstatus{todo}}\label{sec:iso-transfer}
+
+Table~\ref{tab:pcstransfer} is the answer in one page. It holds the thirteen served
+isoprenol datasets that are not Carruthers', ranked by how much of that campaign's
+target set each one reaches. Carruthers' own four stores are the thing joined to, so
+none of them is a row.
+
+The ranking column is a join, not a size. Of the 135 CRISPRi targets the campaign
+knocks down, it counts how many each dataset also \emph{perturbs} and how many it
+reports a value \emph{for}, and the two are kept apart because they buy different
+things. A perturbed target gives a second measurement of that target's effect, which
+is what tests a model. A measured target gives that target a feature, which is what
+feeds one.
+
+Three groups come out of it, and the order is not the order of record counts:
+
+\begin{itemize}[nosep,leftmargin=1.4em]
+\item \textbf{Yunus 2026 alone perturbs the target set}, 120 of 135, which made it the
+transfer candidate (Sec.~\ref{sec:iso-yunus}). Measured, its titer does not rank those
+targets the way the campaign does (Sec.~\ref{sec:iso-corr}).
+\item \textbf{Three proteome datasets measure most of it}, 111, 111 and 100 targets,
+in conditions the campaign never ran. They are feature sources, not labels.
+\item \textbf{The two transposon compendia cover 86 targets} with a fitness value for
+growth on isoprenol, which is a per-target prior available without a new experiment,
+and separately name the catabolism genes (Sec.~\ref{sec:transposon}).
+\end{itemize}
+
+Everything below those reaches four targets or fewer. Those rows earn their place by
+design rather than by overlap, and the last column says which. Overlap is a
+precondition, not evidence of transfer: whether any of these values moves with the
+campaign's titer is tested in Sec.~\ref{sec:iso-corr}, and none does reliably.
+
+\clearpage
+\input{tables/carruthers-transfer}
+
+\subsection{What the served data holds on isoprenol\secstatus{todo}}\label{sec:iso-all}
+
+Seventeen of the 32 served \org{P. putida} datasets carry isoprenol, over 2.59 million
+records of which 20,264 are isoprenol records. Table~\ref{tab:pcsisodata} is the short
+list: what each one would be used for, what one label is, the held-out unit a score
+would be read on, and the other datasets posing the same task. It bands by the role
+isoprenol plays, because the role decides the question the dataset can answer and only
+one of the four is a label for this task:
+
+\begin{itemize}[nosep,leftmargin=1.4em]
+\item \textbf{As the measured product}, in five titer campaigns. These are the only
+candidate labels. Kang 2026 is in this group on a technicality worth knowing: it is an
+isoprenyl acetate campaign built on the isoprenol chassis, and 7 of its 26 records
+carry isoprenol as the product while 19 carry the ester.
+\item \textbf{As the sole carbon source}, in both transposon compendia, which is the
+largest isoprenol block in the served data and measures catabolism rather than
+production (Sec.~\ref{sec:transposon}).
+\item \textbf{As a stressor}, in the three Lim 2025 datasets.
+\item \textbf{As the pathway the strain carries}, in the proteome, metabolite and
+selection datasets, which measure something else on a strain whose genotype names the
+cassette. These join to a campaign by strain rather than carrying a titer.
+\end{itemize}
+
+Of the four titer campaigns outside Carruthers, three are ruled out before any
+comparison of conditions. Banerjee 2024 holds 20 records across five condition
+families, and none of its strains is a CRISPRi knockdown, so there is no target set to
+share. de Siqueira 2025 holds 10 records on acetate-tolerized isolates, again not
+CRISPRi. Kang 2026's 7 isoprenol records are controls in an ester campaign. That
+leaves one.
+
+\subsection{The candidate: Yunus 2026\secstatus{todo}}\label{sec:iso-yunus}
+
+\sym{IsoprenolTiterYunus2026} is the candidate on design, and Table~\ref{tab:pcsiso}
+is why. Yunus 2026 (doi:\allowbreak 10.1016/\allowbreak j.ymben.\allowbreak
+2025.\allowbreak 11.007) selects CRISPRi knockdown targets by FluxRETAP against intuition, in the
+engineered isoprenol-producing strain IY1452, and Carruthers is a co-author. Three
+things line up and two do not. The measured test of whether it transfers is
+Sec.~\ref{sec:iso-corr}, and it does not.
+
+\notesec{The target sets nearly coincide} Every target in the Yunus campaign but one
+is also a Carruthers target (Table~\ref{tab:pcsiso}). That is what makes the dataset
+unusual: it is not a different experiment that happens to share a product, it is a
+second measurement of nearly the same target set.
+
+\notesec{The readout is the same quantity} Same product, same unit, same
+quantification method, same 48 hour culture. No unit conversion and no method bridge
+stands between the two campaigns. The replicate structure is the one readout axis that
+differs, and the difference is in what was released rather than in what was run.
+Carruthers reports a per-strain count, 2 to 6 biological replicates, and every record
+carries a sample standard deviation. Yunus releases one number per strain with the
+replicate count given only as a 3-to-6 range and the dispersion only as error bars, so
+the loader stores the conservative lower end of that range and records the missing
+dispersion as a typed gap. The uniform 3 in Table~\ref{tab:pcsiso} is therefore a
+resolved lower bound, not a reported count, and a weighting scheme must not read it as
+one.
+
+\notesec{The modality is the same, the chassis designation is not} Both repress a
+native gene by CRISPRi in an isoprenol-producing strain. The served records pin
+different chassis, IY1449b for Carruthers and IY1452 for Yunus (Table~\ref{tab:pcsiso}),
+and the Yunus loader deliberately does not borrow the IY1449b genotype for IY1452,
+because the two are different designations and the paper states no genotype for its
+own. A target's effect therefore need not mean the same thing in both.
+
+\notesec{The paired features exist} \sym{CrispriPanelProteomeYunus2026} carries an
+absolute Top3 proteome over 253 accessions on the same strains, which is the same
+feature modality as \sym{CampaignProteomeCarruthers2025} in
+Table~\ref{tab:pcsrows}. A proteome-to-titer map can be fit on both.
+
+\notesec{The conditions differ, and this decides how it is used} Carruthers runs at
+24\,\textdegree C in M9-NREL with 20 g/L glucose; Yunus runs at 30\,\textdegree C in
+plain M9 salts. The titer ranges differ accordingly, and the Yunus records carry no
+uncertainty, because only one number per strain was released and the loader records
+that as a typed gap rather than inventing a dispersion.
+
+So Yunus is not extra training rows for absolute titer. The two uses it was a candidate
+for were a held-out condition, where a ranking learned on the earlier Carruthers cycles
+is scored on Yunus, and a reproducibility bound on the label. Both rest on the two
+campaigns ranking the shared targets alike, and they do not: rank agreement over the
+120 shared targets is indistinguishable from none (Sec.~\ref{sec:iso-corr}). The
+reproducibility question has a different answer than expected. Within Carruthers'
+first round the label is highly reproducible, and between the two campaigns it is not,
+so the target effect is bound to the condition, the chassis or both, and the served
+data cannot say which.
+
+The runner-up is \sym{IsoprenolSelectionMenasalvas2025} in
+Table~\ref{tab:pcsrows}, the only other CRISPRi and isoprenol pairing. Its readout is a
+categorical biosensor enrichment call rather than a titer, so it is a weaker label and
+not the first choice.
+
+\subsection{Does any served readout track the campaign?\secstatus{todo}}\label{sec:iso-corr}
+
+Overlap says another dataset reaches a target. It does not say that dataset's value for
+the target moves with the campaign's titer, and Table~\ref{tab:pcscorr} tests that
+directly.
+
+\notesec{The campaign's effect is a real signal} The per-target effect is the titer of
+the campaign's single-knockdown strains, 123 strains over 121 targets. Matched to the
+raw mirror's cycle column by target set, 119 of them are DBTL0 and the other four match
+no cycle or several, so the effect is a within-round estimate with no batch term.
+Replicate error accounts for under 2 percent of the spread between targets: the mean
+released standard error is 7.0\,ug/mL against a spread of 73.7\,ug/mL, a reliability
+of 0.985. A weak correlation below is therefore not caused by noise in the campaign.
+
+\notesec{No served readout tracks it} Every served gene-level dataset outside the
+campaign was read as gene vectors, one per experiment, sample or strain, and each
+vector was correlated with the effect over the shared targets. None clears the bar once
+the number of vectors a dataset offers is accounted for:
+
+\begin{itemize}[nosep,leftmargin=1.4em]
+\item \textbf{Yunus 2026}, the largest overlap, ranks the 120 shared targets in
+unrelated order, $\rho = -0.10$. Its top quartile shares 8 of 30 targets with the
+campaign's, against 7.5 by chance, and its bottom quartile shares 3. Its titers run
+about five times higher, a median of 858 against 163\,ug/mL. Its own knockdown depth
+does not predict the campaign's effect either.
+\item \textbf{Growth on isoprenol} in the transposon compendia gives $\rho$ between
+$-0.06$ and $+0.01$ over 77 targets (Table~\ref{tab:pcspriors}).
+\item \textbf{The best of hundreds} is what hundreds of unrelated vectors produce. The
+best of 234 and 310 compendium experiments reaches $\rho = +0.28$ with a best-of
+\emph{p} near 0.8, and the best of 321 PRECISE321 samples reaches $+0.25$ at 0.09.
+\item \textbf{Lim 2025's stress proteome fold change} is the one best-of \emph{p} below
+0.05, $\rho = +0.27$ at 0.028 over four lineages. Against the all-strain fit it falls
+to $+0.18$, so it is a lead, not a result.
+\end{itemize}
+
+\notesec{One weak lead among the priors} Targets whose transposon mutants show a strong
+defect in many experiments give higher first-round titer, $\rho = +0.27$ and $+0.24$ in
+the two compendia, and essential targets have a higher median titer than nonessential
+ones (Table~\ref{tab:pcspriors}). It does not stand as a finding. The priors were not
+chosen in advance, the two compendia share most of their experiments, and the
+correlation falls below $+0.10$ against the all-strain fit. Hypothesis (untested):
+knocking down a growth-limiting gene diverts carbon from biomass to product, which
+would make a fitness prior useful for ranking first-round targets.
+
+\notesec{What it leaves} For predicting the last round, the served data outside the
+campaign offers features with no measured relation to the label, and the campaign's own
+earlier rounds remain the training signal. The cycle label that split needs is the
+blocker of Sec.~\ref{sec:iso-cycle}.
+
+\clearpage
+\input{tables/correlates}
+
+\subsection{The blocker: the cycle label is not in the graph\secstatus{todo}}\label{sec:iso-cycle}
+
+The task needs a cycle label, to train on the earlier rounds and test on the last one.
+No served Carruthers record carries one. Table~\ref{tab:pcscycle} searches every record
+in all four Carruthers stores for a DBTL token anywhere in its serialization and finds
+none, and \texttt{screen\_id} is empty throughout.
+
+The loader's record identity is one per construct and DBTL cycle, so the cycle is
+implied by the record set and was never written onto a record. From the graph alone the
+final round cannot be separated from the earlier ones, which means the task as stated
+cannot be set up from a query.
+
+It is recoverable. The raw mirror's Dryad culture metadata carries a
+\texttt{DBTL\_Cycle} column, and Table~\ref{tab:pcsrawcycle} gives its distribution.
+The join is on the construct name, so recovering the label is a preprocessing step
+rather than a re-ingest. It is still a loader gap worth filing: a campaign whose entire
+structure is the cycle should not lose the cycle on ingest.
+
+\clearpage
+\input{tables/isoprenol-datasets}
+
+\clearpage
+\input{tables/isoprenol}
+
+\input{tables/cycle-label}

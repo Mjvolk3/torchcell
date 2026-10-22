@@ -1,0 +1,40 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_pputida_cell_state_table.py
+\begingroup
+\footnotesize
+\begin{longtable}{@{}L{62mm} r@{\hspace{8pt}} r@{\hspace{8pt}} r@{}}
+\caption[]{The DBTL cycle label in the served Carruthers stores. \emph{Naming a cycle} counts records whose full serialization matches \texttt{DBTL\textbackslash s*\textbackslash d} anywhere, so it is as permissive a search as the store allows.}\label{tab:pcscycle}\\
+\toprule
+\textbf{Store} & \textbf{Records} & \textbf{Naming a cycle} & \textbf{With a screen id} \\
+\midrule
+\endfirsthead
+\bottomrule
+\endfoot
+campaign\_\allowbreak proteome\_\allowbreak carruthers2025 & 465 & 0 & 0 \\
+isoprenol\_\allowbreak titer\_\allowbreak carruthers2025 & 502 & 0 & 0 \\
+proteome\_\allowbreak carruthers2025 & 21 & 0 & 0 \\
+proteome\_\allowbreak fold\_\allowbreak change\_\allowbreak carruthers2025 & 16 & 0 & 0 \\
+\end{longtable}
+
+\begingroup
+\footnotesize
+\begin{longtable}{@{}L{62mm} r@{}}
+\caption[]{The same label in the raw mirror, which is the recovery path. Rows are cultures and include each cycle's controls, so these are not record counts; they establish that the label exists upstream and joins on \texttt{Line\_\allowbreak name}.}\label{tab:pcsrawcycle}\\
+\toprule
+\textbf{Cycle} & \textbf{Culture rows} \\
+\midrule
+\endfirsthead
+\bottomrule
+\endfoot
+DBTL0 & 393 \\
+DBTL1 & 183 \\
+DBTL2 & 189 \\
+DBTL3 & 174 \\
+DBTL4 & 183 \\
+DBTL5 & 186 \\
+DBTL6 & 189 \\
+\midrule
+\textbf{Total} & \textbf{1,497} \\
+\end{longtable}
+\endgroup
+\endgroup

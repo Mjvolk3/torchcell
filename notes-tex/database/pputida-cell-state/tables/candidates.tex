@@ -1,0 +1,63 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_pputida_cell_state_table.py
+\begin{landscape}
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{@{}L{30mm} r@{\hspace{5pt}} L{30mm} L{17mm} L{34mm} L{20mm} L{66mm}@{}}
+\caption[]{The served \org{P. putida} datasets bearing on alcohol exposure or cell
+state, ordered by record count. Every column but the last is read off the served store
+(Sec.~\ref{sec:method}). \emph{Genotype} gives the perturbation types the records
+carry, with what the probe cannot see added in italic. \emph{Env.} is the number of
+distinct \texttt{Environment} objects, counted by value over a full scan, and
+Table~\ref{tab:pcsenv} breaks each one into its media, factors and agents.
+\emph{Phenotype} is the stored class, then its measurement type and assay type.
+\emph{Genome} is the assembly the reference record pins; the experiment-level
+\texttt{genome\_reference} is null throughout, by design, since the genome never gates
+a record.}
+\label{tab:pcsrows}\\
+\toprule
+\textbf{Dataset} & \textbf{Records} & \textbf{Genotype} & \textbf{Env.} & \textbf{Phenotype} & \textbf{Genome} & \textbf{Why it is here} \\
+\midrule
+\endfirsthead
+\multicolumn{7}{@{}l}{\footnotesize\emph{Table~\ref{tab:pcsrows}, continued}}\\
+\toprule
+\textbf{Dataset} & \textbf{Records} & \textbf{Genotype} & \textbf{Env.} & \textbf{Phenotype} & \textbf{Genome} & \textbf{Why it is here} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\textbf{Rb\allowbreak Tnseq\allowbreak Borchert2024} & 1,466,920 & transposon insertion\newline {\scriptsize\emph{gene-level aggregate, one gene per record}} & 155 & \textbf{environment\_\allowbreak response}\newline {\scriptsize log2\_\allowbreak ratio / pooled\_\allowbreak competitive\_\allowbreak growth\_\allowbreak barcode} & KT2440\newline {\scriptsize GCA\_\allowbreak 000007565.\allowbreak 2} & The RB-TnSeq compendium, and it carries Thompson 2020's alcohol panel. Nine alcohol and diol carbon sources, 2-methyl-1-butanol among them. These arms are growth ON the alcohol as the sole carbon source, so they measure catabolism, not tolerance to a solvent stress \\
+\addlinespace[5pt]
+\textbf{Fitness\allowbreak Browser\allowbreak Putida} & 1,118,052 & transposon insertion\newline {\scriptsize\emph{gene-level aggregate, one locus per record}} & 146 & \textbf{environment\_\allowbreak response}\newline {\scriptsize log2\_\allowbreak ratio / pooled\_\allowbreak competitive\_\allowbreak growth\_\allowbreak barcode} & KT2440\newline {\scriptsize GCA\_\allowbreak 000007565.\allowbreak 2} & The Fitness Browser deposit over the same alcohol panel, on 4,778 loci, and it is the one compendium that carries a moderated t statistic per record alongside the fitness value \\
+\addlinespace[5pt]
+\textbf{Fitness\allowbreak Contrast\allowbreak Borchert2023} & 64,853 & transposon insertion & 12 & \textbf{t\_\allowbreak statistic}\newline {\scriptsize rbtnseq\_\allowbreak gene\_\allowbreak fitness\_\allowbreak two\_\allowbreak sample\_\allowbreak t\_\allowbreak test / None} & KT2440\newline {\scriptsize GCA\_\allowbreak 000007565.\allowbreak 2} & The significance test of a lignin-related stressor arm against its reference arm, stored as the t statistic rather than as a fitness value \\
+\addlinespace[5pt]
+\textbf{Env\allowbreak Metal\allowbreak Tnseq\allowbreak Royet2025} & 21,583 & transposon insertion\newline {\scriptsize\emph{non-barcoded mariner pool, gene-level aggregate}} & 4 & \textbf{environment\_\allowbreak response}\newline {\scriptsize log2\_\allowbreak ratio / other} & KT2440\newline {\scriptsize GCA\_\allowbreak 000007565.\allowbreak 2} & Cobalt, copper, zinc and cadmium at sub-inhibitory dose over 12 generations. A metal stress rather than a solvent one, and the cleanest served example of a graded cell-state perturbation on a transposon pool \\
+\addlinespace[5pt]
+\textbf{Graded\allowbreak Gene\allowbreak Essentiality\allowbreak Royet2025} & 11,458 & transposon insertion & 2 & \textbf{essentiality\_\allowbreak call}\newline {\scriptsize None / None} & KT2440\newline {\scriptsize GCA\_\allowbreak 000007565.\allowbreak 2} & The unstressed essentiality baseline the metal contrasts above are read against, so the two rows are used together or not at all \\
+\addlinespace[5pt]
+\textbf{Rb\allowbreak Tnseq\allowbreak Borchert2023} & 10,824 & transposon insertion & 32 & \textbf{environment\_\allowbreak response}\newline {\scriptsize log2\_\allowbreak ratio / pooled\_\allowbreak competitive\_\allowbreak growth\_\allowbreak barcode} & KT2440\newline {\scriptsize GCA\_\allowbreak 000007565.\allowbreak 2} & The loci Borchert 2023 scored that the compendium eliminated. Disjoint from the compendium row by construction, so it adds fitness values rather than duplicating them \\
+\addlinespace[5pt]
+\textbf{Campaign\allowbreak Proteome\allowbreak Carruthers2025} & 465 & crispr interference, heterologous pathway & 1 & \textbf{protein\_\allowbreak abundance}\newline {\scriptsize dia\_\allowbreak nn\_\allowbreak top3\_\allowbreak percent\_\allowbreak of\_\allowbreak proteome\_\allowbreak mean / None} & IY1449b\newline {\scriptsize GCA\_\allowbreak 000007565.\allowbreak 2} & Cell state under CRISPRi knockdown across the six automated design-build-test-learn cycles, as a proteome panel. The paired feature table for the isoprenol titer campaign \\
+\addlinespace[5pt]
+\textbf{Putida\allowbreak Precise321\allowbreak Lim2022} & 321 & released identifier & 118 & \textbf{expression\_\allowbreak tpm}\newline {\scriptsize rnaseq\_\allowbreak tpm / None} & CJ522\newline {\scriptsize GCA\_\allowbreak 000007565.\allowbreak 2} & The only served butanol exposure, in the compendium's Fuel project, beside an isopentanol arm, a three-point growth-phase series, a multistress panel of salt, imipenem and peroxide, an ionic-liquid adaptation series and two bioreactor runs. The broadest cell-state axis in the served set \\
+\addlinespace[5pt]
+\textbf{Isoprenol\allowbreak Selection\allowbreak Menasalvas2025} & 58 & crispr interference, deletion strain, heterologous pathway & 1 & \textbf{environment\_\allowbreak response}\newline {\scriptsize categorical / biosensor\_\allowbreak readout} & KT2440\newline {\scriptsize GCA\_\allowbreak 000007565.\allowbreak 2} & Isoprenol production coupled to growth through a pyrF biosensor, so the readout is a categorical enrichment call rather than a titer \\
+\addlinespace[5pt]
+\textbf{Proteome\allowbreak Menasalvas2025} & 6 & deletion strain, heterologous pathway, locus variant call, site variant call & 2 & \textbf{protein\_\allowbreak abundance}\newline {\scriptsize dia\_\allowbreak protein\_\allowbreak counts\_\allowbreak sum\_\allowbreak mean / None} & KT2440\newline {\scriptsize GCA\_\allowbreak 000007565.\allowbreak 2} & Growth phase against production phase over 2,090 loci, with the two phases stored as distinct environments rather than as one condition \\
+\addlinespace[5pt]
+\textbf{Proteome\allowbreak Fold\allowbreak Change\allowbreak Lim2025} & 4 & deletion strain, locus variant call, site variant call & 2 & \textbf{protein\_\allowbreak fold\_\allowbreak change}\newline {\scriptsize dia\_\allowbreak nn\_\allowbreak top3\_\allowbreak log2\_\allowbreak fold\_\allowbreak change\_\allowbreak welch\_\allowbreak two\_\allowbreak sample\_\allowbreak t\_\allowbreak test / None} & IPL400\newline {\scriptsize GCA\_\allowbreak 000007565.\allowbreak 2} & The proteome response to isoprenol stress, as a log2 fold change with its Welch test, which is the closest served analog of a solvent tolerance signature \\
+\addlinespace[5pt]
+\textbf{Isoprenol\allowbreak Tolerance\allowbreak Lim2025} & 3 & deletion strain, locus variant call & 2 & \textbf{environment\_\allowbreak response}\newline {\scriptsize log2\_\allowbreak ratio / liquid\_\allowbreak od\_\allowbreak growth} & KT2440\newline {\scriptsize GCA\_\allowbreak 000007565.\allowbreak 2} & The only served alcohol tolerance growth phenotype: specific growth rate of a tolerized lineage against wild type at the same alcohol dose \\
+\addlinespace[5pt]
+\textbf{Proteome\allowbreak Lim2025} & 3 & deletion strain, locus variant call, site variant call & 1 & \textbf{protein\_\allowbreak abundance}\newline {\scriptsize dia\_\allowbreak nn\_\allowbreak top3\_\allowbreak log2\_\allowbreak mean / None} & IPL400\newline {\scriptsize GCA\_\allowbreak 000007565.\allowbreak 2} & Absolute abundances on the same tolerized lineages as the row above, so the tolerance phenotype has a proteome beside it \\
+\addlinespace[5pt]
+\textbf{Metabolite\allowbreak Growth\allowbreak Phase\allowbreak Menasalvas2025} & 3 & deletion strain, heterologous pathway, locus variant call, site variant call & 1 & \textbf{metabolite\_\allowbreak level}\newline {\scriptsize lc\_\allowbreak ms\_\allowbreak intracellular\_\allowbreak concentration\_\allowbreak uM / None} & KT2440\newline {\scriptsize GCA\_\allowbreak 000007565.\allowbreak 2} & Intracellular pool sizes in growth phase, the metabolite half of the same phase contrast \\
+\addlinespace[5pt]
+\textbf{Metabolite\allowbreak Production\allowbreak Phase\allowbreak Menasalvas2025} & 3 & deletion strain, heterologous pathway, locus variant call, site variant call & 1 & \textbf{metabolite\_\allowbreak level}\newline {\scriptsize lc\_\allowbreak ms\_\allowbreak intracellular\_\allowbreak concentration\_\allowbreak uM / None} & KT2440\newline {\scriptsize GCA\_\allowbreak 000007565.\allowbreak 2} & The paired production-phase pools, which is the environment the titer campaigns actually sample \\
+\addlinespace[5pt]
+\end{longtable}
+\endgroup
+\end{landscape}

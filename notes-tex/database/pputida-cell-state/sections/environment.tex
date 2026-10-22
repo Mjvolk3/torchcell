@@ -1,0 +1,30 @@
+%% notes-tex/database/pputida-cell-state/sections/environment.tex
+%% [[experiments.database.pputida-cell-state]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/pputida-cell-state/sections/environment.tex
+%% SOURCE: experiments/database/scripts/build_pputida_cell_state_table.py
+
+\section{Reading the environment column\secstatus{todo}}\label{sec:environment}
+
+The \texttt{Environment} object served in all fifteen datasets carries the same seven
+fields: \texttt{media}, \texttt{temperature}, \texttt{perturbations},
+\texttt{aerobicity}, \texttt{duration\_hours}, \texttt{duration\_generations} and
+\texttt{dilution\_rate\_per\_hour}. Each perturbation names a factor from a controlled
+vocabulary and an agent resolved to a compound identity with an InChIKey and a PubChem
+identifier, so an alcohol arm is queryable by structure. Table~\ref{tab:pcsenv} breaks
+each row into those parts.
+
+Two caveats on that column, and both limit what a query over it can claim.
+
+\notesec{Lim 2022's media are condition labels, not recipes} The compendium releases a
+condition name per sample and not the medium, the additions or the timing, so the media
+count for that row counts labels. A join on medium composition across that row and any
+other is not available.
+
+\notesec{A temperature can be a typed absence} Lim 2025 reports no incubation
+temperature for its tolerance assay, its evolution flasks or its proteome cultures, so
+the field carries a \texttt{ProvenanceGap} naming where it was looked for rather than a
+guessed 30\,\textdegree C. Table~\ref{tab:pcsenv} prints that absence as a value, since
+treating it as missing data is what turns a recorded gap into an invented number.
+
+\clearpage
+\input{tables/environment}

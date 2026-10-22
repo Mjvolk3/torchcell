@@ -1,0 +1,69 @@
+%% notes-tex/database/pputida-cell-state/sections/transposon.tex
+%% [[experiments.database.pputida-cell-state]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/pputida-cell-state/sections/transposon.tex
+%% SOURCE: hand-authored from the served records and the loader docstrings cited inline.
+
+\section{What a transposon record means here\secstatus{todo}}\label{sec:transposon}
+
+Four rows of Table~\ref{tab:pcsrows} are transposon screens and they hold almost every
+record in it, so the representation is worth stating exactly.
+
+\notesec{The experiment} A randomly barcoded transposon library is a pool in which
+each cell carries one transposon inserted at a random genomic position, with a random
+DNA barcode in the insert. An insertion inside a gene disrupts it, so each cell is a
+loss-of-function mutant of one gene. The pool grows competitively in a condition,
+barcodes are sequenced at time zero and at the end, and a gene's fitness is the log2
+ratio of its barcode abundance after growth over time zero, averaged across that gene's
+insertion strains and normalized so the typical gene sits at zero.
+
+\notesec{The genotype is a gene, not a clone} Each record carries one
+\sym{TransposonInsertionPerturbation} with \texttt{insertion\_position},
+\texttt{insertion\_strand} and \texttt{barcode} left null. Those nulls are the
+representation, not missing data: the stored value is the gene-level aggregate over
+every insertion mutant of that gene, which is the quantity the release reports. Royet
+2025 is the case that makes this unavoidable, since its mariner library is not barcoded
+at all and a clone is unresolvable in principle.
+
+\notesec{The phenotype is not the fitness class} These records use
+\sym{EnvironmentResponsePhenotype}, whose measurement type is \texttt{log2\_ratio} and
+whose assay type is \sym{pooled\_competitive\_growth\_barcode}.
+\sym{FitnessPhenotype} would be the obvious class and it is wrong here:
+\texttt{validate\_fitness} clamps a non-positive value to 0.0, which would erase every
+fitness defect in the compendium, since a defect is exactly a negative log2 ratio. The
+signed ratio therefore goes on the environment-response class.
+
+\notesec{Reliability travels with the value} The Fitness Browser row carries a
+moderated $t$ in \sym{environment\_response\_t\_statistic}, and the loader derives a
+standard error as $\sqrt{(f/t)^2 - 0.1^2}$, where $f$ is the fitness value. That makes
+it the one compendium row where a per-record weight is available, which matters for any
+model that should down-weight a gene measured in a sparse pool.
+
+\notesec{Both compendia do measure isoprenol, as a substrate} The alcohol panel
+includes isoprenol itself as the sole carbon source at 10 mM, in MOPS minimal medium.
+Table~\ref{tab:pcsisodata} gives the record counts, which are the largest isoprenol
+block in the served data by three orders of magnitude. Each record is one gene's
+fitness when the pool has nothing but isoprenol to grow on, so the arm names the
+catabolism genes: a gene whose disruption impairs growth on isoprenol is a gene the
+host uses to consume it.
+
+That makes the arm an engineering target in its own right and in the opposite
+direction from a titer campaign. A producing strain that also catabolizes its product
+loses yield to its own metabolism, and deleting a catabolism gene is how that is
+stopped, which is the design de Siqueira 2025's parent strain already embodies. The
+compendia are where the candidate genes are, genome-wide, without a new experiment.
+
+\notesec{For titer prediction they are features, not labels} The substrate arm does
+not make these rows training data for Sec.~\ref{sec:isoprenol}'s task, and three
+differences are why. The readout is competitive growth, not product titer, and a gene
+that raises titer can be fitness-neutral or fitness-costly. The perturbation differs in
+kind: a transposon insertion is a full disruption while CRISPRi is partial repression
+of a gene that is still present, so the sign may agree but the magnitudes share no
+scale. And the chassis differs, since the libraries are wild-type KT2440 and carry
+neither the mevalonate pathway nor its flux burden.
+
+What they can supply is a descriptor. A gene's fitness across the compendium's many
+carbon and nitrogen sources is a cheap, genome-wide measure of how essential or
+buffered that gene is, available for nearly every CRISPRi target without a new
+experiment. \emph{Hypothesis, untested:} that descriptor improves last-round titer
+prediction over the proteome features alone. Nothing here measures it, and it should be
+checked against a proteome-only model before it is relied on.

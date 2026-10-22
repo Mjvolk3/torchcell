@@ -1,0 +1,58 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_pputida_cell_state_table.py
+\begin{landscape}
+\begingroup
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}r >{\raggedright\arraybackslash}p{29mm} r >{\raggedright\arraybackslash}p{40mm} r r >{\raggedright\arraybackslash}p{88mm}@{}}
+\caption[]{The served \org{P. putida} isoprenol data that is NOT Carruthers', ranked by
+how much of that campaign's target set it reaches. \emph{Rec.} is the dataset's
+isoprenol records. \emph{Pert.} and \emph{Meas.} count, of the 135 CRISPRi targets
+the campaign knocks down, how many this dataset also perturbs and how many it reports a
+value for, such as a proteome keyed by locus tag. The two are kept apart because only
+the first gives a target a second measurement of its effect; the second gives it a
+feature. All four columns are read from a full scan. \emph{What one row gives you} and
+\emph{How it helps the campaign} are the pick list in the generating script.}
+\label{tab:pcstransfer}\\
+\toprule
+\# & Dataset & Rec. & What one row gives you & Pert. & Meas. & How it helps the campaign \\
+\midrule
+\endfirsthead
+\multicolumn{7}{@{}l}{\footnotesize\emph{Table~\ref{tab:pcstransfer}, continued}}\\
+\toprule
+\# & Dataset & Rec. & What one row gives you & Pert. & Meas. & How it helps the campaign \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+1 & Isoprenol\allowbreak Titer\allowbreak Yunus2026 & 125 & isoprenol titer in ug/mL per CRISPRi strain & 120 & 0 & A second titer for 120 of the 135 targets, in another medium, temperature and chassis. Its ranking of those targets does not track the campaign's (Table\textasciitilde{}\textbackslash\{\}ref\{tab:pcscorr\}), so it says how condition-bound a target effect is rather than scoring a model trained on the early cycles. \\
+\addlinespace[2pt]
+2 & Proteome\allowbreak Lim2025 & 3 & absolute Top3 abundance per protein in a tolerized lineage & 1 & 111 & Abundances for 111 of the 135 targets under isoprenol stress, so a target's protein level is known in a condition the campaign never ran. \\
+\addlinespace[2pt]
+3 & Proteome\allowbreak Fold\allowbreak Change\allowbreak Lim2025 & 2 & log2 fold change per protein under isoprenol stress, with a Welch test & 1 & 111 & The same 111 targets as a stress contrast, which separates a target that responds to isoprenol from one that is merely abundant. \\
+\addlinespace[2pt]
+4 & Proteome\allowbreak Menasalvas2025 & 6 & summed DIA protein counts per protein, growth or production phase & 4 & 100 & Abundances for 100 of the 135 targets split by growth and production phase, which is the axis the campaign's single endpoint cannot resolve. \\
+\addlinespace[2pt]
+5 & Fitness\allowbreak Browser\allowbreak Putida & 9,556 & log2 fitness per locus on the same panel, with a moderated t & 86 & 0 & A growth-on-isoprenol fitness value for 86 of the 135 targets, with a moderated t so a weakly measured gene can be down-weighted. A per-target prior that needs no new experiment. \\
+\addlinespace[2pt]
+6 & Rb\allowbreak Tnseq\allowbreak Borchert2024 & 9,464 & log2 fitness per gene, growing on isoprenol as the sole carbon source & 86 & 0 & The same prior over a slightly different locus set, and the arm that names the catabolism genes: deleting one stops the chassis consuming the product the campaign is optimizing. \\
+\addlinespace[2pt]
+7 & Metabolite\allowbreak Growth\allowbreak Phase\allowbreak Menasalvas2025 & 3 & intracellular concentration in uM per metabolite, growth phase & 4 & 0 & Four shared targets, and pathway intermediates rather than product, which is where a flux explanation of a knockdown can be checked against something other than titer. \\
+\addlinespace[2pt]
+8 & Metabolite\allowbreak Production\allowbreak Phase\allowbreak Menasalvas2025 & 3 & the same pools in production phase, the paired environment & 4 & 0 & The same four targets in the phase the campaign actually samples, so it is the closer of the two to the campaign's own condition. \\
+\addlinespace[2pt]
+9 & Isoprenol\allowbreak Titer\allowbreak Banerjee2024 & 20 & isoprenol titer in ug/mL per (strain, condition family) & 3 & 0 & Three shared targets, and a set of deletions and pathway swaps the campaign never tried. Useful as an out-of-design check, not as training rows. \\
+\addlinespace[2pt]
+10 & Isoprenol\allowbreak Titer\allowbreak De\allowbreak Siqueira2025 & 10 & isoprenol titer in ug/mL per tolerized isolate & 2 & 0 & Two shared targets on evolved isolates with resequenced genotypes, so it says what tolerization does to titer where the campaign only varies knockdowns. \\
+\addlinespace[2pt]
+11 & Isoprenyl\allowbreak Acetate\allowbreak Titer\allowbreak Kang2026 & 7 & titer in ug/mL per strain, isoprenol on 7 records and the ester on 19 & 1 & 0 & One shared target. Its value is the design rather than the overlap: the one served case where draining the isoprenol pool on purpose is the goal. \\
+\addlinespace[2pt]
+12 & Isoprenol\allowbreak Tolerance\allowbreak Lim2025 & 3 & log2 growth rate against wild type at the same isoprenol dose & 1 & 0 & One shared target. Three records, so it is a sanity check on whether a high-titer strain is tolerating its own product, not a source of signal. \\
+\addlinespace[2pt]
+13 & Isoprenol\allowbreak Selection\allowbreak Menasalvas2025 & 58 & enriched or not, one biosensor call per CRISPRi target and round & 0 & 0 & No shared target, but a growth-coupled assay that scales past what a titer campaign can measure, so it is the route to a target list larger than 135. \\
+\addlinespace[2pt]
+\midrule
+ & \textbf{All 13 datasets} & \textbf{19,260} & & & & \\
+\end{longtable}
+\endgroup
+\end{landscape}

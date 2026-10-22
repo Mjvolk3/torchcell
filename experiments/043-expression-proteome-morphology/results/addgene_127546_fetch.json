@@ -1,0 +1,216 @@
+{
+  "construct_set": "vaishnav2022_addgene_127546",
+  "derived_genbank": {
+    "path": "addgene/127546/derived/addgene-127546-251803.gb",
+    "sha256": "d9efd0825e6b058990dfbf5bbc3f8d130aa15dac55ac64b01317033e0c753115"
+  },
+  "files": [
+    {
+      "bytes": 52150,
+      "command": "curl -sS -L -A \"Mozilla/5.0 (torchcell provenance fetch; contact via repository)\" -w \"%{http_code}\" -o /scratch/projects/torchcell-scratch/torchcell-raw/vaishnavEvolutionEvolvabilityEngineering2022/addgene/127546/plasmid.fetch1.html \"https://www.addgene.org/127546/\"  # run twice; page_text() applied; the two extractions must hash identically",
+      "html_fetch_sha256": [
+        "6f23f8ebdbd7537ce38e536342b0d9e7786d729929861a09b51754216c5b290e",
+        "6815865c820d72bae9e6ee88b83956ff4389423b14ce95c07ac4bbe1a550946f"
+      ],
+      "http_status": 200,
+      "rel_path": "addgene/127546/plasmid.page.txt",
+      "retrieved_at": "2026-10-22T02:13:53.006844+00:00",
+      "sha256": "e9661e7754aa981b4155bcd130e9b3298b1fd1ffd5230a7465641faf7f37c611",
+      "url": "https://www.addgene.org/127546/"
+    },
+    {
+      "bytes": 36979,
+      "command": "curl -sS -L -A \"Mozilla/5.0 (torchcell provenance fetch; contact via repository)\" -w \"%{http_code}\" -o /scratch/projects/torchcell-scratch/torchcell-raw/vaishnavEvolutionEvolvabilityEngineering2022/addgene/127546/sequences.fetch1.html \"https://www.addgene.org/127546/sequences/\"  # run twice; page_text() applied; the two extractions must hash identically",
+      "html_fetch_sha256": [
+        "bac258d44ae87976b8ce299c14f538d55b36756afacedd31418e52188aee694a",
+        "0910ecad7adbd5e08459fae8837a81e2021c83adbb71937d8532553955c8586f"
+      ],
+      "http_status": 200,
+      "rel_path": "addgene/127546/sequences.page.txt",
+      "retrieved_at": "2026-10-22T02:14:03.661962+00:00",
+      "sha256": "25fa69683737fd7fa9d09a1035ffb5e3e0710f2a5847f5b5fe2cd85ba5e9c9bc",
+      "url": "https://www.addgene.org/127546/sequences/"
+    },
+    {
+      "bytes": 725,
+      "command": "curl -sS -L -A \"Mozilla/5.0 (torchcell provenance fetch; contact via repository)\" -w \"%{http_code}\" -o /scratch/projects/torchcell-scratch/torchcell-raw/vaishnavEvolutionEvolvabilityEngineering2022/addgene/127546/seq-251803/collection.json \"https://www.addgene.org/api/get-sequence-file-collection/251803/\"",
+      "html_fetch_sha256": [],
+      "http_status": 200,
+      "rel_path": "addgene/127546/seq-251803/collection.json",
+      "retrieved_at": "2026-10-22T02:14:08.808890+00:00",
+      "sha256": "8530d584f8cafc01685108c9875c10bc88b4a2d9a6d8f429bdf5d21fbd079e29",
+      "url": "https://www.addgene.org/api/get-sequence-file-collection/251803/"
+    },
+    {
+      "bytes": 6276323,
+      "command": "curl -sS -L -A \"Mozilla/5.0 (torchcell provenance fetch; contact via repository)\" -w \"%{http_code}\" -o /scratch/projects/torchcell-scratch/torchcell-raw/vaishnavEvolutionEvolvabilityEngineering2022/addgene/127546/seq-251803/features.json \"https://sequences.addgene.org/snapgene-media/v3.101.0/sequences/251803/666bf7d7-4ab7-4165-96aa-9a62efe951b4/addgene-plasmid-127546-sequence-251803-features.json\"",
+      "html_fetch_sha256": [],
+      "http_status": 200,
+      "rel_path": "addgene/127546/seq-251803/features.json",
+      "retrieved_at": "2026-10-22T02:14:24.372193+00:00",
+      "sha256": "ae65312253b55c341a66962e865314cbf8a50f4ced2cb261f715d1f914c457ab",
+      "url": "https://sequences.addgene.org/snapgene-media/v3.101.0/sequences/251803/666bf7d7-4ab7-4165-96aa-9a62efe951b4/addgene-plasmid-127546-sequence-251803-features.json"
+    },
+    {
+      "bytes": 4810692,
+      "command": "curl -sS -L -A \"Mozilla/5.0 (torchcell provenance fetch; contact via repository)\" -w \"%{http_code}\" -o /scratch/projects/torchcell-scratch/torchcell-raw/vaishnavEvolutionEvolvabilityEngineering2022/addgene/127546/seq-251803/sequence-lines.json \"https://sequences.addgene.org/snapgene-media/v3.101.0/sequences/251803/666bf7d7-4ab7-4165-96aa-9a62efe951b4/addgene-plasmid-127546-sequence-251803-sequence-lines.json\"",
+      "html_fetch_sha256": [],
+      "http_status": 200,
+      "rel_path": "addgene/127546/seq-251803/sequence-lines.json",
+      "retrieved_at": "2026-10-22T02:14:29.628934+00:00",
+      "sha256": "1e4c3d5e03cf232c96ec211b3d6e8c7343bcf7b90d90a10d6149e8e1bfaddaab",
+      "url": "https://sequences.addgene.org/snapgene-media/v3.101.0/sequences/251803/666bf7d7-4ab7-4165-96aa-9a62efe951b4/addgene-plasmid-127546-sequence-251803-sequence-lines.json"
+    },
+    {
+      "bytes": 333343,
+      "command": "curl -sS -L -A \"Mozilla/5.0 (torchcell provenance fetch; contact via repository)\" -w \"%{http_code}\" -o /scratch/projects/torchcell-scratch/torchcell-raw/vaishnavEvolutionEvolvabilityEngineering2022/addgene/127546/seq-251803/map.svg \"https://sequences.addgene.org/snapgene-media/v3.101.0/sequences/251803/666bf7d7-4ab7-4165-96aa-9a62efe951b4/addgene-plasmid-127546-sequence-251803-map.svg\"",
+      "html_fetch_sha256": [],
+      "http_status": 200,
+      "rel_path": "addgene/127546/seq-251803/map.svg",
+      "retrieved_at": "2026-10-22T02:14:34.856538+00:00",
+      "sha256": "f4d63c90b657f92d77e16cd320f60e24427ef77664018b7d755a300c1bb95450",
+      "url": "https://sequences.addgene.org/snapgene-media/v3.101.0/sequences/251803/666bf7d7-4ab7-4165-96aa-9a62efe951b4/addgene-plasmid-127546-sequence-251803-map.svg"
+    },
+    {
+      "bytes": 725,
+      "command": "curl -sS -L -A \"Mozilla/5.0 (torchcell provenance fetch; contact via repository)\" -w \"%{http_code}\" -o /scratch/projects/torchcell-scratch/torchcell-raw/vaishnavEvolutionEvolvabilityEngineering2022/addgene/127546/seq-244230/collection.json \"https://www.addgene.org/api/get-sequence-file-collection/244230/\"",
+      "html_fetch_sha256": [],
+      "http_status": 200,
+      "rel_path": "addgene/127546/seq-244230/collection.json",
+      "retrieved_at": "2026-10-22T02:14:40.214896+00:00",
+      "sha256": "aa3a6a7df83a8e238a6a545219060d114f28dd2acee79de87b3b13b1e52c9e8c",
+      "url": "https://www.addgene.org/api/get-sequence-file-collection/244230/"
+    },
+    {
+      "bytes": 6316115,
+      "command": "curl -sS -L -A \"Mozilla/5.0 (torchcell provenance fetch; contact via repository)\" -w \"%{http_code}\" -o /scratch/projects/torchcell-scratch/torchcell-raw/vaishnavEvolutionEvolvabilityEngineering2022/addgene/127546/seq-244230/features.json \"https://sequences.addgene.org/snapgene-media/v3.101.0/sequences/244230/5403028e-19c9-4eed-9d56-4599cdb91d4f/addgene-plasmid-127546-sequence-244230-features.json\"",
+      "html_fetch_sha256": [],
+      "http_status": 200,
+      "rel_path": "addgene/127546/seq-244230/features.json",
+      "retrieved_at": "2026-10-22T02:14:55.663874+00:00",
+      "sha256": "e1acdfd21897891f5831bd7e31011b2ccb0573bf8bd33019296c0d354791179b",
+      "url": "https://sequences.addgene.org/snapgene-media/v3.101.0/sequences/244230/5403028e-19c9-4eed-9d56-4599cdb91d4f/addgene-plasmid-127546-sequence-244230-features.json"
+    },
+    {
+      "bytes": 4820175,
+      "command": "curl -sS -L -A \"Mozilla/5.0 (torchcell provenance fetch; contact via repository)\" -w \"%{http_code}\" -o /scratch/projects/torchcell-scratch/torchcell-raw/vaishnavEvolutionEvolvabilityEngineering2022/addgene/127546/seq-244230/sequence-lines.json \"https://sequences.addgene.org/snapgene-media/v3.101.0/sequences/244230/5403028e-19c9-4eed-9d56-4599cdb91d4f/addgene-plasmid-127546-sequence-244230-sequence-lines.json\"",
+      "html_fetch_sha256": [],
+      "http_status": 200,
+      "rel_path": "addgene/127546/seq-244230/sequence-lines.json",
+      "retrieved_at": "2026-10-22T02:15:01.004561+00:00",
+      "sha256": "e61ee99368645b9019cf2e452f9d156a71be7a85236e599646ba71c9ff2efd03",
+      "url": "https://sequences.addgene.org/snapgene-media/v3.101.0/sequences/244230/5403028e-19c9-4eed-9d56-4599cdb91d4f/addgene-plasmid-127546-sequence-244230-sequence-lines.json"
+    },
+    {
+      "bytes": 333846,
+      "command": "curl -sS -L -A \"Mozilla/5.0 (torchcell provenance fetch; contact via repository)\" -w \"%{http_code}\" -o /scratch/projects/torchcell-scratch/torchcell-raw/vaishnavEvolutionEvolvabilityEngineering2022/addgene/127546/seq-244230/map.svg \"https://sequences.addgene.org/snapgene-media/v3.101.0/sequences/244230/5403028e-19c9-4eed-9d56-4599cdb91d4f/addgene-plasmid-127546-sequence-244230-map.svg\"",
+      "html_fetch_sha256": [],
+      "http_status": 200,
+      "rel_path": "addgene/127546/seq-244230/map.svg",
+      "retrieved_at": "2026-10-22T02:15:06.136336+00:00",
+      "sha256": "29aaccaf50bbb53c15def6ca4a5f8628ecb13ab511435406464b5e36096c2b36",
+      "url": "https://sequences.addgene.org/snapgene-media/v3.101.0/sequences/244230/5403028e-19c9-4eed-9d56-4599cdb91d4f/addgene-plasmid-127546-sequence-244230-map.svg"
+    }
+  ],
+  "manual_recipe": "Open https://www.addgene.org/127546/sequences/ in a logged-out desktop browser, expand 'Addgene-Verified Full Sequences (1)' (sequence object 251803) or 'Depositor Full Sequences (1)' (244230), and use that section's GenBank / SnapGene download button. The URLs the page's own API advertises (/api/get-sequence-file-collection/<id>/ -> genbankUrl, snapgeneUrl) return HTTP 404 to curl, to curl with a browser user-agent, to curl with a Referer from the sequences page and to curl with that page's cookie jar, while every sibling viewer artifact in the same directory returns 200; plasmid 12259 behaves identically, so the refusal is Addgene's, not this plasmid's. Deposit the downloaded .gbk beside these files and re-run with --genbank <path> to replace the reconstruction.",
+  "orf_proofs": [
+    {
+      "bp": 804,
+      "feature": "URA3",
+      "internal_stops": 0,
+      "n_terminus": "MSKATY",
+      "span": "623..1426",
+      "strand": "+"
+    },
+    {
+      "bp": 717,
+      "feature": "yeGFP",
+      "internal_stops": 0,
+      "n_terminus": "MSKGEE",
+      "span": "1960..2676",
+      "strand": "+"
+    },
+    {
+      "bp": 711,
+      "feature": "mCherry",
+      "internal_stops": 0,
+      "n_terminus": "MVSKGE",
+      "span": "6984..7694",
+      "strand": "-"
+    },
+    {
+      "bp": 573,
+      "feature": "NrsR",
+      "internal_stops": 0,
+      "n_terminus": "MGTTLD",
+      "span": "3303..3875",
+      "strand": "+"
+    },
+    {
+      "bp": 861,
+      "feature": "AmpR",
+      "internal_stops": 0,
+      "n_terminus": "MSIQHF",
+      "span": "5740..6600",
+      "strand": "-"
+    }
+  ],
+  "plasmid": "addgene:127546",
+  "reconstructed_length_bp": 8218,
+  "refused_downloads": {
+    "244230:genbankUrl": {
+      "http_status": 404,
+      "url": "https://sequences.addgene.org/snapgene-media/v3.101.0/sequences/244230/5403028e-19c9-4eed-9d56-4599cdb91d4f/addgene-plasmid-127546-sequence-244230.gbk"
+    },
+    "244230:snapgeneUrl": {
+      "http_status": 404,
+      "url": "https://sequences.addgene.org/snapgene-media/v3.101.0/sequences/244230/5403028e-19c9-4eed-9d56-4599cdb91d4f/addgene-plasmid-127546-sequence-244230.dna"
+    },
+    "251803:genbankUrl": {
+      "http_status": 404,
+      "url": "https://sequences.addgene.org/snapgene-media/v3.101.0/sequences/251803/666bf7d7-4ab7-4165-96aa-9a62efe951b4/addgene-plasmid-127546-sequence-251803.gbk"
+    },
+    "251803:snapgeneUrl": {
+      "http_status": 404,
+      "url": "https://sequences.addgene.org/snapgene-media/v3.101.0/sequences/251803/666bf7d7-4ab7-4165-96aa-9a62efe951b4/addgene-plasmid-127546-sequence-251803.dna"
+    }
+  },
+  "reporter_feature": {
+    "begin": 1960,
+    "bp": 717,
+    "depositor_alt_name": "YFP",
+    "depositor_gene_name": "yEVenus",
+    "end": 2676,
+    "label": "yeGFP",
+    "stated_insert_bp": 717
+  },
+  "scaffold": {
+    "between_flanks": {
+      "end": 1862,
+      "seq": "TCGA",
+      "start": 1859
+    },
+    "five_prime_flank": {
+      "end": 1858,
+      "seq": "TGCATTTTTTTCACATC",
+      "start": 1842
+    },
+    "three_prime_flank": {
+      "end": 1875,
+      "seq": "GGTTACGGCTGTT",
+      "start": 1863
+    }
+  },
+  "sequence_objects": {
+    "244230": {
+      "length_bp": 8218,
+      "rotation_of_canonical": true
+    },
+    "251803": {
+      "length_bp": 8218,
+      "rotation_of_canonical": true
+    }
+  },
+  "source_name": "yeast_DualReporter",
+  "stated_length_bp": 8218
+}

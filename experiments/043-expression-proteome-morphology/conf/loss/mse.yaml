@@ -1,0 +1,3 @@
+# experiments/043-expression-proteome-morphology/conf/loss/mse.yaml
+# Reference cell (O4): MSE on the standardized target.
+kind: mse

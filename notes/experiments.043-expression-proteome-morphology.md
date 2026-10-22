@@ -834,3 +834,27 @@ New jobs: A 6127 (downstream, CaLM) with resume 6131; B 6138 (ProtT5; 6128 stopp
 batch, fixed) with resume 6139; isolate verify 6135; representation rebuild 6129, 6130, 6133 and
 trainer prepare 6134; smokes 6136 and 6137 (balanced), after both resumes and the prepare.
 Details and the per-code counts: [[experiments.043-expression-proteome-morphology.scripts.compute_isolate_composite]].
+
+## 2026.10.22 - Suggested datasets to add next
+
+Owner's question: what to add to the 043 query beyond the 15 datasets, with the GFP and
+position-effect studies in mind. Ranked by fit to the 043 questions (gene-level cell-state
+readouts, the position term, the promoter encoder). Schedule rows refer to the
+database-expansion-100 and -200 candidate tables; "in mirror" means the paper is OCR'd under
+`$DATA_ROOT/torchcell-library/`.
+
+| rank | dataset | records (approx.) | readout | genotype class | why for 043 | state |
+|---|---|---|---|---|---|---|
+| 1 | Wu 2017, genome-wide position effects (Biotechnol Biofuels) | 1,044 loci | RFP fluorescence, pURA3 (a pTEF1 subset) | YKO deletion + reporter cassette at the deleted locus | the direct test of the position term: one reporter, one promoter, 1,044 chromosomal positions; the first integrated-cassette genotype | in mirror (`wuGenomewideLandscapePosition2017`, no SI captured); no candidate verdict yet |
+| 2 | Rafi 2024, Random Promoter DREAM Challenge (Nat Biotechnol) | about 6.7 million random 80 bp promoters plus designed test sets (from memory, unverified) | YFP sort-seq, the de Boer assay | S288C + reporter locus | the promoter-encoder training signal at scale; same reporter path and plasmid window as Vaishnav if the library build matches 127546 (to verify) | not in Zotero, not in the mirror, on no schedule; owner names it 2026-10-22 |
+| 3 | de Boer 2020, 100 M random promoters (Nat Biotechnol) | > 1e8 | YFP sort-seq | S288C + reporter locus | the parent set of Vaishnav and Rafi; Addgene cites it as the primary paper of plasmid 127546 | schedule row 55, in mirror |
+| 4 | Renganaath 2020, natural promoter-variant MPRA (eLife) | 5,832 variants in 2,503 promoters | allele-specific promoter activity | S288C + reporter locus | bridges designed 80-mers to the natural promoter variation the isolates carry | row 103 |
+| 5 | Keren 2013, promoter activity across conditions (MSB) | about 900 native promoter reporters x 10 conditions | time-resolved fluorescence | S288C + reporter locus | promoter x environment | row 83 |
+| 6 | Newman 2006 and Breker 2013, GFP fusion library | about 2,500 proteins (abundance and noise, rich and minimal medium); 4,159 strains under stress | protein level per gene of the tagged reference cell | S288C + tag | reference-cell protein level and noise per gene, which supervises the gene token itself | rows 15/17 and 101/114 |
+| 7 | Chong 2015 (CYCLoPs) and Huh 2003, localization | about 4,100 tagged ORFs | localization class per gene | S288C + tag | a classification readout per gene, suited to the binned head; a new phenotype leaf | rows 67/79 and 119 |
+| 8 | Sharon 2012, Cuperus 2017 | 2,000 designed promoters; 500 k random 5' UTRs | fluorescence; translation output | S288C + reporter locus | regulatory DNA beyond the promoter | rows 123/136 and 77 |
+
+Not candidates: Albert 2014 X-pQTL (no strain-by-protein matrix), Zhang 2020 promoter
+combinations (blocked on provision, #990), Hale 2024 (landed; fitness readout on segregants, not
+gene-level). Adding any of these to Zotero or the mirror is a separate instruction; this list is
+the suggestion only.

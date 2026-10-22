@@ -1,0 +1,9 @@
+# experiments/043-expression-proteome-morphology/conf/loss/hlgauss.yaml
+# Main loss (O4): HL-Gauss, K 32 bins over [-4, 4] z, sigma 0.75 bin widths, expectation as point.
+kind: hlgauss
+hl_gauss:
+  num_bins: 32
+  low: -4.0
+  high: 4.0
+  sigma_bins: 0.75
+num_quantiles: 19

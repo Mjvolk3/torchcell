@@ -1,0 +1,4 @@
+# experiments/043-expression-proteome-morphology/conf/loss/pinball.yaml
+# Arm 1 (O4): 19-quantile pinball, the median quantile as the point.
+kind: pinball
+num_quantiles: 19

@@ -36,3 +36,6 @@ created: 1792393327949
 - [x] dataset_043 serves the representation [[experiments.043-expression-proteome-morphology.scripts.dataset_043]]
 - [ ] Vaishnav windows and the reporter through the encoders, job 6115, chained after 6106 [[experiments.043-expression-proteome-morphology.scripts.embed_vaishnav_reporter_043]]
 - [ ] Vector-level check of the representation once 6106 and 6115 finish
+- [x] 043 training stack: HL-Gauss loss with pinned per-dataset standardization, the cell model (composite frozen tokens, 019 trunk with the graph mask, mark operator with ReZero, level heads), the trainer with Hydra arms, and a CPU end-to-end test on synthetic tables (36 tests) [[experiments.043-expression-proteome-morphology]]
+- [x] Trainer prepared store, job 6123 [[experiments.043-expression-proteome-morphology.scripts.train_043]]
+- [ ] Smoke cell joint_9 HL-Gauss seed 0, job 6124 chained after 6122; read the epoch time and the first curve [[experiments.043-expression-proteome-morphology.scripts.gh_train_043_smoke]]

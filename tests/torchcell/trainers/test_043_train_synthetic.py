@@ -473,3 +473,43 @@ def test_arm_config_validation(tr: ModuleType) -> None:
         tr.ArmConfig(name="x", datasets=["sameith_dm"])
     with pytest.raises(ValueError, match="kemmeren"):
         tr.ArmConfig(name="x", datasets=["messner"], doubles=True)
+
+
+def test_balanced_sampler_draws_datasets_uniformly(
+    tr: ModuleType, world: dict[str, Any]
+) -> None:
+    store = world["store"]
+    arm = tr.ArmConfig(
+        name="a", datasets=["kemmeren", "messner", "caudal", "vaishnav"], doubles=False
+    )
+    view = tr.build_view(store, arm, mark_cap=2)
+    train = view.positions(tr.ROLE_CODE[tr.Role.TRAIN])
+    batches = tr.balanced_batches(view, train, batch_size=50, seed=7)
+    assert len(batches) == int(np.ceil(len(train) / 50))
+    drawn = np.concatenate(batches)
+    assert set(drawn.tolist()) <= set(train.tolist())
+    # every draw is a training position; datasets are near-uniform, not record-weighted
+    counts = np.bincount(view.local_dataset[drawn], minlength=4)
+    assert counts.sum() == len(batches) * 50
+    assert counts.min() > 0.15 * counts.sum()
+    # the same seed gives the same epoch; another seed another
+    again = tr.balanced_batches(view, train, batch_size=50, seed=7)
+    assert all(np.array_equal(a, b) for a, b in zip(batches, again, strict=True))
+    other = tr.balanced_batches(view, train, batch_size=50, seed=8)
+    assert not all(np.array_equal(a, b) for a, b in zip(batches, other, strict=True))
+
+
+def test_two_training_steps_with_balanced_sampler(
+    tr: ModuleType, world: dict[str, Any]
+) -> None:
+    base = _cfg(tr, world["root"], "hlgauss")
+    cfg = base.model_copy(
+        update={"data": base.data.model_copy(update={"sampler": "balanced"})}
+    )
+    assert cfg.run_name == "joint_test_balanced_hlgauss_equal_s0"
+    result = tr.train(
+        cfg, world["store"], tr.h5_vector_source(cfg.paths), tr.MemoryLogger()
+    )
+    assert result.steps == 2
+    assert np.isfinite(result.last_metrics["train/loss"])
+    assert Path(result.checkpoint_dir).name == cfg.run_name

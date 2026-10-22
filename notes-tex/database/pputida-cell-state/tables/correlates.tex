@@ -1,0 +1,63 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_pputida_cell_state_table.py
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}L{40mm} L{54mm} r r r r r r@{}}
+\caption[]{Does another served dataset's gene-level value track the Carruthers per-target titer effect? The effect is the DBTL0 single-knockdown titer, 121 targets. Each dataset is a set of gene vectors, one per experiment, sample or strain. \emph{Vec.} is the number of vectors tested out of the total, where a vector is tested when it shares at least 15 targets. \emph{Shared} is the median shared targets. $\rho$ and \emph{p} are the Spearman correlation and its single-test p-value for the best vector. \emph{Best-of p} compares that best $\rho$ against the best under 2,000 shuffles of the target labels, which is the honest p when a dataset offers hundreds of vectors. \emph{All} is the same vector against the additive fit over all 502 strains. A dash means no vector shares enough targets.}\label{tab:pcscorr}\\
+\toprule
+Dataset & One value is & Vec. & Shared & $\rho$ & \emph{p} & Best-of \emph{p} & All \\
+\midrule
+\endfirsthead
+\multicolumn{8}{@{}l}{\footnotesize\emph{Table~\ref{tab:pcscorr}, continued}}\\
+\toprule
+Dataset & One value is & Vec. & Shared & $\rho$ & \emph{p} & Best-of \emph{p} & All \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Proteome\allowbreak Fold\allowbreak Change\allowbreak Lim2025 & log2 fold change against the parent, one vector per lineage & 4/4 & 97 & $+0.27$ & 0.0066 & 0.028 & $+0.18$ \\
+Putida\allowbreak Precise321\allowbreak Lim2022 & RNA-seq TPM, one vector per sample & 321/321 & 121 & $+0.25$ & 0.0053 & 0.090 & $+0.20$ \\
+Fitness\allowbreak Contrast\allowbreak Borchert2023 & t statistic of a two-arm fitness contrast, one vector per contrast & 13/13 & 87 & $-0.25$ & 0.021 & 0.196 & $-0.14$ \\
+Isoprenol\allowbreak Titer\allowbreak Yunus2026 & isoprenol titer per CRISPRi strain & 1/1 & 120 & $-0.10$ & 0.28 & 0.279 & $-0.03$ \\
+Proteome\allowbreak Lim2025 & absolute Top3 abundance, one vector per lineage & 3/3 & 97 & $+0.10$ & 0.31 & 0.394 & $0.00$ \\
+Crispri\allowbreak Knockdown\allowbreak Yunus2026 & the target's own protein against the non-targeting control & 1/1 & 99 & $+0.05$ & 0.62 & 0.623 & $-0.02$ \\
+Env\allowbreak Metal\allowbreak Tnseq\allowbreak Royet2025 & Tn-seq log2 fold change under a metal, one vector per metal & 4/4 & 109 & $+0.10$ & 0.32 & 0.732 & $+0.01$ \\
+Fitness\allowbreak Browser\allowbreak Putida & log2 transposon fitness per gene, one vector per experiment & 234/234 & 77 & $+0.27$ & 0.016 & 0.755 & $+0.15$ \\
+Rb\allowbreak Tnseq\allowbreak Borchert2024 & log2 transposon fitness per gene, one vector per experiment & 310/310 & 77 & $+0.28$ & 0.015 & 0.802 & $+0.15$ \\
+Proteome\allowbreak Banerjee2025 & log2 LFQ intensity, one vector per strain & 6/6 & 80 & $+0.04$ & 0.73 & 0.963 & $+0.05$ \\
+Proteome\allowbreak Menasalvas2025 & summed DIA protein counts, one vector per strain and phase & 6/6 & 88 & $-0.04$ & 0.72 & 0.967 & $-0.02$ \\
+Proteome\allowbreak Log10\allowbreak Percent\allowbreak De\allowbreak Siqueira2025 & log10 percent of proteome, one vector per isolate & 17/17 & 73 & $-0.04$ & 0.75 & 0.995 & $-0.05$ \\
+Proteome\allowbreak De\allowbreak Siqueira2025 & Top3 peptide signal, one vector per isolate & 17/17 & 73 & $-0.03$ & 0.79 & 0.998 & $-0.07$ \\
+Proteome\allowbreak Percent\allowbreak De\allowbreak Siqueira2025 & percent of proteome, one vector per isolate & 17/17 & 73 & $-0.03$ & 0.79 & 0.999 & $-0.07$ \\
+Rb\allowbreak Tnseq\allowbreak Borchert2023 & log2 transposon fitness per gene, one vector per experiment & 0/42 & 10 & -- & -- & -- & -- \\
+Crispri\allowbreak Panel\allowbreak Proteome\allowbreak Yunus2026 & Top3 signal on a 207-protein panel, one vector per CRISPRi strain & 0/125 & 11 & -- & -- & -- & -- \\
+Crispri\allowbreak Differential\allowbreak Proteome\allowbreak Yunus2026 & fold change against the control, one knockdown strain & 0/1 & 8 & -- & -- & -- & -- \\
+\end{longtable}
+\endgroup
+
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}L{112mm} r r r r@{}}
+\caption[]{Single tests against the same effect: the compendia's two growth-on-isoprenol experiments, named because the best-of row in Table~\ref{tab:pcscorr} hides them, and aggregate gene priors, each one vector. The priors were not chosen in advance and the two compendia share most of their experiments, so their p-values are not corrected and are not independent.}\label{tab:pcspriors}\\
+\toprule
+Test & Shared & $\rho$ & \emph{p} & All \\
+\midrule
+\endfirsthead
+\bottomrule
+\endfoot
+Rb\allowbreak Tnseq\allowbreak Borchert2024: growth on isoprenol, set16IT008 & 77 & $-0.06$ & 0.62 &  \\
+Rb\allowbreak Tnseq\allowbreak Borchert2024: growth on isoprenol, set16IT009 & 77 & $+0.01$ & 0.9 &  \\
+Fitness\allowbreak Browser\allowbreak Putida: growth on isoprenol, Putida:set16IT008 & 77 & $-0.06$ & 0.62 &  \\
+Fitness\allowbreak Browser\allowbreak Putida: growth on isoprenol, Putida:set16IT009 & 77 & $+0.01$ & 0.9 &  \\
+\addlinespace[2pt]
+RbTnseqBorchert2024: mean fitness over all 310 experiments & 77 & $-0.20$ & 0.077 & $-0.09$ \\
+RbTnseqBorchert2024: share of experiments with $|$fitness$|$ above 1 & 77 & $+0.27$ & 0.018 & $+0.09$ \\
+FitnessBrowserPutida: mean fitness over all 234 experiments & 77 & $-0.19$ & 0.094 & $-0.06$ \\
+FitnessBrowserPutida: share of experiments with $|$fitness$|$ above 1 & 77 & $+0.24$ & 0.034 & $+0.07$ \\
+PRECISE321: mean log2(TPM + 1) over 321 samples & 121 & $+0.11$ & 0.25 & $+0.12$ \\
+\addlinespace[2pt]
+Royet 2025 essentiality call: median DBTL0 titer in ug/mL by class, essential 199 (n 32), growth advantage 162 (n 13), growth defect 210 (n 7), nonessential 153 (n 69); Kruskal--Wallis & & & 0.063 & \\
+\end{longtable}
+\endgroup

@@ -2,7 +2,8 @@
 %% [[experiments.database.pputida-cell-state]]
 %% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/pputida-cell-state/sections/isoprenol.tex
 %% SOURCE: experiments/database/scripts/build_pputida_cell_state_table.py
-%% (Tables pcsiso, pcscycle and pcsrawcycle); the prose is hand-authored.
+%% (Tables pcstransfer, pcsisodata, pcsiso, pcscorr, pcspriors, pcscycle and
+%% pcsrawcycle); the prose is hand-authored.
 
 \section{Predicting the last Carruthers round\secstatus{todo}}\label{sec:isoprenol}
 
@@ -28,8 +29,9 @@ feeds one.
 Three groups come out of it, and the order is not the order of record counts:
 
 \begin{itemize}[nosep,leftmargin=1.4em]
-\item \textbf{Yunus 2026 alone perturbs the target set}, 120 of 135, which is why it
-is the transfer dataset (Sec.~\ref{sec:iso-yunus}).
+\item \textbf{Yunus 2026 alone perturbs the target set}, 120 of 135, which made it the
+transfer candidate (Sec.~\ref{sec:iso-yunus}). Measured, its titer does not rank those
+targets the way the campaign does (Sec.~\ref{sec:iso-corr}).
 \item \textbf{Three proteome datasets measure most of it}, 111, 111 and 100 targets,
 in conditions the campaign never ran. They are feature sources, not labels.
 \item \textbf{The two transposon compendia cover 86 targets} with a fitness value for
@@ -38,7 +40,9 @@ and separately name the catabolism genes (Sec.~\ref{sec:transposon}).
 \end{itemize}
 
 Everything below those reaches four targets or fewer. Those rows earn their place by
-design rather than by overlap, and the last column says which.
+design rather than by overlap, and the last column says which. Overlap is a
+precondition, not evidence of transfer: whether any of these values moves with the
+campaign's titer is tested in Sec.~\ref{sec:iso-corr}, and none does reliably.
 
 \clearpage
 \input{tables/carruthers-transfer}
@@ -73,13 +77,14 @@ share. de Siqueira 2025 holds 10 records on acetate-tolerized isolates, again no
 CRISPRi. Kang 2026's 7 isoprenol records are controls in an ester campaign. That
 leaves one.
 
-\subsection{The dataset: Yunus 2026\secstatus{todo}}\label{sec:iso-yunus}
+\subsection{The candidate: Yunus 2026\secstatus{todo}}\label{sec:iso-yunus}
 
-\texttt{IsoprenolTiterYunus2026} is the answer, and Table~\ref{tab:pcsiso} is why.
-Yunus 2026 (doi:\allowbreak 10.1016/\allowbreak j.ymben.\allowbreak 2025.11.007)
-selects CRISPRi knockdown targets by FluxRETAP against intuition, in the engineered
-isoprenol-producing strain IY1452, and Carruthers is a co-author. Four things line up
-and one does not.
+\sym{IsoprenolTiterYunus2026} is the candidate on design, and Table~\ref{tab:pcsiso}
+is why. Yunus 2026 (doi:\allowbreak 10.1016/\allowbreak j.ymben.\allowbreak
+2025.\allowbreak 11.007) selects CRISPRi knockdown targets by FluxRETAP against intuition, in the
+engineered isoprenol-producing strain IY1452, and Carruthers is a co-author. Three
+things line up and two do not. The measured test of whether it transfers is
+Sec.~\ref{sec:iso-corr}, and it does not.
 
 \notesec{The target sets nearly coincide} Every target in the Yunus campaign but one
 is also a Carruthers target (Table~\ref{tab:pcsiso}). That is what makes the dataset
@@ -98,9 +103,12 @@ dispersion as a typed gap. The uniform 3 in Table~\ref{tab:pcsiso} is therefore 
 resolved lower bound, not a reported count, and a weighting scheme must not read it as
 one.
 
-\notesec{The chassis and the modality are the same} Both repress a native gene by
-CRISPRi in an isoprenol-producing strain, so a target's effect means the same thing in
-both.
+\notesec{The modality is the same, the chassis designation is not} Both repress a
+native gene by CRISPRi in an isoprenol-producing strain. The served records pin
+different chassis, IY1449b for Carruthers and IY1452 for Yunus (Table~\ref{tab:pcsiso}),
+and the Yunus loader deliberately does not borrow the IY1449b genotype for IY1452,
+because the two are different designations and the paper states no genotype for its
+own. A target's effect therefore need not mean the same thing in both.
 
 \notesec{The paired features exist} \sym{CrispriPanelProteomeYunus2026} carries an
 absolute Top3 proteome over 253 accessions on the same strains, which is the same
@@ -113,23 +121,72 @@ plain M9 salts. The titer ranges differ accordingly, and the Yunus records carry
 uncertainty, because only one number per strain was released and the loader records
 that as a typed gap rather than inventing a dispersion.
 
-So Yunus is not extra training rows for absolute titer. Two uses survive the condition
-difference, and both are worth more than 125 rows would be:
-
-\begin{itemize}[nosep,leftmargin=1.4em]
-\item \textbf{A held-out condition.} If a model trained on the earlier Carruthers
-cycles ranks targets correctly in Yunus, the ranking is a property of the biology
-rather than of the campaign. Test rank agreement, not absolute error, since the scales
-differ.
-\item \textbf{A reproducibility bound on the label.} Two independent measurements of
-nearly the same target set say how much of the titer variation is real. That ceilings
-what any model can achieve on this data, and it is the first thing to compute.
-\end{itemize}
+So Yunus is not extra training rows for absolute titer. The two uses it was a candidate
+for were a held-out condition, where a ranking learned on the earlier Carruthers cycles
+is scored on Yunus, and a reproducibility bound on the label. Both rest on the two
+campaigns ranking the shared targets alike, and they do not: rank agreement over the
+120 shared targets is indistinguishable from none (Sec.~\ref{sec:iso-corr}). The
+reproducibility question has a different answer than expected. Within Carruthers'
+first round the label is highly reproducible, and between the two campaigns it is not,
+so the target effect is bound to the condition, the chassis or both, and the served
+data cannot say which.
 
 The runner-up is \sym{IsoprenolSelectionMenasalvas2025} in
 Table~\ref{tab:pcsrows}, the only other CRISPRi and isoprenol pairing. Its readout is a
 categorical biosensor enrichment call rather than a titer, so it is a weaker label and
 not the first choice.
+
+\subsection{Does any served readout track the campaign?\secstatus{todo}}\label{sec:iso-corr}
+
+Overlap says another dataset reaches a target. It does not say that dataset's value for
+the target moves with the campaign's titer, and Table~\ref{tab:pcscorr} tests that
+directly.
+
+\notesec{The campaign's effect is a real signal} The per-target effect is the titer of
+the campaign's single-knockdown strains, 123 strains over 121 targets. Matched to the
+raw mirror's cycle column by target set, 119 of them are DBTL0 and the other four match
+no cycle or several, so the effect is a within-round estimate with no batch term.
+Replicate error accounts for under 2 percent of the spread between targets: the mean
+released standard error is 7.0\,ug/mL against a spread of 73.7\,ug/mL, a reliability
+of 0.985. A weak correlation below is therefore not caused by noise in the campaign.
+
+\notesec{No served readout tracks it} Every served gene-level dataset outside the
+campaign was read as gene vectors, one per experiment, sample or strain, and each
+vector was correlated with the effect over the shared targets. None clears the bar once
+the number of vectors a dataset offers is accounted for:
+
+\begin{itemize}[nosep,leftmargin=1.4em]
+\item \textbf{Yunus 2026}, the largest overlap, ranks the 120 shared targets in
+unrelated order, $\rho = -0.10$. Its top quartile shares 8 of 30 targets with the
+campaign's, against 7.5 by chance, and its bottom quartile shares 3. Its titers run
+about five times higher, a median of 858 against 163\,ug/mL. Its own knockdown depth
+does not predict the campaign's effect either.
+\item \textbf{Growth on isoprenol} in the transposon compendia gives $\rho$ between
+$-0.06$ and $+0.01$ over 77 targets (Table~\ref{tab:pcspriors}).
+\item \textbf{The best of hundreds} is what hundreds of unrelated vectors produce. The
+best of 234 and 310 compendium experiments reaches $\rho = +0.28$ with a best-of
+\emph{p} near 0.8, and the best of 321 PRECISE321 samples reaches $+0.25$ at 0.09.
+\item \textbf{Lim 2025's stress proteome fold change} is the one best-of \emph{p} below
+0.05, $\rho = +0.27$ at 0.028 over four lineages. Against the all-strain fit it falls
+to $+0.18$, so it is a lead, not a result.
+\end{itemize}
+
+\notesec{One weak lead among the priors} Targets whose transposon mutants show a strong
+defect in many experiments give higher first-round titer, $\rho = +0.27$ and $+0.24$ in
+the two compendia, and essential targets have a higher median titer than nonessential
+ones (Table~\ref{tab:pcspriors}). It does not stand as a finding. The priors were not
+chosen in advance, the two compendia share most of their experiments, and the
+correlation falls below $+0.10$ against the all-strain fit. Hypothesis (untested):
+knocking down a growth-limiting gene diverts carbon from biomass to product, which
+would make a fitness prior useful for ranking first-round targets.
+
+\notesec{What it leaves} For predicting the last round, the served data outside the
+campaign offers features with no measured relation to the label, and the campaign's own
+earlier rounds remain the training signal. The cycle label that split needs is the
+blocker of Sec.~\ref{sec:iso-cycle}.
+
+\clearpage
+\input{tables/correlates}
 
 \subsection{The blocker: the cycle label is not in the graph\secstatus{todo}}\label{sec:iso-cycle}
 

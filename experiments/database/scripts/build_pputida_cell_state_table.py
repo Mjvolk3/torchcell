@@ -36,6 +36,10 @@ probes merge into the same cache and neither clobbers the other's keys:
       re-read the fifteen row stores
   python experiments/database/scripts/build_pputida_cell_state_table.py --probe-isoprenol
       re-read the titer campaigns and the cycle-label question
+  python experiments/database/scripts/build_pputida_cell_state_table.py --probe-correlates
+      test every served gene-level readout against the Carruthers target effect;
+      reads both compendia in full, so it takes a few minutes, and it needs the
+      --probe-roles cache for the class names
   python experiments/database/scripts/build_pputida_cell_state_table.py
       render every table from the cache
 
@@ -45,6 +49,7 @@ Emits:
   - notes-tex/database/pputida-cell-state/tables/counts.tex      (totals)
   - notes-tex/database/pputida-cell-state/tables/isoprenol.tex   (the two campaigns)
   - notes-tex/database/pputida-cell-state/tables/cycle-label.tex (the DBTL cycle label)
+  - notes-tex/database/pputida-cell-state/tables/correlates.tex  (gene-level correlates)
   - <results>/pputida_cell_state_probe.json                      (the cache)
 
 Run from the repo root.
@@ -63,8 +68,10 @@ from pathlib import Path
 from typing import Any
 
 import lmdb
+import numpy as np
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
+from scipy.stats import kruskal, pearsonr, rankdata, spearmanr
 
 SCRIPT = Path(__file__).resolve()
 REPO = SCRIPT.parents[3]
@@ -511,12 +518,14 @@ def probe_titer(store_dir: Path) -> dict[str, Any]:
     units: set[str] = set()
     methods: set[str] = set()
     replicates: set[str] = set()
+    strains: set[str] = set()
     records = 0
 
     with env.begin() as txn:
         records = txn.stat()["entries"]
         for _, value in txn.cursor():
             rec = splice(pickle.loads(value), table)
+            strains.add(rec["reference"]["genome_reference"]["strain"])
             experiment = rec["experiment"]
             for pert in experiment["genotype"]["perturbations"]:
                 pert_types.add(pert["perturbation_type"])
@@ -551,6 +560,7 @@ def probe_titer(store_dir: Path) -> dict[str, Any]:
         "titer_units": sorted(units),
         "quantification_methods": sorted(methods),
         "replicates": sorted(replicates),
+        "chassis_strains": sorted(strains),
         "media": sorted(m for m in media if m),
         "temperatures": sorted(temperatures),
         "duration_hours": sorted(d for d in durations if d is not None),
@@ -1128,6 +1138,7 @@ def render_isoprenol(cache: dict[str, Any]) -> str:
                 breakable(t.replace("_", " ")) for t in yun["perturbation_types"]
             ),
         ),
+        ("Chassis strain", *joined("chassis_strains")),
         ("Medium", *joined("media")),
         (
             "Temperature",
@@ -1303,16 +1314,17 @@ PICKS: list[IsoprenolPick] = [
         split="held-out condition, against Carruthers",
         alternates=["IsoprenolTiterCarruthers2025"],
         why=(
-            "All but one of its targets are Carruthers targets, on the same chassis "
-            "and the same GC-FID readout, in a different medium and temperature. That "
-            "makes it a second measurement of the same target set rather than more "
-            "rows: it bounds label reproducibility and tests whether a ranking "
-            "transfers across conditions."
+            "All but one of its targets are Carruthers targets, with the same GC-FID "
+            "readout, on a different chassis designation (IY1452 against IY1449b) "
+            "and in a different medium and temperature. Measured against the DBTL0 "
+            "single knockdowns, it ranks the shared targets in unrelated order "
+            "(Table~\\ref{tab:pcscorr}), so it does not test a transferred ranking."
         ),
         helps=(
-            "A second titer for 120 of the 135 targets, in another medium and "
-            "temperature. Bounds how reproducible the label is, and tests whether a "
-            "target ranking learned on the early cycles survives a condition change."
+            "A second titer for 120 of the 135 targets, in another medium, "
+            "temperature and chassis. Its ranking of those targets does not track the "
+            "campaign's (Table~\\ref{tab:pcscorr}), so it says how condition-bound a "
+            "target effect is rather than scoring a model trained on the early cycles."
         ),
     ),
     IsoprenolPick(
@@ -1804,6 +1816,646 @@ same strain or the same condition.}
     )
 
 
+# ---------------------------------------------------------------------------------
+# Gene-level correlates of the Carruthers campaign
+# ---------------------------------------------------------------------------------
+#
+# The transfer table counts how many Carruthers targets another dataset reaches. This
+# block asks the next question: over those shared targets, does the other dataset's
+# value TRACK the campaign's titer effect? A target set that overlaps but ranks the
+# targets in unrelated order transfers nothing.
+
+CARRUTHERS_TITER = "isoprenol_titer_carruthers2025"
+YUNUS_TITER = "isoprenol_titer_yunus2026"
+YUNUS_KNOCKDOWN = "crispri_knockdown_yunus2026"
+
+# Every served non-Carruthers store whose phenotype is keyed by gene, either as a
+# per-gene dict on one record (a proteome, a transcriptome) or as one scalar per
+# single-gene record (a transposon screen). The readout text is what the table says
+# one value is; each claim is checked against the record shape when the store is read.
+CORRELATE_STORES: dict[str, str] = {
+    "rbtnseq_fitness_browser_putida": "log2 transposon fitness per gene, one vector per experiment",
+    "rbtnseq_borchert2024": "log2 transposon fitness per gene, one vector per experiment",
+    "rbtnseq_borchert2023": "log2 transposon fitness per gene, one vector per experiment",
+    "fitness_contrast_borchert2023": "t statistic of a two-arm fitness contrast, one vector per contrast",
+    "pputida_env_metal_tnseq_royet2025": "Tn-seq log2 fold change under a metal, one vector per metal",
+    "putida_precise321_lim2022": "RNA-seq TPM, one vector per sample",
+    "proteome_lim2025": "absolute Top3 abundance, one vector per lineage",
+    "proteome_fold_change_lim2025": "log2 fold change against the parent, one vector per lineage",
+    "proteome_menasalvas2025": "summed DIA protein counts, one vector per strain and phase",
+    "proteome_banerjee2025": "log2 LFQ intensity, one vector per strain",
+    "proteome_desiqueira2025": "Top3 peptide signal, one vector per isolate",
+    "proteome_percent_desiqueira2025": "percent of proteome, one vector per isolate",
+    "proteome_log10_percent_desiqueira2025": "log10 percent of proteome, one vector per isolate",
+    "crispri_panel_proteome_yunus2026": "Top3 signal on a 207-protein panel, one vector per CRISPRi strain",
+    "crispri_differential_proteome_yunus2026": "fold change against the control, one knockdown strain",
+}
+GENE_DICT_FIELDS = ("protein_abundance", "protein_fold_change", "expression_tpm")
+GENE_SCALAR_LABELS = ("environment_response", "t_statistic")
+
+# Below this many shared targets a rank correlation is not reported: with 15 targets
+# a rho of 0.5 is already p of about 0.06, and the column would mostly print noise.
+MIN_SHARED_TARGETS = 15
+# Permutations for the best-of-many null. A dataset with 310 conditions offers 310
+# chances at a large rho, so its best one is compared against the best one under
+# shuffled target labels, not against the single-test p.
+N_PERMUTATIONS = 2000
+PERMUTATION_SEED = 0
+# Ridge penalty for the all-strain additive fit. Small: it only keeps the 135-column
+# indicator design solvable where a target appears once.
+ADDITIVE_RIDGE = 1.0
+
+
+class CorrelateRow(BaseModel):
+    """One served store tested against the Carruthers per-target effect."""
+
+    store: str
+    readout: str
+    n_conditions: int
+    n_tested: int
+    shared_targets: int = Field(description="median shared targets over tested vectors")
+    rho: float | None = Field(description="best rho against the DBTL0 effect")
+    p: float | None
+    family_p: float | None = Field(
+        description="permutation p of the best over all vectors"
+    )
+    rho_additive: float | None = Field(
+        description="the same vector against the all-strain fit"
+    )
+    best_condition: str | None
+
+
+def gene_vectors(store_dir: Path) -> dict[str, dict[str, float]]:
+    """Every per-condition gene vector a store holds.
+
+    A record whose phenotype is a gene-keyed dict is one vector. A record that holds
+    one scalar for one perturbed gene contributes that gene's entry to the vector of
+    its condition, and the condition is the screen id, else the contrast label, else
+    the interned environment reference, in that order: a compendium runs many
+    experiments in one medium, so the environment alone would merge replicates of
+    different experiments.
+    """
+    table = interned_table(store_dir)
+    env = lmdb.open(
+        str(store_dir / "processed" / "lmdb"), readonly=True, lock=False, subdir=True
+    )
+    vectors: dict[str, dict[str, float]] = {}
+    with env.begin() as txn:
+        for n, (_, value) in enumerate(txn.cursor()):
+            rec = pickle.loads(value)
+            experiment = rec["experiment"]
+            pheno = splice(experiment["phenotype"], table)
+            field = next(
+                (f for f in GENE_DICT_FIELDS if isinstance(pheno.get(f), dict)), None
+            )
+            if field is not None:
+                vectors[f"record {n}"] = {
+                    g: float(v) for g, v in pheno[field].items() if v is not None
+                }
+                continue
+            label = pheno["label_name"]
+            if label not in GENE_SCALAR_LABELS or pheno.get(label) is None:
+                continue
+            perts = splice(experiment["genotype"], table)["perturbations"]
+            if len(perts) != 1:
+                continue
+            raw_env = experiment["environment"]
+            key = (
+                pheno.get("screen_id")
+                or pheno.get("contrast_label")
+                or raw_env.get("$ref")
+                or stable_hash(splice(raw_env, table))
+            )
+            vectors.setdefault(key, {})[perts[0]["systematic_gene_name"]] = float(
+                pheno[label]
+            )
+    env.close()
+    return vectors
+
+
+def isoprenol_conditions(store_dir: Path) -> set[str]:
+    """The screen ids of a compendium's experiments grown on isoprenol, by InChIKey."""
+    table = interned_table(store_dir)
+    refs = {
+        digest
+        for digest, const in table.items()
+        if isinstance(const, dict)
+        and "media" in const
+        and any(
+            ISOPRENOL_INCHIKEY
+            in str(((p.get("agent") or p.get("compound") or {}).get("inchikey")) or "")
+            for p in const.get("perturbations") or []
+        )
+    }
+    env = lmdb.open(
+        str(store_dir / "processed" / "lmdb"), readonly=True, lock=False, subdir=True
+    )
+    out: set[str] = set()
+    with env.begin() as txn:
+        for _, value in txn.cursor():
+            experiment = pickle.loads(value)["experiment"]
+            if experiment["environment"].get("$ref") in refs:
+                out.add(splice(experiment["phenotype"], table)["screen_id"])
+    env.close()
+    return out
+
+
+def carruthers_effects(base: Path) -> dict[str, Any]:
+    """The campaign's per-target titer effect, estimated two ways.
+
+    The titer store holds 502 strains: single knockdowns and combinations of two to
+    four, and no unedited control. The PRIMARY estimate is the single-knockdown
+    titer, the mean where a target was built twice. Its cycle is read off the raw
+    mirror by target set, and every single knockdown that assigns lands in DBTL0, so
+    it is a within-round estimate with no batch term to fit. The SECONDARY estimate
+    is an additive ridge fit over all 502 strains, one indicator per target plus one
+    for a deletion and one for a gene addition. It has no cycle term, because a third
+    of the records match more than one cycle on target set and assigning those would
+    be a guess, so it is reported as a robustness check rather than as the answer.
+    """
+    table = interned_table(base / CARRUTHERS_TITER)
+    env = lmdb.open(
+        str(base / CARRUTHERS_TITER / "processed" / "lmdb"),
+        readonly=True,
+        lock=False,
+        subdir=True,
+    )
+    strains: list[dict[str, Any]] = []
+    with env.begin() as txn:
+        for _, value in txn.cursor():
+            experiment = splice(pickle.loads(value), table)["experiment"]
+            perts = experiment["genotype"]["perturbations"]
+            pheno = experiment["phenotype"]
+            strains.append(
+                {
+                    "targets": sorted(
+                        p["systematic_gene_name"]
+                        for p in perts
+                        if p["perturbation_type"] == "crispr_interference"
+                    ),
+                    "other": sorted(
+                        {p["perturbation_type"] for p in perts}
+                        - {"crispr_interference", "heterologous_pathway"}
+                    ),
+                    "titer": pheno["titer"],
+                    "se": pheno["titer_se"],
+                }
+            )
+    env.close()
+
+    load_dotenv(REPO / ".env")
+    with (Path(os.environ["DATA_ROOT"]) / RAW_CYCLE_CSV).open(
+        newline="", encoding="utf-8-sig"
+    ) as handle:
+        raw = list(csv.DictReader(handle))
+    set_cycles: dict[tuple[str, ...], set[int]] = {}
+    for row in raw:
+        key = tuple(sorted(re.findall(r"PP_\d+", row["Genes_targeted_for_CRISPRi"])))
+        set_cycles.setdefault(key, set()).add(int(row["DBTL_Cycle"]))
+
+    single = [s for s in strains if len(s["targets"]) == 1 and not s["other"]]
+    single_cycles: dict[str, int] = {}
+    for s in single:
+        cycles = set_cycles.get(tuple(s["targets"]), set())
+        label = f"DBTL{min(cycles)}" if len(cycles) == 1 else "unassigned or several"
+        single_cycles[label] = single_cycles.get(label, 0) + 1
+    by_target: dict[str, list[float]] = {}
+    for s in single:
+        by_target.setdefault(s["targets"][0], []).append(s["titer"])
+    primary = {g: float(np.mean(v)) for g, v in by_target.items()}
+
+    titers = np.array([s["titer"] for s in single])
+    ses = np.array([s["se"] for s in single])
+    reliability = 1 - float(np.mean(ses**2)) / float(np.var(titers, ddof=1))
+
+    genes = sorted({g for s in strains for g in s["targets"]})
+    col = {g: i for i, g in enumerate(genes)}
+    design = np.zeros((len(strains), len(genes) + 3))
+    design[:, 0] = 1
+    for i, s in enumerate(strains):
+        for g in s["targets"]:
+            design[i, 1 + col[g]] = 1
+        design[i, -2] = "deletion_strain" in s["other"]
+        design[i, -1] = "gene_addition" in s["other"]
+    penalty = ADDITIVE_RIDGE * np.eye(design.shape[1])
+    penalty[0, 0] = 0
+    beta = np.linalg.solve(
+        design.T @ design + penalty, design.T @ np.array([s["titer"] for s in strains])
+    )
+    additive = {g: float(beta[1 + col[g]]) for g in genes}
+
+    return {
+        "n_strains": len(strains),
+        "n_single": len(single),
+        "single_cycles": single_cycles,
+        "n_targets_single": len(primary),
+        "n_targets_all": len(additive),
+        "single_titer_sd": float(np.std(titers, ddof=1)),
+        "single_mean_se": float(np.mean(ses)),
+        "reliability": reliability,
+        "primary": primary,
+        "additive": additive,
+    }
+
+
+def best_correlate(
+    effect: dict[str, float],
+    vectors: dict[str, dict[str, float]],
+    perms: np.ndarray,
+    genes: list[str],
+) -> tuple[list[tuple[float, float, int, str]], np.ndarray]:
+    """Spearman of the effect against each vector, and the null of the best |rho|.
+
+    The null permutes the effect over ALL its targets and then takes each vector's
+    shared subset, so a vector covering fewer targets is held to its own null rather
+    than to a pooled one.
+    """
+    idx = {g: i for i, g in enumerate(genes)}
+    e = np.array([effect[g] for g in genes])
+    shuffled = e[perms]
+    results: list[tuple[float, float, int, str]] = []
+    null_best = np.zeros(len(perms))
+    for key, vec in vectors.items():
+        shared = [g for g in genes if g in vec]
+        if len(shared) < MIN_SHARED_TARGETS:
+            continue
+        y = np.array([vec[g] for g in shared])
+        if np.ptp(y) == 0:
+            continue
+        ix = np.array([idx[g] for g in shared])
+        rho, p = spearmanr(e[ix], y)
+        ry = rankdata(y)
+        ry = (ry - ry.mean()) / ry.std()
+        rp = np.apply_along_axis(rankdata, 1, shuffled[:, ix])
+        rp = (rp - rp.mean(1, keepdims=True)) / rp.std(1, keepdims=True)
+        null_best = np.maximum(null_best, np.abs((rp * ry).mean(1)))
+        results.append((float(rho), float(p), len(shared), key))
+    results.sort(key=lambda r: -abs(r[0]))
+    return results, null_best
+
+
+def run_probe_correlates() -> dict[str, Any]:
+    """Test every served gene-level readout against the Carruthers per-target effect."""
+    base = data_root()
+    out = json.loads(CACHE.read_text()) if CACHE.exists() else {}
+    print("estimating the Carruthers per-target effect ...", flush=True)
+    effects = carruthers_effects(base)
+    primary, additive = effects["primary"], effects["additive"]
+
+    stores: dict[str, tuple[str, dict[str, dict[str, float]]]] = {}
+    yunus: dict[str, float] = {}
+    table = interned_table(base / YUNUS_TITER)
+    env = lmdb.open(
+        str(base / YUNUS_TITER / "processed" / "lmdb"), readonly=True, lock=False
+    )
+    with env.begin() as txn:
+        for _, value in txn.cursor():
+            experiment = splice(pickle.loads(value), table)["experiment"]
+            (gene,) = [
+                p["systematic_gene_name"]
+                for p in experiment["genotype"]["perturbations"]
+                if p["perturbation_type"] == "crispr_interference"
+            ]
+            yunus[gene] = experiment["phenotype"]["titer"]
+    env.close()
+    stores[YUNUS_TITER] = ("isoprenol titer per CRISPRi strain", {"titer": yunus})
+
+    knockdown: dict[str, float] = {}
+    table = interned_table(base / YUNUS_KNOCKDOWN)
+    env = lmdb.open(
+        str(base / YUNUS_KNOCKDOWN / "processed" / "lmdb"), readonly=True, lock=False
+    )
+    with env.begin() as txn:
+        for _, value in txn.cursor():
+            pheno = splice(pickle.loads(value), table)["experiment"]["phenotype"]
+            knockdown.update(pheno["protein_fold_change"])
+    env.close()
+    stores[YUNUS_KNOCKDOWN] = (
+        "the target's own protein against the non-targeting control",
+        {"depth": knockdown},
+    )
+    for store, readout in CORRELATE_STORES.items():
+        print(f"reading gene vectors {store} ...", flush=True)
+        stores[store] = (readout, gene_vectors(base / store))
+
+    rng = np.random.default_rng(PERMUTATION_SEED)
+    p_genes, a_genes = sorted(primary), sorted(additive)
+    p_perms = np.array([rng.permutation(len(p_genes)) for _ in range(N_PERMUTATIONS)])
+    a_perms = np.array([rng.permutation(len(a_genes)) for _ in range(N_PERMUTATIONS)])
+    rows: list[CorrelateRow] = []
+    for store, (readout, vectors) in stores.items():
+        res, null = best_correlate(primary, vectors, p_perms, p_genes)
+        res_a, _ = best_correlate(additive, vectors, a_perms, a_genes)
+        by_key_a = {r[3]: r[0] for r in res_a}
+        shared = [len(set(primary) & set(v)) for v in vectors.values()]
+        top = res[0] if res else None
+        rows.append(
+            CorrelateRow(
+                store=store,
+                readout=readout,
+                n_conditions=len(vectors),
+                n_tested=len(res),
+                shared_targets=int(np.median([r[2] for r in res]))
+                if res
+                else max(shared, default=0),
+                rho=top[0] if top else None,
+                p=top[1] if top else None,
+                family_p=float((null >= abs(top[0])).mean()) if top else None,
+                rho_additive=by_key_a.get(top[3]) if top else None,
+                best_condition=top[3] if top else None,
+            )
+        )
+        print(f"  {rows[-1].model_dump_json()}", flush=True)
+
+    # The compendia's isoprenol arms, by name, since the best-of-many row hides them.
+    isoprenol_arms = []
+    for store in COMPENDIA_STORES:
+        vectors = stores[store][1]
+        for screen in sorted(isoprenol_conditions(base / store)):
+            res, _ = best_correlate(
+                primary, {screen: vectors[screen]}, p_perms, p_genes
+            )
+            isoprenol_arms.append(
+                {
+                    "store": store,
+                    "screen": screen,
+                    "rho": res[0][0],
+                    "p": res[0][1],
+                    "n": res[0][2],
+                }
+            )
+
+    # Aggregate gene priors: each is one vector, so each is one test.
+    priors = []
+
+    def prior(name: str, vec: dict[str, float]) -> None:
+        shared = sorted(set(primary) & set(vec))
+        rho, p = spearmanr([primary[g] for g in shared], [vec[g] for g in shared])
+        rho_a, _ = spearmanr(
+            [additive[g] for g in sorted(set(additive) & set(vec))],
+            [vec[g] for g in sorted(set(additive) & set(vec))],
+        )
+        priors.append(
+            {
+                "name": name,
+                "n": len(shared),
+                "rho": float(rho),
+                "p": float(p),
+                "rho_additive": float(rho_a),
+            }
+        )
+
+    for store in COMPENDIA_STORES:
+        vectors = stores[store][1]
+        values: dict[str, list[float]] = {}
+        for vec in vectors.values():
+            for g, v in vec.items():
+                values.setdefault(g, []).append(v)
+        label = class_name(out, store)
+        prior(
+            f"{label}: mean fitness over all {len(vectors)} experiments",
+            {g: float(np.mean(v)) for g, v in values.items()},
+        )
+        prior(
+            f"{label}: share of experiments with |fitness| above 1",
+            {g: float(np.mean(np.abs(v) > 1)) for g, v in values.items()},
+        )
+    precise = stores["putida_precise321_lim2022"][1]
+    genes_tpm: dict[str, list[float]] = {}
+    for vec in precise.values():
+        for g, v in vec.items():
+            genes_tpm.setdefault(g, []).append(np.log2(v + 1))
+    prior(
+        f"PRECISE321: mean log2(TPM + 1) over {len(precise)} samples",
+        {g: float(np.mean(v)) for g, v in genes_tpm.items()},
+    )
+
+    calls: dict[str, str] = {}
+    table = interned_table(base / "graded_gene_essentiality_royet2025")
+    env = lmdb.open(
+        str(base / "graded_gene_essentiality_royet2025" / "processed" / "lmdb"),
+        readonly=True,
+        lock=False,
+    )
+    with env.begin() as txn:
+        for _, value in txn.cursor():
+            experiment = splice(pickle.loads(value), table)["experiment"]
+            gene = experiment["genotype"]["perturbations"][0]["systematic_gene_name"]
+            calls[gene] = str(experiment["phenotype"]["essentiality_call"])
+    env.close()
+    groups: dict[str, list[float]] = {}
+    for g, v in primary.items():
+        if g in calls:
+            groups.setdefault(calls[g], []).append(v)
+    essentiality = {
+        "groups": {
+            k: {"n": len(v), "median": float(np.median(v))}
+            for k, v in sorted(groups.items())
+        },
+        "kruskal_p": float(kruskal(*[v for v in groups.values() if len(v) > 2]).pvalue),
+    }
+
+    shared_y = sorted(set(primary) & set(yunus))
+    a = np.array([primary[g] for g in shared_y])
+    y = np.array([yunus[g] for g in shared_y])
+    q = len(shared_y) // 4
+    names = np.array(shared_y)
+    yunus_detail = {
+        "n": len(shared_y),
+        "pearson": float(pearsonr(a, y)[0]),
+        "carruthers_median": float(np.median(a)),
+        "yunus_median": float(np.median(y)),
+        "quartile": q,
+        "top_overlap": len(
+            set(names[np.argsort(-a)[:q]]) & set(names[np.argsort(-y)[:q]])
+        ),
+        "bottom_overlap": len(
+            set(names[np.argsort(a)[:q]]) & set(names[np.argsort(y)[:q]])
+        ),
+        "chance": q * q / len(shared_y),
+    }
+
+    out["correlates"] = {
+        "effects": {
+            k: v for k, v in effects.items() if k not in ("primary", "additive")
+        },
+        "rows": [r.model_dump() for r in rows],
+        "isoprenol_arms": isoprenol_arms,
+        "priors": priors,
+        "essentiality": essentiality,
+        "yunus": yunus_detail,
+        "n_permutations": N_PERMUTATIONS,
+        "min_shared": MIN_SHARED_TARGETS,
+    }
+    _save(out)
+    return out
+
+
+def class_name(cache: dict[str, Any], store: str) -> str:
+    """A store's dataset class, read off the roles probe rather than restated here."""
+    name: str = cache["isoprenol_roles"][store]["dataset_name"]
+    return name.removesuffix("Dataset")
+
+
+def signed(x: float) -> str:
+    """A correlation in math mode, so its minus is a minus and a column aligns."""
+    # A value that rounds to zero prints unsigned rather than as -0.00.
+    if round(x, 2) == 0:
+        return "$0.00$"
+    return f"${x:+.2f}$"
+
+
+def p_tex(p: float) -> str:
+    """A p-value at two significant figures, in scientific form below 0.001."""
+    if p < 0.001:
+        mantissa, exponent = f"{p:.1e}".split("e")
+        return f"${mantissa}\\times 10^{{{int(exponent)}}}$"
+    return f"{p:.2g}"
+
+
+def render_correlates(cache: dict[str, Any]) -> str:
+    """Whether another served gene-level readout tracks the Carruthers target effect."""
+    c = cache["correlates"]
+    fx = c["effects"]
+    rows = sorted(
+        c["rows"],
+        key=lambda r: (r["family_p"] is None, r["family_p"] or 0, -abs(r["rho"] or 0)),
+    )
+    head = [
+        r"\begingroup",
+        r"\footnotesize",
+        r"\setlength{\tabcolsep}{4pt}",
+        r"\begin{longtable}{@{}L{40mm} L{54mm} r r r r r r@{}}",
+        r"\caption[]{Does another served dataset's gene-level value track the "
+        r"Carruthers per-target titer effect? The effect is the DBTL0 "
+        r"single-knockdown titer, "
+        + f"{fx['n_targets_single']} targets"
+        + r". Each dataset is a set of gene vectors, one per experiment, sample or "
+        r"strain. \emph{Vec.} is the number of vectors tested out of the total, "
+        r"where a vector is tested when it shares at least "
+        + f"{c['min_shared']}"
+        + r" targets. \emph{Shared} is the median shared targets. "
+        r"$\rho$ and \emph{p} are the Spearman correlation and its single-test "
+        r"p-value for the best vector. \emph{Best-of p} compares that best $\rho$ "
+        r"against the best under "
+        + f"{c['n_permutations']:,}"
+        + r" shuffles of the target labels, which is the honest p when a dataset "
+        r"offers hundreds of vectors. \emph{All} is the same vector against the "
+        r"additive fit over all "
+        + f"{fx['n_strains']}"
+        + r" strains. A dash means no vector shares enough targets.}"
+        r"\label{tab:pcscorr}\\",
+        r"\toprule",
+        r"Dataset & One value is & Vec. & Shared & $\rho$ & \emph{p} & Best-of \emph{p} & All \\",
+        r"\midrule",
+        r"\endfirsthead",
+        r"\multicolumn{8}{@{}l}{\footnotesize\emph{Table~\ref{tab:pcscorr}, continued}}\\",
+        r"\toprule",
+        r"Dataset & One value is & Vec. & Shared & $\rho$ & \emph{p} & Best-of \emph{p} & All \\",
+        r"\midrule",
+        r"\endhead",
+        r"\bottomrule",
+        r"\endfoot",
+    ]
+    body = []
+    for r in rows:
+        name = class_tex(class_name(cache, r["store"]))
+        if r["rho"] is None:
+            cells = [
+                name,
+                tex_escape(r["readout"]),
+                f"0/{r['n_conditions']:,}",
+                f"{r['shared_targets']}",
+                "--",
+                "--",
+                "--",
+                "--",
+            ]
+        else:
+            cells = [
+                name,
+                tex_escape(r["readout"]),
+                f"{r['n_tested']:,}/{r['n_conditions']:,}",
+                f"{r['shared_targets']}",
+                signed(r["rho"]),
+                p_tex(r["p"]),
+                f"{r['family_p']:.3f}",
+                signed(r["rho_additive"]) if r["rho_additive"] is not None else "--",
+            ]
+        body.append(" & ".join(cells) + r" \\")
+    first = "\n".join(head + body + [r"\end{longtable}", r"\endgroup"])
+
+    ess = c["essentiality"]
+    single = [
+        r"\begingroup",
+        r"\footnotesize",
+        r"\setlength{\tabcolsep}{4pt}",
+        r"\begin{longtable}{@{}L{112mm} r r r r@{}}",
+        r"\caption[]{Single tests against the same effect: the compendia's two "
+        r"growth-on-isoprenol experiments, named because the best-of row in "
+        r"Table~\ref{tab:pcscorr} hides them, and aggregate gene priors, each one "
+        r"vector. The priors were not chosen in advance and the two compendia share "
+        r"most of their experiments, so their p-values are not corrected and are "
+        r"not independent.}\label{tab:pcspriors}\\",
+        r"\toprule",
+        r"Test & Shared & $\rho$ & \emph{p} & All \\",
+        r"\midrule",
+        r"\endfirsthead",
+        r"\bottomrule",
+        r"\endfoot",
+    ]
+    for arm in c["isoprenol_arms"]:
+        single.append(
+            " & ".join(
+                [
+                    class_tex(class_name(cache, arm["store"]))
+                    + ": growth on isoprenol, "
+                    + breakable(arm["screen"]),
+                    f"{arm['n']}",
+                    signed(arm["rho"]),
+                    p_tex(arm["p"]),
+                    "",
+                ]
+            )
+            + r" \\"
+        )
+    single.append(r"\addlinespace[2pt]")
+    for pr in c["priors"]:
+        single.append(
+            " & ".join(
+                [
+                    tex_escape(pr["name"]).replace("|fitness|", r"$|$fitness$|$"),
+                    f"{pr['n']}",
+                    signed(pr["rho"]),
+                    p_tex(pr["p"]),
+                    signed(pr["rho_additive"]),
+                ]
+            )
+            + r" \\"
+        )
+    # The four TRANSIT HMM states, spelled as the schema's EssentialityCall names them.
+    call_names = {
+        "ES": "essential",
+        "GD": "growth defect",
+        "NE": "nonessential",
+        "GA": "growth advantage",
+    }
+    groups = ", ".join(
+        f"{call_names[k]} {v['median']:.0f} (n {v['n']})"
+        for k, v in ess["groups"].items()
+    )
+    single.append(r"\addlinespace[2pt]")
+    single.append(
+        r"Royet 2025 essentiality call: median DBTL0 titer in ug/mL by class, "
+        + groups
+        + r"; Kruskal--Wallis & & & "
+        + p_tex(ess["kruskal_p"])
+        + r" & \\"
+    )
+    second = "\n".join(single + [r"\end{longtable}", r"\endgroup"])
+    return first + "\n\n" + second + "\n"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -1821,6 +2473,11 @@ def main() -> None:
         action="store_true",
         help="ask every served P. putida store what role isoprenol plays in it",
     )
+    parser.add_argument(
+        "--probe-correlates",
+        action="store_true",
+        help="test every served gene-level readout against the Carruthers target effect",
+    )
     args = parser.parse_args()
 
     if args.probe:
@@ -1829,6 +2486,8 @@ def main() -> None:
         run_probe_isoprenol()
     if args.probe_roles:
         run_probe_roles()
+    if args.probe_correlates:
+        run_probe_correlates()
     cache = json.loads(CACHE.read_text())
 
     write(TEX_DIR / "candidates.tex", render_candidates(cache))
@@ -1838,6 +2497,7 @@ def main() -> None:
     write(TEX_DIR / "cycle-label.tex", render_cycle_label(cache))
     write(TEX_DIR / "carruthers-transfer.tex", render_carruthers_transfer(cache))
     write(TEX_DIR / "isoprenol-datasets.tex", render_isoprenol_datasets(cache))
+    write(TEX_DIR / "correlates.tex", render_correlates(cache))
 
 
 if __name__ == "__main__":

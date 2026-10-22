@@ -1,0 +1,154 @@
+{
+ "generated_by": "experiments/043-expression-proteome-morphology/scripts/compute_isolate_composite.py",
+ "stage": "alphabet",
+ "created_at": "2026-10-22T19:12:04+00:00",
+ "rule": "an input with a character outside its encoder's alphabet is a typed gap ambiguous_sequence: never resolved to a base, never embedded",
+ "encoders": {
+  "fudt_species_upstream": {
+   "input_kind": "window_up",
+   "alphabet": "ACGT",
+   "distinct_inputs": 1137931,
+   "distinct_untokenizable": 111641,
+   "distinct_untokenizable_by_code": {
+    "K": 384,
+    "M": 375,
+    "N": 103149,
+    "R": 1675,
+    "S": 301,
+    "W": 551,
+    "Y": 1686,
+    "a": 3026,
+    "c": 1831,
+    "g": 1818,
+    "n": 3096,
+    "t": 3047
+   },
+   "rows_with_input_before": 5709125,
+   "rows_untokenizable": 138408,
+   "rows_untokenizable_by_code": {
+    "K": 455,
+    "M": 447,
+    "N": 128500,
+    "R": 2063,
+    "S": 337,
+    "W": 626,
+    "Y": 2057,
+    "a": 3516,
+    "c": 2060,
+    "g": 2035,
+    "n": 3173,
+    "t": 3601
+   },
+   "rows_untokenizable_by_feature_kind": {
+    "reference_gene": 135790,
+    "accessory_orf": 2618
+   },
+   "isolates_touched": 1011,
+   "s288c_reference_inputs_untokenizable": [],
+   "h5_rows_already_embedded_relabelled": 111641
+  },
+  "fudt_species_downstream": {
+   "input_kind": "window_down",
+   "alphabet": "ACGT",
+   "distinct_inputs": 413606,
+   "distinct_untokenizable": 48211,
+   "distinct_untokenizable_by_code": {
+    "K": 110,
+    "M": 105,
+    "N": 43767,
+    "R": 460,
+    "S": 83,
+    "W": 194,
+    "Y": 456,
+    "a": 1789,
+    "c": 937,
+    "g": 930,
+    "n": 1609,
+    "t": 1808
+   },
+   "rows_with_input_before": 5756614,
+   "rows_untokenizable": 71495,
+   "rows_untokenizable_by_code": {
+    "K": 170,
+    "M": 141,
+    "N": 65872,
+    "R": 657,
+    "S": 186,
+    "W": 283,
+    "Y": 672,
+    "a": 2332,
+    "c": 1106,
+    "g": 1113,
+    "n": 1722,
+    "t": 2399
+   },
+   "rows_untokenizable_by_feature_kind": {
+    "reference_gene": 70061,
+    "accessory_orf": 1434
+   },
+   "isolates_touched": 1011,
+   "s288c_reference_inputs_untokenizable": [],
+   "h5_rows_already_embedded_relabelled": 0
+  },
+  "calm": {
+   "input_kind": "calm",
+   "alphabet": "ACGT",
+   "distinct_inputs": 1163337,
+   "distinct_untokenizable": 580786,
+   "distinct_untokenizable_by_code": {
+    "K": 135732,
+    "M": 156890,
+    "N": 23,
+    "R": 427008,
+    "S": 145222,
+    "W": 159354,
+    "Y": 426914
+   },
+   "rows_with_input_before": 6163683,
+   "rows_untokenizable": 1281220,
+   "rows_untokenizable_by_code": {
+    "K": 265003,
+    "M": 308503,
+    "N": 654,
+    "R": 906282,
+    "S": 287950,
+    "W": 316113,
+    "Y": 905712
+   },
+   "rows_untokenizable_by_feature_kind": {
+    "reference_gene": 1280558,
+    "accessory_orf": 662
+   },
+   "isolates_touched": 1011,
+   "s288c_reference_inputs_untokenizable": [],
+   "h5_rows_already_embedded_relabelled": 0
+  },
+  "prot_t5_xl_uniref50": {
+   "input_kind": "protein",
+   "alphabet": "*ACDEFGHIKLMNPQRSTVWY",
+   "distinct_inputs": 757720,
+   "distinct_untokenizable": 384755,
+   "distinct_untokenizable_by_code": {
+    "B": 45602,
+    "J": 15335,
+    "X": 376843,
+    "Z": 13292
+   },
+   "rows_with_input_before": 6163683,
+   "rows_untokenizable": 992159,
+   "rows_untokenizable_by_code": {
+    "B": 101169,
+    "J": 33309,
+    "X": 966332,
+    "Z": 28703
+   },
+   "rows_untokenizable_by_feature_kind": {
+    "reference_gene": 991497,
+    "accessory_orf": 662
+   },
+   "isolates_touched": 1011,
+   "s288c_reference_inputs_untokenizable": [],
+   "h5_rows_already_embedded_relabelled": 0
+  }
+ }
+}

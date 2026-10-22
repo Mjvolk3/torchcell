@@ -234,6 +234,9 @@ def test_promoter_and_deletion_records() -> None:
     ]
     assert d.rel_midpoint.tolist() == pytest.approx([0.15, 0.35, 0.2, 0.5])
     assert d.chrom_index.tolist() == [1, 1, 8, 0]
+    assert d.genotype_class == "deletion"
+    empty = res.deletion([])
+    assert empty.genotype_class == "reference" and empty.marked.tolist() == []
 
 
 def test_allele_vector_store_reads_and_raises(tmp_path: Path) -> None:

@@ -91,6 +91,25 @@ def test_composite_token_uses_typed_gap_rows() -> None:
         CompositeToken([torch.randn(3, 5)] + tables[1:], 8, DIMS)
 
 
+def test_composite_token_accepts_ambiguous_sequence_gap_on_calm_only() -> None:
+    """An ambiguity code gaps one encoder (CaLM, column 3); the others keep keys."""
+    tables = [torch.randn(3, d) for d in DIMS]
+    comp = CompositeToken(tables, 8, DIMS)
+    rows = torch.tensor([[0, 1, 2, 0], [0, 1, 2, -1], [0, 1, 2, -1]])
+    gaps = torch.tensor(
+        [
+            [0, 0, 0, 0],
+            [0, 0, 0, int(GapKind.AMBIGUOUS_SEQUENCE)],
+            [0, 0, 0, int(GapKind.SPLICE_UNVERIFIED)],
+        ]
+    )
+    out = comp(rows, gaps)
+    assert out.shape == (3, 8)
+    assert int(GapKind.AMBIGUOUS_SEQUENCE) == len(GapKind) - 1
+    assert not torch.allclose(out[1], out[2])  # its own learned row per gap kind
+    assert not torch.allclose(out[0], out[1])
+
+
 def test_position_term_unknown_copy_uses_gap_embedding() -> None:
     pos = PositionTerm(8, 4)
     rep = torch.tensor([3, 3, int(Replicon.ACCESSORY_ORF)])

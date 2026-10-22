@@ -81,11 +81,14 @@ ENCODER_INPUT: dict[str, tuple[str, str]] = {
     "prot_t5_xl_uniref50": ("protein_sha256", "sequences/protein.parquet"),
     "calm": ("calm_sha256", "sequences/calm.parquet"),
 }
+#: per-encoder gap columns of the index (written by compute_isolate_composite.py
+#: --stage alphabet: protein and CaLM no longer share cds_gap, since an ambiguity code
+#: can gap CaLM's CDS while the translated protein is unambiguous)
 ENCODER_GAP: dict[str, str] = {
     "fudt_species_upstream": "up_gap",
     "fudt_species_downstream": "down_gap",
-    "prot_t5_xl_uniref50": "cds_gap",
-    "calm": "cds_gap",
+    "prot_t5_xl_uniref50": "protein_gap",
+    "calm": "calm_gap",
 }
 VAISHNAV_INPUTS_REL = "sequences/vaishnav2022_inputs.parquet"
 STATE_CODE = {
@@ -242,9 +245,7 @@ def build(data_root: str) -> None:
         "feature_kind",
         "state",
         "copy_number",
-        "cds_gap",
-        "up_gap",
-        "down_gap",
+        *sorted(set(ENCODER_GAP.values())),
         *[ENCODER_INPUT[e][0] for e in ENCODERS],
     ]
     pf = pq.ParquetFile(store / "index/isolate_gene.parquet")

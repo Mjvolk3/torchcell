@@ -100,6 +100,10 @@ class GapKind(IntEnum):
     NO_S288C_KEY = 8  # the S288C reference context has no key
     ACCESSORY_WITHOUT_ROW = 9  # a present accessory ORF with no row for the isolate
     MISSING_REPORTER_WINDOW = 10  # a promoter variant with no construct window
+    #: the input exists but carries a character outside the encoder's alphabet (an IUPAC
+    #: heterozygosity code in a CDS or window, an X/B/Z/J residue from an ambiguous
+    #: codon); never resolved to a base, never embedded
+    AMBIGUOUS_SEQUENCE = 11
 
 
 #: Gap strings of the isolate index -> GapKind.
@@ -108,6 +112,7 @@ INDEX_GAP: dict[str, GapKind] = {
     "flank_short": GapKind.FLANK_SHORT,
     "splice_unverified": GapKind.SPLICE_UNVERIFIED,
     "exon_boundary_in_alignment_gap": GapKind.EXON_BOUNDARY_IN_GAP,
+    "ambiguous_sequence": GapKind.AMBIGUOUS_SEQUENCE,
 }
 
 

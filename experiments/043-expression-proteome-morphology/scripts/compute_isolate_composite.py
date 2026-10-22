@@ -280,6 +280,48 @@ class WindowGap(StrEnum):
     FLANK_SHORT = "flank_short"
 
 
+class RepresentationGap(StrEnum):
+    """An input that exists but that its encoder cannot read."""
+
+    AMBIGUOUS_SEQUENCE = "ambiguous_sequence"
+
+
+#: What each encoder's vocabulary tokenizes WITHOUT an unknown token (measured from the
+#: tokenizers 2026-10-22): CaLM holds the 64 ACGU codons and its ``encode`` raises on
+#: any other codon; FUDT holds the 4,096 ACGT 6-mers and maps any other 6-mer to
+#: ``[UNK]`` silently; ProtT5 holds the 20 amino acids plus B, O, U, X, Z (the wrapper
+#: maps U, Z, O, B to X) and maps anything else to ``<unk>``. The protein alphabet is the
+#: 20 amino acids plus ``*``: every S288C ProtT5 input ends in ``*`` (read as ``<unk>``),
+#: the convention the trained composite carries, so ``*`` is kept; X, B, Z and J (an
+#: ambiguous codon's translation) are not. An input with any other character is a
+#: typed gap ``ambiguous_sequence``: never resolved to a base, never embedded.
+ENCODER_ALPHABET: dict[str, frozenset[str]] = {
+    "window_up": frozenset("ACGT"),
+    "window_down": frozenset("ACGT"),
+    "calm": frozenset("ACGT"),
+    "protein": frozenset("ACDEFGHIKLMNPQRSTVWY*"),
+}
+#: Per input kind, the index column holding its gap (protein and CaLM no longer share).
+GAP_COLUMN: dict[str, str] = {
+    "protein": "protein_gap",
+    "calm": "calm_gap",
+    "window_up": "up_gap",
+    "window_down": "down_gap",
+}
+#: Per input kind, the index column holding its offending codes.
+CODES_COLUMN: dict[str, str] = {
+    "protein": "protein_untokenizable_codes",
+    "calm": "calm_untokenizable_codes",
+    "window_up": "up_untokenizable_codes",
+    "window_down": "down_untokenizable_codes",
+}
+
+
+def untokenizable_codes(kind: str, seq: str) -> str:
+    """The characters of ``seq`` outside its encoder's alphabet, sorted ('' = none)."""
+    return "".join(sorted(set(seq) - ENCODER_ALPHABET[kind]))
+
+
 class CdsGap(StrEnum):
     """Why an intron gene's allele could not be spliced."""
 
@@ -334,6 +376,10 @@ class IsolateEmbeddingManifest(Strict):
     conventions: dict[str, str]
     tools: dict[str, str]
     dedup_counts: dict[str, int] = Field(default_factory=dict)
+    representation_gaps: dict[str, Any] = Field(
+        default_factory=dict,
+        description="per encoder: untokenizable inputs (ambiguous_sequence), by code",
+    )
     stages: dict[str, StageRecord] = Field(default_factory=dict)
     created_at: str
     updated_at: str
@@ -547,6 +593,7 @@ def record_stage(
     started: str,
     counts: dict[str, int | float | str],
     dedup: dict[str, int] | None = None,
+    representation_gaps: dict[str, Any] | None = None,
 ) -> StageRecord:
     """Add a stage record (and optional dedup counts) to the manifest and save it."""
     rec = StageRecord(
@@ -567,6 +614,10 @@ def record_stage(
             update={
                 "stages": {**manifest.stages, stage: rec},
                 "dedup_counts": {**manifest.dedup_counts, **(dedup or {})},
+                "representation_gaps": {
+                    **manifest.representation_gaps,
+                    **(representation_gaps or {}),
+                },
                 "updated_at": now(),
             }
         )
@@ -1636,6 +1687,129 @@ def stage_merge(cfg: IsolateCompositeConfig) -> None:
 
 
 # --------------------------------------------------------------------------- #
+# Stage 2d: alphabet (typed gaps for untokenizable inputs)
+# --------------------------------------------------------------------------- #
+KIND_ENCODER: dict[str, str] = {
+    spec.input_kind: name for name, spec in ENCODERS.items()
+}
+
+
+def stage_alphabet(cfg: IsolateCompositeConfig) -> None:
+    """Typed gap ``ambiguous_sequence`` for every input its encoder cannot tokenize.
+
+    Per input kind: the distinct inputs carrying a character outside the encoder's
+    alphabet (``ENCODER_ALPHABET``), by code, written to
+    ``sequences/untokenizable_<kind>.parquet``. In the index each affected row gets its
+    own per-encoder gap (``protein_gap`` and ``calm_gap`` now separate from
+    ``cds_gap``), its offending codes, and its hash moved to ``<col>_untokenizable``
+    (the input column is emptied, so a row still has a key XOR a gap). Rows an encoder
+    already embedded from such an input (the FUDT tokenizer maps them to ``[UNK]``
+    without failing) are relabelled ``untokenizable`` in the h5 ``source`` column and
+    are referenced by nothing. Counts go to the manifest and
+    ``results/compute_isolate_composite_alphabet.json``.
+    """
+    import h5py
+
+    t0, started = time.time(), now()
+    out = cfg.out_root
+    index_path = out / "index/isolate_gene.parquet"
+    index = pd.read_parquet(index_path)
+    if "calm_gap" in index.columns:
+        print("alphabet: index already carries the per-encoder gaps, nothing to do")
+        return
+    ref = pd.read_parquet(out / "index/s288c_reference.parquet")
+    index["protein_gap"] = index["cds_gap"]
+    index["calm_gap"] = index["cds_gap"]
+    report: dict[str, Any] = {}
+    for kind in ("window_up", "window_down", "calm", "protein"):
+        name = KIND_ENCODER[kind]
+        table = pq.read_table(
+            out / SEQUENCE_TABLE[kind], columns=["sha256", "sequence"]
+        )
+        bad: dict[str, str] = {}
+        for k, sq in zip(
+            table["sha256"].to_pylist(), table["sequence"].to_pylist(), strict=True
+        ):
+            c = untokenizable_codes(kind, sq)
+            if c:
+                bad[k] = c
+        n_distinct = table.num_rows
+        del table
+        write_parquet(
+            pd.DataFrame({"sha256": list(bad), "codes": list(bad.values())}),
+            out / f"sequences/untokenizable_{kind}.parquet",
+        )
+        col = INPUT_COLUMN[kind]
+        has_input = index[col].notna()
+        codes = index[col].map(bad)
+        mask = codes.notna()
+        if (mask & index[GAP_COLUMN[kind]].notna()).any():
+            raise ValueError(f"{kind}: a row carries both an input and a gap")
+        index[CODES_COLUMN[kind]] = codes.where(mask, None)
+        index[f"{col}_untokenizable"] = index[col].where(mask, None)
+        index.loc[mask, GAP_COLUMN[kind]] = RepresentationGap.AMBIGUOUS_SEQUENCE.value
+        index.loc[mask, col] = None
+        rows_by_code = Counter(ch for c in codes[mask] for ch in c)
+        distinct_by_code = Counter(ch for c in bad.values() for ch in c)
+        s288c_bad = sorted(ref.loc[ref[col].isin(set(bad)), "feature_id"])
+        relabelled = 0
+        h5 = h5_path(cfg, name)
+        if h5.exists():
+            with h5py.File(h5, "a") as f:
+                keys = np.array([k.decode() for k in f["sha256"][:]])
+                hit = np.nonzero(np.isin(keys, list(bad)))[0]
+                if hit.size:
+                    src = f["source"][:]
+                    src[hit] = b"untokenizable"
+                    f["source"][:] = src
+                relabelled = int(hit.size)
+        report[name] = {
+            "input_kind": kind,
+            "alphabet": "".join(sorted(ENCODER_ALPHABET[kind])),
+            "distinct_inputs": n_distinct,
+            "distinct_untokenizable": len(bad),
+            "distinct_untokenizable_by_code": dict(sorted(distinct_by_code.items())),
+            "rows_with_input_before": int(has_input.sum()),
+            "rows_untokenizable": int(mask.sum()),
+            "rows_untokenizable_by_code": dict(sorted(rows_by_code.items())),
+            "rows_untokenizable_by_feature_kind": index.loc[mask, "feature_kind"]
+            .value_counts()
+            .to_dict(),
+            "isolates_touched": int(index.loc[mask, "isolate"].nunique()),
+            "s288c_reference_inputs_untokenizable": s288c_bad,
+            "h5_rows_already_embedded_relabelled": relabelled,
+        }
+        print(json.dumps({name: report[name]}, indent=1), flush=True)
+    write_parquet(index, index_path)
+    res = {
+        "generated_by": f"experiments/{EXPERIMENT}/scripts/compute_isolate_composite.py",
+        "stage": "alphabet",
+        "created_at": now(),
+        "rule": (
+            "an input with a character outside its encoder's alphabet is a typed gap "
+            "ambiguous_sequence: never resolved to a base, never embedded"
+        ),
+        "encoders": report,
+    }
+    write_json(
+        res,
+        Path(experiment_results_dir(EXPERIMENT, __file__))
+        / "compute_isolate_composite_alphabet.json",
+    )
+    record_stage(
+        cfg,
+        "alphabet",
+        t0,
+        started,
+        counts={
+            f"{n}_rows_untokenizable": r["rows_untokenizable"]
+            for n, r in report.items()
+        },
+        representation_gaps=report,
+    )
+
+
+# --------------------------------------------------------------------------- #
 # Stage 3a: seed the tables with the S288C rows the composite trained on
 # --------------------------------------------------------------------------- #
 def h5_path(cfg: IsolateCompositeConfig, encoder: str) -> Path:
@@ -1824,7 +1998,16 @@ class Embedder:
                 self.pt5.model.float().eval()
 
     def __call__(self, seqs: list[str]) -> np.ndarray:
-        """Mean embeddings ``[len(seqs), dim]`` float32 (inputs of one token length)."""
+        """Mean embeddings ``[len(seqs), dim]`` float32 (inputs of one token length).
+
+        An input outside the encoder's alphabet never reaches the model: it raises here
+        (``stage_embed`` filters and counts them first).
+        """
+        bad = [s for s in seqs if untokenizable_codes(self.spec.input_kind, s)]
+        if bad:
+            raise ValueError(
+                f"{self.spec.name}: {len(bad)} untokenizable inputs reached the model"
+            )
         torch = self.torch
         with torch.no_grad():
             if self.spec.name.startswith("fudt"):
@@ -1913,6 +2096,7 @@ def reference_check(
         i
         for i, s in enumerate(seqs)
         if s == conv[ids[i]]
+        and not untokenizable_codes(spec.input_kind, s)
         and not (spec.input_kind == "window_up" and len(s) != cfg.geometry.window_up_bp)
         and not (
             spec.input_kind == "window_down" and len(s) != cfg.geometry.window_down_bp
@@ -1963,13 +2147,27 @@ def stage_embed(
         path = h5_path(cfg, name)
         have = h5_keys(path)
         table = pd.read_parquet(cfg.out_root / SEQUENCE_TABLE[spec.input_kind])
-        todo = [
+        pending = [
             (k, s)
             for k, s in zip(table["sha256"], table["sequence"], strict=True)
             if k not in have
         ]
+        # an input the encoder cannot tokenize is a typed gap: skipped and counted
+        # here, before any batch is formed (the alphabet stage records it in the index)
+        skipped: Counter[str] = Counter()
+        todo = []
+        for k, s in pending:
+            codes = untokenizable_codes(spec.input_kind, s)
+            if codes:
+                skipped.update(codes)
+                skipped["__inputs__"] += 1
+            else:
+                todo.append((k, s))
         print(
-            f"embed {name}: {len(table)} distinct, {len(todo)} to compute", flush=True
+            f"embed {name}: {len(table)} distinct, {len(pending)} without a row, "
+            f"{skipped['__inputs__']} untokenizable skipped {dict(skipped)}, "
+            f"{len(todo)} to compute",
+            flush=True,
         )
         emb = Embedder(spec, cfg.device)
         check = reference_check(cfg, data_root, emb)
@@ -2001,6 +2199,7 @@ def stage_embed(
             counts={
                 "distinct": len(table),
                 "computed": len(todo),
+                "untokenizable_skipped": skipped["__inputs__"],
                 "batches": len(plan),
                 **{f"reference_{k}": v for k, v in check.items()},
             },
@@ -2032,12 +2231,9 @@ def stage_verify(cfg: IsolateCompositeConfig) -> None:
             f"reference-gene rows per isolate vary: {n_ref.describe().to_dict()}"
         )
     report["reference_genes_per_isolate"] = int(n_ref.iloc[0])
-    gap_col = {
-        "protein": "cds_gap",
-        "calm": "cds_gap",
-        "window_up": "up_gap",
-        "window_down": "down_gap",
-    }
+    if "calm_gap" not in index.columns:
+        raise ValueError("run --stage alphabet before verify (per-encoder gap columns)")
+    gap_col = GAP_COLUMN
     tables: dict[str, Any] = {}
     for name in cfg.encoders:
         spec = ENCODERS[name]
@@ -2185,6 +2381,7 @@ def main() -> None:
             "verify",
             "config",
             "check",
+            "alphabet",
         ],
     )
     parser.add_argument("--chunk", type=int, default=None)
@@ -2236,6 +2433,8 @@ def main() -> None:
         stage_embed(cfg, data_root, encoders)
     elif args.stage == "verify":
         stage_verify(cfg)
+    elif args.stage == "alphabet":
+        stage_alphabet(cfg)
     elif args.stage == "check":
         # the batch path against the S288C tables, on any device, writing nothing
         encoders = args.encoders.split(",") if args.encoders else list(cfg.encoders)

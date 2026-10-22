@@ -3,24 +3,23 @@
 # [[experiments.043-expression-proteome-morphology.scripts.gh_compute_isolate_composite_embed]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/gh_compute_isolate_composite_embed.slurm
 #
-# GPU stage of compute_isolate_composite.py: embed every distinct input not yet in its
-# allele table, one card, the three cheap encoders first (FUDT upstream, CaLM, FUDT
-# downstream) and ProtT5-XL last, then the verify stage. Each encoder first reproduces
-# a sample of the S288C rows through the batched path and stops on disagreement. The
-# tables are appended every flush, so a job cut by the time limit is resumed by
-# resubmitting this script (done rows are skipped).
+# GPU stage of compute_isolate_composite.py on one card: embed every distinct input not
+# yet in each named encoder's allele table. The first argument is the comma list of
+# encoders. Each encoder first reproduces a sample of the S288C rows through the batched
+# path and stops on disagreement; an input outside the encoder's alphabet is skipped and
+# counted before any batch (typed gap ambiguous_sequence, written by --stage alphabet).
+# Tables are appended every flush, so a job cut by its limit is resumed by the same line
+# (done rows are skipped). Two encoders sets run on two cards in parallel, each with a
+# resume job chained afterany; verify runs as a CPU job after both resumes, because it
+# reads every table and must not open one another job is still appending to.
 #
-# Needs the CPU stages first: extract, unpack, align, merge, seed. Submitted HELD (the
-# cards are held by the 031 packs); release with `scontrol release <jobid>`:
+# Needs the CPU stages first: extract, unpack, align, merge, alphabet, seed.
 #
-#   sbatch --hold experiments/043-expression-proteome-morphology/scripts/gh_compute_isolate_composite_embed.slurm
+#   sbatch -J 043-iso-embed-A --time=<t> .../gh_compute_isolate_composite_embed.slurm fudt_species_downstream,calm
+#   sbatch -J 043-iso-embed-B --time=<t> .../gh_compute_isolate_composite_embed.slurm prot_t5_xl_uniref50
 #
-# --time 18 h. Distinct inputs still to compute after the S288C seed (merge job 6089,
-# seed job 6088, measured): FUDT upstream ~1.131 M, CaLM ~1.157 M, FUDT downstream
-# ~0.407 M, ProtT5 ~0.751 M. Per-card rates on one RTX 6000 Ada are ASSUMED, not
-# measured (hypothesis): FUDT upstream fp32 150-300 per s, CaLM fp32 300-600 per s,
-# FUDT downstream fp32 600-1000 per s, ProtT5-XL fp16 30-60 per s, giving 5 to 10.5 h.
-# 18 h covers the slow end with margin; a job cut by the limit is resumed by resubmitting.
+# --time per job: from the measured rates (FUDT upstream 76.0 windows per s, job 6106;
+# the others in the script note) and the counts left to compute.
 #SBATCH -p main
 #SBATCH --gres=gpu:1
 #SBATCH --mem=48g
@@ -28,21 +27,20 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=6
 #SBATCH --job-name=043-iso-embed
-#SBATCH --time=18:00:00
+#SBATCH --time=12:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END,FAIL
 #SBATCH --output=/scratch/projects/torchcell-scratch/experiments/043-expression-proteome-morphology/slurm/output/%x_%j.out
 #SBATCH --error=/scratch/projects/torchcell-scratch/experiments/043-expression-proteome-morphology/slurm/output/%x_%j.out
 set -euo pipefail
+ENCODERS="${1:?comma list of encoders}"
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate torchcell
 cd "${SLURM_SUBMIT_DIR:?submit from the repository root}"
 export PYTHONPATH="$PWD"
 export DATA_ROOT=/scratch/projects/torchcell-scratch
 SCRIPT=experiments/043-expression-proteome-morphology/scripts/compute_isolate_composite.py
-echo "host $(hostname)  commit $(git rev-parse --short HEAD)  gpu ${CUDA_VISIBLE_DEVICES:-none}  $(date)"
+echo "host $(hostname)  commit $(git rev-parse --short HEAD)  gpu ${CUDA_VISIBLE_DEVICES:-none}  encoders ${ENCODERS}  $(date)"
 nvidia-smi --query-gpu=index,name,memory.total,memory.used --format=csv
-python "$SCRIPT" --stage embed --encoders fudt_species_upstream,calm,fudt_species_downstream
-python "$SCRIPT" --stage embed --encoders prot_t5_xl_uniref50
-python "$SCRIPT" --stage verify
+python "$SCRIPT" --stage embed --encoders "${ENCODERS}"
 echo "done $(date)"

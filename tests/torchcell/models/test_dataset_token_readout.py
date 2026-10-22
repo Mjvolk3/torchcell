@@ -4,6 +4,7 @@ from typing import Any, cast
 
 import pytest
 import torch
+from torch import nn
 from torch_geometric.data import HeteroData
 
 from torchcell.models.equivariant_cell_graph_transformer import CellGraphTransformer
@@ -120,3 +121,96 @@ def test_entry_readout_reproduces_forward_and_rejects_bad_indices() -> None:
 def test_input_mode_is_the_deferred_ablation() -> None:
     with pytest.raises(NotImplementedError):
         _model(dataset_token={"enabled": True, "vocab_size": VOCAB, "mode": "input"})
+
+
+def test_affine_mode_is_a_per_source_calibration_of_one_prediction() -> None:
+    model = _model(
+        dataset_token={"enabled": True, "vocab_size": VOCAB, "mode": "affine"}
+    )
+    model.eval()
+    # No token enters the heads: their input widths are the plain model's.
+    assert model.token_proj is None
+    assert cast(Any, model.perturbation_head).mlp[0].in_features == 2 * HIDDEN
+    assert cast(Any, model.global_head).mlp.in_features == HIDDEN
+    assert model.num_parameters["dataset_token"] == 2 * VOCAB * 2
+    entry_batch = torch.tensor([0, 0, 1, 2, 2])
+    entry_dataset = torch.tensor([0, 1, 2, 0, 0])
+    with torch.no_grad():
+        pred, reps = model(
+            _cell_graph(),
+            _batch(),
+            entry_batch=entry_batch,
+            entry_dataset=entry_dataset,
+        )
+    assert pred.shape == (5, 1) and reps["head_outputs"]["global"].shape == (5, 1)
+    # At the identity init every source reads the same value for one genotype.
+    assert torch.allclose(pred[0], pred[1], atol=1e-6)
+    assert torch.allclose(pred[3], pred[4], atol=1e-6)
+    cal = model.entry_calibration()
+    assert cal is not None and torch.equal(
+        cal["gene_interaction"], torch.tensor([[1.0, 0.0]] * VOCAB)
+    )
+    # Source 1 at scale 2, shift 0.5 on the interaction head: y1 = 2 * y0 + 0.5, the
+    # fitness head untouched.
+    with torch.no_grad():
+        cast(nn.Parameter, model.entry_affine)[0, 1] = torch.tensor([1.0, 0.5])
+        pred2, reps2 = model(
+            _cell_graph(),
+            _batch(),
+            entry_batch=entry_batch,
+            entry_dataset=entry_dataset,
+        )
+    assert torch.allclose(pred2[1], 2 * pred2[0] + 0.5, atol=1e-6)
+    assert torch.allclose(pred2[0], pred[0], atol=1e-6)
+    assert torch.allclose(
+        reps2["head_outputs"]["global"], reps["head_outputs"]["global"]
+    )
+    again, fit = model.entry_readout(reps2, _batch(), entry_batch, entry_dataset)
+    assert torch.allclose(again, pred2) and fit is not None
+
+
+def test_affine_frozen_factor_gets_no_gradient_and_stays_identity() -> None:
+    model = _model(
+        dataset_token={
+            "enabled": True,
+            "vocab_size": VOCAB,
+            "mode": "affine",
+            "scale": False,
+        }
+    )
+    model.train()
+    entry_batch = torch.tensor([0, 1, 2])
+    entry_dataset = torch.tensor([0, 1, 2])
+    pred, _ = model(
+        _cell_graph(), _batch(), entry_batch=entry_batch, entry_dataset=entry_dataset
+    )
+    pred.sum().backward()
+    grad = cast(torch.Tensor, cast(nn.Parameter, model.entry_affine).grad)
+    assert torch.all(grad[0, :, 0] == 0)  # scale frozen
+    assert torch.any(grad[0, :, 1] != 0)  # shift live
+    model.eval()  # dropout off, so the two reads below differ only by the parameter
+    with torch.no_grad():
+        pred_ref, _ = model(
+            _cell_graph(),
+            _batch(),
+            entry_batch=entry_batch,
+            entry_dataset=entry_dataset,
+        )
+        cast(nn.Parameter, model.entry_affine)[0, :, 0] = 5.0  # must not read through
+        pred_frozen, _ = model(
+            _cell_graph(),
+            _batch(),
+            entry_batch=entry_batch,
+            entry_dataset=entry_dataset,
+        )
+    assert torch.allclose(pred_frozen, pred_ref, atol=1e-6)
+    with pytest.raises(ValueError, match="needs scale or shift"):
+        _model(
+            dataset_token={
+                "enabled": True,
+                "vocab_size": VOCAB,
+                "mode": "affine",
+                "scale": False,
+                "shift": False,
+            }
+        )

@@ -2487,6 +2487,15 @@ class RegressionTask(L.LightningModule):
         self._log_order_epoch_metrics("val")
         self._log_per_entry_epoch_metrics("val")
         self._log_essentiality_epoch()
+        # Affine source calibration (dataset_token.mode affine): the effective
+        # scale and shift per label and source, so the learned offsets are readable.
+        calibration = getattr(self.model, "entry_calibration", None)
+        table = calibration() if callable(calibration) else None
+        if table is not None:
+            for label, coef in table.items():
+                for i, name in enumerate(self.dataset_vocabulary):
+                    self.log(f"cal/{label}/{name}/scale", coef[i, 0], sync_dist=True)
+                    self.log(f"cal/{label}/{name}/shift", coef[i, 1], sync_dist=True)
 
         # Log edge recovery metrics (now includes layer and head info)
         for metric_key, acc in self.edge_recovery_accumulators.items():

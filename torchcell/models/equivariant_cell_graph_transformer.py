@@ -2000,9 +2000,21 @@ class CellGraphTransformer(nn.Module):
                 BOTH readouts, which then return ``[E, 1]``. The encoder and the
                 perturbation operator are untouched, so any change in a score is
                 attributable to readout conditioning on the screen. ``mode`` is
-                ``"readout"``; ``"input"`` (the token as an encoder token) is reserved
-                for an ablation and raises until it is built. Disabled or ``None``:
-                no parameters, no new keys, the forward is the pre-change one.
+                ``"readout"`` (the ``dim``-vector concatenated into both head
+                inputs, so the head may condition on the source arbitrarily) or
+                ``"affine"`` (no concatenation and no ``token_proj``: each head
+                predicts ONE value per genotype and the source enters only as a
+                per-dataset calibration ``y_entry = scale[d] * y + shift[d]``,
+                ``entry_affine`` ``[2 heads, vocab_size, 2]`` initialized at
+                ``(1, 0)``; ``scale`` / ``shift`` booleans freeze either factor,
+                so ``{"scale": False}`` is the offset-only arm and
+                ``{"shift": False}`` the gain-only arm). Affine is the reading of
+                two sources with the same ontology as two linear instruments on one
+                quantity: the model can match a screen's level and gain but cannot
+                reorder genotypes per source, which the readout token can.
+                ``"input"`` (the token as an encoder token) is reserved for an
+                ablation and raises until it is built. Disabled or ``None``: no
+                parameters, no new keys, the forward is the pre-change one.
             perturb_cls: Send the CLS token through ``EquivariantPerturbationTransform``
                 as one more query beside the N gene tokens, over the same deleted-gene
                 keys. Today the encoder runs once on the wild-type graph and h_CLS is
@@ -2220,22 +2232,53 @@ class CellGraphTransformer(nn.Module):
         token_cfg = dataset_token or {}
         self.dataset_token_dim = 0
         self.dataset_vocab_size = 0
+        # None = per-genotype predictions (the pre-change forward); "readout" or
+        # "affine" = one prediction per ENTRY row, the source entering as described
+        # in the __init__ docstring.
+        self.entry_mode: str | None = None
         self.token_proj: nn.Linear | None = None
+        self.entry_affine: nn.Parameter | None = None
         if token_cfg.get("enabled", False):
             mode = str(token_cfg.get("mode", "readout"))
             if mode == "input":
                 raise NotImplementedError(
                     "dataset_token.mode='input' is the deferred ablation; use 'readout'"
                 )
-            if mode != "readout":
-                raise ValueError(f"dataset_token.mode must be 'readout', got {mode!r}")
+            if mode not in ("readout", "affine"):
+                raise ValueError(
+                    f"dataset_token.mode must be 'readout' or 'affine', got {mode!r}"
+                )
+            self.entry_mode = mode
             self.dataset_vocab_size = int(token_cfg["vocab_size"])
-            self.dataset_token_dim = int(token_cfg.get("dim", 8))
-            if self.dataset_vocab_size < 1 or self.dataset_token_dim < 1:
-                raise ValueError("dataset_token needs vocab_size >= 1 and dim >= 1")
-            self.token_proj = nn.Linear(
-                self.dataset_vocab_size, self.dataset_token_dim, bias=False
-            )
+            if self.dataset_vocab_size < 1:
+                raise ValueError("dataset_token needs vocab_size >= 1")
+            if mode == "readout":
+                self.dataset_token_dim = int(token_cfg.get("dim", 8))
+                if self.dataset_token_dim < 1:
+                    raise ValueError("dataset_token.readout needs dim >= 1")
+                self.token_proj = nn.Linear(
+                    self.dataset_vocab_size, self.dataset_token_dim, bias=False
+                )
+            else:
+                use_scale = bool(token_cfg.get("scale", True))
+                use_shift = bool(token_cfg.get("shift", True))
+                if not (use_scale or use_shift):
+                    raise ValueError("dataset_token.affine needs scale or shift")
+                # [head (0 interaction, 1 fitness), dataset, (scale, shift)] stored
+                # as DEVIATIONS from the identity (1, 0), so zeros is the identity
+                # and weight decay pulls a source back toward it rather than toward
+                # a zero gain. The mask zeroes a frozen factor's path (its parameter
+                # is still saved whole, so a checkpoint reads back under any mask).
+                self.entry_affine = nn.Parameter(
+                    torch.zeros(2, self.dataset_vocab_size, 2)
+                )
+                self.register_buffer(
+                    "entry_affine_mask",
+                    torch.tensor([float(use_scale), float(use_shift)]),
+                    persistent=False,
+                )
+        if self.entry_affine is None:
+            self.entry_affine_mask: torch.Tensor | None = None
 
         # Perturbation readout head (Type II Virtual Instrument). `pooling` is read once
         # and shared with the per-gene z_S site so the two can never disagree.
@@ -2344,7 +2387,7 @@ class CellGraphTransformer(nn.Module):
                     token_dim=self.dataset_token_dim,
                 )
             elif g_decoder == "s3_xattn":
-                if self.dataset_token_dim:
+                if self.entry_mode is not None:
                     raise ValueError(
                         "dataset_token is implemented for the s1_pool global head only"
                     )
@@ -3038,7 +3081,7 @@ class CellGraphTransformer(nn.Module):
         #    This is the ORIGINAL single (gene-interaction) head; kept as the first
         #    returned element so single-head behavior is unchanged.
         head_outputs: dict[str, torch.Tensor] = {}
-        if self.dataset_token_dim:
+        if self.entry_mode is not None:
             if entry_batch is None or entry_dataset is None:
                 raise ValueError(
                     "dataset_token is enabled: forward needs entry_batch and "
@@ -3070,7 +3113,7 @@ class CellGraphTransformer(nn.Module):
         #    head downstream: global -> class-token, node -> per-gene,
         #    metabolism -> per-metabolite. When no heads are configured this dict is
         #    empty and nothing here runs.
-        if self.global_head is not None and not self.dataset_token_dim:
+        if self.global_head is not None and self.entry_mode is None:
             # The whole-cell head reads the perturbed CLS when there is one, so a
             # CLS-only readout (use_gene_pool=False) is a probe of the cell state
             # rather than a constant.
@@ -3173,7 +3216,7 @@ class CellGraphTransformer(nn.Module):
         under other tokens (the token-swap ablation, the essentiality holdout under the
         Costanzo and SGD tokens) without running the encoder again.
         """
-        assert self.token_proj is not None
+        assert self.entry_mode is not None
         if (
             entry_dataset.numel()
             and int(entry_dataset.max()) >= self.dataset_vocab_size
@@ -3182,11 +3225,15 @@ class CellGraphTransformer(nn.Module):
                 f"entry_dataset holds index {int(entry_dataset.max())} but the "
                 f"vocabulary has {self.dataset_vocab_size} names"
             )
-        token = self.token_proj(
-            nn.functional.one_hot(entry_dataset, self.dataset_vocab_size).to(
-                H_genes_pert.dtype
-            )
-        )  # [E, dim]
+        if self.token_proj is not None:
+            token = self.token_proj(
+                nn.functional.one_hot(entry_dataset, self.dataset_vocab_size).to(
+                    H_genes_pert.dtype
+                )
+            )  # [E, dim]
+        else:
+            # Affine: nothing enters the heads; the source acts on their output.
+            token = H_genes_pert.new_zeros(entry_batch.shape[0], 0)
         cls_for_interaction = (
             h_CLS_pert
             if self.perturbation_head_cls == "perturbed" and h_CLS_pert is not None
@@ -3208,7 +3255,34 @@ class CellGraphTransformer(nn.Module):
                 h_CLS_pert if h_CLS_pert is not None else h_CLS, H_genes_pert
             )
             fitness = self.global_head.forward_entries(features, entry_batch, token)
+        if self.entry_affine is not None:
+            interaction = self._entry_calibrate(interaction, entry_dataset, 0)
+            if fitness is not None:
+                fitness = self._entry_calibrate(fitness, entry_dataset, 1)
         return interaction, fitness
+
+    def _entry_calibrate(
+        self, y: torch.Tensor, entry_dataset: torch.Tensor, head: int
+    ) -> torch.Tensor:
+        """``scale[d] * y + shift[d]`` per entry row, frozen factors held at (1, 0)."""
+        assert self.entry_affine is not None and self.entry_affine_mask is not None
+        identity = torch.tensor([1.0, 0.0], device=y.device, dtype=y.dtype)
+        mask = self.entry_affine_mask.to(y.dtype)
+        # identity + masked deviation: a frozen factor's parameter gets a zero
+        # gradient and the effective coefficient stays at its identity value.
+        effective = identity + mask * self.entry_affine[head].to(y.dtype)
+        coef = effective[entry_dataset]  # [E, 2]
+        return coef[:, :1] * y + coef[:, 1:]
+
+    def entry_calibration(self) -> dict[str, torch.Tensor] | None:
+        """Effective ``(scale, shift)`` per head and dataset, ``[vocab_size, 2]`` each,
+        for logging; ``None`` outside affine mode.
+        """
+        if self.entry_affine is None or self.entry_affine_mask is None:
+            return None
+        identity = torch.tensor([1.0, 0.0], device=self.entry_affine.device)
+        eff = identity + self.entry_affine_mask * self.entry_affine.detach()
+        return {"gene_interaction": eff[0], "fitness": eff[1]}
 
     def entry_readout(
         self,
@@ -3262,6 +3336,8 @@ class CellGraphTransformer(nn.Module):
             counts["per_metabolite_head"] = count_params(self.per_metabolite_head)
         if self.token_proj is not None:
             counts["dataset_token"] = count_params(self.token_proj)
+        if self.entry_affine is not None:
+            counts["dataset_token"] = self.entry_affine.numel()
         counts["total"] = sum(counts.values())
         return counts
 

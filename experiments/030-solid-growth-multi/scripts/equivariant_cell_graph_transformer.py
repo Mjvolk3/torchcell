@@ -153,6 +153,9 @@ def main(cfg: DictConfig) -> None:
         "build_" + wandb_cfg["dataset"]["root_rel"].split("/")[-1],
         "per_entry",
         "dataset_token",
+        # readout (the dim-vector in the head inputs) or affine (per-source scale
+        # and shift on the head outputs); see CellGraphTransformer.dataset_token.
+        f"token_{wandb_cfg['model']['dataset_token'].get('mode', 'readout')}",
     ] + (
         ["smoke", "smoke_control" if smoke_cfg.get("control") else "smoke_token"]
         if smoke_on

@@ -948,3 +948,148 @@ rule is met from the next run on; 6151 was not restarted for it.
 
 Views (rerun `scripts/wandb_view_043.py` after every sync):
 [[experiments.043-expression-proteome-morphology.scripts.wandb_view_043]].
+
+## 2026.10.23 - Two-stage smokes on GilaHyper
+
+Owner direction 2026-10-23: stage 1 pretrains one model over every dataset of the query with
+no target dataset; stage 2 fine-tunes the stage-1 checkpoint on Kemmeren and is read on the
+Sameith doubles against the from-scratch alone run. Grant: at most two of our cards. Plan
+document: `notes-tex/multimodal/043-training-plan/`.
+
+### Code changes (commits a054414d7, fadb13813, a814b4e76)
+
+- `model.operator_residual: plain | rezero`, default `plain` (post-norm, as the trunk); ReZero
+  only as a control, its W&B group suffixed `_rezero`. `operator/relative_norm` (attention
+  branch as added over the context norm, mean over records and tokens of the validation pass),
+  `operator/ffn_relative_norm`, `operator/update_relative_norm` logged each evaluation.
+- Arm `all` = joint_9 + Hu 2007 (X score, as released) + Jackson 2020 (log2 CPM ratio to the
+  record's served reference of the same environment; zero counts on both sides missing) +
+  Nadal-Ribelles 2025 (as released, |v| >= 20 set missing). Prepared store `prep_v2` (job
+  6171, 197 s); joint_9's ten datasets have the same record counts as `prep_v1`. Sameith 2015 Sm
+  is in the raw store but the fold file excludes it (Kemmeren's arrays, 82 of 82 identical), so
+  it is not in `all`. Ohya 2005 stays the eval-time probe: no record-level multi-output head
+  exists (the record head emits one scalar per record), and the probe is not wired into the
+  trainer yet.
+- `init_from: <checkpoint>` loads model weights only (fresh optimizer), dataset-indexed rows
+  by name, refuses a model/loss/standardization mismatch; group
+  `finetune_<dataset>_from_<stage-1 group>`.
+- `data.mark_cap` default null (every mark); the setup line prints the maximum and what a cap
+  drops. Checkpoints now go to `checkpoints/<run_name>/<SLURM_JOB_ID>/` (the overnight ones
+  sit directly in `<run_name>/` and are untouched).
+
+### ReZero stayed nearly shut overnight (window checkpoints)
+
+One operator layer, so one `beta_attn` and one `beta_ffn` per run (there is no per-layer
+pair). Read from the checkpoints under
+`$DATA_ROOT/experiments/043-expression-proteome-morphology/checkpoints/<run_name>/`:
+
+| run | job | epoch 41 (or 1,682) attn / ffn | epoch 50 (or 2,102) attn / ffn |
+|---|---|---|---|
+| joint_9_hlgauss_equal_s0 (g5wda4mp) | 6136 | -0.051 / -0.050 | -0.060 / -0.054 |
+| joint_9_balanced_hlgauss_equal_s0 (cqdm487x) | 6137 | -0.068 / -0.264 | -0.062 / -0.227 |
+| joint_9_pinball_equal_s0 (5f3ijxa1) | 6150 | -0.055 / +0.034 | -0.049 / +0.028 |
+| alone_kemmeren_hlgauss_equal_s0 (kmlepsr2) | 6152 | +0.271 / -0.207 | +0.245 / -0.192 |
+
+The three joint runs kept the attention gate at |beta| 0.05 to 0.07 after 317,300 steps; the
+alone run opened it to about 0.25. A beta is a scale, not a contribution: the branch size
+relative to the context was not logged then. The smokes below log it. Same-run comparison at 4
+epochs, arm `all`: `operator/relative_norm` 0.413 under plain (job 6172) against 0.144 under
+ReZero (job 6173), epoch 4.
+
+### Records per dataset, arm `all` (train / val / traineval; job 6172 setup line)
+
+kemmeren 1202/140/256; messner 3712/455/256; zelezniak 79/9/79; caudal 566/189/256; muenzner
+476/159/256; turnover 33/11/33; boocock 235/79/235; nguessan 1770/591/256; vaishnav
+42694/2000/256 (validation capped at 2,000 of 14,232); hu 224/19/224; jackson 784/0/256; nadal
+4913/603/256, 5,926,828 sentinel cells (|v| >= 20) masked over its train and validation
+records; Sameith Dm split B 72. Total 56,688 training records, 7,086 steps per epoch at batch 8.
+Jackson has no validation record under `global_split_v1` (its 12 TF genes and HO are training
+units), so it is read on traineval only. Marks: maximum 4,416 (N'Guessan); the smoke cap of
+1,024 truncates 2,675 of 73,247 records (Boocock 314, N'Guessan 2,361) and drops 5,012,316
+marks.
+
+### Gate (S1, run f3zk2sb3, after epoch 2)
+
+```
+epoch                                 rows      2  ok
+train/loss                            rows      2  ok
+val/loss                              rows      2  ok
+train/lr                              rows    303  ok
+train/grad_norm                       rows    303  ok
+val/kemmeren/loss                     rows      2  ok
+val/kemmeren/pearson_per_gene_median  rows      2  ok
+
+OK zhao-group/torchcell_043-expression-proteome-morphology/f3zk2sb3: every required key is logged on >= 2 rows
+```
+
+### Queue (two of our cards at most; 025 held the other two)
+
+| job | run | dependency | --time | trainer budget | measured |
+|---|---|---|---|---|---|
+| 6171 | prepare prep_v2 (CPU) | none | 2:00 | | 197 s |
+| 6172 | S1 all_hlgauss_equal_s0, plain, records sampler | none | 1:00 | 4 epochs (0.9 h cap) | 0.035 s/step; 259 to 263 s per epoch; 18.7 min wall |
+| 6173 | S2 all_hlgauss_equal_rezero_s0 | submitted after the gate | 1:00 | 4 epochs | 0.037 s/step; 253 to 257 s per epoch |
+| 6174 | S3 finetune_kemmeren_from_all_hlgauss_equal_s0 | afterok:6172 | 0:30 | 302 steps (2 Kemmeren epochs) | 0.029 s/step |
+| 6175 | S4 alone_kemmeren_hlgauss_equal_s0 | afterany:6174 | 1:00 | max_steps 28,646, eval every 10 epochs | 190 epochs, about 15 min wall |
+
+Matched budget for S4: stage 1 4 x 7,086 = 28,344 steps plus 302 fine-tune steps = 28,646
+steps, which is 189 Kemmeren epochs of 151 steps plus 107. S3: lr 3e-4, the same as the stage-1
+lr (3e-4), warmup 30 steps (the default 500 would never reach 3e-4 in 302 steps). Launcher lines
+in `scripts/gh_train_043_smoke.slurm`.
+
+### Reads (validation fold; single seed; smokes, not results)
+
+Statistics as in the overnight section: Kemmeren median per-gene Pearson; doubles median over
+the 72 Sameith doubles of the centered per-double Pearson (additive measured line 0.440);
+Vaishnav Pearson over sequences; losses are the HL-Gauss objective.
+
+| run | job | epoch | Kemmeren | doubles | Vaishnav | val/loss | train/loss |
+|---|---|---|---|---|---|---|---|
+| S1 plain | 6172 | 4 of 4 | 0.033 | -0.019 | 0.836 | 2.547 | 2.368 |
+| S2 ReZero | 6173 | 4 of 4 | 0.028 | -0.018 | 0.835 | 2.543 | 2.371 |
+| S3 fine-tune | 6174 | 2 of 2 | 0.077 | 0.101 | | 2.313 | 2.280 |
+| S4 alone, matched | 6175 | 190 of 190 | 0.130 | 0.231 | | 2.564 | 1.888 |
+
+S1's other datasets at epoch 4: Nadal 0.164, Hu 0.013, Jackson (traineval) 0.304, Messner
+0.041, Caudal 0.043, Muenzner 0.022 (per-gene median Pearson).
+
+At matched optimizer steps the from-scratch alone run is above the pretrain-then-fine-tune
+run on both Kemmeren (0.130 against 0.077) and the doubles (0.231 against 0.101), one seed. The
+two arms do not see the target equally: Kemmeren training records seen are 4 x 1,202 + 2 x
+1,202 = 7,212 for S3 against 189 x 1,202 + 107 x 8 = 228,034 for S4, since Kemmeren is 2.1% of
+`all`'s training records under the records sampler. S4's validation loss (2.564) is above
+S3's (2.313) while its Pearson is higher, and its train loss (1.888) is far below its validation
+loss. A four-epoch stage 1 is far short of the plan's stage 1, so none of this decides the
+two-stage question; it shows the pipeline runs end to end.
+
+W&B views, round `two_stage_2026_10_23` (loss panel first):
+
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=9kmfp3eqe72
+
+Runs:
+
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/f3zk2sb3
+
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/pc0zsb60
+
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/l2fwphu9
+
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/9rqoslxw
+
+### Raw store short 145 served records (issue #1154, PR #1155)
+
+Loaders that store a deleted gene under its released SYMBOL write
+`ReleasedIdentifierPerturbation` (`perturbation_type` `released_identifier`), and the query's
+`ALL(... systematic_gene_name IN $gene_set)` clause rejects them: Messner 4,699 served against
+4,624 returned (75 missing), Nadal-Ribelles 6,188 against 6,118 (70 missing), Zelezniak 97
+against 97. The Kemmeren 2, Hu 1 and Ohya 40 shortfalls are ordinary ORFs outside the gene set
+(`results/build_043_store_census.json`, job 5856). Fix at the NEXT store build:
+`generate_043_cql.py` admits the leaf for the Messner, Nadal and Zelezniak blocks with the
+clause now in `torchcell/knowledge_graphs/queries/expression_proteome_morphology.cql`
+(`p.perturbation_type = 'released_identifier' OR p.systematic_gene_name IN $gene_set`, plus
+`SIZE(...) > 0`); the strict clause stays for Kemmeren, Sameith, Hu, Jackson and Ohya. Not
+re-queried mid-campaign; `dataset_043.py` maps a perturbed standard name to its ORF on read.
+
+Open decision 13: whether to rebuild the raw store with the admitted leaf before the stage-1
+campaign (145 records more, Messner and Nadal-Ribelles) or carry the current store to the end
+of the campaign and admit them at the next build.

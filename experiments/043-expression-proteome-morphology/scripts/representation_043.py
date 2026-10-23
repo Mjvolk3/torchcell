@@ -26,6 +26,10 @@ into a :class:`RecordRepresentation`. Vectors stay in the h5 tables and are read
 ``AlleleVectorStore`` (``vector_stores``) only when asked; job 6106 may still be filling
 them.
 
+The output directory and the gene index follow the store generation
+(``store_version_043``, env ``STORE_043_VERSION``): ``representation_043`` over
+``raw_043`` for v1, ``representation_043_v2`` over ``raw_043_v2`` for v2.
+
     python experiments/043-expression-proteome-morphology/scripts/representation_043.py --stage build
 """
 
@@ -38,6 +42,7 @@ import os
 import os.path as osp
 import socket
 import subprocess
+import sys
 import time
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -50,7 +55,10 @@ import pyarrow.parquet as pq
 from dotenv import load_dotenv
 from pydantic import BaseModel, ConfigDict, Field
 
-from torchcell.data.representation_043 import (
+sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
+from store_version_043 import active as active_store  # noqa: E402
+
+from torchcell.data.representation_043 import (  # noqa: E402
     ENCODERS,
     INDEX_GAP,
     N_ENC,
@@ -67,13 +75,12 @@ from torchcell.data.representation_043 import (
     ReporterKeys,
     RepresentationConfig,
     RepresentationResolver,
-    change_type_of,
+    change_type_of_perturbation,
 )
-from torchcell.models.genotype_tokens_043 import ChangeType
+from torchcell.models.genotype_tokens_043 import ChangeType  # noqa: E402
 
 EXPERIMENT = "043-expression-proteome-morphology"
 ISO_REL = "data/scerevisiae/isolate_embeddings/peter2018_1011"
-REP_TAG = "representation_043"
 #: encoder -> (input kind column of the index, distinct-sequence table)
 ENCODER_INPUT: dict[str, tuple[str, str]] = {
     "fudt_species_upstream": ("up_sha256", "sequences/window_up_1003.parquet"),
@@ -126,8 +133,15 @@ class RepresentationBuildRecord(BaseModel):
 
 
 def rep_root(data_root: str) -> Path:
-    """``$DATA_ROOT/data/torchcell/experiments/<EXPERIMENT>/representation_043``."""
-    return Path(data_root) / "data/torchcell/experiments" / EXPERIMENT / REP_TAG
+    """``$DATA_ROOT/data/torchcell/experiments/<EXPERIMENT>/<representation tag>`` of the
+    active store generation (``representation_043`` for v1).
+    """
+    return (
+        Path(data_root)
+        / "data/torchcell/experiments"
+        / EXPERIMENT
+        / active_store().representation_tag
+    )
 
 
 def iso_root(data_root: str) -> Path:
@@ -152,7 +166,8 @@ def gene_set(data_root: str) -> list[str]:
         Path(data_root)
         / "data/torchcell/experiments"
         / EXPERIMENT
-        / "raw_043/processed/gene_set.json"
+        / active_store().raw_tag
+        / "processed/gene_set.json"
     )
     genes: list[str] = json.loads(path.read_text())
     if genes != sorted(genes):
@@ -495,8 +510,9 @@ def resolve_genotype(
     accessory: list[tuple[str, float | None]] = []
     variant_id: str | None = None
     outside = 0
+    off_index: list[tuple[str, ChangeType]] = []
     for p in genotype["perturbations"]:
-        ct = change_type_of(p["perturbation_type"])
+        ct = change_type_of_perturbation(p)
         if ct == ChangeType.present:
             accessory.append((p["pangenome_orf_id"], p["copy_number"]))
             continue
@@ -514,10 +530,13 @@ def resolve_genotype(
         idx = gene_idx(p["systematic_gene_name"])
         if idx is None:
             outside += 1
+            if isolate is None:
+                # an engineered edit of a gene with no index position: a typed gap token
+                off_index.append((p["systematic_gene_name"], ct))
             continue
         marks.append((idx, ct))
     if variant_id is not None:
-        if marks or isolate is not None:
+        if marks or off_index or isolate is not None:
             raise ValueError("a promoter record with other marks")
         return resolver.promoter(variant_id)
     if isolate is not None:
@@ -531,7 +550,7 @@ def resolve_genotype(
         )
     if accessory:
         raise ValueError("an accessory ORF outside a natural isolate")
-    return resolver.deletion(marks, outside)
+    return resolver.deletion(marks, outside, off_index)
 
 
 def main() -> None:

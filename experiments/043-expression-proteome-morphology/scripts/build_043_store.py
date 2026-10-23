@@ -31,7 +31,19 @@ Genome, graphs and the ``calm`` node embedding are set up as in the 019
 ``torchcell.database.connection.neo4j_connection_settings`` (local served instance when
 unset); only the URI is recorded.
 
-Writes ``results/build_043_store_census.json``: build time, ``len(dataset)``, raw and
+Store generation (``store_version_043``, env ``STORE_043_VERSION``): ``v1`` builds
+``raw_043`` and writes ``results/build_043_store_census.json``; ``v2`` builds
+``raw_043_v2`` (every served record admitted) and writes
+``results/build_043_store_census_v2.json``. After the build the script writes the raw
+dataset index ``raw/raw_dataset_name_index.json`` (``data_shapes_043.raw_dataset_index``),
+which ``dataset_043`` and the split read.
+
+The census states, per dataset, the served count (``generate_043_cql.EXPECTED_COUNTS``,
+``n_experiments`` of release 2026.10.17-4295f7ca), the returned count and their
+difference, and the records whose genotype holds a ``released_identifier`` perturbation
+or a perturbed name outside ``gene_set`` (the records the v1 gene-set clause dropped).
+
+Writes the census: build time, ``len(dataset)``, raw and
 processed entry counts, records per dataset (raw LMDB scan and ``dataset_name_index``),
 records per phenotype label, and for the first sample of every dataset the
 ``Perturbation`` processor's output (or the exception it raised).
@@ -47,6 +59,7 @@ import json
 import os
 import os.path as osp
 import socket
+import sys
 import time
 from collections import Counter
 from typing import Any
@@ -55,6 +68,11 @@ import lmdb
 from dotenv import load_dotenv
 
 load_dotenv()
+
+sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
+from data_shapes_043 import raw_dataset_index  # noqa: E402
+from generate_043_cql import EXPECTED_COUNTS  # noqa: E402
+from store_version_043 import active as active_store  # noqa: E402
 
 from torchcell.data import Neo4jCellDataset  # noqa: E402
 from torchcell.data.aggregate import Aggregator  # noqa: E402
@@ -71,7 +89,6 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome  # noq
 from torchcell.utils.paths import experiment_results_dir  # noqa: E402
 
 EXPERIMENT = "043-expression-proteome-morphology"
-DATASET_TAG = "raw_043"
 QUERY_NAME = "expression_proteome_morphology_043.cql"
 GRAPHS = [
     "physical",
@@ -114,15 +131,38 @@ def _lmdb_entries(path: str) -> int:
     return n
 
 
-def _raw_dataset_counts(path: str) -> dict[str, int]:
-    """Records per ``dataset_name`` in the raw LMDB (one JSON object per value)."""
+def _raw_dataset_counts(
+    path: str, gene_set: set[str]
+) -> tuple[dict[str, int], dict[str, int], dict[str, int]]:
+    """Per ``dataset_name`` in the raw LMDB (one JSON object per value): records, records
+    holding a ``released_identifier`` perturbation, and records with a perturbed
+    ``systematic_gene_name`` outside ``gene_set`` (released identifiers included).
+    """
     counts: Counter[str] = Counter()
+    released: Counter[str] = Counter()
+    off_set: Counter[str] = Counter()
     env = lmdb.open(path, readonly=True, lock=False, subdir=True, readahead=True)
     with env.begin() as txn:
         for _, value in txn.cursor():
-            counts[json.loads(value)["experiment"]["dataset_name"]] += 1
+            experiment = json.loads(value)["experiment"]
+            name = experiment["dataset_name"]
+            counts[name] += 1
+            perts = experiment["genotype"].get("perturbations") or []
+            if any(p["perturbation_type"] == "released_identifier" for p in perts):
+                released[name] += 1
+            if any(
+                "systematic_gene_name" in p
+                and p["systematic_gene_name"] not in gene_set
+                for p in perts
+                if p["perturbation_type"] not in ("natural_gene_presence",)
+            ):
+                off_set[name] += 1
     env.close()
-    return dict(sorted(counts.items()))
+    return (
+        dict(sorted(counts.items())),
+        dict(sorted(released.items())),
+        dict(sorted(off_set.items())),
+    )
 
 
 def _first_record(path: str, index: int) -> dict[str, Any]:
@@ -171,9 +211,11 @@ def _describe(dataset: Neo4jCellDataset, index: int, record: dict[str, Any]) -> 
 def main() -> None:
     """Build the store and write the census."""
     data_root = os.environ["DATA_ROOT"]
+    store = active_store()
     dataset_root = osp.join(
-        data_root, "data/torchcell/experiments", EXPERIMENT, DATASET_TAG
+        data_root, "data/torchcell/experiments", EXPERIMENT, store.raw_tag
     )
+    print(f"store {store.version}: {dataset_root}", flush=True)
     here = osp.dirname(osp.abspath(__file__))
     query_path = osp.abspath(osp.join(here, "..", "queries", QUERY_NAME))
     with open(query_path) as f:
@@ -221,6 +263,26 @@ def main() -> None:
             "RecordAggregator merged byte-identical records"
         )
 
+    raw_index = raw_dataset_index(dataset_root)
+    print(f"raw dataset index: {sum(len(v) for v in raw_index.values())} records")
+    raw_counts, released_counts, off_set_counts = _raw_dataset_counts(
+        raw_path, set(genome.gene_set)
+    )
+    served_vs_returned = {
+        name: {
+            "served": served,
+            "returned": raw_counts.get(name, 0),
+            "difference": served - raw_counts.get(name, 0),
+            "records_with_released_identifier": released_counts.get(name, 0),
+            "records_with_name_outside_gene_set": off_set_counts.get(name, 0),
+        }
+        for name, served in sorted(EXPECTED_COUNTS.items())
+    }
+    unexpected = sorted(set(raw_counts) - set(EXPECTED_COUNTS))
+    if unexpected:
+        raise RuntimeError(
+            f"datasets returned that the query does not name: {unexpected}"
+        )
     name_index = dataset.dataset_name_index
     first_by_dataset = {name: min(idx) for name, idx in sorted(name_index.items())}
     samples = {
@@ -230,6 +292,7 @@ def main() -> None:
     census = {
         "generated_by": (f"experiments/{EXPERIMENT}/scripts/build_043_store.py"),
         "dataset_root": dataset_root,
+        "store_version": store.version,
         "query_file": query_path,
         "neo4j_uri": uri,
         "host": socket.gethostname(),
@@ -238,7 +301,11 @@ def main() -> None:
         "len_dataset": len(dataset),
         "n_raw_records": raw_n,
         "n_processed_records": processed_n,
-        "n_records_by_dataset_raw": _raw_dataset_counts(raw_path),
+        "served_release": "2026.10.17-4295f7ca",
+        "n_served": sum(EXPECTED_COUNTS.values()),
+        "n_returned": raw_n,
+        "served_vs_returned": served_vs_returned,
+        "n_records_by_dataset_raw": raw_counts,
         "n_records_by_dataset_index": {
             k: len(v) for k, v in sorted(name_index.items())
         },
@@ -249,7 +316,8 @@ def main() -> None:
         "first_sample_by_dataset": samples,
     }
     out = osp.join(
-        experiment_results_dir(EXPERIMENT, __file__), "build_043_store_census.json"
+        experiment_results_dir(EXPERIMENT, __file__),
+        store.result_name("build_043_store_census"),
     )
     with open(out, "w") as f:
         json.dump(census, f, indent=1)

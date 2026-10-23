@@ -17,7 +17,14 @@ The resolution per genotype class:
 * Engineered deletions, the reference strain (an empty perturbation list, class
   ``reference``) and the promoter reporter: context ``S288C``; every gene carries
   its S288C keys; deletions are ``deletion`` marks; the reporter is an extra token whose
-  upstream key is the variant's 1,003 bp construct window.
+  upstream key is the variant's 1,003 bp construct window. A deleted gene whose released
+  name has no position in the gene index (an ORF outside ``gene_set.json``, or a
+  released symbol with no standard-name owner) is an ``off_index_gene`` extra token: a
+  ``deletion`` change with every key ``-1`` and gap ``NO_S288C_KEY``. The record is kept
+  and the deletion stays visible to the model as a typed gap; the genome never gates a
+  record. A ``released_identifier`` perturbation (the source's own gene name, not
+  resolved at load time) takes its change type from ``released_kind``
+  (:func:`change_type_of_perturbation`).
 * Natural isolates, route ``A`` (the main design): context = the isolate; every gene
   carries the isolate's own keys (genes outside the released allele set and genes the
   record calls absent are gaps); the operator mask holds the engineered edits only (the
@@ -117,6 +124,8 @@ INDEX_GAP: dict[str, GapKind] = {
 
 
 _ACCESSORY_GAP = (int(GapKind.ACCESSORY_WITHOUT_ROW),) * 4
+#: An engineered deletion of a gene with no index position has no S288C key in any block.
+_OFF_INDEX_GAP = (int(GapKind.NO_S288C_KEY),) * 4
 
 
 class PositionGap(IntEnum):
@@ -261,6 +270,34 @@ def change_type_of(perturbation_type: str) -> ChangeType:
     if perturbation_type not in PERTURBATION_TYPE_TO_CHANGE:
         raise ValueError(f"unexpected perturbation_type {perturbation_type!r}")
     return PERTURBATION_TYPE_TO_CHANGE[perturbation_type]
+
+
+#: ``released_kind`` of a ``released_identifier`` perturbation -> its change type. A kind
+#: not listed raises: a heterozygous deletion, a tag or an insertion is not a deletion,
+#: and the 043 change-type alphabet has no member for it yet.
+RELEASED_KIND_TO_CHANGE: dict[str, ChangeType] = {
+    "deletion": ChangeType.deletion,
+    "truncation": ChangeType.deletion,
+}
+
+
+def change_type_of_perturbation(perturbation: Mapping[str, Any]) -> ChangeType:
+    """The change type of one stored perturbation dict.
+
+    ``released_identifier`` (``ReleasedIdentifierPerturbation``) carries the source's own
+    gene name and the kind of change the source reports in ``released_kind``; every other
+    type maps through :func:`change_type_of`. An unknown type or kind raises.
+    """
+    t = perturbation["perturbation_type"]
+    if t != "released_identifier":
+        return change_type_of(t)
+    kind = perturbation["released_kind"]
+    if kind not in RELEASED_KIND_TO_CHANGE:
+        raise ValueError(
+            f"released_identifier {perturbation['systematic_gene_name']!r} has "
+            f"released_kind {kind!r}, which has no 043 change type"
+        )
+    return RELEASED_KIND_TO_CHANGE[kind]
 
 
 def resolve_change_types(
@@ -470,7 +507,7 @@ class ExtraToken(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    kind: Literal["accessory_orf", "reporter"]
+    kind: Literal["accessory_orf", "reporter", "off_index_gene"]
     feature_id: str
     change_type: int
     key_ids: tuple[int, int, int, int]
@@ -591,11 +628,34 @@ class RepresentationResolver:
 
     # ---- classes
     def deletion(
-        self, marks: Sequence[tuple[int, ChangeType]], outside: int = 0
+        self,
+        marks: Sequence[tuple[int, ChangeType]],
+        outside: int = 0,
+        off_index: Sequence[tuple[str, ChangeType]] = (),
     ) -> RecordRepresentation:
-        """Engineered deletions on S288C; no mark at all is the reference strain."""
+        """Engineered deletions on S288C; no mark at all is the reference strain.
+
+        ``off_index`` lists the marked genes whose released name has no index position
+        (name, change type); each becomes an ``off_index_gene`` extra token with every
+        key ``-1`` and gap ``NO_S288C_KEY``. ``outside`` counts them (and any other mark
+        without a position) on ``n_marked_outside_index``.
+        """
+        if len(off_index) > outside:
+            raise ValueError("more off-index tokens than marks outside the index")
         change = resolve_change_types(marks, self.n_genes)
         keys, gaps = self._ctx(self.s288c)
+        extra = tuple(
+            ExtraToken(
+                kind="off_index_gene",
+                feature_id=name,
+                change_type=CHANGE_TYPE_INDEX[ct],
+                key_ids=(-1, -1, -1, -1),
+                gaps=_OFF_INDEX_GAP,
+                # the S288C copy number of a deleted on-graph gene's token (gene_copy 1)
+                copy_number=1.0,
+            )
+            for name, ct in off_index
+        )
         return self._base(
             "deletion" if marks or outside else "reference",
             S288C_CONTEXT,
@@ -604,6 +664,7 @@ class RepresentationResolver:
             gaps,
             change,
             change != _REF,
+            extra=extra,
             outside=outside,
         )
 

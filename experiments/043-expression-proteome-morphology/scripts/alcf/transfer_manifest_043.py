@@ -7,8 +7,8 @@ Two tiers, both relative to ``$DATA_ROOT`` so the remote tree mirrors the local 
 under ``<project>/mjvolk3/torchcell-data/043/``:
 
 ``train``    every file the ``train`` stage of ``train_043.py`` opens: the prepared store
-             (``train_043_prep/prep_v2_routeA``, the ``PREP_VERSION`` of train_043.py; the
-             prep_v1 store sent on 2026-10-23 stays on the remote side), the vocabularies (``representation_043``)
+             (``train_043_prep/prep_v2_routeA`` for store v1, ``prep_v3_routeA`` for
+             v2; the prep_v1 store sent on 2026-10-23 stays on the remote side), the vocabularies (``representation_043``)
              and the four frozen allele tables (``isolate_embeddings/peter2018_1011/
              alleles/<encoder>.h5``, which also hold the Vaishnav promoter and reporter
              rows), plus the table manifest and verify report. The split file
@@ -26,7 +26,15 @@ Files under 2 GB carry a sha256; larger files carry their size only. ``build`` a
 per tier, an rsync ``--files-from`` list and a ``sha256sum -c`` checklist beside the
 manifest.
 
+Store generation (``store_version_043``, env ``STORE_043_VERSION``): v1 lists
+``prep_v2_routeA``, ``representation_043`` and ``raw_043`` and writes
+``transfer_manifest_043.json`` and ``{files,sha256,sizes}_<tier>_043.txt``; v2 lists
+``prep_v3_routeA``, ``representation_043_v2`` and ``raw_043_v2`` and writes the same
+names with ``_v2`` (``transfer_manifest_043_v2.json``, ``files_train_043_v2.txt``), so
+the v1 lists of a transfer still in flight are never rewritten.
+
     python experiments/043-expression-proteome-morphology/scripts/alcf/transfer_manifest_043.py build
+    STORE_043_VERSION=v2 python experiments/043-expression-proteome-morphology/scripts/alcf/transfer_manifest_043.py build
 """
 
 from __future__ import annotations
@@ -35,6 +43,7 @@ import argparse
 import hashlib
 import os
 import os.path as osp
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from typing import Literal
@@ -43,36 +52,48 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, ConfigDict
 
 HERE = osp.dirname(osp.abspath(__file__))
+sys.path.insert(0, osp.dirname(HERE))
+from store_version_043 import StorePaths043  # noqa: E402
+from store_version_043 import active as active_store  # noqa: E402
+
 EXP = "data/torchcell/experiments/043-expression-proteome-morphology"
 ISO = "data/scerevisiae/isolate_embeddings/peter2018_1011"
 SHA_LIMIT = 2_000_000_000
 
 Tier = Literal["train", "prepare"]
 
-# (tier, path relative to DATA_ROOT, file or directory)
-SOURCES: list[tuple[Tier, str]] = [
-    ("train", f"{EXP}/train_043_prep/prep_v2_routeA"),
-    ("train", f"{EXP}/representation_043"),
-    ("train", f"{ISO}/alleles"),
-    ("train", f"{ISO}/manifest.json"),
-    ("train", f"{ISO}/verify_report.json"),
-    ("prepare", f"{EXP}/raw_043/raw"),
-    ("prepare", f"{EXP}/raw_043/processed"),
-    ("prepare", f"{ISO}/index"),
-    ("prepare", f"{ISO}/sequences"),
-    ("prepare", "data/sgd/genome"),
-    ("prepare", "data/go"),
-    ("prepare", "data/string"),
-    ("prepare", "data/tflink"),
-]
 
-EXCLUDED: dict[str, str] = {
-    f"{ISO}/work": "reclaimable embedding intermediates; no stage reads them",
-    f"{EXP}/raw_043/aggregation/lmdb": "163 GB LMDB; neither the prepare nor the train stage opens it",
-    f"{EXP}/raw_043/processed/lmdb": "163 GB LMDB; prepare reads raw/lmdb, not this one",
-    f"{EXP}/cross_dataset_cache": "analysis cache of cross_dataset_correlation.py",
-    f"{EXP}/linear_evals_cache": "analysis cache of linear_evals_043.py",
-}
+# (tier, path relative to DATA_ROOT, file or directory)
+def sources(store: StorePaths043) -> list[tuple[Tier, str]]:
+    """The tiers of one store generation."""
+    return [
+        ("train", f"{EXP}/train_043_prep/{store.prep_version}_routeA"),
+        ("train", f"{EXP}/{store.representation_tag}"),
+        ("train", f"{ISO}/alleles"),
+        ("train", f"{ISO}/manifest.json"),
+        ("train", f"{ISO}/verify_report.json"),
+        ("prepare", f"{EXP}/{store.raw_tag}/raw"),
+        ("prepare", f"{EXP}/{store.raw_tag}/processed"),
+        ("prepare", f"{ISO}/index"),
+        ("prepare", f"{ISO}/sequences"),
+        ("prepare", "data/sgd/genome"),
+        ("prepare", "data/go"),
+        ("prepare", "data/string"),
+        ("prepare", "data/tflink"),
+    ]
+
+
+def excluded(store: StorePaths043) -> dict[str, str]:
+    """Paths under the sources that are not sent, with the reason."""
+    return {
+        f"{ISO}/work": "reclaimable embedding intermediates; no stage reads them",
+        f"{EXP}/{store.raw_tag}/aggregation/lmdb": "LMDB of about 160 GB; neither the "
+        "prepare nor the train stage opens it",
+        f"{EXP}/{store.raw_tag}/processed/lmdb": "LMDB of about 160 GB; prepare reads "
+        "raw/lmdb, not this one",
+        f"{EXP}/cross_dataset_cache": "analysis cache of cross_dataset_correlation.py",
+        f"{EXP}/{store.linear_evals_cache}": "analysis cache of linear_evals_043.py",
+    }
 
 
 class ManifestFile(BaseModel):
@@ -118,7 +139,7 @@ def _sha256(path: str) -> str:
     return h.hexdigest()
 
 
-def _walk(data_root: str, rel: str) -> list[str]:
+def _walk(data_root: str, rel: str, skip: dict[str, str]) -> list[str]:
     full = osp.join(data_root, rel)
     if osp.isfile(full):
         return [rel]
@@ -127,19 +148,20 @@ def _walk(data_root: str, rel: str) -> list[str]:
     out = []
     for dirpath, dirnames, filenames in os.walk(full):
         rel_dir = osp.relpath(dirpath, data_root)
-        dirnames[:] = sorted(
-            d for d in dirnames if osp.join(rel_dir, d) not in EXCLUDED
-        )
+        dirnames[:] = sorted(d for d in dirnames if osp.join(rel_dir, d) not in skip)
         for name in sorted(filenames):
             out.append(osp.join(rel_dir, name))
     return out
 
 
-def build(data_root: str, out_dir: str, workers: int) -> TransferManifest043:
+def build(
+    data_root: str, out_dir: str, workers: int, store: StorePaths043
+) -> TransferManifest043:
     """Walk the sources, hash the small files, write the manifest and the lists."""
+    skip = excluded(store)
     entries: list[tuple[Tier, str, int]] = []
-    for tier, rel in SOURCES:
-        for f in _walk(data_root, rel):
+    for tier, rel in sources(store):
+        for f in _walk(data_root, rel, skip):
             if f.endswith(".lock"):
                 continue
             entries.append((tier, f, osp.getsize(osp.join(data_root, f))))
@@ -165,11 +187,11 @@ def build(data_root: str, out_dir: str, workers: int) -> TransferManifest043:
                 n_sha256=sum(f.sha256 is not None for f in sel),
             )
         )
-        with open(osp.join(out_dir, f"files_{tier}_043.txt"), "w") as fh:
+        with open(osp.join(out_dir, f"files_{tier}_043{store.suffix}.txt"), "w") as fh:
             fh.writelines(f"{f.path}\n" for f in sel)
-        with open(osp.join(out_dir, f"sha256_{tier}_043.txt"), "w") as fh:
+        with open(osp.join(out_dir, f"sha256_{tier}_043{store.suffix}.txt"), "w") as fh:
             fh.writelines(f"{f.sha256}  {f.path}\n" for f in sel if f.sha256)
-        with open(osp.join(out_dir, f"sizes_{tier}_043.txt"), "w") as fh:
+        with open(osp.join(out_dir, f"sizes_{tier}_043{store.suffix}.txt"), "w") as fh:
             fh.writelines(f"{f.bytes} {f.path}\n" for f in sel)
 
     manifest = TransferManifest043(
@@ -178,10 +200,12 @@ def build(data_root: str, out_dir: str, workers: int) -> TransferManifest043:
         remote_subdir="torchcell-data/043",
         sha256_limit_bytes=SHA_LIMIT,
         totals=totals,
-        excluded=EXCLUDED,
+        excluded=skip,
         files=files,
     )
-    with open(osp.join(out_dir, "transfer_manifest_043.json"), "w") as fh:
+    with open(
+        osp.join(out_dir, f"transfer_manifest_043{store.suffix}.json"), "w"
+    ) as fh:
         fh.write(manifest.model_dump_json(indent=1))
     return manifest
 
@@ -193,7 +217,7 @@ def main() -> None:
     ap.add_argument("stage", choices=["build"])
     ap.add_argument("--workers", type=int, default=16)
     args = ap.parse_args()
-    m = build(os.environ["DATA_ROOT"], HERE, args.workers)
+    m = build(os.environ["DATA_ROOT"], HERE, args.workers, active_store())
     for t in m.totals:
         print(f"{t.tier}: {t.n_files} files, {t.gb} GB, {t.n_sha256} with sha256")
 

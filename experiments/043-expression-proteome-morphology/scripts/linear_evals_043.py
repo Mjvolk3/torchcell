@@ -6,7 +6,10 @@
 Implements the primer's "Linear evaluations first" and "The evaluation protocol"
 (notes-tex/multimodal/043-datasets-primer/sections/output-design.tex) on
 ``conf/splits/global_split_v1.json`` (``GlobalSplit043``; the run refuses a store whose
-raw index hash differs from the file's).
+raw index hash differs from the file's). Store generation v2 (``STORE_043_VERSION=v2``,
+``store_version_043``) reads ``raw_043_v2`` and ``global_split_v2.json`` and writes
+``results/linear_evals_043_v2.json``, ``results/linear_evals_043_v2/`` and the cache
+``linear_evals_cache_v2``.
 
 Stages (``--stage``):
 
@@ -91,6 +94,7 @@ sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
 from dataset_043 import RAW_INDEX_NAME, Dataset043Config, Raw043Dataset  # noqa: E402
 from global_split_043 import GlobalSplit043, Role, load_split  # noqa: E402
 from make_global_split_043 import isolate_key  # noqa: E402
+from store_version_043 import active as active_store  # noqa: E402
 
 EXPERIMENT = "043-expression-proteome-morphology"
 EMBED_FILES = {
@@ -168,7 +172,7 @@ class LinearEvalConfig(BaseModel):
             self.data_root,
             "data/torchcell/experiments",
             EXPERIMENT,
-            "linear_evals_cache",
+            active_store().linear_evals_cache,
         )
 
     @property
@@ -179,7 +183,7 @@ class LinearEvalConfig(BaseModel):
     @property
     def part_dir(self) -> str:
         """Per-dataset result files of the ladder, one directory under results."""
-        return osp.join(self.results, "linear_evals_043")
+        return osp.join(self.results, "linear_evals_043" + active_store().suffix)
 
 
 # ============================================================================ extract
@@ -1595,7 +1599,7 @@ def _save(fig: Any, title: str) -> str:
 
     d = osp.join(os.environ["ASSET_IMAGES_DIR"], EXPERIMENT)
     os.makedirs(d, exist_ok=True)
-    base = osp.join(d, f"{title}_{timestamp()}")
+    base = osp.join(d, f"{title}{active_store().suffix}_{timestamp()}")
     fig.savefig(base + ".png", dpi=300)
     savefig_true_size_svg(fig, base + ".svg")
     plt.close(fig)
@@ -1629,7 +1633,9 @@ def report(cfg: LinearEvalConfig, split: GlobalSplit043) -> dict[str, Any]:
         "parts": parts,
         "report_slurm_job_id": os.environ.get("SLURM_JOB_ID"),
     }
-    with open(osp.join(cfg.results, "linear_evals_043.json"), "w") as f:
+    with open(
+        osp.join(cfg.results, active_store().result_name("linear_evals_043")), "w"
+    ) as f:
         json.dump(merged, f, indent=1, default=float)
 
     # ---- split A summary table
@@ -1646,7 +1652,11 @@ def report(cfg: LinearEvalConfig, split: GlobalSplit043) -> dict[str, Any]:
                 frames.append(df)
     split_a = pd.concat(frames) if frames else pd.DataFrame()
     split_a.to_csv(
-        osp.join(cfg.results, "linear_evals_043_split_a_summary.csv"), index=False
+        osp.join(
+            cfg.results,
+            active_store().result_name("linear_evals_043_split_a_summary", "csv"),
+        ),
+        index=False,
     )
     _style()
     figs = {}
@@ -1799,7 +1809,12 @@ def report(cfg: LinearEvalConfig, split: GlobalSplit043) -> dict[str, Any]:
                 other.append(df)
     other_df = pd.concat(other) if other else pd.DataFrame()
     other_df.to_csv(
-        osp.join(cfg.results, "linear_evals_043_isolates_segregants_summary.csv"),
+        osp.join(
+            cfg.results,
+            active_store().result_name(
+                "linear_evals_043_isolates_segregants_summary", "csv"
+            ),
+        ),
         index=False,
     )
     if not other_df.empty:
@@ -1870,7 +1885,9 @@ def report(cfg: LinearEvalConfig, split: GlobalSplit043) -> dict[str, Any]:
             fig, "linear_evals_isolates_segregants_promoters"
         )
     merged["figures"] = figs
-    with open(osp.join(cfg.results, "linear_evals_043.json"), "w") as f:
+    with open(
+        osp.join(cfg.results, active_store().result_name("linear_evals_043")), "w"
+    ) as f:
         json.dump(merged, f, indent=1, default=float)
     print(json.dumps(figs, indent=1))
     return merged
@@ -1904,7 +1921,9 @@ def main() -> None:
     cfg = LinearEvalConfig(
         data_root=os.environ["DATA_ROOT"],
         experiment_dir=exp_dir,
-        split_path=osp.join(exp_dir, "conf", "splits", "global_split_v1.json"),
+        split_path=osp.join(
+            exp_dir, "conf", "splits", f"{active_store().split_version}.json"
+        ),
         workers=args.workers,
         n_boot=args.n_boot,
     )
@@ -1914,7 +1933,7 @@ def main() -> None:
             cfg.data_root,
             "data/torchcell/experiments",
             EXPERIMENT,
-            "raw_043",
+            active_store().raw_tag,
             "raw",
             RAW_INDEX_NAME,
         )

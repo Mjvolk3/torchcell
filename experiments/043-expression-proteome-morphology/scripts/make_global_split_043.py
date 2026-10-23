@@ -3,6 +3,13 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/make_global_split_043
 """Write the 043 fold file ``conf/splits/global_split_v1.json`` (``GlobalSplit043``).
 
+Store generation v2 (``STORE_043_VERSION=v2``, ``store_version_043``) draws
+``conf/splits/global_split_v2.json`` from ``raw_043_v2`` under the same seed and
+stratification, and its summary ``results/global_split_v2_summary.json`` compares the
+gene folds with v1 (genes that changed fold, the pinned genes, Jackson 2020 per fold). A
+deleted gene of a ``released_identifier`` perturbation (``released_kind`` deletion) is
+keyed like any other: its ORF when the name resolves, its released spelling otherwise.
+
 The draw follows the primer ("The evaluation protocol", "The fold file"), one
 ``numpy.random.default_rng(0)`` stream consumed in a fixed order (genes, pinned genes,
 isolates, segregants, promoters):
@@ -52,6 +59,7 @@ sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
 from dataset_043 import (  # noqa: E402
     DELETION_TYPES,
     RAW_INDEX_NAME,
+    RELEASED_DELETION_KINDS,
     Dataset043Config,
     Raw043Dataset,
 )
@@ -68,6 +76,7 @@ from global_split_043 import (  # noqa: E402
     Role,
     SplitCounts,
 )
+from store_version_043 import active as active_store  # noqa: E402
 
 EXPERIMENT = "043-expression-proteome-morphology"
 HO = "YDL227C"
@@ -122,7 +131,11 @@ def _key_of(item: tuple[str, int]) -> tuple[str, int, Any]:
         return name, raw_index, seq
     genes = []
     for p in g["perturbations"]:
-        if p["perturbation_type"] not in DELETION_TYPES:
+        released_deletion = (
+            p["perturbation_type"] == "released_identifier"
+            and p["released_kind"] in RELEASED_DELETION_KINDS
+        )
+        if p["perturbation_type"] not in DELETION_TYPES and not released_deletion:
             raise ValueError(f"{name} data_{raw_index}: {p['perturbation_type']}")
         idx = _DS._gene_idx(p["systematic_gene_name"])
         genes.append(p["systematic_gene_name"] if idx is None else _DS.genes[idx])
@@ -161,6 +174,47 @@ def deal(
             out[members[j]] = folds[(offset + i) % len(folds)]
         offset += len(members)
     return out
+
+
+def compare_to_v1(
+    v1_path: str, split: GlobalSplit043, keys: dict[str, list[tuple[int, Any]]]
+) -> dict[str, Any]:
+    """Gene folds of this split against ``global_split_v1``: genes that changed fold,
+    genes new or gone, the pinned genes' folds, and the Jackson 2020 genes per fold.
+    """
+    v1 = GlobalSplit043.model_validate_json(open(v1_path).read())
+    common = sorted(set(v1.gene_folds) & set(split.gene_folds))
+    changed = [g for g in common if v1.gene_folds[g] != split.gene_folds[g]]
+    moved_role = Counter(
+        f"{v1._fold_role(v1.gene_folds[g]).value}->"
+        f"{split._fold_role(split.gene_folds[g]).value}"
+        for g in changed
+    )
+    jackson = sorted(
+        {
+            g
+            for _, genes in keys["TfDeletionPseudobulkJackson2020Dataset"]
+            for g in genes
+        }
+    )
+    return {
+        "v1_store_sha256": v1.store_sha256,
+        "n_genes_v1": len(v1.gene_folds),
+        "n_genes_v2": len(split.gene_folds),
+        "n_genes_common": len(common),
+        "n_genes_changed_fold": len(changed),
+        "genes_changed_fold_by_role": dict(sorted(moved_role.items())),
+        "genes_new": sorted(set(split.gene_folds) - set(v1.gene_folds)),
+        "genes_gone": sorted(set(v1.gene_folds) - set(split.gene_folds)),
+        "pinned_same_set": sorted(v1.pinned_training_genes)
+        == sorted(split.pinned_training_genes),
+        "pinned_in_training_folds": all(
+            split.gene_folds[g] >= 2 for g in split.pinned_training_genes
+        ),
+        "jackson_genes_by_fold": dict(
+            sorted(Counter(split.gene_folds[g] for g in jackson).items())
+        ),
+    }
 
 
 def main() -> None:
@@ -250,7 +304,9 @@ def main() -> None:
     mers = sorted({seq for _, seq in keys[PROMOTER_DATASETS[0]]})
     promoter_folds = deal({"all": mers}, list(range(N_OTHER_FOLDS)), rng)
 
+    store = active_store()
     split = GlobalSplit043(
+        version=store.split_version,
         seed=args.seed,
         store_sha256=store_sha,
         store_index_path=index_path,
@@ -302,7 +358,7 @@ def main() -> None:
 
     out_dir = osp.join(exp_dir, "conf", "splits")
     os.makedirs(out_dir, exist_ok=True)
-    out = osp.join(out_dir, "global_split_v1.json")
+    out = osp.join(out_dir, f"{store.split_version}.json")
     with open(out, "w") as f:
         f.write(split.model_dump_json(indent=1))
     GlobalSplit043.model_validate_json(open(out).read())
@@ -329,7 +385,12 @@ def main() -> None:
         "fold_sizes": {k: dict(sorted(v.items())) for k, v in fold_sizes.items()},
         "counts": {k: v.model_dump() for k, v in counts.items()},
     }
-    with open(osp.join(exp_dir, "results", "global_split_v1_summary.json"), "w") as f:
+    if store.version != "v1":
+        summary["against_global_split_v1"] = compare_to_v1(
+            osp.join(out_dir, "global_split_v1.json"), split, keys
+        )
+    summary_path = osp.join(exp_dir, "results", f"{store.split_version}_summary.json")
+    with open(summary_path, "w") as f:
         json.dump(summary, f, indent=1)
     print(json.dumps(summary, indent=1))
 

@@ -49,6 +49,7 @@ from dataset_043 import (  # noqa: E402
     Dataset043Config,
     Raw043Dataset,
 )
+from store_version_043 import active as active_store  # noqa: E402
 
 from torchcell.data.representation_043 import (  # noqa: E402
     GapKind,
@@ -79,6 +80,9 @@ def _stats(r: RecordRepresentation) -> dict[str, Any]:
         "n_extra": len(r.extra_tokens),
         "n_extra_accessory": sum(t.kind == "accessory_orf" for t in r.extra_tokens),
         "n_extra_reporter": sum(t.kind == "reporter" for t in r.extra_tokens),
+        "n_extra_off_index_gene": sum(
+            t.kind == "off_index_gene" for t in r.extra_tokens
+        ),
         "n_genes_with_gap": int(gap_any.any(axis=1).sum()),
         "n_marked_outside_index": r.n_marked_outside_index,
     }
@@ -92,6 +96,11 @@ def _stats(r: RecordRepresentation) -> dict[str, Any]:
         all(k == GapKind.ACCESSORY_WITHOUT_ROW for k in t.gaps)
         for t in r.extra_tokens
         if t.kind == "accessory_orf"
+    )
+    out["extra_gap_off_index_no_s288c_key"] = sum(
+        all(k == GapKind.NO_S288C_KEY for k in t.gaps)
+        for t in r.extra_tokens
+        if t.kind == "off_index_gene"
     )
     out["extra_gap_missing_reporter_window"] = sum(
         t.gaps[0] == GapKind.MISSING_REPORTER_WINDOW
@@ -342,7 +351,19 @@ def main() -> None:
         "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
         "wall_seconds": round(time.time() - t0, 1),
         "records": len(frame),
+        "store_version": active_store().version,
         "limit": args.limit,
+        "off_index_gene_tokens": {
+            d: {
+                "records_with": int((f["n_extra_off_index_gene"] > 0).sum()),
+                "tokens_total": int(f["n_extra_off_index_gene"].sum()),
+                "records_marked_outside_index": int(
+                    (f["n_marked_outside_index"] > 0).sum()
+                ),
+            }
+            for d, f in frame.groupby("dataset", sort=True)
+            if f["n_marked_outside_index"].sum() > 0
+        },
         "config": "RepresentationConfig(route='A'), isolates also under route='B'; "
         "segregant rule confident_run at posterior >= 0.9",
         "complete_definition": "no gene slot of the four encoders and no extra token "
@@ -356,8 +377,8 @@ def main() -> None:
     }
     res = Path(osp.dirname(osp.dirname(osp.abspath(__file__)))) / "results"
     stem = "verify_representation_043" + ("" if args.limit is None else "_smoke")
-    (res / f"{stem}.json").write_text(json.dumps(summary, indent=1))
-    (res / f"{stem}.md").write_text(markdown(summary))
+    (res / active_store().result_name(stem)).write_text(json.dumps(summary, indent=1))
+    (res / active_store().result_name(stem, "md")).write_text(markdown(summary))
     if args.limit is None:
         frame.to_parquet(
             rep.rep_root(data_root) / "verify_records.parquet", index=False

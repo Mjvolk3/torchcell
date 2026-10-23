@@ -47,6 +47,12 @@ from __future__ import annotations
 import os.path as osp
 from typing import Literal
 
+from torchcell.data.neo4j_query_raw import (
+    PARTITION_MARKER,
+    partition_queries,
+    single_session_query,
+)
+
 GeneClause = Literal["all", "isolate", "none"]
 
 # (dataset id, phenotype class, graph_level, gene clause); order is the UNION order. The
@@ -122,6 +128,11 @@ EXPECTED_COUNTS: dict[str, int] = {
 }
 
 QUERY_NAME = "expression_proteome_morphology_043.cql"
+#: The partitioned CANDIDATE (2026-10-23): the same text with ``{partition}`` once per
+#: block right after the dataset filter (``torchcell.data.neo4j_query_raw.PARTITION_MARKER``),
+#: written to the experiment folder only. Removing the markers gives QUERY_NAME byte for
+#: byte; ``main`` asserts it.
+PARTITIONED_QUERY_NAME = "expression_proteome_morphology_043_partitioned.cql"
 
 HEADER = """\
 // expression_proteome_morphology_043.cql
@@ -148,12 +159,21 @@ def _gene_clause(clause: GeneClause) -> str:
     return ""
 
 
-def block(dataset_id: str, phenotype: str, graph_level: str, clause: GeneClause) -> str:
-    """One dataset's ``MATCH ... RETURN e_serialized, ref_serialized`` block."""
+def block(
+    dataset_id: str,
+    phenotype: str,
+    graph_level: str,
+    clause: GeneClause,
+    partitioned: bool = False,
+) -> str:
+    """One dataset's ``MATCH ... RETURN e_serialized, ref_serialized`` block; with
+    ``partitioned`` the dataset filter carries the partition marker.
+    """
+    marker = PARTITION_MARKER if partitioned else ""
     genotype = "(g:Genotype)" if clause != "none" else "(g)"
     return f"""// {dataset_id} ({phenotype}, graph_level '{graph_level}', gene clause {clause})
 MATCH (dataset:Dataset)<-[:ExperimentMemberOf]-(e:Experiment)
-WHERE dataset.id = '{dataset_id}'
+WHERE dataset.id = '{dataset_id}'{marker}
 MATCH (e)<-[:GenotypeMemberOf]-{genotype}
 MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
 MATCH (e)<-[:PhenotypeMemberOf]-(phen:PhenotypicFeature)
@@ -163,9 +183,9 @@ WITH DISTINCT e, ref
 RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized"""
 
 
-def render() -> str:
-    """The full query text."""
-    body = "\n\nUNION ALL\n\n".join(block(*b) for b in BLOCKS)
+def render(partitioned: bool = False) -> str:
+    """The full query text (the partitioned candidate with ``partitioned``)."""
+    body = "\n\nUNION ALL\n\n".join(block(*b, partitioned=partitioned) for b in BLOCKS)
     return f"{HEADER}\n\n{body}\n"
 
 
@@ -183,6 +203,14 @@ def main() -> None:
         with open(path, "w") as f:
             f.write(text)
         print(f"wrote {path}")
+    candidate = render(partitioned=True)
+    if single_session_query(candidate) != text:
+        raise RuntimeError("the partitioned query without its markers differs")
+    n_partitions = len(partition_queries(candidate, 2))
+    path = osp.join(targets[0], PARTITIONED_QUERY_NAME)
+    with open(path, "w") as f:
+        f.write(candidate)
+    print(f"wrote {path} ({n_partitions} partitions at prefix length 2)")
     print(f"{len(BLOCKS)} blocks, expected {sum(EXPECTED_COUNTS.values())} records")
 
 

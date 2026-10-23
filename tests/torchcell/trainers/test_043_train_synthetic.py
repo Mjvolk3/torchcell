@@ -512,7 +512,8 @@ def test_two_training_steps_with_balanced_sampler(
     )
     assert result.steps == 2
     assert np.isfinite(result.last_metrics["train/loss"])
-    assert Path(result.checkpoint_dir).name == cfg.run_name
+    # one directory per job under the run name
+    assert Path(result.checkpoint_dir).parent.name == cfg.run_name
 
 
 def test_max_steps_matches_steps_across_epochs(
@@ -705,3 +706,109 @@ def test_setup_line_prints_records_per_dataset_and_sentinels(
     assert f"nadal {n_train}/" in out
     assert "(17 sentinel cells |v| >= 20 masked)" in out
     assert "val/nadal/loss" in result.last_metrics
+
+
+def test_finetune_from_stage1_checkpoint(
+    tr: ModuleType, world: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Stage 2: a one-dataset arm starts from the stage-1 model weights (its dataset's
+    rows taken by name), with a fresh optimizer at its own lr, and is named after the
+    stage-1 group.
+    """
+    root = world["root"]
+    stage1 = _cfg(
+        tr, root, "hlgauss"
+    )  # joint_test: kemmeren, messner, caudal, vaishnav
+    monkeypatch.setenv("SLURM_JOB_ID", "1111")
+    r1 = tr.train(
+        stage1, world["store"], tr.h5_vector_source(stage1.paths), tr.MemoryLogger()
+    )
+    ckpt = Path(r1.checkpoint_dir) / "last.pt"
+    assert Path(r1.checkpoint_dir).name == "1111"
+    s1 = torch.load(ckpt, weights_only=False)["model"]
+    label = tr.stage1_label(str(ckpt))
+    assert label == "joint_test_hlgauss_equal"
+    base = _cfg(tr, root, "hlgauss")
+    ft = base.model_copy(
+        update={
+            "arm": tr.ArmConfig(
+                name="alone_kemmeren", datasets=["kemmeren"], doubles=True
+            ),
+            "optim": base.optim.model_copy(update={"lr": 3e-4}),
+            "budget": base.budget.model_copy(update={"max_steps_per_epoch": 1}),
+            "init_from": str(ckpt),
+            "init_from_label": label,
+        }
+    )
+    assert ft.run_name == "finetune_kemmeren_from_joint_test_hlgauss_equal_s0"
+    view = tr.build_view(world["store"], ft.arm, ft.data.mark_cap)
+    tables = [tr.h5_vector_source(ft.paths)(e, view.used_ids[e]) for e in range(4)]
+    model = tr.build_model(ft, view, tables)
+    logs = tr.init_from_checkpoint(model, ft, view)
+    assert logs["setup/init_from_step"] == 2.0
+    assert logs["setup/init_from_lr"] == stage1.optim.lr
+    sd = model.state_dict()
+    k = stage1.arm.datasets.index("kemmeren")
+    for name in tr.DATASET_INDEXED:
+        assert torch.equal(sd[name], s1[name][[k]])
+    for name in (
+        "operator.q_proj.weight",
+        "trunk.layers.0.norm1.weight",
+        "gene_head.mlp.0.weight",
+    ):
+        if name in s1:
+            assert torch.equal(sd[name], s1[name])
+    assert torch.equal(sd["operator.q_proj.weight"], s1["operator.q_proj.weight"])
+    # end to end: the doubles are read each epoch, as in the alone run
+    monkeypatch.setenv("SLURM_JOB_ID", "2222")
+    logger = tr.MemoryLogger()
+    r2 = tr.train(ft, world["store"], tr.h5_vector_source(ft.paths), logger)
+    assert r2.steps == 1
+    assert "val/doubles/pearson_per_strain_centered_median" in r2.last_metrics
+    setup = next(v for _, v in logger.rows if "setup/init_from_step" in v)
+    assert setup["setup/init_from_epoch"] == 1.0
+    # a dataset stage 1 never trained, or another architecture, refuses
+    bad = ft.model_copy(
+        update={
+            "arm": tr.ArmConfig(
+                name="alone_zelezniak", datasets=["zelezniak"], doubles=False
+            )
+        }
+    )
+    vbad = tr.build_view(world["store"], ft.arm, None)
+    with pytest.raises(KeyError, match="not trained in stage 1"):
+        tr.init_from_checkpoint(
+            model, bad, tr.TrainingView(**{**vbad.__dict__, "datasets": ["zelezniak"]})
+        )
+    other = ft.model_copy(
+        update={"model": ft.model.model_copy(update={"operator_residual": "rezero"})}
+    )
+    with pytest.raises(ValueError, match="model section differs"):
+        tr.init_from_checkpoint(model, other, view)
+    with pytest.raises(ValueError, match="init_from_label without init_from"):
+        tr.TrainConfig043.model_validate({**base.model_dump(), "init_from_label": "x"})
+
+
+def test_mark_cap_report_counts_truncation(
+    tr: ModuleType, world: dict[str, Any]
+) -> None:
+    store = world["store"]
+    arm = tr.ArmConfig(
+        name="a", datasets=["kemmeren", "caudal", "vaishnav"], doubles=False
+    )
+    n_caudal = int((store.rec_dataset == list(tr.SPECS).index("caudal")).sum())
+    capped = tr.build_view(store, arm, mark_cap=2)
+    line, logs = tr.mark_cap_report(capped)
+    # every Caudal record carries 3 accessory marks: cap 2 drops one mark each
+    assert logs["setup/marks_max"] == 3.0
+    assert logs["setup/records_truncated"] == float(n_caudal)
+    assert logs["setup/marks_dropped"] == float(n_caudal)
+    assert (
+        f"{n_caudal} of {len(capped.rec)} records truncated {{'caudal': {n_caudal}}}"
+        in line
+    )
+    free = tr.build_view(store, arm, mark_cap=None)
+    line, logs = tr.mark_cap_report(free)
+    assert logs["setup/records_truncated"] == 0.0 and "cap none" in line
+    batch, _ = tr.make_batch(free, np.arange(len(free.rec)).tolist())
+    assert int(batch.marks.valid.sum(1).max()) == 3

@@ -9,9 +9,8 @@ from abc import ABC, abstractmethod
 from typing import Any, cast
 
 import torch
-from torch_geometric.utils import k_hop_subgraph
+from torch_geometric.utils import k_hop_subgraph, scatter
 from torch_geometric.utils._subgraph import subgraph
-from torch_scatter import scatter
 
 from torchcell.data.hetero_data import HeteroData
 from torchcell.datamodels import (

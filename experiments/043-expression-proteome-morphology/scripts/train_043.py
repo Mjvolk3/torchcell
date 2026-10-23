@@ -543,7 +543,7 @@ class TrainConfig043(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     seed: int = 0
-    device: Literal["auto", "cpu", "cuda"] = "auto"
+    device: Literal["auto", "cpu", "cuda", "xpu"] = "auto"
     init_from: str | None = Field(
         default=None,
         description="stage 2: a stage-1 checkpoint (.pt) whose MODEL weights initialize "
@@ -1598,7 +1598,11 @@ class RunResult:
 
 def _device(cfg: TrainConfig043) -> torch.device:
     if cfg.device == "auto":
-        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if torch.cuda.is_available():
+            return torch.device("cuda")
+        if torch.xpu.is_available():
+            return torch.device("xpu")
+        return torch.device("cpu")
     return torch.device(cfg.device)
 
 
@@ -1908,8 +1912,8 @@ def predict(
 
 
 def _autocast(device: torch.device) -> Any:
-    if device.type == "cuda":
-        return torch.autocast(device_type="cuda", dtype=torch.bfloat16)
+    if device.type in ("cuda", "xpu"):
+        return torch.autocast(device_type=device.type, dtype=torch.bfloat16)
     return torch.autocast(device_type="cpu", enabled=False)
 
 

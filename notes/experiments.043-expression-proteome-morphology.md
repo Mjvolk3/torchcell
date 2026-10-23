@@ -858,3 +858,54 @@ Not candidates: Albert 2014 X-pQTL (no strain-by-protein matrix), Zhang 2020 pro
 combinations (blocked on provision, #990), Hale 2024 (landed; fitness readout on segregants, not
 gene-level). Adding any of these to Zotero or the mirror is a separate instruction; this list is
 the suggestion only.
+
+## 2026.10.22 - Overnight test queue
+
+Owner grant: two GilaHyper cards for about 10 hours from 21:29 (window end 07:29, passed to
+the jobs as `DEADLINE=1792758540`). Two chains, each one card, `afterany` on the previous
+job, all seed 0 on the prep store of job 6134 and the registered window (fractions 0.8 to
+1.0 of the run's epochs). Lines in `scripts/gh_train_043_smoke.slurm`.
+
+| chain | job | run | --time | trainer budget | expected (from measured epoch times) |
+|---|---|---|---|---|---|
+| 1 | 6136 | joint_9_hlgauss_equal_s0 (records sampler) | 8:00 | 7.6 h | running; 222 s per epoch (training + evaluation), ends about 23:05 |
+| 1 | 6150 | joint_9_pinball_equal_s0, afterany 6136 | 4:40 | min(4.3 h, hours to 07:29) | about 3.1 h if pinball's epoch matches 6136 (unmeasured) |
+| 1 | 6152 | alone_kemmeren_hlgauss_equal_s0, `budget.max_steps=317300`, eval every 42 epochs, afterany 6150 | 4:50 | min(4.5 h, hours to 07:29) | 2,102 epochs of 151 steps; about 3.1 h if 0.035 s per step holds (unmeasured for this arm); raises at epoch 1 if the budget cannot fit all steps |
+| 2 | 6137 | joint_9_balanced_hlgauss_equal_s0 | 8:00 | 7.6 h | running; first epoch 8.6 min (0.074 s per step), ends about 04:35 |
+| 2 | 6151 | joint_9_hlgauss_records_s0, afterany 6137 | 4:40 | min(4.3 h, hours to 07:29) | about 2.9 h of budget, so about 40 epochs (SHORT of 50); its window rescales to its own epochs |
+| 2 | dropped | joint_9_mse_equal_s0 | | | does not fit: chain 2 reaches it only after 07:29 |
+
+Step matching: 6136 runs 6,346 steps per epoch at batch 8, so 50 epochs are 317,300
+optimizer steps; Kemmeren alone has 1,202 training records (151 steps per epoch), so the
+alone run takes 2,102 epochs, the last cut so the total is exactly 317,300
+(`budget.max_steps`, commit 694b80513, synthetic tests pass). Transfer = joint minus alone at
+matched steps.
+
+Finding while wiring this: window checkpoints are saved at `epoch in window` with `window`
+the tuple `(first, last)`, so only the window's first and last epochs are checkpointed, not
+every epoch inside it. Unchanged here; flagged for the owner.
+
+### First validation reads (epoch 1; validation fold, fold 0 is test)
+
+Statistic per dataset: median over genes of the per-gene Pearson (`pearson_per_gene_median`);
+doubles: median over the 72 Sameith doubles of the per-double centered Pearson; Vaishnav:
+Pearson over sequences. Bars: the fold-0 ladder of `results/linear_evals_043.json` as the
+coordinator lists them. Epoch 26 of 6136 is a PARTIAL run (26 of 50 epochs), not a result.
+
+| dataset | ladder bar | 6136 epoch 1 | 6136 epoch 26 (partial) | 6137 epoch 1 |
+|---|---|---|---|---|
+| Kemmeren | 0.125 (frozen-token ridge) | -0.004 | 0.089 | 0.040 |
+| Sameith doubles | 0.494 (fitted rung) | -0.067 | 0.146 | -0.051 |
+| Messner | 0.083 | -0.015 | 0.055 | 0.011 |
+| Zelezniak | inside zero | -0.007 | 0.145 (9 validation records) | 0.102 |
+| Boocock | 0.058 (marker ridge) | 0.010 | 0.026 | 0.011 |
+| N'Guessan | 0.155 (marker ridge) | 0.001 | 0.020 | -0.003 |
+| Caudal | 0.369 (GBLUP) | -0.002 | 0.147 | 0.057 |
+| Muenzner | 0.423 (GBLUP) | -0.018 | 0.185 | 0.043 |
+| Turnover | none listed | -0.058 | -0.114 (11 validation records) | 0.185 |
+| Vaishnav | 0.884 (6-mer ridge, fold mean) | 0.776 | 0.911 | 0.566 |
+
+Nadal and Hu are not in joint_9, so their bars have no run to compare. At epoch 26 of 50,
+6136 is below every expression and protein bar except Zelezniak's (whose bar is zero and
+whose validation set is 9 records) and above the Vaishnav k-mer ridge; nothing is concluded
+before its registered window (epochs 41 to 50).

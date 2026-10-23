@@ -20,8 +20,8 @@ goes verbatim into the round's dated section of the experiment note.
 At every evaluation, as curves: \texttt{epoch}, \texttt{train/loss} and \texttt{val/loss} under
 the same weighting, the per-dataset pair \texttt{train/<dataset>/loss} and
 \texttt{val/<dataset>/loss}, \texttt{train/lr}, \texttt{train/grad\_norm}, every validation
-statistic of Table~\ref{tab:ladder}, and in the ReZero arm $\zeta_{\mathrm{attn}}$ and
-$\zeta_{\mathrm{ffn}}$. A stage-2 run also logs \texttt{stage}, the stage-1 run id it started
+statistic of Table~\ref{tab:ladder}, and \texttt{operator/relative\_norm}, the operator's
+attention branch over the context norm. A stage-2 run also logs \texttt{stage}, the stage-1 run id it started
 from and the checkpoint's sha256.
 
 \notesec{Time}

@@ -8,7 +8,7 @@
 Experiment 043 trains in two stages. Stage 1 pretrains one model over every dataset of the
 043 query that has a head, with Ohya 2005 morphology read only as a probe of the frozen
 model; it carries the arms that change the representation: sampler and weighting, the
-operator residual (plain against ReZero), where the interaction graphs act (a masked layer,
+where the interaction graphs act (a masked layer,
 a readout gather, or nowhere), background-strain marks, the isolate route and the mark cap.
 Stage 2 fine-tunes the stage-1 model on one target at a time, Kemmeren 2014 first, and
 compares it with training from scratch at the same total optimizer steps and at the same
@@ -17,7 +17,7 @@ single joint objective read below the Kemmeren-alone run at matched steps for tw
 arms, and 0.208 to 0.230 on the Sameith 2015 doubles against 0.335 alone, with no
 validation loss logged. Every arm is called by the decision rule of the design review (a
 paired gain of at least 0.02 in 5 of 6 seeds, with a resampled interval excluding zero).
-The grid runs smokes on GilaHyper, eight owner-approved jobs on Delta, the six-seed stage-1
+The grid runs smokes on GilaHyper, six owner-approved jobs on Delta, the six-seed stage-1
 grid and the Kemmeren fine-tunes on Polaris, and the fine-tuning grid on Aurora once the
-trainer runs on Intel XPU, for an estimated 160 Polaris and 117 Aurora node-hours.
+trainer runs on Intel XPU, for an estimated 148 Polaris and 117 Aurora node-hours.
 \end{abstract}

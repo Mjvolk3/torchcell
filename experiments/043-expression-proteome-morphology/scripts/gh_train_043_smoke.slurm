@@ -74,8 +74,10 @@ fi
 EVAL_EVERY="${EVAL_EVERY:-1}"
 MAX_EPOCHS="${MAX_EPOCHS:-50}"
 TIME_MARGIN_MINUTES="${TIME_MARGIN_MINUTES:-20}"
-# marks per record: the 2026-10-22 runs used 1024; "null" = every mark (the design)
-MARK_CAP="${MARK_CAP:-1024}"
+# marks per record: null = every mark, the default since 2026-10-23 (owner: "bump the
+# limit"; data maximum 4,416, N'Guessan). A number is a smoke-speed override; the 2026-10-22
+# runs and S1 to S4 (6172 to 6175) used 1024.
+MARK_CAP="${MARK_CAP:-null}"
 TAGS="${TAGS:-smoke}"
 # step-matched alone runs: total optimizer steps of the joint run they control for
 EXTRA=()

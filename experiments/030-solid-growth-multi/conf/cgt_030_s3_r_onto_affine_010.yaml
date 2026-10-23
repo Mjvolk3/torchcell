@@ -1,0 +1,36 @@
+# experiments/030-solid-growth-multi/conf/cgt_030_s3_r_onto_affine_010.yaml
+#
+# plan.030-ontology-conditioning.2026.10.22, arm A1 ON THE RANDOM SPLIT: the experiment's
+# ontology annotation (DAG-propagated) as a per-entry scale and shift on the head outputs.
+# cgt_030_s3_r_tok_embfit_003 (the closure arm on the random split, composite, 100 epochs)
+# with dataset_token changed and nothing else, the random-split twin of
+# cgt_030_s3_q_onto_affine_007, so the two splits carry the same comparison against their
+# readout-name runs (embfit_003 seed 0, 2413840 + continuations, 0.5626 over epochs 150-163).
+#
+# First run (2026.10.22): IGB mmli, four A100 DDP, batch 256 per card, the s3r pool store
+# on the node's RAM disk, seed 0, 200 epochs (the readout-name seed 0 converged near 160);
+# the Q twin (007, s3q store) is chained behind it with afterany:
+#   PROJECT_ROOT=<worktree> sbatch --time=30-00:00:00 \
+#       --export=ALL,PROJECT_ROOT=<worktree>,GPUS=4,STAGE_SHM=1,POOL_STORE_REL=data/torchcell/experiments/030-solid-growth-multi/001-multi-build-s3r \
+#       -J 030-r1w4-r-onto_aff-s0 experiments/030-solid-growth-multi/scripts/igb_mmli_cgt_030.slurm \
+#       cgt_030_s3_r_onto_affine_010 +seed=0 trainer.max_epochs=200
+defaults:
+  - cgt_030_s3_r_tok_embfit_003
+  - _self_
+
+wandb:
+  tags: [s3, split_R, graph_reg_kl, fitness_joint, closure_doubles, unpinned_to_train, seq_embedding, full_gene_composite, param_matched, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, per_entry, dataset_token, no_holdout, token_affine, source_ontology, igb_mmli]
+
+trainer:
+  max_epochs: 200
+
+model:
+  dataset_token:
+    enabled: true
+    mode: affine
+    source: ontology
+    dim: 8
+    scale: true
+    shift: true
+    ontology:
+      state_dim: 8

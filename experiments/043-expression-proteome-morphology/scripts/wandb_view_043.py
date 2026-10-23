@@ -91,7 +91,7 @@ ROUNDS: dict[str, Round] = {
         ),
         intro=(
             "Seed 0 smokes on prep_v2 (job 6171), mark cap 1024. Stage 1 arm all at 4 "
-            "epochs (28,344 steps), plain residual and the ReZero control; stage 2 "
+            "epochs (28,344 steps), plain residual and the ReZero run (removed since); stage 2 "
             "fine-tune on Kemmeren from the plain stage-1 last.pt (302 steps, lr 3e-4, "
             "warmup 30); alone_kemmeren from scratch at 28,646 steps (stage 1 + fine-tune)."
         ),
@@ -207,11 +207,6 @@ def sections() -> list[tuple[str, list[Panel]]]:
                 ("gradient norm", EPOCH, ["train/grad_norm"]),
                 ("gradient clip fraction", EPOCH, ["train/grad_norm_clip_frac"]),
                 ("learning rate", STEP, ["train/lr"]),
-                (
-                    "operator gates (rezero only)",
-                    EPOCH,
-                    ["train/beta_attn", "train/beta_ffn"],
-                ),
                 (
                     "operator branch norm relative to the context (is the operator live)",
                     EPOCH,

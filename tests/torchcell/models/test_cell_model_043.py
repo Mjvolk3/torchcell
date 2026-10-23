@@ -248,34 +248,10 @@ def test_forward_shapes_per_loss(
     assert torch.isfinite(out.gene).all() and torch.isfinite(out.record).all()
 
 
-def test_rezero_operator_is_identity_at_init_and_learns() -> None:
-    cfg = _config("mse", operator_residual="rezero")
-    model = _model(cfg).eval()
-    batch = _batch()
-    # at init (betas 0) records sharing a context get identical gene states
-    with torch.no_grad():
-        X = model.context_tokens(batch.contexts)
-        H = model.trunk(X)[batch.record_context]
-        keys = model.mark_keys(batch.marks, H)
-        H_pert = model.operator(H, keys, batch.marks.valid)
-    assert torch.allclose(H_pert, H)
-    # closed gates: the branches as added are exactly zero
-    norms = model.operator.last_norms
-    assert float(norms["attn"]) == 0.0 and float(norms["update"]) == 0.0
-    # the gates receive gradient
-    model.train()
-    out = model(batch, torch.tensor([0, 1]), torch.tensor([2]))
-    (out.gene.sum() + out.record.sum()).backward()
-    assert model.operator.beta_attn.grad is not None
-    assert float(model.operator.beta_attn.grad.abs()) > 0.0
-
-
-def test_plain_operator_is_the_default_post_norm_residual() -> None:
+def test_operator_is_the_post_norm_residual() -> None:
     cfg = _config("mse")
-    assert cfg.operator_residual == "plain"
     model = _model(cfg).eval()
     op = model.operator
-    assert not hasattr(op, "beta_attn") and not hasattr(op, "beta_ffn")
     batch = _batch()
     with torch.no_grad():
         X = model.context_tokens(batch.contexts)
@@ -335,10 +311,8 @@ def test_dataset_id_reaches_only_the_head() -> None:
 
 
 def test_record_without_marks_attends_to_null_key() -> None:
-    cfg = _config("mse", operator_residual="rezero")
+    cfg = _config("mse")
     model = _model(cfg)
-    with torch.no_grad():
-        model.operator.beta_attn.fill_(1.0)
     out = model(
         _batch((0, 0, 0)), torch.tensor([0, 1, 2]), torch.tensor([], dtype=torch.long)
     )

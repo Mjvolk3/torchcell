@@ -69,8 +69,6 @@ model:
     8: string12_0_database
   fourier_frequencies: 8
   operator_ffn_mult: 4
-  # plain: post-norm residual as the trunk (default since 2026-10-23); rezero: control only
-  operator_residual: plain
   type_token_dim: 16
   env_token_dim: 16
   dataset_token_dim: 8

@@ -618,25 +618,17 @@ def test_validation_loss_is_the_training_objective(
         assert lo - 1e-9 <= last["val/loss"] <= hi + 1e-9
 
 
-@pytest.mark.parametrize("residual", ["plain", "rezero"])
-def test_operator_residual_and_relative_norm_logged(
-    tr: ModuleType, world: dict[str, Any], residual: str
+def test_relative_norm_logged_and_no_operator_gates(
+    tr: ModuleType, world: dict[str, Any]
 ) -> None:
-    """``model.operator_residual`` picks the residual; ``operator/relative_norm`` is
-    logged at every evaluation; the beta gates exist (and are logged) only under rezero.
+    """The operator is the post-norm residual only: ``operator/*`` norms are logged at
+    every evaluation, there is no residual option and no beta gate.
     """
-    base = _cfg(tr, world["root"], "hlgauss")
-    cfg = base.model_copy(
-        update={"model": base.model.model_copy(update={"operator_residual": residual})}
-    )
-    assert (
-        tr.TrainConfig043.model_validate(
-            {**base.model_dump(), "model": {**base.model.model_dump()}}
-        ).model.operator_residual
-        == "plain"
-    )  # the default
-    suffix = "_rezero" if residual == "rezero" else ""
-    assert cfg.run_name == f"joint_test_hlgauss_equal{suffix}_s0"
+    cfg = _cfg(tr, world["root"], "hlgauss")
+    assert "operator_residual" not in tr.ModelConfig.model_fields
+    with pytest.raises(ValueError, match="operator_residual"):
+        tr.ModelConfig.model_validate({"operator_residual": "plain"})
+    assert cfg.run_name == "joint_test_hlgauss_equal_s0"
     logger = tr.MemoryLogger()
     result = tr.train(
         cfg,
@@ -651,13 +643,20 @@ def test_operator_residual_and_relative_norm_logged(
         "operator/update_relative_norm",
     ):
         assert np.isfinite(last[k])
-    if residual == "plain":
-        assert last["operator/relative_norm"] > 0.0
-        assert "train/beta_attn" not in last
-    else:
-        assert "train/beta_attn" in last and "train/beta_ffn" in last
-        # two steps from zero-initialized gates: the branch is still nearly shut
-        assert last["operator/relative_norm"] < 0.05
+    assert last["operator/relative_norm"] > 0.0
+    assert not any("beta" in k for _, row in logger.rows for k in row)
+
+
+def test_checkpoint_config_drops_legacy_plain_key_and_refuses_rezero(
+    tr: ModuleType, world: dict[str, Any]
+) -> None:
+    cfg = _cfg(tr, world["root"], "hlgauss")
+    dumped = cfg.model_dump(mode="json")
+    legacy = {**dumped, "model": {**dumped["model"], "operator_residual": "plain"}}
+    assert tr.checkpoint_config({"config": legacy}) == cfg
+    rezero = {**dumped, "model": {**dumped["model"], "operator_residual": "rezero"}}
+    with pytest.raises(ValueError, match="only plain exists"):
+        tr.checkpoint_config({"config": rezero})
 
 
 def test_nadal_sentinels_and_jackson_ratio(tr: ModuleType) -> None:
@@ -828,7 +827,7 @@ def test_finetune_from_stage1_checkpoint(
             model, bad, tr.TrainingView(**{**vbad.__dict__, "datasets": ["zelezniak"]})
         )
     other = ft.model_copy(
-        update={"model": ft.model.model_copy(update={"operator_residual": "rezero"})}
+        update={"model": ft.model.model_copy(update={"num_layers": 3})}
     )
     with pytest.raises(ValueError, match="model section differs"):
         tr.init_from_checkpoint(model, other, view)

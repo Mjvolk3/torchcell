@@ -1,0 +1,218 @@
+%% notes-tex/multimodal/043-training-design/sections/4-objective.tex
+%% SOURCE: torchcell/losses/hl_gauss.py (HLGaussLoss, fit_standardization),
+%% torchcell/losses/distributional.py (pinball), torchcell/models/cell_model_043.py
+%% (ReadoutLoss043), train_043.py (SPECS, transform_target, loss_sums, combine_loss,
+%% balanced_batches, batch_loader, predict, evaluate, OptimConfig), conf/loss/*.yaml,
+%% conf/weighting/*.yaml; batch shares through tables/t2-batch-share-rows.tex and
+%% tables/macros.tex (training_design_043_tables.py); standardization sha256 from the job 6136 log.
+
+\section{Objective, step by step\secstatus{todo}}
+\label{sec:objective}
+
+\subsection{Targets\secstatus{todo}}
+\label{sec:targets}
+
+\notesec{Step 1, the transform}
+Each dataset's released value is first put on a scale where differences are comparable,
+$\tilde y_{b,i} = \operatorname{tr}_s(y_{b,i})$: as released for Kemmeren (already a
+$\log_2$ ratio to wild type) and Vaishnav (a sort-seq level); the $\log_2$ ratio to the
+reference for Messner; the difference to the reference for Zelezniak; $\log_2(y+1)$ of TPM
+for Caudal; $\log_2 y$ of positive values for Muenzner protein and turnover; and
+$\log_2(10^{6} y / \text{UMI total} + 1)$ for the Boocock and N'Guessan counts, where a
+gene a record omits is a released zero. The primer's table of output scales gives the
+reasons per dataset.
+
+\notesec{Step 2, standardization per dataset}
+On the training rows of dataset $s$ only,
+\begin{equation}
+z_{b,i} = \frac{\tilde y_{b,i} - \eta_{s,i} - \mu_s}{\sigma_s},
+\qquad
+m_{b,i} = \mathbf{1}\big[z_{b,i} \text{ is finite}\big],
+\label{eq:standardize}
+\end{equation}
+where $\eta_{s,i}$ is the mean of gene $i$ over the training rows that measure it for the
+five panel datasets centered per gene (Caudal, Muenzner protein and turnover, Boocock,
+N'Guessan) and zero for the rest, and $\mu_s$, $\sigma_s$ are the mean and standard
+deviation pooled over every centered training value of $s$. A gene with no training value
+has no center, so its $z$ is missing rather than zero. The fitted statistics are one
+pydantic record pinned by sha256 (\texttt{0d5df0f0\ldots} in the overnight runs, job 6136
+log). Counts never detected in a Boocock or N'Guessan training row are not targets.
+
+\subsection{Elementwise losses\secstatus{todo}}
+\label{sec:elementwise}
+
+\notesec{Step 3, HL-Gauss bins}
+The main loss (decision O4 of the primer) bins $z$ into $n_{\mathrm{bin}} = 32$ bins on
+$[-4, 4]$ of width $\Delta = 0.25$, with interior edges $\upsilon_u = -4 + u\Delta$ for $u =
+1, \ldots, 31$, the outer edges opened to $\upsilon_0 = -\infty$ and $\upsilon_{32} =
++\infty$, and nominal centers $\bar\upsilon_u = -4 + (u - \tfrac12)\Delta$.
+
+\notesec{Step 4, the Gaussian histogram target}
+A measured $z$ becomes the mass a normal $\mathcal{N}(z, \sigma_{\mathrm{HL}}^2)$ puts in
+each bin, with $\sigma_{\mathrm{HL}} = 0.75\Delta = 0.1875$ and $\Phi$ the standard normal
+distribution function,
+\begin{equation}
+\omega_u(z) = \Phi\!\Big(\frac{\upsilon_u - z}{\sigma_{\mathrm{HL}}}\Big) - \Phi\!\Big(\frac{\upsilon_{u-1} - z}{\sigma_{\mathrm{HL}}}\Big),
+\qquad u = 1, \ldots, n_{\mathrm{bin}},
+\qquad \sum_{u} \omega_u(z) = 1.
+\label{eq:hltarget}
+\end{equation}
+Because the edge bins are open, a target beyond $\pm 4$ still has a histogram that sums to
+one; its mass sits in the edge bin.
+
+\notesec{Step 5, the cross-entropy}
+The head's $n_{\mathrm{out}} = 32$ outputs are logits,
+\begin{equation}
+\hat\omega_u = \frac{\exp(\hat o_u)}{\sum_{u'} \exp(\hat o_{u'})},
+\qquad
+\mathcal{L}^{\mathrm{HL}}(\hat{\mathbf{o}}, z) = -\sum_{u=1}^{n_{\mathrm{bin}}} \omega_u(z) \log \hat\omega_u.
+\label{eq:hlce}
+\end{equation}
+
+\notesec{Step 6, the point prediction}
+The prediction scored by every correlation is the expectation over the nominal centers,
+\begin{equation}
+\hat z = \sum_{u=1}^{n_{\mathrm{bin}}} \hat\omega_u\, \bar\upsilon_u \in [-3.875,\ 3.875],
+\label{eq:hlpoint}
+\end{equation}
+a convex combination of the centers, so it lies inside the outermost centers and moves
+toward the middle of the histogram when the predicted mass spreads. The trainer also logs
+the entropy of $\hat\omega$ and the fraction of measured entries whose argmax bin is within
+one bin of the target's.
+
+\notesec{Step 7, the pinball arm}
+The quantile arm emits $n_{\mathrm{out}} = n_q = 19$ values at levels $\gamma_u = u/20$
+and averages the check loss,
+\begin{equation}
+\mathcal{L}^{\mathrm{pin}}(\hat{\mathbf{o}}, z) = \frac{1}{n_q} \sum_{u=1}^{n_q} \max\!\big(\gamma_u (z - \hat o_u),\ (\gamma_u - 1)(z - \hat o_u)\big),
+\qquad
+\hat z = \hat o_{10},
+\label{eq:pinball}
+\end{equation}
+the point being the median quantile ($\gamma_{10} = 0.5$). Nothing orders the 19 outputs,
+so quantile crossing is not prevented.
+
+\notesec{Step 8, the MSE reference}
+With $n_{\mathrm{out}} = 1$, $\mathcal{L}^{\mathrm{MSE}}(\hat o, z) = (\hat o - z)^2$ and
+$\hat z = \hat o$. The overnight queue dropped its run for time (Sec.~\ref{sec:measured}).
+
+\subsection{From elements to the batch objective\secstatus{todo}}
+\label{sec:batchobjective}
+
+\notesec{Step 9, the mean within a dataset}
+Write $\mathcal{L}^{\circ}$ for whichever elementwise loss the arm uses. For dataset $s$ in
+batch $\mathcal{B}$, the loss is the mean over its measured entries, pooled over its records,
+\begin{equation}
+\mathcal{L}_s(\mathcal{B}) = \frac{\sum_{b \in \mathcal{B},\, s(b) = s}\ \sum_{i} m_{b,i}\, \mathcal{L}^{\circ}(\hat{\mathbf{o}}_{b,i}, z_{b,i})}{\sum_{b \in \mathcal{B},\, s(b) = s}\ \sum_{i} m_{b,i}},
+\label{eq:dsmean}
+\end{equation}
+where $i$ runs over the $N$ genes of a gene-level record and over its single entry for a
+record-level one. Within a dataset a record with more measured genes therefore counts for
+more.
+
+\notesec{Step 10, the weighting across datasets}
+With $\mathcal{S}_{\mathcal{B}}$ the datasets that have a measured entry in the batch,
+\begin{equation}
+\mathcal{L}_y(\mathcal{B}) = \sum_{s \in \mathcal{S}_{\mathcal{B}}} w_s(\mathcal{B})\, \mathcal{L}_s(\mathcal{B}),
+\qquad
+w_s(\mathcal{B}) =
+\begin{cases}
+1 / |\mathcal{S}_{\mathcal{B}}| & \text{equal weighting (main)},\\
+n_s(\mathcal{B}) \big/ \sum_{s' \in \mathcal{S}_{\mathcal{B}}} n_{s'}(\mathcal{B}) & \text{record weighting (arm)}.
+\end{cases}
+\label{eq:objective}
+\end{equation}
+Against the manuscript's $\mathcal{L}_y = \sum_t w_t \sum_b m^{(b)}_t \ell_t$, two things
+differ: each dataset's term is normalized by its own measured count, and the weights are not
+constants but functions of what the batch happens to hold. 043 adds no graph term, so
+$\mathcal{L} = \mathcal{L}_y$.
+
+\subsection{What a batch holds\secstatus{todo}}
+\label{sec:batch}
+
+\notesec{Step 11, the records sampler}
+The default sampler shuffles the $n = \tdNTrain$ training records each epoch and cuts the
+order into batches of $B = 8$, so a batch is a draw without replacement and its composition
+$(n_s(\mathcal{B}))_{s}$ is multivariate hypergeometric (the last batch of an epoch holds 7
+records, $\tdNTrain = 6{,}345 \times 8 + 7$; it is ignored below). Vaishnav holds
+$n_{\mathrm{vai}} = \tdNVaishnavTrain$ of them, \tdVaishnavPct\%, so a batch holds
+$8 \times (1 - n_{\mathrm{vai}}/n) = \tdGeneRecordsPerBatch$ gene-level records on average.
+
+\notesec{Step 12, the expected weight as a gradient share}
+The batch gradient is $\nabla \mathcal{L}_y = \sum_{s} w_s(\mathcal{B}) \nabla
+\mathcal{L}_s(\mathcal{B})$, so the expected weight
+\begin{equation}
+\bar w_s = \mathbb{E}_{\mathcal{B}}\big[w_s(\mathcal{B})\big] =
+\sum_{(n_1, \ldots, n_9)} \frac{\prod_{s'} \binom{n_{s'}}{n_{s'}(\mathcal{B})}}{\binom{n}{B}}\; w_s(\mathcal{B}),
+\qquad
+\bar w_s^{\,\mathrm{records}} = \frac{n_s}{n},
+\label{eq:share}
+\end{equation}
+is the expected share of the objective's gradient that dataset $s$ carries, if the
+per-dataset gradients $\nabla \mathcal{L}_s$ have comparable norms. The sum runs over every
+composition of a batch of 8 into the nine datasets, and the record-weighting value follows
+from linearity. Table~\ref{tab:share} gives both exactly. Under equal weighting Vaishnav
+carries $\bar w_{\mathrm{vai}} = \tdVaishnavWeightEqual$: it is present in nearly every
+batch, and the batches that also hold a gene-level record split the weight only two or three
+ways. Kemmeren is present in a fraction \tdKemmerenPresent{} of batches and carries
+$\bar w = \tdKemmerenWeightEqual$. Hypothesis (untested): the per-dataset gradient norms are
+not comparable, since the 32-bin cross-entropy of one Vaishnav scalar and the mean over
+about 6{,}000 genes of a Kemmeren profile differ in variance; the norms were not logged.
+
+\notesec{Step 13, the balanced sampler}
+The alternative draws, for each of the 8 slots of a batch, a dataset uniformly among the
+nine and then a record uniformly within it, with replacement, for the same 6{,}346 batches
+per epoch. The composition is then multinomial with equal cell probabilities, and both
+weightings give $\bar w_s = \tdBalancedWeight$ for every dataset by symmetry. Each dataset
+is drawn about $6{,}346 \times 8 / 9 \approx 5{,}641$ times per epoch, so the 33 turnover
+training records are each revisited about 171 times per epoch and Vaishnav's 42{,}694 are
+subsampled to about 13\%. The sampler acts on the batch and the weighting on the loss; the
+two compose, and a balanced run is labeled \texttt{<arm>\_balanced\_<loss>\_<weighting>}.
+
+%% SOURCE: experiments/043-expression-proteome-morphology/scripts/training_design_043_tables.py
+%% -> tables/t2-batch-share-rows.tex (train_043_prep/prep_v1_routeA/meta.json, job 6134;
+%% conf/train_043_default.yaml)
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption[]{\textbf{Training records and the expected weight of each dataset in
+the batch objective, \texttt{joint\_9}, batches of 8.} Records from the prepared store (job
+6134). Validation records are those the trainer scores per evaluation (at most 2{,}000 per
+dataset). Expected weights are exact (Eq.~\ref{eq:share}): the records sampler is a draw
+without replacement (multivariate hypergeometric over all 12{,}870 compositions of 8 into
+nine datasets), the balanced sampler a multinomial with probability $1/9$ per dataset.
+Probabilities and weights are per batch.}
+\label{tab:share}
+\begin{tabular}{>{\raggedright\arraybackslash}p{26mm}>{\raggedright\arraybackslash}p{9mm}>{\raggedleft\arraybackslash}p{14mm}>{\raggedleft\arraybackslash}p{19mm}>{\raggedleft\arraybackslash}p{15mm}>{\raggedleft\arraybackslash}p{18mm}>{\raggedleft\arraybackslash}p{19mm}>{\raggedleft\arraybackslash}p{19mm}>{\raggedleft\arraybackslash}p{19mm}}
+\toprule
+Dataset & Level & Training records, $n_s$ & Validation records scored, n & Share of training records, \% & Probability present in a batch, records sampler & Expected weight $\bar w_s$, records sampler, equal weighting & Expected weight $\bar w_s$, records sampler, record weighting & Expected weight $\bar w_s$, balanced sampler, either weighting \\
+\midrule
+\input{tables/t2-batch-share-rows}
+\end{tabular}
+\end{table}
+
+\subsection{Optimization and the validation loss\secstatus{todo}}
+\label{sec:optim}
+
+\notesec{Step 14, the optimizer}
+AdamW at learning rate $3 \times 10^{-4}$ with weight decay $10^{-8}$, linear warmup over
+500 steps then constant, gradient norm clipped at 10, dropout 0.1, bf16 autocast on the
+card. A non-finite gradient norm stops the run.
+
+\notesec{Step 15, the validation loss}
+The validation pass computes the same objective with the same weighting, but accumulates the
+per-dataset sums of Eq.~\ref{eq:dsmean} over the whole pass before combining them, so under
+equal weighting
+\begin{equation}
+\mathcal{L}^{\mathrm{val}} = \frac{1}{|\mathcal{S}|} \sum_{s \in \mathcal{S}} \frac{\sum_{b \in \mathrm{val}_s} \sum_i m_{b,i}\, \mathcal{L}^{\circ}(\hat{\mathbf{o}}_{b,i}, z_{b,i})}{\sum_{b \in \mathrm{val}_s} \sum_i m_{b,i}},
+\label{eq:valloss}
+\end{equation}
+logged as \texttt{val/loss} with each dataset's term as \texttt{val/<dataset>/loss}. The
+training curve \texttt{train/loss} is the mean of $\mathcal{L}_y(\mathcal{B})$ over the
+epoch's batches, whose weights follow Table~\ref{tab:share}; the two are the same loss but
+not the same weighting of datasets, so their gap mixes generalization with the batch
+composition. The validation loss was added on 2026-10-23 (commit \texttt{e6ad22d0c}); none
+of the overnight runs of 2026-10-22 has it, and the prepare-experiment gate
+(\file{.claude/skills/prepare-experiment/SKILL.md}) now refuses a chain whose smoke run
+lacks \texttt{val/loss} and the per-dataset pair.

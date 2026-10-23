@@ -33,8 +33,17 @@ Vaishnav; Sameith Dm read as split B through Kemmeren's tokens), and ``alone_<sh
 with one dataset. Loss arms ``conf/loss/{hlgauss,pinball,mse}.yaml``; weighting arms
 ``conf/weighting/{equal,records}.yaml``.
 
-    python experiments/043-expression-proteome-morphology/scripts/train_043.py --stage prepare
+Store generation (``store_version_043``): the trainer reads ``data.store_version``
+(``v2`` by default since 2026-10-23: ``prep_v3``, ``representation_043_v2``,
+``global_split_v2``; ``v1`` gives ``prep_v2``, ``representation_043``,
+``global_split_v1``, the inputs of every run before it). ``paths.split_file``,
+``paths.prep_dir`` and ``paths.representation_root`` override the derived paths. The
+prepare stage reads the generation from ``STORE_043_VERSION`` (the same variable
+``dataset_043`` reads the raw store by).
+
+    STORE_043_VERSION=v2 python experiments/043-expression-proteome-morphology/scripts/train_043.py --stage prepare
     python experiments/043-expression-proteome-morphology/scripts/train_043.py arm=joint_9 loss=hlgauss seed=0
+    python experiments/043-expression-proteome-morphology/scripts/train_043.py data.store_version=v1
 """
 
 from __future__ import annotations
@@ -78,11 +87,14 @@ SCRIPTS = osp.dirname(osp.abspath(__file__))
 if SCRIPTS not in sys.path:
     sys.path.insert(0, SCRIPTS)
 from global_split_043 import GlobalSplit043, Role, load_split  # noqa: E402
+from store_version_043 import StorePaths043, StoreVersion, store_paths  # noqa: E402
+from store_version_043 import active as active_store  # noqa: E402
 
 EXPERIMENT = "043-expression-proteome-morphology"
-#: prep_v2 (2026-10-23) adds Hu 2007, Jackson 2020 and Nadal-Ribelles 2025 to prep_v1's
-#: ten datasets; the joint_9 records and their targets are unchanged.
-PREP_VERSION = "prep_v2"
+#: The prepared-store version is the store generation's (``store_version_043``):
+#: prep_v2 (2026-10-23, store v1) adds Hu 2007, Jackson 2020 and Nadal-Ribelles 2025 to
+#: prep_v1's ten datasets, the joint_9 records and their targets unchanged; prep_v3
+#: (store v2) is the same build over raw_043_v2, every served record admitted.
 WANDB_PROJECT = "torchcell_043-expression-proteome-morphology"
 ISO_REL = "data/scerevisiae/isolate_embeddings/peter2018_1011"
 #: 019's nine gene-gene relations, one per attention head (names of
@@ -374,6 +386,12 @@ class DataConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     route: Literal["A", "B"] = "A"
+    store_version: StoreVersion = Field(
+        default="v2",
+        description="the 043 store generation (store_version_043): v2 = raw_043_v2 "
+        "(every served record), prep_v3, global_split_v2; v1 = raw_043, prep_v2, "
+        "global_split_v1",
+    )
     sampler: Literal["records", "balanced"] = Field(
         default="records",
         description="records: uniform over training records (the per-record extreme); "
@@ -499,13 +517,19 @@ class PathsConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     data_root: str
-    split_file: str
+    split_file: str | None = None
     prep_dir: str | None = None
     representation_root: str | None = None
     alleles_root: str | None = None
     checkpoint_root: str | None = None
 
-    def resolved_prep_dir(self, route: str) -> str:
+    def resolved_split_file(self, store: StorePaths043) -> str:
+        """``conf/splits/<split_version>.json`` of the store generation."""
+        return self.split_file or osp.join(
+            osp.dirname(SCRIPTS), "conf", "splits", f"{store.split_version}.json"
+        )
+
+    def resolved_prep_dir(self, route: str, store: StorePaths043) -> str:
         """The prepared store directory."""
         if self.prep_dir is not None:
             return self.prep_dir
@@ -514,16 +538,16 @@ class PathsConfig(BaseModel):
             "data/torchcell/experiments",
             EXPERIMENT,
             "train_043_prep",
-            f"{PREP_VERSION}_route{route}",
+            f"{store.prep_version}_route{route}",
         )
 
-    def resolved_representation_root(self) -> str:
-        """``representation_043`` (vocabularies)."""
+    def resolved_representation_root(self, store: StorePaths043) -> str:
+        """``representation_043`` / ``representation_043_v2`` (vocabularies)."""
         return self.representation_root or osp.join(
             self.data_root,
             "data/torchcell/experiments",
             EXPERIMENT,
-            "representation_043",
+            store.representation_tag,
         )
 
     def resolved_alleles_root(self) -> str:
@@ -798,8 +822,6 @@ class _PrepRows(torch.utils.data.Dataset[dict[str, Any] | None]):
         import representation_043 as rep043
         from make_global_split_043 import isolate_key
 
-        from torchcell.models.genotype_tokens_043 import CHANGE_TYPE_INDEX, ChangeType
-
         name, raw_index = self.ds.items[i]
         spec = SPECS[self.short_of[name]]
         if spec.short == "boocock":
@@ -885,7 +907,6 @@ class _PrepRows(torch.utils.data.Dataset[dict[str, Any] | None]):
         # ---- marks: operator genes, then off-graph tokens
         on = np.nonzero(r.operator_mask)[0]
         n_on, n_ex = len(on), len(r.extra_tokens)
-        acc = CHANGE_TYPE_INDEX[ChangeType.present]
         marks = {
             "gene": np.concatenate([on, np.zeros(n_ex, dtype=np.int64)]).astype(
                 np.int32
@@ -913,9 +934,12 @@ class _PrepRows(torch.utils.data.Dataset[dict[str, Any] | None]):
                 [
                     r.chrom_index[on],
                     [
-                        int(Replicon.ACCESSORY_ORF)
-                        if t.change_type == acc
-                        else int(Replicon.REPORTER_CONSTRUCT)
+                        # an accessory ORF and an off-index gene (a deleted gene with
+                        # no index position, prep_v3) share the row of an ORF with no
+                        # reference coordinate; the reporter has its own
+                        int(Replicon.REPORTER_CONSTRUCT)
+                        if t.kind == "reporter"
+                        else int(Replicon.ACCESSORY_ORF)
                         for t in r.extra_tokens
                     ],
                 ]
@@ -1003,14 +1027,24 @@ def _edge_lists(
     return edges, outside
 
 
-def prepare(paths: PathsConfig, route: Literal["A", "B"], workers: int) -> str:
+def prepare(
+    paths: PathsConfig,
+    route: Literal["A", "B"],
+    workers: int,
+    generation: StorePaths043,
+) -> str:
     """Build the prepared store over every spec (module docstring)."""
     import dataset_043 as d043
 
     from torchcell.data.representation_043 import RepresentationConfig
 
+    if active_store().version != generation.version:
+        raise ValueError(
+            f"prepare for store {generation.version}, but dataset_043 reads "
+            f"{active_store().version} (STORE_043_VERSION)"
+        )
     t0 = time.time()
-    split = load_split(paths.split_file)
+    split = load_split(paths.resolved_split_file(generation))
     names = [s.name for s in SPECS.values()]
     ds = d043.Raw043Dataset(
         d043.Dataset043Config(
@@ -1083,9 +1117,9 @@ def prepare(paths: PathsConfig, route: Literal["A", "B"], workers: int) -> str:
     ptr = np.zeros(len(rec["n_marks"]) + 1, dtype=np.int64)
     ptr[1:] = np.cumsum(rec["n_marks"])
     edges, outside = _edge_lists(paths.data_root, ds.genes)
-    store = PreparedStore043(
+    prepared = PreparedStore043(
         meta=PreparedMeta(
-            prep_version=PREP_VERSION,
+            prep_version=generation.prep_version,
             route=route,
             split_version=split.version,
             split_store_sha256=split.store_sha256,
@@ -1133,9 +1167,9 @@ def prepare(paths: PathsConfig, route: Literal["A", "B"], workers: int) -> str:
         Y=np.stack(ys).astype(np.float32),
         edges=edges,
     )
-    out = paths.resolved_prep_dir(route)
-    store.save(out)
-    print(store.meta.model_dump_json(indent=1))
+    out = paths.resolved_prep_dir(route, generation)
+    prepared.save(out)
+    print(prepared.meta.model_dump_json(indent=1))
     return out
 
 
@@ -1568,13 +1602,13 @@ class WandbLogger:
 VectorSource = Callable[[int, npt.NDArray[np.int64]], torch.Tensor]
 
 
-def h5_vector_source(paths: PathsConfig) -> VectorSource:
+def h5_vector_source(paths: PathsConfig, generation: StorePaths043) -> VectorSource:
     """Vocabulary ids of encoder ``e`` -> their vectors from ``alleles/<encoder>.h5``."""
 
     def read(e: int, ids: npt.NDArray[np.int64]) -> torch.Tensor:
         enc = ENCODERS[e]
         vocab = np.load(
-            osp.join(paths.resolved_representation_root(), f"vocab_{enc}.npy")
+            osp.join(paths.resolved_representation_root(generation), f"vocab_{enc}.npy")
         )
         return load_vector_table(
             osp.join(paths.resolved_alleles_root(), f"{enc}.h5"), vocab[ids]
@@ -2343,8 +2377,11 @@ def run(cfg: TrainConfig043) -> RunResult:
     """Load the prepared store and train with W&B logging."""
     if cfg.init_from is not None and cfg.init_from_label is None:
         cfg = cfg.model_copy(update={"init_from_label": stage1_label(cfg.init_from)})
-    store = PreparedStore043.load(cfg.paths.resolved_prep_dir(cfg.data.route))
-    split = load_split(cfg.paths.split_file)
+    generation = store_paths(cfg.data.store_version)
+    store = PreparedStore043.load(
+        cfg.paths.resolved_prep_dir(cfg.data.route, generation)
+    )
+    split = load_split(cfg.paths.resolved_split_file(generation))
     if (split.version, split.store_sha256) != (
         store.meta.split_version,
         store.meta.split_store_sha256,
@@ -2353,7 +2390,7 @@ def run(cfg: TrainConfig043) -> RunResult:
     dump = config_dump(cfg, store)
     logger = WandbLogger(cfg, dump)
     try:
-        result = train(cfg, store, h5_vector_source(cfg.paths), logger)
+        result = train(cfg, store, h5_vector_source(cfg.paths, generation), logger)
         logger.log(
             {
                 "split.version_logged": 1.0,
@@ -2401,13 +2438,7 @@ if __name__ == "__main__":
         ap.add_argument("--route", choices=["A", "B"], default="A")
         ap.add_argument("--workers", type=int, default=32)
         args = ap.parse_args()
-        data_root = os.environ["DATA_ROOT"]
-        paths = PathsConfig(
-            data_root=data_root,
-            split_file=osp.join(
-                osp.dirname(SCRIPTS), "conf/splits/global_split_v1.json"
-            ),
-        )
-        print(prepare(paths, args.route, args.workers))
+        paths = PathsConfig(data_root=os.environ["DATA_ROOT"])
+        print(prepare(paths, args.route, args.workers, active_store()))
     else:
         _hydra_main()

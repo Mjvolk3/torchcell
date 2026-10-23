@@ -23,6 +23,7 @@ from torchcell.data.representation_043 import (
     RepresentationResolver,
     SegregantReason,
     assign_segregant_genes,
+    change_type_of_perturbation,
     chromosome_copy_vector,
     resolve_change_types,
 )
@@ -261,3 +262,47 @@ def test_allele_vector_store_reads_and_raises(tmp_path: Path) -> None:
         store.vectors(vocab.ids([sha(2)]))
     with pytest.raises(KeyError, match="gap id"):
         store.vectors(np.array([-1]))
+
+
+def test_released_identifier_change_type() -> None:
+    released = {
+        "perturbation_type": "released_identifier",
+        "systematic_gene_name": "ENA1",
+        "released_kind": "deletion",
+    }
+    assert change_type_of_perturbation(released) == ChangeType.deletion
+    truncated = {**released, "released_kind": "truncation"}
+    assert change_type_of_perturbation(truncated) == ChangeType.deletion
+    placed = {"perturbation_type": "kanmx_deletion", "systematic_gene_name": "YAL001C"}
+    assert change_type_of_perturbation(placed) == ChangeType.deletion
+    with pytest.raises(ValueError, match="released_kind 'affinity_tag'"):
+        change_type_of_perturbation({**released, "released_kind": "affinity_tag"})
+    with pytest.raises(ValueError, match="unexpected perturbation_type"):
+        change_type_of_perturbation({"perturbation_type": "mystery"})
+
+
+def test_deletion_off_index_gene_is_a_typed_gap_token() -> None:
+    res = _resolver("A")
+    d = res.deletion(
+        [(1, ChangeType.deletion)],
+        outside=1,
+        off_index=[("YKL200C", ChangeType.deletion)],
+    )
+    assert d.genotype_class == "deletion"
+    assert d.marked.tolist() == [1]
+    assert d.n_marked_outside_index == 1
+    (token,) = d.extra_tokens
+    assert token.kind == "off_index_gene"
+    assert token.feature_id == "YKL200C"
+    assert token.change_type == DEL
+    assert token.key_ids == (-1, -1, -1, -1)
+    assert token.gaps == (int(GapKind.NO_S288C_KEY),) * 4
+    assert token.copy_number == 1.0
+    # a record whose only deletion is off the index is kept as a deletion, not a
+    # reference strain, and carries no on-graph mark
+    only = res.deletion([], outside=1, off_index=[("YER109C", ChangeType.deletion)])
+    assert only.genotype_class == "deletion"
+    assert only.marked.tolist() == [] and not only.operator_mask.any()
+    assert [t.feature_id for t in only.extra_tokens] == ["YER109C"]
+    with pytest.raises(ValueError, match="more off-index tokens"):
+        res.deletion([], outside=0, off_index=[("YER109C", ChangeType.deletion)])

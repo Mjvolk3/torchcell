@@ -33,9 +33,12 @@ Every sample is a dict over ONE shared gene index, the 6,607 genes of the store'
 Label keys that are not systematic ORFs are mapped at read time, never at load time:
 Messner 2023 UniProt accession -> ORF (``build_uniprot_to_orf_map``), Nadal-Ribelles 2025
 standard name -> ORF (``build_orf_to_gene_name_map`` inverted); a perturbed gene name
-outside the index is also tried through the standard-name map (``ENA1`` -> ``YDR040C``). A
-key with no index position is counted (``n_label_keys_outside_index``,
-``n_marked_outside_index``), never guessed.
+outside the index is also tried through the standard-name map (``ENA1`` -> ``YDR040C``),
+which is how a ``released_identifier`` perturbation (the released symbol in
+``systematic_gene_name``, ``released_kind`` deletion) finds its ORF. A key with no index
+position is counted (``n_label_keys_outside_index``, ``n_marked_outside_index``), never
+guessed, and the record is kept; with a representation, an engineered deletion of a gene
+with no position is an ``off_index_gene`` extra token (gap ``NO_S288C_KEY``).
 
 Genotype classes:
 
@@ -97,6 +100,7 @@ from torch.utils.data import Dataset
 
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
 import representation_043 as rep043  # noqa: E402
+from store_version_043 import active as active_store  # noqa: E402
 
 from torchcell.data.representation_043 import RepresentationConfig  # noqa: E402
 from torchcell.datasets.scerevisiae.messner2023 import (  # noqa: E402
@@ -106,7 +110,6 @@ from torchcell.datasets.scerevisiae.messner2023 import (  # noqa: E402
 )
 
 EXPERIMENT = "043-expression-proteome-morphology"
-STORE_TAG = "raw_043"
 RAW_INDEX_NAME = "raw_dataset_name_index.json"
 N_CALMORPH = 281
 
@@ -198,6 +201,9 @@ Y_SCALE: dict[str, YScale] = {
 UNIPROT_KEYED = {"ProteomeMessner2023Dataset"}
 STANDARD_NAME_KEYED = {"NadalRibellesPerturbSeq2025Dataset"}
 
+#: ``released_kind`` values of a ``released_identifier`` perturbation marked as DELETION
+#: (``rep043`` maps the same kinds through ``RELEASED_KIND_TO_CHANGE``).
+RELEASED_DELETION_KINDS = {"deletion", "truncation"}
 DELETION_TYPES = {
     "kanmx_deletion",
     "sga_kanmx_deletion",
@@ -276,9 +282,14 @@ class Dataset043Config(BaseModel):
 
     @property
     def store_root(self) -> str:
-        """``$DATA_ROOT/data/torchcell/experiments/<EXPERIMENT>/raw_043``."""
+        """``$DATA_ROOT/data/torchcell/experiments/<EXPERIMENT>/<raw tag>`` of the active
+        store generation (``store_version_043``: ``raw_043`` v1, ``raw_043_v2`` v2).
+        """
         return osp.join(
-            self.data_root, "data/torchcell/experiments", EXPERIMENT, STORE_TAG
+            self.data_root,
+            "data/torchcell/experiments",
+            EXPERIMENT,
+            active_store().raw_tag,
         )
 
 
@@ -448,6 +459,14 @@ class Raw043Dataset(Dataset):
         for p in perturbations:
             t = p["perturbation_type"]
             if t in DELETION_TYPES:
+                kind = PertType.DELETION
+            elif t == "released_identifier":
+                # the source's own gene name; the change is its released_kind
+                if p["released_kind"] not in RELEASED_DELETION_KINDS:
+                    raise ValueError(
+                        f"released_identifier {p['systematic_gene_name']!r} has "
+                        f"released_kind {p['released_kind']!r}"
+                    )
                 kind = PertType.DELETION
             elif t == "sequence_variant":
                 if not is_isolate:

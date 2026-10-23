@@ -219,7 +219,7 @@ def _store(tr: ModuleType, split: Any) -> Any:
             marks["pg"].append(0)
         ptr.append(ptr[-1] + len(ms))
     meta = tr.PreparedMeta(
-        prep_version=tr.PREP_VERSION,
+        prep_version=tr.store_paths("v2").prep_version,
         route="A",
         split_version=split.version,
         split_store_sha256=split.store_sha256,
@@ -392,7 +392,12 @@ def test_two_training_steps_per_loss_arm(
     root = world["root"]
     cfg = _cfg(tr, root, loss)
     logger = tr.MemoryLogger()
-    result = tr.train(cfg, world["store"], tr.h5_vector_source(cfg.paths), logger)
+    result = tr.train(
+        cfg,
+        world["store"],
+        tr.h5_vector_source(cfg.paths, tr.store_paths(cfg.data.store_version)),
+        logger,
+    )
     assert result.steps == 2
     assert result.n_epochs == 1
     last = result.last_metrics
@@ -417,7 +422,10 @@ def test_records_weighting_and_missing_vector_raises(
     root = world["root"]
     cfg = _cfg(tr, root, "mse", "records")
     result = tr.train(
-        cfg, world["store"], tr.h5_vector_source(cfg.paths), tr.MemoryLogger()
+        cfg,
+        world["store"],
+        tr.h5_vector_source(cfg.paths, tr.store_paths(cfg.data.store_version)),
+        tr.MemoryLogger(),
     )
     assert result.steps == 2
 
@@ -508,7 +516,10 @@ def test_two_training_steps_with_balanced_sampler(
     )
     assert cfg.run_name == "joint_test_balanced_hlgauss_equal_s0"
     result = tr.train(
-        cfg, world["store"], tr.h5_vector_source(cfg.paths), tr.MemoryLogger()
+        cfg,
+        world["store"],
+        tr.h5_vector_source(cfg.paths, tr.store_paths(cfg.data.store_version)),
+        tr.MemoryLogger(),
     )
     assert result.steps == 2
     assert np.isfinite(result.last_metrics["train/loss"])
@@ -532,7 +543,12 @@ def test_max_steps_matches_steps_across_epochs(
         }
     )
     logger = tr.MemoryLogger()
-    result = tr.train(cfg, world["store"], tr.h5_vector_source(cfg.paths), logger)
+    result = tr.train(
+        cfg,
+        world["store"],
+        tr.h5_vector_source(cfg.paths, tr.store_paths(cfg.data.store_version)),
+        logger,
+    )
     assert result.steps == 5
     assert result.n_epochs == 3  # 2 + 2 + 1
     setup = [v for _, v in logger.rows if "setup/max_steps" in v]
@@ -558,7 +574,12 @@ def test_max_steps_cut_by_time_budget_raises(
         }
     )
     with pytest.raises(RuntimeError, match="not step-matched"):
-        tr.train(cfg, world["store"], tr.h5_vector_source(cfg.paths), tr.MemoryLogger())
+        tr.train(
+            cfg,
+            world["store"],
+            tr.h5_vector_source(cfg.paths, tr.store_paths(cfg.data.store_version)),
+            tr.MemoryLogger(),
+        )
 
 
 @pytest.mark.parametrize(
@@ -574,7 +595,10 @@ def test_validation_loss_is_the_training_objective(
     root = world["root"]
     cfg = _cfg(tr, root, loss, weighting)
     result = tr.train(
-        cfg, world["store"], tr.h5_vector_source(cfg.paths), tr.MemoryLogger()
+        cfg,
+        world["store"],
+        tr.h5_vector_source(cfg.paths, tr.store_paths(cfg.data.store_version)),
+        tr.MemoryLogger(),
     )
     last = result.last_metrics
     per_ds = {
@@ -614,7 +638,12 @@ def test_operator_residual_and_relative_norm_logged(
     suffix = "_rezero" if residual == "rezero" else ""
     assert cfg.run_name == f"joint_test_hlgauss_equal{suffix}_s0"
     logger = tr.MemoryLogger()
-    result = tr.train(cfg, world["store"], tr.h5_vector_source(cfg.paths), logger)
+    result = tr.train(
+        cfg,
+        world["store"],
+        tr.h5_vector_source(cfg.paths, tr.store_paths(cfg.data.store_version)),
+        logger,
+    )
     last = result.last_metrics
     for k in (
         "operator/relative_norm",
@@ -695,7 +724,12 @@ def test_setup_line_prints_records_per_dataset_and_sentinels(
             )
         }
     )
-    result = tr.train(cfg, store2, tr.h5_vector_source(cfg.paths), tr.MemoryLogger())
+    result = tr.train(
+        cfg,
+        store2,
+        tr.h5_vector_source(cfg.paths, tr.store_paths(cfg.data.store_version)),
+        tr.MemoryLogger(),
+    )
     out = capsys.readouterr().out
     n_train = int(
         (
@@ -721,7 +755,10 @@ def test_finetune_from_stage1_checkpoint(
     )  # joint_test: kemmeren, messner, caudal, vaishnav
     monkeypatch.setenv("SLURM_JOB_ID", "1111")
     r1 = tr.train(
-        stage1, world["store"], tr.h5_vector_source(stage1.paths), tr.MemoryLogger()
+        stage1,
+        world["store"],
+        tr.h5_vector_source(stage1.paths, tr.store_paths(stage1.data.store_version)),
+        tr.MemoryLogger(),
     )
     ckpt = Path(r1.checkpoint_dir) / "last.pt"
     assert Path(r1.checkpoint_dir).name == "1111"
@@ -742,7 +779,12 @@ def test_finetune_from_stage1_checkpoint(
     )
     assert ft.run_name == "finetune_kemmeren_from_joint_test_hlgauss_equal_s0"
     view = tr.build_view(world["store"], ft.arm, ft.data.mark_cap)
-    tables = [tr.h5_vector_source(ft.paths)(e, view.used_ids[e]) for e in range(4)]
+    tables = [
+        tr.h5_vector_source(ft.paths, tr.store_paths(ft.data.store_version))(
+            e, view.used_ids[e]
+        )
+        for e in range(4)
+    ]
     model = tr.build_model(ft, view, tables)
     logs = tr.init_from_checkpoint(model, ft, view)
     assert logs["setup/init_from_step"] == 2.0
@@ -762,7 +804,12 @@ def test_finetune_from_stage1_checkpoint(
     # end to end: the doubles are read each epoch, as in the alone run
     monkeypatch.setenv("SLURM_JOB_ID", "2222")
     logger = tr.MemoryLogger()
-    r2 = tr.train(ft, world["store"], tr.h5_vector_source(ft.paths), logger)
+    r2 = tr.train(
+        ft,
+        world["store"],
+        tr.h5_vector_source(ft.paths, tr.store_paths(ft.data.store_version)),
+        logger,
+    )
     assert r2.steps == 1
     assert "val/doubles/pearson_per_strain_centered_median" in r2.last_metrics
     setup = next(v for _, v in logger.rows if "setup/init_from_step" in v)

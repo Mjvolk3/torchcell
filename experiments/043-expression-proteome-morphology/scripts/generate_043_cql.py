@@ -15,17 +15,28 @@ Every block has the property-shaped RETURN of the supported query
 (``e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized``) and keeps
 the phenotype ``graph_level`` filter. The genotype clause takes one of three shapes:
 
-* ``all``: every perturbation names a gene in ``$gene_set`` and there is at least one
-  (deletion and allele panels, the shape of the supported query).
-* ``any``: no perturbation at all, or at least one names a gene in ``$gene_set``. The
-  natural isolates (Caudal 2024, Muenzner 2024) carry accessory-ORF absences and
-  thousands of ``sequence_variant`` perturbations outside S288C, which ``all`` would
-  drop; one Muenzner 2024 proteome strain carries none, which ``ANY`` alone would drop.
+* ``all`` (deletion and allele panels): at least one perturbation, nothing else. Every
+  served record is admitted; the genome never gates a record (owner, 2026-10-12: "the
+  genome is separate.. it doesn't gate anything... we do that at modeling time"). Until
+  2026-10-23 this clause also required every perturbation to name a gene in
+  ``$gene_set``, which dropped 188 served records in the v1 build (job 5856,
+  ``results/build_043_store_census.json``): 75 Messner 2023 and 70 Nadal-Ribelles 2025
+  records whose deleted gene is a ``ReleasedIdentifierPerturbation`` (the released symbol
+  in ``systematic_gene_name``), and 2 Kemmeren 2014, 1 Hu 2007 and 40 Ohya 2005 records
+  whose ORFs are outside the gene set. The released name is resolved to an index
+  position at read time (``dataset_043``), and a name with no position is a typed gap of
+  the representation, never a drop.
+* ``isolate`` (Caudal 2024, Muenzner 2024): no genotype clause beyond the ``Genotype``
+  label. Natural isolates carry accessory-ORF absences and thousands of
+  ``sequence_variant`` perturbations outside S288C, and one Muenzner 2024 proteome strain
+  carries none, so no perturbation test applies.
 * ``none``: no gene clause and no ``Genotype`` label. Boocock 2025 and Nguessan 2025 have
   ``SegregantGenotype`` genotypes (``segregant genotype`` is_a ``genotype`` in
   ``biocypher/config/torchcell_schema_config.yaml``, reached through
   ``GenotypeMemberOf``), and Vaishnav 2022 carries a
   ``VariablePromoterReporterPerturbation`` with no gene.
+
+``$gene_set`` is no longer read by the query; ``Neo4jCellDataset`` still passes it.
 
 Run from the repo root:
     python experiments/043-expression-proteome-morphology/scripts/generate_043_cql.py
@@ -36,7 +47,7 @@ from __future__ import annotations
 import os.path as osp
 from typing import Literal
 
-GeneClause = Literal["all", "any", "none"]
+GeneClause = Literal["all", "isolate", "none"]
 
 # (dataset id, phenotype class, graph_level, gene clause); order is the UNION order. The
 # phenotype class is the one the dataset's recorded closure in
@@ -67,9 +78,19 @@ BLOCKS: list[tuple[str, str, str, GeneClause]] = [
     ("ProteomeMessner2023Dataset", "ProteinAbundancePhenotype", "node", "all"),
     ("ProteomeZelezniak2018Dataset", "ProteinAbundancePhenotype", "node", "all"),
     ("ScmdOhya2005Dataset", "CalMorphPhenotype", "global", "all"),
-    ("CaudalPanTranscriptome2024Dataset", "RNASeqExpressionPhenotype", "node", "any"),
-    ("ProteomeMuenzner2024Dataset", "ProteinAbundancePhenotype", "node", "any"),
-    ("ProteinTurnoverMuenzner2024Dataset", "ProteinTurnoverPhenotype", "node", "any"),
+    (
+        "CaudalPanTranscriptome2024Dataset",
+        "RNASeqExpressionPhenotype",
+        "node",
+        "isolate",
+    ),
+    ("ProteomeMuenzner2024Dataset", "ProteinAbundancePhenotype", "node", "isolate"),
+    (
+        "ProteinTurnoverMuenzner2024Dataset",
+        "ProteinTurnoverPhenotype",
+        "node",
+        "isolate",
+    ),
     ("Boocock2025Dataset", "SingleCellExpressionPhenotype", "node", "none"),
     ("Nguessan2025Dataset", "SingleCellExpressionPhenotype", "node", "none"),
     (
@@ -113,26 +134,17 @@ HEADER = """\
 // torchcell/knowledge_graphs/queries/. Edit the generator, never this file.
 //
 // Block shape of torchcell/knowledge_graphs/queries/expression_proteome_morphology.cql
-// (property-shaped RETURN, no medium filter). Gene clause per block:
-//   all  = every perturbation names a gene in $gene_set, at least one perturbation
-//   any  = no perturbation, or at least one names a gene in $gene_set (natural isolates)
-//   none = no gene clause, unlabeled genotype (segregants, promoter library)"""
+// (property-shaped RETURN, no medium filter). Every served record is admitted: the genome
+// never gates a record (no $gene_set test since 2026-10-23, store v2). Clause per block:
+//   all     = at least one perturbation (deletion and allele panels)
+//   isolate = Genotype label only (natural isolates, one with no perturbation)
+//   none    = no gene clause, unlabeled genotype (segregants, promoter library)"""
 
 
 def _gene_clause(clause: GeneClause) -> str:
     perts = "[(g)<-[:PerturbationMemberOf]-(pert) | pert]"
     if clause == "all":
-        return (
-            f"\n AND ALL(p IN {perts}\nWHERE p.systematic_gene_name IN $gene_set)"
-            f"\n AND SIZE({perts}) > 0"
-        )
-    if clause == "any":
-        # SIZE = 0 keeps an isolate with no perturbation (the S288C-identical strain):
-        # ANY over an empty list is false and would drop it.
-        return (
-            f"\n AND (SIZE({perts}) = 0\n OR ANY(p IN {perts}"
-            "\nWHERE p.systematic_gene_name IN $gene_set))"
-        )
+        return f"\n AND SIZE({perts}) > 0"
     return ""
 
 

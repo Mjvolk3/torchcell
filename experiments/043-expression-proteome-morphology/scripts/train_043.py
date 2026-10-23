@@ -426,11 +426,6 @@ class ModelConfig(BaseModel):
     )
     fourier_frequencies: int = 8
     operator_ffn_mult: int = 4
-    operator_residual: Literal["plain", "rezero"] = Field(
-        default="plain",
-        description="plain: the trunk's post-norm residual (default since 2026-10-23); "
-        "rezero: zero-initialized beta gates, kept only as a control",
-    )
     type_token_dim: int = 16
     env_token_dim: int = 16
     dataset_token_dim: int = 8
@@ -597,14 +592,10 @@ class TrainConfig043(BaseModel):
 
     @property
     def arm_label(self) -> str:
-        """``<arm>[_balanced]_<loss>_<weighting>[_rezero]``: the W&B group.
+        """``<arm>[_balanced]_<loss>_<weighting>``: the W&B group.
 
         A stage-2 run (``init_from``) is ``finetune_<arm without alone_>_from_<stage-1
         group>``.
-
-        ``_rezero`` marks the ReZero operator control; the plain residual is unmarked. The
-        overnight runs of 2026-10-22 were ReZero under the unmarked name (it was the only
-        residual then).
         """
         if self.init_from is not None:
             if self.init_from_label is None:
@@ -613,10 +604,7 @@ class TrainConfig043(BaseModel):
                 )
             return f"finetune_{self.arm.name.removeprefix('alone_')}_from_{self.init_from_label}"
         sampler = "_balanced" if self.data.sampler == "balanced" else ""
-        rezero = "_rezero" if self.model.operator_residual == "rezero" else ""
-        return (
-            f"{self.arm.name}{sampler}_{self.loss.kind}_{self.weighting.kind}{rezero}"
-        )
+        return f"{self.arm.name}{sampler}_{self.loss.kind}_{self.weighting.kind}"
 
     @property
     def run_name(self) -> str:
@@ -1644,10 +1632,28 @@ def _device(cfg: TrainConfig043) -> torch.device:
 DATASET_INDEXED = ("dataset_token.weight", "gene_bias", "record_bias")
 
 
+def checkpoint_config(state: dict[str, Any]) -> TrainConfig043:
+    """The run config stored in a checkpoint.
+
+    Checkpoints written between a054414d7 and the ReZero removal carry
+    ``model.operator_residual``; ``plain`` is today's only operator and the key is dropped,
+    a ReZero checkpoint (beta gates) is refused.
+    """
+    raw = dict(state["config"])
+    model = dict(raw.get("model", {}))
+    residual = model.pop("operator_residual", "plain")
+    if residual != "plain":
+        raise ValueError(
+            f"checkpoint operator residual {residual!r}: only plain exists"
+        )
+    raw["model"] = model
+    return TrainConfig043.model_validate(raw)
+
+
 def stage1_label(path: str) -> str:
     """The W&B group of the run that wrote the checkpoint at ``path``."""
     state = torch.load(path, map_location="cpu", weights_only=False)
-    return TrainConfig043.model_validate(state["config"]).arm_label
+    return checkpoint_config(state).arm_label
 
 
 def init_from_checkpoint(
@@ -1662,7 +1668,7 @@ def init_from_checkpoint(
     """
     assert cfg.init_from is not None
     state = torch.load(cfg.init_from, map_location="cpu", weights_only=False)
-    src = TrainConfig043.model_validate(state["config"])
+    src = checkpoint_config(state)
     if src.model != cfg.model:
         raise ValueError(f"model section differs from the checkpoint's: {src.model}")
     if src.loss != cfg.loss:
@@ -1753,7 +1759,6 @@ def build_model(
         head_graphs=dict(cfg.model.head_graphs),
         fourier_frequencies=cfg.model.fourier_frequencies,
         operator_ffn_mult=cfg.model.operator_ffn_mult,
-        operator_residual=cfg.model.operator_residual,
         n_parents=int(store.mark_parent.max(initial=0)) + 1
         if store.mark_parent.size
         else 1,
@@ -2267,9 +2272,6 @@ def train(
             "epoch": float(epoch),
             "train/loss": loss_sum / max(n_steps, 1),
         }
-        if cfg.model.operator_residual == "rezero":
-            logs["train/beta_attn"] = float(model.operator.beta_attn.detach())
-            logs["train/beta_ffn"] = float(model.operator.beta_ffn.detach())
         by_type: dict[str, list[float]] = defaultdict(list)
         for d, total in ds_sum.items():
             name = view.datasets[d]

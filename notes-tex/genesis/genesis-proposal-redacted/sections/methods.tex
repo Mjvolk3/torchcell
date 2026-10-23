@@ -75,7 +75,10 @@ TorchCell database.
 We will attempt to integrate HiGenLM with TorchCell. HiGenLM gene-level embeddings
 can replace or augment the sequence features currently used in TorchCell's
 supervised models for fitness, gene interaction, morphology, and expression
-prediction. By providing each gene node in TorchCell's graph database with a
+prediction. \correction{Correction (2026-10-22): the values we held for morphology
+and expression at the time of submission are now known to be in error, so the
+morphology and expression prediction claims here should not be relied on.} By
+providing each gene node in TorchCell's graph database with a
 HiGenLM-derived embedding giving TorchCell CGT models access to evolutionary and
 functional priors that sharply reduce the effective sample complexity for
 multi-phenotype prediction. Preliminary evidence from analogous integrations using

@@ -9,11 +9,10 @@
 * add: set 0 = ``[1 + 3, 2 + 4] = [4, 6]``, set 1 = ``[5, 6]``; outputs
   ``4 + 12 = 16`` and ``5 + 12 = 17``.
 * mean: set 0 = ``[2, 3]``, set 1 = ``[5, 6]``; outputs ``2 + 6 = 8`` and 17.
+* max: set 0 = ``[3, 4]``, set 1 = ``[5, 6]``; outputs ``3 + 8 = 11`` and 17.
 
 ``main`` is a print-only demo and is left uncovered.
 """
-
-import re
 
 import pytest
 import torch
@@ -48,7 +47,7 @@ def test_default_scatter_is_add() -> None:
 
     Weight ``[[1, 2]]``, bias 0 on the module fixture: set 0 sums to ``[4, 6]``, giving
     ``4 + 2 * 6 = 16``; set 1 is ``[5, 6]``, giving ``5 + 12 = 17``. A mean default
-    would give 8 for set 0, a max default would raise.
+    would give 8 for set 0, a max default 11.
     """
     model = SimpleLinearModel(2, 1)
     with torch.no_grad():
@@ -59,16 +58,14 @@ def test_default_scatter_is_add() -> None:
     )
 
 
-def test_max_scatter_crashes_on_the_argmax_tuple() -> None:
-    """Finding: ``scatter="max"`` cannot run.
+def test_max_scatter_takes_the_per_set_maximum() -> None:
+    """``scatter="max"`` runs since 2026-10-23 (PyG ``scatter(reduce="max")`` returns the
+    values; ``torch_scatter.scatter_max`` returned ``(values, argmax)`` and crashed).
 
-    ``torch_scatter.scatter_max`` returns ``(values, argmax)``; linear.py:37 assigns
-    the tuple to ``x`` and passes it to ``nn.Linear``, which refuses it. Pinned until
-    the branch keeps ``scatter_max(...)[0]``.
+    Set 0 maximum ``[3, 4]`` gives ``3 + 2 * 4 = 11``; set 1 ``[5, 6]`` gives 17.
     """
-    message = "linear(): argument 'input' (position 1) must be Tensor, not tuple"
-    with pytest.raises(TypeError, match=f"^{re.escape(message)}$"):
-        _model("max")(X, BATCH)
+    out = _model("max")(X, BATCH)
+    torch.testing.assert_close(out, torch.tensor([[11.0], [17.0]]), rtol=0.0, atol=0.0)
 
 
 def test_unknown_scatter_skips_aggregation_silently() -> None:

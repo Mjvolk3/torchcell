@@ -7,7 +7,7 @@
 
 import torch
 import torch.nn as nn
-from torch_scatter import scatter_add, scatter_max, scatter_mean
+from torch_geometric.utils import scatter
 
 
 class SimpleLinearModel(nn.Module):
@@ -30,11 +30,11 @@ class SimpleLinearModel(nn.Module):
         """Aggregate node features by batch and project to the output dimension."""
         # Aggregate the data
         if self.scatter == "add":
-            x = scatter_add(x, batch, dim=0)
+            x = scatter(x, batch, dim=0, reduce="sum")
         elif self.scatter == "mean":
-            x = scatter_mean(x, batch, dim=0)
+            x = scatter(x, batch, dim=0, reduce="mean")
         elif self.scatter == "max":
-            x = scatter_max(x, batch, dim=0)
+            x = scatter(x, batch, dim=0, reduce="max")
 
         # Process aggregated data through the linear layer
         x_set: torch.Tensor = self.linear(x)

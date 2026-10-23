@@ -7,7 +7,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_scatter import scatter_add
+from torch_geometric.utils import scatter
 
 from torchcell.models.act import act_register
 
@@ -167,7 +167,7 @@ class SelfAttentionDeepSet(nn.Module):
     ) -> tuple[torch.Tensor, torch.Tensor, list[list[torch.Tensor]]]:
         """Encode nodes, sum per graph, and return node, set, and attention."""
         x_node, attn_weights_list = self.node_layers_forward(x, batch)
-        x_summed = scatter_add(x_node, batch, dim=0)
+        x_summed = scatter(x_node, batch, dim=0, reduce="sum")
         x_set = self.set_layers_forward(x_summed)
         return x_node, x_set, attn_weights_list
 

@@ -24,11 +24,12 @@
 #
 # Overnight test queue (2026-10-22; two chains, afterany, budget matched to --time):
 #   chain 1 after 6136:
-#   sbatch --export=ALL,LOSS=pinball,TIME_BUDGET_HOURS=4.3 --job-name=043-train-pinball --time=04:40:00 --dependency=afterany:6136 .../gh_train_043_smoke.slurm
-#   sbatch --export=ALL,ARM=alone_kemmeren,MAX_STEPS=317300,EVAL_EVERY=42,TIME_BUDGET_HOURS=4.5 --job-name=043-train-alone-kem --time=04:50:00 --dependency=afterany:<pinball> .../gh_train_043_smoke.slurm
+#   sbatch --export=ALL,LOSS=pinball,TIME_BUDGET_HOURS=4.3,DEADLINE=1792758540 --job-name=043-train-pinball --time=04:40:00 --dependency=afterany:6136 .../gh_train_043_smoke.slurm
+#   sbatch --export=ALL,ARM=alone_kemmeren,MAX_STEPS=317300,EVAL_EVERY=42,TIME_BUDGET_HOURS=4.5,DEADLINE=1792758540 --job-name=043-train-alone-kem --time=04:50:00 --dependency=afterany:<pinball> .../gh_train_043_smoke.slurm
 #   chain 2 after 6137:
-#   sbatch --export=ALL,WEIGHTING=records,TIME_BUDGET_HOURS=4.3 --job-name=043-train-records --time=04:40:00 --dependency=afterany:6137 .../gh_train_043_smoke.slurm
-#   sbatch --export=ALL,LOSS=mse,TIME_BUDGET_HOURS=3.5 --job-name=043-train-mse --time=03:50:00 --dependency=afterany:<records> .../gh_train_043_smoke.slurm
+#   sbatch --export=ALL,WEIGHTING=records,TIME_BUDGET_HOURS=4.3,DEADLINE=1792758540 --job-name=043-train-records --time=04:40:00 --dependency=afterany:6137 .../gh_train_043_smoke.slurm
+#   (2b, LOSS=mse, dropped: 6137's balanced sampler runs 0.074 s per step, so chain 2
+#   reaches 2a only near 04:25 and the 10 h window ends 07:29; DEADLINE is that end)
 # MAX_STEPS=317300 is 50 epochs x 6,346 steps of joint_9 (job 6136, batch 8); Kemmeren
 # alone has 1,202 training records = 151 steps per epoch, so 2,102 epochs, evaluated every
 # 42 (about 50 evaluations).
@@ -64,6 +65,12 @@ SEED="${SEED:-0}"
 SAMPLER="${SAMPLER:-records}"
 # the trainer's own budget must match this job's --time (7.6 h for the 8 h default)
 TIME_BUDGET_HOURS="${TIME_BUDGET_HOURS:-7.6}"
+# DEADLINE (epoch seconds): the run must end by then; the trainer's budget becomes the
+# smaller of TIME_BUDGET_HOURS and the hours left, so the epoch count shrinks to fit
+if [ -n "${DEADLINE:-}" ]; then
+  LEFT=$(python -c "import time; print(round(max(0.1, (${DEADLINE} - time.time()) / 3600), 2))")
+  TIME_BUDGET_HOURS=$(python -c "print(min(${TIME_BUDGET_HOURS}, ${LEFT}))")
+fi
 EVAL_EVERY="${EVAL_EVERY:-1}"
 # step-matched alone runs: total optimizer steps of the joint run they control for
 STEPS_ARG=()

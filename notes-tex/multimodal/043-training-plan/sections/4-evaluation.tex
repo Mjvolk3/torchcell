@@ -1,0 +1,107 @@
+%% notes-tex/multimodal/043-training-plan/sections/4-evaluation.tex
+%% SOURCE: results/linear_evals_043.json, parts.<part>.panels.<panel>.folds.{1,0}: models.ridge_composite
+%% (deletion panels), gblup_kinship (isolates), ridge_parent_of_origin (segregants), with n_test;
+%% parts.vaishnav (kmer_1_6_ridge, folds 1 and 0) as quoted in the design review's t1-measured-rows;
+%% parts.doubles (job 6060); parts.morphology.inputs.token_composite (raw_all 0.121, residualized
+%% 0.083, fold-0-gene subgroup 0.137 over 459). Ohya 019 trained-head value from the datasets
+%% primer's output design (Sec. on the morphology probe). Split facts from the design review Sec. 5.1.
+
+\section{Evaluation\secstatus{todo}}
+\label{sec:evaluation}
+
+\subsection{Split, window and seeds\secstatus{todo}}
+\label{sec:evalsplit}
+
+Both stages use \file{conf/splits/global_split_v1.json} (\dsec{5.1}): fold 0 test, fold 1
+validation, the rest training, and the prepare stage drops fold 0 so its labels are never
+loaded during development. Each run reads its registered window, the last 20\% of its own
+epochs (\deq{28}): epochs 41 to 50 of a 50-epoch stage-1 run, epochs 169 to 210 of the main
+Kemmeren fine-tune. Validation is logged every evaluation and never selects an epoch. Seeds
+pair across stages: the stage-2 runs of seed $j$ start from the stage-1 run of seed $j$, and
+both of their from-scratch controls take seed $j$.
+
+\subsection{The decision rule\secstatus{todo}}
+\label{sec:rule}
+
+An arm is called better than its named control when the mean paired gain in the primary
+statistic's window mean is at least 0.02, the gain is positive in at least 5 of 6 paired
+seeds, and the 95\% interval of the gain, resampled over held-out strains (over genes for a
+per-gene statistic, over doubles for the doubles), excludes zero (\dsec{5.5}). The control is
+named before the first read: the stage-1 reference for every stage-1 contrast,
+$\mathrm{alone}(k_{\mathrm{tot}})$ and $\mathrm{alone}(k)$ for a fine-tune. The rule is
+committed as \file{conf/decision_rule.yaml} before the Polaris launch; at commit
+\texttt{f1cf262d2} it stands in the primer and the design review only. Eleven stage-1
+contrasts are each called under the rule, which does not adjust for their number; the
+single read of fold 0 at the end of the campaign is the check on the calls that survive.
+
+\subsection{Per-dataset statistics, with the fold-1 ladder beside fold 0\secstatus{todo}}
+\label{sec:perdataset}
+
+Every stage-1 run reports each dataset's statistic of \dsec{5.2} on fold 1, against the
+linear ladder of \file{results/linear_evals_043.json} on the same fold
+(Table~\ref{tab:ladder}). The ladder was first reported on fold 0; its fold-1 values train on
+fold 0 as well but score the same held-out units as the runs, so fold 1 is the column a run is
+read against during development and fold 0 the column it is read against once at the end.
+
+%% SOURCE: results/linear_evals_043.json (see the header of this file for the keys).
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{>{\raggedright\arraybackslash}p{30mm}>{\raggedright\arraybackslash}p{50mm}>{\raggedleft\arraybackslash}p{17mm}>{\raggedleft\arraybackslash}p{17mm}>{\raggedleft\arraybackslash}p{17mm}>{\raggedright\arraybackslash}p{38mm}}
+\caption[]{\textbf{Per-dataset statistics and the linear ladder, fold 1 beside fold 0.}
+Held-out units are fold-1 counts (fold 0 within two). Bars are the named linear model of
+\file{linear_evals_043.py} (jobs 6059 to 6067). A dash means no bar; ``inside zero'' marks a
+bar whose value is within noise of zero on a held-out set of fewer than 20 units.}\label{tab:ladder}\\
+\toprule
+Dataset & Statistic & Held-out units, n & Linear bar, fold 1 & Linear bar, fold 0 & Linear model of the bar \\
+\midrule
+\endfirsthead
+\toprule
+Dataset & Statistic & Held-out units, n & Linear bar, fold 1 & Linear bar, fold 0 & Linear model of the bar \\
+\midrule
+\endhead
+Kemmeren 2014 & median per-gene Pearson $r$ & 140 & 0.131 & 0.125 & ridge, composite token of the deleted gene \\
+Hu 2007 & median per-gene Pearson $r$ & 19 & $-$0.006 & $-$0.023 & same; inside zero \\
+Jackson 2020 & median per-gene Pearson $r$ of the effect against HO & -- & -- & -- & none computed \\
+Nadal-Ribelles 2025, environment 0 & median per-gene Pearson $r$ & 298 & 0.076 & 0.088 & ridge, composite token \\
+Nadal-Ribelles 2025, environment 1 & median per-gene Pearson $r$ & 297 & 0.062 & 0.065 & ridge, composite token \\
+Messner 2023 & median per-gene Pearson $r$ & 441 & 0.082 & 0.083 & ridge, composite token \\
+Zelezniak 2018 & median per-gene Pearson $r$ & 9 & 0.022 & $-$0.117 & ridge, composite token; inside zero \\
+Caudal 2024 & median per-gene Pearson $r$ & 189 & 0.372 & 0.369 & GBLUP, kinship from gene-level calls \\
+Muenzner 2024 protein & median per-gene Pearson $r$ & 159 & 0.471 & 0.423 & GBLUP \\
+Muenzner 2024 turnover & median per-gene Pearson $r$ & 11 & 0.113 & $-$0.025 & GBLUP; inside zero \\
+Boocock 2025 pooled & median per-gene Pearson $r$ & 79 & 0.064 & 0.058 & ridge on parent of origin \\
+N'Guessan 2025 & median per-gene Pearson $r$ & 591 & 0.122 & 0.155 & ridge on parent of origin \\
+Vaishnav 2022 & Pearson $r$ over promoters & 14{,}208 & 0.885 & 0.884 & ridge, $k$-mer counts ($k$ 1 to 6) \\
+Sameith 2015 doubles & median centered per-double Pearson $r$ (\deq{26}) & 72 & 0.440 / 0.494 & same set & additive measured / fitted, leave one out \\
+Ohya 2005 (probe) & median over 116 moving features of the out-of-fold Pearson $r$ & 4{,}678 & 0.121 & -- & ridge, composite token; 5-fold over genotypes \\
+\bottomrule
+\end{longtable}
+\endgroup
+
+The centered per-strain Pearson (\deq{25}) is reported beside the per-gene statistic for
+every gene-level dataset, with the raw value and Kemmeren's 0.284 different-mutant floor beside
+any raw number (primer S4).
+
+\subsection{The Ohya probe\secstatus{todo}}
+\label{sec:ohya}
+
+Ohya 2005 enters no training. For each of its 4{,}678 genotypes the frozen model produces the
+perturbed gene state, the mark summary and the mean perturbed state; ridge regressions from
+each and from their concatenation predict the 116 moving CalMorph features, 5-fold over
+genotypes, raw and residualized on growth (primer S6). The statistic is the median over the
+116 features of the out-of-fold Pearson correlation, with the subgroup of genotypes whose gene
+is in fold 0 (459) reported as the strictly inductive read. The bar is the same ridge on the
+frozen composite token: 0.121 raw, 0.083 residualized, 0.137 on the fold-0-gene subgroup; the
+019 trained head read $0.149 \pm 0.022$. The probe is not wired into the trainer; it runs as a
+CPU job on the window-end checkpoints of every stage-1 and stage-2 run, so it costs no card
+time and reads how much morphology the representation carries before and after fine-tuning.
+
+\subsection{The route consistency readout\secstatus{todo}}
+\label{sec:routeread}
+
+For each seed of the route-B arm and the stage-1 reference of the same seed,
+Eq.~\ref{eq:routecons} is computed on the fold-1 isolates of Caudal and of Muenzner protein and
+reported as three medians: $\rho_b$, $r^{A}_b$ and $r^{B}_b$. The readout decides nothing alone;
+it qualifies the route contrast, since a route-B gain with a low $\rho_b$ is a different function
+of the genotype rather than a better reading of the same one.

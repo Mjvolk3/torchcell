@@ -246,3 +246,17 @@ counts overlap.
 Time projections (hypothesis from token mass, linear in tokens; attention makes the long tail
 slower): CaLM 3.17e8 codon tokens left after the first 45,329 inputs, about 1.8 h; ProtT5 2.16e8
 residue tokens left after the first 77,522, about 2.4 h.
+
+### Outcome (2026-10-22 evening)
+
+- Job A 6127 COMPLETED in 3:12:40: FUDT downstream 358,838 rows, CaLM 576,007 rows in
+  10,213 s (56.4 per s overall). Resume 6131 found nothing left (36 s).
+- Job B 6138 COMPLETED in 5:41:02: ProtT5 366,429 rows in 20,454 s (17.9 per s overall).
+  Resume 6139 found nothing left (30 s).
+- Correction: the token-mass projections above (CaLM about 1.8 h, ProtT5 about 2.4 h) were
+  low; the long inputs at the end ran far slower per token than the short ones measured first.
+- Verify 6135 (1:44) PASSED with `embedding_complete: true`: every row with an input has an
+  embedding row (FUDT upstream 5,570,717, FUDT downstream 5,685,119, CaLM 4,882,463, ProtT5
+  5,171,524) and every other row carries a typed gap (`results/compute_isolate_composite_verify.json`).
+- Smoke 6136 passed the trainer's key check and is training (0.035 s per step, 3.7 min per
+  epoch of training by its 30-step probe); 6137 (balanced) queues behind it.

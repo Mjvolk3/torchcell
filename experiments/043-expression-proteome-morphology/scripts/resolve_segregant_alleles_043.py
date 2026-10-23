@@ -51,6 +51,7 @@ from pydantic import BaseModel, ConfigDict
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
 import representation_043 as rep  # noqa: E402
 from dataset_043 import RAW_INDEX_NAME, Dataset043Config  # noqa: E402
+from store_version_043 import active as active_store  # noqa: E402
 
 from torchcell.data.representation_043 import (  # noqa: E402
     ContextTables,
@@ -271,6 +272,7 @@ def main() -> None:
         "created_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
         "wall_seconds": round(time.time() - t0, 1),
+        "store_version": active_store().version,
         "rule": "whole-gene containment in one confident run (consecutive blocks of "
         "one parent, every block posterior >= 0.9); single_block = the literal "
         "one-block form",
@@ -294,10 +296,10 @@ def main() -> None:
         "distinct_parent_alleles_used": distinct,
     }
     res = Path(osp.dirname(osp.dirname(osp.abspath(__file__)))) / "results"
-    name = (
-        "resolve_segregant_alleles_043.json"
+    name = active_store().result_name(
+        "resolve_segregant_alleles_043"
         if args.limit is None
-        else "resolve_segregant_alleles_043_smoke.json"
+        else "resolve_segregant_alleles_043_smoke"
     )
     (res / name).write_text(json.dumps(summary, indent=1))
     print(json.dumps(summary["per_dataset"], indent=1))

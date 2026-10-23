@@ -36,6 +36,7 @@ import hashlib
 import json
 import os
 import os.path as osp
+import sys
 import time
 from collections import Counter
 from typing import Any
@@ -44,14 +45,16 @@ import lmdb
 import numpy as np
 from dotenv import load_dotenv
 
-from torchcell.datasets.scerevisiae.messner2023 import (
+sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
+from store_version_043 import active as active_store  # noqa: E402
+
+from torchcell.datasets.scerevisiae.messner2023 import (  # noqa: E402
     build_orf_to_gene_name_map,
     build_uniprot_to_orf_map,
 )
 from torchcell.utils.paths import experiment_results_dir
 
 EXPERIMENT = "043-expression-proteome-morphology"
-STORE_TAG = "raw_043"
 HEAD_BYTES = 300
 RAW_INDEX_NAME = "raw_dataset_name_index.json"
 
@@ -78,8 +81,12 @@ PHENOTYPE_CLASS: dict[str, str] = {
 
 
 def store_root(data_root: str) -> str:
-    """``$DATA_ROOT/data/torchcell/experiments/<EXPERIMENT>/raw_043``."""
-    return osp.join(data_root, "data/torchcell/experiments", EXPERIMENT, STORE_TAG)
+    """``$DATA_ROOT/data/torchcell/experiments/<EXPERIMENT>/<raw tag>`` of the active
+    store generation (``store_version_043``; ``raw_043`` for v1).
+    """
+    return osp.join(
+        data_root, "data/torchcell/experiments", EXPERIMENT, active_store().raw_tag
+    )
 
 
 def dataset_name_from_head(head: bytes) -> str:
@@ -531,7 +538,10 @@ def main() -> None:
         },
         "datasets": summaries,
     }
-    out = osp.join(experiment_results_dir(EXPERIMENT, __file__), "data_shapes_043.json")
+    out = osp.join(
+        experiment_results_dir(EXPERIMENT, __file__),
+        active_store().result_name("data_shapes_043"),
+    )
     with open(out, "w") as f:
         json.dump(payload, f, indent=1)
     print(markdown(summaries))

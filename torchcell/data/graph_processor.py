@@ -6,7 +6,7 @@
 # Test file: tests/torchcell/data/test_graph_processor.py
 
 from abc import ABC, abstractmethod
-from typing import Any, cast
+from typing import Any, Protocol, cast
 
 import torch
 from torch_geometric.utils import k_hop_subgraph
@@ -1988,17 +1988,87 @@ class Unperturbed(GraphProcessor):
         return processed_graph
 
 
+class ReleasedNameResolverLike(Protocol):
+    """What :class:`Perturbation` needs of a released-name resolver.
+
+    :class:`torchcell.datasets.gene_alias_resolution.ReleasedNameResolver` is the
+    implementation; the protocol keeps this module free of the datasets package.
+    """
+
+    gene_set: set[str]
+
+    def resolve(self, name: str) -> tuple[str | None, str, str]:
+        """``(ORF or None, rule, detail)`` for one released name."""
+        ...
+
+
+def _is_deletion_kind(perturbation_type: str) -> bool:
+    """A placed deletion leaf or the released-identifier leaf (released kind deletion
+    in every yeast loader that writes it); a gene addition or an allele is not resolved.
+    """
+    return (
+        perturbation_type.endswith("deletion")
+        or perturbation_type == "released_identifier"
+    )
+
+
 class Perturbation(GraphProcessor):
     """Store only perturbation-specific information without duplicating the graph.
 
     Uses COO format for phenotypes and does not copy the base graph structure.
+
+    ``released_name_resolver`` (2026-10-23): a loader stores a deleted gene under the
+    name its source released (#1045), and a source that names the gene by SYMBOL puts
+    that symbol in ``systematic_gene_name`` on ``ReleasedIdentifierPerturbation``
+    (3,592 of Cachera 2023's 4,759 strains). This processor matches that field exactly
+    against ``cell_graph["gene"].node_ids``, so without a resolver such a record has no
+    perturbed gene and no error. With one, every deletion-kind perturbation whose name is
+    not a gene node is resolved to its R64 ORF before the match; a name the resolver
+    refuses stays unmapped and is listed, with its reason, on
+    ``processed_graph["gene"].unresolved_perturbations``, so a trainer can exclude the
+    record explicitly instead of training on it as a wild type. Without a resolver the
+    output is unchanged from before, attribute for attribute.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self, released_name_resolver: ReleasedNameResolverLike | None = None
+    ) -> None:
         """Initialize the CPU device used for tensor construction."""
         super().__init__()
         # Always use CPU for pin_memory compatibility
         self.device = torch.device("cpu")
+        self.released_name_resolver = released_name_resolver
+
+    def _resolve_released_names(
+        self, experiment: Experiment
+    ) -> tuple[Experiment, list[str]]:
+        """The experiment with released deletion names resolved, and the refusals."""
+        resolver = self.released_name_resolver
+        assert resolver is not None
+        perturbations = getattr(experiment.genotype, "perturbations", None)
+        if not perturbations:
+            return experiment, []
+        resolved: list[Any] = []
+        refused: list[str] = []
+        changed = False
+        for p in perturbations:
+            name = p.systematic_gene_name
+            if name in resolver.gene_set or not _is_deletion_kind(p.perturbation_type):
+                resolved.append(p)
+                continue
+            orf, _rule, detail = resolver.resolve(name)
+            if orf is None:
+                refused.append(f"{name}: {detail}")
+                resolved.append(p)
+                continue
+            # Frozen pydantic models: a copy with the ORF in place of the symbol; the
+            # stored record is untouched.
+            resolved.append(p.model_copy(update={"systematic_gene_name": orf}))
+            changed = True
+        if not changed:
+            return experiment, refused
+        genotype = experiment.genotype.model_copy(update={"perturbations": resolved})
+        return experiment.model_copy(update={"genotype": genotype}), refused
 
     def process(
         self,
@@ -2011,6 +2081,19 @@ class Perturbation(GraphProcessor):
         """Store perturbation and phenotype data in COO format without copying the graph."""
         if not data:
             raise ValueError("Data list is empty")
+
+        unresolved: list[str] = []
+        if self.released_name_resolver is not None:
+            resolved_data: list[
+                dict[str, ExperimentType | ExperimentReferenceType]
+            ] = []
+            for item in data:
+                experiment, refused = self._resolve_released_names(
+                    cast(Experiment, item["experiment"])
+                )
+                resolved_data.append({**item, "experiment": experiment})
+                unresolved.extend(refused)
+            data = resolved_data
 
         # Always use CPU for pin_memory compatibility
         # The model will handle moving tensors to GPU after DataLoader
@@ -2062,6 +2145,9 @@ class Perturbation(GraphProcessor):
 
         # Add phenotype data in COO format
         self._add_phenotype_data(processed_graph, phenotype_info, data)
+        if self.released_name_resolver is not None:
+            # Only with a resolver, so a cell built without one is unchanged.
+            processed_graph["gene"].unresolved_perturbations = unresolved
 
         return processed_graph
 

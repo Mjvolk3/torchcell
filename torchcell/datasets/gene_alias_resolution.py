@@ -36,6 +36,17 @@ owner does not repeat it in its own ``Alias`` list.
 :func:`check_ambiguous_aliases` is the build-time check: given the (source name, stored
 systematic name) pairs a loader is about to write, it refuses the build when any pair's
 source name is ambiguous and the stored ORF is not the one its pin records.
+
+:class:`ReleasedNameResolver` is the READ-time half (2026-10-23). A loader that stores a
+released symbol on ``ReleasedIdentifierPerturbation`` (Cachera 2023 names 3,592 of its 4,759
+strains by symbol, ``ADE2``) leaves ``systematic_gene_name`` holding that symbol, and the
+graph processor matches that field exactly against the gene nodes, so without this step the
+record has no perturbed gene and no error. The resolver applies the strict rule above, then
+the ``SGD_STANDARD_NAME`` rule generically (an ambiguous name that exactly one live ORF
+carries as its SGD standard name resolves to that ORF, the way a deletion collection names
+its strains), and otherwise refuses; every outcome is counted and a refusal travels on the
+processed record as a listed name, never as a dropped record. The 046 build measured
+3,511 strict, 75 by the standard-name rule and 6 refusals over Cachera's symbols.
 """
 
 from collections.abc import Iterable, Mapping
@@ -310,3 +321,78 @@ def check_ambiguous_aliases(
             )
         ambiguous[n] = stored
     return AmbiguousAliasAudit(n_pairs=n_pairs, ambiguous=ambiguous)
+
+
+RULE_STRICT = "strict"
+RULE_SGD_STANDARD_NAME = "sgd_standard_name"
+RULE_REFUSED = "refused"
+
+
+def is_deletion_kind(perturbation_type: str) -> bool:
+    """A placed deletion leaf, or the released-identifier leaf.
+
+    Every loader that writes the released-identifier leaf for a yeast deletion collection
+    writes ``released_kind`` deletion (Cachera 2023, Mulleder 2016, Messner 2023, Zelezniak
+    2018, Nadal-Ribelles 2025); the served perturbation node carries no ``released_kind``
+    property, so the type is what a query and a reader can test. A gene addition or an
+    allele is not a name to resolve.
+    """
+    return (
+        perturbation_type.endswith("deletion")
+        or perturbation_type == "released_identifier"
+    )
+
+
+class ReleasedNameResolver:
+    """Released gene name -> ``(ORF or None, rule, detail)``, memoized per name.
+
+    ``rule`` is :data:`RULE_STRICT` (a live systematic name, or exactly one candidate ORF),
+    :data:`RULE_SGD_STANDARD_NAME` (several candidates, exactly one of which carries the
+    name as its SGD standard name) or :data:`RULE_REFUSED` (``detail`` carries the typed
+    reason and the candidates). ``outcomes`` counts every DISTINCT name by rule.
+    """
+
+    def __init__(self, genome: GenomeNameIndex) -> None:
+        """Index the genome once; every lookup after that is a dict hit."""
+        self.genome = genome
+        self.gene_set: set[str] = set(genome.gene_set)
+        self._cache: dict[str, tuple[str | None, str, str]] = {}
+        self.outcomes: dict[str, int] = {}
+
+    def resolve(self, name: str) -> tuple[str | None, str, str]:
+        """Resolve one released name; the rule names how, the detail says why."""
+        key = name.strip().upper()
+        if key in self._cache:
+            return self._cache[key]
+        out: tuple[str | None, str, str]
+        if key in self.gene_set:
+            out = (key, RULE_STRICT, "live systematic name")
+        else:
+            try:
+                out = (
+                    resolve_gene_name_strict(self.genome, key, pins={}),
+                    RULE_STRICT,
+                    "single candidate ORF",
+                )
+            except GeneNameRefused as refused:
+                candidates = candidate_orfs(self.genome, key)
+                owners = sorted(
+                    orf
+                    for orf in self.genome.feature_index["standard_to_ids"].get(key, [])
+                    if orf in self.gene_set
+                )
+                if len(candidates) > 1 and len(owners) == 1:
+                    out = (
+                        owners[0],
+                        RULE_SGD_STANDARD_NAME,
+                        f"ambiguous among {candidates}; SGD standard name of {owners[0]}",
+                    )
+                else:
+                    out = (
+                        None,
+                        RULE_REFUSED,
+                        f"{refused.refusal.reason.value}; candidates {candidates}",
+                    )
+        self._cache[key] = out
+        self.outcomes[out[1]] = self.outcomes.get(out[1], 0) + 1
+        return out

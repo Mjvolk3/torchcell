@@ -47,9 +47,13 @@ The pieces, in forward order:
     (accessory ORFs, the Vaishnav reporter) are the projection alone. One learned NULL
     key with a zero value is always present, so a record without marks attends to it
     and the softmax over a single real mark is not degenerate (019's null sink). The
-    residual is ReZero, ``h + beta_attn * attn`` then ``x + beta_ffn * FFN(x)`` with both
-    betas initialized to zero, the 019 operator's ``residual="rezero"``. ``z_S`` is the
-    mean of the mark keys (zero for a record without marks).
+    residual is ``config.operator_residual``: ``plain`` (the default since 2026-10-23) is the
+    trunk's post-norm residual, ``LN(h + attn)`` then ``LN(x + FFN(x))``; ``rezero`` (kept
+    only as a control) is ``h + beta_attn * attn`` then ``x + beta_ffn * FFN(x)`` with both
+    betas initialized to zero, the 019 operator's ``residual="rezero"``. In eval mode the
+    operator records how large its branches are against the context it updates
+    (:attr:`MarkOperator043.last_norms`). ``z_S`` is the mean of the mark keys (zero for a
+    record without marks).
 
 ``CellModel043``
     Binds the above and the heads of O1/O3: a gene-level head ``f([H_g ; t])`` shared by
@@ -112,6 +116,7 @@ from torchcell.models.readout_heads_043 import (
 )
 
 LossKind = Literal["hlgauss", "pinball", "mse"]
+OperatorResidual = Literal["plain", "rezero"]
 
 #: The composite encoders in key-column order, and their widths.
 ENCODER_DIMS: tuple[int, int, int, int] = (768, 768, 1024, 768)
@@ -213,6 +218,7 @@ class CellModel043Config(BaseModel):
     head_graphs: dict[int, str] = Field(default_factory=dict)
     fourier_frequencies: int = Field(default=8, gt=0)
     operator_ffn_mult: int = Field(default=4, gt=0)
+    operator_residual: OperatorResidual = "plain"
     n_parents: int = Field(ge=1, description="allele-parent rows; row 0 = no parent")
     n_datasets: int = Field(gt=0)
     n_envs: int = Field(gt=0)
@@ -478,14 +484,27 @@ class CellTrunk043(nn.Module):
 
 
 class MarkOperator043(nn.Module):
-    """Every context token queries the record's marks plus a null key; ReZero residual."""
+    """Every context token queries the record's marks plus a null key.
+
+    ``operator_residual`` picks the residual (module docstring): ``plain`` post-norm, as
+    the trunk, or ``rezero`` with two zero-initialized gates. In eval mode ``last_norms``
+    holds, for the last forward, the mean over records and tokens of
+
+    * ``attn``: the attention branch as added, ``|g_a * attn| / |H|``;
+    * ``ffn``: the FFN branch as added, ``|g_f * FFN(H1)| / |H1|``;
+    * ``update``: the whole change, ``|H_out - H| / |H|``;
+
+    with ``g`` the beta gate under ``rezero`` and 1 under ``plain``. ``attn`` is the
+    operator-liveness statistic the trainer logs as ``operator/relative_norm``.
+    """
 
     def __init__(self, config: CellModel043Config) -> None:
-        """Q/K/V/O projections, the null key, the FFN and the two ReZero gates."""
+        """Q/K/V/O projections, the null key, the FFN and the residual's parameters."""
         super().__init__()
         d, h = config.hidden_dim, config.num_heads
         self.num_heads = h
         self.head_dim = d // h
+        self.residual: OperatorResidual = config.operator_residual
         self.q_proj = nn.Linear(d, d)
         self.k_proj = nn.Linear(d, d)
         self.v_proj = nn.Linear(d, d)
@@ -499,8 +518,20 @@ class MarkOperator043(nn.Module):
         )
         self.dropout = nn.Dropout(config.dropout)
         self.p_drop = config.dropout
-        self.beta_attn = nn.Parameter(torch.zeros(1))
-        self.beta_ffn = nn.Parameter(torch.zeros(1))
+        if self.residual == "rezero":
+            self.beta_attn = nn.Parameter(torch.zeros(1))
+            self.beta_ffn = nn.Parameter(torch.zeros(1))
+        else:
+            self.norm1 = nn.LayerNorm(d)
+            self.norm2 = nn.LayerNorm(d)
+        self.last_norms: dict[str, torch.Tensor] = {}
+
+    @staticmethod
+    def _ratio(num: torch.Tensor, den: torch.Tensor) -> torch.Tensor:
+        """Mean over records and tokens of the row-norm ratio ``|num| / |den|``."""
+        n = num.float().norm(dim=-1)
+        dd = den.float().norm(dim=-1).clamp_min(1e-12)
+        return cast(torch.Tensor, (n / dd).mean().detach())
 
     def forward(
         self, H: torch.Tensor, keys: torch.Tensor, valid: torch.Tensor
@@ -522,8 +553,23 @@ class MarkOperator043(nn.Module):
             q, k, v, attn_mask=allowed, dropout_p=self.p_drop if self.training else 0.0
         )
         out = self.out_proj(attn.transpose(1, 2).reshape(B, N, d))
-        H1 = H + self.beta_attn * self.dropout(out)
-        return cast(torch.Tensor, H1 + self.beta_ffn * self.dropout(self.ffn(H1)))
+        if self.residual == "rezero":
+            a = self.beta_attn * self.dropout(out)
+            H1 = H + a
+            f = self.beta_ffn * self.dropout(self.ffn(H1))
+            H2 = H1 + f
+        else:
+            a = self.dropout(out)
+            H1 = self.norm1(H + a)
+            f = self.dropout(self.ffn(H1))
+            H2 = self.norm2(H1 + f)
+        if not self.training:
+            self.last_norms = {
+                "attn": self._ratio(a, H),
+                "ffn": self._ratio(f, H1),
+                "update": self._ratio(H2 - H, H),
+            }
+        return cast(torch.Tensor, H2)
 
 
 # --------------------------------------------------------------------------- #

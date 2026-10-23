@@ -591,3 +591,40 @@ def test_validation_loss_is_the_training_objective(
     else:
         lo, hi = min(per_ds.values()), max(per_ds.values())
         assert lo - 1e-9 <= last["val/loss"] <= hi + 1e-9
+
+
+@pytest.mark.parametrize("residual", ["plain", "rezero"])
+def test_operator_residual_and_relative_norm_logged(
+    tr: ModuleType, world: dict[str, Any], residual: str
+) -> None:
+    """``model.operator_residual`` picks the residual; ``operator/relative_norm`` is
+    logged at every evaluation; the beta gates exist (and are logged) only under rezero.
+    """
+    base = _cfg(tr, world["root"], "hlgauss")
+    cfg = base.model_copy(
+        update={"model": base.model.model_copy(update={"operator_residual": residual})}
+    )
+    assert (
+        tr.TrainConfig043.model_validate(
+            {**base.model_dump(), "model": {**base.model.model_dump()}}
+        ).model.operator_residual
+        == "plain"
+    )  # the default
+    suffix = "_rezero" if residual == "rezero" else ""
+    assert cfg.run_name == f"joint_test_hlgauss_equal{suffix}_s0"
+    logger = tr.MemoryLogger()
+    result = tr.train(cfg, world["store"], tr.h5_vector_source(cfg.paths), logger)
+    last = result.last_metrics
+    for k in (
+        "operator/relative_norm",
+        "operator/ffn_relative_norm",
+        "operator/update_relative_norm",
+    ):
+        assert np.isfinite(last[k])
+    if residual == "plain":
+        assert last["operator/relative_norm"] > 0.0
+        assert "train/beta_attn" not in last
+    else:
+        assert "train/beta_attn" in last and "train/beta_ffn" in last
+        # two steps from zero-initialized gates: the branch is still nearly shut
+        assert last["operator/relative_norm"] < 0.05

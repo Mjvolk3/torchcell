@@ -353,6 +353,11 @@ class ModelConfig(BaseModel):
     )
     fourier_frequencies: int = 8
     operator_ffn_mult: int = 4
+    operator_residual: Literal["plain", "rezero"] = Field(
+        default="plain",
+        description="plain: the trunk's post-norm residual (default since 2026-10-23); "
+        "rezero: zero-initialized beta gates, kept only as a control",
+    )
     type_token_dim: int = 16
     env_token_dim: int = 16
     dataset_token_dim: int = 8
@@ -496,9 +501,17 @@ class TrainConfig043(BaseModel):
 
     @property
     def arm_label(self) -> str:
-        """``<arm>_<loss>_<weighting>``: the W&B group."""
+        """``<arm>[_balanced]_<loss>_<weighting>[_rezero]``: the W&B group.
+
+        ``_rezero`` marks the ReZero operator control; the plain residual is unmarked. The
+        overnight runs of 2026-10-22 were ReZero under the unmarked name (it was the only
+        residual then).
+        """
         sampler = "_balanced" if self.data.sampler == "balanced" else ""
-        return f"{self.arm.name}{sampler}_{self.loss.kind}_{self.weighting.kind}"
+        rezero = "_rezero" if self.model.operator_residual == "rezero" else ""
+        return (
+            f"{self.arm.name}{sampler}_{self.loss.kind}_{self.weighting.kind}{rezero}"
+        )
 
     @property
     def run_name(self) -> str:
@@ -1473,6 +1486,7 @@ def build_model(
         head_graphs=dict(cfg.model.head_graphs),
         fourier_frequencies=cfg.model.fourier_frequencies,
         operator_ffn_mult=cfg.model.operator_ffn_mult,
+        operator_residual=cfg.model.operator_residual,
         n_parents=int(store.mark_parent.max(initial=0)) + 1
         if store.mark_parent.size
         else 1,
@@ -1605,12 +1619,17 @@ def predict(
     rec_pred = np.full(len(positions), np.nan, np.float32)
     acc_hits = acc_n = 0.0
     ent_sum = ent_n = 0.0
+    op_sums: dict[str, float] = defaultdict(float)
+    op_n = 0
     cursor = 0
     for batch, tg in batch_loader(view, positions, batch_size, None, num_workers):
         b = batch.to(device)
         with _autocast(device):
             out = model(b, tg.gene_rows.to(device), tg.record_rows.to(device))
         B = len(tg.dataset_ids)
+        for k, v in model.operator.last_norms.items():
+            op_sums[k] += float(v) * B
+        op_n += B
         if weighting is not None:
             s_, c_, n_ = loss_sums(
                 out.gene.float(), out.record.float(), tg, objective, n_ds
@@ -1653,6 +1672,7 @@ def predict(
         "gene": gene_pred,
         "record": rec_pred,
         "extra": extra,
+        "operator": {k: v / op_n for k, v in op_sums.items()} if op_n else {},
         "loss": loss,
         "dataset_loss": dataset_loss,
     }
@@ -1737,6 +1757,16 @@ def evaluate(
             logs[f"{prefix}/{t}/{k}"] = float(arr.mean()) if arr.size else float("nan")
     for k, v in pred["extra"].items():
         logs[f"{prefix}/{k}"] = v
+    if prefix == "val":
+        # is the operator live: its branches against the context they update, over the
+        # validation pass (MarkOperator043.last_norms; record-weighted mean of batches)
+        names = {
+            "attn": "relative_norm",
+            "ffn": "ffn_relative_norm",
+            "update": "update_relative_norm",
+        }
+        for k, v in pred["operator"].items():
+            logs[f"operator/{names[k]}"] = v
     return logs
 
 
@@ -1941,9 +1971,10 @@ def train(
         logs: dict[str, float] = {
             "epoch": float(epoch),
             "train/loss": loss_sum / max(n_steps, 1),
-            "train/beta_attn": float(model.operator.beta_attn.detach()),
-            "train/beta_ffn": float(model.operator.beta_ffn.detach()),
         }
+        if cfg.model.operator_residual == "rezero":
+            logs["train/beta_attn"] = float(model.operator.beta_attn.detach())
+            logs["train/beta_ffn"] = float(model.operator.beta_ffn.detach())
         by_type: dict[str, list[float]] = defaultdict(list)
         for d, total in ds_sum.items():
             name = view.datasets[d]
@@ -1999,6 +2030,7 @@ def train(
                         "val/protein/pearson_per_gene",
                         "val/promoter/pearson",
                         "val/doubles/pearson",
+                        "operator/relative_norm",
                     )
                 )
             ),

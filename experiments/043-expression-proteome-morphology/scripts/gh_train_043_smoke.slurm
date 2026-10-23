@@ -22,6 +22,17 @@
 # Dataset-balanced sampler (data.sampler=balanced; W&B group joint_9_balanced_hlgauss_equal):
 #   sbatch --export=ALL,SAMPLER=balanced --job-name=043-train-smoke-bal --dependency=afterany:6122 .../gh_train_043_smoke.slurm
 #
+# Overnight test queue (2026-10-22; two chains, afterany, budget matched to --time):
+#   chain 1 after 6136:
+#   sbatch --export=ALL,LOSS=pinball,TIME_BUDGET_HOURS=4.3 --job-name=043-train-pinball --time=04:40:00 --dependency=afterany:6136 .../gh_train_043_smoke.slurm
+#   sbatch --export=ALL,ARM=alone_kemmeren,MAX_STEPS=317300,EVAL_EVERY=42,TIME_BUDGET_HOURS=4.5 --job-name=043-train-alone-kem --time=04:50:00 --dependency=afterany:<pinball> .../gh_train_043_smoke.slurm
+#   chain 2 after 6137:
+#   sbatch --export=ALL,WEIGHTING=records,TIME_BUDGET_HOURS=4.3 --job-name=043-train-records --time=04:40:00 --dependency=afterany:6137 .../gh_train_043_smoke.slurm
+#   sbatch --export=ALL,LOSS=mse,TIME_BUDGET_HOURS=3.5 --job-name=043-train-mse --time=03:50:00 --dependency=afterany:<records> .../gh_train_043_smoke.slurm
+# MAX_STEPS=317300 is 50 epochs x 6,346 steps of joint_9 (job 6136, batch 8); Kemmeren
+# alone has 1,202 training records = 151 steps per epoch, so 2,102 epochs, evaluated every
+# 42 (about 50 evaluations).
+#
 # --mem: host-side peak is the prepared store (measured at prepare time) plus one encoder's
 # full h5 embedding array while the compact table is gathered (FUDT upstream 1.21 M x 768
 # fp16 = 1.9 GB) plus the compact tables before they move to the card (about 5.8 GB if every
@@ -51,12 +62,19 @@ LOSS="${LOSS:-hlgauss}"
 WEIGHTING="${WEIGHTING:-equal}"
 SEED="${SEED:-0}"
 SAMPLER="${SAMPLER:-records}"
+# the trainer's own budget must match this job's --time (7.6 h for the 8 h default)
+TIME_BUDGET_HOURS="${TIME_BUDGET_HOURS:-7.6}"
+EVAL_EVERY="${EVAL_EVERY:-1}"
+# step-matched alone runs: total optimizer steps of the joint run they control for
+STEPS_ARG=()
+if [ -n "${MAX_STEPS:-}" ]; then STEPS_ARG=("budget.max_steps=${MAX_STEPS}"); fi
 echo "host $(hostname)  commit $(git rev-parse --short HEAD)  $(date)"
-echo "arm $ARM  loss $LOSS  weighting $WEIGHTING  sampler $SAMPLER  seed $SEED"
+echo "arm $ARM  loss $LOSS  weighting $WEIGHTING  sampler $SAMPLER  seed $SEED  max_steps ${MAX_STEPS:-none}  eval_every $EVAL_EVERY  budget ${TIME_BUDGET_HOURS} h"
 nvidia-smi --query-gpu=index,name,memory.total,memory.used --format=csv
 python experiments/043-expression-proteome-morphology/scripts/train_043.py \
   arm="$ARM" loss="$LOSS" weighting="$WEIGHTING" seed="$SEED" \
   data.batch_size=8 data.num_workers=4 data.sampler="$SAMPLER" \
-  budget.max_epochs=50 budget.time_budget_hours=7.6 budget.time_margin_minutes=20 \
+  budget.max_epochs=50 budget.time_budget_hours="$TIME_BUDGET_HOURS" budget.time_margin_minutes=20 \
+  budget.eval_every_epochs="$EVAL_EVERY" "${STEPS_ARG[@]}" \
   "wandb.tags=[smoke]"
 echo "done $(date)"

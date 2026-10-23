@@ -1,0 +1,48 @@
+diff -ru a/experiments/043-expression-proteome-morphology/scripts/train_043.py b/experiments/043-expression-proteome-morphology/scripts/train_043.py
+--- a/experiments/043-expression-proteome-morphology/scripts/train_043.py	2026-10-23 10:18:51.712509198 -0500
++++ b/experiments/043-expression-proteome-morphology/scripts/train_043.py	2026-10-23 10:18:51.733509599 -0500
+@@ -543,7 +543,7 @@
+     model_config = ConfigDict(extra="forbid", frozen=True)
+ 
+     seed: int = 0
+-    device: Literal["auto", "cpu", "cuda"] = "auto"
++    device: Literal["auto", "cpu", "cuda", "xpu"] = "auto"
+     init_from: str | None = Field(
+         default=None,
+         description="stage 2: a stage-1 checkpoint (.pt) whose MODEL weights initialize "
+@@ -1598,7 +1598,11 @@
+ 
+ def _device(cfg: TrainConfig043) -> torch.device:
+     if cfg.device == "auto":
+-        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
++        if torch.cuda.is_available():
++            return torch.device("cuda")
++        if torch.xpu.is_available():
++            return torch.device("xpu")
++        return torch.device("cpu")
+     return torch.device(cfg.device)
+ 
+ 
+@@ -1908,8 +1912,8 @@
+ 
+ 
+ def _autocast(device: torch.device) -> Any:
+-    if device.type == "cuda":
+-        return torch.autocast(device_type="cuda", dtype=torch.bfloat16)
++    if device.type in ("cuda", "xpu"):
++        return torch.autocast(device_type=device.type, dtype=torch.bfloat16)
+     return torch.autocast(device_type="cpu", enabled=False)
+ 
+ 
+diff -ru a/torchcell/data/graph_processor.py b/torchcell/data/graph_processor.py
+--- a/torchcell/data/graph_processor.py	2026-10-23 10:18:51.704509045 -0500
++++ b/torchcell/data/graph_processor.py	2026-10-23 10:18:51.732509580 -0500
+@@ -11,7 +11,7 @@
+ import torch
+ from torch_geometric.utils import k_hop_subgraph
+ from torch_geometric.utils._subgraph import subgraph
+-from torch_scatter import scatter
++from torch_geometric.utils import scatter
+ 
+ from torchcell.data.hetero_data import HeteroData
+ from torchcell.datamodels import (

@@ -1,0 +1,130 @@
+# experiments/046-betaxanthin-omics-cotarget/scripts/generate_046_cql.py
+# [[experiments.046-betaxanthin-omics-cotarget.scripts.generate_046_cql]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/046-betaxanthin-omics-cotarget/scripts/generate_046_cql
+"""Generate the experiment 046 query: betaxanthin, amino acids, knockout expression and
+knockout proteome as ONE dataset.
+
+The 031 inductive-fold program predicts betaxanthin production (Cachera 2023) in
+single-deletion strains the model never saw, with the Mulleder 2016 amino-acid profile as a
+co-target. The owner (2026-10-22) wants knockout expression (Kemmeren 2014) and knockout
+proteome (Messner 2023) to enter the same way, inductively, as co-targets read off the gene
+nodes, never as per-strain inputs. The 2026-10-23 co-target store joined those panels to
+the betaxanthin strains BY DELETED-GENE NAME outside the graph; the owner's answer was that
+adding data means another query, so this query puts the four datasets in one served
+dataset where the omics are phenotypes of records, duplicates stay separate records, and
+the omics-only strains (deletions Cachera never screened) are samples too.
+
+Blocks, in UNION order, each with the perturbation clause of
+``experiments/019-simb-multimodal/queries/fig6_build.cql`` EXTENDED for the released-identifier
+leaf. The fig6 clause: every DELETION names a gene in ``$gene_set`` and at least one deletion
+is present; non-deletion perturbations pass, which is what keeps Cachera's strains, every one
+of which carries the Btx cassette additions CYP76AD1 and DOD and the ARO4 K229L / ARO7 G141S
+alleles (the 043 ``all`` clause would drop all of them). The extension: a perturbation of type
+``released_identifier`` is admitted as a deletion WITHOUT the gene-set test. Since PR #1085
+(#1045, every released name stored as released) a strain whose source names the deleted gene
+by a symbol sits on ``ReleasedIdentifierPerturbation`` with ``systematic_gene_name`` equal to
+that symbol and ``released_kind`` deletion; under the fig6 clause the first 046 build (job
+6154, 2026-10-23) returned 1,101 of Cachera's 4,759 experiments, because 3,592 of them are
+symbol-named (served count query, job 6155: 3,592 ``released_identifier``, 1,167
+``kanmx_deletion``, 19,036 ``gene_addition`` perturbations; the served node carries no
+``released_kind`` property, so the type is what the query can see). The symbol is resolved to
+its R64 ORF at READ time by the resolving graph processor of this experiment, with every
+refusal reported, which is where the loader deliberately left that step
+(``torchcell/datasets/gene_alias_resolution.py``). The Cachera, Mulleder and Messner loaders
+write ``released_kind`` deletion for every released identifier; Kemmeren's has none.
+
+* ``BetaxanthinCachera2023Dataset``  MetabolitePhenotype, graph_level ``metabolism``
+* ``AminoAcidMulleder2016Dataset``   MetabolitePhenotype, graph_level ``metabolism``
+* ``MicroarrayKemmeren2014Dataset``  MicroarrayExpressionPhenotype, graph_level ``node``
+* ``ProteomeMessner2023Dataset``     ProteinAbundancePhenotype, graph_level ``node``
+
+Property-shaped RETURN (``e.serialized_data AS e_serialized``), ``ORDER BY e.id`` and one
+``{partition}`` marker per block, so the build can run the partitioned raw stage
+(``fetch_workers``) or a single session, which strips the marker.
+
+Run from the repo root; it writes ``queries/betaxanthin_omics_046.cql`` beside this script:
+    python experiments/046-betaxanthin-omics-cotarget/scripts/generate_046_cql.py
+"""
+
+from __future__ import annotations
+
+import os.path as osp
+
+QUERY_NAME = "betaxanthin_omics_046.cql"
+
+# (dataset id, phenotype class, graph_level); the class is a comment, the filter is the level.
+BLOCKS: list[tuple[str, str, str]] = [
+    ("BetaxanthinCachera2023Dataset", "MetabolitePhenotype", "metabolism"),
+    ("AminoAcidMulleder2016Dataset", "MetabolitePhenotype", "metabolism"),
+    ("MicroarrayKemmeren2014Dataset", "MicroarrayExpressionPhenotype", "node"),
+    ("ProteomeMessner2023Dataset", "ProteinAbundancePhenotype", "node"),
+]
+
+#: Served experiment counts in KG 4.0 release 2026.10.17-4295f7ca
+#: (database/releases/2026.10.17-4295f7ca.json, ``n_experiments`` per dataset). The gene
+#: clause admits fewer: a deletion of an ORF outside ``$gene_set`` (dubious or retired
+#: names) drops its record on the server, as 043 saw for Kemmeren (1,482) and Messner (4,624).
+SERVED_COUNTS: dict[str, int] = {
+    "BetaxanthinCachera2023Dataset": 4759,
+    "AminoAcidMulleder2016Dataset": 4678,
+    "MicroarrayKemmeren2014Dataset": 1484,
+    "ProteomeMessner2023Dataset": 4699,
+}
+
+HEADER = """\
+// betaxanthin_omics_046.cql
+// [[experiments.046-betaxanthin-omics-cotarget]]
+//
+// Experiment 046 query: betaxanthin production (Cachera 2023), intracellular amino acids
+// (Mulleder 2016), knockout expression (Kemmeren 2014) and knockout proteome (Messner 2023)
+// of KG 4.0 (release 2026.10.17-4295f7ca) as one dataset. GENERATED by
+// experiments/046-betaxanthin-omics-cotarget/scripts/generate_046_cql.py. Edit the
+// generator, never this file.
+//
+// Perturbation clause of experiments/019-simb-multimodal/queries/fig6_build.cql, extended:
+// every placed deletion names a gene in $gene_set, a released_identifier perturbation is
+// admitted as a deletion without that test (resolved to an ORF at read time), at least one
+// of either is present, and non-deletion perturbations pass (Cachera's Btx cassette
+// additions and feedback-resistant alleles).
+// RETURN is property-shaped; each block carries the partitioned raw stage's marker once."""
+
+
+def block(dataset_id: str, phenotype: str, graph_level: str) -> str:
+    """One dataset's ``MATCH ... RETURN e_serialized, ref_serialized`` block."""
+    return f"""// {dataset_id} ({phenotype}, graph_level '{graph_level}')
+MATCH (dataset:Dataset)<-[:ExperimentMemberOf]-(e:Experiment)
+WHERE dataset.id = '{dataset_id}' {{partition}}
+MATCH (e)<-[:GenotypeMemberOf]-(g:Genotype)
+MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
+MATCH (e)<-[:PhenotypeMemberOf]-(phen:PhenotypicFeature)
+WHERE phen.graph_level = '{graph_level}'
+ AND ALL(dp IN [(g)<-[:PerturbationMemberOf]-(pert) | pert]
+WHERE dp.perturbation_type = 'released_identifier'
+ OR (NOT dp.perturbation_type ENDS WITH 'deletion')
+ OR dp.systematic_gene_name IN $gene_set)
+ AND SIZE([(g)<-[:PerturbationMemberOf]-(pert)
+WHERE pert.perturbation_type ENDS WITH 'deletion'
+ OR pert.perturbation_type = 'released_identifier' | pert]) > 0
+WITH DISTINCT e, ref
+ ORDER BY e.id
+RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized"""
+
+
+def render() -> str:
+    """The full query text."""
+    body = "\n\nUNION ALL\n\n".join(block(*b) for b in BLOCKS)
+    return f"{HEADER}\n\n{body}\n"
+
+
+def main() -> None:
+    """Write the query beside this script's experiment folder."""
+    here = osp.dirname(osp.abspath(__file__))
+    path = osp.join(here, "..", "queries", QUERY_NAME)
+    with open(path, "w") as f:
+        f.write(render())
+    print(f"wrote {osp.abspath(path)}")
+    print(f"{len(BLOCKS)} blocks, {sum(SERVED_COUNTS.values())} served experiments")
+
+
+if __name__ == "__main__":
+    main()

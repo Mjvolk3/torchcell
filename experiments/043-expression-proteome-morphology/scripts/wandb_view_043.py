@@ -386,6 +386,7 @@ def window_means(api: wandb.Api, key: str, rnd: Round) -> dict[str, object]:
                 means[k] = {"mean": float(np.mean(vals)), "n_evaluations": len(vals)}
         runs[rid] = {
             "arm_label": run.group,
+            "seed": int(run.config["seed"]),
             "state": run.state,
             "epochs_reached": reached,
             "n_epochs": n_epochs,
@@ -393,21 +394,44 @@ def window_means(api: wandb.Api, key: str, rnd: Round) -> dict[str, object]:
             "complete": reached >= n_epochs,
             "means": means,
         }
-    alone = [r for r in runs.values() if r["arm_label"] == ALONE_ARM]
+    alone = [
+        r
+        for r in runs.values()
+        if r["arm_label"] == ALONE_ARM and r["complete"] and TRANSFER_KEY in r["means"]  # type: ignore[operator]
+    ]
     transfer: dict[str, float] = {}
-    if len(alone) == 1 and TRANSFER_KEY in alone[0]["means"]:  # type: ignore[operator]
+    if len(alone) == 1:
+        # one alone run: every complete run is read against it (the 2026-10-22 round)
         a = alone[0]["means"][TRANSFER_KEY]["mean"]  # type: ignore[index]
         for rid, r in runs.items():
             m = r["means"]
             if r["arm_label"] != ALONE_ARM and r["complete"] and TRANSFER_KEY in m:  # type: ignore[operator]
                 transfer[str(r["arm_label"])] = m[TRANSFER_KEY]["mean"] - a  # type: ignore[index]
+    elif len(alone) > 1:
+        # several alone seeds: each run is paired with the alone run of its own seed,
+        # keyed <arm label>_s<seed>; a run whose seed has no alone run is not paired
+        by_seed = {r["seed"]: r["means"][TRANSFER_KEY]["mean"] for r in alone}  # type: ignore[index]
+        for rid, r in runs.items():
+            m = r["means"]
+            if (
+                r["arm_label"] != ALONE_ARM
+                and r["complete"]
+                and TRANSFER_KEY in m  # type: ignore[operator]
+                and r["seed"] in by_seed
+            ):
+                transfer[f"{r['arm_label']}_s{r['seed']}"] = (
+                    m[TRANSFER_KEY]["mean"] - by_seed[r["seed"]]  # type: ignore[index]
+                )
+    seeds = sorted({int(r["seed"]) for r in runs.values()})  # type: ignore[call-overload]
+    seed_text = "seed 0" if seeds == [0] else f"seeds {', '.join(map(str, seeds))}"
     return {
         "generated_by": "experiments/043-expression-proteome-morphology/scripts/wandb_view_043.py",
         "round": key,
         "statistic": "mean over the evaluated epochs of each run's registered window "
-        "(0.8 to 1.0 of its epochs), validation fold, seed 0, unsampled W&B history",
+        f"(0.8 to 1.0 of its epochs), validation fold, {seed_text}, unsampled W&B history",
         "transfer_definition": "joint minus alone_kemmeren at matched optimizer steps, "
-        f"on {TRANSFER_KEY}",
+        f"on {TRANSFER_KEY}"
+        + ("" if len(alone) <= 1 else "; paired by seed (same-seed alone run)"),
         "runs": runs,
         "transfer_kemmeren": transfer,
     }

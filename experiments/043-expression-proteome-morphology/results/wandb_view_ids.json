@@ -1,0 +1,32 @@
+{
+  "overnight_2026_10_22": {
+    "id": "s8fhdl23nl5",
+    "name": "043 overnight 2026-10-22 by arm",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=s8fhdl23nl5"
+  },
+  "overnight_2026_10_22/alone_kemmeren_hlgauss_equal": {
+    "id": "9ki57kr3291",
+    "name": "043 overnight_2026_10_22: alone_kemmeren_hlgauss_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=9ki57kr3291"
+  },
+  "overnight_2026_10_22/joint_9_balanced_hlgauss_equal": {
+    "id": "3c34rnzuyi6",
+    "name": "043 overnight_2026_10_22: joint_9_balanced_hlgauss_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=3c34rnzuyi6"
+  },
+  "overnight_2026_10_22/joint_9_hlgauss_equal": {
+    "id": "hchied8alzi",
+    "name": "043 overnight_2026_10_22: joint_9_hlgauss_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=hchied8alzi"
+  },
+  "overnight_2026_10_22/joint_9_hlgauss_records": {
+    "id": "9h8ixze6z26",
+    "name": "043 overnight_2026_10_22: joint_9_hlgauss_records",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=9h8ixze6z26"
+  },
+  "overnight_2026_10_22/joint_9_pinball_equal": {
+    "id": "28uxd5087nc",
+    "name": "043 overnight_2026_10_22: joint_9_pinball_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=28uxd5087nc"
+  }
+}

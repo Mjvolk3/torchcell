@@ -71,6 +71,7 @@ optim:
 
 budget:
   max_epochs: 50
+  max_steps: null  # total optimizer steps for a step-matched run (overrides max_epochs)
   time_budget_hours: null
   time_margin_minutes: 20.0
   probe_steps: 30

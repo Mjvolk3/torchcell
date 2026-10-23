@@ -46,9 +46,8 @@ Kemmeren, the MATa and MAT$\alpha$ strata read separately, since only a mixed-ba
 can separate the marks from the dataset token.
 \item \textbf{Graph placement.} Mask at one layer, readout gather or none, and whether the soft
 edge bias is worth an arm. \emph{Test:} C5 and C6 against R, six seeds, on every dataset.
-\item \textbf{Operator residual.} Plain is the main arm by the owner's preference. \emph{Test:}
-C1 against R, with the $\zeta$ trajectories; if ReZero wins under the rule, whether it replaces
-plain or stays a control is the owner's call.
+\item \textbf{Operator residual.} Closed 2026-10-23: the plain residual is the only one; ReZero
+was removed from the code on the owner's instruction, and its arm C1 from the grid.
 \item \textbf{The stage-1 reference sampler.} Balanced, records or $\alpha = 0.5$. \emph{Test:} C2
 and C4 against R. The winner becomes the reference for any later stage-1 job; stage 2 starts from
 the winner's checkpoints.

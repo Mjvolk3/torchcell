@@ -909,3 +909,42 @@ Nadal and Hu are not in joint_9, so their bars have no run to compare. At epoch 
 6136 is below every expression and protein bar except Zelezniak's (whose bar is zero and
 whose validation set is 9 records) and above the Vaishnav k-mer ridge; nothing is concluded
 before its registered window (epochs 41 to 50).
+
+## 2026.10.23 - Overnight results, seed 0
+
+Single seed, validation fold, registered window (0.8 to 1.0 of each run's epochs: epochs 41
+to 50 of the 50-epoch joint runs; for the step-matched alone run its evaluations inside
+epochs 1,682 to 2,102, 11 of them). Statistic: the window mean of the median per-gene
+Pearson (doubles: the median per-double centered Pearson over the 72 Sameith doubles;
+Vaishnav: Pearson over sequences). Computed from the unsampled W&B history by
+`scripts/wandb_view_043.py --window-means` into
+`results/overnight_2026_10_22_window_means.json`. These are BELOW the decision rule (a gain
+of at least 0.02 in 5 of 6 paired seeds): one seed decides nothing.
+
+| readout | alone_kemmeren | joint, records sampler (6136) | joint, balanced (6137) | joint, pinball (6150) | bar |
+|---|---|---|---|---|---|
+| Kemmeren per-gene | 0.110 | 0.078 | 0.119 | 0.090 | 0.125 (frozen-token ridge) |
+| doubles centered per double | 0.335 | 0.208 | 0.218 | 0.230 | additive measured 0.440; fitted 0.494 |
+| Muenzner per-gene | | 0.202 | 0.278 | 0.210 | 0.423 (GBLUP) |
+| Caudal per-gene | | 0.155 | 0.175 | 0.160 | 0.369 (GBLUP) |
+| Messner per-gene | | 0.059 | 0.064 | 0.065 | 0.083 |
+| Vaishnav Pearson | | 0.921 | 0.866 | 0.914 | 0.884 (6-mer ridge) |
+
+Transfer on Kemmeren at matched optimizer steps, joint minus alone: -0.032 (records
+sampler), +0.009 (balanced), -0.020 (pinball). Single seed; none clears the rule.
+
+Corrections to the figures relayed earlier (same statistic, recomputed here from the
+unsampled history): Kemmeren records-sampler joint 0.078 (not 0.081) and pinball joint
+0.090 (not 0.087); doubles pinball 0.230 (0.2295; not 0.232); transfer -0.032 (not -0.029),
++0.009 (not +0.008), -0.020 (not -0.023). The other cells agree within 0.001 of rounding.
+
+joint_9_hlgauss_records (6151, run 2391fl7t) is PARTIAL: 26 of 39 epochs when read, its
+window (epochs 32 to 39) not reached; no number is reported for it.
+
+None of the overnight runs logs a validation loss: `train_043.py` logged only `train/loss`
+until commit e6ad22d0c, which adds `val/loss` and `val/<dataset>/loss` (the training
+objective over the validation pass, same weighting). The owner's train-and-validation-loss
+rule is met from the next run on; 6151 was not restarted for it.
+
+Views (rerun `scripts/wandb_view_043.py` after every sync):
+[[experiments.043-expression-proteome-morphology.scripts.wandb_view_043]].

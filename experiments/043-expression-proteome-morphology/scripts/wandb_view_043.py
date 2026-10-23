@@ -1,0 +1,423 @@
+# experiments/043-expression-proteome-morphology/scripts/wandb_view_043.py
+# [[experiments.043-expression-proteome-morphology.scripts.wandb_view_043]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/wandb_view_043
+"""Saved W&B views for the 043 training rounds, loss curves first.
+
+The 019 pattern (``experiments/019-simb-multimodal/scripts/wandb_v13_report.py``) for the
+043 trainer: one ``Round`` per round in ``ROUNDS``. A run of this script (1) writes the
+config keys ``round`` and ``arm_label`` on the round's runs (``arm_label`` is the
+trainer's W&B group, ``<arm>[_balanced]_<loss>_<weighting>``, which is also the
+checkpoint directory stem, so nothing is renamed), (2) tags the zombie runs of failed
+smokes ``aborted`` (never deleted), and (3) overwrites the round's saved view and one saved
+view per arm with the fixed section order: 1 loss, 2 headline validation, 3 per-dataset
+validation, 4 train side, 5 bookkeeping. Views filter on ``Config('round')``, so runs
+outside the round (the zombies included) never appear. Each view keeps only keys its own
+runs log, so a panel appears the first time a run logs its key (``val/loss`` from commit
+e6ad22d0c on); rerun after every sync and after every new run. Idempotent.
+
+View ids are created on the first run (``save_as_new_view``) and recorded in
+``results/wandb_view_ids.json`` under ``<round>`` and ``<round>/<arm>``, which is
+committed; later runs overwrite those views in place. The group page
+``/groups/<arm>/workspace`` is a personal view the API cannot write, so the arm view is
+where an arm's panels live.
+
+    python experiments/043-expression-proteome-morphology/scripts/wandb_view_043.py --round overnight_2026_10_22
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os.path as osp
+import re
+from dataclasses import dataclass
+
+import numpy as np
+import wandb
+import wandb_workspaces.reports.v2 as wr
+import wandb_workspaces.workspaces as ws
+
+ENTITY = "zhao-group"
+PROJECT = "torchcell_043-expression-proteome-morphology"
+VIEW_REGISTRY = osp.join(
+    osp.dirname(osp.dirname(osp.abspath(__file__))), "results", "wandb_view_ids.json"
+)
+#: Runs of failed smokes (no epoch logged): tagged, filtered out, never deleted.
+ABORTED_RUNS = ("7y481s36", "epf3gh0d")
+ABORTED_TAG = "aborted"
+#: Every view shows every run (W&B's default is 10 per panel).
+MAX_RUNS_SHOWN = 1000
+#: Smoothing on by default: a five-epoch running average (the joint runs have 50 epochs,
+#: so the ten-epoch average of the 019 views would flatten a fifth of a run).
+SMOOTHING_TYPE = "average"
+SMOOTHING_WEIGHT = 5
+EPOCH = "epoch"
+STEP = (
+    "Step"  # the optimizer step (the trainer logs at step=step): the matched-steps axis
+)
+
+
+@dataclass(frozen=True)
+class Round:
+    """One review unit: its runs, its saved view, and its hardware line."""
+
+    view_name: str
+    run_ids: tuple[str, ...]
+    hardware: str
+    intro: str
+
+
+ROUNDS: dict[str, Round] = {
+    "overnight_2026_10_22": Round(
+        view_name="043 overnight 2026-10-22 by arm",
+        run_ids=("g5wda4mp", "cqdm487x", "5f3ijxa1", "kmlepsr2", "2391fl7t"),
+        hardware=(
+            "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, jobs 6136, 6137, "
+            "6150, 6152, 6151"
+        ),
+        intro=(
+            "Seed 0 only, prep store of job 6134, registered window 0.8 to 1.0 of each "
+            "run's epochs. joint_9 at 50 epochs (6,346 steps each); alone_kemmeren "
+            "step-matched to it (317,300 steps, 2,102 epochs); joint_9_hlgauss_records "
+            "deadline-capped at 39 epochs. No run logs val/loss (it predates e6ad22d0c)."
+        ),
+    )
+}
+
+DATASETS = (
+    "kemmeren",
+    "messner",
+    "zelezniak",
+    "turnover",
+    "caudal",
+    "muenzner",
+    "boocock",
+    "nguessan",
+)
+
+#: A panel: (title, x axis, metrics overlaid). Sections in the fixed order.
+Panel = tuple[str, str, list[str]]
+
+
+def sections() -> list[tuple[str, list[Panel]]]:
+    """The fixed section order of every 043 view."""
+    return [
+        (
+            "1 loss",
+            [
+                (
+                    "train and validation loss by epoch",
+                    EPOCH,
+                    ["train/loss", "val/loss"],
+                ),
+                (
+                    "train and validation loss by optimizer step (the matched-steps axis)",
+                    STEP,
+                    ["train/loss", "val/loss"],
+                ),
+                (
+                    "Kemmeren loss by optimizer step (joint against alone)",
+                    STEP,
+                    ["train/kemmeren/loss", "val/kemmeren/loss"],
+                ),
+                (
+                    "per-type train loss by epoch",
+                    EPOCH,
+                    [
+                        "train/expression/loss",
+                        "train/protein/loss",
+                        "train/promoter/loss",
+                    ],
+                ),
+            ],
+        ),
+        (
+            "2 headline validation",
+            [
+                (
+                    "val expression per-gene median Pearson",
+                    EPOCH,
+                    ["val/expression/pearson_per_gene_median"],
+                ),
+                (
+                    "val doubles, per-double centered Pearson, with the additive measured line",
+                    EPOCH,
+                    [
+                        "val/doubles/pearson_per_strain_centered_median",
+                        "val/doubles/additive_measured_pearson_per_strain_centered_median",
+                    ],
+                ),
+                (
+                    "val protein per-gene median Pearson",
+                    EPOCH,
+                    ["val/protein/pearson_per_gene_median"],
+                ),
+                ("val promoter Pearson", EPOCH, ["val/promoter/pearson"]),
+            ],
+        ),
+        (
+            "3 per-dataset validation",
+            [
+                (
+                    f"val {d} per-gene median Pearson",
+                    EPOCH,
+                    [f"val/{d}/pearson_per_gene_median"],
+                )
+                for d in DATASETS
+            ],
+        ),
+        (
+            "4 train side",
+            [
+                (
+                    "Kemmeren per-gene median Pearson, traineval against val",
+                    EPOCH,
+                    [
+                        "traineval/kemmeren/pearson_per_gene_median",
+                        "val/kemmeren/pearson_per_gene_median",
+                    ],
+                ),
+                (
+                    "traineval expression per-gene median Pearson",
+                    EPOCH,
+                    ["traineval/expression/pearson_per_gene_median"],
+                ),
+                (
+                    "traineval protein per-gene median Pearson",
+                    EPOCH,
+                    ["traineval/protein/pearson_per_gene_median"],
+                ),
+                ("traineval promoter Pearson", EPOCH, ["traineval/promoter/pearson"]),
+                ("gradient norm", EPOCH, ["train/grad_norm"]),
+                ("gradient clip fraction", EPOCH, ["train/grad_norm_clip_frac"]),
+                ("learning rate", STEP, ["train/lr"]),
+                ("operator gates", EPOCH, ["train/beta_attn", "train/beta_ffn"]),
+            ],
+        ),
+        (
+            "5 bookkeeping",
+            [
+                ("epoch seconds", EPOCH, ["time/epoch_seconds"]),
+                ("epochs fixed by the budget", EPOCH, ["setup/n_epochs"]),
+                (
+                    "registered window",
+                    EPOCH,
+                    ["setup/window_first_epoch", "setup/window_last_epoch"],
+                ),
+                ("steps per epoch", EPOCH, ["setup/steps_per_epoch"]),
+                ("doubles scored", EPOCH, ["val/doubles/n_doubles"]),
+            ],
+        ),
+    ]
+
+
+def label_runs(api: wandb.Api, key: str, rnd: Round) -> dict[str, set[str]]:
+    """Write ``round`` and ``arm_label``; return the logged keys per arm."""
+    keys: dict[str, set[str]] = {}
+    for rid in rnd.run_ids:
+        run = api.run(f"{ENTITY}/{PROJECT}/{rid}")
+        if not run.group:
+            raise ValueError(f"{rid}: no W&B group, cannot name its arm")
+        if run.config.get("round") != key or run.config.get("arm_label") != run.group:
+            run.config["round"] = key
+            run.config["arm_label"] = run.group
+            run.update()
+        keys.setdefault(run.group, set()).update(run.summary.keys())
+    return keys
+
+
+def tag_aborted(api: wandb.Api) -> list[str]:
+    """Tag the zombie runs ``aborted``; return the ids changed."""
+    changed = []
+    for rid in ABORTED_RUNS:
+        run = api.run(f"{ENTITY}/{PROJECT}/{rid}")
+        if run.summary.get("epoch") is not None:
+            raise ValueError(f"{rid} logged an epoch; it is not a zombie")
+        if ABORTED_TAG not in run.tags:
+            run.tags = [*run.tags, ABORTED_TAG]
+            run.update()
+            changed.append(rid)
+    return changed
+
+
+def _registry() -> dict[str, dict[str, str]]:
+    if not osp.exists(VIEW_REGISTRY):
+        return {}
+    with open(VIEW_REGISTRY) as f:
+        reg: dict[str, dict[str, str]] = json.load(f)
+    return reg
+
+
+def populate_view(key: str, rnd: Round, present: set[str], arm: str | None) -> str:
+    """Overwrite (or create) one saved view; ``arm`` None is the round view."""
+    built = []
+    for name, panels in sections():
+        kept = [(t, x, [m for m in ys if m in present]) for t, x, ys in panels]
+        kept = [(t, x, ys) for t, x, ys in kept if ys]
+        if not kept:
+            continue
+        built.append(
+            ws.Section(
+                name=name,
+                is_open=True,
+                layout_settings=ws.SectionLayoutSettings(columns=3, rows=2),
+                panel_settings=ws.SectionPanelSettings(
+                    smoothing_type=SMOOTHING_TYPE, smoothing_weight=SMOOTHING_WEIGHT
+                ),
+                panels=[
+                    wr.LinePlot(
+                        title=t,
+                        x=x,
+                        y=ys,
+                        title_x="optimizer step" if x == STEP else "epoch",
+                        smoothing_type=SMOOTHING_TYPE,
+                        smoothing_factor=SMOOTHING_WEIGHT,
+                        max_runs_to_show=MAX_RUNS_SHOWN,
+                        layout=wr.Layout(w=8, h=6),
+                    )
+                    for t, x, ys in kept
+                ],
+            )
+        )
+    settings = ws.WorkspaceSettings(
+        smoothing_type=SMOOTHING_TYPE,
+        smoothing_weight=SMOOTHING_WEIGHT,
+        max_runs=MAX_RUNS_SHOWN,
+        sort_panels_alphabetically=False,
+    )
+    filters = [ws.Config("round") == key]
+    if arm is not None:
+        filters.append(ws.Config("arm_label") == arm)
+    runset_settings = ws.RunsetSettings(
+        filters=filters,
+        groupby=[ws.Config("arm_label")],
+        order=[ws.Ordering(ws.Metric("Name"), ascending=True)],
+    )
+    name = rnd.view_name if arm is None else f"043 {key}: {arm}"
+    reg = _registry()
+    slot = key if arm is None else f"{key}/{arm}"
+    view_id = reg.get(slot, {}).get("id")
+    if view_id is None:
+        view = ws.Workspace(
+            entity=ENTITY,
+            project=PROJECT,
+            name=name,
+            sections=built,
+            settings=settings,
+            runset_settings=runset_settings,
+        )
+        view.save_as_new_view()
+        found = re.search(r"[?&]nw=([\w-]+)", view.url)
+        if found is None:
+            raise ValueError(f"no view id in {view.url}")
+        reg[slot] = {"id": found.group(1), "url": view.url, "name": name}
+        with open(VIEW_REGISTRY, "w") as f:
+            json.dump(reg, f, indent=2, sort_keys=True)
+            f.write("\n")
+        return view.url
+    view = ws.Workspace.from_url(f"https://wandb.ai/{ENTITY}/{PROJECT}?nw={view_id}")
+    view.name = name
+    view.sections = built
+    view.settings = settings
+    view.runset_settings = runset_settings
+    view.save()
+    return view.url
+
+
+#: Keys of the registered-window readout, and the alone run each joint run is read against.
+WINDOW_KEYS = (
+    "val/kemmeren/pearson_per_gene_median",
+    "val/doubles/pearson_per_strain_centered_median",
+    "val/doubles/additive_measured_pearson_per_strain_centered_median",
+    "val/muenzner/pearson_per_gene_median",
+    "val/caudal/pearson_per_gene_median",
+    "val/messner/pearson_per_gene_median",
+    "val/vaishnav/pearson",
+)
+ALONE_ARM = "alone_kemmeren_hlgauss_equal"
+TRANSFER_KEY = "val/kemmeren/pearson_per_gene_median"
+
+
+def window_means(api: wandb.Api, key: str, rnd: Round) -> dict[str, object]:
+    """Per run, the mean of each readout key over the evaluated epochs of its registered
+    window (``setup/window_first_epoch`` .. ``setup/window_last_epoch``, read from the
+    run), from the UNSAMPLED history; and the step-matched transfer on Kemmeren (joint
+    minus alone). A run that has not reached its window is reported partial.
+    """
+    runs: dict[str, dict[str, object]] = {}
+    for rid in rnd.run_ids:
+        run = api.run(f"{ENTITY}/{PROJECT}/{rid}")
+        rows = [
+            r for r in run.scan_history(page_size=5000) if r.get("epoch") is not None
+        ]
+        first = int(run.summary["setup/window_first_epoch"])
+        last = int(run.summary["setup/window_last_epoch"])
+        n_epochs = int(run.summary["setup/n_epochs"])
+        reached = int(max(r["epoch"] for r in rows))
+        win = [r for r in rows if first <= r["epoch"] <= last]
+        means: dict[str, dict[str, float | int]] = {}
+        for k in WINDOW_KEYS:
+            vals = [float(r[k]) for r in win if r.get(k) is not None]
+            if vals:
+                means[k] = {"mean": float(np.mean(vals)), "n_evaluations": len(vals)}
+        runs[rid] = {
+            "arm_label": run.group,
+            "state": run.state,
+            "epochs_reached": reached,
+            "n_epochs": n_epochs,
+            "window": [first, last],
+            "complete": reached >= n_epochs,
+            "means": means,
+        }
+    alone = [r for r in runs.values() if r["arm_label"] == ALONE_ARM]
+    transfer: dict[str, float] = {}
+    if len(alone) == 1 and TRANSFER_KEY in alone[0]["means"]:  # type: ignore[operator]
+        a = alone[0]["means"][TRANSFER_KEY]["mean"]  # type: ignore[index]
+        for rid, r in runs.items():
+            m = r["means"]
+            if r["arm_label"] != ALONE_ARM and r["complete"] and TRANSFER_KEY in m:  # type: ignore[operator]
+                transfer[str(r["arm_label"])] = m[TRANSFER_KEY]["mean"] - a  # type: ignore[index]
+    return {
+        "generated_by": "experiments/043-expression-proteome-morphology/scripts/wandb_view_043.py",
+        "round": key,
+        "statistic": "mean over the evaluated epochs of each run's registered window "
+        "(0.8 to 1.0 of its epochs), validation fold, seed 0, unsampled W&B history",
+        "transfer_definition": "joint minus alone_kemmeren at matched optimizer steps, "
+        f"on {TRANSFER_KEY}",
+        "runs": runs,
+        "transfer_kemmeren": transfer,
+    }
+
+
+def main() -> None:
+    """CLI."""
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--round", choices=sorted(ROUNDS), required=True)
+    parser.add_argument(
+        "--window-means",
+        action="store_true",
+        help="also write results/<round>_window_means.json",
+    )
+    args = parser.parse_args()
+    rnd = ROUNDS[args.round]
+    api = wandb.Api(timeout=120)
+    if args.window_means:
+        out = osp.join(osp.dirname(VIEW_REGISTRY), f"{args.round}_window_means.json")
+        with open(out, "w") as f:
+            json.dump(window_means(api, args.round, rnd), f, indent=1)
+            f.write("\n")
+        print(f"window means -> {out}")
+    print(f"tagged aborted: {tag_aborted(api)}")
+    keys = label_runs(api, args.round, rnd)
+    print(f"hardware: {rnd.hardware}")
+    print(
+        f"round view\n{populate_view(args.round, rnd, set().union(*keys.values()), None)}"
+    )
+    for arm in sorted(keys):
+        print(f"{arm}: arm view, then the group page")
+        print(populate_view(args.round, rnd, keys[arm], arm))
+        print(f"https://wandb.ai/{ENTITY}/{PROJECT}/groups/{arm}/workspace")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,173 @@
+{
+ "generated_by": "experiments/043-expression-proteome-morphology/scripts/wandb_view_043.py",
+ "round": "overnight_2026_10_22",
+ "statistic": "mean over the evaluated epochs of each run's registered window (0.8 to 1.0 of its epochs), validation fold, seed 0, unsampled W&B history",
+ "transfer_definition": "joint minus alone_kemmeren at matched optimizer steps, on val/kemmeren/pearson_per_gene_median",
+ "runs": {
+  "g5wda4mp": {
+   "arm_label": "joint_9_hlgauss_equal",
+   "state": "finished",
+   "epochs_reached": 50,
+   "n_epochs": 50,
+   "window": [
+    41,
+    50
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.07838150507456704,
+     "n_evaluations": 10
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.208229026570078,
+     "n_evaluations": 10
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 10
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.20177969414274885,
+     "n_evaluations": 10
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.15451029593518803,
+     "n_evaluations": 10
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.05907427945672903,
+     "n_evaluations": 10
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9208541837939324,
+     "n_evaluations": 10
+    }
+   }
+  },
+  "cqdm487x": {
+   "arm_label": "joint_9_balanced_hlgauss_equal",
+   "state": "finished",
+   "epochs_reached": 50,
+   "n_epochs": 50,
+   "window": [
+    41,
+    50
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.11928551975309236,
+     "n_evaluations": 10
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.21802946867429945,
+     "n_evaluations": 10
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 10
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.2783302306870545,
+     "n_evaluations": 10
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.1748669271071634,
+     "n_evaluations": 10
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.0639411218014532,
+     "n_evaluations": 10
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.865978240401217,
+     "n_evaluations": 10
+    }
+   }
+  },
+  "5f3ijxa1": {
+   "arm_label": "joint_9_pinball_equal",
+   "state": "finished",
+   "epochs_reached": 50,
+   "n_epochs": 50,
+   "window": [
+    41,
+    50
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.09003224320587729,
+     "n_evaluations": 10
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.22946310025537625,
+     "n_evaluations": 10
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 10
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.2100379709124321,
+     "n_evaluations": 10
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.15996757738907424,
+     "n_evaluations": 10
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.06457579160617997,
+     "n_evaluations": 10
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9141025851578984,
+     "n_evaluations": 10
+    }
+   }
+  },
+  "kmlepsr2": {
+   "arm_label": "alone_kemmeren_hlgauss_equal",
+   "state": "finished",
+   "epochs_reached": 2102,
+   "n_epochs": 2102,
+   "window": [
+    1682,
+    2102
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.11006194459914466,
+     "n_evaluations": 11
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.3350109616875179,
+     "n_evaluations": 11
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.4396675454257383,
+     "n_evaluations": 11
+    }
+   }
+  },
+  "2391fl7t": {
+   "arm_label": "joint_9_hlgauss_records",
+   "state": "running",
+   "epochs_reached": 26,
+   "n_epochs": 39,
+   "window": [
+    32,
+    39
+   ],
+   "complete": false,
+   "means": {}
+  }
+ },
+ "transfer_kemmeren": {
+  "joint_9_hlgauss_equal": -0.03168043952457762,
+  "joint_9_balanced_hlgauss_equal": 0.0092235751539477,
+  "joint_9_pinball_equal": -0.020029701393267374
+ }
+}

@@ -97,14 +97,10 @@ reference is the balanced sampler because it is the only joint arm whose seed-0 
 transfer was positive and whose isolate means were highest (\dsec{6}); that is a choice of
 reference, not a finding, and the contrasts of Sec.~\ref{sec:polaris} decide it.
 
-\subsection{Operator residual: plain against ReZero\secstatus{todo}}
+\subsection{Operator residual\secstatus{todo}}
 \label{sec:residual}
 
-The overnight operator gates its two sublayers with ReZero scalars initialized at zero
-(\deq{9}), so at step 0 it is the identity and the marks reach nothing until
-$\zeta_{\mathrm{attn}}$ moves. The owner's objection, 2026-10-23: ``it seems to allow
-models to cheat ... shut off info before dynamics mature''. The plan makes the plain residual
-the main arm, post-normalized like the trunk (\deq{5}) and like the manuscript's operator,
+The operator is post-normalized like the trunk (\deq{5}) and like the manuscript's operator,
 \begin{equation}
 h'_i = \operatorname{LN}\!\big(h_i + \operatorname{Drop}(\Delta h_i)\big),
 \qquad
@@ -113,10 +109,13 @@ h^{\mathrm{pert}}_i = \operatorname{LN}\!\big(h'_i + \operatorname{Drop}(\operat
 \end{equation}
 with $\Delta h_i$ of \deq{8}. A record without marks attends only to the null key, whose value
 is zero, so its $\Delta h_i = 0$ and its state passes through the operator's normalizations
-alone. ReZero (\deq{9}) is the control. The control arm logs $\zeta_{\mathrm{attn}}$ and
-$\zeta_{\mathrm{ffn}}$ every 50 steps, which turns the objection into a measurement: how many
-steps the gates stay near zero, and whether the ReZero arm's Kemmeren and segregant
-statistics, the ones that depend on marks, trail the plain arm's at the window.
+alone. This is the only residual. The ReZero gates of the overnight round (\deq{9}) were removed
+from the code on the owner's instruction, 2026-10-23, after the readout of their scalars: the
+attention gate of the three joint runs stood at $|\zeta_{\mathrm{attn}}|$ 0.05 to 0.07 after
+317{,}300 steps, against 0.25 in the Kemmeren-alone run, and at four stage-1 epochs the
+operator's attention branch was 0.413 of the context norm under the plain residual against
+0.144 under ReZero (GilaHyper jobs 6172 and 6173, one seed). Every run logs that ratio,
+\texttt{operator/relative\_norm}, at each evaluation.
 
 \subsection{Where the graphs act\secstatus{todo}}
 \label{sec:graph}

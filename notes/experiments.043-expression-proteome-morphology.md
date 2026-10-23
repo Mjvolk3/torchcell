@@ -1123,3 +1123,28 @@ batch, would separate the two.
 The standardization sha256 differs between GilaHyper (5ba3e409...) and Aurora (042e5966...) on
 the same prep_v2 store; the cause (floating-point summation order across numpy builds is the
 first candidate) is not checked.
+
+### ReZero removed; every mark by default (owner, 2026-10-23)
+
+- ReZero removed from 043 entirely on the owner's instruction after the beta readout (joint
+  attention gates at |0.05 to 0.07| after 317,300 steps against 0.25 alone; relative_norm 0.413
+  plain against 0.144 ReZero at epoch 4, jobs 6172 and 6173). The operator is the post-norm
+  residual only; `model.operator_residual` and `OPERATOR_RESIDUAL` are gone; S1's checkpoint
+  still loads for fine-tuning, S2's is refused (commit ef30c01ff). S2 (pc0zsb60) stays in W&B as
+  the only ReZero record, tagged `rezero_removed`.
+- Training plan (`notes-tex/multimodal/043-training-plan/`): the plain-against-ReZero arm is
+  out of the abstract, Sec. 2 (the residual subsection now states the plain residual and the
+  readout above), the logging contract and the grid. Delta loses D3 and D4 (block 58.2 to 34.2
+  card-h estimated, 88:00 to 52:00 requested); Polaris loses C1 (72 runs, 588.6 card-h, P1
+  147.2 node-h, block 148.3); Aurora A1 and A3 run R only on the same node-hours (one node is
+  the minimum); decision 14 is closed. Rebuilt, `make check` clean, published to Zotero as
+  version 3 (`043-training-plan_2026-10-23-11-41-58_1325d89f.pdf`; version 2, uploaded a minute
+  earlier, still read 160 Polaris node-hours in the abstract).
+- Every mark by default (owner: "bump the limit"): `data.mark_cap` null, the maximum read from
+  the store at setup (4,416, N'Guessan), no record truncated; both launchers default to null
+  (they passed 1024); `time/peak_gpu_gb` logged per epoch (commit a45a4dd80). Memory, job 6207:
+  the eight records with the most marks (all N'Guessan, 4,128 to 4,416) as one batch of 8, arm
+  `all`, bf16, forward, backward and AdamW: peak 6.29 GB of 47.7 GB (frozen tables 3.39 GB
+  included), 0.062 s per step after the first. The plan's reference R still reads "cap 1,024"
+  and its C9 "mark cap 4,096" contrast is moot under an uncapped default; both await the
+  owner.

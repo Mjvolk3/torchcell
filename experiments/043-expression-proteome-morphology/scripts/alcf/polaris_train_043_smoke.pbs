@@ -1,0 +1,71 @@
+#!/bin/bash -l
+#PBS -A GenesisHackathonOct26
+#PBS -q debug
+#PBS -l select=1:ngpus=4
+#PBS -l walltime=01:00:00
+#PBS -l filesystems=home:eagle
+#PBS -N 043-smoke-polaris
+#PBS -j oe
+#PBS -o /eagle/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/slurm/output/
+# experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_smoke.pbs
+# [[experiments.043-expression-proteome-morphology.scripts.alcf.polaris_train_043_smoke]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_smoke.pbs
+#
+# The 043 trainer smoke on one Polaris A100 (the debug queue hands out the whole 4-GPU
+# node; CUDA_VISIBLE_DEVICES=0 keeps the run on one card). Cell of
+# gh_train_043_smoke.slurm with arm all by default (qsub -v ARM=joint_9 for the nine; HL-Gauss, equal weighting, seed 0, batch 8) capped at
+# 4 epochs and a 0.75 h trainer budget so it ends inside the 1 h debug walltime; the
+# trainer shrinks the epoch count to what fits by the measured first epoch.
+#
+# Data: the 043 tiers sent by transfer_043.sh to $TC_PREFIX/torchcell-data/043, so
+# DATA_ROOT points there. Code: the tree synced by transfer_043.sh code.
+#
+# The synced tree has no .git, and train_043.py records `git rev-parse --short HEAD` with
+# check=True. A one-command git shim on PATH answers exactly that call with the commit
+# the tree was synced from ($TC_TREE/.synced_commit, written by the code sync) and hands
+# every other git call to the real git.
+#
+# Submit from GilaHyper:
+#   ssh polaris "cd /eagle/GenesisHackathonOct26/mjvolk3/torchcell && qsub experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_smoke.pbs"
+set -euo pipefail
+
+TC_PREFIX=/eagle/GenesisHackathonOct26/mjvolk3
+TC_TREE=$TC_PREFIX/torchcell
+PY=$TC_PREFIX/miniforge3/envs/torchcell/bin/python
+
+# Compute nodes reach the internet (W&B) only through the ALCF proxy.
+export http_proxy=http://proxy.alcf.anl.gov:3128
+export https_proxy=http://proxy.alcf.anl.gov:3128
+export HTTP_PROXY=$http_proxy HTTPS_PROXY=$https_proxy
+export no_proxy=localhost,127.0.0.1,.alcf.anl.gov
+
+cd "$TC_TREE"
+set -a; source .env; set +a
+export DATA_ROOT=$TC_PREFIX/torchcell-data/043
+export EXPERIMENT_ROOT=$TC_TREE/experiments
+export PYTHONUNBUFFERED=1 PYTHONPATH="$TC_TREE"
+export CUDA_VISIBLE_DEVICES=0
+export WANDB_MODE=online
+
+SHIM=$(mktemp -d)
+REAL_GIT=$(command -v git)
+SYNCED=$(cut -c1-9 "$TC_TREE/.synced_commit")
+cat > "$SHIM/git" <<EOF
+#!/bin/bash
+if [ "\$*" = "rev-parse --short HEAD" ]; then echo "$SYNCED"; exit 0; fi
+exec "$REAL_GIT" "\$@"
+EOF
+chmod +x "$SHIM/git"
+export PATH="$SHIM:$PATH"
+
+echo "arm ${ARM:-all}"
+echo "job $PBS_JOBID on $(hostname) at $(date); tree synced from $SYNCED; DATA_ROOT=$DATA_ROOT"
+nvidia-smi --query-gpu=index,name,memory.total --format=csv
+
+"$PY" experiments/043-expression-proteome-morphology/scripts/train_043.py \
+  arm="${ARM:-all}" loss=hlgauss weighting=equal seed=0 device=cuda \
+  data.batch_size=8 data.num_workers=4 data.sampler=records \
+  budget.max_epochs=4 budget.time_budget_hours=0.75 budget.time_margin_minutes=5 \
+  budget.eval_every_epochs=1 \
+  "wandb.tags=[smoke,alcf,polaris]"
+echo "done $(date)"

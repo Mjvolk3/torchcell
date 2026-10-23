@@ -1,0 +1,98 @@
+%% notes-tex/multimodal/043-training-design/sections/6-measured.tex
+%% SOURCE: results/overnight_2026_10_22_window_means.json (wandb_view_043.py --window-means),
+%% results/linear_evals_043.json (linear_evals_043.py, report job 6109), through
+%% tables/t1-measured-rows.tex and tables/t3-runs-rows.tex (training_design_043_tables.py);
+%% the 6151 cancellation from `sacct -j 6151` and its slurm log
+%% ($DATA_ROOT/experiments/043-expression-proteome-morphology/slurm/output/043-train-records_6151.out).
+
+\section{What has been measured\secstatus{todo}}
+\label{sec:measured}
+
+The overnight round of 2026-10-22 ran five jobs on two GilaHyper cards, all seed 0, all on
+the prepared store of job 6134 (Table~\ref{tab:runs}). Four completed. Table~\ref{tab:measured}
+sets their registered-window means against the linear ladder of
+\file{results/linear_evals_043.json}, read on fold 1, the fold the runs validate on, and on
+fold 0, where the ladder was first reported. The ladder fits on folds other than its test
+fold, so on fold 1 it trains on fold 0 as well; the held-out units are the same as the
+runs'. Every number here is one seed, below the decision rule's six, and none of these runs
+logged a validation loss: the only loss curve is \texttt{train/loss}.
+
+%% SOURCE: experiments/043-expression-proteome-morphology/scripts/training_design_043_tables.py
+%% -> tables/t3-runs-rows.tex (results/overnight_2026_10_22_window_means.json)
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption[]{\textbf{The overnight runs of 2026-10-22, seed 0.} Each run id links to
+its W\&B run (project \texttt{torchcell\_043-expression-proteome-morphology}). Epochs are
+those in the W\&B history when the window means were computed; the registered window is the
+last 20\% of each run's epochs.}
+\label{tab:runs}
+\begin{tabular}{>{\raggedright\arraybackslash}p{12mm}>{\raggedright\arraybackslash}p{16mm}>{\raggedright\arraybackslash}p{56mm}>{\raggedleft\arraybackslash}p{26mm}>{\raggedleft\arraybackslash}p{24mm}>{\raggedleft\arraybackslash}p{26mm}}
+\toprule
+Slurm job & W\&B run & Arm (W\&B group) & Epochs reached of planned, n & Registered window, epochs & Validation evaluations in the window, n \\
+\midrule
+\input{tables/t3-runs-rows}
+\end{tabular}
+\end{table}
+
+%% SOURCE: experiments/043-expression-proteome-morphology/scripts/training_design_043_tables.py
+%% -> tables/t1-measured-rows.tex (results/overnight_2026_10_22_window_means.json,
+%% results/linear_evals_043.json)
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption[]{\textbf{Registered-window means of the overnight runs against the
+linear bars, one seed.} Each run column is the mean of the row's statistic over the
+evaluations inside the run's registered window, on the validation fold (fold 1), seed 0,
+from the unsampled W\&B history. Bold marks the highest of the four runs in each row. The
+ladder columns are the fold-1 and fold-0 values of the named linear model on the same held-out
+units (\file{linear_evals_043.py}, jobs 6059 to 6067); the doubles are split B, one set, so
+the two doubles bars are the additive null of the measured singles and the fitted rung of
+Eq.~\ref{eq:fitted}. The runs score Vaishnav on a fixed subset of 2{,}000 validation
+promoters, the ladder on all of them. The last row is Eq.~\ref{eq:transfer}; a single seed
+cannot meet the rule it names.}
+\label{tab:measured}
+\begin{tabular}{>{\raggedright\arraybackslash}p{40mm}>{\raggedleft\arraybackslash}p{15mm}>{\raggedleft\arraybackslash}p{15mm}>{\raggedleft\arraybackslash}p{15mm}>{\raggedleft\arraybackslash}p{15mm}>{\raggedleft\arraybackslash}p{17mm}>{\raggedleft\arraybackslash}p{15mm}>{\raggedright\arraybackslash}p{28mm}}
+\toprule
+Readout and statistic & Window mean, Kemmeren alone (6152) & Window mean, joint, records sampler (6136) & Window mean, joint, balanced sampler (6137) & Window mean, joint, pinball loss (6150) & Linear bar, same statistic, fold 1 & Linear bar, same statistic, fold 0 & Linear model of the bar \\
+\midrule
+\input{tables/t1-measured-rows}
+\end{tabular}
+\end{table}
+
+\notesec{Readings}
+On Kemmeren the joint run with the records sampler reads 0.078 against 0.110 alone at
+matched steps, a transfer of \tdTransferRecords; the balanced sampler reads 0.119, a
+transfer of \tdTransferBalanced; the pinball arm \tdTransferPinball. All four Kemmeren values
+sit below the fold-1 ridge on the deleted gene's frozen composite token. The doubles read
+0.208 to 0.230 jointly and 0.335 alone, all below the additive null of the measured singles
+(0.440). On the isolates every joint run is below the GBLUP bar, the balanced sampler
+closest (Muenzner 0.278 against 0.471, Caudal 0.175 against 0.372). Messner reads 0.059 to
+0.065 against 0.082. Vaishnav is the one readout at or above its bar: 0.921 with the
+records sampler against a k-mer ridge of 0.885, on a 2{,}000-promoter subset. Hypothesis
+(untested): the balanced sampler's higher Kemmeren, Caudal and Muenzner means and lower
+Vaishnav mean follow from the shift in expected weight of Table~\ref{tab:share} (Kemmeren
+from 0.066 to 0.111, Vaishnav from 0.573 to 0.111); one seed cannot separate that from
+seed noise.
+
+\notesec{The canceled run}
+Job 6151 (\texttt{joint\_9\_hlgauss\_records}, run \texttt{2391fl7t}) is the record-weighting
+arm. Its trainer fixed 39 epochs from the time left before the end of the owner's card grant (07:29), so its
+registered window was epochs 32 to 39. It was canceled by hand at 06:33:55 on 2026-10-23,
+after 1 h 56 min, while in epoch 32: its log shows 31 completed epochs, and the W\&B history
+read for Table~\ref{tab:runs} held 26. The window was never reached, so no number is reported
+for it. The MSE reference run was dropped from the queue before launch because the second
+card's chain could not reach it before the end of the granted window.
+
+\notesec{Run links}
+The four complete runs and the canceled one, in the order of Table~\ref{tab:runs}:
+
+\begingroup\footnotesize
+\noindent\url{https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/g5wda4mp}\\
+\url{https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/cqdm487x}\\
+\url{https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/5f3ijxa1}\\
+\url{https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/kmlepsr2}\\
+\url{https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/2391fl7t}\par
+\endgroup

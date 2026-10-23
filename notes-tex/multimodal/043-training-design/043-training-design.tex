@@ -1,0 +1,58 @@
+%% notes-tex/multimodal/043-training-design/043-training-design.tex
+%% [[experiments.043-expression-proteome-morphology]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/multimodal/043-training-design/043-training-design.tex
+%%
+%% Design review of the 043 training setup: notation (the Nature Biotechnology manuscript's,
+%% extended where 043 needs more), the data and model flow, the model and the objective step
+%% by step, the evaluation and decision rule, what the overnight round of 2026-10-22 measured,
+%% and the open design questions. Dataset detail lives in the 043 datasets primer
+%% (notes-tex/multimodal/043-datasets-primer/) and is not repeated.
+%%
+%% Build:  make            -> 043-training-design.pdf
+%%         make check      -> gate
+%%         make tables     -> rerun training_design_043_tables.py
+%%         make diagrams   -> copy the rendered mermaid diagram into figures/
+%%         make publish    -> upload the build to Zotero
+%%
+%% Ground truth: experiments/043-expression-proteome-morphology/scripts/train_043.py,
+%% torchcell/models/cell_model_043.py, torchcell/models/readout_heads_043.py,
+%% torchcell/losses/hl_gauss.py, torchcell/data/representation_043.py,
+%% experiments/043-expression-proteome-morphology/scripts/global_split_043.py and the conf/
+%% tree, at commit bed26f949.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+\pdfstringdefDisableCommands{\def\secstatus#1{}}
+
+\input{tables/macros}
+
+\title{\vspace{-1.5em}The 043 Training Setup\\
+  {\large A design review: one model over expression, protein, isolate, segregant and
+  promoter readouts, its objective, and how a transfer gain is decided}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\input{sections/0-abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-notation}
+\input{sections/2-flow}
+\input{sections/3-model}
+\input{sections/4-objective}
+\input{sections/5-evaluation}
+\input{sections/6-measured}
+\input{sections/7-open}
+
+\end{document}

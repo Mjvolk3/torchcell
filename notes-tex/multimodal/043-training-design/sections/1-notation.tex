@@ -1,0 +1,98 @@
+%% notes-tex/multimodal/043-training-design/sections/1-notation.tex
+%% SOURCE: hand-authored notation contract. Paper rows copy paper/nature-biotech/sections/methods.tex
+%% (Table tab:notation and Eqs. objective to loss); 043 rows name the code symbol they stand for
+%% (torchcell/models/cell_model_043.py, torchcell/losses/hl_gauss.py, train_043.py).
+
+\section{Notation\secstatus{todo}}
+\label{sec:notation}
+
+The symbols are the manuscript's (Methods, Table ``Notation'', and Eqs.\ for the encoder,
+the perturbation operator, the readouts and the loss), reused with the same meaning.
+Where 043 needs more, the symbol is defined once in the second block of
+Table~\ref{tab:notation} and marked ``043''. Four manuscript symbols carry a narrower
+meaning here and say so in their rows: the task index becomes the dataset index $s$,
+the perturbation tokens are the record's marks, the type $\tau_t$ is a change type, and the
+mask $m$ marks measured entries only, since 043 marks carry no magnitude. Two manuscript
+symbols whose objects 043 does not build are reused: $s$, the gene-set index of the
+morphology head, and $\lambda$, the graph-prior weights, absent because 043 masks attention
+instead of regularizing it. Within each block the rows are alphabetical by the symbol's
+letter name.
+
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{>{\raggedright\arraybackslash}p{34mm}>{\raggedright\arraybackslash}p{128mm}>{\raggedright\arraybackslash}p{10mm}}
+\caption[]{\textbf{Notation.} First block: manuscript symbols as 043 uses them. Second
+block: symbols 043 adds. Shapes are per record unless a batch dimension is written.
+Numbers are the values of the overnight runs of 2026-10-22
+(\file{conf/train_043_default.yaml} with \texttt{data.batch\_size=8}).}\label{tab:notation}\\
+\toprule
+Symbol & Meaning in 043 & Source \\
+\midrule
+\endfirsthead
+\toprule
+Symbol & Meaning in 043 & Source \\
+\midrule
+\endhead
+$a,\ h$ & attention head index, number of heads; $h = 9$ in the trunk and the operator & paper \\
+$A^{(k)}$ & relation-$k$ adjacency over genes; nine relations, one per head of the masked trunk layer, used as a hard mask (Eq.~\ref{eq:mask}), not as a KL prior & paper \\
+$\alpha^{(\ell,a)}$ & trunk self-attention map of layer $\ell$, head $a$ & paper \\
+$B$ & records per batch; 8 in every overnight run (the config default is 16) & paper \\
+$\beta^{a}_{i,t}$ & operator cross-attention weight of query $i$ on mark $t$ in head $a$; the softmax also runs over the null key $\varnothing$ & paper \\
+$d,\ d_k$ & model width $d = 144$; head width $d_k = d/h = 16$ & paper \\
+$\operatorname{Embed},\ \mathbf{E}$ & entity encoder; learned lookup table. Every learned lookup of 043 is an $\mathbf{E}$ with a superscript naming it: $\mathbf{E}^{\mathrm{gap}}$, $\mathbf{E}^{\mathrm{chr}}$, $\mathbf{E}^{\mathrm{pgap}}$, $\mathbf{E}^{\mathrm{par}}$, $\mathbf{E}^{\mathrm{type}}$, $\mathbf{E}^{\mathrm{data}}$, $\mathbf{E}^{\mathrm{env}}$ & paper \\
+$\varepsilon$ & environment; enters only through the token $\mathbf{c}^{\mathrm{env}}$ at the heads & paper \\
+$F_\theta$ & trunk (encoder), $H_c = F_\theta(G_c)$ & paper \\
+$\operatorname{FFN},\ \operatorname{LN},\ \operatorname{MLP}$ & position-wise feed-forward network, layer normalization, two-layer perceptron (Linear, GELU, dropout 0.1, Linear) & paper \\
+$G,\ g_i,\ N$ & reference cell; gene $i$ of the shared index; $N = 6{,}607$ & paper \\
+$H,\ h_i,\ h_{\mathrm{CLS}}$ & trunk states $(h_{\mathrm{CLS}}, h_1, \ldots, h_N) \in \mathbb{R}^{(N+1)\times d}$; $H^{(\ell)}$ after layer $\ell$ & paper \\
+$H_{\mathrm{pert}},\ h^{\mathrm{pert}}_i$ & operator output, same shape as $H$ & paper \\
+$\ell,\ L$ & trunk layer index, number of layers; $L = 4$ & paper \\
+$\mathcal{L},\ \mathcal{L}_y$ & loss; supervised objective of a batch (Eq.~\ref{eq:objective}). 043 has no graph term, so $\mathcal{L} = \mathcal{L}_y$ & paper \\
+$m_{b,i}$ & 1 when entry $i$ of record $b$ is measured, else 0 (the manuscript's $m_t^{(b)}$) & paper \\
+$M_b$ & number of marks of record $b$ (the manuscript's $M$) & paper \\
+$p,\ \mathbf{p}_t,\ \mathbf{P}$ & perturbation set; its tokens are the record's marks $t = 1, \ldots, M_b$ (Eq.~\ref{eq:markkey}) & paper \\
+$\mathcal{R}_\phi$ & decoder: the gene head and the record head (Eqs.~\ref{eq:genehead},~\ref{eq:rechead}) & paper \\
+$\mathcal{T}_\psi$ & perturbation operator (Eqs.~\ref{eq:opattn},~\ref{eq:rezero}) & paper \\
+$\tau_t,\ \mathbf{t}_{\tau}$ & type of mark $t$, here a change type $\tau_t \in \mathcal{C}$; its learned embedding & paper \\
+$\Theta$ & all trainable parameters, 1.85\,M in the overnight runs (job 6136 log) & paper \\
+$W_Q, W_K, W_V, W_O$ & query, key, value and output maps & paper \\
+$w_s$ & weight of dataset $s$ in the objective (the manuscript's task weight $w_t$) & paper \\
+$x_i,\ x_{\mathrm{CLS}}$ & input token of gene $i$ (Eq.~\ref{eq:token}); learned CLS token & paper \\
+$y,\ \hat y$ & released label, prediction & paper \\
+\midrule
+$\bar{\mathbf{k}}_b$ & mean of the mark keys of record $b$ (the primer's $z_S$, renamed because $z$ is the target here); zero without marks & 043 \\
+$\mathbf{b}^{\mathrm{gene}}_s,\ \mathbf{b}^{\mathrm{rec}}_s$ & learned per-dataset bias of the gene and the record head, $\in \mathbb{R}^{n_{\mathrm{out}}}$ & 043 \\
+$\mathcal{B},\ n_s(\mathcal{B}),\ \mathcal{S}_{\mathcal{B}}$ & a batch of records; the records of dataset $s$ in it; the datasets with a measured entry in it & 043 \\
+$c,\ G_c,\ H_c$ & reference context (S288C, or an isolate under route A); its cell; its trunk states & 043 \\
+$\mathbf{c}_b$ & conditioning token $[\mathbf{c}^{\mathrm{type}}; \mathbf{c}^{\mathrm{data}}; \mathbf{c}^{\mathrm{env}}] \in \mathbb{R}^{40}$ of record $b$ (Eq.~\ref{eq:cond}) & 043 \\
+$\mathcal{C}$ & change-type vocabulary: reference, deletion, variant, loss of function, absent, present, promoter & 043 \\
+$\chi$ & node of the experiment-type path (Eq.~\ref{eq:typetoken}) & 043 \\
+$\Delta$ & HL-Gauss bin width, $8/32 = 0.25$ in $z$ & 043 \\
+$\eta_{s,i},\ \mu_s,\ \sigma_s$ & per-gene center (zero unless the dataset is centered per gene), pooled mean and standard deviation of dataset $s$ over its training rows & 043 \\
+$\operatorname{Four}(\xi)$ & Fourier features $[\sin(2\pi 2^f \xi), \cos(2\pi 2^f \xi)]_{f=0}^{7} \in \mathbb{R}^{16}$ & 043 \\
+$\gamma_u$ & quantile level $u/20$, $u = 1, \ldots, 19$ & 043 \\
+$\kappa,\ \mathcal{K}$ & typed-gap kind of a block slot; the 12 kinds of \texttt{GapKind} (no allele, locus gap, short flank, \ldots, ambiguous sequence) & 043 \\
+$\mathbf{k}_{\varnothing}$ & learned null key of the operator, one per head, with value zero & 043 \\
+$\lambda_0, \lambda_1, \lambda_2$ & coefficients of the fitted doubles rung (Eq.~\ref{eq:fitted}) & 043 \\
+$n_{\mathrm{bin}},\ n_q,\ n_{\mathrm{out}}$ & HL-Gauss bins (32); pinball quantiles (19); head output width ($n_{\mathrm{bin}}$, $n_q$ or 1) & 043 \\
+$n_s,\ n$ & training records of dataset $s$; $n = \sum_s n_s = \tdNTrain$ & 043 \\
+$n_{\mathrm{ep}},\ n_{\mathrm{step}}$ & epochs and optimizer steps of a run & 043 \\
+$\nu^{\mathrm{chr}}_{c,i},\ \nu^{\mathrm{gene}}_{c,i}$ & copy number of gene $i$'s chromosome relative to the basal ploidy, and of the gene, in context $c$ & 043 \\
+$o_t$ & allele parent of mark $t$ (segregants; row 0 is ``no parent'') & 043 \\
+$\hat{\mathbf{o}}_{b,i}$ & head output for entry $i$ of record $b$, $\in \mathbb{R}^{n_{\mathrm{out}}}$ & 043 \\
+$\omega_u(z),\ \hat\omega_u$ & target and predicted mass of HL-Gauss bin $u$ & 043 \\
+$q,\ \mathcal{Q}$ & frozen block index, $\mathcal{Q} = \{\mathrm{up}, \mathrm{down}, \mathrm{prot}, \mathrm{calm}\}$ & 043 \\
+$s,\ \mathcal{S},\ s(b)$ & dataset index; the training datasets of an arm ($|\mathcal{S}| = 9$ for \texttt{joint\_9}); the dataset of record $b$ & 043 \\
+$\operatorname{stat}_e$ & an evaluation statistic at epoch $e$; $\overline{\operatorname{stat}}$ its registered-window mean & 043 \\
+$\operatorname{tr}_s$ & pre-standardization transform of dataset $s$ & 043 \\
+$u$ & output component index (bin or quantile) & 043 \\
+$\upsilon_u,\ \bar\upsilon_u$ & HL-Gauss bin edges and centers & 043 \\
+$\mathcal{W}$ & registered window: the epochs whose evaluations are averaged & 043 \\
+$x^{(q)}_{c,i},\ d_q$ & frozen vector of block $q$ for gene $i$ in context $c$; its width, $(768, 768, 1024, 768)$ & 043 \\
+$\xi_i$ & relative midpoint of gene $i$ on its chromosome, in $[0,1]$ & 043 \\
+$z_{b,i},\ \hat z_{b,i}$ & standardized target (Eq.~\ref{eq:standardize}); point prediction in $z$ & 043 \\
+$\zeta_{\mathrm{attn}},\ \zeta_{\mathrm{ffn}}$ & ReZero gates of the operator, initialized at zero & 043 \\
+\bottomrule
+\end{longtable}
+\endgroup

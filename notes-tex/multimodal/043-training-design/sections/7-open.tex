@@ -1,0 +1,92 @@
+%% notes-tex/multimodal/043-training-design/sections/7-open.tex
+%% SOURCE: notes/experiments.043-expression-proteome-morphology.md (2026.10.19 Stage 3 open
+%% items; 2026.10.21 Input representation complete; 2026.10.21 Training stack; 2026.10.22
+%% Isolate embeddings), notes/experiments.043-expression-proteome-morphology.scripts.compute_isolate_composite.md
+%% (job 6126 counts), results/addgene_127546_fetch.json, results/embed_vaishnav_reporter_043.json
+%% (job 6115), results/verify_representation_043.json (job 6120), the primer's decision table.
+
+\section{Open design questions\secstatus{todo}}
+\label{sec:open}
+
+Each question names the choice, the fact that bears on it, and the measurement that would
+settle it. Arms are compared under the rule of Sec.~\ref{sec:rule}, on the window mean of
+Eq.~\ref{eq:window}, paired by seed.
+
+\begin{enumerate}[leftmargin=*,itemsep=3pt]
+\item \textbf{Heterozygous IUPAC codes: strict gap or the encoder's unknown token.} An isolate
+input with a character outside its encoder's alphabet is the typed gap
+\texttt{ambiguous\_sequence} today. The rule gaps 2.4\% of isolate-gene rows for FUDT
+upstream, 1.2\% for FUDT downstream, 20.8\% for CaLM and 16.1\% for ProtT5 (job 6126); FUDT
+and ProtT5 would accept the same inputs by reading the odd character as their unknown
+token. \emph{Test:} embed the gapped rows through the unknown token, rebuild the isolate
+representation, and compare the strict-gap and unknown-token arms on Caudal and Muenzner
+per-gene Pearson, six seeds each; report also how far each gapped protein's unknown-token
+vector lies from its gene's S288C vector.
+
+\item \textbf{Soft-masked bases.} The lowercase a, c, g, t, n of the isolate assemblies are
+soft-masked bases, not ambiguities, but fall under the same rule (about 3\% of the distinct
+untokenizable windows). Uppercasing at slice time would change the stored window string.
+\emph{Test:} count the windows the uppercase slice recovers, re-embed them (an align and
+merge rerun of a few minutes), and compare the recovered and strict-gap arms on Caudal and
+Muenzner per-gene Pearson.
+
+\item \textbf{Route B, and the consistency test between routes.} Route B reads an isolate on
+S288C with its variant and loss-of-function genes as marks (a median of 5{,}038 marks per
+Caudal record, against at most one engineered mark under route A; job 6120). It is not
+implemented in the trainer. \emph{Test:} the two routes on the same isolates and seeds,
+compared on the isolate statistics; and a consistency check that needs no labels: on
+held-out isolates, the correlation between the two routes' predicted profiles, against the
+correlation of either with the measurement.
+
+\item \textbf{Attended-token head or head-only tokens.} $\mathbf{c}_b$ reaches only the heads
+(Eqs.~\ref{eq:genehead},~\ref{eq:rechead}). The attended form (form c of the primer) also
+offers the tokens as keys to the operator, so the experiment type could change which genes
+move. \emph{Test:} the attended arm against head-only on Kemmeren, the doubles and the
+isolates, six seeds; not implemented.
+
+\item \textbf{Flat-type and six-heads controls.} The type path of Eq.~\ref{eq:typetoken}
+assumes that sharing a group row helps. \emph{Test:} \texttt{exp\_type\_mode: flat} (one row per
+leaf) and six heads, one per experiment type with no shared group, each against the DAG arm
+on every dataset; the flat control needs only the config switch, the six-heads control is
+not implemented.
+
+\item \textbf{Dataset weighting extremes.} Table~\ref{tab:share} spans an expected Vaishnav
+weight of \tdBalancedWeight{} (balanced) to \tdVaishnavWeightRecords{} (records sampler, record
+weighting); the record-weighting run (6151) was canceled before its window. \emph{Test:} the
+full two-by-two of sampler (records, balanced) and weighting (equal, records), six seeds,
+read on Kemmeren, the doubles, the isolates and Vaishnav, with \texttt{val/loss} logged
+(Eq.~\ref{eq:valloss}).
+
+\item \textbf{A clade-disjoint isolate split.} The random isolate folds leave relatives of a
+held-out isolate in training, so the GBLUP bars are the easy-split bars. \emph{Test:} a second
+fold file disjoint by Peter 2018 clade, beside \texttt{global\_split\_v1}; GBLUP and the model
+on both, with the drop from random to clade split as the quantity of interest.
+
+\item \textbf{The Addgene 127546 window gate.} The Vaishnav reporter's upstream key is a
+1{,}003 bp window of plasmid 127546. Every GenBank and SnapGene download of the plasmid
+returned HTTP 404, so the window comes from a reconstruction of 8{,}218 bp that matches the
+stated length and five ORFs without internal stops (\file{results/addgene_127546_fetch.json});
+all 71{,}158 windows were embedded on it (job 6115). \emph{Test:} deposit the GenBank file by
+the recorded manual recipe, compare its sha256-pinned window with the reconstruction base by
+base, and re-embed only on a difference; until then, decide whether the Vaishnav readings of
+Table~\ref{tab:measured} may be quoted.
+
+\item \textbf{Retiring Sameith 2015 Sm.} Its 82 profiles are Kemmeren's own arrays (82 of 82
+identical at $r = 1.000$ over 6{,}169 genes), so the split excludes it. The question is
+whether it leaves the served store or stays as a typed duplicate. \emph{Test:} repeat the
+identity check on the served graph's records rather than the raw store, and record the
+result with the retirement decision.
+
+\item \textbf{The 188 dropped records.} The deletion blocks of the 043 query use an
+\texttt{ALL} clause over the genome gene set, which drops 188 released records whose gene
+name is outside the 6{,}607-gene index: Kemmeren 2, Hu 1, Nadal-Ribelles 70, Messner 75,
+Ohya 40. The database constitution keeps every released record and lets the genome gate
+nothing. \emph{Test:} re-query with the isolates' \texttt{SIZE = 0 OR ANY} shape (about 6 h),
+confirm the store gains exactly 188 records, and report their names under the
+name-currency rule; whether they train then depends on whether their genes have a token.
+
+\item \textbf{The mark cap.} The overnight runs kept at most 1{,}024 marks per record, a
+smoke-time cap; N'Guessan carries a median of 2{,}910 and Boocock de novo cells 3{,}351.
+\emph{Test:} an uncapped run's memory and step time on one card, then the capped and uncapped
+arms on the segregant statistics.
+\end{enumerate}

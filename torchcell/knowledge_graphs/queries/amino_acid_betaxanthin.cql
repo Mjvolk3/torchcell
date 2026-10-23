@@ -19,6 +19,18 @@
 // rule (every perturbed gene in $gene_set) would drop every Cachera record unless
 // $gene_set carried CYP76AD1 and DOD, which are not yeast genes. RETURN is
 // property-shaped (serialized_data strings).
+//
+// Released identifiers (2026-10-23). Since PR #1085 (#1045) a strain whose source names the
+// deleted gene by a SYMBOL sits on ReleasedIdentifierPerturbation (perturbation_type
+// 'released_identifier', released_kind deletion, systematic_gene_name = the symbol): 3,592 of
+// Cachera's 4,759 served experiments, and Mulleder's non-systematic strain entries. Under
+// the clause above alone the Cachera block returned 1,101 of 4,759 against release
+// 2026.10.17-4295f7ca (experiment 046, jobs 6154 and 6155). The Mulleder and Cachera blocks
+// therefore admit a released_identifier perturbation as a deletion WITHOUT the gene-set
+// test (the served node carries no released_kind property, so the type is what the query
+// can see); the symbol is resolved to its R64 ORF at read time by
+// torchcell.data.graph_processor.Perturbation(released_name_resolver=...), every refusal
+// listed on the record. Cooper 2010 writes no released identifiers and keeps the clause.
 
 // AminoAcidMulleder2016Dataset (MetabolitePhenotype, graph_level 'metabolism')
 MATCH (dataset:Dataset)<-[:ExperimentMemberOf]-(e:Experiment)
@@ -28,10 +40,12 @@ MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
 MATCH (e)<-[:PhenotypeMemberOf]-(phen:PhenotypicFeature)
 WHERE phen.graph_level = 'metabolism'
  AND ALL(dp IN [(g)<-[:PerturbationMemberOf]-(pert) | pert]
-WHERE (NOT dp.perturbation_type ENDS WITH 'deletion')
+WHERE dp.perturbation_type = 'released_identifier'
+ OR (NOT dp.perturbation_type ENDS WITH 'deletion')
  OR dp.systematic_gene_name IN $gene_set)
  AND SIZE([(g)<-[:PerturbationMemberOf]-(pert)
-WHERE pert.perturbation_type ENDS WITH 'deletion' | pert]) > 0
+WHERE pert.perturbation_type ENDS WITH 'deletion'
+ OR pert.perturbation_type = 'released_identifier' | pert]) > 0
 WITH DISTINCT e, ref
  ORDER BY e.id
 RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
@@ -64,10 +78,12 @@ MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
 MATCH (e)<-[:PhenotypeMemberOf]-(phen:PhenotypicFeature)
 WHERE phen.graph_level = 'metabolism'
  AND ALL(dp IN [(g)<-[:PerturbationMemberOf]-(pert) | pert]
-WHERE (NOT dp.perturbation_type ENDS WITH 'deletion')
+WHERE dp.perturbation_type = 'released_identifier'
+ OR (NOT dp.perturbation_type ENDS WITH 'deletion')
  OR dp.systematic_gene_name IN $gene_set)
  AND SIZE([(g)<-[:PerturbationMemberOf]-(pert)
-WHERE pert.perturbation_type ENDS WITH 'deletion' | pert]) > 0
+WHERE pert.perturbation_type ENDS WITH 'deletion'
+ OR pert.perturbation_type = 'released_identifier' | pert]) > 0
 WITH DISTINCT e, ref
  ORDER BY e.id
 RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized

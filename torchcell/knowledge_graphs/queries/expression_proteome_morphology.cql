@@ -11,6 +11,14 @@
 //   - ProteomeMessner2023Dataset      ProteinAbundancePhenotype, 'node'
 //   - ScmdOhya2005Dataset             CalMorphPhenotype, 'global'
 //
+// Released identifiers (2026-10-23). Messner 2023 stores a non-systematic ORF column entry
+// on ReleasedIdentifierPerturbation (perturbation_type 'released_identifier', released_kind
+// deletion) since PR #1085 (#1045); the gene-set clause dropped 75 of its 4,699 served
+// experiments in the 043 build (4,624 returned). The Messner block admits a
+// released_identifier perturbation without the gene-set test; the released name is resolved
+// to its R64 ORF at read time by Perturbation(released_name_resolver=...). Kemmeren, Sameith
+// and Ohya write no released identifiers and keep the clause.
+//
 // Block shape of experiments/025-solid-growth/queries/001_all_solid_growth.cql: the
 // $gene_set parameter (every perturbed gene in the set, at least one perturbation) and
 // the property-shaped RETURN (serialized_data strings, never whole nodes). No medium
@@ -76,7 +84,8 @@ MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
 MATCH (e)<-[:PhenotypeMemberOf]-(phen:PhenotypicFeature)
 WHERE phen.graph_level = 'node'
  AND ALL(p IN [(g)<-[:PerturbationMemberOf]-(pert) | pert]
-WHERE p.systematic_gene_name IN $gene_set)
+WHERE p.perturbation_type = 'released_identifier'
+ OR p.systematic_gene_name IN $gene_set)
  AND SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) > 0
 WITH DISTINCT e, ref
  ORDER BY e.id

@@ -41,11 +41,12 @@ data:
   sampler: records
   batch_size: 16
   num_workers: 4
-  # Marks per record entering the operator. null = every mark (the design; since
-  # 2026-10-23). A number is a smoke-speed cap (select_marks: the absent / deletion /
-  # loss-of-function marks first, then a fixed per-record random subset); the setup line
-  # prints the data maximum and the records and marks the cap drops. The 2026-10-22 runs
-  # used 1024. Boocock segregants carry median 3,351 marks.
+  # Marks per record entering the operator. null = every mark: the data maximum, read
+  # from the prepared store at setup (4,416 on prep_v2, N'Guessan), so no record is
+  # truncated (owner, 2026-10-23: "bump the limit"). A number is a smoke-only override
+  # (select_marks: absent / deletion / loss-of-function first, then a fixed per-record random
+  # subset); the setup line prints the maximum and what a cap drops. The 2026-10-22 runs and
+  # S1 to S4 (jobs 6172 to 6175) used 1024.
   mark_cap: null
   val_max_records_per_dataset: 2000
   traineval_max_records_per_dataset: 256

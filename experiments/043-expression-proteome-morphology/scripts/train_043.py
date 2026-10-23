@@ -80,7 +80,9 @@ if SCRIPTS not in sys.path:
 from global_split_043 import GlobalSplit043, Role, load_split  # noqa: E402
 
 EXPERIMENT = "043-expression-proteome-morphology"
-PREP_VERSION = "prep_v1"
+#: prep_v2 (2026-10-23) adds Hu 2007, Jackson 2020 and Nadal-Ribelles 2025 to prep_v1's
+#: ten datasets; the joint_9 records and their targets are unchanged.
+PREP_VERSION = "prep_v2"
 WANDB_PROJECT = "torchcell_043-expression-proteome-morphology"
 ISO_REL = "data/scerevisiae/isolate_embeddings/peter2018_1011"
 #: 019's nine gene-gene relations, one per attention head (names of
@@ -107,6 +109,7 @@ Transform = Literal[
     "log2_plus_one",
     "log2_positive",
     "log2_cpm_plus_one",
+    "log2_cpm_ratio_to_reference",
 ]
 
 
@@ -126,6 +129,12 @@ class DatasetSpec(BaseModel):
         default=False, description="evaluation only, read as split B through `read_as`"
     )
     read_as: str | None = None
+    sentinel_abs: float | None = Field(
+        default=None,
+        gt=0,
+        description="released values with |v| >= this are a sentinel, set missing "
+        "(unmeasured) before the standardization and counted in the prepared meta",
+    )
 
 
 SPECS: dict[str, DatasetSpec] = {
@@ -213,6 +222,34 @@ SPECS: dict[str, DatasetSpec] = {
             center_per_gene=False,
         ),
         DatasetSpec(
+            short="hu",
+            name="MicroarrayScoreHu2007Dataset",
+            level="gene",
+            exp_class="MicroarrayExpressionScorePhenotype",
+            metric_type="expression",
+            transform="as_released",
+            center_per_gene=False,
+        ),
+        DatasetSpec(
+            short="jackson",
+            name="TfDeletionPseudobulkJackson2020Dataset",
+            level="gene",
+            exp_class="SingleCellExpressionPhenotype",
+            metric_type="expression",
+            transform="log2_cpm_ratio_to_reference",
+            center_per_gene=False,
+        ),
+        DatasetSpec(
+            short="nadal",
+            name="NadalRibellesPerturbSeq2025Dataset",
+            level="gene",
+            exp_class="PseudobulkExpressionPhenotype",
+            metric_type="expression",
+            transform="as_released",
+            center_per_gene=False,
+            sentinel_abs=20.0,
+        ),
+        DatasetSpec(
             short="sameith_dm",
             name="DmMicroarraySameith2015Dataset",
             level="gene",
@@ -236,6 +273,10 @@ JOINT_9: tuple[str, ...] = (
     "nguessan",
     "vaishnav",
 )
+#: Arm ``all``: every dataset of the raw store with a working head. Sameith 2015 Sm is in
+#: the store but the fold file excludes it (its 82 arrays are Kemmeren's, 82 of 82
+#: identical); Ohya 2005 is the morphology probe (no record-level multi-output head).
+ALL_DATASETS: tuple[str, ...] = (*JOINT_9, "hu", "jackson", "nadal")
 #: The modeling-side ontology path of every experiment type the arms read (O2).
 EXP_TYPE_PATHS: dict[str, tuple[str, ...]] = {
     "MicroarrayExpressionPhenotype": (
@@ -260,6 +301,17 @@ EXP_TYPE_PATHS: dict[str, tuple[str, ...]] = {
         "promoter",
         "PooledSortSeqExpressionPhenotype",
     ),
+    # appended (prep_v2): the earlier classes keep their indices
+    "MicroarrayExpressionScorePhenotype": (
+        "phenotype",
+        "expression",
+        "MicroarrayExpressionScorePhenotype",
+    ),
+    "PseudobulkExpressionPhenotype": (
+        "phenotype",
+        "expression",
+        "PseudobulkExpressionPhenotype",
+    ),
 }
 EXP_TYPE_CLASSES: tuple[str, ...] = tuple(EXP_TYPE_PATHS)
 #: ``dataset_043.ExpType`` name of each served class (checked at prepare time).
@@ -270,6 +322,8 @@ EXP_TYPE_OF_CLASS: dict[str, str] = {
     "ProteinAbundancePhenotype": "PROTEIN_ABUNDANCE",
     "ProteinTurnoverPhenotype": "PROTEIN_TURNOVER",
     "PooledSortSeqExpressionPhenotype": "POOLED_SORT_SEQ_EXPRESSION",
+    "MicroarrayExpressionScorePhenotype": "MICROARRAY_EXPRESSION_SCORE",
+    "PseudobulkExpressionPhenotype": "PSEUDOBULK_EXPRESSION",
 }
 
 
@@ -633,8 +687,15 @@ def transform_target(
     y: npt.NDArray[np.float64],
     y_ref: npt.NDArray[np.float64] | None = None,
     total_umis: float | None = None,
+    total_umis_ref: float | None = None,
 ) -> npt.NDArray[np.float32]:
-    """The pre-standardization transform of one record's gene vector (NaN = missing)."""
+    """The pre-standardization transform of one record's gene vector (NaN = missing).
+
+    ``log2_cpm_ratio_to_reference`` (Jackson 2020): ``log2((CPM + 1) / (CPM_ref + 1))``
+    against the record's served ``experiment_reference`` of the same environment, omitted
+    keys read as zero counts on both sides; a gene with zero counts on both sides carries
+    no ratio and is missing.
+    """
     with np.errstate(invalid="ignore", divide="ignore"):
         if transform == "as_released":
             out = y
@@ -653,9 +714,38 @@ def transform_target(
                 raise ValueError("log2_cpm_plus_one needs a positive total_umis")
             counts = np.nan_to_num(y, nan=0.0)  # omitted keys are released zeros
             out = np.log2(counts / total_umis * 1e6 + 1.0)
+        elif transform == "log2_cpm_ratio_to_reference":
+            if (
+                y_ref is None
+                or not (total_umis or 0) > 0
+                or not (total_umis_ref or 0) > 0
+            ):
+                raise ValueError(
+                    "log2_cpm_ratio_to_reference needs y_ref, total_umis and total_umis_ref"
+                )
+            assert total_umis is not None and total_umis_ref is not None
+            c = np.nan_to_num(y, nan=0.0)
+            c_ref = np.nan_to_num(y_ref, nan=0.0)
+            out = np.log2(
+                (c / total_umis * 1e6 + 1.0) / (c_ref / total_umis_ref * 1e6 + 1.0)
+            )
+            out = np.where((c > 0) | (c_ref > 0), out, np.nan)
         else:
             raise ValueError(f"unknown transform {transform!r}")
     return np.asarray(out, dtype=np.float32)
+
+
+def mask_sentinels(
+    y: npt.NDArray[np.float32], sentinel_abs: float | None
+) -> tuple[npt.NDArray[np.float32], int]:
+    """``y`` with ``|v| >= sentinel_abs`` set missing, and how many cells were set."""
+    if sentinel_abs is None:
+        return y, 0
+    with np.errstate(invalid="ignore"):
+        hit = np.abs(y) >= sentinel_abs
+    out = y.copy()
+    out[hit] = np.nan
+    return out, int(hit.sum())
 
 
 def _context_hash(*arrays: np.ndarray) -> str:
@@ -728,20 +818,30 @@ class _PrepRows(torch.utils.data.Dataset[dict[str, Any] | None]):
         # ---- target
         y_vec: np.ndarray | None = None
         y_scalar = float("nan")
+        n_sentinel = 0
         if spec.level == "gene":
             y_ref = (
                 sample["y_ref"].numpy().astype(np.float64)
                 if "y_ref" in sample
                 else None
             )
-            total = (
-                float(ex["phenotype"]["total_umis"])
-                if spec.transform == "log2_cpm_plus_one"
+            cpm = spec.transform in ("log2_cpm_plus_one", "log2_cpm_ratio_to_reference")
+            total = float(ex["phenotype"]["total_umis"]) if cpm else None
+            total_ref = (
+                float(
+                    record["experiment_reference"]["phenotype_reference"]["total_umis"]
+                )
+                if spec.transform == "log2_cpm_ratio_to_reference"
                 else None
             )
             y_vec = transform_target(
-                spec.transform, sample["y"].numpy().astype(np.float64), y_ref, total
+                spec.transform,
+                sample["y"].numpy().astype(np.float64),
+                y_ref,
+                total,
+                total_ref,
             )
+            y_vec, n_sentinel = mask_sentinels(y_vec, spec.sentinel_abs)
         else:
             y_scalar = float(sample["y_scalar"])
         # ---- context (route A isolates carry their own; everything else is S288C)
@@ -835,6 +935,7 @@ class _PrepRows(torch.utils.data.Dataset[dict[str, Any] | None]):
             "ctx": ctx,
             "marks": marks,
             "genes2": genes2,
+            "n_sentinel": n_sentinel,
         }
 
 
@@ -946,6 +1047,8 @@ def prepare(paths: PathsConfig, route: Literal["A", "B"], workers: int) -> str:
             for k, v in row["marks"].items():
                 marks[k].append(v)
             counts[row["short"]][{0: "train", 1: "val", 2: "split_b"}[row["role"]]] += 1
+            if row["n_sentinel"]:
+                counts[row["short"]]["sentinel_masked_cells"] += row["n_sentinel"]
         print(
             f"{done}/{len(ds)} records read, {len(rec['raw_index'])} kept", flush=True
         )
@@ -1472,6 +1575,33 @@ def _device(cfg: TrainConfig043) -> torch.device:
     return torch.device(cfg.device)
 
 
+def dataset_record_counts(
+    view: TrainingView,
+    train_pos: npt.NDArray[np.int64],
+    val_pos: npt.NDArray[np.int64],
+    te_pos: npt.NDArray[np.int64],
+) -> list[str]:
+    """``<dataset> <train>/<val>/<traineval>`` per arm dataset, plus split B and the
+    sentinel cells the prepare step set missing (``sentinel_masked_cells``).
+    """
+    out = []
+    for i, d in enumerate(view.datasets):
+        n = [
+            int((view.local_dataset[p] == i).sum())
+            for p in (train_pos, val_pos, te_pos)
+        ]
+        item = f"{d} {n[0]}/{n[1]}/{n[2]}"
+        masked = view.store.meta.counts.get(d, {}).get("sentinel_masked_cells")
+        if masked:
+            item += (
+                f" ({masked} sentinel cells |v| >= {SPECS[d].sentinel_abs:g} masked)"
+            )
+        out.append(item)
+    if len(view.doubles):
+        out.append(f"sameith_dm split B {len(view.doubles)}")
+    return out
+
+
 def build_model(
     cfg: TrainConfig043, view: TrainingView, tables: list[torch.Tensor]
 ) -> CellModel043:
@@ -1859,6 +1989,11 @@ def train(
         f"{len(te_pos)} traineval records; {len(view.doubles)} doubles; "
         f"{n_params / 1e6:.2f} M trainable parameters; frozen tables {table_gb:.2f} GB "
         f"({[len(u) for u in view.used_ids]} rows); standardization sha256 {stats_sha}",
+        flush=True,
+    )
+    print(
+        "[setup] records per dataset (train / val / traineval): "
+        + "; ".join(dataset_record_counts(view, train_pos, val_pos, te_pos)),
         flush=True,
     )
     opt = torch.optim.AdamW(

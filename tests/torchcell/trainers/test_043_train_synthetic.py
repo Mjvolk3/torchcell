@@ -628,3 +628,80 @@ def test_operator_residual_and_relative_norm_logged(
         assert "train/beta_attn" in last and "train/beta_ffn" in last
         # two steps from zero-initialized gates: the branch is still nearly shut
         assert last["operator/relative_norm"] < 0.05
+
+
+def test_nadal_sentinels_and_jackson_ratio(tr: ModuleType) -> None:
+    y = np.array([1.5, -23.0, 20.0, -19.99, np.nan], np.float32)
+    out, n = tr.mask_sentinels(y, tr.SPECS["nadal"].sentinel_abs)
+    assert n == 2
+    assert (
+        np.isnan(out[[1, 2, 4]]).all()
+        and out[0] == 1.5
+        and out[3] == np.float32(-19.99)
+    )
+    same, zero = tr.mask_sentinels(y, None)
+    assert zero == 0 and same is y
+    # Jackson: log2((CPM + 1) / (CPM_ref + 1)); omitted keys are zero counts; zero on both
+    # sides is missing
+    r = tr.transform_target(
+        "log2_cpm_ratio_to_reference",
+        np.array([3.0, np.nan, np.nan, 1.0]),
+        np.array([1.0, 1.0, np.nan, 1.0]),
+        total_umis=1e6,
+        total_umis_ref=1e6,
+    )
+    assert r[0] == pytest.approx(1.0)  # (3 + 1) / (1 + 1)
+    assert r[1] == pytest.approx(-1.0)
+    assert np.isnan(r[2])
+    assert r[3] == pytest.approx(0.0)
+    with pytest.raises(ValueError, match="total_umis_ref"):
+        tr.transform_target("log2_cpm_ratio_to_reference", y, y, total_umis=1.0)
+
+
+def test_arm_all_lists_every_headed_dataset(tr: ModuleType) -> None:
+    import yaml
+
+    raw = yaml.safe_load((SCRIPTS.parent / "conf" / "arm" / "all.yaml").read_text())
+    arm = tr.ArmConfig.model_validate(raw)
+    assert tuple(arm.datasets) == tr.ALL_DATASETS
+    assert {"hu", "jackson", "nadal"} <= set(arm.datasets)
+    assert "sameith_dm" not in arm.datasets  # split B, read through Kemmeren
+
+
+def test_setup_line_prints_records_per_dataset_and_sentinels(
+    tr: ModuleType, world: dict[str, Any], capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Messner's rows relabeled as Nadal-Ribelles: the new spec trains end to end and the
+    setup line names its records and its masked sentinel cells.
+    """
+    store = world["store"]
+    shorts = store.meta.datasets
+    rec_dataset = store.rec_dataset.copy()
+    rec_dataset[rec_dataset == shorts.index("messner")] = shorts.index("nadal")
+    meta = store.meta.model_copy(
+        update={"counts": {"nadal": {"sentinel_masked_cells": 17}}}
+    )
+    store2 = tr.PreparedStore043(
+        **{**store.__dict__, "rec_dataset": rec_dataset, "meta": meta}
+    )
+    base = _cfg(tr, world["root"], "hlgauss")
+    cfg = base.model_copy(
+        update={
+            "arm": tr.ArmConfig(
+                name="all_test",
+                datasets=["kemmeren", "nadal", "vaishnav"],
+                doubles=True,
+            )
+        }
+    )
+    result = tr.train(cfg, store2, tr.h5_vector_source(cfg.paths), tr.MemoryLogger())
+    out = capsys.readouterr().out
+    n_train = int(
+        (
+            (store2.rec_dataset == shorts.index("nadal"))
+            & (store2.rec_role == tr.ROLE_CODE[tr.Role.TRAIN])
+        ).sum()
+    )
+    assert f"nadal {n_train}/" in out
+    assert "(17 sentinel cells |v| >= 20 masked)" in out
+    assert "val/nadal/loss" in result.last_metrics

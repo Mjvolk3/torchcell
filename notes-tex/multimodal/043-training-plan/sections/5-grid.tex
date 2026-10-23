@@ -1,0 +1,309 @@
+%% notes-tex/multimodal/043-training-plan/sections/5-grid.tex
+%% SOURCE: measured step times from `sacct -j 6136,6137,6150,6152 -X --format=Elapsed` (GilaHyper,
+%% 2026-10-23): 6136 03:06:30, 6137 07:12:38, 6150 03:03:59, 6152 02:33:59, each over 317,300
+%% optimizer steps at B = 8 (design review tables/macros.tex); everything else in this file is
+%% arithmetic on those four numbers, the step counts of Secs. 2 and 3, and the machine factors of
+%% Table tab:cost, which are planning values, not measurements. Machine and queue facts from
+%% memory alcf-polaris-login (qstat -Qf 2026-10-17; allocations 2026-10-16), the owner's machine
+%% list of 2026-10-23, and memory delta-never-preempt-partition.
+
+\section{The grid\secstatus{todo}}
+\label{sec:grid}
+
+\subsection{The cost model\secstatus{todo}}
+\label{sec:cost}
+
+Every hour in this section is an estimate from four measured runs and a machine factor
+(Table~\ref{tab:cost}). A run's estimate is its optimizer steps times the measured seconds per
+step of its closest overnight run, times the factor of the machine. The seconds per step are
+whole-job elapsed time over steps, so they include evaluation and startup. The factors are
+planning values: A100 at 1.0, A40 at 1.5 and an Aurora tile at 2.0 times the RTX 6000 Ada time.
+None is measured for this trainer; the first smoke on each machine replaces its factor, and
+every \texttt{-{}-time} and PBS walltime below is recomputed from that measurement before
+submission. Requested time is about 1.5 times the estimate (the prepare-experiment gate's
+margin). Route B and the 4{,}096-mark cap are budgeted at twice the reference's time, a guess
+that smoke G6 replaces.
+
+%% SOURCE: sacct elapsed times of jobs 6136, 6137, 6150, 6152 (header of this file).
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption[]{\textbf{Measured seconds per optimizer step and the planning factors.} Top:
+GilaHyper, one RTX 6000 Ada card, batch 8, elapsed time over 317{,}300 steps. Bottom: factors
+on that time, unmeasured.}
+\label{tab:cost}
+\begin{tabular}{>{\raggedright\arraybackslash}p{62mm}>{\raggedright\arraybackslash}p{20mm}>{\raggedleft\arraybackslash}p{24mm}>{\raggedleft\arraybackslash}p{24mm}>{\raggedright\arraybackslash}p{36mm}}
+\toprule
+Run & Slurm job & Elapsed, h:mm & Seconds per step, s & Used for \\
+\midrule
+\texttt{joint\_9}, records sampler, HL-Gauss & 6136 & 3:07 & 0.0353 & records-sampler arms \\
+\texttt{joint\_9}, records sampler, pinball & 6150 & 3:04 & 0.0348 & (agrees with 6136) \\
+\texttt{joint\_9}, balanced sampler, HL-Gauss & 6137 & 7:13 & 0.0818 & every other stage-1 arm; segregant fine-tunes \\
+Kemmeren alone & 6152 & 2:34 & 0.0291 & Kemmeren fine-tunes and controls \\
+\midrule
+Machine factor, A100 40\,GB (Polaris; Delta A100) & -- & -- & $\times 1.0$ & planning value \\
+Machine factor, A40 48\,GB (Delta) & -- & -- & $\times 1.5$ & planning value \\
+Machine factor, Max 1550 tile (Aurora) & -- & -- & $\times 2.0$ & planning value \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+With $k_1 \approx 353{,}150$, a stage-1 reference run is $353{,}150 \times 0.0818$\,s $= 8.0$\,h
+on an Ada card, a records-sampler run 3.5\,h; a Kemmeren fine-tune of 31{,}710 steps is 0.26\,h;
+a Kemmeren $\mathrm{alone}(k_{\mathrm{tot}})$ of 384{,}860 steps is 3.1\,h; a segregant
+fine-tune 0.72\,h and a segregant $\mathrm{alone}(k_{\mathrm{tot}})$ 8.75\,h.
+
+\subsection{(a) GilaHyper smokes, today\secstatus{todo}}
+\label{sec:gilahyper}
+
+Two cards, one smoke per card at a time, chained \texttt{afterany}. Each smoke runs on the real
+prepared store with the real logger and must pass the gate of Sec.~\ref{sec:launch} before any
+run it enables is submitted. Every smoke but G7 waits on code that is not in the trainer at
+commit \texttt{f1cf262d2}; the last column names it.
+
+%% SOURCE: arithmetic on Table tab:cost (Ada, factor 1.0); 7,063 steps per epoch of `all` (estimate, Sec. 2.1).
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption[]{\textbf{Block (a): GilaHyper smokes.} One RTX 6000 Ada card per job, seed 0,
+batch 8. Estimated hours from Table~\ref{tab:cost}; requested is the slurm
+\texttt{-{}-time}.}
+\label{tab:gh}
+\begin{tabular}{>{\raggedright\arraybackslash}p{8mm}>{\raggedright\arraybackslash}p{44mm}>{\raggedright\arraybackslash}p{20mm}>{\raggedleft\arraybackslash}p{14mm}>{\raggedleft\arraybackslash}p{14mm}>{\raggedright\arraybackslash}p{30mm}>{\raggedright\arraybackslash}p{36mm}}
+\toprule
+Id & Run & Length & Estimated, card-h & Requested, h:mm & Enables & Needs first \\
+\midrule
+G1 & \texttt{all}, reference arm (balanced, HL-Gauss, equal, plain residual, mask) & 2 epochs & 0.4 & 1:00 & P0, the Delta request, the Polaris stage-1 job & specs for Hu, Jackson, Nadal-Ribelles; \texttt{conf/arm/all.yaml}; prepare of \texttt{all}; residual switch \\
+G2 & fine-tune path: 6136's window-end checkpoint (\texttt{joint\_9}) onto Kemmeren & 2 epochs (302 steps) & 0.1 & 0:30 & D5, D6, Polaris stage 2 & checkpoint load mapping dataset rows by name; $\mathrm{lr}_2$, $\mathcal{F}$; standardization sha256 check \\
+G3 & readout gather (Eq.~\ref{eq:gather}) & 1 epoch & 0.2 & 0:45 & C5 & graph-placement switch \\
+G4 & no graph & 1 epoch & 0.2 & 0:45 & C6 & graph-placement switch \\
+G5 & background marks (Eq.~\ref{eq:bgmarks}) & 1 epoch & 0.2 & 0:45 & C7 & background registry, marks, $\mathbf{E}^{\mathrm{orig}}$ \\
+G6 & memory probe: route B, and uncapped marks, on the largest-mark batches & 50 steps each & 0.1 & 0:30 & C8, C9, and the factor of 2 & route B in the trainer \\
+G7 & Kemmeren $\mathrm{alone}(k)$, seeds 0 to 5 & 31{,}710 steps each & 1.6 & 3:00 (6 jobs of 0:30) & the $\Delta^{\mathrm{ft}}_{k}$ controls & nothing \\
+\midrule
+\multicolumn{3}{l}{Block total} & 2.8 & 7:15 & & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+G2 loads a \texttt{joint\_9} checkpoint into an \texttt{all} model on purpose: the two have
+different dataset vocabularies, so the smoke proves that rows of $\mathbf{E}^{\mathrm{data}}$
+and $\mathbf{b}_s$ are matched by dataset name, not by position.
+
+\subsection{(b) Delta, eight individual jobs (owner go required)\secstatus{todo}}
+\label{sec:delta}
+
+Eight single-card jobs on Delta's A40 partition, never the preempt partition, submitted only
+after the owner's go. Their role is an early read of the whole two-stage chain at two seeds
+while the Polaris job queues, and a cross-machine check: seeds 1 and 2 repeat inside the
+Polaris grid. D7 runs first and doubles as the A40 timing probe; D1 to D4 are submitted after
+its first evaluation, with \texttt{-{}-time} recomputed from its measured seconds per step.
+
+%% SOURCE: arithmetic on Table tab:cost with the A40 factor 1.5.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption[]{\textbf{Block (b): Delta, eight jobs on single A40 cards.} Stage-1 runs use the
+reference configuration except where the arm says otherwise. D5 and D6 depend on D1 and D2
+with \texttt{afterany} and raise if the checkpoint is missing.}
+\label{tab:delta}
+\begin{tabular}{>{\raggedright\arraybackslash}p{8mm}>{\raggedright\arraybackslash}p{50mm}>{\raggedleft\arraybackslash}p{10mm}>{\raggedright\arraybackslash}p{26mm}>{\raggedleft\arraybackslash}p{10mm}>{\raggedleft\arraybackslash}p{16mm}>{\raggedleft\arraybackslash}p{16mm}>{\raggedright\arraybackslash}p{18mm}}
+\toprule
+Id & Arm & Seed & Length & Cards, n & Estimated, card-h & Requested, h:mm & Dependency \\
+\midrule
+D1 & stage 1, reference (plain residual) & 1 & 50 epochs & 1 & 12.0 & 18:00 & after D7 read \\
+D2 & stage 1, reference (plain residual) & 2 & 50 epochs & 1 & 12.0 & 18:00 & after D7 read \\
+D3 & stage 1, ReZero control (C1) & 1 & 50 epochs & 1 & 12.0 & 18:00 & after D7 read \\
+D4 & stage 1, ReZero control (C1) & 2 & 50 epochs & 1 & 12.0 & 18:00 & after D7 read \\
+D5 & stage 2, $\mathrm{ft}(k)$ on Kemmeren from D1 & 1 & 210 epochs & 1 & 0.4 & 1:00 & afterany D1 \\
+D6 & stage 2, $\mathrm{ft}(k)$ on Kemmeren from D2 & 2 & 210 epochs & 1 & 0.4 & 1:00 & afterany D2 \\
+D7 & Kemmeren $\mathrm{alone}(k_{\mathrm{tot}})$, 384{,}860 steps & 1 & 2{,}549 epochs & 1 & 4.7 & 7:00 & none \\
+D8 & Kemmeren $\mathrm{alone}(k_{\mathrm{tot}})$, 384{,}860 steps & 2 & 2{,}549 epochs & 1 & 4.7 & 7:00 & none \\
+\midrule
+\multicolumn{4}{l}{Block total} & 8 & 58.2 & 88:00 & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The $\mathrm{alone}(k)$ controls of seeds 1 and 2 come from G7. Two seeds decide nothing under
+the rule; the block's outputs are the A40 factor, a working chain, and the first paired
+values of $\Delta^{\mathrm{ft}}_{\mathrm{tot}}$ and $\Delta^{\mathrm{ft}}_{k}$.
+
+\subsection{(c) Polaris\secstatus{todo}}
+\label{sec:polaris}
+
+Polaris holds the six-seed stage-1 grid. Each node has four A100 40\,GB cards and each run
+takes one card, so a packed job runs four runs per node: one process per card
+(\texttt{CUDA\_VISIBLE\_DEVICES}), drawing from a task list ordered longest first, each task its
+own W\&B run, a failed task leaving the others running. The queue is \texttt{capacity} (1 to 4
+nodes, 168\,h, one job per project at a time). The \texttt{preemptable} queue is not used: the
+trainer has no resume, so a preemption loses the run. The 1-hour \texttt{debug} queue takes the
+timing probe and the short fine-tunes.
+
+%% SOURCE: arithmetic on Table tab:cost (A100 factor 1.0) and the arms of Secs. 2.2 to 2.7.
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{>{\raggedright\arraybackslash}p{9mm}>{\raggedright\arraybackslash}p{70mm}>{\raggedleft\arraybackslash}p{12mm}>{\raggedleft\arraybackslash}p{22mm}>{\raggedleft\arraybackslash}p{20mm}>{\raggedright\arraybackslash}p{24mm}}
+\caption[]{\textbf{Block (c), the Polaris stage-1 job: arms, seeds 0 to 5.} One change from
+the reference per contrast. Estimated hours per run on one A100 card; card-hours are runs times
+hours.}\label{tab:polaris}\\
+\toprule
+Id & Arm (change from the reference) & Runs, n & Estimated per run, card-h & Estimated, card-h & Control \\
+\midrule
+\endfirsthead
+\toprule
+Id & Arm (change from the reference) & Runs, n & Estimated per run, card-h & Estimated, card-h & Control \\
+\midrule
+\endhead
+R & reference: \texttt{all}, balanced, HL-Gauss, equal, plain residual, mask at layer 2, no background marks, route A, cap 1{,}024 & 6 & 8.0 & 48.0 & -- \\
+C1 & ReZero residual (\deq{9}) & 6 & 8.0 & 48.0 & R \\
+C2 & records sampler, equal weighting & 6 & 3.5 & 21.0 & R \\
+C3 & records sampler, record weighting & 6 & 3.5 & 21.0 & C2 \\
+C4 & sampler $\alpha = 0.5$ (Eq.~\ref{eq:sampler}), equal weighting & 6 & 8.0 & 48.0 & R \\
+C5 & readout gather, no mask (Eq.~\ref{eq:gather}) & 6 & 8.0 & 48.0 & R \\
+C6 & no graph & 6 & 8.0 & 48.0 & R \\
+C7 & background marks (Eq.~\ref{eq:bgmarks}) & 6 & 8.0 & 48.0 & R \\
+C8 & route B for the isolates, uncapped & 6 & 16.0 & 96.0 & R \\
+C9 & mark cap 4{,}096 & 6 & 16.0 & 96.0 & R \\
+C10 & pinball loss & 6 & 8.0 & 48.0 & R \\
+C11 & \texttt{joint\_9} at $k_1$ steps (without Hu, Jackson, Nadal-Ribelles) & 6 & 8.0 & 48.0 & R \\
+K & Kemmeren $\mathrm{alone}(k_{\mathrm{tot}})$, the stage-2 control & 6 & 3.1 & 18.6 & -- \\
+\midrule
+ & Job total & 78 & & 636.6 & \\
+\bottomrule
+\end{longtable}
+\endgroup
+
+On 16 cards the job's 636.6 card-hours take about 39.8\,h, which is 159.2 node-hours; the
+longest single runs (16\,h) fit well inside that. Every stage-1 run saves its window-end
+checkpoint, so stage 2 can start from whichever arm the rule names without rerunning stage 1.
+
+%% SOURCE: arithmetic on Tables tab:cost and tab:polaris; allocation 3,884 node-hours
+%% (GenesisHackathonOct26, sbank 2026-10-16).
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption[]{\textbf{Block (c): Polaris jobs and node-hours.} Estimated node-hours are nodes
+times the estimated wall time; requested is nodes times the PBS walltime. The allocation is
+3{,}884 node-hours on \texttt{GenesisHackathonOct26}.}
+\label{tab:polarisjobs}
+\begin{tabular}{>{\raggedright\arraybackslash}p{9mm}>{\raggedright\arraybackslash}p{58mm}>{\raggedright\arraybackslash}p{18mm}>{\raggedleft\arraybackslash}p{10mm}>{\raggedleft\arraybackslash}p{17mm}>{\raggedleft\arraybackslash}p{17mm}>{\raggedleft\arraybackslash}p{17mm}}
+\toprule
+Id & Job & Queue & Nodes, n & Walltime requested, h & Estimated, node-h & Requested, node-h \\
+\midrule
+P0 & timing probe: R for 2 epochs on four cards (seeds 0 to 3), C8 memory, the fine-tune path & debug & 1 & 1 & 0.5 & 1 \\
+P1 & stage-1 grid, Table~\ref{tab:polaris} & capacity & 4 & 60 & 159.2 & 240 \\
+P2 & stage 2 from R, seeds 0 to 5: Kemmeren $\mathrm{ft}(k)$; singles $\mathrm{ft}(1{,}100)$ and $\mathrm{alone}(1{,}100)$ & debug & 1 & 1 & 0.6 & 1 \\
+\midrule
+ & Block total & & & & 160.3 & 242 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{(d) Aurora\secstatus{todo}}
+\label{sec:aurora}
+
+Aurora runs only after the trainer runs on Intel XPU and its results agree with Polaris'. Its
+torch 2.11 XPU environment is live and PyG works on XPU (17 of 17 core checks, job 8938797);
+what the 043 trainer still needs:
+
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+\item \textbf{Device.} \texttt{TrainConfig043.device} admits \texttt{xpu}; device selection,
+\texttt{pin\_memory} and the bf16 autocast (\texttt{device\_type="xpu"}) follow it. At commit
+\texttt{f1cf262d2} the trainer knows only \texttt{cuda} and \texttt{cpu}.
+\item \textbf{The \texttt{torch\_scatter} import chain.} \file{cell_model_043.py} imports
+\file{equivariant_cell_graph_transformer.py}, whose package import reaches
+\file{torchcell/models/__init__.py} and \file{deep_set.py}, which imports \texttt{torch\_scatter};
+there is no XPU build of it. The candidate fix, \texttt{torch\_geometric.utils.scatter} or a
+lazy import, is untested.
+\item \textbf{Attention kernels.} The masked trunk layer and the operator call
+\texttt{scaled\_dot\_product\_attention} with masks; its output on XPU is compared with CUDA on
+a fixed batch and fixed weights at bf16 tolerance, and its speed is measured.
+\item \textbf{The launcher.} A PBS script with \texttt{ZE\_FLAT\_DEVICE\_HIERARCHY=FLAT}, one
+process per tile pinned by \texttt{ZE\_AFFINITY\_MASK}, twelve per node, and W\&B online through
+the ALCF proxy.
+\item \textbf{Data.} The prepared store, the frozen vector tables, the split file and the
+standardization records on \texttt{/flare}, each verified by sha256 against the GilaHyper copy
+(the transfer starts 2026-10-23).
+\item \textbf{Parity.} Job A1 runs R and C1, seeds 0 to 5, on twelve tiles. Aurora results enter
+a decision only if, per dataset of Table~\ref{tab:ladder}, the paired Aurora-minus-Polaris
+window-mean difference has a 95\% interval covering zero and a mean below 0.01 in magnitude, half
+the rule's margin (a proposed threshold).
+\end{enumerate}
+
+%% SOURCE: arithmetic on Table tab:cost with the tile factor 2.0; allocation 18,468 node-hours
+%% (sbank 2026-10-16); queue limits from qstat -Qf 2026-10-17.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption[]{\textbf{Block (d): Aurora jobs and node-hours.} Twelve tiles per node, one run per
+tile. Estimated tile-hours per run: stage-1 reference 16.0; Kemmeren fine-tune 0.5; segregant
+fine-tune and $\mathrm{alone}(k)$ 1.4; segregant $\mathrm{alone}(k_{\mathrm{tot}})$ 17.5. The
+allocation is 18{,}468 node-hours.}
+\label{tab:aurora}
+\begin{tabular}{>{\raggedright\arraybackslash}p{9mm}>{\raggedright\arraybackslash}p{62mm}>{\raggedright\arraybackslash}p{18mm}>{\raggedleft\arraybackslash}p{10mm}>{\raggedleft\arraybackslash}p{15mm}>{\raggedleft\arraybackslash}p{15mm}>{\raggedleft\arraybackslash}p{15mm}}
+\toprule
+Id & Job & Queue & Nodes, n & Walltime requested, h & Estimated, node-h & Requested, node-h \\
+\midrule
+A0 & XPU port tests: CUDA parity of a fixed batch, one-tile smoke, twelve-tile launcher (4 jobs) & debug & 1 & 1 each & 2 & 4 \\
+A1 & parity: R and C1, seeds 0 to 5, 50 epochs & capacity & 1 & 24 & 16 & 24 \\
+A2 & stage-2 grid from Polaris R checkpoints: four targets $\times$ $\mathrm{lr}_2 \in \{3, 1, 0.3\} \times 10^{-4}$ $\times$ three policies $\mathcal{F}$ $\times$ 6 seeds (216 runs), plus the segregant and singles controls (30 runs); 406 tile-h & capacity & 2 & 27 & 35 & 54 \\
+A3 & longer stage 1: R and C1 at 200 epochs, seeds 0 to 5 (owner decision 19) & capacity & 1 & 96 & 64 & 96 \\
+\midrule
+ & Block total & & & & 117 & 178 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A2 compares its Kemmeren fine-tunes with the Polaris Kemmeren controls (K and G7), a
+cross-machine comparison admitted only after A1 passes. On two nodes the twelve segregant
+$\mathrm{alone}(k_{\mathrm{tot}})$ runs (17.5\,h each) occupy twelve tiles, and the other twelve
+tiles finish the remaining 196 tile-hours in about 16.3\,h, so the wall is about 17.5\,h.
+
+\subsection{Totals and the order of unblocking\secstatus{todo}}
+\label{sec:totals}
+
+%% SOURCE: block totals of Tables tab:gh, tab:delta, tab:polarisjobs, tab:aurora.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption[]{\textbf{Budget per machine.} GilaHyper and Delta in card-hours, Polaris and
+Aurora in node-hours, the unit each allocation is charged in. Share is requested over the
+allocation.}
+\label{tab:totals}
+\begin{tabular}{>{\raggedright\arraybackslash}p{20mm}>{\raggedright\arraybackslash}p{30mm}>{\raggedleft\arraybackslash}p{18mm}>{\raggedleft\arraybackslash}p{18mm}>{\raggedleft\arraybackslash}p{24mm}>{\raggedleft\arraybackslash}p{20mm}>{\raggedright\arraybackslash}p{24mm}}
+\toprule
+Machine & Unit & Estimated & Requested & Allocation & Share of allocation, \% & Gate \\
+\midrule
+GilaHyper & card-h & 2.8 & 7.3 & two cards, owner's grant & -- & none \\
+Delta & card-h & 58.2 & 88.0 & owner's account & -- & owner's go \\
+Polaris & node-h & 160.3 & 242 & 3{,}884 & 6.2 & G1, P0 \\
+Aurora & node-h & 117 & 178 & 18{,}468 & 1.0 & A0, A1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+\item \textbf{Code}, by the trainer's owner: the three dataset specs, the residual, graph and
+background switches, the fine-tune entry point, route B, \file{conf/decision_rule.yaml}, the
+Ohya probe script, the XPU items of Sec.~\ref{sec:aurora}.
+\item \textbf{GilaHyper G1 to G7} (Table~\ref{tab:gh}). G1 passing the gate unblocks P0 and the
+Delta request; G2 unblocks every fine-tune; G6 fixes the budget of C8 and C9.
+\item \textbf{Polaris P0} replaces the A100 factor and sets P1's walltime; \textbf{P1} then runs
+the stage-1 grid and the Kemmeren $\mathrm{alone}(k_{\mathrm{tot}})$ controls.
+\item \textbf{Delta}, after the owner's go and in parallel with P1: D7 and D8 first, D1 to D4 on
+D7's measured factor, D5 and D6 behind D1 and D2.
+\item \textbf{Aurora A0 then A1}, in parallel with P1; A1 compares with P1's R and C1.
+\item \textbf{P1's result under the rule} names the stage-1 arm stage 2 starts from (R unless a
+contrast wins). \textbf{P2} runs from its checkpoints; \textbf{A2}, if A1 passed, runs the
+fine-tuning grid; \textbf{A3} waits for the owner.
+\item \textbf{End of campaign}: fold 0 and the three doubles statements of
+Sec.~\ref{sec:ftdoubles} are read once.
+\end{enumerate}

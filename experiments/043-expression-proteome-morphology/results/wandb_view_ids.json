@@ -28,5 +28,30 @@
     "id": "28uxd5087nc",
     "name": "043 overnight_2026_10_22: joint_9_pinball_equal",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=28uxd5087nc"
+  },
+  "two_stage_2026_10_23": {
+    "id": "9kmfp3eqe72",
+    "name": "043 two-stage smokes 2026-10-23 by arm",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=9kmfp3eqe72"
+  },
+  "two_stage_2026_10_23/all_hlgauss_equal": {
+    "id": "fo9dvedwsvb",
+    "name": "043 two_stage_2026_10_23: all_hlgauss_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=fo9dvedwsvb"
+  },
+  "two_stage_2026_10_23/all_hlgauss_equal_rezero": {
+    "id": "u4hqi0e6ter",
+    "name": "043 two_stage_2026_10_23: all_hlgauss_equal_rezero",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=u4hqi0e6ter"
+  },
+  "two_stage_2026_10_23/alone_kemmeren_hlgauss_equal": {
+    "id": "rbb5jrfsife",
+    "name": "043 two_stage_2026_10_23: alone_kemmeren_hlgauss_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=rbb5jrfsife"
+  },
+  "two_stage_2026_10_23/finetune_kemmeren_from_all_hlgauss_equal": {
+    "id": "hwcj0t175iz",
+    "name": "043 two_stage_2026_10_23: finetune_kemmeren_from_all_hlgauss_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=hwcj0t175iz"
   }
 }

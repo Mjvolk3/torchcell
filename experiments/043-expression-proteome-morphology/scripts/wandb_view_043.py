@@ -81,7 +81,21 @@ ROUNDS: dict[str, Round] = {
             "step-matched to it (317,300 steps, 2,102 epochs); joint_9_hlgauss_records "
             "deadline-capped at 39 epochs. No run logs val/loss (it predates e6ad22d0c)."
         ),
-    )
+    ),
+    "two_stage_2026_10_23": Round(
+        view_name="043 two-stage smokes 2026-10-23 by arm",
+        run_ids=("f3zk2sb3", "pc0zsb60", "l2fwphu9", "9rqoslxw"),
+        hardware=(
+            "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, jobs 6172, 6173, "
+            "6174, 6175"
+        ),
+        intro=(
+            "Seed 0 smokes on prep_v2 (job 6171), mark cap 1024. Stage 1 arm all at 4 "
+            "epochs (28,344 steps), plain residual and the ReZero control; stage 2 "
+            "fine-tune on Kemmeren from the plain stage-1 last.pt (302 steps, lr 3e-4, "
+            "warmup 30); alone_kemmeren from scratch at 28,646 steps (stage 1 + fine-tune)."
+        ),
+    ),
 }
 
 DATASETS = (
@@ -93,6 +107,8 @@ DATASETS = (
     "muenzner",
     "boocock",
     "nguessan",
+    "hu",
+    "nadal",
 )
 
 #: A panel: (title, x axis, metrics overlaid). Sections in the fixed order.
@@ -191,7 +207,20 @@ def sections() -> list[tuple[str, list[Panel]]]:
                 ("gradient norm", EPOCH, ["train/grad_norm"]),
                 ("gradient clip fraction", EPOCH, ["train/grad_norm_clip_frac"]),
                 ("learning rate", STEP, ["train/lr"]),
-                ("operator gates", EPOCH, ["train/beta_attn", "train/beta_ffn"]),
+                (
+                    "operator gates (rezero only)",
+                    EPOCH,
+                    ["train/beta_attn", "train/beta_ffn"],
+                ),
+                (
+                    "operator branch norm relative to the context (is the operator live)",
+                    EPOCH,
+                    [
+                        "operator/relative_norm",
+                        "operator/ffn_relative_norm",
+                        "operator/update_relative_norm",
+                    ],
+                ),
             ],
         ),
         (

@@ -1519,6 +1519,26 @@ def batch_loss(
     weighting: Literal["equal", "records"],
 ) -> tuple[torch.Tensor, dict[int, float]]:
     """Weighted per-dataset mean loss of a batch, and each dataset's mean (for logs)."""
+    sums, counts, nrec = loss_sums(out_gene, out_record, targets, objective, n_datasets)
+    total, means = combine_loss(sums, counts, nrec, weighting)
+    if total is None:
+        total = (out_gene.sum() + out_record.sum()) * 0.0
+    present = counts > 0
+    detached = means.detach()
+    logs = {
+        int(i): float(detached[i]) for i in torch.nonzero(present).flatten().tolist()
+    }
+    return total, logs
+
+
+def loss_sums(
+    out_gene: torch.Tensor,
+    out_record: torch.Tensor,
+    targets: Targets043,
+    objective: ReadoutLoss043,
+    n_datasets: int,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Per dataset: summed elementwise loss, measured entries, records (one batch)."""
     device = out_gene.device
     sums = torch.zeros(n_datasets, device=device)
     counts = torch.zeros(n_datasets, device=device)
@@ -1536,20 +1556,26 @@ def batch_loss(
         sums = sums.index_add(0, d, elem)
         counts = counts.index_add(0, d, measured.to(sums.dtype))
         nrec = nrec.index_add(0, d, torch.ones_like(d, dtype=sums.dtype))
+    return sums, counts, nrec
+
+
+def combine_loss(
+    sums: torch.Tensor,
+    counts: torch.Tensor,
+    nrec: torch.Tensor,
+    weighting: Literal["equal", "records"],
+) -> tuple[torch.Tensor | None, torch.Tensor]:
+    """The objective from per-dataset sums: equal = mean of the dataset means, records =
+    their mean weighted by records; None when no dataset has a measured entry.
+    """
     present = counts > 0
     means = torch.where(present, sums / counts.clamp_min(1.0), torch.zeros_like(sums))
     if not bool(present.any()):
-        total = (out_gene.sum() + out_record.sum()) * 0.0
-    elif weighting == "equal":
-        total = means[present].mean()
-    else:
-        w = nrec * present
-        total = (means * w).sum() / w.sum()
-    detached = means.detach()
-    logs = {
-        int(i): float(detached[i]) for i in torch.nonzero(present).flatten().tolist()
-    }
-    return total, logs
+        return None, means
+    if weighting == "equal":
+        return means[present].mean(), means
+    w = nrec * present
+    return (means * w).sum() / w.sum(), means
 
 
 @torch.no_grad()
@@ -1561,10 +1587,20 @@ def predict(
     batch_size: int,
     device: torch.device,
     num_workers: int,
+    weighting: Literal["equal", "records"] | None = None,
 ) -> dict[str, Any]:
-    """Point predictions (z) for ``positions``, with the HL-Gauss readouts."""
+    """Point predictions (z) for ``positions``, with the HL-Gauss readouts.
+
+    With ``weighting``, also the training objective over the whole pass (``loss``: the
+    per-dataset sums of every batch combined as ``batch_loss`` combines one batch) and
+    each dataset's mean loss (``dataset_loss``).
+    """
     model.eval()
     G = view.store.Y.shape[1]
+    n_ds = len(view.datasets)
+    acc_sums = torch.zeros(n_ds, dtype=torch.float64)
+    acc_counts = torch.zeros(n_ds, dtype=torch.float64)
+    acc_nrec = torch.zeros(n_ds, dtype=torch.float64)
     gene_pred = np.full((len(positions), G), np.nan, np.float32)
     rec_pred = np.full(len(positions), np.nan, np.float32)
     acc_hits = acc_n = 0.0
@@ -1575,6 +1611,13 @@ def predict(
         with _autocast(device):
             out = model(b, tg.gene_rows.to(device), tg.record_rows.to(device))
         B = len(tg.dataset_ids)
+        if weighting is not None:
+            s_, c_, n_ = loss_sums(
+                out.gene.float(), out.record.float(), tg, objective, n_ds
+            )
+            acc_sums += s_.double().cpu()
+            acc_counts += c_.double().cpu()
+            acc_nrec += n_.double().cpu()
         if tg.gene_rows.numel():
             gene_pred[cursor + tg.gene_rows.numpy()] = (
                 objective.point(out.gene).cpu().numpy()
@@ -1594,10 +1637,25 @@ def predict(
         cursor += B
     model.train()
     extra = {}
+    dataset_loss: dict[int, float] = {}
+    loss: float | None = None
+    if weighting is not None:
+        total, means = combine_loss(acc_sums, acc_counts, acc_nrec, weighting)
+        loss = None if total is None else float(total)
+        dataset_loss = {
+            int(i): float(means[i])
+            for i in torch.nonzero(acc_counts > 0).flatten().tolist()
+        }
     if acc_n:
         extra["acc_within_one_bin"] = acc_hits / acc_n
         extra["entropy_mean"] = ent_sum / ent_n
-    return {"gene": gene_pred, "record": rec_pred, "extra": extra}
+    return {
+        "gene": gene_pred,
+        "record": rec_pred,
+        "extra": extra,
+        "loss": loss,
+        "dataset_loss": dataset_loss,
+    }
 
 
 def _autocast(device: torch.device) -> Any:
@@ -1637,9 +1695,16 @@ def evaluate(
         cfg.data.batch_size,
         device,
         cfg.data.num_workers,
+        cfg.weighting.kind,
     )
     store = view.store
     logs: dict[str, float] = {}
+    # the training objective on this pass (same loss, same weighting): <prefix>/loss and
+    # <prefix>/<dataset>/loss, so train and validation loss share an axis
+    if pred["loss"] is not None:
+        logs[f"{prefix}/loss"] = pred["loss"]
+    for i, v in pred["dataset_loss"].items():
+        logs[f"{prefix}/{view.datasets[i]}/loss"] = v
     by_type: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
     for d in view.datasets:
         spec = SPECS[d]
@@ -1929,6 +1994,7 @@ def train(
                 if k.startswith(
                     (
                         "train/loss",
+                        "val/loss",
                         "val/expression/pearson_per_gene",
                         "val/protein/pearson_per_gene",
                         "val/promoter/pearson",

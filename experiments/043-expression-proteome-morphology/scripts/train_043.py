@@ -383,9 +383,10 @@ class DataConfig(BaseModel):
     batch_size: int = Field(default=16, gt=0)
     num_workers: int = Field(default=4, ge=0)
     mark_cap: int | None = Field(
-        default=1024,
+        default=None,
         gt=0,
-        description="SMOKE ONLY: marks kept per record (select_marks); the design has no cap",
+        description="marks kept per record (select_marks); None = every mark (the design). "
+        "A cap is a smoke-speed choice; the setup line prints the records it truncates",
     )
     val_max_records_per_dataset: int | None = Field(default=2000, gt=0)
     traineval_max_records_per_dataset: int = Field(default=256, gt=0)
@@ -543,6 +544,16 @@ class TrainConfig043(BaseModel):
 
     seed: int = 0
     device: Literal["auto", "cpu", "cuda"] = "auto"
+    init_from: str | None = Field(
+        default=None,
+        description="stage 2: a stage-1 checkpoint (.pt) whose MODEL weights initialize "
+        "this run (never its optimizer); the model and loss sections must match it",
+    )
+    init_from_label: str | None = Field(
+        default=None,
+        description="the stage-1 run's W&B group, read from the checkpoint by run(); "
+        "names this run finetune_<dataset>_from_<label>",
+    )
     arm: ArmConfig
     loss: LossConfig
     weighting: WeightingConfig
@@ -553,14 +564,30 @@ class TrainConfig043(BaseModel):
     wandb: WandbConfig = Field(default_factory=WandbConfig)
     paths: PathsConfig
 
+    @model_validator(mode="after")
+    def _init_label(self) -> TrainConfig043:
+        """A stage-1 label only with a stage-1 checkpoint."""
+        if self.init_from_label is not None and self.init_from is None:
+            raise ValueError("init_from_label without init_from")
+        return self
+
     @property
     def arm_label(self) -> str:
         """``<arm>[_balanced]_<loss>_<weighting>[_rezero]``: the W&B group.
+
+        A stage-2 run (``init_from``) is ``finetune_<arm without alone_>_from_<stage-1
+        group>``.
 
         ``_rezero`` marks the ReZero operator control; the plain residual is unmarked. The
         overnight runs of 2026-10-22 were ReZero under the unmarked name (it was the only
         residual then).
         """
+        if self.init_from is not None:
+            if self.init_from_label is None:
+                raise ValueError(
+                    "init_from_label is filled from the checkpoint by run()"
+                )
+            return f"finetune_{self.arm.name.removeprefix('alone_')}_from_{self.init_from_label}"
         sampler = "_balanced" if self.data.sampler == "balanced" else ""
         rezero = "_rezero" if self.model.operator_residual == "rezero" else ""
         return (
@@ -1575,6 +1602,78 @@ def _device(cfg: TrainConfig043) -> torch.device:
     return torch.device(cfg.device)
 
 
+#: Parameters indexed by the arm-local dataset id: remapped by dataset name on init_from.
+DATASET_INDEXED = ("dataset_token.weight", "gene_bias", "record_bias")
+
+
+def stage1_label(path: str) -> str:
+    """The W&B group of the run that wrote the checkpoint at ``path``."""
+    state = torch.load(path, map_location="cpu", weights_only=False)
+    return TrainConfig043.model_validate(state["config"]).arm_label
+
+
+def init_from_checkpoint(
+    model: CellModel043, cfg: TrainConfig043, view: TrainingView
+) -> dict[str, float]:
+    """Load the stage-1 MODEL weights of ``cfg.init_from`` (the optimizer is not loaded).
+
+    The model and loss sections must equal the checkpoint's; dataset-indexed rows
+    (``DATASET_INDEXED``) are taken by dataset name, so a one-dataset arm reads its own
+    row of a twelve-dataset stage 1; every arm dataset must be a stage-1 dataset, and its
+    standardization must equal the stage-1 one (same training rows). Loads strictly.
+    """
+    assert cfg.init_from is not None
+    state = torch.load(cfg.init_from, map_location="cpu", weights_only=False)
+    src = TrainConfig043.model_validate(state["config"])
+    if src.model != cfg.model:
+        raise ValueError(f"model section differs from the checkpoint's: {src.model}")
+    if src.loss != cfg.loss:
+        raise ValueError(f"loss differs from the checkpoint's: {src.loss}")
+    missing = [d for d in view.datasets if d not in src.arm.datasets]
+    if missing:
+        raise KeyError(f"{missing} not trained in stage 1 ({src.arm.datasets})")
+    with open(osp.join(osp.dirname(cfg.init_from), "standardization.json")) as f:
+        src_stats = StandardizationStats.model_validate_json(f.read())
+    for d in view.datasets:
+        if src_stats.get(d) != view.stats.get(d):
+            raise ValueError(f"{d}: standardization differs from stage 1")
+    rows = torch.as_tensor([src.arm.datasets.index(d) for d in view.datasets])
+    sd = dict(state["model"])
+    for k in DATASET_INDEXED:
+        sd[k] = sd[k][rows]
+    model.load_state_dict(sd, strict=True)
+    return {
+        "setup/init_from_epoch": float(state["epoch"]),
+        "setup/init_from_step": float(state["step"]),
+        "setup/init_from_lr": float(src.optim.lr),
+    }
+
+
+def mark_cap_report(view: TrainingView) -> tuple[str, dict[str, float]]:
+    """Marks per record over the arm: the maximum, and what ``view.mark_cap`` drops."""
+    store = view.store
+    n = (store.mark_ptr[view.rec + 1] - store.mark_ptr[view.rec]).astype(np.int64)
+    top = int(np.argmax(n)) if len(n) else 0
+    mx = int(n.max(initial=0))
+    cap = view.mark_cap
+    over = n > cap if cap is not None else np.zeros(len(n), bool)
+    dropped = int((n[over] - cap).sum()) if cap is not None else 0
+    by_ds = defaultdict(int)
+    for i in np.nonzero(over)[0]:
+        by_ds[view.datasets[view.local_dataset[i]]] += 1
+    line = (
+        f"[setup] marks per record: max {mx} ({view.datasets[view.local_dataset[top]] if len(n) else '-'}); "
+        f"cap {cap if cap is not None else 'none'}: {int(over.sum())} of {len(n)} records "
+        f"truncated {dict(by_ds)}, {dropped} marks dropped"
+    )
+    return line, {
+        "setup/marks_max": float(mx),
+        "setup/mark_cap": float(cap or 0),
+        "setup/records_truncated": float(over.sum()),
+        "setup/marks_dropped": float(dropped),
+    }
+
+
 def dataset_record_counts(
     view: TrainingView,
     train_pos: npt.NDArray[np.int64],
@@ -1965,7 +2064,19 @@ def train(
     device = _device(cfg)
     view = build_view(store, cfg.arm, cfg.data.mark_cap)
     tables = [vector_source(e, view.used_ids[e]) for e in range(len(ENCODERS))]
-    model = build_model(cfg, view, tables).to(device)
+    model = build_model(cfg, view, tables)
+    init_logs: dict[str, float] = {}
+    if cfg.init_from is not None:
+        init_logs = init_from_checkpoint(model, cfg, view)
+        print(
+            f"[setup] init_from {cfg.init_from} (stage-1 epoch "
+            f"{init_logs['setup/init_from_epoch']:.0f}, step "
+            f"{init_logs['setup/init_from_step']:.0f}, stage-1 lr "
+            f"{init_logs['setup/init_from_lr']:g}); model weights only, fresh optimizer at "
+            f"lr {cfg.optim.lr:g}",
+            flush=True,
+        )
+    model = model.to(device)
     objective = ReadoutLoss043(model.config).to(device)
     stats_sha = view.stats.sha256()
     table_gb = model.composite.table_bytes() / 1e9
@@ -1980,7 +2091,14 @@ def train(
         cfg.data.traineval_max_records_per_dataset,
         cfg.seed,
     )
-    ckpt_dir = osp.join(cfg.paths.resolved_checkpoint_root(), cfg.run_name)
+    # one directory per job, so a rerun of a run name never overwrites an earlier run's
+    # checkpoints (the 2026-10-22 runs sit directly in <run_name>/)
+    ckpt_dir = osp.join(
+        cfg.paths.resolved_checkpoint_root(),
+        cfg.run_name,
+        os.environ.get("SLURM_JOB_ID")
+        or f"local-{datetime.now(UTC).strftime('%Y%m%dT%H%M%S%f')}",
+    )
     os.makedirs(ckpt_dir, exist_ok=True)
     with open(osp.join(ckpt_dir, "standardization.json"), "w") as f:
         f.write(view.stats.canonical_json())
@@ -1991,6 +2109,8 @@ def train(
         f"({[len(u) for u in view.used_ids]} rows); standardization sha256 {stats_sha}",
         flush=True,
     )
+    cap_line, cap_logs = mark_cap_report(view)
+    print(cap_line, flush=True)
     print(
         "[setup] records per dataset (train / val / traineval): "
         + "; ".join(dataset_record_counts(view, train_pos, val_pos, te_pos)),
@@ -2018,6 +2138,8 @@ def train(
             "setup/table_gb": table_gb,
             "setup/n_params_m": n_params / 1e6,
             "setup/seconds": time.time() - t_start,
+            **cap_logs,
+            **init_logs,
         },
         step=0,
     )
@@ -2215,6 +2337,8 @@ def config_dump(cfg: TrainConfig043, store: PreparedStore043) -> dict[str, Any]:
 
 def run(cfg: TrainConfig043) -> RunResult:
     """Load the prepared store and train with W&B logging."""
+    if cfg.init_from is not None and cfg.init_from_label is None:
+        cfg = cfg.model_copy(update={"init_from_label": stage1_label(cfg.init_from)})
     store = PreparedStore043.load(cfg.paths.resolved_prep_dir(cfg.data.route))
     split = load_split(cfg.paths.split_file)
     if (split.version, split.store_sha256) != (

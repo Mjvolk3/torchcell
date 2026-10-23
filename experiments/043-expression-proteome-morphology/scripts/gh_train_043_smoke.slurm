@@ -72,16 +72,28 @@ if [ -n "${DEADLINE:-}" ]; then
   TIME_BUDGET_HOURS=$(python -c "print(min(${TIME_BUDGET_HOURS}, ${LEFT}))")
 fi
 EVAL_EVERY="${EVAL_EVERY:-1}"
+MAX_EPOCHS="${MAX_EPOCHS:-50}"
+TIME_MARGIN_MINUTES="${TIME_MARGIN_MINUTES:-20}"
+# operator residual (plain default since 2026-10-23; rezero = the control)
+OPERATOR_RESIDUAL="${OPERATOR_RESIDUAL:-plain}"
+# marks per record: the 2026-10-22 runs used 1024; "null" = every mark (the design)
+MARK_CAP="${MARK_CAP:-1024}"
+TAGS="${TAGS:-smoke}"
 # step-matched alone runs: total optimizer steps of the joint run they control for
-STEPS_ARG=()
-if [ -n "${MAX_STEPS:-}" ]; then STEPS_ARG=("budget.max_steps=${MAX_STEPS}"); fi
+EXTRA=()
+if [ -n "${MAX_STEPS:-}" ]; then EXTRA+=("budget.max_steps=${MAX_STEPS}"); fi
+# stage 2: the stage-1 checkpoint (model weights only), its lr and warmup
+if [ -n "${INIT_FROM:-}" ]; then EXTRA+=("init_from=${INIT_FROM}"); fi
+if [ -n "${LR:-}" ]; then EXTRA+=("optim.lr=${LR}"); fi
+if [ -n "${WARMUP_STEPS:-}" ]; then EXTRA+=("optim.warmup_steps=${WARMUP_STEPS}"); fi
 echo "host $(hostname)  commit $(git rev-parse --short HEAD)  $(date)"
-echo "arm $ARM  loss $LOSS  weighting $WEIGHTING  sampler $SAMPLER  seed $SEED  max_steps ${MAX_STEPS:-none}  eval_every $EVAL_EVERY  budget ${TIME_BUDGET_HOURS} h"
+echo "arm $ARM  loss $LOSS  weighting $WEIGHTING  sampler $SAMPLER  seed $SEED  residual $OPERATOR_RESIDUAL  mark_cap $MARK_CAP  max_epochs $MAX_EPOCHS  max_steps ${MAX_STEPS:-none}  init_from ${INIT_FROM:-none}  lr ${LR:-default}  eval_every $EVAL_EVERY  budget ${TIME_BUDGET_HOURS} h"
 nvidia-smi --query-gpu=index,name,memory.total,memory.used --format=csv
 python experiments/043-expression-proteome-morphology/scripts/train_043.py \
   arm="$ARM" loss="$LOSS" weighting="$WEIGHTING" seed="$SEED" \
-  data.batch_size=8 data.num_workers=4 data.sampler="$SAMPLER" \
-  budget.max_epochs=50 budget.time_budget_hours="$TIME_BUDGET_HOURS" budget.time_margin_minutes=20 \
-  budget.eval_every_epochs="$EVAL_EVERY" "${STEPS_ARG[@]}" \
-  "wandb.tags=[smoke]"
+  data.batch_size=8 data.num_workers=4 data.sampler="$SAMPLER" data.mark_cap="$MARK_CAP" \
+  model.operator_residual="$OPERATOR_RESIDUAL" \
+  budget.max_epochs="$MAX_EPOCHS" budget.time_budget_hours="$TIME_BUDGET_HOURS" budget.time_margin_minutes="$TIME_MARGIN_MINUTES" \
+  budget.eval_every_epochs="$EVAL_EVERY" "${EXTRA[@]}" \
+  "wandb.tags=[${TAGS}]"
 echo "done $(date)"

@@ -763,7 +763,10 @@ def frames_to_gif(frames: list[FArray], path: str, duration_ms: int = 80) -> Non
     print(f"wrote {path} ({len(frames)} frames)")
 
 
-GIF_DPI = 190  # 118.9 mm -> about 890 px wide; larger frames decode too slowly to play
+# 118.9 mm -> about 1220 px wide. 190 dpi (890 px) left 7 pt glyphs about 18 px tall,
+# visibly rough; 260 is the legibility step. The earlier frames that played too slowly
+# were a 170 mm canvas at 200 dpi, 1340 px, so this stays under that.
+GIF_DPI = 260
 # The GIF frames are typeset by real LaTeX (Computer Modern, amsmath), not mathtext.
 # Agg cannot rasterize usetex text without dvipng, which this machine lacks, so a frame
 # is written as a PDF (the PDF backend reads the DVI itself) and rasterized with

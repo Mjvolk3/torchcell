@@ -22,12 +22,21 @@ which reads records and writes nothing into the raw LMDB). The raw dataset index
 Writes ``results/build_043_raw_partitioned.json``: wall time, record count, rate, the
 settings, and the raw entries per dataset.
 
+``--finalize`` (after ``compare_raw_stores_043.py`` says identical) writes the one file the
+043 readers need beyond the raw stage, ``processed/gene_set.json`` (the 6,607-gene index,
+``sorted(genome.gene_set)`` through ``Neo4jCellDataset._write_json_with_lock``, the writer
+and genome setup of ``build_043_store.py``), and stops with an error unless it is byte
+identical to ``raw_043/processed/gene_set.json`` and, once job 6187 has written it, to
+``raw_043_v2/processed/gene_set.json``. ``--out-dir`` writes it elsewhere (a dry run).
+
     STORE_043_VERSION=v2 python experiments/043-expression-proteome-morphology/scripts/build_043_raw_partitioned.py --fetch-workers 8 --prefix-length 2
+    python experiments/043-expression-proteome-morphology/scripts/build_043_raw_partitioned.py --finalize
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import os.path as osp
@@ -53,13 +62,57 @@ EXPERIMENT = "043-expression-proteome-morphology"
 CANDIDATE_TAG = "raw_043_v2_partitioned"
 
 
+def _genome(data_root: str) -> SCerevisiaeGenome:
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(data_root, "data/sgd/genome"),
+        go_root=osp.join(data_root, "data/go"),
+        overwrite=False,
+    )
+    genome.drop_empty_go()
+    return genome
+
+
+def finalize(data_root: str, out_dir: str | None) -> dict[str, object]:
+    """Write ``processed/gene_set.json`` and check it byte for byte (module docstring)."""
+    exp = osp.join(data_root, "data/torchcell/experiments", EXPERIMENT)
+    out_dir = out_dir or osp.join(exp, CANDIDATE_TAG, "processed")
+    os.makedirs(out_dir, exist_ok=True)
+    path = osp.join(out_dir, "gene_set.json")
+    Neo4jCellDataset._write_json_with_lock(path, sorted(_genome(data_root).gene_set))
+    with open(path, "rb") as f:
+        written = f.read()
+    checks: dict[str, object] = {
+        "path": path,
+        "sha256": hashlib.sha256(written).hexdigest(),
+    }
+    for tag in ("raw_043", "raw_043_v2"):
+        other = osp.join(exp, tag, "processed", "gene_set.json")
+        if not osp.exists(other):
+            checks[tag] = "not written yet"
+            continue
+        with open(other, "rb") as f:
+            same = f.read() == written
+        checks[tag] = "byte-identical" if same else "DIFFERENT"
+        if not same:
+            raise RuntimeError(f"{path} differs from {other}")
+    print(json.dumps(checks, indent=1))
+    return checks
+
+
 def main() -> None:
-    """Run the partitioned raw stage and write the build record."""
+    """Run the partitioned raw stage and write the build record (or ``--finalize``)."""
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--fetch-workers", type=int, required=True)
-    ap.add_argument("--prefix-length", type=int, required=True)
+    ap.add_argument("--fetch-workers", type=int)
+    ap.add_argument("--prefix-length", type=int)
+    ap.add_argument("--finalize", action="store_true")
+    ap.add_argument("--out-dir", default=None, help="--finalize: write here instead")
     args = ap.parse_args()
     data_root = os.environ["DATA_ROOT"]
+    if args.finalize:
+        finalize(data_root, args.out_dir)
+        return
+    if args.fetch_workers is None or args.prefix_length is None:
+        ap.error("--fetch-workers and --prefix-length are required for the build")
     root = osp.join(data_root, "data/torchcell/experiments", EXPERIMENT, CANDIDATE_TAG)
     if osp.exists(osp.join(root, "raw", "lmdb")):
         raise FileExistsError(f"{root}/raw/lmdb exists; the candidate is built once")
@@ -68,12 +121,7 @@ def main() -> None:
     with open(query_path) as f:
         query = f.read()
     settings = neo4j_connection_settings()
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
-    genome.drop_empty_go()
+    genome = _genome(data_root)
     t0 = time.time()
     raw = Neo4jCellDataset.load_raw(
         settings.uri,

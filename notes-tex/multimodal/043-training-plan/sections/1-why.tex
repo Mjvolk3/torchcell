@@ -1,0 +1,90 @@
+%% notes-tex/multimodal/043-training-plan/sections/1-why.tex
+%% SOURCE: results/overnight_2026_10_22_window_means.json (jobs 6136, 6137, 6150, 6152, seed 0,
+%% registered window) as tabulated in notes-tex/multimodal/043-training-design/tables/t1-measured-rows.tex;
+%% design review tables/t2-batch-share-rows.tex (expected weights); the 040 final-push list in
+%% memory 040-final-push-plan-2026-10-22 (item 3, pooled-then-target); the manuscript framing from
+%% paper/nature-biotech/sections/results.tex (Fig. 3 title) and sections/introduction.tex.
+%% Owner quotes are verbatim from the 2026-10-23 direction relayed with this task.
+
+\section{Why two stages\secstatus{todo}}
+\label{sec:why}
+
+\notesec{What one joint objective measured}
+The overnight round of 2026-10-22 trained one objective over the nine datasets of
+\texttt{joint\_9} and asked of it a per-target question: does the joint run beat a run on
+Kemmeren 2014 alone at the same number of optimizer steps (\dsec{5.4})? At seed 0, on the
+validation fold, the Kemmeren window mean read 0.078 for the records sampler against 0.110
+alone, a transfer of $-0.032$; $-0.020$ for the pinball arm; and $+0.009$ for the balanced
+sampler. On the 72 Sameith 2015 doubles the alone run read 0.335 and the three joint runs
+0.208 to 0.230. One seed is below the decision rule's six, and no run of that round logged a
+validation loss, so the comparison rests on window means and the training loss and cannot be
+read for overfitting (\dsec{6}).
+
+\notesec{Why the answer depended on the batch}
+In a single objective the transfer to a target is decided by how much of each batch the
+target holds. Under equal weighting the records sampler gives Kemmeren an expected weight of
+0.066 and the promoter library 0.573; the balanced sampler gives every dataset 0.111
+(design Table~2). The one positive transfer came from the sampler that moved Kemmeren's weight
+up. Hypothesis (untested): the sign of the overnight transfer follows the target's expected
+weight, not the value of the shared representation; one seed cannot separate the two.
+
+\notesec{The same lesson in 040}
+The environment case study (experiment 040) built its trainer around one target screen, the
+others entering as auxiliary sources, and its final list of experiments adds a
+pooled-then-target arm: train on every screen, then drop the auxiliary sources for the last 10
+to 20\% of epochs. The direction drawn from both experiments is not to gear a trainer to one
+target, and to ``pretrain'' over all phenotypes before fine-tuning for those of interest. For
+043 the owner stated it on 2026-10-23: ``we want to just be able to train models over all
+data. then we can eval them at the end, but then we can also fine tune on perturbation data to
+see if it helps with sameith doubles for example.''
+
+\notesec{Two questions, two stages}
+The joint objective answers two questions at once. Whether one representation carries every
+readout is a property of the pretrained model, read per dataset at the end of stage 1
+(Sec.~\ref{sec:stage1}). Whether that representation helps a given target is a property of
+the starting point, read by fine-tuning from it against training from scratch at matched
+optimizer steps (Sec.~\ref{sec:stage2}). The stage-1 trainer then needs no target, and the
+target-specific comparison moves to stage 2, where every batch belongs to the target.
+
+\notesec{The paper's framing}
+The manuscript's Fig.~3 states that one latent cell embedding generalizes across
+systems-biology phenotypes (expression, morphology and fitness), and its introduction places
+the work beside foundation cell models that pretrain on single-cell expression matrices and
+fine-tune for phenotype, noting that industrial microbes lack such matrices but have diverse
+perturbation data. Stage 1 is that claim's test on the 043 readouts, with morphology held out
+of training and read as a probe; stage 2 is the fine-tuning half.
+
+\subsection{Symbols added by this plan\secstatus{todo}}
+\label{sec:symbols}
+
+Every symbol of the design review (\dsec{1}, Table~1) keeps its meaning. The plan adds the
+symbols of Table~\ref{tab:symbols}, alphabetical by letter name.
+
+%% SOURCE: hand-authored notation contract; each row names the equation of this document that
+%% defines it.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\caption[]{\textbf{Symbols added by the plan.} Symbols of the design review are not
+repeated; ``Eq.'' is the equation of this document that defines the symbol.}
+\label{tab:symbols}
+\begin{tabular}{>{\raggedright\arraybackslash}p{34mm}>{\raggedright\arraybackslash}p{120mm}>{\raggedright\arraybackslash}p{16mm}}
+\toprule
+Symbol & Meaning & Defined in \\
+\midrule
+$\alpha$ & sampler exponent: dataset $s$ is drawn for a batch slot with probability $\pi_s(\alpha) \propto n_s^{\alpha}$; $\alpha = 0$ is the balanced sampler & Eq.~\ref{eq:sampler} \\
+$\mathrm{bg}(b),\ \mathcal{P}^{\mathrm{bg}}_{\mathrm{bg}(b)}$ & background strain of record $b$ (S288C, BY4741, BY4742, FY4, FY5, Y8205); the fixed marks that strain carries relative to S288C & Eq.~\ref{eq:bgmarks} \\
+$\Delta^{\mathrm{ft}}_{\mathrm{tot}},\ \Delta^{\mathrm{ft}}_{k}$ & fine-tune gain against training from scratch for $k_1 + k$ steps, and for $k$ steps & Eq.~\ref{eq:ftgain} \\
+$\mathbf{E}^{\mathrm{nbr}}_{k},\ \mathbf{E}^{\mathrm{orig}}$ & learned vector of an empty relation-$k$ neighborhood; learned table of mark origin (engineered, background) & Eqs.~\ref{eq:gather},~\ref{eq:bgmarks} \\
+$\bar h^{(k)}_{b,i}$ & mean perturbed state of the relation-$k$ neighbors of gene $i$ in record $b$ (readout gather) & Eq.~\ref{eq:gather} \\
+$\iota_t$ & origin of mark $t$: 0 engineered, 1 background & Eq.~\ref{eq:bgmarks} \\
+$k_1,\ k,\ k_{\mathrm{tot}}$ & optimizer steps of stage 1, of stage 2, and their sum & Eq.~\ref{eq:ftruns} \\
+$\mathrm{lr}_2,\ \mathcal{F}$ & stage-2 learning rate; freezing policy (none, trunk frozen, heads only) & Sec.~\ref{sec:ftstart} \\
+$\pi_s(\alpha)$ & probability that a batch slot draws dataset $s$ & Eq.~\ref{eq:sampler} \\
+$\rho_b$ & agreement of the route-A and route-B predicted profiles of isolate $b$, centered & Eq.~\ref{eq:routecons} \\
+$\theta^{(1)}$ & all trainable parameters at the last epoch of a stage-1 run (the window-end checkpoint) & Eq.~\ref{eq:ftruns} \\
+$W_{\mathrm{ga}}$ & projection of the nine gathered neighbor states, $\in \mathbb{R}^{d \times 9d}$ & Eq.~\ref{eq:gather} \\
+\bottomrule
+\end{tabular}
+\end{table}

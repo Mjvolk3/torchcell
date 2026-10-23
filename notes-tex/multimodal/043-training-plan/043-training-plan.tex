@@ -1,0 +1,56 @@
+%% notes-tex/multimodal/043-training-plan/043-training-plan.tex
+%% [[experiments.043-expression-proteome-morphology]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/multimodal/043-training-plan/043-training-plan.tex
+%%
+%% The training plan of experiment 043: pretrain one model over every dataset of the 043
+%% query (stage 1), fine-tune it per target (stage 2), the evaluation that decides both, the
+%% grid across GilaHyper, Delta, Polaris and Aurora, the launch discipline, and the decisions
+%% the owner still holds. Notation, model and objective are those of the design review
+%% (notes-tex/multimodal/043-training-design/) and are referenced, not repeated.
+%%
+%% Build:  make            -> 043-training-plan.pdf
+%%         make check      -> gate
+%%         make publish    -> upload the build to Zotero
+%%
+%% Ground truth for measured numbers: results/overnight_2026_10_22_window_means.json,
+%% results/linear_evals_043.json, `sacct` elapsed times of jobs 6136, 6137, 6150, 6151, 6152,
+%% and the design review's generated tables, at commit f1cf262d2.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+\pdfstringdefDisableCommands{\def\secstatus#1{}}
+
+%% Cross-references into the design review (043-training-design.pdf).
+\newcommand{\deq}[1]{design Eq.~(#1)}
+\newcommand{\dsec}[1]{design Sec.~#1}
+
+\title{\vspace{-1.5em}The 043 Training Plan\\
+  {\large Pretrain over every 043 dataset, fine-tune per target, decide at matched
+  optimizer steps: arms, evaluation, and the grid across four machines}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\input{sections/0-abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-why}
+\input{sections/2-stage1}
+\input{sections/3-stage2}
+\input{sections/4-evaluation}
+\input{sections/5-grid}
+\input{sections/6-launch}
+\input{sections/7-decisions}
+
+\end{document}

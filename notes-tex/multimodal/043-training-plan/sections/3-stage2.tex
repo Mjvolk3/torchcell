@@ -1,0 +1,122 @@
+%% notes-tex/multimodal/043-training-plan/sections/3-stage2.tex
+%% SOURCE: steps per epoch from the design review's tables/macros.tex (Kemmeren 151 at B = 8,
+%% 1,202 training records); window means from results/overnight_2026_10_22_window_means.json
+%% (jobs 6136, 6137, 6150, 6152, seed 0); doubles bars and fitted coefficients from
+%% results/linear_evals_043.json (parts.doubles, job 6060); training record counts of N'Guessan
+%% (1,770) and Boocock pooled (235) from the design review's tables/t2-batch-share-rows.tex.
+
+\section{Stage 2: fine-tune per target\secstatus{todo}}
+\label{sec:stage2}
+
+\subsection{The starting point\secstatus{todo}}
+\label{sec:ftstart}
+
+A fine-tune starts from $\theta^{(1)}$, the parameters of a stage-1 run at its last epoch,
+which the trainer already checkpoints as the end of the registered window; validation never
+picks the checkpoint. The target's standardization is the stage-1 record, matched by its
+sha256, since the target's training rows are the same in both stages. The dataset token,
+the per-dataset bias and the head carry over; the optimizer state does not: AdamW restarts at
+learning rate $\mathrm{lr}_2$ with 100 warmup steps, then constant. The main setting is
+$\mathrm{lr}_2 = 10^{-4}$, a third of the stage-1 rate, with nothing frozen; the freezing
+policies $\mathcal{F}$ are none, trunk frozen (the token projections and $F_\theta$ fixed, the
+operator and heads training) and heads only. These are choices, not findings; the Aurora block
+(Sec.~\ref{sec:aurora}) tests them, and decision 16 holds the outcome.
+
+\subsection{The order of targets\secstatus{todo}}
+\label{sec:fttargets}
+
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+\item \textbf{Kemmeren 2014 alone}, read on Kemmeren's validation fold and on the 72 Sameith
+doubles.
+\item \textbf{The Sameith singles}: the 82 Kemmeren training records whose genes are the
+parents of the 72 doubles. Sameith 2015 Sm is the same arrays and stays excluded; the singles
+are Kemmeren's records, pinned to the training folds by primer decision P2. Fine-tuning on the
+parents alone asks whether narrowing to them helps the doubles more than the full Kemmeren set.
+\item \textbf{The segregant panels}, N'Guessan 2025 then Boocock 2025 pooled, read on their
+own validation folds.
+\end{enumerate}
+
+\subsection{The matched-steps comparison\secstatus{todo}}
+\label{sec:ftcompare}
+
+For target $s$, three runs share the seed of the stage-1 run they are compared with,
+\begin{equation}
+\begin{aligned}
+\mathrm{ft}(k):&\quad \theta^{(1)} \text{ after } k_1 \text{ stage-1 steps, then } k \text{ steps on } s,\\
+\mathrm{alone}(k_{\mathrm{tot}}):&\quad k_{\mathrm{tot}} = k_1 + k \text{ steps on } s \text{ from scratch},\\
+\mathrm{alone}(k):&\quad k \text{ steps on } s \text{ from scratch},
+\end{aligned}
+\label{eq:ftruns}
+\end{equation}
+and the two gains are
+\begin{equation}
+\Delta^{\mathrm{ft}}_{\mathrm{tot}} = \overline{\operatorname{stat}}^{\,\mathrm{ft}(k)}_s - \overline{\operatorname{stat}}^{\,\mathrm{alone}(k_{\mathrm{tot}})}_s,
+\qquad
+\Delta^{\mathrm{ft}}_{k} = \overline{\operatorname{stat}}^{\,\mathrm{ft}(k)}_s - \overline{\operatorname{stat}}^{\,\mathrm{alone}(k)}_s,
+\label{eq:ftgain}
+\end{equation}
+each a registered-window mean (\deq{28}) over its own run's epochs. $\Delta^{\mathrm{ft}}_{\mathrm{tot}}$ is
+the headline: positive means pretraining bought more than the same optimizer steps spent on the
+target. $\Delta^{\mathrm{ft}}_{k} > 0$ with $\Delta^{\mathrm{ft}}_{\mathrm{tot}} \le 0$ means the
+start helps per fine-tune step but not per total step. One stage-1 run serves every target, so
+charging all of $k_1$ to each target makes $\Delta^{\mathrm{ft}}_{\mathrm{tot}}$ the conservative
+comparison. The stage-1 model's own window mean on $s$, with no fine-tuning, is reported beside
+both.
+
+\notesec{The arithmetic for Kemmeren}
+With 151 steps per epoch at $B = 8$, the main fine-tune is $k = 210 \times 151 = 31{,}710$
+steps, evaluated every 5 epochs, so its window (epochs 169 to 210) holds 9 evaluations. With
+the estimate $k_1 \approx 353{,}150$ of Sec.~\ref{sec:armall}, $k_{\mathrm{tot}} \approx
+384{,}860$, or 2{,}549 Kemmeren epochs with the last one cut (\texttt{budget.max\_steps}); both
+are fixed once \texttt{all} is prepared. The nearest measured point is the overnight alone run
+at 317{,}300 steps: 0.110 on Kemmeren, 0.335 on the doubles (seed 0, job 6152). The singles take
+$k = 1{,}100$ steps (100 epochs of 11 steps); their $\mathrm{alone}(k_{\mathrm{tot}})$ control is
+the Kemmeren one, which has about 9\% more steps than $k_1 + 1{,}100$, a difference that favors
+the control. The segregant panels take $k = 31{,}710$ as well: about 143 epochs of N'Guessan's
+1{,}770 training records and 1{,}057 of Boocock's 235.
+
+\subsection{What ``helps the doubles'' means in numbers\secstatus{todo}}
+\label{sec:ftdoubles}
+
+The statistic is \deq{26}: the median over the 72 doubles of the per-double Pearson
+correlation over 6{,}127 genes, in released units, centered on Kemmeren's training-mean
+profile. Table~\ref{tab:doublesbars} gives the points a fine-tuned model is placed against.
+
+%% SOURCE: results/overnight_2026_10_22_window_means.json (window means, seed 0) and
+%% results/linear_evals_043.json (parts.doubles.rungs: additive_Mx_plus_My, fitted_a_Mx_b_My_c_loo;
+%% job 6060), as tabulated in the design review's tables/t1-measured-rows.tex.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\caption[]{\textbf{Reference points for the Sameith 2015 doubles.} Statistic: median over
+72 doubles of the centered per-double Pearson $r$ over 6{,}127 genes (\deq{26}). Run values
+are registered-window means, seed 0; the two rungs use no model and no seed.}
+\label{tab:doublesbars}
+\begin{tabular}{>{\raggedright\arraybackslash}p{78mm}>{\raggedleft\arraybackslash}p{34mm}>{\raggedright\arraybackslash}p{50mm}}
+\toprule
+Reference & Median centered per-double $r$ & Source \\
+\midrule
+Fitted rung $\lambda_1 y_{\mathrm{strong}} + \lambda_2 y_{\mathrm{weak}} + \lambda_0$, leave one out & 0.494 & job 6060 (\deq{27}) \\
+Additive null of the measured singles, $y_x + y_{x'}$ & 0.440 & job 6060 \\
+Kemmeren alone, 317{,}300 steps & 0.335 & job 6152, run \texttt{kmlepsr2} \\
+Joint, three arms, 317{,}300 steps & 0.208 to 0.230 & jobs 6136, 6137, 6150 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three statements are registered before the first fine-tune, each under the rule of
+Sec.~\ref{sec:rule} with the interval resampled over the 72 doubles:
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+\item \textbf{Fine-tuning helps the doubles}: $\Delta^{\mathrm{ft}}_{\mathrm{tot}} \ge 0.02$ on the
+doubles statistic, positive in at least 5 of 6 seeds, interval excluding zero.
+\item \textbf{The fine-tuned model clears the additive null}: its doubles window mean exceeds
+0.440, with the interval of the paired difference excluding zero. The singles are in training,
+so the null and the model see the same measured parents.
+\item \textbf{It clears the fitted rung}: the same against 0.494.
+\end{enumerate}
+The model's own additive prediction, the sum of its predictions for the two singles, is
+reported beside each, so a gain can be split into better singles and better combination. The
+doubles are split B and a test set: they are logged during training but enter only these three
+statements, read once at the end of the campaign; no choice of arm, $\mathrm{lr}_2$, $\mathcal{F}$
+or $k$ reads them, all of which are made on Kemmeren's validation fold.

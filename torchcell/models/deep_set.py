@@ -2,7 +2,7 @@
 
 import torch
 import torch.nn as nn
-from torch_scatter import scatter_add, scatter_mean
+from torch_geometric.utils import scatter
 
 from torchcell.models.act import act_register
 
@@ -160,9 +160,9 @@ class DeepSet(nn.Module):
             x_node = x
 
         if self.aggregation == "sum":
-            x_aggregated = scatter_add(x_node, batch, dim=0)
+            x_aggregated = scatter(x_node, batch, dim=0, reduce="sum")
         else:
-            x_aggregated = scatter_mean(x_node, batch, dim=0)
+            x_aggregated = scatter(x_node, batch, dim=0, reduce="mean")
 
         x_set = self.set_layers_forward(x_aggregated)
         return x_node, x_set

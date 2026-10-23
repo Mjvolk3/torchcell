@@ -1093,3 +1093,33 @@ re-queried mid-campaign; `dataset_043.py` maps a perturbed standard name to its 
 Open decision 13: whether to rebuild the raw store with the admitted leaf before the stage-1
 campaign (145 records more, Messner and Nadal-Ribelles) or carry the current store to the end
 of the campaign and admit them at the next build.
+
+### First smokes on the ALCF machines (arm `all`, 4 epochs, seed 0, prep_v2 of job 6171)
+
+| machine | run | mark cap | s/step (30-step probe) | epoch seconds | state |
+|---|---|---|---|---|---|
+| GilaHyper RTX 6000 Ada (S1) | f3zk2sb3, job 6172 | 1024 | 0.035 | 259 to 263 | finished, 4 of 4 |
+| Polaris A100 | yd1vcute | none (4,416 max) | 0.059 | 372 to 379 | finished, 4 of 4 |
+| Aurora Max 1550 tile | 4xvlubph, PBS 8957239 | 1024 | 0.236 | none completed | died in epoch 1 on an XPU page fault |
+
+Polaris epoch 4 (yd1vcute): Kemmeren per-gene 0.036, doubles -0.018, Vaishnav 0.837, val/loss
+2.537, train/loss 2.368; GilaHyper S1 at epoch 4 reads 0.033, -0.019, 0.836, 2.547, 2.368. The
+two differ in the mark cap (Polaris ran every mark), so the rate ratio (0.059 against 0.035
+s/step) is not like for like.
+
+Aurora: PBS 8957169 failed at import (`torch_scatter` reached through `torchcell.models`;
+fixed in 9a166da10). PBS 8957194 ran uncapped and aborted on `Segmentation fault from GPU ...
+NotPresent ... banned` (intel-compute-runtime `drm_neo.cpp` line 288) right after the setup
+lines. PBS 8957239, capped at 1,024 (ac9fde590), got through the 30-step probe at 0.236 s/step
+(6.7x GilaHyper's 0.035) and then aborted with the same page fault, so the cap is not the
+cause; the cause is not found. No Aurora evaluation exists, so no gate was run on it. The
+Aurora tree was synced from the working tree while the store-v2 agent's edits were
+uncommitted, so its `torchcell/data/representation_043.py` carried the off-index token edit
+(committed afterwards in 9d4f31cdc); `train_043.py` on Aurora did not carry the v2 switch.
+Hypothesis (untested): the fault is in an XPU kernel path of the bf16 autocast or the masked
+SDPA over the 6,608-token context; a run with `device=xpu` and autocast off, or a smaller
+batch, would separate the two.
+
+The standardization sha256 differs between GilaHyper (5ba3e409...) and Aurora (042e5966...) on
+the same prep_v2 store; the cause (floating-point summation order across numpy builds is the
+first candidate) is not checked.

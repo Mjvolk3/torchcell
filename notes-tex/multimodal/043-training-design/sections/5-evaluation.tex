@@ -1,0 +1,140 @@
+%% notes-tex/multimodal/043-training-design/sections/5-evaluation.tex
+%% SOURCE: experiments/043-expression-proteome-morphology/scripts/global_split_043.py,
+%% results/global_split_v1_summary.json (job 6046), train_043.py (WindowConfig, BudgetConfig,
+%% gene_level_metrics, evaluate, evaluate_doubles), results/linear_evals_043.json (doubles rungs,
+%% job 6060), results/overnight_2026_10_22_window_means.json, the job 6136 log (steps per
+%% epoch) and tables/macros.tex; the decision rule from the primer's protocol (Sec. 5.1,
+%% "The unified protocol").
+
+\section{Evaluation and the decision rule\secstatus{todo}}
+\label{sec:evaluation}
+
+\subsection{The split\secstatus{todo}}
+\label{sec:split}
+
+One fold file, \file{conf/splits/global_split_v1.json} (seed 0, job 6046), gives every
+record a role. It holds one fold id per key in four key spaces: the 4{,}908 deletion genes
+in 10 folds, stratified over 38 strata of dataset membership (which deletion datasets
+measure the gene); the 979 isolates by strain name in 5 folds, stratified over 4 membership
+strata; the segregant records in 5 folds drawn within each cross and panel; and the 71{,}158
+distinct promoter 80-mers in 5 folds. Fold 0 is test, fold 1 validation, the rest
+training. A deletion record trains only when none of its genes is in fold 0 or 1, is test
+when any is in fold 0, and is validation otherwise; the 83 pinned genes (the 82 Sameith 2015
+singles and the HO control of Jackson 2020) take folds 2 to 9 only. Three datasets have a
+fixed role: Sameith 2015 Dm is split B, read through Kemmeren's dataset token and
+standardization because it comes from the same arrays; Ohya 2005 is the morphology probe;
+Sameith 2015 Sm is excluded. The prepare stage drops fold 0, so its labels are never
+loaded during development, and the doubles, logged as \texttt{val/doubles/\ldots}, are a
+test set that must not steer a choice.
+
+\subsection{Statistics\secstatus{todo}}
+\label{sec:stats}
+
+\notesec{Per-gene Pearson}
+For a gene-level dataset and its held-out records $\mathcal{V}$, the primary statistic is
+the median over genes of the Pearson correlation across records,
+\begin{equation}
+r_i = \operatorname{corr}_{b \in \mathcal{V}}\big(\hat z_{b,i},\ z_{b,i}\big),
+\qquad
+\operatorname{stat} = \operatorname*{median}_{i}\, r_i,
+\label{eq:pergene}
+\end{equation}
+over genes measured in at least 3 held-out records with nonzero variance on both sides. The
+standardization of Eq.~\ref{eq:standardize} is affine per gene, so $r_i$ is the same on
+$z$ and on the transformed scale $\tilde y$.
+
+\notesec{Centered per-strain Pearson}
+With $\bar z_i$ the training-mean profile of the dataset,
+\begin{equation}
+r_b = \operatorname{corr}_{i}\big(\hat z_{b,i} - \bar z_i,\ z_{b,i} - \bar z_i\big),
+\qquad
+\operatorname{stat} = \operatorname*{median}_{b \in \mathcal{V}}\, r_b.
+\label{eq:perstrain}
+\end{equation}
+Centering removes the shared deletion response that a model emitting the training mean
+would score on: two different Kemmeren mutants already agree at a raw 0.284 (job 5893,
+primer Sec.\ 3.1).
+
+\notesec{Vaishnav}
+One value per promoter, so the statistic is the Pearson correlation of $\hat z_b$ and
+$z_b$ over held-out promoters.
+
+\notesec{The Sameith doubles}
+The 72 doubles are scored in released units, through the inverse of Kemmeren's
+standardization, centered per double on Kemmeren's training-mean profile $\bar y_i$, over all
+6{,}127 genes,
+\begin{equation}
+r_{xx'} = \operatorname{corr}_{i}\big(\hat y_{xx',i} - \bar y_i,\ y_{xx',i} - \bar y_i\big),
+\qquad
+\operatorname{stat} = \operatorname*{median}_{xx'}\, r_{xx'},
+\label{eq:doubles}
+\end{equation}
+for the double deletion of genes $x$ and $x'$. Two baselines need no model: the additive
+null of the measured singles, $\hat y_{xx'} = y_x + y_{x'}$ (the paper's own expected value
+for a log ratio), and the fitted rung
+\begin{equation}
+\hat y_{xx'} = \lambda_1 y_{\mathrm{strong}} + \lambda_2 y_{\mathrm{weak}} + \lambda_0,
+\label{eq:fitted}
+\end{equation}
+fitted leaving each double out, with $y_{\mathrm{strong}}$ the single of larger effect; its
+mean coefficients are $\lambda_1 = 0.638$, $\lambda_2 = 0.312$ and $\lambda_0 = 0.005$
+(\file{results/linear_evals_043.json}, job 6060). The trainer also logs the model's own
+additive prediction, the sum of its predictions for the two singles.
+
+\subsection{The registered window\secstatus{todo}}
+\label{sec:window}
+
+The read-out is declared in the config before launch. For a run of $n_{\mathrm{ep}}$ epochs,
+\begin{equation}
+\mathcal{W} = \big\{\lfloor 0.8\, n_{\mathrm{ep}} \rfloor + 1, \ldots, n_{\mathrm{ep}}\big\},
+\qquad
+\overline{\operatorname{stat}} = \frac{1}{|\mathcal{W}_{\mathrm{eval}}|} \sum_{e \in \mathcal{W}_{\mathrm{eval}}} \operatorname{stat}_e,
+\label{eq:window}
+\end{equation}
+where $\mathcal{W}_{\mathrm{eval}} \subseteq \mathcal{W}$ are the epochs at which validation
+ran. The 50-epoch joint runs give $\mathcal{W} = \{41, \ldots, 50\}$ with 10 evaluations;
+the step-matched Kemmeren run (2{,}102 epochs, validation every 42) gives epochs 1{,}682 to
+2{,}102 with 11. Validation is computed and logged every evaluation epoch and never selects
+an epoch: a maximum over noisy epochs is an upward-biased order statistic, and the window
+mean is not. One implementation detail differs from the intent: checkpoints are written at
+the window's first and last epoch only, not at every epoch inside it
+(\file{train_043.py}, \texttt{epoch in window} on a tuple).
+
+\subsection{Transfer at matched optimizer steps\secstatus{todo}}
+\label{sec:transfer}
+
+Transfer to a dataset is the joint run's window mean minus the window mean of a run trained
+on that dataset alone, with the same seed and the same number of optimizer steps,
+\begin{equation}
+\Delta^{\mathrm{tr}}_s = \overline{\operatorname{stat}}^{\,\mathrm{joint}}_s - \overline{\operatorname{stat}}^{\,\mathrm{alone}}_s
+\quad \text{at equal } n_{\mathrm{step}}.
+\label{eq:transfer}
+\end{equation}
+For Kemmeren the arithmetic is
+\begin{align}
+\text{joint:}\quad & \lceil \tdNTrain / 8 \rceil = \tdStepsPerEpochJoint \text{ steps per epoch},
+\qquad 6{,}346 \times 50 = 317{,}300 = n_{\mathrm{step}},
+\label{eq:stepsjoint}\\
+\text{alone:}\quad & \lceil 1{,}202 / 8 \rceil = \tdStepsPerEpochKemmeren \text{ steps per epoch},
+\qquad \lceil 317{,}300 / 151 \rceil = \lceil 2{,}101.3 \rceil = 2{,}102 \text{ epochs},
+\label{eq:stepsalone}
+\end{align}
+the last epoch cut to 49 steps so the total is exactly $2{,}101 \times 151 + 49 = 317{,}300$
+(\texttt{budget.max\_steps}, commit \texttt{694b80513}); a time budget that would cut the
+alone run short raises instead of training an unmatched control. Matching on epochs would
+give the alone run 50 epochs of 151 steps, 7{,}550 optimizer steps, 2.4\% of the joint run's.
+
+\subsection{The decision rule\secstatus{todo}}
+\label{sec:rule}
+
+An arm is called better than its named control on a split when all of the following hold,
+with the control named before the first read: the mean paired gain in the primary
+statistic's window mean is at least 0.02; the gain is positive in at least 5 of 6 paired
+initialization seeds; and the 95\% interval of the gain, resampled over held-out strains
+(over genes for a per-gene statistic), excludes zero. The test fold is read once, at the end of a campaign. The primer's
+protocol (Sec.\ 5.1) calls for the rule to be committed as \file{conf/decision_rule.yaml}
+before the first GPU run; no such file is in \file{conf/} at commit \texttt{bed26f949}, so
+the rule stands in the primer and here only. Hypothesis (untested): 6 seeds suffice to
+separate a 0.02 gain on Kemmeren from seed noise; experiment 031 found the seed standard
+deviation equal to the pinned fold's sampling standard deviation (0.041), so the seed
+spread of 043 has to be measured before the rule's power is known.

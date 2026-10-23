@@ -249,7 +249,7 @@ def test_forward_shapes_per_loss(
 
 
 def test_rezero_operator_is_identity_at_init_and_learns() -> None:
-    cfg = _config("mse")
+    cfg = _config("mse", operator_residual="rezero")
     model = _model(cfg).eval()
     batch = _batch()
     # at init (betas 0) records sharing a context get identical gene states
@@ -259,12 +259,59 @@ def test_rezero_operator_is_identity_at_init_and_learns() -> None:
         keys = model.mark_keys(batch.marks, H)
         H_pert = model.operator(H, keys, batch.marks.valid)
     assert torch.allclose(H_pert, H)
+    # closed gates: the branches as added are exactly zero
+    norms = model.operator.last_norms
+    assert float(norms["attn"]) == 0.0 and float(norms["update"]) == 0.0
     # the gates receive gradient
     model.train()
     out = model(batch, torch.tensor([0, 1]), torch.tensor([2]))
     (out.gene.sum() + out.record.sum()).backward()
     assert model.operator.beta_attn.grad is not None
     assert float(model.operator.beta_attn.grad.abs()) > 0.0
+
+
+def test_plain_operator_is_the_default_post_norm_residual() -> None:
+    cfg = _config("mse")
+    assert cfg.operator_residual == "plain"
+    model = _model(cfg).eval()
+    op = model.operator
+    assert not hasattr(op, "beta_attn") and not hasattr(op, "beta_ffn")
+    batch = _batch()
+    with torch.no_grad():
+        X = model.context_tokens(batch.contexts)
+        H = model.trunk(X)[batch.record_context]
+        keys = model.mark_keys(batch.marks, H)
+        H_pert = op(H, keys, batch.marks.valid)
+        # the trunk's post-norm form, written out
+        B, N, d = H.shape
+        hd = d // op.num_heads
+        q = op.q_proj(H).view(B, N, op.num_heads, hd).transpose(1, 2)
+        k = op.k_proj(keys).view(B, -1, op.num_heads, hd).transpose(1, 2)
+        v = op.v_proj(keys).view(B, -1, op.num_heads, hd).transpose(1, 2)
+        k = torch.cat(
+            [op.null_key.view(1, op.num_heads, 1, hd).expand(B, -1, -1, -1), k], 2
+        )
+        v = torch.cat([v.new_zeros(B, op.num_heads, 1, hd), v], 2)
+        allowed = torch.cat(
+            [torch.ones(B, 1, dtype=torch.bool), batch.marks.valid], 1
+        ).view(B, 1, 1, -1)
+        att = torch.nn.functional.scaled_dot_product_attention(
+            q, k, v, attn_mask=allowed
+        )
+        a = op.out_proj(att.transpose(1, 2).reshape(B, N, d))
+        H1 = op.norm1(H + a)
+        expected = op.norm2(H1 + op.ffn(H1))
+    assert torch.allclose(H_pert, expected, atol=1e-5)
+    # the attention branch is live from the first step and its ratio is what is logged
+    norms = op.last_norms
+    ratio = (a.norm(dim=-1) / H.norm(dim=-1)).mean()
+    assert float(norms["attn"]) > 0.0
+    assert torch.allclose(norms["attn"], ratio, atol=1e-6)
+    # no statistic is computed in training mode
+    op.last_norms = {}
+    model.train()
+    model(batch, torch.tensor([0, 1]), torch.tensor([2]))
+    assert op.last_norms == {}
 
 
 def test_dataset_id_reaches_only_the_head() -> None:
@@ -288,7 +335,7 @@ def test_dataset_id_reaches_only_the_head() -> None:
 
 
 def test_record_without_marks_attends_to_null_key() -> None:
-    cfg = _config("mse")
+    cfg = _config("mse", operator_residual="rezero")
     model = _model(cfg)
     with torch.no_grad():
         model.operator.beta_attn.fill_(1.0)

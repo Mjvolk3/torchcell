@@ -763,10 +763,11 @@ def frames_to_gif(frames: list[FArray], path: str, duration_ms: int = 80) -> Non
     print(f"wrote {path} ({len(frames)} frames)")
 
 
-# 118.9 mm -> about 1220 px wide. 190 dpi (890 px) left 7 pt glyphs about 18 px tall,
-# visibly rough; 260 is the legibility step. The earlier frames that played too slowly
-# were a 170 mm canvas at 200 dpi, 1340 px, so this stays under that.
-GIF_DPI = 260
+# 118.9 mm -> about 1500 px wide. 190 dpi (890 px) left 7 pt glyphs about 18 px tall
+# and visibly rough; 260 was better and 320 is the step asked for after that. Frame
+# duration is 80 ms, so a viewer that cannot decode 1500 px frames at that rate will
+# play these slowly; drop this constant if it does.
+GIF_DPI = 320
 # The GIF frames are typeset by real LaTeX (Computer Modern, amsmath), not mathtext.
 # Agg cannot rasterize usetex text without dvipng, which this machine lacks, so a frame
 # is written as a PDF (the PDF backend reads the DVI itself) and rasterized with
@@ -1365,7 +1366,14 @@ def gif_bootstrap(path: str) -> None:
             label="generating curve",
         )
         ax.plot(
-            Nf, Lf, "o", ms=2.5, color=AMBER, mec="black", mew=0.3, label="fitted runs"
+            Nf,
+            Lf,
+            "o",
+            ms=2.5,
+            color=AMBER,
+            mec="black",
+            mew=0.3,
+            label="runs the fit sees (15)",
         )
         counts = np.bincount(idx, minlength=Nf.size)
         drawn = counts > 0
@@ -1376,11 +1384,18 @@ def gif_bootstrap(path: str) -> None:
             facecolors="none",
             edgecolors=BRICK,
             linewidths=0.6,
-            label="drawn this resample (size = draws)",
+            label="drawn in this resample (size = times drawn)",
             zorder=5,
         )
         ax.plot(
-            Nh, Lh, "o", ms=2.5, mfc="white", mec=GRAY, mew=0.6, label="held-out runs"
+            Nh,
+            Lh,
+            "o",
+            ms=2.5,
+            mfc="white",
+            mec=GRAY,
+            mew=0.6,
+            label="held-out runs (6), never drawn",
         )
         ax.set_xlim(grid[0], grid[-1])
         loss_axis(ax, 1.5, 7)

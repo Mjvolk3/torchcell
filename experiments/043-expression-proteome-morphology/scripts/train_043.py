@@ -406,6 +406,17 @@ class BudgetConfig(BaseModel):
     )
     time_margin_minutes: float = Field(default=20.0, ge=0)
     max_steps_per_epoch: int | None = Field(default=None, gt=0, description="tests")
+    max_steps: int | None = Field(
+        default=None,
+        gt=0,
+        description=(
+            "total optimizer steps for a step-matched run (an alone arm matched to a "
+            "joint run): the run takes ceil(max_steps / steps_per_epoch) epochs, the "
+            "last one cut so the total is exactly max_steps, and max_epochs is ignored. "
+            "A time budget that would cut such a run raises (an unmatched alone run is "
+            "not a transfer control)."
+        ),
+    )
     probe_steps: int = Field(default=30, gt=0)
     eval_every_epochs: int = Field(default=1, gt=0)
     registered_window: WindowConfig = Field(default_factory=WindowConfig)
@@ -1761,10 +1772,16 @@ def train(
     steps_per_epoch = math.ceil(len(train_pos) / cfg.data.batch_size)
     if cfg.budget.max_steps_per_epoch is not None:
         steps_per_epoch = min(steps_per_epoch, cfg.budget.max_steps_per_epoch)
-    n_epochs = cfg.budget.max_epochs
+    max_steps = cfg.budget.max_steps
+    n_epochs = (
+        cfg.budget.max_epochs
+        if max_steps is None
+        else math.ceil(max_steps / steps_per_epoch)
+    )
     window = cfg.budget.registered_window.epochs(n_epochs)
     logger.log(
         {
+            "setup/max_steps": float(max_steps or 0),
             "setup/n_train": float(len(train_pos)),
             "setup/n_val": float(len(val_pos)),
             "setup/steps_per_epoch": float(steps_per_epoch),
@@ -1795,7 +1812,7 @@ def train(
         )
         t_probe = None
         for i, (batch, tg) in enumerate(loader):
-            if i >= steps_per_epoch:
+            if i >= steps_per_epoch or (max_steps is not None and step >= max_steps):
                 break
             if epoch == 1 and i == 5:
                 t_probe = time.time()
@@ -1845,8 +1862,8 @@ def train(
                 print(
                     f"[projection] {s_per_step:.3f} s/step over {cfg.budget.probe_steps} steps; "
                     f"{steps_per_epoch} steps/epoch -> {proj / 60:.1f} min/epoch of training "
-                    f"(evaluation not included); {cfg.budget.max_epochs} epochs -> "
-                    f"{proj * cfg.budget.max_epochs / 3600:.2f} h",
+                    f"(evaluation not included); {n_epochs} epochs -> "
+                    f"{proj * n_epochs / 3600:.2f} h",
                     flush=True,
                 )
                 logger.log(
@@ -1886,7 +1903,13 @@ def train(
                 - cfg.budget.time_margin_minutes * 60
             )
             fit = 1 + max(0, int(remaining // dt))
-            n_epochs = max(1, min(cfg.budget.max_epochs, fit))
+            if max_steps is not None and fit < n_epochs:
+                raise RuntimeError(
+                    f"the {cfg.budget.time_budget_hours} h budget fits {fit} epochs but "
+                    f"max_steps={max_steps} needs {n_epochs}; a cut run is not step-matched"
+                )
+            cap = cfg.budget.max_epochs if max_steps is None else n_epochs
+            n_epochs = max(1, min(cap, fit))
             window = cfg.budget.registered_window.epochs(n_epochs)
             print(
                 f"[budget] first epoch {dt / 60:.1f} min (training + evaluation); "

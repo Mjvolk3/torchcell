@@ -513,3 +513,48 @@ def test_two_training_steps_with_balanced_sampler(
     assert result.steps == 2
     assert np.isfinite(result.last_metrics["train/loss"])
     assert Path(result.checkpoint_dir).name == cfg.run_name
+
+
+def test_max_steps_matches_steps_across_epochs(
+    tr: ModuleType, world: dict[str, Any]
+) -> None:
+    """A step-matched run takes ceil(max_steps / steps_per_epoch) epochs and stops at
+    exactly max_steps, whatever max_epochs says.
+    """
+    root = world["root"]
+    base = _cfg(tr, root, "mse")
+    cfg = base.model_copy(
+        update={
+            "budget": base.budget.model_copy(
+                update={"max_epochs": 1, "max_steps_per_epoch": 2, "max_steps": 5}
+            )
+        }
+    )
+    logger = tr.MemoryLogger()
+    result = tr.train(cfg, world["store"], tr.h5_vector_source(cfg.paths), logger)
+    assert result.steps == 5
+    assert result.n_epochs == 3  # 2 + 2 + 1
+    setup = [v for _, v in logger.rows if "setup/max_steps" in v]
+    assert setup[0]["setup/max_steps"] == 5.0
+    assert [v["epoch"] for _, v in logger.rows if "epoch" in v] == [1.0, 2.0, 3.0]
+
+
+def test_max_steps_cut_by_time_budget_raises(
+    tr: ModuleType, world: dict[str, Any]
+) -> None:
+    root = world["root"]
+    base = _cfg(tr, root, "mse")
+    cfg = base.model_copy(
+        update={
+            "budget": base.budget.model_copy(
+                update={
+                    "max_steps_per_epoch": 1,
+                    "max_steps": 10**6,
+                    "time_budget_hours": 1e-6,
+                    "time_margin_minutes": 0.0,
+                }
+            )
+        }
+    )
+    with pytest.raises(RuntimeError, match="not step-matched"):
+        tr.train(cfg, world["store"], tr.h5_vector_source(cfg.paths), tr.MemoryLogger())

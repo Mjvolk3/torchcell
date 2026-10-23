@@ -1,0 +1,191 @@
+{
+ "generated_by": "experiments/046-betaxanthin-omics-cotarget/scripts/build_046_store.py",
+ "dataset_root": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/046-betaxanthin-omics-cotarget/raw_046",
+ "query_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/046-betaxanthin-omics-cotarget/experiments/046-betaxanthin-omics-cotarget/queries/betaxanthin_omics_046.cql",
+ "neo4j_uri": "bolt://localhost:7687",
+ "host": "gilahyper",
+ "slurm_job_id": "6157",
+ "fetch_workers": 4,
+ "build_seconds": 6.88633918762207,
+ "len_dataset": 15477,
+ "n_raw_records": 15477,
+ "n_processed_records": 15477,
+ "n_records_by_dataset_raw": {
+  "AminoAcidMulleder2016Dataset": 4678,
+  "BetaxanthinCachera2023Dataset": 4693,
+  "MicroarrayKemmeren2014Dataset": 1482,
+  "ProteomeMessner2023Dataset": 4624
+ },
+ "n_records_by_dataset_index": {
+  "AminoAcidMulleder2016Dataset": 4678,
+  "BetaxanthinCachera2023Dataset": 4693,
+  "MicroarrayKemmeren2014Dataset": 1482,
+  "ProteomeMessner2023Dataset": 4624
+ },
+ "n_experiments_served_release_2026_10_17": {
+  "BetaxanthinCachera2023Dataset": 4759,
+  "AminoAcidMulleder2016Dataset": 4678,
+  "MicroarrayKemmeren2014Dataset": 1484,
+  "ProteomeMessner2023Dataset": 4699
+ },
+ "n_dropped_by_gene_clause": {
+  "BetaxanthinCachera2023Dataset": 66,
+  "AminoAcidMulleder2016Dataset": 0,
+  "MicroarrayKemmeren2014Dataset": 2,
+  "ProteomeMessner2023Dataset": 75
+ },
+ "resolution_by_dataset": {
+  "AminoAcidMulleder2016Dataset": {
+   "n_records": 4678,
+   "n_records_resolved": 4678,
+   "perturbations_gene_node": 4678,
+   "refused_names": {}
+  },
+  "BetaxanthinCachera2023Dataset": {
+   "n_records": 4693,
+   "n_records_resolved": 4687,
+   "n_records_with_refusal": 6,
+   "perturbations_gene_node": 10487,
+   "perturbations_other_type": 9386,
+   "perturbations_refused": 6,
+   "perturbations_sgd_standard_name": 75,
+   "perturbations_strict": 3511,
+   "refused_names": {
+    "YLR287-A": 1,
+    "PPA1": 1,
+    "CRS5": 1,
+    "FEN1": 1,
+    "AAD6": 1,
+    "FLO8": 1
+   }
+  },
+  "MicroarrayKemmeren2014Dataset": {
+   "n_records": 1482,
+   "n_records_resolved": 1482,
+   "perturbations_gene_node": 1482,
+   "refused_names": {}
+  },
+  "ProteomeMessner2023Dataset": {
+   "n_records": 4624,
+   "n_records_resolved": 4624,
+   "perturbations_gene_node": 4624,
+   "refused_names": {}
+  }
+ },
+ "n_perturbations_refused": 6,
+ "n_records_by_label": {
+  "expression_log2_ratio": 1482,
+  "metabolite_level": 9371,
+  "protein_abundance": 4624
+ },
+ "first_sample_by_dataset": {
+  "AminoAcidMulleder2016Dataset": {
+   "index": 9582,
+   "dataset_name": "AminoAcidMulleder2016Dataset",
+   "experiment_type": "metabolite",
+   "label_name": "metabolite_level",
+   "graph_level": "metabolism",
+   "label_length": 19,
+   "n_perturbations": 1,
+   "perturbation_types": {
+    "kanmx_deletion": 1
+   },
+   "media": "SM agar (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose + 2% agar)",
+   "temperature": {
+    "value": 30.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[1],\n    perturbation_indices=[1],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[19],\n    phenotype_type_indices=[19],\n    phenotype_sample_indices=[19],\n    phenotype_types=[3],\n    phenotype_stat_values=[0],\n    phenotype_stat_type_indices=[0],\n    phenotype_stat_sample_indices=[0],\n    phenotype_stat_types=[3],\n    unresolved_perturbations=[0],\n    resolution_rules={},\n  }\n)",
+   "perturbation_indices_length": 1,
+   "pert_mask_sum": 1,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "metabolite_level",
+    "protein_abundance"
+   ],
+   "unresolved_perturbations": [],
+   "resolution_rules": {}
+  },
+  "BetaxanthinCachera2023Dataset": {
+   "index": 0,
+   "dataset_name": "BetaxanthinCachera2023Dataset",
+   "experiment_type": "metabolite",
+   "label_name": "metabolite_level",
+   "graph_level": "metabolism",
+   "label_length": 1,
+   "n_perturbations": 5,
+   "perturbation_types": {
+    "gene_addition": 4,
+    "released_identifier": 1
+   },
+   "media": "YPD + G418 (solid, 2% agar; Cachera 2023 final CRI-SPA screen plate)",
+   "temperature": null,
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[5],\n    perturbation_indices=[3],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[1],\n    phenotype_type_indices=[1],\n    phenotype_sample_indices=[1],\n    phenotype_types=[3],\n    phenotype_stat_values=[1],\n    phenotype_stat_type_indices=[1],\n    phenotype_stat_sample_indices=[1],\n    phenotype_stat_types=[3],\n    unresolved_perturbations=[0],\n    resolution_rules={ strict=1 },\n  }\n)",
+   "perturbation_indices_length": 3,
+   "pert_mask_sum": 3,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "metabolite_level",
+    "protein_abundance"
+   ],
+   "unresolved_perturbations": [],
+   "resolution_rules": {
+    "strict": 1
+   }
+  },
+  "MicroarrayKemmeren2014Dataset": {
+   "index": 5,
+   "dataset_name": "MicroarrayKemmeren2014Dataset",
+   "experiment_type": "microarray_expression",
+   "label_name": "expression_log2_ratio",
+   "graph_level": "node",
+   "label_length": 6169,
+   "n_perturbations": 1,
+   "perturbation_types": {
+    "kanmx_deletion": 1
+   },
+   "media": "SC",
+   "temperature": {
+    "value": 30.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[1],\n    perturbation_indices=[1],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[6169],\n    phenotype_type_indices=[6169],\n    phenotype_sample_indices=[6169],\n    phenotype_types=[3],\n    phenotype_stat_values=[6169],\n    phenotype_stat_type_indices=[6169],\n    phenotype_stat_sample_indices=[6169],\n    phenotype_stat_types=[3],\n    unresolved_perturbations=[0],\n    resolution_rules={},\n  }\n)",
+   "perturbation_indices_length": 1,
+   "pert_mask_sum": 1,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "metabolite_level",
+    "protein_abundance"
+   ],
+   "unresolved_perturbations": [],
+   "resolution_rules": {}
+  },
+  "ProteomeMessner2023Dataset": {
+   "index": 951,
+   "dataset_name": "ProteomeMessner2023Dataset",
+   "experiment_type": "protein_abundance",
+   "label_name": "protein_abundance",
+   "graph_level": "node",
+   "label_length": 1821,
+   "n_perturbations": 1,
+   "perturbation_types": {
+    "kanmx_deletion": 1
+   },
+   "media": "SM (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose), liquid",
+   "temperature": {
+    "value": 30.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[1],\n    perturbation_indices=[1],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[1821],\n    phenotype_type_indices=[1821],\n    phenotype_sample_indices=[1821],\n    phenotype_types=[3],\n    phenotype_stat_values=[0],\n    phenotype_stat_type_indices=[0],\n    phenotype_stat_sample_indices=[0],\n    phenotype_stat_types=[3],\n    unresolved_perturbations=[0],\n    resolution_rules={},\n  }\n)",
+   "perturbation_indices_length": 1,
+   "pert_mask_sum": 1,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "metabolite_level",
+    "protein_abundance"
+   ],
+   "unresolved_perturbations": [],
+   "resolution_rules": {}
+  }
+ }
+}

@@ -1,0 +1,66 @@
+#!/bin/bash -l
+#PBS -A GenesisHackathonOct26
+#PBS -q debug
+#PBS -l select=1
+#PBS -l walltime=01:00:00
+#PBS -l filesystems=home:flare
+#PBS -N 043-smoke-aurora
+#PBS -j oe
+#PBS -o /flare/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/slurm/output/
+# experiments/043-expression-proteome-morphology/scripts/alcf/aurora_train_043_smoke.pbs
+# [[experiments.043-expression-proteome-morphology.scripts.alcf.aurora_train_043_smoke]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/alcf/aurora_train_043_smoke.pbs
+#
+# The 043 trainer smoke on one Aurora Max 1550 tile (FLAT hierarchy, tile 0), device xpu.
+# Same cell as polaris_train_043_smoke.pbs.
+#
+# NOT SUBMITTABLE until xpu_device_043.patch (beside this file) is applied: the Aurora env
+# has no torch_scatter and torchcell/data/graph_processor.py imports it at module level
+# (reached through train_043.py -> torchcell.data.representation_043 -> torchcell/data/
+# __init__.py), and TrainConfig043.device does not accept "xpu".
+#
+# Submit from GilaHyper:
+#   ssh aurora "cd /flare/GenesisHackathonOct26/mjvolk3/torchcell && qsub experiments/043-expression-proteome-morphology/scripts/alcf/aurora_train_043_smoke.pbs"
+set -euo pipefail
+
+TC_PREFIX=/flare/GenesisHackathonOct26/mjvolk3
+TC_TREE=$TC_PREFIX/torchcell
+PY=$TC_PREFIX/miniforge3/envs/torchcell/bin/python
+
+export http_proxy=http://proxy.alcf.anl.gov:3128
+export https_proxy=http://proxy.alcf.anl.gov:3128
+export HTTP_PROXY=$http_proxy HTTPS_PROXY=$https_proxy
+export no_proxy=localhost,127.0.0.1,.alcf.anl.gov
+export ZE_FLAT_DEVICE_HIERARCHY=FLAT
+export ZE_AFFINITY_MASK=0
+
+cd "$TC_TREE"
+set -a; source .env; set +a
+export DATA_ROOT=$TC_PREFIX/torchcell-data/043
+export EXPERIMENT_ROOT=$TC_TREE/experiments
+export PYTHONUNBUFFERED=1 PYTHONPATH="$TC_TREE"
+export WANDB_MODE=online
+
+# git shim: see polaris_train_043_smoke.pbs
+SHIM=$(mktemp -d)
+REAL_GIT=$(command -v git)
+SYNCED=$(cut -c1-9 "$TC_TREE/.synced_commit")
+cat > "$SHIM/git" <<EOF
+#!/bin/bash
+if [ "\$*" = "rev-parse --short HEAD" ]; then echo "$SYNCED"; exit 0; fi
+exec "$REAL_GIT" "\$@"
+EOF
+chmod +x "$SHIM/git"
+export PATH="$SHIM:$PATH"
+
+echo "arm ${ARM:-all}"
+echo "job $PBS_JOBID on $(hostname) at $(date); tree synced from $SYNCED; DATA_ROOT=$DATA_ROOT"
+"$PY" -c "import torch; print('xpu devices', torch.xpu.device_count(), torch.xpu.get_device_name(0))"
+
+"$PY" experiments/043-expression-proteome-morphology/scripts/train_043.py \
+  arm="${ARM:-all}" loss=hlgauss weighting=equal seed=0 device=xpu \
+  data.batch_size=8 data.num_workers=4 data.sampler=records \
+  budget.max_epochs=4 budget.time_budget_hours=0.75 budget.time_margin_minutes=5 \
+  budget.eval_every_epochs=1 \
+  "wandb.tags=[smoke,alcf,aurora]"
+echo "done $(date)"

@@ -558,3 +558,36 @@ def test_max_steps_cut_by_time_budget_raises(
     )
     with pytest.raises(RuntimeError, match="not step-matched"):
         tr.train(cfg, world["store"], tr.h5_vector_source(cfg.paths), tr.MemoryLogger())
+
+
+@pytest.mark.parametrize(
+    ("loss", "weighting"),
+    [("hlgauss", "equal"), ("pinball", "equal"), ("mse", "equal"), ("mse", "records")],
+)
+def test_validation_loss_is_the_training_objective(
+    tr: ModuleType, world: dict[str, Any], loss: str, weighting: str
+) -> None:
+    """``val/loss`` is the objective over the validation pass: the per-dataset losses
+    (``val/<dataset>/loss``) combined by the run's weighting.
+    """
+    root = world["root"]
+    cfg = _cfg(tr, root, loss, weighting)
+    result = tr.train(
+        cfg, world["store"], tr.h5_vector_source(cfg.paths), tr.MemoryLogger()
+    )
+    last = result.last_metrics
+    per_ds = {
+        k.split("/")[1]: v
+        for k, v in last.items()
+        if k.startswith("val/") and k.endswith("/loss") and k.count("/") == 2
+    }
+    assert per_ds, "no per-dataset validation loss logged"
+    assert np.isfinite(last["val/loss"])
+    assert np.isfinite(last["traineval/loss"])
+    if weighting == "equal":
+        assert last["val/loss"] == pytest.approx(
+            np.mean(list(per_ds.values())), rel=1e-6
+        )
+    else:
+        lo, hi = min(per_ds.values()), max(per_ds.values())
+        assert lo - 1e-9 <= last["val/loss"] <= hi + 1e-9

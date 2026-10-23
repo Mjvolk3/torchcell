@@ -1148,3 +1148,161 @@ first candidate) is not checked.
   included), 0.062 s per step after the first. The plan's reference R still reads "cap 1,024"
   and its C9 "mark cap 4,096" contrast is moot under an uncapped default; both await the
   owner.
+
+## 2026.10.23 - Store v2: every served record admitted
+
+Owner, 2026-10-23: "we haven't even started training yet so let's do it". Open decision 13 is
+closed: the raw store is rebuilt before the stage-1 campaign, and the new query admits EVERY
+served record. The genome never gates a record; a gene with no index position is a typed gap
+at read time, not a query filter.
+
+### The query change
+
+`scripts/generate_043_cql.py` writes `queries/expression_proteome_morphology_043.cql` and its
+byte-identical copy in `torchcell/knowledge_graphs/queries/` (sha256 `b8ba1de8...c57c791e`).
+No block reads `$gene_set` any more:
+
+- deletion and allele panels (Kemmeren, Sameith Sm and Dm, Hu, Jackson, Nadal-Ribelles,
+  Messner, Zelezniak, Ohya): `AND SIZE([(g)<-[:PerturbationMemberOf]-(pert) | pert]) > 0` only;
+  the `ALL(p IN ... WHERE p.systematic_gene_name IN $gene_set)` test is gone.
+- natural isolates (Caudal, Muenzner protein and turnover): no genotype clause beyond the
+  `Genotype` label (the old clause was `SIZE = 0 OR ANY(... IN $gene_set)`).
+- segregants and Vaishnav: unchanged (no clause).
+
+This goes further than PR #1155 (which admits only `released_identifier` in the Messner block
+and keeps the gene-set test elsewhere): the 43 Kemmeren, Hu and Ohya records with ORFs outside
+the gene set return too. Offline check:
+`python -m torchcell.knowledge_graphs.supported_queries validate expression_proteome_morphology_043 --release 2026.10.17-4295f7ca`
+reports "validated on 2026.10.17-4295f7ca, dataset_composite 1bbf284e...7c15997, since_kg_version 4.0".
+
+The census settles the premise of issue #1154 for 043: the served graph holds NO
+`released_identifier` perturbation in any of the 15 datasets, and every record the v1 query
+dropped is a placed deletion (`kanmx_deletion`, Nadal-Ribelles `marker_deletion`) of an ORF
+outside the 6,607-gene index (e.g. `YLL016W`, `YNCB0010W`, `YER109C`, `YBL039W-A`, `YAR037W`,
+`YML010C-B`, `YDL038C`). The gene-set test, not the leaf, removed them.
+
+### Store generations side by side
+
+`scripts/store_version_043.py` is the one switch. v1 stays exactly as it was; v2 writes only
+new names.
+
+| artifact | v1 (runs to 2026-10-23) | v2 |
+|---|---|---|
+| raw store | `raw_043` (job 5856) | `raw_043_v2` |
+| census | `results/build_043_store_census.json` | `results/build_043_store_census_v2.json` |
+| representation | `representation_043` | `representation_043_v2` |
+| verify | `results/verify_representation_043.json` | `results/verify_representation_043_v2.json` |
+| split | `conf/splits/global_split_v1.json` | `conf/splits/global_split_v2.json` |
+| linear evals | `results/linear_evals_043.json` | `results/linear_evals_043_v2.json` |
+| prepared store | `prep_v2_routeA` | `prep_v3_routeA` |
+| ALCF lists | `scripts/alcf/*_043.txt` | `scripts/alcf/*_043_v2.txt` |
+
+Scripts read `STORE_043_VERSION` (unset = v1, so every committed v1 result regenerates
+unchanged); the trainer reads `data.store_version` in `conf/train_043_default.yaml`, default
+`v2` from now on; `data.store_version=v1` reproduces the 2026-10-22 and 2026-10-23 runs
+(smokes 6172-6175 ran on v1).
+
+The v2 training round trains uncapped (every mark of every record; `data.mark_cap` is a
+smoke-only override since a45a4dd80) and without ReZero (removed from the operator in
+ef30c01ff; the post-norm residual is the only path).
+
+### Read side
+
+- `dataset_043.py`: a `released_identifier` perturbation with `released_kind` deletion or
+  truncation is a DELETION mark; its released symbol finds the ORF through the standard-name
+  map (`ENA1` -> `YDR040C`). Any other released kind raises.
+- `torchcell/data/representation_043.py`: `change_type_of_perturbation` maps the released kind;
+  `RepresentationResolver.deletion(marks, outside, off_index)` turns every engineered deletion
+  with no index position into an `off_index_gene` extra token, change type deletion, every key
+  `-1`, gap `NO_S288C_KEY` in all four blocks. The record is kept and stays a `deletion`
+  record (not a reference strain) even when its only deletion is off the index.
+  `n_marked_outside_index` still counts them.
+- `train_043.py` prepare: an off-index token takes the position row of an ORF with no
+  reference coordinate (`Replicon.ACCESSORY_ORF`), the reporter keeps its own row; no new
+  embedding row, so stage-1 checkpoints still load.
+- Tests: `tests/torchcell/trainers/test_043_store_v2_read_side.py` (released symbol resolves;
+  off-index ORF and an unmapped released symbol become the gap token; a lone off-index
+  deletion keeps its record; the two store generations name disjoint paths) and two tests in
+  `tests/torchcell/data/test_representation_043.py`.
+
+### Partitioned candidate (job 6208): not used, hung on a dead worker
+
+Owner, 2026-10-23: "if we speed it up we must be confident that we are getting equivalent
+query." A partitioned raw stage (`build_043_raw_partitioned.py`, `fetch_workers` 8, prefix
+length 2, 64 GB) ran beside the single-session reference 6187 on
+`queries/expression_proteome_morphology_043_partitioned.cql` (the v2 query with
+`{partition}` once per block; `generate_043_cql.py` asserts that removing the markers gives the
+v2 query byte for byte), to be proven record-identical by `compare_raw_stores_043.py` (order-free
+multiset of per-record canonical-JSON sha256s, the gene set and an index-free reference index)
+before anything downstream read it. It did not finish, so no comparison ran and v2 reads the
+single-session store `raw_043_v2`:
+
+- At 12:51:03 the job's memory cgroup killed ONE fetch worker (pid 3909297, anon RSS 9.1 GB;
+  kernel log). Nine processes at about 9 GB each is about 80 GB, over the 64 GB requested.
+- The main process and the other 8 workers then waited in `futex_wait` with no Bolt socket open;
+  the log and `data.mdb` stop at 12:52:48. The pool hung on the dead worker for 2 h 18 min
+  until the job was cancelled at 15:10:46. slurm reports OUT_OF_MEMORY because the cgroup flag
+  is read at teardown, not because the kill happened then.
+- Throughput while it ran: 91,970 records committed between 12:01 and 12:51, about 30 records/s,
+  against the reference's about 4.7 records/s over the same blocks (Kemmeren through most of
+  Boocock), about 6x. A 1.7x figure reported earlier divided by a wall time that included the
+  deadlock and is withdrawn.
+- The dead store was moved to
+  `/scratch/projects/torchcell-scratch/deprecated/2026.10.23/raw_043_v2_partitioned.oom_6208`.
+- Fix list before the partitioned path is tooling: a worker death must fail the job rather than
+  hang the pool; memory sized from the measured 9 GB per worker; prefix length 3 (16x smaller
+  Boocock partitions).
+
+### Chain (GilaHyper, slurm, afterany)
+
+Every job exports `STORE_043_VERSION=v2`; each stage waits (afterany) on the one before. No job
+requests a GPU.
+
+| job | stage | --time |
+|---|---|---|
+| 6187 | raw build into `raw_043_v2`, census v2, raw dataset index (256 GB) | 12 h |
+| 6189 | `representation_043_v2` | 1 h |
+| 6190 | segregant alleles | 1 h |
+| 6191 | verify | 1 h |
+| 6192 | `global_split_v2` | 1 h |
+| 6193 | linear evals, extract | 1 h |
+| 6194-6203 | ladder parts: Kemmeren, Hu, Nadal-Ribelles, Messner, Zelezniak, doubles, isolates, segregants, Vaishnav, morphology | 30 min, Nadal-Ribelles 1 h |
+| 6204 | linear evals, report | 30 min |
+| 6205 | `prep_v3` (one prepare covers arms `all` and `joint_9`) | 1 h |
+
+6187 started 11:14 CDT; its raw stage closed at about 17:34 (6 h 08 min of record fetch,
+"Total records processed: 173805" in `043-build-store-v2_6187.out`), single session at about
+4.7 records/s over the run.
+
+### Results
+
+Census v2 (raw stage of 6187; read-only pass over `raw_043_v2/raw/lmdb` after it closed,
+checked against `results/build_043_store_census_v2.json` when the job writes it). Every served
+record is returned: 173,805 served, 173,805 returned.
+
+| block | served | returned | v1 returned | records with an ORF outside the index | released identifier |
+|---|---|---|---|---|---|
+| Kemmeren 2014 | 1,484 | 1,484 | 1,482 | 2 | 0 |
+| Sameith 2015 Sm | 82 | 82 | 82 | 0 | 0 |
+| Sameith 2015 Dm | 72 | 72 | 72 | 0 | 0 |
+| Hu 2007 | 263 | 263 | 262 | 1 | 0 |
+| Jackson 2020 | 784 | 784 | 784 | 0 | 0 |
+| Nadal-Ribelles 2025 | 6,188 | 6,188 | 6,118 | 70 | 0 |
+| Messner 2023 | 4,699 | 4,699 | 4,624 | 75 | 0 |
+| Zelezniak 2018 | 97 | 97 | 97 | 0 | 0 |
+| Ohya 2005 | 4,718 | 4,718 | 4,678 | 40 | 0 |
+| Caudal 2024 | 943 | 943 | 943 | 0 | 0 |
+| Muenzner 2024 protein | 795 | 795 | 795 | 0 | 0 |
+| Muenzner 2024 turnover | 55 | 55 | 55 | 0 | 0 |
+| Boocock 2025 | 79,516 | 79,516 | 79,516 | 0 | 0 |
+| N'Guessan 2025 | 2,951 | 2,951 | 2,951 | 0 | 0 |
+| Vaishnav 2022 | 71,158 | 71,158 | 71,158 | 0 | 0 |
+
+v1 counts: `results/build_043_store_census.json` (job 5856). The 188 records with an ORF outside
+the index are exactly the v1 shortfall.
+
+Gap counts of the 188 newly admitted records: pending the verify job 6191 (`results/verify_representation_043_v2.json`, `off_index_gene_tokens`). Expected from the code, not yet measured: one `off_index_gene` token (gap `NO_S288C_KEY`) per record.
+
+Split change against v1: pending 6192 (`results/global_split_v2_summary.json`, `against_global_split_v1`).
+
+Linear-evaluation bars v1 against v2: pending 6204 (`results/linear_evals_043_v2.json`).

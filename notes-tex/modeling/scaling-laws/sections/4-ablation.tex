@@ -1,0 +1,74 @@
+%% notes-tex/modeling/scaling-laws/sections/4-ablation.tex
+
+\section{A minimal ablation, and what makes its curve defensible\secstatus{todo}}
+\label{sec:ablation}
+
+A Kaplan-style ablation on a modest allocation is three sweeps and four controls.
+The sweeps produce the points; the controls decide whether a line through them
+means anything.
+
+\notesec{The three sweeps}
+\begin{enumerate}
+\item \textbf{Parameters.} One architecture family, width and depth scaled in a
+fixed ratio, five to seven sizes spaced evenly in $\log N$ over at least one and a
+half to two decades, each trained on the full training set until the loss stops
+improving. This gives $L(N)$ with data not limiting, the row of panel~a.
+\item \textbf{Data.} One model large enough that data is the bottleneck, trained
+on nested subsets of the training set at 1/64, 1/16, 1/4 and 1, drawn by the unit
+that leaks (Section~\ref{sec:counting}), against one fixed evaluation set. This
+gives $L(D)$, the row of panel~b, and for a scientific dataset it is the sweep that
+matters most, since $D$ cannot simply be increased.
+\item \textbf{Compute.} Three or four budgets $C$. At each, several sizes $N$ with
+$D$ set by the budget, $D = C / c_N$ where $c_N$ is the measured cost per record at
+that size. Each budget gives a U in $N$, its minimum is $N^*(C)$, and a line
+through the minima in log-log is the frontier of panel~h. This is the Chinchilla
+IsoFLOP construction, and it is the only one of the three that answers how a fixed
+budget should be split.
+\end{enumerate}
+
+\notesec{The four controls}
+\begin{itemize}
+\item \textbf{A learning rate that suits each size.} Kaplan's runs used a cosine
+schedule whose length did not match each run's length, and the conclusion about
+$N$ versus $D$ changed when Hoffmann matched them. Either tune the learning rate per
+size, or use $\mu$P (Yang et al., arXiv:2203.03466)\external{arXiv:2203.03466,
+not in the mirror}, under which the optimum transfers across widths so one tuning
+at the smallest size serves the sweep.
+\item \textbf{Validation loss, not a downstream metric.} Loss is smooth in $N$
+and $D$; a correlation or an accuracy jumps and plateaus, and a power law fit to
+one is a fit to the plateau's edge.
+\item \textbf{Seeds at the small sizes.} Two or three seeds at each of the small
+sizes, where they are cheap, give the noise floor the bootstrap needs. Panel~i uses
+three.
+\item \textbf{Compute counted properly.} $6ND$ for a transformer over tokens;
+a profiler for anything else.
+\end{itemize}
+
+\notesec{Fitting}
+For a pure power law, a linear regression of $\log L$ on $\log N$ is the fit, and
+the slope is the exponent. With a floor the fit is nonlinear least squares in log
+space over $(\log A, \log E, \alpha)$, run from a grid of starting points and
+keeping the best, because the objective has several local minima; fitting the
+logarithms keeps $A$ and $E$ positive without constraints. The estimator in
+\file{experiments/041-scaling-laws/scripts/scaling_law_forms.py} (function
+\texttt{fit\_floored}) does this with 27 starts and a squared residual. Hoffmann's
+appendix uses a Huber residual, which stops a few bad runs from steering the
+exponent; it is the right choice once real runs are being fit and is a one-line
+change there. The joint form adds $(\log B, \beta)$ to the parameter vector and is
+otherwise the same fit.
+
+\notesec{What makes the curve defensible}
+\begin{itemize}
+\item \textbf{Hold out the largest runs.} Fit on the smaller runs and check whether
+the fit predicts the largest. Panel~i is the case where this is the only test that
+separates a right model from a wrong one.
+\item \textbf{Bootstrap over runs.} Resample runs with replacement, refit, and
+report an interval on every exponent. A point estimate of $\alpha$ is not a
+result, and panel~h shows two published point estimates from one set of runs.
+\item \textbf{Look for curvature.} A bend at the large end means $E$ is near, or
+that hyperparameters or data have become the bottleneck. Either way the straight
+line stops there.
+\item \textbf{Check $E$ against the replicate floor.} When the loss is a squared
+error on a replicated measurement, the replicate variance is an estimate of $E$
+that owes nothing to the fit (Section~\ref{sec:counting}).
+\end{itemize}

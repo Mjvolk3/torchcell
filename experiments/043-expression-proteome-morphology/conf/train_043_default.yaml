@@ -19,6 +19,10 @@ defaults:
 
 seed: 0
 device: auto
+# STAGE 2 (two-stage protocol, 2026-10-23): a stage-1 checkpoint whose model weights (not
+# the optimizer) initialize this run; the W&B group becomes
+# finetune_<arm without alone_>_from_<stage-1 group>. optim.lr is the fine-tune lr.
+init_from: null
 
 data:
   route: A
@@ -31,10 +35,12 @@ data:
   sampler: records
   batch_size: 16
   num_workers: 4
-  # SMOKE ONLY: at most this many marks per record enter the operator (select_marks: the
-  # absent / deletion / loss-of-function marks first, then a fixed per-record random subset).
-  # The design has no cap; Boocock segregants carry median 3,351 marks.
-  mark_cap: 1024
+  # Marks per record entering the operator. null = every mark (the design; since
+  # 2026-10-23). A number is a smoke-speed cap (select_marks: the absent / deletion /
+  # loss-of-function marks first, then a fixed per-record random subset); the setup line
+  # prints the data maximum and the records and marks the cap drops. The 2026-10-22 runs
+  # used 1024. Boocock segregants carry median 3,351 marks.
+  mark_cap: null
   val_max_records_per_dataset: 2000
   traineval_max_records_per_dataset: 256
   min_strains_per_gene: 3

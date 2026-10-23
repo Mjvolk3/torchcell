@@ -6,7 +6,7 @@
 # CPU: train_043.py --stage prepare. Reads every record of the trainer's datasets from the raw
 # 043 store with the route-A representation (keys only, no vectors), drops the test fold,
 # writes the prepared store under
-# $DATA_ROOT/data/torchcell/experiments/043-expression-proteome-morphology/train_043_prep/prep_v1_routeA/
+# $DATA_ROOT/data/torchcell/experiments/043-expression-proteome-morphology/train_043_prep/prep_<PREP_VERSION>_routeA/ (prep_v2 since 2026-10-23: adds Hu, Jackson, Nadal-Ribelles)
 # The store-wide verification (job 6120) read 173,617 records in 3 min 37 s on 32 workers; the
 # graphs and the Boocock raw-byte filter add to that, so 2 h is generous.
 #

@@ -12,8 +12,8 @@
 # [[experiments.043-expression-proteome-morphology.scripts.alcf.aurora_train_043_grid]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/alcf/aurora_train_043_grid.pbs
 #
-# Round aurora_2026_10_24: one node of the Aurora grid, one cell per tile (12 tiles per
-# node, FLAT hierarchy). Rows of aurora_grid_043.tsv whose node column equals NODE run here,
+# Round aurora_2026_10_24: one node of the Aurora grid, one cell per tile (all 12 tiles of
+# the node, FLAT hierarchy). Rows of aurora_grid_043.tsv whose node column equals NODE run here,
 # each on its tile column, through aurora_run_cell_043.sh (stage 1, then the Kemmeren
 # fine-tune). -r y plus fixed resume ids: a rerun resumes every stage from its last.pt.
 #
@@ -29,13 +29,13 @@ mkdir -p "$OUT"
 echo "job $PBS_JOBID node-slot $NODE on $(hostname) at $(date); tree $SYNCED"
 
 pids=()
-while IFS=$'\t' read -r node tile cell overrides; do
+while IFS=$'\t' read -r node tile cell finetune overrides; do
   [ "$node" = "$NODE" ] || continue
   # shellcheck disable=SC2086
-  ZE_AFFINITY_MASK=$tile bash "$HERE/aurora_run_cell_043.sh" "$cell" $overrides \
+  ZE_AFFINITY_MASK=$tile bash "$HERE/aurora_run_cell_043.sh" "$cell" "$finetune" $overrides \
     >> "$OUT/$cell.log" 2>&1 &
   pids+=($!)
-  echo "tile $tile: $cell pid ${pids[-1]}"
+  echo "tile $tile: $cell (fine-tune $finetune) pid ${pids[-1]}"
 done < <(grep -v '^#' "$HERE/aurora_grid_043.tsv")
 rc=0
 for p in "${pids[@]}"; do wait "$p" || rc=$?; done

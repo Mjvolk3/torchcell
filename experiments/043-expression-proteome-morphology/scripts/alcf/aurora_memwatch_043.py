@@ -64,7 +64,10 @@ def _step(self: torch.optim.AdamW, *args: object, **kwargs: object) -> object:
 torch.optim.AdamW.step = _step  # type: ignore[method-assign]
 
 if __name__ == "__main__":
-    import train_043
+    import runpy
 
-    sys.argv[0] = train_043.__file__
-    train_043._hydra_main()
+    # run train_043.py as __main__ so hydra resolves ../conf from its own directory
+    # (a call into train_043._hydra_main from here resolves it from scripts/alcf)
+    script = osp.join(osp.dirname(osp.dirname(osp.abspath(__file__))), "train_043.py")
+    sys.argv[0] = script
+    runpy.run_path(script, run_name="__main__")

@@ -1,0 +1,168 @@
+{
+ "store": "prep_v3_routeA",
+ "n_genes": 6607,
+ "n_envs": 23,
+ "n_parents": 9,
+ "n_datasets_joint_9": 9,
+ "params": {
+  "hlgauss": {
+   "composite": 493376,
+   "position": 6048,
+   "trunk": 1002960,
+   "change_embedding": 1008,
+   "parent_embedding": 1296,
+   "mark_proj": 21168,
+   "operator": 250848,
+   "type_token": 192,
+   "dataset_token": 72,
+   "env_token": 368,
+   "gene_head": 27808,
+   "record_head": 46240,
+   "gene_bias": 288,
+   "record_bias": 288,
+   "trunk_per_layer": 250704,
+   "total": 1851960
+  },
+  "pinball": {
+   "composite": 493376,
+   "position": 6048,
+   "trunk": 1002960,
+   "change_embedding": 1008,
+   "parent_embedding": 1296,
+   "mark_proj": 21168,
+   "operator": 250848,
+   "type_token": 192,
+   "dataset_token": 72,
+   "env_token": 368,
+   "gene_head": 26131,
+   "record_head": 44563,
+   "gene_bias": 171,
+   "record_bias": 171,
+   "trunk_per_layer": 250704,
+   "total": 1848372
+  },
+  "mse": {
+   "composite": 493376,
+   "position": 6048,
+   "trunk": 1002960,
+   "change_embedding": 1008,
+   "parent_embedding": 1296,
+   "mark_proj": 21168,
+   "operator": 250848,
+   "type_token": 192,
+   "dataset_token": 72,
+   "env_token": 368,
+   "gene_head": 23809,
+   "record_head": 42241,
+   "gene_bias": 9,
+   "record_bias": 9,
+   "trunk_per_layer": 250704,
+   "total": 1843404
+  }
+ },
+ "datasets": {
+  "kemmeren": {
+   "records": 1343,
+   "marks_max": 1,
+   "marks_median": 1,
+   "level": "gene",
+   "index_columns_measured_any_record": 6127,
+   "index_columns_measured_median_record": 6127
+  },
+  "messner": {
+   "records": 4235,
+   "marks_max": 1,
+   "marks_median": 1,
+   "level": "gene",
+   "index_columns_measured_any_record": 1850,
+   "index_columns_measured_median_record": 1819
+  },
+  "zelezniak": {
+   "records": 88,
+   "marks_max": 1,
+   "marks_median": 1,
+   "level": "gene",
+   "index_columns_measured_any_record": 726,
+   "index_columns_measured_median_record": 726
+  },
+  "caudal": {
+   "records": 755,
+   "marks_max": 352,
+   "marks_median": 78,
+   "level": "gene",
+   "index_columns_measured_any_record": 6084,
+   "index_columns_measured_median_record": 6006
+  },
+  "muenzner": {
+   "records": 635,
+   "marks_max": 352,
+   "marks_median": 79,
+   "level": "gene",
+   "index_columns_measured_any_record": 1576,
+   "index_columns_measured_median_record": 1541
+  },
+  "turnover": {
+   "records": 44,
+   "marks_max": 334,
+   "marks_median": 79,
+   "level": "gene",
+   "index_columns_measured_any_record": 1808,
+   "index_columns_measured_median_record": 1071
+  },
+  "boocock": {
+   "records": 314,
+   "marks_max": 3844,
+   "marks_median": 3112,
+   "level": "gene",
+   "index_columns_measured_any_record": 6607,
+   "index_columns_measured_median_record": 6607
+  },
+  "nguessan": {
+   "records": 2361,
+   "marks_max": 4416,
+   "marks_median": 2909,
+   "level": "gene",
+   "index_columns_measured_any_record": 6607,
+   "index_columns_measured_median_record": 6607
+  },
+  "vaishnav": {
+   "records": 56926,
+   "marks_max": 1,
+   "marks_median": 1,
+   "level": "record"
+  },
+  "hu": {
+   "records": 244,
+   "marks_max": 1,
+   "marks_median": 1,
+   "level": "gene",
+   "index_columns_measured_any_record": 5878,
+   "index_columns_measured_median_record": 5832
+  },
+  "jackson": {
+   "records": 784,
+   "marks_max": 1,
+   "marks_median": 1,
+   "level": "gene",
+   "index_columns_measured_any_record": 6383,
+   "index_columns_measured_median_record": 5466
+  },
+  "nadal": {
+   "records": 5580,
+   "marks_max": 1,
+   "marks_median": 1,
+   "level": "gene",
+   "index_columns_measured_any_record": 5655,
+   "index_columns_measured_median_record": 4660
+  },
+  "sameith_dm": {
+   "records": 72,
+   "marks_max": 2,
+   "marks_median": 2,
+   "level": "gene",
+   "index_columns_measured_any_record": 6127,
+   "index_columns_measured_median_record": 6127
+  }
+ },
+ "marks_max_joint_9": 4416
+}

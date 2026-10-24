@@ -177,7 +177,7 @@ ROUNDS: dict[str, Round] = {
         run_ids=tuple(
             f"gs1024_{w}_{a}{ft}"
             for w, arms in (
-                ("w1", ("smmss", "mmmm", "ssss", "msmsms")),
+                ("w1", ("smss", "smmss", "mmmm", "ssss", "msmsms")),
                 ("w2", ("mle", "binq", "qn", "h288")),
                 ("w3", ("ffn2", "hh256", "lrhalf", "lrx2")),
             )

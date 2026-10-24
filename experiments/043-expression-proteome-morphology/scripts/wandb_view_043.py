@@ -231,7 +231,9 @@ ROUNDS: dict[str, Round] = {
     "ghyper_sweep_2026_10_24": Round(
         view_name="043 GilaHyper sweep 2026-10-24 by arm",
         # run id = gs1024_<wave>_<arm> (resume_id), _ft = its Kemmeren fine-tune;
-        # gh_train_043_sweep_v2.slurm, four slots chained wave 1 -> 2 -> 3
+        # gh_train_043_sweep_v2.slurm, four slots chained wave 1 -> 2 -> 3. Resubmitted with
+        # STOP_HOURS 14 (projected over 10 h; same run ids): smmss 6336 -> 6369, msmsms
+        # 6354 -> 6370, h288 6356 -> 6371. Baseline smss 6362/6363 heads slot A.
         run_ids=tuple(
             f"gs1024_{w}_{a}{ft}"
             for w, arms in (

@@ -1445,3 +1445,107 @@ The hashes differ only because the canonical JSON prints the last digit. Hypothe
 - capacity: open to every project (no ACL), 1 to 4 nodes, at most 1 running and 2 queued jobs per project. GenesisHackathonOct26 already holds both: mwest's 3-node job has run since 00:30 UTC (24 h walltime) and aattia's 1-node job is queued. Our 4-node submission was refused at qsub ("would exceed queue capacity's per-project limit"). `polaris_train_043_ontology_capacity.pbs` is ready (the 16 priority cells under the same run ids, live-run guard in `run_cell_043.sh`).
 - demand: limited to named groups (APS, IRI, OpenCosmo and others; we are in `users` and `GenesisHackathonOct26` only), 1 h maximum. Not a route.
 - prod backlog: small 69 queued, medium 48, large 14, plus 29 in the prod routing queue.
+
+## 2026.10.24 - GilaHyper sweep: layer pattern, loss family, preprocessing, dims
+
+Owner instruction (2026-10-23, verbatim): "ok you can keep running experiments on ghyper wrt to this dataset - we don't want to make dramatic changes away from the virt cell like architecture. but how it's optimized, how data is preprocessed, mse mle, versus more binned quantile etc., how many layers of M vs S [S, M, M, S, S] etc. dim of L dim of H. keep composite no matter what."
+
+### Reading of the axes against the code
+
+- `model.mask_layers` is 0-based (`CellTrunk043.forward`, `torchcell/models/cell_model_043.py`: `mask = self.head_mask if i in self.masked`). The default `[1]` therefore makes the trunk **[S, M, S, S]**, not [M, S, S, S]. SMSS is the baseline label everywhere below.
+- Heads: `num_heads = 9`, one per graph channel (`head_graphs` 0..8: physical, regulatory, TFLink, six STRING 12.0 channels); `conf/train_043_default.yaml` `model.num_heads: 9`, `train_043.py` `ModelConfig.num_heads`, `CellModel043Config.num_heads` default 9. At hidden 144 the head dim is 16, so the model is 9 heads x 16 dims. Keeping 9 heads, hidden 288 gives head dim 32; a width not divisible by 9 is refused at config validation.
+- "dim of L" = `model.hidden_dim` (token width, 144). "dim of H" = the trunk FFN (`model.trunk_ffn_mult`, 4 = 576; hard-coded 4x before commit c02fa631e), the operator FFN (`model.operator_ffn_mult`, 4 = 576) and `model.head_hidden` (128).
+
+### Knob table
+
+| knob (config key) | values (meaning) | default = every earlier run | commit | synthetic test |
+|---|---|---|---|---|
+| `model.layer_pattern` | list of S (dense) / M (multigraph-masked), sets `num_layers` and `mask_layers` | null (SMSS) | 50fe3e3fb | `test_layer_pattern_sets_layers_and_widths_refuse_loudly`, `test_sweep_arm_yamls_validate` |
+| `model.hidden_dim` (L) | 144, 288 (head dim 16, 32) | 144 | existing | `test_two_training_steps_per_sweep_knob[dims]` |
+| `model.trunk_ffn_mult` (H, trunk) | 2, 4 (FFN width / hidden) | 4 | c02fa631e, 50fe3e3fb | `test_trunk_ffn_mult_sets_the_trunk_ffn_width_only`, `[pattern_ffn2]` |
+| `model.head_hidden` (H, heads) | 128, 256 | 128 | existing | `[dims]` |
+| `loss.kind` | hlgauss, pinball, mse, mle (Gaussian NLL, log-variance clamped to [-7, 7]), binned_quantile (HL-Gauss over K = 32 equal-mass bins of the TRAINING targets per group) | hlgauss | 708122c1a | `tests/torchcell/losses/test_readout_family_043.py`, `[mle]`, `[binned_quantile]` |
+| point prediction (scoring) | expectation (hlgauss, binned_quantile), mean (mse, mle), median quantile (pinball) | expectation | 708122c1a | same |
+| `data.target_transform` | zscore, quantile_normal (rank to N(0,1) per group, train only), none (released scale after the per-gene center) | zscore | 289b9355d, 50fe3e3fb | `tests/torchcell/data/test_target_transform_043.py`, `[quantile_normal]`, `[none]` |
+| `data.target_stats_by` | dataset, profile (experiment-ontology phenotype profile, prep_v4) | dataset | 289b9355d, 50fe3e3fb | `test_profile_grouping_shares_statistics_and_weighting` |
+| `weighting.by` | dataset, profile | dataset | 50fe3e3fb | same |
+| `optim.lr` | 3e-4 (x0.5, x2 in wave 3) | 3e-4 | existing | - |
+| `optim.warmup_steps` | linear warmup steps | 500 (fine-tunes 30) | existing | - |
+| `optim.weight_decay` | AdamW decay | 1e-8 | existing | - |
+| `optim.schedule` / `min_lr_frac` | constant, cosine to `min_lr_frac * lr` at the last step | constant / 0.0 | 50fe3e3fb | `test_cosine_schedule_and_resume_reads_missing_sweep_keys_as_defaults`, `[cos]` |
+| `optim.clip_grad_norm` | gradient norm clip | 10.0 | existing | - |
+| `data.batch_size` | records per batch | 16 in the yaml; 8 in every launcher | existing | - |
+
+The new preprocessing is a monotone second stage on the legacy z, fitted on training rows and inverted before scoring. Every `val/*` Pearson key is therefore computed against the same legacy-z targets for every loss and preprocessing family, and `val/loss` / `train/loss` are each family's own objective. Losses of different families are not on one scale: compare families on the Pearson keys, and loss curves only within a family. The defaults are bit-identical to HEAD 5f29aff8d: `test_default_config_is_bit_identical_to_head` pins the parameter count and an exact fixed-seed forward sum for hlgauss, pinball and mse. Earlier W&B group names are unchanged, because the sweep suffix is opt-in (`wandb.label_knobs`).
+
+`data.target_transform=none` leaves each dataset on its released scale after the per-gene center (the `u` of `torchcell.data.target_transform_043`). That is incompatible across datasets in one model: Vaishnav's sort-seq expression and the log2 ratio datasets (Kemmeren, Sameith, Hu) live on different ranges; Nadal's pseudobulk log2 fold change runs to the |v| < 20 sentinel; the CPM-based datasets (Boocock, N'Guessan) are log2 CPM after a per-gene center; Turnover is a rate. The HL-Gauss bins over [-4, 4] would clip most of a released-scale target, so `none` is only paired with mse or mle.
+
+### Phenotype profiles on prep_v4 (the `by: profile` groups)
+
+Profile key = the sorted annotated vocabulary nodes whose ancestors include `Phenotype` (`torchcell.data.target_transform_043.profile_keys`); the prep_v4 vocabulary has no phenotype unit nodes, so units do not enter the key. Record counts are from `prep_v4_routeA/store.npz`:
+
+| profile key (phenotype-lane nodes) | datasets sharing it (records) |
+|---|---|
+| MicroarrayExpressionPhenotype, TwoChannelMicroarrayExpressionPhenotype | kemmeren 1343, sameith_dm 72 |
+| ProteinAbundancePhenotype | messner 4235, zelezniak 88, muenzner 635 |
+| RNASeqExpressionPhenotype | caudal 755 |
+| ProteinTurnoverPhenotype | turnover 44 |
+| SingleCellExpressionPhenotype, ...measurement_type:scrnaseq_umi_count | boocock 314, nguessan 2361, jackson 784 |
+| PooledSortSeqExpressionPhenotype, ...readout:sort_seq_fluorescence | vaishnav 56926 |
+| MicroarrayExpressionScorePhenotype, TwoChannelMicroarrayExpressionPhenotype | hu 244 |
+| PseudobulkExpressionPhenotype | nadal 5580 |
+
+### Dataset-name branches in train_043.py and their general replacement
+
+Line numbers at commit 56385d5b2. "Now" = implemented as a config-level additive option (legacy default unchanged); "next" = the next refactor.
+
+| line(s) | branch keyed by a dataset name | general replacement (keyed by the record / ontology) | status |
+|---|---|---|---|
+| 131-132, 1035-1039 | `BOOCOCK_POOLED_MEDIA` string filter on the raw record (Boocock pooled SM cells only) | an environment-attribute filter read from the record's `Environment.media` (an arm-level predicate over ontology value nodes) | next |
+| 1044-1048 | Vaishnav role key = the promoter variable region | the split key comes from the perturbation type (a promoter-sequence perturbation keys by its variable region), not the dataset | next |
+| 1197-1199 | `genes2` filled for kemmeren / sameith_dm only | fill the deleted-gene pair for every record whose perturbations are gene deletions | next |
+| 287-295, 1546, 1725-1740, 2568-2593 | Sameith Dm read as split B through Kemmeren's tokens and standardization; doubles evaluated against Kemmeren stats and training mean | same-technology-leaf sharing: records with one phenotype profile share one normalization (`data.target_stats_by=profile` does this for the statistics); the doubles read takes the profile's statistics | statistics now; doubles read next |
+| 394 | arm validator: doubles require kemmeren in the arm | require the profile of the doubles in the arm | next |
+| 174-297 `SPECS` | per-dataset transform, `center_per_gene`, level (gene / record), `exp_class`, `metric_type` | transform and level from the phenotype leaf (technology); centering from the genotype class (panel of isolates or segregants); metric grouping from the profile | next |
+| 284, 1101 | Nadal `sentinel_abs=20` masking | a measured-column mask carried by the record (typed absence for a sentinel value) | next |
+| 1567 | `log2_cpm_plus_one` never-detected genes set missing, by the dataset's transform | measured-column mask from the record | next |
+| 313, `conf/arm/all.yaml` | Ohya 2005 probe-only (absent from SPECS); Jackson train-only (no validation records under the fold file) | Ohya: no record-level multi-output head, a model capability, not a name; Jackson: a property of the split, nothing to change in code | none needed |
+| 2334-2350 (`combine_loss`), weighting `equal` | the loss balances datasets | `weighting.by=profile` pools datasets sharing a profile first | now |
+| 1853 (`balanced_batches`) | the balanced sampler draws a dataset uniformly | draw a profile uniformly | next |
+| 2482 (`eval_positions`), `val_max_records_per_dataset` | evaluation caps per dataset | caps per profile | next (logged keys per dataset stay, the gate needs `val/kemmeren/loss`) |
+| 2062 `DATASET_INDEXED`, name conditioning | dataset token and per-dataset bias tables | ontology conditioning (`model.conditioning.source=ontology`, commit b3ca02bf5) has no dataset id in forward | landed (ontology agent) |
+
+### CPU smoke evidence (real store, three optimizer steps per case)
+
+`gh_train_043_sweep_smoke_cpu.slurm` at commit 56385d5b2: arm all, prep_v3 (prep_v4 for profile), name conditioning, batch 4, every mark, `attention_query_chunk` 1024, W&B offline, a tiny validation pass (8 records per dataset). These prove the forward, the loss, the evaluation keys and the checkpoint path. The metric values after three steps are not results. Jobs 6327-6329 failed at Hydra composition (`attention_query_chunk` needs `+`) and were resubmitted as 6330-6332, all COMPLETED, exit 0.
+
+| case (job) | `[setup] trunk` line, abridged | epoch seconds (CPU) | train/loss (own objective) | val/loss (own objective) |
+|---|---|---|---|---|
+| ftlegacy (6330) | SMSS, 9 heads x 16, hlgauss, legacy z; fine-tune alone_kemmeren from a copy of overnight job 6308's last.pt, lr 3e-4, warmup 30 | 152 | 2.2056 | 2.2614 |
+| smmss (6330) | SMMSS via `+model=pattern_smmss` | 229 | 3.5004 | 3.4346 |
+| ssss (6330) | SSSS, no head mask built | 161 | 3.4849 | 3.4675 |
+| mle (6330) | loss mle | 162 | 1.4700 | 1.4568 |
+| mmmm (6331) | MMMM | 245 | 3.4853 | 3.4717 |
+| msmsms (6331) | MSMSMS | 307 | 3.4330 | 3.4626 |
+| dims (6331) | hidden 288 (9 heads x 32), trunk FFN 576 (2x), operator FFN 1152, head_hidden 256 | 230 | 3.4676 | 3.4268 |
+| binq (6331) | loss binned_quantile | 139 | 3.4764 | 3.4861 |
+| qn (6332) | quantile_normal by dataset (12 groups) | 184 | 3.4921 | 3.4615 |
+| none (6332) | none, mse (released scale: loss not comparable) | 186 | 88.0692 | 9.7247 |
+| profile (6332) | zscore and weighting by ontology phenotype profile, prep_v4 | 203 | 3.4852 | 3.4692 |
+| cos (6332) | cosine schedule | 138 | 3.4559 | 3.4267 |
+| chain-stage1 / chain-ft (6332) | binned_quantile + quantile_normal, then its Kemmeren fine-tune (target map and bins checked equal to stage 1) | 131 / 129 | 3.4764 / 3.4843 | 3.4867 / 3.4740 |
+
+The ftlegacy case is the pending overnight fine-tune 6311 (stage 1 6308) run on the new trainer, so the overnight chain still loads under it. Composite gene token in every case, from the setup line of 6331: "composite gene token: encoders fudt_species_upstream 768-d x 929348 rows, fudt_species_downstream 768-d x 326255 rows, prot_t5_xl_uniref50 1024-d x 329430 rows, calm 768-d x 514189 rows".
+
+### Wave plan and submitted jobs (round ghyper_sweep_2026_10_24)
+
+`gh_train_043_sweep_v2.slurm` at commit 73aaf11a7: store v2 on prep_v4, conditioning by ontology (commit b3ca02bf5; no dataset id enters forward), equal weighting, batch 8, every mark, 80 fixed epochs, window 0.875 (epochs 71-80, the overnight round's), seed 0, STOP_HOURS 11.5. Each stage 1 is chained (afterany) to its Kemmeren fine-tune: 20 epochs, lr 3e-4, warmup 30, window 0.8, gated on the stage-1 W&B history holding `val/kemmeren/loss` (`scripts/check_wandb_run_keys.py --min-rows 2`). GPU smoke 6335 (cases smmss mmmm ssss msmsms mle binq qn dims, ontology, prep_v4) depends afterany:6311:6312:6317:6318:6322; every wave-1 stage 1 depends afterok on it. Four slots, at most four 043 GPU jobs at once. The in-sweep baseline is the default trunk SMSS: the ontology round's o1023_all_onto_hlgauss_equal_s0 (Polaris, same recipe), and on GilaHyper the name-conditioned overnight all_hlgauss_equal_s0 (job 6308).
+
+| slot | wave 1 (stage 1 / ft job), run id | wave 2 | wave 3 |
+|---|---|---|---|
+| A | SMMSS 6336 / 6337, gs1024_w1_smmss | mle 6338 / 6339, gs1024_w2_mle | trunk FFN 2x 6340 / 6341, gs1024_w3_ffn2 |
+| B | MMMM 6342 / 6343, gs1024_w1_mmmm | binned_quantile 6344 / 6345, gs1024_w2_binq | head_hidden 256 6346 / 6347, gs1024_w3_hh256 |
+| C | SSSS (no graph, control) 6348 / 6349, gs1024_w1_ssss | quantile_normal 6350 / 6351, gs1024_w2_qn | lr 1.5e-4 6352 / 6353, gs1024_w3_lrhalf |
+| D | MSMSMS 6354 / 6355, gs1024_w1_msmsms | hidden 288 6356 / 6357, gs1024_w2_h288 | lr 6e-4 6358 / 6359, gs1024_w3_lrx2 |
+
+Fine-tune run ids append `_ft`. Projected start (an estimate, not measured): the round ends near 07:30 CDT 2026-10-24, the GPU smoke takes about 30 min, so wave 1 starts near 08:00. The overnight stage 1 epoch is 286-338 s with evaluation (job 6308, epochs 33-35), so 80 epochs take about 6.5-7.5 h. That puts wave 2 near 15:30 and wave 3 near 23:00. Hypothesis (untested): MMMM, MSMSMS and hidden 288 run slower per epoch than SMSS; a run that hits STOP_HOURS 11.5 exits 124 and is PARTIAL.

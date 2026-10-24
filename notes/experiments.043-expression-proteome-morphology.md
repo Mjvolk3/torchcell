@@ -1633,3 +1633,15 @@ PBS 8959369 and 8959370 were deleted while still queued and resubmitted with all
 |---|---|---|
 | 8959387 | 0 | all_onto s0, pinball s0, all_name s0, mse s0, bs16 s0, all_name s1, bs32 s0, ffn2 s1, h288 s0, lodo_hu s0, ffn2 s0, lodo_zelezniak s0 |
 | 8959388 | 1 | all_onto s1, bs16 s2, bs16 s1, bs32 s2, bs32 s1, h288 s2, h288 s1, alone_kemmeren s0, all_onto s2, all_onto s3, all_name s2, all_name s3 |
+
+### Long cells resubmitted, MMMM fine-tune guarded (2026-10-24 02:50)
+
+From the two live wave-1 runs: SSSS 0.039 s/step (334-341 s per epoch with evaluation, job 6348) and MMMM 0.066 s/step (511-514 s per epoch, about 11.4 h for 80 epochs, job 6342), so each M layer adds about 0.007 s/step. Projected (an estimate): SMMSS about 10.4 h, MSMSMS about 12.3 h; hidden 288 is unmeasured and assumed over 10 h. The pending jobs for those three cells were cancelled and resubmitted with STOP_HOURS 14 and `--time=15:00:00`, keeping the same run ids and dependencies:
+
+| cell, run id | old job | new job | dependency | fine-tune re-pointed |
+|---|---|---|---|---|
+| SMMSS, gs1024_w1_smmss | 6336 | 6369 | afterany:6363 | 6337 -> afterany:6369 |
+| MSMSMS, gs1024_w1_msmsms | 6354 | 6370 | after:6362 (starts once the baseline has started) | 6355 -> afterany:6370 |
+| hidden 288, gs1024_w2_h288 | 6356 | 6371 | afterany:6355 | 6357 -> afterany:6371 |
+
+MMMM 6342 still runs under STOP_HOURS 11.5, and its fine-tune 6343 is held (`scontrol hold`). This also holds slot B's wave 2, because binq 6344 depends on 6343. When 6342 ends: on COMPLETED with an `[epoch 80/80]` line, 6343 is released. Otherwise a resume job on the same run id (gs1024_w1_mmmm, resume_id = the checkpoint directory and the W&B id; same config) finishes the remaining epochs, and 6343 is released with afterok on that resume job. The registered window then covers epochs 71-80 complete.

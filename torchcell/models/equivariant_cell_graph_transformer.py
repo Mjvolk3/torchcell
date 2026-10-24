@@ -18,12 +18,62 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.checkpoint import checkpoint
 from torch_geometric.data import HeteroData
 
 if TYPE_CHECKING:
     # Type-only import: keeps the models package free of a runtime dependency on
     # torchcell.losses (whose __init__ imports other model-specific losses).
     from torchcell.losses.distributional import DistHead
+
+
+def query_chunked_sdpa(
+    q: torch.Tensor,
+    k: torch.Tensor,
+    v: torch.Tensor,
+    attn_mask: torch.Tensor | None,
+    dropout_p: float,
+    query_chunk: int | None,
+) -> torch.Tensor:
+    """``F.scaled_dot_product_attention`` over query blocks of ``query_chunk`` rows.
+
+    ``query_chunk=None`` (or a query no longer than it) is the plain call. Otherwise each
+    block of queries attends to every key under activation checkpointing, so at most one
+    block's ``[B, H, query_chunk, Lk]`` score matrix is alive at a time. The result is the
+    same attention (the softmax runs over keys, each query row on its own); the dropout
+    draws differ from the one-call draws, and checkpointing restores the RNG state so the
+    recomputed block uses the forward's draws.
+
+    WHY: on Intel XPU (torch 2.11.0+xpu, Aurora jobs 8959138 and 8959152) a masked or
+    dropout SDPA training call has no fused kernel and takes the math path, which forms
+    the score matrix: 5.1 GB per [1, 9, 6609, 6609] call, 41.1 GB at 8 contexts. CUDA's
+    memory-efficient kernel never forms it.
+    """
+    Lq = q.shape[-2]
+    if query_chunk is None or Lq <= query_chunk:
+        return F.scaled_dot_product_attention(
+            q, k, v, attn_mask=attn_mask, dropout_p=dropout_p
+        )
+    outs = []
+    for s in range(0, Lq, query_chunk):
+        mask = attn_mask
+        if mask is not None and mask.shape[-2] != 1:
+            mask = mask[..., s : s + query_chunk, :]
+        outs.append(
+            cast(
+                torch.Tensor,
+                checkpoint(
+                    F.scaled_dot_product_attention,
+                    q[..., s : s + query_chunk, :],
+                    k,
+                    v,
+                    attn_mask=mask,
+                    dropout_p=dropout_p,
+                    use_reentrant=False,
+                ),
+            )
+        )
+    return torch.cat(outs, dim=-2)
 
 
 class GraphRegularizedTransformerLayer(nn.Module):
@@ -33,15 +83,24 @@ class GraphRegularizedTransformerLayer(nn.Module):
     for graph regularization loss.
     """
 
-    def __init__(self, hidden_dim: int, num_heads: int, dropout: float = 0.1):
+    def __init__(
+        self,
+        hidden_dim: int,
+        num_heads: int,
+        dropout: float = 0.1,
+        query_chunk: int | None = None,
+    ):
         """Build Q/K/V/out projections, layer norms, and the feedforward block.
 
         Args:
             hidden_dim: Model hidden dimension (divisible by num_heads).
             num_heads: Number of attention heads.
             dropout: Dropout probability.
+            query_chunk: fused-path query block size (``query_chunked_sdpa``); None is
+                one SDPA call.
         """
         super().__init__()
+        self.query_chunk = query_chunk
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
         self.head_dim = hidden_dim // num_heads
@@ -126,12 +185,13 @@ class GraphRegularizedTransformerLayer(nn.Module):
             # RNG differently from the manual softmax path, so trajectories will not match
             # earlier runs at an identical seed; that is why this lands on a new wave boundary
             # rather than being pooled with wave3/wave4a.
-            attn_output = F.scaled_dot_product_attention(
+            attn_output = query_chunked_sdpa(
                 q,
                 k,
                 v,
-                attn_mask=None if head_mask is None else head_mask.unsqueeze(0),
-                dropout_p=self.dropout.p if self.training else 0.0,
+                None if head_mask is None else head_mask.unsqueeze(0),
+                self.dropout.p if self.training else 0.0,
+                self.query_chunk,
             )
             gene_attention_weights = None
         else:

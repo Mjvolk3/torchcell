@@ -24,6 +24,8 @@ HERE=/flare/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-p
 # shellcheck disable=SC1091
 source "$HERE/aurora_env_043.sh"
 export PY TRAIN
+export TILES_DIR=/tmp/043_tiles_${PBS_JOBID%%.*}
+ulimit -c 0
 OUT=$TC_TREE/experiments/043-expression-proteome-morphology/slurm/output/aurora_grid
 mkdir -p "$OUT"
 echo "job $PBS_JOBID node-slot $NODE on $(hostname) at $(date); tree $SYNCED"

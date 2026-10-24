@@ -17,6 +17,8 @@ HERE=/flare/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-p
 # shellcheck disable=SC1091
 source "$HERE/aurora_env_043.sh"
 export PY TRAIN
+: "${TILES_DIR:?set it to the tile-claim directory of the grid job, /tmp/043_tiles_JOBID}"
+export TILES_DIR
 OUT=$TC_TREE/experiments/043-expression-proteome-morphology/slurm/output/aurora_grid
 row=$(grep -v '^#' "$HERE/aurora_grid_043.tsv" | awk -F'\t' -v c="$cell" '$3 == c')
 [ -n "$row" ] || { echo "no cell $cell in aurora_grid_043.tsv" >&2; exit 2; }

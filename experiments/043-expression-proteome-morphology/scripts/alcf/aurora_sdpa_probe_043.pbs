@@ -1,0 +1,49 @@
+#!/bin/bash -l
+#PBS -A GenesisHackathonOct26
+#PBS -q debug
+#PBS -l select=1
+#PBS -l walltime=00:30:00
+#PBS -l filesystems=home:flare
+#PBS -N 043-sdpa-probe
+#PBS -j oe
+#PBS -o /flare/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/slurm/output/
+# experiments/043-expression-proteome-morphology/scripts/alcf/aurora_sdpa_probe_043.pbs
+# [[experiments.043-expression-proteome-morphology.scripts.alcf.aurora_sdpa_probe_043]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/alcf/aurora_sdpa_probe_043.pbs
+#
+# SDPA forward+backward at the 043 trunk and mark-operator shapes on one Max 1550 tile, one
+# case per process, to find which shape triggers the GPU write page fault of jobs 8957194
+# and 8957239. Each case prints a JSON line or dies; the exit code is echoed after it.
+set -uo pipefail
+
+TC_PREFIX=/flare/GenesisHackathonOct26/mjvolk3
+TC_TREE=$TC_PREFIX/torchcell
+PY=$TC_PREFIX/miniforge3/envs/torchcell/bin/python
+export ZE_FLAT_DEVICE_HIERARCHY=FLAT
+export ZE_AFFINITY_MASK=0
+P="$TC_TREE/experiments/043-expression-proteome-morphology/scripts/alcf/aurora_sdpa_probe_043.py"
+echo "job $PBS_JOBID on $(hostname) at $(date)"
+
+run() {
+  echo "== case: $*"
+  timeout 300 "$PY" "$P" "$@" 2>&1 | grep -v Warning | tail -3
+  echo "exit ${PIPESTATUS[0]}"
+}
+# which backends accept a training call (C=2 trunk shape)
+for be in MATH FLASH_ATTENTION EFFICIENT_ATTENTION OVERRIDEABLE CUDNN_ATTENTION; do
+  run --batch 2 --lq 6609 --lk 6609 --mask head --dropout 0.1 --backend $be
+  run --batch 2 --lq 6609 --lk 6609 --mask head --dropout 0.0 --backend $be
+done
+# trunk, default backend choice, growing distinct-context count
+for c in 1 2 4 5 6 8; do
+  run --batch $c --lq 6609 --lk 6609 --mask head --dropout 0.1
+done
+run --batch 8 --lq 6609 --lk 6609 --mask head --dropout 0.0
+run --batch 8 --lq 6609 --lk 6609 --mask none --dropout 0.1
+run --batch 8 --lq 6609 --lk 6609 --mask none --dropout 0.0
+# mark operator at batch 8
+for m in 1025 2049 3073 4417; do
+  run --batch 8 --lq 6609 --lk $m --mask key --dropout 0.1
+done
+run --batch 8 --lq 6609 --lk 4417 --mask key --dropout 0.0
+echo "done $(date)"

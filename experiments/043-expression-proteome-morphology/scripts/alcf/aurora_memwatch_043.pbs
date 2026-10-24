@@ -11,31 +11,35 @@
 # [[experiments.043-expression-proteome-morphology.scripts.alcf.aurora_memwatch_043]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/alcf/aurora_memwatch_043.pbs
 #
-# Does XPU memory grow until the page fault? 12 tiles, arm all, ontology, micro-batch 2 x
-# accumulate 4, W&B disabled, XPU memory printed every 60 s (aurora_memwatch_043.py):
-#   tiles 0-3   default allocator, seeds 0-3
-#   tiles 4-7   PYTORCH_XPU_ALLOC_CONF=expandable_segments:True, seeds 0-3
-#   tiles 8-11  micro-batch 1 x accumulate 8, seeds 0-3
+# Does XPU memory grow until the page fault? arm all, ontology, every mark, one epoch,
+# W&B on (tag aurora_memprobe), ops/mem_alloc_gb and ops/mem_reserved_gb every 100
+# micro-steps (aurora_memwatch_043.py), one variable per pair of tiles (seeds 0 and 1):
+#   tiles 0-1  baseline, micro-batch 2 x accumulate 4
+#   tiles 2-3  PYTORCH_XPU_ALLOC_CONF=expandable_segments:True
+#   tiles 4-5  torch.xpu.empty_cache() every 50 optimizer steps
+#   tiles 6-7  micro-batch 1 x accumulate 8
 set -uo pipefail
 HERE=/flare/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/scripts/alcf
 # shellcheck disable=SC1091
 source "$HERE/aurora_env_043.sh"
-export WANDB_MODE=disabled
 OUT=$TC_TREE/experiments/043-expression-proteome-morphology/slurm/output
 J=${PBS_JOBID%%.*}
 ulimit -c 0
 echo "job $PBS_JOBID on $(hostname) at $(date); tree $SYNCED"
 common=(device=xpu data.store_version=v2 data.prep_version=prep_v4 arm=all loss=hlgauss
   weighting=equal model.conditioning.source=ontology data.num_workers=4 data.sampler=records
-  data.mark_cap=null budget.time_budget_hours=null budget.max_epochs=1 wandb.mode=disabled
-  paths.checkpoint_root=$TC_PREFIX/torchcell-data/043/memwatch)
-for s in 0 1 2 3; do
-  ZE_AFFINITY_MASK=$s "$PY" "$HERE/aurora_memwatch_043.py" "${common[@]}" seed=$s \
-    data.batch_size=2 ++optim.accumulate_steps=4 > "$OUT/${J}_default_s$s.log" 2>&1 &
-  ZE_AFFINITY_MASK=$((s + 4)) PYTORCH_XPU_ALLOC_CONF=expandable_segments:True \
-    "$PY" "$HERE/aurora_memwatch_043.py" "${common[@]}" seed=$s \
-    data.batch_size=2 ++optim.accumulate_steps=4 > "$OUT/${J}_expandable_s$s.log" 2>&1 &
-  ZE_AFFINITY_MASK=$((s + 8)) "$PY" "$HERE/aurora_memwatch_043.py" "${common[@]}" seed=$s \
+  data.mark_cap=null budget.time_budget_hours=null budget.max_epochs=1
+  "wandb.tags=[aurora_memprobe,aurora]" paths.checkpoint_root=$TC_PREFIX/torchcell-data/043/memwatch)
+M2=(data.batch_size=2 ++optim.accumulate_steps=4)
+W="$HERE/aurora_memwatch_043.py"
+for s in 0 1; do
+  ZE_AFFINITY_MASK=$s MEMWATCH_EVERY=25 "$PY" "$W" "${common[@]}" seed=$s "${M2[@]}" \
+    > "$OUT/${J}_baseline_s$s.log" 2>&1 &
+  ZE_AFFINITY_MASK=$((s + 2)) MEMWATCH_EVERY=25 PYTORCH_XPU_ALLOC_CONF=expandable_segments:True \
+    "$PY" "$W" "${common[@]}" seed=$s "${M2[@]}" > "$OUT/${J}_expandable_s$s.log" 2>&1 &
+  ZE_AFFINITY_MASK=$((s + 4)) MEMWATCH_EVERY=25 EMPTY_CACHE_EVERY=50 \
+    "$PY" "$W" "${common[@]}" seed=$s "${M2[@]}" > "$OUT/${J}_emptycache_s$s.log" 2>&1 &
+  ZE_AFFINITY_MASK=$((s + 6)) MEMWATCH_EVERY=12 "$PY" "$W" "${common[@]}" seed=$s \
     data.batch_size=1 ++optim.accumulate_steps=8 > "$OUT/${J}_micro1_s$s.log" 2>&1 &
 done
 sleep 3300

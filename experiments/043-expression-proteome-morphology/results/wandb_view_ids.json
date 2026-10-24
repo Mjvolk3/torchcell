@@ -44,6 +44,11 @@
     "name": "043 overnight_2026_10_23: alone_kemmeren_hlgauss_equal",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=9kyhcdyx6sj"
   },
+  "overnight_2026_10_23_loss": {
+    "id": "qxzmq01felk",
+    "name": "043 overnight 2026-10-23 (store v2) by arm: total loss only",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=qxzmq01felk"
+  },
   "two_stage_2026_10_23": {
     "id": "9kmfp3eqe72",
     "name": "043 two-stage smokes 2026-10-23 by arm",

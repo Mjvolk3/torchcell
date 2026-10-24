@@ -374,6 +374,79 @@ def populate_view(key: str, rnd: Round, present: set[str], arm: str | None) -> s
     return view.url
 
 
+#: Rounds that also get a total-loss-only view (owner, 2026-10-23: "curate charts so you
+#: have train/loss and val/loss that's what i want to see"), registry slot <round>_loss.
+LOSS_VIEW_ROUNDS = ("overnight_2026_10_23",)
+LOSS_KEYS = ["train/loss", "val/loss"]
+
+
+def populate_loss_view(key: str, rnd: Round) -> str:
+    """Overwrite (or create) the round's total-loss view: train/loss and val/loss on one
+    axis by epoch, then by optimizer step; every run of the round as its own line, no
+    grouping, no smoothing, nothing else. A saved view has one runset, so a panel cannot
+    hold a single run; each run's own curves are on its run page.
+    """
+    panels = [
+        wr.LinePlot(
+            title=title,
+            x=x,
+            y=LOSS_KEYS,
+            title_x=title_x,
+            smoothing_type="none",
+            max_runs_to_show=MAX_RUNS_SHOWN,
+            legend_template="${run:displayName} ${metricName}",
+            layout=wr.Layout(w=12, h=9),
+        )
+        for title, x, title_x in (
+            ("train/loss and val/loss by epoch", EPOCH, "epoch"),
+            ("train/loss and val/loss by optimizer step", STEP, "optimizer step"),
+        )
+    ]
+    section = ws.Section(
+        name="total loss",
+        is_open=True,
+        layout_settings=ws.SectionLayoutSettings(columns=2, rows=1),
+        panel_settings=ws.SectionPanelSettings(smoothing_type="none"),
+        panels=panels,
+    )
+    settings = ws.WorkspaceSettings(
+        smoothing_type="none", max_runs=MAX_RUNS_SHOWN, sort_panels_alphabetically=False
+    )
+    runset_settings = ws.RunsetSettings(
+        filters=[ws.Config("round") == key],
+        order=[ws.Ordering(ws.Metric("Name"), ascending=True)],
+    )
+    name = f"{rnd.view_name}: total loss only"
+    slot = f"{key}_loss"
+    reg = _registry()
+    view_id = reg.get(slot, {}).get("id")
+    if view_id is None:
+        view = ws.Workspace(
+            entity=ENTITY,
+            project=PROJECT,
+            name=name,
+            sections=[section],
+            settings=settings,
+            runset_settings=runset_settings,
+        )
+        view.save_as_new_view()
+        found = re.search(r"[?&]nw=([\w-]+)", view.url)
+        if found is None:
+            raise ValueError(f"no view id in {view.url}")
+        reg[slot] = {"id": found.group(1), "url": view.url, "name": name}
+        with open(VIEW_REGISTRY, "w") as f:
+            json.dump(reg, f, indent=2, sort_keys=True)
+            f.write("\n")
+        return view.url
+    view = ws.Workspace.from_url(f"https://wandb.ai/{ENTITY}/{PROJECT}?nw={view_id}")
+    view.name = name
+    view.sections = [section]
+    view.settings = settings
+    view.runset_settings = runset_settings
+    view.save()
+    return view.url
+
+
 #: Keys of the registered-window readout, and the alone run each joint run is read against.
 WINDOW_KEYS = (
     "val/kemmeren/pearson_per_gene_median",
@@ -487,6 +560,8 @@ def main() -> None:
     print(
         f"round view\n{populate_view(args.round, rnd, set().union(*keys.values()), None)}"
     )
+    if args.round in LOSS_VIEW_ROUNDS:
+        print(f"total-loss view\n{populate_loss_view(args.round, rnd)}")
     for arm in sorted(keys):
         print(f"{arm}: arm view, then the group page")
         print(populate_view(args.round, rnd, keys[arm], arm))

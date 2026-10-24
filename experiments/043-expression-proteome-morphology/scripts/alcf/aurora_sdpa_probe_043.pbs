@@ -29,11 +29,8 @@ run() {
   timeout 300 "$PY" "$P" "$@" 2>&1 | grep -v Warning | tail -3
   echo "exit ${PIPESTATUS[0]}"
 }
-# which backends accept a training call (C=2 trunk shape)
-for be in MATH FLASH_ATTENTION EFFICIENT_ATTENTION OVERRIDEABLE CUDNN_ATTENTION; do
-  run --batch 2 --lq 6609 --lk 6609 --mask head --dropout 0.1 --backend $be
-  run --batch 2 --lq 6609 --lk 6609 --mask head --dropout 0.0 --backend $be
-done
+# kernel survey (job 8959138): MATH and EFFICIENT_ATTENTION accept a masked training call
+# at the trunk shape, FLASH_ATTENTION and OVERRIDEABLE have no kernel, CUDNN none.
 # trunk, default backend choice, growing distinct-context count
 for c in 1 2 4 5 6 8; do
   run --batch $c --lq 6609 --lk 6609 --mask head --dropout 0.1

@@ -20,7 +20,7 @@ export PY TRAIN
 : "${TILES_DIR:?set it to the tile-claim directory of the grid job, /tmp/043_tiles_JOBID}"
 export TILES_DIR
 OUT=$TC_TREE/experiments/043-expression-proteome-morphology/slurm/output/aurora_grid
-row=$(grep -v '^#' "$HERE/aurora_grid_043.tsv" | awk -F'\t' -v c="$cell" '$3 == c')
+row=$(grep -v '^#' "$HERE/${GRID:-aurora_grid_043.tsv}" | awk -F'\t' -v c="$cell" '$3 == c')
 [ -n "$row" ] || { echo "no cell $cell in aurora_grid_043.tsv" >&2; exit 2; }
 IFS=$'\t' read -r node tile _ finetune overrides <<< "$row"
 echo "[relaunch] $cell on tile $tile of $(hostname) (node slot $node) at $(date); tree $SYNCED" >> "$OUT/$cell.log"

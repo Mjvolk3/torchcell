@@ -1562,6 +1562,12 @@ Every cell is one factor at a time against the recipe: hlgauss, weighting equal 
 
 The lr cells' fine-tunes keep lr 3e-4.
 
+Loss-curve reports, one runset per panel grid (`experiments/043-expression-proteome-morphology/scripts/wandb_report_043.py --round ghyper_sweep_2026_10_24` and `--round aurora_2026_10_24`): sweep report with layer pattern (losses, metrics), one grid per objective-changing cell, dims and optimization against SMSS, and fine-tunes; Aurora report with onto vs name anchors, capacity axis, pinball, mse and alone Kemmeren. Run ids not yet in W&B are skipped and printed, so rerun the script as cells start; in-flight runs are partial.
+
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/reports/043-GilaHyper-sweep-2026-10-24:-loss-curves--VmlldzoxODE3NTk3MQ==
+
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/reports/043-Aurora-capacity-grid-2026-10-24:-loss-curves--VmlldzoxODE3NTk3Mw==
+
 ## 2026.10.24 - Aurora: XPU fixes and capacity grid
 
 ### The page fault is the materialized attention, not a bad index

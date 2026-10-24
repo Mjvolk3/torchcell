@@ -18,17 +18,19 @@
 # fine-tune). -r y plus fixed resume ids: a rerun resumes every stage from its last.pt.
 #
 #   qsub -v NODE=0 aurora_train_043_grid.pbs
+#   qsub -v NODE=0,GRID=aurora_grid_043_b.tsv,RID_PREFIX=a1024b aurora_train_043_grid.pbs
 set -uo pipefail
 : "${NODE:?qsub -v NODE=<k>}"
 HERE=/flare/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/scripts/alcf
 # shellcheck disable=SC1091
 source "$HERE/aurora_env_043.sh"
 export PY TRAIN
+export RID_PREFIX=${RID_PREFIX:-a1024}
 export TILES_DIR=/tmp/043_tiles_${PBS_JOBID%%.*}
 ulimit -c 0
 OUT=$TC_TREE/experiments/043-expression-proteome-morphology/slurm/output/aurora_grid
 mkdir -p "$OUT"
-echo "job $PBS_JOBID node-slot $NODE on $(hostname) at $(date); tree $SYNCED"
+echo "grid ${GRID:-aurora_grid_043.tsv} run ids ${RID_PREFIX}_<cell>; job $PBS_JOBID node-slot $NODE on $(hostname) at $(date); tree $SYNCED"
 
 pids=()
 while IFS=$'\t' read -r node tile cell finetune overrides; do
@@ -38,7 +40,7 @@ while IFS=$'\t' read -r node tile cell finetune overrides; do
     >> "$OUT/$cell.log" 2>&1 &
   pids+=($!)
   echo "tile $tile: $cell (fine-tune $finetune) pid ${pids[-1]}"
-done < <(grep -v '^#' "$HERE/aurora_grid_043.tsv")
+done < <(grep -v '^#' "$HERE/${GRID:-aurora_grid_043.tsv}")
 rc=0
 for p in "${pids[@]}"; do wait "$p" || rc=$?; done
 echo "done $(date) rc $rc"

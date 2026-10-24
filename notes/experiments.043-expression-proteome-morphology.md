@@ -1561,3 +1561,66 @@ Every cell is one factor at a time against the recipe: hlgauss, weighting equal 
 - Registered window 0.875: the overnight round's last 10 of 80 epochs. This is a read-out choice and does not change training.
 
 The lr cells' fine-tunes keep lr 3e-4.
+
+## 2026.10.24 - Aurora: XPU fixes and capacity grid
+
+### The page fault is the materialized attention, not a bad index
+
+- SDPA kernel survey on one Max 1550 tile (torch 2.11.0+xpu, PBS 8959138): for a masked training call at the trunk shape `[2, 9, 6609, 16]`, MATH and EFFICIENT_ATTENTION run, FLASH_ATTENTION and OVERRIDEABLE have no kernel, CUDNN none. EFFICIENT used the same memory as MATH, so on XPU it forms the score matrix too.
+- Shape sweep (PBS 8959152, forward plus backward, bf16 autocast, default kernel choice): every masked or dropout call forms `[B, 9, Lq, Lk]`. Only the unmasked, dropout-0 call fuses.
+
+| case (B x heads x Lq x Lk) | mask | dropout | peak extra GB (`torch.xpu.max_memory_allocated`) | s per fwd+bwd |
+|---|---|---|---|---|
+| 1 x 9 x 6609 x 6609 (trunk, 1 context) | head | 0.1 | 5.14 | 2.66 (first call) |
+| 4 x 9 x 6609 x 6609 | head | 0.1 | 20.53 | 0.87 |
+| 8 x 9 x 6609 x 6609 | head | 0.1 | 41.05 | 0.90 |
+| 8 x 9 x 6609 x 6609 | none | 0.1 | 41.06 | 0.74 |
+| 8 x 9 x 6609 x 6609 | none | 0.0 | 0.98 | 0.62 |
+| 8 x 9 x 6609 x 4417 (operator, every mark) | key | 0.1 | 27.47 | 0.85 |
+
+None of these isolated calls faulted, including the ones over 2^31 scores. The trainer at batch 8 holds several such matrices for backward at once (four trunk layers, the operator, several distinct contexts per batch), more than a 64 GB tile, and the failure surfaces as `Segmentation fault from GPU ... NotPresent ... banned` (reproduced: PBS 8959230 tile 0, run ifoo5r54; PBS 8959340, 8 layers at micro-batch 2, run 6u2nvxuh). Hypothesis (untested): the Level Zero runtime reports this out-of-memory condition as a page fault instead of a torch OutOfMemoryError.
+
+- Peak device memory is now logged on XPU (`time/peak_gpu_gb` through `torch.get_device_module`, fd3ef1bb6).
+
+### Query-chunked SDPA: exact in isolation, non-finite in the trainer (open)
+
+`query_chunked_sdpa` (`torchcell/models/equivariant_cell_graph_transformer.py`, 5f29aff8d) splits the queries into blocks under activation checkpointing, opt-in through the top-level trainer field `attention_query_chunk` (default None = the one call, CUDA unchanged). CPU tests: identical values and gradients to the one call for no mask, per-query and per-key masks, dropout draws replayed in backward, and the 043 model's outputs and gradients unchanged. On XPU at the trunk shape it matches the one call to bf16 rounding at dropout 0 and 0.1 (PBS 8959263 and 8959297). Inside the trainer every chunked run stopped on `non-finite gradient norm` within 2 to 68 steps (PBS 8959230: chunks 512, 1024, 2048 at batch 8, 16, 32; PBS 8959263: batch 2, chunk 1024, step 2; PBS 8959297: batch 2, chunk 1024, dropout 0, step 11), while the unchunked trainer at batch 2 trains (PBS 8959263, 150 steps). Cause not found; debugging stopped on the coordinator's decision. Not used by the grid.
+
+### Standardization sha mismatch: float rounding
+
+Aurora (`standardization.json` of 4xvlubph) and GilaHyper (job 6172) on the same prep_v2 store differ only in the last one or two ULPs of `mu` and `sd` for 11 of 12 datasets (for example kemmeren sd 0.19771548645028988 against 0.1977154864502899); every per-gene center is identical. numpy 2.5.4 with AVX512 on the Aurora Xeon Gold 5320 against numpy 2.2.6 with AVX2 on the GilaHyper Threadripper 5995WX; the pairwise summation order differs. Harmless when stage 1 and its fine-tune run on the same machine (the `init_from` check compares the two exactly); a cross-machine `init_from` would be refused. No code change.
+
+### Gradient accumulation
+
+`optim.accumulate_steps` (fc4ef5bd7; default 1 is the old loop): micro-batches of `data.batch_size` per optimizer step; steps, warmup, the lr schedule and `max_steps(_per_epoch)` count optimizer steps (80 epochs at effective batch 8 stay 7,101 x 80 updates). Semantic difference: the `equal` weighting averages per dataset inside each micro-batch, so with several datasets accumulation is not exactly one step at the effective batch. Test (`test_accumulate_steps_matches_one_batch_on_one_dataset`, one record-level dataset, mse, dropout 0): micro 1 x 2 equals batch 2 after two optimizer steps, every parameter within 3.4e-5 except the key-projection biases (their exact gradient is zero, so AdamW turns float noise into lr-sized moves, 1.0e-4 at lr 1e-3); batch 1 without accumulation lands more than 5e-4 away. `data.label_batch_size` labels the effective batch (80fed4eaf).
+
+### Smoke and memory per tile (PBS 8959340, prep_v4, arm all, hlgauss, equal, unchunked, 7 runs on tiles 0-6 of one node)
+
+| run | W&B | micro-batch x accumulate | s per micro-step (30-step probe) | `time/peak_gpu_gb` (`torch.xpu.max_memory_allocated`, train + eval) | headroom of 64 GB |
+|---|---|---|---|---|---|
+| gate, ontology, 2 epochs x 60 optimizer steps | f0u767u7 | 2 x 4 | 0.219 | 35.90 | 44 % |
+| anchor, name conditioning | gp3gkepq | 2 x 4 | 0.207 | 35.90 | 44 % |
+| hidden 288 | 4lzt1hqy | 2 x 4 | 0.229 | 36.35 | 43 % |
+| hidden 288 | t56c198k | 1 x 8 | 0.226 | 21.24 | 67 % |
+| 8 layers | 6u2nvxuh | 2 x 4 | page fault | none | none |
+| 8 layers | q2tr5ve7 | 1 x 8 | 0.347 | 35.29 | 45 % |
+| trunk FFN mult 2 | 0j3zdun6 | 2 x 4 | 0.199 | 35.84 | 44 % |
+
+Earlier, one run alone on a node at batch 2 (PBS 8959263, h9jb4y8h): 0.194 s per step, 35.89 GB. Gate: `check_wandb_run_keys.py .../f0u767u7 --require val/kemmeren/loss --min-rows 2` passed (epoch, train/loss, val/loss, train/lr, train/grad_norm, val/kemmeren/loss on 2 rows each); val/loss 3.315 then 2.953 at the two evaluations. Setup line from the gate log: `[setup] composite gene token: encoders fudt_species_upstream 768-d x 929348 rows, fudt_species_downstream 768-d x 326255 rows, prot_t5_xl_uniref50 1024-d x 329430 rows, calm 768-d x 514189 rows; conditioning ontology (426 ontology nodes, 38 profiles in the arm)`.
+
+Batch 16 and 32 were not measured as micro-batches: the grid reaches them by accumulation at micro-batch 2, whose memory does not depend on the effective batch.
+
+### Grid, round aurora_2026_10_24
+
+Queue capacity (`qstat -Qf`: 1-16 nodes, 168 h, 2 running and 5 queued per user), walltime 168 h, `-r y`, checkpoint every epoch, resume ids `a1024_<cell>` and `a1024_<cell>_ft`. Two single-node jobs, six cells each on tiles 0, 2, 4, 6, 8, 10 (one tile per card): 12 GPUs of the 18-GPU (3-node) ceiling. Cells and placement: `experiments/043-expression-proteome-morphology/scripts/alcf/aurora_grid_043.tsv`; launcher `aurora_train_043_grid.pbs` -> `aurora_run_cell_043.sh` (stage 1, then the Kemmeren fine-tune, 20 epochs, lr 3e-4, warmup 30, effective batch 8).
+
+| PBS | node slot | cells |
+|---|---|---|
+| 8959369 | 0 | all_onto s0, all_name s0, bs16 s0, bs32 s0, h288 s0, ffn2 s0 |
+| 8959370 | 1 | all_onto s1, bs16 s1, bs32 s1, h288 s1, all_onto s2, all_name s2 |
+
+Dropped: 8 layers (page fault at micro-batch 2; at micro-batch 1 it fits, 35.29 GB, but 0.347 s per micro-step projects to about 438 h for 80 epochs, past the 168 h limit).
+
+Projection from the measured rates (not a result): 28,403 micro-steps per epoch at 0.207 to 0.229 s plus about 100 s of evaluation is 1.66 to 1.84 h per epoch, 133 to 147 h for 80 epochs, plus about 1 h of fine-tune; inside 168 h, with the h288 cells closest to the limit. About 13x slower per record than the Polaris A100 (0.059 s per batch-8 step there), because masked SDPA on XPU takes the math path.
+
+Morning item, hypothesis (unimplemented): the masked trunk layers could run as edge-list attention with a scatter softmax, O(E) instead of the 6609 x 6609 score matrix, which would let Aurora train at batch 8 without accumulation.

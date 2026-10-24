@@ -109,6 +109,7 @@ ROUNDS: dict[str, Round] = {
             "jxlvzmmb",
             "zbsnrjqn",
             "fth871fz",
+            "86cc6tgp",
         ),
         hardware=(
             "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, jobs 6308-6313 and "

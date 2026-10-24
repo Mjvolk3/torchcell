@@ -89,6 +89,7 @@ class GraphRegularizedTransformerLayer(nn.Module):
         num_heads: int,
         dropout: float = 0.1,
         query_chunk: int | None = None,
+        ffn_mult: int = 4,
     ):
         """Build Q/K/V/out projections, layer norms, and the feedforward block.
 
@@ -98,6 +99,8 @@ class GraphRegularizedTransformerLayer(nn.Module):
             dropout: Dropout probability.
             query_chunk: fused-path query block size (``query_chunked_sdpa``); None is
                 one SDPA call.
+            ffn_mult: FFN hidden width as a multiple of ``hidden_dim`` (4 = the layer
+                as it always was; 043 sweep knob ``model.trunk_ffn_mult``).
         """
         super().__init__()
         self.query_chunk = query_chunk
@@ -119,11 +122,13 @@ class GraphRegularizedTransformerLayer(nn.Module):
         self.norm1 = nn.LayerNorm(hidden_dim)
         self.norm2 = nn.LayerNorm(hidden_dim)
 
+        if ffn_mult < 1:
+            raise ValueError(f"ffn_mult must be >= 1, got {ffn_mult}")
         self.ffn = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim * 4),
+            nn.Linear(hidden_dim, hidden_dim * ffn_mult),
             nn.GELU(),
             nn.Dropout(dropout),
-            nn.Linear(hidden_dim * 4, hidden_dim),
+            nn.Linear(hidden_dim * ffn_mult, hidden_dim),
         )
 
         self.dropout = nn.Dropout(dropout)

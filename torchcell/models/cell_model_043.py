@@ -125,7 +125,9 @@ from torchcell.models.readout_heads_043 import (
     PerGeneReadoutConfig,
 )
 
-LossKind = Literal["hlgauss", "pinball", "mse"]
+# mle and binned_quantile (043 sweep, 2026-10-24) are computed by
+# torchcell.losses.readout_family_043.ReadoutLossFamily043, which needs per-row groups.
+LossKind = Literal["hlgauss", "pinball", "mse", "mle", "binned_quantile"]
 
 #: The composite encoders in key-column order, and their widths.
 ENCODER_DIMS: tuple[int, int, int, int] = (768, 768, 1024, 768)
@@ -227,6 +229,9 @@ class CellModel043Config(BaseModel):
     head_graphs: dict[int, str] = Field(default_factory=dict)
     fourier_frequencies: int = Field(default=8, gt=0)
     operator_ffn_mult: int = Field(default=4, gt=0)
+    trunk_ffn_mult: int = Field(
+        default=4, gt=0, description="trunk FFN width as a multiple of hidden_dim"
+    )
     n_parents: int = Field(ge=1, description="allele-parent rows; row 0 = no parent")
     n_datasets: int = Field(gt=0)
     n_envs: int = Field(gt=0)
@@ -276,9 +281,13 @@ class CellModel043Config(BaseModel):
 
     @property
     def param_dim(self) -> int:
-        """Output width per prediction: K bins, the quantile count, or 1."""
-        if self.loss == "hlgauss":
+        """Output width per prediction: K bins, the quantile count, 2 (mean and
+        log-variance) for mle, or 1.
+        """
+        if self.loss in ("hlgauss", "binned_quantile"):
             return self.hl_gauss.num_bins
+        if self.loss == "mle":
+            return 2
         if self.loss == "pinball":
             return self.num_quantiles
         return 1
@@ -487,7 +496,11 @@ class CellTrunk043(nn.Module):
         self.cls_token = nn.Parameter(torch.randn(1, 1, d) * 0.02)
         self.layers = nn.ModuleList(
             GraphRegularizedTransformerLayer(
-                d, config.num_heads, config.dropout, config.attention_query_chunk
+                d,
+                config.num_heads,
+                config.dropout,
+                config.attention_query_chunk,
+                ffn_mult=config.trunk_ffn_mult,
             )
             for _ in range(config.num_layers)
         )
@@ -810,6 +823,11 @@ class ReadoutLoss043(nn.Module):
         self, pred: torch.Tensor, target: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Loss per entry (zero where missing) and the measured mask, ``target.shape``."""
+        if self.kind in ("mle", "binned_quantile"):
+            raise ValueError(
+                f"{self.kind} needs per-row groups: use "
+                "torchcell.losses.readout_family_043.ReadoutLossFamily043"
+            )
         if self.kind == "hlgauss":
             return self.hl.elementwise(pred, target)
         measured = ~torch.isnan(target)
@@ -826,6 +844,8 @@ class ReadoutLoss043(nn.Module):
 
     def point(self, pred: torch.Tensor) -> torch.Tensor:
         """The point prediction in z: expectation, median quantile, or the value."""
+        if self.kind in ("mle", "binned_quantile"):
+            raise ValueError(f"{self.kind}: use ReadoutLossFamily043.point")
         if self.kind == "hlgauss":
             return self.hl.expectation(pred)
         if self.kind == "pinball":

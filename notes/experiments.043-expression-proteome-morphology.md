@@ -1549,3 +1549,15 @@ The ftlegacy case is the pending overnight fine-tune 6311 (stage 1 6308) run on 
 | D | MSMSMS 6354 / 6355, gs1024_w1_msmsms | hidden 288 6356 / 6357, gs1024_w2_h288 | lr 6e-4 6358 / 6359, gs1024_w3_lrx2 |
 
 Fine-tune run ids append `_ft`. Projected start (an estimate, not measured): the round ends near 07:30 CDT 2026-10-24, the GPU smoke takes about 30 min, so wave 1 starts near 08:00. The overnight stage 1 epoch is 286-338 s with evaluation (job 6308, epochs 33-35), so 80 epochs take about 6.5-7.5 h. That puts wave 2 near 15:30 and wave 3 near 23:00. Hypothesis (untested): MMMM, MSMSMS and hidden 288 run slower per epoch than SMSS; a run that hits STOP_HOURS 11.5 exits 124 and is PARTIAL.
+
+### Baseline added and one-factor check (2026-10-24, before the round ended)
+
+Slot A now opens with the in-sweep baseline: `gs1024_w1_smss` (ontology, prep_v4, the default trunk SMSS, every other knob at the recipe value), stage 1 job 6362 (afterok:6335), and its fine-tune `gs1024_w1_smss_ft`, job 6363 (afterany:6362). SMMSS 6336 was re-pointed to afterany:6363, and the rest of slot A follows unchanged. The baseline runs on GilaHyper with the same code as the cells it anchors; the Polaris run o1023_all_onto_hlgauss_equal_s0 is no longer the anchor.
+
+Every cell is one factor at a time against the recipe: hlgauss, weighting equal by dataset, target_stats_by dataset, target_transform zscore, schedule constant, lr 3e-4, warmup 500, trunk SMSS, hidden 144, trunk FFN 4x, head_hidden 128. Each cell passes only its own knob, and the profile options appear in no cell. Recipe values that differ from the yaml:
+
+- prep_v4 and ontology conditioning: owner-directed.
+- Batch 8: the yaml says 16, but every launcher since 2026-10-22 uses 8.
+- Registered window 0.875: the overnight round's last 10 of 80 epochs. This is a read-out choice and does not change training.
+
+The lr cells' fine-tunes keep lr 3e-4.

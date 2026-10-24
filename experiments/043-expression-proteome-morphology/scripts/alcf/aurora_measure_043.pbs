@@ -26,14 +26,14 @@ MAX_STEPS=${MAX_STEPS:-300}
 echo "job $PBS_JOBID on $(hostname) at $(date); tree $SYNCED; max_steps_per_epoch $MAX_STEPS"
 
 common=(arm=all loss=hlgauss weighting=equal seed=0 data.num_workers=4 data.sampler=records
-  data.mark_cap=null budget.max_epochs=1 "budget.max_steps_per_epoch=$MAX_STEPS"
+  data.mark_cap=null budget.max_epochs=1 "++budget.max_steps_per_epoch=$MAX_STEPS"
   budget.time_budget_hours=0.8 budget.eval_every_epochs=1 "wandb.tags=[aurora,aurora_measure]")
 tile=0
 for spec in 8:none 8:512 8:1024 8:2048 16:512 16:1024 32:512 32:1024 32:2048; do
   b=${spec%%:*}
   c=${spec##*:}
   ch=()
-  [ "$c" != none ] && ch=("attention_query_chunk=$c")
+  [ "$c" != none ] && ch=("++attention_query_chunk=$c")
   train_on_tile $tile "$OUT/${J}_b${b}_c${c}.log" "${common[@]}" "data.batch_size=$b" "${ch[@]}"
   tile=$((tile + 1))
 done

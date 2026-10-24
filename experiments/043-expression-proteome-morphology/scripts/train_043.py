@@ -2288,9 +2288,11 @@ def train(
         dt = time.time() - t_epoch
         epoch_seconds.append(dt)
         logs["time/epoch_seconds"] = dt
-        if device.type == "cuda":
+        if device.type in ("cuda", "xpu"):
             # peak device memory since the run started (training and evaluation)
-            logs["time/peak_gpu_gb"] = torch.cuda.max_memory_allocated(device) / 1e9
+            logs["time/peak_gpu_gb"] = (
+                torch.get_device_module(device).max_memory_allocated(device) / 1e9
+            )
         logs["time/epochs_per_hour"] = 3600.0 / dt
         if epoch == 1 and cfg.budget.time_budget_hours is not None:
             remaining = (

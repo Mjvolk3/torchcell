@@ -29,9 +29,10 @@ data:
   # STORE GENERATION (2026-10-23, store_version_043): v2 = raw_043_v2 (every served
   # record admitted, no gene-set clause), prep_v3, representation_043_v2, global_split_v2.
   # v1 = raw_043, prep_v2, representation_043, global_split_v1: every run before
-  # 2026-10-23 (smokes 6172-6175 included); pass data.store_version=v1 to reproduce one.
-  # v1 until prep_v3 lands (job 6205, about 2026-10-24 14:00); flip to v2 then.
-  store_version: v1
+  # 2026-10-23 (GilaHyper smokes S1-S4, jobs 6172-6175, and the Polaris and Aurora smokes
+  # included); pass data.store_version=v1 to reproduce one. v2 since prep_v3 landed
+  # (job 6304, 2026-10-23 19:17; global_split_v2 inherits v1's folds).
+  store_version: v2
   # SAMPLER (batch side) and WEIGHTING (loss side) compose. records = uniform over training
   # records, the per-record extreme (Vaishnav is 84% of joint_9's training records, so a
   # batch of 8 holds about 1.3 gene-level records); balanced = each batch slot draws a

@@ -12,7 +12,8 @@
 # [[experiments.043-expression-proteome-morphology.scripts.alcf.polaris_train_043_ontology_grid]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_grid.pbs
 #
-# One Polaris node (4 A100 40 GB) of round ontology_2026_10_23. NODE (0-based) selects its
+# One Polaris node (4 A100 40 GB) of round ontology_2026_10_23, through node_cells_043.sh.
+# NODE (0-based) selects its
 # rows of ontology_grid_043.tsv: with PER_CARD processes per card, node k takes rows
 # [4 * PER_CARD * k, 4 * PER_CARD * (k + 1)), row r of the node going to card r % 4. Each row
 # runs run_cell_043.sh (stage 1, then its Kemmeren fine-tune) pinned with
@@ -24,61 +25,5 @@
 #     qsub -v NODE=0,PER_CARD=1 experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_grid.pbs"
 set -euo pipefail
 : "${NODE:?qsub -v NODE=<k>}"
-PER_CARD="${PER_CARD:-1}"
-
-TC_PREFIX=/eagle/GenesisHackathonOct26/mjvolk3
-TC_TREE=$TC_PREFIX/torchcell
-export PY=$TC_PREFIX/miniforge3/envs/torchcell/bin/python
-
-export http_proxy=http://proxy.alcf.anl.gov:3128
-export https_proxy=http://proxy.alcf.anl.gov:3128
-export HTTP_PROXY=$http_proxy HTTPS_PROXY=$https_proxy
-export no_proxy=localhost,127.0.0.1,.alcf.anl.gov
-
-cd "$TC_TREE"
-set -a; source .env; set +a
-export DATA_ROOT=$TC_PREFIX/torchcell-data/043
-export EXPERIMENT_ROOT=$TC_TREE/experiments
-export PYTHONUNBUFFERED=1 PYTHONPATH="$TC_TREE"
-export WANDB_MODE=online
-
-SHIM=$(mktemp -d)
-REAL_GIT=$(command -v git)
-SYNCED=$(cut -c1-9 "$TC_TREE/.synced_commit")
-cat > "$SHIM/git" <<EOF
-#!/bin/bash
-if [ "\$*" = "rev-parse --short HEAD" ]; then echo "$SYNCED"; exit 0; fi
-exec "$REAL_GIT" "\$@"
-EOF
-chmod +x "$SHIM/git"
-export PATH="$SHIM:$PATH"
-
-ALCF=experiments/043-expression-proteome-morphology/scripts/alcf
-OUT=$TC_TREE/experiments/043-expression-proteome-morphology/slurm/output/onto_grid
-mkdir -p "$OUT"
-echo "job $PBS_JOBID node-slot $NODE per_card $PER_CARD on $(hostname) at $(date); tree $SYNCED"
-nvidia-smi --query-gpu=index,name,memory.total --format=csv
-
-mapfile -t ROWS < <(grep -v '^#' "$ALCF/ontology_grid_043.tsv")
-per_node=$((4 * PER_CARD))
-first=$((NODE * per_node))
-pids=()
-for ((i = 0; i < per_node; i++)); do
-  r=$((first + i))
-  [ "$r" -lt "${#ROWS[@]}" ] || break
-  IFS=$'\t' read -r cell finetune overrides <<< "${ROWS[$r]}"
-  card=$((i % 4))
-  # shellcheck disable=SC2086
-  CUDA_VISIBLE_DEVICES=$card bash "$ALCF/run_cell_043.sh" "$cell" "$finetune" $overrides \
-    >> "$OUT/$cell.log" 2>&1 &
-  pids+=($!)
-  echo "card $card: $cell (fine-tune $finetune) pid ${pids[-1]}"
-done
-( while sleep 300; do date; nvidia-smi --query-gpu=index,utilization.gpu,memory.used --format=csv,noheader; done ) \
-  >> "$OUT/nvidia_smi_node${NODE}.log" 2>&1 &
-MON=$!
-rc=0
-for p in "${pids[@]}"; do wait "$p" || rc=$?; done
-kill "$MON" 2>/dev/null || true
-echo "done $(date) rc $rc"
-exit "$rc"
+cd /eagle/GenesisHackathonOct26/mjvolk3/torchcell
+exec bash experiments/043-expression-proteome-morphology/scripts/alcf/node_cells_043.sh "$NODE" "${PER_CARD:-1}"

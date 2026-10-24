@@ -25,7 +25,11 @@ common=(data.store_version=v2 data.prep_version=prep_v4 device=cuda data.num_wor
   data.sampler=records data.mark_cap=null budget.time_budget_hours=null
   "wandb.tags=[ontology_2026_10_23,polaris]" wandb.round=ontology_2026_10_23)
 
-echo "[cell $cell] stage 1 on card ${CUDA_VISIBLE_DEVICES:-?} at $(date): $*"
+LIVE=experiments/043-expression-proteome-morphology/scripts/alcf/wandb_run_live_043.py
+# A cell is queued on two routes (preemptable and capacity) under one run id: a stage whose
+# W&B run is live elsewhere (state running, heartbeat under 10 min) is not started here.
+if "$PY" "$LIVE" "$rid"; then echo "[cell $cell] $rid is live on another route: not started here"; exit 0; fi
+echo "[cell $cell] stage 1 on card ${CUDA_VISIBLE_DEVICES:-?} host $(hostname) job ${PBS_JOBID:-?} at $(date): $*"
 "$PY" "$TRAIN" "${common[@]}" "$@" resume_id="$rid" paths.checkpoint_root="$ROOT/$cell"
 
 if [ "$finetune" = 1 ]; then
@@ -36,6 +40,7 @@ if [ "$finetune" = 1 ]; then
   for o in "$@"; do
     case "$o" in loss=*|seed=*|weighting=*|model.*) keep+=("$o") ;; esac
   done
+  if "$PY" "$LIVE" "${rid}_ft"; then echo "[cell $cell] ${rid}_ft is live on another route"; exit 0; fi
   echo "[cell $cell] fine-tune from ${ckpts[0]} at $(date): ${keep[*]}"
   "$PY" "$TRAIN" "${common[@]}" "${keep[@]}" arm=alone_kemmeren init_from="${ckpts[0]}" \
     data.batch_size=8 optim.lr=3.0e-4 optim.warmup_steps=30 budget.max_epochs=20 \

@@ -1,0 +1,36 @@
+#!/bin/bash -l
+#PBS -A GenesisHackathonOct26
+#PBS -q capacity
+#PBS -l select=4:ngpus=4
+#PBS -l walltime=24:00:00
+#PBS -l filesystems=home:eagle
+#PBS -r y
+#PBS -N 043-onto-cap
+#PBS -j oe
+#PBS -o /eagle/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/slurm/output/
+# experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_capacity.pbs
+# [[experiments.043-expression-proteome-morphology.scripts.alcf.polaris_train_043_ontology_capacity]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_capacity.pbs
+#
+# Second route of round ontology_2026_10_23: the capacity queue (max 4 nodes, one running job
+# per project), slots 0-3 of ontology_grid_043.tsv = its first 16 rows (the 12 conditioning x
+# loss x seed cells, the two leave-outs, the two alone_kemmeren controls), one slot per node
+# through mpiexec. The same slots are queued on preemptable (NODE 0-3) under the same W&B run
+# ids; run_cell_043.sh starts a stage only when its run is not live elsewhere.
+#
+#   ssh polaris "cd /eagle/GenesisHackathonOct26/mjvolk3/torchcell && qsub experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_capacity.pbs"
+set -euo pipefail
+cd /eagle/GenesisHackathonOct26/mjvolk3/torchcell
+NODE_SCRIPT=experiments/043-expression-proteome-morphology/scripts/alcf/node_cells_043.sh
+mapfile -t HOSTS < <(sort -u "$PBS_NODEFILE")
+echo "job $PBS_JOBID on ${HOSTS[*]} at $(date)"
+pids=()
+for k in 0 1 2 3; do
+  mpiexec -n 1 --ppn 1 --hosts "${HOSTS[$k]}" --cpu-bind none \
+    bash "$NODE_SCRIPT" "$k" 1 &
+  pids+=($!)
+done
+rc=0
+for p in "${pids[@]}"; do wait "$p" || rc=$?; done
+echo "done $(date) rc $rc"
+exit "$rc"

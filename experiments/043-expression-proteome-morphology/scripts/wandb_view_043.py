@@ -98,8 +98,9 @@ ROUNDS: dict[str, Round] = {
     ),
     "overnight_2026_10_23": Round(
         view_name="043 overnight 2026-10-23 (store v2) by arm",
-        # stage 1 A/B (s0, s1), alone s0 (card D); the remaining runs are added as they start
-        run_ids=("gdqlsjpb", "oc881bqm", "18s6j2p2"),
+        # stage 1 A/B (s0, s1), alone s0 (card D), stage 1 pinball (card C, job 6321);
+        # the remaining runs are added as they start
+        run_ids=("gdqlsjpb", "oc881bqm", "18s6j2p2", "05d5anh5"),
         hardware=(
             "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, jobs 6308-6313 and "
             "6316-6318 (DEADLINE 07:30 CDT 2026-10-24)"

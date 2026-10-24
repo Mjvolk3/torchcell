@@ -170,6 +170,34 @@ ROUNDS: dict[str, Round] = {
             "alone_kemmeren step-matched at 571,100 steps."
         ),
     ),
+    "ghyper_sweep_2026_10_24": Round(
+        view_name="043 GilaHyper sweep 2026-10-24 by arm",
+        # run id = gs1024_<wave>_<arm> (resume_id), _ft = its Kemmeren fine-tune;
+        # gh_train_043_sweep_v2.slurm, four slots chained wave 1 -> 2 -> 3
+        run_ids=tuple(
+            f"gs1024_{w}_{a}{ft}"
+            for w, arms in (
+                ("w1", ("smmss", "mmmm", "ssss", "msmsms")),
+                ("w2", ("mle", "binq", "qn", "h288")),
+                ("w3", ("ffn2", "hh256", "lrhalf", "lrx2")),
+            )
+            for a in arms
+            for ft in ("", "_ft")
+        ),
+        hardware=(
+            "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, four chained slots "
+            "after the overnight round (dependency afterany:6311:6312:6317:6318:6322)"
+        ),
+        intro=(
+            "Store v2, every mark, equal weighting, batch 8, HL-Gauss unless the group says "
+            "otherwise, 80 fixed epochs (window 71-80), seed 0, each stage 1 chained to its "
+            "Kemmeren fine-tune (20 epochs, lr 3e-4, warmup 30). Wave 1 trunk layer "
+            "patterns (_L<pattern>: S dense, M multigraph-masked; the default trunk SMSS "
+            "is the baseline); wave 2 loss family and preprocessing (mle, binned_quantile, "
+            "_tqn) and hidden 288 (_h288); wave 3 trunk FFN 2x (_ffn2), head_hidden 256 "
+            "(_hh256), lr 1.5e-4 and 6e-4. Composite gene token on in every run."
+        ),
+    ),
 }
 
 DATASETS = (
@@ -433,7 +461,11 @@ def populate_view(key: str, rnd: Round, present: set[str], arm: str | None) -> s
 
 #: Rounds that also get a total-loss-only view (owner, 2026-10-23: "curate charts so you
 #: have train/loss and val/loss that's what i want to see"), registry slot <round>_loss.
-LOSS_VIEW_ROUNDS = ("overnight_2026_10_23", "ontology_2026_10_23")
+LOSS_VIEW_ROUNDS = (
+    "overnight_2026_10_23",
+    "ontology_2026_10_23",
+    "ghyper_sweep_2026_10_24",
+)
 LOSS_KEYS = ["train/loss", "val/loss"]
 
 

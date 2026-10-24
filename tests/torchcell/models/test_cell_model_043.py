@@ -13,6 +13,10 @@ import numpy.typing as npt
 import pytest
 import torch
 
+from torchcell.data.experiment_ontology import (
+    ExperimentOntologyVocabulary,
+    OntologyNode,
+)
 from torchcell.data.representation_043 import GapKind, PositionGap
 from torchcell.models.cell_model_043 import (
     Batch043,
@@ -349,3 +353,116 @@ def test_config_validation() -> None:
         _config(mask_layers=(5,))
     with pytest.raises(ValueError, match="masks nothing"):
         _config(head_graphs={})
+
+
+# --------------------------------------------------------------------------- #
+# Ontology conditioning (2026-10-23)
+# --------------------------------------------------------------------------- #
+def _tiny_vocab() -> ExperimentOntologyVocabulary:
+    return ExperimentOntologyVocabulary(
+        nodes=[
+            OntologyNode(name="Experiment", kind="class"),
+            OntologyNode(name="A", kind="class", parents=["Experiment"]),
+            OntologyNode(name="B", kind="class", parents=["Experiment"]),
+            OntologyNode(name="A.temp", kind="numeric", parents=["A"]),
+        ]
+    )
+
+
+def _onto_model(loss: str = "hlgauss") -> CellModel043:
+    cfg = _config(loss, conditioning="ontology")
+    torch.manual_seed(0)
+    tables = [torch.randn(5, d) for d in DIMS]
+    mask = build_head_mask(
+        {"physical": torch.tensor([[0, 1, 2], [1, 2, 3]])},
+        cfg.head_graphs,
+        cfg.num_heads,
+        G,
+    )
+    return CellModel043(
+        cfg,
+        tables,
+        chrom_index=torch.tensor([1, 1, 2, 2, 3, 0]),
+        rel_midpoint=torch.linspace(0.1, 0.9, G),
+        head_mask=mask,
+        encoder_dims=DIMS,
+        ontology_vocabulary=_tiny_vocab(),
+    )
+
+
+def _with_ids(b: Batch043, ids: torch.Tensor, onto: torch.Tensor | None) -> Batch043:
+    return Batch043(
+        contexts=b.contexts,
+        record_context=b.record_context,
+        marks=b.marks,
+        dataset_ids=ids,
+        exp_type_ids=ids,
+        env_ids=ids,
+        ontology=onto,
+    )
+
+
+ONTO = torch.tensor([[1.0, 1.0, 0.0, 0.3], [1.0, 1.0, 0.0, 0.3], [1.0, 0.0, 1.0, 0.0]])
+
+
+@pytest.mark.parametrize("loss", ["hlgauss", "pinball", "mse"])
+def test_ontology_conditioning_has_the_name_shapes_and_no_dataset_tables(
+    loss: str,
+) -> None:
+    name = _model(_config(loss))
+    onto = _onto_model(loss)
+    b = _with_ids(_batch(), torch.tensor([0, 1, 2]), ONTO)
+    o_name = name(_batch(), torch.tensor([0, 1]), torch.tensor([2]))
+    o_onto = onto(b, torch.tensor([0, 1]), torch.tensor([2]))
+    assert o_name.gene.shape == o_onto.gene.shape
+    assert o_name.record.shape == o_onto.record.shape
+    names = {n for n, _ in onto.named_parameters()}
+    for leak in (
+        "dataset_token",
+        "env_token",
+        "type_token",
+        "gene_bias",
+        "record_bias",
+    ):
+        assert not any(n.startswith(leak + ".") or n == leak for n in names), leak
+    assert {
+        "onto_token.out.weight",
+        "gene_bias_map.weight",
+        "record_bias_map.weight",
+    } <= names
+    # the bias maps keep PyTorch's default init: not zero, no gate
+    assert onto.gene_bias_map.weight.abs().sum() > 0
+    # the head input width is the name model's (token 40 at the default widths)
+    assert onto.config.token_dim == name.config.token_dim
+
+
+def test_ontology_forward_never_reads_a_dataset_id() -> None:
+    model = _onto_model("mse").eval()
+    b = _batch()
+    real = _with_ids(b, torch.tensor([0, 1, 2]), ONTO)
+    # ids far outside every table: any index by them raises
+    poison = _with_ids(b, torch.tensor([10**9, -(10**9), 10**9]), ONTO)
+    with torch.no_grad():
+        o1 = model(real, torch.tensor([0, 1]), torch.tensor([2]))
+        o2 = model(poison, torch.tensor([0, 1]), torch.tensor([2]))
+    assert torch.equal(o1.gene, o2.gene) and torch.equal(o1.record, o2.record)
+    # the annotation is what conditions: changing it changes the output
+    other = ONTO.clone()
+    other[0, 3] = 0.25
+    with torch.no_grad():
+        o3 = model(
+            _with_ids(b, torch.tensor([0, 1, 2]), other),
+            torch.tensor([0, 1]),
+            torch.tensor([2]),
+        )
+    assert not torch.allclose(o1.gene[0], o3.gene[0])
+    assert torch.allclose(o1.gene[1], o3.gene[1])
+    # a batch without the annotation is refused, and the vocabulary is required
+    with pytest.raises(ValueError, match="Batch043.ontology"):
+        model(
+            _with_ids(b, torch.tensor([0, 1, 2]), None),
+            torch.tensor([0]),
+            torch.tensor([2]),
+        )
+    with pytest.raises(ValueError, match="vocabulary"):
+        _model(_config("mse", conditioning="ontology"))

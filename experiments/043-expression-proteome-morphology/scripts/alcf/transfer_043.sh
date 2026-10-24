@@ -25,6 +25,8 @@
 # Store generation: STORE_043_VERSION=v2 reads the _v2 lists (files_train_043_v2.txt, from
 # `STORE_043_VERSION=v2 python transfer_manifest_043.py build`); unset or v1 reads the v1
 # lists. Both generations land side by side under $DEST (their directories differ).
+# PREP_043_VERSION=prep_v4 with `train` also sends that prepared store and verifies its
+# sha256 remotely.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -67,6 +69,17 @@ case "$action" in
       --files-from="$HERE/files_${action}_043${SUF}.txt" \
       --rsync-path="mkdir -p '$DEST' && rsync" \
       "$LOCAL_DATA_ROOT/" "$TC_SSH_HOST:$DEST/"
+    # PREP_043_VERSION=prep_v4 (2026-10-23): also send that prepared store (store.npz,
+    # meta.json and the ontology vocabulary) and check every file's sha256 on the remote
+    # side against the local bytes, hashed now
+    if [ "$action" = train ] && [ -n "${PREP_043_VERSION:-}" ]; then
+      rel="data/torchcell/experiments/043-expression-proteome-morphology/train_043_prep/${PREP_043_VERSION}_routeA"
+      rsync -a --partial --info=progress2 --human-readable --relative \
+        --rsync-path="mkdir -p '$DEST' && rsync" \
+        "$LOCAL_DATA_ROOT/./$rel" "$TC_SSH_HOST:$DEST/"
+      (cd "$LOCAL_DATA_ROOT" && sha256sum "$rel"/*) \
+        | ssh "$TC_SSH_HOST" "cd '$DEST' && sha256sum -c - && echo sha256-ok ${PREP_043_VERSION}"
+    fi
     ;;
   verify-train|verify-prepare)
     tier="${action#verify-}"

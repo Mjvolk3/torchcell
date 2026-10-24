@@ -858,3 +858,119 @@ def test_mark_cap_report_counts_truncation(
     assert logs["setup/records_truncated"] == 0.0 and "cap none" in line
     batch, _ = tr.make_batch(free, np.arange(len(free.rec)).tolist())
     assert int(batch.marks.valid.sum(1).max()) == 3
+
+
+# --------------------------------------------------------------------------- #
+# Ontology conditioning (prep_v4, 2026-10-23)
+# --------------------------------------------------------------------------- #
+def _onto_store(tr: ModuleType, world: dict[str, Any], directory: Path) -> Any:
+    """The synthetic store plus a per-dataset annotation over a tiny vocabulary."""
+    from torchcell.data.experiment_ontology import (
+        ExperimentOntologyVocabulary,
+        OntologyNode,
+    )
+
+    store = world["store"]
+    vocab = ExperimentOntologyVocabulary(
+        nodes=[
+            OntologyNode(name="Experiment", kind="class"),
+            OntologyNode(name="Expr", kind="class", parents=["Experiment"]),
+            OntologyNode(name="Prot", kind="class", parents=["Experiment"]),
+            OntologyNode(name="Temperature.value", kind="numeric", parents=["Expr"]),
+        ]
+    )
+    profiles = np.asarray([[1, 1, 0, 0.3], [1, 0, 1, 0], [1, 1, 0, 0.25]], np.float32)
+    shorts = store.meta.datasets
+    by_short = {"messner": 1, "caudal": 2}
+    rec_onto = np.asarray(
+        [by_short.get(shorts[d], 0) for d in store.rec_dataset], np.int32
+    )
+    vocab.to_json(str(directory / "v.json"))
+    import hashlib
+
+    sha = hashlib.sha256((directory / "v.json").read_bytes()).hexdigest()
+    meta = store.meta.model_copy(
+        update={
+            "prep_version": "prep_v4",
+            "ontology_vocab_sha256": sha,
+            "ontology_n_nodes": len(vocab),
+            "ontology_n_profiles": 3,
+        }
+    )
+    out = tr.PreparedStore043(
+        **{
+            **store.__dict__,
+            "meta": meta,
+            "rec_onto": rec_onto,
+            "onto_profiles": profiles,
+            "ontology_vocabulary": vocab,
+        }
+    )
+    out.save(str(directory / "prep"))
+    return tr.PreparedStore043.load(str(directory / "prep"))
+
+
+def test_ontology_arm_trains_leaves_a_dataset_out_resumes_and_finetunes(
+    tr: ModuleType, world: dict[str, Any], tmp_path: Path
+) -> None:
+    store = _onto_store(tr, world, tmp_path)
+    assert store.ontology_vocabulary is not None and store.rec_onto.size
+    root = world["root"]
+    base = _cfg(tr, root, "hlgauss").model_dump()
+    base["model"]["conditioning"] = {"source": "ontology", "state_dim": 4}
+    base["paths"]["prep_dir"] = str(tmp_path / "prep")
+    base["paths"]["checkpoint_root"] = str(tmp_path / "ckpt")
+    cfg = tr.TrainConfig043.model_validate(base)
+    assert cfg.arm_label == "joint_test_onto_hlgauss_equal"
+    src = tr.h5_vector_source(cfg.paths, tr.store_paths(cfg.data.store_version))
+    res = tr.train(cfg, store, src, tr.MemoryLogger())
+    assert res.steps == 2 and np.isfinite(res.last_metrics["train/loss"])
+    sd = torch.load(Path(res.checkpoint_dir) / "last.pt", weights_only=False)["model"]
+    assert not any(
+        k.startswith(("dataset_token", "env_token", "type_token")) for k in sd
+    )
+    assert "gene_bias" not in sd and "gene_bias_map.weight" in sd
+    # leave-dataset-out: messner never in a training batch, still scored
+    lodo = {**base, "arm": {**base["arm"], "exclude_from_training": ["messner"]}}
+    cfg_l = tr.TrainConfig043.model_validate(lodo)
+    assert cfg_l.arm_label == "joint_test_lodo_messner_onto_hlgauss_equal"
+    view = tr.build_view(store, cfg_l.arm, 2)
+    train_pos = view.positions(tr.ROLE_CODE[tr.Role.TRAIN])
+    kept = train_pos[view.train_mask[train_pos]]
+    assert (view.local_dataset[kept] != view.datasets.index("messner")).all()
+    assert len(kept) < len(train_pos)
+    logger = tr.MemoryLogger()
+    res_l = tr.train(cfg_l, store, src, logger)
+    trained = {k for _, row in logger.rows for k in row if k.startswith("train/")}
+    assert "train/messner/loss" not in trained
+    assert any(
+        k.startswith(("val/messner/", "traineval/messner/")) for k in res_l.last_metrics
+    )
+    # name conditioning cannot leave a dataset out
+    bad = {**lodo, "model": {**base["model"], "conditioning": {"source": "name"}}}
+    with pytest.raises(ValueError, match="ontology"):
+        tr.TrainConfig043.model_validate(bad)
+    # resume: a second run with the same id continues from epoch 1, step 2
+    rid = {**base, "resume_id": "r1"}
+    rid["budget"] = {**base["budget"], "max_epochs": 1}
+    r1 = tr.train(tr.TrainConfig043.model_validate(rid), store, src, tr.MemoryLogger())
+    assert r1.steps == 2 and Path(r1.checkpoint_dir).name == "r1"
+    rid2 = {**rid, "budget": {**rid["budget"], "max_epochs": 2}}
+    with pytest.raises(ValueError, match="another config"):
+        tr.train(tr.TrainConfig043.model_validate(rid2), store, src, tr.MemoryLogger())
+    r1b = tr.train(tr.TrainConfig043.model_validate(rid), store, src, tr.MemoryLogger())
+    assert r1b.steps == 2 and r1b.epoch_seconds == []  # nothing left to run
+    # stage 2 from the ontology checkpoint: no dataset-indexed rows to remap
+    ft = {
+        **base,
+        "init_from": str(Path(res.checkpoint_dir) / "last.pt"),
+        "arm": {"name": "alone_kemmeren", "datasets": ["kemmeren"], "doubles": True},
+    }
+    cfg_ft = tr.TrainConfig043.model_validate(
+        {**ft, "init_from_label": "joint_test_onto_hlgauss_equal"}
+    )
+    view_ft = tr.build_view(store, cfg_ft.arm, 2)
+    model = tr.build_model(
+        cfg_ft, view_ft, [src(e, view_ft.used_ids[e]) for e in range(4)]
+    )
+    tr.init_from_checkpoint(model, cfg_ft, view_ft)

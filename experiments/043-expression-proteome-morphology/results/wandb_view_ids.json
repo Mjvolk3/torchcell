@@ -64,6 +64,11 @@
     "name": "043 Aurora capacity grid 2026-10-24 by arm: total loss only",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=eu90owkk0q5"
   },
+  "aurora_2026_10_24_report": {
+    "id": "VmlldzoxODE3NTk3Mw==",
+    "name": "043 Aurora capacity grid 2026-10-24: loss curves",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/reports/043-Aurora-capacity-grid-2026-10-24:-loss-curves--VmlldzoxODE3NTk3Mw=="
+  },
   "ghyper_sweep_2026_10_24": {
     "id": "sjpdqsr7yjg",
     "name": "043 GilaHyper sweep 2026-10-24 by arm",
@@ -113,6 +118,11 @@
     "id": "i5ll45t6ioi",
     "name": "043 GilaHyper sweep 2026-10-24 by arm: total loss only",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=i5ll45t6ioi"
+  },
+  "ghyper_sweep_2026_10_24_report": {
+    "id": "VmlldzoxODE3NTk3MQ==",
+    "name": "043 GilaHyper sweep 2026-10-24: loss curves",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/reports/043-GilaHyper-sweep-2026-10-24:-loss-curves--VmlldzoxODE3NTk3MQ=="
   },
   "overnight_2026_10_22": {
     "id": "s8fhdl23nl5",

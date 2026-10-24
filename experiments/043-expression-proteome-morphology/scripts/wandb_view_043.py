@@ -442,8 +442,15 @@ def sections() -> list[tuple[str, list[Panel]]]:
 def label_runs(api: wandb.Api, key: str, rnd: Round) -> dict[str, set[str]]:
     """Write ``round`` and ``arm_label``; return the logged keys per arm."""
     keys: dict[str, set[str]] = {}
+    absent = []
     for rid in rnd.run_ids:
-        run = api.run(f"{ENTITY}/{PROJECT}/{rid}")
+        # A round lists its chained stages (fine-tunes) before they exist; an in-flight
+        # round therefore has ids with no run yet. They are reported, not an error.
+        try:
+            run = api.run(f"{ENTITY}/{PROJECT}/{rid}")
+        except wandb.errors.CommError:
+            absent.append(rid)
+            continue
         if not run.group:
             raise ValueError(f"{rid}: no W&B group, cannot name its arm")
         if run.config.get("round") != key or run.config.get("arm_label") != run.group:
@@ -451,6 +458,10 @@ def label_runs(api: wandb.Api, key: str, rnd: Round) -> dict[str, set[str]]:
             run.config["arm_label"] = run.group
             run.update()
         keys.setdefault(run.group, set()).update(run.summary.keys())
+    if absent:
+        print(
+            f"{len(absent)} run ids of round {key} have no run yet: {' '.join(absent)}"
+        )
     return keys
 
 

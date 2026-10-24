@@ -19,6 +19,8 @@
 #   chain   : stage 1 binned_quantile + quantile_normal, then its Kemmeren fine-tune
 #
 #   sbatch --export=ALL,CASES="smmss ssss" experiments/043-expression-proteome-morphology/scripts/gh_train_043_sweep_smoke_cpu.slurm
+# On a GPU after the round (DEVICE=cuda, CHUNK=null: one SDPA call):
+#   sbatch --gres=gpu:1 --mem=48g --cpus-per-task=6 --export=ALL,DEVICE=cuda,CHUNK=null,CASES="..." experiments/043-expression-proteome-morphology/scripts/gh_train_043_sweep_smoke_cpu.slurm
 #SBATCH -p main
 #SBATCH --mem=96g
 #SBATCH -N 1
@@ -40,14 +42,18 @@ CKPT="$DATA_ROOT/experiments/043-expression-proteome-morphology/checkpoints"
 SMOKE_DIR="$DATA_ROOT/experiments/043-expression-proteome-morphology/sweep_smoke/${SLURM_JOB_ID}"
 mkdir -p "$SMOKE_DIR"
 COMMON=(
-  data.store_version=v2 arm=all loss=hlgauss weighting=equal seed=0 device=cpu
+  data.store_version=v2 arm=all loss=hlgauss weighting=equal seed=0 "device=${DEVICE:-cpu}"
   data.batch_size=4 data.num_workers=4 data.sampler=records data.mark_cap=null
   data.val_max_records_per_dataset=8 data.traineval_max_records_per_dataset=4
   budget.max_epochs=1 +budget.max_steps_per_epoch=3 budget.probe_steps=2
-  attention_query_chunk=1024 wandb.mode=offline wandb.label_knobs=true
+  "attention_query_chunk=${CHUNK:-1024}" wandb.mode=offline wandb.label_knobs=true
   "wandb.tags=[smoke,ghyper_sweep_2026_10_24]" wandb.round=ghyper_sweep_smoke_cpu
   "paths.checkpoint_root=$SMOKE_DIR/ckpt"
 )
+# SMOKE_EXTRA: space-separated overrides added to every case (e.g. the waves' conditioning:
+# "data.prep_version=prep_v4 model.conditioning.source=ontology")
+read -ra XC <<< "${SMOKE_EXTRA:-}"
+COMMON+=("${XC[@]}")
 TRAIN=experiments/043-expression-proteome-morphology/scripts/train_043.py
 FT=(arm=alone_kemmeren optim.lr=3e-4 optim.warmup_steps=30)
 run() { echo "===== case $1  $(date)"; shift; python "$TRAIN" "${COMMON[@]}" "$@"; echo "===== ok $(date)"; }

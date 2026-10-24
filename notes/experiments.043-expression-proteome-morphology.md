@@ -1306,3 +1306,28 @@ Gap counts of the 188 newly admitted records: pending the verify job 6191 (`resu
 Split change against v1: pending 6192 (`results/global_split_v2_summary.json`, `against_global_split_v1`).
 
 Linear-evaluation bars v1 against v2: pending 6204 (`results/linear_evals_043_v2.json`).
+
+### Split inheritance, prep_v3 and the trainer default (2026-10-23 evening)
+
+- The first `global_split_v2` (job 6192) was a full redraw under the same seed: the 79 new
+  genes change how much of the one `default_rng(0)` stream the gene deal consumes, so every
+  later draw shifted (4,421 of 4,908 genes, 787 of 979 isolates, 63,992 of 82,467 segregants,
+  58,273 of 71,158 promoter 80-mers changed fold). Kept as `conf/splits/global_split_v2_redraw.json`,
+  not used.
+- Owner, 2026-10-23: a new split version INHERITS its predecessor and draws only new keys; this is
+  the rule for every later version. `make_global_split_043.py --inherit-from global_split_v1`
+  (job 6291) writes `conf/splits/global_split_v2.json` (`mode: inherit`,
+  `inherits_from: global_split_v1`): every v1 gene, isolate, segregant and promoter keeps its fold
+  (`inherited_keys_unchanged` true for all four; `tests/torchcell/trainers/test_043_split_inheritance.py`),
+  and the 79 new genes (the off-index ORFs of the 188 admitted records) are dealt 8 per fold,
+  7 in fold 9. The 83 pinned genes and Jackson's 12 genes are v1 keys, so unchanged; Jackson
+  still has no fold-0 or fold-1 gene. Records train / val / test that differ from v1
+  (`results/global_split_v2_summary.json`): Kemmeren 1,202 / 141 / 141 (v1 140 / 140), Hu
+  225 / 19 / 19 (v1 224), Nadal-Ribelles 4,969 / 611 / 608 (v1 4,913 / 603 / 602), Messner
+  3,772 / 463 / 464 (v1 3,712 / 455 / 457), Ohya probe 4,718 (v1 4,678).
+- `prep_v3_routeA` (job 6304, 1 min 10 s; `meta.json` split `global_split_v2`, commit f65676e6c):
+  the training and validation counts that change from prep_v2 are Kemmeren val 141 (140), Messner
+  3,772 / 463 (3,712 / 455), Hu train 225 (224), Nadal-Ribelles 4,969 / 611 (4,913 / 603).
+- Trainer default flipped to `data.store_version: v2`. Every run before it read the v1 store:
+  the GilaHyper smokes S1-S4 (jobs 6172-6175) and the Polaris and Aurora smokes ran on prep_v2
+  over `raw_043` with `global_split_v1`. The v2 round trains uncapped and without ReZero.

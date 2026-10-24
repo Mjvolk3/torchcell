@@ -60,7 +60,11 @@ case "$action" in
       --exclude 'experiments/*/profiling_results/' --exclude '.env' --exclude '.env.vscode' \
       "$REPO/" "$TC_SSH_HOST:$TC_TREE/" | tail -4
     # the commit the remote tree was synced from (git is excluded from the copy)
-    git -C "$REPO" rev-parse HEAD | ssh "$TC_SSH_HOST" "cat > '$TC_TREE/.synced_commit'"
+    # SYNC_COMMIT: the commit of a clean `git archive` export this script runs from (the
+    # export has no .git; syncing an export keeps another agent's uncommitted edits in the
+    # shared worktree off the remote tree)
+    if [ -n "${SYNC_COMMIT:-}" ]; then echo "$SYNC_COMMIT"; else git -C "$REPO" rev-parse HEAD; fi \
+      | ssh "$TC_SSH_HOST" "cat > '$TC_TREE/.synced_commit'"
     # PBS -o directory of the 043 smoke jobs (job output is excluded from the copy)
     ssh "$TC_SSH_HOST" "mkdir -p '$TC_TREE/experiments/043-expression-proteome-morphology/slurm/output'"
     ;;

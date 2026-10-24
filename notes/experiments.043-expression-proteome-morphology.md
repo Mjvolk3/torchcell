@@ -1428,3 +1428,20 @@ There are 20 cells in `alcf/ontology_grid_043.tsv`, one per A100 on 5 Polaris no
 Every stage carries `resume_id` (`o1023_<cell>`, plus `_ft` for the fine-tune), which is both its W&B run id and its checkpoint directory. Each node job is rerunnable (`-r y`), so a preempted job resumes every stage from its last.pt.
 
 Queue choice: on Polaris, `qstat -Qf` gave preemptable max 10 nodes and 72 h, at most 10 running and 20 queued jobs per project, with 17 running and 124 queued. Capacity allows 4 nodes, 168 h and one running job per project, with 18 running and 26 queued. The measured 438 s per epoch makes a stage 1 about 9.7 h (80 epochs) and the fine-tune well under 1 h, which fits the 72 h preemptable limit with a wide margin. The grid went to preemptable as 5 one-node jobs with 24 h walltime: PBS 7780544 to 7780548 (NODE 0 to 4). They were queued at submission with no start estimate ("Insufficient amount of resource: queue_tags"). No result exists yet.
+
+### Standardization hash, GilaHyper against Polaris (not a gate)
+
+The two smoke runs fitted the standardization over the same sha256-verified prep_v4 training rows. Their `standardization.json` files hash to 6523e7d0... on GilaHyper (job 6326) and 138a3ab2... on Polaris (PBS 7780477). Every dataset's `mu` and `sd` differs only at float64 rounding level:
+
+- The first differing entry, in key order, is `boocock/mu`: -5.04e-18 against -7.75e-18, a mean that is zero by construction (per-gene centering).
+- The largest absolute difference is `jackson/sd`: 2.3980681938646193 against 2.3980681938646202, 9e-16.
+- Every non-zero statistic agrees to about 1e-15 relative.
+
+The hashes differ only because the canonical JSON prints the last digit. Hypothesis (untested): the two numpy builds sum in a different order. The z-scored targets differ at the 1e-15 level, which cannot move any reported metric.
+
+### Queue state, 2026-10-24 04:00 UTC (23:00 CDT)
+
+- preemptable: its default chunk asks for `queue_tags=preemptable`. 56 nodes carry that tag (shared with `demand`), and all 56 were job-exclusive. A NeoUS-BandwidthAI preemptable job runs on the same pool, so the tag is a node pool, not a project ACL. FIFO, with 129 queued, 17 running and 50 held.
+- capacity: open to every project (no ACL), 1 to 4 nodes, at most 1 running and 2 queued jobs per project. GenesisHackathonOct26 already holds both: mwest's 3-node job has run since 00:30 UTC (24 h walltime) and aattia's 1-node job is queued. Our 4-node submission was refused at qsub ("would exceed queue capacity's per-project limit"). `polaris_train_043_ontology_capacity.pbs` is ready (the 16 priority cells under the same run ids, live-run guard in `run_cell_043.sh`).
+- demand: limited to named groups (APS, IRI, OpenCosmo and others; we are in `users` and `GenesisHackathonOct26` only), 1 h maximum. Not a route.
+- prod backlog: small 69 queued, medium 48, large 14, plus 29 in the prod routing queue.

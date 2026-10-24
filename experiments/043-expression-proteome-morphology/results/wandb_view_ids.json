@@ -69,6 +69,11 @@
     "name": "043 overnight 2026-10-23 (store v2) by arm: total loss only",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=qxzmq01felk"
   },
+  "overnight_2026_10_23_report": {
+    "id": "VmlldzoxODE3NTA1MA==",
+    "name": "043 overnight round 2026-10-23: loss curves",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/reports/043-overnight-round-2026-10-23:-loss-curves--VmlldzoxODE3NTA1MA=="
+  },
   "two_stage_2026_10_23": {
     "id": "9kmfp3eqe72",
     "name": "043 two-stage smokes 2026-10-23 by arm",

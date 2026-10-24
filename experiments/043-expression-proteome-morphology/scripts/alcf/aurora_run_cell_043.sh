@@ -26,8 +26,25 @@ common=(data.store_version=v2 data.prep_version=prep_v4 device=xpu data.num_work
   data.sampler=records data.mark_cap=null budget.time_budget_hours=null
   "wandb.tags=[aurora_2026_10_24,aurora]" wandb.round=aurora_2026_10_24)
 
+# A GPU page fault (intel-compute-runtime "Segmentation fault from GPU ... NotPresent")
+# aborts a process at no particular batch: a1024_lodo_zelezniak_onto_hlgauss_equal_s0 died
+# near optimizer step 2,400 of epoch 1 where no micro-batch is heavy (census:
+# aurora_batch_census_043.py). Each stage is therefore retried up to ATTEMPTS times; a retry
+# resumes from the stage's last.pt (the last finished epoch) under the same resume_id, so
+# W&B drops the step rows the retry repeats and keeps everything after them.
+ATTEMPTS=${ATTEMPTS:-5}
+attempt() {
+  local stage=$1 n
+  shift
+  for ((n = 1; n <= ATTEMPTS; n++)); do
+    "$PY" "$TRAIN" "$@" && return 0
+    echo "[cell $cell] $stage attempt $n of $ATTEMPTS failed (exit $?) at $(date)"
+  done
+  return 1
+}
+
 echo "[cell $cell] stage 1 on tile ${ZE_AFFINITY_MASK:-?} at $(date): $*"
-"$PY" "$TRAIN" "${common[@]}" "$@" resume_id="$rid" paths.checkpoint_root="$ROOT/$cell"
+attempt "stage 1" "${common[@]}" "$@" resume_id="$rid" paths.checkpoint_root="$ROOT/$cell"
 
 [ "$finetune" = 1 ] || { echo "[cell $cell] done (no fine-tune) at $(date)"; exit 0; }
 shopt -s nullglob
@@ -42,7 +59,7 @@ for o in "$@"; do
   esac
 done
 echo "[cell $cell] fine-tune from ${ckpts[0]} at $(date): ${keep[*]}"
-"$PY" "$TRAIN" "${common[@]}" "${keep[@]}" arm=alone_kemmeren init_from="${ckpts[0]}" \
+attempt "fine-tune" "${common[@]}" "${keep[@]}" arm=alone_kemmeren init_from="${ckpts[0]}" \
   data.batch_size=$micro ++optim.accumulate_steps=$((8 / micro)) optim.lr=3.0e-4 optim.warmup_steps=30 \
   budget.max_epochs=20 budget.eval_every_epochs=1 resume_id="${rid}_ft" \
   paths.checkpoint_root="$ROOT/${cell}_ft"

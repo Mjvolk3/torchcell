@@ -451,7 +451,8 @@ class DataConfig(BaseModel):
     batch_size: int = Field(default=16, gt=0)
     label_batch_size: bool = Field(
         default=False,
-        description="append _bs<batch_size> to the W&B group (a batch-size axis)",
+        description="append _bs<batch_size x optim.accumulate_steps> (the effective batch) to "
+        "the W&B group (a batch-size axis)",
     )
     num_workers: int = Field(default=4, ge=0)
     mark_cap: int | None = Field(
@@ -778,7 +779,9 @@ class TrainConfig043(BaseModel):
         sampler = "_balanced" if self.data.sampler == "balanced" else ""
         onto = "_onto" if self.model.conditioning.source == "ontology" else ""
         lodo = "".join(f"_lodo_{d}" for d in self.arm.exclude_from_training)
-        bs = f"_bs{self.data.batch_size}" if self.data.label_batch_size else ""
+        # the effective batch: batch_size x optim.accumulate_steps
+        eff = self.data.batch_size * self.optim.accumulate_steps
+        bs = f"_bs{eff}" if self.data.label_batch_size else ""
         return (
             f"{self.arm.name}{lodo}{onto}{sampler}_{self.loss.kind}_"
             f"{self.weighting.kind}{bs}{self.sweep_suffix}"

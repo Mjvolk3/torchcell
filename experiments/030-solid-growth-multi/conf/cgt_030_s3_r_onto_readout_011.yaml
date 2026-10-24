@@ -1,0 +1,31 @@
+# experiments/030-solid-growth-multi/conf/cgt_030_s3_r_onto_readout_011.yaml
+#
+# plan.030-ontology-conditioning.2026.10.22, arm A2 ON THE RANDOM SPLIT: the experiment's
+# ontology annotation (DAG-propagated) as an 8-dim token concatenated into both head
+# inputs, in place of the one-hot dataset name. cgt_030_s3_r_tok_embfit_003 with
+# dataset_token changed and nothing else; the random-split twin of
+# cgt_030_s3_q_onto_readout_008 and the readout sibling of cgt_030_s3_r_onto_affine_010.
+#
+# First run (2026.10.23): NERSC Perlmutter, one node of four A100, batch 256 per card, the
+# s3r pool store on $SCRATCH, seed 0, 200 epochs as a chain of 24 h jobs
+# (perlmutter_chain_030.sh), queued behind the 025 Perlmutter jobs.
+defaults:
+  - cgt_030_s3_r_tok_embfit_003
+  - _self_
+
+wandb:
+  tags: [s3, split_R, graph_reg_kl, fitness_joint, closure_doubles, unpinned_to_train, seq_embedding, full_gene_composite, param_matched, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, per_entry, dataset_token, no_holdout, token_readout, source_ontology, perlmutter]
+
+trainer:
+  max_epochs: 200
+
+model:
+  dataset_token:
+    enabled: true
+    mode: readout
+    source: ontology
+    dim: 8
+    scale: true
+    shift: true
+    ontology:
+      state_dim: 8

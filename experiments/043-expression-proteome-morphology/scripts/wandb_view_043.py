@@ -230,13 +230,23 @@ ROUNDS: dict[str, Round] = {
                 "all_onto_hlgauss_equal_h288_s1",
                 "all_onto_pinball_equal_s0",
                 "all_onto_mse_equal_s0",
+                # grid c (alcf/aurora_grid_043_c.tsv, PBS 8959861)
+                "all_onto_hlgauss_equal_s2",
+                "all_name_hlgauss_equal_s1",
+                "all_name_hlgauss_equal_s2",
+                "all_onto_hlgauss_equal_bs16_s2",
+                "all_onto_hlgauss_equal_bs32_s2",
+                "all_onto_hlgauss_equal_h288_s2",
+                "all_onto_hlgauss_equal_ffn2_s1",
+                "all_name_hlgauss_equal_s3",
             )
             for ft in ("", "_ft")
         ),
         hardware=(
             "Aurora (ALCF), Intel Max 1550, one cell per tile; a1024_: 2 capacity nodes, "
             "PBS 8959387 and 8959388, micro-batch 2 (most faulted in epoch 1, ops/status in "
-            "each run); a1024b_: PBS 8959835, micro-batch 1 (alcf/aurora_train_043_grid.pbs)"
+            "each run); a1024b_: PBS 8959835 and 8959861, micro-batch 1 "
+            "(alcf/aurora_train_043_grid.pbs); alone_kemmeren resumed in 8959861"
         ),
         intro=(
             "prep_v4, store v2, every mark, equal weighting, HL-Gauss unless the group says "

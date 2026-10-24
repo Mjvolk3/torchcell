@@ -638,6 +638,15 @@ class BudgetConfig(BaseModel):
         ),
     )
     probe_steps: int = Field(default=30, gt=0)
+    checkpoint_every_steps: int | None = Field(
+        default=None,
+        gt=0,
+        description="also write last.pt every n optimizer steps inside an epoch (with the "
+        "micro-batches done and the epoch's running sums), so a resume continues "
+        "mid-epoch, skipping the micro-batches already trained (the records sampler's "
+        "order is fixed by seed and epoch); the dropout RNG state is not restored. None "
+        "= at epoch ends only",
+    )
     eval_every_epochs: int = Field(default=1, gt=0)
     registered_window: WindowConfig = Field(default_factory=WindowConfig)
 
@@ -2649,6 +2658,7 @@ SWEEP_DEFAULTS: dict[tuple[str, str], Any] = {
     ("optim", "schedule"): "constant",
     ("optim", "min_lr_frac"): 0.0,
     ("optim", "accumulate_steps"): 1,
+    ("budget", "checkpoint_every_steps"): None,
 }
 
 
@@ -2830,7 +2840,19 @@ def train(
         model.load_state_dict(st["model"], strict=True)
         opt.load_state_dict(st["optimizer"])
         epoch, step = int(st["epoch"]), int(st["step"])
-        print(f"[resume] {resume_path}: epoch {epoch}, step {step}", flush=True)
+        skip_micro = int(st.get("micro_done", 0))
+        partial = st.get("partial")
+        print(
+            f"[resume] {resume_path}: epoch {epoch}, step {step}"
+            + (
+                f", {skip_micro} micro-batches of epoch {epoch + 1} done"
+                if skip_micro
+                else ""
+            ),
+            flush=True,
+        )
+    else:
+        skip_micro, partial = 0, None
     while epoch < n_epochs:
         epoch += 1
         t_epoch = time.time()
@@ -2838,6 +2860,12 @@ def train(
         ds_n: dict[int, int] = defaultdict(int)
         loss_sum = 0.0
         n_steps = 0
+        if partial is not None:
+            # mid-epoch resume: the epoch's running sums as the checkpoint left them
+            loss_sum, n_steps = float(partial["loss_sum"]), int(partial["n_steps"])
+            ds_sum.update({int(k): float(v) for k, v in partial["ds_sum"].items()})
+            ds_n.update({int(k): int(v) for k, v in partial["ds_n"].items()})
+            partial = None
         loader = batch_loader(
             view,
             train_pos,
@@ -2854,6 +2882,8 @@ def train(
             )  # optimizer step within the epoch, micro-batch within it
             if k >= steps_per_epoch or (max_steps is not None and step >= max_steps):
                 break
+            if i < skip_micro:
+                continue
             group = min(acc, micro_per_epoch - k * acc)
             if not epoch_seconds and i == 5:
                 t_probe = time.time()
@@ -2895,6 +2925,26 @@ def train(
                 raise FloatingPointError(f"non-finite gradient norm at step {step}")
             opt.step()
             step += 1
+            every = cfg.budget.checkpoint_every_steps
+            if every is not None and step % every == 0 and k + 1 < steps_per_epoch:
+                torch.save(
+                    {
+                        "model": model.state_dict(),
+                        "optimizer": opt.state_dict(),
+                        "epoch": epoch - 1,  # completed epochs
+                        "step": step,
+                        "micro_done": i + 1,
+                        "partial": {
+                            "loss_sum": loss_sum,
+                            "n_steps": n_steps,
+                            "ds_sum": dict(ds_sum),
+                            "ds_n": dict(ds_n),
+                        },
+                        "config": cfg.model_dump(mode="json"),
+                        "standardization_sha256": stats_sha,
+                    },
+                    osp.join(ckpt_dir, "last.pt"),
+                )
             if step % 50 == 0:
                 logger.log(
                     {
@@ -2931,6 +2981,7 @@ def train(
                     },
                     step=step,
                 )
+        skip_micro = 0  # only the resumed epoch skips
         logs: dict[str, float] = {
             "epoch": float(epoch),
             "train/loss": loss_sum / max(n_steps, 1),

@@ -1230,3 +1230,65 @@ def test_accumulate_steps_matches_one_batch_on_one_dataset(
     # the check discriminates: batch 1 without accumulation (two single-record steps)
     # lands elsewhere
     assert max(float((one[k] - unaccumulated[k]).abs().max()) for k in compared) > 5e-4
+
+
+def test_mid_epoch_checkpoint_resumes_where_the_crash_left_off(
+    tr: ModuleType,
+    world: dict[str, Any],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """budget.checkpoint_every_steps=1: a run killed at its third optimizer step resumes
+    after the two micro-batches already trained and ends where an uninterrupted run ends.
+
+    mse, dropout 0, records sampler (one fixed order per seed and epoch): the resumed run
+    redoes no micro-batch, so its weights equal the uninterrupted run's.
+    """
+    base = _cfg(tr, world["root"], "mse")
+
+    def cfg_for(name: str) -> Any:
+        return base.model_copy(
+            update={
+                "resume_id": name,
+                "budget": base.budget.model_copy(
+                    update={"max_steps_per_epoch": 4, "checkpoint_every_steps": 1}
+                ),
+                "paths": base.paths.model_copy(
+                    update={"checkpoint_root": str(tmp_path / name)}
+                ),
+            }
+        )
+
+    src = tr.h5_vector_source(base.paths, tr.store_paths(base.data.store_version))
+    full = tr.train(cfg_for("full"), world["store"], src, tr.MemoryLogger())
+    assert full.steps == 4
+
+    calls = {"n": 0}
+    step = torch.optim.AdamW.step
+
+    def crash_on_third(self: torch.optim.AdamW, *a: Any, **k: Any) -> Any:
+        calls["n"] += 1
+        if calls["n"] == 3:
+            raise RuntimeError("simulated device fault")
+        return step(self, *a, **k)
+
+    monkeypatch.setattr(torch.optim.AdamW, "step", crash_on_third)
+    with pytest.raises(RuntimeError, match="simulated device fault"):
+        tr.train(cfg_for("cut"), world["store"], src, tr.MemoryLogger())
+    monkeypatch.setattr(torch.optim.AdamW, "step", step)
+    cut_ckpt = Path(tmp_path / "cut").glob("*/cut/last.pt")
+    saved = torch.load(next(cut_ckpt), weights_only=False)
+    assert (saved["epoch"], saved["step"], saved["micro_done"]) == (0, 2, 2)
+
+    resumed = tr.train(cfg_for("cut"), world["store"], src, tr.MemoryLogger())
+    assert resumed.steps == 4
+    a = torch.load(Path(full.checkpoint_dir) / "last.pt", weights_only=False)["model"]
+    b = torch.load(Path(resumed.checkpoint_dir) / "last.pt", weights_only=False)[
+        "model"
+    ]
+    worst = max(
+        float((a[k].double() - b[k].double()).abs().max())
+        for k in a
+        if a[k].is_floating_point()
+    )
+    assert worst < 1e-6

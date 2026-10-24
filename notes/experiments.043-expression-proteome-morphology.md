@@ -1677,3 +1677,19 @@ Kept for an ALCF ticket: `/flare/GenesisHackathonOct26/mjvolk3/torchcell/core.x4
 Runner changes: `budget.checkpoint_every_steps` (9be61c73b; a mid-epoch `last.pt`, and the resume skips micro-batches already trained; tested against an uninterrupted run), `last.pt` every 1,000 optimizer steps, a failed attempt marks its tile bad and retries on a free healthy tile (3f9893e5e), and fresh run ids `a1024b_<cell>`. Grid b (`aurora_grid_043_b.tsv`, PBS 8959835, queued 08:2x UTC): all_onto s0/s1, all_name s0, bs16 s0/s1, bs32 s0/s1, h288 s0/s1, ffn2 s0, pinball s0, mse s0. Grid c (`aurora_grid_043_c.tsv`) is to replace PBS 8959388 once grid b runs. It holds the 7 remaining faulted cells, all_name s3 at micro 1 (its micro-2 run marked superseded), and alone_kemmeren resumed under its own id.
 
 Cost (measured 0.204 s per micro-step at micro 1, PBS 8959729): about 3.3 h per epoch, about 260 h for 80 epochs, past the 168 h walltime, so every cell needs one continuation job. This is roughly 25x slower per record than Polaris on this model, because masked attention has no fused XPU kernel.
+
+## 2026.10.24 - Loss-curve report for the overnight round
+
+The saved view "total loss only" for `overnight_2026_10_23` was hard to read: one panel carried all 10 runs (20 lines), HL-Gauss (about 2 to 3) and pinball (about 0.2) shared a y axis, and alone_kemmeren (3,783 epochs) squashed the 80-epoch and 20-epoch runs into the left edge. A saved view has one runset, so the fix is a W&B Report with one runset per panel grid, filtered by run id. Five grids, 16 panels, no smoothing, every panel 12 x 8:
+
+1. Stage 1 HL-Gauss (gdqlsjpb, oc881bqm): train/loss and val/loss by epoch and by optimizer step.
+2. Stage 1 pinball (05d5anh5): the same two panels, on its own y axis.
+3. Alone Kemmeren (18s6j2p2, bc1awz4y) against stage 1 HL-Gauss at matched optimizer steps: loss, `val/kemmeren/pearson_per_gene_median`, `val/doubles/pearson_per_strain_centered_median`.
+4. Kemmeren fine-tunes (jxlvzmmb, zbsnrjqn, fth871fz): loss, Kemmeren median and doubles median by epoch.
+5. Stage 1 validation by epoch (gdqlsjpb, oc881bqm, 05d5anh5, 86cc6tgp; joint_9 is partial at 15 epochs): Kemmeren, doubles, Muenzner, Caudal, Messner per-gene medians and Vaishnav Pearson.
+
+The script verifies after saving that every plotted key is logged by every run of its grid (all 25 grid-key pairs held), and a second run updated the same report (URL unchanged). The report id is recorded in `results/wandb_view_ids.json` under `overnight_2026_10_23_report`.
+
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/reports/043-overnight-round-2026-10-23:-loss-curves--VmlldzoxODE3NTA1MA==
+
+Script: `experiments/043-expression-proteome-morphology/scripts/wandb_report_043.py`

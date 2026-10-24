@@ -710,7 +710,7 @@ def window_means(api: wandb.Api, key: str, rnd: Round) -> dict[str, object]:
         "generated_by": "experiments/043-expression-proteome-morphology/scripts/wandb_view_043.py",
         "round": key,
         "statistic": "mean over the evaluated epochs of each run's registered window "
-        f"(0.8 to 1.0 of its epochs), validation fold, {seed_text}, unsampled W&B history",
+        f"(setup/window_first_epoch to setup/window_last_epoch, listed per run as window), validation fold, {seed_text}, unsampled W&B history",
         "transfer_definition": "joint minus alone_kemmeren at matched optimizer steps, "
         f"on {TRANSFER_KEY}"
         + ("" if len(alone) <= 1 else "; paired by seed (same-seed alone run)"),

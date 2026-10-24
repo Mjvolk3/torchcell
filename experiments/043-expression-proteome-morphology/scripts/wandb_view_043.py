@@ -212,10 +212,31 @@ ROUNDS: dict[str, Round] = {
             )
             for ft in ("", "_ft")
         )
-        + ("a1024_alone_kemmeren_onto_hlgauss_equal_s0",),
+        + ("a1024_alone_kemmeren_onto_hlgauss_equal_s0",)
+        # second submission (alcf/aurora_grid_043_b.tsv, micro-batch 1, PBS 8959835):
+        # fresh ids for 12 of the cells that faulted in PBS 8959387/8959388
+        + tuple(
+            f"a1024b_{c}{ft}"
+            for c in (
+                "all_onto_hlgauss_equal_s0",
+                "all_name_hlgauss_equal_s0",
+                "all_onto_hlgauss_equal_bs16_s0",
+                "all_onto_hlgauss_equal_bs32_s0",
+                "all_onto_hlgauss_equal_h288_s0",
+                "all_onto_hlgauss_equal_ffn2_s0",
+                "all_onto_hlgauss_equal_s1",
+                "all_onto_hlgauss_equal_bs16_s1",
+                "all_onto_hlgauss_equal_bs32_s1",
+                "all_onto_hlgauss_equal_h288_s1",
+                "all_onto_pinball_equal_s0",
+                "all_onto_mse_equal_s0",
+            )
+            for ft in ("", "_ft")
+        ),
         hardware=(
-            "Aurora (ALCF), Intel Max 1550, one cell per tile on all 12 tiles of 2 "
-            "capacity nodes, PBS 8959387 and 8959388 (alcf/aurora_train_043_grid.pbs)"
+            "Aurora (ALCF), Intel Max 1550, one cell per tile; a1024_: 2 capacity nodes, "
+            "PBS 8959387 and 8959388, micro-batch 2 (most faulted in epoch 1, ops/status in "
+            "each run); a1024b_: PBS 8959835, micro-batch 1 (alcf/aurora_train_043_grid.pbs)"
         ),
         intro=(
             "prep_v4, store v2, every mark, equal weighting, HL-Gauss unless the group says "

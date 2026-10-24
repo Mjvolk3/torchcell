@@ -19,14 +19,28 @@
 # requires an equal model section) and sets its own arm, batch, lr, warmup and epochs.
 set -euo pipefail
 cell=$1 finetune=$2; shift 2
-rid="${RID_PREFIX:-a1024}_${cell}"
+# row-level options ahead of the hydra overrides: rid_prefix=<p> (a resumed run keeps its
+# old id) and ckpt_every=none (a run whose last.pt predates budget.checkpoint_every_steps;
+# the key would make config_matches refuse it)
+prefix=${RID_PREFIX:-a1024}
+ckpt="++budget.checkpoint_every_steps=${CKPT_EVERY:-1000}"
+args=()
+for o in "$@"; do
+  case "$o" in
+    rid_prefix=*) prefix=${o#rid_prefix=} ;;
+    ckpt_every=none) ckpt="" ;;
+    *) args+=("$o") ;;
+  esac
+done
+set -- "${args[@]}"
+rid="${prefix}_${cell}"
 : "${PY:?}" "${DATA_ROOT:?}" "${TRAIN:?}" "${TILES_DIR:?node-local tile claims, set by the grid job}"
 ulimit -c 0  # a fault's core file is 10-12 GB; two are kept from PBS 8959387 for ALCF
 ROOT=$DATA_ROOT/experiments/043-expression-proteome-morphology/checkpoints_aurora_2026_10_24
 common=(data.store_version=v2 data.prep_version=prep_v4 device=xpu data.num_workers=4
   data.sampler=records data.mark_cap=null budget.time_budget_hours=null
-  "wandb.tags=[aurora_2026_10_24,aurora]" wandb.round=aurora_2026_10_24
-  "++budget.checkpoint_every_steps=${CKPT_EVERY:-1000}")
+  "wandb.tags=[aurora_2026_10_24,aurora]" wandb.round=aurora_2026_10_24)
+[ -n "$ckpt" ] && common+=("$ckpt")
 
 # A GPU page fault (intel-compute-runtime "Segmentation fault from GPU ... NotPresent")
 # aborts a process at no particular batch (PBS 8959387/8959388: 7 of 24 cells within 85

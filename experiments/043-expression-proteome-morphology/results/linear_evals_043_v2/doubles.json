@@ -1,0 +1,459 @@
+{
+ "n_doubles": 72,
+ "n_genes": 6127,
+ "n_kemmeren_train_genes_for_mean": 1202,
+ "kemmeren_genes_outside_index": [
+  "YLL016W",
+  "YNCB0010W"
+ ],
+ "ridge_log10_lambda_rel": {
+  "composite": 1.0,
+  "fudt_up": 2.0,
+  "fudt_down": 3.0,
+  "prott5": 1.0,
+  "calm": 1.5
+ },
+ "fitted_coef_mean": [
+  0.6379860331273478,
+  0.31221457157249116,
+  0.005042347846720582
+ ],
+ "fitted_coef_sd": [
+  0.004462758516062307,
+  0.004527873505377452,
+  0.00026240025889788033
+ ],
+ "restricted_genes_per_double_median": 100.0,
+ "rungs": {
+  "per_gene_mean": {
+   "all_median_unit_centered_pearson": 0.0,
+   "all_mean_unit_centered_pearson": 0.0,
+   "all_n_unit_centered_pearson": 72,
+   "all_median_unit_centered_spearman": 0.0,
+   "all_mean_unit_centered_spearman": 0.0,
+   "all_n_unit_centered_spearman": 72,
+   "all_median_unit_raw_pearson": 0.44496901903559494,
+   "all_mean_unit_raw_pearson": 0.4632363862487672,
+   "all_n_unit_raw_pearson": 72,
+   "restricted_median_unit_centered_pearson": 0.0,
+   "restricted_mean_unit_centered_pearson": 0.0,
+   "restricted_n_unit_centered_pearson": 72,
+   "restricted_median_unit_centered_spearman": 0.0,
+   "restricted_mean_unit_centered_spearman": 0.0,
+   "restricted_n_unit_centered_spearman": 72,
+   "calibration_slope_all_entries": NaN,
+   "calibration_slope_predicted_top_decile": NaN
+  },
+  "stronger_single": {
+   "all_median_unit_centered_pearson": 0.4843261764981941,
+   "all_mean_unit_centered_pearson": 0.44159664319414343,
+   "all_n_unit_centered_pearson": 72,
+   "all_median_unit_centered_spearman": 0.3781437377346643,
+   "all_mean_unit_centered_spearman": 0.359809602849437,
+   "all_n_unit_centered_spearman": 72,
+   "all_median_unit_raw_pearson": 0.6363522919298463,
+   "all_mean_unit_raw_pearson": 0.5944593420068222,
+   "all_n_unit_raw_pearson": 72,
+   "restricted_median_unit_centered_pearson": 0.2920994496440394,
+   "restricted_mean_unit_centered_pearson": 0.28841373992025077,
+   "restricted_n_unit_centered_pearson": 72,
+   "restricted_median_unit_centered_spearman": 0.18657132874598448,
+   "restricted_mean_unit_centered_spearman": 0.2214116777393971,
+   "restricted_n_unit_centered_spearman": 72,
+   "calibration_slope_all_entries": 0.6278324645864262,
+   "calibration_slope_predicted_top_decile": 0.6883760958279641
+  },
+  "additive_Mx_plus_My": {
+   "all_median_unit_centered_pearson": 0.43966754409706726,
+   "all_mean_unit_centered_pearson": 0.4358289995387799,
+   "all_n_unit_centered_pearson": 72,
+   "all_median_unit_centered_spearman": 0.3234061006199237,
+   "all_mean_unit_centered_spearman": 0.3372918248188283,
+   "all_n_unit_centered_spearman": 72,
+   "all_median_unit_raw_pearson": 0.6436630892880599,
+   "all_mean_unit_raw_pearson": 0.6294877401304437,
+   "all_n_unit_raw_pearson": 72,
+   "restricted_median_unit_centered_pearson": 0.2386846824272932,
+   "restricted_mean_unit_centered_pearson": 0.26048464348106687,
+   "restricted_n_unit_centered_pearson": 72,
+   "restricted_median_unit_centered_spearman": 0.20881114704026732,
+   "restricted_mean_unit_centered_spearman": 0.22100874218801062,
+   "restricted_n_unit_centered_spearman": 72,
+   "calibration_slope_all_entries": 0.4441154640187372,
+   "calibration_slope_predicted_top_decile": 0.5026487623853516
+  },
+  "inductive_additive_ridge_composite": {
+   "all_median_unit_centered_pearson": 0.13609083847235898,
+   "all_mean_unit_centered_pearson": 0.14845809433411816,
+   "all_n_unit_centered_pearson": 72,
+   "all_median_unit_centered_spearman": 0.07030015037193674,
+   "all_mean_unit_centered_spearman": 0.09876303133357649,
+   "all_n_unit_centered_spearman": 72,
+   "all_median_unit_raw_pearson": 0.4796313830954571,
+   "all_mean_unit_raw_pearson": 0.49030588693959765,
+   "all_n_unit_raw_pearson": 72,
+   "restricted_median_unit_centered_pearson": 0.14036225763058083,
+   "restricted_mean_unit_centered_pearson": 0.1273458542488243,
+   "restricted_n_unit_centered_pearson": 72,
+   "restricted_median_unit_centered_spearman": 0.07869535354584403,
+   "restricted_mean_unit_centered_spearman": 0.08208080209495082,
+   "restricted_n_unit_centered_spearman": 72,
+   "calibration_slope_all_entries": 0.29747907126840445,
+   "calibration_slope_predicted_top_decile": 0.32793676143921846
+  },
+  "inductive_additive_ridge_fudt_up": {
+   "all_median_unit_centered_pearson": 0.08853247726679916,
+   "all_mean_unit_centered_pearson": 0.08127103699326975,
+   "all_n_unit_centered_pearson": 72,
+   "all_median_unit_centered_spearman": 0.03196148599108274,
+   "all_mean_unit_centered_spearman": 0.03560510320131269,
+   "all_n_unit_centered_spearman": 72,
+   "all_median_unit_raw_pearson": 0.4426490163792636,
+   "all_mean_unit_raw_pearson": 0.46722440408352967,
+   "all_n_unit_raw_pearson": 72,
+   "restricted_median_unit_centered_pearson": 0.08609481651404724,
+   "restricted_mean_unit_centered_pearson": 0.09782720253866348,
+   "restricted_n_unit_centered_pearson": 72,
+   "restricted_median_unit_centered_spearman": 0.049036818634708934,
+   "restricted_mean_unit_centered_spearman": 0.04823069307791558,
+   "restricted_n_unit_centered_spearman": 72,
+   "calibration_slope_all_entries": 0.22510907166083666,
+   "calibration_slope_predicted_top_decile": 0.2593180790370184
+  },
+  "inductive_additive_ridge_fudt_down": {
+   "all_median_unit_centered_pearson": 0.08947170680537378,
+   "all_mean_unit_centered_pearson": 0.06564441411402352,
+   "all_n_unit_centered_pearson": 72,
+   "all_median_unit_centered_spearman": 0.03327568385939837,
+   "all_mean_unit_centered_spearman": 0.021212043622624015,
+   "all_n_unit_centered_spearman": 72,
+   "all_median_unit_raw_pearson": 0.44179423819903674,
+   "all_mean_unit_raw_pearson": 0.4629893149082439,
+   "all_n_unit_raw_pearson": 72,
+   "restricted_median_unit_centered_pearson": 0.09416666462913086,
+   "restricted_mean_unit_centered_pearson": 0.09851617921175117,
+   "restricted_n_unit_centered_pearson": 72,
+   "restricted_median_unit_centered_spearman": 0.051283755692498344,
+   "restricted_mean_unit_centered_spearman": 0.04626002979333001,
+   "restricted_n_unit_centered_spearman": 72,
+   "calibration_slope_all_entries": 0.2301534320692602,
+   "calibration_slope_predicted_top_decile": 0.2607287338726531
+  },
+  "inductive_additive_ridge_prott5": {
+   "all_median_unit_centered_pearson": 0.13497887085800786,
+   "all_mean_unit_centered_pearson": 0.13527775909311957,
+   "all_n_unit_centered_pearson": 72,
+   "all_median_unit_centered_spearman": 0.08708586100680243,
+   "all_mean_unit_centered_spearman": 0.0874997433249865,
+   "all_n_unit_centered_spearman": 72,
+   "all_median_unit_raw_pearson": 0.4823357661341786,
+   "all_mean_unit_raw_pearson": 0.4833093475572416,
+   "all_n_unit_raw_pearson": 72,
+   "restricted_median_unit_centered_pearson": 0.09508528984407817,
+   "restricted_mean_unit_centered_pearson": 0.11772446159936045,
+   "restricted_n_unit_centered_pearson": 72,
+   "restricted_median_unit_centered_spearman": 0.07089518854224736,
+   "restricted_mean_unit_centered_spearman": 0.06404498503548708,
+   "restricted_n_unit_centered_spearman": 72,
+   "calibration_slope_all_entries": 0.2543930099102317,
+   "calibration_slope_predicted_top_decile": 0.28490443439099633
+  },
+  "inductive_additive_ridge_calm": {
+   "all_median_unit_centered_pearson": 0.11471511157121367,
+   "all_mean_unit_centered_pearson": 0.10886563318447429,
+   "all_n_unit_centered_pearson": 72,
+   "all_median_unit_centered_spearman": 0.06377399424341741,
+   "all_mean_unit_centered_spearman": 0.06531195224613719,
+   "all_n_unit_centered_spearman": 72,
+   "all_median_unit_raw_pearson": 0.46620235797211457,
+   "all_mean_unit_raw_pearson": 0.4774915912628174,
+   "all_n_unit_raw_pearson": 72,
+   "restricted_median_unit_centered_pearson": 0.09232277785349019,
+   "restricted_mean_unit_centered_pearson": 0.1095836125801124,
+   "restricted_n_unit_centered_pearson": 72,
+   "restricted_median_unit_centered_spearman": 0.0432552177370476,
+   "restricted_mean_unit_centered_spearman": 0.05885823770280147,
+   "restricted_n_unit_centered_spearman": 72,
+   "calibration_slope_all_entries": 0.26700482577457724,
+   "calibration_slope_predicted_top_decile": 0.3010445552968803
+  },
+  "fitted_a_Mx_b_My_c_loo": {
+   "all_median_unit_centered_pearson": 0.4943928614397024,
+   "all_mean_unit_centered_pearson": 0.4740606897414454,
+   "all_n_unit_centered_pearson": 72,
+   "all_median_unit_centered_spearman": 0.3865390570450995,
+   "all_mean_unit_centered_spearman": 0.3840551256671485,
+   "all_n_unit_centered_spearman": 72,
+   "all_median_unit_raw_pearson": 0.6527754024207528,
+   "all_mean_unit_raw_pearson": 0.6320914591462612,
+   "all_n_unit_raw_pearson": 72,
+   "restricted_median_unit_centered_pearson": 0.3003557702580216,
+   "restricted_mean_unit_centered_pearson": 0.29347159561607095,
+   "restricted_n_unit_centered_pearson": 72,
+   "restricted_median_unit_centered_spearman": 0.15180373096139907,
+   "restricted_mean_unit_centered_spearman": 0.22155354944673775,
+   "restricted_n_unit_centered_spearman": 72,
+   "calibration_slope_all_entries": 0.9714993337139465,
+   "calibration_slope_predicted_top_decile": 1.08268157403332
+  }
+ },
+ "bootstrap": {
+  "per_gene_mean_vs_fitted_a_Mx_b_My_c_loo|centered_pearson_all_genes": {
+   "diff_of_medians": -0.4943928614397024,
+   "ci95": [
+    -0.5596025744268954,
+    -0.3986591391281781
+   ],
+   "n_doubles_up": 4
+  },
+  "per_gene_mean_vs_fitted_a_Mx_b_My_c_loo|centered_pearson_restricted_genes": {
+   "diff_of_medians": -0.3003557702580216,
+   "ci95": [
+    -0.4103418864756359,
+    -0.13933051845995004
+   ],
+   "n_doubles_up": 15
+  },
+  "stronger_single_vs_fitted_a_Mx_b_My_c_loo|centered_pearson_all_genes": {
+   "diff_of_medians": -0.010066684941508308,
+   "ci95": [
+    -0.049768077394647274,
+    0.03323016841338405
+   ],
+   "n_doubles_up": 28
+  },
+  "stronger_single_vs_fitted_a_Mx_b_My_c_loo|centered_pearson_restricted_genes": {
+   "diff_of_medians": -0.008256320613982238,
+   "ci95": [
+    -0.09601466784403463,
+    0.08430006443792856
+   ],
+   "n_doubles_up": 36
+  },
+  "additive_Mx_plus_My_vs_fitted_a_Mx_b_My_c_loo|centered_pearson_all_genes": {
+   "diff_of_medians": -0.05472531734263514,
+   "ci95": [
+    -0.1008943505067176,
+    -0.00358794488477781
+   ],
+   "n_doubles_up": 18
+  },
+  "additive_Mx_plus_My_vs_fitted_a_Mx_b_My_c_loo|centered_pearson_restricted_genes": {
+   "diff_of_medians": -0.061671087830728416,
+   "ci95": [
+    -0.10977377532967171,
+    0.0661972128984284
+   ],
+   "n_doubles_up": 27
+  },
+  "inductive_additive_ridge_composite_vs_fitted_a_Mx_b_My_c_loo|centered_pearson_all_genes": {
+   "diff_of_medians": -0.3583020229673434,
+   "ci95": [
+    -0.4177399457451364,
+    -0.2581794402065263
+   ],
+   "n_doubles_up": 9
+  },
+  "inductive_additive_ridge_composite_vs_fitted_a_Mx_b_My_c_loo|centered_pearson_restricted_genes": {
+   "diff_of_medians": -0.1599935126274408,
+   "ci95": [
+    -0.27289080943940386,
+    -0.011786748411586619
+   ],
+   "n_doubles_up": 22
+  },
+  "inductive_additive_ridge_fudt_up_vs_fitted_a_Mx_b_My_c_loo|centered_pearson_all_genes": {
+   "diff_of_medians": -0.40586038417290327,
+   "ci95": [
+    -0.46288288785368764,
+    -0.30755682342468044
+   ],
+   "n_doubles_up": 7
+  },
+  "inductive_additive_ridge_fudt_up_vs_fitted_a_Mx_b_My_c_loo|centered_pearson_restricted_genes": {
+   "diff_of_medians": -0.21426095374397439,
+   "ci95": [
+    -0.31832105803701355,
+    -0.056240861827578606
+   ],
+   "n_doubles_up": 22
+  },
+  "inductive_additive_ridge_fudt_down_vs_fitted_a_Mx_b_My_c_loo|centered_pearson_all_genes": {
+   "diff_of_medians": -0.40492115463432865,
+   "ci95": [
+    -0.46839451890301886,
+    -0.3126415141427126
+   ],
+   "n_doubles_up": 5
+  },
+  "inductive_additive_ridge_fudt_down_vs_fitted_a_Mx_b_My_c_loo|centered_pearson_restricted_genes": {
+   "diff_of_medians": -0.20618910562889076,
+   "ci95": [
+    -0.30818046406536226,
+    -0.04813333713838187
+   ],
+   "n_doubles_up": 21
+  },
+  "inductive_additive_ridge_prott5_vs_fitted_a_Mx_b_My_c_loo|centered_pearson_all_genes": {
+   "diff_of_medians": -0.35941399058169454,
+   "ci95": [
+    -0.420516652390713,
+    -0.26218015617507984
+   ],
+   "n_doubles_up": 8
+  },
+  "inductive_additive_ridge_prott5_vs_fitted_a_Mx_b_My_c_loo|centered_pearson_restricted_genes": {
+   "diff_of_medians": -0.20527048041394347,
+   "ci95": [
+    -0.30543902829341946,
+    -0.039326540511420455
+   ],
+   "n_doubles_up": 21
+  },
+  "inductive_additive_ridge_calm_vs_fitted_a_Mx_b_My_c_loo|centered_pearson_all_genes": {
+   "diff_of_medians": -0.37967774986848873,
+   "ci95": [
+    -0.44679024858610894,
+    -0.2874138334931237
+   ],
+   "n_doubles_up": 9
+  },
+  "inductive_additive_ridge_calm_vs_fitted_a_Mx_b_My_c_loo|centered_pearson_restricted_genes": {
+   "diff_of_medians": -0.20803299240453144,
+   "ci95": [
+    -0.3016849354254101,
+    -0.03357708856991906
+   ],
+   "n_doubles_up": 22
+  },
+  "per_gene_mean_vs_additive_Mx_plus_My|centered_pearson_all_genes": {
+   "diff_of_medians": -0.43966754409706726,
+   "ci95": [
+    -0.4841847501622981,
+    -0.35726317027009624
+   ],
+   "n_doubles_up": 4
+  },
+  "per_gene_mean_vs_additive_Mx_plus_My|centered_pearson_restricted_genes": {
+   "diff_of_medians": -0.2386846824272932,
+   "ci95": [
+    -0.36995270452130197,
+    -0.15743758324184742
+   ],
+   "n_doubles_up": 16
+  },
+  "stronger_single_vs_additive_Mx_plus_My|centered_pearson_all_genes": {
+   "diff_of_medians": 0.04465863240112683,
+   "ci95": [
+    -0.013699701143558477,
+    0.11103783916420674
+   ],
+   "n_doubles_up": 41
+  },
+  "stronger_single_vs_additive_Mx_plus_My|centered_pearson_restricted_genes": {
+   "diff_of_medians": 0.05341476721674618,
+   "ci95": [
+    -0.07858303808961721,
+    0.12007388813235499
+   ],
+   "n_doubles_up": 43
+  },
+  "inductive_additive_ridge_composite_vs_additive_Mx_plus_My|centered_pearson_all_genes": {
+   "diff_of_medians": -0.3035767056247083,
+   "ci95": [
+    -0.3481058094611693,
+    -0.22294692643517847
+   ],
+   "n_doubles_up": 8
+  },
+  "inductive_additive_ridge_composite_vs_additive_Mx_plus_My|centered_pearson_restricted_genes": {
+   "diff_of_medians": -0.09832242479671238,
+   "ci95": [
+    -0.20681713975972554,
+    -0.046899264967366856
+   ],
+   "n_doubles_up": 24
+  },
+  "inductive_additive_ridge_fudt_up_vs_additive_Mx_plus_My|centered_pearson_all_genes": {
+   "diff_of_medians": -0.35113506683026807,
+   "ci95": [
+    -0.3948091851361097,
+    -0.27129758051235736
+   ],
+   "n_doubles_up": 6
+  },
+  "inductive_additive_ridge_fudt_up_vs_additive_Mx_plus_My|centered_pearson_restricted_genes": {
+   "diff_of_medians": -0.15258986591324597,
+   "ci95": [
+    -0.25634127993365863,
+    -0.0869663570460399
+   ],
+   "n_doubles_up": 21
+  },
+  "inductive_additive_ridge_fudt_down_vs_additive_Mx_plus_My|centered_pearson_all_genes": {
+   "diff_of_medians": -0.35019583729169346,
+   "ci95": [
+    -0.4035781433844274,
+    -0.2729290389681737
+   ],
+   "n_doubles_up": 4
+  },
+  "inductive_additive_ridge_fudt_down_vs_additive_Mx_plus_My|centered_pearson_restricted_genes": {
+   "diff_of_medians": -0.14451801779816237,
+   "ci95": [
+    -0.25085257088667284,
+    -0.07938173162235906
+   ],
+   "n_doubles_up": 20
+  },
+  "inductive_additive_ridge_prott5_vs_additive_Mx_plus_My|centered_pearson_all_genes": {
+   "diff_of_medians": -0.3046886732390594,
+   "ci95": [
+    -0.35190848993730117,
+    -0.2239871501214441
+   ],
+   "n_doubles_up": 7
+  },
+  "inductive_additive_ridge_prott5_vs_additive_Mx_plus_My|centered_pearson_restricted_genes": {
+   "diff_of_medians": -0.14359939258321502,
+   "ci95": [
+    -0.23690721854589283,
+    -0.06757505170608143
+   ],
+   "n_doubles_up": 25
+  },
+  "inductive_additive_ridge_calm_vs_additive_Mx_plus_My|centered_pearson_all_genes": {
+   "diff_of_medians": -0.3249524325258536,
+   "ci95": [
+    -0.3800389693909948,
+    -0.24608277097828973
+   ],
+   "n_doubles_up": 7
+  },
+  "inductive_additive_ridge_calm_vs_additive_Mx_plus_My|centered_pearson_restricted_genes": {
+   "diff_of_medians": -0.14636190457380302,
+   "ci95": [
+    -0.23235898430267593,
+    -0.0769352786602744
+   ],
+   "n_doubles_up": 25
+  },
+  "fitted_a_Mx_b_My_c_loo_vs_additive_Mx_plus_My|centered_pearson_all_genes": {
+   "diff_of_medians": 0.05472531734263514,
+   "ci95": [
+    0.003587944884777809,
+    0.10089435050671759
+   ],
+   "n_doubles_up": 54
+  },
+  "fitted_a_Mx_b_My_c_loo_vs_additive_Mx_plus_My|centered_pearson_restricted_genes": {
+   "diff_of_medians": 0.061671087830728416,
+   "ci95": [
+    -0.0661972128984284,
+    0.10977377532967171
+   ],
+   "n_doubles_up": 45
+  }
+ },
+ "slurm_job_id": "6319"
+}

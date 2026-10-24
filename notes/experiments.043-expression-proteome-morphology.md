@@ -1331,3 +1331,33 @@ Linear-evaluation bars v1 against v2: pending 6204 (`results/linear_evals_043_v2
 - Trainer default flipped to `data.store_version: v2`. Every run before it read the v1 store:
   the GilaHyper smokes S1-S4 (jobs 6172-6175) and the Polaris and Aurora smokes ran on prep_v2
   over `raw_043` with `global_split_v1`. The v2 round trains uncapped and without ReZero.
+
+### Linear evaluations on store v2 (report job 6320)
+
+`results/linear_evals_043_v2.json` (extract 6292, parts 6293-6302 and doubles rerun 6319, report
+6320; the first doubles run 6298 stopped with `KeyError: 'YLL016W'`, a Kemmeren gene with no
+index position entering the token ridge; `run_doubles` now leaves such genes out of the fit and
+lists them as `kemmeren_genes_outside_index`, the two of store v2). Under the inheriting split
+every bar that reads frozen tokens is UNCHANGED from v1 to the last digit, because the newly
+admitted units have no token (they are counted as `n_units_outside_index`: Messner 73,
+Nadal-Ribelles 36 and 34, Kemmeren 2, Hu 1) and every other unit keeps its v1 fold. Parts
+deletion (Kemmeren, Hu, Nadal-Ribelles, Messner, Zelezniak), doubles, isolates (GBLUP),
+segregants and Vaishnav are identical to `results/linear_evals_043.json` apart from those
+counts. Fold-0 median per-gene Pearson of `ridge_composite`, v1 = v2: Kemmeren 0.125, Messner
+0.083, Nadal-Ribelles 0.088 (env 0) and 0.065 (env 1), Hu -0.023, Zelezniak -0.117; doubles
+median centered per-unit Pearson: stronger single 0.484, fitted aMx + bMy + c 0.494, inductive
+additive ridge on the composite 0.136. The training bars do not move.
+
+Only the morphology probe changes, because it reads MEASURED profiles: Ohya genotypes 4,678 ->
+4,718 and the Kemmeren, Hu and Messner input panels gain the admitted genotypes (Messner raw_all
+4,279 -> 4,314). Its medians move by under 0.02 (Kemmeren raw_all 0.348 -> 0.352, Messner raw_all
+0.278 -> 0.282); the Hu fold-0 subgroup moves most (raw_all 0.178 -> -0.001, a subgroup of a
+few dozen genotypes).
+
+![](./assets/images/043-expression-proteome-morphology/linear_evals_split_a_ladder_v2_2026-10-23-19-41-23.svg)
+
+![](./assets/images/043-expression-proteome-morphology/linear_evals_doubles_ladder_v2_2026-10-23-19-41-24.svg)
+
+![](./assets/images/043-expression-proteome-morphology/linear_evals_isolates_segregants_promoters_v2_2026-10-23-19-41-24.svg)
+
+![](./assets/images/043-expression-proteome-morphology/linear_evals_morphology_probe_v2_2026-10-23-19-41-24.svg)

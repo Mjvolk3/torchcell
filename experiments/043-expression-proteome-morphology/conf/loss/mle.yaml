@@ -1,0 +1,5 @@
+# experiments/043-expression-proteome-morphology/conf/loss/mle.yaml
+# Sweep arm (2026-10-24): heteroscedastic Gaussian NLL; the head emits a mean and a
+# log-variance, the log-variance clamped to [-7, 7]; the mean is the point prediction.
+# torchcell.losses.readout_family_043.
+kind: mle

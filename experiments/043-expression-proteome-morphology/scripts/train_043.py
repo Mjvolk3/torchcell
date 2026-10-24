@@ -74,14 +74,23 @@ from torchcell.data.experiment_ontology import (
     ExperimentOntologyVocabulary,
 )
 from torchcell.data.representation_043 import ENCODERS, PositionGap
+from torchcell.data.target_transform_043 import (
+    TargetTransform043,
+    fit_group_map,
+    profile_keys,
+)
 from torchcell.losses.hl_gauss import HLGaussConfig, StandardizationStats
+from torchcell.losses.readout_family_043 import (
+    QuantileBins,
+    ReadoutLossFamily043,
+    fit_quantile_bins,
+)
 from torchcell.models.cell_model_043 import (
     Batch043,
     CellModel043,
     CellModel043Config,
     ContextInputs,
     MarkInputs,
-    ReadoutLoss043,
     Replicon,
     build_head_mask,
     load_vector_table,
@@ -124,6 +133,8 @@ BOOCOCK_POOLED_COUNT = 393
 ONTOLOGY_VOCAB = "experiment_ontology_vocab.json"
 #: Prepared-store versions that carry the ontology annotation.
 ONTOLOGY_PREP_VERSIONS = frozenset({"prep_v4"})
+TARGET_TRANSFORM_JSON = "target_transform.json"
+QUANTILE_BINS_JSON = "quantile_bins.json"
 
 Transform = Literal[
     "as_released",
@@ -390,7 +401,12 @@ class LossConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    kind: Literal["hlgauss", "pinball", "mse"]
+    kind: Literal["hlgauss", "pinball", "mse", "mle", "binned_quantile"] = Field(
+        description="hlgauss / binned_quantile (HL-Gauss over equal-mass bins of the "
+        "TRAINING targets per group, K = hl_gauss.num_bins) / pinball / mse / mle "
+        "(heteroscedastic Gaussian NLL, log-variance clamped to [-7, 7]); "
+        "torchcell.losses.readout_family_043"
+    )
     hl_gauss: HLGaussConfig = Field(default_factory=HLGaussConfig)
     num_quantiles: int = Field(default=19, gt=0)
 
@@ -401,6 +417,12 @@ class WeightingConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     kind: Literal["equal", "records"]
+    by: Literal["dataset", "profile"] = Field(
+        default="dataset",
+        description="the unit the weighting balances: dataset (legacy) or the record's "
+        "experiment-ontology phenotype profile (datasets sharing a profile pool their "
+        "loss first; needs a prep_v4 store)",
+    )
 
 
 class DataConfig(BaseModel):
@@ -441,6 +463,19 @@ class DataConfig(BaseModel):
     val_max_records_per_dataset: int | None = Field(default=2000, gt=0)
     traineval_max_records_per_dataset: int = Field(default=256, gt=0)
     min_strains_per_gene: int = Field(default=3, ge=2)
+    target_transform: Literal["zscore", "quantile_normal", "none"] = Field(
+        default="zscore",
+        description="second stage on the legacy z (torchcell.data.target_transform_043): "
+        "zscore (legacy under target_stats_by=dataset), quantile_normal (rank to a "
+        "standard normal per group, fitted on training values), none (released scale "
+        "after the per-gene center). Predictions are mapped back to z before scoring",
+    )
+    target_stats_by: Literal["dataset", "profile"] = Field(
+        default="dataset",
+        description="the group the target statistics (and binned_quantile bins) are "
+        "fitted over: dataset (legacy) or the experiment-ontology phenotype profile "
+        "(needs a prep_v4 store)",
+    )
 
 
 class ConditioningConfig(BaseModel):
@@ -481,10 +516,55 @@ class ModelConfig(BaseModel):
     conditioning: ConditioningConfig = Field(
         default_factory=lambda: ConditioningConfig()
     )
+    # GilaHyper sweep (2026-10-24)
+    layer_pattern: list[Literal["S", "M"]] | None = Field(
+        default=None,
+        description="trunk layers in order, M = multigraph-masked attention (head h sees "
+        "graph head_graphs[h]), S = dense; when set it DEFINES num_layers and "
+        "mask_layers (0-based), e.g. [S, M, S, S] = num_layers 4, mask_layers [1]",
+    )
+    trunk_ffn_mult: int = Field(
+        default=4, gt=0, description="trunk FFN width / hidden_dim"
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _pattern_sets_layers(cls, data: Any) -> Any:
+        """``layer_pattern`` -> ``num_layers`` and ``mask_layers``."""
+        if isinstance(data, dict) and data.get("layer_pattern") is not None:
+            pattern = [str(c) for c in data["layer_pattern"]]
+            data = {
+                **data,
+                "num_layers": len(pattern),
+                "mask_layers": [i for i, c in enumerate(pattern) if c == "M"],
+            }
+        return data
+
+    @model_validator(mode="after")
+    def _widths(self) -> ModelConfig:
+        """Heads divide the width, loudly; a pattern agrees with the layers."""
+        if self.hidden_dim % self.num_heads:
+            raise ValueError(
+                f"hidden_dim {self.hidden_dim} is not divisible by num_heads "
+                f"{self.num_heads} (one head per graph channel); pick a multiple"
+            )
+        if self.layer_pattern is not None and (
+            self.num_layers != len(self.layer_pattern)
+            or self.mask_layers
+            != [i for i, c in enumerate(self.layer_pattern) if c == "M"]
+        ):
+            raise ValueError("layer_pattern disagrees with num_layers / mask_layers")
+        return self
+
+    @property
+    def pattern_label(self) -> str:
+        """The trunk as S/M letters, e.g. SMSS."""
+        masked = set(self.mask_layers)
+        return "".join("M" if i in masked else "S" for i in range(self.num_layers))
 
 
 class OptimConfig(BaseModel):
-    """AdamW, linear warmup then constant, gradient clipping by norm."""
+    """AdamW, linear warmup then constant (or cosine), gradient clipping by norm."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -492,6 +572,12 @@ class OptimConfig(BaseModel):
     weight_decay: float = Field(default=1.0e-8, ge=0)
     warmup_steps: int = Field(default=500, ge=0)
     clip_grad_norm: float = Field(default=10.0, gt=0)
+    schedule: Literal["constant", "cosine"] = Field(
+        default="constant",
+        description="after warmup: constant lr, or cosine from lr to min_lr_frac * lr at "
+        "the run's last optimizer step",
+    )
+    min_lr_frac: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
 class WindowConfig(BaseModel):
@@ -555,6 +641,11 @@ class WandbConfig(BaseModel):
     mode: Literal["online", "offline", "disabled"] = "online"
     tags: list[str] = Field(default_factory=list)
     round: str | None = Field(default=None, description="round label (config only)")
+    label_knobs: bool = Field(
+        default=False,
+        description="append the 2026-10-24 sweep knobs that differ from their defaults "
+        "to the W&B group (sweep_suffix); off keeps every earlier run name",
+    )
 
 
 class PathsConfig(BaseModel):
@@ -680,8 +771,39 @@ class TrainConfig043(BaseModel):
         bs = f"_bs{self.data.batch_size}" if self.data.label_batch_size else ""
         return (
             f"{self.arm.name}{lodo}{onto}{sampler}_{self.loss.kind}_"
-            f"{self.weighting.kind}{bs}"
+            f"{self.weighting.kind}{bs}{self.sweep_suffix}"
         )
+
+    @property
+    def sweep_suffix(self) -> str:
+        """The 2026-10-24 sweep knobs that differ from their defaults (else empty);
+        empty unless ``wandb.label_knobs``.
+        """
+        if not self.wandb.label_knobs:
+            return ""
+        m, d0 = self.model, ModelConfig()
+        parts = []
+        if m.layer_pattern is not None:
+            parts.append(f"L{m.pattern_label}")
+        if m.hidden_dim != d0.hidden_dim:
+            parts.append(f"h{m.hidden_dim}")
+        if m.trunk_ffn_mult != d0.trunk_ffn_mult:
+            parts.append(f"ffn{m.trunk_ffn_mult}")
+        if m.head_hidden != d0.head_hidden:
+            parts.append(f"hh{m.head_hidden}")
+        if self.data.target_transform != "zscore":
+            parts.append(
+                {"quantile_normal": "tqn", "none": "tnone"}[self.data.target_transform]
+            )
+        if self.data.target_stats_by == "profile":
+            parts.append("statsprofile")
+        if self.weighting.by == "profile":
+            parts.append("wprofile")
+        if self.optim.schedule == "cosine":
+            parts.append("cos")
+        if self.optim.lr != OptimConfig().lr:
+            parts.append(f"lr{self.optim.lr:g}")
+        return "".join(f"_{p}" for p in parts)
 
     @property
     def run_name(self) -> str:
@@ -1346,6 +1468,30 @@ class TrainingView:
     doubles_singles: npt.NDArray[np.int64] = field(
         default_factory=lambda: np.zeros((0, 2), np.int64)
     )  # arm positions of the Kemmeren single of each gene of each double
+    # ---- 2026-10-24 sweep: target statistics group of each arm record and the training
+    # targets t (None = the legacy z: zscore by dataset, bit-identical)
+    group: npt.NDArray[np.int64] = field(default_factory=lambda: np.zeros(0, np.int64))
+    group_names: list[str] = field(default_factory=list)
+    row_mu: npt.NDArray[np.float64] = field(
+        default_factory=lambda: np.zeros(0, np.float64)
+    )  # [R_arm] the record's dataset mu (legacy standardization)
+    row_sd: npt.NDArray[np.float64] = field(
+        default_factory=lambda: np.ones(0, np.float64)
+    )
+    target_map: TargetTransform043 | None = None
+    T: npt.NDArray[np.float32] | None = None  # [Rg_store, G] training targets
+    t_scalar: npt.NDArray[np.float32] | None = None  # [R_store]
+    weight_group: npt.NDArray[np.int64] | None = None  # [n_datasets] profile of each
+
+    @property
+    def gene_targets(self) -> npt.NDArray[np.float32]:
+        """The gene-level training targets (``T``, or the legacy ``Z``)."""
+        return self.Z if self.T is None else self.T
+
+    @property
+    def record_targets(self) -> npt.NDArray[np.float32]:
+        """The record-level training targets (``t_scalar``, or ``z_scalar``)."""
+        return self.z_scalar if self.t_scalar is None else self.t_scalar
 
     def positions(self, role: int, dataset: str | None = None) -> npt.NDArray[np.int64]:
         """Arm positions with ``role`` (and of ``dataset`` when given)."""
@@ -1357,10 +1503,45 @@ class TrainingView:
         return np.nonzero(sel)[0].astype(np.int64)
 
 
+def record_groups(
+    store: PreparedStore043,
+    rec: npt.NDArray[np.int64],
+    local_dataset: npt.NDArray[np.int64],
+    datasets: list[str],
+    by: Literal["dataset", "profile"],
+) -> tuple[npt.NDArray[np.int64], list[str]]:
+    """Group id of each arm record and the group names: the arm-local dataset (legacy),
+    or the record's experiment-ontology phenotype profile (prep_v4; no dataset name).
+    """
+    if by == "dataset":
+        return local_dataset.astype(np.int64).copy(), list(datasets)
+    if store.ontology_vocabulary is None or not store.rec_onto.size:
+        raise ValueError(
+            f"grouping by profile needs a prepared store with the ontology annotation "
+            f"({sorted(ONTOLOGY_PREP_VERSIONS)}); {store.meta.prep_version} has none"
+        )
+    keys = profile_keys(store.ontology_vocabulary, store.onto_profiles)
+    rk = [keys[i] for i in store.rec_onto[rec]]
+    names = sorted(set(rk))
+    index = {n: i for i, n in enumerate(names)}
+    return np.asarray([index[k] for k in rk], np.int64), names
+
+
 def build_view(
-    store: PreparedStore043, arm: ArmConfig, mark_cap: int | None
+    store: PreparedStore043,
+    arm: ArmConfig,
+    mark_cap: int | None,
+    target_transform: Literal["zscore", "quantile_normal", "none"] = "zscore",
+    target_stats_by: Literal["dataset", "profile"] = "dataset",
+    weighting_by: Literal["dataset", "profile"] = "dataset",
 ) -> TrainingView:
-    """Select the arm, fit the standardization on its training rows, compact the keys."""
+    """Select the arm, fit the standardization on its training rows, compact the keys.
+
+    ``target_transform`` / ``target_stats_by`` other than zscore / dataset add the
+    second-stage training targets ``T`` (torchcell.data.target_transform_043), fitted on
+    the training rows of each group; ``weighting_by = profile`` maps each arm dataset to
+    its phenotype profile for the loss weighting.
+    """
     shorts = store.meta.datasets
     wanted = list(arm.datasets) + (["sameith_dm"] if arm.doubles else [])
     sel = np.isin(store.rec_dataset, [shorts.index(d) for d in wanted])
@@ -1460,7 +1641,85 @@ def build_view(
     )
     if arm.doubles:
         _attach_doubles(view, rec_short)
+    _attach_targets(view, rec_short, train, target_transform, target_stats_by)
+    if weighting_by == "profile":
+        wg, _ = record_groups(store, rec, local_dataset, view.datasets, "profile")
+        per_ds = []
+        for i, d in enumerate(view.datasets):
+            u = np.unique(wg[local_dataset == i])
+            if len(u) != 1:
+                raise ValueError(
+                    f"weighting by profile needs one profile per dataset; {d} spans "
+                    f"{len(u)}"
+                )
+            per_ds.append(int(u[0]))
+        view.weight_group = np.asarray(per_ds, np.int64)
     return view
+
+
+def _attach_targets(
+    view: TrainingView,
+    rec_short: list[str],
+    train: npt.NDArray[np.bool_],
+    kind: Literal["zscore", "quantile_normal", "none"],
+    by: Literal["dataset", "profile"],
+) -> None:
+    """Groups, per-record dataset statistics and (unless legacy) the targets ``T``."""
+    store = view.store
+    view.group, view.group_names = record_groups(
+        store, view.rec, view.local_dataset, view.datasets, by
+    )
+    st = [view.stats.get(SPECS[s].read_as or s) for s in rec_short]
+    view.row_mu = np.asarray([x.mu for x in st], np.float64)
+    view.row_sd = np.asarray([x.sd for x in st], np.float64)
+    if kind == "zscore" and by == "dataset":
+        return  # the legacy z, untouched
+    gsel = view.level_gene
+    yrow = store.rec_yrow[view.rec]
+
+    def u_of(rows: npt.NDArray[np.int64]) -> npt.NDArray[np.float64]:
+        g = rows[gsel[rows]]
+        r = rows[~gsel[rows]]
+        ug = view.row_mu[g, None] + view.row_sd[g, None] * view.Z[yrow[g]]
+        ur = view.row_mu[r] + view.row_sd[r] * view.z_scalar[view.rec[r]]
+        return np.concatenate([ug.ravel(), ur.astype(np.float64)])
+
+    maps = []
+    for gi, name in enumerate(view.group_names):
+        rows = np.nonzero(train & (view.group == gi))[0]
+        maps.append(fit_group_map(name, kind, u_of(rows)))
+    tmap = TargetTransform043(kind=kind, by=by, groups=maps)
+    T = np.full_like(view.Z, np.nan)
+    t_scalar = np.full_like(view.z_scalar, np.nan)
+    g = np.nonzero(gsel)[0]
+    r = np.nonzero(~gsel)[0]
+    T[yrow[g]] = tmap.z_to_t(
+        view.Z[yrow[g]], view.group[g], view.row_mu[g], view.row_sd[g]
+    )
+    t_scalar[view.rec[r]] = tmap.z_to_t(
+        view.z_scalar[view.rec[r]], view.group[r], view.row_mu[r], view.row_sd[r]
+    )
+    view.target_map, view.T, view.t_scalar = tmap, T, t_scalar
+
+
+def fit_view_bins(
+    view: TrainingView, train_pos: npt.NDArray[np.int64], num_bins: int
+) -> list[QuantileBins]:
+    """binned_quantile: equal-mass bins per target group over the TRAINING targets."""
+    yrow = view.store.rec_yrow[view.rec]
+    out = []
+    for gi, name in enumerate(view.group_names):
+        pos = train_pos[view.group[train_pos] == gi]
+        g = pos[view.level_gene[pos]]
+        r = pos[~view.level_gene[pos]]
+        vals = np.concatenate(
+            [
+                view.gene_targets[yrow[g]].ravel(),
+                view.record_targets[view.rec[r]].ravel(),
+            ]
+        )
+        out.append(fit_quantile_bins(name, vals, num_bins))
+    return out
 
 
 def _attach_doubles(view: TrainingView, rec_short: list[str]) -> None:
@@ -1493,6 +1752,7 @@ class Targets043:
     record_rows: torch.Tensor  # [Br]
     record_z: torch.Tensor  # [Br]
     dataset_ids: torch.Tensor  # [B] arm-local dataset of each row (loss bookkeeping)
+    groups: torch.Tensor | None = None  # [B] target-statistics group of each row
 
 
 def make_batch(
@@ -1562,11 +1822,14 @@ def make_batch(
     targets = Targets043(
         gene_rows=torch.from_numpy(g.astype(np.int64)),
         gene_z=torch.from_numpy(
-            view.Z[store.rec_yrow[rec[g]]] if len(g) else np.zeros((0, G), np.float32)
+            view.gene_targets[store.rec_yrow[rec[g]]]
+            if len(g)
+            else np.zeros((0, G), np.float32)
         ),
         record_rows=torch.from_numpy(rr.astype(np.int64)),
-        record_z=torch.from_numpy(view.z_scalar[rec[rr]]),
+        record_z=torch.from_numpy(view.record_targets[rec[rr]]),
         dataset_ids=torch.from_numpy(view.local_dataset[pos]),
+        groups=torch.from_numpy(view.group[pos]) if view.group.size else None,
     )
     return batch, targets
 
@@ -1848,6 +2111,7 @@ def init_from_checkpoint(
     for d in view.datasets:
         if src_stats.get(d) != view.stats.get(d):
             raise ValueError(f"{d}: standardization differs from stage 1")
+    _check_stage1_targets(osp.dirname(cfg.init_from), view, cfg)
     rows = torch.as_tensor([src.arm.datasets.index(d) for d in view.datasets])
     sd = dict(state["model"])
     for k in DATASET_INDEXED:
@@ -1859,6 +2123,31 @@ def init_from_checkpoint(
         "setup/init_from_step": float(state["step"]),
         "setup/init_from_lr": float(src.optim.lr),
     }
+
+
+def _check_stage1_targets(
+    src_dir: str, view: TrainingView, cfg: TrainConfig043
+) -> None:
+    """The fine-tune's target maps and quantile bins equal stage 1's for its groups."""
+    path = osp.join(src_dir, TARGET_TRANSFORM_JSON)
+    if osp.exists(path) != (view.target_map is not None):
+        raise ValueError("target_transform differs from stage 1 (one is the legacy z)")
+    if view.target_map is not None:
+        with open(path) as f:
+            src_map = TargetTransform043.model_validate_json(f.read())
+        have = src_map.by_name()
+        for g in view.target_map.groups:
+            if have.get(g.group) != g:
+                raise ValueError(f"{g.group}: target map differs from stage 1")
+    if cfg.loss.kind == "binned_quantile":
+        with open(osp.join(src_dir, QUANTILE_BINS_JSON)) as f:
+            src_bins = {
+                b["group"]: QuantileBins.model_validate(b) for b in json.load(f)
+            }
+        train_pos = view.positions(ROLE_CODE[Role.TRAIN])
+        for b in fit_view_bins(view, train_pos, cfg.loss.hl_gauss.num_bins):
+            if src_bins.get(b.group) != b:
+                raise ValueError(f"{b.group}: quantile bins differ from stage 1")
 
 
 def mark_cap_report(view: TrainingView) -> tuple[str, dict[str, float]]:
@@ -1927,6 +2216,7 @@ def build_model(
         head_graphs=dict(cfg.model.head_graphs),
         fourier_frequencies=cfg.model.fourier_frequencies,
         operator_ffn_mult=cfg.model.operator_ffn_mult,
+        trunk_ffn_mult=cfg.model.trunk_ffn_mult,
         n_parents=int(store.mark_parent.max(initial=0)) + 1
         if store.mark_parent.size
         else 1,
@@ -1986,13 +2276,14 @@ def batch_loss(
     out_gene: torch.Tensor,
     out_record: torch.Tensor,
     targets: Targets043,
-    objective: ReadoutLoss043,
+    objective: ReadoutLossFamily043,
     n_datasets: int,
     weighting: Literal["equal", "records"],
+    dataset_group: torch.Tensor | None = None,
 ) -> tuple[torch.Tensor, dict[int, float]]:
     """Weighted per-dataset mean loss of a batch, and each dataset's mean (for logs)."""
     sums, counts, nrec = loss_sums(out_gene, out_record, targets, objective, n_datasets)
-    total, means = combine_loss(sums, counts, nrec, weighting)
+    total, means = combine_loss(sums, counts, nrec, weighting, dataset_group)
     if total is None:
         total = (out_gene.sum() + out_record.sum()) * 0.0
     present = counts > 0
@@ -2007,7 +2298,7 @@ def loss_sums(
     out_gene: torch.Tensor,
     out_record: torch.Tensor,
     targets: Targets043,
-    objective: ReadoutLoss043,
+    objective: ReadoutLossFamily043,
     n_datasets: int,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Per dataset: summed elementwise loss, measured entries, records (one batch)."""
@@ -2016,14 +2307,23 @@ def loss_sums(
     counts = torch.zeros(n_datasets, device=device)
     nrec = torch.zeros(n_datasets, device=device)
     ds = targets.dataset_ids.to(device)
+    grp = None if targets.groups is None else targets.groups.to(device)
     if targets.gene_rows.numel():
-        elem, measured = objective.elementwise(out_gene, targets.gene_z.to(device))
+        elem, measured = objective.elementwise(
+            out_gene,
+            targets.gene_z.to(device),
+            None if grp is None else grp[targets.gene_rows.to(device)],
+        )
         d = ds[targets.gene_rows.to(device)]
         sums = sums.index_add(0, d, elem.sum(1))
         counts = counts.index_add(0, d, measured.sum(1).to(sums.dtype))
         nrec = nrec.index_add(0, d, torch.ones_like(d, dtype=sums.dtype))
     if targets.record_rows.numel():
-        elem, measured = objective.elementwise(out_record, targets.record_z.to(device))
+        elem, measured = objective.elementwise(
+            out_record,
+            targets.record_z.to(device),
+            None if grp is None else grp[targets.record_rows.to(device)],
+        )
         d = ds[targets.record_rows.to(device)]
         sums = sums.index_add(0, d, elem)
         counts = counts.index_add(0, d, measured.to(sums.dtype))
@@ -2036,14 +2336,27 @@ def combine_loss(
     counts: torch.Tensor,
     nrec: torch.Tensor,
     weighting: Literal["equal", "records"],
+    dataset_group: torch.Tensor | None = None,
 ) -> tuple[torch.Tensor | None, torch.Tensor]:
     """The objective from per-dataset sums: equal = mean of the dataset means, records =
     their mean weighted by records; None when no dataset has a measured entry.
+
+    With ``dataset_group`` (the phenotype profile of each dataset, ``weighting.by =
+    profile``) the sums pool per profile first and the weighting balances profiles;
+    the returned means stay per dataset (the logged ``<dataset>/loss``).
     """
     present = counts > 0
     means = torch.where(present, sums / counts.clamp_min(1.0), torch.zeros_like(sums))
     if not bool(present.any()):
         return None, means
+    if dataset_group is not None:
+        dg = dataset_group.to(sums.device)
+        n_g = int(dg.max()) + 1
+        gs = sums.new_zeros(n_g).index_add(0, dg, sums)
+        gc = counts.new_zeros(n_g).index_add(0, dg, counts)
+        gn = nrec.new_zeros(n_g).index_add(0, dg, nrec)
+        total, _ = combine_loss(gs, gc, gn, weighting)
+        return total, means
     if weighting == "equal":
         return means[present].mean(), means
     w = nrec * present
@@ -2053,7 +2366,7 @@ def combine_loss(
 @torch.no_grad()
 def predict(
     model: CellModel043,
-    objective: ReadoutLoss043,
+    objective: ReadoutLossFamily043,
     view: TrainingView,
     positions: npt.NDArray[np.int64],
     batch_size: int,
@@ -2095,13 +2408,22 @@ def predict(
             acc_sums += s_.double().cpu()
             acc_counts += c_.double().cpu()
             acc_nrec += n_.double().cpu()
+        grp = None if tg.groups is None else tg.groups.to(device)
         if tg.gene_rows.numel():
             gene_pred[cursor + tg.gene_rows.numpy()] = (
-                objective.point(out.gene).cpu().numpy()
+                objective.point(
+                    out.gene, None if grp is None else grp[tg.gene_rows.to(device)]
+                )
+                .cpu()
+                .numpy()
             )
         if tg.record_rows.numel():
             rec_pred[cursor + tg.record_rows.numpy()] = (
-                objective.point(out.record).cpu().numpy()
+                objective.point(
+                    out.record, None if grp is None else grp[tg.record_rows.to(device)]
+                )
+                .cpu()
+                .numpy()
             )
         if objective.kind == "hlgauss" and tg.gene_rows.numel():
             z = tg.gene_z.to(device)
@@ -2113,11 +2435,26 @@ def predict(
             ent_n += float(meas.sum())
         cursor += B
     model.train()
+    if view.target_map is not None:
+        # predictions are in the training targets t; score them as legacy z
+        gp, mu, sd = (
+            view.group[positions],
+            view.row_mu[positions],
+            view.row_sd[positions],
+        )
+        gene_pred = view.target_map.t_to_z(gene_pred, gp, mu, sd)
+        rec_pred = view.target_map.t_to_z(rec_pred, gp, mu, sd)
     extra = {}
     dataset_loss: dict[int, float] = {}
     loss: float | None = None
     if weighting is not None:
-        total, means = combine_loss(acc_sums, acc_counts, acc_nrec, weighting)
+        total, means = combine_loss(
+            acc_sums,
+            acc_counts,
+            acc_nrec,
+            weighting,
+            None if view.weight_group is None else torch.from_numpy(view.weight_group),
+        )
         loss = None if total is None else float(total)
         dataset_loss = {
             int(i): float(means[i])
@@ -2158,7 +2495,7 @@ def eval_positions(
 def evaluate(
     prefix: str,
     model: CellModel043,
-    objective: ReadoutLoss043,
+    objective: ReadoutLossFamily043,
     view: TrainingView,
     positions: npt.NDArray[np.int64],
     cfg: TrainConfig043,
@@ -2230,7 +2567,7 @@ def evaluate(
 
 def evaluate_doubles(
     model: CellModel043,
-    objective: ReadoutLoss043,
+    objective: ReadoutLossFamily043,
     view: TrainingView,
     cfg: TrainConfig043,
     device: torch.device,
@@ -2274,10 +2611,42 @@ def evaluate_doubles(
     }
 
 
-def _lr_at(step: int, cfg: OptimConfig) -> float:
+def _lr_at(step: int, cfg: OptimConfig, total_steps: int | None = None) -> float:
+    """Linear warmup, then constant or cosine to ``min_lr_frac * lr`` at ``total_steps``."""
     if cfg.warmup_steps and step < cfg.warmup_steps:
         return cfg.lr * (step + 1) / cfg.warmup_steps
-    return cfg.lr
+    if cfg.schedule == "constant":
+        return cfg.lr
+    if total_steps is None:
+        raise ValueError("a cosine schedule needs the run's total optimizer steps")
+    span = max(total_steps - cfg.warmup_steps, 1)
+    prog = min(max(step - cfg.warmup_steps, 0) / span, 1.0)
+    floor = cfg.min_lr_frac
+    return cfg.lr * (floor + (1.0 - floor) * 0.5 * (1.0 + math.cos(math.pi * prog)))
+
+
+#: Sweep keys added 2026-10-24, with their defaults; a checkpoint written before them
+#: holds none, and a resume of it compares equal when every one is at its default.
+SWEEP_DEFAULTS: dict[tuple[str, str], Any] = {
+    ("model", "layer_pattern"): None,
+    ("model", "trunk_ffn_mult"): 4,
+    ("data", "target_transform"): "zscore",
+    ("data", "target_stats_by"): "dataset",
+    ("weighting", "by"): "dataset",
+    ("optim", "schedule"): "constant",
+    ("optim", "min_lr_frac"): 0.0,
+}
+
+
+def config_matches(stored: dict[str, Any], cfg: TrainConfig043) -> bool:
+    """``stored`` (a checkpoint's config dump) equals ``cfg``, reading a sweep key the
+    checkpoint predates as its default.
+    """
+    cur = cfg.model_dump(mode="json")
+    for (sec, key), default in SWEEP_DEFAULTS.items():
+        if key not in stored.get(sec, {}) and cur[sec][key] == default:
+            cur[sec] = {k: v for k, v in cur[sec].items() if k != key}
+    return bool(stored == cur)
 
 
 def train(
@@ -2291,7 +2660,14 @@ def train(
     torch.manual_seed(cfg.seed)
     np.random.seed(cfg.seed)
     device = _device(cfg)
-    view = build_view(store, cfg.arm, cfg.data.mark_cap)
+    view = build_view(
+        store,
+        cfg.arm,
+        cfg.data.mark_cap,
+        cfg.data.target_transform,
+        cfg.data.target_stats_by,
+        cfg.weighting.by,
+    )
     tables = [vector_source(e, view.used_ids[e]) for e in range(len(ENCODERS))]
     model = build_model(cfg, view, tables)
     init_logs: dict[str, float] = {}
@@ -2306,7 +2682,7 @@ def train(
             flush=True,
         )
     model = model.to(device)
-    objective = ReadoutLoss043(model.config).to(device)
+    bins: list[QuantileBins] | None = None
     stats_sha = view.stats.sha256()
     table_gb = model.composite.table_bytes() / 1e9
     n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -2328,6 +2704,9 @@ def train(
         cfg.data.traineval_max_records_per_dataset,
         cfg.seed,
     )
+    if cfg.loss.kind == "binned_quantile":
+        bins = fit_view_bins(view, train_pos, cfg.loss.hl_gauss.num_bins)
+    objective = ReadoutLossFamily043(model.config, bins).to(device)
     # one directory per job, so a rerun of a run name never overwrites an earlier run's
     # checkpoints (the 2026-10-22 runs sit directly in <run_name>/)
     ckpt_dir = osp.join(
@@ -2341,6 +2720,30 @@ def train(
     os.makedirs(ckpt_dir, exist_ok=True)
     with open(osp.join(ckpt_dir, "standardization.json"), "w") as f:
         f.write(view.stats.canonical_json())
+    if view.target_map is not None:
+        with open(osp.join(ckpt_dir, TARGET_TRANSFORM_JSON), "w") as f:
+            f.write(view.target_map.canonical_json())
+    if bins is not None:
+        with open(osp.join(ckpt_dir, QUANTILE_BINS_JSON), "w") as f:
+            f.write(
+                json.dumps([b.model_dump(mode="json") for b in bins], sort_keys=True)
+            )
+    print(
+        f"[setup] trunk {cfg.model.pattern_label} (S dense, M multigraph-masked; "
+        f"{cfg.model.num_heads} heads x {cfg.model.hidden_dim // cfg.model.num_heads} "
+        f"dims, trunk FFN {cfg.model.trunk_ffn_mult * cfg.model.hidden_dim}, operator FFN "
+        f"{cfg.model.operator_ffn_mult * cfg.model.hidden_dim}, head_hidden "
+        f"{cfg.model.head_hidden}); loss {cfg.loss.kind}; targets "
+        f"{cfg.data.target_transform} by {cfg.data.target_stats_by}"
+        + (
+            f" (groups {view.group_names}, sha256 {view.target_map.sha256()})"
+            if view.target_map is not None
+            else " (legacy z)"
+        )
+        + f"; weighting {cfg.weighting.kind} by {cfg.weighting.by}; lr "
+        f"{cfg.optim.lr:g} warmup {cfg.optim.warmup_steps} {cfg.optim.schedule}",
+        flush=True,
+    )
     print(
         f"[setup] device {device}; {len(train_pos)} train / {len(val_pos)} val / "
         f"{len(te_pos)} traineval records; {len(view.doubles)} doubles; "
@@ -2384,6 +2787,7 @@ def train(
         else math.ceil(max_steps / steps_per_epoch)
     )
     window = cfg.budget.registered_window.epochs(n_epochs)
+    total_steps = max_steps if max_steps is not None else steps_per_epoch * n_epochs
     logger.log(
         {
             "setup/max_steps": float(max_steps or 0),
@@ -2405,7 +2809,7 @@ def train(
     resume_path = osp.join(ckpt_dir, "last.pt")
     if cfg.resume_id is not None and osp.exists(resume_path):
         st = torch.load(resume_path, map_location=device, weights_only=False)
-        if st["config"] != cfg.model_dump(mode="json"):
+        if not config_matches(st["config"], cfg):
             raise ValueError(f"{resume_path} was written under another config")
         model.load_state_dict(st["model"], strict=True)
         opt.load_state_dict(st["optimizer"])
@@ -2433,7 +2837,7 @@ def train(
             if not epoch_seconds and i == 5:
                 t_probe = time.time()
             for g in opt.param_groups:
-                g["lr"] = _lr_at(step, cfg.optim)
+                g["lr"] = _lr_at(step, cfg.optim, total_steps)
             b = batch.to(device)
             with _autocast(device):
                 out = model(b, tg.gene_rows.to(device), tg.record_rows.to(device))
@@ -2444,6 +2848,9 @@ def train(
                 objective,
                 len(view.datasets),
                 cfg.weighting.kind,
+                None
+                if view.weight_group is None
+                else torch.from_numpy(view.weight_group),
             )
             opt.zero_grad(set_to_none=True)
             loss.backward()

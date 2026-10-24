@@ -114,6 +114,62 @@ ROUNDS: dict[str, Round] = {
             "1; joint_9 DEADLINE-capped."
         ),
     ),
+    "ontology_2026_10_23": Round(
+        view_name="043 ontology conditioning 2026-10-23 (Polaris) by arm",
+        # run id = o1023_<cell of alcf/ontology_grid_043.tsv> (resume_id), _ft = its fine-tune
+        run_ids=(
+            "o1023_all_onto_hlgauss_equal_s0",
+            "o1023_all_onto_hlgauss_equal_s0_ft",
+            "o1023_all_onto_hlgauss_equal_s1",
+            "o1023_all_onto_hlgauss_equal_s1_ft",
+            "o1023_all_onto_pinball_equal_s0",
+            "o1023_all_onto_pinball_equal_s0_ft",
+            "o1023_all_onto_pinball_equal_s1",
+            "o1023_all_onto_pinball_equal_s1_ft",
+            "o1023_all_onto_mse_equal_s0",
+            "o1023_all_onto_mse_equal_s0_ft",
+            "o1023_all_onto_mse_equal_s1",
+            "o1023_all_onto_mse_equal_s1_ft",
+            "o1023_all_name_hlgauss_equal_s0",
+            "o1023_all_name_hlgauss_equal_s0_ft",
+            "o1023_all_name_hlgauss_equal_s1",
+            "o1023_all_name_hlgauss_equal_s1_ft",
+            "o1023_all_name_pinball_equal_s0",
+            "o1023_all_name_pinball_equal_s0_ft",
+            "o1023_all_name_pinball_equal_s1",
+            "o1023_all_name_pinball_equal_s1_ft",
+            "o1023_all_name_mse_equal_s0",
+            "o1023_all_name_mse_equal_s0_ft",
+            "o1023_all_name_mse_equal_s1",
+            "o1023_all_name_mse_equal_s1_ft",
+            "o1023_lodo_hu_onto_hlgauss_equal_s0",
+            "o1023_lodo_hu_onto_hlgauss_equal_s0_ft",
+            "o1023_lodo_zelezniak_onto_hlgauss_equal_s0",
+            "o1023_lodo_zelezniak_onto_hlgauss_equal_s0_ft",
+            "o1023_alone_kemmeren_onto_hlgauss_equal_s0",
+            "o1023_alone_kemmeren_onto_hlgauss_equal_s1",
+            "o1023_all_onto_hlgauss_equal_bs16_s0",
+            "o1023_all_onto_hlgauss_equal_bs16_s0_ft",
+            "o1023_all_onto_hlgauss_equal_bs32_s0",
+            "o1023_all_onto_hlgauss_equal_bs32_s0_ft",
+            "o1023_all_onto_hlgauss_equal_s2",
+            "o1023_all_onto_hlgauss_equal_s2_ft",
+            "o1023_all_name_hlgauss_equal_s2",
+            "o1023_all_name_hlgauss_equal_s2_ft",
+        ),
+        hardware=(
+            "Polaris (ALCF), A100 40 GB, one PBS job per node "
+            "(alcf/polaris_train_043_ontology_grid.pbs), queue and job ids in the note"
+        ),
+        intro=(
+            "prep_v4 (prep_v3 plus the experiment ontology annotation, job 6324), store v2, "
+            "every mark, equal weighting, batch 8 unless the group says bs16 / bs32, 80 "
+            "epochs (window 71-80), each stage 1 chained to its Kemmeren fine-tune (20 "
+            "epochs, lr 3e-4, warmup 30). Conditioning ontology (_onto groups: no dataset id "
+            "enters forward) or name; lodo groups never train on that dataset; "
+            "alone_kemmeren step-matched at 571,100 steps."
+        ),
+    ),
 }
 
 DATASETS = (
@@ -377,7 +433,7 @@ def populate_view(key: str, rnd: Round, present: set[str], arm: str | None) -> s
 
 #: Rounds that also get a total-loss-only view (owner, 2026-10-23: "curate charts so you
 #: have train/loss and val/loss that's what i want to see"), registry slot <round>_loss.
-LOSS_VIEW_ROUNDS = ("overnight_2026_10_23",)
+LOSS_VIEW_ROUNDS = ("overnight_2026_10_23", "ontology_2026_10_23")
 LOSS_KEYS = ["train/loss", "val/loss"]
 
 

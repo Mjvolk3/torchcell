@@ -1,0 +1,11 @@
+# experiments/043-expression-proteome-morphology/conf/loss/binned_quantile.yaml
+# Sweep arm (2026-10-24): HL-Gauss over K = 32 EQUAL-MASS bins per target group (edges at
+# the quantiles of the group's TRAINING targets, fitted at startup from the train split;
+# no validation or test row enters), sigma 0.75 bin widths, expectation over the per-bin
+# training means as the point. torchcell.losses.readout_family_043.
+kind: binned_quantile
+hl_gauss:
+  num_bins: 32
+  low: -4.0
+  high: 4.0
+  sigma_bins: 0.75

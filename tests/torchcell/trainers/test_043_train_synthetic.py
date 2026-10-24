@@ -974,3 +974,202 @@ def test_ontology_arm_trains_leaves_a_dataset_out_resumes_and_finetunes(
         cfg_ft, view_ft, [src(e, view_ft.used_ids[e]) for e in range(4)]
     )
     tr.init_from_checkpoint(model, cfg_ft, view_ft)
+
+
+# --------------------------------------------------------------------------- #
+# GilaHyper sweep knobs (2026-10-24)
+# --------------------------------------------------------------------------- #
+def test_layer_pattern_sets_layers_and_widths_refuse_loudly(tr: ModuleType) -> None:
+    m = tr.ModelConfig(layer_pattern=["S", "M", "M", "S", "S"])
+    assert m.num_layers == 5 and m.mask_layers == [1, 2]
+    assert m.pattern_label == "SMMSS"
+    assert tr.ModelConfig().pattern_label == "SMSS"  # the default trunk, 0-based [1]
+    assert tr.ModelConfig(layer_pattern=["S"] * 4).mask_layers == []
+    with pytest.raises(ValueError, match="not divisible by num_heads 9"):
+        tr.ModelConfig(hidden_dim=160)
+    for hd in (144, 288):
+        assert tr.ModelConfig(hidden_dim=hd).hidden_dim // 9 in (16, 32)
+
+
+def test_sweep_arm_yamls_validate(tr: ModuleType) -> None:
+    import yaml
+
+    conf = SCRIPTS.parent / "conf" / "model"
+    want = {
+        "pattern_smss.yaml": "SMSS",
+        "pattern_smmss.yaml": "SMMSS",
+        "pattern_mmmm.yaml": "MMMM",
+        "pattern_ssss.yaml": "SSSS",
+        "pattern_msmsms.yaml": "MSMSMS",
+    }
+    for name, label in want.items():
+        over = yaml.safe_load((conf / name).read_text())
+        m = tr.ModelConfig.model_validate(over)
+        assert m.pattern_label == label, name
+
+
+@pytest.mark.parametrize(
+    "over",
+    [
+        {"loss": {"kind": "mle"}},
+        {"loss": {"kind": "binned_quantile"}},
+        {"data": {"target_transform": "quantile_normal"}},
+        {"data": {"target_transform": "none"}, "loss": {"kind": "mse"}},
+        {"model": {"layer_pattern": ["M", "S", "M"], "trunk_ffn_mult": 2}},
+        {"model": {"hidden_dim": 32, "head_hidden": 16}},
+        {"optim": {"schedule": "cosine", "warmup_steps": 1}},
+    ],
+    ids=[
+        "mle",
+        "binned_quantile",
+        "quantile_normal",
+        "none",
+        "pattern_ffn2",
+        "dims",
+        "cos",
+    ],
+)
+def test_two_training_steps_per_sweep_knob(
+    tr: ModuleType, world: dict[str, Any], tmp_path: Path, over: dict[str, Any]
+) -> None:
+    base = _cfg(tr, world["root"], "hlgauss").model_dump()
+    for sec, vals in over.items():
+        base[sec] = {**base[sec], **vals}
+    base["paths"]["checkpoint_root"] = str(tmp_path / "ckpt")
+    base["wandb"]["label_knobs"] = True
+    cfg = tr.TrainConfig043.model_validate(base)
+    res = tr.train(
+        cfg,
+        world["store"],
+        tr.h5_vector_source(cfg.paths, tr.store_paths(cfg.data.store_version)),
+        tr.MemoryLogger(),
+    )
+    last = res.last_metrics
+    assert res.steps == 2 and np.isfinite(last["train/loss"])
+    assert np.isfinite(last["val/loss"]) and "val/kemmeren/loss" in last
+    assert "val/expression/pearson_per_gene_median" in last
+    ckpt = Path(res.checkpoint_dir)
+    if cfg.data.target_transform != "zscore":
+        assert (ckpt / "target_transform.json").exists()
+    if cfg.loss.kind == "binned_quantile":
+        assert (ckpt / "quantile_bins.json").exists()
+    assert cfg.arm_label.startswith("joint_test_")
+
+
+def test_quantile_normal_targets_invert_to_the_legacy_z(
+    tr: ModuleType, world: dict[str, Any]
+) -> None:
+    arm = tr.ArmConfig(name="a", datasets=["kemmeren", "caudal", "vaishnav"])
+    legacy = tr.build_view(world["store"], arm, 2)
+    assert legacy.T is None and legacy.target_map is None  # zscore by dataset untouched
+    v = tr.build_view(world["store"], arm, 2, "quantile_normal", "dataset")
+    assert v.T is not None and v.target_map is not None
+    assert v.group_names == ["kemmeren", "caudal", "vaishnav"]
+    g = np.nonzero(v.level_gene)[0]
+    yr = world["store"].rec_yrow[v.rec[g]]
+    back = v.target_map.t_to_z(v.T[yr], v.group[g], v.row_mu[g], v.row_sd[g])
+    fin = np.isfinite(v.Z[yr])
+    inside = fin & (np.abs(v.T[yr]) < 3.4)  # tails clip to the grid ends by design
+    np.testing.assert_allclose(back[inside], v.Z[yr][inside], atol=1e-4)
+
+
+def _profile_store(tr: ModuleType, world: dict[str, Any], directory: Path) -> Any:
+    """Kemmeren and Caudal share an expression profile; Messner and Vaishnav do not."""
+    from torchcell.data.experiment_ontology import (
+        ExperimentOntologyVocabulary,
+        OntologyNode,
+    )
+
+    store = world["store"]
+    vocab = ExperimentOntologyVocabulary(
+        nodes=[
+            OntologyNode(name="Experiment", kind="class"),
+            OntologyNode(name="Phenotype", kind="class", parents=["Experiment"]),
+            OntologyNode(name="ExprPhenotype", kind="class", parents=["Phenotype"]),
+            OntologyNode(name="ProtPhenotype", kind="class", parents=["Phenotype"]),
+            OntologyNode(name="SortSeqPhenotype", kind="class", parents=["Phenotype"]),
+            OntologyNode(name="Media", kind="class", parents=["Experiment"]),
+        ]
+    )
+    profiles = np.asarray(
+        [
+            [1, 1, 1, 0, 0, 1],
+            [1, 1, 0, 1, 0, 1],
+            [1, 1, 0, 0, 1, 1],
+            [1, 1, 1, 0, 0, 0],
+        ],
+        np.float32,
+    )
+    shorts = store.meta.datasets
+    by_short = {"messner": 1, "vaishnav": 2, "caudal": 3}  # caudal: other medium
+    rec_onto = np.asarray(
+        [by_short.get(shorts[d], 0) for d in store.rec_dataset], np.int32
+    )
+    vocab.to_json(str(directory / "v.json"))
+    import hashlib
+
+    sha = hashlib.sha256((directory / "v.json").read_bytes()).hexdigest()
+    meta = store.meta.model_copy(
+        update={
+            "prep_version": "prep_v4",
+            "ontology_vocab_sha256": sha,
+            "ontology_n_nodes": len(vocab),
+            "ontology_n_profiles": 4,
+        }
+    )
+    return tr.PreparedStore043(
+        **{
+            **store.__dict__,
+            "meta": meta,
+            "rec_onto": rec_onto,
+            "onto_profiles": profiles,
+            "ontology_vocabulary": vocab,
+        }
+    )
+
+
+def test_profile_grouping_shares_statistics_and_weighting(
+    tr: ModuleType, world: dict[str, Any], tmp_path: Path
+) -> None:
+    store = _profile_store(tr, world, tmp_path)
+    arm = tr.ArmConfig(
+        name="a", datasets=["kemmeren", "messner", "caudal", "vaishnav"], doubles=True
+    )
+    v = tr.build_view(store, arm, 2, "zscore", "profile", "profile")
+    assert v.group_names == ["ExprPhenotype", "ProtPhenotype", "SortSeqPhenotype"]
+    ds = {
+        d: int(v.group[np.nonzero(v.local_dataset == i)[0][0]])
+        for i, d in enumerate(arm.datasets)
+    }
+    assert ds["kemmeren"] == ds["caudal"] != ds["messner"]
+    assert v.weight_group is not None and v.weight_group.tolist() == [0, 1, 0, 2]
+    # profile weighting: kemmeren and caudal pool, then three profiles weigh equally
+    sums = torch.tensor([2.0, 3.0, 6.0, 4.0])
+    counts = torch.tensor([1.0, 1.0, 2.0, 1.0])
+    total, means = tr.combine_loss(
+        sums, counts, torch.ones(4), "equal", torch.from_numpy(v.weight_group)
+    )
+    assert float(total) == pytest.approx(((2 + 6) / 3 + 3.0 + 4.0) / 3)
+    assert means.tolist() == [2.0, 3.0, 3.0, 4.0]
+    with pytest.raises(ValueError, match="ontology annotation"):
+        tr.build_view(world["store"], arm, 2, "zscore", "profile")
+
+
+def test_cosine_schedule_and_resume_reads_missing_sweep_keys_as_defaults(
+    tr: ModuleType, world: dict[str, Any]
+) -> None:
+    o = tr.OptimConfig(lr=1.0, warmup_steps=10, schedule="cosine", min_lr_frac=0.1)
+    assert tr._lr_at(4, o, 110) == pytest.approx(0.5)
+    assert tr._lr_at(10, o, 110) == pytest.approx(1.0)
+    assert tr._lr_at(60, o, 110) == pytest.approx(0.55)
+    assert tr._lr_at(500, o, 110) == pytest.approx(0.1)
+    assert tr._lr_at(500, tr.OptimConfig(lr=1.0), None) == 1.0
+    cfg = _cfg(tr, world["root"], "hlgauss")
+    old = cfg.model_dump(mode="json")
+    for (sec, key), _ in tr.SWEEP_DEFAULTS.items():
+        old[sec].pop(key)
+    assert tr.config_matches(old, cfg)
+    changed = tr.TrainConfig043.model_validate(
+        {**cfg.model_dump(), "optim": {**cfg.optim.model_dump(), "schedule": "cosine"}}
+    )
+    assert not tr.config_matches(old, changed)

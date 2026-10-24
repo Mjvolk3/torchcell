@@ -172,38 +172,52 @@ ROUNDS: dict[str, Round] = {
     ),
     "aurora_2026_10_24": Round(
         view_name="043 Aurora capacity grid 2026-10-24 by arm",
-        # run id = a1024_<cell of alcf/aurora_grid_043.tsv> (resume_id), _ft = its fine-tune
+        # run id = a1024_<cell of alcf/aurora_grid_043.tsv> (resume_id), _ft = its fine-tune;
+        # alone_kemmeren has no fine-tune
         run_ids=tuple(
             f"a1024_{c}{ft}"
             for c in (
                 "all_onto_hlgauss_equal_s0",
+                "all_onto_pinball_equal_s0",
                 "all_name_hlgauss_equal_s0",
+                "all_onto_mse_equal_s0",
                 "all_onto_hlgauss_equal_bs16_s0",
+                "all_name_hlgauss_equal_s1",
                 "all_onto_hlgauss_equal_bs32_s0",
+                "all_onto_hlgauss_equal_ffn2_s1",
                 "all_onto_hlgauss_equal_h288_s0",
+                "lodo_hu_onto_hlgauss_equal_s0",
                 "all_onto_hlgauss_equal_ffn2_s0",
+                "lodo_zelezniak_onto_hlgauss_equal_s0",
                 "all_onto_hlgauss_equal_s1",
+                "all_onto_hlgauss_equal_bs16_s2",
                 "all_onto_hlgauss_equal_bs16_s1",
+                "all_onto_hlgauss_equal_bs32_s2",
                 "all_onto_hlgauss_equal_bs32_s1",
+                "all_onto_hlgauss_equal_h288_s2",
                 "all_onto_hlgauss_equal_h288_s1",
                 "all_onto_hlgauss_equal_s2",
+                "all_onto_hlgauss_equal_s3",
                 "all_name_hlgauss_equal_s2",
+                "all_name_hlgauss_equal_s3",
             )
             for ft in ("", "_ft")
-        ),
+        )
+        + ("a1024_alone_kemmeren_onto_hlgauss_equal_s0",),
         hardware=(
-            "Aurora (ALCF), Intel Max 1550, one cell per tile on even tiles (one tile per "
-            "card), 2 capacity nodes, PBS 8959369 and 8959370 "
-            "(alcf/aurora_train_043_grid.pbs)"
+            "Aurora (ALCF), Intel Max 1550, one cell per tile on all 12 tiles of 2 "
+            "capacity nodes, PBS 8959387 and 8959388 (alcf/aurora_train_043_grid.pbs)"
         ),
         intro=(
-            "prep_v4, store v2, every mark, HL-Gauss, equal weighting, 80 epochs (window "
-            "71-80), each stage 1 chained to its Kemmeren fine-tune (20 epochs, lr 3e-4, "
-            "warmup 30). Micro-batch 2 with gradient accumulation to the effective batch "
-            "(8 unless the group says bs16 / bs32, lr 3e-4 x sqrt(batch / 8)): masked SDPA "
-            "on XPU forms the score matrix, so batch 8 does not fit a 64 GB tile. Capacity "
-            "axis (bs16, bs32, h288, ffn2) under ontology conditioning, seeds 0 and 1; "
-            "anchors all_onto / all_name s0 shared with Polaris; seed 2 of both anchors."
+            "prep_v4, store v2, every mark, equal weighting, HL-Gauss unless the group says "
+            "pinball / mse, 80 epochs (window 71-80), each stage 1 chained to its Kemmeren "
+            "fine-tune (20 epochs, lr 3e-4, warmup 30). Micro-batch 2 with gradient "
+            "accumulation to the effective batch (8 unless the group says bs16 / bs32, lr "
+            "3e-4 x sqrt(batch / 8)): masked SDPA on XPU forms the score matrix, so batch 8 "
+            "does not fit a 64 GB tile. Capacity axis (bs16, bs32, h288, ffn2) under "
+            "ontology conditioning, seeds 0-2; anchors all_onto / all_name shared with "
+            "Polaris, seeds 0-3; loss family and lodo cells at seed 0; alone_kemmeren "
+            "step-matched at 571,100 optimizer steps."
         ),
     ),
     "ghyper_sweep_2026_10_24": Round(

@@ -1,0 +1,14 @@
+# experiments/043-expression-proteome-morphology/scripts/alcf/aurora_grid_043_c.tsv
+# Round aurora_2026_10_24, third submission: node slot, tile, cell, fine-tune 0|1, stage-1 overrides.
+# The 7 faulted cells grid b left waiting, micro-batch 1, fresh ids a1024b_<cell>; all_name s3 restarted at micro 1
+# (its micro-2 run a1024_ is superseded); alone_kemmeren RESUMED under its old id a1024_ from its last.pt (config unchanged,
+# 16.5 GB peak, no checkpoint_every_steps key so config_matches accepts the old last.pt).
+0	0	all_onto_hlgauss_equal_s2	1	arm=all budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 loss=hlgauss weighting=equal seed=2 model.conditioning.source=ontology data.batch_size=1 ++optim.accumulate_steps=8
+0	1	all_name_hlgauss_equal_s1	1	arm=all budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 loss=hlgauss weighting=equal seed=1 model.conditioning.source=name data.batch_size=1 ++optim.accumulate_steps=8
+0	2	all_name_hlgauss_equal_s2	1	arm=all budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 loss=hlgauss weighting=equal seed=2 model.conditioning.source=name data.batch_size=1 ++optim.accumulate_steps=8
+0	3	all_onto_hlgauss_equal_bs16_s2	1	arm=all budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 loss=hlgauss weighting=equal seed=2 model.conditioning.source=ontology data.batch_size=1 ++optim.accumulate_steps=16 data.label_batch_size=true optim.lr=4.243e-4
+0	4	all_onto_hlgauss_equal_bs32_s2	1	arm=all budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 loss=hlgauss weighting=equal seed=2 model.conditioning.source=ontology data.batch_size=1 ++optim.accumulate_steps=32 data.label_batch_size=true optim.lr=6.0e-4
+0	5	all_onto_hlgauss_equal_h288_s2	1	arm=all budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 loss=hlgauss weighting=equal seed=2 model.conditioning.source=ontology data.batch_size=1 ++optim.accumulate_steps=8 model.hidden_dim=288 wandb.label_knobs=true
+0	6	all_onto_hlgauss_equal_ffn2_s1	1	arm=all budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 loss=hlgauss weighting=equal seed=1 model.conditioning.source=ontology data.batch_size=1 ++optim.accumulate_steps=8 model.trunk_ffn_mult=2 wandb.label_knobs=true
+0	7	all_name_hlgauss_equal_s3	1	arm=all budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 loss=hlgauss weighting=equal seed=3 model.conditioning.source=name data.batch_size=1 ++optim.accumulate_steps=8
+0	8	alone_kemmeren_onto_hlgauss_equal_s0	0	rid_prefix=a1024 ckpt_every=none arm=alone_kemmeren loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology data.batch_size=2 ++optim.accumulate_steps=4 budget.max_epochs=50 budget.max_steps=571100 budget.eval_every_epochs=20

@@ -3,3 +3,5 @@
 name: alone_kemmeren
 datasets: [kemmeren]
 doubles: true
+# leave-dataset-out (ontology conditioning only): datasets never trained on, still evaluated
+exclude_from_training: []

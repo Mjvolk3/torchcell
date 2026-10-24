@@ -61,6 +61,15 @@ The pieces, in forward order:
     bias vector on the K logits, a learned prior histogram per dataset). The dataset id
     enters only at the head: never the trunk, never the operator.
 
+    ``conditioning = "ontology"`` (experiment 043, 2026-10-23, copied from 030's
+    ``dataset_token.source: ontology``): ``t`` is instead the
+    :class:`torchcell.data.experiment_ontology.OntologyDagEncoder` token of the record's
+    experiment ontology annotation (``Batch043.ontology``, ``[B, n_nodes]``), of the same
+    width ``token_dim``, and the two bias tables become ``nn.Linear(token_dim, P)`` maps
+    of that token (default PyTorch init). ``dataset_ids``, ``env_ids`` and
+    ``exp_type_ids`` are not read by ``forward``: the model cannot tell two records
+    apart unless their annotations differ.
+
 Route A context caching (I3). Each distinct reference context of a batch (S288C, or an
 isolate under route A) is encoded ONCE per batch, and every record of that context reads
 the same trunk output. The frozen inputs are cached on the device for the whole run as
@@ -92,6 +101,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from torchcell.data.experiment_ontology import (
+    ExperimentOntologyVocabulary,
+    OntologyDagEncoder,
+)
 from torchcell.data.representation_043 import GapKind, PositionGap
 from torchcell.losses.distributional import DEFAULT_NUM_QUANTILES, pinball
 from torchcell.losses.hl_gauss import HLGaussConfig, HLGaussLoss
@@ -223,6 +236,13 @@ class CellModel043Config(BaseModel):
     type_token_dim: int = Field(default=16, gt=0)
     env_token_dim: int = Field(default=16, gt=0)
     dataset_token_dim: int = Field(default=8, gt=0)
+    conditioning: Literal["name", "ontology"] = Field(
+        default="name",
+        description="name: type path + dataset + environment embeddings and per-dataset "
+        "bias tables; ontology: the OntologyDagEncoder token of the record's annotation "
+        "(width token_dim) and linear bias maps of it; no dataset id enters forward",
+    )
+    ontology_state_dim: int = Field(default=16, gt=0)
     head_hidden: int = Field(default=128, ge=0)
     loss: LossKind = "hlgauss"
     hl_gauss: HLGaussConfig = Field(default_factory=HLGaussConfig)
@@ -301,6 +321,7 @@ class Batch043:
     dataset_ids: torch.Tensor  # [B] long
     exp_type_ids: torch.Tensor  # [B] long
     env_ids: torch.Tensor  # [B] long
+    ontology: torch.Tensor | None = None  # [B, n_nodes] float, the record's annotation
 
     def to(self, device: torch.device) -> Batch043:
         """A copy with every tensor on ``device``."""
@@ -318,6 +339,9 @@ class Batch043:
             dataset_ids=self.dataset_ids.to(device, non_blocking=True),
             exp_type_ids=self.exp_type_ids.to(device, non_blocking=True),
             env_ids=self.env_ids.to(device, non_blocking=True),
+            ontology=None
+            if self.ontology is None
+            else self.ontology.to(device, non_blocking=True),
         )
 
 
@@ -581,8 +605,12 @@ class CellModel043(nn.Module):
         rel_midpoint: torch.Tensor,
         head_mask: torch.Tensor | None,
         encoder_dims: Sequence[int] = ENCODER_DIMS,
+        ontology_vocabulary: ExperimentOntologyVocabulary | None = None,
     ) -> None:
-        """``chrom_index``/``rel_midpoint`` ``[G]`` are the reference positions."""
+        """``chrom_index``/``rel_midpoint`` ``[G]`` are the reference positions;
+        ``ontology_vocabulary`` is required (and only allowed) under
+        ``conditioning = "ontology"``.
+        """
         super().__init__()
         self.config = config
         d = config.hidden_dim
@@ -596,16 +624,28 @@ class CellModel043(nn.Module):
         self.parent_embedding = nn.Embedding(config.n_parents, d, padding_idx=0)
         self.mark_proj = nn.Sequential(nn.LayerNorm(d), nn.Linear(d, d))
         self.operator = MarkOperator043(config)
-        self.type_token = ExperimentTypeEmbedding(
-            ExperimentTypeEmbeddingConfig(
-                classes=config.exp_type_classes,
-                hidden_dim=config.type_token_dim,
-                mode=config.exp_type_mode,
-                dag_paths=config.exp_type_paths,
+        self.ontology = config.conditioning == "ontology"
+        if self.ontology != (ontology_vocabulary is not None):
+            raise ValueError(
+                "an ontology vocabulary is required exactly when conditioning is ontology"
             )
-        )
-        self.dataset_token = nn.Embedding(config.n_datasets, config.dataset_token_dim)
-        self.env_token = nn.Embedding(config.n_envs, config.env_token_dim)
+        if ontology_vocabulary is not None:
+            self.onto_token = OntologyDagEncoder(
+                ontology_vocabulary, config.ontology_state_dim, config.token_dim
+            )
+        else:
+            self.type_token = ExperimentTypeEmbedding(
+                ExperimentTypeEmbeddingConfig(
+                    classes=config.exp_type_classes,
+                    hidden_dim=config.type_token_dim,
+                    mode=config.exp_type_mode,
+                    dag_paths=config.exp_type_paths,
+                )
+            )
+            self.dataset_token = nn.Embedding(
+                config.n_datasets, config.dataset_token_dim
+            )
+            self.env_token = nn.Embedding(config.n_envs, config.env_token_dim)
         p = config.param_dim
         self.gene_head = PerGeneReadout(
             PerGeneReadoutConfig(
@@ -628,8 +668,14 @@ class CellModel043(nn.Module):
                 use_pert_summary=True,
             )
         )
-        self.gene_bias = nn.Parameter(torch.zeros(config.n_datasets, p))
-        self.record_bias = nn.Parameter(torch.zeros(config.n_datasets, p))
+        if self.ontology:
+            # the per-dataset bias tables become maps of the ontology token (default
+            # PyTorch init; no zero init, no gate)
+            self.gene_bias_map = nn.Linear(config.token_dim, p)
+            self.record_bias_map = nn.Linear(config.token_dim, p)
+        else:
+            self.gene_bias = nn.Parameter(torch.zeros(config.n_datasets, p))
+            self.record_bias = nn.Parameter(torch.zeros(config.n_datasets, p))
 
     def context_tokens(self, ctx: ContextInputs) -> torch.Tensor:
         """``[C, G, d]`` composite plus position for each distinct context."""
@@ -672,7 +718,13 @@ class CellModel043(nn.Module):
         return cast(torch.Tensor, keys * marks.valid.unsqueeze(-1).to(keys.dtype))
 
     def tokens(self, batch: Batch043, rows: torch.Tensor) -> torch.Tensor:
-        """``t = [t_type ; t_dataset ; t_env]`` for ``rows`` of the batch."""
+        """``t = [t_type ; t_dataset ; t_env]`` for ``rows`` of the batch, or under
+        ontology conditioning the encoder token of the rows' annotations.
+        """
+        if self.ontology:
+            if batch.ontology is None:
+                raise ValueError("ontology conditioning needs Batch043.ontology")
+            return cast(torch.Tensor, self.onto_token(batch.ontology[rows]))
         return torch.cat(
             [
                 self.type_token(batch.exp_type_ids[rows]),
@@ -697,10 +749,16 @@ class CellModel043(nn.Module):
         p = self.config.param_dim
         if gene_rows.numel():
             t = self.tokens(batch, gene_rows)
-            gene = self.gene_head(
-                H_pert[gene_rows, 1:], batch.dataset_ids[gene_rows], t
-            )
-            bias = self.gene_bias[batch.dataset_ids[gene_rows]]
+            if self.ontology:
+                # the head's dataset argument only feeds its per-dataset affine, which
+                # this model never builds (per_dataset_affine=False); a constant id
+                # keeps the dataset id out of forward
+                head_ids = torch.zeros_like(gene_rows)
+                bias = self.gene_bias_map(t)
+            else:
+                head_ids = batch.dataset_ids[gene_rows]
+                bias = self.gene_bias[batch.dataset_ids[gene_rows]]
+            gene = self.gene_head(H_pert[gene_rows, 1:], head_ids, t)
             gene = gene + (bias.unsqueeze(1) if p > 1 else bias)
         else:
             gene = H_pert.new_zeros(
@@ -709,7 +767,11 @@ class CellModel043(nn.Module):
         if record_rows.numel():
             t = self.tokens(batch, record_rows)
             record = self.record_head(h_cls[record_rows], z_s[record_rows], t)
-            bias = self.record_bias[batch.dataset_ids[record_rows]]
+            bias = (
+                self.record_bias_map(t)
+                if self.ontology
+                else self.record_bias[batch.dataset_ids[record_rows]]
+            )
             record = record + (bias if p > 1 else bias.squeeze(-1))
         else:
             record = H_pert.new_zeros((0, p) if p > 1 else (0,))

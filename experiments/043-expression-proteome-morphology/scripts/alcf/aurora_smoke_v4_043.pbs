@@ -1,0 +1,50 @@
+#!/bin/bash -l
+#PBS -A GenesisHackathonOct26
+#PBS -q debug
+#PBS -l select=1
+#PBS -l walltime=01:00:00
+#PBS -l filesystems=home:flare
+#PBS -N 043-smoke-v4-aurora
+#PBS -j oe
+#PBS -o /flare/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/slurm/output/
+# experiments/043-expression-proteome-morphology/scripts/alcf/aurora_smoke_v4_043.pbs
+# [[experiments.043-expression-proteome-morphology.scripts.alcf.aurora_smoke_v4_043]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/alcf/aurora_smoke_v4_043.pbs
+#
+# Round aurora_2026_10_24 smoke and memory probes, one tile each, prep_v4, unchunked SDPA at
+# micro-batch 2 (job 8959263: 0.194 s/step, 35.9 GB; the chunked path is non-finite, open):
+#   tile 0  gate run: arm all, ontology, hlgauss, equal, micro 2 x accumulate 4, 2 epochs of
+#           60 optimizer steps (480 micro-steps), validation after each epoch
+#   tile 1  anchor name conditioning, same shape (1 epoch)
+#   tile 2  hidden 288 at micro 2        tile 3  hidden 288 at micro 1
+#   tile 4  8 layers at micro 2          tile 5  8 layers at micro 1
+#   tile 6  trunk FFN mult 2 at micro 2
+# Probes run one epoch of 20 optimizer steps plus its evaluation, so time/peak_gpu_gb covers
+# training and evaluation.
+set -uo pipefail
+HERE=/flare/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/scripts/alcf
+# shellcheck disable=SC1091
+source "$HERE/aurora_env_043.sh"
+OUT=$TC_TREE/experiments/043-expression-proteome-morphology/slurm/output
+J=${PBS_JOBID%%.*}
+echo "job $PBS_JOBID on $(hostname) at $(date); tree $SYNCED"
+
+v4=(data.store_version=v2 data.prep_version=prep_v4 arm=all loss=hlgauss weighting=equal seed=0
+  data.num_workers=4 data.sampler=records data.mark_cap=null budget.time_budget_hours=null
+  budget.eval_every_epochs=1 wandb.round=aurora_2026_10_24 "wandb.tags=[aurora_2026_10_24,aurora,smoke]")
+probe=("${v4[@]}" model.conditioning.source=ontology budget.max_epochs=1 "++budget.max_steps_per_epoch=20")
+train_on_tile 0 "$OUT/${J}_gate.log" "${v4[@]}" model.conditioning.source=ontology \
+  data.batch_size=2 ++optim.accumulate_steps=4 budget.max_epochs=2 "++budget.max_steps_per_epoch=60"
+train_on_tile 1 "$OUT/${J}_name.log" "${v4[@]}" model.conditioning.source=name \
+  data.batch_size=2 ++optim.accumulate_steps=4 budget.max_epochs=1 "++budget.max_steps_per_epoch=60"
+train_on_tile 2 "$OUT/${J}_h288_m2.log" "${probe[@]}" model.hidden_dim=288 data.batch_size=2 ++optim.accumulate_steps=4
+train_on_tile 3 "$OUT/${J}_h288_m1.log" "${probe[@]}" model.hidden_dim=288 data.batch_size=1 ++optim.accumulate_steps=8
+train_on_tile 4 "$OUT/${J}_l8_m2.log" "${probe[@]}" model.num_layers=8 data.batch_size=2 ++optim.accumulate_steps=4
+train_on_tile 5 "$OUT/${J}_l8_m1.log" "${probe[@]}" model.num_layers=8 data.batch_size=1 ++optim.accumulate_steps=8
+train_on_tile 6 "$OUT/${J}_ffn2_m2.log" "${probe[@]}" model.trunk_ffn_mult=2 data.batch_size=2 ++optim.accumulate_steps=4
+wait
+for f in "$OUT/${J}"_*.log; do
+  echo "== $f"
+  grep -E "composite gene token|conditioning|projection|\[epoch|non-finite|Segmentation|Error|OutOfMemory|runs/" "$f" | cut -c1-400 | tail -8
+done
+echo "done $(date)"

@@ -1,0 +1,25 @@
+# experiments/043-expression-proteome-morphology/scripts/alcf/ontology_grid_043.tsv
+# Round ontology_2026_10_23 on Polaris: one row per cell (cell id, fine-tune 0|1, stage-1 hydra overrides).
+# Placement (node, card) is assigned by polaris_train_043_ontology_grid.pbs from the row order and PER_CARD.
+# lr of the batch-size axis = 3e-4 * sqrt(batch / 8): 4.243e-4 at 16, 6.0e-4 at 32; 80 epochs (fewer steps).
+# alone_kemmeren: step-matched to GilaHyper 6316 (571,100 steps, eval every 20 epochs), no fine-tune.
+all_onto_hlgauss_equal_s0	1	arm=all loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_onto_hlgauss_equal_s1	1	arm=all loss=hlgauss weighting=equal seed=1 model.conditioning.source=ontology budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_onto_pinball_equal_s0	1	arm=all loss=pinball weighting=equal seed=0 model.conditioning.source=ontology budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_onto_pinball_equal_s1	1	arm=all loss=pinball weighting=equal seed=1 model.conditioning.source=ontology budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_onto_mse_equal_s0	1	arm=all loss=mse weighting=equal seed=0 model.conditioning.source=ontology budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_onto_mse_equal_s1	1	arm=all loss=mse weighting=equal seed=1 model.conditioning.source=ontology budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_name_hlgauss_equal_s0	1	arm=all loss=hlgauss weighting=equal seed=0 model.conditioning.source=name budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_name_hlgauss_equal_s1	1	arm=all loss=hlgauss weighting=equal seed=1 model.conditioning.source=name budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_name_pinball_equal_s0	1	arm=all loss=pinball weighting=equal seed=0 model.conditioning.source=name budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_name_pinball_equal_s1	1	arm=all loss=pinball weighting=equal seed=1 model.conditioning.source=name budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_name_mse_equal_s0	1	arm=all loss=mse weighting=equal seed=0 model.conditioning.source=name budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_name_mse_equal_s1	1	arm=all loss=mse weighting=equal seed=1 model.conditioning.source=name budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+lodo_hu_onto_hlgauss_equal_s0	1	arm=all arm.exclude_from_training=[hu] loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+lodo_zelezniak_onto_hlgauss_equal_s0	1	arm=all arm.exclude_from_training=[zelezniak] loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+alone_kemmeren_onto_hlgauss_equal_s0	0	arm=alone_kemmeren loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology data.batch_size=8 budget.max_epochs=50 budget.max_steps=571100 budget.eval_every_epochs=20
+alone_kemmeren_onto_hlgauss_equal_s1	0	arm=alone_kemmeren loss=hlgauss weighting=equal seed=1 model.conditioning.source=ontology data.batch_size=8 budget.max_epochs=50 budget.max_steps=571100 budget.eval_every_epochs=20
+all_onto_hlgauss_equal_bs16_s0	1	arm=all loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=16 data.label_batch_size=true optim.lr=4.243e-4
+all_onto_hlgauss_equal_bs32_s0	1	arm=all loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=32 data.label_batch_size=true optim.lr=6.0e-4
+all_onto_hlgauss_equal_s2	1	arm=all loss=hlgauss weighting=equal seed=2 model.conditioning.source=ontology budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_name_hlgauss_equal_s2	1	arm=all loss=hlgauss weighting=equal seed=2 model.conditioning.source=name budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8

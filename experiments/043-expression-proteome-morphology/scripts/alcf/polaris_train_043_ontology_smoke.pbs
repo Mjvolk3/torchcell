@@ -1,0 +1,87 @@
+#!/bin/bash -l
+#PBS -A GenesisHackathonOct26
+#PBS -q debug
+#PBS -l select=1:ngpus=4
+#PBS -l walltime=01:00:00
+#PBS -l filesystems=home:eagle
+#PBS -N 043-onto-smoke
+#PBS -j oe
+#PBS -o /eagle/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/slurm/output/
+# experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_smoke.pbs
+# [[experiments.043-expression-proteome-morphology.scripts.alcf.polaris_train_043_ontology_smoke]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_smoke.pbs
+#
+# GPU smoke and gate of the ontology-conditioning round on one Polaris node (4 A100 40 GB),
+# prep_v4, arm all, HL-Gauss, equal weighting, every mark. Four measurements at once:
+#
+#   card 0: ontology, batch 8, 2 epochs            -> the gate run (W&B keys), s/step, peak memory
+#   card 1: ontology, batch 8, 2 epochs, TWO processes on the card -> s/step when packed
+#   card 2: name, batch 8, 2 epochs                -> the same-hardware control on this code path
+#   card 3: ontology, batch 32, 1 epoch            -> s/step and peak memory at batch 32
+#
+# Each process prints the resolved config (the trainer's first output), the composite-token
+# setup line and, per epoch, time/peak_gpu_gb (torch.cuda.max_memory_allocated). The packed
+# pair on card 1 tells whether the grid can run two processes per card. A 0.8 h trainer
+# budget keeps every process inside the 1 h debug walltime (a cut run says so in its log).
+#
+# Submit from GilaHyper (after transfer_043.sh polaris code and PREP_043_VERSION=prep_v4 ... train):
+#   ssh polaris "cd /eagle/GenesisHackathonOct26/mjvolk3/torchcell && qsub experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_smoke.pbs"
+set -euo pipefail
+
+TC_PREFIX=/eagle/GenesisHackathonOct26/mjvolk3
+TC_TREE=$TC_PREFIX/torchcell
+PY=$TC_PREFIX/miniforge3/envs/torchcell/bin/python
+
+export http_proxy=http://proxy.alcf.anl.gov:3128
+export https_proxy=http://proxy.alcf.anl.gov:3128
+export HTTP_PROXY=$http_proxy HTTPS_PROXY=$https_proxy
+export no_proxy=localhost,127.0.0.1,.alcf.anl.gov
+
+cd "$TC_TREE"
+set -a; source .env; set +a
+export DATA_ROOT=$TC_PREFIX/torchcell-data/043
+export EXPERIMENT_ROOT=$TC_TREE/experiments
+export PYTHONUNBUFFERED=1 PYTHONPATH="$TC_TREE"
+export WANDB_MODE=online
+
+SHIM=$(mktemp -d)
+REAL_GIT=$(command -v git)
+SYNCED=$(cut -c1-9 "$TC_TREE/.synced_commit")
+cat > "$SHIM/git" <<EOF
+#!/bin/bash
+if [ "\$*" = "rev-parse --short HEAD" ]; then echo "$SYNCED"; exit 0; fi
+exec "$REAL_GIT" "\$@"
+EOF
+chmod +x "$SHIM/git"
+export PATH="$SHIM:$PATH"
+
+OUT=$TC_TREE/experiments/043-expression-proteome-morphology/slurm/output/onto_smoke_${PBS_JOBID%%.*}
+mkdir -p "$OUT"
+echo "job $PBS_JOBID on $(hostname) at $(date); tree synced from $SYNCED; DATA_ROOT=$DATA_ROOT; logs $OUT"
+nvidia-smi --query-gpu=index,name,memory.total --format=csv
+
+common=(data.store_version=v2 data.prep_version=prep_v4 arm=all loss=hlgauss weighting=equal
+  seed=0 device=cuda data.num_workers=4 data.sampler=records data.mark_cap=null
+  budget.time_budget_hours=0.8 budget.time_margin_minutes=3 budget.eval_every_epochs=1
+  "wandb.tags=[smoke,alcf,polaris,ontology_2026_10_23]" wandb.round=ontology_smoke)
+run() {  # run <card> <log name> <overrides...>
+  local card=$1 name=$2; shift 2
+  CUDA_VISIBLE_DEVICES=$card "$PY" experiments/043-expression-proteome-morphology/scripts/train_043.py \
+    "${common[@]}" "$@" > "$OUT/$name.log" 2>&1 &
+}
+run 0 card0_onto_bs8 model.conditioning.source=ontology data.batch_size=8 budget.max_epochs=2
+run 1 card1_onto_bs8_packA model.conditioning.source=ontology data.batch_size=8 budget.max_epochs=2 seed=1
+run 1 card1_onto_bs8_packB model.conditioning.source=ontology data.batch_size=8 budget.max_epochs=2 seed=2
+run 2 card2_name_bs8 model.conditioning.source=name data.batch_size=8 budget.max_epochs=2
+run 3 card3_onto_bs32 model.conditioning.source=ontology data.batch_size=32 data.label_batch_size=true budget.max_epochs=1
+( while sleep 60; do nvidia-smi --query-gpu=index,utilization.gpu,memory.used --format=csv,noheader; done ) > "$OUT/nvidia_smi.log" 2>&1 &
+MON=$!
+rc=0
+for j in $(jobs -p | grep -v "^$MON$"); do wait "$j" || rc=$?; done
+kill "$MON" 2>/dev/null || true
+for f in "$OUT"/*.log; do
+  echo "===== $(basename "$f")"
+  grep -E "^\[setup\]|^\[projection\]|^\[epoch|^\[budget\]|wandb: .*runs/|Traceback|Error" "$f" | cut -c1-400
+done
+echo "done $(date) rc $rc"
+exit "$rc"

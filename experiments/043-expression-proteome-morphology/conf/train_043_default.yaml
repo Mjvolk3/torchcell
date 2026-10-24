@@ -23,9 +23,15 @@ device: auto
 # the optimizer) initialize this run; the W&B group becomes
 # finetune_<arm without alone_>_from_<stage-1 group>. optim.lr is the fine-tune lr.
 init_from: null
+# PREEMPTIBLE QUEUES (2026-10-23): a fixed id names the checkpoint directory and the W&B run;
+# a resubmitted job with the same id resumes from that directory's last.pt.
+resume_id: null
 
 data:
   route: A
+  # null = the store generation's prepared store (prep_v3 for v2); prep_v4 = prep_v3 plus the
+  # per-record experiment ontology annotation (needed by model.conditioning.source=ontology)
+  prep_version: null
   # STORE GENERATION (2026-10-23, store_version_043): v2 = raw_043_v2 (every served
   # record admitted, no gene-set clause), prep_v3, representation_043_v2, global_split_v2.
   # v1 = raw_043, prep_v2, representation_043, global_split_v1: every run before
@@ -41,6 +47,7 @@ data:
   # A balanced run is labeled <arm>_balanced_<loss>_<weighting> in W&B.
   sampler: records
   batch_size: 16
+  label_batch_size: false  # true appends _bs<N> to the W&B group (batch-size axis)
   num_workers: 4
   # Marks per record entering the operator. null = every mark: the data maximum, read
   # from the prepared store at setup (4,416 on prep_v2, N'Guessan), so no record is
@@ -76,6 +83,13 @@ model:
   dataset_token_dim: 8
   head_hidden: 128
   exp_type_mode: dag
+  # CONDITIONING (2026-10-23): name = type path + dataset + environment tokens and
+  # per-dataset bias tables (every earlier run); ontology = the record's experiment ontology
+  # annotation through OntologyDagEncoder (token width 40, as the name token), bias maps of
+  # it; no dataset id enters the forward pass. Needs data.prep_version=prep_v4.
+  conditioning:
+    source: name
+    state_dim: 16
 
 optim:
   lr: 3.0e-4
@@ -99,6 +113,7 @@ wandb:
   entity: null
   mode: online
   tags: []
+  round: null
 
 paths:
   data_root: ${oc.env:DATA_ROOT}

@@ -49,6 +49,7 @@ prepare stage reads the generation from ``STORE_043_VERSION`` (the same variable
 from __future__ import annotations
 
 import hashlib
+import json
 import math
 import os
 import os.path as osp
@@ -68,6 +69,10 @@ import pandas as pd
 import torch
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from torchcell.data.experiment_ontology import (
+    AnnotationRecipe,
+    ExperimentOntologyVocabulary,
+)
 from torchcell.data.representation_043 import ENCODERS, PositionGap
 from torchcell.losses.hl_gauss import HLGaussConfig, StandardizationStats
 from torchcell.models.cell_model_043 import (
@@ -94,7 +99,10 @@ EXPERIMENT = "043-expression-proteome-morphology"
 #: The prepared-store version is the store generation's (``store_version_043``):
 #: prep_v2 (2026-10-23, store v1) adds Hu 2007, Jackson 2020 and Nadal-Ribelles 2025 to
 #: prep_v1's ten datasets, the joint_9 records and their targets unchanged; prep_v3
-#: (store v2) is the same build over raw_043_v2, every served record admitted.
+#: (store v2) is the same build over raw_043_v2, every served record admitted. prep_v4
+#: (2026-10-23) is prep_v3 plus each record's experiment ontology annotation
+#: (``rec_onto`` into ``onto_profiles``, over the vocabulary ``ontology_annotation_043.py``
+#: built from the whole raw store, copied into the prep dir as ``ONTOLOGY_VOCAB``).
 WANDB_PROJECT = "torchcell_043-expression-proteome-morphology"
 ISO_REL = "data/scerevisiae/isolate_embeddings/peter2018_1011"
 #: 019's nine gene-gene relations, one per attention head (names of
@@ -113,6 +121,9 @@ GRAPH_NAMES: tuple[str, ...] = (
 ROLE_CODE: dict[Role, int] = {Role.TRAIN: 0, Role.VAL: 1, Role.SPLIT_B: 2}
 BOOCOCK_POOLED_MEDIA = "SM (synthetic minimal"
 BOOCOCK_POOLED_COUNT = 393
+ONTOLOGY_VOCAB = "experiment_ontology_vocab.json"
+#: Prepared-store versions that carry the ontology annotation.
+ONTOLOGY_PREP_VERSIONS = frozenset({"prep_v4"})
 
 Transform = Literal[
     "as_released",
@@ -348,6 +359,12 @@ class ArmConfig(BaseModel):
     name: str
     datasets: list[str] = Field(min_length=1)
     doubles: bool = True
+    exclude_from_training: list[str] = Field(
+        default_factory=list,
+        description="arm datasets never trained on (no training batch holds them) but "
+        "evaluated like the others: leave-one-dataset-out, read through the model's "
+        "conditioning alone (needs model.conditioning.source=ontology to mean anything)",
+    )
 
     @model_validator(mode="after")
     def _known(self) -> ArmConfig:
@@ -357,6 +374,12 @@ class ArmConfig(BaseModel):
                 raise ValueError(f"{d!r} is not a trainable dataset: {sorted(SPECS)}")
         if len(set(self.datasets)) != len(self.datasets):
             raise ValueError("datasets repeat")
+        bad = [d for d in self.exclude_from_training if d not in self.datasets]
+        if bad or set(self.exclude_from_training) == set(self.datasets):
+            raise ValueError(
+                f"exclude_from_training {self.exclude_from_training} must be a proper "
+                f"subset of the arm datasets {self.datasets}"
+            )
         if self.doubles and "kemmeren" not in self.datasets:
             raise ValueError("doubles are read through Kemmeren; list kemmeren")
         return self
@@ -386,6 +409,11 @@ class DataConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     route: Literal["A", "B"] = "A"
+    prep_version: str | None = Field(
+        default=None,
+        description="prepared-store version; None = the store generation's (prep_v3 "
+        "for v2). prep_v4 = prep_v3 plus the ontology annotation",
+    )
     store_version: StoreVersion = Field(
         default="v2",
         description="the 043 store generation (store_version_043): v2 = raw_043_v2 "
@@ -399,6 +427,10 @@ class DataConfig(BaseModel):
         "within it. Composes with weighting (the loss-side knob).",
     )
     batch_size: int = Field(default=16, gt=0)
+    label_batch_size: bool = Field(
+        default=False,
+        description="append _bs<batch_size> to the W&B group (a batch-size axis)",
+    )
     num_workers: int = Field(default=4, ge=0)
     mark_cap: int | None = Field(
         default=None,
@@ -409,6 +441,21 @@ class DataConfig(BaseModel):
     val_max_records_per_dataset: int | None = Field(default=2000, gt=0)
     traineval_max_records_per_dataset: int = Field(default=256, gt=0)
     min_strains_per_gene: int = Field(default=3, ge=2)
+
+
+class ConditioningConfig(BaseModel):
+    """What the heads are conditioned on (``CellModel043Config.conditioning``)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    source: Literal["name", "ontology"] = Field(
+        default="name",
+        description="name: type path + dataset + environment tokens and per-dataset bias "
+        "tables (every run before 2026-10-23 ontology round); ontology: the experiment "
+        "ontology annotation through OntologyDagEncoder (width 40 = the name token's), "
+        "bias maps of it; needs a prep_v4 store",
+    )
+    state_dim: int = Field(default=16, gt=0)
 
 
 class ModelConfig(BaseModel):
@@ -431,6 +478,9 @@ class ModelConfig(BaseModel):
     dataset_token_dim: int = 8
     head_hidden: int = 128
     exp_type_mode: Literal["flat", "dag"] = "dag"
+    conditioning: ConditioningConfig = Field(
+        default_factory=lambda: ConditioningConfig()
+    )
 
 
 class OptimConfig(BaseModel):
@@ -504,6 +554,7 @@ class WandbConfig(BaseModel):
     entity: str | None = None
     mode: Literal["online", "offline", "disabled"] = "online"
     tags: list[str] = Field(default_factory=list)
+    round: str | None = Field(default=None, description="round label (config only)")
 
 
 class PathsConfig(BaseModel):
@@ -524,8 +575,10 @@ class PathsConfig(BaseModel):
             osp.dirname(SCRIPTS), "conf", "splits", f"{store.split_version}.json"
         )
 
-    def resolved_prep_dir(self, route: str, store: StorePaths043) -> str:
-        """The prepared store directory."""
+    def resolved_prep_dir(
+        self, route: str, store: StorePaths043, prep_version: str | None = None
+    ) -> str:
+        """The prepared store directory (``prep_version`` overrides the generation's)."""
         if self.prep_dir is not None:
             return self.prep_dir
         return osp.join(
@@ -533,7 +586,7 @@ class PathsConfig(BaseModel):
             "data/torchcell/experiments",
             EXPERIMENT,
             "train_043_prep",
-            f"{store.prep_version}_route{route}",
+            f"{prep_version or store.prep_version}_route{route}",
         )
 
     def resolved_representation_root(self, store: StorePaths043) -> str:
@@ -573,6 +626,12 @@ class TrainConfig043(BaseModel):
         description="the stage-1 run's W&B group, read from the checkpoint by run(); "
         "names this run finetune_<dataset>_from_<label>",
     )
+    resume_id: str | None = Field(
+        default=None,
+        description="checkpoint directory name and W&B run id: a rerun with the same id "
+        "resumes from that directory's last.pt (model, optimizer, epoch, step) and the "
+        "same W&B run (preemptible queues); None = one fresh directory per job",
+    )
     arm: ArmConfig
     loss: LossConfig
     weighting: WeightingConfig
@@ -588,6 +647,11 @@ class TrainConfig043(BaseModel):
         """A stage-1 label only with a stage-1 checkpoint."""
         if self.init_from_label is not None and self.init_from is None:
             raise ValueError("init_from_label without init_from")
+        if (
+            self.arm.exclude_from_training
+            and self.model.conditioning.source != "ontology"
+        ):
+            raise ValueError("exclude_from_training is read through the ontology only")
         return self
 
     @property
@@ -604,7 +668,13 @@ class TrainConfig043(BaseModel):
                 )
             return f"finetune_{self.arm.name.removeprefix('alone_')}_from_{self.init_from_label}"
         sampler = "_balanced" if self.data.sampler == "balanced" else ""
-        return f"{self.arm.name}{sampler}_{self.loss.kind}_{self.weighting.kind}"
+        onto = "_onto" if self.model.conditioning.source == "ontology" else ""
+        lodo = "".join(f"_lodo_{d}" for d in self.arm.exclude_from_training)
+        bs = f"_bs{self.data.batch_size}" if self.data.label_batch_size else ""
+        return (
+            f"{self.arm.name}{lodo}{onto}{sampler}_{self.loss.kind}_"
+            f"{self.weighting.kind}{bs}"
+        )
 
     @property
     def run_name(self) -> str:
@@ -629,6 +699,9 @@ class PreparedMeta(BaseModel):
     graph_names: list[str]
     counts: dict[str, dict[str, int]]
     edges_outside_index: dict[str, int] = Field(default_factory=dict)
+    ontology_vocab_sha256: str | None = None
+    ontology_n_nodes: int | None = None
+    ontology_n_profiles: int | None = None
     created_at: str
     host: str
     slurm_job_id: str | None
@@ -677,13 +750,21 @@ class PreparedStore043:
     rel_midpoint: npt.NDArray[np.float32]
     Y: npt.NDArray[np.float32]
     edges: dict[str, npt.NDArray[np.int64]] = field(default_factory=dict)
+    # prep_v4: the ontology profile of every record, and the distinct profiles
+    rec_onto: npt.NDArray[np.int32] = field(
+        default_factory=lambda: np.zeros(0, np.int32)
+    )
+    onto_profiles: npt.NDArray[np.float32] = field(
+        default_factory=lambda: np.zeros((0, 0), np.float32)
+    )
+    ontology_vocabulary: ExperimentOntologyVocabulary | None = None
 
     def array_fields(self) -> dict[str, np.ndarray]:
         """Every array, by name (edges as ``edges__<name>``)."""
         out = {
             f.name: getattr(self, f.name)
             for f in fields(self)
-            if f.name not in ("meta", "edges")
+            if f.name not in ("meta", "edges", "ontology_vocabulary")
         }
         out.update({f"edges__{k}": v for k, v in self.edges.items()})
         return out
@@ -694,6 +775,8 @@ class PreparedStore043:
         np.savez(osp.join(directory, "store.npz"), **self.array_fields())
         with open(osp.join(directory, "meta.json"), "w") as f:
             f.write(self.meta.model_dump_json(indent=1))
+        if self.ontology_vocabulary is not None:
+            self.ontology_vocabulary.to_json(osp.join(directory, ONTOLOGY_VOCAB))
 
     @classmethod
     def load(cls, directory: str) -> PreparedStore043:
@@ -707,7 +790,14 @@ class PreparedStore043:
             for k in list(arrays)
             if k.startswith("edges__")
         }
-        return cls(meta=meta, edges=edges, **arrays)
+        vocab = None
+        if meta.ontology_vocab_sha256 is not None:
+            path = osp.join(directory, ONTOLOGY_VOCAB)
+            with open(path, "rb") as f:
+                if hashlib.sha256(f.read()).hexdigest() != meta.ontology_vocab_sha256:
+                    raise ValueError(f"{path} does not match the sha256 in meta.json")
+            vocab = ExperimentOntologyVocabulary.from_json(path)
+        return cls(meta=meta, edges=edges, ontology_vocabulary=vocab, **arrays)
 
 
 # =========================================================================== prepare
@@ -797,9 +887,10 @@ def _context_hash(*arrays: np.ndarray) -> str:
 class _PrepRows(torch.utils.data.Dataset[dict[str, Any] | None]):
     """One compact row per raw record (runs in DataLoader workers)."""
 
-    def __init__(self, ds: Any, split: GlobalSplit043) -> None:
+    def __init__(self, ds: Any, split: GlobalSplit043, ontology: bool = False) -> None:
         self.ds = ds
         self.split = split
+        self.ontology = ontology
         self.short_of = {s.name: s.short for s in SPECS.values()}
 
     def __len__(self) -> int:
@@ -959,6 +1050,20 @@ class _PrepRows(torch.utils.data.Dataset[dict[str, Any] | None]):
                 ]
             ).astype(np.int8),
         }
+        onto = None
+        if self.ontology:
+            from torchcell.data.experiment_ontology import annotation_recipe
+            from torchcell.datamodels.schema import (
+                EXPERIMENT_REFERENCE_TYPE_MAP,
+                EXPERIMENT_TYPE_MAP,
+            )
+
+            rr = record["experiment_reference"]
+            recipe = annotation_recipe(
+                EXPERIMENT_TYPE_MAP[ex["experiment_type"]](**ex),
+                EXPERIMENT_REFERENCE_TYPE_MAP[rr["experiment_reference_type"]](**rr),
+            )
+            onto = json.dumps(recipe.model_dump(), sort_keys=True)
         genes2 = [-1, -1]
         if spec.short in ("kemmeren", "sameith_dm"):
             idx = [self.ds.gene_to_idx[k] for k in key if k in self.ds.gene_to_idx]
@@ -975,6 +1080,7 @@ class _PrepRows(torch.utils.data.Dataset[dict[str, Any] | None]):
             "marks": marks,
             "genes2": genes2,
             "n_sentinel": n_sentinel,
+            "onto": onto,
         }
 
 
@@ -1020,8 +1126,23 @@ def prepare(
     route: Literal["A", "B"],
     workers: int,
     generation: StorePaths043,
+    prep_version: str | None = None,
+    ontology_vocab: str | None = None,
 ) -> str:
-    """Build the prepared store over every spec (module docstring)."""
+    """Build the prepared store over every spec (module docstring).
+
+    ``prep_version`` names the output (default: the generation's); a version in
+    ``ONTOLOGY_PREP_VERSIONS`` also annotates every record against the vocabulary JSON
+    ``ontology_vocab`` (written by ``ontology_annotation_043.py`` over the whole raw
+    store); a record whose annotation leaves that vocabulary raises.
+    """
+    prep_version = prep_version or generation.prep_version
+    with_onto = prep_version in ONTOLOGY_PREP_VERSIONS
+    if with_onto != (ontology_vocab is not None):
+        raise ValueError(
+            f"{prep_version}: the ontology vocabulary is required exactly "
+            f"for {sorted(ONTOLOGY_PREP_VERSIONS)}"
+        )
     import dataset_043 as d043
 
     from torchcell.data.representation_043 import RepresentationConfig
@@ -1045,7 +1166,10 @@ def prepare(
     split.check_store(osp.join(ds.config.store_root, "raw", d043.RAW_INDEX_NAME))
     G = ds.n_genes
     loader = torch.utils.data.DataLoader(
-        _PrepRows(ds, split), batch_size=64, num_workers=workers, collate_fn=lambda b: b
+        _PrepRows(ds, split, with_onto),
+        batch_size=64,
+        num_workers=workers,
+        collate_fn=lambda b: b,
     )
     shorts = list(SPECS)
     tables = ds.resolver.tables
@@ -1065,6 +1189,7 @@ def prepare(
     marks: dict[str, list[np.ndarray]] = defaultdict(list)
     ys: list[np.ndarray] = []
     env_index: dict[str, int] = {}
+    onto_index: dict[str, int] = {}
     counts: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     done = 0
     for chunk in loader:
@@ -1085,6 +1210,8 @@ def prepare(
             rec["raw_index"].append(row["raw_index"])
             rec["role"].append(row["role"])
             rec["env"].append(env_index.setdefault(row["env"], len(env_index)))
+            if with_onto:
+                rec["onto"].append(onto_index.setdefault(row["onto"], len(onto_index)))
             rec["context"].append(c)
             rec["yrow"].append(len(ys) if row["y"] is not None else -1)
             if row["y"] is not None:
@@ -1105,9 +1232,26 @@ def prepare(
     ptr = np.zeros(len(rec["n_marks"]) + 1, dtype=np.int64)
     ptr[1:] = np.cumsum(rec["n_marks"])
     edges, outside = _edge_lists(paths.data_root, ds.genes)
+    vocab = None
+    onto_profiles = np.zeros((0, 0), np.float32)
+    vocab_sha = None
+    if with_onto:
+        assert ontology_vocab is not None
+        vocab = ExperimentOntologyVocabulary.from_json(ontology_vocab)
+        onto_profiles = np.stack(
+            [
+                vocab.vector_from_recipe(
+                    AnnotationRecipe.model_validate_json(k)
+                ).numpy()
+                for k in onto_index
+            ]
+        ).astype(np.float32)
+        with open(ontology_vocab, "rb") as f:
+            vocab_sha = hashlib.sha256(f.read()).hexdigest()
+        print(f"ontology: {len(vocab)} nodes, {len(onto_index)} distinct profiles")
     prepared = PreparedStore043(
         meta=PreparedMeta(
-            prep_version=generation.prep_version,
+            prep_version=prep_version,
             route=route,
             split_version=split.version,
             split_store_sha256=split.store_sha256,
@@ -1118,6 +1262,9 @@ def prepare(
             graph_names=list(GRAPH_NAMES),
             counts={k: dict(v) for k, v in counts.items()},
             edges_outside_index=outside,
+            ontology_vocab_sha256=vocab_sha,
+            ontology_n_nodes=None if vocab is None else len(vocab),
+            ontology_n_profiles=len(onto_index) if with_onto else None,
             created_at=datetime.now(UTC).isoformat(timespec="seconds"),
             host=socket.gethostname(),
             slurm_job_id=os.environ.get("SLURM_JOB_ID"),
@@ -1154,8 +1301,11 @@ def prepare(
         rel_midpoint=ds.resolver.pos.rel_midpoint.astype(np.float32),
         Y=np.stack(ys).astype(np.float32),
         edges=edges,
+        rec_onto=np.asarray(rec["onto"], np.int32),
+        onto_profiles=onto_profiles,
+        ontology_vocabulary=vocab,
     )
-    out = paths.resolved_prep_dir(route, generation)
+    out = paths.resolved_prep_dir(route, generation, prep_version)
     prepared.save(out)
     print(prepared.meta.model_dump_json(indent=1))
     return out
@@ -1182,6 +1332,7 @@ class TrainingView:
     mark_rows: npt.NDArray[np.int32]  # [M, 4] compact rows
     used_ids: list[npt.NDArray[np.int64]]  # per encoder: sorted vocab ids
     mark_cap: int | None
+    train_mask: npt.NDArray[np.bool_] | None = None  # [R_arm] False = excluded dataset
     doubles: npt.NDArray[np.int64] = field(
         default_factory=lambda: np.zeros(0, np.int64)
     )  # arm positions of split-B records
@@ -1295,6 +1446,10 @@ def build_view(
         mark_rows=mark_rows,
         used_ids=used_ids,
         mark_cap=mark_cap,
+        train_mask=np.asarray(
+            [arm.datasets[d] not in arm.exclude_from_training for d in local_dataset],
+            bool,
+        ),
     )
     if arm.doubles:
         _attach_doubles(view, rec_short)
@@ -1390,6 +1545,9 @@ def make_batch(
         dataset_ids=torch.from_numpy(view.head_dataset[pos]),
         exp_type_ids=torch.from_numpy(view.exp_type[pos]),
         env_ids=torch.from_numpy(store.rec_env[rec].astype(np.int64)),
+        ontology=torch.from_numpy(store.onto_profiles[store.rec_onto[rec]])
+        if store.rec_onto.size
+        else None,
     )
     g = np.nonzero(view.level_gene[pos])[0]
     rr = np.nonzero(~view.level_gene[pos])[0]
@@ -1575,6 +1733,8 @@ class WandbLogger:
             mode=cfg.wandb.mode,
             tags=list(cfg.wandb.tags),
             config=config_dump,
+            id=cfg.resume_id,
+            resume="allow" if cfg.resume_id is not None else None,
         )
 
     def log(self, values: dict[str, float], step: int) -> None:
@@ -1684,7 +1844,8 @@ def init_from_checkpoint(
     rows = torch.as_tensor([src.arm.datasets.index(d) for d in view.datasets])
     sd = dict(state["model"])
     for k in DATASET_INDEXED:
-        sd[k] = sd[k][rows]
+        if k in sd:  # absent under ontology conditioning
+            sd[k] = sd[k][rows]
     model.load_state_dict(sd, strict=True)
     return {
         "setup/init_from_epoch": float(state["epoch"]),
@@ -1770,6 +1931,8 @@ def build_model(
         type_token_dim=cfg.model.type_token_dim,
         env_token_dim=cfg.model.env_token_dim,
         dataset_token_dim=cfg.model.dataset_token_dim,
+        conditioning=cfg.model.conditioning.source,
+        ontology_state_dim=cfg.model.conditioning.state_dim,
         head_hidden=cfg.model.head_hidden,
         loss=cfg.loss.kind,
         hl_gauss=cfg.loss.hl_gauss,
@@ -1793,7 +1956,22 @@ def build_model(
         rel_midpoint=torch.from_numpy(store.rel_midpoint),
         head_mask=head_mask,
         encoder_dims=[int(t.shape[1]) for t in tables],
+        ontology_vocabulary=_ontology_vocabulary(cfg, store),
     )
+
+
+def _ontology_vocabulary(
+    cfg: TrainConfig043, store: PreparedStore043
+) -> ExperimentOntologyVocabulary | None:
+    """The prep_v4 vocabulary under ontology conditioning (raises without one)."""
+    if cfg.model.conditioning.source != "ontology":
+        return None
+    if store.ontology_vocabulary is None or not store.rec_onto.size:
+        raise ValueError(
+            f"ontology conditioning needs a prepared store with the annotation "
+            f"({sorted(ONTOLOGY_PREP_VERSIONS)}); {store.meta.prep_version} has none"
+        )
+    return store.ontology_vocabulary
 
 
 def batch_loss(
@@ -2125,6 +2303,14 @@ def train(
     table_gb = model.composite.table_bytes() / 1e9
     n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     train_pos = view.positions(ROLE_CODE[Role.TRAIN])
+    if cfg.arm.exclude_from_training:
+        assert view.train_mask is not None
+        train_pos = train_pos[view.train_mask[train_pos]]
+        print(
+            f"[setup] leave-dataset-out: {cfg.arm.exclude_from_training} never trained "
+            f"on, evaluated through the ontology conditioning only",
+            flush=True,
+        )
     val_pos = eval_positions(
         view, ROLE_CODE[Role.VAL], cfg.data.val_max_records_per_dataset, cfg.seed
     )
@@ -2139,7 +2325,9 @@ def train(
     ckpt_dir = osp.join(
         cfg.paths.resolved_checkpoint_root(),
         cfg.run_name,
-        os.environ.get("SLURM_JOB_ID")
+        cfg.resume_id
+        or os.environ.get("SLURM_JOB_ID")
+        or os.environ.get("PBS_JOBID")
         or f"local-{datetime.now(UTC).strftime('%Y%m%dT%H%M%S%f')}",
     )
     os.makedirs(ckpt_dir, exist_ok=True)
@@ -2150,6 +2338,22 @@ def train(
         f"{len(te_pos)} traineval records; {len(view.doubles)} doubles; "
         f"{n_params / 1e6:.2f} M trainable parameters; frozen tables {table_gb:.2f} GB "
         f"({[len(u) for u in view.used_ids]} rows); standardization sha256 {stats_sha}",
+        flush=True,
+    )
+    print(
+        "[setup] composite gene token: encoders "
+        + ", ".join(
+            f"{e} {int(t.shape[1])}-d x {int(t.shape[0])} rows"
+            for e, t in zip(ENCODERS, tables, strict=True)
+        )
+        + f"; conditioning {cfg.model.conditioning.source}"
+        + (
+            f" ({len(store.ontology_vocabulary)} ontology nodes, "
+            f"{int(np.unique(store.rec_onto[view.rec]).size)} profiles in the arm)"
+            if cfg.model.conditioning.source == "ontology"
+            and store.ontology_vocabulary is not None
+            else ""
+        ),
         flush=True,
     )
     cap_line, cap_logs = mark_cap_report(view)
@@ -2190,6 +2394,15 @@ def train(
     epoch_seconds: list[float] = []
     last: dict[str, float] = {}
     epoch = 0
+    resume_path = osp.join(ckpt_dir, "last.pt")
+    if cfg.resume_id is not None and osp.exists(resume_path):
+        st = torch.load(resume_path, map_location=device, weights_only=False)
+        if st["config"] != cfg.model_dump(mode="json"):
+            raise ValueError(f"{resume_path} was written under another config")
+        model.load_state_dict(st["model"], strict=True)
+        opt.load_state_dict(st["optimizer"])
+        epoch, step = int(st["epoch"]), int(st["step"])
+        print(f"[resume] {resume_path}: epoch {epoch}, step {step}", flush=True)
     while epoch < n_epochs:
         epoch += 1
         t_epoch = time.time()
@@ -2209,7 +2422,7 @@ def train(
         for i, (batch, tg) in enumerate(loader):
             if i >= steps_per_epoch or (max_steps is not None and step >= max_steps):
                 break
-            if epoch == 1 and i == 5:
+            if not epoch_seconds and i == 5:
                 t_probe = time.time()
             for g in opt.param_groups:
                 g["lr"] = _lr_at(step, cfg.optim)
@@ -2251,7 +2464,11 @@ def train(
                     },
                     step=step,
                 )
-            if epoch == 1 and t_probe is not None and i == 5 + cfg.budget.probe_steps:
+            if (
+                not epoch_seconds
+                and t_probe is not None
+                and i == 5 + cfg.budget.probe_steps
+            ):
                 s_per_step = (time.time() - t_probe) / cfg.budget.probe_steps
                 proj = s_per_step * steps_per_epoch
                 print(
@@ -2294,7 +2511,7 @@ def train(
                 torch.get_device_module(device).max_memory_allocated(device) / 1e9
             )
         logs["time/epochs_per_hour"] = 3600.0 / dt
-        if epoch == 1 and cfg.budget.time_budget_hours is not None:
+        if len(epoch_seconds) == 1 and cfg.budget.time_budget_hours is not None:
             remaining = (
                 cfg.budget.time_budget_hours * 3600
                 - (time.time() - t_start)
@@ -2333,6 +2550,7 @@ def train(
                         "val/promoter/pearson",
                         "val/doubles/pearson",
                         "operator/relative_norm",
+                        "time/peak_gpu_gb",
                     )
                 )
             ),
@@ -2374,6 +2592,9 @@ def config_dump(cfg: TrainConfig043, store: PreparedStore043) -> dict[str, Any]:
         "torchcell_commit": store.meta.torchcell_commit,
     }
     d["registered_window"] = cfg.budget.registered_window.model_dump()
+    d["round"] = cfg.wandb.round
+    d["prep"]["ontology_n_nodes"] = store.meta.ontology_n_nodes
+    d["prep"]["ontology_vocab_sha256"] = store.meta.ontology_vocab_sha256
     d["host"] = socket.gethostname()
     d["slurm_job_id"] = os.environ.get("SLURM_JOB_ID")
     d["torchcell_commit"] = _git_commit()
@@ -2386,7 +2607,7 @@ def run(cfg: TrainConfig043) -> RunResult:
         cfg = cfg.model_copy(update={"init_from_label": stage1_label(cfg.init_from)})
     generation = store_paths(cfg.data.store_version)
     store = PreparedStore043.load(
-        cfg.paths.resolved_prep_dir(cfg.data.route, generation)
+        cfg.paths.resolved_prep_dir(cfg.data.route, generation, cfg.data.prep_version)
     )
     split = load_split(cfg.paths.resolved_split_file(generation))
     if (split.version, split.store_sha256) != (
@@ -2444,8 +2665,23 @@ if __name__ == "__main__":
         ap.add_argument("--stage", choices=["prepare"], required=True)
         ap.add_argument("--route", choices=["A", "B"], default="A")
         ap.add_argument("--workers", type=int, default=32)
+        ap.add_argument("--prep-version", default=None, help="e.g. prep_v4")
+        ap.add_argument(
+            "--ontology-vocab",
+            default=None,
+            help="vocabulary JSON of ontology_annotation_043.py (prep_v4)",
+        )
         args = ap.parse_args()
         paths = PathsConfig(data_root=os.environ["DATA_ROOT"])
-        print(prepare(paths, args.route, args.workers, active_store()))
+        print(
+            prepare(
+                paths,
+                args.route,
+                args.workers,
+                active_store(),
+                args.prep_version,
+                args.ontology_vocab,
+            )
+        )
     else:
         _hydra_main()

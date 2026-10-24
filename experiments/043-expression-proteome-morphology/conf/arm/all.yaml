@@ -11,3 +11,5 @@
 name: all
 datasets: [kemmeren, messner, zelezniak, caudal, muenzner, turnover, boocock, nguessan, vaishnav, hu, jackson, nadal]
 doubles: true
+# leave-dataset-out (ontology conditioning only): datasets never trained on, still evaluated
+exclude_from_training: []

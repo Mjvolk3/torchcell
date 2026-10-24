@@ -862,8 +862,12 @@ def run_doubles(cfg: LinearEvalConfig, split: GlobalSplit043) -> dict[str, Any]:
         np.stack([r["y"] for r in dm])
     ).all(0)
     roles = {g: split.deletion_role([g]) for g in K}
-    train_genes = sorted(g for g, r in roles.items() if r == Role.TRAIN)
-    val_genes = sorted(g for g, r in roles.items() if r == Role.VAL)
+    # A Kemmeren gene with no index position (store v2 admits 2: YLL016W, YNCB0010W) has
+    # no frozen token, so it cannot enter the token ridge; it is counted, as the split-A
+    # panels count n_units_outside_index.
+    outside = sorted(g for g in K if g not in gidx)
+    train_genes = sorted(g for g, r in roles.items() if r == Role.TRAIN and g in gidx)
+    val_genes = sorted(g for g, r in roles.items() if r == Role.VAL and g in gidx)
     mu = np.mean(np.stack([K[g] for g in train_genes]), 0)[cols]
     tokens = load_tokens(cfg, genes)
     # single-fit ridge f on the Kemmeren training genes, penalty on the validation fold
@@ -932,6 +936,7 @@ def run_doubles(cfg: LinearEvalConfig, split: GlobalSplit043) -> dict[str, Any]:
         "n_doubles": len(dm),
         "n_genes": int(cols.sum()),
         "n_kemmeren_train_genes_for_mean": len(train_genes),
+        "kemmeren_genes_outside_index": outside,
         "ridge_log10_lambda_rel": lam_of,
         "fitted_coef_mean": [float(x) for x in np.mean(coefs, 0)],
         "fitted_coef_sd": [float(x) for x in np.std(coefs, 0)],

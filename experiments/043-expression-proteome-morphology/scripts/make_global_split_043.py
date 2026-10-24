@@ -217,11 +217,38 @@ def compare_to_v1(
     }
 
 
+def deal_new(
+    strata: dict[str, list[str]],
+    folds: list[int],
+    rng: np.random.Generator,
+    previous: dict[str, int],
+) -> dict[str, int]:
+    """Inheritance: every key ``previous`` holds keeps its fold; only the NEW keys of
+    each stratum are permuted and dealt round-robin over ``folds``, the deal continuing
+    across strata (``deal`` restricted to the new keys).
+    """
+    out = {
+        k: previous[k] for members in strata.values() for k in members if k in previous
+    }
+    new = {
+        stratum: [k for k in members if k not in previous]
+        for stratum, members in strata.items()
+    }
+    out.update(deal({k: v for k, v in new.items() if v}, folds, rng))
+    return out
+
+
 def main() -> None:
     """Read the keys, draw the folds, count, validate, write."""
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--workers", type=int, default=16)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--inherit-from",
+        default=None,
+        help="split version to inherit (e.g. global_split_v1): its keys keep their "
+        "folds and only new keys are drawn; omitted = full redraw",
+    )
     parser.add_argument(
         "--max-records", type=int, default=None, help="smoke test: records per dataset"
     )
@@ -244,6 +271,20 @@ def main() -> None:
 
     keys = read_keys(ds, args.workers)
     rng = np.random.default_rng(args.seed)
+    prev: GlobalSplit043 | None = None
+    if args.inherit_from is not None:
+        prev = GlobalSplit043.model_validate_json(
+            open(
+                osp.join(exp_dir, "conf", "splits", f"{args.inherit_from}.json")
+            ).read()
+        )
+
+    def draw(
+        strata: dict[str, list[str]], folds: list[int], previous: dict[str, int]
+    ) -> dict[str, int]:
+        if prev is None:
+            return deal(strata, folds, rng)
+        return deal_new(strata, folds, rng, previous)
 
     # ---- genes
     membership: dict[str, set[str]] = defaultdict(set)
@@ -269,8 +310,9 @@ def main() -> None:
     pinned_strata: dict[str, list[str]] = defaultdict(list)
     for g, p in pattern.items():
         (pinned_strata if g in pinned else free)[p].append(g)
-    gene_folds = deal(free, list(range(N_GENE_FOLDS)), rng)
-    gene_folds.update(deal(pinned_strata, list(range(2, N_GENE_FOLDS)), rng))
+    prev_genes = {} if prev is None else prev.gene_folds
+    gene_folds = draw(free, list(range(N_GENE_FOLDS)), prev_genes)
+    gene_folds.update(draw(pinned_strata, list(range(2, N_GENE_FOLDS)), prev_genes))
     outside_index = sorted(g for g in membership if g not in ds.gene_to_idx)
 
     # ---- isolates
@@ -285,7 +327,11 @@ def main() -> None:
     iso_strata: dict[str, list[str]] = defaultdict(list)
     for s, p in iso_pattern.items():
         iso_strata[p].append(s)
-    isolate_folds = deal(iso_strata, list(range(N_OTHER_FOLDS)), rng)
+    isolate_folds = draw(
+        iso_strata,
+        list(range(N_OTHER_FOLDS)),
+        {} if prev is None else prev.isolate_folds,
+    )
 
     # ---- segregants
     seg_strata: dict[str, list[str]] = defaultdict(list)
@@ -298,15 +344,25 @@ def main() -> None:
     n_seg = sum(len(v) for v in seg_strata.values())
     if len({k for v in seg_strata.values() for k in v}) != n_seg:
         raise ValueError("segregant keys are not unique per record")
-    segregant_folds = deal(seg_strata, list(range(N_OTHER_FOLDS)), rng)
+    segregant_folds = draw(
+        seg_strata,
+        list(range(N_OTHER_FOLDS)),
+        {} if prev is None else prev.segregant_folds,
+    )
 
     # ---- promoters
     mers = sorted({seq for _, seq in keys[PROMOTER_DATASETS[0]]})
-    promoter_folds = deal({"all": mers}, list(range(N_OTHER_FOLDS)), rng)
+    promoter_folds = draw(
+        {"all": mers},
+        list(range(N_OTHER_FOLDS)),
+        {} if prev is None else prev.promoter_folds,
+    )
 
     store = active_store()
     split = GlobalSplit043(
         version=store.split_version,
+        mode="redraw" if prev is None else "inherit",
+        inherits_from=args.inherit_from,
         seed=args.seed,
         store_sha256=store_sha,
         store_index_path=index_path,
@@ -371,6 +427,8 @@ def main() -> None:
     }
     summary = {
         "out": out,
+        "mode": split.mode,
+        "inherits_from": split.inherits_from,
         "store_sha256": store_sha,
         "n_genes": len(gene_folds),
         "n_gene_strata": len(set(pattern.values())),
@@ -385,11 +443,35 @@ def main() -> None:
         "fold_sizes": {k: dict(sorted(v.items())) for k, v in fold_sizes.items()},
         "counts": {k: v.model_dump() for k, v in counts.items()},
     }
+    if prev is not None:
+        new_genes = sorted(set(gene_folds) - set(prev.gene_folds))
+        summary["new_gene_folds"] = {g: gene_folds[g] for g in new_genes}
+        summary["new_gene_fold_counts"] = dict(
+            sorted(Counter(gene_folds[g] for g in new_genes).items())
+        )
+        summary["new_gene_strata"] = {g: pattern[g] for g in new_genes}
+        summary["inherited_keys_unchanged"] = {
+            name: all(now[k] == f for k, f in before.items() if k in now)
+            and set(before) <= set(now)
+            for name, before, now in (
+                ("gene", prev.gene_folds, gene_folds),
+                ("isolate", prev.isolate_folds, isolate_folds),
+                ("segregant", prev.segregant_folds, segregant_folds),
+                ("promoter", prev.promoter_folds, promoter_folds),
+            )
+        }
     if store.version != "v1":
         summary["against_global_split_v1"] = compare_to_v1(
             osp.join(out_dir, "global_split_v1.json"), split, keys
         )
     summary_path = osp.join(exp_dir, "results", f"{store.split_version}_summary.json")
+    summary["record_counts"] = {
+        k: {
+            r: v.model_dump().get(r, 0)
+            for r in ("train", "val", "test", "split_b_test", "probe", "excluded")
+        }
+        for k, v in counts.items()
+    }
     with open(summary_path, "w") as f:
         json.dump(summary, f, indent=1)
     print(json.dumps(summary, indent=1))

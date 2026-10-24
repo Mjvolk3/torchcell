@@ -578,6 +578,16 @@ class OptimConfig(BaseModel):
         "the run's last optimizer step",
     )
     min_lr_frac: float = Field(default=0.0, ge=0.0, le=1.0)
+    accumulate_steps: int = Field(
+        default=1,
+        ge=1,
+        description="micro-batches of data.batch_size per optimizer step (effective "
+        "batch = batch_size x accumulate_steps). Steps, warmup, the lr schedule and "
+        "max_steps(_per_epoch) count OPTIMIZER steps. Each micro-batch loss is weighted "
+        "per dataset inside the micro-batch (weighting.kind), so with several datasets "
+        "it is not exactly one step at the effective batch; one dataset with equal "
+        "micro-batches is",
+    )
 
 
 class WindowConfig(BaseModel):
@@ -2635,6 +2645,7 @@ SWEEP_DEFAULTS: dict[tuple[str, str], Any] = {
     ("weighting", "by"): "dataset",
     ("optim", "schedule"): "constant",
     ("optim", "min_lr_frac"): 0.0,
+    ("optim", "accumulate_steps"): 1,
 }
 
 
@@ -2777,7 +2788,9 @@ def train(
     opt = torch.optim.AdamW(
         model.parameters(), lr=cfg.optim.lr, weight_decay=cfg.optim.weight_decay
     )
-    steps_per_epoch = math.ceil(len(train_pos) / cfg.data.batch_size)
+    acc = cfg.optim.accumulate_steps
+    micro_per_epoch = math.ceil(len(train_pos) / cfg.data.batch_size)
+    steps_per_epoch = math.ceil(micro_per_epoch / acc)
     if cfg.budget.max_steps_per_epoch is not None:
         steps_per_epoch = min(steps_per_epoch, cfg.budget.max_steps_per_epoch)
     max_steps = cfg.budget.max_steps
@@ -2831,13 +2844,21 @@ def train(
             cfg.data.sampler,
         )
         t_probe = None
+        step_loss = 0.0
         for i, (batch, tg) in enumerate(loader):
-            if i >= steps_per_epoch or (max_steps is not None and step >= max_steps):
+            k, j = divmod(
+                i, acc
+            )  # optimizer step within the epoch, micro-batch within it
+            if k >= steps_per_epoch or (max_steps is not None and step >= max_steps):
                 break
+            group = min(acc, micro_per_epoch - k * acc)
             if not epoch_seconds and i == 5:
                 t_probe = time.time()
-            for g in opt.param_groups:
-                g["lr"] = _lr_at(step, cfg.optim, total_steps)
+            if j == 0:
+                for g in opt.param_groups:
+                    g["lr"] = _lr_at(step, cfg.optim, total_steps)
+                opt.zero_grad(set_to_none=True)
+                step_loss = 0.0
             b = batch.to(device)
             with _autocast(device):
                 out = model(b, tg.gene_rows.to(device), tg.record_rows.to(device))
@@ -2852,8 +2873,16 @@ def train(
                 if view.weight_group is None
                 else torch.from_numpy(view.weight_group),
             )
-            opt.zero_grad(set_to_none=True)
-            loss.backward()
+            (loss / group if group > 1 else loss).backward()
+            # train/loss and train/<dataset>/loss: means over micro-batches
+            loss_sum += float(loss.detach())
+            step_loss += float(loss.detach()) / group
+            n_steps += 1
+            for d, v in per_ds.items():
+                ds_sum[d] += v
+                ds_n[d] += 1
+            if j < group - 1:
+                continue
             grad_norm = float(
                 torch.nn.utils.clip_grad_norm_(
                     model.parameters(), cfg.optim.clip_grad_norm
@@ -2863,15 +2892,10 @@ def train(
                 raise FloatingPointError(f"non-finite gradient norm at step {step}")
             opt.step()
             step += 1
-            loss_sum += float(loss.detach())
-            n_steps += 1
-            for d, v in per_ds.items():
-                ds_sum[d] += v
-                ds_n[d] += 1
             if step % 50 == 0:
                 logger.log(
                     {
-                        "train/loss_step": float(loss.detach()),
+                        "train/loss_step": step_loss,
                         "train/grad_norm": grad_norm,
                         "train/grad_norm_clip_frac": grad_norm
                         / cfg.optim.clip_grad_norm,
@@ -2882,12 +2906,16 @@ def train(
             if (
                 not epoch_seconds
                 and t_probe is not None
-                and i == 5 + cfg.budget.probe_steps
+                and i >= 5 + cfg.budget.probe_steps
             ):
-                s_per_step = (time.time() - t_probe) / cfg.budget.probe_steps
-                proj = s_per_step * steps_per_epoch
+                # per micro-batch (= per optimizer step when accumulate_steps is 1); the
+                # first optimizer step at or after the probe window reports it, once
+                s_per_step = (time.time() - t_probe) / (i - 5)
+                t_probe = None
+                proj = s_per_step * steps_per_epoch * acc
+                unit = "step" if acc == 1 else f"micro-step (accumulate {acc})"
                 print(
-                    f"[projection] {s_per_step:.3f} s/step over {cfg.budget.probe_steps} steps; "
+                    f"[projection] {s_per_step:.3f} s/{unit} over {cfg.budget.probe_steps} steps; "
                     f"{steps_per_epoch} steps/epoch -> {proj / 60:.1f} min/epoch of training "
                     f"(evaluation not included); {n_epochs} epochs -> "
                     f"{proj * n_epochs / 3600:.2f} h",

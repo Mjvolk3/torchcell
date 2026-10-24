@@ -4,7 +4,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/alcf/aurora_run_cell_043.sh
 #
 # One cell of round aurora_2026_10_24 on one Aurora tile (ZE_AFFINITY_MASK set by the
-# caller): the stage-1 run on prep_v4, then its Kemmeren fine-tune from the stage-1 last.pt
+# caller): the stage-1 run on prep_v4, then (fine-tune 1) its Kemmeren fine-tune from the stage-1 last.pt
 # (20 epochs, lr 3e-4, 30 warmup steps, effective batch 8 = micro 2 x accumulate 4, or
 # micro 1 x accumulate 8 when stage 1 ran at micro-batch 1). Both
 # stages carry a fixed resume_id (a1024_<cell> and a1024_<cell>_ft), so a rerun PBS job
@@ -13,12 +13,12 @@
 # one-call path at batch 8 exceeds the 64 GB tile and page-faults; the chunked path goes
 # non-finite, open).
 #
-#   aurora_run_cell_043.sh <cell id> <hydra overrides of stage 1 ...>
+#   aurora_run_cell_043.sh <cell id> <fine-tune 0|1> <hydra overrides of stage 1 ...>
 #
 # The fine-tune keeps the stage-1 loss, seed, weighting and model section (init_from
 # requires an equal model section) and sets its own arm, batch, lr, warmup and epochs.
 set -euo pipefail
-cell=$1; shift
+cell=$1 finetune=$2; shift 2
 rid="a1024_${cell}"
 : "${PY:?}" "${DATA_ROOT:?}" "${TRAIN:?}"
 ROOT=$DATA_ROOT/experiments/043-expression-proteome-morphology/checkpoints_aurora_2026_10_24
@@ -29,6 +29,7 @@ common=(data.store_version=v2 data.prep_version=prep_v4 device=xpu data.num_work
 echo "[cell $cell] stage 1 on tile ${ZE_AFFINITY_MASK:-?} at $(date): $*"
 "$PY" "$TRAIN" "${common[@]}" "$@" resume_id="$rid" paths.checkpoint_root="$ROOT/$cell"
 
+[ "$finetune" = 1 ] || { echo "[cell $cell] done (no fine-tune) at $(date)"; exit 0; }
 shopt -s nullglob
 ckpts=("$ROOT/$cell"/*/"$rid"/last.pt)
 [ "${#ckpts[@]}" = 1 ] || { echo "[cell $cell] expected one stage-1 last.pt, found ${#ckpts[@]}" >&2; exit 4; }

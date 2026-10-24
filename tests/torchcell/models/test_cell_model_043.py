@@ -485,3 +485,56 @@ def test_ontology_forward_never_reads_a_dataset_id() -> None:
         )
     with pytest.raises(ValueError, match="vocabulary"):
         _model(_config("mse", conditioning="ontology"))
+
+
+# --------------------------------------------------------------------------- #
+# 043 sweep hooks (2026-10-24): trunk_ffn_mult and the mle / binned_quantile kinds
+# --------------------------------------------------------------------------- #
+# Recorded at HEAD 5f29aff8d, before the hooks existed, with this file's _config,
+# _model and _batch (CPU, float32): parameter count, sum of gene and record outputs.
+HEAD_REFERENCE = {
+    "hlgauss": (14076, 9.171564197167754, 2.805013310164213),
+    "pinball": (13764, -20.97563796164468, -0.6964259445667267),
+    "mse": (13332, 3.15146341919899, 0.00433029979467392),
+}
+
+
+@pytest.mark.parametrize("loss", sorted(HEAD_REFERENCE))
+def test_default_config_is_bit_identical_to_head(loss: str) -> None:
+    n_params, gene_sum, record_sum = HEAD_REFERENCE[loss]
+    model = _model(_config(loss)).eval()
+    batch = _batch()
+    with torch.no_grad():
+        out = model(batch, torch.tensor([0, 1]), torch.tensor([2]))
+    assert sum(p.numel() for p in model.parameters()) == n_params
+    assert float(out.gene.double().sum()) == gene_sum  # exact
+    assert float(out.record.double().sum()) == record_sum  # exact
+
+
+def test_trunk_ffn_mult_sets_the_trunk_ffn_width_only() -> None:
+    for mult in (2, 4):
+        model = _model(_config("mse", trunk_ffn_mult=mult))
+        trunk_ffn = [
+            (m.in_features, m.out_features)
+            for name, m in model.trunk.named_modules()
+            if isinstance(m, torch.nn.Linear) and ".ffn." in name
+        ]
+        assert trunk_ffn == [(16, 16 * mult), (16 * mult, 16)] * 2  # two trunk layers
+        op_ffn = [
+            m.out_features
+            for name, m in model.operator.named_modules()
+            if isinstance(m, torch.nn.Linear) and name.startswith("ffn.")
+        ]
+        assert op_ffn == [16 * 4, 16]  # operator_ffn_mult, untouched
+    with pytest.raises(ValueError):
+        _config("mse", trunk_ffn_mult=0)
+
+
+def test_param_dim_of_the_sweep_losses() -> None:
+    assert _config("mle").param_dim == 2
+    assert _config("binned_quantile").param_dim == 32
+    model = _model(_config("mle"))
+    out = model(_batch(), torch.tensor([0, 1]), torch.tensor([2]))
+    assert tuple(out.gene.shape) == (2, G, 2) and tuple(out.record.shape) == (1, 2)
+    with pytest.raises(ValueError, match="ReadoutLossFamily043"):
+        ReadoutLoss043(_config("mle")).elementwise(out.record, torch.zeros(1))

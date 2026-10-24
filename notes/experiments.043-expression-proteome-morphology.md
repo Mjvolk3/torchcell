@@ -1645,3 +1645,35 @@ From the two live wave-1 runs: SSSS 0.039 s/step (334-341 s per epoch with evalu
 | hidden 288, gs1024_w2_h288 | 6356 | 6371 | afterany:6355 | 6357 -> afterany:6371 |
 
 MMMM 6342 still runs under STOP_HOURS 11.5, and its fine-tune 6343 is held (`scontrol hold`). This also holds slot B's wave 2, because binq 6344 depends on 6343. When 6342 ends: on COMPLETED with an `[epoch 80/80]` line, 6343 is released. Otherwise a resume job on the same run id (gs1024_w1_mmmm, resume_id = the checkpoint directory and the W&B id; same config) finishes the remaining epochs, and 6343 is released with afterok on that resume job. The registered window then covers epochs 71-80 complete.
+
+## 2026.10.24 - Aurora: GPU page faults, memory probe, micro-batch 1 resubmission
+
+Follows "2026.10.24 - Aurora: XPU fixes and capacity grid" above.
+
+### Faults in the micro-batch-2 grid (PBS 8959387, node x4412c7s5b0n0; PBS 8959388, node x4708c7s4b0n0)
+
+Every 80-epoch cell at micro-batch 2 except one died in epoch 1 on the same signature: `Segmentation fault from GPU at 0x...000, ctx_id: 1 (CCS) type: 0 (NotPresent), level: 1 (PDE), access: 1 (Write), banned: 1, aborting`, then `Abort was called at 288 line in file .../intel-compute-runtime-25.18.33578.77/shared/source/os_interface/linux/drm_neo.cpp`. The first fault came at 06:13 UTC (lodo_zelezniak, node 0 tile 11), and 20 of the 22 non-lodo 80-epoch cells had faulted by 08:02 UTC. The last W&B steps put the faults at 900 to 6,900 optimizer steps, which is 13,000 to 27,600 micro-steps. all_name s3 finished epoch 1 (val/loss 2.6206) and was still running at 08:30 UTC. alone_kemmeren (Kemmeren only, one context, `time/peak_gpu_gb` flat at 16.53 over 58 epochs) never faulted. PBS 8959387 ended by itself at 07:34 UTC (exit 134) once its 12 cells had died. Every dead run carries `ops/status = faulted`, `ops/fault_utc` and `ops/fault_last_step` in its W&B summary. The lodo runs carry `ops/status = moved_to_polaris`.
+
+Two separate findings:
+
+1. No out-of-range index on the lodo path. The bounds audit covered every epoch-1 micro-batch of lodo_hu (28,290) and lodo_zelezniak (28,363) against the tables of the arm's model: the key-row tables, record_context, mark gene and parent, dataset, environment and experiment-type ids, and the target rows. It found 0 out of range. CPU forward and backward of micro 11,780-12,010 (hu) and 9,580-9,810 (zelezniak) gave 0 non-finite values and no exception. Sources: GilaHyper slurm 6367 and 6368, `aurora_lodo_replay_043.py`. The batch census (`aurora_batch_census_043.py`) found no heavy micro-batch at the fault (at most 2 contexts and 331 marks), while heavier ones earlier in the epoch went through.
+2. A tile that faulted fails every later launch. After the faults, every relaunch on tiles 9 and 11 of x4412c7s5b0n0 died at its first training step with a host SIGSEGV (exit 139): 14 attempts, including a non-lodo config (`aurora_tile_test_043.sh`). A plain 4096 x 4096 matmul still ran on both tiles. Hypothesis (untested): the tile stays degraded until the node is reset.
+
+Kept for an ALCF ticket: `/flare/GenesisHackathonOct26/mjvolk3/torchcell/core.x4412c7s5b0n0.585635` (11.55 GB, tile 11) and `core.x4412c7s5b0n0.585639` (11.68 GB, tile 9). The 16 other core files (154 GB) were moved to `/flare/GenesisHackathonOct26/mjvolk3/torchcell/cores_2026-10-24/`. The runner now sets `ulimit -c 0`.
+
+### Memory probe (PBS 8959729, debug, 53 min, arm all, ontology, W&B tag aurora_memprobe)
+
+| arm (seeds 0 / 1) | `memory_reserved` GB at 5 min | `memory_reserved` GB at 53 min | reserved slope GB/h, 5-53 min | `max_memory_reserved` GB | micro-steps reached | GPU faults |
+|---|---|---|---|---|---|---|
+| baseline, micro 2 x 4 | 49.66 / 54.91 | 54.50 / 58.06 | 6.0 / 3.9, all in the first 15 min | 54.50 / 58.06 | 13,200 / 13,000 | 0 / 0 |
+| `PYTORCH_XPU_ALLOC_CONF=expandable_segments:True` | 49.66 / 54.91 | 54.50 / 58.06 | identical to baseline | 54.50 / 58.06 | 13,100 / 13,200 | 0 / 0 |
+| `torch.xpu.empty_cache()` every 50 optimizer steps | 49.66 / 54.91 | 5.36 / 5.41 after a release | sawtooth | 62.59 / 65.89 | 11,400 / 11,200 | 0 / 0 |
+| micro 1 x 8 | 22.93 / 23.10 | 23.80 / 23.11 | 1.1 / 0.0 | 23.80 / 23.11 | 14,200 / 14,300 | 0 / 0 |
+
+`memory_allocated` between steps is 3.83 GB in every arm. The device holds 68.7 GB. Reserved memory does not keep growing; the expandable setting has no effect on XPU; the cache release raises the peaks. The probe stopped before the production fault window, so it does not establish the mechanism. Hypothesis (untested): a rare heavy micro-batch pushes reserved memory past the device while it already sits at 54-58 GB. Micro-batch 1 leaves about 45 GB.
+
+### Resubmission at micro-batch 1
+
+Runner changes: `budget.checkpoint_every_steps` (9be61c73b; a mid-epoch `last.pt`, and the resume skips micro-batches already trained; tested against an uninterrupted run), `last.pt` every 1,000 optimizer steps, a failed attempt marks its tile bad and retries on a free healthy tile (3f9893e5e), and fresh run ids `a1024b_<cell>`. Grid b (`aurora_grid_043_b.tsv`, PBS 8959835, queued 08:2x UTC): all_onto s0/s1, all_name s0, bs16 s0/s1, bs32 s0/s1, h288 s0/s1, ffn2 s0, pinball s0, mse s0. Grid c (`aurora_grid_043_c.tsv`) is to replace PBS 8959388 once grid b runs. It holds the 7 remaining faulted cells, all_name s3 at micro 1 (its micro-2 run marked superseded), and alone_kemmeren resumed under its own id.
+
+Cost (measured 0.204 s per micro-step at micro 1, PBS 8959729): about 3.3 h per epoch, about 260 h for 80 epochs, past the 168 h walltime, so every cell needs one continuation job. This is roughly 25x slower per record than Polaris on this model, because masked attention has no fused XPU kernel.

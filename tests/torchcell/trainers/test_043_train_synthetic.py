@@ -1173,3 +1173,60 @@ def test_cosine_schedule_and_resume_reads_missing_sweep_keys_as_defaults(
         {**cfg.model_dump(), "optim": {**cfg.optim.model_dump(), "schedule": "cosine"}}
     )
     assert not tr.config_matches(old, changed)
+
+
+def test_accumulate_steps_matches_one_batch_on_one_dataset(
+    tr: ModuleType, world: dict[str, Any], tmp_path: Path
+) -> None:
+    """optim.accumulate_steps=2 at micro-batch 1 equals batch 2, over two optimizer steps.
+
+    One record-level dataset (vaishnav, one value per record) under mse and dropout 0:
+    each micro-batch loss is that record's error, so the mean of two micro-batch losses
+    is the batch-2 loss, the gradients sum to the batch-2 gradient, and the records
+    sampler hands out the same records in the same order (one shuffled order, sliced).
+    With several datasets ``equal`` weighting averages per dataset inside each
+    micro-batch, so that case is not an identity and is not asserted.
+    """
+    root = world["root"]
+    base = _cfg(tr, root, "mse")
+    arm = base.arm.model_copy(
+        update={"name": "vaishnav_test", "datasets": ["vaishnav"], "doubles": False}
+    )
+    states = []
+    for batch, acc in ((2, 1), (1, 2), (1, 1)):
+        cfg = base.model_copy(
+            update={
+                "arm": arm,
+                "data": base.data.model_copy(update={"batch_size": batch}),
+                "optim": base.optim.model_copy(update={"accumulate_steps": acc}),
+                "paths": base.paths.model_copy(
+                    update={"checkpoint_root": str(tmp_path / f"b{batch}_a{acc}")}
+                ),
+            }
+        )
+        result = tr.train(
+            cfg,
+            world["store"],
+            tr.h5_vector_source(cfg.paths, tr.store_paths(cfg.data.store_version)),
+            tr.MemoryLogger(),
+        )
+        assert result.steps == 2
+        states.append(
+            torch.load(Path(result.checkpoint_dir) / "last.pt", weights_only=False)[
+                "model"
+            ]
+        )
+    one, accumulated, unaccumulated = (
+        {k: v.double() for k, v in st.items() if v.is_floating_point()} for st in states
+    )
+    assert one.keys() == accumulated.keys() and len(one) > 0
+    # A key-projection bias has an exactly zero gradient (softmax is invariant to a
+    # shift shared by every key), so its float-noise gradient differs between the two
+    # runs and AdamW's first steps turn noise into lr-sized moves (measured 1.0e-4 at
+    # lr 1e-3); every other parameter agrees to 3.4e-5 (operator.out_proj.weight).
+    compared = [k for k in one if not k.endswith("k_proj.bias")]
+    worst = max(float((one[k] - accumulated[k]).abs().max()) for k in compared)
+    assert worst < 5e-5
+    # the check discriminates: batch 1 without accumulation (two single-record steps)
+    # lands elsewhere
+    assert max(float((one[k] - unaccumulated[k]).abs().max()) for k in compared) > 5e-4

@@ -14,10 +14,9 @@
 # The 043 trainer smoke on one Aurora Max 1550 tile (FLAT hierarchy, tile 0), device xpu.
 # Same cell as polaris_train_043_smoke.pbs.
 #
-# NOT SUBMITTABLE until xpu_device_043.patch (beside this file) is applied: the Aurora env
-# has no torch_scatter and torchcell/data/graph_processor.py imports it at module level
-# (reached through train_043.py -> torchcell.data.representation_043 -> torchcell/data/
-# __init__.py), and TrainConfig043.device does not accept "xpu".
+# Parameters (qsub -v): ARM (all), BATCH (8), EPOCHS (2), MAX_STEPS_PER_EPOCH (unset = full
+# epochs; set for a memory/rate measurement), TILE (0), EXTRA (space-separated overrides),
+# TAGS (smoke,alcf,aurora).
 #
 # Submit from GilaHyper:
 #   ssh aurora "cd /flare/GenesisHackathonOct26/mjvolk3/torchcell && qsub experiments/043-expression-proteome-morphology/scripts/alcf/aurora_train_043_smoke.pbs"
@@ -32,7 +31,7 @@ export https_proxy=http://proxy.alcf.anl.gov:3128
 export HTTP_PROXY=$http_proxy HTTPS_PROXY=$https_proxy
 export no_proxy=localhost,127.0.0.1,.alcf.anl.gov
 export ZE_FLAT_DEVICE_HIERARCHY=FLAT
-export ZE_AFFINITY_MASK=0
+export ZE_AFFINITY_MASK=${TILE:-0}
 
 cd "$TC_TREE"
 set -a; source .env; set +a
@@ -59,10 +58,15 @@ echo "arm ${ARM:-all}  mark_cap ${MARK_CAP:-null}"
 echo "job $PBS_JOBID on $(hostname) at $(date); tree synced from $SYNCED; DATA_ROOT=$DATA_ROOT"
 "$PY" -c "import torch; print('xpu devices', torch.xpu.device_count(), torch.xpu.get_device_name(0))"
 
+EXTRA_ARGS=()
+if [ -n "${MAX_STEPS_PER_EPOCH:-}" ]; then EXTRA_ARGS+=("budget.max_steps_per_epoch=${MAX_STEPS_PER_EPOCH}"); fi
+# shellcheck disable=SC2206
+if [ -n "${EXTRA:-}" ]; then EXTRA_ARGS+=(${EXTRA}); fi
+echo "batch ${BATCH:-8}  epochs ${EPOCHS:-2}  max_steps_per_epoch ${MAX_STEPS_PER_EPOCH:-none}  extra ${EXTRA:-none}"
 "$PY" experiments/043-expression-proteome-morphology/scripts/train_043.py \
   arm="${ARM:-all}" loss=hlgauss weighting=equal seed=0 device=xpu \
-  data.batch_size=8 data.num_workers=4 data.sampler=records data.mark_cap="${MARK_CAP:-null}" \
-  budget.max_epochs=4 budget.time_budget_hours=0.75 budget.time_margin_minutes=5 \
-  budget.eval_every_epochs=1 \
-  "wandb.tags=[smoke,alcf,aurora]"
+  data.batch_size="${BATCH:-8}" data.num_workers=4 data.sampler=records data.mark_cap="${MARK_CAP:-null}" \
+  budget.max_epochs="${EPOCHS:-2}" budget.time_budget_hours=0.75 budget.time_margin_minutes=5 \
+  budget.eval_every_epochs=1 "${EXTRA_ARGS[@]}" \
+  "wandb.tags=[${TAGS:-smoke,alcf,aurora}]"
 echo "done $(date)"

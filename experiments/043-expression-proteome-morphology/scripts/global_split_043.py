@@ -26,6 +26,7 @@ from __future__ import annotations
 import hashlib
 import json
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -84,6 +85,13 @@ class GlobalSplit043(BaseModel):
     """The 043 fold file (``conf/splits/global_split_v1.json``)."""
 
     version: str = SPLIT_VERSION
+    mode: Literal["redraw", "inherit"] = Field(
+        default="redraw",
+        description="redraw: every key drawn from the seed; inherit: the keys of "
+        "inherits_from keep their folds and only new keys are drawn (the rule for every "
+        "split version after v1, owner 2026-10-23)",
+    )
+    inherits_from: str | None = None
     seed: int = 0
     store_sha256: str = Field(
         description="sha256 of raw/raw_dataset_name_index.json of the raw store"

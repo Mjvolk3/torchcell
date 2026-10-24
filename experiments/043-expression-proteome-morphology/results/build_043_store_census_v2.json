@@ -1,0 +1,693 @@
+{
+ "generated_by": "experiments/043-expression-proteome-morphology/scripts/build_043_store.py",
+ "dataset_root": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/043-expression-proteome-morphology/raw_043_v2",
+ "store_version": "v2",
+ "query_file": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/043-expression-proteome-morphology/experiments/043-expression-proteome-morphology/queries/expression_proteome_morphology_043.cql",
+ "neo4j_uri": "bolt://localhost:7687",
+ "host": "gilahyper",
+ "slurm_job_id": "6187",
+ "build_seconds": 24521.067198991776,
+ "len_dataset": 173805,
+ "n_raw_records": 173805,
+ "n_processed_records": 173805,
+ "served_release": "2026.10.17-4295f7ca",
+ "n_served": 173805,
+ "n_returned": 173805,
+ "served_vs_returned": {
+  "Boocock2025Dataset": {
+   "served": 79516,
+   "returned": 79516,
+   "difference": 0,
+   "records_with_released_identifier": 0,
+   "records_with_name_outside_gene_set": 0
+  },
+  "CaudalPanTranscriptome2024Dataset": {
+   "served": 943,
+   "returned": 943,
+   "difference": 0,
+   "records_with_released_identifier": 0,
+   "records_with_name_outside_gene_set": 943
+  },
+  "DmMicroarraySameith2015Dataset": {
+   "served": 72,
+   "returned": 72,
+   "difference": 0,
+   "records_with_released_identifier": 0,
+   "records_with_name_outside_gene_set": 0
+  },
+  "MicroarrayKemmeren2014Dataset": {
+   "served": 1484,
+   "returned": 1484,
+   "difference": 0,
+   "records_with_released_identifier": 0,
+   "records_with_name_outside_gene_set": 2
+  },
+  "MicroarrayScoreHu2007Dataset": {
+   "served": 263,
+   "returned": 263,
+   "difference": 0,
+   "records_with_released_identifier": 0,
+   "records_with_name_outside_gene_set": 1
+  },
+  "NadalRibellesPerturbSeq2025Dataset": {
+   "served": 6188,
+   "returned": 6188,
+   "difference": 0,
+   "records_with_released_identifier": 0,
+   "records_with_name_outside_gene_set": 70
+  },
+  "Nguessan2025Dataset": {
+   "served": 2951,
+   "returned": 2951,
+   "difference": 0,
+   "records_with_released_identifier": 0,
+   "records_with_name_outside_gene_set": 0
+  },
+  "PooledPromoterExpressionVaishnav2022Dataset": {
+   "served": 71158,
+   "returned": 71158,
+   "difference": 0,
+   "records_with_released_identifier": 0,
+   "records_with_name_outside_gene_set": 71158
+  },
+  "ProteinTurnoverMuenzner2024Dataset": {
+   "served": 55,
+   "returned": 55,
+   "difference": 0,
+   "records_with_released_identifier": 0,
+   "records_with_name_outside_gene_set": 55
+  },
+  "ProteomeMessner2023Dataset": {
+   "served": 4699,
+   "returned": 4699,
+   "difference": 0,
+   "records_with_released_identifier": 0,
+   "records_with_name_outside_gene_set": 75
+  },
+  "ProteomeMuenzner2024Dataset": {
+   "served": 795,
+   "returned": 795,
+   "difference": 0,
+   "records_with_released_identifier": 0,
+   "records_with_name_outside_gene_set": 794
+  },
+  "ProteomeZelezniak2018Dataset": {
+   "served": 97,
+   "returned": 97,
+   "difference": 0,
+   "records_with_released_identifier": 0,
+   "records_with_name_outside_gene_set": 0
+  },
+  "ScmdOhya2005Dataset": {
+   "served": 4718,
+   "returned": 4718,
+   "difference": 0,
+   "records_with_released_identifier": 0,
+   "records_with_name_outside_gene_set": 40
+  },
+  "SmMicroarraySameith2015Dataset": {
+   "served": 82,
+   "returned": 82,
+   "difference": 0,
+   "records_with_released_identifier": 0,
+   "records_with_name_outside_gene_set": 0
+  },
+  "TfDeletionPseudobulkJackson2020Dataset": {
+   "served": 784,
+   "returned": 784,
+   "difference": 0,
+   "records_with_released_identifier": 0,
+   "records_with_name_outside_gene_set": 0
+  }
+ },
+ "n_records_by_dataset_raw": {
+  "Boocock2025Dataset": 79516,
+  "CaudalPanTranscriptome2024Dataset": 943,
+  "DmMicroarraySameith2015Dataset": 72,
+  "MicroarrayKemmeren2014Dataset": 1484,
+  "MicroarrayScoreHu2007Dataset": 263,
+  "NadalRibellesPerturbSeq2025Dataset": 6188,
+  "Nguessan2025Dataset": 2951,
+  "PooledPromoterExpressionVaishnav2022Dataset": 71158,
+  "ProteinTurnoverMuenzner2024Dataset": 55,
+  "ProteomeMessner2023Dataset": 4699,
+  "ProteomeMuenzner2024Dataset": 795,
+  "ProteomeZelezniak2018Dataset": 97,
+  "ScmdOhya2005Dataset": 4718,
+  "SmMicroarraySameith2015Dataset": 82,
+  "TfDeletionPseudobulkJackson2020Dataset": 784
+ },
+ "n_records_by_dataset_index": {
+  "Boocock2025Dataset": 79516,
+  "CaudalPanTranscriptome2024Dataset": 943,
+  "DmMicroarraySameith2015Dataset": 72,
+  "MicroarrayKemmeren2014Dataset": 1484,
+  "MicroarrayScoreHu2007Dataset": 263,
+  "NadalRibellesPerturbSeq2025Dataset": 6188,
+  "Nguessan2025Dataset": 2951,
+  "PooledPromoterExpressionVaishnav2022Dataset": 71158,
+  "ProteinTurnoverMuenzner2024Dataset": 55,
+  "ProteomeMessner2023Dataset": 4699,
+  "ProteomeMuenzner2024Dataset": 795,
+  "ProteomeZelezniak2018Dataset": 97,
+  "ScmdOhya2005Dataset": 4718,
+  "SmMicroarraySameith2015Dataset": 82,
+  "TfDeletionPseudobulkJackson2020Dataset": 784
+ },
+ "n_records_by_label": {
+  "calmorph": 4718,
+  "degradation_rate": 55,
+  "expression_level": 71158,
+  "expression_log2_ratio": 7826,
+  "expression_score": 263,
+  "expression_tpm": 943,
+  "protein_abundance": 5591,
+  "umi_count": 83251
+ },
+ "first_sample": {
+  "index": 0,
+  "dataset_name": "MicroarrayKemmeren2014Dataset",
+  "experiment_type": "microarray_expression",
+  "genotype_fields": [
+   "perturbations"
+  ],
+  "label_name": "expression_log2_ratio",
+  "label_length": 6169,
+  "n_perturbations": 1,
+  "perturbation_types": {
+   "kanmx_deletion": 1
+  },
+  "media": "SC",
+  "temperature": {
+   "value": 30.0,
+   "unit": "Celsius"
+  },
+  "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[1],\n    perturbation_indices=[1],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[6169],\n    phenotype_type_indices=[6169],\n    phenotype_sample_indices=[6169],\n    phenotype_types=[8],\n    phenotype_stat_values=[6169],\n    phenotype_stat_type_indices=[6169],\n    phenotype_stat_sample_indices=[6169],\n    phenotype_stat_types=[7],\n  }\n)",
+  "perturbation_indices_length": 1,
+  "pert_mask_sum": 1,
+  "phenotype_types": [
+   "expression_log2_ratio",
+   "degradation_rate",
+   "protein_abundance",
+   "expression_level",
+   "expression_score",
+   "calmorph",
+   "umi_count",
+   "expression_tpm"
+  ]
+ },
+ "first_sample_by_dataset": {
+  "Boocock2025Dataset": {
+   "index": 85120,
+   "dataset_name": "Boocock2025Dataset",
+   "experiment_type": "segregant_expression",
+   "genotype_fields": [
+    "blocks",
+    "call_method",
+    "cross",
+    "marker_matrix_sha256",
+    "parent_1",
+    "parent_2",
+    "segregant_id"
+   ],
+   "label_name": "umi_count",
+   "label_length": 926,
+   "n_perturbations": 0,
+   "perturbation_types": {},
+   "media": "2x YNB + 2% glucose added to FACS sheath fluid (PBS, pH 7.4), liquid (Boocock 2025 de novo segregant cultures)",
+   "temperature": {
+    "value": 30.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[0],\n    perturbation_indices=[0],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[926],\n    phenotype_type_indices=[926],\n    phenotype_sample_indices=[926],\n    phenotype_types=[8],\n    phenotype_stat_values=[0],\n    phenotype_stat_type_indices=[0],\n    phenotype_stat_sample_indices=[0],\n    phenotype_stat_types=[7],\n  }\n)",
+   "perturbation_indices_length": 0,
+   "pert_mask_sum": 0,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "degradation_rate",
+    "protein_abundance",
+    "expression_level",
+    "expression_score",
+    "calmorph",
+    "umi_count",
+    "expression_tpm"
+   ]
+  },
+  "CaudalPanTranscriptome2024Dataset": {
+   "index": 83126,
+   "dataset_name": "CaudalPanTranscriptome2024Dataset",
+   "experiment_type": "rnaseq_expression",
+   "genotype_fields": [
+    "natural_isolate",
+    "perturbations"
+   ],
+   "label_name": "expression_tpm",
+   "label_length": 6063,
+   "n_perturbations": 6095,
+   "perturbation_types": {
+    "sequence_variant": 5500,
+    "natural_loss_of_function": 394,
+    "natural_gene_absence": 110,
+    "natural_gene_presence": 91
+   },
+   "media": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+   "temperature": {
+    "value": 30.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[5672],\n    perturbation_indices=[5575],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[6063],\n    phenotype_type_indices=[6063],\n    phenotype_sample_indices=[6063],\n    phenotype_types=[8],\n    phenotype_stat_values=[0],\n    phenotype_stat_type_indices=[0],\n    phenotype_stat_sample_indices=[0],\n    phenotype_stat_types=[7],\n  }\n)",
+   "perturbation_indices_length": 5575,
+   "pert_mask_sum": 5575,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "degradation_rate",
+    "protein_abundance",
+    "expression_level",
+    "expression_score",
+    "calmorph",
+    "umi_count",
+    "expression_tpm"
+   ]
+  },
+  "DmMicroarraySameith2015Dataset": {
+   "index": 62891,
+   "dataset_name": "DmMicroarraySameith2015Dataset",
+   "experiment_type": "microarray_expression",
+   "genotype_fields": [
+    "perturbations"
+   ],
+   "label_name": "expression_log2_ratio",
+   "label_length": 6169,
+   "n_perturbations": 2,
+   "perturbation_types": {
+    "sga_kanmx_deletion": 1,
+    "sga_natmx_deletion": 1
+   },
+   "media": "SC",
+   "temperature": {
+    "value": 30.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[2],\n    perturbation_indices=[2],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[6169],\n    phenotype_type_indices=[6169],\n    phenotype_sample_indices=[6169],\n    phenotype_types=[8],\n    phenotype_stat_values=[6169],\n    phenotype_stat_type_indices=[6169],\n    phenotype_stat_sample_indices=[6169],\n    phenotype_stat_types=[7],\n  }\n)",
+   "perturbation_indices_length": 2,
+   "pert_mask_sum": 2,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "degradation_rate",
+    "protein_abundance",
+    "expression_level",
+    "expression_score",
+    "calmorph",
+    "umi_count",
+    "expression_tpm"
+   ]
+  },
+  "MicroarrayKemmeren2014Dataset": {
+   "index": 0,
+   "dataset_name": "MicroarrayKemmeren2014Dataset",
+   "experiment_type": "microarray_expression",
+   "genotype_fields": [
+    "perturbations"
+   ],
+   "label_name": "expression_log2_ratio",
+   "label_length": 6169,
+   "n_perturbations": 1,
+   "perturbation_types": {
+    "kanmx_deletion": 1
+   },
+   "media": "SC",
+   "temperature": {
+    "value": 30.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[1],\n    perturbation_indices=[1],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[6169],\n    phenotype_type_indices=[6169],\n    phenotype_sample_indices=[6169],\n    phenotype_types=[8],\n    phenotype_stat_values=[6169],\n    phenotype_stat_type_indices=[6169],\n    phenotype_stat_sample_indices=[6169],\n    phenotype_stat_types=[7],\n  }\n)",
+   "perturbation_indices_length": 1,
+   "pert_mask_sum": 1,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "degradation_rate",
+    "protein_abundance",
+    "expression_level",
+    "expression_score",
+    "calmorph",
+    "umi_count",
+    "expression_tpm"
+   ]
+  },
+  "MicroarrayScoreHu2007Dataset": {
+   "index": 70891,
+   "dataset_name": "MicroarrayScoreHu2007Dataset",
+   "experiment_type": "microarray_expression_score",
+   "genotype_fields": [
+    "perturbations"
+   ],
+   "label_name": "expression_score",
+   "label_length": 6273,
+   "n_perturbations": 1,
+   "perturbation_types": {
+    "kanmx_deletion": 1
+   },
+   "media": "YPD (yeast extract / peptone / dextrose), liquid",
+   "temperature": null,
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[1],\n    perturbation_indices=[1],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[6273],\n    phenotype_type_indices=[6273],\n    phenotype_sample_indices=[6273],\n    phenotype_types=[8],\n    phenotype_stat_values=[6273],\n    phenotype_stat_type_indices=[6273],\n    phenotype_stat_sample_indices=[6273],\n    phenotype_stat_types=[7],\n  }\n)",
+   "perturbation_indices_length": 1,
+   "pert_mask_sum": 1,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "degradation_rate",
+    "protein_abundance",
+    "expression_level",
+    "expression_score",
+    "calmorph",
+    "umi_count",
+    "expression_tpm"
+   ]
+  },
+  "NadalRibellesPerturbSeq2025Dataset": {
+   "index": 92529,
+   "dataset_name": "NadalRibellesPerturbSeq2025Dataset",
+   "experiment_type": "pseudobulk_expression",
+   "genotype_fields": [
+    "perturbations"
+   ],
+   "label_name": "expression_log2_ratio",
+   "label_length": 5833,
+   "n_perturbations": 1,
+   "perturbation_types": {
+    "marker_deletion": 1
+   },
+   "media": "YPD (yeast extract / peptone / dextrose), liquid",
+   "temperature": {
+    "value": 30.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[1],\n    perturbation_indices=[1],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[5833],\n    phenotype_type_indices=[5833],\n    phenotype_sample_indices=[5833],\n    phenotype_types=[8],\n    phenotype_stat_values=[1],\n    phenotype_stat_type_indices=[1],\n    phenotype_stat_sample_indices=[1],\n    phenotype_stat_types=[7],\n  }\n)",
+   "perturbation_indices_length": 1,
+   "pert_mask_sum": 1,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "degradation_rate",
+    "protein_abundance",
+    "expression_level",
+    "expression_score",
+    "calmorph",
+    "umi_count",
+    "expression_tpm"
+   ]
+  },
+  "Nguessan2025Dataset": {
+   "index": 6,
+   "dataset_name": "Nguessan2025Dataset",
+   "experiment_type": "segregant_expression",
+   "genotype_fields": [
+    "blocks",
+    "call_method",
+    "cross",
+    "marker_matrix_sha256",
+    "parent_1",
+    "parent_2",
+    "segregant_id"
+   ],
+   "label_name": "umi_count",
+   "label_length": 1834,
+   "n_perturbations": 0,
+   "perturbation_types": {},
+   "media": "YPD (yeast extract / peptone / dextrose), liquid",
+   "temperature": null,
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[0],\n    perturbation_indices=[0],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[1834],\n    phenotype_type_indices=[1834],\n    phenotype_sample_indices=[1834],\n    phenotype_types=[8],\n    phenotype_stat_values=[0],\n    phenotype_stat_type_indices=[0],\n    phenotype_stat_sample_indices=[0],\n    phenotype_stat_types=[7],\n  }\n)",
+   "perturbation_indices_length": 0,
+   "pert_mask_sum": 0,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "degradation_rate",
+    "protein_abundance",
+    "expression_level",
+    "expression_score",
+    "calmorph",
+    "umi_count",
+    "expression_tpm"
+   ]
+  },
+  "PooledPromoterExpressionVaishnav2022Dataset": {
+   "index": 2945,
+   "dataset_name": "PooledPromoterExpressionVaishnav2022Dataset",
+   "experiment_type": "pooled_sort_seq_expression",
+   "genotype_fields": [
+    "perturbations"
+   ],
+   "label_name": "expression_level",
+   "label_length": null,
+   "n_perturbations": 1,
+   "perturbation_types": {
+    "variable_promoter_reporter": 1
+   },
+   "media": "SC-Ura (synthetic complete minus uracil; URA3 plasmid selection)",
+   "temperature": {
+    "value": 30.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[1],\n    perturbation_indices=[0],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[1],\n    phenotype_type_indices=[1],\n    phenotype_sample_indices=[1],\n    phenotype_types=[8],\n    phenotype_stat_values=[0],\n    phenotype_stat_type_indices=[0],\n    phenotype_stat_sample_indices=[0],\n    phenotype_stat_types=[7],\n  }\n)",
+   "perturbation_indices_length": 0,
+   "pert_mask_sum": 0,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "degradation_rate",
+    "protein_abundance",
+    "expression_level",
+    "expression_score",
+    "calmorph",
+    "umi_count",
+    "expression_tpm"
+   ]
+  },
+  "ProteinTurnoverMuenzner2024Dataset": {
+   "index": 85059,
+   "dataset_name": "ProteinTurnoverMuenzner2024Dataset",
+   "experiment_type": "protein_turnover",
+   "genotype_fields": [
+    "natural_isolate",
+    "perturbations"
+   ],
+   "label_name": "degradation_rate",
+   "label_length": 1006,
+   "n_perturbations": 5994,
+   "perturbation_types": {
+    "sequence_variant": 5432,
+    "natural_loss_of_function": 339,
+    "natural_gene_absence": 135,
+    "natural_gene_presence": 88
+   },
+   "media": "SM + 80 mg/L [13C6/15N2] L-lysine (SILAC Lys-8), liquid",
+   "temperature": {
+    "value": 30.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[5630],\n    perturbation_indices=[5538],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[1006],\n    phenotype_type_indices=[1006],\n    phenotype_sample_indices=[1006],\n    phenotype_types=[8],\n    phenotype_stat_values=[0],\n    phenotype_stat_type_indices=[0],\n    phenotype_stat_sample_indices=[0],\n    phenotype_stat_types=[7],\n  }\n)",
+   "perturbation_indices_length": 5538,
+   "pert_mask_sum": 5538,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "degradation_rate",
+    "protein_abundance",
+    "expression_level",
+    "expression_score",
+    "calmorph",
+    "umi_count",
+    "expression_tpm"
+   ]
+  },
+  "ProteomeMessner2023Dataset": {
+   "index": 5,
+   "dataset_name": "ProteomeMessner2023Dataset",
+   "experiment_type": "protein_abundance",
+   "genotype_fields": [
+    "perturbations"
+   ],
+   "label_name": "protein_abundance",
+   "label_length": 1551,
+   "n_perturbations": 1,
+   "perturbation_types": {
+    "kanmx_deletion": 1
+   },
+   "media": "SM (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose), liquid",
+   "temperature": {
+    "value": 30.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[1],\n    perturbation_indices=[1],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[1551],\n    phenotype_type_indices=[1551],\n    phenotype_sample_indices=[1551],\n    phenotype_types=[8],\n    phenotype_stat_values=[0],\n    phenotype_stat_type_indices=[0],\n    phenotype_stat_sample_indices=[0],\n    phenotype_stat_types=[7],\n  }\n)",
+   "perturbation_indices_length": 1,
+   "pert_mask_sum": 1,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "degradation_rate",
+    "protein_abundance",
+    "expression_level",
+    "expression_score",
+    "calmorph",
+    "umi_count",
+    "expression_tpm"
+   ]
+  },
+  "ProteomeMuenzner2024Dataset": {
+   "index": 84175,
+   "dataset_name": "ProteomeMuenzner2024Dataset",
+   "experiment_type": "protein_abundance",
+   "genotype_fields": [
+    "natural_isolate",
+    "perturbations"
+   ],
+   "label_name": "protein_abundance",
+   "label_length": 1499,
+   "n_perturbations": 5432,
+   "perturbation_types": {
+    "sequence_variant": 4863,
+    "natural_loss_of_function": 351,
+    "natural_gene_absence": 123,
+    "natural_gene_presence": 95
+   },
+   "media": "SM (synthetic minimal: 6.8 g/L YNB without amino acids + 2% glucose), liquid",
+   "temperature": {
+    "value": 30.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[5062],\n    perturbation_indices=[4960],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[1499],\n    phenotype_type_indices=[1499],\n    phenotype_sample_indices=[1499],\n    phenotype_types=[8],\n    phenotype_stat_values=[0],\n    phenotype_stat_type_indices=[0],\n    phenotype_stat_sample_indices=[0],\n    phenotype_stat_types=[7],\n  }\n)",
+   "perturbation_indices_length": 4960,
+   "pert_mask_sum": 4960,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "degradation_rate",
+    "protein_abundance",
+    "expression_level",
+    "expression_score",
+    "calmorph",
+    "umi_count",
+    "expression_tpm"
+   ]
+  },
+  "ProteomeZelezniak2018Dataset": {
+   "index": 39692,
+   "dataset_name": "ProteomeZelezniak2018Dataset",
+   "experiment_type": "protein_abundance",
+   "genotype_fields": [
+    "perturbations"
+   ],
+   "label_name": "protein_abundance",
+   "label_length": 726,
+   "n_perturbations": 1,
+   "perturbation_types": {
+    "kanmx_deletion": 1
+   },
+   "media": "SM (synthetic minimal, composition deferred to Mulleder 2012), liquid",
+   "temperature": {
+    "value": 30.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[1],\n    perturbation_indices=[1],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[726],\n    phenotype_type_indices=[726],\n    phenotype_sample_indices=[726],\n    phenotype_types=[8],\n    phenotype_stat_values=[726],\n    phenotype_stat_type_indices=[726],\n    phenotype_stat_sample_indices=[726],\n    phenotype_stat_types=[7],\n  }\n)",
+   "perturbation_indices_length": 1,
+   "pert_mask_sum": 1,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "degradation_rate",
+    "protein_abundance",
+    "expression_level",
+    "expression_score",
+    "calmorph",
+    "umi_count",
+    "expression_tpm"
+   ]
+  },
+  "ScmdOhya2005Dataset": {
+   "index": 40769,
+   "dataset_name": "ScmdOhya2005Dataset",
+   "experiment_type": "calmorph",
+   "genotype_fields": [
+    "perturbations"
+   ],
+   "label_name": "calmorph",
+   "label_length": 281,
+   "n_perturbations": 1,
+   "perturbation_types": {
+    "kanmx_deletion": 1
+   },
+   "media": "YPD (yeast extract / peptone / dextrose), liquid",
+   "temperature": {
+    "value": 25.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[1],\n    perturbation_indices=[1],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[281],\n    phenotype_type_indices=[281],\n    phenotype_sample_indices=[281],\n    phenotype_types=[8],\n    phenotype_stat_values=[220],\n    phenotype_stat_type_indices=[220],\n    phenotype_stat_sample_indices=[220],\n    phenotype_stat_types=[7],\n  }\n)",
+   "perturbation_indices_length": 1,
+   "pert_mask_sum": 1,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "degradation_rate",
+    "protein_abundance",
+    "expression_level",
+    "expression_score",
+    "calmorph",
+    "umi_count",
+    "expression_tpm"
+   ]
+  },
+  "SmMicroarraySameith2015Dataset": {
+   "index": 53780,
+   "dataset_name": "SmMicroarraySameith2015Dataset",
+   "experiment_type": "microarray_expression",
+   "genotype_fields": [
+    "perturbations"
+   ],
+   "label_name": "expression_log2_ratio",
+   "label_length": 6169,
+   "n_perturbations": 1,
+   "perturbation_types": {
+    "sga_kanmx_deletion": 1
+   },
+   "media": "SC",
+   "temperature": {
+    "value": 30.0,
+    "unit": "Celsius"
+   },
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[1],\n    perturbation_indices=[1],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[6169],\n    phenotype_type_indices=[6169],\n    phenotype_sample_indices=[6169],\n    phenotype_types=[8],\n    phenotype_stat_values=[6169],\n    phenotype_stat_type_indices=[6169],\n    phenotype_stat_sample_indices=[6169],\n    phenotype_stat_types=[7],\n  }\n)",
+   "perturbation_indices_length": 1,
+   "pert_mask_sum": 1,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "degradation_rate",
+    "protein_abundance",
+    "expression_level",
+    "expression_score",
+    "calmorph",
+    "umi_count",
+    "expression_tpm"
+   ]
+  },
+  "TfDeletionPseudobulkJackson2020Dataset": {
+   "index": 83819,
+   "dataset_name": "TfDeletionPseudobulkJackson2020Dataset",
+   "experiment_type": "pseudobulk_umi_count",
+   "genotype_fields": [
+    "perturbations"
+   ],
+   "label_name": "umi_count",
+   "label_length": 3021,
+   "n_perturbations": 1,
+   "perturbation_types": {
+    "barcoded_kanmx_deletion": 1
+   },
+   "media": "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM urea (NLIM-UREA)",
+   "temperature": null,
+   "get_repr": "HeteroData(\n  gene={\n    num_nodes=6607,\n    perturbed_genes=[1],\n    perturbation_indices=[1],\n    pert_mask=[6607],\n    mask=[6607],\n    phenotype_values=[3021],\n    phenotype_type_indices=[3021],\n    phenotype_sample_indices=[3021],\n    phenotype_types=[8],\n    phenotype_stat_values=[0],\n    phenotype_stat_type_indices=[0],\n    phenotype_stat_sample_indices=[0],\n    phenotype_stat_types=[7],\n  }\n)",
+   "perturbation_indices_length": 1,
+   "pert_mask_sum": 1,
+   "phenotype_types": [
+    "expression_log2_ratio",
+    "degradation_rate",
+    "protein_abundance",
+    "expression_level",
+    "expression_score",
+    "calmorph",
+    "umi_count",
+    "expression_tpm"
+   ]
+  }
+ }
+}

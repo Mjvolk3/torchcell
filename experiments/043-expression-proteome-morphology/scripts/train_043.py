@@ -616,6 +616,13 @@ class TrainConfig043(BaseModel):
 
     seed: int = 0
     device: Literal["auto", "cpu", "cuda", "xpu"] = "auto"
+    attention_query_chunk: int | None = Field(
+        default=None,
+        gt=0,
+        description="query block size of the model's SDPA calls (memory, not the model: "
+        "the attention is the same). Set on XPU, where masked or dropout SDPA forms the "
+        "score matrix (Aurora job 8959152); None = one call",
+    )
     init_from: str | None = Field(
         default=None,
         description="stage 2: a stage-1 checkpoint (.pt) whose MODEL weights initialize "
@@ -1937,6 +1944,7 @@ def build_model(
         loss=cfg.loss.kind,
         hl_gauss=cfg.loss.hl_gauss,
         num_quantiles=cfg.loss.num_quantiles,
+        attention_query_chunk=cfg.attention_query_chunk,
     )
     G = len(store.meta.genes)
     head_mask = (

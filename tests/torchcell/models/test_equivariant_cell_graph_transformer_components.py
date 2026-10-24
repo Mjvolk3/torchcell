@@ -38,6 +38,7 @@ from torchcell.models.equivariant_cell_graph_transformer import (
     ResponseBasisHead,
     calculate_weight_l2_norm,
     compute_smoothness,
+    query_chunked_sdpa,
 )
 
 N, D, HEADS, B = 8, 16, 4, 3
@@ -438,3 +439,61 @@ def test_full_model_backward_determinism_and_attention_output(
     assert weights is not None and len(weights) == 2
     assert all(w.shape == (1, HEADS, N, N) for w in weights)
     assert len(with_attention["residual_update_ratios"]) == 2
+
+
+# --------------------------------------------------------------------------- #
+# query_chunked_sdpa
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize("mask_kind", ["none", "per_query", "per_key"])
+def test_query_chunked_sdpa_equals_one_call_without_dropout(mask_kind: str) -> None:
+    """Query blocks of 3 over 10 queries: same output and same q/k/v gradients."""
+    g = torch.Generator().manual_seed(0)
+    q0 = torch.randn(2, 4, 10, 8, generator=g, dtype=torch.float64)
+    k0 = torch.randn(2, 4, 7, 8, generator=g, dtype=torch.float64)
+    v0 = torch.randn(2, 4, 7, 8, generator=g, dtype=torch.float64)
+    mask: torch.Tensor | None
+    if mask_kind == "per_query":
+        mask = torch.rand(1, 4, 10, 7, generator=g) < 0.6
+        mask[..., 0] = True
+    elif mask_kind == "per_key":
+        mask = torch.rand(2, 1, 1, 7, generator=g) < 0.6
+        mask[..., 0] = True
+    else:
+        mask = None
+    w = torch.arange(8, dtype=torch.float64)
+    q1, k1, v1 = (t.clone().requires_grad_(True) for t in (q0, k0, v0))
+    one = query_chunked_sdpa(q1, k1, v1, mask, 0.0, None)
+    (one * w).sum().backward()
+    q2, k2, v2 = (t.clone().requires_grad_(True) for t in (q0, k0, v0))
+    chunked = query_chunked_sdpa(q2, k2, v2, mask, 0.0, 3)
+    (chunked * w).sum().backward()
+    assert torch.allclose(chunked, one, rtol=1e-12, atol=1e-12)
+    for a, b in ((q2, q1), (k2, k1), (v2, v1)):
+        assert torch.allclose(
+            cast(torch.Tensor, a.grad),
+            cast(torch.Tensor, b.grad),
+            rtol=1e-12,
+            atol=1e-12,
+        )
+
+
+def test_query_chunked_sdpa_backward_replays_forward_dropout() -> None:
+    """Under dropout the recomputed blocks reuse the forward draws.
+
+    With a linear loss ``sum(out * w)`` the gradient with respect to ``v`` is
+    ``P_drop^T w`` summed over queries, where ``P_drop`` is the dropped attention the
+    forward used; it is reconstructed here from the forward output by solving for it
+    over a ``v`` that is the identity (keys = value width), so the check holds only if
+    backward saw the forward's dropout mask.
+    """
+    torch.manual_seed(0)
+    Lk = 6
+    q = torch.randn(1, 1, 9, 4, dtype=torch.float64)
+    k = torch.randn(1, 1, Lk, 4, dtype=torch.float64)
+    v = torch.eye(Lk, dtype=torch.float64).view(1, 1, Lk, Lk).requires_grad_(True)
+    out = query_chunked_sdpa(q, k, v, None, 0.5, 4)
+    w = torch.randn(Lk, dtype=torch.float64)
+    (out * w).sum().backward()
+    p_drop = out.detach()[0, 0]  # [9, Lk]: out = P_drop @ I
+    expected = p_drop.t() @ w.expand(9, Lk)
+    torch.testing.assert_close(cast(torch.Tensor, v.grad)[0, 0], expected)

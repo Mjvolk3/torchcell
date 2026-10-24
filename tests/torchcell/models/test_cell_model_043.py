@@ -252,6 +252,25 @@ def test_forward_shapes_per_loss(
     assert torch.isfinite(out.gene).all() and torch.isfinite(out.record).all()
 
 
+def test_attention_query_chunk_changes_memory_not_the_model() -> None:
+    """Chunk 2 over the G+1 = 7 trunk queries: same outputs and parameter gradients."""
+    results = []
+    for chunk in (None, 2):
+        model = _model(_config("mse", attention_query_chunk=chunk))
+        out = model(_batch(), torch.tensor([0, 1]), torch.tensor([2]))
+        (out.gene.sum() + out.record.sum()).backward()
+        grads = {
+            n: p.grad.clone() for n, p in model.named_parameters() if p.grad is not None
+        }
+        results.append((out.gene.detach(), out.record.detach(), grads))
+    (g0, r0, d0), (g1, r1, d1) = results
+    torch.testing.assert_close(g1, g0)
+    torch.testing.assert_close(r1, r0)
+    assert d1.keys() == d0.keys()
+    for n in d0:
+        torch.testing.assert_close(d1[n], d0[n], msg=n)
+
+
 def test_operator_is_the_post_norm_residual() -> None:
     cfg = _config("mse")
     model = _model(cfg).eval()

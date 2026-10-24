@@ -1361,3 +1361,70 @@ few dozen genotypes).
 ![](./assets/images/043-expression-proteome-morphology/linear_evals_isolates_segregants_promoters_v2_2026-10-23-19-41-24.svg)
 
 ![](./assets/images/043-expression-proteome-morphology/linear_evals_morphology_probe_v2_2026-10-23-19-41-24.svg)
+
+## 2026.10.23 - Ontology conditioning arm (Polaris)
+
+The owner asked for an arm that uses the experiment ontology directly: the model never sees which dataset a record came from, and its conditioning is the record's annotation to the schema DAG, the way experiment 030 conditions its readouts.
+
+### What was copied from 030
+
+`torchcell/data/experiment_ontology.py` and its test come from the 030 worktree (commits 8ef094ac7 and 65b365a4c): `OntologyNode`, `ExperimentOntologyVocabulary`, `build_experiment_ontology_vocabulary`, `OntologyDagEncoder`, `describe_annotation`, `CONVERTED_FROM`. `dataset_name` is excluded by construction. Three changes were needed on the 043 records, all generic:
+
+- `AnnotationRecipe`: a record's annotation without a vocabulary, so DataLoader workers annotate and the vocabulary is the union of what they return.
+- A walk of every closed field (Enum, Literal or bool, read from the schema's own typing) of the phenotype, the genotype (class, segregant cross parents, natural isolate zygosity and ploidy; never its genes), the reference genome (ploidy, assembly, background) and the environment fields 030 did not visit (durations, culture format, pre-culture, perturbation compound and dose). Free strings and lists are not visited. Nested models are named by path, so a pre-culture medium never lands on the experiment's Media node.
+- The `ref:` namespace mirrors the whole Phenotype and ExperimentReference subtrees; the 030 version raised on `MicroarrayExpressionPhenotype`, whose parent is not `Phenotype`.
+
+030's `scan_store_records` was left out: it reads `torchcell.data.pool_store`, which is absent from this tree.
+
+### Vocabulary and collisions (job 6323)
+
+`ontology_annotation_043.py` annotated all 173,805 records of the 15 v2 datasets: 426 nodes, depth 7, 43 distinct annotations. Of 105 dataset pairs, 4 share a profile:
+
+| pair | shared |
+|---|---|
+| Kemmeren 2014, Sameith 2015 Dm | identical profile sets |
+| Kemmeren 2014, Sameith 2015 Sm | identical profile sets |
+| Sameith 2015 Dm, Sameith 2015 Sm | identical profile sets |
+| Messner 2023, Muenzner 2024 proteome | 1 of 795 Muenzner records (the one with no natural isolate) equals Messner's single profile |
+
+The three microarray collisions were expected. The Muenzner record differs from Messner only by its medium name (6.8 versus 6.7 g/L YNB), and component concentrations are not nodes. The encoder check passed: identical annotations give identical tokens, and the smallest token distance between distinct annotations at initialization was 2.3e-5. Results: `results/ontology_annotation_043_v2.json`.
+
+### prep_v4 (job 6324)
+
+prep_v4 is prep_v3 plus `rec_onto` and `onto_profiles` (38 profiles among the prepared records), with the vocabulary sha256-pinned in `meta.json`. Every prep_v3 array is byte-identical; train 56,805, val 16,504. The prep_v4 train tier was sent to Polaris and Aurora with `PREP_043_VERSION=prep_v4 transfer_043.sh train`, and sha256 was verified on both. Code was synced from a clean `git archive` export of 25ce71d69, because another agent had uncommitted edits in the shared worktree.
+
+### Leak channels removed
+
+Under `model.conditioning.source=ontology`, the dataset embedding, the environment embedding (23 environments across 15 datasets act as a fingerprint), the experiment-type path token and both per-dataset bias tables are gone. One `OntologyDagEncoder` token of width 40 takes their place, so the head input stays 184. The bias tables become `nn.Linear(40, P)` maps of that token, with default init. `forward` never reads `dataset_ids`, `env_ids` or `exp_type_ids`: a test feeds ids far outside every table and gets bit-identical outputs. Loss masks and metrics still use the dataset id as bookkeeping. `arm.exclude_from_training` removes a dataset from every training batch while it is still evaluated.
+
+### Smokes
+
+- GilaHyper CPU, job 6326: arm all, batch 8, 6 steps for each of ontology, name and leave-Hu-out. All three trained and evaluated (val/loss 3.5208, 3.4629, 3.5182; smoke numbers, not results). The setup line confirms the composite gene token: FUDT upstream 768-d, FUDT downstream 768-d, ProtT5-XL 1024-d, CaLM 768-d.
+- Polaris debug, PBS 7780477, one node of 4 A100 40 GB:
+
+| card | arm | s/step (30-step probe) | epoch 1 with evaluation | peak GPU memory |
+|---|---|---|---|---|
+| 0 | ontology, batch 8 | 0.058 | 438 s | 6.67 GB (epoch 1), 6.93 GB (epoch 2) |
+| 1 | ontology, batch 8, two processes on one card | 0.115 and 0.109 | not reached in the smoke window | 15.2 GB for the pair (nvidia-smi) |
+| 2 | name, batch 8 | 0.050 | 380 s | 6.67 GB |
+| 3 | ontology, batch 32 | 0.174 | 318 s (1,776 steps) | 10.90 GB |
+
+Packing two processes on one card gave the same aggregate rate as one process (17.9 against 17.2 steps per second), with the card at 98 to 99 percent utilization. The grid therefore runs one process per card; memory alone would allow five. At batch 32, one card processes 184 records per second, against 138 at batch 8.
+
+The standardization sha256 on Polaris (138a3ab2...) differs from GilaHyper's (6523e7d0...) for the same prepared store. Hypothesis (untested): floating-point summation differs between the two numpy builds.
+
+Gate: `check_wandb_run_keys.py` on run vg9v0g0b passed. epoch, train/loss, val/loss, val/kemmeren/loss, val/kemmeren/pearson_per_gene_median, val/kemmeren/spearman_median, val/hu/loss and time/peak_gpu_gb are each logged on 2 rows.
+
+### Grid (round ontology_2026_10_23)
+
+There are 20 cells in `alcf/ontology_grid_043.tsv`, one per A100 on 5 Polaris nodes. All use prep_v4, equal weighting, every mark and 80 epochs (registered window epochs 71 to 80), and every stage 1 chains to its Kemmeren fine-tune (20 epochs, lr 3e-4, warmup 30, batch 8, as GilaHyper 6311):
+
+- conditioning {ontology, name} x loss {hlgauss, pinball, mse} x seed {0, 1}, batch 8 (12 cells);
+- leave-out: lodo_hu and lodo_zelezniak, ontology, HL-Gauss, seed 0;
+- alone_kemmeren ontology HL-Gauss seeds 0 and 1, step-matched to 6316 (571,100 steps, validation every 20 epochs), no fine-tune;
+- batch-size axis: ontology HL-Gauss seed 0 at batch 16 (lr 4.243e-4) and batch 32 (lr 6.0e-4), lr = 3e-4 x sqrt(batch / 8), 80 epochs;
+- seed 2 of ontology and name HL-Gauss.
+
+Every stage carries `resume_id` (`o1023_<cell>`, plus `_ft` for the fine-tune), which is both its W&B run id and its checkpoint directory. Each node job is rerunnable (`-r y`), so a preempted job resumes every stage from its last.pt.
+
+Queue choice: on Polaris, `qstat -Qf` gave preemptable max 10 nodes and 72 h, at most 10 running and 20 queued jobs per project, with 17 running and 124 queued. Capacity allows 4 nodes, 168 h and one running job per project, with 18 running and 26 queued. The measured 438 s per epoch makes a stage 1 about 9.7 h (80 epochs) and the fine-tune well under 1 h, which fits the 72 h preemptable limit with a wide margin. The grid went to preemptable as 5 one-node jobs with 24 h walltime: PBS 7780544 to 7780548 (NODE 0 to 4). They were queued at submission with no start estimate ("Insufficient amount of resource: queue_tags"). No result exists yet.

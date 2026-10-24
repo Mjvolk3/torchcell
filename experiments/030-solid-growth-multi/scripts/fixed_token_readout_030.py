@@ -20,6 +20,13 @@ defines it), per-screen Pearson, and the mean prediction per screen under each t
 Genotypes are reduced to one value exactly as the trainer does (``_policy_reduce``: rows
 of the lowest precedence rank present, averaged).
 
+Under ``dataset_token.source: ontology`` the heads never see the source name: the token
+is the record's annotation to the schema DAG, and the two Kuzmin screens annotate
+IDENTICALLY, so the own read already is the de novo read. The fixed reads then hold the
+annotation at each distinct profile the store carries (``fixed_profiles`` names them by
+the sources sharing it), the vocabulary being the one the run wrote to
+``results/experiment_ontology_vocab_030.json``.
+
     python experiments/030-solid-growth-multi/scripts/fixed_token_readout_030.py \\
         --config cgt_030_s3_r_tok_embfit_003 --ckpt <...>/u28pgzde-last.ckpt --tag r_s0_ep183
 """
@@ -44,6 +51,11 @@ from pydantic import BaseModel, Field
 from scipy.stats import pearsonr, spearmanr
 from torch_geometric.transforms import Compose
 
+from torchcell.data.experiment_ontology import (
+    ExperimentOntologyVocabulary,
+    describe_annotation,
+    scan_store_records,
+)
 from torchcell.losses.point_dist_graph_reg import PointDistGraphReg
 from torchcell.models.equivariant_cell_graph_transformer import CellGraphTransformer
 from torchcell.trainers.int_transformer_cell import (
@@ -101,6 +113,13 @@ class FixedTokenReadout(BaseModel):
     mean_target_kuzmin2018: float
     mean_target_kuzmin2020: float
     dataset_vocabulary: list[str]
+    token_source: str = Field(
+        default="name", description="'name', 'ontology' or 'none' (model.dataset_token)"
+    )
+    fixed_profiles: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description="ontology source: the sources sharing each fixed annotation profile",
+    )
     reads: list[TokenRead]
 
 
@@ -185,6 +204,38 @@ def main() -> None:
         flush=True,
     )
 
+    dataset_root = osp.join(data_root, cfg["dataset"]["root_rel"])
+    token_cfg_raw = dict(cfg["model"]["dataset_token"])
+    token_source = (
+        str(token_cfg_raw.get("source", "name"))
+        if token_cfg_raw.get("enabled")
+        else "none"
+    )
+    ontology_vocabulary = None
+    fixed_profiles: dict[str, list[str]] = {}
+    fixed_vectors: dict[str, torch.Tensor] = {}
+    if token_source == "ontology":
+        vocab_path = osp.join(results_dir(), "experiment_ontology_vocab_030.json")
+        ontology_vocabulary = ExperimentOntologyVocabulary.from_json(vocab_path)
+        by_profile: dict[tuple[str, ...], tuple[set[str], torch.Tensor]] = {}
+        for name, e, r in scan_store_records(dataset_root, per_dataset=25):
+            vec = ontology_vocabulary.vector(e, r)
+            key = tuple(describe_annotation(ontology_vocabulary, vec))
+            by_profile.setdefault(key, (set(), vec))[0].add(name)
+        for names, vec in by_profile.values():
+            base = label = "+".join(sorted(names))
+            k = 2
+            while label in fixed_profiles:
+                label = f"{base}#{k}"
+                k += 1
+            fixed_profiles[label] = sorted(names)
+            fixed_vectors[label] = vec
+        print(
+            f"ontology: {len(ontology_vocabulary)} nodes from {vocab_path}; "
+            f"{len(fixed_profiles)} annotation profiles: {list(fixed_profiles)}",
+            flush=True,
+        )
+
     with open(
         osp.join(experiment_root, EXPERIMENT, "queries/001_multi_measurement.cql")
     ) as f:
@@ -193,12 +244,13 @@ def main() -> None:
     t0 = time.time()
     dataset, _genome, _graph, node_embeddings = build_dataset(
         data_root=data_root,
-        dataset_root=osp.join(data_root, cfg["dataset"]["root_rel"]),
+        dataset_root=dataset_root,
         query=query,
         graph_names=list(cfg["cell_dataset"]["graphs"]),
         node_embedding_names=list(cfg["cell_dataset"].get("node_embeddings", [])),
         phenotype_labels=phenotype_labels,
         dataset_vocabulary=arm.dataset_vocabulary,
+        ontology_vocabulary=ontology_vocabulary,
     )
     print(f"dataset: {len(dataset)} records in {time.time() - t0:.0f}s", flush=True)
     norm_transform = COOLabelNormalizationTransform(
@@ -227,6 +279,8 @@ def main() -> None:
     model_cfg = cfg["model"]
     token_cfg = dict(model_cfg["dataset_token"])
     token_cfg["vocab_size"] = len(arm.dataset_vocabulary)
+    if ontology_vocabulary is not None:
+        token_cfg["vocabulary"] = ontology_vocabulary
     loss_cfg = cfg["regression_task"]["loss"]
     model = CellGraphTransformer(
         gene_num=model_cfg["gene_num"],
@@ -307,11 +361,15 @@ def main() -> None:
             batch = batch.to(device)
             gene = batch["gene"]
             batch_size = task._get_batch_size(batch)
+            model_kwargs: dict[str, Any] = {}
+            if ontology_vocabulary is not None:
+                model_kwargs["entry_annotation"] = gene.phenotype_ontology
             preds, reps = task(
                 batch,
                 return_attention=False,
                 entry_batch=gene.phenotype_values_batch,
                 entry_dataset=gene.phenotype_dataset_indices,
+                **model_kwargs,
             )
             rows, _vals, orig, toks, sel = task._entry_rows(batch, "gene_interaction")
             own = task._inverse_scalar(preds[sel].float(), "gene_interaction").view(-1)
@@ -323,16 +381,27 @@ def main() -> None:
                 "target": orig.float().cpu().numpy(),
                 "pred_own": own.cpu().numpy(),
             }
-            for t in range(n_tokens):
-                fixed_pred, _ = task.model.entry_readout(
-                    reps, batch, rows, torch.full_like(toks, t)
-                )
-                frame[f"pred_{vocabulary[t]}"] = (
-                    task._inverse_scalar(fixed_pred.float(), "gene_interaction")
+            def inverse(pred: torch.Tensor) -> np.ndarray:
+                return (
+                    task._inverse_scalar(pred.float(), "gene_interaction")
                     .view(-1)
                     .cpu()
                     .numpy()
                 )
+
+            if ontology_vocabulary is None:
+                for t in range(n_tokens):
+                    fixed_pred, _ = task.model.entry_readout(
+                        reps, batch, rows, torch.full_like(toks, t)
+                    )
+                    frame[f"pred_{vocabulary[t]}"] = inverse(fixed_pred)
+            else:
+                for label, vec in fixed_vectors.items():
+                    annotation = vec.to(device).unsqueeze(0).expand(rows.shape[0], -1)
+                    fixed_pred, _ = task.model.entry_readout(
+                        reps, batch, rows, toks, annotation
+                    )
+                    frame[f"pred_{label}"] = inverse(fixed_pred)
             frames.append(pd.DataFrame(frame))
             offset += batch_size
             if bi % 20 == 0:
@@ -363,7 +432,8 @@ def main() -> None:
             **_score(y, reduced["pred_own"].to_numpy(), screen),
         )
     ]
-    for name in vocabulary:
+    fixed_names = vocabulary if ontology_vocabulary is None else list(fixed_vectors)
+    for name in fixed_names:
         reads.append(
             TokenRead(
                 token=name,
@@ -383,6 +453,8 @@ def main() -> None:
         mean_target_kuzmin2018=float(y[screen == "kuzmin2018"].mean()),
         mean_target_kuzmin2020=float(y[screen == "kuzmin2020"].mean()),
         dataset_vocabulary=vocabulary,
+        token_source=token_source,
+        fixed_profiles=fixed_profiles,
         reads=reads,
     )
     out_json = osp.join(results_dir(), f"fixed_token_readout_030_{args.tag}.json")

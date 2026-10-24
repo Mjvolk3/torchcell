@@ -98,7 +98,6 @@ import numpy as np
 import numpy.typing as npt
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from torchcell.data.experiment_ontology import (
@@ -110,6 +109,7 @@ from torchcell.losses.distributional import DEFAULT_NUM_QUANTILES, pinball
 from torchcell.losses.hl_gauss import HLGaussConfig, HLGaussLoss
 from torchcell.models.equivariant_cell_graph_transformer import (
     GraphRegularizedTransformerLayer,
+    query_chunked_sdpa,
 )
 from torchcell.models.genotype_tokens_043 import (
     CHANGE_PRECEDENCE,
@@ -247,6 +247,12 @@ class CellModel043Config(BaseModel):
     loss: LossKind = "hlgauss"
     hl_gauss: HLGaussConfig = Field(default_factory=HLGaussConfig)
     num_quantiles: int = Field(default=DEFAULT_NUM_QUANTILES, gt=0)
+    attention_query_chunk: int | None = Field(
+        default=None,
+        gt=0,
+        description="query block size of every trunk and operator SDPA "
+        "(query_chunked_sdpa); None = one call. Memory only: the attention is the same",
+    )
 
     @model_validator(mode="after")
     def _check(self) -> CellModel043Config:
@@ -480,7 +486,9 @@ class CellTrunk043(nn.Module):
         d = config.hidden_dim
         self.cls_token = nn.Parameter(torch.randn(1, 1, d) * 0.02)
         self.layers = nn.ModuleList(
-            GraphRegularizedTransformerLayer(d, config.num_heads, config.dropout)
+            GraphRegularizedTransformerLayer(
+                d, config.num_heads, config.dropout, config.attention_query_chunk
+            )
             for _ in range(config.num_layers)
         )
         if config.mask_layers and head_mask is None:
@@ -534,6 +542,7 @@ class MarkOperator043(nn.Module):
         )
         self.dropout = nn.Dropout(config.dropout)
         self.p_drop = config.dropout
+        self.query_chunk = config.attention_query_chunk
         self.norm1 = nn.LayerNorm(d)
         self.norm2 = nn.LayerNorm(d)
         self.last_norms: dict[str, torch.Tensor] = {}
@@ -561,8 +570,8 @@ class MarkOperator043(nn.Module):
         allowed = torch.cat(
             [torch.ones(B, 1, dtype=torch.bool, device=valid.device), valid], dim=1
         ).view(B, 1, 1, M + 1)
-        attn = F.scaled_dot_product_attention(
-            q, k, v, attn_mask=allowed, dropout_p=self.p_drop if self.training else 0.0
+        attn = query_chunked_sdpa(
+            q, k, v, allowed, self.p_drop if self.training else 0.0, self.query_chunk
         )
         out = self.out_proj(attn.transpose(1, 2).reshape(B, N, d))
         a = self.dropout(out)

@@ -15,6 +15,7 @@ driver (aurora_sdpa_probe_043.pbs) loops over cases and records which ones survi
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import time
 
@@ -54,13 +55,14 @@ def main() -> None:
     acc.synchronize()
     acc.reset_peak_memory_stats()
     base = acc.memory_allocated()
-    backends = (
-        [b for b in SDPBackend]
+    # "default" lets torch choose the kernel, as the trainer does
+    ctx = (
+        contextlib.nullcontext()
         if a.backend == "default"
-        else [getattr(SDPBackend, a.backend)]
+        else sdpa_kernel([getattr(SDPBackend, a.backend)])
     )
     t0 = time.perf_counter()
-    with sdpa_kernel(backends), torch.autocast(dev.type, dtype=torch.bfloat16):
+    with ctx, torch.autocast(dev.type, dtype=torch.bfloat16):
         out = F.scaled_dot_product_attention(
             q, k, v, attn_mask=mask, dropout_p=a.dropout
         )

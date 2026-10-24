@@ -39,6 +39,11 @@
     "name": "043 overnight_2026_10_23: all_hlgauss_equal",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=eh9yurpvc24"
   },
+  "overnight_2026_10_23/all_pinball_equal": {
+    "id": "252it8u8mt1",
+    "name": "043 overnight_2026_10_23: all_pinball_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=252it8u8mt1"
+  },
   "overnight_2026_10_23/alone_kemmeren_hlgauss_equal": {
     "id": "9kyhcdyx6sj",
     "name": "043 overnight_2026_10_23: alone_kemmeren_hlgauss_equal",

@@ -1,0 +1,5 @@
+# experiments/043-expression-proteome-morphology/conf/model/pattern_mmmm.yaml
+# Trunk layer pattern [M, M, M, M] (M = multigraph-masked attention, head h sees graph
+# head_graphs[h]; S = dense). Sets model.num_layers and model.mask_layers. 
+# Use as an override group: +model=pattern_mmmm, or model.layer_pattern=[M,M,M,M].
+layer_pattern: [M, M, M, M]

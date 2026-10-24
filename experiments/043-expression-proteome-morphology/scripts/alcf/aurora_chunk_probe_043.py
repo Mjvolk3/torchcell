@@ -15,6 +15,7 @@ whether anything is non-finite.
 from __future__ import annotations
 
 import json
+import sys
 
 import torch
 import torch.nn.functional as F
@@ -29,6 +30,7 @@ def blocks(
     mask: torch.Tensor | None,
     chunk: int,
     contiguous: bool,
+    p: float = 0.0,
 ) -> torch.Tensor:
     """Query blocks, no checkpointing."""
     outs = []
@@ -38,13 +40,14 @@ def blocks(
         if contiguous:
             qc = qc.contiguous()
             m = None if m is None else m.contiguous()
-        outs.append(F.scaled_dot_product_attention(qc, k, v, attn_mask=m))
+        outs.append(F.scaled_dot_product_attention(qc, k, v, attn_mask=m, dropout_p=p))
     return torch.cat(outs, dim=-2)
 
 
 def main() -> None:
     """Run the four variants on xpu (or cuda) and print one JSON line per variant."""
     dev = torch.device("xpu" if torch.xpu.is_available() else "cuda")
+    p = float(sys.argv[1]) if len(sys.argv) > 1 else 0.0
     torch.manual_seed(0)
     B, N, H, hd, chunk = 2, 6609, 9, 16, 1024
     x = torch.randn(B, N, H * hd, device=dev)
@@ -62,13 +65,15 @@ def main() -> None:
             qkv = proj(xx).view(B, N, 3, H, hd)
             q, k, v = (qkv[:, :, i].transpose(1, 2) for i in range(3))
             if kind == "one":
-                out = F.scaled_dot_product_attention(q, k, v, attn_mask=mask)
+                out = F.scaled_dot_product_attention(
+                    q, k, v, attn_mask=mask, dropout_p=p
+                )
             elif kind == "blocks":
-                out = blocks(q, k, v, mask, chunk, contiguous=False)
+                out = blocks(q, k, v, mask, chunk, contiguous=False, p=p)
             elif kind == "blocks_contig":
-                out = blocks(q, k, v, mask, chunk, contiguous=True)
+                out = blocks(q, k, v, mask, chunk, contiguous=True, p=p)
             else:
-                out = query_chunked_sdpa(q, k, v, mask, 0.0, chunk)
+                out = query_chunked_sdpa(q, k, v, mask, p, chunk)
         (out.float() * w).sum().backward()
         assert xx.grad is not None and proj.weight.grad is not None
         return out.float().detach(), [xx.grad.clone(), proj.weight.grad.clone()]
@@ -80,6 +85,7 @@ def main() -> None:
             json.dumps(
                 {
                     "variant": kind,
+                    "dropout": p,
                     "out_finite": bool(torch.isfinite(out).all()),
                     "grads_finite": [bool(torch.isfinite(t).all()) for t in g],
                     "max_abs_out": float((out - ref_out).abs().max()),

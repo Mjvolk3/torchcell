@@ -1,0 +1,148 @@
+# experiments/043-expression-proteome-morphology/conf/train_043_default.yaml
+# [[experiments.043-expression-proteome-morphology.conf.train_043_default]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/conf/train_043_default.yaml
+#
+# The 043 trainer (scripts/train_043.py). Validated into the pydantic TrainConfig043.
+# Arms compose from three groups: arm (which datasets), loss (hlgauss | pinball | mse) and
+# weighting (equal | records). W&B group = <arm>_<loss>_<weighting>, name = <group>_s<seed>.
+#
+# REGISTERED WINDOW (decision O10), declared here before any launch: the read-out is the
+# mean over the last 20% of the run's epochs (budget.registered_window, start_frac 0.8,
+# end_frac 1.0). Validation is logged every epoch and never selects an epoch; the test fold
+# (fold 0) is never loaded by the trainer. Alone and joint runs are to be matched on
+# optimizer steps (S5); the smoke is time-budgeted instead and says so.
+defaults:
+  - arm: joint_9
+  - loss: hlgauss
+  - weighting: equal
+  - _self_
+
+seed: 0
+device: auto
+# STAGE 2 (two-stage protocol, 2026-10-23): a stage-1 checkpoint whose model weights (not
+# the optimizer) initialize this run; the W&B group becomes
+# finetune_<arm without alone_>_from_<stage-1 group>. optim.lr is the fine-tune lr.
+init_from: null
+# PREEMPTIBLE QUEUES (2026-10-23): a fixed id names the checkpoint directory and the W&B run;
+# a resubmitted job with the same id resumes from that directory's last.pt.
+resume_id: null
+
+data:
+  route: A
+  # null = the store generation's prepared store (prep_v3 for v2); prep_v4 = prep_v3 plus the
+  # per-record experiment ontology annotation (needed by model.conditioning.source=ontology)
+  prep_version: null
+  # STORE GENERATION (2026-10-23, store_version_043): v2 = raw_043_v2 (every served
+  # record admitted, no gene-set clause), prep_v3, representation_043_v2, global_split_v2.
+  # v1 = raw_043, prep_v2, representation_043, global_split_v1: every run before
+  # 2026-10-23 (GilaHyper smokes S1-S4, jobs 6172-6175, and the Polaris and Aurora smokes
+  # included); pass data.store_version=v1 to reproduce one. v2 since prep_v3 landed
+  # (job 6304, 2026-10-23 19:17; global_split_v2 inherits v1's folds).
+  store_version: v2
+  # SAMPLER (batch side) and WEIGHTING (loss side) compose. records = uniform over training
+  # records, the per-record extreme (Vaishnav is 84% of joint_9's training records, so a
+  # batch of 8 holds about 1.3 gene-level records); balanced = each batch slot draws a
+  # dataset uniformly, then a record within it (same number of batches per epoch). The
+  # weighting then reweights the per-dataset loss means of whatever the batch holds.
+  # A balanced run is labeled <arm>_balanced_<loss>_<weighting> in W&B.
+  sampler: records
+  batch_size: 16
+  label_batch_size: false  # true appends _bs<N> to the W&B group (batch-size axis)
+  num_workers: 4
+  # Marks per record entering the operator. null = every mark: the data maximum, read
+  # from the prepared store at setup (4,416 on prep_v2, N'Guessan), so no record is
+  # truncated (owner, 2026-10-23: "bump the limit"). A number is a smoke-only override
+  # (select_marks: absent / deletion / loss-of-function first, then a fixed per-record random
+  # subset); the setup line prints the maximum and what a cap drops. The 2026-10-22 runs and
+  # S1 to S4 (jobs 6172 to 6175) used 1024.
+  mark_cap: null
+  val_max_records_per_dataset: 2000
+  traineval_max_records_per_dataset: 256
+  min_strains_per_gene: 3
+  # TARGET PREPROCESSING (GilaHyper sweep, 2026-10-24; torchcell.data.target_transform_043):
+  # a monotone second stage on the legacy z, fitted on training rows, inverted before
+  # scoring. zscore + dataset = the legacy z (every earlier run); quantile_normal = rank to
+  # a standard normal per group; none = released scale after the per-gene center.
+  # target_stats_by: dataset (legacy) | profile (experiment-ontology phenotype profile;
+  # needs data.prep_version=prep_v4).
+  target_transform: zscore
+  target_stats_by: dataset
+
+model:
+  hidden_dim: 144
+  num_heads: 9
+  num_layers: 4
+  dropout: 0.1
+  mask_layers: [1]
+  head_graphs:
+    0: physical
+    1: regulatory
+    2: tflink
+    3: string12_0_neighborhood
+    4: string12_0_fusion
+    5: string12_0_cooccurence
+    6: string12_0_coexpression
+    7: string12_0_experimental
+    8: string12_0_database
+  fourier_frequencies: 8
+  operator_ffn_mult: 4
+  type_token_dim: 16
+  env_token_dim: 16
+  dataset_token_dim: 8
+  head_hidden: 128
+  exp_type_mode: dag
+  # TRUNK SHAPE (2026-10-24): layer_pattern [S|M, ...] DEFINES num_layers and mask_layers
+  # (M = multigraph-masked attention, 0-based; null = num_layers / mask_layers above, i.e.
+  # [S, M, S, S]). conf/model/pattern_*.yaml hold the sweep arms (+model=pattern_ssss).
+  # trunk_ffn_mult: trunk FFN width / hidden_dim (4 = 576 at hidden 144).
+  layer_pattern: null
+  trunk_ffn_mult: 4
+  # CONDITIONING (2026-10-23): name = type path + dataset + environment tokens and
+  # per-dataset bias tables (every earlier run); ontology = the record's experiment ontology
+  # annotation through OntologyDagEncoder (token width 40, as the name token), bias maps of
+  # it; no dataset id enters the forward pass. Needs data.prep_version=prep_v4.
+  conditioning:
+    source: name
+    state_dim: 16
+
+optim:
+  lr: 3.0e-4
+  weight_decay: 1.0e-8
+  warmup_steps: 500
+  clip_grad_norm: 10.0
+  # constant after warmup (every earlier run) | cosine to min_lr_frac * lr at the last step
+  schedule: constant
+  min_lr_frac: 0.0
+
+budget:
+  max_epochs: 50
+  max_steps: null  # total optimizer steps for a step-matched run (overrides max_epochs)
+  time_budget_hours: null
+  time_margin_minutes: 20.0
+  probe_steps: 30
+  eval_every_epochs: 1
+  registered_window:
+    start_frac: 0.8
+    end_frac: 1.0
+
+wandb:
+  project: torchcell_043-expression-proteome-morphology
+  entity: null
+  mode: online
+  tags: []
+  round: null
+  label_knobs: false  # true appends non-default sweep knobs to the W&B group
+
+paths:
+  data_root: ${oc.env:DATA_ROOT}
+  # null = derived from data.store_version (conf/splits/global_split_<v>.json)
+  split_file: null
+  prep_dir: null
+  representation_root: null
+  alleles_root: null
+  checkpoint_root: null
+
+hydra:
+  run:
+    dir: ${oc.env:DATA_ROOT}/experiments/043-expression-proteome-morphology/hydra/${now:%Y-%m-%d_%H-%M-%S}
+  output_subdir: null

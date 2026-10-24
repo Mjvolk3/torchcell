@@ -184,6 +184,7 @@ def test_committed_registry_is_byte_stable_and_seeded() -> None:
         "amino_acid_betaxanthin",
         "essentiality_smf",
         "expression_proteome_morphology",
+        "expression_proteome_morphology_043",
         "solid_growth_025",
     ]
     assert {q.status for q in registry.queries} == {"supported"}

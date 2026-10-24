@@ -1,0 +1,48 @@
+#!/bin/bash -l
+#PBS -A GenesisHackathonOct26
+#PBS -q debug
+#PBS -l select=1
+#PBS -l walltime=00:40:00
+#PBS -l filesystems=home:flare
+#PBS -N 043-chunk-probe
+#PBS -j oe
+#PBS -o /flare/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/slurm/output/
+# experiments/043-expression-proteome-morphology/scripts/alcf/aurora_chunk_probe_043.pbs
+# [[experiments.043-expression-proteome-morphology.scripts.alcf.aurora_chunk_probe_043]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/alcf/aurora_chunk_probe_043.pbs
+#
+# Tile 0: aurora_chunk_probe_043.py (one call against query blocks on XPU). Tiles 1-4: the
+# 043 trainer at batch 2 (few distinct contexts, so the one-call path fits a tile) for 150
+# steps, chunk none / 1024, mark cap null / 1024, to separate a chunking fault from an XPU
+# fault in the non-finite gradient norms of job 8959230.
+set -uo pipefail
+HERE=/flare/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/scripts/alcf
+# shellcheck disable=SC1091
+source "$HERE/aurora_env_043.sh"
+OUT=$TC_TREE/experiments/043-expression-proteome-morphology/slurm/output
+J=${PBS_JOBID%%.*}
+echo "job $PBS_JOBID on $(hostname) at $(date); tree $SYNCED"
+ZE_AFFINITY_MASK=0 "$PY" "$HERE/aurora_chunk_probe_043.py" "${PROBE_DROPOUT:-0.0}" > "$OUT/${J}_probe.log" 2>&1 &
+common=(arm=all loss=hlgauss weighting=equal seed=0 data.num_workers=4 data.sampler=records
+  budget.max_epochs=1 "++budget.max_steps_per_epoch=150" budget.time_budget_hours=0.6
+  budget.eval_every_epochs=1 data.batch_size=2 "wandb.tags=[aurora,aurora_measure]")
+if [ "${ROUND2:-0}" = 1 ]; then
+  # job 8959263: chunk none trains, chunk 1024 is non-finite at step 2; dropout is the
+  # difference between the trainer and the probe, so: dropout 0 with chunking, and a
+  # second probe tile with dropout 0.1
+  ZE_AFFINITY_MASK=5 "$PY" "$HERE/aurora_chunk_probe_043.py" 0.1 > "$OUT/${J}_probe_p01.log" 2>&1 &
+  train_on_tile 1 "$OUT/${J}_b2_c1024_drop0.log" "${common[@]}" data.mark_cap=null ++attention_query_chunk=1024 model.dropout=0.0
+  train_on_tile 2 "$OUT/${J}_b2_cnone_drop0.log" "${common[@]}" data.mark_cap=null model.dropout=0.0
+else
+  train_on_tile 1 "$OUT/${J}_b2_cnone_capnull.log" "${common[@]}" data.mark_cap=null
+  train_on_tile 2 "$OUT/${J}_b2_c1024_capnull.log" "${common[@]}" data.mark_cap=null ++attention_query_chunk=1024
+  train_on_tile 3 "$OUT/${J}_b2_cnone_cap1024.log" "${common[@]}" data.mark_cap=1024
+  train_on_tile 4 "$OUT/${J}_b2_c1024_cap1024.log" "${common[@]}" data.mark_cap=1024 ++attention_query_chunk=1024
+fi
+wait
+cat "$OUT/${J}"_probe*.log
+for f in "$OUT/${J}"_b2*.log; do
+  echo "== $f"
+  grep -E "projection|non-finite|Segmentation|Error|runs/" "$f" | cut -c1-200 | tail -4
+done
+echo "done $(date)"

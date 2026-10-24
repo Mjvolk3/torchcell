@@ -631,6 +631,7 @@ def test_real_registry_holds_on_the_committed_snapshot() -> None:
             "amino_acid_betaxanthin",
             "essentiality_smf",
             "expression_proteome_morphology",
+            "expression_proteome_morphology_043",
             "solid_growth_025",
         ],
         snapshot.release,

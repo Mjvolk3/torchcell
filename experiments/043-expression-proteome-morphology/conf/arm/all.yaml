@@ -1,0 +1,15 @@
+# experiments/043-expression-proteome-morphology/conf/arm/all.yaml
+# Stage 1 of the two-stage protocol (owner, 2026-10-23): one model over every dataset of the
+# raw store that has a working head, no target dataset. joint_9 plus Hu 2007 (error-model X
+# score, as released), Jackson 2020 (pseudobulk UMI counts, log2 CPM ratio to the record's
+# served reference of the same environment) and Nadal-Ribelles 2025 (pseudobulk log2 fold
+# change, |v| >= 20 set missing as the sentinel). Sameith 2015 Sm is in the store but the
+# fold file excludes it (Kemmeren's arrays, 82 of 82 identical); Sameith Dm stays split B;
+# Ohya 2005 stays the eval-time morphology probe (no record-level multi-output head exists).
+# Jackson has no validation records under global_split_v1 (its 12 TF genes and HO are
+# training units), so it is read on traineval only.
+name: all
+datasets: [kemmeren, messner, zelezniak, caudal, muenzner, turnover, boocock, nguessan, vaishnav, hu, jackson, nadal]
+doubles: true
+# leave-dataset-out (ontology conditioning only): datasets never trained on, still evaluated
+exclude_from_training: []

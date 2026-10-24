@@ -1,0 +1,416 @@
+{
+ "source": "raw",
+ "datasets": {
+  "Boocock2025Dataset": {
+   "records": 79516,
+   "genotypes": 79516,
+   "perturbation_sets": 79516,
+   "environments": 2,
+   "media_names": 2,
+   "labels": {
+    "umi_count": 79516
+   },
+   "label_length_min": 182,
+   "label_length_median": 962.0,
+   "label_length_max": 4758,
+   "perturbations_per_record_min": 0,
+   "perturbations_per_record_max": 0,
+   "perturbation_types": {}
+  },
+  "CaudalPanTranscriptome2024Dataset": {
+   "records": 943,
+   "genotypes": 943,
+   "perturbation_sets": 943,
+   "environments": 1,
+   "media_names": 1,
+   "labels": {
+    "expression_tpm": 943
+   },
+   "label_length_min": 5922,
+   "label_length_median": 6050.0,
+   "label_length_max": 6120,
+   "perturbations_per_record_min": 195,
+   "perturbations_per_record_max": 7025,
+   "perturbation_types": {
+    "sequence_variant": 4759608,
+    "natural_loss_of_function": 361624,
+    "natural_gene_absence": 126839,
+    "natural_gene_presence": 79016,
+    "deletion": 116
+   }
+  },
+  "DmMicroarraySameith2015Dataset": {
+   "records": 72,
+   "genotypes": 72,
+   "perturbation_sets": 72,
+   "environments": 1,
+   "media_names": 1,
+   "labels": {
+    "expression_log2_ratio": 72
+   },
+   "label_length_min": 6169,
+   "label_length_median": 6169.0,
+   "label_length_max": 6169,
+   "perturbations_per_record_min": 2,
+   "perturbations_per_record_max": 2,
+   "perturbation_types": {
+    "sga_kanmx_deletion": 72,
+    "sga_natmx_deletion": 72
+   }
+  },
+  "MicroarrayKemmeren2014Dataset": {
+   "records": 1482,
+   "genotypes": 1482,
+   "perturbation_sets": 1482,
+   "environments": 1,
+   "media_names": 1,
+   "labels": {
+    "expression_log2_ratio": 1482
+   },
+   "label_length_min": 6169,
+   "label_length_median": 6169.0,
+   "label_length_max": 6169,
+   "perturbations_per_record_min": 1,
+   "perturbations_per_record_max": 1,
+   "perturbation_types": {
+    "kanmx_deletion": 1482
+   }
+  },
+  "MicroarrayScoreHu2007Dataset": {
+   "records": 262,
+   "genotypes": 262,
+   "perturbation_sets": 262,
+   "environments": 1,
+   "media_names": 1,
+   "labels": {
+    "expression_score": 262
+   },
+   "label_length_min": 5921,
+   "label_length_median": 6381.0,
+   "label_length_max": 6429,
+   "perturbations_per_record_min": 1,
+   "perturbations_per_record_max": 1,
+   "perturbation_types": {
+    "kanmx_deletion": 262
+   }
+  },
+  "NadalRibellesPerturbSeq2025Dataset": {
+   "records": 6118,
+   "genotypes": 3059,
+   "perturbation_sets": 3114,
+   "environments": 2,
+   "media_names": 1,
+   "labels": {
+    "expression_log2_ratio": 6118
+   },
+   "label_length_min": 4223,
+   "label_length_median": 5866.0,
+   "label_length_max": 6313,
+   "perturbations_per_record_min": 1,
+   "perturbations_per_record_max": 1,
+   "perturbation_types": {
+    "marker_deletion": 6118
+   }
+  },
+  "Nguessan2025Dataset": {
+   "records": 2951,
+   "genotypes": 2951,
+   "perturbation_sets": 2951,
+   "environments": 1,
+   "media_names": 1,
+   "labels": {
+    "umi_count": 2951
+   },
+   "label_length_min": 475,
+   "label_length_median": 2592.0,
+   "label_length_max": 5111,
+   "perturbations_per_record_min": 0,
+   "perturbations_per_record_max": 0,
+   "perturbation_types": {}
+  },
+  "PooledPromoterExpressionVaishnav2022Dataset": {
+   "records": 71158,
+   "genotypes": 1,
+   "perturbation_sets": 71158,
+   "environments": 1,
+   "media_names": 1,
+   "labels": {
+    "expression_level": 71158
+   },
+   "label_length_min": 1,
+   "label_length_median": 1.0,
+   "label_length_max": 1,
+   "perturbations_per_record_min": 1,
+   "perturbations_per_record_max": 1,
+   "perturbation_types": {
+    "variable_promoter_reporter": 71158
+   }
+  },
+  "ProteinTurnoverMuenzner2024Dataset": {
+   "records": 55,
+   "genotypes": 55,
+   "perturbation_sets": 55,
+   "environments": 1,
+   "media_names": 1,
+   "labels": {
+    "degradation_rate": 55
+   },
+   "label_length_min": 919,
+   "label_length_median": 1055.0,
+   "label_length_max": 1177,
+   "perturbations_per_record_min": 4903,
+   "perturbations_per_record_max": 6430,
+   "perturbation_types": {
+    "sequence_variant": 278223,
+    "natural_loss_of_function": 20525,
+    "natural_gene_absence": 7366,
+    "natural_gene_presence": 4940,
+    "deletion": 4
+   }
+  },
+  "ProteomeMessner2023Dataset": {
+   "records": 4624,
+   "genotypes": 4476,
+   "perturbation_sets": 4476,
+   "environments": 1,
+   "media_names": 1,
+   "labels": {
+    "protein_abundance": 4624
+   },
+   "label_length_min": 1441,
+   "label_length_median": 1819.0,
+   "label_length_max": 1849,
+   "perturbations_per_record_min": 1,
+   "perturbations_per_record_max": 1,
+   "perturbation_types": {
+    "kanmx_deletion": 4624
+   }
+  },
+  "ProteomeMuenzner2024Dataset": {
+   "records": 795,
+   "genotypes": 795,
+   "perturbation_sets": 795,
+   "environments": 1,
+   "media_names": 1,
+   "labels": {
+    "protein_abundance": 795
+   },
+   "label_length_min": 1336,
+   "label_length_median": 1540.0,
+   "label_length_max": 1571,
+   "perturbations_per_record_min": 0,
+   "perturbations_per_record_max": 7025,
+   "perturbation_types": {
+    "sequence_variant": 3988281,
+    "natural_loss_of_function": 300040,
+    "natural_gene_absence": 105431,
+    "natural_gene_presence": 66957,
+    "deletion": 85
+   }
+  },
+  "ProteomeZelezniak2018Dataset": {
+   "records": 97,
+   "genotypes": 97,
+   "perturbation_sets": 97,
+   "environments": 1,
+   "media_names": 1,
+   "labels": {
+    "protein_abundance": 97
+   },
+   "label_length_min": 726,
+   "label_length_median": 726.0,
+   "label_length_max": 726,
+   "perturbations_per_record_min": 1,
+   "perturbations_per_record_max": 1,
+   "perturbation_types": {
+    "kanmx_deletion": 97
+   }
+  },
+  "ScmdOhya2005Dataset": {
+   "records": 4678,
+   "genotypes": 4678,
+   "perturbation_sets": 4678,
+   "environments": 1,
+   "media_names": 1,
+   "labels": {
+    "calmorph": 4678
+   },
+   "label_length_min": 281,
+   "label_length_median": 281.0,
+   "label_length_max": 281,
+   "perturbations_per_record_min": 1,
+   "perturbations_per_record_max": 1,
+   "perturbation_types": {
+    "kanmx_deletion": 4678
+   }
+  },
+  "SmMicroarraySameith2015Dataset": {
+   "records": 82,
+   "genotypes": 82,
+   "perturbation_sets": 82,
+   "environments": 1,
+   "media_names": 1,
+   "labels": {
+    "expression_log2_ratio": 82
+   },
+   "label_length_min": 6169,
+   "label_length_median": 6169.0,
+   "label_length_max": 6169,
+   "perturbations_per_record_min": 1,
+   "perturbations_per_record_max": 1,
+   "perturbation_types": {
+    "sga_kanmx_deletion": 82
+   }
+  },
+  "TfDeletionPseudobulkJackson2020Dataset": {
+   "records": 784,
+   "genotypes": 12,
+   "perturbation_sets": 72,
+   "environments": 10,
+   "media_names": 9,
+   "labels": {
+    "umi_count": 784
+   },
+   "label_length_min": 298,
+   "label_length_median": 4028.5,
+   "label_length_max": 5561,
+   "perturbations_per_record_min": 1,
+   "perturbations_per_record_max": 1,
+   "perturbation_types": {
+    "barcoded_kanmx_deletion": 784
+   }
+  }
+ },
+ "colocation": {
+  "genotypes_by_label": {
+   "calmorph": 4678,
+   "degradation_rate": 55,
+   "expression_log2_ratio": 3685,
+   "expression_score": 262,
+   "expression_tpm": 943,
+   "protein_abundance": 5279,
+   "umi_count": 82479
+  },
+  "genotypes_by_dataset": {
+   "Boocock2025Dataset": 79516,
+   "CaudalPanTranscriptome2024Dataset": 943,
+   "DmMicroarraySameith2015Dataset": 72,
+   "MicroarrayKemmeren2014Dataset": 1482,
+   "MicroarrayScoreHu2007Dataset": 262,
+   "NadalRibellesPerturbSeq2025Dataset": 3059,
+   "Nguessan2025Dataset": 2951,
+   "ProteinTurnoverMuenzner2024Dataset": 55,
+   "ProteomeMessner2023Dataset": 4476,
+   "ProteomeMuenzner2024Dataset": 795,
+   "ProteomeZelezniak2018Dataset": 97,
+   "ScmdOhya2005Dataset": 4678,
+   "SmMicroarraySameith2015Dataset": 82,
+   "TfDeletionPseudobulkJackson2020Dataset": 12
+  },
+  "genotypes_total": 88426,
+  "label_pairs": {
+   "expression_log2_ratio x calmorph": 3473,
+   "protein_abundance x calmorph": 4287,
+   "expression_log2_ratio x protein_abundance": 3317,
+   "expression_tpm x protein_abundance": 759,
+   "umi_count x calmorph": 12,
+   "expression_score x calmorph": 259
+  },
+  "genotype_environment_grid": {
+   "NadalRibellesPerturbSeq2025Dataset": {
+    "environments": 2,
+    "genotypes": 3059,
+    "grid_size": 6118,
+    "observed_cells": 6011,
+    "genotypes_per_environment": [
+     {
+      "environment": "d90725939a0d",
+      "media": "YPD (yeast extract / peptone / dextrose), liquid",
+      "genotypes": 3008
+     },
+     {
+      "environment": "b490825678d3",
+      "media": "YPD (yeast extract / peptone / dextrose), liquid",
+      "genotypes": 3003
+     }
+    ]
+   },
+   "TfDeletionPseudobulkJackson2020Dataset": {
+    "environments": 10,
+    "genotypes": 12,
+    "grid_size": 120,
+    "observed_cells": 120,
+    "genotypes_per_environment": [
+     {
+      "environment": "0cd5701f7c46",
+      "media": "Jackson 2020 carbon-starvation medium, 1 mM ammonium sulfate, no carbon source (CSTARVE)",
+      "genotypes": 12
+     },
+     {
+      "environment": "6ad0ad81b1e8",
+      "media": "Jackson 2020 minimal medium, 2% (v/v) ethanol + 20 mM ammonium sulfate (MMEtOH)",
+      "genotypes": 12
+     },
+     {
+      "environment": "ce010872e837",
+      "media": "Jackson 2020 minimal medium, 2% glucose + 20 mM ammonium sulfate (MMD)",
+      "genotypes": 12
+     },
+     {
+      "environment": "ec4452b333f7",
+      "media": "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM L-glutamine (NLIM-GLN)",
+      "genotypes": 12
+     },
+     {
+      "environment": "902d53cba929",
+      "media": "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM L-proline (NLIM-PRO)",
+      "genotypes": 12
+     },
+     {
+      "environment": "3fd70c761469",
+      "media": "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM ammonium sulfate (NLIM-NH4)",
+      "genotypes": 12
+     },
+     {
+      "environment": "94642f75a1d1",
+      "media": "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM urea (NLIM-UREA)",
+      "genotypes": 12
+     },
+     {
+      "environment": "f0588efd64fc",
+      "media": "YP + 2% (v/v) ethanol, liquid (Jackson 2020 YPEtOH)",
+      "genotypes": 12
+     },
+     {
+      "environment": "b78d6a0404f3",
+      "media": "YPD (yeast extract / peptone / dextrose), liquid",
+      "genotypes": 12
+     },
+     {
+      "environment": "112573bd707c",
+      "media": "YPD (yeast extract / peptone / dextrose), liquid",
+      "genotypes": 12
+     }
+    ]
+   }
+  },
+  "isolate_overlap_by_genotype": {
+   "caudal": 943,
+   "muenzner_proteome": 795,
+   "muenzner_turnover": 55,
+   "caudal_and_proteome": 759,
+   "caudal_and_turnover": 55,
+   "proteome_and_turnover": 55,
+   "all_three": 55
+  },
+  "isolate_overlap_by_strain_name": {
+   "caudal": 943,
+   "muenzner_proteome": 795,
+   "muenzner_turnover": 55,
+   "caudal_and_proteome": 759,
+   "caudal_and_turnover": 55,
+   "proteome_and_turnover": 55,
+   "all_three": 55
+  }
+ }
+}

@@ -1,0 +1,12 @@
+{
+ "generated_by": "experiments/043-expression-proteome-morphology/scripts/primer_043_tables.py",
+ "inputs_sha256": {
+  "results/store_census.json": "b97546d91bfefc298dbbef03bbbf7c0f261bbc9480c6c9700692e20c51d0aa32",
+  "results/cross_dataset_correlation.json": "8a7afc2b913d76e274846916f1dd4c13fd42563aafe6bf211dca0237a954c900",
+  "results/within_dataset_ceilings.json": "3577d6c318b45dec26b07576b10f5acee36cd232d4d95f505ed690f414b6efc5",
+  "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/experiments/019-simb-multimodal/results/expression_ceiling_all.json": "740aaf97ca2dae97a6eb5652c8bad4a2b265f31fadb39e13a11360ef117271b2",
+  "/home/michaelvolk/Documents/projects/torchcell.worktrees/multimodal-phenotype-retrospective/experiments/019-simb-multimodal/results/morphology_noise_ceiling.json": "5eeb8489c470cb278bab1e8b35c4d2772aafadbc8dbec33fef8405f9f95a1e01",
+  "results/data_shapes_043.json": "ec3c2b1e9aae2fa8c539495256aee151af081fd19ba6de2e44833409bb98c176",
+  "results/distinct_alleles.json": "bc806631585309fb3bf40a6cb067a475ad00caa381d377d90235dd51e4c978bc"
+ }
+}

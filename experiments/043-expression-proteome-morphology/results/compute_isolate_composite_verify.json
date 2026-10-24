@@ -1,0 +1,183 @@
+{
+ "generated_by": "experiments/043-expression-proteome-morphology/scripts/compute_isolate_composite.py",
+ "store": "/scratch/projects/torchcell-scratch/data/scerevisiae/isolate_embeddings/peter2018_1011",
+ "created_at": "2026-10-23T00:57:20+00:00",
+ "rows": 6165757,
+ "isolates": 1011,
+ "reference_genes_per_isolate": 6015,
+ "tables": {
+  "fudt_species_upstream": {
+   "rows_with_input": 5570717,
+   "rows_with_typed_gap": 595040,
+   "rows_with_neither": 0,
+   "rows_with_both": 0,
+   "inputs_in_sequence_table": 5570717,
+   "inputs_with_embedding_row": 5570717,
+   "distinct_inputs": 1025434,
+   "distinct_inputs_with_embedding_row": 1025434,
+   "embedding_table_rows": 1209089,
+   "s288c_genes_with_embedding_row": 6607,
+   "gap_types": {
+    "locus_gap": 366832,
+    "ambiguous_sequence": 138408,
+    "flank_short": 89800
+   }
+  },
+  "calm": {
+   "rows_with_input": 4882463,
+   "rows_with_typed_gap": 1283294,
+   "rows_with_neither": 0,
+   "rows_with_both": 0,
+   "inputs_in_sequence_table": 4882463,
+   "inputs_with_embedding_row": 4882463,
+   "distinct_inputs": 581944,
+   "distinct_inputs_with_embedding_row": 581944,
+   "embedding_table_rows": 582566,
+   "s288c_genes_with_embedding_row": 6607,
+   "gap_types": {
+    "ambiguous_sequence": 1281220,
+    "splice_unverified": 2022,
+    "exon_boundary_in_alignment_gap": 52
+   }
+  },
+  "prot_t5_xl_uniref50": {
+   "rows_with_input": 5171524,
+   "rows_with_typed_gap": 994233,
+   "rows_with_neither": 0,
+   "rows_with_both": 0,
+   "inputs_in_sequence_table": 5171524,
+   "inputs_with_embedding_row": 5171524,
+   "distinct_inputs": 372369,
+   "distinct_inputs_with_embedding_row": 372369,
+   "embedding_table_rows": 372966,
+   "s288c_genes_with_embedding_row": 6607,
+   "gap_types": {
+    "ambiguous_sequence": 992159,
+    "splice_unverified": 2022,
+    "exon_boundary_in_alignment_gap": 52
+   }
+  },
+  "fudt_species_downstream": {
+   "rows_with_input": 5685119,
+   "rows_with_typed_gap": 480638,
+   "rows_with_neither": 0,
+   "rows_with_both": 0,
+   "inputs_in_sequence_table": 5685119,
+   "inputs_with_embedding_row": 5685119,
+   "distinct_inputs": 364715,
+   "distinct_inputs_with_embedding_row": 364715,
+   "embedding_table_rows": 365396,
+   "s288c_genes_with_embedding_row": 6607,
+   "gap_types": {
+    "locus_gap": 366832,
+    "ambiguous_sequence": 71495,
+    "flank_short": 42311
+   }
+  }
+ },
+ "embedding_complete": true,
+ "geometry_check_reference_alleles": {
+  "window_up": {
+   "rows_reference_allele_with_window": 839113,
+   "identical_to_s288c_window": 241048,
+   "fraction_identical": 0.2873,
+   "fraction_identical_sgd_model_agrees": 0.2882
+  },
+  "window_down": {
+   "rows_reference_allele_with_window": 850433,
+   "identical_to_s288c_window": 474437,
+   "fraction_identical": 0.5579,
+   "fraction_identical_sgd_model_agrees": 0.5574
+  }
+ },
+ "locus_outcomes": {
+  "located": 5798925,
+  "partial_alignment": 237818,
+  "below_identity": 97523,
+  "no_hit": 28081,
+  "cds_off_contig": 3410
+ },
+ "locus_outcomes_reference_present": {
+  "located": 5445076,
+  "partial_alignment": 153483,
+  "below_identity": 17769,
+  "cds_off_contig": 1732,
+  "no_hit": 131
+ },
+ "per_isolate_summary": {
+  "reference_genes": {
+   "count": 1011.0,
+   "mean": 6015.0,
+   "std": 0.0,
+   "min": 6015.0,
+   "25%": 6015.0,
+   "50%": 6015.0,
+   "75%": 6015.0,
+   "max": 6015.0
+  },
+  "accessory_orfs": {
+   "count": 1011.0,
+   "mean": 83.67,
+   "std": 39.75,
+   "min": 34.0,
+   "25%": 63.0,
+   "50%": 78.0,
+   "75%": 92.0,
+   "max": 352.0
+  },
+  "located": {
+   "count": 1011.0,
+   "mean": 5735.83,
+   "std": 217.34,
+   "min": 4321.0,
+   "25%": 5738.0,
+   "50%": 5804.0,
+   "75%": 5830.0,
+   "max": 5882.0
+  },
+  "up_windows": {
+   "count": 1011.0,
+   "mean": 5510.11,
+   "std": 455.84,
+   "min": 2831.0,
+   "25%": 5501.0,
+   "50%": 5663.0,
+   "75%": 5726.0,
+   "max": 5821.0
+  },
+  "down_windows": {
+   "count": 1011.0,
+   "mean": 5623.26,
+   "std": 347.23,
+   "min": 3483.0,
+   "25%": 5627.5,
+   "50%": 5733.0,
+   "75%": 5780.0,
+   "max": 5855.0
+  },
+  "present": {
+   "count": 1011.0,
+   "mean": 5640.73,
+   "std": 31.17,
+   "min": 5549.0,
+   "25%": 5621.0,
+   "50%": 5641.0,
+   "75%": 5660.0,
+   "max": 5819.0
+  }
+ },
+ "isolates_lowest_located": {
+  "BFG": 4321,
+  "BTE": 4328,
+  "CBF": 4390,
+  "BFE": 4393,
+  "BFM": 4401,
+  "BMM": 4440,
+  "CFN": 4463,
+  "CFI": 4491,
+  "CLA": 4507,
+  "CKS": 4540
+ },
+ "failures": [],
+ "passed": true
+}

@@ -1,0 +1,5 @@
+# experiments/043-expression-proteome-morphology/conf/weighting/records.yaml
+# Arm (O5): each dataset's mean loss weighted by its record count in the batch.
+kind: records
+# dataset (legacy) | profile (pool datasets sharing an ontology phenotype profile; prep_v4)
+by: dataset

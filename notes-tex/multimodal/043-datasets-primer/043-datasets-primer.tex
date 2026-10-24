@@ -1,0 +1,56 @@
+%% notes-tex/multimodal/043-datasets-primer/043-datasets-primer.tex
+%% [[experiments.043-expression-proteome-morphology]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/multimodal/043-datasets-primer/043-datasets-primer.tex
+%%
+%% The 15 datasets of the 043 store: what each holds, how its genotypes enter a model,
+%% how far each agrees with itself and with the others, which genotypes carry which
+%% labels, the plan set by the owner on 2026-10-19 (every gene-level readout trained
+%% together; splits A, B, C and the Ohya probe), the data as tensors, and the input- and
+%% output-side designs with one owner-decision checklist (tab:decisions).
+%%
+%% Build:  make            -> 043-datasets-primer.pdf
+%%         make check      -> gate
+%%         make tables     -> rerun primer_043_tables.py
+%%         make plots      -> re-convert the panels from ASSET_IMAGES_DIR
+%%         make publish    -> upload the build to Zotero
+%%
+%% Every table is written by experiments/043-expression-proteome-morphology/scripts/
+%% primer_043_tables.py; the figures by cross_dataset_correlation.py and
+%% within_dataset_ceilings.py in the same directory.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{pdflscape}
+
+\emergencystretch=3.5em
+\pdfstringdefDisableCommands{\def\secstatus#1{}}
+
+\title{\vspace{-1.5em}The 043 Datasets\\
+  {\large Fifteen expression, protein and morphology datasets: genotypes, agreement,
+  co-location, and the design of one model over every gene-level readout}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\input{sections/0-abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-store}
+\input{sections/2-genotypes}
+\input{sections/3-agreement}
+\input{sections/4-colocation}
+\input{sections/5-proposal}
+\input{sections/6-tensors}
+\input{sections/input-design}
+\input{sections/output-design}
+
+\end{document}

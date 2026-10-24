@@ -1,0 +1,61 @@
+%% notes-tex/multimodal/043-training-plan/sections/6-launch.tex
+%% SOURCE: .claude/skills/prepare-experiment/SKILL.md (sections 1 to 5) at commit bed26f949;
+%% experiments/043-expression-proteome-morphology/scripts/wandb_view_043.py and
+%% results/wandb_view_ids.json; memories delta-never-preempt-partition,
+%% always-show-train-and-validation-loss-together, wandb-views-all-runs-smoothing-loss-first.
+
+\section{Launch discipline\secstatus{todo}}
+\label{sec:launch}
+
+\notesec{The gate}
+Every machine's first submission is a smoke, never a chain: G1 on GilaHyper, P0 on Polaris,
+A0 and A1 on Aurora, D7 on Delta. After a smoke has logged two evaluations,
+\file{scripts/check_wandb_run_keys.py} is run on its W\&B run with \texttt{-{}-require} for
+\texttt{val/loss} and, for every dataset of the arm, \texttt{val/<dataset>/loss} and its
+validation score; exit 1 means the trainer is fixed and the smoke rerun before anything depends
+on it. The gate is rerun after every trainer change, and its output (key, row count, verdict)
+goes verbatim into the round's dated section of the experiment note.
+
+\notesec{The logging contract}
+At every evaluation, as curves: \texttt{epoch}, \texttt{train/loss} and \texttt{val/loss} under
+the same weighting, the per-dataset pair \texttt{train/<dataset>/loss} and
+\texttt{val/<dataset>/loss}, \texttt{train/lr}, \texttt{train/grad\_norm}, every validation
+statistic of Table~\ref{tab:ladder}, and \texttt{operator/relative\_norm}, the operator's
+attention branch over the context norm. A stage-2 run also logs \texttt{stage}, the stage-1 run id it started
+from and the checkpoint's sha256.
+
+\notesec{Time}
+\texttt{-{}-time} and PBS walltime are about 1.5 times the estimate from a measured step time on
+that machine (Sec.~\ref{sec:cost}), never a round number chosen in advance. A step-matched run
+sets \texttt{budget.max\_steps}, and the trainer raises rather than train a shorter unmatched
+control.
+
+\notesec{Chains}
+Slurm chains use \texttt{-{}-dependency=afterany}, PBS chains \texttt{-W depend=afterany:<id>},
+so a crash never stalls a chain; a fine-tune whose checkpoint is missing raises at startup.
+GilaHyper uses at most the two cards granted. Delta never uses the preempt partition and never
+launches without the owner's go. Polaris uses no \texttt{preemptable} queue while the trainer
+has no resume.
+
+\notesec{W\&B}
+One project, \texttt{torchcell\_043-expression-proteome-morphology}. Groups are named
+\file{s1_<arm>_<loss>_<weighting>} and \file{s2_<target>_<from-arm>_<lr>_<policy>},
+runs \file{<group>_s<seed>}, with the machine as a tag. \file{wandb_view_043.py} writes the
+round's view before the first result is read, loss first (train and validation on one panel,
+grouped by arm, smoothing on, with a step-axis twin where stage-2 runs and their controls differ
+in epochs per step), then the headline validation statistics, the per-dataset panels, the train
+side and bookkeeping. Aborted runs are tagged, not deleted. Links go one per line.
+
+\notesec{What is committed where}
+Configs (\file{conf/arm/all.yaml}, \file{conf/stage2/*.yaml}, \file{conf/decision_rule.yaml}),
+launchers (\file{scripts/gh_*.slurm}, \file{scripts/delta_*.slurm}, \file{scripts/polaris_*.pbs},
+\file{scripts/aurora_*.pbs}) and the task lists of the packed jobs live in
+\file{experiments/043-expression-proteome-morphology/} and are committed before submission.
+Window means, ladder reads and probe reads are JSON files under \file{results/}, each written by
+a committed script from the unsampled W\&B history or the checkpoints. Each round gets a dated
+section in the experiment note with the gate output, the queue table (job id, run, dependency,
+time requested, expected end) and the arms dropped for budget, by name. Checkpoints, prepared
+stores and job logs stay under \texttt{\$DATA\_ROOT} and the \texttt{/eagle} and \texttt{/flare}
+project trees, never in git. The numbers of this document are hand-sourced with
+\texttt{\%\% SOURCE} comments; a table script in the experiment folder replaces them when the
+first stage-1 results arrive.

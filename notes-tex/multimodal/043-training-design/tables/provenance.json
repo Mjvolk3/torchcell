@@ -1,0 +1,10 @@
+{
+ "generated_by": "experiments/043-expression-proteome-morphology/scripts/training_design_043_tables.py",
+ "inputs": {
+  "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/043-expression-proteome-morphology/experiments/043-expression-proteome-morphology/results/overnight_2026_10_22_window_means.json": "a66917d78ad271827053d8ec9b17dc78840a14bbe285651a1eba544bf6bdc1e4",
+  "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/043-expression-proteome-morphology/experiments/043-expression-proteome-morphology/results/linear_evals_043.json": "c061fb492887be478ba3beb86a1f1c4837c12b85399d808aafaa02e9ec843af5",
+  "/scratch/projects/torchcell-scratch/data/torchcell/experiments/043-expression-proteome-morphology/train_043_prep/prep_v1_routeA/meta.json": "e3d30b33bea5ba5e7cb9a458c857e3b9c57a95dce996f311a45cbde5d63563ed",
+  "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/043-expression-proteome-morphology/experiments/043-expression-proteome-morphology/conf/train_043_default.yaml": "02070f5a9963bf1cbfc9d63b5ceee5a8a42724e325bdde01b58bf54039052e47"
+ },
+ "batch_size": 8
+}

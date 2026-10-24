@@ -1,0 +1,29 @@
+#!/bin/bash -l
+#PBS -A GenesisHackathonOct26
+#PBS -q preemptable
+#PBS -l select=1:ngpus=4
+#PBS -l walltime=24:00:00
+#PBS -l filesystems=home:eagle
+#PBS -r y
+#PBS -N 043-onto-grid
+#PBS -j oe
+#PBS -o /eagle/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/slurm/output/
+# experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_grid.pbs
+# [[experiments.043-expression-proteome-morphology.scripts.alcf.polaris_train_043_ontology_grid]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_grid.pbs
+#
+# One Polaris node (4 A100 40 GB) of round ontology_2026_10_23, through node_cells_043.sh.
+# NODE (0-based) selects its
+# rows of ontology_grid_043.tsv: with PER_CARD processes per card, node k takes rows
+# [4 * PER_CARD * k, 4 * PER_CARD * (k + 1)), row r of the node going to card r % 4. Each row
+# runs run_cell_043.sh (stage 1, then its Kemmeren fine-tune) pinned with
+# CUDA_VISIBLE_DEVICES. Every stage resumes from its own last.pt and W&B run (resume_id), and
+# the job is rerunnable (-r y): a preempted job requeued by PBS, or resubmitted with the same
+# NODE, continues where it stopped.
+#
+#   ssh polaris "cd /eagle/GenesisHackathonOct26/mjvolk3/torchcell && \
+#     qsub -v NODE=0,PER_CARD=1 experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_grid.pbs"
+set -euo pipefail
+: "${NODE:?qsub -v NODE=<k>}"
+cd /eagle/GenesisHackathonOct26/mjvolk3/torchcell
+exec bash experiments/043-expression-proteome-morphology/scripts/alcf/node_cells_043.sh "$NODE" "${PER_CARD:-1}"

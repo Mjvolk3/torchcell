@@ -1,0 +1,76 @@
+%% notes-tex/multimodal/043-training-plan/sections/7-decisions.tex
+%% SOURCE: items 1 to 11 restate notes-tex/multimodal/043-training-design/sections/7-open.tex
+%% (with its numbers: job 6126 gap shares, job 6120 mark counts, job 6115 embedding, the 188
+%% dropped records); items 12 to 21 are this plan's, with the arms of Sec. 5; primer decision P1
+%% from notes-tex/multimodal/043-datasets-primer/tables/t13-decisions-rows.tex.
+
+\section{Decisions the owner holds\secstatus{todo}}
+\label{sec:decisions}
+
+Each item names the choice and the test that settles it. Items 1 to 11 are the open questions
+of \dsec{7}, shortened, with where the plan places their test; items 12 to 21 are new.
+
+\begin{enumerate}[leftmargin=*,itemsep=3pt]
+\item \textbf{Heterozygous IUPAC codes: typed gap or the encoder's unknown token.} \emph{Test:}
+re-embed the gapped rows through the unknown token and compare the two arms on Caudal and
+Muenzner per-gene Pearson, six seeds. Not in the grid; a candidate Aurora stage-1 contrast.
+\item \textbf{Soft-masked bases.} \emph{Test:} count and re-embed the windows an uppercase slice
+recovers, then the recovered against the strict-gap arm on the isolate statistics. Not in the
+grid.
+\item \textbf{Route B and the consistency test.} \emph{Test:} C8 against R, six seeds, with the
+consistency readout of Eq.~\ref{eq:routecons}.
+\item \textbf{Attended-token head or head-only tokens.} \emph{Test:} the attended arm against
+head-only on Kemmeren, the doubles and the isolates, six seeds; not implemented, not in the grid.
+\item \textbf{Flat-type and six-heads controls.} \emph{Test:} \texttt{exp\_type\_mode: flat} and
+six heads against the type path on every dataset; the flat control is a config switch and fits
+a later Polaris job.
+\item \textbf{Dataset weighting extremes.} \emph{Test:} C2, C3 and C4 against R
+(Sec.~\ref{sec:sampler}); under the balanced sampler the weighting contrast is degenerate.
+\item \textbf{A clade-disjoint isolate split.} \emph{Test:} a second fold file disjoint by Peter
+2018 clade; GBLUP and the stage-1 reference on both, the drop from random to clade split being
+the quantity of interest.
+\item \textbf{The Addgene 127546 window gate.} \emph{Test:} deposit the plasmid's GenBank file by
+the manual recipe, compare its window with the reconstruction base by base, re-embed only on a
+difference; until then, whether Vaishnav numbers may be quoted.
+\item \textbf{Retiring Sameith 2015 Sm.} \emph{Test:} repeat the identity check on the served
+graph's records and record it with the retirement decision.
+\item \textbf{The 188 dropped records.} \emph{Test:} re-query with the \texttt{SIZE = 0 OR ANY}
+shape and confirm the store gains exactly 188 records; \texttt{all} would then hold them. Hu,
+Nadal-Ribelles and Ohya account for 111 of the 188.
+\item \textbf{The mark cap.} \emph{Test:} G6 for memory, then C9 against R on the segregant
+statistics.
+\item \textbf{Background marks.} On or off, how the mating type enters, and whether a
+complemented auxotrophy is two marks on one gene or one under the precedence rule
+(Sec.~\ref{sec:background}). \emph{Test:} C7 against R, six seeds, per dataset; and, within
+Kemmeren, the MATa and MAT$\alpha$ strata read separately, since only a mixed-background dataset
+can separate the marks from the dataset token.
+\item \textbf{Graph placement.} Mask at one layer, readout gather or none, and whether the soft
+edge bias is worth an arm. \emph{Test:} C5 and C6 against R, six seeds, on every dataset.
+\item \textbf{Operator residual.} Closed 2026-10-23: the plain residual is the only one; ReZero
+was removed from the code on the owner's instruction, and its arm C1 from the grid.
+\item \textbf{The stage-1 reference sampler.} Balanced, records or $\alpha = 0.5$. \emph{Test:} C2
+and C4 against R. The winner becomes the reference for any later stage-1 job; stage 2 starts from
+the winner's checkpoints.
+\item \textbf{Fine-tune learning rate and freezing policy.} Main $\mathrm{lr}_2 = 10^{-4}$, nothing
+frozen. \emph{Test:} A2's three rates by three policies, chosen on Kemmeren's validation fold
+only, never on the doubles.
+\item \textbf{Fine-tune length.} $k = 31{,}710$ for Kemmeren and the segregants, 1{,}100 for the
+singles. \emph{Test:} $k = 7{,}550$ (50 Kemmeren epochs) beside 31{,}710 for the main setting,
+six seeds, $\Delta^{\mathrm{ft}}_{k}$ at each; one extra short run per seed.
+\item \textbf{Which datasets fine-tune second.} The Sameith singles, then the segregant panels,
+is the proposed order; the isolates (Caudal, Muenzner) are the alternative second target.
+\emph{Test:} A2 reads every target's $\Delta^{\mathrm{ft}}_{\mathrm{tot}}$ on the same stage-1
+checkpoints; an isolate target (Caudal and Muenzner) adds its fine-tunes and 24 control runs, about 230 tile-hours at the segregant rate (an estimate).
+\item \textbf{A longer stage 1.} Whether 200 stage-1 epochs make a better starting point than 50.
+\emph{Test:} A3 against R at matched seeds, read on stage 1 and through the Kemmeren fine-tune;
+64 node-hours.
+\item \textbf{Hu, Jackson, Nadal-Ribelles in \texttt{all}, and the Boocock de novo cells (P1).}
+The three were left out of \texttt{joint\_9} on 2026-10-21; ``all data'' brings them back.
+\emph{Test:} C11 (\texttt{joint\_9} at $k_1$ steps) against R on the datasets the two share. The de
+novo cells, 79{,}123 records beyond the pooled 393, would make Boocock the largest gene-level
+dataset; their arm waits on P1.
+\item \textbf{A leave-target-out pretraining control.} \texttt{all} minus Kemmeren in stage 1,
+then the Kemmeren fine-tune, separates transfer from the other datasets from a second pass over
+the target. \emph{Test:} six seeds of that stage-1 arm and its fine-tunes against R's; about 50
+Polaris card-hours, not in the budget.
+\end{enumerate}

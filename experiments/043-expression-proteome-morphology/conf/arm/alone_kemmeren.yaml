@@ -1,0 +1,7 @@
+# experiments/043-expression-proteome-morphology/conf/arm/alone_kemmeren.yaml
+# Control arm: the joint_9 config with one dataset listed (decision S1, S5).
+name: alone_kemmeren
+datasets: [kemmeren]
+doubles: true
+# leave-dataset-out (ontology conditioning only): datasets never trained on, still evaluated
+exclude_from_training: []

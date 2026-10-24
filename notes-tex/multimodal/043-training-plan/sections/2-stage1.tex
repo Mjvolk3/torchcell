@@ -1,0 +1,232 @@
+%% notes-tex/multimodal/043-training-plan/sections/2-stage1.tex
+%% SOURCE: record counts from the datasets primer, notes-tex/multimodal/043-datasets-primer/tables/t1-store.tex
+%% (results/store_census.json); training records and steps of joint_9 from the design review's
+%% tables/macros.tex (prep store, job 6134); trainer state from
+%% experiments/043-expression-proteome-morphology/scripts/train_043.py and
+%% conf/arm/joint_9.yaml at commit f1cf262d2; mark counts from results/verify_representation_043.json
+%% (job 6120) as quoted in the design review Sec. 7; background genotypes from the loaders
+%% torchcell/datasets/scerevisiae/hu2007.py (BY4741 quote, line 283), messner2023.py (lines 34-35
+%% and 424-429), zelezniak2018.py (lines 48, 488-495), jackson2020.py (lines 298, 429-432),
+%% muenzner2024 loader (FY4), vaishnav2022.py (lines 57-67, S288C::ura3 for the loaded file),
+%% kemmeren2014.py (lines 101-110, 188, 642), sameith2015.py (lines 870-875, 1062-1075).
+
+\section{Stage 1: pretrain over every dataset\secstatus{todo}}
+\label{sec:stage1}
+
+\subsection{The arm \texttt{all}\secstatus{todo}}
+\label{sec:armall}
+
+The stage-1 arm \texttt{all} trains every dataset of the 043 query that has a head
+(Table~\ref{tab:all}). It differs from \texttt{joint\_9} by Hu 2007, Jackson 2020 and
+Nadal-Ribelles 2025, which the owner had left out of \texttt{joint\_9} on 2026-10-21 and
+which ``all data'' brings back. Ohya 2005 trains nothing and is read as a probe of the frozen
+model (Sec.~\ref{sec:ohya}); Sameith 2015 Dm is split B, read through Kemmeren's dataset token
+and standardization; Sameith 2015 Sm stays excluded as a copy of Kemmeren's arrays. Boocock
+2025 enters with its 393 pooled records; whether the de novo single cells train is decision P1
+of the primer, kept open (Sec.~\ref{sec:decisions}). The training record count of \texttt{all}
+is fixed by its prepare stage, which has not run. Estimate (untested): \texttt{joint\_9}'s
+50{,}767 training records plus about 80\% of the added records (the share of single-deletion
+genes outside folds 0 and 1), about 56{,}500, or 7{,}063 steps per epoch at $B = 8$ and $k_1
+\approx 353{,}150$ steps over 50 epochs.
+
+%% SOURCE: notes-tex/multimodal/043-datasets-primer/tables/t1-store.tex (records in the store);
+%% train_043.py SPECS at f1cf262d2 (which datasets have a trainer spec); primer decisions O6, O7, P1.
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{>{\raggedright\arraybackslash}p{30mm}>{\raggedright\arraybackslash}p{24mm}>{\raggedleft\arraybackslash}p{16mm}>{\raggedright\arraybackslash}p{16mm}>{\raggedright\arraybackslash}p{24mm}>{\raggedright\arraybackslash}p{58mm}}
+\caption[]{\textbf{Datasets of the 043 query and their role in the stage-1 arm
+\texttt{all}.} Records are those of the raw store (primer Table~1), before the split. ``Trainer
+spec'' says whether \file{train_043.py} reads the dataset at commit \texttt{f1cf262d2}; a
+dataset without one cannot enter \texttt{all} until its spec, transform and standardization
+are written.}\label{tab:all}\\
+\toprule
+Dataset & Role in \texttt{all} & Records in the store, n & Head & Trainer spec at \texttt{f1cf262d2} & What \texttt{all} needs \\
+\midrule
+\endfirsthead
+\toprule
+Dataset & Role in \texttt{all} & Records in the store, n & Head & Trainer spec at \texttt{f1cf262d2} & What \texttt{all} needs \\
+\midrule
+\endhead
+Kemmeren 2014 & trains & 1{,}482 & gene & yes & nothing \\
+Sameith 2015 Dm & split B, evaluation only & 72 & gene & yes & nothing; read through Kemmeren's token and standardization \\
+Sameith 2015 Sm & excluded & 82 & -- & -- & nothing; 82 of 82 identical to Kemmeren's arrays \\
+Hu 2007 & trains & 262 & gene & no & spec; signed X score as released, standardized per dataset \\
+Jackson 2020 & trains & 784 & gene & no & spec; target per primer O7 (deletion effect against the HO control of the same environment) \\
+Nadal-Ribelles 2025 & trains & 6{,}118 & gene & no & spec; sentinels $|\log_2 \mathrm{FC}| > 20$ set missing before standardization (O6) \\
+Messner 2023 & trains & 4{,}624 & gene & yes & nothing \\
+Zelezniak 2018 & trains & 97 & gene & yes & nothing \\
+Ohya 2005 & probe, never trained & 4{,}678 & -- & -- & the probe script on saved checkpoints (Sec.~\ref{sec:ohya}) \\
+Caudal 2024 & trains & 943 & gene & yes & nothing \\
+Muenzner 2024 protein & trains & 795 & gene & yes & nothing \\
+Muenzner 2024 turnover & trains & 55 & gene & yes & nothing \\
+Boocock 2025 & trains, pooled records only & 393 of 79{,}516 & gene & yes & nothing; de novo cells wait on P1 \\
+N'Guessan 2025 & trains & 2{,}951 & gene & yes & nothing \\
+Vaishnav 2022 & trains & 71{,}158 & record & yes & nothing \\
+\bottomrule
+\end{longtable}
+\endgroup
+
+Every dataset keeps its own gene or record head input, dataset token and bias
+(\deq{13}, \deq{14}); the objective is \deq{20} and \deq{21} unchanged, and the
+validation loss is \deq{23}, which the prepare-experiment gate requires per dataset.
+
+\subsection{Sampler and weighting arms\secstatus{todo}}
+\label{sec:sampler}
+
+The two overnight samplers are the ends of one family. A batch slot draws dataset $s$ with
+probability
+\begin{equation}
+\pi_s(\alpha) = \frac{n_s^{\alpha}}{\sum_{s' \in \mathcal{S}} n_{s'}^{\alpha}},
+\qquad \alpha \in [0, 1],
+\label{eq:sampler}
+\end{equation}
+then a record of $s$ uniformly, with replacement, for the same number of batches per epoch.
+$\alpha = 0$ is the balanced sampler of \dsec{4.4}; $\alpha = 1$ matches the records
+sampler in expectation (the records sampler draws without replacement). $\alpha = 0.5$ is
+the one new point: Vaishnav, with 42{,}694 training records against Kemmeren's 1{,}202, is
+drawn about 6 times as often as Kemmeren rather than 36 times (records) or equally
+(balanced).
+
+Under the balanced sampler the two weightings of \deq{21} give every dataset the same
+expected weight $1/|\mathcal{S}|$ (design Table~2), so the weighting contrast is degenerate
+there and lives under the records sampler only. The distinct cells are therefore four:
+balanced with equal weighting (the stage-1 reference), records with equal weighting, records
+with record weighting (the canceled run 6151), and $\alpha = 0.5$ with equal weighting. The
+reference is the balanced sampler because it is the only joint arm whose seed-0 Kemmeren
+transfer was positive and whose isolate means were highest (\dsec{6}); that is a choice of
+reference, not a finding, and the contrasts of Sec.~\ref{sec:polaris} decide it.
+
+\subsection{Operator residual\secstatus{todo}}
+\label{sec:residual}
+
+The operator is post-normalized like the trunk (\deq{5}) and like the manuscript's operator,
+\begin{equation}
+h'_i = \operatorname{LN}\!\big(h_i + \operatorname{Drop}(\Delta h_i)\big),
+\qquad
+h^{\mathrm{pert}}_i = \operatorname{LN}\!\big(h'_i + \operatorname{Drop}(\operatorname{FFN}(h'_i))\big),
+\label{eq:plain}
+\end{equation}
+with $\Delta h_i$ of \deq{8}. A record without marks attends only to the null key, whose value
+is zero, so its $\Delta h_i = 0$ and its state passes through the operator's normalizations
+alone. This is the only residual. The ReZero gates of the overnight round (\deq{9}) were removed
+from the code on the owner's instruction, 2026-10-23, after the readout of their scalars: the
+attention gate of the three joint runs stood at $|\zeta_{\mathrm{attn}}|$ 0.05 to 0.07 after
+317{,}300 steps, against 0.25 in the Kemmeren-alone run, and at four stage-1 epochs the
+operator's attention branch was 0.413 of the context norm under the plain residual against
+0.144 under ReZero (GilaHyper jobs 6172 and 6173, one seed). Every run logs that ratio,
+\texttt{operator/relative\_norm}, at each evaluation.
+
+\subsection{Where the graphs act\secstatus{todo}}
+\label{sec:graph}
+
+Off-graph attention is not forbidden in any arm: self-attention stays full in every trunk
+layer except, in one arm, the single masked layer. Three placements are compared.
+
+\notesec{Mask (reference)} The overnight form: in layer $\ell = 2$ head $a$ attends only along
+graph $k(a)$ (\deq{6}); the other three layers are unmasked.
+
+\notesec{Readout gather} No layer is masked. The gene head reads, beside the gene's own
+perturbed state, the mean perturbed state of its neighbors in each relation,
+\begin{equation}
+\bar h^{(k)}_{b,i} =
+\begin{cases}
+\dfrac{1}{|\mathcal{N}_k(i)|} \displaystyle\sum_{j \in \mathcal{N}_k(i)} h^{\mathrm{pert}}_{b,j} & \text{if } \mathcal{N}_k(i) \neq \varnothing,\\[8pt]
+\mathbf{E}^{\mathrm{nbr}}_{k} & \text{otherwise},
+\end{cases}
+\qquad
+\hat{\mathbf{o}}_{b,i} = \operatorname{MLP}_{\mathrm{gene}}\big([h^{\mathrm{pert}}_{b,i} ;\ W_{\mathrm{ga}} [\bar h^{(1)}_{b,i}; \ldots; \bar h^{(9)}_{b,i}] ;\ \mathbf{c}_b]\big) + \mathbf{b}^{\mathrm{gene}}_{s(b)},
+\label{eq:gather}
+\end{equation}
+with $\mathcal{N}_k(i) = \{j : A^{(k)}_{ij} = 1 \text{ or } A^{(k)}_{ji} = 1,\ j \neq i\}$, the
+same nine relations as the mask, and $\operatorname{MLP}_{\mathrm{gene}}: \mathbb{R}^{328} \to
+\mathbb{R}^{128} \to \mathbb{R}^{n_{\mathrm{out}}}$. A gene with no neighbor in a relation
+reads a learned vector of that relation, never a zero standing in for a mean. The record head
+(\deq{14}) is unchanged.
+
+\notesec{None} No mask and no gather: the graphs enter nowhere, the control for both.
+
+\notesec{Not in the grid} A soft form, an additive learned bias on graph edges in place of
+$-\infty$ off them, sits between mask and none and is left to the owner (decision 13).
+
+\subsection{Background-strain marks\secstatus{todo}}
+\label{sec:background}
+
+Every non-isolate record is read today on the S288C reference, although the strains carry
+fixed edits relative to it. The plan adds those edits as marks shared by every record of a
+background,
+\begin{equation}
+\mathcal{P}_b = \mathcal{P}^{\mathrm{bg}}_{\mathrm{bg}(b)} \cup \mathcal{P}^{\mathrm{eng}}_b,
+\qquad
+\mathbf{p}_t \leftarrow \mathbf{p}_t + \mathbf{E}^{\mathrm{orig}}_{\iota_t},
+\label{eq:bgmarks}
+\end{equation}
+where $\mathcal{P}^{\mathrm{eng}}_b$ are the record's engineered marks of \deq{7},
+$\iota_t = 1$ for a background mark and $\mathbf{E}^{\mathrm{orig}} \in \mathbb{R}^{2 \times
+d}$, so the operator can tell a shared background edit from the perturbation. Isolates under
+route A carry their own alleles in their context and take no background marks.
+Table~\ref{tab:backgrounds} lists what the loaders name.
+
+%% SOURCE: the loaders named in this file's header (genotype strings and background names as the
+%% loaders state them); BY4742 and Y8205 genotypes are the standard published ones and are marked
+%% as not yet quoted in the repo.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption[]{\textbf{Background strains named by the 043 loaders, and their marks over
+S288C.} ``Quoted'' means the genotype string is quoted in a loader; a genotype not quoted is
+the standard published one and is pinned with a verbatim quote and sha256 in a background
+registry before any mark enters a run.}
+\label{tab:backgrounds}
+\begin{tabular}{>{\raggedright\arraybackslash}p{18mm}>{\raggedright\arraybackslash}p{52mm}>{\raggedright\arraybackslash}p{50mm}>{\raggedright\arraybackslash}p{50mm}}
+\toprule
+Background & Genotype over S288C & Datasets whose loader names it & Marks, and what is open \\
+\midrule
+BY4741 & MATa his3$\Delta$1 leu2$\Delta$0 met15$\Delta$0 ura3$\Delta$0 (quoted, \file{hu2007.py}) & Hu 2007; Kemmeren 2014 MATa strains; Messner 2023 and Zelezniak 2018, both made prototrophic & four deletion marks and the mating type; the prototrophy of Messner and Zelezniak (pHLUM minichromosome; Messner's control his3$\Delta$::kanMX complemented by HIS3) puts a deletion and a plasmid copy on one gene \\
+BY4742 & MAT$\alpha$ his3$\Delta$1 leu2$\Delta$0 lys2$\Delta$0 ura3$\Delta$0 (not yet quoted) & Kemmeren 2014 MAT$\alpha$ strains (the loader assigns BY4741 or BY4742 per strain); Sameith 2015 singles, and the doubles except the few the SI places in BY4741 & four deletion marks and the mating type \\
+FY4, FY5 & MATa, MAT$\alpha$, prototrophic (quoted, \file{jackson2020.py}) & Jackson 2020; the Muenzner 2024 reference record & the mating type only \\
+S288C::ura3 & ura3 deletion (the loader's file-level inference from the SI and the Zenodo token) & Vaishnav 2022, every loaded row & one deletion mark; the per-record strain is not released \\
+Y8205 & MAT$\alpha$ can1$\Delta$::STE2pr-Sp\_his5 lyp1$\Delta$::STE3pr-LEU2 his3$\Delta$1 leu2$\Delta$0 ura3$\Delta$0 (not yet quoted) & none of the loaded rows: Vaishnav's Y8205 random-library file is a separate release the loader does not read & three deletion marks and two integrated cassettes as off-graph present marks, registered for later SGA-derived records \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two representation choices are open and are decision 12. The mating type differs between
+backgrounds at one locus, and the change types of \dsec{3.3} (step 8) have no mating-type
+change. A complemented auxotrophy carries a chromosomal deletion and a plasmid copy of the
+same gene, and the precedence rule of step 8 (deletion outranks present) would read the gene as
+deleted; the plan proposes two marks on that gene, one per change type. The background is
+nearly constant within a dataset, so the dataset token and bias can absorb its effect; the
+backgrounds become separable only where a dataset mixes them: Kemmeren's MATa and MAT$\alpha$
+strains, Muenzner's FY4 reference beside its isolates, Messner's complemented control.
+
+\subsection{Isolates: route A, with the route B consistency test\secstatus{todo}}
+\label{sec:routes}
+
+Route A, each isolate as its own reference context (\dsec{3.1}), stays the main arm. Route B
+reads an isolate on S288C with its variant, loss-of-function and absence genes as marks, a
+median of 5{,}038 marks per Caudal record (job 6120); it is not implemented in the trainer
+(design Sec.~7, item 3). In the route-B arm only the three isolate datasets change route. Beside
+the per-route statistics of \deq{24} and \deq{25}, a label-free readout compares the two
+routes' predictions on the same held-out isolate, centered on the training-mean profile
+$\bar z_i$ of \deq{25},
+\begin{equation}
+\rho_b = \operatorname{corr}_{i}\big(\hat z^{A}_{b,i} - \bar z_i,\ \hat z^{B}_{b,i} - \bar z_i\big),
+\qquad
+\text{reported as } \operatorname*{median}_{b} \rho_b \text{ beside } \operatorname*{median}_b r^{A}_b \text{ and } \operatorname*{median}_b r^{B}_b,
+\label{eq:routecons}
+\end{equation}
+for routes A and B trained with the same seed. A median $\rho_b$ well above both $r_b$ means
+the routes learned the same function of the genotype; a $\rho_b$ near or below them means
+they reach their scores by different functions, and neither route's isolate score then speaks
+for the representation.
+
+\subsection{The mark cap\secstatus{todo}}
+\label{sec:markcap}
+
+The overnight runs kept at most 1{,}024 marks per record (deletion, absence and
+loss-of-function marks first), a smoke-time cap the design does not have. N'Guessan carries
+a median of 2{,}910 marks and route-B isolates about 5{,}000. The reference keeps 1{,}024; the
+arm raises it to 4{,}096; an uncapped run is first measured for memory and step time on one
+GilaHyper card (smoke G6) and enters the grid only if it fits a 40\,GB A100.

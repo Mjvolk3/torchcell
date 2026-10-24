@@ -1,0 +1,243 @@
+%% notes-tex/multimodal/043-training-design/sections/3-model.tex
+%% SOURCE: torchcell/models/cell_model_043.py (CompositeToken, PositionTerm, CellTrunk043,
+%% MarkOperator043, CellModel043), torchcell/models/readout_heads_043.py,
+%% torchcell/models/genotype_tokens_043.py (ChangeType, CHANGE_PRECEDENCE),
+%% torchcell/models/equivariant_cell_graph_transformer.py (GraphRegularizedTransformerLayer),
+%% torchcell/data/representation_043.py (GapKind, PositionGap), train_043.py (EXP_TYPE_PATHS,
+%% build_model), conf/train_043_default.yaml; parameter count and table rows from the
+%% job 6136 log.
+
+\section{Model, step by step\secstatus{todo}}
+\label{sec:model}
+
+The model keeps the manuscript's factorization $\hat f_\theta = \mathcal{R}_\phi \circ
+\mathcal{T}_\psi \circ F_\theta$ (Methods, ``Problem setup'') and changes what enters it:
+the input token of a gene is a function of the reference context, the perturbation tokens
+are typed marks, and the decoder is two shared heads with the dataset entering only at
+their input and output. Shapes are given for one record unless a batch axis is written;
+$C$ is the number of distinct contexts in a batch.
+
+\subsection{The gene token\secstatus{todo}}
+\label{sec:token}
+
+\notesec{Step 1, the four frozen blocks}
+For context $c$ and gene $i$, each block $q \in \mathcal{Q}$ holds either a key or a typed
+gap $\kappa \in \mathcal{K}$. A key indexes a frozen fp16 vector $x^{(q)}_{c,i} \in
+\mathbb{R}^{d_q}$: the FUDT upstream encoder on the 1{,}003 bp window ($d_{\mathrm{up}} =
+768$), the FUDT downstream encoder on the 300 bp window ($d_{\mathrm{down}} = 768$),
+ProtT5-XL on the protein ($d_{\mathrm{prot}} = 1024$) and CaLM on the coding sequence
+($d_{\mathrm{calm}} = 768$). Each block is normalized and projected separately,
+\begin{equation}
+\tilde x^{(q)}_{c,i} =
+\begin{cases}
+W^{(q)} \operatorname{LN}^{(q)}\!\big(x^{(q)}_{c,i}\big) + b^{(q)} & \text{if block } q \text{ of gene } i \text{ has a key in } c,\\[2pt]
+\mathbf{E}^{\mathrm{gap}}_{q,\kappa} & \text{if it carries the gap } \kappa,
+\end{cases}
+\qquad W^{(q)} \in \mathbb{R}^{d \times d_q},
+\label{eq:block}
+\end{equation}
+so a gap is a learned vector of its own kind and block and is never filled with another
+sequence's vector. The vectors stay frozen; $\operatorname{LN}^{(q)}$, $W^{(q)}$, $b^{(q)}$
+and $\mathbf{E}^{\mathrm{gap}} \in \mathbb{R}^{(4 \cdot 12) \times d}$ train. The overnight
+runs held 929{,}348, 326{,}255, 329{,}430 and 514{,}189 rows of the four tables on the card,
+3.39 GB (job 6136 log).
+
+\notesec{Step 2, the composite}
+The four projections are summed,
+\begin{equation}
+\tilde x_{c,i} = \sum_{q \in \mathcal{Q}} \tilde x^{(q)}_{c,i} \in \mathbb{R}^{d}.
+\label{eq:composite}
+\end{equation}
+
+\notesec{Step 3, the position term}
+Gene $i$ lies on chromosome $\operatorname{chr}(i) \in \{0, \ldots, 16\}$ (0 is the
+mitochondrion) at relative midpoint $\xi_i \in [0,1]$ of the reference. With $\nu^{\mathrm{chr}}_{c,i}$
+the copy number of that chromosome relative to the basal ploidy (1 except on aneuploid
+isolate chromosomes) and $\nu^{\mathrm{gene}}_{c,i}$ the gene's copy number,
+\begin{equation}
+\operatorname{pos}_{c,i} =
+\nu^{\mathrm{chr}}_{c,i}\, \mathbf{E}^{\mathrm{chr}}_{\operatorname{chr}(i)}
++ W_{\xi} \operatorname{Four}(\xi_i) + b_{\xi}
++ \mathbf{w}_{\nu}\big(\log_2(\nu^{\mathrm{gene}}_{c,i} + 1) - 1\big) + \mathbf{b}_{\nu}
++ \mathbf{E}^{\mathrm{pgap}}_{\kappa'_{c,i}},
+\label{eq:pos}
+\end{equation}
+with $\mathbf{E}^{\mathrm{chr}} \in \mathbb{R}^{19 \times d}$ (17 chromosomes and two rows for
+off-graph tokens, an accessory ORF and the reporter construct), $W_{\xi} \in \mathbb{R}^{d
+\times 16}$ and $\mathbf{w}_\nu, \mathbf{b}_\nu \in \mathbb{R}^{d}$. The copy feature is 0 at
+one copy and $-1$ at zero copies. An unknown copy number (a ploidy the source did not report,
+a value the pangenome matrix does not release) drops its term and selects the learned
+position-gap row $\kappa'_{c,i}$ of $\mathbf{E}^{\mathrm{pgap}} \in \mathbb{R}^{4 \times d}$
+(row 0 when nothing is unknown).
+
+\notesec{Step 4, the input token}
+The manuscript's node feature $x_i = \operatorname{Embed}(g_i)$ becomes context dependent,
+\begin{equation}
+x_{c,i} = \tilde x_{c,i} + \operatorname{pos}_{c,i},
+\qquad
+H^{(0)}_c = (x_{\mathrm{CLS}}, x_{c,1}, \ldots, x_{c,N}) \in \mathbb{R}^{(N+1) \times d}.
+\label{eq:token}
+\end{equation}
+For S288C every slot has its reference keys; under route A an isolate's slots carry the
+isolate's own alleles, with the genes outside the released allele set and the genes the
+record calls absent as gaps.
+
+\subsection{The trunk\secstatus{todo}}
+\label{sec:trunk}
+
+\notesec{Step 5, the layers}
+$F_\theta$ is four layers of width $d = 144$ with $h = 9$ heads of width $d_k = 16$. The
+layer is the manuscript's Eqs.\ for the queries, keys, values and attention map, but
+post-normalized, where the manuscript writes the pre-normalized form,
+\begin{equation}
+\hat H^{(\ell)} = \operatorname{LN}\!\Big(H^{(\ell-1)} + \operatorname{Drop}\big(\big[O^{(\ell,1)} \Vert \cdots \Vert O^{(\ell,h)}\big] W_O^{(\ell)}\big)\Big),
+\qquad
+H^{(\ell)} = \operatorname{LN}\!\Big(\hat H^{(\ell)} + \operatorname{Drop}\big(\operatorname{FFN}^{(\ell)}(\hat H^{(\ell)})\big)\Big).
+\label{eq:layer}
+\end{equation}
+
+\notesec{Step 6, the graph mask}
+In layer $\ell = 2$ (\texttt{mask\_layers: [1]}, counted from zero) head $a$ may attend only
+along graph $k(a)$; the other three layers are unmasked. With $A^{(k)}$ symmetrized,
+\begin{equation}
+\alpha^{(2,a)} = \operatorname{softmax}\!\Big(\frac{Q^{(2,a)} (K^{(2,a)})^{\top}}{\sqrt{d_k}} + \Gamma^{(a)}\Big),
+\qquad
+\Gamma^{(a)}_{ij} =
+\begin{cases}
+0 & \text{if } A^{(k(a))}_{ij} = 1,\ A^{(k(a))}_{ji} = 1,\ i = j, \text{ or } i \text{ or } j \text{ is the CLS},\\
+-\infty & \text{otherwise},
+\end{cases}
+\label{eq:mask}
+\end{equation}
+with $k(0), \ldots, k(8)$ the physical, regulatory and TFLink graphs and the STRING 12.0
+neighborhood, fusion, co-occurrence, coexpression, experimental and database channels.
+The objective carries no $\Omega_k$ term: 043 takes the manuscript's $\lambda \to \infty$
+limit of graph-regularized attention at one layer and leaves the rest free.
+
+\notesec{Step 7, one encode per context}
+Each distinct context of a batch is encoded once, $H_c = F_\theta(G_c) \in \mathbb{R}^{(N+1)
+\times d}$, a $[C, N+1, d]$ tensor, and record $b$ reads $H_{c(b)}$. The trunk trains, so
+nothing is cached across batches.
+
+\subsection{Marks and the perturbation operator\secstatus{todo}}
+\label{sec:operator}
+
+\notesec{Step 8, change types}
+Each gene of a genotype has one change type in $\mathcal{C}$. When the source gives a gene
+several, the first in the order absent, deletion, loss of function, variant, present,
+promoter wins: a gene that is gone outranks a call on its sequence, which outranks a
+variant that is still expressed. A mark is a token the operator attends to: a deleted gene,
+a gene a segregant inherits from a non-BY parent (a variant, with that parent as $o_t$), the
+HO deletion of an isolate under route A, an isolate's present accessory ORF (off-graph), and
+Vaishnav's reporter, an off-graph token whose upstream key is the variant's 1{,}003 bp
+construct window. Under route A the isolate's variants live in its context, not in its
+marks. The overnight runs kept at most 1{,}024 marks per record (\texttt{data.mark\_cap}:
+absent, deletion and loss-of-function marks first, then a fixed per-record random subset),
+a smoke-time truncation the design does not have; N'Guessan 2025 records carry a median of
+2{,}910 marks (job 6120).
+
+\notesec{Step 9, the mark key}
+Mark $t$ of record $b$ has the composite and position of its gene in the record's context
+(or of its off-graph token, with the replicon row of $\mathbf{E}^{\mathrm{chr}}$ and the
+Fourier term zeroed), plus its change type and allele parent,
+\begin{equation}
+\tilde{\mathbf{p}}_t = \tilde x_{t} + \operatorname{pos}_{t} + \mathbf{t}_{\tau_t} + \mathbf{E}^{\mathrm{par}}_{o_t},
+\qquad
+\mathbf{p}_t = W_p \operatorname{LN}(\tilde{\mathbf{p}}_t) + b_p + \mathbf{1}[\text{mark } t \text{ is on the graph}]\; h_{c(b),\,j_t},
+\label{eq:markkey}
+\end{equation}
+where $j_t$ is the marked gene and $\mathbf{E}^{\mathrm{par}}_0 = 0$ is ``no parent''. This is
+the manuscript's token $\mathbf{p}_t = r(e_t) + \mathbf{t}_{\tau_t} + m_t \mathbf{w}$ with two
+changes: the projected mark token is added for in-cell genes as well, and there is no
+magnitude term. $\mathbf{P}_b \in \mathbb{R}^{M_b \times d}$, padded to $[B, \max_b M_b, d]$.
+
+\notesec{Step 10, cross-attention with a null sink}
+Every token of the context, the CLS included, is a query. Each head adds a learned null key
+$\mathbf{k}_{\varnothing}$ with value zero, so a record without marks attends only to it and a
+record with one mark does not see a degenerate softmax,
+\begin{equation}
+\beta^{a}_{i,t} = \operatorname*{softmax}_{t \in \{\varnothing, 1, \ldots, M_b\}} \frac{(h_i W^{a}_Q) \cdot \mathbf{k}^{a}_t}{\sqrt{d_k}},
+\quad
+\mathbf{k}^{a}_t = \mathbf{p}_t W^{a}_K,
+\quad
+\Delta h_i = \Big[\textstyle\sum_{t \ge 1} \beta^{1}_{i,t}\, \mathbf{p}_t W^{1}_V \,\Big\Vert \cdots \Big\Vert\, \sum_{t \ge 1} \beta^{h}_{i,t}\, \mathbf{p}_t W^{h}_V\Big] W_O,
+\label{eq:opattn}
+\end{equation}
+for $i \in \{\mathrm{CLS}, 1, \ldots, N\}$; the null term contributes weight but no value.
+
+\notesec{Step 11, the ReZero residual}
+Where the manuscript's operator normalizes, 043 gates,
+\begin{equation}
+h'_i = h_i + \zeta_{\mathrm{attn}} \operatorname{Drop}(\Delta h_i),
+\qquad
+h^{\mathrm{pert}}_i = h'_i + \zeta_{\mathrm{ffn}} \operatorname{Drop}\big(\operatorname{FFN}(h'_i)\big),
+\qquad
+H_{\mathrm{pert}} = \mathcal{T}_\psi(H_{c(b)}, p_b) \in \mathbb{R}^{(N+1) \times d},
+\label{eq:rezero}
+\end{equation}
+with $\zeta_{\mathrm{attn}} = \zeta_{\mathrm{ffn}} = 0$ at initialization, so at step 0 the
+operator is the identity and $H_{\mathrm{pert}} = H_{c(b)}$. The record-level summary of the
+marks is
+\begin{equation}
+\bar{\mathbf{k}}_b = \frac{1}{\max(M_b, 1)} \sum_{t=1}^{M_b} \mathbf{p}_t \in \mathbb{R}^{d}.
+\label{eq:summary}
+\end{equation}
+
+\subsection{Conditioning tokens and heads\secstatus{todo}}
+\label{sec:heads}
+
+\notesec{Step 12, the experiment-type token}
+Each dataset reads one phenotype class of the schema, and the class enters as the sum of
+one learned row per node of its path,
+\begin{equation}
+\mathbf{c}^{\mathrm{type}}_b = \sum_{\chi \in \operatorname{path}(\operatorname{class}(s(b)))} \mathbf{E}^{\mathrm{type}}_{\chi} \in \mathbb{R}^{16},
+\label{eq:typetoken}
+\end{equation}
+where a path runs root, group, leaf: phenotype, expression, then the microarray (Kemmeren),
+RNA-seq (Caudal) or single-cell (Boocock, N'Guessan) class; phenotype, protein, then protein
+abundance (Messner, Zelezniak, Muenzner) or turnover (Muenzner turnover); phenotype,
+promoter, pooled sort-seq (Vaishnav). The path is the minimal differential subset of the
+ontology DAG for these six leaves: it keeps the one level that separates them into the three
+readout groups the heads share, so two leaves under one group share that group's row and
+differ by their own. The group nodes are modeling-side groups, not schema classes
+(\file{train_043.py}, \texttt{EXP\_TYPE\_PATHS}); the root is on every path and acts as a
+shared offset. The flat alternative, one row per leaf, is \texttt{exp\_type\_mode: flat}
+(Sec.~\ref{sec:open}).
+
+\notesec{Step 13, the conditioning token}
+The dataset and the environment are flat lookups,
+\begin{equation}
+\mathbf{c}_b = \big[\mathbf{c}^{\mathrm{type}}_b ;\ \mathbf{E}^{\mathrm{data}}_{s(b)} ;\ \mathbf{E}^{\mathrm{env}}_{\varepsilon(b)}\big] \in \mathbb{R}^{16 + 8 + 16 = 40},
+\label{eq:cond}
+\end{equation}
+over the nine datasets and nine environments of the prepared store.
+
+\notesec{Step 14, the gene head}
+Every gene-level dataset shares one head that reads the gene's own perturbed state, the
+manuscript's equivariant readout with the conditioning token appended,
+\begin{equation}
+\hat{\mathbf{o}}_{b,i} = \operatorname{MLP}_{\mathrm{gene}}\big([h^{\mathrm{pert}}_{b,i} ;\ \mathbf{c}_b]\big) + \mathbf{b}^{\mathrm{gene}}_{s(b)} \in \mathbb{R}^{n_{\mathrm{out}}},
+\qquad i = 1, \ldots, N,
+\label{eq:genehead}
+\end{equation}
+with $\operatorname{MLP}_{\mathrm{gene}}: \mathbb{R}^{184} \to \mathbb{R}^{128} \to
+\mathbb{R}^{n_{\mathrm{out}}}$, a $[B_{\mathrm{gene}}, N, n_{\mathrm{out}}]$ output.
+
+\notesec{Step 15, the record head}
+Vaishnav's one value per promoter is read from the perturbed CLS, the mark summary and the
+conditioning token,
+\begin{equation}
+\hat{\mathbf{o}}_{b} = \operatorname{MLP}_{\mathrm{rec}}\big([h^{\mathrm{pert}}_{b,\mathrm{CLS}} ;\ \bar{\mathbf{k}}_b ;\ \mathbf{c}_b]\big) + \mathbf{b}^{\mathrm{rec}}_{s(b)} \in \mathbb{R}^{n_{\mathrm{out}}},
+\label{eq:rechead}
+\end{equation}
+with $\operatorname{MLP}_{\mathrm{rec}}: \mathbb{R}^{328} \to \mathbb{R}^{128} \to
+\mathbb{R}^{n_{\mathrm{out}}}$; it replaces the manuscript's perturbed-gene mean in the
+interaction head by the mark-key mean of Eq.~\ref{eq:summary}.
+
+\notesec{The per-dataset term is a bias}
+The design calls for a per-dataset affine at the head, $a_s f(\cdot) + \mathbf{b}_s$.
+\texttt{CellModel043} builds the gene head with \texttt{per\_dataset\_affine=False} and adds
+$\mathbf{b}_s$ alone, so the scale $a_s$ is fixed at 1 in every run so far. Under HL-Gauss
+$\mathbf{b}_s$ adds to the 32 logits, a learned prior histogram per dataset. The dataset
+id therefore enters in two places, both at the heads: $\mathbf{E}^{\mathrm{data}}$ inside
+$\mathbf{c}_b$ and the bias. It never reaches the trunk or the operator.

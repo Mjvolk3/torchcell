@@ -1,0 +1,45 @@
+#!/bin/bash -l
+#PBS -A GenesisHackathonOct26
+#PBS -q debug
+#PBS -l select=1
+#PBS -l walltime=01:00:00
+#PBS -l filesystems=home:flare
+#PBS -N 043-measure-aurora
+#PBS -j oe
+#PBS -o /flare/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/slurm/output/
+# experiments/043-expression-proteome-morphology/scripts/alcf/aurora_measure_043.pbs
+# [[experiments.043-expression-proteome-morphology.scripts.alcf.aurora_measure_043]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/alcf/aurora_measure_043.pbs
+#
+# Rate and memory of the 043 trainer on Aurora, one variant per tile of one node: batch
+# {8, 16, 32} x attention_query_chunk {none, 512, 1024, 2048}, arm all, hlgauss, equal,
+# one epoch cut at MAX_STEPS steps (then the epoch's evaluation), every mark. Each run
+# logs time/peak_gpu_gb (torch.xpu.max_memory_allocated, training and evaluation) and the
+# 30-step [projection] s/step. Per-tile logs: $OUT/<jobid>_<variant>.log.
+set -uo pipefail
+HERE=/flare/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/scripts/alcf
+# shellcheck disable=SC1091
+source "$HERE/aurora_env_043.sh"
+OUT=$TC_TREE/experiments/043-expression-proteome-morphology/slurm/output
+J=${PBS_JOBID%%.*}
+MAX_STEPS=${MAX_STEPS:-300}
+echo "job $PBS_JOBID on $(hostname) at $(date); tree $SYNCED; max_steps_per_epoch $MAX_STEPS"
+
+common=(arm=all loss=hlgauss weighting=equal seed=0 data.num_workers=4 data.sampler=records
+  data.mark_cap=null budget.max_epochs=1 "++budget.max_steps_per_epoch=$MAX_STEPS"
+  budget.time_budget_hours=0.8 budget.eval_every_epochs=1 "wandb.tags=[aurora,aurora_measure]")
+tile=0
+for spec in 8:none 8:512 8:1024 8:2048 16:512 16:1024 32:512 32:1024 32:2048; do
+  b=${spec%%:*}
+  c=${spec##*:}
+  ch=()
+  [ "$c" != none ] && ch=("++attention_query_chunk=$c")
+  train_on_tile $tile "$OUT/${J}_b${b}_c${c}.log" "${common[@]}" "data.batch_size=$b" "${ch[@]}"
+  tile=$((tile + 1))
+done
+wait
+for f in "$OUT/${J}"_b*.log; do
+  echo "== $f"
+  grep -E "projection|peak|Segmentation|Error|OutOfMemory|wandb: Syncing run|runs/" "$f" | head -8
+done
+echo "done $(date)"

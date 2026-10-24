@@ -1,0 +1,242 @@
+{
+ "out": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/043-expression-proteome-morphology/experiments/043-expression-proteome-morphology/conf/splits/global_split_v1.json",
+ "store_sha256": "4bd3e6d465bce93958f5bdddea7d885403494fa25c65b968f01bf1fc07af7751",
+ "n_genes": 4908,
+ "n_gene_strata": 38,
+ "n_pinned": 83,
+ "genes_outside_index": [],
+ "n_isolates": 979,
+ "isolate_strata": {
+  "110": 704,
+  "100": 184,
+  "111": 55,
+  "010": 36
+ },
+ "n_segregant_records": 82467,
+ "segregant_strata": {
+  "Boocock2025Dataset|B|2x YNB + 2% glucose added to FACS sheath fluid (PBS, pH 7.4), liquid (Boocock 2025 de novo segregant cultures)": 44784,
+  "Boocock2025Dataset|A|2x YNB + 2% glucose added to FACS sheath fluid (PBS, pH 7.4), liquid (Boocock 2025 de novo segregant cultures)": 27744,
+  "Boocock2025Dataset|3004|2x YNB + 2% glucose added to FACS sheath fluid (PBS, pH 7.4), liquid (Boocock 2025 de novo segregant cultures)": 6595,
+  "Boocock2025Dataset|A|SM (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose), liquid": 393,
+  "Nguessan2025Dataset|BBQTL_BYxRM|YPD (yeast extract / peptone / dextrose), liquid": 2951
+ },
+ "n_promoter_80mers": 71158,
+ "n_vaishnav_records": 71158,
+ "fold_sizes": {
+  "gene": {
+   "0": 483,
+   "1": 483,
+   "2": 494,
+   "3": 494,
+   "4": 494,
+   "5": 492,
+   "6": 492,
+   "7": 492,
+   "8": 492,
+   "9": 492
+  },
+  "isolate": {
+   "0": 196,
+   "1": 196,
+   "2": 196,
+   "3": 196,
+   "4": 195
+  },
+  "segregant": {
+   "0": 16494,
+   "1": 16494,
+   "2": 16493,
+   "3": 16493,
+   "4": 16493
+  },
+  "promoter": {
+   "0": 14232,
+   "1": 14232,
+   "2": 14232,
+   "3": 14231,
+   "4": 14231
+  }
+ },
+ "counts": {
+  "MicroarrayKemmeren2014Dataset": {
+   "train": 1202,
+   "val": 140,
+   "test": 140,
+   "split_b_test": 0,
+   "probe": 0,
+   "excluded": 0,
+   "units_train": 1202,
+   "units_val": 140,
+   "units_test": 140,
+   "unit": "gene"
+  },
+  "MicroarrayScoreHu2007Dataset": {
+   "train": 224,
+   "val": 19,
+   "test": 19,
+   "split_b_test": 0,
+   "probe": 0,
+   "excluded": 0,
+   "units_train": 224,
+   "units_val": 19,
+   "units_test": 19,
+   "unit": "gene"
+  },
+  "TfDeletionPseudobulkJackson2020Dataset": {
+   "train": 784,
+   "val": 0,
+   "test": 0,
+   "split_b_test": 0,
+   "probe": 0,
+   "excluded": 0,
+   "units_train": 12,
+   "units_val": 0,
+   "units_test": 0,
+   "unit": "gene"
+  },
+  "NadalRibellesPerturbSeq2025Dataset": {
+   "train": 4913,
+   "val": 603,
+   "test": 602,
+   "split_b_test": 0,
+   "probe": 0,
+   "excluded": 0,
+   "units_train": 2456,
+   "units_val": 301,
+   "units_test": 302,
+   "unit": "gene"
+  },
+  "ProteomeMessner2023Dataset": {
+   "train": 3712,
+   "val": 455,
+   "test": 457,
+   "split_b_test": 0,
+   "probe": 0,
+   "excluded": 0,
+   "units_train": 3594,
+   "units_val": 441,
+   "units_test": 441,
+   "unit": "gene"
+  },
+  "ProteomeZelezniak2018Dataset": {
+   "train": 79,
+   "val": 9,
+   "test": 9,
+   "split_b_test": 0,
+   "probe": 0,
+   "excluded": 0,
+   "units_train": 79,
+   "units_val": 9,
+   "units_test": 9,
+   "unit": "gene"
+  },
+  "ScmdOhya2005Dataset": {
+   "train": 0,
+   "val": 0,
+   "test": 0,
+   "split_b_test": 0,
+   "probe": 4678,
+   "excluded": 0,
+   "units_train": 0,
+   "units_val": 0,
+   "units_test": 0,
+   "unit": "gene"
+  },
+  "DmMicroarraySameith2015Dataset": {
+   "train": 0,
+   "val": 0,
+   "test": 0,
+   "split_b_test": 72,
+   "probe": 0,
+   "excluded": 0,
+   "units_train": 0,
+   "units_val": 0,
+   "units_test": 72,
+   "unit": "double deletion"
+  },
+  "SmMicroarraySameith2015Dataset": {
+   "train": 0,
+   "val": 0,
+   "test": 0,
+   "split_b_test": 0,
+   "probe": 0,
+   "excluded": 82,
+   "units_train": 0,
+   "units_val": 0,
+   "units_test": 0,
+   "unit": "single deletion"
+  },
+  "CaudalPanTranscriptome2024Dataset": {
+   "train": 566,
+   "val": 189,
+   "test": 188,
+   "split_b_test": 0,
+   "probe": 0,
+   "excluded": 0,
+   "units_train": 566,
+   "units_val": 189,
+   "units_test": 188,
+   "unit": "isolate"
+  },
+  "ProteomeMuenzner2024Dataset": {
+   "train": 476,
+   "val": 159,
+   "test": 160,
+   "split_b_test": 0,
+   "probe": 0,
+   "excluded": 0,
+   "units_train": 476,
+   "units_val": 159,
+   "units_test": 160,
+   "unit": "isolate"
+  },
+  "ProteinTurnoverMuenzner2024Dataset": {
+   "train": 33,
+   "val": 11,
+   "test": 11,
+   "split_b_test": 0,
+   "probe": 0,
+   "excluded": 0,
+   "units_train": 33,
+   "units_val": 11,
+   "units_test": 11,
+   "unit": "isolate"
+  },
+  "Boocock2025Dataset": {
+   "train": 47709,
+   "val": 15903,
+   "test": 15904,
+   "split_b_test": 0,
+   "probe": 0,
+   "excluded": 0,
+   "units_train": 47709,
+   "units_val": 15903,
+   "units_test": 15904,
+   "unit": "segregant record"
+  },
+  "Nguessan2025Dataset": {
+   "train": 1770,
+   "val": 591,
+   "test": 590,
+   "split_b_test": 0,
+   "probe": 0,
+   "excluded": 0,
+   "units_train": 1770,
+   "units_val": 591,
+   "units_test": 590,
+   "unit": "segregant record"
+  },
+  "PooledPromoterExpressionVaishnav2022Dataset": {
+   "train": 42694,
+   "val": 14232,
+   "test": 14232,
+   "split_b_test": 0,
+   "probe": 0,
+   "excluded": 0,
+   "units_train": 42694,
+   "units_val": 14232,
+   "units_test": 14232,
+   "unit": "distinct 80-mer"
+  }
+ }
+}

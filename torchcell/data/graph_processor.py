@@ -9,9 +9,8 @@ from abc import ABC, abstractmethod
 from typing import Any, cast
 
 import torch
-from torch_geometric.utils import k_hop_subgraph
+from torch_geometric.utils import k_hop_subgraph, scatter
 from torch_geometric.utils._subgraph import subgraph
-from torch_scatter import scatter
 
 from torchcell.data.hetero_data import HeteroData
 from torchcell.datamodels import (
@@ -498,8 +497,11 @@ class SubgraphRepresentation(GraphProcessor):
             label_name = phenotype_class.model_fields["label_name"].default
             stat_name = phenotype_class.model_fields["label_statistic_name"].default
 
-            phenotype_types.append(label_name)
-            if stat_name:
+            # Two phenotype classes can share a label_name (e.g. microarray and
+            # pseudobulk expression_log2_ratio); each label is read once per record.
+            if label_name not in phenotype_types:
+                phenotype_types.append(label_name)
+            if stat_name and stat_name not in stat_types:
                 stat_types.append(stat_name)
 
         # Process each experimental data point
@@ -1158,8 +1160,11 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
             label_name = phenotype_class.model_fields["label_name"].default
             stat_name = phenotype_class.model_fields["label_statistic_name"].default
 
-            phenotype_types.append(label_name)
-            if stat_name:
+            # Two phenotype classes can share a label_name (e.g. microarray and
+            # pseudobulk expression_log2_ratio); each label is read once per record.
+            if label_name not in phenotype_types:
+                phenotype_types.append(label_name)
+            if stat_name and stat_name not in stat_types:
                 stat_types.append(stat_name)
 
         # Process each experimental data point
@@ -1803,8 +1808,11 @@ class LazySubgraphRepresentation(GraphProcessor):
             label_name = phenotype_class.model_fields["label_name"].default
             stat_name = phenotype_class.model_fields["label_statistic_name"].default
 
-            phenotype_types.append(label_name)
-            if stat_name:
+            # Two phenotype classes can share a label_name (e.g. microarray and
+            # pseudobulk expression_log2_ratio); each label is read once per record.
+            if label_name not in phenotype_types:
+                phenotype_types.append(label_name)
+            if stat_name and stat_name not in stat_types:
                 stat_types.append(stat_name)
 
         for item_idx, item in enumerate(data):
@@ -2022,11 +2030,15 @@ class Perturbation(GraphProcessor):
         # Add required node count to avoid PyG warnings
         processed_graph["gene"].num_nodes = cell_graph["gene"].num_nodes
 
-        # Process perturbed genes
+        # Process perturbed genes. A SegregantGenotype has no ``perturbations``
+        # attribute (its gene-keyed properties are absent by design): no perturbed genes.
         perturbed_names = {
             p.systematic_gene_name
             for item in data
-            for p in cast(Experiment, item["experiment"]).genotype.perturbations
+            for p in getattr(
+                cast(Experiment, item["experiment"]).genotype, "perturbations", None
+            )
+            or []
         }
         node_ids = cell_graph["gene"].node_ids
         perturbed_indices = [
@@ -2091,8 +2103,11 @@ class Perturbation(GraphProcessor):
             label_name = phenotype_class.model_fields["label_name"].default
             stat_name = phenotype_class.model_fields["label_statistic_name"].default
 
-            phenotype_types.append(label_name)
-            if stat_name:
+            # Two phenotype classes can share a label_name (e.g. microarray and
+            # pseudobulk expression_log2_ratio); each label is read once per record.
+            if label_name not in phenotype_types:
+                phenotype_types.append(label_name)
+            if stat_name and stat_name not in stat_types:
                 stat_types.append(stat_name)
 
         # Process each experimental data point
@@ -2234,11 +2249,15 @@ class DCellGraphProcessor(GraphProcessor):
         if hasattr(cell_graph["gene"], "x"):
             processed_graph["gene"].x = cell_graph["gene"].x
 
-        # Process perturbed genes
+        # Process perturbed genes. A SegregantGenotype has no ``perturbations``
+        # attribute (its gene-keyed properties are absent by design): no perturbed genes.
         perturbed_names = {
             p.systematic_gene_name
             for item in data
-            for p in cast(Experiment, item["experiment"]).genotype.perturbations
+            for p in getattr(
+                cast(Experiment, item["experiment"]).genotype, "perturbations", None
+            )
+            or []
         }
         node_ids = cell_graph["gene"].node_ids
         perturbed_indices = [
@@ -2343,8 +2362,11 @@ class DCellGraphProcessor(GraphProcessor):
             label_name = phenotype_class.model_fields["label_name"].default
             stat_name = phenotype_class.model_fields["label_statistic_name"].default
 
-            phenotype_types.append(label_name)
-            if stat_name:
+            # Two phenotype classes can share a label_name (e.g. microarray and
+            # pseudobulk expression_log2_ratio); each label is read once per record.
+            if label_name not in phenotype_types:
+                phenotype_types.append(label_name)
+            if stat_name and stat_name not in stat_types:
                 stat_types.append(stat_name)
 
         # Process each experimental data point
@@ -2623,8 +2645,11 @@ class NeighborSubgraphRepresentation(GraphProcessor):
         for phenotype_class in phenotype_info:
             label_name = phenotype_class.model_fields["label_name"].default
             stat_name = phenotype_class.model_fields["label_statistic_name"].default
-            phenotype_types.append(label_name)
-            if stat_name:
+            # Two phenotype classes can share a label_name (e.g. microarray and
+            # pseudobulk expression_log2_ratio); each label is read once per record.
+            if label_name not in phenotype_types:
+                phenotype_types.append(label_name)
+            if stat_name and stat_name not in stat_types:
                 stat_types.append(stat_name)
         for item_idx, item in enumerate(data):
             phenotype = cast(ExperimentType, item["experiment"]).phenotype

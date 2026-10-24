@@ -1,0 +1,5 @@
+# experiments/043-expression-proteome-morphology/conf/arm/alone_nguessan.yaml
+# Control arm: the joint_9 config with one dataset listed (decision S1, S5).
+name: alone_nguessan
+datasets: [nguessan]
+doubles: false

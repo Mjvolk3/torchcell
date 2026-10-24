@@ -1,0 +1,229 @@
+%% notes-tex/multimodal/043-datasets-primer/sections/5-proposal.tex
+%% SOURCE: the owner's direction of 2026-10-19 (notes/experiments.043-expression-proteome-morphology.md,
+%% "Design pass") and the 2026-10-20 review pass (same note, "Review pass"); numbers from
+%% results/data_shapes_043.json, results/store_census.json, results/cross_dataset_correlation.json,
+%% results/within_dataset_ceilings.json and results/distinct_alleles.json, through the tables
+%% written by experiments/043-expression-proteome-morphology/scripts/primer_043_tables.py. The
+%% case-study numbers cite their experiment's records: 031 (memory 031-inductive-fold-program,
+%% jobs 5022 to 5081; operator audit jobs 4917 and 4918; closure plan header), 035 (rounds 2,
+%% 9 to 11, slurm 3034, 3009) and 038 (slurm 3374, 3700, 3701), 010 and 030
+%% (notes-tex/trigenic/010-additive-baselines; job 1605; job 3902; W&B xy3xnpau).
+
+\section{The plan: every gene-level readout trained together\secstatus{todo}}
+\label{sec:proposal}
+
+Every gene-level readout of the store trains in one model, and the question it answers
+is an engineering one: does the model predict the transcriptome of a deletion it has not
+seen, and of a double deletion from its two measured singles? Table~\ref{tab:plan} gives
+the sets. An earlier version of this section proposed two separate training batches,
+deletions and then isolates with segregants; the owner superseded it on 2026-10-19, and the
+review pass of 2026-10-20 replaced the separate split draws by one fold file and put a
+linear ladder and a decision rule ahead of any training run.
+
+%% SOURCE: experiments/043-expression-proteome-morphology/scripts/primer_043_tables.py
+%% -> tables/t11-plan.tex (record counts from results/data_shapes_043.json and store_census.json)
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption[]{\textbf{The sets of the plan.} Records count the raw store (full pass of
+\file{data_shapes_043.py}, slurm job 5902). The fold file is not yet written, so a split's
+count is its expected fold-0 share under the stratified draw: a tenth of each deletion
+dataset's genes, a fifth of the isolates by strain name, of each segregant panel and of the
+promoter variants. Splits A, C, D and E are carved out of training records; split B is a
+dataset of its own and never trains.}
+\label{tab:plan}
+\input{tables/t11-plan}
+\end{table}
+
+\notesec{Training}
+Twelve datasets train together: every dataset of the store except Sameith 2015 Sm,
+whose 82 profiles are Kemmeren's own arrays (82 of 82 identical), Sameith 2015 Dm, which
+is split B, and Ohya 2005, which is the probe. Vaishnav 2022 stays in the plan as the
+promoter signal: one sort-seq level per promoter insert, read at the record level through
+the reporter token of Sec.~\ref{sec:input-token}, whose promoter block is the frozen FUDT
+upstream encoder on the construct window; its linear evaluations run first and its joint
+entry waits on the Addgene 127546 sequence. Expression and protein readouts come off the
+perturbed graph: a gene's value is read from that gene's own perturbed node state, and the
+CLS state and the perturbed-gene summary $z_S$ are the record-level sites
+(Sec.~\ref{sec:output-sites}). The low-agreement datasets train too, and their measured
+agreement is what the arm without them reads: Nadal-Ribelles agrees with itself across
+batches at a median $r$ of 0.043 against 0.022 for different genotypes and with Kemmeren
+at 0.002; two Jackson 2020 constructions of one genotype agree at 0.129 against 0.095; Hu
+2007 released no replicate and agrees with Kemmeren at 0.107 per genotype, on an X score
+that is not a log ratio; Zelezniak 2018 agrees with Messner at 0.049 per genotype over 715
+proteins though its own ceiling is 0.916; Muenzner 2024 turnover agrees with abundance at
+$-$0.006 per isolate.
+
+\notesec{Split A, deletion genes}
+One fold file holds every deletion gene's fold; fold 0 is held out of every deletion
+dataset at once, so a held-out gene is never seen as a perturbation on any readout, and
+the same genes test Kemmeren, Messner, Hu, Nadal-Ribelles and Zelezniak alone and jointly.
+Kemmeren holds out about 140 of its 1{,}400 eligible genes (the 82 Sameith singles are
+pinned to training). The score is the median per-gene Pearson across those strains; the
+per-strain Pearson is reported centered, because two different Kemmeren mutants already
+agree at a raw 0.284 (Sec.~\ref{sec:within}). The bound is Kemmeren's own-culture ceiling,
+0.729 over 114 mutants with two cultures; the bars are the frozen-token ridge and kNN of
+Sec.~\ref{sec:output-linear} on the same genes.
+
+\notesec{Split B, the Sameith doubles}
+All 72 Sameith 2015 double deletions are held out and scored, centered, against their
+measured profiles and against four rungs that need no model: the per-gene mean, the
+stronger single, the additive null of the two Kemmeren singles (the paper's own expected
+value) and a fitted combination of the two singles. Sameith's Methods defer to Kemmeren's,
+so the doubles were profiled by the same procedure; no double has a replicate, and the
+Kemmeren ceiling of 0.729 is the bound for the same arrays.
+
+\notesec{Split C, the isolates}
+Fold 0 of the isolate folds, about 196 of the 979 Caudal and Muenzner strains with about
+159 Muenzner and 11 turnover isolates among them, is held out of every readout of those
+isolates. The bar is kinship ridge (GBLUP) on the same isolates; the reference is how far
+another readout of the same isolate agrees, Caudal mRNA against Muenzner protein at a
+median per-isolate $r$ of 0.208, against 0.031 for Kemmeren mRNA against Messner protein on
+deletions. Splits D (segregants, within cross) and E (promoters) come from the same file.
+
+\notesec{The morphology probe}
+Ohya 2005 CalMorph enters no training. Its 4{,}678 genotypes are run through the frozen
+model and a ridge reads the 116 moving features from $h$, $z_S$, $\bar H$ and their
+concatenation, raw and with the Costanzo single-mutant fitness regressed out, since growth
+matrices alone predict morphology nearly as well as the proteome (019 screen). A ridge on
+the measured inputs already reaches a median $r$ of 0.348 from Kemmeren expression
+(1{,}437 shared genotypes), 0.278 from Messner protein (4{,}279) and 0.235 from Hu (259)
+over the 116 moving features, against row-permutation nulls near zero, and Ohya's own
+ceiling is 0.611 over 122 wild-type replicates on all 281 (Table~\ref{tab:morph}).
+Sec.~\ref{sec:output-protocol} gives the bars and the two reads.
+
+\notesec{The genotypes the model has not yet read}
+Isolates and segregants need a gene-level genotype the \texttt{Perturbation} processor
+does not build: marking every isolate perturbation sets 5{,}575 of 6{,}607 nodes, and a
+segregant sets none. Sec.~\ref{sec:input} gives the replacement: each isolate as its own
+reference context built from its allele embeddings, with an interim arm that marks loss of
+function and absence on S288C, and the definite rule for segregants (a gene inherits the
+non-reference parent only inside a block called at posterior 0.9 or above), with the
+parent's real allele token. The posterior cut removes little on the pooled panels (a
+median of 0\% of markers for Boocock pooled, 1.7\% for N'Guessan) and a quarter to a third
+on Boocock's de novo cells, whose single cells carry medians of 2{,}000 to 4{,}000 UMIs;
+whether those cells train is decision P1. The measured genotype signal across segregant
+panels is small: nearest-genotype deviation $r$ 0.113 against 0.070 for random pairs
+(Sec.~\ref{sec:within}).
+
+\subsection{What the three case studies teach\secstatus{todo}}
+\label{sec:lessons}
+
+Three earlier campaigns trained the same cell graph transformer on other labels, and each
+found a bar, a scoring trap and a protocol that the first 043 design did not carry.
+
+\notesec{Betaxanthin, experiment 031}
+The GO recipe with a rank term reached a fold-average held-out Spearman of 0.229 to 0.230
+over six seeds (fold sd 0.003 to 0.006), 0.264 on the pinned fold; the annotation-free cell
+(composite sequence token plus metabolic block) 0.108 on the fold average and 0.125 on the
+pin. The bars were ridge on the deleted gene's raw ProtT5 token, 0.082 on the pin, and
+forests on ProtT5 (0.150) and on GO plus pFBA (0.204) on the fold average. What made it
+honest: five inductive folds over deletion genes with the external pin as fold 0, every arm
+paired by seed against a named control, the rule of a gain of at least 0.02 with 5 of 6
+seeds up (9 of 12 at twelve), and a fixed budget, since epoch selection on validation was
+null ($-0.009$). The operator audit (jobs 4917, 4918) found the single-deletion score to be
+a learned affine read of the deleted gene's own token, reproduced by a ridge from that row:
+the inductive gap is in the representation, not the head. Split A is a single-deletion task
+and the same audit applies, so the first number to produce is the ridge from the deleted
+gene's frozen composite token to its profile; the first 043 design ran no such bar and
+proposed three initializations by two split seeds with no fold structure, where 031 found
+the pin's sampling sd (0.041) equal to the seed sd.
+
+\notesec{Environment, experiments 035 and 038}
+Nested ridge on raw FCFP4 counts reached a median centered Spearman per held-out compound
+of 0.303 over 123 compound-evaluations (035, slurm 3034) and 0.359 over 96 on the second
+build (038, slurm 3374); the transformer trained to saturation tied ridge on the first
+build (every entry point's compound-level interval through zero) and sat below it on the
+second (0.312 and 0.297; slurm 3700, 3701). The protocol that fixed the verdict: fit on the
+whole non-test pool as ridge does, a fixed 50 epochs keeping the last, three seeds, paired
+against ridge on the same held-out units, and the interval resampled over the 41 compounds
+rather than the 123 evaluations. Its centering lesson: each side is centered by its own
+training mean, since centering the prediction by the measured mean rewarded an untrained
+model at 0.356 after 60 steps (slurm 3009). The per-strain Pearson across genes has the
+same trap here: Kemmeren's different-mutant pairs agree at 0.284 (job 5893), the shared
+deletion response, which a model that emits the training-mean profile earns. Every
+per-strain Pearson is therefore reported centered, and the per-gene mean is the first rung.
+
+\notesec{Trigenic, experiments 010 and 030}
+The trigenic Pearson reached $0.454 \pm 0.006$ on the random split and fell to about 0.13
+for every model on held-out query pairs, with the fitness-head model recovering 0.41 on one
+seed. On the random split the ladder read 0.390 for the query pair alone, 0.400 for the
+additive per-gene ridge, 0.425 to 0.427 for an embedding MLP and 0.438 to 0.455 for the
+transformer; on the 030 pool a zero-parameter lower-order null read 0.577 and 0.566 and
+boosted trees over the lower-order terms 0.743 and 0.700, above the joint transformer's
+0.562 and 0.391 (job 3902). The per-entry dataset token (a 15-way one-hot projected to 8
+dimensions at the readout) converged at a validation interaction Pearson of 0.5655 on one
+seed. Ordering generalized and magnitudes did not (held-out calibration slope 0.24, job
+1605), and the slope is a property of the population scored (0.88 on the whole test split
+against 1.59 inside the predicted top 100). Split B carries the additive null but needs the
+whole ladder of rungs that see only a double's components, and because the binned head's
+point prediction is an expectation that shrinks toward the mean, Spearman sits beside
+Pearson and the calibration slope is named by population.
+
+\notesec{The unified protocol}
+Four steps, in order. (1) The linear ladder on CPU from the frozen embeddings, on the same
+held-out units the transformer will use (Sec.~\ref{sec:output-linear}); nothing trains on a
+card until it is on file. (2) The rule, committed as \file{conf/decision\_rule.yaml} before
+the first GPU run: primary statistic per split, the control arm, a gain of at least 0.02,
+at least 5 of 6 paired seeds up, and a 95\% interval resampled over held-out strains (genes
+for per-gene statistics) that excludes zero. (3) Training with the budget and window
+declared at launch; the validation fold monitors the escape and never selects the epoch;
+the test fold is read once. (4) Paired comparison by initialization seed, each arm against
+its named control, at the unit of generalization: held-out deletion gene, isolate, double,
+segregant or promoter, with both intervals computed and the unit-level one quoted.
+
+\notesec{Decisions}
+Table~\ref{tab:decisions} collects every choice the design leaves to the owner, with
+two options, the measured fact that bears on it and the reconciled proposal with its
+named alternatives. The I rows come from the input side (Sec.~\ref{sec:input-decisions}),
+the O rows from the output side (Sec.~\ref{sec:output-decisions}), the P rows from putting
+the plan together, the S rows from the protocol the review pass added, D1 from the data per
+model part (Sec.~\ref{sec:data-per-part}) and E1 from the isolate embedding plan
+(Sec.~\ref{sec:input-embeddings}).
+
+%% SOURCE: experiments/043-expression-proteome-morphology/scripts/primer_043_tables.py
+%% -> tables/t13-decisions-rows.tex (DECISIONS, numbers filled by facts() from the result files)
+\begin{landscape}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{>{\raggedright\arraybackslash}p{6mm}>{\raggedright\arraybackslash}p{22mm}>{\raggedright\arraybackslash}p{44mm}>{\raggedright\arraybackslash}p{30mm}>{\raggedright\arraybackslash}p{56mm}>{\raggedright\arraybackslash}p{62mm}>{\raggedright\arraybackslash}p{9mm}}
+\caption[]{\textbf{Owner decisions, one checklist.} Each row is one choice the design
+cannot make alone. Option 1 is the reconciled main option; the proposed column states the
+decision and names its alternatives; ``open'' marks a choice with no proposal. The
+measured fact is the one its section cites. The last column is the section that carries
+the full argument.}\label{tab:decisions}\\
+\toprule
+Id & Decision & Option 1 & Option 2 & Measured fact & Proposed, with alternatives & Sec. \\
+\midrule
+\endfirsthead
+\toprule
+Id & Decision & Option 1 & Option 2 & Measured fact & Proposed, with alternatives & Sec. \\
+\midrule
+\endhead
+\input{tables/t13-decisions-rows}
+\end{longtable}
+\end{landscape}
+
+\notesec{Questions for the owner}
+\begin{enumerate}
+\item \textbf{Isolates as reference contexts or the interim arm.} The main design encodes
+each isolate as its own reference context (979 cached contexts, the operator carrying only
+engineered edits) and needs the per-context encoder; the interim arm marks loss of function
+and absence on S288C with allele tokens and needs nothing new. Which runs first?
+\item \textbf{Addgene 127546.} May its plasmid sequence be fetched into
+\file{torchcell-constructs/} with a provenance record, so the Vaishnav construct gets the
+1{,}003 bp window the gene promoter encoder expects?
+\item \textbf{ProtT5 or ESM2 for the first isolate pass.} 775{,}856 distinct proteins:
+about 2.7 hours of ProtT5 on two cards under the stated throughput assumptions, ESM2 about
+a third of that.
+\item \textbf{Segregant parents.} The five non-BY parents carry Peter ids that are all
+members of the gene-keyed allele tarball; confirm that their real allele tokens replace the
+parent id on marked genes.
+\item \textbf{Headline joint arm.} With or without Hu, Jackson and Nadal-Ribelles (Kemmeren
+agreement 0.107, 0.043 to 0.076, 0.002)? They can only lower the Kemmeren score if their
+signal does not transfer; the rule names its control before the first read.
+\item \textbf{Clade-disjoint isolate split.} A second isolate fold file, disjoint by Peter
+2018 clade, beside the random one, once the clade is on the isolate descriptor?
+\item \textbf{The quoted per-strain statistic.} Confirm that the centered per-strain
+Pearson, with the raw value and the 0.284 floor beside it, is the form quoted.
+\end{enumerate}

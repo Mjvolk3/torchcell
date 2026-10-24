@@ -1,0 +1,23 @@
+%% notes-tex/multimodal/043-training-design/sections/0-abstract.tex
+%% SOURCE: numbers from tables/macros.tex (training_design_043_tables.py) and
+%% results/overnight_2026_10_22_window_means.json
+
+\begin{abstract}
+\noindent
+Experiment 043 trains one model over nine datasets of the 043 store: deletion
+transcriptomes and proteomes, natural-isolate transcriptomes and proteomes, segregant
+single-cell expression, and a promoter library read by sort-seq. Every gene enters as a
+composite of four frozen sequence embeddings plus a position term, a trunk encodes each
+distinct reference context once, a perturbation operator applies the record's marks by
+cross-attention, and two heads read a gene-level and a record-level value, with the dataset
+entering only at the heads. The objective is a binned regression (HL-Gauss) on per-dataset
+standardized targets, averaged within each dataset and weighted across datasets. Written
+in the notation of the Nature Biotechnology manuscript, the setup is given equation by
+equation, followed by the evaluation protocol and the rule that decides whether joint
+training transfers to a dataset, the single-seed overnight runs of 2026-10-22 against the
+linear bars, and the design questions left open. Under the uniform record sampler the
+promoter library holds \tdVaishnavPct\% of the training records and carries an expected
+\tdVaishnavWeightEqual{} of the batch objective's weight; the step-matched transfer on
+Kemmeren 2014 read \tdTransferRecords{}, \tdTransferBalanced{} and \tdTransferPinball{}
+for the three complete joint runs, one seed each and below the decision rule.
+\end{abstract}

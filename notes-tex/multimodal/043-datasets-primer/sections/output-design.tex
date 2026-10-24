@@ -1,0 +1,604 @@
+%% notes-tex/multimodal/043-datasets-primer/sections/output-design.tex
+%% SOURCE: the numbers are read from notes/experiments.043-expression-proteome-morphology.md
+%% (cross_dataset_correlation.py, jobs 5890 and 5892; within_dataset_ceilings.py, jobs 5893,
+%% 5895, 5896, 5898; store_census.py; data_shapes_043.py, job 5902), from the 019 campaign
+%% write-up on the multimodal-phenotype-retrospective worktree
+%% (notes-tex/figure-3-gate/sections/10-data-review.tex and 11-inductive.tex;
+%% notes-tex/019-simb-multimodal-expression/sections/2-readouts.tex), from the 035 note
+%% (notes/experiments.035-env-chemgen-vanacloig-cgt.md, rounds 2 and 9 to 11), the 031 closure
+%% plan and inductive-fold records (jobs 4917, 4918, 5022 to 5081), the 030 per-entry token
+%% runs (W&B xy3xnpau and continuations) and lower-order null (job 3902), the 010 additive
+%% baselines (notes-tex/trigenic/010-additive-baselines) and the Sameith 2015 paper in the
+%% mirror (sameithHighresolutionGeneExpression2015/paper.md). The prototype of the heads and
+%% the loss is torchcell/models/readout_heads_043.py, tested by
+%% tests/torchcell/models/test_readout_heads_043.py; the diagram is
+%% notes/experiments.043-expression-proteome-morphology.mermaid.output-side.md.
+%% Design decisions of the 2026-10-20 review pass (objective reviewer, reconciled by the
+%% driver); code follows in the next stage.
+
+\section{The output side: readouts, heads, tokens, losses and the evaluation\secstatus{todo}}
+\label{sec:output}
+
+What follows is a design for the group to accept, change or reject. The owner's direction
+fixes three things: every gene-level readout is trained on; a readout is read off the
+perturbed graph, ``from the node itself'' for a gene-level value; and the question to
+answer is whether the model improves on held-out single deletions and on the Sameith
+double deletions, with the isolates as a further test and Ohya 2005 CalMorph as a probe of
+the learned state and never a training target. Everything else below is a choice with its
+facts, Fig.~\ref{fig:output-side} draws the path, and Sec.~\ref{sec:output-decisions}
+lists the choices the owner has to make.
+
+%% SOURCE: hand-authored definitions; the numbers in cells cite their section.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption[]{\textbf{Terms of this section}, alphabetical. Terms of Table~\ref{tab:vocab}
+are not repeated.}
+\label{tab:output-vocab}
+\begin{tabular}{>{\raggedright\arraybackslash}p{30mm}>{\raggedright\arraybackslash}p{140mm}}
+\toprule
+Term & Meaning \\
+\midrule
+Additive null & For a double deletion $xy$ and gene $i$, the single-mutant sum
+$M_{x,i} + M_{y,i}$, the expected value Sameith 2015 scores its epistasis against
+(Sec.~\ref{sec:output-protocol}). It needs no model. \\
+Bias, per dataset & A learned offset applied to a shared head's output for every record
+of dataset $d$: a shift $b_d$ under the pinball or MSE, a vector $c_d$ over the bin logits
+under the binned loss. With targets standardized per dataset it is all that stays
+learned per dataset; it cannot change a correlation. \\
+Centered per-strain Pearson & The Pearson across genes between a strain's prediction and
+its measurement after the training-mean profile of the dataset is subtracted from both.
+Kemmeren's culture 1 of one mutant against culture 2 of a different mutant agrees at a raw
+median of 0.284 (Sec.~\ref{sec:within}), the floor a raw per-strain Pearson carries. \\
+Escape & A run whose training Pearson, in eval mode, passes 0.3. In 019 the genotype-only
+morphology runs sat on a plateau at 0.04 to 0.12 that an escape leaves within about 50
+epochs (retrospective, \texttt{11-inductive.tex}). \\
+Fold file & \file{conf/splits/global_split_v1.json}: one fold id per deletion gene, isolate,
+segregant record and promoter sequence; fold 0 is test, fold 1 validation; every run, alone
+or joint, reads it. \\
+Head & The map from a readout site to a predicted value. Per level: one head for every
+gene-level readout and one for every record-level readout, conditioned by the type token.
+By type: one head per readout type. Split: one head per dataset. \\
+HL-Gauss & The histogram loss of Farebrother et al.\ 2024: the target is a Gaussian over
+$K$ bins, the loss its cross-entropy, the point prediction the expectation over bin
+centers, the uncertainty the bin entropy. \\
+Perturbed-gene summary $z_S$ & The sum of the perturbed states of the strain's perturbed
+genes, $z_S = \sum_{g \in S} H_g$; for a single deletion it is the deleted gene's own
+token. The input of the 019 \texttt{M\_zs} readout and of the trigenic-interaction head. \\
+Readout level & Gene-level (one value per gene of the index, read from $H_g$) or
+record-level (one value per record, read from $h$ and $z_S$). \\
+Readout site & A tensor of the perturbed graph a head reads: the perturbed CLS $h$, the
+summary $z_S$, or the gene states $H$. \\
+Readout type & The physical quantity a head predicts: expression log ratio, absolute
+expression, expression score, protein abundance, protein turnover, promoter level. \\
+Registered window & The epochs over which a run is scored, declared with the epoch budget
+before any run of the round is read; 019 used 500 epochs and epochs 400 to 499. \\
+Token & A learned vector carried with a record and read by the head: the experiment type
+(ontology path), the dataset, and the environment. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%% SOURCE: notes/experiments.043-expression-proteome-morphology.mermaid.output-side.md, rendered by
+%% notes/assets/publish/scripts/mermaid_pdf.sh, copied to figures/ by `make diagrams`
+\begin{figure}[p]\centering
+\includegraphics[width=0.91\textwidth]{figures/mermaid-output-side.pdf}\par\vspace{2pt}
+\caption[]{\textbf{Gene-level readouts are read from each gene's own perturbed state by
+one head per readout level, conditioned at the head by the type, dataset and environment
+tokens, and Ohya is read only from the frozen latent.} Top, the three readout sites of the
+perturbed graph and the three tokens; middle, the gene-level and record-level heads with
+the per-dataset bias, over targets standardized per dataset; then the binned loss over
+measured entries with its two arms; bottom, the evaluation: the linear ladder first, the
+held-out splits of the fold file and the morphology probe.}
+\label{fig:output-side}
+\end{figure}
+%% Generated by notes/assets/publish/scripts/mermaid_pdf.sh from
+%% notes/experiments.043-expression-proteome-morphology.mermaid.output-side.md
+
+\subsection{Readout sites and the per-gene readout\secstatus{todo}}
+\label{sec:output-sites}
+
+The trunk returns three tensors per record after the perturbation operator: the perturbed
+class token $h \in \mathbb{R}^d$, the perturbed gene states $H \in \mathbb{R}^{N \times d}$
+over the $N = 6{,}607$ gene nodes, and the summary $z_S$. A gene-level value for gene $g$
+is read from that gene's own state,
+\begin{equation}
+\hat z_{g} = f_\theta\!\big([\,H_g \,;\, t\,]\big) + b_{d},
+\qquad t = [\,t_{\mathrm{type}} \,;\, t_{\mathrm{data}} \,;\, t_{\mathrm{env}}\,],
+\label{eq:pergene}
+\end{equation}
+with $f_\theta$ one head shared by every gene, every dataset and every readout type of the
+gene level, $t$ the record's tokens (Sec.~\ref{sec:output-tokens}), $b_d$ the bias of
+dataset $d$ and $\hat z_g$ the prediction on the dataset's standardized scale
+(Sec.~\ref{sec:output-losses}); under the binned loss $f_\theta$ emits $K$ logits and
+$b_d$ is the vector $c_d$. The prediction for gene $g$ depends on $H_g$ and on nothing
+else of $H$; the strain reaches it through the trunk's attention and the perturbation
+operator, which is what ``from the node itself'' means in the equation. Four forms of
+$f_\theta$ are on the table.
+
+\begin{itemize}
+\item \textbf{Shared affine.} $f_\theta(x) = w^\top x + c$. The 019 head round measured
+the linear per-gene readout within noise of the two-layer one on Kemmeren expression
+($+0.002$ over four seeds, \texttt{H\_linear} against \texttt{H\_ref},
+\texttt{2-readouts.tex}), so the nonlinearity is not known to carry anything there.
+\item \textbf{Shared MLP with the per-dataset bias} (Eq.~\ref{eq:pergene}; the prototype
+\texttt{PerGeneReadout}).
+\item \textbf{Shared MLP with the strain vector concatenated.} 019's \texttt{H\_concat}
+feeds $[H_g ; c]$ with $c$ the strain context, and was the one arm above the reference in
+every seed, $+0.0135$ with a seed sd of $0.0026$ on the difference (\texttt{2-readouts.tex},
+Table \texttt{tab:readouts-head}). In Eq.~\ref{eq:pergene} this is $t$ extended by $z_S$.
+\item \textbf{Cross-attention head.} One learned query per output feature over every token
+(019 \texttt{M\_xattn}). On morphology it escaped under the pinball (4 of 4, $0.121 \pm
+0.029$) and not under MSE (1 of 4) (\texttt{11-inductive.tex}). It reads the whole token
+set, so it is not a readout from the node itself; it is the alternative if the per-gene
+form stalls.
+\end{itemize}
+
+A record-level value (Vaishnav 2022, one level per promoter insert) is read from
+$[h ; z_S ; t]$ through an MLP, the \texttt{GlobalHead} with \texttt{use\_pert\_summary}
+that gave the 019 morphology result (12 of 12 escapes with MSE, $0.149 \pm 0.022$ over the
+registered window, \texttt{11-inductive.tex}). The plain CLS escaped 0 of 8 under MSE at
+two learning rates, so $h$ alone is not a readout site this design uses for a trained
+target; it remains a probe input (Sec.~\ref{sec:output-protocol}).
+
+\subsection{Heads by level, by type or by dataset\secstatus{todo}}
+\label{sec:output-heads}
+
+Two facts bound the choice. First, the datasets report different quantities on different
+scales (Table~\ref{tab:output-scales}): a two-color $\log_2$ ratio to a wild-type pool, an
+error-model X score, a pseudobulk $\log_2$ fold change with sentinels at $\pm 23$ to
+$\pm 33$ in 20.2\% of cells (028, \texttt{2-readouts.tex}), UMI counts, TPM, a linear
+MaxLFQ abundance, a log SWATH signal, a degradation rate per hour, a sort-seq bin level.
+Second, datasets of one quantity agree weakly where they share a genotype
+(Table~\ref{tab:cross}): Kemmeren against Hu 0.107, against Jackson 0.043 to 0.076,
+against Nadal-Ribelles 0.002 per genotype; Messner against Zelezniak 0.049; Kemmeren mRNA
+against Messner protein 0.031. Standardization and a per-dataset bias reconcile the first
+fact and cannot reconcile the second: a head shared by two datasets that agree at 0.002
+is asked to emit two unrelated vectors from the same $H_g$, told apart only by the tokens.
+
+\notesec{One head per readout level, the main design}
+Two heads: one gene-level head over every gene-level readout of the eleven gene-level
+training datasets, one record-level head over Vaishnav and any other scalar readout, each
+conditioned at the head by the type token of Sec.~\ref{sec:output-tokens}, with targets
+standardized per dataset and a learned bias per dataset. The type token carries what a
+by-type head would carry, so a readout type unseen in training lands on an existing path
+of the ontology and is scored by a head that already exists; a head per type cannot serve
+a type it never saw. What a shared head buys is the transfer of the readout function
+across datasets and types, which is the premise of the exercise and is unmeasured; what it
+risks is that a large low-agreement dataset pulls the shared function away from the one
+with a ceiling, which the equal per-dataset weighting of Sec.~\ref{sec:output-losses}
+limits.
+
+\notesec{Six heads by type, the control arm}
+Expression log ratio; absolute expression; expression score; protein abundance; protein
+turnover; promoter level. The datasets that would share a head and the agreement that
+supports it: Kemmeren and Sameith Dm (the same arrays and procedures; Sameith's Methods
+defer to Kemmeren, Sec.~\ref{sec:between}; the Kemmeren ceiling 0.729 is the only
+within-type ceiling) and, by scale alone, Nadal-Ribelles at 0.002; Jackson, Boocock,
+N'Guessan and Caudal under absolute expression (no shared genotype among them; Boocock and
+N'Guessan share no segregant, Sec.~\ref{sec:within}); Messner, Zelezniak and Muenzner under
+protein abundance (Messner against Zelezniak 0.049; Muenzner shares no genotype with
+either). The paired difference against the main design on the split-A score is the answer.
+
+\notesec{Split by dataset}
+Fifteen heads, no sharing below the trunk. Datasets then meet only in $H$, which is what
+every 019 round did with two array datasets (Kemmeren and Sameith) that are the same
+arrays. Nothing is known about the trunk's transfer between readout types from this
+campaign: proteome from genotype reached $0.085 \pm 0.008$ (v16, 12 runs) and expression
+$0.180 \pm 0.006$ (v12, 4 runs) in separate trainings (\texttt{10-data-review.tex}); a joint
+training of both was not scored on both. The alone runs of the transfer statistic
+(Sec.~\ref{sec:output-protocol}) measure what the split form would.
+
+%% SOURCE: the released-quantity and transform columns are the 043 cross-dataset analysis
+%% (notes/experiments.043-expression-proteome-morphology.md, "What each dataset reports");
+%% the Nadal sentinel and Vaishnav rows are this section's proposal.
+\begin{table}[htbp]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\caption[]{\textbf{Readout type and target transform per dataset.} The transform column is
+what precedes the per-dataset standardization of Sec.~\ref{sec:output-losses}; ``as
+released'' means the stored value. The transforms for Jackson, Caudal, Messner, Zelezniak
+and Muenzner are the ones the cross-dataset analysis used (Table~\ref{tab:cross}); the
+Nadal-Ribelles and Vaishnav rows are proposals.}
+\label{tab:output-scales}
+\begin{tabular}{>{\raggedright\arraybackslash}p{30mm}>{\raggedright\arraybackslash}p{30mm}>{\raggedright\arraybackslash}p{46mm}>{\raggedright\arraybackslash}p{62mm}}
+\toprule
+Dataset & Readout type & Released quantity, scale & Target transform \\
+\midrule
+Kemmeren 2014; Sameith 2015 Dm & expression log ratio & two-color array, $\log_2$ (deletion / WT pool) & as released \\
+Nadal-Ribelles 2025 & expression log ratio & pseudobulk $\log_2$ fold change vs WT & as released, with $|{\cdot}| > 20$ set to missing (the zero-mean sentinel; 20.2\% of cells) \\
+Hu 2007 & expression score & error-model X score vs BY4741, signed & as released; an X score is not a log ratio, and the type token says so \\
+Jackson 2020 & absolute expression & pseudobulk UMI counts, zeros omitted & $\log_2((\mathrm{CPM}+1)/(\mathrm{CPM}_{\mathrm{HO}}+1))$ against the HO deletion of the same environment \\
+Boocock 2025; N'Guessan 2025 & absolute expression & UMI counts per segregant & $\log_2(\mathrm{CPM}+1)$, centered per gene within the panel \\
+Caudal 2024 & absolute expression & RNA-seq TPM, linear & $\log_2(\mathrm{TPM}+1)$, centered per gene over the isolates \\
+Messner 2023 & protein abundance & SWATH MaxLFQ, linear & $\log_2$(strain / record reference) \\
+Zelezniak 2018 & protein abundance & SWATH log signal (SVA) & strain minus record reference \\
+Muenzner 2024 protein & protein abundance & SWATH MaxLFQ precursor quantity, linear & $\log_2$, centered per protein over the isolates \\
+Muenzner 2024 turnover & protein turnover & dynamic SILAC degradation rate, per hour & $\log_2$, centered per protein over the isolates \\
+Vaishnav 2022 & promoter level & sort-seq expression level, one scalar & standardized over the library \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{The experiment-type, dataset and environment tokens\secstatus{todo}}
+\label{sec:output-tokens}
+
+Three learned vectors travel with every record. The \textbf{experiment-type token} is the
+record's ontology phenotype class: \texttt{Microarray\allowbreak Expression\allowbreak Phenotype} (Kemmeren,
+Sameith), \texttt{Microarray\allowbreak Expression\allowbreak Score\allowbreak Phenotype} (Hu),
+\texttt{Single\allowbreak Cell\allowbreak Expression\allowbreak Phenotype} (Jackson, Boocock, N'Guessan),
+\texttt{Pseudobulk\allowbreak Expression\allowbreak Phenotype} (Nadal-Ribelles), \texttt{RNASeq\allowbreak Expression\allowbreak Phenotype}
+(Caudal), \texttt{Protein\allowbreak Abundance\allowbreak Phenotype} (Messner, Zelezniak, Muenzner),
+\texttt{Protein\allowbreak Turnover\allowbreak Phenotype} (Muenzner) and \texttt{Pooled\allowbreak Sort\allowbreak Seq\allowbreak Expression\allowbreak Phenotype}
+(Vaishnav), the classes of Table~\ref{tab:store}'s rows. The \textbf{dataset token} is the
+dataset's id. The \textbf{environment token} is the record's medium, temperature and
+environmental perturbation, which separates Jackson's eleven conditions and Nadal-Ribelles'
+two.
+
+\notesec{The precedent}
+Experiment 035 gave the cell graph transformer a compound token $z_E$ from a fingerprint
+MLP and asked whether it predicts Vanacloig 2022 for an unseen compound. Three entry points
+were measured on 123 compound-evaluations (\texttt{experiments.035}, rounds 9 and 10): a
+bilinear factor at the head ($-0.007$ paired against ridge, 95\% CI $-0.028$ to $+0.015$),
+a gate on every gene's state ($-0.025$), and a token the genes attend to for one further
+layer ($+0.008$, CI $-0.026$ to $+0.045$; $+0.015$ against the head form, CI through zero).
+The ablation was the arm with no compound input (\texttt{cgt\_genes}), whose centered score
+is zero by construction. Experiment 030 put a one-hot over its 15 source datasets,
+projected to 8 dimensions, at the readout of both heads; seed 0 on the random split
+converged at a validation interaction Pearson of 0.5655 by epochs 164 to 181 (W\&B
+\texttt{xy3xnpau} and its continuations), and its encoder-side placement never ran.
+
+\notesec{Where the tokens enter, and the per-dataset bias}
+Three forms, for gene $g$ of a record from dataset $d$ with experiment type $\tau(d)$:
+\begin{equation}
+\text{(a)}\;\; \hat z_g = f(H_g) + b_d, \qquad
+\text{(b)}\;\; \hat z_g = f\big([\,H_g \,;\, t_{\tau(d)} \,;\, t_d \,;\, t_{\mathrm{env}}\,]\big) + b_d, \qquad
+\text{(c)}\;\; H' = \mathrm{Layer}\big([\,t_{\tau(d)};\,t_{\mathrm{env}};\,H\,]\big),\;\; \hat z_g = f(H'_g) + b_d.
+\label{eq:token-forms}
+\end{equation}
+Duplicate encoding with a linear bias is the pairing in (b): the record's provenance is
+encoded once semantically, as the type and environment tokens shared across datasets, and
+once as free parameters, the dataset row and its bias, which absorb the instrument's scale
+and offset. With standardized targets the scale is fitted from the data and only the bias
+is learned; under the binned loss it is a bias vector $c_d \in \mathbb{R}^K$ on the logits,
+a learned prior histogram per dataset. Form (b) contains (a), since a one-hot $t_d$ read by
+a head that is linear in it is a per-dataset bias.
+
+The main design is (b), the 030 per-entry readout token's form: cheapest, measured to
+convergence on one seed, and it keeps every token out of the trunk. Arm 1 is (c), type and
+environment attended in one layer after the operator, the 035 environment-encoder form, the
+only one of 035's three with a positive paired mean against ridge, and the form a
+compound-structured environment will need, since a token the genes see can change which
+genes respond. The ablation is (a) with no token. The dataset id never enters the trunk
+in any arm, so the morphology probe reads a latent built without it. A new dataset is one
+new row of $t_d$ and one new bias; a new dataset of a known type can be scored before
+training with $t_d$ at its type's mean row and the bias at zero (hypothesis, untested,
+that this read is above the per-gene mean). The interface the head needs from the trunk is
+$H$, $z_S$, $h$ and the three integer ids \texttt{collate\_043} already emits; the isolate
+context and the change-type marks enter the operator and never the head, or the
+alone-against-joint transfer on the isolates cannot be attributed to the trunk.
+
+\notesec{Ontology path or flat id}
+A flat token is one row per class. A path token sums one row per node of the class's
+ontology path, so \texttt{MicroarrayExpressionPhenotype} and
+\texttt{RNASeqExpressionPhenotype} share an expression row and differ in their own
+(prototype \texttt{ExperimentTypeEmbedding}, \texttt{mode="dag"}). The served graph has no
+such path: every phenotype class is a direct child of \texttt{phenotype} in
+\texttt{biocypher/config/torchcell\_schema\_config.yaml} (the \texttt{phenotype member of}
+edge lists all 34 leaves), and in the pydantic schema only the two microarray classes share
+a parent below \texttt{Phenotype} (\texttt{TwoChannelMicroarrayExpressionPhenotype}). The
+main design writes the grouping on the modeling side: expression, protein, promoter,
+fitness, interaction, metabolite, morphology, with the served leaf below its group. This
+is the owner's tokenizing of the ontology; when the ontology unification lands a real
+path, \file{dag\_paths} reads it and nothing else changes. The flat id is the ablation,
+which says whether the shared group row carries anything (hypothesis, untested: with 15
+datasets over 8 classes the type and dataset rows are nearly collinear, and the type row
+earns its place only on a dataset unseen in training).
+
+\subsection{Losses\secstatus{todo}}
+\label{sec:output-losses}
+
+Each readout has one loss over the measured entries of its records only: a missing gene is
+\texttt{NaN} in the target tensor, contributes no value and no gradient, and a type with
+nothing measured in a batch returns a connected zero (prototype \texttt{MaskedTypedLoss},
+the convention of \texttt{masked\_mean} in \texttt{torchcell/losses/distributional.py}).
+Nadal-Ribelles sentinels are set missing first.
+
+\notesec{Standardization}
+Every target is standardized per dataset before the loss, $z = (y - \mu_d)/s_d$ with
+$\mu_d$ and $s_d$ fitted on the training rows of dataset $d$, pooled over genes so a
+gene's deviation keeps its size. Every linear quantity is logged first and every panel
+quantity centered per gene over the training isolates or segregants
+(Table~\ref{tab:output-scales}). The learned per-dataset scale of the prototype is thereby
+fixed from the data; what stays learned per dataset is the bias of
+Eq.~\ref{eq:token-forms}. The statistics are fitted on training records only and frozen
+for every linear evaluation, or they leak the held-out set's scale.
+
+\notesec{Binned prediction, the main design}
+The main loss is HL-Gauss (Farebrother et al.\ 2024): the standardized target is a
+Gaussian of width $\sigma$ integrated over $K$ bins and renormalized, the loss is the
+cross-entropy against that soft target, the point prediction is the expectation over bin
+centers, read back in released units as $\mu_d + s_d\, \mathbb{E}[z]$, and the bin entropy
+is the uncertainty. Bins are shared in $z$ units: $K = 32$ equal bins over $[-4, 4]$,
+width 0.25, the two edge bins open, $\sigma = 0.75$ bin widths, so a target smears over
+about three bins. Vaishnav's released level is already a mean over 18 sort bins and is
+treated as a continuous scalar after standardization. The logits are $[B, 6{,}607, K]$,
+6.8 million floats or 27 MB in fp32 at $B = 32$, against the 19-knot pinball's 16 MB; the
+attention over 6{,}607 tokens dominates either. The cross-entropy per entry is masked
+exactly as the MSE is; the soft target is built from the zero-filled safe target under the
+mask, so no \texttt{NaN} reaches the backward pass. Scalar heads (trigenic interaction,
+betaxanthin, the promoter level) use the same bins on their own standardized target.
+Pearson and Spearman are computed on $\mathbb{E}[z]$; accuracy within one bin and the mean
+entropy are reported beside them, the classification reading of the same prediction.
+Hypothesis (untested): the binned head escapes the marginal plateau at least as reliably
+as MSE on $z_S$, because its gradient at the marginal is the full mismatch of two
+histograms and not a shrinking residual. No binned head has run in this codebase, so
+every gain is a hypothesis until the arms below have their seeds.
+
+\notesec{Pinball and MSE, the arms}
+019 trained expression with the 19-quantile pinball and read the median; on morphology, MSE
+on \texttt{M\_zs} escaped 12 of 12 runs by epoch 410, the pinball on the same readout 8 of
+10 and late (epochs 230 to 770), MSE on the CLS 0 of 8, CRPS 0 of 8
+(\texttt{11-inductive.tex}). Nothing is measured on a per-gene head with any loss on these
+data. The pinball is arm 1, on the same seeds as the main design, and is the owner's
+stated preference over MSE. One MSE cell on the per-gene head is the reference: it is the
+only loss with a 12 of 12 escape on record (on $z_S$), so it tells a bins failure from a
+readout failure. The Pearson loss and ListMLE are not arms: five of six batch-32 Pearson
+runs collapsed to a constant output and the anchored ListMLE runs sat on the mean by epoch
+250 (\texttt{2-readouts.tex}). A two-hot target is HL-Gauss at $\sigma \to 0$ and is
+covered by a $\sigma$ sweep over 0.5, 0.75 and 1.0 bin widths if the main design is in
+doubt.
+
+\notesec{Weighting across datasets}
+By record the store is 173{,}617 samples, of which Boocock holds 79{,}516 and Vaishnav
+71{,}158 (Table~\ref{tab:store}); by gene-level value Boocock's single cells hold 52\% of
+the training values (Table~\ref{tab:data-per-part}); Kemmeren is 1{,}482 records. The main
+design weights each dataset's mean masked loss equally. Agreement weighting is dropped: it
+writes a judgment about which datasets are poor into the objective, and the arm without
+the low-agreement datasets (Sec.~\ref{sec:output-protocol}) answers the same question
+without it. Record-count weighting is the arm that shows what the two large panels do to
+the deletion score, and decision P1 settles whether Boocock's de novo cells train at all.
+
+\subsection{Linear evaluations first\secstatus{todo}}
+\label{sec:output-linear}
+
+Nothing trains on a card before the ladder is on file. Every rung reads the fold file of
+Sec.~\ref{sec:output-protocol}, scores the same held-out units the transformer will, and
+runs on CPU (\file{linear\_evals\_043.py}, results in \file{results/linear\_evals\_043.json};
+neither exists yet). The reason is the 031 operator audit: on single deletions the
+transformer's score was a learned affine read of the deleted gene's own token, reproduced
+by a ridge from that row, and the ridge on the raw ProtT5 token read 0.082 on the same
+pin. The ridge from the deleted gene's frozen composite token to its expression profile is
+therefore the real split-A bar, and it has never been measured on expression. 035 found
+nested ridge on the raw fingerprint, 0.303, the bar no model beat with an interval clear
+of zero; 030 found a zero-parameter lower-order null at 0.577 above the joint
+transformer's 0.562.
+
+\notesec{Strain vectors}
+A single deletion is the deleted gene's frozen composite token $x_g$
+(Sec.~\ref{sec:input-token}), and each member of it alone, so the ladder says which block
+carries what. A double is $x_a + x_b$ and $[\,x_a + x_b \,;\, x_a \odot x_b\,]$; since no
+double trains, the inductive additive null is $f(x_a) + f(x_b)$ from the single-fit ridge.
+An isolate is, in order of richness, the 0/1 vector of its absent and loss-of-function
+genes, the genotype kinship matrix over the 979 isolates from the sequence-variant calls
+(kinship ridge is the GBLUP bar), and the change-type-weighted sum of $x_g$ over its marked
+genes. A segregant is its parent-of-origin vector over genes ($+1$, $-1$, 0 for
+unassigned) from the posterior 0.9 blocks. A promoter is its one-hot 80-mer and $k$-mer
+counts, $k \le 6$, and the frozen $f_{\mathrm{up}}$ window once the plasmid is in.
+
+\notesec{Rungs}
+N0, the per-gene mean, the training-mean profile for every strain; ridge, multi-output and
+closed form, penalty on the inner fold, inputs and targets $z$-scored on training rows; kNN,
+the mean profile of the $k$ nearest training strains by cosine on $x_g$, $k \in \{5, 10,
+20\}$; GBLUP for isolates; the marker ridge for segregants; the $k$-mer ridge for
+promoters; and for the doubles a four-rung ladder that sees only the double's components:
+the per-gene mean, the stronger single, $M_x + M_y$, and the fitted $a M_x + b M_y + c$
+(leave-one-out over the 72). Every difference is paired by held-out unit with a 95\%
+bootstrap interval resampled over strains (per-strain statistics) or genes (per-gene
+statistics); the strain interval is the one quoted, as the compound interval was in 035.
+A ridge over 1{,}400 strains by 3{,}328 inputs to 6{,}169 targets is one solve per penalty
+per fold, seconds on CPU; the whole ladder is a CPU job.
+
+\notesec{What would say the embedding carries the signal}
+Per dataset, ridge or kNN on $x_g$ above N0 on the median per-gene Pearson with the strain
+interval clear of zero. For Kemmeren the reference points are the 019 window mean $0.180
+\pm 0.006$ and the ceiling 0.729; no number is predicted for the token ridge. For the
+isolates, GBLUP against N0 on Muenzner is the bar the transformer must clear, with Caudal
+against Muenzner (0.208 per isolate, 0.160 per gene, Table~\ref{tab:cross}) the reference
+for another readout of the same strain. For the doubles, a model counts only above the
+fitted combination with at least 5 of 6 seeds up, on the 72 and on the restricted genes.
+
+\subsection{The evaluation protocol\secstatus{todo}}
+\label{sec:output-protocol}
+
+One fold file, five held-out sets, one probe, the arms and a scoring rule, declared before
+any run is read (Table~\ref{tab:output-protocol}). The 019 window rule stands: budget and
+window declared with the launch (500 epochs read over epochs 400 to 499 is the precedent;
+its 1{,}000-epoch runs scored lower over 900 to 999 than over 400 to 499 in 7 of 8), a
+cell read by its escape fraction first and its window mean second, no maximum over epochs.
+Two rules are added from 031 and 035: the validation fold monitors the escape and never
+selects the epoch (031 found epoch selection on validation null, $-0.009$), and the test
+fold is read once per round. Spearman is reported beside Pearson everywhere, and every
+calibration slope is named by its population (the whole fold and the predicted top
+decile), since 010 measured 0.88 on a whole test split against 1.59 inside the predicted
+top 100.
+
+\notesec{The fold file}
+\file{conf/splits/global\_split\_v1.json}, written by \file{make\_global\_split\_043.py}
+with \texttt{default\_rng(0)} from the raw store's index and validated by the pydantic
+record \texttt{GlobalSplit043} (version, seed, store sha256, test fold 0, validation fold
+1, the pinned training genes, and one fold id per key in four key spaces). Deletion genes:
+every gene deleted in Kemmeren, Hu, Jackson, Nadal-Ribelles, Messner, Zelezniak or Ohya,
+the 82 Sameith singles pinned to the training folds (P2), the rest in ten folds by a draw
+stratified on the gene's dataset-membership pattern, so each dataset holds out about a
+tenth of its genes (Table~\ref{tab:plan}). A deletion record trains only if none of its
+genes is in fold 0 or 1. Isolates: the 979 strain names of Caudal and Muenzner (759
+shared, 55 with turnover) in five folds stratified by membership and turnover. Segregants:
+five folds within each cross, de novo cells as records of their own. Promoters: five
+folds over distinct Vaishnav 80-mers. Ten folds for genes and five for the rest because a
+held-out gene leaves every deletion dataset at once and Kemmeren at 1{,}400 eligible genes
+cannot spare 40\% to test and validation. The dataset module answers
+\texttt{role(sample)} from the file; a per-dataset-alone run is the joint configuration
+with one dataset listed, so alone and joint read the same held-out records. Every run
+logs the file's version and store hash and refuses a mismatch. A second, clade-disjoint
+isolate file is the hard split once the Peter 2018 clade is on the isolate descriptor
+(owner question 6); it sits beside the random file and does not replace it.
+
+\notesec{Split A, deletion genes}
+Fold 0 of the gene folds, scored on every deletion dataset that measures the gene. The
+primary statistic is the median per-gene Pearson across the held-out strains; the
+per-strain Pearson across genes is reported centered on the training-mean profile, with
+the raw value and the Kemmeren different-mutant floor of 0.284 beside it (job 5893;
+Jackson's different-genotype constructions agree at 0.095). The bars are the ladder of
+Sec.~\ref{sec:output-linear} on the same genes; the ceiling is Kemmeren's own-culture
+0.729 (test-retest) and 0.653 (decomposition); the 019 by-strain reading $0.180 \pm
+0.006$ is a reference and not a paired bar. A held-out gene still appears in the isolates
+and segregants as a sequence variant, an absence or an inherited block; those are not
+deletions and are not held out. Jackson is scored only inside the joint arm, never alone.
+
+\notesec{Split B, every Sameith double}
+All 72 Sameith 2015 double deletions are held out; their 82 constituent singles are in
+training as Kemmeren profiles (Sameith Sm is excluded outright, the same arrays). Each
+double is scored by the centered per-strain Pearson against its measured profile and
+paired against the four rungs of Sec.~\ref{sec:output-linear}, the additive null being the
+paper's own expected value (``the deviation between the expression change observed in the
+double mutant $M_{x\Delta y\Delta i}$ and the expected expression change, given each single
+mutant $M_{x\Delta i} + M_{y\Delta i}$'', paper.md line 39); the same on the genes where
+$|M_{xy,i} - (M_{x,i} + M_{y,i})| > \log_2 1.5$, where the additive null is wrong by
+construction. Sameith ran ``four times from two independent cultures'' per mutant
+(paper.md line 33) and released one profile, so no double has a replicate; the Kemmeren
+0.729 is the bound for the same arrays.
+
+\notesec{Split C, isolates}
+Fold 0 of the isolate folds, out of Caudal, Muenzner protein and turnover together. The
+primary statistic is the median per-protein Pearson across the held-out isolates over
+1{,}540 proteins; the per-isolate Pearson is reported centered. GBLUP on the same isolates
+is the bar; Caudal against Muenzner is the reference for another readout of the same
+strain; the turnover read is the fold average over all five folds, the only stable read at
+55 isolates. The random isolate fold is the easy split, since relatives of a held-out
+strain sit in training, and GBLUP will look strong on it.
+
+\notesec{Splits D and E, segregants and promoters}
+Fold 0 within each cross, scored by the median per-gene Pearson across held-out segregants
+against the marker ridge; fold 0 of the promoters, scored by Pearson and Spearman across
+held-out promoters against the $k$-mer ridge.
+
+\notesec{The transfer statistic and the rule}
+For dataset $d$ and initialization seed $s$, $T_d(s) = S_d(\mathrm{joint}, s) -
+S_d(\mathrm{alone}, s)$ on the fold-0 records of $d$, with $S_d$ the primary statistic.
+Alone and joint are matched on optimizer steps, not epochs, since an alone run sees fewer
+records per epoch. A gain, transfer or arm difference is called when its mean is at least
+0.02 on the primary statistic, at least 5 of 6 paired seeds are up, and the 95\% interval
+resampled over held-out strains (genes for per-gene statistics) excludes zero: 0.02 is
+three seed standard deviations on either readout (019 expression 0.006 over four runs,
+proteome 0.008 over twelve), 5 of 6 is the 031 campaign rule at six seeds (9 of 12 at
+twelve), and the interval guards against six seeds agreeing on the sign of a 0.005 effect.
+The rule is committed as \file{conf/decision\_rule.yaml} before the first GPU run. Six
+seeds are six initializations on the pinned fold 0; fold 1 as test with fold 0 as
+validation is the second split seed when the budget allows, and the rule then reads 9 of
+12. One seed is never read.
+
+\notesec{The morphology probe}
+Ohya 2005 enters no training. For each of its 4{,}678 genotypes the frozen model produces
+$h$, $z_S$ and the mean over genes $\bar H$; a ridge from each, from their concatenation
+and from the frozen token $x_g$ to the 116 moving CalMorph features is fit 5-fold over
+genotypes with the penalty chosen on an inner split, inputs and targets $z$-scored and
+clipped at 8, and scored as the out-of-fold Pearson per feature across held-out genotypes,
+median over the 116 (the construction of Table~\ref{tab:morph}). Two reads: raw, and
+growth-residualized, with the Costanzo 2016 single-mutant fitness of the genotype
+regressed out of every feature on the training folds and appended as a covariate, because
+the chemogenomic growth matrices predict morphology nearly as well as the proteome
+(Hoepfner 0.263, Hillenmeyer 0.246, Messner 0.282, three growth panels 0.310; 019 screen,
+job 3919). The bars, in order: the 019 genotype-only model read through its own trained
+head, $0.149 \pm 0.022$; the sequence-embedding ridge 0.08 to 0.14
+(\texttt{11-inductive.tex}); the Kemmeren-expression ridge 0.348 on the 1{,}437 shared
+genotypes, the Messner ridge 0.278 on 4{,}279 and the Hu ridge 0.235 on 259
+(Table~\ref{tab:morph}, job 5892), transductive and each also paired on its own strains;
+the residualized bars recomputed in the same script; and the ceiling 0.847 on the 116 or
+0.611 over the 281. The learned state carries morphology beyond growth when the
+residualized median clears the residualized Kemmeren ridge with the strain interval clear
+of it; a raw median near 0.149 says the probe is the trained head by another route. The
+Ohya genotypes whose gene is in fold 0 (about 468) are the strictly inductive subgroup,
+unseen on every readout. Hypothesis (untested): $z_S$ carries the most, since the 031
+audit placed the score in the deleted gene's own row and $z_S$ is the readout 019 trained.
+
+\notesec{Arms}
+Main: every training dataset, heads per level, tokens at the head with the per-dataset
+bias, HL-Gauss. Data arms in a $2 \times 2$: with and without the natural-genome datasets
+(Caudal, Muenzner protein and turnover, Boocock, N'Guessan), with and without Vaishnav
+(once its window exists); the arm without Hu, Jackson and Nadal-Ribelles, which can only
+lower the Kemmeren score if their signal does not transfer (owner question 5 names the
+headline control). Loss arms: pinball; one MSE cell. Token arms: the attended layer
+(arm 1); the flat type id; no token. The six-heads-by-type control; the record-count
+weighting arm; the transductive identity-table ceiling; and the alone runs, one per
+training dataset. Every arm is scored on splits A and B and the probe, C, D and E in the
+arms that train those datasets; six initializations per cell on fold 0. Main plus these
+arms at six seeds is on the order of 70 runs of 500 epochs before the alone runs, so the
+linear ladder cuts any arm whose lower-order bar already answers it, and the owner ranks
+the rest.
+
+%% SOURCE: the n, bar and metric columns cite notes/experiments.043-expression-proteome-morphology.md
+%% (store table, cross-dataset and within-dataset sections), store_census.json, data_shapes_043.json
+%% and the 019 retrospective; expected fold sizes are tables/t11-plan.tex (primer_043_tables.py).
+\begin{table}[htbp]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\caption[]{\textbf{The evaluation protocol.} Every bar is a measured number or a rung
+computed on the same held-out units; a reference is a number from a different split or
+model and is marked so. Held-out sizes are expected fold-0 shares (Table~\ref{tab:plan});
+per-strain Pearson is reported centered on the training-mean profile, the raw value
+beside it.}
+\label{tab:output-protocol}
+\begin{tabular}{>{\raggedright\arraybackslash}p{18mm}>{\raggedright\arraybackslash}p{40mm}>{\raggedright\arraybackslash}p{24mm}>{\raggedright\arraybackslash}p{44mm}>{\raggedright\arraybackslash}p{44mm}}
+\toprule
+Split & Held out & n & Primary statistic (secondary) & Bar \\
+\midrule
+A, deletion genes & gene fold 0 of the fold file, out of every deletion dataset; the 82 Sameith singles pinned to training & about 140 Kemmeren strains, 448 Messner, 306 Nadal, 26 Hu, 10 Zelezniak; 6{,}169 genes & median per-gene Pearson across held-out strains (centered per-strain Pearson, median; raw beside it) & ladder on the same genes: per-gene mean, ridge and kNN on the frozen token; ceiling 0.729 test-retest, 0.653 decomposition; raw per-strain floor 0.284; reference 019 by-strain $0.180 \pm 0.006$ \\
+B, Sameith doubles & all 72 double deletions; the 82 singles in training as Kemmeren records & 72 strains, 6{,}169 genes & centered per-strain Pearson vs measured; paired difference vs four rungs; the same on genes with $|M_{xy} - (M_x + M_y)| > \log_2 1.5$ (Spearman; slope in the predicted top decile) & per-gene mean; stronger single; $M_x + M_y$; fitted $a M_x + b M_y + c$ (leave-one-out); ceiling 0.729 \\
+C, isolates & isolate fold 0, the same strains out of Caudal, Muenzner protein and turnover & about 196 isolates (about 159 Muenzner, 11 turnover), 1{,}540 proteins & median per-protein Pearson across held-out isolates (centered per-isolate Pearson; turnover as the fold average) & GBLUP on the same isolates; reference Caudal $\times$ Muenzner 0.208 per isolate, 0.160 per gene; reference 019 Messner $0.085 \pm 0.008$ \\
+D, segregants & fold 0 within each cross & about 15{,}903 Boocock records, 590 N'Guessan & median per-gene Pearson across held-out segregants (centered per-segregant) & marker ridge on the parent-of-origin vector; nearest-genotype $r$ 0.113 vs 0.070 random (Sec.~\ref{sec:within}) \\
+E, promoters & fold 0 over distinct promoter variants & about 14{,}232 promoters & Pearson across held-out promoters (Spearman) & $k$-mer ridge; one-hot ridge; frozen-window ridge once the plasmid is in \\
+Morphology probe & Ohya 2005, never trained; 5-fold over genotypes; fold-0-gene subgroup & 4{,}678 genotypes, 116 moving features & ridge from frozen $h$, $z_S$, $\bar H$, their concatenation, $x_g$; out-of-fold Pearson per feature, median over 116; raw and growth-residualized & 019 trained head $0.149 \pm 0.022$; sequence ridge 0.08 to 0.14; Kemmeren ridge 0.348 (1{,}437), Messner 0.278 (4{,}279), Hu 0.235 (259), transductive, residualized twins recomputed; ceiling 0.847 (116) or 0.611 (281) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Owner decisions\secstatus{todo}}
+\label{sec:output-decisions}
+
+Each item names the main option first; Table~\ref{tab:decisions} carries the same rows
+with their measured facts.
+
+\begin{enumerate}
+\item \textbf{Heads.} One head per readout level, shared across readout types and
+conditioned by the type token, on targets standardized per dataset with a per-dataset
+bias ($c_d$ on the logits, $b_d$ under pinball or MSE). Control arm: six heads by type.
+\item \textbf{Experiment-type token.} Ontology path with the modeling-side grouping
+(expression, protein, promoter, fitness, interaction, metabolite, morphology); the flat id
+as the ablation.
+\item \textbf{Where the tokens enter.} At the head (main); type and environment attended in
+one layer after the operator (arm 1); no token (ablation). The dataset never enters the
+trunk.
+\item \textbf{Loss.} HL-Gauss bins ($K = 32$ over $[-4, 4]$ in $z$ units, $\sigma$ 0.75 bin
+widths, expectation as the point); the 19-quantile pinball as arm 1; one MSE cell as the
+reference.
+\item \textbf{Dataset weighting.} Equal per dataset; agreement weighting dropped; record
+count as an arm.
+\item \textbf{Nadal-Ribelles sentinels.} $|\log_2 \mathrm{FC}| > 20$ set to missing before
+standardization (20.2\% of cells).
+\item \textbf{Jackson target.} The effect against the HO control of the same environment;
+Jackson not scored alone.
+\item \textbf{Split A leakage rule.} The held-out gene out of every deletion dataset, from
+the fold file.
+\item \textbf{Split C.} Fold 0 of the isolate folds, about 196 isolates with about 159
+Muenzner and 11 turnover; random over isolates now, a clade-disjoint second file when the
+clade is on the descriptor.
+\item \textbf{Budget, window and selection.} Declared with the launch; alone and joint
+matched on optimizer steps; the validation fold never selects the epoch; the test fold read
+once.
+\item \textbf{The fold file, the rule, the ladder, the centered statistic, the transfer
+statistic, the probe control and the reporting} are rows S1 to S7 of
+Table~\ref{tab:decisions}.
+\end{enumerate}

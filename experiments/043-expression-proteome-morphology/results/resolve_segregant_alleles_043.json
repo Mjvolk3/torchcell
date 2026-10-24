@@ -1,0 +1,445 @@
+{
+ "generated_by": "experiments/043-expression-proteome-morphology/scripts/resolve_segregant_alleles_043.py",
+ "created_at": "2026-10-22T19:17:23+00:00",
+ "slurm_job_id": "6130",
+ "wall_seconds": 161.5,
+ "rule": "whole-gene containment in one confident run (consecutive blocks of one parent, every block posterior >= 0.9); single_block = the literal one-block form",
+ "coordinates": "gene spans: SGD R64-4-1 GFF; blocks: the loaders' marker positions on the S288C reference",
+ "n_genes": 6607,
+ "limit": null,
+ "per_dataset": {
+  "Boocock2025Dataset": {
+   "records": 79516,
+   "n_assigned": {
+    "mean": 4099.0,
+    "median": 4113.0,
+    "min": 936,
+    "max": 6256
+   },
+   "n_assigned_by": {
+    "mean": 810.7,
+    "median": 0.0,
+    "min": 0,
+    "max": 4435
+   },
+   "n_assigned_non_reference": {
+    "mean": 3288.3,
+    "median": 3351.0,
+    "min": 662,
+    "max": 6001
+   },
+   "n_non_reference_allele_differs_from_s288c": {
+    "mean": 2798.6,
+    "median": 2865.0,
+    "min": 569,
+    "max": 5151
+   },
+   "n_non_reference_without_allele": {
+    "mean": 270.8,
+    "median": 274.0,
+    "min": 43,
+    "max": 501
+   },
+   "n_unassigned_no_block": {
+    "mean": 1437.9,
+    "median": 1450.0,
+    "min": 304,
+    "max": 2925
+   },
+   "n_unassigned_low_posterior": {
+    "mean": 988.2,
+    "median": 908.0,
+    "min": 0,
+    "max": 4008
+   },
+   "n_unassigned_straddle": {
+    "mean": 81.9,
+    "median": 80.0,
+    "min": 25,
+    "max": 190
+   },
+   "n_assigned_single_block_rule": {
+    "mean": 3521.3,
+    "median": 3512.0,
+    "min": 470,
+    "max": 6256
+   },
+   "n_blocks": {
+    "mean": 702.3,
+    "median": 720.0,
+    "min": 46,
+    "max": 1149
+   }
+  },
+  "Nguessan2025Dataset": {
+   "records": 2951,
+   "n_assigned": {
+    "mean": 5761.5,
+    "median": 6022.0,
+    "min": 3038,
+    "max": 6255
+   },
+   "n_assigned_by": {
+    "mean": 2886.0,
+    "median": 2896.0,
+    "min": 1441,
+    "max": 4280
+   },
+   "n_assigned_non_reference": {
+    "mean": 2875.5,
+    "median": 2910.0,
+    "min": 1095,
+    "max": 4416
+   },
+   "n_non_reference_allele_differs_from_s288c": {
+    "mean": 2427.3,
+    "median": 2459.0,
+    "min": 948,
+    "max": 3715
+   },
+   "n_non_reference_without_allele": {
+    "mean": 228.6,
+    "median": 230.0,
+    "min": 84,
+    "max": 356
+   },
+   "n_unassigned_no_block": {
+    "mean": 412.1,
+    "median": 380.0,
+    "min": 295,
+    "max": 754
+   },
+   "n_unassigned_low_posterior": {
+    "mean": 380.2,
+    "median": 155.0,
+    "min": 1,
+    "max": 2986
+   },
+   "n_unassigned_straddle": {
+    "mean": 53.1,
+    "median": 52.0,
+    "min": 28,
+    "max": 109
+   },
+   "n_assigned_single_block_rule": {
+    "mean": 5594.9,
+    "median": 5889.0,
+    "min": 2754,
+    "max": 6247
+   },
+   "n_blocks": {
+    "mean": 591.8,
+    "median": 483.0,
+    "min": 57,
+    "max": 2225
+   }
+  }
+ },
+ "per_cross": {
+  "Boocock2025Dataset:3004": {
+   "parents": [
+    "CBS2888 (ABL)",
+    "YJM981 (ADI)"
+   ],
+   "records": 6595,
+   "n_assigned": {
+    "mean": 4048.9,
+    "median": 4376.0,
+    "min": 936,
+    "max": 6001
+   },
+   "n_assigned_by": {
+    "mean": 0.0,
+    "median": 0.0,
+    "min": 0,
+    "max": 0
+   },
+   "n_assigned_non_reference": {
+    "mean": 4048.9,
+    "median": 4376.0,
+    "min": 936,
+    "max": 6001
+   },
+   "n_non_reference_allele_differs_from_s288c": {
+    "mean": 3466.6,
+    "median": 3749.0,
+    "min": 766,
+    "max": 5151
+   },
+   "n_non_reference_without_allele": {
+    "mean": 336.5,
+    "median": 362.0,
+    "min": 88,
+    "max": 501
+   },
+   "n_unassigned_no_block": {
+    "mean": 1583.5,
+    "median": 1584.0,
+    "min": 481,
+    "max": 2925
+   },
+   "n_unassigned_low_posterior": {
+    "mean": 910.6,
+    "median": 569.0,
+    "min": 39,
+    "max": 3498
+   },
+   "n_unassigned_straddle": {
+    "mean": 64.0,
+    "median": 63.0,
+    "min": 31,
+    "max": 151
+   },
+   "n_assigned_single_block_rule": {
+    "mean": 3337.5,
+    "median": 3473.0,
+    "min": 470,
+    "max": 5740
+   },
+   "n_blocks": {
+    "mean": 505.4,
+    "median": 529.0,
+    "min": 167,
+    "max": 952
+   }
+  },
+  "Boocock2025Dataset:A": {
+   "parents": [
+    "BY (None)",
+    "RM (AAA)"
+   ],
+   "records": 28137,
+   "n_assigned": {
+    "mean": 4448.2,
+    "median": 4431.0,
+    "min": 1606,
+    "max": 6256
+   },
+   "n_assigned_by": {
+    "mean": 2291.1,
+    "median": 2278.0,
+    "min": 678,
+    "max": 4435
+   },
+   "n_assigned_non_reference": {
+    "mean": 2157.0,
+    "median": 2136.0,
+    "min": 662,
+    "max": 4184
+   },
+   "n_non_reference_allele_differs_from_s288c": {
+    "mean": 1808.1,
+    "median": 1789.0,
+    "min": 569,
+    "max": 3508
+   },
+   "n_non_reference_without_allele": {
+    "mean": 177.4,
+    "median": 176.0,
+    "min": 43,
+    "max": 339
+   },
+   "n_unassigned_no_block": {
+    "mean": 1294.7,
+    "median": 1317.0,
+    "min": 304,
+    "max": 2032
+   },
+   "n_unassigned_low_posterior": {
+    "mean": 778.7,
+    "median": 734.0,
+    "min": 0,
+    "max": 4008
+   },
+   "n_unassigned_straddle": {
+    "mean": 85.4,
+    "median": 85.0,
+    "min": 25,
+    "max": 169
+   },
+   "n_assigned_single_block_rule": {
+    "mean": 3930.9,
+    "median": 3888.0,
+    "min": 1180,
+    "max": 6256
+   },
+   "n_blocks": {
+    "mean": 715.7,
+    "median": 734.0,
+    "min": 46,
+    "max": 1149
+   }
+  },
+  "Boocock2025Dataset:B": {
+   "parents": [
+    "YJM145 (AAS)",
+    "YPS163 (ACD)"
+   ],
+   "records": 44784,
+   "n_assigned": {
+    "mean": 3887.0,
+    "median": 3814.0,
+    "min": 1892,
+    "max": 5850
+   },
+   "n_assigned_by": {
+    "mean": 0.0,
+    "median": 0.0,
+    "min": 0,
+    "max": 0
+   },
+   "n_assigned_non_reference": {
+    "mean": 3887.0,
+    "median": 3814.0,
+    "min": 1892,
+    "max": 5850
+   },
+   "n_non_reference_allele_differs_from_s288c": {
+    "mean": 3322.6,
+    "median": 3263.0,
+    "min": 1586,
+    "max": 5024
+   },
+   "n_non_reference_without_allele": {
+    "mean": 319.8,
+    "median": 314.0,
+    "min": 124,
+    "max": 491
+   },
+   "n_unassigned_no_block": {
+    "mean": 1506.4,
+    "median": 1529.0,
+    "min": 601,
+    "max": 2247
+   },
+   "n_unassigned_low_posterior": {
+    "mean": 1131.3,
+    "median": 1128.0,
+    "min": 95,
+    "max": 3274
+   },
+   "n_unassigned_straddle": {
+    "mean": 82.3,
+    "median": 79.0,
+    "min": 32,
+    "max": 190
+   },
+   "n_assigned_single_block_rule": {
+    "mean": 3291.0,
+    "median": 3177.0,
+    "min": 1364,
+    "max": 5629
+   },
+   "n_blocks": {
+    "mean": 722.9,
+    "median": 729.0,
+    "min": 246,
+    "max": 1122
+   }
+  },
+  "Nguessan2025Dataset:BBQTL_BYxRM": {
+   "parents": [
+    "BY4741 (None)",
+    "RM11-1a (AAA)"
+   ],
+   "records": 2951,
+   "n_assigned": {
+    "mean": 5761.5,
+    "median": 6022.0,
+    "min": 3038,
+    "max": 6255
+   },
+   "n_assigned_by": {
+    "mean": 2886.0,
+    "median": 2896.0,
+    "min": 1441,
+    "max": 4280
+   },
+   "n_assigned_non_reference": {
+    "mean": 2875.5,
+    "median": 2910.0,
+    "min": 1095,
+    "max": 4416
+   },
+   "n_non_reference_allele_differs_from_s288c": {
+    "mean": 2427.3,
+    "median": 2459.0,
+    "min": 948,
+    "max": 3715
+   },
+   "n_non_reference_without_allele": {
+    "mean": 228.6,
+    "median": 230.0,
+    "min": 84,
+    "max": 356
+   },
+   "n_unassigned_no_block": {
+    "mean": 412.1,
+    "median": 380.0,
+    "min": 295,
+    "max": 754
+   },
+   "n_unassigned_low_posterior": {
+    "mean": 380.2,
+    "median": 155.0,
+    "min": 1,
+    "max": 2986
+   },
+   "n_unassigned_straddle": {
+    "mean": 53.1,
+    "median": 52.0,
+    "min": 28,
+    "max": 109
+   },
+   "n_assigned_single_block_rule": {
+    "mean": 5594.9,
+    "median": 5889.0,
+    "min": 2754,
+    "max": 6247
+   },
+   "n_blocks": {
+    "mean": 591.8,
+    "median": 483.0,
+    "min": 57,
+    "max": 2225
+   }
+  }
+ },
+ "distinct_parent_alleles_used": {
+  "AAA": {
+   "genes_ever_assigned": 6446,
+   "genes_with_all_four_keys": 5647,
+   "distinct_protein_keys": 5847,
+   "distinct_calm_keys": 5860,
+   "genes_whose_allele_differs_from_s288c": 5352
+  },
+  "AAS": {
+   "genes_ever_assigned": 6439,
+   "genes_with_all_four_keys": 5578,
+   "distinct_protein_keys": 5836,
+   "distinct_calm_keys": 5843,
+   "genes_whose_allele_differs_from_s288c": 5305
+  },
+  "ABL": {
+   "genes_ever_assigned": 6419,
+   "genes_with_all_four_keys": 5574,
+   "distinct_protein_keys": 5833,
+   "distinct_calm_keys": 5840,
+   "genes_whose_allele_differs_from_s288c": 5571
+  },
+  "ACD": {
+   "genes_ever_assigned": 6439,
+   "genes_with_all_four_keys": 5655,
+   "distinct_protein_keys": 5820,
+   "distinct_calm_keys": 5825,
+   "genes_whose_allele_differs_from_s288c": 5646
+  },
+  "ADI": {
+   "genes_ever_assigned": 6419,
+   "genes_with_all_four_keys": 5660,
+   "distinct_protein_keys": 5835,
+   "distinct_calm_keys": 5847,
+   "genes_whose_allele_differs_from_s288c": 5374
+  }
+ }
+}

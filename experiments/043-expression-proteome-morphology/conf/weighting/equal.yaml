@@ -1,0 +1,5 @@
+# experiments/043-expression-proteome-morphology/conf/weighting/equal.yaml
+# Main (O5): each dataset's mean masked loss weighted equally among the datasets in the batch.
+kind: equal
+# dataset (legacy) | profile (pool datasets sharing an ontology phenotype profile; prep_v4)
+by: dataset

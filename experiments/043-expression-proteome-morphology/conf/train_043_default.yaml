@@ -59,6 +59,14 @@ data:
   val_max_records_per_dataset: 2000
   traineval_max_records_per_dataset: 256
   min_strains_per_gene: 3
+  # TARGET PREPROCESSING (GilaHyper sweep, 2026-10-24; torchcell.data.target_transform_043):
+  # a monotone second stage on the legacy z, fitted on training rows, inverted before
+  # scoring. zscore + dataset = the legacy z (every earlier run); quantile_normal = rank to
+  # a standard normal per group; none = released scale after the per-gene center.
+  # target_stats_by: dataset (legacy) | profile (experiment-ontology phenotype profile;
+  # needs data.prep_version=prep_v4).
+  target_transform: zscore
+  target_stats_by: dataset
 
 model:
   hidden_dim: 144
@@ -83,6 +91,12 @@ model:
   dataset_token_dim: 8
   head_hidden: 128
   exp_type_mode: dag
+  # TRUNK SHAPE (2026-10-24): layer_pattern [S|M, ...] DEFINES num_layers and mask_layers
+  # (M = multigraph-masked attention, 0-based; null = num_layers / mask_layers above, i.e.
+  # [S, M, S, S]). conf/model/pattern_*.yaml hold the sweep arms (+model=pattern_ssss).
+  # trunk_ffn_mult: trunk FFN width / hidden_dim (4 = 576 at hidden 144).
+  layer_pattern: null
+  trunk_ffn_mult: 4
   # CONDITIONING (2026-10-23): name = type path + dataset + environment tokens and
   # per-dataset bias tables (every earlier run); ontology = the record's experiment ontology
   # annotation through OntologyDagEncoder (token width 40, as the name token), bias maps of
@@ -96,6 +110,9 @@ optim:
   weight_decay: 1.0e-8
   warmup_steps: 500
   clip_grad_norm: 10.0
+  # constant after warmup (every earlier run) | cosine to min_lr_frac * lr at the last step
+  schedule: constant
+  min_lr_frac: 0.0
 
 budget:
   max_epochs: 50
@@ -114,6 +131,7 @@ wandb:
   mode: online
   tags: []
   round: null
+  label_knobs: false  # true appends non-default sweep knobs to the W&B group
 
 paths:
   data_root: ${oc.env:DATA_ROOT}

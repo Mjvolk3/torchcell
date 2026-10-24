@@ -1624,3 +1624,12 @@ Dropped: 8 layers (page fault at micro-batch 2; at micro-batch 1 it fits, 35.29 
 Projection from the measured rates (not a result): 28,403 micro-steps per epoch at 0.207 to 0.229 s plus about 100 s of evaluation is 1.66 to 1.84 h per epoch, 133 to 147 h for 80 epochs, plus about 1 h of fine-tune; inside 168 h, with the h288 cells closest to the limit. About 13x slower per record than the Polaris A100 (0.059 s per batch-8 step there), because masked SDPA on XPU takes the math path.
 
 Morning item, hypothesis (unimplemented): the masked trunk layers could run as edge-list attention with a scatter softmax, O(E) instead of the 6609 x 6609 score matrix, which would let Aurora train at batch 8 without accumulation.
+
+### Grid resubmitted with every tile filled (PBS 8959387 and 8959388)
+
+PBS 8959369 and 8959370 were deleted while still queued and resubmitted with all 12 tiles of each node in use, 24 cells on the same 2 nodes (12 GPUs). The paired-tile rates of PBS 8959340 already include sharing a card (tiles 0-5 ran in pairs: 0.207 to 0.229 s per micro-step; tile 6 without a partner: 0.199), so the projection above stands. Added to the 12 cells: all_onto pinball s0 and mse s0 (the Polaris loss axis), all_name s1 and s3, all_onto s3, ffn2 s1, bs16 s2, bs32 s2, h288 s2, lodo_hu and lodo_zelezniak (ontology, s0), and alone_kemmeren (ontology, s0, 571,100 optimizer steps, validation every 20 epochs, no fine-tune). Placement in `aurora_grid_043.tsv`.
+
+| PBS | node slot | tiles 0-11 |
+|---|---|---|
+| 8959387 | 0 | all_onto s0, pinball s0, all_name s0, mse s0, bs16 s0, all_name s1, bs32 s0, ffn2 s1, h288 s0, lodo_hu s0, ffn2 s0, lodo_zelezniak s0 |
+| 8959388 | 1 | all_onto s1, bs16 s2, bs16 s1, bs32 s2, bs32 s1, h288 s2, h288 s1, alone_kemmeren s0, all_onto s2, all_onto s3, all_name s2, all_name s3 |

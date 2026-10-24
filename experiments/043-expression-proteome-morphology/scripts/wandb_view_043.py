@@ -96,6 +96,23 @@ ROUNDS: dict[str, Round] = {
             "warmup 30); alone_kemmeren from scratch at 28,646 steps (stage 1 + fine-tune)."
         ),
     ),
+    "overnight_2026_10_23": Round(
+        view_name="043 overnight 2026-10-23 (store v2) by arm",
+        # stage 1 A/B (s0, s1), alone s0 (card D); the remaining runs are added as they start
+        run_ids=("gdqlsjpb", "oc881bqm", "18s6j2p2"),
+        hardware=(
+            "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, jobs 6308-6313 and "
+            "6316-6318 (DEADLINE 07:30 CDT 2026-10-24)"
+        ),
+        intro=(
+            "Store v2 (prep_v3, job 6304; global_split_v2), every mark, plain residual. "
+            "Stage 1 arm all at 80 epochs (7,101 steps each; window epochs 71-80), seeds 0 "
+            "and 1; balanced sampler DEADLINE-capped; stage 2 fine-tune on Kemmeren, 20 "
+            "epochs (3,020 steps, lr 3e-4, warmup 30, window 16-20); alone_kemmeren "
+            "step-matched at 571,100 steps (3,783 epochs, validation every 20), seeds 0 and "
+            "1; joint_9 DEADLINE-capped."
+        ),
+    ),
 }
 
 DATASETS = (
@@ -136,6 +153,15 @@ def sections() -> list[tuple[str, list[Panel]]]:
                     STEP,
                     ["train/kemmeren/loss", "val/kemmeren/loss"],
                 ),
+                # one train-and-validation pair per dataset (the owner reads these first)
+                *[
+                    (
+                        f"{d} train and validation loss by epoch",
+                        EPOCH,
+                        [f"train/{d}/loss", f"val/{d}/loss"],
+                    )
+                    for d in (*DATASETS, "vaishnav")
+                ],
                 (
                     "per-type train loss by epoch",
                     EPOCH,

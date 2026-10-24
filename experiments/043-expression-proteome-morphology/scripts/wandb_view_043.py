@@ -65,6 +65,15 @@ class Round:
     run_ids: tuple[str, ...]
     hardware: str
     intro: str
+    #: window means only: runs of OTHER rounds read beside this one as a labelled
+    #: reference (run id -> label); never added to the round's views
+    references: tuple[tuple[str, str], ...] = ()
+    #: window means only: list unfinished runs apart instead of as partial rows
+    finished_only: bool = False
+    #: window means only: read the fine-tune runs (arm finetune_*) over this epoch range
+    #: instead of their logged registered window (the window is read-out only; training
+    #: is the same), recorded per run as window_override_of
+    finetune_window: tuple[int, int] | None = None
 
 
 ROUNDS: dict[str, Round] = {
@@ -290,6 +299,17 @@ ROUNDS: dict[str, Round] = {
             "_tqn) and hidden 288 (_h288); wave 3 trunk FFN 2x (_ffn2), head_hidden 256 "
             "(_hh256), lr 1.5e-4 and 6e-4. Composite gene token on in every run."
         ),
+        references=(
+            (
+                "gdqlsjpb",
+                "cross-round reference: overnight_2026_10_23 all_hlgauss_equal s0 (job "
+                "6308), same recipe on prep_v3 with NAME conditioning, not ontology",
+            ),
+        ),
+        finished_only=True,
+        # the sweep fine-tunes were launched with WINDOW_START_FRAC 0.8 (logged window
+        # 17-20); the overnight fine-tunes used 0.75 (16-20), so they are read over 16-20
+        finetune_window=(16, 20),
     ),
 }
 
@@ -650,6 +670,8 @@ WINDOW_KEYS = (
     "val/caudal/pearson_per_gene_median",
     "val/messner/pearson_per_gene_median",
     "val/vaishnav/pearson",
+    "train/loss",
+    "val/loss",
 )
 ALONE_ARM = "alone_kemmeren_hlgauss_equal"
 TRANSFER_KEY = "val/kemmeren/pearson_per_gene_median"
@@ -662,13 +684,28 @@ def window_means(api: wandb.Api, key: str, rnd: Round) -> dict[str, object]:
     minus alone). A run that has not reached its window is reported partial.
     """
     runs: dict[str, dict[str, object]] = {}
-    for rid in rnd.run_ids:
-        run = api.run(f"{ENTITY}/{PROJECT}/{rid}")
+    absent: list[str] = []
+    unfinished: dict[str, int] = {}
+    references: dict[str, dict[str, object]] = {}
+    labels = dict(rnd.references)
+    for rid in (*rnd.run_ids, *labels):
+        try:
+            run = api.run(f"{ENTITY}/{PROJECT}/{rid}")
+        except wandb.errors.CommError:
+            absent.append(rid)  # a chained stage that has not started
+            continue
+        if rnd.finished_only and rid not in labels and run.state != "finished":
+            # the window bounds are written at the end of a run; an in-flight run has none
+            unfinished[rid] = int(run.summary.get("epoch", 0))
+            continue
         rows = [
             r for r in run.scan_history(page_size=5000) if r.get("epoch") is not None
         ]
         first = int(run.summary["setup/window_first_epoch"])
         last = int(run.summary["setup/window_last_epoch"])
+        logged = [first, last]
+        if rnd.finetune_window is not None and str(run.group).startswith("finetune_"):
+            first, last = rnd.finetune_window
         n_epochs = int(run.summary["setup/n_epochs"])
         reached = int(max(r["epoch"] for r in rows))
         win = [r for r in rows if first <= r["epoch"] <= last]
@@ -677,13 +714,15 @@ def window_means(api: wandb.Api, key: str, rnd: Round) -> dict[str, object]:
             vals = [float(r[k]) for r in win if r.get(k) is not None]
             if vals:
                 means[k] = {"mean": float(np.mean(vals)), "n_evaluations": len(vals)}
-        runs[rid] = {
+        (references if rid in labels else runs)[rid] = {
+            **({"reference": labels[rid]} if rid in labels else {}),
             "arm_label": run.group,
             "seed": int(run.config["seed"]),
             "state": run.state,
             "epochs_reached": reached,
             "n_epochs": n_epochs,
             "window": [first, last],
+            **({"window_override_of": logged} if logged != [first, last] else {}),
             "complete": reached >= n_epochs,
             "means": means,
         }
@@ -727,6 +766,9 @@ def window_means(api: wandb.Api, key: str, rnd: Round) -> dict[str, object]:
         + ("" if len(alone) <= 1 else "; paired by seed (same-seed alone run)"),
         "runs": runs,
         "transfer_kemmeren": transfer,
+        **({"references": references} if references else {}),
+        **({"not_finished_epochs_reached": unfinished} if rnd.finished_only else {}),
+        **({"no_run_yet": absent} if absent else {}),
     }
 
 

@@ -1377,3 +1377,26 @@ def test_balance_power_interpolates_records_to_equal_shares(
     for d, t in table.items():
         assert t["draws_per_epoch"] == pytest.approx(math.ceil(len(pos) / 6) * 6 / 4)
         assert t["visits_per_record"] == pytest.approx(t["draws_per_epoch"] / n[d] * 80)
+
+
+def test_grad_norm_window_and_per_dataset_entropy_are_logged(
+    tr: ModuleType, world: dict[str, Any], tmp_path: Path
+) -> None:
+    base = _cfg(tr, world["root"], "hlgauss").model_dump()
+    base["data"] = {**base["data"], "batch_size": 1}
+    base["budget"] = {**base["budget"], "max_epochs": 60, "max_steps_per_epoch": 1}
+    base["optim"] = {**base["optim"], "clip_grad_norm": 1e-3}  # every step clips
+    base["paths"]["checkpoint_root"] = str(tmp_path / "ckpt")
+    cfg = tr.TrainConfig043.model_validate(base)
+    src = tr.h5_vector_source(cfg.paths, tr.store_paths(cfg.data.store_version))
+    logger = tr.MemoryLogger()
+    tr.train(cfg, world["store"], src, logger)
+    steps = [r for s, r in logger.rows if "train/grad_norm_max50" in r]
+    assert len(steps) == 1  # 60 steps: one logged window, at step 50
+    r = steps[0]
+    assert r["train/grad_norm_max50"] >= r["train/grad_norm"] > 0
+    assert r["train/clipped_frac50"] == 1.0  # all 50 window steps were above the clip
+    last = [r for _, r in logger.rows if "val/loss" in r][-1]
+    for d in ("kemmeren", "messner", "vaishnav"):  # gene-level and record-level heads
+        e = last[f"val/{d}/entropy_mean"]
+        assert 0.0 < e <= np.log(32) + 1e-6  # 32 bins: entropy within [0, log K]

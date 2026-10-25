@@ -364,6 +364,19 @@ ROUNDS: dict[str, Round] = {
                 "gs1024_w1_msmsms_ft",
                 "initialized from the diverged gs1024_w1_msmsms last.pt (epoch 80)",
             ),
+            (
+                "gs1024_w2_h288",
+                "collapsed at epoch 60: val/loss 2.4960 (ep 59) -> 2.7042 (ep 60), "
+                "train/loss 2.0981 -> 2.2893 (ep 61); gene-level heads constant "
+                "(val/kemmeren median 0.0757 -> -0.0024, val/doubles -0.0883 at epochs 60 "
+                "and 61) while val/vaishnav/pearson holds 0.92-0.93; no logged "
+                "train/grad_norm above 50 (8,736 rows, one step in 50 logged, max 48.9 at "
+                "step 368,800, epoch 51.9)",
+            ),
+            (
+                "gs1024_w2_h288_ft",
+                "initialized from the collapsed gs1024_w2_h288 last.pt (epoch 80)",
+            ),
         ),
     ),
 }

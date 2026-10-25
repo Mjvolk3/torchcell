@@ -2494,6 +2494,11 @@ def predict(
     rec_pred = np.full(len(positions), np.nan, np.float32)
     acc_hits = acc_n = 0.0
     ent_sum = ent_n = 0.0
+    # per-dataset predictive entropy (nats) of the binned heads, over measured entries
+    # (gene level) or records (record level): a constant-histogram collapse of one head
+    # shows as an entropy jump on that dataset (2026-10-25)
+    ds_ent_sum: dict[int, float] = defaultdict(float)
+    ds_ent_n: dict[int, float] = defaultdict(float)
     op_sums: dict[str, float] = defaultdict(float)
     op_n = 0
     cursor = 0
@@ -2537,6 +2542,25 @@ def predict(
             ent = objective.hl.entropy(out.gene)
             ent_sum += float((ent * meas).sum())
             ent_n += float(meas.sum())
+        if objective.kind in ("hlgauss", "binned_quantile"):
+            if tg.gene_rows.numel():
+                meas_g = (~torch.isnan(tg.gene_z)).to(device)
+                ent_g = (objective.hl.entropy(out.gene) * meas_g).sum(1)
+                for d, e, m in zip(
+                    tg.dataset_ids[tg.gene_rows].tolist(),
+                    ent_g.tolist(),
+                    meas_g.sum(1).tolist(),
+                    strict=True,
+                ):
+                    ds_ent_sum[d] += e
+                    ds_ent_n[d] += m
+            if tg.record_rows.numel():
+                ent_r = objective.hl.entropy(out.record)
+                for d, e in zip(
+                    tg.dataset_ids[tg.record_rows].tolist(), ent_r.tolist(), strict=True
+                ):
+                    ds_ent_sum[d] += e
+                    ds_ent_n[d] += 1.0
         cursor += B
     model.train()
     if view.target_map is not None:
@@ -2567,6 +2591,9 @@ def predict(
     if acc_n:
         extra["acc_within_one_bin"] = acc_hits / acc_n
         extra["entropy_mean"] = ent_sum / ent_n
+    for d, n in ds_ent_n.items():
+        if n:
+            extra[f"{view.datasets[d]}/entropy_mean"] = ds_ent_sum[d] / n
     return {
         "gene": gene_pred,
         "record": rec_pred,
@@ -2968,6 +2995,7 @@ def train(
     # best.pt (owner, 2026-10-24: "checkpoint at gap"): the checkpoint at the minimum
     # val/loss so far, overwritten atomically when val/loss improves; no early stopping
     best_val, best_epoch = math.inf, 0
+    win_max, win_clipped, win_n = 0.0, 0, 0  # grad-norm window since the last log
     resume_path = osp.join(ckpt_dir, "last.pt")
     if cfg.resume_id is not None and osp.exists(resume_path):
         st = torch.load(resume_path, map_location=device, weights_only=False)
@@ -3062,6 +3090,11 @@ def train(
             )
             if not math.isfinite(grad_norm):
                 raise FloatingPointError(f"non-finite gradient norm at step {step}")
+            # the 50-step window ending at each logged step: max pre-clip norm and the
+            # fraction of steps clipped (a one-step spike is otherwise unobservable)
+            win_max = max(win_max, grad_norm)
+            win_clipped += int(grad_norm > cfg.optim.clip_grad_norm)
+            win_n += 1
             opt.step()
             step += 1
             every = cfg.budget.checkpoint_every_steps
@@ -3093,10 +3126,13 @@ def train(
                         "train/grad_norm": grad_norm,
                         "train/grad_norm_clip_frac": grad_norm
                         / cfg.optim.clip_grad_norm,
+                        "train/grad_norm_max50": win_max,
+                        "train/clipped_frac50": win_clipped / max(win_n, 1),
                         "train/lr": opt.param_groups[0]["lr"],
                     },
                     step=step,
                 )
+                win_max, win_clipped, win_n = 0.0, 0, 0
             if (
                 not epoch_seconds
                 and t_probe is not None

@@ -74,6 +74,9 @@ class Round:
     #: instead of their logged registered window (the window is read-out only; training
     #: is the same), recorded per run as window_override_of
     finetune_window: tuple[int, int] | None = None
+    #: window means only: runs whose training diverged inside the window (run id ->
+    #: evidence); written as diverged = true so the row is never read as a result
+    diverged: tuple[tuple[str, str], ...] = ()
 
 
 ROUNDS: dict[str, Round] = {
@@ -285,7 +288,9 @@ ROUNDS: dict[str, Round] = {
             )
             for a in arms
             for ft in ("", "_ft")
-        ),
+        )
+        # the divergence test (owner go-ahead 2026-10-24): MMMM with the cosine schedule
+        + ("gs1024_w2_mmmm_cos", "gs1024_w2_mmmm_cos_ft"),
         hardware=(
             "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, four chained slots "
             "after the overnight round (dependency afterany:6311:6312:6317:6318:6322)"
@@ -310,6 +315,25 @@ ROUNDS: dict[str, Round] = {
         # the sweep fine-tunes were launched with WINDOW_START_FRAC 0.8 (logged window
         # 17-20); the overnight fine-tunes used 0.75 (16-20), so they are read over 16-20
         finetune_window=(16, 20),
+        diverged=(
+            (
+                "gs1024_w1_mmmm",
+                "train/grad_norm > 1e3 from step 507,700 (epoch 71.5), max 2.2e14",
+            ),
+            (
+                "gs1024_w1_msmsms",
+                "train/grad_norm > 1e3 from step 514,100 (epoch 72.4), max 6.03e16; "
+                "val/vaishnav/pearson changes sign from epoch 76",
+            ),
+            (
+                "gs1024_w1_mmmm_ft",
+                "initialized from the diverged gs1024_w1_mmmm last.pt (epoch 80)",
+            ),
+            (
+                "gs1024_w1_msmsms_ft",
+                "initialized from the diverged gs1024_w1_msmsms last.pt (epoch 80)",
+            ),
+        ),
     ),
 }
 
@@ -723,6 +747,11 @@ def window_means(api: wandb.Api, key: str, rnd: Round) -> dict[str, object]:
             "n_epochs": n_epochs,
             "window": [first, last],
             **({"window_override_of": logged} if logged != [first, last] else {}),
+            **(
+                {"diverged": True, "diverged_evidence": dict(rnd.diverged)[rid]}
+                if rid in dict(rnd.diverged)
+                else {}
+            ),
             "complete": reached >= n_epochs,
             "means": means,
         }

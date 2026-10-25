@@ -51,6 +51,7 @@ MUENZNER = "val/muenzner/pearson_per_gene_median"
 CAUDAL = "val/caudal/pearson_per_gene_median"
 MESSNER = "val/messner/pearson_per_gene_median"
 VAISHNAV = "val/vaishnav/pearson"
+GRAD_NORM = "train/grad_norm"
 #: Panel-title names that say the statistic.
 METRIC_TITLE = {
     "train/loss and val/loss": "train/loss and val/loss",
@@ -61,6 +62,7 @@ METRIC_TITLE = {
     CAUDAL: "val/caudal per-gene Pearson median",
     MESSNER: "val/messner per-gene Pearson median",
     VAISHNAV: "val/vaishnav Pearson",
+    GRAD_NORM: "train/grad_norm (pre-clip, log scale)",
 }
 
 
@@ -72,6 +74,7 @@ class PanelSpec(BaseModel):
     y: tuple[str, ...]
     x: str  # EPOCH or STEP
     title: str
+    log_y: bool = False
 
 
 class GridSpec(BaseModel):
@@ -99,9 +102,9 @@ def _x_name(x: str) -> str:
     return "epoch" if x == EPOCH else "optimizer step"
 
 
-def _panel(y: tuple[str, ...], x: str) -> PanelSpec:
+def _panel(y: tuple[str, ...], x: str, log_y: bool = False) -> PanelSpec:
     name = "train/loss and val/loss" if y == LOSS_KEYS else METRIC_TITLE[y[0]]
-    return PanelSpec(y=y, x=x, title=f"{name} by {_x_name(x)}")
+    return PanelSpec(y=y, x=x, title=f"{name} by {_x_name(x)}", log_y=log_y)
 
 
 def _loss_pair() -> tuple[PanelSpec, ...]:
@@ -208,7 +211,7 @@ REPORTS: dict[str, ReportSpec] = {
 GS = "gs1024_"
 LAYER_PATTERNS = tuple(
     f"{GS}w1_{a}" for a in ("smss", "ssss", "mmmm", "msmsms", "smmss")
-)
+) + (f"{GS}w2_mmmm_cos",)  # MMMM with the cosine schedule (the divergence test)
 GS_BASELINE = f"{GS}w1_smss"
 GS_DIMS_OPT = (f"{GS}w2_h288",) + tuple(
     f"{GS}w3_{a}" for a in ("ffn2", "hh256", "lrhalf", "lrx2")
@@ -244,6 +247,16 @@ REPORTS["ghyper_sweep_2026_10_24"] = ReportSpec(
             ),
             run_ids=LAYER_PATTERNS,
             panels=(_panel(LOSS_KEYS, EPOCH), _panel(("val/loss",), EPOCH)),
+        ),
+        GridSpec(
+            heading="Gradient norm by optimizer step (divergence)",
+            caption=(
+                "train/grad_norm before clipping (clip 10), log scale, every stage 1 "
+                "cell: MMMM and MSMSMS exceed 1e3 from epoch 71.5 and 72.4 (7,101 steps "
+                f"per epoch) and diverge inside their scoring window; {PARTIAL}."
+            ),
+            run_ids=GS_STAGE1,
+            panels=(_panel((GRAD_NORM,), STEP, log_y=True),),
         ),
         GridSpec(
             heading="Layer pattern: validation metrics by epoch",
@@ -410,6 +423,7 @@ def _line_plot(p: PanelSpec, i: int) -> wr.LinePlot:
         y=list(p.y),
         title_x=_x_name(p.x),
         smoothing_type="none",
+        log_y=p.log_y,
         max_runs_to_show=MAX_RUNS_SHOWN,
         legend_template=LEGEND,
         layout=wr.Layout(x=12 * (i % 2), y=8 * (i // 2), w=12, h=8),

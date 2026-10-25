@@ -102,6 +102,8 @@
     71,
     80
    ],
+   "diverged": true,
+   "diverged_evidence": "train/grad_norm > 1e3 from step 507,700 (epoch 71.5), max 2.2e14",
    "complete": true,
    "means": {
     "val/kemmeren/pearson_per_gene_median": {
@@ -156,6 +158,8 @@
     17,
     20
    ],
+   "diverged": true,
+   "diverged_evidence": "initialized from the diverged gs1024_w1_mmmm last.pt (epoch 80)",
    "complete": true,
    "means": {
     "val/kemmeren/pearson_per_gene_median": {
@@ -278,6 +282,8 @@
     71,
     80
    ],
+   "diverged": true,
+   "diverged_evidence": "train/grad_norm > 1e3 from step 514,100 (epoch 72.4), max 6.03e16; val/vaishnav/pearson changes sign from epoch 76",
    "complete": true,
    "means": {
     "val/kemmeren/pearson_per_gene_median": {
@@ -332,6 +338,8 @@
     17,
     20
    ],
+   "diverged": true,
+   "diverged_evidence": "initialized from the diverged gs1024_w1_msmsms last.pt (epoch 80)",
    "complete": true,
    "means": {
     "val/kemmeren/pearson_per_gene_median": {
@@ -500,10 +508,10 @@
   }
  },
  "not_finished_epochs_reached": {
-  "gs1024_w1_smmss": 64,
-  "gs1024_w2_binq": 54,
-  "gs1024_w2_h288": 3,
-  "gs1024_w3_lrhalf": 20
+  "gs1024_w1_smmss": 65,
+  "gs1024_w2_binq": 56,
+  "gs1024_w2_h288": 4,
+  "gs1024_w3_lrhalf": 21
  },
  "no_run_yet": [
   "gs1024_w1_smmss_ft",
@@ -517,6 +525,8 @@
   "gs1024_w3_hh256_ft",
   "gs1024_w3_lrhalf_ft",
   "gs1024_w3_lrx2",
-  "gs1024_w3_lrx2_ft"
+  "gs1024_w3_lrx2_ft",
+  "gs1024_w2_mmmm_cos",
+  "gs1024_w2_mmmm_cos_ft"
  ]
 }

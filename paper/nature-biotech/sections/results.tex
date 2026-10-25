@@ -101,27 +101,67 @@ reaches Pearson $r = 0.454$ (Spearman $0.421$), outperforming Yeast9 FBA, DCell,
 (Fig.~\ref{fig:ggi}).
 
 %% --- Figure 2 (R2): Trigenic gene-gene interactions (plan: "Trigenic GI -- can split in two") ---
-% Fig 2 is composed in draw.io (source: notes/assets/drawio/Fig2-gene-interactions.drawio)
-% and placed true-size with \tcfig. Panel plan, for reference as it is built out:
-%   (a) predicted vs actual trigenic interaction; (b) nested cell representation + iBioFoundry
-%   DBTL loop; (c) state of the art vs Yeast9 FBA / DCell / DANGO; (d) accuracy vs |tau|;
-%   (e) data & model scaling; (f) graph-regularization ablation. Split into two figures if
-%   it gets crowded. Update the caption panel-by-panel as each is finalized.
+% Fig 2 is the seventeen-panel gene-interaction sheet carried in the prelim (2026-10-24 swap).
+% SOURCE: experiments/025-solid-growth/scripts/fig2_gene_interactions.py draws the sheet with
+% slot a empty and notes/assets/drawio/Fig2-gene-interactions.sheet.py lays the draw.io
+% explainer over the slot; both run with FIG2_PRELIM=1 (review marks off) and write
+% notes/assets/images/025-solid-growth/fig2_gene_interactions_prelim.pdf (2026-10-14 03:26).
+% That branch (feat/025-graph-reg-sweep-readout) is not on main yet; the PDF here is a copy
+% of that file at its native 179 x 210 mm. The draw.io sketch of the same name under
+% notes/assets/drawio/ is the earlier prototype and no longer renders this figure; that sketch
+% and its caption are kept as SCRATCH 1 in sections/scratch-figure-mockups.tex (editing view
+% only, after the references). Until feat/025-graph-reg-sweep-readout lands its real draw.io
+% composition under this name, do NOT run `make fig`: it would overwrite this PDF with the
+% sketch.
+% Open review on panel e (notes/experiments.025-solid-growth.scripts.fig2_gene_interactions.md,
+% 2026.10.15): the dark red bar is one seed read before its run finished (0.407 at epoch 74;
+% 0.419 at the end), the S0 and S3 bars differ in more than the pool, and the replicate band
+% is Kuzmin 2018's agreement on significant triples, not over all triples. The caption states
+% what the bars are and does not attribute the lift.
 \begin{figure*}[t]
-\tcfig{figures/Fig2-gene-interactions.pdf}{TorchCell for gene--gene interaction prediction
-and strain design. \textbf{a}, Higher-order genetic interactions are defined by subtracting
-lower-order effects: to isolate a $k$-way interaction you must peel off all interactions
-from subcollections of the same genes. For a trigenic interaction, the observed
-triple-mutant fitness is compared against the fitness expected from the single- and
-double-mutant terms,
-$\tau_{ijk}=f_{ijk}-f_if_jf_k-\varepsilon_{ij}f_k-\varepsilon_{ik}f_j-\varepsilon_{jk}f_i$,
-with digenic interactions $\varepsilon_{ij}=f_{ij}-f_if_j$.
-\textbf{b}, The nested cell representation -- genome, gene networks, metabolism, and
-environment -- feeds TorchCell and a Learn--Design--Build--Test loop with the NSF
-iBioFoundry.
-\textbf{c}, Predicted versus measured trigenic gene--gene interaction.
-\textbf{d}, State of the art on trigenic interactions: Pearson $r$ for Yeast9 FBA ($0.0006$),
-DCell ($0.157$), DANGO ($0.367$), and TorchCell ($0.454$).}{fig:ggi}
+\tcfig{figures/Fig2-gene-interactions.pdf}{The Cell Graph Transformer predicts trigenic
+interactions at the state of the art, and biological graphs help it as a soft prior.
+\textbf{a},~A trigenic interaction $\tau_{ijk}$ is what remains of the triple mutant's fitness
+once the single-mutant fitnesses $f_i$ and the digenic interactions $\varepsilon_{ij}$ are
+subtracted; the general form subtracts every lower-order term.
+\textbf{b},~The two training pools: $S_0$, the 377 k measured triples, and $S_3$, the 1.12 M
+records that add every single and double mutant inside some triple, with a dot per interaction
+order each source feeds.
+\textbf{c},~Measured $\tau_{ijk}$ in bins of predicted $\tau_{ijk}$ on the 37,673 held-out
+triples, rising monotonically across bins, Pearson $r = 0.455$.
+\textbf{d},~Prediction of trigenic interactions alone, trained on $S_0$: Yeast9 flux balance
+analysis 0.0019, DCell 0.157, DANGO 0.366 and the CGT 0.454, open circles one run each,
+against a ridge regression with no interaction term at 0.40 (dashed).
+\textbf{e},~The split decides the claim. On a random split nearly every held-out triple shares a
+query pair with a training triple; on held-out query pairs every model that sees only gene
+identity falls to about 0.13. The dark red bar is the $S_3$ model with a fitness co-head and a
+composite sequence embedding, one seed, read before its run finished; the band is the screen's
+replicate agreement on its significant triples, 0.74 to 0.81
+\cite{kuzminSystematicAnalysisComplex2018a}.
+\textbf{f}--\textbf{m},~The graph prior, trained on $S_0$; validation Pearson at epoch 29
+unless stated, three seeds, open circles one seed each.
+\textbf{f},~A Kullback--Leibler penalty that pulls attention toward graph edges (soft prior)
+beats no penalty, a hard attention mask and degree-matched random graphs, by 0.017 on every seed
+(paired $t$-test).
+\textbf{g},~Closing the pool with the lower-order records lifts validation Pearson from 0.439 to
+0.478; the 13.5 M-record pool of every entry is a planned run.
+\textbf{h},~The penalty weight $\lambda$: the lift appears at $\lambda = 1$ and holds to 100
+(stars, paired $t$ against no penalty).
+\textbf{i},~Biological graphs minus degree-matched random graphs at the same $\lambda$ and seed.
+\textbf{j},~The prior's reach: a one-hop target beats two and three hops, for the soft prior
+and the directed hard mask.
+\textbf{k},~Edge recall at degree rises with $\lambda$ and is 1 for the mask by construction.
+\textbf{l},~Over 60 epochs the soft prior rises longer and holds its peak while the alternatives
+decline; the 30-epoch runs are dashed.
+\textbf{m},~A frozen composite sequence embedding (SpeciesLM on 1,003 bp upstream, CaLM and
+ProtT5 on the ORF, SpeciesLM on 300 bp downstream, 3,328 dimensions per gene) trains only under
+the soft prior.
+\textbf{n}--\textbf{q},~t-SNE maps of the 6,607 gene tokens of the $S_3$ model of \textbf{g}.
+\textbf{n},~The 2,255 genes in no training triple sit apart from the 4,352 that are, so
+predictions for them lie outside the training distribution.
+\textbf{o},~The encoder's output forms 12 clusters, 9 enriched for a Gene Ontology term at
+$q < 0.05$; \textbf{p}, the best term per cluster (Benjamini--Hochberg).
+\textbf{q},~The input embeddings form 7 clusters, 6 enriched.}{fig:ggi}
 \end{figure*}
 \FloatBarrier
 
@@ -177,11 +217,69 @@ targets for production phenotypes and pairs with the UIUC iBioFoundry for iterat
 (Fig.~\ref{fig:metabolism}; inference at scale in \suppfig{fig:inference-scale}).
 
 %% --- Figure 6 (R5): metabolism and metabolic engineering ---
-% Fig 6 composed in draw.io (source:
-% notes/assets/drawio/Fig6-metabolism-and-metabolic-engineering.drawio.svg) and placed
-% true-size with \tcfig. Update the caption panel-by-panel as each is finalized.
+% Fig 6 is the betaxanthin + amino acid module sheet carried in the prelim (2026-10-24 swap).
+% SOURCE: experiments/031-betaxanthin-module/scripts/figure_gate_panels.py,
+% fig_one(Reads(), committee=True, suffix="_prelim") under GATE_STATUS_MARKS=0, which writes
+% notes/assets/images/031-betaxanthin-module/gate_one_committee_prelim.{pdf,svg} (2026-10-22
+% 17:30) from the result files named in its docstring. That branch
+% (feat/kinetics-equilibrator-datasets) is not on main yet. The PDF here is the SVG converted
+% with notes-tex/common/svg_true_size_pdf.py (179 x 170 mm, TrueType Arial), NOT matplotlib's
+% own PDF: that file embeds Type 3 fonts and Tectonic 0.17's xdvipdfmx segfaults on it inside
+% this document (it compiles alone; bisected 2026-10-24). It is a matplotlib sheet with no
+% draw.io source; the earlier draw.io sketch was renamed to
+% notes/assets/drawio/scratch-Fig6-metabolism-and-metabolic-engineering-mockup.drawio.svg so
+% that `make fig` cannot overwrite this PDF with it, and it is kept as SCRATCH 2 in
+% sections/scratch-figure-mockups.tex (editing view only, after the references). The two screens (Cachera 2023 CRI-SPA
+% betaxanthin; Mulleder 2016 amino acids) are not in references.bib yet, so the caption names
+% them without \cite; adding them to the Zotero paper collection is the owner's call.
 \begin{figure*}[t]
-\tcfig{figures/Fig6-metabolism-and-metabolic-engineering.pdf}{Extending TorchCell to metabolism
-and metabolic-engineering strain design. \textbf{a}--\textbf{f}.}{fig:metabolism}
+\tcfig{figures/Fig6-metabolism-and-metabolic-engineering.pdf}{The metabolic module and a
+whole-genome representation rank betaxanthin producers that a flux model cannot reach.
+\textbf{a},~The engineered route from central carbon metabolism through the aromatic amino acids
+and tyrosine to betaxanthin (CYP76AD1, DOD), with the 19 measured amino acids at their branch
+points; the purple field marks the three aromatic acids the route starts from and the yellow
+field the readout.
+\textbf{b},~What each model can score: the CGT carries 6,607 gene tokens and scores all 4,930
+deletions in the dataset, Yeast9 holds 1,161 genes so flux balance analysis scores 939 of those
+deletions, and the released Flux Cone Learning (FCL) labels cover 640 of 811 sampled knockouts;
+1,886 genes have no betaxanthin value.
+\textbf{c},~\textbf{d},~The betaxanthin score of 4,719 yeast knockout (YKO) strains from a
+CRISPR-based selective ploidy ablation screen, median $-0.01$.
+\textbf{e},~Standardized levels of 19 intracellular amino acids across 4,678 YKO strains from a
+functional metabolomics study, strains ordered low to high.
+\textbf{f},~Each amino acid against betaxanthin over the 4,477 strains in both screens:
+tyrosine, the direct precursor, reads $-0.08$, the best single acid (methionine) 0.13, and all
+19 fitted together out of fold 0.23 (dashed), so the profile carries what the precursor does not.
+\textbf{g},~Held-out test Spearman with betaxanthin on the 629 genes of the FCL split, one open
+dot per seed, banded from the baselines through inductive without and with Gene Ontology (GO)
+to transductive, against a screen ceiling of 0.84 (retest reliability, Pearson). Flux balance
+analysis at 90 percent of growth scores below zero; the metabolic module, in which every Yeast9
+reaction and metabolite is a learned token and the deleted gene's reactions are shut off,
+lifts the sequence token from $-0.06$ to 0.13 on every one of 18 seeds; a graph convolution over
+the union of nine gene graphs reaches 0.26 with GO, level with the transductive models at 0.25
+to 0.28.
+\textbf{h},~Each row minus the model before the colon: a predicted amino acid profile, which is
+all an unmeasured strain would have, moves betaxanthin by less than 0.02; only the strain's own
+measured profile helps, and that is transductive.
+\textbf{i},~Only 30 of the 629 test genes touch a precursor of the product; the signal is not
+local to the pathway.
+\textbf{j},~Predicted against measured mean betaxanthin over 45 Yeast9 subsystems, Spearman
+0.39, oxidative phosphorylation highest.
+\textbf{k},~Four of eight gene graphs carry betaxanthin in their neighbors' mean beyond two
+permutation standard deviations, coexpression highest.
+\textbf{l},~The share of the measured top $k$ outside FCL's release: 72 percent of the top 50
+cannot be ranked by a flux model at all.
+\textbf{m},~GO terms enriched in the top 50 of FCL, the CGT with and without GO, and the
+measured high producers; mitochondrial and respiratory terms lead in every column.
+\textbf{n},~High producers among each model's top 50: chance 8, the published FCL forest 19,
+the metabolic module with no GO 18, and the GO models 28 to 32.
+\textbf{o},~What the graphs add to each token: the graph preprocessor, one graph convolution
+over the union graph that gives each gene token its neighbors' annotation, adds 0.11 to the
+sequence token and the metabolic module adds 0.07; GO tokens gain 0.04 to 0.06.
+\textbf{p},~Of the 1,886 unmeasured deletions, those in each inductive model's 90th percentile,
+and the 11 that all three agree on.
+\textbf{q},~The 11 agreed nominations, every one a subunit of cytochrome c oxidase (complex IV)
+or of ATP synthase, both mitochondrial, so even the models given no GO ranked related genes
+together; \textit{ATP16} is essential (SGD).}{fig:metabolism}
 \end{figure*}
 \FloatBarrier

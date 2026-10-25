@@ -88,6 +88,10 @@
   {\small\tableofcontents}%
   \endgroup}
 \newcommand{\paperoutline}{\clearpage\input{sections/outline}\clearpage\papertoc\clearpage}
+% \paperscratch = the SCRATCH section of superseded figure mock-ups, placed by content.tex
+% after the references so kept-for-ideas sketches never sit among the real figures.
+% Editing view only: submission.tex / twocolumn.tex define it as a no-op.
+\newcommand{\paperscratch}{\input{sections/scratch-figure-mockups}}
 % Drafting view only: block paragraphs -- no first-line indent, vertical gap between paras.
 % submission.tex / twocolumn.tex keep the class's indented Nature default.
 \setlength{\parindent}{0pt}

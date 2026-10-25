@@ -1,0 +1,73 @@
+%% SCRATCH -- superseded figure mock-ups. EDITING VIEW ONLY.
+%% Inserted by \paperscratch at the very end of content.tex (after the references).
+%% submission.tex and twocolumn.tex define \paperscratch as a no-op, so nothing here can
+%% reach a submitted or shared PDF. Nothing in the manuscript body may \ref a figure in
+%% this section.
+%%
+%% Why it exists: on 2026-10-24 the draw.io sketches that stood in for Fig 2 and Fig 6 were
+%% replaced by the generated sheets carried in the prelim (see the SOURCE comments above
+%% each \tcfig in sections/results.tex). The sketches hold panel ideas the sheets do not
+%% (the nested cell representation feeding the iBioFoundry Learn--Design--Build--Test loop,
+%% the accuracy-versus-|tau| panel, the data-and-model scaling panel), so they are kept
+%% here, with their captions as they stood, rather than deleted.
+%% Sources (draw.io, embedded-XML SVG; `make figures` re-exports them from these):
+%%   figures/scratch-Fig2-gene-interactions-mockup.pdf
+%%     <- notes/assets/drawio/scratch-Fig2-gene-interactions-mockup.drawio.svg
+%%        (a copy of Fig2-gene-interactions.drawio.svg as it stood on main; the original
+%%        stays in place because feat/025-graph-reg-sweep-readout rewrites it as the real
+%%        Fig 2 composition)
+%%   figures/scratch-Fig6-metabolism-and-metabolic-engineering-mockup.pdf
+%%     <- notes/assets/drawio/scratch-Fig6-metabolism-and-metabolic-engineering-mockup.drawio.svg
+%%        (renamed from Fig6-metabolism-and-metabolic-engineering.drawio.svg)
+\clearpage
+\setcounter{figure}{0}
+\renewcommand{\thefigure}{\arabic{figure}}
+\renewcommand{\figurename}{SCRATCH Figure}% the SI set "Supplementary Figure"; these are neither
+\phantomsection
+\addcontentsline{toc}{section}{SCRATCH: superseded figure mock-ups (editing view only)}
+\begin{center}
+{\large\bfseries\color{stred}SCRATCH: superseded figure mock-ups}\\[2pt]
+{\small\color{stred}Not part of the manuscript. Editing view only; absent from submission.tex and twocolumn.tex.}
+\end{center}
+\noindent These draw.io sketches stood in for Fig.~2 and Fig.~6 until 2026-10-24, when the
+generated sheets from the prelim replaced them. They are kept so the panel ideas they carry
+are not lost: the nested cell representation feeding a Learn--Design--Build--Test loop with
+the NSF iBioFoundry, accuracy as a function of $|\tau|$, data and model scaling, and the
+graph-regularization ablation (Fig.~2 plan), and a six-panel metabolism and
+metabolic-engineering layout (Fig.~6 plan). Captions are reproduced as they stood. The
+flux-balance number in the Fig.~2 sketch caption (0.0006) predates the current sheet, which
+prints 0.0019.
+\clearpage % keep the [t] floats below this banner, not above it
+
+%% --- Former Fig 2 mock-up, as it stood on main before the 2026-10-24 swap ---
+% Panel plan recorded with the sketch:
+%   (a) predicted vs actual trigenic interaction; (b) nested cell representation + iBioFoundry
+%   DBTL loop; (c) state of the art vs Yeast9 FBA / DCell / DANGO; (d) accuracy vs |tau|;
+%   (e) data & model scaling; (f) graph-regularization ablation. Split into two figures if
+%   it gets crowded.
+\begin{figure*}[t]
+\tcfig{figures/scratch-Fig2-gene-interactions-mockup.pdf}{SCRATCH, superseded mock-up of Fig.~2.
+TorchCell for gene--gene interaction prediction
+and strain design. \textbf{a}, Higher-order genetic interactions are defined by subtracting
+lower-order effects: to isolate a $k$-way interaction you must peel off all interactions
+from subcollections of the same genes. For a trigenic interaction, the observed
+triple-mutant fitness is compared against the fitness expected from the single- and
+double-mutant terms,
+$\tau_{ijk}=f_{ijk}-f_if_jf_k-\varepsilon_{ij}f_k-\varepsilon_{ik}f_j-\varepsilon_{jk}f_i$,
+with digenic interactions $\varepsilon_{ij}=f_{ij}-f_if_j$.
+\textbf{b}, The nested cell representation -- genome, gene networks, metabolism, and
+environment -- feeds TorchCell and a Learn--Design--Build--Test loop with the NSF
+iBioFoundry.
+\textbf{c}, Predicted versus measured trigenic gene--gene interaction.
+\textbf{d}, State of the art on trigenic interactions: Pearson $r$ for Yeast9 FBA ($0.0006$),
+DCell ($0.157$), DANGO ($0.367$), and TorchCell ($0.454$).}{fig:scratch-ggi-mockup}
+\end{figure*}
+\FloatBarrier
+
+%% --- Former Fig 6 mock-up, as it stood on main before the 2026-10-24 swap ---
+\begin{figure*}[t]
+\tcfig{figures/scratch-Fig6-metabolism-and-metabolic-engineering-mockup.pdf}{SCRATCH,
+superseded mock-up of Fig.~6. Extending TorchCell to metabolism
+and metabolic-engineering strain design. \textbf{a}--\textbf{f}.}{fig:scratch-metabolism-mockup}
+\end{figure*}
+\FloatBarrier

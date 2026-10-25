@@ -41,6 +41,7 @@ import argparse
 import json
 import os.path as osp
 import re
+from collections import Counter
 from dataclasses import dataclass
 
 import numpy as np
@@ -542,6 +543,10 @@ class Arm(BaseModel):
     target_transform: str
     keys: frozenset[str]
     loss_run_ids: tuple[str, ...]  # runs that logged train/loss or val/loss
+    #: summary keys with a numeric value, minus W&B internals and the epoch axis
+    plottable: frozenset[str]
+    #: summary keys whose value is not a number (status strings, tables): no panel
+    unplottable: frozenset[str]
 
     @property
     def category(self) -> int:
@@ -589,8 +594,17 @@ def collect_arms(api: wandb.Api, rnd: Round) -> list[Arm]:
         if len(kinds) != 1 or len(transforms) != 1:
             raise ValueError(f"{label}: mixed objectives {kinds} {transforms}")
         keys: set[str] = set()
+        plottable: set[str] = set()
+        unplottable: set[str] = set()
         for r in runs:
             keys.update(r.summary.keys())
+            for k, v in r.summary._json_dict.items():
+                if k.startswith("_") or k == EPOCH:
+                    continue
+                if isinstance(v, (int, float)):
+                    plottable.add(k)
+                else:
+                    unplottable.add(k)
         arms.append(
             Arm(
                 label=label,
@@ -604,6 +618,8 @@ def collect_arms(api: wandb.Api, rnd: Round) -> list[Arm]:
                 loss_run_ids=tuple(
                     r.id for r in runs if set(LOSS_KEYS) & set(r.summary.keys())
                 ),
+                plottable=frozenset(plottable),
+                unplottable=frozenset(unplottable - plottable),
             )
         )
     return sorted(arms, key=lambda a: (a.category, len(a.label), a.label))
@@ -644,160 +660,180 @@ def series_styles(
     return colors, marks
 
 
-def hlgauss_range(api: wandb.Api, run_ids: list[str]) -> tuple[float, float, int]:
-    """(min, max) of train/loss and val/loss and the largest epoch over the HL-Gauss
-    z-score cells, from the unsampled history; the round view clips its HL-Gauss
-    pair to this box because a view has one runset.
+def key_axes(api: wandb.Api, arms: list[Arm]) -> dict[str, str]:
+    """Per key, how the runs log it: ``epoch`` (most history rows holding the key
+    also hold ``epoch``), ``step`` (logged at optimizer steps), from 1,000 sampled
+    history rows of every run. A plottable key absent from every history is a
+    summary-only value (``setup/*`` written once), drawn as a bar of the summary.
     """
-    vals: list[float] = []
-    max_epoch = 0
-    for rid in run_ids:
-        run = api.run(f"{ENTITY}/{PROJECT}/{rid}")
-        # one key at a time; a row can still carry None for a key it did not log
-        for k in LOSS_KEYS:
-            for row in run.scan_history(keys=["epoch", k], page_size=5000):
-                if row.get(k) is None or row.get("epoch") is None:
-                    continue
-                vals.append(float(row[k]))
-                max_epoch = max(max_epoch, int(row["epoch"]))
-    if not vals:
-        raise ValueError(f"no train/loss or val/loss in {run_ids}")
-    lo, hi = min(vals), max(vals)
-    pad = 0.05 * (hi - lo)
-    return lo - pad, hi + pad, max_epoch
+    rows_with: Counter[str] = Counter()
+    rows_with_epoch: Counter[str] = Counter()
+    for a in arms:
+        for rid in a.run_ids:
+            run = api.run(f"{ENTITY}/{PROJECT}/{rid}")
+            for row in run.history(samples=1000, pandas=False):
+                has_epoch = row.get(EPOCH) is not None
+                for k, v in row.items():
+                    if v is None:
+                        continue
+                    rows_with[k] += 1
+                    rows_with_epoch[k] += has_epoch
+    return {
+        k: ("epoch" if 2 * rows_with_epoch[k] > n else "step")
+        for k, n in rows_with.items()
+    }
 
 
-def _plot(
-    title: str,
-    x: str,
-    y: list[str],
-    *,
-    grouped: bool,
-    log_y: bool = False,
-    colors: dict[str, str] | None = None,
-    marks: dict[str, str] | None = None,
-    range_x: tuple[float | None, float | None] = (None, None),
-    range_y: tuple[float | None, float | None] = (None, None),
-    w: int = 12,
-) -> wr.LinePlot:
-    """One line plot: grouped = mean per arm (``arm_label``) with the min/max band
-    over its runs; otherwise one line per run named by the run.
+#: Dataset order in the per-dataset panels; a dataset not listed follows, sorted.
+DATASET_ORDER = (*DATASETS, "jackson", "vaishnav")
+#: Pooled readouts across datasets (section 4), not datasets.
+AGGREGATES = ("doubles", "promoter", "protein", "expression")
+
+
+def _datasets(keys: set[str]) -> list[str]:
+    """The dataset components of ``train|val|traineval/<dataset>/<metric>`` keys,
+    aggregates excluded, in ``DATASET_ORDER``.
     """
-    return wr.LinePlot(
-        title=title,
-        x=x,
-        y=y,
-        title_x="optimizer step" if x == STEP else "epoch",
-        log_y=log_y,
-        range_x=range_x,
-        range_y=range_y,
-        smoothing_type=SMOOTHING_TYPE,
-        smoothing_factor=SMOOTHING_WEIGHT,
-        max_runs_to_show=MAX_RUNS_SHOWN,
-        **(
-            {
-                "groupby": wr.Config("arm_label"),
-                "groupby_aggfunc": "mean",
-                "groupby_rangefunc": "minmax",
-            }
-            if grouped
-            else {"legend_template": "${run:displayName}"}
-        ),
-        line_colors=colors,
-        line_marks=marks,
-        layout=wr.Layout(w=w, h=8),
+    found = {
+        k.split("/")[1]
+        for k in keys
+        if k.count("/") == 2 and k.split("/")[0] in ("train", "val", "traineval")
+    } - set(AGGREGATES)
+    known = [d for d in DATASET_ORDER if d in found]
+    return known + sorted(found - set(known))
+
+
+def _panel(
+    ys: list[str], axes: dict[str, str], grouped: bool, log_y: bool = False
+) -> list:
+    """Panels for ``ys`` overlaid on one axis when they share how they are logged
+    (by epoch, by optimizer step, or summary only); otherwise one panel per key.
+    Grouped = mean per arm with the min/max band; otherwise one line per run.
+    """
+    kinds = {axes.get(k, "summary") for k in ys}
+    if len(kinds) > 1:
+        return [p for k in ys for p in _panel([k], axes, grouped, log_y)]
+    kind = kinds.pop()
+    group = (
+        {
+            "groupby": wr.Config("arm_label"),
+            "groupby_aggfunc": "mean",
+            "groupby_rangefunc": "minmax",
+        }
+        if grouped
+        else {"legend_template": "${run:displayName} ${metricName}"}
     )
+    per_arm = ", mean per arm" if grouped else ""
+    names = " and ".join(ys)
+    if kind == "summary":
+        return [
+            wr.BarPlot(
+                title=f"{names} (summary value, logged once){per_arm}",
+                metrics=ys,
+                max_runs_to_show=MAX_RUNS_SHOWN,
+                layout=wr.Layout(w=8, h=6),
+                **{k: v for k, v in group.items() if k != "legend_template"},
+            )
+        ]
+    x = EPOCH if kind == "epoch" else STEP
+    return [
+        wr.LinePlot(
+            title=(
+                f"{names} by {'epoch' if x == EPOCH else 'optimizer step'}"
+                f"{', log y' if log_y else ''}{per_arm}"
+            ),
+            x=x,
+            y=ys,
+            title_x="epoch" if x == EPOCH else "optimizer step",
+            log_y=log_y,
+            smoothing_type=SMOOTHING_TYPE,
+            smoothing_factor=SMOOTHING_WEIGHT,
+            max_runs_to_show=MAX_RUNS_SHOWN,
+            layout=wr.Layout(w=8, h=6),
+            **group,
+        )
+    ]
 
 
-def curated_sections(
-    arms: list[Arm], present: set[str], hl_box: tuple[float, float, int] | None
-) -> list[tuple[str, list[wr.LinePlot]]]:
-    """The loss-first layout: 1 loss together, 2 loss separated, 3 validation
-    metrics, 4 optimization, 5 bookkeeping. ``hl_box`` (round view only) adds the
-    HL-Gauss pair clipped to the HL-Gauss cells' range.
+def full_log_sections(
+    present: set[str], axes: dict[str, str], grouped: bool
+) -> list[tuple[str, list]]:
+    """Every plottable key in ``present`` gets a panel (owner, 2026-10-24: "you need
+    to populate all of the plots ... i like to scroll through to see what is being
+    logged"). Sections: 1 loss, 2 validation metrics by dataset, 3 train-eval against
+    val, 4 pooled readouts, 5 optimization, 6 time and memory, 7 setup and bookkeeping,
+    which also takes any key no earlier rule names, so a new key appears on its own.
     """
-    loss_y = [k for k in LOSS_KEYS if k in present]
-    out: list[tuple[str, list[wr.LinePlot]]] = []
-    if loss_y:
-        out.append(
-            (
-                "1 Loss, together",
-                [
-                    _plot(
-                        f"{' and '.join(loss_y)} by epoch, mean per arm with the "
-                        "min/max band over its runs",
-                        EPOCH,
-                        loss_y,
-                        grouped=True,
-                        w=24 if len(arms) == 1 else 12,
-                    )
-                ],
-            )
+    used: set[str] = set()
+    out: list[tuple[str, list]] = []
+
+    def take(ys: list[str], log_y: bool = False) -> list:
+        ys = [k for k in ys if k in present]
+        used.update(ys)
+        return _panel(ys, axes, grouped, log_y) if ys else []
+
+    datasets = _datasets(present)
+    loss = take(LOSS_KEYS) + take(["val/loss"]) + take(["train/loss"])
+    for d in (*datasets, *AGGREGATES):
+        loss += take([f"train/{d}/loss", f"val/{d}/loss"])
+    out.append(("1 Loss", loss))
+
+    val = []
+    for d in datasets:
+        val += [
+            p
+            for k in sorted(present)
+            if k.startswith(f"val/{d}/") and k != f"val/{d}/loss"
+            for p in take([k])
+        ]
+    out.append(("2 Validation metrics", val))
+
+    te = []
+    te_keys = [k for k in present if k.startswith("traineval/")]
+    order = {d: i for i, d in enumerate((*datasets, *AGGREGATES))}
+    te_keys.sort(
+        key=lambda k: (
+            order.get(k.split("/")[1], len(order))
+            if k.count("/") == 2
+            else len(order) + 1,
+            k,
         )
-        sep = []
-        for k in loss_y:
-            c, m = series_styles(arms, k)
-            sep.append(
-                _plot(
-                    f"{k} by epoch, every run (color = arm, dashed = fine-tune)",
-                    EPOCH,
-                    [k],
-                    grouped=False,
-                    colors=c,
-                    marks=m,
-                )
-            )
-        if hl_box is not None:
-            lo, hi, max_epoch = hl_box
-            for k in loss_y:
-                c, m = series_styles(arms, k)
-                sep.append(
-                    _plot(
-                        f"{k} by epoch, axes clipped to the HL-Gauss z-score cells "
-                        f"(y {lo:.2f} to {hi:.2f}, epochs 0 to {max_epoch}); other "
-                        "runs show only where they fall inside the box",
-                        EPOCH,
-                        [k],
-                        grouped=False,
-                        colors=c,
-                        marks=m,
-                        range_x=(0, max_epoch),
-                        range_y=(lo, hi),
-                    )
-                )
-        out.append(("2 Loss, separated", sep))
-    val = [
-        _plot(f"{name} by epoch, mean per arm", EPOCH, [k], grouped=True)
-        for k, name in VAL_METRICS
-        if k in present
-    ]
-    if val:
-        out.append(("3 Validation metrics", val))
-    opt = []
-    if "train/grad_norm" in present:
-        opt.append(
-            _plot(
-                "train/grad_norm (pre-clip, log y) by optimizer step, mean per arm",
-                STEP,
-                ["train/grad_norm"],
-                grouped=True,
-                log_y=True,
-            )
+    )
+    for k in te_keys:
+        twin = "val/" + k.removeprefix("traineval/")
+        te += take([k, twin]) if twin in present else take([k])
+    out.append(("3 Train-eval metrics (overlaid on the val metric)", te))
+
+    agg = []
+    for k in sorted(present):
+        top = k.split("/")
+        if top[0] == "val" and (
+            (len(top) == 3 and top[1] in AGGREGATES) or len(top) == 2
+        ):
+            if k not in used:
+                agg += take([k])
+    out.append(("4 Doubles, promoter, protein, expression and pooled readouts", agg))
+
+    opt = take(["train/grad_norm"], log_y=True)
+    for k in ("train/grad_norm_clip_frac", "train/lr", "train/loss_step"):
+        opt += take([k])
+    for k in sorted(present):
+        if k not in used and (k.startswith("operator/") or k.startswith("train/")):
+            opt += take([k])
+    out.append(("5 Optimization", opt))
+
+    out.append(
+        (
+            "6 Time and memory",
+            [p for k in sorted(present) if k.startswith("time/") for p in take([k])],
         )
-    if "train/lr" in present:
-        opt.append(
-            _plot("train/lr by optimizer step", STEP, ["train/lr"], grouped=True)
-        )
-    if opt:
-        out.append(("4 Optimization", opt))
-    book = [
-        _plot(t, EPOCH, ys, grouped=True)
-        for t, ys in BOOKKEEPING
-        if all(k in present for k in ys)
-    ]
-    if book:
-        out.append(("5 Bookkeeping", book))
-    return out
+    )
+    book = [p for k in sorted(present) if k.startswith("setup/") for p in take([k])]
+    book += [p for k in sorted(present - used) for p in take([k])]
+    out.append(("7 Setup and bookkeeping", book))
+    if used != present:
+        raise ValueError(f"keys without a panel: {sorted(present - used)}")
+    return [(n, ps) for n, ps in out if ps]
 
 
 def save_view(
@@ -852,24 +888,20 @@ def save_view(
 
 
 def populate_curated(
-    key: str,
-    rnd: Round,
-    arms: list[Arm],
-    arm: Arm | None,
-    hl_box: tuple[float, float, int] | None,
-) -> tuple[str, list[tuple[str, list[wr.LinePlot]]]]:
-    """Overwrite (or create) the curated round view (``arm`` None) or one arm view.
-    The runset is ungrouped; grouping by arm is set per panel, so the separated
-    panels can draw one line per run beside the grouped ones.
+    key: str, rnd: Round, arms: list[Arm], arm: Arm | None, axes: dict[str, str]
+) -> tuple[str, list[tuple[str, list]], set[str]]:
+    """Overwrite (or create) the round view (``arm`` None: panels grouped by arm, mean
+    with the min/max band) or one arm view (one line per run), with a panel for every
+    plottable key its runs log. Returns the URL, the layout and the plotted keys.
     """
     shown = arms if arm is None else [arm]
-    present = set().union(*(a.keys for a in shown))
-    layout = curated_sections(shown, present, hl_box)
+    present = set().union(*(a.plottable for a in shown))
+    layout = full_log_sections(present, axes, grouped=arm is None)
     built = [
         ws.Section(
             name=name,
             is_open=True,
-            layout_settings=ws.SectionLayoutSettings(columns=2, rows=1),
+            layout_settings=ws.SectionLayoutSettings(columns=3, rows=2),
             panel_settings=ws.SectionPanelSettings(
                 smoothing_type=SMOOTHING_TYPE, smoothing_weight=SMOOTHING_WEIGHT
             ),
@@ -882,36 +914,37 @@ def populate_curated(
         filters.append(ws.Config("arm_label") == arm.label)
     name = rnd.view_name if arm is None else f"043 {key}: {arm.label}"
     slot = key if arm is None else f"{key}/{arm.label}"
-    return save_view(key, slot, name, built, filters, []), layout
+    return save_view(key, slot, name, built, filters, []), layout, present
+
+
+def _panel_keys(p: object) -> list[str]:
+    ys = getattr(p, "y", None) or getattr(p, "metrics", None) or []
+    return [getattr(k, "name", k) for k in ys]
 
 
 def verify_view(
-    url: str, layout: list[tuple[str, list[wr.LinePlot]]], shown: list[Arm]
+    url: str, layout: list[tuple[str, list]], present: set[str], shown: list[Arm]
 ) -> list[str]:
     """Read the saved view back: section names and panel counts must match what was
-    written, and every plotted key must be in the summary of a run of the view.
+    written, and the plotted keys must EQUAL the plottable keys the view's runs log
+    (a logged key without a panel, or a panel key no run logs, is an error).
     """
     view = ws.Workspace.from_url(url)
     got = [(s.name, len(s.panels)) for s in view.sections]
     want = [(n, len(p)) for n, p in layout]
     if got != want:
         raise ValueError(f"{url}: sections {got} != written {want}")
-    logged = set().union(*(a.keys for a in shown))
-    missing = []
-    out = []
-    for s in view.sections:
-        grouped = colored = 0
-        for p in s.panels:
-            ys = [getattr(k, "name", k) for k in p.y]
-            missing += [k for k in ys if k not in logged]
-            grouped += p.groupby is not None
-            colored += bool(p.line_colors)
-        out.append(
-            f"{s.name}: {len(s.panels)} panels ({grouped} grouped by arm, {colored} colored by arm)"
+    plotted = {k for s in view.sections for p in s.panels for k in _panel_keys(p)}
+    if plotted != present:
+        raise ValueError(
+            f"{url}: logged without a panel {sorted(present - plotted)}; "
+            f"panel without a logging run {sorted(plotted - present)}"
         )
-    if missing:
-        raise ValueError(f"{url}: keys no run of the view logs: {missing}")
-    return out
+    no_panel = sorted(set().union(*(a.unplottable for a in shown)))
+    return [f"{n}: {c}" for n, c in got] + [
+        f"{len(plotted)} keys plotted = {len(present)} plottable logged keys; "
+        f"non-numeric (no panel possible): {', '.join(no_panel) or 'none'}"
+    ]
 
 
 def label_runs(api: wandb.Api, key: str, rnd: Round) -> dict[str, set[str]]:
@@ -1252,15 +1285,14 @@ def main() -> None:
     print(f"hardware: {rnd.hardware}")
     if args.round in CURATED_ROUNDS:
         arms = collect_arms(api, rnd)
-        cells = [r for a in arms if a.category == HLGAUSS_CELL for r in a.loss_run_ids]
-        hl_box = hlgauss_range(api, cells) if cells else None
-        url, layout = populate_curated(args.round, rnd, arms, None, hl_box)
-        print("round view: " + "; ".join(verify_view(url, layout, arms)))
+        axes = key_axes(api, arms)
+        url, layout, present = populate_curated(args.round, rnd, arms, None, axes)
+        print("round view: " + " | ".join(verify_view(url, layout, present, arms)))
         print(url)
         for arm in arms:
-            url, layout = populate_curated(args.round, rnd, arms, arm, None)
-            checked = verify_view(url, layout, [arm])
-            print(f"{arm.label} ({len(arm.run_ids)} runs): " + "; ".join(checked))
+            url, layout, present = populate_curated(args.round, rnd, arms, arm, axes)
+            checked = verify_view(url, layout, present, [arm])
+            print(f"{arm.label} ({len(arm.run_ids)} runs): " + " | ".join(checked))
             print(url)
             print(f"https://wandb.ai/{ENTITY}/{PROJECT}/groups/{arm.label}/workspace")
         return

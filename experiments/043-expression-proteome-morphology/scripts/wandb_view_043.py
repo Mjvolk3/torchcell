@@ -92,6 +92,9 @@ class Round:
     #: window means only: runs whose training diverged inside the window (run id ->
     #: evidence); written as diverged = true so the row is never read as a result
     diverged: tuple[tuple[str, str], ...] = ()
+    #: window means only: runs stopped by a pre-registered rule before their window (run
+    #: id -> evidence); written under "stopped" so their absence from runs is explained
+    stopped: tuple[tuple[str, str], ...] = ()
 
 
 ROUNDS: dict[str, Round] = {
@@ -348,6 +351,24 @@ ROUNDS: dict[str, Round] = {
         # the sweep fine-tunes were launched with WINDOW_START_FRAC 0.8 (logged window
         # 17-20); the overnight fine-tunes used 0.75 (16-20), so they are read over 16-20
         finetune_window=(16, 20),
+        stopped=(
+            (
+                "gs1024_w4_bal_p1",
+                "stopped at epoch 12 by the rule (val/kemmeren/loss or val/messner/loss "
+                "> 0.02 above its running minimum on two consecutive epochs): kemmeren "
+                "2.3523 (ep 11), 2.3389 (ep 12) vs minimum 2.3118 (ep 6); val/turnover/loss "
+                "3.905 -> 6.042, val/zelezniak/loss 2.485 -> 3.465 while train falls; job "
+                "6392 cancelled 03:20:38, fine-tune 6393 cancelled unrun",
+            ),
+            (
+                "gs1024_w4_bal_p05",
+                "stopped at epoch 20 (coordinator, same rule, met retroactively): messner "
+                "fires at epoch 13 (minimum 2.5038 at ep 2), kemmeren at epoch 17 "
+                "(minimum 2.3127 at ep 4); val/turnover/loss 3.27 -> 4.44, "
+                "val/zelezniak/loss 2.48 (ep 5) -> 2.74, val/vaishnav/loss 2.57 -> 1.99; "
+                "job 6394 cancelled 08:28:47, fine-tune 6395 cancelled unrun",
+            ),
+        ),
         diverged=(
             (
                 "gs1024_w1_mmmm",
@@ -1297,6 +1318,7 @@ def window_means(api: wandb.Api, key: str, rnd: Round) -> dict[str, object]:
         **({"references": references} if references else {}),
         **({"not_finished_epochs_reached": unfinished} if rnd.finished_only else {}),
         **({"no_run_yet": absent} if absent else {}),
+        **({"stopped": dict(rnd.stopped)} if rnd.stopped else {}),
     }
 
 

@@ -2662,6 +2662,16 @@ SWEEP_DEFAULTS: dict[tuple[str, str], Any] = {
 }
 
 
+def save_atomic(state: dict[str, Any], path: str) -> None:
+    """``torch.save`` to ``<path>.tmp`` then rename over ``path``: a job killed mid-write
+    (a walltime cut on a chained queue) leaves the previous ``last.pt`` intact, never a
+    truncated one.
+    """
+    tmp = f"{path}.tmp"
+    torch.save(state, tmp)
+    os.replace(tmp, path)
+
+
 def config_matches(stored: dict[str, Any], cfg: TrainConfig043) -> bool:
     """``stored`` (a checkpoint's config dump) equals ``cfg``, reading a sweep key the
     checkpoint predates as its default.
@@ -2927,7 +2937,7 @@ def train(
             step += 1
             every = cfg.budget.checkpoint_every_steps
             if every is not None and step % every == 0 and k + 1 < steps_per_epoch:
-                torch.save(
+                save_atomic(
                     {
                         "model": model.state_dict(),
                         "optimizer": opt.state_dict(),
@@ -3061,7 +3071,7 @@ def train(
             "config": cfg.model_dump(mode="json"),
             "standardization_sha256": stats_sha,
         }
-        torch.save(state, osp.join(ckpt_dir, "last.pt"))
+        save_atomic(state, osp.join(ckpt_dir, "last.pt"))
         if epoch in window:
             torch.save(state, osp.join(ckpt_dir, f"epoch_{epoch:04d}.pt"))
         last = logs

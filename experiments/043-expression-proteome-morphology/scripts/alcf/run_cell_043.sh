@@ -26,13 +26,33 @@ common=(data.store_version=v2 data.prep_version=prep_v4 device=cuda data.num_wor
   "wandb.tags=[ontology_2026_10_23,polaris]" wandb.round=ontology_2026_10_23)
 
 LIVE=experiments/043-expression-proteome-morphology/scripts/alcf/wandb_run_live_043.py
-# A cell is queued on two routes (preemptable and capacity) under one run id: a stage whose
-# W&B run is live elsewhere (state running, heartbeat under 10 min) is not started here.
-if "$PY" "$LIVE" "$rid"; then echo "[cell $cell] $rid is live on another route: not started here"; exit 0; fi
-echo "[cell $cell] stage 1 on card ${CUDA_VISIBLE_DEVICES:-?} host $(hostname) job ${PBS_JOBID:-?} at $(date): $*"
-"$PY" "$TRAIN" "${common[@]}" "$@" resume_id="$rid" paths.checkpoint_root="$ROOT/$cell"
+# A cell is queued on several routes (preemptable, capacity, prod chunks) under one run id.
+# A stage whose W&B run is live elsewhere (state running, heartbeat under 10 min) is not
+# started. A run killed by the previous chunk's walltime still reads live until its
+# heartbeat ages past 10 min, so the check is retried every 2 min for up to 14 min before
+# the stage is given up to the other route.
+free_or_wait() {  # free_or_wait <run id>: 0 = free to start, 1 = live elsewhere
+  local id=$1 k
+  for k in 0 1 2 3 4 5 6 7; do
+    "$PY" "$LIVE" "$id" || return 0
+    [ "$k" = 7 ] && return 1
+    sleep 120
+  done
+}
+# A stage that completed writes a DONE marker; later chunks skip it without loading data.
+DONE1="$ROOT/$cell/STAGE1_DONE" DONEFT="$ROOT/${cell}_ft/FINETUNE_DONE"
+
+if [ -e "$DONE1" ]; then
+  echo "[cell $cell] stage 1 already finished ($DONE1)"
+else
+  free_or_wait "$rid" || { echo "[cell $cell] $rid is live on another route: not started here"; exit 0; }
+  echo "[cell $cell] stage 1 on card ${CUDA_VISIBLE_DEVICES:-?} host $(hostname) job ${PBS_JOBID:-?} at $(date): $*"
+  "$PY" "$TRAIN" "${common[@]}" "$@" resume_id="$rid" paths.checkpoint_root="$ROOT/$cell"
+  date > "$DONE1"
+fi
 
 if [ "$finetune" = 1 ]; then
+  if [ -e "$DONEFT" ]; then echo "[cell $cell] fine-tune already finished"; exit 0; fi
   shopt -s nullglob
   ckpts=("$ROOT/$cell"/*/"$rid"/last.pt)
   [ "${#ckpts[@]}" = 1 ] || { echo "[cell $cell] expected one stage-1 last.pt, found ${#ckpts[@]}" >&2; exit 4; }
@@ -40,10 +60,11 @@ if [ "$finetune" = 1 ]; then
   for o in "$@"; do
     case "$o" in loss=*|seed=*|weighting=*|model.*) keep+=("$o") ;; esac
   done
-  if "$PY" "$LIVE" "${rid}_ft"; then echo "[cell $cell] ${rid}_ft is live on another route"; exit 0; fi
+  free_or_wait "${rid}_ft" || { echo "[cell $cell] ${rid}_ft is live on another route"; exit 0; }
   echo "[cell $cell] fine-tune from ${ckpts[0]} at $(date): ${keep[*]}"
   "$PY" "$TRAIN" "${common[@]}" "${keep[@]}" arm=alone_kemmeren init_from="${ckpts[0]}" \
     data.batch_size=8 optim.lr=3.0e-4 optim.warmup_steps=30 budget.max_epochs=20 \
     budget.eval_every_epochs=1 resume_id="${rid}_ft" paths.checkpoint_root="$ROOT/${cell}_ft"
+  mkdir -p "$ROOT/${cell}_ft" && date > "$DONEFT"
 fi
 echo "[cell $cell] done at $(date)"

@@ -104,6 +104,16 @@
     "name": "043 ghyper_sweep_2026_10_24: all_onto_hlgauss_equal_LSSSS",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=k8gdbkudr7x"
   },
+  "ghyper_sweep_2026_10_24/all_onto_hlgauss_equal_h288": {
+    "id": "rok5xrrk2y7",
+    "name": "043 ghyper_sweep_2026_10_24: all_onto_hlgauss_equal_h288",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=rok5xrrk2y7"
+  },
+  "ghyper_sweep_2026_10_24/all_onto_hlgauss_equal_lr0.00015": {
+    "id": "8s5qtnas3x5",
+    "name": "043 ghyper_sweep_2026_10_24: all_onto_hlgauss_equal_lr0.00015",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=8s5qtnas3x5"
+  },
   "ghyper_sweep_2026_10_24/all_onto_hlgauss_equal_tqn": {
     "id": "35iodpf4tpa",
     "name": "043 ghyper_sweep_2026_10_24: all_onto_hlgauss_equal_tqn",
@@ -119,10 +129,20 @@
     "name": "043 ghyper_sweep_2026_10_24: finetune_kemmeren_from_all_onto_hlgauss_equal_LMMMM",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=qfvxzmmddkg"
   },
+  "ghyper_sweep_2026_10_24/finetune_kemmeren_from_all_onto_hlgauss_equal_LMSMSMS": {
+    "id": "04aulnlm1v7",
+    "name": "043 ghyper_sweep_2026_10_24: finetune_kemmeren_from_all_onto_hlgauss_equal_LMSMSMS",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=04aulnlm1v7"
+  },
   "ghyper_sweep_2026_10_24/finetune_kemmeren_from_all_onto_hlgauss_equal_LSSSS": {
     "id": "ds58jej6bcv",
     "name": "043 ghyper_sweep_2026_10_24: finetune_kemmeren_from_all_onto_hlgauss_equal_LSSSS",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=ds58jej6bcv"
+  },
+  "ghyper_sweep_2026_10_24/finetune_kemmeren_from_all_onto_hlgauss_equal_tqn": {
+    "id": "cr7fl8kst80",
+    "name": "043 ghyper_sweep_2026_10_24: finetune_kemmeren_from_all_onto_hlgauss_equal_tqn",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=cr7fl8kst80"
   },
   "ghyper_sweep_2026_10_24_loss": {
     "id": "i5ll45t6ioi",

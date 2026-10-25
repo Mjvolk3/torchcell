@@ -368,6 +368,14 @@ ROUNDS: dict[str, Round] = {
                 "val/zelezniak/loss 2.48 (ep 5) -> 2.74, val/vaishnav/loss 2.57 -> 1.99; "
                 "job 6394 cancelled 08:28:47, fine-tune 6395 cancelled unrun",
             ),
+            (
+                "gs1024_w4_bal_p1_cap8",
+                "stopped at epoch 22 by the new-rise rule (minima from epoch 14): "
+                "val/messner/loss 2.5686 (ep 21), 2.5666 (ep 22) vs post-14 minimum 2.5396 "
+                "(ep 16); val/turnover/loss 3.293 -> 3.738, val/zelezniak/loss 2.442 (ep 2) "
+                "-> 2.652 while train falls 2.563 -> 2.243; job 6406 cancelled 09:40:47, "
+                "fine-tune 6407 cancelled unrun",
+            ),
         ),
         diverged=(
             (

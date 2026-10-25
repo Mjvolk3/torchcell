@@ -25,6 +25,7 @@
 #   DROPOUT (model.dropout: trunk attention + FFN, operator, heads)  TOKEN_DROPOUT
 #   WEIGHT_DECAY  SIGMA_BINS (HL-Gauss smoothing in bin widths)  (2026-10-24 regularization)
 #   BALANCE_POWER (with SAMPLER=balanced: record weight (1/n_dataset)^p; 2026-10-25)
+#   MAX_VISITS (with BALANCE_POWER: cap draws per epoch at MAX_VISITS x n_records)
 #   INIT_FROM_ID: stage 2; the stage-1 RESUME_ID. The job first requires the stage-1 W&B run
 #     to have logged val/kemmeren/loss (scripts/check_wandb_run_keys.py), then initializes
 #     from <checkpoints>/*/<INIT_FROM_ID>/last.pt. A stage-2 job must pass the same model,
@@ -69,6 +70,7 @@ if [ -n "${FFN_MULT:-}" ]; then EXTRA+=("model.trunk_ffn_mult=${FFN_MULT}"); fi
 if [ -n "${HEAD_HIDDEN:-}" ]; then EXTRA+=("model.head_hidden=${HEAD_HIDDEN}"); fi
 if [ -n "${DROPOUT:-}" ]; then EXTRA+=("model.dropout=${DROPOUT}"); fi
 if [ -n "${BALANCE_POWER:-}" ]; then EXTRA+=("data.balance_power=${BALANCE_POWER}"); fi
+if [ -n "${MAX_VISITS:-}" ]; then EXTRA+=("data.max_visits_per_record_per_epoch=${MAX_VISITS}"); fi
 if [ -n "${TOKEN_DROPOUT:-}" ]; then EXTRA+=("model.token_dropout=${TOKEN_DROPOUT}"); fi
 if [ -n "${WEIGHT_DECAY:-}" ]; then EXTRA+=("optim.weight_decay=${WEIGHT_DECAY}"); fi
 if [ -n "${SIGMA_BINS:-}" ]; then EXTRA+=("loss.hl_gauss.sigma_bins=${SIGMA_BINS}"); fi

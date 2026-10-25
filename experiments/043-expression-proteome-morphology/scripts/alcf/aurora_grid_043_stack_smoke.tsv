@@ -1,0 +1,3 @@
+# experiments/043-expression-proteome-morphology/scripts/alcf/aurora_grid_043_stack_smoke.tsv
+# Round aurora_2026_10_25 stack test, debug-queue smoke of ARM=frameworks: one cell on tile 0, resuming a1024b_<cell>.
+0	0	all_onto_hlgauss_equal_s0	1	arm=all budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology data.batch_size=1 ++optim.accumulate_steps=8

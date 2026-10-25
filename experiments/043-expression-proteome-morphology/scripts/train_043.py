@@ -661,6 +661,11 @@ class WandbConfig(BaseModel):
     mode: Literal["online", "offline", "disabled"] = "online"
     tags: list[str] = Field(default_factory=list)
     round: str | None = Field(default=None, description="round label (config only)")
+    stack: str | None = Field(
+        default=None,
+        description="software stack label (config only), e.g. frameworks or pip_mixed "
+        "on Aurora (round aurora_2026_10_25 stack test)",
+    )
     label_knobs: bool = Field(
         default=False,
         description="append the 2026-10-24 sweep knobs that differ from their defaults "
@@ -2683,14 +2688,24 @@ def config_matches(stored: dict[str, Any], cfg: TrainConfig043) -> bool:
     return bool(_strip_placement(stored) == _strip_placement(cur))
 
 
+PLACEMENT_KEYS: dict[str, tuple[str, ...]] = {
+    "data": ("num_workers",),
+    "wandb": ("tags", "round", "stack"),
+}
+
+
 def _strip_placement(d: dict[str, Any]) -> dict[str, Any]:
-    """A config dump without the keys that say WHERE a run executes, not what it
-    computes: ``device`` and ``wandb.tags``. A run moved between machines (an Aurora
-    checkpoint resumed on a Polaris A100) therefore resumes; every other key must match.
+    """A config dump without the keys that say WHERE or HOW a run executes, not what it
+    computes: ``device``, ``data.num_workers`` (loader processes; the batch order is the
+    sampler's, the same for any worker count) and the W&B labels ``wandb.tags``,
+    ``wandb.round`` and ``wandb.stack``. A run moved between machines or software stacks
+    (an Aurora checkpoint resumed on a Polaris A100, or under another Aurora stack in
+    round aurora_2026_10_25) therefore resumes; every other key must match.
     """
     out = {k: v for k, v in d.items() if k != "device"}
-    if isinstance(out.get("wandb"), dict):
-        out["wandb"] = {k: v for k, v in out["wandb"].items() if k != "tags"}
+    for sec, keys in PLACEMENT_KEYS.items():
+        if isinstance(out.get(sec), dict):
+            out[sec] = {k: v for k, v in out[sec].items() if k not in keys}
     return out
 
 
@@ -3111,6 +3126,7 @@ def config_dump(cfg: TrainConfig043, store: PreparedStore043) -> dict[str, Any]:
     }
     d["registered_window"] = cfg.budget.registered_window.model_dump()
     d["round"] = cfg.wandb.round
+    d["stack"] = cfg.wandb.stack
     d["prep"]["ontology_n_nodes"] = store.meta.ontology_n_nodes
     d["prep"]["ontology_vocab_sha256"] = store.meta.ontology_vocab_sha256
     d["host"] = socket.gethostname()

@@ -37,9 +37,16 @@ rid="${prefix}_${cell}"
 : "${PY:?}" "${DATA_ROOT:?}" "${TRAIN:?}" "${TILES_DIR:?node-local tile claims, set by the grid job}"
 ulimit -c 0  # a fault's core file is 10-12 GB; two are kept from PBS 8959387 for ALCF
 ROOT=$DATA_ROOT/experiments/043-expression-proteome-morphology/checkpoints_aurora_2026_10_24
-common=(data.store_version=v2 data.prep_version=prep_v4 device=xpu data.num_workers=4
-  data.sampler=records data.mark_cap=null budget.time_budget_hours=null
-  "wandb.tags=[aurora_2026_10_24,aurora]" wandb.round=aurora_2026_10_24)
+# ROUND, TAGS, STACK, NUM_WORKERS (env, set by the stack-test env scripts of round
+# aurora_2026_10_25): W&B round label, tag list, wandb.stack label and loader workers. Their
+# defaults are round aurora_2026_10_24's values. All four are placement keys
+# (train_043._strip_placement), so a run resumes from a last.pt written under other values.
+ROUND=${ROUND:-aurora_2026_10_24}
+TAGS=${TAGS:-[aurora_2026_10_24,aurora]}
+common=(data.store_version=v2 data.prep_version=prep_v4 device=xpu
+  "data.num_workers=${NUM_WORKERS:-4}" data.sampler=records data.mark_cap=null
+  budget.time_budget_hours=null "wandb.tags=$TAGS" "wandb.round=$ROUND")
+[ -n "${STACK:-}" ] && common+=("++wandb.stack=$STACK")
 [ -n "$ckpt" ] && common+=("$ckpt")
 
 # A GPU page fault (intel-compute-runtime "Segmentation fault from GPU ... NotPresent")
@@ -63,9 +70,24 @@ next_tile() {
   done
   return 1
 }
+LIVE=$(dirname "$TRAIN")/alcf/wandb_run_live_043.py
+# A cell queued on two routes (this Aurora job and a Polaris lane copy, same resume_id) trains
+# on one: a stage whose W&B run is live elsewhere (state running, heartbeat under 10 min) is
+# not started. A run killed by an earlier job still reads live until its heartbeat ages past
+# 10 min, so the check is retried every 2 min for up to 14 min (as run_cell_043.sh does).
+free_or_wait() {  # free_or_wait <run id>: 0 = free to start, 1 = live elsewhere
+  local id=$1 k
+  for k in 0 1 2 3 4 5 6 7; do
+    "$PY" "$LIVE" "$id" || return 0
+    [ "$k" = 7 ] && return 1
+    sleep 120
+  done
+}
 attempt() {
-  local stage=$1 n rc
+  local stage=$1 n rc id
   shift
+  for o in "$@"; do case "$o" in resume_id=*) id=${o#resume_id=} ;; esac; done
+  free_or_wait "$id" || { echo "[cell $cell] $stage: $id is live on another route; not started here"; return 3; }
   for ((n = 1; n <= ATTEMPTS; n++)); do
     ZE_AFFINITY_MASK=$tile "$PY" "$TRAIN" "$@" && return 0
     rc=$?
@@ -79,7 +101,7 @@ attempt() {
 }
 
 echo "[cell $cell] stage 1 on tile $tile at $(date): $*"
-attempt "stage 1" "${common[@]}" "$@" resume_id="$rid" paths.checkpoint_root="$ROOT/$cell"
+attempt "stage 1" "${common[@]}" "$@" resume_id="$rid" paths.checkpoint_root="$ROOT/$cell" || exit $?
 
 [ "$finetune" = 1 ] || { echo "[cell $cell] done (no fine-tune) at $(date)"; exit 0; }
 shopt -s nullglob

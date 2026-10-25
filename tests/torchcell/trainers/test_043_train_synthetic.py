@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import math
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -1018,6 +1019,7 @@ def test_sweep_arm_yamls_validate(tr: ModuleType) -> None:
         {"model": {"layer_pattern": ["M", "S", "M"], "trunk_ffn_mult": 2}},
         {"model": {"hidden_dim": 32, "head_hidden": 16}},
         {"optim": {"schedule": "cosine", "warmup_steps": 1}},
+        {"data": {"sampler": "balanced", "balance_power": 1.0}},
     ],
     ids=[
         "mle",
@@ -1027,6 +1029,7 @@ def test_sweep_arm_yamls_validate(tr: ModuleType) -> None:
         "pattern_ffn2",
         "dims",
         "cos",
+        "balanced_p1",
     ],
 )
 def test_two_training_steps_per_sweep_knob(
@@ -1341,3 +1344,36 @@ def test_best_checkpoint_is_the_minimum_val_loss_epoch_and_survives_resume(
     more = tr.TrainConfig043.model_validate({**base, "budget": {**base["budget"]}})
     tr.train(more, world["store"], src, tr.MemoryLogger())
     assert torch.load(ckpt / "best.pt", weights_only=False)["epoch"] == want
+
+
+def test_balance_power_interpolates_records_to_equal_shares(
+    tr: ModuleType, world: dict[str, Any]
+) -> None:
+    ld = np.array([0] * 90 + [1] * 9 + [2] * 1, np.int64)
+    w0 = tr.balance_weights(ld, 0.0)
+    np.testing.assert_allclose(w0, np.full(100, 0.01))  # records sampler
+    w1 = tr.balance_weights(ld, 1.0)
+    shares = [w1[ld == d].sum() for d in range(3)]
+    np.testing.assert_allclose(shares, [1 / 3] * 3)  # equal share per dataset
+    wh = tr.balance_weights(ld, 0.5)
+    assert (w1 > 0).all() and (wh > 0).all() and wh.sum() == pytest.approx(1.0)
+    assert wh[ld == 2].sum() > w0[ld == 2].sum()  # p between: the small one gains
+    # end to end: the view's training positions, drawn per epoch, seeded
+    arm = tr.ArmConfig(name="a", datasets=["kemmeren", "messner", "caudal", "vaishnav"])
+    view = tr.build_view(world["store"], arm, 2)
+    pos = view.positions(tr.ROLE_CODE[tr.Role.TRAIN])
+    b1 = tr.balanced_batches(view, pos, 6, seed=3, power=1.0)
+    assert sum(len(b) for b in b1) == math.ceil(len(pos) / 6) * 6  # same steps
+    np.testing.assert_array_equal(
+        np.concatenate(b1), np.concatenate(tr.balanced_batches(view, pos, 6, 3, 1.0))
+    )
+    draws = np.concatenate(
+        [np.concatenate(tr.balanced_batches(view, pos, 6, s, 1.0)) for s in range(300)]
+    )
+    counts = np.bincount(view.local_dataset[draws], minlength=4)
+    np.testing.assert_allclose(counts / counts.sum(), [0.25] * 4, atol=0.02)
+    table = tr.balance_table(view, pos, 6, 1.0, n_epochs=80)
+    n = {d: (view.local_dataset[pos] == i).sum() for i, d in enumerate(arm.datasets)}
+    for d, t in table.items():
+        assert t["draws_per_epoch"] == pytest.approx(math.ceil(len(pos) / 6) * 6 / 4)
+        assert t["visits_per_record"] == pytest.approx(t["draws_per_epoch"] / n[d] * 80)

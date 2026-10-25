@@ -1714,3 +1714,19 @@ Rule, set before the run reached it: stop `gs1024_w4_bal_p1` (balanced sampler, 
 | 12 | 2.8744 | 2.1694 | 2.3389 | 2.5175 | 6.0419 | 3.4645 |
 
 Read: the composite rise is carried by turnover (33 training records, about 143 draws per record per epoch) and zelezniak (79, about 60), whose validation loss climbs while their training loss falls. Kemmeren rose 0.040 and 0.027 above its epoch-6 minimum on epochs 11 and 12, which is near its own epoch-to-epoch variation (+0.022 on epoch 9), so the Kemmeren harm is weak evidence on one seed. Messner stayed flat. The capped variant `gs1024_w4_bal_p1_cap8` (job 6406) and power 0.5 (job 6394) are queued.
+
+### Four failed cells and their signatures (2026-10-25)
+
+All seed 0, ontology conditioning, prep_v4, HL-Gauss, constant lr 3e-4 after warmup, from the W&B history (grad norms are logged every 50th step; `train/grad_norm_max50` exists only for runs started after commit 4ff106bcc). Two different signatures, not one:
+
+| cell (job) | failure onset | gene head (val/doubles/pearson_per_strain_centered_median) | record head (val/vaishnav/pearson) | train/grad_norm | operator/relative_norm (attention branch / input) |
+|---|---|---|---|---|---|
+| MMMM (6342) | epoch 71.5 | healthy, 0.17-0.22 through epoch 79, 0.097 at 80 | 0.92-0.93, 0.887 at 80 | > 1e3 from step 507,700, max 2.2e14 | 1.0-1.4, no excursion |
+| MSMSMS (6370) | epoch 72.4 | healthy, 0.14-0.23 through epoch 79, 0.048 at 80 | sign flips from epoch 76 (-0.50, 0.67, -0.73, 0.49, -0.62) | > 1e3 from step 514,100, max 6.0e16 | 1.1-1.8, no excursion |
+| hidden 288 (6371) | epoch 60 | locked at exactly -0.0883 from epoch 60 | intact, 0.92-0.93 | no logged value above 50 (max 48.9 at epoch 51.9) | 2.52 (ep 59) -> 2.86 (ep 60) -> 4.51 (ep 61); FFN branch 4.36 -> 1.0 |
+| batch 32 (6398) | epoch 2 | locked at exactly -0.0883 from epoch 2 | nan at epochs 42-43 | max50 first > 100 at epoch 8.7, > 1e3 at 22.7 | 0.336 (ep 1) -> 0.533 (ep 2) -> 1.09 (ep 3) -> 14.8 (ep 4) -> 1164 (ep 43); SMSS baseline 0.34-0.36 at epochs 1-5 |
+
+- **Gradient explosion** (MMMM, MSMSMS, the multi-M trunks): late, the gene head stays healthy, the record head breaks (MSMSMS), the operator norm stays ordinary.
+- **Constant gene-head attractor at -0.0883** (hidden 288, batch 32): the gene-level readouts go constant while the record head survives (h288), and the operator's attention branch grows. In batch 32 it is already off-baseline at the epoch of the lock (0.533 vs SMSS 0.361 at epoch 2; FFN branch 1.66 vs 0.83), about six epochs before the first gradient window above 100. At epoch resolution the operator growth coincides with the lock and precedes the gradient spikes; it is not shown to precede the lock itself.
+- Hypothesis (untested): -0.0883 is the per-strain centered Pearson that a strain-independent gene-level prediction (every strain given the same profile) scores against the Sameith doubles, so any collapse of the gene head to a constant lands on it.
+- Hypothesis (coordinator's, untested): the mark-operator branch exploding drives the attractor. Consistent with batch 32 and hidden 288, not with MMMM or MSMSMS (which never reached it).

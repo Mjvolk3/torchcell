@@ -1699,3 +1699,18 @@ The script verifies after saving that every plotted key is logged by every run o
 https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/reports/043-overnight-round-2026-10-23:-loss-curves--VmlldzoxODE3NTA1MA==
 
 Script: `experiments/043-expression-proteome-morphology/scripts/wandb_report_043.py`
+
+### bal_p1 stopped at epoch 12 by the pre-registered rule (2026-10-25 03:20)
+
+Rule, set before the run reached it: stop `gs1024_w4_bal_p1` (balanced sampler, balance_power 1) at epoch 25 unless `val/kemmeren/loss` or `val/messner/loss` rises more than 0.02 above its running minimum on two consecutive epochs, in which case stop at once. The rule fired at epoch 12 and job 6392 was cancelled at 03:20:38 (2:02:49); its fine-tune 6393 was cancelled unrun. Per-epoch values (HL-Gauss CE, validation fold, seed 0, W&B history):
+
+| epoch | val/loss (equal-weight composite) | train/loss | val/kemmeren/loss | val/messner/loss | val/turnover/loss | val/zelezniak/loss |
+|---|---|---|---|---|---|---|
+| 1 | 2.6361 | 2.5533 | 2.3791 | 2.5189 | 3.9054 | 2.4845 |
+| 6 | 2.8563 | 2.2364 | 2.3118 | 2.5086 | 5.9745 | 3.2051 |
+| 9 | 2.8763 | 2.1914 | 2.3469 | 2.5138 | 6.1788 | 3.3031 |
+| 10 | 2.8453 | 2.1863 | 2.3247 | 2.5131 | 5.8739 | 3.3535 |
+| 11 | 2.8765 | 2.1779 | 2.3523 | 2.5109 | 5.9574 | 3.4442 |
+| 12 | 2.8744 | 2.1694 | 2.3389 | 2.5175 | 6.0419 | 3.4645 |
+
+Read: the composite rise is carried by turnover (33 training records, about 143 draws per record per epoch) and zelezniak (79, about 60), whose validation loss climbs while their training loss falls. Kemmeren rose 0.040 and 0.027 above its epoch-6 minimum on epochs 11 and 12, which is near its own epoch-to-epoch variation (+0.022 on epoch 9), so the Kemmeren harm is weak evidence on one seed. Messner stayed flat. The capped variant `gs1024_w4_bal_p1_cap8` (job 6406) and power 0.5 (job 6394) are queued.

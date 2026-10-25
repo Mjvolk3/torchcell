@@ -5,6 +5,8 @@
 #
 # One MPI rank of a Polaris prod job: runs on card PALS_LOCAL_RANKID and CLAIMS cells from
 # polaris_cells_043.tsv, in table order, until none is left to claim, then exits.
+# EXTRA_CELLS (env, optional): a second table in this directory read after it (lower claim
+# priority), e.g. polaris_cells_043_seeds.tsv for the 24-node copy.
 #
 # Claim design (all on eagle, shared by every job of the lane):
 #   $CLAIMS/<run id>.done   the cell is finished (every stage); never claimed again.
@@ -77,7 +79,7 @@ claim() {  # claim <run id>: 0 = this rank now owns the cell
 
 declare -A tried=()
 while true; do
-  mapfile -t ROWS < <(grep -v '^#' "$ALCF/polaris_cells_043.tsv")
+  mapfile -t ROWS < <(grep -hv '^#' "$ALCF/polaris_cells_043.tsv" ${EXTRA_CELLS:+"$ALCF/$EXTRA_CELLS"})
   picked=""
   for row in "${ROWS[@]}"; do
     IFS=$'\t' read -r cell finetune overrides <<< "$row"

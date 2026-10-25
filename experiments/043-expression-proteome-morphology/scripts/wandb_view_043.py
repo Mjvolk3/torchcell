@@ -308,10 +308,11 @@ ROUNDS: dict[str, Round] = {
         + ("gs1024_w2_mmmm_cos", "gs1024_w2_mmmm_cos_ft")
         # seed 1 of SMMSS (tests the one-seed fine-tune signal), jobs 6376/6377
         + ("gs1024_w1_smmss_s1", "gs1024_w1_smmss_s1_ft")
-        # wave 4, regularization on the SMSS recipe (owner, 2026-10-24), jobs 6380-6387
+        # wave 4, regularization on the SMSS recipe (owner, 2026-10-24): jobs 6380/6381,
+        # 6389/6390 (wd 0.05, replaced wd 1e-7 6382/6383), 6384/6385, 6386/6387
         + tuple(
             f"gs1024_w4_reg_{k}{ft}"
-            for k in ("do02", "wd10x", "sig2x", "tdrop01")
+            for k in ("do02", "wd5e-2", "sig2x", "tdrop01")
             for ft in ("", "_ft")
         ),
         hardware=(

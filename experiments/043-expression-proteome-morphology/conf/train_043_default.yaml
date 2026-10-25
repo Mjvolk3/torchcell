@@ -49,6 +49,9 @@ data:
   # balanced only: record weight (1/n_dataset)^p, p in [0, 1] (0 = records in distribution,
   # 1 = equal share per dataset); null = the legacy balanced path (2026-10-25)
   balance_power: null
+  # with balance_power: cap expected draws per epoch at this x the dataset's records, the
+  # released mass renormalized over the uncapped datasets; null = no cap (2026-10-25)
+  max_visits_per_record_per_epoch: null
   batch_size: 16
   label_batch_size: false  # true appends _bs<N> to the W&B group (batch-size axis)
   num_workers: 4

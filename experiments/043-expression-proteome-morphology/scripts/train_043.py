@@ -458,6 +458,26 @@ class DataConfig(BaseModel):
         "p = 0 is the records sampler in distribution, p = 1 an equal share per dataset. "
         "None = the legacy balanced code path (dataset uniform, then record uniform)",
     )
+    max_visits_per_record_per_epoch: float | None = Field(
+        default=None,
+        gt=0.0,
+        description="with balance_power: cap a dataset's expected draws per epoch at this "
+        "x its training records and give the released mass to the uncapped datasets in "
+        "proportion to their balanced weights, repeated until no dataset exceeds its cap "
+        "(epoch length unchanged); null = no cap (2026-10-25)",
+    )
+
+    @model_validator(mode="after")
+    def _cap_needs_power(self) -> DataConfig:
+        """The visit cap applies to the power-weighted balanced sampler only."""
+        if self.max_visits_per_record_per_epoch is not None and (
+            self.sampler != "balanced" or self.balance_power is None
+        ):
+            raise ValueError(
+                "max_visits_per_record_per_epoch needs sampler=balanced and balance_power"
+            )
+        return self
+
     batch_size: int = Field(default=16, gt=0)
     label_batch_size: bool = Field(
         default=False,
@@ -810,6 +830,8 @@ class TrainConfig043(BaseModel):
         sampler = "_balanced" if self.data.sampler == "balanced" else ""
         if self.data.balance_power is not None:
             sampler += f"_p{self.data.balance_power:g}"
+        if self.data.max_visits_per_record_per_epoch is not None:
+            sampler += f"_cap{self.data.max_visits_per_record_per_epoch:g}"
         onto = "_onto" if self.model.conditioning.source == "ontology" else ""
         lodo = "".join(f"_lodo_{d}" for d in self.arm.exclude_from_training)
         # the effective batch: batch_size x optim.accumulate_steps
@@ -1904,12 +1926,51 @@ class _BatchList(torch.utils.data.Dataset[tuple[Batch043, Targets043]]):
         return make_batch(self.view, self.batches[i].tolist())
 
 
-def balance_weights(
-    local_dataset: npt.NDArray[np.int64], power: float
+def dataset_draws(
+    counts: npt.NDArray[np.int64], power: float, n_draws: int, cap: float | None = None
 ) -> npt.NDArray[np.float64]:
-    """Draw probability of each position: ``(1 / n_dataset)^power``, normalized."""
+    """Expected draws per epoch of each dataset (``counts`` records each; 0 = absent).
+
+    Balanced share ``n^(1-power)``; with ``cap``, a dataset is held at ``cap * n`` draws
+    and the released mass goes to the others in proportion to their shares, repeated
+    until none exceeds its cap. A cap too small to fill ``n_draws`` raises.
+    """
+    n = counts.astype(np.float64)
+    present = n > 0
+    share = np.where(present, n ** (1.0 - power), 0.0)
+    draws = np.zeros_like(n)
+    fixed = np.zeros(len(n), bool)
+    while True:
+        free = n_draws - draws[fixed].sum()
+        open_ = present & ~fixed
+        if not open_.any():
+            if free > 1e-6 * n_draws:
+                raise ValueError(
+                    f"visit cap {cap} cannot fill {n_draws} draws per epoch "
+                    f"({int(n.sum())} records)"
+                )
+            return draws
+        draws[open_] = free * share[open_] / share[open_].sum()
+        over = open_ & (draws > cap * n) if cap is not None else np.zeros_like(open_)
+        if not over.any():
+            return draws
+        draws[over] = cap * n[over]
+        fixed |= over
+
+
+def balance_weights(
+    local_dataset: npt.NDArray[np.int64],
+    power: float,
+    cap: float | None = None,
+    n_draws: int | None = None,
+) -> npt.NDArray[np.float64]:
+    """Draw probability of each position: its dataset's expected draws (``dataset_draws``)
+    spread uniformly over the dataset's records, normalized. Without a cap this is
+    ``(1 / n_dataset)^power``.
+    """
     counts = np.bincount(local_dataset)
-    w = counts[local_dataset].astype(np.float64) ** (-power)
+    draws = dataset_draws(counts, power, n_draws or len(local_dataset), cap)
+    w = draws[local_dataset] / counts[local_dataset]
     return w / w.sum()
 
 
@@ -1919,6 +1980,7 @@ def balance_table(
     batch_size: int,
     power: float | None,
     n_epochs: int,
+    cap: float | None = None,
 ) -> dict[str, dict[str, float]]:
     """Expected draws per epoch and visits per record over ``n_epochs``, per dataset."""
     n_draws = math.ceil(len(positions) / batch_size) * batch_size
@@ -1927,7 +1989,7 @@ def balance_table(
     if power is None:  # legacy: dataset uniform among the present ones
         share = {d: 1.0 / len(present) for d in present}
     else:
-        w = balance_weights(ld, power)
+        w = balance_weights(ld, power, cap, n_draws)
         share = {d: float(w[ld == d].sum()) for d in present}
     out = {}
     for d in present:
@@ -1948,6 +2010,7 @@ def balanced_batches(
     batch_size: int,
     seed: int,
     power: float | None = None,
+    cap: float | None = None,
 ) -> list[npt.NDArray[np.int64]]:
     """One epoch of dataset-balanced batches over ``positions``.
 
@@ -1966,7 +2029,9 @@ def balanced_batches(
     rng = np.random.default_rng(seed)
     n_batches = math.ceil(len(positions) / batch_size)
     if power is not None:
-        w = balance_weights(view.local_dataset[positions], power)
+        w = balance_weights(
+            view.local_dataset[positions], power, cap, n_batches * batch_size
+        )
         drawn = rng.choice(positions, size=n_batches * batch_size, replace=True, p=w)
         return list(drawn.reshape(n_batches, batch_size))
     which = rng.integers(0, len(pools), size=(n_batches, batch_size))
@@ -1985,13 +2050,14 @@ def batch_loader(
     num_workers: int,
     sampler: Literal["records", "balanced"] = "records",
     balance_power: float | None = None,
+    visit_cap: float | None = None,
 ) -> torch.utils.data.DataLoader[tuple[Batch043, Targets043]]:
     """Batches of ``positions``: in order, shuffled (``records``) or ``balanced``."""
     if sampler == "balanced":
         if shuffle_seed is None:
             raise ValueError("the balanced sampler needs a seed")
         chunks = balanced_batches(
-            view, positions, batch_size, shuffle_seed, balance_power
+            view, positions, batch_size, shuffle_seed, balance_power, visit_cap
         )
     else:
         order = positions.copy()
@@ -2763,6 +2829,7 @@ SWEEP_DEFAULTS: dict[tuple[str, str], Any] = {
     ("model", "trunk_ffn_mult"): 4,
     ("model", "token_dropout"): 0.0,
     ("data", "balance_power"): None,
+    ("data", "max_visits_per_record_per_epoch"): None,
     ("data", "target_transform"): "zscore",
     ("data", "target_stats_by"): "dataset",
     ("weighting", "by"): "dataset",
@@ -2959,10 +3026,16 @@ def train(
     bal_logs: dict[str, float] = {}
     if cfg.data.sampler == "balanced":
         table = balance_table(
-            view, train_pos, cfg.data.batch_size, cfg.data.balance_power, n_epochs
+            view,
+            train_pos,
+            cfg.data.batch_size,
+            cfg.data.balance_power,
+            n_epochs,
+            cfg.data.max_visits_per_record_per_epoch,
         )
         print(
-            f"[setup] balanced sampler, power {cfg.data.balance_power}: "
+            f"[setup] balanced sampler, power {cfg.data.balance_power}, visit cap "
+            f"{cfg.data.max_visits_per_record_per_epoch}: "
             + "; ".join(
                 f"{d} {t['draws_per_epoch']:.0f} draws/epoch, "
                 f"{t['visits_per_record']:.1f} visits/record over {n_epochs} epochs"
@@ -3040,6 +3113,7 @@ def train(
             cfg.data.num_workers,
             cfg.data.sampler,
             cfg.data.balance_power,
+            cfg.data.max_visits_per_record_per_epoch,
         )
         t_probe = None
         step_loss = 0.0

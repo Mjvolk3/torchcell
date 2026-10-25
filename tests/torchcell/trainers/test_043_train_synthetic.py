@@ -1400,3 +1400,34 @@ def test_grad_norm_window_and_per_dataset_entropy_are_logged(
     for d in ("kemmeren", "messner", "vaishnav"):  # gene-level and record-level heads
         e = last[f"val/{d}/entropy_mean"]
         assert 0.0 < e <= np.log(32) + 1e-6  # 32 bins: entropy within [0, log K]
+
+
+def test_visit_cap_holds_small_datasets_and_refills_the_epoch(tr: ModuleType) -> None:
+    # the store v2 training counts of arm all (job 6308's setup line)
+    n = np.array([1202, 3772, 79, 566, 476, 33, 235, 1770, 42694, 225, 784, 4969])
+    N = math.ceil(n.sum() / 8) * 8  # 56,808 draws per epoch
+    free = tr.dataset_draws(n, 1.0, N)
+    np.testing.assert_allclose(free, np.full(12, N / 12))  # p = 1: equal shares
+    d = tr.dataset_draws(n, 1.0, N, cap=8.0)
+    assert d.sum() == pytest.approx(N)  # epoch length unchanged
+    capped = np.isclose(d, 8.0 * n)
+    assert d[5] == pytest.approx(264.0) and d[2] == pytest.approx(
+        632.0
+    )  # turnover, zelezniak
+    assert (d <= 8.0 * n + 1e-6).all()  # no dataset above its cap
+    np.testing.assert_allclose(d[~capped], d[~capped][0])  # the uncapped share equally
+    assert (
+        capped.sum() == 7 and d[~capped][0] > N / 12
+    )  # the released mass went to them
+    # no cap reproduces the uncapped weights; every record keeps a nonzero probability
+    ld = np.repeat(np.arange(12), n)
+    np.testing.assert_allclose(
+        tr.balance_weights(ld, 1.0), tr.balance_weights(ld, 1.0, None, N)
+    )
+    w = tr.balance_weights(ld, 1.0, 8.0, N)
+    assert (w > 0).all() and w.sum() == pytest.approx(1.0)
+    assert w[ld == 5].sum() * N == pytest.approx(264.0)
+    with pytest.raises(ValueError, match="cannot fill"):
+        tr.dataset_draws(n, 1.0, N, cap=0.5)  # 0.5 x 56,805 records < 56,808 draws
+    with pytest.raises(ValueError, match="needs sampler=balanced"):
+        tr.DataConfig(max_visits_per_record_per_epoch=8.0)

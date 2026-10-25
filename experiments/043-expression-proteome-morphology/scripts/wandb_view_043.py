@@ -371,11 +371,9 @@ ROUNDS: dict[str, Round] = {
                 "(val/kemmeren median 0.0757 -> -0.0024, val/doubles -0.0883 at epochs 60 "
                 "and 61) while val/vaishnav/pearson holds 0.92-0.93; no logged "
                 "train/grad_norm above 50 (8,736 rows, one step in 50 logged, max 48.9 at "
-                "step 368,800, epoch 51.9)",
-            ),
-            (
-                "gs1024_w2_h288_ft",
-                "initialized from the collapsed gs1024_w2_h288 last.pt (epoch 80)",
+                "step 368,800, epoch 51.9); cancelled after the collapse at epoch 65 "
+                "(job 6371, 7:38:45), no recovery; its fine-tune 6357 was cancelled "
+                "unrun",
             ),
         ),
     ),

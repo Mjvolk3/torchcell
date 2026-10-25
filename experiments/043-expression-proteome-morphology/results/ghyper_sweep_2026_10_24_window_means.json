@@ -452,6 +452,94 @@
     }
    }
   },
+  "gs1024_w2_mle": {
+   "arm_label": "all_onto_mle_equal",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 80,
+   "n_epochs": 80,
+   "window": [
+    71,
+    80
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.05320295863180684,
+     "n_evaluations": 10
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.15600082358055006,
+     "n_evaluations": 10
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 10
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.157110247726458,
+     "n_evaluations": 10
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.12418829151591877,
+     "n_evaluations": 10
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.07826688331649638,
+     "n_evaluations": 10
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9224507319184985,
+     "n_evaluations": 10
+    },
+    "train/loss": {
+     "mean": 0.7319467165802439,
+     "n_evaluations": 10
+    },
+    "val/loss": {
+     "mean": 1.2606304413074167,
+     "n_evaluations": 10
+    }
+   }
+  },
+  "gs1024_w2_mle_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_mle_equal",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    16,
+    20
+   ],
+   "window_override_of": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.08046566180182889,
+     "n_evaluations": 5
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.2697403949897497,
+     "n_evaluations": 5
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 5
+    },
+    "train/loss": {
+     "mean": 0.7099594103974222,
+     "n_evaluations": 5
+    },
+    "val/loss": {
+     "mean": 1.0878936761820137,
+     "n_evaluations": 5
+    }
+   }
+  },
   "gs1024_w2_binq": {
    "arm_label": "all_onto_binned_quantile_equal",
    "seed": 0,
@@ -499,6 +587,44 @@
     "val/loss": {
      "mean": 3.099092418425139,
      "n_evaluations": 10
+    }
+   }
+  },
+  "gs1024_w2_binq_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_binned_quantile_equal",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    16,
+    20
+   ],
+   "window_override_of": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.09555349956426737,
+     "n_evaluations": 5
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.20072032357368008,
+     "n_evaluations": 5
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 5
+    },
+    "train/loss": {
+     "mean": 3.029484932312113,
+     "n_evaluations": 5
+    },
+    "val/loss": {
+     "mean": 3.2983499091916144,
+     "n_evaluations": 5
     }
    }
   },
@@ -589,6 +715,182 @@
      "n_evaluations": 5
     }
    }
+  },
+  "gs1024_w3_lrhalf": {
+   "arm_label": "all_onto_hlgauss_equal_lr0.00015",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 80,
+   "n_epochs": 80,
+   "window": [
+    71,
+    80
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.07968076029172542,
+     "n_evaluations": 10
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.19553688144699452,
+     "n_evaluations": 10
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 10
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.23322676280692728,
+     "n_evaluations": 10
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.16045294106103622,
+     "n_evaluations": 10
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.07864672099664696,
+     "n_evaluations": 10
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9276639399943669,
+     "n_evaluations": 10
+    },
+    "train/loss": {
+     "mean": 2.082915886926443,
+     "n_evaluations": 10
+    },
+    "val/loss": {
+     "mean": 2.498970923321181,
+     "n_evaluations": 10
+    }
+   }
+  },
+  "gs1024_w3_lrhalf_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_hlgauss_equal_lr0.00015",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    16,
+    20
+   ],
+   "window_override_of": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.11360013995103066,
+     "n_evaluations": 5
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.23104525976779078,
+     "n_evaluations": 5
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 5
+    },
+    "train/loss": {
+     "mean": 2.09817504756498,
+     "n_evaluations": 5
+    },
+    "val/loss": {
+     "mean": 2.374928225781247,
+     "n_evaluations": 5
+    }
+   }
+  },
+  "gs1024_w4_bs16": {
+   "arm_label": "all_onto_hlgauss_equal",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 80,
+   "n_epochs": 80,
+   "window": [
+    71,
+    80
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.12222487659928696,
+     "n_evaluations": 10
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.20779828984831053,
+     "n_evaluations": 10
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 10
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.22481406764504305,
+     "n_evaluations": 10
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.16576328497708887,
+     "n_evaluations": 10
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.056612208010693145,
+     "n_evaluations": 10
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9309537257757619,
+     "n_evaluations": 10
+    },
+    "train/loss": {
+     "mean": 2.1560328717870934,
+     "n_evaluations": 10
+    },
+    "val/loss": {
+     "mean": 2.5105140636630674,
+     "n_evaluations": 10
+    }
+   }
+  },
+  "gs1024_w4_bs16_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_hlgauss_equal",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    16,
+    20
+   ],
+   "window_override_of": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.14274331021457273,
+     "n_evaluations": 5
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.2423038968172538,
+     "n_evaluations": 5
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 5
+    },
+    "train/loss": {
+     "mean": 2.0947842342174607,
+     "n_evaluations": 5
+    },
+    "val/loss": {
+     "mean": 2.366897042664893,
+     "n_evaluations": 5
+    }
+   }
   }
  },
  "transfer_kemmeren": {},
@@ -646,22 +948,40 @@
   }
  },
  "not_finished_epochs_reached": {
-  "gs1024_w2_mle": 0,
-  "gs1024_w2_h288": 25,
-  "gs1024_w3_lrhalf": 46,
-  "gs1024_w2_mmmm_cos": 4
+  "gs1024_w2_h288": 65,
+  "gs1024_w2_mmmm_cos": 24,
+  "gs1024_w4_reg_do02": 12,
+  "gs1024_w4_reg_wd5e-2": 7,
+  "gs1024_w4_reg_sig2x": 0,
+  "gs1024_w4_bal_p1": 12,
+  "gs1024_w4_bal_p05": 20,
+  "gs1024_w4_bs32": 43,
+  "gs1024_w4_bal_p1_cap8": 22
  },
  "no_run_yet": [
-  "gs1024_w2_mle_ft",
-  "gs1024_w2_binq_ft",
   "gs1024_w2_h288_ft",
   "gs1024_w3_ffn2",
   "gs1024_w3_ffn2_ft",
   "gs1024_w3_hh256",
   "gs1024_w3_hh256_ft",
-  "gs1024_w3_lrhalf_ft",
   "gs1024_w3_lrx2",
   "gs1024_w3_lrx2_ft",
-  "gs1024_w2_mmmm_cos_ft"
- ]
+  "gs1024_w2_mmmm_cos_ft",
+  "gs1024_w1_smmss_s1",
+  "gs1024_w1_smmss_s1_ft",
+  "gs1024_w4_reg_do02_ft",
+  "gs1024_w4_reg_wd5e-2_ft",
+  "gs1024_w4_reg_sig2x_ft",
+  "gs1024_w4_reg_tdrop01",
+  "gs1024_w4_reg_tdrop01_ft",
+  "gs1024_w4_bal_p1_ft",
+  "gs1024_w4_bal_p05_ft",
+  "gs1024_w4_bs32_ft",
+  "gs1024_w4_bal_p1_cap8_ft"
+ ],
+ "stopped": {
+  "gs1024_w4_bal_p1": "stopped at epoch 12 by the rule (val/kemmeren/loss or val/messner/loss > 0.02 above its running minimum on two consecutive epochs): kemmeren 2.3523 (ep 11), 2.3389 (ep 12) vs minimum 2.3118 (ep 6); val/turnover/loss 3.905 -> 6.042, val/zelezniak/loss 2.485 -> 3.465 while train falls; job 6392 cancelled 03:20:38, fine-tune 6393 cancelled unrun",
+  "gs1024_w4_bal_p05": "stopped at epoch 20 (coordinator, same rule, met retroactively): messner fires at epoch 13 (minimum 2.5038 at ep 2), kemmeren at epoch 17 (minimum 2.3127 at ep 4); val/turnover/loss 3.27 -> 4.44, val/zelezniak/loss 2.48 (ep 5) -> 2.74, val/vaishnav/loss 2.57 -> 1.99; job 6394 cancelled 08:28:47, fine-tune 6395 cancelled unrun",
+  "gs1024_w4_bal_p1_cap8": "stopped at epoch 22 by the new-rise rule (minima from epoch 14): val/messner/loss 2.5686 (ep 21), 2.5666 (ep 22) vs post-14 minimum 2.5396 (ep 16); val/turnover/loss 3.293 -> 3.738, val/zelezniak/loss 2.442 (ep 2) -> 2.652 while train falls 2.563 -> 2.243; job 6406 cancelled 09:40:47, fine-tune 6407 cancelled unrun"
+ }
 }

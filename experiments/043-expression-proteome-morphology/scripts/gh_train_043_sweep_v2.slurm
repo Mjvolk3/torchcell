@@ -26,6 +26,7 @@
 #   WEIGHT_DECAY  SIGMA_BINS (HL-Gauss smoothing in bin widths)  (2026-10-24 regularization)
 #   BALANCE_POWER (with SAMPLER=balanced: record weight (1/n_dataset)^p; 2026-10-25)
 #   MAX_VISITS (with BALANCE_POWER: cap draws per epoch at MAX_VISITS x n_records)
+#   INJECT (ontology token: head | operator | trunk_and_operator; 2026-10-25)
 #   INIT_FROM_ID: stage 2; the stage-1 RESUME_ID. The job first requires the stage-1 W&B run
 #     to have logged val/kemmeren/loss (scripts/check_wandb_run_keys.py), then initializes
 #     from <checkpoints>/*/<INIT_FROM_ID>/last.pt. A stage-2 job must pass the same model,
@@ -82,6 +83,7 @@ if [ -n "${LR:-}" ]; then EXTRA+=("optim.lr=${LR}"); fi
 if [ -n "${WARMUP_STEPS:-}" ]; then EXTRA+=("optim.warmup_steps=${WARMUP_STEPS}"); fi
 if [ -n "${PREP_VERSION:-}" ]; then EXTRA+=("data.prep_version=${PREP_VERSION}"); fi
 if [ -n "${CONDITIONING:-}" ]; then EXTRA+=("model.conditioning.source=${CONDITIONING}"); fi
+if [ -n "${INJECT:-}" ]; then EXTRA+=("model.conditioning.inject=${INJECT}"); fi
 echo "host $(hostname)  commit $(git rev-parse --short HEAD)  $(date)"
 if [ -n "${INIT_FROM_ID:-}" ]; then
   python scripts/check_wandb_run_keys.py "zhao-group/${PROJECT}/${INIT_FROM_ID}" \

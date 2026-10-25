@@ -19,6 +19,7 @@
 #   chain   : stage 1 binned_quantile + quantile_normal, then its Kemmeren fine-tune
 #   reg regft: all four regularization knobs + best.pt, then its fine-tune (SMOKE_ID)
 #   bal     : balanced sampler, balance_power 1 (SMOKE_ID_bal)
+#   balcap  : balanced p=1 with max_visits_per_record_per_epoch 8 (SMOKE_ID_balcap)
 #
 #   sbatch --export=ALL,CASES="smmss ssss" experiments/043-expression-proteome-morphology/scripts/gh_train_043_sweep_smoke_cpu.slurm
 # On a GPU after the round (DEVICE=cuda, CHUNK=null: one SDPA call):
@@ -96,6 +97,10 @@ for c in $CASES; do
     bal)
       # the balanced sampler at power 1 (2026-10-25), W&B id ${SMOKE_ID}_bal
       run bal data.sampler=balanced data.balance_power=1.0 "resume_id=${SMOKE_ID:?set SMOKE_ID}_bal" ;;
+    balcap)
+      # balanced p=1 with the visit cap 8 (2026-10-25), W&B id ${SMOKE_ID}_balcap
+      run balcap data.sampler=balanced data.balance_power=1.0 \
+        data.max_visits_per_record_per_epoch=8 "resume_id=${SMOKE_ID:?set SMOKE_ID}_balcap" ;;
     *) echo "unknown case $c" >&2; exit 2 ;;
   esac
 done

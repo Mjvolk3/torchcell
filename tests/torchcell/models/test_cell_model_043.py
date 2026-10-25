@@ -538,3 +538,27 @@ def test_param_dim_of_the_sweep_losses() -> None:
     assert tuple(out.gene.shape) == (2, G, 2) and tuple(out.record.shape) == (1, 2)
     with pytest.raises(ValueError, match="ReadoutLossFamily043"):
         ReadoutLoss043(_config("mle")).elementwise(out.record, torch.zeros(1))
+
+
+def test_token_dropout_trains_only_and_default_draws_nothing() -> None:
+    batch = _batch()
+    rows = (torch.tensor([0, 1]), torch.tensor([2]))
+    base = _model(_config("mse"))
+    drop = _model(_config("mse", token_dropout=0.5))
+    assert sum(p.numel() for p in base.parameters()) == sum(
+        p.numel() for p in drop.parameters()
+    )
+    base.eval()
+    drop.eval()
+    with torch.no_grad():
+        torch.testing.assert_close(drop(batch, *rows).gene, base(batch, *rows).gene)
+    drop.train()
+    torch.manual_seed(1)
+    X = drop.context_tokens(batch.contexts)
+    drop.eval()
+    X_eval = drop.context_tokens(batch.contexts)
+    pos_only = X_eval - drop.composite(batch.contexts.key_rows, batch.contexts.key_gap)
+    dropped = torch.isclose(X, pos_only, atol=1e-6).all(-1)
+    assert 0 < int(dropped.sum()) < dropped.numel()  # some genes dropped, not all
+    with pytest.raises(ValueError):
+        _config("mse", token_dropout=1.0)

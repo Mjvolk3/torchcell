@@ -232,6 +232,14 @@ class CellModel043Config(BaseModel):
     trunk_ffn_mult: int = Field(
         default=4, gt=0, description="trunk FFN width as a multiple of hidden_dim"
     )
+    token_dropout: float = Field(
+        default=0.0,
+        ge=0.0,
+        lt=1.0,
+        description="training only: the composite token of each gene of each distinct "
+        "context is zeroed with this probability and the kept ones scaled by 1/(1-p) "
+        "(the position term stays); 0 draws nothing (043 regularization, 2026-10-24)",
+    )
     n_parents: int = Field(ge=1, description="allele-parent rows; row 0 = no parent")
     n_datasets: int = Field(gt=0)
     n_envs: int = Field(gt=0)
@@ -705,6 +713,10 @@ class CellModel043(nn.Module):
         if G != self.n_genes:
             raise ValueError(f"contexts carry {G} genes, the model {self.n_genes}")
         tok = self.composite(ctx.key_rows, ctx.key_gap)
+        p_drop = self.config.token_dropout
+        if self.training and p_drop > 0.0:
+            keep = torch.rand(C, G, 1, device=tok.device) >= p_drop
+            tok = tok * keep.to(tok.dtype) / (1.0 - p_drop)
         pos = self.position(
             self.chrom_index.unsqueeze(0).expand(C, -1),
             self.rel_midpoint.unsqueeze(0).expand(C, -1),

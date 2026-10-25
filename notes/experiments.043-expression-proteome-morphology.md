@@ -1730,3 +1730,22 @@ All seed 0, ontology conditioning, prep_v4, HL-Gauss, constant lr 3e-4 after war
 - **Constant gene-head attractor at -0.0883** (hidden 288, batch 32): the gene-level readouts go constant while the record head survives (h288), and the operator's attention branch grows. In batch 32 it is already off-baseline at the epoch of the lock (0.533 vs SMSS 0.361 at epoch 2; FFN branch 1.66 vs 0.83), about six epochs before the first gradient window above 100. At epoch resolution the operator growth coincides with the lock and precedes the gradient spikes; it is not shown to precede the lock itself.
 - Hypothesis (untested): -0.0883 is the per-strain centered Pearson that a strain-independent gene-level prediction (every strain given the same profile) scores against the Sameith doubles, so any collapse of the gene head to a constant lands on it.
 - Hypothesis (coordinator's, untested): the mark-operator branch exploding drives the attractor. Consistent with batch 32 and hidden 288, not with MMMM or MSMSMS (which never reached it).
+
+### bal_p05 stopped at epoch 20; per-gene heads overfit after a similar number of passes (2026-10-25)
+
+`gs1024_w4_bal_p05` (balance_power 0.5; about 18.5 draws per turnover record and 12 per zelezniak record per epoch) was stopped at epoch 20 (job 6394 cancelled 08:28:47; fine-tune 6395 cancelled unrun). The bal_p1 rule, applied to its full per-epoch history, fires on Messner at epoch 13 (running minimum 2.5038 at epoch 2) and on Kemmeren at epoch 17 (minimum 2.3127 at epoch 4); by epoch 20 both sit 0.035-0.045 above their minima. Over epochs 1 -> 20, val/turnover/loss rose 3.27 -> 4.44 and val/zelezniak/loss 2.48 (epoch 5) -> 2.74 while their training losses fell, and val/vaishnav/loss fell 2.57 -> 1.99. The capped variant `gs1024_w4_bal_p1_cap8` (job 6406) continues under a new-rise watcher (minima from epoch 14, stop on a > 0.02 rise on two consecutive epochs, hard stop at epoch 30).
+
+Observation (measured, one seed per sampler): the per-gene heads reach their validation minimum after a similar number of passes over their own records, whatever the sampler. Epoch of the minimum, with passes per record per epoch from each run's draw table:
+
+| head | sampler (run) | epoch of val minimum | val/&lt;dataset&gt;/loss minimum (HL-Gauss CE) | passes per record per epoch | passes at the minimum |
+|---|---|---|---|---|---|
+| Kemmeren | records (gs1024_w1_smss) | 14 | 2.3191 | 1.0 | 14 |
+| Kemmeren | records (gdqlsjpb, overnight) | 24 | 2.3193 | 1.0 | 24 |
+| Kemmeren | balanced p=0.5 (gs1024_w4_bal_p05) | 4 | 2.3127 | 3.07 | about 12 |
+| Kemmeren | balanced p=1 (gs1024_w4_bal_p1) | 6 | 2.3118 | 3.94 | about 24 |
+| Messner | records (gs1024_w1_smss) | 3 | 2.4975 | 1.0 | 3 |
+| Messner | records (gdqlsjpb) | 3 | 2.4984 | 1.0 | 3 |
+| Messner | balanced p=0.5 | 2 | 2.5038 | 1.73 | about 3.5 |
+| Messner | balanced p=1 | 3 | 2.5018 | 1.26 | about 3.8 |
+
+The Kemmeren minimum under the records sampler is at epoch 14 (SMSS) and 24 (overnight), not 33. Under balanced sampling the minimum moves earlier in epochs in proportion to the revisit rate, so in passes it lands in the same range (Kemmeren 12-24, Messner 3-4); the minimum values themselves agree within 0.01.

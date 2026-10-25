@@ -256,6 +256,14 @@ class CellModel043Config(BaseModel):
         "(width token_dim) and linear bias maps of it; no dataset id enters forward",
     )
     ontology_state_dim: int = Field(default=16, gt=0)
+    ontology_inject: Literal["head", "operator", "trunk_and_operator"] = Field(
+        default="head",
+        description="where the ontology token enters besides the heads (2026-10-25): "
+        "head = the heads and bias maps only; operator = also added, through "
+        "LayerNorm + Linear(token_dim -> hidden_dim), to every gene token and the CLS of "
+        "the record's trunk state before the mark operator; trunk_and_operator = also "
+        "added to the trunk input (the trunk then runs once per record, not per context)",
+    )
     head_hidden: int = Field(default=128, ge=0)
     loss: LossKind = "hlgauss"
     hl_gauss: HLGaussConfig = Field(default_factory=HLGaussConfig)
@@ -280,6 +288,8 @@ class CellModel043Config(BaseModel):
             raise ValueError(f"head_graphs names heads {bad_heads}")
         if self.mask_layers and not self.head_graphs:
             raise ValueError("mask_layers without head_graphs masks nothing")
+        if self.ontology_inject != "head" and self.conditioning != "ontology":
+            raise ValueError("ontology_inject beyond head needs conditioning=ontology")
         return self
 
     @property
@@ -520,9 +530,16 @@ class CellTrunk043(nn.Module):
             self.head_mask = None
         self.masked = set(config.mask_layers)
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
-        """``X`` ``[C, G, d]`` -> ``[C, G+1, d]`` with the CLS at position 0."""
-        h = torch.cat([self.cls_token.expand(X.shape[0], -1, -1), X], dim=1)
+    def forward(
+        self, X: torch.Tensor, cls_shift: torch.Tensor | None = None
+    ) -> torch.Tensor:
+        """``X`` ``[C, G, d]`` -> ``[C, G+1, d]`` with the CLS at position 0;
+        ``cls_shift`` ``[C, 1, d]`` is added to the CLS input (ontology injection).
+        """
+        cls = self.cls_token.expand(X.shape[0], -1, -1)
+        if cls_shift is not None:
+            cls = cls + cls_shift
+        h = torch.cat([cls, X], dim=1)
         if self.head_mask is not None and self.head_mask.shape[-1] != h.shape[1]:
             raise ValueError("head_mask does not match the gene count")
         for i, layer in enumerate(self.layers):
@@ -663,6 +680,11 @@ class CellModel043(nn.Module):
             self.onto_token = OntologyDagEncoder(
                 ontology_vocabulary, config.ontology_state_dim, config.token_dim
             )
+            if config.ontology_inject != "head":
+                # token -> hidden width; default PyTorch init (no zero init, no gate)
+                self.onto_inject = nn.Sequential(
+                    nn.LayerNorm(config.token_dim), nn.Linear(config.token_dim, d)
+                )
         else:
             self.type_token = ExperimentTypeEmbedding(
                 ExperimentTypeEmbeddingConfig(
@@ -773,8 +795,20 @@ class CellModel043(nn.Module):
     ) -> CellModel043Output:
         """Heads for the gene-level rows and the record-level rows of the batch."""
         X = self.context_tokens(batch.contexts)
-        H_ctx = self.trunk(X)  # [C, G+1, d], one pass per distinct context
-        H_rec = H_ctx[batch.record_context]  # [B, G+1, d]
+        inject = self.config.ontology_inject
+        if inject == "head":
+            H_ctx = self.trunk(X)  # [C, G+1, d], one pass per distinct context
+            H_rec = H_ctx[batch.record_context]  # [B, G+1, d]
+        else:
+            if batch.ontology is None:
+                raise ValueError("ontology injection needs Batch043.ontology")
+            shift = self.onto_inject(self.onto_token(batch.ontology)).unsqueeze(1)
+            if inject == "trunk_and_operator":
+                # the record's token enters the trunk input, so the trunk runs per record
+                H_rec = self.trunk(X[batch.record_context] + shift, cls_shift=shift)
+            else:
+                H_rec = self.trunk(X)[batch.record_context]
+            H_rec = H_rec + shift  # every gene token and the CLS, before the operator
         keys = self.mark_keys(batch.marks, H_rec)
         H_pert = self.operator(H_rec, keys, batch.marks.valid)
         valid = batch.marks.valid.unsqueeze(-1).to(keys.dtype)

@@ -20,6 +20,8 @@
 #   reg regft: all four regularization knobs + best.pt, then its fine-tune (SMOKE_ID)
 #   bal     : balanced sampler, balance_power 1 (SMOKE_ID_bal)
 #   balcap  : balanced p=1 with max_visits_per_record_per_epoch 8 (SMOKE_ID_balcap)
+#   injhead injop injtr: ontology token at the heads / + operator / + trunk (SMOKE_ID_<case>)
+#   SMOKE_BATCH (default 4) sets data.batch_size
 #
 #   sbatch --export=ALL,CASES="smmss ssss" experiments/043-expression-proteome-morphology/scripts/gh_train_043_sweep_smoke_cpu.slurm
 # On a GPU after the round (DEVICE=cuda, CHUNK=null: one SDPA call):
@@ -46,7 +48,7 @@ SMOKE_DIR="$DATA_ROOT/experiments/043-expression-proteome-morphology/sweep_smoke
 mkdir -p "$SMOKE_DIR"
 COMMON=(
   data.store_version=v2 arm=all loss=hlgauss weighting=equal seed=0 "device=${DEVICE:-cpu}"
-  data.batch_size=4 data.num_workers=4 data.sampler=records data.mark_cap=null
+  "data.batch_size=${SMOKE_BATCH:-4}" data.num_workers=4 data.sampler=records data.mark_cap=null
   data.val_max_records_per_dataset=8 data.traineval_max_records_per_dataset=4
   "budget.max_epochs=${SMOKE_EPOCHS:-1}" "+budget.max_steps_per_epoch=${SMOKE_STEPS:-3}" budget.probe_steps=2
   "+attention_query_chunk=${CHUNK:-1024}" "wandb.mode=${SMOKE_WANDB:-offline}" wandb.label_knobs=true
@@ -101,6 +103,12 @@ for c in $CASES; do
       # balanced p=1 with the visit cap 8 (2026-10-25), W&B id ${SMOKE_ID}_balcap
       run balcap data.sampler=balanced data.balance_power=1.0 \
         data.max_visits_per_record_per_epoch=8 "resume_id=${SMOKE_ID:?set SMOKE_ID}_balcap" ;;
+    injhead|injop|injtr)
+      # ontology conditioning with the token at the heads only / also before the operator
+      # / also into the trunk (2026-10-25); W&B id ${SMOKE_ID}_<case>. Needs prep_v4.
+      inj=$(case $c in injhead) echo head;; injop) echo operator;; injtr) echo trunk_and_operator;; esac)
+      run "$c" data.prep_version=prep_v4 model.conditioning.source=ontology \
+        "model.conditioning.inject=$inj" "resume_id=${SMOKE_ID:?set SMOKE_ID}_$c" ;;
     *) echo "unknown case $c" >&2; exit 2 ;;
   esac
 done

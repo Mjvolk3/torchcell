@@ -314,7 +314,9 @@ ROUNDS: dict[str, Round] = {
             f"gs1024_w4_reg_{k}{ft}"
             for k in ("do02", "wd5e-2", "sig2x", "tdrop01")
             for ft in ("", "_ft")
-        ),
+        )
+        # wave 4, balanced sampler power (owner, 2026-10-25): p1 6392/6393, p05 6394/6395
+        + tuple(f"gs1024_w4_bal_{k}{ft}" for k in ("p1", "p05") for ft in ("", "_ft")),
         hardware=(
             "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, four chained slots "
             "after the overnight round (dependency afterany:6311:6312:6317:6318:6322)"

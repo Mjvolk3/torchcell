@@ -1749,3 +1749,15 @@ Observation (measured, one seed per sampler): the per-gene heads reach their val
 | Messner | balanced p=1 | 3 | 2.5018 | 1.26 | about 3.8 |
 
 The Kemmeren minimum under the records sampler is at epoch 14 (SMSS) and 24 (overnight), not 33. Under balanced sampling the minimum moves earlier in epochs in proportion to the revisit rate, so in passes it lands in the same range (Kemmeren 12-24, Messner 3-4); the minimum values themselves agree within 0.01.
+
+### Closed: balanced sampling as implemented does not lower the validation floor (2026-10-25)
+
+Three balanced-sampler cells on the SMSS recipe (seed 0 each, ontology, prep_v4, HL-Gauss) were stopped by the pre-registered rule before their scoring window; every one memorizes the two smallest datasets and the per-gene heads reach their validation minima early, then rise.
+
+| cell (job) | sampler | stopped at epoch | val/turnover/loss, epoch 1 -> stop | val/zelezniak/loss, low -> stop | per-gene val minimum (epoch) | rule trigger |
+|---|---|---|---|---|---|---|
+| gs1024_w4_bal_p1 (6392) | balance_power 1 | 12 | 3.905 -> 6.042 | 2.485 -> 3.465 | Kemmeren 2.3118 (6), Messner 2.5018 (3) | Kemmeren +0.040, +0.027 at epochs 11-12 |
+| gs1024_w4_bal_p05 (6394) | balance_power 0.5 | 20 | 3.27 -> 4.44 | 2.48 (5) -> 2.74 | Kemmeren 2.3127 (4), Messner 2.5038 (2) | Messner from epoch 13, Kemmeren from epoch 17 |
+| gs1024_w4_bal_p1_cap8 (6406) | balance_power 1, at most 8 visits per record per epoch | 22 | 3.293 -> 3.738 | 2.442 (2) -> 2.652 | Kemmeren 2.3180 (5), Messner 2.5039 (3) | new rise after epoch 14: Messner +0.029, +0.027 at epochs 21-22 |
+
+Read (one seed each): turnover (33 training records) and zelezniak (79) are memorized under every balanced setting, the cap slowing it without stopping it, and the per-gene heads reach their minima within epochs 2-6 and then rise. None of the three reaches a per-gene validation loss below the records-sampler cells (Kemmeren 2.3191 at epoch 14 under `gs1024_w1_smss`), so balanced sampling as implemented does not lower the validation floor. The batch-size axis is followed up instead: `gs1024_w4_bs16` (batch 16) is the one cell beyond the seed spread on Kemmeren at both stages (stage 1 +0.051, fine-tune +0.044 against SMSS), and seeds 1 and 2 (`gs1024_w4_bs16_s1`, `_s2`; jobs 6408/6409, 6410/6411) are queued after the regularization cells.

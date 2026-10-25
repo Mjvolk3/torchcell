@@ -1,0 +1,17 @@
+# experiments/043-expression-proteome-morphology/scripts/alcf/polaris_cells_043_seeds.tsv
+# Extra cells for the 24-node Polaris prod copy (polaris_train_043_ontology_prod24.pbs, 2026-10-25): seeds s2/s3 of the
+# 12-cell conditioning x loss grid of round ontology_2026_10_23 (run ids o1023_<cell>), cloned from the s0 rows of
+# polaris_cells_043.tsv with only the seed changed. all_onto_hlgauss_equal_s2 and all_name_hlgauss_equal_s2 are already
+# rows of polaris_cells_043.tsv and are not repeated. Read after polaris_cells_043.tsv (lower claim priority) when
+# rank_cell_043.sh runs with EXTRA_CELLS=polaris_cells_043_seeds.tsv.
+# Columns: cell, fine-tune 0|1, row options + hydra overrides.
+all_onto_hlgauss_equal_s3	1	profile=ontology arm=all loss=hlgauss weighting=equal seed=3 model.conditioning.source=ontology budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_onto_pinball_equal_s2	1	profile=ontology arm=all loss=pinball weighting=equal seed=2 model.conditioning.source=ontology budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_onto_pinball_equal_s3	1	profile=ontology arm=all loss=pinball weighting=equal seed=3 model.conditioning.source=ontology budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_onto_mse_equal_s2	1	profile=ontology arm=all loss=mse weighting=equal seed=2 model.conditioning.source=ontology budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_onto_mse_equal_s3	1	profile=ontology arm=all loss=mse weighting=equal seed=3 model.conditioning.source=ontology budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_name_hlgauss_equal_s3	1	profile=ontology arm=all loss=hlgauss weighting=equal seed=3 model.conditioning.source=name budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_name_pinball_equal_s2	1	profile=ontology arm=all loss=pinball weighting=equal seed=2 model.conditioning.source=name budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_name_pinball_equal_s3	1	profile=ontology arm=all loss=pinball weighting=equal seed=3 model.conditioning.source=name budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_name_mse_equal_s2	1	profile=ontology arm=all loss=mse weighting=equal seed=2 model.conditioning.source=name budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8
+all_name_mse_equal_s3	1	profile=ontology arm=all loss=mse weighting=equal seed=3 model.conditioning.source=name budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 data.batch_size=8

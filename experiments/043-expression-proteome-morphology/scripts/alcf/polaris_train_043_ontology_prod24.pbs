@@ -1,0 +1,30 @@
+#!/bin/bash -l
+#PBS -A GenesisHackathonOct26
+#PBS -q prod
+#PBS -l select=24:ncpus=64:ngpus=4
+#PBS -l walltime=02:00:00
+#PBS -l filesystems=home:eagle
+#PBS -N 043-lane24
+#PBS -j oe
+#PBS -o /eagle/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/slurm/output/
+# experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_prod24.pbs
+# [[experiments.043-expression-proteome-morphology.scripts.alcf.polaris_train_043_ontology_prod24]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_prod24.pbs
+#
+# Polaris prod lane, 24-node copy (2026-10-25): 24 nodes x 4 A100 = 96 ranks, 2 h walltime, still
+# in `small` (10-24 nodes). Same claim lane as polaris_train_043_ontology_prod.pbs (rank_cell_043.sh,
+# claims_polaris_lane/ on eagle): the 41 cells of polaris_cells_043.tsv first, then the 10 seed
+# cells of polaris_cells_043_seeds.tsv (EXTRA_CELLS), 51 cells in all. The node count is chosen for
+# queue priority (PBS score rises with node count): about 2.2x the score of the 11-node copy. With
+# 51 cells, at most 51 of the 96 ranks hold a cell; the rest exit at once, and their nodes are
+# still charged for the full walltime (48 node-hours per copy).
+#
+#   ssh polaris "cd /eagle/GenesisHackathonOct26/mjvolk3/torchcell && qsub experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_prod24.pbs"
+set -euo pipefail
+cd /eagle/GenesisHackathonOct26/mjvolk3/torchcell
+echo "job $PBS_JOBID on $(sort -u "$PBS_NODEFILE" | tr '\n' ' ') at $(date); tree $(cut -c1-9 .synced_commit)"
+rc=0
+mpiexec -n 96 --ppn 4 --depth 16 --cpu-bind depth \
+  env EXTRA_CELLS=polaris_cells_043_seeds.tsv bash experiments/043-expression-proteome-morphology/scripts/alcf/rank_cell_043.sh || rc=$?
+echo "done $(date) rc $rc"
+exit "$rc"

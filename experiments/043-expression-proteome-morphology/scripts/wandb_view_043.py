@@ -321,7 +321,9 @@ ROUNDS: dict[str, Round] = {
         # (6398/6399), fine-tunes at the recipe batch 8. Their Polaris / Aurora twins
         # a1024b_all_onto_hlgauss_equal_bs16_s0 / _bs32_s0 are micro-batch 1 x
         # accumulate 16 / 32, not plain batches
-        + tuple(f"gs1024_w4_bs{b}{ft}" for b in (16, 32) for ft in ("", "_ft")),
+        + tuple(f"gs1024_w4_bs{b}{ft}" for b in (16, 32) for ft in ("", "_ft"))
+        # balanced p=1 with the visit cap 8 (2026-10-25), jobs 6406/6407
+        + ("gs1024_w4_bal_p1_cap8", "gs1024_w4_bal_p1_cap8_ft"),
         hardware=(
             "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, four chained slots "
             "after the overnight round (dependency afterany:6311:6312:6317:6318:6322)"

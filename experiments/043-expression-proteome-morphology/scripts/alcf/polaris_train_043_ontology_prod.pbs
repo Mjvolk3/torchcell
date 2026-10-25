@@ -1,31 +1,31 @@
 #!/bin/bash -l
 #PBS -A GenesisHackathonOct26
 #PBS -q prod
-#PBS -l select=10:ngpus=4
-#PBS -l walltime=03:00:00
+#PBS -l select=11:ncpus=64:ngpus=4
+#PBS -l walltime=02:00:00
 #PBS -l filesystems=home:eagle
-#PBS -N 043-onto-prod
+#PBS -N 043-onto-lane
 #PBS -j oe
 #PBS -o /eagle/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/slurm/output/
 # experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_prod.pbs
 # [[experiments.043-expression-proteome-morphology.scripts.alcf.polaris_train_043_ontology_prod]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_prod.pbs
 #
-# Third route of round ontology_2026_10_23 (owner, 2026-10-24): the prod routing queue,
-# which places a 10-node 3 h job in `small`. Twenty ranks, two per node (20 GPUs, the
-# owner's ceiling; two cards per node idle), rank r = row r of ontology_grid_043.tsv
-# (rank_cell_043.sh). Chunks chain with -W depend=afterany:<previous>; every stage resumes
-# from its last.pt under its resume_id (written atomically at every epoch end, about every
-# 7.3 min at the measured 438 s per epoch), and a stage whose DONE marker exists exits at
-# once, so a later chunk only spends what is left.
+# Polaris prod lane (owner, 2026-10-25): 11 nodes x 4 A100 = 44 ranks, 2 h walltime (the
+# prod router places it in `small`; larger jobs and shorter walltimes score higher). Each
+# rank claims cells from polaris_cells_043.tsv (41 cells: the 20 of round
+# ontology_2026_10_23 and the 21 moved from Aurora) through rank_cell_043.sh's mkdir-lock
+# claims on eagle, trains until the walltime, and the next copy resumes every stage from its
+# last.pt. Copies are INDEPENDENT (no -W depend: a dependent job accrues no eligible time
+# until its predecessor finishes); a lane keeper resubmits as copies finish until every
+# cell has its .done marker. Ranks that find nothing to claim exit at once.
 #
-#   prev=$(qsub polaris_train_043_ontology_prod.pbs)
-#   prev=$(qsub -W depend=afterany:$prev polaris_train_043_ontology_prod.pbs)   # x4
+#   ssh polaris "cd /eagle/GenesisHackathonOct26/mjvolk3/torchcell && qsub experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_prod.pbs"
 set -euo pipefail
 cd /eagle/GenesisHackathonOct26/mjvolk3/torchcell
 echo "job $PBS_JOBID on $(sort -u "$PBS_NODEFILE" | tr '\n' ' ') at $(date); tree $(cut -c1-9 .synced_commit)"
 rc=0
-mpiexec -n 20 --ppn 2 --depth 32 --cpu-bind depth \
+mpiexec -n 44 --ppn 4 --depth 16 --cpu-bind depth \
   bash experiments/043-expression-proteome-morphology/scripts/alcf/rank_cell_043.sh || rc=$?
 echo "done $(date) rc $rc"
 exit "$rc"

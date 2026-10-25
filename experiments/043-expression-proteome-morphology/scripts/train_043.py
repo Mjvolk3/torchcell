@@ -2680,7 +2680,18 @@ def config_matches(stored: dict[str, Any], cfg: TrainConfig043) -> bool:
     for (sec, key), default in SWEEP_DEFAULTS.items():
         if key not in stored.get(sec, {}) and cur[sec][key] == default:
             cur[sec] = {k: v for k, v in cur[sec].items() if k != key}
-    return bool(stored == cur)
+    return bool(_strip_placement(stored) == _strip_placement(cur))
+
+
+def _strip_placement(d: dict[str, Any]) -> dict[str, Any]:
+    """A config dump without the keys that say WHERE a run executes, not what it
+    computes: ``device`` and ``wandb.tags``. A run moved between machines (an Aurora
+    checkpoint resumed on a Polaris A100) therefore resumes; every other key must match.
+    """
+    out = {k: v for k, v in d.items() if k != "device"}
+    if isinstance(out.get("wandb"), dict):
+        out["wandb"] = {k: v for k, v in out["wandb"].items() if k != "tags"}
+    return out
 
 
 def train(

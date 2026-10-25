@@ -15,6 +15,17 @@ outside the round (the zombies included) never appear. Each view keeps only keys
 runs log, so a panel appears the first time a run logs its key (``val/loss`` from commit
 e6ad22d0c on); rerun after every sync and after every new run. Idempotent.
 
+The rounds in ``CURATED_ROUNDS`` use the loss-first layout instead (owner, 2026-10-24:
+"we want loss curves together and separated"): 1 loss together (train/loss and val/loss
+on one axis, mean per arm with the min/max band), 2 loss separated (train/loss and
+val/loss of every run on their own axes, color = arm, dashed = fine-tune; in the round
+view also a pair clipped to the HL-Gauss z-score cells' range), 3 the six validation
+metrics grouped by arm, 4 optimization, 5 bookkeeping. Their runset is ungrouped and the
+grouping is set per panel, so per-run and per-arm panels sit in one view. A view has one
+runset, so a panel per arm restricted to that arm's runs exists only in the arm views
+and in the round Report (``wandb_report_043.py``); every view is read back and checked
+(sections, panel counts, every key logged by a run of the view).
+
 View ids are created on the first run (``save_as_new_view``) and recorded in
 ``results/wandb_view_ids.json`` under ``<round>`` and ``<round>/<arm>``, which is
 committed; later runs overwrite those views in place. The group page
@@ -36,6 +47,9 @@ import numpy as np
 import wandb
 import wandb_workspaces.reports.v2 as wr
 import wandb_workspaces.workspaces as ws
+from pydantic import BaseModel, ConfigDict
+
+from torchcell.utils import PLOT_PALETTE
 
 ENTITY = "zhao-group"
 PROJECT = "torchcell_043-expression-proteome-morphology"
@@ -483,6 +497,421 @@ def sections() -> list[tuple[str, list[Panel]]]:
     ]
 
 
+#: Rounds whose views use the curated loss-first layout (owner, 2026-10-24: "we want
+#: loss curves together and separated"); every other round keeps ``sections()``.
+CURATED_ROUNDS = (
+    "aurora_2026_10_24",
+    "ghyper_sweep_2026_10_24",
+    "overnight_2026_10_23",
+)
+LOSS_KEYS = ["train/loss", "val/loss"]
+VAL_METRICS = (
+    ("val/kemmeren/pearson_per_gene_median", "val/kemmeren per-gene Pearson median"),
+    (
+        "val/doubles/pearson_per_strain_centered_median",
+        "val/doubles (Sameith) per-double centered Pearson median",
+    ),
+    ("val/muenzner/pearson_per_gene_median", "val/muenzner per-gene Pearson median"),
+    ("val/caudal/pearson_per_gene_median", "val/caudal per-gene Pearson median"),
+    ("val/messner/pearson_per_gene_median", "val/messner per-gene Pearson median"),
+    ("val/vaishnav/pearson", "val/vaishnav Pearson"),
+)
+BOOKKEEPING = (
+    ("time/epoch_seconds by epoch", ["time/epoch_seconds"]),
+    ("setup/steps_per_epoch by epoch", ["setup/steps_per_epoch"]),
+    ("setup/n_epochs (epochs fixed by the budget) by epoch", ["setup/n_epochs"]),
+)
+FINETUNE_PREFIX = "finetune_kemmeren_from_"
+#: Arm categories, in display order.
+HLGAUSS_CELL, OTHER_OBJECTIVE, ALONE, FINETUNE = 0, 1, 2, 3
+
+
+class Arm(BaseModel):
+    """One arm (W&B group) of a round, as read from its runs."""
+
+    model_config = ConfigDict(frozen=True)
+
+    label: str
+    run_ids: tuple[str, ...]
+    seeds: tuple[int, ...]
+    epochs_reached: tuple[int, ...]  # per run, 0 when no epoch was logged
+    states: tuple[str, ...]
+    loss_kind: str
+    target_transform: str
+    keys: frozenset[str]
+    loss_run_ids: tuple[str, ...]  # runs that logged train/loss or val/loss
+
+    @property
+    def category(self) -> int:
+        """Display category: HL-Gauss z-score cell, other objective, alone, fine-tune."""
+        if self.label.startswith(FINETUNE_PREFIX):
+            return FINETUNE
+        if self.label.startswith("alone_"):
+            return ALONE
+        if self.loss_kind != "hlgauss" or self.target_transform != "zscore":
+            return OTHER_OBJECTIVE
+        return HLGAUSS_CELL
+
+    @property
+    def objective(self) -> str:
+        """Loss family and target transform, as a phrase."""
+        return f"{self.loss_kind} loss on {self.target_transform} targets"
+
+
+def _target_transform(config: dict) -> str:
+    """``data.target_transform``; runs before commit 50fe3e3fb (which added the knob)
+    trained on the legacy z score only, which is the knob's ``zscore``.
+    """
+    data = config.get("data", {})
+    return str(data["target_transform"]) if "target_transform" in data else "zscore"
+
+
+def collect_arms(api: wandb.Api, rnd: Round) -> list[Arm]:
+    """Read every run of the round that W&B holds and return its arms in display
+    order: HL-Gauss z-score cells, other objectives, alone, fine-tunes; within a
+    category the shortest label (the baseline) first.
+    """
+    found = list(
+        api.runs(f"{ENTITY}/{PROJECT}", filters={"name": {"$in": list(rnd.run_ids)}})
+    )
+    by_arm: dict[str, list] = {}
+    for run in found:
+        if not run.group:
+            raise ValueError(f"{run.id}: no W&B group, cannot name its arm")
+        by_arm.setdefault(run.group, []).append(run)
+    arms = []
+    for label, runs in by_arm.items():
+        runs = sorted(runs, key=lambda r: r.id)
+        kinds = {r.config["loss"]["kind"] for r in runs}
+        transforms = {_target_transform(r.config) for r in runs}
+        if len(kinds) != 1 or len(transforms) != 1:
+            raise ValueError(f"{label}: mixed objectives {kinds} {transforms}")
+        keys: set[str] = set()
+        for r in runs:
+            keys.update(r.summary.keys())
+        arms.append(
+            Arm(
+                label=label,
+                run_ids=tuple(r.id for r in runs),
+                seeds=tuple(int(r.config["seed"]) for r in runs),
+                epochs_reached=tuple(int(r.summary.get("epoch") or 0) for r in runs),
+                states=tuple(r.state for r in runs),
+                loss_kind=kinds.pop(),
+                target_transform=transforms.pop(),
+                keys=frozenset(keys),
+                loss_run_ids=tuple(
+                    r.id for r in runs if set(LOSS_KEYS) & set(r.summary.keys())
+                ),
+            )
+        )
+    return sorted(arms, key=lambda a: (a.category, len(a.label), a.label))
+
+
+def arm_styles(arms: list[Arm]) -> tuple[dict[str, str], dict[str, str]]:
+    """Line color per arm label from ``PLOT_PALETTE`` in display order; a fine-tune
+    takes its stage 1 parent's color and is dashed. Returns (color, mark) by label.
+    """
+    color: dict[str, str] = {}
+    mark: dict[str, str] = {}
+    nxt = 0
+    for a in arms:
+        parent = a.label.removeprefix(FINETUNE_PREFIX)
+        if a.category == FINETUNE and parent in color:
+            color[a.label] = color[parent]
+        else:
+            if nxt == len(PLOT_PALETTE):
+                raise ValueError(
+                    f"more than {len(PLOT_PALETTE)} arm colors needed; the palette "
+                    "ceiling is 18 (disambiguate by mark, not by more color)"
+                )
+            color[a.label] = PLOT_PALETTE[nxt]
+            nxt += 1
+        mark[a.label] = "dashed" if a.category == FINETUNE else "solid"
+    return color, mark
+
+
+def series_styles(
+    arms: list[Arm], metric: str
+) -> tuple[dict[str, str], dict[str, str]]:
+    """Per-series ``line_colors`` / ``line_marks`` (keys ``<run id>:<metric>``) that
+    color every run by its arm.
+    """
+    color, mark = arm_styles(arms)
+    colors = {f"{r}:{metric}": color[a.label] for a in arms for r in a.run_ids}
+    marks = {f"{r}:{metric}": mark[a.label] for a in arms for r in a.run_ids}
+    return colors, marks
+
+
+def hlgauss_range(api: wandb.Api, run_ids: list[str]) -> tuple[float, float, int]:
+    """(min, max) of train/loss and val/loss and the largest epoch over the HL-Gauss
+    z-score cells, from the unsampled history; the round view clips its HL-Gauss
+    pair to this box because a view has one runset.
+    """
+    vals: list[float] = []
+    max_epoch = 0
+    for rid in run_ids:
+        run = api.run(f"{ENTITY}/{PROJECT}/{rid}")
+        # one key at a time; a row can still carry None for a key it did not log
+        for k in LOSS_KEYS:
+            for row in run.scan_history(keys=["epoch", k], page_size=5000):
+                if row.get(k) is None or row.get("epoch") is None:
+                    continue
+                vals.append(float(row[k]))
+                max_epoch = max(max_epoch, int(row["epoch"]))
+    if not vals:
+        raise ValueError(f"no train/loss or val/loss in {run_ids}")
+    lo, hi = min(vals), max(vals)
+    pad = 0.05 * (hi - lo)
+    return lo - pad, hi + pad, max_epoch
+
+
+def _plot(
+    title: str,
+    x: str,
+    y: list[str],
+    *,
+    grouped: bool,
+    log_y: bool = False,
+    colors: dict[str, str] | None = None,
+    marks: dict[str, str] | None = None,
+    range_x: tuple[float | None, float | None] = (None, None),
+    range_y: tuple[float | None, float | None] = (None, None),
+    w: int = 12,
+) -> wr.LinePlot:
+    """One line plot: grouped = mean per arm (``arm_label``) with the min/max band
+    over its runs; otherwise one line per run named by the run.
+    """
+    return wr.LinePlot(
+        title=title,
+        x=x,
+        y=y,
+        title_x="optimizer step" if x == STEP else "epoch",
+        log_y=log_y,
+        range_x=range_x,
+        range_y=range_y,
+        smoothing_type=SMOOTHING_TYPE,
+        smoothing_factor=SMOOTHING_WEIGHT,
+        max_runs_to_show=MAX_RUNS_SHOWN,
+        **(
+            {
+                "groupby": wr.Config("arm_label"),
+                "groupby_aggfunc": "mean",
+                "groupby_rangefunc": "minmax",
+            }
+            if grouped
+            else {"legend_template": "${run:displayName}"}
+        ),
+        line_colors=colors,
+        line_marks=marks,
+        layout=wr.Layout(w=w, h=8),
+    )
+
+
+def curated_sections(
+    arms: list[Arm], present: set[str], hl_box: tuple[float, float, int] | None
+) -> list[tuple[str, list[wr.LinePlot]]]:
+    """The loss-first layout: 1 loss together, 2 loss separated, 3 validation
+    metrics, 4 optimization, 5 bookkeeping. ``hl_box`` (round view only) adds the
+    HL-Gauss pair clipped to the HL-Gauss cells' range.
+    """
+    loss_y = [k for k in LOSS_KEYS if k in present]
+    out: list[tuple[str, list[wr.LinePlot]]] = []
+    if loss_y:
+        out.append(
+            (
+                "1 Loss, together",
+                [
+                    _plot(
+                        f"{' and '.join(loss_y)} by epoch, mean per arm with the "
+                        "min/max band over its runs",
+                        EPOCH,
+                        loss_y,
+                        grouped=True,
+                        w=24 if len(arms) == 1 else 12,
+                    )
+                ],
+            )
+        )
+        sep = []
+        for k in loss_y:
+            c, m = series_styles(arms, k)
+            sep.append(
+                _plot(
+                    f"{k} by epoch, every run (color = arm, dashed = fine-tune)",
+                    EPOCH,
+                    [k],
+                    grouped=False,
+                    colors=c,
+                    marks=m,
+                )
+            )
+        if hl_box is not None:
+            lo, hi, max_epoch = hl_box
+            for k in loss_y:
+                c, m = series_styles(arms, k)
+                sep.append(
+                    _plot(
+                        f"{k} by epoch, axes clipped to the HL-Gauss z-score cells "
+                        f"(y {lo:.2f} to {hi:.2f}, epochs 0 to {max_epoch}); other "
+                        "runs show only where they fall inside the box",
+                        EPOCH,
+                        [k],
+                        grouped=False,
+                        colors=c,
+                        marks=m,
+                        range_x=(0, max_epoch),
+                        range_y=(lo, hi),
+                    )
+                )
+        out.append(("2 Loss, separated", sep))
+    val = [
+        _plot(f"{name} by epoch, mean per arm", EPOCH, [k], grouped=True)
+        for k, name in VAL_METRICS
+        if k in present
+    ]
+    if val:
+        out.append(("3 Validation metrics", val))
+    opt = []
+    if "train/grad_norm" in present:
+        opt.append(
+            _plot(
+                "train/grad_norm (pre-clip, log y) by optimizer step, mean per arm",
+                STEP,
+                ["train/grad_norm"],
+                grouped=True,
+                log_y=True,
+            )
+        )
+    if "train/lr" in present:
+        opt.append(
+            _plot("train/lr by optimizer step", STEP, ["train/lr"], grouped=True)
+        )
+    if opt:
+        out.append(("4 Optimization", opt))
+    book = [
+        _plot(t, EPOCH, ys, grouped=True)
+        for t, ys in BOOKKEEPING
+        if all(k in present for k in ys)
+    ]
+    if book:
+        out.append(("5 Bookkeeping", book))
+    return out
+
+
+def save_view(
+    key: str,
+    slot: str,
+    name: str,
+    built: list[ws.Section],
+    filters: list,
+    groupby: list,
+) -> str:
+    """Overwrite the registered saved view ``slot`` in place, or create and register
+    it.
+    """
+    settings = ws.WorkspaceSettings(
+        smoothing_type=SMOOTHING_TYPE,
+        smoothing_weight=SMOOTHING_WEIGHT,
+        max_runs=MAX_RUNS_SHOWN,
+        sort_panels_alphabetically=False,
+    )
+    runset_settings = ws.RunsetSettings(
+        filters=filters,
+        groupby=groupby,
+        order=[ws.Ordering(ws.Metric("Name"), ascending=True)],
+    )
+    reg = _registry()
+    view_id = reg.get(slot, {}).get("id")
+    if view_id is None:
+        view = ws.Workspace(
+            entity=ENTITY,
+            project=PROJECT,
+            name=name,
+            sections=built,
+            settings=settings,
+            runset_settings=runset_settings,
+        )
+        view.save_as_new_view()
+        found = re.search(r"[?&]nw=([\w-]+)", view.url)
+        if found is None:
+            raise ValueError(f"no view id in {view.url}")
+        reg[slot] = {"id": found.group(1), "url": view.url, "name": name}
+        with open(VIEW_REGISTRY, "w") as f:
+            json.dump(reg, f, indent=2, sort_keys=True)
+            f.write("\n")
+        return view.url
+    view = ws.Workspace.from_url(f"https://wandb.ai/{ENTITY}/{PROJECT}?nw={view_id}")
+    view.name = name
+    view.sections = built
+    view.settings = settings
+    view.runset_settings = runset_settings
+    view.save()
+    return view.url
+
+
+def populate_curated(
+    key: str,
+    rnd: Round,
+    arms: list[Arm],
+    arm: Arm | None,
+    hl_box: tuple[float, float, int] | None,
+) -> tuple[str, list[tuple[str, list[wr.LinePlot]]]]:
+    """Overwrite (or create) the curated round view (``arm`` None) or one arm view.
+    The runset is ungrouped; grouping by arm is set per panel, so the separated
+    panels can draw one line per run beside the grouped ones.
+    """
+    shown = arms if arm is None else [arm]
+    present = set().union(*(a.keys for a in shown))
+    layout = curated_sections(shown, present, hl_box)
+    built = [
+        ws.Section(
+            name=name,
+            is_open=True,
+            layout_settings=ws.SectionLayoutSettings(columns=2, rows=1),
+            panel_settings=ws.SectionPanelSettings(
+                smoothing_type=SMOOTHING_TYPE, smoothing_weight=SMOOTHING_WEIGHT
+            ),
+            panels=panels,
+        )
+        for name, panels in layout
+    ]
+    filters = [ws.Config("round") == key]
+    if arm is not None:
+        filters.append(ws.Config("arm_label") == arm.label)
+    name = rnd.view_name if arm is None else f"043 {key}: {arm.label}"
+    slot = key if arm is None else f"{key}/{arm.label}"
+    return save_view(key, slot, name, built, filters, []), layout
+
+
+def verify_view(
+    url: str, layout: list[tuple[str, list[wr.LinePlot]]], shown: list[Arm]
+) -> list[str]:
+    """Read the saved view back: section names and panel counts must match what was
+    written, and every plotted key must be in the summary of a run of the view.
+    """
+    view = ws.Workspace.from_url(url)
+    got = [(s.name, len(s.panels)) for s in view.sections]
+    want = [(n, len(p)) for n, p in layout]
+    if got != want:
+        raise ValueError(f"{url}: sections {got} != written {want}")
+    logged = set().union(*(a.keys for a in shown))
+    missing = []
+    out = []
+    for s in view.sections:
+        grouped = colored = 0
+        for p in s.panels:
+            ys = [getattr(k, "name", k) for k in p.y]
+            missing += [k for k in ys if k not in logged]
+            grouped += p.groupby is not None
+            colored += bool(p.line_colors)
+        out.append(
+            f"{s.name}: {len(s.panels)} panels ({grouped} grouped by arm, {colored} colored by arm)"
+        )
+    if missing:
+        raise ValueError(f"{url}: keys no run of the view logs: {missing}")
+    return out
+
+
 def label_runs(api: wandb.Api, key: str, rnd: Round) -> dict[str, set[str]]:
     """Write ``round`` and ``arm_label``; return the logged keys per arm."""
     keys: dict[str, set[str]] = {}
@@ -609,13 +1038,10 @@ def populate_view(key: str, rnd: Round, present: set[str], arm: str | None) -> s
 
 #: Rounds that also get a total-loss-only view (owner, 2026-10-23: "curate charts so you
 #: have train/loss and val/loss that's what i want to see"), registry slot <round>_loss.
-LOSS_VIEW_ROUNDS = (
-    "overnight_2026_10_23",
-    "ontology_2026_10_23",
-    "aurora_2026_10_24",
-    "ghyper_sweep_2026_10_24",
-)
-LOSS_KEYS = ["train/loss", "val/loss"]
+#: The curated rounds (``CURATED_ROUNDS``) left this list on 2026-10-24: their round
+#: view carries the loss panels per arm, and the old ``<round>_loss`` views (every run
+#: on one ungrouped axis, "hardly readable") are no longer refreshed.
+LOSS_VIEW_ROUNDS = ("ontology_2026_10_23",)
 
 
 def populate_loss_view(key: str, rnd: Round) -> str:
@@ -822,6 +1248,20 @@ def main() -> None:
     print(f"tagged aborted: {tag_aborted(api)}")
     keys = label_runs(api, args.round, rnd)
     print(f"hardware: {rnd.hardware}")
+    if args.round in CURATED_ROUNDS:
+        arms = collect_arms(api, rnd)
+        cells = [r for a in arms if a.category == HLGAUSS_CELL for r in a.loss_run_ids]
+        hl_box = hlgauss_range(api, cells) if cells else None
+        url, layout = populate_curated(args.round, rnd, arms, None, hl_box)
+        print("round view: " + "; ".join(verify_view(url, layout, arms)))
+        print(url)
+        for arm in arms:
+            url, layout = populate_curated(args.round, rnd, arms, arm, None)
+            checked = verify_view(url, layout, [arm])
+            print(f"{arm.label} ({len(arm.run_ids)} runs): " + "; ".join(checked))
+            print(url)
+            print(f"https://wandb.ai/{ENTITY}/{PROJECT}/groups/{arm.label}/workspace")
+        return
     print(
         f"round view\n{populate_view(args.round, rnd, set().union(*keys.values()), None)}"
     )

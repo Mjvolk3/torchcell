@@ -1,0 +1,10 @@
+# experiments/043-expression-proteome-morphology/scripts/alcf/aurora_grid_043_stack_fw3.tsv
+# Round aurora_2026_10_25, third frameworks-stack job 043-stack-fw3 (ARM=frameworks, GRID=this file): the 4 round
+# aurora_2026_10_24 cells not on Aurora on 2026-10-25 (bs16 s1/s2, h288 s2, alone_kemmeren resumed under a1024_), rows
+# copied from polaris_cells_043.tsv (profile=aurora dropped; that table keeps each cell's Aurora micro-batch and
+# accumulate_steps, so it resumes from its last.pt). Tiles 0-3; tiles 4-11 are spares for the tile-retry.
+# Columns: node slot, tile, cell, fine-tune 0|1, row options + stage-1 overrides.
+0	0	all_onto_hlgauss_equal_bs16_s1	1	arm=all budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 loss=hlgauss weighting=equal seed=1 model.conditioning.source=ontology data.batch_size=1 ++optim.accumulate_steps=16 data.label_batch_size=true optim.lr=4.243e-4
+0	1	all_onto_hlgauss_equal_bs16_s2	1	arm=all budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 loss=hlgauss weighting=equal seed=2 model.conditioning.source=ontology data.batch_size=1 ++optim.accumulate_steps=16 data.label_batch_size=true optim.lr=4.243e-4
+0	2	all_onto_hlgauss_equal_h288_s2	1	arm=all budget.max_epochs=80 budget.eval_every_epochs=1 budget.registered_window.start_frac=0.875 loss=hlgauss weighting=equal seed=2 model.conditioning.source=ontology data.batch_size=1 ++optim.accumulate_steps=8 model.hidden_dim=288 wandb.label_knobs=true
+0	3	alone_kemmeren_onto_hlgauss_equal_s0	0	rid_prefix=a1024 ckpt_every=none arm=alone_kemmeren loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology data.batch_size=2 ++optim.accumulate_steps=4 budget.max_epochs=50 budget.max_steps=571100 budget.eval_every_epochs=20

@@ -92,6 +92,94 @@
     }
    }
   },
+  "gs1024_w1_smmss": {
+   "arm_label": "all_onto_hlgauss_equal_LSMMSS",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 80,
+   "n_epochs": 80,
+   "window": [
+    71,
+    80
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.09455533076079788,
+     "n_evaluations": 10
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.18128788278934677,
+     "n_evaluations": 10
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 10
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.17564803341522625,
+     "n_evaluations": 10
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.1028277229985222,
+     "n_evaluations": 10
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.056414256969583056,
+     "n_evaluations": 10
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.932016008566881,
+     "n_evaluations": 10
+    },
+    "train/loss": {
+     "mean": 2.075487489319909,
+     "n_evaluations": 10
+    },
+    "val/loss": {
+     "mean": 2.4981826360895703,
+     "n_evaluations": 10
+    }
+   }
+  },
+  "gs1024_w1_smmss_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_hlgauss_equal_LSMMSS",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    16,
+    20
+   ],
+   "window_override_of": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.13464284141863217,
+     "n_evaluations": 5
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.20713598915540138,
+     "n_evaluations": 5
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 5
+    },
+    "train/loss": {
+     "mean": 2.1257305579469694,
+     "n_evaluations": 5
+    },
+    "val/loss": {
+     "mean": 2.361293873356739,
+     "n_evaluations": 5
+    }
+   }
+  },
   "gs1024_w1_mmmm": {
    "arm_label": "all_onto_hlgauss_equal_LMMMM",
    "seed": 0,
@@ -364,6 +452,56 @@
     }
    }
   },
+  "gs1024_w2_binq": {
+   "arm_label": "all_onto_binned_quantile_equal",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 80,
+   "n_epochs": 80,
+   "window": [
+    71,
+    80
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.06845296336281234,
+     "n_evaluations": 10
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.15730874463550557,
+     "n_evaluations": 10
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 10
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.21210086336885406,
+     "n_evaluations": 10
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.13336150590805734,
+     "n_evaluations": 10
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.06738694989874364,
+     "n_evaluations": 10
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9291920790841198,
+     "n_evaluations": 10
+    },
+    "train/loss": {
+     "mean": 2.6694866294592905,
+     "n_evaluations": 10
+    },
+    "val/loss": {
+     "mean": 3.099092418425139,
+     "n_evaluations": 10
+    }
+   }
+  },
   "gs1024_w2_qn": {
    "arm_label": "all_onto_hlgauss_equal_tqn",
    "seed": 0,
@@ -508,14 +646,12 @@
   }
  },
  "not_finished_epochs_reached": {
-  "gs1024_w1_smmss": 65,
-  "gs1024_w2_binq": 56,
-  "gs1024_w2_h288": 4,
-  "gs1024_w3_lrhalf": 21
+  "gs1024_w2_mle": 0,
+  "gs1024_w2_h288": 25,
+  "gs1024_w3_lrhalf": 46,
+  "gs1024_w2_mmmm_cos": 4
  },
  "no_run_yet": [
-  "gs1024_w1_smmss_ft",
-  "gs1024_w2_mle",
   "gs1024_w2_mle_ft",
   "gs1024_w2_binq_ft",
   "gs1024_w2_h288_ft",
@@ -526,7 +662,6 @@
   "gs1024_w3_lrhalf_ft",
   "gs1024_w3_lrx2",
   "gs1024_w3_lrx2_ft",
-  "gs1024_w2_mmmm_cos",
   "gs1024_w2_mmmm_cos_ft"
  ]
 }

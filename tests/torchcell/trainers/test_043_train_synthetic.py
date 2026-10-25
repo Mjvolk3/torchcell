@@ -1308,3 +1308,36 @@ def test_mid_epoch_checkpoint_resumes_where_the_crash_left_off(
         if a[k].is_floating_point()
     )
     assert worst < 1e-6
+
+
+def test_best_checkpoint_is_the_minimum_val_loss_epoch_and_survives_resume(
+    tr: ModuleType, world: dict[str, Any], tmp_path: Path
+) -> None:
+    base = _cfg(tr, world["root"], "hlgauss").model_dump()
+    base["budget"] = {**base["budget"], "max_epochs": 4, "max_steps_per_epoch": 1}
+    base["optim"] = {
+        **base["optim"],
+        "lr": 5e-2,
+    }  # large steps: val/loss moves both ways
+    base["paths"]["checkpoint_root"] = str(tmp_path / "ckpt")
+    base["resume_id"] = "best_test"
+    cfg = tr.TrainConfig043.model_validate(base)
+    src = tr.h5_vector_source(cfg.paths, tr.store_paths(cfg.data.store_version))
+    logger = tr.MemoryLogger()
+    res = tr.train(cfg, world["store"], src, logger)
+    epochs = [r for _, r in logger.rows if "val/loss" in r]
+    vals = [r["val/loss"] for r in epochs]
+    want = int(np.argmin(vals)) + 1
+    for i, r in enumerate(epochs):  # the running minimum and its epoch, every epoch
+        assert r["val/loss_best"] == pytest.approx(min(vals[: i + 1]))
+        assert r["val/loss_best_epoch"] == int(np.argmin(vals[: i + 1])) + 1
+    ckpt = Path(res.checkpoint_dir)
+    best = torch.load(ckpt / "best.pt", weights_only=False)
+    last = torch.load(ckpt / "last.pt", weights_only=False)
+    assert best["epoch"] == want and last["epoch"] == 4
+    assert best["best_val_loss"] == pytest.approx(min(vals))
+    assert last["best_val_epoch"] == want
+    # a resume past the end runs no epoch and keeps the best record
+    more = tr.TrainConfig043.model_validate({**base, "budget": {**base["budget"]}})
+    tr.train(more, world["store"], src, tr.MemoryLogger())
+    assert torch.load(ckpt / "best.pt", weights_only=False)["epoch"] == want

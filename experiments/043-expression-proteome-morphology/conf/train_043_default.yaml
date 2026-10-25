@@ -97,6 +97,9 @@ model:
   # trunk_ffn_mult: trunk FFN width / hidden_dim (4 = 576 at hidden 144).
   layer_pattern: null
   trunk_ffn_mult: 4
+  # training only: zero the composite token of a gene of a context with this probability
+  # (kept ones scaled 1/(1-p), the position term stays); 0 = off (2026-10-24 regularization)
+  token_dropout: 0.0
   # CONDITIONING (2026-10-23): name = type path + dataset + environment tokens and
   # per-dataset bias tables (every earlier run); ontology = the record's experiment ontology
   # annotation through OntologyDagEncoder (token width 40, as the name token), bias maps of

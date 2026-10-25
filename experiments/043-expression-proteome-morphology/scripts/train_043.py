@@ -527,6 +527,13 @@ class ModelConfig(BaseModel):
     trunk_ffn_mult: int = Field(
         default=4, gt=0, description="trunk FFN width / hidden_dim"
     )
+    token_dropout: float = Field(
+        default=0.0,
+        ge=0.0,
+        lt=1.0,
+        description="training only: zero the composite token of a gene of a context "
+        "with this probability (CellModel043Config.token_dropout); 0 = off",
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -818,6 +825,14 @@ class TrainConfig043(BaseModel):
             parts.append(f"ffn{m.trunk_ffn_mult}")
         if m.head_hidden != d0.head_hidden:
             parts.append(f"hh{m.head_hidden}")
+        if m.dropout != d0.dropout:
+            parts.append(f"do{m.dropout:g}")
+        if m.token_dropout != d0.token_dropout:
+            parts.append(f"tdrop{m.token_dropout:g}")
+        if self.optim.weight_decay != OptimConfig().weight_decay:
+            parts.append(f"wd{self.optim.weight_decay:g}")
+        if self.loss.hl_gauss.sigma_bins != HLGaussConfig().sigma_bins:
+            parts.append(f"sig{self.loss.hl_gauss.sigma_bins:g}")
         if self.data.target_transform != "zscore":
             parts.append(
                 {"quantile_normal": "tqn", "none": "tnone"}[self.data.target_transform]
@@ -2244,6 +2259,7 @@ def build_model(
         fourier_frequencies=cfg.model.fourier_frequencies,
         operator_ffn_mult=cfg.model.operator_ffn_mult,
         trunk_ffn_mult=cfg.model.trunk_ffn_mult,
+        token_dropout=cfg.model.token_dropout,
         n_parents=int(store.mark_parent.max(initial=0)) + 1
         if store.mark_parent.size
         else 1,
@@ -2657,6 +2673,7 @@ def _lr_at(step: int, cfg: OptimConfig, total_steps: int | None = None) -> float
 SWEEP_DEFAULTS: dict[tuple[str, str], Any] = {
     ("model", "layer_pattern"): None,
     ("model", "trunk_ffn_mult"): 4,
+    ("model", "token_dropout"): 0.0,
     ("data", "target_transform"): "zscore",
     ("data", "target_stats_by"): "dataset",
     ("weighting", "by"): "dataset",
@@ -2868,6 +2885,9 @@ def train(
     epoch_seconds: list[float] = []
     last: dict[str, float] = {}
     epoch = 0
+    # best.pt (owner, 2026-10-24: "checkpoint at gap"): the checkpoint at the minimum
+    # val/loss so far, overwritten atomically when val/loss improves; no early stopping
+    best_val, best_epoch = math.inf, 0
     resume_path = osp.join(ckpt_dir, "last.pt")
     if cfg.resume_id is not None and osp.exists(resume_path):
         st = torch.load(resume_path, map_location=device, weights_only=False)
@@ -2876,6 +2896,8 @@ def train(
         model.load_state_dict(st["model"], strict=True)
         opt.load_state_dict(st["optimizer"])
         epoch, step = int(st["epoch"]), int(st["step"])
+        best_val = float(st.get("best_val_loss", math.inf))
+        best_epoch = int(st.get("best_val_epoch", 0))
         skip_micro = int(st.get("micro_done", 0))
         partial = st.get("partial")
         print(
@@ -2978,6 +3000,8 @@ def train(
                         },
                         "config": cfg.model_dump(mode="json"),
                         "standardization_sha256": stats_sha,
+                        "best_val_loss": best_val,
+                        "best_val_epoch": best_epoch,
                     },
                     osp.join(ckpt_dir, "last.pt"),
                 )
@@ -3068,6 +3092,12 @@ def train(
         logs["setup/n_epochs"] = float(n_epochs)
         logs["setup/window_first_epoch"] = float(window[0])
         logs["setup/window_last_epoch"] = float(window[1])
+        improved = "val/loss" in logs and logs["val/loss"] < best_val
+        if improved:
+            best_val, best_epoch = logs["val/loss"], epoch
+        if math.isfinite(best_val):
+            logs["val/loss_best"] = best_val
+            logs["val/loss_best_epoch"] = float(best_epoch)
         logger.log(logs, step=step)
         print(
             f"[epoch {epoch}/{n_epochs}] {dt:.0f} s; "
@@ -3096,8 +3126,12 @@ def train(
             "step": step,
             "config": cfg.model_dump(mode="json"),
             "standardization_sha256": stats_sha,
+            "best_val_loss": best_val,
+            "best_val_epoch": best_epoch,
         }
         save_atomic(state, osp.join(ckpt_dir, "last.pt"))
+        if improved:
+            save_atomic(state, osp.join(ckpt_dir, "best.pt"))
         if epoch in window:
             torch.save(state, osp.join(ckpt_dir, f"epoch_{epoch:04d}.pt"))
         last = logs

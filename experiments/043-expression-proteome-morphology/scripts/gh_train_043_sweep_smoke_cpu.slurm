@@ -46,7 +46,7 @@ COMMON=(
   data.store_version=v2 arm=all loss=hlgauss weighting=equal seed=0 "device=${DEVICE:-cpu}"
   data.batch_size=4 data.num_workers=4 data.sampler=records data.mark_cap=null
   data.val_max_records_per_dataset=8 data.traineval_max_records_per_dataset=4
-  "budget.max_epochs=${SMOKE_EPOCHS:-1}" +budget.max_steps_per_epoch=3 budget.probe_steps=2
+  "budget.max_epochs=${SMOKE_EPOCHS:-1}" "+budget.max_steps_per_epoch=${SMOKE_STEPS:-3}" budget.probe_steps=2
   "+attention_query_chunk=${CHUNK:-1024}" "wandb.mode=${SMOKE_WANDB:-offline}" wandb.label_knobs=true
   "wandb.tags=[smoke,ghyper_sweep_2026_10_24]" wandb.round=ghyper_sweep_smoke_cpu
   "paths.checkpoint_root=$SMOKE_DIR/ckpt"

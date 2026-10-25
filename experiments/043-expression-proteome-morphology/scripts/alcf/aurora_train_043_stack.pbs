@@ -1,0 +1,76 @@
+#!/bin/bash -l
+#PBS -A GenesisHackathonOct26
+#PBS -q capacity
+#PBS -l select=1
+#PBS -l walltime=168:00:00
+#PBS -l filesystems=home:flare
+#PBS -r y
+#PBS -N 043-aurora-stack
+#PBS -j oe
+#PBS -o /flare/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/slurm/output/
+# experiments/043-expression-proteome-morphology/scripts/alcf/aurora_train_043_stack.pbs
+# [[experiments.043-expression-proteome-morphology.scripts.alcf.aurora_train_043_stack]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/alcf/aurora_train_043_stack.pbs
+#
+# Round aurora_2026_10_25, the software-stack test of the Aurora GPU page fault: one node,
+# 8 cells on tiles 0-7 (rows of aurora_grid_043_stack_<ARM>.tsv), tiles 8-11 left free as
+# spares for aurora_run_cell_043.sh's tile-retry. Every cell resumes its round
+# aurora_2026_10_24 run (a1024b_<cell>) from its last.pt; round, tags, wandb.stack and the
+# loader worker count are placement keys, so the resume is accepted.
+#   ARM=frameworks  frameworks/2026.1.0 module + venv (aurora_env_043_frameworks.sh)
+#   ARM=control     the old pip env with DisableScratchPages=0 and num_workers=0
+#                   (aurora_env_043_control.sh)
+#
+#   qsub -v ARM=frameworks aurora_train_043_stack.pbs
+#   qsub -v ARM=control aurora_train_043_stack.pbs
+#   (debug smoke: qsub -q debug -l walltime=01:00:00 -v ARM=frameworks,SMOKE_MIN=20 ...)
+# SMOKE_MIN (optional): one attempt per cell, stage 1 only, SIGINT to every trainer after
+# that many minutes (GRID=aurora_grid_043_stack_smoke.tsv for the one-cell smoke).
+set -uo pipefail
+: "${ARM:?qsub -v ARM=frameworks|control}"
+HERE=/flare/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/scripts/alcf
+case "$ARM" in
+  frameworks) ENV_SCRIPT=aurora_env_043_frameworks.sh ;;
+  control) ENV_SCRIPT=aurora_env_043_control.sh ;;
+  *) echo "ARM=$ARM is not frameworks or control" >&2; exit 2 ;;
+esac
+GRID=${GRID:-aurora_grid_043_stack_${ARM}.tsv}
+# shellcheck disable=SC1090
+source "$HERE/$ENV_SCRIPT"
+export PY TRAIN
+export ROUND=aurora_2026_10_25
+export TAGS="[aurora_2026_10_25,aurora,stack_test,stack_${STACK}]"
+export RID_PREFIX=a1024b
+export TILES_DIR=/tmp/043_tiles_${PBS_JOBID%%.*}
+ulimit -c 0
+OUT=$TC_TREE/experiments/043-expression-proteome-morphology/slurm/output/aurora_grid
+mkdir -p "$OUT"
+echo "stack test ARM=$ARM STACK=$STACK grid $GRID; job $PBS_JOBID on $(hostname) at $(date); tree $SYNCED; PY $PY"
+"$PY" -c "import torch; print('torch', torch.__version__, 'xpu', torch.xpu.is_available(), torch.xpu.device_count())"
+env | grep -E '^(NEOReadDebugKeys|DisableScratchPages|NUM_WORKERS|ZE_|STACK)=' | sort
+
+pids=()
+while IFS=$'\t' read -r node tile cell finetune overrides; do
+  [ "$node" = 0 ] || continue
+  if [ -n "${SMOKE_MIN:-}" ]; then
+    # shellcheck disable=SC2086
+    ZE_AFFINITY_MASK=$tile ATTEMPTS=1 \
+      bash "$HERE/aurora_run_cell_043.sh" "$cell" 0 $overrides >> "$OUT/$cell.log" 2>&1 &
+  else
+    # shellcheck disable=SC2086
+    ZE_AFFINITY_MASK=$tile bash "$HERE/aurora_run_cell_043.sh" "$cell" "$finetune" $overrides \
+      >> "$OUT/$cell.log" 2>&1 &
+  fi
+  pids+=($!)
+  echo "tile $tile: $cell (fine-tune $finetune) pid ${pids[-1]}"
+done < <(grep -v '^#' "$HERE/$GRID")
+if [ -n "${SMOKE_MIN:-}" ]; then
+  # the node is this job's alone: after SMOKE_MIN minutes interrupt every trainer on it
+  sleep "${SMOKE_MIN}m"
+  echo "smoke: SIGINT to the trainers at $(date)"
+  pkill -INT -u "$USER" -f "$TRAIN" || true
+fi
+rc=0
+for p in "${pids[@]}"; do wait "$p" || rc=$?; done
+echo "done $(date) rc $rc"
+exit "$rc"

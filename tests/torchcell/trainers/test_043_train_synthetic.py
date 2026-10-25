@@ -1173,11 +1173,18 @@ def test_cosine_schedule_and_resume_reads_missing_sweep_keys_as_defaults(
         {**cfg.model_dump(), "optim": {**cfg.optim.model_dump(), "schedule": "cosine"}}
     )
     assert not tr.config_matches(old, changed)
-    # where a run executes (device, W&B tags) does not block a resume; what it computes does
+    # where or how a run executes (device, loader workers, W&B tags, round and stack
+    # labels) does not block a resume; what it computes does
     moved = {
         **cfg.model_dump(),
         "device": "xpu",
-        "wandb": {**cfg.wandb.model_dump(), "tags": ["aurora"]},
+        "data": {**cfg.data.model_dump(), "num_workers": 0},
+        "wandb": {
+            **cfg.wandb.model_dump(),
+            "tags": ["aurora"],
+            "round": "aurora_2026_10_25",
+            "stack": "frameworks",
+        },
     }
     assert tr.config_matches(old, tr.TrainConfig043.model_validate(moved))
     other_seed = {**cfg.model_dump(), "device": "xpu", "seed": 7}

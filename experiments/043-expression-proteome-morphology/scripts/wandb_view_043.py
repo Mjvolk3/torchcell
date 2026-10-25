@@ -316,7 +316,12 @@ ROUNDS: dict[str, Round] = {
             for ft in ("", "_ft")
         )
         # wave 4, balanced sampler power (owner, 2026-10-25): p1 6392/6393, p05 6394/6395
-        + tuple(f"gs1024_w4_bal_{k}{ft}" for k in ("p1", "p05") for ft in ("", "_ft")),
+        + tuple(f"gs1024_w4_bal_{k}{ft}" for k in ("p1", "p05") for ft in ("", "_ft"))
+        # wave 4, batch size (owner, 2026-10-25): plain batches 16 (6396/6397) and 32
+        # (6398/6399), fine-tunes at the recipe batch 8. Their Polaris / Aurora twins
+        # a1024b_all_onto_hlgauss_equal_bs16_s0 / _bs32_s0 are micro-batch 1 x
+        # accumulate 16 / 32, not plain batches
+        + tuple(f"gs1024_w4_bs{b}{ft}" for b in (16, 32) for ft in ("", "_ft")),
         hardware=(
             "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, four chained slots "
             "after the overnight round (dependency afterany:6311:6312:6317:6318:6322)"

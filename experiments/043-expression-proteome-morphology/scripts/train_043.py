@@ -522,6 +522,20 @@ class ConditioningConfig(BaseModel):
         "bias maps of it; needs a prep_v4 store",
     )
     state_dim: int = Field(default=16, gt=0)
+    inject: Literal["head", "operator", "trunk_and_operator"] = Field(
+        default="head",
+        description="ontology only (CellModel043Config.ontology_inject): head = heads "
+        "and bias maps; operator = also added to every gene token and the CLS before "
+        "the mark operator; trunk_and_operator = also to the trunk input (trunk per "
+        "record)",
+    )
+
+    @model_validator(mode="after")
+    def _inject_needs_ontology(self) -> ConditioningConfig:
+        """Injection beyond the heads is of the ontology token."""
+        if self.inject != "head" and self.source != "ontology":
+            raise ValueError("conditioning.inject beyond head needs source=ontology")
+        return self
 
 
 class ModelConfig(BaseModel):
@@ -833,6 +847,9 @@ class TrainConfig043(BaseModel):
         if self.data.max_visits_per_record_per_epoch is not None:
             sampler += f"_cap{self.data.max_visits_per_record_per_epoch:g}"
         onto = "_onto" if self.model.conditioning.source == "ontology" else ""
+        onto += {"head": "", "operator": "_injop", "trunk_and_operator": "_injtr"}[
+            self.model.conditioning.inject
+        ]
         lodo = "".join(f"_lodo_{d}" for d in self.arm.exclude_from_training)
         # the effective batch: batch_size x optim.accumulate_steps
         eff = self.data.batch_size * self.optim.accumulate_steps
@@ -2400,6 +2417,7 @@ def build_model(
         dataset_token_dim=cfg.model.dataset_token_dim,
         conditioning=cfg.model.conditioning.source,
         ontology_state_dim=cfg.model.conditioning.state_dim,
+        ontology_inject=cfg.model.conditioning.inject,
         head_hidden=cfg.model.head_hidden,
         loss=cfg.loss.kind,
         hl_gauss=cfg.loss.hl_gauss,
@@ -2824,7 +2842,9 @@ def _lr_at(step: int, cfg: OptimConfig, total_steps: int | None = None) -> float
 
 #: Sweep keys added 2026-10-24, with their defaults; a checkpoint written before them
 #: holds none, and a resume of it compares equal when every one is at its default.
-SWEEP_DEFAULTS: dict[tuple[str, str], Any] = {
+#: A key path may be nested (section, subsection, key).
+SWEEP_DEFAULTS: dict[tuple[str, ...], Any] = {
+    ("model", "conditioning", "inject"): "head",
     ("model", "layer_pattern"): None,
     ("model", "trunk_ffn_mult"): 4,
     ("model", "token_dropout"): 0.0,
@@ -2855,9 +2875,15 @@ def config_matches(stored: dict[str, Any], cfg: TrainConfig043) -> bool:
     checkpoint predates as its default.
     """
     cur = cfg.model_dump(mode="json")
-    for (sec, key), default in SWEEP_DEFAULTS.items():
-        if key not in stored.get(sec, {}) and cur[sec][key] == default:
-            cur[sec] = {k: v for k, v in cur[sec].items() if k != key}
+    for path, default in SWEEP_DEFAULTS.items():
+        *parents, key = path
+        st: Any = stored
+        cu: Any = cur
+        for p in parents:
+            st = st.get(p, {}) if isinstance(st, dict) else {}
+            cu = cu[p]
+        if key not in st and cu.get(key) == default:
+            del cu[key]
     return bool(_strip_placement(stored) == _strip_placement(cur))
 
 

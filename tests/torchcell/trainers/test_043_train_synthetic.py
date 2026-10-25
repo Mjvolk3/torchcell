@@ -1169,8 +1169,13 @@ def test_cosine_schedule_and_resume_reads_missing_sweep_keys_as_defaults(
     assert tr._lr_at(500, tr.OptimConfig(lr=1.0), None) == 1.0
     cfg = _cfg(tr, world["root"], "hlgauss")
     old = cfg.model_dump(mode="json")
-    for (sec, key), _ in tr.SWEEP_DEFAULTS.items():
-        old[sec].pop(key)
+    for path in tr.SWEEP_DEFAULTS:  # paths may be nested
+        *parents, key = path
+        node = old
+        for p in parents:
+            node = node[p]
+        node.pop(key)
+    assert "inject" not in old["model"]["conditioning"]
     assert tr.config_matches(old, cfg)
     changed = tr.TrainConfig043.model_validate(
         {**cfg.model_dump(), "optim": {**cfg.optim.model_dump(), "schedule": "cosine"}}
@@ -1431,3 +1436,26 @@ def test_visit_cap_holds_small_datasets_and_refills_the_epoch(tr: ModuleType) ->
         tr.dataset_draws(n, 1.0, N, cap=0.5)  # 0.5 x 56,805 records < 56,808 draws
     with pytest.raises(ValueError, match="needs sampler=balanced"):
         tr.DataConfig(max_visits_per_record_per_epoch=8.0)
+
+
+def test_ontology_inject_operator_trains_two_steps(
+    tr: ModuleType, world: dict[str, Any], tmp_path: Path
+) -> None:
+    store = _onto_store(tr, world, tmp_path)
+    base = _cfg(tr, world["root"], "hlgauss").model_dump()
+    base["model"]["conditioning"] = {
+        "source": "ontology",
+        "state_dim": 4,
+        "inject": "operator",
+    }
+    base["paths"]["prep_dir"] = str(tmp_path / "prep")
+    base["paths"]["checkpoint_root"] = str(tmp_path / "ckpt")
+    cfg = tr.TrainConfig043.model_validate(base)
+    assert cfg.arm_label == "joint_test_onto_injop_hlgauss_equal"
+    src = tr.h5_vector_source(cfg.paths, tr.store_paths(cfg.data.store_version))
+    res = tr.train(cfg, store, src, tr.MemoryLogger())
+    assert res.steps == 2 and np.isfinite(res.last_metrics["val/loss"])
+    sd = torch.load(Path(res.checkpoint_dir) / "last.pt", weights_only=False)["model"]
+    assert "onto_inject.1.weight" in sd
+    with pytest.raises(ValueError, match="needs source=ontology"):
+        tr.ConditioningConfig(inject="operator")

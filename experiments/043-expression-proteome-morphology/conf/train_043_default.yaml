@@ -113,6 +113,8 @@ model:
   conditioning:
     source: name
     state_dim: 16
+    # ontology token beyond the heads: head | operator | trunk_and_operator (2026-10-25)
+    inject: head
 
 optim:
   lr: 3.0e-4

@@ -17,6 +17,7 @@
 #   ftlegacy: fine-tune alone_kemmeren (lr 3e-4, warmup 30) from a COPY of the overnight
 #             stage-1 last.pt of job 6308, i.e. what the pending 6311 runs, on this code
 #   chain   : stage 1 binned_quantile + quantile_normal, then its Kemmeren fine-tune
+#   reg regft: all four regularization knobs + best.pt, then its fine-tune (SMOKE_ID)
 #
 #   sbatch --export=ALL,CASES="smmss ssss" experiments/043-expression-proteome-morphology/scripts/gh_train_043_sweep_smoke_cpu.slurm
 # On a GPU after the round (DEVICE=cuda, CHUNK=null: one SDPA call):
@@ -37,7 +38,7 @@ cd "${SLURM_SUBMIT_DIR:?submit from the repository root}"
 export PYTHONPATH="$PWD"
 export DATA_ROOT=/scratch/projects/torchcell-scratch
 export EXPERIMENT_ROOT="$PWD/experiments"
-export WANDB_MODE=offline
+export WANDB_MODE="${SMOKE_WANDB:-offline}"
 CKPT="$DATA_ROOT/experiments/043-expression-proteome-morphology/checkpoints"
 SMOKE_DIR="$DATA_ROOT/experiments/043-expression-proteome-morphology/sweep_smoke/${SLURM_JOB_ID}"
 mkdir -p "$SMOKE_DIR"
@@ -45,8 +46,8 @@ COMMON=(
   data.store_version=v2 arm=all loss=hlgauss weighting=equal seed=0 "device=${DEVICE:-cpu}"
   data.batch_size=4 data.num_workers=4 data.sampler=records data.mark_cap=null
   data.val_max_records_per_dataset=8 data.traineval_max_records_per_dataset=4
-  budget.max_epochs=1 +budget.max_steps_per_epoch=3 budget.probe_steps=2
-  "+attention_query_chunk=${CHUNK:-1024}" wandb.mode=offline wandb.label_knobs=true
+  "budget.max_epochs=${SMOKE_EPOCHS:-1}" +budget.max_steps_per_epoch=3 budget.probe_steps=2
+  "+attention_query_chunk=${CHUNK:-1024}" "wandb.mode=${SMOKE_WANDB:-offline}" wandb.label_knobs=true
   "wandb.tags=[smoke,ghyper_sweep_2026_10_24]" wandb.round=ghyper_sweep_smoke_cpu
   "paths.checkpoint_root=$SMOKE_DIR/ckpt"
 )
@@ -56,6 +57,7 @@ read -ra XC <<< "${SMOKE_EXTRA:-}"
 COMMON+=("${XC[@]}")
 TRAIN=experiments/043-expression-proteome-morphology/scripts/train_043.py
 FT=(arm=alone_kemmeren optim.lr=3e-4 optim.warmup_steps=30)
+REG=(model.dropout=0.2 model.token_dropout=0.1 optim.weight_decay=1e-7 loss.hl_gauss.sigma_bins=1.5)
 run() { echo "===== case $1  $(date)"; shift; python "$TRAIN" "${COMMON[@]}" "$@"; echo "===== ok $(date)"; }
 echo "host $(hostname)  commit $(git rev-parse --short HEAD)  cases ${CASES:?set CASES}  $(date)"
 for c in $CASES; do
@@ -83,6 +85,13 @@ for c in $CASES; do
       run chain-stage1 loss=binned_quantile data.target_transform=quantile_normal
       s1=$(ls -d "$SMOKE_DIR"/ckpt/all_binned_quantile_equal_tqn_s0/"$SLURM_JOB_ID")
       run chain-ft loss=binned_quantile data.target_transform=quantile_normal "${FT[@]}" "init_from=$s1/last.pt" ;;
+    reg)
+      # every 2026-10-24 regularization knob plus best.pt in one run; SMOKE_ID names the
+      # checkpoint dir and W&B id (run with SMOKE_WANDB=online SMOKE_EPOCHS=2 for the gate)
+      run reg "${REG[@]}" "resume_id=${SMOKE_ID:?set SMOKE_ID}" ;;
+    regft)
+      s1=$(ls -d "$SMOKE_DIR"/ckpt/*/"${SMOKE_ID:?set SMOKE_ID}")
+      run regft "${REG[@]}" "${FT[@]}" "init_from=$s1/last.pt" "resume_id=${SMOKE_ID}_ft" ;;
     *) echo "unknown case $c" >&2; exit 2 ;;
   esac
 done

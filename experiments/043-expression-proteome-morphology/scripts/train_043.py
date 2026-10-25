@@ -448,6 +448,16 @@ class DataConfig(BaseModel):
         "balanced: each batch slot draws a dataset uniformly, then a record uniformly "
         "within it. Composes with weighting (the loss-side knob).",
     )
+    balance_power: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="balanced sampler only (2026-10-25): each draw takes training record "
+        "r with probability proportional to (1 / n_dataset(r))^p, with replacement, as "
+        "many draws per epoch as the records sampler (steps and lr schedule unchanged). "
+        "p = 0 is the records sampler in distribution, p = 1 an equal share per dataset. "
+        "None = the legacy balanced code path (dataset uniform, then record uniform)",
+    )
     batch_size: int = Field(default=16, gt=0)
     label_batch_size: bool = Field(
         default=False,
@@ -798,6 +808,8 @@ class TrainConfig043(BaseModel):
                 )
             return f"finetune_{self.arm.name.removeprefix('alone_')}_from_{self.init_from_label}"
         sampler = "_balanced" if self.data.sampler == "balanced" else ""
+        if self.data.balance_power is not None:
+            sampler += f"_p{self.data.balance_power:g}"
         onto = "_onto" if self.model.conditioning.source == "ontology" else ""
         lodo = "".join(f"_lodo_{d}" for d in self.arm.exclude_from_training)
         # the effective batch: batch_size x optim.accumulate_steps
@@ -1892,8 +1904,50 @@ class _BatchList(torch.utils.data.Dataset[tuple[Batch043, Targets043]]):
         return make_batch(self.view, self.batches[i].tolist())
 
 
+def balance_weights(
+    local_dataset: npt.NDArray[np.int64], power: float
+) -> npt.NDArray[np.float64]:
+    """Draw probability of each position: ``(1 / n_dataset)^power``, normalized."""
+    counts = np.bincount(local_dataset)
+    w = counts[local_dataset].astype(np.float64) ** (-power)
+    return w / w.sum()
+
+
+def balance_table(
+    view: TrainingView,
+    positions: npt.NDArray[np.int64],
+    batch_size: int,
+    power: float | None,
+    n_epochs: int,
+) -> dict[str, dict[str, float]]:
+    """Expected draws per epoch and visits per record over ``n_epochs``, per dataset."""
+    n_draws = math.ceil(len(positions) / batch_size) * batch_size
+    ld = view.local_dataset[positions]
+    present = [d for d in range(len(view.datasets)) if (ld == d).any()]
+    if power is None:  # legacy: dataset uniform among the present ones
+        share = {d: 1.0 / len(present) for d in present}
+    else:
+        w = balance_weights(ld, power)
+        share = {d: float(w[ld == d].sum()) for d in present}
+    out = {}
+    for d in present:
+        n = int((ld == d).sum())
+        draws = share[d] * n_draws
+        out[view.datasets[d]] = {
+            "n_train": float(n),
+            "draws_per_epoch": draws,
+            "visits_per_record_per_epoch": draws / n,
+            "visits_per_record": draws / n * n_epochs,
+        }
+    return out
+
+
 def balanced_batches(
-    view: TrainingView, positions: npt.NDArray[np.int64], batch_size: int, seed: int
+    view: TrainingView,
+    positions: npt.NDArray[np.int64],
+    batch_size: int,
+    seed: int,
+    power: float | None = None,
 ) -> list[npt.NDArray[np.int64]]:
     """One epoch of dataset-balanced batches over ``positions``.
 
@@ -1911,6 +1965,10 @@ def balanced_batches(
         raise ValueError("no training positions to sample")
     rng = np.random.default_rng(seed)
     n_batches = math.ceil(len(positions) / batch_size)
+    if power is not None:
+        w = balance_weights(view.local_dataset[positions], power)
+        drawn = rng.choice(positions, size=n_batches * batch_size, replace=True, p=w)
+        return list(drawn.reshape(n_batches, batch_size))
     which = rng.integers(0, len(pools), size=(n_batches, batch_size))
     out = np.empty((n_batches, batch_size), np.int64)
     for k, pool in enumerate(pools):
@@ -1926,12 +1984,15 @@ def batch_loader(
     shuffle_seed: int | None,
     num_workers: int,
     sampler: Literal["records", "balanced"] = "records",
+    balance_power: float | None = None,
 ) -> torch.utils.data.DataLoader[tuple[Batch043, Targets043]]:
     """Batches of ``positions``: in order, shuffled (``records``) or ``balanced``."""
     if sampler == "balanced":
         if shuffle_seed is None:
             raise ValueError("the balanced sampler needs a seed")
-        chunks = balanced_batches(view, positions, batch_size, shuffle_seed)
+        chunks = balanced_batches(
+            view, positions, batch_size, shuffle_seed, balance_power
+        )
     else:
         order = positions.copy()
         if shuffle_seed is not None:
@@ -2674,6 +2735,7 @@ SWEEP_DEFAULTS: dict[tuple[str, str], Any] = {
     ("model", "layer_pattern"): None,
     ("model", "trunk_ffn_mult"): 4,
     ("model", "token_dropout"): 0.0,
+    ("data", "balance_power"): None,
     ("data", "target_transform"): "zscore",
     ("data", "target_stats_by"): "dataset",
     ("weighting", "by"): "dataset",
@@ -2867,12 +2929,30 @@ def train(
     )
     window = cfg.budget.registered_window.epochs(n_epochs)
     total_steps = max_steps if max_steps is not None else steps_per_epoch * n_epochs
+    bal_logs: dict[str, float] = {}
+    if cfg.data.sampler == "balanced":
+        table = balance_table(
+            view, train_pos, cfg.data.batch_size, cfg.data.balance_power, n_epochs
+        )
+        print(
+            f"[setup] balanced sampler, power {cfg.data.balance_power}: "
+            + "; ".join(
+                f"{d} {t['draws_per_epoch']:.0f} draws/epoch, "
+                f"{t['visits_per_record']:.1f} visits/record over {n_epochs} epochs"
+                for d, t in table.items()
+            ),
+            flush=True,
+        )
+        for d, t in table.items():
+            bal_logs[f"setup/draws_per_epoch/{d}"] = t["draws_per_epoch"]
+            bal_logs[f"setup/visits_per_record/{d}"] = t["visits_per_record"]
     logger.log(
         {
             "setup/max_steps": float(max_steps or 0),
             "setup/n_train": float(len(train_pos)),
             "setup/n_val": float(len(val_pos)),
             "setup/steps_per_epoch": float(steps_per_epoch),
+            **bal_logs,
             "setup/table_gb": table_gb,
             "setup/n_params_m": n_params / 1e6,
             "setup/seconds": time.time() - t_start,
@@ -2931,6 +3011,7 @@ def train(
             cfg.seed * 100003 + epoch,
             cfg.data.num_workers,
             cfg.data.sampler,
+            cfg.data.balance_power,
         )
         t_probe = None
         step_loss = 0.0

@@ -46,6 +46,9 @@ data:
   # weighting then reweights the per-dataset loss means of whatever the batch holds.
   # A balanced run is labeled <arm>_balanced_<loss>_<weighting> in W&B.
   sampler: records
+  # balanced only: record weight (1/n_dataset)^p, p in [0, 1] (0 = records in distribution,
+  # 1 = equal share per dataset); null = the legacy balanced path (2026-10-25)
+  balance_power: null
   batch_size: 16
   label_batch_size: false  # true appends _bs<N> to the W&B group (batch-size axis)
   num_workers: 4

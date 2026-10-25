@@ -1,0 +1,37 @@
+#!/bin/bash -l
+#PBS -A GenesisHackathonOct26
+#PBS -q prod
+#PBS -l select=24:ncpus=64:ngpus=4
+#PBS -l walltime=01:00:00
+#PBS -l filesystems=home:eagle
+#PBS -N 043-1h-24
+#PBS -j oe
+#PBS -o /eagle/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/slurm/output/
+# experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_prod1h.pbs
+# [[experiments.043-expression-proteome-morphology.scripts.alcf.polaris_train_043_ontology_prod1h]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_prod1h.pbs
+#
+# Polaris prod lane, 1-hour copies (2026-10-25). Measured on Polaris over the 24 h to 18:45Z
+# Oct 25: jobs of <= 1 h started within about 3 h at 16-66 nodes, while 2-3 h small jobs waited
+# 9-27 h and 2 h medium jobs 83-121 h. So the lane runs 1 h chunks: 24 nodes by default, 16 with
+#   qsub -l select=16:ncpus=64:ngpus=4 -N 043-1h-16 <this file>
+# One rank per A100 (ranks = 4 x nodes from PBS_NODEFILE). Same claim lane as every other copy
+# (rank_cell_043.sh, claims_polaris_lane/ on eagle), tables polaris_cells_043.tsv, then
+# polaris_cells_043_seeds.tsv, then polaris_cells_043_seeds100.tsv (96 cells, claimed in table
+# order, so a 64-rank copy takes the first 64 claimable). CHUNK_MIN=54: a rank claims nothing in
+# the last 10 min, stops its trainer with SIGINT at minute 54 (last.pt = the last 1000-step
+# checkpoint, about 1-2 min of A100 training at the measured 0.05-0.12 s/step) and releases its
+# lock so the next copy resumes the cell at once. A rank with nothing to claim exits at once.
+#
+#   ssh polaris "cd /eagle/GenesisHackathonOct26/mjvolk3/torchcell && qsub experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_prod1h.pbs"
+set -euo pipefail
+cd /eagle/GenesisHackathonOct26/mjvolk3/torchcell
+T0=$(date +%s)
+nodes=$(sort -u "$PBS_NODEFILE" | wc -l)
+echo "job $PBS_JOBID on $nodes nodes $(sort -u "$PBS_NODEFILE" | tr '\n' ' ') at $(date); tree $(cut -c1-9 .synced_commit)"
+rc=0
+mpiexec -n $((nodes * 4)) --ppn 4 --depth 16 --cpu-bind depth \
+  env JOB_T0="$T0" CHUNK_MIN=54 EXTRA_CELLS="polaris_cells_043_seeds.tsv polaris_cells_043_seeds100.tsv" \
+  bash experiments/043-expression-proteome-morphology/scripts/alcf/rank_cell_043.sh || rc=$?
+echo "done $(date) rc $rc"
+exit "$rc"

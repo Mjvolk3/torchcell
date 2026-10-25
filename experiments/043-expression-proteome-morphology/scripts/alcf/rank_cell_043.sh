@@ -7,6 +7,12 @@
 # polaris_cells_043.tsv, in table order, until none is left to claim, then exits.
 # EXTRA_CELLS (env, optional): space-separated tables in this directory read after it, in
 # order (lower claim priority), e.g. polaris_cells_043_seeds.tsv for the 24-node copy.
+# JOB_T0 + CHUNK_MIN (env, optional, the 1-hour copies): the rank claims nothing once fewer
+# than 10 min remain before JOB_T0 + CHUNK_MIN minutes, and runs each cell under `timeout -s
+# INT` to that deadline. timeout signals the whole process group, so the trainer gets SIGINT
+# (KeyboardInterrupt, nonzero exit: run_cell_043.sh's set -e never writes a DONE marker) and
+# last.pt holds the last checkpoint (save_atomic, every 1000 steps); the rank then RELEASES its
+# lock into stale/ so the next copy claims the cell at once instead of after STALE_MIN.
 #
 # Claim design (all on eagle, shared by every job of the lane):
 #   $CLAIMS/<run id>.done   the cell is finished (every stage); never claimed again.
@@ -92,6 +98,15 @@ while true; do
     if claim "$rid"; then picked=$rid; break; fi
   done
   [ -n "$picked" ] || { echo "[$me] no claimable cell left at $(date)"; exit 0; }
+  limit=()
+  if [ -n "${CHUNK_MIN:-}" ]; then
+    left=$(( ${JOB_T0:?JOB_T0 with CHUNK_MIN} + CHUNK_MIN * 60 - $(date +%s) ))
+    if [ "$left" -lt 600 ]; then
+      mv "$CLAIMS/$picked.lock" "$CLAIMS/stale/$picked.$(date +%s).$PALS_RANKID.unused" 2>/dev/null || true
+      echo "[$me] $((left / 60)) min left of the chunk: not starting $picked at $(date)"; exit 0
+    fi
+    limit=(timeout -s INT -k 90 "$left")
+  fi
   tried[$picked]=1
   # detached from stdout/stderr, so its sleep never holds mpiexec output open after a kill
   ( while sleep 300; do touch "$CLAIMS/$picked.lock/heartbeat"; done ) </dev/null >/dev/null 2>&1 &
@@ -99,8 +114,13 @@ while true; do
   echo "[$me] claimed $picked at $(date)" >> "$OUT/$cell.log"
   rc=0
   # shellcheck disable=SC2086
-  CELL_DONE="$CLAIMS/$picked.done" bash "$ALCF/run_cell_043.sh" "$cell" "$finetune" $overrides \
+  CELL_DONE="$CLAIMS/$picked.done" "${limit[@]}" bash "$ALCF/run_cell_043.sh" "$cell" "$finetune" $overrides \
     >> "$OUT/$cell.log" 2>&1 || rc=$?
   kill "$hb" 2>/dev/null || true
   echo "[$me] $picked ended rc $rc at $(date)" | tee -a "$OUT/$cell.log"
+  if [ -n "${CHUNK_MIN:-}" ] && { [ "$rc" = 124 ] || [ "$rc" = 137 ]; }; then
+    mv "$CLAIMS/$picked.lock" "$CLAIMS/stale/$picked.$(date +%s).$PALS_RANKID.chunk" 2>/dev/null || true
+    echo "[$me] chunk end: $picked released for the next copy at $(date)" | tee -a "$OUT/$cell.log"
+    exit 0
+  fi
 done

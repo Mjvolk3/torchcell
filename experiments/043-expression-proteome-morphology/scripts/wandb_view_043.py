@@ -326,7 +326,9 @@ ROUNDS: dict[str, Round] = {
         # accumulate 16 / 32, not plain batches
         + tuple(f"gs1024_w4_bs{b}{ft}" for b in (16, 32) for ft in ("", "_ft"))
         # balanced p=1 with the visit cap 8 (2026-10-25), jobs 6406/6407
-        + ("gs1024_w4_bal_p1_cap8", "gs1024_w4_bal_p1_cap8_ft"),
+        + ("gs1024_w4_bal_p1_cap8", "gs1024_w4_bal_p1_cap8_ft")
+        # bs16 seeds 1 and 2 (the one-seed signal, 2026-10-25), jobs 6408/6409, 6410/6411
+        + tuple(f"gs1024_w4_bs16_s{sd}{ft}" for sd in (1, 2) for ft in ("", "_ft")),
         hardware=(
             "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, four chained slots "
             "after the overnight round (dependency afterany:6311:6312:6317:6318:6322)"

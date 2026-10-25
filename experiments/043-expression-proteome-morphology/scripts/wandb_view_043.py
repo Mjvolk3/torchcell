@@ -302,20 +302,23 @@ ROUNDS: dict[str, Round] = {
             for w, arms in (
                 ("w1", ("smss", "smmss", "mmmm", "ssss", "msmsms")),
                 ("w2", ("mle", "binq", "qn", "h288")),
-                ("w3", ("ffn2", "hh256", "lrhalf", "lrx2")),
+                # ffn2, hh256, lrx2 never ran at wave 3: replaced by gs1024_r2_* below
+                ("w3", ("lrhalf",)),
             )
             for a in arms
             for ft in ("", "_ft")
         )
         # the divergence test (owner go-ahead 2026-10-24): MMMM with the cosine schedule
         + ("gs1024_w2_mmmm_cos", "gs1024_w2_mmmm_cos_ft")
-        # seed 1 of SMMSS (tests the one-seed fine-tune signal), jobs 6376/6377
-        + ("gs1024_w1_smmss_s1", "gs1024_w1_smmss_s1_ft")
         # wave 4, regularization on the SMSS recipe (owner, 2026-10-24): jobs 6380/6381,
         # 6389/6390 (wd 0.05, replaced wd 1e-7 6382/6383), 6384/6385, 6386/6387
         + tuple(
             f"gs1024_w4_reg_{k}{ft}"
-            for k in ("do02", "wd5e-2", "sig2x", "tdrop01")
+            for k in (
+                "do02",
+                "wd5e-2",
+                "sig2x",
+            )  # tdrop01 runs as gs1024_r2_reg_tdrop01
             for ft in ("", "_ft")
         )
         # wave 4, balanced sampler power (owner, 2026-10-25): p1 6392/6393, p05 6394/6395
@@ -327,8 +330,27 @@ ROUNDS: dict[str, Round] = {
         + tuple(f"gs1024_w4_bs{b}{ft}" for b in (16, 32) for ft in ("", "_ft"))
         # balanced p=1 with the visit cap 8 (2026-10-25), jobs 6406/6407
         + ("gs1024_w4_bal_p1_cap8", "gs1024_w4_bal_p1_cap8_ft")
-        # bs16 seeds 1 and 2 (the one-seed signal, 2026-10-25), jobs 6408/6409, 6410/6411
-        + tuple(f"gs1024_w4_bs16_s{sd}{ft}" for sd in (1, 2) for ft in ("", "_ft")),
+        # bs16 seeds 1 and 2 (the one-seed signal, 2026-10-25) at 50 epochs (recipe v2),
+        # jobs 6420/6421, 6422/6423 (resubmitted from 6408-6411 before they started)
+        + tuple(f"gs1024_w4_bs16_s{sd}{ft}" for sd in (1, 2) for ft in ("", "_ft"))
+        # RECIPE V2 for every cell started from 2026-10-25 (owner: throughput): batch 16,
+        # 50 epochs, registered window 0.8 (epochs 41-50), best.pt. Measured reasons:
+        # bs16 is 24% faster per epoch than batch 8 (278.1 vs 365.5 s, gs1024_w4_bs16 vs
+        # gs1024_w1_smss) with a higher Kemmeren window mean; the val minima fall well
+        # before epoch 50. Baseline = gs1024_w4_bs16 read over epochs 41-50 (constant lr:
+        # its epochs 1-50 equal a 50-epoch run's).
+        # wave 5, ontology injection (owner, 2026-10-25): operator 6414/6415, trunk and
+        # operator 6416/6417
+        + tuple(
+            f"gs1024_w5_onto_inject_{k}{ft}" for k in ("op", "tr") for ft in ("", "_ft")
+        )
+        # recipe-v2 replacements of cells that never started: tdrop01 6418/6419, ffn2
+        # 6424/6425, hh256 6426/6427, lrx2 6428/6429, SMMSS seed 1 6430/6431
+        + tuple(
+            f"gs1024_r2_{k}{ft}"
+            for k in ("reg_tdrop01", "ffn2", "hh256", "lrx2", "smmss_s1")
+            for ft in ("", "_ft")
+        ),
         hardware=(
             "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, four chained slots "
             "after the overnight round (dependency afterany:6311:6312:6317:6318:6322)"

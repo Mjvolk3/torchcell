@@ -22,6 +22,8 @@
 #   HIDDEN  FFN_MULT (trunk)  HEAD_HIDDEN  TRANSFORM (zscore|quantile_normal|none)
 #   STATS_BY (dataset|profile)  WEIGHT_BY (dataset|profile)  SCHEDULE (constant|cosine)
 #   LR  WARMUP_STEPS  PREP_VERSION (prep_v4 for ontology or profile)  CONDITIONING (name|ontology)
+#   DROPOUT (model.dropout: trunk attention + FFN, operator, heads)  TOKEN_DROPOUT
+#   WEIGHT_DECAY  SIGMA_BINS (HL-Gauss smoothing in bin widths)  (2026-10-24 regularization)
 #   INIT_FROM_ID: stage 2; the stage-1 RESUME_ID. The job first requires the stage-1 W&B run
 #     to have logged val/kemmeren/loss (scripts/check_wandb_run_keys.py), then initializes
 #     from <checkpoints>/*/<INIT_FROM_ID>/last.pt. A stage-2 job must pass the same model,
@@ -64,6 +66,10 @@ fi
 if [ -n "${HIDDEN:-}" ]; then EXTRA+=("model.hidden_dim=${HIDDEN}"); fi
 if [ -n "${FFN_MULT:-}" ]; then EXTRA+=("model.trunk_ffn_mult=${FFN_MULT}"); fi
 if [ -n "${HEAD_HIDDEN:-}" ]; then EXTRA+=("model.head_hidden=${HEAD_HIDDEN}"); fi
+if [ -n "${DROPOUT:-}" ]; then EXTRA+=("model.dropout=${DROPOUT}"); fi
+if [ -n "${TOKEN_DROPOUT:-}" ]; then EXTRA+=("model.token_dropout=${TOKEN_DROPOUT}"); fi
+if [ -n "${WEIGHT_DECAY:-}" ]; then EXTRA+=("optim.weight_decay=${WEIGHT_DECAY}"); fi
+if [ -n "${SIGMA_BINS:-}" ]; then EXTRA+=("loss.hl_gauss.sigma_bins=${SIGMA_BINS}"); fi
 if [ -n "${TRANSFORM:-}" ]; then EXTRA+=("data.target_transform=${TRANSFORM}"); fi
 if [ -n "${STATS_BY:-}" ]; then EXTRA+=("data.target_stats_by=${STATS_BY}"); fi
 if [ -n "${WEIGHT_BY:-}" ]; then EXTRA+=("weighting.by=${WEIGHT_BY}"); fi

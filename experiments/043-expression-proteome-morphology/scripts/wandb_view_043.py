@@ -304,7 +304,9 @@ ROUNDS: dict[str, Round] = {
             for ft in ("", "_ft")
         )
         # the divergence test (owner go-ahead 2026-10-24): MMMM with the cosine schedule
-        + ("gs1024_w2_mmmm_cos", "gs1024_w2_mmmm_cos_ft"),
+        + ("gs1024_w2_mmmm_cos", "gs1024_w2_mmmm_cos_ft")
+        # seed 1 of SMMSS (tests the one-seed fine-tune signal), jobs 6376/6377
+        + ("gs1024_w1_smmss_s1", "gs1024_w1_smmss_s1_ft"),
         hardware=(
             "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, four chained slots "
             "after the overnight round (dependency afterany:6311:6312:6317:6318:6322)"

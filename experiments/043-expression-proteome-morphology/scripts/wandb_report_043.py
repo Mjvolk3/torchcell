@@ -1,21 +1,24 @@
 # experiments/043-expression-proteome-morphology/scripts/wandb_report_043.py
 # [[experiments.043-expression-proteome-morphology.scripts.wandb_report_043]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/wandb_report_043
-"""W&B Report with one runset per panel grid, for readable 043 loss curves.
+"""W&B Report with one runset per panel grid: loss curves together and separated.
 
-A saved view (``wandb_view_043.py``) has one runset, so its total-loss panel puts every
-run of a round on one axis: HL-Gauss (about 2 to 3) beside pinball (about 0.2), and the
-alone_kemmeren runs (3,783 epochs) squash the 80-epoch and 20-epoch runs into the left
-edge. A Report holds several ``PanelGrid`` blocks, each with its own ``Runset`` filtered
-by run id, so each grid shows only a few comparable runs.
+A saved view (``wandb_view_043.py``) has one runset for every panel, so it cannot hold a
+panel per arm restricted to that arm's runs, nor a pair restricted to the HL-Gauss cells.
+A Report holds several ``PanelGrid`` blocks, each with its own ``Runset`` filtered by run
+id, so it carries both. The layout is the curated one of the views (owner, 2026-10-24:
+"we want loss curves together and separated"): 1 loss together, one grid per arm with
+train/loss and val/loss on one axis, mean over the arm's runs with the min/max band; 2
+loss separated, train/loss and val/loss of every run on their own axes (color = arm,
+dashed = fine-tune), then the same pair for the HL-Gauss z-score cells only; 3 the six
+validation metrics grouped by arm; 4 optimization; 5 bookkeeping. Grids are built from
+the round's runs as W&B holds them now, so rerun after every sync.
 
 The report is created on the first run and its id and URL are recorded in
 ``results/wandb_view_ids.json`` under ``<round>_report``; later runs overwrite the same
-report in place (URL unchanged). After saving, the script reads the report back, counts
-grids and panels, and checks that every metric key it plots is logged by at least one run
-of the grid that plots it. Every id must appear in ``ROUNDS`` of ``wandb_view_043.py``; an
-id W&B does not hold yet (a pending cell) is skipped and printed, and a grid with no run
-yet is left out, so rerun the script as cells start.
+report in place. After saving, the script reads the report back, counts grids and
+panels, and checks that every metric key it plots is logged by at least one run of the
+grid that plots it.
 
     python experiments/043-expression-proteome-morphology/scripts/wandb_report_043.py --round overnight_2026_10_23
 """
@@ -31,7 +34,18 @@ import wandb
 import wandb_workspaces.expr as expr
 import wandb_workspaces.reports.v2 as wr
 from pydantic import BaseModel, ConfigDict
-from wandb_view_043 import ROUNDS
+from wandb_view_043 import (
+    BOOKKEEPING,
+    HLGAUSS_CELL,
+    LOSS_KEYS,
+    ROUNDS,
+    SMOOTHING_TYPE,
+    SMOOTHING_WEIGHT,
+    VAL_METRICS,
+    Arm,
+    collect_arms,
+    series_styles,
+)
 
 ENTITY = "zhao-group"
 PROJECT = "torchcell_043-expression-proteome-morphology"
@@ -42,32 +56,20 @@ EPOCH = "epoch"
 #: The optimizer step: the trainer logs at step=step, and W&B's "Step" is ``_step``.
 STEP = "Step"
 STEP_KEY = "_step"
-MAX_RUNS_SHOWN = 30
-LEGEND = "${run:displayName} ${metricName}"
-LOSS_KEYS = ("train/loss", "val/loss")
-KEMMEREN = "val/kemmeren/pearson_per_gene_median"
-DOUBLES = "val/doubles/pearson_per_strain_centered_median"
-MUENZNER = "val/muenzner/pearson_per_gene_median"
-CAUDAL = "val/caudal/pearson_per_gene_median"
-MESSNER = "val/messner/pearson_per_gene_median"
-VAISHNAV = "val/vaishnav/pearson"
+MAX_RUNS_SHOWN = 1000
+LEGEND = "${run:displayName}"
 GRAD_NORM = "train/grad_norm"
-#: Panel-title names that say the statistic.
-METRIC_TITLE = {
-    "train/loss and val/loss": "train/loss and val/loss",
-    "val/loss": "val/loss",
-    KEMMEREN: "val/kemmeren per-gene Pearson median",
-    DOUBLES: "val/doubles (Sameith) per-double centered Pearson median",
-    MUENZNER: "val/muenzner per-gene Pearson median",
-    CAUDAL: "val/caudal per-gene Pearson median",
-    MESSNER: "val/messner per-gene Pearson median",
-    VAISHNAV: "val/vaishnav Pearson",
-    GRAD_NORM: "train/grad_norm (pre-clip, log scale)",
+#: Report titles; the report id (and so its URL stem) is kept in the registry.
+TITLES = {
+    "overnight_2026_10_23": "043 overnight round 2026-10-23: loss curves",
+    "ghyper_sweep_2026_10_24": "043 GilaHyper sweep 2026-10-24: loss curves",
+    "aurora_2026_10_24": "043 Aurora capacity grid 2026-10-24: loss curves",
 }
+PARTIAL = "a run that is not finished is partial and has no final result"
 
 
 class PanelSpec(BaseModel):
-    """One LinePlot: the keys on y and the x axis."""
+    """One LinePlot: the keys on y, the x axis, and whether it is grouped by arm."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -75,13 +77,23 @@ class PanelSpec(BaseModel):
     x: str  # EPOCH or STEP
     title: str
     log_y: bool = False
+    #: mean per arm (config ``arm_label``) with the min/max band over its runs
+    grouped: bool = False
+    #: one line per run colored by its arm (``<run id>:<metric>`` keys)
+    colors: dict[str, str] | None = None
+    marks: dict[str, str] | None = None
+    #: panel width in the 24-unit grid
+    w: int = 12
 
 
 class GridSpec(BaseModel):
-    """One panel grid: a heading, a one-sentence caveat, its runs, its panels."""
+    """One panel grid: its section, a heading, a one-sentence caveat, its runs, its
+    panels.
+    """
 
     model_config = ConfigDict(frozen=True)
 
+    section: str
     heading: str
     caption: str
     run_ids: tuple[str, ...]
@@ -102,337 +114,224 @@ def _x_name(x: str) -> str:
     return "epoch" if x == EPOCH else "optimizer step"
 
 
-def _panel(y: tuple[str, ...], x: str, log_y: bool = False) -> PanelSpec:
-    name = "train/loss and val/loss" if y == LOSS_KEYS else METRIC_TITLE[y[0]]
-    return PanelSpec(y=y, x=x, title=f"{name} by {_x_name(x)}", log_y=log_y)
+def _arm_caption(a: Arm) -> str:
+    """Runs, seeds, objective and epochs reached of one arm, in one sentence."""
+    shown = [i for i, r in enumerate(a.run_ids) if r in a.loss_run_ids]
+    seeds = ", ".join(str(a.seeds[i]) for i in shown)
+    reached = [a.epochs_reached[i] for i in shown]
+    states = {a.states[i] for i in shown}
+    span = (
+        f"epoch {reached[0]}"
+        if len(set(reached)) == 1
+        else f"epochs {min(reached)} to {max(reached)}"
+    )
+    tail = "" if states == {"finished"} else f"; {PARTIAL}"
+    plural = "s" if len(shown) != 1 else ""
+    return (
+        f"{len(shown)} run{plural} (seed {seeds}), {a.objective}, reached {span}; "
+        "train/loss and val/loss are the mean over the runs with the min/max band"
+        f"{tail}."
+    )
 
 
-def _loss_pair() -> tuple[PanelSpec, ...]:
-    return (_panel(LOSS_KEYS, EPOCH), _panel(LOSS_KEYS, STEP))
+def _separated(arm_set: list[Arm], loss_y: tuple[str, ...]) -> tuple[PanelSpec, ...]:
+    """train/loss and val/loss on their own axes, one line per run colored by arm."""
+    out = []
+    for k in loss_y:
+        colors, marks = series_styles(arm_set, k)
+        out.append(
+            PanelSpec(
+                y=(k,),
+                x=EPOCH,
+                title=f"{k} by epoch, every run (color = arm, dashed = fine-tune)",
+                colors=colors,
+                marks=marks,
+            )
+        )
+    return tuple(out)
 
 
-METRICS = (KEMMEREN, DOUBLES, MUENZNER, CAUDAL, MESSNER, VAISHNAV)
-
-
-def _metric_panels(x: str = EPOCH) -> tuple[PanelSpec, ...]:
-    return tuple(_panel((k,), x) for k in METRICS)
-
-
-HLGAUSS_S1 = ("gdqlsjpb", "oc881bqm")
-PINBALL_S1 = ("05d5anh5",)
-FINETUNES = ("jxlvzmmb", "zbsnrjqn", "fth871fz")
-ALONE = ("18s6j2p2", "bc1awz4y")
-JOINT_9 = ("86cc6tgp",)
-
-REPORTS: dict[str, ReportSpec] = {
-    "overnight_2026_10_23": ReportSpec(
-        title="043 overnight round 2026-10-23: loss curves",
+def build_spec(key: str) -> ReportSpec:
+    """The report in the curated section order, from the round's runs in W&B."""
+    arms = collect_arms(wandb.Api(timeout=120), ROUNDS[key])
+    with_loss = [a for a in arms if a.loss_run_ids]
+    present = set().union(*(a.keys for a in arms))
+    loss_y = tuple(k for k in LOSS_KEYS if k in present)
+    grids: list[GridSpec] = []
+    for a in with_loss:
+        y = tuple(k for k in LOSS_KEYS if k in a.keys)
+        grids.append(
+            GridSpec(
+                section="1 Loss, together",
+                heading=f"{a.label}: {' and '.join(y)} by epoch",
+                caption=_arm_caption(a),
+                run_ids=a.loss_run_ids,
+                panels=(
+                    PanelSpec(
+                        y=y,
+                        x=EPOCH,
+                        title=(
+                            f"{a.label}: {' and '.join(y)} by epoch, mean with the "
+                            "min/max band"
+                        ),
+                        grouped=True,
+                        w=24,
+                    ),
+                ),
+            )
+        )
+    if with_loss:
+        every = tuple(r for a in with_loss for r in a.loss_run_ids)
+        grids.append(
+            GridSpec(
+                section="2 Loss, separated",
+                heading="Every run: train/loss and val/loss on separate axes",
+                caption=(
+                    f"All {len(every)} runs of the round that logged a loss, one line per "
+                    "run colored by arm (fine-tunes dashed in their stage 1 color); loss "
+                    "families and epoch budgets differ, so read shapes here and levels in "
+                    f"the HL-Gauss grid below; {PARTIAL}."
+                ),
+                run_ids=every,
+                panels=_separated(with_loss, loss_y),
+            )
+        )
+    cells = [a for a in with_loss if a.category == HLGAUSS_CELL]
+    if cells:
+        left_out = [a.label for a in with_loss if a.category != HLGAUSS_CELL]
+        grids.append(
+            GridSpec(
+                section="2 Loss, separated",
+                heading="HL-Gauss z-score cells only: train/loss and val/loss",
+                caption=(
+                    "Only the stage 1 cells trained with HL-Gauss on z-score targets, so "
+                    "loss levels are comparable; left out (another objective, the alone "
+                    "Kemmeren runs on thousands of epochs, or a Kemmeren fine-tune): "
+                    f"{', '.join(left_out) if left_out else 'none'}; {PARTIAL}."
+                ),
+                run_ids=tuple(r for a in cells for r in a.loss_run_ids),
+                panels=_separated(cells, loss_y),
+            )
+        )
+    every_run = tuple(r for a in arms for r in a.run_ids)
+    val = tuple(
+        PanelSpec(y=(k,), x=EPOCH, title=f"{name} by epoch, mean per arm", grouped=True)
+        for k, name in VAL_METRICS
+        if k in present
+    )
+    if val:
+        grids.append(
+            GridSpec(
+                section="3 Validation metrics",
+                heading="Validation metrics by epoch, grouped by arm",
+                caption=(
+                    "Mean per arm with the min/max band over its runs; a maximum read off "
+                    f"a curve is an upward-biased order statistic, not a score; {PARTIAL}."
+                ),
+                run_ids=every_run,
+                panels=val,
+            )
+        )
+    opt = []
+    if GRAD_NORM in present:
+        opt.append(
+            PanelSpec(
+                y=(GRAD_NORM,),
+                x=STEP,
+                title="train/grad_norm (pre-clip, log y) by optimizer step, mean per arm",
+                log_y=True,
+                grouped=True,
+            )
+        )
+    if "train/lr" in present:
+        opt.append(
+            PanelSpec(
+                y=("train/lr",),
+                x=STEP,
+                title="train/lr by optimizer step, mean per arm",
+                grouped=True,
+            )
+        )
+    if opt:
+        grids.append(
+            GridSpec(
+                section="4 Optimization",
+                heading="Gradient norm and learning rate by optimizer step",
+                caption=(
+                    "train/grad_norm before clipping on a log axis and the logged "
+                    f"learning rate, grouped by arm; {PARTIAL}."
+                ),
+                run_ids=every_run,
+                panels=tuple(opt),
+            )
+        )
+    book = tuple(
+        PanelSpec(y=tuple(ys), x=EPOCH, title=t, grouped=True)
+        for t, ys in BOOKKEEPING
+        if all(k in present for k in ys)
+    )
+    if book:
+        grids.append(
+            GridSpec(
+                section="5 Bookkeeping",
+                heading="Epoch time and budget",
+                caption=(
+                    "Seconds per epoch, steps per epoch and the fixed epoch budget, "
+                    "grouped by arm."
+                ),
+                run_ids=every_run,
+                panels=book,
+            )
+        )
+    return ReportSpec(
+        title=TITLES[key],
         intro=(
-            "Round overnight_2026_10_23 (store v2), one runset per panel grid so each "
-            "grid holds a few comparable runs on its own axes. No smoothing anywhere; "
-            "curves are raw per-epoch values, and a maximum read off a curve is an "
-            "upward-biased order statistic, not a score. Built by "
-            "experiments/043-expression-proteome-morphology/scripts/wandb_report_043.py."
+            f"Round {key}: {ROUNDS[key].intro} Hardware: {ROUNDS[key].hardware}. "
+            "Sections: 1 train/loss and val/loss together, one grid per arm; 2 the same "
+            "losses on separate axes, every run and then the HL-Gauss z-score cells only; "
+            "3 validation metrics; 4 optimization; 5 bookkeeping. Smoothing is a "
+            f"{SMOOTHING_WEIGHT}-point running average. Built by "
+            "experiments/043-expression-proteome-morphology/scripts/wandb_report_043.py; "
+            "rerun it after every sync."
         ),
-        grids=(
-            GridSpec(
-                heading="Stage 1, HL-Gauss: train/loss and val/loss by epoch",
-                caption=(
-                    "Stage 1 all-dataset HL-Gauss runs, seeds 0 (gdqlsjpb) and 1 "
-                    "(oc881bqm), 80 epochs; HL-Gauss loss is a cross-entropy over bins, "
-                    "so its scale is not comparable to the pinball grid below."
-                ),
-                run_ids=HLGAUSS_S1,
-                panels=_loss_pair(),
-            ),
-            GridSpec(
-                heading="Stage 1, pinball: train/loss and val/loss by epoch",
-                caption=(
-                    "Stage 1 all-dataset pinball run, seed 0 only (05d5anh5), 80 epochs, "
-                    "on its own y axis because the loss family differs; one seed, so no "
-                    "seed spread is shown."
-                ),
-                run_ids=PINBALL_S1,
-                panels=_loss_pair(),
-            ),
-            GridSpec(
-                heading=(
-                    "Alone Kemmeren against stage 1 (HL-Gauss) at matched optimizer "
-                    "steps"
-                ),
-                caption=(
-                    "Alone Kemmeren runs (18s6j2p2 s0, bc1awz4y s1; 3,783 epochs) "
-                    "against the stage 1 HL-Gauss runs on the optimizer-step axis, the "
-                    "only axis on which they are comparable; the stage 1 loss covers every "
-                    "dataset, not Kemmeren alone, so read the Kemmeren and doubles medians for the matched "
-                    "comparison, not the loss levels."
-                ),
-                run_ids=ALONE + HLGAUSS_S1,
-                panels=(
-                    _panel(LOSS_KEYS, STEP),
-                    _panel((KEMMEREN,), STEP),
-                    _panel((DOUBLES,), STEP),
-                ),
-            ),
-            GridSpec(
-                heading="Kemmeren fine-tunes (20 epochs) from each stage 1",
-                caption=(
-                    "Kemmeren fine-tunes from stage 1 HL-Gauss (jxlvzmmb s0, zbsnrjqn s1) "
-                    "and from stage 1 pinball (fth871fz s0), 20 epochs each; the pinball "
-                    "fine-tune trains with pinball loss, so compare its loss shape, not "
-                    "its level, with the HL-Gauss fine-tunes."
-                ),
-                run_ids=FINETUNES,
-                panels=(
-                    _panel(LOSS_KEYS, EPOCH),
-                    _panel((KEMMEREN,), EPOCH),
-                    _panel((DOUBLES,), EPOCH),
-                ),
-            ),
-            GridSpec(
-                heading="Stage 1 validation metrics by epoch",
-                caption=(
-                    "Stage 1 HL-Gauss (gdqlsjpb, oc881bqm), stage 1 pinball (05d5anh5) "
-                    "and joint_9 (86cc6tgp, 15 epochs, deadline-capped, so partial) on "
-                    "validation medians per epoch; joint_9 stopped early, so its curves "
-                    "end at epoch 15 and are not a final result."
-                ),
-                run_ids=HLGAUSS_S1 + PINBALL_S1 + JOINT_9,
-                panels=tuple(
-                    _panel((k,), EPOCH)
-                    for k in (KEMMEREN, DOUBLES, MUENZNER, CAUDAL, MESSNER, VAISHNAV)
-                ),
-            ),
-        ),
+        grids=tuple(grids),
     )
-}
-
-
-GS = "gs1024_"
-LAYER_PATTERNS = tuple(
-    f"{GS}w1_{a}" for a in ("smss", "ssss", "mmmm", "msmsms", "smmss")
-) + (f"{GS}w2_mmmm_cos",)  # MMMM with the cosine schedule (the divergence test)
-GS_BASELINE = f"{GS}w1_smss"
-GS_DIMS_OPT = (f"{GS}w2_h288",) + tuple(
-    f"{GS}w3_{a}" for a in ("ffn2", "hh256", "lrhalf", "lrx2")
-)
-GS_STAGE1 = LAYER_PATTERNS + (f"{GS}w2_qn", f"{GS}w2_mle", f"{GS}w2_binq") + GS_DIMS_OPT
-#: Objective-changing cells: each on its own grid, since their losses are on different
-#: targets or a different loss family.
-GS_OBJECTIVES = (
-    ("qn", "quantile_normal target transform", f"{GS}w2_qn"),
-    ("mle", "mle loss family", f"{GS}w2_mle"),
-    ("binq", "binned_quantile loss family", f"{GS}w2_binq"),
-)
-PARTIAL = "runs still in flight are partial and have no final result"
-
-REPORTS["ghyper_sweep_2026_10_24"] = ReportSpec(
-    title="043 GilaHyper sweep 2026-10-24: loss curves",
-    intro=(
-        "Round ghyper_sweep_2026_10_24 (store v2, seed 0, 80 epochs, HL-Gauss unless the "
-        "grid says otherwise), one runset per panel grid. No smoothing; "
-        f"{PARTIAL}, and a maximum read off a curve is an upward-biased order "
-        "statistic, not a score. Run ids not yet in W&B are left out until the script "
-        "is rerun. Built by "
-        "experiments/043-expression-proteome-morphology/scripts/wandb_report_043.py."
-    ),
-    grids=(
-        GridSpec(
-            heading=(
-                "Layer pattern, HL-Gauss stage 1: train/loss and val/loss by epoch"
-            ),
-            caption=(
-                "Trunk layer patterns SMSS (baseline), SSSS, MMMM, MSMSMS and SMMSS "
-                f"under one HL-Gauss objective, so loss levels are comparable; {PARTIAL}."
-            ),
-            run_ids=LAYER_PATTERNS,
-            panels=(_panel(LOSS_KEYS, EPOCH), _panel(("val/loss",), EPOCH)),
-        ),
-        GridSpec(
-            heading="Gradient norm by optimizer step (divergence)",
-            caption=(
-                "train/grad_norm before clipping (clip 10), log scale, every stage 1 "
-                "cell: MMMM and MSMSMS exceed 1e3 from epoch 71.5 and 72.4 (7,101 steps "
-                f"per epoch) and diverge inside their scoring window; {PARTIAL}."
-            ),
-            run_ids=GS_STAGE1,
-            panels=(_panel((GRAD_NORM,), STEP, log_y=True),),
-        ),
-        GridSpec(
-            heading="Layer pattern: validation metrics by epoch",
-            caption=(
-                "The same five layer-pattern runs on the validation medians and the "
-                f"Vaishnav Pearson per epoch; {PARTIAL}."
-            ),
-            run_ids=LAYER_PATTERNS,
-            panels=_metric_panels(),
-        ),
-    )
-    + tuple(
-        GridSpec(
-            heading=(
-                f"Preprocessing and loss family (each its own objective): {tag}, {what}"
-            ),
-            caption=(
-                f"{rid} alone, because its loss is on a different objective than every "
-                f"other cell, so its loss level is comparable with nothing; {PARTIAL}."
-            ),
-            run_ids=(rid,),
-            panels=(_panel(LOSS_KEYS, EPOCH),) + _metric_panels(),
-        )
-        for tag, what, rid in GS_OBJECTIVES
-    )
-    + (
-        GridSpec(
-            heading="Dims and optimization",
-            caption=(
-                "Hidden 288, trunk FFN 2x, head_hidden 256, lr 1.5e-4 and lr 6e-4 "
-                "against the SMSS baseline, all HL-Gauss, so loss levels are "
-                f"comparable; {PARTIAL}."
-            ),
-            run_ids=(GS_BASELINE,) + GS_DIMS_OPT,
-            panels=(_panel(LOSS_KEYS, EPOCH),) + _metric_panels(),
-        ),
-        GridSpec(
-            heading="Kemmeren fine-tunes (20 epochs)",
-            caption=(
-                "Every Kemmeren fine-tune (the _ft run of a stage 1 cell, 20 epochs) on "
-                "loss and the Kemmeren and doubles medians; fine-tunes inherit their "
-                "stage 1 objective, so compare loss levels only within one objective; "
-                f"{PARTIAL}."
-            ),
-            run_ids=tuple(f"{r}_ft" for r in GS_STAGE1),
-            panels=(
-                _panel(LOSS_KEYS, EPOCH),
-                _panel((KEMMEREN,), EPOCH),
-                _panel((DOUBLES,), EPOCH),
-            ),
-        ),
-    ),
-)
-
-AB = "a1024b_all_"
-AURORA_ANCHORS = tuple(f"{AB}onto_hlgauss_equal_s{s}" for s in range(3)) + tuple(
-    f"{AB}name_hlgauss_equal_s{s}" for s in range(4)
-)
-AURORA_CAPACITY = tuple(
-    f"{AB}onto_hlgauss_equal_{c}_s{s}"
-    for c, seeds in (("bs16", 3), ("bs32", 3), ("h288", 3), ("ffn2", 2))
-    for s in range(seeds)
-)
-AURORA_ALONE = "a1024_alone_kemmeren_onto_hlgauss_equal_s0"
-
-REPORTS["aurora_2026_10_24"] = ReportSpec(
-    title="043 Aurora capacity grid 2026-10-24: loss curves",
-    intro=(
-        "Round aurora_2026_10_24 (store v2, micro-batch 1 resubmission a1024b_, 80 "
-        "epochs), one runset per panel grid. No smoothing; "
-        f"{PARTIAL}, and a maximum read off a curve is an upward-biased order "
-        "statistic, not a score. Run ids not yet in W&B are left out until the script "
-        "is rerun. Built by "
-        "experiments/043-expression-proteome-morphology/scripts/wandb_report_043.py."
-    ),
-    grids=(
-        GridSpec(
-            heading="Ontology vs name anchors: train/loss and val/loss",
-            caption=(
-                "Ontology-conditioned anchors (all_onto, seeds 0-2) against name "
-                "anchors (all_name, seeds 0-3), both HL-Gauss at batch 8, by epoch and "
-                f"by optimizer step; {PARTIAL}."
-            ),
-            run_ids=AURORA_ANCHORS,
-            panels=_loss_pair(),
-        ),
-        GridSpec(
-            heading="Capacity axis (bs16, bs32, h288, ffn2): train/loss and val/loss",
-            caption=(
-                "Batch 16 and 32, hidden 288 and FFN 2x cells under ontology "
-                "conditioning, by epoch and by optimizer step (bs16 and bs32 take fewer "
-                f"steps per epoch, so the two axes differ); {PARTIAL}."
-            ),
-            run_ids=AURORA_CAPACITY,
-            panels=_loss_pair(),
-        ),
-        GridSpec(
-            heading="Pinball cell: train/loss and val/loss",
-            caption=(
-                "The pinball loss-family cell alone, on its own y axis because its "
-                f"loss is not on the HL-Gauss scale; {PARTIAL}."
-            ),
-            run_ids=(f"{AB}onto_pinball_equal_s0",),
-            panels=_loss_pair(),
-        ),
-        GridSpec(
-            heading="MSE cell: train/loss and val/loss",
-            caption=(
-                "The mse loss-family cell alone, on its own y axis because its loss is "
-                f"not on the HL-Gauss scale; {PARTIAL}."
-            ),
-            run_ids=(f"{AB}onto_mse_equal_s0",),
-            panels=_loss_pair(),
-        ),
-        GridSpec(
-            heading="Alone Kemmeren (ontology) by optimizer step",
-            caption=(
-                "The alone Kemmeren run under ontology conditioning on loss and the "
-                "Kemmeren and doubles medians by optimizer step, the axis it is "
-                f"step-matched on (571,100 steps); {PARTIAL}."
-            ),
-            run_ids=(AURORA_ALONE,),
-            panels=(
-                _panel(LOSS_KEYS, STEP),
-                _panel((KEMMEREN,), STEP),
-                _panel((DOUBLES,), STEP),
-            ),
-        ),
-    ),
-)
-
-
-def resolve(key: str, spec: ReportSpec) -> ReportSpec:
-    """Check every id against ``ROUNDS[key]``, drop ids W&B does not hold yet (printed),
-    and drop a grid none of whose runs exist yet (printed).
-    """
-    wanted = {r for g in spec.grids for r in g.run_ids}
-    stray = sorted(wanted - set(ROUNDS[key].run_ids))
-    if stray:
-        raise ValueError(f"ids not in ROUNDS[{key!r}]: {stray}")
-    found = {
-        r.id
-        for r in wandb.Api().runs(
-            f"{ENTITY}/{PROJECT}", filters={"name": {"$in": sorted(wanted)}}
-        )
-    }
-    for rid in sorted(wanted - found):
-        print(f"skipped (not in W&B yet): {rid}")
-    grids = []
-    for g in spec.grids:
-        present = tuple(r for r in g.run_ids if r in found)
-        if not present:
-            print(f"skipped grid (no run yet): {g.heading}")
-            continue
-        grids.append(g.model_copy(update={"run_ids": present}))
-    return spec.model_copy(update={"grids": tuple(grids)})
 
 
 def _line_plot(p: PanelSpec, i: int) -> wr.LinePlot:
-    """Panel ``i`` of its grid, placed two per row (w=12 of the 24-unit grid, h=8)."""
+    """Panel ``i`` of its grid, two per row at w=12, one per row at w=24 (h=8)."""
+    per_row = 24 // p.w
     return wr.LinePlot(
         title=p.title,
         x=p.x,
         y=list(p.y),
         title_x=_x_name(p.x),
-        smoothing_type="none",
+        smoothing_type=SMOOTHING_TYPE,
+        smoothing_factor=SMOOTHING_WEIGHT,
         log_y=p.log_y,
         max_runs_to_show=MAX_RUNS_SHOWN,
-        legend_template=LEGEND,
-        layout=wr.Layout(x=12 * (i % 2), y=8 * (i // 2), w=12, h=8),
+        **(
+            {
+                "groupby": wr.Config("arm_label"),
+                "groupby_aggfunc": "mean",
+                "groupby_rangefunc": "minmax",
+            }
+            if p.grouped
+            else {"legend_template": LEGEND}
+        ),
+        line_colors=p.colors,
+        line_marks=p.marks,
+        layout=wr.Layout(x=p.w * (i % per_row), y=8 * (i // per_row), w=p.w, h=8),
     )
 
 
 def build_blocks(spec: ReportSpec) -> list:
     blocks: list = [wr.MarkdownBlock(text=spec.intro)]
+    section = None
     for grid in spec.grids:
+        if grid.section != section:
+            section = grid.section
+            blocks.append(wr.H1(text=section))
         blocks.append(wr.H2(text=grid.heading))
         blocks.append(wr.MarkdownBlock(text=grid.caption))
         runset = wr.Runset(
@@ -486,17 +385,26 @@ def save_report(key: str, spec: ReportSpec) -> str:
 
 
 def verify(url: str, spec: ReportSpec) -> None:
-    """Read the report back, count grids and panels, and check every plotted key."""
+    """Read the report back, count grids and panels per section, and check every
+    plotted key against the summaries and sampled history of the grid's runs.
+    """
     loaded = wr.Report.from_url(url)
     grids = [b for b in loaded.blocks if isinstance(b, wr.PanelGrid)]
     n_panels = sum(len(g.panels) for g in grids)
     want_panels = sum(len(g.panels) for g in spec.grids)
-    print(f"report id {loaded.id}: {len(grids)} panel grids, {n_panels} panels")
     if len(grids) != len(spec.grids) or n_panels != want_panels:
         raise ValueError(
             f"expected {len(spec.grids)} grids / {want_panels} panels, "
             f"found {len(grids)} / {n_panels}"
         )
+    per_section: dict[str, list[int]] = {}
+    for g_spec, g in zip(spec.grids, grids, strict=True):
+        if len(g.panels) != len(g_spec.panels):
+            raise ValueError(f"{g_spec.heading}: panel count differs on read-back")
+        per_section.setdefault(g_spec.section, []).append(len(g.panels))
+    print(f"report id {loaded.id}: {len(grids)} panel grids, {n_panels} panels")
+    for name, counts in per_section.items():
+        print(f"  {name}: {len(counts)} grids, {sum(counts)} panels")
     api = wandb.Api()
     keys_by_run: dict[str, set[str]] = {}
     for grid in spec.grids:
@@ -504,32 +412,26 @@ def verify(url: str, spec: ReportSpec) -> None:
             if rid not in keys_by_run:
                 run = api.run(f"{ENTITY}/{PROJECT}/{rid}")
                 keys = set(run.summary._json_dict)
-                hist = run.history(samples=50, pandas=False)
-                for row in hist:
+                for row in run.history(samples=50, pandas=False):
                     keys.update(row)
                 keys_by_run[rid] = keys
-    print("\n| grid | key | runs logging it | runs in grid |")
-    print("|---|---|---|---|")
     missing = []
-    for i, grid in enumerate(spec.grids, start=1):
+    for grid in spec.grids:
         keys = {k for p in grid.panels for k in p.y}
         keys |= {STEP_KEY if p.x == STEP else EPOCH for p in grid.panels}
         for k in sorted(keys):
-            have = [r for r in grid.run_ids if k in keys_by_run[r]]
-            print(
-                f"| {i} | {k} | {len(have)} ({', '.join(have)}) | {len(grid.run_ids)} |"
-            )
-            if not have:
-                missing.append((i, k))
+            if not any(k in keys_by_run[r] for r in grid.run_ids):
+                missing.append((grid.heading, k))
     if missing:
         raise ValueError(f"keys logged by no run of their grid: {missing}")
+    print("every plotted key is logged by a run of its grid")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--round", required=True, choices=sorted(REPORTS))
+    parser.add_argument("--round", required=True, choices=sorted(TITLES))
     args = parser.parse_args()
-    spec = resolve(args.round, REPORTS[args.round])
+    spec = build_spec(args.round)
     url = save_report(args.round, spec)
     if re.search(r"/reports/", url) is None:
         raise ValueError(f"not a report URL: {url}")

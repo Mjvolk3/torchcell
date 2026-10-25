@@ -89,6 +89,11 @@
     "name": "043 ghyper_sweep_2026_10_24: all_onto_hlgauss_equal_LMMMM",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=p12a6ytag3d"
   },
+  "ghyper_sweep_2026_10_24/all_onto_hlgauss_equal_LMMMM_cos": {
+    "id": "bi5l6a5eu4s",
+    "name": "043 ghyper_sweep_2026_10_24: all_onto_hlgauss_equal_LMMMM_cos",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=bi5l6a5eu4s"
+  },
   "ghyper_sweep_2026_10_24/all_onto_hlgauss_equal_LMSMSMS": {
     "id": "93mhlty6kl7",
     "name": "043 ghyper_sweep_2026_10_24: all_onto_hlgauss_equal_LMSMSMS",

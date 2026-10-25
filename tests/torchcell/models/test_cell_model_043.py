@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import h5py
 import numpy as np
@@ -388,8 +389,8 @@ def _tiny_vocab() -> ExperimentOntologyVocabulary:
     )
 
 
-def _onto_model(loss: str = "hlgauss") -> CellModel043:
-    cfg = _config(loss, conditioning="ontology")
+def _onto_model(loss: str = "hlgauss", inject: str = "head") -> CellModel043:
+    cfg = _config(loss, conditioning="ontology", ontology_inject=inject)
     torch.manual_seed(0)
     tables = [torch.randn(5, d) for d in DIMS]
     mask = build_head_mask(
@@ -562,3 +563,64 @@ def test_token_dropout_trains_only_and_default_draws_nothing() -> None:
     assert 0 < int(dropped.sum()) < dropped.numel()  # some genes dropped, not all
     with pytest.raises(ValueError):
         _config("mse", token_dropout=1.0)
+
+
+# --------------------------------------------------------------------------- #
+# Ontology injection beyond the heads (2026-10-25)
+# --------------------------------------------------------------------------- #
+def test_ontology_inject_head_is_the_existing_model() -> None:
+    b = _with_ids(_batch(), torch.tensor([0, 1, 2]), ONTO)
+    rows = (torch.tensor([0, 1]), torch.tensor([2]))
+    base = _onto_model("hlgauss").eval()
+    head = _onto_model("hlgauss", inject="head").eval()
+    assert [n for n, _ in base.named_parameters()] == [
+        n for n, _ in head.named_parameters()
+    ]
+    assert not hasattr(head, "onto_inject")
+    with torch.no_grad():
+        o1, o2 = base(b, *rows), head(b, *rows)
+    assert torch.equal(o1.gene, o2.gene) and torch.equal(o1.record, o2.record)
+
+
+@pytest.mark.parametrize("inject", ["operator", "trunk_and_operator"])
+def test_ontology_inject_reaches_the_operator_and_trunk(inject: str) -> None:
+    rows = (torch.tensor([0, 1]), torch.tensor([2]))
+    model = _onto_model("hlgauss", inject=inject).eval()
+    head = _onto_model("hlgauss").eval()
+    extra = sum(p.numel() for p in model.parameters()) - sum(
+        p.numel() for p in head.parameters()
+    )
+    tok, d = model.config.token_dim, model.config.hidden_dim
+    assert extra == 2 * tok + tok * d + d  # LayerNorm(token) + Linear(token -> d)
+    inject_map = model.onto_inject
+    linear = cast(torch.nn.Linear, inject_map[1])
+    assert linear.weight.abs().sum() > 0  # default init, no zero init
+    base = _batch()  # one draw: both batches share contexts and marks
+    b = _with_ids(base, torch.tensor([0, 1, 2]), ONTO)
+    with torch.no_grad():
+        out = model(b, *rows)
+        out_h = head(b, *rows)
+    assert out.gene.shape == out_h.gene.shape == (2, G, 32)
+    assert out.record.shape == out_h.record.shape == (1, 32)
+    assert torch.isfinite(out.gene).all() and torch.isfinite(out.record).all()
+    # records 0 and 2 share context 0; a different ontology row changes the CLS state
+    # (the operator output) under injection, never under head-only conditioning
+    other = ONTO.clone()
+    other[0] = ONTO[2]
+    b2 = _with_ids(base, torch.tensor([0, 1, 2]), other)
+    with torch.no_grad():
+        moved = (model(b2, *rows).h_cls[0] - out.h_cls[0]).abs().max()
+        fixed = (head(b2, *rows).h_cls[0] - out_h.h_cls[0]).abs().max()
+    assert float(moved) > 1e-6 and float(fixed) == 0.0
+    if inject == "trunk_and_operator":  # the trunk now runs per record
+        X = model.context_tokens(b.contexts)
+        shift = inject_map(model.onto_token(ONTO)).unsqueeze(1)
+        with torch.no_grad():
+            H = model.trunk(X[b.record_context] + shift, cls_shift=shift)
+        assert H.shape == (3, G + 1, d)
+        assert not torch.allclose(H[0], H[2])  # same context, different ontology
+
+
+def test_ontology_inject_needs_ontology_conditioning() -> None:
+    with pytest.raises(ValueError, match="needs conditioning=ontology"):
+        _config("mse", ontology_inject="operator")

@@ -377,6 +377,17 @@ ROUNDS: dict[str, Round] = {
                 "(job 6371, 7:38:45), no recovery; its fine-tune 6357 was cancelled "
                 "unrun",
             ),
+            (
+                "gs1024_w4_bs32",
+                "degenerate from epoch 2: val/doubles/pearson exactly -0.0883 every epoch "
+                "2-43 (the value h288 locked to), val/loss_best 2.6644 at epoch 1 never "
+                "improved, train/loss 2.59 -> 2.70; operator/relative_norm 0.336 (ep 1) -> "
+                "0.533 (ep 2) -> 1.09 (ep 3) -> 14.8 (ep 4) -> 1164 (ep 43) against SMSS "
+                "0.34-0.36 at epochs 1-5; train/grad_norm_max50 first > 100 at step 15,500 "
+                "(epoch 8.7), > 1e3 at step 40,250 (epoch 22.7), 1899.7 at epoch 25; "
+                "val/promoter/pearson nan at epochs 42-43; cancelled at epoch 43 (job "
+                "6398, 3:07), fine-tune 6399 cancelled unrun",
+            ),
         ),
     ),
 }

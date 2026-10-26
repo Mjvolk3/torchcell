@@ -1514,6 +1514,56 @@
     }
    }
   },
+  "gs1024_w6_profile_stats": {
+   "arm_label": "all_onto_hlgauss_equal_statsprofile_wprofile",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 50,
+   "n_epochs": 50,
+   "window": [
+    41,
+    50
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.09142430512899836,
+     "n_evaluations": 10
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.19422877611917638,
+     "n_evaluations": 10
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 10
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.20148927226799612,
+     "n_evaluations": 10
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.17031003466513855,
+     "n_evaluations": 10
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.06605606207618253,
+     "n_evaluations": 10
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.921381603375529,
+     "n_evaluations": 10
+    },
+    "train/loss": {
+     "mean": 2.1962307210876313,
+     "n_evaluations": 10
+    },
+    "val/loss": {
+     "mean": 2.494262794108998,
+     "n_evaluations": 10
+    }
+   }
+  },
   "gs1024_w5_onto_inject_op": {
    "arm_label": "all_onto_injop_hlgauss_equal",
    "seed": 0,
@@ -1865,6 +1915,182 @@
      "n_evaluations": 5
     }
    }
+  },
+  "gs1024_r2_hh256": {
+   "arm_label": "all_onto_hlgauss_equal_hh256",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 50,
+   "n_epochs": 50,
+   "window": [
+    41,
+    50
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.09854240309056672,
+     "n_evaluations": 10
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.19510911854992577,
+     "n_evaluations": 10
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 10
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.2169446363385296,
+     "n_evaluations": 10
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.15861975907742476,
+     "n_evaluations": 10
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.07062765647145108,
+     "n_evaluations": 10
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9206310276677859,
+     "n_evaluations": 10
+    },
+    "train/loss": {
+     "mean": 2.1901093355906376,
+     "n_evaluations": 10
+    },
+    "val/loss": {
+     "mean": 2.4947898401187123,
+     "n_evaluations": 10
+    }
+   }
+  },
+  "gs1024_r2_hh256_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_hlgauss_equal_hh256",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    16,
+    20
+   ],
+   "window_override_of": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.1413267697963721,
+     "n_evaluations": 5
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.2617716955765815,
+     "n_evaluations": 5
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 5
+    },
+    "train/loss": {
+     "mean": 2.0905319755440517,
+     "n_evaluations": 5
+    },
+    "val/loss": {
+     "mean": 2.374101254171456,
+     "n_evaluations": 5
+    }
+   }
+  },
+  "gs1024_r2_lrx2": {
+   "arm_label": "all_onto_hlgauss_equal_lr0.0006",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 50,
+   "n_epochs": 50,
+   "window": [
+    41,
+    50
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.07807752587754835,
+     "n_evaluations": 10
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.18446218631596392,
+     "n_evaluations": 10
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 10
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.18108450962677874,
+     "n_evaluations": 10
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.13779232148050216,
+     "n_evaluations": 10
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.05772894649645046,
+     "n_evaluations": 10
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9216970268560823,
+     "n_evaluations": 10
+    },
+    "train/loss": {
+     "mean": 2.213357015459748,
+     "n_evaluations": 10
+    },
+    "val/loss": {
+     "mean": 2.4836504441466936,
+     "n_evaluations": 10
+    }
+   }
+  },
+  "gs1024_r2_lrx2_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_hlgauss_equal_lr0.0006",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    16,
+    20
+   ],
+   "window_override_of": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.1135325844667309,
+     "n_evaluations": 5
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.23219553037266044,
+     "n_evaluations": 5
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 5
+    },
+    "train/loss": {
+     "mean": 2.130893207701626,
+     "n_evaluations": 5
+    },
+    "val/loss": {
+     "mean": 2.367827539234547,
+     "n_evaluations": 5
+    }
+   }
   }
  },
  "transfer_kemmeren": {},
@@ -1928,8 +2154,7 @@
   "gs1024_w4_bal_p05": 20,
   "gs1024_w4_bs32": 43,
   "gs1024_w4_bal_p1_cap8": 22,
-  "gs1024_r2_hh256": 24,
-  "gs1024_r2_lrx2": 15
+  "gs1024_w6_lodo_hu": 3
  },
  "no_run_yet": [
   "gs1024_w2_h288_ft",
@@ -1938,16 +2163,12 @@
   "gs1024_w4_bal_p05_ft",
   "gs1024_w4_bs32_ft",
   "gs1024_w4_bal_p1_cap8_ft",
-  "gs1024_w6_profile_stats",
   "gs1024_w6_profile_stats_ft",
-  "gs1024_w6_lodo_hu",
   "gs1024_w6_lodo_hu_ft",
   "gs1024_w6_lodo_zelezniak",
   "gs1024_w6_lodo_zelezniak_ft",
   "gs1024_w5_onto_inject_tr",
   "gs1024_w5_onto_inject_tr_ft",
-  "gs1024_r2_hh256_ft",
-  "gs1024_r2_lrx2_ft",
   "gs1024_r2_smmss_s1",
   "gs1024_r2_smmss_s1_ft"
  ],

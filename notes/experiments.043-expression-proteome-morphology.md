@@ -1775,3 +1775,16 @@ Owner (verbatim): "you only get 3 gpus... we are using the other for environment
 - `trunk_and_operator`: s is also added to the trunk input (gene tokens and the CLS), so the trunk runs once per record instead of once per distinct context; s is added again before the operator. Its step time is measured on the GPU smoke (job 6413) before `gs1024_w5_onto_inject_tr` runs.
 
 Cells (recipe v2, ontology, prep_v4, HL-Gauss, seed 0, each with its Kemmeren fine-tune): `gs1024_w5_onto_inject_op` (jobs 6414/6415), `gs1024_w5_onto_inject_tr` (6416/6417), first in the queue after the GPU smoke and its W&B gate.
+
+### Ontology injection at the operator, first read (2026-10-25, one seed)
+
+`gs1024_w5_onto_inject_op` (jobs 6432/6433 after the zsh PIPESTATUS resubmission; recipe v2, 50 epochs) against the recipe v2 baseline `gs1024_w4_bs16` read over the same epochs 41-50 (unsampled W&B history, `wandb_view_043.py --window-means` and a direct history read; stage-1 seed floor from `gs1024_w1_smss` s0 vs s1: Kemmeren 0.038, doubles 0.006; fine-tune floor 0.013 and 0.011).
+
+| cell | stage | window epochs | val/kemmeren/pearson_per_gene_median | val/doubles/pearson_per_strain_centered_median | val/loss | val/messner/pearson_per_gene_median | val/caudal/pearson_per_gene_median | val/muenzner/pearson_per_gene_median | val/vaishnav/pearson |
+|---|---|---|---|---|---|---|---|---|---|
+| gs1024_w4_bs16 (baseline) | 1 | 41-50 | 0.0935 | 0.2131 | 2.5042 | 0.0460 | 0.1626 | 0.1977 | 0.9188 |
+| gs1024_w5_onto_inject_op | 1 | 41-50 | 0.0876 | **0.2469** | 2.4980 | 0.0659 | 0.1588 | 0.2099 | 0.9194 |
+| gs1024_w4_bs16_ft (from the epoch-80 checkpoint) | fine-tune | 16-20 | 0.1427 | 0.2423 | 2.3669 | | | | |
+| gs1024_w5_onto_inject_op_ft (from the epoch-50 checkpoint) | fine-tune | 16-20 | 0.1112 | 0.2347 | 2.3821 | | | | |
+
+Read: the operator injection moves the Sameith doubles window mean by +0.034 (about 6x the one measured doubles seed gap) and leaves Kemmeren within the seed floor at stage 1; the fine-tune Kemmeren is 0.032 lower, but the two fine-tunes start from checkpoints of different length (80 against 50 stage-1 epochs), so that comparison is not matched. val/loss is within 0.006 of the baseline. One seed; the seed-1 replicate `gs1024_w5_onto_inject_op_s1` is queued first in the slot-manager order. The trunk variant (`inject_tr`, 3.4x the step time) stays unrun.

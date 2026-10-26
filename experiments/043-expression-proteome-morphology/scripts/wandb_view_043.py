@@ -339,10 +339,13 @@ ROUNDS: dict[str, Round] = {
         # gs1024_w1_smss) with a higher Kemmeren window mean; the val minima fall well
         # before epoch 50. Baseline = gs1024_w4_bs16 read over epochs 41-50 (constant lr:
         # its epochs 1-50 equal a 50-epoch run's).
-        # wave 5, ontology injection (owner, 2026-10-25): operator 6414/6415, trunk and
-        # operator 6416/6417
+        # wave 5, ontology injection (owner, 2026-10-25): operator 6432/6433 (6414/6415
+        # were cancelled by the PIPESTATUS false failure), trunk and operator 6416/6417
+        # (unrun), operator seed 1 6434/6435
         + tuple(
-            f"gs1024_w5_onto_inject_{k}{ft}" for k in ("op", "tr") for ft in ("", "_ft")
+            f"gs1024_w5_onto_inject_{k}{ft}"
+            for k in ("op", "tr", "op_s1")
+            for ft in ("", "_ft")
         )
         # recipe-v2 replacements of cells that never started: tdrop01 6418/6419, ffn2
         # 6424/6425, hh256 6426/6427, lrx2 6428/6429, SMMSS seed 1 6430/6431

@@ -337,6 +337,9 @@ ROUNDS: dict[str, Round] = {
         # bs16 seeds 1 and 2 (the one-seed signal, 2026-10-25) at 50 epochs (recipe v2),
         # jobs 6420/6421, 6422/6423 (resubmitted from 6408-6411 before they started)
         + tuple(f"gs1024_w4_bs16_s{sd}{ft}" for sd in (1, 2) for ft in ("", "_ft"))
+        # bs16 seed 1 resumed to 80 epochs (6436, same run id) and its fine-tune from the
+        # epoch-80 checkpoint (6437)
+        + ("gs1024_w4_bs16_s1_e80_ft",)
         # RECIPE V2 for every cell started from 2026-10-25 (owner: throughput): batch 16,
         # 50 epochs, registered window 0.8 (epochs 41-50), best.pt. Measured reasons:
         # bs16 is 24% faster per epoch than batch 8 (278.1 vs 365.5 s, gs1024_w4_bs16 vs
@@ -382,7 +385,8 @@ ROUNDS: dict[str, Round] = {
         # the sweep fine-tunes were launched with WINDOW_START_FRAC 0.8 (logged window
         # 17-20); the overnight fine-tunes used 0.75 (16-20), so they are read over 16-20
         finetune_window=(16, 20),
-        extra_windows=(("gs1024_w4_bs16", (41, 50)),),
+        # bs16 seed 1 is resumed to 80 epochs (job 6436); its 41-50 read stays recorded
+        extra_windows=(("gs1024_w4_bs16", (41, 50)), ("gs1024_w4_bs16_s1", (41, 50))),
         stopped=(
             (
                 "gs1024_w4_bal_p1",

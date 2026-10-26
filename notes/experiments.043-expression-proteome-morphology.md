@@ -1788,3 +1788,18 @@ Cells (recipe v2, ontology, prep_v4, HL-Gauss, seed 0, each with its Kemmeren fi
 | gs1024_w5_onto_inject_op_ft (from the epoch-50 checkpoint) | fine-tune | 16-20 | 0.1112 | 0.2347 | 2.3821 | | | | |
 
 Read: the operator injection moves the Sameith doubles window mean by +0.034 (about 6x the one measured doubles seed gap) and leaves Kemmeren within the seed floor at stage 1; the fine-tune Kemmeren is 0.032 lower, but the two fine-tunes start from checkpoints of different length (80 against 50 stage-1 epochs), so that comparison is not matched. val/loss is within 0.006 of the baseline. One seed; the seed-1 replicate `gs1024_w5_onto_inject_op_s1` is queued first in the slot-manager order. The trunk variant (`inject_tr`, 3.4x the step time) stays unrun.
+
+### Kemmeren alone from scratch matches pretrain plus fine-tune (2026-10-26, two seeds)
+
+Control the design lacked on recipe v2: `gs1024_ctl_alone_kemmeren_s0/s1` (jobs 6440/6441; arm alone_kemmeren, ontology, prep_v4, batch 16, 50 epochs, from random init; 5 min per run on one card). Means over the registered windows (stage 1 epochs 41-50, fine-tune epochs 16-20), validation fold, unsampled W&B history.
+
+| model | val/kemmeren/pearson_per_gene_median | val/doubles/pearson_per_strain_centered_median | val/kemmeren/loss | wall time |
+|---|---|---|---|---|
+| Kemmeren alone from scratch, seed 0 | 0.1134 | 0.2297 | 2.3668 | 5 min |
+| Kemmeren alone from scratch, seed 1 | 0.1275 | 0.2274 | 2.3634 | 4 min |
+| joint pretrain bs16 (3-seed mean, epochs 41-50) | 0.0967 | 0.1989 | | 3.9 h |
+| joint pretrain bs16 seed 1 + Kemmeren fine-tune (from epoch 50) | 0.1147 | 0.2440 | 2.3853 | 3.9 h + 3 min |
+| joint pretrain bs16 seed 2 + Kemmeren fine-tune (from epoch 50) | 0.1340 | 0.2000 | 2.3651 | 3.9 h + 3 min |
+| joint pretrain + operator ontology injection, seed 1 (epochs 41-50) | 0.0890 | 0.2252 | 2.3519 | 4.1 h |
+
+Read (measured, two seeds each side): pretraining on all 13 datasets then fine-tuning on Kemmeren gives the same Kemmeren score as training Kemmeren alone from scratch (0.124 vs 0.120 mean, inside the 0.019 matched fine-tune spread), and the joint model read directly, without the fine-tune, is below the alone model on both Kemmeren (0.097 vs 0.120) and doubles (0.199 vs 0.229). No transfer benefit to the perturbation head is measured; the joint objective costs it. The operator injection's doubles gain replicates on seed 1 (0.2252, +0.026 over the bs16 mean, 2.1 sd; two-seed mean 0.236) and brings the joint model to the alone model's doubles level, no further.

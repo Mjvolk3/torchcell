@@ -84,6 +84,9 @@ if [ -n "${WARMUP_STEPS:-}" ]; then EXTRA+=("optim.warmup_steps=${WARMUP_STEPS}"
 if [ -n "${PREP_VERSION:-}" ]; then EXTRA+=("data.prep_version=${PREP_VERSION}"); fi
 if [ -n "${CONDITIONING:-}" ]; then EXTRA+=("model.conditioning.source=${CONDITIONING}"); fi
 if [ -n "${INJECT:-}" ]; then EXTRA+=("model.conditioning.inject=${INJECT}"); fi
+# space-separated hydra overrides with no env knob of their own (arm.exclude_from_training=[hu]
+# for a leave-one-dataset-out cell, 2026-10-26)
+if [ -n "${EXTRA_OVERRIDES:-}" ]; then read -r -a more <<< "${EXTRA_OVERRIDES}"; EXTRA+=("${more[@]}"); fi
 echo "host $(hostname)  commit $(git rev-parse --short HEAD)  $(date)"
 if [ -n "${INIT_FROM_ID:-}" ]; then
   python scripts/check_wandb_run_keys.py "zhao-group/${PROJECT}/${INIT_FROM_ID}" \

@@ -43,6 +43,7 @@ import os.path as osp
 import re
 from collections import Counter
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 import wandb
@@ -1265,6 +1266,21 @@ ALONE_ARM = "alone_kemmeren_hlgauss_equal"
 TRANSFER_KEY = "val/kemmeren/pearson_per_gene_median"
 
 
+def _extra_means(
+    rows: list[dict[str, Any]], windows: list[tuple[int, int]]
+) -> dict[str, object]:
+    """``means_<first>_<last>`` per extra epoch range, over the WINDOW_KEYS present."""
+    out: dict[str, object] = {}
+    for ef, el in windows:
+        win = [r for r in rows if ef <= r["epoch"] <= el]
+        out[f"means_{ef}_{el}"] = {
+            k: {"mean": float(np.mean(v)), "n_evaluations": len(v)}
+            for k in WINDOW_KEYS
+            if (v := [float(r[k]) for r in win if r.get(k) is not None])
+        }
+    return out
+
+
 def window_means(api: wandb.Api, key: str, rnd: Round) -> dict[str, object]:
     """Per run, the mean of each readout key over the evaluated epochs of its registered
     window (``setup/window_first_epoch`` .. ``setup/window_last_epoch``, read from the
@@ -1274,6 +1290,7 @@ def window_means(api: wandb.Api, key: str, rnd: Round) -> dict[str, object]:
     runs: dict[str, dict[str, object]] = {}
     absent: list[str] = []
     unfinished: dict[str, int] = {}
+    in_flight: dict[str, dict[str, object]] = {}
     references: dict[str, dict[str, object]] = {}
     labels = dict(rnd.references)
     for rid in (*rnd.run_ids, *labels):
@@ -1285,6 +1302,14 @@ def window_means(api: wandb.Api, key: str, rnd: Round) -> dict[str, object]:
         if rnd.finished_only and rid not in labels and run.state != "finished":
             # the window bounds are written at the end of a run; an in-flight run has none
             unfinished[rid] = int(run.summary.get("epoch", 0))
+            ew = [w for erid, w in rnd.extra_windows if erid == rid]
+            if ew:  # a fixed epoch range is readable mid-run (e.g. a resumed extension)
+                hist = [
+                    r
+                    for r in run.scan_history(page_size=5000)
+                    if r.get("epoch") is not None
+                ]
+                in_flight[rid] = _extra_means(hist, ew)
             continue
         rows = [
             r for r in run.scan_history(page_size=5000) if r.get("epoch") is not None
@@ -1302,15 +1327,7 @@ def window_means(api: wandb.Api, key: str, rnd: Round) -> dict[str, object]:
             vals = [float(r[k]) for r in win if r.get(k) is not None]
             if vals:
                 means[k] = {"mean": float(np.mean(vals)), "n_evaluations": len(vals)}
-        extra = {}
-        for erid, (ef, el) in rnd.extra_windows:
-            if erid == rid:
-                ewin = [r for r in rows if ef <= r["epoch"] <= el]
-                extra[f"means_{ef}_{el}"] = {
-                    k: {"mean": float(np.mean(v)), "n_evaluations": len(v)}
-                    for k in WINDOW_KEYS
-                    if (v := [float(r[k]) for r in ewin if r.get(k) is not None])
-                }
+        extra = _extra_means(rows, [w for erid, w in rnd.extra_windows if erid == rid])
         (references if rid in labels else runs)[rid] = {
             **extra,
             **({"reference": labels[rid]} if rid in labels else {}),
@@ -1373,6 +1390,7 @@ def window_means(api: wandb.Api, key: str, rnd: Round) -> dict[str, object]:
         **({"not_finished_epochs_reached": unfinished} if rnd.finished_only else {}),
         **({"no_run_yet": absent} if absent else {}),
         **({"stopped": dict(rnd.stopped)} if rnd.stopped else {}),
+        **({"extra_windows_in_flight": in_flight} if in_flight else {}),
     }
 
 

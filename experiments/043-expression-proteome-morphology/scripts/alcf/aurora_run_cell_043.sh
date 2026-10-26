@@ -16,7 +16,8 @@
 #   aurora_run_cell_043.sh <cell id> <fine-tune 0|1> <hydra overrides of stage 1 ...>
 #
 # The fine-tune keeps the stage-1 loss, seed, weighting and model section (init_from
-# requires an equal model section) and sets its own arm, batch, lr, warmup and epochs.
+# requires an equal model section), plus a row's wandb.round, wandb.tags and
+# ++attention_query_chunk, and sets its own arm, batch, lr, warmup and epochs.
 set -euo pipefail
 cell=$1 finetune=$2; shift 2
 # row-level options ahead of the hydra overrides: rid_prefix=<p> (a resumed run keeps its
@@ -112,6 +113,9 @@ micro=2
 for o in "$@"; do
   case "$o" in
     loss=*|seed=*|weighting=*|model.*) keep+=("$o") ;;
+    # a row's own W&B round and tags (round aurora_v2_2026_10_26) and its query chunk: on the
+    # frameworks stack unchunked SDPA exceeds the 64 GB tile at every batch above 1 (8965812)
+    wandb.round=*|wandb.tags=*|++attention_query_chunk=*) keep+=("$o") ;;
     data.batch_size=1) micro=1 ;;  # a cell that fits a tile only at micro-batch 1
   esac
 done

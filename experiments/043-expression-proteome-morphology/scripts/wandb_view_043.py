@@ -296,6 +296,29 @@ ROUNDS: dict[str, Round] = {
             "step-matched at 571,100 optimizer steps."
         ),
     ),
+    "aurora_v2_2026_10_26": Round(
+        view_name="043 Aurora recipe v2 2026-10-26 by arm",
+        # run id = a1026_<cell> (resume_id), _ft = its Kemmeren fine-tune (added later);
+        # tag aurora_v2_2026_10_26
+        run_ids=tuple(
+            f"a1026_all_{cond}_{loss}_equal_v2_s{seed}{ft}"
+            for cond in ("onto", "name")
+            for loss in ("hlgauss", "pinball", "mse")
+            for seed in (0, 1, 2, 3)
+            for ft in ("", "_ft")
+        ),
+        hardware=(
+            "Aurora (ALCF), 1 node x 12 tiles per job, Intel Data Center GPU Max 1550 tile, "
+            "1 run per tile; capacity jobs 8966432 (ontology) and 8966433 (name); "
+            "frameworks stack, attention query chunk 512"
+        ),
+        intro=(
+            "Recipe v2: batch 16, 50 epochs (registered window 41-50), best.pt; prep_v4, "
+            "store v2, every mark, equal weighting. Conditioning ontology (_onto) or name, "
+            "loss HL-Gauss / pinball / mse, seeds 0-3, each stage 1 later chained to its "
+            "Kemmeren fine-tune (20 epochs, lr 3e-4, warmup 30)."
+        ),
+    ),
     "ghyper_sweep_2026_10_24": Round(
         view_name="043 GilaHyper sweep 2026-10-24 by arm",
         # run id = gs1024_<wave>_<arm> (resume_id), _ft = its Kemmeren fine-tune;
@@ -618,6 +641,7 @@ def sections() -> list[tuple[str, list[Panel]]]:
 #: loss curves together and separated"); every other round keeps ``sections()``.
 CURATED_ROUNDS = (
     "aurora_2026_10_24",
+    "aurora_v2_2026_10_26",
     "ghyper_sweep_2026_10_24",
     "overnight_2026_10_23",
 )

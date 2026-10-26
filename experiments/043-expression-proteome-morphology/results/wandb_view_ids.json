@@ -69,6 +69,41 @@
     "name": "043 Aurora capacity grid 2026-10-24: loss curves",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/reports/043-Aurora-capacity-grid-2026-10-24:-loss-curves--VmlldzoxODE3NTk3Mw=="
   },
+  "aurora_v2_2026_10_26": {
+    "id": "w1o8c8hhyuu",
+    "name": "043 Aurora recipe v2 2026-10-26 by arm",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=w1o8c8hhyuu"
+  },
+  "aurora_v2_2026_10_26/all_hlgauss_equal": {
+    "id": "m2lyb2p8j15",
+    "name": "043 aurora_v2_2026_10_26: all_hlgauss_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=m2lyb2p8j15"
+  },
+  "aurora_v2_2026_10_26/all_mse_equal": {
+    "id": "qm5akqm1v5e",
+    "name": "043 aurora_v2_2026_10_26: all_mse_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=qm5akqm1v5e"
+  },
+  "aurora_v2_2026_10_26/all_onto_hlgauss_equal": {
+    "id": "tbx2pw4uy3h",
+    "name": "043 aurora_v2_2026_10_26: all_onto_hlgauss_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=tbx2pw4uy3h"
+  },
+  "aurora_v2_2026_10_26/all_onto_mse_equal": {
+    "id": "g70mxrchnvv",
+    "name": "043 aurora_v2_2026_10_26: all_onto_mse_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=g70mxrchnvv"
+  },
+  "aurora_v2_2026_10_26/all_onto_pinball_equal": {
+    "id": "ipcnsr9nj2l",
+    "name": "043 aurora_v2_2026_10_26: all_onto_pinball_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=ipcnsr9nj2l"
+  },
+  "aurora_v2_2026_10_26/all_pinball_equal": {
+    "id": "4hopullu1y0",
+    "name": "043 aurora_v2_2026_10_26: all_pinball_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=4hopullu1y0"
+  },
   "ghyper_sweep_2026_10_24": {
     "id": "sjpdqsr7yjg",
     "name": "043 GilaHyper sweep 2026-10-24 by arm",

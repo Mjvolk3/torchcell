@@ -2769,6 +2769,136 @@
     }
    }
   },
+  "gs1024_w6_lodo_zelezniak": {
+   "arm_label": "all_lodo_zelezniak_onto_hlgauss_equal",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 50,
+   "n_epochs": 50,
+   "window": [
+    41,
+    50
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.0793283113204126,
+     "n_evaluations": 10,
+     "sd_epochs": 0.01465697336572939,
+     "min": 0.06654902471049876,
+     "max": 0.10708990514561297
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.19594055155054138,
+     "n_evaluations": 10,
+     "sd_epochs": 0.007140841177911394,
+     "min": 0.18376109514067865,
+     "max": 0.20636116328864654
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 10,
+     "sd_epochs": 0.0,
+     "min": 0.43966754542573827,
+     "max": 0.43966754542573827
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.22565674442846198,
+     "n_evaluations": 10,
+     "sd_epochs": 0.00923240154737401,
+     "min": 0.20575716133079602,
+     "max": 0.24067025444453793
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.15379661251061677,
+     "n_evaluations": 10,
+     "sd_epochs": 0.011337434484780957,
+     "min": 0.1254325327922135,
+     "max": 0.16680181567496424
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.06691487864699135,
+     "n_evaluations": 10,
+     "sd_epochs": 0.00596069607638381,
+     "min": 0.05975172766819717,
+     "max": 0.08049762066823571
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9177450065706039,
+     "n_evaluations": 10,
+     "sd_epochs": 0.003980541617665541,
+     "min": 0.9112583264538124,
+     "max": 0.9239923095970061
+    },
+    "val/hu/pearson_per_gene_median": {
+     "mean": 0.02416208609384716,
+     "n_evaluations": 10,
+     "sd_epochs": 0.014248387751016283,
+     "min": 0.0027078163283164435,
+     "max": 0.048772025234570734
+    },
+    "val/zelezniak/pearson_per_gene_median": {
+     "mean": -0.03847942903287442,
+     "n_evaluations": 10,
+     "sd_epochs": 0.02763259508249884,
+     "min": -0.08806252442092333,
+     "max": -0.004351748148494745
+    },
+    "train/loss": {
+     "mean": 2.2024184271869722,
+     "n_evaluations": 10,
+     "sd_epochs": 0.006234005109330239,
+     "min": 2.1940620340873345,
+     "max": 2.211658915858852
+    },
+    "val/loss": {
+     "mean": 2.590462607456313,
+     "n_evaluations": 10,
+     "sd_epochs": 0.015763571485123147,
+     "min": 2.560790493861873,
+     "max": 2.6100146648576517
+    }
+   }
+  },
+  "gs1024_w6_lodo_zelezniak_ft": {
+   "arm_label": "finetune_zelezniak_from_all_lodo_zelezniak_onto_hlgauss_equal",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    16,
+    20
+   ],
+   "window_override_of": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/zelezniak/pearson_per_gene_median": {
+     "mean": 0.043945074308669355,
+     "n_evaluations": 5,
+     "sd_epochs": 0.009334479598777033,
+     "min": 0.037185011492363224,
+     "max": 0.058391752792460096
+    },
+    "train/loss": {
+     "mean": 2.2568516111373897,
+     "n_evaluations": 5,
+     "sd_epochs": 0.017361989260159395,
+     "min": 2.23420193195343,
+     "max": 2.278787136077881
+    },
+    "val/loss": {
+     "mean": 2.5141007016184576,
+     "n_evaluations": 5,
+     "sd_epochs": 0.011678857967973943,
+     "min": 2.497031901639501,
+     "max": 2.5234228904217364
+    }
+   }
+  },
   "gs1024_w5_onto_inject_op": {
    "arm_label": "all_onto_injop_hlgauss_equal",
    "seed": 0,
@@ -3731,12 +3861,12 @@
  },
  "not_finished_epochs_reached": {
   "gs1024_w2_h288": 65,
-  "gs1024_w2_mmmm_cos": 24,
+  "gs1024_w2_mmmm_cos": 36,
   "gs1024_w4_bal_p1": 12,
   "gs1024_w4_bal_p05": 20,
   "gs1024_w4_bs32": 43,
   "gs1024_w4_bal_p1_cap8": 22,
-  "gs1024_w6_lodo_zelezniak": 24
+  "gs1024_r2_smmss_s1": 9
  },
  "no_run_yet": [
   "gs1024_w2_h288_ft",
@@ -3745,10 +3875,8 @@
   "gs1024_w4_bal_p05_ft",
   "gs1024_w4_bs32_ft",
   "gs1024_w4_bal_p1_cap8_ft",
-  "gs1024_w6_lodo_zelezniak_ft",
   "gs1024_w5_onto_inject_tr",
   "gs1024_w5_onto_inject_tr_ft",
-  "gs1024_r2_smmss_s1",
   "gs1024_r2_smmss_s1_ft"
  ],
  "stopped": {

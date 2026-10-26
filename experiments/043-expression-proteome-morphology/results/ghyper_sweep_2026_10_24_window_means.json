@@ -1,7 +1,7 @@
 {
  "generated_by": "experiments/043-expression-proteome-morphology/scripts/wandb_view_043.py",
  "round": "ghyper_sweep_2026_10_24",
- "statistic": "mean over the evaluated epochs of each run's registered window (setup/window_first_epoch to setup/window_last_epoch, listed per run as window), validation fold, seed 0, unsampled W&B history",
+ "statistic": "mean over the evaluated epochs of each run's registered window (setup/window_first_epoch to setup/window_last_epoch, listed per run as window), validation fold, seeds 0, 1, unsampled W&B history",
  "transfer_definition": "joint minus alone_kemmeren at matched optimizer steps, on val/kemmeren/pearson_per_gene_median",
  "runs": {
   "gs1024_w1_smss": {
@@ -1069,6 +1069,44 @@
    }
   },
   "gs1024_w4_bs16": {
+   "means_41_50": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.09354403775900047,
+     "n_evaluations": 10
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.2131480858147917,
+     "n_evaluations": 10
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 10
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.19766738528819133,
+     "n_evaluations": 10
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.16262066919704327,
+     "n_evaluations": 10
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.04595620603312143,
+     "n_evaluations": 10
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9187852208946824,
+     "n_evaluations": 10
+    },
+    "train/loss": {
+     "mean": 2.2039284590330634,
+     "n_evaluations": 10
+    },
+    "val/loss": {
+     "mean": 2.5041672775727526,
+     "n_evaluations": 10
+    }
+   },
    "arm_label": "all_onto_hlgauss_equal",
    "seed": 0,
    "state": "finished",
@@ -1152,6 +1190,94 @@
     },
     "val/loss": {
      "mean": 2.366897042664893,
+     "n_evaluations": 5
+    }
+   }
+  },
+  "gs1024_w4_bs16_s1": {
+   "arm_label": "all_onto_hlgauss_equal",
+   "seed": 1,
+   "state": "finished",
+   "epochs_reached": 50,
+   "n_epochs": 50,
+   "window": [
+    41,
+    50
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.09260820803198119,
+     "n_evaluations": 10
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.19240817382268577,
+     "n_evaluations": 10
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 10
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.20278650531719072,
+     "n_evaluations": 10
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.15682289173784586,
+     "n_evaluations": 10
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.06601761314270567,
+     "n_evaluations": 10
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9093258001915121,
+     "n_evaluations": 10
+    },
+    "train/loss": {
+     "mean": 2.2025554576412922,
+     "n_evaluations": 10
+    },
+    "val/loss": {
+     "mean": 2.466595426988732,
+     "n_evaluations": 10
+    }
+   }
+  },
+  "gs1024_w4_bs16_s1_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_hlgauss_equal",
+   "seed": 1,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    16,
+    20
+   ],
+   "window_override_of": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.11465879559148813,
+     "n_evaluations": 5
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.2440364328330576,
+     "n_evaluations": 5
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 5
+    },
+    "train/loss": {
+     "mean": 2.0925455698114357,
+     "n_evaluations": 5
+    },
+    "val/loss": {
+     "mean": 2.3853203780904657,
      "n_evaluations": 5
     }
    }
@@ -1243,6 +1369,94 @@
      "n_evaluations": 5
     }
    }
+  },
+  "gs1024_r2_reg_tdrop01": {
+   "arm_label": "all_onto_hlgauss_equal_tdrop0.1",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 50,
+   "n_epochs": 50,
+   "window": [
+    41,
+    50
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.08736488288301275,
+     "n_evaluations": 10
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.20170338463949378,
+     "n_evaluations": 10
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 10
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.2109119510611134,
+     "n_evaluations": 10
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.14517168634169114,
+     "n_evaluations": 10
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.07308812172160786,
+     "n_evaluations": 10
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9198854200256402,
+     "n_evaluations": 10
+    },
+    "train/loss": {
+     "mean": 2.2178846979738793,
+     "n_evaluations": 10
+    },
+    "val/loss": {
+     "mean": 2.492083420173669,
+     "n_evaluations": 10
+    }
+   }
+  },
+  "gs1024_r2_reg_tdrop01_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_hlgauss_equal_tdrop0.1",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    16,
+    20
+   ],
+   "window_override_of": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.11438922227796469,
+     "n_evaluations": 5
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.2544027112709098,
+     "n_evaluations": 5
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 5
+    },
+    "train/loss": {
+     "mean": 2.13240071843002,
+     "n_evaluations": 5
+    },
+    "val/loss": {
+     "mean": 2.3692227197921767,
+     "n_evaluations": 5
+    }
+   }
   }
  },
  "transfer_kemmeren": {},
@@ -1306,9 +1520,9 @@
   "gs1024_w4_bal_p05": 20,
   "gs1024_w4_bs32": 43,
   "gs1024_w4_bal_p1_cap8": 22,
-  "gs1024_w4_bs16_s1": 38,
-  "gs1024_w4_bs16_s2": 0,
-  "gs1024_r2_reg_tdrop01": 41
+  "gs1024_w4_bs16_s2": 13,
+  "gs1024_w5_onto_inject_op_s1": 3,
+  "gs1024_r2_ffn2": 0
  },
  "no_run_yet": [
   "gs1024_w2_h288_ft",
@@ -1317,12 +1531,10 @@
   "gs1024_w4_bal_p05_ft",
   "gs1024_w4_bs32_ft",
   "gs1024_w4_bal_p1_cap8_ft",
-  "gs1024_w4_bs16_s1_ft",
   "gs1024_w4_bs16_s2_ft",
   "gs1024_w5_onto_inject_tr",
   "gs1024_w5_onto_inject_tr_ft",
-  "gs1024_r2_reg_tdrop01_ft",
-  "gs1024_r2_ffn2",
+  "gs1024_w5_onto_inject_op_s1_ft",
   "gs1024_r2_ffn2_ft",
   "gs1024_r2_hh256",
   "gs1024_r2_hh256_ft",

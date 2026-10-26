@@ -2874,6 +2874,55 @@ def config_matches(stored: dict[str, Any], cfg: TrainConfig043) -> bool:
     """``stored`` (a checkpoint's config dump) equals ``cfg``, reading a sweep key the
     checkpoint predates as its default.
     """
+    st, cur = _comparable(stored, cfg)
+    return bool(st == cur)
+
+
+#: Budget keys a resume may change: a finished run continued to a longer epoch budget.
+EXTENSIBLE_BUDGET_KEYS: tuple[str, ...] = ("max_epochs", "registered_window")
+
+
+def resume_budget_extension(stored: dict[str, Any], cfg: TrainConfig043) -> int | None:
+    """``None`` when ``stored`` matches ``cfg`` (``config_matches``); the stored
+    ``budget.max_epochs`` when the ONLY differences are ``budget.max_epochs`` (raised or
+    kept) and ``budget.registered_window`` under a constant lr schedule, so the run
+    continues from its stored epoch to the longer budget with the same per-step
+    computation. Raises ``ValueError`` otherwise: any other key differs, the budget
+    shrinks, or the schedule is cosine (its lr at each step depends on the total step
+    count, so a budget change alters the computation already done).
+    """
+    st, cur = _comparable(stored, cfg)
+    if st == cur:
+        return None
+
+    def rest(d: dict[str, Any]) -> dict[str, Any]:
+        budget = {
+            k: v for k, v in d["budget"].items() if k not in EXTENSIBLE_BUDGET_KEYS
+        }
+        return {**d, "budget": budget}
+
+    if rest(st) != rest(cur):
+        raise ValueError("the checkpoint was written under another config")
+    old = int(st["budget"]["max_epochs"])
+    if cfg.budget.max_epochs < old:
+        raise ValueError(
+            f"budget.max_epochs {cfg.budget.max_epochs} is below the checkpoint's {old}; "
+            "a resume may only extend the budget"
+        )
+    if cfg.optim.schedule != "constant":
+        raise ValueError(
+            f"a budget change on resume needs optim.schedule constant, not "
+            f"{cfg.optim.schedule}: the lr schedule depends on the total step count"
+        )
+    return old
+
+
+def _comparable(
+    stored: dict[str, Any], cfg: TrainConfig043
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """``stored`` and ``cfg``'s dump with the placement keys stripped and a sweep key the
+    checkpoint predates dropped from ``cfg``'s dump when it is at its default.
+    """
     cur = cfg.model_dump(mode="json")
     for path, default in SWEEP_DEFAULTS.items():
         *parents, key = path
@@ -2884,7 +2933,7 @@ def config_matches(stored: dict[str, Any], cfg: TrainConfig043) -> bool:
             cu = cu[p]
         if key not in st and cu.get(key) == default:
             del cu[key]
-    return bool(_strip_placement(stored) == _strip_placement(cur))
+    return _strip_placement(stored), _strip_placement(cur)
 
 
 PLACEMENT_KEYS: dict[str, tuple[str, ...]] = {
@@ -3098,8 +3147,7 @@ def train(
     resume_path = osp.join(ckpt_dir, "last.pt")
     if cfg.resume_id is not None and osp.exists(resume_path):
         st = torch.load(resume_path, map_location=device, weights_only=False)
-        if not config_matches(st["config"], cfg):
-            raise ValueError(f"{resume_path} was written under another config")
+        extended_from = resume_budget_extension(st["config"], cfg)
         model.load_state_dict(st["model"], strict=True)
         opt.load_state_dict(st["optimizer"])
         epoch, step = int(st["epoch"]), int(st["step"])
@@ -3116,6 +3164,12 @@ def train(
             ),
             flush=True,
         )
+        if extended_from is not None:
+            print(
+                f"[resume] budget extended from {extended_from} to {cfg.budget.max_epochs} epochs "
+                f"(constant lr); registered window epochs {window[0]}..{window[1]}",
+                flush=True,
+            )
     else:
         skip_micro, partial = 0, None
     while epoch < n_epochs:

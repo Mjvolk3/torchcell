@@ -956,7 +956,8 @@ def test_ontology_arm_trains_leaves_a_dataset_out_resumes_and_finetunes(
     rid["budget"] = {**base["budget"], "max_epochs": 1}
     r1 = tr.train(tr.TrainConfig043.model_validate(rid), store, src, tr.MemoryLogger())
     assert r1.steps == 2 and Path(r1.checkpoint_dir).name == "r1"
-    rid2 = {**rid, "budget": {**rid["budget"], "max_epochs": 2}}
+    # a longer epoch budget resumes (constant lr); another computed key refuses
+    rid2 = {**rid, "budget": {**rid["budget"], "eval_every_epochs": 2}}
     with pytest.raises(ValueError, match="another config"):
         tr.train(tr.TrainConfig043.model_validate(rid2), store, src, tr.MemoryLogger())
     r1b = tr.train(tr.TrainConfig043.model_validate(rid), store, src, tr.MemoryLogger())
@@ -1459,3 +1460,55 @@ def test_ontology_inject_operator_trains_two_steps(
     assert "onto_inject.1.weight" in sd
     with pytest.raises(ValueError, match="needs source=ontology"):
         tr.ConditioningConfig(inject="operator")
+
+
+def test_resume_extends_the_epoch_budget_only_under_a_constant_schedule(
+    tr: ModuleType, world: dict[str, Any], tmp_path: Path
+) -> None:
+    base = _cfg(tr, world["root"], "hlgauss").model_dump()
+    base["budget"] = {**base["budget"], "max_epochs": 2, "max_steps_per_epoch": 1}
+    base["paths"]["checkpoint_root"] = str(tmp_path / "ckpt")
+    base["resume_id"] = "extend_test"
+    cfg = tr.TrainConfig043.model_validate(base)
+    stored = cfg.model_dump(mode="json")
+
+    def with_budget(d: dict[str, Any], **budget: Any) -> Any:
+        return tr.TrainConfig043.model_validate(
+            {**d, "budget": {**d["budget"], **budget}}
+        )
+
+    longer = with_budget(
+        base, max_epochs=3, registered_window={"start_frac": 0.5, "end_frac": 1.0}
+    )
+    assert tr.resume_budget_extension(stored, cfg) is None
+    assert tr.resume_budget_extension(stored, longer) == 2
+    assert not tr.config_matches(stored, longer)
+    cosine = {**base, "optim": {**base["optim"], "schedule": "cosine"}}
+    with pytest.raises(ValueError, match="optim.schedule constant"):
+        tr.resume_budget_extension(
+            tr.TrainConfig043.model_validate(cosine).model_dump(mode="json"),
+            with_budget(cosine, max_epochs=3),
+        )
+    with pytest.raises(ValueError, match="only extend"):
+        tr.resume_budget_extension(stored, with_budget(base, max_epochs=1))
+    for other in (
+        {**base, "seed": 7, "budget": {**base["budget"], "max_epochs": 3}},
+        {**base, "optim": {**base["optim"], "lr": 5e-4}},
+        {**base, "budget": {**base["budget"], "max_epochs": 3, "eval_every_epochs": 2}},
+    ):
+        with pytest.raises(ValueError, match="another config"):
+            tr.resume_budget_extension(stored, tr.TrainConfig043.model_validate(other))
+    # end to end: a finished 2-epoch run continues to epoch 3 from its stored counter
+    src = tr.h5_vector_source(cfg.paths, tr.store_paths(cfg.data.store_version))
+    res = tr.train(cfg, world["store"], src, tr.MemoryLogger())
+    ckpt = Path(res.checkpoint_dir)
+    assert torch.load(ckpt / "last.pt", weights_only=False)["epoch"] == 2
+    logger = tr.MemoryLogger()
+    tr.train(longer, world["store"], src, logger)
+    last = torch.load(ckpt / "last.pt", weights_only=False)
+    assert last["epoch"] == 3 and last["step"] == 3
+    assert last["config"]["budget"]["max_epochs"] == 3
+    epochs = [r for _, r in logger.rows if "setup/n_epochs" in r]
+    assert len(epochs) == 1 and epochs[0]["setup/n_epochs"] == 3
+    assert epochs[0]["setup/window_first_epoch"] == 2
+    assert epochs[0]["setup/window_last_epoch"] == 3

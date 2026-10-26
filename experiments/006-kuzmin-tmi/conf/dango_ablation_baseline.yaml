@@ -1,0 +1,73 @@
+# experiments/006-kuzmin-tmi/conf/dango_ablation_baseline.yaml
+# Arm A of the DANGO ablation (scripts/dango_ablation.py): the served 006 STRING v9.1
+# configuration (dango_kuzmin2018_tmi_string9_1.yaml: LinearUntilUniform transition 10,
+# ReZero gates initialized to 0.01) on one GPU, 150 epochs. The other arms extend this
+# file and change one block each.
+arm: baseline
+seed: 42 # model init and train shuffle; the split is the fixed seed-42 cache
+
+wandb:
+  # NOT the served project torchcell_006-kuzmin2018-tmi_dango, which
+  # dango_full_dataset_si.py reads in full.
+  project: torchcell_006-kuzmin2018-tmi_dango_ablation
+  tags: [dango_ablation, arm_baseline, string9_1, recon_on, rezero]
+
+cell_dataset:
+  graphs:
+    [
+      string9_1_neighborhood,
+      string9_1_fusion,
+      string9_1_cooccurence,
+      string9_1_coexpression,
+      string9_1_experimental,
+      string9_1_database,
+    ]
+
+data_module:
+  batch_size: 64
+  # Validation and test only; scores do not depend on the batch composition
+  # (HyperSAGNN attends within a genotype), and the full-graph pretrain forward runs
+  # once per batch, so larger eval batches only cut wall time.
+  eval_batch_size: 512
+  num_workers: 4
+  pin_memory: false
+
+trainer:
+  max_epochs: 150
+  strategy: auto
+  accelerator: gpu
+  devices: 1
+  limit_train_batches: 1.0
+  limit_val_batches: 1.0
+  limit_test_batches: 1.0
+  resume_ckpt_path: null
+
+model:
+  hidden_channels: 64
+  num_heads: 4
+  residual: rezero # rezero | plain
+
+regression_task:
+  loss_scheduler:
+    type: LinearUntilUniform # PreThenPost | LinearUntilUniform | LinearUntilFlipped
+    transition_epoch: 10
+  optimizer:
+    type: AdamW
+    lr: 1e-5
+    weight_decay: 1e-6
+  # Registered but never stepped by int_dango.RegressionTask (manual optimization):
+  # the learning rate stays at 1e-5, as in the served runs.
+  lr_scheduler:
+    type: ReduceLROnPlateau
+    mode: min
+    factor: 0.2
+    patience: 3
+    threshold: 1e-4
+    threshold_mode: rel
+    cooldown: 2
+    min_lr: 1e-9
+    eps: 1e-10
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0
+  plot_sample_ceiling: 10000
+  plot_every_n_epochs: 10

@@ -1,0 +1,280 @@
+{
+  "n_records": 332313,
+  "split_sizes": {
+    "train": 265851,
+    "val": 33231,
+    "test": 33231
+  },
+  "014mprap_graph": {
+    "num_genes": 6607,
+    "edges_with_self_loops": {
+      "string9_1_neighborhood": 52208,
+      "string9_1_fusion": 7965,
+      "string9_1_cooccurence": 9266,
+      "string9_1_coexpression": 320295,
+      "string9_1_experimental": 226057,
+      "string9_1_database": 40093
+    }
+  },
+  "014mprap_minmse_channel_weight_means": {
+    "all_genes": {
+      "neighborhood": 0.16725860191874214,
+      "fusion": 0.12472345808694858,
+      "cooccurence": 0.16599191795142015,
+      "coexpression": 0.13500340546780004,
+      "experimental": 0.2770394912502382,
+      "database": 0.12998312451841884
+    },
+    "perturbed_genes": {
+      "neighborhood": 0.1648883268909069,
+      "fusion": 0.12315280564827152,
+      "cooccurence": 0.16392807754788574,
+      "coexpression": 0.13531041042408487,
+      "experimental": 0.2842625838670256,
+      "database": 0.12845779332351695
+    },
+    "val_gene_slots": {
+      "neighborhood": 0.16607747501870834,
+      "fusion": 0.12340218471682961,
+      "cooccurence": 0.1641572925938591,
+      "coexpression": 0.13360584088274233,
+      "experimental": 0.28418627378245676,
+      "database": 0.12857093021501406
+    },
+    "n_perturbed_genes": 4036
+  },
+  "9jpfy547_graph": {
+    "num_genes": 6607,
+    "edges_with_self_loops": {
+      "string12_0_neighborhood": 153320,
+      "string12_0_fusion": 18394,
+      "string12_0_cooccurence": 17692,
+      "string12_0_coexpression": 1002806,
+      "string12_0_experimental": 828701,
+      "string12_0_database": 79224
+    }
+  },
+  "9jpfy547_minmse_channel_weight_means": {
+    "all_genes": {
+      "neighborhood": 0.13356910534434227,
+      "fusion": 0.2607078532162116,
+      "cooccurence": 0.1355336611630657,
+      "coexpression": 0.18678894381565894,
+      "experimental": 0.1606933010415887,
+      "database": 0.1227071355124483
+    },
+    "perturbed_genes": {
+      "neighborhood": 0.13434240993895044,
+      "fusion": 0.26772035277892564,
+      "cooccurence": 0.13705857316026515,
+      "coexpression": 0.1761952476839953,
+      "experimental": 0.16076206738024035,
+      "database": 0.12392134959481811
+    },
+    "val_gene_slots": {
+      "neighborhood": 0.1355009669153992,
+      "fusion": 0.2558729333332917,
+      "cooccurence": 0.14024443889974086,
+      "coexpression": 0.17664689086810711,
+      "experimental": 0.1653902392621467,
+      "database": 0.12634452828759862
+    },
+    "n_perturbed_genes": 4036
+  },
+  "check": [
+    {
+      "run": "014mprap",
+      "ckpt": "minmse",
+      "epoch": 81,
+      "split": "val",
+      "n": 33231,
+      "pearson": 0.3672224801935116,
+      "spearman": 0.3245102519178404,
+      "mse": 0.003234662433382515,
+      "recorded_val_pearson": 0.3672522902488708,
+      "recorded_val_mse": 0.0032345652580261,
+      "delta_pearson": -2.9810055359180687e-05,
+      "rel_delta_mse": 3.0042787411294348e-05
+    },
+    {
+      "run": "014mprap",
+      "ckpt": "minmse",
+      "epoch": 81,
+      "split": "test",
+      "n": 33231,
+      "pearson": 0.37466103741718165,
+      "spearman": 0.33369168629905466,
+      "mse": 0.003224004801872667,
+      "recorded_val_pearson": null,
+      "recorded_val_mse": null,
+      "delta_pearson": null,
+      "rel_delta_mse": null
+    },
+    {
+      "run": "014mprap",
+      "ckpt": "last",
+      "epoch": 999,
+      "split": "val",
+      "n": 33231,
+      "pearson": 0.2973488504271631,
+      "spearman": 0.34069989460062394,
+      "mse": 0.0037607678884072366,
+      "recorded_val_pearson": 0.2973770499229431,
+      "recorded_val_mse": 0.0037607757840305,
+      "delta_pearson": -2.8199495780034667e-05,
+      "rel_delta_mse": -2.0994666304753145e-06
+    },
+    {
+      "run": "014mprap",
+      "ckpt": "last",
+      "epoch": 999,
+      "split": "test",
+      "n": 33231,
+      "pearson": 0.30999417495640386,
+      "spearman": 0.34359740113084414,
+      "mse": 0.0036329076683293935,
+      "recorded_val_pearson": null,
+      "recorded_val_mse": null,
+      "delta_pearson": null,
+      "rel_delta_mse": null
+    },
+    {
+      "run": "9jpfy547",
+      "ckpt": "minmse",
+      "epoch": 53,
+      "split": "val",
+      "n": 33231,
+      "pearson": 0.3543207949919957,
+      "spearman": 0.3240333491987394,
+      "mse": 0.00327015403293345,
+      "recorded_val_pearson": 0.3543532788753509,
+      "recorded_val_mse": 0.0032700456213206,
+      "delta_pearson": -3.2483883355194365e-05,
+      "rel_delta_mse": 3.315293589277967e-05
+    },
+    {
+      "run": "9jpfy547",
+      "ckpt": "minmse",
+      "epoch": 53,
+      "split": "test",
+      "n": 33231,
+      "pearson": 0.35849139835567123,
+      "spearman": 0.32634700983866183,
+      "mse": 0.0032688119686539834,
+      "recorded_val_pearson": null,
+      "recorded_val_mse": null,
+      "delta_pearson": null,
+      "rel_delta_mse": null
+    }
+  ],
+  "rezero_ablation": [
+    {
+      "run": "014mprap",
+      "ckpt": "minmse",
+      "epoch": 81,
+      "beta1": 0.07323967665433884,
+      "beta2": 0.06493743509054184,
+      "arm": "trained",
+      "n": 33231,
+      "pearson": 0.3672224801935116,
+      "spearman": 0.3245102519178404,
+      "mse": 0.003234662433382515,
+      "pearson_vs_trained_pred": 1.0,
+      "residual_ratio_l1_mean": 0.41527287461948076,
+      "residual_ratio_l1_median": 0.3832029104232788,
+      "residual_ratio_l2_mean": 0.33434351161088693,
+      "residual_ratio_l2_median": 0.32125207781791687,
+      "max_abs_gap_to_singleton_mean": null
+    },
+    {
+      "run": "014mprap",
+      "ckpt": "minmse",
+      "epoch": 81,
+      "beta1": 0.07323967665433884,
+      "beta2": 0.06493743509054184,
+      "arm": "beta_zero",
+      "n": 33231,
+      "pearson": 0.07905043116126244,
+      "spearman": 0.14569945033110768,
+      "mse": 0.003919682523765559,
+      "pearson_vs_trained_pred": 0.25969078905135784,
+      "residual_ratio_l1_mean": 0.0,
+      "residual_ratio_l1_median": 0.0,
+      "residual_ratio_l2_mean": 0.0,
+      "residual_ratio_l2_median": 0.0,
+      "max_abs_gap_to_singleton_mean": 8.692344038996325e-09
+    },
+    {
+      "run": "014mprap",
+      "ckpt": "last",
+      "epoch": 999,
+      "beta1": 0.17103369534015656,
+      "beta2": 0.20140855014324188,
+      "arm": "trained",
+      "n": 33231,
+      "pearson": 0.2973488504271631,
+      "spearman": 0.34069989460062394,
+      "mse": 0.0037607678884072366,
+      "pearson_vs_trained_pred": 0.9999999999999996,
+      "residual_ratio_l1_mean": 0.6724346428504218,
+      "residual_ratio_l1_median": 0.6773995161056519,
+      "residual_ratio_l2_mean": 0.618258707683375,
+      "residual_ratio_l2_median": 0.5986663699150085,
+      "max_abs_gap_to_singleton_mean": null
+    },
+    {
+      "run": "014mprap",
+      "ckpt": "last",
+      "epoch": 999,
+      "beta1": 0.17103369534015656,
+      "beta2": 0.20140855014324188,
+      "arm": "beta_zero",
+      "n": 33231,
+      "pearson": -0.028297470582884746,
+      "spearman": 0.11189064114575878,
+      "mse": 0.011304659253063683,
+      "pearson_vs_trained_pred": -0.07082394587748989,
+      "residual_ratio_l1_mean": 0.0,
+      "residual_ratio_l1_median": 0.0,
+      "residual_ratio_l2_mean": 0.0,
+      "residual_ratio_l2_median": 0.0,
+      "max_abs_gap_to_singleton_mean": 8.754432201385498e-08
+    },
+    {
+      "run": "9jpfy547",
+      "ckpt": "minmse",
+      "epoch": 53,
+      "beta1": 0.09212206304073334,
+      "beta2": 0.07452916353940964,
+      "arm": "trained",
+      "n": 33231,
+      "pearson": 0.3543207949919957,
+      "spearman": 0.3240333491987394,
+      "mse": 0.00327015403293345,
+      "pearson_vs_trained_pred": 1.0,
+      "residual_ratio_l1_mean": 0.39289702238444224,
+      "residual_ratio_l1_median": 0.40503546595573425,
+      "residual_ratio_l2_mean": 0.32431834202720183,
+      "residual_ratio_l2_median": 0.34508734941482544,
+      "max_abs_gap_to_singleton_mean": null
+    },
+    {
+      "run": "9jpfy547",
+      "ckpt": "minmse",
+      "epoch": 53,
+      "beta1": 0.09212206304073334,
+      "beta2": 0.07452916353940964,
+      "arm": "beta_zero",
+      "n": 33231,
+      "pearson": 0.33704545080594445,
+      "spearman": 0.31409985864318724,
+      "mse": 0.0034096690165325793,
+      "pearson_vs_trained_pred": 0.9629333207744272,
+      "residual_ratio_l1_mean": 0.0,
+      "residual_ratio_l1_median": 0.0,
+      "residual_ratio_l2_mean": 0.0,
+      "residual_ratio_l2_median": 0.0,
+      "max_abs_gap_to_singleton_mean": 8.692344025118537e-09
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+model,split,n,pearson,axis_limit,n_outside_axes,n_measured_outside,n_predicted_outside,pred_min,pred_max,measured_min,measured_max,pred_sd,measured_sd
+DANGO 014mprap minmse (STRING v9.1),006 validation,33231,0.36722248019351167,0.5,25,25,0,-0.3340245187282562,0.06361798197031021,-0.990258,0.914078,0.0232566783539399,0.061140867206002626

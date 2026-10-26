@@ -6,17 +6,18 @@
 Panels a--d come from ``dango_full_dataset_si.py`` (this folder): (a) validation curves and
 (b) best validation Pearson per run at half width; (c) the convergence epochs and (d) the
 data-effect panel (Kuzmin 2018-only build against the experiment-006 build, by STRING
-release), both at third width. Panels e--g need a trained DANGO checkpoint and inference on
-the validation split, which cannot run on this machine; each is reserved as an empty
-lettered box whose label states exactly what fills it: (e) completes row 2 at third width,
-(f) and (g) share row 3 at half width. Each panel SVG declares its size in draw.io units (100 per inch, via
-``savefig_true_size_svg``), so the image cells are placed at exact physical size and the
-figure is WYSIWYG when ``make -C paper/nature-biotech fig`` exports it to
+release), both at third width. Panels e--g come from ``dango_full_dataset_panels_efg.py``,
+which reads the predictions and channel weights ``dango_full_dataset_inference.py`` scored
+from the DANGO checkpoints: (e) predicted against measured tau completes row 2 at third
+width; (f) absolute error against |tau| (DANGO beside the CGT, each on its own validation
+split) and (g) the per-gene meta-embedding channel weights (STRING v9.1 against v12.0)
+share row 3 at half width. Each panel SVG declares its size in draw.io units (100 per
+inch, via ``savefig_true_size_svg``), so the image cells are placed at exact physical size
+and the figure is WYSIWYG when ``make -C paper/nature-biotech fig`` exports it to
 ``figures/FigS-dango-full-dataset.pdf``.
 
-Panel letters are 8 pt bold lowercase (draw.io fontSize 11.1); placeholder labels are 6 pt
-(fontSize 8.3). Rerun after regenerating any panel; the draw.io file is overwritten, never
-edited by hand.
+Panel letters are 8 pt bold lowercase (draw.io fontSize 11.1). Rerun after regenerating any
+panel; the draw.io file is overwritten, never edited by hand.
 
 Layout convention shared by every composed SI figure (the "white cross"): COL_GAP = 12
 units (3 mm) between columns, ROW_GAP = 22 units (5.5 mm) between rows, a TOP_STRIP of 16
@@ -31,7 +32,7 @@ import base64
 import os
 import os.path as osp
 import re
-from xml.sax.saxutils import escape, quoteattr
+from xml.sax.saxutils import quoteattr
 
 from dotenv import load_dotenv
 
@@ -54,35 +55,7 @@ IMAGE_STYLE = (
     "shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;"
     "verticalAlign=top;aspect=fixed;imageAspect=0;image=data:image/svg+xml,{b64};"
 )
-PLACEHOLDER_STYLE = (
-    "rounded=0;whiteSpace=wrap;html=1;dashed=1;strokeColor=#666666;fillColor=none;"
-    "fontFamily=Arial;fontSize=8.3;fontColor=#666666;align=center;verticalAlign=middle;"
-    "spacing=6;"
-)
-
 P010 = osp.join(ASSET_IMAGES_DIR, "010-kuzmin-tmi")
-
-# What each reserved panel needs, stated so it can be filled on the cluster later.
-PLACEHOLDERS = {
-    "e": (
-        "[placeholder: predicted vs measured trigenic interaction on the validation split, "
-        "DANGO STRING v9.1 run 014mprap. Needs the run's best checkpoint "
-        "(DATA_ROOT/models/checkpoints/compute-3-3-1941704_ff85…/014mprap-best-*.ckpt), "
-        "the 006 dataset LMDB, and experiments/006-kuzmin-tmi/scripts/dango.py with "
-        "regression_task.execution_mode=inference]"
-    ),
-    "f": (
-        "[placeholder: absolute error vs |τ| on the validation split, DANGO (014mprap) beside "
-        "CGT (c7671wgj best-pearson-epoch=24 checkpoint). Needs both checkpoints, the 006 and "
-        "010 dataset LMDBs, and the prediction dumps from dango.py inference and "
-        "equivariant_cell_graph_transformer_eval.py]"
-    ),
-    "g": (
-        "[placeholder: per-STRING-channel weight of DANGO's meta-embedding attention on the "
-        "validation split, STRING v9.1 vs v12.0 checkpoints (014mprap, 9jpfy547). Needs both "
-        "checkpoints and a forward hook on torchcell.models.dango.Dango meta-embedding]"
-    ),
-}
 
 
 def svg_size(path: str) -> tuple[float, float]:
@@ -102,13 +75,6 @@ def image_cell(cid: int, path: str, x: float, y: float) -> str:
     )
 
 
-def placeholder_cell(cid: int, text: str, x: float, y: float, w: float, h: float) -> str:
-    return (
-        f'<mxCell id="{cid}" value={quoteattr(escape(text))} style={quoteattr(PLACEHOLDER_STYLE)} vertex="1" parent="1">'
-        f'<mxGeometry x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{h:.1f}" as="geometry"/></mxCell>'
-    )
-
-
 def letter_cell(cid: int, letter: str, x: float, row_top: float) -> str:
     """Panel letter in the TOP_STRIP above the panel, flush with the panel's left edge."""
     return (
@@ -122,26 +88,33 @@ def main():
     best = osp.join(P010, "dango_full_dataset_best.svg")
     conv = osp.join(P010, "dango_full_dataset_convergence.svg")
     effect = osp.join(P010, "dango_full_dataset_data_effect.svg")
+    pred = osp.join(P010, "dango_full_dataset_pred_vs_measured.svg")
+    error = osp.join(P010, "dango_full_dataset_error_vs_tau.svg")
+    weights = osp.join(P010, "dango_full_dataset_channel_weights.svg")
 
     half = svg_size(curves)[0]
     third = svg_size(conv)[0]
-    if abs(svg_size(effect)[0] - third) > 0.5:
-        raise SystemExit("the data-effect panel must be third width to tile row 2 with c and e")
+    for path in (effect, pred):
+        if abs(svg_size(path)[0] - third) > 0.5:
+            raise SystemExit(f"{path} must be third width to tile row 2 with c, d and e")
+    for path in (best, error, weights):
+        if abs(svg_size(path)[0] - half) > 0.5:
+            raise SystemExit(f"{path} must be half width to tile its row")
     col2 = half + COL_GAP
     # Row 1: (a) curves and (b) best per run, two half-width panels.
     row1_top = 0
     y1 = row1_top + TOP_STRIP
     row1_h = max(svg_size(curves)[1], svg_size(best)[1])
-    # Row 2: (c) convergence, (d) the data effect, (e) the first reserved box, three thirds.
+    # Row 2: (c) convergence, (d) the data effect, (e) predicted vs measured, three thirds.
     row2_top = y1 + row1_h + (ROW_GAP - TOP_STRIP)
     y2 = row2_top + TOP_STRIP
-    row2_h = max(svg_size(conv)[1], svg_size(effect)[1])
+    row2_h = max(svg_size(conv)[1], svg_size(effect)[1], svg_size(pred)[1])
     x_effect = third + COL_GAP
     x_e = 2 * (third + COL_GAP)
-    # Row 3: (f) and (g) reserved boxes at half width.
+    # Row 3: (f) error against |tau| and (g) channel weights, two half-width panels.
     row3_top = y2 + row2_h + (ROW_GAP - TOP_STRIP)
     y3 = row3_top + TOP_STRIP
-    row3_h = 140.0
+    row3_h = max(svg_size(error)[1], svg_size(weights)[1])
 
     cells, cid = [], 2
 
@@ -155,11 +128,11 @@ def main():
     add(image_cell(cid, best, col2, y1), "b", col2, row1_top)
     add(image_cell(cid, conv, 0, y2), "c", 0, row2_top)
     add(image_cell(cid, effect, x_effect, y2), "d", x_effect, row2_top)
-    add(placeholder_cell(cid, PLACEHOLDERS["e"], x_e, y2, third, row2_h), "e", x_e, row2_top)
-    add(placeholder_cell(cid, PLACEHOLDERS["f"], 0, y3, half, row3_h), "f", 0, row3_top)
-    add(placeholder_cell(cid, PLACEHOLDERS["g"], col2, y3, half, row3_h), "g", col2, row3_top)
+    add(image_cell(cid, pred, x_e, y2), "e", x_e, row2_top)
+    add(image_cell(cid, error, 0, y3), "f", 0, row3_top)
+    add(image_cell(cid, weights, col2, y3), "g", col2, row3_top)
 
-    extent_w = max(col2 + svg_size(best)[0], x_e + third, col2 + half)
+    extent_w = max(col2 + svg_size(best)[0], x_e + third, col2 + svg_size(weights)[0])
     extent_h = y3 + row3_h
     xml = (
         '<mxfile host="dango_full_dataset_compose_figure.py">'

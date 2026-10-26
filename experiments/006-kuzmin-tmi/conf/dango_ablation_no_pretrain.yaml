@@ -1,0 +1,18 @@
+# experiments/006-kuzmin-tmi/conf/dango_ablation_no_pretrain.yaml
+# Arm B of the DANGO ablation: no reconstruction objective. PreThenPost with
+# transition_epoch 0 gives alpha = 0 from the first step, so the loss is the
+# interaction log-cosh alone; the reconstruction is still computed and logged
+# (unweighted) but sends no gradient. Everything else is the baseline.
+defaults:
+  - dango_ablation_baseline
+  - _self_
+
+arm: no_pretrain
+
+wandb:
+  tags: [dango_ablation, arm_no_pretrain, string9_1, recon_off, rezero]
+
+regression_task:
+  loss_scheduler:
+    type: PreThenPost
+    transition_epoch: 0

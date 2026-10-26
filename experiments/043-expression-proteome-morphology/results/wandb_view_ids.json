@@ -224,6 +224,11 @@
     "name": "043 ghyper_sweep_2026_10_24: finetune_kemmeren_from_all_onto_hlgauss_equal_wd0.05",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=wgsijhthec7"
   },
+  "ghyper_sweep_2026_10_24/finetune_kemmeren_from_all_onto_injop_hlgauss_equal": {
+    "id": "dy5ux4p8ovg",
+    "name": "043 ghyper_sweep_2026_10_24: finetune_kemmeren_from_all_onto_injop_hlgauss_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=dy5ux4p8ovg"
+  },
   "ghyper_sweep_2026_10_24/finetune_kemmeren_from_all_onto_mle_equal": {
     "id": "ueh50hatd4r",
     "name": "043 ghyper_sweep_2026_10_24: finetune_kemmeren_from_all_onto_mle_equal",

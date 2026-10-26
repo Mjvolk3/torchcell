@@ -1155,6 +1155,94 @@
      "n_evaluations": 5
     }
    }
+  },
+  "gs1024_w5_onto_inject_op": {
+   "arm_label": "all_onto_injop_hlgauss_equal",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 50,
+   "n_epochs": 50,
+   "window": [
+    41,
+    50
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.08758348257551765,
+     "n_evaluations": 10
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.24691369383020634,
+     "n_evaluations": 10
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 10
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.20988731097272906,
+     "n_evaluations": 10
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.1587664979131562,
+     "n_evaluations": 10
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.06591272891209925,
+     "n_evaluations": 10
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.919406745976786,
+     "n_evaluations": 10
+    },
+    "train/loss": {
+     "mean": 2.1977797554533636,
+     "n_evaluations": 10
+    },
+    "val/loss": {
+     "mean": 2.4980316654074075,
+     "n_evaluations": 10
+    }
+   }
+  },
+  "gs1024_w5_onto_inject_op_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_injop_hlgauss_equal",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    16,
+    20
+   ],
+   "window_override_of": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.11115583528639286,
+     "n_evaluations": 5
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.23465573092472997,
+     "n_evaluations": 5
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 5
+    },
+    "train/loss": {
+     "mean": 2.10913854576894,
+     "n_evaluations": 5
+    },
+    "val/loss": {
+     "mean": 2.382108751289201,
+     "n_evaluations": 5
+    }
+   }
   }
  },
  "transfer_kemmeren": {},
@@ -1218,9 +1306,9 @@
   "gs1024_w4_bal_p05": 20,
   "gs1024_w4_bs32": 43,
   "gs1024_w4_bal_p1_cap8": 22,
-  "gs1024_w4_bs16_s1": 4,
-  "gs1024_w5_onto_inject_op": 19,
-  "gs1024_r2_reg_tdrop01": 10
+  "gs1024_w4_bs16_s1": 38,
+  "gs1024_w4_bs16_s2": 0,
+  "gs1024_r2_reg_tdrop01": 41
  },
  "no_run_yet": [
   "gs1024_w2_h288_ft",
@@ -1230,9 +1318,7 @@
   "gs1024_w4_bs32_ft",
   "gs1024_w4_bal_p1_cap8_ft",
   "gs1024_w4_bs16_s1_ft",
-  "gs1024_w4_bs16_s2",
   "gs1024_w4_bs16_s2_ft",
-  "gs1024_w5_onto_inject_op_ft",
   "gs1024_w5_onto_inject_tr",
   "gs1024_w5_onto_inject_tr_ft",
   "gs1024_r2_reg_tdrop01_ft",

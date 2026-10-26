@@ -1,8 +1,8 @@
 # experiments/043-expression-proteome-morphology/scripts/alcf/aurora_grid_043_stack_smoke_bs.tsv
 # Debug-queue smoke (2026-10-26) of the frameworks stack's memory and speed at plain batches: the all_onto hlgauss
 # recipe at data.batch_size=8, 16, 32 with accumulate 1, fresh cells smoke_fw_bs<N> (run ids a1024b_smoke_fw_bs<N>), tiles 0-2.
-# budget.max_steps_per_epoch=300 so an epoch (and its time/peak_gpu_gb line, evaluation included) lands inside SMOKE_MIN.
+# ++budget.max_steps_per_epoch=300 so an epoch (and its time/peak_gpu_gb line, evaluation included) lands inside SMOKE_MIN.
 # Columns: node slot, tile, cell, fine-tune 0|1, stage-1 overrides.
-0	0	smoke_fw_bs8	0	arm=all budget.max_epochs=2 budget.max_steps_per_epoch=300 budget.eval_every_epochs=1 loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology data.batch_size=8
-0	1	smoke_fw_bs16	0	arm=all budget.max_epochs=2 budget.max_steps_per_epoch=300 budget.eval_every_epochs=1 loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology data.batch_size=16
-0	2	smoke_fw_bs32	0	arm=all budget.max_epochs=2 budget.max_steps_per_epoch=300 budget.eval_every_epochs=1 loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology data.batch_size=32
+0	0	smoke_fw_bs8	0	arm=all budget.max_epochs=2 ++budget.max_steps_per_epoch=300 budget.eval_every_epochs=1 loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology data.batch_size=8
+0	1	smoke_fw_bs16	0	arm=all budget.max_epochs=2 ++budget.max_steps_per_epoch=300 budget.eval_every_epochs=1 loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology data.batch_size=16
+0	2	smoke_fw_bs32	0	arm=all budget.max_epochs=2 ++budget.max_steps_per_epoch=300 budget.eval_every_epochs=1 loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology data.batch_size=32

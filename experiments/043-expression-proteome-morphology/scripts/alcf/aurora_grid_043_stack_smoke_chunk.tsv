@@ -1,0 +1,10 @@
+# experiments/043-expression-proteome-morphology/scripts/alcf/aurora_grid_043_stack_smoke_chunk.tsv
+# Debug-queue smoke (2026-10-26) of query-chunked SDPA on the frameworks stack: the smoke_bs recipe (PBS 8965812, which
+# OOMed at batch 8/16/32 with attention_query_chunk null) at data.batch_size=8 and 16 with ++attention_query_chunk=512 and
+# 1024, fresh cells smoke_fw_bs<N>_c<C> (run ids a1024b_smoke_fw_bs<N>_c<C>), tiles 0-3. Asks: finite, peak XPU GB, s/step.
+# ++budget.max_steps_per_epoch=300 so an epoch (and its time/peak_gpu_gb line, evaluation included) lands inside SMOKE_MIN.
+# Columns: node slot, tile, cell, fine-tune 0|1, stage-1 overrides.
+0	0	smoke_fw_bs8_c512	0	arm=all budget.max_epochs=2 ++budget.max_steps_per_epoch=300 budget.eval_every_epochs=1 loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology data.batch_size=8 ++attention_query_chunk=512
+0	1	smoke_fw_bs8_c1024	0	arm=all budget.max_epochs=2 ++budget.max_steps_per_epoch=300 budget.eval_every_epochs=1 loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology data.batch_size=8 ++attention_query_chunk=1024
+0	2	smoke_fw_bs16_c512	0	arm=all budget.max_epochs=2 ++budget.max_steps_per_epoch=300 budget.eval_every_epochs=1 loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology data.batch_size=16 ++attention_query_chunk=512
+0	3	smoke_fw_bs16_c1024	0	arm=all budget.max_epochs=2 ++budget.max_steps_per_epoch=300 budget.eval_every_epochs=1 loss=hlgauss weighting=equal seed=0 model.conditioning.source=ontology data.batch_size=16 ++attention_query_chunk=1024

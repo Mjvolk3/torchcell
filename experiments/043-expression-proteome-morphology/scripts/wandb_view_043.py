@@ -341,6 +341,16 @@ ROUNDS: dict[str, Round] = {
         # bs16 seed 1 resumed to 80 epochs (6436, same run id) and its fine-tune from the
         # epoch-80 checkpoint (6437)
         + ("gs1024_w4_bs16_s1_e80_ft",)
+        # controls and wave 6 (2026-10-26, coordinator): Kemmeren alone from scratch on
+        # recipe v2 (6440, 6441; arm alone_kemmeren, so only Kemmeren and doubles keys),
+        # profile statistics (6451/6452), leave-Hu-out (6453/6454), leave-Zelezniak-out
+        # (6455/6457, fine-tune on alone_zelezniak)
+        + ("gs1024_ctl_alone_kemmeren_s0", "gs1024_ctl_alone_kemmeren_s1")
+        + tuple(
+            f"gs1024_w6_{k}{ft}"
+            for k in ("profile_stats", "lodo_hu", "lodo_zelezniak")
+            for ft in ("", "_ft")
+        )
         # RECIPE V2 for every cell started from 2026-10-25 (owner: throughput): batch 16,
         # 50 epochs, registered window 0.8 (epochs 41-50), best.pt. Measured reasons:
         # bs16 is 24% faster per epoch than batch 8 (278.1 vs 365.5 s, gs1024_w4_bs16 vs

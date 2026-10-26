@@ -1844,3 +1844,54 @@ Read (measured, one seed per checkpoint, one held-out fold):
 - Everything is far below the measured-expression inputs of the earlier probe (Kemmeren ridge 0.35, Messner 0.28, transductive, `linear_evals_043`) and the 0.847 ceiling.
 
 Not run: other seeds or epochs of either checkpoint, the fine-tuned checkpoints, held-out folds other than 0, a residualized-for-fitness version, nonlinear probes.
+
+## 2026.10.26 - Baselines against the trained model
+
+Owner, 2026-10-26: "can you run baselines for the methods we are comparing against so we can see if they are helping at all? ... we have cpu available on ghyper for the night so run baselines."
+
+`scripts/baselines_043.py` (launcher `scripts/gh_baselines_043.slurm`, CPU job 6450, 32 CPUs, 18 min, COMPLETED) scores baselines on exactly the trainer's validation records with the trainer's own code, imported from `train_043.py`: `PreparedStore043` of prep_v4 (store v2, `global_split_v2`, split sha checked), `build_view` with `conf/arm/all.yaml` and the legacy z (zscore by dataset), `eval_positions(view, VAL, 2000, seed)` for seeds 0, 1, 2 (only Vaishnav exceeds the cap, so only its subset moves with the seed; each baseline is scored on each seed's subset and the three are averaged), `gene_level_metrics` and the `evaluate_doubles` statistic. Every fit uses training records only; the ridge penalty is chosen on an inner split (20% of training units, grouped by unit), never on validation. Output: `results/baselines_043.json`.
+
+- Features are the frozen inputs of the 043 linear ladder: the composite token of the deleted gene (FUDT up + down, ProtT5-XL, CaLM, 3,328 wide; Nadal-Ribelles adds its environment indicator) for the deletion panels; the per-gene variant / loss-of-function / absence indicators (the GBLUP kinship input) for the isolates; the parent-of-origin vector for the segregants; k-mer counts (k 1 to 6) plus library for Vaishnav.
+- Doubles: every learned baseline is fitted on Kemmeren and predicts each single from its gene's token; the double is the sum of the two predicted singles in released units. kNN excludes the query gene's own record; ridge and trees are in-sample on the singles, as the trained model is.
+- Trees: `HistGradientBoostingRegressor` per target gene, fixed (not tuned): 200 iterations, lr 0.05, 15 leaves, min(20, n_train // 5) per leaf, on 64 principal components of the features; Vaishnav one model on the raw k-mers (300 iterations).
+- Checks: the recomputed additive-measured doubles value is 0.43967, identical to the trainer's logged `val/doubles/additive_measured_...`; the Kemmeren ridge (0.131) equals the fold-1 bar of `linear_evals_043_v2.json` (0.131).
+- Trained numbers: mean over epochs 41-50 of `gs1024_w4_bs16`, `_s1`, `_s2` from the unsampled W&B history (`--stage trained`), then mean and sample sd over the three seeds.
+
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w4_bs16
+
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w4_bs16_s1
+
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w4_bs16_s2
+
+Every value is a validation Pearson r: median per-gene Pearson across records for the gene-level datasets, Pearson over promoters for Vaishnav, median centered per-double Pearson for the doubles. "Undefined" = a prediction constant across records, so the trainer's Pearson is NaN. The last column is (trained mean minus best baseline) divided by the trained seed sd.
+
+| dataset | statistic | validation records, n | trained Pearson r, mean (sd) of 3 seeds | per-gene training mean, Pearson r | additive measured singles, Pearson r | per-environment mean, Pearson r | ridge, Pearson r | kNN k = 5, Pearson r | kNN k = 20, Pearson r | kNN k = 50, Pearson r | gradient-boosted trees, Pearson r | best baseline, Pearson r | trained minus best, in seed sd |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Kemmeren 2014 | median per-gene Pearson r | 141 | 0.097 (0.006) | undefined | -- | -- | 0.131 | 0.107 | 0.090 | 0.088 | 0.091 | ridge 0.131 | -5.4 |
+| Messner 2023 | median per-gene Pearson r | 463 | 0.063 (0.016) | undefined | -- | -- | 0.081 | 0.059 | 0.069 | 0.075 | 0.064 | ridge 0.081 | -1.1 |
+| Zelezniak 2018 | median per-gene Pearson r | 9 | 0.038 (0.078) | undefined | -- | -- | 0.055 | 0.155 | 0.064 | -0.022 | -0.041 | kNN k = 5 0.155 | -1.5 |
+| Caudal 2024 | median per-gene Pearson r | 189 | 0.160 (0.003) | undefined | -- | -- | 0.307 | 0.244 | 0.273 | 0.250 | 0.300 | ridge 0.307 | -46.0 |
+| Muenzner 2024 protein | median per-gene Pearson r | 159 | 0.199 (0.003) | undefined | -- | -- | 0.402 | 0.381 | 0.356 | 0.307 | 0.386 | ridge 0.402 | -65.2 |
+| Muenzner 2024 turnover | median per-gene Pearson r | 11 | 0.105 (0.225) | undefined | -- | -- | 0.105 | 0.059 | 0.214 | undefined (k > 33 training records) | -0.018 | kNN k = 20 0.214 | -0.5 |
+| Boocock 2025 pooled | median per-gene Pearson r | 79 | -0.063 (0.021) | undefined | -- | -- | 0.047 | -0.003 | 0.008 | 0.012 | 0.016 | ridge 0.047 | -5.1 |
+| N'Guessan 2025 | median per-gene Pearson r | 591 | 0.077 (0.013) | undefined | -- | -- | 0.090 | 0.025 | 0.034 | 0.042 | 0.047 | ridge 0.090 | -1.0 |
+| Vaishnav 2022 | Pearson r over promoters | 2,000 per seed | 0.910 (0.008) | undefined | -- | -- | 0.884 | 0.879 | 0.740 | 0.690 | 0.872 | ridge 0.884 | +3.3 |
+| Hu 2007 | median per-gene Pearson r | 19 | 0.078 (0.008) | undefined | -- | -- | -0.007 | 0.035 | 0.003 | 0.007 | 0.082 | trees 0.082 | -0.5 |
+| Nadal-Ribelles 2025 | median per-gene Pearson r | 611 | 0.203 (0.009) | undefined | -- | 0.211 | 0.129 | 0.106 | 0.153 | 0.188 | 0.179 | per-environment mean 0.211 | -1.0 |
+| Sameith 2015 doubles | median centered per-double Pearson r | 72 | 0.199 (0.012) | 0.088 (sum of two training-mean singles) | 0.440 | -- | 0.136 | 0.099 | 0.087 | 0.095 | 0.364 | additive measured 0.440 | -19.5 |
+| Jackson 2020 | not scored | 0 | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- |
+
+Jackson has no validation records under `global_split_v2` (its 12 TF genes and HO are training units), so neither the trainer nor the baselines score it. For the doubles, the "training mean" baseline is not constant after centering: two training-mean singles summed give the mean profile itself as the centered prediction, so it scores 0.088 instead of undefined.
+
+![](./assets/images/043-expression-proteome-morphology/baselines_043_2026-10-26-01-41-13.svg)
+
+### Read
+
+The "best baseline" is the maximum of up to seven baselines picked on validation. That is an upward-biased order statistic, so the gap overstates how far the model trails it. Ridge alone, fixed in advance with its penalty chosen on training data, gives nearly the same picture. The seed sd is the trained model's only; the baselines are deterministic, and their sampling error over records is not in the gap column.
+
+- **The model beats every baseline on one dataset: Vaishnav**, 0.910 against the k-mer ridge 0.884 (+0.026, 3.3 seed sd).
+- **Within about one seed sd of the best baseline (no evidence either way):** Messner (0.063 vs ridge 0.081), N'Guessan (0.077 vs 0.090), Hu (0.078 vs trees 0.082, n = 19) and Nadal-Ribelles (0.203 vs the per-environment mean 0.211). On Nadal-Ribelles the model clears every token-based baseline (ridge 0.129, trees 0.179, kNN-50 0.188), but not the per-environment training mean. Its gain over the token baselines is therefore the environment effect, and no measured gene-specific gain sits on top of it. Zelezniak (n = 9) and Muenzner turnover (n = 11, model seed sd 0.225) are too small to read.
+- **Clearly below the best baseline:** Kemmeren (0.097 vs ridge 0.131, -5.4 sd; also below kNN-5 0.107), Boocock pooled (-0.063, negative, vs ridge 0.047, -5.1 sd), Caudal (0.160 vs ridge 0.307, about half) and Muenzner protein (0.199 vs ridge 0.402, about half). The doubles sit at 0.199, below the additive measured null 0.440 and below the Kemmeren-fitted trees summed over singles (0.364), but above the ridge sum (0.136).
+- **Hypothesis (untested):** the isolate gap (Caudal, Muenzner) comes from how the model reads an isolate genotype (allele tokens through the operator) compared with the ridge's direct per-gene call indicators. A probe on the trained isolate representation would test it.
+
+Not run: bootstrap intervals over records for the baselines, the inner-split choice of k for kNN, tuned trees, and the trained model's fine-tuned (`_ft`) runs.

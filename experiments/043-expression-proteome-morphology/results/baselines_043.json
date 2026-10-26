@@ -1,0 +1,3560 @@
+{
+ "generated_by": "experiments/043-expression-proteome-morphology/scripts/baselines_043.py",
+ "created_at": "2026-10-26T06:22:10+00:00",
+ "slurm_job_id": "6450",
+ "torchcell_commit": "8ea7106d3",
+ "inputs": {
+  "prep_dir": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/043-expression-proteome-morphology/train_043_prep/prep_v4_routeA",
+  "prep_meta_slurm_job": "6324",
+  "split_version": "global_split_v2",
+  "split_store_sha256": "3416716bbb869e5b6acca576be69ac9d3ea13bdfaa90b0e7095fbb9add17bcec",
+  "arm": {
+   "name": "all",
+   "datasets": [
+    "kemmeren",
+    "messner",
+    "zelezniak",
+    "caudal",
+    "muenzner",
+    "turnover",
+    "boocock",
+    "nguessan",
+    "vaishnav",
+    "hu",
+    "jackson",
+    "nadal"
+   ],
+   "doubles": true,
+   "exclude_from_training": []
+  },
+  "target": "legacy z (target_transform zscore, target_stats_by dataset)",
+  "val_cap_per_dataset": 2000,
+  "seeds_of_val_subsets": [
+   0,
+   1,
+   2
+  ]
+ },
+ "protocol": {
+  "ridge_log10_grid": [
+   -5.0,
+   -4.5,
+   -4.0,
+   -3.5,
+   -3.0,
+   -2.5,
+   -2.0,
+   -1.5,
+   -1.0,
+   -0.5,
+   0.0,
+   0.5,
+   1.0,
+   1.5,
+   2.0,
+   2.5,
+   3.0,
+   3.5,
+   4.0,
+   4.5,
+   5.0
+  ],
+  "inner_split": "20% of training units, rng seed 0",
+  "knn_k": [
+   5,
+   20,
+   50
+  ],
+  "hgb": {
+   "max_iter": 200,
+   "learning_rate": 0.05,
+   "max_leaf_nodes": 15,
+   "min_samples_leaf": 20,
+   "l2_regularization": 1.0,
+   "early_stopping": false,
+   "random_state": 0,
+   "n_principal_components": 64
+  },
+  "aggregation": "each baseline scored on each seed's validation subset; the value is the mean over the three subsets (identical subsets except Vaishnav)"
+ },
+ "not_scored": {
+  "jackson": "no validation records under global_split_v2 (its 12 TF genes and HO are training units); the trainer logs no val/jackson key"
+ },
+ "datasets": {
+  "zelezniak": {
+   "level": "gene",
+   "statistic": "median over genes of the Pearson r across validation records (gene_level_metrics; genes with >= 3 finite pairs)",
+   "n_train_records": 79,
+   "n_val_records_union": 9,
+   "n_train_environments": 1,
+   "features": "composite token of the deleted gene (3,328)",
+   "n_train_no_token": 0,
+   "n_val_no_token": 0,
+   "baselines": {
+    "constant": {
+     "pearson_per_gene_median": NaN,
+     "pearson_per_gene_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "spearman_median": NaN,
+     "spearman_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "pearson_per_strain_centered_median": NaN,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "n_strains": 9.0,
+     "n_strains_per_seed_subset": [
+      9.0,
+      9.0,
+      9.0
+     ],
+     "n_genes_scored": 0.0,
+     "n_genes_scored_per_seed_subset": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "hyperparameter": null,
+     "note": "per-gene training mean; constant across records, so every Pearson is undefined (NaN; linear_evals_043 scores it 0 by convention)"
+    },
+    "ridge": {
+     "pearson_per_gene_median": 0.05472127578776872,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.05472127578776871,
+      0.05472127578776871,
+      0.05472127578776871
+     ],
+     "spearman_median": 0.05000000000000001,
+     "spearman_median_per_seed_subset": [
+      0.05,
+      0.05,
+      0.05
+     ],
+     "pearson_per_strain_centered_median": 0.026353136076479725,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.026353136076479725,
+      0.026353136076479725,
+      0.026353136076479725
+     ],
+     "n_strains": 9.0,
+     "n_strains_per_seed_subset": [
+      9.0,
+      9.0,
+      9.0
+     ],
+     "n_genes_scored": 726.0,
+     "n_genes_scored_per_seed_subset": [
+      726.0,
+      726.0,
+      726.0
+     ],
+     "hyperparameter": {
+      "log10_lambda_rel": -3.0,
+      "lambda_rule": "(trace K / n) x 10^g on the inner split",
+      "inner_scores_median_per_gene_pearson": {
+       "-5.0": 0.03181084560321376,
+       "-4.5": 0.03181088895729211,
+       "-4.0": 0.031811024020973334,
+       "-3.5": 0.03181143084772091,
+       "-3.0": 0.03181251632774985,
+       "-2.5": 0.0313481479882565,
+       "-2.0": 0.030397526593164234,
+       "-1.5": 0.027382736204064707,
+       "-1.0": 0.027023622353712376,
+       "-0.5": 0.024938938644330406,
+       "0.0": 0.019450438175671804,
+       "0.5": 0.011216679040529538,
+       "1.0": 0.004323386510702765,
+       "1.5": 0.003510622416287301,
+       "2.0": 0.005057200602130062,
+       "2.5": 0.002036280549214042,
+       "3.0": 0.0014628523266006254,
+       "3.5": 0.001191547798299437,
+       "4.0": 0.0009723864139445883,
+       "4.5": 0.0008361718338987886,
+       "5.0": 0.0007930803615538497
+      },
+      "grid_edge": false,
+      "n_inner_heldout_records": 16
+     },
+     "seconds": 0.09451866149902344
+    },
+    "knn_5": {
+     "pearson_per_gene_median": 0.15524455039057755,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.15524455039057755,
+      0.15524455039057755,
+      0.15524455039057755
+     ],
+     "spearman_median": 0.11666666666666665,
+     "spearman_median_per_seed_subset": [
+      0.11666666666666667,
+      0.11666666666666667,
+      0.11666666666666667
+     ],
+     "pearson_per_strain_centered_median": -0.06219518531232151,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      -0.06219518531232151,
+      -0.06219518531232151,
+      -0.06219518531232151
+     ],
+     "n_strains": 9.0,
+     "n_strains_per_seed_subset": [
+      9.0,
+      9.0,
+      9.0
+     ],
+     "n_genes_scored": 726.0,
+     "n_genes_scored_per_seed_subset": [
+      726.0,
+      726.0,
+      726.0
+     ],
+     "hyperparameter": {
+      "k": 5,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 0.02254199981689453
+    },
+    "knn_20": {
+     "pearson_per_gene_median": 0.06411778344403127,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.06411778344403127,
+      0.06411778344403127,
+      0.06411778344403127
+     ],
+     "spearman_median": 0.08333333333333333,
+     "spearman_median_per_seed_subset": [
+      0.08333333333333333,
+      0.08333333333333333,
+      0.08333333333333333
+     ],
+     "pearson_per_strain_centered_median": 0.032653515153532764,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.032653515153532764,
+      0.032653515153532764,
+      0.032653515153532764
+     ],
+     "n_strains": 9.0,
+     "n_strains_per_seed_subset": [
+      9.0,
+      9.0,
+      9.0
+     ],
+     "n_genes_scored": 726.0,
+     "n_genes_scored_per_seed_subset": [
+      726.0,
+      726.0,
+      726.0
+     ],
+     "hyperparameter": {
+      "k": 20,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 0.04197216033935547
+    },
+    "knn_50": {
+     "pearson_per_gene_median": -0.021572180675010943,
+     "pearson_per_gene_median_per_seed_subset": [
+      -0.02157218067501094,
+      -0.02157218067501094,
+      -0.02157218067501094
+     ],
+     "spearman_median": -0.03333333333333333,
+     "spearman_median_per_seed_subset": [
+      -0.03333333333333333,
+      -0.03333333333333333,
+      -0.03333333333333333
+     ],
+     "pearson_per_strain_centered_median": 0.07397982531854455,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.07397982531854455,
+      0.07397982531854455,
+      0.07397982531854455
+     ],
+     "n_strains": 9.0,
+     "n_strains_per_seed_subset": [
+      9.0,
+      9.0,
+      9.0
+     ],
+     "n_genes_scored": 726.0,
+     "n_genes_scored_per_seed_subset": [
+      726.0,
+      726.0,
+      726.0
+     ],
+     "hyperparameter": {
+      "k": 50,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 0.061383724212646484
+    },
+    "hgb": {
+     "pearson_per_gene_median": -0.04141285347888986,
+     "pearson_per_gene_median_per_seed_subset": [
+      -0.04141285347888986,
+      -0.04141285347888986,
+      -0.04141285347888986
+     ],
+     "spearman_median": -0.03333333333333333,
+     "spearman_median_per_seed_subset": [
+      -0.03333333333333333,
+      -0.03333333333333333,
+      -0.03333333333333333
+     ],
+     "pearson_per_strain_centered_median": 0.03307850351760436,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.03307850351760436,
+      0.03307850351760436,
+      0.03307850351760436
+     ],
+     "n_strains": 9.0,
+     "n_strains_per_seed_subset": [
+      9.0,
+      9.0,
+      9.0
+     ],
+     "n_genes_scored": 726.0,
+     "n_genes_scored_per_seed_subset": [
+      726.0,
+      726.0,
+      726.0
+     ],
+     "hyperparameter": {
+      "max_iter": 200,
+      "learning_rate": 0.05,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 20,
+      "l2_regularization": 1.0,
+      "early_stopping": false,
+      "random_state": 0,
+      "n_principal_components": 64,
+      "min_samples_leaf_rule": "min(20, n_finite_train // 5), at least 2",
+      "explained_variance_ratio_sum": 0.9684617888958982,
+      "n_extra_columns": 0,
+      "n_target_columns_fitted": 726,
+      "tuned": false
+     },
+     "seconds": 4.42113184928894
+    }
+   },
+   "seconds": 4.601921558380127
+  },
+  "turnover": {
+   "level": "gene",
+   "statistic": "median over genes of the Pearson r across validation records (gene_level_metrics; genes with >= 3 finite pairs)",
+   "n_train_records": 33,
+   "n_val_records_union": 11,
+   "n_train_environments": 1,
+   "features": "per-gene call indicators (variant, loss of function, absence), the GBLUP kinship input of linear_evals_043; 5324 non-constant columns",
+   "baselines": {
+    "constant": {
+     "pearson_per_gene_median": NaN,
+     "pearson_per_gene_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "spearman_median": NaN,
+     "spearman_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "pearson_per_strain_centered_median": NaN,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "n_strains": 11.0,
+     "n_strains_per_seed_subset": [
+      11.0,
+      11.0,
+      11.0
+     ],
+     "n_genes_scored": 0.0,
+     "n_genes_scored_per_seed_subset": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "hyperparameter": null,
+     "note": "per-gene training mean; constant across records, so every Pearson is undefined (NaN; linear_evals_043 scores it 0 by convention)"
+    },
+    "ridge": {
+     "pearson_per_gene_median": 0.10527845416688897,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.10527845416688897,
+      0.10527845416688897,
+      0.10527845416688897
+     ],
+     "spearman_median": 0.15454545454545454,
+     "spearman_median_per_seed_subset": [
+      0.15454545454545454,
+      0.15454545454545454,
+      0.15454545454545454
+     ],
+     "pearson_per_strain_centered_median": 0.0028388202817057045,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.0028388202817057045,
+      0.0028388202817057045,
+      0.0028388202817057045
+     ],
+     "n_strains": 11.0,
+     "n_strains_per_seed_subset": [
+      11.0,
+      11.0,
+      11.0
+     ],
+     "n_genes_scored": 1242.0,
+     "n_genes_scored_per_seed_subset": [
+      1242.0,
+      1242.0,
+      1242.0
+     ],
+     "hyperparameter": {
+      "log10_lambda_rel": 0.5,
+      "lambda_rule": "(trace K / n) x 10^g on the inner split",
+      "inner_scores_median_per_gene_pearson": {
+       "-5.0": 0.19415900809198905,
+       "-4.5": 0.1942159171745891,
+       "-4.0": 0.19421605637315548,
+       "-3.5": 0.19583943965480965,
+       "-3.0": 0.20028365498022577,
+       "-2.5": 0.2122232507384587,
+       "-2.0": 0.21770459380902743,
+       "-1.5": 0.23374809964211327,
+       "-1.0": 0.26895963591644195,
+       "-0.5": 0.29068793821845074,
+       "0.0": 0.30702544933869014,
+       "0.5": 0.31461722770732453,
+       "1.0": 0.3106683772751323,
+       "1.5": 0.29093541695452885,
+       "2.0": 0.27505881815608735,
+       "2.5": 0.2707801856321426,
+       "3.0": 0.2674039236515052,
+       "3.5": 0.267296076472235,
+       "4.0": 0.26688274900370546,
+       "4.5": 0.26675188166693653,
+       "5.0": 0.26671048161002264
+      },
+      "grid_edge": false,
+      "n_inner_heldout_records": 7
+     },
+     "seconds": 0.03331351280212402
+    },
+    "knn_5": {
+     "pearson_per_gene_median": 0.05871682446900798,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.05871682446900798,
+      0.05871682446900798,
+      0.05871682446900798
+     ],
+     "spearman_median": 0.07272727272727272,
+     "spearman_median_per_seed_subset": [
+      0.07272727272727272,
+      0.07272727272727272,
+      0.07272727272727272
+     ],
+     "pearson_per_strain_centered_median": -0.007425750500699131,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      -0.007425750500699131,
+      -0.007425750500699131,
+      -0.007425750500699131
+     ],
+     "n_strains": 11.0,
+     "n_strains_per_seed_subset": [
+      11.0,
+      11.0,
+      11.0
+     ],
+     "n_genes_scored": 1189.0,
+     "n_genes_scored_per_seed_subset": [
+      1189.0,
+      1189.0,
+      1189.0
+     ],
+     "hyperparameter": {
+      "k": 5,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 0.026790618896484375
+    },
+    "knn_20": {
+     "pearson_per_gene_median": 0.21410729296934736,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.21410729296934736,
+      0.21410729296934736,
+      0.21410729296934736
+     ],
+     "spearman_median": 0.181612492149371,
+     "spearman_median_per_seed_subset": [
+      0.181612492149371,
+      0.181612492149371,
+      0.181612492149371
+     ],
+     "pearson_per_strain_centered_median": 0.0906586566059276,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.0906586566059276,
+      0.0906586566059276,
+      0.0906586566059276
+     ],
+     "n_strains": 11.0,
+     "n_strains_per_seed_subset": [
+      11.0,
+      11.0,
+      11.0
+     ],
+     "n_genes_scored": 1227.0,
+     "n_genes_scored_per_seed_subset": [
+      1227.0,
+      1227.0,
+      1227.0
+     ],
+     "hyperparameter": {
+      "k": 20,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 0.04538416862487793
+    },
+    "knn_50": {
+     "pearson_per_gene_median": NaN,
+     "pearson_per_gene_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "spearman_median": NaN,
+     "spearman_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "pearson_per_strain_centered_median": NaN,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "n_strains": 11.0,
+     "n_strains_per_seed_subset": [
+      11.0,
+      11.0,
+      11.0
+     ],
+     "n_genes_scored": 0.0,
+     "n_genes_scored_per_seed_subset": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "hyperparameter": {
+      "k": 50,
+      "metric": "cosine on training-z-scored features"
+     },
+     "note": "k >= 33 training records: every record gets the same neighbors, a constant, so undefined",
+     "seconds": 0.06304097175598145
+    },
+    "hgb": {
+     "pearson_per_gene_median": -0.017825005525572833,
+     "pearson_per_gene_median_per_seed_subset": [
+      -0.017825005525572833,
+      -0.017825005525572833,
+      -0.017825005525572833
+     ],
+     "spearman_median": 0.0,
+     "spearman_median_per_seed_subset": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "pearson_per_strain_centered_median": 0.04556760134526528,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.04556760134526528,
+      0.04556760134526528,
+      0.04556760134526528
+     ],
+     "n_strains": 11.0,
+     "n_strains_per_seed_subset": [
+      11.0,
+      11.0,
+      11.0
+     ],
+     "n_genes_scored": 1152.0,
+     "n_genes_scored_per_seed_subset": [
+      1152.0,
+      1152.0,
+      1152.0
+     ],
+     "hyperparameter": {
+      "max_iter": 200,
+      "learning_rate": 0.05,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 20,
+      "l2_regularization": 1.0,
+      "early_stopping": false,
+      "random_state": 0,
+      "n_principal_components": 32,
+      "min_samples_leaf_rule": "min(20, n_finite_train // 5), at least 2",
+      "explained_variance_ratio_sum": 1.0000000000000002,
+      "n_extra_columns": 0,
+      "n_target_columns_fitted": 1152,
+      "tuned": false
+     },
+     "seconds": 4.976005554199219
+    }
+   },
+   "seconds": 5.105038642883301
+  },
+  "hu": {
+   "level": "gene",
+   "statistic": "median over genes of the Pearson r across validation records (gene_level_metrics; genes with >= 3 finite pairs)",
+   "n_train_records": 225,
+   "n_val_records_union": 19,
+   "n_train_environments": 1,
+   "features": "composite token of the deleted gene (3,328)",
+   "n_train_no_token": 1,
+   "n_val_no_token": 0,
+   "baselines": {
+    "constant": {
+     "pearson_per_gene_median": NaN,
+     "pearson_per_gene_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "spearman_median": NaN,
+     "spearman_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "pearson_per_strain_centered_median": NaN,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "n_strains": 19.0,
+     "n_strains_per_seed_subset": [
+      19.0,
+      19.0,
+      19.0
+     ],
+     "n_genes_scored": 0.0,
+     "n_genes_scored_per_seed_subset": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "hyperparameter": null,
+     "note": "per-gene training mean; constant across records, so every Pearson is undefined (NaN; linear_evals_043 scores it 0 by convention)"
+    },
+    "ridge": {
+     "pearson_per_gene_median": -0.006909972268126628,
+     "pearson_per_gene_median_per_seed_subset": [
+      -0.006909972268126628,
+      -0.006909972268126628,
+      -0.006909972268126628
+     ],
+     "spearman_median": -0.0035087719298245615,
+     "spearman_median_per_seed_subset": [
+      -0.0035087719298245615,
+      -0.0035087719298245615,
+      -0.0035087719298245615
+     ],
+     "pearson_per_strain_centered_median": -0.022860459627806657,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      -0.02286045962780666,
+      -0.02286045962780666,
+      -0.02286045962780666
+     ],
+     "n_strains": 19.0,
+     "n_strains_per_seed_subset": [
+      19.0,
+      19.0,
+      19.0
+     ],
+     "n_genes_scored": 5878.0,
+     "n_genes_scored_per_seed_subset": [
+      5878.0,
+      5878.0,
+      5878.0
+     ],
+     "hyperparameter": {
+      "log10_lambda_rel": -3.0,
+      "lambda_rule": "(trace K / n) x 10^g on the inner split",
+      "inner_scores_median_per_gene_pearson": {
+       "-5.0": 0.03872634934583469,
+       "-4.5": 0.03920679834277678,
+       "-4.0": 0.04009813064805488,
+       "-3.5": 0.04269768394783788,
+       "-3.0": 0.043517755480464076,
+       "-2.5": 0.042831399420369884,
+       "-2.0": 0.03813541240805507,
+       "-1.5": 0.03544860056361815,
+       "-1.0": 0.0344528258413908,
+       "-0.5": 0.03279119939776483,
+       "0.0": 0.03201490915728937,
+       "0.5": 0.03049107879104276,
+       "1.0": 0.03074963629256891,
+       "1.5": 0.031097132243092906,
+       "2.0": 0.03021769616820136,
+       "2.5": 0.03040652750997603,
+       "3.0": 0.030192117851036,
+       "3.5": 0.030074766570488087,
+       "4.0": 0.03012114236637775,
+       "4.5": 0.03013667168293386,
+       "5.0": 0.030140457192208328
+      },
+      "grid_edge": false,
+      "n_inner_heldout_records": 45
+     },
+     "seconds": 0.2653350830078125
+    },
+    "knn_5": {
+     "pearson_per_gene_median": 0.034849262501740946,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.034849262501740946,
+      0.034849262501740946,
+      0.034849262501740946
+     ],
+     "spearman_median": 0.021052631578947368,
+     "spearman_median_per_seed_subset": [
+      0.021052631578947368,
+      0.021052631578947368,
+      0.021052631578947368
+     ],
+     "pearson_per_strain_centered_median": 0.007854321363601247,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.007854321363601247,
+      0.007854321363601247,
+      0.007854321363601247
+     ],
+     "n_strains": 19.0,
+     "n_strains_per_seed_subset": [
+      19.0,
+      19.0,
+      19.0
+     ],
+     "n_genes_scored": 5878.0,
+     "n_genes_scored_per_seed_subset": [
+      5878.0,
+      5878.0,
+      5878.0
+     ],
+     "hyperparameter": {
+      "k": 5,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 0.08649706840515137
+    },
+    "knn_20": {
+     "pearson_per_gene_median": 0.0026832937441284847,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.0026832937441284847,
+      0.0026832937441284847,
+      0.0026832937441284847
+     ],
+     "spearman_median": -0.0035087719298245615,
+     "spearman_median_per_seed_subset": [
+      -0.0035087719298245615,
+      -0.0035087719298245615,
+      -0.0035087719298245615
+     ],
+     "pearson_per_strain_centered_median": 0.02531188747927608,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.02531188747927608,
+      0.02531188747927608,
+      0.02531188747927608
+     ],
+     "n_strains": 19.0,
+     "n_strains_per_seed_subset": [
+      19.0,
+      19.0,
+      19.0
+     ],
+     "n_genes_scored": 5878.0,
+     "n_genes_scored_per_seed_subset": [
+      5878.0,
+      5878.0,
+      5878.0
+     ],
+     "hyperparameter": {
+      "k": 20,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 0.1245112419128418
+    },
+    "knn_50": {
+     "pearson_per_gene_median": 0.007280906022275722,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.007280906022275721,
+      0.007280906022275721,
+      0.007280906022275721
+     ],
+     "spearman_median": -0.0035087719298245615,
+     "spearman_median_per_seed_subset": [
+      -0.0035087719298245615,
+      -0.0035087719298245615,
+      -0.0035087719298245615
+     ],
+     "pearson_per_strain_centered_median": 0.015137994429489049,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.015137994429489047,
+      0.015137994429489047,
+      0.015137994429489047
+     ],
+     "n_strains": 19.0,
+     "n_strains_per_seed_subset": [
+      19.0,
+      19.0,
+      19.0
+     ],
+     "n_genes_scored": 5878.0,
+     "n_genes_scored_per_seed_subset": [
+      5878.0,
+      5878.0,
+      5878.0
+     ],
+     "hyperparameter": {
+      "k": 50,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 0.15698957443237305
+    },
+    "hgb": {
+     "pearson_per_gene_median": 0.0820901287848889,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.0820901287848889,
+      0.0820901287848889,
+      0.0820901287848889
+     ],
+     "spearman_median": 0.07192982456140351,
+     "spearman_median_per_seed_subset": [
+      0.07192982456140351,
+      0.07192982456140351,
+      0.07192982456140351
+     ],
+     "pearson_per_strain_centered_median": 0.05684424791379152,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.056844247913791515,
+      0.056844247913791515,
+      0.056844247913791515
+     ],
+     "n_strains": 19.0,
+     "n_strains_per_seed_subset": [
+      19.0,
+      19.0,
+      19.0
+     ],
+     "n_genes_scored": 5878.0,
+     "n_genes_scored_per_seed_subset": [
+      5878.0,
+      5878.0,
+      5878.0
+     ],
+     "hyperparameter": {
+      "max_iter": 200,
+      "learning_rate": 0.05,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 20,
+      "l2_regularization": 1.0,
+      "early_stopping": false,
+      "random_state": 0,
+      "n_principal_components": 64,
+      "min_samples_leaf_rule": "min(20, n_finite_train // 5), at least 2",
+      "explained_variance_ratio_sum": 0.7934622366993467,
+      "n_extra_columns": 0,
+      "n_target_columns_fitted": 5878,
+      "tuned": false
+     },
+     "seconds": 53.48917818069458
+    }
+   },
+   "seconds": 53.9598343372345
+  },
+  "kemmeren": {
+   "level": "gene",
+   "statistic": "median over genes of the Pearson r across validation records (gene_level_metrics; genes with >= 3 finite pairs)",
+   "n_train_records": 1202,
+   "n_val_records_union": 141,
+   "n_train_environments": 1,
+   "features": "composite token of the deleted gene (3,328)",
+   "n_train_no_token": 0,
+   "n_val_no_token": 1,
+   "baselines": {
+    "constant": {
+     "pearson_per_gene_median": NaN,
+     "pearson_per_gene_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "spearman_median": NaN,
+     "spearman_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "pearson_per_strain_centered_median": NaN,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "n_strains": 141.0,
+     "n_strains_per_seed_subset": [
+      141.0,
+      141.0,
+      141.0
+     ],
+     "n_genes_scored": 0.0,
+     "n_genes_scored_per_seed_subset": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "hyperparameter": null,
+     "note": "per-gene training mean; constant across records, so every Pearson is undefined (NaN; linear_evals_043 scores it 0 by convention)"
+    },
+    "ridge": {
+     "pearson_per_gene_median": 0.1312186804509415,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.1312186804509415,
+      0.1312186804509415,
+      0.1312186804509415
+     ],
+     "spearman_median": 0.12497966522539493,
+     "spearman_median_per_seed_subset": [
+      0.12497966522539493,
+      0.12497966522539493,
+      0.12497966522539493
+     ],
+     "pearson_per_strain_centered_median": 0.16148966143040544,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.16148966143040544,
+      0.16148966143040544,
+      0.16148966143040544
+     ],
+     "n_strains": 141.0,
+     "n_strains_per_seed_subset": [
+      141.0,
+      141.0,
+      141.0
+     ],
+     "n_genes_scored": 6127.0,
+     "n_genes_scored_per_seed_subset": [
+      6127.0,
+      6127.0,
+      6127.0
+     ],
+     "hyperparameter": {
+      "log10_lambda_rel": 1.0,
+      "lambda_rule": "(trace K / n) x 10^g on the inner split",
+      "inner_scores_median_per_gene_pearson": {
+       "-5.0": 0.05615864183076769,
+       "-4.5": 0.05615586979539058,
+       "-4.0": 0.05613823360728666,
+       "-3.5": 0.056152133952124775,
+       "-3.0": 0.056699703641946986,
+       "-2.5": 0.057919188591117915,
+       "-2.0": 0.06061958607294572,
+       "-1.5": 0.06446931901066866,
+       "-1.0": 0.07069547039417869,
+       "-0.5": 0.07721803868578209,
+       "0.0": 0.08660297451585762,
+       "0.5": 0.09832094147091934,
+       "1.0": 0.10504037018350083,
+       "1.5": 0.1047781519225667,
+       "2.0": 0.1012822837233867,
+       "2.5": 0.0976924204003184,
+       "3.0": 0.09619971622373658,
+       "3.5": 0.09557673685718228,
+       "4.0": 0.09532342315768805,
+       "4.5": 0.09532294520405235,
+       "5.0": 0.09532495541201715
+      },
+      "grid_edge": false,
+      "n_inner_heldout_records": 240
+     },
+     "seconds": 2.0341806411743164
+    },
+    "knn_5": {
+     "pearson_per_gene_median": 0.10682410496192758,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.10682410496192758,
+      0.10682410496192758,
+      0.10682410496192758
+     ],
+     "spearman_median": 0.10359604435121367,
+     "spearman_median_per_seed_subset": [
+      0.10359604435121367,
+      0.10359604435121367,
+      0.10359604435121367
+     ],
+     "pearson_per_strain_centered_median": 0.12582003881234669,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.12582003881234669,
+      0.12582003881234669,
+      0.12582003881234669
+     ],
+     "n_strains": 141.0,
+     "n_strains_per_seed_subset": [
+      141.0,
+      141.0,
+      141.0
+     ],
+     "n_genes_scored": 6127.0,
+     "n_genes_scored_per_seed_subset": [
+      6127.0,
+      6127.0,
+      6127.0
+     ],
+     "hyperparameter": {
+      "k": 5,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 0.596135139465332
+    },
+    "knn_20": {
+     "pearson_per_gene_median": 0.09005799803330844,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.09005799803330844,
+      0.09005799803330844,
+      0.09005799803330844
+     ],
+     "spearman_median": 0.08514491202534354,
+     "spearman_median_per_seed_subset": [
+      0.08514491202534355,
+      0.08514491202534355,
+      0.08514491202534355
+     ],
+     "pearson_per_strain_centered_median": 0.07302806785291371,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.07302806785291371,
+      0.07302806785291371,
+      0.07302806785291371
+     ],
+     "n_strains": 141.0,
+     "n_strains_per_seed_subset": [
+      141.0,
+      141.0,
+      141.0
+     ],
+     "n_genes_scored": 6127.0,
+     "n_genes_scored_per_seed_subset": [
+      6127.0,
+      6127.0,
+      6127.0
+     ],
+     "hyperparameter": {
+      "k": 20,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 0.9014058113098145
+    },
+    "knn_50": {
+     "pearson_per_gene_median": 0.0883303522963374,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.0883303522963374,
+      0.0883303522963374,
+      0.0883303522963374
+     ],
+     "spearman_median": 0.08409178475105955,
+     "spearman_median_per_seed_subset": [
+      0.08409178475105955,
+      0.08409178475105955,
+      0.08409178475105955
+     ],
+     "pearson_per_strain_centered_median": 0.09397141313630368,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.09397141313630367,
+      0.09397141313630367,
+      0.09397141313630367
+     ],
+     "n_strains": 141.0,
+     "n_strains_per_seed_subset": [
+      141.0,
+      141.0,
+      141.0
+     ],
+     "n_genes_scored": 6127.0,
+     "n_genes_scored_per_seed_subset": [
+      6127.0,
+      6127.0,
+      6127.0
+     ],
+     "hyperparameter": {
+      "k": 50,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 1.205939769744873
+    },
+    "hgb": {
+     "pearson_per_gene_median": 0.09081169149938066,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.09081169149938066,
+      0.09081169149938066,
+      0.09081169149938066
+     ],
+     "spearman_median": 0.08217817543559228,
+     "spearman_median_per_seed_subset": [
+      0.08217817543559228,
+      0.08217817543559228,
+      0.08217817543559228
+     ],
+     "pearson_per_strain_centered_median": 0.11724448844625401,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.11724448844625401,
+      0.11724448844625401,
+      0.11724448844625401
+     ],
+     "n_strains": 141.0,
+     "n_strains_per_seed_subset": [
+      141.0,
+      141.0,
+      141.0
+     ],
+     "n_genes_scored": 6127.0,
+     "n_genes_scored_per_seed_subset": [
+      6127.0,
+      6127.0,
+      6127.0
+     ],
+     "hyperparameter": {
+      "max_iter": 200,
+      "learning_rate": 0.05,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 20,
+      "l2_regularization": 1.0,
+      "early_stopping": false,
+      "random_state": 0,
+      "n_principal_components": 64,
+      "min_samples_leaf_rule": "min(20, n_finite_train // 5), at least 2",
+      "explained_variance_ratio_sum": 0.6397339297059632,
+      "n_extra_columns": 0,
+      "n_target_columns_fitted": 6127,
+      "tuned": false
+     },
+     "seconds": 144.2217469215393
+    }
+   },
+   "seconds": 148.13131594657898
+  },
+  "messner": {
+   "level": "gene",
+   "statistic": "median over genes of the Pearson r across validation records (gene_level_metrics; genes with >= 3 finite pairs)",
+   "n_train_records": 3772,
+   "n_val_records_union": 463,
+   "n_train_environments": 1,
+   "features": "composite token of the deleted gene (3,328)",
+   "n_train_no_token": 60,
+   "n_val_no_token": 8,
+   "baselines": {
+    "constant": {
+     "pearson_per_gene_median": NaN,
+     "pearson_per_gene_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "spearman_median": NaN,
+     "spearman_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "pearson_per_strain_centered_median": NaN,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "n_strains": 463.0,
+     "n_strains_per_seed_subset": [
+      463.0,
+      463.0,
+      463.0
+     ],
+     "n_genes_scored": 0.0,
+     "n_genes_scored_per_seed_subset": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "hyperparameter": null,
+     "note": "per-gene training mean; constant across records, so every Pearson is undefined (NaN; linear_evals_043 scores it 0 by convention)"
+    },
+    "ridge": {
+     "pearson_per_gene_median": 0.08064981739286196,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.08064981739286196,
+      0.08064981739286196,
+      0.08064981739286196
+     ],
+     "spearman_median": 0.05808434690985994,
+     "spearman_median_per_seed_subset": [
+      0.05808434690985993,
+      0.05808434690985993,
+      0.05808434690985993
+     ],
+     "pearson_per_strain_centered_median": 0.02806402480457941,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.02806402480457941,
+      0.02806402480457941,
+      0.02806402480457941
+     ],
+     "n_strains": 463.0,
+     "n_strains_per_seed_subset": [
+      463.0,
+      463.0,
+      463.0
+     ],
+     "n_genes_scored": 1850.0,
+     "n_genes_scored_per_seed_subset": [
+      1850.0,
+      1850.0,
+      1850.0
+     ],
+     "hyperparameter": {
+      "log10_lambda_rel": 1.5,
+      "lambda_rule": "(trace K / n) x 10^g on the inner split",
+      "inner_scores_median_per_gene_pearson": {
+       "-5.0": 0.012446098798676464,
+       "-4.5": 0.014323888203549302,
+       "-4.0": 0.015815552271350588,
+       "-3.5": 0.015658263033319533,
+       "-3.0": 0.017232545653053696,
+       "-2.5": 0.019051203411451365,
+       "-2.0": 0.020629293250688265,
+       "-1.5": 0.024527625610365374,
+       "-1.0": 0.03152799052160672,
+       "-0.5": 0.039826645207843334,
+       "0.0": 0.048789204776230666,
+       "0.5": 0.05876544527947695,
+       "1.0": 0.06724382662601089,
+       "1.5": 0.07161594210738617,
+       "2.0": 0.06894186892234487,
+       "2.5": 0.06621284301087768,
+       "3.0": 0.06335986414631059,
+       "3.5": 0.06264452731641043,
+       "4.0": 0.062071080763341085,
+       "4.5": 0.06200059133700614,
+       "5.0": 0.06186778573366074
+      },
+      "grid_edge": false,
+      "n_inner_heldout_records": 751
+     },
+     "seconds": 5.061468601226807
+    },
+    "knn_5": {
+     "pearson_per_gene_median": 0.059391931449725016,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.059391931449725016,
+      0.059391931449725016,
+      0.059391931449725016
+     ],
+     "spearman_median": 0.044253049502159504,
+     "spearman_median_per_seed_subset": [
+      0.044253049502159504,
+      0.044253049502159504,
+      0.044253049502159504
+     ],
+     "pearson_per_strain_centered_median": 0.031327116807387104,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.031327116807387104,
+      0.031327116807387104,
+      0.031327116807387104
+     ],
+     "n_strains": 463.0,
+     "n_strains_per_seed_subset": [
+      463.0,
+      463.0,
+      463.0
+     ],
+     "n_genes_scored": 1850.0,
+     "n_genes_scored_per_seed_subset": [
+      1850.0,
+      1850.0,
+      1850.0
+     ],
+     "hyperparameter": {
+      "k": 5,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 1.4505741596221924
+    },
+    "knn_20": {
+     "pearson_per_gene_median": 0.06899543329399238,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.06899543329399238,
+      0.06899543329399238,
+      0.06899543329399238
+     ],
+     "spearman_median": 0.05536991362631293,
+     "spearman_median_per_seed_subset": [
+      0.05536991362631293,
+      0.05536991362631293,
+      0.05536991362631293
+     ],
+     "pearson_per_strain_centered_median": 0.03899832321027567,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.03899832321027567,
+      0.03899832321027567,
+      0.03899832321027567
+     ],
+     "n_strains": 463.0,
+     "n_strains_per_seed_subset": [
+      463.0,
+      463.0,
+      463.0
+     ],
+     "n_genes_scored": 1850.0,
+     "n_genes_scored_per_seed_subset": [
+      1850.0,
+      1850.0,
+      1850.0
+     ],
+     "hyperparameter": {
+      "k": 20,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 2.4985129833221436
+    },
+    "knn_50": {
+     "pearson_per_gene_median": 0.07454089959295995,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.07454089959295995,
+      0.07454089959295995,
+      0.07454089959295995
+     ],
+     "spearman_median": 0.058320974968533425,
+     "spearman_median_per_seed_subset": [
+      0.05832097496853343,
+      0.05832097496853343,
+      0.05832097496853343
+     ],
+     "pearson_per_strain_centered_median": 0.034664203847526893,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.034664203847526893,
+      0.034664203847526893,
+      0.034664203847526893
+     ],
+     "n_strains": 463.0,
+     "n_strains_per_seed_subset": [
+      463.0,
+      463.0,
+      463.0
+     ],
+     "n_genes_scored": 1850.0,
+     "n_genes_scored_per_seed_subset": [
+      1850.0,
+      1850.0,
+      1850.0
+     ],
+     "hyperparameter": {
+      "k": 50,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 3.5271143913269043
+    },
+    "hgb": {
+     "pearson_per_gene_median": 0.06354634502321688,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.06354634502321688,
+      0.06354634502321688,
+      0.06354634502321688
+     ],
+     "spearman_median": 0.04877882536944855,
+     "spearman_median_per_seed_subset": [
+      0.04877882536944855,
+      0.04877882536944855,
+      0.04877882536944855
+     ],
+     "pearson_per_strain_centered_median": 0.028964807918726947,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.028964807918726944,
+      0.028964807918726944,
+      0.028964807918726944
+     ],
+     "n_strains": 463.0,
+     "n_strains_per_seed_subset": [
+      463.0,
+      463.0,
+      463.0
+     ],
+     "n_genes_scored": 1850.0,
+     "n_genes_scored_per_seed_subset": [
+      1850.0,
+      1850.0,
+      1850.0
+     ],
+     "hyperparameter": {
+      "max_iter": 200,
+      "learning_rate": 0.05,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 20,
+      "l2_regularization": 1.0,
+      "early_stopping": false,
+      "random_state": 0,
+      "n_principal_components": 64,
+      "min_samples_leaf_rule": "min(20, n_finite_train // 5), at least 2",
+      "explained_variance_ratio_sum": 0.6282123795263759,
+      "n_extra_columns": 0,
+      "n_target_columns_fitted": 1850,
+      "tuned": false
+     },
+     "seconds": 56.440515995025635
+    }
+   },
+   "seconds": 66.2669723033905
+  },
+  "caudal": {
+   "level": "gene",
+   "statistic": "median over genes of the Pearson r across validation records (gene_level_metrics; genes with >= 3 finite pairs)",
+   "n_train_records": 566,
+   "n_val_records_union": 189,
+   "n_train_environments": 1,
+   "features": "per-gene call indicators (variant, loss of function, absence), the GBLUP kinship input of linear_evals_043; 10652 non-constant columns",
+   "baselines": {
+    "constant": {
+     "pearson_per_gene_median": NaN,
+     "pearson_per_gene_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "spearman_median": NaN,
+     "spearman_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "pearson_per_strain_centered_median": NaN,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "n_strains": 189.0,
+     "n_strains_per_seed_subset": [
+      189.0,
+      189.0,
+      189.0
+     ],
+     "n_genes_scored": 0.0,
+     "n_genes_scored_per_seed_subset": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "hyperparameter": null,
+     "note": "per-gene training mean; constant across records, so every Pearson is undefined (NaN; linear_evals_043 scores it 0 by convention)"
+    },
+    "ridge": {
+     "pearson_per_gene_median": 0.3071554803033243,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.3071554803033243,
+      0.3071554803033243,
+      0.3071554803033243
+     ],
+     "spearman_median": 0.2881530066300503,
+     "spearman_median_per_seed_subset": [
+      0.2881530066300503,
+      0.2881530066300503,
+      0.2881530066300503
+     ],
+     "pearson_per_strain_centered_median": 0.3989446703365091,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.3989446703365091,
+      0.3989446703365091,
+      0.3989446703365091
+     ],
+     "n_strains": 189.0,
+     "n_strains_per_seed_subset": [
+      189.0,
+      189.0,
+      189.0
+     ],
+     "n_genes_scored": 6065.0,
+     "n_genes_scored_per_seed_subset": [
+      6065.0,
+      6065.0,
+      6065.0
+     ],
+     "hyperparameter": {
+      "log10_lambda_rel": 1.5,
+      "lambda_rule": "(trace K / n) x 10^g on the inner split",
+      "inner_scores_median_per_gene_pearson": {
+       "-5.0": 0.007575484525113621,
+       "-4.5": 0.007655465741803326,
+       "-4.0": 0.007878349527555154,
+       "-3.5": 0.008024001394620329,
+       "-3.0": 0.008600619508245824,
+       "-2.5": 0.011645946384945581,
+       "-2.0": 0.01620409370637069,
+       "-1.5": 0.026095334210638473,
+       "-1.0": 0.04040869813979543,
+       "-0.5": 0.06704649673034119,
+       "0.0": 0.1039224787222511,
+       "0.5": 0.15806449277154158,
+       "1.0": 0.22781987485999244,
+       "1.5": 0.2576638716258457,
+       "2.0": 0.24711995874272588,
+       "2.5": 0.23685067111782396,
+       "3.0": 0.2322026279064991,
+       "3.5": 0.23045298878928547,
+       "4.0": 0.23009844611329036,
+       "4.5": 0.23012261002422826,
+       "5.0": 0.23009026915401706
+      },
+      "grid_edge": false,
+      "n_inner_heldout_records": 113
+     },
+     "seconds": 1.1373145580291748
+    },
+    "knn_5": {
+     "pearson_per_gene_median": 0.24417389068764397,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.24417389068764397,
+      0.24417389068764397,
+      0.24417389068764397
+     ],
+     "spearman_median": 0.2418553806063052,
+     "spearman_median_per_seed_subset": [
+      0.24185538060630524,
+      0.24185538060630524,
+      0.24185538060630524
+     ],
+     "pearson_per_strain_centered_median": 0.38051425019838775,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.38051425019838775,
+      0.38051425019838775,
+      0.38051425019838775
+     ],
+     "n_strains": 189.0,
+     "n_strains_per_seed_subset": [
+      189.0,
+      189.0,
+      189.0
+     ],
+     "n_genes_scored": 6063.0,
+     "n_genes_scored_per_seed_subset": [
+      6063.0,
+      6063.0,
+      6063.0
+     ],
+     "hyperparameter": {
+      "k": 5,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 0.8763387203216553
+    },
+    "knn_20": {
+     "pearson_per_gene_median": 0.27263013200756037,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.27263013200756037,
+      0.27263013200756037,
+      0.27263013200756037
+     ],
+     "spearman_median": 0.2644263143787136,
+     "spearman_median_per_seed_subset": [
+      0.2644263143787136,
+      0.2644263143787136,
+      0.2644263143787136
+     ],
+     "pearson_per_strain_centered_median": 0.35652205256677766,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.35652205256677766,
+      0.35652205256677766,
+      0.35652205256677766
+     ],
+     "n_strains": 189.0,
+     "n_strains_per_seed_subset": [
+      189.0,
+      189.0,
+      189.0
+     ],
+     "n_genes_scored": 6064.0,
+     "n_genes_scored_per_seed_subset": [
+      6064.0,
+      6064.0,
+      6064.0
+     ],
+     "hyperparameter": {
+      "k": 20,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 1.3186001777648926
+    },
+    "knn_50": {
+     "pearson_per_gene_median": 0.24980826258816377,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.24980826258816377,
+      0.24980826258816377,
+      0.24980826258816377
+     ],
+     "spearman_median": 0.24573440622265522,
+     "spearman_median_per_seed_subset": [
+      0.24573440622265522,
+      0.24573440622265522,
+      0.24573440622265522
+     ],
+     "pearson_per_strain_centered_median": 0.34348648042327273,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.34348648042327273,
+      0.34348648042327273,
+      0.34348648042327273
+     ],
+     "n_strains": 189.0,
+     "n_strains_per_seed_subset": [
+      189.0,
+      189.0,
+      189.0
+     ],
+     "n_genes_scored": 6064.0,
+     "n_genes_scored_per_seed_subset": [
+      6064.0,
+      6064.0,
+      6064.0
+     ],
+     "hyperparameter": {
+      "k": 50,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 1.7583417892456055
+    },
+    "hgb": {
+     "pearson_per_gene_median": 0.29969340718612275,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.29969340718612275,
+      0.29969340718612275,
+      0.29969340718612275
+     ],
+     "spearman_median": 0.28245436285749836,
+     "spearman_median_per_seed_subset": [
+      0.28245436285749836,
+      0.28245436285749836,
+      0.28245436285749836
+     ],
+     "pearson_per_strain_centered_median": 0.3782495388706609,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.3782495388706609,
+      0.3782495388706609,
+      0.3782495388706609
+     ],
+     "n_strains": 189.0,
+     "n_strains_per_seed_subset": [
+      189.0,
+      189.0,
+      189.0
+     ],
+     "n_genes_scored": 6062.0,
+     "n_genes_scored_per_seed_subset": [
+      6062.0,
+      6062.0,
+      6062.0
+     ],
+     "hyperparameter": {
+      "max_iter": 200,
+      "learning_rate": 0.05,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 20,
+      "l2_regularization": 1.0,
+      "early_stopping": false,
+      "random_state": 0,
+      "n_principal_components": 64,
+      "min_samples_leaf_rule": "min(20, n_finite_train // 5), at least 2",
+      "explained_variance_ratio_sum": 0.6028148087783084,
+      "n_extra_columns": 0,
+      "n_target_columns_fitted": 6062,
+      "tuned": false
+     },
+     "seconds": 118.72915959358215
+    }
+   },
+   "seconds": 122.27498626708984
+  },
+  "muenzner": {
+   "level": "gene",
+   "statistic": "median over genes of the Pearson r across validation records (gene_level_metrics; genes with >= 3 finite pairs)",
+   "n_train_records": 476,
+   "n_val_records_union": 159,
+   "n_train_environments": 1,
+   "features": "per-gene call indicators (variant, loss of function, absence), the GBLUP kinship input of linear_evals_043; 10478 non-constant columns",
+   "baselines": {
+    "constant": {
+     "pearson_per_gene_median": NaN,
+     "pearson_per_gene_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "spearman_median": NaN,
+     "spearman_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "pearson_per_strain_centered_median": NaN,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "n_strains": 159.0,
+     "n_strains_per_seed_subset": [
+      159.0,
+      159.0,
+      159.0
+     ],
+     "n_genes_scored": 0.0,
+     "n_genes_scored_per_seed_subset": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "hyperparameter": null,
+     "note": "per-gene training mean; constant across records, so every Pearson is undefined (NaN; linear_evals_043 scores it 0 by convention)"
+    },
+    "ridge": {
+     "pearson_per_gene_median": 0.40211079772345304,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.40211079772345304,
+      0.40211079772345304,
+      0.40211079772345304
+     ],
+     "spearman_median": 0.39989548712136047,
+     "spearman_median_per_seed_subset": [
+      0.39989548712136047,
+      0.39989548712136047,
+      0.39989548712136047
+     ],
+     "pearson_per_strain_centered_median": 0.42442429649409047,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.4244242964940904,
+      0.4244242964940904,
+      0.4244242964940904
+     ],
+     "n_strains": 159.0,
+     "n_strains_per_seed_subset": [
+      159.0,
+      159.0,
+      159.0
+     ],
+     "n_genes_scored": 1576.0,
+     "n_genes_scored_per_seed_subset": [
+      1576.0,
+      1576.0,
+      1576.0
+     ],
+     "hyperparameter": {
+      "log10_lambda_rel": 1.0,
+      "lambda_rule": "(trace K / n) x 10^g on the inner split",
+      "inner_scores_median_per_gene_pearson": {
+       "-5.0": 0.012838324230831272,
+       "-4.5": 0.01291574331604027,
+       "-4.0": 0.013141547523264647,
+       "-3.5": 0.01403013520738487,
+       "-3.0": 0.017664211907887188,
+       "-2.5": 0.02371255461044406,
+       "-2.0": 0.03454178970389565,
+       "-1.5": 0.059871224806535416,
+       "-1.0": 0.11870137405685245,
+       "-0.5": 0.18585661152932828,
+       "0.0": 0.25413765023351065,
+       "0.5": 0.30163557793246054,
+       "1.0": 0.3103238541527781,
+       "1.5": 0.29630506859322037,
+       "2.0": 0.2789115353513708,
+       "2.5": 0.2717181453381972,
+       "3.0": 0.2682857404750928,
+       "3.5": 0.2672794500503266,
+       "4.0": 0.2670286072105859,
+       "4.5": 0.2669893247346573,
+       "5.0": 0.26697696758247963
+      },
+      "grid_edge": false,
+      "n_inner_heldout_records": 95
+     },
+     "seconds": 0.8399951457977295
+    },
+    "knn_5": {
+     "pearson_per_gene_median": 0.3805537350400478,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.3805537350400478,
+      0.3805537350400478,
+      0.3805537350400478
+     ],
+     "spearman_median": 0.37561100507702627,
+     "spearman_median_per_seed_subset": [
+      0.37561100507702627,
+      0.37561100507702627,
+      0.37561100507702627
+     ],
+     "pearson_per_strain_centered_median": 0.38770239956932406,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.38770239956932406,
+      0.38770239956932406,
+      0.38770239956932406
+     ],
+     "n_strains": 159.0,
+     "n_strains_per_seed_subset": [
+      159.0,
+      159.0,
+      159.0
+     ],
+     "n_genes_scored": 1576.0,
+     "n_genes_scored_per_seed_subset": [
+      1576.0,
+      1576.0,
+      1576.0
+     ],
+     "hyperparameter": {
+      "k": 5,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 0.3960552215576172
+    },
+    "knn_20": {
+     "pearson_per_gene_median": 0.3563749074216573,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.3563749074216573,
+      0.3563749074216573,
+      0.3563749074216573
+     ],
+     "spearman_median": 0.35298394974770875,
+     "spearman_median_per_seed_subset": [
+      0.35298394974770875,
+      0.35298394974770875,
+      0.35298394974770875
+     ],
+     "pearson_per_strain_centered_median": 0.3692845112478345,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.3692845112478345,
+      0.3692845112478345,
+      0.3692845112478345
+     ],
+     "n_strains": 159.0,
+     "n_strains_per_seed_subset": [
+      159.0,
+      159.0,
+      159.0
+     ],
+     "n_genes_scored": 1576.0,
+     "n_genes_scored_per_seed_subset": [
+      1576.0,
+      1576.0,
+      1576.0
+     ],
+     "hyperparameter": {
+      "k": 20,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 0.6495282649993896
+    },
+    "knn_50": {
+     "pearson_per_gene_median": 0.30670542730636985,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.30670542730636985,
+      0.30670542730636985,
+      0.30670542730636985
+     ],
+     "spearman_median": 0.3016567387031558,
+     "spearman_median_per_seed_subset": [
+      0.3016567387031558,
+      0.3016567387031558,
+      0.3016567387031558
+     ],
+     "pearson_per_strain_centered_median": 0.3421624399475303,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.3421624399475303,
+      0.3421624399475303,
+      0.3421624399475303
+     ],
+     "n_strains": 159.0,
+     "n_strains_per_seed_subset": [
+      159.0,
+      159.0,
+      159.0
+     ],
+     "n_genes_scored": 1576.0,
+     "n_genes_scored_per_seed_subset": [
+      1576.0,
+      1576.0,
+      1576.0
+     ],
+     "hyperparameter": {
+      "k": 50,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 0.8959941864013672
+    },
+    "hgb": {
+     "pearson_per_gene_median": 0.3856379262676288,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.3856379262676288,
+      0.3856379262676288,
+      0.3856379262676288
+     ],
+     "spearman_median": 0.3732445665154048,
+     "spearman_median_per_seed_subset": [
+      0.37324456651540483,
+      0.37324456651540483,
+      0.37324456651540483
+     ],
+     "pearson_per_strain_centered_median": 0.3906638347570952,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.3906638347570952,
+      0.3906638347570952,
+      0.3906638347570952
+     ],
+     "n_strains": 159.0,
+     "n_strains_per_seed_subset": [
+      159.0,
+      159.0,
+      159.0
+     ],
+     "n_genes_scored": 1576.0,
+     "n_genes_scored_per_seed_subset": [
+      1576.0,
+      1576.0,
+      1576.0
+     ],
+     "hyperparameter": {
+      "max_iter": 200,
+      "learning_rate": 0.05,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 20,
+      "l2_regularization": 1.0,
+      "early_stopping": false,
+      "random_state": 0,
+      "n_principal_components": 64,
+      "min_samples_leaf_rule": "min(20, n_finite_train // 5), at least 2",
+      "explained_variance_ratio_sum": 0.6243534775640641,
+      "n_extra_columns": 0,
+      "n_target_columns_fitted": 1576,
+      "tuned": false
+     },
+     "seconds": 34.95726943016052
+    }
+   },
+   "seconds": 37.14027547836304
+  },
+  "boocock": {
+   "level": "gene",
+   "statistic": "median over genes of the Pearson r across validation records (gene_level_metrics; genes with >= 3 finite pairs)",
+   "n_train_records": 235,
+   "n_val_records_union": 79,
+   "n_train_environments": 1,
+   "features": "parent-of-origin vector of linear_evals_043 (+1 non-reference, -1 reference, 0 unassigned); 6307 non-constant columns",
+   "baselines": {
+    "constant": {
+     "pearson_per_gene_median": NaN,
+     "pearson_per_gene_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "spearman_median": NaN,
+     "spearman_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "pearson_per_strain_centered_median": NaN,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "n_strains": 79.0,
+     "n_strains_per_seed_subset": [
+      79.0,
+      79.0,
+      79.0
+     ],
+     "n_genes_scored": 0.0,
+     "n_genes_scored_per_seed_subset": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "hyperparameter": null,
+     "note": "per-gene training mean; constant across records, so every Pearson is undefined (NaN; linear_evals_043 scores it 0 by convention)"
+    },
+    "ridge": {
+     "pearson_per_gene_median": 0.04735633520822983,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.047356335208229836,
+      0.047356335208229836,
+      0.047356335208229836
+     ],
+     "spearman_median": 0.04524756390180348,
+     "spearman_median_per_seed_subset": [
+      0.04524756390180348,
+      0.04524756390180348,
+      0.04524756390180348
+     ],
+     "pearson_per_strain_centered_median": 0.03201945373609324,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.03201945373609324,
+      0.03201945373609324,
+      0.03201945373609324
+     ],
+     "n_strains": 79.0,
+     "n_strains_per_seed_subset": [
+      79.0,
+      79.0,
+      79.0
+     ],
+     "n_genes_scored": 4995.0,
+     "n_genes_scored_per_seed_subset": [
+      4995.0,
+      4995.0,
+      4995.0
+     ],
+     "hyperparameter": {
+      "log10_lambda_rel": -0.5,
+      "lambda_rule": "(trace K / n) x 10^g on the inner split",
+      "inner_scores_median_per_gene_pearson": {
+       "-5.0": 0.0350297125220748,
+       "-4.5": 0.03504414599387338,
+       "-4.0": 0.03508976635611502,
+       "-3.5": 0.035180008706183784,
+       "-3.0": 0.034972802113008246,
+       "-2.5": 0.035248459690688995,
+       "-2.0": 0.035320286544503615,
+       "-1.5": 0.037063644038983976,
+       "-1.0": 0.041196304323327465,
+       "-0.5": 0.044154393099247326,
+       "0.0": 0.04316618950661624,
+       "0.5": 0.04321701564981876,
+       "1.0": 0.041902218233549796,
+       "1.5": 0.040563839576156537,
+       "2.0": 0.04072573150787458,
+       "2.5": 0.04070670864621354,
+       "3.0": 0.040934226537478115,
+       "3.5": 0.04108458145042012,
+       "4.0": 0.04114231779782403,
+       "4.5": 0.041156139356410854,
+       "5.0": 0.04116051101005117
+      },
+      "grid_edge": false,
+      "n_inner_heldout_records": 47
+     },
+     "seconds": 0.4916965961456299
+    },
+    "knn_5": {
+     "pearson_per_gene_median": -0.003183567281608945,
+     "pearson_per_gene_median_per_seed_subset": [
+      -0.0031835672816089454,
+      -0.0031835672816089454,
+      -0.0031835672816089454
+     ],
+     "spearman_median": 0.013933144008994642,
+     "spearman_median_per_seed_subset": [
+      0.013933144008994643,
+      0.013933144008994643,
+      0.013933144008994643
+     ],
+     "pearson_per_strain_centered_median": 0.015503803216547292,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.015503803216547292,
+      0.015503803216547292,
+      0.015503803216547292
+     ],
+     "n_strains": 79.0,
+     "n_strains_per_seed_subset": [
+      79.0,
+      79.0,
+      79.0
+     ],
+     "n_genes_scored": 4995.0,
+     "n_genes_scored_per_seed_subset": [
+      4995.0,
+      4995.0,
+      4995.0
+     ],
+     "hyperparameter": {
+      "k": 5,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 0.24016118049621582
+    },
+    "knn_20": {
+     "pearson_per_gene_median": 0.00786326493419515,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.00786326493419515,
+      0.00786326493419515,
+      0.00786326493419515
+     ],
+     "spearman_median": 0.018940961795840275,
+     "spearman_median_per_seed_subset": [
+      0.018940961795840275,
+      0.018940961795840275,
+      0.018940961795840275
+     ],
+     "pearson_per_strain_centered_median": 0.023894543531055506,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.023894543531055506,
+      0.023894543531055506,
+      0.023894543531055506
+     ],
+     "n_strains": 79.0,
+     "n_strains_per_seed_subset": [
+      79.0,
+      79.0,
+      79.0
+     ],
+     "n_genes_scored": 4995.0,
+     "n_genes_scored_per_seed_subset": [
+      4995.0,
+      4995.0,
+      4995.0
+     ],
+     "hyperparameter": {
+      "k": 20,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 0.3706064224243164
+    },
+    "knn_50": {
+     "pearson_per_gene_median": 0.012214151930874757,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.012214151930874757,
+      0.012214151930874757,
+      0.012214151930874757
+     ],
+     "spearman_median": 0.023523082654689834,
+     "spearman_median_per_seed_subset": [
+      0.023523082654689834,
+      0.023523082654689834,
+      0.023523082654689834
+     ],
+     "pearson_per_strain_centered_median": 0.03182565351059898,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.03182565351059898,
+      0.03182565351059898,
+      0.03182565351059898
+     ],
+     "n_strains": 79.0,
+     "n_strains_per_seed_subset": [
+      79.0,
+      79.0,
+      79.0
+     ],
+     "n_genes_scored": 4995.0,
+     "n_genes_scored_per_seed_subset": [
+      4995.0,
+      4995.0,
+      4995.0
+     ],
+     "hyperparameter": {
+      "k": 50,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 0.5020828247070312
+    },
+    "hgb": {
+     "pearson_per_gene_median": 0.01647541408454905,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.01647541408454905,
+      0.01647541408454905,
+      0.01647541408454905
+     ],
+     "spearman_median": 0.021573586307977465,
+     "spearman_median_per_seed_subset": [
+      0.021573586307977465,
+      0.021573586307977465,
+      0.021573586307977465
+     ],
+     "pearson_per_strain_centered_median": 0.021129583574135535,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.021129583574135535,
+      0.021129583574135535,
+      0.021129583574135535
+     ],
+     "n_strains": 79.0,
+     "n_strains_per_seed_subset": [
+      79.0,
+      79.0,
+      79.0
+     ],
+     "n_genes_scored": 4995.0,
+     "n_genes_scored_per_seed_subset": [
+      4995.0,
+      4995.0,
+      4995.0
+     ],
+     "hyperparameter": {
+      "max_iter": 200,
+      "learning_rate": 0.05,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 20,
+      "l2_regularization": 1.0,
+      "early_stopping": false,
+      "random_state": 0,
+      "n_principal_components": 64,
+      "min_samples_leaf_rule": "min(20, n_finite_train // 5), at least 2",
+      "explained_variance_ratio_sum": 0.777301790905224,
+      "n_extra_columns": 0,
+      "n_target_columns_fitted": 4995,
+      "tuned": false
+     },
+     "seconds": 48.00654363632202
+    }
+   },
+   "seconds": 49.15709114074707
+  },
+  "nguessan": {
+   "level": "gene",
+   "statistic": "median over genes of the Pearson r across validation records (gene_level_metrics; genes with >= 3 finite pairs)",
+   "n_train_records": 1770,
+   "n_val_records_union": 591,
+   "n_train_environments": 1,
+   "features": "parent-of-origin vector of linear_evals_043 (+1 non-reference, -1 reference, 0 unassigned); 6320 non-constant columns",
+   "baselines": {
+    "constant": {
+     "pearson_per_gene_median": NaN,
+     "pearson_per_gene_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "spearman_median": NaN,
+     "spearman_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "pearson_per_strain_centered_median": NaN,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "n_strains": 591.0,
+     "n_strains_per_seed_subset": [
+      591.0,
+      591.0,
+      591.0
+     ],
+     "n_genes_scored": 0.0,
+     "n_genes_scored_per_seed_subset": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "hyperparameter": null,
+     "note": "per-gene training mean; constant across records, so every Pearson is undefined (NaN; linear_evals_043 scores it 0 by convention)"
+    },
+    "ridge": {
+     "pearson_per_gene_median": 0.09046125274397353,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.09046125274397353,
+      0.09046125274397353,
+      0.09046125274397353
+     ],
+     "spearman_median": 0.07208208897777418,
+     "spearman_median_per_seed_subset": [
+      0.07208208897777418,
+      0.07208208897777418,
+      0.07208208897777418
+     ],
+     "pearson_per_strain_centered_median": 0.0440963382358461,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.04409633823584609,
+      0.04409633823584609,
+      0.04409633823584609
+     ],
+     "n_strains": 591.0,
+     "n_strains_per_seed_subset": [
+      591.0,
+      591.0,
+      591.0
+     ],
+     "n_genes_scored": 5961.0,
+     "n_genes_scored_per_seed_subset": [
+      5961.0,
+      5961.0,
+      5961.0
+     ],
+     "hyperparameter": {
+      "log10_lambda_rel": 0.5,
+      "lambda_rule": "(trace K / n) x 10^g on the inner split",
+      "inner_scores_median_per_gene_pearson": {
+       "-5.0": 0.033073798320132713,
+       "-4.5": 0.03307564726045441,
+       "-4.0": 0.03317912291082743,
+       "-3.5": 0.033475693488705924,
+       "-3.0": 0.03424870175441395,
+       "-2.5": 0.035843454930519915,
+       "-2.0": 0.03980062123641227,
+       "-1.5": 0.046699750683018376,
+       "-1.0": 0.05571123294610221,
+       "-0.5": 0.06578723136430686,
+       "0.0": 0.07303113950565568,
+       "0.5": 0.07681322441135996,
+       "1.0": 0.07627111488529198,
+       "1.5": 0.07443975931035093,
+       "2.0": 0.07244070982459833,
+       "2.5": 0.07141724951829045,
+       "3.0": 0.07093623910717006,
+       "3.5": 0.07094044515430602,
+       "4.0": 0.07095272063190206,
+       "4.5": 0.07095658491497535,
+       "5.0": 0.0709578051224068
+      },
+      "grid_edge": false,
+      "n_inner_heldout_records": 354
+     },
+     "seconds": 4.239707708358765
+    },
+    "knn_5": {
+     "pearson_per_gene_median": 0.024600250279386046,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.024600250279386046,
+      0.024600250279386046,
+      0.024600250279386046
+     ],
+     "spearman_median": 0.019665870714207827,
+     "spearman_median_per_seed_subset": [
+      0.019665870714207827,
+      0.019665870714207827,
+      0.019665870714207827
+     ],
+     "pearson_per_strain_centered_median": 0.010797622779628339,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.010797622779628339,
+      0.010797622779628339,
+      0.010797622779628339
+     ],
+     "n_strains": 591.0,
+     "n_strains_per_seed_subset": [
+      591.0,
+      591.0,
+      591.0
+     ],
+     "n_genes_scored": 5946.0,
+     "n_genes_scored_per_seed_subset": [
+      5946.0,
+      5946.0,
+      5946.0
+     ],
+     "hyperparameter": {
+      "k": 5,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 2.662867784500122
+    },
+    "knn_20": {
+     "pearson_per_gene_median": 0.033986275749864694,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.033986275749864694,
+      0.033986275749864694,
+      0.033986275749864694
+     ],
+     "spearman_median": 0.02700520237979029,
+     "spearman_median_per_seed_subset": [
+      0.02700520237979029,
+      0.02700520237979029,
+      0.02700520237979029
+     ],
+     "pearson_per_strain_centered_median": 0.016433058223796333,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.016433058223796333,
+      0.016433058223796333,
+      0.016433058223796333
+     ],
+     "n_strains": 591.0,
+     "n_strains_per_seed_subset": [
+      591.0,
+      591.0,
+      591.0
+     ],
+     "n_genes_scored": 5961.0,
+     "n_genes_scored_per_seed_subset": [
+      5961.0,
+      5961.0,
+      5961.0
+     ],
+     "hyperparameter": {
+      "k": 20,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 4.276423931121826
+    },
+    "knn_50": {
+     "pearson_per_gene_median": 0.041698744734525305,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.041698744734525305,
+      0.041698744734525305,
+      0.041698744734525305
+     ],
+     "spearman_median": 0.03472344519824059,
+     "spearman_median_per_seed_subset": [
+      0.03472344519824059,
+      0.03472344519824059,
+      0.03472344519824059
+     ],
+     "pearson_per_strain_centered_median": 0.02076870307182085,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.02076870307182085,
+      0.02076870307182085,
+      0.02076870307182085
+     ],
+     "n_strains": 591.0,
+     "n_strains_per_seed_subset": [
+      591.0,
+      591.0,
+      591.0
+     ],
+     "n_genes_scored": 5961.0,
+     "n_genes_scored_per_seed_subset": [
+      5961.0,
+      5961.0,
+      5961.0
+     ],
+     "hyperparameter": {
+      "k": 50,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 5.920180797576904
+    },
+    "hgb": {
+     "pearson_per_gene_median": 0.04701523363128365,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.04701523363128364,
+      0.04701523363128364,
+      0.04701523363128364
+     ],
+     "spearman_median": 0.03970219584648439,
+     "spearman_median_per_seed_subset": [
+      0.03970219584648439,
+      0.03970219584648439,
+      0.03970219584648439
+     ],
+     "pearson_per_strain_centered_median": 0.023446048200537157,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.023446048200537157,
+      0.023446048200537157,
+      0.023446048200537157
+     ],
+     "n_strains": 591.0,
+     "n_strains_per_seed_subset": [
+      591.0,
+      591.0,
+      591.0
+     ],
+     "n_genes_scored": 5961.0,
+     "n_genes_scored_per_seed_subset": [
+      5961.0,
+      5961.0,
+      5961.0
+     ],
+     "hyperparameter": {
+      "max_iter": 200,
+      "learning_rate": 0.05,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 20,
+      "l2_regularization": 1.0,
+      "early_stopping": false,
+      "random_state": 0,
+      "n_principal_components": 64,
+      "min_samples_leaf_rule": "min(20, n_finite_train // 5), at least 2",
+      "explained_variance_ratio_sum": 0.7012865580667063,
+      "n_extra_columns": 0,
+      "n_target_columns_fitted": 6164,
+      "tuned": false
+     },
+     "seconds": 152.51368141174316
+    }
+   },
+   "seconds": 164.50695371627808
+  },
+  "vaishnav": {
+   "level": "record",
+   "statistic": "Pearson r over validation promoters (each seed's 2,000-record subset, eval_positions)",
+   "n_train_records": 42640,
+   "n_val_records_union": 5168,
+   "features": "k-mer counts (k 1 to 6) + library indicator, 5461 columns",
+   "baselines": {
+    "constant": {
+     "pearson": NaN,
+     "pearson_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "n_strains": 2000.0,
+     "n_strains_per_seed_subset": [
+      2000.0,
+      2000.0,
+      2000.0
+     ],
+     "hyperparameter": null,
+     "note": "training mean; constant across promoters, Pearson undefined"
+    },
+    "ridge": {
+     "pearson": 0.8839001629541237,
+     "pearson_per_seed_subset": [
+      0.888134808805712,
+      0.8810306371673723,
+      0.8825350428892865
+     ],
+     "n_strains": 2000.0,
+     "n_strains_per_seed_subset": [
+      2000.0,
+      2000.0,
+      2000.0
+     ],
+     "hyperparameter": {
+      "log10_lambda_rel": -2.0,
+      "inner_scores_pearson": {
+       "-5.0": 0.8614970114356721,
+       "-4.5": 0.8717728323550373,
+       "-4.0": 0.8719285220038011,
+       "-3.5": 0.8723654269767069,
+       "-3.0": 0.8733811744092645,
+       "-2.5": 0.8751387227446251,
+       "-2.0": 0.8768564832440348,
+       "-1.5": 0.8764839217848991,
+       "-1.0": 0.8727146120576673,
+       "-0.5": 0.8676386950610212,
+       "0.0": 0.8644377015810494,
+       "0.5": 0.860811713259098,
+       "1.0": 0.849521570675725,
+       "1.5": 0.8272158551538168,
+       "2.0": 0.7965114168689332,
+       "2.5": 0.7641701275411578,
+       "3.0": 0.7400819864044069,
+       "3.5": 0.7280204998902099,
+       "4.0": 0.7234168359390784,
+       "4.5": 0.7218620866672332,
+       "5.0": 0.7213597382327988
+      },
+      "grid_edge": false
+     },
+     "seconds": 16.953684329986572
+    },
+    "knn_5": {
+     "pearson": 0.8790450568342347,
+     "pearson_per_seed_subset": [
+      0.8818349647621322,
+      0.8777006121357602,
+      0.877599593604812
+     ],
+     "n_strains": 2000.0,
+     "n_strains_per_seed_subset": [
+      2000.0,
+      2000.0,
+      2000.0
+     ],
+     "hyperparameter": {
+      "k": 5,
+      "metric": "cosine on training-z-scored k-mer counts"
+     },
+     "seconds": 12.110552310943604
+    },
+    "knn_20": {
+     "pearson": 0.7404147426053383,
+     "pearson_per_seed_subset": [
+      0.7445579604138862,
+      0.7336574761521695,
+      0.7430287912499591
+     ],
+     "n_strains": 2000.0,
+     "n_strains_per_seed_subset": [
+      2000.0,
+      2000.0,
+      2000.0
+     ],
+     "hyperparameter": {
+      "k": 20,
+      "metric": "cosine on training-z-scored k-mer counts"
+     },
+     "seconds": 12.111027002334595
+    },
+    "knn_50": {
+     "pearson": 0.6902998630033558,
+     "pearson_per_seed_subset": [
+      0.6993673953993222,
+      0.6817555107331899,
+      0.6897766828775549
+     ],
+     "n_strains": 2000.0,
+     "n_strains_per_seed_subset": [
+      2000.0,
+      2000.0,
+      2000.0
+     ],
+     "hyperparameter": {
+      "k": 50,
+      "metric": "cosine on training-z-scored k-mer counts"
+     },
+     "seconds": 12.111478567123413
+    },
+    "hgb": {
+     "pearson": 0.8716288937030502,
+     "pearson_per_seed_subset": [
+      0.8800236987565847,
+      0.8645836336946776,
+      0.8702793486578881
+     ],
+     "n_strains": 2000.0,
+     "n_strains_per_seed_subset": [
+      2000.0,
+      2000.0,
+      2000.0
+     ],
+     "hyperparameter": {
+      "max_iter": 300,
+      "learning_rate": 0.05,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 20,
+      "l2_regularization": 1.0,
+      "early_stopping": false,
+      "random_state": 0,
+      "features": "raw k-mer counts + library",
+      "tuned": false
+     },
+     "seconds": 23.675312519073486
+    }
+   },
+   "seconds": 66.3644917011261
+  },
+  "nadal": {
+   "level": "gene",
+   "statistic": "median over genes of the Pearson r across validation records (gene_level_metrics; genes with >= 3 finite pairs)",
+   "n_train_records": 4969,
+   "n_val_records_union": 611,
+   "n_train_environments": 2,
+   "features": "composite token of the deleted gene (3,328)",
+   "n_train_no_token": 56,
+   "n_val_no_token": 8,
+   "baselines": {
+    "constant": {
+     "pearson_per_gene_median": NaN,
+     "pearson_per_gene_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "spearman_median": NaN,
+     "spearman_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "pearson_per_strain_centered_median": NaN,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      NaN,
+      NaN,
+      NaN
+     ],
+     "n_strains": 611.0,
+     "n_strains_per_seed_subset": [
+      611.0,
+      611.0,
+      611.0
+     ],
+     "n_genes_scored": 0.0,
+     "n_genes_scored_per_seed_subset": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "hyperparameter": null,
+     "note": "per-gene training mean; constant across records, so every Pearson is undefined (NaN; linear_evals_043 scores it 0 by convention)"
+    },
+    "env_mean": {
+     "pearson_per_gene_median": 0.21145776223401117,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.2114577622340112,
+      0.2114577622340112,
+      0.2114577622340112
+     ],
+     "spearman_median": 0.22492179275842336,
+     "spearman_median_per_seed_subset": [
+      0.22492179275842336,
+      0.22492179275842336,
+      0.22492179275842336
+     ],
+     "pearson_per_strain_centered_median": 0.3967413431866383,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.3967413431866383,
+      0.3967413431866383,
+      0.3967413431866383
+     ],
+     "n_strains": 611.0,
+     "n_strains_per_seed_subset": [
+      611.0,
+      611.0,
+      611.0
+     ],
+     "n_genes_scored": 5249.0,
+     "n_genes_scored_per_seed_subset": [
+      5249.0,
+      5249.0,
+      5249.0
+     ],
+     "hyperparameter": null,
+     "note": "per-gene training mean within the record's environment"
+    },
+    "ridge": {
+     "pearson_per_gene_median": 0.1288638079652335,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.1288638079652335,
+      0.1288638079652335,
+      0.1288638079652335
+     ],
+     "spearman_median": 0.12614330785227168,
+     "spearman_median_per_seed_subset": [
+      0.12614330785227168,
+      0.12614330785227168,
+      0.12614330785227168
+     ],
+     "pearson_per_strain_centered_median": 0.23615460022882942,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.23615460022882942,
+      0.23615460022882942,
+      0.23615460022882942
+     ],
+     "n_strains": 611.0,
+     "n_strains_per_seed_subset": [
+      611.0,
+      611.0,
+      611.0
+     ],
+     "n_genes_scored": 5646.0,
+     "n_genes_scored_per_seed_subset": [
+      5646.0,
+      5646.0,
+      5646.0
+     ],
+     "hyperparameter": {
+      "log10_lambda_rel": 0.0,
+      "lambda_rule": "(trace K / n) x 10^g on the inner split",
+      "inner_scores_median_per_gene_pearson": {
+       "-5.0": 0.04522861736954453,
+       "-4.5": 0.04622965930758533,
+       "-4.0": 0.04824036893073794,
+       "-3.5": 0.050607222791266684,
+       "-3.0": 0.054040784674205034,
+       "-2.5": 0.05691205512604,
+       "-2.0": 0.06264056095915252,
+       "-1.5": 0.07305651591119076,
+       "-1.0": 0.0859540621421666,
+       "-0.5": 0.10076362411495379,
+       "0.0": 0.10904091578035502,
+       "0.5": 0.10637408109248145,
+       "1.0": 0.09895737408318725,
+       "1.5": 0.09070023166138244,
+       "2.0": 0.08353320108273038,
+       "2.5": 0.07843770287054488,
+       "3.0": 0.07608231532387194,
+       "3.5": 0.07513569065436107,
+       "4.0": 0.07470911942697822,
+       "4.5": 0.07455940042526513,
+       "5.0": 0.07445887469782808
+      },
+      "grid_edge": false,
+      "n_inner_heldout_records": 992
+     },
+     "seconds": 18.43857455253601
+    },
+    "knn_5": {
+     "pearson_per_gene_median": 0.10559186685119232,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.10559186685119232,
+      0.10559186685119232,
+      0.10559186685119232
+     ],
+     "spearman_median": 0.10923760178040882,
+     "spearman_median_per_seed_subset": [
+      0.10923760178040884,
+      0.10923760178040884,
+      0.10923760178040884
+     ],
+     "pearson_per_strain_centered_median": 0.24956334514371,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.24956334514371,
+      0.24956334514371,
+      0.24956334514371
+     ],
+     "n_strains": 611.0,
+     "n_strains_per_seed_subset": [
+      611.0,
+      611.0,
+      611.0
+     ],
+     "n_genes_scored": 5614.0,
+     "n_genes_scored_per_seed_subset": [
+      5614.0,
+      5614.0,
+      5614.0
+     ],
+     "hyperparameter": {
+      "k": 5,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 4.296512126922607
+    },
+    "knn_20": {
+     "pearson_per_gene_median": 0.15292403943382965,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.15292403943382965,
+      0.15292403943382965,
+      0.15292403943382965
+     ],
+     "spearman_median": 0.15715686011982313,
+     "spearman_median_per_seed_subset": [
+      0.15715686011982313,
+      0.15715686011982313,
+      0.15715686011982313
+     ],
+     "pearson_per_strain_centered_median": 0.336739595662135,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.33673959566213496,
+      0.33673959566213496,
+      0.33673959566213496
+     ],
+     "n_strains": 611.0,
+     "n_strains_per_seed_subset": [
+      611.0,
+      611.0,
+      611.0
+     ],
+     "n_genes_scored": 5637.0,
+     "n_genes_scored_per_seed_subset": [
+      5637.0,
+      5637.0,
+      5637.0
+     ],
+     "hyperparameter": {
+      "k": 20,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 6.484210014343262
+    },
+    "knn_50": {
+     "pearson_per_gene_median": 0.18831358533199816,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.18831358533199816,
+      0.18831358533199816,
+      0.18831358533199816
+     ],
+     "spearman_median": 0.19018239426256348,
+     "spearman_median_per_seed_subset": [
+      0.19018239426256348,
+      0.19018239426256348,
+      0.19018239426256348
+     ],
+     "pearson_per_strain_centered_median": 0.3740834690924178,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.3740834690924178,
+      0.3740834690924178,
+      0.3740834690924178
+     ],
+     "n_strains": 611.0,
+     "n_strains_per_seed_subset": [
+      611.0,
+      611.0,
+      611.0
+     ],
+     "n_genes_scored": 5643.0,
+     "n_genes_scored_per_seed_subset": [
+      5643.0,
+      5643.0,
+      5643.0
+     ],
+     "hyperparameter": {
+      "k": 50,
+      "metric": "cosine on training-z-scored features"
+     },
+     "seconds": 8.65659236907959
+    },
+    "hgb": {
+     "pearson_per_gene_median": 0.17881732836945108,
+     "pearson_per_gene_median_per_seed_subset": [
+      0.17881732836945108,
+      0.17881732836945108,
+      0.17881732836945108
+     ],
+     "spearman_median": 0.1783741112558331,
+     "spearman_median_per_seed_subset": [
+      0.17837411125583308,
+      0.17837411125583308,
+      0.17837411125583308
+     ],
+     "pearson_per_strain_centered_median": 0.35913354292653654,
+     "pearson_per_strain_centered_median_per_seed_subset": [
+      0.35913354292653654,
+      0.35913354292653654,
+      0.35913354292653654
+     ],
+     "n_strains": 611.0,
+     "n_strains_per_seed_subset": [
+      611.0,
+      611.0,
+      611.0
+     ],
+     "n_genes_scored": 5646.0,
+     "n_genes_scored_per_seed_subset": [
+      5646.0,
+      5646.0,
+      5646.0
+     ],
+     "hyperparameter": {
+      "max_iter": 200,
+      "learning_rate": 0.05,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 20,
+      "l2_regularization": 1.0,
+      "early_stopping": false,
+      "random_state": 0,
+      "n_principal_components": 64,
+      "min_samples_leaf_rule": "min(20, n_finite_train // 5), at least 2",
+      "explained_variance_ratio_sum": 0.6264478929343995,
+      "n_extra_columns": 1,
+      "n_target_columns_fitted": 5646,
+      "tuned": false
+     },
+     "seconds": 169.44273257255554
+    }
+   },
+   "seconds": 201.07420134544373
+  },
+  "doubles": {
+   "level": "split B",
+   "statistic": "median over doubles of the centered per-double Pearson r over genes, released Kemmeren units, centered on Kemmeren's training-mean profile (evaluate_doubles)",
+   "n_doubles": 72,
+   "features": "composite tokens of the two deleted genes, through Kemmeren-fitted baselines",
+   "baselines": {
+    "additive_measured": {
+     "pearson_per_strain_centered_median": 0.43966754542573827,
+     "n_doubles_scored": 72,
+     "hyperparameter": null,
+     "note": "measured single x + measured single y (the trainer's val/doubles/additive_measured key, recomputed)"
+    },
+    "constant": {
+     "pearson_per_strain_centered_median": 0.08827583265156125,
+     "n_doubles_scored": 72,
+     "hyperparameter": null,
+     "note": "Kemmeren-fitted baseline; predicted single x + predicted single y in released units; constant, so undefined"
+    },
+    "ridge": {
+     "pearson_per_strain_centered_median": 0.13581515925247473,
+     "n_doubles_scored": 72,
+     "hyperparameter": {
+      "log10_lambda_rel": 1.0,
+      "lambda_rule": "(trace K / n) x 10^g on the inner split",
+      "grid_edge": false
+     },
+     "note": "Kemmeren-fitted baseline; predicted single x + predicted single y in released units"
+    },
+    "knn_5": {
+     "pearson_per_strain_centered_median": 0.09862968327073444,
+     "n_doubles_scored": 72,
+     "hyperparameter": {
+      "k": 5,
+      "metric": "cosine on training-z-scored features"
+     },
+     "note": "Kemmeren-fitted baseline; predicted single x + predicted single y in released units, query gene's own record excluded from its neighbors"
+    },
+    "knn_20": {
+     "pearson_per_strain_centered_median": 0.08670323822626418,
+     "n_doubles_scored": 72,
+     "hyperparameter": {
+      "k": 20,
+      "metric": "cosine on training-z-scored features"
+     },
+     "note": "Kemmeren-fitted baseline; predicted single x + predicted single y in released units, query gene's own record excluded from its neighbors"
+    },
+    "knn_50": {
+     "pearson_per_strain_centered_median": 0.09498681790491863,
+     "n_doubles_scored": 72,
+     "hyperparameter": {
+      "k": 50,
+      "metric": "cosine on training-z-scored features"
+     },
+     "note": "Kemmeren-fitted baseline; predicted single x + predicted single y in released units, query gene's own record excluded from its neighbors"
+    },
+    "hgb": {
+     "pearson_per_strain_centered_median": 0.36412677560740436,
+     "n_doubles_scored": 72,
+     "hyperparameter": {
+      "max_iter": 200,
+      "learning_rate": 0.05,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 20,
+      "l2_regularization": 1.0,
+      "early_stopping": false,
+      "random_state": 0,
+      "n_principal_components": 64,
+      "min_samples_leaf_rule": "min(20, n_finite_train // 5), at least 2",
+      "explained_variance_ratio_sum": 0.6397339297059632,
+      "n_extra_columns": 0,
+      "n_target_columns_fitted": 6127,
+      "tuned": false
+     },
+     "note": "Kemmeren-fitted baseline; predicted single x + predicted single y in released units"
+    }
+   },
+   "seconds": 150.6049199104309
+  }
+ },
+ "trained": {
+  "runs": {
+   "gs1024_w4_bs16": {
+    "seed": 0,
+    "state": "finished",
+    "epochs_reached": 80,
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w4_bs16",
+    "means_41_50": {
+     "val/kemmeren/pearson_per_gene_median": {
+      "mean": 0.09354403775900047,
+      "n_evaluations": 10
+     },
+     "val/messner/pearson_per_gene_median": {
+      "mean": 0.04595620603312143,
+      "n_evaluations": 10
+     },
+     "val/zelezniak/pearson_per_gene_median": {
+      "mean": 0.087889511329028,
+      "n_evaluations": 10
+     },
+     "val/caudal/pearson_per_gene_median": {
+      "mean": 0.16262066919704327,
+      "n_evaluations": 10
+     },
+     "val/muenzner/pearson_per_gene_median": {
+      "mean": 0.19766738528819133,
+      "n_evaluations": 10
+     },
+     "val/turnover/pearson_per_gene_median": {
+      "mean": -0.13110859869460892,
+      "n_evaluations": 10
+     },
+     "val/boocock/pearson_per_gene_median": {
+      "mean": -0.07149339027062615,
+      "n_evaluations": 10
+     },
+     "val/nguessan/pearson_per_gene_median": {
+      "mean": 0.08721178648913765,
+      "n_evaluations": 10
+     },
+     "val/vaishnav/pearson": {
+      "mean": 0.9187852208946824,
+      "n_evaluations": 10
+     },
+     "val/hu/pearson_per_gene_median": {
+      "mean": 0.08066358458015468,
+      "n_evaluations": 10
+     },
+     "val/nadal/pearson_per_gene_median": {
+      "mean": 0.19298289274710112,
+      "n_evaluations": 10
+     },
+     "val/doubles/pearson_per_strain_centered_median": {
+      "mean": 0.2131480858147917,
+      "n_evaluations": 10
+     },
+     "val/kemmeren/pearson_per_strain_centered_median": {
+      "mean": 0.14819519991241437,
+      "n_evaluations": 10
+     },
+     "val/messner/pearson_per_strain_centered_median": {
+      "mean": 0.06170696585348323,
+      "n_evaluations": 10
+     },
+     "val/zelezniak/pearson_per_strain_centered_median": {
+      "mean": 0.03535980137863451,
+      "n_evaluations": 10
+     },
+     "val/caudal/pearson_per_strain_centered_median": {
+      "mean": 0.15545335110223962,
+      "n_evaluations": 10
+     },
+     "val/muenzner/pearson_per_strain_centered_median": {
+      "mean": 0.2059854258523804,
+      "n_evaluations": 10
+     },
+     "val/turnover/pearson_per_strain_centered_median": {
+      "mean": 0.01161577484076937,
+      "n_evaluations": 10
+     },
+     "val/boocock/pearson_per_strain_centered_median": {
+      "mean": 0.0009555863050426222,
+      "n_evaluations": 10
+     },
+     "val/nguessan/pearson_per_strain_centered_median": {
+      "mean": 0.05564476736647365,
+      "n_evaluations": 10
+     },
+     "val/hu/pearson_per_strain_centered_median": {
+      "mean": 0.05321424364447482,
+      "n_evaluations": 10
+     },
+     "val/nadal/pearson_per_strain_centered_median": {
+      "mean": 0.3847768749152882,
+      "n_evaluations": 10
+     },
+     "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+      "mean": 0.43966754542573827,
+      "n_evaluations": 10
+     },
+     "val/doubles/additive_model_pearson_per_strain_centered_median": {
+      "mean": 0.17819716353346532,
+      "n_evaluations": 10
+     }
+    }
+   },
+   "gs1024_w4_bs16_s1": {
+    "seed": 1,
+    "state": "running",
+    "epochs_reached": 70,
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w4_bs16_s1",
+    "means_41_50": {
+     "val/kemmeren/pearson_per_gene_median": {
+      "mean": 0.09260820803198119,
+      "n_evaluations": 10
+     },
+     "val/messner/pearson_per_gene_median": {
+      "mean": 0.06601761314270567,
+      "n_evaluations": 10
+     },
+     "val/zelezniak/pearson_per_gene_median": {
+      "mean": 0.07757594208803045,
+      "n_evaluations": 10
+     },
+     "val/caudal/pearson_per_gene_median": {
+      "mean": 0.15682289173784586,
+      "n_evaluations": 10
+     },
+     "val/muenzner/pearson_per_gene_median": {
+      "mean": 0.20278650531719072,
+      "n_evaluations": 10
+     },
+     "val/turnover/pearson_per_gene_median": {
+      "mean": 0.31733753087615846,
+      "n_evaluations": 10
+     },
+     "val/boocock/pearson_per_gene_median": {
+      "mean": -0.03877613411094855,
+      "n_evaluations": 10
+     },
+     "val/nguessan/pearson_per_gene_median": {
+      "mean": 0.06267843547530959,
+      "n_evaluations": 10
+     },
+     "val/vaishnav/pearson": {
+      "mean": 0.9093258001915121,
+      "n_evaluations": 10
+     },
+     "val/hu/pearson_per_gene_median": {
+      "mean": 0.08415195795388683,
+      "n_evaluations": 10
+     },
+     "val/nadal/pearson_per_gene_median": {
+      "mean": 0.20712801992320742,
+      "n_evaluations": 10
+     },
+     "val/doubles/pearson_per_strain_centered_median": {
+      "mean": 0.19240817382268577,
+      "n_evaluations": 10
+     },
+     "val/kemmeren/pearson_per_strain_centered_median": {
+      "mean": 0.17429812804668207,
+      "n_evaluations": 10
+     },
+     "val/messner/pearson_per_strain_centered_median": {
+      "mean": 0.06835850037957986,
+      "n_evaluations": 10
+     },
+     "val/zelezniak/pearson_per_strain_centered_median": {
+      "mean": 0.06630293648143377,
+      "n_evaluations": 10
+     },
+     "val/caudal/pearson_per_strain_centered_median": {
+      "mean": 0.15911952013086322,
+      "n_evaluations": 10
+     },
+     "val/muenzner/pearson_per_strain_centered_median": {
+      "mean": 0.20562549134131464,
+      "n_evaluations": 10
+     },
+     "val/turnover/pearson_per_strain_centered_median": {
+      "mean": 0.028258867809356335,
+      "n_evaluations": 10
+     },
+     "val/boocock/pearson_per_strain_centered_median": {
+      "mean": -0.0010547271268562968,
+      "n_evaluations": 10
+     },
+     "val/nguessan/pearson_per_strain_centered_median": {
+      "mean": 0.034529428521373653,
+      "n_evaluations": 10
+     },
+     "val/hu/pearson_per_strain_centered_median": {
+      "mean": 0.06934156717145193,
+      "n_evaluations": 10
+     },
+     "val/nadal/pearson_per_strain_centered_median": {
+      "mean": 0.39216832722711853,
+      "n_evaluations": 10
+     },
+     "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+      "mean": 0.43966754542573827,
+      "n_evaluations": 10
+     },
+     "val/doubles/additive_model_pearson_per_strain_centered_median": {
+      "mean": 0.1747732530534163,
+      "n_evaluations": 10
+     }
+    }
+   },
+   "gs1024_w4_bs16_s2": {
+    "seed": 2,
+    "state": "finished",
+    "epochs_reached": 50,
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w4_bs16_s2",
+    "means_41_50": {
+     "val/kemmeren/pearson_per_gene_median": {
+      "mean": 0.10409428555539675,
+      "n_evaluations": 10
+     },
+     "val/messner/pearson_per_gene_median": {
+      "mean": 0.07825907258818474,
+      "n_evaluations": 10
+     },
+     "val/zelezniak/pearson_per_gene_median": {
+      "mean": -0.05246528600610021,
+      "n_evaluations": 10
+     },
+     "val/caudal/pearson_per_gene_median": {
+      "mean": 0.1620216262413089,
+      "n_evaluations": 10
+     },
+     "val/muenzner/pearson_per_gene_median": {
+      "mean": 0.19715911214851706,
+      "n_evaluations": 10
+     },
+     "val/turnover/pearson_per_gene_median": {
+      "mean": 0.128852332453691,
+      "n_evaluations": 10
+     },
+     "val/boocock/pearson_per_gene_median": {
+      "mean": -0.07928735540248856,
+      "n_evaluations": 10
+     },
+     "val/nguessan/pearson_per_gene_median": {
+      "mean": 0.08230962630897873,
+      "n_evaluations": 10
+     },
+     "val/vaishnav/pearson": {
+      "mean": 0.9030440263123239,
+      "n_evaluations": 10
+     },
+     "val/hu/pearson_per_gene_median": {
+      "mean": 0.06914459744451876,
+      "n_evaluations": 10
+     },
+     "val/nadal/pearson_per_gene_median": {
+      "mean": 0.2088571121938983,
+      "n_evaluations": 10
+     },
+     "val/doubles/pearson_per_strain_centered_median": {
+      "mean": 0.19120223999862743,
+      "n_evaluations": 10
+     },
+     "val/kemmeren/pearson_per_strain_centered_median": {
+      "mean": 0.14785979725157877,
+      "n_evaluations": 10
+     },
+     "val/messner/pearson_per_strain_centered_median": {
+      "mean": 0.0752606447303602,
+      "n_evaluations": 10
+     },
+     "val/zelezniak/pearson_per_strain_centered_median": {
+      "mean": -0.001332296561264547,
+      "n_evaluations": 10
+     },
+     "val/caudal/pearson_per_strain_centered_median": {
+      "mean": 0.15576932023559006,
+      "n_evaluations": 10
+     },
+     "val/muenzner/pearson_per_strain_centered_median": {
+      "mean": 0.1946929761823582,
+      "n_evaluations": 10
+     },
+     "val/turnover/pearson_per_strain_centered_median": {
+      "mean": 0.0270271021831192,
+      "n_evaluations": 10
+     },
+     "val/boocock/pearson_per_strain_centered_median": {
+      "mean": -0.0009348784979723182,
+      "n_evaluations": 10
+     },
+     "val/nguessan/pearson_per_strain_centered_median": {
+      "mean": 0.06418655086543648,
+      "n_evaluations": 10
+     },
+     "val/hu/pearson_per_strain_centered_median": {
+      "mean": 0.04971674881245654,
+      "n_evaluations": 10
+     },
+     "val/nadal/pearson_per_strain_centered_median": {
+      "mean": 0.3893235270247922,
+      "n_evaluations": 10
+     },
+     "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+      "mean": 0.43966754542573827,
+      "n_evaluations": 10
+     },
+     "val/doubles/additive_model_pearson_per_strain_centered_median": {
+      "mean": 0.15827336622518312,
+      "n_evaluations": 10
+     }
+    }
+   }
+  },
+  "window_epochs": [
+   41,
+   50
+  ],
+  "statistic": "mean over the 10 evaluations of epochs 41-50 of each seed, then the mean and sample sd (ddof 1) over seeds 0, 1, 2",
+  "summary": {
+   "val/kemmeren/pearson_per_gene_median": {
+    "mean": 0.09674884378212613,
+    "sd": 0.006378524943345048,
+    "per_seed": [
+     0.09354403775900047,
+     0.09260820803198119,
+     0.10409428555539675
+    ]
+   },
+   "val/messner/pearson_per_gene_median": {
+    "mean": 0.06341096392133728,
+    "sd": 0.016308426105575063,
+    "per_seed": [
+     0.04595620603312143,
+     0.06601761314270567,
+     0.07825907258818474
+    ]
+   },
+   "val/zelezniak/pearson_per_gene_median": {
+    "mean": 0.037666722470319415,
+    "sd": 0.07822676422821825,
+    "per_seed": [
+     0.087889511329028,
+     0.07757594208803045,
+     -0.05246528600610021
+    ]
+   },
+   "val/caudal/pearson_per_gene_median": {
+    "mean": 0.16048839572539933,
+    "sd": 0.0031885188924924983,
+    "per_seed": [
+     0.16262066919704327,
+     0.15682289173784586,
+     0.1620216262413089
+    ]
+   },
+   "val/muenzner/pearson_per_gene_median": {
+    "mean": 0.1992043342512997,
+    "sd": 0.0031126431782503897,
+    "per_seed": [
+     0.19766738528819133,
+     0.20278650531719072,
+     0.19715911214851706
+    ]
+   },
+   "val/turnover/pearson_per_gene_median": {
+    "mean": 0.10502708821174685,
+    "sd": 0.22517041208636093,
+    "per_seed": [
+     -0.13110859869460892,
+     0.31733753087615846,
+     0.128852332453691
+    ]
+   },
+   "val/boocock/pearson_per_gene_median": {
+    "mean": -0.06318562659468775,
+    "sd": 0.02149544057711919,
+    "per_seed": [
+     -0.07149339027062615,
+     -0.03877613411094855,
+     -0.07928735540248856
+    ]
+   },
+   "val/nguessan/pearson_per_gene_median": {
+    "mean": 0.07739994942447533,
+    "sd": 0.012982681669231317,
+    "per_seed": [
+     0.08721178648913765,
+     0.06267843547530959,
+     0.08230962630897873
+    ]
+   },
+   "val/vaishnav/pearson": {
+    "mean": 0.910385015799506,
+    "sd": 0.007923872474874987,
+    "per_seed": [
+     0.9187852208946824,
+     0.9093258001915121,
+     0.9030440263123239
+    ]
+   },
+   "val/hu/pearson_per_gene_median": {
+    "mean": 0.07798671332618676,
+    "sd": 0.007853626369217914,
+    "per_seed": [
+     0.08066358458015468,
+     0.08415195795388683,
+     0.06914459744451876
+    ]
+   },
+   "val/nadal/pearson_per_gene_median": {
+    "mean": 0.20298934162140228,
+    "sd": 0.008708857808326127,
+    "per_seed": [
+     0.19298289274710112,
+     0.20712801992320742,
+     0.2088571121938983
+    ]
+   },
+   "val/doubles/pearson_per_strain_centered_median": {
+    "mean": 0.1989194998787016,
+    "sd": 0.012337060525203197,
+    "per_seed": [
+     0.2131480858147917,
+     0.19240817382268577,
+     0.19120223999862743
+    ]
+   },
+   "val/kemmeren/pearson_per_strain_centered_median": {
+    "mean": 0.15678437507022508,
+    "sd": 0.015168282078946556,
+    "per_seed": [
+     0.14819519991241437,
+     0.17429812804668207,
+     0.14785979725157877
+    ]
+   },
+   "val/messner/pearson_per_strain_centered_median": {
+    "mean": 0.06844203698780776,
+    "sd": 0.0067772255789564015,
+    "per_seed": [
+     0.06170696585348323,
+     0.06835850037957986,
+     0.0752606447303602
+    ]
+   },
+   "val/zelezniak/pearson_per_strain_centered_median": {
+    "mean": 0.03344348043293458,
+    "sd": 0.0338583136269399,
+    "per_seed": [
+     0.03535980137863451,
+     0.06630293648143377,
+     -0.001332296561264547
+    ]
+   },
+   "val/caudal/pearson_per_strain_centered_median": {
+    "mean": 0.1567807304895643,
+    "sd": 0.0020316032740160922,
+    "per_seed": [
+     0.15545335110223962,
+     0.15911952013086322,
+     0.15576932023559006
+    ]
+   },
+   "val/muenzner/pearson_per_strain_centered_median": {
+    "mean": 0.20210129779201771,
+    "sd": 0.006418318316909456,
+    "per_seed": [
+     0.2059854258523804,
+     0.20562549134131464,
+     0.1946929761823582
+    ]
+   },
+   "val/turnover/pearson_per_strain_centered_median": {
+    "mean": 0.022300581611081633,
+    "sd": 0.009273787437108851,
+    "per_seed": [
+     0.01161577484076937,
+     0.028258867809356335,
+     0.0270271021831192
+    ]
+   },
+   "val/boocock/pearson_per_strain_centered_median": {
+    "mean": -0.000344673106595331,
+    "sd": 0.0011276510216490514,
+    "per_seed": [
+     0.0009555863050426222,
+     -0.0010547271268562968,
+     -0.0009348784979723182
+    ]
+   },
+   "val/nguessan/pearson_per_strain_centered_median": {
+    "mean": 0.051453582251094594,
+    "sd": 0.01526632735585769,
+    "per_seed": [
+     0.05564476736647365,
+     0.034529428521373653,
+     0.06418655086543648
+    ]
+   },
+   "val/hu/pearson_per_strain_centered_median": {
+    "mean": 0.05742418654279443,
+    "sd": 0.010467859777013849,
+    "per_seed": [
+     0.05321424364447482,
+     0.06934156717145193,
+     0.04971674881245654
+    ]
+   },
+   "val/nadal/pearson_per_strain_centered_median": {
+    "mean": 0.38875624305573303,
+    "sd": 0.003728236868236658,
+    "per_seed": [
+     0.3847768749152882,
+     0.39216832722711853,
+     0.3893235270247922
+    ]
+   },
+   "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+    "mean": 0.4396675454257382,
+    "sd": 6.798699777552591e-17,
+    "per_seed": [
+     0.43966754542573827,
+     0.43966754542573827,
+     0.43966754542573827
+    ]
+   },
+   "val/doubles/additive_model_pearson_per_strain_centered_median": {
+    "mean": 0.17041459427068825,
+    "sd": 0.010653067848444761,
+    "per_seed": [
+     0.17819716353346532,
+     0.1747732530534163,
+     0.15827336622518312
+    ]
+   }
+  }
+ },
+ "report_table_markdown": "| dataset | statistic | validation records, n | trained, mean (sd) of 3 seeds | per-gene training mean | additive measured singles | per-environment mean | ridge | kNN, k = 5 | kNN, k = 20 | kNN, k = 50 | gradient-boosted trees | best baseline | trained minus best, in seed sd |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n| Kemmeren 2014 | median per-gene Pearson r | 141 | 0.097 (0.006) | undefined | -- | -- | 0.131 | 0.107 | 0.090 | 0.088 | 0.091 | ridge 0.131 | -5.4 |\n| Messner 2023 | median per-gene Pearson r | 463 | 0.063 (0.016) | undefined | -- | -- | 0.081 | 0.059 | 0.069 | 0.075 | 0.064 | ridge 0.081 | -1.1 |\n| Zelezniak 2018 | median per-gene Pearson r | 9 | 0.038 (0.078) | undefined | -- | -- | 0.055 | 0.155 | 0.064 | -0.022 | -0.041 | kNN, k = 5 0.155 | -1.5 |\n| Caudal 2024 | median per-gene Pearson r | 189 | 0.160 (0.003) | undefined | -- | -- | 0.307 | 0.244 | 0.273 | 0.250 | 0.300 | ridge 0.307 | -46.0 |\n| Muenzner 2024 protein | median per-gene Pearson r | 159 | 0.199 (0.003) | undefined | -- | -- | 0.402 | 0.381 | 0.356 | 0.307 | 0.386 | ridge 0.402 | -65.2 |\n| Muenzner 2024 turnover | median per-gene Pearson r | 11 | 0.105 (0.225) | undefined | -- | -- | 0.105 | 0.059 | 0.214 | undefined | -0.018 | kNN, k = 20 0.214 | -0.5 |\n| Boocock 2025 pooled | median per-gene Pearson r | 79 | -0.063 (0.021) | undefined | -- | -- | 0.047 | -0.003 | 0.008 | 0.012 | 0.016 | ridge 0.047 | -5.1 |\n| N'Guessan 2025 | median per-gene Pearson r | 591 | 0.077 (0.013) | undefined | -- | -- | 0.090 | 0.025 | 0.034 | 0.042 | 0.047 | ridge 0.090 | -1.0 |\n| Vaishnav 2022 | Pearson r over promoters | 2,000 per seed (5,168 across the 3 subsets) | 0.910 (0.008) | undefined | -- | -- | 0.884 | 0.879 | 0.740 | 0.690 | 0.872 | ridge 0.884 | +3.3 |\n| Hu 2007 | median per-gene Pearson r | 19 | 0.078 (0.008) | undefined | -- | -- | -0.007 | 0.035 | 0.003 | 0.007 | 0.082 | gradient-boosted trees 0.082 | -0.5 |\n| Nadal-Ribelles 2025 | median per-gene Pearson r | 611 | 0.203 (0.009) | undefined | -- | 0.211 | 0.129 | 0.106 | 0.153 | 0.188 | 0.179 | per-environment mean 0.211 | -1.0 |\n| Sameith 2015 doubles | median centered per-double Pearson r | 72 | 0.199 (0.012) | 0.088 | 0.440 | -- | 0.136 | 0.099 | 0.087 | 0.095 | 0.364 | additive measured singles 0.440 | -19.5 |",
+ "figure": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/043-expression-proteome-morphology/notes/assets/images/043-expression-proteome-morphology/baselines_043_2026-10-26-01-41-13.svg"
+}

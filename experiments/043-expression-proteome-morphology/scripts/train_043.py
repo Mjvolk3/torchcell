@@ -1205,87 +1205,8 @@ class _PrepRows(torch.utils.data.Dataset[dict[str, Any] | None]):
                 r.gene_copy.astype(np.float32),
                 r.position_gap.astype(np.int8),
             )
-        # ---- marks: operator genes, then off-graph tokens
-        on = np.nonzero(r.operator_mask)[0]
-        n_on, n_ex = len(on), len(r.extra_tokens)
-        marks = {
-            "gene": np.concatenate([on, np.zeros(n_ex, dtype=np.int64)]).astype(
-                np.int32
-            ),
-            "on_graph": np.concatenate([np.ones(n_on, bool), np.zeros(n_ex, bool)]),
-            "change": np.concatenate(
-                [r.change_type[on], [t.change_type for t in r.extra_tokens]]
-            ).astype(np.int8),
-            "parent": np.concatenate(
-                [r.allele_parent[on] + 1, np.zeros(n_ex, dtype=np.int8)]
-            ).astype(np.int8),
-            "keys": np.concatenate(
-                [
-                    r.key_ids[on],
-                    np.asarray([t.key_ids for t in r.extra_tokens]).reshape(-1, 4),
-                ]
-            ).astype(np.int32),
-            "gaps": np.concatenate(
-                [
-                    r.key_gap[on],
-                    np.asarray([t.gaps for t in r.extra_tokens]).reshape(-1, 4),
-                ]
-            ).astype(np.int8),
-            "replicon": np.concatenate(
-                [
-                    r.chrom_index[on],
-                    [
-                        # an accessory ORF and an off-index gene (a deleted gene with
-                        # no index position, prep_v3) share the row of an ORF with no
-                        # reference coordinate; the reporter has its own
-                        int(Replicon.REPORTER_CONSTRUCT)
-                        if t.kind == "reporter"
-                        else int(Replicon.ACCESSORY_ORF)
-                        for t in r.extra_tokens
-                    ],
-                ]
-            ).astype(np.int8),
-            "relmid": np.concatenate([r.rel_midpoint[on], np.zeros(n_ex)]).astype(
-                np.float32
-            ),
-            "chrom_copy": np.concatenate([r.chrom_copy[on], np.ones(n_ex)]).astype(
-                np.float32
-            ),
-            "gene_copy": np.concatenate(
-                [
-                    r.gene_copy[on],
-                    [
-                        np.nan if t.copy_number is None else t.copy_number
-                        for t in r.extra_tokens
-                    ],
-                ]
-            ).astype(np.float32),
-            "pgap": np.concatenate(
-                [
-                    r.position_gap[on],
-                    [
-                        int(PositionGap.COPY_NUMBER_UNRELEASED)
-                        if t.copy_number is None
-                        else 0
-                        for t in r.extra_tokens
-                    ],
-                ]
-            ).astype(np.int8),
-        }
-        onto = None
-        if self.ontology:
-            from torchcell.data.experiment_ontology import annotation_recipe
-            from torchcell.datamodels.schema import (
-                EXPERIMENT_REFERENCE_TYPE_MAP,
-                EXPERIMENT_TYPE_MAP,
-            )
-
-            rr = record["experiment_reference"]
-            recipe = annotation_recipe(
-                EXPERIMENT_TYPE_MAP[ex["experiment_type"]](**ex),
-                EXPERIMENT_REFERENCE_TYPE_MAP[rr["experiment_reference_type"]](**rr),
-            )
-            onto = json.dumps(recipe.model_dump(), sort_keys=True)
+        marks = record_marks(r)
+        onto = record_ontology_key(record) if self.ontology else None
         genes2 = [-1, -1]
         if spec.short in ("kemmeren", "sameith_dm"):
             idx = [self.ds.gene_to_idx[k] for k in key if k in self.ds.gene_to_idx]
@@ -1304,6 +1225,93 @@ class _PrepRows(torch.utils.data.Dataset[dict[str, Any] | None]):
             "n_sentinel": n_sentinel,
             "onto": onto,
         }
+
+
+def record_ontology_key(record: dict[str, Any]) -> str:
+    """The canonical JSON of a raw record's experiment ontology annotation recipe (the
+    ``onto_profiles`` key of prep_v4).
+    """
+    from torchcell.data.experiment_ontology import annotation_recipe
+    from torchcell.datamodels.schema import (
+        EXPERIMENT_REFERENCE_TYPE_MAP,
+        EXPERIMENT_TYPE_MAP,
+    )
+
+    ex = record["experiment"]
+    rr = record["experiment_reference"]
+    recipe = annotation_recipe(
+        EXPERIMENT_TYPE_MAP[ex["experiment_type"]](**ex),
+        EXPERIMENT_REFERENCE_TYPE_MAP[rr["experiment_reference_type"]](**rr),
+    )
+    return json.dumps(recipe.model_dump(), sort_keys=True)
+
+
+def record_marks(r: Any) -> dict[str, np.ndarray]:
+    """The marks of one record representation (``RecordRepresentation``): its operator
+    genes, then its off-graph tokens, as the prepared store's ``mark_*`` arrays hold them
+    (key arrays in vocabulary ids).
+    """
+    on = np.nonzero(r.operator_mask)[0]
+    n_on, n_ex = len(on), len(r.extra_tokens)
+    return {
+        "gene": np.concatenate([on, np.zeros(n_ex, dtype=np.int64)]).astype(np.int32),
+        "on_graph": np.concatenate([np.ones(n_on, bool), np.zeros(n_ex, bool)]),
+        "change": np.concatenate(
+            [r.change_type[on], [t.change_type for t in r.extra_tokens]]
+        ).astype(np.int8),
+        "parent": np.concatenate(
+            [r.allele_parent[on] + 1, np.zeros(n_ex, dtype=np.int8)]
+        ).astype(np.int8),
+        "keys": np.concatenate(
+            [
+                r.key_ids[on],
+                np.asarray([t.key_ids for t in r.extra_tokens]).reshape(-1, 4),
+            ]
+        ).astype(np.int32),
+        "gaps": np.concatenate(
+            [r.key_gap[on], np.asarray([t.gaps for t in r.extra_tokens]).reshape(-1, 4)]
+        ).astype(np.int8),
+        "replicon": np.concatenate(
+            [
+                r.chrom_index[on],
+                [
+                    # an accessory ORF and an off-index gene (a deleted gene with
+                    # no index position, prep_v3) share the row of an ORF with no
+                    # reference coordinate; the reporter has its own
+                    int(Replicon.REPORTER_CONSTRUCT)
+                    if t.kind == "reporter"
+                    else int(Replicon.ACCESSORY_ORF)
+                    for t in r.extra_tokens
+                ],
+            ]
+        ).astype(np.int8),
+        "relmid": np.concatenate([r.rel_midpoint[on], np.zeros(n_ex)]).astype(
+            np.float32
+        ),
+        "chrom_copy": np.concatenate([r.chrom_copy[on], np.ones(n_ex)]).astype(
+            np.float32
+        ),
+        "gene_copy": np.concatenate(
+            [
+                r.gene_copy[on],
+                [
+                    np.nan if t.copy_number is None else t.copy_number
+                    for t in r.extra_tokens
+                ],
+            ]
+        ).astype(np.float32),
+        "pgap": np.concatenate(
+            [
+                r.position_gap[on],
+                [
+                    int(PositionGap.COPY_NUMBER_UNRELEASED)
+                    if t.copy_number is None
+                    else 0
+                    for t in r.extra_tokens
+                ],
+            ]
+        ).astype(np.int8),
+    }
 
 
 def _edge_lists(

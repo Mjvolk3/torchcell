@@ -334,6 +334,11 @@
     "name": "043 ghyper_sweep_2026_10_24: finetune_kemmeren_from_all_onto_mle_equal",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=ueh50hatd4r"
   },
+  "ghyper_sweep_2026_10_24/finetune_zelezniak_from_all_lodo_zelezniak_onto_hlgauss_equal": {
+    "id": "4s3auu91wqg",
+    "name": "043 ghyper_sweep_2026_10_24: finetune_zelezniak_from_all_lodo_zelezniak_onto_hlgauss_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=4s3auu91wqg"
+  },
   "ghyper_sweep_2026_10_24_loss": {
     "id": "i5ll45t6ioi",
     "name": "043 GilaHyper sweep 2026-10-24 by arm: total loss only",

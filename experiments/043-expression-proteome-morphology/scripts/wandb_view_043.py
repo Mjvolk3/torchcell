@@ -1293,11 +1293,27 @@ WINDOW_KEYS = (
     "val/caudal/pearson_per_gene_median",
     "val/messner/pearson_per_gene_median",
     "val/vaishnav/pearson",
+    # the leave-dataset-out targets (wave 6): Hu 2007 and Zelezniak 2018 per-gene medians
+    "val/hu/pearson_per_gene_median",
+    "val/zelezniak/pearson_per_gene_median",
     "train/loss",
     "val/loss",
 )
 ALONE_ARM = "alone_kemmeren_hlgauss_equal"
 TRANSFER_KEY = "val/kemmeren/pearson_per_gene_median"
+
+
+def _window_stat(vals: list[float]) -> dict[str, float | int]:
+    """Mean over the window's evaluated epochs, their count and the per-epoch spread
+    (sample sd, min, max), so a small-n readout carries its noise.
+    """
+    return {
+        "mean": float(np.mean(vals)),
+        "n_evaluations": len(vals),
+        "sd_epochs": float(np.std(vals, ddof=1)) if len(vals) > 1 else 0.0,
+        "min": float(np.min(vals)),
+        "max": float(np.max(vals)),
+    }
 
 
 def _extra_means(
@@ -1308,7 +1324,7 @@ def _extra_means(
     for ef, el in windows:
         win = [r for r in rows if ef <= r["epoch"] <= el]
         out[f"means_{ef}_{el}"] = {
-            k: {"mean": float(np.mean(v)), "n_evaluations": len(v)}
+            k: _window_stat(v)
             for k in WINDOW_KEYS
             if (v := [float(r[k]) for r in win if r.get(k) is not None])
         }
@@ -1360,7 +1376,7 @@ def window_means(api: wandb.Api, key: str, rnd: Round) -> dict[str, object]:
         for k in WINDOW_KEYS:
             vals = [float(r[k]) for r in win if r.get(k) is not None]
             if vals:
-                means[k] = {"mean": float(np.mean(vals)), "n_evaluations": len(vals)}
+                means[k] = _window_stat(vals)
         extra = _extra_means(rows, [w for erid, w in rnd.extra_windows if erid == rid])
         (references if rid in labels else runs)[rid] = {
             **extra,

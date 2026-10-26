@@ -114,6 +114,11 @@
     "name": "043 ghyper_sweep_2026_10_24: all_lodo_hu_onto_hlgauss_equal",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=qw1sg0wz80n"
   },
+  "ghyper_sweep_2026_10_24/all_lodo_zelezniak_onto_hlgauss_equal": {
+    "id": "cse5b09undg",
+    "name": "043 ghyper_sweep_2026_10_24: all_lodo_zelezniak_onto_hlgauss_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=cse5b09undg"
+  },
   "ghyper_sweep_2026_10_24/all_onto_balanced_p0.5_hlgauss_equal": {
     "id": "csrdxwf06b4",
     "name": "043 ghyper_sweep_2026_10_24: all_onto_balanced_p0.5_hlgauss_equal",
@@ -234,6 +239,11 @@
     "name": "043 ghyper_sweep_2026_10_24: alone_kemmeren_onto_hlgauss_equal",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=frnkko3yin3"
   },
+  "ghyper_sweep_2026_10_24/finetune_kemmeren_from_all_lodo_hu_onto_hlgauss_equal": {
+    "id": "57hpvk73jx2",
+    "name": "043 ghyper_sweep_2026_10_24: finetune_kemmeren_from_all_lodo_hu_onto_hlgauss_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=57hpvk73jx2"
+  },
   "ghyper_sweep_2026_10_24/finetune_kemmeren_from_all_onto_binned_quantile_equal": {
     "id": "trimem1jgy2",
     "name": "043 ghyper_sweep_2026_10_24: finetune_kemmeren_from_all_onto_binned_quantile_equal",
@@ -293,6 +303,11 @@
     "id": "wjezmd823jc",
     "name": "043 ghyper_sweep_2026_10_24: finetune_kemmeren_from_all_onto_hlgauss_equal_sig1.5",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=wjezmd823jc"
+  },
+  "ghyper_sweep_2026_10_24/finetune_kemmeren_from_all_onto_hlgauss_equal_statsprofile_wprofile": {
+    "id": "4oy7slh1j43",
+    "name": "043 ghyper_sweep_2026_10_24: finetune_kemmeren_from_all_onto_hlgauss_equal_statsprofile_wprofile",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=4oy7slh1j43"
   },
   "ghyper_sweep_2026_10_24/finetune_kemmeren_from_all_onto_hlgauss_equal_tdrop0.1": {
     "id": "la2ndyocv2c",

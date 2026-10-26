@@ -1,0 +1,36 @@
+#!/bin/bash -l
+#PBS -A GenesisHackathonOct26
+#PBS -q prod
+#PBS -l select=25:ncpus=64:ngpus=4
+#PBS -l walltime=06:00:00
+#PBS -l filesystems=home:eagle
+#PBS -N 043-6h-25
+#PBS -j oe
+#PBS -o /eagle/GenesisHackathonOct26/mjvolk3/torchcell/experiments/043-expression-proteome-morphology/slurm/output/
+# experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_prod6h.pbs
+# [[experiments.043-expression-proteome-morphology.scripts.alcf.polaris_train_043_ontology_prod6h]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_prod6h.pbs
+#
+# Polaris medium-queue copies, 25 nodes x 6 h (2026-10-26). Measured on Polaris: the 1 h copies
+# (polaris_train_043_ontology_prod1h.pbs, 16-32 nodes) had 0 starts in 12 h of eligible time
+# while the two node drains of Oct 26 (02:34Z and 08:34Z) each started 6 h medium jobs of
+# 25-60 nodes (7782668; 7764235, 7764424, 7783187, 7783233) and nothing shorter of ours; the
+# Oct 24-25 wait table put 25-96 n x 6 h at 22-47 h. So this copy takes the shape that starts:
+# 25 nodes (the medium floor) x 6 h, 100 ranks on the same claim lane as every other copy
+# (rank_cell_043.sh, claims_polaris_lane/ on eagle; tables polaris_cells_043.tsv, then
+# polaris_cells_043_seeds.tsv, then polaris_cells_043_seeds100.tsv). CHUNK_MIN=354: a rank
+# claims nothing in the last 10 min, stops its trainer with SIGINT at minute 354 and releases
+# its lock so the next copy resumes the cell.
+#
+#   ssh polaris "cd /eagle/GenesisHackathonOct26/mjvolk3/torchcell && qsub experiments/043-expression-proteome-morphology/scripts/alcf/polaris_train_043_ontology_prod6h.pbs"
+set -euo pipefail
+cd /eagle/GenesisHackathonOct26/mjvolk3/torchcell
+T0=$(date +%s)
+nodes=$(sort -u "$PBS_NODEFILE" | wc -l)
+echo "job $PBS_JOBID on $nodes nodes $(sort -u "$PBS_NODEFILE" | tr '\n' ' ') at $(date); tree $(cut -c1-9 .synced_commit)"
+rc=0
+mpiexec -n $((nodes * 4)) --ppn 4 --depth 16 --cpu-bind depth \
+  env JOB_T0="$T0" CHUNK_MIN=354 EXTRA_CELLS="polaris_cells_043_seeds.tsv polaris_cells_043_seeds100.tsv" \
+  bash experiments/043-expression-proteome-morphology/scripts/alcf/rank_cell_043.sh || rc=$?
+echo "done $(date) rc $rc"
+exit "$rc"

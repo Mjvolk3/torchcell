@@ -129,6 +129,11 @@
     "name": "043 ghyper_sweep_2026_10_24: all_onto_hlgauss_equal_do0.2",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=xgvcn392qw2"
   },
+  "ghyper_sweep_2026_10_24/all_onto_hlgauss_equal_ffn2": {
+    "id": "sx4sm94up2r",
+    "name": "043 ghyper_sweep_2026_10_24: all_onto_hlgauss_equal_ffn2",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=sx4sm94up2r"
+  },
   "ghyper_sweep_2026_10_24/all_onto_hlgauss_equal_h288": {
     "id": "rok5xrrk2y7",
     "name": "043 ghyper_sweep_2026_10_24: all_onto_hlgauss_equal_h288",
@@ -213,6 +218,11 @@
     "id": "wjezmd823jc",
     "name": "043 ghyper_sweep_2026_10_24: finetune_kemmeren_from_all_onto_hlgauss_equal_sig1.5",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=wjezmd823jc"
+  },
+  "ghyper_sweep_2026_10_24/finetune_kemmeren_from_all_onto_hlgauss_equal_tdrop0.1": {
+    "id": "la2ndyocv2c",
+    "name": "043 ghyper_sweep_2026_10_24: finetune_kemmeren_from_all_onto_hlgauss_equal_tdrop0.1",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=la2ndyocv2c"
   },
   "ghyper_sweep_2026_10_24/finetune_kemmeren_from_all_onto_hlgauss_equal_tqn": {
     "id": "cr7fl8kst80",

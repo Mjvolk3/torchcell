@@ -95,6 +95,10 @@ class Round:
     #: window means only: runs stopped by a pre-registered rule before their window (run
     #: id -> evidence); written under "stopped" so their absence from runs is explained
     stopped: tuple[tuple[str, str], ...] = ()
+    #: window means only: an extra epoch range read for a run besides its registered
+    #: window (run id -> (first, last)), written as means_<first>_<last>; e.g. the 80-epoch
+    #: bs16 run read over 41-50 as the recipe-v2 baseline
+    extra_windows: tuple[tuple[str, tuple[int, int]], ...] = ()
 
 
 ROUNDS: dict[str, Round] = {
@@ -378,6 +382,7 @@ ROUNDS: dict[str, Round] = {
         # the sweep fine-tunes were launched with WINDOW_START_FRAC 0.8 (logged window
         # 17-20); the overnight fine-tunes used 0.75 (16-20), so they are read over 16-20
         finetune_window=(16, 20),
+        extra_windows=(("gs1024_w4_bs16", (41, 50)),),
         stopped=(
             (
                 "gs1024_w4_bal_p1",
@@ -1293,7 +1298,17 @@ def window_means(api: wandb.Api, key: str, rnd: Round) -> dict[str, object]:
             vals = [float(r[k]) for r in win if r.get(k) is not None]
             if vals:
                 means[k] = {"mean": float(np.mean(vals)), "n_evaluations": len(vals)}
+        extra = {}
+        for erid, (ef, el) in rnd.extra_windows:
+            if erid == rid:
+                ewin = [r for r in rows if ef <= r["epoch"] <= el]
+                extra[f"means_{ef}_{el}"] = {
+                    k: {"mean": float(np.mean(v)), "n_evaluations": len(v)}
+                    for k in WINDOW_KEYS
+                    if (v := [float(r[k]) for r in ewin if r.get(k) is not None])
+                }
         (references if rid in labels else runs)[rid] = {
+            **extra,
             **({"reference": labels[rid]} if rid in labels else {}),
             "arm_label": run.group,
             "seed": int(run.config["seed"]),

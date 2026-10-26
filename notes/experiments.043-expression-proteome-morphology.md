@@ -1895,3 +1895,64 @@ The "best baseline" is the maximum of up to seven baselines picked on validation
 - **Hypothesis (untested):** the isolate gap (Caudal, Muenzner) comes from how the model reads an isolate genotype (allele tokens through the operator) compared with the ridge's direct per-gene call indicators. A probe on the trained isolate representation would test it.
 
 Not run: bootstrap intervals over records for the baselines, the inner-split choice of k for kNN, tuned trees, and the trained model's fine-tuned (`_ft`) runs.
+
+## 2026.10.26 - Diagnostics: double composition and the isolate path
+
+Follow-up to the baselines above: where does the trained joint model lose the signal on the Sameith doubles (0.199 vs the additive-measured null 0.440) and on the isolates (Caudal 0.160 vs ridge 0.307, Muenzner protein 0.199 vs 0.402)? Script [[diagnostics_043|experiments.043-expression-proteome-morphology.scripts.diagnostics_043]], launcher `scripts/gh_diagnostics_043.slurm` (CPU job 6461, 32 CPUs, 29.5 min, COMPLETED; stages d1 + d2), W&B lookup and figure on the login shell (`--stage wandb`, `--stage report`). Result `experiments/043-expression-proteome-morphology/results/diagnostics_043.json`.
+
+Setup (measured). Each checkpoint is built exactly as the trainer builds it (`checkpoint_config` -> `PreparedStore043` -> `build_view` -> `build_model`, strict weight load, the `morphology_probe_043` path), eval mode on CPU, read with forward hooks (forward unchanged). Reproduction check: every model statistic that the trainer also logs equals the logged W&B value at that checkpoint's epoch to 3-4 decimals (for example bs16 seed 0 epoch 31 doubles 0.1863 vs logged 0.1863, Caudal head 0.1473 vs 0.1470; inject-op seed 0 epoch 50 doubles 0.2600 vs 0.2610), and the additive-measured null is 0.4397 on every checkpoint. Checkpoints are `best.pt` (minimum val/loss). Caveat: bs16 seed 1 is being continued to epoch 80 (job 6436), so its `best.pt` is now epoch 75 of the continuation, not the original run's epoch 49 (sha256 in the json). Single-checkpoint values are noisy: the logged doubles value moves 0.14 to 0.26 between epochs of one run, so the 41-50 means of the baselines section are not reproduced by any single checkpoint.
+
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w4_bs16
+
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w5_onto_inject_op
+
+### D1 - Does the operator compose two deletion marks?
+
+72 Sameith doubles (split B, read through the Kemmeren head, S288C context, one environment) and the 144 Kemmeren singles of their genes (all training records). Predictions inverted to released Kemmeren units. Centered r = the trainer's per-double Pearson over genes after subtracting Kemmeren's training-mean profile, median over the 72 doubles. Raw residual = `(p_xy - p_x - p_y)` vs `(m_xy - m_x - m_y)`. Orthogonalized residual: per double, the model double regressed on `[1, p_x, p_y]` over genes and the measured double on `[1, m_x, m_y]`, residual against residual. "Beyond measured singles" = against the measured double's residual after `[1, m_x, m_y]`. Slope and norm ratio in released units (0 = reference strain; 1 = additive).
+
+| checkpoint (best.pt) | epoch | double vs measured double, median centered r | sum of model singles vs measured double, median centered r | model double vs sum of model singles, median centered r | model single vs measured single (n = 144, training), median centered r | raw residual vs measured residual, median r | control: minus model singles sum vs measured residual, median r | orthogonalized residual vs measured, median r | model double vs measured beyond singles, median r | slope of model double on model singles sum, median | norm ratio model double / model singles sum, median |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| bs16 seed 0 | 31 | 0.186 | 0.186 | 0.696 | 0.305 | 0.514 | 0.522 | -0.013 | 0.013 | 0.508 | 0.511 |
+| bs16 seed 1 | 75 | 0.181 | 0.160 | 0.737 | 0.367 | 0.519 | 0.539 | -0.031 | 0.001 | 0.506 | 0.514 |
+| bs16 seed 2 | 29 | 0.152 | 0.135 | 0.669 | 0.317 | 0.506 | 0.528 | -0.026 | 0.002 | 0.513 | 0.520 |
+| inject op seed 0 | 31 | 0.176 | 0.187 | 0.676 | 0.354 | 0.523 | 0.530 | 0.014 | 0.012 | 0.499 | 0.504 |
+| inject op seed 1 | 24 | 0.222 | 0.190 | 0.739 | 0.358 | 0.505 | 0.527 | -0.006 | 0.022 | 0.511 | 0.517 |
+| measured (reference) | | additive null 0.4397 | | | | | | | | 0.462 (measured double on measured sum) | 0.719 |
+
+The `epoch_0050.pt` and `last.pt` rows (json and `report_tables_markdown`) give the same pattern: double vs measured 0.175 to 0.260, double vs own singles sum 0.670 to 0.765, slope 0.498 to 0.517, orthogonalized residual -0.030 to +0.004.
+
+Read (measured, 5 runs, one checkpoint each):
+
+- **The operator composes two marks sub-additively, as a scaled copy of the singles sum: the double is about half of `p_x + p_y`.** Model double vs its own singles sum r 0.67 to 0.74; slope 0.50 to 0.51 and norm ratio 0.50 to 0.52 on all five runs. The measured doubles are also below additive (norm ratio 0.72, slope 0.46; the slope is attenuated by noise in the singles), but less so.
+- **Beyond that scaled sum the composition is incoherent with biology.** The raw residual correlates with the measured residual at 0.51 to 0.52, but the control `-(p_x + p_y)` alone gives 0.52 to 0.54: the raw residual is entirely the shared sub-additive term. After orthogonalizing on the singles, model residual vs measured residual is -0.03 to +0.01, and the model double explains none of the measured double beyond the measured singles (0.00 to 0.02). The inject-op runs are no different here.
+- **The doubles gap is the singles.** Pearson is scale-free, so the 0.5 factor costs nothing: double vs measured double (0.15 to 0.22) is about the model's own singles sum vs measured double (0.14 to 0.19). The sum of measured singles gives 0.440 because the measured singles are right. The model fits its own training singles at only centered r 0.31 to 0.37 (bs16), and that caps the sum.
+- Hypothesis (untested): the 0.5 factor is the operator's softmax over marks (a null key plus two mark keys), which averages two mark values instead of adding them. A one-mark vs two-mark attention-weight readout would test it.
+
+### D2 - Where is the isolate signal lost?
+
+Caudal 2024 (566 training + 189 validation isolates, 6,065 target genes scored) and Muenzner 2024 protein (476 + 159, 1,576 genes); one context per isolate plus 35 to 91 off-graph marks per record. bs16 `best.pt` seeds 0-2. Context-level representations go through the `baselines_043` ridge (penalty on the inner split of training units, never validation); per-gene ridge maps each gene's own 144-d token to that gene's target across training isolates, one penalty for all genes from the same inner split. Score: the trainer's `val/<ds>/pearson_per_gene_median` on all validation records (below the 2,000 cap, so identical for every seed's subset; checked). `frozen per-gene calls` is the baselines ridge input itself (variant / loss-of-function / absence per gene), reproduced exactly (0.3072 / 0.4021). Note that this baseline is not a composite-embedding summary; the composite summary is the separate `frozen composite, mean over genes` row (the frozen vectors of the isolate context, each block standardized, averaged over genes, 3,328).
+
+| representation | Caudal 2024 val median per-gene Pearson r, mean (sd) of 3 seeds | Caudal genes scored, n | Muenzner 2024 protein val median per-gene Pearson r, mean (sd) of 3 seeds | Muenzner genes scored, n |
+|---|---|---|---|---|
+| model head output | 0.166 (0.016) | 6,065 | 0.192 (0.045) | 1,576 |
+| frozen per-gene calls (baseline ridge) | 0.307 (deterministic) | 6,065 | 0.402 (deterministic) | 1,576 |
+| frozen composite, mean over genes | 0.233 (deterministic) | 6,065 | 0.322 (deterministic) | 1,576 |
+| input tokens, mean over genes | 0.212 (0.006) | 6,065 | 0.270 (0.022) | 1,576 |
+| trunk, mean over genes | 0.189 (0.010) | 6,065 | 0.253 (0.013) | 1,576 |
+| trunk, CLS | 0.175 (0.010) | 6,065 | 0.234 (0.007) | 1,576 |
+| operator, CLS | 0.209 (0.014) | 6,065 | 0.239 (0.005) | 1,576 |
+| operator, mean over genes | 0.223 (0.015) | 6,065 | 0.287 (0.008) | 1,576 |
+| per gene: own input token | 0.217 (0.002) | 6,059 | 0.261 (0.003) | 1,571 |
+| per gene: own trunk token | 0.205 (0.003) | 6,062 | 0.236 (0.007) | 1,576 |
+| per gene: own post-operator token | 0.242 (0.015) | 6,062 | 0.295 (0.015) | 1,576 |
+
+Read (measured, 3 seeds, one checkpoint each):
+
+- **The loss is in two places, the input encoding and the head; the trunk and operator roughly cancel.** Frozen calls 0.307 / 0.402 -> frozen composite summary 0.233 / 0.322 (-0.07 / -0.08 before any learned weight) -> learned input mean 0.212 / 0.270 -> trunk mean 0.189 / 0.253 (-0.02) -> operator mean 0.223 / 0.287 (+0.03; the operator is where the off-graph marks enter) -> best probe, each gene's post-operator token 0.242 / 0.295 -> head 0.166 / 0.192 (-0.08 / -0.10 from the post-operator probe).
+- **The head reads its own input badly.** Every learned representation, including the model's input tokens before the trunk, probes above the head's own output on both datasets; the post-operator tokens the head reads probe at 0.242 / 0.295 against the head's 0.166 / 0.192. The per-gene ridge has gene-specific weights, while the head is one MLP shared across genes and datasets, so part of the gap may be the head's form rather than its training (hypothesis, untested; a refit shared linear head on frozen post-operator tokens would separate the two).
+- **Even a perfect head would stay below the call-indicator ridge**: the best learned probe (0.242 / 0.295) is under the frozen composite summary on Muenzner and under the per-gene calls on both. The composite tokens of an isolate's alleles carry less of the expression and protein signal than explicit per-gene variant / loss-of-function / absence calls.
+- The centered per-strain Pearson (json) agrees: head 0.134 to 0.183 on Caudal vs 0.30 to 0.33 for the operator mean and the per-gene post-operator probe.
+
+![](./assets/images/043-expression-proteome-morphology/diagnostics_043_2026-10-26-02-47-50.svg)
+
+Not run: D2 on the inject-op checkpoints or other epochs, a shared linear probe of the post-operator tokens (the head's form refit), the attention weights over marks for D1, per-gene ridge on the frozen allele vectors (only the learned input projection was probed per gene), bootstrap intervals over records.

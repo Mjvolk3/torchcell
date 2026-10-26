@@ -1,0 +1,19 @@
+# experiments/006-kuzmin-tmi/conf/dango_ablation_no_pretrain_no_rezero.yaml
+# Arm D of the DANGO ablation: both factors off (interaction loss only, plain
+# residual), completing the 2 x 2 design. Everything else is the baseline.
+defaults:
+  - dango_ablation_baseline
+  - _self_
+
+arm: no_pretrain_no_rezero
+
+wandb:
+  tags: [dango_ablation, arm_no_pretrain_no_rezero, string9_1, recon_off, plain_residual]
+
+model:
+  residual: plain
+
+regression_task:
+  loss_scheduler:
+    type: PreThenPost
+    transition_epoch: 0

@@ -14,6 +14,11 @@ from torch_geometric.data import HeteroData
 from torch_geometric.nn import SAGEConv
 from torch_scatter import scatter_mean
 
+# Residual connection around each HyperSAGNN attention layer. "rezero" is the served
+# configuration, x + beta * O(attn(x)) with a learned scalar beta per layer (Bachlechner
+# et al. 2020); "plain" is x + O(attn(x)) with no gate (the 006 dango_ablation arm).
+RESIDUALS = ("rezero", "plain")
+
 # Zhang et al. (2020): lambda 0.1 where zero entries fell by more than 1% from STRING
 # v9.1 to v11.0 (neighborhood, coexpression, experimental), else 1.0.
 PAPER_LAMBDA_VALUES: dict[str, float] = {
@@ -264,17 +269,31 @@ class HyperSAGNN(nn.Module):
     that handles all perturbation sets in a single forward pass.
     """
 
-    def __init__(self, hidden_channels: int, num_heads: int = 4):
+    def __init__(
+        self, hidden_channels: int, num_heads: int = 4, residual: str = "rezero"
+    ):
         """Build the static embedding and two multi-head self-attention layers.
 
         Args:
             hidden_channels: Embedding and hidden dimension.
             num_heads: Number of attention heads.
+            residual: ``"rezero"`` (default, the served configuration): each layer
+                returns ``beta_l * O_l(attn(x)) + x`` with learned scalars ``beta1``,
+                ``beta2``. ``"plain"``: each layer returns ``O_l(attn(x)) + x`` and the
+                module has no ``beta`` parameter at all.
+
+        Raises:
+            ValueError: if ``residual`` is not one of ``RESIDUALS``.
         """
+        if residual not in RESIDUALS:
+            raise ValueError(
+                f"HyperSAGNN residual must be one of {RESIDUALS}, got {residual!r}"
+            )
         super().__init__()
         self.hidden_channels = hidden_channels
         self.num_heads = num_heads
         self.head_dim = hidden_channels // num_heads
+        self.residual = residual
 
         # Static embedding layer
         self.static_embedding = nn.Sequential(
@@ -287,14 +306,17 @@ class HyperSAGNN(nn.Module):
         self.K1 = nn.Linear(hidden_channels, hidden_channels)
         self.V1 = nn.Linear(hidden_channels, hidden_channels)
         self.O1 = nn.Linear(hidden_channels, hidden_channels)
-        self.beta1 = nn.Parameter(torch.zeros(1))
+        # ReZero gate ("rezero" keeps the served state_dict keys); "plain" has none.
+        if residual == "rezero":
+            self.beta1 = nn.Parameter(torch.zeros(1))
 
         # Layer 2
         self.Q2 = nn.Linear(hidden_channels, hidden_channels)
         self.K2 = nn.Linear(hidden_channels, hidden_channels)
         self.V2 = nn.Linear(hidden_channels, hidden_channels)
         self.O2 = nn.Linear(hidden_channels, hidden_channels)
-        self.beta2 = nn.Parameter(torch.zeros(1))
+        if residual == "rezero":
+            self.beta2 = nn.Parameter(torch.zeros(1))
 
         # Final prediction layer
         self.prediction_layer = nn.Linear(hidden_channels, 1)
@@ -349,15 +371,15 @@ class HyperSAGNN(nn.Module):
         self_mask = torch.eye(total_nodes, dtype=torch.bool, device=device)
         valid_attention_mask = same_set_mask & ~self_mask
 
+        # Per-layer ReZero gates; None selects the plain residual
+        if self.residual == "rezero":
+            beta1, beta2 = self.beta1, self.beta2
+        else:
+            beta1, beta2 = None, None
+
         # Apply first attention layer with masked attention
         dynamic_embeddings = self._global_attention_layer(
-            embeddings,
-            valid_attention_mask,
-            self.Q1,
-            self.K1,
-            self.V1,
-            self.O1,
-            self.beta1,
+            embeddings, valid_attention_mask, self.Q1, self.K1, self.V1, self.O1, beta1
         )
 
         # Apply second attention layer
@@ -368,7 +390,7 @@ class HyperSAGNN(nn.Module):
             self.K2,
             self.V2,
             self.O2,
-            self.beta2,
+            beta2,
         )
 
         # Compute element-wise squared differences
@@ -392,7 +414,7 @@ class HyperSAGNN(nn.Module):
         K_proj: nn.Linear,
         V_proj: nn.Linear,
         O_proj: nn.Linear,
-        beta: nn.Parameter,
+        beta: nn.Parameter | None,
     ) -> torch.Tensor:
         """
         Apply global masked multi-head attention.
@@ -405,7 +427,8 @@ class HyperSAGNN(nn.Module):
             K_proj: Key linear projection.
             V_proj: Value linear projection.
             O_proj: Output linear projection.
-            beta: ReZero parameter
+            beta: ReZero gate (``residual="rezero"``), or None for the plain
+                residual ``O(attn(x)) + x`` (``residual="plain"``).
 
         Returns:
             Output tensor with shape [total_nodes, hidden_dim]
@@ -449,7 +472,9 @@ class HyperSAGNN(nn.Module):
         # Apply output projection
         out = O_proj(out)
 
-        # Apply ReZero connection
+        # Residual connection: ReZero-gated, or plain when there is no gate
+        if beta is None:
+            return cast(torch.Tensor, out + x)
         return cast(torch.Tensor, beta * out + x)
 
 
@@ -469,6 +494,7 @@ class Dango(nn.Module):
         edge_types: list[str],
         hidden_channels: int = 64,
         num_heads: int = 4,
+        residual: str = "rezero",
     ):
         """Assemble the pretraining, integration, and HyperSAGNN submodules.
 
@@ -477,6 +503,8 @@ class Dango(nn.Module):
             edge_types: PPI network edge types.
             hidden_channels: Embedding and hidden dimension.
             num_heads: Number of attention heads in the HyperSAGNN.
+            residual: HyperSAGNN residual, ``"rezero"`` (default, the served
+                configuration, gates initialized to 0.01) or ``"plain"`` (no gate).
         """
         super().__init__()
         self.hidden_channels = hidden_channels
@@ -491,7 +519,7 @@ class Dango(nn.Module):
 
         # Hypergraph self-attention network
         self.hyper_sagnn = HyperSAGNN(
-            hidden_channels=hidden_channels, num_heads=num_heads
+            hidden_channels=hidden_channels, num_heads=num_heads, residual=residual
         )
 
         # Initialize weights with better defaults
@@ -511,8 +539,9 @@ class Dango(nn.Module):
 
         # Initialize ReZero parameters to small positive values instead of zero
         # This can help with better gradient flow early in training
-        nn.init.constant_(self.hyper_sagnn.beta1, 0.01)
-        nn.init.constant_(self.hyper_sagnn.beta2, 0.01)
+        if self.hyper_sagnn.residual == "rezero":
+            nn.init.constant_(self.hyper_sagnn.beta1, 0.01)
+            nn.init.constant_(self.hyper_sagnn.beta2, 0.01)
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData

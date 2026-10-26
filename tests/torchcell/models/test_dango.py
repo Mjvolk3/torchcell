@@ -825,3 +825,98 @@ def test_dango_num_parameters_counts_trainable_parameters_only() -> None:
         "hyper_sagnn": 0,
         "total": 689,
     }
+
+
+# --- residual="plain" (006 dango_ablation arm C) ------------------------------------- #
+def test_hyper_sagnn_plain_residual_has_no_gate_and_keeps_rezero_keys_in_order() -> (
+    None
+):
+    """``residual="plain"`` registers no ``beta`` parameter; its state_dict keys are the
+    ``"rezero"`` keys, in the same order, with ``beta1`` and ``beta2`` removed. The
+    default is ``"rezero"``, whose direct parameters ``beta1``, ``beta2`` lead the
+    state_dict (module parameters precede submodule parameters), as in the served
+    checkpoints.
+    """
+    rezero = HyperSAGNN(hidden_channels=8, num_heads=2)
+    plain = HyperSAGNN(hidden_channels=8, num_heads=2, residual="plain")
+    assert (rezero.residual, plain.residual) == ("rezero", "plain")
+    assert not hasattr(plain, "beta1") and not hasattr(plain, "beta2")
+    assert [n for n, _ in plain.named_parameters() if "beta" in n] == []
+    rezero_keys = list(rezero.state_dict())
+    assert rezero_keys[:4] == [
+        "beta1",
+        "beta2",
+        "static_embedding.0.weight",
+        "static_embedding.0.bias",
+    ]
+    assert list(plain.state_dict()) == rezero_keys[2:]
+
+
+def test_hyper_sagnn_plain_residual_equals_rezero_with_unit_gates() -> None:
+    """``O(attn(x)) + x`` is the ReZero layer at ``beta = 1``: a plain model loaded with
+    the weights of a seeded ReZero model whose gates are set to 1 gives the same layer
+    output and the same scores on a triple and a pair; at the 0.01 init the two differ.
+    """
+    torch.manual_seed(7)
+    rezero = HyperSAGNN(hidden_channels=8, num_heads=2)
+    for p in rezero.parameters():
+        nn.init.normal_(p, std=0.3)
+    with torch.no_grad():
+        rezero.beta1.fill_(1.0)
+        rezero.beta2.fill_(1.0)
+    plain = HyperSAGNN(hidden_channels=8, num_heads=2, residual="plain")
+    state = {k: v for k, v in rezero.state_dict().items() if not k.startswith("beta")}
+    plain.load_state_dict(state, strict=True)
+
+    x = torch.randn(5, 8)
+    set_ids = torch.tensor([0, 0, 0, 1, 1])
+    mask = (set_ids[:, None] == set_ids[None, :]) & ~torch.eye(5, dtype=torch.bool)
+    layer_plain = plain._global_attention_layer(
+        x, mask, plain.Q1, plain.K1, plain.V1, plain.O1, None
+    )
+    layer_rezero = rezero._global_attention_layer(
+        x, mask, rezero.Q1, rezero.K1, rezero.V1, rezero.O1, rezero.beta1
+    )
+    torch.testing.assert_close(layer_plain, layer_rezero, atol=1e-6, rtol=0.0)
+    out_plain = plain(x, set_ids, num_sets=2)
+    torch.testing.assert_close(
+        out_plain, rezero(x, set_ids, num_sets=2), atol=1e-6, rtol=0.0
+    )
+    with torch.no_grad():
+        rezero.beta1.fill_(0.01)
+        rezero.beta2.fill_(0.01)
+    assert not torch.allclose(out_plain, rezero(x, set_ids, num_sets=2), atol=1e-4)
+
+
+def test_dango_plain_residual_parameter_count_and_forward() -> None:
+    """A plain ``Dango`` has the 1348 parameters of the fixture model minus the two
+    gates (hyper 657, total 1346), its HyperSAGNN Linear biases are zeroed as in the
+    ReZero model, and it scores two triples with finite values. An unknown residual
+    name is refused.
+    """
+    torch.manual_seed(0)
+    model = Dango(
+        gene_num=4,
+        edge_types=EDGE_TYPES,
+        hidden_channels=8,
+        num_heads=2,
+        residual="plain",
+    )
+    assert model.hyper_sagnn.residual == "plain"
+    assert model.num_parameters == {
+        "pretrain_model": 648,
+        "meta_embedding": 41,
+        "hyper_sagnn": 657,
+        "total": 1346,
+    }
+    for name, module in model.hyper_sagnn.named_modules():
+        if isinstance(module, nn.Linear):
+            assert torch.equal(module.bias, torch.zeros_like(module.bias)), name
+    scores, _ = model(_cell_graph(), _batch([0, 1, 2], [1, 2, 3]))
+    assert scores.shape == (2,)
+    assert bool(torch.isfinite(scores).all())
+    with pytest.raises(ValueError) as excinfo:
+        Dango(gene_num=4, edge_types=EDGE_TYPES, hidden_channels=8, residual="gated")
+    assert str(excinfo.value) == (
+        "HyperSAGNN residual must be one of ('rezero', 'plain'), got 'gated'"
+    )

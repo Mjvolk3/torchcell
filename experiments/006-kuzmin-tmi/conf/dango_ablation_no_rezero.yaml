@@ -1,0 +1,15 @@
+# experiments/006-kuzmin-tmi/conf/dango_ablation_no_rezero.yaml
+# Arm C of the DANGO ablation: plain residual x + O(attn(x)) in both HyperSAGNN
+# attention layers (Dango(residual="plain"), no beta parameter). Everything else is
+# the baseline.
+defaults:
+  - dango_ablation_baseline
+  - _self_
+
+arm: no_rezero
+
+wandb:
+  tags: [dango_ablation, arm_no_rezero, string9_1, recon_on, plain_residual]
+
+model:
+  residual: plain

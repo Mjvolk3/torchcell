@@ -1803,3 +1803,44 @@ Control the design lacked on recipe v2: `gs1024_ctl_alone_kemmeren_s0/s1` (jobs 
 | joint pretrain + operator ontology injection, seed 1 (epochs 41-50) | 0.0890 | 0.2252 | 2.3519 | 4.1 h |
 
 Read (measured, two seeds each side): pretraining on all 13 datasets then fine-tuning on Kemmeren gives the same Kemmeren score as training Kemmeren alone from scratch (0.124 vs 0.120 mean, inside the 0.019 matched fine-tune spread), and the joint model read directly, without the fine-tune, is below the alone model on both Kemmeren (0.097 vs 0.120) and doubles (0.199 vs 0.229). No transfer benefit to the perturbation head is measured; the joint objective costs it. The operator injection's doubles gain replicates on seed 1 (0.2252, +0.026 over the bs16 mean, 2.1 sd; two-seed mean 0.236) and brings the joint model to the alone model's doubles level, no further.
+
+## 2026.10.26 - Morphology probe: which representation maps to CalMorph
+
+Owner, 2026-10-26: "see if gene embeddings can map to morphology, and if the cls or sum over genes or something can map to morphology better." Script [[morphology_probe_043|experiments.043-expression-proteome-morphology.scripts.morphology_probe_043]], launcher `gh_morphology_probe_043.slurm` (job 6449, CPU, 5 min), result `experiments/043-expression-proteome-morphology/results/morphology_probe_043.json`.
+
+Setup (measured). Ohya 2005 is never trained on (probe role). 4,678 single-deletion strains in the 6,607-gene index (store v2), targets the 116 moving CalMorph features of the earlier probe (all 281 in the json). Every representation is mapped to the 116-feature vector by ridge on one split: the fold file `global_split_v2` gene folds, held-out strains = deleted gene in fold 0 (459 strains; never a training deletion of either checkpoint), penalty chosen on fold 1 (459) with a fit on folds 2-9, refit on folds 1-9 (3,760 + 459 strains) (`linear_evals_043.ridge_fold`). Trained read-outs come from `best.pt` (epoch 31, minimum val/loss) of `gs1024_w4_bs16` seed 0 and `gs1024_w5_onto_inject_op` seed 0, built through `train_043.build_view` / `build_model` / `make_batch`, one forward pass per strain (S288C context plus one deletion mark), tensors read with forward hooks on the trunk and the operator (forward unchanged). The Ohya marks equal the prepared store's single-deletion mark of the same gene on every field for all 4,106 genes that have one. The Ohya ontology profile (CalMorphPhenotype) is not among the training profiles, so the injection model's operator shift for these records is from a profile it never trained on. The composite OOF row reproduces the earlier probe (0.121, store v2 `morphology_summary.csv` 0.1209).
+
+| representation | dim | median Pearson r over 116 features, fold-0 strains (95% CI) | mean Pearson r over 116 features, fold-0 | features with Pearson r > 0.3 (of 116), fold-0 | mean held-out R^2, fold-0 | median minus composite median Pearson r, 95% CI | median Pearson r over 116, 5-fold OOF (all 4,678) | median Pearson r over 281, fold-0 |
+|---|---|---|---|---|---|---|---|---|
+| null: training mean | 0 | 0 (constant) | 0 | 0 | -0.002 | | | 0 |
+| frozen composite | 3,328 | 0.149 (0.092, 0.199) | 0.134 | 0 | 0.013 | reference | 0.121 | 0.091 |
+| frozen FUDT upstream | 768 | 0.054 (0.000, 0.111) | 0.052 | 0 | 0.000 | (-0.160, -0.031) | 0.020 | 0.030 |
+| frozen FUDT downstream | 768 | -0.014 (-0.079, 0.051) | -0.011 | 0 | -0.002 | (-0.236, -0.084) | 0.033 | 0.003 |
+| frozen ProtT5-XL | 1,024 | 0.162 (0.088, 0.222) | 0.145 | 0 | 0.009 | (-0.029, 0.051) | 0.127 | 0.125 |
+| frozen CaLM | 768 | 0.123 (0.058, 0.181) | 0.115 | 0 | 0.013 | (-0.067, 0.016) | 0.116 | 0.093 |
+| bs16: deleted gene, trunk | 144 | 0.205 (0.134, 0.269) | 0.182 | 0 | 0.034 | (0.004, 0.107) | 0.186 | 0.132 |
+| bs16: deleted gene, after operator | 144 | 0.194 (0.124, 0.268) | 0.179 | 0 | 0.033 | (-0.008, 0.112) | 0.171 | 0.115 |
+| bs16: CLS, after operator | 144 | 0.166 (0.103, 0.228) | 0.146 | 0 | 0.019 | (-0.042, 0.083) | 0.171 | 0.081 |
+| bs16: mean over genes, after operator | 144 | 0.202 (0.132, 0.259) | 0.183 | 3 | 0.027 | (-0.010, 0.107) | 0.172 | 0.103 |
+| bs16: operator update summed over genes | 144 | 0.202 (0.132, 0.259) | 0.183 | 3 | 0.027 | (-0.010, 0.107) | 0.172 | 0.103 |
+| bs16: mark key z_S | 144 | 0.205 (0.138, 0.261) | 0.184 | 0 | 0.034 | (0.002, 0.106) | 0.190 | 0.132 |
+| inject op: deleted gene, trunk | 144 | 0.141 (0.077, 0.200) | 0.126 | 0 | 0.014 | (-0.061, 0.039) | 0.156 | 0.115 |
+| inject op: deleted gene, after operator | 144 | 0.175 (0.101, 0.239) | 0.155 | 0 | 0.025 | (-0.035, 0.075) | 0.169 | 0.105 |
+| inject op: CLS, after operator | 144 | 0.131 (0.060, 0.195) | 0.114 | 0 | 0.006 | (-0.084, 0.042) | 0.140 | 0.064 |
+| inject op: mean over genes, after operator | 144 | 0.156 (0.084, 0.219) | 0.135 | 0 | 0.018 | (-0.061, 0.066) | 0.151 | 0.087 |
+| inject op: operator update summed over genes | 144 | 0.156 (0.084, 0.219) | 0.135 | 0 | 0.018 | (-0.061, 0.066) | 0.151 | 0.087 |
+| inject op: mark key z_S | 144 | 0.138 (0.081, 0.195) | 0.128 | 0 | 0.015 | (-0.062, 0.050) | 0.149 | 0.105 |
+
+CIs: 1,000 bootstrap resamples of the 459 held-out strains, seed 0; the difference column is paired against the frozen composite. "Mean over genes" and "update summed" are the same ridge input by construction (they differ by a strain-independent offset and scale), so their rows are identical.
+
+![](./assets/images/043-expression-proteome-morphology/morphology_probe_043_2026-10-26-01-16-49.svg)
+
+Read (measured, one seed per checkpoint, one held-out fold):
+
+- Gene embeddings do map to morphology, weakly: frozen composite median r 0.149, and no frozen input puts a single feature above 0.3. The signal is in the protein-side encoders: ProtT5 alone (0.162) and CaLM alone (0.123) are each within the CI of the composite, while FUDT upstream (0.054) and downstream (-0.014) are near zero and both are measurably below the composite.
+- The trained bs16 model's 144-d read-outs are the best inputs: trunk token of the deleted gene 0.205 and z_S 0.205, the only two whose paired CI against the frozen composite excludes zero (lower ends +0.004 and +0.002); the 5-fold OOF construction agrees (0.186, 0.190 vs 0.121). The gain is already present before the operator: the deleted gene's trunk token is as good as anything after it.
+- CLS is not better: bs16 CLS 0.166 is below every per-gene and pooled bs16 read-out and its CI against the composite includes zero. Mean over genes (equivalently the summed operator update) 0.202 matches the gene's own token, not exceeding it; it is the only read-out with any feature above 0.3 (3 of 116).
+- The operator-injection checkpoint reads out lower than bs16 on every read-out (0.131 to 0.175), none measurably different from the frozen composite. Its best read-out is the post-operator gene row (0.175), not the trunk token (0.141). Its Ohya ontology profile was never trained on (above), so the post-operator rows of this model are read under an out-of-training conditioning; that may or may not drive the gap (hypothesis, untested).
+- Everything is far below the measured-expression inputs of the earlier probe (Kemmeren ridge 0.35, Messner 0.28, transductive, `linear_evals_043`) and the 0.847 ceiling.
+
+Not run: other seeds or epochs of either checkpoint, the fine-tuned checkpoints, held-out folds other than 0, a residualized-for-fitness version, nonlinear probes.

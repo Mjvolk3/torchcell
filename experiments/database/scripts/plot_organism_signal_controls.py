@@ -118,6 +118,11 @@ def _apply_rc() -> None:
     plt.rcParams.update(
         {
             "font.family": "Arial",
+            # Organism names are set in Arial italic through mathtext.
+            "mathtext.fontset": "custom",
+            "mathtext.rm": "Arial",
+            "mathtext.it": "Arial:italic",
+            "mathtext.bf": "Arial:bold",
             "font.size": 6,
             "axes.titlesize": 6,
             "axes.labelsize": 6,
@@ -131,6 +136,11 @@ def _apply_rc() -> None:
             "ytick.major.width": 0.5,
         }
     )
+
+
+def italic(name: str) -> str:
+    """An organism name in Arial italic (mathtext; spaces escaped)."""
+    return r"$\mathit{" + name.replace(" ", r"\ ") + "}$"
 
 
 def _box(ax: Axes) -> None:
@@ -159,7 +169,8 @@ def _grouped_bars(
     ax.set_xticks(x)
     ax.set_xticklabels(
         [
-            f"{t.label}\n{t.datasets} datasets\n{t.instances / 1e6:.2f} M instances"
+            f"{italic(t.label)}\n{t.datasets} datasets\n"
+            f"{t.instances / 1e6:.2f} M instances"
             for t in totals
         ]
     )
@@ -252,9 +263,11 @@ def main() -> None:
     stem = "organism_signal_controls" + ("" if args.no_timestamp else f"_{timestamp()}")
     png = osp.join(out_dir, stem + ".png")
     svg = osp.join(out_dir, stem + ".svg")
+    pdf = osp.join(out_dir, stem + ".pdf")
     fig.savefig(png, dpi=300)
     savefig_true_size_svg(fig, svg)
-    print(f"Wrote {png}\nWrote {svg}")
+    fig.savefig(pdf)
+    print(f"Wrote {png}\nWrote {svg}\nWrote {pdf}")
 
 
 if __name__ == "__main__":

@@ -63,6 +63,11 @@ def _apply_rc() -> None:
     plt.rcParams.update(
         {
             "font.family": "Arial",
+            # Organism names are set in Arial italic through mathtext.
+            "mathtext.fontset": "custom",
+            "mathtext.rm": "Arial",
+            "mathtext.it": "Arial:italic",
+            "mathtext.bf": "Arial:bold",
             "font.size": 6,
             "axes.titlesize": 6,
             "axes.labelsize": 6,
@@ -76,6 +81,11 @@ def _apply_rc() -> None:
             "ytick.major.width": 0.5,
         }
     )
+
+
+def italic(name: str) -> str:
+    """An organism name in Arial italic (mathtext; spaces escaped)."""
+    return r"$\mathit{" + name.replace(" ", r"\ ") + "}$"
 
 
 def _box(ax: Axes) -> None:
@@ -154,7 +164,7 @@ def main() -> None:
             markeredgecolor="#000000",
             markeredgewidth=0.5,
             markersize=3.5,
-            label=HOST_LABEL[h],
+            label=italic(HOST_LABEL[h]),
         )
         for h in payload["organisms"]
     ]
@@ -221,9 +231,11 @@ def main() -> None:
     stem = f"{name}_datasets_signal" + ("" if args.no_timestamp else f"_{timestamp()}")
     png = osp.join(out_dir, stem + ".png")
     svg = osp.join(out_dir, stem + ".svg")
+    pdf = osp.join(out_dir, stem + ".pdf")
     fig.savefig(png, dpi=300)
     savefig_true_size_svg(fig, svg)
-    print(f"Wrote {png}\nWrote {svg}")
+    fig.savefig(pdf)
+    print(f"Wrote {png}\nWrote {svg}\nWrote {pdf}")
 
 
 if __name__ == "__main__":

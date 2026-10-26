@@ -94,3 +94,16 @@ place. A test would compare the two controls on one dataset with the bits held f
 - Generated per-dataset tables with these controls:
   [[experiments.database.bacteria-datasets-table]] and
   [[experiments.database.yeast-datasets-table]].
+
+## 2026.10.26 - Organism names in italic, PDF beside the SVG
+
+Organism names on the x axis are set in Arial italic through mathtext (`mathtext.fontset:
+custom`, `mathtext.it: Arial:italic`; the `italic()` helper escapes the space), so the thesis
+appendix can take the panel without retyping the labels. The script now also writes
+`organism_signal_controls.pdf` beside the PNG and SVG for direct `\includegraphics`. The
+bacterial LMDBs were rebuilt on 2026-10-16, after the 2026-10-14 probe, so the cache keys
+missed and all 100 bacterial datasets were re-probed; every total and ratio in the table
+above reproduced to the printed precision (yeast 69 / 93,266,786, E. coli 68 / 4,561,865,
+P. putida 32 / 2,695,603; structure only 0.176 / 0.317 / 0.192).
+
+![](./assets/images/database/organism_signal_controls.svg)

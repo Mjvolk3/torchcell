@@ -16,6 +16,13 @@
 # from gh_ontology_annotation_043.slurm):
 #   sbatch --export=ALL,STORE_043_VERSION=v2,PREP_VERSION=prep_v4,ONTOLOGY_VOCAB=$DATA_ROOT/data/torchcell/experiments/043-expression-proteome-morphology/ontology_043_v2/experiment_ontology_vocab.json \
 #     experiments/043-expression-proteome-morphology/scripts/gh_train_043_prepare.slurm
+#
+# ROUTE (default A) picks the isolate representation (torchcell/data/representation_043.py):
+# A = each isolate its own reference context; B = S288C plus the isolate's edit list
+# (variant / loss_of_function genes carry the isolate's keys, every non-reference gene is a
+# mark). The output directory is <PREP_VERSION>_route<ROUTE>. prep_v4 route B (2026-10-26):
+#   sbatch --export=ALL,STORE_043_VERSION=v2,PREP_VERSION=prep_v4,ROUTE=B,ONTOLOGY_VOCAB=$DATA_ROOT/data/torchcell/experiments/043-expression-proteome-morphology/ontology_043_v2/experiment_ontology_vocab.json \
+#     experiments/043-expression-proteome-morphology/scripts/gh_train_043_prepare.slurm
 #SBATCH -p main
 #SBATCH --mem=96g
 #SBATCH -N 1
@@ -38,6 +45,7 @@ echo "host $(hostname)  commit $(git rev-parse --short HEAD)  $(date)"
 PREP_ARGS=()
 if [ -n "${PREP_VERSION:-}" ]; then PREP_ARGS+=(--prep-version "$PREP_VERSION"); fi
 if [ -n "${ONTOLOGY_VOCAB:-}" ]; then PREP_ARGS+=(--ontology-vocab "$ONTOLOGY_VOCAB"); fi
-echo "store ${STORE_043_VERSION:-unset}  prep ${PREP_VERSION:-generation default}  vocab ${ONTOLOGY_VOCAB:-none}"
-python experiments/043-expression-proteome-morphology/scripts/train_043.py --stage prepare --route A --workers 30 "${PREP_ARGS[@]}"
+ROUTE="${ROUTE:-A}"
+echo "store ${STORE_043_VERSION:-unset}  prep ${PREP_VERSION:-generation default}  route ${ROUTE}  vocab ${ONTOLOGY_VOCAB:-none}"
+python experiments/043-expression-proteome-morphology/scripts/train_043.py --stage prepare --route "$ROUTE" --workers 30 "${PREP_ARGS[@]}"
 echo "done $(date)"

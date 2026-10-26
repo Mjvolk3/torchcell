@@ -1956,3 +1956,37 @@ Read (measured, 3 seeds, one checkpoint each):
 ![](./assets/images/043-expression-proteome-morphology/diagnostics_043_2026-10-26-02-47-50.svg)
 
 Not run: D2 on the inject-op checkpoints or other epochs, a shared linear probe of the post-operator tokens (the head's form refit), the attention weights over marks for D1, per-gene ridge on the frozen allele vectors (only the learned input projection was probed per gene), bootstrap intervals over records.
+
+## 2026.10.26 - Route B: isolates as S288C plus an edit list (prep_v4_routeB)
+
+### What route B means
+
+Route A (every run so far) makes each natural isolate its own reference context: every gene token carries the isolate's allele through the composite embedding, and the marks are only the isolate's accessory ORFs (`present`, off-graph) and the HO deletion. Route B (`torchcell/data/representation_043.py`, `RepresentationResolver.isolate`, never prepared before) gives every record one genotype form, reference plus edits, the way segregants are already encoded: context S288C for all records; an isolate's `variant` and `loss_of_function` genes carry the isolate's keys, its `absent` genes keep the S288C keys, and every non-reference gene is a mark (operator mask = change type != reference). Hypothesis (untested): the explicit per-gene marks carry the call information the ridge baseline uses (0.307 Caudal / 0.402 Muenzner protein vs head 0.166 / 0.192, section above) and close part of the isolate gap.
+
+No representation rebuild was needed: `representation_043_v2` holds route-independent context tables; the route is applied by the resolver at prepare time.
+
+### Build and checks
+
+`gh_train_043_prepare.slurm` now takes `ROUTE` (default A). Job 6474 (commit f902f0d63, `STORE_043_VERSION=v2 PREP_VERSION=prep_v4 ROUTE=B`, same ontology vocabulary as routeA, sha256 eb9d1f02...), 5 min 18 s, MaxRSS 109 GiB, wrote `$DATA_ROOT/data/torchcell/experiments/043-expression-proteome-morphology/train_043_prep/prep_v4_routeB` (1.1 GB; routeA 932 MB). `scripts/route_compare_043.py` (output `results/route_compare_043_v2.json`) checked against prep_v4_routeA (job 6324): every `rec_*` array and `Y` identical; route B holds 1 context (route A 784); every dataset without an isolate record (Kemmeren, Messner, Zelezniak, Boocock, N'Guessan, Vaishnav, Hu, Jackson, Nadal-Ribelles, Sameith DM) has byte-identical marks record by record and reads context S288C in both.
+
+| dataset | records, n | route A marks per record, median (min-max) | route B marks per record, median (min-max) | route B marks per record, mean by change type |
+|---|---|---|---|---|
+| Caudal 2024 | 755 | 78 (35-352) | 5,243 (182-6,080) | variant 4,774.2; loss_of_function 232.1; absent 132.8; present 84.3; deletion 0.1 |
+| Muenzner 2024 protein | 635 | 79 (35-352) | 5,216 (182-6,080) | variant 4,755.8; loss_of_function 228.3; absent 130.7; present 84.9; deletion 0.1 |
+| turnover | 44 | 79.5 (49-334) | 5,288 (4,604-5,887) | variant 4,800.8; loss_of_function 227.1; absent 134.9; present 93.8; deletion 0.1 |
+| Boocock / N'Guessan (segregants, unchanged) | 314 / 2,361 | 3,112 / 2,909 (max 3,844 / 4,416) | identical | variant only |
+
+The trainer's setup line on prep_v4_routeB: `marks per record: max 6080 (caudal); cap none: 0 of 73381 records truncated` (route A: max 4416, N'Guessan). Records per dataset are unchanged (train 56,805).
+
+### Smoke and the held cell
+
+CPU smoke `gh_train_043_sweep_smoke_cpu.slurm` (case smss, batch 16, 12 steps, ontology, prep_v4, every mark, chunk 1024) on route B, job 6476, COMPLETED: store loads, 12 steps, validation and checkpoint. Same settings on route A, job 6477, as the reference:
+
+| route | [projection], CPU s/step over 2 probe steps | epoch wall (12 steps + tiny eval), s |
+|---|---|---|
+| A (6477) | 98.95 | 684 |
+| B (6476) | 93.59 | 907 |
+
+These are CPU numbers on 2 probe steps; the GPU step time on route B is not measured. Route B runs the trunk once per batch (one context) but the operator attends over up to 6,080 marks per isolate record.
+
+Recipe-v2 cell, held for the slot manager: stage 1 `gs1024_w7_routeB` job 6478 (`--hold`, batch 16, 50 epochs, window 0.8, STOP_HOURS 11, `EXTRA_OVERRIDES=data.route=B`), its Kemmeren fine-tune `gs1024_w7_routeB_ft` job 6479 (afterany:6478). Not measured: GPU memory at batch 16 with 6,080-mark records, GPU step time, any validation result.

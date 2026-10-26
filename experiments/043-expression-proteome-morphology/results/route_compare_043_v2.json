@@ -1,0 +1,608 @@
+{
+ "prep": "prep_v4",
+ "store_version": "v2",
+ "routeA_meta": {
+  "slurm_job_id": "6324",
+  "commit": "245deea00"
+ },
+ "routeB_meta": {
+  "slurm_job_id": "6474",
+  "commit": "f902f0d63"
+ },
+ "contexts": {
+  "A": 784,
+  "B": 1
+ },
+ "records_identical": true,
+ "Y_identical": true,
+ "datasets": {
+  "kemmeren": {
+   "has_own_context_in_A": false,
+   "A": {
+    "records": 1343,
+    "marks_min": 1,
+    "marks_median": 1.0,
+    "marks_mean": 1.0,
+    "marks_max": 1,
+    "marks_total": 1343,
+    "on_graph_total": 1342,
+    "change_hist": {
+     "deletion": 1343
+    },
+    "change_per_record_mean": {
+     "deletion": 1.0
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "B": {
+    "records": 1343,
+    "marks_min": 1,
+    "marks_median": 1.0,
+    "marks_mean": 1.0,
+    "marks_max": 1,
+    "marks_total": 1343,
+    "on_graph_total": 1342,
+    "change_hist": {
+     "deletion": 1343
+    },
+    "change_per_record_mean": {
+     "deletion": 1.0
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "marks_identical": true
+  },
+  "messner": {
+   "has_own_context_in_A": false,
+   "A": {
+    "records": 4235,
+    "marks_min": 1,
+    "marks_median": 1.0,
+    "marks_mean": 1.0,
+    "marks_max": 1,
+    "marks_total": 4235,
+    "on_graph_total": 4167,
+    "change_hist": {
+     "deletion": 4235
+    },
+    "change_per_record_mean": {
+     "deletion": 1.0
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "B": {
+    "records": 4235,
+    "marks_min": 1,
+    "marks_median": 1.0,
+    "marks_mean": 1.0,
+    "marks_max": 1,
+    "marks_total": 4235,
+    "on_graph_total": 4167,
+    "change_hist": {
+     "deletion": 4235
+    },
+    "change_per_record_mean": {
+     "deletion": 1.0
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "marks_identical": true
+  },
+  "zelezniak": {
+   "has_own_context_in_A": false,
+   "A": {
+    "records": 88,
+    "marks_min": 1,
+    "marks_median": 1.0,
+    "marks_mean": 1.0,
+    "marks_max": 1,
+    "marks_total": 88,
+    "on_graph_total": 88,
+    "change_hist": {
+     "deletion": 88
+    },
+    "change_per_record_mean": {
+     "deletion": 1.0
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "B": {
+    "records": 88,
+    "marks_min": 1,
+    "marks_median": 1.0,
+    "marks_mean": 1.0,
+    "marks_max": 1,
+    "marks_total": 88,
+    "on_graph_total": 88,
+    "change_hist": {
+     "deletion": 88
+    },
+    "change_per_record_mean": {
+     "deletion": 1.0
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "marks_identical": true
+  },
+  "caudal": {
+   "has_own_context_in_A": true,
+   "A": {
+    "records": 755,
+    "marks_min": 35,
+    "marks_median": 78.0,
+    "marks_mean": 84.4,
+    "marks_max": 352,
+    "marks_total": 63740,
+    "on_graph_total": 60,
+    "change_hist": {
+     "deletion": 60,
+     "present": 63680
+    },
+    "change_per_record_mean": {
+     "deletion": 0.1,
+     "present": 84.3
+    },
+    "contexts": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "n_contexts": 755
+   },
+   "B": {
+    "records": 755,
+    "marks_min": 182,
+    "marks_median": 5243.0,
+    "marks_mean": 5223.5,
+    "marks_max": 6080,
+    "marks_total": 3943729,
+    "on_graph_total": 3880049,
+    "change_hist": {
+     "deletion": 60,
+     "variant": 3604530,
+     "loss_of_function": 175217,
+     "absent": 100242,
+     "present": 63680
+    },
+    "change_per_record_mean": {
+     "deletion": 0.1,
+     "variant": 4774.2,
+     "loss_of_function": 232.1,
+     "absent": 132.8,
+     "present": 84.3
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "marks_identical": false
+  },
+  "muenzner": {
+   "has_own_context_in_A": true,
+   "A": {
+    "records": 635,
+    "marks_min": 35,
+    "marks_median": 79.0,
+    "marks_mean": 85.0,
+    "marks_max": 352,
+    "marks_total": 53945,
+    "on_graph_total": 44,
+    "change_hist": {
+     "deletion": 44,
+     "present": 53901
+    },
+    "change_per_record_mean": {
+     "deletion": 0.1,
+     "present": 84.9
+    },
+    "contexts": [
+     1,
+     3,
+     5,
+     6,
+     7
+    ],
+    "n_contexts": 635
+   },
+   "B": {
+    "records": 635,
+    "marks_min": 182,
+    "marks_median": 5216.0,
+    "marks_mean": 5199.7,
+    "marks_max": 6080,
+    "marks_total": 3301801,
+    "on_graph_total": 3247900,
+    "change_hist": {
+     "deletion": 44,
+     "variant": 3019904,
+     "loss_of_function": 144960,
+     "absent": 82992,
+     "present": 53901
+    },
+    "change_per_record_mean": {
+     "deletion": 0.1,
+     "variant": 4755.8,
+     "loss_of_function": 228.3,
+     "absent": 130.7,
+     "present": 84.9
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "marks_identical": false
+  },
+  "turnover": {
+   "has_own_context_in_A": true,
+   "A": {
+    "records": 44,
+    "marks_min": 49,
+    "marks_median": 79.5,
+    "marks_mean": 93.8,
+    "marks_max": 334,
+    "marks_total": 4129,
+    "on_graph_total": 3,
+    "change_hist": {
+     "deletion": 3,
+     "present": 4126
+    },
+    "change_per_record_mean": {
+     "deletion": 0.1,
+     "present": 93.8
+    },
+    "contexts": [
+     25,
+     28,
+     52,
+     58,
+     96
+    ],
+    "n_contexts": 44
+   },
+   "B": {
+    "records": 44,
+    "marks_min": 4604,
+    "marks_median": 5288.0,
+    "marks_mean": 5256.6,
+    "marks_max": 5887,
+    "marks_total": 231290,
+    "on_graph_total": 227164,
+    "change_hist": {
+     "deletion": 3,
+     "variant": 211233,
+     "loss_of_function": 9992,
+     "absent": 5936,
+     "present": 4126
+    },
+    "change_per_record_mean": {
+     "deletion": 0.1,
+     "variant": 4800.8,
+     "loss_of_function": 227.1,
+     "absent": 134.9,
+     "present": 93.8
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "marks_identical": false
+  },
+  "boocock": {
+   "has_own_context_in_A": false,
+   "A": {
+    "records": 314,
+    "marks_min": 2061,
+    "marks_median": 3112.0,
+    "marks_mean": 3103.7,
+    "marks_max": 3844,
+    "marks_total": 974557,
+    "on_graph_total": 974557,
+    "change_hist": {
+     "variant": 974557
+    },
+    "change_per_record_mean": {
+     "variant": 3103.7
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "B": {
+    "records": 314,
+    "marks_min": 2061,
+    "marks_median": 3112.0,
+    "marks_mean": 3103.7,
+    "marks_max": 3844,
+    "marks_total": 974557,
+    "on_graph_total": 974557,
+    "change_hist": {
+     "variant": 974557
+    },
+    "change_per_record_mean": {
+     "variant": 3103.7
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "marks_identical": true
+  },
+  "nguessan": {
+   "has_own_context_in_A": false,
+   "A": {
+    "records": 2361,
+    "marks_min": 1095,
+    "marks_median": 2909.0,
+    "marks_mean": 2870.4,
+    "marks_max": 4416,
+    "marks_total": 6776959,
+    "on_graph_total": 6776959,
+    "change_hist": {
+     "variant": 6776959
+    },
+    "change_per_record_mean": {
+     "variant": 2870.4
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "B": {
+    "records": 2361,
+    "marks_min": 1095,
+    "marks_median": 2909.0,
+    "marks_mean": 2870.4,
+    "marks_max": 4416,
+    "marks_total": 6776959,
+    "on_graph_total": 6776959,
+    "change_hist": {
+     "variant": 6776959
+    },
+    "change_per_record_mean": {
+     "variant": 2870.4
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "marks_identical": true
+  },
+  "vaishnav": {
+   "has_own_context_in_A": false,
+   "A": {
+    "records": 56926,
+    "marks_min": 1,
+    "marks_median": 1.0,
+    "marks_mean": 1.0,
+    "marks_max": 1,
+    "marks_total": 56926,
+    "on_graph_total": 0,
+    "change_hist": {
+     "promoter": 56926
+    },
+    "change_per_record_mean": {
+     "promoter": 1.0
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "B": {
+    "records": 56926,
+    "marks_min": 1,
+    "marks_median": 1.0,
+    "marks_mean": 1.0,
+    "marks_max": 1,
+    "marks_total": 56926,
+    "on_graph_total": 0,
+    "change_hist": {
+     "promoter": 56926
+    },
+    "change_per_record_mean": {
+     "promoter": 1.0
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "marks_identical": true
+  },
+  "hu": {
+   "has_own_context_in_A": false,
+   "A": {
+    "records": 244,
+    "marks_min": 1,
+    "marks_median": 1.0,
+    "marks_mean": 1.0,
+    "marks_max": 1,
+    "marks_total": 244,
+    "on_graph_total": 243,
+    "change_hist": {
+     "deletion": 244
+    },
+    "change_per_record_mean": {
+     "deletion": 1.0
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "B": {
+    "records": 244,
+    "marks_min": 1,
+    "marks_median": 1.0,
+    "marks_mean": 1.0,
+    "marks_max": 1,
+    "marks_total": 244,
+    "on_graph_total": 243,
+    "change_hist": {
+     "deletion": 244
+    },
+    "change_per_record_mean": {
+     "deletion": 1.0
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "marks_identical": true
+  },
+  "jackson": {
+   "has_own_context_in_A": false,
+   "A": {
+    "records": 784,
+    "marks_min": 1,
+    "marks_median": 1.0,
+    "marks_mean": 1.0,
+    "marks_max": 1,
+    "marks_total": 784,
+    "on_graph_total": 784,
+    "change_hist": {
+     "deletion": 784
+    },
+    "change_per_record_mean": {
+     "deletion": 1.0
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "B": {
+    "records": 784,
+    "marks_min": 1,
+    "marks_median": 1.0,
+    "marks_mean": 1.0,
+    "marks_max": 1,
+    "marks_total": 784,
+    "on_graph_total": 784,
+    "change_hist": {
+     "deletion": 784
+    },
+    "change_per_record_mean": {
+     "deletion": 1.0
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "marks_identical": true
+  },
+  "nadal": {
+   "has_own_context_in_A": false,
+   "A": {
+    "records": 5580,
+    "marks_min": 1,
+    "marks_median": 1.0,
+    "marks_mean": 1.0,
+    "marks_max": 1,
+    "marks_total": 5580,
+    "on_graph_total": 5516,
+    "change_hist": {
+     "deletion": 5580
+    },
+    "change_per_record_mean": {
+     "deletion": 1.0
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "B": {
+    "records": 5580,
+    "marks_min": 1,
+    "marks_median": 1.0,
+    "marks_mean": 1.0,
+    "marks_max": 1,
+    "marks_total": 5580,
+    "on_graph_total": 5516,
+    "change_hist": {
+     "deletion": 5580
+    },
+    "change_per_record_mean": {
+     "deletion": 1.0
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "marks_identical": true
+  },
+  "sameith_dm": {
+   "has_own_context_in_A": false,
+   "A": {
+    "records": 72,
+    "marks_min": 2,
+    "marks_median": 2.0,
+    "marks_mean": 2.0,
+    "marks_max": 2,
+    "marks_total": 144,
+    "on_graph_total": 144,
+    "change_hist": {
+     "deletion": 144
+    },
+    "change_per_record_mean": {
+     "deletion": 2.0
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "B": {
+    "records": 72,
+    "marks_min": 2,
+    "marks_median": 2.0,
+    "marks_mean": 2.0,
+    "marks_max": 2,
+    "marks_total": 144,
+    "on_graph_total": 144,
+    "change_hist": {
+     "deletion": 144
+    },
+    "change_per_record_mean": {
+     "deletion": 2.0
+    },
+    "contexts": [
+     0
+    ],
+    "n_contexts": 1
+   },
+   "marks_identical": true
+  }
+ }
+}

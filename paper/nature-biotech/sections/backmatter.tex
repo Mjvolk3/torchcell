@@ -1026,61 +1026,78 @@ FitDb & $\sim$6,000 & 1,144 & smf & global & growth rate & in prog.\\
 perturbation-operator cell representation. Panels \textbf{a}--\textbf{d}.}{fig:overview}
 \end{figure}
 
+%% SOURCE: experiments/database/scripts/plot_ontology_dag.py, which reads the schema live through
+%% torchcell/paper/ontology_graph.py and writes notes/assets/images/database/ontology_dag.svg (179 mm,
+%% PANEL_WIDTHS_MM["full"]); converted to a TrueType PDF by notes-tex/common/svg_true_size_pdf.py.
+%% Counts in the caption are the script's printout on 2026-10-26: 250 classes, 159 inheritance and 364
+%% composition edges, 12 strata, closure of FitnessExperiment 109 classes, 8 classes unreachable from the
+%% root not drawn (2 mixins: ProvenanceGapMixin, HashableProvenanceGapMixin).
 \begin{figure*}[t]
-\tcfig{figures/ontology_pydantic_hourglass_data_model.pdf}{Ontology data model (hourglass). Each experiment
-funnels genotype, phenotype, environment, and experiment-specific metadata through a
-shared Data Merge Layer that distinguishes records from the same experiment; the layer
-can be ignored when merging into larger datasets.}{fig:data-model}
+\tcfig{figures/FigS-ontology-dag.pdf}{\textbf{The experiment ontology is a layered directed acyclic
+graph under one root.} Nodes are the 250 pydantic classes and controlled vocabularies of the schema,
+colored by lane; solid gray edges are inheritance (parent above child, 159 edges) and dashed gray
+edges are composition (a field of the upper class holds the lower one, 364 edges; a field naming
+every leaf of an abstract base holds the base). The root is the dataset node of the knowledge graph,
+with the experiment classes, their reference classes and the publication below it. Strata are
+topological generations, so each class sits one level below the deepest class that holds it and the
+vocabularies collect at the bottom of the 12 strata; within a stratum, classes group by lane and
+follow the mean position of their parents. Thick black borders and black edges mark the closure of
+\texttt{FitnessExperiment}, the 109 classes a fitness record can be written through (its fields,
+inherited ones included, each resolved to its nearest declaration, and the subtrees of the classes
+they hold). Eight classes that no field reaches from the root (two behavior mixins and six
+unreferenced classes and vocabularies) are not drawn.}{fig:ontology-dag}
 \end{figure*}
 
+%% SOURCE: notes/assets/drawio/FigS-queried-dataset.gen.py -> FigS-queried-dataset.drawio (176.7 x 90.4 mm),
+%% exported headless with draw.io. Class and keyword names are those of torchcell/data/neo4j_cell.py,
+%% torchcell/datamodels/fitness_composite_conversion.py, torchcell/data/mean_experiment_deduplicate.py,
+%% torchcell/data/genotype_aggregate.py and torchcell/data/graph_processor.py; the HeteroData print in
+%% panel c is the one in notes/torchcell.data.neo4j_cell.md, abridged. Panel b carries the three
+%% operators of the superseded normalization sketch (SCRATCH Figure 4).
 \begin{figure*}[t]
-\tcfig{figures/neo4j_cell-conversion-deduplication-aggregation.pdf}{Knowledge-graph normalization in three
-stages. Conversion maps phenotype experiment types (GeneEssentiality, SyntheticLethality)
-to a common Fitness type; deduplication collapses records equivalent other than their
-phenotype-label values; aggregation combines equivalent-genotype records with different
-phenotype labels (Fitness, GeneInteraction) into a single HeteroData instance.}{fig:conversion-dedup-agg}
+\tcfig{figures/FigS-queried-dataset.pdf}{\textbf{A query returns typed records, and three operators
+collapse them to one instance per genotype.} \textbf{a},~The Cypher (Neo4j query language) query that
+selects the experiments of one dataset (dataset, genotype and perturbation, environment with medium
+and temperature, phenotype, experiment reference), and the \texttt{Neo4jCellDataset} call with its
+keyword arguments as they exist in the code: the gene set, the gene multigraph, the node embeddings,
+and the converter, deduplicator, aggregator and graph-processor classes. \textbf{b},~The three
+operators: a non-fitness label is converted to fitness (\texttt{CompositeFitnessConverter}), records
+with the same genotype and label are averaged (\texttt{MeanExperimentDeduplicator}), and different
+labels of one genotype are joined into one instance (\texttt{GenotypeAggregator}); label values are
+symbols. \textbf{c},~The instance the model receives, with gene nodes (the two perturbed genes
+masked), physical and regulatory gene edges, metabolite--reaction hyperedges and the label vector,
+above the printed \texttt{HeteroData} abridged to the fields drawn (the gene--reaction hyperedges and
+the per-edge masks are omitted). Composed from the code, not from a published
+figure.}{fig:queried-dataset}
 \end{figure*}
 
-%% Hand-composed schematic (notes/assets/drawio/FigS-dataset-admission-loop.drawio) of the
-%% dataset-admission code path: torchcell/provenance/schema_impact.py (schema-impact gate),
-%% torchcell/knowledge_graphs/kg_manifest.py (manifest admission) and
-%% torchcell/knowledge_graphs/incremental_import.py with
-%% database/slurm/scripts/gilahyper_increment_kg-slurm_docker.slurm (the increment runner), as run
-%% for the Nadal-Ribelles 2025 admission (GilaHyper job 1722, 2026-09-11). Panel c is a plan, not
-%% a result; see notes/torchcell.knowledge_graphs.dataset-admission-loop.md.
+%% SOURCE: notes/assets/drawio/FigS-ontology-growth.drawio, hand-maintained (FigS-ontology-growth.gen.py
+%% made the first draft and now refuses to overwrite it), exported headless with draw.io at 178.5 x
+%% 143.9 mm, so the whole six-panel figure fits the 179 x 170 mm box and is placed as one figure.
+%% FigS-ontology-growth.split.gen.py cuts it into the three row figures the thesis uses.
 \begin{figure*}[t]
-\tcfig{figures/FigS-dataset-admission-loop.pdf}{\textbf{Adding a dataset without rebuilding the
-others, and growing the ontology under the same gates.} \textbf{a},~The admission path for one
-dataset. A Zotero item names the paper; the literature mirror holds the paper, its supplements
-and data with a manifest that pins every file by sha256 and records how it was retrieved; a
-typed loader and its pydantic schema turn the released tables into genotype~$\times$
-environment~$\rightarrow$ phenotype records with every sourced value quoted; the dev LMDB build
-is verified at levels L0 to L4 (structural, completeness, numeric, units, cross-source); the
-BioCypher adapter and graph schema map the records to nodes and edges; the schema-impact gate
-diffs the pydantic schema surface against \texttt{main}; and the manifest admission gate
-decides whether the served graph can take an increment. \textbf{b},~What the gates decide. Each
-loader's dependency closure is the forward closure over the schema surface of the classes it
-imports, so a changed class reaches every loader whose closure contains it (loaders 1 and 2
-rebuild; 3 and 4 are untouched) while a new class or adapter method reaches only the new loader.
-The store manifest records, per served dataset, its closure fingerprints, the graph node classes
-and the adapter methods it was serialized under; an increment is admissible only when all three
-are unchanged for every served dataset, in which case the dev LMDB is staged, that dataset's CSVs
-are emitted, a uniqueness constraint on the shared node id is created, edges the store already
-holds are dropped, and \texttt{neo4j-admin database import incremental} runs against the stopped
-store before verification, manifest recording and archiving. Incremental import matches existing
-node ids and can neither update nor delete them, so any change to a served class is blocked and
-takes the full path: the impacted dev LMDBs are rebuilt and re-verified, every dataset's CSVs are
-emitted, a new store is imported in full and the manifest is bootstrapped from it.
-\textbf{c},~The planned agent loop (dashed borders are not built). An \texttt{add\_dataset} job
-starts from a citation key; retrieval uses the mirror, else the recorded method or a web search,
-and keeps a copy so a rebuild never depends on the source; the closure neighbors of b and their
-papers form the context; N proposing agents draft the loader, the schema delta and the adapter;
-M critics score every proposal and the accepted union becomes the plan; one implementer applies
-it in one worktree and one pull request, and a failed check (unit tests, type and lint checks,
-L0 to L4, schema impact) returns to Propose with the failure. Token usage of every agent run is
-priced into a cost ledger. Several jobs run in parallel; the served store takes one increment at
-a time, and each increment passes the gates of a. Composed from the code, not from a published
-figure.}{fig:dataset-admission-loop}
+\tcfig{figures/FigS-ontology-growth.pdf}{\textbf{The ontology and its datasets grow together.}
+\textbf{a},~One turn of the loop per dataset: a dataset is added and needs classes, the ontology grows
+by a new leaf or by a change to a class it already has, and the database is amended by an
+incremental import or rebuilt, then queried; the dashed shortcut is a dataset that needs no new
+class, and a changed class rebuilds every dataset whose closure (\suppfig{fig:ontology-dag}) holds it.
+\textbf{b},~A paper becomes typed records: each funnel is one record, two from a colony-size dataset
+D1 (orange) and two from a liquid-growth dataset D2 (purple), with the paper entering at the wide top
+with every detail it reports, the record (one \texttt{Experiment} object) at the neck, and below it
+the ontology's first layer and the leaf classes the record instantiates, where the detail returns in
+shared classes. \textbf{c},~One record: \texttt{FitnessExperiment} holds a genotype, an environment
+and a phenotype, each a chain of classes down to its leaves (a deletion, a solid medium, a fitness
+value with its error), and thick borders mark the record's closure. \textbf{d},~D2 (purple) arrives,
+then D3 (yellow): a vocabulary member that already exists (\texttt{Media.state = liquid}) leaves the
+ontology as it is and D2 enters by incremental import (row 1); a new leaf
+(\texttt{AssayType.liquid\_od\_growth}) grows the ontology, but only D2's closure holds it, so D1 is
+untouched (row 2); and a change to a shared class (a new required field on \texttt{Media}) rebuilds D1
+and D2 in full (black ring) as D3 is added (row 3). \textbf{e},~The ontology as a tree, one state per
+admitted dataset, tied to the rows of d. \textbf{f},~Three experiments with one label, three
+genotypes and three media (YPD, YPAD and synthetic complete, SC), recorded as released, are joined
+at query time: a query naming the medium returns $e_1$ alone, one naming the base medium joins $e_1$
+and $e_2$, and one with no media clause joins all three, aggregated as in
+\suppfig{fig:queried-dataset}b. Schematic, composed from the code.}{fig:ontology-growth}
 \end{figure*}
 
 \begin{figure*}[t]

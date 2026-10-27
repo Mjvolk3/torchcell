@@ -19,6 +19,16 @@
 %%   figures/scratch-Fig6-metabolism-and-metabolic-engineering-mockup.pdf
 %%     <- notes/assets/drawio/scratch-Fig6-metabolism-and-metabolic-engineering-mockup.drawio.svg
 %%        (renamed from Fig6-metabolism-and-metabolic-engineering.drawio.svg)
+%% On 2026-10-26 three supplementary sketches joined them (SCRATCH Figures 3 to 5), replaced in
+%% sections/backmatter.tex by figures generated from torchcell sources (the ontology DAG, the query
+%% figure and the ontology-growth figure). Sources renamed with a scratch- prefix so the Makefile's
+%% DRAWIO_FIGS rule re-exports only these copies:
+%%   figures/scratch-ontology_pydantic_hourglass_data_model.pdf
+%%     <- notes/assets/drawio/scratch-ontology_pydantic_hourglass_data_model.drawio.png
+%%   figures/scratch-neo4j_cell-conversion-deduplication-aggregation.pdf
+%%     <- notes/assets/drawio/scratch-neo4j_cell-conversion-deduplication-aggregation.drawio.png
+%%   figures/scratch-FigS-dataset-admission-loop.pdf
+%%     <- notes/assets/drawio/scratch-FigS-dataset-admission-loop.drawio
 \clearpage
 \setcounter{figure}{0}
 \renewcommand{\thefigure}{\arabic{figure}}
@@ -36,7 +46,10 @@ the NSF iBioFoundry, accuracy as a function of $|\tau|$, data and model scaling,
 graph-regularization ablation (Fig.~2 plan), and a six-panel metabolism and
 metabolic-engineering layout (Fig.~6 plan). Captions are reproduced as they stood. The
 flux-balance number in the Fig.~2 sketch caption (0.0006) predates the current sheet, which
-prints 0.0019.
+prints 0.0019. SCRATCH Figures 3 to 5 are former Supplementary Figures (the hourglass data model,
+the three-stage knowledge-graph normalization and the dataset-admission loop), replaced on
+2026-10-26 by figures generated from the code; they keep the hourglass framing, the normalization
+example and the admission gates with the planned agent loop.
 \clearpage % keep the [t] floats below this banner, not above it
 
 %% --- Former Fig 2 mock-up, as it stood on main before the 2026-10-24 swap ---
@@ -69,5 +82,73 @@ DCell ($0.157$), DANGO ($0.367$), and TorchCell ($0.454$).}{fig:scratch-ggi-mock
 \tcfig{figures/scratch-Fig6-metabolism-and-metabolic-engineering-mockup.pdf}{SCRATCH,
 superseded mock-up of Fig.~6. Extending TorchCell to metabolism
 and metabolic-engineering strain design. \textbf{a}--\textbf{f}.}{fig:scratch-metabolism-mockup}
+\end{figure*}
+\FloatBarrier
+
+%% --- Former Supplementary Figure (ontology data model, hourglass), as it stood on main before the 2026-10-26 swap ---
+\begin{figure*}[t]
+\tcfig{figures/scratch-ontology_pydantic_hourglass_data_model.pdf}{SCRATCH, superseded Supplementary Figure, replaced on 2026-10-26 by the layered
+directed acyclic graph of the ontology (\suppfig{fig:ontology-dag}). Ontology data model (hourglass). Each experiment
+funnels genotype, phenotype, environment, and experiment-specific metadata through a
+shared Data Merge Layer that distinguishes records from the same experiment; the layer
+can be ignored when merging into larger datasets.}{fig:scratch-data-model}
+\end{figure*}
+\FloatBarrier
+
+%% --- Former Supplementary Figure (knowledge-graph normalization), as it stood on main before the 2026-10-26 swap ---
+\begin{figure*}[t]
+\tcfig{figures/scratch-neo4j_cell-conversion-deduplication-aggregation.pdf}{SCRATCH, superseded Supplementary Figure, replaced on 2026-10-26 by the query figure, whose
+panel b draws the same three operators (\suppfig{fig:queried-dataset}). Knowledge-graph normalization in three
+stages. Conversion maps phenotype experiment types (GeneEssentiality, SyntheticLethality)
+to a common Fitness type; deduplication collapses records equivalent other than their
+phenotype-label values; aggregation combines equivalent-genotype records with different
+phenotype labels (Fitness, GeneInteraction) into a single HeteroData instance.}{fig:scratch-conversion-dedup-agg}
+\end{figure*}
+\FloatBarrier
+
+%% --- Former Supplementary Figure (dataset-admission loop), as it stood on main before the 2026-10-26 swap ---
+%% Hand-composed schematic (notes/assets/drawio/scratch-FigS-dataset-admission-loop.drawio,
+%% renamed from FigS-dataset-admission-loop.drawio on 2026-10-26) of the
+%% dataset-admission code path: torchcell/provenance/schema_impact.py (schema-impact gate),
+%% torchcell/knowledge_graphs/kg_manifest.py (manifest admission) and
+%% torchcell/knowledge_graphs/incremental_import.py with
+%% database/slurm/scripts/gilahyper_increment_kg-slurm_docker.slurm (the increment runner), as run
+%% for the Nadal-Ribelles 2025 admission (GilaHyper job 1722, 2026-09-11). Panel c is a plan, not
+%% a result; see notes/torchcell.knowledge_graphs.dataset-admission-loop.md.
+\begin{figure*}[t]
+\tcfig{figures/scratch-FigS-dataset-admission-loop.pdf}{SCRATCH, superseded Supplementary Figure, replaced on 2026-10-26 by the six-panel ontology-growth
+figure (\suppfig{fig:ontology-growth}); its admission path, gates and planned agent loop are kept here.
+\textbf{Adding a dataset without rebuilding the
+others, and growing the ontology under the same gates.} \textbf{a},~The admission path for one
+dataset. A Zotero item names the paper; the literature mirror holds the paper, its supplements
+and data with a manifest that pins every file by sha256 and records how it was retrieved; a
+typed loader and its pydantic schema turn the released tables into genotype~$\times$
+environment~$\rightarrow$ phenotype records with every sourced value quoted; the dev LMDB build
+is verified at levels L0 to L4 (structural, completeness, numeric, units, cross-source); the
+BioCypher adapter and graph schema map the records to nodes and edges; the schema-impact gate
+diffs the pydantic schema surface against \texttt{main}; and the manifest admission gate
+decides whether the served graph can take an increment. \textbf{b},~What the gates decide. Each
+loader's dependency closure is the forward closure over the schema surface of the classes it
+imports, so a changed class reaches every loader whose closure contains it (loaders 1 and 2
+rebuild; 3 and 4 are untouched) while a new class or adapter method reaches only the new loader.
+The store manifest records, per served dataset, its closure fingerprints, the graph node classes
+and the adapter methods it was serialized under; an increment is admissible only when all three
+are unchanged for every served dataset, in which case the dev LMDB is staged, that dataset's CSVs
+are emitted, a uniqueness constraint on the shared node id is created, edges the store already
+holds are dropped, and \texttt{neo4j-admin database import incremental} runs against the stopped
+store before verification, manifest recording and archiving. Incremental import matches existing
+node ids and can neither update nor delete them, so any change to a served class is blocked and
+takes the full path: the impacted dev LMDBs are rebuilt and re-verified, every dataset's CSVs are
+emitted, a new store is imported in full and the manifest is bootstrapped from it.
+\textbf{c},~The planned agent loop (dashed borders are not built). An \texttt{add\_dataset} job
+starts from a citation key; retrieval uses the mirror, else the recorded method or a web search,
+and keeps a copy so a rebuild never depends on the source; the closure neighbors of b and their
+papers form the context; N proposing agents draft the loader, the schema delta and the adapter;
+M critics score every proposal and the accepted union becomes the plan; one implementer applies
+it in one worktree and one pull request, and a failed check (unit tests, type and lint checks,
+L0 to L4, schema impact) returns to Propose with the failure. Token usage of every agent run is
+priced into a cost ledger. Several jobs run in parallel; the served store takes one increment at
+a time, and each increment passes the gates of a. Composed from the code, not from a published
+figure.}{fig:scratch-dataset-admission-loop}
 \end{figure*}
 \FloatBarrier

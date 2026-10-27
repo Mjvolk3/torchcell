@@ -10,7 +10,7 @@ created: 1789158282395
 
 Supplementary figure `FigS-dataset-admission-loop` (source `notes/assets/drawio/FigS-dataset-admission-loop.drawio`, placed in `paper/nature-biotech/sections/backmatter.tex` after the knowledge-graph normalization figure) shows three things: the admission path one dataset takes today, what the two gates decide, and the agent loop that is planned but not built. Panels a and b are drawn from the code as it ran for the Nadal-Ribelles 2025 admission ([[torchcell.knowledge_graphs.incremental-admission]], GilaHyper job 1722). Panel c is a plan.
 
-![](./assets/drawio/FigS-dataset-admission-loop.vector.svg)
+![](./assets/drawio/scratch-FigS-dataset-admission-loop.vector.svg)
 
 ### What runs today (panels a and b) and where it lives
 
@@ -210,3 +210,7 @@ And on the notes this asks for:
 | `YeastPhenomeDataset` (loader, not in the adapter map) | YeastPhenome yp-data | curated rescaling of published screens |
 
 **Considered and not flagged.** Wetmore 2015, Mutalik 2020, Guzman 2018 and Borchert 2023 are loaded from their own releases (the compendium is their L4 check). Butland 2008 is its own unfiltered release. Shiver 2016 stores only its own 57 conditions, not the 235 re-analyzed Nichols 2011 rows. Thompson 2019 stores titers and growth rates from its own paper and no compendium sample. O'Duibhir 2014 stores its own Dataset S2, not the Kemmeren compendium. `GeneEssentialityPrice2018EcoliDataset` is Price 2018's own first analysis of the insertion maps. Wildenhain 2015 reads the authors' own PubChem deposit (AID 1159580, the 2016 extension by the same group), which releases per-screen values. Loegler 2025 carries an aggregation verdict but no served loader.
+
+## 2026.10.26 - Moved to the manuscript SCRATCH section
+
+The manuscript replaced this supplementary figure with the six-panel ontology-growth figure (`notes/assets/drawio/FigS-ontology-growth.drawio`). The sketch is kept as a SCRATCH figure in `paper/nature-biotech/sections/scratch-figure-mockups.tex`, and its sources were renamed with a `scratch-` prefix: `notes/assets/drawio/scratch-FigS-dataset-admission-loop.drawio` (plus `.drawio.pdf` and `.vector.svg`) and `paper/nature-biotech/figures/scratch-FigS-dataset-admission-loop.pdf`.

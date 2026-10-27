@@ -105,7 +105,7 @@ edges, while a \emph{cross-experiment} query returns all instances sharing a str
 entity (e.g.\ a common environment), joining studies through shared schema entities
 (Fig.~\ref{fig:torchcell}a). This homogenizes modular literature and public data into
 queryable datasets, addressing the data-fragmentation barrier to deep learning in
-metabolic engineering (Supplementary Figs.~\ref{fig:data-model}, \ref{fig:conversion-dedup-agg}).
+metabolic engineering (Supplementary Figs.~\ref{fig:ontology-dag}, \ref{fig:queried-dataset}).
 
 \subsection*{Datasets: a reference acted on by a perturbation}
 Each experiment is a tuple $(G,\varepsilon,p,y)$ (Fig.~\ref{fig:torchcell}b). The minimal
@@ -125,7 +125,7 @@ traits or metabolite concentrations, and the formulation is agnostic to its tens
 explainable join/aggregation step merges instances across compatible conditions (e.g.\
 across environments, or recasting lethality to fitness), enlarging datasets and shrinking
 the decoder's output domain $\mathcal{Y}$ to fewer symbol types
-(\suppfig{fig:conversion-dedup-agg}).
+(\suppfig{fig:queried-dataset}b).
 
 \subsection*{Encoded entities}
 The cell's molecular parts -- DNA, RNA, protein, and small molecules such as metabolites and

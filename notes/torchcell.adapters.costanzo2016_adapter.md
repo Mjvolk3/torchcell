@@ -71,7 +71,7 @@ I think think the `@staticmethod` is justified when the data has some guarantee 
 
 Everything below the red line classes should used Liskov substitution.
 
- ![](./assets/drawio/ontology_pydantic_hourglass_data_model.drawio.png)
+ ![](./assets/drawio/scratch-ontology_pydantic_hourglass_data_model.drawio.png)
 
 ```python
 @staticmethod

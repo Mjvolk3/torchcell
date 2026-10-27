@@ -13,7 +13,7 @@ created: 1705045346511
 - I had some ideas on pulling `strain_id` information via another method, but I avoid this and just added the data to more refined pydantic models.
   - We want these more refined pydantic models because they allow us to take advantage of the authors preprocessing of their own data. Authors like to use some conventions, and this is evident in the follow up `Kuzmin` work. It is best to add these specific details to the data so they can be used for processing, but they need to easily removed so the more general data can be more easily merged.
 
-![](./assets/drawio/ontology_pydantic_hourglass_data_model.drawio.png)
+![](./assets/drawio/scratch-ontology_pydantic_hourglass_data_model.drawio.png)
 
 ## Issues with the Current Data Scheme that Uses Different Named Phenotypes
 

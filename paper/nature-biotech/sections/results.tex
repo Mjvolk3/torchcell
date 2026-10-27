@@ -7,8 +7,8 @@ data under a single schema and exposing it as deep-learning-ready datasets. Each
 experimental record is typed by an experiment ontology grounded in the Biolink Model and
 validated at ingestion -- for acyclicity, subtype substitutability, Biolink conformance,
 and referential integrity -- so that records from unrelated studies share one
-machine-checkable structure (Fig.~\ref{fig:torchcell}a; ontology data model in
-\suppfig{fig:data-model}). Validated records are emitted as typed
+machine-checkable structure (Fig.~\ref{fig:torchcell}a; the ontology as a layered graph in
+\suppfig{fig:ontology-dag}, and its growth one dataset at a time in \suppfig{fig:ontology-growth}). Validated records are emitted as typed
 subgraphs into a Neo4j knowledge graph hosted at NCSA, and datasets are recovered as
 queries over this shared structure: a data-specific query returns one instance with its
 typed neighborhood, while a cross-experiment query joins studies through shared entities
@@ -28,7 +28,7 @@ ${\sim}10^{4\text{--}6}$ deletion strains, each represented as a perturbation ov
 reference rather than as an independently rebuilt graph. A mechanistic join-and-aggregation
 step then merges compatible records -- recasting lethality to fitness, or pooling
 equivalent genotypes measured under different assays -- enlarging datasets while shrinking
-the label vocabulary the model must decode (\suppfig{fig:conversion-dedup-agg}).
+the label vocabulary the model must decode (\suppfig{fig:queried-dataset}b).
 
 This organization exposes a favorable information budget (Fig.~\ref{fig:torchcell}c). The
 cell's molecular parts -- DNA, RNA, protein, and small molecules -- are \emph{persistent

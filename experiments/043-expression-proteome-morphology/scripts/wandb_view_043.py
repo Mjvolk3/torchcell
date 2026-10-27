@@ -411,6 +411,18 @@ ROUNDS: dict[str, Round] = {
             f"gs1024_w7_routeB{k}{ft}"
             for k in ("", "_s1", "_lrhalf")
             for ft in ("", "_ft")
+        )
+        # wave 8 (2026-10-27): the three operator-injection seeds resumed from epoch 50 to
+        # 80 (same run ids, jobs 6508/6510/6512; constant lr, so epochs 1-50 are unchanged)
+        # with fine-tunes from the epoch-80 last.pt (6509/6511/6513); route B at batch 8
+        # (6514/6515), the test of the marks-per-step hypothesis after three batch-16
+        # route B cells collapsed
+        + tuple(f"gs1024_w5_onto_inject_op{k}_e80_ft" for k in ("", "_s1", "_s2"))
+        + ("gs1024_w8_routeB_bs8", "gs1024_w8_routeB_bs8_ft")
+        # pinball on GilaHyper after the Aurora grid (doubles +0.03-0.04 over HL-Gauss at
+        # 8 of 8 seeds there): plain 6516/6517 and with the operator injection 6518/6519
+        + tuple(
+            f"gs1024_w8_pinball{k}{ft}" for k in ("", "_injop") for ft in ("", "_ft")
         ),
         hardware=(
             "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, four chained slots "
@@ -437,7 +449,14 @@ ROUNDS: dict[str, Round] = {
         # 17-20); the overnight fine-tunes used 0.75 (16-20), so they are read over 16-20
         finetune_window=(16, 20),
         # bs16 seed 1 is resumed to 80 epochs (job 6436); its 41-50 read stays recorded
-        extra_windows=(("gs1024_w4_bs16", (41, 50)), ("gs1024_w4_bs16_s1", (41, 50))),
+        # the operator-injection seeds are resumed to 80 epochs the same way (wave 8)
+        extra_windows=(
+            ("gs1024_w4_bs16", (41, 50)),
+            ("gs1024_w4_bs16_s1", (41, 50)),
+            ("gs1024_w5_onto_inject_op", (41, 50)),
+            ("gs1024_w5_onto_inject_op_s1", (41, 50)),
+            ("gs1024_w5_onto_inject_op_s2", (41, 50)),
+        ),
         stopped=(
             (
                 "gs1024_w4_bal_p1",
@@ -516,6 +535,27 @@ ROUNDS: dict[str, Round] = {
             (
                 "gs1024_w7_routeB_ft",
                 "initialized from the collapsed gs1024_w7_routeB last.pt (epoch 50)",
+            ),
+            (
+                "gs1024_w7_routeB_s1",
+                "the same lock at seed 1: operator/relative_norm 0.36 (ep 9) -> 97.7 (ep "
+                "20) -> 156.7 (ep 35) -> 1404.9 (ep 50); val/doubles exactly -0.0883 from "
+                "epoch 20, val/loss_best 2.5111 never improved after the lock; ran to "
+                "epoch 50 (job 6500); its fine-tune 6501 initialized from the collapsed "
+                "last.pt",
+            ),
+            (
+                "gs1024_w7_routeB_s1_ft",
+                "initialized from the collapsed gs1024_w7_routeB_s1 last.pt (epoch 50)",
+            ),
+            (
+                "gs1024_w7_routeB_lrhalf",
+                "lr 1.5e-4 delays the lock, does not prevent it: val/doubles peaks 0.0765 "
+                "(ep 12, route A bs16 is ~0.20 there), train/loss minimum 2.3609 (ep 12) "
+                "then rising; operator/relative_norm 0.30-0.40 through epoch 17 -> 0.74 "
+                "(ep 18) -> 1.00 (ep 23) -> 1.64 (ep 32) -> 6.98 (ep 33) -> 12.51 (ep 35); "
+                "val/doubles -0.071..-0.098 from epoch 18; val/loss_best 2.5324 at epoch 11; "
+                "cancelled at epoch 35 (job 6504, 3:17:43), fine-tune 6505 cancelled unrun",
             ),
         ),
     ),

@@ -2038,3 +2038,41 @@ Read: zero-shot Hu (0.034, 0.016) sits below the trained-in bs16 seeds (0.069-0.
 `gs1024_r2_smmss_s1`: Kemmeren 0.0968, doubles 0.2028, Muenzner 0.2029, Caudal 0.1612, Messner 0.0556, Vaishnav 0.9104, val/loss 2.4802; every column inside the bs16 spread. Fine-tune 0.1200 / 0.2321. The trunk layer pattern stays a null at two seeds.
 
 Not finished: `gs1024_w2_mmmm_cos` was cancelled at epoch 52/80 (job 6400, 17:27 CDT Oct 26) to free a card; val/loss_best 2.4688 at epoch 35, 2.4825 at epoch 52; last.pt at epoch 52 can be resumed. Its fine-tune 6375 was cancelled unrun.
+
+## 2026.10.27 - Aurora recipe-v2 grid (conditioning x loss x seed), route B at half the lr, wave 8
+
+### Aurora grid: 24 cells and 24 fine-tunes, no faults (PBS 8966432 ontology, 8966433 name)
+
+Recipe v2 on Aurora: plain batch 16 (`accumulate_steps` 1), attention query chunk 512, 50 epochs at 2,227-2,238 s per epoch (37 min), peak 10.6-11.0 GB per tile, one cell per tile and 12 tiles per job; stage 1 ran 06:22Z Oct 26 to 12:30-13:00Z Oct 27 and every cell then ran its Kemmeren fine-tune on the same tile (20 epochs at 174-193 s, peak 1.18 GB, batch 8 as micro-batch 2 x accumulate 4). 0 faults in 32 h, against 11 of 21 cells lost in the 2026-10-24 round. Window means over epochs 41-50 (stage 1) and 17-20 (fine-tune) from `wandb_view_043.py --round aurora_v2_2026_10_26 --window-means` (`results/aurora_v2_2026_10_26_window_means.json`). Mean (sd) over seeds 0-3; the GilaHyper reference is the three-seed bs16 recipe-v2 baseline over the same window.
+
+| arm | Kemmeren r (41-50) | doubles r (41-50) | Muenzner r (41-50) | Caudal r (41-50) | Messner r (41-50) | Vaishnav r (41-50) | ft Kemmeren r (17-20) | ft doubles r (17-20) |
+|---|---|---|---|---|---|---|---|---|
+| onto hlgauss | 0.1012 (0.015) | 0.1960 (0.010) | 0.2190 (0.004) | 0.1595 (0.009) | 0.0699 (0.008) | 0.9111 (0.007) | 0.1268 (0.011) | 0.2196 (0.005) |
+| name hlgauss | 0.0871 (0.011) | 0.1892 (0.008) | 0.2164 (0.010) | 0.1533 (0.009) | 0.0724 (0.009) | 0.9113 (0.007) | 0.1122 (0.004) | 0.2345 (0.013) |
+| onto pinball | 0.0988 (0.011) | **0.2246** (0.015) | 0.2289 (0.014) | **0.1679** (0.008) | 0.0716 (0.012) | 0.9032 (0.005) | **0.1296** (0.014) | **0.2639** (0.016) |
+| name pinball | 0.0925 (0.013) | **0.2285** (0.013) | **0.2339** (0.007) | 0.1573 (0.009) | **0.0782** (0.007) | 0.9042 (0.008) | 0.1239 (0.016) | 0.2447 (0.015) |
+| onto mse | 0.0806 (0.011) | 0.2116 (0.007) | 0.1859 (0.006) | 0.1218 (0.006) | 0.0654 (0.003) | 0.8974 (0.006) | 0.1088 (0.019) | 0.2518 (0.016) |
+| name mse | 0.0857 (0.014) | 0.2104 (0.011) | 0.1552 (0.011) | 0.1208 (0.017) | 0.0695 (0.009) | 0.8970 (0.007) | 0.1160 (0.022) | 0.2421 (0.014) |
+| GilaHyper bs16, 3 seeds | 0.0967 (0.006) | 0.1989 (0.012) | 0.1992 (0.003) | 0.1605 (0.003) | 0.0634 (0.016) | 0.9104 (0.008) | 0.1147 / 0.1340 | 0.2440 / 0.2000 |
+
+Cross-machine check: Aurora onto hlgauss is the same recipe as GilaHyper bs16 (ontology, HL-Gauss, batch 16, prep_v4). Doubles, Kemmeren, Caudal, Messner and Vaishnav agree inside the seed spreads. Muenzner does not: 0.2190 (sd 0.004, four seeds 0.2166-0.2248) on Aurora against 0.1992 (sd 0.003) on GilaHyper, +0.020, the same size as the operator-injection Muenzner gain measured on GilaHyper (+0.016). The cause (XPU bf16 kernels, attention chunking, data order) is not measured; a Muenzner difference below 0.02 must be read within one machine.
+
+Conditioning, ontology minus name at the same loss and seed (12 stage-1 pairs, 12 fine-tune pairs): doubles +0.0067 / -0.0039 / +0.0012 (hlgauss / pinball / mse; 7 of 12 pairs positive), Kemmeren +0.0141 / +0.0063 / -0.0050 (7 of 12 positive), Muenzner +0.0026 / -0.0050 / +0.0307. Two contrasts hold their sign at all four seeds: Muenzner under mse (+0.0165, +0.0253, +0.0548, +0.0261) and fine-tuned Kemmeren under HL-Gauss (+0.0012, +0.0138, +0.0205, +0.0230; mean +0.0146); the other sixteen are mixed. Read: at this grid's resolution the conditioning source is a null on the stage-1 gene-level heads; ontology conditioning stays (the owner's rule) and costs nothing.
+
+Loss family, pinball minus HL-Gauss at the same conditioning and seed: doubles +0.0286 under ontology (+0.0172 to +0.0397) and +0.0393 under name (+0.0311 to +0.0483), 8 of 8 pairs positive, and every pinball seed (0.2091-0.2435) above every HL-Gauss seed (0.1771-0.2038); fine-tuned doubles +0.0443 under ontology (4 of 4: +0.0207 to +0.0609) and +0.0103 under name (2 of 4). Muenzner +0.0099 / +0.0175 (6 of 8 positive); Caudal +0.0084 / +0.0040; Kemmeren -0.0023 / +0.0054 and fine-tuned Kemmeren +0.0028 / +0.0117 (mixed); Vaishnav -0.0078 / -0.0071 (8 of 8 negative, each beyond its seed sd of 0.005-0.008). MSE: doubles 0.211 (between the two), Muenzner 0.155-0.186 (-0.03 to -0.06), Caudal -0.035, Vaishnav -0.014, the weakest of the three on every per-gene head. Read: pinball is the best loss for the doubles head on this grid at a cost of 0.008 on Vaishnav, the second measured lever on doubles after the operator injection (+0.036 on GilaHyper, three seeds). The two have not been combined; see wave 8 below.
+
+Bookkeeping: the val/loss window mean is nan in three cells because one or two window epochs logged a nan pooled validation loss (name mse s2 at epoch 41; onto mse s2 at 44 and 45; onto pinball s3 at 45) while every per-dataset metric at those epochs is finite; which dataset's loss carried the nan is not in the stdout line and was not investigated.
+
+W&B round view (every run, grouped by arm; the six arm views are listed in `results/wandb_view_ids.json` under `aurora_v2_2026_10_26/<arm>`):
+
+<https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=w1o8c8hhyuu>
+
+### Route B at lr 1.5e-4 collapsed too (job 6504, cancelled at epoch 35)
+
+`gs1024_w7_routeB_lrhalf`: operator/relative_norm 0.30-0.40 through epoch 17, then 0.74 (18), 1.00 (23), 1.64 (32), 6.98 (33), 12.51 (35); val/doubles reached 0.0765 at epoch 12 (route A bs16 reads 0.19-0.21 over its window) and sat at -0.071 to -0.098 from epoch 18; train/loss minimum 2.3609 at epoch 12, rising after; val/loss_best 2.5324 at epoch 11. Cancelled at epoch 35 (3:17:43) with the result settled; fine-tune 6505 cancelled unrun. Route B has now locked at 3 of 3 cells (seed 0 at epoch 9, seed 1 at 20 and 1,405 by epoch 50, half lr at 18). Halving the lr delays the operator's departure and does not prevent it, so the lr is not the lever. Remaining cheap test: route B at batch 8 (`gs1024_w8_routeB_bs8`, job 6514), which halves the summed marks per step. The operator-side fixes (weight decay on the operator, a norm bound on its output, a lower operator lr) are an architecture decision and wait for the owner.
+
+### Wave 8 on GilaHyper (three cards, slot manager budget 3)
+
+- Operator injection resumed from epoch 50 to 80 at all three seeds (`gs1024_w5_onto_inject_op`, `_s1`, `_s2`; jobs 6508, 6510, 6512; constant lr, so epochs 1-50 are unchanged and the run ids stay), with fine-tunes from the epoch-80 checkpoint (`..._e80_ft`, 6509, 6511, 6513). Read at 71-80 against bs16 s0 / s1 at 71-80 (doubles 0.2078 / 0.1844): does the +0.036 hold with more training.
+- Pinball on GilaHyper, seed 0, recipe v2: plain (`gs1024_w8_pinball`, 6516 / ft 6517) and with the operator injection (`gs1024_w8_pinball_injop`, 6518 / 6519), the combination of the two measured doubles levers, read against bs16 and inject_op on the same machine.
+- Route B at batch 8 (`gs1024_w8_routeB_bs8`, 6514 / ft 6515), lr 3e-4.

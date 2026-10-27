@@ -2076,3 +2076,17 @@ W&B round view (every run, grouped by arm; the six arm views are listed in `resu
 - Operator injection resumed from epoch 50 to 80 at all three seeds (`gs1024_w5_onto_inject_op`, `_s1`, `_s2`; jobs 6508, 6510, 6512; constant lr, so epochs 1-50 are unchanged and the run ids stay), with fine-tunes from the epoch-80 checkpoint (`..._e80_ft`, 6509, 6511, 6513). Read at 71-80 against bs16 s0 / s1 at 71-80 (doubles 0.2078 / 0.1844): does the +0.036 hold with more training.
 - Pinball on GilaHyper, seed 0, recipe v2: plain (`gs1024_w8_pinball`, 6516 / ft 6517) and with the operator injection (`gs1024_w8_pinball_injop`, 6518 / 6519), the combination of the two measured doubles levers, read against bs16 and inject_op on the same machine.
 - Route B at batch 8 (`gs1024_w8_routeB_bs8`, 6514 / ft 6515), lr 3e-4.
+
+### Third seeds on GilaHyper: profile statistics and LODO (jobs 6502, 6496, 6498)
+
+Window means 41-50 regenerated (`results/ghyper_sweep_2026_10_24_window_means.json`); bs16 baseline mean (sd) as above.
+
+| cell | Kemmeren r (41-50) | doubles r (41-50) | Muenzner r (41-50) | Caudal r (41-50) | Messner r (41-50) | Vaishnav r (41-50) | held-out r (41-50) | ft Kemmeren r (16-20) | ft doubles r (16-20) |
+|---|---|---|---|---|---|---|---|---|---|
+| profile_stats s2 | 0.0867 | 0.1787 | 0.1908 | 0.1271 | 0.0611 | 0.9047 | | 0.1060 | 0.2256 |
+| profile_stats mean of 3 | 0.0902 | 0.1922 | 0.1980 | 0.1460 | 0.0659 | 0.9129 | | | |
+| lodo_hu s2 | 0.1003 | 0.1906 | 0.2081 | 0.1548 | 0.0732 | 0.9040 | Hu -0.0100 | 0.1248 | 0.2326 |
+| lodo_zelezniak s2 | 0.1072 | 0.1941 | 0.2104 | 0.1661 | 0.0815 | 0.9050 | Zelezniak 0.0802 | 0.1508 | 0.2208 |
+| bs16 mean of 3 (sd) | 0.0967 (0.006) | 0.1989 (0.012) | 0.1992 (0.003) | 0.1605 (0.003) | 0.0634 (0.016) | 0.9104 (0.008) | Hu 0.069-0.084, Zelezniak -0.053..0.088 | 0.1147 / 0.1340 | 0.2440 / 0.2000 |
+
+Reads. Profile-pooled statistics at three seeds: Kemmeren, doubles, Muenzner, Messner and Vaishnav inside the baseline spread (means within 0.007 of the baseline), Caudal below every baseline seed at 2 of 3 seeds (0.1406, 0.1271 against 0.1568-0.1626; mean 0.1460 against 0.1605). Null on the gene heads, a cost on Caudal at two seeds: not adopted as the default. Leave-Hu-out at three seeds: zero-shot Hu 0.0335 / 0.0156 / -0.0100 (mean 0.013), every seed below every trained-in bs16 seed (0.069-0.084) and the mean below the trained-in range across cells (0.023-0.087); with three seeds the held-out Hu head does not transfer, at 19 validation records. Leave-Zelezniak-out at three seeds: -0.0385 / -0.1105 / 0.0802 against trained-in -0.0525 / 0.0776 / 0.0879, the two spreads overlap, unresolved at 9 records. The LODO-shared pattern from two seeds (Muenzner high, Kemmeren low) is weaker at seed 2: Muenzner 0.2081 / 0.2104 (still above the baseline's 0.1992, sd 0.003) and Kemmeren 0.1003 / 0.1072 (above the baseline mean), so the Kemmeren half does not hold. The Kemmeren fine-tune from the leave-Zelezniak-out seed-2 checkpoint reads 0.1508, above every other fine-tune so far (0.1060-0.1340); one seed, and the s0 / s1 fine-tunes of that cell were on `alone_zelezniak`, so there is no matched pair.

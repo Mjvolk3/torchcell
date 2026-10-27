@@ -420,9 +420,13 @@ ROUNDS: dict[str, Round] = {
         + tuple(f"gs1024_w5_onto_inject_op{k}_e80_ft" for k in ("", "_s1", "_s2"))
         + ("gs1024_w8_routeB_bs8", "gs1024_w8_routeB_bs8_ft")
         # pinball on GilaHyper after the Aurora grid (doubles +0.03-0.04 over HL-Gauss at
-        # 8 of 8 seeds there): plain 6516/6517 and with the operator injection 6518/6519
+        # 8 of 8 seeds there): plain 6516/6517 and with the operator injection 6518/6519;
+        # seeds 1 and 2 of both (6520-6527) queued behind them
         + tuple(
-            f"gs1024_w8_pinball{k}{ft}" for k in ("", "_injop") for ft in ("", "_ft")
+            f"gs1024_w8_pinball{k}{sd}{ft}"
+            for sd in ("", "_s1", "_s2")
+            for k in ("", "_injop")
+            for ft in ("", "_ft")
         ),
         hardware=(
             "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, four chained slots "

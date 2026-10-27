@@ -34,6 +34,9 @@ X = "epoch"
 # batch per epoch; neither was synced, listed here in case they ever are.
 EXCLUDED_RUN_IDS: set[str] = set()
 KEEP_STATES = {"finished", "running"}
+# An offline run synced from GilaHyper while its IGB job is still training reads as
+# "failed" (the .wandb file ends mid-record) until the final sync; keep these regardless.
+LIVE_OFFLINE_RUN_IDS: set[str] = {"ajcgkpw0"}
 
 # config tag -> arm label. The split is read from the run's split_R / split_Q tag and
 # written to config["split"]; the R view filters on it, so Q arms never appear there.
@@ -43,7 +46,19 @@ ARMS = {
     "cgt_030_s3_r_tok_fit_002": "s3_table_token",
     "cgt_030_s3_r_tok_embfit_003": "s3_composite_token",
     "cgt_030_s3_q_tok_embfit_004": "s3q_composite_token",
+    # Ontology conditioning (plan.030-ontology-conditioning.2026.10.22): the token is the
+    # record's annotation to the schema DAG, not its dataset name.
+    "cgt_030_s3_r_onto_affine_010": "s3_onto_affine",
+    "cgt_030_s3_r_onto_readout_011": "s3_onto_readout",
+    "cgt_030_s3_q_onto_affine_007": "s3q_onto_affine",
+    "cgt_030_s3_q_onto_readout_008": "s3q_onto_readout",
 }
+# Screen-offset bias view: the name-token arm against the ontology-affine arm on the R
+# split, first row pooled vs within-screen interaction Pearson on the pinned val triples.
+BIAS_VIEW_NAME = "030 screen-offset bias: dataset-name token vs ontology-affine token (R)"
+BIAS_VIEW_ID: str | None = "uozi3d6izlb"
+BIAS_ARMS = ["s3_composite_token", "s3_onto_affine"]
+KUZMIN_TRIPLE_TOKENS = ["TmiKuzmin2018Dataset", "TmiKuzmin2020Dataset"]
 # The Q split gets its own saved view: Q and R are different questions and are never
 # compared in one panel. Pinned after the first save_as_new_view().
 Q_VIEW_NAME = "030 query-pair-disjoint: closure with the token"
@@ -263,7 +278,9 @@ def label_runs(api: wandb.Api) -> int:
     runs = list(api.runs(f"{ENTITY}/{PROJECT}"))
     by_arm_seed: dict[tuple[str, int], list] = {}
     for run in runs:
-        if run.id in EXCLUDED_RUN_IDS or run.state not in KEEP_STATES:
+        if run.id in EXCLUDED_RUN_IDS:
+            continue
+        if run.state not in KEEP_STATES and run.id not in LIVE_OFFLINE_RUN_IDS:
             continue
         arm = _arm_of(run)
         if arm is None:
@@ -341,6 +358,85 @@ def populate_view() -> str:
     return view.url
 
 
+def _bias_sections() -> list[tuple[str, list[tuple[list[str], str]]]]:
+    """The bias row first, then every section of the arm view so no logged key is lost.
+
+    The name token learns the Kuzmin 2018 / 2020 screen offset at epoch 0 (pooled Pearson
+    0.37 from the per-screen mean alone), so the pooled val Pearson overstates it; the
+    within-screen Pearson of each Kuzmin token cannot be raised by a screen offset.
+    """
+    within = [f"val/token/{t}/gene_interaction/Pearson" for t in KUZMIN_TRIPLE_TOKENS]
+    bias = (
+        "1 screen-offset bias: pooled vs within-screen val interaction Pearson",
+        [
+            (["val/gene_interaction/Pearson"], "val interaction Pearson, pooled"),
+            ([within[0]], "val interaction Pearson within Kuzmin 2018 triples"),
+            ([within[1]], "val interaction Pearson within Kuzmin 2020 triples"),
+            (
+                ["val/gene_interaction/Pearson", *within],
+                "pooled and within-screen on one axis",
+            ),
+            (
+                [f"val/token/{t}/gene_interaction/MSE" for t in KUZMIN_TRIPLE_TOKENS],
+                "val interaction MSE within each Kuzmin screen",
+            ),
+            (["val/gene_interaction/MSE"], "val interaction MSE, pooled"),
+            (
+                [f"val/token/{t}/gene_interaction/n_entries" for t in KUZMIN_TRIPLE_TOKENS],
+                "val triples per screen",
+            ),
+        ],
+    )
+    return [bias, *SECTIONS]
+
+
+def populate_bias_view() -> str:
+    """Overwrite (or create) the saved view with the two R-split token arms side by side."""
+    sections = [
+        ws.Section(
+            name=name,
+            is_open=True,
+            layout_settings=ws.SectionLayoutSettings(columns=4, rows=1),
+            panel_settings=ws.SectionPanelSettings(x_axis=X, smoothing_type="none"),
+            panels=[_line(y, title) for y, title in panels],
+        )
+        for name, panels in _bias_sections()
+    ]
+    settings = ws.WorkspaceSettings(
+        x_axis=X, smoothing_type="none", max_runs=60, sort_panels_alphabetically=False
+    )
+    runset_settings = ws.RunsetSettings(
+        # rank0 only: the other DDP ranks log no val/ keys and would dilute the train
+        # group means of the name-token arm (13 rank runs against one ontology run).
+        filters=[
+            ws.Config("split") == "R",
+            ws.Config("arm").isin(BIAS_ARMS),
+            ws.Config("rank0") == True,  # noqa: E712
+        ],
+        groupby=[ws.Config("arm")],
+        order=[ws.Ordering(ws.Metric("Name"), ascending=True)],
+    )
+    if BIAS_VIEW_ID is None:
+        view = ws.Workspace(
+            entity=ENTITY,
+            project=PROJECT,
+            name=BIAS_VIEW_NAME,
+            sections=sections,
+            settings=settings,
+            runset_settings=runset_settings,
+        )
+        view.save_as_new_view()
+        print(f"NEW saved bias view: {view.url}\n  pin its nw= id into BIAS_VIEW_ID")
+        return view.url
+    view = ws.Workspace.from_url(f"https://wandb.ai/{ENTITY}/{PROJECT}?nw={BIAS_VIEW_ID}")
+    view.name = BIAS_VIEW_NAME
+    view.sections = sections
+    view.settings = settings
+    view.runset_settings = runset_settings
+    view.save()
+    return view.url
+
+
 def populate_q_view() -> str:
     """Overwrite (or create) the saved view of the query-pair-disjoint arms."""
     sections = [
@@ -387,6 +483,7 @@ def main() -> None:
     print(f"labeled {label_runs(api)} runs")
     print(populate_view())
     print(populate_q_view())
+    print(populate_bias_view())
 
 
 if __name__ == "__main__":

@@ -394,6 +394,23 @@ ROUNDS: dict[str, Round] = {
             f"gs1024_r2_{k}{ft}"
             for k in ("reg_tdrop01", "ffn2", "hh256", "lrx2", "smmss_s1")
             for ft in ("", "_ft")
+        )
+        # seed replicates of the wave-6 cells (2026-10-26/27): leave-Hu-out s1 6470/6471, s2
+        # 6496/6497; leave-Zelezniak-out s1 6472/6473, s2 6498/6499; profile statistics s1
+        # 6494/6495, s2 6502/6503; operator injection s2 6492/6493 (third seed)
+        + tuple(
+            f"gs1024_w6_{k}_s{sd}{ft}"
+            for k in ("lodo_hu", "lodo_zelezniak", "profile_stats")
+            for sd in (1, 2)
+            for ft in ("", "_ft")
+        )
+        + ("gs1024_w5_onto_inject_op_s2", "gs1024_w5_onto_inject_op_s2_ft")
+        # wave 7, route B (isolates as S288C plus variant/LOF/absent marks, prep_v4_routeB;
+        # 2026-10-26): seed 0 6478/6479, seed 1 6500/6501, seed 0 at lr 1.5e-4 6504/6505
+        + tuple(
+            f"gs1024_w7_routeB{k}{ft}"
+            for k in ("", "_s1", "_lrhalf")
+            for ft in ("", "_ft")
         ),
         hardware=(
             "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, four chained slots "
@@ -486,6 +503,19 @@ ROUNDS: dict[str, Round] = {
                 "(epoch 8.7), > 1e3 at step 40,250 (epoch 22.7), 1899.7 at epoch 25; "
                 "val/promoter/pearson nan at epochs 42-43; cancelled at epoch 43 (job "
                 "6398, 3:07), fine-tune 6399 cancelled unrun",
+            ),
+            (
+                "gs1024_w7_routeB",
+                "the bs32 / h288 lock on route B records (up to 6,080 marks): val/doubles "
+                "exactly -0.0883 from epoch 9 to 50, val/loss_best 2.5232 at epoch 8 never "
+                "improved (2.7139 at epoch 50); operator/relative_norm 0.37 (ep 5) -> 0.98 "
+                "(ep 9) -> 23.4 (ep 13) -> 291.96 (ep 50); ran to epoch 50 (job 6478, "
+                "4:39:43, peak 7.98 GB); its fine-tune 6479 initialized from the collapsed "
+                "last.pt",
+            ),
+            (
+                "gs1024_w7_routeB_ft",
+                "initialized from the collapsed gs1024_w7_routeB last.pt (epoch 50)",
             ),
         ),
     ),

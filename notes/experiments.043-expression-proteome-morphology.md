@@ -1990,3 +1990,51 @@ CPU smoke `gh_train_043_sweep_smoke_cpu.slurm` (case smss, batch 16, 12 steps, o
 These are CPU numbers on 2 probe steps; the GPU step time on route B is not measured. Route B runs the trunk once per batch (one context) but the operator attends over up to 6,080 marks per isolate record.
 
 Recipe-v2 cell, held for the slot manager: stage 1 `gs1024_w7_routeB` job 6478 (`--hold`, batch 16, 50 epochs, window 0.8, STOP_HOURS 11, `EXTRA_OVERRIDES=data.route=B`), its Kemmeren fine-tune `gs1024_w7_routeB_ft` job 6479 (afterany:6478). Not measured: GPU memory at batch 16 with 6,080-mark records, GPU step time, any validation result.
+
+## 2026.10.27 - Overnight reads: route B collapse, third seeds of the operator injection, LODO and profile statistics
+
+Window means over epochs 41-50 (`wandb_view_043.py --round ghyper_sweep_2026_10_24 --window-means`, `results/ghyper_sweep_2026_10_24_window_means.json`); the reference is the three-seed bs16 recipe-v2 baseline (gs1024_w4_bs16 s0/s1/s2, same window). Validation Pearson: Kemmeren, Muenzner, Caudal, Messner, Hu and Zelezniak are the per-gene medians, doubles the per-strain centered median, Vaishnav the pooled r.
+
+### Route B seed 0 collapsed (job 6478)
+
+`gs1024_w7_routeB` ran its 50 epochs (4:39:43, peak 7.98 GB with 6,080-mark records, 0.084 s/step at batch 16, so route B costs nothing in memory or time against route A at 0.066-0.084 s/step) and locked into the bs32 / h288 signature: val/doubles exactly -0.0883 at every epoch from 9 to 50, val/loss_best 2.5232 at epoch 8 never improved (2.7139 at epoch 50), operator/relative_norm 0.37 (epoch 5), 0.98 (9), 23.4 (13), 59.4 (21), 291.96 (50). Window read: Kemmeren 0.0004, doubles -0.0883, Muenzner 0.0351, Caudal 0.0133, Vaishnav 0.8795. Its fine-tune 6479 initialized from the collapsed checkpoint and is not read. Route B has no isolate result yet; the collapse is the finding. Hypothesis (untested): the operator's norm growth scales with the number of marks per record (route B isolates carry about 5,200 marks against at most 352 under route A), the same lever that bs32 and h288 moved through batch and width. Queued: seed 1 (`gs1024_w7_routeB_s1`, job 6500) and seed 0 at lr 1.5e-4 (`gs1024_w7_routeB_lrhalf`, job 6504).
+
+### Operator injection at three seeds (jobs 6432, 6434, 6492)
+
+| cell | Kemmeren r (41-50) | doubles r (41-50) | Muenzner r (41-50) | Caudal r (41-50) | Messner r (41-50) | Hu r (41-50) | val/loss (41-50) |
+|---|---|---|---|---|---|---|---|
+| bs16 s0 | 0.0935 | 0.2131 | 0.1977 | 0.1626 | 0.0460 | 0.0807 | 2.5042 |
+| bs16 s1 | 0.0926 | 0.1924 | 0.2028 | 0.1568 | 0.0660 | 0.0842 | 2.4666 |
+| bs16 s2 | 0.1041 | 0.1912 | 0.1972 | 0.1620 | 0.0783 | 0.0691 | 2.4886 |
+| inject_op s0 | 0.0876 | 0.2469 | 0.2099 | 0.1588 | 0.0659 | 0.0576 | 2.4980 |
+| inject_op s1 | 0.0890 | 0.2252 | 0.2172 | 0.1616 | 0.0685 | 0.0717 | 2.4826 |
+| inject_op s2 | 0.1146 | 0.2332 | 0.2194 | 0.1664 | 0.0572 | 0.0230 | 2.4989 |
+
+Read: doubles 0.2351 (sd 0.011) against 0.1989 (sd 0.012), +0.036, each injected seed above every baseline seed; Muenzner 0.2155 (sd 0.005) against 0.1992 (sd 0.003), +0.016, same ordering; Kemmeren 0.0971 against 0.0967, no change; Hu lower in all three (0.051 against 0.078; Hu has 19 validation records and ranges 0.023-0.087 across trained-in cells, so this is weak). Fine-tune `gs1024_w5_onto_inject_op_s2_ft` (epochs 16-20): Kemmeren 0.1290, doubles 0.2615, inside the matched fine-tune spread (0.1147 / 0.1340 and 0.2440 / 0.2000).
+
+### Profile-pooled statistics and weighting, two seeds (jobs 6451, 6494)
+
+| cell | Kemmeren r (41-50) | doubles r (41-50) | Muenzner r (41-50) | Caudal r (41-50) | Messner r (41-50) | Vaishnav r (41-50) |
+|---|---|---|---|---|---|---|
+| profile_stats s0 | 0.0914 | 0.1942 | 0.2015 | 0.1703 | 0.0661 | 0.9214 |
+| profile_stats s1 | 0.0924 | 0.2036 | 0.2018 | 0.1406 | 0.0706 | 0.9126 |
+| bs16 mean (sd) | 0.0967 (0.0064) | 0.1989 (0.0123) | 0.1992 (0.0031) | 0.1605 (0.0032) | 0.0634 (0.0163) | 0.9104 (0.0079) |
+
+Read: Kemmeren, doubles, Muenzner, Messner and Vaishnav inside the baseline spread at both seeds. Caudal is the one column where the two seeds disagree (+0.010 then -0.020 against the baseline mean, both outside its 0.003 sd), so the seed-0 Caudal gain from 2026-10-26 did not replicate; the cell's own seed spread on Caudal is larger than the baseline's. Val/loss is not comparable (different standardization). Third seed queued (`gs1024_w6_profile_stats_s2`, job 6502). The general variant still costs nothing measurable, which is the condition for making it the default.
+
+### Leave-one-dataset-out, two seeds each (jobs 6453, 6470; 6455, 6472)
+
+| cell | held-out r (41-50) | trained-in r in the bs16 seeds (41-50) | Kemmeren r (41-50) | Muenzner r (41-50) | Caudal r (41-50) |
+|---|---|---|---|---|---|
+| lodo_hu s0 | Hu 0.0335 | 0.0807 / 0.0842 / 0.0691 | 0.0828 | 0.2266 | 0.1695 |
+| lodo_hu s1 | Hu 0.0156 | | 0.0908 | 0.2227 | 0.1676 |
+| lodo_zelezniak s0 | Zelezniak -0.0385 | 0.0879 / 0.0776 / -0.0525 | 0.0793 | 0.2257 | 0.1538 |
+| lodo_zelezniak s1 | Zelezniak -0.1105 | | 0.0763 | 0.2181 | 0.1394 |
+
+Read: zero-shot Hu (0.034, 0.016) sits below the trained-in bs16 seeds (0.069-0.084) but inside the trained-in range across other cells (0.023-0.087, 19 validation records), so Hu cannot resolve transfer at this sample size. Zero-shot Zelezniak is negative at both seeds (-0.039, -0.111) against trained-in values of -0.053 to 0.134 (9 validation records); weak evidence that the held-out proteome is not predicted. Shared by all four LODO cells and no other cell: Muenzner protein 0.218-0.227 against 0.1992 (sd 0.003) and Kemmeren 0.076-0.091 against 0.0967 (sd 0.006). The cause is not measured. Third seeds queued (`gs1024_w6_lodo_hu_s2` 6496, `gs1024_w6_lodo_zelezniak_s2` 6498).
+
+### SMMSS seed 1 (job 6430)
+
+`gs1024_r2_smmss_s1`: Kemmeren 0.0968, doubles 0.2028, Muenzner 0.2029, Caudal 0.1612, Messner 0.0556, Vaishnav 0.9104, val/loss 2.4802; every column inside the bs16 spread. Fine-tune 0.1200 / 0.2321. The trunk layer pattern stays a null at two seeds.
+
+Not finished: `gs1024_w2_mmmm_cos` was cancelled at epoch 52/80 (job 6400, 17:27 CDT Oct 26) to free a card; val/loss_best 2.4688 at epoch 35, 2.4825 at epoch 52; last.pt at epoch 52 can be resumed. Its fine-tune 6375 was cancelled unrun.

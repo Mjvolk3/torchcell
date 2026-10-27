@@ -2076,6 +2076,30 @@ W&B round view (every run, grouped by arm; the six arm views are listed in `resu
 - Operator injection resumed from epoch 50 to 80 at all three seeds (`gs1024_w5_onto_inject_op`, `_s1`, `_s2`; jobs 6508, 6510, 6512; constant lr, so epochs 1-50 are unchanged and the run ids stay), with fine-tunes from the epoch-80 checkpoint (`..._e80_ft`, 6509, 6511, 6513). Read at 71-80 against bs16 s0 / s1 at 71-80 (doubles 0.2078 / 0.1844): does the +0.036 hold with more training.
 - Pinball on GilaHyper, seed 0, recipe v2: plain (`gs1024_w8_pinball`, 6516 / ft 6517) and with the operator injection (`gs1024_w8_pinball_injop`, 6518 / 6519), the combination of the two measured doubles levers, read against bs16 and inject_op on the same machine.
 - Route B at batch 8 (`gs1024_w8_routeB_bs8`, 6514 / ft 6515), lr 3e-4.
+- Queued behind the seed-0 pinball cells (12:50 CDT): pinball seeds 1 and 2 (`gs1024_w8_pinball_s1` 6520 / ft 6521, `_s2` 6524 / 6525) and pinball + operator injection seeds 1 and 2 (`gs1024_w8_pinball_injop_s1` 6522 / 6523, `_s2` 6526 / 6527), same recipe, s1 pair before s2 pair.
+
+### Operator injection at 80 epochs, three seeds (jobs 6508, 6510, 6512; fine-tunes 6509, 6511, 6513)
+
+The three resumes ran epochs 51-80 in 2:23-2:30 (298 s per epoch, peak 8.2 GB) and the fine-tunes from the epoch-80 `last.pt` took 3 min each (20 epochs at 8-9 s, peak 2.1 GB). Window means over epochs 71-80 against the two bs16 cells that ran to 80 epochs (`gs1024_w4_bs16`, `_s1`, same window); the 41-50 columns are the same runs' earlier window (constant lr, epochs 1-50 unchanged). From `results/ghyper_sweep_2026_10_24_window_means.json`.
+
+| cell | Kemmeren r (71-80) | doubles r (71-80) | Muenzner r (71-80) | Caudal r (71-80) | Messner r (71-80) | Vaishnav r (71-80) | train/loss (71-80) | val/loss (71-80) | doubles r (41-50) | Muenzner r (41-50) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| inject_op s0 | 0.0913 | 0.2381 | 0.2364 | 0.1599 | 0.0687 | 0.9328 | 2.1522 | 2.5072 | 0.2482 | 0.2102 |
+| inject_op s1 | 0.0932 | 0.2247 | 0.2442 | 0.1683 | 0.0605 | 0.9221 | 2.1505 | 2.4982 | 0.2266 | 0.2177 |
+| inject_op s2 | 0.1075 | 0.2590 | 0.2347 | 0.1681 | 0.0707 | 0.9196 | 2.1562 | 2.5077 | 0.2332 | 0.2194 |
+| inject_op mean of 3 | 0.0973 | **0.2406** | **0.2384** | 0.1654 | 0.0666 | 0.9248 | 2.1530 | 2.5044 | 0.2360 | 0.2158 |
+| bs16 s0 | 0.1222 | 0.2078 | 0.2248 | 0.1658 | 0.0566 | 0.9310 | 2.1560 | 2.5105 | 0.2131 | 0.1977 |
+| bs16 s1 | 0.1054 | 0.1844 | 0.2297 | 0.1742 | 0.0749 | 0.9245 | 2.1558 | 2.4707 | 0.1924 | 0.2028 |
+| bs16 mean of 2 | **0.1138** | 0.1961 | 0.2273 | **0.1700** | 0.0658 | 0.9278 | 2.1559 | 2.4906 | 0.2028 | 0.2003 |
+
+Fine-tunes (Kemmeren alone, 20 epochs, window 16-20): from the epoch-80 checkpoint, Kemmeren 0.1156 / 0.1131 / 0.1315 (mean 0.1201) and doubles 0.2490 / 0.2293 / 0.2739 (0.2507); from the epoch-50 checkpoint of the same cells, Kemmeren 0.1112 / 0.1217 / 0.1290 (0.1206) and doubles 0.2347 / 0.2296 / 0.2615 (0.2419); bs16 from epoch 80 (`gs1024_w4_bs16_ft`, `_s1_e80_ft`), Kemmeren 0.1427 / 0.1181 (0.1304) and doubles 0.2423 / 0.2419.
+
+Reads.
+
+- The operator-injection doubles gain holds with 30 more epochs: same-seed +0.0303 (s0) and +0.0403 (s1) at 71-80, every inject_op seed (0.2247-0.2590) above both bs16 seeds (0.1844, 0.2078), mean +0.0445 (three seeds against two). At 41-50 the same cells read +0.036 (three seeds against three).
+- Kemmeren at 71-80 is lower under the injection at both matched seeds: 0.0913 / 0.0932 against 0.1222 / 0.1054 (-0.031, -0.012). At 41-50 the three-seed means were equal (0.0966 against 0.0967): bs16 s0 gained 0.029 on Kemmeren from epoch 50 to 80 and inject_op s0 gained 0.005. The epoch-80 fine-tunes repeat it (0.1156 / 0.1131 against 0.1427 / 0.1181). Two matched seeds, so a cost on Kemmeren under longer training is the reading to test, not a result.
+- Epochs 51-80 buy Muenzner (+0.015 to +0.027 in all five cells) and Vaishnav (+0.012 to +0.016 in all five), leave doubles where it was (inject_op -0.010 / -0.002 / +0.026, bs16 -0.005 / -0.008) and Caudal within 0.007, and raise val/loss (+0.009 to +0.016 in the inject_op cells, +0.004 / +0.006 in bs16) while train/loss falls 0.045: the pooled validation loss is past its floor by epoch 50 in every cell, as in [[043 val floor|experiments.043-expression-proteome-morphology#2026.10.25]], while the per-gene Muenzner and Vaishnav heads keep improving.
+- Starting the Kemmeren fine-tune from epoch 80 instead of 50 changes nothing measurable: Kemmeren +0.004 / -0.009 / +0.003, doubles +0.014 / 0.000 / +0.012.
 
 ### Third seeds on GilaHyper: profile statistics and LODO (jobs 6502, 6496, 6498)
 

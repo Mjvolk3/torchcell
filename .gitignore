@@ -289,3 +289,7 @@ experiments/025-solid-growth/results/graph_regularization_how_not_what/
 
 # mypy daemon state (machine-local)
 .dmypy.json
+
+# figure review pages: one page per figure cut from editing-nature-biotech.pdf (qpdf) and
+# handed to the author with its caption; regenerated from the build, never committed
+paper/nature-biotech/review/

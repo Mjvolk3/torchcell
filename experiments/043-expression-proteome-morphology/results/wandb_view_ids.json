@@ -134,6 +134,36 @@
     "name": "043 aurora_v2_2026_10_26: finetune_kemmeren_from_all_pinball_equal",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=4w8clztom93"
   },
+  "aurora_v3_2026_10_27": {
+    "id": "4ebtcp2r4ky",
+    "name": "043 Aurora recipe v2 to 80 epochs 2026-10-27 by arm",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=4ebtcp2r4ky"
+  },
+  "aurora_v3_2026_10_27/all_onto_hlgauss_equal": {
+    "id": "zpqe055gk4s",
+    "name": "043 aurora_v3_2026_10_27: all_onto_hlgauss_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=zpqe055gk4s"
+  },
+  "aurora_v3_2026_10_27/all_onto_injop_hlgauss_equal": {
+    "id": "mrd9ft10too",
+    "name": "043 aurora_v3_2026_10_27: all_onto_injop_hlgauss_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=mrd9ft10too"
+  },
+  "aurora_v3_2026_10_27/all_onto_injop_pinball_equal": {
+    "id": "lxpnp0mhj1y",
+    "name": "043 aurora_v3_2026_10_27: all_onto_injop_pinball_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=lxpnp0mhj1y"
+  },
+  "aurora_v3_2026_10_27/all_onto_injop_pinball_records": {
+    "id": "0dtaf3e0nlk",
+    "name": "043 aurora_v3_2026_10_27: all_onto_injop_pinball_records",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=0dtaf3e0nlk"
+  },
+  "aurora_v3_2026_10_27/all_onto_pinball_equal": {
+    "id": "jxj38onullo",
+    "name": "043 aurora_v3_2026_10_27: all_onto_pinball_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=jxj38onullo"
+  },
   "ghyper_sweep_2026_10_24": {
     "id": "sjpdqsr7yjg",
     "name": "043 GilaHyper sweep 2026-10-24 by arm",

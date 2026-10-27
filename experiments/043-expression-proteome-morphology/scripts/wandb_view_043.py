@@ -319,6 +319,52 @@ ROUNDS: dict[str, Round] = {
             "Kemmeren fine-tune (20 epochs, lr 3e-4, warmup 30)."
         ),
     ),
+    "aurora_v3_2026_10_27": Round(
+        view_name="043 Aurora recipe v2 to 80 epochs 2026-10-27 by arm",
+        # run id = a1027_<cell> (resume_id), _ft = its Kemmeren fine-tune from the epoch-80
+        # last.pt; tag aurora_v3_2026_10_27. Job a (8973596): the combination pinball +
+        # operator injection, the injection under HL-Gauss, plain pinball; job b (8973597):
+        # the HL-Gauss 80-epoch baseline, the combination at lr 1.5e-4 and with
+        # weighting=records. Seeds 0-3; window 71-80, with 41-50 read from the same runs.
+        run_ids=tuple(
+            f"a1027_all_onto_{arm}_v3_s{seed}{ft}"
+            for arm in (
+                "pinball_injop_equal",
+                "hlgauss_injop_equal",
+                "pinball_equal",
+                "hlgauss_equal",
+                "pinball_injop_equal_lrhalf",
+                "pinball_injop_records",
+            )
+            for seed in (0, 1, 2, 3)
+            for ft in ("", "_ft")
+        ),
+        extra_windows=tuple(
+            (f"a1027_all_onto_{arm}_v3_s{seed}", (41, 50))
+            for arm in (
+                "pinball_injop_equal",
+                "hlgauss_injop_equal",
+                "pinball_equal",
+                "hlgauss_equal",
+                "pinball_injop_equal_lrhalf",
+                "pinball_injop_records",
+            )
+            for seed in (0, 1, 2, 3)
+        ),
+        hardware=(
+            "Aurora (ALCF), 1 node x 12 tiles per job, Intel Data Center GPU Max 1550 tile, "
+            "1 run per tile; capacity jobs 8973596 (a) and 8973597 (b), 60 h walltime; "
+            "frameworks stack, attention query chunk 512"
+        ),
+        intro=(
+            "Recipe v2 run to 80 epochs (registered window 71-80; 41-50 recorded from the "
+            "same runs): batch 16, prep_v4, store v2, ontology conditioning. Arms: pinball "
+            "+ operator injection (the two measured doubles levers combined), HL-Gauss + "
+            "injection, plain pinball, plain HL-Gauss (the 80-epoch baseline), the "
+            "combination at lr 1.5e-4 and with record weighting; seeds 0-3, each chained "
+            "to its Kemmeren fine-tune (20 epochs, lr 3e-4, warmup 30)."
+        ),
+    ),
     "ghyper_sweep_2026_10_24": Round(
         view_name="043 GilaHyper sweep 2026-10-24 by arm",
         # run id = gs1024_<wave>_<arm> (resume_id), _ft = its Kemmeren fine-tune;
@@ -716,6 +762,7 @@ def sections() -> list[tuple[str, list[Panel]]]:
 CURATED_ROUNDS = (
     "aurora_2026_10_24",
     "aurora_v2_2026_10_26",
+    "aurora_v3_2026_10_27",
     "ghyper_sweep_2026_10_24",
     "overnight_2026_10_23",
 )

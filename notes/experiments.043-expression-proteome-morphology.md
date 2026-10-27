@@ -2078,6 +2078,15 @@ W&B round view (every run, grouped by arm; the six arm views are listed in `resu
 - Route B at batch 8 (`gs1024_w8_routeB_bs8`, 6514 / ft 6515), lr 3e-4.
 - Queued behind the seed-0 pinball cells (12:50 CDT): pinball seeds 1 and 2 (`gs1024_w8_pinball_s1` 6520 / ft 6521, `_s2` 6524 / 6525) and pinball + operator injection seeds 1 and 2 (`gs1024_w8_pinball_injop_s1` 6522 / 6523, `_s2` 6526 / 6527), same recipe, s1 pair before s2 pair.
 
+### Aurora v3 grid queued (PBS 8973596 job a, 8973597 job b; round aurora_v3_2026_10_27)
+
+The owner (13:10 CDT): "we should keep queuing experiments! We need to try to maximize our experimental throughput on both polaris and aurora". Both v2 jobs had ended, so the next grid went up at 13:20 CDT on the capacity queue, 60 h walltime, one node x 12 tiles per job, recipe v2 run to 80 epochs (registered window 0.875 = epochs 71-80; 41-50 is read from the same runs through `extra_windows`), chained Kemmeren fine-tunes from the epoch-80 checkpoint, run ids `a1027_<cell>`. Grid files `scripts/alcf/aurora_grid_043_v3_a.tsv` and `_b.tsv`, launcher `aurora_train_043_stack.pbs` (`qsub -N 043-v3-<a|b> -l walltime=60:00:00 -v ARM=frameworks,GRID=aurora_grid_043_v3_<a|b>.tsv`), tree synced at 48429ba04. Projected 50 h of stage 1 at the v2 rate (37 min per epoch) plus 1 h of fine-tune.
+
+- Job a, seeds 0-3 each: pinball + operator injection (`all_onto_pinball_injop_equal_v3`, the two measured doubles levers combined), HL-Gauss + operator injection (`all_onto_hlgauss_injop_equal_v3`, the same-machine pair to the v2 onto hlgauss cells), plain pinball (`all_onto_pinball_equal_v3`, pinball at 80 epochs; its 41-50 window replicates v2).
+- Job b, seeds 0-3 each: plain HL-Gauss (`all_onto_hlgauss_equal_v3`, the matched 80-epoch baseline), the combination at lr 1.5e-4 (`..._lrhalf_v3`), the combination with `weighting=records` (`all_onto_pinball_injop_records_v3`; every run so far used equal weighting).
+
+Polaris: 7784069 (`043-1h-32`, 32 nodes x 1 h) started at about 12:40 CDT, the first chunk of the claim lane to run since the three cells of Oct 25; the other ten jobs stay queued.
+
 ### Operator injection at 80 epochs, three seeds (jobs 6508, 6510, 6512; fine-tunes 6509, 6511, 6513)
 
 The three resumes ran epochs 51-80 in 2:23-2:30 (298 s per epoch, peak 8.2 GB) and the fine-tunes from the epoch-80 `last.pt` took 3 min each (20 epochs at 8-9 s, peak 2.1 GB). Window means over epochs 71-80 against the two bs16 cells that ran to 80 epochs (`gs1024_w4_bs16`, `_s1`, same window); the 41-50 columns are the same runs' earlier window (constant lr, epochs 1-50 unchanged). From `results/ghyper_sweep_2026_10_24_window_means.json`.

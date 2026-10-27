@@ -43,6 +43,7 @@ import os.path as osp
 import re
 from collections import Counter
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -100,6 +101,29 @@ class Round:
     #: window (run id -> (first, last)), written as means_<first>_<last>; e.g. the 80-epoch
     #: bs16 run read over 41-50 as the recipe-v2 baseline
     extra_windows: tuple[tuple[str, tuple[int, int]], ...] = ()
+
+
+def _polaris_lane_run_ids() -> tuple[str, ...]:
+    """Run ids of every cell in the Polaris claim-lane tables, in claim order."""
+    alcf = Path(__file__).resolve().parent / "alcf"
+    ids: list[str] = []
+    for name in (
+        "polaris_cells_043.tsv",
+        "polaris_cells_043_seeds.tsv",
+        "polaris_cells_043_seeds100.tsv",
+    ):
+        for line in (alcf / name).read_text().splitlines():
+            if not line or line.startswith("#"):
+                continue
+            cell, finetune, overrides = line.split("\t", 2)
+            opts = dict(o.split("=", 1) for o in overrides.split() if "=" in o)
+            prefix = opts.get(
+                "rid_prefix", "a1024b" if opts.get("profile") == "aurora" else "o1023"
+            )
+            ids.append(f"{prefix}_{cell}")
+            if finetune == "1":
+                ids.append(f"{prefix}_{cell}_ft")
+    return tuple(ids)
 
 
 ROUNDS: dict[str, Round] = {
@@ -161,47 +185,11 @@ ROUNDS: dict[str, Round] = {
     ),
     "ontology_2026_10_23": Round(
         view_name="043 ontology conditioning 2026-10-23 (Polaris) by arm",
-        # run id = o1023_<cell of alcf/ontology_grid_043.tsv> (resume_id), _ft = its fine-tune
-        run_ids=(
-            "o1023_all_onto_hlgauss_equal_s0",
-            "o1023_all_onto_hlgauss_equal_s0_ft",
-            "o1023_all_onto_hlgauss_equal_s1",
-            "o1023_all_onto_hlgauss_equal_s1_ft",
-            "o1023_all_onto_pinball_equal_s0",
-            "o1023_all_onto_pinball_equal_s0_ft",
-            "o1023_all_onto_pinball_equal_s1",
-            "o1023_all_onto_pinball_equal_s1_ft",
-            "o1023_all_onto_mse_equal_s0",
-            "o1023_all_onto_mse_equal_s0_ft",
-            "o1023_all_onto_mse_equal_s1",
-            "o1023_all_onto_mse_equal_s1_ft",
-            "o1023_all_name_hlgauss_equal_s0",
-            "o1023_all_name_hlgauss_equal_s0_ft",
-            "o1023_all_name_hlgauss_equal_s1",
-            "o1023_all_name_hlgauss_equal_s1_ft",
-            "o1023_all_name_pinball_equal_s0",
-            "o1023_all_name_pinball_equal_s0_ft",
-            "o1023_all_name_pinball_equal_s1",
-            "o1023_all_name_pinball_equal_s1_ft",
-            "o1023_all_name_mse_equal_s0",
-            "o1023_all_name_mse_equal_s0_ft",
-            "o1023_all_name_mse_equal_s1",
-            "o1023_all_name_mse_equal_s1_ft",
-            "o1023_lodo_hu_onto_hlgauss_equal_s0",
-            "o1023_lodo_hu_onto_hlgauss_equal_s0_ft",
-            "o1023_lodo_zelezniak_onto_hlgauss_equal_s0",
-            "o1023_lodo_zelezniak_onto_hlgauss_equal_s0_ft",
-            "o1023_alone_kemmeren_onto_hlgauss_equal_s0",
-            "o1023_alone_kemmeren_onto_hlgauss_equal_s1",
-            "o1023_all_onto_hlgauss_equal_bs16_s0",
-            "o1023_all_onto_hlgauss_equal_bs16_s0_ft",
-            "o1023_all_onto_hlgauss_equal_bs32_s0",
-            "o1023_all_onto_hlgauss_equal_bs32_s0_ft",
-            "o1023_all_onto_hlgauss_equal_s2",
-            "o1023_all_onto_hlgauss_equal_s2_ft",
-            "o1023_all_name_hlgauss_equal_s2",
-            "o1023_all_name_hlgauss_equal_s2_ft",
-        ),
+        # run id = <prefix>_<cell> (resume_id) for every row of the Polaris claim-lane tables
+        # (alcf/polaris_cells_043.tsv, _seeds.tsv, _seeds100.tsv; prefix o1023 for
+        # profile=ontology, a1024b for profile=aurora, or the row's rid_prefix), _ft = its
+        # Kemmeren fine-tune when the row's fine-tune flag is 1
+        run_ids=_polaris_lane_run_ids(),
         hardware=(
             "Polaris (ALCF), A100 40 GB, one PBS job per node "
             "(alcf/polaris_train_043_ontology_grid.pbs), queue and job ids in the note"

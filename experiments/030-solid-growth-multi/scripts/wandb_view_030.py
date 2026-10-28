@@ -36,7 +36,7 @@ EXCLUDED_RUN_IDS: set[str] = set()
 KEEP_STATES = {"finished", "running"}
 # An offline run synced from GilaHyper while its IGB job is still training reads as
 # "failed" (the .wandb file ends mid-record) until the final sync; keep these regardless.
-LIVE_OFFLINE_RUN_IDS: set[str] = {"ajcgkpw0"}
+LIVE_OFFLINE_RUN_IDS: set[str] = {"ajcgkpw0", "8uq4ij64", "0ucjb5tj", "henkfeto", "kyljhznr"}
 
 # config tag -> arm label. The split is read from the run's split_R / split_Q tag and
 # written to config["split"]; the R view filters on it, so Q arms never appear there.

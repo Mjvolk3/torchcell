@@ -60,17 +60,14 @@ def query_chunked_sdpa(
         if mask is not None and mask.shape[-2] != 1:
             mask = mask[..., s : s + query_chunk, :]
         outs.append(
-            cast(
-                torch.Tensor,
-                checkpoint(
-                    F.scaled_dot_product_attention,
-                    q[..., s : s + query_chunk, :],
-                    k,
-                    v,
-                    attn_mask=mask,
-                    dropout_p=dropout_p,
-                    use_reentrant=False,
-                ),
+            checkpoint(
+                F.scaled_dot_product_attention,
+                q[..., s : s + query_chunk, :],
+                k,
+                v,
+                attn_mask=mask,
+                dropout_p=dropout_p,
+                use_reentrant=False,
             )
         )
     return torch.cat(outs, dim=-2)

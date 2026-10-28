@@ -17,16 +17,24 @@ Every panel is drawn by one of the panel modules (``figure_043_data_panels``,
 from a result file under ``results/`` or the W&B cache
 ``results/figure_043_curves.csv``; the layout and the status marks live here.
 
-    python experiments/043-expression-proteome-morphology/scripts/figure_043_sheets.py [--only 1|2]
+    python experiments/043-expression-proteome-morphology/scripts/figure_043_sheets.py [--only 1|2] [--tex]
     -> $ASSET_IMAGES_DIR/043-expression-proteome-morphology/figure_043_{setup,evals}{_<stamp>.svg,.png,.pdf}
+
+``--tex`` (owner, 2026-10-28, "would prefer to have math in latex") composes sheet 1 a
+second time as ``figure_043_setup_tex`` (PDF and PNG, no SVG) with the model panels of
+``figure_043_model_panel_tex`` (real LaTeX) in place of the mathtext ones; every other
+panel is the same.
 """
 
 from __future__ import annotations
 
 import argparse
+import contextlib
 import os.path as osp
 import sys
 from typing import Any
+
+import matplotlib
 
 sys.path.insert(0, osp.dirname(__file__))
 
@@ -35,12 +43,17 @@ import figure_043_common as C  # noqa: E402
 PanelFn = Any
 
 
-def _panels() -> dict[str, PanelFn]:
-    """Every panel of the four modules under one namespace, ``<module>.<key>``."""
+def _panels(tex: bool = False) -> dict[str, PanelFn]:
+    """Every panel of the four modules under one namespace, ``<module>.<key>``;
+    ``tex`` takes the model panels from ``figure_043_model_panel_tex``.
+    """
     import figure_043_curve_panels as curves
     import figure_043_data_panels as data
     import figure_043_eval_panels as evals
     import figure_043_model_panel as model
+
+    if tex:
+        import figure_043_model_panel_tex as model  # type: ignore[no-redef]
 
     out: dict[str, PanelFn] = {}
     for name, mod in (
@@ -70,15 +83,17 @@ def _draw(
 
 
 #: sheet 1: four rows, heights in mm (the data row holds 15 to 19 bar rows, the model
-#: row the five equation blocks and the symbol table)
+#: row the five equation blocks and the symbol table). The epoch share sits between the
+#: conditioning and the loss curve: row 1 has no width to spare and a fifth row would
+#: take the sheet past 235 mm.
 SETUP_ROWS: list[list[str]] = [
     ["data.records", "data.split", "data.ontology"],
     ["model.model", "model.symbols"],
-    ["model.conditioning", "curves.loss"],
+    ["model.conditioning", "data.epoch_share", "curves.loss"],
     ["curves.heads", "curves.levers", "curves.collapse", "curves.bs32"],
 ]
 SETUP_HEIGHTS = [46.0, 64.0, 52.0, 36.0]
-SETUP_WIDTHS: list[list[float] | None] = [None, [1.05, 0.95], [1.45, 1.0], None]
+SETUP_WIDTHS: list[list[float] | None] = [None, [1.05, 0.95], [1.72, 0.72, 0.66], None]
 
 #: sheet 2: the baselines strip across the top, then three rows of three
 EVALS_ROWS: list[list[str]] = [
@@ -101,22 +116,50 @@ def sheet(
     widths: list[list[float] | None] | None,
     panels: dict[str, PanelFn],
     R: C.Reads,
+    tex: bool = False,
 ) -> dict[str, str]:
-    """One sheet; ``heights`` are row heights in mm, the sheet adds the letter bands."""
+    """One sheet; ``heights`` are row heights in mm, the sheet adds the letter bands.
+
+    ``tex``: the sheet holds usetex text, so it is drawn and saved under the TeX rc of
+    ``figure_043_model_panel_tex`` (entered after ``new_sheet``, which applies the
+    sheet rc) and saved as PDF and PNG only.
+    """
     fig = C.new_sheet(sum(heights) + BAND_MM * len(heights))
     axes = C.rows(
         fig, len(layout), [len(r) for r in layout], widths=widths, heights=heights
     )
-    _draw(fig, axes, [k for row in layout for k in row], panels, R)
-    return C.save(fig, name)
+    if tex:
+        import figure_043_model_panel_tex as T
+
+        ctx: Any = matplotlib.rc_context(T.SAVE_RC)
+    else:
+        ctx = contextlib.nullcontext()
+    with ctx:
+        _draw(fig, axes, [k for row in layout for k in row], panels, R)
+        return C.save(fig, name, tex=tex)
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", choices=["1", "2"], default=None)
+    ap.add_argument(
+        "--tex", action="store_true", help="sheet 1 with LaTeX model panels only"
+    )
     args = ap.parse_args()
-    panels = _panels()
     R = C.Reads()
+    if args.tex:
+        out = sheet(
+            "figure_043_setup_tex",
+            SETUP_ROWS,
+            SETUP_HEIGHTS,
+            SETUP_WIDTHS,
+            _panels(tex=True),
+            R,
+            tex=True,
+        )
+        print(out["png"])
+        return
+    panels = _panels()
     if args.only in (None, "1"):
         out = sheet(
             "figure_043_setup", SETUP_ROWS, SETUP_HEIGHTS, SETUP_WIDTHS, panels, R

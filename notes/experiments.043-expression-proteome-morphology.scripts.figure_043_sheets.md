@@ -34,3 +34,24 @@ PYTHONPATH=$PWD ~/miniconda3/envs/torchcell/bin/python experiments/043-expressio
 - Panel 1d was audited against the code; `notes-tex/multimodal/043-training-design/sections/3-model.tex` still describes a ReZero gate (the code has none), no ontology conditioning, 9 environments (the code has 23), batch 8 and a 1,024 mark cap; the document needs the update, not the figure.
 - The kNN bar in 2a is the best k on the validation fold, which favors that baseline; the best.pt checkpoints in 2f range over epochs 24-75.
 - Sheet 1 is 222 mm tall, above the 170 mm Nature cap; it is a thesis-style sheet like the 040 reference, and the owner picks what to cut. Panel 1f is tight at its row height; the route A and B boxes read but have no air.
+
+## 2026.10.28 - Sheet 1 with LaTeX math and the per-epoch panel
+
+Owner (13:50 CDT): "would prefer to have math in latex for clarity i think. try to make a duplicate with this" and "we need some sense of the total datasets being trained over per epoch". Two changes to sheet 1; sheet 2 is unchanged.
+
+- `figure_043_model_panel_tex.py` wraps the same three model panels (same equation strings, same `CODE_LINES` audit) under `text.usetex` with `amsmath`, `amssymb` and `helvet` as the body family; GilaHyper has no `dvipng`, so the TeX sheet is saved through the PDF backend and rasterized with `pdftoppm` (`C.save(..., tex=True)`, no SVG). `figure_043_sheets.py --tex` writes `figure_043_setup_tex`; the default path is unchanged.
+- New panel `epoch_share` (`figure_043_data_panels.py`): per training dataset the training records, which under the records sampler of recipe v2 are also the records drawn per epoch (every record once), the mean records per batch of 16, and the expected loss weight of the dataset in a batch under equal weighting (the mean of the per-dataset means of the datasets present, computed by `equal_weight_shares`, which matches `training_design_043_tables.expected_weights` to 6e-17). Source `prep_v4_routeA/meta.json`, arm `all`, 12 datasets: an epoch is 56,805 records in 3,551 steps (job 6420's log agrees). Kemmeren 1,202 records (0.34 per batch, loss weight 0.070), Caudal 566 (0.16, 0.035), Boocock 235, N'Guessan 1,770 (0.50, 0.099), Hu 225, Nadal-Ribelles 4,969 (1.40, 0.210), Jackson 784, Messner 3,772 (1.06, 0.177), Zelezniak 79, Muenzner protein 476 (0.13, 0.030), Muenzner turnover 33, Vaishnav 42,694 (12.03 of 16, 0.296). Read: three of every four records in a batch are Vaishnav promoters; equal weighting caps its loss share at 0.30, and the two smallest panels (Zelezniak, turnover) weigh under 0.005.
+
+The panel sits in row 3 beside the conditioning panel and the loss curve, so the letters move: g = epoch share, h = loss, i-l = heads, levers, route B, batch 32 (the 2026.10.27 caption's g-k).
+
+### Sheet 1, mathtext (179 x 222 mm)
+
+![](./assets/images/043-expression-proteome-morphology/figure_043_setup_2026-10-28-14-14-08.svg)
+
+### Sheet 1, LaTeX math (179 x 222 mm, PNG from the PDF)
+
+![](./assets/images/043-expression-proteome-morphology/figure_043_setup_tex_2026-10-28-14-14-30.png)
+
+Caption as for the 2026.10.27 sheet with the re-lettering above and (g) added: "(g) The datasets trained over per epoch: training records per dataset (equal to the records drawn per epoch under the records sampler), the mean records per batch of 16 and the expected loss weight under equal weighting; 56,805 records in 3,551 steps, prep_v4, arm all."
+
+Cosmetic, open: in panel e two symbol rows touch the second column; in panel f the route A box text touches its edge at the narrower width.

@@ -386,14 +386,23 @@ def box(ax: Any) -> None:
         s.set_color("black")
 
 
-def save(fig: Any, name: str) -> dict[str, str]:
-    """Write the timestamped PNG and true-size SVG of one sheet, and its bare-named PDF."""
+def save(fig: Any, name: str, tex: bool = False) -> dict[str, str]:
+    """Write the timestamped PNG and true-size SVG of one sheet, and its bare-named PDF.
+
+    ``tex=True`` (a sheet holding ``text.usetex`` text) writes the PDF and the PNG only:
+    GilaHyper has no ``dvipng``, so only the PDF backend, which reads the DVI itself,
+    can draw TeX text, and the SVG is skipped rather than written with TeX turned off.
+    The PNG is rasterized from the PDF either way.
+    """
     os.makedirs(OUT_DIR, exist_ok=True)
     stamp = timestamp()
     png = osp.join(OUT_DIR, f"{name}_{stamp}.png")
     svg = osp.join(OUT_DIR, f"{name}_{stamp}.svg")
     pdf = osp.join(OUT_DIR, f"{name}.pdf")
-    savefig_true_size_svg(fig, svg)
+    out = {"name": f"{name}_{stamp}", "png": png, "pdf": pdf}
+    if not tex:
+        savefig_true_size_svg(fig, svg)
+        out["svg"] = svg
     fig.savefig(pdf, metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
     subprocess.run(
@@ -401,7 +410,7 @@ def save(fig: Any, name: str) -> dict[str, str]:
         check=True,
     )
     assert not WIDE_TITLES, f"{name}: titles wider than their panel: {WIDE_TITLES}"
-    return {"name": f"{name}_{stamp}", "png": png, "svg": svg, "pdf": pdf}
+    return out
 
 
 def demo(panels: dict[str, Any], name: str, height_mm: float = 60.0) -> dict[str, str]:

@@ -2260,3 +2260,28 @@ Reads (measured):
 
 <https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball_injop_lrhalf?nw=sjpdqsr7yjg>
 <https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball_injop_records?nw=sjpdqsr7yjg>
+
+### Combination seed 3, records and lr-half at seed 1 (jobs 6552, 6554, 6556; fine-tunes 6553, 6555, 6557; 09:30 CDT Oct 28)
+
+Window means over epochs 41-50 and fine-tune 16-20, `results/ghyper_sweep_2026_10_24_window_means.json` regenerated 09:25 CDT. Mean (sd) over seeds.
+
+| arm (seeds) | Kemmeren r | doubles r | Muenzner r | Caudal r | Messner r | Vaishnav r | ft Kemmeren r | ft doubles r |
+|---|---|---|---|---|---|---|---|---|
+| pinball + inject_op (4) | 0.1007 (0.027) | **0.2549** (0.019) | 0.2176 (0.010) | 0.1611 (0.012) | 0.0633 (0.004) | 0.9036 (0.007) | 0.1277 (0.021) | 0.2621 (0.019) |
+| + lr 1.5e-4 (2) | 0.1063 (0.007) | **0.2590** (0.015) | **0.2414** (0.008) | **0.1787** (0.007) | 0.0712 (0.004) | 0.8742 (0.010) | 0.1297 (0.007) | **0.2761** (0.014) |
+| + weighting records (2) | 0.0873 (0.000) | 0.2328 (0.042) | 0.1885 (0.007) | 0.1429 (0.001) | 0.0539 (0.004) | 0.9102 (0.006) | 0.1309 (0.005) | 0.2527 (0.043) |
+| pinball (3) | 0.0900 (0.007) | 0.2269 (0.003) | 0.2273 (0.012) | 0.1527 (0.002) | 0.0767 (0.007) | 0.9017 (0.008) | 0.1262 (0.014) | 0.2656 (0.006) |
+| bs16 HL-Gauss (3) | 0.0967 (0.006) | 0.1989 (0.012) | 0.1992 (0.003) | 0.1605 (0.003) | 0.0634 (0.016) | 0.9104 (0.008) | 0.1147 / 0.1340 | 0.2440 / 0.2000 |
+
+Per seed: combination s3 doubles 0.2398, Kemmeren 0.1083; lr-half s0 / s1 doubles 0.2694 / 0.2486, Muenzner 0.2468 / 0.2360, Vaishnav 0.8815 / 0.8669; records s0 / s1 doubles 0.2627 / 0.2030, Muenzner 0.1836 / 0.1933.
+
+Reads (measured):
+
+- lr 1.5e-4 on the combination holds at two seeds: Muenzner 0.2414, both seeds above every combination seed (0.203-0.226) and every pinball seed (0.219-0.241), +0.024 over the combination mean; Caudal 0.1787, both seeds above all four combination seeds; doubles 0.2590 inside the combination's spread; Vaishnav 0.8742, both seeds below every other arm (-0.03 against the combination), the one measured cost. Its fine-tuned doubles 0.2761 (0.014) is the highest two-seed fine-tune.
+- Records weighting does not hold: doubles 0.2627 then 0.2030 (sd 0.042, the noisiest pair of the sweep), Muenzner 0.1885 at both seeds below every combination seed, Caudal -0.018; Vaishnav +0.007 is inside the seed sd. Seed 2 (6560) runs for completeness; the arm is not a candidate.
+- The combination at four seeds: doubles 0.2549 (0.019), +0.028 over pinball and +0.056 over the HL-Gauss baseline; Kemmeren 0.1007 (0.027) level with the baseline.
+
+Queued (09:20 CDT): lr-half seed 2 (6558/6559), records seed 2 (6560/6561), and lr-half with records at seed 0 (6562/6563).
+
+<https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball_injop_lrhalf_s1?nw=sjpdqsr7yjg>
+<https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball_injop_records_s1?nw=sjpdqsr7yjg>

@@ -1,0 +1,833 @@
+{
+ "files": {
+  "data/scerevisiae/isolate_embeddings/peter2018_1011/alleles/calm.h5": {
+   "method": "full",
+   "mtime": "2026-10-22T17:26:01",
+   "present": true,
+   "sha256": "ac7ab11ef0f132ca12655ba34ec2c40c7fa32e6be54ae6b605115e6119b81c74",
+   "size": 941865424,
+   "tier": "train"
+  },
+  "data/scerevisiae/isolate_embeddings/peter2018_1011/alleles/fudt_species_downstream.h5": {
+   "method": "full",
+   "mtime": "2026-10-22T14:35:48",
+   "present": true,
+   "sha256": "fc3956f3754319f9806a62c43e15c6fb1f321e20ffa9144a36fd25cfe867c814",
+   "size": 591039176,
+   "tier": "train"
+  },
+  "data/scerevisiae/isolate_embeddings/peter2018_1011/alleles/fudt_species_upstream.h5": {
+   "method": "full",
+   "mtime": "2026-10-22T14:11:18",
+   "present": true,
+   "sha256": "037bcff257b993cc91f3a37630c3b00b1db73ac2f16f943bfc042f7a2c877009",
+   "size": 1954634584,
+   "tier": "train"
+  },
+  "data/scerevisiae/isolate_embeddings/peter2018_1011/alleles/prot_t5_xl_uniref50.h5": {
+   "method": "full",
+   "mtime": "2026-10-22T19:56:18",
+   "present": true,
+   "sha256": "bb27b7bb876c4425f4c30a23de8030710ab68d0dc49d2fda7ff8be575af29fba",
+   "size": 795642568,
+   "tier": "train"
+  },
+  "data/scerevisiae/isolate_embeddings/peter2018_1011/manifest.json": {
+   "method": "full",
+   "mtime": "2026-10-22T19:58:32",
+   "present": true,
+   "sha256": "4795fdcf087788df1201cbd221d9ff3582ca1f44b147e68328b5e209251656f3",
+   "size": 27886,
+   "tier": "companion"
+  },
+  "data/scerevisiae/isolate_embeddings/peter2018_1011/verify_report.json": {
+   "method": "full",
+   "mtime": "2026-10-22T19:58:32",
+   "present": true,
+   "sha256": "4992334a313606c7f4df81ee7cfa837f734837ab33406b48526d621b240c3da8",
+   "size": 4377,
+   "tier": "companion"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/ontology_043_v2/experiment_ontology_vocab.json": {
+   "method": "full",
+   "mtime": "2026-10-23T22:10:01",
+   "present": true,
+   "sha256": "eb9d1f022b12db7fb1a3479d1d63462fd3ae09998d2aaedc03d556c6c78563e9",
+   "size": 56408,
+   "tier": "prepare"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/raw_043_v2/processed/dataset_name_index.json": {
+   "method": "full",
+   "mtime": "2026-10-23T18:02:55",
+   "present": true,
+   "sha256": "7dd276fb83b382080fed16dcc83a7c5d2ef72dd7d092cb1449940da14b539f00",
+   "size": 1279888,
+   "tier": "prepare"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/raw_043_v2/processed/experiment_types.json": {
+   "method": "full",
+   "mtime": "2026-10-23T18:02:55",
+   "present": true,
+   "sha256": "8bedd0bdfbd60de6eebe39dc7776a8ed6e3c736eb1a863d6370c7e6de6fcf9e3",
+   "size": 235,
+   "tier": "prepare"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/raw_043_v2/processed/gene_set.json": {
+   "method": "full",
+   "mtime": "2026-10-23T11:14:29",
+   "present": true,
+   "sha256": "c467a5f369675b14c6acc2e3e411ff82e4107714ac3fef1aea80449a390924f0",
+   "size": 73759,
+   "tier": "prepare"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/raw_043_v2/processed/label_df.parquet": {
+   "method": "full",
+   "mtime": "2026-10-23T18:02:55",
+   "present": true,
+   "sha256": "73b0a2941b81b77005b55d1c9db7652446cf7ce7f43b6f408c4404e6c93c7433",
+   "size": 1700446,
+   "tier": "prepare"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/raw_043_v2/processed/perturbation_count_index.json": {
+   "method": "full",
+   "mtime": "2026-10-23T18:02:55",
+   "present": true,
+   "sha256": "1421fe867b912c080cf2f13d37a37902171f1354fb72028e29e06d0fdd1fd859",
+   "size": 1287746,
+   "tier": "prepare"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/raw_043_v2/processed/phenotype_label_index.json": {
+   "method": "full",
+   "mtime": "2026-10-23T18:02:55",
+   "present": true,
+   "sha256": "13cf9af90cfde63ad6050140f5dbe8ba8179b7b835f4ea169c0a028e38766ac4",
+   "size": 1279513,
+   "tier": "prepare"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/raw_043_v2/processed/pre_filter.pt": {
+   "method": "full",
+   "mtime": "2026-10-23T18:03:03",
+   "present": true,
+   "sha256": "e409ce5b1c6853122a7993c430fafff30751b180097b71368f7268c2288a2cf3",
+   "size": 1261,
+   "tier": "prepare"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/raw_043_v2/processed/pre_transform.pt": {
+   "method": "full",
+   "mtime": "2026-10-23T18:03:03",
+   "present": true,
+   "sha256": "e409ce5b1c6853122a7993c430fafff30751b180097b71368f7268c2288a2cf3",
+   "size": 1261,
+   "tier": "prepare"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/raw_043_v2/raw/experiment_reference_index.json": {
+   "head_sha256": "917f1dd0d7e30154b2b760762100bf6b767a8bd28f97a56f61480e33fc4be688",
+   "method": "full+head_tail_64MiB",
+   "mtime": "2026-10-23T17:37:01",
+   "present": true,
+   "sha256": "9d7cae5dcc3e13cf003e5ad2a4abb6c72bf2e3d6c6f89d08b1ec3b3ebd166429",
+   "size": 2616846893,
+   "tail_sha256": "736681f51627685c5e44cb646f54a5efead0832aaafde4ecfa247940e1d267b3",
+   "tier": "prepare"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/raw_043_v2/raw/gene_set.json": {
+   "method": "full",
+   "mtime": "2026-10-23T17:37:01",
+   "present": true,
+   "sha256": "129e0900c66fd879f5504495cfe0a7c300665382c35c825f88b942b841f5ab30",
+   "size": 125596,
+   "tier": "prepare"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/raw_043_v2/raw/lmdb/data.mdb": {
+   "head_sha256": "89989348f50476a565efb4cad19960ca3860d2236b7437d0fa3162a4019427b1",
+   "method": "full+head_tail_64MiB",
+   "mtime": "2026-10-23T17:23:02",
+   "present": true,
+   "sha256": "18f5867af903ab164972744263e3aa0b7317f7f99f33adb3112405b45d5b8d4d",
+   "size": 163318136832,
+   "tail_sha256": "fee536834663cb5de272998e22bf2cdef7785dda16c69d72db210e291f60938e",
+   "tier": "prepare"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/raw_043_v2/raw/lmdb/lock.mdb": {
+   "method": "size_only_runtime_state",
+   "mtime": "2026-10-23T17:47:47",
+   "present": true,
+   "size": 8192,
+   "tier": "prepare"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/raw_043_v2/raw/raw_dataset_name_index.json": {
+   "method": "full",
+   "mtime": "2026-10-23T18:52:35",
+   "present": true,
+   "sha256": "3416716bbb869e5b6acca576be69ac9d3ea13bdfaa90b0e7095fbb9add17bcec",
+   "size": 1280505,
+   "tier": "prepare"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/representation_043_v2/accessory.parquet": {
+   "method": "full",
+   "mtime": "2026-10-23T19:06:28",
+   "present": true,
+   "sha256": "a6dac38c526e8e46861cd580655bcc25c63a7354701e1bb27bb135e23ff554cf",
+   "size": 646953,
+   "tier": "companion"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/representation_043_v2/build_record.json": {
+   "method": "full",
+   "mtime": "2026-10-23T19:06:28",
+   "present": true,
+   "sha256": "bebc27a59ec01146adc5004d4ebcf80f59ee63766e1f6ae2bdabc587ee02e10f",
+   "size": 938,
+   "tier": "companion"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/representation_043_v2/contexts.json": {
+   "method": "full",
+   "mtime": "2026-10-23T19:06:28",
+   "present": true,
+   "sha256": "2e12b79d1870f017a456d617045e469288bc953e0b261f30c6c51c05cbed160d",
+   "size": 81336,
+   "tier": "companion"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/representation_043_v2/contexts.npz": {
+   "method": "full",
+   "mtime": "2026-10-23T19:06:28",
+   "present": true,
+   "sha256": "4338eeda58868eef13d111d1b5a27eaf7d6aff0d790f98ff6fb2b26590cbb179",
+   "size": 167158106,
+   "tier": "companion"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/representation_043_v2/reporter.json": {
+   "method": "full",
+   "mtime": "2026-10-23T19:06:28",
+   "present": true,
+   "sha256": "2d5bb1558365da6b80f9e63fe41d0748b469e361b7dac3f67c779ccae79dd3c9",
+   "size": 85,
+   "tier": "companion"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/representation_043_v2/reporter.parquet": {
+   "method": "full",
+   "mtime": "2026-10-23T19:06:28",
+   "present": true,
+   "sha256": "e84c6844082e6e84d752f5f5b8bbcb305ddaa27b3debdc0397a14002f0b5e84a",
+   "size": 986905,
+   "tier": "companion"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/representation_043_v2/segregant_alleles.parquet": {
+   "method": "full",
+   "mtime": "2026-10-23T19:08:13",
+   "present": true,
+   "sha256": "5fd7d2dfff5938426215faee49a820267dc9cebc7247635883ec77c6ce0a0f41",
+   "size": 156381304,
+   "tier": "companion"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/representation_043_v2/verify_records.parquet": {
+   "method": "full",
+   "mtime": "2026-10-23T19:10:47",
+   "present": true,
+   "sha256": "07564545116d413f4090adab0111afd640919562422870fa5b31c6e109ac030b",
+   "size": 3012916,
+   "tier": "companion"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/representation_043_v2/vocab_calm.npy": {
+   "method": "full",
+   "mtime": "2026-10-23T19:05:52",
+   "present": true,
+   "sha256": "e8633c192d9664a94fc7123f0982c68b86190e89cfe771678c15ba5ddcac1bc0",
+   "size": 74453760,
+   "tier": "train"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/representation_043_v2/vocab_fudt_species_downstream.npy": {
+   "method": "full",
+   "mtime": "2026-10-23T19:05:51",
+   "present": true,
+   "sha256": "c7ac2017bed58864e69c0abe93a899e3352e95ba008fd386f0450ac1da97df9a",
+   "size": 26470976,
+   "tier": "train"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/representation_043_v2/vocab_fudt_species_upstream.npy": {
+   "method": "full",
+   "mtime": "2026-10-23T19:05:51",
+   "present": true,
+   "sha256": "cd8065b1929777f5de371db32fe6ee1ba56b4d1944ac9619b5aa8887052a73b2",
+   "size": 77381824,
+   "tier": "train"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/representation_043_v2/vocab_prot_t5_xl_uniref50.npy": {
+   "method": "full",
+   "mtime": "2026-10-23T19:05:51",
+   "present": true,
+   "sha256": "2c0957de743d268239e0df7a89b7da5584935da4ea6f6e193c3613e3a2f8f572",
+   "size": 48494272,
+   "tier": "train"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/train_043_prep/prep_v3_routeA/meta.json": {
+   "method": "full",
+   "mtime": "2026-10-23T19:17:35",
+   "present": true,
+   "sha256": "eeaa4c527eb86b79b942bc848bb8463a9828a89930a283794f31165da32fb72d",
+   "size": 96517,
+   "tier": "train_v3"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/train_043_prep/prep_v3_routeA/store.npz": {
+   "method": "full",
+   "mtime": "2026-10-23T19:17:35",
+   "present": true,
+   "sha256": "2f2481ccead2a78ca8852b7714d596e621706b354e70753cfb0e81f6291f34b5",
+   "size": 976435742,
+   "tier": "train_v3"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/train_043_prep/prep_v4_routeA/experiment_ontology_vocab.json": {
+   "method": "full",
+   "mtime": "2026-10-23T22:14:40",
+   "present": true,
+   "sha256": "eb9d1f022b12db7fb1a3479d1d63462fd3ae09998d2aaedc03d556c6c78563e9",
+   "size": 56408,
+   "tier": "train"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/train_043_prep/prep_v4_routeA/meta.json": {
+   "method": "full",
+   "mtime": "2026-10-23T22:14:40",
+   "present": true,
+   "sha256": "905f0311bc02ed3210eb4b99f6274d153913b03c3d06db027e26be3732525d2e",
+   "size": 96666,
+   "tier": "train"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/train_043_prep/prep_v4_routeA/store.npz": {
+   "method": "full",
+   "mtime": "2026-10-23T22:14:40",
+   "present": true,
+   "sha256": "7684168925b14c4ec1846758bac273aaf3898434154d70fb42d22c5e89abfbb5",
+   "size": 976794524,
+   "tier": "train"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/train_043_prep/prep_v4_routeB/experiment_ontology_vocab.json": {
+   "method": "full",
+   "mtime": "2026-10-26T15:23:02",
+   "present": true,
+   "sha256": "eb9d1f022b12db7fb1a3479d1d63462fd3ae09998d2aaedc03d556c6c78563e9",
+   "size": 56408,
+   "tier": "train"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/train_043_prep/prep_v4_routeB/meta.json": {
+   "method": "full",
+   "mtime": "2026-10-26T15:23:02",
+   "present": true,
+   "sha256": "e65dc21109290415f84f3426afa2cb690d83af01c0165c9ea3a8c9829f385c27",
+   "size": 89289,
+   "tier": "train"
+  },
+  "data/torchcell/experiments/043-expression-proteome-morphology/train_043_prep/prep_v4_routeB/store.npz": {
+   "method": "full",
+   "mtime": "2026-10-26T15:23:02",
+   "present": true,
+   "sha256": "ed1223220328837fdc77282b8b9d4dda237ae563365cbccb3c3c48ce80c68fc7",
+   "size": 1128324621,
+   "tier": "train"
+  }
+ },
+ "full_flag": true,
+ "full_hash_limit_bytes": 2147483648,
+ "generated_at": "2026-10-28T17:31:18-0500",
+ "head_tail_bytes": 67108864,
+ "host": "gilahyper",
+ "machine": "gilahyper",
+ "prep_meta": {
+  "prep_v3_routeA": {
+   "context_ids": {
+    "len": 784,
+    "sha256": "fe7e7ddcc0ac17113551c466047ad5718bd841bd179921ae9de87d75efe8afab"
+   },
+   "counts": {
+    "boocock": {
+     "train": 235,
+     "val": 79
+    },
+    "caudal": {
+     "train": 566,
+     "val": 189
+    },
+    "hu": {
+     "train": 225,
+     "val": 19
+    },
+    "jackson": {
+     "train": 784
+    },
+    "kemmeren": {
+     "train": 1202,
+     "val": 141
+    },
+    "messner": {
+     "train": 3772,
+     "val": 463
+    },
+    "muenzner": {
+     "train": 476,
+     "val": 159
+    },
+    "nadal": {
+     "sentinel_masked_cells": 6002044,
+     "train": 4969,
+     "val": 611
+    },
+    "nguessan": {
+     "train": 1770,
+     "val": 591
+    },
+    "sameith_dm": {
+     "split_b": 72
+    },
+    "turnover": {
+     "train": 33,
+     "val": 11
+    },
+    "vaishnav": {
+     "train": 42694,
+     "val": 14232
+    },
+    "zelezniak": {
+     "train": 79,
+     "val": 9
+    }
+   },
+   "created_at": "2026-10-24T00:17:33+00:00",
+   "datasets": [
+    "kemmeren",
+    "messner",
+    "zelezniak",
+    "caudal",
+    "muenzner",
+    "turnover",
+    "boocock",
+    "nguessan",
+    "vaishnav",
+    "hu",
+    "jackson",
+    "nadal",
+    "sameith_dm"
+   ],
+   "edges_outside_index": {
+    "physical": 0,
+    "regulatory": 1869,
+    "string12_0_coexpression": 0,
+    "string12_0_cooccurence": 0,
+    "string12_0_database": 0,
+    "string12_0_experimental": 0,
+    "string12_0_fusion": 0,
+    "string12_0_neighborhood": 0,
+    "tflink": 0
+   },
+   "env_keys": [
+    "042e9aca39c0",
+    "8f819c781251",
+    "ed4dc0d4d175",
+    "c7d8fd2babbb",
+    "fbf37e55f920",
+    "ab85e0823b60",
+    "5eb8436d2923",
+    "bbf7b9f1e80e",
+    "61d90319663a",
+    "a805d6f93770",
+    "57a078e53dee",
+    "31a2aac58b27",
+    "85560dec9149",
+    "309887d86bc2",
+    "005a55874b02",
+    "25f7d50fb210",
+    "89820c3bd8bc",
+    "2fba8beb3f4c",
+    "d1f886a77721",
+    "c9e271a3a23b",
+    "be55c43cd341",
+    "5f3603465471",
+    "33a1eacd12ce"
+   ],
+   "genes": {
+    "len": 6607,
+    "sha256": "88f08cc4a22df64426813c66bc39b188714362bc086c051cf94d139a84c39b52"
+   },
+   "graph_names": [
+    "physical",
+    "regulatory",
+    "tflink",
+    "string12_0_neighborhood",
+    "string12_0_fusion",
+    "string12_0_cooccurence",
+    "string12_0_coexpression",
+    "string12_0_experimental",
+    "string12_0_database"
+   ],
+   "host": "gilahyper",
+   "prep_version": "prep_v3",
+   "route": "A",
+   "slurm_job_id": "6304",
+   "split_store_sha256": "3416716bbb869e5b6acca576be69ac9d3ea13bdfaa90b0e7095fbb9add17bcec",
+   "split_version": "global_split_v2",
+   "torchcell_commit": "f65676e6c",
+   "wall_seconds": 57.1
+  },
+  "prep_v4_routeA": {
+   "context_ids": {
+    "len": 784,
+    "sha256": "fe7e7ddcc0ac17113551c466047ad5718bd841bd179921ae9de87d75efe8afab"
+   },
+   "counts": {
+    "boocock": {
+     "train": 235,
+     "val": 79
+    },
+    "caudal": {
+     "train": 566,
+     "val": 189
+    },
+    "hu": {
+     "train": 225,
+     "val": 19
+    },
+    "jackson": {
+     "train": 784
+    },
+    "kemmeren": {
+     "train": 1202,
+     "val": 141
+    },
+    "messner": {
+     "train": 3772,
+     "val": 463
+    },
+    "muenzner": {
+     "train": 476,
+     "val": 159
+    },
+    "nadal": {
+     "sentinel_masked_cells": 6002044,
+     "train": 4969,
+     "val": 611
+    },
+    "nguessan": {
+     "train": 1770,
+     "val": 591
+    },
+    "sameith_dm": {
+     "split_b": 72
+    },
+    "turnover": {
+     "train": 33,
+     "val": 11
+    },
+    "vaishnav": {
+     "train": 42694,
+     "val": 14232
+    },
+    "zelezniak": {
+     "train": 79,
+     "val": 9
+    }
+   },
+   "created_at": "2026-10-24T03:14:38+00:00",
+   "datasets": [
+    "kemmeren",
+    "messner",
+    "zelezniak",
+    "caudal",
+    "muenzner",
+    "turnover",
+    "boocock",
+    "nguessan",
+    "vaishnav",
+    "hu",
+    "jackson",
+    "nadal",
+    "sameith_dm"
+   ],
+   "edges_outside_index": {
+    "physical": 0,
+    "regulatory": 1869,
+    "string12_0_coexpression": 0,
+    "string12_0_cooccurence": 0,
+    "string12_0_database": 0,
+    "string12_0_experimental": 0,
+    "string12_0_fusion": 0,
+    "string12_0_neighborhood": 0,
+    "tflink": 0
+   },
+   "env_keys": [
+    "042e9aca39c0",
+    "8f819c781251",
+    "ed4dc0d4d175",
+    "c7d8fd2babbb",
+    "fbf37e55f920",
+    "ab85e0823b60",
+    "5eb8436d2923",
+    "bbf7b9f1e80e",
+    "61d90319663a",
+    "a805d6f93770",
+    "57a078e53dee",
+    "31a2aac58b27",
+    "85560dec9149",
+    "309887d86bc2",
+    "005a55874b02",
+    "25f7d50fb210",
+    "89820c3bd8bc",
+    "2fba8beb3f4c",
+    "d1f886a77721",
+    "c9e271a3a23b",
+    "be55c43cd341",
+    "5f3603465471",
+    "33a1eacd12ce"
+   ],
+   "genes": {
+    "len": 6607,
+    "sha256": "88f08cc4a22df64426813c66bc39b188714362bc086c051cf94d139a84c39b52"
+   },
+   "graph_names": [
+    "physical",
+    "regulatory",
+    "tflink",
+    "string12_0_neighborhood",
+    "string12_0_fusion",
+    "string12_0_cooccurence",
+    "string12_0_coexpression",
+    "string12_0_experimental",
+    "string12_0_database"
+   ],
+   "host": "gilahyper",
+   "ontology_n_nodes": 426,
+   "ontology_n_profiles": 38,
+   "ontology_vocab_sha256": "eb9d1f022b12db7fb1a3479d1d63462fd3ae09998d2aaedc03d556c6c78563e9",
+   "prep_version": "prep_v4",
+   "route": "A",
+   "slurm_job_id": "6324",
+   "split_store_sha256": "3416716bbb869e5b6acca576be69ac9d3ea13bdfaa90b0e7095fbb9add17bcec",
+   "split_version": "global_split_v2",
+   "torchcell_commit": "245deea00",
+   "wall_seconds": 173.5
+  },
+  "prep_v4_routeB": {
+   "context_ids": [
+    "S288C"
+   ],
+   "counts": {
+    "boocock": {
+     "train": 235,
+     "val": 79
+    },
+    "caudal": {
+     "train": 566,
+     "val": 189
+    },
+    "hu": {
+     "train": 225,
+     "val": 19
+    },
+    "jackson": {
+     "train": 784
+    },
+    "kemmeren": {
+     "train": 1202,
+     "val": 141
+    },
+    "messner": {
+     "train": 3772,
+     "val": 463
+    },
+    "muenzner": {
+     "train": 476,
+     "val": 159
+    },
+    "nadal": {
+     "sentinel_masked_cells": 6002044,
+     "train": 4969,
+     "val": 611
+    },
+    "nguessan": {
+     "train": 1770,
+     "val": 591
+    },
+    "sameith_dm": {
+     "split_b": 72
+    },
+    "turnover": {
+     "train": 33,
+     "val": 11
+    },
+    "vaishnav": {
+     "train": 42694,
+     "val": 14232
+    },
+    "zelezniak": {
+     "train": 79,
+     "val": 9
+    }
+   },
+   "created_at": "2026-10-26T20:22:51+00:00",
+   "datasets": [
+    "kemmeren",
+    "messner",
+    "zelezniak",
+    "caudal",
+    "muenzner",
+    "turnover",
+    "boocock",
+    "nguessan",
+    "vaishnav",
+    "hu",
+    "jackson",
+    "nadal",
+    "sameith_dm"
+   ],
+   "edges_outside_index": {
+    "physical": 0,
+    "regulatory": 1869,
+    "string12_0_coexpression": 0,
+    "string12_0_cooccurence": 0,
+    "string12_0_database": 0,
+    "string12_0_experimental": 0,
+    "string12_0_fusion": 0,
+    "string12_0_neighborhood": 0,
+    "tflink": 0
+   },
+   "env_keys": [
+    "042e9aca39c0",
+    "8f819c781251",
+    "ed4dc0d4d175",
+    "c7d8fd2babbb",
+    "fbf37e55f920",
+    "ab85e0823b60",
+    "5eb8436d2923",
+    "bbf7b9f1e80e",
+    "61d90319663a",
+    "a805d6f93770",
+    "57a078e53dee",
+    "31a2aac58b27",
+    "85560dec9149",
+    "309887d86bc2",
+    "005a55874b02",
+    "25f7d50fb210",
+    "89820c3bd8bc",
+    "2fba8beb3f4c",
+    "d1f886a77721",
+    "c9e271a3a23b",
+    "be55c43cd341",
+    "5f3603465471",
+    "33a1eacd12ce"
+   ],
+   "genes": {
+    "len": 6607,
+    "sha256": "88f08cc4a22df64426813c66bc39b188714362bc086c051cf94d139a84c39b52"
+   },
+   "graph_names": [
+    "physical",
+    "regulatory",
+    "tflink",
+    "string12_0_neighborhood",
+    "string12_0_fusion",
+    "string12_0_cooccurence",
+    "string12_0_coexpression",
+    "string12_0_experimental",
+    "string12_0_database"
+   ],
+   "host": "gilahyper",
+   "ontology_n_nodes": 426,
+   "ontology_n_profiles": 38,
+   "ontology_vocab_sha256": "eb9d1f022b12db7fb1a3479d1d63462fd3ae09998d2aaedc03d556c6c78563e9",
+   "prep_version": "prep_v4",
+   "route": "B",
+   "slurm_job_id": "6474",
+   "split_store_sha256": "3416716bbb869e5b6acca576be69ac9d3ea13bdfaa90b0e7095fbb9add17bcec",
+   "split_version": "global_split_v2",
+   "torchcell_commit": "f902f0d63",
+   "wall_seconds": 295.2
+  }
+ },
+ "repo": {
+  "files": {
+   "experiments/043-expression-proteome-morphology/conf/splits/global_split_v1.json": {
+    "method": "full",
+    "mtime": "2026-10-21T20:55:39",
+    "present": true,
+    "sha256": "3ada7aab92967db15a39217dd9befc2343ba1e35c24fe552e7008c8840adb6e2",
+    "size": 11986322
+   },
+   "experiments/043-expression-proteome-morphology/conf/splits/global_split_v2.json": {
+    "method": "full",
+    "mtime": "2026-10-23T19:16:26",
+    "present": true,
+    "sha256": "a499bc2cdaf23a791aaf31241d25798e07e47c79c7f0bdabb887db7127366f5b",
+    "size": 11992090
+   },
+   "experiments/043-expression-proteome-morphology/conf/splits/global_split_v2_redraw.json": {
+    "method": "full",
+    "mtime": "2026-10-23T19:12:19",
+    "present": true,
+    "sha256": "241591ac064fdeac24b33cd6fc3150ae1477211fb6efe52ca304f6257e948cae",
+    "size": 11992037
+   },
+   "experiments/043-expression-proteome-morphology/conf/train_043_default.yaml": {
+    "method": "full",
+    "mtime": "2026-10-25T15:57:49",
+    "present": true,
+    "sha256": "b4154d950713fcd898a0b089a00da54fadd513058eb2960b638718d133f4c0e3",
+    "size": 7090
+   },
+   "experiments/043-expression-proteome-morphology/scripts/global_split_043.py": {
+    "method": "full",
+    "mtime": "2026-10-23T19:14:31",
+    "present": true,
+    "sha256": "2cfdfd41007cf21e78ab71759ecccb4bd261c825faf78312c2fa0e506e6f808f",
+    "size": 7623
+   },
+   "experiments/043-expression-proteome-morphology/scripts/store_version_043.py": {
+    "method": "full",
+    "mtime": "2026-10-23T10:56:20",
+    "present": true,
+    "sha256": "82e51a2b586c9a8e3b8475b18a7b76c1e6e62a3b23f05a0f733aa557c3f0ba2a",
+    "size": 3592
+   },
+   "experiments/043-expression-proteome-morphology/scripts/train_043.py": {
+    "method": "full",
+    "mtime": "2026-10-26T01:15:13",
+    "present": true,
+    "sha256": "4793ee0bfd343d3faad50af20d717567e1940742fcc430ee97a3d5575450fc69",
+    "size": 141866
+   },
+   "torchcell/data/experiment_ontology.py": {
+    "method": "full",
+    "mtime": "2026-10-23T22:11:18",
+    "present": true,
+    "sha256": "b9d9f1e50154eed02c75439f9281028df73add62bb4975e45a495fa7c52da35f",
+    "size": 29998
+   },
+   "torchcell/data/representation_043.py": {
+    "method": "full",
+    "mtime": "2026-10-23T11:02:26",
+    "present": true,
+    "sha256": "5cd7f273d81277b4175b69eb1ec1d78555638b28bf01694edf84955a35c069c0",
+    "size": 32347
+   },
+   "torchcell/data/target_transform_043.py": {
+    "method": "full",
+    "mtime": "2026-10-23T22:25:14",
+    "present": true,
+    "sha256": "1e229d38e90b0a441c7780de366b733e0b4fc0ee8e657c0a3d377997d48ce701",
+    "size": 8479
+   },
+   "torchcell/models/cell_model_043.py": {
+    "method": "full",
+    "mtime": "2026-10-25T15:51:47",
+    "present": true,
+    "sha256": "89b0c62843f73df8b5ea813be2e2b0243bf6cc623be8a0aea904391c3ac51298",
+    "size": 40019
+   }
+  },
+  "git": {
+   "head": "d3ab5f03e0f3b7310294da121f3b7ffe3961770b"
+  },
+  "global_split_v2": {
+   "store_sha256": "3416716bbb869e5b6acca576be69ac9d3ea13bdfaa90b0e7095fbb9add17bcec",
+   "version": "global_split_v2"
+  },
+  "synced_commit": null,
+  "tree": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/043-expression-proteome-morphology"
+ },
+ "root": "/scratch/projects/torchcell-scratch"
+}

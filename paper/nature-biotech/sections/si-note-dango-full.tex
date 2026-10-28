@@ -36,6 +36,20 @@
 %% (line ~258, determine_lambda_values() keyed string9_1_*) + torchcell/losses/dango.py
 %% (DangoLoss: lambda_values.get(edge_type, 1.0)) + conf/dango_kuzmin2018_tmi_string1{1,2}_0.yaml
 %% (graphs string11_0_*/string12_0_*). Not measured in training.
+%% Paragraph "Ablation of the reconstruction loss and the ReZero gate", fig:dango-ablation and
+%% tab-dango-ablation-arms.tex: experiments/006-kuzmin-tmi/scripts/dango_ablation_si.py (wandb pull of
+%% zhao-group/torchcell_006-kuzmin2018-tmi_dango_ablation, one run per arm: baseline qy17re1f, slurm
+%% 6442; no_pretrain s2bpfsqr, 6443; no_rezero wlszxkke, 6444; the both-off arm, 6445, was held and has
+%% no run), frozen to experiments/006-kuzmin-tmi/results/dango_ablation_{curves,arms}.csv; every number of
+%% the paragraph and the caption is a column of dango_ablation_arms.csv. The gray reference curves and the
+%% 0.3652-0.3676 band are the five v9.1 runs read from
+%% experiments/010-kuzmin-tmi/results/dango_full_dataset_{runs,history}.csv (not re-pulled). Training:
+%% experiments/006-kuzmin-tmi/scripts/dango_ablation.py, conf/dango_ablation_*.yaml (reads the 006 build's
+%% side files, since the LMDB no longer deserializes). Figure composed by
+%% experiments/006-kuzmin-tmi/scripts/dango_ablation_compose_figure.py. Notes:
+%% notes/experiments.006-kuzmin-tmi.scripts.dango_ablation_si.md and
+%% notes/experiments.006-kuzmin-tmi.scripts.dango_ablation_compose_figure.md. The gate-gradient sentence
+%% is a labeled hypothesis: no per-branch gradient norm was logged.
 \clearpage
 \suppnote{note:dango-full}{DANGO on the full trigenic dataset of the CGT experiment\secstatus{todo}}
 
@@ -110,11 +124,48 @@ ablation takes the epoch-999 checkpoint of that run ($\beta_l=0.171,\,0.201$; ra
 0.618) from 0.2973 to $-0.0283$, and the v12.0 checkpoint \texttt{9jpfy547} ($\beta_l=0.0921,
 \,0.0745$; ratios 0.393, 0.324) only from 0.3543 to 0.3370, its $\beta=0$ predictions
 correlating 0.963 with its full ones. This is an inference-time ablation of models trained
-with the branch: no model was trained without it, and whether ReZero as a residual
-parameterization helps or hurts training is not measured here. Hypothesis (untested): the
-v12.0 checkpoint carries most of its validation correlation in the per-gene term, while the
-v9.1 checkpoint relies on the attention branch for nearly all of it; removing a branch that the
-downstream layers were fit with does not measure what a model trained without it would reach.
+with the branch: it measures how much of each trained model's validation correlation passes
+through the attention branch, not whether the gate helps training, which a model trained
+without the gate answers (next paragraph).
+
+\notesec{Ablation of the reconstruction loss and the ReZero gate} Three arms of a two-by-two
+ablation of the v9.1 configuration were each trained once, for 150 epochs at batch 64 on one
+GPU with seed 42 (\supptab{tab:dango-ablation-arms}, \suppfig{fig:dango-ablation}); the fourth
+arm, with both changes, has not been run. The baseline (\texttt{qy17re1f}) is the v9.1
+configuration of \supptab{tab:dango-full-runs}. The arm without the reconstruction loss
+(\texttt{s2bpfsqr}) sets $\alpha_e=0$ from the first step, so the reconstruction loss is
+computed and logged but sends no gradient and the model trains on the interaction loss alone.
+It removes an auxiliary loss trained jointly with the interaction loss and does not test the
+staged pretraining of the DANGO paper, which TorchCell folds into one run
+(\suppnoteref{note:dango-repro}). The arm without the gate (\texttt{wlszxkke}) replaces
+$x+\beta_l\,O_l(\mathrm{attn}(x))$ by the plain residual $x+O_l(\mathrm{attn}(x))$ in both
+layers, with no $\beta_l$. One seed per arm cannot resolve a difference the size of the spread
+of the five v9.1 runs, 0.3652 to 0.3676 in best validation $r$, and those runs took two to four
+times fewer optimizer steps per epoch, so their spread is a scale, not a matched control.
+
+Without the reconstruction loss, validation $r$ reaches 0.35 as early as the baseline (epoch 12
+against 13), although the baseline trains on the reconstruction loss alone in epoch 0 and
+starts at $-0.043$ where this arm starts at 0.240. It then stays near 0.35 (0.351 at epochs 50
+and 100, against 0.364 for the baseline) and reaches 0.36 only at epoch 126, against 33 for the
+baseline and 39 to 66 for the five earlier runs: 7.5 h of training against 3.0 h, although its
+epochs take 212 s against 311 s. Its best, 0.3611 at epoch 137, is 0.004 below the baseline's
+0.3654 and below all five earlier runs; at the minimum-validation-MSE checkpoint its test $r$ is
+0.3705 against 0.3711. Its validation reconstruction loss, never trained, rises from 0.0047 to
+0.0062 while the baseline's falls from 0.0019 to 0.0010 (\suppfig{fig:dango-ablation}c). On
+this seed the reconstruction loss gives no head start to $r=0.35$ and no gain in test $r$ at the
+kept checkpoint, but brings the model to its plateau about 90 epochs sooner; whether that holds
+over seeds is not measured.
+
+Without the gate, validation $r$ reaches 0.35 at epoch 6 and 0.36 at
+epoch 17, against 13 and 33 for the baseline, at the same cost per epoch (309 s against 311 s);
+its best, 0.3701 at epoch 70, is 0.0047 above the baseline and 0.0025 above the five earlier
+runs, and its test $r$ at the kept checkpoint is 0.3784 against 0.3711. Removing the gate
+therefore leaves the score unchanged or higher on this seed. The value a gate trains to is not a
+readout of the branch's contribution: the baseline's gates end at $\beta_1=0.071$ and
+$\beta_2=0.072$, the inference ablation above shows that a branch under such a gate carries
+nearly all of the v9.1 correlation, and this arm shows that the model does not need the gate to
+use the branch. Hypothesis (untested): a gate initialized at 0.01 scales down the attention
+branch's gradient early in training, which would slow the rise that the plain residual avoids.
 
 \begin{figure*}[t]
 \tcfig{figures/FigS-dango-full-dataset.pdf}{\textbf{DANGO on the full trigenic dataset.}
@@ -155,4 +206,29 @@ for 99.4\% of genes), mean fusion weight 0.261 with v12.0 (94.4\%). Source:
 \texttt{dango\_full\_dataset\_inference.py}).}{fig:dango-full}
 \end{figure*}
 
+\begin{figure*}[t]
+\tcfig{figures/FigS-dango-ablation.pdf}{\textbf{Without the ReZero gate DANGO reaches its plateau
+sooner; without the reconstruction loss it stalls near $r=0.35$.} One run per arm with STRING
+v9.1 graphs on the experiment-006 splits, 150 epochs at batch 64 on one GPU: the baseline
+configuration of \supptab{tab:dango-full-runs}, the same trained on the interaction loss alone
+($\alpha_e=0$, no reconstruction loss), and the same with the plain residual
+$x+O_l(\mathrm{attn}(x))$ in place of the ReZero gate (\supptab{tab:dango-ablation-arms}).
+\textbf{a},~Validation Pearson $r$ against epoch; thin gray lines, the first 150 epochs of the
+five v9.1 runs of \suppfig{fig:dango-full}a, trained at two to four times fewer optimizer steps
+per epoch; dashed line, $r=0.35$; the axis is zoomed to 0.20 to 0.40. The baseline, the arm
+without the reconstruction loss and the arm without the gate reach 0.35 at epochs 13, 12 and 6
+and 0.36 at epochs 33, 126 and 17; without the reconstruction loss, $r$ is 0.351 at epochs 50
+and 100. \textbf{b},~Best validation Pearson $r$ (maximum over epochs, an upward-biased order
+statistic; dark bar) and test Pearson $r$ at the minimum-validation-MSE checkpoint (light
+hatched bar) per arm: 0.3654 and 0.3711, 0.3611 and 0.3705, 0.3701 and 0.3784. Gray band, the
+range of best validation $r$ over the five earlier v9.1 runs, 0.3652 to 0.3676; one run per arm,
+so no whisker; the axis is zoomed to 0.34 to 0.40. \textbf{c},~Validation reconstruction loss
+(Eq.~\ref{eq:dango-rec}, unweighted) against epoch, logarithmic axis: it falls from 0.0019 to
+0.0010 in the baseline and to 0.0011 without the gate, and rises from 0.0047 to 0.0062 in the arm
+that never trains on it. Source:
+\texttt{experiments/006-kuzmin-tmi/scripts/dango\_ablation\_si.py}.}{fig:dango-ablation}
+\end{figure*}
+
 \input{sections/tab-dango-full-runs}
+
+\input{sections/tab-dango-ablation-arms}

@@ -1,0 +1,32 @@
+%% SOURCE: experiments/006-kuzmin-tmi/scripts/dango_ablation_si.py -- AUTO-GENERATED from wandb zhao-group/torchcell_006-kuzmin2018-tmi_dango_ablation; do not hand-edit.
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{The DANGO ablation arms, one run each. Every arm trains the STRING v9.1
+configuration of \supptab{tab:dango-full-runs} (hidden width 64, four heads, AdamW at
+learning rate $10^{-5}$) on the experiment-006 splits for 150 epochs at batch 64 on one
+GPU, with seed 42 for initialization and shuffling; it changes only what the second
+column states. The arm with both changes has not been run. Best validation $r$ is the maximum over epochs of
+validation Pearson $r$, an upward-biased order statistic, with the epoch it occurs at;
+validation and test Pearson $r$ at minimum validation MSE are read at the checkpoint the
+trainer keeps, the only one scored on test. Epochs count from 0. $\beta_1,\beta_2$ are
+the two ReZero gates after the last epoch (initialized at 0.01; -- where the arm has
+none). $\mathcal{L}_{\mathrm{rec}}$ is the unweighted validation reconstruction loss
+(Eq.~\ref{eq:dango-rec}) after the first and the last epoch. Wall time is the median
+over epochs of one training epoch plus its validation, on one NVIDIA RTX 6000 Ada GPU.
+For scale, the five v9.1 runs of \supptab{tab:dango-full-runs} reach best
+validation $r$ 0.3652 to 0.3676, $r\ge0.35$ at epochs
+16 to 23 and $r\ge0.36$ at epochs 39 to
+66, at two to four times fewer optimizer steps per epoch.}
+\label{tab:dango-ablation-arms}
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}p{1.65cm} p{3.0cm} l l l l l l r@{}}
+\toprule
+\textbf{\begin{tabular}[b]{@{}l@{}}Arm, run\end{tabular}} & \textbf{\begin{tabular}[b]{@{}l@{}}Change from\\ the baseline\end{tabular}} & \textbf{\begin{tabular}[b]{@{}l@{}}Best val.\\ Pearson $r$\\ (epoch)\end{tabular}} & \textbf{\begin{tabular}[b]{@{}l@{}}Val. Pearson\\ $r$ at min.\\ val. MSE\\ (epoch)\end{tabular}} & \textbf{\begin{tabular}[b]{@{}l@{}}Test Pearson\\ $r$ at min.\\ val. MSE\end{tabular}} & \textbf{\begin{tabular}[b]{@{}l@{}}First epoch,\\ val. Pearson\\ $r \ge 0.35$; $0.36$\end{tabular}} & \textbf{\begin{tabular}[b]{@{}l@{}}$\beta_1,\beta_2$\\ after\\ epoch 149\end{tabular}} & \textbf{\begin{tabular}[b]{@{}l@{}}Val. $\mathcal{L}_{\mathrm{rec}}$,\\ epoch 0 $\to$ 149\end{tabular}} & \textbf{\begin{tabular}[b]{@{}l@{}}Median\\ wall per\\ epoch (s)\end{tabular}}\tabularnewline
+\midrule
+\raggedright Baseline\newline\texttt{qy17re1f} & \raggedright None: reconstruction loss at weight $\alpha_e$, 1 to 0.5 over epochs 0 to 10, then 0.5; ReZero gates $\beta_l$ from 0.01 & 0.3654 (70) & 0.3652 (74) & 0.3711 & 13; 33 & 0.071, 0.072 & 0.0019 $\to$ 0.0010 & 311\tabularnewline
+\raggedright No reconstruction loss\newline\texttt{s2bpfsqr} & \raggedright Interaction loss only, $\alpha_e=0$ from the first step; $\mathcal{L}_{\mathrm{rec}}$ logged, not trained & 0.3611 (137) & 0.3606 (129) & 0.3705 & 12; 126 & 0.092, 0.135 & 0.0047 $\to$ 0.0062 & 212\tabularnewline
+\raggedright No ReZero gate\newline\texttt{wlszxkke} & \raggedright Plain residual $x+O_l(\mathrm{attn}(x))$ in both layers, no $\beta_l$ & 0.3701 (70) & 0.3688 (58) & 0.3784 & 6; 17 & -- & 0.0019 $\to$ 0.0011 & 309\tabularnewline
+\bottomrule
+\end{tabular}
+\end{table}

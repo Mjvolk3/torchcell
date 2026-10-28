@@ -13,3 +13,7 @@ created: 1792994261365
 - [ ] DANGO ablation arms on the 006 build, STRING v9.1 (baseline, no reconstruction loss, plain residual, both): GilaHyper jobs 6442 to 6444 pending behind the 043 sweep, 6445 held; W&B project `torchcell_006-kuzmin2018-tmi_dango_ablation` [[experiments.006-kuzmin-tmi.scripts.dango_ablation]]
 - [ ] Add the Bachlechner 2020 ReZero reference and the DANGO reference key to `references.bib` (owner curation)
 - [x] Owner review: panel f (error vs |tau| beside the CGT) dropped as redundant with Fig. 2d; Supplementary Fig. 9 re-flowed as a 2 x 3 grid of third-width panels (a to f, channel weights now f), 179.9 x 114.0 mm [[experiments.010-kuzmin-tmi.scripts.dango_full_dataset_panels_ef]]
+
+## 2026.10.27
+
+- [x] DANGO ablation arms into `note:dango-full`: Supplementary Fig. `fig:dango-ablation` (`FigS-dango-ablation`, 179.9 x 56.5 mm, one row a to c), Supplementary Table `tab:dango-ablation-arms`, and the paragraph "Ablation of the reconstruction loss and the ReZero gate". One seed per arm: without the ReZero gate validation r reaches 0.35 at epoch 6 (baseline 13), best 0.3701 (baseline 0.3654), test 0.3784 (0.3711); without the reconstruction loss it reaches 0.35 at epoch 12 but stalls there and reaches 0.36 only at epoch 126 (baseline 33), best 0.3611, test 0.3705. The both-off arm (6445) has no run [[experiments.006-kuzmin-tmi.scripts.dango_ablation_si]] [[experiments.006-kuzmin-tmi.scripts.dango_ablation_compose_figure]]

@@ -2125,3 +2125,65 @@ Window means 41-50 regenerated (`results/ghyper_sweep_2026_10_24_window_means.js
 | bs16 mean of 3 (sd) | 0.0967 (0.006) | 0.1989 (0.012) | 0.1992 (0.003) | 0.1605 (0.003) | 0.0634 (0.016) | 0.9104 (0.008) | Hu 0.069-0.084, Zelezniak -0.053..0.088 | 0.1147 / 0.1340 | 0.2440 / 0.2000 |
 
 Reads. Profile-pooled statistics at three seeds: Kemmeren, doubles, Muenzner, Messner and Vaishnav inside the baseline spread (means within 0.007 of the baseline), Caudal below every baseline seed at 2 of 3 seeds (0.1406, 0.1271 against 0.1568-0.1626; mean 0.1460 against 0.1605). Null on the gene heads, a cost on Caudal at two seeds: not adopted as the default. Leave-Hu-out at three seeds: zero-shot Hu 0.0335 / 0.0156 / -0.0100 (mean 0.013), every seed below every trained-in bs16 seed (0.069-0.084) and the mean below the trained-in range across cells (0.023-0.087); with three seeds the held-out Hu head does not transfer, at 19 validation records. Leave-Zelezniak-out at three seeds: -0.0385 / -0.1105 / 0.0802 against trained-in -0.0525 / 0.0776 / 0.0879, the two spreads overlap, unresolved at 9 records. The LODO-shared pattern from two seeds (Muenzner high, Kemmeren low) is weaker at seed 2: Muenzner 0.2081 / 0.2104 (still above the baseline's 0.1992, sd 0.003) and Kemmeren 0.1003 / 0.1072 (above the baseline mean), so the Kemmeren half does not hold. The Kemmeren fine-tune from the leave-Zelezniak-out seed-2 checkpoint reads 0.1508, above every other fine-tune so far (0.1060-0.1340); one seed, and the s0 / s1 fine-tunes of that cell were on `alone_zelezniak`, so there is no matched pair.
+
+### Throughput review, Oct 26 00:00 to Oct 28 01:00 UTC (owner's request, 20:10 CDT Oct 27)
+
+Sources: `qstat -xf` on Polaris and Aurora (walltime used per job), the per-cell logs (`slurm/output/onto_grid` on Polaris, `slurm/output/aurora_grid` on Aurora), `sacct` on GilaHyper, and the epochs each W&B run logged inside the window (scratch script over `run.history`; every Polaris run was re-created on Oct 26 12:40 UTC when the lane moved to prep_v4, so its whole history falls in the window). Stage-1 epochs count one `[epoch]` line each; the five `alone_kemmeren` cells log per step and are left out of the epoch totals.
+
+| machine | allocation that ran in the window | GPU-hours allocated (tile-hours on Aurora) | stage-1 cell-epochs logged | fine-tune epochs | cells finished (stage 1 / fine-tune) | seconds per epoch | share of allocated GPU time spent training (estimate) |
+|---|---|---|---|---|---|---|---|
+| Aurora | v2 grid 8966432 + 8966433: 2 nodes x 12 tiles, 32.4 h + 32.0 h, exit 0; v3 grid 8973596 + 8973597 running since Oct 27 19:13 UTC (5.9 h in window); 3 debug smokes, 45 min | 924 | 1,429 (v2: 1,200; v3: 216 at epoch 9 of 80 in all 24 cells; smokes 13) | 480 (24 fine-tunes of 20) | 24 / 24 (v2), 0 faults | 2,205-2,360 at batch 16 | about 95 percent: one cell per tile, start to end, 4.5 h idle between v2 end (14:40 UTC) and v3 start |
+| Polaris | 10 productive chunks (nine 24-node, one 32-node, each 54 min of a 1 h walltime), one 16-min chunk that found no free cell, three 1 s no-ops; 11 jobs still queued | about 1,005 (251 node-hours x 4) | 3,342 (65 cells; 50 of them from 0 to 60-73 of 80) | 140 (7 fine-tunes of 20) | 12 / 7, plus 3 cells retired for collapse | 400 (name arms), 460 (ontology arms), 475 (injection arms) at batch 8; 320 at batch 32 | about 40 percent: 400 GPU-hours of epochs against 1,005 allocated; the lane had 55-65 cells for 96-128 ranks per chunk, and each 54-min chunk gives a cell 6-7 epochs plus a partial one |
+| GilaHyper | 2-3 cards (the owner's 025 and essentiality jobs hold the other cards) | about 130 | 1,476 | 540 (27 fine-tunes) | 26 / 27; 2 cancelled (mmmm-cos at 52 of 80, route B lr-half at 35 of 50, both collapses) | 261-308 at batch 16, 385-395 route B at batch 8 | about 90 percent |
+
+Per calendar day: Polaris about 1,670 stage-1 cell-epochs, GilaHyper about 740, Aurora about 715 (an Aurora tile at batch 16 takes 2,300 s per epoch against 261 s on a GilaHyper card and 460 s at batch 8 on a Polaris A100). Polaris delivered 9.3 h of chunk time in the 49 h window, with a 12 h gap (Oct 27 06:40 to 18:38 UTC) when nothing ran; the queue, not the lane, set that. Inside a chunk the waste is ranks without a cell (41-80 idle per chunk). Twenty cells were appended to `polaris_cells_043_seeds100.tsv` at 20:30 CDT (85 cells now; file md5 caa03a73 both sides, rsynced alone): `all_onto_{hlgauss,pinball}_injop_equal_lrhalf_s0-4` (`optim.lr=1.5e-4`, stage 1 only; the fine-tune keeps lr 3e-4) and `all_onto_{hlgauss,pinball}_injop_records_s0-4` (`weighting=records`, kept by the fine-tune), the Polaris twins of Aurora v3 job b. Aurora v3 at 2,360 s per epoch including start-up ends stage 1 at about Oct 29 23:40 UTC (18:40 CDT), fine-tunes an hour later, inside the 60 h walltime.
+
+### Polaris lane: batch 16 at five seeds finished, batch 32 collapsed at every seed
+
+Window means 71-80 from `results/ontology_2026_10_23_window_means.json` (regenerated 20:50 CDT); Polaris A100, batch 16, 80 epochs, HL-Gauss, ontology conditioning, otherwise the lane recipe. The GilaHyper rows are the same recipe on a GilaHyper card (`gs1024_w4_bs16`, `_s1`, 71-80), from the table above.
+
+| cell | Kemmeren r (71-80) | doubles r (71-80) | Muenzner r (71-80) | Caudal r (71-80) | Messner r (71-80) | Vaishnav r (71-80) | val/loss (71-80) | ft Kemmeren r (17-20) | ft doubles r (17-20) |
+|---|---|---|---|---|---|---|---|---|---|
+| Polaris bs16 s0 | 0.0942 | 0.1788 | 0.2025 | 0.1264 | 0.0694 | 0.9331 | 2.5049 | 0.1245 | 0.2432 |
+| Polaris bs16 s1 | 0.0991 | 0.1941 | 0.1879 | 0.1375 | 0.0595 | 0.9245 | 2.4877 | 0.1279 | 0.2197 |
+| Polaris bs16 s2 | 0.1020 | 0.2043 | 0.2139 | 0.1453 | 0.0518 | 0.9226 | 2.4812 | 0.1239 | 0.2619 |
+| Polaris bs16 s3 | 0.0930 | 0.1970 | 0.2213 | 0.1498 | 0.0504 | 0.9289 | 2.4862 | 0.1193 | 0.2511 |
+| Polaris bs16 s4 | 0.0712 | 0.1976 | 0.2066 | 0.1576 | 0.0635 | 0.9176 | 2.4990 | 0.0974 | 0.2022 |
+| Polaris bs16 mean of 5 | 0.0919 | 0.1944 | 0.2064 | 0.1433 | 0.0589 | 0.9253 | 2.4918 | 0.1186 | 0.2356 |
+| GilaHyper bs16 mean of 2 | 0.1138 | 0.1961 | 0.2273 | 0.1700 | 0.0658 | 0.9278 | 2.4906 | 0.1304 | 0.2421 |
+| Polaris bs32 s0 | nan | -0.0883 | 0.0131 | 0.0254 | nan | nan | 2.7762 | nan | -0.0883 |
+| Polaris bs32 s2 | -0.0035 | -0.0883 | 0.0337 | 0.0233 | 0.0031 | nan | 2.7694 | 0.0054 | -0.0883 |
+
+Reads.
+
+- Batch 32 (HL-Gauss, lr 3e-4, route A) collapsed in 5 of 5 seeds: s0 and s2 ran all 80 epochs with the gene heads locked at the collapse values (doubles -0.0883, Kemmeren nan, val/loss 2.77, the signature of route B at batch 16 in [[043 collapse signatures|experiments.043-expression-proteome-morphology#2026.10.27]]); s1, s3 and s4 stopped on `FloatingPointError: non-finite gradient norm` at epochs 41, 42 and 14 with `operator/relative_norm` 1,000-4,500, and were retired from the lane by hand (`.done` markers with the reason written in them, Oct 26 15:50 and Oct 27 04:15 / 05:56 UTC) so that ranks stop re-claiming a cell that fails on every resume. Batch 16 at the same lr: 0 of 5 collapsed on Polaris, 0 of 3 on GilaHyper, 0 of 24 on Aurora v2. Hypothesis (untested): the collapse threshold sits between effective batch 16 and 32 at lr 3e-4 for route A, as it sits between batch 8 and 16 for route B (below).
+- Polaris batch 16 against GilaHyper batch 16, same recipe, 71-80: doubles agree (0.1944 against 0.1961) and val/loss agrees (2.4918 against 2.4906); Kemmeren (0.0919 against 0.1138), Muenzner (0.2064 against 0.2273) and Caudal (0.1433 against 0.1700) read lower on Polaris at every one of the five seeds against both GilaHyper seeds. A machine effect of 0.02-0.03 on the per-gene heads, in the opposite direction to the Aurora Muenzner offset (+0.02 over GilaHyper); per-gene heads are compared within one machine only.
+- The Polaris 80-epoch batch-16 fine-tunes: Kemmeren 0.0974-0.1279 (mean 0.1186), doubles 0.2022-0.2619 (0.2356); the GilaHyper pair 0.1427 / 0.1181 and 0.2423 / 0.2419.
+
+### Wave 8 seed 0: pinball, pinball + operator injection, route B at batch 8 (jobs 6516, 6518, 6514; fine-tunes 6517, 6519)
+
+Window means 41-50 (`results/ghyper_sweep_2026_10_24_window_means.json`, regenerated 20:35 and 20:55 CDT); GilaHyper, batch 16, 50 epochs, ontology conditioning, recipe v2. In both regenerations W&B's `scan_history` export returned epochs 1-50 only (3,602 rows) for `gs1024_w5_onto_inject_op` and `_s1`, the two runs resumed from 50 to 80 in jobs 6508 / 6510, while `run.history(samples=1000)` returns 80 epochs and the summary says 80 (`_s2` exports all 80, 5,763 rows); their 71-80 rows are therefore empty in the committed file, and the 71-80 table above stands on the 12:50 CDT regeneration (commit 48429ba04). Regenerate again before the next read of those two runs. Pinball cells report losses on the pinball scale, so the loss columns are left out. Comparators: bs16 mean of 3 at 41-50 (above), inject_op mean of 3 at 41-50 (Kemmeren 0.0966, doubles 0.2360, Muenzner 0.2158), route B batch 16 s0 / s1 (collapsed).
+
+| cell | Kemmeren r (41-50) | doubles r (41-50) | Muenzner r (41-50) | Caudal r (41-50) | Messner r (41-50) | Vaishnav r (41-50) | operator norm at epoch 50 | ft Kemmeren r (16-20) | ft doubles r (16-20) |
+|---|---|---|---|---|---|---|---|---|---|
+| pinball s0 | 0.0833 | 0.2243 | 0.2217 | 0.1520 | 0.0827 | 0.9096 | 0.85 | 0.1145 | 0.2696 |
+| pinball + inject_op s0 | 0.0628 | **0.2674** | 0.2219 | **0.1721** | 0.0643 | 0.9097 | 0.88 | 0.1062 | **0.2784** |
+| route B bs8 s0 | 0.0859 | 0.1963 | 0.1657 | 0.1079 | 0.0643 | **0.9248** | 1.17 | ft 6515 queued | |
+| bs16 mean of 3 (sd) | **0.0967** (0.006) | 0.1989 (0.012) | 0.1992 (0.003) | 0.1605 (0.003) | 0.0634 (0.016) | 0.9104 (0.008) | | 0.1147 / 0.1340 | 0.2440 / 0.2000 |
+| inject_op mean of 3 | 0.0966 | 0.2360 | 0.2158 | | | | | 0.1112 / 0.1217 / 0.1290 | 0.2347 / 0.2296 / 0.2615 |
+| route B bs16 s0 / s1 | 0.0004 / nan | -0.0883 / -0.0883 | 0.0351 / 0.0355 | 0.0133 / 0.0227 | | 0.8795 / 0.8683 | 292 / (collapsed) | -0.0032 / 0.0004 | -0.0883 / -0.0883 |
+
+Reads (one seed each; seeds 1 and 2 of the two pinball cells are running or queued).
+
+- Pinball alone on GilaHyper repeats the Aurora direction: doubles 0.2243 against bs16 0.1989 (+0.025, above all three bs16 seeds 0.1912-0.2131; Aurora read +0.029 under ontology at 4 seeds), Muenzner +0.022 (above all three), Messner +0.019, Vaishnav equal, Caudal -0.009 and Kemmeren -0.013 (below all three bs16 seeds). After the Kemmeren fine-tune: Kemmeren 0.1145 (the bs16 fine-tunes 0.1147 / 0.1340), doubles 0.2696 (0.2440 / 0.2000).
+- The two doubles levers add: pinball + operator injection reads doubles 0.2674, +0.043 over pinball alone, +0.031 over the injection mean (+0.019 over its best seed, 0.2482), +0.069 over bs16; the highest 41-50 doubles of any cell on this machine. Its fine-tune, 0.2784, is also the highest fine-tuned doubles so far (0.2739 before). The cost is Kemmeren: 0.0628 before the fine-tune, the lowest of every non-collapsed cell (bs16 0.0967, injection 0.0966, pinball 0.0833), and 0.1062 after it (0.1112-0.1340 for the others); Muenzner equals pinball alone (0.2219), Caudal 0.1721 is above every bs16 seed. One seed; the Aurora v3 grid carries this combination at 4 seeds and 80 epochs.
+- Route B at batch 8 did not collapse in 50 epochs: `operator/relative_norm` 0.38 at epoch 1, 0.72 at 30, 0.90 at 40, 1.17 at 50, against 37-292 over epochs 41-50 at batch 16 (s0) with the gene heads locked. Its heads are not better than route A at batch 16: doubles 0.1963 (bs16 0.1989), Kemmeren 0.0859, Muenzner 0.1657 and Caudal 0.1079 below every bs16 seed (0.1992 sd 0.003, 0.1605 sd 0.003), Vaishnav 0.9248 above (0.9104 sd 0.008); val/loss 2.4788 against 2.4886 for the one 50-epoch bs16 seed. The norm rose through the whole run, so whether batch 8 prevents the collapse or delays it past epoch 50 is not measured; the architecture-side fixes stay with the owner.
+
+GilaHyper at 20:50 CDT: two 043 cards (the owner's `025-gifit-a` / `-b` hold the other two): `gs1024_w8_pinball_s1` (6520, epoch 42) and `gs1024_w8_pinball_injop_s1` (6522, epoch 26) running, the route B bs8 fine-tune 6515 released and waiting for a card, seeds 2 (6524-6527) held behind them. Aurora v3: 24 of 24 cells at epoch 9, 0 faults.
+
+Run links (`?nw=sjpdqsr7yjg` is the GilaHyper round view, `?nw=v7cpxguxc5o` the Polaris round view built this evening, loss-only view `?nw=ue6jm8p1669`; both recorded in `results/wandb_view_ids.json`):
+
+<https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball_injop?nw=sjpdqsr7yjg>
+<https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball?nw=sjpdqsr7yjg>
+<https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_routeB_bs8?nw=sjpdqsr7yjg>
+<https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/o1023_all_onto_hlgauss_equal_bs32_s0?nw=v7cpxguxc5o>

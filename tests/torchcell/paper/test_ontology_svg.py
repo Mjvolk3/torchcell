@@ -300,8 +300,11 @@ def test_flow_lane_wraps_a_tree_that_would_pass_the_target_height() -> None:
         classes={n: _model(n, "provenance", ten) for n in ["A", "B", "C"]}
     )
     cards, max_x, max_y = svg._flow_lane(graph, "provenance", compact=False)
-    assert {n: (c.x, c.y) for n, c in cards.items()} == pytest.approx(
-        {"A": (0.0, 0.0), "B": (0.0, 191.0), "C": (312.0, 0.0)}
+    assert {n: c.x for n, c in cards.items()} == pytest.approx(
+        {"A": 0.0, "B": 0.0, "C": 312.0}
+    )
+    assert {n: c.y for n, c in cards.items()} == pytest.approx(
+        {"A": 0.0, "B": 191.0, "C": 0.0}
     )
     assert (max_x, max_y) == pytest.approx((570.0, 348.0))
 

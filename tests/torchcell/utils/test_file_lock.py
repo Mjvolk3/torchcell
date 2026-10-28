@@ -17,8 +17,9 @@ timed with ``time.monotonic``:
 - ``timeout=0`` is one non-blocking attempt and ``retry_delay`` is ``filelock``'s
   ``poll_interval``; only ``None`` takes the class defaults (2026.10.01, issue #529,
   which retired the Findings that 0 became 60 s and that the delay was dropped);
-- a stale ``.lock`` file with content and no holder does not block, and is truncated to
-  empty while held; the context manager and the update path release on an exception;
+- a stale ``.lock`` file with content and no holder does not block, and while the
+  update holds it a second lock object cannot take it (2026.10.28: no longer "truncated
+  to empty", which ``filelock`` 4.x dropped upstream, #591); the context manager and the update path release on an exception;
 - the exact lock and staging paths: ``<name><suffix>.lock`` and ``<name><suffix>.tmp``
   (2026.10.01: no longer ``<stem>.tmp``, which ``a.json`` and ``a.yaml`` shared under
   two different locks); a failed stage leaves the target untouched;
@@ -404,25 +405,28 @@ def test_every_method_forwards_timeout_and_poll_interval(
     assert seen == [(0, 0)] * 3 + [(60.0, 0.1)] * 3
 
 
-def test_stale_lock_file_does_not_block_and_is_truncated_while_held(
+def test_stale_lock_file_does_not_block_and_is_held_by_the_update(
     tmp_path: Path,
 ) -> None:
     """A ``.lock`` file left with content by a process that no longer holds it is not
     a lock: the update acquires within its 0.5 s timeout, and while it holds the lock
-    the file exists and is empty (opened with ``O_TRUNC``).
+    a second ``FileLock`` on that file cannot take it. The file's content is not
+    asserted: ``filelock`` 3.x opened it with ``O_TRUNC`` and 4.x leaves it as found.
     """
     path = tmp_path / "data.json"
     lock_path = tmp_path / "data.json.lock"
     lock_path.write_text("12345\n")
-    seen: list[str] = []
+    seen: list[bool] = []
 
     def peek(data: dict[str, Any]) -> dict[str, Any]:
-        seen.append(lock_path.read_text())
+        with pytest.raises(Timeout):
+            FileLock(lock_path).acquire(blocking=False)
+        seen.append(lock_path.exists())
         return {**data, "seen": True}
 
     result = FileLockHelper.update_json_with_lock(path, peek, timeout=0.5)
     assert result == {"seen": True}
-    assert seen == [""]
+    assert seen == [True]
 
 
 def test_with_file_lock_releases_on_an_exception(tmp_path: Path) -> None:

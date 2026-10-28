@@ -315,14 +315,16 @@ def test_recall_bars_sorted_by_graph_then_layer_and_colored_per_graph(
     ]
     assert _heights(fig) == [0.25, 0.5, 0.1, 0.75, 0.9]
     assert _texts(fig) == ["0.250", "0.500", "0.100", "0.750", "0.900"]
-    assert _faces(fig) == pytest.approx(
-        [
-            to_rgba("#000000", 0.8),
-            to_rgba("#000000", 0.8),
-            to_rgba("#D86E2F", 0.8),
-            to_rgba("#7191A9", 0.8),
-            to_rgba("#6B8D3A", 0.8),
-        ]
+    assert np.asarray(_faces(fig)) == pytest.approx(
+        np.array(
+            [
+                to_rgba("#000000", 0.8),
+                to_rgba("#000000", 0.8),
+                to_rgba("#D86E2F", 0.8),
+                to_rgba("#7191A9", 0.8),
+                to_rgba("#6B8D3A", 0.8),
+            ]
+        )
     )
     assert ax.get_ylim() == (0.0, 1.0)
     assert ax.get_title() == "Edge Recovery: Recall@Degree\nEpoch 7"
@@ -498,13 +500,15 @@ def test_edge_mass_bars_labels_and_baseline(
     ]
     assert _heights(fig) == [0.7, 0.6, 0.3, 0.2]
     assert _texts(fig) == ["0.700", "0.600", "0.300", "0.200"]
-    assert _faces(fig) == pytest.approx(
-        [
-            to_rgba("#000000", 0.8),
-            to_rgba("#000000", 0.8),
-            to_rgba("#D86E2F", 0.8),
-            to_rgba("#7191A9", 0.8),
-        ]
+    assert np.asarray(_faces(fig)) == pytest.approx(
+        np.array(
+            [
+                to_rgba("#000000", 0.8),
+                to_rgba("#000000", 0.8),
+                to_rgba("#D86E2F", 0.8),
+                to_rgba("#7191A9", 0.8),
+            ]
+        )
     )
     assert len(ax.lines) == 1
     np.testing.assert_array_equal(ax.lines[0].get_ydata(), [0.5, 0.5])

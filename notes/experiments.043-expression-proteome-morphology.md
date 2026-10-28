@@ -2191,3 +2191,28 @@ Run links (`?nw=sjpdqsr7yjg` is the GilaHyper round view, `?nw=v7cpxguxc5o` the 
 ## 2026.10.27 - Two figure sheets: setup and pretraining, preliminary evaluations
 
 Owner (22:00 CDT): the 043 work needs figures, "2 total. 1 is setup and pretraining. 2. is our preliminary evaluations", in the style of the 040 thesis sheet with more synthesis per sheet and placeholders where a panel is an idea only. Built by `figure_043_sheets.py` from four panel modules (data, model in math, W&B curves, evaluations) and the shared `figure_043_common.py`; the sheets, the long-first captions and the caveats are in [[experiments.043-expression-proteome-morphology.scripts.figure_043_sheets]]. Two findings surfaced by the curve cache (`history`, 46 runs) while drawing: all five Polaris batch-32 seeds lock the operator (doubles at exactly -0.0883), not only the three that died; and the resumed operator-injection runs hold 80 epochs in the cache where the window-means file holds 50.
+
+### Wave 8 seeds 1 and 2: pinball replicates at three seeds, the combination at two (jobs 6520, 6524, 6522; fine-tunes 6521, 6525, 6523, 6515)
+
+Window means over epochs 41-50 (stage 1) and 16-20 (fine-tune), from `wandb_view_043.py --round ghyper_sweep_2026_10_24 --window-means` regenerated 01:00 CDT Oct 28 (`results/ghyper_sweep_2026_10_24_window_means.json`). Mean (sd) over seeds; a two-seed arm lists both seeds.
+
+| arm (seeds) | Kemmeren r (41-50) | doubles r (41-50) | Muenzner r (41-50) | Caudal r (41-50) | Messner r (41-50) | Vaishnav r (41-50) | ft Kemmeren r (16-20) | ft doubles r (16-20) |
+|---|---|---|---|---|---|---|---|---|
+| bs16 HL-Gauss (3) | 0.0967 (0.006) | 0.1989 (0.012) | 0.1992 (0.003) | 0.1605 (0.003) | 0.0634 (0.016) | 0.9104 (0.008) | 0.1147 / 0.1340 | 0.2440 / 0.2000 |
+| inject_op HL-Gauss (3) | 0.0971 (0.015) | 0.2351 (0.011) | 0.2155 (0.005) | 0.1623 (0.004) | 0.0639 (0.006) | 0.9110 (0.008) | 0.1206 (0.009) | 0.2419 (0.017) |
+| pinball (3) | 0.0900 (0.007) | **0.2269** (0.003) | **0.2273** (0.012) | 0.1527 (0.002) | **0.0767** (0.007) | 0.9017 (0.008) | **0.1262** (0.014) | **0.2656** (0.006) |
+| pinball + inject_op (2: s0 / s1) | 0.0628 / 0.1035 | **0.2674 / 0.2373** | 0.2219 / 0.2032 | 0.1721 / 0.1496 | 0.0643 / 0.0613 | 0.9097 / 0.9014 | 0.1062 / 0.1244 | 0.2784 / 0.2519 |
+| route B bs8 (1) | 0.0859 | 0.1963 | 0.1657 | 0.1079 | 0.0643 | **0.9248** | 0.1129 | 0.2635 |
+
+Reads (measured):
+
+- Pinball replicates on GilaHyper what Aurora measured: doubles +0.028 over bs16 HL-Gauss (0.2269 against 0.1989; every pinball seed, 0.2243-0.2308, above every HL-Gauss seed, 0.1912-0.2131), Aurora read +0.029 at 4 of 4 seeds. Muenzner +0.028 (Aurora +0.010), Messner +0.013, Kemmeren -0.007 and Caudal -0.008 (inside the seed spreads), Vaishnav -0.009 (Aurora -0.008, every seed below every bs16 seed). The pinball fine-tune reaches doubles 0.2656 (sd 0.006) against the two bs16 fine-tunes 0.2440 and 0.2000.
+- The combination at two seeds: doubles 0.2674 and 0.2373, mean 0.2524, above the pinball mean (0.2269) and the inject_op mean (0.2351), but seed 1 sits inside the inject_op spread (0.2252-0.2469) and 0.012 above the pinball spread. The seed-0 Kemmeren cost (0.0628) did not replicate: seed 1 reads 0.1035, above every pinball seed. Two seeds do not settle whether the two levers add; seed 2 (6526) ends in about an hour.
+- Route B at batch 8 fine-tunes to doubles 0.2635 and Kemmeren 0.1129 from a stage 1 at 0.1963 and 0.0859, the largest fine-tune lift of the wave (+0.067 on doubles); its stage-1 Vaishnav 0.9248 stays the highest of every GilaHyper arm.
+- Every fine-tune ran its 20 epochs at 7-9 s per epoch (Kemmeren alone, 1,202 training records), 3 minutes per job.
+
+Queued next on the three cards (01:03 CDT Oct 28, slot manager budget 3): `gs1024_w8_pinball_injop_records` (6544, weighting records, ft 6545) and `gs1024_w8_pinball_injop_lrhalf` (6546, lr 1.5e-4, ft 6547), the batch-16 twins of the twenty Polaris lane cells appended on Oct 27, beside `gs1024_w8_pinball_injop_s2` (6526, ft 6527).
+
+<https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball_s2?nw=sjpdqsr7yjg>
+<https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball_injop_s1?nw=sjpdqsr7yjg>
+<https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_routeB_bs8_ft?nw=sjpdqsr7yjg>

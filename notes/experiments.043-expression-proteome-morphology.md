@@ -2187,3 +2187,7 @@ Run links (`?nw=sjpdqsr7yjg` is the GilaHyper round view, `?nw=v7cpxguxc5o` the 
 <https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball?nw=sjpdqsr7yjg>
 <https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_routeB_bs8?nw=sjpdqsr7yjg>
 <https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/o1023_all_onto_hlgauss_equal_bs32_s0?nw=v7cpxguxc5o>
+
+## 2026.10.27 - Two figure sheets: setup and pretraining, preliminary evaluations
+
+Owner (22:00 CDT): the 043 work needs figures, "2 total. 1 is setup and pretraining. 2. is our preliminary evaluations", in the style of the 040 thesis sheet with more synthesis per sheet and placeholders where a panel is an idea only. Built by `figure_043_sheets.py` from four panel modules (data, model in math, W&B curves, evaluations) and the shared `figure_043_common.py`; the sheets, the long-first captions and the caveats are in [[experiments.043-expression-proteome-morphology.scripts.figure_043_sheets]]. Two findings surfaced by the curve cache (`history`, 46 runs) while drawing: all five Polaris batch-32 seeds lock the operator (doubles at exactly -0.0883), not only the three that died; and the resumed operator-injection runs hold 80 epochs in the cache where the window-means file holds 50.

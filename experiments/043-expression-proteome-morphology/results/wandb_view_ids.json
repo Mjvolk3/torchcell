@@ -294,6 +294,21 @@
     "name": "043 ghyper_sweep_2026_10_24: all_onto_injop_pinball_equal",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=iwdh5iqq342"
   },
+  "ghyper_sweep_2026_10_24/all_onto_injop_pinball_equal_lr0.00015": {
+    "id": "a03bv8vq8lf",
+    "name": "043 ghyper_sweep_2026_10_24: all_onto_injop_pinball_equal_lr0.00015",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=a03bv8vq8lf"
+  },
+  "ghyper_sweep_2026_10_24/all_onto_injop_pinball_records": {
+    "id": "w0vbzx6p3d8",
+    "name": "043 ghyper_sweep_2026_10_24: all_onto_injop_pinball_records",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=w0vbzx6p3d8"
+  },
+  "ghyper_sweep_2026_10_24/all_onto_injop_pinball_records_lr0.00015": {
+    "id": "ojezn4m9l50",
+    "name": "043 ghyper_sweep_2026_10_24: all_onto_injop_pinball_records_lr0.00015",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=ojezn4m9l50"
+  },
   "ghyper_sweep_2026_10_24/all_onto_mle_equal": {
     "id": "fwk3um97rlc",
     "name": "043 ghyper_sweep_2026_10_24: all_onto_mle_equal",
@@ -408,6 +423,16 @@
     "id": "y12d2ci093z",
     "name": "043 ghyper_sweep_2026_10_24: finetune_kemmeren_from_all_onto_injop_pinball_equal",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=y12d2ci093z"
+  },
+  "ghyper_sweep_2026_10_24/finetune_kemmeren_from_all_onto_injop_pinball_equal_lr0.00015": {
+    "id": "mtl7s9iiwb7",
+    "name": "043 ghyper_sweep_2026_10_24: finetune_kemmeren_from_all_onto_injop_pinball_equal_lr0.00015",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=mtl7s9iiwb7"
+  },
+  "ghyper_sweep_2026_10_24/finetune_kemmeren_from_all_onto_injop_pinball_records": {
+    "id": "laafj6sunt0",
+    "name": "043 ghyper_sweep_2026_10_24: finetune_kemmeren_from_all_onto_injop_pinball_records",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=laafj6sunt0"
   },
   "ghyper_sweep_2026_10_24/finetune_kemmeren_from_all_onto_mle_equal": {
     "id": "ueh50hatd4r",

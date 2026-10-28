@@ -1,8 +1,8 @@
 {
  "generated_by": "experiments/043-expression-proteome-morphology/scripts/baselines_043.py",
- "created_at": "2026-10-26T06:22:10+00:00",
- "slurm_job_id": "6450",
- "torchcell_commit": "8ea7106d3",
+ "created_at": "2026-10-28T07:03:39+00:00",
+ "slurm_job_id": "6550",
+ "torchcell_commit": "23d0a75db",
  "inputs": {
   "prep_dir": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/043-expression-proteome-morphology/train_043_prep/prep_v4_routeA",
   "prep_meta_slurm_job": "6324",
@@ -75,7 +75,9 @@
    "random_state": 0,
    "n_principal_components": 64
   },
-  "aggregation": "each baseline scored on each seed's validation subset; the value is the mean over the three subsets (identical subsets except Vaishnav)"
+  "aggregation": "each baseline scored on each seed's validation subset; the value is the mean over the three subsets (identical subsets except where a dataset exceeds the cap)",
+  "scored_records": "eval_positions(view, ROLE_CODE[Role.VAL], 2000, seed) for seeds [0, 1, 2]: per dataset every val record of global_split_v2, a seeded subset of 2000 (numpy default_rng(seed), without replacement, sorted) when larger. The trainer's validation call (train_043.run, cfg.data.val_max_records_per_dataset = 2000, cfg.seed).",
+  "hyperparameter_selection": "training records only: the ridge penalty on the inner split of the training units; kNN k and HGB settings are fixed and every k is reported; no hyperparameter is chosen on validation records"
  },
  "not_scored": {
   "jackson": "no validation records under global_split_v2 (its 12 TF genes and HO are training units); the trainer logs no val/jackson key"
@@ -185,7 +187,7 @@
       "grid_edge": false,
       "n_inner_heldout_records": 16
      },
-     "seconds": 0.09451866149902344
+     "seconds": 0.06210803985595703
     },
     "knn_5": {
      "pearson_per_gene_median": 0.15524455039057755,
@@ -222,7 +224,7 @@
       "k": 5,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 0.02254199981689453
+     "seconds": 0.022611379623413086
     },
     "knn_20": {
      "pearson_per_gene_median": 0.06411778344403127,
@@ -259,7 +261,7 @@
       "k": 20,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 0.04197216033935547
+     "seconds": 0.041983842849731445
     },
     "knn_50": {
      "pearson_per_gene_median": -0.021572180675010943,
@@ -296,7 +298,7 @@
       "k": 50,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 0.061383724212646484
+     "seconds": 0.0630803108215332
     },
     "hgb": {
      "pearson_per_gene_median": -0.04141285347888986,
@@ -344,10 +346,10 @@
       "n_target_columns_fitted": 726,
       "tuned": false
      },
-     "seconds": 4.42113184928894
+     "seconds": 4.535753011703491
     }
    },
-   "seconds": 4.601921558380127
+   "seconds": 4.68463134765625
   },
   "turnover": {
    "level": "gene",
@@ -451,7 +453,7 @@
       "grid_edge": false,
       "n_inner_heldout_records": 7
      },
-     "seconds": 0.03331351280212402
+     "seconds": 0.0322108268737793
     },
     "knn_5": {
      "pearson_per_gene_median": 0.05871682446900798,
@@ -488,7 +490,7 @@
       "k": 5,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 0.026790618896484375
+     "seconds": 0.025336265563964844
     },
     "knn_20": {
      "pearson_per_gene_median": 0.21410729296934736,
@@ -525,7 +527,7 @@
       "k": 20,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 0.04538416862487793
+     "seconds": 0.04344916343688965
     },
     "knn_50": {
      "pearson_per_gene_median": NaN,
@@ -563,7 +565,7 @@
       "metric": "cosine on training-z-scored features"
      },
      "note": "k >= 33 training records: every record gets the same neighbors, a constant, so undefined",
-     "seconds": 0.06304097175598145
+     "seconds": 0.060638427734375
     },
     "hgb": {
      "pearson_per_gene_median": -0.017825005525572833,
@@ -611,10 +613,10 @@
       "n_target_columns_fitted": 1152,
       "tuned": false
      },
-     "seconds": 4.976005554199219
+     "seconds": 5.036844968795776
     }
    },
-   "seconds": 5.105038642883301
+   "seconds": 5.162149429321289
   },
   "hu": {
    "level": "gene",
@@ -720,7 +722,7 @@
       "grid_edge": false,
       "n_inner_heldout_records": 45
      },
-     "seconds": 0.2653350830078125
+     "seconds": 0.23204326629638672
     },
     "knn_5": {
      "pearson_per_gene_median": 0.034849262501740946,
@@ -757,7 +759,7 @@
       "k": 5,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 0.08649706840515137
+     "seconds": 0.09135031700134277
     },
     "knn_20": {
      "pearson_per_gene_median": 0.0026832937441284847,
@@ -794,7 +796,7 @@
       "k": 20,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 0.1245112419128418
+     "seconds": 0.12825894355773926
     },
     "knn_50": {
      "pearson_per_gene_median": 0.007280906022275722,
@@ -831,7 +833,7 @@
       "k": 50,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 0.15698957443237305
+     "seconds": 0.160444974899292
     },
     "hgb": {
      "pearson_per_gene_median": 0.0820901287848889,
@@ -879,10 +881,10 @@
       "n_target_columns_fitted": 5878,
       "tuned": false
      },
-     "seconds": 53.48917818069458
+     "seconds": 53.696128368377686
     }
    },
-   "seconds": 53.9598343372345
+   "seconds": 54.138943910598755
   },
   "kemmeren": {
    "level": "gene",
@@ -988,7 +990,7 @@
       "grid_edge": false,
       "n_inner_heldout_records": 240
      },
-     "seconds": 2.0341806411743164
+     "seconds": 2.7511367797851562
     },
     "knn_5": {
      "pearson_per_gene_median": 0.10682410496192758,
@@ -1025,7 +1027,7 @@
       "k": 5,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 0.596135139465332
+     "seconds": 0.5957443714141846
     },
     "knn_20": {
      "pearson_per_gene_median": 0.09005799803330844,
@@ -1062,7 +1064,7 @@
       "k": 20,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 0.9014058113098145
+     "seconds": 0.903526782989502
     },
     "knn_50": {
      "pearson_per_gene_median": 0.0883303522963374,
@@ -1099,7 +1101,7 @@
       "k": 50,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 1.205939769744873
+     "seconds": 1.215200662612915
     },
     "hgb": {
      "pearson_per_gene_median": 0.09081169149938066,
@@ -1147,10 +1149,10 @@
       "n_target_columns_fitted": 6127,
       "tuned": false
      },
-     "seconds": 144.2217469215393
+     "seconds": 147.75093030929565
     }
    },
-   "seconds": 148.13131594657898
+   "seconds": 152.38590335845947
   },
   "messner": {
    "level": "gene",
@@ -1256,7 +1258,7 @@
       "grid_edge": false,
       "n_inner_heldout_records": 751
      },
-     "seconds": 5.061468601226807
+     "seconds": 5.315363645553589
     },
     "knn_5": {
      "pearson_per_gene_median": 0.059391931449725016,
@@ -1293,7 +1295,7 @@
       "k": 5,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 1.4505741596221924
+     "seconds": 1.526582956314087
     },
     "knn_20": {
      "pearson_per_gene_median": 0.06899543329399238,
@@ -1330,7 +1332,7 @@
       "k": 20,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 2.4985129833221436
+     "seconds": 2.604278087615967
     },
     "knn_50": {
      "pearson_per_gene_median": 0.07454089959295995,
@@ -1367,7 +1369,7 @@
       "k": 50,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 3.5271143913269043
+     "seconds": 3.7397658824920654
     },
     "hgb": {
      "pearson_per_gene_median": 0.06354634502321688,
@@ -1415,10 +1417,10 @@
       "n_target_columns_fitted": 1850,
       "tuned": false
      },
-     "seconds": 56.440515995025635
+     "seconds": 57.58291506767273
     }
    },
-   "seconds": 66.2669723033905
+   "seconds": 67.91853713989258
   },
   "caudal": {
    "level": "gene",
@@ -1522,7 +1524,7 @@
       "grid_edge": false,
       "n_inner_heldout_records": 113
      },
-     "seconds": 1.1373145580291748
+     "seconds": 7.00102686882019
     },
     "knn_5": {
      "pearson_per_gene_median": 0.24417389068764397,
@@ -1559,7 +1561,7 @@
       "k": 5,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 0.8763387203216553
+     "seconds": 0.995474100112915
     },
     "knn_20": {
      "pearson_per_gene_median": 0.27263013200756037,
@@ -1596,7 +1598,7 @@
       "k": 20,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 1.3186001777648926
+     "seconds": 1.4620857238769531
     },
     "knn_50": {
      "pearson_per_gene_median": 0.24980826258816377,
@@ -1633,7 +1635,7 @@
       "k": 50,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 1.7583417892456055
+     "seconds": 1.9697434902191162
     },
     "hgb": {
      "pearson_per_gene_median": 0.29969340718612275,
@@ -1681,10 +1683,10 @@
       "n_target_columns_fitted": 6062,
       "tuned": false
      },
-     "seconds": 118.72915959358215
+     "seconds": 122.77257633209229
     }
    },
-   "seconds": 122.27498626708984
+   "seconds": 132.38919925689697
   },
   "muenzner": {
    "level": "gene",
@@ -1788,7 +1790,7 @@
       "grid_edge": false,
       "n_inner_heldout_records": 95
      },
-     "seconds": 0.8399951457977295
+     "seconds": 1.785895586013794
     },
     "knn_5": {
      "pearson_per_gene_median": 0.3805537350400478,
@@ -1825,7 +1827,7 @@
       "k": 5,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 0.3960552215576172
+     "seconds": 0.39869165420532227
     },
     "knn_20": {
      "pearson_per_gene_median": 0.3563749074216573,
@@ -1862,7 +1864,7 @@
       "k": 20,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 0.6495282649993896
+     "seconds": 0.6619083881378174
     },
     "knn_50": {
      "pearson_per_gene_median": 0.30670542730636985,
@@ -1899,7 +1901,7 @@
       "k": 50,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 0.8959941864013672
+     "seconds": 0.9380590915679932
     },
     "hgb": {
      "pearson_per_gene_median": 0.3856379262676288,
@@ -1947,10 +1949,10 @@
       "n_target_columns_fitted": 1576,
       "tuned": false
      },
-     "seconds": 34.95726943016052
+     "seconds": 37.842204332351685
     }
    },
-   "seconds": 37.14027547836304
+   "seconds": 41.060359716415405
   },
   "boocock": {
    "level": "gene",
@@ -2054,7 +2056,7 @@
       "grid_edge": false,
       "n_inner_heldout_records": 47
      },
-     "seconds": 0.4916965961456299
+     "seconds": 1.4927947521209717
     },
     "knn_5": {
      "pearson_per_gene_median": -0.003183567281608945,
@@ -2091,7 +2093,7 @@
       "k": 5,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 0.24016118049621582
+     "seconds": 0.24690794944763184
     },
     "knn_20": {
      "pearson_per_gene_median": 0.00786326493419515,
@@ -2128,7 +2130,7 @@
       "k": 20,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 0.3706064224243164
+     "seconds": 0.37462639808654785
     },
     "knn_50": {
      "pearson_per_gene_median": 0.012214151930874757,
@@ -2165,7 +2167,7 @@
       "k": 50,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 0.5020828247070312
+     "seconds": 0.5017373561859131
     },
     "hgb": {
      "pearson_per_gene_median": 0.01647541408454905,
@@ -2213,10 +2215,10 @@
       "n_target_columns_fitted": 4995,
       "tuned": false
      },
-     "seconds": 48.00654363632202
+     "seconds": 50.56155729293823
     }
    },
-   "seconds": 49.15709114074707
+   "seconds": 52.71325063705444
   },
   "nguessan": {
    "level": "gene",
@@ -2320,7 +2322,7 @@
       "grid_edge": false,
       "n_inner_heldout_records": 354
      },
-     "seconds": 4.239707708358765
+     "seconds": 4.397084474563599
     },
     "knn_5": {
      "pearson_per_gene_median": 0.024600250279386046,
@@ -2357,7 +2359,7 @@
       "k": 5,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 2.662867784500122
+     "seconds": 2.9943172931671143
     },
     "knn_20": {
      "pearson_per_gene_median": 0.033986275749864694,
@@ -2394,7 +2396,7 @@
       "k": 20,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 4.276423931121826
+     "seconds": 4.660541534423828
     },
     "knn_50": {
      "pearson_per_gene_median": 0.041698744734525305,
@@ -2431,7 +2433,7 @@
       "k": 50,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 5.920180797576904
+     "seconds": 6.349822521209717
     },
     "hgb": {
      "pearson_per_gene_median": 0.04701523363128365,
@@ -2479,10 +2481,10 @@
       "n_target_columns_fitted": 6164,
       "tuned": false
      },
-     "seconds": 152.51368141174316
+     "seconds": 158.6366629600525
     }
    },
-   "seconds": 164.50695371627808
+   "seconds": 171.27691078186035
   },
   "vaishnav": {
    "level": "record",
@@ -2547,7 +2549,7 @@
       },
       "grid_edge": false
      },
-     "seconds": 16.953684329986572
+     "seconds": 26.896378993988037
     },
     "knn_5": {
      "pearson": 0.8790450568342347,
@@ -2566,7 +2568,7 @@
       "k": 5,
       "metric": "cosine on training-z-scored k-mer counts"
      },
-     "seconds": 12.110552310943604
+     "seconds": 36.20326638221741
     },
     "knn_20": {
      "pearson": 0.7404147426053383,
@@ -2585,7 +2587,7 @@
       "k": 20,
       "metric": "cosine on training-z-scored k-mer counts"
      },
-     "seconds": 12.111027002334595
+     "seconds": 36.203805923461914
     },
     "knn_50": {
      "pearson": 0.6902998630033558,
@@ -2604,7 +2606,7 @@
       "k": 50,
       "metric": "cosine on training-z-scored k-mer counts"
      },
-     "seconds": 12.111478567123413
+     "seconds": 36.20430898666382
     },
     "hgb": {
      "pearson": 0.8716288937030502,
@@ -2630,10 +2632,10 @@
       "features": "raw k-mer counts + library",
       "tuned": false
      },
-     "seconds": 23.675312519073486
+     "seconds": 24.466789484024048
     }
    },
-   "seconds": 66.3644917011261
+   "seconds": 101.22393369674683
   },
   "nadal": {
    "level": "gene",
@@ -2773,7 +2775,7 @@
       "grid_edge": false,
       "n_inner_heldout_records": 992
      },
-     "seconds": 18.43857455253601
+     "seconds": 15.040936470031738
     },
     "knn_5": {
      "pearson_per_gene_median": 0.10559186685119232,
@@ -2810,7 +2812,7 @@
       "k": 5,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 4.296512126922607
+     "seconds": 4.217121124267578
     },
     "knn_20": {
      "pearson_per_gene_median": 0.15292403943382965,
@@ -2847,7 +2849,7 @@
       "k": 20,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 6.484210014343262
+     "seconds": 6.451868295669556
     },
     "knn_50": {
      "pearson_per_gene_median": 0.18831358533199816,
@@ -2884,7 +2886,7 @@
       "k": 50,
       "metric": "cosine on training-z-scored features"
      },
-     "seconds": 8.65659236907959
+     "seconds": 8.676468849182129
     },
     "hgb": {
      "pearson_per_gene_median": 0.17881732836945108,
@@ -2932,31 +2934,59 @@
       "n_target_columns_fitted": 5646,
       "tuned": false
      },
-     "seconds": 169.44273257255554
+     "seconds": 172.80736708641052
     }
    },
-   "seconds": 201.07420134544373
+   "seconds": 201.35136461257935
   },
   "doubles": {
    "level": "split B",
-   "statistic": "median over doubles of the centered per-double Pearson r over genes, released Kemmeren units, centered on Kemmeren's training-mean profile (evaluate_doubles)",
+   "statistic": "median over doubles of the centered per-double Pearson r over genes, released Kemmeren units, centered on Kemmeren's training-mean profile (evaluate_doubles); every evaluate_doubles key is stored per baseline",
+   "records": "split B: all 72 Sameith doubles under either --split (the trainer's view.doubles), predicted from training-only fits, so the same in both files",
    "n_doubles": 72,
    "features": "composite tokens of the two deleted genes, through Kemmeren-fitted baselines",
    "baselines": {
     "additive_measured": {
      "pearson_per_strain_centered_median": 0.43966754542573827,
+     "additive_model_pearson_per_strain_centered_median": 0.43966754542573827,
+     "additive_measured_pearson_per_strain_centered_median": 0.43966754542573827,
+     "n_doubles": 72.0,
      "n_doubles_scored": 72,
      "hyperparameter": null,
      "note": "measured single x + measured single y (the trainer's val/doubles/additive_measured key, recomputed)"
     },
+    "larger_single": {
+     "pearson_per_strain_centered_median": 0.45993680899380407,
+     "additive_model_pearson_per_strain_centered_median": 0.43966754542573827,
+     "additive_measured_pearson_per_strain_centered_median": 0.43966754542573827,
+     "n_doubles": 72.0,
+     "n_doubles_scored": 72,
+     "hyperparameter": null,
+     "note": "per double and gene, the measured single with the larger absolute released value (an effect against the wild-type reference pool); NaN where either single is NaN. Not defined by Sameith 2015 (which uses only the additive expectation); this script's definition"
+    },
+    "mean_singles": {
+     "pearson_per_strain_centered_median": 0.4539386421573961,
+     "additive_model_pearson_per_strain_centered_median": 0.43966754542573827,
+     "additive_measured_pearson_per_strain_centered_median": 0.43966754542573827,
+     "n_doubles": 72.0,
+     "n_doubles_scored": 72,
+     "hyperparameter": null,
+     "note": "mean of the two measured singles, (x + y) / 2, released units"
+    },
     "constant": {
      "pearson_per_strain_centered_median": 0.08827583265156125,
+     "additive_model_pearson_per_strain_centered_median": 0.08827583265156125,
+     "additive_measured_pearson_per_strain_centered_median": 0.43966754542573827,
+     "n_doubles": 72.0,
      "n_doubles_scored": 72,
      "hyperparameter": null,
      "note": "Kemmeren-fitted baseline; predicted single x + predicted single y in released units; constant, so undefined"
     },
     "ridge": {
      "pearson_per_strain_centered_median": 0.13581515925247473,
+     "additive_model_pearson_per_strain_centered_median": 0.13581515925247473,
+     "additive_measured_pearson_per_strain_centered_median": 0.43966754542573827,
+     "n_doubles": 72.0,
      "n_doubles_scored": 72,
      "hyperparameter": {
       "log10_lambda_rel": 1.0,
@@ -2967,6 +2997,9 @@
     },
     "knn_5": {
      "pearson_per_strain_centered_median": 0.09862968327073444,
+     "additive_model_pearson_per_strain_centered_median": 0.09862968327073444,
+     "additive_measured_pearson_per_strain_centered_median": 0.43966754542573827,
+     "n_doubles": 72.0,
      "n_doubles_scored": 72,
      "hyperparameter": {
       "k": 5,
@@ -2976,6 +3009,9 @@
     },
     "knn_20": {
      "pearson_per_strain_centered_median": 0.08670323822626418,
+     "additive_model_pearson_per_strain_centered_median": 0.08670323822626418,
+     "additive_measured_pearson_per_strain_centered_median": 0.43966754542573827,
+     "n_doubles": 72.0,
      "n_doubles_scored": 72,
      "hyperparameter": {
       "k": 20,
@@ -2985,6 +3021,9 @@
     },
     "knn_50": {
      "pearson_per_strain_centered_median": 0.09498681790491863,
+     "additive_model_pearson_per_strain_centered_median": 0.09498681790491863,
+     "additive_measured_pearson_per_strain_centered_median": 0.43966754542573827,
+     "n_doubles": 72.0,
      "n_doubles_scored": 72,
      "hyperparameter": {
       "k": 50,
@@ -2994,6 +3033,9 @@
     },
     "hgb": {
      "pearson_per_strain_centered_median": 0.36412677560740436,
+     "additive_model_pearson_per_strain_centered_median": 0.36412677560740436,
+     "additive_measured_pearson_per_strain_centered_median": 0.43966754542573827,
+     "n_doubles": 72.0,
      "n_doubles_scored": 72,
      "hyperparameter": {
       "max_iter": 200,
@@ -3013,7 +3055,7 @@
      "note": "Kemmeren-fitted baseline; predicted single x + predicted single y in released units"
     }
    },
-   "seconds": 150.6049199104309
+   "seconds": 150.10132789611816
   }
  },
  "trained": {
@@ -3555,6 +3597,7 @@
    }
   }
  },
- "report_table_markdown": "| dataset | statistic | validation records, n | trained, mean (sd) of 3 seeds | per-gene training mean | additive measured singles | per-environment mean | ridge | kNN, k = 5 | kNN, k = 20 | kNN, k = 50 | gradient-boosted trees | best baseline | trained minus best, in seed sd |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n| Kemmeren 2014 | median per-gene Pearson r | 141 | 0.097 (0.006) | undefined | -- | -- | 0.131 | 0.107 | 0.090 | 0.088 | 0.091 | ridge 0.131 | -5.4 |\n| Messner 2023 | median per-gene Pearson r | 463 | 0.063 (0.016) | undefined | -- | -- | 0.081 | 0.059 | 0.069 | 0.075 | 0.064 | ridge 0.081 | -1.1 |\n| Zelezniak 2018 | median per-gene Pearson r | 9 | 0.038 (0.078) | undefined | -- | -- | 0.055 | 0.155 | 0.064 | -0.022 | -0.041 | kNN, k = 5 0.155 | -1.5 |\n| Caudal 2024 | median per-gene Pearson r | 189 | 0.160 (0.003) | undefined | -- | -- | 0.307 | 0.244 | 0.273 | 0.250 | 0.300 | ridge 0.307 | -46.0 |\n| Muenzner 2024 protein | median per-gene Pearson r | 159 | 0.199 (0.003) | undefined | -- | -- | 0.402 | 0.381 | 0.356 | 0.307 | 0.386 | ridge 0.402 | -65.2 |\n| Muenzner 2024 turnover | median per-gene Pearson r | 11 | 0.105 (0.225) | undefined | -- | -- | 0.105 | 0.059 | 0.214 | undefined | -0.018 | kNN, k = 20 0.214 | -0.5 |\n| Boocock 2025 pooled | median per-gene Pearson r | 79 | -0.063 (0.021) | undefined | -- | -- | 0.047 | -0.003 | 0.008 | 0.012 | 0.016 | ridge 0.047 | -5.1 |\n| N'Guessan 2025 | median per-gene Pearson r | 591 | 0.077 (0.013) | undefined | -- | -- | 0.090 | 0.025 | 0.034 | 0.042 | 0.047 | ridge 0.090 | -1.0 |\n| Vaishnav 2022 | Pearson r over promoters | 2,000 per seed (5,168 across the 3 subsets) | 0.910 (0.008) | undefined | -- | -- | 0.884 | 0.879 | 0.740 | 0.690 | 0.872 | ridge 0.884 | +3.3 |\n| Hu 2007 | median per-gene Pearson r | 19 | 0.078 (0.008) | undefined | -- | -- | -0.007 | 0.035 | 0.003 | 0.007 | 0.082 | gradient-boosted trees 0.082 | -0.5 |\n| Nadal-Ribelles 2025 | median per-gene Pearson r | 611 | 0.203 (0.009) | undefined | -- | 0.211 | 0.129 | 0.106 | 0.153 | 0.188 | 0.179 | per-environment mean 0.211 | -1.0 |\n| Sameith 2015 doubles | median centered per-double Pearson r | 72 | 0.199 (0.012) | 0.088 | 0.440 | -- | 0.136 | 0.099 | 0.087 | 0.095 | 0.364 | additive measured singles 0.440 | -19.5 |",
- "figure": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/043-expression-proteome-morphology/notes/assets/images/043-expression-proteome-morphology/baselines_043_2026-10-26-01-41-13.svg"
+ "report_table_markdown": "| dataset | statistic | validation records, n | trained, mean (sd) of 3 seeds | per-gene training mean | additive measured singles | per-environment mean | ridge | kNN, k = 5 | kNN, k = 20 | kNN, k = 50 | gradient-boosted trees | best baseline | trained minus best, in seed sd |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n| Kemmeren 2014 | median per-gene Pearson r | 141 | 0.097 (0.006) | undefined | -- | -- | 0.131 | 0.107 | 0.090 | 0.088 | 0.091 | ridge 0.131 | -5.4 |\n| Messner 2023 | median per-gene Pearson r | 463 | 0.063 (0.016) | undefined | -- | -- | 0.081 | 0.059 | 0.069 | 0.075 | 0.064 | ridge 0.081 | -1.1 |\n| Zelezniak 2018 | median per-gene Pearson r | 9 | 0.038 (0.078) | undefined | -- | -- | 0.055 | 0.155 | 0.064 | -0.022 | -0.041 | kNN, k = 5 0.155 | -1.5 |\n| Caudal 2024 | median per-gene Pearson r | 189 | 0.160 (0.003) | undefined | -- | -- | 0.307 | 0.244 | 0.273 | 0.250 | 0.300 | ridge 0.307 | -46.0 |\n| Muenzner 2024 protein | median per-gene Pearson r | 159 | 0.199 (0.003) | undefined | -- | -- | 0.402 | 0.381 | 0.356 | 0.307 | 0.386 | ridge 0.402 | -65.2 |\n| Muenzner 2024 turnover | median per-gene Pearson r | 11 | 0.105 (0.225) | undefined | -- | -- | 0.105 | 0.059 | 0.214 | undefined | -0.018 | kNN, k = 20 0.214 | -0.5 |\n| Boocock 2025 pooled | median per-gene Pearson r | 79 | -0.063 (0.021) | undefined | -- | -- | 0.047 | -0.003 | 0.008 | 0.012 | 0.016 | ridge 0.047 | -5.1 |\n| N'Guessan 2025 | median per-gene Pearson r | 591 | 0.077 (0.013) | undefined | -- | -- | 0.090 | 0.025 | 0.034 | 0.042 | 0.047 | ridge 0.090 | -1.0 |\n| Vaishnav 2022 | Pearson r over promoters | 2,000 per seed (5,168 across the 3 subsets) | 0.910 (0.008) | undefined | -- | -- | 0.884 | 0.879 | 0.740 | 0.690 | 0.872 | ridge 0.884 | +3.3 |\n| Hu 2007 | median per-gene Pearson r | 19 | 0.078 (0.008) | undefined | -- | -- | -0.007 | 0.035 | 0.003 | 0.007 | 0.082 | gradient-boosted trees 0.082 | -0.5 |\n| Nadal-Ribelles 2025 | median per-gene Pearson r | 611 | 0.203 (0.009) | undefined | -- | 0.211 | 0.129 | 0.106 | 0.153 | 0.188 | 0.179 | per-environment mean 0.211 | -1.0 |\n| Sameith 2015 doubles | median centered per-double Pearson r | 72 | 0.199 (0.012) | 0.088 | 0.440 | -- | 0.136 | 0.099 | 0.087 | 0.095 | 0.364 | larger measured single 0.460 | -21.2 |",
+ "figure": "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/043-expression-proteome-morphology/notes/assets/images/043-expression-proteome-morphology/baselines_043_2026-10-28-02-23-11.svg",
+ "split": "val"
 }

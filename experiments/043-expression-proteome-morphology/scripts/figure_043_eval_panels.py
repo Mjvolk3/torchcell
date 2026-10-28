@@ -7,6 +7,9 @@ Every number is read from a file under ``results/``:
 
 * ``baselines_043.json``: the model-free baselines per validation head and the recipe-v2
   trained arm (``gs1024_w4_bs16`` seeds 0-2, ``trained.summary``, epochs 41-50);
+* ``baselines_043_test.json``: the same baselines on the test records (``draw_baselines_test``,
+  baselines only; not in ``PANELS`` until the file exists, which needs a prepared store
+  that keeps the test records);
 * ``<round>_window_means.json`` (``wandb_view_043.window_means``): per run, the mean of
   each metric over the run's registered window. The GilaHyper runs that went past epoch
   50 carry the 41-50 means under ``means_41_50`` (``means`` is then 71-80); the others
@@ -464,7 +467,12 @@ def baseline_values(R: C.Reads, ds: str) -> dict[str, float]:
     """The finite model-free baselines of one head (``constant`` is undefined for every
     per-gene head and is left out).
     """
-    b = R.baselines["datasets"][ds]["baselines"]
+    return baseline_values_of(R.baselines, ds)
+
+
+def baseline_values_of(payload: dict[str, Any], ds: str) -> dict[str, float]:
+    """``baseline_values`` of one ``baselines_043`` payload (validation or test file)."""
+    b = payload["datasets"][ds]["baselines"]
     st = baseline_stat(ds)
     out: dict[str, float] = {}
     for k in ("additive_measured", "env_mean", "ridge"):
@@ -652,6 +660,88 @@ def draw_baselines(ax: Axes, R: C.Reads) -> str:
             f"a baseline leads on {n_lost} of {len(per_gene)} per-gene heads; the model on {', '.join(led)}",
         ],
         legend_rows=n_rows,
+    )
+    return "ready"
+
+
+def draw_baselines_test(ax: Axes, R: C.Reads) -> str:
+    """``draw_baselines`` on ``baselines_043_test.json``: the model-free bars only, since
+    no results file holds a trained number on the test split.
+    """
+    test = R.json("baselines_043_test.json")
+    fig_w_mm = (
+        ax.figure.get_figure(root=True).get_figwidth() * 25.4 * ax.get_position().width
+    )
+    narrow = fig_w_mm < 120
+    width = 0.105
+    for gi, (ds, _, _) in enumerate(C.DATASETS):
+        bv = baseline_values_of(test, ds)
+        slots = [k for k in BASE_STYLE if k in bv]
+        x0 = gi - width * (len(slots) - 1) / 2
+        for j, k in enumerate(slots):
+            _, face, hatch = BASE_STYLE[k]
+            ax.bar(
+                x0 + j * width,
+                bv[k],
+                width,
+                color=face,
+                hatch=hatch,
+                edgecolor="black",
+                linewidth=0.4,
+                zorder=2,
+            )
+    ax.axhline(0, color="black", linewidth=0.4)
+    ax.set_xticks(range(len(C.DATASETS)))
+    if narrow:
+        ax.set_xticklabels(
+            [lab.split(" ")[0] for _, lab, _ in C.DATASETS],
+            rotation=45,
+            ha="right",
+            rotation_mode="anchor",
+        )
+    else:
+        ax.set_xticklabels([lab.replace(" ", "\n", 1) for _, lab, _ in C.DATASETS])
+    ax.tick_params(axis="x", length=0)
+    ax.set_xlim(-0.6, len(C.DATASETS) - 0.4)
+    ax.set_ylim(-0.2, 1.0)
+    C.hgrid(ax, 0.1)
+    C.box(ax)
+    ax.set_ylabel("test r")
+    h = [
+        Patch(facecolor=face, hatch=hatch, edgecolor="black", linewidth=0.4, label=lab)
+        for lab, face, hatch in BASE_STYLE.values()
+    ]
+    ncol = 3 if narrow else 5
+    ax.legend(
+        handles=h,
+        loc="lower left",
+        bbox_to_anchor=(0.0, 1.0),
+        ncol=ncol,
+        fontsize=5 if narrow else 6,
+        borderaxespad=0.2,
+        handlelength=1.4,
+        columnspacing=0.8,
+    )
+    if not narrow:
+        ax.text(
+            0.005,
+            0.97,
+            "r: median per-gene Pearson; Vaishnav over promoters; doubles: median centered per-double Pearson\n"
+            "test records: eval_positions(TEST, 2000, seed), mean over seeds 0-2; fits on training records only\n"
+            "doubles are split B, the same 72 as in validation",
+            transform=ax.transAxes,
+            ha="left",
+            va="top",
+            fontsize=5,
+            color="#333333",
+        )
+    C.fit_title(
+        ax,
+        [
+            "test split: the model-free bars the final read is held to",
+            "test split: model-free bars",
+        ],
+        legend_rows=int(np.ceil(len(h) / ncol)),
     )
     return "ready"
 
@@ -959,6 +1049,9 @@ PANELS: dict[str, Callable[[Axes, C.Reads], str]] = {
     "morphology": draw_morphology,
     "scatter": draw_scatter,
 }
+# draw_baselines_test joins PANELS (key "baselines_test") once
+# results/baselines_043_test.json exists; prep_v4 holds no test records
+# (baselines_043.py --split test refuses), so the file does not.
 
 
 def full_width(key: str, height_mm: float, name: str) -> dict[str, str]:

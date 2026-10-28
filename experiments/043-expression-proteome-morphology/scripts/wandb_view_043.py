@@ -469,8 +469,13 @@ ROUNDS: dict[str, Round] = {
         + tuple(
             f"gs1024_w8_pinball_injop_{k}{sd}{ft}"
             for k in ("records", "lrhalf")
-            for sd in ("", "_s1")
+            for sd in ("", "_s1", "_s2")
             for ft in ("", "_ft")
+        )
+        # both knobs at once, seed 0 (6562/6563)
+        + (
+            "gs1024_w8_pinball_injop_lrhalf_records",
+            "gs1024_w8_pinball_injop_lrhalf_records_ft",
         ),
         hardware=(
             "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, four chained slots "

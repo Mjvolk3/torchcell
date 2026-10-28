@@ -461,6 +461,16 @@ ROUNDS: dict[str, Round] = {
             for sd in ("", "_s1", "_s2")
             for k in ("", "_injop")
             for ft in ("", "_ft")
+        )
+        # the combination at seed 3 (6552/6553) and its records-weighting (6544/6545,
+        # 6554/6555) and lr 1.5e-4 (6546/6547, 6556/6557) twins of the Polaris lane cells
+        # (2026-10-28)
+        + ("gs1024_w8_pinball_injop_s3", "gs1024_w8_pinball_injop_s3_ft")
+        + tuple(
+            f"gs1024_w8_pinball_injop_{k}{sd}{ft}"
+            for k in ("records", "lrhalf")
+            for sd in ("", "_s1")
+            for ft in ("", "_ft")
         ),
         hardware=(
             "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, four chained slots "

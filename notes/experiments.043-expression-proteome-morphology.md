@@ -2237,3 +2237,26 @@ Read: the larger single is a better predictor of the double than their sum (0.46
 Test split: not possible on `prep_v4`. The prepare stage drops the test records so their labels are never loaded (`ROLE_CODE` has no TEST entry; job 6551 failed in 31 s with `KeyError: Role.TEST`), and the trainer never evaluates test. `--split test` is wired in `baselines_043.py` and stops with that message; a test-bearing prepared store (a new prep tag that keeps TEST under its own role code) unseals the test labels and is the owner's decision. The `baselines_test` panel is written in `figure_043_eval_panels.py` and not registered until that file exists.
 
 ![](./assets/images/043-expression-proteome-morphology/baselines_043_2026-10-28-02-23-11.svg)
+
+### The combination at three seeds, and its records-weighting and lr-half twins at seed 0 (jobs 6526, 6544, 6546; fine-tunes 6527, 6545, 6547; 05:30 CDT Oct 28)
+
+Window means over epochs 41-50 and fine-tune 16-20 (`results/ghyper_sweep_2026_10_24_window_means.json`, regenerated 05:30 CDT with the new run ids registered in `wandb_view_043.py`).
+
+| arm (seeds) | Kemmeren r | doubles r | Muenzner r | Caudal r | Messner r | Vaishnav r | ft Kemmeren r | ft doubles r |
+|---|---|---|---|---|---|---|---|---|
+| pinball + inject_op (3) | 0.0981 (0.033) | **0.2599** (0.020) | 0.2171 (0.012) | 0.1580 (0.012) | 0.0618 (0.002) | 0.9020 (0.007) | 0.1288 (0.025) | 0.2693 (0.015) |
+| per seed s0 / s1 / s2 | 0.0628 / 0.1035 / 0.1281 | 0.2674 / 0.2373 / 0.2749 | 0.2219 / 0.2032 / 0.2262 | 0.1721 / 0.1496 / 0.1522 | | 0.9097 / 0.9014 / 0.8948 | 0.1062 / 0.1244 / 0.1557 | 0.2784 / 0.2519 / 0.2777 |
+| + weighting records (1) | 0.0874 | 0.2627 | 0.1836 | 0.1435 | 0.0511 | **0.9148** | 0.1347 | **0.2830** |
+| + lr 1.5e-4 (1) | 0.1111 | **0.2694** | **0.2468** | **0.1735** | 0.0682 | 0.8815 | 0.1250 | 0.2663 |
+| pinball (3) | 0.0900 (0.007) | 0.2269 (0.003) | 0.2273 (0.012) | 0.1527 (0.002) | 0.0767 (0.007) | 0.9017 (0.008) | 0.1262 (0.014) | 0.2656 (0.006) |
+| inject_op HL-Gauss (3) | 0.0971 (0.015) | 0.2351 (0.011) | 0.2155 (0.005) | 0.1623 (0.004) | 0.0639 (0.006) | 0.9110 (0.008) | 0.1206 (0.009) | 0.2419 (0.017) |
+| bs16 HL-Gauss (3) | 0.0967 (0.006) | 0.1989 (0.012) | 0.1992 (0.003) | 0.1605 (0.003) | 0.0634 (0.016) | 0.9104 (0.008) | 0.1147 / 0.1340 | 0.2440 / 0.2000 |
+
+Reads (measured):
+
+- The combination is the best doubles arm at three seeds: 0.2599 against pinball 0.2269 (+0.033) and injection 0.2351 (+0.025); every combination seed above every pinball seed, two of three above every injection seed. The seed-0 Kemmeren cost (0.0628) is a seed effect: seeds 1 and 2 read 0.1035 and 0.1281, and the three-seed mean 0.0981 matches bs16 (0.0967). Muenzner 0.2171 sits between injection (0.2155) and pinball (0.2273); Vaishnav keeps the pinball cost (0.9020 against 0.9104).
+- Records weighting (one seed): doubles 0.2627 inside the combination's spread; Vaishnav +0.013 (0.9148, the largest dataset gains weight) at the cost of Muenzner -0.034 (0.1836, below every combination seed), Caudal -0.015 and Messner -0.011; its val/loss (0.1798) is a different weighting and not comparable. Its fine-tune reads the highest fine-tuned doubles so far, 0.2830, one seed.
+- lr 1.5e-4 (one seed): doubles 0.2694, Muenzner 0.2468 (the highest Muenzner on GilaHyper, +0.030 over the combination mean, above its spread 0.203-0.226), Caudal 0.1735, Kemmeren 0.1111; Vaishnav 0.8815 (-0.021, below every other arm). One seed each; seed 1 of both and seed 3 of the combination are queued (6552-6557).
+
+<https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball_injop_lrhalf?nw=sjpdqsr7yjg>
+<https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball_injop_records?nw=sjpdqsr7yjg>

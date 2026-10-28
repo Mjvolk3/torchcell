@@ -472,10 +472,12 @@ ROUNDS: dict[str, Round] = {
             for sd in ("", "_s1", "_s2")
             for ft in ("", "_ft")
         )
-        # both knobs at once, seed 0 (6562/6563)
-        + (
-            "gs1024_w8_pinball_injop_lrhalf_records",
-            "gs1024_w8_pinball_injop_lrhalf_records_ft",
+        # both knobs at once, seed 0 (6562/6563); lr-half seed 3 (6564/6565), lr 7.5e-5
+        # (6566/6567) and lr-half with head hidden 256 (6568/6569), 2026-10-28 13:30 CDT
+        + tuple(
+            f"gs1024_w8_pinball_injop_{k}{ft}"
+            for k in ("lrhalf_records", "lrhalf_s3", "lrquarter", "lrhalf_hh256")
+            for ft in ("", "_ft")
         ),
         hardware=(
             "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, four chained slots "

@@ -71,13 +71,54 @@ Jackson 2020 has no validation records under ``global_split_v2`` (its 12 TF gene
 are training units), so the trainer scores it on no validation key and it is listed as not
 scored.
 
-Stages: ``fit`` (CPU, slurm: ``gh_baselines_043.slurm``) writes
-``results/baselines_043.json``; ``trained`` reads the three runs' unsampled W&B history
-over epochs 41-50 for every ``val/`` key the table needs and adds it to the json;
-``report`` writes the figure to ``ASSET_IMAGES_DIR/043-expression-proteome-morphology/``
-and prints the markdown table.
+Doubles statistics. Every doubles baseline reports every statistic ``evaluate_doubles``
+returns, under the trainer's key names without the ``val/doubles/`` prefix (owner,
+2026-10-28: "we need baselines that we will be able to compare with expression sameith
+and other evals"). ``evaluate_doubles`` returns exactly four keys:
+
+* ``pearson_per_strain_centered_median``: the baseline's double prediction;
+* ``additive_model_pearson_per_strain_centered_median``: the sum of the baseline's own
+  single-level predictions (for the Kemmeren-fitted baselines this IS their double
+  prediction, so the two keys are equal; for the measured-single nulls the singles are
+  the measured ones, so it equals ``additive_measured``);
+* ``additive_measured_pearson_per_strain_centered_median``: the measured-singles null,
+  identical for every baseline (the reference the trainer logs beside the model);
+* ``n_doubles``: the number of doubles passed in (72), as the trainer logs it.
+
+Two more measured-single nulls, in released Kemmeren units like ``additive_measured``:
+``larger_single`` (per double and gene, the measured single with the larger absolute
+released value; Kemmeren's released values are ratios against the common wild-type
+reference pool, so the absolute value is the effect against wild type; NaN when either
+single is NaN, as in the additive sum) and ``mean_singles`` ((x + y) / 2). Sameith 2015
+defines only the additive expectation for expression ("the expression change expected
+given the single mutants M_xΔi + M_yΔi", Methods; mirror ``paper.md`` sha256
+7064a1eb...); it names masking and buffering as pattern classes but defines no
+larger-single or mean null, so both are this script's definitions.
+
+Splits (``--split``). ``val`` (default) is the behavior above and writes
+``results/baselines_043.json``. ``test`` is wired to score the same baselines on the
+``global_split_v2`` TEST records into ``results/baselines_043_test.json`` (same schema
+plus ``split``), but it REFUSES on ``prep_v4``: ``train_043 --stage prepare`` drops the
+test records so their labels are never loaded, and ``ROLE_CODE`` has no TEST code. The
+trainer never evaluates the test split (``train_043.run`` evaluates ``val`` with
+``eval_positions(view, VAL, val_max_records_per_dataset, seed)``, ``traineval`` with
+TRAIN records, and the split-B doubles). Given a prepared store that keeps the test
+records (an owner decision, since it unseals their labels), the test records are chosen
+by the trainer's VAL rule with the role swapped: ``eval_positions(view, TEST, 2000,
+seed)`` for seeds 0, 1, 2, each baseline scored per seed subset and averaged; every
+baseline is refitted on training records only (there is no fit cache), the ridge penalty
+on the same inner split of the training records, so no hyperparameter reads a test
+record. The doubles are split B and predicted from training-only fits, so their numbers
+would be the same in both files.
+
+Stages: ``fit`` (CPU, slurm: ``gh_baselines_043.slurm``, ``SPLIT=test`` for the test
+file) writes the json; ``trained`` reads the three runs' unsampled W&B history over
+epochs 41-50 for every ``val/`` key the table needs and adds it to the json; ``report``
+writes the figure to ``ASSET_IMAGES_DIR/043-expression-proteome-morphology/`` and prints
+the markdown table (``trained`` and ``report`` are validation only).
 
     python experiments/043-expression-proteome-morphology/scripts/baselines_043.py --stage fit
+    python experiments/043-expression-proteome-morphology/scripts/baselines_043.py --stage fit --split test
     python experiments/043-expression-proteome-morphology/scripts/baselines_043.py --stage trained
     python experiments/043-expression-proteome-morphology/scripts/baselines_043.py --stage report
 """
@@ -165,9 +206,19 @@ ORDER = (
     "nadal",
     "doubles",
 )
+#: the role each ``--split`` scores, its word in the json, and its output file
+SPLIT_ROLE = {"val": Role.VAL, "test": Role.TEST}
+SPLIT_WORD = {"val": "validation", "test": "test"}
+SPLIT_FILE = {"val": "baselines_043.json", "test": "baselines_043_test.json"}
 NOT_SCORED = {
-    "jackson": "no validation records under global_split_v2 (its 12 TF genes and HO are "
-    "training units); the trainer logs no val/jackson key"
+    "val": {
+        "jackson": "no validation records under global_split_v2 (its 12 TF genes and HO "
+        "are training units); the trainer logs no val/jackson key"
+    },
+    "test": {
+        "jackson": "no test records under global_split_v2 (its 12 TF genes and HO are "
+        "training units)"
+    },
 }
 TRAINED_RUNS = ("gs1024_w4_bs16", "gs1024_w4_bs16_s1", "gs1024_w4_bs16_s2")
 TRAINED_WINDOW = (41, 50)
@@ -331,10 +382,22 @@ def hgb_predict(
 
 # ============================================================================ inputs
 class Inputs:
-    """The prepared store, the trainer's view and the validation subsets of each seed."""
+    """The prepared store, the trainer's view and the scored subsets of each seed.
 
-    def __init__(self, data_root: str, exp_dir: str) -> None:
-        """Load prep_v4, check its split, build the recipe view and the val subsets."""
+    ``val`` holds the scored records of ``split`` (validation or test; the name and the
+    json's ``n_val_*`` keys are kept so both files share one schema).
+    """
+
+    def __init__(self, data_root: str, exp_dir: str, split: str = "val") -> None:
+        """Load prep_v4, check its split, build the recipe view and the scored subsets."""
+        if SPLIT_ROLE[split] not in ROLE_CODE:
+            raise ValueError(
+                f"{PREP_VERSION} holds no {split} records: train_043 --stage prepare "
+                "drops the test records so their labels are never loaded (ROLE_CODE "
+                "has no TEST code). Test baselines need a prepared store that keeps "
+                "them, which unseals the test labels: an owner decision."
+            )
+        self.split = split
         gen = store_paths(STORE_VERSION)
         self.prep_dir = osp.join(
             data_root,
@@ -362,9 +425,9 @@ class Inputs:
         self.view: TrainingView = build_view(
             self.store, self.arm, None, "zscore", "dataset", "dataset"
         )
-        self.val = {
-            s: eval_positions(self.view, ROLE_CODE[Role.VAL], VAL_CAP, s) for s in SEEDS
-        }
+        # the trainer's validation rule; under --split test the same call on TEST
+        role = ROLE_CODE[SPLIT_ROLE[self.split]]
+        self.val = {s: eval_positions(self.view, role, VAL_CAP, s) for s in SEEDS}
         self.genes = list(self.store.meta.genes)
         with open(osp.join(self.cache, "genes.json")) as f:
             if json.load(f) != self.genes:
@@ -645,8 +708,9 @@ def run_gene_dataset(inp: Inputs, d: str, n_jobs: int) -> dict[str, Any]:
     env_val = s.rec_env[v.rec[val]].astype(np.int64)
     info: dict[str, Any] = {
         "level": "gene",
-        "statistic": "median over genes of the Pearson r across validation records "
-        "(gene_level_metrics; genes with >= 3 finite pairs)",
+        "statistic": "median over genes of the Pearson r across "
+        f"{SPLIT_WORD[inp.split]} records (gene_level_metrics; genes with >= 3 finite "
+        "pairs)",
         "n_train_records": int(len(tr)),
         "n_val_records_union": int(len(val)),
         "n_train_environments": int(len(np.unique(env_tr))),
@@ -736,22 +800,49 @@ def run_doubles(inp: Inputs, n_jobs: int) -> dict[str, Any]:
         r = column_pearson((a - mean_profile).T, (m_xy - mean_profile).T, 3)
         return int(np.isfinite(r).sum())
 
+    def stats(p_xy: np.ndarray, p_x: np.ndarray, p_y: np.ndarray) -> dict[str, Any]:
+        """Every ``evaluate_doubles`` statistic (trainer key names, no ``val/doubles/``
+        prefix) for a double prediction and the baseline's own singles.
+        """
+        return {
+            "pearson_per_strain_centered_median": centered(p_xy),
+            "additive_model_pearson_per_strain_centered_median": centered(p_x + p_y),
+            "additive_measured_pearson_per_strain_centered_median": centered(m_x + m_y),
+            "n_doubles": float(n),
+            "n_doubles_scored": n_scored(p_xy),
+        }
+
+    # the larger single: per double and gene, the measured single with the larger
+    # absolute released value (NaN where either single is NaN, as in the sum)
+    larger = np.where(np.abs(m_x) >= np.abs(m_y), m_x, m_y)
+    larger[~(np.isfinite(m_x) & np.isfinite(m_y))] = np.nan
     out: dict[str, Any] = {
         "additive_measured": {
-            "pearson_per_strain_centered_median": centered(m_x + m_y),
-            "n_doubles_scored": n_scored(m_x + m_y),
+            **stats(m_x + m_y, m_x, m_y),
             "hyperparameter": None,
             "note": "measured single x + measured single y (the trainer's "
             "val/doubles/additive_measured key, recomputed)",
-        }
+        },
+        "larger_single": {
+            **stats(larger, m_x, m_y),
+            "hyperparameter": None,
+            "note": "per double and gene, the measured single with the larger absolute "
+            "released value (an effect against the wild-type reference pool); NaN where "
+            "either single is NaN. Not defined by Sameith 2015 (which uses only the "
+            "additive expectation); this script's definition",
+        },
+        "mean_singles": {
+            **stats((m_x + m_y) / 2, m_x, m_y),
+            "hyperparameter": None,
+            "note": "mean of the two measured singles, (x + y) / 2, released units",
+        },
     }
     for name, P in preds_q.items():
         rel = st.invert(P)
         a = rel[:n] + rel[n:]
         hp = kem[name].get("hyperparameter")
         out[name] = {
-            "pearson_per_strain_centered_median": centered(a),
-            "n_doubles_scored": n_scored(a),
+            **stats(a, rel[:n], rel[n:]),
             "hyperparameter": hp
             if name != "ridge"
             else {k: hp[k] for k in ("log10_lambda_rel", "lambda_rule", "grid_edge")},
@@ -768,7 +859,9 @@ def run_doubles(inp: Inputs, n_jobs: int) -> dict[str, Any]:
         "level": "split B",
         "statistic": "median over doubles of the centered per-double Pearson r over genes, "
         "released Kemmeren units, centered on Kemmeren's training-mean profile "
-        "(evaluate_doubles)",
+        "(evaluate_doubles); every evaluate_doubles key is stored per baseline",
+        "records": "split B: all 72 Sameith doubles under either --split (the trainer's "
+        "view.doubles), predicted from training-only fits, so the same in both files",
         "n_doubles": int(n),
         "features": "composite tokens of the two deleted genes, through Kemmeren-fitted "
         "baselines",
@@ -851,8 +944,8 @@ def run_vaishnav(inp: Inputs, n_jobs: int) -> dict[str, Any]:
     print(f"vaishnav hgb {out['hgb']['pearson']:.4f}", flush=True)
     return {
         "level": "record",
-        "statistic": "Pearson r over validation promoters (each seed's 2,000-record "
-        "subset, eval_positions)",
+        "statistic": f"Pearson r over {SPLIT_WORD[inp.split]} promoters (each seed's "
+        "2,000-record subset, eval_positions)",
         "n_train_records": int(len(fin_tr)),
         "n_val_records_union": int(len(val)),
         "features": f"k-mer counts (k 1 to 6) + library indicator, {X.shape[1]} columns",
@@ -866,8 +959,10 @@ def stage_fit(inp: Inputs, out_path: str, n_jobs: int, only: list[str] | None) -
     if osp.exists(out_path):
         with open(out_path) as f:
             payload = json.load(f)
+    role = SPLIT_ROLE[inp.split]
     payload.update(
         {
+            "split": inp.split,
             "generated_by": "experiments/043-expression-proteome-morphology/scripts/baselines_043.py",
             "created_at": datetime.now(UTC).isoformat(timespec="seconds"),
             "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
@@ -887,11 +982,28 @@ def stage_fit(inp: Inputs, out_path: str, n_jobs: int, only: list[str] | None) -
                 "inner_split": f"{INNER_FRAC:.0%} of training units, rng seed {INNER_SEED}",
                 "knn_k": list(KS),
                 "hgb": {**HGB_PARAMS, "n_principal_components": HGB_PCS},
-                "aggregation": "each baseline scored on each seed's validation subset; "
-                "the value is the mean over the three subsets (identical subsets except "
-                "Vaishnav)",
+                "aggregation": f"each baseline scored on each seed's {SPLIT_WORD[inp.split]} "
+                "subset; the value is the mean over the three subsets (identical subsets "
+                "except where a dataset exceeds the cap)",
+                "scored_records": f"eval_positions(view, ROLE_CODE[Role.{role.name}], "
+                f"{VAL_CAP}, seed) for seeds {list(SEEDS)}: per dataset every "
+                f"{role.value} record of global_split_v2, a seeded subset of {VAL_CAP} "
+                "(numpy default_rng(seed), without replacement, sorted) when larger. "
+                + (
+                    "The trainer's validation call (train_043.run, "
+                    "cfg.data.val_max_records_per_dataset = 2000, cfg.seed)."
+                    if inp.split == "val"
+                    else "The trainer never evaluates the test split; this is its "
+                    "validation call (train_043.run, cfg.data."
+                    "val_max_records_per_dataset = 2000, cfg.seed) with the role "
+                    "swapped to TEST."
+                ),
+                "hyperparameter_selection": "training records only: the ridge penalty "
+                "on the inner split of the training units; kNN k and HGB settings are "
+                "fixed and every k is reported; no hyperparameter is chosen on "
+                f"{SPLIT_WORD[inp.split]} records",
             },
-            "not_scored": NOT_SCORED,
+            "not_scored": NOT_SCORED[inp.split],
         }
     )
     payload.setdefault("datasets", {})
@@ -997,6 +1109,8 @@ BASELINE_ORDER = (
 BASELINE_LABEL = {
     "constant": "per-gene training mean",
     "additive_measured": "additive measured singles",
+    "larger_single": "larger measured single",
+    "mean_singles": "mean of measured singles",
     "env_mean": "per-environment mean",
     "ridge": "ridge",
     "knn_5": "kNN, k = 5",
@@ -1177,15 +1291,18 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--stage", required=True, choices=["fit", "trained", "report"])
     parser.add_argument("--only", nargs="*", default=None, choices=list(ORDER))
+    parser.add_argument("--split", default="val", choices=list(SPLIT_ROLE))
     parser.add_argument(
         "--n-jobs", type=int, default=int(os.environ.get("SLURM_CPUS_PER_TASK", "4"))
     )
     args = parser.parse_args()
+    if args.split != "val" and args.stage != "fit":
+        parser.error("--stage trained and report read the validation file only")
     load_dotenv()
     exp_dir = osp.join(os.environ["EXPERIMENT_ROOT"], EXPERIMENT)
-    out_path = osp.join(exp_dir, "results", "baselines_043.json")
+    out_path = osp.join(exp_dir, "results", SPLIT_FILE[args.split])
     if args.stage == "fit":
-        inp = Inputs(os.environ["DATA_ROOT"], exp_dir)
+        inp = Inputs(os.environ["DATA_ROOT"], exp_dir, args.split)
         stage_fit(inp, out_path, args.n_jobs, args.only)
     elif args.stage == "trained":
         stage_trained(out_path)

@@ -2216,3 +2216,24 @@ Queued next on the three cards (01:03 CDT Oct 28, slot manager budget 3): `gs102
 <https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball_s2?nw=sjpdqsr7yjg>
 <https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball_injop_s1?nw=sjpdqsr7yjg>
 <https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_routeB_bs8_ft?nw=sjpdqsr7yjg>
+
+### Baselines: every doubles statistic, two more nulls, and no test split yet (job 6550, 02:23 CDT Oct 28)
+
+Owner (01:20 CDT): "we need baselines that we will be able to compare with expression sameith and other evals." `baselines_043.py` now reports, for the Sameith doubles, every key `evaluate_doubles` returns (`pearson_per_strain_centered_median`, `additive_model_...`, `additive_measured_...`, `n_doubles`) for every baseline, and two nulls beyond the additive one: `larger_single` (per gene, the measured single with the larger absolute released value) and `mean_singles` ((x + y) / 2); neither is from Sameith 2015, whose only expression null is the additive sum (mirror `paper.md`, sha256 7064a1eb...). Validation run 6550 (19 min 27 s, 48 GB): every pre-existing number identical to the Oct 26 file (703 fields diffed, only `seconds` changed).
+
+| doubles baseline (validation, 72 doubles) | centered per-double r |
+|---|---|
+| larger_single (new) | **0.4599** |
+| mean_singles (new) | 0.4539 |
+| additive_measured | 0.4397 |
+| gradient-boosted trees on tokens, summed | 0.3641 |
+| ridge on tokens, summed | 0.1358 |
+| kNN k = 5 / 20 / 50 | 0.0986 / 0.0867 / 0.0950 |
+| constant (training-mean profile) | 0.0883 |
+| trained recipe v2, 3 seeds (41-50) | 0.1989 (0.012) |
+
+Read: the larger single is a better predictor of the double than their sum (0.460 against 0.440), so the best model-free bar on doubles rose by 0.02; the trained model sits 0.26 under it.
+
+Test split: not possible on `prep_v4`. The prepare stage drops the test records so their labels are never loaded (`ROLE_CODE` has no TEST entry; job 6551 failed in 31 s with `KeyError: Role.TEST`), and the trainer never evaluates test. `--split test` is wired in `baselines_043.py` and stops with that message; a test-bearing prepared store (a new prep tag that keeps TEST under its own role code) unseals the test labels and is the owner's decision. The `baselines_test` panel is written in `figure_043_eval_panels.py` and not registered until that file exists.
+
+![](./assets/images/043-expression-proteome-morphology/baselines_043_2026-10-28-02-23-11.svg)

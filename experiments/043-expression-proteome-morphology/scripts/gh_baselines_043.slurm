@@ -5,7 +5,8 @@
 #
 # baselines_043.py --stage fit (CPU only, no GPU): constant / additive, ridge, kNN and
 # per-gene gradient-boosted trees on the trainer's validation records of every dataset,
-# written to results/baselines_043.json. ONLY (optional) restricts to some datasets, e.g.
+# written to results/baselines_043.json (SPLIT=test targets results/baselines_043_test.json
+# but refuses on prep_v4, which holds no test records). ONLY (optional) restricts to some datasets, e.g.
 # ONLY="zelezniak turnover". Submit from the repository root:
 #
 #   sbatch experiments/043-expression-proteome-morphology/scripts/gh_baselines_043.slurm
@@ -29,8 +30,8 @@ export PYTHONPATH="$PWD"
 export EXPERIMENT_ROOT="$PWD/experiments"
 export STORE_043_VERSION=v2
 export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK}" MKL_NUM_THREADS="${SLURM_CPUS_PER_TASK}" OPENBLAS_NUM_THREADS="${SLURM_CPUS_PER_TASK}"
-echo "host $(hostname)  commit $(git rev-parse --short HEAD)  only ${ONLY:-all}  $(date)"
+echo "host $(hostname)  commit $(git rev-parse --short HEAD)  only ${ONLY:-all}  split ${SPLIT:-val}  $(date)"
 EXTRA=()
 if [[ -n "${ONLY:-}" ]]; then read -r -a DS <<< "$ONLY"; EXTRA=(--only "${DS[@]}"); fi
-python experiments/043-expression-proteome-morphology/scripts/baselines_043.py --stage fit --n-jobs "${SLURM_CPUS_PER_TASK}" "${EXTRA[@]}"
+python experiments/043-expression-proteome-morphology/scripts/baselines_043.py --stage fit --split "${SPLIT:-val}" --n-jobs "${SLURM_CPUS_PER_TASK}" "${EXTRA[@]}"
 echo "done $(date)"

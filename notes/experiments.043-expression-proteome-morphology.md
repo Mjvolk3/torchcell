@@ -2307,3 +2307,27 @@ Reads (measured):
 
 <https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball_injop_lrhalf_s2?nw=sjpdqsr7yjg>
 <https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball_injop_lrhalf_records?nw=sjpdqsr7yjg>
+
+### lr-half at four seeds; lr 7.5e-5 and head hidden 256 at one seed (jobs 6564, 6566, 6568; fine-tunes 6565, 6567, 6569; 17:45 CDT Oct 28)
+
+Window means over epochs 41-50 and fine-tune 16-20, `results/ghyper_sweep_2026_10_24_window_means.json` regenerated 17:42 CDT. All arms are pinball + operator injection (ontology, batch 16, prep_v4).
+
+| arm (seeds) | Kemmeren r | doubles r | Muenzner r | Caudal r | Messner r | Vaishnav r | ft Kemmeren r | ft doubles r |
+|---|---|---|---|---|---|---|---|---|
+| lr 1.5e-4 (4) | 0.1014 (0.016) | **0.2606** (0.014) | **0.2363** (0.010) | **0.1797** (0.005) | 0.0625 (0.011) | 0.8721 (0.008) | 0.1230 (0.013) | 0.2701 (0.016) |
+| lr 7.5e-5 (1) | 0.0980 | 0.2775 | 0.2104 | 0.1639 | 0.0778 | 0.8633 | **0.1410** | 0.2691 |
+| lr 1.5e-4 + head hidden 256 (1) | 0.1028 | 0.2580 | 0.2197 | 0.1790 | 0.0648 | 0.8832 | 0.1196 | 0.2521 |
+| lr 3e-4, the combination (4) | 0.1007 (0.027) | 0.2549 (0.019) | 0.2176 (0.010) | 0.1611 (0.012) | 0.0633 (0.004) | 0.9036 (0.007) | 0.1277 (0.021) | 0.2621 (0.019) |
+
+Seed 3 of lr-half: doubles 0.2753, Muenzner 0.2235, Caudal 0.1788, Kemmeren 0.0783, Vaishnav 0.8760.
+
+Reads (measured):
+
+- lr 1.5e-4 at four seeds: Caudal 0.1797 (0.005), every seed above every combination seed; Muenzner 0.2363 (0.010), +0.019 over the combination, three of four seeds above its spread (seed 3 at 0.2235 sits at its top); doubles 0.2606 (0.014); Vaishnav 0.8721 (0.008), every seed below every other arm. The lever stands at n = 4 with its Vaishnav cost.
+- Halving again (7.5e-5, one seed) does not continue the trend: Muenzner 0.2104 and Caudal 0.1639 fall back to the combination's level, Vaishnav drops further (0.8633); doubles 0.2775 and the fine-tuned Kemmeren 0.1410 are the highest single values of the sweep but one seed. Read: 1.5e-4 is the lr to keep; 7.5e-5 is not a candidate on the isolate heads.
+- Head hidden 256 on lr-half (one seed): every head inside the lr-half spread (doubles 0.2580, Muenzner 0.2197, Caudal 0.1790); Vaishnav 0.8832 is 0.011 above the lr-half mean. No measured gain from the wider head.
+
+No cells are queued on GilaHyper: the worktree lands on main next and the following cells launch from the primary checkout.
+
+<https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball_injop_lrquarter?nw=sjpdqsr7yjg>
+<https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball_injop_lrhalf_hh256?nw=sjpdqsr7yjg>

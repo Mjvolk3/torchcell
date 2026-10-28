@@ -552,7 +552,8 @@ class RecordRepresentation(BaseModel):
     @property
     def marked(self) -> IntArray:
         """Gene indices whose change type is not reference."""
-        return np.nonzero(self.change_type != _REF)[0]
+        marked: IntArray = np.nonzero(self.change_type != _REF)[0]
+        return marked
 
 
 class RepresentationResolver:

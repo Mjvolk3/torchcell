@@ -158,16 +158,47 @@ def _arrow(ax: Axes, xy0: tuple[float, float], xy1: tuple[float, float]) -> None
     )
 
 
+#: rewrites every panel string and its text keywords before drawing; ``None`` draws them
+#: as written (mathtext). ``figure_043_model_panel_tex`` sets it to a TeX escaper.
+TEXT_HOOK: Callable[[str, dict[str, Any]], tuple[str, dict[str, Any]]] | None = None
+
+
 def _t(ax: Axes, x: float, y: float, s: str, **kw: Any) -> None:
     kw.setdefault("fontsize", 6)
     kw.setdefault("ha", "left")
     kw.setdefault("va", "center")
+    if TEXT_HOOK is not None:
+        s, kw = TEXT_HOOK(s, kw)
     ax.text(x, y, s, transform=ax.transAxes, zorder=4, **kw)
 
 
-def _size(ax: Axes, y: float, s: str) -> None:
+def _size(ax: Axes, y: float, s: str) -> Any:
     """A tensor size, right-aligned at the box edge."""
     _t(ax, 0.975, y, s, ha="right", fontsize=5, color=SIZE_COLOR)
+    return ax.texts[-1]
+
+
+def _lift_colliding_sizes(ax: Axes, rows: list[tuple[Any, Any, Any]]) -> None:
+    """A size label that overlaps its own equation moves up to its block's header line,
+    when that line has room and no other size of the block moved there. Rows are
+    ``(header, equation, size)`` texts. The LaTeX panels need it (Computer Modern math
+    sets wider than mathtext); a mathtext row that fits is never moved.
+    """
+    fig = ax.figure.get_figure(root=True)
+    fig.draw_without_rendering()
+    renderer = fig._get_renderer()
+    lifted: set[int] = set()
+    for head, eq, size in rows:
+        if eq.get_window_extent(renderer).x1 + 2 < size.get_window_extent(renderer).x0:
+            continue
+        free = head.get_window_extent(renderer).x1 + 4 < (
+            size.get_window_extent(renderer).x0
+        )
+        if id(head) in lifted or not free:
+            print(f"  size label {size.get_text()!r} overlaps its equation", flush=True)
+            continue
+        size.set_y(head.get_position()[1])
+        lifted.add(id(head))
 
 
 # --------------------------------------------------------------------------- #
@@ -290,19 +321,23 @@ def draw_model(ax: Axes, R: C.Reads) -> str:
     y = 1.0
     left = 0.03
     spans: list[tuple[float, float]] = []
+    placed: list[tuple[Any, Any, Any]] = []
     for head, fill, rows_ in blocks:
         top = y
         bottom = top - s * (head_pt + eq_pt * len(rows_) + 2 * pad_pt)
         _frame(ax, 0.0, bottom, 1.0, top, fill)
         cy = top - s * (pad_pt + head_pt / 2)
         _t(ax, 0.012, cy, head, fontweight="bold")
+        head_text = ax.texts[-1]
         cy -= s * (head_pt / 2 + eq_pt / 2)
         for eq, size in rows_:
             _t(ax, left, cy, eq)
-            _size(ax, cy, size)
+            eq_text = ax.texts[-1]
+            placed.append((head_text, eq_text, _size(ax, cy, size)))
             cy -= s * eq_pt
         spans.append((top, bottom))
         y = bottom - s * gap_pt
+    _lift_colliding_sizes(ax, placed)
     for (_, b0), (t1, _) in zip(spans[:-1], spans[1:], strict=True):
         _arrow(ax, (0.5, b0), (0.5, t1))
     return "ready"
@@ -407,7 +442,7 @@ def draw_conditioning(ax: Axes, R: C.Reads) -> str:
     bw = 0.125
     heads = ["name", "ontology", "inject_op", "route A vs B"]
     notes = [
-        f"$[E_{{type}};E_s;E_\\varepsilon]$, {n['tok']},\nand a bias table\nper dataset;\nheads only",
+        f"$[E_{{type}};E_s;E_\\varepsilon]$\n({n['tok']} dims) and a\nbias table per\ndataset; heads only",
         "$t_b=\\mathrm{DAG}_\\psi(a_b)$\nand bias maps;\nno dataset id\nin forward",
         "ontology, plus\n$W_s\\mathrm{LN}(t_b)$ added\nto every token\nbefore the operator",
     ]

@@ -282,7 +282,15 @@ def _loss_family(ax: Axes, loss: str) -> str:
     )
     gap = va["mean"].iloc[-1] - tr["mean"].iloc[-1]
     where = f"still falling at {last}" if vmin == last else f"bottoms at epoch {vmin}"
-    C.title(ax, f"{C.LOSS_LABEL[loss]} val {where}, gap {gap:.2f}")
+    short = f"min at {last}" if vmin == last else f"min at epoch {vmin}"
+    C.fit_title(
+        ax,
+        [
+            f"{C.LOSS_LABEL[loss]} val {where}, gap {gap:.2f}",
+            f"{C.LOSS_LABEL[loss]} val {short}, gap {gap:.2f}",
+            f"val {short}, gap {gap:.2f}",
+        ],
+    )
     return "ready"
 
 

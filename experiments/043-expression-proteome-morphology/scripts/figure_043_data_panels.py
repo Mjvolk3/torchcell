@@ -30,12 +30,18 @@ Every number comes from a file under ``results/``:
 
 from __future__ import annotations
 
+import json
+import os
 import os.path as osp
+import re
 import sys
 from collections.abc import Callable
+from fractions import Fraction
+from math import comb
 from typing import Any
 
 import numpy as np
+import yaml
 from matplotlib.axes import Axes
 from matplotlib.patches import Patch
 from matplotlib.ticker import LogLocator, MultipleLocator, NullFormatter
@@ -604,6 +610,201 @@ def panel_ceilings(ax: Axes, R: C.Reads) -> str:
     return "partial"
 
 
+# ------------------------------------------------------------------------- epoch share
+
+SCRIPTS = osp.dirname(osp.abspath(__file__))
+CONF = osp.join(osp.dirname(SCRIPTS), "conf")
+#: the recipe-v2 cells are submitted through this script; its defaults name the arm,
+#: the sampler and the weighting (notes 2026-10-25, "Recipe v2 and ontology injection")
+RECIPE_V2_SLURM = osp.join(SCRIPTS, "gh_train_043_sweep_v2.slurm")
+RECIPE_V2_PREP = "prep_v4"
+#: trainer short name -> store class, for the datasets an arm can train on
+#: the fraction of the epoch-share box the longest bar spans
+BAR_SPAN = 0.42
+TRAINER_CLASS = {**HEAD_CLASS, "jackson": "TfDeletionPseudobulkJackson2020Dataset"}
+
+
+def _slurm_default(name: str) -> str:
+    """The ``NAME="${NAME:-default}"`` default of the recipe-v2 submission script."""
+    with open(RECIPE_V2_SLURM) as fh:
+        found = re.findall(
+            rf'^{name}="\$\{{{name}:-([^}}]+)\}}"$', fh.read(), flags=re.MULTILINE
+        )
+    assert len(found) == 1, (name, found)
+    return found[0]
+
+
+def equal_weight_shares(counts: list[int], batch: int) -> list[float]:
+    """Exact expected loss weight of each dataset in one uniformly drawn batch (the
+    records sampler: ``batch`` records without replacement from all training records)
+    under equal weighting (``combine_loss``: the mean of the per-dataset means of the
+    datasets present, so a present dataset weighs 1 / datasets present).
+
+    The same expectation as ``training_design_043_tables.expected_weights``' ``w_equal``,
+    computed by a dynamic program over (records drawn, datasets present) of the other
+    datasets instead of enumerating every composition of the batch.
+    """
+    total = comb(sum(counts), batch)
+    out = []
+    for s, c_s in enumerate(counts):
+        others = [c for i, c in enumerate(counts) if i != s]
+        # ways[t][k]: ways the other datasets fill t slots with k of them present
+        ways = [[0] * (len(others) + 1) for _ in range(batch + 1)]
+        ways[0][0] = 1
+        for c in others:
+            new = [[0] * (len(others) + 1) for _ in range(batch + 1)]
+            for t in range(batch + 1):
+                for k in range(len(others) + 1):
+                    if ways[t][k]:
+                        for m in range(min(c, batch - t) + 1):
+                            new[t + m][k + (m > 0)] += ways[t][k] * comb(c, m)
+            ways = new
+        w = sum(
+            Fraction(comb(c_s, m) * ways[batch - m][k], k + 1)
+            for m in range(1, min(c_s, batch) + 1)
+            for k in range(len(others) + 1)
+        )
+        out.append(float(w / total))
+    return out
+
+
+def _recipe_v2() -> dict[str, Any]:
+    """The recipe-v2 training set per dataset and the batch it is drawn in."""
+    arm = _slurm_default("ARM")
+    sampler = _slurm_default("SAMPLER")
+    weighting = _slurm_default("WEIGHTING")
+    with open(osp.join(CONF, "arm", f"{arm}.yaml")) as fh:
+        arm_cfg = yaml.safe_load(fh)
+    with open(osp.join(CONF, "train_043_default.yaml")) as fh:
+        data_cfg = yaml.safe_load(fh)["data"]
+    batch, route = int(data_cfg["batch_size"]), data_cfg["route"]
+    with open(osp.join(CONF, "weighting", f"{weighting}.yaml")) as fh:
+        w_cfg = yaml.safe_load(fh)
+    assert (sampler, w_cfg["kind"], w_cfg["by"]) == ("records", "equal", "dataset")
+    meta_path = osp.join(
+        os.environ["DATA_ROOT"],
+        "data/torchcell/experiments",
+        C.SLUG,
+        "train_043_prep",
+        f"{RECIPE_V2_PREP}_route{route}",
+        "meta.json",
+    )
+    with open(meta_path) as fh:
+        meta = json.load(fh)
+    assert meta["prep_version"] == RECIPE_V2_PREP, meta["prep_version"]
+    shorts = [
+        s for s in arm_cfg["datasets"] if s not in arm_cfg["exclude_from_training"]
+    ]
+    counts = [int(meta["counts"][s]["train"]) for s in shorts]
+    return {
+        "arm": arm,
+        "batch": batch,
+        "shorts": shorts,
+        "counts": counts,
+        "weights": equal_weight_shares(counts, batch),
+    }
+
+
+def panel_epoch_share(ax: Axes, R: C.Reads) -> str:
+    """Per training dataset of recipe v2: the records one epoch draws, their mean count
+    in a batch, and the expected loss weight under equal weighting.
+    """
+    E = _recipe_v2()
+    order = sorted(
+        range(len(E["shorts"])),
+        key=lambda i: [c for c, _, _ in CATALOG].index(TRAINER_CLASS[E["shorts"][i]]),
+    )
+    shorts = [E["shorts"][i] for i in order]
+    counts = np.array([E["counts"][i] for i in order], dtype=float)
+    weights = [E["weights"][i] for i in order]
+    n, batch = int(counts.sum()), E["batch"]
+    steps = -(-n // batch)
+    classes = [TRAINER_CLASS[s] for s in shorts]
+    y = np.arange(len(shorts))
+    left = 10.0 ** np.floor(np.log10(counts.min()))
+    # the bars take the left of the box, the two number columns the right
+    top = 10.0 ** (
+        np.log10(left) + (np.log10(counts.max()) - np.log10(left)) / BAR_SPAN
+    )
+    ax.barh(
+        y,
+        counts - left,
+        left=left,
+        height=0.72,
+        color=[C.MODALITY_COLOR[MODALITY[c]] for c in classes],
+        edgecolor="black",
+        linewidth=0.5,
+        zorder=3,
+    )
+    ax.set_xscale("log")
+    ax.set_xlim(left, top)
+    decades = [
+        10.0**e for e in range(int(np.log10(left)), int(np.log10(counts.max())) + 2)
+    ]
+    for d in decades:
+        ax.axvline(d, color="#DDDDDD", linewidth=0.4, zorder=0)
+    ax.set_xticks(decades[::2])
+    ax.xaxis.set_minor_formatter(NullFormatter())
+    ax.tick_params(axis="x", which="minor", length=0)
+    to_axes = ax.get_yaxis_transform()
+    col_batch, col_w = 0.80, 0.995
+    for yi, v, w in zip(y, counts, weights, strict=True):
+        ax.text(v * 1.2, yi, f"{int(v):,}", va="center", ha="left", fontsize=FS)
+        ax.text(
+            col_batch,
+            yi,
+            f"{batch * v / n:.2f}",
+            va="center",
+            ha="right",
+            fontsize=FS,
+            transform=to_axes,
+        )
+        ax.text(
+            col_w,
+            yi,
+            f"{w:.3f}",
+            va="center",
+            ha="right",
+            fontsize=FS,
+            transform=to_axes,
+        )
+    for x, head in ((col_batch, f"of {batch}"), (col_w, "loss w")):
+        ax.text(
+            x,
+            -1.1,
+            head,
+            va="center",
+            ha="right",
+            fontsize=FS,
+            fontweight="bold",
+            transform=to_axes,
+        )
+    labels = [
+        C.DATASET_LABEL[s] if s in C.DATASET_LABEL else LABEL[TRAINER_CLASS[s]]
+        for s in shorts
+    ]
+    ax.set_yticks(y, labels, fontsize=FS)
+    ax.set_ylim(len(shorts) - 0.4, -1.7)
+    ax.tick_params(axis="y", length=0, pad=1.5)
+    ax.set_xlabel(
+        f"training records = records per epoch (records sampler, each once)\n"
+        f"{RECIPE_V2_PREP} meta.json, arm {E['arm']}, equal weighting, "
+        f"{len(shorts)} datasets",
+        fontsize=FS,
+        labelpad=1,
+    )
+    C.box(ax)
+    C.fit_title(
+        ax,
+        [
+            f"an epoch draws {n:,} records in {steps:,} steps of {batch}",
+            f"an epoch: {n:,} records, {steps:,} steps of {batch}",
+            f"epoch: {n:,} records, {steps:,} steps",
+        ],
+    )
+    return "ready"
+
+
 # ----------------------------------------------------------------------------- targets
 
 
@@ -627,6 +828,7 @@ PANELS: dict[str, Callable[[Axes, C.Reads], str]] = {
     "split": panel_split,
     "ontology": panel_ontology,
     "ceilings": panel_ceilings,
+    "epoch_share": panel_epoch_share,
     "targets": panel_targets,
 }
 

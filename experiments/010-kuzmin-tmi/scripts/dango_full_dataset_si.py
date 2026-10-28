@@ -285,10 +285,12 @@ def style_axes(ax):
 
 
 def panel_curves(runs: pd.DataFrame, history: pd.DataFrame):
-    """Validation Pearson against epoch, one thin line per run, colored by group."""
-    w, h = PANEL_WIDTHS_MM["half"], 52.0
+    """Validation Pearson against epoch, one thin line per run, colored by group. Third
+    width at the height of panels c to f; the one-column legend sits in the empty lower
+    right, below the DANGO plateau and right of the rise."""
+    w, h = PANEL_WIDTHS_MM["third"], 52.0
     fig, ax = plt.subplots(figsize=(mm_to_in(w), mm_to_in(h)))
-    fig.subplots_adjust(left=0.13, right=0.98, top=0.97, bottom=0.17)
+    fig.subplots_adjust(left=0.2, right=0.97, top=0.97, bottom=0.17)
     for g in GROUPS:
         for i, rid in enumerate(runs.loc[runs["group"] == g, "run_id"]):
             hh = history[history["run_id"] == rid].sort_values("epoch")
@@ -307,7 +309,10 @@ def panel_curves(runs: pd.DataFrame, history: pd.DataFrame):
     ax.tick_params(which="minor", length=0)
     ax.grid(axis="y", which="both", color="#CACACA", linewidth=0.4)
     ax.set_axisbelow(True)
-    ax.legend(frameon=False, loc="lower right", handlelength=1.2)
+    leg = ax.legend(frameon=False, loc="lower right", handlelength=1.2, handletextpad=0.4,
+                    labelspacing=0.25, borderaxespad=0.3)
+    for line in leg.get_lines():
+        line.set_linewidth(1.0)
     style_axes(ax)
     save(fig, "dango_full_dataset_curves")
 
@@ -315,10 +320,11 @@ def panel_curves(runs: pd.DataFrame, history: pd.DataFrame):
 def panel_best(runs: pd.DataFrame, summary: pd.DataFrame):
     """Best validation Pearson per run by group: bar = mean, whisker = SEM, marker = run
     (filled = enters the main-text figure). The y-axis is zoomed to 0.3--0.5 so the
-    between-run spread of a few thousandths is visible."""
-    w, h = PANEL_WIDTHS_MM["half"], 52.0
+    between-run spread of a few thousandths is visible. Third width: the tick labels give
+    the release alone, as in panel c, and the axis label names the model."""
+    w, h = PANEL_WIDTHS_MM["third"], 52.0
     fig, ax = plt.subplots(figsize=(mm_to_in(w), mm_to_in(h)))
-    fig.subplots_adjust(left=0.13, right=0.98, top=0.97, bottom=0.17)
+    fig.subplots_adjust(left=0.2, right=0.97, top=0.97, bottom=0.17)
     x = np.arange(len(GROUPS))
     rng = np.random.default_rng(0)
     for i, g in enumerate(GROUPS):
@@ -334,7 +340,8 @@ def panel_best(runs: pd.DataFrame, summary: pd.DataFrame):
                        facecolor="black" if r["main_text"] else "white",
                        edgecolor="black", linewidth=0.4, zorder=5)
     ax.set_xticks(x)
-    ax.set_xticklabels(["STRING v9.1", "STRING v11.0", "STRING v12.0", "CGT"])
+    ax.set_xticklabels(["v9.1", "v11.0", "v12.0", "CGT"])
+    ax.set_xlim(-0.5, len(GROUPS) - 0.5)
     ax.set_xlabel("DANGO by STRING release, and the CGT")
     ax.set_ylabel("Best validation Pearson r")
     ax.set_ylim(0.3, 0.5)
@@ -345,7 +352,8 @@ def panel_best(runs: pd.DataFrame, summary: pd.DataFrame):
     ax.set_axisbelow(True)
     ax.scatter([], [], s=7, facecolor="black", edgecolor="black", linewidth=0.4, label="in Fig. 2d")
     ax.scatter([], [], s=7, facecolor="white", edgecolor="black", linewidth=0.4, label="other replicate")
-    ax.legend(frameon=False, loc="upper left", handlelength=1.0)
+    ax.legend(frameon=False, loc="upper left", handlelength=1.0, handletextpad=0.4,
+              labelspacing=0.25, borderaxespad=0.3)
     style_axes(ax)
     save(fig, "dango_full_dataset_best")
 

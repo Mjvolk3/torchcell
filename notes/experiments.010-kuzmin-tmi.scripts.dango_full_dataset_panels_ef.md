@@ -1,6 +1,6 @@
 ---
 id: au80kyqc43wogkjcn01n9i0
-title: Dango_full_dataset_panels_efg
+title: Dango_full_dataset_panels_ef
 desc: ''
 updated: 1792994092712
 created: 1792994092712
@@ -20,7 +20,7 @@ DANGO `014mprap` (STRING v9.1), minimum-validation-MSE checkpoint (epoch 81), on
 
 ### f: absolute error against |tau|, DANGO beside the CGT
 
-![](./assets/images/010-kuzmin-tmi/dango_full_dataset_error_vs_tau.svg)
+Panel dropped 2026.10.26 (see the section of that date below); its SVG and `dango_full_dataset_panel_f_bins.csv` were deleted, and the numbers below are the record of what it showed.
 
 Each model on its own validation split: DANGO `014mprap` minimum-MSE on the experiment-006 split (33,231 records) and CGT `c7671wgj` best-Pearson checkpoint (epoch 24, val r 0.4619) on the experiment-010 split (37,673 records). The splits come from different builds and differ in membership; nothing is joined record by record. Fixed bins of measured |tau|, width 0.02, from 0 to 0.22 (about the 99th percentile: 0.210 in the 006 split, 0.218 in the 010 split). Line = median of |prediction - tau| per bin, band = interquartile range, dashed diagonal = the error of predicting 0 (which is |tau|).
 
@@ -57,3 +57,15 @@ The largest channel is experimental with v9.1 and fusion with v12.0. The v12.0 c
 
 - Only one DANGO checkpoint enters e and f, and one CGT replicate enters f; no spread over replicates is shown.
 - f compares two error profiles on two different validation splits; a paired comparison needs both models scored on one split, which no run provides (no DANGO run on the experiment-010 build exists).
+
+## 2026.10.26 - Error panel dropped; channel weights become f at third width
+
+Owner's review of `FigS-dango-full-dataset`: the absolute-error-against-|tau| panel is dropped, because the DANGO against CGT comparison is carried by the Pearson values of panels a and b and by Fig. 2d. The script is renamed `experiments/010-kuzmin-tmi/scripts/dango_full_dataset_panels_ef.py` (front matter and docstring updated); `load_cgt`, `error_bins`, `panel_error_vs_tau`, the CGT label-table path and the bin constants are removed, so the script no longer reads the 010 build or the CGT predictions. `dango_full_dataset_panel_f_bins.csv` and `dango_full_dataset_error_vs_tau.{svg,png}` are deleted. The channel-weight panel, formerly g, is now f; its frozen summary keeps the name `dango_full_dataset_panel_g_summary.csv`, and both summary CSVs and the panel e SVG/PNG came out byte-identical on the re-run.
+
+Run from the repo root: `python experiments/010-kuzmin-tmi/scripts/dango_full_dataset_panels_ef.py`.
+
+### f: channel weights at third width
+
+![](./assets/images/010-kuzmin-tmi/dango_full_dataset_channel_weights.svg)
+
+Third width (57.8 mm) at 52 mm, like every panel of the 2 x 3 figure. Six channels at 57.8 mm leave 7.4 mm per channel, too narrow for `neighborhood` (13.1 mm at 6 pt Arial) or `experimental` (12.2 mm) on one line, so the channel names are set in full at 45 degrees (anchored at their tick, `rotation_mode="anchor"`), which needs no abbreviation key in the caption; the bottom margin is 0.30 of the panel height to hold them. Both releases are kept per channel (boxes 0.32 wide at offsets of plus and minus 0.19), the dashed line stays at 1/6, the mean markers are 2.0 pt. The legend is one column in the upper left, over the first two channels, whose 95th percentiles stay at or below 0.34; a two-column legend cleared the experimental v9.1 whisker (95th percentile 0.48) by only about 1.3 mm. Values unchanged.

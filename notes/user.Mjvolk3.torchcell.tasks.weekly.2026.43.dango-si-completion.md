@@ -12,3 +12,4 @@ created: 1792994261365
 - [x] ReZero fact check at inference: the v9.1 checkpoint's gates sit at 0.07 but removing the attention branch drops validation Pearson from 0.367 to 0.079 (v12.0: 0.354 to 0.337); the small gate is not a shut branch. Written into the Note `note:dango-full`.
 - [ ] DANGO ablation arms on the 006 build, STRING v9.1 (baseline, no reconstruction loss, plain residual, both): GilaHyper jobs 6442 to 6444 pending behind the 043 sweep, 6445 held; W&B project `torchcell_006-kuzmin2018-tmi_dango_ablation` [[experiments.006-kuzmin-tmi.scripts.dango_ablation]]
 - [ ] Add the Bachlechner 2020 ReZero reference and the DANGO reference key to `references.bib` (owner curation)
+- [x] Owner review: panel f (error vs |tau| beside the CGT) dropped as redundant with Fig. 2d; Supplementary Fig. 9 re-flowed as a 2 x 3 grid of third-width panels (a to f, channel weights now f), 179.9 x 114.0 mm [[experiments.010-kuzmin-tmi.scripts.dango_full_dataset_panels_ef]]

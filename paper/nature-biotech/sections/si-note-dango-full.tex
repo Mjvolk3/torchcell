@@ -8,7 +8,7 @@
 %% experiments/005-kuzmin2018-tmi/results/dango_string_version_sweep.csv, and writes
 %% results/dango_full_dataset_data_effect.csv). The figure is composed by
 %% experiments/010-kuzmin-tmi/scripts/dango_full_dataset_compose_figure.py. Rerun those, not this file.
-%% Panels e--g and the paragraphs "Prediction, error and channel weights" and "What the ReZero gate
+%% Panels e, f and the paragraphs "Prediction and channel weights" and "What the ReZero gate
 %% carries": experiments/010-kuzmin-tmi/scripts/dango_full_dataset_inference.py scored the 014mprap
 %% (min-MSE ckpt, epoch 81; last, epoch 999) and 9jpfy547 (min-MSE, epoch 53) checkpoints on the
 %% experiment-006 splits and checked validation Pearson and MSE against the logged values
@@ -16,13 +16,14 @@
 %% results/dango_predictions_*_{val,test}.npy, dango_labels_val.npy, dango_rezero_ablation.csv
 %% (beta, Pearson trained vs beta = 0, residual ratios), dango_meta_embedding_weights_*_minmse.csv,
 %% and dango_full_dataset_inference_summary.json (channel means over all / perturbed genes).
-%% experiments/010-kuzmin-tmi/scripts/dango_full_dataset_panels_efg.py draws e--g from those files
-%% plus the CGT c7671wgj validation predictions of score_010_checkpoints_directly.py
-%% (results/cgt_predictions_M03_c7671wgj_val.npy, cgt_direct_scoring.csv) and freezes
-%% results/dango_full_dataset_panel_{e_summary,f_bins,g_summary}.csv (SD and range of e, the
-%% per-bin medians and ratios to predicting zero of f, the channel means and shares above 1/6 of g).
+%% experiments/010-kuzmin-tmi/scripts/dango_full_dataset_panels_ef.py draws e and f from those files
+%% and freezes results/dango_full_dataset_panel_{e_summary,g_summary}.csv (SD and range of e; the
+%% channel means and shares above 1/6 of f, whose CSV keeps the name it had as panel g). The
+%% absolute-error-vs-|tau| panel beside the CGT and its results/dango_full_dataset_panel_f_bins.csv
+%% were dropped 2026-10-26 at the owner's review (the comparison is carried by panels a, b and
+%% Fig. 2d); the script was renamed from dango_full_dataset_panels_efg.py.
 %% Notes: notes/experiments.010-kuzmin-tmi.scripts.dango_full_dataset_inference.md and
-%% notes/experiments.010-kuzmin-tmi.scripts.dango_full_dataset_panels_efg.md.
+%% notes/experiments.010-kuzmin-tmi.scripts.dango_full_dataset_panels_ef.md.
 %% beta_l starts at 0.01: Dango._initialize_weights in torchcell/models/dango.py
 %% (nn.init.constant_(hyper_sagnn.beta1/beta2, 0.01), present since 5c7bab65f4, 2025-05-07,
 %% before the 2025-09 runs 014mprap and 9jpfy547); read from the code, not measured.
@@ -83,19 +84,13 @@ union, given that the CGT scores $0.396$ on the deletion-only experiment-009 bui
 $0.454$ on the experiment-010 build. Whether DANGO trained on the experiment-010 build would
 close any of the gap to the CGT is likewise not measured.
 
-\notesec{Prediction, error and channel weights} Rescored from the saved weights on the
+\notesec{Prediction and channel weights} Rescored from the saved weights on the
 experiment-006 splits, the minimum-validation-MSE checkpoints of \texttt{014mprap} (v9.1,
 epoch 81) and \texttt{9jpfy547} (v12.0, epoch 53) reproduce their logged validation Pearson
 $r$, 0.3672 and 0.3543, to within $4\times10^{-5}$. The v9.1 checkpoint's validation
 predictions are compressed toward zero, SD 0.023 against 0.061 for the measured $\tau$, and none
-exceeds 0.064 (\suppfig{fig:dango-full}e). Set beside the CGT replicate \texttt{c7671wgj} on its
-own validation split (\suppfig{fig:dango-full}f), the median absolute error over all records is
-the same, 0.028, and is spread differently: DANGO's is the lower where $|\tau|<0.02$ (0.012
-against 0.015), the CGT's is the lower in every wider bin, and DANGO's median error stays 5 to
-7\% below the error of predicting zero in each bin from 0.02 to 0.22, against 12 to 23\% for the
-CGT. The two splits hold different records of different builds, so these are two error
-profiles, not paired predictions. The meta-embedding weights depend on the release
-(\suppfig{fig:dango-full}g): with v9.1 the experimental channel takes a mean weight of 0.277
+exceeds 0.064 (\suppfig{fig:dango-full}e). The meta-embedding weights depend on the release
+(\suppfig{fig:dango-full}f): with v9.1 the experimental channel takes a mean weight of 0.277
 against the uniform 0.167 and fusion the least, 0.125; with v12.0 fusion takes 0.261,
 co-expression 0.187, and experimental 0.161. Restricted to the 4,036 genes perturbed in the
 dataset, no channel mean moves by more than 0.011.
@@ -148,16 +143,7 @@ trigenic interaction $\tau$ on the 33,231 records of the experiment-006 validati
 STRING v9.1 run of Fig.~\ref{fig:ggi}d at its minimum-validation-MSE checkpoint (epoch 81),
 Pearson $r=0.367$; predictions span $-0.33$ to $0.06$ (SD 0.023), measured values $-0.99$ to
 $0.91$ (SD 0.061); 25 records with $|\tau|>0.5$ lie outside the axes.
-\textbf{f},~Away from $\tau=0$ the CGT errs less than DANGO, whose median error stays 5 to 7\%
-below that of predicting zero (dashed, equal to $|\tau|$). Median (line) and interquartile range
-(band) of the absolute error in bins of measured $|\tau|$ 0.02 wide, for the checkpoint of e and
-for the CGT replicate with the highest validation $r$ (0.462, epoch 24) on its own
-experiment-010 validation split of 37,673 records; the splits differ in membership, so no
-prediction is paired. Below $|\tau|=0.02$ (35\% and 34\% of the splits) DANGO's median error is
-the lower, 0.012 against 0.015; in every wider bin the CGT's is, 12 to 23\% below predicting
-zero; over all records both are 0.028. Records with $|\tau|\ge0.22$ (0.9\% and 1.0\%) lie
-beyond the axis.
-\textbf{g},~The STRING release changes which channel DANGO's meta-embedding weights most,
+\textbf{f},~The STRING release changes which channel DANGO's meta-embedding weights most,
 experimental with v9.1 and fusion with v12.0. Per-gene softmax weight over the six channels, over
 all 6,607 genes, for the checkpoint of e and a v12.0 run at its minimum-validation-MSE checkpoint
 (epoch 53); box, interquartile range; line, median; open circle, mean; whiskers, 5th to 95th
@@ -165,7 +151,7 @@ percentile; dashed line, the uniform 1/6. Mean experimental weight 0.277 with v9
 for 99.4\% of genes), mean fusion weight 0.261 with v12.0 (94.4\%). Source:
 \texttt{experiments/010-kuzmin-tmi/scripts/dango\_full\_dataset\_si.py} (a--d; d also reads
 \texttt{experiments/005-kuzmin2018-tmi/results/dango\_string\_version\_sweep.csv}) and
-\texttt{dango\_full\_dataset\_panels\_efg.py} (e--g; inputs from
+\texttt{dango\_full\_dataset\_panels\_ef.py} (e, f; inputs from
 \texttt{dango\_full\_dataset\_inference.py}).}{fig:dango-full}
 \end{figure*}
 

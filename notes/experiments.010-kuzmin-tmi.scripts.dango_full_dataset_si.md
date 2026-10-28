@@ -115,3 +115,16 @@ Author review: the wide panel was too big for what it shows. `panel_data_effect`
 `Kuzmin 2018 + 2020 / 332,313 records` (the caption spells out that 006 adds the Kuzmin 2020
 deletions). Re-rendered with `--from-csv`; no value changed; the frozen
 `dango_full_dataset_data_effect.csv` is the same.
+
+## 2026.10.26 - Curves and best-per-run panels at third width
+
+Owner's review of `FigS-dango-full-dataset`: the figure becomes a 2 x 3 grid of six third-width panels (see [[experiments.010-kuzmin-tmi.scripts.dango_full_dataset_compose_figure]]), so `panel_curves` (a) and `panel_best` (b) go from half width (88 mm) to third width (57.8 mm, `PANEL_WIDTHS_MM["third"]`), at the 52 mm height of c and d and with the same margins as c (`left=0.2, right=0.97, top=0.97, bottom=0.17`), so the axes of a, b and c line up across row 1.
+
+- (a) The log epoch axis (1 to 1,100) and the four legend entries are unchanged. The one-column legend stays in the lower right, which at third width begins at about epoch 14, right of the DANGO rise and below the plateau, with tighter spacing (`handletextpad=0.4`, `labelspacing=0.25`, `borderaxespad=0.3`); the legend handles are drawn at 1.0 pt so the four colors read at the smaller size (the plotted lines stay 0.5 pt).
+- (b) The tick labels are shortened to `v9.1`, `v11.0`, `v12.0`, `CGT`, as in panel c (`STRING v12.0` measures 13.8 mm at 6 pt Arial against an 11.1 mm slot per bar); the axis label `DANGO by STRING release, and the CGT` names the model. The legend (`in Fig. 2d`, `other replicate`) stays in the upper left with the same tighter spacing.
+
+![](./assets/images/010-kuzmin-tmi/dango_full_dataset_curves.svg)
+
+![](./assets/images/010-kuzmin-tmi/dango_full_dataset_best.svg)
+
+Re-rendered with `--from-csv` (no wandb pull). The four frozen CSVs (`dango_full_dataset_{runs,history,summary,data_effect}.csv`) and `paper/nature-biotech/sections/tab-dango-full-runs.tex` are byte-identical afterwards (`git diff --stat` lists none of them). The re-run also rewrote panels c and d with matplotlib 3.10.7, which moves their text by under 0.1 pt against the committed 3.11.1 render; those two files were restored from git, since their code did not change.

@@ -3,17 +3,17 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/010-kuzmin-tmi/scripts/dango_full_dataset_compose_figure
 """Compose the DANGO full-dataset SI figure as a draw.io file from the true-size panel SVGs.
 
-Panels a--d come from ``dango_full_dataset_si.py`` (this folder): (a) validation curves and
-(b) best validation Pearson per run at half width; (c) the convergence epochs and (d) the
-data-effect panel (Kuzmin 2018-only build against the experiment-006 build, by STRING
-release), both at third width. Panels e--g come from ``dango_full_dataset_panels_efg.py``,
-which reads the predictions and channel weights ``dango_full_dataset_inference.py`` scored
-from the DANGO checkpoints: (e) predicted against measured tau completes row 2 at third
-width; (f) absolute error against |tau| (DANGO beside the CGT, each on its own validation
-split) and (g) the per-gene meta-embedding channel weights (STRING v9.1 against v12.0)
-share row 3 at half width. Each panel SVG declares its size in draw.io units (100 per
-inch, via ``savefig_true_size_svg``), so the image cells are placed at exact physical size
-and the figure is WYSIWYG when ``make -C paper/nature-biotech fig`` exports it to
+A 2 x 3 grid of six third-width panels (57.8 mm each, 52 mm tall). Panels a--d come from
+``dango_full_dataset_si.py`` (this folder): (a) validation curves, (b) best validation
+Pearson per run, (c) the convergence epochs, (d) the data-effect panel (Kuzmin 2018-only
+build against the experiment-006 build, by STRING release). Panels e and f come from
+``dango_full_dataset_panels_ef.py``, which reads the predictions and channel weights
+``dango_full_dataset_inference.py`` scored from the DANGO checkpoints: (e) predicted against
+measured tau and (f) the per-gene meta-embedding channel weights (STRING v9.1 against
+v12.0). Row 1 is a, b, c; row 2 is d, e, f. The script refuses any panel that is not third
+width. Each panel SVG declares its size in draw.io units (100 per inch, via
+``savefig_true_size_svg``), so the image cells are placed at exact physical size and the
+figure is WYSIWYG when ``make -C paper/nature-biotech fig`` exports it to
 ``figures/FigS-dango-full-dataset.pdf``.
 
 Panel letters are 8 pt bold lowercase (draw.io fontSize 11.1). Rerun after regenerating any
@@ -56,6 +56,8 @@ IMAGE_STYLE = (
     "verticalAlign=top;aspect=fixed;imageAspect=0;image=data:image/svg+xml,{b64};"
 )
 P010 = osp.join(ASSET_IMAGES_DIR, "010-kuzmin-tmi")
+THIRD_WIDTH_MM = 57.8  # torchcell.utils.PANEL_WIDTHS_MM["third"]
+UNITS_PER_MM = 100 / 25.4  # draw.io canvas units (100 per inch)
 
 
 def svg_size(path: str) -> tuple[float, float]:
@@ -84,56 +86,36 @@ def letter_cell(cid: int, letter: str, x: float, row_top: float) -> str:
 
 
 def main():
-    curves = osp.join(P010, "dango_full_dataset_curves.svg")
-    best = osp.join(P010, "dango_full_dataset_best.svg")
-    conv = osp.join(P010, "dango_full_dataset_convergence.svg")
-    effect = osp.join(P010, "dango_full_dataset_data_effect.svg")
-    pred = osp.join(P010, "dango_full_dataset_pred_vs_measured.svg")
-    error = osp.join(P010, "dango_full_dataset_error_vs_tau.svg")
-    weights = osp.join(P010, "dango_full_dataset_channel_weights.svg")
-
-    half = svg_size(curves)[0]
-    third = svg_size(conv)[0]
-    for path in (effect, pred):
-        if abs(svg_size(path)[0] - third) > 0.5:
-            raise SystemExit(f"{path} must be third width to tile row 2 with c, d and e")
-    for path in (best, error, weights):
-        if abs(svg_size(path)[0] - half) > 0.5:
-            raise SystemExit(f"{path} must be half width to tile its row")
-    col2 = half + COL_GAP
-    # Row 1: (a) curves and (b) best per run, two half-width panels.
-    row1_top = 0
-    y1 = row1_top + TOP_STRIP
-    row1_h = max(svg_size(curves)[1], svg_size(best)[1])
-    # Row 2: (c) convergence, (d) the data effect, (e) predicted vs measured, three thirds.
-    row2_top = y1 + row1_h + (ROW_GAP - TOP_STRIP)
-    y2 = row2_top + TOP_STRIP
-    row2_h = max(svg_size(conv)[1], svg_size(effect)[1], svg_size(pred)[1])
-    x_effect = third + COL_GAP
-    x_e = 2 * (third + COL_GAP)
-    # Row 3: (f) error against |tau| and (g) channel weights, two half-width panels.
-    row3_top = y2 + row2_h + (ROW_GAP - TOP_STRIP)
-    y3 = row3_top + TOP_STRIP
-    row3_h = max(svg_size(error)[1], svg_size(weights)[1])
+    rows = [
+        [("a", "dango_full_dataset_curves.svg"),
+         ("b", "dango_full_dataset_best.svg"),
+         ("c", "dango_full_dataset_convergence.svg")],
+        [("d", "dango_full_dataset_data_effect.svg"),
+         ("e", "dango_full_dataset_pred_vs_measured.svg"),
+         ("f", "dango_full_dataset_channel_weights.svg")],
+    ]
+    third = THIRD_WIDTH_MM * UNITS_PER_MM
+    for row in rows:
+        for _, name in row:
+            w = svg_size(osp.join(P010, name))[0]
+            if abs(w - third) > 0.5:
+                raise SystemExit(f"{name} is {w:.2f} units wide; every panel must be third width ({third:.2f})")
 
     cells, cid = [], 2
+    row_top = 0.0
+    extent_w = extent_h = 0.0
+    for row in rows:
+        y = row_top + TOP_STRIP
+        row_h = max(svg_size(osp.join(P010, name))[1] for _, name in row)
+        for col, (letter, name) in enumerate(row):
+            x = col * (third + COL_GAP)
+            cells.append(image_cell(cid, osp.join(P010, name), x, y))
+            cells.append(letter_cell(cid + 1, letter, x, row_top))
+            cid += 2
+            extent_w = max(extent_w, x + svg_size(osp.join(P010, name))[0])
+        extent_h = y + row_h
+        row_top = y + row_h + (ROW_GAP - TOP_STRIP)
 
-    def add(cell_xml: str, letter: str, x: float, row_top: float):
-        nonlocal cid
-        cells.append(cell_xml)
-        cells.append(letter_cell(cid + 1, letter, x, row_top))
-        cid += 2
-
-    add(image_cell(cid, curves, 0, y1), "a", 0, row1_top)
-    add(image_cell(cid, best, col2, y1), "b", col2, row1_top)
-    add(image_cell(cid, conv, 0, y2), "c", 0, row2_top)
-    add(image_cell(cid, effect, x_effect, y2), "d", x_effect, row2_top)
-    add(image_cell(cid, pred, x_e, y2), "e", x_e, row2_top)
-    add(image_cell(cid, error, 0, y3), "f", 0, row3_top)
-    add(image_cell(cid, weights, col2, y3), "g", col2, row3_top)
-
-    extent_w = max(col2 + svg_size(best)[0], x_e + third, col2 + svg_size(weights)[0])
-    extent_h = y3 + row3_h
     xml = (
         '<mxfile host="dango_full_dataset_compose_figure.py">'
         f'<diagram id="{FIG_NAME}" name="Page-1">'

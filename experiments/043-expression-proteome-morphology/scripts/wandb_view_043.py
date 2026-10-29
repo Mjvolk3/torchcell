@@ -478,6 +478,18 @@ ROUNDS: dict[str, Round] = {
             f"gs1024_w8_pinball_injop_{k}{ft}"
             for k in ("lrhalf_records", "lrhalf_s3", "lrquarter", "lrhalf_hh256")
             for ft in ("", "_ft")
+        )
+        # wave 9 (2026-10-28, after the branch landed on main): the lr-half recipe at
+        # seed 4 (6581/6582), its HL-Gauss twin (6583/6584) and route B at batch 8 under
+        # the new recipe (6585/6586)
+        + tuple(
+            f"gs1024_w9_{k}{ft}"
+            for k in (
+                "pinball_injop_lrhalf_s4",
+                "hlgauss_injop_lrhalf",
+                "routeB_bs8_pinball_injop_lrhalf",
+            )
+            for ft in ("", "_ft")
         ),
         hardware=(
             "GilaHyper main, RTX 6000 Ada 48 GB, one run per card, four chained slots "

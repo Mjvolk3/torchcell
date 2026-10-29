@@ -375,6 +375,46 @@ ROUNDS: dict[str, Round] = {
             "to its Kemmeren fine-tune (20 epochs, lr 3e-4, warmup 30)."
         ),
     ),
+    "aurora_v4_2026_10_29": Round(
+        view_name="043 Aurora recipe v3 seeds at 80 epochs 2026-10-29 by arm",
+        # run id = a1029_<cell> (resume_id), _ft = its Kemmeren fine-tune from the epoch-80
+        # last.pt; tag aurora_v4_2026_10_29. Job a (aurora_grid_043_v4_a.tsv): seeds 4-6 of
+        # the three v3 pinball-injection arms (equal lr 1.5e-4, equal lr 3e-4, records lr
+        # 3e-4) and seeds 0-2 of records weighting at lr 1.5e-4; window 71-80.
+        run_ids=tuple(
+            f"a1029_all_onto_{arm}_v4_s{seed}{ft}"
+            for arm, seeds in (
+                ("pinball_injop_equal_lrhalf", (4, 5, 6)),
+                ("pinball_injop_equal", (4, 5, 6)),
+                ("pinball_injop_records", (4, 5, 6)),
+                ("pinball_injop_records_lrhalf", (0, 1, 2)),
+            )
+            for seed in seeds
+            for ft in ("", "_ft")
+        ),
+        extra_windows=tuple(
+            (f"a1029_all_onto_{arm}_v4_s{seed}", (41, 50))
+            for arm, seeds in (
+                ("pinball_injop_equal_lrhalf", (4, 5, 6)),
+                ("pinball_injop_equal", (4, 5, 6)),
+                ("pinball_injop_records", (4, 5, 6)),
+                ("pinball_injop_records_lrhalf", (0, 1, 2)),
+            )
+            for seed in seeds
+        ),
+        hardware=(
+            "Aurora (ALCF), 1 node x 12 tiles per job, Intel Data Center GPU Max 1550 tile, "
+            "1 run per tile; capacity queue; frameworks stack, attention query chunk 512"
+        ),
+        intro=(
+            "Recipe v3 seeds at 80 epochs (registered window 71-80; 41-50 recorded from the "
+            "same runs): batch 16, prep_v4, store v2, ontology conditioning, operator "
+            "injection, pinball loss. Job a: seeds 4-6 of equal weighting at lr 1.5e-4 and "
+            "3e-4 and of records weighting at 3e-4 (seven seeds each with the v3 grid), "
+            "seeds 0-2 of records weighting at lr 1.5e-4; each cell chained to its Kemmeren "
+            "fine-tune (20 epochs, lr 3e-4, warmup 30)."
+        ),
+    ),
     "ghyper_sweep_2026_10_24": Round(
         view_name="043 GilaHyper sweep 2026-10-24 by arm",
         # run id = gs1024_<wave>_<arm> (resume_id), _ft = its Kemmeren fine-tune;
@@ -812,6 +852,7 @@ CURATED_ROUNDS = (
     "aurora_2026_10_24",
     "aurora_v2_2026_10_26",
     "aurora_v3_2026_10_27",
+    "aurora_v4_2026_10_29",
     "ghyper_sweep_2026_10_24",
     "overnight_2026_10_23",
 )

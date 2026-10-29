@@ -307,6 +307,28 @@ ROUNDS: dict[str, Round] = {
             "Kemmeren fine-tune (20 epochs, lr 3e-4, warmup 30)."
         ),
     ),
+    "delta_2026_10_28": Round(
+        view_name="043 Delta recipe v3 candidate 2026-10-28 by arm",
+        # run id = d1028_<cell> (resume_id), _ft = its Kemmeren fine-tune; jobs
+        # 23310067-23310086 under bfjt-delta-gpu, launcher delta_train_043.slurm
+        run_ids=tuple(
+            f"d1028_pinball_injop_{lr}_s{seed}{ft}"
+            for lr in ("lrhalf", "lr3e4")
+            for seed in (0, 1, 2, 3, 4)
+            for ft in ("", "_ft")
+        ),
+        hardware=(
+            "Delta (NCSA), gpuA40x4, one A40 40 GB per job, env torchcell043 tarball "
+            "(torch 2.11.0+cu128, PyG 2.8.0) unpacked to node-local disk; smoke 23309265 "
+            "0.132 s/step, 505 s per epoch"
+        ),
+        intro=(
+            "The GilaHyper recipe v3 candidate on Delta: pinball, ontology conditioning, "
+            "operator injection, batch 16, 50 epochs (window 41-50), prep_v4 route A, "
+            "at lr 1.5e-4 (lrhalf) and lr 3e-4, seeds 0-4; each stage 1 chained to its "
+            "Kemmeren fine-tune (20 epochs, lr 3e-4, warmup 30, batch 8)."
+        ),
+    ),
     "aurora_v3_2026_10_27": Round(
         view_name="043 Aurora recipe v2 to 80 epochs 2026-10-27 by arm",
         # run id = a1027_<cell> (resume_id), _ft = its Kemmeren fine-tune from the epoch-80

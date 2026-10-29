@@ -104,9 +104,9 @@ F_XMAX = 40  # panel f shows the epochs in which the offset is learned; the plat
 
 # ------------------------------------------------------------------ sheet geometry, mm
 W_MM = 164.0  # the thesis text block is 165 mm; the ink-cropped export adds 1 pt a side
-H_MM = 118.0
+H_MM = 113.0
 ROW1_TOP, ROW1_H = 8.5, 40.0
-ROW2_TOP, ROW2_H = 68.5, 36.0
+ROW2_TOP, ROW2_H = 64.0, 36.0
 A_X, A_W = 10.0, 33.0
 SLOT_B = (47.0, 7.0, 48.0, 52.0)  # x, y, w, h of the shared-bias panel, drawn by the thesis generator
 SLOT_C = (98.5, 7.0, 66.0, 52.0)  # x, y, w, h of the annotation and encoder panel
@@ -273,12 +273,13 @@ def panel_a(ax: Axes, rows: pd.DataFrame, vocabulary: list[str]) -> dict[str, fl
         out[f"mean_{screen}"] = float(t.mean())
         out[f"sd_{screen}"] = float(t.std(ddof=1))
         out[f"n_rows_{screen}"] = int(len(t))
+        out[f"frac_positive_{screen}"] = float((t > 0).mean())
     ax.set_xlim(-0.3, 0.3)
     ax.xaxis.set_major_locator(MultipleLocator(0.2))
     ax.yaxis.set_major_locator(MultipleLocator(5))
     ax.set_xlabel(r"measured $\tau_{ijk}$")
     ax.set_ylabel("density")
-    title(ax, "the screens differ by an offset")
+    title(ax, "Kuzmin 2018 is all negative interactions")
     handles = [Line2D([0], [0], color=SCREEN_COLOR[s], lw=0.8, label=f"Kuzmin {s}") for s in ("2018", "2020")]
     handles.append(Line2D([0], [0], color="black", lw=0.6, ls=(0, (2, 1.2)), label="screen mean"))
     legend(ax, handles, "upper right", (1.02, 1.0))
@@ -328,7 +329,7 @@ def panel_e(ax: Axes, swap: dict[str, dict[str, dict[str, float]]]) -> None:
                        edgecolor="black", linewidth=0.4, hatch="///" if read == "other" else None, zorder=3)
             t = swap[arm]["own"][f"mean_target_{screen}"]
             ax.plot([g - w - 0.05, g + w + 0.05], [t, t], color="black", lw=0.8, zorder=5)
-        ax.text(a * 2.4 + 0.5, -0.27, ARMS[arm]["label"], ha="center", va="top", fontsize=6,
+        ax.text(a * 2.4 + 0.5, -0.19, ARMS[arm]["label"], ha="center", va="top", fontsize=6,
                 transform=ax.get_xaxis_transform(),
                 bbox=dict(boxstyle="round,pad=0.3", facecolor=ARMS[arm]["fill"], edgecolor=ARMS[arm]["color"], linewidth=0.5))
     ax.axhline(0, color="black", lw=0.4, zorder=2)
@@ -350,26 +351,31 @@ def panel_e(ax: Axes, swap: dict[str, dict[str, dict[str, float]]]) -> None:
 
 
 def panel_f(ax: Axes, hist: pd.DataFrame, floor: float) -> dict[str, float]:
-    """Pooled minus mean within-screen Pearson per epoch, both arms."""
+    """Pooled (solid) and mean within-screen (dashed) validation Pearson per epoch, both arms,
+    over the first F_XMAX epochs, with the screen-mean floor."""
     out: dict[str, float] = {}
     for arm in ARMS:
         h = hist[hist.arm == arm].sort_values("epoch")
-        gap = h.pooled - 0.5 * (h.within_2018 + h.within_2020)
-        ax.plot(h.epoch, gap, color=ARMS[arm]["color"], lw=0.8, label=ARMS[arm]["label"], zorder=3)
-        out[f"gap_epoch0_{arm}"] = float(gap.iloc[0])
-        out[f"gap_epochs_10_19_{arm}"] = float(gap[(h.epoch >= 10) & (h.epoch <= 19)].mean())
-        out[f"gap_last10_{arm}"] = float(gap.tail(WINDOW).mean())
-    ax.axvline(10, color="black", lw=0.5, ls=(0, (1, 1.5)), zorder=2)
+        within = 0.5 * (h.within_2018 + h.within_2020)
+        ax.plot(h.epoch, h.pooled, color=ARMS[arm]["color"], lw=0.8, zorder=3)
+        ax.plot(h.epoch, within, color=ARMS[arm]["color"], lw=0.8, ls=(0, (2.5, 1.5)), zorder=3)
+        out[f"pooled_epoch0_{arm}"] = float(h.pooled.iloc[0])
+        out[f"within_epoch0_{arm}"] = float(within.iloc[0])
+        out[f"pooled_epoch10_{arm}"] = float(h.pooled[h.epoch == 10].iloc[0])
+        out[f"within_epoch10_{arm}"] = float(within[h.epoch == 10].iloc[0])
+    ax.axhline(floor, color="black", lw=0.6, ls=(0, (2, 1.2)), zorder=2)
     ax.set_xlim(0, F_XMAX)
     ax.xaxis.set_major_locator(MultipleLocator(10))
-    ax.set_ylim(0, 0.35)
+    ax.set_ylim(0, 0.6)
     ax.yaxis.set_major_locator(MultipleLocator(0.1))
     ax.set_xlabel("epoch")
-    ax.set_ylabel("pooled minus within-screen Pearson")
-    title(ax, "the name token knows the screen at epoch 0")
-    handles = [Line2D([0], [0], color=ARMS[a]["color"], lw=0.8, label=ARMS[a]["label"]) for a in ARMS]
-    handles.append(Line2D([0], [0], color="black", lw=0.5, ls=(0, (1, 1.5)), label="epoch 10"))
-    legend(ax, handles, "upper right", (1.02, 1.0))
+    ax.set_ylabel("validation Pearson")
+    title(ax, "the name token starts at the floor")
+    # the arm colors are keyed in d; this key names the line styles only
+    handles = [Line2D([0], [0], color="black", lw=0.8, label="pooled"),
+                Line2D([0], [0], color="black", lw=0.8, ls=(0, (2.5, 1.5)), label="mean within screen"),
+                Line2D([0], [0], color="black", lw=0.6, ls=(0, (2, 1.2)), label=f"screen-mean floor, {floor:.2f}")]
+    legend(ax, handles, "lower right", (1.02, -0.02))
     box(ax)
     return out
 

@@ -380,7 +380,9 @@ ROUNDS: dict[str, Round] = {
         # run id = a1029_<cell> (resume_id), _ft = its Kemmeren fine-tune from the epoch-80
         # last.pt; tag aurora_v4_2026_10_29. Job a (aurora_grid_043_v4_a.tsv): seeds 4-6 of
         # the three v3 pinball-injection arms (equal lr 1.5e-4, equal lr 3e-4, records lr
-        # 3e-4) and seeds 0-2 of records weighting at lr 1.5e-4; window 71-80.
+        # 3e-4) and seeds 0-2 of records weighting at lr 1.5e-4; window 71-80. Job b
+        # (aurora_grid_043_v4_b.tsv, cells *_v4e120_s{0,1,2}): the same four arms at 120
+        # epochs, window 106-120, with 71-80 and 41-50 read from the same runs.
         run_ids=tuple(
             f"a1029_all_onto_{arm}_v4_s{seed}{ft}"
             for arm, seeds in (
@@ -390,6 +392,17 @@ ROUNDS: dict[str, Round] = {
                 ("pinball_injop_records_lrhalf", (0, 1, 2)),
             )
             for seed in seeds
+            for ft in ("", "_ft")
+        )
+        + tuple(
+            f"a1029_all_onto_{arm}_v4e120_s{seed}{ft}"
+            for arm in (
+                "pinball_injop_equal_lrhalf",
+                "pinball_injop_equal",
+                "pinball_injop_records",
+                "pinball_injop_records_lrhalf",
+            )
+            for seed in (0, 1, 2)
             for ft in ("", "_ft")
         ),
         extra_windows=tuple(
@@ -401,6 +414,17 @@ ROUNDS: dict[str, Round] = {
                 ("pinball_injop_records_lrhalf", (0, 1, 2)),
             )
             for seed in seeds
+        )
+        + tuple(
+            (f"a1029_all_onto_{arm}_v4e120_s{seed}", window)
+            for arm in (
+                "pinball_injop_equal_lrhalf",
+                "pinball_injop_equal",
+                "pinball_injop_records",
+                "pinball_injop_records_lrhalf",
+            )
+            for seed in (0, 1, 2)
+            for window in ((71, 80), (41, 50))
         ),
         hardware=(
             "Aurora (ALCF), 1 node x 12 tiles per job, Intel Data Center GPU Max 1550 tile, "

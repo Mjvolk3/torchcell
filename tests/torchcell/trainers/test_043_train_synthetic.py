@@ -1248,10 +1248,11 @@ def test_accumulate_steps_matches_one_batch_on_one_dataset(
     # A key-projection bias has an exactly zero gradient (softmax is invariant to a
     # shift shared by every key), so its float-noise gradient differs between the two
     # runs and AdamW's first steps turn noise into lr-sized moves (measured 1.0e-4 at
-    # lr 1e-3); every other parameter agrees to 3.4e-5 (operator.out_proj.weight).
+    # lr 1e-3); every other parameter agrees to 3.4e-5 (operator.out_proj.weight) on
+    # GilaHyper and to 5.4e-5 on the CI runner's CPU (2026-10-28), so the bound is 1e-4
     compared = [k for k in one if not k.endswith("k_proj.bias")]
     worst = max(float((one[k] - accumulated[k]).abs().max()) for k in compared)
-    assert worst < 5e-5
+    assert worst < 1e-4
     # the check discriminates: batch 1 without accumulation (two single-record steps)
     # lands elsewhere
     assert max(float((one[k] - unaccumulated[k]).abs().max()) for k in compared) > 5e-4

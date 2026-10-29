@@ -1,5 +1,13 @@
 {
-  "panel_b": {
+  "panel_a": {
+    "mean_2018": -0.0474,
+    "sd_2018": 0.0526,
+    "n_rows_2018": 10122,
+    "mean_2020": 0.0046,
+    "sd_2020": 0.0628,
+    "n_rows_2020": 29219
+  },
+  "panel_d": {
     "name": {
       "epochs": [
         174,
@@ -21,7 +29,7 @@
       "fitness": 0.9512
     }
   },
-  "panel_c": {
+  "panel_e": {
     "name": {
       "checkpoint_epoch": 183,
       "own": {
@@ -64,6 +72,14 @@
         "n_2020": 27559
       }
     }
+  },
+  "panel_f": {
+    "gap_epoch0_name": 0.2952,
+    "gap_epochs_10_19_name": 0.1229,
+    "gap_last10_name": 0.076,
+    "gap_epoch0_ontology": 0.1638,
+    "gap_epochs_10_19_ontology": 0.124,
+    "gap_last10_ontology": 0.0847
   },
   "window_epochs": 10,
   "screen_mean_floor_pearson": 0.3682,

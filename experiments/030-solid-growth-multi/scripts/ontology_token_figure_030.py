@@ -1,33 +1,41 @@
 # experiments/030-solid-growth-multi/scripts/ontology_token_figure_030.py
 # [[experiments.030-solid-growth-multi.scripts.ontology_token_figure_030]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/030-solid-growth-multi/scripts/ontology_token_figure_030.py
-"""Panels b and c of the dissertation's "experiment ontology as model input" figure
-(Section 3.7), on the random split: the dataset-name token arm against the ontology-affine
-arm, performance then bias. Panel a (the annotation, the encoder, the two entry points) is
-drawn in draw.io by the thesis repository's ``notes/assets/drawio/fig-ch03-ontology-input.gen.py``,
-which lays this sheet into the figure with slot a left empty here.
+"""The data panels of the dissertation's "experiment ontology as model input" figure
+(Section 3.7), a 2 x 3 sheet on the random split. Panels b (the shared-bias idea) and c (the
+annotation, the encoder, the two entry points) are drawn in draw.io by the thesis repository's
+``notes/assets/drawio/fig-ch03-ontology-input.gen.py``, which lays this sheet into the figure
+with slots b and c left empty here.
 
-b, validation Pearson of the two arms: the trigenic interaction pooled over the pinned
-   validation triples, within the Kuzmin 2018 triples, within the Kuzmin 2020 triples, and
-   fitness. Each bar is the mean of the run's last ten logged epochs (the name-token arm
-   ends at epoch 183 after two checkpoint continuations, the ontology arm at 199). The dashed
-   segment over the pooled group is the floor a predictor of the two screens' mean tau scores,
-   computed on the same genotypes.
-c, the fixed-token swap: the mean predicted tau of each screen's validation triples under the
-   record's own token and under the other Kuzmin screen's token, for both arms, with the
+a, the screen offset: histograms of the measured trigenic interaction of the held-out
+   validation triples of each Kuzmin screen, with the two means. The 2018 screen sits below
+   zero and the 2020 screen at zero, so a predictor that knows the screen scores a Pearson
+   correlation from the offset alone (the floor of d).
+d, validation Pearson of the dataset-name token arm against the ontology-affine arm: the
+   trigenic interaction pooled over the validation triples, within the Kuzmin 2018 triples,
+   within the Kuzmin 2020 triples, and fitness. Each bar is the mean of the run's last ten
+   logged epochs (the name-token arm ends at epoch 183 after two checkpoint continuations, the
+   ontology arm at 199). The dashed segment over the pooled group is the floor of a predictor
+   that outputs each screen's mean, computed on the same genotypes.
+e, the fixed-token swap: the mean predicted tau of each screen's validation triples under
+   the record's own token and under the other Kuzmin screen's token, for both arms, with the
    measured per-screen means as black ticks. The ontology annotates the two screens
-   identically, so the swap is the identity there. The pooled Pearson under the swap is in the
-   numbers file and the caption.
+   identically, so the swap is the identity there.
+f, the offset the model carries over training: pooled validation Pearson minus the mean of the
+   two within-screen Pearsons, per epoch, for both arms. The name token starts at the floor
+   (the token alone names the screen at epoch 0); from epoch 10 the two arms carry the same
+   gap, which the genes supply.
 
 Reads the two runs' W&B histories once into ``results/ontology_token_figure_030_history.csv``
 (``--refresh`` pulls again) and the fixed-token readouts
 ``results/fixed_token_readout_030_r_s0_ep183{.json,_rows.parquet}`` (name token, epoch 183)
 and ``results/fixed_token_readout_030_r_onto_aff_s0_ep199{.json,_rows.parquet}`` (ontology,
-epoch 199). Genotypes are reduced as the readout reduces them (``policy_reduce``).
+epoch 199). Genotypes are reduced as the readout reduces them (``policy_reduce``); the
+histograms of a are over the readout's validation rows.
 
-Writes, true size at the dissertation's 165 mm text width:
+Writes, true size at the dissertation's text width (164 mm, so the ink-cropped export is 165):
   $ASSET_IMAGES_DIR/030-solid-growth-multi/ontology_token_figure_030.svg  (+ .png)
-  $ASSET_IMAGES_DIR/030-solid-growth-multi/ontology_token_figure_030_slot_a.json
+  $ASSET_IMAGES_DIR/030-solid-growth-multi/ontology_token_figure_030_slots.json  (slots b, c in mm)
   results/ontology_token_figure_030_numbers.json   every number the caption quotes
 
     PYTHONPATH=$PWD python experiments/030-solid-growth-multi/scripts/ontology_token_figure_030.py [--refresh]
@@ -54,7 +62,7 @@ from matplotlib.lines import Line2D  # noqa: E402
 from matplotlib.patches import Patch  # noqa: E402
 from matplotlib.ticker import MultipleLocator  # noqa: E402
 
-from torchcell.utils import PLOT_PALETTE, mm_to_in, savefig_true_size_svg  # noqa: E402
+from torchcell.utils import PLOT_PALETTE, PLOT_PALETTE_FILL, mm_to_in, savefig_true_size_svg  # noqa: E402
 
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
 from fixed_token_readout_030 import policy_reduce  # noqa: E402
@@ -72,10 +80,13 @@ ENTITY = "zhao-group"
 PROJECT = "torchcell_030-solid-growth-multi_equivariant_cell_graph_transformer"
 # The two arms on the random split, seed 0, IGB mmli (four A100). The name-token run trained
 # in three pieces (the 100-epoch job, then two checkpoint continuations), one W&B run each.
+# One hue per thing: the dataset name gray, the ontology purple, the 2018 screen orange, the
+# 2020 screen red.
 ARMS = {
-    "name": {"label": "dataset-name token", "arm": "s3_composite_token", "color": PLOT_PALETTE[5]},
-    "ontology": {"label": "ontology token", "arm": "s3_onto_affine", "color": PLOT_PALETTE[2]},
+    "name": {"label": "dataset-name token", "arm": "s3_composite_token", "color": PLOT_PALETTE[5], "fill": PLOT_PALETTE_FILL[5]},
+    "ontology": {"label": "ontology token", "arm": "s3_onto_affine", "color": PLOT_PALETTE[2], "fill": PLOT_PALETTE_FILL[2]},
 }
+SCREEN_COLOR = {"2018": PLOT_PALETTE[0], "2020": PLOT_PALETTE[1]}
 READOUT = {
     "name": "fixed_token_readout_030_r_s0_ep183",
     "ontology": "fixed_token_readout_030_r_onto_aff_s0_ep199",
@@ -91,17 +102,21 @@ WINDOW = 10  # epochs averaged at the end of each run
 
 # ------------------------------------------------------------------ sheet geometry, mm
 W_MM = 164.0  # the thesis text block is 165 mm; the ink-cropped export adds 1 pt a side
-H_MM = 60.0
-SLOT = (0.7, 7.0, 66.0, 52.0)  # x, y, w, h of panel a, drawn by the thesis generator
-ROW_TOP, ROW_H = 8.5, 36.0
-B_X, B_W = 80.0, 32.0
-C_X, C_W = 127.0, 36.0
+H_MM = 118.0
+ROW1_TOP, ROW1_H = 8.5, 40.0
+ROW2_TOP, ROW2_H = 68.5, 36.0
+A_X, A_W = 10.0, 28.0
+SLOT_B = (42.5, 7.0, 52.0, 52.0)  # x, y, w, h of the shared-bias panel, drawn by the thesis generator
+SLOT_C = (98.5, 7.0, 66.0, 52.0)  # x, y, w, h of the annotation and encoder panel
+D_X, D_W = 9.0, 41.0
+E_X, E_W = 61.5, 42.5
+F_X, F_W = 115.0, 47.0
 GRID = "#E3E3E3"
 
 plt.rcParams.update(
     {
         # The readout import leaves savefig.bbox at "tight", which recrops the sheet to its
-        # ink and loses slot a; the sheet is a fixed canvas.
+        # ink and loses the slots; the sheet is a fixed canvas.
         "savefig.bbox": "standard",
         "font.family": "Arial",
         "font.size": 6,
@@ -117,7 +132,7 @@ plt.rcParams.update(
         "legend.framealpha": 1.0,
         "legend.facecolor": "white",
         "patch.linewidth": 0.5,
-        "hatch.linewidth": 0.4,
+        "hatch.linewidth": 0.6,
         "mathtext.fontset": "custom",
         "mathtext.rm": "Arial",
         "mathtext.it": "Arial:italic",
@@ -235,14 +250,48 @@ def letter(fig: Figure, ch: str, x_mm: float, y_mm: float) -> None:
     fig.text(x_mm / W_MM, 1 - y_mm / H_MM, ch, fontsize=8, fontweight="bold", ha="left", va="top")
 
 
-def panel_b(ax: Axes, windows: dict[str, pd.Series], floor: float) -> None:
+def title(ax: Axes, words: str) -> None:
+    ax.text(0.5, 1.03, words, transform=ax.transAxes, fontsize=6, ha="center", va="bottom")
+
+
+def legend(ax: Axes, handles: list, loc: str, anchor: tuple[float, float]) -> None:
+    ax.legend(handles=handles, loc=loc, bbox_to_anchor=anchor, handlelength=1.0, handletextpad=0.3,
+              borderpad=0.2, labelspacing=0.15, frameon=True)
+
+
+def panel_a(ax: Axes, rows: pd.DataFrame, vocabulary: list[str]) -> dict[str, float]:
+    """Histograms of the measured tau of each screen's validation rows."""
+    bins = np.arange(-0.3, 0.3001, 0.01)
+    out: dict[str, float] = {}
+    for token, screen in SCREENS.items():
+        t = rows.loc[rows.token == vocabulary.index(token), "target"].to_numpy(dtype=float)
+        ax.hist(t, bins=bins, density=True, histtype="stepfilled", color=SCREEN_COLOR[screen], alpha=0.45,
+                edgecolor=SCREEN_COLOR[screen], linewidth=0.6, zorder=3, label=f"Kuzmin {screen}")
+        ax.axvline(t.mean(), color=SCREEN_COLOR[screen], lw=0.8, zorder=4)
+        out[f"mean_{screen}"] = float(t.mean())
+        out[f"sd_{screen}"] = float(t.std(ddof=1))
+        out[f"n_rows_{screen}"] = int(len(t))
+    ax.set_xlim(-0.3, 0.3)
+    ax.xaxis.set_major_locator(MultipleLocator(0.2))
+    ax.yaxis.set_major_locator(MultipleLocator(5))
+    ax.set_xlabel(r"measured $\tau_{ijk}$")
+    ax.set_ylabel("density")
+    title(ax, "the screens differ by an offset")
+    handles = [Patch(facecolor=SCREEN_COLOR[s], edgecolor=SCREEN_COLOR[s], alpha=0.7, label=f"Kuzmin {s}") for s in ("2018", "2020")]
+    handles.append(Line2D([0], [0], color="black", lw=0.8, label="screen mean"))
+    legend(ax, handles, "upper right", (1.02, 1.0))
+    box(ax)
+    ax.grid(False)
+    return out
+
+
+def panel_d(ax: Axes, windows: dict[str, pd.Series], floor: float) -> None:
     groups = [("pooled", "pooled"), ("within_2018", "within\n2018"), ("within_2020", "within\n2020"), ("fitness", "fitness")]
     w = 0.36
     for g, (key, _) in enumerate(groups):
         for k, arm in enumerate(ARMS):
             x = g + (k - 0.5) * w
-            v = float(windows[arm][key])
-            ax.bar(x, v, width=w * 0.92, color=ARMS[arm]["color"], edgecolor="black", linewidth=0.4, zorder=3)
+            ax.bar(x, float(windows[arm][key]), width=w * 0.92, color=ARMS[arm]["color"], edgecolor="black", linewidth=0.4, zorder=3)
     ax.plot([-0.5 * w - 0.2, 0.5 * w + 0.2], [floor, floor], color="black", lw=0.6, ls=(0, (2, 1.2)), zorder=4)
     ax.set_xticks(range(len(groups)))
     ax.set_xticklabels([g[1] for g in groups])
@@ -252,14 +301,14 @@ def panel_b(ax: Axes, windows: dict[str, pd.Series], floor: float) -> None:
     ax.yaxis.set_minor_locator(MultipleLocator(0.1))
     ax.tick_params(which="minor", length=0)
     ax.set_ylabel("validation Pearson")
-    ax.text(0.5, 1.03, "both arms score the triples alike", transform=ax.transAxes, fontsize=6, ha="center", va="bottom")
+    title(ax, "both arms score the triples alike")
     handles = [Patch(facecolor=ARMS[a]["color"], edgecolor="black", linewidth=0.4, label=ARMS[a]["label"]) for a in ARMS]
     handles.append(Line2D([0], [0], color="black", lw=0.6, ls=(0, (2, 1.2)), label=f"screen-mean floor, {floor:.2f}"))
-    ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(-0.02, 1.0), handlelength=1.0, handletextpad=0.3, borderpad=0.2, labelspacing=0.15, frameon=True)
+    legend(ax, handles, "upper left", (-0.02, 1.0))
     box(ax)
 
 
-def panel_c(ax: Axes, swap: dict[str, dict[str, dict[str, float]]]) -> None:
+def panel_e(ax: Axes, swap: dict[str, dict[str, dict[str, float]]]) -> None:
     """swap[arm][read] -> {mean_pred_2018, mean_pred_2020, mean_target_2018, mean_target_2020}, read in (own, other)."""
     w = 0.3
     xs: list[float] = []
@@ -272,8 +321,9 @@ def panel_c(ax: Axes, swap: dict[str, dict[str, dict[str, float]]]) -> None:
             for k, read in enumerate(("own", "other")):
                 x = g + (k - 0.5) * w
                 v = swap[arm][read][f"mean_pred_{screen}"]
-                ax.bar(x, v, width=w * 0.92, color=ARMS[arm]["color"], edgecolor="black", linewidth=0.4,
-                       hatch="////" if read == "other" else None, zorder=3)
+                # the swapped read on the arm's light fill, so the black hatch stays visible
+                ax.bar(x, v, width=w * 0.92, color=ARMS[arm]["fill" if read == "other" else "color"],
+                       edgecolor="black", linewidth=0.4, hatch="///" if read == "other" else None, zorder=3)
             t = swap[arm]["own"][f"mean_target_{screen}"]
             ax.plot([g - w - 0.05, g + w + 0.05], [t, t], color="black", lw=0.8, zorder=5)
         ax.text(a * 2.4 + 0.5, -0.30, ARMS[arm]["label"], ha="center", va="top", fontsize=6,
@@ -285,15 +335,38 @@ def panel_c(ax: Axes, swap: dict[str, dict[str, dict[str, float]]]) -> None:
     ax.set_ylim(-0.07, 0.03)
     ax.yaxis.set_major_locator(MultipleLocator(0.02))
     ax.set_ylabel(r"mean predicted $\tau_{ijk}$")
-    ax.text(0.5, 1.03, "the name token carries the screen offset", transform=ax.transAxes, fontsize=6, ha="center", va="bottom")
+    title(ax, "the name token carries the offset")
     handles = [
         Patch(facecolor="white", edgecolor="black", linewidth=0.4, label="own token"),
-        Patch(facecolor="white", edgecolor="black", linewidth=0.4, hatch="////", label="other screen's token"),
+        Patch(facecolor="white", edgecolor="black", linewidth=0.4, hatch="///", label="other screen's token"),
         Line2D([0], [0], color="black", lw=0.8, label="measured mean"),
     ]
-    ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.02, 1.0), handlelength=0.9, handletextpad=0.3, borderpad=0.2, labelspacing=0.15, frameon=True)
+    legend(ax, handles, "upper right", (1.02, 1.0))
     box(ax)
     ax.grid(False)
+
+
+def panel_f(ax: Axes, hist: pd.DataFrame, floor: float) -> dict[str, float]:
+    """Pooled minus mean within-screen Pearson per epoch, both arms."""
+    out: dict[str, float] = {}
+    for arm in ARMS:
+        h = hist[hist.arm == arm].sort_values("epoch")
+        gap = h.pooled - 0.5 * (h.within_2018 + h.within_2020)
+        ax.plot(h.epoch, gap, color=ARMS[arm]["color"], lw=0.8, label=ARMS[arm]["label"], zorder=3)
+        out[f"gap_epoch0_{arm}"] = float(gap.iloc[0])
+        out[f"gap_epochs_10_19_{arm}"] = float(gap[(h.epoch >= 10) & (h.epoch <= 19)].mean())
+        out[f"gap_last10_{arm}"] = float(gap.tail(WINDOW).mean())
+    ax.set_xlim(0, 200)
+    ax.xaxis.set_major_locator(MultipleLocator(50))
+    ax.set_ylim(0, 0.35)
+    ax.yaxis.set_major_locator(MultipleLocator(0.1))
+    ax.set_xlabel("epoch")
+    ax.set_ylabel("pooled minus within-screen Pearson")
+    title(ax, "after epoch 10 the genes carry the offset")
+    handles = [Line2D([0], [0], color=ARMS[a]["color"], lw=0.8, label=ARMS[a]["label"]) for a in ARMS]
+    legend(ax, handles, "upper right", (1.02, 1.0))
+    box(ax)
+    return out
 
 
 def main() -> None:
@@ -304,15 +377,17 @@ def main() -> None:
 
     hist = history(args.refresh)
     windows: dict[str, pd.Series] = {}
-    numbers: dict = {"panel_b": {}, "panel_c": {}, "window_epochs": WINDOW}
+    numbers: dict = {"panel_a": {}, "panel_d": {}, "panel_e": {}, "panel_f": {}, "window_epochs": WINDOW}
     for arm in ARMS:
         win, e0, e1 = last_window(hist, arm)
         windows[arm] = win
-        numbers["panel_b"][arm] = {"epochs": [e0, e1], **{k: round(float(win[k]), 4) for k in KEYS}}
-        print(f"b {arm:9s} epochs {e0}-{e1}: " + " ".join(f"{k} {win[k]:.3f}" for k in KEYS))
+        numbers["panel_d"][arm] = {"epochs": [e0, e1], **{k: round(float(win[k]), 4) for k in KEYS}}
+        print(f"d {arm:9s} epochs {e0}-{e1}: " + " ".join(f"{k} {win[k]:.3f}" for k in KEYS))
 
     swap: dict[str, dict[str, dict[str, float]]] = {}
     floor = None
+    name_rows = None
+    name_vocab: list[str] = []
     for arm in ARMS:
         summary, rows = readout(arm)
         vocab = summary["dataset_vocabulary"]
@@ -321,31 +396,42 @@ def main() -> None:
         swap[arm] = {"own": own, "other": other}
         if floor is None:
             floor = floor_pearson(rows, vocab)
-        numbers["panel_c"][arm] = {
+            name_rows, name_vocab = rows, vocab
+        numbers["panel_e"][arm] = {
             "checkpoint_epoch": summary["checkpoint_epoch"],
             "own": {k: round(v, 4) for k, v in own.items()},
             "other_screen_token": {k: round(v, 4) for k, v in other.items()},
         }
-        print(f"c {arm:9s} ep {summary['checkpoint_epoch']}: own r {own['pearson']:.3f} "
+        print(f"e {arm:9s} ep {summary['checkpoint_epoch']}: own r {own['pearson']:.3f} "
               f"means {own['mean_pred_2018']:+.4f}/{own['mean_pred_2020']:+.4f}; "
               f"other r {other['pearson']:.3f} means {other['mean_pred_2018']:+.4f}/{other['mean_pred_2020']:+.4f}")
-    assert floor is not None
+    assert floor is not None and name_rows is not None
     numbers["screen_mean_floor_pearson"] = round(floor, 4)
     numbers["measured_means"] = {s: round(swap["name"]["own"][f"mean_target_{s}"], 4) for s in ("2018", "2020")}
     print(f"screen-mean floor r {floor:.3f}")
 
     fig = plt.figure(figsize=(mm_to_in(W_MM), mm_to_in(H_MM)))
-    ax_b = axes_mm(fig, B_X, ROW_TOP, B_W, ROW_H)
-    ax_c = axes_mm(fig, C_X, ROW_TOP, C_W, ROW_H)
-    panel_b(ax_b, windows, floor)
-    panel_c(ax_c, swap)
-    letter(fig, "b", B_X - 9.5, 1.2)
-    letter(fig, "c", C_X - 9.5, 1.2)
+    ax_a = axes_mm(fig, A_X, ROW1_TOP, A_W, ROW1_H)
+    ax_d = axes_mm(fig, D_X, ROW2_TOP, D_W, ROW2_H)
+    ax_e = axes_mm(fig, E_X, ROW2_TOP, E_W, ROW2_H)
+    ax_f = axes_mm(fig, F_X, ROW2_TOP, F_W, ROW2_H)
+    numbers["panel_a"] = {k: (round(v, 4) if isinstance(v, float) else v) for k, v in panel_a(ax_a, name_rows, name_vocab).items()}
+    panel_d(ax_d, windows, floor)
+    panel_e(ax_e, swap)
+    numbers["panel_f"] = {k: round(v, 4) for k, v in panel_f(ax_f, hist, floor).items()}
+    print("a " + " ".join(f"{k} {v}" for k, v in numbers["panel_a"].items()))
+    print("f " + " ".join(f"{k} {v:.3f}" for k, v in numbers["panel_f"].items()))
+    letter(fig, "a", 0.7, 1.2)
+    letter(fig, "d", 0.7, ROW2_TOP - 7.3)
+    letter(fig, "e", E_X - 9.5, ROW2_TOP - 7.3)
+    letter(fig, "f", F_X - 9.5, ROW2_TOP - 7.3)
     savefig_true_size_svg(fig, STEM + ".svg")
     fig.savefig(STEM + ".png", dpi=300)
-    with open(STEM + "_slot_a.json", "w") as fh:
-        json.dump({"x_mm": SLOT[0], "y_mm": SLOT[1], "width_mm": SLOT[2], "height_mm": SLOT[3],
-                   "page_width_mm": W_MM, "page_height_mm": H_MM}, fh, indent=2)
+    with open(STEM + "_slots.json", "w") as fh:
+        json.dump({"page_width_mm": W_MM, "page_height_mm": H_MM,
+                   "b": dict(zip(("x_mm", "y_mm", "width_mm", "height_mm"), SLOT_B)),
+                   "c": dict(zip(("x_mm", "y_mm", "width_mm", "height_mm"), SLOT_C)),
+                   "row2_axes_bottom_mm": ROW2_TOP + ROW2_H, "row1_axes_bottom_mm": ROW1_TOP + ROW1_H}, fh, indent=2)
     with open(NUMBERS_JSON, "w") as fh:
         json.dump(numbers, fh, indent=2)
     print("wrote", STEM + ".svg", STEM + ".png", NUMBERS_JSON, sep="\n  ")

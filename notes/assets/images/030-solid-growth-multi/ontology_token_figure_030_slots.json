@@ -1,0 +1,18 @@
+{
+  "page_width_mm": 164.0,
+  "page_height_mm": 118.0,
+  "b": {
+    "x_mm": 42.5,
+    "y_mm": 7.0,
+    "width_mm": 52.0,
+    "height_mm": 52.0
+  },
+  "c": {
+    "x_mm": 98.5,
+    "y_mm": 7.0,
+    "width_mm": 66.0,
+    "height_mm": 52.0
+  },
+  "row2_axes_bottom_mm": 104.5,
+  "row1_axes_bottom_mm": 48.5
+}

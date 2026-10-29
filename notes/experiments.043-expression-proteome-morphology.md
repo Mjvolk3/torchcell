@@ -2425,3 +2425,26 @@ What holds at three seeds: Muenzner (+0.030) and Vaishnav (+0.029, the lr lever'
 
 - `gs1024_w9_pinball_injop_lrhalf_ep80_s2`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lrhalf_ep80_s2
 - `gs1024_w9_pinball_injop_lr3e4_ep80`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lr3e4_ep80
+
+### Aurora v3 grid complete: six arms x four seeds at 80 epochs (18:00 CDT)
+
+Jobs 8973596/8973597 (two nodes, 12 tiles each, 44 h 20 min, 0 faults): 24 cells, each 80 stage-1 epochs then the 20-epoch Kemmeren fine-tune in the same allocation. Statistic: mean over epochs 71-80 of the validation metric named in the header (fine-tunes 17-20), four seeds per arm, sd over seeds (`wandb_view_043.py --round aurora_v3_2026_10_27 --window-means`, `results/aurora_v3_2026_10_27_window_means.json`). The lr-half arm shares the W&B arm label with lr 3e-4 on Aurora (`all_onto_injop_pinball_equal`; the label carries no lr there), so the two rows below were split by run id (`a1027_all_onto_pinball_injop_equal_lrhalf_v3_s*`).
+
+| arm (ontology conditioning, bs 16, 80 epochs) | doubles Pearson, strain-centered median | Muenzner Pearson per gene median | Caudal Pearson per gene median | Kemmeren Pearson per gene median | Vaishnav Pearson | fine-tune Kemmeren per gene median (17-20) | fine-tune doubles (17-20) |
+|---|---|---|---|---|---|---|---|
+| HL-Gauss, equal | 0.1916 (0.008) | 0.2286 (0.011) | 0.1751 (0.005) | 0.0805 (0.008) | 0.9242 (0.003) | 0.1143 (0.009) | 0.2358 (0.009) |
+| HL-Gauss, operator injection | 0.2408 (0.006) | 0.2273 (0.007) | 0.1693 (0.020) | 0.1005 (0.023) | **0.9256 (0.003)** | 0.1208 (0.019) | 0.2469 (0.016) |
+| pinball, equal | 0.2379 (0.011) | 0.2561 (0.011) | 0.1672 (0.011) | 0.0963 (0.007) | 0.9194 (0.006) | 0.1223 (0.013) | 0.2658 (0.019) |
+| pinball, operator injection, lr 3e-4 | 0.2540 (0.012) | 0.2516 (0.010) | 0.1717 (0.010) | **0.1086 (0.005)** | 0.9172 (0.006) | 0.1261 (0.014) | 0.2473 (0.018) |
+| pinball, operator injection, lr 1.5e-4 | 0.2441 (0.016) | **0.2632 (0.014)** | **0.1809 (0.020)** | 0.1058 (0.014) | 0.8989 (0.007) | 0.1214 (0.011) | 0.2648 (0.023) |
+| pinball, operator injection, records weighting | **0.2713 (0.010)** | 0.2298 (0.018) | 0.1646 (0.005) | 0.1010 (0.004) | 0.9206 (0.007) | **0.1287 (0.015)** | **0.2832 (0.010)** |
+
+- **Pinball over HL-Gauss, again:** at equal weighting without injection, doubles 0.238 vs 0.192 and Muenzner 0.256 vs 0.229 (4 vs 4 seeds); with injection, doubles 0.254 vs 0.241, Muenzner 0.252 vs 0.227. HL-Gauss leads only Vaishnav (0.926 vs 0.917).
+- **Operator injection** lifts doubles in both losses (HL-Gauss +0.049, pinball +0.016) and Kemmeren (+0.020, +0.012) without moving the per-gene isolate heads.
+- **The lr lever at 80 epochs, four seeds per arm:** Muenzner +0.012 (0.9 sd), Caudal +0.009 (0.5 sd), doubles -0.010 (0.7 sd), Vaishnav -0.018 (3 sd). At this budget the lr-half gain seen at 50 epochs on GilaHyper is inside the seed noise on Aurora, and the Vaishnav cost remains. This differs from the single GilaHyper lr 3e-4 80-epoch cell (doubles 0.218); the four Aurora lr 3e-4 seeds sit at 0.254 (0.012). Cross-machine offsets are also visible on the matched arm: lr-half at 80 epochs gives doubles 0.267 (0.011, three seeds) on GilaHyper and 0.244 (0.016, four seeds) on Aurora, Muenzner 0.262 vs 0.263. Measured; no cause assigned (hardware, bf16 paths and the one-tile-per-cell placement all differ).
+- **Records weighting** gives the best doubles (0.271) and the best fine-tune (Kemmeren 0.129, doubles 0.283) while putting Muenzner (0.230) and Caudal (0.165) at the bottom of the pinball arms, the same trade GilaHyper showed at 50 epochs. No arm wins every head; the choice between equal and records weighting is a choice between the isolate heads and the doubles head.
+
+Aurora is idle after this round; the next grid waits on the 120-epoch GilaHyper cell (6598, ends within the hour) to set the budget.
+
+W&B (view ids in `results/wandb_view_ids.json`): round view
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=4ebtcp2r4ky

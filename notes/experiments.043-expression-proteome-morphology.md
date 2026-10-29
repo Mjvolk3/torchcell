@@ -2404,3 +2404,24 @@ Third free card: recipe v3 at 80 epochs, seed 1 (`gs1024_w9_pinball_injop_lrhalf
 Every stage-1 head moves up, Muenzner, Caudal and Vaishnav by more than 2.5 seed sd; the fine-tune does not move (Kemmeren alone saturates in 20 epochs from either start). The 80-epoch budget is the recipe v4 candidate for every machine; the Delta round (ten jobs, started 09:21 to 10:30 CDT today, not Nov 1 as `sbatch --test-only` had estimated) and the Aurora v3 grid run 50 epochs as submitted and stay that way. Open on the cards: seed 2 (6596) and the 120-epoch cell (6598); new on the freed card, lr 3e-4 at 80 epochs (`gs1024_w9_pinball_injop_lr3e4_ep80`, job 6600, fine-tune 6601), which asks whether the lr lever is still needed once the budget is 80 epochs (hypothesis, untested: the lr-half gain at 50 epochs was partly a budget effect).
 
 - `gs1024_w9_pinball_injop_lrhalf_ep80_s1`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lrhalf_ep80_s1
+
+### 80 epochs at three seeds: Muenzner and Vaishnav hold, doubles and Caudal fall back into the noise; lr 3e-4 at 80 epochs loses doubles (17:45 CDT)
+
+Correction to the two-seed table above: seed 2 (`gs1024_w9_pinball_injop_lrhalf_ep80_s2`, job 6596) came in low on every head (doubles 0.2552, Muenzner 0.2525, Caudal 0.1634, Vaishnav 0.8908; fine-tune 6597 Kemmeren 0.1149, doubles 0.2666), so "every stage-1 head up" was a two-seed statement that does not survive the third seed.
+
+| metric (validation, window mean) | 50 epochs, 5 seeds (41-50) | 80 epochs, 3 seeds (71-80) | gain in 50-epoch seed sd |
+|---|---|---|---|
+| doubles Pearson, strain-centered median | 0.2597 (0.012) | 0.2671 (0.011) | +0.6 |
+| Muenzner Pearson per gene median | 0.2320 (0.013) | 0.2618 (0.009) | +2.3 |
+| Caudal Pearson per gene median | 0.1779 (0.006) | 0.1845 (0.022) | +1.1, with a 4x wider seed spread |
+| Kemmeren Pearson per gene median | 0.0986 (0.015) | 0.1061 (0.003) | +0.5 |
+| Vaishnav Pearson | 0.8695 (0.009) | 0.8983 (0.007) | +3.2 |
+| fine-tune Kemmeren per gene median (16-20) | 0.1238 (0.011) | 0.1241 (0.011) | 0 |
+| fine-tune doubles (16-20) | 0.2743 (0.017) | 0.2711 (0.011) | 0 |
+
+What holds at three seeds: Muenzner (+0.030) and Vaishnav (+0.029, the lr lever's cost gone). What does not: doubles and Caudal are within one seed sd, and the fine-tune is unchanged. Seeds 3 and 4 (`gs1024_w9_pinball_injop_lrhalf_ep80_s3`, job 6606, fine-tune 6607; `_s4`, job 6608, fine-tune 6609) bring the 80-epoch arm to the same five seeds as the 50-epoch table.
+
+**lr 3e-4 at 80 epochs, one seed** (`gs1024_w9_pinball_injop_lr3e4_ep80`, job 6600, 6 h 37 min): doubles 0.2182, Muenzner 0.2616, Caudal 0.1734, Kemmeren 0.1096, Vaishnav 0.9237; fine-tune (6601) Kemmeren 0.1366, doubles 0.2233. `operator/relative_norm` sat at 1.27 to 1.34 over epochs 74-80 (lr-half at 80 epochs: 0.72), and the per-epoch doubles value swung 0.19 to 0.25 across the window. Against lr-half at 80 epochs (three seeds): doubles 0.049 lower (4.5 sd), Muenzner equal, Caudal within sd, Vaishnav 0.025 higher (3.6 sd), fine-tune Kemmeren 0.012 higher (one sd). The lr lever is still needed at 80 epochs for doubles; it costs Vaishnav at either budget, less at 80. One seed, no mechanism claimed.
+
+- `gs1024_w9_pinball_injop_lrhalf_ep80_s2`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lrhalf_ep80_s2
+- `gs1024_w9_pinball_injop_lr3e4_ep80`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lr3e4_ep80

@@ -2368,3 +2368,11 @@ W&B runs (the view `?nw=` ids are in `results/wandb_view_ids.json`; the round vi
 - `gs1024_w9_pinball_injop_lrhalf_s4`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lrhalf_s4
 - `gs1024_w9_hlgauss_injop_lrhalf`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_hlgauss_injop_lrhalf
 - `gs1024_w9_pinball_injop_lrhalf_s4_ft`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lrhalf_s4_ft
+
+### Route B at batch 8 under recipe v3 trains to 50 epochs without collapsing (04:30 CDT)
+
+`gs1024_w9_routeB_bs8_pinball_injop_lrhalf` (job 6587, 5 h 51 min, exit 0; fine-tune 6588): `operator/relative_norm` rose 0.32 (epoch 1), 0.46 (10), 0.59 (20), 0.72 (30), 0.82 (40), 0.96 (50) with no blow-up (the batch-16 route B cells reached 12.5 by epoch 35 and locked doubles at -0.0883), the second route B cell at batch 8 to finish cleanly after the HL-Gauss one (`gs1024_w8_routeB_bs8`). Window 41-50 means, one seed, against route A recipe v3 (five seeds): doubles 0.2509 (route A 0.2597, sd 0.012), Muenzner 0.1637 (0.2320, sd 0.013), Caudal 0.1534 (0.1779, sd 0.006), Kemmeren 0.1026 (0.0986), Vaishnav 0.9038 (0.8695, sd 0.009); fine-tune Kemmeren 0.1254, doubles 0.2683. Route B gives back the Vaishnav cost of the lr lever and loses more than five seed sd on Muenzner and Caudal; the route B HL-Gauss cell at batch 8 showed the same shape (Vaishnav 0.9248, Muenzner 0.1657). Measured at one seed per cell; no mechanism claimed. The still-rising operator norm at epoch 50 is a watch item for any route B run past 50 epochs. Bookkeeping: the trainer's arm label does not carry the route (`all_onto_injop_pinball_equal_lr0.00015` names both routes), so seed means over that label must exclude the `routeB_` run ids by hand until the label gains a route token (a labeling change, left for the owner).
+
+Third free card: recipe v3 at 80 epochs, seed 1 (`gs1024_w9_pinball_injop_lrhalf_ep80_s1`, job 6594, fine-tune 6595), so the epoch-budget question gets two seeds by the afternoon.
+
+- `gs1024_w9_routeB_bs8_pinball_injop_lrhalf`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_routeB_bs8_pinball_injop_lrhalf

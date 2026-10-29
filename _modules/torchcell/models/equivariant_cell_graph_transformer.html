@@ -132,12 +132,59 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.checkpoint</span><span class="w"> </span><span class="kn">import</span> <span class="n">checkpoint</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">HeteroData</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="c1"># Type-only import: keeps the models package free of a runtime dependency on</span>
     <span class="c1"># torchcell.losses (whose __init__ imports other model-specific losses).</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.losses.distributional</span><span class="w"> </span><span class="kn">import</span> <span class="n">DistHead</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">query_chunked_sdpa</span><span class="p">(</span>
+    <span class="n">q</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">k</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">v</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">attn_mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">dropout_p</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">query_chunk</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``F.scaled_dot_product_attention`` over query blocks of ``query_chunk`` rows.</span>
+
+<span class="sd">    ``query_chunk=None`` (or a query no longer than it) is the plain call. Otherwise each</span>
+<span class="sd">    block of queries attends to every key under activation checkpointing, so at most one</span>
+<span class="sd">    block's ``[B, H, query_chunk, Lk]`` score matrix is alive at a time. The result is the</span>
+<span class="sd">    same attention (the softmax runs over keys, each query row on its own); the dropout</span>
+<span class="sd">    draws differ from the one-call draws, and checkpointing restores the RNG state so the</span>
+<span class="sd">    recomputed block uses the forward's draws.</span>
+
+<span class="sd">    WHY: on Intel XPU (torch 2.11.0+xpu, Aurora jobs 8959138 and 8959152) a masked or</span>
+<span class="sd">    dropout SDPA training call has no fused kernel and takes the math path, which forms</span>
+<span class="sd">    the score matrix: 5.1 GB per [1, 9, 6609, 6609] call, 41.1 GB at 8 contexts. CUDA's</span>
+<span class="sd">    memory-efficient kernel never forms it.</span>
+<span class="sd">    """</span>
+    <span class="n">Lq</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">query_chunk</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">Lq</span> <span class="o">&lt;=</span> <span class="n">query_chunk</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">scaled_dot_product_attention</span><span class="p">(</span>
+            <span class="n">q</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">attn_mask</span><span class="o">=</span><span class="n">attn_mask</span><span class="p">,</span> <span class="n">dropout_p</span><span class="o">=</span><span class="n">dropout_p</span>
+        <span class="p">)</span>
+    <span class="n">outs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">Lq</span><span class="p">,</span> <span class="n">query_chunk</span><span class="p">):</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">attn_mask</span>
+        <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">s</span> <span class="p">:</span> <span class="n">s</span> <span class="o">+</span> <span class="n">query_chunk</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">outs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">checkpoint</span><span class="p">(</span>
+                <span class="n">F</span><span class="o">.</span><span class="n">scaled_dot_product_attention</span><span class="p">,</span>
+                <span class="n">q</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">s</span> <span class="p">:</span> <span class="n">s</span> <span class="o">+</span> <span class="n">query_chunk</span><span class="p">,</span> <span class="p">:],</span>
+                <span class="n">k</span><span class="p">,</span>
+                <span class="n">v</span><span class="p">,</span>
+                <span class="n">attn_mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span>
+                <span class="n">dropout_p</span><span class="o">=</span><span class="n">dropout_p</span><span class="p">,</span>
+                <span class="n">use_reentrant</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">outs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="GraphRegularizedTransformerLayer">
@@ -149,15 +196,27 @@
 <span class="sd">    for graph regularization loss.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">num_heads</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">hidden_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_heads</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">query_chunk</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ffn_mult</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Build Q/K/V/out projections, layer norms, and the feedforward block.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            hidden_dim: Model hidden dimension (divisible by num_heads).</span>
 <span class="sd">            num_heads: Number of attention heads.</span>
 <span class="sd">            dropout: Dropout probability.</span>
+<span class="sd">            query_chunk: fused-path query block size (``query_chunked_sdpa``); None is</span>
+<span class="sd">                one SDPA call.</span>
+<span class="sd">            ffn_mult: FFN hidden width as a multiple of ``hidden_dim`` (4 = the layer</span>
+<span class="sd">                as it always was; 043 sweep knob ``model.trunk_ffn_mult``).</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">query_chunk</span> <span class="o">=</span> <span class="n">query_chunk</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span> <span class="o">=</span> <span class="n">hidden_dim</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_heads</span> <span class="o">=</span> <span class="n">num_heads</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">head_dim</span> <span class="o">=</span> <span class="n">hidden_dim</span> <span class="o">//</span> <span class="n">num_heads</span>
@@ -176,11 +235,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">norm1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">norm2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">LayerNorm</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">)</span>
 
+        <span class="k">if</span> <span class="n">ffn_mult</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ffn_mult must be &gt;= 1, got </span><span class="si">{</span><span class="n">ffn_mult</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ffn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
-            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">hidden_dim</span> <span class="o">*</span> <span class="mi">4</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">hidden_dim</span> <span class="o">*</span> <span class="n">ffn_mult</span><span class="p">),</span>
             <span class="n">nn</span><span class="o">.</span><span class="n">GELU</span><span class="p">(),</span>
             <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">),</span>
-            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span> <span class="o">*</span> <span class="n">ffn_mult</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">),</span>
         <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span>
@@ -244,12 +305,13 @@
             <span class="c1"># RNG differently from the manual softmax path, so trajectories will not match</span>
             <span class="c1"># earlier runs at an identical seed; that is why this lands on a new wave boundary</span>
             <span class="c1"># rather than being pooled with wave3/wave4a.</span>
-            <span class="n">attn_output</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">scaled_dot_product_attention</span><span class="p">(</span>
+            <span class="n">attn_output</span> <span class="o">=</span> <span class="n">query_chunked_sdpa</span><span class="p">(</span>
                 <span class="n">q</span><span class="p">,</span>
                 <span class="n">k</span><span class="p">,</span>
                 <span class="n">v</span><span class="p">,</span>
-                <span class="n">attn_mask</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">head_mask</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">head_mask</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
-                <span class="n">dropout_p</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="o">.</span><span class="n">p</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="kc">None</span> <span class="k">if</span> <span class="n">head_mask</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">head_mask</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="o">.</span><span class="n">p</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">query_chunk</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">gene_attention_weights</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>

@@ -341,7 +341,8 @@
             <span class="n">experiment</span><span class="p">[</span><span class="s2">"experiment_type"</span><span class="p">],</span>
             <span class="n">phenotype</span><span class="p">[</span><span class="s2">"label_name"</span><span class="p">],</span>
             <span class="n">experiment</span><span class="p">[</span><span class="s2">"dataset_name"</span><span class="p">],</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">experiment</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]),</span>
+            <span class="c1"># A SegregantGenotype has no perturbation list: zero perturbations.</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">experiment</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbations"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]),</span>
             <span class="n">values</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -1291,8 +1292,9 @@
                     <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">data_list</span><span class="p">:</span>
                         <span class="c1"># Dict read, not pydantic validation -- see</span>
                         <span class="c1"># compute_phenotype_label_index for the cost measured.</span>
+                        <span class="c1"># A SegregantGenotype has no perturbation list: count 0.</span>
                         <span class="n">perturbation_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span>
-                            <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]</span>
+                            <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"genotype"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbations"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
                         <span class="p">)</span>
 
                         <span class="k">if</span> <span class="n">perturbation_count</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">perturbation_count_index</span><span class="p">:</span>
@@ -1361,7 +1363,9 @@
                         <span class="n">data_list</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
                         <span class="c1"># Process all perturbations in one pass</span>
                         <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">data_list</span><span class="p">:</span>
-                            <span class="k">for</span> <span class="n">pert</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]:</span>
+                            <span class="c1"># A SegregantGenotype has no perturbation list.</span>
+                            <span class="n">genotype</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"genotype"</span><span class="p">]</span>
+                            <span class="k">for</span> <span class="n">pert</span> <span class="ow">in</span> <span class="n">genotype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbations"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]:</span>
                                 <span class="n">gene</span> <span class="o">=</span> <span class="n">pert</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span>
                                 <span class="k">if</span> <span class="n">gene</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">is_any_perturbed_gene_index</span><span class="p">:</span>
                                     <span class="n">is_any_perturbed_gene_index</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -1436,7 +1440,9 @@
                 <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">txn</span><span class="o">.</span><span class="n">cursor</span><span class="p">():</span>
                     <span class="n">idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
                     <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">()):</span>
-                        <span class="k">for</span> <span class="n">pert</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]:</span>
+                        <span class="c1"># A SegregantGenotype has no perturbation list.</span>
+                        <span class="n">genotype</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"genotype"</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">pert</span> <span class="ow">in</span> <span class="n">genotype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbations"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]:</span>
                             <span class="k">if</span> <span class="ow">not</span> <span class="n">pert</span><span class="p">[</span><span class="s2">"perturbation_type"</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"deletion"</span><span class="p">):</span>
                                 <span class="k">continue</span>
                             <span class="n">index</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">pert</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">],</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>

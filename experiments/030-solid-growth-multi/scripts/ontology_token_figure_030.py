@@ -100,14 +100,15 @@ KEYS = {
 }
 SCREENS = {"TmiKuzmin2018Dataset": "2018", "TmiKuzmin2020Dataset": "2020"}
 WINDOW = 10  # epochs averaged at the end of each run
+F_XMAX = 40  # panel f shows the epochs in which the offset is learned; the plateau to 200 is in the numbers file
 
 # ------------------------------------------------------------------ sheet geometry, mm
 W_MM = 164.0  # the thesis text block is 165 mm; the ink-cropped export adds 1 pt a side
 H_MM = 118.0
 ROW1_TOP, ROW1_H = 8.5, 40.0
 ROW2_TOP, ROW2_H = 68.5, 36.0
-A_X, A_W = 10.0, 28.0
-SLOT_B = (42.5, 7.0, 52.0, 52.0)  # x, y, w, h of the shared-bias panel, drawn by the thesis generator
+A_X, A_W = 10.0, 33.0
+SLOT_B = (47.0, 7.0, 48.0, 52.0)  # x, y, w, h of the shared-bias panel, drawn by the thesis generator
 SLOT_C = (98.5, 7.0, 66.0, 52.0)  # x, y, w, h of the annotation and encoder panel
 D_X, D_W = 9.0, 41.0
 E_X, E_W = 61.5, 42.5
@@ -327,8 +328,9 @@ def panel_e(ax: Axes, swap: dict[str, dict[str, dict[str, float]]]) -> None:
                        edgecolor="black", linewidth=0.4, hatch="///" if read == "other" else None, zorder=3)
             t = swap[arm]["own"][f"mean_target_{screen}"]
             ax.plot([g - w - 0.05, g + w + 0.05], [t, t], color="black", lw=0.8, zorder=5)
-        ax.text(a * 2.4 + 0.5, -0.30, ARMS[arm]["label"], ha="center", va="top", fontsize=6,
-                transform=ax.get_xaxis_transform())
+        ax.text(a * 2.4 + 0.5, -0.27, ARMS[arm]["label"], ha="center", va="top", fontsize=6,
+                transform=ax.get_xaxis_transform(),
+                bbox=dict(boxstyle="round,pad=0.3", facecolor=ARMS[arm]["fill"], edgecolor=ARMS[arm]["color"], linewidth=0.5))
     ax.axhline(0, color="black", lw=0.4, zorder=2)
     ax.set_xticks(xs)
     ax.set_xticklabels(labels)
@@ -357,14 +359,16 @@ def panel_f(ax: Axes, hist: pd.DataFrame, floor: float) -> dict[str, float]:
         out[f"gap_epoch0_{arm}"] = float(gap.iloc[0])
         out[f"gap_epochs_10_19_{arm}"] = float(gap[(h.epoch >= 10) & (h.epoch <= 19)].mean())
         out[f"gap_last10_{arm}"] = float(gap.tail(WINDOW).mean())
-    ax.set_xlim(0, 200)
-    ax.xaxis.set_major_locator(MultipleLocator(50))
+    ax.axvline(10, color="black", lw=0.5, ls=(0, (1, 1.5)), zorder=2)
+    ax.set_xlim(0, F_XMAX)
+    ax.xaxis.set_major_locator(MultipleLocator(10))
     ax.set_ylim(0, 0.35)
     ax.yaxis.set_major_locator(MultipleLocator(0.1))
     ax.set_xlabel("epoch")
     ax.set_ylabel("pooled minus within-screen Pearson")
-    title(ax, "after epoch 10 the genes carry the offset")
+    title(ax, "the name token knows the screen at epoch 0")
     handles = [Line2D([0], [0], color=ARMS[a]["color"], lw=0.8, label=ARMS[a]["label"]) for a in ARMS]
+    handles.append(Line2D([0], [0], color="black", lw=0.5, ls=(0, (1, 1.5)), label="epoch 10"))
     legend(ax, handles, "upper right", (1.02, 1.0))
     box(ax)
     return out

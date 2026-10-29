@@ -1,0 +1,28 @@
+{
+ "generated_by": "experiments/043-expression-proteome-morphology/scripts/embed_vaishnav_reporter_043.py",
+ "created_at": "2026-10-22T07:24:36+00:00",
+ "slurm_job_id": "6115",
+ "encoders": {
+  "calm": {
+   "inputs": 1,
+   "with_row": 1,
+   "table_rows": 6559
+  },
+  "fudt_species_downstream": {
+   "inputs": 1,
+   "with_row": 1,
+   "table_rows": 6558
+  },
+  "fudt_species_upstream": {
+   "inputs": 71158,
+   "with_row": 71158,
+   "table_rows": 1209089
+  },
+  "prot_t5_xl_uniref50": {
+   "inputs": 1,
+   "with_row": 1,
+   "table_rows": 6537
+  }
+ },
+ "complete": true
+}

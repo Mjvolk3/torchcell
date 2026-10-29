@@ -59,7 +59,7 @@ from dotenv import load_dotenv  # noqa: E402
 from matplotlib.axes import Axes  # noqa: E402
 from matplotlib.figure import Figure  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
-from matplotlib.patches import Patch  # noqa: E402
+from matplotlib.patches import Patch, Rectangle  # noqa: E402
 from matplotlib.ticker import MultipleLocator  # noqa: E402
 
 from torchcell.utils import PLOT_PALETTE, PLOT_PALETTE_FILL, mm_to_in, savefig_true_size_svg  # noqa: E402
@@ -109,10 +109,18 @@ ROW1_TOP, ROW1_H = 8.5, 40.0
 ROW2_TOP, ROW2_H = 64.0, 36.0
 A_X, A_W = 10.0, 33.0
 SLOT_B = (47.0, 7.0, 48.0, 52.0)  # x, y, w, h of the shared-bias panel, drawn by the thesis generator
-SLOT_C = (98.5, 7.0, 66.0, 52.0)  # x, y, w, h of the annotation and encoder panel
-D_X, D_W = 9.0, 41.0
-E_X, E_W = 61.5, 42.5
-F_X, F_W = 115.0, 47.0
+C_X, C_W = 113.5, 50.5  # the assembly-rule heatmap; its rule labels sit to the left
+SLOT_D = (0.7, ROW2_TOP - 1.5, 66.0, 52.0)  # the annotation and encoder panel, drawn by the thesis generator
+E_X, E_W = 78.0, 34.0
+F_X, F_W = 126.0, 38.0
+R029 = osp.join(EXPERIMENT_ROOT, "029-solid-growth-ko", "results")
+# The assembly rules of 029's closure recompute (closure_recompute.py), one fitness per
+# genotype from what a query returns, and the screens whose stored scores the identity is
+# read against.
+RULES = [("mean_all", "mean of\nevery entry"), ("measured_else_0", "measured,\n0 if none"),
+         ("kuzmin_first", "Kuzmin\nfirst"), ("costanzo_first", "Costanzo\nfirst")]
+SCREEN_COLS = [(2, "C26", "Costanzo\n26 \u00b0C"), (2, "C30", "Costanzo\n30 \u00b0C"), (2, "K18", "Kuzmin\n2018"),
+               (2, "K20", "Kuzmin\n2020"), (3, "K18", "Kuzmin\n2018"), (3, "K20", "Kuzmin\n2020")]
 GRID = "#E3E3E3"
 
 plt.rcParams.update(
@@ -252,8 +260,8 @@ def letter(fig: Figure, ch: str, x_mm: float, y_mm: float) -> None:
     fig.text(x_mm / W_MM, 1 - y_mm / H_MM, ch, fontsize=8, fontweight="bold", ha="left", va="top")
 
 
-def title(ax: Axes, words: str) -> None:
-    ax.text(0.5, 1.03, words, transform=ax.transAxes, fontsize=6, ha="center", va="bottom")
+def title(ax: Axes, words: str, y: float = 1.03) -> None:
+    ax.text(0.5, y, words, transform=ax.transAxes, fontsize=6, ha="center", va="bottom")
 
 
 def legend(ax: Axes, handles: list, loc: str, anchor: tuple[float, float]) -> None:
@@ -288,7 +296,44 @@ def panel_a(ax: Axes, rows: pd.DataFrame, vocabulary: list[str]) -> dict[str, fl
     return out
 
 
-def panel_d(ax: Axes, windows: dict[str, pd.Series], floor: float) -> None:
+def panel_c(ax: Axes) -> dict[str, float]:
+    """The identity's Pearson r per source screen under each assembly rule, from 029's
+    closure_policy_stats.csv; one ramp, white to dark red, for r in [0, 1]."""
+    from matplotlib.colors import LinearSegmentedColormap
+
+    stats = pd.read_csv(osp.join(R029, "closure_policy_stats.csv"))
+    cmap = LinearSegmentedColormap.from_list("tc_red", ["#FFFFFF", PLOT_PALETTE_FILL[1], PLOT_PALETTE[1], PLOT_PALETTE[7]])
+    out: dict[str, float] = {}
+    for i, (rule, _) in enumerate(RULES):
+        for j, (order, src, _) in enumerate(SCREEN_COLS):
+            row = stats[(stats.policy == rule) & (stats.order == order) & (stats.stored_source == src)]
+            assert len(row) == 1, (rule, order, src)
+            r = float(row.pearson.iloc[0])
+            face = cmap(r)
+            ax.add_patch(Rectangle((j - 0.5, i - 0.5), 1.0, 1.0, facecolor=face, edgecolor=face, lw=0.3))
+            lum = 0.299 * face[0] + 0.587 * face[1] + 0.114 * face[2]
+            ax.text(j, i, f"{r:.2f}", ha="center", va="center", fontsize=5, color="white" if lum < 0.5 else "black")
+            out[f"{rule}/{'digenic' if order == 2 else 'trigenic'}/{src}"] = r
+            if i == 0:
+                out[f"n/{'digenic' if order == 2 else 'trigenic'}/{src}"] = int(row.n.iloc[0])
+    ax.set_xlim(-0.5, len(SCREEN_COLS) - 0.5)
+    ax.set_ylim(len(RULES) - 0.5, -0.5)
+    ax.set_xticks(range(len(SCREEN_COLS)))
+    ax.set_xticklabels([c[2] for c in SCREEN_COLS], fontsize=5)
+    ax.set_yticks(range(len(RULES)))
+    ax.set_yticklabels([r[1] for r in RULES])
+    ax.axvline(3.5, color="white", lw=2.0)
+    ax.text(1.5, -0.58, "digenic screens", ha="center", va="bottom", fontsize=5)
+    ax.text(4.5, -0.58, "trigenic screens", ha="center", va="bottom", fontsize=5)
+    title(ax, "each assembly rule keeps a different screen", y=1.11)
+    for sp in ax.spines.values():
+        sp.set_visible(True)
+        sp.set_linewidth(0.5)
+    ax.tick_params(length=0)
+    return out
+
+
+def panel_e(ax: Axes, windows: dict[str, pd.Series], floor: float) -> None:
     groups = [("pooled", "pooled"), ("within_2018", "within\n2018"), ("within_2020", "within\n2020"), ("fitness", "fitness")]
     w = 0.36
     for g, (key, _) in enumerate(groups):
@@ -311,7 +356,7 @@ def panel_d(ax: Axes, windows: dict[str, pd.Series], floor: float) -> None:
     box(ax)
 
 
-def panel_e(ax: Axes, swap: dict[str, dict[str, dict[str, float]]]) -> None:
+def panel_f(ax: Axes, swap: dict[str, dict[str, dict[str, float]]]) -> None:
     """swap[arm][read] -> {mean_pred_2018, mean_pred_2020, mean_target_2018, mean_target_2020}, read in (own, other)."""
     w = 0.3
     xs: list[float] = []
@@ -350,7 +395,7 @@ def panel_e(ax: Axes, swap: dict[str, dict[str, dict[str, float]]]) -> None:
     ax.grid(False)
 
 
-def panel_f(ax: Axes, hist: pd.DataFrame, floor: float) -> dict[str, float]:
+def panel_epochs(ax: Axes, hist: pd.DataFrame, floor: float) -> dict[str, float]:
     """Pooled (solid) and mean within-screen (dashed) validation Pearson per epoch, both arms,
     over the first F_XMAX epochs, with the screen-mean floor."""
     out: dict[str, float] = {}
@@ -388,12 +433,12 @@ def main() -> None:
 
     hist = history(args.refresh)
     windows: dict[str, pd.Series] = {}
-    numbers: dict = {"panel_a": {}, "panel_d": {}, "panel_e": {}, "panel_f": {}, "window_epochs": WINDOW}
+    numbers: dict = {"panel_a": {}, "panel_c": {}, "panel_e": {}, "panel_f": {}, "window_epochs": WINDOW}
     for arm in ARMS:
         win, e0, e1 = last_window(hist, arm)
         windows[arm] = win
-        numbers["panel_d"][arm] = {"epochs": [e0, e1], **{k: round(float(win[k]), 4) for k in KEYS}}
-        print(f"d {arm:9s} epochs {e0}-{e1}: " + " ".join(f"{k} {win[k]:.3f}" for k in KEYS))
+        numbers["panel_e"][arm] = {"epochs": [e0, e1], **{k: round(float(win[k]), 4) for k in KEYS}}
+        print(f"e {arm:9s} epochs {e0}-{e1}: " + " ".join(f"{k} {win[k]:.3f}" for k in KEYS))
 
     swap: dict[str, dict[str, dict[str, float]]] = {}
     floor = None
@@ -408,12 +453,12 @@ def main() -> None:
         if floor is None:
             floor = floor_pearson(rows, vocab)
             name_rows, name_vocab = rows, vocab
-        numbers["panel_e"][arm] = {
+        numbers["panel_f"][arm] = {
             "checkpoint_epoch": summary["checkpoint_epoch"],
             "own": {k: round(v, 4) for k, v in own.items()},
             "other_screen_token": {k: round(v, 4) for k, v in other.items()},
         }
-        print(f"e {arm:9s} ep {summary['checkpoint_epoch']}: own r {own['pearson']:.3f} "
+        print(f"f {arm:9s} ep {summary['checkpoint_epoch']}: own r {own['pearson']:.3f} "
               f"means {own['mean_pred_2018']:+.4f}/{own['mean_pred_2020']:+.4f}; "
               f"other r {other['pearson']:.3f} means {other['mean_pred_2018']:+.4f}/{other['mean_pred_2020']:+.4f}")
     assert floor is not None and name_rows is not None
@@ -423,17 +468,16 @@ def main() -> None:
 
     fig = plt.figure(figsize=(mm_to_in(W_MM), mm_to_in(H_MM)))
     ax_a = axes_mm(fig, A_X, ROW1_TOP, A_W, ROW1_H)
-    ax_d = axes_mm(fig, D_X, ROW2_TOP, D_W, ROW2_H)
+    ax_c = axes_mm(fig, C_X, ROW1_TOP, C_W, ROW1_H)
     ax_e = axes_mm(fig, E_X, ROW2_TOP, E_W, ROW2_H)
     ax_f = axes_mm(fig, F_X, ROW2_TOP, F_W, ROW2_H)
     numbers["panel_a"] = {k: (round(v, 4) if isinstance(v, float) else v) for k, v in panel_a(ax_a, name_rows, name_vocab).items()}
-    panel_d(ax_d, windows, floor)
-    panel_e(ax_e, swap)
-    numbers["panel_f"] = {k: round(v, 4) for k, v in panel_f(ax_f, hist, floor).items()}
+    numbers["panel_c"] = {k: (round(v, 4) if isinstance(v, float) else v) for k, v in panel_c(ax_c).items()}
+    panel_e(ax_e, windows, floor)
+    panel_f(ax_f, swap)
     print("a " + " ".join(f"{k} {v}" for k, v in numbers["panel_a"].items()))
-    print("f " + " ".join(f"{k} {v:.3f}" for k, v in numbers["panel_f"].items()))
     letter(fig, "a", 0.7, 1.2)
-    letter(fig, "d", 0.7, ROW2_TOP - 7.3)
+    letter(fig, "c", C_X - 16.0, 1.2)
     letter(fig, "e", E_X - 9.5, ROW2_TOP - 7.3)
     letter(fig, "f", F_X - 9.5, ROW2_TOP - 7.3)
     savefig_true_size_svg(fig, STEM + ".svg")
@@ -441,8 +485,17 @@ def main() -> None:
     with open(STEM + "_slots.json", "w") as fh:
         json.dump({"page_width_mm": W_MM, "page_height_mm": H_MM,
                    "b": dict(zip(("x_mm", "y_mm", "width_mm", "height_mm"), SLOT_B)),
-                   "c": dict(zip(("x_mm", "y_mm", "width_mm", "height_mm"), SLOT_C)),
+                   "d": dict(zip(("x_mm", "y_mm", "width_mm", "height_mm"), SLOT_D)),
                    "row2_axes_bottom_mm": ROW2_TOP + ROW2_H, "row1_axes_bottom_mm": ROW1_TOP + ROW1_H}, fh, indent=2)
+    # The epoch curves (pooled and within-screen Pearson over the first forty epochs) left the
+    # figure on the author's review of 2026-10-29; they stay as a standalone sheet for the
+    # script's note, with their numbers in the numbers file.
+    fig2 = plt.figure(figsize=(mm_to_in(60.0), mm_to_in(48.0)))
+    ax2 = fig2.add_axes((12.0 / 60.0, 8.0 / 48.0, 45.0 / 60.0, 32.0 / 48.0))
+    numbers["epoch_curves"] = {k: round(v, 4) for k, v in panel_epochs(ax2, hist, floor).items()}
+    savefig_true_size_svg(fig2, STEM + "_epochs.svg")
+    fig2.savefig(STEM + "_epochs.png", dpi=300)
+    print("epochs " + " ".join(f"{k} {v:.3f}" for k, v in numbers["epoch_curves"].items()))
     with open(NUMBERS_JSON, "w") as fh:
         json.dump(numbers, fh, indent=2)
     print("wrote", STEM + ".svg", STEM + ".png", NUMBERS_JSON, sep="\n  ")

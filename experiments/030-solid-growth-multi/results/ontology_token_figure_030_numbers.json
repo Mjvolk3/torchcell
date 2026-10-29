@@ -9,7 +9,39 @@
     "n_rows_2020": 29219,
     "frac_positive_2020": 0.5349
   },
-  "panel_d": {
+  "panel_c": {
+    "mean_all/digenic/C26": 0.4634,
+    "n/digenic/C26": 4422,
+    "mean_all/digenic/C30": 0.4404,
+    "n/digenic/C30": 898027,
+    "mean_all/digenic/K18": 0.6344,
+    "n/digenic/K18": 129356,
+    "mean_all/digenic/K20": 0.3995,
+    "n/digenic/K20": 494557,
+    "mean_all/trigenic/K18": 0.3622,
+    "n/trigenic/K18": 57451,
+    "mean_all/trigenic/K20": 0.1823,
+    "n/trigenic/K20": 231611,
+    "measured_else_0/digenic/C26": 0.4801,
+    "measured_else_0/digenic/C30": 0.465,
+    "measured_else_0/digenic/K18": 0.6881,
+    "measured_else_0/digenic/K20": 0.4064,
+    "measured_else_0/trigenic/K18": 0.4409,
+    "measured_else_0/trigenic/K20": 0.22,
+    "kuzmin_first/digenic/C26": 0.0074,
+    "kuzmin_first/digenic/C30": 0.0763,
+    "kuzmin_first/digenic/K18": 0.8937,
+    "kuzmin_first/digenic/K20": 0.4062,
+    "kuzmin_first/trigenic/K18": 0.5166,
+    "kuzmin_first/trigenic/K20": 0.2867,
+    "costanzo_first/digenic/C26": 0.9,
+    "costanzo_first/digenic/C30": 0.7542,
+    "costanzo_first/digenic/K18": 0.3281,
+    "costanzo_first/digenic/K20": 0.1818,
+    "costanzo_first/trigenic/K18": 0.3019,
+    "costanzo_first/trigenic/K20": 0.1272
+  },
+  "panel_e": {
     "name": {
       "epochs": [
         174,
@@ -31,7 +63,7 @@
       "fitness": 0.9512
     }
   },
-  "panel_e": {
+  "panel_f": {
     "name": {
       "checkpoint_epoch": 183,
       "own": {
@@ -75,7 +107,13 @@
       }
     }
   },
-  "panel_f": {
+  "window_epochs": 10,
+  "screen_mean_floor_pearson": 0.3682,
+  "measured_means": {
+    "2018": -0.0474,
+    "2020": 0.0049
+  },
+  "epoch_curves": {
     "pooled_epoch0_name": 0.3709,
     "within_epoch0_name": 0.0757,
     "pooled_epoch10_name": 0.4232,
@@ -84,11 +122,5 @@
     "within_epoch0_ontology": 0.0776,
     "pooled_epoch10_ontology": 0.4215,
     "within_epoch10_ontology": 0.2782
-  },
-  "window_epochs": 10,
-  "screen_mean_floor_pearson": 0.3682,
-  "measured_means": {
-    "2018": -0.0474,
-    "2020": 0.0049
   }
 }

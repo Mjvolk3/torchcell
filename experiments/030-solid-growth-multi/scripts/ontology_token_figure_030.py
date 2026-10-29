@@ -315,8 +315,8 @@ def panel_c(ax: Axes) -> dict[str, float]:
         out[f"{'digenic' if x < 4 else 'trigenic'}/{label.replace(chr(10), ' ')}"] = float(v)
     ax.set_xticks([b[0] for b in bars])
     ax.set_xticklabels([b[1] for b in bars], fontsize=5)
-    ax.text(1.5, 1.07, "digenic", ha="center", va="bottom", fontsize=6)
-    ax.text(5.6, 1.07, "trigenic", ha="center", va="bottom", fontsize=6)
+    ax.text(1.5, 1.16, "digenic", ha="center", va="bottom", fontsize=6)
+    ax.text(5.6, 1.16, "trigenic", ha="center", va="bottom", fontsize=6)
     ax.axvline(3.8, color=GRID, lw=0.5)
     ax.set_xlim(-0.6, 7.2)
     ax.set_ylim(0, 1.5)  # the top third holds the key, above the bars

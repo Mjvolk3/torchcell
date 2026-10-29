@@ -778,10 +778,10 @@ z
     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="453.870382" y="117.952027" transform="rotate(-0 453.870382 117.952027)">0.23</text>
    </g>
    <g id="text_35">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="360.272562" y="55.335613" transform="rotate(-0 360.272562 55.335613)">digenic</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="360.272562" y="48.532463" transform="rotate(-0 360.272562 48.532463)">digenic</text>
    </g>
    <g id="text_36">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="435.517868" y="55.335613" transform="rotate(-0 435.517868 55.335613)">trigenic</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="435.517868" y="48.532463" transform="rotate(-0 435.517868 48.532463)">trigenic</text>
    </g>
    <g id="text_37">
     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="393.307087" y="19.430101" transform="rotate(-0 393.307087 19.430101)">kept per screen the identity holds; merged it breaks</text>

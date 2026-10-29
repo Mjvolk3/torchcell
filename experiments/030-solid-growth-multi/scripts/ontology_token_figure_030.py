@@ -59,7 +59,7 @@ from dotenv import load_dotenv  # noqa: E402
 from matplotlib.axes import Axes  # noqa: E402
 from matplotlib.figure import Figure  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
-from matplotlib.patches import Patch, Rectangle  # noqa: E402
+from matplotlib.patches import Patch  # noqa: E402
 from matplotlib.ticker import MultipleLocator  # noqa: E402
 
 from torchcell.utils import PLOT_PALETTE, PLOT_PALETTE_FILL, mm_to_in, savefig_true_size_svg  # noqa: E402
@@ -109,18 +109,11 @@ ROW1_TOP, ROW1_H = 8.5, 40.0
 ROW2_TOP, ROW2_H = 64.0, 36.0
 A_X, A_W = 10.0, 33.0
 SLOT_B = (47.0, 7.0, 48.0, 52.0)  # x, y, w, h of the shared-bias panel, drawn by the thesis generator
-C_X, C_W = 113.5, 50.5  # the assembly-rule heatmap; its rule labels sit to the left
+C_X, C_W = 113.5, 50.5  # the identity within screens against the merged pool
 SLOT_D = (0.7, ROW2_TOP - 1.5, 66.0, 52.0)  # the annotation and encoder panel, drawn by the thesis generator
 E_X, E_W = 78.0, 34.0
 F_X, F_W = 126.0, 38.0
-R029 = osp.join(EXPERIMENT_ROOT, "029-solid-growth-ko", "results")
-# The assembly rules of 029's closure recompute (closure_recompute.py), one fitness per
-# genotype from what a query returns, and the screens whose stored scores the identity is
-# read against.
-RULES = [("mean_all", "mean of\nevery entry"), ("measured_else_0", "measured,\n0 if none"),
-         ("kuzmin_first", "Kuzmin\nfirst"), ("costanzo_first", "Costanzo\nfirst")]
-SCREEN_COLS = [(2, "C26", "Costanzo\n26 \u00b0C"), (2, "C30", "Costanzo\n30 \u00b0C"), (2, "K18", "Kuzmin\n2018"),
-               (2, "K20", "Kuzmin\n2020"), (3, "K18", "Kuzmin\n2018"), (3, "K20", "Kuzmin\n2020")]
+R025 = osp.join(EXPERIMENT_ROOT, "025-solid-growth", "results")  # the closure recompute of c
 GRID = "#E3E3E3"
 
 plt.rcParams.update(
@@ -297,39 +290,45 @@ def panel_a(ax: Axes, rows: pd.DataFrame, vocabulary: list[str]) -> dict[str, fl
 
 
 def panel_c(ax: Axes) -> dict[str, float]:
-    """The identity's Pearson r per source screen under each assembly rule, from 029's
-    closure_policy_stats.csv; one ramp, white to dark red, for r in [0, 1]."""
-    from matplotlib.colors import LinearSegmentedColormap
-
-    stats = pd.read_csv(osp.join(R029, "closure_policy_stats.csv"))
-    cmap = LinearSegmentedColormap.from_list("tc_red", ["#FFFFFF", PLOT_PALETTE_FILL[1], PLOT_PALETTE[1], PLOT_PALETTE[7]])
+    """The interaction identity, stored score against the score recomputed from fitness: every
+    record kept and read within its own screen (purple, one bar per screen) against the records
+    merged into one fitness per genotype across sources (gray, the 025 training pool). From the
+    025 closure recompute (s3_closure_recompute_summary.json, s3_closure_trigenic_within_screen.json)."""
+    with open(osp.join(R025, "s3_closure_recompute_summary.json")) as fh:
+        rec = json.load(fh)
+    with open(osp.join(R025, "s3_closure_trigenic_within_screen.json")) as fh:
+        tri = json.load(fh)
+    bars = [  # (x, label, value, kept-within-screen?)
+        (0.0, "Costanzo\n2016", rec["within_screen_control"]["costanzo2016"]["pearson"], True),
+        (1.0, "Kuzmin\n2018", rec["within_screen_control"]["kuzmin2018"]["pearson"], True),
+        (2.0, "Kuzmin\n2020", rec["within_screen_control"]["kuzmin2020"]["pearson"], True),
+        (3.0, "merged", rec["digenic_strength"]["all"]["pearson"], False),
+        (4.6, "Kuzmin\n2018", tri["kuzmin2018"]["tau_within_screen"]["pearson"], True),
+        (5.6, "Kuzmin\n2020", tri["kuzmin2020"]["tau_within_screen"]["pearson"], True),
+        (6.6, "merged", rec["trigenic_strength"]["all"]["pearson"], False),
+    ]
     out: dict[str, float] = {}
-    for i, (rule, _) in enumerate(RULES):
-        for j, (order, src, _) in enumerate(SCREEN_COLS):
-            row = stats[(stats.policy == rule) & (stats.order == order) & (stats.stored_source == src)]
-            assert len(row) == 1, (rule, order, src)
-            r = float(row.pearson.iloc[0])
-            face = cmap(r)
-            ax.add_patch(Rectangle((j - 0.5, i - 0.5), 1.0, 1.0, facecolor=face, edgecolor=face, lw=0.3))
-            lum = 0.299 * face[0] + 0.587 * face[1] + 0.114 * face[2]
-            ax.text(j, i, f"{r:.2f}", ha="center", va="center", fontsize=5, color="white" if lum < 0.5 else "black")
-            out[f"{rule}/{'digenic' if order == 2 else 'trigenic'}/{src}"] = r
-            if i == 0:
-                out[f"n/{'digenic' if order == 2 else 'trigenic'}/{src}"] = int(row.n.iloc[0])
-    ax.set_xlim(-0.5, len(SCREEN_COLS) - 0.5)
-    ax.set_ylim(len(RULES) - 0.5, -0.5)
-    ax.set_xticks(range(len(SCREEN_COLS)))
-    ax.set_xticklabels([c[2] for c in SCREEN_COLS], fontsize=5)
-    ax.set_yticks(range(len(RULES)))
-    ax.set_yticklabels([r[1] for r in RULES])
-    ax.axvline(3.5, color="white", lw=2.0)
-    ax.text(1.5, -0.58, "digenic screens", ha="center", va="bottom", fontsize=5)
-    ax.text(4.5, -0.58, "trigenic screens", ha="center", va="bottom", fontsize=5)
-    title(ax, "each assembly rule keeps a different screen", y=1.11)
-    for sp in ax.spines.values():
-        sp.set_visible(True)
-        sp.set_linewidth(0.5)
-    ax.tick_params(length=0)
+    for x, label, v, kept in bars:
+        ax.bar(x, v, width=0.8, color=ARMS["ontology"]["color"] if kept else ARMS["name"]["color"],
+               edgecolor="black", linewidth=0.4, zorder=3)
+        ax.text(x, v + 0.015, f"{v:.2f}", ha="center", va="bottom", fontsize=5)
+        out[f"{'digenic' if x < 4 else 'trigenic'}/{label.replace(chr(10), ' ')}"] = float(v)
+    ax.set_xticks([b[0] for b in bars])
+    ax.set_xticklabels([b[1] for b in bars], fontsize=5)
+    ax.text(1.5, 1.07, "digenic", ha="center", va="bottom", fontsize=6)
+    ax.text(5.6, 1.07, "trigenic", ha="center", va="bottom", fontsize=6)
+    ax.axvline(3.8, color=GRID, lw=0.5)
+    ax.set_xlim(-0.6, 7.2)
+    ax.set_ylim(0, 1.5)  # the top third holds the key, above the bars
+    ax.set_yticks(np.arange(0, 1.01, 0.2))
+    ax.yaxis.set_minor_locator(MultipleLocator(0.1))
+    ax.tick_params(which="minor", length=0)
+    ax.set_ylabel("Pearson, stored vs recomputed")
+    title(ax, "kept per screen the identity holds; merged it breaks")
+    handles = [Patch(facecolor=ARMS["ontology"]["color"], edgecolor="black", linewidth=0.4, label="every record kept, read within its screen"),
+               Patch(facecolor=ARMS["name"]["color"], edgecolor="black", linewidth=0.4, label="one fitness per genotype across sources")]
+    legend(ax, handles, "upper center", (0.5, 1.0))
+    box(ax)
     return out
 
 

@@ -79,6 +79,7 @@ def test_registry_maps_dotted_paths_to_the_functions() -> None:
         "torchcell.literature.retrieve.plos_supplementary": retrieve.plos_supplementary,
         "torchcell.literature.retrieve.elsevier_mmc": retrieve.elsevier_mmc,
         "torchcell.literature.retrieve.local_archive": retrieve.local_archive,
+        "torchcell.literature.retrieve.git_repository": retrieve.git_repository,
     }
 
 

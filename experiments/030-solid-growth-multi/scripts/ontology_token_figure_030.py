@@ -81,12 +81,13 @@ PROJECT = "torchcell_030-solid-growth-multi_equivariant_cell_graph_transformer"
 # The two arms on the random split, seed 0, IGB mmli (four A100). The name-token run trained
 # in three pieces (the 100-epoch job, then two checkpoint continuations), one W&B run each.
 # One hue per thing: the dataset name gray, the ontology purple, the 2018 screen orange, the
-# 2020 screen red.
+# 2020 screen blue (red sat too close to orange in the overlapping histograms; the sheets of
+# 025 draw overlapping distributions as step outlines, s3_closure_plots.py).
 ARMS = {
     "name": {"label": "dataset-name token", "arm": "s3_composite_token", "color": PLOT_PALETTE[5], "fill": PLOT_PALETTE_FILL[5]},
     "ontology": {"label": "ontology token", "arm": "s3_onto_affine", "color": PLOT_PALETTE[2], "fill": PLOT_PALETTE_FILL[2]},
 }
-SCREEN_COLOR = {"2018": PLOT_PALETTE[0], "2020": PLOT_PALETTE[1]}
+SCREEN_COLOR = {"2018": PLOT_PALETTE[0], "2020": PLOT_PALETTE[4]}
 READOUT = {
     "name": "fixed_token_readout_030_r_s0_ep183",
     "ontology": "fixed_token_readout_030_r_onto_aff_s0_ep199",
@@ -265,9 +266,9 @@ def panel_a(ax: Axes, rows: pd.DataFrame, vocabulary: list[str]) -> dict[str, fl
     out: dict[str, float] = {}
     for token, screen in SCREENS.items():
         t = rows.loc[rows.token == vocabulary.index(token), "target"].to_numpy(dtype=float)
-        ax.hist(t, bins=bins, density=True, histtype="stepfilled", color=SCREEN_COLOR[screen], alpha=0.45,
-                edgecolor=SCREEN_COLOR[screen], linewidth=0.6, zorder=3, label=f"Kuzmin {screen}")
-        ax.axvline(t.mean(), color=SCREEN_COLOR[screen], lw=0.8, zorder=4)
+        ax.hist(t, bins=bins, density=True, histtype="step", color=SCREEN_COLOR[screen], linewidth=0.8,
+                zorder=3, label=f"Kuzmin {screen}")
+        ax.axvline(t.mean(), color=SCREEN_COLOR[screen], lw=0.6, ls=(0, (2, 1.2)), zorder=4)
         out[f"mean_{screen}"] = float(t.mean())
         out[f"sd_{screen}"] = float(t.std(ddof=1))
         out[f"n_rows_{screen}"] = int(len(t))
@@ -277,8 +278,8 @@ def panel_a(ax: Axes, rows: pd.DataFrame, vocabulary: list[str]) -> dict[str, fl
     ax.set_xlabel(r"measured $\tau_{ijk}$")
     ax.set_ylabel("density")
     title(ax, "the screens differ by an offset")
-    handles = [Patch(facecolor=SCREEN_COLOR[s], edgecolor=SCREEN_COLOR[s], alpha=0.7, label=f"Kuzmin {s}") for s in ("2018", "2020")]
-    handles.append(Line2D([0], [0], color="black", lw=0.8, label="screen mean"))
+    handles = [Line2D([0], [0], color=SCREEN_COLOR[s], lw=0.8, label=f"Kuzmin {s}") for s in ("2018", "2020")]
+    handles.append(Line2D([0], [0], color="black", lw=0.6, ls=(0, (2, 1.2)), label="screen mean"))
     legend(ax, handles, "upper right", (1.02, 1.0))
     box(ax)
     ax.grid(False)

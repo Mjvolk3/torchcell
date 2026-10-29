@@ -1,0 +1,176 @@
+{
+  "config_name": "cgt_030_s3_r_onto_affine_010",
+  "checkpoint": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/71bb0530-d8a4-4f03-b0fc-9c9605094c75/scratchpad/ckpt-2431317/ajcgkpw0-last-ep199.ckpt",
+  "checkpoint_epoch": 199,
+  "split": "val",
+  "seed": 0,
+  "n_rows": 39341,
+  "n_genotypes": 37673,
+  "n_genotypes_both_screens": 62,
+  "mean_target_kuzmin2018": -0.04738575592637062,
+  "mean_target_kuzmin2020": 0.004885111935436726,
+  "dataset_vocabulary": [
+    "DmfCostanzo2016Dataset",
+    "DmfKuzmin2018Dataset",
+    "DmfKuzmin2020Dataset",
+    "DmiCostanzo2016Dataset",
+    "DmiKuzmin2018Dataset",
+    "DmiKuzmin2020Dataset",
+    "GeneEssentialitySgdDataset",
+    "SmfCostanzo2016Dataset",
+    "SmfKuzmin2018Dataset",
+    "SmfKuzmin2020Dataset",
+    "SynthLethalityYeastSynthLethDbDataset",
+    "TmfKuzmin2018Dataset",
+    "TmfKuzmin2020Dataset",
+    "TmiKuzmin2018Dataset",
+    "TmiKuzmin2020Dataset"
+  ],
+  "token_source": "ontology",
+  "fixed_profiles": {
+    "DmfCostanzo2016Dataset+SmfCostanzo2016Dataset": [
+      "DmfCostanzo2016Dataset",
+      "SmfCostanzo2016Dataset"
+    ],
+    "DmfCostanzo2016Dataset+SmfCostanzo2016Dataset#2": [
+      "DmfCostanzo2016Dataset",
+      "SmfCostanzo2016Dataset"
+    ],
+    "DmfKuzmin2018Dataset+DmfKuzmin2020Dataset+SmfKuzmin2018Dataset+SmfKuzmin2020Dataset+TmfKuzmin2018Dataset+TmfKuzmin2020Dataset": [
+      "DmfKuzmin2018Dataset",
+      "DmfKuzmin2020Dataset",
+      "SmfKuzmin2018Dataset",
+      "SmfKuzmin2020Dataset",
+      "TmfKuzmin2018Dataset",
+      "TmfKuzmin2020Dataset"
+    ],
+    "DmiCostanzo2016Dataset": [
+      "DmiCostanzo2016Dataset"
+    ],
+    "DmiCostanzo2016Dataset#2": [
+      "DmiCostanzo2016Dataset"
+    ],
+    "DmiKuzmin2018Dataset+DmiKuzmin2020Dataset+TmiKuzmin2018Dataset+TmiKuzmin2020Dataset": [
+      "DmiKuzmin2018Dataset",
+      "DmiKuzmin2020Dataset",
+      "TmiKuzmin2018Dataset",
+      "TmiKuzmin2020Dataset"
+    ],
+    "GeneEssentialitySgdDataset": [
+      "GeneEssentialitySgdDataset"
+    ],
+    "SynthLethalityYeastSynthLethDbDataset": [
+      "SynthLethalityYeastSynthLethDbDataset"
+    ]
+  },
+  "reads": [
+    {
+      "token": "own",
+      "n_genotypes": 37673,
+      "pearson": 0.5419839024543762,
+      "spearman": 0.502148281122838,
+      "rmse": 0.05538299307227135,
+      "pearson_within_screen": 0.4412529468536377,
+      "pearson_kuzmin2018": 0.4908127784729004,
+      "pearson_kuzmin2020": 0.42652398347854614,
+      "mean_pred_kuzmin2018": -0.053741514682769775,
+      "mean_pred_kuzmin2020": 0.005664177238941193
+    },
+    {
+      "token": "DmfCostanzo2016Dataset+SmfCostanzo2016Dataset",
+      "n_genotypes": 37673,
+      "pearson": 0.5421052575111389,
+      "spearman": 0.5021365682808615,
+      "rmse": 0.06473426520824432,
+      "pearson_within_screen": 0.4413692355155945,
+      "pearson_kuzmin2018": 0.4910559058189392,
+      "pearson_kuzmin2020": 0.42660027742385864,
+      "mean_pred_kuzmin2018": -0.07593411952257156,
+      "mean_pred_kuzmin2020": 0.007570266257971525
+    },
+    {
+      "token": "DmfCostanzo2016Dataset+SmfCostanzo2016Dataset#2",
+      "n_genotypes": 37673,
+      "pearson": 0.5421017408370972,
+      "spearman": 0.5021401694358973,
+      "rmse": 0.06603143364191055,
+      "pearson_within_screen": 0.4413450062274933,
+      "pearson_kuzmin2018": 0.490950345993042,
+      "pearson_kuzmin2020": 0.42660218477249146,
+      "mean_pred_kuzmin2018": -0.07998854666948318,
+      "mean_pred_kuzmin2020": 0.005632291082292795
+    },
+    {
+      "token": "DmfKuzmin2018Dataset+DmfKuzmin2020Dataset+SmfKuzmin2018Dataset+SmfKuzmin2020Dataset+TmfKuzmin2018Dataset+TmfKuzmin2020Dataset",
+      "n_genotypes": 37673,
+      "pearson": 0.5420885682106018,
+      "spearman": 0.5021320661068701,
+      "rmse": 0.06558137387037277,
+      "pearson_within_screen": 0.4413464367389679,
+      "pearson_kuzmin2018": 0.4909328520298004,
+      "pearson_kuzmin2020": 0.4266101121902466,
+      "mean_pred_kuzmin2018": -0.07800090312957764,
+      "mean_pred_kuzmin2020": 0.007049414329230785
+    },
+    {
+      "token": "DmiCostanzo2016Dataset",
+      "n_genotypes": 37673,
+      "pearson": 0.5421184301376343,
+      "spearman": 0.5021439294644677,
+      "rmse": 0.053069546818733215,
+      "pearson_within_screen": 0.4413624107837677,
+      "pearson_kuzmin2018": 0.490969717502594,
+      "pearson_kuzmin2020": 0.4266188442707062,
+      "mean_pred_kuzmin2018": -0.03933195769786835,
+      "mean_pred_kuzmin2020": -0.0028598655480891466
+    },
+    {
+      "token": "DmiCostanzo2016Dataset#2",
+      "n_genotypes": 37673,
+      "pearson": 0.5420202016830444,
+      "spearman": 0.5021417294978819,
+      "rmse": 0.05321696028113365,
+      "pearson_within_screen": 0.4412776231765747,
+      "pearson_kuzmin2018": 0.490972101688385,
+      "pearson_kuzmin2020": 0.4265061020851135,
+      "mean_pred_kuzmin2018": -0.03429126739501953,
+      "mean_pred_kuzmin2020": -0.0012734036426991224
+    },
+    {
+      "token": "DmiKuzmin2018Dataset+DmiKuzmin2020Dataset+TmiKuzmin2018Dataset+TmiKuzmin2020Dataset",
+      "n_genotypes": 37673,
+      "pearson": 0.5419862866401672,
+      "spearman": 0.5021408022824202,
+      "rmse": 0.05538221821188927,
+      "pearson_within_screen": 0.441256582736969,
+      "pearson_kuzmin2018": 0.4908371567726135,
+      "pearson_kuzmin2020": 0.4265211820602417,
+      "mean_pred_kuzmin2018": -0.053732965141534805,
+      "mean_pred_kuzmin2020": 0.00567012932151556
+    },
+    {
+      "token": "GeneEssentialitySgdDataset",
+      "n_genotypes": 37673,
+      "pearson": 0.54213947057724,
+      "spearman": 0.502139298371783,
+      "rmse": 0.054327093064785004,
+      "pearson_within_screen": 0.44142988324165344,
+      "pearson_kuzmin2018": 0.49113112688064575,
+      "pearson_kuzmin2020": 0.426656574010849,
+      "mean_pred_kuzmin2018": -0.030264826491475105,
+      "mean_pred_kuzmin2020": -0.004637811798602343
+    },
+    {
+      "token": "SynthLethalityYeastSynthLethDbDataset",
+      "n_genotypes": 37673,
+      "pearson": 0.5421451926231384,
+      "spearman": 0.5021372459286991,
+      "rmse": 0.05421716719865799,
+      "pearson_within_screen": 0.4414096176624298,
+      "pearson_kuzmin2018": 0.49099740386009216,
+      "pearson_kuzmin2020": 0.42667263746261597,
+      "mean_pred_kuzmin2018": -0.034046754240989685,
+      "mean_pred_kuzmin2020": -0.006833174731582403
+    }
+  ]
+}

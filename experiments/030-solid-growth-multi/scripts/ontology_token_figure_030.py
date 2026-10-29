@@ -90,12 +90,12 @@ SCREENS = {"TmiKuzmin2018Dataset": "2018", "TmiKuzmin2020Dataset": "2020"}
 WINDOW = 10  # epochs averaged at the end of each run
 
 # ------------------------------------------------------------------ sheet geometry, mm
-W_MM = 165.0
+W_MM = 164.0  # the thesis text block is 165 mm; the ink-cropped export adds 1 pt a side
 H_MM = 60.0
 SLOT = (0.7, 7.0, 66.0, 52.0)  # x, y, w, h of panel a, drawn by the thesis generator
 ROW_TOP, ROW_H = 8.5, 36.0
 B_X, B_W = 80.0, 32.0
-C_X, C_W = 127.5, 36.5
+C_X, C_W = 127.0, 36.0
 GRID = "#E3E3E3"
 
 plt.rcParams.update(

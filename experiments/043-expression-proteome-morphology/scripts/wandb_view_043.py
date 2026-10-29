@@ -503,13 +503,17 @@ ROUNDS: dict[str, Round] = {
         )
         # wave 9 (2026-10-28, after the branch landed on main): the lr-half recipe at
         # seed 4 (6581/6582), its HL-Gauss twin (6583/6584) and route B at batch 8 under
-        # the new recipe (6585/6586)
+        # the new recipe (6585/6586 failed at launch, resubmitted as 6587/6588); second
+        # seed of the HL-Gauss twin (6590/6591) and the lr-half recipe run to 80 epochs
+        # (6592/6593), 2026-10-29 02:30 CDT
         + tuple(
             f"gs1024_w9_{k}{ft}"
             for k in (
                 "pinball_injop_lrhalf_s4",
                 "hlgauss_injop_lrhalf",
                 "routeB_bs8_pinball_injop_lrhalf",
+                "hlgauss_injop_lrhalf_s1",
+                "pinball_injop_lrhalf_ep80",
             )
             for ft in ("", "_ft")
         ),

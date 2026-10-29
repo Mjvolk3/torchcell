@@ -515,6 +515,8 @@ ROUNDS: dict[str, Round] = {
                 "hlgauss_injop_lrhalf_s1",
                 "pinball_injop_lrhalf_ep80",
                 "pinball_injop_lrhalf_ep80_s1",
+                "pinball_injop_lrhalf_ep80_s2",
+                "pinball_injop_lrhalf_ep120",
             )
             for ft in ("", "_ft")
         ),

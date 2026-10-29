@@ -2386,3 +2386,21 @@ Third free card: recipe v3 at 80 epochs, seed 1 (`gs1024_w9_pinball_injop_lrhalf
 - `gs1024_w9_pinball_injop_lrhalf_ep80`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lrhalf_ep80
 - `gs1024_w9_pinball_injop_lrhalf_ep80_ft`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lrhalf_ep80_ft
 - `gs1024_w9_hlgauss_injop_lrhalf_s1`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_hlgauss_injop_lrhalf_s1
+
+### 80 epochs, second seed: confirmed (13:20 CDT)
+
+`gs1024_w9_pinball_injop_lrhalf_ep80_s1` (job 6594, 6 h 25 min, exit 0), window 71-80: doubles 0.2689, Muenzner 0.2622, Caudal 0.2067, Kemmeren 0.1082, Vaishnav 0.8992; fine-tune (6595) Kemmeren 0.1358, doubles 0.2625. Two-seed means of the 80-epoch recipe against the 50-epoch recipe at five seeds:
+
+| metric (validation, window mean) | 50 epochs, 5 seeds (41-50) | 80 epochs, 2 seeds (71-80) | gain in 50-epoch seed sd |
+|---|---|---|---|
+| doubles Pearson, strain-centered median | 0.2597 (0.012) | 0.2730 (0.006) | +1.1 |
+| Muenzner Pearson per gene median | 0.2320 (0.013) | 0.2664 (0.006) | +2.6 |
+| Caudal Pearson per gene median | 0.1779 (0.006) | 0.1950 (0.016) | +2.9 |
+| Kemmeren Pearson per gene median | 0.0986 (0.015) | 0.1057 (0.003) | +0.5 |
+| Vaishnav Pearson | 0.8695 (0.009) | 0.9021 (0.004) | +3.6 |
+| fine-tune Kemmeren per gene median (16-20) | 0.1238 (0.011) | 0.1287 | +0.4 |
+| fine-tune doubles (16-20) | 0.2743 (0.017) | 0.2733 | 0 |
+
+Every stage-1 head moves up, Muenzner, Caudal and Vaishnav by more than 2.5 seed sd; the fine-tune does not move (Kemmeren alone saturates in 20 epochs from either start). The 80-epoch budget is the recipe v4 candidate for every machine; the Delta round (ten jobs, started 09:21 to 10:30 CDT today, not Nov 1 as `sbatch --test-only` had estimated) and the Aurora v3 grid run 50 epochs as submitted and stay that way. Open on the cards: seed 2 (6596) and the 120-epoch cell (6598); new on the freed card, lr 3e-4 at 80 epochs (`gs1024_w9_pinball_injop_lr3e4_ep80`, job 6600, fine-tune 6601), which asks whether the lr lever is still needed once the budget is 80 epochs (hypothesis, untested: the lr-half gain at 50 epochs was partly a budget effect).
+
+- `gs1024_w9_pinball_injop_lrhalf_ep80_s1`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lrhalf_ep80_s1

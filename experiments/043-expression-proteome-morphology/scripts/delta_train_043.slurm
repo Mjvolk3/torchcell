@@ -35,6 +35,8 @@
 #   LAYER_PATTERN  HIDDEN  FFN_MULT  HEAD_HIDDEN  TRANSFORM  STATS_BY  WEIGHT_BY  SCHEDULE
 #   LR  WARMUP_STEPS  PREP_VERSION  CONDITIONING  DROPOUT  TOKEN_DROPOUT  WEIGHT_DECAY
 #   SIGMA_BINS  BALANCE_POWER  MAX_VISITS  INJECT  EXTRA_OVERRIDES (space-separated hydra)
+#   CHAIN_FT=1: run the Kemmeren fine-tune in the same job after stage 1 (FT_LR 3e-4,
+#     FT_WARMUP_STEPS 30, FT_MAX_EPOCHS 20, FT_BATCH 8); the Delta default for production.
 #   INIT_FROM_ID: stage 2; the stage-1 RESUME_ID, whose W&B run must have logged
 #     val/kemmeren/loss and whose last.pt must be under the Delta checkpoint root (a stage 1
 #     trained on GilaHyper has to be rsynced here first).
@@ -237,4 +239,33 @@ rc=0
   wandb.label_knobs=true || rc=$?
 nvidia-smi --query-gpu=index,memory.used --format=csv,noheader || true
 echo "done $(date -Is)  exit ${rc} (124 = stopped at STOP_HOURS: PARTIAL)"
+
+# CHAIN_FT=1: the Kemmeren fine-tune runs in THIS allocation right after stage 1 (owner,
+# 2026-10-28: a dependent job on Delta accrues no queue age until its dependency clears,
+# so a chained job would wait days behind a 7 h stage 1). Same keep rule as the GilaHyper
+# chain (loss, seed, weighting, model.* and data overrides stay; optim.lr and warmup do not).
+if [ "${CHAIN_FT:-0}" = "1" ] && [ "$rc" -eq 0 ]; then
+  mapfile -t found < <(ls -d "$CKPT"/*/"$RESUME_ID" 2>/dev/null)
+  if [ "${#found[@]}" -ne 1 ] || [ ! -f "${found[0]}/last.pt" ]; then
+    echo "stage-1 checkpoint for ${RESUME_ID}: ${found[*]:-none}" >&2; exit 3
+  fi
+  FT_EXTRA=()
+  for o in "${EXTRA[@]}"; do
+    case "$o" in optim.lr=*|optim.warmup_steps=*|init_from=*) ;; *) FT_EXTRA+=("$o") ;; esac
+  done
+  FT_EXTRA+=("init_from=${found[0]}/last.pt" "optim.lr=${FT_LR:-3e-4}" "optim.warmup_steps=${FT_WARMUP_STEPS:-30}")
+  # %L is [days-]hours:minutes:seconds, or minutes:seconds under an hour
+  left=$(( $(squeue -h -j "$SLURM_JOB_ID" -o %L | awk -F'[-:]' '{n=NF; s=$n; if (n>=2) s+=60*$(n-1); if (n>=3) s+=3600*$(n-2); if (n==4) s+=86400*$1; print s}') - 600 ))
+  [ "$left" -gt 600 ] || { echo "no time left for the fine-tune (${left} s)" >&2; exit 4; }
+  echo "fine-tune ${RESUME_ID}_ft  arm alone_kemmeren  epochs ${FT_MAX_EPOCHS:-20}  batch ${FT_BATCH:-8}  stop ${left} s  extra ${FT_EXTRA[*]}"
+  rc=0
+  timeout --signal=TERM --kill-after=120 "$left" "$DELTA_PY" "experiments/$EXP_NAME/scripts/train_043.py" \
+    data.store_version=v2 resume_id="${RESUME_ID}_ft" \
+    arm=alone_kemmeren loss="$LOSS" weighting="$WEIGHTING" seed="$SEED" \
+    data.batch_size="${FT_BATCH:-8}" data.num_workers="$NUM_WORKERS" data.sampler="$SAMPLER" data.mark_cap=null \
+    budget.max_epochs="${FT_MAX_EPOCHS:-20}" budget.time_budget_hours=null \
+    "${FT_EXTRA[@]}" "wandb.tags=[${TAGS}]" wandb.round="$ROUND" wandb.mode="$WANDB_MODE" \
+    wandb.label_knobs=true || rc=$?
+  echo "fine-tune done $(date -Is)  exit ${rc} (124 = stopped at the walltime guard: PARTIAL)"
+fi
 exit "$rc"

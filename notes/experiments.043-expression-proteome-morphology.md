@@ -2456,6 +2456,15 @@ Smoke 2434938 (`igb_smoke_043_20261028`, compute-3-3, RTX 6000 Ada, torch 2.8.0 
 
 - `igb_smoke_043_20261028`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/igb_smoke_043_20261028
 
+### Delta: seven of ten cells died in one filesystem event; two completed cells match GilaHyper; seven resubmitted (20:00 CDT)
+
+Jobs 23313274/76/77 (lr-half seeds 1-3) and 23313279/81/82/83 (lr 3e-4 seeds 0, 2, 3, 4) all exited 1 at 16:13:47 CDT within 20 s of each other, each inside `save_atomic` with `RuntimeError: Parent directory .../checkpoints/<arm>/<run> does not exist`. The directories exist now, with each failed run's `last.pt` dated 11:22-11:23 CDT; the failed runs' last epoch lines (29, 27, 26, 15, 11, 11, 11) place their last finished epoch near 11:30, so the jobs hung on the next save for 4.7 h before the error surfaced. The three cells on other nodes (lr-half seeds 0 and 4 on gpub036/gpub079, lr 3e-4 seed 1 on gpub018) kept saving through the same hours. Measured: simultaneous failure of seven jobs on seven nodes (gpub046, 049, 029, 070, 013, 031, 048) at one timestamp, intact directories afterwards, no change in our code or data between the saves that worked and the one that did not. Hypothesis (not verified with NCSA): a `/scratch` Lustre outage on part of the gpub rack from about 11:30 to 16:13. Resubmitted with identical knobs and the same resume ids, so each resumes from its 11:23 `last.pt` (epoch 28, 26, 25, 14, 10, 10, 10): jobs 23325753-23325755 (lr-half seeds 1-3) and 23325756-23325759 (lr 3e-4 seeds 0, 2, 3, 4), `CHAIN_FT=1`, no dependencies; queue age restarts from 20:00 CDT.
+
+Completed Delta cells (A40, 504 s per epoch, window 41-50) against the GilaHyper lr-half five-seed band: `d1028_pinball_injop_lrhalf_s0` doubles 0.2690 (GilaHyper 0.2597, sd 0.012), Muenzner 0.2441 (0.2320, sd 0.013), Caudal 0.1813 (0.1779), Kemmeren 0.0905 (0.0986), Vaishnav 0.8798 (0.8695); fine-tune Kemmeren 0.1140, doubles 0.2562. `d1028_pinball_injop_lrhalf_s4` doubles 0.2361, Muenzner 0.2375, Caudal 0.1735, Kemmeren 0.0893, Vaishnav 0.8586; fine-tune Kemmeren 0.1056, doubles 0.2682. Both Delta seeds sit within two GilaHyper seed sd on every head, so the A40 reproduces the GilaHyper recipe where Aurora shows a doubles offset. Fine-tune window on Delta is 17-20 (the chain's `budget.registered_window.start_frac=0.8` on 20 epochs rounds differently from the GilaHyper fine-tune's 16-20).
+
+- `d1028_pinball_injop_lrhalf_s0`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/d1028_pinball_injop_lrhalf_s0
+- `d1028_pinball_injop_lrhalf_s4`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/d1028_pinball_injop_lrhalf_s4
+
 - `gs1024_w9_pinball_injop_lrhalf_ep120`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lrhalf_ep120
 
 W&B (view ids in `results/wandb_view_ids.json`): round view

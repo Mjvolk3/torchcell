@@ -189,6 +189,26 @@
     "name": "043 aurora_v3_2026_10_27: finetune_kemmeren_from_all_onto_pinball_equal",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=u4hxkqmialj"
   },
+  "delta_2026_10_28": {
+    "id": "acr3bdbgw5e",
+    "name": "043 Delta recipe v3 candidate 2026-10-28 by arm",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=acr3bdbgw5e"
+  },
+  "delta_2026_10_28/all_onto_injop_pinball_equal": {
+    "id": "ei3qzr41ggf",
+    "name": "043 delta_2026_10_28: all_onto_injop_pinball_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=ei3qzr41ggf"
+  },
+  "delta_2026_10_28/all_onto_injop_pinball_equal_lr0.00015": {
+    "id": "veou0u5b45s",
+    "name": "043 delta_2026_10_28: all_onto_injop_pinball_equal_lr0.00015",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=veou0u5b45s"
+  },
+  "delta_2026_10_28/finetune_kemmeren_from_all_onto_injop_pinball_equal_lr0.00015": {
+    "id": "umggudubgs0",
+    "name": "043 delta_2026_10_28: finetune_kemmeren_from_all_onto_injop_pinball_equal_lr0.00015",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=umggudubgs0"
+  },
   "ghyper_sweep_2026_10_24": {
     "id": "sjpdqsr7yjg",
     "name": "043 GilaHyper sweep 2026-10-24 by arm",

@@ -2465,6 +2465,10 @@ Completed Delta cells (A40, 504 s per epoch, window 41-50) against the GilaHyper
 - `d1028_pinball_injop_lrhalf_s0`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/d1028_pinball_injop_lrhalf_s0
 - `d1028_pinball_injop_lrhalf_s4`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/d1028_pinball_injop_lrhalf_s4
 
+### 043 stood down on GilaHyper and IGB cabbi (20:40 CDT)
+
+Owner: "i have little confidence in this rn. i want to cancel all 043 exps on cabbi for now ... we are going to reallocate to our metabolic study. do so for ghyper too." Cancelled: GilaHyper 6606/6607 (80-epoch seed 3 at epoch ~37 of 80 and its fine-tune) and 6608/6609 (seed 4 at epoch ~29); IGB 2435763-2435766 (the two 120-epoch cells at epoch ~13 and their fine-tunes). The partial runs carry no result; their W&B runs stay as partial records. The 80-epoch arm on GilaHyper therefore stays at three seeds (0-2). Aurora v4 (jobs 8987532, 8987590), the Delta round (23313280 running, 23325753-23325759 resuming) and the Polaris lane were not named and continue.
+
 - `gs1024_w9_pinball_injop_lrhalf_ep120`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lrhalf_ep120
 
 W&B (view ids in `results/wandb_view_ids.json`): round view

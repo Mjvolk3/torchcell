@@ -439,6 +439,37 @@ ROUNDS: dict[str, Round] = {
             "fine-tune (20 epochs, lr 3e-4, warmup 30)."
         ),
     ),
+    "igb_cabbi_2026_10_29": Round(
+        view_name="043 IGB cabbi recipe v3 at 120 epochs 2026-10-29 by arm",
+        # run id = igb1029_<cell> (resume_id), _ft = its Kemmeren fine-tune (a dependent
+        # job, afterany on the stage-1 job); igb_cabbi_train_043.slurm, W&B offline on IGB,
+        # synced from GilaHyper with `wandb sync`. Smoke igb_smoke_043_20261028 (job 2434938):
+        # one epoch, 279 s, 7.9 GB, val/loss 0.2734. Production: the lr-half recipe at 120
+        # epochs, seeds 1 and 2 (jobs 2435763/2435765, fine-tunes 2435764/2435766); window
+        # 106-120 with 71-80 and 41-50 from the same runs.
+        run_ids=("igb_smoke_043_20261028",)
+        + tuple(
+            f"igb1029_pinball_injop_lrhalf_ep120_s{seed}{ft}"
+            for seed in (1, 2)
+            for ft in ("", "_ft")
+        ),
+        extra_windows=tuple(
+            (f"igb1029_pinball_injop_lrhalf_ep120_s{seed}", window)
+            for seed in (1, 2)
+            for window in ((71, 80), (41, 50))
+        ),
+        hardware=(
+            "IGB cabbi (compute-3-3), RTX 6000 Ada 48 GB, one run per card, 48 GB host "
+            "memory, 2 loader workers; torch 2.8.0+cu128, PyG 2.7.0"
+        ),
+        intro=(
+            "Recipe v3 (pinball, operator injection, ontology conditioning, lr 1.5e-4, batch "
+            "16, prep_v4, store v2) run to 120 epochs on IGB, seeds 1 and 2 (GilaHyper holds "
+            "seed 0 of the same cell); registered window 106-120, with 71-80 and 41-50 read "
+            "from the same runs; each chained to its Kemmeren fine-tune (20 epochs, lr 3e-4, "
+            "warmup 30, batch 8)."
+        ),
+    ),
     "ghyper_sweep_2026_10_24": Round(
         view_name="043 GilaHyper sweep 2026-10-24 by arm",
         # run id = gs1024_<wave>_<arm> (resume_id), _ft = its Kemmeren fine-tune;
@@ -877,6 +908,7 @@ CURATED_ROUNDS = (
     "aurora_v2_2026_10_26",
     "aurora_v3_2026_10_27",
     "aurora_v4_2026_10_29",
+    "igb_cabbi_2026_10_29",
     "ghyper_sweep_2026_10_24",
     "overnight_2026_10_23",
 )

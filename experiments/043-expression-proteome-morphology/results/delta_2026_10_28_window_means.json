@@ -339,15 +339,142 @@
   "d1028_pinball_injop_lr3e4_s1": {
    "arm_label": "all_onto_injop_pinball_equal",
    "seed": 1,
-   "state": "running",
-   "epochs_reached": 38,
+   "state": "finished",
+   "epochs_reached": 50,
    "n_epochs": 50,
    "window": [
     41,
     50
    ],
-   "complete": false,
-   "means": {}
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.08845570599664024,
+     "n_evaluations": 10,
+     "sd_epochs": 0.010220781613894479,
+     "min": 0.07134347057841685,
+     "max": 0.1006837884203242
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.21078325283156613,
+     "n_evaluations": 10,
+     "sd_epochs": 0.026641944860718466,
+     "min": 0.17824109852082246,
+     "max": 0.24825389872353892
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 10,
+     "sd_epochs": 0.0,
+     "min": 0.43966754542573827,
+     "max": 0.43966754542573827
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.207286187807385,
+     "n_evaluations": 10,
+     "sd_epochs": 0.006373121076076117,
+     "min": 0.20008124385760973,
+     "max": 0.21823927234363588
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.1547867048768289,
+     "n_evaluations": 10,
+     "sd_epochs": 0.008847451824488905,
+     "min": 0.14223548963157762,
+     "max": 0.1681157845970489
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.07562312037369559,
+     "n_evaluations": 10,
+     "sd_epochs": 0.008137667976758113,
+     "min": 0.06083757369793269,
+     "max": 0.08510007124847013
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9013667522834913,
+     "n_evaluations": 10,
+     "sd_epochs": 0.003130163509954583,
+     "min": 0.8973591998207973,
+     "max": 0.9070589855623266
+    },
+    "val/hu/pearson_per_gene_median": {
+     "mean": 0.04881538951988311,
+     "n_evaluations": 10,
+     "sd_epochs": 0.01884729619724732,
+     "min": 0.013017617764236693,
+     "max": 0.08364022038590672
+    },
+    "val/zelezniak/pearson_per_gene_median": {
+     "mean": 0.03159905901027912,
+     "n_evaluations": 10,
+     "sd_epochs": 0.02530101503466526,
+     "min": 0.0036058914697826585,
+     "max": 0.07734442028822852
+    },
+    "train/loss": {
+     "mean": 0.1890457291958601,
+     "n_evaluations": 10,
+     "sd_epochs": 0.001027582341729777,
+     "min": 0.1875329891902163,
+     "max": 0.1906725808189171
+    },
+    "val/loss": {
+     "mean": 0.24475657943916654,
+     "n_evaluations": 10,
+     "sd_epochs": 0.0014409380609934981,
+     "min": 0.24292963975928095,
+     "max": 0.24755334600357115
+    }
+   }
+  },
+  "d1028_pinball_injop_lr3e4_s1_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_injop_pinball_equal",
+   "seed": 1,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.11603225046224688,
+     "n_evaluations": 4,
+     "sd_epochs": 0.001724886757206276,
+     "min": 0.11346155656821016,
+     "max": 0.1170350555350847
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.24097544118581116,
+     "n_evaluations": 4,
+     "sd_epochs": 0.026573300783920117,
+     "min": 0.21011321135580496,
+     "max": 0.2748360370379297
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0,
+     "min": 0.43966754542573827,
+     "max": 0.43966754542573827
+    },
+    "train/loss": {
+     "mean": 0.15821400794219104,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0006133721427112852,
+     "min": 0.15743431794327617,
+     "max": 0.15892146424149836
+    },
+    "val/loss": {
+     "mean": 0.19524630844279606,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0005923784762890149,
+     "min": 0.19455479639391884,
+     "max": 0.1958119581032015
+    }
+   }
   },
   "d1028_pinball_injop_lr3e4_s2": {
    "arm_label": "all_onto_injop_pinball_equal",
@@ -395,7 +522,6 @@
   "d1028_pinball_injop_lrhalf_s2_ft",
   "d1028_pinball_injop_lrhalf_s3_ft",
   "d1028_pinball_injop_lr3e4_s0_ft",
-  "d1028_pinball_injop_lr3e4_s1_ft",
   "d1028_pinball_injop_lr3e4_s2_ft",
   "d1028_pinball_injop_lr3e4_s3_ft",
   "d1028_pinball_injop_lr3e4_s4_ft"

@@ -2469,6 +2469,11 @@ Completed Delta cells (A40, 504 s per epoch, window 41-50) against the GilaHyper
 
 Owner: "i have little confidence in this rn. i want to cancel all 043 exps on cabbi for now ... we are going to reallocate to our metabolic study. do so for ghyper too." Cancelled: GilaHyper 6606/6607 (80-epoch seed 3 at epoch ~37 of 80 and its fine-tune) and 6608/6609 (seed 4 at epoch ~29); IGB 2435763-2435766 (the two 120-epoch cells at epoch ~13 and their fine-tunes). The partial runs carry no result; their W&B runs stay as partial records. The 80-epoch arm on GilaHyper therefore stays at three seeds (0-2). Aurora v4 (jobs 8987532, 8987590), the Delta round (23313280 running, 23325753-23325759 resuming) and the Polaris lane were not named and continue.
 
+## 2026.10.30 - Delta: lr 3e-4 seed 1 completed; the seven resubmitted cells failed at start; socket lost
+
+- `d1028_pinball_injop_lr3e4_s1` (23313280, 11 h 45 min with the in-job fine-tune, completed 21:27 CDT Oct 29), window 41-50: doubles 0.2108, Muenzner 0.2073, Caudal 0.1548, Kemmeren 0.0885, Messner 0.0756, Vaishnav 0.9014; fine-tune (17-20) Kemmeren 0.1160, doubles 0.2410. Against the GilaHyper lr 3e-4 four-seed band (doubles 0.2549 sd 0.019, Muenzner 0.2176 sd 0.010, Vaishnav 0.9036 sd 0.007) this seed is 2.3 sd low on doubles and inside the band elsewhere; one seed, so not a machine claim. Delta round so far: three of ten cells complete (lr-half seeds 0 and 4, lr 3e-4 seed 1).
+- The seven resubmitted cells (23325753-23325759) started 07:45 to 08:07 CDT and each FAILED after 73 to 146 s, before any epoch. The 20:00 resubmission used the original knobs and resume ids, so the failure is in staging or in resuming from the 11:23 `last.pt`; the cause is unread because the Delta ControlMaster socket died while the log was being fetched (`Control socket ... No such file or directory`, 08:40 CDT). Next step once the socket is back: `tail` of `slurm/output/043-d-lrhalf_s1_23325753.out`, then either fix the resume path or resubmit fresh under new resume ids.
+
 - `gs1024_w9_pinball_injop_lrhalf_ep120`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lrhalf_ep120
 
 W&B (view ids in `results/wandb_view_ids.json`): round view

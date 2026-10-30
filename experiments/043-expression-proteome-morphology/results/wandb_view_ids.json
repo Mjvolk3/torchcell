@@ -204,6 +204,11 @@
     "name": "043 delta_2026_10_28: all_onto_injop_pinball_equal_lr0.00015",
     "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=veou0u5b45s"
   },
+  "delta_2026_10_28/finetune_kemmeren_from_all_onto_injop_pinball_equal": {
+    "id": "6d1l63d4k1v",
+    "name": "043 delta_2026_10_28: finetune_kemmeren_from_all_onto_injop_pinball_equal",
+    "url": "https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=6d1l63d4k1v"
+  },
   "delta_2026_10_28/finetune_kemmeren_from_all_onto_injop_pinball_equal_lr0.00015": {
     "id": "umggudubgs0",
     "name": "043 delta_2026_10_28: finetune_kemmeren_from_all_onto_injop_pinball_equal_lr0.00015",

@@ -49,3 +49,8 @@
 # the same missing exception.
 !prebuild_verify_stores.json
 !prebuild_verify_csv_endpoint_gate.json
+# The organism summary of a knowledge-graph release (datasets, records, experiment types,
+# reference genomes, primary-reference gene counts): the dissertation's organism table
+# (thesis common/organisms_table.py, tab:organisms) is rendered from it, so the measured
+# file is tracked beside the release snapshot it summarizes.
+!organism_summary.json

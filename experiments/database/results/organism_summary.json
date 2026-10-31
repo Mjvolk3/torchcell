@@ -1,0 +1,259 @@
+{
+  "release": "2026.10.17-4295f7ca",
+  "version": "4.0",
+  "built_at": "2026-10-17T10:35:06.511345+00:00",
+  "torchcell_version": "1.8.3",
+  "torchcell_tag": "v1.8.3",
+  "release_snapshot": {
+    "path": "database/releases/2026.10.17-4295f7ca.json",
+    "sha256": "28a4083f23579d0b151e902779d7248401b809a9be166114d7e618ac3846d957"
+  },
+  "probe_cache": {
+    "path": "experiments/database/scripts/dataset_probe_cache.json",
+    "variant": "probes-v1",
+    "sha256": "66d713e91e6091b9d6096f060fc1aabc6e98627f85226d44abc176a7c4b6c317",
+    "modified": "2026-10-31"
+  },
+  "genomes_root": "/scratch/projects/torchcell-scratch/torchcell-genomes",
+  "measured_at": "2026-10-31T07:29:00+00:00",
+  "organisms": {
+    "scerevisiae": {
+      "name": "Saccharomyces cerevisiae",
+      "datasets": 70,
+      "records": 65889107,
+      "experiment_types": [
+        "calmorph",
+        "environment_response",
+        "fitness",
+        "gene essentiality",
+        "gene interaction",
+        "genome_architecture",
+        "induction_timecourse_expression",
+        "life_cycle",
+        "metabolite",
+        "microarray_expression",
+        "microarray_expression_score",
+        "pooled_sort_seq_expression",
+        "protein_abundance",
+        "pseudobulk_expression",
+        "pseudobulk_umi_count",
+        "rnaseq_expression",
+        "segregant_expression",
+        "segregant_growth",
+        "segregant_perturbation",
+        "strain_environment_response",
+        "synthetic lethality",
+        "synthetic rescue",
+        "visual_score",
+        "yeast_protein_turnover"
+      ],
+      "n_experiment_types": 24,
+      "unprobed_datasets": [
+        "InhibitorBioscreenVolk2021Dataset"
+      ],
+      "reference_genomes": [
+        {
+          "assembly_set": "sgd_S288C_R64-4-1_20230830",
+          "strain": "S288C",
+          "source": "SGD",
+          "release": "R64-4-1_20230830",
+          "roles": [
+            "annotation",
+            "container",
+            "sequence"
+          ],
+          "is_assembly": true
+        },
+        {
+          "assembly_set": "peter2018_1011_assemblies",
+          "strain": "1,011 isolates",
+          "source": "Peter et al. 2018",
+          "release": "2018",
+          "roles": [
+            "annotation",
+            "container",
+            "index",
+            "matrix",
+            "sequence"
+          ],
+          "is_assembly": true
+        },
+        {
+          "assembly_set": "scerevisiae_CENPK113-7D_ASM257140v2",
+          "strain": "CEN.PK113-7D",
+          "source": "NCBI GenBank (ASM257140v2)",
+          "release": "2017-10 (GCA_002571405.2)",
+          "roles": [
+            "annotation",
+            "index",
+            "sequence"
+          ],
+          "is_assembly": true
+        },
+        {
+          "assembly_set": "hale2024_322134S_variants",
+          "strain": "322134S (3S), the clinical parent of the BYx3S cross",
+          "source": "Hale et al. 2024 Supplemental Data 13",
+          "release": "2024",
+          "roles": [
+            "variants"
+          ],
+          "is_assembly": false
+        }
+      ],
+      "primary_reference": {
+        "assembly_set": "sgd_S288C_R64-4-1_20230830",
+        "strain": "S288C",
+        "source": "SGD",
+        "release": "R64-4-1_20230830",
+        "roles": [
+          "annotation",
+          "container",
+          "sequence"
+        ],
+        "is_assembly": true,
+        "genome_class": "SCerevisiaeGenome",
+        "genes": 6607
+      }
+    },
+    "ecoli": {
+      "name": "Escherichia coli",
+      "datasets": 68,
+      "records": 4561865,
+      "experiment_types": [
+        "environment_response",
+        "fitness",
+        "flux",
+        "gene essentiality",
+        "gene interaction",
+        "graded_gene_essentiality",
+        "metabolite",
+        "morphology",
+        "mrna_number_fraction",
+        "phosphosite_intensity",
+        "product_titer",
+        "promoter_activity",
+        "protein_abundance",
+        "protein_fold_change",
+        "protein_synthesis_rate",
+        "protein_turnover",
+        "rnaseq_expression"
+      ],
+      "n_experiment_types": 17,
+      "unprobed_datasets": [],
+      "reference_genomes": [
+        {
+          "assembly_set": "ecoli_K12_MG1655_ASM584v2",
+          "strain": "K-12 MG1655",
+          "source": "NCBI",
+          "release": "ASM584v2",
+          "roles": [
+            "annotation",
+            "index",
+            "sequence"
+          ],
+          "is_assembly": true
+        },
+        {
+          "assembly_set": "ecoli_B_REL606_ASM1798v1",
+          "strain": "B REL606",
+          "source": "NCBI",
+          "release": "ASM1798v1",
+          "roles": [
+            "annotation",
+            "index",
+            "sequence"
+          ],
+          "is_assembly": true
+        },
+        {
+          "assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+          "strain": "K-12 BW25113",
+          "source": "NCBI",
+          "release": "ASM75055v1",
+          "roles": [
+            "annotation",
+            "index",
+            "sequence"
+          ],
+          "is_assembly": true
+        },
+        {
+          "assembly_set": "ecoli_K12_W3110_ASM1024v1",
+          "strain": "K-12 W3110",
+          "source": "NCBI",
+          "release": "ASM1024v1",
+          "roles": [
+            "annotation",
+            "index",
+            "sequence"
+          ],
+          "is_assembly": true
+        }
+      ],
+      "primary_reference": {
+        "assembly_set": "ecoli_K12_MG1655_ASM584v2",
+        "strain": "K-12 MG1655",
+        "source": "NCBI",
+        "release": "ASM584v2",
+        "roles": [
+          "annotation",
+          "index",
+          "sequence"
+        ],
+        "is_assembly": true,
+        "genome_class": "EcoliK12MG1655Genome",
+        "genes": 4506
+      }
+    },
+    "pputida": {
+      "name": "Pseudomonas putida",
+      "datasets": 32,
+      "records": 2695603,
+      "experiment_types": [
+        "environment_response",
+        "fitness_contrast",
+        "graded_gene_essentiality",
+        "metabolite",
+        "product_titer",
+        "protein_abundance",
+        "protein_fold_change",
+        "rnaseq_expression"
+      ],
+      "n_experiment_types": 8,
+      "unprobed_datasets": [],
+      "reference_genomes": [
+        {
+          "assembly_set": "pputida_KT2440_ASM756v2",
+          "strain": "KT2440",
+          "source": "NCBI",
+          "release": "ASM756v2",
+          "roles": [
+            "annotation",
+            "index",
+            "sequence"
+          ],
+          "is_assembly": true
+        }
+      ],
+      "primary_reference": {
+        "assembly_set": "pputida_KT2440_ASM756v2",
+        "strain": "KT2440",
+        "source": "NCBI",
+        "release": "ASM756v2",
+        "roles": [
+          "annotation",
+          "index",
+          "sequence"
+        ],
+        "is_assembly": true,
+        "genome_class": "PPutidaKT2440Genome",
+        "genes": 5729
+      }
+    }
+  },
+  "total": {
+    "datasets": 170,
+    "records": 73146575
+  }
+}

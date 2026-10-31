@@ -146,6 +146,7 @@ def compose(sheet: Sheet, text_pt: float, gap_mm: float, letter_pt: float) -> st
 
 
 def main() -> None:
+    """Compose every sheet, or the one named by ``--only``."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--text-pt", type=float, default=6.0)
     parser.add_argument("--gap-mm", type=float, default=4.0)

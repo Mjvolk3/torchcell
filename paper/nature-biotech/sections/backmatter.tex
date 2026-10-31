@@ -41,6 +41,7 @@ Supplementary Note~\ref{note:dango-repro}     & Constructing DANGO in TorchCell 
 Supplementary Note~\ref{note:dango-full}      & DANGO on the full trigenic dataset of the CGT experiment (with \suppfig{fig:dango-full} and \supptab{tab:dango-full-runs})\\
 Supplementary Note~\ref{note:dcell-model}     & DCell in TorchCell: the ontology-structured model in the shared notation (with \suppfig{fig:dcell-model} and \supptab{tab:dcell-go-filter})\\
 Supplementary Note~\ref{note:dcell-training}  & DCell training cost, instability, and the checkpoint-based baseline (with \suppfig{fig:dcell-training} and \supptab{tab:dcell-training-checkpoints}--\ref{tab:dcell-training-cost})\\[4pt]
+\suppfig{fig:si-cgt-trigenic}--\ref{fig:si-cgt-essentiality} & The Cell Graph Transformer as a function: the trigenic model, the model with the experiment ontology as its prior, and the essentiality models (after the Notes)\\
 Supplementary Figs.\  & A figure supporting a Note sits with that Note; the remainder follow all the Notes\\
 Supplementary Tables & \supptab{tab:compute} (per-batch compute), \supptab{tab:entity-corpora} (persistent-entity corpora), \supptab{tab:classical-ml-results}--\ref{tab:classical-ml-pearson} (classical-ML benchmark: Spearman, MSE, Pearson), \supptab{tab:datasets} (phenotype datasets), \supptab{tab:databases} (attention-prior graphs), \supptab{tab:string-versions} (STRING releases), \supptab{tab:dango-string-versions} (DANGO replication by release), \supptab{tab:dango-full-runs} (DANGO runs on the full trigenic dataset), \supptab{tab:dcell-go-filter} (DCell GO-DAG filtering), \supptab{tab:dcell-training-checkpoints} (DCell checkpoint statistic), \supptab{tab:dcell-training-cost} (training cost of the Fig.~\ref{fig:ggi}d models)\\
 \end{tabular}
@@ -1098,6 +1099,88 @@ genotypes and three media (YPD, YPAD and synthetic complete, SC), recorded as re
 at query time: a query naming the medium returns $e_1$ alone, one naming the base medium joins $e_1$
 and $e_2$, and one with no media clause joins all three, aggregated as in
 \suppfig{fig:queried-dataset}b. Schematic, composed from the code.}{fig:ontology-growth}
+\end{figure*}
+
+%% ---- The Cell Graph Transformer as a function, three configurations (2026-10-31). ----
+%% SOURCE: paper/nature-biotech/scripts/compose_cgt_architecture_si.py composes the three sheets
+%%   from the mermaid renders (notes/assets/publish/scripts/mermaid_pdf.sh) of
+%%   notes/experiments.025-solid-growth.architecture-mermaid.md (SI-cgt-trigenic-architecture.pdf,
+%%   99 x 125 mm, text 6 pt), notes/experiments.030-solid-growth-multi.architecture-mermaid.md
+%%   (SI-cgt-ontology-architecture.pdf, 129 x 165 mm, 6 pt) and
+%%   notes/experiments.028-gene-essentiality.architecture-mermaid.md
+%%   (SI-cgt-essentiality-architecture.pdf, 165 x 168 mm, 5.6 pt; the thesis sheet
+%%   fig-ch03-essentiality-architecture.pdf). Every box was audited against the model code in
+%%   those notes; parameter counts are CellGraphTransformer.num_parameters on an instance built
+%%   from the run's configuration (experiments/025-solid-growth/conf/cgt_s0_r_kl_000.yaml;
+%%   experiments/030-solid-growth-multi/conf/cgt_030_s3_r_onto_affine_010.yaml on branch
+%%   feat/030-token-affine; the 028 w49 result file).
+\begin{figure*}[t]
+\tcfig{figures/SI-cgt-trigenic-architecture.pdf}{\textbf{The Cell Graph Transformer of the
+trigenic experiment as a function: what each block takes in, what it computes, what it passes
+on.} Every box names its inputs, its map, its outputs and its parameter count, and the output of
+one box is the input of the next. Purple boxes are inputs, orange the gene table and the
+deletion operator, red the encoder and the output, yellow the readout. A learned 180-wide row
+per gene is stacked behind a learned class token and passed through eight transformer blocks of
+nine heads in which every token attends to every other, each block normalizing after its
+attention residual and again after its feed-forward residual. During training the nine heads
+of the second block are each pulled toward one of the nine gene graphs by the row-wise KL
+divergence of Eq.~\ref{eq:graphreg} between the row-normalized adjacency and the attention map
+over the gene rows, each graph's term scaled by $N$ over its edge count (Eq.~\ref{eq:loss}). The
+strain enters only at the deletion operator (Eqs.~\ref{eq:pert} and \ref{eq:pertblock}): every gene
+token queries the encoded rows of the three deleted genes and is updated through a residual
+block, so the operator never changes the class token. The readout (Eq.~\ref{eq:int})
+concatenates the reference cell's class token with the sum of the three deleted genes'
+perturbed rows and maps the pair to the standardized trigenic interaction. The loss is the
+mean squared error, a Wasserstein-2 term between the batch's predicted and measured
+interactions at weight 0.1, and the graph prior at $\lambda_k = 10^{-3}$; 4,774,861
+parameters in all, 1,189,260 of them the gene table. This is the model of
+Fig.~\ref{fig:ggi}.}{fig:si-cgt-trigenic}
+\end{figure*}
+
+\begin{figure*}[t]
+\tcfig{figures/SI-cgt-ontology-architecture.pdf}{\textbf{The Cell Graph Transformer trained on
+every stored measurement, with the experiment ontology as its prior.} The trigenic model of
+\suppfig{fig:si-cgt-trigenic} with four changes, in the same function view and colors. The
+gene table is replaced by a frozen 3,328-wide composite sequence embedding per gene (SpeciesLM
+upstream and downstream, CaLM, ProtT5) through a two-layer preprocessor whose 1,190,769
+parameters match the table it replaces. The class token rides through the deletion operator as
+one more query row, and a linear probe of the perturbed class token predicts fitness beside the
+interaction readout, which still reads the reference cell's class token. Every stored
+measurement of a strain is its own row, so a double mutant measured in two screens is two rows
+with two labels, and the labels are standardized with one scale per phenotype over every
+source. Each row's annotation on the experiment ontology, 149 nodes over the experiment,
+phenotype and reference classes with their parents, the medium's components, dropouts, state
+and base, aerobicity, the temperature unit and value, with the dataset name left out, is
+propagated to the root by an encoder with one tanh state per node, computed leaves first from
+the node's children, its own indicator and a bias, as in DCell. The root token sets a scale and
+a shift on each head's output through a map that is zero at initialization, so training starts
+at the identity calibration and the model is conditioned on what the experiment is and never
+on which dataset reported it. The 15 sources of the pool fall into eight annotation profiles,
+the two trigenic screens sharing one. The loss adds the fitness rows' mean squared error to the
+trigenic objective; 4,789,771 parameters, 13,220 of them the ontology prior.}{fig:si-cgt-ontology}
+\end{figure*}
+
+\begin{figure*}[t]
+\tcfig{figures/SI-cgt-essentiality-architecture.pdf}{\textbf{The two essentiality models as
+functions: what each block takes in, what it computes, what it passes on.} Every box names its
+inputs, its map, its outputs and its parameter count, and the output of one box is the input of
+the next. Purple boxes are inputs, orange the embedding and the deletion operator, red the
+attention or convolution blocks and the output, yellow the readouts. \textbf{a},~The cell graph
+transformer (CGT) that reads the metabolic solve as data, 22,773 parameters. Every gene is
+embedded once from its pathway membership and its protein language model vector, stacked
+behind a learned class token, and passed through one attention block in which every token
+attends to every other (no graph prior; the configurations that pull or mask the heads toward
+the gene graphs act on a second block). The strain enters only at the deletion operator: every
+gene token queries the deleted gene's token, so with one deletion the same context vector is
+added to all 6,607 genes before the residual normalization and the feed-forward map. The
+readout pools the class token, the mean over all perturbed genes and the mean over the deleted
+gene into a 36-wide vector, and adds an affine over the 4,135 numbers of the deletion's
+flux-balance solve (four growth ratios and the log-scaled pFBA flux of every reaction).
+\textbf{b},~The graph convolutional network (GCN), 155,457 parameters: two convolutions of
+width 64 over the union of the nine gene graphs, reading a 2,362-term Gene Ontology multi-hot,
+and one linear logit per node, trained in one pass over the whole graph so the held-out genes
+are nodes of the same graph. Both are trained with the essential class up-weighted and read at
+the epoch with the best five-epoch average of validation AUROC.}{fig:si-cgt-essentiality}
 \end{figure*}
 
 \begin{figure*}[t]

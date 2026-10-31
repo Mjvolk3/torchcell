@@ -30,7 +30,11 @@ base="$(basename "${input_file%.md}")"        # e.g. torchcell.models...type-i-i
 outdir="notes/assets/pdf-output"
 
 # --pdfFit fits the page to the diagram (no wasted whitespace around the chart).
-mmdc -i "${input_file}" -o "${outdir}/${base}.pdf" -b "${bg}" --pdfFit
+# mermaid_mathml.css: Chromium renders KaTeX labels as MathML Core and drops
+# mathvariant="bold" (\textbf, \mathbf print regular); the stylesheet maps it to CSS
+# weight and lets no foreignObject clip its glyphs (2026-10-27).
+css_file="$(dirname "$0")/mermaid_mathml.css"
+mmdc -i "${input_file}" -o "${outdir}/${base}.pdf" -b "${bg}" --pdfFit -C "${css_file}"
 
 # Single-diagram file: collapse the mmdc "-1" suffix to the exact md name.
 if [ -f "${outdir}/${base}-1.pdf" ] && [ ! -f "${outdir}/${base}-2.pdf" ]; then

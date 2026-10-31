@@ -1,0 +1,7 @@
+/* Chromium renders mermaid's KaTeX labels as MathML Core, which ignores
+   mathvariant="bold" and "bold-italic" (only "normal" is honored), so \textbf,
+   \mathbf and \boldsymbol print regular. Map the attribute to CSS weight/style. */
+[mathvariant="bold"] { font-weight: bold; }
+[mathvariant="bold-italic"] { font-weight: bold; font-style: italic; }
+/* Never clip a label's glyphs at the foreignObject edge. */
+foreignObject { overflow: visible; }

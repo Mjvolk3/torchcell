@@ -2478,3 +2478,44 @@ Owner: "i have little confidence in this rn. i want to cancel all 043 exps on ca
 
 W&B (view ids in `results/wandb_view_ids.json`): round view
 https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=4ebtcp2r4ky
+
+## 2026.10.31 - Aurora v4 job a complete: weighting trades doubles against the isolate heads; the fine-tune erases the pretraining differences
+
+Job 8987532 (1 node x 12 tiles, 53 h 35 min, 0 faults; cells done 20:10 to 21:28 CDT): 12 cells, each 80 stage-1 epochs then the 20-epoch Kemmeren fine-tune in the same allocation. Statistic: mean over epochs 71-80 of the validation metric named in the header (fine-tunes 17-20), three seeds per arm, sd over seeds (`wandb_view_043.py --round aurora_v4_2026_10_29 --window-means`, `results/aurora_v4_2026_10_29_window_means.json`; the 41-50 window of the same runs is in `means_41_50`). The W&B arm label carries neither lr nor route, so rows are split by run id (`a1029_all_onto_pinball_injop_<equal|records>[_lrhalf]_v4_s*`).
+
+| arm (pinball, operator injection, ontology conditioning, bs 16, 80 epochs) | seeds | doubles Pearson, strain-centered median | Muenzner Pearson per gene median | Caudal Pearson per gene median | Kemmeren Pearson per gene median | Vaishnav Pearson | fine-tune Kemmeren per gene median (17-20) | fine-tune doubles (17-20) |
+|---|---|---|---|---|---|---|---|---|
+| equal, lr 1.5e-4 | 4-6 | 0.2562 (0.017) | **0.2636 (0.011)** | **0.1844 (0.009)** | **0.1148 (0.005)** | 0.8883 (0.009) | **0.1259 (0.003)** | 0.2690 (0.007) |
+| equal, lr 3e-4 | 4-6 | 0.2401 (0.029) | 0.2728 (0.005) | 0.1805 (0.006) | 0.1002 (0.013) | 0.9125 (0.004) | 0.1240 (0.013) | 0.2495 (0.050) |
+| records, lr 3e-4 | 4-6 | 0.2767 (0.016) | 0.2221 (0.009) | 0.1591 (0.017) | 0.1020 (0.007) | **0.9138 (0.004)** | 0.1205 (0.017) | 0.2673 (0.023) |
+| records, lr 1.5e-4 (new) | 0-2 | **0.2777 (0.014)** | 0.2196 (0.008) | 0.1665 (0.006) | 0.0982 (0.012) | 0.9033 (0.007) | 0.1249 (0.019) | **0.2786 (0.007)** |
+
+Pooled with the v3 seeds (0-3) of the same cells, seven seeds per arm at 80 epochs on Aurora:
+
+| arm (pinball, operator injection, 80 epochs, Aurora) | doubles Pearson, strain-centered median | Muenzner Pearson per gene median | Caudal Pearson per gene median | Kemmeren Pearson per gene median | Vaishnav Pearson | fine-tune Kemmeren per gene median (17-20) | fine-tune doubles (17-20) |
+|---|---|---|---|---|---|---|---|
+| equal, lr 1.5e-4 | 0.2493 (0.016) | **0.2633 (0.012)** | **0.1824 (0.015)** | **0.1097 (0.012)** | 0.8943 (0.009) | 0.1233 (0.008) | 0.2666 (0.017) |
+| equal, lr 3e-4 | 0.2481 (0.020) | 0.2607 (0.014) | 0.1754 (0.009) | 0.1050 (0.009) | 0.9152 (0.006) | 0.1252 (0.012) | 0.2483 (0.032) |
+| records, lr 3e-4 | **0.2736 (0.012)** | 0.2265 (0.014) | 0.1622 (0.011) | 0.1014 (0.005) | **0.9177 (0.007)** | 0.1252 (0.015) | **0.2764 (0.017)** |
+
+- **Weighting is the one lever that moves the heads by more than the seed noise, and it moves them in opposite directions.** Records weighting against equal weighting at seven seeds, lr 3e-4: doubles +0.026 (1.3 sd), Muenzner -0.034 (2.4 sd), Caudal -0.013 (1.3 sd), Vaishnav +0.003. The new records lr-half arm reproduces the trade at three seeds against equal lr-half: doubles +0.022, Muenzner -0.044, Caudal -0.018, Vaishnav +0.015. No arm leads on more than three of the five heads.
+- **The lr lever is now inside the noise everywhere except Vaishnav.** Equal lr 1.5e-4 against lr 3e-4 at seven seeds: doubles +0.001, Muenzner +0.003, Caudal +0.007, Kemmeren +0.005, Vaishnav -0.021 (2.8 sd). Records lr 1.5e-4 against records lr 3e-4 (3 vs 7 seeds): doubles +0.004, Muenzner -0.007, Caudal +0.004, Vaishnav -0.014. The lr-half gain on Muenzner seen at 50 epochs on GilaHyper (+0.014 over five seeds) does not survive 80 epochs and seven seeds on Aurora; its Vaishnav cost does.
+- **The fine-tune erases the stage-1 differences.** Fine-tune Kemmeren across all four arms spans 0.1205 to 0.1259 with per-arm sd 0.003 to 0.019, so no arm's pretraining produces a better Kemmeren head after 20 epochs on Kemmeren alone; the 50-epoch GilaHyper fine-tune band (0.1238, sd 0.011, five seeds) sits inside the same range. Fine-tune doubles tracks the stage-1 doubles (records 0.277-0.279 against equal 0.250-0.269), as expected from a fine-tune that no longer trains doubles.
+- **Budget, read within the same runs (41-50 against 71-80):** Muenzner +0.037 to +0.044 on every arm (equal 0.231 to 0.273, equal lr-half 0.226 to 0.264, records 0.182 to 0.222, records lr-half 0.176 to 0.220) and Vaishnav +0.019 to +0.024; the twelve new seeds agree with the GilaHyper 80- and 120-epoch cells that these two heads are budget-bound. Doubles moves with budget in no consistent direction (equal +0.003, equal lr-half -0.011, records +0.014, records lr-half +0.004), Caudal +0.013 to +0.017.
+- **The cross-machine offset on the matched arm narrows but holds.** Equal lr-half at 80 epochs: GilaHyper doubles 0.2671 (0.011, three seeds), Aurora 0.2493 (0.016, seven seeds), a 1.3 sd gap on the pooled sd; Muenzner 0.2618 against 0.2633, Caudal 0.1845 against 0.1824, Kemmeren 0.1061 against 0.1097, Vaishnav 0.8983 against 0.8943. Only the doubles head carries the offset. Measured; no cause assigned.
+
+Job b (8987590, the same four arms at 120 epochs, seeds 0-2) was at epochs 82-84 of 120 at 22:20 CDT with 0 faults, 51 h 20 min into its 84 h walltime; at 37 min per epoch it reaches epoch 120 near 21:00 CDT Nov 1 plus the fine-tune, inside the walltime. Its 71-80 and 41-50 windows will be read from the same runs when it ends.
+
+W&B (view ids in `results/wandb_view_ids.json`): round view
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=liewt7v10e7
+equal-weighting arm (lr 1.5e-4 and lr 3e-4 share the label)
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=g6u1hzg8gay
+records-weighting arm
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=cyfot9qwjd9
+fine-tunes from the equal-weighting arm
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=b38c6ltsx12
+fine-tunes from the records-weighting arm
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=to83nt5n6vs
+
+- `a1029_all_onto_pinball_injop_records_lrhalf_v4_s0` (best doubles arm, seed 0): https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/a1029_all_onto_pinball_injop_records_lrhalf_v4_s0
+- `a1029_all_onto_pinball_injop_equal_lrhalf_v4_s4` (best isolate-head arm, seed 4): https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/a1029_all_onto_pinball_injop_equal_lrhalf_v4_s4

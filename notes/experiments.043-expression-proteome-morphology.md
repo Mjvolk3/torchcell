@@ -2549,3 +2549,31 @@ Round `aurora_v4_2026_10_29` is complete: 24 cells, 48 runs, 0 faults, 130 h 20 
 
 - `a1029_all_onto_pinball_injop_equal_v4e120_s0_ft` (fine-tune Kemmeren after 120 epochs, equal lr 3e-4, seed 0): https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/a1029_all_onto_pinball_injop_equal_v4e120_s0_ft
 - `a1029_all_onto_pinball_injop_equal_lrhalf_v4e120_s0` (Muenzner still climbing at 120 epochs): https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/a1029_all_onto_pinball_injop_equal_lrhalf_v4e120_s0
+
+## 2026.11.02 - Data-size table for the dissertation's future directions
+
+Owner: "a very simple table that gives idea of size of data number of strain records with expression ... chapter 6 future directions". `scripts/table_data_size_043.py` reads the served store census (`results/build_043_store_census_v2.json`, 173,805 records on KG release 2026.10.17-4295f7ca, job 6187) for the record counts and the full data pass (`results/data_shapes_043.json`) for the median label keys per record, and writes `results/tab-ch08-omics-data-size.{tex,md}`; `--thesis-tables-dir` copies the `.tex` into the thesis as `tables/tab-ch08-omics-data-size.tex`, placed in `sections/ch08-scaling-strain-engineering.tex` (chapter 6 of the deposit, "Conclusion and future directions") after the data-type ablation paragraph. Hu 2007 and N'Guessan 2025 have no key in the thesis `references.bib`, so those two rows carry no citation until the owner adds them.
+
+| Source | Readout | Genotype | Strain records | Measured per record (median) |
+|---|---|---|---:|---:|
+| **Expression** | | | | |
+| Kemmeren 2014 | microarray, log2 ratio to wild type | single deletion | 1,484 | 6,169 genes |
+| Sameith 2015, singles | microarray, log2 ratio | single deletion | 82 | 6,169 genes |
+| Sameith 2015, doubles | microarray, log2 ratio | double deletion | 72 | 6,169 genes |
+| Hu 2007 | microarray, error-model score | single deletion | 263 | 6,381 genes |
+| Jackson 2020 | single-cell RNA-seq, pseudobulk UMI | single deletion | 784 | 4,028 genes |
+| Nadal-Ribelles 2025 | Perturb-seq, pseudobulk log2 fold change | single deletion | 6,188 | 5,866 genes |
+| Caudal 2024 | RNA-seq, TPM | natural isolate | 943 | 6,050 genes |
+| Boocock 2025 | single-cell RNA-seq, UMI per cell | segregant | 79,516 | 962 genes |
+| N'Guessan 2025 | single-cell RNA-seq, UMI per cell | segregant | 2,951 | 2,592 genes |
+| Vaishnav 2022 | sort-seq promoter reporter | 80-mer promoter variant | 71,158 | 1 reporter |
+| **Proteome** | | | | |
+| Messner 2023 | MaxLFQ protein abundance | single deletion | 4,699 | 1,819 proteins |
+| Muenzner 2024 | MaxLFQ protein abundance | natural isolate | 795 | 1,540 proteins |
+| Muenzner 2024, turnover | protein degradation rate | natural isolate | 55 | 1,055 proteins |
+| Zelezniak 2018 | protein abundance, log signal | single deletion | 97 | 726 proteins |
+| **Morphology** | | | | |
+| Ohya 2005 | CalMorph, 281 cell features | single deletion | 4,718 | 281 features |
+| **All** | | | **173,805** | |
+
+The record counts are the store's (v2); the shape table of 2026.10.20 above counted the earlier v1 pass (173,617), which is why Kemmeren reads 1,484 here and 1,482 there. Deletion and isolate panels together hold 20,180 records; the two single-cell segregant studies and the promoter library hold the other 153,625.

@@ -2793,15 +2793,142 @@
    },
    "arm_label": "all_onto_injop_pinball_equal",
    "seed": 0,
-   "state": "running",
-   "epochs_reached": 83,
+   "state": "finished",
+   "epochs_reached": 120,
    "n_epochs": 120,
    "window": [
     106,
     120
    ],
-   "complete": false,
-   "means": {}
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.1285643547867954,
+     "n_evaluations": 15,
+     "sd_epochs": 0.00793293010510407,
+     "min": 0.11707464021120428,
+     "max": 0.14306685897225774
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.2762293781058132,
+     "n_evaluations": 15,
+     "sd_epochs": 0.01744477862847777,
+     "min": 0.24218670838288492,
+     "max": 0.29617335146372803
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 15,
+     "sd_epochs": 5.745950043620392e-17,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.28646821617779417,
+     "n_evaluations": 15,
+     "sd_epochs": 0.006301006026234763,
+     "min": 0.2725520254751293,
+     "max": 0.2953736181366865
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.1808658283404952,
+     "n_evaluations": 15,
+     "sd_epochs": 0.01229301216478388,
+     "min": 0.1666131712014399,
+     "max": 0.2051511312323499
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.08650505843039234,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0034242569380292798,
+     "min": 0.0827464580120311,
+     "max": 0.09497084006350903
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9197571931314903,
+     "n_evaluations": 15,
+     "sd_epochs": 0.004410190028903997,
+     "min": 0.9113923139723988,
+     "max": 0.9264952731677523
+    },
+    "val/hu/pearson_per_gene_median": {
+     "mean": 0.06426213756122398,
+     "n_evaluations": 15,
+     "sd_epochs": 0.019073623918495954,
+     "min": 0.027205475875841295,
+     "max": 0.09255583125536335
+    },
+    "val/zelezniak/pearson_per_gene_median": {
+     "mean": 0.08690235991239034,
+     "n_evaluations": 15,
+     "sd_epochs": 0.04357480243814362,
+     "min": 0.015144326950312422,
+     "max": 0.17867074193856436
+    },
+    "train/loss": {
+     "mean": 0.17884419406811855,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0006962946814082881,
+     "min": 0.17774061545922668,
+     "max": 0.17983493560747307
+    },
+    "val/loss": {
+     "mean": 0.24894867319661265,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0007801394326857372,
+     "min": 0.24766698964765277,
+     "max": 0.250614591074008
+    }
+   }
+  },
+  "a1029_all_onto_pinball_injop_equal_lrhalf_v4e120_s0_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_injop_pinball_equal",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.1451743120165996,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0035952807986234913,
+     "min": 0.14119114692065624,
+     "max": 0.1483972844141379
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.2718544623028501,
+     "n_evaluations": 4,
+     "sd_epochs": 0.004862581209682443,
+     "min": 0.26644584273244076,
+     "max": 0.27687215415181554
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.4396675454257382,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "train/loss": {
+     "mean": 0.15071771989348723,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0005434381848927047,
+     "min": 0.1499651643926411,
+     "max": 0.1512180362733549
+    },
+    "val/loss": {
+     "mean": 0.19448363514643607,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0006108814608968658,
+     "min": 0.1936899962793711,
+     "max": 0.1951231140864627
+    }
+   }
   },
   "a1029_all_onto_pinball_injop_equal_lrhalf_v4e120_s1": {
    "means_71_80": {
@@ -2964,15 +3091,142 @@
    },
    "arm_label": "all_onto_injop_pinball_equal",
    "seed": 1,
-   "state": "running",
-   "epochs_reached": 83,
+   "state": "finished",
+   "epochs_reached": 120,
    "n_epochs": 120,
    "window": [
     106,
     120
    ],
-   "complete": false,
-   "means": {}
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.09973496092331595,
+     "n_evaluations": 15,
+     "sd_epochs": 0.007226203918972336,
+     "min": 0.08605130933353775,
+     "max": 0.11047040578925477
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.2662009682721326,
+     "n_evaluations": 15,
+     "sd_epochs": 0.02004104750372508,
+     "min": 0.23098625109407245,
+     "max": 0.29103822674694796
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 15,
+     "sd_epochs": 5.745950043620392e-17,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.2749534376365733,
+     "n_evaluations": 15,
+     "sd_epochs": 0.016491963587030367,
+     "min": 0.23006650176403642,
+     "max": 0.2903532889955942
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.16802505030809792,
+     "n_evaluations": 15,
+     "sd_epochs": 0.011369054064690447,
+     "min": 0.14396563458769518,
+     "max": 0.1842837910763266
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.07454588558968618,
+     "n_evaluations": 15,
+     "sd_epochs": 0.004530261087580862,
+     "min": 0.06755218843495306,
+     "max": 0.08235375989710036
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.912958918544372,
+     "n_evaluations": 15,
+     "sd_epochs": 0.003436303026458748,
+     "min": 0.9052219488423414,
+     "max": 0.9175196516407369
+    },
+    "val/hu/pearson_per_gene_median": {
+     "mean": 0.04789079709609885,
+     "n_evaluations": 15,
+     "sd_epochs": 0.016257217318608182,
+     "min": 0.013338686651250608,
+     "max": 0.07293948975566245
+    },
+    "val/zelezniak/pearson_per_gene_median": {
+     "mean": 0.20713489200073518,
+     "n_evaluations": 15,
+     "sd_epochs": 0.026930796168089424,
+     "min": 0.16648794674879883,
+     "max": 0.2686996726440096
+    },
+    "train/loss": {
+     "mean": 0.1784938385410258,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0006289915916631834,
+     "min": 0.17759194493952585,
+     "max": 0.179613795209077
+    },
+    "val/loss": {
+     "mean": 0.2488365699807889,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0011843321745980259,
+     "min": 0.24734271652849896,
+     "max": 0.2524839730619587
+    }
+   }
+  },
+  "a1029_all_onto_pinball_injop_equal_lrhalf_v4e120_s1_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_injop_pinball_equal",
+   "seed": 1,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.12853214171171629,
+     "n_evaluations": 4,
+     "sd_epochs": 0.005506870112394817,
+     "min": 0.1210992484801172,
+     "max": 0.13428745749598234
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.25871602177740455,
+     "n_evaluations": 4,
+     "sd_epochs": 0.028282817255111878,
+     "min": 0.229255149653915,
+     "max": 0.28646622101455194
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.4396675454257382,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "train/loss": {
+     "mean": 0.15033921317666918,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0008338348315809275,
+     "min": 0.14932314292860904,
+     "max": 0.1513548292554357
+    },
+    "val/loss": {
+     "mean": 0.19440478297697558,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0006483652382847042,
+     "min": 0.19377476903709687,
+     "max": 0.19531259452989622
+    }
+   }
   },
   "a1029_all_onto_pinball_injop_equal_lrhalf_v4e120_s2": {
    "means_71_80": {
@@ -3135,15 +3389,142 @@
    },
    "arm_label": "all_onto_injop_pinball_equal",
    "seed": 2,
-   "state": "running",
-   "epochs_reached": 83,
+   "state": "finished",
+   "epochs_reached": 120,
    "n_epochs": 120,
    "window": [
     106,
     120
    ],
-   "complete": false,
-   "means": {}
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.09687225304373438,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0061172022056593355,
+     "min": 0.0900939205961214,
+     "max": 0.11346564441224435
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.25519076980860317,
+     "n_evaluations": 15,
+     "sd_epochs": 0.014740350992925833,
+     "min": 0.2279373926922766,
+     "max": 0.28186076509583147
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 15,
+     "sd_epochs": 5.745950043620392e-17,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.2761470658878842,
+     "n_evaluations": 15,
+     "sd_epochs": 0.008865910319558402,
+     "min": 0.25845913526647496,
+     "max": 0.28870215597799187
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.1686938048071809,
+     "n_evaluations": 15,
+     "sd_epochs": 0.010790305417135755,
+     "min": 0.14335142196590636,
+     "max": 0.186027468243971
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.08212512502741788,
+     "n_evaluations": 15,
+     "sd_epochs": 0.005499742307454955,
+     "min": 0.068941636038126,
+     "max": 0.09195840844602948
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9107018690821477,
+     "n_evaluations": 15,
+     "sd_epochs": 0.002476906455738551,
+     "min": 0.9057546649620881,
+     "max": 0.915081457257042
+    },
+    "val/hu/pearson_per_gene_median": {
+     "mean": 0.017665386293316432,
+     "n_evaluations": 15,
+     "sd_epochs": 0.012969104437346154,
+     "min": -0.0028066783709237287,
+     "max": 0.04029334145242411
+    },
+    "val/zelezniak/pearson_per_gene_median": {
+     "mean": 0.10355659722074559,
+     "n_evaluations": 15,
+     "sd_epochs": 0.02966022085777611,
+     "min": 0.025793665508613346,
+     "max": 0.1507134096378057
+    },
+    "train/loss": {
+     "mean": 0.17868000782405863,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0005702483798863388,
+     "min": 0.1779239394517641,
+     "max": 0.17985140009917228
+    },
+    "val/loss": {
+     "mean": 0.24973255195445668,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0011902599471985016,
+     "min": 0.24770954232339468,
+     "max": 0.2526021687943423
+    }
+   }
+  },
+  "a1029_all_onto_pinball_injop_equal_lrhalf_v4e120_s2_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_injop_pinball_equal",
+   "seed": 2,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.11084009052700347,
+     "n_evaluations": 4,
+     "sd_epochs": 0.007843542720427095,
+     "min": 0.10062075199773791,
+     "max": 0.11974301888658358
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.2839818029211983,
+     "n_evaluations": 4,
+     "sd_epochs": 0.013275942223783926,
+     "min": 0.26824238424395075,
+     "max": 0.3004226931254785
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.4396675454257382,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "train/loss": {
+     "mean": 0.15244343725905543,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0008169191043321905,
+     "min": 0.1515423650923069,
+     "max": 0.15338861659640282
+    },
+    "val/loss": {
+     "mean": 0.1993993667466838,
+     "n_evaluations": 4,
+     "sd_epochs": 0.001503036518877641,
+     "min": 0.19778327636376802,
+     "max": 0.2008228025163769
+    }
+   }
   },
   "a1029_all_onto_pinball_injop_equal_v4e120_s0": {
    "means_71_80": {
@@ -3306,15 +3687,142 @@
    },
    "arm_label": "all_onto_injop_pinball_equal",
    "seed": 0,
-   "state": "running",
-   "epochs_reached": 82,
+   "state": "finished",
+   "epochs_reached": 120,
    "n_epochs": 120,
    "window": [
     106,
     120
    ],
-   "complete": false,
-   "means": {}
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.1366202039180138,
+     "n_evaluations": 15,
+     "sd_epochs": 0.006849392460112839,
+     "min": 0.12651854099410484,
+     "max": 0.15288770349578729
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.2314227274327714,
+     "n_evaluations": 15,
+     "sd_epochs": 0.022979421985511474,
+     "min": 0.1889558983019003,
+     "max": 0.27446094628656215
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 15,
+     "sd_epochs": 5.745950043620392e-17,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.2924349697753469,
+     "n_evaluations": 15,
+     "sd_epochs": 0.009874223731087936,
+     "min": 0.2776893785883663,
+     "max": 0.30959374055177413
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.1616082766860551,
+     "n_evaluations": 15,
+     "sd_epochs": 0.00998405138313196,
+     "min": 0.14363941641010897,
+     "max": 0.17790066859321993
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.06813897037312441,
+     "n_evaluations": 15,
+     "sd_epochs": 0.004839891549473676,
+     "min": 0.0595302064426588,
+     "max": 0.07934431110055856
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9314542906787915,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0034441707528591143,
+     "min": 0.9241021489373126,
+     "max": 0.9363430426813407
+    },
+    "val/hu/pearson_per_gene_median": {
+     "mean": 0.08997859233679258,
+     "n_evaluations": 15,
+     "sd_epochs": 0.01986436761642518,
+     "min": 0.05548177758621654,
+     "max": 0.11636980678699177
+    },
+    "val/zelezniak/pearson_per_gene_median": {
+     "mean": 0.01308968537558393,
+     "n_evaluations": 15,
+     "sd_epochs": 0.05505554214568399,
+     "min": -0.0816887565755267,
+     "max": 0.1253282710794087
+    },
+    "train/loss": {
+     "mean": 0.17687995364400105,
+     "n_evaluations": 15,
+     "sd_epochs": 0.000509702132706365,
+     "min": 0.1761804974696412,
+     "max": 0.17757373670353685
+    },
+    "val/loss": {
+     "mean": 0.247948809801829,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0008325629297822154,
+     "min": 0.24668443943896534,
+     "max": 0.24953270356384596
+    }
+   }
+  },
+  "a1029_all_onto_pinball_injop_equal_v4e120_s0_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_injop_pinball_equal",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.15400027741973946,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0038407747663608714,
+     "min": 0.14871540521674956,
+     "max": 0.15768325843562328
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.2421099118112055,
+     "n_evaluations": 4,
+     "sd_epochs": 0.008876535762892372,
+     "min": 0.23543395589286958,
+     "max": 0.2545512540054346
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.4396675454257382,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "train/loss": {
+     "mean": 0.15536324829235054,
+     "n_evaluations": 4,
+     "sd_epochs": 0.00038409692045679493,
+     "min": 0.15498153058294448,
+     "max": 0.15584985220095085
+    },
+    "val/loss": {
+     "mean": 0.1945474889079496,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0014682691835055388,
+     "min": 0.1925462361802435,
+     "max": 0.19602407287542054
+    }
+   }
   },
   "a1029_all_onto_pinball_injop_equal_v4e120_s1": {
    "means_71_80": {
@@ -3477,15 +3985,142 @@
    },
    "arm_label": "all_onto_injop_pinball_equal",
    "seed": 1,
-   "state": "running",
-   "epochs_reached": 82,
+   "state": "finished",
+   "epochs_reached": 120,
    "n_epochs": 120,
    "window": [
     106,
     120
    ],
-   "complete": false,
-   "means": {}
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.11401251317257985,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0061124226774275665,
+     "min": 0.10195187799748132,
+     "max": 0.12133630534670593
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.25702742915593235,
+     "n_evaluations": 15,
+     "sd_epochs": 0.019049923423353356,
+     "min": 0.2178944137446362,
+     "max": 0.29064803082079893
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 15,
+     "sd_epochs": 5.745950043620392e-17,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.259409722330606,
+     "n_evaluations": 15,
+     "sd_epochs": 0.007979132001041604,
+     "min": 0.2436356436841381,
+     "max": 0.2702135819219593
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.17425890689519305,
+     "n_evaluations": 15,
+     "sd_epochs": 0.009391622448025445,
+     "min": 0.14702651962194943,
+     "max": 0.1847846126626231
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.061961963116851676,
+     "n_evaluations": 15,
+     "sd_epochs": 0.006484492594169553,
+     "min": 0.049314829530071144,
+     "max": 0.07110221388844515
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9224618741249795,
+     "n_evaluations": 15,
+     "sd_epochs": 0.004498138591166544,
+     "min": 0.9106174108250101,
+     "max": 0.9272812591049735
+    },
+    "val/hu/pearson_per_gene_median": {
+     "mean": 0.008147176582539899,
+     "n_evaluations": 15,
+     "sd_epochs": 0.028036280401221702,
+     "min": -0.05146677919153801,
+     "max": 0.05643217879820129
+    },
+    "val/zelezniak/pearson_per_gene_median": {
+     "mean": 0.09112208471095894,
+     "n_evaluations": 15,
+     "sd_epochs": 0.027647675040057957,
+     "min": 0.04312497048141769,
+     "max": 0.14230311509202154
+    },
+    "train/loss": {
+     "mean": 0.17761935145753904,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0004785479429759203,
+     "min": 0.17698725400651485,
+     "max": 0.1784686258435669
+    },
+    "val/loss": {
+     "mean": 0.24833339791919717,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0019130273209141942,
+     "min": 0.24614532529392344,
+     "max": 0.25255598574874405
+    }
+   }
+  },
+  "a1029_all_onto_pinball_injop_equal_v4e120_s1_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_injop_pinball_equal",
+   "seed": 1,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.13580215713261326,
+     "n_evaluations": 4,
+     "sd_epochs": 0.004488986445905971,
+     "min": 0.1321624479282017,
+     "max": 0.1423424182103499
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.29011742640403493,
+     "n_evaluations": 4,
+     "sd_epochs": 0.011236417724116658,
+     "min": 0.27623700878875856,
+     "max": 0.3019964069926572
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.4396675454257382,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "train/loss": {
+     "mean": 0.15461899316598493,
+     "n_evaluations": 4,
+     "sd_epochs": 0.00037174518887307445,
+     "min": 0.15422395233703334,
+     "max": 0.15505631037440754
+    },
+    "val/loss": {
+     "mean": 0.19605609438321747,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0010040902658683714,
+     "min": 0.1951743598170913,
+     "max": 0.19732155335169901
+    }
+   }
   },
   "a1029_all_onto_pinball_injop_equal_v4e120_s2": {
    "means_71_80": {
@@ -3648,15 +4283,142 @@
    },
    "arm_label": "all_onto_injop_pinball_equal",
    "seed": 2,
-   "state": "running",
-   "epochs_reached": 82,
+   "state": "finished",
+   "epochs_reached": 120,
    "n_epochs": 120,
    "window": [
     106,
     120
    ],
-   "complete": false,
-   "means": {}
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.10821064169063209,
+     "n_evaluations": 15,
+     "sd_epochs": 0.009071332829012225,
+     "min": 0.08884767969947226,
+     "max": 0.1239742155034589
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.27685646675621206,
+     "n_evaluations": 15,
+     "sd_epochs": 0.01653825240858093,
+     "min": 0.23917976401931385,
+     "max": 0.30479629704303746
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 15,
+     "sd_epochs": 5.745950043620392e-17,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.26129889888542907,
+     "n_evaluations": 15,
+     "sd_epochs": 0.010085503710042265,
+     "min": 0.24513067562021307,
+     "max": 0.27857370132327364
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.18464794947574273,
+     "n_evaluations": 15,
+     "sd_epochs": 0.008548167183322374,
+     "min": 0.16435184594733113,
+     "max": 0.19704697870710583
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.06625515706728088,
+     "n_evaluations": 15,
+     "sd_epochs": 0.00423462901377513,
+     "min": 0.06051537527783483,
+     "max": 0.07335038243732583
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9219420881429153,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0034660061946339368,
+     "min": 0.9132635241926824,
+     "max": 0.9269652196879067
+    },
+    "val/hu/pearson_per_gene_median": {
+     "mean": 0.04797187060194854,
+     "n_evaluations": 15,
+     "sd_epochs": 0.024631574192676982,
+     "min": 0.00012992812681476411,
+     "max": 0.08890076437104488
+    },
+    "val/zelezniak/pearson_per_gene_median": {
+     "mean": 0.02046067339889107,
+     "n_evaluations": 15,
+     "sd_epochs": 0.04259802798745011,
+     "min": -0.05930437688622931,
+     "max": 0.07895941069047964
+    },
+    "train/loss": {
+     "mean": 0.17738115585480876,
+     "n_evaluations": 15,
+     "sd_epochs": 0.000455917055736694,
+     "min": 0.17668346039713756,
+     "max": 0.17826485977214648
+    },
+    "val/loss": {
+     "mean": NaN,
+     "n_evaluations": 15,
+     "sd_epochs": NaN,
+     "min": NaN,
+     "max": NaN
+    }
+   }
+  },
+  "a1029_all_onto_pinball_injop_equal_v4e120_s2_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_injop_pinball_equal",
+   "seed": 2,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.121291417556953,
+     "n_evaluations": 4,
+     "sd_epochs": 0.00734692146082253,
+     "min": 0.11478033385098808,
+     "max": 0.12905994998433334
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.2976756732210018,
+     "n_evaluations": 4,
+     "sd_epochs": 0.009209057737066392,
+     "min": 0.28844955752332246,
+     "max": 0.3066772283389141
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.4396675454257382,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "train/loss": {
+     "mean": 0.1563535019408248,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0005478239678176008,
+     "min": 0.1558865150576225,
+     "max": 0.15706315145714708
+    },
+    "val/loss": {
+     "mean": 0.1964469143917523,
+     "n_evaluations": 4,
+     "sd_epochs": 0.00028215315805462933,
+     "min": 0.19610536081466234,
+     "max": 0.19679640028470857
+    }
+   }
   },
   "a1029_all_onto_pinball_injop_records_v4e120_s0": {
    "means_71_80": {
@@ -3819,15 +4581,142 @@
    },
    "arm_label": "all_onto_injop_pinball_records",
    "seed": 0,
-   "state": "running",
-   "epochs_reached": 83,
+   "state": "finished",
+   "epochs_reached": 120,
    "n_epochs": 120,
    "window": [
     106,
     120
    ],
-   "complete": false,
-   "means": {}
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.0886033889457954,
+     "n_evaluations": 15,
+     "sd_epochs": 0.006377909615295163,
+     "min": 0.0784758033916289,
+     "max": 0.10323692832218598
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.2810119095719463,
+     "n_evaluations": 15,
+     "sd_epochs": 0.019965729735978044,
+     "min": 0.24767409454572265,
+     "max": 0.31374597370059953
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 15,
+     "sd_epochs": 5.745950043620392e-17,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.2663588910328045,
+     "n_evaluations": 15,
+     "sd_epochs": 0.009504015051775404,
+     "min": 0.2437880939822692,
+     "max": 0.28118772517185286
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.1562862178525583,
+     "n_evaluations": 15,
+     "sd_epochs": 0.008446586244624061,
+     "min": 0.14155294789173303,
+     "max": 0.17224498333229898
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.08229422567113115,
+     "n_evaluations": 15,
+     "sd_epochs": 0.005652629127363021,
+     "min": 0.06611639800325511,
+     "max": 0.08797463533626636
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9314338756317809,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0011066779677861786,
+     "min": 0.9294152450951816,
+     "max": 0.9329047387889352
+    },
+    "val/hu/pearson_per_gene_median": {
+     "mean": -0.00039813848067327617,
+     "n_evaluations": 15,
+     "sd_epochs": 0.03013863861771689,
+     "min": -0.03851226115252436,
+     "max": 0.06766328269337753
+    },
+    "val/zelezniak/pearson_per_gene_median": {
+     "mean": 0.10831846872179035,
+     "n_evaluations": 15,
+     "sd_epochs": 0.03312351189128589,
+     "min": 0.04139711788262679,
+     "max": 0.15746982237821144
+    },
+    "train/loss": {
+     "mean": 0.11959823787920151,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0008657998976641829,
+     "min": 0.11809545013475539,
+     "max": 0.1210361550019446
+    },
+    "val/loss": {
+     "mean": NaN,
+     "n_evaluations": 15,
+     "sd_epochs": NaN,
+     "min": NaN,
+     "max": NaN
+    }
+   }
+  },
+  "a1029_all_onto_pinball_injop_records_v4e120_s0_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_injop_pinball_records",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.11636533604354683,
+     "n_evaluations": 4,
+     "sd_epochs": 0.006946942632069315,
+     "min": 0.1093842880702777,
+     "max": 0.12589147806584786
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.29176924563938744,
+     "n_evaluations": 4,
+     "sd_epochs": 0.012159588532439916,
+     "min": 0.28195526249489505,
+     "max": 0.3092046897053339
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.4396675454257382,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "train/loss": {
+     "mean": 0.16213737880367904,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0006063871886246441,
+     "min": 0.1613590598676645,
+     "max": 0.162746230670299
+    },
+    "val/loss": {
+     "mean": 0.1929164972257134,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0007991593097702326,
+     "min": 0.19174529101059923,
+     "max": 0.1935081097376014
+    }
+   }
   },
   "a1029_all_onto_pinball_injop_records_v4e120_s1": {
    "means_71_80": {
@@ -3990,15 +4879,142 @@
    },
    "arm_label": "all_onto_injop_pinball_records",
    "seed": 1,
-   "state": "running",
-   "epochs_reached": 84,
+   "state": "finished",
+   "epochs_reached": 120,
    "n_epochs": 120,
    "window": [
     106,
     120
    ],
-   "complete": false,
-   "means": {}
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.09704275325655075,
+     "n_evaluations": 15,
+     "sd_epochs": 0.00690361705719247,
+     "min": 0.08608431621026269,
+     "max": 0.10948023127180433
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.21833408529414247,
+     "n_evaluations": 15,
+     "sd_epochs": 0.021269554698869736,
+     "min": 0.17752028772908493,
+     "max": 0.26232224334686777
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 15,
+     "sd_epochs": 5.745950043620392e-17,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.2429499794808683,
+     "n_evaluations": 15,
+     "sd_epochs": 0.007973226167982902,
+     "min": 0.23340015159894756,
+     "max": 0.2612314048435428
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.1884290579002663,
+     "n_evaluations": 15,
+     "sd_epochs": 0.009974583694282165,
+     "min": 0.16558823889147123,
+     "max": 0.20825101336417642
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.06413001958065224,
+     "n_evaluations": 15,
+     "sd_epochs": 0.007860323015181555,
+     "min": 0.05234390412012781,
+     "max": 0.07995844683066622
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9233971118054475,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0038087678636485518,
+     "min": 0.9165397177167439,
+     "max": 0.9292313410782572
+    },
+    "val/hu/pearson_per_gene_median": {
+     "mean": 0.09694974322601482,
+     "n_evaluations": 15,
+     "sd_epochs": 0.023167490401968204,
+     "min": 0.05818743265695444,
+     "max": 0.1335666837135786
+    },
+    "val/zelezniak/pearson_per_gene_median": {
+     "mean": 0.06392788037165884,
+     "n_evaluations": 15,
+     "sd_epochs": 0.06377428849197436,
+     "min": -0.058382851078482983,
+     "max": 0.1649603881584303
+    },
+    "train/loss": {
+     "mean": 0.12091089296072938,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0008448244388113822,
+     "min": 0.1197513040827634,
+     "max": 0.12233775700105476
+    },
+    "val/loss": {
+     "mean": 0.17708824644796506,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0023280131947635654,
+     "min": 0.17419997185258598,
+     "max": 0.1838326025140879
+    }
+   }
+  },
+  "a1029_all_onto_pinball_injop_records_v4e120_s1_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_injop_pinball_records",
+   "seed": 1,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.121235475598941,
+     "n_evaluations": 4,
+     "sd_epochs": 0.005647835249936726,
+     "min": 0.1152926377312819,
+     "max": 0.12873131731125237
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.22022421272749,
+     "n_evaluations": 4,
+     "sd_epochs": 0.012886019797903549,
+     "min": 0.20554124347496167,
+     "max": 0.2361063488906977
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.4396675454257382,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "train/loss": {
+     "mean": 0.16144026631176372,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0004798664406815293,
+     "min": 0.16085706036320938,
+     "max": 0.16201873882340512
+    },
+    "val/loss": {
+     "mean": 0.1927823147757079,
+     "n_evaluations": 4,
+     "sd_epochs": 0.00046150896067904344,
+     "min": 0.19222353563011466,
+     "max": 0.19322416552647503
+    }
+   }
   },
   "a1029_all_onto_pinball_injop_records_v4e120_s2": {
    "means_71_80": {
@@ -4161,15 +5177,142 @@
    },
    "arm_label": "all_onto_injop_pinball_records",
    "seed": 2,
-   "state": "running",
-   "epochs_reached": 84,
+   "state": "finished",
+   "epochs_reached": 120,
    "n_epochs": 120,
    "window": [
     106,
     120
    ],
-   "complete": false,
-   "means": {}
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.09437585067135104,
+     "n_evaluations": 15,
+     "sd_epochs": 0.006504067296339806,
+     "min": 0.08326753941172042,
+     "max": 0.1058464381293108
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.27526873842494937,
+     "n_evaluations": 15,
+     "sd_epochs": 0.015754675003543044,
+     "min": 0.24915413310722895,
+     "max": 0.3057231242923982
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 15,
+     "sd_epochs": 5.745950043620392e-17,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.22767260024332764,
+     "n_evaluations": 15,
+     "sd_epochs": 0.009987619745664176,
+     "min": 0.20778753774254916,
+     "max": 0.24107221362145148
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.11483138074525243,
+     "n_evaluations": 15,
+     "sd_epochs": 0.016375036783046946,
+     "min": 0.08901462603357388,
+     "max": 0.14928211064655353
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.05115408305804027,
+     "n_evaluations": 15,
+     "sd_epochs": 0.005496102104674297,
+     "min": 0.037998801668151824,
+     "max": 0.05754915362221619
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9213267515109459,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0030658514147223533,
+     "min": 0.9154958703949829,
+     "max": 0.9253845538915533
+    },
+    "val/hu/pearson_per_gene_median": {
+     "mean": 0.01919977272399203,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0125399900724081,
+     "min": -0.0013333643820425225,
+     "max": 0.04332783103572334
+    },
+    "val/zelezniak/pearson_per_gene_median": {
+     "mean": 0.049598714450042915,
+     "n_evaluations": 15,
+     "sd_epochs": 0.02877201434465096,
+     "min": -0.008607205754969245,
+     "max": 0.09176813775625235
+    },
+    "train/loss": {
+     "mean": 0.1201671608809987,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0009560021772204057,
+     "min": 0.11884895631252998,
+     "max": 0.1214708876860323
+    },
+    "val/loss": {
+     "mean": NaN,
+     "n_evaluations": 15,
+     "sd_epochs": NaN,
+     "min": NaN,
+     "max": NaN
+    }
+   }
+  },
+  "a1029_all_onto_pinball_injop_records_v4e120_s2_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_injop_pinball_records",
+   "seed": 2,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.12911001133327865,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0037430216275509917,
+     "min": 0.12418109027817756,
+     "max": 0.13328575045812668
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.2851488159222941,
+     "n_evaluations": 4,
+     "sd_epochs": 0.009065154087814414,
+     "min": 0.27792103644969535,
+     "max": 0.2978748600749174
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.4396675454257382,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "train/loss": {
+     "mean": 0.16325701027798672,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0005705823561178296,
+     "min": 0.16271634324269366,
+     "max": 0.16401806404308947
+    },
+    "val/loss": {
+     "mean": 0.19181521229502055,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0006405332911629141,
+     "min": 0.1911482448489193,
+     "max": 0.19268243468517154
+    }
+   }
   },
   "a1029_all_onto_pinball_injop_records_lrhalf_v4e120_s0": {
    "means_71_80": {
@@ -4332,15 +5475,142 @@
    },
    "arm_label": "all_onto_injop_pinball_records",
    "seed": 0,
-   "state": "running",
-   "epochs_reached": 84,
+   "state": "finished",
+   "epochs_reached": 120,
    "n_epochs": 120,
    "window": [
     106,
     120
    ],
-   "complete": false,
-   "means": {}
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.10059138924028234,
+     "n_evaluations": 15,
+     "sd_epochs": 0.004721873392139131,
+     "min": 0.09271717479623377,
+     "max": 0.10776929584589333
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.2763730451511829,
+     "n_evaluations": 15,
+     "sd_epochs": 0.01644271092171191,
+     "min": 0.24321154850705545,
+     "max": 0.30108692406562637
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 15,
+     "sd_epochs": 5.745950043620392e-17,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.24993087290610153,
+     "n_evaluations": 15,
+     "sd_epochs": 0.008001277811732075,
+     "min": 0.23506672842646573,
+     "max": 0.26593387907164157
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.18372871998116894,
+     "n_evaluations": 15,
+     "sd_epochs": 0.00784911820430889,
+     "min": 0.1712648169005417,
+     "max": 0.19979807130110305
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.06191417042357521,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0030862762056644965,
+     "min": 0.05771589124472107,
+     "max": 0.06799796817013001
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9257892989374579,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0024039979810810313,
+     "min": 0.921098757332199,
+     "max": 0.9302961454205092
+    },
+    "val/hu/pearson_per_gene_median": {
+     "mean": 0.03051954988866634,
+     "n_evaluations": 15,
+     "sd_epochs": 0.013104538923771251,
+     "min": 0.011800873518993952,
+     "max": 0.050976257136549394
+    },
+    "val/zelezniak/pearson_per_gene_median": {
+     "mean": 0.09885729584165945,
+     "n_evaluations": 15,
+     "sd_epochs": 0.04055100687617512,
+     "min": 0.016327261890745154,
+     "max": 0.18443151797555002
+    },
+    "train/loss": {
+     "mean": 0.12737060465659264,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0011324712093467929,
+     "min": 0.12567353628049163,
+     "max": 0.12910424504702914
+    },
+    "val/loss": {
+     "mean": 0.17690481896736326,
+     "n_evaluations": 15,
+     "sd_epochs": 0.001549420794196458,
+     "min": 0.17483888067836276,
+     "max": 0.17990654063928044
+    }
+   }
+  },
+  "a1029_all_onto_pinball_injop_records_lrhalf_v4e120_s0_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_injop_pinball_records",
+   "seed": 0,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.11661319136187015,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0025508656944213236,
+     "min": 0.11431754280238196,
+     "max": 0.12025700332712597
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.28416931313055904,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0036101342070374285,
+     "min": 0.27882861816705473,
+     "max": 0.2867795637060255
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.4396675454257382,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "train/loss": {
+     "mean": 0.16199788161105602,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0006996338855011599,
+     "min": 0.1610740413904785,
+     "max": 0.16275802078639806
+    },
+    "val/loss": {
+     "mean": 0.19158738975205697,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0006662595867826231,
+     "min": 0.19088570289867085,
+     "max": 0.19216586045353948
+    }
+   }
   },
   "a1029_all_onto_pinball_injop_records_lrhalf_v4e120_s1": {
    "means_71_80": {
@@ -4503,15 +5773,142 @@
    },
    "arm_label": "all_onto_injop_pinball_records",
    "seed": 1,
-   "state": "running",
-   "epochs_reached": 83,
+   "state": "finished",
+   "epochs_reached": 120,
    "n_epochs": 120,
    "window": [
     106,
     120
    ],
-   "complete": false,
-   "means": {}
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.10597630441516863,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0069604240845349595,
+     "min": 0.09560342950545851,
+     "max": 0.11637913481943894
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.24783117138621608,
+     "n_evaluations": 15,
+     "sd_epochs": 0.02371979531407574,
+     "min": 0.19523878549134666,
+     "max": 0.2709816988311343
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 15,
+     "sd_epochs": 5.745950043620392e-17,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.22689784192757695,
+     "n_evaluations": 15,
+     "sd_epochs": 0.008426503472041508,
+     "min": 0.2100327639387829,
+     "max": 0.23844534592974115
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.18322493361443068,
+     "n_evaluations": 15,
+     "sd_epochs": 0.009276921347050479,
+     "min": 0.16765563963279717,
+     "max": 0.19966268332383308
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.06564034627184599,
+     "n_evaluations": 15,
+     "sd_epochs": 0.004040295883676902,
+     "min": 0.05984018644061803,
+     "max": 0.0727060068027757
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9175186593864215,
+     "n_evaluations": 15,
+     "sd_epochs": 0.00404740615443299,
+     "min": 0.9067023954943263,
+     "max": 0.9217713652236185
+    },
+    "val/hu/pearson_per_gene_median": {
+     "mean": 0.05362776393877998,
+     "n_evaluations": 15,
+     "sd_epochs": 0.009103468662484182,
+     "min": 0.03782965424169991,
+     "max": 0.06680324532885554
+    },
+    "val/zelezniak/pearson_per_gene_median": {
+     "mean": 0.08441148231734845,
+     "n_evaluations": 15,
+     "sd_epochs": 0.030053150002699598,
+     "min": 0.016160656212155542,
+     "max": 0.1283976822956409
+    },
+    "train/loss": {
+     "mean": 0.1282336274860449,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0010559450178816232,
+     "min": 0.12672103044895078,
+     "max": 0.13008065777483271
+    },
+    "val/loss": {
+     "mean": 0.1782619071812733,
+     "n_evaluations": 15,
+     "sd_epochs": 0.002405069943354356,
+     "min": 0.17603653269084105,
+     "max": 0.18515287935511515
+    }
+   }
+  },
+  "a1029_all_onto_pinball_injop_records_lrhalf_v4e120_s1_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_injop_pinball_records",
+   "seed": 1,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.14937285437748238,
+     "n_evaluations": 4,
+     "sd_epochs": 0.006403313733838177,
+     "min": 0.1403440414507008,
+     "max": 0.15479369676612606
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.25732654792959586,
+     "n_evaluations": 4,
+     "sd_epochs": 0.01528164748821861,
+     "min": 0.24121932673063962,
+     "max": 0.2773576348214864
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.4396675454257382,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "train/loss": {
+     "mean": 0.1604017858484918,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0008208166426783794,
+     "min": 0.15960216980904787,
+     "max": 0.1614131325741179
+    },
+    "val/loss": {
+     "mean": 0.1906426667120885,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0003910185770300318,
+     "min": 0.19022154072261793,
+     "max": 0.19112257546048342
+    }
+   }
   },
   "a1029_all_onto_pinball_injop_records_lrhalf_v4e120_s2": {
    "means_71_80": {
@@ -4674,30 +6071,143 @@
    },
    "arm_label": "all_onto_injop_pinball_records",
    "seed": 2,
-   "state": "running",
-   "epochs_reached": 83,
+   "state": "finished",
+   "epochs_reached": 120,
    "n_epochs": 120,
    "window": [
     106,
     120
    ],
-   "complete": false,
-   "means": {}
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.11554384091676811,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0046011775859954515,
+     "min": 0.10716793928620917,
+     "max": 0.12219454731226176
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.30141443560802905,
+     "n_evaluations": 15,
+     "sd_epochs": 0.009265800496758143,
+     "min": 0.28734073385352465,
+     "max": 0.31795233634833525
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.43966754542573827,
+     "n_evaluations": 15,
+     "sd_epochs": 5.745950043620392e-17,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "val/muenzner/pearson_per_gene_median": {
+     "mean": 0.24719520898489136,
+     "n_evaluations": 15,
+     "sd_epochs": 0.007760958255195967,
+     "min": 0.22989326087630038,
+     "max": 0.26170484836995767
+    },
+    "val/caudal/pearson_per_gene_median": {
+     "mean": 0.17499919761711097,
+     "n_evaluations": 15,
+     "sd_epochs": 0.008930872886831712,
+     "min": 0.16041141531154332,
+     "max": 0.18615971812436963
+    },
+    "val/messner/pearson_per_gene_median": {
+     "mean": 0.06099531172038622,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0055028640805516475,
+     "min": 0.05471781804240938,
+     "max": 0.07262733969583812
+    },
+    "val/vaishnav/pearson": {
+     "mean": 0.9125044263112067,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0029251663174318333,
+     "min": 0.9076119277064684,
+     "max": 0.9165912217178932
+    },
+    "val/hu/pearson_per_gene_median": {
+     "mean": 0.04994461450437369,
+     "n_evaluations": 15,
+     "sd_epochs": 0.013568173382274479,
+     "min": 0.023035144464949496,
+     "max": 0.0739116322004652
+    },
+    "val/zelezniak/pearson_per_gene_median": {
+     "mean": 0.131035980246961,
+     "n_evaluations": 15,
+     "sd_epochs": 0.036744258267491316,
+     "min": 0.07466606201687939,
+     "max": 0.18946238861015113
+    },
+    "train/loss": {
+     "mean": 0.12697718059040006,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0012870425131994345,
+     "min": 0.12493261019299313,
+     "max": 0.12892875552148056
+    },
+    "val/loss": {
+     "mean": 0.177856897610464,
+     "n_evaluations": 15,
+     "sd_epochs": 0.0012097625457625923,
+     "min": 0.17588959395336737,
+     "max": 0.1810079870428593
+    }
+   }
+  },
+  "a1029_all_onto_pinball_injop_records_lrhalf_v4e120_s2_ft": {
+   "arm_label": "finetune_kemmeren_from_all_onto_injop_pinball_records",
+   "seed": 2,
+   "state": "finished",
+   "epochs_reached": 20,
+   "n_epochs": 20,
+   "window": [
+    17,
+    20
+   ],
+   "complete": true,
+   "means": {
+    "val/kemmeren/pearson_per_gene_median": {
+     "mean": 0.12924363739012218,
+     "n_evaluations": 4,
+     "sd_epochs": 0.003411197610730979,
+     "min": 0.12448774522083053,
+     "max": 0.13251103559028268
+    },
+    "val/doubles/pearson_per_strain_centered_median": {
+     "mean": 0.27050134252172475,
+     "n_evaluations": 4,
+     "sd_epochs": 0.009530155565369331,
+     "min": 0.25906700951942446,
+     "max": 0.2804657030920289
+    },
+    "val/doubles/additive_measured_pearson_per_strain_centered_median": {
+     "mean": 0.4396675454257382,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0,
+     "min": 0.4396675454257382,
+     "max": 0.4396675454257382
+    },
+    "train/loss": {
+     "mean": 0.1619118825221022,
+     "n_evaluations": 4,
+     "sd_epochs": 0.00044548153691415405,
+     "min": 0.1615746081644009,
+     "max": 0.16255879176535742
+    },
+    "val/loss": {
+     "mean": 0.19207908517039426,
+     "n_evaluations": 4,
+     "sd_epochs": 0.0005080620076882369,
+     "min": 0.19135453628279994,
+     "max": 0.19246239381429908
+    }
+   }
   }
  },
- "transfer_kemmeren": {},
- "no_run_yet": [
-  "a1029_all_onto_pinball_injop_equal_lrhalf_v4e120_s0_ft",
-  "a1029_all_onto_pinball_injop_equal_lrhalf_v4e120_s1_ft",
-  "a1029_all_onto_pinball_injop_equal_lrhalf_v4e120_s2_ft",
-  "a1029_all_onto_pinball_injop_equal_v4e120_s0_ft",
-  "a1029_all_onto_pinball_injop_equal_v4e120_s1_ft",
-  "a1029_all_onto_pinball_injop_equal_v4e120_s2_ft",
-  "a1029_all_onto_pinball_injop_records_v4e120_s0_ft",
-  "a1029_all_onto_pinball_injop_records_v4e120_s1_ft",
-  "a1029_all_onto_pinball_injop_records_v4e120_s2_ft",
-  "a1029_all_onto_pinball_injop_records_lrhalf_v4e120_s0_ft",
-  "a1029_all_onto_pinball_injop_records_lrhalf_v4e120_s1_ft",
-  "a1029_all_onto_pinball_injop_records_lrhalf_v4e120_s2_ft"
- ]
+ "transfer_kemmeren": {}
 }

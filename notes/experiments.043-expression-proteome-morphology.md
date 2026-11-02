@@ -2519,3 +2519,33 @@ https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=to83
 
 - `a1029_all_onto_pinball_injop_records_lrhalf_v4_s0` (best doubles arm, seed 0): https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/a1029_all_onto_pinball_injop_records_lrhalf_v4_s0
 - `a1029_all_onto_pinball_injop_equal_lrhalf_v4_s4` (best isolate-head arm, seed 4): https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/a1029_all_onto_pinball_injop_equal_lrhalf_v4_s4
+
+## 2026.11.01 - Aurora v4 job b complete: 120 epochs at three seeds per arm; Muenzner and Vaishnav still climbing; the fine-tune after 120 epochs reaches 0.128-0.137
+
+Job 8987590 (1 node x 12 tiles, 76 h 45 min, 0 faults; cells done 19:50 to 21:46 CDT): the four job-a arms at 120 stage-1 epochs, seeds 0-2, then the 20-epoch Kemmeren fine-tune in the same allocation. Statistic: mean over epochs 106-120 of the validation metric named in the header (fine-tunes 17-20), three seeds per arm, sd over seeds (`wandb_view_043.py --round aurora_v4_2026_10_29 --window-means`, same JSON as job a; `means_71_80` and `means_41_50` hold the earlier windows of the same runs). Rows split by run id (`a1029_all_onto_pinball_injop_<equal|records>[_lrhalf]_v4e120_s*`).
+
+| arm (pinball, operator injection, ontology conditioning, bs 16, 120 epochs) | doubles Pearson, strain-centered median | Muenzner Pearson per gene median | Caudal Pearson per gene median | Kemmeren Pearson per gene median | Vaishnav Pearson | fine-tune Kemmeren per gene median (17-20) | fine-tune doubles (17-20) |
+|---|---|---|---|---|---|---|---|
+| equal, lr 1.5e-4 | 0.2659 (0.011) | **0.2792 (0.006)** | 0.1725 (0.007) | 0.1084 (0.018) | 0.9145 (0.005) | 0.1282 (0.017) | 0.2715 (0.013) |
+| equal, lr 3e-4 | 0.2551 (0.023) | 0.2710 (0.019) | 0.1735 (0.012) | **0.1196 (0.015)** | 0.9253 (0.005) | **0.1370 (0.016)** | **0.2766 (0.030)** |
+| records, lr 3e-4 | 0.2582 (0.035) | 0.2457 (0.019) | 0.1532 (0.037) | 0.0933 (0.004) | **0.9254 (0.005)** | 0.1222 (0.006) | 0.2657 (0.040) |
+| records, lr 1.5e-4 | **0.2752 (0.027)** | 0.2413 (0.013) | **0.1807 (0.005)** | 0.1074 (0.008) | 0.9186 (0.007) | 0.1317 (0.017) | 0.2707 (0.013) |
+
+Within the same twelve runs, window means at 41-50, 71-80 and 106-120:
+
+| arm | Muenzner per gene (50 / 80 / 120) | Vaishnav (50 / 80 / 120) | doubles (50 / 80 / 120) | Caudal per gene (50 / 80 / 120) | Kemmeren per gene (50 / 80 / 120) |
+|---|---|---|---|---|---|
+| equal, lr 1.5e-4 | 0.229 / 0.261 / 0.279 | 0.870 / 0.898 / 0.915 | 0.265 / 0.260 / 0.266 | 0.170 / 0.181 / 0.173 | 0.111 / 0.115 / 0.108 |
+| equal, lr 3e-4 | 0.219 / 0.254 / 0.271 | 0.901 / 0.917 / 0.925 | 0.249 / 0.260 / 0.255 | 0.166 / 0.174 / 0.174 | 0.103 / 0.108 / 0.120 |
+| records, lr 3e-4 | 0.186 / 0.225 / 0.246 | 0.904 / 0.917 / 0.925 | 0.267 / 0.260 / 0.258 | 0.137 / 0.145 / 0.153 | 0.091 / 0.098 / 0.093 |
+| records, lr 1.5e-4 | 0.169 / 0.220 / 0.241 | 0.879 / 0.902 / 0.919 | 0.269 / 0.282 / 0.275 | 0.155 / 0.167 / 0.181 | 0.099 / 0.101 / 0.107 |
+
+- **Muenzner and Vaishnav are still climbing at 120 epochs on every arm**, by +0.018 to +0.021 (Muenzner) and +0.008 to +0.017 (Vaishnav) over the 80-epoch window of the same runs, against +0.032 to +0.051 and +0.013 to +0.028 from 50 to 80: the slope is falling but has not reached zero. Doubles moves by at most 0.007 between 80 and 120 on any arm, inside its seed sd; Caudal and Kemmeren move by up to 0.014 with no shared sign. The 120-epoch GilaHyper cell (6598, one seed, equal lr-half) read Muenzner 0.289 and Vaishnav 0.919 against Aurora's 0.279 (0.006) and 0.915 (0.005), the cross-machine offset again on the matched arm, now with Muenzner above and doubles (0.276 against 0.266) above on GilaHyper.
+- **The weighting trade holds at 120 epochs.** Records against equal at lr 3e-4: doubles +0.003, Muenzner -0.025, Caudal -0.020, Kemmeren -0.026; at lr 1.5e-4: doubles +0.009, Muenzner -0.038, Caudal +0.008. The doubles advantage of records weighting seen at 80 epochs (+0.022 to +0.026) has shrunk to inside the seed sd at 120, while its Muenzner cost has not.
+- **The fine-tune after 120 epochs is the highest Kemmeren reading in the program**: 0.1282, 0.1370, 0.1222, 0.1317 across the four arms, against 0.1205 to 0.1259 after 80 epochs (job a, other seeds) and 0.1238 (0.011, five seeds) after 50 epochs on GilaHyper. Three of the four arms sit above the frozen-token ridge bar of 0.125 (median per-gene Pearson; that bar is on split A fold 0 and the model's `val/` is fold 1, so the comparison is indicative until the fold-0 read). Equal weighting at lr 3e-4 gives 0.1370 (0.016); its one-sd interval does not reach the 80-epoch band. Measured at three seeds per arm; whether the gain is the longer pretraining or the seeds (0-2 here against 4-6 in job a) is not separated by this design, because the two budgets ran different seeds.
+- **The pooled `val/loss` is flat from epoch 40 to 120 on every arm** (equal 0.2473 / 0.2489 / 0.2481 at the three windows; records 0.1823 / 0.1786 / 0.1771) while Muenzner moves 0.06 and the fine-tune moves 0.01: the pooled loss remains blind to the heads that are still improving, as the GilaHyper 120-epoch cell showed at one seed.
+
+Round `aurora_v4_2026_10_29` is complete: 24 cells, 48 runs, 0 faults, 130 h 20 min of node time. No 043 job is running on Aurora. The round's views are those of the job-a section (round view liewt7v10e7; arm views g6u1hzg8gay, cyfot9qwjd9; fine-tune views b38c6ltsx12, to83nt5n6vs), regenerated with the job-b runs.
+
+- `a1029_all_onto_pinball_injop_equal_v4e120_s0_ft` (fine-tune Kemmeren after 120 epochs, equal lr 3e-4, seed 0): https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/a1029_all_onto_pinball_injop_equal_v4e120_s0_ft
+- `a1029_all_onto_pinball_injop_equal_lrhalf_v4e120_s0` (Muenzner still climbing at 120 epochs): https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/a1029_all_onto_pinball_injop_equal_lrhalf_v4e120_s0

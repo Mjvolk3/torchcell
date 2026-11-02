@@ -2331,3 +2331,249 @@ No cells are queued on GilaHyper: the worktree lands on main next and the follow
 
 <https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball_injop_lrquarter?nw=sjpdqsr7yjg>
 <https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w8_pinball_injop_lrhalf_hh256?nw=sjpdqsr7yjg>
+
+## 2026.10.28 - Landed on main; 043 staged on Delta and IGB; data equivalence across five machines
+
+Owner (17:20 CDT): "we want to move these exps over to delta also and to IGB ... push these experiments on these machines as hard as possible in next weeks. can you merge everything and then make sure data across all systems is equivalent."
+
+- **Merged.** `exp/043-expression-proteome-morphology` landed on main at 4e1e058372 (250 commits, PR #1145 closed) after a rebase onto main and four CI fixes: two mypy errors, pytest 9.2 refusing nested `approx` (graph recovery, ontology svg), filelock 4 no longer truncating a stale lock, the retriever registry's `git_repository` entry, and two CPU-portable tolerances in the 043 tests (the head-reference check at 1e-6 relative with a 1e-6 absolute floor; the accumulate-steps identity at 1e-4, measured 5.4e-5 on the CI runner). Work continues on `exp/043-expression-proteome-morphology-r2` (PR #1161).
+- **Data equivalence** (`scripts/data_manifest_043.py`, `results/data_manifest_043/*.json`): a stage-1 or fine-tune run reads 17 files, 6.6 GB (prep_v4 route A and B stores, four `representation_043_v2/vocab_*.npy`, four allele tables under `peter2018_1011/alleles`); the 459 GB `raw_043_v2` store, the genome and the graphs are read only by `--stage prepare`. Zero hash mismatches between GilaHyper, Polaris, Aurora and Delta wherever a file exists; route B was copied to Polaris and Aurora (hashes verified); IGB received the full set. One non-training difference: `data/sgd/genome/data.db` on Delta has the same size and a different sha256.
+- **Delta** (`delta_train_043.slurm`, `delta_build_env_043.sh`): tree `/scratch/bbub/mjvolk3/torchcell-043`, env tarball `/scratch/bbub/mjvolk3/envs/torchcell043.tar` (torch 2.11.0+cu128, PyG 2.8.0, torch_scatter; a full GilaHyper pip freeze does not resolve on Delta), inputs 6.94 GB. Smoke 23309265 on `gpuA40x4-interactive`: 0.132 s/step, 505 s per epoch with evaluation, peak GPU 7.9 GB, val/loss 0.2738 at epoch 1 (GilaHyper job 6564 epoch 1: 0.2744). An A40 is 1.7x slower than a GilaHyper card. Production round `delta_2026_10_28` queued under bfjt-delta-gpu (jobs 23310067-23310086): pinball + operator injection at lr 1.5e-4 and 3e-4, seeds 0-4, each with its Kemmeren fine-tune; `sbatch --test-only` puts the first start near Nov 1 regardless of job size.
+- **IGB** (`igb_cabbi_train_043.slurm`): tree `~/scratch/torchcell-043`, inputs 5.82 GB (21 files, all hashes matching), env torch 2.8.0 / PyG 2.7.0 (older than GilaHyper; cross-version numerics untested). The torch_scatter import blocker was already gone on this branch (commit 9a166da10 moved the deep-set modules to `torch_geometric.utils.scatter`); `tests/torchcell/models/test_scatter_pyg_equivalence.py` (21 cases, forward and gradient to 1e-12) and GilaHyper job 6571 (trainer with torch_scatter hidden: 0.075 s/step, 7.7 GB) cover it. Smoke 2434938 queued on cabbi behind seven jobs (six of them 046 workers); the first cards free near 11:00 CDT Oct 29.
+- **Code trees:** Delta at the landed head; Aurora synced 48429ba0 (12 commits behind the branch head at audit time), Polaris 51d83040 (21 behind); their 043 training files were byte-identical to ours. Re-sync both after Aurora v3 ends and between Polaris lane chunks.
+- **Wave 9 on GilaHyper** (from the r2 worktree, 22:05 CDT): `gs1024_w9_pinball_injop_lrhalf_s4` (6581/6582, the fifth seed of the candidate recipe), `gs1024_w9_hlgauss_injop_lrhalf` (6583/6584, is the lr lever loss-independent), `gs1024_w9_routeB_bs8_pinball_injop_lrhalf` (6587/6588 after 6585/6586 failed in 8 s: route B is `EXTRA_OVERRIDES=data.route=B` with `PREP_VERSION=prep_v4`, not a prep tag).
+
+### Delta production without dependent jobs (23:30 CDT Oct 28)
+
+Owner: "why did you queue on delta with dependencies? we should only do this if we are chaining jobs." On Delta (`PriorityFlags=MAX_TRES`, no `ACCRUE_ALWAYS`) a dependent job accrues no queue age until its dependency clears, so a chained fine-tune would wait days behind its 7 h stage 1. The ten dependent fine-tunes (23310068-23310086, even ids) and the ten stage-1 jobs were cancelled; `delta_train_043.slurm` gained `CHAIN_FT=1`, which runs the Kemmeren fine-tune in the same allocation right after stage 1 (same keep rule as the GilaHyper chain: loss, seed, weighting, model and data overrides stay; `optim.lr` and warmup are the fine-tune's own 3e-4 and 30; the walltime left minus 10 min is the fine-tune's guard). Chain smoke 23313287 (gpuA40x4-interactive): stage 1 one epoch 504 s, then the fine-tune one epoch 12 s, both exit 0, the fine-tune initialized from the stage-1 `last.pt` written minutes before. Production resubmitted as 23313273-23313283 (ten jobs, `STOP_HOURS=16` for stage 1, 24 h walltime, `CHAIN_FT=1`), round `delta_2026_10_28`.
+
+## 2026.10.29 - Wave 9 read: the lr-half recipe holds at five seeds; HL-Gauss does not take the lr lever
+
+Statistic throughout: mean over epochs 41-50 of the validation metric named in the header (fine-tunes: epochs 16-20), from `wandb_view_043.py --round ghyper_sweep_2026_10_24 --window-means` (`results/ghyper_sweep_2026_10_24_window_means.json`); seed rows are means (sd over seeds, n).
+
+| arm (loss, operator injection, bs 16, 50 epochs) | n seeds | doubles Pearson, strain-centered median | Muenzner Pearson per gene median | Caudal Pearson per gene median | Kemmeren Pearson per gene median | Vaishnav Pearson | fine-tune Kemmeren per gene median (16-20) | fine-tune doubles (16-20) |
+|---|---|---|---|---|---|---|---|---|
+| pinball, lr 3e-4 | 4 | 0.2549 (0.019) | 0.2176 (0.010) | 0.1611 (0.012) | 0.1007 (0.027) | 0.9036 (0.007) | 0.1277 (0.021) | 0.2621 (0.019) |
+| **pinball, lr 1.5e-4** (recipe v3) | **5** | **0.2597 (0.012)** | **0.2320 (0.013)** | **0.1779 (0.006)** | 0.0986 (0.015) | 0.8695 (0.009) | 0.1238 (0.011) | **0.2743 (0.017)** |
+| HL-Gauss, lr 3e-4 (`gs1024_w5_onto_inject_op_s2`, the one seed still at 50 epochs) | 1 | 0.2590 | 0.2347 | 0.1681 | 0.1075 | 0.9196 | 0.1204 (0.008, n = 6 fine-tunes of this arm incl. the 80-epoch cells) | 0.2463 (0.018) |
+| HL-Gauss, lr 1.5e-4 (`gs1024_w9_hlgauss_injop_lrhalf`) | 1 | 0.2491 | 0.1978 | 0.1391 | 0.1135 | 0.8920 | 0.1298 | 0.2419 |
+
+- **Fifth seed of recipe v3** (`gs1024_w9_pinball_injop_lrhalf_s4`, job 6581, 3 h 57 min): doubles 0.2560, Muenzner 0.2147, Caudal 0.1709, Kemmeren 0.0875, Vaishnav 0.8592; fine-tune (6582) Kemmeren 0.1271, doubles 0.2912 (the best fine-tune doubles value of the round, a single seed). The five-seed means move little from the four-seed ones (doubles 0.2606 to 0.2597, Muenzner 0.2363 to 0.2320, Caudal 0.1797 to 0.1779) and the seed sd on doubles drops to 0.012. The lr-half gains over lr 3e-4 on Muenzner (+0.014) and Caudal (+0.017) each exceed one seed sd of both arms; the doubles gain (+0.005) does not. Vaishnav stays the cost (0.870 vs 0.904, 3.5 sd).
+- **HL-Gauss at lr 1.5e-4** (`gs1024_w9_hlgauss_injop_lrhalf`, job 6583, 3 h 53 min, one seed): below its lr 3e-4 twin on doubles, Muenzner and Caudal, and below the pinball lr-half five-seed band on Muenzner (0.198 vs 0.232, sd 0.013) and Caudal (0.139 vs 0.178, sd 0.006). Measured at one seed, so the arm is not closed yet; a second seed (`gs1024_w9_hlgauss_injop_lrhalf_s1`, job 6590, fine-tune 6591) runs now and decides it. Hypothesis (untested): the lr lever is specific to the pinball objective rather than a general property of the recipe.
+- **Pinball loss was still falling at epoch 50** in every lr-half cell (val/loss 0.245 at 50, from the curve cache `results/figure_043_curves.csv`), so recipe v3 now runs to 80 epochs at one seed (`gs1024_w9_pinball_injop_lrhalf_ep80`, job 6592, window 71-80, fine-tune 6593; projection 5.6 h of training). Route B at batch 8 under the recipe (`gs1024_w9_routeB_bs8_pinball_injop_lrhalf`, job 6587) is at hour 4 of its 7,102-step epochs; fine-tune 6588 is held behind it.
+- Both new cells were submitted unheld because two cards were free (the slot manager's lists hold only 6587/6588); their fine-tunes are slurm `afterany` dependencies, which is the chaining case and costs no queue age on GilaHyper.
+
+W&B runs (the view `?nw=` ids are in `results/wandb_view_ids.json`; the round view is `https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=sjpdqsr7yjg`):
+
+- `gs1024_w9_pinball_injop_lrhalf_s4`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lrhalf_s4
+- `gs1024_w9_hlgauss_injop_lrhalf`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_hlgauss_injop_lrhalf
+- `gs1024_w9_pinball_injop_lrhalf_s4_ft`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lrhalf_s4_ft
+
+### Route B at batch 8 under recipe v3 trains to 50 epochs without collapsing (04:30 CDT)
+
+`gs1024_w9_routeB_bs8_pinball_injop_lrhalf` (job 6587, 5 h 51 min, exit 0; fine-tune 6588): `operator/relative_norm` rose 0.32 (epoch 1), 0.46 (10), 0.59 (20), 0.72 (30), 0.82 (40), 0.96 (50) with no blow-up (the batch-16 route B cells reached 12.5 by epoch 35 and locked doubles at -0.0883), the second route B cell at batch 8 to finish cleanly after the HL-Gauss one (`gs1024_w8_routeB_bs8`). Window 41-50 means, one seed, against route A recipe v3 (five seeds): doubles 0.2509 (route A 0.2597, sd 0.012), Muenzner 0.1637 (0.2320, sd 0.013), Caudal 0.1534 (0.1779, sd 0.006), Kemmeren 0.1026 (0.0986), Vaishnav 0.9038 (0.8695, sd 0.009); fine-tune Kemmeren 0.1254, doubles 0.2683. Route B gives back the Vaishnav cost of the lr lever and loses more than five seed sd on Muenzner and Caudal; the route B HL-Gauss cell at batch 8 showed the same shape (Vaishnav 0.9248, Muenzner 0.1657). Measured at one seed per cell; no mechanism claimed. The still-rising operator norm at epoch 50 is a watch item for any route B run past 50 epochs. Bookkeeping: the trainer's arm label does not carry the route (`all_onto_injop_pinball_equal_lr0.00015` names both routes), so seed means over that label must exclude the `routeB_` run ids by hand until the label gains a route token (a labeling change, left for the owner).
+
+Third free card: recipe v3 at 80 epochs, seed 1 (`gs1024_w9_pinball_injop_lrhalf_ep80_s1`, job 6594, fine-tune 6595), so the epoch-budget question gets two seeds by the afternoon.
+
+- `gs1024_w9_routeB_bs8_pinball_injop_lrhalf`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_routeB_bs8_pinball_injop_lrhalf
+
+### 80 epochs of recipe v3: the per-gene heads keep climbing after the pooled validation loss stops (10:50 CDT)
+
+`gs1024_w9_pinball_injop_lrhalf_ep80` (job 6592, 6 h 10 min, exit 0; `optim.schedule: constant`, so the only change against the 50-epoch cells is 30 more epochs at the same lr). Window 71-80 means, one seed, against the 50-epoch recipe at five seeds (window 41-50): doubles 0.2771 (0.2597, sd 0.012), Muenzner 0.2707 (0.2320, sd 0.013), Caudal 0.1834 (0.1779, sd 0.006), Kemmeren 0.1033 (0.0986), Vaishnav 0.9049 (0.8695, sd 0.009); fine-tune (6593) Kemmeren 0.1217, doubles 0.2841. Muenzner is three seed sd above the 50-epoch band and Vaishnav is back at the lr 3e-4 level, so at one seed the 80-epoch budget removes the Vaishnav cost of the lr lever rather than trading it. The pooled validation loss does not see this: `val/loss_best` 0.2465 at epoch 38, then 0.2481 (50), 0.2542 (60), 0.2489 (70), 0.2473 (80), while `val/protein/pearson_per_gene_median` rose 0.126 (40), 0.171 (50), 0.188 (60), 0.197 (70), 0.204 (80) and `val/promoter/pearson` 0.868 to 0.908 over the same epochs (single-epoch values from the slurm log). Measured on one seed; the pooled loss is weighted by records (Vaishnav 0.30, Nadal 0.21, Messner 0.18, the per-gene heads 0.03 to 0.07), which is a candidate explanation of the mismatch, untested. Seed 1 (job 6594, hour 4.7 of 6) and seed 2 (`gs1024_w9_pinball_injop_lrhalf_ep80_s2`, job 6596, fine-tune 6597) follow; the 120-epoch cell (`gs1024_w9_pinball_injop_lrhalf_ep120`, job 6598, `STOP_HOURS=11.5` under the 12 h walltime, window 106-120, fine-tune 6599) asks whether the climb continues. Decision pending on seed 1: the Delta production round and the Aurora grid both run 50 epochs; moving Delta to 80 epochs means cancel and resubmit, which forfeits the queue age accrued since Oct 28.
+
+**HL-Gauss at lr 1.5e-4, second seed** (`gs1024_w9_hlgauss_injop_lrhalf_s1`, job 6590, 3 h 56 min): doubles 0.2565, Muenzner 0.2199, Caudal 0.1690, Kemmeren 0.1158, Vaishnav 0.8789; fine-tune (6591) Kemmeren 0.1492, doubles 0.2376. Two-seed means: doubles 0.2528 (sd 0.005), Muenzner 0.2088 (0.016), Caudal 0.1541 (0.021), Kemmeren 0.1146 (0.002), Vaishnav 0.8854 (0.009). Against pinball at the same lr and five seeds: Muenzner 0.023 lower (1.8 pinball sd), Caudal 0.024 lower (4 sd), doubles 0.007 lower (within sd), Kemmeren 0.016 higher (one pinball sd), fine-tune Kemmeren 0.1395 vs 0.1238 (two seeds vs five). The HL-Gauss twin is closed for the recipe: no head where the lr lever lifted it above pinball except Kemmeren, which stays below ridge on frozen tokens (0.131) in both arms. Pinball stays the loss.
+
+- `gs1024_w9_pinball_injop_lrhalf_ep80`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lrhalf_ep80
+- `gs1024_w9_pinball_injop_lrhalf_ep80_ft`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lrhalf_ep80_ft
+- `gs1024_w9_hlgauss_injop_lrhalf_s1`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_hlgauss_injop_lrhalf_s1
+
+### 80 epochs, second seed: confirmed (13:20 CDT)
+
+`gs1024_w9_pinball_injop_lrhalf_ep80_s1` (job 6594, 6 h 25 min, exit 0), window 71-80: doubles 0.2689, Muenzner 0.2622, Caudal 0.2067, Kemmeren 0.1082, Vaishnav 0.8992; fine-tune (6595) Kemmeren 0.1358, doubles 0.2625. Two-seed means of the 80-epoch recipe against the 50-epoch recipe at five seeds:
+
+| metric (validation, window mean) | 50 epochs, 5 seeds (41-50) | 80 epochs, 2 seeds (71-80) | gain in 50-epoch seed sd |
+|---|---|---|---|
+| doubles Pearson, strain-centered median | 0.2597 (0.012) | 0.2730 (0.006) | +1.1 |
+| Muenzner Pearson per gene median | 0.2320 (0.013) | 0.2664 (0.006) | +2.6 |
+| Caudal Pearson per gene median | 0.1779 (0.006) | 0.1950 (0.016) | +2.9 |
+| Kemmeren Pearson per gene median | 0.0986 (0.015) | 0.1057 (0.003) | +0.5 |
+| Vaishnav Pearson | 0.8695 (0.009) | 0.9021 (0.004) | +3.6 |
+| fine-tune Kemmeren per gene median (16-20) | 0.1238 (0.011) | 0.1287 | +0.4 |
+| fine-tune doubles (16-20) | 0.2743 (0.017) | 0.2733 | 0 |
+
+Every stage-1 head moves up, Muenzner, Caudal and Vaishnav by more than 2.5 seed sd; the fine-tune does not move (Kemmeren alone saturates in 20 epochs from either start). The 80-epoch budget is the recipe v4 candidate for every machine; the Delta round (ten jobs, started 09:21 to 10:30 CDT today, not Nov 1 as `sbatch --test-only` had estimated) and the Aurora v3 grid run 50 epochs as submitted and stay that way. Open on the cards: seed 2 (6596) and the 120-epoch cell (6598); new on the freed card, lr 3e-4 at 80 epochs (`gs1024_w9_pinball_injop_lr3e4_ep80`, job 6600, fine-tune 6601), which asks whether the lr lever is still needed once the budget is 80 epochs (hypothesis, untested: the lr-half gain at 50 epochs was partly a budget effect).
+
+- `gs1024_w9_pinball_injop_lrhalf_ep80_s1`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lrhalf_ep80_s1
+
+### 80 epochs at three seeds: Muenzner and Vaishnav hold, doubles and Caudal fall back into the noise; lr 3e-4 at 80 epochs loses doubles (17:45 CDT)
+
+Correction to the two-seed table above: seed 2 (`gs1024_w9_pinball_injop_lrhalf_ep80_s2`, job 6596) came in low on every head (doubles 0.2552, Muenzner 0.2525, Caudal 0.1634, Vaishnav 0.8908; fine-tune 6597 Kemmeren 0.1149, doubles 0.2666), so "every stage-1 head up" was a two-seed statement that does not survive the third seed.
+
+| metric (validation, window mean) | 50 epochs, 5 seeds (41-50) | 80 epochs, 3 seeds (71-80) | gain in 50-epoch seed sd |
+|---|---|---|---|
+| doubles Pearson, strain-centered median | 0.2597 (0.012) | 0.2671 (0.011) | +0.6 |
+| Muenzner Pearson per gene median | 0.2320 (0.013) | 0.2618 (0.009) | +2.3 |
+| Caudal Pearson per gene median | 0.1779 (0.006) | 0.1845 (0.022) | +1.1, with a 4x wider seed spread |
+| Kemmeren Pearson per gene median | 0.0986 (0.015) | 0.1061 (0.003) | +0.5 |
+| Vaishnav Pearson | 0.8695 (0.009) | 0.8983 (0.007) | +3.2 |
+| fine-tune Kemmeren per gene median (16-20) | 0.1238 (0.011) | 0.1241 (0.011) | 0 |
+| fine-tune doubles (16-20) | 0.2743 (0.017) | 0.2711 (0.011) | 0 |
+
+What holds at three seeds: Muenzner (+0.030) and Vaishnav (+0.029, the lr lever's cost gone). What does not: doubles and Caudal are within one seed sd, and the fine-tune is unchanged. Seeds 3 and 4 (`gs1024_w9_pinball_injop_lrhalf_ep80_s3`, job 6606, fine-tune 6607; `_s4`, job 6608, fine-tune 6609) bring the 80-epoch arm to the same five seeds as the 50-epoch table.
+
+**lr 3e-4 at 80 epochs, one seed** (`gs1024_w9_pinball_injop_lr3e4_ep80`, job 6600, 6 h 37 min): doubles 0.2182, Muenzner 0.2616, Caudal 0.1734, Kemmeren 0.1096, Vaishnav 0.9237; fine-tune (6601) Kemmeren 0.1366, doubles 0.2233. `operator/relative_norm` sat at 1.27 to 1.34 over epochs 74-80 (lr-half at 80 epochs: 0.72), and the per-epoch doubles value swung 0.19 to 0.25 across the window. Against lr-half at 80 epochs (three seeds): doubles 0.049 lower (4.5 sd), Muenzner equal, Caudal within sd, Vaishnav 0.025 higher (3.6 sd), fine-tune Kemmeren 0.012 higher (one sd). The lr lever is still needed at 80 epochs for doubles; it costs Vaishnav at either budget, less at 80. One seed, no mechanism claimed.
+
+- `gs1024_w9_pinball_injop_lrhalf_ep80_s2`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lrhalf_ep80_s2
+- `gs1024_w9_pinball_injop_lr3e4_ep80`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lr3e4_ep80
+
+### Aurora v3 grid complete: six arms x four seeds at 80 epochs (18:00 CDT)
+
+Jobs 8973596/8973597 (two nodes, 12 tiles each, 44 h 20 min, 0 faults): 24 cells, each 80 stage-1 epochs then the 20-epoch Kemmeren fine-tune in the same allocation. Statistic: mean over epochs 71-80 of the validation metric named in the header (fine-tunes 17-20), four seeds per arm, sd over seeds (`wandb_view_043.py --round aurora_v3_2026_10_27 --window-means`, `results/aurora_v3_2026_10_27_window_means.json`). The lr-half arm shares the W&B arm label with lr 3e-4 on Aurora (`all_onto_injop_pinball_equal`; the label carries no lr there), so the two rows below were split by run id (`a1027_all_onto_pinball_injop_equal_lrhalf_v3_s*`).
+
+| arm (ontology conditioning, bs 16, 80 epochs) | doubles Pearson, strain-centered median | Muenzner Pearson per gene median | Caudal Pearson per gene median | Kemmeren Pearson per gene median | Vaishnav Pearson | fine-tune Kemmeren per gene median (17-20) | fine-tune doubles (17-20) |
+|---|---|---|---|---|---|---|---|
+| HL-Gauss, equal | 0.1916 (0.008) | 0.2286 (0.011) | 0.1751 (0.005) | 0.0805 (0.008) | 0.9242 (0.003) | 0.1143 (0.009) | 0.2358 (0.009) |
+| HL-Gauss, operator injection | 0.2408 (0.006) | 0.2273 (0.007) | 0.1693 (0.020) | 0.1005 (0.023) | **0.9256 (0.003)** | 0.1208 (0.019) | 0.2469 (0.016) |
+| pinball, equal | 0.2379 (0.011) | 0.2561 (0.011) | 0.1672 (0.011) | 0.0963 (0.007) | 0.9194 (0.006) | 0.1223 (0.013) | 0.2658 (0.019) |
+| pinball, operator injection, lr 3e-4 | 0.2540 (0.012) | 0.2516 (0.010) | 0.1717 (0.010) | **0.1086 (0.005)** | 0.9172 (0.006) | 0.1261 (0.014) | 0.2473 (0.018) |
+| pinball, operator injection, lr 1.5e-4 | 0.2441 (0.016) | **0.2632 (0.014)** | **0.1809 (0.020)** | 0.1058 (0.014) | 0.8989 (0.007) | 0.1214 (0.011) | 0.2648 (0.023) |
+| pinball, operator injection, records weighting | **0.2713 (0.010)** | 0.2298 (0.018) | 0.1646 (0.005) | 0.1010 (0.004) | 0.9206 (0.007) | **0.1287 (0.015)** | **0.2832 (0.010)** |
+
+- **Pinball over HL-Gauss, again:** at equal weighting without injection, doubles 0.238 vs 0.192 and Muenzner 0.256 vs 0.229 (4 vs 4 seeds); with injection, doubles 0.254 vs 0.241, Muenzner 0.252 vs 0.227. HL-Gauss leads only Vaishnav (0.926 vs 0.917).
+- **Operator injection** lifts doubles in both losses (HL-Gauss +0.049, pinball +0.016) and Kemmeren (+0.020, +0.012) without moving the per-gene isolate heads.
+- **The lr lever at 80 epochs, four seeds per arm:** Muenzner +0.012 (0.9 sd), Caudal +0.009 (0.5 sd), doubles -0.010 (0.7 sd), Vaishnav -0.018 (3 sd). At this budget the lr-half gain seen at 50 epochs on GilaHyper is inside the seed noise on Aurora, and the Vaishnav cost remains. This differs from the single GilaHyper lr 3e-4 80-epoch cell (doubles 0.218); the four Aurora lr 3e-4 seeds sit at 0.254 (0.012). Cross-machine offsets are also visible on the matched arm: lr-half at 80 epochs gives doubles 0.267 (0.011, three seeds) on GilaHyper and 0.244 (0.016, four seeds) on Aurora, Muenzner 0.262 vs 0.263. Measured; no cause assigned (hardware, bf16 paths and the one-tile-per-cell placement all differ).
+- **Records weighting** gives the best doubles (0.271) and the best fine-tune (Kemmeren 0.129, doubles 0.283) while putting Muenzner (0.230) and Caudal (0.165) at the bottom of the pinball arms, the same trade GilaHyper showed at 50 epochs. No arm wins every head; the choice between equal and records weighting is a choice between the isolate heads and the doubles head.
+
+**Aurora v4, job a** (18:45 CDT): tree re-synced to 304c5a194 (28 files; the only training-path changes since 48429ba0 are the two mypy edits in `representation_043.py` and `equivariant_cell_graph_transformer.py`), then `qsub -N 043-v4-a -l walltime=60:00:00 -v ARM=frameworks,GRID=aurora_grid_043_v4_a.tsv aurora_train_043_stack.pbs` = job 8987532 (capacity queue, 1 node x 12 tiles, 80 epochs, run ids `a1029_<cell>`, round `aurora_v4_2026_10_29`). Cells: seeds 4-6 of the three v3 pinball-injection arms (equal at lr 1.5e-4, equal at lr 3e-4, records at lr 3e-4), which brings each to seven seeds with v3, and seeds 0-2 of records weighting at lr 1.5e-4, the one combination not yet run at 80 epochs. Job b (the second node) waits on the 120-epoch GilaHyper cell (6598) to set its budget.
+
+### 120 epochs, one seed: Muenzner and Vaishnav keep climbing, doubles and Caudal do not (19:00 CDT)
+
+`gs1024_w9_pinball_injop_lrhalf_ep120` (job 6598, 9 h 20 min, exit 0; window 106-120, 15 evaluations), against the 80-epoch recipe at three seeds (71-80): doubles 0.2762 (0.2671, sd 0.011), Muenzner 0.2891 (0.2618, sd 0.009, +3 sd), Caudal 0.1702 (0.1845, sd 0.022), Kemmeren 0.0969 (0.1061), Vaishnav 0.9193 (0.8983, sd 0.007, +3 sd); fine-tune (6599) Kemmeren 0.1257, doubles 0.2875. Within the same run the doubles window mean is 0.2676 (41-50), 0.2696 (71-80), 0.2762 (106-120): flat inside its epoch-to-epoch sd of 0.014. The pooled `val/loss` best stayed at 0.2455 (epoch 38 region) through epoch 120. Muenzner has now moved 0.232 (50 epochs) to 0.262 (80) to 0.289 (120) and Vaishnav 0.870 to 0.898 to 0.919 with no sign of a plateau, each at a single seed beyond 80; doubles and Caudal are budget-insensitive past 50. Aurora v4 job b takes the budget question to three seeds per arm at 120 epochs: `aurora_grid_043_v4_b.tsv`, `qsub -N 043-v4-b -l walltime=84:00:00 -v ARM=frameworks,GRID=aurora_grid_043_v4_b.tsv aurora_train_043_stack.pbs` = job 8987590 (queued 19:05 CDT behind job a, which started 18:45; the capacity queue allows two running jobs per user and 168 h), cells `all_onto_<arm>_v4e120_s{0,1,2}` for the four job-a arms, window 106-120 with 71-80 and 41-50 read from the same runs (`extra_windows`). Projected 74 h of stage 1 at 37 min per epoch plus the fine-tune.
+
+### IGB cabbi smoke passed; two 120-epoch cells queued there (19:45 CDT)
+
+Smoke 2434938 (`igb_smoke_043_20261028`, compute-3-3, RTX 6000 Ada, torch 2.8.0 / PyG 2.7.0, two loader workers) ran 18:36 to 18:44 CDT after 20 h in the queue: 0.071 s/step, 279 s for the epoch with evaluation, peak GPU 7.9 GB, val/loss 0.2734 at epoch 1 against 0.2744 on GilaHyper (job 6564) and 0.2738 on Delta (23309265): the IGB card runs the recipe at GilaHyper speed (Delta's A40 takes 504 s). The offline W&B run was pulled to GilaHyper and synced with `wandb sync` (IGB's wandb cannot sync from the login node, [[igb-wandb-022-cannot-sync-unfinished-runs]]); offline runs for the production cells live under `$DATA_ROOT/experiments/043-expression-proteome-morphology/wandb-igb/wandb/` on IGB and are synced the same way after each cell ends. Production, round `igb_cabbi_2026_10_29`: the lr-half recipe at 120 epochs, seeds 1 and 2 (`igb1029_pinball_injop_lrhalf_ep120_s{1,2}`, jobs 2435763/2435765, 20 h stop, window 106-120 with 71-80 and 41-50 from the same runs), each with its Kemmeren fine-tune as an `afterany` dependency (2435764/2435766; the IGB launcher has no in-job chain). GilaHyper holds seed 0 of the same cell, so the GilaHyper-class 120-epoch read reaches three seeds without taking a GilaHyper card. The cells queue behind the same six jobs the smoke waited on (four 046 workers plus two other users' interactive jobs); whether 043 takes more cabbi cards than the 046 workers leave free is the owner's call.
+
+- `igb_smoke_043_20261028`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/igb_smoke_043_20261028
+
+### Delta: seven of ten cells died in one filesystem event; two completed cells match GilaHyper; seven resubmitted (20:00 CDT)
+
+Jobs 23313274/76/77 (lr-half seeds 1-3) and 23313279/81/82/83 (lr 3e-4 seeds 0, 2, 3, 4) all exited 1 at 16:13:47 CDT within 20 s of each other, each inside `save_atomic` with `RuntimeError: Parent directory .../checkpoints/<arm>/<run> does not exist`. The directories exist now, with each failed run's `last.pt` dated 11:22-11:23 CDT; the failed runs' last epoch lines (29, 27, 26, 15, 11, 11, 11) place their last finished epoch near 11:30, so the jobs hung on the next save for 4.7 h before the error surfaced. The three cells on other nodes (lr-half seeds 0 and 4 on gpub036/gpub079, lr 3e-4 seed 1 on gpub018) kept saving through the same hours. Measured: simultaneous failure of seven jobs on seven nodes (gpub046, 049, 029, 070, 013, 031, 048) at one timestamp, intact directories afterwards, no change in our code or data between the saves that worked and the one that did not. Hypothesis (not verified with NCSA): a `/scratch` Lustre outage on part of the gpub rack from about 11:30 to 16:13. Resubmitted with identical knobs and the same resume ids, so each resumes from its 11:23 `last.pt` (epoch 28, 26, 25, 14, 10, 10, 10): jobs 23325753-23325755 (lr-half seeds 1-3) and 23325756-23325759 (lr 3e-4 seeds 0, 2, 3, 4), `CHAIN_FT=1`, no dependencies; queue age restarts from 20:00 CDT.
+
+Completed Delta cells (A40, 504 s per epoch, window 41-50) against the GilaHyper lr-half five-seed band: `d1028_pinball_injop_lrhalf_s0` doubles 0.2690 (GilaHyper 0.2597, sd 0.012), Muenzner 0.2441 (0.2320, sd 0.013), Caudal 0.1813 (0.1779), Kemmeren 0.0905 (0.0986), Vaishnav 0.8798 (0.8695); fine-tune Kemmeren 0.1140, doubles 0.2562. `d1028_pinball_injop_lrhalf_s4` doubles 0.2361, Muenzner 0.2375, Caudal 0.1735, Kemmeren 0.0893, Vaishnav 0.8586; fine-tune Kemmeren 0.1056, doubles 0.2682. Both Delta seeds sit within two GilaHyper seed sd on every head, so the A40 reproduces the GilaHyper recipe where Aurora shows a doubles offset. Fine-tune window on Delta is 17-20 (the chain's `budget.registered_window.start_frac=0.8` on 20 epochs rounds differently from the GilaHyper fine-tune's 16-20).
+
+- `d1028_pinball_injop_lrhalf_s0`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/d1028_pinball_injop_lrhalf_s0
+- `d1028_pinball_injop_lrhalf_s4`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/d1028_pinball_injop_lrhalf_s4
+
+### 043 stood down on GilaHyper and IGB cabbi (20:40 CDT)
+
+Owner: "i have little confidence in this rn. i want to cancel all 043 exps on cabbi for now ... we are going to reallocate to our metabolic study. do so for ghyper too." Cancelled: GilaHyper 6606/6607 (80-epoch seed 3 at epoch ~37 of 80 and its fine-tune) and 6608/6609 (seed 4 at epoch ~29); IGB 2435763-2435766 (the two 120-epoch cells at epoch ~13 and their fine-tunes). The partial runs carry no result; their W&B runs stay as partial records. The 80-epoch arm on GilaHyper therefore stays at three seeds (0-2). Aurora v4 (jobs 8987532, 8987590), the Delta round (23313280 running, 23325753-23325759 resuming) and the Polaris lane were not named and continue.
+
+## 2026.10.30 - Delta: lr 3e-4 seed 1 completed; the seven resubmitted cells failed at start; socket lost
+
+- `d1028_pinball_injop_lr3e4_s1` (23313280, 11 h 45 min with the in-job fine-tune, completed 21:27 CDT Oct 29), window 41-50: doubles 0.2108, Muenzner 0.2073, Caudal 0.1548, Kemmeren 0.0885, Messner 0.0756, Vaishnav 0.9014; fine-tune (17-20) Kemmeren 0.1160, doubles 0.2410. Against the GilaHyper lr 3e-4 four-seed band (doubles 0.2549 sd 0.019, Muenzner 0.2176 sd 0.010, Vaishnav 0.9036 sd 0.007) this seed is 2.3 sd low on doubles and inside the band elsewhere; one seed, so not a machine claim. Delta round so far: three of ten cells complete (lr-half seeds 0 and 4, lr 3e-4 seed 1).
+- The seven resubmitted cells (23325753-23325759) started 07:45 to 08:07 CDT and each FAILED after 73 to 146 s, before any epoch. The 20:00 resubmission used the original knobs and resume ids, so the failure is in staging or in resuming from the 11:23 `last.pt`; the cause is unread because the Delta ControlMaster socket died while the log was being fetched (`Control socket ... No such file or directory`, 08:40 CDT). Next step once the socket is back: `tail` of `slurm/output/043-d-lrhalf_s1_23325753.out`, then either fix the resume path or resubmit fresh under new resume ids.
+
+- `gs1024_w9_pinball_injop_lrhalf_ep120`: https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/gs1024_w9_pinball_injop_lrhalf_ep120
+
+W&B (view ids in `results/wandb_view_ids.json`): round view
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=4ebtcp2r4ky
+
+## 2026.10.31 - Aurora v4 job a complete: weighting trades doubles against the isolate heads; the fine-tune erases the pretraining differences
+
+Job 8987532 (1 node x 12 tiles, 53 h 35 min, 0 faults; cells done 20:10 to 21:28 CDT): 12 cells, each 80 stage-1 epochs then the 20-epoch Kemmeren fine-tune in the same allocation. Statistic: mean over epochs 71-80 of the validation metric named in the header (fine-tunes 17-20), three seeds per arm, sd over seeds (`wandb_view_043.py --round aurora_v4_2026_10_29 --window-means`, `results/aurora_v4_2026_10_29_window_means.json`; the 41-50 window of the same runs is in `means_41_50`). The W&B arm label carries neither lr nor route, so rows are split by run id (`a1029_all_onto_pinball_injop_<equal|records>[_lrhalf]_v4_s*`).
+
+| arm (pinball, operator injection, ontology conditioning, bs 16, 80 epochs) | seeds | doubles Pearson, strain-centered median | Muenzner Pearson per gene median | Caudal Pearson per gene median | Kemmeren Pearson per gene median | Vaishnav Pearson | fine-tune Kemmeren per gene median (17-20) | fine-tune doubles (17-20) |
+|---|---|---|---|---|---|---|---|---|
+| equal, lr 1.5e-4 | 4-6 | 0.2562 (0.017) | **0.2636 (0.011)** | **0.1844 (0.009)** | **0.1148 (0.005)** | 0.8883 (0.009) | **0.1259 (0.003)** | 0.2690 (0.007) |
+| equal, lr 3e-4 | 4-6 | 0.2401 (0.029) | 0.2728 (0.005) | 0.1805 (0.006) | 0.1002 (0.013) | 0.9125 (0.004) | 0.1240 (0.013) | 0.2495 (0.050) |
+| records, lr 3e-4 | 4-6 | 0.2767 (0.016) | 0.2221 (0.009) | 0.1591 (0.017) | 0.1020 (0.007) | **0.9138 (0.004)** | 0.1205 (0.017) | 0.2673 (0.023) |
+| records, lr 1.5e-4 (new) | 0-2 | **0.2777 (0.014)** | 0.2196 (0.008) | 0.1665 (0.006) | 0.0982 (0.012) | 0.9033 (0.007) | 0.1249 (0.019) | **0.2786 (0.007)** |
+
+Pooled with the v3 seeds (0-3) of the same cells, seven seeds per arm at 80 epochs on Aurora:
+
+| arm (pinball, operator injection, 80 epochs, Aurora) | doubles Pearson, strain-centered median | Muenzner Pearson per gene median | Caudal Pearson per gene median | Kemmeren Pearson per gene median | Vaishnav Pearson | fine-tune Kemmeren per gene median (17-20) | fine-tune doubles (17-20) |
+|---|---|---|---|---|---|---|---|
+| equal, lr 1.5e-4 | 0.2493 (0.016) | **0.2633 (0.012)** | **0.1824 (0.015)** | **0.1097 (0.012)** | 0.8943 (0.009) | 0.1233 (0.008) | 0.2666 (0.017) |
+| equal, lr 3e-4 | 0.2481 (0.020) | 0.2607 (0.014) | 0.1754 (0.009) | 0.1050 (0.009) | 0.9152 (0.006) | 0.1252 (0.012) | 0.2483 (0.032) |
+| records, lr 3e-4 | **0.2736 (0.012)** | 0.2265 (0.014) | 0.1622 (0.011) | 0.1014 (0.005) | **0.9177 (0.007)** | 0.1252 (0.015) | **0.2764 (0.017)** |
+
+- **Weighting is the one lever that moves the heads by more than the seed noise, and it moves them in opposite directions.** Records weighting against equal weighting at seven seeds, lr 3e-4: doubles +0.026 (1.3 sd), Muenzner -0.034 (2.4 sd), Caudal -0.013 (1.3 sd), Vaishnav +0.003. The new records lr-half arm reproduces the trade at three seeds against equal lr-half: doubles +0.022, Muenzner -0.044, Caudal -0.018, Vaishnav +0.015. No arm leads on more than three of the five heads.
+- **The lr lever is now inside the noise everywhere except Vaishnav.** Equal lr 1.5e-4 against lr 3e-4 at seven seeds: doubles +0.001, Muenzner +0.003, Caudal +0.007, Kemmeren +0.005, Vaishnav -0.021 (2.8 sd). Records lr 1.5e-4 against records lr 3e-4 (3 vs 7 seeds): doubles +0.004, Muenzner -0.007, Caudal +0.004, Vaishnav -0.014. The lr-half gain on Muenzner seen at 50 epochs on GilaHyper (+0.014 over five seeds) does not survive 80 epochs and seven seeds on Aurora; its Vaishnav cost does.
+- **The fine-tune erases the stage-1 differences.** Fine-tune Kemmeren across all four arms spans 0.1205 to 0.1259 with per-arm sd 0.003 to 0.019, so no arm's pretraining produces a better Kemmeren head after 20 epochs on Kemmeren alone; the 50-epoch GilaHyper fine-tune band (0.1238, sd 0.011, five seeds) sits inside the same range. Fine-tune doubles tracks the stage-1 doubles (records 0.277-0.279 against equal 0.250-0.269), as expected from a fine-tune that no longer trains doubles.
+- **Budget, read within the same runs (41-50 against 71-80):** Muenzner +0.037 to +0.044 on every arm (equal 0.231 to 0.273, equal lr-half 0.226 to 0.264, records 0.182 to 0.222, records lr-half 0.176 to 0.220) and Vaishnav +0.019 to +0.024; the twelve new seeds agree with the GilaHyper 80- and 120-epoch cells that these two heads are budget-bound. Doubles moves with budget in no consistent direction (equal +0.003, equal lr-half -0.011, records +0.014, records lr-half +0.004), Caudal +0.013 to +0.017.
+- **The cross-machine offset on the matched arm narrows but holds.** Equal lr-half at 80 epochs: GilaHyper doubles 0.2671 (0.011, three seeds), Aurora 0.2493 (0.016, seven seeds), a 1.3 sd gap on the pooled sd; Muenzner 0.2618 against 0.2633, Caudal 0.1845 against 0.1824, Kemmeren 0.1061 against 0.1097, Vaishnav 0.8983 against 0.8943. Only the doubles head carries the offset. Measured; no cause assigned.
+
+Job b (8987590, the same four arms at 120 epochs, seeds 0-2) was at epochs 82-84 of 120 at 22:20 CDT with 0 faults, 51 h 20 min into its 84 h walltime; at 37 min per epoch it reaches epoch 120 near 21:00 CDT Nov 1 plus the fine-tune, inside the walltime. Its 71-80 and 41-50 windows will be read from the same runs when it ends.
+
+W&B (view ids in `results/wandb_view_ids.json`): round view
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=liewt7v10e7
+equal-weighting arm (lr 1.5e-4 and lr 3e-4 share the label)
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=g6u1hzg8gay
+records-weighting arm
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=cyfot9qwjd9
+fine-tunes from the equal-weighting arm
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=b38c6ltsx12
+fine-tunes from the records-weighting arm
+https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology?nw=to83nt5n6vs
+
+- `a1029_all_onto_pinball_injop_records_lrhalf_v4_s0` (best doubles arm, seed 0): https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/a1029_all_onto_pinball_injop_records_lrhalf_v4_s0
+- `a1029_all_onto_pinball_injop_equal_lrhalf_v4_s4` (best isolate-head arm, seed 4): https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/a1029_all_onto_pinball_injop_equal_lrhalf_v4_s4
+
+## 2026.11.01 - Aurora v4 job b complete: 120 epochs at three seeds per arm; Muenzner and Vaishnav still climbing; the fine-tune after 120 epochs reaches 0.128-0.137
+
+Job 8987590 (1 node x 12 tiles, 76 h 45 min, 0 faults; cells done 19:50 to 21:46 CDT): the four job-a arms at 120 stage-1 epochs, seeds 0-2, then the 20-epoch Kemmeren fine-tune in the same allocation. Statistic: mean over epochs 106-120 of the validation metric named in the header (fine-tunes 17-20), three seeds per arm, sd over seeds (`wandb_view_043.py --round aurora_v4_2026_10_29 --window-means`, same JSON as job a; `means_71_80` and `means_41_50` hold the earlier windows of the same runs). Rows split by run id (`a1029_all_onto_pinball_injop_<equal|records>[_lrhalf]_v4e120_s*`).
+
+| arm (pinball, operator injection, ontology conditioning, bs 16, 120 epochs) | doubles Pearson, strain-centered median | Muenzner Pearson per gene median | Caudal Pearson per gene median | Kemmeren Pearson per gene median | Vaishnav Pearson | fine-tune Kemmeren per gene median (17-20) | fine-tune doubles (17-20) |
+|---|---|---|---|---|---|---|---|
+| equal, lr 1.5e-4 | 0.2659 (0.011) | **0.2792 (0.006)** | 0.1725 (0.007) | 0.1084 (0.018) | 0.9145 (0.005) | 0.1282 (0.017) | 0.2715 (0.013) |
+| equal, lr 3e-4 | 0.2551 (0.023) | 0.2710 (0.019) | 0.1735 (0.012) | **0.1196 (0.015)** | 0.9253 (0.005) | **0.1370 (0.016)** | **0.2766 (0.030)** |
+| records, lr 3e-4 | 0.2582 (0.035) | 0.2457 (0.019) | 0.1532 (0.037) | 0.0933 (0.004) | **0.9254 (0.005)** | 0.1222 (0.006) | 0.2657 (0.040) |
+| records, lr 1.5e-4 | **0.2752 (0.027)** | 0.2413 (0.013) | **0.1807 (0.005)** | 0.1074 (0.008) | 0.9186 (0.007) | 0.1317 (0.017) | 0.2707 (0.013) |
+
+Within the same twelve runs, window means at 41-50, 71-80 and 106-120:
+
+| arm | Muenzner per gene (50 / 80 / 120) | Vaishnav (50 / 80 / 120) | doubles (50 / 80 / 120) | Caudal per gene (50 / 80 / 120) | Kemmeren per gene (50 / 80 / 120) |
+|---|---|---|---|---|---|
+| equal, lr 1.5e-4 | 0.229 / 0.261 / 0.279 | 0.870 / 0.898 / 0.915 | 0.265 / 0.260 / 0.266 | 0.170 / 0.181 / 0.173 | 0.111 / 0.115 / 0.108 |
+| equal, lr 3e-4 | 0.219 / 0.254 / 0.271 | 0.901 / 0.917 / 0.925 | 0.249 / 0.260 / 0.255 | 0.166 / 0.174 / 0.174 | 0.103 / 0.108 / 0.120 |
+| records, lr 3e-4 | 0.186 / 0.225 / 0.246 | 0.904 / 0.917 / 0.925 | 0.267 / 0.260 / 0.258 | 0.137 / 0.145 / 0.153 | 0.091 / 0.098 / 0.093 |
+| records, lr 1.5e-4 | 0.169 / 0.220 / 0.241 | 0.879 / 0.902 / 0.919 | 0.269 / 0.282 / 0.275 | 0.155 / 0.167 / 0.181 | 0.099 / 0.101 / 0.107 |
+
+- **Muenzner and Vaishnav are still climbing at 120 epochs on every arm**, by +0.018 to +0.021 (Muenzner) and +0.008 to +0.017 (Vaishnav) over the 80-epoch window of the same runs, against +0.032 to +0.051 and +0.013 to +0.028 from 50 to 80: the slope is falling but has not reached zero. Doubles moves by at most 0.007 between 80 and 120 on any arm, inside its seed sd; Caudal and Kemmeren move by up to 0.014 with no shared sign. The 120-epoch GilaHyper cell (6598, one seed, equal lr-half) read Muenzner 0.289 and Vaishnav 0.919 against Aurora's 0.279 (0.006) and 0.915 (0.005), the cross-machine offset again on the matched arm, now with Muenzner above and doubles (0.276 against 0.266) above on GilaHyper.
+- **The weighting trade holds at 120 epochs.** Records against equal at lr 3e-4: doubles +0.003, Muenzner -0.025, Caudal -0.020, Kemmeren -0.026; at lr 1.5e-4: doubles +0.009, Muenzner -0.038, Caudal +0.008. The doubles advantage of records weighting seen at 80 epochs (+0.022 to +0.026) has shrunk to inside the seed sd at 120, while its Muenzner cost has not.
+- **The fine-tune after 120 epochs is the highest Kemmeren reading in the program**: 0.1282, 0.1370, 0.1222, 0.1317 across the four arms, against 0.1205 to 0.1259 after 80 epochs (job a, other seeds) and 0.1238 (0.011, five seeds) after 50 epochs on GilaHyper. Three of the four arms sit above the frozen-token ridge bar of 0.125 (median per-gene Pearson; that bar is on split A fold 0 and the model's `val/` is fold 1, so the comparison is indicative until the fold-0 read). Equal weighting at lr 3e-4 gives 0.1370 (0.016); its one-sd interval does not reach the 80-epoch band. Measured at three seeds per arm; whether the gain is the longer pretraining or the seeds (0-2 here against 4-6 in job a) is not separated by this design, because the two budgets ran different seeds.
+- **The pooled `val/loss` is flat from epoch 40 to 120 on every arm** (equal 0.2473 / 0.2489 / 0.2481 at the three windows; records 0.1823 / 0.1786 / 0.1771) while Muenzner moves 0.06 and the fine-tune moves 0.01: the pooled loss remains blind to the heads that are still improving, as the GilaHyper 120-epoch cell showed at one seed.
+
+Round `aurora_v4_2026_10_29` is complete: 24 cells, 48 runs, 0 faults, 130 h 20 min of node time. No 043 job is running on Aurora. The round's views are those of the job-a section (round view liewt7v10e7; arm views g6u1hzg8gay, cyfot9qwjd9; fine-tune views b38c6ltsx12, to83nt5n6vs), regenerated with the job-b runs.
+
+- `a1029_all_onto_pinball_injop_equal_v4e120_s0_ft` (fine-tune Kemmeren after 120 epochs, equal lr 3e-4, seed 0): https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/a1029_all_onto_pinball_injop_equal_v4e120_s0_ft
+- `a1029_all_onto_pinball_injop_equal_lrhalf_v4e120_s0` (Muenzner still climbing at 120 epochs): https://wandb.ai/zhao-group/torchcell_043-expression-proteome-morphology/runs/a1029_all_onto_pinball_injop_equal_lrhalf_v4e120_s0
+
+## 2026.11.02 - Data-size table for the dissertation's future directions
+
+Owner: "a very simple table that gives idea of size of data number of strain records with expression ... chapter 6 future directions". `scripts/table_data_size_043.py` reads the served store census (`results/build_043_store_census_v2.json`, 173,805 records on KG release 2026.10.17-4295f7ca, job 6187) for the record counts and the full data pass (`results/data_shapes_043.json`) for the median label keys per record, and writes `results/tab-ch08-omics-data-size.{tex,md}`; `--thesis-tables-dir` copies the `.tex` into the thesis as `tables/tab-ch08-omics-data-size.tex`, placed in `sections/ch08-scaling-strain-engineering.tex` (chapter 6 of the deposit, "Conclusion and future directions") after the data-type ablation paragraph. Hu 2007 and N'Guessan 2025 have no key in the thesis `references.bib`, so those two rows carry no citation until the owner adds them.
+
+| Source | Readout | Genotype | Strain records | Measured per record (median) |
+|---|---|---|---:|---:|
+| **Expression** | | | | |
+| Kemmeren 2014 | microarray, log2 ratio to wild type | single deletion | 1,484 | 6,169 genes |
+| Sameith 2015, singles | microarray, log2 ratio | single deletion | 82 | 6,169 genes |
+| Sameith 2015, doubles | microarray, log2 ratio | double deletion | 72 | 6,169 genes |
+| Hu 2007 | microarray, error-model score | single deletion | 263 | 6,381 genes |
+| Jackson 2020 | single-cell RNA-seq, pseudobulk UMI | single deletion | 784 | 4,028 genes |
+| Nadal-Ribelles 2025 | Perturb-seq, pseudobulk log2 fold change | single deletion | 6,188 | 5,866 genes |
+| Caudal 2024 | RNA-seq, TPM | natural isolate | 943 | 6,050 genes |
+| Boocock 2025 | single-cell RNA-seq, UMI per cell | segregant | 79,516 | 962 genes |
+| N'Guessan 2025 | single-cell RNA-seq, UMI per cell | segregant | 2,951 | 2,592 genes |
+| Vaishnav 2022 | sort-seq promoter reporter | 80-mer promoter variant | 71,158 | 1 reporter |
+| **Proteome** | | | | |
+| Messner 2023 | MaxLFQ protein abundance | single deletion | 4,699 | 1,819 proteins |
+| Muenzner 2024 | MaxLFQ protein abundance | natural isolate | 795 | 1,540 proteins |
+| Muenzner 2024, turnover | protein degradation rate | natural isolate | 55 | 1,055 proteins |
+| Zelezniak 2018 | protein abundance, log signal | single deletion | 97 | 726 proteins |
+| **Morphology** | | | | |
+| Ohya 2005 | CalMorph, 281 cell features | single deletion | 4,718 | 281 features |
+| **All** | | | **173,805** | |
+
+The record counts are the store's (v2); the shape table of 2026.10.20 above counted the earlier v1 pass (173,617), which is why Kemmeren reads 1,484 here and 1,482 there. Deletion and isolate panels together hold 20,180 records; the two single-cell segregant studies and the promoter library hold the other 153,625.

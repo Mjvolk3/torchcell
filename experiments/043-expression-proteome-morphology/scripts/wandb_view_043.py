@@ -307,6 +307,28 @@ ROUNDS: dict[str, Round] = {
             "Kemmeren fine-tune (20 epochs, lr 3e-4, warmup 30)."
         ),
     ),
+    "delta_2026_10_28": Round(
+        view_name="043 Delta recipe v3 candidate 2026-10-28 by arm",
+        # run id = d1028_<cell> (resume_id), _ft = its Kemmeren fine-tune; jobs
+        # 23310067-23310086 under bfjt-delta-gpu, launcher delta_train_043.slurm
+        run_ids=tuple(
+            f"d1028_pinball_injop_{lr}_s{seed}{ft}"
+            for lr in ("lrhalf", "lr3e4")
+            for seed in (0, 1, 2, 3, 4)
+            for ft in ("", "_ft")
+        ),
+        hardware=(
+            "Delta (NCSA), gpuA40x4, one A40 40 GB per job, env torchcell043 tarball "
+            "(torch 2.11.0+cu128, PyG 2.8.0) unpacked to node-local disk; smoke 23309265 "
+            "0.132 s/step, 505 s per epoch"
+        ),
+        intro=(
+            "The GilaHyper recipe v3 candidate on Delta: pinball, ontology conditioning, "
+            "operator injection, batch 16, 50 epochs (window 41-50), prep_v4 route A, "
+            "at lr 1.5e-4 (lrhalf) and lr 3e-4, seeds 0-4; each stage 1 chained to its "
+            "Kemmeren fine-tune (20 epochs, lr 3e-4, warmup 30, batch 8)."
+        ),
+    ),
     "aurora_v3_2026_10_27": Round(
         view_name="043 Aurora recipe v2 to 80 epochs 2026-10-27 by arm",
         # run id = a1027_<cell> (resume_id), _ft = its Kemmeren fine-tune from the epoch-80
@@ -351,6 +373,101 @@ ROUNDS: dict[str, Round] = {
             "injection, plain pinball, plain HL-Gauss (the 80-epoch baseline), the "
             "combination at lr 1.5e-4 and with record weighting; seeds 0-3, each chained "
             "to its Kemmeren fine-tune (20 epochs, lr 3e-4, warmup 30)."
+        ),
+    ),
+    "aurora_v4_2026_10_29": Round(
+        view_name="043 Aurora recipe v3 seeds at 80 epochs 2026-10-29 by arm",
+        # run id = a1029_<cell> (resume_id), _ft = its Kemmeren fine-tune from the epoch-80
+        # last.pt; tag aurora_v4_2026_10_29. Job a (aurora_grid_043_v4_a.tsv): seeds 4-6 of
+        # the three v3 pinball-injection arms (equal lr 1.5e-4, equal lr 3e-4, records lr
+        # 3e-4) and seeds 0-2 of records weighting at lr 1.5e-4; window 71-80. Job b
+        # (aurora_grid_043_v4_b.tsv, cells *_v4e120_s{0,1,2}): the same four arms at 120
+        # epochs, window 106-120, with 71-80 and 41-50 read from the same runs.
+        run_ids=tuple(
+            f"a1029_all_onto_{arm}_v4_s{seed}{ft}"
+            for arm, seeds in (
+                ("pinball_injop_equal_lrhalf", (4, 5, 6)),
+                ("pinball_injop_equal", (4, 5, 6)),
+                ("pinball_injop_records", (4, 5, 6)),
+                ("pinball_injop_records_lrhalf", (0, 1, 2)),
+            )
+            for seed in seeds
+            for ft in ("", "_ft")
+        )
+        + tuple(
+            f"a1029_all_onto_{arm}_v4e120_s{seed}{ft}"
+            for arm in (
+                "pinball_injop_equal_lrhalf",
+                "pinball_injop_equal",
+                "pinball_injop_records",
+                "pinball_injop_records_lrhalf",
+            )
+            for seed in (0, 1, 2)
+            for ft in ("", "_ft")
+        ),
+        extra_windows=tuple(
+            (f"a1029_all_onto_{arm}_v4_s{seed}", (41, 50))
+            for arm, seeds in (
+                ("pinball_injop_equal_lrhalf", (4, 5, 6)),
+                ("pinball_injop_equal", (4, 5, 6)),
+                ("pinball_injop_records", (4, 5, 6)),
+                ("pinball_injop_records_lrhalf", (0, 1, 2)),
+            )
+            for seed in seeds
+        )
+        + tuple(
+            (f"a1029_all_onto_{arm}_v4e120_s{seed}", window)
+            for arm in (
+                "pinball_injop_equal_lrhalf",
+                "pinball_injop_equal",
+                "pinball_injop_records",
+                "pinball_injop_records_lrhalf",
+            )
+            for seed in (0, 1, 2)
+            for window in ((71, 80), (41, 50))
+        ),
+        hardware=(
+            "Aurora (ALCF), 1 node x 12 tiles per job, Intel Data Center GPU Max 1550 tile, "
+            "1 run per tile; capacity queue; frameworks stack, attention query chunk 512"
+        ),
+        intro=(
+            "Recipe v3 seeds at 80 epochs (registered window 71-80; 41-50 recorded from the "
+            "same runs): batch 16, prep_v4, store v2, ontology conditioning, operator "
+            "injection, pinball loss. Job a: seeds 4-6 of equal weighting at lr 1.5e-4 and "
+            "3e-4 and of records weighting at 3e-4 (seven seeds each with the v3 grid), "
+            "seeds 0-2 of records weighting at lr 1.5e-4; each cell chained to its Kemmeren "
+            "fine-tune (20 epochs, lr 3e-4, warmup 30)."
+        ),
+    ),
+    "igb_cabbi_2026_10_29": Round(
+        view_name="043 IGB cabbi recipe v3 at 120 epochs 2026-10-29 by arm",
+        # run id = igb1029_<cell> (resume_id), _ft = its Kemmeren fine-tune (a dependent
+        # job, afterany on the stage-1 job); igb_cabbi_train_043.slurm, W&B offline on IGB,
+        # synced from GilaHyper with `wandb sync`. Smoke igb_smoke_043_20261028 (job 2434938):
+        # one epoch, 279 s, 7.9 GB, val/loss 0.2734. Production: the lr-half recipe at 120
+        # epochs, seeds 1 and 2 (jobs 2435763/2435765, fine-tunes 2435764/2435766); window
+        # 106-120 with 71-80 and 41-50 from the same runs.
+        run_ids=("igb_smoke_043_20261028",)
+        + tuple(
+            f"igb1029_pinball_injop_lrhalf_ep120_s{seed}{ft}"
+            for seed in (1, 2)
+            for ft in ("", "_ft")
+        ),
+        extra_windows=tuple(
+            (f"igb1029_pinball_injop_lrhalf_ep120_s{seed}", window)
+            for seed in (1, 2)
+            for window in ((71, 80), (41, 50))
+        ),
+        hardware=(
+            "IGB cabbi (compute-3-3), RTX 6000 Ada 48 GB, one run per card, 48 GB host "
+            "memory, 2 loader workers; torch 2.8.0+cu128, PyG 2.7.0"
+        ),
+        intro=(
+            "Recipe v3 (pinball, operator injection, ontology conditioning, lr 1.5e-4, batch "
+            "16, prep_v4, store v2) run to 120 epochs on IGB, seeds 1 and 2 (GilaHyper holds "
+            "seed 0 of the same cell); registered window 106-120, with 71-80 and 41-50 read "
+            "from the same runs; each chained to its Kemmeren fine-tune (20 epochs, lr 3e-4, "
+            "warmup 30, batch 8)."
         ),
     ),
     "ghyper_sweep_2026_10_24": Round(
@@ -477,6 +594,28 @@ ROUNDS: dict[str, Round] = {
         + tuple(
             f"gs1024_w8_pinball_injop_{k}{ft}"
             for k in ("lrhalf_records", "lrhalf_s3", "lrquarter", "lrhalf_hh256")
+            for ft in ("", "_ft")
+        )
+        # wave 9 (2026-10-28, after the branch landed on main): the lr-half recipe at
+        # seed 4 (6581/6582), its HL-Gauss twin (6583/6584) and route B at batch 8 under
+        # the new recipe (6585/6586 failed at launch, resubmitted as 6587/6588); second
+        # seed of the HL-Gauss twin (6590/6591) and the lr-half recipe run to 80 epochs
+        # (6592/6593), 2026-10-29 02:30 CDT
+        + tuple(
+            f"gs1024_w9_{k}{ft}"
+            for k in (
+                "pinball_injop_lrhalf_s4",
+                "hlgauss_injop_lrhalf",
+                "routeB_bs8_pinball_injop_lrhalf",
+                "hlgauss_injop_lrhalf_s1",
+                "pinball_injop_lrhalf_ep80",
+                "pinball_injop_lrhalf_ep80_s1",
+                "pinball_injop_lrhalf_ep80_s2",
+                "pinball_injop_lrhalf_ep120",
+                "pinball_injop_lr3e4_ep80",
+                "pinball_injop_lrhalf_ep80_s3",
+                "pinball_injop_lrhalf_ep80_s4",
+            )
             for ft in ("", "_ft")
         ),
         hardware=(
@@ -768,6 +907,8 @@ CURATED_ROUNDS = (
     "aurora_2026_10_24",
     "aurora_v2_2026_10_26",
     "aurora_v3_2026_10_27",
+    "aurora_v4_2026_10_29",
+    "igb_cabbi_2026_10_29",
     "ghyper_sweep_2026_10_24",
     "overnight_2026_10_23",
 )

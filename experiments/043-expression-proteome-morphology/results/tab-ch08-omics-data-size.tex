@@ -1,0 +1,40 @@
+%% SOURCE: torchcell experiments/043-expression-proteome-morphology/scripts/table_data_size_043.py (reads results/build_043_store_census_v2.json and results/data_shapes_043.json)
+%% AUTO-GENERATED -- do not hand-edit; edits are lost on the next run.
+%% Regenerate: ~/miniconda3/envs/torchcell/bin/python experiments/043-expression-proteome-morphology/scripts/table_data_size_043.py --thesis-tables-dir <thesis>/thesis/tables
+%% Records: the served store census (KG release 2026.10.17-4295f7ca, store v2, GilaHyper job 6187). Per-record counts: medians over the full data pass of data_shapes_043.py.
+%% Hu 2007 and N'Guessan 2025 carry no \cite because references.bib has no key for them (checked 2026-11-02).
+\begin{table}[!ht]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{5pt}
+\caption{\textbf{Strain records with an expression, proteome or morphology readout in the TorchCell store.} One row per dataset: the readout, the genotype class, the strain records the store serves and the median number of genes, proteins or features one record carries, on the 2026.10.17-4295f7ca release. A record is one strain, or one cell for the two single-cell segregant studies and one promoter variant for the sort-seq reporter. The Sameith single deletions are the Kemmeren arrays and the Ohya morphology is held out of training, so the thirteen training datasets hold 169,005 records.}
+\label{tab:ch08-omics-data-size}
+\begin{tabular}{@{}l l l r r@{}}
+\toprule
+Source & Readout & Genotype & Strain records & Measured per record (median) \\
+\midrule
+\multicolumn{5}{@{}l}{\textbf{Expression}} \\
+Kemmeren 2014 \cite{kemmerenLargeScaleGeneticPerturbationsReveal2014} & microarray, log2 ratio to wild type & single deletion & 1,484 & 6,169 genes \\
+Sameith 2015, singles \cite{sameithHighResolutionGeneExpressionAtlas2015} & microarray, log2 ratio & single deletion & 82 & 6,169 genes \\
+Sameith 2015, doubles \cite{sameithHighResolutionGeneExpressionAtlas2015} & microarray, log2 ratio & double deletion & 72 & 6,169 genes \\
+Hu 2007 & microarray, error-model score & single deletion & 263 & 6,381 genes \\
+Jackson 2020 \cite{jacksonGeneRegulatoryNetworkReconstructionUsing2020} & single-cell RNA-seq, pseudobulk UMI & single deletion & 784 & 4,028 genes \\
+Nadal-Ribelles 2025 \cite{nadalribellesSingleCellResolvedGenotypePhenotype2025} & Perturb-seq, pseudobulk log2 fold change & single deletion & 6,188 & 5,866 genes \\
+Caudal 2024 \cite{caudalPanTranscriptomeRevealsLargeAccessory2024} & RNA-seq, TPM & natural isolate & 943 & 6,050 genes \\
+Boocock 2025 \cite{boocockSinglecellEQTLMapping2025} & single-cell RNA-seq, UMI per cell & segregant & 79,516 & 962 genes \\
+N'Guessan 2025 & single-cell RNA-seq, UMI per cell & segregant & 2,951 & 2,592 genes \\
+Vaishnav 2022 \cite{vaishnavEvolutionEvolvabilityEngineeringGeneRegulatory2022} & sort-seq promoter reporter & 80-mer promoter variant & 71,158 & 1 reporter \\
+\addlinespace
+\multicolumn{5}{@{}l}{\textbf{Proteome}} \\
+Messner 2023 \cite{messnerProteomicLandscapeGenomeWideGenetic2023} & MaxLFQ protein abundance & single deletion & 4,699 & 1,819 proteins \\
+Muenzner 2024 \cite{muenznerNaturalProteomeDiversityLinksAneuploidy2024} & MaxLFQ protein abundance & natural isolate & 795 & 1,540 proteins \\
+Muenzner 2024, turnover \cite{muenznerNaturalProteomeDiversityLinksAneuploidy2024} & protein degradation rate & natural isolate & 55 & 1,055 proteins \\
+Zelezniak 2018 \cite{zelezniakMachineLearningPredictsYeastMetabolome2018} & protein abundance, log signal & single deletion & 97 & 726 proteins \\
+\addlinespace
+\multicolumn{5}{@{}l}{\textbf{Morphology}} \\
+Ohya 2005 \cite{ohyaHighDimensionalLargeScalePhenotyping2005} & CalMorph, 281 cell features & single deletion & 4,718 & 281 features \\
+\midrule
+All & & & 173,805 & \\
+\bottomrule
+\end{tabular}
+\end{table}

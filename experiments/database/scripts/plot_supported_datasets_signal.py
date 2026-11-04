@@ -1,7 +1,7 @@
 # experiments/database/scripts/plot_supported_datasets_signal.py
 # [[experiments.database.scripts.plot_supported_datasets_signal]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/database/scripts/plot_supported_datasets_signal
-"""VIEW off the raw-data JSON: scatter of Instances (dataset length) vs Signal
+"""VIEW off the raw-data JSON: scatter of Records (dataset length) vs Signal
 (gzip bits), one point per built dataset, labeled and colored by phenotype
 category. Reads only the JSON produced by build_supported_datasets_table.py.
 
@@ -249,6 +249,10 @@ def _apply_rc() -> None:
             # hands the freed lower-right corner back to the point labels.
             "legend.fontsize": 5,
             "svg.fonttype": "none",
+            # Real TrueType in the PDF, not matplotlib's default Type 3 outlines: the
+            # thesis places this figure in a tagged build, where the text has to stay
+            # text for extraction and for the PDF/UA pass.
+            "pdf.fonttype": 42,
             "axes.linewidth": 0.5,
             "savefig.bbox": None,  # torchcell.mplstyle sets 'tight'; would break true-size
         }
@@ -546,7 +550,7 @@ def _release(release_id: str | None) -> dict:
 
 
 def main() -> None:
-    """Draw the instances-vs-signal scatter and save PNG + true-size SVG."""
+    """Draw the records-vs-signal scatter and save PNG + true-size SVG."""
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument(
         "--data",
@@ -595,15 +599,9 @@ def main() -> None:
 
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel("Instances (dataset length)")
+    ax.set_xlabel("Records (dataset length)")
     ax.set_ylabel("Signal (gzip, bits)")
     release = _release(args.release)
-    ax.set_title(
-        f"S. cerevisiae datasets in KG {release['version']}: release {release['release']}, "
-        f"torchcell {release['torchcell_tag']}; signal probed {payload['date']}",
-        loc="left",
-        color=INK,
-    )
     # Pad the limits by a fraction of a decade so the 6 pt labels have somewhere to
     # go: adjustText moves text but cannot push it outside the axes, and a label that
     # runs off the panel edge is the failure mode on a fixed 179 mm width.
@@ -631,6 +629,19 @@ def main() -> None:
 
     out_dir = osp.join(os.environ["ASSET_IMAGES_DIR"], "database")
     os.makedirs(out_dir, exist_ok=True)
+    # Provenance along the bottom, not a title: a title band above the plot frame put
+    # the release id where it had to be cropped out again before the figure could be
+    # placed in the thesis (notes/prelim.figures.md, "Figure 2 lost its title").
+    fig.text(
+        0.005,
+        0.004,
+        f"KG {release['version']}, release {release['release']}, "
+        f"torchcell {release['torchcell_tag']}, signal probed {payload['date']}",
+        ha="left",
+        va="bottom",
+        fontsize=5,
+        color="#666666",
+    )
     fig.text(
         0.995,
         0.004,

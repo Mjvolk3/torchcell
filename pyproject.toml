@@ -70,6 +70,9 @@ ignore = ["E501", "D205", "D212", "D415"]
 "tests/**" = ["D103", "D104"]
 "notes/assets/scripts/**" = ["D100", "D103"]
 "experiments/**" = ["D100", "D103", "E402"]
+# Bootstraps a machine that has only its system Python 3.9 (it fetches uv and Python
+# 3.13 itself), so pyupgrade's 3.13 rewrites (datetime.UTC, ...) would break it there.
+"experiments/034-showcase-datasets/scripts/install_benchmark.py" = ["UP"]
 # torch_geometric.MessagePassing inspects message()/forward() signatures at runtime
 # and chokes on PEP 604 unions (X | Y -> types.UnionType has no __qualname__). PyG
 # won't fix this (issue #10138, "not planned"), so keep Optional/Union here. See

@@ -1,0 +1,102 @@
+{
+  "host": "gilahyper",
+  "started_at": "2026-11-17T16:55:29.667447+00:00",
+  "platform": "Linux-5.14.0-503.35.1.el9_5.x86_64-x86_64-with-glibc2.34",
+  "cpu_count": 128,
+  "work": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/52ad433d-1c0d-4a36-ae6a-dcf90068319f/scratchpad/install-bench/work",
+  "work_filesystem": "ext2/ext3",
+  "requirement": "torchcell==1.8.4",
+  "uv_version": "uv 0.13.9 (x86_64-unknown-linux-gnu)",
+  "fetch_uv_seconds": 5.9,
+  "python_install_seconds": 6.38,
+  "arms": [
+    {
+      "arm": "pip_cold",
+      "tool": "pip",
+      "cache": "empty",
+      "command": "pip install torchcell==1.8.4",
+      "venv_seconds": 5.44,
+      "exit_code": 0,
+      "install_seconds": 216.4,
+      "pip_version": "26.3",
+      "probe_exit_code": 1,
+      "probe_error": [
+        "ModuleNotFoundError: No module named 'torch_scatter'"
+      ],
+      "venv_bytes": 7559923207
+    },
+    {
+      "arm": "uv_cold",
+      "tool": "uv",
+      "cache": "empty",
+      "command": "uv pip install torchcell==1.8.4",
+      "venv_seconds": 0.01,
+      "exit_code": 0,
+      "install_seconds": 57.5,
+      "probe_exit_code": 1,
+      "probe_error": [
+        "ModuleNotFoundError: No module named 'torch_scatter'"
+      ],
+      "venv_bytes": 7037507001
+    },
+    {
+      "arm": "pip_warm",
+      "tool": "pip",
+      "cache": "warm",
+      "command": "pip install torchcell==1.8.4",
+      "venv_seconds": 0.09,
+      "exit_code": 0,
+      "install_seconds": 104.0,
+      "pip_version": "26.3",
+      "probe_exit_code": 1,
+      "probe_error": [
+        "ModuleNotFoundError: No module named 'torch_scatter'"
+      ],
+      "venv_bytes": 7559923225
+    },
+    {
+      "arm": "uv_warm",
+      "tool": "uv",
+      "cache": "warm",
+      "command": "uv pip install torchcell==1.8.4",
+      "venv_seconds": 0.01,
+      "exit_code": 0,
+      "install_seconds": 0.6,
+      "probe_exit_code": 1,
+      "probe_error": [
+        "ModuleNotFoundError: No module named 'torch_scatter'"
+      ],
+      "venv_bytes": 7037511097
+    },
+    {
+      "arm": "uv_cpu_cold",
+      "tool": "uv",
+      "cache": "empty",
+      "command": "uv pip install --torch-backend cpu torchcell==1.8.4",
+      "venv_seconds": 0.05,
+      "exit_code": 0,
+      "install_seconds": 33.7,
+      "probe_exit_code": 1,
+      "probe_error": [
+        "ModuleNotFoundError: No module named 'torch_scatter'"
+      ],
+      "venv_bytes": 2370471688
+    },
+    {
+      "arm": "pip_cpu_cold",
+      "tool": "pip",
+      "cache": "empty",
+      "command": "pip install --extra-index-url https://download.pytorch.org/whl/cpu torchcell==1.8.4",
+      "venv_seconds": 0.1,
+      "exit_code": 0,
+      "install_seconds": 148.4,
+      "pip_version": "26.3",
+      "probe_exit_code": 1,
+      "probe_error": [
+        "ModuleNotFoundError: No module named 'torch_scatter'"
+      ],
+      "venv_bytes": 2891326601
+    }
+  ],
+  "finished_at": "2026-11-17T17:05:39.558931+00:00"
+}

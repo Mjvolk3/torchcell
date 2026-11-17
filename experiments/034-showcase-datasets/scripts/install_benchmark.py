@@ -21,6 +21,10 @@ Arms, run in this order so the two tools alternate:
 - ``pip_cpu_cold``: ``pip install --extra-index-url <pytorch cpu index> <requirement>``
   with its own empty cache; pip's way to the same CPU build.
 
+For a uv arm the result also holds uv's own split of the install (packages and time
+to resolve, to prepare, which is download and unpack, and to install), read from the
+closing lines of its log.
+
 Every arm gets a venv made by ``uv venv --python 3.13`` (``--seed`` for the pip arms, so
 the venv holds pip), and the time to make it is recorded apart from the install. An arm
 that fails is recorded with its exit code and its log, and the run goes on to the next
@@ -40,6 +44,7 @@ import argparse
 import json
 import os
 import platform
+import re
 import socket
 import subprocess
 import sys
@@ -56,6 +61,8 @@ UV_URL = (
 )
 PYTHON_VERSION = "3.13"
 TORCH_CPU_INDEX = "https://download.pytorch.org/whl/cpu"
+# uv's own closing lines: "Resolved 258 packages in 12.91s", "Prepared ...", "Installed ...".
+UV_PHASE = re.compile(r"^(Resolved|Prepared|Installed) (\d+) packages? in (.+)$")
 # (arm, tool, cache family, extra install arguments)
 ARMS: tuple[tuple[str, str, str, tuple[str, ...]], ...] = (
     ("pip_cold", "pip", "default", ()),
@@ -114,6 +121,19 @@ def fetch_uv(bin_dir: Path) -> Path:
     uv = bin_dir / "uv"
     uv.chmod(0o755)
     return uv
+
+
+def uv_phases(log: Path) -> dict[str, dict[str, Any]]:
+    """Uv's split of one install into resolve, prepare and install, read from its log."""
+    phases: dict[str, dict[str, Any]] = {}
+    for line in log.read_text(encoding="utf-8").splitlines():
+        match = UV_PHASE.match(line.strip())
+        if match:
+            phases[match.group(1).lower()] = {
+                "packages": int(match.group(2)),
+                "time": match.group(3),
+            }
+    return phases
 
 
 def tree_bytes(path: Path, env: dict[str, str]) -> int:
@@ -236,6 +256,8 @@ def main() -> int:
         else:
             code, seconds = run(command, arm_env, log)
             row.update({"exit_code": code, "install_seconds": round(seconds, 1)})
+            if tool == "uv":
+                row["uv_phases"] = uv_phases(log)
             if code == 0:
                 if tool == "pip":
                     row["pip_version"] = output(

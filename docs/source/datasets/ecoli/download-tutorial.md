@@ -41,6 +41,11 @@ A first install was timed on two machines, each arm in a new Python 3.13 virtual
 ```{include} _generated/download-tutorial/install_benchmark.md
 ```
 
+The same installs were repeated for the next release. The table gives each one with the result of importing a loader in the new environment.
+
+```{include} _generated/download-tutorial/install_release_check.md
+```
+
 ## Set the endpoint and import the loaders
 
 ```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
@@ -94,7 +99,7 @@ The constructor did the download. After it returns, `data/torchcell/ecoli_growth
 
 ## Cell shape and cell cycle (Campos 2018)
 
-`MorphologyCampos2018Dataset` covers the same strains from the same imaging screen. Each record stores the mean of every cell-shape and cell-cycle feature under the symbol the paper gives it, with the coefficient of variation of the shape features beside them in `morphology_coefficient_of_variation`.
+`MorphologyCampos2018Dataset` covers the same strains from the same imaging screen. Each record stores the cell-shape means and the cell-cycle features under the symbols the paper gives them, and the coefficients of variation of the shape features in `morphology_coefficient_of_variation`.
 
 ```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
 :language: python

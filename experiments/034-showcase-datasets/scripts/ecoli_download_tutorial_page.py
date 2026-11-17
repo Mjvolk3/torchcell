@@ -16,9 +16,11 @@ machine that holds nothing but a fresh venv with torchcell in it:
     packages the output depends on. Writes one JSON file per host.
 
 ``page``
-    Reads every ``results/ecoli_download_tutorial.<host>.json`` and every
-    ``results/install_benchmark.<host>.json`` and writes the MyST fragments the page
-    includes into ``docs/source/datasets/ecoli/_generated/download-tutorial/``. The
+    Reads every ``results/ecoli_download_tutorial.<host>.json``, every
+    ``results/install_benchmark.<host>.json`` and every
+    ``results/install_release_check.<host>.json`` (the same benchmark script run on a
+    later release) and writes the MyST fragments the page includes into
+    ``docs/source/datasets/ecoli/_generated/download-tutorial/``. The
     printed output on the page is the reference host's; ``page`` exits 1 when any other
     host printed different bytes, so the page cannot claim an agreement that did not
     hold.
@@ -528,6 +530,52 @@ def write_page(args: argparse.Namespace) -> int:
                 ],
                 setup_rows,
                 right={5, 6},
+            ),
+            encoding="utf-8",
+        )
+    checks = {
+        path.name.split(".")[1]: json.loads(path.read_text(encoding="utf-8"))
+        for path in sorted(RESULTS_DIR.glob("install_release_check.*.json"))
+    }
+    if checks:
+        check_hosts = [h for h in hosts if h in checks] + [
+            h for h in checks if h not in hosts
+        ]
+        check_rows = []
+        for name in check_hosts:
+            for arm in checks[name]["arms"]:
+                installed = arm.get("exit_code") == 0
+                if not installed:
+                    imports = "not installed"
+                elif arm.get("probe_exit_code") == 0:
+                    imports = "yes"
+                else:
+                    imports = "no: `{}`".format(" ".join(arm.get("probe_error", [])))
+                check_rows.append(
+                    [
+                        name,
+                        ARM_LABELS[arm["arm"]],
+                        "`{}`".format(arm["command"]),
+                        "{:.0f}".format(arm["install_seconds"])
+                        if installed
+                        else "failed",
+                        "{:.1f}".format(arm["venv_bytes"] / 1e9) if installed else "",
+                        imports,
+                    ]
+                )
+        (FRAGMENT_DIR / "install_release_check.md").write_text(
+            header(stamp)
+            + table(
+                [
+                    "Host",
+                    "Install",
+                    "Command",
+                    "Seconds",
+                    "venv (GB)",
+                    "Loaders import after the install",
+                ],
+                check_rows,
+                right={3, 4},
             ),
             encoding="utf-8",
         )

@@ -1,0 +1,98 @@
+{
+  "host": "torchcell-database.novalocal",
+  "started_at": "2026-11-17T19:19:26.358503+00:00",
+  "platform": "Linux-5.14.0-570.30.1.el9_6.x86_64-x86_64-with-glibc2.34",
+  "cpu_count": 16,
+  "work": "/mnt/zhao5/mjvolk3/projects/torchcell/tmp/scratch/install-bench-2026.11.17/work-1.8.5",
+  "work_filesystem": "nfs4",
+  "requirement": "torchcell==1.8.5",
+  "uv_version": "uv 0.13.9 (x86_64-unknown-linux-gnu)",
+  "fetch_uv_seconds": 1.08,
+  "python_install_seconds": 28.82,
+  "arms": [
+    {
+      "arm": "pip_cold",
+      "tool": "pip",
+      "cache": "empty",
+      "command": "pip install torchcell==1.8.5",
+      "venv_seconds": 5.29,
+      "exit_code": 0,
+      "install_seconds": 1135.6,
+      "pip_version": "26.3",
+      "probe_exit_code": 0,
+      "torchcell": "1.8.5",
+      "torch": "2.15.0+cu132",
+      "numpy": "2.5.5",
+      "pandas": "2.3.3",
+      "cuda_build": "13.2",
+      "n_distributions": 258,
+      "import_seconds": 40.18,
+      "venv_bytes": 7557409461
+    },
+    {
+      "arm": "uv_cold",
+      "tool": "uv",
+      "cache": "empty",
+      "command": "uv pip install torchcell==1.8.5",
+      "venv_seconds": 1.2,
+      "exit_code": 0,
+      "install_seconds": 135.1,
+      "uv_phases": {
+        "resolved": {
+          "packages": 258,
+          "time": "11.55s"
+        },
+        "prepared": {
+          "packages": 256,
+          "time": "1m 44s"
+        },
+        "installed": {
+          "packages": 258,
+          "time": "15.33s"
+        }
+      },
+      "probe_exit_code": 0,
+      "torchcell": "1.8.5",
+      "torch": "2.15.0+cu132",
+      "numpy": "2.5.5",
+      "pandas": "2.3.3",
+      "cuda_build": "13.2",
+      "n_distributions": 258,
+      "import_seconds": 138.11,
+      "venv_bytes": 7102200934
+    },
+    {
+      "arm": "uv_cpu_cold",
+      "tool": "uv",
+      "cache": "empty",
+      "command": "uv pip install --torch-backend cpu torchcell==1.8.5",
+      "venv_seconds": 0.66,
+      "exit_code": 0,
+      "install_seconds": 142.8,
+      "uv_phases": {
+        "resolved": {
+          "packages": 239,
+          "time": "8.97s"
+        },
+        "prepared": {
+          "packages": 238,
+          "time": "1m 54s"
+        },
+        "installed": {
+          "packages": 239,
+          "time": "15.90s"
+        }
+      },
+      "probe_exit_code": 0,
+      "torchcell": "1.8.5",
+      "torch": "2.15.0+cpu",
+      "numpy": "2.5.5",
+      "pandas": "2.3.3",
+      "cuda_build": null,
+      "n_distributions": 239,
+      "import_seconds": 124.32,
+      "venv_bytes": 2435143551
+    }
+  ],
+  "finished_at": "2026-11-17T19:49:16.731432+00:00"
+}

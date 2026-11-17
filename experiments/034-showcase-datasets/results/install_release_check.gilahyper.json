@@ -1,0 +1,164 @@
+{
+  "host": "gilahyper",
+  "started_at": "2026-11-17T19:19:24.952478+00:00",
+  "platform": "Linux-5.14.0-503.35.1.el9_5.x86_64-x86_64-with-glibc2.34",
+  "cpu_count": 128,
+  "work": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/52ad433d-1c0d-4a36-ae6a-dcf90068319f/scratchpad/install-bench-185/work",
+  "work_filesystem": "ext4",
+  "requirement": "torchcell==1.8.5",
+  "uv_version": "uv 0.13.9 (x86_64-unknown-linux-gnu)",
+  "fetch_uv_seconds": 5.87,
+  "python_install_seconds": 5.9,
+  "arms": [
+    {
+      "arm": "pip_cold",
+      "tool": "pip",
+      "cache": "empty",
+      "command": "pip install torchcell==1.8.5",
+      "venv_seconds": 5.46,
+      "exit_code": 0,
+      "install_seconds": 201.8,
+      "pip_version": "26.3",
+      "probe_exit_code": 0,
+      "torchcell": "1.8.5",
+      "torch": "2.15.0+cu132",
+      "numpy": "2.5.5",
+      "pandas": "2.3.3",
+      "cuda_build": "13.2",
+      "n_distributions": 258,
+      "import_seconds": 6.64,
+      "venv_bytes": 7561050035
+    },
+    {
+      "arm": "uv_cold",
+      "tool": "uv",
+      "cache": "empty",
+      "command": "uv pip install torchcell==1.8.5",
+      "venv_seconds": 0.01,
+      "exit_code": 0,
+      "install_seconds": 60.5,
+      "uv_phases": {
+        "resolved": {
+          "packages": 258,
+          "time": "8.69s"
+        },
+        "prepared": {
+          "packages": 256,
+          "time": "51.20s"
+        },
+        "installed": {
+          "packages": 258,
+          "time": "470ms"
+        }
+      },
+      "probe_exit_code": 0,
+      "torchcell": "1.8.5",
+      "torch": "2.15.0+cu132",
+      "numpy": "2.5.5",
+      "pandas": "2.3.3",
+      "cuda_build": "13.2",
+      "n_distributions": 258,
+      "import_seconds": 16.52,
+      "venv_bytes": 7104631802
+    },
+    {
+      "arm": "pip_warm",
+      "tool": "pip",
+      "cache": "warm",
+      "command": "pip install torchcell==1.8.5",
+      "venv_seconds": 0.1,
+      "exit_code": 0,
+      "install_seconds": 101.4,
+      "pip_version": "26.3",
+      "probe_exit_code": 0,
+      "torchcell": "1.8.5",
+      "torch": "2.15.0+cu132",
+      "numpy": "2.5.5",
+      "pandas": "2.3.3",
+      "cuda_build": "13.2",
+      "n_distributions": 258,
+      "import_seconds": 7.24,
+      "venv_bytes": 7561050053
+    },
+    {
+      "arm": "uv_warm",
+      "tool": "uv",
+      "cache": "warm",
+      "command": "uv pip install torchcell==1.8.5",
+      "venv_seconds": 0.01,
+      "exit_code": 0,
+      "install_seconds": 0.6,
+      "uv_phases": {
+        "resolved": {
+          "packages": 258,
+          "time": "21ms"
+        },
+        "installed": {
+          "packages": 258,
+          "time": "496ms"
+        }
+      },
+      "probe_exit_code": 0,
+      "torchcell": "1.8.5",
+      "torch": "2.15.0+cu132",
+      "numpy": "2.5.5",
+      "pandas": "2.3.3",
+      "cuda_build": "13.2",
+      "n_distributions": 258,
+      "import_seconds": 17.77,
+      "venv_bytes": 7104627706
+    },
+    {
+      "arm": "uv_cpu_cold",
+      "tool": "uv",
+      "cache": "empty",
+      "command": "uv pip install --torch-backend cpu torchcell==1.8.5",
+      "venv_seconds": 0.05,
+      "exit_code": 0,
+      "install_seconds": 33.7,
+      "uv_phases": {
+        "resolved": {
+          "packages": 239,
+          "time": "10.77s"
+        },
+        "prepared": {
+          "packages": 238,
+          "time": "22.39s"
+        },
+        "installed": {
+          "packages": 239,
+          "time": "413ms"
+        }
+      },
+      "probe_exit_code": 0,
+      "torchcell": "1.8.5",
+      "torch": "2.15.0+cpu",
+      "numpy": "2.5.5",
+      "pandas": "2.3.3",
+      "cuda_build": null,
+      "n_distributions": 239,
+      "import_seconds": 16.25,
+      "venv_bytes": 2437598373
+    },
+    {
+      "arm": "pip_cpu_cold",
+      "tool": "pip",
+      "cache": "empty",
+      "command": "pip install --extra-index-url https://download.pytorch.org/whl/cpu torchcell==1.8.5",
+      "venv_seconds": 0.09,
+      "exit_code": 0,
+      "install_seconds": 147.8,
+      "pip_version": "26.3",
+      "probe_exit_code": 0,
+      "torchcell": "1.8.5",
+      "torch": "2.15.0+cpu",
+      "numpy": "2.5.5",
+      "pandas": "2.3.3",
+      "cuda_build": null,
+      "n_distributions": 239,
+      "import_seconds": 6.43,
+      "venv_bytes": 2892452986
+    }
+  ],
+  "finished_at": "2026-11-17T19:30:00.481380+00:00"
+}

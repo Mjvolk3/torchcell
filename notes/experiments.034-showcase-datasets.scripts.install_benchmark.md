@@ -74,3 +74,38 @@ On NFS a filled cache removed 138 s of pip's 1,175 s, the downloads and the whee
 ### The import probe failed in every venv
 
 All six venvs of torchcell 1.8.4 failed the probe with `ModuleNotFoundError: No module named 'torch_scatter'`: `torchcell/data/graph_processor.py` imported `torch_scatter` at 1.8.4, and pip does not install it (`env/requirements_dependent.txt`, PyG wheel index). Commit `46dcb76c5` on main moved that import to `torch_geometric.utils.scatter`. A wheel built from the branch that holds this script, installed into a seventh uv venv with no `torch_scatter`, passed the probe and ran the tutorial to the end ([[experiments.034-showcase-datasets.scripts.ecoli_download_tutorial_page]]).
+
+## 2026.11.17 - Release check: torchcell 1.8.5 from PyPI
+
+torchcell 1.8.5 reached PyPI on 2026-11-17 at 19:16 UTC. The same script, with `--requirement torchcell==1.8.5`, was run again on both hosts. Its result files are named `install_release_check.<host>.json` so the page keeps the six-arm 1.8.4 comparison in one table and lists the release check under it. The script records the filesystem with `findmnt` in these runs, and for each uv arm it records uv's own split of the install (`uv_phases`).
+
+### GilaHyper, local disk, torchcell==1.8.5
+
+Source: `experiments/034-showcase-datasets/results/install_release_check.gilahyper.json` (one run, ext4, uv 0.13.9, pip 26.3).
+
+| arm | install seconds | venv GB | loader import | seconds of the first import |
+|---|---:|---:|---|---:|
+| `pip_cold` | 201.8 | 7.56 | passes | 6.6 |
+| `uv_cold` | 60.5 | 7.10 | passes | 16.5 |
+| `pip_warm` | 101.4 | 7.56 | passes | 7.2 |
+| `uv_warm` | 0.6 | 7.10 | passes | 17.8 |
+| `uv_cpu_cold` | 33.7 | 2.44 | passes | 16.3 |
+| `pip_cpu_cold` | 147.8 | 2.89 | passes | 6.4 |
+
+The import probe passes in all six venvs, with torchcell 1.8.5 and torch 2.15.0 (258 distributions with the CUDA build, 239 with the CPU build). The install seconds agree with the 1.8.4 run to within 15 s per arm. uv split `uv_cold` into 8.7 s to resolve, 51.2 s to prepare 256 packages and 0.47 s to install 258.
+
+The first import took 16 to 18 s in the three uv venvs and 6 to 7 s in the three pip venvs. The cause was not measured. Hypothesis (untested): pip compiles bytecode at install time and uv does not unless `--compile-bytecode` is passed, so the uv venvs compile on first import.
+
+### Radiant VM, NFS scratch, torchcell==1.8.5
+
+Source: `experiments/034-showcase-datasets/results/install_release_check.radiant.json` (one run, `nfs4`, uv 0.13.9, pip 26.3). Three arms were run there, since the two pip arms left out take about 19 minutes each on that filesystem and the 1.8.4 run already measured them.
+
+| arm | install seconds | venv GB | loader import | seconds of the first import |
+|---|---:|---:|---|---:|
+| `pip_cold` | 1,135.6 | 7.56 | passes | 40.2 |
+| `uv_cold` | 135.1 | 7.10 | passes | 138.1 |
+| `uv_cpu_cold` | 142.8 | 2.44 | passes | 124.3 |
+
+uv split `uv_cold` into 11.6 s to resolve, 1 min 44 s to prepare 256 packages and 15.3 s to install 258. `uv_cpu_cold` took 142.8 s here and 193.6 s in the 1.8.4 run, so a single run on this filesystem can vary by about 50 s.
+
+Install plus first import, from the two columns above: pip 1,176 s, uv 273 s, uv with the CPU build 267 s.

@@ -43,7 +43,11 @@ myst_enable_extensions = ["colon_fence", "deflist", "dollarmath"]
 source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
 
 templates_path = ["_templates"]
-exclude_patterns: list[str] = ["datasets/_generated", "datasets/scerevisiae/_generated"]
+exclude_patterns: list[str] = [
+    "datasets/_generated",
+    "datasets/scerevisiae/_generated",
+    "datasets/ecoli/_generated",
+]
 
 html_theme = "torchcell_sphinx_theme"
 html_logo = "_static/torchcell-logo.png"

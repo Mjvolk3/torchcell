@@ -10,7 +10,8 @@ number of datasets it serves and the total experiments, the organisms it covers,
 one table per organism (in ``Organism`` order) with one row per dataset (experiments
 served, the dataset page that shows it, when one exists). The page column comes from the
 supported-query registry (``docs_page`` of each query and the datasets its Cypher
-selects), so a new dataset page appears here once it is registered.
+selects), so a new dataset page appears here once it is registered, and from
+``TUTORIAL_PAGES`` for the datasets a download tutorial shows.
 
 The organisms are the release's own record when it has one: a snapshot written since the
 organism switch (2026.10.12) carries ``organisms`` and a per-dataset ``organism``, and a
@@ -41,6 +42,15 @@ QUERIES = REPO / "torchcell" / "knowledge_graphs"
 FRAGMENT = REPO / "docs" / "source" / "datasets" / "_generated" / "served_counts.md"
 SCRIPT = "experiments/034-showcase-datasets/scripts/served_dataset_counts.py"
 DATASET_ID = re.compile(r"dataset\.id = '([A-Za-z0-9_]+)'")
+# Datasets shown by a download tutorial, which has no supported query to register a
+# ``docs_page`` on: dataset class -> page, relative to ``docs/source/datasets``. A page
+# from the registry takes precedence.
+TUTORIAL_PAGES = {
+    "GrowthRateCampos2018Dataset": "ecoli/download-tutorial",
+    "MorphologyCampos2018Dataset": "ecoli/download-tutorial",
+    "GeneInteractionBabu2014Dataset": "ecoli/download-tutorial",
+    "MetabolomeFuhrer2017Dataset": "ecoli/download-tutorial",
+}
 
 
 def newest_snapshot() -> tuple[str, dict[str, object]]:
@@ -56,9 +66,13 @@ def newest_snapshot() -> tuple[str, dict[str, object]]:
 
 
 def pages_by_dataset() -> dict[str, str]:
-    """Dataset class -> docs page (relative to ``docs/source/datasets``), from the registry."""
+    """Dataset class -> docs page (relative to ``docs/source/datasets``).
+
+    From the supported-query registry, plus :data:`TUTORIAL_PAGES` for the datasets a
+    download tutorial shows.
+    """
     registry = json.loads(REGISTRY.read_text(encoding="utf-8"))
-    pages: dict[str, str] = {}
+    pages: dict[str, str] = dict(TUTORIAL_PAGES)
     for query in registry["queries"]:
         page = query.get("docs_page")
         if not page:

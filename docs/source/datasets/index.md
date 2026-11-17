@@ -24,8 +24,11 @@ A dataset page is a fixed set of sections, in this order, so two pages can be re
 
 Two rules hold for every number on a page. Every table, figure, record dump and query count is written by a committed script under `experiments/034-showcase-datasets/scripts/` into the page's `_generated/` directory, and the page only includes those fragments; nothing is typed by hand. Every query against the served graph runs as a slurm job whose id the fragment records, and the page names the release the job read. The page path is registered as `docs_page` on its supported query in `torchcell/knowledge_graphs/supported_queries/registry.json`, and the Sphinx build must add no warnings.
 
+The *E. coli* section holds a download tutorial, not a dataset page of the form above. It follows the first rule, with its code and output written by scripts under `experiments/034-showcase-datasets/scripts/`, and it has no diagram, query, or distribution sections.
+
 ```{toctree}
 :maxdepth: 2
 
 scerevisiae/index
+ecoli/index
 ```

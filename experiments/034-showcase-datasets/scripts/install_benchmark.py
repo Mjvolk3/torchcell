@@ -187,7 +187,8 @@ def main() -> int:
         "platform": platform.platform(),
         "cpu_count": os.cpu_count(),
         "work": str(work),
-        "work_filesystem": output(["stat", "-f", "-c", "%T", str(work)], env),
+        # findmnt, not `stat -f`: stat names every ext filesystem "ext2/ext3".
+        "work_filesystem": output(["findmnt", "-no", "FSTYPE", "-T", str(work)], env),
         "requirement": args.requirement,
         "uv_version": output([uv, "--version"], env),
         "fetch_uv_seconds": round(fetch_uv_seconds, 2),

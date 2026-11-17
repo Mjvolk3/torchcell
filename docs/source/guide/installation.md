@@ -5,6 +5,23 @@ torchcell requires Python 3.13 or newer (`requires-python = ">=3.13"` in
 `env/requirements.txt` (`[tool.setuptools.dynamic]` in `pyproject.toml`), so the pip
 requirement files under `env/` are the source of truth for what gets installed.
 
+## Install the released package
+
+To use the loaders and download built datasets, install the release from PyPI into a
+Python 3.13 environment:
+
+```bash
+pip install torchcell
+```
+
+```bash
+uv pip install torchcell
+```
+
+{doc}`../datasets/ecoli/download-tutorial` gives the measured time of each installer and
+the commands that select the CPU build of torch on a machine with no GPU. The sections
+below set up a development checkout.
+
 ## Create the environment
 
 The repository does not ship a conda environment file for the main package

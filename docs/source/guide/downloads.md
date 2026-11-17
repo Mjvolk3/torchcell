@@ -15,9 +15,15 @@ The endpoint is `http://torchcell-database.ncsa.illinois.edu:8724`, on the datab
 host, serving the archive store and the raw mirror from the Taiga project storage. No
 key, account or ssh is needed: every route is open for reading. The URL is built into
 the package as `torchcell.endpoint_http.DEFAULT_URL`, and `TC_DATA_URL` overrides it
-for a mirror or a development server. The store currently holds `gene_essentiality_sgd`,
-`smf_costanzo2016`, `amino_acid_cooper2010`, `amino_acid_mulleder2016` and
-`betaxanthin_cachera2023`; `GET /datasets` is the authoritative list.
+for a mirror or a development server. `GET /datasets` is the authoritative list of what
+the store holds. On 2026-11-17 it held nine archives. Four are *E. coli* stores packaged
+with torchcell 1.8.4: `ecoli_growth_rate_campos2018`, `ecoli_morphology_campos2018`,
+`gene_interaction_babu2014` and `metabolome_fuhrer2017`, which
+{doc}`../datasets/ecoli/download-tutorial` downloads, loads and prints. Five are yeast
+stores packaged with torchcell 1.5.0: `gene_essentiality_sgd`, `smf_costanzo2016`,
+`amino_acid_cooper2010`, `amino_acid_mulleder2016` and `betaxanthin_cachera2023`. An
+archive is read by the releases that share its `major.minor`, so a 1.8 install selects
+the four *E. coli* archives and none of the yeast five.
 
 ## Swagger
 
@@ -94,16 +100,16 @@ files and data files under the same key are served as usual.
 export TC_DATA_URL=http://torchcell-database.ncsa.illinois.edu:8724
 
 curl "$TC_DATA_URL/datasets" | python -m json.tool
-curl "$TC_DATA_URL/datasets/smf_costanzo2016"
+curl "$TC_DATA_URL/datasets/ecoli_growth_rate_campos2018"
 
 # download an archive, resuming if interrupted, then verify it
-ARCHIVE=smf_costanzo2016-1.2.1-d8a0f06c.tar.xz
-curl -C - -o "$ARCHIVE" "$TC_DATA_URL/datasets/smf_costanzo2016/$ARCHIVE"
+ARCHIVE=ecoli_growth_rate_campos2018-1.8.4-ef455265.tar.xz
+curl -C - -o "$ARCHIVE" "$TC_DATA_URL/datasets/ecoli_growth_rate_campos2018/$ARCHIVE"
 sha256sum "$ARCHIVE"   # must equal the row's archive_sha256
 
 # unpack into a dataset root; processed/ and preprocess/ appear beside it
-mkdir -p data/torchcell/smf_costanzo2016
-tar -xf "$ARCHIVE" -C data/torchcell/smf_costanzo2016
+mkdir -p data/torchcell/ecoli_growth_rate_campos2018
+tar -xf "$ARCHIVE" -C data/torchcell/ecoli_growth_rate_campos2018
 
 # raw files
 curl "$TC_DATA_URL/raw"
@@ -151,9 +157,9 @@ from dotenv import load_dotenv
 
 load_dotenv()  # reads the .env beside this script or in a parent directory
 
-from torchcell.datasets.scerevisiae.costanzo2016 import SmfCostanzo2016Dataset
+from torchcell.datasets.ecoli.campos2018 import GrowthRateCampos2018Dataset
 
-dataset = SmfCostanzo2016Dataset(root="data/torchcell/smf_costanzo2016")
+dataset = GrowthRateCampos2018Dataset(root="data/torchcell/ecoli_growth_rate_campos2018")
 ```
 
 torchcell does not read `.env` on its own. A `.env` with no `load_dotenv()` call leaves
@@ -168,11 +174,11 @@ the public endpoint otherwise.
 from torchcell.datasets.client import DatasetClient, unpack_artifact
 
 client = DatasetClient.from_env()          # TC_DATA_URL if set, else the public endpoint
-artifact = client.select("smf_costanzo2016")  # newest supported row on this major.minor
+artifact = client.select("ecoli_growth_rate_campos2018")  # newest supported row on this major.minor
 if artifact is None:
     raise SystemExit("nothing compatible with the installed torchcell")
 archive = client.download(artifact, dest=f"artifacts/{artifact.archive}")  # verifies sha256
-unpack_artifact(archive, "data/torchcell/smf_costanzo2016")
+unpack_artifact(archive, "data/torchcell/ecoli_growth_rate_campos2018")
 ```
 
 The raw mirror keys and files are one `GET` away; see the Swagger page for the exact

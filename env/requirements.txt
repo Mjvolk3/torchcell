@@ -146,4 +146,8 @@
     # Keyed read-only endpoint serving the OCR literature mirror (issue #20)
     fastapi>=0.115
     uvicorn[standard]>=0.30
+    # HTTP client of the tc-data and tc-lit clients (torchcell/datasets/client.py,
+    # torchcell/endpoint_http.py). Imported directly, so declared directly: until
+    # 1.8.5 it reached a fresh install only as a dependency of cobra.
+    httpx>=0.27
     unidecode>=1.3.0

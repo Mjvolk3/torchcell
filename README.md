@@ -26,43 +26,58 @@ Datasets: <https://mjvolk3.github.io/torchcell/datasets/index.html>
 
 Dataset downloads (the tc-data API): <https://mjvolk3.github.io/torchcell/guide/downloads.html>
 
+## Install
+
+torchcell needs Python 3.13 or newer.
+
+```bash
+pip install torchcell      # or: uv pip install torchcell
+```
+
+On a machine with no GPU, select the CPU build of torch. The environment is then 2.4 GB
+in place of 7.0 GB, as measured in the
+[download tutorial](https://mjvolk3.github.io/torchcell/datasets/ecoli/download-tutorial.html):
+
+```bash
+uv pip install --torch-backend cpu torchcell
+pip install --extra-index-url https://download.pytorch.org/whl/cpu torchcell
+```
+
 ## Download a dataset
 
 Built datasets are served as versioned archives (the records LMDB plus its build
-manifest) by the `tc-data` endpoint on the database host, with Swagger at `/docs`. Each
-page below is one supported query over the knowledge graph and bundles the datasets it
-returns: what the experiments measured, one stored record each, the value distributions,
-the query, and the download commands.
-
-| Page | Datasets (records) |
-| :-- | :-- |
-| [Gene essentiality and single-mutant fitness](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/essentiality-smf.html) | Gene essentiality, SGD (1,329)<br>Single-mutant fitness, Costanzo 2016 (20,484) |
-| [Amino acids and betaxanthin](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/amino-acid-betaxanthin.html) | Amino acids, Mulleder 2016 (4,678)<br>Amine peaks, Cooper 2010 (4,313)<br>Betaxanthin, Cachera 2023 (4,719) |
-
-With an endpoint URL and a key (see [Downloading datasets](https://mjvolk3.github.io/torchcell/guide/downloads.html)),
-a loader fetches its archive instead of building. Export the two variables in the shell:
-
-```bash
-export TC_DATA_URL=http://torchcell-database.ncsa.illinois.edu:8724
-export TC_DATA_API_KEY=<your key>
-```
-
-or put the same two lines, without `export`, in a `.env` file in your project and load
-it before constructing a loader:
+manifest) by the public `tc-data` endpoint on the database host, with Swagger at `/docs`.
+The endpoint takes no key. With `TC_DATA_URL` set, a loader downloads its archive, checks
+the sha256, and unpacks it instead of building from the publisher's files:
 
 ```python
-from dotenv import load_dotenv
+import os
 
-load_dotenv()  # reads the .env beside this script or in a parent directory
+os.environ["TC_DATA_URL"] = "http://torchcell-database.ncsa.illinois.edu:8724"
 
-from torchcell.datasets.scerevisiae.mulleder2016 import AminoAcidMulleder2016Dataset
+from torchcell.datasets.ecoli.campos2018 import GrowthRateCampos2018Dataset
 
-dataset = AminoAcidMulleder2016Dataset(root="data/torchcell/amino_acid_mulleder2016")
+dataset = GrowthRateCampos2018Dataset(root="data/torchcell/ecoli_growth_rate_campos2018")
+record = dataset[0]  # a dict: experiment, reference, publication
+print(len(dataset), record["experiment"]["phenotype"]["fitness"])
 ```
 
-The loader reads the two variables from the process environment and does not read `.env`
-itself. With `TC_DATA_URL` unset it builds from the publisher's files instead.
+The loader reads `TC_DATA_URL` from the process environment and does not read a `.env`
+file itself. With the variable unset it builds from the publisher's files instead. An
+archive is read by the releases that share the `major.minor` it was packaged with.
 
-The full collection served by the knowledge graph (51 datasets, 52.7 million
-experiments at release 2026.09.21) is listed on the
+| Page | Datasets (records) | Archives packaged with |
+| :-- | :-- | :-- |
+| [Downloading E. coli datasets](https://mjvolk3.github.io/torchcell/datasets/ecoli/download-tutorial.html) | Growth rate, Campos 2018 (3,664)<br>Cell shape and cell cycle, Campos 2018 (3,664)<br>Genetic interaction, Babu 2014 (42,705)<br>Metabolome, Fuhrer 2017 (3,806) | torchcell 1.8 |
+| [Gene essentiality and single-mutant fitness](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/essentiality-smf.html) | Gene essentiality, SGD (1,329)<br>Single-mutant fitness, Costanzo 2016 (20,484) | torchcell 1.5 |
+| [Amino acids and betaxanthin](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/amino-acid-betaxanthin.html) | Amino acids, Mulleder 2016 (4,678)<br>Amine peaks, Cooper 2010 (4,313)<br>Betaxanthin, Cachera 2023 (4,719) | torchcell 1.5 |
+
+The first page is a download tutorial that loads each dataset and prints its records. The
+other two describe what the experiments measured, the stored records, the value
+distributions, and the query that returns them from the knowledge graph.
+[Downloading datasets](https://mjvolk3.github.io/torchcell/guide/downloads.html) documents
+the endpoint.
+
+The full collection served by the knowledge graph (170 datasets, 73.1 million
+experiments at release 2026.10.17) is listed on the
 [Datasets](https://mjvolk3.github.io/torchcell/datasets/index.html) page.

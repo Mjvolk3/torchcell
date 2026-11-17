@@ -282,8 +282,8 @@ keep every node it has read for the life of the result, measured in the
 <code class="docutils literal notranslate"><span class="pre">Neo4jQueryRaw.process</span></code> comments at 13.6 KB per record on the 025 build against 3 B per
 record for the property shape.</p>
 </section>
-<section id="choosing-a-release">
-<span id="kg-choosing-a-release"></span><h2>Choosing a release<a class="headerlink" href="#choosing-a-release" title="Link to this heading"></a></h2>
+<section id="kg-choosing-a-release">
+<span id="choosing-a-release"></span><h2>Choosing a release<a class="headerlink" href="#kg-choosing-a-release" title="Link to this heading"></a></h2>
 <p>Clients name a <strong>version</strong>, not a database. <code class="docutils literal notranslate"><span class="pre">Neo4jQueryRaw</span></code> resolves the version to a
 database name each time it runs a query, through
 <code class="docutils literal notranslate"><span class="pre">torchcell.knowledge_graphs.releases.resolve_database</span></code>:</p>
@@ -325,8 +325,8 @@ themselves sha256 hashes of the serialized records, so two releases that report 
 hash for a dataset serve byte-identical experiment records for it.</p>
 </section>
 </section>
-<section id="converters">
-<span id="kg-converters"></span><h2>Converters<a class="headerlink" href="#converters" title="Link to this heading"></a></h2>
+<section id="kg-converters">
+<span id="converters"></span><h2>Converters<a class="headerlink" href="#kg-converters" title="Link to this heading"></a></h2>
 <p>Some phenotypes are statements that imply a fitness value. A <strong>converter</strong> rewrites
 such records into another experiment type between the raw query and deduplication, so
 they can be pooled with measured values. Converters subclass

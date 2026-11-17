@@ -130,6 +130,20 @@
 <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>). The package’s runtime dependencies are read from
 <code class="docutils literal notranslate"><span class="pre">env/requirements.txt</span></code> (<code class="docutils literal notranslate"><span class="pre">[tool.setuptools.dynamic]</span></code> in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>), so the pip
 requirement files under <code class="docutils literal notranslate"><span class="pre">env/</span></code> are the source of truth for what gets installed.</p>
+<section id="install-the-released-package">
+<h2>Install the released package<a class="headerlink" href="#install-the-released-package" title="Link to this heading"></a></h2>
+<p>To use the loaders and download built datasets, install the release from PyPI into a
+Python 3.13 environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchcell
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>torchcell
+</pre></div>
+</div>
+<p><a class="reference internal" href="../datasets/ecoli/download-tutorial.html"><span class="doc">Downloading E. coli datasets</span></a> gives the measured time of each installer and
+the commands that select the CPU build of torch on a machine with no GPU. The sections
+below set up a development checkout.</p>
+</section>
 <section id="create-the-environment">
 <h2>Create the environment<a class="headerlink" href="#create-the-environment" title="Link to this heading"></a></h2>
 <p>The repository does not ship a conda environment file for the main package

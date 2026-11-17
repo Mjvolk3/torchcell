@@ -140,9 +140,15 @@ which serves each paper’s supplementary material (never the paper itself).</p>
 host, serving the archive store and the raw mirror from the Taiga project storage. No
 key, account or ssh is needed: every route is open for reading. The URL is built into
 the package as <code class="docutils literal notranslate"><span class="pre">torchcell.endpoint_http.DEFAULT_URL</span></code>, and <code class="docutils literal notranslate"><span class="pre">TC_DATA_URL</span></code> overrides it
-for a mirror or a development server. The store currently holds <code class="docutils literal notranslate"><span class="pre">gene_essentiality_sgd</span></code>,
-<code class="docutils literal notranslate"><span class="pre">smf_costanzo2016</span></code>, <code class="docutils literal notranslate"><span class="pre">amino_acid_cooper2010</span></code>, <code class="docutils literal notranslate"><span class="pre">amino_acid_mulleder2016</span></code> and
-<code class="docutils literal notranslate"><span class="pre">betaxanthin_cachera2023</span></code>; <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/datasets</span></code> is the authoritative list.</p>
+for a mirror or a development server. <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/datasets</span></code> is the authoritative list of what
+the store holds. On 2026-11-17 it held nine archives. Four are <em>E. coli</em> stores packaged
+with torchcell 1.8.4: <code class="docutils literal notranslate"><span class="pre">ecoli_growth_rate_campos2018</span></code>, <code class="docutils literal notranslate"><span class="pre">ecoli_morphology_campos2018</span></code>,
+<code class="docutils literal notranslate"><span class="pre">gene_interaction_babu2014</span></code> and <code class="docutils literal notranslate"><span class="pre">metabolome_fuhrer2017</span></code>, which
+<a class="reference internal" href="../datasets/ecoli/download-tutorial.html"><span class="doc">Downloading E. coli datasets</span></a> downloads, loads and prints. Five are yeast
+stores packaged with torchcell 1.5.0: <code class="docutils literal notranslate"><span class="pre">gene_essentiality_sgd</span></code>, <code class="docutils literal notranslate"><span class="pre">smf_costanzo2016</span></code>,
+<code class="docutils literal notranslate"><span class="pre">amino_acid_cooper2010</span></code>, <code class="docutils literal notranslate"><span class="pre">amino_acid_mulleder2016</span></code> and <code class="docutils literal notranslate"><span class="pre">betaxanthin_cachera2023</span></code>. An
+archive is read by the releases that share its <code class="docutils literal notranslate"><span class="pre">major.minor</span></code>, so a 1.8 install selects
+the four <em>E. coli</em> archives and none of the yeast five.</p>
 <section id="swagger">
 <h2>Swagger<a class="headerlink" href="#swagger" title="Link to this heading"></a></h2>
 <p>The interactive documentation lives at <code class="docutils literal notranslate"><span class="pre">&lt;TC_DATA_URL&gt;/docs</span></code> and the OpenAPI schema at
@@ -261,16 +267,16 @@ files and data files under the same key are served as usual.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">TC_DATA_URL</span><span class="o">=</span>http://torchcell-database.ncsa.illinois.edu:8724
 
 curl<span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/datasets"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>json.tool
-curl<span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/datasets/smf_costanzo2016"</span>
+curl<span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/datasets/ecoli_growth_rate_campos2018"</span>
 
 <span class="c1"># download an archive, resuming if interrupted, then verify it</span>
-<span class="nv">ARCHIVE</span><span class="o">=</span>smf_costanzo2016-1.2.1-d8a0f06c.tar.xz
-curl<span class="w"> </span>-C<span class="w"> </span>-<span class="w"> </span>-o<span class="w"> </span><span class="s2">"</span><span class="nv">$ARCHIVE</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/datasets/smf_costanzo2016/</span><span class="nv">$ARCHIVE</span><span class="s2">"</span>
+<span class="nv">ARCHIVE</span><span class="o">=</span>ecoli_growth_rate_campos2018-1.8.4-ef455265.tar.xz
+curl<span class="w"> </span>-C<span class="w"> </span>-<span class="w"> </span>-o<span class="w"> </span><span class="s2">"</span><span class="nv">$ARCHIVE</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/datasets/ecoli_growth_rate_campos2018/</span><span class="nv">$ARCHIVE</span><span class="s2">"</span>
 sha256sum<span class="w"> </span><span class="s2">"</span><span class="nv">$ARCHIVE</span><span class="s2">"</span><span class="w">   </span><span class="c1"># must equal the row's archive_sha256</span>
 
 <span class="c1"># unpack into a dataset root; processed/ and preprocess/ appear beside it</span>
-mkdir<span class="w"> </span>-p<span class="w"> </span>data/torchcell/smf_costanzo2016
-tar<span class="w"> </span>-xf<span class="w"> </span><span class="s2">"</span><span class="nv">$ARCHIVE</span><span class="s2">"</span><span class="w"> </span>-C<span class="w"> </span>data/torchcell/smf_costanzo2016
+mkdir<span class="w"> </span>-p<span class="w"> </span>data/torchcell/ecoli_growth_rate_campos2018
+tar<span class="w"> </span>-xf<span class="w"> </span><span class="s2">"</span><span class="nv">$ARCHIVE</span><span class="s2">"</span><span class="w"> </span>-C<span class="w"> </span>data/torchcell/ecoli_growth_rate_campos2018
 
 <span class="c1"># raw files</span>
 curl<span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/raw"</span>
@@ -345,9 +351,9 @@ Either export it in the shell, as in the curl section, or put the same line, wit
 
 <span class="n">load_dotenv</span><span class="p">()</span>  <span class="c1"># reads the .env beside this script or in a parent directory</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.costanzo2016</span><span class="w"> </span><span class="kn">import</span> <span class="n">SmfCostanzo2016Dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.ecoli.campos2018</span><span class="w"> </span><span class="kn">import</span> <span class="n">GrowthRateCampos2018Dataset</span>
 
-<span class="n">dataset</span> <span class="o">=</span> <span class="n">SmfCostanzo2016Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="s2">"data/torchcell/smf_costanzo2016"</span><span class="p">)</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">GrowthRateCampos2018Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="s2">"data/torchcell/ecoli_growth_rate_campos2018"</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>torchcell does not read <code class="docutils literal notranslate"><span class="pre">.env</span></code> on its own. A <code class="docutils literal notranslate"><span class="pre">.env</span></code> with no <code class="docutils literal notranslate"><span class="pre">load_dotenv()</span></code> call leaves
@@ -359,11 +365,11 @@ the public endpoint otherwise.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetClient</span><span class="p">,</span> <span class="n">unpack_artifact</span>
 
 <span class="n">client</span> <span class="o">=</span> <span class="n">DatasetClient</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>          <span class="c1"># TC_DATA_URL if set, else the public endpoint</span>
-<span class="n">artifact</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">"smf_costanzo2016"</span><span class="p">)</span>  <span class="c1"># newest supported row on this major.minor</span>
+<span class="n">artifact</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">"ecoli_growth_rate_campos2018"</span><span class="p">)</span>  <span class="c1"># newest supported row on this major.minor</span>
 <span class="k">if</span> <span class="n">artifact</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="s2">"nothing compatible with the installed torchcell"</span><span class="p">)</span>
 <span class="n">archive</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">artifact</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="sa">f</span><span class="s2">"artifacts/</span><span class="si">{</span><span class="n">artifact</span><span class="o">.</span><span class="n">archive</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>  <span class="c1"># verifies sha256</span>
-<span class="n">unpack_artifact</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="s2">"data/torchcell/smf_costanzo2016"</span><span class="p">)</span>
+<span class="n">unpack_artifact</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="s2">"data/torchcell/ecoli_growth_rate_campos2018"</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The raw mirror keys and files are one <code class="docutils literal notranslate"><span class="pre">GET</span></code> away; see the Swagger page for the exact

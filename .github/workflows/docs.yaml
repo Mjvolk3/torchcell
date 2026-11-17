@@ -140,7 +140,10 @@ jobs:
   # `validate` on the new release. Separate from `build` for the same reason as
   # ontology-drift: it must never stop the docs deploy.
   query-drift:
-    runs-on: ubuntu-latest
+    # ubuntu-24.04, not ubuntu-latest: Python 3.13.0, pinned below for the schema
+    # fingerprints, is built for Ubuntu 20.04, 22.04 and 24.04 only, and setup-python
+    # fails on the 26.04 image ubuntu-latest became (first seen 2026-11-17, PR #1166).
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       issues: write

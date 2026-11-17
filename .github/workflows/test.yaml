@@ -12,7 +12,11 @@ concurrency:
 
 jobs:
   pytest-coverage:
-    runs-on: ubuntu-latest
+    # ubuntu-24.04, not ubuntu-latest: the Python 3.13.0 this job pins (see "Set up
+    # Python") is built for Ubuntu 20.04, 22.04 and 24.04 only. When ubuntu-latest became
+    # 26.04, setup-python failed with "The version '3.13.0' with architecture 'x64' was
+    # not found for Ubuntu 26.04" (first seen 2026-11-17, PR #1166).
+    runs-on: ubuntu-24.04
     # Blocking (#16): the CI-fragile tests are hardened -- test_s288c has a module-level
     # DATA_ROOT skip, the wall-clock benchmark is gpu-marked (deselected), the PyG-batch
     # test is DATA_ROOT-guarded, and test_cleanup_lock_files is filelock-version-robust --

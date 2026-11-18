@@ -1,23 +1,20 @@
-"""Cliff command for building the torchcell database image via shell scripts."""
+"""The ``tcdb build`` subcommand: build the torchcell database image via shell scripts."""
 
 import argparse
 import os
 import os.path as osp
 import subprocess
-from typing import IO, TYPE_CHECKING, cast
-
-from cliff.command import Command
-
-if TYPE_CHECKING:
-    from cliff._argparse import ArgumentParser as CliffArgumentParser
+from typing import IO, cast
 
 
-class BuildCommand(Command):
+class BuildCommand:
     """A simple command that builds something."""
 
-    def get_parser(self, prog_name: str) -> "CliffArgumentParser":
-        """Build the argument parser, adding the build mode option."""
-        parser = super().get_parser(prog_name)
+    description = "A simple command that builds something."
+
+    @staticmethod
+    def add_arguments(parser: argparse.ArgumentParser) -> None:
+        """Add the build mode option to ``parser``."""
         parser.add_argument(
             "-m",
             "--mode",
@@ -25,6 +22,11 @@ class BuildCommand(Command):
             default="regular",
             help="Build mode (default: %(default)s)",
         )
+
+    def get_parser(self, prog_name: str) -> argparse.ArgumentParser:
+        """A standalone parser for the command, named ``prog_name`` in its usage line."""
+        parser = argparse.ArgumentParser(prog=prog_name, description=self.description)
+        self.add_arguments(parser)
         return parser
 
     def take_action(self, parsed_args: argparse.Namespace) -> int | None:

@@ -74,18 +74,38 @@ BANNER = re.compile(r"^={12} (.+) ={12}$")
 BLOCK = re.compile(r"^# \[(\w+)\]\n(.*?)^# \[/\1\]\n", re.DOTALL | re.MULTILINE)
 # The notebook, top to bottom: a markdown cell (text) or a code cell (the name of a
 # tutorial block). The cells in HIDDEN hold plotting code; their source is collapsed in
-# the notebook (JupyterLab, VS Code) and on the documentation page.
+# the notebook (JupyterLab, VS Code) and on the documentation page. A "raw" cell is code
+# that belongs to the notebook only: the first one installs torchcell when the notebook
+# is opened in Google Colab and does nothing anywhere else.
+NOTEBOOK_PATH = "experiments/034-showcase-datasets/notebooks/ecoli_datasets.ipynb"
+NOTEBOOK_URL = f"https://github.com/Mjvolk3/torchcell/blob/main/{NOTEBOOK_PATH}"
+COLAB_URL = f"https://colab.research.google.com/github/Mjvolk3/torchcell/blob/main/{NOTEBOOK_PATH}"
+COLAB_BADGE = (
+    "[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)]"
+    f"({COLAB_URL})"
+)
+COLAB_INSTALL = """\
+# In Google Colab this installs torchcell. Anywhere else it does nothing.
+import sys
+
+if "google.colab" in sys.modules:
+    %pip install -q "torchcell>=1.8.6"
+"""
 NOTEBOOK: tuple[tuple[str, str], ...] = (
     (
         "md",
         "# E. coli datasets in torchcell\n\n"
+        f"{COLAB_BADGE}\n\n"
         "Four built *Escherichia coli* K-12 datasets, loaded from the public `tc-data` "
         "endpoint. The cells that load and read the data are the interface to copy. "
         "The plotting cells are collapsed: expand one to see how its figure is drawn. "
-        "Run the cells top to bottom in an empty directory with `torchcell` installed "
-        "(Python 3.13 or newer). The stores download into `./data/torchcell/` and the "
-        "figures are written to `./figures/`.",
+        "To run it with nothing installed, open it in Google Colab with the badge "
+        "above and choose Runtime, Run all: the first cell installs `torchcell`. "
+        "On your own machine, run the cells top to bottom in an empty directory with "
+        "`torchcell` installed (Python 3.13 or newer). The stores download into "
+        "`./data/torchcell/` and the figures are written to `./figures/`.",
     ),
+    ("raw", COLAB_INSTALL),
     (
         "md",
         "## Setup\n\nSetting `TC_DATA_URL` makes each loader download its built store. "
@@ -185,10 +205,6 @@ HIDDEN = frozenset(
     }
 )
 NOTEBOOK_PAGE = Path("docs/source/datasets/ecoli/notebook.md")
-NOTEBOOK_URL = (
-    "https://github.com/Mjvolk3/torchcell/blob/main/"
-    "experiments/034-showcase-datasets/notebooks/ecoli_datasets.ipynb"
-)
 
 # Dataset rows of the page, in page order: slug, label on the page, loader module, what
 # one record's label is. The record and feature counts are read from the runs.
@@ -377,6 +393,14 @@ def build_notebook(tutorial: Path) -> dict[str, Any]:
                 "metadata": {},
                 "source": value,
             }
+        elif kind == "raw":
+            cell = {
+                "cell_type": "code",
+                "execution_count": None,
+                "metadata": {"tags": ["install"]},
+                "outputs": [],
+                "source": value.rstrip("\n"),
+            }
         else:
             hidden = value in HIDDEN
             cell = {
@@ -468,6 +492,8 @@ def write_notebook_page(notebook: dict[str, Any], stamp: str) -> None:
         "",
         f"```{{note}}\nThis page is the notebook "
         f"[`ecoli_datasets.ipynb`]({NOTEBOOK_URL}) with the outputs of one run. "
+        f"[Open it in Google Colab]({COLAB_URL}) to run it in the browser with nothing "
+        "installed. "
         "The plotting code is collapsed; open **Show the plotting code** to read it.\n```",
         "",
     ]

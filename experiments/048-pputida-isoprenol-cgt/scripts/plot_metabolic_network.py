@@ -45,7 +45,6 @@ import pandas as pd
 from dotenv import load_dotenv
 from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
-from matplotlib.patches import Circle, FancyArrowPatch, Rectangle
 
 from torchcell.graph.string_db import StringTaxonMirror
 from torchcell.metabolism.bigg_gem import BiggGEM
@@ -166,58 +165,101 @@ def accoa_competition(model: cobra.Model, targets: set[str]) -> pd.DataFrame:
     ).reset_index(drop=True)
 
 
+#: Node marker areas in points squared, so a node's printed size does not
+#: depend on the data limits. Drawing nodes as data-space patches under
+#: ``aspect="equal"`` is what made the first version of this figure letterbox
+#: itself into a quarter of its canvas and overlap its own arrows.
+METABOLITE_AREA = 62.0
+REACTION_AREA = 40.0
+HUB_AREA = 105.0
+
+#: Font sizes. Nature's figure band is 5 pt minimum and 7 pt maximum, with
+#: 8 pt bold lowercase for panel letters only.
+FS_NODE_LABEL = 5.6
+FS_REACTION = 5.2
+FS_GENE = 5.0
+FS_TITLE = 6.0
+FS_PANEL_LETTER = 8.0
+
+
+def _marker_radius_pt(area: float) -> float:
+    """Half the drawn width of a scatter marker, in points."""
+    return math.sqrt(area / math.pi)
+
+
 def draw_metabolite(
-    ax: Axes, x: float, y: float, label: str, radius: float = 0.052
+    ax: Axes, x: float, y: float, label: str, area: float = METABOLITE_AREA
 ) -> None:
-    """A metabolite node: filled circle, label to its right."""
-    ax.add_patch(
-        Circle(
+    """A metabolite node: circle, label to its right at a fixed point offset."""
+    ax.scatter(
+        [x],
+        [y],
+        s=area,
+        marker="o",
+        facecolor=PLOT_PALETTE_FILL[4],
+        edgecolor=PLOT_PALETTE[4],
+        linewidth=0.5,
+        zorder=3,
+        clip_on=False,
+    )
+    if label:
+        ax.annotate(
+            label,
             (x, y),
-            radius,
-            facecolor=PLOT_PALETTE_FILL[4],
-            edgecolor=PLOT_PALETTE[4],
-            linewidth=0.5,
-            zorder=3,
+            xytext=(_marker_radius_pt(area) + 2.5, 0),
+            textcoords="offset points",
+            fontsize=FS_NODE_LABEL,
+            ha="left",
+            va="center",
+            zorder=4,
+            annotation_clip=False,
         )
-    )
-    ax.text(
-        x + radius + 0.028, y, label, fontsize=5.4, ha="left", va="center", zorder=4
-    )
 
 
-def draw_reaction(
-    ax: Axes, x: float, y: float, label: str, genes: list[str], half: float = 0.030
-) -> None:
-    """A reaction node: square, id above, genes below.
+def draw_reaction(ax: Axes, x: float, y: float, label: str, genes: list[str]) -> None:
+    """A reaction node: square, id to the left, the genes its GPR names below it.
 
-    A plasmid gene is set apart because it is background in this campaign: it is
-    present in every strain and no guide targets it.
+    A plasmid gene is set apart by color because it is background in this
+    campaign: present in every strain, and targeted by no guide.
     """
-    ax.add_patch(
-        Rectangle(
-            (x - half, y - half),
-            2 * half,
-            2 * half,
-            facecolor=PLOT_PALETTE_FILL[0],
-            edgecolor=PLOT_PALETTE[0],
-            linewidth=0.5,
-            zorder=3,
-        )
+    ax.scatter(
+        [x],
+        [y],
+        s=REACTION_AREA,
+        marker="s",
+        facecolor=PLOT_PALETTE_FILL[0],
+        edgecolor=PLOT_PALETTE[0],
+        linewidth=0.5,
+        zorder=3,
+        clip_on=False,
     )
-    ax.text(x - half - 0.028, y, label, fontsize=5.0, ha="right", va="center", zorder=4)
+    offset = -(math.sqrt(REACTION_AREA) / 2.0 + 2.5)
+    ax.annotate(
+        label,
+        (x, y),
+        xytext=(offset, 2.3 if genes else 0.0),
+        textcoords="offset points",
+        fontsize=FS_REACTION,
+        ha="right",
+        va="center",
+        zorder=4,
+        annotation_clip=False,
+    )
     if genes:
         shown = ", ".join(genes[:3]) + (", ..." if len(genes) > 3 else "")
         plasmid = any(gene in PLASMID_GENES for gene in genes)
-        ax.text(
-            x - half - 0.028,
-            y - 0.042,
+        ax.annotate(
             shown,
-            fontsize=4.4,
+            (x, y),
+            xytext=(offset, -3.4),
+            textcoords="offset points",
+            fontsize=FS_GENE,
             fontstyle="italic",
             color=PLOT_PALETTE[1] if plasmid else "#444444",
             ha="right",
             va="center",
             zorder=4,
+            annotation_clip=False,
         )
 
 
@@ -225,56 +267,67 @@ def arrow(
     ax: Axes,
     start: tuple[float, float],
     end: tuple[float, float],
+    shrink_a: float,
+    shrink_b: float,
     color: str = "#555555",
-    width: float = 0.5,
-    rad: float = 0.0,
 ) -> None:
-    ax.add_patch(
-        FancyArrowPatch(
-            start,
-            end,
-            arrowstyle="-|>",
-            mutation_scale=3.2,
-            linewidth=width,
-            color=color,
-            connectionstyle=f"arc3,rad={rad}",
-            shrinkA=2.0,
-            shrinkB=2.0,
-            zorder=2,
-        )
+    """A directed edge between two nodes.
+
+    ``shrink_a`` and ``shrink_b`` are in points and are the drawn radii of the
+    nodes at each end, so the arrow starts and ends clear of them whatever the
+    data limits are. That is the whole reason the nodes are markers rather than
+    patches: the gap is set in print units, not in data units.
+    """
+    ax.annotate(
+        "",
+        xy=end,
+        xytext=start,
+        arrowprops={
+            "arrowstyle": "-|>",
+            "color": color,
+            "linewidth": 0.5,
+            "shrinkA": shrink_a + 1.2,
+            "shrinkB": shrink_b + 1.2,
+            "mutation_scale": 4.0,
+        },
+        annotation_clip=False,
+        zorder=2,
     )
 
 
 def panel_route(ax: Axes, model: cobra.Model) -> None:
-    """Panel a: the nine-reaction route, top to bottom."""
-    steps = len(ROUTE)
+    """Panel a: the route from acetyl-CoA to measured titer, top to bottom."""
     metabolites = [ROUTE[0][1]] + [product for _, _, product in ROUTE]
-    y_metabolite = [1.0 - index * (1.0 / steps) for index in range(len(metabolites))]
-    x = 0.42
+    x = 0.12
+    met_r = _marker_radius_pt(METABOLITE_AREA)
+    rxn_r = math.sqrt(REACTION_AREA) / 2.0
 
-    for y, metabolite in zip(y_metabolite, metabolites, strict=True):
-        draw_metabolite(ax, x, y, METABOLITE_LABELS[metabolite])
+    for index, metabolite in enumerate(metabolites):
+        draw_metabolite(ax, x, -float(index), METABOLITE_LABELS[metabolite])
     for index, (reaction, _, _) in enumerate(ROUTE):
-        y = (y_metabolite[index] + y_metabolite[index + 1]) / 2.0
+        y = -(index + 0.5)
         draw_reaction(ax, x, y, reaction, route_genes(model, reaction))
-        arrow(ax, (x, y_metabolite[index] - 0.052), (x, y + 0.030))
-        arrow(ax, (x, y - 0.030), (x, y_metabolite[index + 1] + 0.052))
+        arrow(ax, (x, -float(index)), (x, y), met_r, rxn_r)
+        arrow(ax, (x, y), (x, -float(index + 1)), rxn_r, met_r)
 
-    # The exchange, which is what a titer is measured as.
-    y_last = y_metabolite[-1]
-    draw_reaction(ax, x, y_last - 0.062, EXCHANGE, [])
-    arrow(ax, (x, y_last - 0.052), (x, y_last - 0.092))
-    ax.text(
-        x + 0.062,
-        y_last - 0.062,
+    # The exchange reaction, which is what a measured titer is.
+    y_last = -float(len(metabolites) - 1)
+    y_exchange = y_last - 0.6
+    draw_reaction(ax, x, y_exchange, EXCHANGE, [])
+    arrow(ax, (x, y_last), (x, y_exchange), met_r, rxn_r)
+    ax.annotate(
         "measured titer",
-        fontsize=5.0,
+        (x, y_exchange),
+        xytext=(rxn_r + 2.5, 0),
+        textcoords="offset points",
+        fontsize=FS_GENE,
+        color=PLOT_PALETTE[1],
         ha="left",
         va="center",
-        color=PLOT_PALETTE[1],
+        annotation_clip=False,
     )
-    ax.set_xlim(-0.30, 1.10)
-    ax.set_ylim(y_last - 0.16, 1.10)
+    ax.set_xlim(-1.0, 1.0)
+    ax.set_ylim(y_exchange - 0.35, 0.35)
 
 
 def panel_competition(
@@ -283,9 +336,8 @@ def panel_competition(
     """Panel b: the CRISPRi targets that carry acetyl-CoA reactions.
 
     One row per gene, every gene named, since there are only fourteen of them.
-    Node radius goes as the square root of the reaction count, so area is
-    proportional to it; pcaF-II carries 33 of the 49 and would otherwise cover
-    half the panel.
+    Marker area is proportional to the reaction count, so pcaF-II's 33 of the 49
+    read as 33 without covering the panel.
 
     The edge is an undirected statement, "this gene catalyzes n of acetyl-CoA's
     reactions", and its color says which way those reactions run. An arrowhead
@@ -297,74 +349,86 @@ def panel_competition(
     producers = [row for row in rows if int(row["consumes"]) < int(row["produces"])]
     ordered = consumers + producers
 
-    hub = (-0.08, 0.0)
-    draw_metabolite(ax, hub[0], hub[1], "", radius=0.070)
-    ax.text(
-        hub[0],
-        hub[1] - 0.115,
-        "acetyl-CoA",
-        fontsize=5.6,
-        ha="center",
-        va="top",
-        fontweight="bold",
-    )
-    ax.text(
-        hub[0],
-        hub[1] - 0.175,
-        f"{total} reactions",
-        fontsize=4.8,
-        ha="center",
-        va="top",
-        color="#555555",
-    )
-    ax.text(
-        hub[0],
-        hub[1] - 0.235,
-        f"{int(frame.n_reactions.sum())} knocked down",
-        fontsize=4.8,
-        ha="center",
-        va="top",
-        color="#555555",
-    )
+    hub_x, hub_y = -0.62, 0.0
+    draw_metabolite(ax, hub_x, hub_y, "", area=HUB_AREA)
+    for offset, text, size, color, weight in (
+        (
+            -(_marker_radius_pt(HUB_AREA) + 4.0),
+            "acetyl-CoA",
+            FS_NODE_LABEL,
+            "#000000",
+            "bold",
+        ),
+        (
+            -(_marker_radius_pt(HUB_AREA) + 11.0),
+            f"{total} reactions",
+            FS_GENE,
+            "#555555",
+            "normal",
+        ),
+        (
+            -(_marker_radius_pt(HUB_AREA) + 17.5),
+            f"{int(frame.n_reactions.sum())} knocked down",
+            FS_GENE,
+            "#555555",
+            "normal",
+        ),
+    ):
+        ax.annotate(
+            text,
+            (hub_x, hub_y),
+            xytext=(0, offset),
+            textcoords="offset points",
+            fontsize=size,
+            color=color,
+            fontweight=weight,
+            ha="center",
+            va="center",
+            annotation_clip=False,
+            zorder=4,
+        )
 
-    top, bottom, x = 0.92, -0.92, 0.62
+    top, bottom, x = 0.90, -0.90, 0.10
     step = (top - bottom) / max(len(ordered) - 1, 1)
     for index, row in enumerate(ordered):
         count = int(row["n_reactions"])
         y = top - index * step
         color = PLOT_PALETTE[1] if row in consumers else PLOT_PALETTE[2]
-        radius = 0.014 + 0.011 * math.sqrt(count)
+        area = 16.0 + 5.5 * count
         ax.plot(
-            [hub[0] + 0.070, x - radius],
-            [hub[1] + (y - hub[1]) * 0.09, y],
+            [hub_x, x],
+            [hub_y, y],
             color=color,
             linewidth=0.4,
             alpha=0.75,
             solid_capstyle="round",
             zorder=2,
         )
-        ax.add_patch(
-            Circle(
-                (x, y),
-                radius,
-                facecolor=color,
-                edgecolor="#333333",
-                linewidth=0.3,
-                zorder=3,
-            )
+        ax.scatter(
+            [x],
+            [y],
+            s=area,
+            marker="o",
+            facecolor=color,
+            edgecolor="#333333",
+            linewidth=0.3,
+            zorder=3,
+            clip_on=False,
         )
-        label = names.get(str(row["gene"]), str(row["gene"]))
-        ax.text(
-            x + radius + 0.035,
-            y,
-            f"{label} ({count})",
-            fontsize=4.8,
+        ax.annotate(
+            f"{names.get(str(row['gene']), str(row['gene']))} ({count})",
+            (x, y),
+            xytext=(_marker_radius_pt(area) + 2.5, 0),
+            textcoords="offset points",
+            fontsize=FS_GENE,
             fontstyle="italic",
             ha="left",
             va="center",
+            annotation_clip=False,
+            zorder=4,
         )
 
-    ax.set_xlim(-0.50, 1.50)
+    ax.set_xlim(-1.0, 1.0)
     ax.set_ylim(-1.05, 1.05)
 
 
@@ -383,25 +447,37 @@ def main() -> None:
     ).preferred_names()
     total_accoa = len(model.metabolites.get_by_id(ENTRY_METABOLITE).reactions)
 
+    # Nature full width, and a height that leaves the 170 mm cap alone. The
+    # panels carry 18 and 15 nodes down their long axis, so height is what the
+    # figure needs and width is what the standard fixes.
     fig, axes = plt.subplots(
         1,
         2,
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(122.0)),
-        gridspec_kw={"width_ratios": [1.05, 1.0]},
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(148.0)),
+        gridspec_kw={"width_ratios": [0.92, 1.08]},
         constrained_layout=True,
     )
     panel_route(axes[0], model)
     panel_competition(axes[1], frame, names, total_accoa)
 
     titles = (
-        "a  The isoprenol route, as the cell graph stores it",
-        "b  The CRISPRi targets competing for acetyl-CoA",
+        "The isoprenol route, as the cell graph stores it",
+        "The CRISPRi targets competing for acetyl-CoA",
     )
-    for ax, title in zip(axes, titles, strict=True):
-        ax.set_title(title, fontsize=6.0, loc="left", pad=3.0)
+    for ax, letter, title in zip(axes, ("a", "b"), titles, strict=True):
+        ax.text(
+            -0.045,
+            1.012,
+            letter,
+            transform=ax.transAxes,
+            fontsize=FS_PANEL_LETTER,
+            fontweight="bold",
+            ha="left",
+            va="bottom",
+        )
+        ax.set_title(title, fontsize=FS_TITLE, loc="left", pad=3.0)
         ax.set_xticks([])
         ax.set_yticks([])
-        ax.set_aspect("equal")
         for spine in ax.spines.values():
             spine.set_visible(True)
             spine.set_linewidth(0.5)
@@ -459,14 +535,6 @@ def main() -> None:
         frameon=True,
         fontsize=5.0,
         handletextpad=0.5,
-    )
-    fig.suptitle(
-        f"The isoprenol metabolic module of P. putida KT2440: {len(model.reactions)} "
-        f"reactions, {len(model.metabolites)} metabolites, {len(model.genes)} genes "
-        f"(iJN1463 plus the pIY670 route)\nplasmid genes in red are constant across "
-        f"every strain; {len(frame)} CRISPRi target genes carry "
-        f"{int(frame.n_reactions.sum())} of the {total_accoa} acetyl-CoA reactions",
-        fontsize=6.5,
     )
 
     out_dir = osp.join(ASSET_IMAGES_DIR, "048-pputida-isoprenol-cgt")

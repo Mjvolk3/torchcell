@@ -1285,12 +1285,26 @@ pendant genes stretch the frame, and the picture changes with the seed and with
 the threshold. Genome order costs nothing, is a pure function of the locus tag,
 and reproduces exactly.
 
+Both figures are drawn to the repo figure standard: 179 mm wide, under the
+170 mm height cap, Arial, every piece of text inside Nature's 5 to 7 pt band
+with 8 pt bold lowercase panel letters, and exported as a true-size SVG beside
+the PNG. Figure 2 needed one further change to get there. Its nodes were
+originally data-space patches under `aspect="equal"`, which letterboxed the
+drawing into a quarter of its canvas and, in panel a, spaced the route's 18
+nodes closer together than their own radii, so the arrows between them had
+negative length and the chain read as a stack of disconnected shapes. The nodes
+are now scatter markers sized in points and the arrows shrink by the drawn
+marker radius, so the edges are visible at any data limits and the panel fills
+its box.
+
 `experiments/048-pputida-isoprenol-cgt/scripts/plot_metabolic_network.py`
 
 ![](./assets/images/048-pputida-isoprenol-cgt/isoprenol_metabolic_module.svg)
 
 **Figure 2. The isoprenol metabolic module, drawn the way the cell graph stores
-it.** Both panels are bipartite, metabolite nodes and reaction nodes, never a
+it.** The module is iJN1463 plus the pIY670 route: 2,958 reactions, 2,178
+metabolites and 1,474 genes, pinned by sha256 as `pputida_isoprenol`. Both
+panels are bipartite, metabolite nodes and reaction nodes, never a
 metabolite-to-metabolite cartoon. **a**, the nine reactions carrying acetyl-CoA
 to extracellular isoprenol, each annotated with the genes its GPR names. The
 five genes in red (mvaE, mvaS, MK, PMDHKQ, aphA) are the pIY670 plasmid's: they

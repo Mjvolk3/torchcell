@@ -100,6 +100,13 @@ N_LABELED_GENES = 8
 #: the names collide on the rim.
 MIN_LABEL_SEPARATION_DEG = 7.0
 
+#: Font sizes. Nature's figure band is 5 pt minimum and 7 pt maximum, with
+#: 8 pt bold lowercase for panel letters only, so nothing here goes below 5.
+FS_PANEL_TITLE = 6.0
+FS_GENE_LABEL = 5.0
+FS_LEGEND = 5.0
+FS_PANEL_LETTER = 8.0
+
 
 def target_genes() -> tuple[list[str], dict[str, int]]:
     """The campaign's CRISPRi target genes, and how many designs name each."""
@@ -199,7 +206,7 @@ def main() -> None:
     fig, axes = plt.subplots(
         2,
         3,
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(126.0)),
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(128.0)),
         constrained_layout=True,
     )
     for index, channel in enumerate(STRING_SCORE_CHANNELS):
@@ -253,7 +260,7 @@ def main() -> None:
                     1.045 * x,
                     1.045 * y,
                     names.get(gene, gene),
-                    fontsize=4.6,
+                    fontsize=FS_GENE_LABEL,
                     fontstyle="italic",
                     ha="left" if x >= 0 else "right",
                     va="center",
@@ -261,10 +268,21 @@ def main() -> None:
                     rotation_mode="anchor",
                 )
 
+        ax.text(
+            -0.02,
+            1.01,
+            "abcdef"[index],
+            transform=ax.transAxes,
+            fontsize=FS_PANEL_LETTER,
+            fontweight="bold",
+            ha="left",
+            va="bottom",
+        )
         ax.set_title(
             f"{CHANNEL_TITLES[channel]}: {graph.number_of_edges()} edges, "
             f"{len(connected)} of {len(genes)} genes",
-            fontsize=6.0,
+            fontsize=FS_PANEL_TITLE,
+            loc="center",
             pad=2.0,
         )
         ax.set_xticks([])
@@ -323,17 +341,9 @@ def main() -> None:
         loc="outside lower center",
         ncol=3,
         frameon=True,
-        fontsize=5.0,
+        fontsize=FS_LEGEND,
         handletextpad=0.5,
     )
-    fig.suptitle(
-        f"STRING v12.5 evidence channels over the {len(genes)} CRISPRi target genes of "
-        f"P. putida KT2440 (taxon 160488)\ngenes on a circle in genome order, edges "
-        f"drawn above {args.score_floor}; node area is the number of designs naming "
-        f"the gene",
-        fontsize=6.5,
-    )
-
     out_dir = osp.join(ASSET_IMAGES_DIR, "048-pputida-isoprenol-cgt")
     os.makedirs(out_dir, exist_ok=True)
     stem = "string_channels_crispri_targets"

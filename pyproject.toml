@@ -59,6 +59,9 @@ line-length = 88
 target-version = "py313"
 # Honor the exclude even when the path is passed explicitly (pre-commit, CI diff-scope).
 force-exclude = true
+# Assembled by ecoli_download_tutorial_page.py from a run; a lint fix here would make the
+# committed notebook differ from what its generator writes.
+extend-exclude = ["experiments/034-showcase-datasets/notebooks"]
 
 [tool.ruff.lint]
 # E/F: pycodestyle+pyflakes, I: isort, UP: pyupgrade, D: pydocstyle.

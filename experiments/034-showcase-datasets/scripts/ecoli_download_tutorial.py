@@ -103,7 +103,7 @@ def save(figure: Figure, name: str) -> None:
     for axis, letter in zip(figure.axes, "abc", strict=True):
         panel_label(axis, letter)
     figure.savefig(FIGURES / f"{name}.svg", metadata={"Date": None})
-    figure.savefig(FIGURES / f"{name}.png", dpi=300)
+    figure.savefig(FIGURES / f"{name}.png", dpi=200)
     plt.close(figure)
 
 
@@ -199,7 +199,7 @@ left.axvline(1.0, color="black", linewidth=0.5, linestyle="--")
 left.set(xlabel="Growth rate relative to parent", ylabel="Strains")
 
 ranked = growth_table.sort_values("fitness").reset_index(drop=True)
-middle.plot(ranked.index + 1, ranked["fitness"], color=ORANGE, linewidth=1)
+middle.plot(ranked.index + 1, ranked["fitness"], color=PURPLE, linewidth=1)
 for rank, row in ranked.head(5).iterrows():
     middle.annotate(
         row["gene"],
@@ -212,14 +212,14 @@ for rank, row in ranked.head(5).iterrows():
 middle.set(xlabel="Strain rank", ylabel="Growth rate relative to parent")
 
 plates = growth_table.groupby("plate")["fitness"].quantile([0.25, 0.5, 0.75]).unstack()
-right.vlines(plates.index, plates[0.25], plates[0.75], color=ORANGE, linewidth=1)
+right.vlines(plates.index, plates[0.25], plates[0.75], color=BLUE, linewidth=1)
 right.plot(plates.index, plates[0.5], "o", color="black", markersize=1.5)
 right.axhline(1.0, color="black", linewidth=0.5, linestyle="--")
 right.set(xlabel="Keio plate", ylabel="Growth rate relative to parent")
 save(figure, "ecoli_growth_rate_campos2018")
 # [/growth_figure]
 
-section("typed record")
+section("typed")
 # [typed]
 typed = growth.transform_item(record)  # the same record as validated pydantic objects
 experiment = typed["experiment"]
@@ -282,7 +282,7 @@ middle.scatter(
     morphology_table["<L>"],
     morphology_table["<W>"],
     s=1.5,
-    color=ORANGE,
+    color=PURPLE,
     linewidths=0,
     rasterized=True,
 )
@@ -295,7 +295,7 @@ right.scatter(
     shape_growth["fitness"],
     shape_growth["<A>"],
     s=1.5,
-    color=ORANGE,
+    color=BLUE,
     linewidths=0,
     rasterized=True,
 )
@@ -360,7 +360,7 @@ print(
 figure, (left, middle, right) = three_panels()
 edges = np.arange(-32, 25, 1)
 negative = pairs["s_score"] < 0
-left.hist(pairs.loc[negative, "s_score"], bins=edges, color=ORANGE, label="negative")
+left.hist(pairs.loc[negative, "s_score"], bins=edges, color=BLUE, label="negative")
 left.hist(pairs.loc[~negative, "s_score"], bins=edges, color=RED, label="positive")
 left.set(xlabel="S-score", ylabel="Gene pairs")
 left.legend()
@@ -378,14 +378,14 @@ per_gene = (
     .sum()
 )
 degree = per_gene["negative"] + per_gene["positive"]
-middle.hist(degree, bins=np.logspace(0, np.log10(degree.max() + 1), 40), color=ORANGE)
+middle.hist(degree, bins=np.logspace(0, np.log10(degree.max() + 1), 40), color=PURPLE)
 middle.set(xscale="log", xlabel="Scored pairs per gene", ylabel="Genes")
 
 right.scatter(
     per_gene["negative"],
     per_gene["positive"],
     s=1.5,
-    color=ORANGE,
+    color=BLUE,
     linewidths=0,
     rasterized=True,
 )
@@ -443,10 +443,10 @@ left.hist(matrix.ravel(), bins=np.arange(-11.0, 62.5, 0.5), color=ORANGE)
 left.set(yscale="log", xlabel="Modified z-score", ylabel="Strain and ion values")
 
 beyond = np.abs(matrix) > 5
-middle.hist(beyond.sum(axis=1), bins=np.arange(0, 580, 10), color=ORANGE)
+middle.hist(beyond.sum(axis=1), bins=np.arange(0, 580, 10), color=PURPLE)
 middle.set(yscale="log", xlabel="Ions beyond 5 per strain", ylabel="Strains")
 
-for mode, color in (("pos", RED), ("neg", ORANGE)):
+for mode, color in (("pos", RED), ("neg", BLUE)):
     of_mode = (ions["mode"] == mode).to_numpy()
     right.scatter(
         ions.loc[of_mode, "deposit_mz"],

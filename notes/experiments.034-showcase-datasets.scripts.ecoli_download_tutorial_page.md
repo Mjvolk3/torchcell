@@ -39,3 +39,13 @@ Both tutorial result files were replaced after torchcell 1.8.5 reached PyPI. `ec
 - `run --figures-out <dir>` copies the SVG figures the tutorial drew into the docs tree; the reference host's run is the source of the figures on the page.
 - `page` writes the printed output, the dataset table, the download seconds and the archive table to `docs/source/datasets/ecoli/_generated/tutorial/`, and the install timings, the release check and the run table to `docs/source/guide/_generated/install-timings/`.
 - One output fragment per section banner of the tutorial, so a new cell needs no change here.
+
+## 2026.11.17 - Notebook assembled from the run, overview page
+
+Owner, on the first notebook-style page: the walkthrough should be an `.ipynb`, and the web page a high-level overview of at most about a page per dataset. He also asked for more of the primary palette colors in the figures and why the E. coli pages were missing from the left sidebar.
+
+- `run --notebook-out <path>` writes `experiments/034-showcase-datasets/notebooks/ecoli_datasets.ipynb`: the tutorial's blocks in the order of `NOTEBOOK`, each code cell carrying the text its section printed in this run and, for a figure block, the PNG this run drew. It is assembled with the standard library, not executed by a Jupyter kernel, so no notebook tooling is needed on a host. The code cells were also run top to bottom as one script in an empty directory (exit 0, eight figure files), without the two `IPython.display` lines a kernel provides.
+- `docs/source/datasets/ecoli/tutorial.md` is now the overview: for each dataset a paragraph, a three-line load snippet and its figure, with a download link and a GitHub link for the notebook.
+- Panels are colored by position: orange for panel a, purple for b, blue for c, with red as the second category.
+- Sidebar: the theme defaults to `navigation_depth=2`, which hid every page below a section index. `conf.py` sets 4, and the organism toctree of `datasets/index.md` moved above the first section so organisms are direct children of Datasets.
+- Standard output sha256 `350aa2e73288b21f...` on GilaHyper and on Radiant (PyPI 1.8.5), one run each.

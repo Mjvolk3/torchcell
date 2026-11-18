@@ -15,7 +15,9 @@ machine that holds nothing but a fresh venv with torchcell in it:
     four index rows of the endpoint, and the versions of the interpreter and of the
     packages the output depends on. Writes one JSON file per host. With
     ``--figures-out`` it also copies the SVG figures the tutorial drew into that
-    directory, which is how the reference host's figures reach the page.
+    directory, which is how the reference host's figures reach the page. With
+    ``--notebook-out`` it assembles a Jupyter notebook from the tutorial's blocks, the
+    text each block printed in this run and the PNG figures this run drew.
 
 ``page``
     Reads every ``results/ecoli_download_tutorial.<host>.json``, every
@@ -36,6 +38,7 @@ Usage, from the repository root::
         --python ~/miniconda3/envs/torchcell/bin/python --pythonpath "$PWD" \
         --installed-from "repository checkout" --work <empty dir> \
         --figures-out docs/source/datasets/ecoli/_generated/tutorial \
+        --notebook-out experiments/034-showcase-datasets/notebooks/ecoli_datasets.ipynb \
         --out experiments/034-showcase-datasets/results/ecoli_download_tutorial.gilahyper.json
     python experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py page
 """
@@ -43,6 +46,7 @@ Usage, from the repository root::
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import json
 import os
@@ -65,6 +69,86 @@ FRAGMENT_DIR = Path("docs/source/datasets/ecoli/_generated/tutorial")
 INSTALL_DIR = Path("docs/source/guide/_generated/install-timings")
 TIMINGS_FILE = "data/torchcell/ecoli_download_tutorial_timings.json"
 BANNER = re.compile(r"^={12} (.+) ={12}$")
+BLOCK = re.compile(r"^# \[(\w+)\]\n(.*?)^# \[/\1\]\n", re.DOTALL | re.MULTILINE)
+# The notebook, top to bottom: a markdown cell (text) or a code cell (the name of a
+# tutorial block). A block's printed text is the run's section of the same name, with
+# spaces for underscores; a ``*_figure`` block shows the PNG of the slug it saves.
+NOTEBOOK: tuple[tuple[str, str], ...] = (
+    (
+        "md",
+        "# E. coli datasets in torchcell\n\n"
+        "Four built *Escherichia coli* K-12 datasets, loaded from the public `tc-data` "
+        "endpoint, printed and plotted. Run the cells top to bottom in an empty "
+        "directory with `torchcell` installed (Python 3.13 or newer). The stores "
+        "download into `./data/torchcell/` and the figures are written to `./figures/`."
+        "\n\nThe outputs below are from one run of the same code as a script, "
+        "`experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py`.",
+    ),
+    (
+        "md",
+        "## Setup\n\nSetting `TC_DATA_URL` makes each loader download its built store.",
+    ),
+    ("code", "setup"),
+    ("md", "Figure style: one row of three panels, colors from the torchcell palette."),
+    ("code", "style"),
+    ("md", "## What the endpoint serves"),
+    ("code", "index"),
+    (
+        "md",
+        "## Growth rate (Campos 2018)\n\nOne record per Keio strain. The label is the "
+        "maximal growth rate relative to the parent strain BW25113.",
+    ),
+    ("code", "growth_load"),
+    ("md", "One record, field by field."),
+    ("code", "growth_record"),
+    ("md", "All records as a table."),
+    ("code", "growth_table"),
+    ("code", "growth_figure"),
+    (
+        "md",
+        "### The same record as typed objects\n\n`transform_item` validates a record "
+        "through the pydantic classes of the schema.",
+    ),
+    ("code", "typed"),
+    (
+        "md",
+        "## Cell shape and cell cycle (Campos 2018)\n\nThe same strains from the same "
+        "imaging screen, with cell-shape means and cell-cycle features.",
+    ),
+    ("code", "morphology_load"),
+    ("code", "morphology_table"),
+    ("md", "The growth-rate dataset holds the same strains in the same order."),
+    ("code", "morphology_growth"),
+    ("code", "morphology_figure"),
+    (
+        "md",
+        "## Genetic interactions (Babu 2014)\n\nOne record per double mutant of the "
+        "released high-confidence set. The label is the pair's S-score.",
+    ),
+    ("code", "interaction_load"),
+    ("code", "interaction_table"),
+    ("code", "interaction_figure"),
+    (
+        "md",
+        "## Metabolome (Fuhrer 2017)\n\nOne record per Keio strain. The label maps each "
+        "detected ion to a modified z-score.",
+    ),
+    ("code", "metabolome_load"),
+    ("code", "metabolome_matrix"),
+    ("code", "metabolome_figure"),
+    (
+        "md",
+        "## Check the records against the release\n\nHashing the loaded records "
+        "reproduces the content hash the knowledge-graph release recorded.",
+    ),
+    ("code", "verify"),
+)
+FIGURE_OF_BLOCK = {
+    "growth_figure": "ecoli_growth_rate_campos2018",
+    "morphology_figure": "ecoli_morphology_campos2018",
+    "interaction_figure": "gene_interaction_babu2014",
+    "metabolome_figure": "metabolome_fuhrer2017",
+}
 
 # Dataset rows of the page, in page order: slug, label on the page, loader module, what
 # one record's label is. The record and feature counts are read from the runs.
@@ -227,12 +311,78 @@ def run_tutorial(args: argparse.Namespace) -> int:
         for figure in sorted((work / "figures").glob("*.svg")):
             shutil.copyfile(figure, args.figures_out / figure.name)
             print(f"copied {figure.name} to {args.figures_out}")
+    if args.notebook_out:
+        write_notebook(tutorial, done.stdout, work / "figures", args.notebook_out)
     print(
         "wrote {} (stdout sha256 {}, {:.1f} s)".format(
             out, result["stdout_sha256"], seconds
         )
     )
     return 0
+
+
+def write_notebook(tutorial: Path, stdout: str, figures: Path, out: Path) -> None:
+    """Assemble the notebook: the tutorial's blocks with this run's text and figures."""
+    blocks = {
+        m.group(1): m.group(2) for m in BLOCK.finditer(tutorial.read_text("utf-8"))
+    }
+    printed = sections(stdout)
+    cells: list[dict[str, Any]] = []
+    count = 0
+    for kind, value in NOTEBOOK:
+        if kind == "md":
+            cells.append({"cell_type": "markdown", "metadata": {}, "source": value})
+            continue
+        count += 1
+        outputs: list[dict[str, Any]] = []
+        text = printed.get(value.replace("_", " "))
+        if text:
+            outputs.append(
+                {"output_type": "stream", "name": "stdout", "text": text + "\n"}
+            )
+        if value in FIGURE_OF_BLOCK:
+            png = (figures / f"{FIGURE_OF_BLOCK[value]}.png").read_bytes()
+            outputs.append(
+                {
+                    "output_type": "display_data",
+                    "metadata": {},
+                    "data": {"image/png": base64.b64encode(png).decode("ascii")},
+                }
+            )
+        source = blocks[value].rstrip("\n")
+        if value in FIGURE_OF_BLOCK:
+            # save() closes the figure, so the last line shows the file it wrote
+            source += (
+                "\nfrom IPython.display import Image\n\n"
+                f'Image(str(FIGURES / "{FIGURE_OF_BLOCK[value]}.png"))'
+            )
+        cells.append(
+            {
+                "cell_type": "code",
+                "execution_count": count,
+                "metadata": {},
+                "outputs": outputs,
+                "source": source,
+            }
+        )
+    notebook = {
+        "cells": cells,
+        "metadata": {
+            "kernelspec": {
+                "display_name": "Python 3",
+                "language": "python",
+                "name": "python3",
+            },
+            "language_info": {"name": "python"},
+        },
+        "nbformat": 4,
+        "nbformat_minor": 5,
+    }
+    for number, cell in enumerate(cells):
+        cell["id"] = f"cell-{number:02d}"  # nbformat 4.5 wants an id on every cell
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(notebook, indent=1) + "\n", encoding="utf-8")
+    print(f"wrote {out} ({len(cells)} cells)")
 
 
 # ------------------------------------------------------------------------------ page
@@ -625,6 +775,9 @@ def main() -> int:
     run.add_argument("--out", required=True, type=Path)
     run.add_argument(
         "--figures-out", default=None, type=Path, help="copy the SVG figures here"
+    )
+    run.add_argument(
+        "--notebook-out", default=None, type=Path, help="assemble the notebook here"
     )
     page = sub.add_parser("page", help="write the page fragments from the result files")
     page.add_argument("--reference", default="gilahyper")

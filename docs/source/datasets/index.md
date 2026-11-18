@@ -2,6 +2,15 @@
 
 torchcell provides built datasets the way `torchvision.datasets` provides image datasets: a loader class per source publication, a versioned archive of the built records (`{doc}`../guide/downloads``), and a supported query that returns the records from the served knowledge graph. The pages under each organism take one group of datasets and show what the experiments measured, what one stored record looks like, how the values are distributed, the query that returns them, and how to download the built stores. Every table, figure, record dump and query result on these pages is written by a script under `experiments/034-showcase-datasets/scripts/`, and query results come from a slurm job against the served release named on the page. Caveats that change how a value should be read are stated on the page that shows the value.
 
+Pages by organism:
+
+```{toctree}
+:maxdepth: 2
+
+scerevisiae/index
+ecoli/index
+```
+
 ## Size of the collection
 
 ```{include} _generated/served_counts.md
@@ -25,10 +34,3 @@ A dataset page is a fixed set of sections, in this order, so two pages can be re
 Two rules hold for every number on a page. Every table, figure, record dump and query count is written by a committed script under `experiments/034-showcase-datasets/scripts/` into the page's `_generated/` directory, and the page only includes those fragments; nothing is typed by hand. Every query against the served graph runs as a slurm job whose id the fragment records, and the page names the release the job read. The page path is registered as `docs_page` on its supported query in `torchcell/knowledge_graphs/supported_queries/registry.json`, and the Sphinx build must add no warnings.
 
 The *E. coli* section holds a tutorial and a download page, not a dataset page of the form above. Both follow the first rule, with their code, output and figures written by scripts under `experiments/034-showcase-datasets/scripts/`, and they have no diagram or query sections.
-
-```{toctree}
-:maxdepth: 2
-
-scerevisiae/index
-ecoli/index
-```

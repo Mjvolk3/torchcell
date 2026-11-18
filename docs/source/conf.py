@@ -51,6 +51,9 @@ exclude_patterns: list[str] = [
 ]
 
 html_theme = "torchcell_sphinx_theme"
+# The theme's own default is 2, which hid every page below a section index: the
+# sidebar stopped at "Datasets" and never listed an organism or its pages.
+html_theme_options = {"navigation_depth": 4}
 html_logo = "_static/torchcell-logo.png"
 # The cell alone: the wordmark is unreadable at favicon size. Written by
 # docs/make_logo.py, like the logo.

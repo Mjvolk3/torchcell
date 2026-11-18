@@ -68,7 +68,7 @@ archive is read by the releases that share the `major.minor` it was packaged wit
 
 | Page | Datasets (records) | Archives packaged with |
 | :-- | :-- | :-- |
-| [Exploring the E. coli datasets](https://mjvolk3.github.io/torchcell/datasets/ecoli/tutorial.html) | Growth rate, Campos 2018 (3,664)<br>Cell shape and cell cycle, Campos 2018 (3,664)<br>Genetic interaction, Babu 2014 (42,705)<br>Metabolome, Fuhrer 2017 (3,806) | torchcell 1.8 |
+| [The E. coli datasets](https://mjvolk3.github.io/torchcell/datasets/ecoli/tutorial.html) | Growth rate, Campos 2018 (3,664)<br>Cell shape and cell cycle, Campos 2018 (3,664)<br>Genetic interaction, Babu 2014 (42,705)<br>Metabolome, Fuhrer 2017 (3,806) | torchcell 1.8 |
 | [Gene essentiality and single-mutant fitness](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/essentiality-smf.html) | Gene essentiality, SGD (1,329)<br>Single-mutant fitness, Costanzo 2016 (20,484) | torchcell 1.5 |
 | [Amino acids and betaxanthin](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/amino-acid-betaxanthin.html) | Amino acids, Mulleder 2016 (4,678)<br>Amine peaks, Cooper 2010 (4,313)<br>Betaxanthin, Cachera 2023 (4,719) | torchcell 1.5 |
 

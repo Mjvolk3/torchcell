@@ -1,7 +1,7 @@
 # tests/torchcell/database/test_build_command.py
 # [[tests.torchcell.database.test_build_command]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/database/test_build_command.py
-"""The cliff ``build`` command with the build script stubbed.
+"""The ``tcdb build`` command with the build script stubbed.
 
 Fixture: the working directory is ``tmp_path`` (``monkeypatch.chdir``), which
 holds ``database/build/`` with empty files named exactly as the repo's
@@ -65,7 +65,7 @@ def workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def test_parser_mode_default_and_choices(capsys: pytest.CaptureFixture[str]) -> None:
-    parser = BuildCommand(None, None).get_parser("tcdb build")  # type: ignore[arg-type, unused-ignore]
+    parser = BuildCommand().get_parser("tcdb build")
     assert parser.parse_args([]).mode == "regular"
     assert parser.parse_args(["-m", "fresh"]).mode == "fresh"
     with pytest.raises(SystemExit):
@@ -87,7 +87,7 @@ def test_regular_mode_runs_the_arm_script_and_streams_output(
     monkeypatch.setattr(_FakePopen, "script_output", "  step 1  \n\nstep 2\n")
     monkeypatch.setattr(_FakePopen, "return_code", 3)
     script = workspace / "database" / "build" / "build_linux-arm.sh"
-    cmd = BuildCommand(None, None)  # type: ignore[arg-type, unused-ignore]
+    cmd = BuildCommand()
     rc = cmd.take_action(cmd.get_parser("b").parse_args([]))
     assert rc == 3
     assert stat.S_IMODE(script.stat().st_mode) == 0o755
@@ -116,7 +116,7 @@ def test_fresh_mode_names_a_script_the_repo_does_not_have(
     assert "build-image-fresh_linux-arm.sh" in names
     assert "build_image_fresh_linux-arm.sh" not in names
     missing = workspace / "database" / "build" / "build_image_fresh_linux-arm.sh"
-    cmd = BuildCommand(None, None)  # type: ignore[arg-type, unused-ignore]
+    cmd = BuildCommand()
     with pytest.raises(
         FileNotFoundError, match=re.escape(f"No such file or directory: '{missing}'")
     ):

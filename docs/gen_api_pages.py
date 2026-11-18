@@ -54,11 +54,10 @@ DESC: dict[str, str] = {
     ),
     "database": (
         "Commands that build and serve the torchcell Neo4j knowledge graph. The "
-        "package exports :class:`~torchcell.database.build_command.BuildCommand`, a "
-        "Cliff command "
-        "that runs the database image build scripts; ``tcdb`` (the console script "
-        "declared in ``pyproject.toml``) is the Cliff entry point in "
-        "``torchcell.database.tcdb``. Other modules create the Neo4j directory tree, "
+        "package exports :class:`~torchcell.database.build_command.BuildCommand`, the "
+        "``build`` subcommand that runs the database image build scripts; ``tcdb`` "
+        "(the console script declared in ``pyproject.toml``) is the argparse entry "
+        "point in ``torchcell.database.tcdb``. Other modules create the Neo4j directory tree, "
         "combine BioCypher output directories into one import set, build a single "
         "registered dataset's LMDB for admission, and hold the client connection "
         "settings and the Neo4j Browser stylesheet."

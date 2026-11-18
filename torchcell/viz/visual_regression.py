@@ -1,18 +1,39 @@
 """Visualization helpers for logging regression diagnostics to Weights & Biases."""
 
 import io
+import math
 import os
 import os.path as osp
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 import torch
-import umap
 import wandb
+from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+from numpy.typing import NDArray
 from PIL import Image
 from scipy import stats
+
+
+def _density_histogram(
+    ax: Axes, values: NDArray[np.floating[Any]], bins: int, color: str, label: str
+) -> None:
+    """A density histogram of ``values`` with its Gaussian KDE line over the data range.
+
+    The plain-matplotlib form of ``seaborn.histplot(kde=True, stat="density")``: ``bins``
+    equal-width bins over the series' own range, a KDE with Scott's bandwidth on 200 grid
+    points that stops at the data's minimum and maximum (histplot's ``cut=0``), drawn in
+    the opaque series color, and no KDE line for a series with zero variance (histplot
+    skips it too).
+    """
+    ax.hist(values, bins=bins, density=True, color=color, alpha=0.6, label=label)
+    if math.isclose(float(np.var(values)), 0):
+        return
+    kde = stats.gaussian_kde(values, bw_method="scott")
+    grid = np.linspace(values.min(), values.max(), 200)
+    ax.plot(grid, kde(grid), color=color)
 
 
 class Visualization:
@@ -142,27 +163,9 @@ class Visualization:
         fig = plt.figure(figsize=(10, 6))
         ax = fig.add_subplot(111)
 
-        # Plot histograms
-        sns.histplot(
-            y_true,
-            color="blue",
-            label="True",
-            kde=True,
-            stat="density",
-            alpha=0.6,
-            bins=bins,
-            ax=ax,
-        )
-        sns.histplot(
-            y_pred,
-            color="red",
-            label="Predicted",
-            kde=True,
-            stat="density",
-            alpha=0.6,
-            bins=bins,
-            ax=ax,
-        )
+        # Density histograms with a Gaussian KDE line over each series' own range
+        _density_histogram(ax, y_true, bins, "blue", "True")
+        _density_histogram(ax, y_pred, bins, "red", "Predicted")
 
         # Position metrics text in top-left corner
         ax.text(
@@ -222,6 +225,9 @@ class Visualization:
             )
             features_np = features_np[idx]
             labels_np = labels_np[idx]
+        # umap-learn (with numba and llvmlite) is imported only when a UMAP is drawn.
+        import umap
+
         reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, metric="euclidean")
         embedding = reducer.fit_transform(features_np)
         fig = plt.figure(figsize=(8, 6))

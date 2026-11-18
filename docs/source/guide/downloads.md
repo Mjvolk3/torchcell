@@ -19,7 +19,7 @@ for a mirror or a development server. `GET /datasets` is the authoritative list 
 the store holds. On 2026-11-17 it held nine archives. Four are *E. coli* stores packaged
 with torchcell 1.8.4: `ecoli_growth_rate_campos2018`, `ecoli_morphology_campos2018`,
 `gene_interaction_babu2014` and `metabolome_fuhrer2017`, which
-{doc}`../datasets/ecoli/download-tutorial` downloads, loads and prints. Five are yeast
+{doc}`../datasets/ecoli/download` covers and {doc}`../datasets/ecoli/tutorial` loads and plots. Five are yeast
 stores packaged with torchcell 1.5.0: `gene_essentiality_sgd`, `smf_costanzo2016`,
 `amino_acid_cooper2010`, `amino_acid_mulleder2016` and `betaxanthin_cachera2023`. An
 archive is read by the releases that share its `major.minor`, so a 1.8 install selects

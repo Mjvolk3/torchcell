@@ -11,6 +11,7 @@ PyTorch Geometric datasets for model training.
 :maxdepth: 2
 
 installation
+install-timings
 quickstart
 data-model
 datasets

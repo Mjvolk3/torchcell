@@ -18,8 +18,15 @@ pip install torchcell
 uv pip install torchcell
 ```
 
-{doc}`../datasets/ecoli/download-tutorial` gives the measured time of each installer and
-the commands that select the CPU build of torch on a machine with no GPU. The sections
+On Linux the default torch wheel depends on the CUDA libraries. On a machine with no
+GPU, select the CPU build of torch for a smaller environment:
+
+```bash
+uv pip install --torch-backend cpu torchcell
+pip install --extra-index-url https://download.pytorch.org/whl/cpu torchcell
+```
+
+{doc}`install-timings` gives the measured time and size of each install. The sections
 below set up a development checkout.
 
 ## Create the environment

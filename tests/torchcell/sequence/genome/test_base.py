@@ -28,6 +28,8 @@ Fixture (GFF coordinates are 1-based inclusive; Python slices are ``[start - 1:e
 import ast
 import pickle
 import re
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -52,11 +54,12 @@ from torchcell.sequence.genome.base import (
 
 CONTIG = "ATGAAACCCTTACCCGGGTTTCATGGATCCATGCATGCAAGCTTGGTAACCTGCAGGTCA"
 TOY_SET = "toy_assembly_v1"
+CDS_FASTA = "toy_cds.fna"  # kept as a str: FILES.cds_fasta is typed str | None
 FILES = GenomeReleaseFiles(
     dna_fasta="toy_genomic.fna",
     gff="toy_genomic.gff",
     protein_fasta="toy_protein.faa",
-    cds_fasta="toy_cds.fna",
+    cds_fasta=CDS_FASTA,
 )
 GFF_ROWS = [
     (
@@ -151,7 +154,7 @@ def resolved(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> list[tuple[str,
         FILES.dna_fasta: f">contig1 toy linear replicon\n{CONTIG}\n",
         FILES.gff: "\n".join(gff) + "\n",
         FILES.protein_fasta: ">T0001\nMKP*\n",
-        FILES.cds_fasta: ">T0001\nATGAAACCC\n",
+        CDS_FASTA: ">T0001\nATGAAACCC\n",
     }
     for name, text in texts.items():
         (release / name).write_text(text)
@@ -426,3 +429,16 @@ def test_base_imports_nothing_organism_specific() -> None:
         "torchcell.sequence.genome.registry",
     ]
     assert "torch_geometric.data" not in imported
+
+
+def test_importing_base_does_not_load_goatools() -> None:
+    """Goatools is imported inside ``go_dag`` only (a fresh interpreter, since this
+    session's other tests may already have read a GO DAG).
+    """
+    code = (
+        "import sys, torchcell.sequence.genome.base; print('goatools' in sys.modules)"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True
+    )
+    assert result.stdout == "False\n"

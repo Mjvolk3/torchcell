@@ -27,6 +27,7 @@ The constructor downloads the store on first use and opens it from disk after th
 This page says what each dataset holds and shows one figure of its values. The full walkthrough, with every record, table and plot, is a notebook:
 
 - {doc}`notebook`: the notebook rendered here, with its outputs and the plotting code collapsed.
+- [Open it in Google Colab](https://colab.research.google.com/github/Mjvolk3/torchcell/blob/main/experiments/034-showcase-datasets/notebooks/ecoli_datasets.ipynb) to run it in the browser with nothing installed: the first cell installs `torchcell`.
 - {download}`Download ecoli_datasets.ipynb <../../../../experiments/034-showcase-datasets/notebooks/ecoli_datasets.ipynb>` to run it yourself.
 - [View it on GitHub](https://github.com/Mjvolk3/torchcell/blob/main/experiments/034-showcase-datasets/notebooks/ecoli_datasets.ipynb).
 

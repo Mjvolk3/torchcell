@@ -95,6 +95,7 @@ def test_registry_names_periods_and_sources() -> None:
         ("lit-bib-store", timedelta(days=1), "wrapper"),
         ("purge-deprecated", timedelta(days=1), "wrapper"),
         ("backup-mirrors", timedelta(days=7), "wrapper"),
+        ("deps-weekly", timedelta(days=7), "script"),
     ]
 
 
@@ -134,11 +135,12 @@ def test_crontab_txt_matches_registry_both_ways() -> None:
             job.command,
             "wrapper",
         )
-    # every unwrapped line is a heartbeat job's command on its schedule
-    heartbeat = [j for j in jobs.CRON_JOBS if j.status_source == "heartbeat"]
+    # every unwrapped line is a heartbeat or script job's command on its schedule
+    heartbeat = [j for j in jobs.CRON_JOBS if j.status_source != "wrapper"]
     assert [
-        (e.schedule, any(j.command in e.command for j in heartbeat)) for e in unwrapped
-    ] == [("*/2 * * * *", True)]
+        (e.schedule, [j.name for j in heartbeat if j.command in e.command])
+        for e in unwrapped
+    ] == [("*/2 * * * *", ["drain-merge-queue"]), ("0 5 * * 0", ["deps-weekly"])]
     # and every registry job has exactly one line
     names = sorted(e.job for e in wrapped) + [j.name for j in heartbeat]
     assert sorted(names) == sorted(registry)
@@ -346,6 +348,7 @@ def test_cron_rows_from_fixture_records(tmp_path: Path, utc_zone: None) -> None:
         "         log: /tmp/torchcell-lit-bib-store.log",
         "  ✓  purge-deprecated   0 4 * * *    2026-11-17 11:00  1h+       -     1h / 1d       running",
         "  ✗  backup-mirrors     0 2 * * 0    2026-11-01 02:00  20m       0     16d10h / 7d   STALE",
+        "  !  deps-weekly        0 5 * * 0    -                 -         -     - / 7d        never ran (wrapper not installed yet)",
     ]
 
 

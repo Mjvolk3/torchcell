@@ -74,7 +74,7 @@ class CronJob(BaseModel):
     name: str = Field(pattern=r"^[a-z0-9][a-z0-9-]*$")
     schedule: str
     command: str
-    status_source: Literal["wrapper", "heartbeat"]
+    status_source: Literal["wrapper", "heartbeat", "script"]
 
     @property
     def period(self) -> timedelta:
@@ -85,8 +85,9 @@ class CronJob(BaseModel):
 # The single registry. Each entry's line in scripts/crontab.txt runs `command` (for a
 # wrapper job, as `bash scripts/cron_run.sh <name> -- <command>`) on `schedule`;
 # tests/scripts/test_jobs.py fails when the two disagree in either direction.
-# Extension point: the weekly dependency-update job `deps-weekly` (Sunday) is
-# registered here, with its wrapped crontab line, by its own PR.
+# A `script` job's crontab line runs a script that calls the wrapper itself (the weekly
+# dependency update runs in a fresh worktree of origin/main, so its line cannot name a
+# file of the primary checkout); `command` is then the script the line must mention.
 CRON_JOBS: tuple[CronJob, ...] = (
     CronJob(
         name="drain-merge-queue",
@@ -126,6 +127,12 @@ CRON_JOBS: tuple[CronJob, ...] = (
         schedule="0 2 * * 0",
         command="bash scripts/backup_mirrors_to_bulk.sh",
         status_source="wrapper",
+    ),
+    CronJob(
+        name="deps-weekly",
+        schedule="0 5 * * 0",
+        command="scripts/deps_weekly_cron.sh",
+        status_source="script",
     ),
 )
 
@@ -196,7 +203,7 @@ def parse_crontab(text: str) -> list[CrontabEntry]:
 
 def installed_wrapped(job: CronJob, live_crontab: str) -> bool:
     """Whether the live crontab runs this job the way the registry expects."""
-    if job.status_source == "heartbeat":
+    if job.status_source in ("heartbeat", "script"):
         return job.command in live_crontab
     return f"cron_run.sh {job.name} -- " in live_crontab
 

@@ -310,7 +310,7 @@ def test_policy_seed_values() -> None:
     assert policy.held() <= reqs
     assert {n: c.probe for n, c in policy.caps.items()} == {
         "biocypher": False,
-        "neo4j": True,
+        "neo4j": False,
         "bibtexparser": True,
     }
 

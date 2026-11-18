@@ -39,8 +39,8 @@ reason = "Exact pin: biocypher writes the neo4j-admin import files, so a bump is
 probe = false
 
 [caps.neo4j]
-reason = "Driver 4.4 line. The cap has no recorded reason (added 2024-08-19)."
-probe = true
+reason = "Driver 4.4 line. The cap has no recorded reason (added 2024-08-19). The hermetic suite opens no driver (tests/conftest.py blocks it without --neo4j), so a green suite without the cap says nothing about driver 5 or 6 against the served Neo4j 5.26 server: on 2026-11-17 neo4j 6.4.1 passed the suite that way. Lift by hand after a run against the server."
+probe = false
 comment_marker = "The cap has no recorded reason"
 
 [caps.bibtexparser]

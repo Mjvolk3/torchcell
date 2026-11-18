@@ -29,9 +29,9 @@ from collections import Counter
 from collections.abc import Callable
 from typing import Any
 
+import httpx
 import lmdb
 import pandas as pd
-import requests
 from pydantic import BaseModel
 from tqdm import tqdm
 
@@ -316,6 +316,34 @@ class DropLog(BaseModel):
     rules: list[dict[str, Any]]
 
 
+def _write_checked_body(response: httpx.Response, path: str) -> None:
+    """Raise on a non-2xx status, else stream the body to ``path`` in 8 KiB chunks."""
+    response.raise_for_status()
+    with open(path, "wb") as f:
+        for chunk in response.iter_bytes(chunk_size=8192):
+            f.write(chunk)
+
+
+def _download_drive_file(url: str, download_path: str) -> None:
+    """Stream a Google Drive export link to ``download_path``.
+
+    Drive may answer with a ``download_warning`` cookie instead of the file; the GET is
+    then repeated with ``confirm=<cookie value>`` and only that second body is written.
+    A non-2xx final response raises before anything is written. ``confirm`` is added to
+    the URL's own query (``export`` and ``id`` stay): httpx's ``params=`` would replace
+    the query instead of extending it.
+    """
+    with httpx.Client(follow_redirects=True, timeout=60.0) as client:
+        with client.stream("GET", url) as response:
+            warning = response.cookies.get("download_warning")
+            if warning is None:
+                _write_checked_body(response, download_path)
+                return
+        confirmed = httpx.URL(url).copy_add_param("confirm", warning)
+        with client.stream("GET", confirmed) as response:
+            _write_checked_body(response, download_path)
+
+
 def _read_synlethdb_csv(path: str) -> pd.DataFrame:
     """Read a SynLethDB CSV with ``r.pubmed_id`` as text, refusing a blank PMID.
 
@@ -525,18 +553,7 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
         os.makedirs(self.raw_dir, exist_ok=True)
         log.info(f"Downloading {url} to {download_path}")
 
-        session = requests.Session()
-        response = session.get(url, stream=True)
-
-        if "download_warning" in response.cookies:
-            params = {"confirm": response.cookies["download_warning"]}
-            response = session.get(url, params=params, stream=True)
-
-        response.raise_for_status()
-
-        with open(download_path, "wb") as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
+        _download_drive_file(url, download_path)
 
         log.info("Download completed successfully.")
 
@@ -652,18 +669,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
         os.makedirs(self.raw_dir, exist_ok=True)
         log.info(f"Downloading {url} to {download_path}")
 
-        session = requests.Session()
-        response = session.get(url, stream=True)
-
-        if "download_warning" in response.cookies:
-            params = {"confirm": response.cookies["download_warning"]}
-            response = session.get(url, params=params, stream=True)
-
-        response.raise_for_status()
-
-        with open(download_path, "wb") as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
+        _download_drive_file(url, download_path)
 
         log.info("Download completed successfully.")
 

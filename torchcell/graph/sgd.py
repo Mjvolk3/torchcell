@@ -15,8 +15,7 @@ from asyncio import Task
 from collections.abc import Callable, Iterator
 from typing import Any, cast
 
-import aiohttp
-from aiohttp import ClientError, ContentTypeError
+import httpx
 from attrs import define, field
 from dotenv import load_dotenv
 from tqdm import tqdm
@@ -143,44 +142,40 @@ class Gene:
     async def _get_data(
         self, url: str, max_retries: int = 10
     ) -> dict[Any, Any] | list[Any] | None:
+        """GET ``url`` as JSON, retrying transport errors with exponential backoff.
+
+        An ``httpx.HTTPError`` (connection, timeout, protocol) is retried up to
+        ``max_retries`` times with a ``2**retry`` second backoff, then None is returned.
+        A response that is not JSON is saved to a temporary ``.html`` file and raises a
+        ``ValueError`` at once, without a retry; the HTTP status is not checked.
+        """
         for retry in range(max_retries):
             try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url, headers=self.headers) as response:
-                        content_type = response.headers.get("Content-Type")
-
-                        # Check if the content type indicates a JSON response
-                        if "application/json" in content_type:  # type: ignore[operator]  # header value may be None at runtime; behavior preserved
-                            data = await response.json()
-                            if not isinstance(data, (dict, list)):
-                                raise ValueError(f"Data is not a dict or list: {data}")
-                            return data
-                        else:
-                            # Save unexpected content (e.g., HTML) to a temporary file for debugging
-                            content = await response.text()
-                            with tempfile.NamedTemporaryFile(
-                                delete=False, suffix=".html"
-                            ) as temp:
-                                temp.write(content.encode())
-                                logging.error(
-                                    f"Saved unexpected response to: {temp.name}"
-                                )
-
-                            error_message = (
-                                f"Unexpected content type: {content_type}. URL: {url}"
-                            )
-                            logging.error(error_message)
-                            raise ContentTypeError(error_message)  # type: ignore[call-arg, arg-type]  # legacy call shape; fixing args would change runtime behavior
-
-            except (ClientError, ContentTypeError) as e:
+                async with httpx.AsyncClient(
+                    follow_redirects=True, timeout=60.0
+                ) as client:
+                    response = await client.get(url, headers=self.headers)
+                content_type = response.headers.get("Content-Type", "")
+                if "application/json" in content_type:
+                    data = response.json()
+                    if not isinstance(data, (dict, list)):
+                        raise ValueError(f"Data is not a dict or list: {data}")
+                    return data
+                # Save unexpected content (e.g., HTML) to a temporary file for debugging
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as temp:
+                    temp.write(response.text.encode())
+                    logging.error(f"Saved unexpected response to: {temp.name}")
+                error_message = f"Unexpected content type: {content_type}. URL: {url}"
+                logging.error(error_message)
+                raise ValueError(error_message)
+            except httpx.HTTPError as e:
                 if retry == max_retries - 1:  # If it's the last retry and still fails
                     logging.error(
                         f"Failed to fetch data after {max_retries} attempts. Error: {e}"
                     )
                     return None
-                else:
-                    logging.warning(f"Attempt {retry + 1} failed. Retrying...")
-                    await asyncio.sleep(2**retry)  # Exponential backoff
+                logging.warning(f"Attempt {retry + 1} failed. Retrying...")
+                await asyncio.sleep(2**retry)  # Exponential backoff
 
         return None
 
@@ -405,11 +400,3 @@ if __name__ == "__main__":
 #                 for id_ in locus_ids
 #             )
 #         )
-
-# async def _get_data(self, url: str) -> dict[Any, Any] | list[Any]:
-#     async with aiohttp.ClientSession() as session:
-#         async with session.get(url, headers=self.headers) as response:
-#             data = await response.json()
-#             if not isinstance(data, (dict, list)):
-#                 raise ValueError(f"Data is not a dict or list: {data}")
-#             return data

@@ -26,8 +26,8 @@ import os.path as osp
 from pathlib import Path
 from typing import Any
 
+import httpx
 import pytest
-import requests
 from pydantic import ValidationError
 
 from torchcell.data import ExperimentDataset
@@ -454,38 +454,32 @@ def test_a_blank_pmid_refuses_the_build_by_name(
 # --------------------------------------------------------------------------- #
 
 
-class _Response:
-    def __init__(
-        self, chunks: list[bytes], cookies: dict[str, str], status: int
-    ) -> None:
-        self.cookies = cookies
-        self._chunks = chunks
-        self._status = status
-        self.chunk_sizes: list[int] = []
+def _fake_transport(
+    monkeypatch: pytest.MonkeyPatch, responses: list[httpx.Response]
+) -> list[httpx.Request]:
+    """Serve ``responses`` in order from every real httpx transport; record each request.
 
-    def raise_for_status(self) -> None:
-        if self._status != 200:
-            raise requests.HTTPError(f"{self._status} Client Error")
+    The client itself (redirects, cookies, query params, ``raise_for_status``) runs for
+    real; only the socket layer is replaced.
+    """
+    requests_seen: list[httpx.Request] = []
 
-    def iter_content(self, chunk_size: int) -> list[bytes]:
-        self.chunk_sizes.append(chunk_size)
-        return self._chunks
+    def handle_request(
+        self: httpx.HTTPTransport, request: httpx.Request
+    ) -> httpx.Response:
+        requests_seen.append(request)
+        return responses[len(requests_seen) - 1]
+
+    monkeypatch.setattr(httpx.HTTPTransport, "handle_request", handle_request)
+    return requests_seen
 
 
-def _fake_session(
-    monkeypatch: pytest.MonkeyPatch, responses: list[_Response]
-) -> list[tuple[str, dict[str, str] | None, bool]]:
-    calls: list[tuple[str, dict[str, str] | None, bool]] = []
-
-    class _Session:
-        def get(
-            self, url: str, params: dict[str, str] | None = None, stream: bool = False
-        ) -> _Response:
-            calls.append((url, params, stream))
-            return responses[len(calls) - 1]
-
-    monkeypatch.setattr(requests, "Session", _Session)
-    return calls
+def _drive_warning() -> httpx.Response:
+    return httpx.Response(
+        200,
+        headers={"set-cookie": "download_warning=tok; Path=/"},
+        content=b"<html>virus scan</html>",
+    )
 
 
 _DOWNLOADS = [
@@ -509,19 +503,48 @@ def _bare(cls: type[ExperimentDataset], root: Path) -> ExperimentDataset:
 
 
 @pytest.mark.parametrize(("cls", "filename", "url"), _DOWNLOADS)
-def test_download_writes_the_streamed_chunks_in_one_request(
+def test_download_writes_the_streamed_body_in_one_request(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     cls: type[ExperimentDataset],
     filename: str,
     url: str,
 ) -> None:
-    response = _Response([b"n1.name,", b"n2.name\n"], {}, 200)
-    calls = _fake_session(monkeypatch, [response])
+    """One GET of the export URL with a 60 s timeout; the body is written verbatim."""
+    seen = _fake_transport(
+        monkeypatch, [httpx.Response(200, content=b"n1.name,n2.name\n")]
+    )
     _bare(cls, tmp_path).download()
-    assert calls == [(url, None, True)]
-    assert response.chunk_sizes == [8192]
+    assert [(r.method, str(r.url)) for r in seen] == [("GET", url)]
+    assert seen[0].extensions["timeout"] == {
+        "connect": 60.0,
+        "read": 60.0,
+        "write": 60.0,
+        "pool": 60.0,
+    }
     assert (tmp_path / "raw" / filename).read_bytes() == b"n1.name,n2.name\n"
+
+
+@pytest.mark.parametrize(("cls", "filename", "url"), _DOWNLOADS)
+def test_download_follows_a_redirect_to_the_file(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    cls: type[ExperimentDataset],
+    filename: str,
+    url: str,
+) -> None:
+    """Drive redirects ``uc?export=download`` to the content host; the client follows."""
+    target = "https://drive.usercontent.google.com/download?id=x"
+    seen = _fake_transport(
+        monkeypatch,
+        [
+            httpx.Response(303, headers={"location": target}),
+            httpx.Response(200, content=b"payload"),
+        ],
+    )
+    _bare(cls, tmp_path).download()
+    assert [str(r.url) for r in seen] == [url, target]
+    assert (tmp_path / "raw" / filename).read_bytes() == b"payload"
 
 
 @pytest.mark.parametrize(("cls", "filename", "url"), _DOWNLOADS)
@@ -532,12 +555,15 @@ def test_download_confirms_a_drive_warning_cookie_and_keeps_the_second_body(
     filename: str,
     url: str,
 ) -> None:
-    warning = _Response([b"<html>virus scan</html>"], {"download_warning": "tok"}, 200)
-    body = _Response([b"payload"], {}, 200)
-    calls = _fake_session(monkeypatch, [warning, body])
+    """A ``download_warning`` cookie repeats the GET with ``confirm=<value>``; only the
+    second body is written and the cookie is sent back on the second request.
+    """
+    seen = _fake_transport(
+        monkeypatch, [_drive_warning(), httpx.Response(200, content=b"payload")]
+    )
     _bare(cls, tmp_path).download()
-    assert calls == [(url, None, True), (url, {"confirm": "tok"}, True)]
-    assert warning.chunk_sizes == []
+    assert [str(r.url) for r in seen] == [url, f"{url}&confirm=tok"]
+    assert seen[1].headers["cookie"] == "download_warning=tok"
     assert (tmp_path / "raw" / filename).read_bytes() == b"payload"
 
 
@@ -549,10 +575,11 @@ def test_download_raises_on_an_http_error_before_writing(
     filename: str,
     url: str,
 ) -> None:
-    _fake_session(monkeypatch, [_Response([b"x"], {}, 404)])
-    with pytest.raises(requests.HTTPError) as excinfo:
+    _fake_transport(monkeypatch, [httpx.Response(404, content=b"x")])
+    with pytest.raises(httpx.HTTPStatusError) as excinfo:
         _bare(cls, tmp_path).download()
-    assert str(excinfo.value) == "404 Client Error"
+    assert excinfo.value.response.status_code == 404
+    assert str(excinfo.value.request.url) == url
     assert os.listdir(tmp_path / "raw") == []
 
 

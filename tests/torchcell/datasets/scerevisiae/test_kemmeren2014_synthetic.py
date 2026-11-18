@@ -63,12 +63,12 @@ from pathlib import Path
 from typing import Any, cast
 
 import GEOparse
+import httpx
 import lmdb
 import numpy as np
 import openpyxl
 import pandas as pd
 import pytest
-import requests
 from GEOparse.GEOTypes import GPL, GSE, GSM
 
 from torchcell.datamodels.schema import (
@@ -812,7 +812,7 @@ class _FakeResponse:
 
 
 class _FakeGet:
-    """Stand-in for ``requests.get`` recording ``(url, kwargs)``."""
+    """Stand-in for ``httpx.get`` recording ``(url, kwargs)``."""
 
     def __init__(self, response: _FakeResponse) -> None:
         self.response = response
@@ -856,7 +856,7 @@ def test_download_writes_table_s1_and_six_geo_pickles(
     GEO pickles get a sha256 or a retrieval record. Under the stub (which writes no
     SOFT file) ``raw/`` holds exactly the seven files the loader itself writes; a real
     ``get_GEO`` also leaves each ``*_family.soft.gz`` there (the real raw dir holds 13
-    files), none of them recorded either. ``requests.get`` gets the Box URL with ``timeout=60``; ``get_GEO`` gets the
+    files), none of them recorded either. ``httpx.get`` gets the Box URL with ``timeout=60`` and ``follow_redirects=True`` (the share link redirects to Box's file host); ``get_GEO`` gets the
     two deletion series then the four wildtype series, each with ``destdir=<raw_dir>``
     and ``silent=False``. Pinned until the workbook is fetched from the journal SI and
     every file is recorded with its sha256.
@@ -864,10 +864,10 @@ def test_download_writes_table_s1_and_six_geo_pickles(
     raw = _empty_raw(dataset)
     get = _FakeGet(_FakeResponse(_WORKBOOK_BYTES))
     geo = _FakeGeo()
-    monkeypatch.setattr(requests, "get", get)
+    monkeypatch.setattr(httpx, "get", get)
     monkeypatch.setattr(GEOparse, "get_GEO", geo)
     dataset.download()
-    assert get.calls == [(_TABLE_S1_URL, {"timeout": 60})]
+    assert get.calls == [(_TABLE_S1_URL, {"timeout": 60, "follow_redirects": True})]
     assert geo.calls == [
         {"geo": accession, "destdir": str(raw), "silent": False}
         for accession in _ALL_SERIES
@@ -884,14 +884,14 @@ def test_download_writes_table_s1_and_six_geo_pickles(
 def test_download_keeps_an_existing_table_s1(
     dataset: m.MicroarrayKemmeren2014Dataset, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A workbook already in ``raw/`` is not fetched again (``requests.get`` is never
+    """A workbook already in ``raw/`` is not fetched again (``httpx.get`` is never
     called) and its bytes are unchanged; the GEO series are still fetched.
     """
     raw = Path(dataset.raw_dir)
     before = (raw / "kemmeren2014_table_s1.xlsx").read_bytes()
     get = _FakeGet(_FakeResponse(_WORKBOOK_BYTES))
     geo = _FakeGeo()
-    monkeypatch.setattr(requests, "get", get)
+    monkeypatch.setattr(httpx, "get", get)
     monkeypatch.setattr(GEOparse, "get_GEO", geo)
     dataset.download()
     assert get.calls == []
@@ -929,7 +929,7 @@ def test_table_s1_download_refusals(
     """
     raw = _empty_raw(dataset)
     geo = _FakeGeo()
-    monkeypatch.setattr(requests, "get", _FakeGet(response))
+    monkeypatch.setattr(httpx, "get", _FakeGet(response))
     monkeypatch.setattr(GEOparse, "get_GEO", geo)
     table = raw / "kemmeren2014_table_s1.xlsx"
     message = (
@@ -951,7 +951,7 @@ def test_a_table_s1_body_of_exactly_1000_bytes_is_accepted(
     raw = _empty_raw(dataset)
     body = b"y" * 1000
     geo = _FakeGeo()
-    monkeypatch.setattr(requests, "get", _FakeGet(_FakeResponse(body)))
+    monkeypatch.setattr(httpx, "get", _FakeGet(_FakeResponse(body)))
     monkeypatch.setattr(GEOparse, "get_GEO", geo)
     dataset.download()
     assert (raw / "kemmeren2014_table_s1.xlsx").read_bytes() == body

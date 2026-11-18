@@ -11,10 +11,10 @@ import zipfile
 from typing import Any, cast
 
 import cobra
+import httpx
 import hypernetx as hnx
 import matplotlib.pyplot as plt
 import networkx as nx
-import requests
 from attrs import define, field
 from dotenv import load_dotenv
 from matplotlib.patches import Patch
@@ -75,7 +75,7 @@ class YeastGEM:
 
         os.makedirs(self.root, exist_ok=True)
         url = f"https://github.com/SysBioChalmers/yeast-GEM/archive/refs/tags/v{self.version}.zip"
-        response = requests.get(url)
+        response = httpx.get(url, follow_redirects=True, timeout=60.0)
         response.raise_for_status()
 
         zip_path = osp.join(self.root, f"yeast-GEM-{self.version}.zip")

@@ -64,8 +64,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+import httpx
 import pytest
-import requests
 
 from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.compound_identity import resolved_compound
@@ -845,38 +845,49 @@ def test_real_hop_tokens_that_are_not_orf_shaped_carry_no_score() -> None:
 _URL = "https://datadryad.org/downloads/file_stream/4834609"
 
 
-class _Response(requests.Response):
-    """A streamed response: its content type, its HTML text and whether it was closed."""
+class _Dryad:
+    """A real ``httpx.Client`` over a mock transport serving queued responses in order.
 
-    def __init__(self, content_type: str, text: str = "", label: str = "") -> None:
-        super().__init__()
-        self.headers["content-type"] = content_type
-        self._content = text.encode()
-        self.encoding = "utf-8"
-        self.label = label
-        self.closed = False
+    Each served response is kept so a test can check it was closed; every request is
+    recorded with its URL, query and per-request timeout.
+    """
 
-    def close(self) -> None:
-        self.closed = True
-
-
-class _Session(requests.Session):
-    """Records every GET and serves the queued responses in order."""
-
-    def __init__(self, responses: list[_Response]) -> None:
-        super().__init__()
+    def __init__(self, responses: list[httpx.Response]) -> None:
         self.responses = list(responses)
-        self.calls: list[tuple[str, dict[str, Any]]] = []
+        self.served: list[httpx.Response] = []
+        self.requests: list[httpx.Request] = []
+        self.client = httpx.Client(
+            transport=httpx.MockTransport(self._handle), follow_redirects=True
+        )
 
-    def get(self, *args: Any, **kwargs: Any) -> requests.Response:
-        self.calls.append((args[0], kwargs))
-        return self.responses.pop(0)
+    def _handle(self, request: httpx.Request) -> httpx.Response:
+        self.requests.append(request)
+        self.served.append(self.responses.pop(0))
+        return self.served[-1]
+
+    def urls(self) -> list[str]:
+        return [str(r.url) for r in self.requests]
+
+    def timeouts(self) -> list[float | None]:
+        return [r.extensions["timeout"]["read"] for r in self.requests]
 
 
-def _label(response: requests.Response) -> str:
-    """The label of a served fake response (a guard, not a cast)."""
-    assert isinstance(response, _Response)
-    return response.label
+def _html(text: str) -> httpx.Response:
+    """An HTML page as an unread stream (an iterator body is not pre-read or closed)."""
+    return httpx.Response(
+        200,
+        headers={"content-type": "text/html; charset=utf-8"},
+        content=iter([text.encode()]),
+    )
+
+
+def _body(content: bytes = b"body") -> httpx.Response:
+    """A file body as an unread stream."""
+    return httpx.Response(
+        200,
+        headers={"content-type": "application/octet-stream"},
+        content=iter([content]),
+    )
 
 
 def _challenge_page(with_base: bool) -> str:
@@ -903,12 +914,25 @@ def sleeps(monkeypatch: pytest.MonkeyPatch) -> list[float]:
 def test_dryad_get_returns_a_non_html_body_from_the_first_request(
     sleeps: list[float],
 ) -> None:
-    """A file body (not ``text/html``) is returned as is: one GET, no sleep."""
-    session = _Session([_Response("application/octet-stream", label="body")])
-    response = module._dryad_get(session, _URL)
-    assert _label(response) == "body"
-    assert session.calls == [(_URL, {"timeout": 180, "stream": True})]
+    """A file body (not ``text/html``) is returned open: one GET (180 s), no sleep."""
+    dryad = _Dryad([_body(b"payload")])
+    response = module._dryad_get(dryad.client, _URL)
+    assert response is dryad.served[0]
+    assert not response.is_closed
+    assert response.read() == b"payload"
+    assert dryad.urls() == [_URL]
+    assert dryad.timeouts() == [180]
     assert sleeps == []
+
+
+def test_dryad_get_follows_a_redirect_from_the_file_stream_url(
+    sleeps: list[float],
+) -> None:
+    """Dryad's file-stream URL redirects to storage; the client follows it."""
+    target = "https://store.example/f"
+    dryad = _Dryad([httpx.Response(302, headers={"location": target}), _body()])
+    module._dryad_get(dryad.client, _URL)
+    assert dryad.urls() == [_URL, target]
 
 
 @pytest.mark.parametrize(
@@ -929,33 +953,22 @@ def test_dryad_get_solves_the_anubis_challenge_and_passes_it(
 ) -> None:
     """The challenge page is closed, the proof of work solved (nonce 26 is the first whose
     sha256("abc26") starts with a zero nibble) and sent to the pass-challenge endpoint
-    under the page's base prefix, redirecting to the file URL; the cleared body returns.
+    under the page's base prefix (1800 s timeout), redirecting to the file URL; the
+    cleared body returns.
     """
-    page = _Response("text/html; charset=utf-8", _challenge_page(with_base))
-    session = _Session([page, _Response("application/octet-stream", label="body")])
-    response = module._dryad_get(session, _URL)
-    assert _label(response) == "body"
-    assert page.closed
-    assert session.calls == [
-        (_URL, {"timeout": 180, "stream": True}),
-        (
-            pass_url,
-            {
-                "params": {
-                    "id": "c1",
-                    "response": (
-                        "0d56d5ce616422904a584cf3735a45ae611817d96c4717b17369ef6778025848"
-                    ),
-                    "nonce": 26,
-                    "redir": _URL,
-                    "elapsedTime": 100,
-                },
-                "stream": True,
-                "allow_redirects": True,
-                "timeout": 1800,
-            },
-        ),
-    ]
+    dryad = _Dryad([_html(_challenge_page(with_base)), _body()])
+    response = module._dryad_get(dryad.client, _URL)
+    assert response is dryad.served[1]
+    assert dryad.served[0].is_closed
+    params = {
+        "id": "c1",
+        "response": "0d56d5ce616422904a584cf3735a45ae611817d96c4717b17369ef6778025848",
+        "nonce": "26",
+        "redir": _URL,
+        "elapsedTime": "100",
+    }
+    assert dryad.urls() == [_URL, str(httpx.URL(pass_url, params=params))]
+    assert dryad.timeouts() == [180, 1800]
     assert sleeps == []
 
 
@@ -964,18 +977,20 @@ def test_dryad_get_retries_a_throttled_page_and_a_cleared_page_that_is_still_htm
 ) -> None:
     """A page with no challenge is a throttle: close, sleep 15 s, GET again. A challenge
     whose pass request still answers HTML is closed, then sleep 15 s and GET again; the
-    third file GET returns the body. Five requests, two sleeps.
+    third file GET returns the body. Four requests, two sleeps.
     """
-    throttled = _Response("text/html", "<html>slow down</html>")
-    page = _Response("text/html", _challenge_page(False))
-    still_html = _Response("text/html", "<html>again</html>")
-    session = _Session(
-        [throttled, page, still_html, _Response("application/octet-stream", label="b")]
+    dryad = _Dryad(
+        [
+            _html("<html>slow down</html>"),
+            _html(_challenge_page(False)),
+            _html("<html>again</html>"),
+            _body(),
+        ]
     )
-    response = module._dryad_get(session, _URL)
-    assert _label(response) == "b"
-    assert [throttled.closed, page.closed, still_html.closed] == [True, True, True]
-    assert [url for url, _ in session.calls] == [
+    response = module._dryad_get(dryad.client, _URL)
+    assert response is dryad.served[3]
+    assert [r.is_closed for r in dryad.served[:3]] == [True, True, True]
+    assert [url.split("?")[0] for url in dryad.urls()] == [
         _URL,
         _URL,
         "https://datadryad.org/.within.website/x/cmd/anubis/api/pass-challenge",
@@ -986,24 +1001,24 @@ def test_dryad_get_retries_a_throttled_page_and_a_cleared_page_that_is_still_htm
 
 def test_dryad_get_gives_up_after_eighty_throttled_pages(sleeps: list[float]) -> None:
     """80 throttled pages (80 GETs, 80 sleeps of 15 s) end in a named refusal."""
-    session = _Session([_Response("text/html", "<html>busy</html>") for _ in range(80)])
+    dryad = _Dryad([_html("<html>busy</html>") for _ in range(80)])
     with pytest.raises(
         RuntimeError, match=f"^could not clear Anubis challenge for {re.escape(_URL)}$"
     ):
-        module._dryad_get(session, _URL)
-    assert len(session.calls) == 80
+        module._dryad_get(dryad.client, _URL)
+    assert len(dryad.requests) == 80
     assert sleeps == [15] * 80
 
 
 class _ChunkedResponse:
-    """A streamed body served as fixed chunks, one of them an empty keep-alive chunk."""
+    """A streamed body served as fixed chunks."""
 
     def __init__(self, chunks: list[bytes]) -> None:
         self.chunks = chunks
         self.closed = False
         self.chunk_sizes: list[int] = []
 
-    def iter_content(self, chunk_size: int) -> list[bytes]:
+    def iter_bytes(self, chunk_size: int) -> list[bytes]:
         self.chunk_sizes.append(chunk_size)
         return self.chunks
 
@@ -1011,22 +1026,22 @@ class _ChunkedResponse:
         self.closed = True
 
 
-def test_fetch_from_dryad_skips_empty_chunks_and_verifies_the_pin(
+def test_fetch_from_dryad_streams_chunks_and_verifies_the_pin(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """``b"ab"``, ``b""``, ``b"c"`` write ``abc`` (the empty chunk is skipped) in 1 MiB
-    reads through a session carrying the browser User-Agent; the digest ba7816bf... is
-    the pin, so the file is kept and "Wrote <dest> (sha256 verified)" is logged. The
-    same body against another pin raises ``RawSha256MismatchError`` naming the URL and
-    both digests, and the refused body never reaches ``dest`` (it streams into a
-    ``.partial`` sibling that is removed), so the earlier verified file is untouched.
+    """``b"ab"``, ``b"c"`` write ``abc`` in 1 MiB reads through a redirect-following
+    client carrying the browser User-Agent; the digest ba7816bf... is the pin, so the
+    file is kept and "Wrote <dest> (sha256 verified)" is logged. The same body against
+    another pin raises ``RawSha256MismatchError`` naming the URL and both digests, and
+    the refused body never reaches ``dest`` (it streams into a ``.partial`` sibling that
+    is removed), so the earlier verified file is untouched.
     """
-    sessions: list[Any] = []
+    clients: list[Any] = []
     responses: list[_ChunkedResponse] = []
 
-    def fake_get(session: Any, url: str) -> _ChunkedResponse:
-        sessions.append((session.headers["User-Agent"], url))
-        responses.append(_ChunkedResponse([b"ab", b"", b"c"]))
+    def fake_get(client: httpx.Client, url: str) -> _ChunkedResponse:
+        clients.append((client.headers["User-Agent"], client.follow_redirects, url))
+        responses.append(_ChunkedResponse([b"ab", b"c"]))
         return responses[-1]
 
     monkeypatch.setattr(module, "_dryad_get", fake_get)
@@ -1037,7 +1052,7 @@ def test_fetch_from_dryad_skips_empty_chunks_and_verifies_the_pin(
             "HOP_scores.txt", {"url": _URL, "sha256": abc}, str(dest)
         )
     assert dest.read_bytes() == b"abc"
-    assert sessions == [(module._UA, _URL)]
+    assert clients == [(module._UA, True, _URL)]
     assert responses[0].chunk_sizes == [1 << 20]
     assert responses[0].closed
     assert [r.getMessage() for r in caplog.records if r.name == module.log.name] == [

@@ -37,11 +37,11 @@ from types import SimpleNamespace
 from typing import Any
 
 import cobra
+import httpx
 import hypernetx as hnx
 import matplotlib.pyplot as plt
 import networkx as nx
 import pytest
-import requests
 from networkx.drawing.layout import kamada_kawai_layout, spring_layout
 
 import torchcell.metabolism.yeast_GEM as yeast_gem_module
@@ -774,15 +774,12 @@ def test_download_refuses_a_failed_response(
 ) -> None:
     """A non-2xx response raises from ``raise_for_status`` before any file is written."""
 
-    def raise_404() -> None:
-        raise requests.HTTPError("404 Client Error")
+    def fake_get(url: str, **kwargs: Any) -> httpx.Response:
+        return httpx.Response(404, content=b"", request=httpx.Request("GET", url))
 
-    def fake_get(url: str) -> SimpleNamespace:
-        return SimpleNamespace(content=b"", raise_for_status=raise_404)
-
-    monkeypatch.setattr("torchcell.metabolism.yeast_GEM.requests.get", fake_get)
+    monkeypatch.setattr("torchcell.metabolism.yeast_GEM.httpx.get", fake_get)
     root = tmp_path / "root"
-    with pytest.raises(requests.HTTPError, match="^404 Client Error$"):
+    with pytest.raises(httpx.HTTPStatusError, match="^Client error '404 Not Found'"):
         YeastGEM(root=str(root), version="0.0.1")
     assert os.listdir(root) == []
 

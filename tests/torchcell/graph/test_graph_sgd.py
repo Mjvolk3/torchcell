@@ -1,11 +1,11 @@
 # tests/torchcell/graph/test_graph_sgd.py
 # [[tests.torchcell.graph.test_graph_sgd]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/graph/test_graph_sgd.py
-"""SGD locus fetch/cache on a fake aiohttp session; nothing reaches yeastgenome.org.
+"""SGD locus fetch/cache on a fake httpx transport; nothing reaches yeastgenome.org.
 
-``aiohttp.ClientSession`` is replaced at its import site (``torchcell.graph.sgd.aiohttp``)
-by :class:`FakeSession`, which answers every GET with a JSON body ``{"url": <url>}`` (or a
-scripted failure) and records each URL. ``asyncio.sleep`` is replaced by a recorder so the
+``httpx.AsyncHTTPTransport.handle_async_request`` is replaced by :class:`FakeSGD`, so the
+real ``httpx.AsyncClient`` runs and only the socket layer is faked: every GET is answered
+with a JSON body ``{"url": <url>}`` (or a scripted failure) and each URL is recorded. ``asyncio.sleep`` is replaced by a recorder so the
 exponential backoff (``2 ** retry`` seconds) is asserted without waiting. ``DATA_ROOT``
 points at tmp_path wherever the module's default gene directory is read, and the
 non-JSON branch's ``NamedTemporaryFile`` is redirected into tmp_path via
@@ -32,10 +32,8 @@ import os.path as osp
 import re
 import tempfile
 from pathlib import Path
-from types import SimpleNamespace
-from typing import Any
 
-import aiohttp
+import httpx
 import pytest
 from pydantic import BaseModel
 
@@ -57,67 +55,46 @@ ENDPOINTS = [
 ]
 
 
-class FakeResponse:
-    """A response with a fixed content type and body."""
-
-    def __init__(self, content_type: str, body: Any) -> None:
-        """Store the header and body."""
-        self.headers = {"Content-Type": content_type}
-        self._body = body
-
-    async def json(self) -> Any:
-        """Return the body as parsed JSON."""
-        return self._body
-
-    async def text(self) -> str:
-        """Return the body as text."""
-        return str(self._body)
-
-    async def __aenter__(self) -> "FakeResponse":
-        """Enter the response context."""
-        return self
-
-    async def __aexit__(self, *exc: object) -> None:
-        """Leave the context."""
-        return None
-
-
-class FakeSession:
+class FakeSGD:
     """Records GETs; ``mode`` selects json, html, a non-container json, or an error."""
 
     urls: list[str] = []
     headers_seen: list[dict[str, str]] = []
     mode: str = "json"
 
-    async def __aenter__(self) -> "FakeSession":
-        """Enter the session context."""
-        return self
-
-    async def __aexit__(self, *exc: object) -> None:
-        """Leave the context."""
-        return None
-
-    def get(self, url: str, headers: dict[str, str]) -> FakeResponse:
+    @staticmethod
+    async def handle_async_request(
+        transport: httpx.AsyncHTTPTransport, request: httpx.Request
+    ) -> httpx.Response:
         """Record the GET and answer per ``mode``."""
-        FakeSession.urls.append(url)
-        FakeSession.headers_seen.append(headers)
-        if FakeSession.mode == "error":
-            raise aiohttp.ClientError("boom")
-        if FakeSession.mode == "html":
-            return FakeResponse("text/html", "<html>down</html>")
-        if FakeSession.mode == "scalar":
-            return FakeResponse("application/json", 7)
-        return FakeResponse("application/json; charset=utf-8", {"url": url})
+        url = str(request.url)
+        FakeSGD.urls.append(url)
+        FakeSGD.headers_seen.append({"accept": request.headers["accept"]})
+        if FakeSGD.mode == "error":
+            raise httpx.ConnectError("boom", request=request)
+        if FakeSGD.mode == "html":
+            return httpx.Response(
+                200, headers={"Content-Type": "text/html"}, text="<html>down</html>"
+            )
+        if FakeSGD.mode == "scalar":
+            return httpx.Response(200, json=7)
+        return httpx.Response(
+            200,
+            headers={"Content-Type": "application/json; charset=utf-8"},
+            content=json.dumps({"url": url}).encode(),
+        )
 
 
 @pytest.fixture
-def session(monkeypatch: pytest.MonkeyPatch) -> type[FakeSession]:
-    """Install FakeSession at the sgd import site and a recording ``asyncio.sleep``."""
-    FakeSession.urls = []
-    FakeSession.headers_seen = []
-    FakeSession.mode = "json"
-    monkeypatch.setattr(sgd, "aiohttp", SimpleNamespace(ClientSession=FakeSession))
-    return FakeSession
+def session(monkeypatch: pytest.MonkeyPatch) -> type[FakeSGD]:
+    """Install FakeSGD as the async transport's request handler."""
+    FakeSGD.urls = []
+    FakeSGD.headers_seen = []
+    FakeSGD.mode = "json"
+    monkeypatch.setattr(
+        httpx.AsyncHTTPTransport, "handle_async_request", FakeSGD.handle_async_request
+    )
+    return FakeSGD
 
 
 @pytest.fixture
@@ -184,7 +161,7 @@ def test_read_errors(tmp_path: Path) -> None:
 
 
 def test_fetch_data_downloads_every_endpoint_and_writes(
-    tmp_path: Path, session: type[FakeSession]
+    tmp_path: Path, session: type[FakeSGD]
 ) -> None:
     """Unvalidated fetch: 11 GETs in order, each stored under its key, then written."""
     gene = Gene(locusID="YAL001C", is_validated=False, base_data_dir=str(tmp_path))
@@ -215,7 +192,7 @@ def test_fetch_data_raises_when_download_leaves_no_data(
 
 
 def test_client_error_retries_with_backoff_then_returns_none(
-    tmp_path: Path, session: type[FakeSession], sleeps: list[float]
+    tmp_path: Path, session: type[FakeSGD], sleeps: list[float]
 ) -> None:
     """Three failing attempts: sleeps 2**0 and 2**1, then None (no sleep after the last)."""
     session.mode = "error"
@@ -225,7 +202,7 @@ def test_client_error_retries_with_backoff_then_returns_none(
     assert sleeps == [1, 2]
 
 
-def test_non_container_json_raises(tmp_path: Path, session: type[FakeSession]) -> None:
+def test_non_container_json_raises(tmp_path: Path, session: type[FakeSGD]) -> None:
     """A JSON scalar is rejected with the value in the message."""
     session.mode = "scalar"
     gene = Gene(locusID="YAL001C", base_data_dir=str(tmp_path))
@@ -233,25 +210,22 @@ def test_non_container_json_raises(tmp_path: Path, session: type[FakeSession]) -
         asyncio.run(gene._get_data(f"{BASE}/YAL001C"))
 
 
-def test_non_json_response_raises_type_error(
-    tmp_path: Path, session: type[FakeSession], monkeypatch: pytest.MonkeyPatch
+def test_non_json_response_raises_value_error_without_retry(
+    tmp_path: Path, session: type[FakeSGD], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: sgd.py:161 builds ``ContentTypeError(message)`` with one argument.
+    """An HTML response escapes the retry loop on the first attempt with a ValueError
+    naming the content type and URL; the body is saved to a temp file first.
 
-    aiohttp's ``ClientResponseError.__init__`` needs ``request_info`` and ``history``,
-    so constructing it raises ``TypeError``, which the ``except (ClientError,
-    ContentTypeError)`` does not catch: an HTML response escapes the retry loop on the
-    first attempt instead of being retried. The body is still saved to a temp file.
+    Under aiohttp the same branch raised a ``TypeError`` (``ContentTypeError`` was built
+    with one argument), which also escaped on the first attempt; the escape is kept and
+    the error now names the cause.
     """
     monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
     session.mode = "html"
     gene = Gene(locusID="YAL001C", base_data_dir=str(tmp_path / "genes"))
     with pytest.raises(
-        TypeError,
-        match=re.escape(
-            "ClientResponseError.__init__() missing 1 required positional argument: "
-            "'history'"
-        ),
+        ValueError,
+        match=re.escape(f"Unexpected content type: text/html. URL: {BASE}/YAL001C"),
     ):
         asyncio.run(gene._get_data(f"{BASE}/YAL001C", max_retries=3))
     assert session.urls == [f"{BASE}/YAL001C"]
@@ -261,7 +235,7 @@ def test_non_json_response_raises_type_error(
 
 
 def test_validated_locus_writes_schema_into_cwd(
-    tmp_path: Path, session: type[FakeSession], monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, session: type[FakeSGD], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Finding: sgd.py:181-182 write ``locus_schema.json`` into the CURRENT directory.
 
@@ -302,7 +276,7 @@ def test_create_gene_uses_default_dir(
 def test_download_gene_chunk_skips_cached_and_fetches_the_rest(  # test-quality: allow returns None; asserts the files, factory calls, GETs and sleeps it causes
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    session: type[FakeSession],
+    session: type[FakeSGD],
     sleeps: list[float],
 ) -> None:
     """YAL001C is cached and skipped; YAL002W is fetched (11 GETs) after a 1 s pause
@@ -334,7 +308,7 @@ def test_download_gene_chunk_skips_cached_and_fetches_the_rest(  # test-quality:
 
 
 def test_concurrent_fetches_share_one_download(
-    tmp_path: Path, session: type[FakeSession]
+    tmp_path: Path, session: type[FakeSGD]
 ) -> None:
     """The second ``fetch_data`` awaits the pending task instead of scheduling another.
 
@@ -354,7 +328,7 @@ def test_concurrent_fetches_share_one_download(
 
 
 def test_zero_retries_returns_none_without_a_request(
-    tmp_path: Path, session: type[FakeSession]
+    tmp_path: Path, session: type[FakeSGD]
 ) -> None:
     """``max_retries=0`` skips the loop: None, and the session is never opened."""
     gene = Gene(locusID="YAL001C", base_data_dir=str(tmp_path))
@@ -365,7 +339,7 @@ def test_zero_retries_returns_none_without_a_request(
 def test_failed_download_raises_and_caches_nothing(  # test-quality: allow returns None; asserts the error, file, GETs, sleeps and factory calls it causes
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    session: type[FakeSession],
+    session: type[FakeSGD],
     sleeps: list[float],
 ) -> None:
     """A download where every GET fails raises, writes no file and stores no data.
@@ -403,7 +377,7 @@ def test_failed_download_raises_and_caches_nothing(  # test-quality: allow retur
 
 
 def test_partial_download_failure_names_only_the_failed_endpoint(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, session: type[FakeSession]
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, session: type[FakeSGD]
 ) -> None:
     """One failed endpoint is enough to refuse the write; the error names just it."""
 

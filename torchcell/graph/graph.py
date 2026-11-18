@@ -13,10 +13,10 @@ from collections.abc import ItemsView, Iterator, KeysView, ValuesView
 from copy import deepcopy
 from typing import Any, cast, overload
 
+import httpx
 import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
-import requests
 from attrs import define, field
 from pydantic import ValidationInfo, field_validator
 from sortedcontainers import SortedDict, SortedSet
@@ -355,6 +355,20 @@ def filter_go_IGI(G_go: nx.DiGraph) -> nx.DiGraph:
         G.remove_node(node)
 
     return G
+
+
+def _stream_to_file(url: str, output_path: str) -> None:
+    """Stream ``url`` into ``output_path`` in 8 KiB chunks, following redirects.
+
+    The status is not checked, as before the move from ``requests`` to ``httpx``: the
+    body is written whatever the response code.
+    """
+    with (
+        httpx.stream("GET", url, follow_redirects=True, timeout=60.0) as response,
+        open(output_path, "wb") as f,
+    ):
+        for chunk in tqdm(response.iter_bytes(chunk_size=8192)):
+            f.write(chunk)
 
 
 @define
@@ -723,10 +737,7 @@ class SCerevisiaeGraph:
             return
 
         log.info(f"Downloading TFLink data to {output_path}...")
-        response = requests.get(url, stream=True)
-        with open(output_path, "wb") as f:
-            for chunk in tqdm(response.iter_content(chunk_size=8192)):
-                f.write(chunk)
+        _stream_to_file(url, output_path)
         log.info("TFLink download complete!")
 
     def download_string_data(self, output_path: str, version: str = "9.1") -> None:
@@ -752,10 +763,7 @@ class SCerevisiaeGraph:
             return
 
         log.info(f"Downloading STRING v{version} data to {output_path}...")
-        response = requests.get(url, stream=True)
-        with open(output_path, "wb") as f:
-            for chunk in tqdm(response.iter_content(chunk_size=8192)):
-                f.write(chunk)
+        _stream_to_file(url, output_path)
         log.info(f"STRING v{version} download complete!")
 
     def create_string_graphs(self, file_path: str, version: str) -> None:

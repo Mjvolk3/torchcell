@@ -888,13 +888,13 @@ def test_download_links_the_mirror_only_when_its_bytes_match_the_pinned_sha256(
 
 
 class _FakeResponse:
-    """The two members of a streamed ``requests.Response`` that ``_fetch_from_dryad`` uses."""
+    """The two members of a streamed ``httpx.Response`` that ``_fetch_from_dryad`` uses."""
 
     def __init__(self, body: bytes) -> None:
         self.body = body
         self.closed = False
 
-    def iter_content(self, chunk_size: int) -> list[bytes]:
+    def iter_bytes(self, chunk_size: int) -> list[bytes]:
         return [
             self.body[i : i + chunk_size] for i in range(0, len(self.body), chunk_size)
         ]
@@ -924,7 +924,7 @@ def test_download_fetches_a_file_the_mirror_lacks_and_verifies_the_pin(
     responses: list[_FakeResponse] = []
     calls: list[str] = []
 
-    def fake_dryad_get(session: Any, url: str) -> _FakeResponse:
+    def fake_dryad_get(client: Any, url: str) -> _FakeResponse:
         calls.append(url)
         responses.append(_FakeResponse(b"wrong body" if len(calls) == 1 else hop_bytes))
         return responses[-1]

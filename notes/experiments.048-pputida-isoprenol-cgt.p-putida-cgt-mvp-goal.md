@@ -381,6 +381,35 @@ there is no cycle split and no vector token, so criteria 2 and 4 cannot be
 evaluated at all. Criteria 1 and 3 can proceed on the served titer records
 meanwhile.
 
+### The proteome pairing is better here than in yeast
+
+Worth recording because it shapes what comes after the MVP.
+`CampaignProteomeCarruthers2025Dataset` serves 465 records and
+`IsoprenolTiterCarruthers2025Dataset` serves 465 campaign records, measured on
+the same cultures: the Dryad quantification table carries `Isoprenol_titer` in
+the same row as the ~1,700 protein columns. So proteome and phenotype are
+paired one-to-one, which is stronger than the yeast situation where the omics
+co-targets (Kemmeren, Messner) are gene-keyed and only partially overlap the
+phenotype pool.
+
+That makes the proteome co-head the natural first extension after the MVP, and
+it can be a true co-head on the same record rather than a separately keyed
+auxiliary target. It stays out of the MVP so that criterion 1 is not confounded,
+but it is the obvious next arm.
+
+### Logging and reporting conventions
+
+Carried over so later sessions do not relitigate them:
+
+- Train and validation loss on one axis, always.
+- Per-label loss and performance logged, not just the aggregate.
+- W&B views over reports, with a Charts view each round; group links per arm.
+- Every number that reaches this note or a figure comes from a committed script
+  in `experiments/048-pputida-isoprenol-cgt/scripts/`, reading real result
+  files.
+- Figures follow the repo standard (`PLOT_PALETTE`, Arial 6 pt, boxed axes,
+  panel widths from `PANEL_WIDTHS_MM`, true-size SVG embedded in the note).
+
 ### Ordered plan across sessions
 
 1. Materialize the DBTL cycle (and therefore the vector) on the Carruthers

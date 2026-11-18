@@ -1,0 +1,9 @@
+graph,edge_means,nodes,edges,self_loops
+STRING neighborhood,genes stay adjacent across genomes,"5,729 genes",282020,5729
+STRING fusion,the two are one gene in another genome,"5,729 genes",5512,5729
+STRING co-occurrence,the two appear and vanish together,"5,729 genes",291140,5729
+STRING co-expression,expression correlates across conditions,"5,729 genes",288542,5729
+STRING experimental,a published experiment links them,"5,729 genes",121575,5729
+STRING database,a curated pathway holds both,"5,729 genes",45713,5729
+"Metabolism, reaction to metabolite",a reaction consumes or produces a metabolite,"4,860 reactions, 2,168 metabolites",19367,0
+"Metabolism, gene to reaction",a gene catalyzes a reaction,"5,729 genes, 4,860 reactions",4578,0

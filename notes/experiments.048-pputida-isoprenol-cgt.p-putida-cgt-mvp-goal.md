@@ -1364,3 +1364,42 @@ and graph-assembly overhead rather than by the GPU, so several arms could share
 one card with little slowdown and the suite would finish in well under three
 hours. Worth measuring before relying on it, since the fix if true is to run the
 arms concurrently rather than serially as `run_mvp_arms.sh` does today.
+
+### The graphs, in one table
+
+`experiments/048-pputida-isoprenol-cgt/scripts/summarize_graphs.py` reads the
+built cell graph and writes `results/cell_graph_summary.csv` plus a slide-sized
+rendering. It is deliberately basic, one row per graph, because the detail is
+already in Figures 1 and 2.
+
+![](./assets/images/048-pputida-isoprenol-cgt/cell_graph_summary_table.svg)
+
+| Graph | An edge means | Nodes | Edges |
+|---|---|---|---|
+| STRING neighborhood | genes stay adjacent across genomes | 5,729 genes | 282,020 |
+| STRING fusion | the two are one gene in another genome | 5,729 genes | 5,512 |
+| STRING co-occurrence | the two appear and vanish together | 5,729 genes | 291,140 |
+| STRING co-expression | expression correlates across conditions | 5,729 genes | 288,542 |
+| STRING experimental | a published experiment links them | 5,729 genes | 121,575 |
+| STRING database | a curated pathway holds both | 5,729 genes | 45,713 |
+| Metabolism, reaction to metabolite | a reaction consumes or produces a metabolite | 4,860 reactions, 2,168 metabolites | 19,367 |
+| Metabolism, gene to reaction | a gene catalyzes a reaction | 5,729 genes, 4,860 reactions | 4,578 |
+
+1,058,447 edges in all. The table is rendered at 240 mm and 9 pt rather than in
+Nature's 5 to 7 pt band, because it is a slide asset and a table nobody can read
+from the back of a room is not a table.
+
+Two of these counts are not the edge store's own `num_edges`, and both would
+have misled the slide:
+
+* **Every STRING store holds one self-loop per gene** on top of its pairs, so
+  its `num_edges` is 5,729 higher than the number of gene pairs the channel
+  asserts. The table reports the pairs.
+* **The gene-to-reaction store is a hyperedge store**, and its `num_edges` is
+  the hyperedge count, which is the 3,611 reactions that have a GPR at all, not
+  the 4,578 gene-to-reaction links its index holds. The table reports the links.
+
+The reaction node count is 4,860 rather than the model's 2,958 reactions because
+a reaction node is a catalytic unit: a reaction whose GPR has an OR contributes
+one node per alternative. That is the same convention the yeast bipartite
+extraction uses, and it is why the reaction store is larger than the GEM.

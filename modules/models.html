@@ -75,28 +75,256 @@
 <li class="toctree-l1"><a class="reference internal" href="losses.html">torchcell.losses</a></li>
 <li class="toctree-l1"><a class="reference internal" href="metabolism.html">torchcell.metabolism</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.models</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#cell-graph-transformer"><code class="docutils literal notranslate"><span class="pre">cell_graph_transformer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#cell-graph-transformer-metabolism"><code class="docutils literal notranslate"><span class="pre">cell_graph_transformer_metabolism</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#dango"><code class="docutils literal notranslate"><span class="pre">dango</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#dcell"><code class="docutils literal notranslate"><span class="pre">dcell</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#dcell-opt"><code class="docutils literal notranslate"><span class="pre">dcell_opt</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#deep-set"><code class="docutils literal notranslate"><span class="pre">deep_set</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#diffusion-decoder"><code class="docutils literal notranslate"><span class="pre">diffusion_decoder</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#equivariant-cell-graph-transformer"><code class="docutils literal notranslate"><span class="pre">equivariant_cell_graph_transformer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#esm2"><code class="docutils literal notranslate"><span class="pre">esm2</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#fungal-up-down-transformer"><code class="docutils literal notranslate"><span class="pre">fungal_up_down_transformer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#gpu-edge-mask-generator"><code class="docutils literal notranslate"><span class="pre">gpu_edge_mask_generator</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#hetero-cell-bipartite-dango"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#hetero-cell-bipartite-dango-diff-gi"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_diff_gi</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#hetero-cell-bipartite-dango-gi"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_gi</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#hetero-cell-bipartite-dango-gi-lazy"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_gi_lazy</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#hetero-cell-nsa-retry"><code class="docutils literal notranslate"><span class="pre">hetero_cell_nsa_retry</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#linear"><code class="docutils literal notranslate"><span class="pre">linear</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#llm"><code class="docutils literal notranslate"><span class="pre">llm</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#mlp"><code class="docutils literal notranslate"><span class="pre">mlp</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#nucleotide-transformer"><code class="docutils literal notranslate"><span class="pre">nucleotide_transformer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#prott5"><code class="docutils literal notranslate"><span class="pre">protT5</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#self-attention-deep-set"><code class="docutils literal notranslate"><span class="pre">self_attention_deep_set</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cell-graph-transformer"><code class="docutils literal notranslate"><span class="pre">cell_graph_transformer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#classes">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.cell_graph_transformer.GraphRegularizedTransformerLayer.html">torchcell.models.cell_graph_transformer.GraphRegularizedTransformerLayer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.cell_graph_transformer.HyperSAGNN.html">torchcell.models.cell_graph_transformer.HyperSAGNN</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.cell_graph_transformer.PerturbationHead.html">torchcell.models.cell_graph_transformer.PerturbationHead</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.cell_graph_transformer.CellGraphTransformer.html">torchcell.models.cell_graph_transformer.CellGraphTransformer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#functions">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.cell_graph_transformer.calculate_weight_l2_norm.html">torchcell.models.cell_graph_transformer.calculate_weight_l2_norm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.cell_graph_transformer.compute_smoothness.html">torchcell.models.cell_graph_transformer.compute_smoothness</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#cell-graph-transformer-metabolism"><code class="docutils literal notranslate"><span class="pre">cell_graph_transformer_metabolism</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.cell_graph_transformer_metabolism.FluxMetaboliteHead.html">torchcell.models.cell_graph_transformer_metabolism.FluxMetaboliteHead</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.cell_graph_transformer_metabolism.FluxScalarHead.html">torchcell.models.cell_graph_transformer_metabolism.FluxScalarHead</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.cell_graph_transformer_metabolism.ProductScalarHead.html">torchcell.models.cell_graph_transformer_metabolism.ProductScalarHead</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.cell_graph_transformer_metabolism.MetabolomeVectorHead.html">torchcell.models.cell_graph_transformer_metabolism.MetabolomeVectorHead</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.cell_graph_transformer_metabolism.CellGraphTransformerMetabolism.html">torchcell.models.cell_graph_transformer_metabolism.CellGraphTransformerMetabolism</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.cell_graph_transformer_metabolism.perturbed_gene_pool.html">torchcell.models.cell_graph_transformer_metabolism.perturbed_gene_pool</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#dango"><code class="docutils literal notranslate"><span class="pre">dango</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.dango.DangoPreTrain.html">torchcell.models.dango.DangoPreTrain</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.dango.MetaEmbedding.html">torchcell.models.dango.MetaEmbedding</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.dango.HyperSAGNN.html">torchcell.models.dango.HyperSAGNN</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.dango.Dango.html">torchcell.models.dango.Dango</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#dcell"><code class="docutils literal notranslate"><span class="pre">dcell</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.dcell.DCell.html">torchcell.models.dcell.DCell</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.dcell.DCellSubsystem.html">torchcell.models.dcell.DCellSubsystem</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#dcell-opt"><code class="docutils literal notranslate"><span class="pre">dcell_opt</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.dcell_opt.DCellOpt.html">torchcell.models.dcell_opt.DCellOpt</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.dcell_opt.DCellSubsystem.html">torchcell.models.dcell_opt.DCellSubsystem</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#deep-set"><code class="docutils literal notranslate"><span class="pre">deep_set</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.deep_set.DeepSet.html">torchcell.models.deep_set.DeepSet</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#diffusion-decoder"><code class="docutils literal notranslate"><span class="pre">diffusion_decoder</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.diffusion_decoder.SinusoidalTimeEmbedding.html">torchcell.models.diffusion_decoder.SinusoidalTimeEmbedding</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.diffusion_decoder.CrossAttention.html">torchcell.models.diffusion_decoder.CrossAttention</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.diffusion_decoder.DenoisingBlock.html">torchcell.models.diffusion_decoder.DenoisingBlock</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.diffusion_decoder.DiffusionDecoder.html">torchcell.models.diffusion_decoder.DiffusionDecoder</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#equivariant-cell-graph-transformer"><code class="docutils literal notranslate"><span class="pre">equivariant_cell_graph_transformer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id8">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.GraphRegularizedTransformerLayer.html">torchcell.models.equivariant_cell_graph_transformer.GraphRegularizedTransformerLayer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.HyperSAGNN.html">torchcell.models.equivariant_cell_graph_transformer.HyperSAGNN</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.EquivariantPerturbationTransform.html">torchcell.models.equivariant_cell_graph_transformer.EquivariantPerturbationTransform</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.PerturbationGraphPropagation.html">torchcell.models.equivariant_cell_graph_transformer.PerturbationGraphPropagation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.LowRankBilinear.html">torchcell.models.equivariant_cell_graph_transformer.LowRankBilinear</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.ObservedLabelEncoder.html">torchcell.models.equivariant_cell_graph_transformer.ObservedLabelEncoder</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.CrossGeneMixing.html">torchcell.models.equivariant_cell_graph_transformer.CrossGeneMixing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.ResponseBasisHead.html">torchcell.models.equivariant_cell_graph_transformer.ResponseBasisHead</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.PerceiverMixing.html">torchcell.models.equivariant_cell_graph_transformer.PerceiverMixing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.PerturbationHead.html">torchcell.models.equivariant_cell_graph_transformer.PerturbationHead</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.GlobalHead.html">torchcell.models.equivariant_cell_graph_transformer.GlobalHead</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.CrossAttnHead.html">torchcell.models.equivariant_cell_graph_transformer.CrossAttnHead</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.PerGeneHead.html">torchcell.models.equivariant_cell_graph_transformer.PerGeneHead</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.PerMetaboliteHead.html">torchcell.models.equivariant_cell_graph_transformer.PerMetaboliteHead</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.MaskedMultitaskLoss.html">torchcell.models.equivariant_cell_graph_transformer.MaskedMultitaskLoss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.CellGraphTransformer.html">torchcell.models.equivariant_cell_graph_transformer.CellGraphTransformer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.calculate_weight_l2_norm.html">torchcell.models.equivariant_cell_graph_transformer.calculate_weight_l2_norm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.compute_smoothness.html">torchcell.models.equivariant_cell_graph_transformer.compute_smoothness</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#esm2"><code class="docutils literal notranslate"><span class="pre">esm2</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id10">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.esm2.Esm2.html">torchcell.models.esm2.Esm2</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#fungal-up-down-transformer"><code class="docutils literal notranslate"><span class="pre">fungal_up_down_transformer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id11">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.fungal_up_down_transformer.FungalUpDownTransformer.html">torchcell.models.fungal_up_down_transformer.FungalUpDownTransformer</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#gpu-edge-mask-generator"><code class="docutils literal notranslate"><span class="pre">gpu_edge_mask_generator</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id12">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.gpu_edge_mask_generator.GPUEdgeMaskGenerator.html">torchcell.models.gpu_edge_mask_generator.GPUEdgeMaskGenerator</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hetero-cell-bipartite-dango"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id13">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango.GeneInteractionAttention.html">torchcell.models.hetero_cell_bipartite_dango.GeneInteractionAttention</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango.GeneInteractionPredictor.html">torchcell.models.hetero_cell_bipartite_dango.GeneInteractionPredictor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango.AttentionalGraphAggregation.html">torchcell.models.hetero_cell_bipartite_dango.AttentionalGraphAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango.PreProcessor.html">torchcell.models.hetero_cell_bipartite_dango.PreProcessor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango.AttentionConvWrapper.html">torchcell.models.hetero_cell_bipartite_dango.AttentionConvWrapper</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango.HeteroCellBipartite.html">torchcell.models.hetero_cell_bipartite_dango.HeteroCellBipartite</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango.get_norm_layer.html">torchcell.models.hetero_cell_bipartite_dango.get_norm_layer</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hetero-cell-bipartite-dango-diff-gi"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_diff_gi</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id15">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_diff_gi.LinearDecoder.html">torchcell.models.hetero_cell_bipartite_dango_diff_gi.LinearDecoder</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_diff_gi.GeneInteractionDiff.html">torchcell.models.hetero_cell_bipartite_dango_diff_gi.GeneInteractionDiff</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hetero-cell-bipartite-dango-gi"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_gi</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id16">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi.SelfAttentionGraphAggregation.html">torchcell.models.hetero_cell_bipartite_dango_gi.SelfAttentionGraphAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi.PairwiseGraphAggregation.html">torchcell.models.hetero_cell_bipartite_dango_gi.PairwiseGraphAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi.AggregationNormNotImplementedError.html">torchcell.models.hetero_cell_bipartite_dango_gi.AggregationNormNotImplementedError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi.HeteroConvAggregator.html">torchcell.models.hetero_cell_bipartite_dango_gi.HeteroConvAggregator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi.AttentionalGraphAggregation.html">torchcell.models.hetero_cell_bipartite_dango_gi.AttentionalGraphAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi.DangoLikeHyperSAGNN.html">torchcell.models.hetero_cell_bipartite_dango_gi.DangoLikeHyperSAGNN</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi.GeneInteractionPredictor.html">torchcell.models.hetero_cell_bipartite_dango_gi.GeneInteractionPredictor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi.PreProcessor.html">torchcell.models.hetero_cell_bipartite_dango_gi.PreProcessor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi.AttentionConvWrapper.html">torchcell.models.hetero_cell_bipartite_dango_gi.AttentionConvWrapper</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi.GeneInteractionDango.html">torchcell.models.hetero_cell_bipartite_dango_gi.GeneInteractionDango</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id17">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi.get_activation.html">torchcell.models.hetero_cell_bipartite_dango_gi.get_activation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi.require_no_aggregation_norm.html">torchcell.models.hetero_cell_bipartite_dango_gi.require_no_aggregation_norm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi.get_norm_layer.html">torchcell.models.hetero_cell_bipartite_dango_gi.get_norm_layer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi.create_conv_layer.html">torchcell.models.hetero_cell_bipartite_dango_gi.create_conv_layer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi.calculate_weight_l2_norm.html">torchcell.models.hetero_cell_bipartite_dango_gi.calculate_weight_l2_norm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi.calculate_rolling_correlation.html">torchcell.models.hetero_cell_bipartite_dango_gi.calculate_rolling_correlation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hetero-cell-bipartite-dango-gi-lazy"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_gi_lazy</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id18">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi_lazy.SelfAttentionGraphAggregation.html">torchcell.models.hetero_cell_bipartite_dango_gi_lazy.SelfAttentionGraphAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi_lazy.PairwiseGraphAggregation.html">torchcell.models.hetero_cell_bipartite_dango_gi_lazy.PairwiseGraphAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi_lazy.HeteroConvAggregator.html">torchcell.models.hetero_cell_bipartite_dango_gi_lazy.HeteroConvAggregator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi_lazy.AttentionalGraphAggregation.html">torchcell.models.hetero_cell_bipartite_dango_gi_lazy.AttentionalGraphAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi_lazy.DangoLikeHyperSAGNN.html">torchcell.models.hetero_cell_bipartite_dango_gi_lazy.DangoLikeHyperSAGNN</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi_lazy.GeneInteractionPredictor.html">torchcell.models.hetero_cell_bipartite_dango_gi_lazy.GeneInteractionPredictor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi_lazy.PreProcessor.html">torchcell.models.hetero_cell_bipartite_dango_gi_lazy.PreProcessor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi_lazy.AttentionConvWrapper.html">torchcell.models.hetero_cell_bipartite_dango_gi_lazy.AttentionConvWrapper</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi_lazy.GeneInteractionDango.html">torchcell.models.hetero_cell_bipartite_dango_gi_lazy.GeneInteractionDango</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id19">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi_lazy.get_norm_layer.html">torchcell.models.hetero_cell_bipartite_dango_gi_lazy.get_norm_layer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi_lazy.create_conv_layer.html">torchcell.models.hetero_cell_bipartite_dango_gi_lazy.create_conv_layer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi_lazy.calculate_weight_l2_norm.html">torchcell.models.hetero_cell_bipartite_dango_gi_lazy.calculate_weight_l2_norm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi_lazy.calculate_rolling_correlation.html">torchcell.models.hetero_cell_bipartite_dango_gi_lazy.calculate_rolling_correlation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hetero-cell-nsa-retry"><code class="docutils literal notranslate"><span class="pre">hetero_cell_nsa_retry</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id20">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_nsa_retry.AttentionalGraphAggregation.html">torchcell.models.hetero_cell_nsa_retry.AttentionalGraphAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_nsa_retry.PreProcessor.html">torchcell.models.hetero_cell_nsa_retry.PreProcessor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_nsa_retry.HeteroCellNSA.html">torchcell.models.hetero_cell_nsa_retry.HeteroCellNSA</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id21">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.hetero_cell_nsa_retry.get_norm_layer.html">torchcell.models.hetero_cell_nsa_retry.get_norm_layer</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#linear"><code class="docutils literal notranslate"><span class="pre">linear</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id22">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.linear.SimpleLinearModel.html">torchcell.models.linear.SimpleLinearModel</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#llm"><code class="docutils literal notranslate"><span class="pre">llm</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id23">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.llm.NucleotideModel.html">torchcell.models.llm.NucleotideModel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.llm.PeptideModel.html">torchcell.models.llm.PeptideModel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.llm.pretrained_LLM.html">torchcell.models.llm.pretrained_LLM</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#mlp"><code class="docutils literal notranslate"><span class="pre">mlp</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id24">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.mlp.Mlp.html">torchcell.models.mlp.Mlp</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#nucleotide-transformer"><code class="docutils literal notranslate"><span class="pre">nucleotide_transformer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id25">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.nucleotide_transformer.NucleotideTransformer.html">torchcell.models.nucleotide_transformer.NucleotideTransformer</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#prott5"><code class="docutils literal notranslate"><span class="pre">protT5</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id26">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.protT5.ProtT5.html">torchcell.models.protT5.ProtT5</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#self-attention-deep-set"><code class="docutils literal notranslate"><span class="pre">self_attention_deep_set</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id27">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.self_attention_deep_set.SelfAttention.html">torchcell.models.self_attention_deep_set.SelfAttention</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.models.self_attention_deep_set.SelfAttentionDeepSet.html">torchcell.models.self_attention_deep_set.SelfAttentionDeepSet</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="nn.html">torchcell.nn</a></li>

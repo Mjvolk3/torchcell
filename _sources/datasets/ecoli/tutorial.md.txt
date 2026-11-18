@@ -1,75 +1,34 @@
-# Exploring the E. coli datasets
+# The E. coli datasets
 
-Four built *Escherichia coli* K-12 datasets load with one constructor call each. This page reads like a notebook: each cell of code is followed by what it printed or drew, and every cell is a part of one script, {download}`ecoli_download_tutorial.py <../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py>`, which runs top to bottom in an empty directory. Where the archives come from, how large they are and how a download is checked is on {doc}`download`.
+Four built *Escherichia coli* K-12 datasets load with one constructor call each. This page is the overview: what each dataset holds, how to load it, and one figure of its values. The full walkthrough, with every record, table and plotting cell and its output, is a Jupyter notebook:
+
+- {download}`Download ecoli_datasets.ipynb <../../../../experiments/034-showcase-datasets/notebooks/ecoli_datasets.ipynb>`
+- [View the notebook on GitHub](https://github.com/Mjvolk3/torchcell/blob/main/experiments/034-showcase-datasets/notebooks/ecoli_datasets.ipynb)
 
 ```{include} _generated/tutorial/datasets_table.md
 ```
 
-Terms used below:
-
-- **Hfr Cavalli donor**: the *E. coli* strain that transfers a marked deletion into a recipient by conjugation in the Babu et al. 2014 screen.
-- **Keio collection**: the *E. coli* K-12 BW25113 single-gene deletion strains of Baba et al. 2006, in which a kanamycin-resistance cassette replaces each gene.
-- **modified z-score**: the value Fuhrer et al. 2017 release for each strain and ion, summarized over the strain's replicates and standardized across strains.
-- **record**: one stored measurement, a dict with three keys. `experiment` holds the genotype, the environment, and the phenotype. `reference` holds the genome and the level the value is compared with. `publication` holds the identifiers of the source paper.
-- **S-score**: the signed genetic-interaction score Babu et al. 2014 compute from the colony sizes of a double mutant. A negative score is an aggravating interaction and a positive score is an alleviating one.
-
 ## Setup
 
-Install torchcell into a Python 3.13 environment ({doc}`../../guide/installation`), then import the loaders. Setting `TC_DATA_URL` makes each loader download its built store from the public endpoint.
+Install torchcell into a Python 3.13 environment ({doc}`../../guide/installation`) and set `TC_DATA_URL` before constructing a loader, so the loader downloads its built store and does not build it from the publisher's files. {doc}`download` covers the archives, their sizes and the check against the release.
 
-```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
-:language: python
-:start-after: "# [setup]"
-:end-before: "# [/setup]"
-```
+```python
+import os
 
-The plotting cell sets the figure style once. Colors come from the torchcell palette, and each figure is one row of three panels.
+from torchcell.endpoint_http import DEFAULT_URL
 
-```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
-:language: python
-:start-after: "# [style]"
-:end-before: "# [/style]"
+os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)
 ```
 
 ## Growth rate (Campos 2018)
 
-`GrowthRateCampos2018Dataset` holds one record per Keio strain. The label is the strain's maximal growth rate in M9 medium with casamino acids and glucose at 30 °C, stored as a ratio to the parent strain BW25113, so the reference level is 1.0.
+One record per strain of the Keio collection, the single-gene deletion strains of *E. coli* K-12 BW25113. The label is the strain's maximal growth rate in M9 medium with casamino acids and glucose at 30 °C, as a ratio to the parent strain, so the reference level is 1.0.
 
-```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
-:language: python
-:start-after: "# [growth_load]"
-:end-before: "# [/growth_load]"
-```
+```python
+from torchcell.datasets.ecoli.campos2018 import GrowthRateCampos2018Dataset
 
-```{include} _generated/tutorial/output_growth_load.md
-```
-
-One record, field by field:
-
-```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
-:language: python
-:start-after: "# [growth_record]"
-:end-before: "# [/growth_record]"
-```
-
-```{include} _generated/tutorial/output_growth_record.md
-```
-
-All records as a table:
-
-```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
-:language: python
-:start-after: "# [growth_table]"
-:end-before: "# [/growth_table]"
-```
-
-```{include} _generated/tutorial/output_growth_table.md
-```
-
-```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
-:language: python
-:start-after: "# [growth_figure]"
-:end-before: "# [/growth_figure]"
+dataset = GrowthRateCampos2018Dataset(root="data/torchcell/ecoli_growth_rate_campos2018")
+record = dataset[0]  # a dict: experiment, reference, publication
 ```
 
 ```{figure} _generated/tutorial/ecoli_growth_rate_campos2018.svg
@@ -79,58 +38,15 @@ All records as a table:
 Growth rate of the Keio strains in `GrowthRateCampos2018Dataset`. **a**, strains per 0.02-wide bin of growth rate relative to the parent, with the parent level of 1.0 dashed. **b**, the strains ranked from slowest to fastest, with the five slowest named. **c**, the median (dot) and the interquartile range (bar) of the strains on each Keio plate.
 ```
 
-## The same record as typed objects
-
-`dataset[i]` returns plain dicts. `transform_item` validates one record through the pydantic classes of the schema and returns the typed objects.
-
-```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
-:language: python
-:start-after: "# [typed]"
-:end-before: "# [/typed]"
-```
-
-```{include} _generated/tutorial/output_typed_record.md
-```
-
 ## Cell shape and cell cycle (Campos 2018)
 
-`MorphologyCampos2018Dataset` covers the same strains from the same imaging screen. Each record stores the cell-shape means and the cell-cycle features under the symbols the paper gives them, and the coefficients of variation of the shape features in `morphology_coefficient_of_variation`.
+The same strains from the same imaging screen. Each record stores cell-shape means and cell-cycle features under the symbols the paper gives them, and the coefficients of variation of the shape features. A strain with no nucleoid channel holds 9 features and not 15.
 
-```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
-:language: python
-:start-after: "# [morphology_load]"
-:end-before: "# [/morphology_load]"
-```
+```python
+from torchcell.datasets.ecoli.campos2018 import MorphologyCampos2018Dataset
 
-```{include} _generated/tutorial/output_morphology_load.md
-```
-
-```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
-:language: python
-:start-after: "# [morphology_table]"
-:end-before: "# [/morphology_table]"
-```
-
-```{include} _generated/tutorial/output_morphology_table.md
-```
-
-Some records hold 9 features and not 15: a strain with no nucleoid channel has no nucleoid-derived features, and the table holds `NaN` there.
-
-The growth-rate dataset holds the same strains in the same order, so the two join by position:
-
-```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
-:language: python
-:start-after: "# [morphology_growth]"
-:end-before: "# [/morphology_growth]"
-```
-
-```{include} _generated/tutorial/output_morphology_growth.md
-```
-
-```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
-:language: python
-:start-after: "# [morphology_figure]"
-:end-before: "# [/morphology_figure]"
+dataset = MorphologyCampos2018Dataset(root="data/torchcell/ecoli_morphology_campos2018")
+record = dataset[0]  # a dict: experiment, reference, publication
 ```
 
 ```{figure} _generated/tutorial/ecoli_morphology_campos2018.svg
@@ -142,32 +58,13 @@ Cell shape of the Keio strains in `MorphologyCampos2018Dataset`, one point or co
 
 ## Genetic interactions (Babu 2014)
 
-`GeneInteractionBabu2014Dataset` holds one record per double mutant of the released high-confidence set. The genotype of a record lists two perturbations, one from an Hfr Cavalli donor and one from the recipient array, and the label is the pair's S-score.
+One record per double mutant of the released high-confidence set. The genotype lists two deletions, one from a donor strain and one from the recipient array, and the label is the pair's S-score: negative for an aggravating interaction, positive for an alleviating one.
 
-```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
-:language: python
-:start-after: "# [interaction_load]"
-:end-before: "# [/interaction_load]"
-```
+```python
+from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
 
-```{include} _generated/tutorial/output_interaction_load.md
-```
-
-The donor is the first perturbation in some records and the second in others, so the `collection` field of each perturbation, not its position, says which side of the cross it came from.
-
-```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
-:language: python
-:start-after: "# [interaction_table]"
-:end-before: "# [/interaction_table]"
-```
-
-```{include} _generated/tutorial/output_interaction_table.md
-```
-
-```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
-:language: python
-:start-after: "# [interaction_figure]"
-:end-before: "# [/interaction_figure]"
+dataset = GeneInteractionBabu2014Dataset(root="data/torchcell/gene_interaction_babu2014")
+record = dataset[0]  # a dict: experiment, reference, publication
 ```
 
 ```{figure} _generated/tutorial/gene_interaction_babu2014.svg
@@ -179,34 +76,13 @@ S-scores in `GeneInteractionBabu2014Dataset`. **a**, gene pairs per unit-wide bi
 
 ## Metabolome (Fuhrer 2017)
 
-`MetabolomeFuhrer2017Dataset` holds one record per Keio strain. The label is a dict from ion key to modified z-score, with the same ions in the same order in every record, and `preprocess/ions.csv` gives the mass-to-charge ratio of each key.
+One record per Keio strain. The label maps each detected ion to a modified z-score, with the same ions in the same order in every record, so the labels stack into one strains-by-ions matrix. `preprocess/ions.csv` in the store gives the mass-to-charge ratio of each ion.
 
-```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
-:language: python
-:start-after: "# [metabolome_load]"
-:end-before: "# [/metabolome_load]"
-```
+```python
+from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 
-```{include} _generated/tutorial/output_metabolome_load.md
-```
-
-Because every record holds the same ions in the same order, the labels stack into one strains-by-ions matrix:
-
-```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
-:language: python
-:start-after: "# [metabolome_matrix]"
-:end-before: "# [/metabolome_matrix]"
-```
-
-```{include} _generated/tutorial/output_metabolome_matrix.md
-```
-
-Some records pool two or three Keio strains. The deposit labels such a column with one name that matches more than one Keio entry, the record's genotype lists every one of them, and the strain label above joins their gene names with `+`.
-
-```{literalinclude} ../../../../experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
-:language: python
-:start-after: "# [metabolome_figure]"
-:end-before: "# [/metabolome_figure]"
+dataset = MetabolomeFuhrer2017Dataset(root="data/torchcell/metabolome_fuhrer2017")
+record = dataset[0]  # a dict: experiment, reference, publication
 ```
 
 ```{figure} _generated/tutorial/metabolome_fuhrer2017.svg
@@ -218,7 +94,6 @@ Modified z-scores in `MetabolomeFuhrer2017Dataset`. **a**, all strain and ion va
 
 ## Provenance
 
-- Tutorial code: `experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py`.
-- Runs, figures and page fragments: `experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py`, which writes `experiments/034-showcase-datasets/results/ecoli_download_tutorial.<host>.json` per host, and the printed output and figures under `docs/source/datasets/ecoli/_generated/tutorial/`.
-- The figures are 179 mm wide with 7 pt Arial text and the first colors of `torchcell.utils.PLOT_PALETTE`.
+- Notebook: `experiments/034-showcase-datasets/notebooks/ecoli_datasets.ipynb`, assembled by `experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py` from the blocks of `ecoli_download_tutorial.py`, the text each block printed in one run, and the figures that run drew.
+- The figures on this page are the same run's, 179 mm wide with 7 pt Arial text and colors from `torchcell.utils.PLOT_PALETTE`.
 - The printed output was byte-identical on a repository checkout and on a new environment installed from PyPI ({doc}`../../guide/install-timings`).

@@ -36,7 +36,7 @@ and an interactive map of the schema is at `/ontology/ <ontology/index.html>`_.
    database/index
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
    :caption: Datasets
 
    datasets/index

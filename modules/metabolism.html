@@ -76,14 +76,136 @@
 <li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
 <li class="toctree-l1"><a class="reference internal" href="losses.html">torchcell.losses</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.metabolism</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#betaxanthin"><code class="docutils literal notranslate"><span class="pre">betaxanthin</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#constraints"><code class="docutils literal notranslate"><span class="pre">constraints</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#enzyme-kinetics"><code class="docutils literal notranslate"><span class="pre">enzyme_kinetics</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#flux-layer"><code class="docutils literal notranslate"><span class="pre">flux_layer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#media"><code class="docutils literal notranslate"><span class="pre">media</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#parameters"><code class="docutils literal notranslate"><span class="pre">parameters</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#pathway"><code class="docutils literal notranslate"><span class="pre">pathway</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#yeast-gem"><code class="docutils literal notranslate"><span class="pre">yeast_GEM</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#betaxanthin"><code class="docutils literal notranslate"><span class="pre">betaxanthin</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#functions">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.betaxanthin.build_betaxanthin_pathway.html">torchcell.metabolism.betaxanthin.build_betaxanthin_pathway</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.betaxanthin.betaxanthin_demand_ids.html">torchcell.metabolism.betaxanthin.betaxanthin_demand_ids</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#constraints"><code class="docutils literal notranslate"><span class="pre">constraints</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#classes">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.constraints.ThermoMode.html">torchcell.metabolism.constraints.ThermoMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.constraints.TableCoverage.html">torchcell.metabolism.constraints.TableCoverage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.constraints.ThermoTable.html">torchcell.metabolism.constraints.ThermoTable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.constraints.CatalyticUnits.html">torchcell.metabolism.constraints.CatalyticUnits</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.constraints.GemTensors.html">torchcell.metabolism.constraints.GemTensors</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.constraints.load_thermo_table.html">torchcell.metabolism.constraints.load_thermo_table</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.constraints.parse_catalytic_units.html">torchcell.metabolism.constraints.parse_catalytic_units</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.constraints.independent_balance_rows.html">torchcell.metabolism.constraints.independent_balance_rows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.constraints.null_space_basis.html">torchcell.metabolism.constraints.null_space_basis</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.constraints.build_gem_tensors.html">torchcell.metabolism.constraints.build_gem_tensors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.constraints.compare_reaction_delta_g.html">torchcell.metabolism.constraints.compare_reaction_delta_g</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#enzyme-kinetics"><code class="docutils literal notranslate"><span class="pre">enzyme_kinetics</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.KineticKind.html">torchcell.metabolism.enzyme_kinetics.KineticKind</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.KineticSource.html">torchcell.metabolism.enzyme_kinetics.KineticSource</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.KineticRetrieval.html">torchcell.metabolism.enzyme_kinetics.KineticRetrieval</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.OedKineticRecord.html">torchcell.metabolism.enzyme_kinetics.OedKineticRecord</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.ResolvedKineticParameter.html">torchcell.metabolism.enzyme_kinetics.ResolvedKineticParameter</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.fetch_oed_records.html">torchcell.metabolism.enzyme_kinetics.fetch_oed_records</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.mirror_oed_slice.html">torchcell.metabolism.enzyme_kinetics.mirror_oed_slice</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.load_mirrored_records.html">torchcell.metabolism.enzyme_kinetics.load_mirrored_records</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.resolve_parameter.html">torchcell.metabolism.enzyme_kinetics.resolve_parameter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.enzyme_kinetics.index_by_uniprot.html">torchcell.metabolism.enzyme_kinetics.index_by_uniprot</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#flux-layer"><code class="docutils literal notranslate"><span class="pre">flux_layer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.flux_layer.CompartmentParameters.html">torchcell.metabolism.flux_layer.CompartmentParameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.flux_layer.FluxLayerConfig.html">torchcell.metabolism.flux_layer.FluxLayerConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.flux_layer.FluxLayer.html">torchcell.metabolism.flux_layer.FluxLayer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.flux_layer.gene_index_map.html">torchcell.metabolism.flux_layer.gene_index_map</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#media"><code class="docutils literal notranslate"><span class="pre">media</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.media.UptakePolicy.html">torchcell.metabolism.media.UptakePolicy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.media.ExchangeBound.html">torchcell.metabolism.media.ExchangeBound</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.media.ComponentResolution.html">torchcell.metabolism.media.ComponentResolution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.media.MediaBounds.html">torchcell.metabolism.media.MediaBounds</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.media.MediaBoundsDiff.html">torchcell.metabolism.media.MediaBoundsDiff</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.media.ExchangeIndex.html">torchcell.metabolism.media.ExchangeIndex</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.media.build_exchange_index.html">torchcell.metabolism.media.build_exchange_index</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.media.resolve_component.html">torchcell.metabolism.media.resolve_component</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.media.media_to_bounds.html">torchcell.metabolism.media.media_to_bounds</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.media.diff_bounds.html">torchcell.metabolism.media.diff_bounds</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#parameters"><code class="docutils literal notranslate"><span class="pre">parameters</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id8">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.parameters.ParameterProvenance.html">torchcell.metabolism.parameters.ParameterProvenance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.parameters.KcatPredictor.html">torchcell.metabolism.parameters.KcatPredictor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.parameters.PredictorRegistry.html">torchcell.metabolism.parameters.PredictorRegistry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.parameters.ParameterTable.html">torchcell.metabolism.parameters.ParameterTable</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.parameters.load_swissprot.html">torchcell.metabolism.parameters.load_swissprot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.parameters.molecular_weight_table.html">torchcell.metabolism.parameters.molecular_weight_table</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.parameters.uniprot_for_genes.html">torchcell.metabolism.parameters.uniprot_for_genes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.parameters.resolve_kcat_table.html">torchcell.metabolism.parameters.resolve_kcat_table</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.parameters.load_measured_concentrations.html">torchcell.metabolism.parameters.load_measured_concentrations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.parameters.concentration_prior.html">torchcell.metabolism.parameters.concentration_prior</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pathway"><code class="docutils literal notranslate"><span class="pre">pathway</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id10">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.pathway.EvidenceTier.html">torchcell.metabolism.pathway.EvidenceTier</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.pathway.MetaboliteSpec.html">torchcell.metabolism.pathway.MetaboliteSpec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.pathway.ReactionSpec.html">torchcell.metabolism.pathway.ReactionSpec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.pathway.HeterologousPathway.html">torchcell.metabolism.pathway.HeterologousPathway</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.pathway.apply_pathway.html">torchcell.metabolism.pathway.apply_pathway</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#yeast-gem"><code class="docutils literal notranslate"><span class="pre">yeast_GEM</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id12">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.yeast_GEM.MemberlessReactionError.html">torchcell.metabolism.yeast_GEM.MemberlessReactionError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.yeast_GEM.YeastGEM.html">torchcell.metabolism.yeast_GEM.YeastGEM</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id13">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.yeast_GEM.plot_reaction_map.html">torchcell.metabolism.yeast_GEM.plot_reaction_map</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.yeast_GEM.plot_full_network.html">torchcell.metabolism.yeast_GEM.plot_full_network</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.yeast_GEM.plot_random_network.html">torchcell.metabolism.yeast_GEM.plot_random_network</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.yeast_GEM.plot_bipartite_network.html">torchcell.metabolism.yeast_GEM.plot_bipartite_network</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.yeast_GEM.sanity_check_metabolic_networks.html">torchcell.metabolism.yeast_GEM.sanity_check_metabolic_networks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.yeast_GEM.analyze_reactions_without_genes.html">torchcell.metabolism.yeast_GEM.analyze_reactions_without_genes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.metabolism.yeast_GEM.test_bipartite_attributes.html">torchcell.metabolism.yeast_GEM.test_bipartite_attributes</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>

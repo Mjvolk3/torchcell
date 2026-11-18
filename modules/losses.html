@@ -75,17 +75,133 @@
 <li class="toctree-l1"><a class="reference internal" href="literature.html">torchcell.literature</a></li>
 <li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.losses</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#dango"><code class="docutils literal notranslate"><span class="pre">dango</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#dcell"><code class="docutils literal notranslate"><span class="pre">dcell</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#diffusion-loss"><code class="docutils literal notranslate"><span class="pre">diffusion_loss</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#distributional"><code class="docutils literal notranslate"><span class="pre">distributional</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#isomorphic-cell-loss"><code class="docutils literal notranslate"><span class="pre">isomorphic_cell_loss</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#list-mle"><code class="docutils literal notranslate"><span class="pre">list_mle</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#logcosh"><code class="docutils literal notranslate"><span class="pre">logcosh</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#mle-dist-supcr"><code class="docutils literal notranslate"><span class="pre">mle_dist_supcr</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#mle-wasserstein"><code class="docutils literal notranslate"><span class="pre">mle_wasserstein</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#multi-dim-nan-tolerant"><code class="docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#point-dist-graph-reg"><code class="docutils literal notranslate"><span class="pre">point_dist_graph_reg</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dango"><code class="docutils literal notranslate"><span class="pre">dango</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#classes">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.dango.DangoLossSched.html">torchcell.losses.dango.DangoLossSched</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.dango.PreThenPost.html">torchcell.losses.dango.PreThenPost</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.dango.LinearUntilUniform.html">torchcell.losses.dango.LinearUntilUniform</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.dango.LinearUntilFlipped.html">torchcell.losses.dango.LinearUntilFlipped</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.dango.DangoLoss.html">torchcell.losses.dango.DangoLoss</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#dcell"><code class="docutils literal notranslate"><span class="pre">dcell</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.dcell.DCellLoss.html">torchcell.losses.dcell.DCellLoss</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#diffusion-loss"><code class="docutils literal notranslate"><span class="pre">diffusion_loss</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.diffusion_loss.DiffusionLoss.html">torchcell.losses.diffusion_loss.DiffusionLoss</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#distributional"><code class="docutils literal notranslate"><span class="pre">distributional</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.distributional.DistHead.html">torchcell.losses.distributional.DistHead</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#functions">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.distributional.gaussian_crps.html">torchcell.losses.distributional.gaussian_crps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.distributional.laplace_crps.html">torchcell.losses.distributional.laplace_crps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.distributional.gaussian_nll.html">torchcell.losses.distributional.gaussian_nll</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.distributional.energy_score.html">torchcell.losses.distributional.energy_score</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.distributional.pinball.html">torchcell.losses.distributional.pinball</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.distributional.masked_mean.html">torchcell.losses.distributional.masked_mean</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.distributional.pit_values.html">torchcell.losses.distributional.pit_values</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.distributional.coverage.html">torchcell.losses.distributional.coverage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.distributional.pit_ks.html">torchcell.losses.distributional.pit_ks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.distributional.dist_param_dim.html">torchcell.losses.distributional.dist_param_dim</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.distributional.make_dist_head.html">torchcell.losses.distributional.make_dist_head</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#isomorphic-cell-loss"><code class="docutils literal notranslate"><span class="pre">isomorphic_cell_loss</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.isomorphic_cell_loss.ICLoss.html">torchcell.losses.isomorphic_cell_loss.ICLoss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.isomorphic_cell_loss.ICLossStd.html">torchcell.losses.isomorphic_cell_loss.ICLossStd</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#list-mle"><code class="docutils literal notranslate"><span class="pre">list_mle</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.list_mle.ListMLELoss.html">torchcell.losses.list_mle.ListMLELoss</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#logcosh"><code class="docutils literal notranslate"><span class="pre">logcosh</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.logcosh.LogCoshLoss.html">torchcell.losses.logcosh.LogCoshLoss</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#mle-dist-supcr"><code class="docutils literal notranslate"><span class="pre">mle_dist_supcr</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.mle_dist_supcr.AdaptiveWeighting.html">torchcell.losses.mle_dist_supcr.AdaptiveWeighting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.mle_dist_supcr.TemperatureScheduler.html">torchcell.losses.mle_dist_supcr.TemperatureScheduler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.mle_dist_supcr.BufferedWeightedDistLoss.html">torchcell.losses.mle_dist_supcr.BufferedWeightedDistLoss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.mle_dist_supcr.BufferedWeightedSupCRCell.html">torchcell.losses.mle_dist_supcr.BufferedWeightedSupCRCell</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.mle_dist_supcr.MleDistSupCR.html">torchcell.losses.mle_dist_supcr.MleDistSupCR</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#mle-wasserstein"><code class="docutils literal notranslate"><span class="pre">mle_wasserstein</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id8">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.mle_wasserstein.AdaptiveWeighting.html">torchcell.losses.mle_wasserstein.AdaptiveWeighting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.mle_wasserstein.TemperatureScheduler.html">torchcell.losses.mle_wasserstein.TemperatureScheduler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.mle_wasserstein.WeightedWassersteinLoss.html">torchcell.losses.mle_wasserstein.WeightedWassersteinLoss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.mle_wasserstein.BufferedWeightedWassersteinLoss.html">torchcell.losses.mle_wasserstein.BufferedWeightedWassersteinLoss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.mle_wasserstein.BufferedWeightedSupCRCell.html">torchcell.losses.mle_wasserstein.BufferedWeightedSupCRCell</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.mle_wasserstein.MleWassSupCR.html">torchcell.losses.mle_wasserstein.MleWassSupCR</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#multi-dim-nan-tolerant"><code class="docutils literal notranslate"><span class="pre">multi_dim_nan_tolerant</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id9">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.SupCR.html">torchcell.losses.multi_dim_nan_tolerant.SupCR</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.WeightedSupCRCell.html">torchcell.losses.multi_dim_nan_tolerant.WeightedSupCRCell</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.NaNTolerantL1Loss.html">torchcell.losses.multi_dim_nan_tolerant.NaNTolerantL1Loss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.NaNTolerantHuberLoss.html">torchcell.losses.multi_dim_nan_tolerant.NaNTolerantHuberLoss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.NaNTolerantLogCoshLoss.html">torchcell.losses.multi_dim_nan_tolerant.NaNTolerantLogCoshLoss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.WeightedMSELoss.html">torchcell.losses.multi_dim_nan_tolerant.WeightedMSELoss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.NaNTolerantMSELoss.html">torchcell.losses.multi_dim_nan_tolerant.NaNTolerantMSELoss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.NaNTolerantQuantileLoss.html">torchcell.losses.multi_dim_nan_tolerant.NaNTolerantQuantileLoss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.FastSoftSort.html">torchcell.losses.multi_dim_nan_tolerant.FastSoftSort</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.WeightedDistLoss.html">torchcell.losses.multi_dim_nan_tolerant.WeightedDistLoss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.CombinedRegressionLoss.html">torchcell.losses.multi_dim_nan_tolerant.CombinedRegressionLoss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.MultiDimNaNTolerantCELoss.html">torchcell.losses.multi_dim_nan_tolerant.MultiDimNaNTolerantCELoss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.CombinedCELoss.html">torchcell.losses.multi_dim_nan_tolerant.CombinedCELoss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.MonotonicParameter.html">torchcell.losses.multi_dim_nan_tolerant.MonotonicParameter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.MultiDimNaNTolerantOrdinalCELoss.html">torchcell.losses.multi_dim_nan_tolerant.MultiDimNaNTolerantOrdinalCELoss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.CombinedOrdinalCELoss.html">torchcell.losses.multi_dim_nan_tolerant.CombinedOrdinalCELoss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.CategoricalEntropyRegLoss.html">torchcell.losses.multi_dim_nan_tolerant.CategoricalEntropyRegLoss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.MseCategoricalEntropyRegLoss.html">torchcell.losses.multi_dim_nan_tolerant.MseCategoricalEntropyRegLoss</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.isotonic_l2_pav.html">torchcell.losses.multi_dim_nan_tolerant.isotonic_l2_pav</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.multi_dim_nan_tolerant.fast_soft_sort.html">torchcell.losses.multi_dim_nan_tolerant.fast_soft_sort</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#point-dist-graph-reg"><code class="docutils literal notranslate"><span class="pre">point_dist_graph_reg</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id11">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.losses.point_dist_graph_reg.PointDistGraphReg.html">torchcell.losses.point_dist_graph_reg.PointDistGraphReg</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="metabolism.html">torchcell.metabolism</a></li>

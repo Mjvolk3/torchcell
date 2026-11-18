@@ -70,20 +70,271 @@
 <li class="toctree-l1"><a class="reference internal" href="datasets.html">torchcell.datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="graph.html">torchcell.graph</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.knowledge_graphs</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#build-time-projection"><code class="docutils literal notranslate"><span class="pre">build_time_projection</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#create-kg"><code class="docutils literal notranslate"><span class="pre">create_kg</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#create-scerevisiae-kg"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#create-scerevisiae-kg-small"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg_small</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#gene-interactions-scerevisae-kg"><code class="docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#head-ontology"><code class="docutils literal notranslate"><span class="pre">head_ontology</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#incremental-import"><code class="docutils literal notranslate"><span class="pre">incremental_import</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#kg-manifest"><code class="docutils literal notranslate"><span class="pre">kg_manifest</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#release-snapshot"><code class="docutils literal notranslate"><span class="pre">release_snapshot</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#releases"><code class="docutils literal notranslate"><span class="pre">releases</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#subset"><code class="docutils literal notranslate"><span class="pre">subset</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#supported-queries-check"><code class="docutils literal notranslate"><span class="pre">supported_queries.check</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#supported-queries-cypher-deps"><code class="docutils literal notranslate"><span class="pre">supported_queries.cypher_deps</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#supported-queries-registry"><code class="docutils literal notranslate"><span class="pre">supported_queries.registry</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#build-time-projection"><code class="docutils literal notranslate"><span class="pre">build_time_projection</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#classes">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.AdapterTiming.html">torchcell.knowledge_graphs.build_time_projection.AdapterTiming</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.CalibrationTimings.html">torchcell.knowledge_graphs.build_time_projection.CalibrationTimings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.SubsetConfig.html">torchcell.knowledge_graphs.build_time_projection.SubsetConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.DatasetSize.html">torchcell.knowledge_graphs.build_time_projection.DatasetSize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.AdapterRate.html">torchcell.knowledge_graphs.build_time_projection.AdapterRate</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.AdapterContribution.html">torchcell.knowledge_graphs.build_time_projection.AdapterContribution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.BuildTimeProjection.html">torchcell.knowledge_graphs.build_time_projection.BuildTimeProjection</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#functions">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.load_timings.html">torchcell.knowledge_graphs.build_time_projection.load_timings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.dataset_sizes.html">torchcell.knowledge_graphs.build_time_projection.dataset_sizes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.calibrate.html">torchcell.knowledge_graphs.build_time_projection.calibrate</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.project_build_time.html">torchcell.knowledge_graphs.build_time_projection.project_build_time</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.gather_dataset_full_records.html">torchcell.knowledge_graphs.build_time_projection.gather_dataset_full_records</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#create-kg"><code class="docutils literal notranslate"><span class="pre">create_kg</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.create_kg.get_num_workers.html">torchcell.knowledge_graphs.create_kg.get_num_workers</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#create-scerevisiae-kg"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.create_scerevisiae_kg.get_num_workers.html">torchcell.knowledge_graphs.create_scerevisiae_kg.get_num_workers</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#create-scerevisiae-kg-small"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg_small</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.create_scerevisiae_kg_small.get_num_workers.html">torchcell.knowledge_graphs.create_scerevisiae_kg_small.get_num_workers</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#gene-interactions-scerevisae-kg"><code class="docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.gene_interactions_scerevisae_kg.get_num_workers.html">torchcell.knowledge_graphs.gene_interactions_scerevisae_kg.get_num_workers</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#head-ontology"><code class="docutils literal notranslate"><span class="pre">head_ontology</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.head_ontology.HeadOntologyError.html">torchcell.knowledge_graphs.head_ontology.HeadOntologyError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.head_ontology.HeadOntologyMirror.html">torchcell.knowledge_graphs.head_ontology.HeadOntologyMirror</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.head_ontology.record_path.html">torchcell.knowledge_graphs.head_ontology.record_path</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.head_ontology.load_mirror_record.html">torchcell.knowledge_graphs.head_ontology.load_mirror_record</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.head_ontology.configured_head_ontology.html">torchcell.knowledge_graphs.head_ontology.configured_head_ontology</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.head_ontology.verify_head_ontology.html">torchcell.knowledge_graphs.head_ontology.verify_head_ontology</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.head_ontology.build_mirror_record.html">torchcell.knowledge_graphs.head_ontology.build_mirror_record</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#incremental-import"><code class="docutils literal notranslate"><span class="pre">incremental_import</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.CsvGroup.html">torchcell.knowledge_graphs.incremental_import.CsvGroup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.ReferenceAnalysis.html">torchcell.knowledge_graphs.incremental_import.ReferenceAnalysis</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.IncrementalImportPlan.html">torchcell.knowledge_graphs.incremental_import.IncrementalImportPlan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.ExistingEdgeFilter.html">torchcell.knowledge_graphs.incremental_import.ExistingEdgeFilter</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.discover_csv_groups.html">torchcell.knowledge_graphs.incremental_import.discover_csv_groups</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.incremental_node_header.html">torchcell.knowledge_graphs.incremental_import.incremental_node_header</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.write_incremental_headers.html">torchcell.knowledge_graphs.incremental_import.write_incremental_headers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.constraints_cypher.html">torchcell.knowledge_graphs.incremental_import.constraints_cypher</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.analyze_references.html">torchcell.knowledge_graphs.incremental_import.analyze_references</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.incremental_import_call.html">torchcell.knowledge_graphs.incremental_import.incremental_import_call</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.prepare_incremental_import.html">torchcell.knowledge_graphs.incremental_import.prepare_incremental_import</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.query_existing_edges.html">torchcell.knowledge_graphs.incremental_import.query_existing_edges</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.filter_existing_edges.html">torchcell.knowledge_graphs.incremental_import.filter_existing_edges</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#kg-manifest"><code class="docutils literal notranslate"><span class="pre">kg_manifest</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id9">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.GraphSchemaEntry.html">torchcell.knowledge_graphs.kg_manifest.GraphSchemaEntry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.SupersetLineage.html">torchcell.knowledge_graphs.kg_manifest.SupersetLineage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.KgDatasetEntry.html">torchcell.knowledge_graphs.kg_manifest.KgDatasetEntry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.KgEvent.html">torchcell.knowledge_graphs.kg_manifest.KgEvent</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.KgBuildManifest.html">torchcell.knowledge_graphs.kg_manifest.KgBuildManifest</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.ServedDrift.html">torchcell.knowledge_graphs.kg_manifest.ServedDrift</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.AdapterDrift.html">torchcell.knowledge_graphs.kg_manifest.AdapterDrift</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.SupersetCheck.html">torchcell.knowledge_graphs.kg_manifest.SupersetCheck</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.AdmissionReport.html">torchcell.knowledge_graphs.kg_manifest.AdmissionReport</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.BatchAdmissionReport.html">torchcell.knowledge_graphs.kg_manifest.BatchAdmissionReport</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.graph_schema_from_yaml.html">torchcell.knowledge_graphs.kg_manifest.graph_schema_from_yaml</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.cell_adapter_surface.html">torchcell.knowledge_graphs.kg_manifest.cell_adapter_surface</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.adapter_file_relpaths.html">torchcell.knowledge_graphs.kg_manifest.adapter_file_relpaths</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.dataset_adapter_files.html">torchcell.knowledge_graphs.kg_manifest.dataset_adapter_files</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.dataset_conf_methods.html">torchcell.knowledge_graphs.kg_manifest.dataset_conf_methods</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.loader_relpath.html">torchcell.knowledge_graphs.kg_manifest.loader_relpath</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.surface_at_ref.html">torchcell.knowledge_graphs.kg_manifest.surface_at_ref</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.surface_in_worktree.html">torchcell.knowledge_graphs.kg_manifest.surface_in_worktree</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.value_surface_from_sources.html">torchcell.knowledge_graphs.kg_manifest.value_surface_from_sources</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.value_surface_in_worktree.html">torchcell.knowledge_graphs.kg_manifest.value_surface_in_worktree</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.value_surface_at_ref.html">torchcell.knowledge_graphs.kg_manifest.value_surface_at_ref</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.value_surface_drift.html">torchcell.knowledge_graphs.kg_manifest.value_surface_drift</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.closure_at_ref.html">torchcell.knowledge_graphs.kg_manifest.closure_at_ref</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.closure_in_worktree.html">torchcell.knowledge_graphs.kg_manifest.closure_in_worktree</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.package_version_from_source.html">torchcell.knowledge_graphs.kg_manifest.package_version_from_source</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.package_version_at_ref.html">torchcell.knowledge_graphs.kg_manifest.package_version_at_ref</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.package_tag_at_ref.html">torchcell.knowledge_graphs.kg_manifest.package_tag_at_ref</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.checkout_package_version.html">torchcell.knowledge_graphs.kg_manifest.checkout_package_version</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.load_manifest.html">torchcell.knowledge_graphs.kg_manifest.load_manifest</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.save_manifest.html">torchcell.knowledge_graphs.kg_manifest.save_manifest</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.bootstrap_manifest.html">torchcell.knowledge_graphs.kg_manifest.bootstrap_manifest</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.experiment_node_id.html">torchcell.knowledge_graphs.kg_manifest.experiment_node_id</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.dev_experiment_ids.html">torchcell.knowledge_graphs.kg_manifest.dev_experiment_ids</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.superset_check.html">torchcell.knowledge_graphs.kg_manifest.superset_check</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.live_experiment_ids.html">torchcell.knowledge_graphs.kg_manifest.live_experiment_ids</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.adapter_drift_against.html">torchcell.knowledge_graphs.kg_manifest.adapter_drift_against</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.check_admission.html">torchcell.knowledge_graphs.kg_manifest.check_admission</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.batch_report_from_members.html">torchcell.knowledge_graphs.kg_manifest.batch_report_from_members</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.check_batch_admission.html">torchcell.knowledge_graphs.kg_manifest.check_batch_admission</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.record_admission.html">torchcell.knowledge_graphs.kg_manifest.record_admission</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.record_batch_admission.html">torchcell.knowledge_graphs.kg_manifest.record_batch_admission</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.live_dataset_counts.html">torchcell.knowledge_graphs.kg_manifest.live_dataset_counts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.live_neo4j_version.html">torchcell.knowledge_graphs.kg_manifest.live_neo4j_version</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.format_report.html">torchcell.knowledge_graphs.kg_manifest.format_report</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.format_batch_report.html">torchcell.knowledge_graphs.kg_manifest.format_batch_report</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.load_report.html">torchcell.knowledge_graphs.kg_manifest.load_report</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.split_dataset_args.html">torchcell.knowledge_graphs.kg_manifest.split_dataset_args</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.parse_n_experiments.html">torchcell.knowledge_graphs.kg_manifest.parse_n_experiments</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#release-snapshot"><code class="docutils literal notranslate"><span class="pre">release_snapshot</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id11">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.SnapshotDataset.html">torchcell.knowledge_graphs.release_snapshot.SnapshotDataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.SnapshotEvent.html">torchcell.knowledge_graphs.release_snapshot.SnapshotEvent</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.KgReleaseSnapshot.html">torchcell.knowledge_graphs.release_snapshot.KgReleaseSnapshot</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.composite_sha256.html">torchcell.knowledge_graphs.release_snapshot.composite_sha256</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.snapshot_from_manifest.html">torchcell.knowledge_graphs.release_snapshot.snapshot_from_manifest</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.bootstrap_package_version.html">torchcell.knowledge_graphs.release_snapshot.bootstrap_package_version</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.pair_package_tag.html">torchcell.knowledge_graphs.release_snapshot.pair_package_tag</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.snapshot_paths.html">torchcell.knowledge_graphs.release_snapshot.snapshot_paths</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.write_snapshot.html">torchcell.knowledge_graphs.release_snapshot.write_snapshot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.load_snapshot.html">torchcell.knowledge_graphs.release_snapshot.load_snapshot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.load_snapshots.html">torchcell.knowledge_graphs.release_snapshot.load_snapshots</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.load_closures.html">torchcell.knowledge_graphs.release_snapshot.load_closures</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#releases"><code class="docutils literal notranslate"><span class="pre">releases</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id13">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.ReleaseDataset.html">torchcell.knowledge_graphs.releases.ReleaseDataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.KgRelease.html">torchcell.knowledge_graphs.releases.KgRelease</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.ServedDatabase.html">torchcell.knowledge_graphs.releases.ServedDatabase</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.ReleaseDiff.html">torchcell.knowledge_graphs.releases.ReleaseDiff</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.DatasetDrift.html">torchcell.knowledge_graphs.releases.DatasetDrift</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.ReleaseCompatibility.html">torchcell.knowledge_graphs.releases.ReleaseCompatibility</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.IncompatibleReleaseError.html">torchcell.knowledge_graphs.releases.IncompatibleReleaseError</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.release_id.html">torchcell.knowledge_graphs.releases.release_id</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.next_version.html">torchcell.knowledge_graphs.releases.next_version</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.content_sha256.html">torchcell.knowledge_graphs.releases.content_sha256</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.content_hashes_from_csv.html">torchcell.knowledge_graphs.releases.content_hashes_from_csv</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.content_hashes_from_store.html">torchcell.knowledge_graphs.releases.content_hashes_from_store</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.read_release.html">torchcell.knowledge_graphs.releases.read_release</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.write_release.html">torchcell.knowledge_graphs.releases.write_release</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.release_from_manifest.html">torchcell.knowledge_graphs.releases.release_from_manifest</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.stamp_manifest.html">torchcell.knowledge_graphs.releases.stamp_manifest</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.list_databases.html">torchcell.knowledge_graphs.releases.list_databases</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.list_databases_bounded.html">torchcell.knowledge_graphs.releases.list_databases_bounded</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.resolve_database.html">torchcell.knowledge_graphs.releases.resolve_database</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.datasets.html">torchcell.knowledge_graphs.releases.datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.diff.html">torchcell.knowledge_graphs.releases.diff</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.compatibility.html">torchcell.knowledge_graphs.releases.compatibility</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.compatibility_with_surface.html">torchcell.knowledge_graphs.releases.compatibility_with_surface</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.closure_compatibility.html">torchcell.knowledge_graphs.releases.closure_compatibility</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.require_paired.html">torchcell.knowledge_graphs.releases.require_paired</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.package_checkout.html">torchcell.knowledge_graphs.releases.package_checkout</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.commit_index.html">torchcell.knowledge_graphs.releases.commit_index</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.commit_date.html">torchcell.knowledge_graphs.releases.commit_date</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.behind_main.html">torchcell.knowledge_graphs.releases.behind_main</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.package_label.html">torchcell.knowledge_graphs.releases.package_label</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.status_rows.html">torchcell.knowledge_graphs.releases.status_rows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.format_table.html">torchcell.knowledge_graphs.releases.format_table</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#subset"><code class="docutils literal notranslate"><span class="pre">subset</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id15">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.subset.RecordFilter.html">torchcell.knowledge_graphs.subset.RecordFilter</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id16">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.subset.load_gene_sets.html">torchcell.knowledge_graphs.subset.load_gene_sets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.subset.select_indices.html">torchcell.knowledge_graphs.subset.select_indices</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.subset.subset_dataset.html">torchcell.knowledge_graphs.subset.subset_dataset</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#supported-queries-check"><code class="docutils literal notranslate"><span class="pre">supported_queries.check</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id17">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.QueryDrift.html">torchcell.knowledge_graphs.supported_queries.check.QueryDrift</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.QueryResult.html">torchcell.knowledge_graphs.supported_queries.check.QueryResult</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.CheckReport.html">torchcell.knowledge_graphs.supported_queries.check.CheckReport</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.GraphLabels.html">torchcell.knowledge_graphs.supported_queries.check.GraphLabels</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id18">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.pascal_label.html">torchcell.knowledge_graphs.supported_queries.check.pascal_label</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.schema_is_a.html">torchcell.knowledge_graphs.supported_queries.check.schema_is_a</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.graph_labels.html">torchcell.knowledge_graphs.supported_queries.check.graph_labels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.selected_composite.html">torchcell.knowledge_graphs.supported_queries.check.selected_composite</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.query_drifts.html">torchcell.knowledge_graphs.supported_queries.check.query_drifts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.run_check.html">torchcell.knowledge_graphs.supported_queries.check.run_check</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.checkout_commit.html">torchcell.knowledge_graphs.supported_queries.check.checkout_commit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.resolve_snapshot.html">torchcell.knowledge_graphs.supported_queries.check.resolve_snapshot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.check_repo.html">torchcell.knowledge_graphs.supported_queries.check.check_repo</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.validate_query.html">torchcell.knowledge_graphs.supported_queries.check.validate_query</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#supported-queries-cypher-deps"><code class="docutils literal notranslate"><span class="pre">supported_queries.cypher_deps</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id19">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.cypher_deps.strip_comments.html">torchcell.knowledge_graphs.supported_queries.cypher_deps.strip_comments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.cypher_deps.blank_literals.html">torchcell.knowledge_graphs.supported_queries.cypher_deps.blank_literals</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.cypher_deps.split_blocks.html">torchcell.knowledge_graphs.supported_queries.cypher_deps.split_blocks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.cypher_deps.extract_dependencies.html">torchcell.knowledge_graphs.supported_queries.cypher_deps.extract_dependencies</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#supported-queries-registry"><code class="docutils literal notranslate"><span class="pre">supported_queries.registry</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id20">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.registry.QueryDependencies.html">torchcell.knowledge_graphs.supported_queries.registry.QueryDependencies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.registry.SupportedQuery.html">torchcell.knowledge_graphs.supported_queries.registry.SupportedQuery</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.registry.QueryRegistry.html">torchcell.knowledge_graphs.supported_queries.registry.QueryRegistry</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id21">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.registry.registry_path.html">torchcell.knowledge_graphs.supported_queries.registry.registry_path</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#not-documented">Not documented</a></li>
 </ul>
 </li>

@@ -1,11 +1,11 @@
 """Data loader and collater that pad batches to a dense, fixed node count."""
 
 from collections import defaultdict
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 import numpy as np
 import torch.utils.data
-from beartype.typing import Any, List, Optional, Sequence, Tuple, Union
 from torch.utils.data.dataloader import default_collate
 from torch_geometric.data import Batch, Dataset
 from torch_geometric.data.data import BaseData
@@ -21,10 +21,10 @@ NON_FLOAT_PADDING_VALUE = -1
 
 def _dense_pad_tensor(
     key: str,
-    values: List[Any],
+    values: list[Any],
     float_padding_value: float = FLOAT_PADDING_VALUE,
     non_float_padding_value: int = NON_FLOAT_PADDING_VALUE,
-) -> Tuple[Any, Any]:
+) -> tuple[Any, Any]:
     """Densely pads a list of `torch.Tensor` along a new `batch_dim=0`.
 
     Args:
@@ -111,12 +111,12 @@ def _dense_pad_tensor(
 
 def _dense_padded_collate(
     key: str,
-    values: List[Any],
-    data_list: List[BaseData],
-    stores: List[BaseStorage],
+    values: list[Any],
+    data_list: list[BaseData],
+    stores: list[BaseStorage],
     float_padding_value: float = FLOAT_PADDING_VALUE,
     non_float_padding_value: int = NON_FLOAT_PADDING_VALUE,
-) -> Tuple[Any, Any]:
+) -> tuple[Any, Any]:
     """Collates a list of values into a single tensor or list of tensors.
 
     Args:
@@ -221,10 +221,10 @@ def _dense_padded_collate(
 
 def dense_padded_collate(
     cls: type[BaseData],
-    data_list: List[BaseData],
-    follow_batch: Optional[List[str]] = None,
-    exclude_keys: Optional[List[str]] = None,
-) -> Tuple[BaseData, Mapping[Any, Any]]:
+    data_list: list[BaseData],
+    follow_batch: list[str] | None = None,
+    exclude_keys: list[str] | None = None,
+) -> tuple[BaseData, Mapping[Any, Any]]:
     """Collate a list of data objects into a single dense object of type cls.
 
     `collate` can handle both homogeneous and heterogeneous data objects by
@@ -305,9 +305,9 @@ def dense_padded_collate(
 
 
 def dense_padded_from_data_list(
-    data_list: List[BaseData],
-    follow_batch: Optional[List[str]] = None,
-    exclude_keys: Optional[List[str]] = None,
+    data_list: list[BaseData],
+    follow_batch: list[str] | None = None,
+    exclude_keys: list[str] | None = None,
 ) -> Batch:
     r"""Construct a dense Batch object from a Python list of data objects.
 
@@ -347,16 +347,16 @@ class DensePaddingCollater:
 
     def __init__(
         self,
-        dataset: Union[Dataset, Sequence[BaseData], DatasetAdapter],
-        follow_batch: Optional[List[str]] = None,
-        exclude_keys: Optional[List[str]] = None,
+        dataset: Dataset | Sequence[BaseData] | DatasetAdapter,
+        follow_batch: list[str] | None = None,
+        exclude_keys: list[str] | None = None,
     ):
         """Store the dataset and the follow/exclude key configuration."""
         self.dataset = dataset
         self.follow_batch = follow_batch
         self.exclude_keys = exclude_keys
 
-    def __call__(self, batch: List[Any]) -> Any:
+    def __call__(self, batch: list[Any]) -> Any:
         """Collate a list of data objects into the DataLoader storage format.
 
         Collates a python list of data objects to the internal storage format
@@ -394,7 +394,7 @@ class DensePaddingCollater:
 
         raise TypeError(f"DataLoader found invalid type: '{type(elem)}'")
 
-    def collate_fn(self, batch: List[Any]) -> Any:
+    def collate_fn(self, batch: list[Any]) -> Any:
         """Collate a batch, fetching from disk first for OnDiskDataset.
 
         Collates a python list of data objects to the internal storage format
@@ -424,9 +424,9 @@ class DensePaddingDataLoader(torch.utils.data.DataLoader[Any]):
             (default: `1`)
         shuffle (bool, optional): If set to `True`, the data will be
             reshuffled at every epoch. (default: `False`)
-        follow_batch (List[str], optional): Creates assignment batch
+        follow_batch (list[str], optional): Creates assignment batch
             vectors for each key in the list. (default: `None`)
-        exclude_keys (List[str], optional): Will exclude each key in the
+        exclude_keys (list[str], optional): Will exclude each key in the
             list. (default: `None`)
         **kwargs (optional): Additional arguments of
             `torch.utils.data.DataLoader`.
@@ -434,11 +434,11 @@ class DensePaddingDataLoader(torch.utils.data.DataLoader[Any]):
 
     def __init__(
         self,
-        dataset: Union[Dataset, Sequence[BaseData], DatasetAdapter],
+        dataset: Dataset | Sequence[BaseData] | DatasetAdapter,
         batch_size: int = 1,
         shuffle: bool = False,
-        follow_batch: Optional[List[str]] = None,
-        exclude_keys: Optional[List[str]] = None,
+        follow_batch: list[str] | None = None,
+        exclude_keys: list[str] | None = None,
         **kwargs: Any,
     ) -> None:
         """Set up the dense-padding collater and base DataLoader."""

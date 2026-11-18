@@ -13,3 +13,7 @@ created: 1790816101841
 - The worker shared-memory path read `torch_geometric.typing.WITH_PT112`, which does not exist; the pre-2.0 fallbacks are removed and the untyped storage is always used.
 - The collater's TensorFrame branch called `torch_frame.cat` (an `object` placeholder without torch_frame); it now raises the same `NotImplementedError` as the attribute collate. TensorFrame support was refused rather than implemented, since nothing in the repo produces one.
 - Evidence: `tests/torchcell/loader/test_dense_padding_data_loader.py` (`test_nested_mappings_and_lists_honor_a_custom_pad`, `test_a_real_value_equal_to_the_pad_stays_unmasked`, `test_worker_branch_ignores_the_pre_2_0_flags`, `test_tensor_frames_are_refused_by_collate_and_by_the_collater`).
+
+## 2026.11.17 - Stdlib typing instead of beartype.typing
+
+The module imported its annotation names (`Any`, `List`, `Optional`, `Sequence`, `Tuple`, `Union`) from `beartype.typing` and never applied a `@beartype` decorator, so no runtime check ran. It now uses `typing.Any`, `collections.abc.Sequence` and builtin `list` / `tuple` with `X | None`. `beartype.typing.Sequence` is `collections.abc.Sequence` on Python 3.9 and later, so the two `isinstance(elem, Sequence)` checks are unchanged. This was the package's only `beartype` import.

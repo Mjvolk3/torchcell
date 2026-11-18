@@ -60,7 +60,6 @@ tqdm>=4.66
 scikit-learn>=1.2.2
 scikit-image>=0.22  # torchcell/sga watershed colony segmentation
 geomloss>=0.2.6
-beartype>=0.18
 
 # Transformer / Hugging Face stack
 transformers>=4.55.4
@@ -86,7 +85,6 @@ lmdb>=1.4.1
 filelock>=3.20.1
 
 # web stack
-aiohttp>=3.8.5
 requests>=2.31
 certifi>=2024.2.2
 # HTTP client of the tc-data and tc-lit clients (torchcell/datasets/client.py,
@@ -101,8 +99,6 @@ biocypher==0.15.2
 # Driver 4.4 line. The cap has no recorded reason (added 2024-08-19); the weekly job
 # tries the suite without it.
 neo4j>=4.4.11,<5.0
-# command line (tcdb)
-cliff>=4.5.0
 
 # Literature / Zotero capture pipeline (MinerU OCR runs in the separate
 # swanki-mineru env, so mineru is NOT listed here)

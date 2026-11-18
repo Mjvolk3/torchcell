@@ -17,3 +17,32 @@ h1 {
 .wy-nav-content {
   max-width: 1400px;
 }
+
+/* Tables a notebook cell displayed (pandas DataFrame HTML), on datasets/ecoli/notebook. */
+table.dataframe {
+  border-collapse: collapse;
+  border: none;
+  margin: 0 0 24px 0;
+  font-size: 13px;
+}
+table.dataframe th,
+table.dataframe td {
+  border: none;
+  border-bottom: 1px solid #e1e4e5;
+  padding: 4px 12px;
+  text-align: right;
+  white-space: nowrap;
+}
+table.dataframe thead th {
+  border-bottom: 2px solid #999;
+}
+/* The collapsed plotting code of a notebook figure cell. */
+details {
+  margin: 0 0 12px 0;
+}
+details > summary {
+  cursor: pointer;
+  color: #6c8ebf;
+  font-size: 14px;
+  margin-bottom: 8px;
+}

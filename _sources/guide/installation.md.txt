@@ -1,14 +1,8 @@
 # Installation
 
-torchcell requires Python 3.13 or newer (`requires-python = ">=3.13"` in
-`pyproject.toml`). The package's runtime dependencies are read from
-`env/requirements.txt` (`[tool.setuptools.dynamic]` in `pyproject.toml`), so the pip
-requirement files under `env/` are the source of truth for what gets installed.
+## To use the datasets
 
-## Install the released package
-
-To use the loaders and download built datasets, install the release from PyPI into a
-Python 3.13 environment:
+One command, in a Python 3.13 or newer environment:
 
 ```bash
 pip install torchcell
@@ -18,6 +12,27 @@ pip install torchcell
 uv pip install torchcell
 ```
 
+That is the whole install for loading datasets. No repository checkout, no conda
+environment file, no database and no account are needed. Then load a dataset:
+
+```python
+import os
+
+from torchcell.endpoint_http import DEFAULT_URL
+
+os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)  # download built stores
+
+from torchcell.datasets.ecoli.campos2018 import GrowthRateCampos2018Dataset
+
+growth = GrowthRateCampos2018Dataset(root="data/torchcell/ecoli_growth_rate_campos2018")
+print(len(growth))
+```
+
+Setting `TC_DATA_URL` is what makes a loader download its built store. With the
+variable unset the loader tries to build the store from the publisher's files, which
+needs a development machine. {doc}`../datasets/ecoli/tutorial` shows the four *E. coli*
+datasets loaded this way, and {doc}`downloads` describes the endpoint.
+
 On Linux the default torch wheel depends on the CUDA libraries. On a machine with no
 GPU, select the CPU build of torch for a smaller environment:
 
@@ -26,10 +41,18 @@ uv pip install --torch-backend cpu torchcell
 pip install --extra-index-url https://download.pytorch.org/whl/cpu torchcell
 ```
 
-{doc}`install-timings` gives the measured time and size of each install. The sections
-below set up a development checkout.
+{doc}`install-timings` gives the measured time and size of each install.
 
-## Create the environment
+## To develop torchcell
+
+Everything below this heading is for working on the package itself from a repository
+checkout. None of it is needed to load datasets.
+
+The package's runtime dependencies are read from `env/requirements.txt`
+(`[tool.setuptools.dynamic]` in `pyproject.toml`), so the pip requirement files under
+`env/` are the source of truth for what gets installed.
+
+### Create the environment
 
 The repository does not ship a conda environment file for the main package
 (`env/tc-graph.yaml` is a separate Python 3.11 environment for the graph-build
@@ -65,7 +88,7 @@ The `Makefile` does not create environments; its `test`, `test-ci`, `test-fast` 
 coverage targets call `$(HOME)/miniconda3/envs/torchcell/bin/python` unless `PYTHON` is
 overridden (`make test PYTHON=$(which python)`).
 
-## Environment variables
+### Environment variables
 
 torchcell reads its paths and connection settings from the process environment. Most
 entry points call `python-dotenv`'s `load_dotenv()`, so a `.env` file at the repository
@@ -87,7 +110,7 @@ The Neo4j variables are resolved at call time, not import time, by
 `torchcell.database.connection.neo4j_connection_settings()`, so a `load_dotenv()` issued
 after `import torchcell` is still honored.
 
-## Verify the install
+### Verify the install
 
 The check below needs no `DATA_ROOT`, no network and no database. Importing
 `torchcell.datasets.scerevisiae` registers every dataset loader class in

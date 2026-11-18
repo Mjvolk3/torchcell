@@ -9,7 +9,7 @@
   <title>Installation &mdash; TorchCell 1.8.5 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
-      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=51c9007c" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=e36e96bc" />
 
   
     <link rel="shortcut icon" href="../_static/torchcell-mark.png"/>
@@ -52,10 +52,13 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">User Guide</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Installation</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#install-the-released-package">Install the released package</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#create-the-environment">Create the environment</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#environment-variables">Environment variables</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#verify-the-install">Verify the install</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#to-use-the-datasets">To use the datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#to-develop-torchcell">To develop torchcell</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#create-the-environment">Create the environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#environment-variables">Environment variables</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#verify-the-install">Verify the install</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="install-timings.html">Install timings and release checks</a></li>
@@ -133,31 +136,50 @@
              
   <section class="tex2jax_ignore mathjax_ignore" id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
-<p>torchcell requires Python 3.13 or newer (<code class="docutils literal notranslate"><span class="pre">requires-python</span> <span class="pre">=</span> <span class="pre">&quot;&gt;=3.13&quot;</span></code> in
-<code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>). The package’s runtime dependencies are read from
-<code class="docutils literal notranslate"><span class="pre">env/requirements.txt</span></code> (<code class="docutils literal notranslate"><span class="pre">[tool.setuptools.dynamic]</span></code> in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>), so the pip
-requirement files under <code class="docutils literal notranslate"><span class="pre">env/</span></code> are the source of truth for what gets installed.</p>
-<section id="install-the-released-package">
-<h2>Install the released package<a class="headerlink" href="#install-the-released-package" title="Link to this heading"></a></h2>
-<p>To use the loaders and download built datasets, install the release from PyPI into a
-Python 3.13 environment:</p>
+<section id="to-use-the-datasets">
+<h2>To use the datasets<a class="headerlink" href="#to-use-the-datasets" title="Link to this heading"></a></h2>
+<p>One command, in a Python 3.13 or newer environment:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchcell
 </pre></div>
 </div>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>torchcell
 </pre></div>
 </div>
+<p>That is the whole install for loading datasets. No repository checkout, no conda
+environment file, no database and no account are needed. Then load a dataset:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.endpoint_http</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_URL</span>
+
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"TC_DATA_URL"</span><span class="p">,</span> <span class="n">DEFAULT_URL</span><span class="p">)</span>  <span class="c1"># download built stores</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.ecoli.campos2018</span><span class="w"> </span><span class="kn">import</span> <span class="n">GrowthRateCampos2018Dataset</span>
+
+<span class="n">growth</span> <span class="o">=</span> <span class="n">GrowthRateCampos2018Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="s2">"data/torchcell/ecoli_growth_rate_campos2018"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">growth</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Setting <code class="docutils literal notranslate"><span class="pre">TC_DATA_URL</span></code> is what makes a loader download its built store. With the
+variable unset the loader tries to build the store from the publisher’s files, which
+needs a development machine. <a class="reference internal" href="../datasets/ecoli/tutorial.html"><span class="doc">The E. coli datasets</span></a> shows the four <em>E. coli</em>
+datasets loaded this way, and <a class="reference internal" href="downloads.html"><span class="doc">Downloading datasets</span></a> describes the endpoint.</p>
 <p>On Linux the default torch wheel depends on the CUDA libraries. On a machine with no
 GPU, select the CPU build of torch for a smaller environment:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--torch-backend<span class="w"> </span>cpu<span class="w"> </span>torchcell
 pip<span class="w"> </span>install<span class="w"> </span>--extra-index-url<span class="w"> </span>https://download.pytorch.org/whl/cpu<span class="w"> </span>torchcell
 </pre></div>
 </div>
-<p><a class="reference internal" href="install-timings.html"><span class="doc">Install timings and release checks</span></a> gives the measured time and size of each install. The sections
-below set up a development checkout.</p>
+<p><a class="reference internal" href="install-timings.html"><span class="doc">Install timings and release checks</span></a> gives the measured time and size of each install.</p>
 </section>
+<section id="to-develop-torchcell">
+<h2>To develop torchcell<a class="headerlink" href="#to-develop-torchcell" title="Link to this heading"></a></h2>
+<p>Everything below this heading is for working on the package itself from a repository
+checkout. None of it is needed to load datasets.</p>
+<p>The package’s runtime dependencies are read from <code class="docutils literal notranslate"><span class="pre">env/requirements.txt</span></code>
+(<code class="docutils literal notranslate"><span class="pre">[tool.setuptools.dynamic]</span></code> in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>), so the pip requirement files under
+<code class="docutils literal notranslate"><span class="pre">env/</span></code> are the source of truth for what gets installed.</p>
 <section id="create-the-environment">
-<h2>Create the environment<a class="headerlink" href="#create-the-environment" title="Link to this heading"></a></h2>
+<h3>Create the environment<a class="headerlink" href="#create-the-environment" title="Link to this heading"></a></h3>
 <p>The repository does not ship a conda environment file for the main package
 (<code class="docutils literal notranslate"><span class="pre">env/tc-graph.yaml</span></code> is a separate Python 3.11 environment for the graph-build
 tooling). Create a Python 3.13 environment and install into it in the order the CI
@@ -190,7 +212,7 @@ coverage targets call <code class="docutils literal notranslate"><span class="pr
 overridden (<code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">test</span> <span class="pre">PYTHON=$(which</span> <span class="pre">python)</span></code>).</p>
 </section>
 <section id="environment-variables">
-<h2>Environment variables<a class="headerlink" href="#environment-variables" title="Link to this heading"></a></h2>
+<h3>Environment variables<a class="headerlink" href="#environment-variables" title="Link to this heading"></a></h3>
 <p>torchcell reads its paths and connection settings from the process environment. Most
 entry points call <code class="docutils literal notranslate"><span class="pre">python-dotenv</span></code>’s <code class="docutils literal notranslate"><span class="pre">load_dotenv()</span></code>, so a <code class="docutils literal notranslate"><span class="pre">.env</span></code> file at the repository
 root works as well. The table lists names only; values are machine specific.</p>
@@ -245,7 +267,7 @@ root works as well. The table lists names only; values are machine specific.</p>
 after <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">torchcell</span></code> is still honored.</p>
 </section>
 <section id="verify-the-install">
-<h2>Verify the install<a class="headerlink" href="#verify-the-install" title="Link to this heading"></a></h2>
+<h3>Verify the install<a class="headerlink" href="#verify-the-install" title="Link to this heading"></a></h3>
 <p>The check below needs no <code class="docutils literal notranslate"><span class="pre">DATA_ROOT</span></code>, no network and no database. Importing
 <code class="docutils literal notranslate"><span class="pre">torchcell.datasets.scerevisiae</span></code> registers every dataset loader class in
 <code class="docutils literal notranslate"><span class="pre">torchcell.datasets.dataset_registry.dataset_registry</span></code>.</p>
@@ -267,6 +289,7 @@ True
 <p>Some compiled dependencies print <code class="docutils literal notranslate"><span class="pre">DeprecationWarning:</span> <span class="pre">builtin</span> <span class="pre">type</span> <span class="pre">SwigPyPacked</span> <span class="pre">has</span> <span class="pre">no</span> <span class="pre">__module__</span> <span class="pre">attribute</span></code> (and similar) on stderr during this import; the import still
 succeeds.</p>
 <p>To run the hermetic test suite, see <a class="reference internal" href="contributing.html#contributing-tests"><span class="std std-ref">Tests</span></a>.</p>
+</section>
 </section>
 </section>
 

@@ -9,7 +9,7 @@
   <title>Downloading the E. coli archives &mdash; TorchCell 1.8.5 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/mytheme.css?v=cf917480" />
-      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=51c9007c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=e36e96bc" />
 
   
     <link rel="shortcut icon" href="../../_static/torchcell-mark.png"/>
@@ -25,7 +25,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="torchcell.adapters" href="../../modules/adapters.html" />
-    <link rel="prev" title="The E. coli datasets" href="tutorial.html" /> 
+    <link rel="prev" title="E. coli datasets in torchcell" href="notebook.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -62,6 +62,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../scerevisiae/index.html">S. cerevisiae</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="index.html">E. coli</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="tutorial.html">The E. coli datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="notebook.html">E. coli datasets in torchcell</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Downloading the E. coli archives</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#set-the-endpoint">Set the endpoint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#see-what-the-endpoint-serves">See what the endpoint serves</a></li>
@@ -150,34 +151,49 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.figure</span><span class="w"> </span><span class="kn">import</span> <span class="n">Figure</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.artifact</span><span class="w"> </span><span class="kn">import</span> <span class="n">content_sha256</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetClient</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.ecoli.babu2014</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneInteractionBabu2014Dataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.ecoli.campos2018</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FEATURE_UNITS</span><span class="p">,</span>
+    <span class="n">MORPHOLOGY_ASSAY</span><span class="p">,</span>
     <span class="n">GrowthRateCampos2018Dataset</span><span class="p">,</span>
     <span class="n">MorphologyCampos2018Dataset</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.ecoli.fuhrer2017</span><span class="w"> </span><span class="kn">import</span> <span class="n">MetabolomeFuhrer2017Dataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.endpoint_http</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_URL</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">PANEL_WIDTHS_MM</span><span class="p">,</span> <span class="n">PLOT_PALETTE</span><span class="p">,</span> <span class="n">mm_to_in</span><span class="p">,</span> <span class="n">panel_label</span>
 
 <span class="c1"># A loader downloads its built store only when TC_DATA_URL is set. Without it the loader</span>
 <span class="c1"># builds the store from the publisher's files, which is the developer path.</span>
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"TC_DATA_URL"</span><span class="p">,</span> <span class="n">DEFAULT_URL</span><span class="p">)</span>
 
 <span class="n">DATA</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"data/torchcell"</span><span class="p">)</span>  <span class="c1"># each dataset unpacks into DATA/&lt;slug&gt;/</span>
-<span class="n">SECONDS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># slug -&gt; seconds to download, verify, unpack and open</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s2">"display.precision"</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">brief</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">depth</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A record part with anything nested deeper than ``depth`` replaced by its size."""</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">kept</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"provenance_gaps"</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">depth</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">"&lt;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">kept</span><span class="p">)</span><span class="si">}</span><span class="s2"> fields&gt;"</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">brief</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">depth</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kept</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"&lt;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2"> items&gt;"</span> <span class="k">if</span> <span class="n">value</span> <span class="k">else</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>  <span class="c1"># an enum member prints as its value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">show</span><span class="p">(</span><span class="n">part</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Print one part of a record as indented JSON, two levels deep."""</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">brief</span><span class="p">(</span><span class="n">part</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">))</span>
+
+
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">DEFAULT_URL</span></code> is the public endpoint. It takes no key and no account. A loader downloads only when <code class="docutils literal notranslate"><span class="pre">TC_DATA_URL</span></code> is set in the process environment. With the variable unset, the same constructor builds the store from the publisher’s files, which needs the raw-file mirror of a development machine.</p>
@@ -203,7 +219,7 @@
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  release  knowledge graph </span><span class="si">{</span><span class="n">artifact</span><span class="o">.</span><span class="n">kg_version</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">artifact</span><span class="o">.</span><span class="n">kg_release</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
 </pre></div>
 </div>
-<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-18T01:50:16Z). Do not edit by hand. -->
+<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-18T03:17:36Z). Do not edit by hand. -->
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>endpoint http://torchcell-database.ncsa.illinois.edu:8724
 ecoli_growth_rate_campos2018
   loader   GrowthRateCampos2018Dataset
@@ -231,13 +247,11 @@ metabolome_fuhrer2017
 </section>
 <section id="download-by-constructing-a-loader">
 <h2>Download by constructing a loader<a class="headerlink" href="#download-by-constructing-a-loader" title="Link to this heading"></a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">started</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
-<span class="n">growth</span> <span class="o">=</span> <span class="n">GrowthRateCampos2018Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">DATA</span> <span class="o">/</span> <span class="s2">"ecoli_growth_rate_campos2018"</span><span class="p">))</span>
-<span class="n">SECONDS</span><span class="p">[</span><span class="s2">"ecoli_growth_rate_campos2018"</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">started</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">growth</span> <span class="o">=</span> <span class="n">GrowthRateCampos2018Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">DATA</span> <span class="o">/</span> <span class="s2">"ecoli_growth_rate_campos2018"</span><span class="p">))</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">growth</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> records"</span><span class="p">)</span>
 </pre></div>
 </div>
-<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-18T01:50:16Z). Do not edit by hand. -->
+<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-18T03:17:36Z). Do not edit by hand. -->
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>3,664 records
 </pre></div>
 </div>
@@ -246,7 +260,7 @@ metabolome_fuhrer2017
 <section id="what-a-download-costs">
 <h2>What a download costs<a class="headerlink" href="#what-a-download-costs" title="Link to this heading"></a></h2>
 <p>The seconds below run from the call of a loader’s constructor on an empty directory to the opened store. They cover the index request, the download, the sha256 check, and the unpacking.</p>
-<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-18T01:50:16Z). Do not edit by hand. -->
+<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-18T03:17:36Z). Do not edit by hand. -->
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Dataset</p></th>
@@ -260,32 +274,32 @@ metabolome_fuhrer2017
 <tr class="row-even"><td><p>Campos 2018, growth rate</p></td>
 <td class="text-right"><p>0.14</p></td>
 <td class="text-right"><p>14.0</p></td>
-<td class="text-right"><p>0.36</p></td>
-<td class="text-right"><p>0.40</p></td>
+<td class="text-right"><p>0.16</p></td>
+<td class="text-right"><p>0.56</p></td>
 </tr>
 <tr class="row-odd"><td><p>Campos 2018, imaging</p></td>
 <td class="text-right"><p>0.86</p></td>
 <td class="text-right"><p>14.0</p></td>
-<td class="text-right"><p>0.23</p></td>
-<td class="text-right"><p>0.42</p></td>
+<td class="text-right"><p>0.22</p></td>
+<td class="text-right"><p>0.51</p></td>
 </tr>
 <tr class="row-even"><td><p>Babu 2014, genetic interaction</p></td>
 <td class="text-right"><p>1.05</p></td>
 <td class="text-right"><p>177.9</p></td>
-<td class="text-right"><p>0.67</p></td>
-<td class="text-right"><p>1.31</p></td>
+<td class="text-right"><p>0.54</p></td>
+<td class="text-right"><p>0.96</p></td>
 </tr>
 <tr class="row-odd"><td><p>Fuhrer 2017, metabolome</p></td>
 <td class="text-right"><p>81.8</p></td>
 <td class="text-right"><p>796.8</p></td>
-<td class="text-right"><p>7.93</p></td>
-<td class="text-right"><p>12.01</p></td>
+<td class="text-right"><p>6.87</p></td>
+<td class="text-right"><p>12.50</p></td>
 </tr>
 <tr class="row-even"><td><p><strong>All four</strong></p></td>
 <td class="text-right"><p>83.8</p></td>
 <td class="text-right"><p>1002.7</p></td>
-<td class="text-right"><p>9.18</p></td>
-<td class="text-right"><p>14.14</p></td>
+<td class="text-right"><p>7.79</p></td>
+<td class="text-right"><p>14.53</p></td>
 </tr>
 </tbody>
 </table>
@@ -298,12 +312,6 @@ metabolome_fuhrer2017
     <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">])</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
 
 
-<span class="n">loaded</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"ecoli_growth_rate_campos2018"</span><span class="p">:</span> <span class="n">growth</span><span class="p">,</span>
-    <span class="s2">"ecoli_morphology_campos2018"</span><span class="p">:</span> <span class="n">morphology</span><span class="p">,</span>
-    <span class="s2">"gene_interaction_babu2014"</span><span class="p">:</span> <span class="n">interaction</span><span class="p">,</span>
-    <span class="s2">"metabolome_fuhrer2017"</span><span class="p">:</span> <span class="n">metabolome</span><span class="p">,</span>
-<span class="p">}</span>
 <span class="k">for</span> <span class="n">slug</span><span class="p">,</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">loaded</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
     <span class="n">ids</span> <span class="o">=</span> <span class="p">(</span><span class="n">experiment_id</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)))</span>
     <span class="n">digest</span> <span class="o">=</span> <span class="n">content_sha256</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>  <span class="c1"># one hash over every record of the dataset</span>
@@ -313,7 +321,7 @@ metabolome_fuhrer2017
     <span class="p">)</span>
 </pre></div>
 </div>
-<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-18T01:50:16Z). Do not edit by hand. -->
+<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-18T03:17:36Z). Do not edit by hand. -->
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ecoli_growth_rate_campos2018  a8ced65c7e68b1d673ad404f001dc47fb9807db7cc3b131282bf532d10f7e11c  matches the release
 ecoli_morphology_campos2018  15d7c23e9300015d48426f8b7e813aec540bd5a9854e8392b7ab1eef19836e6b  matches the release
 gene_interaction_babu2014  fb1f87b2c861a2df6e06bfe8abdcb71bbd46ff77fe56ba2c53996a65f2584f10  matches the release
@@ -323,7 +331,7 @@ metabolome_fuhrer2017  adeb2d85353f426d3a775eab4c09e99e97c47b9c3b96be6684c54cfa6
 </section>
 <section id="the-archives">
 <h2>The archives<a class="headerlink" href="#the-archives" title="Link to this heading"></a></h2>
-<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-18T01:50:16Z). Do not edit by hand. -->
+<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-18T03:17:36Z). Do not edit by hand. -->
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Archive</p></th>
@@ -384,7 +392,7 @@ metabolome_fuhrer2017  adeb2d85353f426d3a775eab4c09e99e97c47b9c3b96be6684c54cfa6
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="tutorial.html" class="btn btn-neutral float-left" title="The E. coli datasets" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="notebook.html" class="btn btn-neutral float-left" title="E. coli datasets in torchcell" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="../../modules/adapters.html" class="btn btn-neutral float-right" title="torchcell.adapters" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

@@ -24,14 +24,19 @@ requires-python = ">=3.13"
 dynamic = ["dependencies"]
 
 [project.optional-dependencies]
+# Development tools. None of these is imported by the package, so none is in
+# env/requirements.txt (the runtime list a user installs).
 dev = [
     "ruff",
     "mypy",
-    "semantic-release",
-    "pip-tools",
+    "python-semantic-release>=9.0.3",
+    "pre-commit>=3.3.3",
     "pytest",
-    # "biocypher@git+https://github.com/Mjvolk3/biocypher@main", won't work
-    # "calm@git+https://github.com/oxpig/CaLM@main",
+]
+# Packages only scripts under experiments/ import.
+experiments = [
+    "wandb_osh>=1.2.2",
+    "matplotlib-venn>=1.1.2",
 ]
 
 [project.urls]

@@ -1,5 +1,9 @@
 # The E. coli datasets
 
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Mjvolk3/torchcell/blob/main/experiments/034-showcase-datasets/notebooks/ecoli_datasets.ipynb)
+
+Run the full walkthrough in the browser with nothing installed: open the notebook in Google Colab with the badge above and choose Runtime, Run all.
+
 Four built *Escherichia coli* K-12 datasets load with one constructor call each, from a plain install of torchcell and with no account or key.
 
 ## Quick start

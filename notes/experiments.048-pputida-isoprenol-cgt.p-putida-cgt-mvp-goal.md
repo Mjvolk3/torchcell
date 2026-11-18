@@ -158,20 +158,58 @@ designs, measured on mean titer per design:
 | mean dCas9 signal, cycle 2 vs cycle 3 | 2.63e6 vs 4.31e6 (1.6x) |
 
 The reliability numbers are Spearman-Brown corrected split-half over 400 random
-replicate splits. They are the decisive part: the replicate ceiling is 0.95 to
-0.98, and the same designs on the new vector agree at only 0.67. **The vector
-change is signal, not noise.** It leaves the mean titer essentially unchanged
-and reorders the strains, which is exactly the behavior a context variable has
-and exactly what a design-only model cannot represent. A model trained on the
-`pIY989` cycles and tested on the `pDBTL3-6_Vector` cycles is capped near 0.67
-no matter how good its genotype representation is.
+replicate splits. The replicate ceiling is 0.95 to 0.98 and the same designs on
+the new vector agree at only 0.67, so something beyond replicate noise changed
+between cycles 2 and 3. That part is measured and stands.
 
-That makes the vector a first-class input, not a nuisance. The cheapest honest
-encoding is the 030 ontology-token route: a learned vector token added to the
-design representation, two levels here, which is the binary mapping already
-anticipated. The more faithful encoding is the sequence of the vector itself,
-which we hold (see the provenance table below), and which generalizes to a
-third vector where a binary token does not.
+#### Correction, same day: the mechanism is dCas9 fidelity, not plasmid context
+
+My first reading of the above was that the vector is a biological context
+variable and belongs in the model as a token. **That was wrong, and the paper
+says so directly.** Quoting Carruthers et al. 2025 Results verbatim from the
+mirrored `paper.md`:
+
+> Notably, we suffered $40 \%$ failure in DBTL2 strains owing to low dCas9
+> expression (Supplementary Fig. 6). Following DBTL2, we repaired the dCas9
+> vector to eliminate a redundant linker and reduce spurious recombination
+> during adaptation, thereby increasing dCas9 fidelity. DBTL3 was then repeated
+> with the same sgRNA arrays from DBTL2, with a noted $2 5 \%$ improvement in
+> dCas9 fidelity.
+
+and, on what they did about it:
+
+> Although the repair only reduced the incidence of recombination, models after
+> DBTL3 were trained only on data from the improved dCas9 plasmid, consolidating
+> our design space to the 18 unique sgRNA that passed proteomics filters in
+> DBTL3.
+
+So the cycle 2 to 3 change is a **construct-fidelity repair on the same
+pRSF1010-Gm backbone** (a redundant linker removed, hence the `Linker7` oligos
+in SI Table 2), not a backbone swap and not a change of biological context. The
+40% DBTL2 failure rate from low dCas9 is the cause of the lost correlation: a
+strain whose sgRNA array recombined carries that defect across its own
+replicates, which is exactly why within-cycle reliability stays at 0.946 while
+the independent rebuild in cycle 3 re-rolls it. **High within-cycle reliability
+does not distinguish a context effect from a per-construct fidelity defect, and
+I treated it as though it did.**
+
+The right reading: the pre-repair cycles are a lower-fidelity measurement tier,
+and the authors themselves trained only on the post-repair cycles. What follows
+for us:
+
+- **Not** a vector token standing for biological context.
+- The primary arm is the tier question: train on cycles 3 through 6 (improved
+  plasmid) and ask whether adding cycles 0 through 2 helps or hurts. That
+  mirrors the authors' own choice and is falsifiable.
+- Use the authors' released QC columns rather than inventing a filter:
+  `above_dcas9_thresh`, `to_keep`, and `to_keep_improved` (717 True / 789 False
+  over the 1,506 rows).
+- A two-level token is still a reasonable *encoding* of the tier, but it is
+  encoding measurement quality, and the note must not call it context.
+
+The 0.670 figure keeps its value as a ceiling statement: it bounds what any
+model can score when trained on pre-repair data and tested on post-repair data.
+It is not evidence of a plasmid effect on the biology.
 
 ### Provenance audit of the shared folder
 
@@ -421,6 +459,217 @@ One-hot plus the randoms are the floor the whole table is read against, and they
 run first, before any new model is added, so the pipeline is proven end to end
 on encoders that cannot be blamed.
 
+### External resources, and the decisions the numbers force
+
+Researched 2026-11-17. Items marked unverified were not read at source.
+
+**The locus-tag trap, which is the cheapest thing to get wrong.** The two NCBI
+annotations disagree on the primary tag:
+
+| annotation | primary `locus_tag` | `old_locus_tag` |
+|---|---|---|
+| GenBank `AE015451.2` (TIGR) | `PP_0001` ... | none |
+| RefSeq `NC_002947.4` (PGAP) | `PP_RS00005` ... | `PP_0001` |
+
+Carruthers, iJN1463, STRING, RegPrecise, CollecTF and iModulonDB all speak
+`PP_####`, so key on the GenBank assembly or join through RefSeq's
+`old_locus_tag`. We are already correct here: `KT2440_ASSEMBLY` makes
+`GCA_000007565.2` primary and `bacterial.py` carries the RefSeq crosswalk. Keep
+it that way. A related naming hazard: NCBI records the synonym *Pseudomonas
+alloputida* KT2440 with 90.66% ANI to the *P. putida* type assembly and
+`taxonomy_check_status: Inconclusive`, so any cross-resource join keyed on a
+species string will silently miss records. Join on taxid 160488.
+
+**STRING: mirror the slice, not the database.** This settles the open question
+directly, and against the instinct.
+
+| scope | compressed size |
+|---|---|
+| taxon 160488, all 18 per-organism files | **36.1 MB** |
+| all organisms, everything | **~682 GB** |
+| all organisms, `.full` tier only | ~285 GB |
+
+A 19,000x difference for one organism. Take the 160488 slice, plus
+`species.v12.5.txt` and the four global COG link files (~82 MB) since COG is
+not published per organism. `COG.mappings` (755 MB) only if orthologous-group
+mapping is wanted. If we later serve many organisms the calculus changes, but
+then the right unit is a per-taxon slice each, not the monolith.
+
+Other STRING facts that change our code:
+
+- **Current release is v12.5, live 2026-09-29.** `graph.py` hard-codes v12.0,
+  which is still served. Add v12.5 rather than silently moving.
+- v12.5 adds a **third, directed network, `protein.regulatory.links`**, with
+  3,972 directed edges for KT2440. That is larger than every curated regulatory
+  resource below combined, but its evidence is predominantly transferred rather
+  than measured, so it is a separate tier, not a peer of CollecTF.
+- KT2440 has 5,564 STRING proteins, matching the GenBank proteome exactly, ids
+  of the form `160488.PP_0001`.
+- Scores are integers 0 to 1000, pre-filtered at `>= 150`. `combined_score` is a
+  naive-Bayes combination with a random-expectation correction, **not a sum or
+  max**, and can fall below a channel score. `.full` splits each channel into
+  direct and `_transferred`; for KT2440 much of the network is transferred, so
+  keep that split as an edge feature instead of collapsing it.
+- **STRING publishes no checksums or manifest for any file.** Hash on first
+  retrieval, which is what our provenance model does anyway.
+- License CC BY 4.0, and it asks that the version appear in metadata. Record
+  `v12.5`.
+
+**Regulatory graph: there is no TFLink for P. putida. Three of the obvious
+candidates have literally zero KT2440 content.**
+
+| resource | KT2440 | TFs | edges | license |
+|---|---|---|---|---|
+| **SBRG `modulome_ppu` TRN** | yes | **94** | **1,993** | **MIT** |
+| STRING v12.5 regulatory | yes | n/a | 3,972 directed | CC BY 4.0 |
+| RegPrecise v3.2 (`genome_id=267`) | yes | 49 | 301 unique | none stated |
+| CollecTF / reCollecTF | yes | 16 | 264 (95 verified) | MIT (app) |
+| RegulonDB v13 | no, E. coli only | 0 | 0 | unverified |
+| Abasy Atlas v2.9 | **no** | 0 | 0 | CC BY-NC 4.0 |
+| PRODORIC | **no** | 0 | 0 | n/a |
+
+The pick is the **SBRG TRN**, and it is a pleasing fit: it ships with Lim et al.
+2022, *Metab Eng* 72:297-310, doi `10.1016/j.ymben.2022.04.004`, the very paper
+whose 321 expression profiles we **already serve** as
+`PutidaPrecise321Lim2022Dataset`. So the regulatory prior and the transcriptome
+compendium come from one pinned source. 1,993 edges, 94 regulators, 1,532 target
+genes (27.5% of the proteome), largest regulons FleQ 299, TurA 227, GacA 180.
+File: `TRN_update_210616.csv` on branch `master` of `SBRG/modulome_ppu` (the
+`main` branch 404s).
+
+Two things to carry as features rather than filters, per "the data is the data":
+`effect` is `unknown` on all 1,993 edges, so the prior is **unsigned**, unlike
+TFLink; and 611 of the edges are *P. aeruginosa* ChIP-exo transferred by
+orthology, flagged by a `Pputida` column that splits 1,352 true / 641 false.
+Dropping the transferred edges costs a third of the graph, and hiding the flag
+makes 30% of the prior silently cross-species. Keep the flag.
+
+Add RegPrecise and CollecTF as separately tagged tiers. Marginal gains are
+lopsided: RegPrecise adds only 27 edges beyond the TRN (which already ingested
+335 RegPrecise edges), while CollecTF adds 241, and CollecTF is the only tier
+with per-site experimental verification. **RegPrecise gotcha:** it mixes
+`PP4489` and `PP_1021` styles in one file, so without a
+`PP_?(\d{4}) -> PP_\1` normalization the genome join drops nearly all of it.
+**CollecTF gotcha:** the whole database is at `collectf.org/CollecTF.db.gz`,
+73 MB, which despite the name is an uncompressed SQLite file, so `gunzip` fails
+and it should just be renamed.
+
+Pooled union after normalization: 2,261 edges, 98 regulators, 1,628 genes, 29.3%
+coverage, unsigned. That is the honest ceiling of what a curated bacterial
+regulatory prior buys here, and it is a fraction of what yeast gets from
+TFLink and YeastRACT.
+
+**Metabolic model.** iJN1463 confirmed current in BiGG (2,927 reactions, 2,153
+metabolites, 1,462 genes, `genome_ref_string: ncbi_accession:NC_002947.4`), with
+a naming wrinkle worth recording: BiGG serves it as `iJN1463` while the paper's
+own file is `iJN1462`, and secondary sources split between the names. Citation
+Nogales et al. 2020, *Environ Microbiol* 22(1):255-269, doi
+`10.1111/1462-2920.14843`.
+
+Two newer models exist. The one that matters is Mueller et al. 2026, *mSystems*,
+doi `10.1128/msystems.01594-25`, a pan-putida reconstruction over 164 strains
+that also **updates the KT2440 model itself** (+158 core, +308 accessory, +33
+rare reactions over iJN1463), with everything on Zenodo
+`10.5281/zenodo.17382094`. Pin iJN1463 first because Carruthers used it, then
+evaluate the 2026 update as a second pinned artifact. There is also an ME model,
+`iPpu1676-ME` (Tibocha-Bonilla et al. 2025), whose download location and license
+I could not verify.
+
+Also worth knowing: Carruthers picked its CRISPRi targets with **FluxRETAP**
+(Czajka et al. 2025, *Bioinformatics* 41:btaf471, code at
+`github.com/JBEI/FluxRETAP`) running on iJN1463, which is what SI Table 1's
+"Source (Flux-RETAP or Heuristic)" column records. The chassis itself comes from
+Banerjee et al. 2024, *Metab Eng* 82:157-170, doi
+`10.1016/j.ymben.2024.02.004`, which is also the source of the 86 kb deletion.
+Intersecting that deletion against the GenBank annotation removes **57 genes,
+PP_4029 through PP_4085**, consistent with the `GenomicSpan` the loader carries.
+
+**Encoders: licensing disqualifies the obvious choice, and ours is already on
+disk.**
+
+| model | license | verdict |
+|---|---|---|
+| GenSLM 25M / 250M PATRIC | weights carry no stated license | **start here: the weights are already on GilaHyper** |
+| Nucleotide Transformer, all variants | **CC BY-NC-SA 4.0** | **disqualified by license, not capability** |
+| Evo 1 (`evo-1-131k-base`) | Apache-2.0 | prokaryote-only, the clean control arm |
+| Evo 2 (`evo2_7b`) | Apache-2.0 | adds eukaryotes, so prokaryotes no longer dominate |
+| `tattabio/gLM2_650M` | Apache-2.0 | models a contig as proteins plus intergenic DNA |
+| `DOEJGI/GenomeOcean-4B` | BSD 3-clause (LBNL) | commercial use fine |
+| ESM-2 `esm2_t33_650M_UR50D` | MIT | dim 1280, the recommended checkpoint |
+| ProtT5 `prot_t5_xl_half_uniref50-enc` | **repos declare no license** | code is MIT, weights are a gap |
+| CaLM | BSD-3 code, **weights unlicensed** | loaded via bare `pickle.load` from a hardcoded URL |
+
+Three findings that change the plan:
+
+1. **GenSLM is unblocked locally.** Its upstream weight download has reportedly
+   been broken since 2025-10-03, but we already hold
+   `patric_25m_epoch01-val_loss_0.57_bias_removed.pt` and
+   `patric_250m_epoch00_val_loss_0.48_attention_removed.pt` (1.1 GB) under
+   `$DATA_ROOT/models/genslm`. The 2.5B is not there. So the owner's "start with
+   GenSLM" needs no download and no new code.
+2. **HiGenLM is not publicly reachable.** The repo URL returns HTTP 404
+   anonymously, the `ramanathanlab` org lists no `higenlm` repo, and no
+   checkpoint named HiSan could be confirmed. Since the owner has the inference
+   API in hand it is presumably private, so this is an **access** question, not
+   an existence one: ask the Ramanathan lab for the repo and weights, and for
+   the license terms. Public Argonne siblings are `ramanathanlab/genslm` (MIT)
+   and `ramanathanlab/genslm-embeddings` (MIT).
+3. **`gLM2` is the most interesting new option** for us specifically, because it
+   models a contig as a sequence of proteins plus intergenic DNA, which lines up
+   with the transcription-unit framing above: the intergenic token span *is* the
+   promoter region. Gotcha to respect: its vocabulary uses lowercase `a t c g`
+   for nucleotides and uppercase `A T C G` for alanine, threonine, cysteine and
+   glycine, so uppercasing DNA makes it silently read intergenic sequence as
+   protein.
+
+Proteome cost is a non-issue: 5,564 proteins, mean 327.9 aa, and only 83 genes
+(1.49%) exceed the 1,022-residue ESM-2 and CaLM window, so handle those
+explicitly rather than redesigning around context length. Reported benchmark on
+one RTX 6000 Ada: ESM-2 650M embedded the proteome in 41.6 s at 2.38 GiB,
+ProtT5-XL encoder in 142.9 s at 9.53 GiB (unverified by me). Note our
+`torchcell/models/protT5.py` pins `prot_t5_xl_uniref50` and already discards
+the decoder via `T5EncoderModel`, so repinning to the encoder-only half-precision
+checkpoint cuts the download from 22 GB to about 2.8 GB for identical output.
+
+**Expression-system data for P. putida: thinner than hoped, and the specific
+thing asked for does not exist.**
+
+| dataset | what it measures | access |
+|---|---|---|
+| **Elmore 2017**, doi `10.1016/j.meteno.2017.04.001` | the only true KT2440 synthetic promoter library: 36 core promoters (6x6 -35 x -10), UP and RBS variants, single-copy Bxb1 integration, 72-fold range | CC BY 4.0, SI zips at `ars.els-cdn.com` |
+| **Liebal 2021 / Köbbing 2020**, doi `10.3389/fbinf.2021.747428` | largest sequence-to-expression table: 550 rows, 102 KT2440 strains, 40 bp sequences, mini-Tn7 single copy | repo `iAMB-RWTH-Aachen/Exp2Ipynb`, GPL-3.0 |
+| **openCIDAR**, doi `10.1021/acssynbio.3c00104` | 18 expression units (3 promoters x 6 RBS) on pBBR1 across 4 hosts incl. KT2440, MEFL-calibrated, plus ddPCR copy number | repo has **no license file**, clear with authors |
+| **Cook 2018**, doi `10.1007/s10295-017-2001-5` | KT2440 copies per chromosome: BBR1 30+-7, RK2 30+-10, RSF1010 130+-40 | Table 1 only, not downloadable |
+| **Jahn 2016**, doi `10.1186/s12934-016-0610-8` | 7 pSEVA plasmids differing only in replicon, ddPCR + EGFP + growth rate | CC BY 4.0, CC0 data, but **host is E. coli** |
+
+Two honest negatives, which are findings rather than search failures:
+
+- **No Sort-seq or MPRA exists in P. putida, and no pooled barcoded RBS library
+  exists in any Pseudomonas.** In-vivo KT2440 promoter and RBS libraries top out
+  around 10^2. The large libraries are in *P. aeruginosa* PAO1 or in KT2440
+  **cell-free lysate**, not in the cell.
+- **There is no head-to-head antibiotic versus auxotrophic marker burden study
+  in P. putida**, and no study measures copy number and reporter expression and
+  growth rate across four or more replicons with deposited per-construct
+  numbers. So the "aux markers under different promoters" data the owner hoped
+  for is not available to learn a plasmid representation from. The openCIDAR
+  result is also cautionary: expression did not track copy number across hosts.
+
+A trap to avoid: **SAGE-RTP** (1,435 promoter variants, 5 hosts, Elmore et al.
+2023) looks like the ideal dataset and is not KT2440 at all; its *P. putida*
+strain is **GPo1**. Likewise Hanko 2020 is *C. necator* H16 and Gilman and Love
+is *Geobacillus*, despite all three being cited in this context.
+
+**The pretraining corpus, with a provenance catch.** The RB-TnSeq Fitness
+Browser database (`feba.db`, 10.4 GB, `orgId = Putida`) carries **no license on
+the website**; the license is CC BY 4.0 only on the figshare archive deposits.
+So take the bytes from figshare and pin the DOI
+(`10.6084/m9.figshare.32865896.v1`, or the per-organism split
+`10.6084/m9.figshare.25236931.v1` at 56 MB), not from the live site. Carries an
+erratum: disregard the sucrose and D-mannitol data, bad stock solutions. Derived
+on top of it, Borchert et al. 2024, *mSystems* 9:e00942-23, CC BY 4.0, gives 84
+fModules over 4,732 genes x 332 samples, repo `fModules/putida-code`.
+
 ### Core reusable objects versus experiment-local assembly
 
 The division the owner asked for: reusable objects in core, the dataset that
@@ -459,9 +708,22 @@ The overnight goal, and the contract this note exists to hold stable:
    titer, train and validation curves on one axis, logged to W&B, with the
    lower-order null (per-target mean, additive, boosted trees) on the same
    table.
-4. The vector arm reported both ways: with and without the vector token, since
-   the 0.670 against a 0.95 ceiling says the ablation is the most informative
-   single comparison in the whole MVP.
+4. The **fidelity-tier arm**, reported both ways: trained on cycles 3 through 6
+   only (the repaired dCas9 plasmid, which is what the authors used) versus
+   trained on all cycles. Per the correction above this is a measurement-quality
+   question, not a plasmid-context one, and it is still the most informative
+   single comparison in the MVP because the 0.670 against a 0.95 ceiling bounds
+   what the pre-repair cycles can contribute.
+
+Criterion 2 carries a caveat that must travel with any result: **cycle 6 is the
+anomalous cycle.** The paper ends the campaign because of it ("DBTL6 exhibited
+an increase in strains that failed to pass the filter and exhibited poor
+titer"), and it has by far the widest spread in our own audit (sd 197.7 against
+79 to 153 elsewhere, median 245.4 against mean 319.6). Predicting cycle 6 is
+therefore predicting the cycle where the assay degraded, so a poor score there
+is ambiguous between a model failure and an assay failure. Report cycle 5 as the
+held-out cycle alongside it, since that is the last well-behaved cycle, and let
+the pair separate the two explanations.
 
 Done means those four, with every artifact produced by a committed script in
 `experiments/048-pputida-isoprenol-cgt/scripts/`.

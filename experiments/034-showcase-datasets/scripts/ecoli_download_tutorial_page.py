@@ -86,10 +86,12 @@ COLAB_BADGE = (
 )
 COLAB_INSTALL = """\
 # In Google Colab this installs torchcell. Anywhere else it does nothing.
+# %pip installs into this notebook's own environment. The version floor matters: on a
+# Python older than 3.13 a bare "pip install torchcell" silently installs release 0.2.8.
 import sys
 
 if "google.colab" in sys.modules:
-    %pip install -q "torchcell>=1.8.6"
+    %pip install -q --no-warn-conflicts "torchcell>=1.8.6"
 """
 NOTEBOOK: tuple[tuple[str, str], ...] = (
     (

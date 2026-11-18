@@ -15,6 +15,8 @@ import shutil
 from collections import deque
 from collections.abc import Callable, Iterator, Sequence
 from concurrent.futures import Future, ProcessPoolExecutor
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
 from itertools import chain, product
 from pathlib import Path
 from typing import Any, Literal, Protocol, cast, get_type_hints, runtime_checkable
@@ -388,7 +390,7 @@ def _render_partition(query: str) -> list[_Row]:
     return rows
 
 
-@define
+@dataclass(slots=True)
 class _CachedEnvironment:
     """A validated environment, the JSON it contributes to a record, and that parsed."""
 
@@ -397,7 +399,7 @@ class _CachedEnvironment:
     parsed: dict[str, Any]
 
 
-@define
+@dataclass(slots=True)
 class _CachedReference:
     """A validated experiment reference, its stored JSON parsed and not, its hash."""
 
@@ -407,7 +409,7 @@ class _CachedReference:
     index_hash: str
 
 
-@define
+@dataclass(slots=True)
 class _StreamState:
     """What ``process`` carries across batches instead of re-reading the LMDB.
 
@@ -420,10 +422,12 @@ class _StreamState:
     both read off the exact dicts that were serialized into the LMDB.
     """
 
-    environments: dict[tuple[str, str, str], _CachedEnvironment] = field(factory=dict)
-    references: dict[str, _CachedReference] = field(factory=dict)
-    reference_members: dict[str, list[int]] = field(factory=dict)
-    gene_set: GeneSet = field(factory=GeneSet)
+    environments: dict[tuple[str, str, str], _CachedEnvironment] = dataclass_field(
+        default_factory=dict
+    )
+    references: dict[str, _CachedReference] = dataclass_field(default_factory=dict)
+    reference_members: dict[str, list[int]] = dataclass_field(default_factory=dict)
+    gene_set: GeneSet = dataclass_field(default_factory=GeneSet)
 
 
 @define

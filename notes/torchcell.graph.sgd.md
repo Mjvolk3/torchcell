@@ -73,3 +73,7 @@ from a factory. No fallback: a missing data root still stops the first real use.
 ## 2026.11.17 - Locus fetch on httpx.AsyncClient
 
 `aiohttp` is no longer imported. `Gene._get_data` opens an `httpx.AsyncClient(follow_redirects=True, timeout=60.0)` per attempt and retries an `httpx.HTTPError` with the same `2**retry` second backoff. A response that is not JSON is still saved to a temporary `.html` file and still escapes on the first attempt, now as a `ValueError` naming the content type and URL; under aiohttp it escaped as a `TypeError` because `ContentTypeError` was built with one argument. A missing `Content-Type` header now takes the same non-JSON path instead of raising a `TypeError` on `in None`. Tests fake `httpx.AsyncHTTPTransport.handle_async_request`, so the real client runs. A real GET of `YAL001C` on 2026-11-17 returned the locus dict.
+
+## 2026.11.17 - Gene is a dataclass
+
+`Gene` is `@dataclass(slots=True)` instead of attrs `@define`, with `__post_init__` in place of `__attrs_post_init__`. Two declarations changed with it: `headers` uses a `default_factory` (attrs shared one dict across instances; a dataclass refuses a mutable default), and `save_path` has no default because `__post_init__` always sets it (the old `default=None` contradicted its `str` type).

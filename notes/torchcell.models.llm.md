@@ -9,3 +9,7 @@ created: 1695170092049
 ## 2026.10.01 - Abstract bodies raise
 
 The abstract `_check_and_download_model`, `load_model` and `embed` of `NucleotideModel` and `PeptideModel` had `pass` bodies, so `super().embed(...)` returned None. Each now raises `NotImplementedError("<Base>.<method> is abstract; implement it in the subclass")`. The concrete subclasses implement all three and still construct. Issue #541; test `test_the_abstract_bodies_raise_when_a_subclass_calls_super`.
+
+## 2026.11.17 - pretrained_LLM is a dataclass
+
+`pretrained_LLM` is `@dataclass(slots=True)` instead of attrs `@define`: the same positional (tokenizer, model) pair with value equality. Its test reads the fields with `dataclasses.fields`.

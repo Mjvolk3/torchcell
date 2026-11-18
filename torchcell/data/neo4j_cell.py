@@ -10,6 +10,7 @@ import logging
 import os
 import os.path as osp
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass, field
 from enum import Enum, auto
 from pathlib import Path
 from typing import Any, cast
@@ -20,7 +21,6 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import torch
-from attrs import define, field
 from pydantic import field_validator
 from sortedcontainers import SortedDict
 from torch_geometric.data import Dataset, HeteroData
@@ -182,7 +182,7 @@ phenotype classes of the build's experiment types, read through the same
 ``__annotations__["phenotype"]`` expression, so its label names are a subset of these."""
 
 
-@define
+@dataclass(slots=True)
 class RawStageGrouping:
     """Raw-stage record observer: the first grouping stage's pass 1, done while writing.
 
@@ -197,9 +197,9 @@ class RawStageGrouping:
 
     key_fn: Callable[[dict[str, Any]], str]
     summarize: bool
-    groups: dict[str, list[int]] = field(factory=dict)
+    groups: dict[str, list[int]] = field(default_factory=dict)
     summaries: list[tuple[str, str, str, int, tuple[tuple[str, Any], ...]]] = field(
-        factory=list
+        default_factory=list
     )
 
     def prepare(

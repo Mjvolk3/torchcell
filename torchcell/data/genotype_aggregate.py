@@ -125,3 +125,117 @@ class DeletionKeyedGenotypeAggregator(GenotypeAggregator):
             for pert in record["experiment"]["genotype"]["perturbations"]
             if pert["perturbation_type"].endswith(DELETION_TYPE_SUFFIX)
         )
+
+
+def _hash_axis_keyed(pairs: Iterable[tuple[str, str]], reference_value: str) -> str:
+    """Hash (perturbation_type, gene) pairs together with a reference value.
+
+    Keying on the pair rather than the gene name alone is the axis-aware key
+    ``GenotypeAggregator`` leaves as a TODO, and this dataset is the case that
+    needs it. Two Carruthers Source Data panel strains share a perturbed gene
+    SET and differ only in how one of those genes is perturbed: one carries a
+    CRISPRi guide against PP_0815 on top of deletions of PP_0812 to PP_0815,
+    the other carries the deletions alone. A gene-set key merges them into one
+    sample, averaging 521.0 and 546.3 ug/mL together with 186.1. Two
+    perturbations of the same gene by different mechanisms are not the same
+    genotype.
+    """
+    return hashlib.sha256(
+        f"{sorted(set(pairs))}|{reference_value}".encode()
+    ).hexdigest()
+
+
+def _reference_label_value(phenotype_reference: Any) -> str:
+    """The reference phenotype's own label value, as a canonical string.
+
+    A phenotype names its value field in ``label_name``, so this reads the
+    reference's control measurement without knowing which phenotype it is.
+
+    The value is canonicalized through ``float`` with a fixed 17-significant-digit
+    format rather than through ``repr``, because the two key paths see different
+    Python types for the same record. ``aggregate_check`` reads a validated
+    pydantic model, where a ``float | None`` field holding an integral JSON value
+    has already been coerced to ``100.0``; ``aggregate_key_raw`` reads the stored
+    JSON, where it is still ``100``. ``repr`` of those is ``'100.0'`` and
+    ``'100'``, two different keys for one record, which would split a group that
+    should merge. 17 significant digits is the shortest width that round-trips
+    every IEEE 754 double, so the format loses nothing.
+
+    ``None`` is a distinct key rather than an error: a phenotype may admit a
+    missing reference under a typed provenance gap, and every such record then
+    keys together, which is the parent's behavior and is the honest degradation.
+    """
+    if isinstance(phenotype_reference, dict):
+        label_name = phenotype_reference["label_name"]
+        value = phenotype_reference[label_name]
+    else:
+        label_name = phenotype_reference.label_name
+        value = getattr(phenotype_reference, label_name)
+    if value is None:
+        return "None"
+    return format(float(value), ".17g")
+
+
+class ReferenceKeyedGenotypeAggregator(GenotypeAggregator):
+    """Aggregator keyed on the perturbation set AND the reference it was measured against.
+
+    :class:`GenotypeAggregator` keys on the genotype alone, so two measurements
+    of the same strain merge no matter when or under what conditions they were
+    taken. That is right when the repeats are replicates and wrong when they are
+    separate screens, because the aggregate then averages across a measurement
+    context that the model is supposed to be able to tell apart.
+
+    The motivating case is a design-build-test-learn campaign. Carruthers 2025
+    re-measured 50 of the cycle-2 CRISPRi designs in cycle 3 on a repaired dCas9
+    plasmid, and reports that the repair raised dCas9 fidelity by 25% and that
+    the authors' own models after cycle 3 were trained only on post-repair data.
+    The two measurements of such a design are therefore not replicates of one
+    quantity; they are the same edit read at two measurement fidelities, and the
+    contrast between them is a result the campaign was run to produce.
+
+    Measured on that store's 502 records, which is also the accounting of what
+    each half of this key buys:
+
+    ======================================  =======
+    key                                     groups
+    ======================================  =======
+    gene set only (``GenotypeAggregator``)      420
+    (type, gene) pairs only                     432
+    gene set plus reference                     496
+    (type, gene) pairs plus reference           497
+    ======================================  =======
+
+    So the parent would absorb 82 records. The reference value does most of the
+    separating, and the axis-aware half adds one further group, which is the
+    PP_0815 case below.
+
+    Each cycle normalized to its own no-gRNA controls, so the reference
+    phenotype's value differs per cycle and keying on it keeps the cycles apart.
+    More generally this is the aggregator for any dataset whose records carry a
+    per-screen reference, which is the same information a ``screen_id`` would
+    carry if the source released one.
+    """
+
+    def aggregate_check(
+        self, data: dict[str, ExperimentType | ExperimentReferenceType]
+    ) -> str:
+        """Return a hash of the axis-aware perturbation set and the reference value."""
+        reference = cast(Any, data["experiment_reference"]).phenotype_reference
+        return _hash_axis_keyed(
+            (
+                (pert.perturbation_type, pert.systematic_gene_name)
+                for pert in _perturbations(data)
+            ),
+            _reference_label_value(reference),
+        )
+
+    def aggregate_key_raw(self, record: dict[str, Any]) -> str:
+        """Return the same key, read off one raw record dict."""
+        reference = record["experiment_reference"]["phenotype_reference"]
+        return _hash_axis_keyed(
+            (
+                (pert["perturbation_type"], pert["systematic_gene_name"])
+                for pert in record["experiment"]["genotype"]["perturbations"]
+            ),
+            _reference_label_value(reference),
+        )

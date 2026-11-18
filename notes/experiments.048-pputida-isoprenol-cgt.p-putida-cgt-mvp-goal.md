@@ -816,3 +816,378 @@ Carried over so later sessions do not relitigate them:
 
 Each step ends with its numbers in this note under a new dated H2, not in a
 conversation.
+
+## 2026.11.17 - The CGT is constructed, the metabolism is load-bearing, and it trains
+
+The gap list of the first session said six things were missing. Four of them are
+now closed with real data rather than placeholders, and the two that remain are
+named below with the decision each one needs. Everything in this section was run;
+the two training numbers at the end are labeled as smoke runs because that is
+what they are.
+
+### What was built, and where it lives
+
+The owner's split was honored: the reusable objects are in `torchcell/`, the
+campaign-specific assembly is in the experiment.
+
+| new file | what it is |
+|---|---|
+| `torchcell/graph/string_db.py` | STRING for any taxon, sha256-pinned, with the per-channel graph builder |
+| `torchcell/metabolism/bipartite.py` | `cobra_bipartite_graph`, the reaction-metabolite builder with the organism removed |
+| `torchcell/metabolism/bigg_gem.py` | `BiggGEM`, a pinned BiGG model exposing `.model`, `.bipartite_graph`, `.gene_set` |
+| `torchcell/data/genotype_aggregate.py` | `ReferenceKeyedGenotypeAggregator`, added |
+| `experiments/048-.../queries/isoprenol_titer_048.cql` | the 502-record campaign query |
+| `experiments/048-.../scripts/pputida_cgt_data.py` | genome, graphs, metabolism, embeddings, dataset, cycle join, splits |
+| `experiments/048-.../scripts/train_isoprenol_cgt.py` | the model, the loss, the arms, the result table |
+| `experiments/048-.../scripts/provision_string_kt2440.py` | the STRING mirror |
+| `experiments/048-.../scripts/provision_pputida_gems.py` | the two metabolic models, pinned |
+| `experiments/048-.../scripts/run_mvp_arms.sh` | the arms of the end criterion |
+
+### STRING is real, not a placeholder
+
+The plan was a placeholder for the gene connections. It is not needed: the v12.5
+per-organism slice downloads, so the edges are real as of tonight.
+
+Mirrored to `/bulk/torchcell-string/v12.5/160488/`, **19 files, 36,056,470
+bytes, every one verified against its own sha256 after write**. /bulk because
+/scratch is at 98% with 150 GB free while /bulk has 20 TB, and this mirror grows
+one directory per organism. STRING publishes no checksums of its own, so each
+sha256 is first-observation and is what a re-fetch is compared against.
+
+**The namespace question is settled and it needed no alias table.** STRING
+protein ids for taxon 160488 are the `PP_` locus tags themselves
+(`160488.PP_0001` is `parB`), so stripping the taxon prefix lands directly on the
+genome's gene set. Measured: of 1,324,300 links, **100% have both ends in the
+5,729-gene set, and zero STRING proteins fall outside it**. The yeast path's
+silent failure mode, where a namespace mismatch yields an empty graph with no
+error, cannot bite here.
+
+The six channel graphs, built in 8.3 s:
+
+| channel | nodes | edges |
+|---|---|---|
+| neighborhood | 5,522 | 282,020 |
+| coexpression | 5,239 | 288,542 |
+| cooccurence | 4,476 | 291,140 |
+| experimental | 3,758 | 121,575 |
+| database | 2,210 | 45,713 |
+| fusion | 2,402 | 5,512 |
+
+On the whole-database question the owner raised: **do not take it.** The three
+v12.5 SQL dumps are 342.83 GB compressed (items 42,578,695,524 + network
+243,027,445,520 + evidence 57,225,579,743 bytes) and restore to an estimated 1.0
+to 1.7 TB inside a PostgreSQL instance, loaded by a single-threaded,
+non-resumable `psql` pipe. Mirroring every taxon's `links.detailed` instead is
+201.04 GB over 12,535 organisms, with no database to run. The slice is 36 MB per
+organism. Three organisms is 110 MB for the complete file set. The evidence
+layer and cross-species SQL joins are the only things the dumps buy, and neither
+is on the CGT's path.
+
+### Both metabolic models are pinned
+
+`$DATA_ROOT/torchcell-gems/`, each with `manifest.json` and `SHA256SUMS` in the
+genome tier's shape.
+
+| model | reactions | metabolites | genes | sha256 (first 12) | provenance |
+|---|---|---|---|---|---|
+| `iJN1463` | 2,927 | 2,153 | 1,462 | `8232a1ea39af` | BiGG, `direct_url` |
+| `pputida_isoprenol` | 2,958 | 2,178 | 1,474 | `e310145bd1f9` | `manual_deposit`, from the authors |
+
+The augmented model adds 33 reactions, removes 2, adds 25 metabolites and adds
+12 genes (`MK`, `PMDHKQ`, `aphA`, `mvaE`, `mvaS`, and seven `PP_` loci). BiGG
+serves the base model as iJN1463 while Nogales et al. publish it as iJN1462, and
+a request for iJN1462 at BiGG returns 404, so the manifest records
+`published_filename: iJN1462.json` or that link is lost. The isoprenol model is
+published nowhere, so our deposit is the only copy and its hash is its only
+identity; that is recorded in its manifest.
+
+### The DBTL cycle is recovered, and no loader change was needed
+
+This was the blocking gap. It is closed, and the route makes the earlier
+owner's-call question moot: **the cycle does not have to be put on the served
+record to be used tonight.**
+
+Each campaign record's own `ExperimentReference` carries the per-cycle no-gRNA
+control titer, because every cycle was normalized to its own controls. Over the
+465 campaign records that reference takes exactly seven distinct values, one per
+cycle:
+
+| control titer, ug/mL | cycle | records |
+|---|---|---|
+| 169.7658 | 0 | 121 |
+| 154.4024 | 1 | 57 |
+| 156.7333 | 2 | 59 |
+| 168.8314 | 3 | 54 |
+| 152.8553 | 4 | 57 |
+| 163.0200 | 5 | 58 |
+| 155.1945 | 6 | 59 |
+
+**Two independent routes agree on those counts.** The join above, read from the
+served graph, and `preprocess/pass_filter.csv` in the loader's own build
+directory, which carries a `cycle` column in LMDB index order. `campaign_table`
+asserts the counts and raises if the join ever stops holding, so this is gated
+rather than trusted.
+
+Campaign and panel records separate cleanly: a record is a campaign record when
+its genotype carries no deletion and no native-copy addition. That gives
+**465 campaign and 37 panel, which is the published split**, with zero campaign
+records failing to match a cycle.
+
+### A real defect found in the aggregation, and the fix
+
+The yeast builds pass a genotype-keyed aggregator. Using one here would have
+silently destroyed the result the campaign exists to produce. 502 served records
+carry only 432 distinct genotypes, because cycle 3 re-measured 50 cycle-2 designs
+on the repaired dCas9 plasmid. A genotype-keyed aggregator averages each such
+pair into one sample, which is exactly the fidelity-tier contrast being averaged
+away.
+
+`ReferenceKeyedGenotypeAggregator` keys on the perturbation set together with the
+record's own reference value, so the cycles stay apart. It is additive and
+changes nothing for yeast.
+
+Keying it revealed a second, pre-existing problem, which the existing
+`GenotypeAggregator` carries as a written TODO: it keys on gene NAMES, so a
+CRISPRi knockdown of a gene and a deletion of the same gene hash together. In
+this dataset that is not hypothetical. The Source Data panel both knocks `PP_0815`
+down with a guide and knocks it out by deletion, and those two strains were being
+merged into one sample despite titers of **521.0 and 186.1 ug/mL**. The new
+aggregator keys on `(perturbation_type, gene)` pairs, which is the axis-aware key
+the TODO asks for, and the merge disappears: 496 samples became 497.
+
+Final shape: **502 served records become 497 samples**. The 465 campaign records
+are 465 samples, every one distinct. The 37 panel records become 32 samples,
+because two strains were measured three times and one twice within the same panel
+context, and those are replicates of one quantity.
+
+### The cell graph, measured
+
+```
+gene            5,729 nodes, x = [5729, 5729] one-hot
+metabolite      2,178 nodes
+reaction        3,717 nodes, w_growth sums to 1.0
+6 STRING gene-gene relations, 51,442 to 296,869 edges each
+(reaction, rmr, metabolite)   hyperedge_index [2, 19367], signed stoichiometry -47 to +47
+(gene, gpr, reaction)         hyperedge_index [2, 4578] over 3,611 reactions
+```
+
+`w_growth` summing to 1.0 is worth stating, because it was a trap.
+`to_cell_data` marks growth reactions by the literal test
+`subsystem == "Growth"`, which is a yeast-GEM convention; iJN1463 calls that
+subsystem "Biomass and maintenance functions", so the growth tensor would have
+come back all zeros with no error. `BiggGEM` reads the objective coefficient
+instead, which is how a GEM declares its own biomass reaction, and labels those
+reactions, keeping the model's own string under `subsystem_source`. It found
+`BIOMASS_KT2440_WT3`.
+
+The isoprenol route is present in the graph as reaction nodes `APP_comb0_fwd`,
+`IPtpp_comb0_fwd`, `IPtex_noGene_fwd`, `EX_ip_e_noGene_fwd`, with metabolites
+`ip_c`, `ip_p`, `ip_e`. `induced_gene_set` is deliberately NOT used: restricting
+the model to the genome's gene set would drop every OR term whose genes all lie
+outside it, and that is precisely the heterologous route, since `APP` is gated by
+`aphA`, which is not a KT2440 locus. Dropping it would have removed the product's
+own reaction from the graph.
+
+A record and a batch, which is what the model is handed:
+
+```
+dataset[0]  gene: perturbed_genes=[7], perturbation_indices=[2],
+            pert_mask=[5729], phenotype_values=[1]
+batch(16)   gene: perturbation_indices=[39], perturbation_indices_batch=[39],
+            phenotype_values=[16], phenotype_values_batch=[16]
+```
+
+`perturbed_genes` is 7 while `perturbation_indices` is 2 for that record, and
+that is correct, not a bug: the five constant pIY670 pathway genes are named on
+the genotype but are not KT2440 loci, so `Perturbation` does not index them. They
+are background, the two CRISPRi guides are the perturbation, and no filtering
+code was needed to arrange it.
+
+### The metabolism is load-bearing, via the flux layer
+
+Worth being precise, because the experiment's name claims it. On this branch the
+model's forward pass does not read the `rmr` and `gpr` stores on its own; the
+blocks that would are not on this branch. Carrying metabolism in the cell graph
+is therefore not the same as using it. What makes it participate is a
+`FluxLayer`, and that path is live on this branch and now wired as `--flux`:
+
+```
+n_reactions 2958, n_metabolites 2178, biomass BIOMASS_KT2440_WT3,
+385 exchanges, 3,051 catalytic units (455 multigene), 2,122 reactions with GPR,
+1,474 GEM genes, EX_ip_e at index 2957, thermo off
+```
+
+With it the chain is gene representation to per-gene availability, through the
+GPR to per-reaction capacity, to a feasible flux vector, which a `flux_scalar`
+head reads on nine named route metabolites (`accoa_c`, `aacoa_c`, `hmgcoa_c`,
+`mva_c`, `5pmva_c`, `3mbut3e1yp_c`, `ip_c`, `ip_p`, `ip_e`). Naming the
+precursors is what makes the head a hypothesis instead of another projection.
+
+`with_thermo=False`, stated rather than hidden: the thermodynamic tables are
+yeast-GEM CSVs, and P. putida deltaG values are a sourcing job, not a default to
+invent. The compartments are also bacterial, `c`, `p`, `e`, with no
+mitochondrion, so the inherited pH and membrane-potential table from iMM904 does
+not apply and is another sourcing job before the thermodynamic term goes on.
+
+### Splits
+
+Both regimes of the end criterion are implemented and verified disjoint.
+
+| regime | train | val | test |
+|---|---|---|---|
+| random by design, 0.8/0.1/0.1 over 401 designs | 375 | 46 | 44 |
+| cycle extrapolation, 0 to 4 / 5 / 6 | 348 | 58 | 59 |
+
+The split is over **designs**, never records, because a design measured in two
+cycles is two records and a record-level split would put the same guide array in
+train and test. The 37 panel records are excluded from the campaign splits by
+`index_subset`, which the data module confirms: "restricts the pool to 465 of 497
+records".
+
+### Two smoke runs, which are not results
+
+Both ran for 2 and 3 epochs respectively, to prove the loop closes. They are
+reported here only so the next session knows what has and has not been seen, and
+the result files were deliberately not kept so they cannot later be mistaken for
+measurements.
+
+Pooled head, one-hot, 2 epochs, design split: val Pearson +0.630, test +0.692.
+Flux head, one-hot, 3 epochs, design split: val Pearson +0.314, test +0.538.
+
+**The lower-order nulls on the same split, which are the thing to beat:** ridge
+on the guide indicator reached val +0.708 / test +0.751, and gradient-boosted
+trees val +0.779 / test +0.782. Three epochs of a transformer losing to boosted
+trees is not a finding, but it is the right table to keep reporting, and on this
+stack the trees have won before.
+
+The flux arm's first epoch had `train_mse` at 127, which is a scale problem, not
+a learning problem: this branch's `FluxScalarHead` has no input normalization, so
+the raw flux magnitudes enter a head whose target is standardized. That needs
+either normalization or a much longer budget, and it is the first thing to look
+at in the real runs.
+
+### What is still owed
+
+1. **An encoder policy for the 165 non-coding genes.** 165 of the 5,729 KT2440
+   loci carry no CDS and no protein: 75 tRNA (`PP_t##`), 67 misc RNA
+   (`PP_mr##`), 21 rRNA (`PP_16S*`/`PP_23S*`/`PP_5S*`) and 2 others.
+   `CodonFrequencyDataset` raises `AttributeError: 'NoneType' object has no
+   attribute 'seq'` on the first of them, and **every** CDS- or protein-based
+   encoder will do the same, GenSLM included. So the encoder ladder stops at
+   one-hot and random until it is decided what those genes contribute: a zero
+   vector, a reserved out-of-vocabulary token, or exclusion from the gene set.
+   This is the single thing most worth deciding next, because the MVP encoder
+   choice depends on it.
+2. **The real runs.** `run_mvp_arms.sh` holds the arms. The one-hot input is
+   5,729 wide, which is why the smoke model carried 17.4 M parameters against
+   375 training samples; a real encoder matters for more than fidelity here.
+3. **No bacterial regulatory graph yet.** The SBRG `modulome_ppu` TRN decision
+   from the first session is unchanged and uningested.
+4. The thermodynamic layer, needing P. putida deltaG values and a bacterial
+   compartment table.
+
+### Correction, same session: three reviews, and what they changed
+
+Three independent reviews ran against the code above. They confirmed the parts
+most likely to be silently wrong and found four things that were wrong, two of
+them mine to own.
+
+**Confirmed correct, by measurement rather than by reading:**
+
+* **Index alignment**, over all 497 samples, not a sample of them: for every
+  ``i``, ``dataset[i]``'s perturbation indices mapped back through the cell
+  graph's node ids equal row ``i`` of the record table, with the group's mean
+  titer matching to float32. Zero mismatches. This was the most dangerous
+  possible bug and it is not there.
+* **The bipartite extraction is byte-exact.** On the real yeast-GEM 9.0.2,
+  ``cobra_bipartite_graph`` and ``YeastGEM.bipartite_graph`` agree on 9,928
+  nodes and 26,325 edges with zero attribute differences, and everything
+  ``to_cell_data`` derives from them (``hyperedge_index``, ``stoichiometry``,
+  ``w_growth`` summing to 9.0 on both, the gpr index, both node id lists)
+  compares equal. So the yeast path can migrate onto the shared builder without
+  changing what the model sees.
+* **The STRING channel graphs** match the yeast builder exactly on the real
+  1,324,300-row slice, all six channels, node sets, edge sets and every edge
+  attribute. All rows are both-direction pairs covering 662,150 undirected
+  pairs, and zero pairs disagree on any channel score, so the last-write-wins of
+  the vectorized build cannot pick a different weight.
+* **Both aggregator key paths agree** on all 502 real records, which is the base
+  class's stated requirement.
+* **The target is wired right**, row for row, in both orders.
+* **The split arithmetic** and the train-split-only standardization are correct;
+  the normalization is in fact better than the yeast path's, which fits the
+  normalizer over the whole dataset.
+
+**Wrong, and fixed:**
+
+1. **The metabolism was decorative, and the result table said otherwise.** This
+   is the one that matters. Without a flux layer, nothing in the forward pass on
+   this branch reads the ``rmr`` or ``gpr`` stores: the blocks that would
+   (``MetabolicMessages``, ``GeneReactionMetaboliteBlock``) are not in this
+   worktree, and the only parent-side consumer is a ``per_metabolite`` head this
+   experiment does not build. Proven rather than argued: deleting every reaction
+   and metabolite store from the cell graph moves the head output by
+   **5.2e-08**, which is exactly the same-input nondeterminism floor. The table
+   nonetheless printed ``CGT + met``. It now prints what the model is,
+   ``CGT, pooled head`` or ``CGT + flux met``, the run record carries a
+   ``metabolism_role`` field saying which, and ``--flux`` is now an arm instead
+   of an unused flag. Two of the four old ablations were also no-ops: a
+   ``--no-metabolism`` arm that changes only a graph the forward ignores, and a
+   ``--embeddings one_hot`` arm identical to the default. Both are replaced, by
+   the flux arm and by a random-feature floor.
+2. **The cycle split leaked designs into the held-out cycle.** The cycle
+   boundary is not a design boundary, and the campaign re-measured designs
+   across cycles, so three cycle-6 designs had already been measured in cycle 4
+   or 5. That is 3 of 59 test records, 5.1%, and a test Pearson over them is
+   partly a memory score. ``cycle_splits`` now drops the earlier measurements
+   from train and val rather than the later ones from test, so the held-out
+   cycle stays the cycle as released: **347 / 56 / 59** instead of 348 / 58 / 59.
+3. **``StringTaxonMirror.fetch`` destroyed the pin it exists to create.** It
+   hashed whatever was on disk and wrote that back as canonical, so a drifted
+   file was re-pinned and ``verify()`` then passed on it. Demonstrated on a copy
+   of the real mirror. It now compares a present file against the record it
+   already has and raises ``MirrorDriftError``, which is the stance
+   ``BiggGEM.deposit`` already took; a narrower fetch no longer deletes other
+   files' records; and every read path goes through ``ensure_verified`` so
+   mirrored bytes are never consumed on trust.
+4. **``alias_map`` resolved ambiguity by file order.** In the v12.5 slice for
+   this taxon every one of the 5,564 proteins carries two ``RefSeq`` aliases, a
+   GenBank protein accession and the locus tag, so asking ``RefSeq`` for locus
+   tags silently returned accessions; and an unknown source name returned an
+   empty mapping with no error. Both now raise, and ``alias_sources()``
+   publishes the real names. Unused on the P. putida path, since the ids are
+   already locus tags, but it was a loaded gun.
+
+Smaller corrections made in the same pass: the target is averaged per sample
+rather than assigned, which mattered for the three samples that aggregate more
+than one record; the reference value in the aggregator key is canonicalized
+through ``float`` so an integral JSON value cannot key differently from the
+validated float; ``min_score`` became ``above_score`` because the threshold is
+strict and the old name denied it; ``protein_to_gene`` refuses an incomplete map
+instead of dropping the unmapped edges; ``MemberlessReactionError`` is one class
+again rather than two unrelated ones of the same name; ``GemManifest`` forbids
+unknown keys, since the fields a caller passes are exactly the ones worth
+misspelling; and the record table's ``n_samples`` is summed over the group so it
+describes the same thing the averaged titer does.
+
+**Still owed, and now explicit:**
+
+* **Criterion 2 as written is not what runs.** The criterion says train on
+  cycles 0 through 5 and predict 6; the implementation trains on 0 through 4 and
+  uses cycle 5 for selection, because a model selected on the cycle it is
+  scored against is not extrapolating. The criterion should be renegotiated in
+  this note rather than silently reinterpreted in a docstring. A separate
+  ``cycle5`` arm, testing on cycle 5 while selecting on cycle 4, now supplies
+  the clean cycle-5 number the criterion asks to see beside cycle 6, which the
+  validation score cannot: **val is the selection set and its score is
+  optimistically biased**, now labeled as such in the printed table and in the
+  run record.
+* The fidelity-tier arm under the cycle split leaves only cycles 3 and 4, which
+  is 111 training records, so the design split is where that arm carries its
+  weight. Worth knowing before reading the two side by side.
+* There is no aggregation or figure script yet, so the arms produce one JSON
+  each and nothing that compares them.
+* The nulls are conservative in the model's favor and the model still lost at
+  two epochs: 15 of the test split's guide-targeted genes appear in no training
+  row, so ridge and the trees can only predict the intercept for them while the
+  CGT can in principle reach them through the graph and the gene features.

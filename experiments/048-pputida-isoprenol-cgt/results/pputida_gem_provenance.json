@@ -1,0 +1,486 @@
+{
+  "gem_root": "/scratch/projects/torchcell-scratch/torchcell-gems",
+  "base": {
+    "model_id": "iJN1463",
+    "model_path": "/scratch/projects/torchcell-scratch/torchcell-gems/iJN1463/iJN1463.json",
+    "sha256": "8232a1ea39af9b9b0313601a3cefca1028e50e53b2ca2c06002c1a9adf7568bf",
+    "reactions": 2927,
+    "metabolites": 2153,
+    "genes": 1462,
+    "growth_reaction_ids": [
+      "BIOMASS_KT2440_WT3"
+    ]
+  },
+  "isoprenol": {
+    "model_id": "pputida_isoprenol",
+    "model_path": "/scratch/projects/torchcell-scratch/torchcell-gems/pputida_isoprenol/pputida_isoprenol.json",
+    "sha256": "e310145bd1f9ac6f49648101016fe6d23515120bcf73141f5873bca55e3984a0",
+    "reactions": 2958,
+    "metabolites": 2178,
+    "genes": 1474,
+    "growth_reaction_ids": [
+      "BIOMASS_KT2440_WT3"
+    ]
+  },
+  "base_manifest_notes": "BiGG serves this model as iJN1463; Nogales et al. 2020 publish it as iJN1462 (1,462 genes) and BiGG's API records published_filename iJN1462.json. A request for iJN1462 at BiGG returns 404, so iJN1463 is the retrievable id. Genome reference NC_002947.4, which is the RefSeq accession of the pinned pputida_KT2440_ASM756v2 replicon AE015451.2. GPR gene ids are bare PP_#### locus tags.",
+  "isoprenol_manifest_notes": "iJN1463 plus the isoprenol route: the IPP-bypass mevalonate pathway (ACCOAAT/HMGCOAS/HMGCOAR by mvaE and mvaS, MEVKIN by MK, PMD by PMDHKQ) ending in APP (3mbut3e1yp_c -> ip_c + pi_c, GPR aphA, the pIY670 acid phosphatase), with transport IPtpp (PP_1384 and PP_1385 and PP_1386) and IPtex, and the exchange EX_ip_e. NOT PUBLISHED: received from Juan Camilo (LBNL/JBEI) in the Carruthers 2025 working-data folder, so this deposit is the only copy and its sha256 is its identity. Flag to the depositor if the upstream model is later released, so the published bytes can be pinned beside this one rather than replacing it.",
+  "diff": {
+    "reactions": {
+      "base": 2927,
+      "augmented": 2958
+    },
+    "metabolites": {
+      "base": 2153,
+      "augmented": 2178
+    },
+    "genes": {
+      "base": 1462,
+      "augmented": 1474
+    },
+    "reactions_added": [
+      "14BDAL",
+      "14BUTOL",
+      "43RYLKETO",
+      "4HPPTPP",
+      "5MTRtex",
+      "5MTRtpp",
+      "ACCOAAT",
+      "ACOAH",
+      "ACSUCC",
+      "APCS",
+      "APP",
+      "BUT1OATE",
+      "EX_5mtr_e",
+      "EX_btd_14_RR_e",
+      "EX_ip_e",
+      "GLYACE",
+      "GLYCOA",
+      "HBCOA",
+      "HBCROA",
+      "HBSUCC",
+      "HMGCOAR",
+      "HMGCOAS",
+      "HYBUAC",
+      "HYBUT",
+      "HYSUCC",
+      "IPtex",
+      "IPtpp",
+      "MEVKIN",
+      "MTAN",
+      "PMD",
+      "SPMPS",
+      "dpm_import",
+      "hemeD_synthesis"
+    ],
+    "reactions_removed": [
+      "ACALD",
+      "CAT23DOX"
+    ],
+    "metabolites_added": [
+      "34hbutcoa_c",
+      "3mbut3e1yp_c",
+      "4hbutal_c",
+      "4hbutal_p",
+      "4hbutcoa_c",
+      "4hbya_c",
+      "4hy3kbutcoa_c",
+      "4hycrocoa_c",
+      "5mta_c",
+      "5mtr_c",
+      "5mtr_e",
+      "5mtr_p",
+      "5pmva_c",
+      "ametam_c",
+      "btd_14_RR_e",
+      "btd_14_RR_p",
+      "dpm_c",
+      "glycoa_c",
+      "hemed_c",
+      "ip_c",
+      "ip_e",
+      "ip_p",
+      "mva_c",
+      "na15dap_c",
+      "succhyde_c"
+    ],
+    "genes_added": [
+      "MK",
+      "PMDHKQ",
+      "PP_1412",
+      "PP_1867",
+      "PP_1948",
+      "PP_2049",
+      "PP_3254",
+      "PP_3491",
+      "PP_5266",
+      "aphA",
+      "mvaE",
+      "mvaS"
+    ],
+    "added_reaction_detail": [
+      {
+        "id": "14BDAL",
+        "name": "Alcohol dehydrogenase",
+        "reaction": "btd_14_RR_p + 2.0 ficytc_c --> 4hbutal_p + 2.0 focytc_c + 2.0 h_c",
+        "gpr": "PP_2674 and PP_2679",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "14BUTOL",
+        "name": "1,4 Butanediol uptake",
+        "reaction": "btd_14_RR_e --> btd_14_RR_p",
+        "gpr": "",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "43RYLKETO",
+        "name": "4-hydroxy-3-keto-butyryl-CoA formation",
+        "reaction": "34hbutcoa_c + flxso_c + h_c --> 4hy3kbutcoa_c + flxr_c",
+        "gpr": "PP_2048",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "4HPPTPP",
+        "name": "1,4 Butanediol transport to cytosol",
+        "reaction": "4hbutal_p --> 4hbutal_c",
+        "gpr": "",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "5MTRtex",
+        "name": "5-Methylthio-D-ribose transport via proton diffusion (extracellular to periplasm)",
+        "reaction": "5mtr_e <=> 5mtr_p",
+        "gpr": "PP_0234 or PP_0944 or PP_0234",
+        "bounds": [
+          -1000.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "5MTRtpp",
+        "name": "5-Methylthio-D-ribose transport via proton symport (periplasm)",
+        "reaction": "5mtr_c + h_c --> 5mtr_p + h_p",
+        "gpr": "",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "ACCOAAT",
+        "name": "acetyl-CoA acetyltransferase from pIY670",
+        "reaction": "2.0 accoa_c --> aacoa_c + coa_c",
+        "gpr": "mvaE",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "ACOAH",
+        "name": "Acetyl-CoA hydrolase",
+        "reaction": "accoa_c + h2o_c --> ac_c + coa_c + h_c",
+        "gpr": "PP_5266",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "ACSUCC",
+        "name": "CoA Synthetase",
+        "reaction": "acac_c + succoa_c --> aacoa_c + succ_c",
+        "gpr": "PP_3122 and PP_3123",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "APCS",
+        "name": "aminopropylcadaverine synthase",
+        "reaction": "15dap_c + ametam_c --> 5mta_c + h_c + na15dap_c",
+        "gpr": "PP_1867",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "APP",
+        "name": "acid phosphatase / phosphotransferase from pIY670",
+        "reaction": "3mbut3e1yp_c --> ip_c + pi_c",
+        "gpr": "aphA",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "BUT1OATE",
+        "name": "Aldehyde dehydrogenase",
+        "reaction": "4hbutal_c + nadh_c + o2_c --> 4hbya_c + h2o_c + nad_c",
+        "gpr": "PP_2680",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "EX_5mtr_e",
+        "name": "5-Methylthio-D-ribose exchange",
+        "reaction": "5mtr_e --> ",
+        "gpr": "",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "EX_btd_14_RR_e",
+        "name": "1,4 Butanediol exchange",
+        "reaction": "btd_14_RR_e <-- ",
+        "gpr": "",
+        "bounds": [
+          -1000.0,
+          0.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "EX_ip_e",
+        "name": "Exchange of isoprenol (isopentenyl alcohol)",
+        "reaction": "ip_e --> ",
+        "gpr": "",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "GLYACE",
+        "name": "4-hydroxy-3-keto-butyryl-CoA breakdown",
+        "reaction": "4hy3kbutcoa_c + succoa_c --> accoa_c + glycoa_c + succ_c",
+        "gpr": "PP_2051",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "GLYCOA",
+        "name": "CoA release",
+        "reaction": "glycoa_c + succ_c --> glyclt_c + succoa_c",
+        "gpr": "",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "HBCOA",
+        "name": "CoA dehydrogenase",
+        "reaction": "4hbutcoa_c + flxso_c + h_c --> flxr_c + succoa_c",
+        "gpr": "PP_2048",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "HBCROA",
+        "name": "hydroxycrotonyl CoA formation",
+        "reaction": "4hbutcoa_c + flxso_c + h_c --> 4hycrocoa_c + flxr_c",
+        "gpr": "PP_2047",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "HBSUCC",
+        "name": "Alcohol reduction",
+        "reaction": "4hbya_c + nad_c --> h_c + nadh_c + succhyde_c",
+        "gpr": "PP_2049",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "HMGCOAR",
+        "name": "hydroxymethylglutaryl-CoA reductase from pIY670",
+        "reaction": "coa_c + mva_c + 2.0 nadp_c <=> 2.0 h_c + hmgcoa_c + 2.0 nadph_c",
+        "gpr": "mvaE",
+        "bounds": [
+          -1000.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "HMGCOAS",
+        "name": "hydroxymethylglutaryl-CoA synthase from pIY670",
+        "reaction": "aacoa_c + accoa_c + h2o_c --> coa_c + h_c + hmgcoa_c",
+        "gpr": "mvaS",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "HYBUAC",
+        "name": "4hydroxybutanoate CoA formation",
+        "reaction": "4hbya_c + succoa_c --> 4hbutcoa_c",
+        "gpr": "(PP_2351 and PP_3122) or PP_3124",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "HYBUT",
+        "name": "34hydroxybutyryl formation",
+        "reaction": "4hycrocoa_c + h2o_c --> 34hbutcoa_c",
+        "gpr": "PP_1412 and PP_3491",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "HYSUCC",
+        "name": "Aldehyde reduction",
+        "reaction": "h2o_c + nad_c + succhyde_c --> 2.0 h_c + nadh_c + succ_c",
+        "gpr": "PP_3151",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "IPtex",
+        "name": "Isoprenol transport to extracellular environment",
+        "reaction": "ip_p --> ip_e",
+        "gpr": "",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "IPtpp",
+        "name": "Isoprenol transport to periplasm",
+        "reaction": "ip_c --> ip_p",
+        "gpr": "PP_1384 and PP_1385 and PP_1386",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "MEVKIN",
+        "name": "mevalonate kinase from pIY670",
+        "reaction": "atp_c + mva_c <=> 5pmva_c + adp_c + h_c",
+        "gpr": "MK",
+        "bounds": [
+          -1000.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "MTAN",
+        "name": "methylthioadenosine nucleosidase",
+        "reaction": "5mta_c + h2o_c --> 5mtr_c + ade_c",
+        "gpr": "PP_3254",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "PMD",
+        "name": "phosphomevalonate decarboxylase from pIY670",
+        "reaction": "5pmva_c + atp_c --> 3mbut3e1yp_c + adp_c + co2_c + pi_c",
+        "gpr": "PMDHKQ",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "SPMPS",
+        "name": "spermidine synthase",
+        "reaction": "ametam_c + ptrc_c --> 5mta_c + h_c + spmd_c",
+        "gpr": "PP_1867",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "dpm_import",
+        "name": "Dipyrromethane import",
+        "reaction": " --> dpm_c",
+        "gpr": "",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      },
+      {
+        "id": "hemeD_synthesis",
+        "name": "Heme D synthesis",
+        "reaction": "h2o2_c + pheme_c --> hemed_c",
+        "gpr": "PP_0115",
+        "bounds": [
+          0.0,
+          1000.0
+        ],
+        "subsystem": ""
+      }
+    ]
+  }
+}

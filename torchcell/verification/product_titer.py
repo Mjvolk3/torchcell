@@ -36,6 +36,12 @@ What it checks, and why each rule is the same rule for every dataset of the fami
    Kang's integration variants), so a production strain that lost its pathway fails.
 10. L3 ``product_is_the_declared_one`` -- the measured product is the one the dataset
     is named for, so two products are never silently pooled into one label.
+11. L3 ``replicate_id_names_one_replicate`` -- a record that carries a ``replicate_id``
+    is ONE replicate (``n_samples`` 1) with no uncertainty, and a record that states an
+    aggregate (``n_samples`` above 1) carries no ``replicate_id``. ``replicate_id`` is
+    read with ``.get`` and a ``None`` keys as the empty string, so every dataset that
+    releases one aggregated titer per strain -- every dataset but Carruthers 2025 --
+    keys and passes exactly as before.
 
 A dataset's own cross-source joins (a released oracle table re-read from the raw
 mirror) stay in the loader module that owns the reader and are added to this report by
@@ -131,6 +137,57 @@ def _l2_se_identity(records: Sequence[Record], tol: float) -> LevelResult:
             "worst_abs_diff": worst,
             "worst": derived[:20],
         },
+    )
+
+
+def _l3_replicate_id_names_one_replicate(
+    phenotypes: Sequence[dict[str, Any]],
+) -> LevelResult:
+    """L3: a labeled record is one replicate; an aggregate carries no label.
+
+    The convention a per-replicate store rests on (#776). A source that releases its
+    replicate cultures individually stores one record per culture with ``n_samples`` 1,
+    no uncertainty and the source's own label in ``replicate_id`` (Carruthers 2025's
+    1,525 isoprenol cultures); a source that releases a mean stores it with the group's
+    ``n_samples`` and no label. A record carrying both a label and a replicate count
+    above one would be unreadable: it would be unclear whether the stored number is one
+    culture's or the group's.
+
+    ``replicate_id`` is read with ``.get``, so a phenotype that has no such field (every
+    other titer dataset) reads ``None`` and satisfies the rule unchanged. That is the
+    same ``.get`` discipline ``environment_response._study_key`` uses when the field
+    joins its uniqueness key.
+    """
+    labeled = [
+        phenotype
+        for phenotype in phenotypes
+        if phenotype.get("replicate_id") is not None
+    ]
+    bad_labeled = [
+        phenotype
+        for phenotype in labeled
+        if phenotype["n_samples"] != 1
+        or phenotype["titer_uncertainty"] is not None
+        or phenotype["titer_se"] is not None
+    ]
+    bad_aggregates = [
+        phenotype
+        for phenotype in phenotypes
+        if phenotype.get("replicate_id") is None
+        and phenotype["n_samples"] == 1
+        and phenotype["titer_uncertainty"] is not None
+    ]
+    passed = not bad_labeled and not bad_aggregates
+    return l3_convention(
+        "replicate_id_names_one_replicate",
+        passed,
+        detail=(
+            f"{len(labeled)} of {len(phenotypes)} records carry a replicate_id; each "
+            "one must be a single replicate (n_samples 1) with no uncertainty, and an "
+            f"aggregate must carry none. {len(bad_labeled)} labeled records break it "
+            f"and {len(bad_aggregates)} single-sample records carry an uncertainty with "
+            "no label"
+        ),
     )
 
 
@@ -253,6 +310,7 @@ def verify_product_titer_dataset(
             ),
         )
     )
+    report.add(_l3_replicate_id_names_one_replicate(phenotypes))
     products = {str(phenotype["product"]["name"]) for phenotype in phenotypes}
     report.add(
         l3_convention(

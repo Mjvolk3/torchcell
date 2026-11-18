@@ -515,3 +515,43 @@ def test_allow_duplicate_strains_reports_the_collisions_as_a_finding() -> None:
     assert finding.message.endswith(
         "(released replicate rows with no strain key; reported, not refused)"
     )
+
+
+def test_replicate_id_joins_the_uniqueness_key() -> None:
+    """Three records of one strain that state replicates ``"1"``, ``"2"`` and ``"3"``
+    are three unique keys, even when two carry the same level, and the message names
+    the replicate key. A repeated ``replicate_id`` of one strain is still a duplicate,
+    and records with no ``replicate_id`` key exactly as before.
+    """
+    from torchcell.verification.metabolite import _l1_orf_uniqueness
+
+    def replicate(gene: str, level: float, replicate_id: str) -> dict[str, Any]:
+        record = _record(gene, level)
+        record["experiment"]["phenotype"]["replicate_id"] = replicate_id
+        return record
+
+    released = [
+        replicate("YAL001C", 1.0, "1"),
+        replicate("YAL001C", 1.0, "2"),
+        replicate("YAL001C", 2.0, "3"),
+        replicate("YAL002W", 3.0, "1"),
+    ]
+    passed = _l1_orf_uniqueness(released)
+    assert passed.passed is True
+    assert passed.details == {
+        "n_strains": 4,
+        "n_duplicated": 0,
+        "n_duplicate_records": 0,
+    }
+    assert passed.message == (
+        "4 unique strains (deletion sets) per released replicate, one record each"
+    )
+    repeated = _l1_orf_uniqueness([*released, replicate("YAL001C", 9.0, "2")])
+    assert repeated.passed is False
+    assert repeated.details == {
+        "n_strains": 4,
+        "n_duplicated": 1,
+        "n_duplicate_records": 1,
+    }
+    aggregate = _l1_orf_uniqueness([_record("YAL001C", 1.0), _record("YAL002W", 2.0)])
+    assert aggregate.message == "2 unique strains (deletion sets), one record each"

@@ -181,6 +181,7 @@ RULE_NAMES = [
     "uncertainty_is_typed_or_gapped",
     "replicate_design_is_sourced_or_gapped",
     "heterologous_pathway_gene_counts",
+    "replicate_id_names_one_replicate",
     "product_is_the_declared_one",
 ]
 

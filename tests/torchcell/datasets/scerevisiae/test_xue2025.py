@@ -1,7 +1,7 @@
 # tests/torchcell/datasets/scerevisiae/test_xue2025.py
 # [[tests.torchcell.datasets.scerevisiae.test_xue2025]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_xue2025.py
-"""Xue 2025 FFA loader: genotype decoding, per-FFA replicate statistics, the WT reference.
+"""Xue 2025 FFA loader: genotype decoding, one record per replicate, the WT reference.
 
 ``Supplementary Data 1_Raw titers.xlsx`` is written synthetically with openpyxl into
 ``<root>/raw/`` so PyG never calls ``download()``; ``process()`` runs for real with no
@@ -162,101 +162,118 @@ def _pairs(record: dict[str, object]) -> list[tuple[str, str]]:
     ]
 
 
-def test_one_record_per_non_wt_row_in_sheet_order(
+def _replicate(levels: list[float], replicate_id: str) -> MetabolitePhenotype:
+    return MetabolitePhenotype(
+        metabolite_level=dict(zip(_FFAS, levels, strict=True)),
+        metabolite_level_se=None,
+        n_replicates=dict.fromkeys(_FFAS, 1),
+        measurement_type="titer_mg_per_l",
+        target_metabolite_ids=None,
+        replicate_id=replicate_id,
+    )
+
+
+# (row label, replicate_id, the five titers of that replicate) in stored order: sheet
+# rows top to bottom, replicate columns left to right, blank replicates absent.
+_EXPECTED_REPLICATES: list[tuple[str, str, list[float]]] = [
+    ("+ve Ctrl", "1", [100.0, 200.0, 50.0, 8.0, 300.0]),
+    ("+ve Ctrl", "2", [110.0, 200.0, 51.0, 10.0, 310.0]),
+    ("+ve Ctrl", "3", [120.0, 200.0, 52.0, 12.0, 320.0]),
+    ("wt BY4741", "1", [10.0, 20.0, 5.0, 1.0, 30.0]),
+    ("wt BY4741", "2", [12.0, 20.0, 6.0, 2.0, 40.0]),
+    ("wt BY4741", "3", [14.0, 20.0, 7.0, 3.0, 50.0]),
+    ("F-G 5d", "1", [1.0, 10.0, 5.0, 2.0, 7.0]),
+    ("F-G 5d", "2", [3.0, 14.0, 5.0, 4.0, 9.0]),
+    ("P-S-Y 6dΔ", "1", [4.0, 6.0, 8.0, 1.0, 9.0]),
+    ("P-S-Y 6dΔ", "2", [4.0, 6.0, 8.0, 1.0, 9.0]),
+    ("P-S-Y 6dΔ", "3", [4.0, 6.0, 8.0, 1.0, 9.0]),
+    ("T 4d", "1", [3.0, 4.0, 5.0, 6.0, 7.0]),
+]
+_GENES_OF_ROW: dict[str, list[str]] = {
+    "+ve Ctrl": ["FAA1", "FAA4", "POX1"],
+    "wt BY4741": [],
+    "F-G 5d": ["FAA1", "FAA4", "FKH1", "GCN5", "POX1"],
+    "P-S-Y 6dΔ": ["FAA1", "FAA4", "POX1", "RPD3", "SPT3", "YAP6"],
+    "T 4d": ["FAA1", "FAA4", "POX1", "TFC7"],
+}
+
+
+def test_one_record_per_released_replicate_in_sheet_order(
     built: m.FattyAcidXue2025Dataset,
 ) -> None:
-    """Five sheet rows give four records (the WT row is skipped) in sheet order, each with
-    the three chassis deletions plus the decoded TF letters, perturbations sorted by
-    their released name (no ORF is resolved, #1045).
-
-    ``+ve Ctrl`` is the chassis alone: means 110, 200, 51, 10, 310 with SE 10/sqrt(3),
-    0, 1/sqrt(3), 2/sqrt(3), 10/sqrt(3) (sample SD over three replicates), n = 3. Its
-    perturbations sort FAA1, FAA4, POX1.
+    """Five sheet rows give 12 records, one per non-blank replicate (3 + 3 + 2 + 3 + 1),
+    rows top to bottom and replicate columns left to right. Each record carries that
+    replicate's five titers verbatim with n = 1, no SE and its column position as
+    ``replicate_id``; the genotype is the chassis triple plus the decoded TF letters
+    under released names (no ORF is resolved, #1045), and the wild-type row's three
+    replicates are records with the empty genotype.
     """
-    assert len(built) == 4
-    assert [_pairs(built[i]["experiment"]) for i in range(4)] == [
-        [("FAA1", "FAA1"), ("FAA4", "FAA4"), ("POX1", "POX1")],
-        [
-            ("FAA1", "FAA1"),
-            ("FAA4", "FAA4"),
-            ("FKH1", "FKH1"),
-            ("GCN5", "GCN5"),
-            ("POX1", "POX1"),
-        ],
-        [
-            ("FAA1", "FAA1"),
-            ("FAA4", "FAA4"),
-            ("POX1", "POX1"),
-            ("RPD3", "RPD3"),
-            ("SPT3", "SPT3"),
-            ("YAP6", "YAP6"),
-        ],
-        [("FAA1", "FAA1"), ("FAA4", "FAA4"), ("POX1", "POX1"), ("TFC7", "TFC7")],
-    ]
+    assert len(built) == 12
+    for index, (label, replicate_id, levels) in enumerate(_EXPECTED_REPLICATES):
+        assert (
+            built[index]["experiment"]
+            == MetaboliteExperiment(
+                dataset_name="FattyAcidXue2025Dataset",
+                genotype=_genotype(_GENES_OF_ROW[label]),
+                environment=_ENVIRONMENT,
+                phenotype=_replicate(levels, replicate_id),
+            ).model_dump()
+        ), (index, label, replicate_id)
+        assert [name for name, _ in _pairs(built[index]["experiment"])] == (
+            _GENES_OF_ROW[label]
+        )
     assert {
         p["perturbation_type"]
-        for i in range(4)
+        for i in range(12)
         for p in built[i]["experiment"]["genotype"]["perturbations"]
     } == {"released_identifier"}
-    root3 = math.sqrt(3)
-    assert (
-        built[0]["experiment"]
-        == MetaboliteExperiment(
-            dataset_name="FattyAcidXue2025Dataset",
-            genotype=_genotype(["POX1", "FAA1", "FAA4"]),
-            environment=_ENVIRONMENT,
-            phenotype=_phenotype(
-                [110.0, 200.0, 51.0, 10.0, 310.0],
-                [10.0 / root3, 0.0, 1.0 / root3, 2.0 / root3, 10.0 / root3],
-                3,
-            ),
-        ).model_dump()
-    )
+    assert built[3]["experiment"]["genotype"] == {"perturbations": []}
     assert built[0]["publication"] == _PUBLICATION.model_dump()
 
 
-def test_two_replicate_strain_uses_the_present_columns_only(
+def test_identical_replicates_stay_three_records_told_apart_by_replicate_id(
     built: m.FattyAcidXue2025Dataset,
 ) -> None:
-    """``F-G 5d`` has a blank third replicate in every FFA: n = 2 per FFA, means 2, 12, 5,
-    3, 8, and SE = |a - b| / 2 (sample SD of two values over sqrt(2)): 1, 2, 0, 1, 1.
+    """``P-S-Y 6dΔ`` has the same five titers in all three replicates (4, 6, 8, 1, 9).
+    The three records differ in ``replicate_id`` alone, so their phenotype dumps, which
+    the adapter hashes into the node id, are three distinct values.
     """
-    phenotype = built[1]["experiment"]["phenotype"]
-    assert (
-        phenotype
-        == _phenotype(
-            [2.0, 12.0, 5.0, 3.0, 8.0], [1.0, 2.0, 0.0, 1.0, 1.0], 2
-        ).model_dump()
-    )
+    phenotypes = [built[i]["experiment"]["phenotype"] for i in (8, 9, 10)]
+    assert [p["replicate_id"] for p in phenotypes] == ["1", "2", "3"]
+    assert [p["metabolite_level"] for p in phenotypes] == [
+        dict(zip(_FFAS, [4.0, 6.0, 8.0, 1.0, 9.0], strict=True))
+    ] * 3
+    assert len({json.dumps(p, sort_keys=True) for p in phenotypes}) == 3
 
 
-def test_single_replicate_strain_stores_nan_se(
+def test_blank_replicate_columns_give_fewer_records_not_a_smaller_n(
     built: m.FattyAcidXue2025Dataset,
 ) -> None:
-    """``T 4d`` has one replicate per FFA: the level is that value (3, 4, 5, 6, 7), n = 1,
-    and the sample SD is undefined so every SE is NaN.
+    """``F-G 5d`` (third replicate blank everywhere) is two records, ``"1"`` and ``"2"``,
+    and ``T 4d`` (one replicate) is one record, ``"1"``. Every stored record has n = 1
+    per FFA and no SE; nothing is averaged.
     """
-    phenotype = built[3]["experiment"]["phenotype"]
-    assert phenotype["metabolite_level"] == {
-        "C14:0": 3.0,
-        "C16:0": 4.0,
-        "C18:0": 5.0,
-        "C16:1": 6.0,
-        "C18:1": 7.0,
-    }
-    assert phenotype["n_replicates"] == dict.fromkeys(_FFAS, 1)
-    assert sorted(phenotype["metabolite_level_se"]) == sorted(_FFAS)
-    assert all(math.isnan(se) for se in phenotype["metabolite_level_se"].values())
-    assert phenotype["measurement_type"] == "titer_mg_per_l"
-    assert phenotype["target_metabolite_ids"] is None
+    ids = [
+        (label, built[i]["experiment"]["phenotype"]["replicate_id"])
+        for i, (label, _, _) in enumerate(_EXPECTED_REPLICATES)
+    ]
+    assert [r for label, r in ids if label == "F-G 5d"] == ["1", "2"]
+    assert [r for label, r in ids if label == "T 4d"] == ["1"]
+    for i in range(12):
+        phenotype = built[i]["experiment"]["phenotype"]
+        assert phenotype["n_replicates"] == dict.fromkeys(_FFAS, 1)
+        assert phenotype["metabolite_level_se"] is None
+        assert phenotype["measurement_type"] == "titer_mg_per_l"
+        assert phenotype["target_metabolite_ids"] is None
 
 
-def test_wt_row_is_the_shared_measured_reference(
+def test_wt_row_summary_is_the_shared_reference(
     built: m.FattyAcidXue2025Dataset,
 ) -> None:
-    """The ``wt BY4741`` row (means 12, 20, 6, 2, 40; SE 2/sqrt(3), 0, 1/sqrt(3),
-    1/sqrt(3), 10/sqrt(3); n = 3) is the phenotype reference of every record, and the
-    reference index has one entry covering [0, 1, 2, 3].
+    """The reference of every record is the ``wt BY4741`` SUMMARY over its replicates
+    (means 12, 20, 6, 2, 40; SE 2/sqrt(3), 0, 1/sqrt(3), 1/sqrt(3), 10/sqrt(3); n = 3),
+    with ``replicate_id`` None because it states an aggregate. The reference index has
+    one entry covering all 12 records, the three wild-type replicate records included.
     """
     root3 = math.sqrt(3)
     expected = MetaboliteExperimentReference(
@@ -274,13 +291,14 @@ def test_wt_row_is_the_shared_measured_reference(
             3,
         ),
     ).model_dump()
-    assert [built[i]["reference"] for i in range(4)] == [expected] * 4
+    assert expected["phenotype_reference"]["replicate_id"] is None
+    assert [built[i]["reference"] for i in range(12)] == [expected] * 12
     index = json.loads(
         (
             Path(built.root) / "preprocess" / "experiment_reference_index.json"
         ).read_text()
     )
-    assert [entry["member_indices"] for entry in index] == [[0, 1, 2, 3]]
+    assert [entry["member_indices"] for entry in index] == [list(range(12))]
     assert index[0]["reference"]["phenotype_reference"]["metabolite_level"] == {
         "C14:0": 12.0,
         "C16:0": 20.0,
@@ -290,24 +308,49 @@ def test_wt_row_is_the_shared_measured_reference(
     }
 
 
+def test_single_replicate_reference_summary_has_nan_se() -> None:
+    """A summary over one replicate has n = 1 and an undefined sample SD, stored NaN."""
+    summary = m.FattyAcidXue2025Dataset._summary_phenotype(
+        {"1": dict(zip(_FFAS, [3.0, 4.0, 5.0, 6.0, 7.0], strict=True))}
+    )
+    assert summary.metabolite_level == dict(
+        zip(_FFAS, [3.0, 4.0, 5.0, 6.0, 7.0], strict=True)
+    )
+    assert summary.n_replicates == dict.fromkeys(_FFAS, 1)
+    assert summary.metabolite_level_se is not None
+    assert all(math.isnan(se) for se in summary.metabolite_level_se.values())
+    assert summary.replicate_id is None
+
+
 def test_summary_csv_gene_set_and_build_manifest(
     built: m.FattyAcidXue2025Dataset,
 ) -> None:
-    """``preprocess/data.csv`` lists each record's label, deletion count and ``;``-joined
-    sorted released names; ``gene_set.json`` is the nine names sorted; the manifest
-    names the slug, the loader and this host.
+    """``preprocess/data.csv`` has one row per record: label, ``replicate_id``, deletion
+    count, ``;``-joined sorted released names (blank for the wild type) and the five
+    titers; ``gene_set.json`` is the nine names sorted; the manifest names the slug,
+    the loader and this host.
     """
     preprocess = Path(built.root) / "preprocess"
-    summary = pd.read_csv(preprocess / "data.csv")
-    assert summary.columns.tolist() == ["genotype", "n_deletions", "genes"]
+    summary = pd.read_csv(preprocess / "data.csv", keep_default_na=False)
+    assert summary.columns.tolist() == [
+        "genotype",
+        "replicate_id",
+        "n_deletions",
+        "genes",
+        *[f"titer_mg_per_l_{ffa}" for ffa in _FFAS],
+    ]
     assert summary.values.tolist() == [
-        ["+ve Ctrl", 3, "FAA1;FAA4;POX1"],
-        ["F-G 5d", 5, "FAA1;FAA4;FKH1;GCN5;POX1"],
-        ["P-S-Y 6dΔ", 6, "FAA1;FAA4;POX1;RPD3;SPT3;YAP6"],
-        ["T 4d", 4, "FAA1;FAA4;POX1;TFC7"],
+        [
+            label,
+            int(replicate_id),
+            len(_GENES_OF_ROW[label]),
+            ";".join(_GENES_OF_ROW[label]),
+            *levels,
+        ]
+        for label, replicate_id, levels in _EXPECTED_REPLICATES
     ]
     assert built.df is not None
-    assert built.df.shape == (4, 3)
+    assert built.df.shape == (12, 9)
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "FAA1",
         "FAA4",
@@ -415,9 +458,11 @@ def test_abbreviation_sheet_must_match_the_expected_code_map(tmp_path: Path) -> 
         m.FattyAcidXue2025Dataset(root=str(root))
 
 
-def test_ffa_with_no_replicate_values_raises(tmp_path: Path) -> None:
-    """A ``M 4d`` row whose three C18:1 cells are all blank raises naming the FFA and the
-    row label (the other four FFAs are complete, so the failure is that column alone).
+def test_replicate_columns_blank_at_different_positions_raise(tmp_path: Path) -> None:
+    """A ``M 4d`` row whose three C18:1 cells are blank while the other four FFAs are
+    complete breaks the reading of the k-th column of every block as one replicate, so
+    the build stops naming the row, the replicate and the FFAs it does carry. A row with
+    no value at all raises on its own.
     """
     blank_c181: list[float | None] = [
         1,
@@ -438,9 +483,17 @@ def test_ffa_with_no_replicate_values_raises(tmp_path: Path) -> None:
     ]
     rows = [*_ROWS, ("M 4d", blank_c181)]
     with pytest.raises(
-        RuntimeError, match="FFA C18:1 has no replicate values in row 'M 4d'"
+        RuntimeError,
+        match=r"row 'M 4d' replicate 1 carries \['C14:0', 'C16:0', 'C16:1', 'C18:0'\] of "
+        r"\['C14:0', 'C16:0', 'C16:1', 'C18:0', 'C18:1'\]: the replicate columns are "
+        "not blank at the same positions across the FFA blocks",
     ):
         m.FattyAcidXue2025Dataset(root=str(_root(tmp_path, "blank", rows)))
+    empty: list[float | None] = [None] * 15
+    with pytest.raises(RuntimeError, match="row 'R 4d' has no replicate values"):
+        m.FattyAcidXue2025Dataset(
+            root=str(_root(tmp_path, "empty", [*_ROWS, ("R 4d", empty)]))
+        )
 
 
 def test_download_reads_the_library_mirror_and_verifies_sha256(
@@ -567,10 +620,11 @@ def test_essential_gene_strains_are_kept_as_the_release_states_them(
     tmp_path: Path,
 ) -> None:
     """``R 4d`` (RGR1), ``M-R-T 6d`` (MED4, RGR1, TFC7) and ``M 4d`` (MED4) are stored,
-    one record each beside the chassis-only control, every one of the three genes a
-    ``released_gene_name`` record of kind ``deletion``: the release states a deletion
-    count (``4Δ``, ``6Δ``) and nothing else about these alleles (#887). No row is
-    dropped.
+    three replicate records each beside the wild type and the chassis-only control (5
+    rows x 3 replicates = 15 records, records 3k..3k+2 being row k), every one of the
+    three genes a ``released_gene_name`` record of kind ``deletion``: the release states
+    a deletion count (``4Δ``, ``6Δ``) and nothing else about these alleles (#887). No
+    row and no replicate is dropped.
     """
     values: list[float | None] = [float(v) for v in range(1, 16)]
     rows: list[Row] = [
@@ -582,8 +636,9 @@ def test_essential_gene_strains_are_kept_as_the_release_states_them(
     ]
     root = _root(tmp_path, "essential", rows)
     built = m.FattyAcidXue2025Dataset(root=str(root))
-    assert len(built) == 4
-    assert [_stated_deletions(built[i]) for i in range(4)] == [
+    assert len(built) == 15
+    per_row = [
+        [],
         [],
         [("RGR1", "RGR1", "released_identifier", "deletion")],
         [
@@ -593,9 +648,17 @@ def test_essential_gene_strains_are_kept_as_the_release_states_them(
         ],
         [("MED4", "MED4", "released_identifier", "deletion")],
     ]
+    assert [_stated_deletions(built[i]) for i in range(15)] == [
+        stated for stated in per_row for _ in range(3)
+    ]
     assert [
-        len(built[i]["experiment"]["genotype"]["perturbations"]) for i in range(4)
-    ] == [3, 4, 6, 4]
+        len(built[i]["experiment"]["genotype"]["perturbations"]) for i in range(15)
+    ] == [n for n in (0, 3, 4, 6, 4) for _ in range(3)]
+    assert [built[i]["experiment"]["phenotype"]["replicate_id"] for i in range(15)] == [
+        "1",
+        "2",
+        "3",
+    ] * 5
 
 
 _MIRROR_WORKBOOK = Path(
@@ -608,29 +671,47 @@ _MIRROR_WORKBOOK = Path(
     not _MIRROR_WORKBOOK.exists(),
     reason=f"requires the Xue 2025 mirror workbook at {_MIRROR_WORKBOOK}",
 )
-def test_the_released_workbook_keeps_all_176_records_and_the_112(
+def test_the_released_workbook_keeps_all_519_replicates_and_the_328(
     tmp_path: Path,
 ) -> None:
-    """The pinned release (sha256 023de80e...) builds 176 records from its 177 rows (the
-    WT row is the reference). 112 carry at least one of RGR1, MED4, TFC7, 46 each; 83
+    """The pinned release (sha256 023de80e...) builds 519 records from its 177 rows, one
+    per released replicate (166 rows x 3 + 10 x 2 + 1 x 1), the three wild-type
+    replicates included. 328 records carry at least one of RGR1, MED4, TFC7 (136, 134
+    and 134: 46 strains each, some released with fewer than three replicates); 243
     carry RGR1 or MED4, the two SGD records as inviable nulls in S288C (Giaever 2002).
-    Each of the 138 perturbations of the three is a ``kanmx_deletion`` with state
-    ``absent``, as the release states it.
+    Each of the 404 perturbations of the three is a released-name deletion, as the
+    release states it.
     """
     root = tmp_path / "ffa_xue2025"
     (root / "raw").mkdir(parents=True)
     shutil.copyfile(_MIRROR_WORKBOOK, root / "raw" / m.DATA_FILENAME)
     built = m.FattyAcidXue2025Dataset(root=str(root))
-    assert len(built) == 176
+    assert len(built) == 519
+    summary = pd.read_csv(Path(built.root) / "preprocess" / "data.csv")
+    assert summary.groupby("genotype").size().value_counts().to_dict() == {
+        3: 166,
+        2: 10,
+        1: 1,
+    }
+    assert summary["genotype"].nunique() == 177
+    assert summary["replicate_id"].value_counts().to_dict() == {1: 170, 2: 173, 3: 176}
     stated = [_stated_deletions(built[i]) for i in range(len(built))]
+    assert (
+        sum(
+            1
+            for i in range(len(built))
+            if not built[i]["experiment"]["genotype"]["perturbations"]
+        )
+        == 3
+    )
     names = [{name for _, name, _, _ in record} for record in stated]
-    assert sum(1 for record in names if record) == 112
+    assert sum(1 for record in names if record) == 328
     assert {
         gene: sum(gene in record for record in names) for gene in _ESSENTIAL_IN_SGD
-    } == {"RGR1": 46, "MED4": 46, "TFC7": 46}
-    assert sum(1 for record in names if record & {"RGR1", "MED4"}) == 83
+    } == {"RGR1": 136, "MED4": 134, "TFC7": 134}
+    assert sum(1 for record in names if record & {"RGR1", "MED4"}) == 243
     flat = [p for record in stated for p in record]
-    assert len(flat) == 138
+    assert len(flat) == 404
     assert {(stored, name) for stored, name, _, _ in flat} == {
         (name, name) for name in _ESSENTIAL_IN_SGD
     }

@@ -11,10 +11,14 @@ This module serves every released readout, as three dataset classes because
 ``ExperimentDataset.transform_item`` validates against ONE ``experiment_class``:
 
 - :class:`IsoprenolTiterCarruthers2025Dataset` -- ``ProductTiterExperiment``, one record
-  per ``(CRISPRi construct, DBTL cycle)`` strain, titer in ``ug/mL`` with the sample SD
-  over biological triplicates.
+  per released CULTURE (1,525 of them), each storing that culture's own titer in
+  ``ug/mL``.
 - :class:`ProteomeCarruthers2025Dataset` -- ``ProteinAbundanceExperiment``, one
-  record per released off-target-study proteome sample (Top3 DIA-NN abundances).
+  record per released off-target-study ``(sample, replicate)`` (63 of them; Top3 DIA-NN
+  abundances).
+- :class:`CampaignProteomeCarruthers2025Dataset` -- ``ProteinAbundanceExperiment``, one
+  record per released culture of the deposited campaign matrix (1,407 of them;
+  percent-of-proteome Top3).
 - :class:`ProteomeFoldChangeCarruthers2025Dataset` --
   ``ProteinFoldChangeExperiment``, one record per released differential
   contrast COLUMN: 14 single-guide CRISPRi contrasts from ``Figure 5b`` plus the 2
@@ -74,13 +78,82 @@ unchanged under the numerically identical unit rather than divided by 1000. Addi
 ``mg_per_l`` to ``ConcentrationUnit`` would be the cleaner fix and is a served-closure
 decision, so it is raised in the PR and not taken here.
 
-NOTHING IS DROPPED FROM THE TITER FAMILY. Every non-control culture becomes a record.
-The 90 control cultures (18 in DBTL0, 12 in each of DBTL1-6) are not records: they are
-the per-cycle ``phenotype_reference``. The authors' CRISPRi proteomics filter
-("pass filter?") is carried in ``preprocess/pass_filter.csv`` and NOT on the record:
-it reports whether the designed knockdown was REALIZED, and no certainty axis exists to
-type that on a perturbation. The paper is explicit that the filter shaped only model
-training -- "no data was excluded in our analysis".
+ONE RECORD PER RELEASED CULTURE, BECAUSE THE RELEASE IS PER CULTURE (2026-11-17). The
+record unit of all three absolute families is the CULTURE or the ``(sample, replicate)``
+the source releases individually, never a mean this loader computed. A record stores the
+released cell verbatim with ``n_samples = 1`` / ``n_replicates = 1`` per key, no
+uncertainty and no SE, and the source's own label for that culture in ``replicate_id``;
+the mean and the sample SD of a replicate group are a MODELING-TIME derivation, and the
+only place this loader states one is a ``phenotype_reference``, which is a labeled
+aggregate summary by construction. Collapsing a per-replicate release into a mean
+discards released records, which principle 2 of the database constitution forbids. The
+before and after:
+
+=====================================  =======  =======
+family                                   before    after
+=====================================  =======  =======
+isoprenol titer                            502    1,525
+off-target + overexpression proteome         21       63
+campaign proteome                           465    1,407
+=====================================  =======  =======
+
+WHERE A ``replicate_id`` COMES FROM, per subset, always the source's own cells:
+
+- ``Figure 4b``: the ``Line Name``'s own ``<construct>-R<n>``, verbatim.
+- ``Figure 6d``, ``Supplementary Figure 12bd``, ``Supplementary Figure 13d`` and both
+  proteome sheets: the released sample, line or strain label joined to the ``Replicate``
+  cell, both verbatim (``PP_0812-15_KO with PP_0815/R1``,
+  ``JBEI_OTS_PP_0977_1_P4_48hr/R2``). The label is kept because the replicate cell alone
+  does not identify a culture: the release carries the SAME genotype under two sheets
+  (``Figure 6a``'s ``PP_0812-15`` Target arm and ``Figure 6d``'s
+  ``PP_0812-15_KO with PP_0815`` line) and the SAME genotype as three independent
+  cultures (``PP_0977_1``, ``PP_0977_2``, ``PP_0977_3``).
+- ``Figure 6a``: the released ROW POSITION in its ``(background, arm)`` group, since
+  that sheet prints no replicate column at all.
+- the deposited campaign matrix: its own ``Line_name``, verbatim.
+
+WHAT THE REPLICATE LABELS CANNOT CARRY. ``ProductTiterPhenotype`` has no field for the
+DBTL cycle, and 63 constructs were screened in more than one cycle, so those cultures
+share a ``(genotype, replicate_id)`` key and are told apart only by their values. The
+count is pinned in :data:`TITER_DUPLICATED_REPLICATE_KEYS` so a NEW collision fails the
+gate, and the cycle-aware checks (the per-target means, the control arithmetic) run at
+BUILD time, where the cycle column is in hand.
+
+NO CONTROL CULTURE IS A RECORD, AND THAT IS A SCHEMA LIMIT RATHER THAN A CHOICE. The 90
+campaign control cultures (18 in DBTL0, 12 in each of DBTL1-6), the 36 ``Figure 6a``
+Non-target cultures, the 6 overexpression Control cultures and the 3 ``Figure 6d``
+Control cultures are all released measurements, and all of them stay the per-cycle or
+per-panel ``phenotype_reference`` with its mean, its sample SD, its n and
+``replicate_id=None``. The reason is :data:`CONTROL_AS_RECORD`: a control strain is the
+production strain carrying the dCas9 vector with a NON-TARGETING sgRNA (the
+overexpression control carries the RFP vector), and a present plasmid that perturbs no
+gene has no home in a ``Genotype`` -- every ``GenePerturbation`` leaf requires a gene.
+Storing such a culture with the five pIY670 pathway perturbations alone would assert
+IY1452b WITHOUT the vector that makes it the control.
+
+THE PASS-FILTER COLUMN, FROM THE PAPER AND FROM THE COLLABORATORS, SEPARATELY. The
+boolean ``pass filter?`` column of ``Figure 4b`` is released PER CULTURE and is carried
+in ``preprocess/pass_filter.csv`` keyed by ``(construct, cycle, replicate_id)``; it is
+not on the record, and a modeler who wants it joins it from there. What it reports has
+two statements, which are never merged:
+
+(a) THE MIRRORED PAPER. The Results: "Guides were filtered out from our training set if
+    they (1) had insufficient downregulation compared to the control (e.g., PP_1023),
+    (2) downregulated the POI nonspecifically in many other strains (e.g., PP_0582), or
+    (3) resulted in isoprenol titers below 66.6 mg/L". The DBTL0 Methods: "(1) below 90%
+    of the library mean for the target; (2) in the bottom quartile of target expression;
+    and (3) isoprenol titer greater than 66.6 mg/L". The DBTL1-6 Methods add the dCas9
+    criterion: "we discarded strains with dCas9 expression below 25% of the control in
+    any of the replicates". So the mirrored criteria are target downregulation, dCas9
+    expression and a DBTL0 titer floor of 66.6 mg/L.
+(b) THE OWNER, 2026-11-17, RELAYING THE COLLABORATORS (not a mirrored source): the
+    column is about whether a strain passed QC checks, including growth, and whether the
+    cells were robust enough to yield viable proteomics data. No sentence of the
+    mirrored paper or SI says this, so it is attributed and never quoted as the paper's.
+
+Either way the filter changed no record: the paper is explicit that it shaped only model
+training -- "no data was excluded in our analysis" -- and every released non-control
+culture is stored.
 
 THE PROTEOME PANEL IS THE RELEASED ARM, NOT THE WHOLE CAMPAIGN. The 472-strain proteome
 lives in seven PRIDE accessions of raw DIA files (PXD063733 DBTL0, PXD063737 DBTL1,
@@ -134,12 +207,13 @@ table, so that table covers 120 of the 121 targets actually screened.
 
 COUNTS, AND WHY THEY DIFFER FROM THE ABSTRACT'S. The paper reports "472 unique strains
 (125 single perturbations and 347 combinations) in triplicate"; 472 is the 1,416
-non-control cultures divided by three. Grouping those cultures by (construct, cycle)
-gives 465 strains, because seven of them carry SIX replicates (R1-R6) rather than three:
+non-control cultures divided by three, which this store now asserts directly, since it
+holds one record per culture. Grouping those cultures by (construct, cycle) gives 465
+strain-cycles, because seven of them carry SIX replicates (R1-R6) rather than three:
 ``PP_0812``, ``PP_0813``, ``PP_4678``, ``PP_4679`` in DBTL0 and ``PP_0814_PP_4192``,
 ``PP_0814_PP_4862``, ``PP_2137_PP_4189`` in DBTL1. 465 + 7 = 472 only under the
-divide-by-three reading. This loader stores 465 strains and the replicate count each one
-actually has.
+divide-by-three reading. The build asserts the grouping on the released bytes and the
+store asserts the arithmetic.
 """
 
 from __future__ import annotations
@@ -161,7 +235,7 @@ from typing import Any, ClassVar, Literal
 
 import openpyxl
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -279,6 +353,11 @@ PAPER_MD = "paper.md"
 PAPER_MD_SHA256 = "ca9a8a2593d2ae3ab3bacfb767e797ece2bdaa0228a4f798f1c38e1af73ef88d"
 SI1_MD = "si/si1.md"
 SI1_MD_SHA256 = "2f83cfecc539e6607e33c51c420fb0be95c335a494cba6ef485eb5cb627ea0a5"
+#: The peer-review file (Supplementary Information 2), whose author replies are the only
+#: mirrored statement of the proteomics replicate structure (see
+#: :data:`FOLD_CHANGE_N_REPLICATES`).
+SI2_MD = "si/si2.md"
+SI2_MD_SHA256 = "5961601d89aece72e1f47e39dc1936e00d1fad029653cdbead4db671c5a3b505"
 #: Supplementary Data 3: the plasmid table that states pIY670's part composition.
 PLASMIDS_XLSX = "si/si6.xlsx"
 PLASMIDS_SHA256 = "e6704d6176d61c76f12243e8248bcff0767d7d57c6a0737da07d5574072c4759"
@@ -350,11 +429,17 @@ DRYAD_TITER_UNIT = "mg/L"
 #: What one campaign-proteome number is: a PERCENT of the proteome, not the panel's raw
 #: Top3 signal, so the two proteome families can never be silently pooled.
 CAMPAIGN_MEASUREMENT_TYPE = "dia_nn_top3_percent_of_proteome_mean"
-#: One record per ``(construct, DBTL cycle)`` strain of the campaign, the same identity
-#: the titer family keys on.
-EXPECTED_CAMPAIGN_PROTEOME_RECORDS = 465
+#: One record per released non-control CULTURE of the deposited matrix: 1,407 of its
+#: 1,497 rows, which group into the 465 ``(construct, DBTL cycle)`` strain-cycles the
+#: titer family also releases (461 of 3 cultures, 4 of 6).
+EXPECTED_CAMPAIGN_PROTEOME_RECORDS = 1407
+#: The ``(construct, DBTL cycle)`` strain-cycles those cultures group into.
+EXPECTED_CAMPAIGN_STRAIN_CYCLES = 465
 #: The per-cycle control proteome references, DBTL0 to DBTL6.
 EXPECTED_CAMPAIGN_REFERENCES = 7
+#: Control cultures of the deposited matrix: 18 in DBTL0 and 12 in each of DBTL1-6,
+#: which are the per-cycle references and not records (see :data:`CONTROL_AS_RECORD`).
+EXPECTED_CAMPAIGN_CONTROL_CULTURES = 90
 #: Accessions of the Dryad matrix reaching exactly one KT2440 locus through the GOA
 #: proteome crosswalk: 1,842 of 2,187, measured 2026-10-09. The floor sits just below
 #: it; the 345 that do not are listed in ``preprocess/dropped_accessions.csv``.
@@ -428,18 +513,44 @@ REPLICATE_RE = re.compile(r"^(?P<base>.+)-R(?P<replicate>\d+)$")
 Family = Literal["titer", "proteome", "campaign_proteome", "fold_change"]
 #: The product every titer record measures, as the compound layer canonicalizes it.
 PRODUCT_NAME = "isoprenol"
-#: One record per ``(construct, DBTL cycle)`` strain of ``Figure 4b``.
-EXPECTED_CRISPRI_TITER_RECORDS = 465
-#: The four Source Data panels below add 37 more: 12 + 4 + 19 + 2.
-EXPECTED_PANEL_TITER_RECORDS = 37
-#: One record per titer strain the release states a full genotype and environment for.
+#: One record per released non-control CULTURE of ``Figure 4b``: its 1,506 rows are
+#: 1,416 strain cultures plus 90 control cultures.
+EXPECTED_CRISPRI_TITER_RECORDS = 1416
+#: The ``(construct, DBTL cycle)`` strain-cycles those cultures group into, and the
+#: seven of them the release cultured six times rather than three.
+EXPECTED_CRISPRI_STRAIN_CYCLES = 465
+EXPECTED_SIX_REPLICATE_STRAIN_CYCLES = 7
+#: The four Source Data panels below add 109 cultures: 36 + 12 + 55 + 6.
+EXPECTED_PANEL_TITER_RECORDS = 109
+#: One record per released non-control culture the release states a full genotype and
+#: environment for.
 EXPECTED_TITER_RECORDS = EXPECTED_CRISPRI_TITER_RECORDS + EXPECTED_PANEL_TITER_RECORDS
-#: One record per released ``SHEET_PROTEOME`` sample bar the non-targeting reference.
-EXPECTED_PP0815_PROTEOME_RECORDS = 19
-#: ``SHEET_OVEREXPRESSION_PROTEOME``'s two uninduced samples.
-EXPECTED_OVEREXPRESSION_PROTEOME_RECORDS = 2
+#: One record per released ``(sample, replicate)`` of ``SHEET_PROTEOME`` bar the three
+#: non-targeting reference replicates: 19 samples x 3.
+EXPECTED_PP0815_PROTEOME_RECORDS = 57
+#: ``SHEET_OVEREXPRESSION_PROTEOME``'s two uninduced samples x 3 replicates.
+EXPECTED_OVEREXPRESSION_PROTEOME_SAMPLES = 2
+EXPECTED_OVEREXPRESSION_PROTEOME_RECORDS = 6
 EXPECTED_PROTEOME_RECORDS = (
     EXPECTED_PP0815_PROTEOME_RECORDS + EXPECTED_OVEREXPRESSION_PROTEOME_RECORDS
+)
+#: Why no CONTROL culture of this release is a record, although every one of them is a
+#: released measurement. The control strain is the production strain carrying the dCas9
+#: vector with a NON-TARGETING sgRNA (the overexpression panel's control carries the RFP
+#: vector instead), and a present plasmid that perturbs no gene has no home in a
+#: ``Genotype``: every ``GenePerturbation`` leaf requires a gene, and ``Genotype`` holds
+#: nothing but perturbations. Storing such a culture with the five pIY670 pathway
+#: perturbations alone would assert IY1452b WITHOUT the vector that makes it the
+#: control, which principle 4 of the database constitution forbids ("a perturbation is
+#: an edit to the total genomic content of the cell ... present plasmids"). So the
+#: control cultures stay what they are today: the per-cycle and per-panel
+#: ``phenotype_reference``, a labeled aggregate with its sample SD, its n and
+#: ``replicate_id=None``. Yunus 2026 and Lim 2025, the two sibling CRISPRi releases,
+#: keep their non-targeting control as the denominator for the same reason.
+CONTROL_AS_RECORD = (
+    "a control culture is not a record: the non-targeting sgRNA and the dCas9 vector "
+    "carrying it perturb no gene, so the control strain's genotype cannot be stated "
+    "without asserting a strain that lacks the vector"
 )
 #: One record per sgRNA target column of ``SHEET_FOLD_CHANGE``.
 EXPECTED_FOLD_CHANGE_RECORDS_FIG5B = 14
@@ -574,6 +685,22 @@ def _si(value: Any, quote: str, *, page: str, note: str | None = None) -> Source
             citation_key=CITATION_KEY,
             sha256=SI1_MD_SHA256,
             method="MinerU OCR of the Supplementary Information PDF (mirror)",
+            page=page,
+        ),
+    )
+
+
+def _si2(value: Any, quote: str, *, page: str, note: str | None = None) -> SourcedValue:
+    """Bind a value to a verbatim sentence of the pinned peer-review file's OCR."""
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=SI2_MD,
+            citation_key=CITATION_KEY,
+            sha256=SI2_MD_SHA256,
+            method="MinerU OCR of the peer-review file PDF (mirror)",
             page=page,
         ),
     )
@@ -730,6 +857,51 @@ _Q_NO_EXCLUSION = (
     "Data used to train the active learning model was filtered according to the method "
     "above; however, no data was excluded in our analysis."
 )
+#: The three mirrored statements of what the ``pass filter?`` column reports. The DBTL0
+#: criteria (target downregulation plus a titer floor), the DBTL1-6 criteria (dCas9
+#: expression plus target downregulation) and the Results' summary of the same rule.
+_Q_FILTER_RESULTS = (
+    "Given the failures observed in downregulating certain genes, we developed a filter "
+    "to avoid training the machine learning model on sgRNAs that did not effectively "
+    "decrease their POI abundance, which would yield poor predictions and "
+    "recommendations. Guides were filtered out from our training set if they (1) had "
+    "insufficient downregulation compared to the control (e.g., PP_1023), (2) "
+    "downregulated the POI nonspecifically in many other strains (e.g., PP_0582), or "
+    "(3) resulted in isoprenol titers below $6 6 . 6 \\mathrm { m g / L }$ (Fig. 3b)."
+)
+_Q_FILTER_DBTL0 = (
+    "In DBTL0, we used proteomics to determine whether an sgRNA downregulated a target "
+    "gene. We kept the sgRNAs of strains that satisfied the following three "
+    "constraints: (1) below $90 \\%$ of the library mean for the target; (2) in the "
+    "bottom quartile of target expression; and (3) isoprenol titer greater than $6 6 . "
+    "6 \\mathrm { m g / L }$ (approximately $40 \\%$ of control isoprenol titer). "
+    "Filtering resulted in 67 validated sgRNA targets."
+)
+_Q_FILTER_DBTL1_6 = (
+    "To ensure that strains used for modeling express dCas9, we discarded strains with "
+    "dCas9 expression below $2 5 \\%$ of the control in any of the replicates. Strains "
+    "were discarded if any individual POI level was above $50 \\%$ that of the control "
+    "in any of the replicates to ensure that strains used for modeling showed target "
+    "downregulation."
+)
+#: What the owner relayed from the collaborators on 2026-11-17. It is NOT a mirrored
+#: statement and is never quoted as one: no sentence of ``paper.md`` or the SI says that
+#: the column reports growth or proteomics viability, and the mirrored criteria above
+#: name target downregulation, dCas9 expression and a titer floor. It is recorded here
+#: because it is what the people who made the column say it means.
+PASS_FILTER_OWNER_STATEMENT = (
+    "owner, 2026-11-17, relaying the collaborators (not a mirrored source): the boolean "
+    "'pass filter?' column is about whether a strain passed QC checks, including "
+    "growth, and whether the cells were robust enough to yield viable proteomics data."
+)
+#: What the authors' reply to Reviewer 2 states about the proteomics replicate
+#: structure: one measurement per replicate culture, which is what makes the released
+#: paired t-test's n the three cultures of :data:`N_REPLICATES`.
+_Q_SI2_ONE_MEASUREMENT_PER_REPLICATE = (
+    "Our proteomics data set has a single measurement for each replicate at $\\tan = 4 "
+    "8$ hours."
+)
+_Q_REPORTING_SUMMARY_TRIPLICATE = "All strains were cultured in triplicate."
 # --- the four unstored titer panels and the overexpression proteome ------------
 _Q_KO_PANEL_DESIGN = (
     "We sought to investigate the presence of off-target gene downregulation amongst "
@@ -858,10 +1030,14 @@ CAMPAIGN_TOP3 = _dryad_readme(
         "CRISPRi_automation_Pputida_proteomic_Top3_peptide_quantification_method_data"
         ".csv"
     ),
-    note="what one stored abundance IS: the mean, over the strain-cycle's replicates, "
-    "of the released per-replicate PERCENT of the proteome. The panel family's "
-    f"{PROTEOME_MEASUREMENT_TYPE} is the raw Top3 signal of a different sheet, so the "
-    "two are different measurement_types and never pooled",
+    note="what one stored abundance IS: the PERCENT of the proteome one released "
+    "culture's Top3 signal accounts for. The 'mean' of the tag is the mean over the "
+    "three most intense PEPTIDES, which is what this sentence defines, and no culture "
+    "averaging is in it: the deposited matrix releases one row per CULTURE "
+    "(1,497 rows), so a record is one culture with n_replicates = 1 per key and no SE, "
+    "and the per-strain-cycle mean is a modeling-time derivation over its 3 or 6 "
+    f"records. The panel family's {PROTEOME_MEASUREMENT_TYPE} is the raw Top3 signal of "
+    "a different sheet, so the two are different measurement_types and never pooled",
 )
 CAMPAIGN_BLANK_IS_ABSENT = _dryad_readme(
     "not_detected_or_fewer_than_three_peptides",
@@ -873,9 +1049,10 @@ CAMPAIGN_BLANK_IS_ABSENT = _dryad_readme(
         ".csv"
     ),
     note="the sourced rule for the blank cells: a blank is an ABSENT measurement, not "
-    "a zero, so a blank replicate is excluded from that protein's mean and from its "
-    "n_replicates, and a protein blank in every replicate of a strain-cycle carries no "
-    "key in that record. A released 0 is a different cell and is kept verbatim",
+    "a zero, so a protein blank in the culture a record IS carries no key in that "
+    "record, and the key sets of two cultures of one strain-cycle differ by exactly "
+    "which proteins each culture detected. A released 0 is a different cell and is kept "
+    "verbatim",
 )
 CAMPAIGN_ACCESSION_KEYS = _dryad_readme(
     "uniprot_accession",
@@ -1049,16 +1226,51 @@ N_REPLICATES = _paper(
     3,
     _Q_TRIPLICATE,
     page=_METHODS_STATS,
-    note="biological triplicates; seven (construct, cycle) strains carry six replicates "
-    "in the released Source Data and store the count they actually have",
+    note="biological triplicates, which is the size of a REPLICATE GROUP and not a "
+    "record's n_samples: one record is one released culture and carries n_samples = 1. "
+    "Seven (construct, cycle) strains were cultured six times and the rest three "
+    "times, measured on the pinned workbook, and the group a record belongs to is "
+    "recovered from its genotype plus its replicate_id",
 )
 UNCERTAINTY = _paper(
     "sample_sd",
     _Q_ERRORBARS,
     page=_METHODS_STATS,
-    note="the stored uncertainty is the sample SD across a strain's replicates, so "
-    "SE = SD / sqrt(n); Fig. 4d is the one box-and-whisker panel and this loader reads "
-    "no value from it",
+    note="the uncertainty of an AGGREGATE: the sample SD across a group's replicate "
+    "cultures, which is what each phenotype_reference stores (so SE = SD / sqrt(n)). A "
+    "record is one culture and carries no uncertainty, because one measurement has no "
+    "dispersion; Fig. 4d is the one box-and-whisker panel and this loader reads no "
+    "value from it",
+)
+FOLD_CHANGE_N_REPLICATES = _si2(
+    3,
+    _Q_SI2_ONE_MEASUREMENT_PER_REPLICATE,
+    page="Peer review file, reply to Reviewer 2, point 4",
+    note="the replicate count behind one released log2 fold change and its paired "
+    "two-tailed t-test, sourced from a PROTEOMICS statement rather than from the titer "
+    f"triplicate sentence: the authors state '{_Q_SI2_ONE_MEASUREMENT_PER_REPLICATE}', "
+    f"so the pairs the test runs over are the cultures of '{_Q_TRIPLICATE}' "
+    f"(Methods, 'Statistics & reproducibility'), restated in the Reporting Summary as "
+    f"'{_Q_REPORTING_SUMMARY_TRIPLICATE}'. Neither the Fig. 5b nor the Fig. 6b caption "
+    "prints an n for the contrast, and the measured per-culture releases agree: the "
+    f"off-target panel sheet carries 3 replicates per sample and {DRYAD_TOP3_FILENAME} "
+    "carries 3 cultures for 461 of the 465 campaign strain-cycles",
+)
+PASS_FILTER = _paper(
+    "crispri_training_filter",
+    _Q_FILTER_RESULTS,
+    page="Results, 'Rapid characterization of isoprenol production and gene "
+    "downregulation'",
+    note="what the released 'pass filter?' column reports, in the paper's own words: a "
+    "guide fails on insufficient target downregulation, on nonspecific downregulation "
+    "of the POI in other strains, or on an isoprenol titer below 66.6 mg/L. The "
+    f"DBTL0 criteria are stated as '{_Q_FILTER_DBTL0}' and the DBTL1-6 criteria as "
+    f"'{_Q_FILTER_DBTL1_6}'. SEPARATELY, and not from any mirrored byte, "
+    f"{PASS_FILTER_OWNER_STATEMENT} The column is carried in "
+    "preprocess/pass_filter.csv per CULTURE (it is released per row and is measured "
+    "constant within every strain-cycle group) and is not on the record: it is a QC "
+    "flag about a strain, and the paper is explicit that it shaped only model training "
+    f"('{_Q_NO_EXCLUSION}')",
 )
 QUANTIFICATION = _paper(
     "GC-FID", _Q_GCFID, page="Methods, 'Quantification of isoprenol using GC-FID'"
@@ -1074,8 +1286,14 @@ TOP3 = _paper(
     PROTEOME_MEASUREMENT_TYPE,
     _Q_TOP3,
     page="Methods, 'Proteomics analysis'",
-    note="what one stored abundance IS: the mean, over a sample's replicates, of the "
-    "released per-replicate Top3 signal",
+    note="what one stored abundance IS: the Top3 signal of ONE released replicate. The "
+    "'mean' of the tag and of the released column name Top_3pep_counts_mean is the mean "
+    "over the three most intense PEPTIDES, which is what this sentence defines, and no "
+    "replicate averaging is in it: the sheet releases one cell per (sample, protein, "
+    "replicate) and all 60 (sample, replicate) blocks carry 1,503 rows (measured on the "
+    "pinned workbook). A record is therefore one (sample, replicate) with "
+    "n_replicates = 1 per key and no SE, and the per-sample mean is a modeling-time "
+    "derivation over the three records of that sample",
 )
 DIANN_DATABASE = _paper(
     "P. putida KT2440 UniProt proteome + heterologous proteins + common contaminants",
@@ -1093,13 +1311,22 @@ PROTEOME_PANEL_BACKGROUND = _paper(
     f"'{_Q_SI_OTS_BACKGROUND}'; both mean IY1449b ΔPP_0815 carrying pIY670, since "
     "Supplementary Fig. 13d reports isoprenol titers for these strains",
 )
-PROTEOME_N_REPLICATES = _si(3, _Q_SI_TRIPLICATE, page="Supplementary Figure 13 caption")
+PROTEOME_N_REPLICATES = _si(
+    3,
+    _Q_SI_TRIPLICATE,
+    page="Supplementary Figure 13 caption",
+    note="the size of a replicate GROUP, not a record's n_replicates: every released "
+    "sample of this panel carries exactly 3 replicates (measured) and each one is its "
+    "own record with n_replicates = 1 per key",
+)
 PROTEOME_REPEATED_CULTURES = _si(
     3,
     _Q_SI_THREE_CULTURES,
     page="Supplementary Figure 13 caption",
     note="why PP_0977 and PP_1638 appear as several samples: each is an independent "
-    "culture of the same genotype and is kept as its own record, never averaged",
+    "culture of the same genotype, so its three replicates are three records of their "
+    "own and the released sample name rides each record's replicate_id, which is the "
+    "only thing that keeps two cultures of one genotype apart",
 )
 NO_EXCLUSION = _paper(
     True,
@@ -1970,24 +2197,95 @@ def isoprenol_product() -> Any:
     return resolved_compound("isoprenol")
 
 
-def titer_phenotype(
-    values: list[float], *, is_reference: bool
-) -> ProductTiterPhenotype:
-    """Mean titer over a strain's replicates with the sample SD, in ``ug/mL``.
+def _titer_yield_gaps(subject: str) -> list[ProvenanceGap]:
+    """The four typed absences every titer phenotype of this release carries."""
+    return [
+        ProvenanceGap(
+            field=field,
+            reason=ProvenanceGapReason.not_reported_by_primary,
+            note=(
+                "the campaign reports titer only; neither a yield on substrate nor a "
+                f"volumetric productivity is released for {subject}"
+            ),
+        )
+        for field in (
+            "product_yield",
+            "product_yield_unit",
+            "productivity",
+            "productivity_unit",
+        )
+    ]
+
+
+#: Why a record carries no uncertainty: it is ONE culture. The quote on
+#: :data:`UNCERTAINTY` is a statement about error bars, which are a property of the
+#: replicate group that each ``phenotype_reference`` stores, not of a single culture.
+_SINGLE_CULTURE_UNCERTAINTY_NOTE = (
+    "a record is ONE released culture, and one measurement has no dispersion of its "
+    "own, so neither an uncertainty number nor its type exists to store. The release's "
+    f"own dispersion statement is about a group of cultures ('{_Q_ERRORBARS}', "
+    f"'{_Q_TRIPLICATE}'), which is what each phenotype_reference carries with its "
+    "sample SD and its n; the per-group mean and SD over the records of one genotype "
+    "are a modeling-time derivation"
+)
+
+
+def titer_phenotype(titer_mg_per_l: float, replicate_id: str) -> ProductTiterPhenotype:
+    """One released culture's titer, verbatim, in ``ug/mL``.
 
     The released numbers are mg/L and 1 mg/L is exactly 1 ug/mL, so no arithmetic is
-    applied to a source value. ``product_yield`` and ``productivity`` are typed
-    absences: the campaign released neither.
+    applied to a source value: the stored number IS the cell. ``n_samples`` is 1 and
+    ``sample_unit`` is the biological replicate the Methods name, ``replicate_id`` is
+    the source's own label for that culture, and the two uncertainty fields are typed
+    absences (:data:`_SINGLE_CULTURE_UNCERTAINTY_NOTE`). ``product_yield`` and
+    ``productivity`` are typed absences too: the campaign released neither.
+    """
+    if not math.isfinite(titer_mg_per_l):
+        raise RuntimeError(f"non-finite released titer {titer_mg_per_l!r}")
+    if not replicate_id:
+        raise RuntimeError("a per-culture titer record needs the source's own label")
+    return ProductTiterPhenotype(
+        product=isoprenol_product(),
+        titer=titer_mg_per_l,
+        titer_unit=ConcentrationUnit.ug_per_ml,
+        titer_uncertainty=None,
+        titer_uncertainty_type=None,
+        n_samples=1,
+        sample_unit=SampleUnit.biological_replicate,
+        replicate_id=replicate_id,
+        quantification_method=str(QUANTIFICATION.value),
+        provenance_gaps=[
+            *(
+                ProvenanceGap(
+                    field=field,
+                    reason=ProvenanceGapReason.not_reported_by_primary,
+                    note=_SINGLE_CULTURE_UNCERTAINTY_NOTE,
+                )
+                for field in ("titer_uncertainty", "titer_uncertainty_type")
+            ),
+            *_titer_yield_gaps("any strain"),
+        ],
+    )
+
+
+def titer_reference_phenotype(values: Sequence[float]) -> ProductTiterPhenotype:
+    """The control group's mean titer with its sample SD, in ``ug/mL``.
+
+    This is the only titer phenotype of this release that states an AGGREGATE, which is
+    what a ``phenotype_reference`` is: the per-cycle or per-panel control group summarized
+    by its mean, its sample SD and its n, with ``replicate_id=None`` because no single
+    culture is what it reports. It needs at least two cultures, since a sample SD over
+    one is undefined.
     """
     n = len(values)
     if n < 2:
         raise RuntimeError(
-            f"a titer record needs at least two replicates to carry a sample SD, got {n}"
+            f"a control reference needs at least two cultures for a sample SD, got {n}"
         )
     mean = statistics.fmean(values)
     sd = statistics.stdev(values)
     if not math.isfinite(mean) or not math.isfinite(sd):
-        raise RuntimeError(f"non-finite titer statistics over {values!r}")
+        raise RuntimeError(f"non-finite titer statistics over {list(values)!r}")
     return ProductTiterPhenotype(
         product=isoprenol_product(),
         titer=mean,
@@ -1996,30 +2294,27 @@ def titer_phenotype(
         titer_uncertainty_type=UncertaintyType(UNCERTAINTY.value),
         n_samples=n,
         sample_unit=SampleUnit.biological_replicate,
+        replicate_id=None,
         quantification_method=str(QUANTIFICATION.value),
-        provenance_gaps=[
-            ProvenanceGap(
-                field=field,
-                reason=ProvenanceGapReason.not_reported_by_primary,
-                note=(
-                    "the campaign reports titer only; neither a yield on substrate nor "
-                    "a volumetric productivity is released for "
-                    + ("the per-cycle control" if is_reference else "any strain")
-                ),
-            )
-            for field in (
-                "product_yield",
-                "product_yield_unit",
-                "productivity",
-                "productivity_unit",
-            )
-        ],
+        provenance_gaps=_titer_yield_gaps("the control group"),
     )
 
 
 # --------------------------------------------------------------------------- #
 # Source Data readers
 # --------------------------------------------------------------------------- #
+#: Why a per-replicate abundance record carries no standard error: it IS one replicate.
+#: The release's own dispersion statement is about a sample's three cultures, which is
+#: what each ``phenotype_reference`` states.
+_SINGLE_REPLICATE_SE_NOTE = (
+    "a record is ONE released replicate, and one measurement has no dispersion of its "
+    "own, so there is no standard error to store. The release's dispersion statement is "
+    f"about a group of cultures ('{_Q_SI_TRIPLICATE}'), which is what each "
+    "phenotype_reference carries with SD / sqrt(n) and n; the per-sample mean and SE "
+    "over the records of one sample are a modeling-time derivation"
+)
+
+
 def _sheet_rows(path: str, sheet: str) -> tuple[tuple[Any, ...], list[tuple[Any, ...]]]:
     """``(header, rows)`` of one Source Data sheet, read-only."""
     book = openpyxl.load_workbook(path, read_only=True, data_only=True)
@@ -2929,7 +3224,12 @@ def _standard_names(genome: PPutidaKT2440Genome, tags: Iterable[str]) -> dict[st
 # does is prove the partition, in both directions, before a record is built.
 # --------------------------------------------------------------------------- #
 class PanelTiterGroup(BaseModel):
-    """One group of released cultures of a non-``Figure 4b`` panel: one titer record."""
+    """One group of released cultures of a non-``Figure 4b`` panel: one record EACH.
+
+    ``titers_mg_per_l`` and ``replicate_ids`` are parallel and in released order, so a
+    record is one ``(replicate_id, titer)`` pair of the group. The group itself survives
+    as the unit the cross-sheet proofs and the released means are stated over.
+    """
 
     sheet: str
     group: str
@@ -2937,9 +3237,29 @@ class PanelTiterGroup(BaseModel):
     knockdowns: tuple[str, ...] = ()
     native_copies: tuple[str, ...] = ()
     titers_mg_per_l: tuple[float, ...]
+    replicate_ids: tuple[str, ...]
     reference_key: str
     overexpression_environment: bool = False
     note: str | None = None
+
+    @model_validator(mode="after")
+    def _check_cultures(self) -> PanelTiterGroup:
+        """One label per released culture, and no label used twice in one group."""
+        if len(self.replicate_ids) != len(self.titers_mg_per_l):
+            raise ValueError(
+                f"{self.sheet} {self.group}: {len(self.replicate_ids)} replicate labels "
+                f"for {len(self.titers_mg_per_l)} released cultures"
+            )
+        if len(set(self.replicate_ids)) != len(self.replicate_ids):
+            raise ValueError(
+                f"{self.sheet} {self.group}: repeated replicate label in "
+                f"{self.replicate_ids}"
+            )
+        return self
+
+    def cultures(self) -> tuple[tuple[str, float], ...]:
+        """``(replicate_id, titer)`` per released culture, in released order."""
+        return tuple(zip(self.replicate_ids, self.titers_mg_per_l, strict=True))
 
 
 class PanelTiterReference(BaseModel):
@@ -3018,20 +3338,30 @@ def _assert_panel_partition(
 def _ko_panel_groups(
     rows: Sequence[KoPanelRow],
 ) -> tuple[list[PanelTiterGroup], list[PanelTiterReference], list[str]]:
-    """``Figure 6a``: one record per KO background, its Non-target arm the reference.
+    """``Figure 6a``: one record per Target CULTURE, its Non-target arm the reference.
 
     The design is the Results' own: "pairs of knockout (KO) strains harboring either a
     non-target sgRNA or the 'target' sgRNA previously used to downregulate the KO
     gene". So the Target arm is the KO plus a knockdown of the gene it deleted, and the
     Non-target arm is the same KO carrying a sgRNA that perturbs no gene, which is a
-    ``phenotype_reference`` rather than a record. One background, ``PP_0812-15``,
+    ``phenotype_reference`` rather than a record.
+
+    This sheet prints NO replicate column (its three columns are ``Strain``, ``Type``
+    and ``Titer``), so a culture's ``replicate_id`` is its POSITION among the rows the
+    sheet releases for that ``(background, arm)``, written
+    ``<background>/<arm> row <n>``. One background, ``PP_0812-15``,
     deletes four genes and its sgRNA is named only in the Results text
     (:data:`KO_MULTI_GENE_GUIDE`); a multi-gene background absent from that sourced map
     stops the build rather than getting a guessed guide.
     """
-    arms: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
+    arms: dict[str, dict[str, list[tuple[str, float]]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
     for row in rows:
-        arms[row.background][row.arm].append(row.titer_mg_per_l)
+        label = (
+            f"{row.background}/{row.arm} row {len(arms[row.background][row.arm]) + 1}"
+        )
+        arms[row.background][row.arm].append((label, row.titer_mg_per_l))
     guides = dict(KO_MULTI_GENE_GUIDE.value)
     records: list[PanelTiterGroup] = []
     references: list[PanelTiterReference] = []
@@ -3069,7 +3399,8 @@ def _ko_panel_groups(
                 group=f"{background}/{ARM_KO_TARGET}",
                 deletions=deletions,
                 knockdowns=(knockdown,),
-                titers_mg_per_l=tuple(target),
+                titers_mg_per_l=tuple(titer for _, titer in target),
+                replicate_ids=tuple(label for label, _ in target),
                 reference_key=key,
             )
         )
@@ -3078,11 +3409,11 @@ def _ko_panel_groups(
                 key=key,
                 sheets=(SHEET_KO_PANEL,),
                 group=f"{background}/{ARM_KO_NONTARGET}",
-                titers_mg_per_l=tuple(non_target),
+                titers_mg_per_l=tuple(titer for _, titer in non_target),
                 note=(
                     f"the Δ{background} background carrying a NON-targeting sgRNA, "
-                    "which perturbs no gene, so it is this record's reference rather "
-                    "than a record of its own"
+                    f"which perturbs no gene, so it is this record's reference rather "
+                    f"than a record of its own ({CONTROL_AS_RECORD})"
                 ),
             )
         )
@@ -3092,16 +3423,25 @@ def _ko_panel_groups(
 def _ko_array_groups(
     rows: Sequence[KoArrayRow], control_titers: Mapping[int, Sequence[float]]
 ) -> tuple[list[PanelTiterGroup], list[str]]:
-    """``Figure 6d``: the KO-only and CRISPRi-on-a-KO records, on a STORED reference.
+    """``Figure 6d``: one record per KO-only and CRISPRi-on-a-KO CULTURE.
 
     The sheet's own ``Control`` triplicate is measured to be three of the twelve DBTL6
     control cultures ``Figure 4b`` already releases, so these records point at the
     stored DBTL6 ``phenotype_reference`` (n = 12) rather than at a three-culture copy
-    of three of its members.
+    of three of its members, and those three cultures are stored nowhere twice.
+
+    This sheet DOES print a ``Replicate`` column, so a culture's ``replicate_id`` is
+    ``<Line Name>/<Replicate>``, both cells verbatim. The line name is kept because a
+    genotype can be released by two sheets: ``PP_0812-15_KO with PP_0815`` here and
+    ``PP_0812-15`` / ``Target`` in ``Figure 6a`` are the same deletion set with the same
+    knockdown, so the released group a culture belongs to must stay readable off the
+    record.
     """
-    groups: dict[tuple[str, str], list[float]] = defaultdict(list)
+    groups: dict[tuple[str, str], list[tuple[str, float]]] = defaultdict(list)
     for row in rows:
-        groups[(row.line_name, row.arm)].append(row.titer_mg_per_l)
+        groups[(row.line_name, row.arm)].append(
+            (f"{row.line_name}/{row.replicate}", row.titer_mg_per_l)
+        )
     control = groups.pop((KO_ARRAY_CONTROL_LINE, ARM_CRISPRI), None)
     if control is None:
         raise RuntimeError(
@@ -3109,7 +3449,7 @@ def _ko_array_groups(
             "row, so its reference cannot be matched to a stored cycle"
         )
     stored_cycle = set(control_titers[KO_ARRAY_CONTROL_CYCLE])
-    foreign = [value for value in control if value not in stored_cycle]
+    foreign = [value for _, value in control if value not in stored_cycle]
     if foreign:
         raise RuntimeError(
             f"{SHEET_KO_ARRAYS}'s control cultures {foreign} are not DBTL"
@@ -3145,7 +3485,8 @@ def _ko_array_groups(
                 group=f"{line}/{arm}",
                 deletions=deletions,
                 knockdowns=knockdowns,
-                titers_mg_per_l=tuple(values),
+                titers_mg_per_l=tuple(titer for _, titer in values),
+                replicate_ids=tuple(label for label, _ in values),
                 reference_key=f"stored_cycle:{KO_ARRAY_CONTROL_CYCLE}",
             )
         )
@@ -3170,21 +3511,29 @@ def _offtarget_groups(
     of six values, and each of the other four occurs in its own sheet and nowhere else
     in the 31-sheet workbook. Both captions state ``n = 3``, so neither triplicate is
     stored as the other, neither is dropped, and the five distinct cultures are not
-    pooled into an ``n = 5`` design no caption states: each sheet's released triplicate
-    is its own record and carries the disagreement on it.
+    pooled into a group no caption states: each sheet's released cultures are their own
+    records and both groups carry the disagreement on them.
+
+    This sheet prints a ``Replicate`` column, and its ``Sample`` column is what keeps
+    the REPEATED cultures of one genotype apart (``PP_0977_1``, ``PP_0977_2``,
+    ``PP_0977_3`` are three independent cultures of the same strain, per
+    :data:`PROTEOME_REPEATED_CULTURES`). A culture's ``replicate_id`` is therefore
+    ``<Sample>/<Replicate>``, both cells verbatim: the replicate cell alone would make
+    three records of one genotype indistinguishable.
     """
-    groups: dict[str, list[float]] = defaultdict(list)
+    groups: dict[str, list[tuple[str, float]]] = defaultdict(list)
     for row in rows:
-        groups[row.sample].append(row.titer_mg_per_l)
+        groups[row.sample].append((f"{row.sample}/{row.replicate}", row.titer_mg_per_l))
     reference_values = groups.pop(OFFTARGET_REFERENCE_SAMPLE, None)
     if reference_values is None:
         raise RuntimeError(
             f"{SHEET_OFFTARGET_TITER} has no {OFFTARGET_REFERENCE_SAMPLE!r} arm"
         )
-    if _ordered(reference_values) != _ordered(ko_reference.titers_mg_per_l):
+    reference_titers = [titer for _, titer in reference_values]
+    if _ordered(reference_titers) != _ordered(ko_reference.titers_mg_per_l):
         raise RuntimeError(
             f"{SHEET_OFFTARGET_TITER}'s {OFFTARGET_REFERENCE_SAMPLE} arm "
-            f"{_ordered(reference_values)} is not bit-identical to {SHEET_KO_PANEL}'s "
+            f"{_ordered(reference_titers)} is not bit-identical to {SHEET_KO_PANEL}'s "
             f"Δ{PROTEOME_BACKGROUND_DELETION} {ARM_KO_NONTARGET} arm "
             f"{_ordered(ko_reference.titers_mg_per_l)}; the deduplication this loader "
             "documents no longer holds and the two groups must be re-decided"
@@ -3202,18 +3551,19 @@ def _offtarget_groups(
     proofs = [
         f"{SHEET_OFFTARGET_TITER} {OFFTARGET_REFERENCE_SAMPLE} == {SHEET_KO_PANEL} "
         f"{PROTEOME_BACKGROUND_DELETION}/{ARM_KO_NONTARGET} bit for bit "
-        f"{_ordered(reference_values)}, stored once as one reference"
+        f"{_ordered(reference_titers)}, stored once as one reference"
     ]
     target_values = groups.get(OFFTARGET_TARGET_SAMPLE)
     if target_values is None:
         raise RuntimeError(
             f"{SHEET_OFFTARGET_TITER} has no {OFFTARGET_TARGET_SAMPLE!r} arm"
         )
-    overlap = sorted(set(target_values) & set(ko_target_arm))
+    target_titers = [titer for _, titer in target_values]
+    overlap = sorted(set(target_titers) & set(ko_target_arm))
     if len(overlap) != OFFTARGET_TARGET_SHARED_CULTURES:
         raise RuntimeError(
             f"{SHEET_OFFTARGET_TITER}'s {OFFTARGET_TARGET_SAMPLE} arm "
-            f"{_ordered(target_values)} and {SHEET_KO_PANEL}'s "
+            f"{_ordered(target_titers)} and {SHEET_KO_PANEL}'s "
             f"{PROTEOME_BACKGROUND_DELETION}/{ARM_KO_TARGET} arm "
             f"{_ordered(ko_target_arm)} share {len(overlap)} values, not the "
             f"{OFFTARGET_TARGET_SHARED_CULTURES} this loader documents; the "
@@ -3221,7 +3571,7 @@ def _offtarget_groups(
         )
     disagreement = (
         f"{SHEET_KO_PANEL} exports {_ordered(ko_target_arm)} for this strain and "
-        f"{SHEET_OFFTARGET_TITER} exports {_ordered(target_values)}: two triplicates "
+        f"{SHEET_OFFTARGET_TITER} exports {_ordered(target_titers)}: two triplicates "
         f"sharing exactly the one value {overlap[0]}, with each of the other four "
         "occurring in its own sheet and nowhere else in the workbook. Both captions "
         "state n = 3, so neither triplicate is stored as the other, neither is "
@@ -3257,7 +3607,8 @@ def _offtarget_groups(
                 group=sample,
                 deletions=(PROTEOME_BACKGROUND_DELETION,),
                 knockdowns=(tag,),
-                titers_mg_per_l=tuple(values),
+                titers_mg_per_l=tuple(titer for _, titer in values),
+                replicate_ids=tuple(label for label, _ in values),
                 reference_key=reference.key,
                 note=note,
             )
@@ -3286,10 +3637,18 @@ def _overexpression_titer_groups(
     no unit, and the uninduced arm is the one the paper's own claim rests on:
     "Uninduced expression, however, showed a ~10% increase in titer compared to the RFP
     control".
+
+    This sheet prints a ``Replicate`` column, so a culture's ``replicate_id`` is
+    ``<Strain>/<Replicate>``, both cells verbatim. The ``Control`` group
+    is the RFP vector control and stays a reference rather than becoming records
+    (:data:`CONTROL_AS_RECORD`): the sheet releases it as six uninduced cultures in two
+    blocks, which is why its replicate cells repeat.
     """
-    groups: dict[tuple[str, float], list[float]] = defaultdict(list)
+    groups: dict[tuple[str, float], list[tuple[str, float]]] = defaultdict(list)
     for row in rows:
-        groups[(row.strain, row.inducer_level)].append(row.titer_mg_per_l)
+        groups[(row.strain, row.inducer_level)].append(
+            (f"{row.strain}/{row.replicate}", row.titer_mg_per_l)
+        )
     levels = {level for _, level in groups}
     expected = {OVEREXPRESSION_UNINDUCED_LEVEL, *OVEREXPRESSION_INDUCED_LEVELS}
     if levels != expected:
@@ -3310,7 +3669,7 @@ def _overexpression_titer_groups(
         key="overexpression_control",
         sheets=(SHEET_OVEREXPRESSION_TITER,),
         group=f"{OVEREXPRESSION_CONTROL_STRAIN}/{OVEREXPRESSION_UNINDUCED_LEVEL:g}",
-        titers_mg_per_l=tuple(control),
+        titers_mg_per_l=tuple(titer for _, titer in control),
         note=(
             f"the RFP vector control of '{_Q_OVEREXPRESSION_CULTURE}', carrying "
             f"{_Q_RFP_CONTROL_PLASMID} (Supplementary Data 3, pTE519 / JBx_266188). "
@@ -3325,14 +3684,15 @@ def _overexpression_titer_groups(
         if label == OVEREXPRESSION_CONTROL_STRAIN:
             continue
         if level != OVEREXPRESSION_UNINDUCED_LEVEL:
-            dropped.append(f"{label}/{level:g}")
+            dropped.extend(f"{rep} at inducer level {level:g}" for rep, _ in values)
             continue
         records.append(
             PanelTiterGroup(
                 sheet=SHEET_OVEREXPRESSION_TITER,
                 group=f"{label}/{level:g}",
                 native_copies=tuple(operons[by_label[label]]),
-                titers_mg_per_l=tuple(values),
+                titers_mg_per_l=tuple(titer for _, titer in values),
+                replicate_ids=tuple(rep for rep, _ in values),
                 reference_key=reference.key,
                 overexpression_environment=True,
                 note=_Q_SI_FIG12_UNINDUCED,
@@ -3341,16 +3701,19 @@ def _overexpression_titer_groups(
     drops = [
         DropRule(
             rule="inducer_concentration_has_no_released_unit",
-            scope="strain",
+            scope="culture",
             description=str(INDUCER_UNIT_GAP.note),
             n_records=len(dropped),
             items=sorted(dropped),
         )
     ]
     proofs = [
-        f"{SHEET_OVEREXPRESSION_TITER}: {len(records)} uninduced records kept, "
-        f"{len(dropped)} induced strain-level groups dropped because the inducer's "
-        "unit is not released anywhere in the mirror"
+        f"{SHEET_OVEREXPRESSION_TITER}: "
+        f"{sum(len(record.titers_mg_per_l) for record in records)} uninduced cultures "
+        f"kept as records, {len(dropped)} induced cultures dropped because the "
+        f"inducer's unit is not released anywhere in the mirror, and "
+        f"{len(reference.titers_mg_per_l)} uninduced Control cultures are the "
+        "reference"
     ]
     return records, reference, proofs, drops
 
@@ -3430,7 +3793,7 @@ def assert_overexpression_operons(
             )
         sheet_label = OVEREXPRESSION_SHEET_LABELS[label]
         designations = re.findall(r"PP_\d{4}(?:-\d{2})?", sheet_label)
-        labelled = {
+        labeled = {
             tag
             for designation in designations
             for tag in expand_locus_designation(designation)
@@ -3438,10 +3801,10 @@ def assert_overexpression_operons(
         proofs.append(
             f"{label}: its samples quantify exactly {sorted(operon)}, the operon the "
             f"Methods name; the sheet labels it {sheet_label!r}, which names "
-            f"{sorted(labelled)} and so "
+            f"{sorted(labeled)} and so "
             + (
                 "agrees"
-                if labelled == set(operon)
+                if labeled == set(operon)
                 else "does NOT name those loci: it is the transposition the Methods, "
                 "the Results, the Supplementary Fig. 12 caption body, the "
                 "Supplementary Fig. 10 caption and Supplementary Data 3 all correct"
@@ -3495,14 +3858,14 @@ def overexpression_proteome_samples(
                 f"{sorted(strains[control])}, not {OVEREXPRESSION_CONTROL_STRAIN!r}"
             )
         pairs[sample] = control
-    if len(pairs) != EXPECTED_OVEREXPRESSION_PROTEOME_RECORDS:
+    if len(pairs) != EXPECTED_OVEREXPRESSION_PROTEOME_SAMPLES:
         raise RuntimeError(
-            f"{SHEET_OVEREXPRESSION_PROTEOME} yields {len(pairs)} uninduced records; "
+            f"{SHEET_OVEREXPRESSION_PROTEOME} yields {len(pairs)} uninduced samples; "
             f"this loader was written against "
-            f"{EXPECTED_OVEREXPRESSION_PROTEOME_RECORDS}"
+            f"{EXPECTED_OVEREXPRESSION_PROTEOME_SAMPLES}"
         )
     proofs = [
-        f"{SHEET_OVEREXPRESSION_PROTEOME}: {len(pairs)} uninduced records "
+        f"{SHEET_OVEREXPRESSION_PROTEOME}: {len(pairs)} uninduced samples "
         f"({', '.join(sorted(pairs))}) each against its own Control sample; "
         f"{len(dropped)} induced samples dropped because the inducer's unit is not "
         "released anywhere in the mirror"
@@ -3546,6 +3909,36 @@ def _overexpression_cells(
             )
         seen.add(identity)
         cells[stored_by_key[row.protein]].append(row.top3_signal)
+    if not cells:
+        raise RuntimeError(
+            f"{SHEET_OVEREXPRESSION_PROTEOME} has no rows for sample {sample!r}"
+        )
+    return dict(cells)
+
+
+def _overexpression_replicate_cells(
+    rows: Sequence[OverexpressionProteomeRow],
+    sample: str,
+    stored_by_key: Mapping[str, str],
+) -> dict[str, dict[str, float]]:
+    """``{replicate: {reconciled locus: its Top3 signal}}`` for one released sample.
+
+    The per-replicate shape of :func:`_overexpression_cells`, which is what a record is
+    now; the aggregate that function returns is what the sample's reference states. A
+    repeated ``(sample, protein, replicate)`` raises: one released cell is one record's
+    value, so a doubled one would store a measurement twice.
+    """
+    cells: dict[str, dict[str, float]] = defaultdict(dict)
+    for row in rows:
+        if row.sample != sample:
+            continue
+        locus = stored_by_key[row.protein]
+        if locus in cells[row.replicate]:
+            raise RuntimeError(
+                f"{SHEET_OVEREXPRESSION_PROTEOME} {sample} {row.replicate} {locus} "
+                "appears twice; one released cell is one record's value"
+            )
+        cells[row.replicate][locus] = row.top3_signal
     if not cells:
         raise RuntimeError(
             f"{SHEET_OVEREXPRESSION_PROTEOME} has no rows for sample {sample!r}"
@@ -3704,7 +4097,7 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Build one titer record per (construct, cycle) strain; write LMDB."""
+        """Build one titer record per released non-control culture; write LMDB."""
         verify_raw_files(
             self.raw_dir,
             {
@@ -3731,8 +4124,30 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
         modal, _ = replicate_counts.most_common(1)[0]
         if modal != int(N_REPLICATES.value):
             raise RuntimeError(
-                f"the modal replicate count is {modal}, not the stated "
+                f"the modal replicate-group size is {modal}, not the stated "
                 f"{N_REPLICATES.value}; the replicate design changed"
+            )
+        six = replicate_counts.get(2 * int(N_REPLICATES.value), 0)
+        if (
+            set(replicate_counts)
+            != {int(N_REPLICATES.value), 2 * int(N_REPLICATES.value)}
+            or six != EXPECTED_SIX_REPLICATE_STRAIN_CYCLES
+        ):
+            raise RuntimeError(
+                f"{SHEET_TITER} groups into sizes {dict(sorted(replicate_counts.items()))}; "
+                f"the pinned workbook holds {EXPECTED_SIX_REPLICATE_STRAIN_CYCLES} "
+                "six-culture strain-cycles and triplicates for the rest"
+            )
+        cultures = sum(len(group) for group in strains.values())
+        if cultures != EXPECTED_CRISPRI_TITER_RECORDS:
+            raise RuntimeError(
+                f"{SHEET_TITER} releases {cultures} non-control cultures; the "
+                f"sha256-pinned workbook holds {EXPECTED_CRISPRI_TITER_RECORDS}"
+            )
+        if len(strains) != EXPECTED_CRISPRI_STRAIN_CYCLES:
+            raise RuntimeError(
+                f"{SHEET_TITER}'s cultures group into {len(strains)} strain-cycles; the "
+                f"sha256-pinned workbook holds {EXPECTED_CRISPRI_STRAIN_CYCLES}"
             )
 
         plan = build_panel_titer_plan(
@@ -3740,10 +4155,12 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
             stored_titers={row.titer_mg_per_l for row in rows},
             control_titers=controls,
         )
-        if len(plan.records) != EXPECTED_PANEL_TITER_RECORDS:
+        panel_cultures = sum(len(record.titers_mg_per_l) for record in plan.records)
+        if panel_cultures != EXPECTED_PANEL_TITER_RECORDS:
             raise RuntimeError(
-                f"the four Source Data panels build {len(plan.records)} records; the "
-                f"sha256-pinned workbook holds {EXPECTED_PANEL_TITER_RECORDS}"
+                f"the four Source Data panels release {panel_cultures} non-control "
+                f"cultures; the sha256-pinned workbook holds "
+                f"{EXPECTED_PANEL_TITER_RECORDS}"
             )
 
         tags = sorted(
@@ -3776,7 +4193,7 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
                 dataset_name=self.name,
                 genome_reference=reference_genome,
                 environment_reference=environment.model_copy(),
-                phenotype_reference=titer_phenotype(values, is_reference=True),
+                phenotype_reference=titer_reference_phenotype(values),
             )
             for cycle, values in sorted(controls.items())
         }
@@ -3799,8 +4216,8 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
                     if panel_reference.key == "overexpression_control"
                     else environment.model_copy()
                 ),
-                phenotype_reference=titer_phenotype(
-                    list(panel_reference.titers_mg_per_l), is_reference=True
+                phenotype_reference=titer_reference_phenotype(
+                    panel_reference.titers_mg_per_l
                 ),
             )
         pub = publication()
@@ -3819,71 +4236,78 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
                     crispri_perturbation(stored_by_tag[tag], common[stored_by_tag[tag]])
                     for tag in tag_list
                 ]
-                experiment = ProductTiterExperiment(
-                    dataset_name=self.name,
-                    genotype=Genotype(perturbations=[*pathway, *perturbations]),
-                    environment=environment,
-                    phenotype=titer_phenotype(
-                        [row.titer_mg_per_l for row in group], is_reference=False
-                    ),
-                )
-                txn.put(
-                    f"{idx}".encode(),
-                    self._intern_record(experiment, references[cycle], pub, itxn),
-                )
-                filter_rows.append(
-                    {
-                        "construct": construct,
-                        "cycle": cycle,
-                        "n_replicates": len(group),
-                        "n_targets": len(tag_list),
-                        "non_targeting_tokens": ";".join(extras),
-                        "passed_crispri_filter": group[0].passed_filter,
-                    }
-                )
-                idx += 1
+                genotype = Genotype(perturbations=[*pathway, *perturbations])
+                for row in sorted(group, key=lambda row: row.replicate):
+                    experiment = ProductTiterExperiment(
+                        dataset_name=self.name,
+                        genotype=genotype,
+                        environment=environment,
+                        phenotype=titer_phenotype(
+                            row.titer_mg_per_l, f"{construct}-R{row.replicate}"
+                        ),
+                    )
+                    txn.put(
+                        f"{idx}".encode(),
+                        self._intern_record(experiment, references[cycle], pub, itxn),
+                    )
+                    filter_rows.append(
+                        {
+                            "sheet": SHEET_TITER,
+                            "construct": construct,
+                            "cycle": cycle,
+                            "replicate_id": f"{construct}-R{row.replicate}",
+                            "n_cultures_in_group": len(group),
+                            "n_targets": len(tag_list),
+                            "non_targeting_tokens": ";".join(extras),
+                            "passed_crispri_filter": row.passed_filter,
+                        }
+                    )
+                    idx += 1
             for record in tqdm(plan.records, desc="carruthers2025-titer-panels"):
-                experiment = ProductTiterExperiment(
-                    dataset_name=self.name,
-                    genotype=Genotype(
-                        perturbations=[
-                            *pathway,
-                            *(
-                                deletion_perturbation(
-                                    stored_by_tag[tag], common[stored_by_tag[tag]]
-                                )
-                                for tag in record.deletions
-                            ),
-                            *(
-                                native_copy_perturbation(
-                                    stored_by_tag[tag], common[stored_by_tag[tag]]
-                                )
-                                for tag in record.native_copies
-                            ),
-                            *(
-                                crispri_perturbation(
-                                    stored_by_tag[tag], common[stored_by_tag[tag]]
-                                )
-                                for tag in record.knockdowns
-                            ),
-                        ]
-                    ),
-                    environment=(
-                        overexpression
-                        if record.overexpression_environment
-                        else environment
-                    ),
-                    phenotype=titer_phenotype(
-                        list(record.titers_mg_per_l), is_reference=False
-                    ),
+                genotype = Genotype(
+                    perturbations=[
+                        *pathway,
+                        *(
+                            deletion_perturbation(
+                                stored_by_tag[tag], common[stored_by_tag[tag]]
+                            )
+                            for tag in record.deletions
+                        ),
+                        *(
+                            native_copy_perturbation(
+                                stored_by_tag[tag], common[stored_by_tag[tag]]
+                            )
+                            for tag in record.native_copies
+                        ),
+                        *(
+                            crispri_perturbation(
+                                stored_by_tag[tag], common[stored_by_tag[tag]]
+                            )
+                            for tag in record.knockdowns
+                        ),
+                    ]
                 )
-                txn.put(
-                    f"{idx}".encode(),
-                    self._intern_record(
-                        experiment, panel_references[record.reference_key], pub, itxn
-                    ),
-                )
-                idx += 1
+                for replicate_id, titer in record.cultures():
+                    experiment = ProductTiterExperiment(
+                        dataset_name=self.name,
+                        genotype=genotype,
+                        environment=(
+                            overexpression
+                            if record.overexpression_environment
+                            else environment
+                        ),
+                        phenotype=titer_phenotype(titer, replicate_id),
+                    )
+                    txn.put(
+                        f"{idx}".encode(),
+                        self._intern_record(
+                            experiment,
+                            panel_references[record.reference_key],
+                            pub,
+                            itxn,
+                        ),
+                    )
+                    idx += 1
         env.close()
         interned_env.close()
 
@@ -3909,7 +4333,8 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
                 {
                     "sheet": record.sheet,
                     "group": record.group,
-                    "n_replicates": len(record.titers_mg_per_l),
+                    "n_cultures": len(record.titers_mg_per_l),
+                    "replicate_ids": ";".join(record.replicate_ids),
                     "deletions": ";".join(record.deletions),
                     "knockdowns": ";".join(record.knockdowns),
                     "native_copies": ";".join(record.native_copies),
@@ -3922,48 +4347,72 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
         Path(osp.join(self.preprocess_dir, "panel_proofs.json")).write_text(
             json.dumps(plan.proofs, indent=2)
         )
+        panel_control_cultures = sum(
+            len(reference.titers_mg_per_l) for reference in plan.references
+        )
         _write_accounting(
             BuildAccounting(
                 dataset=self.name,
                 source_rows=len(rows),
                 control_rows=sum(len(v) for v in controls.values()),
-                candidate_records=len(strains)
-                + len(plan.records)
+                candidate_records=cultures
+                + panel_cultures
                 + sum(rule.n_records for rule in plan.drops),
                 kept_records=idx,
                 dropped_records=sum(rule.n_records for rule in plan.drops),
                 rules=plan.drops,
                 reconciliation=report,
                 notes=[
+                    "ONE RECORD PER RELEASED CULTURE: the record unit is the culture, "
+                    f"not the strain. {cultures} non-control {SHEET_TITER} cultures "
+                    f"group into {len(strains)} (construct, DBTL cycle) strain-cycles "
+                    f"({dict(sorted(replicate_counts.items()))} cultures per group), "
+                    "and each culture's own titer is stored verbatim with "
+                    "n_samples = 1 and the replicate_id the release prints for it. The "
+                    "per-group mean and sample SD are a modeling-time derivation; "
+                    "before 2026-11-17 this store held 502 records, 465 campaign "
+                    "strain-cycle means and 37 panel group means",
                     "nothing is dropped from the CRISPRi campaign: every non-control "
                     f"{SHEET_TITER} culture is in a record, and the paper is explicit "
                     "that its CRISPRi filter shaped only model training "
                     f"({_Q_NO_EXCLUSION})",
-                    "the control cultures are the per-cycle phenotype_reference, not "
-                    f"records ({_Q_CONTROL_N})",
-                    "the authors' per-strain pass/fail CRISPRi filter is in "
-                    "preprocess/pass_filter.csv; it reports whether a designed "
-                    "knockdown was realized, which no schema axis can type today",
-                    f"{len(plan.records)} further records come from {SHEET_KO_PANEL}, "
+                    f"{sum(len(v) for v in controls.values())} control cultures are the "
+                    f"per-cycle phenotype_reference ({_Q_CONTROL_N}) and "
+                    f"{panel_control_cultures} more are the panels' own references; "
+                    f"{CONTROL_AS_RECORD}",
+                    "the authors' pass/fail CRISPRi filter is released PER CULTURE and "
+                    "is in preprocess/pass_filter.csv keyed by (construct, cycle, "
+                    "replicate_id); measured on the pinned workbook it is constant "
+                    f"within every strain-cycle group. {PASS_FILTER.note}",
+                    f"{panel_cultures} further records come from {SHEET_KO_PANEL}, "
                     f"{SHEET_KO_ARRAYS}, {SHEET_OFFTARGET_TITER} and "
                     f"{SHEET_OVEREXPRESSION_TITER}; their cross-sheet proofs are in "
-                    "preprocess/panel_proofs.json and their genotypes in "
-                    "preprocess/source_data_panels.csv",
+                    "preprocess/panel_proofs.json and their genotypes and replicate "
+                    "labels in preprocess/source_data_panels.csv",
+                    "where each replicate_id comes from: the Line Name's own "
+                    f"<construct>-R<n> for {SHEET_TITER}, the released Replicate cell "
+                    f"for {SHEET_KO_ARRAYS} and {SHEET_OVEREXPRESSION_TITER}, "
+                    f"<Sample>/<Replicate> for {SHEET_OFFTARGET_TITER} (whose Sample "
+                    "column is the only thing that keeps the repeated cultures of one "
+                    f"genotype apart) and the released row position for {SHEET_KO_PANEL}, "
+                    "which prints no replicate column",
                     *plan.proofs,
                 ],
             ),
             self.preprocess_dir,
         )
         log.info(
-            "Carruthers2025 titer: %d records = %d (construct, cycle) campaign strains "
-            "from %d cultures (%d control) + %d from the four Source Data panels; "
-            "replicate histogram %s; %d host loci",
+            "Carruthers2025 titer: %d records = %d %s campaign cultures over %d "
+            "(construct, cycle) strain-cycles (%d control cultures held as references) "
+            "+ %d from the four Source Data panels; replicate-group histogram %s; "
+            "%d host loci",
             idx,
+            cultures,
+            SHEET_TITER,
             len(strains),
-            len(rows),
             sum(len(v) for v in controls.values()),
-            len(plan.records),
-            dict(sorted(Counter(len(g) for g in strains.values()).items())),
+            panel_cultures,
+            dict(sorted(replicate_counts.items())),
             len(tags),
         )
 
@@ -4117,14 +4566,41 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
         return self.pputida_genome
 
     @staticmethod
+    def _replicate_phenotype(
+        levels: Mapping[str, float], replicate_id: str
+    ) -> ProteinAbundancePhenotype:
+        """One released (sample, replicate)'s Top3 profile, verbatim.
+
+        ``n_replicates`` is 1 per key and ``protein_abundance_se`` is ``None`` with a
+        typed gap, because one measurement has no dispersion. A released 0 is kept
+        verbatim; nothing is imputed.
+        """
+        return ProteinAbundancePhenotype(
+            protein_abundance=dict(levels),
+            protein_abundance_se=None,
+            n_replicates=dict.fromkeys(levels, 1),
+            measurement_type=str(TOP3.value),
+            replicate_id=replicate_id,
+            provenance_gaps=[
+                ProvenanceGap(
+                    field="protein_abundance_se",
+                    reason=ProvenanceGapReason.not_reported_by_primary,
+                    note=_SINGLE_REPLICATE_SE_NOTE,
+                )
+            ],
+        )
+
+    @staticmethod
     def _aggregate(
         cells: dict[str, list[float]], sample: str
     ) -> tuple[dict[str, float], dict[str, float], dict[str, int]]:
-        """Per-protein mean, SE and replicate count for one sample.
+        """Per-protein mean, SE and replicate count over one sample's replicates.
 
-        A released 0 is the number the source reports for a protein with no Top3
-        peptide signal in that replicate; it is kept, not imputed and not dropped, so
-        ``n_replicates`` is the replicate count the sample actually has.
+        This is the AGGREGATE a ``phenotype_reference`` states, not a record: a record
+        is one (sample, replicate). A released 0 is the number the source reports for a
+        protein with no Top3 peptide signal in that replicate; it is kept, not imputed
+        and not dropped, so ``n_replicates`` is the replicate count the sample actually
+        has.
         """
         abundance: dict[str, float] = {}
         se: dict[str, float] = {}
@@ -4171,7 +4647,7 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Build one protein-abundance record per released proteome sample; write LMDB."""
+        """Build one record per released (sample, replicate); write LMDB."""
         verify_raw_files(self.raw_dir, {SOURCE_DATA_FILENAME: SOURCE_DATA_SHA256})
         rows = read_proteome_rows(osp.join(self.raw_dir, SOURCE_DATA_FILENAME))
         genome = self._genome()
@@ -4214,8 +4690,8 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
         if not kept_keys:
             raise RuntimeError(f"{self.name}: every protein key was dropped")
 
-        cells: dict[str, dict[str, list[float]]] = defaultdict(
-            lambda: defaultdict(list)
+        per_replicate: dict[str, dict[str, dict[str, float]]] = defaultdict(
+            lambda: defaultdict(dict)
         )
         seen: set[tuple[str, str, str]] = set()
         for row in rows:
@@ -4224,10 +4700,26 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
             identity = (row.sample, row.protein, row.replicate)
             if identity in seen:
                 raise RuntimeError(
-                    f"{identity} appears twice; a repeated replicate would shrink the SE"
+                    f"{identity} appears twice; one (sample, protein, replicate) is one "
+                    "released cell and one record's value"
                 )
             seen.add(identity)
-            cells[row.sample][stored_by_key[row.protein]].append(row.top3_signal)
+            per_replicate[row.sample][row.replicate][stored_by_key[row.protein]] = (
+                row.top3_signal
+            )
+        cells: dict[str, dict[str, list[float]]] = {
+            sample: {
+                locus: [
+                    replicates[replicate][locus]
+                    for replicate in sorted(replicates)
+                    if locus in replicates[replicate]
+                ]
+                for locus in sorted(
+                    {locus for levels in replicates.values() for locus in levels}
+                )
+            }
+            for sample, replicates in per_replicate.items()
+        }
 
         if PROTEOME_REFERENCE_SAMPLE not in cells:
             raise RuntimeError(
@@ -4266,6 +4758,7 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
                 protein_abundance_se=ref_se,
                 n_replicates=ref_n,
                 measurement_type=str(TOP3.value),
+                replicate_id=None,
             ),
         )
         pub = publication()
@@ -4278,33 +4771,30 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
         idx = 0
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for sample in tqdm(samples, desc="carruthers2025-proteome"):
-                abundance, se, n_reps = self._aggregate(cells[sample], sample)
-                experiment = ProteinAbundanceExperiment(
-                    dataset_name=self.name,
-                    genotype=self._genotype(
-                        sample, pathway, background_deletion, common
-                    ),
-                    environment=environment,
-                    phenotype=ProteinAbundancePhenotype(
-                        protein_abundance=abundance,
-                        protein_abundance_se=se,
-                        n_replicates=n_reps,
-                        measurement_type=str(TOP3.value),
-                    ),
-                )
-                txn.put(
-                    f"{idx}".encode(),
-                    self._intern_record(experiment, reference, pub, itxn),
-                )
-                sample_rows.append(
-                    {
-                        "sheet": SHEET_PROTEOME,
-                        "sample": sample,
-                        "n_proteins": len(abundance),
-                        "n_replicates": max(n_reps.values()),
-                    }
-                )
-                idx += 1
+                genotype = self._genotype(sample, pathway, background_deletion, common)
+                for replicate in sorted(per_replicate[sample]):
+                    levels = per_replicate[sample][replicate]
+                    experiment = ProteinAbundanceExperiment(
+                        dataset_name=self.name,
+                        genotype=genotype,
+                        environment=environment,
+                        phenotype=self._replicate_phenotype(
+                            levels, f"{sample}/{replicate}"
+                        ),
+                    )
+                    txn.put(
+                        f"{idx}".encode(),
+                        self._intern_record(experiment, reference, pub, itxn),
+                    )
+                    sample_rows.append(
+                        {
+                            "sheet": SHEET_PROTEOME,
+                            "sample": sample,
+                            "replicate_id": f"{sample}/{replicate}",
+                            "n_proteins": len(levels),
+                        }
+                    )
+                    idx += 1
             operons = dict(OVEREXPRESSION_OPERON_SOURCE.value)
             overexpression = overexpression_environment()
             for sample, control in tqdm(
@@ -4312,61 +4802,57 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
                 desc="carruthers2025-proteome-overexpression",
             ):
                 label = str(OVEREXPRESSION_SAMPLE_RE.match(sample).group("label"))  # type: ignore[union-attr]
-                abundance, se, n_reps = self._aggregate(
-                    _overexpression_cells(overexpression_rows, sample, stored_by_key),
-                    sample,
-                )
                 control_abundance, control_se, control_n = self._aggregate(
                     _overexpression_cells(overexpression_rows, control, stored_by_key),
                     control,
                 )
-                experiment = ProteinAbundanceExperiment(
-                    dataset_name=self.name,
-                    genotype=Genotype(
-                        perturbations=[
-                            *pathway,
-                            *(
-                                native_copy_perturbation(tag, common.get(tag, tag))
-                                for tag in operons[label]
-                            ),
-                        ]
-                    ),
-                    environment=overexpression,
-                    phenotype=ProteinAbundancePhenotype(
-                        protein_abundance=abundance,
-                        protein_abundance_se=se,
-                        n_replicates=n_reps,
-                        measurement_type=str(TOP3.value),
-                    ),
-                )
-                txn.put(
-                    f"{idx}".encode(),
-                    self._intern_record(
-                        experiment,
-                        ProteinAbundanceExperimentReference(
-                            dataset_name=self.name,
-                            genome_reference=reference_genome,
-                            environment_reference=overexpression.model_copy(),
-                            phenotype_reference=ProteinAbundancePhenotype(
-                                protein_abundance=control_abundance,
-                                protein_abundance_se=control_se,
-                                n_replicates=control_n,
-                                measurement_type=str(TOP3.value),
-                            ),
+                genotype = Genotype(
+                    perturbations=[
+                        *pathway,
+                        *(
+                            native_copy_perturbation(tag, common.get(tag, tag))
+                            for tag in operons[label]
                         ),
-                        pub,
-                        itxn,
+                    ]
+                )
+                control_reference = ProteinAbundanceExperimentReference(
+                    dataset_name=self.name,
+                    genome_reference=reference_genome,
+                    environment_reference=overexpression.model_copy(),
+                    phenotype_reference=ProteinAbundancePhenotype(
+                        protein_abundance=control_abundance,
+                        protein_abundance_se=control_se,
+                        n_replicates=control_n,
+                        measurement_type=str(TOP3.value),
+                        replicate_id=None,
                     ),
                 )
-                sample_rows.append(
-                    {
-                        "sheet": SHEET_OVEREXPRESSION_PROTEOME,
-                        "sample": sample,
-                        "n_proteins": len(abundance),
-                        "n_replicates": max(n_reps.values()),
-                    }
+                replicates = _overexpression_replicate_cells(
+                    overexpression_rows, sample, stored_by_key
                 )
-                idx += 1
+                for replicate in sorted(replicates):
+                    levels = replicates[replicate]
+                    experiment = ProteinAbundanceExperiment(
+                        dataset_name=self.name,
+                        genotype=genotype,
+                        environment=overexpression,
+                        phenotype=self._replicate_phenotype(
+                            levels, f"{sample}/{replicate}"
+                        ),
+                    )
+                    txn.put(
+                        f"{idx}".encode(),
+                        self._intern_record(experiment, control_reference, pub, itxn),
+                    )
+                    sample_rows.append(
+                        {
+                            "sheet": SHEET_OVEREXPRESSION_PROTEOME,
+                            "sample": sample,
+                            "replicate_id": f"{sample}/{replicate}",
+                            "n_proteins": len(levels),
+                        }
+                    )
+                    idx += 1
         env.close()
         interned_env.close()
 
@@ -4392,18 +4878,35 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
                 for key in dropped_keys
             ]
         ).to_csv(osp.join(self.preprocess_dir, "dropped_protein_keys.csv"), index=False)
+        induced_samples = _overexpression_induced_samples(overexpression_rows)
+        dropped_induced_cultures = sum(
+            len(
+                _overexpression_replicate_cells(
+                    overexpression_rows, sample, stored_by_key
+                )
+            )
+            for sample in induced_samples
+        )
+        panel_cultures = sum(len(per_replicate[sample]) for sample in samples)
+        overexpression_cultures = idx - panel_cultures
+        control_cultures = len(per_replicate[PROTEOME_REFERENCE_SAMPLE]) + sum(
+            len(
+                _overexpression_replicate_cells(
+                    overexpression_rows, control, stored_by_key
+                )
+            )
+            for control in sorted(set(overexpression_pairs.values()))
+        )
         _write_accounting(
             BuildAccounting(
                 dataset=self.name,
                 source_rows=len(rows) + len(overexpression_rows),
-                control_rows=1 + len(set(overexpression_pairs.values())),
-                candidate_records=len(samples)
-                + len(overexpression_pairs)
-                + len(_overexpression_induced_samples(overexpression_rows)),
+                control_rows=control_cultures,
+                candidate_records=panel_cultures
+                + overexpression_cultures
+                + dropped_induced_cultures,
                 kept_records=idx,
-                dropped_records=len(
-                    _overexpression_induced_samples(overexpression_rows)
-                ),
+                dropped_records=dropped_induced_cultures,
                 rules=[
                     DropRule(
                         rule="protein_key_is_not_a_locus_of_the_pinned_assembly",
@@ -4432,32 +4935,55 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
                     ),
                     DropRule(
                         rule="inducer_concentration_has_no_released_unit",
-                        scope="strain",
+                        scope="culture",
                         description=str(INDUCER_UNIT_GAP.note),
-                        n_records=len(
-                            _overexpression_induced_samples(overexpression_rows)
-                        ),
-                        items=_overexpression_induced_samples(overexpression_rows),
+                        n_records=dropped_induced_cultures,
+                        items=[
+                            f"{sample}/{replicate}"
+                            for sample in _overexpression_induced_samples(
+                                overexpression_rows
+                            )
+                            for replicate in sorted(
+                                _overexpression_replicate_cells(
+                                    overexpression_rows, sample, stored_by_key
+                                )
+                            )
+                        ],
                     ),
                 ],
                 reconciliation=report,
                 notes=[
-                    f"no SAMPLE is dropped; {len(dropped_keys)} of {len(keys)} protein "
-                    f"KEYS are, leaving {len(kept_keys)} in every record's abundance map",
+                    "ONE RECORD PER RELEASED (SAMPLE, REPLICATE): the record unit is "
+                    f"the replicate, not the sample. {len(samples)} record samples x "
+                    f"{int(PROTEOME_N_REPLICATES.value)} replicates = {panel_cultures} "
+                    f"records from {SHEET_PROTEOME} and {overexpression_cultures} from "
+                    f"{SHEET_OVEREXPRESSION_PROTEOME}. Each record stores that "
+                    "replicate's own released Top3 value with n_replicates = 1 per key "
+                    "and no SE; the per-sample mean and SD / sqrt(n) are a "
+                    "modeling-time derivation. Before 2026-11-17 this store held 21 "
+                    "per-sample means over the same 63 released sample-replicates",
+                    f"no SAMPLE and no REPLICATE is dropped; {len(dropped_keys)} of "
+                    f"{len(keys)} protein KEYS are, leaving {len(kept_keys)} in every "
+                    "record's abundance map",
                     f"the non-targeting control {PROTEOME_REFERENCE_SAMPLE} is the "
-                    "phenotype_reference, not a record",
+                    f"phenotype_reference over its {int(PROTEOME_N_REPLICATES.value)} "
+                    f"replicates, not records, and so are the two overexpression "
+                    f"Control samples: {CONTROL_AS_RECORD}",
                     "PP_0977, PP_1638 and PP_3416 appear as several samples because "
                     f"'{_Q_SI_THREE_CULTURES}'; each is an independent culture of the "
-                    "same genotype and is kept as its own record, never averaged",
+                    "same genotype, and the released sample name rides its records' "
+                    "replicate_id (<Sample>/<Replicate>), which is the only thing that "
+                    "keeps cultures of one genotype apart",
                     "a released Top3 value of 0 is kept verbatim; the source floors the "
                     "companion percent-abundance column at 1e-05 for those cells, and "
                     "this loader imputes nothing",
-                    f"{len(overexpression_pairs)} further records come from "
+                    f"{overexpression_cultures} further records come from "
                     f"{SHEET_OVEREXPRESSION_PROTEOME}, the second per-protein "
                     "per-replicate abundance matrix the Source Data carries. It reads "
                     "the same Top_3pep_counts_mean column on the same Top3 scale, so "
                     "both panels store one measurement_type; each record is referenced "
-                    "against its own label's Control sample, whose key set it matches",
+                    "against its own label's Control sample mean, whose key set it "
+                    "matches",
                     f"{SHEET_CONTROL_PROTEOME} is NOT loaded: {CONTROL_PROTEOME_DEFERRAL.note}",
                     *proofs,
                 ],
@@ -4465,14 +4991,18 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
             self.preprocess_dir,
         )
         log.info(
-            "Carruthers2025 proteome: %d records = %d %s samples (+1 non-targeting "
-            "reference) x %d protein keys + %d uninduced %s samples; %d keys dropped "
+            "Carruthers2025 proteome: %d records = %d %s sample-replicates (%d samples "
+            "x %d, plus the non-targeting reference's %d held as its aggregate) x %d "
+            "protein keys + %d uninduced %s sample-replicates; %d keys dropped "
             "(%d outside the namespace, %d merged accessions) from %d released cells",
             idx,
-            len(samples),
+            panel_cultures,
             SHEET_PROTEOME,
+            len(samples),
+            int(PROTEOME_N_REPLICATES.value),
+            len(per_replicate[PROTEOME_REFERENCE_SAMPLE]),
             len(kept_keys),
-            len(overexpression_pairs),
+            overexpression_cultures,
             SHEET_OVEREXPRESSION_PROTEOME,
             len(dropped_keys),
             len(outside),
@@ -4492,6 +5022,16 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
 # --------------------------------------------------------------------------- #
 # Family 3: the deposited Dryad campaign proteome, paired to the 465 titer records
 # --------------------------------------------------------------------------- #
+#: Why a per-culture campaign record carries no standard error: it IS one culture.
+_SINGLE_CULTURE_CAMPAIGN_SE_NOTE = (
+    "a record is ONE released culture of the deposited matrix, and one measurement has "
+    "no dispersion of its own, so there is no standard error to store. The per-cycle "
+    "control reference states the aggregate with SD / sqrt(n) over its cultures, and "
+    "the per-strain-cycle mean and SE over the records of one genotype are a "
+    "modeling-time derivation"
+)
+
+
 class CampaignAggregate(BaseModel):
     """One strain-cycle's aggregated profile, before it becomes a phenotype."""
 
@@ -4789,13 +5329,14 @@ def assert_campaign_accession_crosswalk(
 
 @register_dataset
 class CampaignProteomeCarruthers2025Dataset(ExperimentDataset):
-    """Carruthers 2025 campaign proteome: one record per CRISPRi strain-cycle.
+    """Carruthers 2025 campaign proteome: one record per released CRISPRi culture.
 
-    The paired feature set of :class:`IsoprenolTiterCarruthers2025Dataset`. Its 465
-    records carry the SAME ``(construct, DBTL cycle)`` identity as the 465 titer
-    records, so a proteome-conditioned baseline on the target dataset joins the two on
-    the genotype. It reads the Dryad deposit of issue #739, not the Source Data: the
-    Source Data's only abundance matrix is the 19-sample off-target panel that
+    The paired feature set of :class:`IsoprenolTiterCarruthers2025Dataset`. Its 1,407
+    records are the deposit's non-control cultures, which carry the SAME
+    ``(construct, DBTL cycle)`` genotypes as that family's campaign cultures, so a
+    proteome-conditioned baseline on the target dataset joins the two on the genotype
+    and the replicate label. It reads the Dryad deposit of issue #739, not the Source
+    Data: the Source Data's only abundance matrix is the 19-sample off-target panel that
     :class:`ProteomeCarruthers2025Dataset` serves, which is a different experiment on a
     different background and a different scale.
     """
@@ -4933,10 +5474,22 @@ class CampaignProteomeCarruthers2025Dataset(ExperimentDataset):
                 controls[culture.cycle].append(row_index)
             else:
                 by_strain[(culture.construct_name, culture.cycle)].append(row_index)
-        if len(by_strain) != EXPECTED_CAMPAIGN_PROTEOME_RECORDS:
+        if len(by_strain) != EXPECTED_CAMPAIGN_STRAIN_CYCLES:
             raise RuntimeError(
                 f"the deposit groups into {len(by_strain)} strain-cycles; the titer "
-                f"family stores {EXPECTED_CAMPAIGN_PROTEOME_RECORDS}"
+                f"family releases {EXPECTED_CAMPAIGN_STRAIN_CYCLES}"
+            )
+        non_control_cultures = sum(len(group) for group in by_strain.values())
+        if non_control_cultures != EXPECTED_CAMPAIGN_PROTEOME_RECORDS:
+            raise RuntimeError(
+                f"the deposit releases {non_control_cultures} non-control cultures; the "
+                f"pinned matrix holds {EXPECTED_CAMPAIGN_PROTEOME_RECORDS}"
+            )
+        control_cultures = sum(len(group) for group in controls.values())
+        if control_cultures != EXPECTED_CAMPAIGN_CONTROL_CULTURES:
+            raise RuntimeError(
+                f"the deposit releases {control_cultures} control cultures; the pinned "
+                f"matrix holds {EXPECTED_CAMPAIGN_CONTROL_CULTURES}"
             )
         if len(controls) != EXPECTED_CAMPAIGN_REFERENCES:
             raise RuntimeError(
@@ -4962,12 +5515,13 @@ class CampaignProteomeCarruthers2025Dataset(ExperimentDataset):
         pub = publication()
         # The per-cycle control profile, from which each record's reference is PROJECTED
         # onto that record's own key set. The projection is not a choice: a record's key
-        # set is the proteins its own cultures detected, and the shared protein gate
+        # set is the proteins ITS OWN CULTURE detected, and the shared protein gate
         # requires experiment and reference to be key-matched so that a per-protein
-        # ratio against the control is defined everywhere. Measured 2026-10-09, every
-        # one of the 465 records is a SUBSET of its cycle's control key set (0 records
-        # with a key the control lacks, 0 of 658,405 record-keys lost), so the
-        # projection discards nothing and invents nothing.
+        # ratio against the control is defined everywhere. A per-culture key set is a
+        # subset of its strain-cycle's union, and every strain-cycle union was measured
+        # (2026-10-09) to be a subset of its cycle's control key set, so the projection
+        # discards nothing and invents nothing; a key the control lacks still stops the
+        # build.
         controls_profile: dict[int, CampaignAggregate] = {}
         reference_rows: list[dict[str, Any]] = []
         for cycle, row_indices in sorted(controls.items()):
@@ -5003,6 +5557,7 @@ class CampaignProteomeCarruthers2025Dataset(ExperimentDataset):
                     protein_abundance_se={k: control.se[k] for k in keys},
                     n_replicates={k: control.n_replicates[k] for k in keys},
                     measurement_type=str(CAMPAIGN_TOP3.value),
+                    replicate_id=None,
                 ),
             )
 
@@ -5015,52 +5570,78 @@ class CampaignProteomeCarruthers2025Dataset(ExperimentDataset):
             for (construct, cycle), row_indices in tqdm(
                 sorted(by_strain.items()), desc="carruthers2025-campaign-proteome"
             ):
-                aggregate = aggregate_campaign_profile(
-                    proteome, row_indices, locus_of, label=f"{construct} DBTL{cycle}"
-                )
                 tag_list, extras = parse_construct(construct)
-                experiment = ProteinAbundanceExperiment(
-                    dataset_name=self.name,
-                    genotype=Genotype(
-                        perturbations=[
-                            *pathway,
-                            *(
-                                crispri_perturbation(
-                                    stored_by_tag[tag], common[stored_by_tag[tag]]
-                                )
-                                for tag in tag_list
-                            ),
-                        ]
-                    ),
-                    environment=environment,
-                    phenotype=ProteinAbundancePhenotype(
-                        protein_abundance=aggregate.abundance,
-                        protein_abundance_se=aggregate.se,
-                        n_replicates=aggregate.n_replicates,
-                        measurement_type=str(CAMPAIGN_TOP3.value),
-                    ),
+                genotype = Genotype(
+                    perturbations=[
+                        *pathway,
+                        *(
+                            crispri_perturbation(
+                                stored_by_tag[tag], common[stored_by_tag[tag]]
+                            )
+                            for tag in tag_list
+                        ),
+                    ]
                 )
-                txn.put(
-                    f"{idx}".encode(),
-                    self._intern_record(
-                        experiment,
-                        cycle_reference(cycle, sorted(aggregate.abundance)),
-                        pub,
-                        itxn,
-                    ),
-                )
-                strain_rows.append(
-                    {
-                        "construct": construct,
-                        "cycle": cycle,
-                        "n_cultures": aggregate.cultures,
-                        "n_targets": len(tag_list),
-                        "non_targeting_tokens": ";".join(extras),
-                        "n_proteins": len(aggregate.abundance),
-                        "max_n_replicates": max(aggregate.n_replicates.values()),
+                for row_index in sorted(
+                    row_indices, key=lambda index: proteome.cultures[index].replicate
+                ):
+                    culture = proteome.cultures[row_index]
+                    levels = {
+                        locus: cell
+                        for accession, locus in locus_of.items()
+                        if (cell := proteome.cells.get((row_index, accession)))
+                        is not None
                     }
-                )
-                idx += 1
+                    if not levels:
+                        raise RuntimeError(
+                            f"{culture.construct_name}-R{culture.replicate} "
+                            f"(DBTL{culture.cycle}): every stored protein is blank in "
+                            "this culture"
+                        )
+                    experiment = ProteinAbundanceExperiment(
+                        dataset_name=self.name,
+                        genotype=genotype,
+                        environment=environment,
+                        phenotype=ProteinAbundancePhenotype(
+                            protein_abundance=levels,
+                            protein_abundance_se=None,
+                            n_replicates=dict.fromkeys(levels, 1),
+                            measurement_type=str(CAMPAIGN_TOP3.value),
+                            replicate_id=(
+                                f"{culture.construct_name}-R{culture.replicate}"
+                            ),
+                            provenance_gaps=[
+                                ProvenanceGap(
+                                    field="protein_abundance_se",
+                                    reason=ProvenanceGapReason.not_reported_by_primary,
+                                    note=_SINGLE_CULTURE_CAMPAIGN_SE_NOTE,
+                                )
+                            ],
+                        ),
+                    )
+                    txn.put(
+                        f"{idx}".encode(),
+                        self._intern_record(
+                            experiment,
+                            cycle_reference(cycle, sorted(levels)),
+                            pub,
+                            itxn,
+                        ),
+                    )
+                    strain_rows.append(
+                        {
+                            "construct": construct,
+                            "cycle": cycle,
+                            "replicate_id": (
+                                f"{culture.construct_name}-R{culture.replicate}"
+                            ),
+                            "n_cultures_in_group": len(row_indices),
+                            "n_targets": len(tag_list),
+                            "non_targeting_tokens": ";".join(extras),
+                            "n_proteins": len(levels),
+                        }
+                    )
+                    idx += 1
         env.close()
         interned_env.close()
 
@@ -5094,7 +5675,7 @@ class CampaignProteomeCarruthers2025Dataset(ExperimentDataset):
                 dataset=self.name,
                 source_rows=len(proteome.cultures),
                 control_rows=sum(len(group) for group in controls.values()),
-                candidate_records=len(by_strain),
+                candidate_records=non_control_cultures,
                 kept_records=idx,
                 dropped_records=0,
                 rules=[
@@ -5131,32 +5712,40 @@ class CampaignProteomeCarruthers2025Dataset(ExperimentDataset):
                 ],
                 reconciliation=report,
                 notes=[
-                    f"every one of the {EXPECTED_CAMPAIGN_PROTEOME_RECORDS} titer "
-                    "strain-cycles gains a paired feature row: the deposit's "
-                    f"{len(proteome.cultures)} cultures group into exactly the "
-                    f"{len(by_strain)} non-control (construct, cycle) identities the "
-                    "titer family stores, plus controls for all "
-                    f"{EXPECTED_CAMPAIGN_REFERENCES} cycles",
+                    "ONE RECORD PER RELEASED CULTURE: the record unit is the culture of "
+                    f"the deposited matrix, not the strain-cycle. {non_control_cultures} "
+                    f"non-control cultures over {len(by_strain)} (construct, DBTL cycle) "
+                    "strain-cycles, each storing its own culture's released "
+                    "percent-of-proteome with n_replicates = 1 per key and no SE; the "
+                    "per-strain-cycle mean and SE are a modeling-time derivation. "
+                    f"Before 2026-11-17 this store held {len(by_strain)} strain-cycle "
+                    f"means over the same {non_control_cultures} cultures",
+                    "every one of the titer family's campaign cultures gains a paired "
+                    f"feature row where the deposit has one: the deposit's "
+                    f"{len(proteome.cultures)} cultures are "
+                    f"{non_control_cultures} non-control plus {control_cultures} control "
+                    f"cultures, over all {EXPECTED_CAMPAIGN_REFERENCES} cycles",
                     "the nine Source Data cultures with no proteome row are R4-R6 of "
                     "PP_0814_PP_4192, PP_0814_PP_4862 and PP_2137_PP_4189 in DBTL1; "
-                    "all three strain-cycles still have a record, from their R1-R3",
+                    "all three strain-cycles still have records, from their R1-R3",
                     f"{len(locus_of)} of {len(proteome.accessions)} accessions are "
                     f"stored ({len(locus_of) / len(proteome.accessions):.4f}); "
                     f"{len(resolution.unmapped)} carry no locus tag in "
                     f"{crosswalk.member} and {len(resolution.multi_locus)} carry "
                     "several",
-                    "a record's key set is the proteins present in at least one of its "
-                    "cultures, so the sets differ by strain: "
+                    "a record's key set is the proteins ITS OWN CULTURE detected, so "
+                    "the sets differ by culture: "
                     f"{min(key_sizes)} to {max(key_sizes)} proteins, median "
                     f"{int(statistics.median([row['n_proteins'] for row in strain_rows]))}. "
                     f"{CAMPAIGN_BLANK_IS_ABSENT.note}",
-                    "the controls are the per-cycle phenotype_reference and not "
-                    f"records, as in the titer family: {CONTROL_N.note}. Each record's "
-                    "reference is its cycle's control profile PROJECTED onto that "
-                    "record's own key set, which the shared protein gate requires and "
-                    "which discards nothing: every record's keys are a subset of its "
-                    "cycle control's (0 of 658,405 record-keys lost, measured "
-                    "2026-10-09)",
+                    f"the {control_cultures} control cultures are the per-cycle "
+                    f"phenotype_reference and not records, as in the titer family: "
+                    f"{CONTROL_N.note}; {CONTROL_AS_RECORD}. Each record's reference is "
+                    "its cycle's control profile PROJECTED onto that record's own key "
+                    "set, which the shared protein gate requires and which discards "
+                    "nothing: a per-culture key set is a subset of its strain-cycle's "
+                    "union, and every union is a subset of its cycle control's "
+                    "(0 of 658,405 strain-cycle keys lost, measured 2026-10-09)",
                     f"{proteome.blank_cells} of "
                     f"{len(proteome.cultures) * len(proteome.accessions)} released cells "
                     f"are blank and {proteome.zero_cells} are a released 0; the blank "
@@ -5167,12 +5756,16 @@ class CampaignProteomeCarruthers2025Dataset(ExperimentDataset):
             self.preprocess_dir,
         )
         log.info(
-            "Carruthers2025 campaign proteome: %d records over %d accessions stored as "
-            "%d loci, referenced to the %d per-cycle controls",
+            "Carruthers2025 campaign proteome: %d records = %d released cultures over "
+            "%d (construct, cycle) strain-cycles, %d accessions stored as %d loci, "
+            "referenced to the %d per-cycle controls (%d control cultures)",
             idx,
+            non_control_cultures,
+            len(by_strain),
             len(proteome.accessions),
             len(locus_of),
             len(controls_profile),
+            control_cultures,
         )
 
     def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
@@ -5283,7 +5876,7 @@ class ProteomeFoldChangeCarruthers2025Dataset(ExperimentDataset):
         fold_change: dict[str, float] = {}
         p_values: dict[str, float] = {}
         n_replicates: dict[str, int] = {}
-        replicates = int(N_REPLICATES.value)
+        replicates = int(FOLD_CHANGE_N_REPLICATES.value)
         for cell in cells:
             if cell.protein in dropped:
                 continue
@@ -5593,18 +6186,49 @@ class ProteomeFoldChangeCarruthers2025Dataset(ExperimentDataset):
 PAPER_STRAIN_COUNT = 472
 #: Protein keys a ``SHEET_PROTEOME`` record carries: 1,501 released minus the 77
 #: dropped. A ``SHEET_OVEREXPRESSION_PROTEOME`` record carries only the operon its
-#: strain overexpresses, so the two panels have different, pinned key-set sizes.
+#: strain overexpresses, so the two panels have different, pinned key-set sizes. Each
+#: released replicate of a sample carries the same key set as its siblings, because this
+#: panel's sheets have no blank cell (measured: all 60 (sample, replicate) blocks carry
+#: 1,503 rows), so the sizes are the per-sample ones repeated per replicate.
 PROTEOME_KEYS_PER_RECORD = 1424
 PROTEOME_KEY_SET_SIZES: tuple[int, ...] = (
     *(PROTEOME_KEYS_PER_RECORD,) * EXPECTED_PP0815_PROTEOME_RECORDS,
-    *(len(operon) for operon in OVEREXPRESSION_OPERONS.values()),
+    *(
+        len(operon)
+        for operon in OVEREXPRESSION_OPERONS.values()
+        for _ in range(int(PROTEOME_N_REPLICATES.value))
+    ),
 )
 #: The Results text prints the KO-plus-array titers to integer mg/L, inconsistently
 #: rounded (651.860 printed 651, 579.534 printed 580), so the tolerance is that unit.
 KO_ARRAY_TITER_TOL = 1.0
-#: Records on the Δ PP_0815 background alone: ``Figure 6a``'s Target arm plus
-#: ``Supplementary Figure 13d``'s 19. All share the one deduplicated reference.
-OFFTARGET_SHARED_REFERENCE_RECORDS = 1 + 19
+#: Records on the Δ PP_0815 background alone: ``Figure 6a``'s Target arm (3 cultures)
+#: plus every culture ``Supplementary Figure 13d`` releases for its Target and
+#: off-target arms (3 + 52). All share the one deduplicated reference.
+OFFTARGET_SHARED_REFERENCE_RECORDS = 3 + 3 + 52
+#: Replicate-group sizes in the stored CAMPAIGN half, measured on the pinned workbook.
+#: A group is one genotype (one CRISPRi target set), which is coarser than the released
+#: ``(construct, DBTL cycle)`` group because the DBTL cycle is not a field of
+#: ``ProductTiterPhenotype``: a construct screened in two cycles contributes both of its
+#: triplicates to one group, which is why 6 is frequent and 9 occurs twice. Every size is
+#: a multiple of the released triplicate, and the modal size is that triplicate.
+CAMPAIGN_REPLICATE_GROUP_SIZES: dict[int, int] = {3: 332, 6: 67, 9: 2}
+#: Replicate-group sizes in the stored PANEL half, measured on the pinned workbook. The
+#: two groups of 2 are the off-target strains ``Supplementary Figure 13d`` releases two
+#: cultures for (``PP_0378`` and ``PP_3416``, which carry no R3 row). The two groups of 6
+#: are the two genotypes TWO sheets each release a triplicate of: Δ PP_0815 + the PP_0815
+#: sgRNA (``Figure 6a``'s Target arm and ``Supplementary Figure 13d``'s, whose values
+#: disagree and are both kept, :func:`_offtarget_groups`) and Δ PP_0812-15 + the PP_0815
+#: sgRNA (``Figure 6a``'s ``PP_0812-15`` Target arm and ``Figure 6d``'s
+#: ``PP_0812-15_KO with PP_0815`` line). The groups of 9 are ``PP_0977`` and ``PP_1638``,
+#: each released as three independent cultures of one genotype.
+PANEL_REPLICATE_GROUP_SIZES: dict[int, int] = {2: 2, 3: 25, 6: 2, 9: 2}
+#: ``(genotype, replicate_id)`` keys that more than one record carries, measured on the
+#: pinned workbook. They are the campaign constructs screened in several DBTL cycles:
+#: the release prints ``R1``..``R3`` once per cycle and ``ProductTiterPhenotype`` has no
+#: field for the cycle, so those cultures are distinguished only by their values. Pinned
+#: EXACTLY, so a new collision (which would be a real duplicate) fails the gate.
+TITER_DUPLICATED_REPLICATE_KEYS = 189
 #: Tolerance of the derived standard error against ``SD / sqrt(n)``. The loader derives
 #: it in float from the two stored numbers, so the identity holds to float noise.
 TITER_SE_TOL = 1e-9
@@ -5625,6 +6249,12 @@ CAMPAIGN_PERCENT_CEILING = 100.05
 #: per-record sum is necessarily lower, because the 345 accessions with no locus tag are
 #: dropped and they carry proteome mass.
 CAMPAIGN_ROW_SUM_TOL = 0.1
+#: Replicate-group sizes of the stored PANEL proteome, measured on the pinned workbook.
+#: A group is one genotype: 3 for a genotype the release carries as one sample, 9 for
+#: ``PP_0977`` and ``PP_1638``, which it carries as three independent cultures each
+#: (:data:`PROTEOME_REPEATED_CULTURES`), over the 15 off-target genotypes plus the two
+#: overexpression ones.
+PROTEOME_REPLICATE_GROUP_SIZES: dict[int, int] = {3: 15, 9: 2}
 #: What the dropped accessions carry, measured 2026-10-09: 17.2% of the proteome on
 #: average over the 1,497 cultures, so a stored record sums to about 83%. The spread is
 #: WIDE and the reason is a sample-prep artifact rather than biology: the worst culture
@@ -5642,9 +6272,10 @@ def _titer_provenance() -> Provenance:
         sha256=SOURCE_DATA_SHA256,
         method=(
             "Source Data sheet 'Figure 4b', column 'isoprenoli titer (mg/L)' (the typo "
-            "is the source's), grouped by (construct, DBTL cycle); mean over the "
-            "strain's biological replicates with their sample SD, stored verbatim as "
-            "ug/mL since 1 mg/L == 1 ug/mL"
+            "is the source's), ONE RECORD PER RELEASED CULTURE: the cell is stored "
+            "verbatim as ug/mL since 1 mg/L == 1 ug/mL, with n_samples = 1 and the Line "
+            "Name's own R<n> label as replicate_id; the group mean and sample SD are "
+            "stated only on the per-cycle control phenotype_reference"
         ),
         page="Source Data 'Figure 4b'; Supplementary Data 1 as the cross-source oracle",
     )
@@ -5658,9 +6289,11 @@ def _proteome_provenance() -> Provenance:
         sha256=SOURCE_DATA_SHA256,
         method=(
             "Source Data sheet 'Supplementary Figure 13abc', column "
-            "'Top_3pep_counts_mean' (DIA-NN Top3 signal), one record per released "
-            "sample of the PP_0815 off-target panel; 77 of 1,501 protein keys dropped "
-            "by a sourced rule"
+            "'Top_3pep_counts_mean' (the mean over a protein's three most intense "
+            "peptides, one cell per released (sample, protein, replicate)), ONE RECORD "
+            "PER RELEASED (sample, replicate) of the PP_0815 off-target panel with "
+            "n_replicates = 1 per key and no SE; 77 of 1,501 protein keys dropped by a "
+            "sourced rule"
         ),
         page="Source Data 'Supplementary Figure 13abc'",
     )
@@ -5687,12 +6320,12 @@ def _is_campaign_record(record: Mapping[str, Any]) -> bool:
 
 
 def _l1_panel_partition(records: Sequence[dict[str, Any]]) -> LevelResult:
-    """L1: the store splits into the campaign's 465 and the panels' 37.
+    """L1: the store splits into the campaign's 1,416 cultures and the panels' 109.
 
     This is the stored half of the partition the build proves on the released bytes:
     the campaign records carry only the pathway and CRISPRi perturbations, and every
     record that carries a deletion or an extra native copy came from one of the four
-    panels.
+    panels. Both halves count CULTURES, because the record unit is the culture.
     """
     campaign = sum(1 for record in records if _is_campaign_record(record))
     panels = len(records) - campaign
@@ -5705,8 +6338,8 @@ def _l1_panel_partition(records: Sequence[dict[str, Any]]) -> LevelResult:
         name="campaign_and_panel_records_partition",
         passed=passed,
         message=(
-            f"{campaign} {SHEET_TITER} campaign strains + {panels} Source Data panel "
-            f"strains = {len(records)}"
+            f"{campaign} {SHEET_TITER} campaign cultures + {panels} Source Data panel "
+            f"cultures = {len(records)}"
         ),
         details={
             "n_campaign": campaign,
@@ -5725,11 +6358,17 @@ def _l4_ko_array_titer_vs_results_text(
     The Results state "Combining KOs with specific sgRNAs for PP_0528 and PP_0815
     further improved titer to 4-fold that of the control (651 mg/L) and 12% more
     isoprenol than the two-sgRNA array in a strain without KOs (580 mg/L, p < 0.02)".
-    The first number is the ``Figure 6d`` record this revision adds and the second is a
+    The first number is the ``Figure 6d`` strain this revision adds and the second is a
     ``Figure 4b`` array already stored, so one prose sentence joins the new panel and
     the campaign at once. The text prints both to integer mg/L and is not consistent
     about rounding (651.860 printed 651, 579.534 printed 580), so the tolerance is the
     integer unit it prints in.
+
+    The prose states a strain MEAN and the store holds its cultures, so the oracle is
+    compared against the mean over the records that carry that exact deletion /
+    knockdown split -- the triplicate the sentence summarizes -- rather than against a
+    single record. A split that matches a number of records other than that triplicate
+    raises, because the sentence names one strain.
     """
     expected = dict(KO_ARRAY_RESULT.value)
     #: The exact (deleted, knocked down) split of each strain the sentence names, so a
@@ -5760,14 +6399,21 @@ def _l4_ko_array_titer_vs_results_text(
         for label, genotype in genotypes.items():
             if split == genotype:
                 found[label].append(float(experiment["phenotype"]["titer"]))
-    wrong = {label: len(found[label]) for label in expected if len(found[label]) != 1}
+    triplicate = int(N_REPLICATES.value)
+    wrong = {
+        label: len(found[label])
+        for label in expected
+        if len(found[label]) != triplicate
+    }
     if wrong:
         raise AssertionError(
             f"the Results text names {sorted(wrong)} and the store holds {wrong} "
-            "records with that exact deletion / knockdown split; each must be unique"
+            f"records with that exact deletion / knockdown split; each names one "
+            f"strain, whose release is {triplicate} cultures"
         )
     shared = [
-        (label, found[label][0], float(expected[label])) for label in sorted(expected)
+        (label, statistics.fmean(found[label]), float(expected[label]))
+        for label in sorted(expected)
     ]
     return l4_cross_source(shared, tol=KO_ARRAY_TITER_TOL).model_copy(
         update={"name": "ko_array_titer_vs_results_text"}
@@ -5775,36 +6421,151 @@ def _l4_ko_array_titer_vs_results_text(
 
 
 def _l1_strain_count_reconciles(records: Sequence[dict[str, Any]]) -> LevelResult:
-    """L1: the stored strain count plus its six-replicate strains is the paper's 472.
+    """L1: the stored campaign cultures over the triplicate are the paper's 472.
 
     The paper reports "472 unique strains (125 single perturbations and 347
     combinations) in triplicate", which is its 1,416 non-control cultures divided by
-    three. Grouping by ``(construct, DBTL cycle)`` gives 465, because seven strains
-    were cultured six times. This asserts the DOCUMENTED reconciliation rather than
-    accepting either number: 465 + 7 == 472.
+    three, and that arithmetic is now assertable directly: the store holds one record
+    per culture, so 1,416 / 3 == 472. (Grouping those cultures by
+    ``(construct, DBTL cycle)`` gives 465 rather than 472, because seven of them were
+    cultured six times; the build asserts that grouping on the released bytes, where
+    the cycle column is in hand.)
 
     Scoped to the CAMPAIGN records: the four Source Data panels are KO backgrounds and
     overexpression strains that the abstract's 472 does not count, so counting them
     here would silently break a rule about a different experiment.
     """
     campaign = [record for record in records if _is_campaign_record(record)]
-    six = sum(
-        1 for record in campaign if record["experiment"]["phenotype"]["n_samples"] == 6
-    )
-    total = len(campaign) + six
+    triplicate = int(N_REPLICATES.value)
+    quotient, remainder = divmod(len(campaign), triplicate)
     return LevelResult(
         level=Level.L1,
         name="strain_count_reconciles_with_the_papers_472",
-        passed=total == PAPER_STRAIN_COUNT,
+        passed=remainder == 0 and quotient == PAPER_STRAIN_COUNT,
         message=(
-            f"{len(campaign)} campaign strains + {six} with six replicates = {total} "
-            f"(the paper's {PAPER_STRAIN_COUNT})"
+            f"{len(campaign)} campaign cultures / {triplicate} = {quotient} "
+            f"remainder {remainder} (the paper's {PAPER_STRAIN_COUNT})"
         ),
         details={
             "n_campaign_records": len(campaign),
             "n_records": len(records),
-            "n_six_replicate_strains": six,
+            "triplicate": triplicate,
+            "quotient": quotient,
+            "remainder": remainder,
             "paper_strain_count": PAPER_STRAIN_COUNT,
+        },
+    )
+
+
+def _genotype_signature(record: Mapping[str, Any]) -> tuple[str, ...]:
+    """``(perturbation_type, gene)`` pairs of one record's genotype, sorted.
+
+    The replicate GROUP key: every culture of one released group carries the identical
+    genotype, and the environment of this release varies only between the shared
+    protocol and the overexpression panel's gapped endpoint, which the genotype's extra
+    native copies already imply.
+    """
+    return tuple(
+        sorted(
+            f"{perturbation['perturbation_type']}:{perturbation['systematic_gene_name']}"
+            for perturbation in record["experiment"]["genotype"]["perturbations"]
+        )
+    )
+
+
+def _replicate_group_sizes(records: Sequence[dict[str, Any]]) -> Counter[int]:
+    """Histogram of how many records share one genotype signature."""
+    groups: Counter[tuple[str, ...]] = Counter(
+        _genotype_signature(record) for record in records
+    )
+    return Counter(groups.values())
+
+
+def _l3_titer_replicate_groups(records: Sequence[dict[str, Any]]) -> LevelResult:
+    """L3: every record is ONE culture, and the replicate groups are the released ones.
+
+    Two halves of one question: is the record unit the culture, and do the cultures
+    still group the way the release groups them? Every record carries ``n_samples`` 1,
+    ``sample_unit`` the biological replicate, a ``replicate_id``, and no uncertainty;
+    and the per-genotype group sizes are exactly
+    :data:`CAMPAIGN_REPLICATE_GROUP_SIZES` and :data:`PANEL_REPLICATE_GROUP_SIZES`,
+    whose entries each name a released design (the triplicate, the seven six-culture
+    strain-cycles, the two two-culture off-target strains, the one genotype whose two
+    triplicates the release disagrees about, the two strains released as three
+    independent cultures).
+    """
+    phenotypes = [record["experiment"]["phenotype"] for record in records]
+    singles = sum(
+        1
+        for phenotype in phenotypes
+        if phenotype["n_samples"] == 1
+        and phenotype["sample_unit"] == SampleUnit.biological_replicate.value
+        and phenotype.get("replicate_id")
+        and phenotype["titer_uncertainty"] is None
+        and phenotype["titer_se"] is None
+    )
+    campaign = _replicate_group_sizes(
+        [record for record in records if _is_campaign_record(record)]
+    )
+    panel = _replicate_group_sizes(
+        [record for record in records if not _is_campaign_record(record)]
+    )
+    holds = (
+        singles == len(records)
+        and campaign == Counter(CAMPAIGN_REPLICATE_GROUP_SIZES)
+        and panel == Counter(PANEL_REPLICATE_GROUP_SIZES)
+    )
+    return l3_convention(
+        "records_are_cultures_in_the_released_replicate_groups",
+        holds,
+        detail=(
+            f"{singles} of {len(records)} records are one labeled biological replicate "
+            f"with no uncertainty; campaign group sizes "
+            f"{dict(sorted(campaign.items()))} (expected "
+            f"{dict(sorted(CAMPAIGN_REPLICATE_GROUP_SIZES.items()))}) and panel group "
+            f"sizes {dict(sorted(panel.items()))} (expected "
+            f"{dict(sorted(PANEL_REPLICATE_GROUP_SIZES.items()))}); a group is one "
+            "genotype, which merges a construct's triplicates across DBTL cycles "
+            "because the cycle is not a field of ProductTiterPhenotype"
+        ),
+    )
+
+
+def _l1_titer_replicate_ids_are_distinct(
+    records: Sequence[dict[str, Any]],
+) -> LevelResult:
+    """L1: one record per (genotype, replicate_id), with the release's own exceptions.
+
+    The uniqueness key a per-replicate store needs, and the one place this release does
+    not satisfy it is measured rather than tolerated: a construct screened in several
+    DBTL cycles releases ``R1``..``R3`` once per cycle and the DBTL cycle is not a field
+    of ``ProductTiterPhenotype``, so those cultures share a (genotype, replicate_id)
+    key and are told apart only by their values. The count is pinned exactly in
+    :data:`TITER_DUPLICATED_REPLICATE_KEYS`, so a NEW collision -- which would be a
+    genuine duplicate -- fails. The panel half has none: its repeated cultures carry the
+    released sample name in their label.
+    """
+    pairs = Counter(
+        (_genotype_signature(record), record["experiment"]["phenotype"]["replicate_id"])
+        for record in records
+    )
+    duplicated = {key: n for key, n in pairs.items() if n > 1}
+    expected = TITER_DUPLICATED_REPLICATE_KEYS
+    return LevelResult(
+        level=Level.L1,
+        name="one_record_per_genotype_and_replicate_id",
+        passed=len(duplicated) == expected,
+        message=(
+            f"{len(pairs)} distinct (genotype, replicate_id) keys over {len(records)} "
+            f"records; {len(duplicated)} carry more than one record (expected "
+            f"{expected}: a construct screened in several DBTL cycles releases its "
+            "R<n> labels once per cycle and the cycle is not a stored field)"
+        ),
+        details={
+            "n_keys": len(pairs),
+            "n_duplicated": len(duplicated),
+            "expected_duplicated": expected,
+            "worst": max(duplicated.values(), default=1),
         },
     )
 
@@ -5842,22 +6603,37 @@ def _l1_protein_key_sets(records: Sequence[dict[str, Any]]) -> LevelResult:
 
 
 def _l3_biological_triplicate(records: Sequence[dict[str, Any]]) -> LevelResult:
-    """L3: every (sample, protein) cell is a biological triplicate.
+    """L3: every record is ONE replicate, and the groups are the released triplicates.
 
     Supplementary Fig. 13 caption, verbatim: "All strains were cultured in triplicate
-    (n = 3) and error bars represent standard deviation."
+    (n = 3) and error bars represent standard deviation." That is a statement about a
+    GROUP, so the stored form of it is: every record carries ``n_replicates`` 1 per key,
+    no SE and a ``replicate_id``, and the records of one genotype group in the sizes the
+    release prints -- a triplicate per released sample, so 3 for a genotype released as
+    one sample and 9 for ``PP_0977`` and ``PP_1638``, released as three independent
+    cultures each (:data:`PROTEOME_REPEATED_CULTURES`).
     """
+    phenotypes = [record["experiment"]["phenotype"] for record in records]
     counts = {
-        int(n)
-        for record in records
-        for n in record["experiment"]["phenotype"]["n_replicates"].values()
+        int(n) for phenotype in phenotypes for n in phenotype["n_replicates"].values()
     }
+    labeled = sum(
+        1
+        for phenotype in phenotypes
+        if phenotype.get("replicate_id") and phenotype["protein_abundance_se"] is None
+    )
+    groups = _replicate_group_sizes(records)
+    expected = Counter(PROTEOME_REPLICATE_GROUP_SIZES)
+    holds = counts == {1} and labeled == len(records) and groups == expected
     return l3_convention(
-        "every_sample_is_a_biological_triplicate",
-        counts == {3},
+        "records_are_replicates_in_the_released_triplicates",
+        holds,
         detail=(
-            f"stored replicate counts {sorted(counts)}; Supplementary Fig. 13: 'All "
-            "strains were cultured in triplicate (n = 3)'"
+            f"stored replicate counts {sorted(counts)}, {labeled} of {len(records)} "
+            f"records labeled with no SE, genotype group sizes "
+            f"{dict(sorted(groups.items()))} (expected "
+            f"{dict(sorted(expected.items()))}); Supplementary Fig. 13: 'All strains "
+            "were cultured in triplicate (n = 3)'"
         ),
     )
 
@@ -5869,18 +6645,30 @@ def _l4_titer_vs_supplementary_data_1(
 
     The oracle is a DIFFERENT released file from the one the loader reads, so this
     joins the built records to an independent statement of the same measurement. Its
-    means are printed to two decimals, hence the 0.005 mg/L tolerance. A target with
-    several single-guide records (the same tag screened in more than one cycle) is
-    joined on the record closest to the released mean, which is the strain the DBTL0
-    table reports.
+    means are printed to two decimals, hence the 0.005 mg/L tolerance.
+
+    THE STORE HOLDS CULTURES AND THE ORACLE HOLDS A MEAN, so the statement asserted here
+    is that the released mean IS the mean of one released GROUP of stored cultures of
+    that target: the rule searches that target's stored single-guide cultures for a
+    subset of a released group size (3, or the 6 of a strain cultured twice over) whose
+    mean matches. For most targets there is exactly one triplicate to try; for
+    ``PP_0812``, ``PP_0813``, ``PP_4678`` and ``PP_4679``, whose DBTL0 strain was
+    cultured six times, the matching subset is the six, and for ``PP_0815`` and
+    ``PP_1317``, screened in DBTL0 and DBTL3, the subset search is what replaces the
+    DBTL cycle the store cannot carry. The
+    cycle-aware equality is asserted at BUILD time, where the cycle column is in hand
+    (:meth:`IsoprenolTiterCarruthers2025Dataset._assert_target_means`).
 
     Scoped to the CAMPAIGN records. Supplementary Data 1 reports the DBTL0 screen of
     single-guide CRISPRi strains, and three of the four panels also produce records
     with exactly one CRISPRi perturbation -- a KO background carrying the sgRNA of the
     gene it deleted. Those are a different strain with the same guide, so joining them
-    to this oracle would be a false join that the nearest-record rule would then hide.
+    to this oracle would be a false join.
     """
+    from itertools import combinations
+
     released = read_si_target_means(str(raw_mirror_dir(data_root) / TARGETS_REL))
+    triplicate = int(N_REPLICATES.value)
     by_tag: dict[str, list[float]] = {}
     for record in records:
         if not _is_campaign_record(record):
@@ -5893,11 +6681,21 @@ def _l4_titer_vs_supplementary_data_1(
         ]
         if len(targets) == 1:
             by_tag.setdefault(targets[0], []).append(experiment["phenotype"]["titer"])
-    shared = [
-        (tag, min(by_tag[tag], key=lambda titer: abs(titer - mean)), mean)
-        for tag, mean in sorted(released.items())
-        if tag in by_tag
-    ]
+    shared: list[tuple[str, float, float]] = []
+    for tag, mean in sorted(released.items()):
+        cultures = by_tag.get(tag)
+        if cultures is None:
+            continue
+        best = min(
+            (
+                statistics.fmean(subset)
+                for size in (triplicate, 2 * triplicate)
+                if size <= len(cultures)
+                for subset in combinations(cultures, size)
+            ),
+            key=lambda candidate: abs(candidate - mean),
+        )
+        shared.append((tag, best, mean))
     if len(shared) != SI_TARGET_OVERLAP:
         raise AssertionError(
             f"{len(shared)} of Supplementary Data 1's {len(released)} targets join a "
@@ -5911,22 +6709,25 @@ def _l4_titer_vs_supplementary_data_1(
 def _l4_proteome_vs_released_sheet(
     records: Sequence[dict[str, Any]], data_root: str | None
 ) -> LevelResult:
-    """L4: the store's PP_0815-target profile against the released sheet, re-read.
+    """L4: the store's PP_0815-target records against the released sheet, re-read.
 
-    Every stored abundance must be reproducible from the deposited bytes by the same
-    aggregation, so a store that drifted from its source is caught per protein.
+    Every stored abundance must be the released CELL, so the join is per
+    ``(replicate_id, protein)`` rather than per protein of an aggregate: a record's
+    ``replicate_id`` is ``<Sample>/<Replicate>``, which names exactly one released
+    column of the sheet, and a store that drifted from its source is caught cell by
+    cell. All three replicates of the ``PP_0815`` target sample are checked.
     """
     rows = read_proteome_rows(str(raw_mirror_dir(data_root) / SOURCE_DATA_REL))
     genome = bacterial_genome("pputida", "KT2440", data_root)
     keys = sorted({row.protein for row in rows})
     stored_keys, _ = reconcile_locus_tags(genome, pd.Series(keys), label="l4")
     key_map = dict(zip(keys, stored_keys, strict=True))
-    cells: dict[str, list[float]] = {}
+    cells: dict[tuple[str, str], float] = {}
     for row in rows:
         if row.sample != PROTEOME_TARGET_SAMPLE:
             continue
-        cells.setdefault(key_map[row.protein], []).append(row.top3_signal)
-    target = next(
+        cells[(f"{row.sample}/{row.replicate}", key_map[row.protein])] = row.top3_signal
+    targets = [
         record["experiment"]
         for record in records
         if any(
@@ -5934,19 +6735,28 @@ def _l4_proteome_vs_released_sheet(
             and perturbation["perturbation_type"] == "crispr_interference"
             for perturbation in record["experiment"]["genotype"]["perturbations"]
         )
-    )
-    abundance = target["phenotype"]["protein_abundance"]
-    shared = [
-        (key, value, sum(cells[key]) / len(cells[key]))
-        for key, value in sorted(abundance.items())
-        if key in cells
     ]
-    if len(shared) != len(abundance):
+    if len(targets) != int(PROTEOME_N_REPLICATES.value):
         raise AssertionError(
-            f"{len(abundance) - len(shared)} stored proteins are not in the released "
-            "sheet under their reconciled key"
+            f"{len(targets)} records carry the PP_0815 sgRNA on the "
+            f"Δ{PROTEOME_BACKGROUND_DELETION} background; the sheet releases "
+            f"{PROTEOME_N_REPLICATES.value} replicates of it"
         )
-    return l4_cross_source(shared, tol=1e-6).model_copy(
+    shared: list[tuple[str, float, float]] = []
+    for experiment in targets:
+        replicate_id = str(experiment["phenotype"]["replicate_id"])
+        abundance = experiment["phenotype"]["protein_abundance"]
+        missing = sorted(key for key in abundance if (replicate_id, key) not in cells)
+        if missing:
+            raise AssertionError(
+                f"{len(missing)} stored proteins of {replicate_id} are not in the "
+                f"released sheet under their reconciled key: {missing[:5]}"
+            )
+        shared.extend(
+            (f"{replicate_id}/{key}", float(value), cells[(replicate_id, key)])
+            for key, value in sorted(abundance.items())
+        )
+    return l4_cross_source(shared, tol=0.0).model_copy(
         update={"name": "stored_target_profile_vs_released_sheet"}
     )
 
@@ -5959,9 +6769,10 @@ def _l3_panel_reference_is_stored_once(
     ``Figure 6a``'s ``PP_0815`` / ``Non-target`` arm and ``Supplementary Figure 13d``'s
     ``Non-Target`` arm are bit-identical, so the build shares one reference object
     between the records of both sheets. In the store that shows up as a single distinct
-    reference phenotype across all of them: the ``Figure 6a`` Δ PP_0815 record, the
-    ``Supplementary Figure 13d`` Target record and its 18 off-target records. Two
-    distinct objects with the same numbers would mean the group was stored twice.
+    reference phenotype across all of them: the three ``Figure 6a`` Δ PP_0815 Target
+    cultures, the three ``Supplementary Figure 13d`` Target cultures and the 52 cultures
+    of its off-target arm. Two distinct objects with the same numbers would mean the
+    group was stored twice.
     """
     deltas = [
         record
@@ -5996,13 +6807,13 @@ def _l3_panel_reference_is_stored_once(
 def _l4_panel_titers_vs_released_sheets(
     records: Sequence[dict[str, Any]], data_root: str | None
 ) -> LevelResult:
-    """L4: every panel record's titer re-derived from the released sheets.
+    """L4: every panel record's titer re-read from the released sheets, per CULTURE.
 
     The four panels are re-read from the deposited workbook and regrouped, so each
-    stored mean is checked against the mean of the cultures the sheet releases for that
-    group. This is what catches a record that drifted from its source, including the
-    one group the two sheets disagree on: both triplicates must still be present, each
-    under its own record.
+    stored value is checked against the released cell of the culture its
+    ``replicate_id`` names. This is what catches a record that drifted from its source,
+    including the one group the two sheets disagree on: both triplicates must still be
+    present, each culture under its own record and its own label.
     """
     path = str(raw_mirror_dir(data_root) / SOURCE_DATA_REL)
     rows = read_titer_rows(path)
@@ -6015,42 +6826,107 @@ def _l4_panel_titers_vs_released_sheets(
         stored_titers={row.titer_mg_per_l for row in rows},
         control_titers=controls,
     )
+    released = Counter(
+        (replicate_id, round(titer, 9))
+        for group in plan.records
+        for replicate_id, titer in group.cultures()
+    )
     stored = Counter(
-        round(float(record["experiment"]["phenotype"]["titer"]), 9)
+        (
+            str(record["experiment"]["phenotype"]["replicate_id"]),
+            round(float(record["experiment"]["phenotype"]["titer"]), 9),
+        )
         for record in records
         if not _is_campaign_record(record)
     )
-    shared: list[tuple[str, float, float]] = []
-    for group in plan.records:
-        released = statistics.fmean(group.titers_mg_per_l)
-        key = round(released, 9)
-        if not stored[key]:
-            raise AssertionError(
-                f"{group.sheet} {group.group}: the released mean {released} is not a "
-                "stored panel titer"
-            )
-        stored[key] -= 1
-        shared.append((f"{group.sheet}:{group.group}", key, released))
-    leftover = {value: count for value, count in stored.items() if count}
-    if leftover:
-        raise AssertionError(
-            f"{sum(leftover.values())} stored panel titers match no released group: "
-            f"{sorted(leftover)[:5]}"
+    only_stored = stored - released
+    only_released = released - stored
+    passed = not only_stored and not only_released
+    return LevelResult(
+        level=Level.L4,
+        name="panel_titers_vs_released_sheets",
+        passed=passed,
+        message=(
+            f"{sum(stored.values())} stored panel cultures are exactly the "
+            f"{sum(released.values())} (label, titer) cells the four panels release"
+            if passed
+            else f"{sum(only_stored.values())} stored cultures are in no released cell "
+            f"and {sum(only_released.values())} released cells are in no record"
+        ),
+        details={
+            "n_stored": sum(stored.values()),
+            "n_released": sum(released.values()),
+            "only_in_store": [f"{label} {titer}" for label, titer in only_stored][:5],
+            "only_in_release": [f"{label} {titer}" for label, titer in only_released][
+                :5
+            ],
+        },
+    )
+
+
+def _l4_campaign_titers_vs_released_sheet(
+    records: Sequence[dict[str, Any]], data_root: str | None
+) -> LevelResult:
+    """L4: every campaign record's titer is a released ``Figure 4b`` cell.
+
+    The per-culture form of the campaign's own oracle: the sheet is re-read and keyed by
+    ``(construct, replicate label)``, which is exactly what a record carries as its
+    ``replicate_id``, and the stored value must be that cell. A construct screened in
+    several DBTL cycles releases one cell per cycle under that label, so the rule
+    asserts that each stored value is ONE of the released cells of its label and that
+    every released cell is used exactly once -- a multiset identity, which is the
+    strongest statement the store supports without a field for the cycle.
+    """
+    rows = read_titer_rows(str(raw_mirror_dir(data_root) / SOURCE_DATA_REL))
+    released = Counter(
+        (f"{row.construct_name}-R{row.replicate}", round(row.titer_mg_per_l, 9))
+        for row in rows
+        if not row.is_control
+    )
+    stored = Counter(
+        (
+            str(record["experiment"]["phenotype"]["replicate_id"]),
+            round(float(record["experiment"]["phenotype"]["titer"]), 9),
         )
-    return l4_cross_source(shared, tol=TITER_SE_TOL).model_copy(
-        update={"name": "panel_titers_vs_released_sheets"}
+        for record in records
+        if _is_campaign_record(record)
+    )
+    only_stored = stored - released
+    only_released = released - stored
+    passed = not only_stored and not only_released
+    return LevelResult(
+        level=Level.L4,
+        name="campaign_titers_vs_released_sheet",
+        passed=passed,
+        message=(
+            f"{sum(stored.values())} stored campaign cultures are exactly the "
+            f"{sum(released.values())} (line name, titer) cells {SHEET_TITER} releases"
+            if passed
+            else f"{sum(only_stored.values())} stored cultures are in no released cell "
+            f"and {sum(only_released.values())} released cells are in no record"
+        ),
+        details={
+            "n_stored": sum(stored.values()),
+            "n_released": sum(released.values()),
+            "only_in_store": [f"{label} {titer}" for label, titer in only_stored][:5],
+            "only_in_release": [f"{label} {titer}" for label, titer in only_released][
+                :5
+            ],
+        },
     )
 
 
 def _l4_overexpression_proteome_vs_released_sheet(
     records: Sequence[dict[str, Any]], data_root: str | None
 ) -> LevelResult:
-    """L4: the overexpression records' abundances re-derived from the released sheet.
+    """L4: the overexpression records' abundances re-read from the released sheet.
 
-    Per protein, so a swapped pair inside an operon is caught: the ``Phnw`` / ``Phnx``
-    crosswalk is the one place in this release where two pinned sources disagree about
-    which locus a measured accession is, and this row re-runs that resolution from the
-    bytes rather than trusting the store.
+    Per ``(replicate_id, protein)``, so a swapped pair inside an operon is caught: the
+    ``Phnw`` / ``Phnx`` crosswalk is the one place in this release where two pinned
+    sources disagree about which locus a measured accession is, and this row re-runs
+    that resolution from the bytes rather than trusting the store. The join is by label,
+    since a record's ``replicate_id`` is ``<Sample>/<Replicate>`` and names exactly one
+    released column.
     """
     path = str(raw_mirror_dir(data_root) / SOURCE_DATA_REL)
     rows = read_overexpression_proteome_rows(path)
@@ -6060,28 +6936,37 @@ def _l4_overexpression_proteome_vs_released_sheet(
     key_map = dict(zip(keys, stored_keys, strict=True))
     assert_phn_crosswalk(rows, key_map)
     pairs, _ = overexpression_proteome_samples(rows)
-    expected: dict[frozenset[str], dict[str, float]] = {}
+    expected: dict[str, dict[str, float]] = {}
     for sample in sorted(pairs):
-        cells = _overexpression_cells(rows, sample, key_map)
-        expected[frozenset(cells)] = {
-            locus: statistics.fmean(values) for locus, values in cells.items()
-        }
+        for replicate, levels in _overexpression_replicate_cells(
+            rows, sample, key_map
+        ).items():
+            expected[f"{sample}/{replicate}"] = levels
     shared: list[tuple[str, float, float]] = []
+    joined: set[str] = set()
     for record in records:
-        abundance = record["experiment"]["phenotype"]["protein_abundance"]
-        released = expected.get(frozenset(abundance))
+        phenotype = record["experiment"]["phenotype"]
+        replicate_id = str(phenotype.get("replicate_id"))
+        released = expected.get(replicate_id)
         if released is None:
             continue
+        joined.add(replicate_id)
+        if set(phenotype["protein_abundance"]) != set(released):
+            raise AssertionError(
+                f"{replicate_id}: the stored key set differs from the released one by "
+                f"{sorted(set(phenotype['protein_abundance']) ^ set(released))}"
+            )
         shared.extend(
-            (locus, float(value), released[locus])
-            for locus, value in sorted(abundance.items())
+            (f"{replicate_id}/{locus}", float(value), released[locus])
+            for locus, value in sorted(phenotype["protein_abundance"].items())
         )
-    if len(shared) != sum(len(values) for values in expected.values()):
+    if joined != set(expected):
         raise AssertionError(
-            f"{len(shared)} stored abundances join the {len(expected)} released "
-            "overexpression samples; the panel is not fully represented"
+            f"{len(joined)} of the {len(expected)} released uninduced "
+            f"overexpression (sample, replicate) columns are in the store; missing "
+            f"{sorted(set(expected) - joined)}"
         )
-    return l4_cross_source(shared, tol=1e-6).model_copy(
+    return l4_cross_source(shared, tol=0.0).model_copy(
         update={"name": "overexpression_proteome_vs_released_sheet"}
     )
 
@@ -6110,52 +6995,95 @@ def _campaign_provenance() -> Provenance:
 def _l1_campaign_strain_cycles_pair_the_titers(
     records: Sequence[dict[str, Any]], data_root: str | None
 ) -> LevelResult:
-    """L1: the stored genotypes are exactly the titer family's 465 campaign genotypes.
+    """L1: the stored (genotype, replicate) pairs are the titer family's own cultures.
 
     The whole point of this family is to be the titer records' paired feature set, so
-    the assertion is identity of the genotype KEY, not of a count: the sorted tuple of
-    CRISPRi target loci of each record must be the same multiset the Source Data's
-    non-control cultures group into.
+    the assertion is identity of the KEY, not of a count: each record's
+    ``(CRISPRi target loci, replicate_id)`` must be the same multiset the Source Data's
+    non-control cultures give, restricted to the cultures the deposit carries. The nine
+    Source Data cultures with no proteome row (R4-R6 of three DBTL1 strains) are the
+    only difference, and they are named in the message rather than tolerated silently.
     """
 
     def key(record: Mapping[str, Any]) -> tuple[str, ...]:
-        return tuple(
-            sorted(
+        return (
+            *sorted(
                 str(perturbation["systematic_gene_name"])
                 for perturbation in record["experiment"]["genotype"]["perturbations"]
                 if perturbation["perturbation_type"] == "crispr_interference"
-            )
+            ),
+            str(record["experiment"]["phenotype"]["replicate_id"]),
         )
 
     genome = bacterial_genome("pputida", "KT2440", data_root)
     rows = read_titer_rows(str(raw_mirror_dir(data_root) / SOURCE_DATA_REL))
-    constructs = sorted(
-        {(row.construct_name, row.cycle) for row in rows if not row.is_control}
+    cultures = [row for row in rows if not row.is_control]
+    tags = sorted(
+        {tag for row in cultures for tag in parse_construct(row.construct_name)[0]}
     )
-    tags = sorted({tag for name, _ in constructs for tag in parse_construct(name)[0]})
     stored, _ = reconcile_locus_tags(genome, pd.Series(tags), label="l1-campaign")
     tag_map = dict(zip(tags, stored, strict=True))
     expected = Counter(
-        tuple(sorted(tag_map[tag] for tag in parse_construct(name)[0]))
-        for name, _ in constructs
+        (
+            *sorted(tag_map[tag] for tag in parse_construct(row.construct_name)[0]),
+            f"{row.construct_name}-R{row.replicate}",
+        )
+        for row in cultures
     )
     observed = Counter(key(record) for record in records)
-    passed = observed == expected
+    only_in_titers = expected - observed
+    passed = not (observed - expected) and sum(only_in_titers.values()) == len(
+        cultures
+    ) - len(records)
     return LevelResult(
         level=Level.L1,
         name="campaign_genotypes_are_the_titer_familys",
         passed=passed,
         message=(
-            f"{len(records)} records over {len(observed)} distinct CRISPRi target sets; "
-            f"the titer family's {len(constructs)} campaign strain-cycles give "
-            f"{len(expected)}" + ("" if passed else "; the two no longer pair")
+            f"{len(records)} records over {len(observed)} distinct (CRISPRi target set, "
+            f"replicate) keys; the titer family releases {len(cultures)} campaign "
+            f"cultures, of which {sum(only_in_titers.values())} have no row in the "
+            "deposited matrix"
         ),
         details={
             "records": len(records),
-            "titer_strain_cycles": len(constructs),
+            "titer_cultures": len(cultures),
             "only_in_store": sorted(";".join(k) for k in (observed - expected)),
-            "only_in_titers": sorted(";".join(k) for k in (expected - observed)),
+            "only_in_titers": sorted(";".join(k) for k in only_in_titers),
         },
+    )
+
+
+def _l3_campaign_records_are_cultures(records: Sequence[dict[str, Any]]) -> LevelResult:
+    """L3: every campaign-proteome record is ONE culture of the deposited matrix.
+
+    ``n_replicates`` is 1 for every key, the SE map is absent with a typed gap, and the
+    ``replicate_id`` is the deposit's own ``Line_name``. The groups those cultures form
+    are asserted against the titer family's own cultures by
+    :func:`_l1_campaign_strain_cycles_pair_the_titers`, which is the stronger statement,
+    so this rule is about the record UNIT.
+    """
+    phenotypes = [record["experiment"]["phenotype"] for record in records]
+    counts = {
+        int(n) for phenotype in phenotypes for n in phenotype["n_replicates"].values()
+    }
+    labeled = sum(
+        1
+        for phenotype in phenotypes
+        if phenotype.get("replicate_id")
+        and phenotype["protein_abundance_se"] is None
+        and "protein_abundance_se"
+        in {gap["field"] for gap in phenotype["provenance_gaps"]}
+    )
+    groups = _replicate_group_sizes(records)
+    return l3_convention(
+        "records_are_cultures_of_the_deposited_matrix",
+        counts == {1} and labeled == len(records),
+        detail=(
+            f"stored replicate counts {sorted(counts)}; {labeled} of {len(records)} "
+            "records carry a replicate_id and a typed protein_abundance_se gap; "
+            f"per-genotype group sizes {dict(sorted(groups.items()))}"
+        ),
     )
 
 
@@ -6192,11 +7120,12 @@ def _l3_campaign_percent_of_proteome(records: Sequence[dict[str, Any]]) -> Level
 def _l4_campaign_profile_vs_deposited_matrix(
     records: Sequence[dict[str, Any]], data_root: str | None
 ) -> LevelResult:
-    """L4: one stored profile re-derived from the deposited bytes, protein by protein.
+    """L4: one stored culture re-read from the deposited bytes, protein by protein.
 
-    The strain re-read is the campaign's best, ``PP_4188`` is Yunus's; here it is the
-    DBTL0 single-guide strain with the most cultures that is unambiguous to name, so
-    the rule picks the first strain-cycle in sorted order deterministically.
+    The culture re-read is the first of the first strain-cycle in sorted order, picked
+    deterministically, and the join is by ``replicate_id``: a record is one culture, so
+    the oracle is that culture's own released row rather than an aggregate over its
+    strain-cycle.
     """
     root = raw_mirror_dir(data_root)
     proteome = read_campaign_proteome(str(root / DRYAD_TOP3_REL))
@@ -6210,20 +7139,26 @@ def _l4_campaign_profile_vs_deposited_matrix(
         if not culture.is_control:
             by_strain[(culture.construct_name, culture.cycle)].append(row_index)
     construct, cycle = sorted(by_strain)[0]
-    aggregate = aggregate_campaign_profile(
-        proteome,
+    row_index = sorted(
         by_strain[(construct, cycle)],
-        resolution.resolved,
-        label=f"{construct} DBTL{cycle}",
-    )
+        key=lambda index: proteome.cultures[index].replicate,
+    )[0]
+    culture = proteome.cultures[row_index]
+    released = {
+        locus: cell
+        for accession, locus in resolution.resolved.items()
+        if (cell := proteome.cells.get((row_index, accession))) is not None
+    }
     tags = sorted(parse_construct(construct)[0])
     stored, _ = reconcile_locus_tags(genome, pd.Series(tags), label="l4-campaign-tags")
     want = tuple(sorted(stored))
+    label = f"{culture.construct_name}-R{culture.replicate}"
     match = next(
         (
             record
             for record in records
-            if tuple(
+            if record["experiment"]["phenotype"]["replicate_id"] == label
+            and tuple(
                 sorted(
                     str(perturbation["systematic_gene_name"])
                     for perturbation in record["experiment"]["genotype"][
@@ -6237,19 +7172,21 @@ def _l4_campaign_profile_vs_deposited_matrix(
         None,
     )
     if match is None:
-        raise AssertionError(f"no stored record carries the CRISPRi target set {want}")
-    abundance = match["experiment"]["phenotype"]["protein_abundance"]
-    if set(abundance) != set(aggregate.abundance):
         raise AssertionError(
-            f"{construct} DBTL{cycle}: the stored key set differs from the one the "
-            "deposited matrix gives by "
-            f"{sorted(set(abundance) ^ set(aggregate.abundance))[:10]}"
+            f"no stored record carries the CRISPRi target set {want} with replicate "
+            f"{label!r}"
+        )
+    abundance = match["experiment"]["phenotype"]["protein_abundance"]
+    if set(abundance) != set(released):
+        raise AssertionError(
+            f"{label} (DBTL{cycle}): the stored key set differs from the one the "
+            f"deposited matrix gives by {sorted(set(abundance) ^ set(released))[:10]}"
         )
     shared = [
-        (locus, float(value), aggregate.abundance[locus])
+        (locus, float(value), released[locus])
         for locus, value in sorted(abundance.items())
     ]
-    return l4_cross_source(shared, tol=1e-9).model_copy(
+    return l4_cross_source(shared, tol=0.0).model_copy(
         update={"name": "stored_campaign_profile_vs_deposited_matrix"}
     )
 
@@ -6269,6 +7206,7 @@ def campaign_proteome_report(
         allow_duplicate_orfs=True,
     )
     report.add(_l1_campaign_strain_cycles_pair_the_titers(records, data_root))
+    report.add(_l3_campaign_records_are_cultures(records))
     report.add(_l3_campaign_percent_of_proteome(records))
     report.add(_l4_campaign_profile_vs_deposited_matrix(records, data_root))
     return report
@@ -6372,19 +7310,32 @@ def _l1_fold_change_contrast_coverage(records: Sequence[dict[str, Any]]) -> Leve
 
 
 def _l3_fold_change_triplicate(records: Sequence[dict[str, Any]]) -> LevelResult:
-    """L3: every protein's replicate count is the Methods' biological triplicate."""
-    expected = int(N_REPLICATES.value)
+    """L3: every protein's replicate count is the sourced proteomics triplicate.
+
+    Unlike the two absolute families, a fold-change record IS an aggregate: the released
+    number is one statistic over the paired replicates, so its ``n_replicates`` is the
+    pair count and the record carries no ``replicate_id``. The count is sourced from
+    :data:`FOLD_CHANGE_N_REPLICATES`, a PROTEOMICS statement, rather than from the titer
+    triplicate sentence this rule used to quote.
+    """
+    expected = int(FOLD_CHANGE_N_REPLICATES.value)
     counts = {
         int(value)
         for record in records
         for value in record["experiment"]["phenotype"]["n_replicates"].values()
     }
+    replicate_ids = {
+        record["experiment"]["phenotype"].get("replicate_id") for record in records
+    }
     return l3_convention(
         "fold_change_biological_triplicate",
-        counts == {expected},
+        counts == {expected} and replicate_ids == {None},
         detail=(
-            f"replicate counts {sorted(counts)}; the Methods state "
-            f"'{_Q_TRIPLICATE}', so every fold change carries {expected}"
+            f"replicate counts {sorted(counts)} and replicate_ids "
+            f"{sorted(str(value) for value in replicate_ids)}; the authors state "
+            f"'{_Q_SI2_ONE_MEASUREMENT_PER_REPLICATE}' over the cultures of "
+            f"'{_Q_TRIPLICATE}', so every fold change carries {expected} and states an "
+            "aggregate rather than one replicate"
         ),
     )
 
@@ -6481,7 +7432,10 @@ def titer_report(
     )
     report.add(_l1_panel_partition(records))
     report.add(_l1_strain_count_reconciles(records))
+    report.add(_l1_titer_replicate_ids_are_distinct(records))
+    report.add(_l3_titer_replicate_groups(records))
     report.add(_l3_panel_reference_is_stored_once(records))
+    report.add(_l4_campaign_titers_vs_released_sheet(records, data_root))
     report.add(_l4_titer_vs_supplementary_data_1(records, data_root))
     report.add(_l4_ko_array_titer_vs_results_text(records))
     report.add(_l4_panel_titers_vs_released_sheets(records, data_root))

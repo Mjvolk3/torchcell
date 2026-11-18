@@ -798,12 +798,14 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "ffa_xue2025": {
         "root": "data/torchcell/ffa_xue2025",
-        # In-house Xue 2025 combinatorial TF-deletion FFA titers. 177 genotype rows -> 176
-        # experiment records + 1 measured WT reference (wt BY4741). Each strain = the
-        # POX1-FAA1-FAA4 FFA-overproduction baseline + 0-3 TF deletions (letters decoded via
-        # the Abbreviations sheet; N delta = 3 + #TF letters). Combinatorial -> L1 keys on the
-        # genotype signature (deletion set), not per-ORF.
-        "expected_count": 176,
+        # In-house Xue 2025 combinatorial TF-deletion FFA titers. 177 genotype rows -> 519
+        # records, one per released replicate (166 rows x 3 + 10 x 2 + 1 x 1), the three
+        # wt BY4741 replicates included; the reference is the wt BY4741 summary. Each
+        # strain = the POX1-FAA1-FAA4 FFA-overproduction baseline + 0-3 TF deletions
+        # (letters decoded via the Abbreviations sheet; N delta = 3 + #TF letters).
+        # Combinatorial -> L1 keys on the genotype signature (deletion set) plus the
+        # record's replicate_id, not per-ORF.
+        "expected_count": 519,
         "reference_centered": False,  # absolute FFA titers (mg/L) vs measured WT baseline
         "provenance": Provenance(
             source_uri=(
@@ -815,10 +817,11 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
             method=(
                 "Combinatorial TF-deletion strains on the POX1-FAA1-FAA4 FFA-overproduction "
                 "chassis; 5 free-fatty-acid species (C14:0/C16:0/C18:0/C16:1/C18:1) titered in "
-                "mg/L, mean +- sample SD over up to 3 replicates (per-FFA replicate count varies; "
-                "n=1 -> SE NaN). MetabolitePhenotype measurement_type=titer_mg_per_l; genotype = "
+                "mg/L, one record per released replicate (up to 3 per strain; n=1, no SE, "
+                "replicate_id = column position). MetabolitePhenotype measurement_type=titer_mg_per_l; genotype = "
                 "KanMxDeletionPerturbation per gene (markers unknown/mixed for in-house combos -> "
-                "KanMX representative); env SC/30C aerobic (in-house-assumed); ref = measured WT"
+                "KanMX representative); env SC/30C aerobic (in-house-assumed); ref = measured WT "
+                "summary (mean, SE, n=3) over its three replicate records"
             ),
             page=(
                 "In-house Xue 2025 Supplementary Data 1_Raw titers.xlsx "

@@ -812,3 +812,13 @@ The three cassettes that exist carry a typed `not_released_by_primary` gap namin
 ### What moved in the loaders
 
 Thirty-nine `BacterialStrainBackground(...)` and twenty `BacterialBackgroundAllele(...)` construction sites pass the same keyword arguments to the general classes, so no released value changes shape. Eight yeast loaders (`hackett2020`, `jackson2020`, `parsons2006`, `vanacloig2022`, `yoshikawa2009`, `hillenmeyer2008`, `puddu2019`, `hoepfner2014`) plus `standard_background()` and `baid_background()` in `torchcell/datamodels/strain_background.py` build `EukaryoticStrainBackground` and state `reference_strain="S288C"` and the S288C set; `wildenhain2015` revalidates through the subclass. `SGD_S288C_ASSEMBLY_SET` is now typed `Final[AssemblySet]` so a loader that pins it type-checks against the closed vocabulary.
+
+## 2026.11.17 - `replicate_id` on the titer, metabolite and protein-abundance phenotypes (#1178)
+
+`ProductTiterPhenotype`, `MetabolitePhenotype` and `ProteinAbundancePhenotype` gain one additive optional field, `replicate_id: str | None = None`, on the precedent of `EnvironmentResponsePhenotype.replicate_id` (#776). It names which one replicate culture or sample a record states when the release is per replicate and the record stores that replicate's own value: the source's own label where it prints one (Carruthers 2025's `R1` to `R6` line-name suffix), otherwise the replicate's position in the release (Xue 2025's three unlabeled columns per fatty acid). It is `None` on a record that states an aggregate, which is what a `phenotype_reference` summary and an aggregate-only release carry.
+
+Why it is needed: the owner's ruling of 2026-11-17 that released replicate values are stored one record per replicate, with the mean and dispersion derived at model time. Without an identifier, replicates of one (strain, condition) are records with identical genotype and environment, the L1 uniqueness rules read them as duplicates, and two replicates with the same value hash to one phenotype node, because the node id is a sha256 of the phenotype dump.
+
+What moves with it: the metabolite L1 key (`torchcell/verification/metabolite.py`), the titer and protein L1 keys, the three node property lists in `torchcell/adapters/cell_adapter.py`, and the three node classes in `biocypher/config/torchcell_schema_config.yaml`.
+
+Not decided here, listed in #1171 for the owner: one `replicate_id` on the base `Phenotype`, folding in `GenomeArchitecturePhenotype.sample_id` and `PhosphositeIntensityPhenotype.sample_label` + `replicate`. That is a rename of served fields and needs sign-off; the per-class field is additive and does not.

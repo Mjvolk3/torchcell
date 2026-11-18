@@ -1,0 +1,15 @@
+gene,produces,consumes,n_reactions,subsystems,reaction_ids
+PP_2137,32,1,33,S_Fatty_Acid_Metabolism,ACACT10 ACACT11 ACACT12 ACACT13 ACACT8 ACACT8r ACACT9 KAT1 KAT10 KAT11 KAT12 KAT13 KAT14 KAT15 KAT16 KAT17 KAT18 KAT19 KAT20 KAT21 KAT22 KAT23 KAT24 KAT25 KAT26 KAT27 KAT28 KAT29 KAT30 KAT31 KAT32 KAT33 VCACT
+PP_0338,2,0,2,S_Gluconeogenesis; S_Glycolysis,PDH PDHbr
+PP_3280,2,0,2,S_Aromatic_Compounds_Degradation__B_Ketoadipate_pathway; S_Aromatic_Compounds_Degradation__Phenylacetyl_CoA_Catabolom,3OXCOAT OXDHCOAT
+PP_4636,1,1,2,S_Alternate_Carbon_and_Nitrogen_source__Amines_and_Polyamines_Metabolism; S_Butanoate_Metabolism,ACACT1r GLYBACT1r
+PP_0597,1,0,1,S_Alternate_Carbon_and_Nitrogen_source__Dipeptide_Metabolism,MMSAD3
+PP_0774,0,1,1,S_TCA_Cycle,PTAr
+PP_1607,0,1,1,S_Fatty_Acid__Biosynthesis,ACCOAC
+PP_3071,1,0,1,S_Gluconeogenesis,ACS
+PP_3754,0,1,1,S_Butanoate_Metabolism,ACACT1r
+PP_4175,0,1,1,S_Fatty_Acid__Biosynthesis,ACOATA
+PP_4187,1,0,1,S_Glycolysis,PDH
+PP_4194,0,1,1,S_TCA_Cycle,CS
+PP_4487,1,0,1,S_Gluconeogenesis,ACS
+PP_4702,1,0,1,S_Gluconeogenesis,ACS

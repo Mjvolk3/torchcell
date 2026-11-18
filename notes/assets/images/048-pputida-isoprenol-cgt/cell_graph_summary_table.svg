@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="680.314961pt" height="221.102362pt" viewBox="0 0 680.314961 221.102362" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-18T12:38:10.392322</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.10.7, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 221.102362 
+L 680.314961 221.102362 
+L 680.314961 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 8.16378 75.174803 
+L 672.151181 75.174803 
+L 672.151181 51.590551 
+L 8.16378 51.590551 
+z
+" clip-path="url(#p814ceaba92)" style="fill: #f5f5f5"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 8.16378 122.343307 
+L 672.151181 122.343307 
+L 672.151181 98.759055 
+L 8.16378 98.759055 
+z
+" clip-path="url(#p814ceaba92)" style="fill: #f5f5f5"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 8.16378 169.511811 
+L 672.151181 169.511811 
+L 672.151181 145.927559 
+L 8.16378 145.927559 
+z
+" clip-path="url(#p814ceaba92)" style="fill: #f5f5f5"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 8.16378 216.680315 
+L 672.151181 216.680315 
+L 672.151181 193.096063 
+L 8.16378 193.096063 
+z
+" clip-path="url(#p814ceaba92)" style="fill: #f5f5f5"/>
+   </g>
+   <g id="line2d_1">
+    <path d="M 8.16378 28.006299 
+L 672.151181 28.006299 
+" clip-path="url(#p814ceaba92)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_2">
+    <path d="M 8.16378 4.422047 
+L 672.151181 4.422047 
+" clip-path="url(#p814ceaba92)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+   </g>
+   <g id="text_1">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="13.475679" y="42.127175" transform="rotate(-0 13.475679 42.127175)">STRING neighborhood</text>
+   </g>
+   <g id="text_2">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="186.112403" y="42.072331" transform="rotate(-0 186.112403 42.072331)">genes stay adjacent across genomes</text>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="431.787742" y="42.085691" transform="rotate(-0 431.787742 42.085691)">5,729 genes</text>
+   </g>
+   <g id="text_4">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: end" x="665.511307" y="42.125066" transform="rotate(-0 665.511307 42.125066)">282,020</text>
+   </g>
+   <g id="text_5">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="13.475679" y="65.709318" transform="rotate(-0 13.475679 65.709318)">STRING fusion</text>
+   </g>
+   <g id="text_6">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="186.112403" y="65.656583" transform="rotate(-0 186.112403 65.656583)">the two are one gene in another genome</text>
+   </g>
+   <g id="text_7">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="431.787742" y="65.669943" transform="rotate(-0 431.787742 65.669943)">5,729 genes</text>
+   </g>
+   <g id="text_8">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: end" x="665.511307" y="65.709318" transform="rotate(-0 665.511307 65.709318)">5,512</text>
+   </g>
+   <g id="text_9">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="13.475679" y="89.29357" transform="rotate(-0 13.475679 89.29357)">STRING co-occurrence</text>
+   </g>
+   <g id="text_10">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="186.112403" y="89.240835" transform="rotate(-0 186.112403 89.240835)">the two appear and vanish together</text>
+   </g>
+   <g id="text_11">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="431.787742" y="89.254195" transform="rotate(-0 431.787742 89.254195)">5,729 genes</text>
+   </g>
+   <g id="text_12">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: end" x="665.511307" y="89.29357" transform="rotate(-0 665.511307 89.29357)">291,140</text>
+   </g>
+   <g id="text_13">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="13.475679" y="112.932665" transform="rotate(-0 13.475679 112.932665)">STRING co-expression</text>
+   </g>
+   <g id="text_14">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="186.112403" y="112.877822" transform="rotate(-0 186.112403 112.877822)">expression correlates across conditions</text>
+   </g>
+   <g id="text_15">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="431.787742" y="112.838447" transform="rotate(-0 431.787742 112.838447)">5,729 genes</text>
+   </g>
+   <g id="text_16">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: end" x="665.511307" y="112.877822" transform="rotate(-0 665.511307 112.877822)">288,542</text>
+   </g>
+   <g id="text_17">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="13.475679" y="136.516917" transform="rotate(-0 13.475679 136.516917)">STRING experimental</text>
+   </g>
+   <g id="text_18">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="186.112403" y="136.462074" transform="rotate(-0 186.112403 136.462074)">a published experiment links them</text>
+   </g>
+   <g id="text_19">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="431.787742" y="136.422699" transform="rotate(-0 431.787742 136.422699)">5,729 genes</text>
+   </g>
+   <g id="text_20">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: end" x="665.511307" y="136.462074" transform="rotate(-0 665.511307 136.462074)">121,575</text>
+   </g>
+   <g id="text_21">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="13.475679" y="160.046326" transform="rotate(-0 13.475679 160.046326)">STRING database</text>
+   </g>
+   <g id="text_22">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="186.112403" y="159.993591" transform="rotate(-0 186.112403 159.993591)">a curated pathway holds both</text>
+   </g>
+   <g id="text_23">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="431.787742" y="160.006951" transform="rotate(-0 431.787742 160.006951)">5,729 genes</text>
+   </g>
+   <g id="text_24">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: end" x="665.511307" y="160.046326" transform="rotate(-0 665.511307 160.046326)">45,713</text>
+   </g>
+   <g id="text_25">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="13.475679" y="183.630578" transform="rotate(-0 13.475679 183.630578)">Metabolism, reaction to metabolite</text>
+   </g>
+   <g id="text_26">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="186.112403" y="183.630578" transform="rotate(-0 186.112403 183.630578)">a reaction consumes or produces a metabolite</text>
+   </g>
+   <g id="text_27">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="431.787742" y="183.630578" transform="rotate(-0 431.787742 183.630578)">4,860 reactions, 2,168 metabolites</text>
+   </g>
+   <g id="text_28">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: end" x="665.511307" y="183.630578" transform="rotate(-0 665.511307 183.630578)">19,367</text>
+   </g>
+   <g id="text_29">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="13.475679" y="207.162095" transform="rotate(-0 13.475679 207.162095)">Metabolism, gene to reaction</text>
+   </g>
+   <g id="text_30">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="186.112403" y="207.162095" transform="rotate(-0 186.112403 207.162095)">a gene catalyzes a reaction</text>
+   </g>
+   <g id="text_31">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: start" x="431.787742" y="207.175455" transform="rotate(-0 431.787742 207.175455)">5,729 genes, 4,860 reactions</text>
+   </g>
+   <g id="text_32">
+    <text style="font-size: 9px; font-family: 'Arial'; text-anchor: end" x="665.511307" y="207.21483" transform="rotate(-0 665.511307 207.21483)">4,578</text>
+   </g>
+   <g id="line2d_3">
+    <path d="M 8.16378 216.680315 
+L 672.151181 216.680315 
+" clip-path="url(#p814ceaba92)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
+   </g>
+   <g id="text_33">
+    <text style="font-weight: 700; font-size: 9.5px; font-family: 'Arial'; text-anchor: start" x="13.475679" y="18.734642" transform="rotate(-0 13.475679 18.734642)">Graph</text>
+   </g>
+   <g id="text_34">
+    <text style="font-weight: 700; font-size: 9.5px; font-family: 'Arial'; text-anchor: start" x="186.112403" y="18.614408" transform="rotate(-0 186.112403 18.614408)">An edge means</text>
+   </g>
+   <g id="text_35">
+    <text style="font-weight: 700; font-size: 9.5px; font-family: 'Arial'; text-anchor: start" x="431.787742" y="18.676751" transform="rotate(-0 431.787742 18.676751)">Nodes</text>
+   </g>
+   <g id="text_36">
+    <text style="font-weight: 700; font-size: 9.5px; font-family: 'Arial'; text-anchor: end" x="665.511307" y="18.614408" transform="rotate(-0 665.511307 18.614408)">Edges</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p814ceaba92">
+   <rect x="8.16378" y="4.422047" width="663.987402" height="212.258268"/>
+  </clipPath>
+ </defs>
+</svg>

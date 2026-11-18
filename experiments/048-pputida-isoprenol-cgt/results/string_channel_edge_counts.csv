@@ -1,0 +1,7 @@
+channel,score_floor_exclusive,edges_drawn,genes_with_a_drawn_edge,edges_all_scores,genes_total
+neighborhood,400,97,66,1087,121
+fusion,400,26,35,60,121
+cooccurence,400,77,61,285,121
+coexpression,400,306,83,1583,121
+experimental,400,176,65,731,121
+database,400,379,97,712,121

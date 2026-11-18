@@ -22,8 +22,11 @@ MAE ``0.25``, Spearman 1, Wasserstein ``0.25``, Pearson ``6.5/sqrt(5 * 8.75) = 0
 JS is exactly 0.
 """
 
+import subprocess
+import sys
 from collections.abc import Callable
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import matplotlib
@@ -33,7 +36,6 @@ matplotlib.use("Agg")
 import numpy as np  # noqa: E402
 import pytest  # noqa: E402
 import torch  # noqa: E402
-import umap  # noqa: E402
 import wandb  # noqa: E402
 from matplotlib.figure import Figure  # noqa: E402
 from matplotlib.patches import Rectangle  # noqa: E402
@@ -212,10 +214,32 @@ def test_plot_distribution_metrics_text_histograms_and_labels(
         2.3333,
     ]
     assert _legend_labels(fig) == ["True", "Predicted"]
+    # One KDE line per series, 200 points spanning that series' own data range.
+    assert [line.get_color() for line in ax.lines] == ["blue", "red"]
+    spans = [
+        (len(x), float(x[0]), float(x[-1]))
+        for x in (np.asarray(line.get_xdata()) for line in ax.lines)
+    ]
+    assert spans == [(200, 0.0, 2.0), (200, 1.0, 3.0)]
     assert (ax.get_xlabel(), ax.get_ylabel()) == ("Target 0", "Density")
     assert ax.get_title() == (
         "Training Results\nLoss: mse\nEpochs: 5\nDistribution Matching Target 0"
     )
+
+
+def test_plot_distribution_draws_no_kde_for_a_constant_series(
+    vis: Visualization,
+    wandb_recorder: Any,
+    figure_capture: Callable[[Any], list[Figure]],
+) -> None:
+    """A constant prediction (variance 0) keeps its bars but gets no KDE line."""
+    figures = figure_capture(vis)
+    true_values = torch.tensor([[0.0], [1.0], [2.0], [3.0]])
+    predictions = torch.full_like(true_values, 5.0)
+    vis.plot_distribution(true_values, predictions, "mse", 0, 1, None)
+    ax = figures[0].axes[0]
+    assert [line.get_color() for line in ax.lines] == ["blue"]
+    assert len([p for p in ax.patches if isinstance(p, Rectangle)]) == 4
 
 
 def test_plot_distribution_skips_with_fewer_than_two_points(
@@ -228,6 +252,11 @@ def test_plot_distribution_skips_with_fewer_than_two_points(
         == "Not enough valid points for distribution plot for target 0. Skipping.\n"
     )
     assert wandb_recorder.logged == []
+
+
+def _install_fake_umap(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Serve :class:`FakeUMAP` as the ``umap`` module ``plot_umap`` imports lazily."""
+    monkeypatch.setitem(sys.modules, "umap", SimpleNamespace(UMAP=FakeUMAP))
 
 
 class FakeUMAP:
@@ -254,7 +283,7 @@ def test_plot_umap_drops_nan_rows_and_colors_by_label(
 ) -> None:
     FakeUMAP.constructed.clear()
     FakeUMAP.fitted.clear()
-    monkeypatch.setattr(umap, "UMAP", FakeUMAP)
+    _install_fake_umap(monkeypatch)
     figures = figure_capture(vis)
     features = torch.tensor([[1.0, 2.0], [NAN, 0.0], [3.0, 4.0], [5.0, 6.0]])
     labels = torch.tensor([10.0, 20.0, 30.0, 40.0])
@@ -287,7 +316,7 @@ def test_plot_umap_subsamples_to_max_points(
     """max_points=2 with three valid rows fits rows [0, 2], labels kept in step."""
     FakeUMAP.constructed.clear()
     FakeUMAP.fitted.clear()
-    monkeypatch.setattr(umap, "UMAP", FakeUMAP)
+    _install_fake_umap(monkeypatch)
     vis = Visualization(str(tmp_path), max_points=2)
     figures = figure_capture(vis)
     features = torch.tensor([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
@@ -309,7 +338,7 @@ def test_plot_umap_skips_with_fewer_than_two_valid_rows(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     FakeUMAP.constructed.clear()
-    monkeypatch.setattr(umap, "UMAP", FakeUMAP)
+    _install_fake_umap(monkeypatch)
     features = torch.tensor([[1.0, 2.0], [NAN, 0.0]])
     vis.plot_umap(features, torch.tensor([1.0, 2.0]), "z", 2, 1, None)
     assert capsys.readouterr().out == (
@@ -432,3 +461,18 @@ def test_visualize_model_outputs_single_and_all_zero_targets_use_dim_zero(
         torch.zeros(3, 2), torch.zeros(3, 2), {}, "mse", 1, None
     )
     assert [c[1][2] for c in calls if c[0] == "plot_correlations"] == [0]
+
+
+def test_importing_the_module_loads_neither_umap_nor_seaborn() -> None:
+    """``umap`` is imported only inside ``plot_umap`` and seaborn not at all, so a
+    trainer importing ``Visualization`` needs neither installed. Run in a fresh
+    interpreter, since this session may already hold either module.
+    """
+    code = (
+        "import sys, torchcell.viz.visual_regression; "
+        "print(sorted(m for m in ('umap', 'seaborn') if m in sys.modules))"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True
+    )
+    assert result.stdout == "[]\n"

@@ -277,6 +277,56 @@ the isoprenol head to need the fitness pretraining to beat the lower-order null,
 and I have not tested this.** The MVP is designed to find out, which is why the
 null is on the same table as the model.
 
+### Sequence windows for a bacterium: the ORF, not a 1 kb promoter window
+
+The recollection of "1,000 upstream, 300 downstream" is the yeast setting
+(`nt_window_five_prime_1003`, `nt_window_three_prime_300` in
+`torchcell/datasets/nucleotide_transformer.py`). Measured on the pinned KT2440
+GFF by `scripts/kt2440_sequence_window_budget.py`, it does not transfer:
+
+| statistic over 5,729 KT2440 genes | value |
+|---|---|
+| median clear upstream gap to the neighboring gene | 88 bp |
+| mean clear upstream gap | 130 bp |
+| genes overlapping or abutting the upstream neighbor | 17.4% |
+| genes with 100 bp clear upstream | 46.9% |
+| genes with 300 bp clear upstream | 9.8% |
+| genes with 1,000 bp clear upstream | **0.7%** |
+| gene length, median / q99 / max | 834 / 3,431 / 26,049 bp |
+
+For 99.3% of KT2440 genes a 1 kb upstream window is mostly the neighboring
+gene's coding sequence, which is what an operonic genome implies. So a fixed
+promoter window is the wrong sequence unit here, and the right one is the ORF
+itself, with at most a short (100 to 200 bp) upstream flank that is understood
+to reach into the neighbor.
+
+That is also why FUDT genuinely does not apply, as the owner noted, and why the
+protein-level and codon-level encoders carry more weight for this organism than
+a DNA promoter-window model. GenSLM already does the right thing without
+modification: its window is `("cds", GENSLM_SEQ_LENGTH * 3)` = 6,144 nt
+(2,048 codons), which covers well past the 99th percentile gene, and its
+`__main__` already runs P. putida KT2440.
+
+Planned encoder set, grouped by what it reads and in the order the sanity
+checks come first:
+
+| encoder | reads | status in repo |
+|---|---|---|
+| one-hot | ORF | genome-agnostic, works today |
+| random (several seeds) | nothing, control | genome-agnostic, works today |
+| codon frequency | CDS | genome-agnostic, works today |
+| GenSLM 25M / 250M / 2.5B PATRIC | CDS, 6,144 nt | genome-agnostic, bacterial-trained, already runs on KT2440 |
+| ESM2 | protein | typed to `SCerevisiaeGenome`, needs the type relaxed |
+| ProtT5 | protein | typed to `SCerevisiaeGenome`, needs the type relaxed |
+| CaLM | CDS codons | `CalmDataset` exists, CDS-based |
+| Nucleotide Transformer | ORF rather than flanks | class exists, windows are yeast-tuned |
+| HiGenLM / HiSan | nucleotide, long context | no code, new dataset class |
+| Evo or Evo 2 | nucleotide, long context | no code, new dataset class |
+
+One-hot plus the randoms are the floor the whole table is read against, and they
+run first, before any new model is added, so the pipeline is proven end to end
+on encoders that cannot be blamed.
+
 ### Core reusable objects versus experiment-local assembly
 
 The division the owner asked for: reusable objects in core, the dataset that

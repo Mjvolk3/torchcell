@@ -75,8 +75,8 @@ BLOCK = re.compile(r"^# \[(\w+)\]\n(.*?)^# \[/\1\]\n", re.DOTALL | re.MULTILINE)
 # The notebook, top to bottom: a markdown cell (text) or a code cell (the name of a
 # tutorial block). The cells in HIDDEN hold plotting code; their source is collapsed in
 # the notebook (JupyterLab, VS Code) and on the documentation page. A "raw" cell is code
-# that belongs to the notebook only: the first one installs torchcell when the notebook
-# is opened in Google Colab and does nothing anywhere else.
+# that belongs to the notebook only: the first one is the pip install, which Google Colab needs
+# and which changes nothing where torchcell is already installed.
 NOTEBOOK_PATH = "experiments/034-showcase-datasets/notebooks/ecoli_datasets.ipynb"
 NOTEBOOK_URL = f"https://github.com/Mjvolk3/torchcell/blob/main/{NOTEBOOK_PATH}"
 COLAB_URL = f"https://colab.research.google.com/github/Mjvolk3/torchcell/blob/main/{NOTEBOOK_PATH}"
@@ -84,15 +84,9 @@ COLAB_BADGE = (
     "[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)]"
     f"({COLAB_URL})"
 )
-COLAB_INSTALL = """\
-# In Google Colab this installs torchcell. Anywhere else it does nothing.
-# %pip installs into this notebook's own environment. The version floor matters: on a
-# Python older than 3.13 a bare "pip install torchcell" silently installs release 0.2.8.
-import sys
-
-if "google.colab" in sys.modules:
-    %pip install -q --no-warn-conflicts "torchcell>=1.8.6"
-"""
+# %pip installs into the notebook's own environment (a bare !pip runs whichever pip is
+# first on PATH). The flag hides pip's warnings about Colab's own preinstalled packages.
+COLAB_INSTALL = "%pip install -q --no-warn-conflicts torchcell\n"
 NOTEBOOK: tuple[tuple[str, str], ...] = (
     (
         "md",
@@ -106,6 +100,11 @@ NOTEBOOK: tuple[tuple[str, str], ...] = (
         "On your own machine, run the cells top to bottom in an empty directory with "
         "`torchcell` installed (Python 3.13 or newer). The stores download into "
         "`./data/torchcell/` and the figures are written to `./figures/`.",
+    ),
+    (
+        "md",
+        "## Install\n\nOne line installs torchcell and everything the loaders need. "
+        "On your own machine `pip install torchcell` is the same thing.",
     ),
     ("raw", COLAB_INSTALL),
     (
@@ -454,7 +453,9 @@ def execute_notebook(
     notebook: dict[str, Any] = json.loads(path.read_text("utf-8"))
     for cell in notebook["cells"]:
         cell["metadata"].pop("execution", None)
-        if cell["cell_type"] == "code":
+        if cell["cell_type"] == "code" and "install" in cell["metadata"]["tags"]:
+            cell["outputs"] = []  # pip's notices name this host's paths
+        elif cell["cell_type"] == "code":
             merged: list[dict[str, Any]] = []
             for o in cell["outputs"]:
                 if o["output_type"] == "stream" and o["name"] == "stderr":

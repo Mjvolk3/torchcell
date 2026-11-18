@@ -5,7 +5,7 @@ torchcell.database
 
 .. currentmodule:: torchcell.database
 
-Commands that build and serve the torchcell Neo4j knowledge graph. The package exports :class:`~torchcell.database.build_command.BuildCommand`, a Cliff command that runs the database image build scripts; ``tcdb`` (the console script declared in ``pyproject.toml``) is the Cliff entry point in ``torchcell.database.tcdb``. Other modules create the Neo4j directory tree, combine BioCypher output directories into one import set, build a single registered dataset's LMDB for admission, and hold the client connection settings and the Neo4j Browser stylesheet.
+Commands that build and serve the torchcell Neo4j knowledge graph. The package exports :class:`~torchcell.database.build_command.BuildCommand`, the ``build`` subcommand that runs the database image build scripts; ``tcdb`` (the console script declared in ``pyproject.toml``) is the argparse entry point in ``torchcell.database.tcdb``. Other modules create the Neo4j directory tree, combine BioCypher output directories into one import set, build a single registered dataset's LMDB for admission, and hold the client connection settings and the Neo4j Browser stylesheet.
 
 .. contents:: Contents
     :local:
@@ -48,7 +48,7 @@ Functions
 ``build_command``
 -----------------
 
-Cliff command for building the torchcell database image via shell scripts.
+The ``tcdb build`` subcommand: build the torchcell database image via shell scripts.
 
 Classes
 ~~~~~~~
@@ -103,14 +103,16 @@ Functions
 ``tcdb``
 --------
 
-Cliff-based command-line entry point for the torchcell database.
+The ``tcdb`` command line for the torchcell database, on ``argparse``.
 
-Classes
-~~~~~~~
+Functions
+~~~~~~~~~
 
 .. autosummary::
    :nosignatures:
    :toctree: ../generated
-   :template: autosummary/class.rst
 
-   tcdb.TCDB
+   tcdb.build_parser
+   tcdb.configure_logging
+   tcdb.completion_data
+   tcdb.bash_completion

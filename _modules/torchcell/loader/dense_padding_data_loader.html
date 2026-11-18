@@ -115,11 +115,11 @@
 <span></span><span class="sd">"""Data loader and collater that pad batches to a dense, fixed node count."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch.utils.data</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">beartype.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data.dataloader</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_collate</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Batch</span><span class="p">,</span> <span class="n">Dataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseData</span>
@@ -135,10 +135,10 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_dense_pad_tensor</span><span class="p">(</span>
     <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+    <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="n">float_padding_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">FLOAT_PADDING_VALUE</span><span class="p">,</span>
     <span class="n">non_float_padding_value</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">NON_FLOAT_PADDING_VALUE</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Densely pads a list of `torch.Tensor` along a new `batch_dim=0`.</span>
 
 <span class="sd">    Args:</span>
@@ -225,12 +225,12 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_dense_padded_collate</span><span class="p">(</span>
     <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
-    <span class="n">data_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseData</span><span class="p">],</span>
-    <span class="n">stores</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseStorage</span><span class="p">],</span>
+    <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+    <span class="n">data_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseData</span><span class="p">],</span>
+    <span class="n">stores</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseStorage</span><span class="p">],</span>
     <span class="n">float_padding_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">FLOAT_PADDING_VALUE</span><span class="p">,</span>
     <span class="n">non_float_padding_value</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">NON_FLOAT_PADDING_VALUE</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Collates a list of values into a single tensor or list of tensors.</span>
 
 <span class="sd">    Args:</span>
@@ -337,10 +337,10 @@
 <a class="viewcode-back" href="../../../generated/torchcell.loader.dense_padding_data_loader.dense_padded_collate.html#torchcell.loader.dense_padding_data_loader.dense_padded_collate">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">dense_padded_collate</span><span class="p">(</span>
     <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseData</span><span class="p">],</span>
-    <span class="n">data_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseData</span><span class="p">],</span>
-    <span class="n">follow_batch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">exclude_keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">BaseData</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+    <span class="n">data_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseData</span><span class="p">],</span>
+    <span class="n">follow_batch</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">exclude_keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">BaseData</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""Collate a list of data objects into a single dense object of type cls.</span>
 
 <span class="sd">    `collate` can handle both homogeneous and heterogeneous data objects by</span>
@@ -424,9 +424,9 @@
 <div class="viewcode-block" id="dense_padded_from_data_list">
 <a class="viewcode-back" href="../../../generated/torchcell.loader.dense_padding_data_loader.dense_padded_from_data_list.html#torchcell.loader.dense_padding_data_loader.dense_padded_from_data_list">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">dense_padded_from_data_list</span><span class="p">(</span>
-    <span class="n">data_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseData</span><span class="p">],</span>
-    <span class="n">follow_batch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">exclude_keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">data_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseData</span><span class="p">],</span>
+    <span class="n">follow_batch</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">exclude_keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Batch</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Construct a dense Batch object from a Python list of data objects.</span>
 
@@ -469,16 +469,16 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">dataset</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">BaseData</span><span class="p">],</span> <span class="n">DatasetAdapter</span><span class="p">],</span>
-        <span class="n">follow_batch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">exclude_keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="p">:</span> <span class="n">Dataset</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">BaseData</span><span class="p">]</span> <span class="o">|</span> <span class="n">DatasetAdapter</span><span class="p">,</span>
+        <span class="n">follow_batch</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exclude_keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Store the dataset and the follow/exclude key configuration."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">follow_batch</span> <span class="o">=</span> <span class="n">follow_batch</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">exclude_keys</span> <span class="o">=</span> <span class="n">exclude_keys</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Collate a list of data objects into the DataLoader storage format.</span>
 
 <span class="sd">        Collates a python list of data objects to the internal storage format</span>
@@ -518,7 +518,7 @@
 
 <div class="viewcode-block" id="DensePaddingCollater.collate_fn">
 <a class="viewcode-back" href="../../../generated/torchcell.loader.dense_padding_data_loader.DensePaddingCollater.html#torchcell.loader.dense_padding_data_loader.DensePaddingCollater.collate_fn">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">collate_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">collate_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Collate a batch, fetching from disk first for OnDiskDataset.</span>
 
 <span class="sd">        Collates a python list of data objects to the internal storage format</span>
@@ -552,9 +552,9 @@
 <span class="sd">            (default: `1`)</span>
 <span class="sd">        shuffle (bool, optional): If set to `True`, the data will be</span>
 <span class="sd">            reshuffled at every epoch. (default: `False`)</span>
-<span class="sd">        follow_batch (List[str], optional): Creates assignment batch</span>
+<span class="sd">        follow_batch (list[str], optional): Creates assignment batch</span>
 <span class="sd">            vectors for each key in the list. (default: `None`)</span>
-<span class="sd">        exclude_keys (List[str], optional): Will exclude each key in the</span>
+<span class="sd">        exclude_keys (list[str], optional): Will exclude each key in the</span>
 <span class="sd">            list. (default: `None`)</span>
 <span class="sd">        **kwargs (optional): Additional arguments of</span>
 <span class="sd">            `torch.utils.data.DataLoader`.</span>
@@ -562,11 +562,11 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">dataset</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">BaseData</span><span class="p">],</span> <span class="n">DatasetAdapter</span><span class="p">],</span>
+        <span class="n">dataset</span><span class="p">:</span> <span class="n">Dataset</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">BaseData</span><span class="p">]</span> <span class="o">|</span> <span class="n">DatasetAdapter</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="n">shuffle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">follow_batch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">exclude_keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">follow_batch</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exclude_keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Set up the dense-padding collater and base DataLoader."""</span>

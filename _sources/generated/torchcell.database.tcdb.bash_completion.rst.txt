@@ -1,0 +1,6 @@
+﻿torchcell.database.tcdb.bash\_completion
+========================================
+
+.. currentmodule:: torchcell.database.tcdb
+
+.. autofunction:: bash_completion

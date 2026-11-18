@@ -112,43 +112,223 @@
            <div itemprop="articleBody">
              
   <h1>Source code for torchcell.database.tcdb</h1><div class="highlight"><pre>
-<span></span><span class="sd">"""Cliff-based command-line entry point for the torchcell database."""</span>
+<span></span><span class="sd">"""The ``tcdb`` command line for the torchcell database, on ``argparse``.</span>
 
-<span class="c1"># db_cli.py</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">cast</span>
+<span class="sd">Subcommands ``build``, ``help`` and ``complete`` and the global options (``--version``,</span>
+<span class="sd">``-v``/``-q``, ``--log-file``, ``--debug``) are the ones the earlier cliff application</span>
+<span class="sd">exposed, with the same exit codes: the build script's return code, 2 for a usage error,</span>
+<span class="sd">1 for an error raised by a command or ``help`` of an unknown command. Running ``tcdb``</span>
+<span class="sd">with no subcommand prints the help (cliff opened an interactive shell instead).</span>
+<span class="sd">"""</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">cliff.app</span><span class="w"> </span><span class="kn">import</span> <span class="n">App</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">cliff.commandmanager</span><span class="w"> </span><span class="kn">import</span> <span class="n">CommandManager</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.database</span><span class="w"> </span><span class="kn">import</span> <span class="n">BuildCommand</span>  <span class="c1"># Import the command</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.database</span><span class="w"> </span><span class="kn">import</span> <span class="n">BuildCommand</span>
+
+<span class="n">VERSION</span> <span class="o">=</span> <span class="s2">"0.1"</span>
+<span class="n">CONSOLE_MESSAGE_FORMAT</span> <span class="o">=</span> <span class="s2">"</span><span class="si">%(message)s</span><span class="s2">"</span>
+<span class="n">LOG_FILE_MESSAGE_FORMAT</span> <span class="o">=</span> <span class="s2">"[</span><span class="si">%(asctime)s</span><span class="s2">] </span><span class="si">%(levelname)-8s</span><span class="s2"> </span><span class="si">%(name)s</span><span class="s2"> </span><span class="si">%(message)s</span><span class="s2">"</span>
+<span class="n">HELP_DESCRIPTION</span> <span class="o">=</span> <span class="s2">"print detailed help for another command"</span>
+<span class="n">COMPLETE_DESCRIPTION</span> <span class="o">=</span> <span class="s2">"print bash completion command"</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">_BASH_TRAILER</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">  dash=-</span>
+<span class="s2">  underscore=_</span>
+<span class="s2">  cmd=""</span>
+<span class="s2">  words[0]=""</span>
+<span class="s2">  completed="$</span><span class="si">{cmds}</span><span class="s2">"</span>
+<span class="s2">  for var in "$</span><span class="si">{words[@]:1}</span><span class="s2">"</span>
+<span class="s2">  do</span>
+<span class="s2">    if [[ $</span><span class="si">{var}</span><span class="s2"> == -* ]] ; then</span>
+<span class="s2">      break</span>
+<span class="s2">    fi</span>
+<span class="s2">    if [ -z "$</span><span class="si">{cmd}</span><span class="s2">" ] ; then</span>
+<span class="s2">      proposed="$</span><span class="si">{var}</span><span class="s2">"</span>
+<span class="s2">    else</span>
+<span class="s2">      proposed="$</span><span class="si">{cmd}</span><span class="s2">_$</span><span class="si">{var}</span><span class="s2">"</span>
+<span class="s2">    fi</span>
+<span class="s2">    local i="cmds_$</span><span class="si">{proposed}</span><span class="s2">"</span>
+<span class="s2">    i=${i//$dash/$underscore}</span>
+<span class="s2">    local comp="${!i}"</span>
+<span class="s2">    if [ -z "$</span><span class="si">{comp}</span><span class="s2">" ] ; then</span>
+<span class="s2">      break</span>
+<span class="s2">    fi</span>
+<span class="s2">    if [[ $</span><span class="si">{comp}</span><span class="s2"> == -* ]] ; then</span>
+<span class="s2">      if [[ $</span><span class="si">{cur}</span><span class="s2"> != -* ]] ; then</span>
+<span class="s2">        completed=""</span>
+<span class="s2">        break</span>
+<span class="s2">      fi</span>
+<span class="s2">    fi</span>
+<span class="s2">    cmd="$</span><span class="si">{proposed}</span><span class="s2">"</span>
+<span class="s2">    completed="$</span><span class="si">{comp}</span><span class="s2">"</span>
+<span class="s2">  done</span>
+
+<span class="s2">  if [ -z "$</span><span class="si">{completed}</span><span class="s2">" ] ; then</span>
+<span class="s2">    COMPREPLY=( $( compgen -f -- "$cur" ) $( compgen -d -- "$cur" ) )</span>
+<span class="s2">  else</span>
+<span class="s2">    COMPREPLY=( $(compgen -W "$</span><span class="si">{completed}</span><span class="s2">" -- $</span><span class="si">{cur}</span><span class="s2">) )</span>
+<span class="s2">  fi</span>
+<span class="s2">  return 0</span>
+<span class="s2">}</span>
+<span class="s2">"""</span>
 
 
-<div class="viewcode-block" id="TCDB">
-<a class="viewcode-back" href="../../../generated/torchcell.database.tcdb.TCDB.html#torchcell.database.tcdb.TCDB">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">TCDB</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Cliff application exposing the torchcell database build commands."""</span>
+<div class="viewcode-block" id="build_parser">
+<a class="viewcode-back" href="../../../generated/torchcell.database.tcdb.build_parser.html#torchcell.database.tcdb.build_parser">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_parser</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
+    <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">]</span>
+<span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The ``tcdb`` parser and its subcommand parsers keyed by name."""</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">prog</span><span class="o">=</span><span class="s2">"tcdb"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Database CLI"</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--version"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"version"</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="sa">f</span><span class="s2">"%(prog)s </span><span class="si">{</span><span class="n">VERSION</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">verbosity</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_mutually_exclusive_group</span><span class="p">()</span>
+    <span class="n">verbosity</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"-v"</span><span class="p">,</span>
+        <span class="s2">"--verbose"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"count"</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s2">"verbose_level"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Increase verbosity of output. Can be repeated."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">verbosity</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"-q"</span><span class="p">,</span>
+        <span class="s2">"--quiet"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_const"</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s2">"verbose_level"</span><span class="p">,</span>
+        <span class="n">const</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Suppress output except warnings and errors."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--log-file"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Specify a file to log output. Disabled by default."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--debug"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"Show tracebacks on errors."</span>
+    <span class="p">)</span>
+    <span class="n">commands</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">dest</span><span class="o">=</span><span class="s2">"command"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Commands"</span><span class="p">)</span>
+    <span class="n">build</span> <span class="o">=</span> <span class="n">commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"build"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"A simple command that builds something"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="n">BuildCommand</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">BuildCommand</span><span class="o">.</span><span class="n">add_arguments</span><span class="p">(</span><span class="n">build</span><span class="p">)</span>
+    <span class="n">complete</span> <span class="o">=</span> <span class="n">commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"complete"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="n">COMPLETE_DESCRIPTION</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">COMPLETE_DESCRIPTION</span>
+    <span class="p">)</span>
+    <span class="n">complete</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--name"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s2">"&lt;command_name&gt;"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Command name to support with command completion"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">complete</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--shell"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">"bash"</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s2">"&lt;shell&gt;"</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">"bash"</span><span class="p">,</span> <span class="s2">"none"</span><span class="p">],</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"Shell being used. Use none for data only (default: bash)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">help_parser</span> <span class="o">=</span> <span class="n">commands</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"help"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="n">HELP_DESCRIPTION</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">HELP_DESCRIPTION</span>
+    <span class="p">)</span>
+    <span class="n">help_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"cmd"</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s2">"*"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"name of the command"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">parser</span><span class="p">,</span> <span class="p">{</span><span class="s2">"build"</span><span class="p">:</span> <span class="n">build</span><span class="p">,</span> <span class="s2">"complete"</span><span class="p">:</span> <span class="n">complete</span><span class="p">,</span> <span class="s2">"help"</span><span class="p">:</span> <span class="n">help_parser</span><span class="p">}</span></div>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Configure the CLI app and register the ``build`` command."""</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">"Database CLI"</span><span class="p">,</span>
-            <span class="n">version</span><span class="o">=</span><span class="s2">"0.1"</span><span class="p">,</span>
-            <span class="n">command_manager</span><span class="o">=</span><span class="n">CommandManager</span><span class="p">(</span><span class="s2">"db.cli"</span><span class="p">),</span>
-            <span class="n">deferred_help</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+
+
+<div class="viewcode-block" id="configure_logging">
+<a class="viewcode-back" href="../../../generated/torchcell.database.tcdb.configure_logging.html#torchcell.database.tcdb.configure_logging">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">configure_logging</span><span class="p">(</span><span class="n">verbose_level</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">log_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Root logger at DEBUG, a stderr handler by verbosity, and an optional file."""</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+    <span class="n">root</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">log_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">file_handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">log_file</span><span class="p">)</span>
+        <span class="n">file_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="n">LOG_FILE_MESSAGE_FORMAT</span><span class="p">))</span>
+        <span class="n">root</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">file_handler</span><span class="p">)</span>
+    <span class="n">console</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+    <span class="n">console</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span>
+        <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">verbose_level</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">command_manager</span><span class="o">.</span><span class="n">add_command</span><span class="p">(</span><span class="s2">"build"</span><span class="p">,</span> <span class="n">BuildCommand</span><span class="p">)</span></div>
+    <span class="p">)</span>
+    <span class="n">console</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="n">CONSOLE_MESSAGE_FORMAT</span><span class="p">))</span>
+    <span class="n">root</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">console</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="completion_data">
+<a class="viewcode-back" href="../../../generated/torchcell.database.tcdb.completion_data.html#torchcell.database.tcdb.completion_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">completion_data</span><span class="p">(</span><span class="n">subparsers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The ``cmds`` lines of the bash completion: command names, then each one's options."""</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"  cmds='</span><span class="si">{</span><span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">subparsers</span><span class="p">))</span><span class="si">}</span><span class="s2">'"</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">subparsers</span><span class="p">):</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">option</span>
+            <span class="k">for</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">subparsers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">_actions</span>
+            <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="n">action</span><span class="o">.</span><span class="n">option_strings</span>
+        <span class="p">]</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  cmds_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">='</span><span class="si">{</span><span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">options</span><span class="p">)</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">lines</span></div>
+
+
+
+<div class="viewcode-block" id="bash_completion">
+<a class="viewcode-back" href="../../../generated/torchcell.database.tcdb.bash_completion.html#torchcell.database.tcdb.bash_completion">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">bash_completion</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">subparsers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A bash completion function for ``name`` (the script cliff's ``complete`` printed)."""</span>
+    <span class="n">escaped</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[^A-Za-z0-9_]"</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"_</span><span class="si">{</span><span class="n">escaped</span><span class="si">}</span><span class="s2">()</span><span class="se">\n{{\n</span><span class="s2">  local cur prev words</span><span class="se">\n</span><span class="s2">  COMPREPLY=()</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"  _get_comp_words_by_ref -n : cur prev words</span><span class="se">\n\n</span><span class="s2">  # Command data:</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">completion_data</span><span class="p">(</span><span class="n">subparsers</span><span class="p">))</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">header</span><span class="si">}{</span><span class="n">data</span><span class="si">}{</span><span class="n">_BASH_TRAILER</span><span class="si">}</span><span class="s2">complete -F _</span><span class="si">{</span><span class="n">escaped</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Run the database CLI application and return its exit code."""</span>
-    <span class="n">myapp</span> <span class="o">=</span> <span class="n">TCDB</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">myapp</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="s2">"list[str]"</span><span class="p">,</span> <span class="n">argv</span><span class="p">))</span>
+<span class="w">    </span><span class="sd">"""Run the database CLI and return its exit code."""</span>
+    <span class="n">parser</span><span class="p">,</span> <span class="n">subparsers</span> <span class="o">=</span> <span class="n">build_parser</span><span class="p">()</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="n">argv</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">argv</span><span class="p">)</span>
+    <span class="n">configure_logging</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">verbose_level</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">log_file</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">print_help</span><span class="p">()</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"help"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">cmd</span><span class="p">:</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">print_help</span><span class="p">()</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">subparsers</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown command </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">cmd</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mi">1</span>
+        <span class="n">subparsers</span><span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">print_help</span><span class="p">()</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"complete"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">shell</span> <span class="o">==</span> <span class="s2">"none"</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">completion_data</span><span class="p">(</span><span class="n">subparsers</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">bash_completion</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">"tcdb"</span><span class="p">,</span> <span class="n">subparsers</span><span class="p">),</span> <span class="n">end</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="c1"># The error boundary cliff provided: a failing command logs its message and exits 1;</span>
+    <span class="c1"># ``--debug`` adds the traceback.</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">BuildCommand</span><span class="p">()</span><span class="o">.</span><span class="n">take_action</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
-
     <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">main</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span>
 </pre></div>
 

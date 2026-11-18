@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>torchcell.database.tcdb.TCDB &mdash; TorchCell 1.8.5 documentation</title>
+  <title>torchcell.database.tcdb.configure_logging &mdash; TorchCell 1.8.5 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
       <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=e36e96bc" />
 
   
     <link rel="shortcut icon" href="../_static/torchcell-mark.png"/>
-    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/generated/torchcell.database.tcdb.TCDB.html" />
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/generated/torchcell.database.tcdb.configure_logging.html" />
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="../_static/documentation_options.js?v=ed17f7cc"></script>
@@ -24,8 +24,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="torchcell.datamodels" href="../modules/datamodels.html" />
-    <link rel="prev" title="torchcell.database.connection.neo4j_connection_settings" href="torchcell.database.connection.neo4j_connection_settings.html" /> 
+    <link rel="next" title="torchcell.database.tcdb.completion_data" href="torchcell.database.tcdb.completion_data.html" />
+    <link rel="prev" title="torchcell.database.tcdb.build_parser" href="torchcell.database.tcdb.build_parser.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -70,8 +70,11 @@
 <li class="toctree-l2"><a class="reference internal" href="../modules/database.html#build-dataset-lmdb"><code class="docutils literal notranslate"><span class="pre">build_dataset_lmdb</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modules/database.html#connection"><code class="docutils literal notranslate"><span class="pre">connection</span></code></a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="../modules/database.html#tcdb"><code class="docutils literal notranslate"><span class="pre">tcdb</span></code></a><ul class="current">
-<li class="toctree-l3 current"><a class="reference internal" href="../modules/database.html#id5">Classes</a><ul class="current">
-<li class="toctree-l4 current"><a class="current reference internal" href="#">torchcell.database.tcdb.TCDB</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../modules/database.html#id5">Functions</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="torchcell.database.tcdb.build_parser.html">torchcell.database.tcdb.build_parser</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">torchcell.database.tcdb.configure_logging</a></li>
+<li class="toctree-l4"><a class="reference internal" href="torchcell.database.tcdb.completion_data.html">torchcell.database.tcdb.completion_data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="torchcell.database.tcdb.bash_completion.html">torchcell.database.tcdb.bash_completion</a></li>
 </ul>
 </li>
 </ul>
@@ -118,9 +121,9 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../modules/database.html">torchcell.database</a></li>
-      <li class="breadcrumb-item active">torchcell.database.tcdb.TCDB</li>
+      <li class="breadcrumb-item active">torchcell.database.tcdb.configure_logging</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/generated/torchcell.database.tcdb.TCDB.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/generated/torchcell.database.tcdb.configure_logging.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -128,13 +131,12 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="torchcell-database-tcdb-tcdb">
-<h1>torchcell.database.tcdb.TCDB<a class="headerlink" href="#torchcell-database-tcdb-tcdb" title="Link to this heading"></a></h1>
-<dl class="py class">
-<dt class="sig sig-object py" id="torchcell.database.tcdb.TCDB">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TCDB</span></span><a class="reference internal" href="../_modules/torchcell/database/tcdb.html#TCDB"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.database.tcdb.TCDB" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">App</span></code></p>
-<p>Cliff application exposing the torchcell database build commands.</p>
+  <section id="torchcell-database-tcdb-configure-logging">
+<h1>torchcell.database.tcdb.configure_logging<a class="headerlink" href="#torchcell-database-tcdb-configure-logging" title="Link to this heading"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="torchcell.database.tcdb.configure_logging">
+<span class="sig-name descname"><span class="pre">configure_logging</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose_level</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/database/tcdb.html#configure_logging"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.database.tcdb.configure_logging" title="Link to this definition"></a></dt>
+<dd><p>Root logger at DEBUG, a stderr handler by verbosity, and an optional file.</p>
 </dd></dl>
 
 </section>
@@ -143,8 +145,8 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="torchcell.database.connection.neo4j_connection_settings.html" class="btn btn-neutral float-left" title="torchcell.database.connection.neo4j_connection_settings" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../modules/datamodels.html" class="btn btn-neutral float-right" title="torchcell.datamodels" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="torchcell.database.tcdb.build_parser.html" class="btn btn-neutral float-left" title="torchcell.database.tcdb.build_parser" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="torchcell.database.tcdb.completion_data.html" class="btn btn-neutral float-right" title="torchcell.database.tcdb.completion_data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

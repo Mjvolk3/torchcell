@@ -1,0 +1,6 @@
+﻿torchcell.database.tcdb.completion\_data
+========================================
+
+.. currentmodule:: torchcell.database.tcdb
+
+.. autofunction:: completion_data

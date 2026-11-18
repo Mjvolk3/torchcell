@@ -112,37 +112,42 @@
            <div itemprop="articleBody">
              
   <h1>Source code for torchcell.database.build_command</h1><div class="highlight"><pre>
-<span></span><span class="sd">"""Cliff command for building the torchcell database image via shell scripts."""</span>
+<span></span><span class="sd">"""The ``tcdb build`` subcommand: build the torchcell database image via shell scripts."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">IO</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">cast</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">cliff.command</span><span class="w"> </span><span class="kn">import</span> <span class="n">Command</span>
-
-<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">cliff._argparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArgumentParser</span> <span class="k">as</span> <span class="n">CliffArgumentParser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">IO</span><span class="p">,</span> <span class="n">cast</span>
 
 
 <div class="viewcode-block" id="BuildCommand">
 <a class="viewcode-back" href="../../../generated/torchcell.database.build_command.BuildCommand.html#torchcell.database.build_command.BuildCommand">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">BuildCommand</span><span class="p">(</span><span class="n">Command</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BuildCommand</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""A simple command that builds something."""</span>
 
-<div class="viewcode-block" id="BuildCommand.get_parser">
-<a class="viewcode-back" href="../../../generated/torchcell.database.build_command.BuildCommand.html#torchcell.database.build_command.BuildCommand.get_parser">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_parser</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prog_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"CliffArgumentParser"</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build the argument parser, adding the build mode option."""</span>
-        <span class="n">parser</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_parser</span><span class="p">(</span><span class="n">prog_name</span><span class="p">)</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="s2">"A simple command that builds something."</span>
+
+<div class="viewcode-block" id="BuildCommand.add_arguments">
+<a class="viewcode-back" href="../../../generated/torchcell.database.build_command.BuildCommand.html#torchcell.database.build_command.BuildCommand.add_arguments">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_arguments</span><span class="p">(</span><span class="n">parser</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Add the build mode option to ``parser``."""</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
             <span class="s2">"-m"</span><span class="p">,</span>
             <span class="s2">"--mode"</span><span class="p">,</span>
             <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">"regular"</span><span class="p">,</span> <span class="s2">"fresh"</span><span class="p">],</span>
             <span class="n">default</span><span class="o">=</span><span class="s2">"regular"</span><span class="p">,</span>
             <span class="n">help</span><span class="o">=</span><span class="s2">"Build mode (default: </span><span class="si">%(default)s</span><span class="s2">)"</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BuildCommand.get_parser">
+<a class="viewcode-back" href="../../../generated/torchcell.database.build_command.BuildCommand.html#torchcell.database.build_command.BuildCommand.get_parser">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_parser</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prog_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A standalone parser for the command, named ``prog_name`` in its usage line."""</span>
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">prog</span><span class="o">=</span><span class="n">prog_name</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_arguments</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">parser</span></div>
 
 

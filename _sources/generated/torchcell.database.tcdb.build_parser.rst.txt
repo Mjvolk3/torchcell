@@ -1,0 +1,6 @@
+﻿torchcell.database.tcdb.build\_parser
+=====================================
+
+.. currentmodule:: torchcell.database.tcdb
+
+.. autofunction:: build_parser

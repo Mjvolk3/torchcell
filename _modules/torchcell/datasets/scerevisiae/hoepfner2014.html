@@ -372,7 +372,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">httpx</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">model_validator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
@@ -1469,15 +1469,17 @@
         <span class="n">nonce</span> <span class="o">+=</span> <span class="mi">1</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_dryad_get</span><span class="p">(</span><span class="n">session</span><span class="p">:</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">requests</span><span class="o">.</span><span class="n">Response</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_dryad_get</span><span class="p">(</span><span class="n">client</span><span class="p">:</span> <span class="n">httpx</span><span class="o">.</span><span class="n">Client</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">httpx</span><span class="o">.</span><span class="n">Response</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""GET a Dryad file-stream URL, clearing the Anubis PoW challenge if present.</span>
 
-<span class="sd">    Returns a streamed response for the file body. Retries on WAF throttling.</span>
+<span class="sd">    Returns an open streamed response for the file body; the caller closes it. Retries</span>
+<span class="sd">    on WAF throttling. ``client`` must follow redirects.</span>
 <span class="sd">    """</span>
     <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">80</span><span class="p">):</span>
-        <span class="n">resp</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">build_request</span><span class="p">(</span><span class="s2">"GET"</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">180</span><span class="p">),</span> <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">resp</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"content-type"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"text/html"</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">resp</span>
+        <span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
         <span class="n">body</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">text</span>
         <span class="n">resp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="n">challenge_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>
@@ -1498,18 +1500,21 @@
             <span class="sa">f</span><span class="s2">"https://datadryad.org</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">"</span>
             <span class="s2">"/.within.website/x/cmd/anubis/api/pass-challenge"</span>
         <span class="p">)</span>
-        <span class="n">cleared</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="n">pass_url</span><span class="p">,</span>
-            <span class="n">params</span><span class="o">=</span><span class="p">{</span>
-                <span class="s2">"id"</span><span class="p">:</span> <span class="n">challenge</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
-                <span class="s2">"response"</span><span class="p">:</span> <span class="n">digest</span><span class="p">,</span>
-                <span class="s2">"nonce"</span><span class="p">:</span> <span class="n">nonce</span><span class="p">,</span>
-                <span class="s2">"redir"</span><span class="p">:</span> <span class="n">url</span><span class="p">,</span>
-                <span class="s2">"elapsedTime"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
-            <span class="p">},</span>
+        <span class="n">cleared</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">send</span><span class="p">(</span>
+            <span class="n">client</span><span class="o">.</span><span class="n">build_request</span><span class="p">(</span>
+                <span class="s2">"GET"</span><span class="p">,</span>
+                <span class="n">pass_url</span><span class="p">,</span>
+                <span class="n">params</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">"id"</span><span class="p">:</span> <span class="n">challenge</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
+                    <span class="s2">"response"</span><span class="p">:</span> <span class="n">digest</span><span class="p">,</span>
+                    <span class="s2">"nonce"</span><span class="p">:</span> <span class="n">nonce</span><span class="p">,</span>
+                    <span class="s2">"redir"</span><span class="p">:</span> <span class="n">url</span><span class="p">,</span>
+                    <span class="s2">"elapsedTime"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="n">timeout</span><span class="o">=</span><span class="mi">1800</span><span class="p">,</span>
+            <span class="p">),</span>
             <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">allow_redirects</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">timeout</span><span class="o">=</span><span class="mi">1800</span><span class="p">,</span>
+            <span class="n">follow_redirects</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">cleared</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"content-type"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"text/html"</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">cleared</span>
@@ -1811,20 +1816,18 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_fetch_from_dryad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">dest</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Stream one Dryad file (solving the Anubis PoW) and verify its pinned sha256."""</span>
-        <span class="n">session</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
-        <span class="n">session</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"User-Agent"</span><span class="p">:</span> <span class="n">_UA</span><span class="p">})</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Downloading Hoepfner2014 </span><span class="si">%s</span><span class="s2"> from </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"url"</span><span class="p">])</span>
-        <span class="n">resp</span> <span class="o">=</span> <span class="n">_dryad_get</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"url"</span><span class="p">])</span>
         <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
         <span class="c1"># Stream into a sibling ``.partial`` renamed into place only after the digest</span>
         <span class="c1"># matches, so a refused download never leaves unverified bytes in raw/.</span>
         <span class="n">partial</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2">.partial"</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">partial</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">resp</span><span class="o">.</span><span class="n">iter_content</span><span class="p">(</span><span class="n">chunk_size</span><span class="o">=</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">chunk</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">httpx</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"User-Agent"</span><span class="p">:</span> <span class="n">_UA</span><span class="p">},</span> <span class="n">follow_redirects</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="n">_dryad_get</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"url"</span><span class="p">])</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">partial</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">resp</span><span class="o">.</span><span class="n">iter_bytes</span><span class="p">(</span><span class="n">chunk_size</span><span class="o">=</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span><span class="p">):</span>
                     <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
                     <span class="n">digest</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-        <span class="n">resp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">resp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="n">got</span> <span class="o">=</span> <span class="n">digest</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">got</span> <span class="o">!=</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"sha256"</span><span class="p">]:</span>
             <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">partial</span><span class="p">)</span>

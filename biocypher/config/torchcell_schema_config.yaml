@@ -480,6 +480,7 @@ metabolite phenotype:
         metabolite_level: str
         metabolite_level_se: str
         measurement_type: str
+        replicate_id: str
 
 protein abundance phenotype:
     is_a: phenotypic feature
@@ -491,6 +492,7 @@ protein abundance phenotype:
         protein_abundance: str
         protein_abundance_se: str
         measurement_type: str
+        replicate_id: str
 
 # --- begin #770: the protein fold-change family ---
 # Per-protein RELATIVE abundance against a control strain (ProteinFoldChangePhenotype),
@@ -583,6 +585,7 @@ product titer phenotype:
         titer_uncertainty_type: str
         n_samples: int
         sample_unit: str
+        replicate_id: str
         product_yield: float
         product_yield_unit: str
         productivity: float

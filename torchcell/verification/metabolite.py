@@ -127,10 +127,22 @@ def _l1_orf_uniqueness(
     distinguished by ``Environment.dilution_rate_per_hour`` alone. For a dataset whose
     records share one environment the key is the strain plus a constant, so the verdict
     and the unique-key count are unchanged.
+
+    ``replicate_id`` joins the key on the ``environment_response`` precedent (#776): a
+    release that gives one value PER REPLICATE culture (Xue 2025's three titer columns
+    per fatty acid) has measured each culture, so the records of one strain are told
+    apart by the replicate they state and none is a duplicate of another. It is read
+    with ``.get`` and joins only when set, so a dataset whose records state one
+    aggregate per strain keys exactly as before.
     """
     seen: dict[tuple[Any, ...], int] = {}
+    per_replicate = False
     for rec in records:
         sig: tuple[Any, ...] = _genotype_signature(rec["experiment"])
+        replicate_id = rec["experiment"]["phenotype"].get("replicate_id")
+        if replicate_id is not None:
+            sig = (sig, ("replicate_id", str(replicate_id)))
+            per_replicate = True
         if per_protocol:
             sig = (sig, rec["experiment"]["phenotype"]["measurement_type"])
         if per_environment:
@@ -142,6 +154,8 @@ def _l1_orf_uniqueness(
         unit = "(strain, protocol) pairs"
     elif per_environment:
         unit = "(strain, environment) pairs"
+    if per_replicate:
+        unit = f"{unit} per released replicate"
     dup_unit = "deletion sets" if unit.endswith("sets)") else unit
     if not dups:
         message = f"{len(seen)} unique {unit}, one record each"

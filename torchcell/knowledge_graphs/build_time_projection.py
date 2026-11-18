@@ -153,7 +153,7 @@ DATASET_FULL_RECORDS: dict[str, int] = {
     "OrganicAcidYoshida2012Dataset": 17,
     "IsobutanolScreenLopez2024Dataset": 4554,
     "IsobutanolValidatedLopez2024Dataset": 224,
-    "FattyAcidXue2025Dataset": 176,
+    "FattyAcidXue2025Dataset": 519,
 }
 
 # dataset class name -> processed-LMDB subpath under DATA_ROOT, for re-gathering the

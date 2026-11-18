@@ -1417,6 +1417,7 @@ def test_run_protein_forwards_allow_duplicate_orfs(
         "se_nonnegative",
         "reference_finite",
         "measurement_type_consistent",
+        "replicate_id_names_one_replicate",
     ]
 
     # with Ohya built, the one knocked-out ORF is fully contained: the row passes
@@ -2148,7 +2149,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "organic_acid_yoshida2012": 17,
         "isobutanol_screen_lopez2024": 4805,
         "isobutanol_validated_lopez2024": 227,
-        "ffa_xue2025": 176,
+        "ffa_xue2025": 519,
         "metabolome_fuhrer2017": 3735,
         # #753: 24 Keio disruptants at 0.2 h-1 plus the wild type at 0.1, 0.4, 0.5
         # and 0.7 h-1, which Environment.dilution_rate_per_hour keeps as four distinct

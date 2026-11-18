@@ -893,6 +893,7 @@ def test_product_titer_phenotype_node_projects_every_field() -> None:
         "titer_uncertainty_type": "sample_sd",
         "n_samples": 9,
         "sample_unit": "biological_replicate",
+        "replicate_id": None,
         "product_yield": 0.12,
         "product_yield_unit": "g/g_substrate",
         "productivity": 0.05,

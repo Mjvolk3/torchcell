@@ -13,6 +13,11 @@ keys, and non-negative SE, so L0 subsumes those. This verifier adds:
 4. L3 `reference_finite` -- the WT reference abundance is finite + key-matched to the
    experiment (absolute abundances, not a centered 0).
 5. L3 `measurement_type_consistent` -- every record shares one measurement_type.
+5b. L3 `replicate_id_names_one_replicate` -- a record that carries a `replicate_id` is
+   ONE replicate (every `n_replicates` value is 1) and stores no SE map; a record that
+   states an aggregate over replicates carries no `replicate_id`. The field is read with
+   `.get`, so every dataset that releases one aggregated profile per strain keys and
+   passes exactly as before.
 6. L4 `gene_containment` (caller) -- the screened knockouts overlap the deletion
    collection used by the other datasets.
 """
@@ -130,6 +135,43 @@ def _l3_measurement_type_consistent(records: Sequence[Record]) -> LevelResult:
     )
 
 
+def _l3_replicate_id_names_one_replicate(
+    records: Sequence[Record], label_key: str, se_key: str
+) -> LevelResult:
+    """L3: a labeled record is one replicate; an aggregate carries no label.
+
+    The protein-family half of the per-replicate convention (#776). Carruthers 2025
+    releases its proteomes per (sample, replicate) and per culture, so each record is
+    one of them: every ``n_replicates`` value is 1, the SE map is ``None``, and
+    ``replicate_id`` is the source's own label. A record that states a mean over
+    replicates carries the counts it averaged and no label.
+
+    ``replicate_id`` is read with ``.get``, so a phenotype without the field reads
+    ``None`` and the rule holds unchanged for every other dataset of the family.
+    """
+    labeled = 0
+    bad = 0
+    for rec in records:
+        phenotype = rec["experiment"]["phenotype"]
+        if phenotype.get("replicate_id") is None:
+            continue
+        labeled += 1
+        counts = {int(n) for n in phenotype["n_replicates"].values()}
+        if counts != {1} or phenotype.get(se_key) is not None:
+            bad += 1
+    from torchcell.verification.levels import l3_convention
+
+    return l3_convention(
+        "replicate_id_names_one_replicate",
+        bad == 0,
+        detail=(
+            f"{labeled} of {len(records)} records carry a replicate_id; each one must "
+            f"have every {label_key} key at n_replicates 1 and no {se_key} map. "
+            f"{bad} break it"
+        ),
+    )
+
+
 def verify_protein_dataset(
     records: Sequence[Record],
     *,
@@ -190,6 +232,7 @@ def verify_protein_dataset(
 
     report.add(_l3_reference_finite(records, label_key))
     report.add(_l3_measurement_type_consistent(records))
+    report.add(_l3_replicate_id_names_one_replicate(records, label_key, se_key))
     return report
 
 

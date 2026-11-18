@@ -1219,3 +1219,204 @@ Report `verification_report.json` (written 2026-10-11 08:32 UTC):
 | L4 | `stored_target_profile_vs_released_sheet` | pass | 1424 overlapping entities agree within 1e-06 |
 | L4 | `overexpression_proteome_vs_released_sheet` | pass | 6 overlapping entities agree within 1e-06 |
 | L4 | `protein_and_perturbed_locus_containment_assembly` | pass | 1.000 of 1425 measured genes are loci of pputida_KT2440_ASM756v2 (>= 1.0) |
+
+## 2026.11.17 - One record per released culture
+
+The owner ruled that replicate measurements a source releases individually are stored one
+record per replicate, never collapsed to a mean plus a SD: the data is the data, and
+principle 2 of [[database.constitution]] forbids collapsing a released record. Mean and SD
+are a modeling-time derivation. Three of the four families of this release were storing
+group means, so all three change; the fold-change family does not, because the source
+releases only contrasts.
+
+### Before and after
+
+| family | record unit before | before | record unit after | after |
+|---|---|---|---|---|
+| `IsoprenolTiterCarruthers2025Dataset` | `(construct, DBTL cycle)` strain, mean + sample SD | 502 | one released culture | 1,525 |
+| `ProteomeCarruthers2025Dataset` | released sample, mean + SE over 3 replicates | 21 | one released `(sample, replicate)` | 63 |
+| `CampaignProteomeCarruthers2025Dataset` | `(construct, DBTL cycle)` strain-cycle, mean + SE | 465 | one released culture of the Dryad matrix | 1,407 |
+| `ProteomeFoldChangeCarruthers2025Dataset` | released contrast column | 16 | unchanged, the release is a contrast | 16 |
+
+The titer total decomposes as 1,416 `Figure 4b` campaign cultures (465 strain-cycles: 458
+triplicates and 7 six-culture strains) plus 109 panel cultures: 36 from `Figure 6a`
+(12 KO backgrounds x 3 Target cultures), 12 from `Figure 6d` (2 KO-only and 2
+CRISPRi-on-a-KO lines x 3), 55 from `Supplementary Figure 13d` (3 Target plus 52
+off-target cultures) and 6 from `Supplementary Figure 12bd` (2 uninduced overexpression
+strains x 3). The 63-record proteome total is 19 samples x 3 plus 2 overexpression samples
+x 3.
+
+### What a record carries now
+
+`titer` / `protein_abundance` is the released cell verbatim; `n_samples` is 1 and
+`sample_unit` is `biological_replicate`; `n_replicates` is 1 per protein key;
+`titer_uncertainty`, `titer_uncertainty_type`, `protein_abundance_se` are `None` beside a
+typed `ProvenanceGap` whose note says why (one measurement has no dispersion of its own);
+and `replicate_id` is the source's own label for that culture. A blank proteome cell is
+absent from that record's map, now per replicate rather than per sample.
+
+`phenotype_reference` is unchanged in kind: the per-cycle or per-panel control group's
+mean with its sample SD and its n, and `replicate_id=None`, which is what makes it a
+labeled aggregate summary rather than a measurement.
+
+### Where each `replicate_id` comes from, per subset
+
+| subset | `replicate_id` | why |
+|---|---|---|
+| `Figure 4b` | the `Line Name` cell, e.g. `PP_0815_PP_1317-R1` | the sheet's own label |
+| `Figure 6d`, `Supplementary Figure 12bd`, `Supplementary Figure 13d`, both proteome sheets | the released line, strain or sample label joined to the `Replicate` cell, e.g. `PP_0812-15_KO with PP_0815/R1` | the replicate cell alone does not identify a culture: one genotype is released by two sheets (`Figure 6a`'s `PP_0812-15` Target arm and `Figure 6d`'s `PP_0812-15_KO with PP_0815` line) and one genotype is released as three independent cultures (`PP_0977_1`, `PP_0977_2`, `PP_0977_3`) |
+| `Figure 6a` | `<background>/<arm> row <n>` | that sheet prints no replicate column at all |
+| the Dryad matrix | its own `Line_name` | the deposit's own label |
+
+What no label can carry is the DBTL cycle: `ProductTiterPhenotype` has no field for it and
+63 constructs were screened in more than one cycle, so those cultures share a
+`(genotype, replicate_id)` key and are told apart only by their values. The count is
+pinned in `TITER_DUPLICATED_REPLICATE_KEYS` so a NEW collision fails the gate, and the
+cycle-aware checks run at build time where the cycle column is in hand. A field for the
+campaign round is the honest fix and is raised in the PR rather than taken here.
+
+### The decision NOT taken: control cultures are still not records
+
+Every released control culture stays the `phenotype_reference` it was: the 90 campaign
+controls (18 in DBTL0, 12 per later cycle), the 36 `Figure 6a` Non-target cultures, the 6
+overexpression Control cultures and the 3 `Figure 6d` Control cultures (which are three of
+the twelve stored DBTL6 controls anyway). The reason is a schema limit, not a preference,
+and it is recorded in `CONTROL_AS_RECORD`:
+
+- a control strain is the production strain carrying the dCas9 vector with a NON-TARGETING
+  sgRNA, and the overexpression control carries the RFP vector `pRSF1010-Gm-mCherry`;
+- every `GenePerturbation` leaf requires a gene, and `Genotype` holds nothing but
+  perturbations, so a present plasmid that perturbs no gene has nowhere to go;
+- storing such a culture with the five pIY670 pathway perturbations alone would assert
+  IY1452b WITHOUT the vector that makes it a control, which principle 4 of
+  [[database.constitution]] forbids: "A perturbation is an edit to the total genomic
+  content of the cell: deletions, integrations, alleles, present plasmids, heterologous
+  cassettes.";
+- the two sibling CRISPRi releases do the same: Yunus 2026's nontarget control and Lim
+  2025's IPL400 arm are denominators, not records.
+
+Admitting them needs a schema decision (a construct-only perturbation leaf, or a
+`Genotype`-level present-plasmid field), which is owned elsewhere.
+
+### The measurement_type strings are correct and stay as they are
+
+`dia_nn_top3_peptide_signal_mean` and `dia_nn_top3_percent_of_proteome_mean` both keep the
+word `mean`, because the mean they name is over PEPTIDES, not over replicates. The Methods
+define it: "The Top3 method, which is the average MS signal response of the three most
+intense tryptic peptides of each identified protein", and the Dryad README repeats it for
+the percent column: "Percentage of the proteome for the specific protein as calculated by
+the Top3 peptide absolute protein quantification method as detailed in Ahrne et al. 2013
+(DOI:10.1002/pmic.201300135), consisting of the average signal response of the three most
+intense tryptic peptides for each protein." Measured on the pinned bytes, no replicate
+averaging can be in
+a released cell either: the panel sheet carries one cell per `(sample, protein, replicate)`
+(60 blocks of 1,503 rows) and the Dryad matrix one row per culture (1,497 rows). The
+`SourcedValue` notes on `TOP3` and `CAMPAIGN_TOP3` now say that, where they used to say the
+stored number was a mean over replicates.
+
+### The fold-change replicate count is now sourced from a proteomics statement
+
+`n_replicates` on a `Figure 5b` / `Figure 6b` record was 3 sourced from the TITER
+triplicate sentence in Methods "Statistics & reproducibility". The right statement is the
+authors' own reply to Reviewer 2 in the peer-review file (`si/si2.md`, sha256
+`5961601d89aece72e1f47e39dc1936e00d1fad029653cdbead4db671c5a3b505`), verbatim: "Our
+proteomics data set has a single measurement for each replicate at $\tan = 4 8$ hours." One
+proteomics measurement per replicate culture, over the cultures of "All strains were
+cultured as biological triplicates $\left( n = 3 \right)$ ." (restated in the Reporting
+Summary as "All strains were cultured in triplicate."), makes the paired two-tailed
+t-test's n the three cultures. The new `FOLD_CHANGE_N_REPLICATES` carries the si2 quote and
+names the other two in its note; `si2.md` joins the module's pinned mirror files for it.
+Neither caption prints an n for the contrast, which is why the value needed a chain rather
+than one sentence.
+
+### The pass-filter column: the paper's statements and the owner's, separately
+
+The boolean `pass filter?` column is released PER CULTURE in `Figure 4b` and is carried in
+`preprocess/pass_filter.csv`, now keyed by `(construct, cycle, replicate_id)`. Measured on
+the pinned workbook it is constant within every strain-cycle group (0 of 465 groups
+disagree), and its distribution over the 1,506 released rows is 774 fail / 642 pass among
+the strains and 78 pass / 12 fail among the controls. It is NOT on the record; a modeler
+joins it from that file.
+
+What it reports has two statements, and they are kept apart:
+
+**(a) What the mirrored paper says.** Results: "Guides were filtered out from our training
+set if they (1) had insufficient downregulation compared to the control (e.g., PP_1023),
+(2) downregulated the POI nonspecifically in many other strains (e.g., PP_0582), or (3)
+resulted in isoprenol titers below $6 6 . 6 \mathrm { m g / L }$ (Fig. 3b)." Methods, DBTL0:
+"(1) below $90 \%$ of the library mean for the target; (2) in the bottom quartile of target
+expression; and (3) isoprenol titer greater than $6 6 . 6 \mathrm { m g / L }$
+(approximately $40 \%$ of control isoprenol titer)." Methods, DBTL1-6: "To ensure that
+strains used for modeling express dCas9, we discarded strains with dCas9 expression below
+$2 5 \%$ of the control in any of the replicates. Strains were discarded if any individual
+POI level was above $50 \%$ that of the control in any of the replicates to ensure that
+strains used for modeling showed target downregulation." So the mirrored criteria are
+target downregulation, dCas9 expression and a DBTL0 titer floor of 66.6 mg/L.
+
+**(b) What the owner said on 2026-11-17, relaying the collaborators (not a mirrored
+source).** The column is about whether a strain passed QC checks, including growth, and
+whether the cells were robust enough to yield viable proteomics data. No sentence of
+`paper.md` or the SI says this, so it is attributed and never quoted as the paper's.
+
+Either reading changes no record: "Data used to train the active learning model was
+filtered according to the method above; however, no data was excluded in our analysis."
+Before today the loader docstring and this note said only that the column reports whether
+the designed knockdown was realized, which is (a) narrowed to one of its three criteria.
+
+### Verification, reworked over replicate groups
+
+The released means became L4 oracles the per-replicate records must reproduce, and the
+per-record `n` rules became rules over replicate GROUPS:
+
+- `campaign_titers_vs_released_sheet` (new, L4): the multiset of stored
+  `(replicate_id, titer)` pairs IS the multiset `Figure 4b` releases for its non-control
+  rows.
+- `panel_titers_vs_released_sheets` (L4): per culture now, joined by `replicate_id`, at
+  tolerance 0.
+- `single_guide_titer_vs_supplementary_data_1` (L4): the released per-target mean is the
+  mean of one released GROUP of stored cultures of that target, so the rule searches that
+  target's cultures for a subset of a released group size (3, or the 6 of a strain cultured
+  twice over) whose mean matches. Four targets need the 6 (`PP_0812`, `PP_0813`, `PP_4678`,
+  `PP_4679`, whose DBTL0 strains were cultured six times) and two need the search because
+  the cycle is not a stored field (`PP_0815` and `PP_1317`, screened in DBTL0 and DBTL3).
+  All 120 join.
+- `ko_array_titer_vs_results_text` (L4): the Results text states a strain mean, so it is
+  compared against the mean over that strain's three stored cultures.
+- `stored_target_profile_vs_released_sheet`, `overexpression_proteome_vs_released_sheet`,
+  `stored_campaign_profile_vs_deposited_matrix` (L4): per `(replicate_id, protein)` cell at
+  tolerance 0, not per protein of an aggregate.
+- `records_are_cultures_in_the_released_replicate_groups` /
+  `records_are_replicates_in_the_released_triplicates` /
+  `records_are_cultures_of_the_deposited_matrix` (L3, replacing
+  `every_sample_is_a_biological_triplicate`): every record is one labeled replicate with
+  no dispersion, and the per-genotype group sizes are the pinned measured histograms.
+- `one_record_per_genotype_and_replicate_id` (new, L1) with
+  `TITER_DUPLICATED_REPLICATE_KEYS`.
+- `strain_count_reconciles_with_the_papers_472` (L1) now asserts the paper's own arithmetic
+  directly: 1,416 campaign cultures / 3 = 472.
+- the two shared verifiers gained `replicate_id_names_one_replicate` (L3,
+  `torchcell/verification/product_titer.py` and `protein.py`): a record carrying a
+  `replicate_id` is one replicate with no dispersion, and an aggregate carries no label.
+  `replicate_id` is read with `.get`, so every other dataset of both families keys and
+  passes exactly as before.
+
+### The measured replicate groups, and the store's own verdicts
+
+A group here is one GENOTYPE, which is coarser than the released group, because neither
+phenotype class has a field for the DBTL cycle or for the released sample. Measured on the
+pinned bytes and pinned in the module:
+
+| store | per-genotype group sizes | what the non-triplicates are |
+|---|---|---|
+| titer, campaign half | `{3: 332, 6: 67, 9: 2}` | a construct screened in two or three cycles contributes both or all three of its triplicates to one group; seven of the 6s are instead one strain cultured six times |
+| titer, panel half | `{2: 2, 3: 25, 6: 2, 9: 2}` | `PP_0378` and `PP_3416` carry no R3 row; two genotypes are released by two sheets each (Δ PP_0815 + PP_0815 sgRNA, and Δ PP_0812-15 + PP_0815 sgRNA); `PP_0977` and `PP_1638` are three independent cultures each |
+| panel proteome | `{3: 15, 9: 2}` | the same two repeated-culture strains |
+| campaign proteome | `{3: 334, 6: 66, 9: 1}` | the same cross-cycle merging, minus the nine cultures the deposit lacks |
+
+Built into a throwaway root on 2026-11-17 against the real raw mirror, each store's own
+`verify_build` verdict is PASS across L0-L4: titer 1,525 records over 20 rules, panel
+proteome 63 over 11, campaign proteome 1,407 over 13, fold change 16 over 13. The counts
+the accounting proves: titer 1,506 source rows = 1,416 stored + 90 control references, plus
+109 panel cultures stored and 36 induced cultures dropped (1,561 candidates = 1,525 kept +
+36 dropped); campaign proteome 1,497 deposited cultures = 1,407 stored + 90 control
+references.

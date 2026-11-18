@@ -447,8 +447,8 @@ checks come first:
 | one-hot | ORF | genome-agnostic, works today |
 | random (several seeds) | nothing, control | genome-agnostic, works today |
 | codon frequency | CDS | genome-agnostic, works today |
-| **GenSLM 25M / 250M / 2.5B PATRIC** | CDS, 6,144 nt | genome-agnostic, bacterial-trained, already runs on KT2440: **the owner's pick to start, and the fast path** |
-| **HiGenLM / HiSan** | nucleotide, long context | the owner's other pick; no code, needs a new dataset class and weights from ANL |
+| **GenSLM 25M / 250M PATRIC** | CDS, 6,144 nt | genome-agnostic, bacterial-trained, already runs on KT2440, weights on disk: **the MVP encoder** |
+| HiGenLM / HiSan | nucleotide, long context | **deferred past the MVP**; needs repo access, weights and terms from the Ramanathan lab |
 | ESM2 | protein | typed to `SCerevisiaeGenome`, needs the type relaxed |
 | ProtT5 | protein | typed to `SCerevisiaeGenome`, needs the type relaxed |
 | CaLM | CDS codons | `CalmDataset` exists, CDS-based |
@@ -589,8 +589,8 @@ disk.**
 
 | model | license | verdict |
 |---|---|---|
-| GenSLM 25M / 250M PATRIC | weights carry no stated license | **start here: the weights are already on GilaHyper** |
-| Nucleotide Transformer, all variants | **CC BY-NC-SA 4.0** | **disqualified by license, not capability** |
+| GenSLM 25M / 250M PATRIC | weights carry **no stated license** | **start here, and for the MVP this is the only one: weights already on GilaHyper** |
+| Nucleotide Transformer, all variants | CC BY-NC-SA 4.0 (verified on the HF API) | fine to use, see the licensing note below |
 | Evo 1 (`evo-1-131k-base`) | Apache-2.0 | prokaryote-only, the clean control arm |
 | Evo 2 (`evo2_7b`) | Apache-2.0 | adds eukaryotes, so prokaryotes no longer dominate |
 | `tattabio/gLM2_650M` | Apache-2.0 | models a contig as proteins plus intergenic DNA |
@@ -599,22 +599,47 @@ disk.**
 | ProtT5 `prot_t5_xl_half_uniref50-enc` | **repos declare no license** | code is MIT, weights are a gap |
 | CaLM | BSD-3 code, **weights unlicensed** | loaded via bare `pickle.load` from a hardcoded URL |
 
-Three findings that change the plan:
+**Licensing note, and a correction to my own framing.** I first wrote that the
+Nucleotide Transformer was "disqualified by license". That was wrong. The
+license is real (`cc-by-nc-sa-4.0`, verified on the HF API for the v2 50M, v2
+500M, 2.5B and segment-NT repos), but CC BY-NC-SA restricts **commercial** use,
+and academic research in an open-source academic project is the paradigm
+non-commercial use. ShareAlike binds adapted material that is distributed; we
+download weights at runtime and ship code that calls them, which is not
+adaptation. It was also inconsistent with existing practice, since the yeast
+line already uses `NucleotideTransformerDataset`. Owner's position, 2026-11-17:
+this is an open-source academic project, so there is no reason not to use it.
 
-1. **GenSLM is unblocked locally.** Its upstream weight download has reportedly
-   been broken since 2025-10-03, but we already hold
-   `patric_25m_epoch01-val_loss_0.57_bias_removed.pt` and
+The only narrow cases to keep in mind are redistributing weights or publishing
+an embedding dataset as a release artifact, and any future commercial licensing
+of a resulting model. Neither is in scope.
+
+Worth recording the opposite finding, because it inverts which model is the
+awkward one: **ProtT5 and GenSLM state no license at all.**
+`Rostlab/prot_t5_xl_half_uniref50-enc` has no `license` field and no LICENSE
+file among its seven repo files, and our local GenSLM weight directory contains
+only a `manifest.json` and the two checkpoints. "No stated license" grants no
+explicit permission, which is murkier than a clear non-commercial grant, and
+ProtT5 is already pinned in `torchcell/models/protT5.py` and appears in thesis
+Fig 3.2. In practice academic use of published weights is universally accepted
+for all three; the point is only that NT is the one that actually tells you the
+terms, so it should not be singled out.
+
+Two findings that do change the plan:
+
+1. **GenSLM is unblocked locally, and for the MVP it is the only encoder.**
+   Owner's call 2026-11-17: use GenSLM for now instead of HiGenLM. Its upstream
+   weight download has reportedly been broken since 2025-10-03, but we already
+   hold `patric_25m_epoch01-val_loss_0.57_bias_removed.pt` and
    `patric_250m_epoch00_val_loss_0.48_attention_removed.pt` (1.1 GB) under
-   `$DATA_ROOT/models/genslm`. The 2.5B is not there. So the owner's "start with
-   GenSLM" needs no download and no new code.
-2. **HiGenLM is not publicly reachable.** The repo URL returns HTTP 404
-   anonymously, the `ramanathanlab` org lists no `higenlm` repo, and no
-   checkpoint named HiSan could be confirmed. Since the owner has the inference
-   API in hand it is presumably private, so this is an **access** question, not
-   an existence one: ask the Ramanathan lab for the repo and weights, and for
-   the license terms. Public Argonne siblings are `ramanathanlab/genslm` (MIT)
-   and `ramanathanlab/genslm-embeddings` (MIT).
-3. **`gLM2` is the most interesting new option** for us specifically, because it
+   `$DATA_ROOT/models/genslm`, with a `manifest.json` beside them. The 2.5B is
+   not there. So this needs no download and no new code. HiGenLM/HiSan is
+   **deferred, not dropped**: the repo URL 404s anonymously and the
+   `ramanathanlab` org lists no `higenlm`, so it is an access question for the
+   Ramanathan lab (repo, weights, terms) to be picked up after the MVP. Public
+   Argonne siblings are `ramanathanlab/genslm` (MIT) and
+   `ramanathanlab/genslm-embeddings` (MIT).
+2. **`gLM2` is the most interesting new option** for us specifically, because it
    models a contig as a sequence of proteins plus intergenic DNA, which lines up
    with the transcription-unit framing above: the intergenic token span *is* the
    promoter region. Gotcha to respect: its vocabulary uses lowercase `a t c g`
@@ -779,11 +804,11 @@ Carried over so later sessions do not relitigate them:
    pinned artifact or a documented derivation from it.
 3. Bacterial STRING: taxon 160488, the channel set, and the STRING-protein to
    `PP_` mapping.
-4. Embeddings. Owner's call 2026-11-17: **start with GenSLM, then HiSan.**
-   GenSLM needs no new code (its `__main__` already runs KT2440), so it goes
-   first alongside one-hot and the randoms as the floor, and the pipeline is
-   proven end to end before HiGenLM/HiSan is wired as a new
-   `BaseEmbeddingDataset` subclass.
+4. Embeddings. Owner's call 2026-11-17: **GenSLM for now, HiSan deferred.**
+   GenSLM needs no new code and no download (its `__main__` already runs KT2440
+   and the PATRIC weights are on disk), so the MVP runs on GenSLM 25M and 250M
+   alongside one-hot and the randoms as the floor. No new encoder class is
+   written until the pipeline is proven end to end on those.
    Also in this step: the TU promoter windows from
    `kt2440_transcription_unit_promoters.py` as a per-gene feature, and the TU
    co-expression validation against `PutidaPrecise321Lim2022Dataset`.

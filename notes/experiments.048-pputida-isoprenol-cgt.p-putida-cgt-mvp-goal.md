@@ -307,6 +307,100 @@ modification: its window is `("cds", GENSLM_SEQ_LENGTH * 3)` = 6,144 nt
 (2,048 codons), which covers well past the 99th percentile gene, and its
 `__main__` already runs P. putida KT2440.
 
+### How to capture the promoter: at the transcription unit, not the gene
+
+The constructive half of the window question. In a bacterium the promoter
+belongs to the transcription unit, so the capture is: chain adjacent same-strand
+genes into TUs, take a promoter window upstream of the TU **leader** only, and
+let every gene in the TU inherit its leader's promoter.
+
+The operon threshold is measured, not assumed, by
+`scripts/kt2440_transcription_unit_promoters.py`. The negative class is
+**divergent** gene pairs, which cannot share a TU and must hold promoters in
+their gap; convergent pairs are reported as the terminator-containing control.
+
+| median intergenic gap, by orientation | value |
+|---|---|
+| tandem (same strand, n = 4,014) | 42 bp |
+| convergent (n = 857) | 72 bp |
+| divergent (n = 857) | **178 bp** |
+
+A gap that has to hold two promoters is 4.2x a tandem gap. The threshold scan
+shows how sharply that separates:
+
+| tandem gap at or below | tandem | divergent | enrichment |
+|---|---|---|---|
+| 0 bp | 0.240 | 0.018 | 13.7x |
+| 20 bp | 0.423 | 0.028 | **15.1x** |
+| 40 bp | 0.496 | 0.041 | 12.1x |
+| 100 bp | 0.689 | 0.173 | 4.0x |
+| 150 bp | 0.793 | 0.400 | 2.0x |
+| 300 bp | 0.937 | 0.823 | 1.1x |
+
+So a tandem gap under about 40 bp essentially never holds a promoter, and past
+roughly 150 bp the distinction is gone. Taking 40 bp as the chaining threshold:
+
+| result | value |
+|---|---|
+| transcription units from 5,729 genes | 3,740 |
+| multigene units | 1,107 (largest 14 genes) |
+| promoter window upstream of a TU leader, median available | **151 bp** |
+| units with no promoter window at all | 3 |
+| units hitting the 300 bp cap | 581 |
+
+That is the payoff: per gene, the median clear upstream is 88 bp and about a
+thousand genes have none at all. Per TU leader it is 151 bp and **three** units
+have none. Moving to the TU nearly doubles the promoter sequence available and
+removes the zero-window problem almost entirely.
+
+Rules that follow, and they are implementation requirements, not preferences:
+
+- The window is **clipped, variable-length, and never padded with coding
+  sequence**. The available length is itself a feature, so the model can tell a
+  200 bp promoter from a leader that abuts its neighbor instead of being handed
+  a silently contaminated window.
+- Cap at 300 bp, near the divergent median, since that is roughly how much
+  sequence a gap that genuinely holds a promoter offers.
+- Genes in one TU **share** a promoter representation. This also matters
+  mechanistically for CRISPRi: a guide against an internal gene of a 14-gene
+  operon is not the same perturbation as one against the leader, and the TU
+  assignment is what lets the model express that.
+- The threshold is a parameter with a measured basis, not a constant to be
+  tuned quietly. 20 bp maximizes separation, 40 bp trades a little separation
+  for longer units; report which was used.
+
+A caveat on all of the above: this is **predicted** operon structure from gene
+adjacency, not measured transcription units. The honest upgrade is a TSS or
+operon measurement. The already-served
+`PutidaPrecise321Lim2022Dataset` (321-sample transcriptome compendium) can test
+the TU calls directly by within-TU versus across-TU co-expression, which is a
+real validation available without new data. Do that before leaning on the
+predicted TUs for anything load-bearing.
+
+### Promoters in this dataset vary on the plasmid, not the chromosome
+
+A distinction that matters for how promoter sequence is used here. CRISPRi does
+not edit promoters, so **native promoter sequence is constant across every
+strain in 048**. It is a per-gene node feature, useful through pretraining and
+transfer across the millions of P. putida fitness records, and it cannot by
+itself explain any variation in isoprenol titer.
+
+What varies per record is the engineered expression context: the sgRNA array
+promoter (`J23119`, constant), the dCas9 promoter (`pnagAa`, salicylate
+inducible, constant), the pathway plasmid promoters (`PBAD`, `Ptrc1-O` on
+pIY670), and the one that actually changes, the **vector**, where SI Table 2
+lists `Linker7_Insert_F/R` as a 70 nt insert, corroborating that the
+`pIY989` to `pDBTL3-6_Vector` difference is the L7 linker ahead of `NagR`.
+
+**A gap to raise with Juan:** the sgRNA spacer sequences are not in the released
+tables. SI Table 2 holds check primers, SI Table 4 names the arrays by target
+set, and the only spacers we hold are in the two example genbanks, where
+`dbtl2-1.gb` and `dbtl3-1.gb` differ at 29 nt in the spacer region. Without the
+spacer table we cannot compute guide position relative to the TU leader or the
+TSS, which is likely the strongest promoter-adjacent feature available for a
+CRISPRi dataset, since repression strength depends on where dCas9 binds. Ask
+for the spacer table or the full plasmid set.
+
 Planned encoder set, grouped by what it reads and in the order the sanity
 checks come first:
 
@@ -315,12 +409,12 @@ checks come first:
 | one-hot | ORF | genome-agnostic, works today |
 | random (several seeds) | nothing, control | genome-agnostic, works today |
 | codon frequency | CDS | genome-agnostic, works today |
-| GenSLM 25M / 250M / 2.5B PATRIC | CDS, 6,144 nt | genome-agnostic, bacterial-trained, already runs on KT2440 |
+| **GenSLM 25M / 250M / 2.5B PATRIC** | CDS, 6,144 nt | genome-agnostic, bacterial-trained, already runs on KT2440: **the owner's pick to start, and the fast path** |
+| **HiGenLM / HiSan** | nucleotide, long context | the owner's other pick; no code, needs a new dataset class and weights from ANL |
 | ESM2 | protein | typed to `SCerevisiaeGenome`, needs the type relaxed |
 | ProtT5 | protein | typed to `SCerevisiaeGenome`, needs the type relaxed |
 | CaLM | CDS codons | `CalmDataset` exists, CDS-based |
 | Nucleotide Transformer | ORF rather than flanks | class exists, windows are yeast-tuned |
-| HiGenLM / HiSan | nucleotide, long context | no code, new dataset class |
 | Evo or Evo 2 | nucleotide, long context | no code, new dataset class |
 
 One-hot plus the randoms are the floor the whole table is read against, and they
@@ -423,9 +517,14 @@ Carried over so later sessions do not relitigate them:
    pinned artifact or a documented derivation from it.
 3. Bacterial STRING: taxon 160488, the channel set, and the STRING-protein to
    `PP_` mapping.
-4. Embeddings, starting with the ones that already work on a bacterial genome
-   (one-hot, random, codon frequency, GenSLM) so the pipeline runs end to end
-   before any new model is added.
+4. Embeddings. Owner's call 2026-11-17: **start with GenSLM, then HiSan.**
+   GenSLM needs no new code (its `__main__` already runs KT2440), so it goes
+   first alongside one-hot and the randoms as the floor, and the pipeline is
+   proven end to end before HiGenLM/HiSan is wired as a new
+   `BaseEmbeddingDataset` subclass.
+   Also in this step: the TU promoter windows from
+   `kt2440_transcription_unit_promoters.py` as a per-gene feature, and the TU
+   co-expression validation against `PutidaPrecise321Lim2022Dataset`.
 5. The dataset assembly, the splits, the baselines, then the model.
 
 Each step ends with its numbers in this note under a new dated H2, not in a

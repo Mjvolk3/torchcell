@@ -1,0 +1,119 @@
+{
+  "gff": "/scratch/projects/torchcell-scratch/torchcell-genomes/pputida_KT2440_ASM756v2/GCA_000007565.2_ASM756v2_genomic.gff.gz",
+  "genes": 5729,
+  "junctions": 5728,
+  "gap_by_orientation": {
+    "convergent": {
+      "n": 857,
+      "median": 72.0,
+      "mean": 105.5169194865811,
+      "q25": 31.0,
+      "q75": 127.0
+    },
+    "divergent": {
+      "n": 857,
+      "median": 178.0,
+      "mean": 224.46674445740956,
+      "q25": 118.0,
+      "q75": 261.0
+    },
+    "tandem": {
+      "n": 4014,
+      "median": 42.0,
+      "mean": 89.80792227204783,
+      "q25": 1.0,
+      "q75": 130.0
+    }
+  },
+  "threshold_scan": [
+    {
+      "threshold": 0,
+      "tandem_fraction": 0.24015944195316394,
+      "divergent_fraction": 0.01750291715285881,
+      "convergent_fraction": 0.09801633605600933,
+      "enrichment_over_divergent": 13.721109450257433
+    },
+    {
+      "threshold": 20,
+      "tandem_fraction": 0.4227703039362232,
+      "divergent_fraction": 0.028004667444574097,
+      "convergent_fraction": 0.20303383897316218,
+      "enrichment_over_divergent": 15.096422936389304
+    },
+    {
+      "threshold": 30,
+      "tandem_fraction": 0.46512207274539114,
+      "divergent_fraction": 0.0338389731621937,
+      "convergent_fraction": 0.24620770128354727,
+      "enrichment_over_divergent": 13.74515918423449
+    },
+    {
+      "threshold": 40,
+      "tandem_fraction": 0.49551569506726456,
+      "divergent_fraction": 0.040840140023337225,
+      "convergent_fraction": 0.3115519253208868,
+      "enrichment_over_divergent": 12.133055733504163
+    },
+    {
+      "threshold": 50,
+      "tandem_fraction": 0.5323866467364226,
+      "divergent_fraction": 0.050175029171528586,
+      "convergent_fraction": 0.3733955659276546,
+      "enrichment_over_divergent": 10.61058968030498
+    },
+    {
+      "threshold": 60,
+      "tandem_fraction": 0.5687593423019432,
+      "divergent_fraction": 0.06534422403733955,
+      "convergent_fraction": 0.4130688448074679,
+      "enrichment_over_divergent": 8.704049220585096
+    },
+    {
+      "threshold": 80,
+      "tandem_fraction": 0.6362730443447933,
+      "divergent_fraction": 0.11201866977829639,
+      "convergent_fraction": 0.5297549591598599,
+      "enrichment_over_divergent": 5.680062489619664
+    },
+    {
+      "threshold": 100,
+      "tandem_fraction": 0.6893373193821625,
+      "divergent_fraction": 0.17269544924154026,
+      "convergent_fraction": 0.6091015169194866,
+      "enrichment_over_divergent": 3.9916356939899544
+    },
+    {
+      "threshold": 150,
+      "tandem_fraction": 0.7929745889387145,
+      "divergent_fraction": 0.4002333722287048,
+      "convergent_fraction": 0.8284714119019837,
+      "enrichment_over_divergent": 1.9812805327127647
+    },
+    {
+      "threshold": 200,
+      "tandem_fraction": 0.8716990533134031,
+      "divergent_fraction": 0.5857642940490082,
+      "convergent_fraction": 0.9043173862310385,
+      "enrichment_over_divergent": 1.4881396189035587
+    },
+    {
+      "threshold": 300,
+      "tandem_fraction": 0.9372197309417041,
+      "divergent_fraction": 0.822637106184364,
+      "convergent_fraction": 0.9556592765460911,
+      "enrichment_over_divergent": 1.1392869637121141
+    }
+  ],
+  "operon_gap_max": 40,
+  "promoter_window_max": 300,
+  "transcription_units": 3740,
+  "multigene_units": 1107,
+  "genes_in_multigene_units": 3096,
+  "largest_unit_genes": 14,
+  "promoter_window_bp": {
+    "median": 151.0,
+    "mean": 165.67860962566846,
+    "zero_window_units": 3,
+    "full_window_units": 581
+  }
+}

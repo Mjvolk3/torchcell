@@ -97,3 +97,7 @@ suites pass unchanged.
 Observation, not changed: the base `__getitem__` catches `KeyError`, but gffutils'
 `FeatureNotFoundError` derives from `Exception`, so an id absent from `data.db` raises
 rather than returning None. The bacterial `__getitem__` checks membership instead.
+
+## 2026.11.17 - goatools imported only when the GO DAG is read
+
+`from goatools.obo_parser import GODag` moved from module scope into `AnnotatedGenome.go_dag`, the single point of use; the `_go_dag` field and the property's return type name `GODag` as a string under `TYPE_CHECKING`. goatools installs about 209 MB, 200 MB of it bundled test data, and importing any genome module no longer loads it (`test_importing_base_does_not_load_goatools`). Behavior of `go_dag` is unchanged: the first read parses the OBO once per genome object.

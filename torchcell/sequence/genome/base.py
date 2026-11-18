@@ -60,7 +60,7 @@ from contextlib import closing, contextmanager
 from enum import StrEnum
 from itertools import product
 from pathlib import Path
-from typing import Any, ClassVar, SupportsIndex, cast
+from typing import TYPE_CHECKING, Any, ClassVar, SupportsIndex, cast
 
 import attrs
 import gffutils
@@ -68,7 +68,6 @@ import pandas as pd
 from attrs import define, field
 from Bio import SeqIO
 from gffutils.feature import Feature
-from goatools.obo_parser import GODag
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sortedcontainers import SortedDict, SortedSet
 
@@ -85,6 +84,11 @@ from torchcell.sequence import (
 )
 from torchcell.sequence.db_connection import GffutilsConnectionManager
 from torchcell.sequence.genome.registry import resolve
+
+if TYPE_CHECKING:
+    # goatools (about 200 MB, most of it bundled test data) is imported only when the GO
+    # DAG is first read, in ``AnnotatedGenome.go_dag``.
+    from goatools.obo_parser import GODag
 
 log = logging.getLogger(__name__)
 
@@ -1527,7 +1531,7 @@ class AnnotatedGenome[GeneT: AnnotatedGene](Genome):
     # Cached all-feature index (upper-cased) backing resolve_gene_name.
     _feature_index: dict[str, Any] | None = field(init=False, default=None, repr=False)
     # Use factory to ensure GO DAG is not pickled
-    _go_dag: GODag | None = field(init=False, factory=lambda: None, repr=False)
+    _go_dag: "GODag | None" = field(init=False, factory=lambda: None, repr=False)
     _obo_path: str | None = field(init=False, default=None, repr=False)
     # This instance's private copy of data.db (made on its first write) and the
     # (pid, instance token) that made it; a pickled or forked copy writes to a copy of its own.
@@ -1750,8 +1754,10 @@ class AnnotatedGenome[GeneT: AnnotatedGene](Genome):
             ) from exc
 
     @property
-    def go_dag(self) -> GODag:
+    def go_dag(self) -> "GODag":
         """Lazy-load GO DAG - one per process"""
+        from goatools.obo_parser import GODag
+
         if self._go_dag is None:
             if self._obo_path and osp.exists(self._obo_path):
                 self._go_dag = GODag(self._obo_path)

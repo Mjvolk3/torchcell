@@ -1,5 +1,6 @@
 """Visualization helpers for logging regression diagnostics to Weights & Biases."""
 
+import importlib
 import io
 import math
 import os
@@ -226,8 +227,9 @@ class Visualization:
             features_np = features_np[idx]
             labels_np = labels_np[idx]
         # umap-learn (with numba and llvmlite) is imported only when a UMAP is drawn.
-        import umap
-
+        # Through importlib and Any: umap ships no usable types, and strict mypy on the
+        # CI runner (where umap is installed) rejects the untyped calls.
+        umap: Any = importlib.import_module("umap")
         reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, metric="euclidean")
         embedding = reducer.fit_transform(features_np)
         fig = plt.figure(figsize=(8, 6))

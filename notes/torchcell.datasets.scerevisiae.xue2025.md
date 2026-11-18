@@ -125,3 +125,44 @@ The loader no longer takes a genome. The release names its 13 genes by common na
 | L3 | `reference_finite` | gate | ok | reference level finite + key-subset for all 880 values |
 | L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'titer_mg_per_l' |
 | L4 | `gene_containment_scmd_ohya2005` | report | finding | 0.000 of scmd_ohya2005's 13 deletion genes are in Ohya (>= 0.9) |
+
+## 2026.11.17 - One record per released replicate (#1178)
+
+The loader stored one record per genotype row holding the mean and SD / sqrt(n) over that row's replicate columns, although the sheet releases every replicate titer. It now stores one record per released replicate and averages nothing. The mean and its dispersion are a modeling-time derivation over the records of one genotype.
+
+| | before | after |
+|---|---|---|
+| records | 176 (one per non-WT row) | 519 (one per released replicate of all 177 rows) |
+| wild type | reference only | 3 replicate records with the empty genotype, plus the reference summary |
+| `metabolite_level` | mean over the row's replicates | that replicate's five titers, verbatim |
+| `n_replicates` | 1 to 3 per FFA | 1 per FFA |
+| `metabolite_level_se` | SD / sqrt(n), NaN at n = 1 | `None` |
+| `replicate_id` | field did not exist | `"1"`, `"2"` or `"3"` |
+
+Measured on the pinned workbook (sha256 `023de80e...`): 166 rows carry 3 replicates, 10 carry 2 and 1 (`G-O-T 6Δ`) carries 1, so 166 x 3 + 10 x 2 + 1 = 519. Records per replicate position are 170, 173 and 176 for positions 1, 2 and 3, so the missing replicates are mostly in the first column.
+
+Three points the release does not settle, and how each is handled:
+
+- **The sheet prints no replicate label.** Row 0 names only the fatty acid over the first column of each three-column block. `replicate_id` is therefore the column's position inside its block.
+- **Alignment across fatty acids is read, not stated.** The k-th column of every block is taken as one replicate, which makes a record the five titers of one replicate. The evidence is that every row with fewer than 3 replicates is blank at the same positions in all five blocks (11 of 11 rows). `process()` refuses a row whose blank positions differ between blocks.
+- **What a replicate is (an independent culture or a repeat injection) is not stated.** `MetabolitePhenotype` has no replicate-kind field and none is asserted. Listed in #1172.
+
+The reference is the `wt BY4741` summary (mean, SD / sqrt(n), n = 3) with `replicate_id = None`. One reference per record cannot hold three cultures, so it states the aggregate, and the three cultures it summarizes are records.
+
+Columns 16 to 21 of the titer sheet (per-FFA averages and a total) are spreadsheet formulas with no cached value in the pinned file, so every cell reads blank; they are not consumed.
+
+Schema: additive optional `replicate_id` on `MetabolitePhenotype` (schema-change record `2026-11-17-replicate-id-on-titer-metabolite-and-protein-abundance-phenotypes`), joined to the metabolite L1 uniqueness key and emitted as a node property. It also separates replicates with identical values in the phenotype node id, which is a sha256 of the phenotype dump.
+
+### L0-L3 on a throwaway build of the per-replicate loader
+
+Built into `$DATA_ROOT/tmp/scratch/per-replicate-xue/v2/ffa_xue2025` (not the shared dev store) and verified with `verify_metabolite_dataset` under the `ffa_xue2025` runner configuration.
+
+| level | rule | outcome | message |
+|---|---|---|---|
+| L0 | `structural` | PASS | 519 records validated |
+| L1 | `count` | PASS | observed 519, expected 519 |
+| L1 | `genotype_uniqueness` | PASS | 519 unique strains (deletion sets) per released replicate, one record each |
+| L2 | `value_fidelity` | PASS | 2595 values checked |
+| L2 | `se_nonnegative` | PASS | 0 values checked |
+| L3 | `reference_finite` | PASS | reference level finite + key-subset for all 2595 values |
+| L3 | `measurement_type_consistent` | PASS | single measurement_type: 'titer_mg_per_l' |

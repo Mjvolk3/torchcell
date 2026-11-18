@@ -13,13 +13,24 @@ free fatty acids per strain: C14:0, C16:0, C18:0, C16:1, C18:1. 177 genotype row
 true wild type (``wt BY4741``), one baseline-only positive control (``+ve Ctrl`` = the
 three-deletion chassis alone), and 175 combinatorial TF-deletion strains.
 
-Maps to ``MetaboliteExperiment`` / ``MetabolitePhenotype`` (one record per genotype row,
-EXCEPT ``wt BY4741`` which is the measured reference). Each record's
-``metabolite_level`` carries all five FFA titers at once (multi-metabolite pattern, like
-``dasilveira2014``): ``metabolite_level = {FFA -> mean of the replicate titers (mg/L)}``,
-``metabolite_level_se = {FFA -> sample-SD / sqrt(n)}``, ``n_replicates = {FFA -> n}``,
+ONE RECORD PER RELEASED REPLICATE, AND NO VALUE IS AVERAGED. The sheet releases every
+replicate titer, so each replicate of each genotype row is its own
+``MetaboliteExperiment`` / ``MetabolitePhenotype`` record: 177 rows -> 519 records (166
+rows x 3 replicates + 10 x 2 + 1 x 1, measured on the pinned bytes), the three
+``wt BY4741`` replicates included, as records with an empty genotype. Each record's
+``metabolite_level`` carries the five FFA titers of that one replicate (multi-metabolite
+pattern, like ``dasilveira2014``): ``metabolite_level = {FFA -> that replicate's titer
+(mg/L)}``, ``n_replicates = {FFA -> 1}``, ``metabolite_level_se = None`` (one value has
+no dispersion), ``replicate_id`` = the replicate's position (below), and
 ``measurement_type = "titer_mg_per_l"`` (ABSOLUTE FFA titer, not a ratio nor a centered
-score). ``target_metabolite_ids = None`` (the FFAs are acyl species; the Yeast9
+score). Before 2026-11-17 the loader stored one record per row holding the mean and
+SD / sqrt(n) over the row's replicates (176 records); the mean and its dispersion are now
+a modeling-time derivation over the records of one genotype.
+
+THE REFERENCE IS A SUMMARY, AND IT SAYS SO. ``phenotype_reference`` is the ``wt BY4741``
+row's mean over its replicates with ``SD / sqrt(n)`` and ``n_replicates = 3``, and its
+``replicate_id`` is ``None``: one reference per record cannot hold three cultures, so it
+states the aggregate, and the three cultures it summarizes are themselves records. ``target_metabolite_ids = None`` (the FFAs are acyl species; the Yeast9
 ``s_NNNN`` / ChEBI mapping is deferred). ``reference_centered = False`` for verification
 (the reference is a MEASURED WT baseline, not an identically-zero centered origin; this is
 a verifier parameter set in ``verification/runners.py``, not a schema field).
@@ -33,7 +44,8 @@ xue2025/data/``):
   - ``raw-titer (mg-L)``: col0 = genotype string; then 5 FFAs x 3 replicate columns of raw
     per-replicate titer (mg/L): C14:0 = cols 1-3, C16:0 = cols 4-6, C18:0 = cols 7-9,
     C16:1 = cols 10-12, C18:1 = cols 13-15. Cols 16-21 are the authors' per-FFA averages +
-    total titer and are IGNORED (we recompute mean/SD from the 3 replicate columns).
+    total titer; they are spreadsheet formulas with no cached value in the pinned file
+    (every cell reads blank) and are not consumed.
 
 GENOTYPE DECODING (validated): every non-WT strain carries the IMPLICIT FFA-chassis
 baseline of THREE deletions (POX1, FAA1, FAA4). The genotype string is
@@ -51,13 +63,17 @@ YOR110W and an alias of YNL039W) is stored as the symbol the release wrote, and 
 to R64 is a modeling-time act. Before #1045 the loader resolved every name through
 ``resolve_gene_name_strict`` with a pin for TFC7 (#886).
 
-REPLICATE STRUCTURE: 3 GC replicate columns per FFA. Some strains released fewer than 3
-replicates (an entire replicate column is blank across all FFAs -- 10 strains have 2, one
-strain (``G-O-T 6d``) has 1). We therefore compute ``n_replicates`` PER FFA from the count
-of non-blank replicates (never hardcode 3), the mean over the present replicates, and the
-sample SD (ddof=1) over the present replicates; ``SE = SD / sqrt(n)``. For ``n == 1`` the
-sample SD is undefined, so that FFA's SE is stored as NaN (the schema permits NaN SE) and
-``n_replicates = 1``.
+REPLICATE STRUCTURE: 3 replicate columns per FFA. The sheet prints NO replicate label
+(the header row names only the FFA over the first column of each block), so
+``replicate_id`` is the column's position inside its block, ``"1"``, ``"2"`` or ``"3"``.
+The k-th column of every FFA block is read as ONE replicate, which makes a record the
+five titers of one replicate. That alignment is not stated by the sheet; what supports it
+is measured: a strain released with fewer than 3 replicates is blank at the SAME
+positions in all five blocks (10 strains have 2 replicates, one strain, ``G-O-T 6d``, has
+1), and ``process()`` refuses a row whose blank positions differ between FFAs, so a file
+that breaks the alignment stops the build. WHAT A REPLICATE IS (an independent culture or
+a repeat injection) is not stated anywhere in the release; ``MetabolitePhenotype`` has no
+replicate-kind field, and none is asserted here.
 
 DELETION MARKER (documented flag, NOT asserted fidelity): these are IN-HOUSE COMBINATORIAL
 strains carrying up to SIX deletions. Six independent KanMX cassettes cannot be stacked
@@ -283,9 +299,7 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
             )
         return code_to_gene
 
-    def _decode_genotype(
-        self, label: str, code_to_gene: dict[str, str]
-    ) -> list[str] | None:
+    def _decode_genotype(self, label: str, code_to_gene: dict[str, str]) -> list[str]:
         """Decode a genotype string into a list of deleted common gene names.
 
         Returns [] for the true wild type (``wt BY4741``), the baseline chassis for the
@@ -312,17 +326,54 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
         tf_genes = [code_to_gene[c] for c in letters]
         return list(_BASELINE_GENES) + tf_genes
 
-    def _phenotype_from_row(self, row: pd.Series) -> MetabolitePhenotype:
-        """Compute a MetabolitePhenotype (5 FFA titers) from one titer-sheet row."""
+    @staticmethod
+    def _replicate_titers(row: pd.Series) -> dict[str, dict[str, float]]:
+        """``{replicate_id: {FFA: titer}}`` for one titer-sheet row, blanks left out.
+
+        The k-th column of each FFA block is replicate ``k``. A replicate present for
+        one FFA and blank for another would mean the columns are not aligned as
+        replicates, so it raises.
+        """
+        replicates: dict[str, dict[str, float]] = {}
+        for ffa, cols in _FFA_COLUMNS.items():
+            for position, col in enumerate(cols, start=1):
+                if pd.notna(row[col]):
+                    replicates.setdefault(str(position), {})[ffa] = float(row[col])
+        if not replicates:
+            raise RuntimeError(f"row {row[0]!r} has no replicate values")
+        for replicate_id, titers in replicates.items():
+            if set(titers) != set(_FFA_COLUMNS):
+                raise RuntimeError(
+                    f"row {row[0]!r} replicate {replicate_id} carries "
+                    f"{sorted(titers)} of {sorted(_FFA_COLUMNS)}: the replicate columns "
+                    "are not blank at the same positions across the FFA blocks"
+                )
+        return replicates
+
+    @staticmethod
+    def _replicate_phenotype(
+        replicate_id: str, titers: dict[str, float]
+    ) -> MetabolitePhenotype:
+        """One replicate's five FFA titers, verbatim: n = 1 and no dispersion."""
+        return MetabolitePhenotype(
+            metabolite_level=dict(titers),
+            metabolite_level_se=None,
+            n_replicates=dict.fromkeys(titers, 1),
+            measurement_type=MEASUREMENT_TYPE,
+            target_metabolite_ids=None,  # FFAs are acyl species; s_NNNN/ChEBI mapping deferred
+            replicate_id=replicate_id,
+        )
+
+    @staticmethod
+    def _summary_phenotype(
+        replicates: dict[str, dict[str, float]],
+    ) -> MetabolitePhenotype:
+        """The reference summary: mean, SD / sqrt(n) and n over a row's replicates."""
         level: dict[str, float] = {}
         se: dict[str, float] = {}
         n_rep: dict[str, int] = {}
-        for ffa, cols in _FFA_COLUMNS.items():
-            values = [float(row[c]) for c in cols if pd.notna(row[c])]
-            if not values:
-                raise RuntimeError(
-                    f"FFA {ffa} has no replicate values in row {row[0]!r}"
-                )
+        for ffa in _FFA_COLUMNS:
+            values = [titers[ffa] for titers in replicates.values()]
             n = len(values)
             mean = sum(values) / n
             level[ffa] = mean
@@ -339,7 +390,7 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
             metabolite_level_se=se,
             n_replicates=n_rep,
             measurement_type=MEASUREMENT_TYPE,
-            target_metabolite_ids=None,  # FFAs are acyl species; s_NNNN/ChEBI mapping deferred
+            target_metabolite_ids=None,
         )
 
     def _environment(self) -> Environment:
@@ -360,7 +411,7 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Parse the raw-titer sheet into per-strain Metabolite experiments; write LMDB."""
+        """Write one Metabolite experiment per released replicate of every row."""
         verify_raw_files(self.raw_dir, {DATA_FILENAME: DATA_SHA256})
         code_to_gene = self._code_to_gene()
         path = osp.join(self.raw_dir, DATA_FILENAME)
@@ -381,14 +432,15 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
             assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
-        # Measured WT reference: the wt BY4741 row's 5 FFA titers (constant across records).
+        # Measured WT reference: the wt BY4741 row's summary over its replicates (constant
+        # across records). The replicates themselves are records, written below.
         wt_rows = df[df[0].astype(str).str.strip().isin(_WT_LABELS)]
         if len(wt_rows) != 1:
             raise RuntimeError(
                 f"expected exactly 1 wild-type row, found {len(wt_rows)}: "
                 f"{wt_rows[0].tolist()}"
             )
-        wt_phenotype = self._phenotype_from_row(wt_rows.iloc[0])
+        wt_phenotype = self._summary_phenotype(self._replicate_titers(wt_rows.iloc[0]))
         reference = MetaboliteExperimentReference(
             dataset_name=self.name,
             genome_reference=genome_reference,
@@ -404,24 +456,25 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
         for _, row in df.iterrows():
             label = str(row[0]).strip()
             deleted = self._decode_genotype(label, code_to_gene)
-            if not deleted:  # true WT -> reference only, not an experiment record
-                continue
-            genotype = self._genotype(deleted)
-            experiments.append(
-                MetaboliteExperiment(
-                    dataset_name=self.name,
-                    genotype=genotype,
-                    environment=environment,
-                    phenotype=self._phenotype_from_row(row),
+            genotype = self._genotype(deleted)  # wt BY4741 -> the empty genotype
+            for replicate_id, titers in self._replicate_titers(row).items():
+                experiments.append(
+                    MetaboliteExperiment(
+                        dataset_name=self.name,
+                        genotype=genotype,
+                        environment=environment,
+                        phenotype=self._replicate_phenotype(replicate_id, titers),
+                    )
                 )
-            )
-            summary.append(
-                {
-                    "genotype": label,
-                    "n_deletions": len(deleted),
-                    "genes": ";".join(genotype.systematic_gene_names),
-                }
-            )
+                summary.append(
+                    {
+                        "genotype": label,
+                        "replicate_id": replicate_id,
+                        "n_deletions": len(deleted),
+                        "genes": ";".join(genotype.systematic_gene_names),
+                        **{f"titer_mg_per_l_{ffa}": titers[ffa] for ffa in titers},
+                    }
+                )
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -445,8 +498,10 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
             osp.join(self.preprocess_dir, "data.csv"), index=False
         )
         log.info(
-            "Wrote %d Xue2025 FFA metabolite experiments to LMDB (+ 1 measured WT reference)",
+            "Wrote %d Xue2025 FFA replicate records over %d genotype rows to LMDB "
+            "(reference = the wt BY4741 summary)",
             idx,
+            len(df),
         )
 
     def preprocess_raw(

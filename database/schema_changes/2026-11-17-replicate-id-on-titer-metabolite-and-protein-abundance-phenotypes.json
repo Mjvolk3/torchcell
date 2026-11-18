@@ -1,0 +1,634 @@
+{
+  "record_version": 1,
+  "slug": "replicate-id-on-titer-metabolite-and-protein-abundance-phenotypes",
+  "date": "2026-11-17",
+  "pr": null,
+  "author_kind": "agent",
+  "base_commit": "937d081ade7884afb59c5a574a91312858c8726f",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "MetabolitePhenotype",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "1bf0d7c0dc5db9d580972808c09215dd1a149a2f58e7178c60f5dace940ec100",
+      "fingerprint_after": "f36e10ecbe1869b2be1fab5a4a736c5b2fca9a7ed69bc03dc20c31becf5251c1",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'replicate_id'"
+      ]
+    },
+    {
+      "symbol": "ProductTiterPhenotype",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "5eb854f5a989ec55e474ca850d6b700325129c789fd2acec056091bc986d5a50",
+      "fingerprint_after": "ae38733744e5b70e7d6e322498ac75064f3c33135aee561002a9b998127244f3",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'replicate_id'"
+      ]
+    },
+    {
+      "symbol": "ProteinAbundancePhenotype",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "248d5258fbb7d7aa1a64cf0a188de5d83197c4c44e44260135b17562046afdbd",
+      "fingerprint_after": "306710f135bf9876ffe39f7a1956deb4e3e6ce4d4bc5efb23748519723a9dd6a",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'replicate_id'"
+      ]
+    }
+  ],
+  "correctness_argument": "Xue 2025 and Carruthers 2025 release every replicate value (Xue: three titer columns per fatty acid, 519 replicate rows over 177 genotype rows; Carruthers: 1,525 non-control cultures with a titer each, 63 panel proteome sample-replicates, 1,407 Dryad campaign cultures), and the loaders stored the mean with a dispersion (176, 502, 21 and 465 records). Constitution principle 2 forbids collapsing a released record, and the owner ruled on 2026-11-17 that released replicates are stored one record each with the mean derived at model time. A per-replicate record needs to say which replicate it states: without that, replicates of one (strain, condition) are records with identical genotype and environment, the L1 uniqueness rules read them as duplicates, and two replicates with the same value hash to one phenotype node because the node id is a sha256 of the phenotype dump (measured on Xue: the P-S-Y fixture row, and Ozaydin 2013's 31 colliding pairs are the same defect on another class). replicate_id is optional by construction: None means the record states an aggregate over replicates, which is what a phenotype_reference summary and an aggregate-only release carry, so no served record of any other dataset changes meaning. It follows EnvironmentResponsePhenotype.replicate_id (#776), which five loaders already use, with the same type and the same reading.",
+  "measurement_type_decision": false,
+  "source_quotes": [],
+  "alternatives_rejected": [
+    {
+      "alternative": "One replicate_id on the base Phenotype, folding in GenomeArchitecturePhenotype.sample_id and PhosphositeIntensityPhenotype.sample_label + replicate",
+      "why_rejected": "Likely the more unified end state, but it renames served fields on two classes, which is a sign-off kind; it is raised to the owner in #1171 and is not taken on an agent's authority. The per-class field does not preclude it."
+    },
+    {
+      "alternative": "No identifier: store replicate records told apart only by their values, as the per-library RNA-seq and proteome loaders do today",
+      "why_rejected": "Two replicates with the same value become one phenotype node and one L1 key, so a released record is silently lost; and the record cannot be joined back to the source's own replicate label."
+    },
+    {
+      "alternative": "Keep the mean and add the replicate values as a list field on the phenotype",
+      "why_rejected": "The label field would keep its aggregate meaning while a second field carries the data, so every consumer that reads the label still trains on a collapsed value; one record per replicate keeps one fact in one field."
+    }
+  ],
+  "served_release": "2026.10.17-4295f7ca",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/brunk2016.py",
+      "dataset_classes": [
+        "_MetaboliteBrunk2016Dataset",
+        "MetabolomeBrunk2016Dataset",
+        "ExometaboliteBrunk2016Dataset",
+        "ProteomeBrunk2016Dataset",
+        "BiofuelTiterBrunk2016Dataset"
+      ],
+      "served_classes": [
+        "BiofuelTiterBrunk2016Dataset",
+        "ExometaboliteBrunk2016Dataset",
+        "MetabolomeBrunk2016Dataset",
+        "ProteomeBrunk2016Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "MetabolitePhenotype",
+        "ProductTiterPhenotype",
+        "ProteinAbundancePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017.py",
+      "dataset_classes": [
+        "RnaseqCaglar2017Dataset",
+        "ProteomeCaglar2017Dataset",
+        "ProteinFoldChangeCaglar2017Dataset"
+      ],
+      "served_classes": [
+        "ProteinFoldChangeCaglar2017Dataset",
+        "ProteomeCaglar2017Dataset",
+        "RnaseqCaglar2017Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProteinAbundancePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/foo2014.py",
+      "dataset_classes": [
+        "IsopentenolTiterFoo2014Dataset"
+      ],
+      "served_classes": [
+        "IsopentenolTiterFoo2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProductTiterPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fuhrer2017.py",
+      "dataset_classes": [
+        "MetabolomeFuhrer2017Dataset"
+      ],
+      "served_classes": [
+        "MetabolomeFuhrer2017Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "MetabolitePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/ishii2007.py",
+      "dataset_classes": [
+        "_Ishii2007Dataset",
+        "MetabolomeIshii2007Dataset",
+        "ProteomeIshii2007Dataset",
+        "FluxIshii2007Dataset"
+      ],
+      "served_classes": [
+        "FluxIshii2007Dataset",
+        "MetabolomeIshii2007Dataset",
+        "ProteomeIshii2007Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "MetabolitePhenotype",
+        "ProteinAbundancePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mori2021.py",
+      "dataset_classes": [
+        "ProteomeMori2021Dataset"
+      ],
+      "served_classes": [
+        "ProteomeMori2021Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProteinAbundancePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/niu2019.py",
+      "dataset_classes": [
+        "CrisprPineneToleranceNiu2019Dataset",
+        "PineneFoldChangeNiu2019Dataset"
+      ],
+      "served_classes": [
+        "CrisprPineneToleranceNiu2019Dataset",
+        "PineneFoldChangeNiu2019Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProductTiterPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rapp2026.py",
+      "dataset_classes": [
+        "MetabolomeRapp2026Dataset"
+      ],
+      "served_classes": [
+        "MetabolomeRapp2026Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "MetabolitePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rapp2026_platforms.py",
+      "dataset_classes": [
+        "_Rapp2026Dataset",
+        "GrowthAucRapp2026Dataset",
+        "_AccumulationDataset",
+        "TargetedMetabolomeRapp2026Dataset",
+        "MetaboliteIntensityRapp2026Dataset"
+      ],
+      "served_classes": [
+        "GrowthAucRapp2026Dataset",
+        "MetaboliteIntensityRapp2026Dataset",
+        "TargetedMetabolomeRapp2026Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "MetabolitePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schastnaya2021.py",
+      "dataset_classes": [
+        "MetabolomeSchastnaya2021Dataset"
+      ],
+      "served_classes": [
+        "MetabolomeSchastnaya2021Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "MetabolitePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016.py",
+      "dataset_classes": [
+        "ProteomeSchmidt2016Dataset"
+      ],
+      "served_classes": [
+        "ProteomeSchmidt2016Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProteinAbundancePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_srm.py",
+      "dataset_classes": [
+        "_SrmSchmidt2016Dataset",
+        "ProteomeSrmSet1Schmidt2016Dataset",
+        "ProteomeSrmSet2Schmidt2016Dataset"
+      ],
+      "served_classes": [
+        "ProteomeSrmSet1Schmidt2016Dataset",
+        "ProteomeSrmSet2Schmidt2016Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProteinAbundancePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/banerjee2024.py",
+      "dataset_classes": [
+        "IsoprenolTiterBanerjee2024Dataset"
+      ],
+      "served_classes": [
+        "IsoprenolTiterBanerjee2024Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProductTiterPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/banerjee2025.py",
+      "dataset_classes": [
+        "ProteomeBanerjee2025Dataset"
+      ],
+      "served_classes": [
+        "ProteomeBanerjee2025Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProteinAbundancePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/carruthers2025.py",
+      "dataset_classes": [
+        "IsoprenolTiterCarruthers2025Dataset",
+        "ProteomeCarruthers2025Dataset",
+        "CampaignProteomeCarruthers2025Dataset",
+        "ProteomeFoldChangeCarruthers2025Dataset"
+      ],
+      "served_classes": [
+        "CampaignProteomeCarruthers2025Dataset",
+        "IsoprenolTiterCarruthers2025Dataset",
+        "ProteomeCarruthers2025Dataset",
+        "ProteomeFoldChangeCarruthers2025Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProductTiterPhenotype",
+        "ProteinAbundancePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/desiqueira2025.py",
+      "dataset_classes": [
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset"
+      ],
+      "served_classes": [
+        "IsoprenolTiterDeSiqueira2025Dataset",
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProductTiterPhenotype",
+        "ProteinAbundancePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/kang2026.py",
+      "dataset_classes": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "served_classes": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProductTiterPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2025.py",
+      "dataset_classes": [
+        "IsoprenolToleranceLim2025Dataset",
+        "ProteomeLim2025Dataset",
+        "ProteomeFoldChangeLim2025Dataset"
+      ],
+      "served_classes": [
+        "IsoprenolToleranceLim2025Dataset",
+        "ProteomeFoldChangeLim2025Dataset",
+        "ProteomeLim2025Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProteinAbundancePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/menasalvas2025.py",
+      "dataset_classes": [
+        "IsoprenolSelectionMenasalvas2025Dataset",
+        "ProteomeMenasalvas2025Dataset",
+        "_MetabolitePhaseDataset",
+        "MetaboliteGrowthPhaseMenasalvas2025Dataset",
+        "MetaboliteProductionPhaseMenasalvas2025Dataset"
+      ],
+      "served_classes": [
+        "IsoprenolSelectionMenasalvas2025Dataset",
+        "MetaboliteGrowthPhaseMenasalvas2025Dataset",
+        "MetaboliteProductionPhaseMenasalvas2025Dataset",
+        "ProteomeMenasalvas2025Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "MetabolitePhenotype",
+        "ProteinAbundancePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/thompson2019_valerolactam.py",
+      "dataset_classes": [
+        "_Thompson2019Dataset",
+        "ValerolactamTiterThompson2019Dataset",
+        "LactamGrowthRateThompson2019Dataset"
+      ],
+      "served_classes": [
+        "LactamGrowthRateThompson2019Dataset",
+        "ValerolactamTiterThompson2019Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProductTiterPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/yunus2026.py",
+      "dataset_classes": [
+        "_Yunus2026Dataset",
+        "_Yunus2026BenchlingDataset",
+        "CrispriKnockdownYunus2026Dataset",
+        "CrispriArrayYunus2026Dataset",
+        "CrispriDifferentialProteomeYunus2026Dataset",
+        "IsoprenolTiterYunus2026Dataset",
+        "CrispriPanelProteomeYunus2026Dataset"
+      ],
+      "served_classes": [
+        "CrispriArrayYunus2026Dataset",
+        "CrispriDifferentialProteomeYunus2026Dataset",
+        "CrispriKnockdownYunus2026Dataset",
+        "CrispriPanelProteomeYunus2026Dataset",
+        "IsoprenolTiterYunus2026Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProductTiterPhenotype",
+        "ProteinAbundancePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cachera2023.py",
+      "dataset_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "served_classes": [
+        "BetaxanthinCachera2023Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "MetabolitePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/cooper2010.py",
+      "dataset_classes": [
+        "AminoAcidCooper2010Dataset"
+      ],
+      "served_classes": [
+        "AminoAcidCooper2010Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "MetabolitePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/dasilveira2014.py",
+      "dataset_classes": [
+        "MetaboliteDaSilveira2014Dataset"
+      ],
+      "served_classes": [
+        "MetaboliteDaSilveira2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "MetabolitePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/lopez2024.py",
+      "dataset_classes": [
+        "IsobutanolScreenLopez2024Dataset",
+        "IsobutanolValidatedLopez2024Dataset"
+      ],
+      "served_classes": [
+        "IsobutanolScreenLopez2024Dataset",
+        "IsobutanolValidatedLopez2024Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "MetabolitePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/messner2021.py",
+      "dataset_classes": [
+        "ProteomeMessner2021Dataset"
+      ],
+      "served_classes": [
+        "ProteomeMessner2021Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProteinAbundancePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/messner2023.py",
+      "dataset_classes": [
+        "ProteomeMessner2023Dataset"
+      ],
+      "served_classes": [
+        "ProteomeMessner2023Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProteinAbundancePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/muenzner2024.py",
+      "dataset_classes": [
+        "_MuenznerIsolateDataset",
+        "ProteomeMuenzner2024Dataset",
+        "ProteinTurnoverMuenzner2024Dataset"
+      ],
+      "served_classes": [
+        "ProteinTurnoverMuenzner2024Dataset",
+        "ProteomeMuenzner2024Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProteinAbundancePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/mulleder2016.py",
+      "dataset_classes": [
+        "AminoAcidMulleder2016Dataset"
+      ],
+      "served_classes": [
+        "AminoAcidMulleder2016Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "MetabolitePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/xue2025.py",
+      "dataset_classes": [
+        "FattyAcidXue2025Dataset"
+      ],
+      "served_classes": [
+        "FattyAcidXue2025Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "MetabolitePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/yoshida2012.py",
+      "dataset_classes": [
+        "OrganicAcidYoshida2012Dataset"
+      ],
+      "served_classes": [
+        "OrganicAcidYoshida2012Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "MetabolitePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/zelezniak2018.py",
+      "dataset_classes": [
+        "ProteomeZelezniak2018Dataset",
+        "MetaboliteZelezniak2018Dataset"
+      ],
+      "served_classes": [
+        "MetaboliteZelezniak2018Dataset",
+        "ProteomeZelezniak2018Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "MetabolitePhenotype",
+        "ProteinAbundancePhenotype"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "AminoAcidCooper2010Dataset",
+    "AminoAcidMulleder2016Dataset",
+    "BetaxanthinCachera2023Dataset",
+    "BiofuelTiterBrunk2016Dataset",
+    "CampaignProteomeCarruthers2025Dataset",
+    "CrisprPineneToleranceNiu2019Dataset",
+    "CrispriArrayYunus2026Dataset",
+    "CrispriDifferentialProteomeYunus2026Dataset",
+    "CrispriKnockdownYunus2026Dataset",
+    "CrispriPanelProteomeYunus2026Dataset",
+    "ExometaboliteBrunk2016Dataset",
+    "FattyAcidXue2025Dataset",
+    "FluxIshii2007Dataset",
+    "GrowthAucRapp2026Dataset",
+    "IsobutanolScreenLopez2024Dataset",
+    "IsobutanolValidatedLopez2024Dataset",
+    "IsopentenolTiterFoo2014Dataset",
+    "IsoprenolSelectionMenasalvas2025Dataset",
+    "IsoprenolTiterBanerjee2024Dataset",
+    "IsoprenolTiterCarruthers2025Dataset",
+    "IsoprenolTiterDeSiqueira2025Dataset",
+    "IsoprenolTiterYunus2026Dataset",
+    "IsoprenolToleranceLim2025Dataset",
+    "IsoprenylAcetateTiterKang2026Dataset",
+    "LactamGrowthRateThompson2019Dataset",
+    "MetaboliteDaSilveira2014Dataset",
+    "MetaboliteGrowthPhaseMenasalvas2025Dataset",
+    "MetaboliteIntensityRapp2026Dataset",
+    "MetaboliteProductionPhaseMenasalvas2025Dataset",
+    "MetaboliteZelezniak2018Dataset",
+    "MetabolomeBrunk2016Dataset",
+    "MetabolomeFuhrer2017Dataset",
+    "MetabolomeIshii2007Dataset",
+    "MetabolomeRapp2026Dataset",
+    "MetabolomeSchastnaya2021Dataset",
+    "OrganicAcidYoshida2012Dataset",
+    "PineneFoldChangeNiu2019Dataset",
+    "ProteinFoldChangeCaglar2017Dataset",
+    "ProteinTurnoverMuenzner2024Dataset",
+    "ProteomeBanerjee2025Dataset",
+    "ProteomeBrunk2016Dataset",
+    "ProteomeCaglar2017Dataset",
+    "ProteomeCarruthers2025Dataset",
+    "ProteomeDeSiqueira2025Dataset",
+    "ProteomeFoldChangeCarruthers2025Dataset",
+    "ProteomeFoldChangeLim2025Dataset",
+    "ProteomeIshii2007Dataset",
+    "ProteomeLim2025Dataset",
+    "ProteomeLog10PercentDeSiqueira2025Dataset",
+    "ProteomeMenasalvas2025Dataset",
+    "ProteomeMessner2021Dataset",
+    "ProteomeMessner2023Dataset",
+    "ProteomeMori2021Dataset",
+    "ProteomeMuenzner2024Dataset",
+    "ProteomePercentDeSiqueira2025Dataset",
+    "ProteomeSchmidt2016Dataset",
+    "ProteomeSrmSet1Schmidt2016Dataset",
+    "ProteomeSrmSet2Schmidt2016Dataset",
+    "ProteomeZelezniak2018Dataset",
+    "RnaseqCaglar2017Dataset",
+    "TargetedMetabolomeRapp2026Dataset",
+    "ValerolactamTiterThompson2019Dataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": false,
+    "quote": null,
+    "url": null
+  }
+}

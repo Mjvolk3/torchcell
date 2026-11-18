@@ -97,17 +97,16 @@ def test_parse_construct_on_a_single_guide_name() -> None:
 # --------------------------------------------------------------------------- #
 # Synthetic: the titer phenotype
 # --------------------------------------------------------------------------- #
-def test_titer_phenotype_stores_the_mean_with_the_sample_sd_and_derives_the_se() -> (
-    None
-):
-    """The mean, the sample SD as ``sample_sd``, and SE = SD / sqrt(n)."""
-    pheno = c25.titer_phenotype([100.0, 110.0, 120.0], is_reference=False)
-    assert pheno.titer == pytest.approx(110.0)
-    assert pheno.titer_uncertainty == pytest.approx(10.0)
-    assert pheno.titer_uncertainty_type is UncertaintyType.sample_sd
-    assert pheno.n_samples == 3
+def test_titer_phenotype_stores_one_cultures_value_with_its_released_label() -> None:
+    """A record is ONE culture: the released number, n = 1, no dispersion."""
+    pheno = c25.titer_phenotype(818.6499, "PP_0751_PP_0813_PP_0815-R1")
+    assert pheno.titer == 818.6499
+    assert pheno.titer_uncertainty is None
+    assert pheno.titer_uncertainty_type is None
+    assert pheno.titer_se is None
+    assert pheno.n_samples == 1
     assert pheno.sample_unit is SampleUnit.biological_replicate
-    assert pheno.titer_se == pytest.approx(10.0 / math.sqrt(3))
+    assert pheno.replicate_id == "PP_0751_PP_0813_PP_0815-R1"
     assert pheno.quantification_method == "GC-FID"
 
 
@@ -115,18 +114,18 @@ def test_titer_phenotype_stores_the_source_number_in_the_identical_microgram_uni
     None
 ):
     """mg/L is stored verbatim as ug/mL, which is the same quantity exactly."""
-    pheno = c25.titer_phenotype([818.6499, 773.4597, 762.3653], is_reference=False)
+    pheno = c25.titer_phenotype(818.6499, "PP_0751-R1")
     assert pheno.titer_unit is ConcentrationUnit.ug_per_ml
     assert "mg/L" not in {unit.value for unit in ConcentrationUnit}
-    assert pheno.titer == pytest.approx((818.6499 + 773.4597 + 762.3653) / 3)
+    assert pheno.titer == 818.6499
 
 
-def test_titer_phenotype_gaps_the_yield_and_productivity_the_campaign_never_released() -> (
-    None
-):
-    """Four typed absences, not four silent Nones."""
-    pheno = c25.titer_phenotype([1.0, 2.0], is_reference=True)
+def test_titer_phenotype_gaps_the_uncertainty_the_yield_and_the_productivity() -> None:
+    """Six typed absences, not six silent Nones."""
+    pheno = c25.titer_phenotype(1.0, "PP_0751-R1")
     assert pheno.gapped_fields() == {
+        "titer_uncertainty",
+        "titer_uncertainty_type",
         "product_yield",
         "product_yield_unit",
         "productivity",
@@ -136,10 +135,34 @@ def test_titer_phenotype_gaps_the_yield_and_productivity_the_campaign_never_rele
     assert pheno.productivity is None
 
 
-def test_titer_phenotype_refuses_a_single_replicate() -> None:
-    """One culture has no sample SD, so it cannot carry the paper's uncertainty type."""
-    with pytest.raises(RuntimeError, match="at least two replicates"):
-        c25.titer_phenotype([100.0], is_reference=False)
+def test_titer_phenotype_refuses_a_culture_with_no_released_label() -> None:
+    """A per-culture record must carry the source's own label for that culture."""
+    with pytest.raises(RuntimeError, match="the source's own label"):
+        c25.titer_phenotype(100.0, "")
+
+
+def test_titer_reference_phenotype_states_the_groups_mean_sd_and_n() -> None:
+    """The only aggregate of the family: mean, sample SD, n, and no replicate_id."""
+    pheno = c25.titer_reference_phenotype([100.0, 110.0, 120.0])
+    assert pheno.titer == pytest.approx(110.0)
+    assert pheno.titer_uncertainty == pytest.approx(10.0)
+    assert pheno.titer_uncertainty_type is UncertaintyType.sample_sd
+    assert pheno.n_samples == 3
+    assert pheno.sample_unit is SampleUnit.biological_replicate
+    assert pheno.titer_se == pytest.approx(10.0 / math.sqrt(3))
+    assert pheno.replicate_id is None
+    assert pheno.gapped_fields() == {
+        "product_yield",
+        "product_yield_unit",
+        "productivity",
+        "productivity_unit",
+    }
+
+
+def test_titer_reference_phenotype_refuses_a_single_culture() -> None:
+    """One culture has no sample SD, so it cannot be an aggregate summary."""
+    with pytest.raises(RuntimeError, match="at least two cultures"):
+        c25.titer_reference_phenotype([100.0])
 
 
 def test_the_product_is_the_compound_layers_isoprenol_with_its_identity() -> None:
@@ -276,7 +299,7 @@ def test_the_titer_slot_keeps_the_protocol_and_the_proteome_slot_still_drops_it(
         dataset_name="probe",
         genotype=Genotype(perturbations=perturbations),
         environment=env,
-        phenotype=c25.titer_phenotype([1.0, 2.0, 3.0], is_reference=False),
+        phenotype=c25.titer_phenotype(1.0, "PP_0751-R1"),
     )
     culture = titer.model_dump()["environment"]["culture_format"]
     assert culture["vessel"] == "48-well BioLector flower plate"
@@ -300,10 +323,23 @@ def test_the_titer_slot_keeps_the_protocol_and_the_proteome_slot_still_drops_it(
 # --------------------------------------------------------------------------- #
 # Synthetic: the proteome aggregation
 # --------------------------------------------------------------------------- #
+def test_the_proteome_replicate_phenotype_stores_one_replicates_cells() -> None:
+    """A record is ONE (sample, replicate): n = 1 per key, no SE, a typed gap."""
+    pheno = c25.ProteomeCarruthers2025Dataset._replicate_phenotype(
+        {"PP_0001": 10.0, "PP_0002": 0.0}, "JBEI_OTS_PP_0378_48hr/R2"
+    )
+    assert pheno.protein_abundance == {"PP_0001": 10.0, "PP_0002": 0.0}
+    assert pheno.protein_abundance_se is None
+    assert pheno.n_replicates == {"PP_0001": 1, "PP_0002": 1}
+    assert pheno.replicate_id == "JBEI_OTS_PP_0378_48hr/R2"
+    assert pheno.measurement_type == "dia_nn_top3_peptide_signal_mean"
+    assert pheno.gapped_fields() == {"protein_abundance_se"}
+
+
 def test_the_proteome_aggregation_gives_the_mean_the_se_and_the_replicate_count() -> (
     None
 ):
-    """SE is the sample SD over sqrt(n); a single replicate has no SE."""
+    """The REFERENCE aggregate: SE is the sample SD over sqrt(n), n = 1 has no SE."""
     abundance, se, n_reps = c25.ProteomeCarruthers2025Dataset._aggregate(
         {"PP_0001": [10.0, 20.0, 30.0], "PP_0002": [5.0]}, "sample"
     )
@@ -628,7 +664,7 @@ def test_the_reference_pins_the_genbank_assembly_and_survives_serialization(
         dataset_name="probe",
         genome_reference=reference,
         environment_reference=c25.production_environment(),
-        phenotype_reference=c25.titer_phenotype([1.0, 2.0], is_reference=True),
+        phenotype_reference=c25.titer_reference_phenotype([1.0, 2.0]),
     ).model_dump()
     assert dumped["genome_reference"]["assembly_accession"] == "GCA_000007565.2"
     assert dumped["genome_reference"]["background"]["name"] == "IY1449b"
@@ -691,9 +727,10 @@ def test_the_released_cultures_match_the_papers_own_control_and_strain_counts() 
 
 @pytest.mark.data
 @requires_built
-def test_the_built_titer_store_has_one_record_per_strain_and_passes_l0_to_l4() -> None:
-    """L0 schema, L1 count + the 472 reconciliation, L2 fidelity and the SE identity,
-    L3 unit and pathway pins, L4 against Supplementary Data 1.
+def test_the_built_titer_store_has_one_record_per_culture_and_passes_l0_to_l4() -> None:
+    """L0 schema, L1 count + the 472 reconciliation + the replicate keys, L2 fidelity
+    and the SE identity, L3 unit, pathway and replicate-group pins, L4 against the
+    released sheets and Supplementary Data 1.
     """
     from torchcell.verification.runners import load_records
 
@@ -706,7 +743,7 @@ def test_the_built_titer_store_has_one_record_per_strain_and_passes_l0_to_l4() -
 
 @pytest.mark.data
 @requires_built
-def test_the_built_proteome_store_has_one_record_per_sample_and_passes_l0_to_l4() -> (
+def test_the_built_proteome_store_has_one_record_per_replicate_and_passes_l0_to_l4() -> (
     None
 ):
     """The protein family's own five levels over the PP_0815 off-target panel."""
@@ -721,12 +758,12 @@ def test_the_built_proteome_store_has_one_record_per_sample_and_passes_l0_to_l4(
 
 @pytest.mark.data
 @requires_built
-def test_the_titer_build_accounting_drops_only_the_induced_groups() -> None:
-    """Every released culture is in a record bar the induced overexpression groups.
+def test_the_titer_build_accounting_drops_only_the_induced_cultures() -> None:
+    """Every released culture is in a record bar the induced overexpression cultures.
 
-    Measured on the pinned workbook: 465 campaign strain-cycles plus the four panels'
-    49 candidate groups, of which the 12 induced ones are dropped because the
-    inducer's unit is released nowhere in the mirror.
+    Measured on the pinned workbook: 1,416 campaign cultures plus the four panels' 109
+    non-control cultures, plus the 36 induced overexpression cultures that are dropped
+    because the inducer's unit is released nowhere in the mirror.
     """
     accounting = c25.BuildAccounting.model_validate_json(
         Path(osp.join(TITER_ROOT, "preprocess/build_accounting.json")).read_text()
@@ -734,21 +771,21 @@ def test_the_titer_build_accounting_drops_only_the_induced_groups() -> None:
     accounting.check()
     assert accounting.source_rows == 1506
     assert accounting.control_rows == 90
-    assert accounting.candidate_records == 514
-    assert accounting.kept_records == c25.EXPECTED_TITER_RECORDS
-    assert accounting.dropped_records == 12
+    assert accounting.candidate_records == 1561
+    assert accounting.kept_records == c25.EXPECTED_TITER_RECORDS == 1525
+    assert accounting.dropped_records == 36
 
 
 @pytest.mark.data
 @requires_built
-def test_the_proteome_build_accounting_drops_keys_and_the_induced_samples() -> None:
-    """77 of 1,501 protein keys are dropped, and the 12 induced samples."""
+def test_the_proteome_build_accounting_drops_keys_and_the_induced_replicates() -> None:
+    """77 of 1,501 protein keys are dropped, and the 36 induced sample-replicates."""
     accounting = c25.BuildAccounting.model_validate_json(
         Path(osp.join(PROTEOME_ROOT, "preprocess/build_accounting.json")).read_text()
     )
     accounting.check()
-    assert accounting.kept_records == c25.EXPECTED_PROTEOME_RECORDS
-    assert accounting.dropped_records == 12
+    assert accounting.kept_records == c25.EXPECTED_PROTEOME_RECORDS == 63
+    assert accounting.dropped_records == 36
     dropped = pd.read_csv(
         osp.join(PROTEOME_ROOT, "preprocess/dropped_protein_keys.csv")
     )
@@ -899,9 +936,12 @@ OFFTARGET_DISTINCT_TARGETS = 2
 #: The ``Figure 6d`` line the Results sentence prints a titer for, and its cultures.
 KO_ARRAY_PROSE_LINE = "PP_0368_PP_0812-15_KO with PP_0528_PP_0815"
 KO_ARRAY_PROSE_TITERS: tuple[float, ...] = (980.0, 981.0, 982.0)
-#: What the four synthetic panels build: 2 Figure 6a + 2 Figure 6d + 4 off-target +
-#: 2 uninduced overexpression strains.
-SYNTHETIC_PANEL_TITER_RECORDS = 2 + 3 + 1 + len(OFFTARGET_SAMPLES) + 2
+#: What the four synthetic panels build, in released GROUPS: 2 Figure 6a + 3 Figure 6d +
+#: 1 off-target Target + its off-target samples + 2 uninduced overexpression strains.
+SYNTHETIC_PANEL_TITER_GROUPS = 2 + 3 + 1 + len(OFFTARGET_SAMPLES) + 2
+#: And in CULTURES, which is the record unit (#776): every synthetic panel group is a
+#: triplicate.
+SYNTHETIC_PANEL_TITER_RECORDS = SYNTHETIC_PANEL_TITER_GROUPS * 3
 #: The synthetic ``Figure 5b`` contrast columns: every single-guide DBTL0 construct, so
 #: the released-strain join the fold-change loader asserts holds on the miniature too.
 FOLD_CHANGE_CONTRASTS: tuple[str, ...] = SINGLE_GUIDE_TARGETS
@@ -1045,6 +1085,85 @@ def _titer_rows() -> list[tuple[str, int, str, float, str]]:
                     (f"{construct}-R{replicate}", cycle, "False", value, "True")
                 )
     return rows
+
+
+def _synthetic_titer_groups() -> dict[tuple[str, int], int]:
+    """``(construct, cycle) -> culture count`` of the synthetic ``Figure 4b`` strains."""
+    groups: dict[tuple[str, int], int] = {}
+    for line, cycle, is_control, _titer, _passed in _titer_rows():
+        if is_control == "True":
+            continue
+        match = c25.REPLICATE_RE.match(line)
+        assert match is not None
+        key = (match.group("base"), cycle)
+        groups[key] = groups.get(key, 0) + 1
+    return groups
+
+
+def _synthetic_group_sizes(dataset: Any, *, campaign: bool | None) -> dict[int, int]:
+    """The built store's per-genotype replicate-group histogram.
+
+    ``campaign`` selects the campaign half (True), the panel half (False) or every
+    record (None), matching the three pinned histograms the module carries.
+    """
+    from collections import Counter as _Counter
+
+    records = [dataset[index] for index in range(len(dataset))]
+    dumped = [
+        {
+            "experiment": (
+                record["experiment"]
+                if isinstance(record["experiment"], dict)
+                else record["experiment"].model_dump()
+            )
+        }
+        for record in records
+    ]
+    if campaign is not None:
+        dumped = [
+            record for record in dumped if c25._is_campaign_record(record) is campaign
+        ]
+    groups = _Counter(c25._genotype_signature(record) for record in dumped)
+    return dict(_Counter(groups.values()))
+
+
+def _synthetic_duplicated_keys(dataset: Any) -> int:
+    """``(genotype, replicate_id)`` keys the built store carries more than once."""
+    from collections import Counter as _Counter
+
+    keys: _Counter[tuple[Any, ...]] = _Counter()
+    for index in range(len(dataset)):
+        experiment = dataset[index]["experiment"]
+        record = {
+            "experiment": (
+                experiment if isinstance(experiment, dict) else experiment.model_dump()
+            )
+        }
+        keys[
+            (
+                c25._genotype_signature(record),
+                record["experiment"]["phenotype"]["replicate_id"],
+            )
+        ] += 1
+    return sum(1 for count in keys.values() if count > 1)
+
+
+def _synthetic_campaign_cultures() -> int:
+    """Non-control cultures the synthetic Dryad matrix carries."""
+    return sum(
+        1
+        for construct, _cycle, _replicate, _titer in _campaign_cultures()
+        if not construct.startswith(c25.KO_ARRAY_CONTROL_LINE)
+    )
+
+
+def _synthetic_campaign_control_cultures() -> int:
+    """Control cultures the synthetic Dryad matrix carries."""
+    return sum(
+        1
+        for construct, _cycle, _replicate, _titer in _campaign_cultures()
+        if construct.startswith(c25.KO_ARRAY_CONTROL_LINE)
+    )
 
 
 def _target_means(rows: list[tuple[str, int, str, float, str]]) -> dict[str, float]:
@@ -1623,6 +1742,19 @@ def synthetic_mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setattr(
         c25, "EXPECTED_PANEL_TITER_RECORDS", SYNTHETIC_PANEL_TITER_RECORDS
     )
+    # The culture, strain-cycle and six-culture counts the module pins to the REAL
+    # workbook (#776: one record per released culture). The miniature holds one
+    # six-culture strain-cycle and triplicates for the rest.
+    synthetic_groups = _synthetic_titer_groups()
+    monkeypatch.setattr(
+        c25, "EXPECTED_CRISPRI_TITER_RECORDS", sum(synthetic_groups.values())
+    )
+    monkeypatch.setattr(c25, "EXPECTED_CRISPRI_STRAIN_CYCLES", len(synthetic_groups))
+    monkeypatch.setattr(
+        c25,
+        "EXPECTED_SIX_REPLICATE_STRAIN_CYCLES",
+        sum(1 for n in synthetic_groups.values() if n == 6),
+    )
     monkeypatch.setattr(
         c25, "EXPECTED_FOLD_CHANGE_RECORDS_FIG5B", len(FOLD_CHANGE_CONTRASTS)
     )
@@ -1955,7 +2087,15 @@ def campaign_patches(monkeypatch: pytest.MonkeyPatch) -> None:
         c25, "uniprot_locus_crosswalk", lambda *a, **k: _synthetic_crosswalk()
     )
     monkeypatch.setattr(
-        c25, "EXPECTED_CAMPAIGN_PROTEOME_RECORDS", SYNTHETIC_CAMPAIGN_RECORDS
+        c25, "EXPECTED_CAMPAIGN_PROTEOME_RECORDS", _synthetic_campaign_cultures()
+    )
+    monkeypatch.setattr(
+        c25, "EXPECTED_CAMPAIGN_STRAIN_CYCLES", SYNTHETIC_CAMPAIGN_RECORDS
+    )
+    monkeypatch.setattr(
+        c25,
+        "EXPECTED_CAMPAIGN_CONTROL_CULTURES",
+        _synthetic_campaign_control_cultures(),
     )
     monkeypatch.setattr(c25, "CAMPAIGN_CROSSWALK_SHARED", CAMPAIGN_RESOLVED_ACCESSIONS)
     monkeypatch.setattr(
@@ -2001,15 +2141,11 @@ def built_proteome(
     )
 
 
-def test_the_titer_loader_writes_one_record_per_construct_and_cycle(
+def test_the_titer_loader_writes_one_record_per_released_culture(
     built_titer: Any,
 ) -> None:
-    """Strains, not cultures: the 465-shaped arithmetic on a small fixture."""
-    expected = (
-        len(SINGLE_GUIDE_TARGETS)
-        + 2
-        + sum(len(v) for v in COMBINATION_CONSTRUCTS.values())
-    )
+    """Cultures, not strains (#776): the 1,525-shaped arithmetic on a small fixture."""
+    expected = sum(_synthetic_titer_groups().values())
     assert len(built_titer) == expected + SYNTHETIC_PANEL_TITER_RECORDS
     assert built_titer.experiment_class is ProductTiterExperiment
     assert built_titer.reference_class is ProductTiterExperimentReference
@@ -2024,6 +2160,10 @@ def test_the_titer_loader_writes_one_record_per_construct_and_cycle(
     assert kinds == {"heterologous_pathway", "crispr_interference"}
     assert dumped["phenotype"]["titer_unit"] == ConcentrationUnit.ug_per_ml.value
     assert dumped["phenotype"]["sample_unit"] == SampleUnit.biological_replicate.value
+    assert dumped["phenotype"]["n_samples"] == 1
+    assert dumped["phenotype"]["titer_uncertainty"] is None
+    assert dumped["phenotype"]["titer_se"] is None
+    assert c25.REPLICATE_RE.match(dumped["phenotype"]["replicate_id"]) is not None
 
 
 def test_the_titer_loader_writes_its_accounting_the_controls_and_the_filter(
@@ -2036,9 +2176,12 @@ def test_the_titer_loader_writes_its_accounting_the_controls_and_the_filter(
     accounting.check()
     assert accounting.source_rows == len(_titer_rows())
     assert accounting.control_rows == 90
-    # The only drops are the induced overexpression groups, whose dose has no unit.
-    assert accounting.dropped_records == len(c25.OVEREXPRESSION_INDUCED_LEVELS) * len(
-        c25.OVEREXPRESSION_SHEET_LABELS
+    # The only drops are the induced overexpression CULTURES, whose dose has no unit.
+    assert (
+        accounting.dropped_records
+        == len(c25.OVEREXPRESSION_INDUCED_LEVELS)
+        * len(c25.OVEREXPRESSION_SHEET_LABELS)
+        * 3
     )
     assert [rule.rule for rule in accounting.rules] == [
         "inducer_concentration_has_no_released_unit"
@@ -2046,7 +2189,7 @@ def test_the_titer_loader_writes_its_accounting_the_controls_and_the_filter(
     assert accounting.kept_records == len(built_titer)
     assert accounting.reconciliation is not None
     assert accounting.reconciliation.resolved_fraction == 1.0
-    assert len(accounting.notes) == 4 + len(
+    assert len(accounting.notes) == 6 + len(
         json.loads(
             Path(osp.join(built_titer.root, "preprocess/panel_proofs.json")).read_text()
         )
@@ -2062,34 +2205,41 @@ def test_the_titer_loader_writes_its_accounting_the_controls_and_the_filter(
     panels = pd.read_csv(
         osp.join(built_titer.root, "preprocess/source_data_panels.csv")
     )
-    assert len(panels) == SYNTHETIC_PANEL_TITER_RECORDS
+    assert len(panels) == SYNTHETIC_PANEL_TITER_GROUPS
+    assert panels["n_cultures"].tolist() == [3] * SYNTHETIC_PANEL_TITER_GROUPS
     assert set(panels["sheet"]) == {
         c25.SHEET_KO_PANEL,
         c25.SHEET_KO_ARRAYS,
         c25.SHEET_OFFTARGET_TITER,
         c25.SHEET_OVEREXPRESSION_TITER,
     }
-    assert passes["n_replicates"].max() == 6
+    assert passes["n_cultures_in_group"].max() == 6
     filler = passes.loc[passes["construct"] == FILLER_CONSTRUCT].iloc[0]
     assert filler["non_targeting_tokens"] == "NT1"
     assert filler["n_targets"] == 1
+    assert filler["replicate_id"].startswith(f"{FILLER_CONSTRUCT}-R")
 
 
-def test_the_titer_loader_keeps_a_six_replicate_strain_as_one_record(
+def test_the_titer_loader_keeps_a_six_replicate_strain_as_six_records(
     built_titer: Any,
 ) -> None:
-    """The replicate count stored is the one the strain has, not the paper's 3."""
+    """A strain cultured six times is six records, each one culture (#776)."""
     records = [built_titer[i] for i in range(len(built_titer))]
-    samples = sorted(
+    phenotypes = [
         (
             record["experiment"]
             if isinstance(record["experiment"], dict)
             else record["experiment"].model_dump()
-        )["phenotype"]["n_samples"]
+        )["phenotype"]
         for record in records
+    ]
+    assert {phenotype["n_samples"] for phenotype in phenotypes} == {1}
+    labels = sorted(
+        phenotype["replicate_id"]
+        for phenotype in phenotypes
+        if phenotype["replicate_id"].startswith(f"{SIX_REPLICATE_CONSTRUCT}-R")
     )
-    assert samples.count(6) == 1
-    assert samples.count(3) == len(records) - 1
+    assert labels == [f"{SIX_REPLICATE_CONSTRUCT}-R{n}" for n in range(1, 7)]
 
 
 def test_the_titer_loader_builds_one_reference_per_cycle(built_titer: Any) -> None:
@@ -2112,12 +2262,14 @@ def test_the_titer_loader_builds_one_reference_per_cycle(built_titer: Any) -> No
     assert counts == [3] * len(KO_PANEL_BACKGROUNDS) + [6] + [12] * 6 + [18]
 
 
-def test_the_proteome_loader_writes_one_record_per_sample_and_drops_two_keys(
+def test_the_proteome_loader_writes_one_record_per_replicate_and_drops_two_keys(
     built_proteome: Any,
 ) -> None:
-    """The PP_0815 panel's records plus the two uninduced overexpression samples."""
+    """One record per released (sample, replicate), both panels (#776)."""
+    replicates = int(c25.PROTEOME_N_REPLICATES.value)
     assert len(built_proteome) == (
-        len(PROTEOME_SAMPLES) - 1 + c25.EXPECTED_OVEREXPRESSION_PROTEOME_RECORDS
+        (len(PROTEOME_SAMPLES) - 1) * replicates
+        + c25.EXPECTED_OVEREXPRESSION_PROTEOME_RECORDS
     )
     assert built_proteome.raw_file_names == [c25.SOURCE_DATA_FILENAME]
     record = built_proteome[0]
@@ -2128,7 +2280,9 @@ def test_the_proteome_loader_writes_one_record_per_sample_and_drops_two_keys(
         c25.OVEREXPRESSION_OPERONS["pSTABL1"]
     ) | set(c25.OVEREXPRESSION_OPERONS["pSTABL2"])
     assert dumped["phenotype"]["measurement_type"] == c25.PROTEOME_MEASUREMENT_TYPE
-    assert set(dumped["phenotype"]["n_replicates"].values()) == {3}
+    assert set(dumped["phenotype"]["n_replicates"].values()) == {1}
+    assert dumped["phenotype"]["protein_abundance_se"] is None
+    assert dumped["phenotype"]["replicate_id"].endswith("/R1")
     kinds = Counter(
         pert["perturbation_type"] for pert in dumped["genotype"]["perturbations"]
     )
@@ -2160,12 +2314,23 @@ def test_the_proteome_loader_records_the_target_control_and_the_off_target_sampl
             for pert in dumped["genotype"]["perturbations"]
             if pert["perturbation_type"] == "crispr_interference"
         )
-    assert sorted(targets) == ["PP_0378", "PP_0815", "PP_0977"]
+    replicates = int(c25.PROTEOME_N_REPLICATES.value)
+    assert sorted(targets) == sorted(["PP_0378", "PP_0815", "PP_0977"] * replicates)
     samples = pd.read_csv(osp.join(built_proteome.root, "preprocess/samples.csv"))
     assert sorted(samples["sample"]) == sorted(
         [*PROTEOME_SAMPLES[1:], "pSTABL1_Condition_7", "pSTABL2_Condition_7"]
+        * replicates
     )
-    by_sheet = dict(zip(samples["sample"], samples["sheet"], strict=True))
+    assert sorted(samples["replicate_id"]) == sorted(
+        f"{sample}/R{n}"
+        for sample in [
+            *PROTEOME_SAMPLES[1:],
+            "pSTABL1_Condition_7",
+            "pSTABL2_Condition_7",
+        ]
+        for n in range(1, replicates + 1)
+    )
+    by_sheet = dict(zip(samples["sample"], samples["sheet"], strict=False))
     assert by_sheet["pSTABL1_Condition_7"] == c25.SHEET_OVEREXPRESSION_PROTEOME
     n_keys = len(PROTEOME_TAGS) + len(OVEREXPRESSION_KEYS)
     assert set(samples["n_proteins"]) == {n_keys, 2, 4}
@@ -2182,6 +2347,7 @@ def test_the_proteome_loader_records_the_target_control_and_the_off_target_sampl
         )
     assert sorted(additions) == sorted(
         [*c25.OVEREXPRESSION_OPERONS["pSTABL1"], *c25.OVEREXPRESSION_OPERONS["pSTABL2"]]
+        * replicates
     )
 
 
@@ -2195,10 +2361,10 @@ def test_the_proteome_loaders_accounting_names_both_drop_rules(
         ).read_text()
     )
     accounting.check()
-    # The only dropped SAMPLES are the induced overexpression ones.
+    # The only dropped records are the induced overexpression sample-REPLICATES.
     assert accounting.dropped_records == len(c25.OVEREXPRESSION_INDUCED_LEVELS) * len(
         c25.OVEREXPRESSION_SHEET_LABELS
-    )
+    ) * int(c25.PROTEOME_N_REPLICATES.value)
     by_rule = {rule.rule: rule for rule in accounting.rules}
     assert by_rule["protein_key_is_not_a_locus_of_the_pinned_assembly"].items == [
         PROTEOME_UNRESOLVED
@@ -2209,7 +2375,7 @@ def test_the_proteome_loaders_accounting_names_both_drop_rules(
     )
     assert accounting.reconciliation is not None
     assert accounting.reconciliation.resolved_fraction >= 0.94
-    assert len(accounting.notes) == 6 + len(
+    assert len(accounting.notes) == 7 + len(
         json.loads(
             Path(
                 osp.join(built_proteome.root, "preprocess/panel_proofs.json")
@@ -2256,11 +2422,34 @@ def test_both_loaders_pass_their_full_level_batteries_on_the_synthetic_build(
         len(built_titer) - SYNTHETIC_PANEL_TITER_RECORDS,
     )
     monkeypatch.setattr(
-        c25, "PAPER_STRAIN_COUNT", len(built_titer) - SYNTHETIC_PANEL_TITER_RECORDS + 1
+        c25,
+        "PAPER_STRAIN_COUNT",
+        (len(built_titer) - SYNTHETIC_PANEL_TITER_RECORDS)
+        // int(c25.N_REPLICATES.value),
+    )
+    # The per-genotype replicate-group histograms and the duplicate-key count are
+    # measured on the REAL workbook (#776), so the fixture's own are patched over them.
+    monkeypatch.setattr(
+        c25,
+        "CAMPAIGN_REPLICATE_GROUP_SIZES",
+        _synthetic_group_sizes(built_titer, campaign=True),
+    )
+    monkeypatch.setattr(
+        c25,
+        "PANEL_REPLICATE_GROUP_SIZES",
+        _synthetic_group_sizes(built_titer, campaign=False),
+    )
+    monkeypatch.setattr(
+        c25, "TITER_DUPLICATED_REPLICATE_KEYS", _synthetic_duplicated_keys(built_titer)
+    )
+    monkeypatch.setattr(
+        c25,
+        "PROTEOME_REPLICATE_GROUP_SIZES",
+        _synthetic_group_sizes(built_proteome, campaign=None),
     )
     monkeypatch.setattr(c25, "SI_TARGET_OVERLAP", len(SINGLE_GUIDE_TARGETS) + 1)
     monkeypatch.setattr(
-        c25, "OFFTARGET_SHARED_REFERENCE_RECORDS", 1 + 1 + len(OFFTARGET_SAMPLES)
+        c25, "OFFTARGET_SHARED_REFERENCE_RECORDS", (1 + 1 + len(OFFTARGET_SAMPLES)) * 3
     )
     monkeypatch.setattr(
         c25,
@@ -2335,13 +2524,17 @@ def test_the_proteome_l4_refuses_a_stored_protein_the_sheet_does_not_carry(
         c25._l4_proteome_vs_released_sheet(records, str(synthetic_mirror))
 
 
-def test_the_titer_battery_fails_a_store_whose_se_is_not_sd_over_sqrt_n(
+def test_the_titer_battery_fails_a_store_that_fabricated_a_standard_error(
     built_titer: Any, synthetic_mirror: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The derived standard error is checked, not assumed: break one and L2 fails.
+    """A per-culture record has no dispersion, and three rules say so (#776).
 
-    Only the SE rule may fail: breaking a derived statistic must not disturb the counts,
-    the partition or either cross-source join, all of which read other fields.
+    Since every record is ONE culture, the failure to catch is no longer a wrong SE but
+    a FABRICATED one: a standard error with no released uncertainty behind it. The SE
+    identity catches it as "titer_se without an uncertainty", and the two per-replicate
+    conventions catch it because a labelled single culture must store neither. Nothing
+    else may fail: the counts, the partition and the cross-source joins read other
+    fields.
     """
     from torchcell.verification.runners import load_records
 
@@ -2352,11 +2545,29 @@ def test_the_titer_battery_fails_a_store_whose_se_is_not_sd_over_sqrt_n(
         len(built_titer) - SYNTHETIC_PANEL_TITER_RECORDS,
     )
     monkeypatch.setattr(
-        c25, "PAPER_STRAIN_COUNT", len(built_titer) - SYNTHETIC_PANEL_TITER_RECORDS + 1
+        c25,
+        "PAPER_STRAIN_COUNT",
+        (len(built_titer) - SYNTHETIC_PANEL_TITER_RECORDS)
+        // int(c25.N_REPLICATES.value),
+    )
+    # The per-genotype replicate-group histograms and the duplicate-key count are
+    # measured on the REAL workbook (#776), so the fixture's own are patched over them.
+    monkeypatch.setattr(
+        c25,
+        "CAMPAIGN_REPLICATE_GROUP_SIZES",
+        _synthetic_group_sizes(built_titer, campaign=True),
+    )
+    monkeypatch.setattr(
+        c25,
+        "PANEL_REPLICATE_GROUP_SIZES",
+        _synthetic_group_sizes(built_titer, campaign=False),
+    )
+    monkeypatch.setattr(
+        c25, "TITER_DUPLICATED_REPLICATE_KEYS", _synthetic_duplicated_keys(built_titer)
     )
     monkeypatch.setattr(c25, "SI_TARGET_OVERLAP", len(SINGLE_GUIDE_TARGETS) + 1)
     monkeypatch.setattr(
-        c25, "OFFTARGET_SHARED_REFERENCE_RECORDS", 1 + 1 + len(OFFTARGET_SAMPLES)
+        c25, "OFFTARGET_SHARED_REFERENCE_RECORDS", (1 + 1 + len(OFFTARGET_SAMPLES)) * 3
     )
     monkeypatch.setattr(
         c25,
@@ -2375,11 +2586,18 @@ def test_the_titer_battery_fails_a_store_whose_se_is_not_sd_over_sqrt_n(
         ),
     )
     records = load_records(built_titer.root)
-    records[0]["experiment"]["phenotype"]["titer_se"] += 1.0
+    records[0]["experiment"]["phenotype"]["titer_se"] = 99.0
     report = c25.titer_report(records, str(synthetic_mirror))
     broken = [r for r in report.results if not r.passed]
-    assert [r.name for r in broken] == ["se_is_the_uncertainty_over_sqrt_n"]
-    assert broken[0].details["worst"][0]["index"] == 0
+    assert [r.name for r in broken] == [
+        "se_is_the_uncertainty_over_sqrt_n",
+        "replicate_id_names_one_replicate",
+        "records_are_cultures_in_the_released_replicate_groups",
+    ]
+    assert broken[0].details["worst"][0] == {
+        "index": 0,
+        "reason": "titer_se without an uncertainty",
+    }
 
 
 # --- the build-time refusals, each driven by a doctored workbook ----------- #
@@ -2601,16 +2819,18 @@ def test_main_builds_all_three_families_and_prints_their_accounting(
     assert "IsoprenolTiterCarruthers2025Dataset: len =" in out
     assert "ProteomeCarruthers2025Dataset: len =" in out
     assert (
-        f"CampaignProteomeCarruthers2025Dataset: len = {SYNTHETIC_CAMPAIGN_RECORDS}"
-        in out
+        "CampaignProteomeCarruthers2025Dataset: len = "
+        f"{_synthetic_campaign_cultures()}" in out
     )
     assert "ProteomeFoldChangeCarruthers2025Dataset: len =" in out
-    # The titer and panel families drop exactly the induced overexpression groups, so
+    # The titer and panel families drop exactly the induced overexpression CULTURES, so
     # both print it; the campaign family drops no record, only accessions, and the
     # fold-change family drops its own unsourced contrasts and the refused heatmap
     # columns instead.
-    dropped = len(c25.OVEREXPRESSION_INDUCED_LEVELS) * len(
-        c25.OVEREXPRESSION_SHEET_LABELS
+    dropped = (
+        len(c25.OVEREXPRESSION_INDUCED_LEVELS)
+        * len(c25.OVEREXPRESSION_SHEET_LABELS)
+        * int(c25.PROTEOME_N_REPLICATES.value)
     )
     assert out.count(f'"dropped_records": {dropped}') == 2
     assert out.count('"dropped_records": 0') == 1
@@ -2740,10 +2960,17 @@ def _offtarget_reference(values: tuple[float, ...]) -> Any:
 
 
 def _offtarget_rows(pairs: tuple[tuple[str, float], ...]) -> list[Any]:
-    return [
-        c25.OffTargetTiterRow(sample=sample, replicate="R1", titer_mg_per_l=value)
-        for sample, value in pairs
-    ]
+    """The released rows, each with its own replicate label as the sheet prints one."""
+    seen: Counter[str] = Counter()
+    rows: list[Any] = []
+    for sample, value in pairs:
+        seen[sample] += 1
+        rows.append(
+            c25.OffTargetTiterRow(
+                sample=sample, replicate=f"R{seen[sample]}", titer_mg_per_l=value
+            )
+        )
+    return rows
 
 
 def test_the_off_target_panel_refuses_a_reference_that_is_not_bit_identical() -> None:
@@ -2825,10 +3052,14 @@ def _overexpression_titer_rows(
 ) -> list[Any]:
     rows = [
         c25.OverexpressionTiterRow(
-            strain=label, replicate="R1", inducer_level=level, titer_mg_per_l=1.0
+            strain=label,
+            replicate=f"R{replicate}",
+            inducer_level=level,
+            titer_mg_per_l=1.0,
         )
         for label in labels
         for level in levels
+        for replicate in (1,)
     ]
     rows.append(
         c25.OverexpressionTiterRow(
@@ -2874,7 +3105,7 @@ def test_the_overexpression_panel_keeps_only_the_uninduced_arm() -> None:
     assert reference.key == "overexpression_control"
     assert drops[0].rule == "inducer_concentration_has_no_released_unit"
     assert drops[0].n_records == len(c25.OVEREXPRESSION_INDUCED_LEVELS) * len(labels)
-    assert any("uninduced records kept" in proof for proof in proofs)
+    assert any("uninduced cultures kept as records" in proof for proof in proofs)
 
 
 def _overexpression_proteome_row(
@@ -3124,7 +3355,7 @@ def test_the_overexpression_proteome_refuses_a_changed_record_count() -> None:
             "pSTABL1_Control", "Phnw", 0.0, "d", c25.OVEREXPRESSION_CONTROL_STRAIN
         ),
     ]
-    with pytest.raises(RuntimeError, match="yields 1 uninduced records"):
+    with pytest.raises(RuntimeError, match="yields 1 uninduced samples"):
         c25.overexpression_proteome_samples(rows)
 
 
@@ -3166,7 +3397,7 @@ def test_the_prose_l4_refuses_a_genotype_the_store_does_not_hold_uniquely(
         "KO_ARRAY_RESULT",
         c25.KO_ARRAY_RESULT.model_copy(update={"value": {"PP_9999_PP_9998": 1.0}}),
     )
-    with pytest.raises(AssertionError, match="each must be unique"):
+    with pytest.raises(AssertionError, match="each names one strain"):
         c25._l4_ko_array_titer_vs_results_text(records)
 
 
@@ -3383,11 +3614,11 @@ def test_the_campaign_crosswalk_refuses_a_disagreement_set_that_is_not_pinned(
         )
 
 
-def test_the_campaign_loader_writes_one_record_per_strain_cycle(
+def test_the_campaign_loader_writes_one_record_per_released_culture(
     built_campaign: Any,
 ) -> None:
-    """One record per non-control ``(construct, cycle)``, keyed on its guide targets."""
-    assert len(built_campaign) == SYNTHETIC_CAMPAIGN_RECORDS
+    """One record per non-control CULTURE of the deposit (#776), keyed on its targets."""
+    assert len(built_campaign) == _synthetic_campaign_cultures()
     assert built_campaign.raw_file_names == [
         c25.DRYAD_TOP3_FILENAME,
         c25.DRYAD_METADATA_FILENAME,
@@ -3395,11 +3626,22 @@ def test_the_campaign_loader_writes_one_record_per_strain_cycle(
         c25.SOURCE_DATA_FILENAME,
     ]
     strains = pd.read_csv(osp.join(built_campaign.root, "preprocess/strain_cycles.csv"))
-    assert len(strains) == SYNTHETIC_CAMPAIGN_RECORDS
-    assert set(strains["n_cultures"]) == {3}
+    assert len(strains) == _synthetic_campaign_cultures()
+    assert set(strains["n_cultures_in_group"]) == {3}
+    assert sorted(strains["replicate_id"]) == sorted(
+        f"{construct}-R{replicate}"
+        for construct, _cycle, replicate, _titer in _campaign_cultures()
+        if not construct.startswith(c25.KO_ARRAY_CONTROL_LINE)
+    )
     filler = strains.loc[strains["construct"] == FILLER_CONSTRUCT].iloc[0]
     assert filler["n_targets"] == 1
     assert filler["non_targeting_tokens"] == "NT1"
+    phenotype_of = built_campaign[0]["experiment"]
+    phenotype_of = (
+        phenotype_of if isinstance(phenotype_of, dict) else phenotype_of.model_dump()
+    )["phenotype"]
+    assert set(phenotype_of["n_replicates"].values()) == {1}
+    assert phenotype_of["protein_abundance_se"] is None
     record = built_campaign[0]
     experiment = record["experiment"]
     dumped = experiment if isinstance(experiment, dict) else experiment.model_dump()
@@ -3476,8 +3718,8 @@ def test_the_campaign_accounting_names_both_accession_drop_rules(
     )
     accounting.check()
     assert accounting.source_rows == len(_campaign_cultures())
-    assert accounting.candidate_records == SYNTHETIC_CAMPAIGN_RECORDS
-    assert accounting.kept_records == SYNTHETIC_CAMPAIGN_RECORDS
+    assert accounting.candidate_records == _synthetic_campaign_cultures()
+    assert accounting.kept_records == _synthetic_campaign_cultures()
     assert accounting.dropped_records == 0
     rules = {rule.rule: rule for rule in accounting.rules}
     assert rules["accession_has_no_locus_tag_in_the_goa_proteome_file"].items == [

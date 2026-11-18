@@ -2673,6 +2673,7 @@ class CellAdapter:
                 else None
             ),
             "measurement_type": phenotype.measurement_type,
+            "replicate_id": phenotype.replicate_id,
         }
         return BioCypherNode(
             node_id=phenotype_id,
@@ -2699,6 +2700,7 @@ class CellAdapter:
                     else None
                 ),
                 "measurement_type": phenotype.measurement_type,
+                "replicate_id": phenotype.replicate_id,
             }
             nodes.append(
                 BioCypherNode(
@@ -2729,6 +2731,7 @@ class CellAdapter:
                 else None
             ),
             "measurement_type": phenotype.measurement_type,
+            "replicate_id": phenotype.replicate_id,
         }
         return BioCypherNode(
             node_id=phenotype_id,
@@ -2755,6 +2758,7 @@ class CellAdapter:
                     else None
                 ),
                 "measurement_type": phenotype.measurement_type,
+                "replicate_id": phenotype.replicate_id,
             }
             nodes.append(
                 BioCypherNode(
@@ -2795,6 +2799,7 @@ class CellAdapter:
             ),
             "n_samples": phenotype.n_samples,
             "sample_unit": str(sample_unit.value) if sample_unit is not None else None,
+            "replicate_id": phenotype.replicate_id,
             "product_yield": phenotype.product_yield,
             "product_yield_unit": (
                 str(yield_unit.value) if yield_unit is not None else None

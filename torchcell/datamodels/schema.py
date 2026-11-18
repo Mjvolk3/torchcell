@@ -9124,6 +9124,17 @@ class MetabolitePhenotype(Phenotype, ModelStrict):
         default=None,
         description="metabolite key -> Yeast9 s_NNNN id for CBM linkage; None until decided",
     )
+    replicate_id: str | None = Field(
+        default=None,
+        description="which ONE replicate culture or sample this record is, when the release is "
+        "per replicate and the record stores that replicate's own value rather than an "
+        "aggregate: the source's own replicate label where it prints one, otherwise "
+        "the replicate's position in the release (Xue 2025's titer sheet has three unlabelled replicate columns per fatty acid). It joins the L1 "
+        "uniqueness key and the phenotype node id, so replicates of one (strain, "
+        "condition) stay distinct records even when two of them carry the same value. "
+        "None on a record that states an aggregate over replicates, which is what "
+        "``phenotype_reference`` summaries and aggregate-only releases carry.",
+    )
 
     @model_validator(mode="after")
     def validate_metabolite_level(self) -> "MetabolitePhenotype":
@@ -9185,6 +9196,17 @@ class ProteinAbundancePhenotype(Phenotype, ModelStrict):
     )
     measurement_type: str = Field(
         description="what the level is, e.g. 'swath_ms_label_free_log_signal_sva'"
+    )
+    replicate_id: str | None = Field(
+        default=None,
+        description="which ONE replicate sample this record is, when the release is "
+        "per replicate and the record stores that replicate's own value rather than an "
+        "aggregate: the source's own replicate label where it prints one, otherwise "
+        "the replicate's position in the release (Carruthers 2025's ``R1``..``R6`` suffix of a line name). It joins the L1 "
+        "uniqueness key and the phenotype node id, so replicates of one (strain, "
+        "condition) stay distinct records even when two of them carry the same value. "
+        "None on a record that states an aggregate over replicates, which is what "
+        "``phenotype_reference`` summaries and aggregate-only releases carry.",
     )
 
     @model_validator(mode="after")
@@ -11041,6 +11063,17 @@ class ProductTiterPhenotype(Phenotype, ModelStrict):
     sample_unit: SampleUnit | None = Field(
         default=None,
         description="what one sample in n_samples is (biological_replicate, ...)",
+    )
+    replicate_id: str | None = Field(
+        default=None,
+        description="which ONE replicate culture this record is, when the release is "
+        "per replicate and the record stores that replicate's own value rather than an "
+        "aggregate: the source's own replicate label where it prints one, otherwise "
+        "the replicate's position in the release (Carruthers 2025's ``R1``..``R6`` suffix of a line name). It joins the L1 "
+        "uniqueness key and the phenotype node id, so replicates of one (strain, "
+        "condition) stay distinct records even when two of them carry the same value. "
+        "None on a record that states an aggregate over replicates, which is what "
+        "``phenotype_reference`` summaries and aggregate-only releases carry.",
     )
     product_yield: float | None = Field(
         default=None,

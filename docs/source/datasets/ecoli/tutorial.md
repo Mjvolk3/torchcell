@@ -38,6 +38,13 @@ This page says what each dataset holds and shows one figure of its values. The f
 ```{include} _generated/tutorial/datasets_table.md
 ```
 
+## At a glance
+
+Every dataset is described by the same rows, counted from the loaded records: the shape of the labels, the genotype and how it was perturbed, and the growth condition. The same card, for one dataset, opens each section below.
+
+```{include} _generated/tutorial/glance.md
+```
+
 In the figures, red marks values below a reference level and blue marks values above it.
 
 ## How each dataset names its genes
@@ -53,6 +60,9 @@ The gene symbol is the one name all four datasets carry, so it is the key to joi
 ```
 
 ## Growth rate (Campos 2018)
+
+```{include} _generated/tutorial/glance_ecoli_growth_rate_campos2018.md
+```
 
 One record per strain of the Keio collection, the single-gene deletion strains of *E. coli* K-12 BW25113. The label is the strain's maximal growth rate in M9 medium with casamino acids and glucose at 30 °C, as a ratio to the parent strain, so the reference level is 1.0. Each value comes from one growth curve, and the release gives no spread.
 
@@ -71,6 +81,9 @@ Growth rate of the Keio strains in `GrowthRateCampos2018Dataset`. **a**, strains
 ```
 
 ## Cell shape and cell cycle (Campos 2018)
+
+```{include} _generated/tutorial/glance_ecoli_morphology_campos2018.md
+```
 
 The same Keio strains from the same screen, imaged in phase contrast and, for most strains, with a DAPI nucleoid channel. A record summarizes the cells measured for one strain (the paper reports 291 ± 116 cells per strain), and its `n_samples` is that strain's number of cells. The features fall in two groups. The cell-shape features (length, width, area, volume, surface area, perimeter, circularity, aspect ratio, surface-to-volume ratio) are stored as a mean in `morphology` and as a coefficient of variation in `morphology_coefficient_of_variation`. The nucleoid and cell-cycle features (nucleoid area, the timing of constriction and of nucleoid separation, the fraction of cells with two nucleoids) exist only for strains imaged with a nucleoid channel, so a strain without one holds 9 mean features and not 15. Feature names are the symbols the paper gives them:
 
@@ -92,6 +105,9 @@ Cell shape of the Keio strains in `MorphologyCampos2018Dataset`, one point or co
 ```
 
 ## Genetic interactions (Babu 2014)
+
+```{include} _generated/tutorial/glance_gene_interaction_babu2014.md
+```
 
 One record per double mutant. A donor strain carrying one marked deletion is crossed by conjugation with an arrayed recipient strain carrying another, and the double mutant's colony size is measured. The label is the interaction score $S$ of the pair. Butland et al. 2008, the method paper, define it in words: "We then calculated an interaction score (S) to quantify the strength and confidence of genetic interaction determined for each mutant gene pair. Negative $S$ scores correspond to putative aggravating interactions and positive S scores, to putative alleviating interactions." Babu et al. 2014 average eight replicate colony measurements of each pair into one score. The release holds only the high-confidence pairs, which the paper states as
 
@@ -116,6 +132,9 @@ S-scores in `GeneInteractionBabu2014Dataset`. **a**, gene pairs per unit-wide bi
 ```
 
 ## Metabolome (Fuhrer 2017)
+
+```{include} _generated/tutorial/glance_metabolome_fuhrer2017.md
+```
 
 One record per Keio strain, measured by flow-injection time-of-flight mass spectrometry. The label maps each detected ion to a modified z-score, the strain's level of that ion standardized across strains. An ion here is a mass feature, a peak at one mass-to-charge ratio in the negative or the positive ionization mode, keyed `neg_0001`, `pos_0001` and so on. The store does not name a metabolite for an ion: `preprocess/ions.csv` gives each ion's mode and mass-to-charge ratio, and matching an ion to a compound is left to the reader. Every record holds the same ions in the same order, so the labels stack into one strains-by-ions matrix. The first lines printed on loading give the number of ions in each mode and their mass-to-charge range:
 

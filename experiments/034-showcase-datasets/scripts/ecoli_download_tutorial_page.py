@@ -186,6 +186,13 @@ NOTEBOOK: tuple[tuple[str, str], ...] = (
     ("code", "gene_names"),
     (
         "md",
+        "## At a glance\n\nThe same rows for every dataset, counted from the loaded "
+        "records: the shape of the labels, the genotype and how it was perturbed, and "
+        "the growth condition.",
+    ),
+    ("code", "glance"),
+    (
+        "md",
         "Gene symbols shared by each pair of datasets (the diagonal is the dataset's own count).",
     ),
     ("code", "gene_overlap"),
@@ -636,6 +643,27 @@ def write_page(args: argparse.Namespace) -> int:
         name = "output_{}.md".format(title.replace(" ", "_"))
         (FRAGMENT_DIR / name).write_text(
             header(stamp) + "```text\n" + text + "\n```\n", encoding="utf-8"
+        )
+
+    # The glance section is a pipe-separated table: property, then one column per slug.
+    glance = [line.split(" | ") for line in by_section["glance"].splitlines()]
+    labels = {slug: label for slug, label, _, _ in DATASETS}
+    (FRAGMENT_DIR / "glance.md").write_text(
+        header(stamp)
+        + table(
+            ["Property", *(labels[slug] for slug in glance[0][1:])],
+            [[f"**{row[0]}**", *row[1:]] for row in glance[1:]],
+        ),
+        encoding="utf-8",
+    )
+    for column, slug in enumerate(glance[0][1:], start=1):
+        (FRAGMENT_DIR / f"glance_{slug}.md").write_text(
+            header(stamp)
+            + table(
+                ["Property", labels[slug]],
+                [[f"**{row[0]}**", row[column]] for row in glance[1:]],
+            ),
+            encoding="utf-8",
         )
 
     rows = reference["index_rows"]

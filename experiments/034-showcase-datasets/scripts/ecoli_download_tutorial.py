@@ -534,6 +534,102 @@ print(gene_names.to_string(index=False))
 gene_names
 # [/gene_names]
 
+section("glance")
+# [glance]
+# The same rows for every dataset, counted from the loaded records: the shape of the
+# labels, what the genotype is and how it was perturbed, and the growth condition.
+
+
+def plain(value: Any) -> str:
+    """A field as text; an enum shows its value."""
+    return str(getattr(value, "value", value))
+
+
+def tally(values: list[Any]) -> str:
+    """The distinct values, most frequent first, with counts when there are several."""
+    counts = pd.Series([plain(v) for v in values]).value_counts()
+    if len(counts) == 1:
+        return str(counts.index[0])
+    return "; ".join(f"{value} ({n:,})" for value, n in counts.items())
+
+
+def glance(dataset: Any) -> dict[str, str]:
+    """One dataset's row values, in the order every dataset is shown in."""
+    experiments = [dataset[i]["experiment"] for i in range(len(dataset))]
+    perturbations = [p for e in experiments for p in e["genotype"]["perturbations"]]
+    phenotypes = [e["phenotype"] for e in experiments]
+    labels = [ph[ph["label_name"]] for ph in phenotypes]
+    values = [x for v in labels for x in (v.values() if isinstance(v, dict) else [v])]
+    width = max(len(v) if isinstance(v, dict) else 1 for v in labels)
+    cells = len(experiments) * width  # a record may lack some of the label's values
+    missing = cells - sum(x is not None and x == x for x in values)
+    samples = [ph["n_samples"] for ph in phenotypes if ph.get("n_samples") is not None]
+    media = [e["environment"]["media"] for e in experiments]
+    # A strain is a genotype: the set of perturbed genes, each with how it was perturbed.
+    strains = {
+        tuple(
+            sorted(
+                (p["systematic_gene_name"], p["perturbation_type"])
+                for p in e["genotype"]["perturbations"]
+            )
+        )
+        for e in experiments
+    }
+    return {
+        "Records": f"{len(experiments):,}",
+        "Distinct strains (genotypes)": f"{len(strains):,}",
+        "Label array (records x values)": f"{len(experiments):,} x {width:,}",
+        "Missing label values": f"{missing:,} of {cells:,}",
+        "Experiment type": tally([e["experiment_type"] for e in experiments]),
+        "Label field": tally([ph["label_name"] for ph in phenotypes]),
+        "Label attaches to": tally([ph["graph_level"] for ph in phenotypes]),
+        "Measurements behind one record": (
+            (
+                f"{min(samples):,}"
+                if min(samples) == max(samples)
+                else f"{min(samples):,} to {max(samples):,}"
+            )
+            + " "
+            + tally([ph.get("sample_unit") for ph in phenotypes])
+            if samples
+            else "not recorded"
+        ),
+        "Genes perturbed per record": tally(
+            [len(e["genotype"]["perturbations"]) for e in experiments]
+        ),
+        "Perturbation type": tally([p["perturbation_type"] for p in perturbations]),
+        "Perturbation mechanism": tally(
+            [
+                p.get("mechanism_so_name") or p.get("released_kind")
+                for p in perturbations
+            ]
+        ),
+        "Strain collection": tally([p.get("collection") for p in perturbations]),
+        "Distinct genes perturbed": f"{len({p['perturbed_gene_name'] for p in perturbations}):,}",
+        "Gene identifier namespace": tally(
+            [p["gene_namespace"] for p in perturbations]
+        ),
+        "Medium": tally([f"{m['base_medium']}, {m['state']}" for m in media]),
+        "Temperature": tally(
+            [
+                f"{e['environment']['temperature']['value']:g} "
+                f"{plain(e['environment']['temperature']['unit'])}"
+                for e in experiments
+            ]
+        ),
+    }
+
+
+at_a_glance = pd.DataFrame({slug: glance(dataset) for slug, dataset in loaded.items()})
+at_a_glance.index.name = "property"
+for line in [
+    " | ".join(["property", *at_a_glance.columns]),
+    *(" | ".join([name, *row]) for name, row in at_a_glance.iterrows()),
+]:
+    print(line)
+at_a_glance
+# [/glance]
+
 section("gene overlap")
 # [gene_overlap]
 # The gene symbol is the name every dataset carries, so it is the key to join on.

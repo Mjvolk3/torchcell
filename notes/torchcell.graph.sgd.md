@@ -69,3 +69,7 @@ from a factory. No fallback: a missing data root still stops the first real use.
 - `main_get_all_genes` built `SCerevisiaeGenome()` with its defaults (relative `data/sgd/genome`, `overwrite=True`). It now uses `$DATA_ROOT/data/sgd/genome` and `$DATA_ROOT/data/go` with `overwrite=False`.
 - `load_dotenv()` moved from import time into `main_get_all_genes`; `data_root()` already reads `DATA_ROOT` at call time.
 - Evidence: `tests/torchcell/graph/test_graph_sgd.py` (`test_failed_download_raises_and_caches_nothing`, `test_partial_download_failure_names_only_the_failed_endpoint`, `test_main_get_all_genes_chunks_by_fifty`).
+
+## 2026.11.17 - Locus fetch on httpx.AsyncClient
+
+`aiohttp` is no longer imported. `Gene._get_data` opens an `httpx.AsyncClient(follow_redirects=True, timeout=60.0)` per attempt and retries an `httpx.HTTPError` with the same `2**retry` second backoff. A response that is not JSON is still saved to a temporary `.html` file and still escapes on the first attempt, now as a `ValueError` naming the content type and URL; under aiohttp it escaped as a `TypeError` because `ContentTypeError` was built with one argument. A missing `Content-Type` header now takes the same non-JSON path instead of raising a `TypeError` on `in None`. Tests fake `httpx.AsyncHTTPTransport.handle_async_request`, so the real client runs. A real GET of `YAL001C` on 2026-11-17 returned the locus dict.

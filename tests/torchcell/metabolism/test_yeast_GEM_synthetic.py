@@ -16,8 +16,8 @@ So the hypergraph and the bipartite graph have R1 as two gene combinations
 a reverse ``noGene`` edge: 7 reaction units. Every bipartite edge points reaction ->
 metabolite; ``edge_type`` is ``reactant`` for a negative coefficient on the forward node
 and flips on the reverse node; ``stoichiometry`` is the absolute coefficient (R2's
-``B_c`` edge carries 2.0). The download test stubs ``requests.get`` at its import site
-(``torchcell.metabolism.yeast_GEM.requests``) with an in-memory zip of the same SBML.
+``B_c`` edge carries 2.0). The download test stubs ``httpx.get`` at its import site
+(``torchcell.metabolism.yeast_GEM.httpx``) with an in-memory zip of the same SBML.
 No solver is invoked anywhere in this file.
 """
 
@@ -355,17 +355,21 @@ def test_download_extracts_the_release_zip(
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as zf:
         zf.write(sbml, "yeast-GEM-9.0.2/model/yeast-GEM.xml")
-    urls: list[str] = []
+    calls: list[tuple[str, dict[str, Any]]] = []
 
-    def fake_get(url: str) -> SimpleNamespace:
-        urls.append(url)
+    def fake_get(url: str, **kwargs: Any) -> SimpleNamespace:
+        calls.append((url, kwargs))
         return SimpleNamespace(content=buffer.getvalue(), raise_for_status=lambda: None)
 
-    monkeypatch.setattr("torchcell.metabolism.yeast_GEM.requests.get", fake_get)
+    monkeypatch.setattr("torchcell.metabolism.yeast_GEM.httpx.get", fake_get)
     root = tmp_path / "root"
     gem = YeastGEM(root=str(root))
-    assert urls == [
-        "https://github.com/SysBioChalmers/yeast-GEM/archive/refs/tags/v9.0.2.zip"
+    # GitHub answers the tag archive with a redirect to codeload, so redirects are on.
+    assert calls == [
+        (
+            "https://github.com/SysBioChalmers/yeast-GEM/archive/refs/tags/v9.0.2.zip",
+            {"follow_redirects": True, "timeout": 60.0},
+        )
     ]
     assert os.listdir(root) == ["yeast-GEM-9.0.2"]
     assert [r.id for r in gem.model.reactions] == ["R1", "R2", "EX_A"]

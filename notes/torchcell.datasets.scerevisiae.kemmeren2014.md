@@ -399,3 +399,7 @@ A deletion array's GEO title names the deleted gene by a common name (`bck1-del-
 ### Rebuild (slurm 4443_9, `--retire-existing --verify`)
 
 Building at the landing (expected 1,484 records); the expression family runner (slurm 4523) writes its report after it, and the count and the L0-L4 table go in the docs follow-up after the landing.
+
+## 2026.11.17 - Table S1 fetched with httpx
+
+Table S1 is fetched with `httpx.get(url, timeout=60, follow_redirects=True)` instead of `requests.get(url, timeout=60)`. The Box share link redirects three times before the file (`uofi.box.com/shared/static` to `public/static` to `uofi.app.box.com` to `public.boxcloud.com`, observed 2026-11-17), so the redirect flag carries the default `requests` behavior over.

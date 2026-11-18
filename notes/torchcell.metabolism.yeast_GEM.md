@@ -36,3 +36,7 @@ Four fixes from issue #534.
 - **`plot_random_network` raises `ValueError` for an unknown layout**, naming `spring`, `spectral`, `kamada_kawai`; it used to fail with `UnboundLocalError` at the draw call.
 
 Tests: `test_memberless_reaction_is_refused_by_both_graph_views`, `test_transport_rule_reads_compartments_not_id_suffixes`, `test_main_with_gene_set_filters_by_the_induced_gene_set`, `test_plot_random_network_unknown_layout` in [[tests.torchcell.metabolism.test_yeast_GEM]].
+
+## 2026.11.17 - Download uses httpx
+
+`_download` fetches the tagged archive with `httpx.get(url, follow_redirects=True, timeout=60.0)` instead of `requests.get`. GitHub answers `archive/refs/tags/v<version>.zip` with a 302 to `codeload.github.com` (observed 2026-11-17), so following redirects is required; `raise_for_status` is unchanged.

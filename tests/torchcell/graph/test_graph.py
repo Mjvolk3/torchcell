@@ -38,9 +38,9 @@ GO:0000002 is re-attached to GO:0008150, the date cutoff of the GO perturbation
 comparison (``filter_by_date(G_go, "2017-07-19")``). Containment with no gene set on
 the unmodified stub: GO:0000002, GO:0000003, GO:0000004 and GO:0000011 each hold one
 gene (their own); every other term holds two or three, so ``n = 2`` removes exactly the
-four leaves. STRING downloads are faked at ``torchcell.graph.graph.requests.get`` with
-the same three-row table gzip-compressed and split in two chunks; the TFLink download
-likewise. The two entry points run with ``DATA_ROOT`` pointed at ``tmp_path`` and a
+four leaves. STRING downloads are faked at the httpx transport
+(``httpx.HTTPTransport.handle_request``) with the same three-row table gzip-compressed
+and served as a two-chunk stream; the TFLink download likewise. The two entry points run with ``DATA_ROOT`` pointed at ``tmp_path`` and a
 fake ``SCerevisiaeGenome`` that records its keyword arguments.
 """
 
@@ -56,6 +56,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import httpx
 import networkx as nx
 import pytest
 from dotenv import load_dotenv
@@ -67,6 +68,7 @@ from torchcell.graph.graph import (
     SCEREVISIAE_GENE_GRAPH_MAP,
     SCEREVISIAE_GENE_GRAPH_VALID_NAMES,
     GeneGraph,
+    _stream_to_file,
     build_gene_multigraph,
     filter_by_contained_genes,
 )
@@ -939,15 +941,26 @@ def test_every_lazy_graph_is_memoized_after_its_first_read(  # test-quality: all
     assert (first_go, sgd_graph.G_go.graph["name"]) == ("first_go", "first_go")
 
 
-class _Response:
-    """A streamed ``requests`` response over fixed bytes, served in two chunks."""
+def _serve(
+    monkeypatch: pytest.MonkeyPatch, responses: list[httpx.Response]
+) -> list[httpx.Request]:
+    """Answer every real httpx request with the next queued response; record each one."""
+    seen: list[httpx.Request] = []
 
-    def __init__(self, payload: bytes) -> None:
-        self.payload = payload
+    def handle_request(
+        self: httpx.HTTPTransport, request: httpx.Request
+    ) -> httpx.Response:
+        seen.append(request)
+        return responses[len(seen) - 1]
 
-    def iter_content(self, chunk_size: int) -> list[bytes]:
-        half = len(self.payload) // 2
-        return [self.payload[:half], self.payload[half:]]
+    monkeypatch.setattr(httpx.HTTPTransport, "handle_request", handle_request)
+    return seen
+
+
+def _two_chunks(payload: bytes) -> httpx.Response:
+    """A 200 whose body streams as two chunks (an iterator body is not pre-read)."""
+    half = len(payload) // 2
+    return httpx.Response(200, content=iter([payload[:half], payload[half:]]))
 
 
 STRING_TABLE = (
@@ -987,17 +1000,12 @@ def test_a_missing_string_table_is_downloaded_then_built(
     The table is written byte for byte from the two chunks, and the channel graphs carry
     the version string.
     """
-    calls: list[tuple[str, bool]] = []
     payload = gzip.compress(STRING_TABLE.encode())
-
-    def fake_get(target: str, stream: bool) -> _Response:
-        calls.append((target, stream))
-        return _Response(payload)
-
-    monkeypatch.setattr("torchcell.graph.graph.requests.get", fake_get)
+    seen = _serve(monkeypatch, [_two_chunks(payload)])
     v = version.replace(".", "_")
     experimental = getattr(sgd_graph, f"G_string{v}_experimental")
-    assert calls == [(url, True)]
+    assert [(r.method, str(r.url)) for r in seen] == [("GET", url)]
+    assert seen[0].extensions["timeout"]["read"] == 60.0
     path = osp.join(
         sgd_graph.string_root,
         f"v{version}",
@@ -1016,19 +1024,13 @@ def test_a_missing_tflink_table_is_downloaded_then_built(
     sgd_graph: SCerevisiaeGraph, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """No TFLink TSV: one streamed GET of the netbiol URL, then TFA1 -> TGT1 (two edges)."""
-    calls: list[str] = []
     tsv = (
         b"UniprotID.TF\tUniprotID.Target\tName.TF\tName.Target\tDetection.method\n"
         b"P1\tP2\tTFA1\tTGT1\tchip\n"
     )
-
-    def fake_get(target: str, stream: bool) -> _Response:
-        calls.append(target)
-        return _Response(tsv)
-
-    monkeypatch.setattr("torchcell.graph.graph.requests.get", fake_get)
+    seen = _serve(monkeypatch, [_two_chunks(tsv)])
     tflink = sgd_graph.G_tflink
-    assert calls == [
+    assert [str(r.url) for r in seen] == [
         "https://cdn.netbiol.org/tflink/download_files/"
         "TFLink_Saccharomyces_cerevisiae_interactions_All_simpleFormat_v1.0.tsv"
     ]
@@ -1037,6 +1039,34 @@ def test_a_missing_tflink_table_is_downloaded_then_built(
         ("YAL001C", "YAL002W"),
         ("YAL001C", "YAL003W"),
     ]
+
+
+def test_stream_to_file_follows_redirects_and_writes_the_body(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A 301 to another host is followed (``requests`` did so by default), the final
+    body is written byte for byte, and a non-2xx final status is written as is: the
+    helper does not check the status, as the ``requests`` code it replaced did not.
+    """
+    target = "https://mirror.example/table.gz"
+    seen = _serve(
+        monkeypatch,
+        [
+            httpx.Response(301, headers={"location": target}),
+            _two_chunks(b"abcdef"),
+            httpx.Response(404, content=b"missing"),
+        ],
+    )
+    first, second = tmp_path / "first", tmp_path / "second"
+    _stream_to_file("http://origin.example/table.gz", str(first))
+    _stream_to_file(target, str(second))
+    assert [str(r.url) for r in seen] == [
+        "http://origin.example/table.gz",
+        target,
+        target,
+    ]
+    assert first.read_bytes() == b"abcdef"
+    assert second.read_bytes() == b"missing"
 
 
 def test_tflink_still_missing_after_the_download_gives_an_empty_graph(

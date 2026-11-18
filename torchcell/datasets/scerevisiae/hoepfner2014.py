@@ -258,7 +258,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import requests
+import httpx
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from tqdm import tqdm
 
@@ -1355,15 +1355,17 @@ def _solve_anubis(random_data: str, difficulty: int) -> tuple[str, int]:
         nonce += 1
 
 
-def _dryad_get(session: requests.Session, url: str) -> requests.Response:
+def _dryad_get(client: httpx.Client, url: str) -> httpx.Response:
     """GET a Dryad file-stream URL, clearing the Anubis PoW challenge if present.
 
-    Returns a streamed response for the file body. Retries on WAF throttling.
+    Returns an open streamed response for the file body; the caller closes it. Retries
+    on WAF throttling. ``client`` must follow redirects.
     """
     for _ in range(80):
-        resp = session.get(url, timeout=180, stream=True)
+        resp = client.send(client.build_request("GET", url, timeout=180), stream=True)
         if not resp.headers.get("content-type", "").startswith("text/html"):
             return resp
+        resp.read()
         body = resp.text
         resp.close()
         challenge_match = re.search(
@@ -1384,18 +1386,21 @@ def _dryad_get(session: requests.Session, url: str) -> requests.Response:
             f"https://datadryad.org{base}"
             "/.within.website/x/cmd/anubis/api/pass-challenge"
         )
-        cleared = session.get(
-            pass_url,
-            params={
-                "id": challenge["id"],
-                "response": digest,
-                "nonce": nonce,
-                "redir": url,
-                "elapsedTime": 100,
-            },
+        cleared = client.send(
+            client.build_request(
+                "GET",
+                pass_url,
+                params={
+                    "id": challenge["id"],
+                    "response": digest,
+                    "nonce": nonce,
+                    "redir": url,
+                    "elapsedTime": 100,
+                },
+                timeout=1800,
+            ),
             stream=True,
-            allow_redirects=True,
-            timeout=1800,
+            follow_redirects=True,
         )
         if not cleared.headers.get("content-type", "").startswith("text/html"):
             return cleared
@@ -1692,20 +1697,18 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
 
     def _fetch_from_dryad(self, name: str, spec: dict[str, str], dest: str) -> None:
         """Stream one Dryad file (solving the Anubis PoW) and verify its pinned sha256."""
-        session = requests.Session()
-        session.headers.update({"User-Agent": _UA})
         log.info("Downloading Hoepfner2014 %s from %s", name, spec["url"])
-        resp = _dryad_get(session, spec["url"])
         digest = hashlib.sha256()
         # Stream into a sibling ``.partial`` renamed into place only after the digest
         # matches, so a refused download never leaves unverified bytes in raw/.
         partial = f"{dest}.partial"
-        with open(partial, "wb") as handle:
-            for chunk in resp.iter_content(chunk_size=1 << 20):
-                if chunk:
+        with httpx.Client(headers={"User-Agent": _UA}, follow_redirects=True) as client:
+            resp = _dryad_get(client, spec["url"])
+            with open(partial, "wb") as handle:
+                for chunk in resp.iter_bytes(chunk_size=1 << 20):
                     handle.write(chunk)
                     digest.update(chunk)
-        resp.close()
+            resp.close()
         got = digest.hexdigest()
         if got != spec["sha256"]:
             os.remove(partial)

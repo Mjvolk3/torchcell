@@ -14,10 +14,10 @@ from concurrent.futures import ProcessPoolExecutor
 from typing import Any, cast
 
 import GEOparse
+import httpx
 import lmdb
 import numpy as np
 import pandas as pd
-import requests
 from dotenv import load_dotenv
 from sortedcontainers import SortedDict
 from tqdm import tqdm
@@ -262,7 +262,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             url = "https://uofi.box.com/shared/static/9n6ruj58ueup0cebhnek8ijdcy4om0bi"
 
             try:
-                response = requests.get(url, timeout=60)
+                response = httpx.get(url, timeout=60, follow_redirects=True)
                 response.raise_for_status()
 
                 # Check if we got actual Excel content

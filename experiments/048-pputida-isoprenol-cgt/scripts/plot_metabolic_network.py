@@ -169,9 +169,9 @@ def accoa_competition(model: cobra.Model, targets: set[str]) -> pd.DataFrame:
 #: depend on the data limits. Drawing nodes as data-space patches under
 #: ``aspect="equal"`` is what made the first version of this figure letterbox
 #: itself into a quarter of its canvas and overlap its own arrows.
-METABOLITE_AREA = 62.0
-REACTION_AREA = 40.0
-HUB_AREA = 105.0
+METABOLITE_AREA = 46.0
+REACTION_AREA = 30.0
+HUB_AREA = 82.0
 
 #: Font sizes. Nature's figure band is 5 pt minimum and 7 pt maximum, with
 #: 8 pt bold lowercase for panel letters only.
@@ -312,7 +312,7 @@ def panel_route(ax: Axes, model: cobra.Model) -> None:
 
     # The exchange reaction, which is what a measured titer is.
     y_last = -float(len(metabolites) - 1)
-    y_exchange = y_last - 0.6
+    y_exchange = y_last - 0.55
     draw_reaction(ax, x, y_exchange, EXCHANGE, [])
     arrow(ax, (x, y_last), (x, y_exchange), met_r, rxn_r)
     ax.annotate(
@@ -327,7 +327,7 @@ def panel_route(ax: Axes, model: cobra.Model) -> None:
         annotation_clip=False,
     )
     ax.set_xlim(-1.0, 1.0)
-    ax.set_ylim(y_exchange - 0.35, 0.35)
+    ax.set_ylim(y_exchange - 0.3, 0.3)
 
 
 def panel_competition(
@@ -447,13 +447,16 @@ def main() -> None:
     ).preferred_names()
     total_accoa = len(model.metabolites.get_by_id(ENTRY_METABOLITE).reactions)
 
-    # Nature full width, and a height that leaves the 170 mm cap alone. The
-    # panels carry 18 and 15 nodes down their long axis, so height is what the
-    # figure needs and width is what the standard fixes.
+    # Nature full width. Height is set by the shorter of the two constraints
+    # that matter: the route's 18 nodes need a metabolite-to-reaction gap wider
+    # than the two markers' drawn radii, which at these marker areas is about
+    # 3.5 mm, and a figure much taller than it is wide reads as a column rather
+    # than a figure. 110 mm gives roughly 9.5 mm per step, so the arrows are
+    # visible and the proportions stay close to 3:2.
     fig, axes = plt.subplots(
         1,
         2,
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(148.0)),
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(110.0)),
         gridspec_kw={"width_ratios": [0.92, 1.08]},
         constrained_layout=True,
     )

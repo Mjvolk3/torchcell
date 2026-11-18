@@ -64,6 +64,7 @@ conda create -n torchcell python=3.13
 conda activate torchcell
 
 # 1. torch first; choose the wheel that matches your platform and CUDA version
+#    (CI tests the version in env/torch-ci-version.txt; 2.11.0 here is an example)
 pip install "torch==2.11.0"
 
 # 2. the runtime stack

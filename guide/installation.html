@@ -188,6 +188,7 @@ workflow (<code class="docutils literal notranslate"><span class="pre">.github/w
 conda<span class="w"> </span>activate<span class="w"> </span>torchcell
 
 <span class="c1"># 1. torch first; choose the wheel that matches your platform and CUDA version</span>
+<span class="c1">#    (CI tests the version in env/torch-ci-version.txt; 2.11.0 here is an example)</span>
 pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"torch==2.11.0"</span>
 
 <span class="c1"># 2. the runtime stack</span>

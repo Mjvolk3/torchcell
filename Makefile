@@ -87,6 +87,17 @@ ops-releases:
 ops-sync:
 	@bash scripts/ops.sh sync
 
+# --- Jobs: recurring (cron) and continuous (slurm, docker) jobs + GitHub state ---
+# `make jobs` says whether the last run of each cron job succeeded (records written by
+# scripts/cron_run.sh; the drainer by its heartbeat), what slurm and docker are running,
+# the latest GitHub Actions run of each workflow on main, open PRs with CI, and open
+# issues. `make jobs-fast` skips the three gh calls. Read-only, exit 0. See scripts/jobs.py.
+.PHONY: jobs jobs-fast
+jobs:
+	@$(PYTHON) scripts/jobs.py
+jobs-fast:
+	@$(PYTHON) scripts/jobs.py --no-network
+
 # --- Manuscript (paper/nature-biotech) passthrough targets ---
 .PHONY: paper paper-submission paper-editing paper-twocolumn paper-figproto paper-figlimits paper-figures paper-fig paper-flat paper-clean paper-sync paper-pull
 paper:
@@ -131,6 +142,8 @@ help:
 	@echo "  make ops             - Served KG releases on every host + service health"
 	@echo "  make ops-health      - Health probes only; make ops-releases - the table only"
 	@echo "  make ops-fast        - GilaHyper only, 2 s probes: the panel in a few seconds, no radiant rows"
+	@echo "  make jobs            - Cron jobs (last run, verdict), slurm + docker, Actions on main, PRs, issues"
+	@echo "  make jobs-fast       - The local half of make jobs: cron, slurm, docker (no GitHub calls)"
 	@echo "  make paper           - Build submission + editing + twocolumn PDFs"
 	@echo "  make paper-submission/-editing/-twocolumn/-figproto - one PDF"
 	@echo "  make paper-fig       - Force re-render all figures from draw.io + size/scale check"

@@ -7,6 +7,18 @@
 #   crontab -l | { cat; cat scripts/crontab.txt; } | crontab -
 #
 # ...or paste the merge-queue line into `crontab -e`. Verify with `crontab -l`.
+#
+# Status recording (`make jobs`): every job except the merge-queue drainer runs through
+# `bash scripts/cron_run.sh <job-name> -- <command...>`, which appends the command's
+# output to /tmp/torchcell-<job-name>.log and records start, end and exit code under
+# ~/.local/state/torchcell/cron/, so `make jobs` can say whether the last run succeeded.
+# The drainer runs every 2 min and already touches a heartbeat that `make jobs` reads
+# (merge_queue.py loop-status), so it stays unwrapped.
+#
+# The job registry is CRON_JOBS in scripts/jobs.py (name, schedule, command):
+# tests/scripts/test_jobs.py fails when a line here and the registry disagree, in
+# either direction. To add a job, add a CronJob there and its wrapped line here.
+# (A weekly `deps-weekly` dependency-update job, Sunday, is registered by its own PR.)
 
 # merge-queue drainer: sweep free notes to main + land queued worktree branches
 # (deterministic, no model; also triggered on-demand by /enqueue-merge).
@@ -26,7 +38,9 @@
 # GPU host so MinerU has the GPUs to itself. `--limit 10` bounds a big-backlog
 # night's GPU time (applied per collection); drop it once the backlog is drained.
 # Writes one JSON report per collection under torchcell-library/_sync_reports/.
-30 3 * * * bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && /home/michaelvolk/miniconda3/envs/torchcell/bin/python scripts/lit_sync.py --limit 10 --personal-root torchcell --personal-root thesis >> /tmp/torchcell-lit-sync.log 2>&1'
+# Then, whatever lit_sync's exit code, scripts/lit_annotations.py pulls Zotero
+# highlights, comments and notes into the mirror next to each paper.md (GPU-free).
+30 3 * * * bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && bash scripts/cron_run.sh lit-sync -- /home/michaelvolk/miniconda3/envs/torchcell/bin/python scripts/lit_sync.py --limit 10 --personal-root torchcell --personal-root thesis; bash scripts/cron_run.sh lit-annotations -- /home/michaelvolk/miniconda3/envs/torchcell/bin/python scripts/lit_annotations.py'
 
 # bibliography store: nightly headless Zotero Web API export of every repo-declared
 # bibliography (group `paper` collection, one per notes-tex document, the whole
@@ -34,7 +48,7 @@
 # serves at /bib and /bib/<name>. Writes nothing git-tracked, so cron cannot dirty a
 # checkout; consumers pull a pinned copy with `make bib-pull`. Runs after lit_sync so
 # a paper captured that night is citable the same morning.
-45 3 * * * bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && /home/michaelvolk/miniconda3/envs/torchcell/bin/python scripts/lit_bib_store.py >> /tmp/torchcell-lit-bib-store.log 2>&1'
+45 3 * * * bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && bash scripts/cron_run.sh lit-bib-store -- /home/michaelvolk/miniconda3/envs/torchcell/bin/python scripts/lit_bib_store.py'
 
 # deprecation-graveyard retention sweep: remove graveyard entries that have STAYED past the
 # retention window (14 days), keeping recent ones. The 14-day RETENTION is enforced by the
@@ -43,7 +57,7 @@
 # cadence use `0 4 */14 * *` instead -- but then an item can linger up to ~a month before a
 # run catches it; daily + age-gate is the precise way to get "removed after staying 14 days".)
 # Sweeps both /tmp and the /scratch sibling graveyard; never touches non-deprecate entries.
-0 4 * * * bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && bash scripts/purge_deprecated.sh >> /tmp/torchcell-purge-deprecated.log 2>&1'
+0 4 * * * bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && bash scripts/cron_run.sh purge-deprecated -- bash scripts/purge_deprecated.sh'
 
 # mirror backup: weekly (Sunday 02:00) non-destructive rsync of the two provenance mirrors,
 # $DATA_ROOT/torchcell-library (papers, OCR, SI, released data + manifests) and
@@ -51,4 +65,4 @@
 # into the /bulk archive tier. No --delete: a file removed on /scratch stays archived.
 # Seeded once by scripts/migrate_storage_tiers.sh (2026-08-23); this keeps it current, so a
 # rebuild never depends on a live URL (upstream sources have vanished before).
-0 2 * * 0 bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && bash scripts/backup_mirrors_to_bulk.sh >> /tmp/torchcell-backup-mirrors.log 2>&1'
+0 2 * * 0 bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && bash scripts/cron_run.sh backup-mirrors -- bash scripts/backup_mirrors_to_bulk.sh'

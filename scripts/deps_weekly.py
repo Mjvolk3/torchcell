@@ -1447,10 +1447,17 @@ def cmd_report(args: argparse.Namespace) -> int:
 
 
 def cmd_write_lock(args: argparse.Namespace) -> int:
-    """Write the lock from a report's tested resolution (the step-h code path)."""
+    """Write the lock from a report's passing capped arm (the step-h writer).
+
+    The capped arm is the resolution of the requirements as committed. A dry run
+    leaves the files unchanged, so a cap it would have lifted is still in them, and
+    the lifted arm's resolution would not describe them.
+    """
     path: Path = args.report or newest_report(state_dir())
     report = DepsReport.model_validate_json(path.read_text())
-    write_tracked(Path.cwd(), LOCK, render_lock(effective_freeze(report)))
+    if report.capped is None or not report.capped.passed:
+        raise ValueError(f"{path}: the capped arm did not pass; no lock to write")
+    write_tracked(Path.cwd(), LOCK, render_lock(report.capped.freeze))
     print(f"wrote {LOCK} from {path}")
     return 0
 
@@ -1490,7 +1497,7 @@ def build_parser() -> argparse.ArgumentParser:
     rep.add_argument("--path", type=Path, default=None, help="a specific report JSON")
     rep.set_defaults(func=cmd_report)
     lock = sub.add_parser(
-        "write-lock", help=f"Write {LOCK} from a report's passing arm."
+        "write-lock", help=f"Write {LOCK} from a report's passing capped arm."
     )
     lock.add_argument(
         "--report", type=Path, default=None, help="report JSON (default newest)"

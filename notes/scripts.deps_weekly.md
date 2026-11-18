@@ -121,3 +121,37 @@ driver logs `/scratch/tmp/torchcell-deps-weekly/dryrun-2026.11.17*.log`):
   warnings in 1087.17s`; the single uncapped arm (neo4j 6.4.1 with bibtexparser 2.1.0)
   failed at conftest import as described above. Would raise 44 floors and move the CI
   torch from 2.11.0 to 2.12.1.
+
+Run 4 (`2026.11.17-run4`, head `afff558a9`, per-cap arms), the run the first lock comes
+from:
+
+- capped: `16246 passed, 1176 skipped, 10 xfailed, 7929 warnings in 1091.15s`, install
+  45 s.
+- uncapped-neo4j (neo4j 6.4.1): `16246 passed, 1176 skipped, 10 xfailed, 7929 warnings
+  in 1093.72s`, verdict "lifted". Caveat: `tests/conftest.py` refuses to open a Neo4j
+  driver unless `--neo4j` is given, and no test in `tests/torchcell` carries the `neo4j`
+  mark, so this pass covers importing the driver and mocked calls, not a session against
+  the served Neo4j server. Whether driver 6.4.1 talks to that server is not measured.
+- uncapped-bibtexparser (bibtexparser 2.1.0): exit 4 at conftest import
+  (`ModuleNotFoundError: No module named 'bibtexparser.bibdatabase'` from
+  `torchcell/literature/bib.py:39`), verdict "kept: the suite fails without it". The
+  `<2` cap is load-bearing.
+- Would change: 44 floors raised in `env/requirements.txt` (among them neo4j to 6.4.1
+  with its cap and two-line comment removed, lmdb 1.4.1 to 3.0.0, filelock 3.20.1 to
+  4.2.4, pyarrow 15.0.0 to 26.0.1), the `[caps.neo4j]` table removed, CI torch 2.11.0 to
+  2.12.1, and the lock. A real run would commit these as `PATCH(deps)`.
+
+`write-lock` writes the capped arm's resolution, not the lifted arm's: a dry run leaves
+`neo4j<5.0` in the committed requirements, and the lock has to describe the files it sits
+beside. The first `env/tested/requirements.lock.txt` (189 packages, torch
+`2.12.1+cpu`, torch-scatter `2.1.2+pt212cpu`, neo4j 4.4.13, bibtexparser 1.4.4,
+transformers 5.23.0) was written by
+`deps_weekly.py write-lock --report /scratch/tmp/torchcell-deps-weekly/2026.11.17-run4/report.json`
+and equals that run's `logs/freeze-capped.txt` line for line.
+
+Against the torchcell conda env (`pip list --format=freeze`, 2026-11-17), the capped
+resolution (189 packages) shares 173 packages with the env (308), and 131 of those 173
+have a different version; 16 are only in the venv. Notable direct-dependency jumps:
+transformers 4.57.1 to 5.23.0 (held floor), lmdb 1.7.5 to 3.0.0, filelock 3.20.0 to
+4.2.4, numpy 2.2.6 to 2.5.5 (held floor), biocypher 0.5.43 in the conda env versus the
+0.15.2 pin.

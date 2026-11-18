@@ -2,7 +2,7 @@
   "record_version": 1,
   "slug": "replicate-id-on-titer-metabolite-and-protein-abundance-phenotypes",
   "date": "2026-11-17",
-  "pr": null,
+  "pr": 1181,
   "author_kind": "agent",
   "base_commit": "937d081ade7884afb59c5a574a91312858c8726f",
   "python_version": "3.13.0",

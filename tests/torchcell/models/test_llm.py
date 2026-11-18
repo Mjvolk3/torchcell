@@ -4,7 +4,7 @@
 """The language-model interfaces in ``torchcell.models.llm`` with no weights loaded.
 
 2026.09.30, Phase 17. The module holds only two abstract bases,
-``NucleotideModel`` and ``PeptideModel``, and the attrs container ``pretrained_LLM``;
+``NucleotideModel`` and ``PeptideModel``, and the dataclass container ``pretrained_LLM``;
 it has no tokenization helpers, window arithmetic or output selection of its own (those
 live in the concrete subclasses under ``torchcell.models``), and nothing in it
 downloads weights. What a fake can reach is therefore the whole module:
@@ -18,7 +18,7 @@ downloads weights. What a fake can reach is therefore the whole module:
   unimplemented raises TypeError naming the missing ones, in sorted order.
 * The abstract bodies raise ``NotImplementedError`` naming the base and the method, so
   ``super().embed(...)`` is an error, never a silent None (issue #541).
-* ``pretrained_LLM`` is an attrs class: positional order (tokenizer, model), value
+* ``pretrained_LLM`` is a dataclass: positional order (tokenizer, model), value
   equality over both fields, and no validation of the declared ``AutoTokenizer`` /
   ``AutoModelForMaskedLM`` types.
 
@@ -26,10 +26,10 @@ The concrete subclasses are defined in the test module; they are model interface
 schema classes. The two bases are identical in behavior, so each test runs on both.
 """
 
+import dataclasses
 import re
 from typing import Any
 
-import attrs
 import pytest
 import torch
 
@@ -151,7 +151,7 @@ def test_a_class_missing_abstract_methods_cannot_be_instantiated(
         cls("m")
 
 
-def test_pretrained_llm_is_a_positional_attrs_pair_with_value_equality() -> None:
+def test_pretrained_llm_is_a_positional_pair_with_value_equality() -> None:
     """Fields in order (tokenizer, model); equality compares both; the declared types are
     annotations only, so a stand-in tokenizer and module are accepted unconverted.
     """
@@ -159,11 +159,17 @@ def test_pretrained_llm_is_a_positional_attrs_pair_with_value_equality() -> None
     other: Any = "other"
     model: Any = torch.nn.Identity()
     pair = pretrained_LLM(tokenizer, model)
-    assert [f.name for f in attrs.fields(pretrained_LLM)] == ["tokenizer", "model"]
+    assert [f.name for f in dataclasses.fields(pretrained_LLM)] == [
+        "tokenizer",
+        "model",
+    ]
     assert (pair.tokenizer, pair.model) == (tokenizer, model)
     assert pair == pretrained_LLM(tokenizer=tokenizer, model=model)
     assert pair != pretrained_LLM(other, model)
-    assert attrs.asdict(pair, recurse=False) == {"tokenizer": "tok", "model": model}
+    assert {f.name: getattr(pair, f.name) for f in dataclasses.fields(pair)} == {
+        "tokenizer": "tok",
+        "model": model,
+    }
 
 
 @pytest.mark.parametrize(

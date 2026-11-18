@@ -8,6 +8,7 @@ import os
 import os.path as osp
 import re
 import zipfile
+from dataclasses import dataclass, field
 from typing import Any, cast
 
 import cobra
@@ -15,7 +16,6 @@ import httpx
 import hypernetx as hnx
 import matplotlib.pyplot as plt
 import networkx as nx
-from attrs import define, field
 from dotenv import load_dotenv
 from matplotlib.patches import Patch
 
@@ -50,7 +50,7 @@ class MemberlessReactionError(ValueError):
     """
 
 
-@define
+@dataclass(slots=True)
 class YeastGEM:
     """Download, load, and expose the yeast-GEM genome-scale model."""
 
@@ -64,7 +64,7 @@ class YeastGEM:
     _bipartite_graph: nx.Graph | None = field(default=None, init=False)
     model_dir: str = field(init=False)
 
-    def __attrs_post_init__(self) -> None:
+    def __post_init__(self) -> None:
         """Resolve the model directory and download the model if missing."""
         self.model_dir = osp.join(self.root, f"yeast-GEM-{self.version}")
         self._download()

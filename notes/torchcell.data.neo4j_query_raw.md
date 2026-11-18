@@ -125,3 +125,7 @@ Decision D5 of the artifact-tier plan. `process` now refuses to build a store wh
 - `materialize(ref) -> Path`: `torchcell.artifacts.materialize` with the same `artifact_data_root` and `artifact_client`.
 
 Records with no refs are untouched: byte-identical LMDB values, no resolver call. Tests: `tests/torchcell/data/test_neo4j_query_raw_artifacts.py` (12; real `FitnessExperiment` records whose `SequenceVariantPerturbation`s carry `sequence_ref`; no schema class is subclassed in tests, because the ontology tree tests walk the live hierarchy in the same process; no reference-side schema class holds a ref after phase 3, so the reference half of the walk is not pinned on a stored record). The attrs state pin in `test_close_lmdb_is_idempotent_and_a_closed_view_pickles_and_reopens` gained the five new fields.
+
+## 2026.11.17 - Stream-state records are dataclasses
+
+`_CachedEnvironment`, `_CachedReference` and `_StreamState` are `@dataclass(slots=True)` instead of attrs `@define` (which is slotted by default); `_StreamState`'s four collections use `default_factory`. They are internal records with no validation, converters or attrs-only behavior. `Neo4jQueryRaw` itself stays on attrs: it is the root of a hierarchy that tests (`_MemoryQueryRaw`, `_StoreQueryRaw`) and three `experiments/tcdb-002-build-speed` scripts subclass, and tests replace its `__attrs_post_init__` on the class.

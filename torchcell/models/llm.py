@@ -5,10 +5,10 @@
 """Abstract base classes for nucleotide and peptide language models."""
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Any
 
 import torch
-from attrs import define
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 
 
@@ -108,7 +108,7 @@ class PeptideModel(ABC):
         )
 
 
-@define
+@dataclass(slots=True)
 class pretrained_LLM:
     """Container pairing a tokenizer with a pretrained masked-LM model."""
 

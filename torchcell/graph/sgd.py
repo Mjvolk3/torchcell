@@ -13,10 +13,10 @@ import os.path as osp
 import tempfile
 from asyncio import Task
 from collections.abc import Callable, Iterator
+from dataclasses import dataclass, field
 from typing import Any, cast
 
 import httpx
-from attrs import define, field
 from dotenv import load_dotenv
 from tqdm import tqdm
 
@@ -46,20 +46,24 @@ def _default_gene_dir() -> str:
     return osp.join(data_root(), "data/sgd/genome/genes")
 
 
-@define
+@dataclass(slots=True)
 class Gene:
     """Fetch, cache, and expose SGD annotation details for a single locus."""
 
     locusID: str = "YAL001C"
     is_validated: bool = field(default=True, init=True, repr=False)
     sgd_url: str = "https://www.yeastgenome.org/backend/locus"
-    headers: dict[str, str] = field(default={"accept": "application/json"})
-    base_data_dir: str = field(factory=_default_gene_dir)
-    save_path: str = field(default=None, init=False, repr=True)
-    _data: dict[str, dict[Any, Any] | list[Any]] = field(factory=dict, init=False)
+    headers: dict[str, str] = field(
+        default_factory=lambda: {"accept": "application/json"}
+    )
+    base_data_dir: str = field(default_factory=_default_gene_dir)
+    save_path: str = field(init=False, repr=True)  # set in __post_init__
+    _data: dict[str, dict[Any, Any] | list[Any]] = field(
+        default_factory=dict, init=False
+    )
     _data_task: Task[Any] | None = field(default=None, init=False, repr=False)
 
-    def __attrs_post_init__(self) -> None:
+    def __post_init__(self) -> None:
         """Set the save path and load cached data if it already exists."""
         if not osp.exists(self.base_data_dir):
             os.makedirs(self.base_data_dir)

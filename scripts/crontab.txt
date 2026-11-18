@@ -66,3 +66,14 @@
 # Seeded once by scripts/migrate_storage_tiers.sh (2026-08-23); this keeps it current, so a
 # rebuild never depends on a live URL (upstream sources have vanished before).
 0 2 * * 0 bash -lc 'cd /home/michaelvolk/Documents/projects/torchcell && bash scripts/cron_run.sh backup-mirrors -- bash scripts/backup_mirrors_to_bulk.sh'
+
+# weekly dependency update: Sunday 05:00, install the newest versions env/requirements.txt
+# allows (and the newest torch with a PyG torch_scatter wheel) into a fresh venv, run
+# `pytest tests/torchcell`, and when it passes open a PR that raises the floors, moves
+# the CI torch and rewrites env/tested/requirements.lock.txt; `--land` enqueues that PR
+# once its checks pass. A red suite files one issue instead. Policy (held floors, caps):
+# env/deps_policy.toml. The primary checkout can sit behind origin/main, so the line
+# reads origin/main's scripts/deps_weekly_cron.sh, which runs the job in a fresh
+# detached worktree under /scratch/tmp/torchcell-deps-weekly/ and removes it after.
+# Report: `make deps-report`. See scripts/deps_weekly.py.
+0 5 * * 0 bash -lc '( git -C /home/michaelvolk/Documents/projects/torchcell fetch -q origin && git -C /home/michaelvolk/Documents/projects/torchcell show origin/main:scripts/deps_weekly_cron.sh | bash -s -- /home/michaelvolk/Documents/projects/torchcell ) >> /tmp/torchcell-deps-weekly.log 2>&1'

@@ -97,6 +97,17 @@ jobs:
 	@$(PYTHON) scripts/jobs.py
 jobs-fast:
 	@$(PYTHON) scripts/jobs.py --no-network
+# --- Weekly dependency update (scripts/deps_weekly.py, cron Sunday 05:00) ---
+# By hand this is a dry run: it installs and tests the newest dependencies in a fresh
+# venv under /scratch/tmp/torchcell-deps-weekly/<date> and reports, changing no tracked
+# file. `make deps-weekly DEPS_ARGS=` runs it for real (branch, commit, PR). It refuses
+# a dirty tree and a non-empty work dir.
+DEPS_ARGS ?= --dry-run
+.PHONY: deps-weekly deps-report
+deps-weekly:
+	@$(PYTHON) scripts/deps_weekly.py run $(DEPS_ARGS)
+deps-report:
+	@$(PYTHON) scripts/deps_weekly.py report
 
 # --- Manuscript (paper/nature-biotech) passthrough targets ---
 .PHONY: paper paper-submission paper-editing paper-twocolumn paper-figproto paper-figlimits paper-figures paper-fig paper-flat paper-clean paper-sync paper-pull
@@ -144,6 +155,8 @@ help:
 	@echo "  make ops-fast        - GilaHyper only, 2 s probes: the panel in a few seconds, no radiant rows"
 	@echo "  make jobs            - Cron jobs (last run, verdict), slurm + docker, Actions on main, PRs, issues"
 	@echo "  make jobs-fast       - The local half of make jobs: cron, slurm, docker (no GitHub calls)"
+	@echo "  make deps-weekly     - Newest dependencies in a fresh venv + test suite (dry run; DEPS_ARGS= for real)"
+	@echo "  make deps-report     - The newest weekly dependency report as a table"
 	@echo "  make paper           - Build submission + editing + twocolumn PDFs"
 	@echo "  make paper-submission/-editing/-twocolumn/-figproto - one PDF"
 	@echo "  make paper-fig       - Force re-render all figures from draw.io + size/scale check"

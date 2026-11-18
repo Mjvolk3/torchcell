@@ -1,0 +1,48 @@
+# env/deps_policy.toml
+#
+# Policy of the weekly dependency job (scripts/deps_weekly.py), edited by hand.
+#
+# The job installs the newest versions env/requirements.txt allows into a fresh venv,
+# runs `pytest tests/torchcell`, and when the suite passes raises each floor in
+# env/requirements.txt to the version it tested. This file says where it must not:
+#
+#   python   the interpreter the job runs on and builds its venvs from. 3.13.0 exactly:
+#            schema contract fingerprints depend on the patch release (see the
+#            "Set up Python" comment in .github/workflows/test.yaml).
+#   [hold]   packages whose FLOOR is never raised automatically, each with its reason.
+#            A held package is still installed and tested at its newest resolvable
+#            version; only the floor in env/requirements.txt stays.
+#   [caps]   one table per upper bound or exact pin in env/requirements.txt (the test
+#            tests/scripts/test_deps_weekly.py fails when the two disagree):
+#              reason          why the bound exists
+#              probe           true: the job tries the suite with the bound removed and
+#                              lifts it when the newer version passes
+#              comment_marker  optional: text inside the comment block directly above
+#                              the requirement line; when the cap is lifted that whole
+#                              block is deleted with it. Without a marker the job leaves
+#                              the comment alone and flags it as stale in its report.
+#            A lifted cap's table is deleted from this file by the job.
+
+python = "3.13.0"
+
+[hold]
+torch = "Cluster environments (IGB, Delta, Polaris) carry their own CUDA torch builds and install the checkout with `pip install -e .`, which enforces floors; a floor that moves weekly would break them."
+torch_geometric = "Built against the cluster torch builds; same reason as torch."
+lightning = "Tied to the cluster torch builds; same reason as torch."
+torchmetrics = "Tied to the cluster torch builds; same reason as torch."
+transformers = "Tied to the cluster torch builds; same reason as torch."
+numpy = "Pinned cluster environments carry older builds compiled against it; a floor that moves weekly would break `pip install -e .` there."
+pandas = "Same reason as numpy."
+
+[caps.biocypher]
+reason = "Exact pin: biocypher writes the neo4j-admin import files, so a bump is adapter-path code under the build-manifest policy and moves with the build scripts that name the version."
+probe = false
+
+[caps.neo4j]
+reason = "Driver 4.4 line. The cap has no recorded reason (added 2024-08-19)."
+probe = true
+comment_marker = "The cap has no recorded reason"
+
+[caps.bibtexparser]
+reason = "torchcell/literature/bib.py imports the v1 modules bibdatabase and bwriter, which v2 rewrote; the test suite decides whether v2 still works."
+probe = true

@@ -25,9 +25,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           # CPU-only torch + prebuilt torch-scatter wheel (no GPU on the runner, no
-          # source build) so torchcell and its model modules import for autodoc.
-          pip install "torch==2.11.0" --index-url https://download.pytorch.org/whl/cpu
-          pip install torch-scatter -f https://data.pyg.org/whl/torch-2.11.0+cpu.html
+          # source build) so torchcell and its model modules import for autodoc. The
+          # version is env/torch-ci-version.txt, shared with test.yaml.
+          TORCH_CI=$(cat env/torch-ci-version.txt)
+          pip install "torch==${TORCH_CI}" --index-url https://download.pytorch.org/whl/cpu
+          pip install torch-scatter -f "https://data.pyg.org/whl/torch-${TORCH_CI}+cpu.html"
           pip install -r docs/requirements.txt
           # Install the LOCAL torchcell (this checkout) so autodoc documents THIS repo,
           # not the ancient PyPI 0.2.6 release.

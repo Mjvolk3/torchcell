@@ -1,17 +1,19 @@
 # experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py
 # [[experiments.034-showcase-datasets.scripts.ecoli_download_tutorial]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/034-showcase-datasets/scripts/ecoli_download_tutorial
-"""Load four built E. coli datasets, print their records and plot their values.
+"""Load four built E. coli datasets, show their records and plot their values.
 
-This is the code of two documentation pages. ``datasets/ecoli/tutorial`` shows the
-blocks that load, tabulate and plot each dataset; ``datasets/ecoli/download`` shows the
-blocks that list the endpoint's archives and check the downloaded records against the
-knowledge-graph release. A page shows each block between a ``# [name]`` and a
-``# [/name]`` marker and, under it, what that block printed or drew. The script needs an
-installed ``torchcell`` and a network route to the public endpoint, nothing else: no
-repository checkout, no ``DATA_ROOT``, no key.
+This is the source of the notebook ``experiments/034-showcase-datasets/notebooks/
+ecoli_datasets.ipynb`` and of the documentation pages under ``datasets/ecoli``. Each block
+between a ``# [name]`` and a ``# [/name]`` marker is one notebook cell. The cells that
+load and read the data are short on purpose, because they are the interface a reader
+copies; the ``style`` cell and the ``*_figure`` cells hold the plotting code and are
+collapsed in the notebook and on the page. A cell that ends in a bare expression (a
+table) shows that table in a notebook and prints nothing when this file runs as a script.
 
-Run it in an empty directory::
+The script needs an installed ``torchcell`` and a network route to the public endpoint,
+nothing else: no repository checkout, no ``DATA_ROOT``, no key. Run it in an empty
+directory::
 
     python ecoli_download_tutorial.py
 
@@ -35,38 +37,67 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import sys
-import time
 from pathlib import Path
 from typing import Any
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib.figure import Figure
 
 from torchcell.datasets.artifact import content_sha256
 from torchcell.datasets.client import DatasetClient
 from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
 from torchcell.datasets.ecoli.campos2018 import (
     FEATURE_UNITS,
+    MORPHOLOGY_ASSAY,
     GrowthRateCampos2018Dataset,
     MorphologyCampos2018Dataset,
 )
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.endpoint_http import DEFAULT_URL
-from torchcell.utils import PANEL_WIDTHS_MM, PLOT_PALETTE, mm_to_in, panel_label
 
 # A loader downloads its built store only when TC_DATA_URL is set. Without it the loader
 # builds the store from the publisher's files, which is the developer path.
 os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)
 
 DATA = Path("data/torchcell")  # each dataset unpacks into DATA/<slug>/
-SECONDS: dict[str, float] = {}  # slug -> seconds to download, verify, unpack and open
+pd.set_option("display.precision", 4)
+
+
+def brief(value: Any, depth: int = 1) -> Any:
+    """A record part with anything nested deeper than ``depth`` replaced by its size."""
+    if isinstance(value, dict):
+        kept = {k: v for k, v in value.items() if k != "provenance_gaps"}
+        if depth < 0:
+            return f"<{len(kept)} fields>"
+        return {k: brief(v, depth - 1) for k, v in kept.items()}
+    if isinstance(value, list):
+        return f"<{len(value)} items>" if value else []
+    return getattr(value, "value", value)  # an enum member prints as its value
+
+
+def show(part: dict[str, Any]) -> None:
+    """Print one part of a record as indented JSON, two levels deep."""
+    print(json.dumps(brief(part), indent=2, default=str))
+
+
 # [/setup]
 
+import sys  # noqa: E402
+import time  # noqa: E402
+
 # [style]
+import matplotlib.pyplot as plt  # noqa: E402
+from matplotlib.figure import Figure  # noqa: E402
+
+from torchcell.utils import (  # noqa: E402
+    PANEL_WIDTHS_MM,
+    PLOT_PALETTE,
+    mm_to_in,
+    panel_label,
+)
+
 ORANGE, RED, PURPLE, YELLOW, BLUE, GRAY = PLOT_PALETTE[:6]
+NEGATIVE, POSITIVE = RED, BLUE  # below and above a reference level, in every figure
 plt.rcParams.update(
     {
         "font.family": ["Arial", "DejaVu Sans"],
@@ -80,6 +111,7 @@ plt.rcParams.update(
         "xtick.major.width": 0.5,
         "ytick.major.width": 0.5,
         "legend.frameon": False,
+        "figure.dpi": 150,  # size of a figure shown in a notebook
         "svg.fonttype": "none",  # text stays text in the SVG
         "svg.hashsalt": "torchcell",  # the same bytes on every run
     }
@@ -104,12 +136,12 @@ def save(figure: Figure, name: str) -> None:
         panel_label(axis, letter)
     figure.savefig(FIGURES / f"{name}.svg", metadata={"Date": None})
     figure.savefig(FIGURES / f"{name}.png", dpi=200)
-    plt.close(figure)
 
 
 # [/style]
 
 SECTION = "=" * 12
+SECONDS: dict[str, float] = {}  # slug -> seconds to download, verify, unpack and open
 
 
 def section(title: str) -> None:
@@ -139,33 +171,22 @@ for slug in SLUGS:
 # [/index]
 
 section("growth load")
-# [growth_load]
 started = time.perf_counter()
+# [growth_load]
 growth = GrowthRateCampos2018Dataset(root=str(DATA / "ecoli_growth_rate_campos2018"))
-SECONDS["ecoli_growth_rate_campos2018"] = time.perf_counter() - started
 print(f"{len(growth):,} records")
 # [/growth_load]
+SECONDS["ecoli_growth_rate_campos2018"] = time.perf_counter() - started
 
 section("growth record")
 # [growth_record]
 record = growth[0]  # a dict with three keys: experiment, reference, publication
-deletion = record["experiment"]["genotype"]["perturbations"][0]
-environment = record["experiment"]["environment"]
-phenotype = record["experiment"]["phenotype"]
-print("gene       ", deletion["perturbed_gene_name"], deletion["systematic_gene_name"])
-print("strain     ", deletion["collection"], "plate", deletion["construction"]["plate"])
-print("medium     ", environment["media"]["name"])
-print(
-    "temperature",
-    environment["temperature"]["value"],
-    environment["temperature"]["unit"],
-)
-print(
-    "fitness    ", phenotype["fitness"], "from", phenotype["n_samples"], "growth curve"
-)
-print("wild type  ", record["reference"]["phenotype_reference"]["fitness"])
-print("genome     ", record["reference"]["genome_reference"]["assembly_accession"])
-print("source     ", record["publication"]["doi_url"])
+experiment = record["experiment"]
+show(experiment["genotype"]["perturbations"][0])
+show(experiment["environment"])
+show(experiment["phenotype"])
+print("reference fitness", record["reference"]["phenotype_reference"]["fitness"])
+print("source", record["publication"]["doi_url"])
 # [/growth_record]
 
 section("growth table")
@@ -182,7 +203,6 @@ for r in (growth[i] for i in range(len(growth))):
         }
     )
 growth_table = pd.DataFrame(rows)
-print(growth_table.head(6).to_string(index=False, float_format="{:.4f}".format))
 print(
     "fitness min {:.4f}  median {:.4f}  max {:.4f}".format(
         growth_table["fitness"].min(),
@@ -190,13 +210,22 @@ print(
         growth_table["fitness"].max(),
     )
 )
+growth_table.head(6)
 # [/growth_table]
 
 # [growth_figure]
 figure, (left, middle, right) = three_panels()
-left.hist(growth_table["fitness"], bins=np.arange(0.10, 1.38, 0.02), color=ORANGE)
+edges = np.arange(0.10, 1.38, 0.02)
+slower = growth_table["fitness"] < 1.0
+left.hist(
+    growth_table.loc[slower, "fitness"], bins=edges, color=NEGATIVE, label="slower"
+)
+left.hist(
+    growth_table.loc[~slower, "fitness"], bins=edges, color=POSITIVE, label="faster"
+)
 left.axvline(1.0, color="black", linewidth=0.5, linestyle="--")
 left.set(xlabel="Growth rate relative to parent", ylabel="Strains")
+left.legend()
 
 ranked = growth_table.sort_values("fitness").reset_index(drop=True)
 middle.plot(ranked.index + 1, ranked["fitness"], color=PURPLE, linewidth=1)
@@ -212,7 +241,7 @@ for rank, row in ranked.head(5).iterrows():
 middle.set(xlabel="Strain rank", ylabel="Growth rate relative to parent")
 
 plates = growth_table.groupby("plate")["fitness"].quantile([0.25, 0.5, 0.75]).unstack()
-right.vlines(plates.index, plates[0.25], plates[0.75], color=BLUE, linewidth=1)
+right.vlines(plates.index, plates[0.25], plates[0.75], color=ORANGE, linewidth=1)
 right.plot(plates.index, plates[0.5], "o", color="black", markersize=1.5)
 right.axhline(1.0, color="black", linewidth=0.5, linestyle="--")
 right.set(xlabel="Keio plate", ylabel="Growth rate relative to parent")
@@ -231,16 +260,23 @@ print(
 # [/typed]
 
 section("morphology load")
-# [morphology_load]
 started = time.perf_counter()
+# [morphology_load]
 morphology = MorphologyCampos2018Dataset(root=str(DATA / "ecoli_morphology_campos2018"))
-SECONDS["ecoli_morphology_campos2018"] = time.perf_counter() - started
 print(f"{len(morphology):,} records")
-
-phenotype = morphology[0]["experiment"]["phenotype"]
-print("cells measured", phenotype["n_samples"])
-print("features      ", list(phenotype["morphology"]))
+show(morphology[0]["experiment"]["phenotype"])
 # [/morphology_load]
+SECONDS["ecoli_morphology_campos2018"] = time.perf_counter() - started
+
+section("morphology features")
+# [morphology_features]
+# The assay vocabulary names every feature a record can hold, with its unit.
+features = pd.DataFrame(
+    feature.model_dump(mode="json") for feature in MORPHOLOGY_ASSAY.features
+).drop(columns="note")
+print(features.to_string(index=False))
+features
+# [/morphology_features]
 
 section("morphology table")
 # [morphology_table]
@@ -251,15 +287,14 @@ morphology_table = pd.DataFrame(
     }
     for r in (morphology[i] for i in range(len(morphology)))
 ).set_index("gene")
+unit = FEATURE_UNITS.value  # feature symbol -> unit, as the release states it
 print("table shape   ", morphology_table.shape)
 print(
     "features per strain:",
     morphology_table.notna().sum(axis=1).value_counts().to_dict(),
 )
-unit = FEATURE_UNITS.value  # feature symbol -> unit, as the release states it
 print("units         ", {symbol: unit[symbol] for symbol in ("<L>", "<W>", "<A>")})
-shown = ["<L>", "<W>", "<A>", "<SA/V>", "rho_CD", "%2N"]
-print(morphology_table[shown].head(6).to_string(float_format="{:.4f}".format))
+morphology_table.head(6)
 # [/morphology_table]
 
 section("morphology growth")
@@ -291,45 +326,43 @@ middle.set(
     ylabel=f"Mean cell width <W> ({unit['<W>']})",
 )
 
-right.scatter(
-    shape_growth["fitness"],
-    shape_growth["<A>"],
-    s=1.5,
-    color=BLUE,
-    linewidths=0,
-    rasterized=True,
-)
+slower = shape_growth["fitness"] < 1.0
+for mask, color, label in ((slower, NEGATIVE, "slower"), (~slower, POSITIVE, "faster")):
+    right.scatter(
+        shape_growth.loc[mask, "fitness"],
+        shape_growth.loc[mask, "<A>"],
+        s=1.5,
+        color=color,
+        linewidths=0,
+        rasterized=True,
+        label=label,
+    )
 right.set(
     xlabel="Growth rate relative to parent",
     ylabel=f"Mean cell area <A> ({unit['<A>']})",
 )
+right.legend(markerscale=3)
 save(figure, "ecoli_morphology_campos2018")
 # [/morphology_figure]
 
 section("interaction load")
-# [interaction_load]
 started = time.perf_counter()
+# [interaction_load]
 interaction = GeneInteractionBabu2014Dataset(
     root=str(DATA / "gene_interaction_babu2014")
 )
-SECONDS["gene_interaction_babu2014"] = time.perf_counter() - started
 print(f"{len(interaction):,} records")
-
 record = interaction[0]
-phenotype = record["experiment"]["phenotype"]
 for perturbation in record["experiment"]["genotype"]["perturbations"]:
     print(
-        "gene   ",
         perturbation["perturbed_gene_name"],
         perturbation["systematic_gene_name"],
         "|",
         perturbation["collection"],
     )
-print(
-    "S-score", phenotype["gene_interaction"], "from", phenotype["n_samples"], "colonies"
-)
-print("medium ", record["experiment"]["environment"]["media"]["name"])
+show(record["experiment"]["phenotype"])
 # [/interaction_load]
+SECONDS["gene_interaction_babu2014"] = time.perf_counter() - started
 
 section("interaction table")
 # [interaction_table]
@@ -346,22 +379,18 @@ for r in (interaction[i] for i in range(len(interaction))):
         }
     )
 pairs = pd.DataFrame(rows)
-print(pairs.head(6).to_string(index=False, float_format="{:.4f}".format))
 print("genes in any pair:", len(interaction.gene_set))
 print("negative scores:", int((pairs["s_score"] < 0).sum()))
 print("positive scores:", int((pairs["s_score"] > 0).sum()))
-print("strongest negative pairs:")
-print(
-    pairs.nsmallest(3, "s_score").to_string(index=False, float_format="{:.4f}".format)
-)
+pairs.nsmallest(6, "s_score")
 # [/interaction_table]
 
 # [interaction_figure]
 figure, (left, middle, right) = three_panels()
 edges = np.arange(-32, 25, 1)
 negative = pairs["s_score"] < 0
-left.hist(pairs.loc[negative, "s_score"], bins=edges, color=BLUE, label="negative")
-left.hist(pairs.loc[~negative, "s_score"], bins=edges, color=RED, label="positive")
+left.hist(pairs.loc[negative, "s_score"], bins=edges, color=NEGATIVE, label="negative")
+left.hist(pairs.loc[~negative, "s_score"], bins=edges, color=POSITIVE, label="positive")
 left.set(xlabel="S-score", ylabel="Gene pairs")
 left.legend()
 
@@ -378,14 +407,14 @@ per_gene = (
     .sum()
 )
 degree = per_gene["negative"] + per_gene["positive"]
-middle.hist(degree, bins=np.logspace(0, np.log10(degree.max() + 1), 40), color=PURPLE)
+middle.hist(degree, bins=np.logspace(0, np.log10(degree.max() + 1), 40), color=ORANGE)
 middle.set(xscale="log", xlabel="Scored pairs per gene", ylabel="Genes")
 
 right.scatter(
     per_gene["negative"],
     per_gene["positive"],
     s=1.5,
-    color=BLUE,
+    color=PURPLE,
     linewidths=0,
     rasterized=True,
 )
@@ -402,23 +431,20 @@ save(figure, "gene_interaction_babu2014")
 # [/interaction_figure]
 
 section("metabolome load")
-# [metabolome_load]
 started = time.perf_counter()
+# [metabolome_load]
 metabolome = MetabolomeFuhrer2017Dataset(root=str(DATA / "metabolome_fuhrer2017"))
-SECONDS["metabolome_fuhrer2017"] = time.perf_counter() - started
 print(f"{len(metabolome):,} records")
-
 record = metabolome[0]
 levels = record["experiment"]["phenotype"]["metabolite_level"]  # ion key -> z-score
-print(
-    "strain      ", record["experiment"]["genotype"]["perturbations"][0]["strain_label"]
-)
-print("ions        ", len(levels))
-print("first ions  ", dict(list(levels.items())[:4]))
-
+print("strain", record["experiment"]["genotype"]["perturbations"][0]["strain_label"])
+print("ions", len(levels), "first", dict(list(levels.items())[:4]))
 ions = pd.read_csv(Path(metabolome.preprocess_dir) / "ions.csv")  # ion key -> m/z
-print(ions.head(4).to_string(index=False, float_format="{:.5f}".format))
+# The ions are mass features of the two instrument modes, not named metabolites.
+print(ions.groupby("mode")["deposit_mz"].agg(["size", "min", "max"]).to_string())
+ions.head(4)
 # [/metabolome_load]
+SECONDS["metabolome_fuhrer2017"] = time.perf_counter() - started
 
 section("metabolome matrix")
 # [metabolome_matrix]
@@ -431,22 +457,26 @@ for r in (metabolome[i] for i in range(len(metabolome))):
     matrix_rows.append([row_levels[key] for key in ion_keys])
 matrix = np.asarray(matrix_rows, dtype=np.float32)  # strains x ions
 print("matrix shape", matrix.shape, matrix.dtype)
-corner = pd.DataFrame(matrix[:5, :5], index=strains[:5], columns=ion_keys[:5])
-print(corner.to_string(float_format="{:.4f}".format))
 print("z-scores beyond 5 in absolute value:", int((np.abs(matrix) > 5).sum()))
 print("records that name more than one gene:", sum("+" in name for name in strains))
+pd.DataFrame(matrix[:5, :5], index=strains[:5], columns=ion_keys[:5])
 # [/metabolome_matrix]
 
 # [metabolome_figure]
 figure, (left, middle, right) = three_panels()
-left.hist(matrix.ravel(), bins=np.arange(-11.0, 62.5, 0.5), color=ORANGE)
+values = matrix.ravel()
+edges = np.arange(-11.0, 62.5, 0.5)
+left.hist(values[values < 0], bins=edges, color=NEGATIVE, label="negative")
+left.hist(values[values >= 0], bins=edges, color=POSITIVE, label="positive")
 left.set(yscale="log", xlabel="Modified z-score", ylabel="Strain and ion values")
+left.legend()
 
 beyond = np.abs(matrix) > 5
 middle.hist(beyond.sum(axis=1), bins=np.arange(0, 580, 10), color=PURPLE)
 middle.set(yscale="log", xlabel="Ions beyond 5 per strain", ylabel="Strains")
 
-for mode, color in (("pos", RED), ("neg", BLUE)):
+# Ionization mode is a property of the instrument run, not a sign of the value.
+for mode, color in (("pos", ORANGE), ("neg", PURPLE)):
     of_mode = (ions["mode"] == mode).to_numpy()
     right.scatter(
         ions.loc[of_mode, "deposit_mz"],
@@ -462,6 +492,59 @@ right.legend(markerscale=3, loc="upper right")
 save(figure, "metabolome_fuhrer2017")
 # [/metabolome_figure]
 
+section("gene names")
+# [gene_names]
+loaded = {
+    "ecoli_growth_rate_campos2018": growth,
+    "ecoli_morphology_campos2018": morphology,
+    "gene_interaction_babu2014": interaction,
+    "metabolome_fuhrer2017": metabolome,
+}
+# Every perturbation names its gene twice: perturbed_gene_name is the gene symbol and
+# systematic_gene_name is the identifier in the namespace gene_namespace names.
+rows = []
+for slug, dataset in loaded.items():
+    for r in (dataset[i] for i in range(len(dataset))):
+        for p in r["experiment"]["genotype"]["perturbations"]:
+            mapping = p["identifier_mapping"] or {}
+            rows.append(
+                {
+                    "dataset": slug,
+                    "symbol": p["perturbed_gene_name"],
+                    "identifier": p["systematic_gene_name"],
+                    "namespace": p["gene_namespace"],
+                    "identifier_kind": p.get("identifier_kind") or "locus identifier",
+                    "mapped_from": mapping.get("route") or "released as is",
+                    "perturbation_type": p["perturbation_type"],
+                }
+            )
+names = pd.DataFrame(rows)
+how = ["dataset", "perturbation_type", "namespace", "identifier_kind", "mapped_from"]
+gene_names = (
+    names.groupby(how, sort=False)
+    .agg(
+        perturbations=("symbol", "size"),
+        genes=("identifier", "nunique"),
+        example_symbol=("symbol", "first"),
+        example_identifier=("identifier", "first"),
+    )
+    .reset_index()
+)
+print(gene_names.to_string(index=False))
+gene_names
+# [/gene_names]
+
+section("gene overlap")
+# [gene_overlap]
+# The gene symbol is the name every dataset carries, so it is the key to join on.
+symbols = {slug: set(group["symbol"]) for slug, group in names.groupby("dataset")}
+overlap = pd.DataFrame(
+    {a: {b: len(symbols[a] & symbols[b]) for b in loaded} for a in loaded}
+)
+print(overlap.to_string())
+overlap
+# [/gene_overlap]
+
 section("verify")
 
 
@@ -471,12 +554,6 @@ def experiment_id(record: dict[str, Any]) -> str:
     return hashlib.sha256(json.dumps(record["experiment"]).encode("utf-8")).hexdigest()
 
 
-loaded = {
-    "ecoli_growth_rate_campos2018": growth,
-    "ecoli_morphology_campos2018": morphology,
-    "gene_interaction_babu2014": interaction,
-    "metabolome_fuhrer2017": metabolome,
-}
 for slug, dataset in loaded.items():
     ids = (experiment_id(dataset[i]) for i in range(len(dataset)))
     digest = content_sha256(ids)  # one hash over every record of the dataset

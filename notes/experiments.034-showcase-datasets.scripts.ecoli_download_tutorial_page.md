@@ -49,3 +49,16 @@ Owner, on the first notebook-style page: the walkthrough should be an `.ipynb`, 
 - Panels are colored by position: orange for panel a, purple for b, blue for c, with red as the second category.
 - Sidebar: the theme defaults to `navigation_depth=2`, which hid every page below a section index. `conf.py` sets 4, and the organism toctree of `datasets/index.md` moved above the first section so organisms are direct children of Datasets.
 - Standard output sha256 `350aa2e73288b21f...` on GilaHyper and on Radiant (PyPI 1.8.5), one run each.
+
+## 2026.11.17 - Notebook run in a kernel, plotting code collapsed, gene names
+
+Owner's second review: colors should be semantic (red negative, blue positive), the notebook should let plotting code collapse so the data-access calls stand out, the output should be prettier, the page should show how each dataset names its genes, the cell-shape and metabolome sections needed more context, and the S-score should be shown as the papers define it. He also asked whether `pip install torchcell` alone is enough to load datasets: "we are trying to make this as easy as possible for collaborators to get there hands on the datasets and start to use them."
+
+- `run --notebook-out` now builds the notebook from the tutorial's blocks and runs it with `jupyter-execute` (`--jupyter-execute`, an environment with nbclient and ipykernel) in its own empty directory, so tables are real DataFrame outputs and figures are inline. The `style` and `*_figure` cells carry `jupyter.source_hidden` and the `hide-input` tag, which JupyterLab and VS Code honor. GitHub's viewer shows every cell expanded.
+- The same executed notebook is rendered to `docs/source/datasets/ecoli/notebook.md`: code cells as code blocks, the hidden ones inside `<details>`, stream output as text, DataFrames as raw HTML, figures as PNG under `_generated/notebook/`.
+- The tutorial's load cells hold only the constructor and what it prints; the timing lines sit outside the cell markers. `show` prints a record part as JSON two levels deep.
+- New cells: `morphology_features` (the assay vocabulary with units), `gene_names` (perturbation type, namespace, identifier kind and mapping route per dataset) and `gene_overlap` (shared gene symbols per pair of datasets).
+- Colors: red below and blue above a reference level in every figure (growth relative to the parent, S-score sign, z-score sign). Ionization mode is not a sign, so it keeps orange and purple.
+- S-score: neither Babu 2014 nor Butland 2008 prints the formula. Both defer to Collins et al. 2006 (Genome Biol. 7, R63; reference 4 of Butland's Supplementary Methods, `si/si1.md` sha256 `a5e1648b...`), which is not in the mirror. The page quotes Butland's definition in words and states the released thresholds from Babu; the formula waits for Collins 2006 to be mirrored.
+- `docs/source/guide/installation.md` now opens with the one-command install and a load snippet, and labels everything else as development setup.
+- Standard output sha256 `768e237be5268f65...` on GilaHyper and on Radiant (PyPI 1.8.5), one run each.

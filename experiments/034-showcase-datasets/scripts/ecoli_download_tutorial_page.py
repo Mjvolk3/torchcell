@@ -16,8 +16,10 @@ machine that holds nothing but a fresh venv with torchcell in it:
     packages the output depends on. Writes one JSON file per host. With
     ``--figures-out`` it also copies the SVG figures the tutorial drew into that
     directory, which is how the reference host's figures reach the page. With
-    ``--notebook-out`` it assembles a Jupyter notebook from the tutorial's blocks, the
-    text each block printed in this run and the PNG figures this run drew.
+    ``--notebook-out`` it builds a Jupyter notebook from the tutorial's blocks, runs it
+    in a kernel (``--jupyter-execute``) in its own empty directory, writes the executed
+    notebook and renders it as ``docs/source/datasets/ecoli/notebook.md``, with the
+    plotting cells collapsed in both.
 
 ``page``
     Reads every ``results/ecoli_download_tutorial.<host>.json``, every
@@ -71,25 +73,29 @@ TIMINGS_FILE = "data/torchcell/ecoli_download_tutorial_timings.json"
 BANNER = re.compile(r"^={12} (.+) ={12}$")
 BLOCK = re.compile(r"^# \[(\w+)\]\n(.*?)^# \[/\1\]\n", re.DOTALL | re.MULTILINE)
 # The notebook, top to bottom: a markdown cell (text) or a code cell (the name of a
-# tutorial block). A block's printed text is the run's section of the same name, with
-# spaces for underscores; a ``*_figure`` block shows the PNG of the slug it saves.
+# tutorial block). The cells in HIDDEN hold plotting code; their source is collapsed in
+# the notebook (JupyterLab, VS Code) and on the documentation page.
 NOTEBOOK: tuple[tuple[str, str], ...] = (
     (
         "md",
         "# E. coli datasets in torchcell\n\n"
         "Four built *Escherichia coli* K-12 datasets, loaded from the public `tc-data` "
-        "endpoint, printed and plotted. Run the cells top to bottom in an empty "
-        "directory with `torchcell` installed (Python 3.13 or newer). The stores "
-        "download into `./data/torchcell/` and the figures are written to `./figures/`."
-        "\n\nThe outputs below are from one run of the same code as a script, "
-        "`experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py`.",
+        "endpoint. The cells that load and read the data are the interface to copy. "
+        "The plotting cells are collapsed: expand one to see how its figure is drawn. "
+        "Run the cells top to bottom in an empty directory with `torchcell` installed "
+        "(Python 3.13 or newer). The stores download into `./data/torchcell/` and the "
+        "figures are written to `./figures/`.",
     ),
     (
         "md",
-        "## Setup\n\nSetting `TC_DATA_URL` makes each loader download its built store.",
+        "## Setup\n\nSetting `TC_DATA_URL` makes each loader download its built store. "
+        "`show` prints one part of a record as indented JSON.",
     ),
     ("code", "setup"),
-    ("md", "Figure style: one row of three panels, colors from the torchcell palette."),
+    (
+        "md",
+        "Figure style (collapsed): one row of three panels, red below and blue above a reference level.",
+    ),
     ("code", "style"),
     ("md", "## What the endpoint serves"),
     ("code", "index"),
@@ -99,7 +105,11 @@ NOTEBOOK: tuple[tuple[str, str], ...] = (
         "maximal growth rate relative to the parent strain BW25113.",
     ),
     ("code", "growth_load"),
-    ("md", "One record, field by field."),
+    (
+        "md",
+        "A record is a dict with three keys: `experiment` (genotype, environment, "
+        "phenotype), `reference` and `publication`.",
+    ),
     ("code", "growth_record"),
     ("md", "All records as a table."),
     ("code", "growth_table"),
@@ -116,6 +126,13 @@ NOTEBOOK: tuple[tuple[str, str], ...] = (
         "imaging screen, with cell-shape means and cell-cycle features.",
     ),
     ("code", "morphology_load"),
+    (
+        "md",
+        "Means (`<...>`) go to `morphology` and coefficients of variation (`CV_...`) "
+        "to `morphology_coefficient_of_variation`. The nucleoid and cell-cycle "
+        "features exist only for strains imaged with a nucleoid channel.",
+    ),
+    ("code", "morphology_features"),
     ("code", "morphology_table"),
     ("md", "The growth-rate dataset holds the same strains in the same order."),
     ("code", "morphology_growth"),
@@ -131,11 +148,26 @@ NOTEBOOK: tuple[tuple[str, str], ...] = (
     (
         "md",
         "## Metabolome (Fuhrer 2017)\n\nOne record per Keio strain. The label maps each "
-        "detected ion to a modified z-score.",
+        "detected ion to a modified z-score. An ion is a mass feature of the negative "
+        "or the positive instrument mode, keyed `neg_0001`, `pos_0001` and so on, and "
+        "`ions.csv` gives its mass-to-charge ratio.",
     ),
     ("code", "metabolome_load"),
     ("code", "metabolome_matrix"),
     ("code", "metabolome_figure"),
+    (
+        "md",
+        "## How each dataset names its genes\n\nEvery perturbation carries the gene "
+        "symbol (`perturbed_gene_name`) and an identifier (`systematic_gene_name`) in "
+        "the namespace `gene_namespace` names. The identifier differs by dataset, and "
+        "the table says which kind each one stores and what it was mapped from.",
+    ),
+    ("code", "gene_names"),
+    (
+        "md",
+        "Gene symbols shared by each pair of datasets (the diagonal is the dataset's own count).",
+    ),
+    ("code", "gene_overlap"),
     (
         "md",
         "## Check the records against the release\n\nHashing the loaded records "
@@ -143,12 +175,20 @@ NOTEBOOK: tuple[tuple[str, str], ...] = (
     ),
     ("code", "verify"),
 )
-FIGURE_OF_BLOCK = {
-    "growth_figure": "ecoli_growth_rate_campos2018",
-    "morphology_figure": "ecoli_morphology_campos2018",
-    "interaction_figure": "gene_interaction_babu2014",
-    "metabolome_figure": "metabolome_fuhrer2017",
-}
+HIDDEN = frozenset(
+    {
+        "style",
+        "growth_figure",
+        "morphology_figure",
+        "interaction_figure",
+        "metabolome_figure",
+    }
+)
+NOTEBOOK_PAGE = Path("docs/source/datasets/ecoli/notebook.md")
+NOTEBOOK_URL = (
+    "https://github.com/Mjvolk3/torchcell/blob/main/"
+    "experiments/034-showcase-datasets/notebooks/ecoli_datasets.ipynb"
+)
 
 # Dataset rows of the page, in page order: slug, label on the page, loader module, what
 # one record's label is. The record and feature counts are read from the runs.
@@ -312,7 +352,10 @@ def run_tutorial(args: argparse.Namespace) -> int:
             shutil.copyfile(figure, args.figures_out / figure.name)
             print(f"copied {figure.name} to {args.figures_out}")
     if args.notebook_out:
-        write_notebook(tutorial, done.stdout, work / "figures", args.notebook_out)
+        notebook = execute_notebook(
+            tutorial, args.notebook_out, work / "notebook", args.jupyter_execute, env
+        )
+        write_notebook_page(notebook, datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"))
     print(
         "wrote {} (stdout sha256 {}, {:.1f} s)".format(
             out, result["stdout_sha256"], seconds
@@ -321,51 +364,34 @@ def run_tutorial(args: argparse.Namespace) -> int:
     return 0
 
 
-def write_notebook(tutorial: Path, stdout: str, figures: Path, out: Path) -> None:
-    """Assemble the notebook: the tutorial's blocks with this run's text and figures."""
+def build_notebook(tutorial: Path) -> dict[str, Any]:
+    """The notebook before it runs: the tutorial's blocks in the order of NOTEBOOK."""
     blocks = {
         m.group(1): m.group(2) for m in BLOCK.finditer(tutorial.read_text("utf-8"))
     }
-    printed = sections(stdout)
     cells: list[dict[str, Any]] = []
-    count = 0
-    for kind, value in NOTEBOOK:
+    for number, (kind, value) in enumerate(NOTEBOOK):
         if kind == "md":
-            cells.append({"cell_type": "markdown", "metadata": {}, "source": value})
-            continue
-        count += 1
-        outputs: list[dict[str, Any]] = []
-        text = printed.get(value.replace("_", " "))
-        if text:
-            outputs.append(
-                {"output_type": "stream", "name": "stdout", "text": text + "\n"}
-            )
-        if value in FIGURE_OF_BLOCK:
-            png = (figures / f"{FIGURE_OF_BLOCK[value]}.png").read_bytes()
-            outputs.append(
-                {
-                    "output_type": "display_data",
-                    "metadata": {},
-                    "data": {"image/png": base64.b64encode(png).decode("ascii")},
-                }
-            )
-        source = blocks[value].rstrip("\n")
-        if value in FIGURE_OF_BLOCK:
-            # save() closes the figure, so the last line shows the file it wrote
-            source += (
-                "\nfrom IPython.display import Image\n\n"
-                f'Image(str(FIGURES / "{FIGURE_OF_BLOCK[value]}.png"))'
-            )
-        cells.append(
-            {
-                "cell_type": "code",
-                "execution_count": count,
+            cell: dict[str, Any] = {
+                "cell_type": "markdown",
                 "metadata": {},
-                "outputs": outputs,
-                "source": source,
+                "source": value,
             }
-        )
-    notebook = {
+        else:
+            hidden = value in HIDDEN
+            cell = {
+                "cell_type": "code",
+                "execution_count": None,
+                "metadata": {
+                    "tags": [value, *(["hide-input"] if hidden else [])],
+                    **({"jupyter": {"source_hidden": True}} if hidden else {}),
+                },
+                "outputs": [],
+                "source": blocks[value].rstrip("\n").replace("  # noqa: E402", ""),
+            }
+        cell["id"] = f"cell-{number:02d}"  # nbformat 4.5 wants an id on every cell
+        cells.append(cell)
+    return {
         "cells": cells,
         "metadata": {
             "kernelspec": {
@@ -378,11 +404,108 @@ def write_notebook(tutorial: Path, stdout: str, figures: Path, out: Path) -> Non
         "nbformat": 4,
         "nbformat_minor": 5,
     }
-    for number, cell in enumerate(cells):
-        cell["id"] = f"cell-{number:02d}"  # nbformat 4.5 wants an id on every cell
+
+
+def execute_notebook(
+    tutorial: Path, out: Path, work: Path, jupyter_execute: str, env: dict[str, str]
+) -> dict[str, Any]:
+    """Run the notebook in a Jupyter kernel in an empty directory and keep its outputs.
+
+    ``jupyter_execute`` is the ``jupyter-execute`` of an environment that holds nbclient,
+    ipykernel and torchcell. What the kernel wrote to standard error (the HTTP request
+    log) and the per-run execution times are dropped, so a rerun changes the file only
+    where the data or the code changed.
+    """
+    work.mkdir(parents=True)
+    path = work / out.name
+    path.write_text(json.dumps(build_notebook(tutorial), indent=1) + "\n", "utf-8")
+    subprocess.run(
+        [jupyter_execute, "--inplace", "--timeout=1800", path.name],
+        cwd=str(work),
+        env=env,
+        check=True,
+    )
+    notebook: dict[str, Any] = json.loads(path.read_text("utf-8"))
+    for cell in notebook["cells"]:
+        cell["metadata"].pop("execution", None)
+        if cell["cell_type"] == "code":
+            merged: list[dict[str, Any]] = []
+            for o in cell["outputs"]:
+                if o["output_type"] == "stream" and o["name"] == "stderr":
+                    continue
+                if (
+                    o["output_type"] == "stream"
+                    and merged
+                    and merged[-1]["output_type"] == "stream"
+                ):  # the kernel flushes one print in several pieces
+                    merged[-1]["text"] = text_of(merged[-1]["text"]) + text_of(
+                        o["text"]
+                    )
+                    continue
+                merged.append(o)
+            cell["outputs"] = merged
+    notebook["metadata"] = {
+        "kernelspec": notebook["metadata"]["kernelspec"],
+        "language_info": {"name": "python"},
+    }
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(notebook, indent=1) + "\n", encoding="utf-8")
-    print(f"wrote {out} ({len(cells)} cells)")
+    print(f"wrote {out} ({len(notebook['cells'])} cells, executed)")
+    return notebook
+
+
+def text_of(value: str | list[str]) -> str:
+    """A notebook field that is a string or a list of lines, as one string."""
+    return value if isinstance(value, str) else "".join(value)
+
+
+def write_notebook_page(notebook: dict[str, Any], stamp: str) -> None:
+    """The executed notebook as a documentation page, plotting code collapsed."""
+    images = FRAGMENT_DIR.parent / "notebook"
+    images.mkdir(parents=True, exist_ok=True)
+    parts = [
+        header(stamp).rstrip("\n"),
+        "",
+        f"```{{note}}\nThis page is the notebook "
+        f"[`ecoli_datasets.ipynb`]({NOTEBOOK_URL}) with the outputs of one run. "
+        "The plotting code is collapsed; open **Show the plotting code** to read it.\n```",
+        "",
+    ]
+    for cell in notebook["cells"]:
+        source = text_of(cell["source"])
+        if cell["cell_type"] == "markdown":
+            parts += [source, ""]
+            continue
+        code = ["```python", source, "```", ""]
+        if "hide-input" in cell["metadata"]["tags"]:
+            code = [
+                "<details><summary>Show the plotting code</summary>",
+                "",
+                *code,
+                "</details>",
+                "",
+            ]
+        parts += code
+        for output in cell["outputs"]:
+            if output["output_type"] == "stream":
+                parts += ["```text", text_of(output["text"]).rstrip("\n"), "```", ""]
+                continue
+            data = output["data"]
+            if "image/png" in data:
+                name = cell["metadata"]["tags"][0] + ".png"
+                (images / name).write_bytes(base64.b64decode(data["image/png"]))
+                parts += [f"![{name}](_generated/notebook/{name})", ""]
+            elif "text/html" in data:
+                parts += [
+                    "```{raw} html",
+                    text_of(data["text/html"]).strip(),
+                    "```",
+                    "",
+                ]
+            else:
+                parts += ["```text", text_of(data["text/plain"]), "```", ""]
+    NOTEBOOK_PAGE.write_text("\n".join(parts), encoding="utf-8")
+    print(f"wrote {NOTEBOOK_PAGE}")
 
 
 # ------------------------------------------------------------------------------ page
@@ -777,7 +900,15 @@ def main() -> int:
         "--figures-out", default=None, type=Path, help="copy the SVG figures here"
     )
     run.add_argument(
-        "--notebook-out", default=None, type=Path, help="assemble the notebook here"
+        "--notebook-out",
+        default=None,
+        type=Path,
+        help="run the notebook in a kernel, write it here and write its docs page",
+    )
+    run.add_argument(
+        "--jupyter-execute",
+        default="jupyter-execute",
+        help="jupyter-execute of an environment with nbclient, ipykernel and torchcell",
     )
     page = sub.add_parser("page", help="write the page fragments from the result files")
     page.add_argument("--reference", default="gilahyper")

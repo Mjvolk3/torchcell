@@ -6,5 +6,6 @@ Datasets of the bacterium *Escherichia coli* K-12. The overview says what each o
 :maxdepth: 1
 
 tutorial
+notebook
 download
 ```

@@ -180,12 +180,15 @@ def test_strip_cap_keeps_only_floors() -> None:
     )
 
 
-def test_strip_probed_caps_leaves_unprobed_pin(policy: object) -> None:
-    out = dw.strip_probed_caps(REQS, policy)
-    assert out == REQS.replace("neo4j>=4.4.11,<5.0", "neo4j>=4.4.11").replace(
+def test_strip_one_cap_touches_only_that_line() -> None:
+    assert dw.strip_one_cap(REQS, "neo4j") == REQS.replace(
+        "neo4j>=4.4.11,<5.0", "neo4j>=4.4.11"
+    )
+    assert dw.strip_one_cap(REQS, "BibTexParser") == REQS.replace(
         "bibtexparser>=1.4,<2", "bibtexparser>=1.4"
     )
-    assert "biocypher==0.15.2" in out
+    with pytest.raises(ValueError):
+        dw.strip_one_cap(REQS, "pandas")
 
 
 # ── rewriting env/requirements.txt ────────────────────────────────────────────
@@ -488,28 +491,53 @@ def test_decide_land(
     assert (decision.enqueue, decision.reason) == (enqueue, reason)
 
 
+def _probes(neo4j: tuple[str, int], bib: tuple[str, int]) -> dict[str, Any]:
+    return {
+        "neo4j": _arm("uncapped-neo4j", {**FREEZE, "neo4j": neo4j[0]}, neo4j[1]),
+        "bibtexparser": _arm(
+            "uncapped-bibtexparser", {**FREEZE, "bibtexparser": bib[0]}, bib[1]
+        ),
+    }
+
+
 def test_cap_outcomes(policy: object) -> None:
-    uncapped = {**FREEZE, "neo4j": "6.0.2", "bibtexparser": "1.4.3"}
-    out = dw.cap_outcomes(REQS, policy, FREEZE, uncapped, True)
+    out = dw.cap_outcomes(REQS, policy, FREEZE, _probes(("6.0.2", 0), ("1.4.3", 0)))
     assert [
         (c.name, c.capped_version, c.uncapped_version, c.verdict, c.stale_comment)
         for c in out
     ] == [
-        ("biocypher", "0.15.2", "0.15.2", "not probed", False),
+        ("biocypher", "0.15.2", None, "not probed", False),
         ("neo4j", "4.4.13", "6.0.2", "lifted", False),
         ("bibtexparser", "1.4.3", "1.4.3", "not binding", False),
     ]
-    failed = dw.cap_outcomes(REQS, policy, FREEZE, uncapped, False)
+    # The 2026-11-17 dry run: bibtexparser 2 breaks the import, neo4j alone is judged
+    # on its own arm.
+    failed = dw.cap_outcomes(REQS, policy, FREEZE, _probes(("6.4.1", 1), ("2.1.0", 4)))
     assert [c.verdict for c in failed] == [
         "not probed",
-        "kept: uncapped suite failed",
-        "not binding",
+        "kept: the suite fails without it",
+        "kept: the suite fails without it",
     ]
-    not_run = dw.cap_outcomes(REQS, policy, FREEZE, None, False)
+    # Both pass alone: only the first is lifted, the other waits a run.
+    both = dw.cap_outcomes(REQS, policy, FREEZE, _probes(("6.4.1", 0), ("2.1.0", 0)))
+    assert [(c.verdict, c.stale_comment) for c in both] == [
+        ("not probed", False),
+        ("lifted", False),
+        ("deferred: passes alone; one cap is lifted per run", False),
+    ]
+    not_run = dw.cap_outcomes(REQS, policy, FREEZE, {})
     assert [c.verdict for c in not_run] == [
         "not probed",
-        "kept: uncapped arm not run",
-        "kept: uncapped arm not run",
+        "kept: not probed in this run",
+        "kept: not probed in this run",
+    ]
+    lifted_bib = dw.cap_outcomes(
+        REQS, policy, FREEZE, _probes(("4.4.13", 0), ("2.1.0", 0))
+    )
+    assert [(c.verdict, c.stale_comment) for c in lifted_bib] == [
+        ("not probed", False),
+        ("not binding", False),
+        ("lifted", True),  # no comment_marker: its comment is flagged
     ]
 
 
@@ -565,14 +593,15 @@ def _report(**kw: object) -> Any:
 
 
 def test_effective_freeze_and_exit_codes(policy: object) -> None:
-    uncapped = {**FREEZE, "neo4j": "6.0.2"}
-    caps = dw.cap_outcomes(REQS, policy, FREEZE, uncapped, True)
-    lifted = _report(
-        capped=_arm("capped", FREEZE, 0),
-        uncapped=_arm("uncapped", uncapped, 0),
-        caps=caps,
-    )
-    assert dw.effective_freeze(lifted) == uncapped
+    probes = _probes(("6.0.2", 0), ("1.4.3", 0))
+    caps = dw.cap_outcomes(REQS, policy, FREEZE, probes)
+    lifted = _report(capped=_arm("capped", FREEZE, 0), uncapped=probes, caps=caps)
+    assert dw.effective_freeze(lifted) == {**FREEZE, "neo4j": "6.0.2"}
+    two = [c.model_copy(update={"verdict": "lifted"}) for c in caps[1:]]
+    with pytest.raises(ValueError, match="more than one cap lifted"):
+        dw.effective_freeze(
+            _report(capped=_arm("capped", FREEZE, 0), uncapped=probes, caps=two)
+        )
     kept = _report(capped=_arm("capped", FREEZE, 0), caps=[])
     assert dw.effective_freeze(kept) == FREEZE
     red = _report(capped=_arm("capped", FREEZE, 1), status="suite-failed")

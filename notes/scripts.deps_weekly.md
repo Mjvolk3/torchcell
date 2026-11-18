@@ -87,3 +87,37 @@ the dry run). `make deps-weekly` runs a dry run; `make deps-weekly DEPS_ARGS=` a
 
 Not exercised for real: `--land`, the commit/push/PR path and the issue path (the
 decision logic is unit-tested in [[tests.scripts.test_deps_weekly]]).
+
+## 2026.11.17 - One uncapped arm per probed cap, and the first dry runs
+
+Step 6 above changed after the third dry run. One arm that stripped every probed cap at
+once could not judge them separately: bibtexparser 2.1.0 has no
+`bibtexparser.bibdatabase`, so `torchcell/literature/bib.py` failed to import, pytest
+stopped at `tests/torchcell/conftest.py` (exit 4, no summary line, 14 s), and neo4j 6.4.1,
+installed in the same arm, was never tested. Now each cap with `probe = true` gets its own
+arm `uncapped-<name>` with only that cap removed. A binding cap whose arm passes is
+lifted, but at most one per run (the first in file order): each arm tested one cap
+removed, so lifting two at once would ship a combination no arm ran. The others are
+reported "deferred" and next week's run tests them on top of the lifted one. The lifted
+cap's arm is the resolution the rewritten files and the lock describe.
+
+Dry runs on 2026-11-17 (`run --dry-run --keep-work`, GilaHyper, conda Python 3.13.0;
+driver logs `/scratch/tmp/torchcell-deps-weekly/dryrun-2026.11.17*.log`):
+
+- Torch pick: 2.12.1 (PyPI latest 2.15.0; 2.15.0 and 2.14.1 have no PyG page, 2.14.0
+  and 2.13.0 list no torch_scatter). `torch-scatter==2.1.2+pt212cpu` installed as a
+  prebuilt wheel. Capped install 47 to 51 s with a cold uv cache.
+- Run 1 (work dir `2026.11.17`): capped arm `16246 passed, 1176 skipped, 10 xfailed,
+  7930 warnings in 1113.11s`, then the job stopped with exit 2 because notes created in
+  the worktree during the run made it dirty (the post-suite guard working as meant).
+- Run 2 (`2026.11.17-rerun`, identical resolution): `1 failed, 16245 passed` in
+  1077.25 s. The failure was
+  `tests/torchcell/sequence/genome/scerevisiae/test_s288c_synthetic.py::test_concurrent_processes_keep_the_original_pair_over_an_earlier_one`
+  (one of four racing processes exited 1). The same test passed 15 of 15 times alone in
+  the job's venv and 15 of 15 in the conda env. Hypothesis (untested): a load-dependent
+  race in the test, not a dependency regression; the same versions passed run 1 and
+  run 3.
+- Run 3 (`2026.11.17-run3`): capped arm `16246 passed, 1176 skipped, 10 xfailed, 7929
+  warnings in 1087.17s`; the single uncapped arm (neo4j 6.4.1 with bibtexparser 2.1.0)
+  failed at conftest import as described above. Would raise 44 floors and move the CI
+  torch from 2.11.0 to 2.12.1.

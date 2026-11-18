@@ -13,7 +13,7 @@
    checkout), and ``pytest tests/torchcell`` run hermetically;
 3. diffs the resolution against ``env/tested/requirements.lock.txt`` (which packages
    moved);
-4. arm ``uncapped`` (only when ``capped`` passed and a cap in ``env/deps_policy.toml``
+4. one arm ``uncapped-<name>`` per cap with ``probe = true`` in ``env/deps_policy.toml``
    has ``probe = true``): the same with the probed caps removed; a cap the resolver then
    exceeds, with the suite still passing, is lifted;
 5. when ``capped`` passed: rewrites the lock, ``env/torch-ci-version.txt``, the floors in
@@ -94,14 +94,16 @@ LOCK_HEADER = (
     "# weekly run whose test suite passed (the last known good). See env/tested/README.md.\n"
 )
 
-ArmName = Literal["capped", "uncapped"]
+# "capped", or "uncapped-<canonical name of the probed cap>".
+ArmName = str
 Status = Literal["running", "no-change", "changes", "suite-failed", "job-failed"]
 CapVerdict = Literal[
     "not probed",
     "not binding",
     "lifted",
-    "kept: uncapped suite failed",
-    "kept: uncapped arm not run",
+    "kept: the suite fails without it",
+    "kept: not probed in this run",
+    "deferred: passes alone; one cap is lifted per run",
 ]
 
 
@@ -249,16 +251,19 @@ def requirement_lines(text: str) -> list[ReqLine]:
     return [r for r in (parse_requirement_line(x) for x in text.split("\n")) if r]
 
 
-def strip_probed_caps(text: str, policy: DepsPolicy) -> str:
-    """The requirements text with every ``probe = true`` cap removed (uncapped arm)."""
+def strip_one_cap(text: str, name: str) -> str:
+    """The requirements text with the bound of ``name`` (any spelling) removed."""
     out: list[str] = []
+    found = False
     for line in text.split("\n"):
         req = parse_requirement_line(line)
-        cap = policy.cap(req.name) if req else None
-        if req is not None and cap is not None and cap.probe:
+        if req is not None and req.canonical == canonicalize_name(name):
             out.append(strip_cap(req).render())
+            found = True
         else:
             out.append(line)
+    if not found:
+        raise ValueError(f"{name} is not in the requirements text")
     return "\n".join(out)
 
 
@@ -578,28 +583,39 @@ def cap_outcomes(
     requirements_text: str,
     policy: DepsPolicy,
     capped: Mapping[str, str],
-    uncapped: Mapping[str, str] | None,
-    uncapped_passed: bool,
+    probes: Mapping[str, ArmResult],
 ) -> list[CapOutcome]:
-    """One verdict per cap. A cap binds when the uncapped version breaks its bound."""
+    """One verdict per cap, from the arm that removed that cap alone.
+
+    ``probes`` maps a cap's canonical name to its ``uncapped-<name>`` arm. A cap binds
+    when its arm installed a version outside the bound. A binding cap whose arm passed
+    is lifted, but only the first such cap in file order: each arm tested one cap
+    removed, so two lifted together would be an untested combination; the others are
+    deferred to the next run, which tests them on top of this one.
+    """
     out: list[CapOutcome] = []
+    lifted_one = False
     for req in requirement_lines(requirements_text):
         cap = policy.cap(req.name)
         if cap is None:
             continue
         cv = capped.get(req.canonical)
-        uv = uncapped.get(req.canonical) if uncapped is not None else None
+        arm = probes.get(req.canonical)
+        uv = arm.freeze.get(req.canonical) if arm is not None else None
         verdict: CapVerdict
         if not cap.probe:
             verdict = "not probed"
-        elif uncapped is None or uv is None:
-            verdict = "kept: uncapped arm not run"
+        elif arm is None or uv is None:
+            verdict = "kept: not probed in this run"
         elif Version(uv) in SpecifierSet(",".join(req.specs)):
             verdict = "not binding"
-        elif uncapped_passed:
-            verdict = "lifted"
+        elif not arm.passed:
+            verdict = "kept: the suite fails without it"
+        elif lifted_one:
+            verdict = "deferred: passes alone; one cap is lifted per run"
         else:
-            verdict = "kept: uncapped suite failed"
+            verdict = "lifted"
+            lifted_one = True
         out.append(
             CapOutcome(
                 name=req.name,
@@ -661,7 +677,8 @@ class DepsReport(BaseModel):
     status: Status = "running"
     torch: TorchChoice | None = None
     capped: ArmResult | None = None
-    uncapped: ArmResult | None = None
+    # canonical cap name -> its uncapped-<name> arm
+    uncapped: dict[str, ArmResult] = {}
     baseline: str | None = None
     moved: FreezeDiff | None = None
     floor_raises: list[FloorRaise] = []
@@ -681,13 +698,14 @@ class DepsReport(BaseModel):
 
 
 def effective_freeze(report: DepsReport) -> dict[str, str]:
-    """The resolution the rewritten files describe: uncapped when a cap was lifted."""
+    """The resolution the rewritten files describe: the lifted cap's arm, else capped."""
     if report.capped is None or not report.capped.passed:
         raise ValueError("the capped arm did not pass; there is no tested resolution")
-    if any(c.verdict == "lifted" for c in report.caps):
-        if report.uncapped is None:
-            raise ValueError("a cap is lifted but the uncapped arm is missing")
-        return report.uncapped.freeze
+    lifted = [c.name for c in report.caps if c.verdict == "lifted"]
+    if len(lifted) > 1:
+        raise ValueError(f"more than one cap lifted in one run: {lifted}")
+    if lifted:
+        return report.uncapped[canonicalize_name(lifted[0])].freeze
     return report.capped.freeze
 
 
@@ -714,7 +732,10 @@ def render_markdown(report: DepsReport) -> str:
             f"{t.ci_before}) |"
         )
     lines.append(f"| capped arm | {_arm_line(report.capped)} |")
-    lines.append(f"| uncapped arm | {_arm_line(report.uncapped)} |")
+    if not report.uncapped:
+        lines.append("| uncapped arms | not run |")
+    for cap_name, arm in report.uncapped.items():
+        lines.append(f"| uncapped arm ({cap_name}) | {_arm_line(arm)} |")
     lines.append(f"| head | {report.head} |")
     lines.append("")
     lines.append("### Packages that moved")
@@ -790,7 +811,14 @@ def status_line(report: DepsReport) -> str:
         f"exit={report.exit_code()}",
         f"torch={report.torch.testable if report.torch else '-'}",
         f"capped={'pass' if report.capped and report.capped.passed else ('fail' if report.capped else '-')}",
-        f"uncapped={'pass' if report.uncapped and report.uncapped.passed else ('fail' if report.uncapped else '-')}",
+        "uncapped="
+        + (
+            ",".join(
+                f"{n}:{'pass' if a.passed else 'fail'}"
+                for n, a in report.uncapped.items()
+            )
+            or "-"
+        ),
         f"moved={moved}",
         f"floors={len(report.floor_raises)}",
         f"caps-lifted={','.join(lifted) or '-'}",
@@ -1083,19 +1111,17 @@ class Job:
                 self.report.issue_url = self.file_issue(capped)
             return
 
-        probed = [n for n, c in policy.caps.items() if c.probe]
-        uncapped: ArmResult | None = None
-        if probed:
-            uncapped_req = self.work / "requirements.uncapped.txt"
-            uncapped_req.write_text(strip_probed_caps(req_text, policy))
-            uncapped = self.arm("uncapped", uncapped_req, probed, choice.testable)
-            self.report.uncapped = uncapped
+        # One arm per probed cap, so a cap that breaks the suite cannot hide another
+        # (2026-11-17: bibtexparser 2 failed at conftest import and masked neo4j 6).
+        for key in [n for n, c in policy.caps.items() if c.probe]:
+            canon = canonicalize_name(key)
+            probe_req = self.work / f"requirements.uncapped-{canon}.txt"
+            probe_req.write_text(strip_one_cap(req_text, key))
+            self.report.uncapped[canon] = self.arm(
+                f"uncapped-{canon}", probe_req, [key], choice.testable
+            )
         self.report.caps = cap_outcomes(
-            req_text,
-            policy,
-            capped.freeze,
-            uncapped.freeze if uncapped else None,
-            uncapped.passed if uncapped else False,
+            req_text, policy, capped.freeze, self.report.uncapped
         )
         self.plan_and_apply(policy, req_text, choice)
 

@@ -1,7 +1,7 @@
 # experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py
 # [[experiments.034-showcase-datasets.scripts.ecoli_download_tutorial_page]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page
-"""Run the E. coli download tutorial on a host, and write the page fragments from the runs.
+"""Run the E. coli tutorial on a host, and write the page fragments from the runs.
 
 Two subcommands, both standard library only, because ``run`` is also executed on a
 machine that holds nothing but a fresh venv with torchcell in it:
@@ -13,23 +13,29 @@ machine that holds nothing but a fresh venv with torchcell in it:
     repository). Records the standard output and its sha256, the seconds each loader
     took (the tutorial's own timings file), the bytes each dataset occupies on disk, the
     four index rows of the endpoint, and the versions of the interpreter and of the
-    packages the output depends on. Writes one JSON file per host.
+    packages the output depends on. Writes one JSON file per host. With
+    ``--figures-out`` it also copies the SVG figures the tutorial drew into that
+    directory, which is how the reference host's figures reach the page.
 
 ``page``
     Reads every ``results/ecoli_download_tutorial.<host>.json``, every
     ``results/install_benchmark.<host>.json`` and every
     ``results/install_release_check.<host>.json`` (the same benchmark script run on a
-    later release) and writes the MyST fragments the page includes into
-    ``docs/source/datasets/ecoli/_generated/download-tutorial/``. The
-    printed output on the page is the reference host's; ``page`` exits 1 when any other
-    host printed different bytes, so the page cannot claim an agreement that did not
-    hold.
+    later release) and writes the MyST fragments three pages include. The printed
+    output, the dataset table, the download seconds and the archive table go to
+    ``docs/source/datasets/ecoli/_generated/tutorial/`` for ``datasets/ecoli/tutorial``
+    and ``datasets/ecoli/download``. The install timings, the release check and the
+    table of runs go to ``docs/source/guide/_generated/install-timings/`` for
+    ``guide/install-timings``. The printed output on the pages is the reference host's;
+    ``page`` exits 1 when any other host printed different bytes, so the pages cannot
+    claim an agreement that did not hold.
 
 Usage, from the repository root::
 
     python experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py run \
         --python ~/miniconda3/envs/torchcell/bin/python --pythonpath "$PWD" \
         --installed-from "repository checkout" --work <empty dir> \
+        --figures-out docs/source/datasets/ecoli/_generated/tutorial \
         --out experiments/034-showcase-datasets/results/ecoli_download_tutorial.gilahyper.json
     python experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py page
 """
@@ -42,6 +48,7 @@ import json
 import os
 import platform
 import re
+import shutil
 import socket
 import subprocess
 import sys
@@ -54,7 +61,8 @@ from typing import Any
 SCRIPT = "experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py"
 TUTORIAL = "experiments/034-showcase-datasets/scripts/ecoli_download_tutorial.py"
 RESULTS_DIR = Path("experiments/034-showcase-datasets/results")
-FRAGMENT_DIR = Path("docs/source/datasets/ecoli/_generated/download-tutorial")
+FRAGMENT_DIR = Path("docs/source/datasets/ecoli/_generated/tutorial")
+INSTALL_DIR = Path("docs/source/guide/_generated/install-timings")
 TIMINGS_FILE = "data/torchcell/ecoli_download_tutorial_timings.json"
 BANNER = re.compile(r"^={12} (.+) ={12}$")
 
@@ -89,8 +97,11 @@ DATASETS: tuple[tuple[str, str, str, str], ...] = (
 # Values per record. One for the two scalar labels; for the other two the tutorial
 # prints the shape of the table it builds, and the number is read from that line.
 WIDTH_PATTERNS: dict[str, tuple[str, str]] = {
-    "ecoli_morphology_campos2018": ("morphology", r"^table shape\s+\(\d+, (\d+)\)$"),
-    "metabolome_fuhrer2017": ("metabolome", r"^matrix shape \(\d+, (\d+)\) "),
+    "ecoli_morphology_campos2018": (
+        "morphology table",
+        r"^table shape\s+\(\d+, (\d+)\)$",
+    ),
+    "metabolome_fuhrer2017": ("metabolome matrix", r"^matrix shape \(\d+, (\d+)\) "),
 }
 PROBE = """
 import json, sys, numpy, pandas, torch, torchcell
@@ -211,6 +222,11 @@ def run_tutorial(args: argparse.Namespace) -> int:
     out: Path = args.out
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    if args.figures_out:
+        args.figures_out.mkdir(parents=True, exist_ok=True)
+        for figure in sorted((work / "figures").glob("*.svg")):
+            shutil.copyfile(figure, args.figures_out / figure.name)
+            print(f"copied {figure.name} to {args.figures_out}")
     print(
         "wrote {} (stdout sha256 {}, {:.1f} s)".format(
             out, result["stdout_sha256"], seconds
@@ -312,6 +328,7 @@ def write_page(args: argparse.Namespace) -> int:
 
     stamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     FRAGMENT_DIR.mkdir(parents=True, exist_ok=True)
+    INSTALL_DIR.mkdir(parents=True, exist_ok=True)
     by_section = sections(reference["stdout"])
     for title, text in by_section.items():
         name = "output_{}.md".format(title.replace(" ", "_"))
@@ -424,7 +441,7 @@ def write_page(args: argparse.Namespace) -> int:
         ]
         for name in hosts
     ]
-    (FRAGMENT_DIR / "runs.md").write_text(
+    (INSTALL_DIR / "runs.md").write_text(
         header(stamp)
         + table(
             [
@@ -511,7 +528,7 @@ def write_page(args: argparse.Namespace) -> int:
             for name in bench_hosts
             if {"uv_cold", "pip_cold"} <= set(by_arm[name])
         ]
-        (FRAGMENT_DIR / "install_benchmark.md").write_text(
+        (INSTALL_DIR / "install_benchmark.md").write_text(
             header(stamp)
             + ("With an empty cache, " + ", and ".join(cold) + ".\n\n" if cold else "")
             + table(head, bench_rows, right=set(range(2, len(head))))
@@ -563,7 +580,7 @@ def write_page(args: argparse.Namespace) -> int:
                         imports,
                     ]
                 )
-        (FRAGMENT_DIR / "install_release_check.md").write_text(
+        (INSTALL_DIR / "install_release_check.md").write_text(
             header(stamp)
             + table(
                 [
@@ -579,7 +596,8 @@ def write_page(args: argparse.Namespace) -> int:
             ),
             encoding="utf-8",
         )
-    print(f"wrote {len(list(FRAGMENT_DIR.glob('*.md')))} fragments to {FRAGMENT_DIR}")
+    for directory in (FRAGMENT_DIR, INSTALL_DIR):
+        print(f"{len(list(directory.glob('*.md')))} fragments in {directory}")
     return 0
 
 
@@ -605,6 +623,9 @@ def main() -> int:
         "--work", required=True, type=Path, help="empty directory to run in"
     )
     run.add_argument("--out", required=True, type=Path)
+    run.add_argument(
+        "--figures-out", default=None, type=Path, help="copy the SVG figures here"
+    )
     page = sub.add_parser("page", help="write the page fragments from the result files")
     page.add_argument("--reference", default="gilahyper")
     args = parser.parse_args()

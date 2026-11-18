@@ -46,10 +46,10 @@ DATASET_ID = re.compile(r"dataset\.id = '([A-Za-z0-9_]+)'")
 # ``docs_page`` on: dataset class -> page, relative to ``docs/source/datasets``. A page
 # from the registry takes precedence.
 TUTORIAL_PAGES = {
-    "GrowthRateCampos2018Dataset": "ecoli/download-tutorial",
-    "MorphologyCampos2018Dataset": "ecoli/download-tutorial",
-    "GeneInteractionBabu2014Dataset": "ecoli/download-tutorial",
-    "MetabolomeFuhrer2017Dataset": "ecoli/download-tutorial",
+    "GrowthRateCampos2018Dataset": "ecoli/tutorial",
+    "MorphologyCampos2018Dataset": "ecoli/tutorial",
+    "GeneInteractionBabu2014Dataset": "ecoli/tutorial",
+    "MetabolomeFuhrer2017Dataset": "ecoli/tutorial",
 }
 
 

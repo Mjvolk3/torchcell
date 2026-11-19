@@ -5,4 +5,4 @@
 
 """Package version string for torchcell."""
 
-__version__ = "1.8.6"  # Linked to semantic-release in toml
+__version__ = "1.8.7"  # Linked to semantic-release in toml

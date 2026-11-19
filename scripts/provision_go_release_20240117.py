@@ -24,7 +24,12 @@ from pathlib import Path
 
 import httpx
 
-from torchcell.literature.manifest import ArtifactRecord, RetrievalRecord, sha256_file
+from torchcell.literature.manifest import (
+    ArtifactRecord,
+    RetrievalMethod,
+    RetrievalRecord,
+    sha256_file,
+)
 from torchcell.sequence.genome.registry import (
     GO_RELEASE_20240117,
     ROLE_ONTOLOGY,

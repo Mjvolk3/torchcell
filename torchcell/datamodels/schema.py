@@ -824,6 +824,8 @@ NON_ASSEMBLY_REGISTRY_SETS: dict[str, str] = {
     "hale2024_322134S_variants": "a variant table of the 3S parent against S288C, not an "
     "assembly; a Hale 2024 record pins the S288C release the variants are called on",
     "go_release_2026-08-05": "an ontology release, not a genome",
+    "go_release_2024-01-17": "an ontology release, not a genome; the go.obo the S288C "
+    "genome class reads",
 }
 
 #: The NCBI accessions of each assembly set: the GenBank / RefSeq pair read from the

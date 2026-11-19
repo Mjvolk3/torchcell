@@ -1,0 +1,46 @@
+{
+  "record_version": 1,
+  "slug": "go-release-2024-01-17-is-a-non-assembly-registry-set",
+  "date": "2026-11-19",
+  "pr": 1194,
+  "author_kind": "agent",
+  "base_commit": "533a55de79f1b715038802aaeae2885c59e8bdd2",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "NON_ASSEMBLY_REGISTRY_SETS",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "224c90366abcb71a025f0c630353d144438619c8b6b9df5a5d0cf8481a02749c",
+      "fingerprint_after": "9454ddf601fbb637210b5a06b36b232e3a04c9f98cef0c0265c0728a185efc83",
+      "impact": "stale",
+      "reasons": [
+        "gained members [\"'go_release_2024-01-17': 'an ontology release, not a genome; the go.obo the S288C genome class reads'\"]"
+      ]
+    }
+  ],
+  "correctness_argument": "The genome registry gained the set id go_release_2024-01-17 in PR #1192: the dated go.obo (sha256 ad2f0502...aa9ff, 34,420,328 bytes) that the S288C genome class reads, deposited so that a new machine reads the same ontology as every existing one. The vocabulary test requires every registry set id to be placed either in AssemblySet (an assembly a record pins) or in NON_ASSEMBLY_REGISTRY_SETS (with its reason), and PR #1192 placed it in neither, so the test has failed on main since 68d93d74a. An ontology release is not an assembly: no record's identifiers are written against it and no ASSEMBLY_SET_ACCESSIONS entry could exist for it. It therefore belongs in NON_ASSEMBLY_REGISTRY_SETS beside go_release_2026-08-05, which is there for the same reason. AssemblySet, and so every record field typed by it, is unchanged; no stored record serializes differently.",
+  "measurement_type_decision": false,
+  "source_quotes": [],
+  "alternatives_rejected": [
+    {
+      "alternative": "Add go_release_2024-01-17 to AssemblySet.",
+      "why_rejected": "A record would then be allowed to pin an ontology file as its genome assembly, and ASSEMBLY_SET_ACCESSIONS requires a GCA_ accession it cannot have."
+    },
+    {
+      "alternative": "Exclude the constant by name in the vocabulary test.",
+      "why_rejected": "The test's exclusion list is for registry constants that are not set ids; this one is a deposited set, and the mapping exists so each such set is placed in writing with its reason."
+    }
+  ],
+  "served_release": "2026.10.17-4295f7ca",
+  "affected_loaders": [],
+  "served_datasets": [],
+  "rebuild_scope": "none",
+  "owner_sign_off": {
+    "signed": false,
+    "quote": null,
+    "url": null
+  }
+}

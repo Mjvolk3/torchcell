@@ -54,10 +54,12 @@ from torchcell.datasets.ecoli.campos2018 import (
 )
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.endpoint_http import DEFAULT_URL
+from torchcell.sequence.genome.standard import genome_for, standard_genomes
 
 # A loader downloads its built store only when TC_DATA_URL is set. Without it the loader
 # builds the store from the publisher's files, which is the developer path.
 os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)
+os.environ.setdefault("DATA_ROOT", ".")  # genome files go to ./torchcell-genomes/
 
 DATA = Path("data/torchcell")  # each dataset unpacks into DATA/<slug>/
 pd.set_option("display.precision", 4)
@@ -640,6 +642,53 @@ overlap = pd.DataFrame(
 print(overlap.to_string())
 overlap
 # [/gene_overlap]
+
+section("genome standard")
+# [genome_standard]
+for row in standard_genomes():  # every genome that loads by its assembly-set id
+    print(f"{row.assembly_set:32} {row.organism} {row.strain} -> {row.class_name}")
+# [/genome_standard]
+
+section("genome load")
+# [genome_load]
+# genome_for reads the assembly set the records name, fetches its files (original
+# source first, the torchcell mirror when the source fails or its bytes changed, every
+# file checked against its sha256) and returns the genome object.
+genomes = {slug: genome_for(dataset) for slug, dataset in loaded.items()}
+resolved = {}  # slug -> {identifier the dataset stores -> how the genome resolves it}
+for slug, dataset in loaded.items():
+    genome = genomes[slug]
+    resolved[slug] = {name: genome.resolve_gene_name(name) for name in dataset.gene_set}
+    status = pd.Series([r.status.value for r in resolved[slug].values()]).value_counts()
+    print(slug)
+    print(f"  genome        {type(genome).__name__} ({genome.ASSEMBLY_SET})")
+    print(f"  genome genes  {len(genome.gene_set):,}")
+    print(f"  dataset genes {len(dataset.gene_set):,}: {status.sort_index().to_dict()}")
+# [/genome_load]
+
+section("genome record")
+# [genome_record]
+# One record as model input. The nodes of a cell graph are the genes of the genome; a
+# strain is the indices of the nodes it perturbs, and the phenotype is the label.
+slug = "gene_interaction_babu2014"
+genome = genomes[slug]
+nodes = list(genome.gene_set)  # sorted, so a node index is stable
+node_index = {gene: i for i, gene in enumerate(nodes)}
+
+experiment = interaction[0]["experiment"]
+stored = [p["systematic_gene_name"] for p in experiment["genotype"]["perturbations"]]
+targets = [resolved[slug][name].systematic_name for name in stored]
+print("stored identifiers ", stored)
+print("genome locus tags  ", targets)
+print("perturbed nodes    ", [node_index[t] for t in targets], f"of {len(nodes):,}")
+print("label              ", experiment["phenotype"]["label_name"])
+for target in targets:
+    gene = genome[target]  # sequence, protein and annotation of one node
+    print(
+        f"{gene.id} {gene.symbol}: {len(gene.seq):,} bp, "
+        f"protein {len(gene.protein.seq):,} aa, GO terms {len(gene.go)}"
+    )
+# [/genome_record]
 
 section("verify")
 

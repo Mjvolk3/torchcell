@@ -86,7 +86,7 @@ COLAB_BADGE = (
 )
 # %pip installs into the notebook's own environment (a bare !pip runs whichever pip is
 # first on PATH). The flag hides pip's warnings about Colab's own preinstalled packages.
-COLAB_INSTALL = "%pip install -q --no-warn-conflicts torchcell\n"
+COLAB_INSTALL = '%pip install -q --no-warn-conflicts "torchcell>=1.8.7"\n'
 NOTEBOOK: tuple[tuple[str, str], ...] = (
     (
         "md",
@@ -109,7 +109,8 @@ NOTEBOOK: tuple[tuple[str, str], ...] = (
     ("raw", COLAB_INSTALL),
     (
         "md",
-        "## Setup\n\nSetting `TC_DATA_URL` makes each loader download its built store. "
+        "## Setup\n\nSetting `TC_DATA_URL` makes each loader download its built store, "
+        "and `DATA_ROOT` is where the genome files go. "
         "`show` prints one part of a record as indented JSON.",
     ),
     ("code", "setup"),
@@ -196,6 +197,31 @@ NOTEBOOK: tuple[tuple[str, str], ...] = (
         "Gene symbols shared by each pair of datasets (the diagonal is the dataset's own count).",
     ),
     ("code", "gene_overlap"),
+    (
+        "md",
+        "## The genome behind each dataset\n\nEvery record names the genome assembly "
+        "it is written against. The genomes that load by that id:",
+    ),
+    ("code", "genome_standard"),
+    (
+        "md",
+        "`genome_for(dataset)` looks the assembly up from the records, downloads its "
+        "files into `./torchcell-genomes/` and returns the genome. Each file comes "
+        "from its original source when the bytes there still match the recorded "
+        "sha256 and from the torchcell mirror otherwise. `resolve_gene_name` maps an "
+        "identifier the dataset stores to a locus tag of that genome and says how: "
+        "`current`, `renamed` (an alias of one current gene), `non_gene_feature` (a "
+        "locus the annotation does not class as a gene) or `retired` (not in the "
+        "annotation).",
+    ),
+    ("code", "genome_load"),
+    (
+        "md",
+        "One record as model input: the genes of the genome are the nodes of the "
+        "cell graph, the strain is the indices of the nodes it perturbs, and the "
+        "phenotype is the label. A node carries its sequence, protein and GO terms.",
+    ),
+    ("code", "genome_record"),
     (
         "md",
         "## Check the records against the release\n\nHashing the loaded records "

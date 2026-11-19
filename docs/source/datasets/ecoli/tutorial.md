@@ -59,6 +59,23 @@ The gene symbol is the one name all four datasets carry, so it is the key to joi
 ```{include} _generated/tutorial/output_gene_overlap.md
 ```
 
+## The genome behind each dataset
+
+Every record names the genome assembly it is written against, and `genome_for(dataset)` returns that genome: it reads the assembly id from the records, downloads the files into `./torchcell-genomes/` and builds the genome object. Each file is taken from its original source when the bytes there still match the recorded sha256 and from the torchcell mirror otherwise. `load_genome("<assembly set>")` loads one of these by its id without a dataset.
+
+```{include} _generated/tutorial/output_genome_standard.md
+```
+
+Three of the four datasets are written against BW25113, the Keio parent strain, and the Babu 2014 pairs against MG1655. `resolve_gene_name` maps each identifier a dataset stores to a locus tag of its genome and reports how it resolved: `current`, `renamed` (an alias of one current gene), `non_gene_feature` (a locus the annotation does not class as a gene) or `retired` (not in the annotation). The records themselves are never filtered by the genome.
+
+```{include} _generated/tutorial/output_genome_load.md
+```
+
+The genes of the genome are the nodes of a cell graph. A record becomes model input as the indices of the nodes its strain perturbs, with the phenotype as the label, and each node carries its sequence, protein and GO terms.
+
+```{include} _generated/tutorial/output_genome_record.md
+```
+
 ## Growth rate (Campos 2018)
 
 ```{include} _generated/tutorial/glance_ecoli_growth_rate_campos2018.md

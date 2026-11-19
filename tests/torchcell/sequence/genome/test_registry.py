@@ -166,7 +166,8 @@ def _hint(root: str, assembly_set: str) -> str:
     return (
         f"assembly set {assembly_set!r} is not present under {root}; seed it with: "
         "rsync -a gilahyper:/scratch/projects/torchcell-scratch/torchcell-genomes/"
-        f"{assembly_set}/ {root}/{assembly_set}/"
+        f"{assembly_set}/ {root}/{assembly_set}/ "
+        "(or fetch it with torchcell.sequence.genome.standard.fetch_assembly_set)"
     )
 
 

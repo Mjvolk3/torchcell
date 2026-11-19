@@ -12,9 +12,12 @@ graph stores pointers (an assembly-set id, a member path, a sha256); this module
 one place those pointers are dereferenced to a file on disk, and it verifies the sha256
 on every resolve.
 
-There is deliberately no fallback to the legacy locations (``data/sgd/genome``, the
-literature mirror): a machine without the tier fails at ``resolve`` with the rsync
-command that seeds it, rather than running on bytes nothing has verified.
+``resolve`` is a pure path authority: it never downloads, and there is no fallback to
+the legacy locations (``data/sgd/genome``, the literature mirror). A machine without a
+set fails at ``resolve`` with the two ways to seed it: the fetch that
+``torchcell.sequence.genome.standard`` runs automatically for a standard genome (the
+recorded source first, the tc-data mirror when the source fails or has changed, both
+held to the manifest's sha256), or an rsync from the canonical tier.
 """
 
 from __future__ import annotations
@@ -109,6 +112,11 @@ PPUTIDA_KT2440: Final = "pputida_KT2440_ASM756v2"
 #: The GO Consortium release of 2026-08-05: ``go-basic.obo``, one copy that every
 #: bacterial set pins by this id instead of carrying its own.
 GO_RELEASE_20260805: Final = "go_release_2026-08-05"
+#: The GO Consortium release of 2024-01-17: ``go.obo``, the file ``SCerevisiaeGenome``
+#: has read from ``<go_root>/go.obo`` on every machine since 2024-03-15 (the class
+#: downloaded the then-current file). Pinned so a new machine reads the same ontology.
+#: Deposited by ``scripts/provision_go_release_20240117.py``.
+GO_RELEASE_20240117: Final = "go_release_2024-01-17"
 #: Hale et al. 2024 Supplemental Data 13: the 3S (322134S) parent's variants against
 #: S288C (SNVs and single-base indels). A VARIANT TABLE, not an assembly: no public 3S
 #: assembly exists, so this is the sequence reference the BYx3S segregant mosaics pin
@@ -212,7 +220,8 @@ def assembly_set_dir(assembly_set: str, data_root: str | None = None) -> str:
 def _seed_hint(assembly_set: str, root: str) -> str:
     return (
         f"assembly set {assembly_set!r} is not present under {root}; seed it with: "
-        f"rsync -a {CANONICAL_HOST_ROOT}/{assembly_set}/ {root}/{assembly_set}/"
+        f"rsync -a {CANONICAL_HOST_ROOT}/{assembly_set}/ {root}/{assembly_set}/ "
+        "(or fetch it with torchcell.sequence.genome.standard.fetch_assembly_set)"
     )
 
 

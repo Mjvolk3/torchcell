@@ -10,7 +10,9 @@ route to the public endpoint, nothing else; run it in an empty directory::
 
 It downloads the four dataset stores into ``./data/torchcell/<slug>/`` and the genome
 files into ``./torchcell-genomes/<assembly_set>/``, every file checked against its
-sha256. For each dataset it prints which genome was looked up, how the dataset's gene
+sha256. A genome file is taken from its original source when the bytes there still match
+and from the torchcell mirror otherwise; ``fetch_report.json`` beside the files says
+which. For each dataset it prints which genome was looked up, how the dataset's gene
 identifiers resolve against that genome, and one record turned into the two things a
 cell graph transformer consumes: the node set (the genome's genes) and the indices of
 the nodes a strain perturbs, with the measured label.
@@ -31,7 +33,7 @@ from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.endpoint_http import DEFAULT_URL
 from torchcell.sequence.genome.standard import genome_for, standard_genomes
 
-os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)  # download built stores and genomes
+os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)  # download the built dataset stores
 os.environ.setdefault("DATA_ROOT", ".")  # genome files go to ./torchcell-genomes/
 # [/setup]
 

@@ -1,0 +1,65 @@
+%% notes-tex/modeling/scaling-laws/sections/5-torchcell.tex
+
+\section{What an ablation looks like on the trigenic build\secstatus{todo}}
+\label{sec:torchcell}
+
+\begin{keybox}
+\textbf{Measured.} No number here is a torchcell result. The constants
+are the published ones and panel~i is synthetic.
+
+\textbf{Not measured.} Every number a scaling section of the manuscript or thesis
+would state: the exponents, the floor, and whether a curve fit on small runs
+predicts a large one. What follows is the design, with the choices each sweep
+forces written down so a run can be launched against it.
+\end{keybox}
+
+\notesec{The axes available}
+The trigenic build of experiment 025 holds 376{,}732 records with bit-identical
+labels to the 010 build, organized as 420 recurring query pairs plus one array
+gene each, and it already carries the two splits an ablation needs: the published
+random-over-records split and a query-pair-disjoint split under which no query
+double is shared between parts. The equivariant cell graph transformer trained on
+it is one architecture family whose width and depth can be scaled together. The
+axes are therefore available now; what is missing is the sweep.
+
+\notesec{The data sweep first}
+Data is the binding axis here, so the $D$-sweep is the one to run before any
+other. Nested subsets of the disjoint-split training set at 1/64, 1/16, 1/4 and 1,
+drawn by query pair so that a smaller subset removes whole screens, against the
+one fixed disjoint test set; a model at the current configuration's size; the
+loss recorded per epoch and the validation-selected checkpoint scored on test.
+Four points give a slope and, with the held-out largest subset, the first
+extrapolation test. The reading the sweep is for: whether the loss is still
+falling with $D$ at the full set, which says a new screen is worth more than a
+larger model, or has flattened, which says the opposite.
+
+\notesec{The parameter sweep}
+Five sizes of the transformer, width and depth in the fixed ratio of the current
+configuration, spaced evenly in $\log N$ over about two decades, with the gene
+embedding table counted separately and the curve fit on the rest; three seeds at
+the two smallest sizes; learning rate tuned per size, or transferred under $\mu$P
+once the parametrization is checked against the model code. Every run on the full
+disjoint training set, so that this sweep reads $L(N)$ with data as fixed as it
+can be made.
+
+\notesec{The floor from the replicates}
+Before either sweep, the replicate standard deviations of the test records give
+the noise-variance bound on $E$ in the loss's units. Whether the trigenic
+interaction score's released uncertainty is a sample standard deviation over
+colonies or a bootstrap standard error, and over how many colonies, is already
+recorded for the Kuzmin and Costanzo screens in the noise-computation note, and
+the bound follows from it. That number is the first thing to set beside a fitted
+$E$.
+
+\notesec{Compute}
+The cost per record of the transformer depends on how many gene tokens a record
+carries and on the graph penalty, so $C$ is read from a profiler at each size
+rather than from $6ND$. The IsoFLOP sweep is third in priority: it answers how to
+split a budget, which matters once the first two sweeps have shown that the
+budget buys anything.
+
+\notesec{What the section in the manuscript would then say}
+A scaling section is one figure, three panels, $L$ against $D$, against $N$ and
+against $C$, each with its fitted exponent and interval, the held-out largest run
+marked, and $E$ drawn against the replicate floor. Until the sweeps have run, that
+figure is a plan, and the sweeps above are its specification.

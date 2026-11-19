@@ -1,0 +1,120 @@
+{
+  "project": "torchcell_019_expr_v9",
+  "n_runs": 40,
+  "n_collapsed": 5,
+  "n_short": 9,
+  "min_epochs": 1000,
+  "n_live": 27,
+  "n_skipped": 30,
+  "skipped": {
+    "1h21uhl9": "no plain Pearson or no val/loss in summary",
+    "23kaqywv": "no plain Pearson or no val/loss in summary",
+    "8kwl5p4f": "no plain Pearson or no val/loss in summary",
+    "m10ns9mn": "no plain Pearson or no val/loss in summary",
+    "npi26er1": "no plain Pearson or no val/loss in summary",
+    "9s9kzd0m": "no plain Pearson or no val/loss in summary",
+    "fj56wrb4": "no plain Pearson or no val/loss in summary",
+    "0fymu4py": "resume, starts at epoch 10000",
+    "f1ezkzvq": "no plain Pearson or no val/loss in summary",
+    "bcqz3i4e": "no plain Pearson or no val/loss in summary",
+    "y8ex71vn": "resume, starts at epoch 2580",
+    "d94cy5az": "resume, starts at epoch 12230",
+    "g69wskm0": "resume, starts at epoch 2033",
+    "eiu664kx": "resume, starts at epoch 2033",
+    "1xa3x8uc": "resume, starts at epoch 1996",
+    "m6utaeu8": "resume, starts at epoch 1996",
+    "djgkdzol": "resume, starts at epoch 2040",
+    "8gklzy7n": "resume, starts at epoch 2040",
+    "7v9l6ett": "resume, starts at epoch 2040",
+    "yrs7x07y": "resume, starts at epoch 2040",
+    "kspeoljg": "metric-aligned head pearson",
+    "ppc2pyv5": "metric-aligned head pearson_mse",
+    "hsauh7al": "metric-aligned head pearson_mse",
+    "zaul43n1": "metric-aligned head pearson",
+    "p2qq2525": "metric-aligned head pearson",
+    "4ei42tb1": "metric-aligned head pearson_mse",
+    "wb2xocf2": "metric-aligned head pearson",
+    "7ylecrjz": "metric-aligned head pearson",
+    "r4jhzqo4": "no plain Pearson or no val/loss in summary",
+    "ekukvwy1": "no plain Pearson or no val/loss in summary"
+  },
+  "n_rows_short": 0,
+  "roll_window": 5,
+  "live": {
+    "epoch_loss_min_median": 481.0,
+    "epoch_loss_min_max": 3097,
+    "n_loss_min_within_100": 0,
+    "epoch_pearson_peak_median": 2433.0,
+    "n_pearson_peak_within_100": 0,
+    "pearson_gain_after_loss_min_median": 0.05656986385583879,
+    "loss_rel_excess_at_100_median": 0.0411600820761118,
+    "loss_final_rel_excess_median": 0.08968039245722567,
+    "loss_at_pearson_peak_rel_excess_median": 0.06821515695417023
+  },
+  "by_dist": {
+    "crps": {
+      "n": 2,
+      "epoch_loss_min_median": 1051.0,
+      "epoch_loss_min_range": [
+        318,
+        1784
+      ],
+      "epoch_pearson_peak_median": 1080.0,
+      "epoch_pearson_peak_range": [
+        193,
+        1967
+      ],
+      "pearson_roll_at_loss_min_mean": 0.053654962095323146,
+      "pearson_roll_max_mean": 0.09227786869741976,
+      "loss_final_rel_excess_median": 0.03363508978403962
+    },
+    "laplace_crps": {
+      "n": 3,
+      "epoch_loss_min_median": 787.0,
+      "epoch_loss_min_range": [
+        284,
+        894
+      ],
+      "epoch_pearson_peak_median": 1990.0,
+      "epoch_pearson_peak_range": [
+        1410,
+        2027
+      ],
+      "pearson_roll_at_loss_min_mean": 0.14981779257456462,
+      "pearson_roll_max_mean": 0.19268473585446674,
+      "loss_final_rel_excess_median": 0.06663099904889934
+    },
+    "listmle": {
+      "n": 4,
+      "epoch_loss_min_median": 488.0,
+      "epoch_loss_min_range": [
+        291,
+        633
+      ],
+      "epoch_pearson_peak_median": 1988.5,
+      "epoch_pearson_peak_range": [
+        1488,
+        2433
+      ],
+      "pearson_roll_at_loss_min_mean": 0.04776317505165935,
+      "pearson_roll_max_mean": 0.15302882939577103,
+      "loss_final_rel_excess_median": 0.03239003597463016
+    },
+    "quantile": {
+      "n": 18,
+      "epoch_loss_min_median": 477.0,
+      "epoch_loss_min_range": [
+        203,
+        3097
+      ],
+      "epoch_pearson_peak_median": 3269.5,
+      "epoch_pearson_peak_range": [
+        1198,
+        9682
+      ],
+      "pearson_roll_at_loss_min_mean": 0.14264008204142253,
+      "pearson_roll_max_mean": 0.19499727504120934,
+      "loss_final_rel_excess_median": 0.13404753491434668
+    }
+  }
+}

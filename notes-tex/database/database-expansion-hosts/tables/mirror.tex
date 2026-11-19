@@ -1,0 +1,45 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/audit_provenance_mirror.py
+\begin{table}[H]\centering
+\footnotesize
+\caption[]{What the two provenance mirrors actually store, measured from the trees on disk and from every \texttt{manifest.json} in them, validated through \texttt{torchcell.literature.manifest.Manifest}. \emph{Library} is \texttt{\$DATA\_ROOT/torchcell-library/} (paper PDFs, OCR markdown, SI) and \emph{Raw} is \texttt{\$DATA\_ROOT/torchcell-raw/} (the raw dataset files a loader consumed). Each cell is the share of the population carrying the property, with the count and the population size. Rows are ordered by consequence, worst first: the first block is what a rebuild cannot reproduce, the second what a drift check cannot see, the third the manifest metadata, the fourth shape drift, the last the size of each tree. \emph{Files in no manifest} is the integrity hole: bytes no sha256 pins and no recorded command re-fetches. Byte totals sum file sizes and exclude directory entries, so they read a little under \texttt{du}. \texttt{provenance\_complete} counts manifests asserting a complete chain, so a false value counts as unfilled.}
+\label{tab:mirror}
+\begin{tabular}{@{}L{74mm} L{48mm} L{48mm}@{}}
+\toprule
+Property & Library & Raw \\
+\midrule
+File records with a retrieval record & 2.4\% (599/24,950) & 75.6\% (472/624) \\
+Keys where every file record has one & 0.0\% (0/717) & 78.1\% (75/96) \\
+Retrieval source ever re-checked (\texttt{last\_check}) & 0.0\% (0/599) & 3.6\% (17/472) \\
+File records with a processing record & 1.1\% (278/24,950) & 5.1\% (32/624) \\
+\texttt{paper.md} with reproducible MinerU OCR & 15.7\% (112/715) & 0.0\% (0/1) \\
+Files on disk named in a manifest & 97.9\% (24,950/25,483) & 92.2\% (624/677) \\
+Manifest \texttt{si\_expected} (SI completeness checklist) & 0.0\% (0/717) & 92.7\% (89/96) \\
+Manifest \texttt{si\_data\_sources} & 10.5\% (75/717) & 96.9\% (93/96) \\
+Manifest \texttt{zotero\_item\_key} & 99.4\% (713/717) & 7.3\% (7/96) \\
+Manifest \texttt{collections} & 98.7\% (708/717) & 0.0\% (0/96) \\
+Manifest \texttt{doi} & 90.0\% (645/717) & 99.0\% (95/96) \\
+Manifest \texttt{provenance\_complete} true & 99.9\% (716/717) & 97.9\% (94/96) \\
+File record \texttt{original\_filename} & 2.4\% (590/24,950) & 28.4\% (177/624) \\
+File record \texttt{zotero\_md5} & 3.1\% (766/24,950) & 0.0\% (0/624) \\
+File record \texttt{source} & 9.2\% (2,291/24,950) & 100.0\% (624/624) \\
+File record \texttt{sha256} & 100.0\% (24,950/24,950) & 100.0\% (624/624) \\
+Retrieval \texttt{retriever} resolves in \texttt{RETRIEVERS} & 100.0\% (599/599) & 87.5\% (413/472) \\
+Retrieval \texttt{source\_url} & 100.0\% (599/599) & 99.8\% (471/472) \\
+\midrule
+Files in no manifest & 533 files, 0.79 GB (4.9\% of tree) & 53 files, 16.84 GB (48.2\% of tree) \\
+Manifest records whose file is gone & 0 & 0 \\
+Unresolvable \texttt{retriever} strings & 0 distinct, 0 records & 5 distinct, 59 records \\
+File records in the pre-nesting retrieval shape & 2 records in 1 key & 0 records in 0 keys \\
+Manifests with fields outside the model & 1 & 1 \\
+File roles outside the documented vocabulary & 1 distinct, 2 records & 1 distinct, 1 record \\
+Retrieval methods in use & 4 & 9 \\
+\midrule
+Bytes on disk & 16.10 GB & 34.92 GB \\
+Citation-key directories & 717 & 99 \\
+Keys carrying a manifest & 100.0\% (717/717) & 97.0\% (96/99) \\
+File records across all manifests & 24,950 & 624 \\
+Files on disk in key directories & 25,483 & 677 \\
+\bottomrule
+\end{tabular}
+\end{table}

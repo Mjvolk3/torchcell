@@ -1,0 +1,124 @@
+%% notes-tex/database/database-expansion-hosts/sections/caveats.tex
+%% [[experiments.database.expansion-hosts]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-hosts/sections/caveats.tex
+%% SOURCE: hand-authored prose; the excluded and asks tables are generated and name their own
+%% scripts. The verified, snippet and inferred labels, the retrieval classes and the HTTP
+%% responses quoted here come from the triage report
+%% /scratch/projects/torchcell-scratch/tmp/deep-research/reports/Pk and next dataset wave triage.md
+%% and its research notes; the gate and verdict-store figures from
+%% torchcell/candidates/ and database/candidates/ as recorded in
+%% .../research_notes/Pk and next dataset wave triage/local_triage_scaffold.md
+
+\section{What was dropped\secstatus{todo}}\label{sec:excluded}
+
+\input{tables/excluded}
+
+Table~\ref{tab:excluded} holds the rows that were considered and never ranked, each with the
+rule that dropped it. Four rules do the work. The three evolved acid-tolerant lines fail the
+sequence gate of Sec.~\ref{sec:gate}, because no resequencing of them was deposited and neither
+search pass found a variant table. The iIsor850 essential-gene list is a reconstruction rather
+than an experiment, and that exclusion stands on its own merits whatever happens to the host's
+other rows. The synthetic-chromosome phenotype claims have no per-record values to ingest,
+because their released form is a figure. And the coverage-track and record-format releases of
+the two expression models are a model's own input format rather than a measurement, with the
+one genuinely new measurement under them recorded as an ask instead.
+
+Two standing exclusions in the yeast pool need a decision rather than a rule, and this wave
+forces it. That pool excludes a \org{Komagataella phaffii} CRISPR fitness screen and a
+multi-species yeast panel as off-species, under the standing note ``Revisit if the
+generalization axis widens to other hosts.'' A second yeast host is that widening, so the
+off-species note is now a judgment to make rather than an inherited default.
+Table~\ref{tab:schema} records it as a decision item.
+
+\section{Before a loader is written\secstatus{todo}}\label{sec:caveats}
+
+Every figure in Table~\ref{tab:final} is an axis count rather than a verified record count, and
+the label on each figure marks which it is. A figure read on the source page in session is
+marked as read. A figure taken from a search snippet without the page being opened is marked as
+such and is provisional. A figure that is the product of two reported axes, or an estimate of a
+panel depth, is marked inferred. Every measurement count in this document for a vector-valued
+row is inferred in that sense, because it multiplies a reported record count by a reported or
+estimated dimensionality. A row whose position looks surprising needs its dimensionality
+checked before its record count, because the product set the position.
+
+\notesec{Six internal conflicts have to be reconciled, not averaged} Each of these is a
+disagreement inside one source or between two pages of one project, and each would silently
+change a stored value. The isolate panel of the new host reports 170 strains sequenced and 161
+phenotyped in the preprint against 162 strains on a DOE page, 57 conditions against 58, and
+305,405 SNPs on a poster against 305,435 in a DOE summary. The KT2440 fitness compendium says
+179 unique conditions in its abstract and results and 183 in its methods. The promoter-swap
+fitness library's gene count is reported as 81, 96, and about 100 in three places. The
+transcription-start-site library's preprint says about 80,000 variants against 1,000,000 in the
+published version, so the release has to be pinned. The longitudinal isolate panel gives 474,
+373, 389, and 443 isolates on one page. And the served yeast record total itself is 65,889,109
+in the prose and the per-dataset table against 65,889,107 in the organism table whose
+three-organism total this document quotes.
+
+\subsection{What is retrievable, what needs a browser, and what needs an ask\secstatus{todo}}\label{sec:retrieval}
+
+Sorting the pool by how a row is obtained rather than by what it contains changes what the
+campaign does first, and the three classes are unequal in size and in effort.
+
+\notesec{Retrievable now, programmatically} The 10.4 GB fitness database and its
+protein-sequence companion both return HTTP 200 to a plain \texttt{curl} with no challenge, as
+do the 2018 release's bulk page and its archival copy. Two GitHub repositories hold the KT2440
+fitness and transcriptome matrices. The GEO, SRA, and BioProject accessions of the ranked rows
+resolve, as do the Zenodo records behind the promoter libraries, the clinical classifier
+inputs, and the PAO1 interference screen. Two APIs complete the class: the proteomics archive's
+REST interface, which is the only workable route to roughly 35 \org{P. putida} proteomics
+projects because the aggregator's pages are rendered in JavaScript, and the
+deep-mutational-scanning aggregate through its R and Python packages. One rule applies to the
+largest of these. Scrape nothing from the fitness browser's CGI layer, pull the database file
+once, and read it locally.
+
+\notesec{Needs a human with a browser} Every Illinois Data Bank deposit for the new host, six
+of them, returned 403 to automated fetch on both passes, which matters because that repository
+is the de facto home of this organism's phenotype data and is invisible to GEO and SRA
+searches. The preprint full text holding the 57-condition phenotype matrix is unreachable from
+two directions, 403 at the preprint server and 500 at the literature API's full-text route, and
+the multi-strain respiration panel was rate-limited on four attempts. Four pages behind a
+challenge or a redirect are the fitness browser's help page and archival record, which carry
+the license, the community genome database's downloads page, a phenotype-microarray database,
+and the 1,877-strain susceptibility set. The rest of the class is the supplement-only rows: the
+terminator panels, the core-promoter and designed-promoter libraries, the 3' end library's
+sequence-and-value table, the position-effect tables, the two aneuploid panels, the two isolate
+spreadsheets, the essentiality gene lists, and one supplementary strain table.
+
+\notesec{Needs an ask to a named person or group} This is the shortest class and the one with
+the largest effect per request, and Table~\ref{tab:asks} prints each ask with what it would
+make retrievable. The nine cover the resequencing series with no publication attached, the 161
+by 57 phenotype matrix and its isolate-to-accession map, the unprovenanced 69-condition
+expression matrix, a deposit for the 3,053 induction tracks, the gene-level scores of the
+78,932-member interference library, an archival deposit for the landing-pad package now behind
+a lab-hosted URL that can rot, the license for the fitness browser data, which of three
+deposits holds gene-level scores, and the meaning of three uncertainty columns in the served
+promoter dataset, which is already an open owner question in that loader.
+
+\input{tables/asks}
+
+\subsection{The candidate gate, and how much of this pool it has measured\secstatus{todo}}\label{sec:ungated}
+
+The gate runs five gates in order with a stop rule. G1 classifies the source as a primary
+measurement, an aggregation, a transcription, or a prediction. G2 resolves every host through
+the genomes tier. G3 inventories the deposit off the mirrored bytes. G4 tests overlap against
+built loaders by identifier and by released value, and G5 tests schema fit. After a failure or
+a block every later gate is unmeasured, a typed gap does not stop the run, and the verdict's
+outcome is derived from its gates rather than stored, so a stored verdict cannot disagree with
+its own gates.
+
+Measured against this pool, the gate has run on none of it. The verdict store holds 52
+verdicts, every one with a table field of bacteria or yeast, and no verdict in it mentions this
+document's new host under any of its four names or its strain. That is not an oversight: the
+gate's organism set is three values, so \texttt{hosts\_named()} raises a \texttt{ValueError} on
+any row of the new host, and G2 cannot be measured rather than returning a block. Every
+non-KT2440 pseudomonad row is in the same position for the same reason. So the ungated fraction
+of this pool is all of it, and the first two rows of Table~\ref{tab:schema} are the two edits
+that change it, so the table lists them as gating every row rather than one.
+
+Two further properties of the store bear on the build order. Enforcement requires every
+registered dataset class outside a frozen grandfathered tuple of 134 classes to declare a
+module-level citation key and to hold a passing verdict, so a row that is built without a
+verdict fails that check rather than entering quietly. And a verdict is evidence rather than a
+working document: every record model is frozen and forbids extra fields, one file is written
+per citation key, and git keeps the history, so a re-gated row produces a new commit rather
+than an edited file.

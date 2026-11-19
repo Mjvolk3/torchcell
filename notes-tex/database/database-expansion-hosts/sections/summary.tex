@@ -1,0 +1,59 @@
+%% notes-tex/database/database-expansion-hosts/sections/summary.tex
+%% [[experiments.database.expansion-hosts]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-hosts/sections/summary.tex
+%% SOURCE: hand-authored prose around a generated table; tables/summary.tex names its own
+%% generating script. The time-axis figures come from the triage report
+%% /scratch/projects/torchcell-scratch/tmp/deep-research/reports/Pk and next dataset wave triage.md
+%% and its research notes; the schema fields from torchcell/datamodels/schema.py.
+
+\clearpage
+\section{Summary statistics\secstatus{todo}}\label{sec:summary}
+
+\input{tables/summary}
+
+Table~\ref{tab:summary} gives the pool by host, by band, and by tier, with the record,
+genotype, and measurement sums for each. Three properties of those sums are worth stating
+before they are read as a ranking.
+
+A handful of rows account for the measurement sums, so the hosts are not comparable on them.
+Three \org{S. cerevisiae} rows hold more measurements than every other row in the pool
+combined, which makes the yeast total a statement about one platform rather than about the
+host, and one artifact accounts for the pseudomonad total, its rows sharing a pipeline and a
+condition vocabulary. The new host's total is four orders of magnitude below either, which is
+the measured condition of the host rather than a property of the ranking.
+
+Record counts and measurement counts disagree in direction, which is the point of the rank
+quantity in Sec.~\ref{sec:measurements}. The isolate panels hold hundreds of records each and
+millions of measurements, because one record is a genome plus a transcriptome or a
+genome plus a proteome, while the arrayed and pooled screens hold the opposite shape. Summing
+either column alone orders the hosts the wrong way round.
+
+And the sums are upper bounds in two specific ways that Sec.~\ref{sec:caveats} records. A
+count that is the product of two reported axes assumes a dense matrix, and a real screen drops
+strains per condition, so every such figure is an upper bound. A measurement count for a
+vector-valued row multiplies by a reported or estimated depth, and a label-free proteome or a
+sparse count matrix quantifies a different subset in each sample, so the dense assumption fails
+there too.
+
+\subsection{Time\secstatus{todo}}\label{sec:time}
+
+Five rows in this pool carry a time dimension, and they differ in kind as well as in
+length. The low-pH expression atlas samples at 0 h and 1 h after the acid shift, so its series
+is two points per strain. The 3,053 induction tracks of the fungal language model's corpus
+typically carry eight time points per induction, which is the same design as the served
+induction series. The longitudinal isolate panel is the longest axis in the pool at 0.2 to 10.2
+years of colonization across 52 clone types, where the ordering is part of the phenotype rather
+than a label on it. The isoprenol design-build-test-learn ladder is indexed per round across
+seven deposits, which is a campaign axis and not a time axis, and it appears here only so that
+the two are not conflated. And one allele-specific expression study on the diauxic shift carries 19
+time points, the densest series found.
+
+What the schema holds for all of them is \texttt{Environment.duration\_hours} and
+\texttt{Environment.duration\_generations}, treatment durations that make two exposure lengths
+two distinct environments, and the served induction series was ingested that way as 1,752
+records with one environment per time point. That is a flattening: a model sees time as a
+categorical condition, and nothing on the record states that eight environments are one series
+in order. A first-class time field on the record and a series identity that groups its points
+are the two additions a time-resolved model needs, and the five rows above would exercise both.
+They are recorded here as an open schema item rather than folded into the
+ranking, because the rule of Sec.~\ref{sec:rule} does not score a time axis.

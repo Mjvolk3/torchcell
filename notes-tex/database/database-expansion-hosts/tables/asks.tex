@@ -1,0 +1,47 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_hosts_candidate_datasets_table.py
+\begin{landscape}
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{@{}L{38mm} L{16mm} L{40mm} L{78mm} L{70mm}@{}}
+\caption[]{The rows gated on a request to a named person or group, which is the shortest
+list in this document and the highest leverage: each of these is one message, and three
+of them are the only route to the dataset at all. A dash in \emph{Host} marks an ask
+that spans hosts.}
+\label{tab:asks}\\
+\toprule
+\textbf{Dataset} & \textbf{Host} & \textbf{Who to ask} & \textbf{What exactly to ask for} & \textbf{What it unlocks} \\
+\midrule
+\endfirsthead
+\multicolumn{5}{@{}l}{\footnotesize\emph{Table~\ref{tab:asks}, continued}}\\
+\toprule
+\textbf{Dataset} & \textbf{Host} & \textbf{Who to ask} & \textbf{What exactly to ask for} & \textbf{What it unlocks} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\textbf{IoSL resequencing series (PRJNA1464946/47/48)} & \org{P. kudriavzevii} & DOE Joint Genome Institute, submitter of PRJNA1464946, PRJNA1464947 and PRJNA1464948, registered 2026-05-11 & How many strains the IoSL series covers, what perturbation produced them, and whether any phenotype was measured alongside the sequencing & The only remaining candidate for a genome-wide P. kudriavzevii strain library. Three sampled BioProjects are titled Issatchenkia orientalis SD108 IoSL10, IoSL16 and IoSL19 resequencing, with no publication attached; a series sequenced at that scale is either a mutagenized or an evolved SD108 library, and if it carries phenotypes it is the resource this wave cannot otherwise find \\
+\addlinespace[5pt]
+\textbf{MAESTRO 170-isolate panel} & \org{P. kudriavzevii} & Ping-Hung Hsieh (LBNL), corresponding; also Yasuo Yoshikuni (LBNL/JGI), Huimin Zhao (UIUC/CABBI), Chris Todd Hittinger and Dana Opulente for the isolates, Igor Grigoriev (JGI) for the genomes, Andrew Leakey (CABBI) & The 161-isolate by 57-stressor phenotype matrix as a file, the complete isolate-to-accession map, and the per-isolate VCF and CNV tables & This host's largest phenotype resource by measurements, and the per-isolate variant calls behind the tandem-paralog CNV finding, none of which has a public accession. bioRxiv returns 403 for the full text and Europe PMC's fullTextXML for PPR1078985 returns 500, so the supplementary table is unreachable without a person \\
+\addlinespace[5pt]
+\textbf{I. orientalis 5,140-gene by 69-condition expression matrix} & \org{P. kudriavzevii} & Saurabh Sinha's group at UIUC, with Payam Dibaeinia & Whose data the matrix is, whether a release exists, and under what terms it could be deposited with a provenance record & A 69-condition expression matrix for this host. The senior thesis carrying it has no data-availability, code, deposition or supplementary section of any kind, so it is reachable by asking and by nothing else; with a real provenance record it would be worth more to this host's program than anything else in that corpus \\
+\addlinespace[5pt]
+\textbf{Shorkie IDEA induction RNA-seq tracks} & \org{S. cerevisiae} & Calico Life Sciences (Chao, Magzoub, Stoops, Hackett, Linder, Kelley) & A GEO or SRA deposit for the 3,053 induction RNA-seq tracks, or a stable archival copy with a checksum manifest & The one genuinely new measurement in that paper, currently distributed only as BigWig and TFRecord on a Google Cloud Storage bucket with no accession anywhere in the paper and no archive fallback if the bucket moves \\
+\addlinespace[5pt]
+\textbf{Genome-wide KT2440 CRISPRi library (78,932 members)} & \org{P. putida} & CU Boulder, ORNL and the Center for Bioenergy Innovation: Fenster, Hren, Spangler, Alexander, Fox, Cameron, Eckert, Tuskan & Gene-level or guide-level scores from the library, and whether a deposit exists anywhere, for the glucose, acetate and p-coumarate selections & The complement to RB-TnSeq, covering the essential genes a transposon library cannot score by construction. Abstract-only today: no publication, no repository, no accession, so no file exists to hash \\
+\addlinespace[5pt]
+\textbf{Landing-pad locus screen (Fatma 2023)} & \org{P. kudriavzevii} & Huimin Zhao lab (UIUC) & An archival deposit for the landing-pad package, currently a lab-hosted uofi.box.com URL plus a GitHub repository & The only measured per-locus fitness data in this species, and genotype-precise, behind a URL that can rot. An institutional Box link is not an archive and nothing mirrors it \\
+\addlinespace[5pt]
+\textbf{Fitness Browser licensing} & -- & LBL Fitness Browser maintainers & The license and terms of use for the live feba.db release and for the June 2017 archival release & The whole cross-host fitness band, nine organisms, gated by a Cloudflare challenge rather than by anything substantive: help.cgi and the organism list return 403 with Cf-Mitigated: challenge to every non-browser client and the Figshare archival record page returns 403 as well, so nobody has read a license string for either release \\
+\addlinespace[5pt]
+\textbf{PAO1 genome-wide CRISPRi (Kaczmarczyk 2025)} & \org{P. aeruginosa} & Jenal lab (Kaczmarczyk, Klotz, Manfredi, Jenal) & Which of the three Zenodo records holds the gene-level score table, if opening them does not settle it & The only pseudomonad CRISPRi score table plausibly downloadable today, covering the essential genes RB-TnSeq structurally cannot \\
+\addlinespace[5pt]
+\textbf{Vaishnav 2022 deferred libraries} & \org{S. cerevisiae} & Vaishnav 2022 authors & The meaning of sdEL, relativeSD and sdScale & Already an open owner question in vaishnav2022.py and listed under issue 1172. de Boer's Supplementary Tables may answer it without an ask, since Vaishnav's Methods defer to de Boer, so one page check comes first \\
+\addlinespace[5pt]
+\textbf{Dotsch 2009 arrayed PA14 screen} & \org{P. aeruginosa} & The study's authors, or whoever now holds the arrayed PA14 library data & Whether the full 5,459-mutant by 19-antibiotic susceptibility matrix was released, and where & If the full matrix exists it is the densest arrayed-library phenotype matrix in the species. This is the highest-value unresolved pseudomonad item and the value location is unconfirmed, so the row cannot be costed until someone answers \\
+\addlinespace[5pt]
+\end{longtable}
+\endgroup
+\end{landscape}

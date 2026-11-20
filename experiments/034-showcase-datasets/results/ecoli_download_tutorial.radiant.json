@@ -1,11 +1,11 @@
 {
   "host": "radiant",
-  "ran_at": "2026-11-19T22:35:37.092161+00:00",
+  "ran_at": "2026-11-19T23:59:54.602734+00:00",
   "platform": "Linux-5.14.0-570.30.1.el9_6.x86_64-x86_64-with-glibc2.34",
-  "installed_from": "repository checkout",
+  "installed_from": "PyPI, in a new uv venv with the CPU build of torch",
   "interpreter": {
-    "torchcell": "1.8.6",
-    "torchcell_file": "/mnt/zhao5/mjvolk3/projects/torchcell/tmp/scratch/genome-tutorial-2026.11.19/src/torchcell/__init__.py",
+    "torchcell": "1.8.7",
+    "torchcell_file": "/mnt/zhao5/mjvolk3/projects/torchcell/tmp/scratch/genome-tutorial-2026.11.19/venv-1.8.7/lib/python3.13/site-packages/torchcell/__init__.py",
     "python": "3.13.18",
     "numpy": "2.5.5",
     "pandas": "2.3.3",
@@ -13,12 +13,12 @@
   },
   "endpoint": "http://torchcell-database.ncsa.illinois.edu:8724",
   "tutorial_sha256": "adb4ab85c03b18caf6f0ceca437877f5762563d2673108c9bc683d6ae8346f96",
-  "whole_script_seconds": 389.1,
+  "whole_script_seconds": 391.7,
   "load_seconds": {
-    "ecoli_growth_rate_campos2018": 0.45131608843803406,
-    "ecoli_morphology_campos2018": 0.48729628697037697,
-    "gene_interaction_babu2014": 1.126060537993908,
-    "metabolome_fuhrer2017": 12.372580736875534
+    "ecoli_growth_rate_campos2018": 0.6702238321304321,
+    "ecoli_morphology_campos2018": 0.5147738307714462,
+    "gene_interaction_babu2014": 1.296081569045782,
+    "metabolome_fuhrer2017": 12.244558233767748
   },
   "disk_bytes": {
     "ecoli_growth_rate_campos2018": {

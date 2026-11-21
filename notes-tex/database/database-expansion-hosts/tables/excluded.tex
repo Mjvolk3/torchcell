@@ -1,0 +1,112 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_hosts_candidate_datasets_table.py
+\begingroup
+\footnotesize
+\begin{longtable}{@{}L{58mm} L{26mm} L{88mm}@{}}
+\caption[]{Considered and dropped. \emph{no-sequence} is the hard gate: without a route
+to the strain's genomic content there is no genotype to map a phenotype from.
+\emph{off-host} is a real dataset in an organism outside this wave's hosts.
+\emph{not-a-dataset} is a model, a design program, a review or a prior over the genome.
+\emph{no-per-record-data} is a real experiment whose released form is a figure or a
+summary rather than per-record values. \emph{already-built} is served, or already in the
+raw mirror, so it is an overlap rather than a candidate. \emph{derivative} re-serves or
+re-processes another dataset's values, so its records are not net new.}
+\label{tab:excluded}\\
+\toprule
+Dataset or group & Rule & Reason \\
+\midrule
+\endfirsthead
+\toprule
+Dataset or group & Rule & Reason \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+scYeast (Fan 2027) figshare deposit & derivative & A model and its training corpus rather than a new measurement. Its attention prior is built from the documented-targets subset of YEASTRACT+, about 170,000 pairs, which is a prior over the genome and not a genotype-by-environment record, and the expression it trains on is the built yeast compendia. Nothing in the deposit is a released per-record value this store does not already hold. \\
+\addlinespace[5pt]
+Shorkie induction RNA-seq tracks (gs://shorkie-paper/) & no-per-record-data & The 3,053 induction RNA-seq tracks generated at Calico are the one genuinely new measurement in the paper and they are distributed only as BigWig and TFRecord on a Google Cloud Storage bucket, with no GEO, SRA, Zenodo or Hugging Face accession anywhere in the paper. A sha256-pinned mirror is the only reproducible route and there is no archive fallback if the bucket moves, so the right action is the ask in Table 8, not a parse. \\
+\addlinespace[5pt]
+Zrimec 2020 (expression prediction from regulatory sequence) & derivative & A modeling paper over expression values already held: its records are the public compendia re-encoded as model inputs, so admitting it would re-serve measurements the store has rather than add any. \\
+\addlinespace[5pt]
+Gu 2025 & derivative & A model trained on the regulatory-DNA libraries this wave ranks, not a new measurement. Its contribution is an architecture and a benchmark score, so there is no per-record value to store that is not already in de Boer, Vaishnav or the DREAM release. \\
+\addlinespace[5pt]
+Lei 2025 & derivative & Same class as Gu 2025: a sequence-to-expression model scored on the existing libraries. The report ranks the libraries and not the models, because a model's output is a prediction and the substrate stores measurements. \\
+\addlinespace[5pt]
+Cheng 2025 & derivative & A model over the same corpus again. Named here rather than omitted so the boundary is explicit: a benchmark result on a held-out split of a dataset already in the pool is not a second dataset. \\
+\addlinespace[5pt]
+iIsor850 genome-scale model (Issatchenkia orientalis) & not-a-dataset & A reconstruction, not an experiment. Its 850 gene calls are model output, which is the only form essentiality exists in for this species, and that is exactly why it cannot stand in for a screen. The yeast pool already excludes it under the same rule and the exclusion stands on its own merits even though this wave widens the host axis. \\
+\addlinespace[5pt]
+Wetmore 2015 RB-TnSeq methodology release & already-built & 3,903 genome-wide fitness experiments over 96,024 non-essential genes in 25 bacteria, and already in the database. It is the method paper the cross-host fitness band's artifact comes from, so admitting it again would re-serve values the store holds. \\
+\addlinespace[5pt]
+Fitness Browser GW456-L13 (Aquipseudomonas jessenii) & off-host & A real row in the same artifact as the nine hosts this wave admits, at 106 experiments with 80 updated annotations, and its species has no member in this pool's declared Organism vocabulary. Folding it into a neighboring species would be a silent sequence-level error in a substrate whose claim is sequence-level genotype fidelity, so it waits on the Organism decision rather than being mislabeled. Admit it in the same change that adds the other nine. \\
+\addlinespace[5pt]
+Gong 2018 (48-strain microsatellite panel, 9 antifungals) & no-sequence & 432 potential susceptibility values against nine drugs, which is more than twice the drug breadth of the sequenced panel, and the genotype is a microsatellite marker fingerprint rather than a sequence. There is no route to the strain's genomic content, so it cannot be joined to a genome even in principle. \\
+\addlinespace[5pt]
+Wiehlmann 2015 (2,921-isolate 58-marker survey) & no-sequence & 2,921 isolates from 1,448 habitats in 323 clone types, and the 58-marker binary profile is a genotype fingerprint rather than a sequence or a measured phenotype. It must not be ingested as either. \\
+\addlinespace[5pt]
+PkAC-7, PkAC-8 and PkAC-9 acetic-acid evolved strains & no-sequence & Three strains from acetic acid stepped 7 to 9 g/L, with tolerance measured against six stresses, and no resequencing, no variant table and no accession in either search pass. The genotype is undefined, so there is nothing to map a phenotype from; the 70-gene expression panel on PkAC-9 inherits the same gap. \\
+\addlinespace[5pt]
+RWT glucose osmotic-stress evolved mutant & no-sequence & Two strains, tolerant to 35 percent glucose with best growth at 20 percent, and the mutations were never characterized. Same gap as the other evolved panels, and the osmotic axis is already covered by the 57-stressor isolate panel. \\
+\addlinespace[5pt]
+Candida glycerinogenes as an ingestible host & no-sequence & A proprietary, independently owned industrial strain with no public assembly, and the species name was folded into P. kudriavzevii by the population-genomics study that showed one species under four names. Its published values cannot be tied to a public genome. \\
+\addlinespace[5pt]
+Blazeck 2012 (modular UAS and core hybrid promoters) & no-per-record-data & A real S. cerevisiae regulatory-parts panel in two backgrounds with biological triplicate and standard deviations, and every value exists only as a bar height: the supplementary table is primers. Unusable as released, and worth re-checking only if the hybrid-promoter design becomes the question. \\
+\addlinespace[5pt]
+Nikel 2015 (EDEMP cycle flux) & no-per-record-data & Reports that about 90 percent of consumed sugar is converted to gluconate and about 10 percent of triose phosphates are recycled to hexose phosphates, and the numbers sit in paper figures. Flux is the layer where the provenance discipline bites hardest, so the honest outcome is that the values are not retrievable rather than a thin extraction. \\
+\addlinespace[5pt]
+Puchalka 2008 (legacy KT2440 model validation) & no-per-record-data & Validated a genome-scale model against continuous culture and substrate utilization assays, and the utilization matrix itself is not confirmed to be a downloadable table. The validation is a model result; the matrix is what would be ingestible and it was not located. \\
+\addlinespace[5pt]
+PA14 pooled essential-gene knockdown library (dissertation only) & no-per-record-data & A pooled library with one essential gene knocked down per strain, tested in a murine pneumonia model, described only in a dissertation. No deposited score table was confirmed, so it is a lead rather than a citable dataset. \\
+\addlinespace[5pt]
+Mobile-CRISPRi and P. aeruginosa CRISPRi optimization methods & not-a-dataset & Vector systems and tuning studies: conjugation-transferable integrating CRISPRi vectors, dCas9 expression tuned to avoid toxicity, and guide designs for common laboratory strains. Methods rather than screens, with no per-record score tables. \\
+\addlinespace[5pt]
+Ozer 2019 (739-genome population structure) & not-a-dataset & 739 isolate genomes with source metadata, reporting that one lineage is 99.4 percent exoS-positive and the other 95.2 percent exoU-positive. Genotype only, with no measured phenotype, so it belongs beside the reference genomes rather than in a phenotype table. \\
+\addlinespace[5pt]
+43-strain international reference panel (BCCM/LMG) & not-a-dataset & 43 strains spanning cystic fibrosis, other clinical and environmental sources, 33 of them sequenced alongside 7 reference genomes. It is an order-the-strains resource rather than a phenotype table, and the genome accessions were not confirmed. \\
+\addlinespace[5pt]
+Murepavadin 414-isolate panel & not-a-dataset & Reported as 414 cystic-fibrosis isolates against 14 antibiotics with 412 genomes, and the citation itself is unconfirmed. The isolate count coincides with the best-documented clinical panel's, which is reason to resolve the citation before treating it as a second dataset. \\
+\addlinespace[5pt]
+SBW25 barcoded populations & not-a-dataset & Chromosomal barcodes for lineage tracking, which the authors explicitly distinguish from transposon sequencing: nothing is mutagenized. A different assay, whose value would be evolution and lineage phenotypes rather than gene fitness. \\
+\addlinespace[5pt]
+Pseudomonas Genome DB and the Pseudomonas Ortholog Database & not-a-dataset & Community annotation and orthology over 14,229 genomes, with ortholog groups and batch downloads, and no evidence it serves a phenotype table at all. It is the mapping substrate for the alias layer, which is what the Bakta and PA-number rows need, not a phenotype source. \\
+\addlinespace[5pt]
+GSE139245 (data-integrity flag) & not-a-dataset & A 15-sample series whose index record carries a summary describing mammalian histone-modification profiling, inconsistent with both its own title and its taxon. Treated as suspect rather than ingested. \\
+\addlinespace[5pt]
+Illinois Data Bank IDB-2926789 (constraint-based organic-acid potential) & not-a-dataset & Predicted production potential for 22 organic acids from a genome-scale model, which is the same class as the model-derived essential-gene list: model output, not measurement. The growth-coupled knockout designs built on the same model fall under this too. \\
+\addlinespace[5pt]
+Mendeley Data methylotrophic-protein deposit & not-a-dataset & A P. kudriavzevii deposit for open production of methylotrophic protein. Project policy disallows this repository as a source, so the deposit is recorded and not recommended. \\
+\addlinespace[5pt]
+PXD044970 and PXD048012 & not-a-dataset & The first lists a different species entirely, Saccharomyces kudriavzevii, and the second lists P. kudriavzevii while its displayed abstract belongs to an unrelated glycolysis study, so it may be mislabeled. Both are suspect and neither may be used without a check. \\
+\addlinespace[5pt]
+Komagataella phaffii methanol cross-tolerance study & off-host & A different species. Named because it surfaced repeatedly in searches for this wave's low-data host and is not it. \\
+\addlinespace[5pt]
+681-member environmental yeast isolate collection & off-host & Multi-species rather than specific to this wave's host, so its records cannot be assigned to one organism without splitting the collection first. \\
+\addlinespace[5pt]
+FUN-PROSE expression-prediction preprint & derivative & A modeling paper in the same group's orbit as the host's expression work, not a dataset: its records are the matrices it trains on. \\
+\addlinespace[5pt]
+Karollus 2024 benchmark deposit & derivative & Model weights plus an unitemized supporting-data bundle. Every measured dataset behind it belongs to the terminator, promoter and 3' end rows this pool already ranks, so the right action is to take those. \\
+\addlinespace[5pt]
+Martinez-Carranza 2019 essentiality comparison & derivative & A comparison of published essentiality screens, reporting 336 essential in one reference strain and 434 in the other with 20 having no ortholog, and only 192 genes shared by all screens in one strain against 17 in the other. Those figures are the reason a call must carry its method, medium and strain; the comparison itself re-serves the five studies' calls. \\
+\addlinespace[5pt]
+Rossi 2021 ChIP-exo and ChIP-MNase track set & not-a-dataset & 1,229 datasets over 791 targets, 400 of them reproducible, and not a genotype-by-environment record at all: it is a molecular-layer track set. It belongs in the artifact tier as a feature source if anywhere, which is a features decision rather than a dataset admission. \\
+\addlinespace[5pt]
+mLife 2026 genome-editing system & not-a-dataset & A genome-editing system in a nonconventional yeast whose organism is not confirmed to be this wave's host, so the row cannot even be assigned a host. One record check resolves it. \\
+\addlinespace[5pt]
+Lactic-acid stress comparative transcriptomics & no-sequence & A fermented-grain isolate against a type strain under lactic-acid stress, with differential expression in pyruvate metabolism, transporters and amino acid biosynthesis. Comparative rather than evolved, and neither strain's assembly was located, so there is no route to either genotype. \\
+\addlinespace[5pt]
+Sc2.0 synthetic-genome program; CNGB CNP0002230 & no-per-record-data & The 2023 Cell papers' phenotype claims appear as figures, and CNP0002230 lists 231 samples across genome sequencing, proteome and transcriptome with no phenotype data type at all. A genome-engineering program is not gene-indexed perturbation-phenotype data, and there is no per-record value to ingest today. \\
+\addlinespace[5pt]
+Genome-wide KT2440 CRISPRi library (78,932 members) & no-per-record-data & The highest-value missing dataset in the survey and effectively request-only: 10 to 15 gRNAs per gene with 798 non-targeting controls, screened on glucose, acetate and p-coumarate at two concentrations, existing only as a Department of Energy abstract with no publication, no repository and no accession. It cannot be ranked against rows whose numbers were read off a file, so it is an ask rather than a row. \\
+\addlinespace[5pt]
+Werner 2023 and the engineered-strain product literature & no-per-record-data & Supplementary-table-only across the board. In Werner 2023, the one paper whose data-availability statement was read verbatim, every number is in sciadv.adj0053\_data\_s1.zip and the SI PDF, there is no repository of any kind, and the strains are request-only under a material transfer agreement. The tier is worth ingesting for its named genotypes, which is why those rows are in the pool, and not for record count. \\
+\addlinespace[5pt]
+Fitness Browser fitprivate instance (104 organisms, 989 KT2440 experiments) & not-a-dataset & A non-public instance whose counts disagree with the live public page's 74 organisms and 314 KT2440 experiments. The live public page supersedes every other count, and fitprivate numbers must never be mixed in, so the instance is named here to keep its figures out of any total. \\
+\addlinespace[5pt]
+Fitness Browser KBase mirror (48 organisms) and the June 2017 release & derivative & Stale mirrors of the same artifact. The bulk page itself says the 2018 release's sucrose and D-mannitol data should be disregarded in favor of fresh stock data, so an older copy is not an independent dataset and ingesting one would serve values the source has retracted. \\
+\addlinespace[5pt]
+Wheeldon genome-scale CRISPR libraries (Y. lipolytica, K. phaffii) & off-host & Real genome-scale resources, including a 6-fold-coverage K. phaffii library of 30,848 active guides covering more than 99 percent of the genome, and in neither case the host this wave bootstraps. Searched specifically because a Pichia screen would be the single most valuable row available; the platform has never been extended to P. kudriavzevii. \\
+\addlinespace[5pt]
+ProteomeCentral P. putida project pages & not-a-dataset & JavaScript-rendered, so a crawl returns nothing. This is a retrieval route and not a dataset: the same projects are reachable through the PRIDE v3 REST API, which is how the proteomics rows in the pool are counted. \\
+\addlinespace[5pt]
+\end{longtable}
+\endgroup

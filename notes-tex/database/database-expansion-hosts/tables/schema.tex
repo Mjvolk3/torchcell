@@ -1,0 +1,54 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_hosts_candidate_datasets_table.py
+\begingroup
+\footnotesize
+\begin{longtable}{@{}L{50mm} L{48mm} L{74mm}@{}}
+\caption[]{Every schema or candidate-machinery change this wave requires, with the
+symbol it lands on and the policy it triggers. \emph{Symbol} is the exact module path
+and name, so the change is addressable rather than described. A change marked additive
+adds a class or a vocabulary member that only its own closure holds, so it enters the
+served graph by incremental admission; a change to a class other closures hold is a full
+rebuild of every dataset whose closure holds it. The first two are the critical path:
+without them no loader can declare a host and the candidate gate cannot even be
+measured.}
+\label{tab:schema}\\
+\toprule
+Symbol & What changes & Policy it triggers \\
+\midrule
+\endfirsthead
+\toprule
+Symbol & What changes & Policy it triggers \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\file{torchcell/data/experiment_dataset.py::Organism} & Add a pkudriavzevii member. The enum holds exactly scerevisiae, ecoli and pputida today, and ALL\_ORGANISMS is frozenset(Organism), so no loader can declare the host and dataset\_adapter\_map can hold nothing for it & Served-vocabulary change: schema-change record, impact report, the served datasets named in the PR, and the schema-breaking label if a served closure changes. The genome side is already done, which is what makes this the whole cost: registry.py pins PKUDRIAVZEVII\_SD108 = pkudriavzevii\_SD108\_v1 and gates.py already lists it in READABLE\_ASSEMBLY\_SETS with the comment that no host token names it yet. Additive. \\
+\addlinespace[5pt]
+\file{torchcell/candidates/gates.py::HOSTS, _ORGANISM_OF_TABLE_ROW} & Add HostTokens for SD108 and CBS573, and admit 'P. kudriavzevii' to the set of organisms a table row may name, which holds E. coli, P. putida and S. cerevisiae today & Gate-code change, not a schema change. Until it lands hosts\_named() raises ValueError on any P. kudriavzevii row, so G2 cannot even be measured and no verdict can be written for one. The eight pseudomonad hosts need the same treatment, one token per reference strain. Additive. \\
+\addlinespace[5pt]
+\file{torchcell/data/experiment_dataset.py::Organism (pseudomonads)} & Nine or ten further members for the Fitness Browser organisms and P. aeruginosa, plus the matching reference genomes in the genomes tier & The same served-vocabulary policy, ten times over. Worth staging as one deliberate change rather than ten accidental ones, because the Fitness Browser rows arrive in one artifact and the marginal work per organism after the first is a genome registration. Additive. \\
+\addlinespace[5pt]
+\file{torchcell/candidates/verdict.py::CandidateTable} & A third literal for this pool. The type is Literal['bacteria', 'yeast'] and it is also the table field of every one of the 52 stored verdicts & Record-model change on a frozen, extra-forbidding model, so it is a policy decision rather than a widening: until it lands, every row in Table 11 reads 'no verdict' and candidate-gate can read this pool's rows but cannot write a verdict for one. gates.py::CandidateRow.table and gates.py::TEXT\_FIELDS carry the same literal and the same keys. Not additive. \\
+\addlinespace[5pt]
+\file{torchcell/candidates/cli.py::TABLE_SCRIPTS} & Register this script as a third pool, so candidate-gate can load its rows by name the way it loads the bacteria and yeast pools & CLI change only. Done. The gate subcommand's --table choices still admit two values, so passing this pool's name needs the CandidateTable decision above first. Additive. \\
+\addlinespace[5pt]
+\file{experiments/database/scripts/build_candidate_datasets_table.py::CANDIDATES} & A separate pool rather than more rows in the yeast one. The yeast Candidate has no organism field at all, the bacteria one admits only E. coli and P. putida, and the yeast main() raises on a pool over 250 rows against 169 literals held & Splitting by wave is forced by the guard, not merely tidier. This script is that split, and its own guard is 400 because the pool spans eight hosts. Additive. \\
+\addlinespace[5pt]
+\file{experiments/database/scripts/build_hosts_candidate_datasets_table.py::SeqBasis} & Host-specific sequence bases. The yeast SeqBasis is eleven values, every one S288C- or yeast-panel-relative, so isolate-WGS transfers to a Pichia or pseudomonad isolate panel and an SD108 designed edit does not & Script-level vocabulary, enforced as a validation error on any unlisted value. Declared explicitly per host so a bacterial row cannot be written against a yeast-shaped basis by accident. Additive. \\
+\addlinespace[5pt]
+\file{torchcell/datamodels/schema.py (phenotype leaves)} & New leaves for TSS initiation efficiency, antifungal and antibiotic MIC, Biolog respiration per well, plate-reader reporter ratio, and 13C flux & By the placement rule a different technology is its own leaf with an explicit conversion, so a plate-reader GFP ratio and a sort-seq bin average are different leaves rather than one class with a note. Each is additive and admissible on its own and none weakens an existing required field. Additive. \\
+\addlinespace[5pt]
+\file{torchcell/datamodels/schema.py (perturbation leaves)} & New leaves for a 5' UTR variant, a 3' end variant, a promoter swap upstream of a native gene, a tRNA point substitution, and an amino-acid substitution for the ProteinGym subset & Additive leaves, so each should clear the admission check on its own closure. In the served graph the perturbation subclasses collapse into one Perturbation node whose kind is a property, so a query naming every deletion names the kinds one by one. Additive. \\
+\addlinespace[5pt]
+\file{torchcell/datamodels/schema.py (GenePerturbation namespaces)} & Gene-identifier namespaces for a JGI gNNNN model id, an INSDC SD108 locus tag, a PA or PA14 number, a Bakta locus tag and a Fitness Browser locusId & The same additive change the bacterial layer already made for b-numbers and PP\_ tags. The genome never gates a record, so a released name the reference does not hold is a report-class verification finding and never a dropped row. Additive. \\
+\addlinespace[5pt]
+\file{torchcell/verification/sourced.py::SourcedValue} & Extend it to the phenotype value and the perturbation. ontology\_checks.sourced\_value\_fields() reports exactly nine fields that can carry one today, all of them media, strain background, culture format or essentiality, so a quoted n\_samples, uncertainty type, unit or threshold has nowhere typed to be written & The most expensive change here: it moves classes many served closures hold, so the record's rebuild\_scope reads full\_kg\_rebuild and the PR carries the schema-breaking label. It is also the blocking change for an artifact-to-ontology pipeline, whose entire output is that class of value. Not additive. \\
+\addlinespace[5pt]
+\file{notes/paper.north-star.dataset-triage.md (guide-level exclusion)} & An explicit decision on gRNA-library rows. The standing rule excludes a dataset whose primary label is per-guide activity or cleavage efficiency rather than a per-strain phenotype & The landing-pad screen's cutting and integration efficiency fall under the rule while its fitness and GFP readouts do not, and the PAO1 and KT2440 CRISPRi libraries are guide-level by construction, where the guide sequence is part of the genotype. This needs a decision, not an inherited rule. Additive. \\
+\addlinespace[5pt]
+\file{experiments/database/scripts/build_candidate_datasets_table.py::EXCLUDED} & Revisit the standing off-species exclusion of the K. phaffii screen and the Y1000+ panel, whose note reads 'Revisit if the generalization axis widens to other hosts' & A cross-host wave is that widening, so the note needs a decision. The iIsor850 exclusion stands on its own merits under not-a-dataset: a reconstruction is not an experiment. Additive. \\
+\addlinespace[5pt]
+\file{$DATA_ROOT/torchcell-raw/priceMutantPhenotypesThousands2018} & Bring the key into the manifest before extending it. Six of its nine files are unhashed over 10.21 GB, and a parallel non-pydantic convention sits beside it: DEPOSIT.md, feba.db.sha256 and SHA256SUMS.txt, which no program reads & A precondition of the cross-host fitness band rather than a schema change: those rows extend this key, and an ingested fitness value has to carry the release date and sha256 of the db file it came from, because the bulk page itself says the 2018 release's sucrose and D-mannitol data should be disregarded in favor of fresh stock data. Additive. \\
+\addlinespace[5pt]
+\end{longtable}
+\endgroup

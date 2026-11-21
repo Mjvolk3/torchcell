@@ -1,0 +1,96 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_hosts_candidate_datasets_table.py
+\begingroup
+\small
+\begin{longtable}{@{}l r r r r r@{}}
+\caption[]{Summary of the recommended set, split at the fifty line. \emph{Top 50} and
+\emph{Extra} count rows; \emph{Genotypes}, \emph{Instances} and \emph{Meas.} sum the row
+axes over all 60 and are lower bounds, since a row with no count contributes
+nothing. The set names 25 distinct schema classes the substrate does not hold
+(Table~\ref{tab:schema}).}
+\label{tab:summary}\\
+\toprule
+ & Top 50 & Extra & Genotypes & Instances & Meas. \\
+\endfirsthead
+\multicolumn{6}{@{}l}{\footnotesize\emph{Table~\ref{tab:summary}, continued}}\\
+\toprule
+ & Top 50 & Extra & Genotypes & Instances & Meas. \\
+\endhead
+\bottomrule
+\endfoot
+\midrule
+\multicolumn{6}{@{}l}{\emph{By band}}\\
+regulatory DNA & 25 & 0 & 163,068,185 & $1.6\times 10^{8}$ & $1.6\times 10^{8}$ \\
+cross-host fitness & 9 & 0 & 0 & $1.4\times 10^{3}$ & $6.2\times 10^{6}$ \\
+host bootstrap & 8 & 10 & 328 & $9.9\times 10^{3}$ & $3.6\times 10^{5}$ \\
+scale & 8 & 0 & 5,467 & $5.8\times 10^{3}$ & $4.4\times 10^{6}$ \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{By tier}}\\
+tier 1 & 13 & 0 & 163,016,501 & $1.6\times 10^{8}$ & $1.7\times 10^{8}$ \\
+tier 2 & 11 & 0 & 34,127 & $5.8\times 10^{4}$ & $3.1\times 10^{6}$ \\
+tier 3 & 14 & 0 & 21,139 & $3.0\times 10^{4}$ & $7.7\times 10^{5}$ \\
+tier 4 & 12 & 10 & 2,213 & $2.5\times 10^{3}$ & $1.5\times 10^{5}$ \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{By host}}\\
+P. aeruginosa & 1 & 0 & 0 & 8 & $3.6\times 10^{4}$ \\
+P. fluorescens & 4 & 0 & 0 & 745 & $3.4\times 10^{6}$ \\
+P. kudriavzevii & 8 & 10 & 328 & $9.9\times 10^{3}$ & $3.6\times 10^{5}$ \\
+P. putida & 8 & 0 & 5,467 & $5.8\times 10^{3}$ & $4.4\times 10^{6}$ \\
+P. simiae & 1 & 0 & 0 & 201 & $9.1\times 10^{5}$ \\
+P. syringae & 2 & 0 & 0 & 69 & $3.1\times 10^{5}$ \\
+S. cerevisiae & 25 & 0 & 163,068,185 & $1.6\times 10^{8}$ & $1.6\times 10^{8}$ \\
+S. stutzeri & 1 & 0 & 0 & 350 & $1.6\times 10^{6}$ \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{By class}}\\
+CRISPR library screen & 1 & 0 & 47 & 188 & 188 \\
+Deep mutational scan & 3 & 0 & 4,176 & $4.2\times 10^{3}$ & $4.2\times 10^{3}$ \\
+Engineering parts & 3 & 1 & 3,116 & $3.1\times 10^{3}$ & $3.1\times 10^{3}$ \\
+Fitness / chemical genomics & 9 & 0 & 0 & $1.4\times 10^{3}$ & $6.2\times 10^{6}$ \\
+Modality / backbone & 0 & 1 & 32 & 64 & 64 \\
+Natural variation & 4 & 0 & 900 & $1.5\times 10^{4}$ & $1.5\times 10^{4}$ \\
+Production campaign & 0 & 4 & 16 & 45 & 45 \\
+Proteome & 1 & 1 & 1 & 196 & $3.9\times 10^{4}$ \\
+Regulatory DNA & 18 & 0 & 163,060,226 & $1.6\times 10^{8}$ & $1.6\times 10^{8}$ \\
+Tolerance / robustness & 0 & 1 & 1 & 0 & 0 \\
+Transcriptome & 7 & 2 & 22 & 473 & $2.6\times 10^{6}$ \\
+Transposon fitness & 4 & 0 & 5,443 & 430 & $2.1\times 10^{6}$ \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{By sequence basis}}\\
+CBS573-reference & 0 & 1 & 1 & 0 & 0 \\
+KT2440+transposon & 4 & 0 & 5,443 & 430 & $2.1\times 10^{6}$ \\
+KT2440-reference & 1 & 0 & 0 & 321 & $1.8\times 10^{6}$ \\
+Pk-isolate-WGS & 5 & 1 & 242 & $9.4\times 10^{3}$ & $3.0\times 10^{5}$ \\
+Pk-reference & 0 & 1 & 1 & 189 & 189 \\
+S288C+designed-edit & 5 & 0 & 503,524 & $5.1\times 10^{5}$ & $5.1\times 10^{5}$ \\
+S288C+integration-locus & 4 & 0 & 2,648 & $2.6\times 10^{3}$ & $1.5\times 10^{6}$ \\
+SD108+designed-edit & 0 & 4 & 15 & 37 & 37 \\
+SD108+guide & 1 & 0 & 47 & 188 & 188 \\
+SD108-reference & 0 & 3 & 19 & 25 & $4.9\times 10^{3}$ \\
+engineered-chassis & 3 & 0 & 3 & 93 & $5.1\times 10^{5}$ \\
+engineered-chassis+guide & 1 & 0 & 0 & 7 & $3.9\times 10^{4}$ \\
+fitbrowser+transposon & 9 & 0 & 0 & $1.4\times 10^{3}$ & $6.2\times 10^{6}$ \\
+isolate-WGS & 1 & 0 & 683 & 683 & 683 \\
+plasmid-reporter-library & 15 & 0 & 162,561,330 & $1.6\times 10^{8}$ & $1.6\times 10^{8}$ \\
+pseudomonad-isolate-WGS & 1 & 0 & 24 & $4.9\times 10^{3}$ & $4.9\times 10^{3}$ \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{By retrieval class}}\\
+retrievable programmatically & 29 & 4 & 163,033,081 & $1.6\times 10^{8}$ & $1.7\times 10^{8}$ \\
+needs a human with a browser & 18 & 5 & 40,666 & $4.9\times 10^{4}$ & $1.8\times 10^{6}$ \\
+needs an ask to a named party & 3 & 1 & 233 & $1.4\times 10^{4}$ & $1.4\times 10^{4}$ \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{By verification label}}\\
+counts read on the source & 24 & 1 & 163,058,318 & $1.6\times 10^{8}$ & $1.7\times 10^{8}$ \\
+counts from a search snippet & 8 & 5 & 4,429 & $1.3\times 10^{4}$ & $1.6\times 10^{5}$ \\
+counts inferred, including a product & 18 & 4 & 11,233 & $3.2\times 10^{4}$ & $1.0\times 10^{7}$ \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{Other attributes}}\\
+needs a schema class the substrate lacks & 34 & 10 & 2,537,009 & $2.6\times 10^{6}$ & $1.1\times 10^{7}$ \\
+figures sourced this pass & 42 & 4 & 163,069,541 & $1.6\times 10^{8}$ & $1.8\times 10^{8}$ \\
+figures from recall, to confirm & 8 & 6 & 4,439 & $1.3\times 10^{4}$ & $1.6\times 10^{5}$ \\
+instances a reported count & 38 & 3 & 163,059,742 & $1.6\times 10^{8}$ & $1.8\times 10^{8}$ \\
+instances a product of the axes & 7 & 1 & 11,208 & $4.4\times 10^{4}$ & $2.8\times 10^{5}$ \\
+instances an estimate & 5 & 6 & 3,030 & $3.1\times 10^{3}$ & $3.1\times 10^{3}$ \\
+\midrule
+Total & 50 & 10 & 163,073,980 & $1.6\times 10^{8}$ & $1.8\times 10^{8}$ \\
+\end{longtable}
+\endgroup

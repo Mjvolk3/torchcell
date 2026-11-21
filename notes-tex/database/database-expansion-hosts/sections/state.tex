@@ -1,0 +1,137 @@
+%% notes-tex/database/database-expansion-hosts/sections/state.tex
+%% [[experiments.database.expansion-hosts]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-hosts/sections/state.tex
+%% SOURCE: hand-authored prose. Served dataset and record counts come from release
+%% 2026.10.17-4295f7ca and the per-organism tables of the thesis database chapter
+%% (experiments/database/results/organism_summary.json, probe variant probes-v1); the
+%% candidate figures come from the triage report
+%% /scratch/projects/torchcell-scratch/tmp/deep-research/reports/Pk and next dataset wave triage.md
+%% and the research notes beside it.
+
+\section{State across hosts\secstatus{todo}}\label{sec:state}
+
+A \term{host} here is an organism the served graph can declare, meaning one that
+\texttt{torchcell/data/experiment\_dataset.py} holds as an \texttt{Organism} member and the
+genomes tier resolves to pinned bytes. Three hosts are served today and the asymmetry between
+them is the starting condition of this pass: \org{S. cerevisiae} carries 70 datasets and
+65,889,109 records, \org{E. coli} 68 datasets and 4,561,865 records, and \org{P. putida} 32
+datasets and 2,695,603 records. The three-organism total of 73,146,575 is computed against a
+yeast figure of 65,889,107, two records below the figure the yeast table itself reports, so
+the discrepancy is in the served tables and is carried here rather than resolved.
+
+Where each host is thin is a property of its phenotype mix rather than of its record count.
+\org{E. coli}'s largest section is environmental and chemogenomic response at 22 datasets,
+followed by fitness, metabolite, and protein abundance at 8 each, expression and viability at
+5 each, product titer at 3, and flux, gene interaction, and protein synthesis and turnover at
+2 each, with one dataset each for morphology, phosphoproteome, and promoter activity. For
+\org{P. putida} protein abundance leads with 14 datasets, then environmental and chemogenomic
+response with 7, product titer with 6, metabolite with 2, and expression, fitness, and
+viability with one each. So the newer host of the two carries almost no gene-perturbation
+fitness, which is the layer the yeast corpus is built on, and the layer a transfer claim would
+be judged against.
+
+The plan this serves is stated in the thesis conclusions chapter: ``The first pillar is the
+database, which already holds \org{Escherichia coli} and extends next to ten further
+gram-negative bacteria and ten yeasts, each with its own virtual cell, with \org{Pseudomonas
+putida} and \org{Pichia kudriavzevii} as the first hosts with little data, on which the models
+are judged.'' The same passage records the test as a comparison of label counts. A Cell Graph
+Transformer trained on
+\org{S. cerevisiae} and fine-tuned on \org{P. kudriavzevii}, both budding yeasts, or trained
+on \org{E. coli} and fine-tuned on \org{P. putida}, both in the class Gammaproteobacteria,
+could match a model trained from scratch on the target with several-fold fewer labels, and the
+threshold recorded beside it is five-fold fewer labels at matched Pearson correlation.
+
+That test fixes what a low-data host needs before a model can be judged on it, and the list is
+short and ordered. It needs a reference genome pinned in the genomes tier, and
+\org{P. kudriavzevii} SD108 already has one, because
+\file{torchcell/sequence/genome/registry.py} pins the assembly set
+\texttt{pkudriavzevii\_SD108\_v1} and \file{torchcell/candidates/gates.py} already lists that
+set among the readable ones. It needs an \texttt{Organism} member, which that host
+does not have, so no loader can declare it and \texttt{dataset\_adapter\_map} can hold nothing
+for it. It needs a host token in the gate, so that G2 can resolve a row's strain to that
+assembly set. And it needs held-out labels of the same kind as the source host's labels, and
+the subsections below measure how far each host of this wave is from that.
+
+\subsection{What the served graph holds per host\secstatus{todo}}\label{sec:state-served}
+
+On the gene-perturbation fitness axis the served graph is one host deep. The yeast corpus's
+fitness and gene-interaction maps supply 67 percent of all 65,889,109 yeast records, and the
+metabolite and titer screens that bear directly on strain engineering are three to four orders
+of magnitude smaller. \org{P. putida} contributes one fitness dataset and \org{E. coli} eight,
+so a cross-host fitness comparison has a dense source and two sparse targets.
+
+On the sequence-to-readout axis the served graph is thinner still, on every host. One dataset
+serves a varied-sequence library at scale, \texttt{vaishnav2022.py} with 71,158 records of
+\texttt{VariablePromoterReporterPerturbation} crossed with
+\texttt{PooledSortSeqExpressionPhenotype}, and \org{E. coli} carries a single promoter-activity
+dataset. Everything else perturbs a gene list. That matters for a low-data host because a
+promoter, a terminator, and an integration locus are the parts a new host is engineered with
+first, before any deletion collection for it exists.
+
+\subsection{What this wave adds per host\secstatus{todo}}\label{sec:state-rows}
+
+\notesec{\org{S. cerevisiae}, measurements rather than rows} The three regulatory-DNA rows add
+102,371,025, 51,339,035 and 6,739,258 measured promoter sequences, all on the same sort-seq
+platform and all under classes the served schema already holds (Sec.~\ref{sec:regdna}). Below
+them the same axis supplies a 1,000,000-sequence transcription-start-site library, a
+489,348-sequence 5' UTR library, a 13,000-sequence 3' end library, and the position-effect
+panels, each of which needs one new leaf rather than a new record type.
+
+\notesec{\org{P. putida}, two ready-made matrices} The additions are dense and small in row
+count: 332 RB-TnSeq samples as a 4,732 by 332 gene fitness matrix with t statistics and
+per-sample metadata, 321 RNA-seq profiles as a 5,564 by 321 matrix over 118 typed conditions,
+a 71-condition nitrogen BarSeq screen with 672 genes showing a significant phenotype, and a
+24-strain by 205-substrate respiration panel that is the only resource letting this host enter
+as a species with intraspecific variation rather than as one reference strain
+(Sec.~\ref{sec:pseudo}).
+
+\notesec{Nine further pseudomonads, inside one artifact} The nine non-KT2440 pseudomonad rows
+of the Fitness Browser hold 1,479 genome-wide fitness experiments between them, measured, and
+roughly $6.7\times10^{6}$ measurements, inferred from the per-gene matrix shape. They arrive
+in the same \texttt{feba.db} download, under the same schema, with the same condition
+vocabulary and the same RefSeq mapping files as the KT2440 rows already served, so the
+marginal work is genome registration rather than loader work.
+
+\notesec{\org{P. aeruginosa}, essentiality and isolate panels} This host enters for the
+layer the others lack: 199 curated essentiality calls scoped by strain and medium, a
+414-isolate clinical panel with a genome, a transcriptome, and 1,656 agar-dilution MIC records
+per the CLSI standard, a 443-isolate longitudinal panel with 8 phenotypes, and a
+125-isolate survey with 13 readouts (Sec.~\ref{sec:pseudo}).
+
+\notesec{\org{P. kudriavzevii}, about 25 small rows} The host's additions are a 161-isolate by
+57-stressor growth matrix, 9,177 measurements inferred, a 12-strain low-pH expression atlas at
+two sampling points, 128 four-drug MIC values on 32 sequenced isolates, a 47-guide by
+21-locus landing-pad screen with four readouts, and four small GEO series
+(Sec.~\ref{sec:pk}). None of them is a screen.
+
+\subsection{What is still missing after this wave\secstatus{todo}}\label{sec:state-gaps}
+
+Four gaps survive the wave, and each is a measured absence rather than an unexamined axis.
+
+There is no measured essentiality or genome-wide fitness screen in \org{P. kudriavzevii} of
+any kind, so a model trained on yeast essentiality has no target to be judged against in that
+host. Its only measured gene-perturbation fitness data are the 47-guide landing-pad screen,
+one validated paralog-pair deletion, and the targeted knockouts inside each engineering paper.
+Essentiality exists only as output of the iIsor850 reconstruction over 850 genes, which the
+yeast pool already excludes under the rule \texttt{not-a-dataset}. The one remaining lead is
+unresolved rather than negative: NCBI holds 713 BioProjects for the species and 357 of them
+match \texttt{resequencing}, and three sampled ones registered by the DOE Joint Genome
+Institute on 2026-05-11 are titled as SD108 \texttt{IoSL} resequencing with no publication
+attached.
+
+There is no baseline genome-wide essentiality call for KT2440 from the 2018 to 2026 window at
+all, because RB-TnSeq by construction cannot score a gene it cannot mutate. The dataset that
+would complete it, a 78,932-member CRISPRi library with 10 to 15 guides per gene and 798
+non-targeting controls screened on glucose, acetate, and p-coumarate at two concentrations,
+exists only as a DOE abstract with no publication, no repository, and no accession, so it is
+tracked rather than planned for.
+
+There is no \org{P. putida} or environmental-pseudomonad isolate collection with paired
+sequence and growth data beyond the 24-strain respiration panel, and that panel's
+data-availability statement could not be read. So the intraspecific genotype axis for this host
+rests on one preprint.
+
+And there is no ribosome profiling, CAGE, transcription-start-site mapping, or arrayed
+overexpression dataset for \org{P. kudriavzevii}, by a targeted query and the GEO taxid sweep.
+Chinese-language indices, ArrayExpress and BioStudies, and the Zenodo, Dryad, and figshare
+APIs were not searched, so absence on those routes is unmeasured rather than negative.

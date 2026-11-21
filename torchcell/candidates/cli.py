@@ -62,6 +62,15 @@ REPO: Final = Path(__file__).resolve().parents[2]
 TABLE_SCRIPTS: Final[dict[str, Path]] = {
     "bacteria": REPO
     / "experiments/database/scripts/build_bacteria_candidate_datasets_table.py",
+    # The cross-host wave: P. kudriavzevii, the pseudomonads and yeast regulatory DNA.
+    # Registered so ``load_table_module("hosts")`` finds the pool. Gating one of its
+    # rows needs more than this entry: ``verdict.CandidateTable`` and
+    # ``gates.CandidateRow.table`` are Literal["bacteria", "yeast"] and that literal is
+    # the ``table`` field of all 52 stored verdicts, so widening it is a policy
+    # decision rather than a registration. Until it is taken, the hosts document
+    # renders "no verdict" for every row.
+    "hosts": REPO
+    / "experiments/database/scripts/build_hosts_candidate_datasets_table.py",
     "yeast": REPO / "experiments/database/scripts/build_candidate_datasets_table.py",
 }
 DOI_TO_PMID_CACHE: Final = (

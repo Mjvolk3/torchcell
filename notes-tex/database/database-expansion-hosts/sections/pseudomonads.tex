@@ -1,0 +1,141 @@
+%% notes-tex/database/database-expansion-hosts/sections/pseudomonads.tex
+%% [[experiments.database.expansion-hosts]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-hosts/sections/pseudomonads.tex
+%% SOURCE: hand-authored prose. Per-organism experiment counts, file sizes and HTTP responses
+%% come from the triage report
+%% /scratch/projects/torchcell-scratch/tmp/deep-research/reports/Pk and next dataset wave triage.md
+%% and from .../research_notes/Pk and next dataset wave triage/pseudomonads.md, which records
+%% which figures were read on the live page and which came from a search snippet.
+
+\section{Pseudomonads\secstatus{todo}}\label{sec:pseudo}
+
+The row count of this wave comes from one downloadable file. The public Fitness Browser held 74
+organisms when its organism list was read on 2026-11-19, of which 11 rows are pseudomonads
+counting two backgrounds of one \org{Pseudomonas syringae} strain, and those 11 rows carry
+1,793 genome-wide fitness experiments between them. KT2440 holds 314 of them, over 54 carbon
+sources, 52 nitrogen sources, 2 stress compounds, and 27 other conditions. The nine
+non-KT2440 rows hold 1,479: \org{Stutzerimonas stutzeri} RCH2 at 350, \org{Aquipseudomonas
+helvetica} FW300-N2E3 at 211, FW300-N2E2 at 203, \org{A. simiae} WCS417 at 201, FW300-N2C3 at
+184, FW300-N1B4 at 147, \org{A. jessenii} GW456-L13 at 106, and \org{A. fragariae} pv.
+\emph{syringae} B728a at 46 in the wild type and 23 in a \gene{mexB} deletion background. The
+eleventh row is \org{Pseudomonas aeruginosa} PA14 at 8 experiments and 3 other conditions, with
+no carbon, nitrogen, or stress panel, so that host's presence in this resource is a token row
+rather than a compendium.
+
+Retrieval is one request and the terms are the open question. The whole-browser
+\texttt{sqlite3} database at \texttt{cgi\_data/feba.db} returns HTTP 200 to a plain
+\texttt{curl} at 10,433,708,032 bytes with a Last-Modified of 2026-10-27, and the companion
+protein-sequence file returns 118,142,489 bytes at the same release date. The CGI layer is the
+opposite: the help page and the organism list return 403 with a Cloudflare challenge header to
+every non-browser client, as does the archival record page, so no license string has been read
+for either the live database or the 2017 release. That is the cheapest ask in
+Table~\ref{tab:asks} and it gates nine organisms. Counts for this resource also have to be
+dated rather than quoted: search summaries circulate 50 organisms and 7,593 experiments, a
+KBase mirror reports 48 organisms, and a separate non-public instance reports 104 organisms
+with 989 KT2440 experiments. The live public page supersedes all of them and the non-public
+instance's figures must never be mixed in. The resource is a rolling release and the bulk
+download page states that ``data for sucrose and D-mannitol from this publication should be
+disregarded'' in favor of fresh stock data, so every ingested fitness value carries the release date and
+sha256 of the file it came from, and two builds months apart will not agree.
+
+\subsection{The ready-made KT2440 matrix, and what it overlaps\secstatus{todo}}\label{sec:pseudo-kt}
+
+Borchert et al. 2024 assembled 332 publicly available KT2440 RB-TnSeq datasets collected
+between 2017 and 2022 into a 4,732 gene by 332 sample fitness matrix with t statistics and
+per-sample metadata, released on GitHub with gene identifiers as \texttt{PP\_} locus tags, at
+$1.6\times10^{6}$ measurements. The matrix drops the genes with no data across all samples,
+4,732 of 5,564 protein-coding genes, so its shape is the released shape rather than a product
+of axes. Two things about it decide the build order rather than the rank. 254 of the 332
+samples come from the Fitness Browser itself, so de-duplication has to be by experiment
+identity and not by count, and the remaining samples are in SRA under PRJNA809672,
+PRJNA856070, and PRJNA1011287. And the paper disagrees with itself on the condition count, 179
+unique conditions in the abstract and results against 183 in the methods, so neither figure can
+be quoted without the other. It also states no genome assembly version for the locus tags it
+uses, which is a provenance gap to close before a loader is written.
+
+Two further KT2440 rows pair with it on the same axis. A transcriptome compendium holds 321
+high-quality RNA-seq profiles selected from 541 collected samples, 305 published and 16 new, as
+a 5,564 gene by 321 sample matrix over 118 unique conditions with 84 independent components, on
+GitHub under an MIT license, which is structurally parallel to the fitness matrix so one
+condition vocabulary serves both. Its per-sample GEO accession list sits in a supplementary
+spreadsheet rather than in the text. A nitrogen BarSeq screen adds 52 nitrogen-containing
+compounds plus 19 amino-acid dropout conditions, 71 in all, with significant fitness phenotypes
+in 672 genes, of which 529 encode proteins unreviewed in UniProt and 256 had no significant
+phenotype in previous BarSeq studies. A respiration panel of 24 strains against 205
+substrates, 190 from two Biolog plates plus 15 aromatics off-plate, is the only resource that
+would let this host enter as a species with intraspecific variation rather than as one
+reference strain, and its data-availability statement is unread because the preprint server
+rate-limited four attempts.
+
+\subsection{The essentiality gold standards are in the wrong species\secstatus{todo}}\label{sec:pseudo-ess}
+
+The one curated essentiality benchmark in this triage is in \org{P. aeruginosa}, not in the
+host that needs it. A 2026 paper intersects five published Tn-seq studies into two gene sets,
+GOLD\_115 for PA14 grown in LB and GOLD\_84 as a cross-strain core carrying PAO1 locus tags,
+199 gene calls in all, shipped as a supplementary table with its own new reads at SRA
+PRJNA1240204 against reference NC\_008463.1. The published essential-gene counts across that
+literature are 335, 352, 434, 634, 321 core, 115 gold, and 84 core-gold, and the same paper
+measures gold-standard recovery ranging from 0 to 100 percent depending on the calling tool.
+The threshold and the calling tool therefore account for part of that spread alongside biology,
+which makes the placement rule binding: every ingested essentiality call carries its calling
+method, medium, and strain, and is never merged across studies into one boolean. GOLD\_115 is
+already scoped that way by construction, PA14 in LB, so it fits the schema's essentiality layer
+as released.
+
+KT2440 is the inverse case and the gap is measured. It has dense quantitative fitness data for
+its non-essential genes and no baseline genome-wide essentiality call from 2018 to 2026 at all,
+because RB-TnSeq cannot score a gene it cannot mutate. The complement exists and is not
+public: a 78,932-member CRISPRi library with 10 to 15 guides per gene and 798 non-targeting
+controls as internal standards, screened on glucose, acetate, and p-coumarate at two
+concentrations, appears only as a DOE abstract with no essential-gene count, no repository, no
+accession, and no journal. The only pseudomonad CRISPRi score table plausibly downloadable
+today is a PAO1 library of more than 80,000 guides over coding sequences and intergenic
+regions, with more than a thousand genes showing a phenotype on depletion, deposited as three
+Zenodo records whose contents are unlabeled, so which of the three holds gene-level scores is
+the ask recorded against that row. CRISPRi and RB-TnSeq are not interchangeable perturbation
+types for a typed schema in any case: interference is partial, polar within an operon, and
+dependent on guide efficiency, so the guide sequence is part of the genotype and guide-level
+and gene-level scores are different record types.
+
+\org{P. aeruginosa}'s other contribution is sequenced isolates with measured phenotypes. One
+414-isolate clinical panel carries a genome and a transcriptome per isolate with MICs by agar
+dilution to the CLSI 2018 standard for four drugs, run in triplicate with up to five replicates
+when discordant and an inclusion rule of three concordant results, which is about 1,656 MIC
+records, and every layer sits under its own accession with PA14 locus tags on a stated
+reference, so it is the one panel here that would need no provenance reconstruction. A
+443-isolate longitudinal panel adds 8 phenotypes in 4 categories with the whole dataset in one
+spreadsheet, and its isolate count is internally inconsistent on its own page at 474, 373, 389,
+and 443, so it has to be reconciled against that spreadsheet before ingestion. A 125-isolate
+survey adds 13 readouts and uses Bakta locus tags rather than PAO1 \texttt{PA} numbers, which
+forces the alias layer rather than exercising it. And an arrayed screen of 5,459 mutants against
+19 antibiotics would be the densest arrayed-library phenotype matrix in the species if the full
+matrix was released, which is unconfirmed, making it the highest-value unresolved row of this
+section.
+
+\subsection{Admitting a new pseudomonad host\secstatus{todo}}\label{sec:pseudo-admit}
+
+Three of the nine clear the bar of a sequenced genome plus a large, downloadable,
+multi-condition phenotype set produced by one uniform pipeline: RCH2 at 350 experiments,
+FW300-N2E3 at 211, and WCS417 at 201, with FW300-N2E2 at 203, FW300-N2C3 at 184, and
+FW300-N1B4 at 147 behind them on the same evidence. The marginal cost of adding them is genome
+and annotation registration rather than loader work, because they arrive in the same
+\texttt{feba.db} artifact under the same schema and condition vocabulary, and the identifier
+bridge is supplied by the source: \texttt{refseq\_mapping.tsv} maps organism and locus id to a
+RefSeq accession and \texttt{refseq\_assemblies} maps the organism id to an NCBI assembly.
+
+Two costs are real and both are policy rather than engineering. Each host needs an
+\texttt{Organism} member and a reference genome in the genomes tier, so ten hosts means ten of
+each, and Table~\ref{tab:schema} records that as one deliberate change rather than ten
+accidental ones. And the names have moved: the browser has adopted GTDB-style renaming, so
+KT2440 is listed as \org{Aquipseudomonas alloputida}, RCH2 as \org{Stutzerimonas
+stutzeri}\_AE, and B728a as \org{A. fragariae} pv. \emph{syringae}, which means the organism table carries both
+the historical and the current binomial as aliases or a row will not resolve to the literature
+that produced it.
+
+Orthology stays a modeling-time operation, and the evidence for that is in the resource itself.
+It ships conserved functional associations and per-organism paralog tables beside the fitness
+matrices, so a loader stores the released locus tag verbatim and transfer is computed
+downstream, which the data-is-the-data rule requires in any case. The counter-example
+is specific enough to settle the question: 20 PA14 essential genes have no PAO1 ortholog, only
+192 genes are shared across all PA14 screens, and only 17 are shared across all PAO1 screens.
+A load-time ortholog merge would turn each of those disagreements into a silently wrong record.

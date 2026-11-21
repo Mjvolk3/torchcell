@@ -1,0 +1,163 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_hosts_candidate_datasets_table.py
+\begingroup
+\footnotesize
+\begin{longtable}{@{}r L{76mm} L{20mm} L{36mm} L{24mm}@{}}
+\caption[]{Candidate-gate verdict per ranked row, rendered from the verdict store
+(\texttt{database/candidates/}). \emph{no verdict} means the row has not been gated, and
+every row reads that way here: the stored verdict's \emph{table} field admits only the
+two existing pools, so a row of this table cannot yet carry one
+(Table~\ref{tab:schema}).}
+\label{tab:verdicts}\\
+\toprule
+Rank & Dataset & Host & Verdict & Decided \\
+\midrule
+\endfirsthead
+\toprule
+Rank & Dataset & Host & Verdict & Decided \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+1 & de Boer 2020 (GPRA sort-seq, 100M random promoters) & \org{S. cerevisiae} & no verdict &  \\
+2 & Vaishnav 2022 deferred training libraries & \org{S. cerevisiae} & no verdict &  \\
+3 & DREAM 2022 random promoter challenge (Rafi 2024) & \org{S. cerevisiae} & no verdict &  \\
+4 & Kotopka and Smolke 2020 (artificial promoter libraries) & \org{S. cerevisiae} & no verdict &  \\
+5 & Zhu 2024 (Pol II MASTER, TSS initiation efficiency) & \org{S. cerevisiae} & no verdict &  \\
+6 & Cuperus 2017 (random 5' UTR library) & \org{S. cerevisiae} & no verdict &  \\
+7 & Gui 2021 (position effects with transcriptomes) & \org{S. cerevisiae} & no verdict &  \\
+8 & Keren 2016 (promoter panel x named gene, pooled fitness) & \org{S. cerevisiae} & no verdict &  \\
+9 & Shalem 2015 (3' end FACS-seq library) & \org{S. cerevisiae} & no verdict &  \\
+10 & Renganaath 2020 (native promoter variant MPRA) & \org{S. cerevisiae} & no verdict &  \\
+11 & Arg-CCU tRNA deep mutational scan & \org{S. cerevisiae} & no verdict &  \\
+12 & Keren 2013 (native promoter panel across conditions) & \org{S. cerevisiae} & no verdict &  \\
+13 & Lubliner 2015 (core promoter variant panel) & \org{S. cerevisiae} & no verdict &  \\
+14 & Sharon 2012 (designed promoter library) & \org{S. cerevisiae} & no verdict &  \\
+15 & Yamanishi 2013 (genomic terminatome) & \org{S. cerevisiae} & no verdict &  \\
+16 & Dvir 2013 (5' UTR positions -10 to -1) & \org{S. cerevisiae} & no verdict &  \\
+17 & Wu 2017 (genome-wide position effects, 1,044 loci) & \org{S. cerevisiae} & no verdict &  \\
+18 & ProteinGym yeast subset & \org{S. cerevisiae} & no verdict &  \\
+19 & Zhang 2016 (genome-wide GFP position scan) & \org{S. cerevisiae} & no verdict &  \\
+20 & Kita 2017 (context-stratified yeast eQTLs) & \org{S. cerevisiae} & no verdict &  \\
+21 & Chen (earlier position-effect study, 482 loci) & \org{S. cerevisiae} & no verdict &  \\
+22 & Wei 2017 (synthetic terminator panel) & \org{S. cerevisiae} & no verdict &  \\
+23 & Lubliner 2013 (native core promoter maximal strengths) & \org{S. cerevisiae} & no verdict &  \\
+24 & Morse (short synthetic terminators) & \org{S. cerevisiae} & no verdict &  \\
+25 & MaveDB yeast score sets & \org{S. cerevisiae} & no verdict &  \\
+26 & Fitness Browser RCH2 (Stutzerimonas stutzeri\_AE) & \org{S. stutzeri} & no verdict &  \\
+27 & Fitness Browser FW300-N2E3 (Aquipseudomonas helvetica) & \org{P. fluorescens} & no verdict &  \\
+28 & Fitness Browser FW300-N2E2 (Aquipseudomonas fluorescens\_Q) & \org{P. fluorescens} & no verdict &  \\
+29 & Fitness Browser WCS417 (Aquipseudomonas simiae) & \org{P. simiae} & no verdict &  \\
+30 & Fitness Browser FW300-N2C3 (Aquipseudomonas fluorescens\_AA) & \org{P. fluorescens} & no verdict &  \\
+31 & Fitness Browser FW300-N1B4 (Aquipseudomonas sp.) & \org{P. fluorescens} & no verdict &  \\
+32 & Fitness Browser B728a (Aquipseudomonas fragariae pv. syringae) & \org{P. syringae} & no verdict &  \\
+33 & Fitness Browser B728a mexB deletion background & \org{P. syringae} & no verdict &  \\
+34 & Fitness Browser PA14 (Pseudomonas aeruginosa) & \org{P. aeruginosa} & no verdict &  \\
+35 & Dubinkina 2024 (12-strain low-pH transcriptomic atlas) & \org{P. kudriavzevii} & no verdict &  \\
+36 & MAESTRO 2025 (170-isolate WGS, 57-stressor growth panel) & \org{P. kudriavzevii} & no verdict &  \\
+37 & Fatma 2023 (landing-pad locus screen) & \org{P. kudriavzevii} & no verdict &  \\
+38 & Douglass 2018 (32 sequenced isolates, 4-antifungal MIC) & \org{P. kudriavzevii} & no verdict &  \\
+39 & GSE282019 (Delhi NICU five-year outbreak) & \org{P. kudriavzevii} & no verdict &  \\
+40 & GSE202655 (L-malic acid, EcSthA transhydrogenase) & \org{P. kudriavzevii} & no verdict &  \\
+41 & GSE159457 (CY902 C4 dicarboxylic acid transporters) & \org{P. kudriavzevii} & no verdict &  \\
+42 & GSE262836 (Delhi NICU, fluconazole-resistance expression) & \org{P. kudriavzevii} & no verdict &  \\
+43 & Thompson 2019 (KT2440 lysine metabolism) & \org{P. putida} & no verdict &  \\
+44 & Isoprenol CRISPRi DBTL proteome ladder (7 PRIDE deposits) & \org{P. putida} & no verdict &  \\
+45 & Thompson 2020 (KT2440 fatty acids and alcohols) & \org{P. putida} & no verdict &  \\
+46 & GSE198395 (putidaPRECISE321 carbon sources) & \org{P. putida} & no verdict &  \\
+47 & Mueller 2025 (24-strain P. putida Biolog panel) & \org{P. putida} & no verdict &  \\
+48 & Schmidt 2022 (KT2440 nitrogen BarSeq) & \org{P. putida} & no verdict &  \\
+49 & Borchert 2024 (KT2440 fitness compendium) & \org{P. putida} & no verdict &  \\
+50 & putidaPRECISE321 (Lim 2022) & \org{P. putida} & no verdict &  \\
+51 & Cao 2020 (pooled four-condition RNA-seq) & \org{P. kudriavzevii} & no verdict &  \\
+52 & PXD069498 (extracellular vesicle proteome) & \org{P. kudriavzevii} & no verdict &  \\
+53 & Douglass 2018 (per-strain SNP density and loss of heterozygosity) & \org{P. kudriavzevii} & no verdict &  \\
+54 & Tran 2023 (succinate end-to-end pipeline) & \org{P. kudriavzevii} & no verdict &  \\
+55 & Cao 2020 (constitutive promoter-GFP panel) & \org{P. kudriavzevii} & no verdict &  \\
+56 & Xiao 2014 (SD108 reductive-TCA succinate) & \org{P. kudriavzevii} & no verdict &  \\
+57 & Xylose utilization across four natural backgrounds & \org{P. kudriavzevii} & no verdict &  \\
+58 & Illinois Data Bank IDB-9063411 (high-yield 3-HP) & \org{P. kudriavzevii} & no verdict &  \\
+59 & Douglass 2018 (CBS573 RNA-seq) & \org{P. kudriavzevii} & no verdict &  \\
+60 & MAESTRO 2025 (gene4260/gene4261 paralog-pair deletion) & \org{P. kudriavzevii} & no verdict &  \\
+61 & Illinois Data Bank IDB-0538107 (succinate pipeline deposit) & \org{P. kudriavzevii} & no verdict &  \\
+62 & CABBI inorganic carbon sources (low-pH succinate kinetics) & \org{P. kudriavzevii} & no verdict &  \\
+63 & Xylose 3-HP from cellulosic hydrolysates (2026) & \org{P. kudriavzevii} & no verdict &  \\
+64 & Jeong 2025 (acetate metabolism during xylose fermentation) & \org{P. kudriavzevii} & no verdict &  \\
+65 & Glycolic acid overproduction (2026) & \org{P. kudriavzevii} & no verdict &  \\
+66 & Wu 2023 (piggyBac citramalate copy-number and locus variants) & \org{P. kudriavzevii} & no verdict &  \\
+67 & Mitochondrial decompartmentalization (2025, with GNPS metabolomics) & \org{P. kudriavzevii} & no verdict &  \\
+68 & GSE39558 (ethanol-stress expression) & \org{P. kudriavzevii} & no verdict &  \\
+69 & PXD041801 (flocculin expression and floating biofilms) & \org{P. kudriavzevii} & no verdict &  \\
+70 & PXD039973 (succinylation and amphotericin B resistance) & \org{P. kudriavzevii} & no verdict &  \\
+71 & PXD075355 (Pichia against Botrytis cinerea) & \org{P. kudriavzevii} & no verdict &  \\
+72 & Pk E1 toolkit expansion (mycoprotein, 2026) & \org{P. kudriavzevii} & no verdict &  \\
+73 & China fermented-vegetable and clinical panel (2024) & \org{P. kudriavzevii} & no verdict &  \\
+74 & Indonesian clinical genomes (PRJNA819536) & \org{P. kudriavzevii} & no verdict &  \\
+75 & Unidentified Illinois Data Bank CRISPR/Cas9 gene-deletion deposit & \org{P. kudriavzevii} & no verdict &  \\
+76 & Khaledi 2020 (414-isolate clinical transcriptome panel) & \org{P. aeruginosa} & no verdict &  \\
+77 & Kaczmarczyk 2025 (PAO1 genome-wide CRISPRi) & \org{P. aeruginosa} & no verdict &  \\
+78 & Dotsch 2009 (arrayed PA14 library against 19 antibiotics) & \org{P. aeruginosa} & no verdict &  \\
+79 & Bartell 2019 (longitudinal cystic fibrosis panel) & \org{P. aeruginosa} & no verdict &  \\
+80 & Genome Medicine 2024 (1,877-strain genome and MIC set) & \org{P. aeruginosa} & no verdict &  \\
+81 & Penaranda 2025 (125-isolate diversity survey) & \org{P. aeruginosa} & no verdict &  \\
+82 & Khaledi 2020 (1,656-record agar-dilution MIC panel) & \org{P. aeruginosa} & no verdict &  \\
+83 & Poulsen 2019 (nine-strain Tn-seq core essentiality) & \org{P. aeruginosa} & no verdict &  \\
+84 & PAO1 arrayed transposon libraries (Jacobs 2003, Held 2012) & \org{P. aeruginosa} & no verdict &  \\
+85 & KT2440 pooled transposon library (Putida\_ML5 metadata) & \org{P. putida} & no verdict &  \\
+86 & Gao 2020 (KT2440 targeted SRM proteomics) & \org{P. putida} & no verdict &  \\
+87 & BACTOME (101 clinical genomes with eight phenotypes) & \org{P. aeruginosa} & no verdict &  \\
+88 & Kohlstedt 2019 (13C metabolic flux analysis, two hosts) & \org{P. putida} & no verdict &  \\
+89 & Turner 2015 (PA14 and PAO1 essentiality across four arms) & \org{P. aeruginosa} & no verdict &  \\
+90 & Liberati 2006 (PA14 non-redundant transposon library and essentiality) & \org{P. aeruginosa} & no verdict &  \\
+91 & GOLD\_115 and GOLD\_84 essential-gene sets & \org{P. aeruginosa} & no verdict &  \\
+92 & Werner 2023 (beta-ketoadipate from lignin) & \org{P. putida} & no verdict &  \\
+93 & Wilkes 2026 (muconate multi-omics with fluxomics) & \org{P. putida} & no verdict &  \\
+94 & GSE213139 (low-dose ionizing radiation) & \org{P. putida} & no verdict &  \\
+95 & GSE131229 (non-antibiotic pharmaceutical stress) & \org{P. putida} & no verdict &  \\
+96 & GSE248909 (micro and nanoplastic stress) & \org{P. putida} & no verdict &  \\
+97 & GSE193493 (putidaPRECISE321 second deposit) & \org{P. putida} & no verdict &  \\
+98 & GSE221044 (kaiC deletion) & \org{P. putida} & no verdict &  \\
+99 & GSE144045 (solvent-tolerance evolution in P. putida S12) & \org{P. putida} & no verdict &  \\
+100 & GSE275525 (HexR regulatory landscape) & \org{P. putida} & no verdict &  \\
+101 & GSE309641 (fluoride adaptive evolution) & \org{P. putida} & no verdict &  \\
+102 & GSE155767 (evolved KT2440 on non-native sugars) & \org{P. putida} & no verdict &  \\
+103 & GSE147420 (ammonium against nitrate) & \org{P. putida} & no verdict &  \\
+104 & GSE229763 (one-carbon metabolism) & \org{P. putida} & no verdict &  \\
+105 & KT2440 aromatics RB-TnSeq (2019 preprint) & \org{P. putida} & no verdict &  \\
+106 & PMkbase v1.0 (phenotype-microarray database) & \org{P. putida} & no verdict &  \\
+107 & IPCD (International P. aeruginosa Consortium Database) & \org{P. aeruginosa} & no verdict &  \\
+108 & Pirnay 2009 (328-isolate population survey) & \org{P. aeruginosa} & no verdict &  \\
+109 & n-butanol KT2440 proteome (2015) & \org{P. putida} & no verdict &  \\
+110 & Skurnik 2013 (PA14 essentiality) & \org{P. aeruginosa} & no verdict &  \\
+111 & Lee 2015 (PAO1 essentiality across three media) & \org{P. aeruginosa} & no verdict &  \\
+112 & P. putida S12 phenotype microarray (190 carbon sources) & \org{P. putida} & no verdict &  \\
+113 & Chandler 2023 (128 functionally phenotyped isolates) & \org{P. aeruginosa} & no verdict &  \\
+114 & Breidenstein 2008 (ciprofloxacin resistome) & \org{P. aeruginosa} & no verdict &  \\
+115 & Remaining P. putida GEO expression series & \org{P. putida} & no verdict &  \\
+116 & KT2440 mini-Tn5 knockout collection (2010) & \org{P. putida} & no verdict &  \\
+117 & Nunez-Garcia 2024 (39 isolates over ten years) & \org{P. aeruginosa} & no verdict &  \\
+118 & Remaining P. putida PRIDE proteomics projects & \org{P. putida} & no verdict &  \\
+119 & Kohlstedt 2022 (genome-reduced MA-10 muconate for PET) & \org{P. putida} & no verdict &  \\
+120 & Kohlstedt 2018 (MA-6 muconate to nylon) & \org{P. putida} & no verdict &  \\
+121 & PAO1 ppk1 and ppk2 Biolog panels & \org{P. aeruginosa} & no verdict &  \\
+122 & Vardon 2015 (adipic acid from lignin) & \org{P. putida} & no verdict &  \\
+123 & PXD074559 (JAG1 proteome, acetate against glucose) & \org{P. putida} & no verdict &  \\
+124 & Batianis 2020 (expanded CRISPRi toolbox) & \org{P. putida} & no verdict &  \\
+125 & KT2440 lignin-stream tolerance RB-TnSeq (2023) & \org{P. putida} & no verdict &  \\
+126 & KT2440 metal-excess Tn-seq (2024) & \org{P. putida} & no verdict &  \\
+127 & Woodworth 2021 (syringyl lignin to pyrone dicarboxylic acid) & \org{P. putida} & no verdict &  \\
+128 & PXD067010 (lignocellulosic sugars to an aviation-fuel precursor) & \org{P. putida} & no verdict &  \\
+129 & PXD054609 (isoprenol tolerance, evolution plus omics) & \org{P. putida} & no verdict &  \\
+130 & PXD045993 (polyhydroxyalkanoate biology in KT2440) & \org{P. putida} & no verdict &  \\
+131 & QconCAT absolute quantification workflow (2023) & \org{P. putida} & no verdict &  \\
+132 & MTBLS12468 (GAPDH homologs on glucose against ferulate) & \org{P. putida} & no verdict &  \\
+133 & MTBLS1715 (13C metabolomics under iron limitation) & \org{P. putida} & no verdict &  \\
+134 & MTBLS319 and MTBLS320 (DOT-T1E solvent and drug exposure) & \org{P. putida} & no verdict &  \\
+135 & Sigma-factor regulon reconstruction (2026) & \org{P. putida} & no verdict &  \\
+136 & Fenster 2022 (KT2440 CRISPRi toolset with a product readout) & \org{P. putida} & no verdict &  \\
+137 & Rhizosphere CRISPRi (2024) & \org{P. putida} & no verdict &  \\
+138 & Pediatric cystic fibrosis susceptibility panel (2025) & \org{P. aeruginosa} & no verdict &  \\
+139 & PA14 non-redundant phage-resistance screen (2024) & \org{P. aeruginosa} & no verdict &  \\
+140 & OSTI barcoded P. fluorescens transposon libraries & \org{P. fluorescens} & no verdict &  \\
+\end{longtable}
+\endgroup

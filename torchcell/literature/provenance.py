@@ -41,14 +41,15 @@ from torchcell.literature.manifest import (
 from torchcell.literature.retrieve import RETRIEVERS
 
 __all__ = [
+    "RETRIEVERS",
     "ArtifactRecord",
     "ProcessingRecord",
     "RetrievalMethod",
     "RetrievalRecord",
     "SourceCheck",
+    "check_source",
     "run_retriever",
     "verify_artifact",
-    "check_source",
 ]
 
 

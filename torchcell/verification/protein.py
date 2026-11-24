@@ -29,6 +29,7 @@ from torchcell.verification.levels import (
     l1_count,
     l2_value_fidelity,
     validate_by_type_tag,
+    worst_deviation,
 )
 from torchcell.verification.report import (
     Level,
@@ -542,7 +543,9 @@ def verify_natural_isolate_turnover(
         phenotype = rec["experiment"]["phenotype"]
         for key, rate in phenotype["degradation_rate"].items():
             half_life = float(phenotype["half_life"][key])
-            worst = max(worst, abs(math.log(2) / float(rate) - half_life) / half_life)
+            worst = worst_deviation(
+                worst, abs(math.log(2) / float(rate) - half_life) / half_life
+            )
             n_pairs += 1
     report.add(
         l3_convention(

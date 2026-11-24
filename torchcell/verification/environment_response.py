@@ -65,7 +65,7 @@ from torchcell.verification.common import (
     SharedRecordRules,
     declared_first_union_validator,
 )
-from torchcell.verification.levels import l0_structural, l1_count
+from torchcell.verification.levels import l0_structural, l1_count, worst_deviation
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -673,7 +673,7 @@ def _l3_reference_zero(records: Sequence[Record]) -> LevelResult:
                 reference_categories[str(category)] += 1
         else:
             n += 1
-            worst = max(worst, abs(float(v)))
+            worst = worst_deviation(worst, abs(float(v)))
         experiment_category = rec["experiment"]["phenotype"].get("category")
         if experiment_category is not None:
             experiment_categories[str(experiment_category)] += 1

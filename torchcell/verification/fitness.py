@@ -37,7 +37,12 @@ from torchcell.verification.common import (
     declared_member_validator,
     key_digest,
 )
-from torchcell.verification.levels import l0_structural, l1_count, l2_value_fidelity
+from torchcell.verification.levels import (
+    l0_structural,
+    l1_count,
+    l2_value_fidelity,
+    worst_deviation,
+)
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -201,7 +206,7 @@ def _l3_reference_one(records: Sequence[Record]) -> LevelResult:
         if v is None:
             continue
         n += 1
-        worst = max(worst, abs(float(v) - 1.0))
+        worst = worst_deviation(worst, abs(float(v) - 1.0))
     holds = worst == 0.0
     return LevelResult(
         level=Level.L3,

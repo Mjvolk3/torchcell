@@ -53,6 +53,7 @@ from torchcell.verification.levels import (
     l1_count,
     l2_value_fidelity,
     l3_convention,
+    worst_deviation,
 )
 from torchcell.verification.perturbation_families import (
     pathway_member_perturbation_types,
@@ -102,8 +103,8 @@ def _l2_se_identity(records: Sequence[Record], tol: float) -> LevelResult:
         n_pairs += 1
         expected = float(uncertainty) / math.sqrt(float(phenotype["n_samples"]))
         difference = abs(float(se) - expected)
-        worst = max(worst, difference)
-        if difference > tol:
+        worst = worst_deviation(worst, difference)
+        if not difference <= tol:  # a NaN difference is a failure
             derived.append(
                 {
                     "index": index,

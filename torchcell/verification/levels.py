@@ -157,6 +157,17 @@ def l2_value_fidelity(
     )
 
 
+def worst_deviation(worst: float, deviation: float) -> float:
+    """Running maximum of a deviation, where a non-finite deviation is infinite.
+
+    ``max(worst, nan)`` returns ``worst``, so a plain running maximum reads a NaN
+    as perfect agreement. A deviation that cannot be computed is never agreement.
+    """
+    if not math.isfinite(deviation):
+        return math.inf
+    return max(worst, deviation)
+
+
 def l2_cross_method(
     a: Sequence[float], b: Sequence[float], *, tol: float = 1e-6
 ) -> LevelResult:
@@ -171,7 +182,7 @@ def l2_cross_method(
         )
     disagreements: list[dict[str, Any]] = []
     for i, (x, y) in enumerate(zip(a, b)):
-        if abs(x - y) > tol:
+        if not abs(x - y) <= tol:  # a NaN pair is a disagreement
             disagreements.append({"index": i, "a": x, "b": y, "diff": abs(x - y)})
     passed = not disagreements
     return LevelResult(
@@ -213,7 +224,7 @@ def l4_cross_source(
     disagreements: list[dict[str, Any]] = []
     for key, va, vb in shared:
         n += 1
-        if abs(va - vb) > tol:
+        if not abs(va - vb) <= tol:  # a NaN pair is a disagreement
             disagreements.append(
                 {"entity": str(key), "a": va, "b": vb, "diff": abs(va - vb)}
             )

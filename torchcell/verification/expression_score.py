@@ -45,6 +45,7 @@ from torchcell.verification.levels import (
     l1_count,
     l2_value_fidelity,
     l3_convention,
+    worst_deviation,
 )
 from torchcell.verification.report import (
     Level,
@@ -98,7 +99,7 @@ def _l3_reference_zero(records: Sequence[Record]) -> LevelResult:
             with_p += 1
         for value in reference["expression_score"].values():
             n += 1
-            worst = max(worst, abs(float(value)))
+            worst = worst_deviation(worst, abs(float(value)))
     holds = worst == 0.0 and with_p == 0
     return l3_convention(
         "reference_score_zero",
@@ -157,7 +158,7 @@ def _l3_two_sided_normal(records: Sequence[Record], tol: float) -> LevelResult:
         for gene, score in phenotype["expression_score"].items():
             n += 1
             expected = MicroarrayExpressionScorePhenotype.p_value_of_score(float(score))
-            worst = max(worst, abs(expected - float(p_values[gene])))
+            worst = worst_deviation(worst, abs(expected - float(p_values[gene])))
     return l3_convention(
         "p_value_is_two_sided_normal",
         worst <= tol,

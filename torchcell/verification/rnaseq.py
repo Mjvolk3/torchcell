@@ -88,8 +88,12 @@ def _l1_strain_uniqueness(
     (Caudal, one environment) still reduces to one record per strain. ``strain_of`` reads
     a record's strain when the perturbations alone cannot (a natural-isolate store's
     S288C-derived column has none); by default the shared ``strain_id``.
+
+    ``replicate_id`` joins the key (read with ``.get``, empty when unset), so the
+    replicate records of a per-replicate release stay distinct and a dataset that
+    stores one aggregate per (strain, environment) is keyed exactly as before.
     """
-    seen: dict[tuple[str, str], int] = {}
+    seen: dict[tuple[str, str, str], int] = {}
     n_missing = 0
     for rec in records:
         exp = rec["experiment"]
@@ -97,7 +101,12 @@ def _l1_strain_uniqueness(
         if strain is None:
             n_missing += 1
             continue
-        key = (strain, _env_identity(exp["environment"]))
+        replicate_id = exp["phenotype"].get("replicate_id")
+        key = (
+            strain,
+            _env_identity(exp["environment"]),
+            "" if replicate_id is None else str(replicate_id),
+        )
         seen[key] = seen.get(key, 0) + 1
     dups = {k: n for k, n in seen.items() if n > 1}
     n_strains = len({k[0] for k in seen})

@@ -152,6 +152,8 @@ def _fitness_json(fitness: float) -> dict[str, Any]:
         "fitness_uncertainty_type": None,
         "sample_unit": None,
         "screen_id": None,
+        # #1178: which replicate a per-replicate record is; None on an aggregate
+        "replicate_id": None,
     }
 
 

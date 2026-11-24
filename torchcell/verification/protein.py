@@ -67,17 +67,24 @@ def _l1_orf_uniqueness(
     independently). For those, ``allow_duplicate_orfs=True`` turns this into an
     informational check (duplicates reported, not failed) -- the per-instance
     uniqueness is guaranteed by the record count (L1 ``expected_count``).
+
+    ``replicate_id`` joins the key (read with ``.get``, empty when unset), so the
+    replicate records of a per-replicate release stay distinct and a dataset that
+    stores one aggregate per ORF is keyed exactly as before.
     """
-    seen: dict[str, int] = {}
+    seen: dict[tuple[str, str], int] = {}
     for rec in records:
+        replicate_id = rec["experiment"]["phenotype"].get("replicate_id")
+        replicate = "" if replicate_id is None else str(replicate_id)
         for g in _deleted_genes(rec["experiment"]):
-            seen[g] = seen.get(g, 0) + 1
-    dups = {g: n for g, n in seen.items() if n > 1}
+            seen[(g, replicate)] = seen.get((g, replicate), 0) + 1
+    dups = {key: n for key, n in seen.items() if n > 1}
+    n_orfs = len({g for g, _ in seen})
     passed = allow_duplicate_orfs or not dups
     if not dups:
-        message = f"{len(seen)} unique knocked-out ORFs, one record each"
+        message = f"{n_orfs} unique knocked-out ORFs, one record each"
     elif allow_duplicate_orfs:
-        message = f"{len(seen)} ORFs, {len(dups)} with multiple strains (expected)"
+        message = f"{n_orfs} ORFs, {len(dups)} with multiple strains (expected)"
     else:
         message = f"{len(dups)} ORFs appear in multiple records"
     return LevelResult(
@@ -85,7 +92,7 @@ def _l1_orf_uniqueness(
         name="orf_uniqueness",
         passed=passed,
         message=message,
-        details={"n_orfs": len(seen), "n_duplicated": len(dups)},
+        details={"n_orfs": n_orfs, "n_duplicated": len(dups)},
     )
 
 

@@ -275,6 +275,31 @@ def test_two_records_of_one_strain_and_environment_are_a_duplicate_unless_screen
     assert _result(report, "pair_uniqueness").passed is True
 
 
+def test_released_replicates_are_distinct_records_and_share_one_companion_key() -> None:
+    """#1178: two replicates of one pair, each with its own ``replicate_id``, are two
+    records for ``pair_uniqueness``, while the companion-fitness containment reads the
+    bare (strain, environment) key the fitness store shares, so both join one key.
+    """
+    replicates = [_record(PAIRS[0], -0.2, 0.01), _record(PAIRS[0], -0.1, 0.02)]
+    replicates[0]["experiment"]["phenotype"]["replicate_id"] = "1"
+    replicates[1]["experiment"]["phenotype"]["replicate_id"] = "2"
+    report = _verify(
+        replicates,
+        released=_released([-0.2, -0.1], [0.01, 0.02]),
+        companion_keys={pair_key(replicates[0]["experiment"])},
+        companion_name="dmf",
+    )
+    assert _result(report, "pair_uniqueness").details == {
+        "n_pairs": 2,
+        "n_duplicated": 0,
+        "n_extra_records": 0,
+    }
+    containment = _result(report, "fitness_companion_containment")
+    assert containment.passed is True
+    assert containment.details["n_keys"] == 1
+    assert containment.details["n_missing"] == 0
+
+
 def test_interaction_order_names_the_wrong_arity_gene_count_and_level() -> None:
     records = [
         _record(("YAL001C", "YBR085W", "YJR155W"), -0.2, 0.01, graph_level="edge"),

@@ -227,6 +227,10 @@ def _l1_pair_uniqueness(records: Sequence[Record]) -> LevelResult:
     The strain is the sorted set of its perturbations, each keyed by ``(systematic gene
     name, perturbation type, perturbed gene name)``; the environment is its whole stored
     object, so two conditions can never be merged by a key that forgot a field.
+
+    ``replicate_id`` joins the key (read with ``.get``, empty when unset), so the
+    replicate records of a per-replicate release stay distinct and a dataset that
+    stores one aggregate per key is keyed exactly as before.
     """
     seen: dict[tuple[Any, ...], int] = {}
     for rec in records:
@@ -241,7 +245,12 @@ def _l1_pair_uniqueness(records: Sequence[Record]) -> LevelResult:
                 for p in experiment["genotype"]["perturbations"]
             )
         )
-        key = (strain, json.dumps(experiment["environment"], sort_keys=True))
+        replicate_id = experiment["phenotype"].get("replicate_id")
+        key = (
+            strain,
+            json.dumps(experiment["environment"], sort_keys=True),
+            "" if replicate_id is None else str(replicate_id),
+        )
         seen[key] = seen.get(key, 0) + 1
     duplicated = {key: n for key, n in seen.items() if n > 1}
     return LevelResult(
@@ -257,8 +266,8 @@ def _l1_pair_uniqueness(records: Sequence[Record]) -> LevelResult:
         details={
             "n_pairs": len(seen),
             "n_duplicated": len(duplicated),
-            "n_strains": len({strain for strain, _ in seen}),
-            "n_environments": len({environment for _, environment in seen}),
+            "n_strains": len({strain for strain, _, _ in seen}),
+            "n_environments": len({environment for _, environment, _ in seen}),
         },
     )
 

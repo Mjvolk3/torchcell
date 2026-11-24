@@ -510,7 +510,11 @@ YEAST_PERTURBATION_NODES = [
 # ``KanMxDeletionPerturbation`` gained the optional ``construction`` (the strain's
 # collection position), so the dump of the two KanMX deletions of the record, their
 # ids, the genotype's and the experiment's moved; the CRISPR interference node, the
-# crispr construct and the fitness phenotype digests did not.
+# crispr construct and the fitness phenotype digests did not. Under #1178 (2026-11-24)
+# ``FitnessPhenotype`` gained the optional ``replicate_id``: the phenotype node projects
+# it and its id is the sha256 of a dump that now carries it, so the fitness phenotype
+# digest moved, and with it the two experiment edges, whose experiment id inlines the
+# phenotype. Genotype, perturbation and construct digests did not move.
 YEAST_GOLDEN_DIGESTS = {
     "genotype (chunked)": (
         "14f3db4e3d35ee9ccf0204ddc24d38e01ddfe19b60f421b112442de187d00a26"
@@ -522,10 +526,10 @@ YEAST_GOLDEN_DIGESTS = {
         "0bc236c34fd3a054f8022092236388026ec9e772b555fbfb7ab9b32173f12727"
     ),
     "fitness phenotype (chunked)": (
-        "dbade8c3c8ad945e439aa6688b306b27b64044bf7415df60a19c14d1f1c00f65"
+        "af3318b11c1999c2d372291948c364e1629429ca14c8e09f91bf96d2f41064d5"
     ),
     "genotype to experiment (chunked)": (
-        "9b31ae7984881f120bf787b24a4cef06d0ca85cafd537d6c9c28c009aa1a7a39"
+        "acaeb024faf999237049b98b510d50f9d99f4c0cba192ab05d2acb4a430947e2"
     ),
     "perturbation to genotype (chunked)": (
         "b4192a4f90fa2b69ffa95bb95f66d02374082eb3ec16a352cc4f315a1615e94d"
@@ -534,7 +538,7 @@ YEAST_GOLDEN_DIGESTS = {
         "b058455ac3fe53b595301dcfeb37495982c239d6f7959fffa291021992aa0a21"
     ),
     "phenotype to experiment (chunked)": (
-        "10e82db360c98a3dee4cb96ddae86242ac26c38487fc96b5422a1104ac5c62a4"
+        "9ccc156a9ede40856b71f24c4493d9f3e42c5f336e20afc622d81c8b7bea8bb8"
     ),
 }
 
@@ -1067,6 +1071,7 @@ def test_protein_turnover_phenotype_node_projects_dicts_as_json() -> None:
         "confidence_level": 0.95,
         "interval_method": "curve_fit_parameter_variance_t_quantile",
         "censoring": '{"b0002": "right", "b0003": "uncensored"}',
+        "replicate_id": None,
         "id": pid,
         "preferred_id": f"phenotype_{pid}",
     }
@@ -1111,6 +1116,7 @@ def test_flux_phenotype_node_keeps_the_sign_and_the_interval() -> None:
         "exchange_flux": None,
         "exchange_flux_lower": None,
         "exchange_flux_upper": None,
+        "replicate_id": None,
         "id": pid,
         "preferred_id": f"phenotype_{pid}",
     }
@@ -1401,6 +1407,7 @@ def test_bacterial_morphology_phenotype_node_projects_both_dicts_as_json() -> No
         "morphology_coefficient_of_variation": '{"CV_L": 0.24}',
         "n_samples": 245,
         "sample_unit": "cell",
+        "replicate_id": None,
         "id": pid,
         "preferred_id": f"phenotype_{pid}",
     }

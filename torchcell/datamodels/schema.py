@@ -6700,6 +6700,17 @@ class FitnessPhenotype(Phenotype, ModelStrict):
         "instead of storing two values nothing tells apart. None when the source "
         "releases one screen per measurement.",
     )
+    replicate_id: str | None = Field(
+        default=None,
+        description="which ONE replicate measurement this record is, when the release is "
+        "per replicate and the record stores that replicate's own value rather than an "
+        "aggregate: the source's own replicate label where it prints one, otherwise "
+        "the replicate's position in the release. It joins the L1 uniqueness key and the phenotype node id, "
+        "so replicates of one (strain, condition) stay distinct records even when two "
+        "of them carry the same value. None on a record that states an aggregate over "
+        "replicates, which is what ``phenotype_reference`` summaries and aggregate-only "
+        "releases carry.",
+    )
 
     @field_validator("fitness")
     def validate_fitness(cls, v: float) -> float:
@@ -7562,6 +7573,17 @@ class GeneInteractionPhenotype(Phenotype, ModelStrict):
     # ----------------------------------------------------------------------- #
     # end ADDITIVE (#793)
     # ----------------------------------------------------------------------- #
+    replicate_id: str | None = Field(
+        default=None,
+        description="which ONE replicate measurement this record is, when the release is "
+        "per replicate and the record stores that replicate's own value rather than an "
+        "aggregate: the source's own replicate label where it prints one, otherwise "
+        "the replicate's position in the release. It joins the L1 uniqueness key and the phenotype node id, "
+        "so replicates of one (strain, condition) stay distinct records even when two "
+        "of them carry the same value. None on a record that states an aggregate over "
+        "replicates, which is what ``phenotype_reference`` summaries and aggregate-only "
+        "releases carry.",
+    )
 
     @field_validator("gene_interaction")
     def validate_fitness(cls, v: float) -> float:
@@ -7625,6 +7647,17 @@ class CalMorphPhenotype(Phenotype, ModelStrict):
     calmorph_coefficient_of_variation: dict[str, float] | None = Field(
         default=None,
         description="Dictionary of coefficient of variation values for CalMorph parameters (220 parameters)",
+    )
+    replicate_id: str | None = Field(
+        default=None,
+        description="which ONE replicate measurement this record is, when the release is "
+        "per replicate and the record stores that replicate's own value rather than an "
+        "aggregate: the source's own replicate label where it prints one, otherwise "
+        "the replicate's position in the release. It joins the phenotype node id, "
+        "so replicates of one (strain, condition) stay distinct records even when two "
+        "of them carry the same value. None on a record that states an aggregate over "
+        "replicates, which is what ``phenotype_reference`` summaries and aggregate-only "
+        "releases carry.",
     )
 
     # CALMORPH_PARAMETERS: All 501 parameters from Ohya et al. 2005
@@ -8004,6 +8037,17 @@ class MicroarrayExpressionPhenotype(
     n_replicates: dict[str, int] = Field(
         description="SortedDict of number of independent biological/technical replicates per gene",
         repr=False,  # Hide in repr to avoid clutter
+    )
+    replicate_id: str | None = Field(
+        default=None,
+        description="which ONE replicate measurement this record is, when the release is "
+        "per replicate and the record stores that replicate's own value rather than an "
+        "aggregate: the source's own replicate label where it prints one, otherwise "
+        "the replicate's position in the release. It joins the phenotype node id, "
+        "so replicates of one (strain, condition) stay distinct records even when two "
+        "of them carry the same value. None on a record that states an aggregate over "
+        "replicates, which is what ``phenotype_reference`` summaries and aggregate-only "
+        "releases carry.",
     )
 
     def __repr__(self) -> str:
@@ -8791,6 +8835,17 @@ class RNASeqExpressionPhenotype(Phenotype, ModelStrict):
             "with >= 1e6 mapped reads). Per-isolate scalar, not per-gene."
         ),
     )
+    replicate_id: str | None = Field(
+        default=None,
+        description="which ONE replicate measurement this record is, when the release is "
+        "per replicate and the record stores that replicate's own value rather than an "
+        "aggregate: the source's own replicate label where it prints one, otherwise "
+        "the replicate's position in the release. It joins the L1 uniqueness key and the phenotype node id, "
+        "so replicates of one (strain, condition) stay distinct records even when two "
+        "of them carry the same value. None on a record that states an aggregate over "
+        "replicates, which is what ``phenotype_reference`` summaries and aggregate-only "
+        "releases carry.",
+    )
 
     def __repr__(self) -> str:
         """Summary repr instead of dumping the per-gene dicts."""
@@ -9049,6 +9104,17 @@ class VisualScorePhenotype(Phenotype, ModelStrict):
             "interpretation caveats (flag_sterile, flag_unusual_color). Do not filter "
             "records on these as if they were all quality failures."
         ),
+    )
+    replicate_id: str | None = Field(
+        default=None,
+        description="which ONE replicate measurement this record is, when the release is "
+        "per replicate and the record stores that replicate's own value rather than an "
+        "aggregate: the source's own replicate label where it prints one, otherwise "
+        "the replicate's position in the release. It joins the L1 uniqueness key and the phenotype node id, "
+        "so replicates of one (strain, condition) stay distinct records even when two "
+        "of them carry the same value. None on a record that states an aggregate over "
+        "replicates, which is what ``phenotype_reference`` summaries and aggregate-only "
+        "releases carry.",
     )
 
     @model_validator(mode="after")
@@ -9344,6 +9410,17 @@ class ProteinFoldChangePhenotype(Phenotype, ModelStrict):
         description="what the number is and how it was tested, e.g. "
         "'dia_top3_ratio_to_control' or "
         "'dia_log2_fold_change_paired_two_tailed_t_test'"
+    )
+    replicate_id: str | None = Field(
+        default=None,
+        description="which ONE replicate measurement this record is, when the release is "
+        "per replicate and the record stores that replicate's own value rather than an "
+        "aggregate: the source's own replicate label where it prints one, otherwise "
+        "the replicate's position in the release. It joins the L1 uniqueness key and the phenotype node id, "
+        "so replicates of one (strain, condition) stay distinct records even when two "
+        "of them carry the same value. None on a record that states an aggregate over "
+        "replicates, which is what ``phenotype_reference`` summaries and aggregate-only "
+        "releases carry.",
     )
 
     @model_validator(mode="after")
@@ -11291,6 +11368,17 @@ class ProteinTurnoverPhenotype(Phenotype, ModelStrict):
         "at all; a key absent from a present map means the source does not say for "
         "that key.",
     )
+    replicate_id: str | None = Field(
+        default=None,
+        description="which ONE replicate measurement this record is, when the release is "
+        "per replicate and the record stores that replicate's own value rather than an "
+        "aggregate: the source's own replicate label where it prints one, otherwise "
+        "the replicate's position in the release. It joins the phenotype node id, "
+        "so replicates of one (strain, condition) stay distinct records even when two "
+        "of them carry the same value. None on a record that states an aggregate over "
+        "replicates, which is what ``phenotype_reference`` summaries and aggregate-only "
+        "releases carry.",
+    )
     # --- end #753 ---------------------------------------------------------------- #
 
     @model_validator(mode="after")
@@ -11586,6 +11674,17 @@ class FluxPhenotype(Phenotype, ModelStrict):
         default=None,
         description="exchange id -> upper confidence bound of the exchange flux, at "
         "confidence_level, verbatim",
+    )
+    replicate_id: str | None = Field(
+        default=None,
+        description="which ONE replicate measurement this record is, when the release is "
+        "per replicate and the record stores that replicate's own value rather than an "
+        "aggregate: the source's own replicate label where it prints one, otherwise "
+        "the replicate's position in the release. It joins the phenotype node id, "
+        "so replicates of one (strain, condition) stay distinct records even when two "
+        "of them carry the same value. None on a record that states an aggregate over "
+        "replicates, which is what ``phenotype_reference`` summaries and aggregate-only "
+        "releases carry.",
     )
 
     @model_validator(mode="after")
@@ -12462,6 +12561,17 @@ class MorphologyPhenotype(Phenotype, ModelStrict):
     )
     sample_unit: SampleUnit | None = Field(
         default=None, description="what one sample in n_samples physically is"
+    )
+    replicate_id: str | None = Field(
+        default=None,
+        description="which ONE replicate measurement this record is, when the release is "
+        "per replicate and the record stores that replicate's own value rather than an "
+        "aggregate: the source's own replicate label where it prints one, otherwise "
+        "the replicate's position in the release. It joins the L1 uniqueness key and the phenotype node id, "
+        "so replicates of one (strain, condition) stay distinct records even when two "
+        "of them carry the same value. None on a record that states an aggregate over "
+        "replicates, which is what ``phenotype_reference`` summaries and aggregate-only "
+        "releases carry.",
     )
 
     @property

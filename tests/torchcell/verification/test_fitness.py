@@ -373,6 +373,35 @@ def test_pair_uniqueness_keys_on_strain_id_and_environment() -> None:
     )
 
 
+def test_pair_uniqueness_keeps_released_replicates_apart_by_replicate_id() -> None:
+    """#1178: two replicates of one (strain, environment) are two records when each
+    states its own ``replicate_id``, in the eager and the streaming rule alike; the same
+    label twice is still a duplicate, and so are two unlabeled records.
+    """
+
+    def replicate(label: str | None, fitness: float) -> dict[str, Any]:
+        record = _record(["YAL001C"], fitness)
+        record["experiment"]["phenotype"]["replicate_id"] = label
+        return record
+
+    distinct = [replicate("1", 0.8), replicate("2", 0.8)]
+    for report in (_verify(distinct), _stream(distinct)):
+        result = _result(report, "pair_uniqueness")
+        assert result.passed
+        assert result.details["n_pairs"] == 2
+        assert result.details["n_duplicated"] == 0
+        assert result.details["n_strains"] == 1
+    for records in (
+        [replicate("1", 0.8), replicate("1", 0.9)],
+        [replicate(None, 0.8), replicate(None, 0.9)],
+    ):
+        for report in (_verify(records), _stream(records)):
+            result = _result(report, "pair_uniqueness")
+            assert result.passed is False
+            assert result.details["n_pairs"] == 1
+            assert result.details["n_duplicated"] == 1
+
+
 def test_pair_uniqueness_splits_strains_by_their_named_reference_background() -> None:
     """#1045 part 3: two strains stored on named backgrounds with empty genotypes (Choe
     2019's MS56 and eMS57) are two strains; a record without a background keys as

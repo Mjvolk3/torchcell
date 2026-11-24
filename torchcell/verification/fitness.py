@@ -167,11 +167,21 @@ def _strain_key(record: Record) -> Any:
 
 
 def _l1_pair_uniqueness(records: Sequence[Record]) -> LevelResult:
-    """L1: exactly one record per (screened STRAIN, environment) pair."""
+    """L1: exactly one record per (screened STRAIN, environment) pair.
+
+    ``replicate_id`` joins the key (read with ``.get``, empty when unset), so the
+    replicate records of a per-replicate release stay distinct and a dataset that
+    stores one aggregate per key is keyed exactly as before.
+    """
     seen: dict[tuple[Any, ...], int] = {}
     for rec in records:
         exp = rec["experiment"]
-        key = (_strain_key(rec), _environment_signature(exp))
+        replicate_id = exp["phenotype"].get("replicate_id")
+        key = (
+            _strain_key(rec),
+            _environment_signature(exp),
+            "" if replicate_id is None else str(replicate_id),
+        )
         seen[key] = seen.get(key, 0) + 1
     dups = {k: n for k, n in seen.items() if n > 1}
     return LevelResult(
@@ -186,8 +196,8 @@ def _l1_pair_uniqueness(records: Sequence[Record]) -> LevelResult:
         details={
             "n_pairs": len(seen),
             "n_duplicated": len(dups),
-            "n_strains": len({genotype for genotype, _ in seen}),
-            "n_environments": len({environment for _, environment in seen}),
+            "n_strains": len({genotype for genotype, _, _ in seen}),
+            "n_environments": len({environment for _, environment, _ in seen}),
         },
     )
 
@@ -333,7 +343,16 @@ def verify_fitness_dataset_streaming(
             l0_failures.append({"index": i, "error": str(err)[:500]})
         genotype = key_digest(_strain_key(rec))
         environment = key_digest(_environment_signature(exp))
-        pair_counts[key_digest((genotype, environment))] += 1
+        # replicate_id joins the key as in the eager rule; an aggregate record keys
+        # exactly as before.
+        replicate_id = exp["phenotype"].get("replicate_id")
+        pair_counts[
+            key_digest(
+                (genotype, environment)
+                if replicate_id is None
+                else (genotype, environment, str(replicate_id))
+            )
+        ] += 1
         strains.add(genotype)
         environments.add(environment)
         fitness = exp["phenotype"]["fitness"]

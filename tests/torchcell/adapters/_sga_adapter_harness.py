@@ -196,6 +196,9 @@ def _phenotype_props(phenotype: Any) -> dict[str, Any]:
             if phenotype.gene_interaction_uncertainty_type is not None
             else None
         )
+    # #1178: both phenotypes project which replicate a per-replicate record is; the
+    # SGA loaders release one value per (strain, environment), so it is null here.
+    props["replicate_id"] = phenotype.replicate_id
     return props
 
 

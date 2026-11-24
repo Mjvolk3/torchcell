@@ -822,3 +822,30 @@ Why it is needed: the owner's ruling of 2026-11-17 that released replicate value
 What moves with it: the metabolite L1 key (`torchcell/verification/metabolite.py`), the titer and protein L1 keys, the three node property lists in `torchcell/adapters/cell_adapter.py`, and the three node classes in `biocypher/config/torchcell_schema_config.yaml`.
 
 Not decided here, listed in #1171 for the owner: one `replicate_id` on the base `Phenotype`, folding in `GenomeArchitecturePhenotype.sample_id` and `PhosphositeIntensityPhenotype.sample_label` + `replicate`. That is a rename of served fields and needs sign-off; the per-class field is additive and does not.
+
+## 2026.11.24 - `replicate_id` on ten more phenotype classes, and a gap reason for a single measurement (#1178)
+
+The 2026-11-17 field reaches every concrete phenotype class the remaining #1178 loader conversions store their replicates through. Each class gains the same additive optional `replicate_id: str | None = None`, with the same reading: the source's own replicate label, or the replicate's position in the release, and `None` on a record that states an aggregate. The class list was read from the phenotype classes each loader to convert constructs:
+
+| class | loaders that will need it |
+|---|---|
+| `FitnessPhenotype` | Rapp 2026 platforms, Schmidt 2016 growth rate, Choe 2019 growth rate, Kuzmin 2018, Rachwalski 2024, Campos 2018, Caglar 2017 doubling time |
+| `GeneInteractionPhenotype` | Kuzmin 2018, Butland 2008 |
+| `ProteinFoldChangePhenotype` | Lim 2025, Yunus 2026, Caglar 2017 |
+| `MorphologyPhenotype` | Campos 2018 |
+| `MicroarrayExpressionPhenotype` | Kemmeren 2014, Sameith 2015 |
+| `ProteinTurnoverPhenotype` | Gupta 2024, Muenzner 2024 |
+| `RNASeqExpressionPhenotype` | Caudal 2024, Caglar 2017 |
+| `FluxPhenotype` | Ishii 2007, Caglar 2017 |
+| `VisualScorePhenotype` | Ozaydin 2013 (its 31 colliding plate pairs) |
+| `CalMorphPhenotype` | Ohya 2005, Ohnuki 2018, Ohnuki 2022 |
+
+Left as they are, because a field they already carry names the replicate: `EnvironmentResponsePhenotype` (`replicate_id`, #776), `InductionTimecourseExpressionPhenotype` (each released time course by its verbatim `timecourse_id` and `experiment_date`, Hackett 2020) and `GenomeArchitecturePhenotype` (`sample_id`, Puddu 2019). Folding `sample_id` into one base-class field stays the open question in #1171.
+
+What moves with it: every node property site of the ten classes in `torchcell/adapters/cell_adapter.py` (experiment and reference), the ten node classes in `biocypher/config/torchcell_schema_config.yaml`, and the L1 uniqueness keys of the fitness, gene-interaction, protein-fold-change, bacterial-morphology, visual-score and RNA-seq verifiers plus the protein-abundance ORF key. Each key reads the field with `.get` and joins it as the empty string when unset, so a store that holds one aggregate per key keys exactly as before. The gene-interaction verifier keeps the bare (strain, environment) digest for its companion-fitness containment rule, since the fitness store shares that digest and not the replicate. `CalMorphPhenotype`, `MicroarrayExpressionPhenotype`, `ProteinTurnoverPhenotype` and `FluxPhenotype` have no L1 uniqueness rule to extend.
+
+Record: `database/schema_changes/2026-11-24-replicate-id-on-every-per-replicate-phenotype.json`, kind `additive_field` on all ten symbols, rebuild scope `full_kg_rebuild` (62 served datasets): every served record of the ten classes gains `replicate_id` None, which moves its phenotype node id and therefore its experiment id. The 2026-11-17 record now carries the owner's sign-off. Owner, 2026-11-24: "ok let's proceed with trying to identify every last dataset that needs this update, and make the correct updates."
+
+### `ProvenanceGapReason.not_applicable_single_measurement`
+
+`torchcell/verification/sourced.py` gains a fifth reason. A per-replicate record with n = 1 has no dispersion, so its missing uncertainty, uncertainty type or standard error is not a value the primary withheld, which is what `not_reported_by_primary` says, but a value that does not exist. Owner, 2026-11-24: "yes this is glaring issue and needs to be fixed." The reason is terminal, so it never joins the deferred worklist of `provenance_gap_census`. Carruthers 2025's per-culture titer records (`titer_uncertainty`, `titer_uncertainty_type`) and its per-replicate panel and campaign proteome records (`protein_abundance_se`) carry it; their yield and productivity gaps and every aggregate keep `not_reported_by_primary`. Xue 2025's per-replicate records carry `metabolite_level_se` None with no gap, so none of them changed. The enum is outside the fingerprinted schema surface, so the record states it in its correctness argument rather than as a symbol.

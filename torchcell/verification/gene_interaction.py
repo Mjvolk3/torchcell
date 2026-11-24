@@ -204,7 +204,12 @@ def verify_gene_interaction_dataset(
     n_records = 0
     l0_failures: list[dict[str, Any]] = []
     ref_failures: list[dict[str, Any]] = []
-    pair_counts: Counter[bytes] = Counter()
+    # The uniqueness key is the (strain, environment) digest plus the record's
+    # replicate_id (empty when the record states an aggregate), so the replicates of a
+    # per-replicate release stay distinct records; the companion containment rule reads
+    # the bare (strain, environment) digests, which the fitness store shares.
+    pair_counts: Counter[tuple[bytes, str]] = Counter()
+    pair_keys: set[bytes] = set()
     wrong_order: Counter[str] = Counter()
     wrong_order_examples: list[dict[str, Any]] = []
     scores = array("d")
@@ -233,11 +238,14 @@ def verify_gene_interaction_dataset(
         except (ValueError, TypeError) as err:
             ref_failures.append({"index": i, "error": str(err)[:500]})
 
-        pair_counts[pair_key(exp)] += 1
+        phenotype = exp["phenotype"]
+        key = pair_key(exp)
+        pair_keys.add(key)
+        replicate_id = phenotype.get("replicate_id")
+        pair_counts[(key, "" if replicate_id is None else str(replicate_id))] += 1
 
         perturbations = exp["genotype"]["perturbations"]
         genes = {p.get("systematic_gene_name") for p in perturbations}
-        phenotype = exp["phenotype"]
         problem = None
         if len(perturbations) != order:
             problem = f"{len(perturbations)} perturbations"
@@ -451,22 +459,22 @@ def verify_gene_interaction_dataset(
     for result in shared.results():
         report.add(result)
     if companion_keys is not None:
-        missing = sum(1 for key in pair_counts if key not in companion_keys)
+        missing = sum(1 for key in pair_keys if key not in companion_keys)
         report.add(
             LevelResult(
                 level=Level.L4,
                 name="fitness_companion_containment",
                 passed=n_records > 0 and missing == 0,
                 message=(
-                    f"every one of the {len(pair_counts)} (strain, environment) keys is a "
+                    f"every one of the {len(pair_keys)} (strain, environment) keys is a "
                     f"record of {companion_name}"
                     if missing == 0
-                    else f"{missing} of {len(pair_counts)} (strain, environment) keys "
+                    else f"{missing} of {len(pair_keys)} (strain, environment) keys "
                     f"have no record in {companion_name}"
                 ),
                 details={
                     "companion": companion_name,
-                    "n_keys": len(pair_counts),
+                    "n_keys": len(pair_keys),
                     "n_companion_keys": len(companion_keys),
                     "n_missing": missing,
                 },

@@ -63,19 +63,26 @@ def _l1_orf_uniqueness(
     With ``allow_duplicate_orfs`` a release that scores one ORF on more than one plate
     (Ozaydin 2013: 130 ORFs on two plates) stores one record per released row, so the
     rule reports the duplicated ORFs and holds.
+
+    ``replicate_id`` joins the key (read with ``.get``, empty when unset), so the
+    replicate records of a per-replicate release stay distinct and a dataset that
+    stores one aggregate per ORF is keyed exactly as before.
     """
-    seen: dict[str, int] = {}
+    seen: dict[tuple[str, str], int] = {}
     for rec in records:
+        replicate_id = rec["experiment"]["phenotype"].get("replicate_id")
+        replicate = "" if replicate_id is None else str(replicate_id)
         for g in _deleted_genes(rec["experiment"]):
-            seen[g] = seen.get(g, 0) + 1
-    dups = {g: n for g, n in seen.items() if n > 1}
+            seen[(g, replicate)] = seen.get((g, replicate), 0) + 1
+    dups = {key: n for key, n in seen.items() if n > 1}
+    n_orfs = len({g for g, _ in seen})
     passed = allow_duplicate_orfs or not dups
     return LevelResult(
         level=Level.L1,
         name="orf_uniqueness",
         passed=passed,
         message=(
-            f"{len(seen)} unique deleted ORFs, one record each"
+            f"{n_orfs} unique deleted ORFs, one record each"
             if not dups
             else f"{len(dups)} ORFs appear in multiple records"
             + (
@@ -84,7 +91,7 @@ def _l1_orf_uniqueness(
                 else ""
             )
         ),
-        details={"n_orfs": len(seen), "n_duplicated": len(dups)},
+        details={"n_orfs": n_orfs, "n_duplicated": len(dups)},
     )
 
 

@@ -3496,14 +3496,13 @@ def verify_pooled_sort_seq_dataset(
     )
     import pandas as pd
 
-    released: dict[str, float | None] = {
-        str(row.seqID): (
-            None
-            if pd.isna(row.expression_level)
-            else float(cast(float, row.expression_level))
-        )
-        for row in measurements.itertuples(index=False)
-    }
+    # The cell is a float or NaN; casting before ``pd.isna`` keeps the argument a
+    # ``float`` under every pandas-stubs release (CI's union of scalar types differs
+    # from the local one, and a bare itertuples attribute matches neither).
+    released: dict[str, float | None] = {}
+    for row in measurements.itertuples(index=False):
+        level = cast(float, row.expression_level)
+        released[str(row.seqID)] = None if pd.isna(level) else float(level)
     report.add(l2_released_values(stream_records(root), released))
     report.add(l4_read_count_coverage(stream_records(root)))
     library_root = osp.join(data_root, "torchcell-library")

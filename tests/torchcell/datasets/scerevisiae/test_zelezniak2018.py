@@ -546,6 +546,7 @@ def test_metabolome_record_1_all_nan_se_collapses_to_none(
         "n_replicates": {"3pg;2pg": 1},
         "measurement_type": MTYPE_1,
         "target_metabolite_ids": {"3pg;2pg": "s_0188"},
+        "replicate_id": None,
     }
     reference = record["reference"]["phenotype_reference"]
     assert reference["metabolite_level"] == {"3pg;2pg": 10.0}

@@ -48,6 +48,7 @@ exclude_patterns: list[str] = [
     "datasets/scerevisiae/_generated",
     "datasets/ecoli/_generated",
     "guide/_generated",
+    "benchmark/ecoli/_generated",
 ]
 
 html_theme = "torchcell_sphinx_theme"

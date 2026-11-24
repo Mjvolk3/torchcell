@@ -52,7 +52,8 @@ worktree by default -- code AND notes (roadmap/plan/weekly/dendron/`.claude/*`).
   `rebase wt onto main -> ff-merge` flow breaks. Keeping the primary tree clean on
   `main` is what keeps ff-landings unblocked.
 - **Open a PR for EVERY branch, before landing it.** `gh pr create` (`/wt-implement`
-  does this automatically). The PR is the public, reviewable record of the change, and
+  does this automatically), with the title and body written by the `pr-message` skill
+  (one screen: what changes, how it was tested). The PR is the public, reviewable record of the change, and
   it **cannot be added afterwards**: once the commits are ancestors of `main`, a PR for
   that branch opens with zero commits and the visibility is lost permanently.
   `/enqueue-merge` enforces this as a hard gate and refuses a branch with no open PR.

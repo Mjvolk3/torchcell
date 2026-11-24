@@ -133,21 +133,11 @@ Max 3 attempts before stopping.
 
 ```bash
 git push -u origin plan/<slug>
-gh pr create --title "<concise title>" --body "$(cat <<'EOF'
-## Summary
-<key changes as bullets>
-
-## Instruction file
-<dendron link or path>
-
-## Verification
-- Tests: PASS
-- Mypy: PASS
-
-Generated with [Claude Code](https://claude.com/claude-code)
-EOF
-)"
+gh pr create --title "<concise title>" --body-file <body.md>
 ```
+
+Write the title and body with the `pr-message` skill (load it first): one or two opening
+sentences, `Changes`, `Tested`, one screen. The instruction file goes in as a single line.
 
 ### Step 13: Merge (if requested)
 

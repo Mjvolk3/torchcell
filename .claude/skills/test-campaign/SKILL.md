@@ -150,7 +150,7 @@ git add -A && ( git commit -q -F msg.txt || true )
 if [ -n "$(git status --short)" ]; then git add -A && git commit -q -F msg.txt; fi   # hook auto-fixes
 git log --oneline -2          # exactly one new commit on top of origin/main
 git push -u origin plan/<slug>
-gh pr create --title "TST: ... (audited)" --body "..."
+gh pr create --title "TST: ... (audited)" --body-file <body.md>   # body per the pr-message skill
 gh pr checks <n> --watch --fail-fast
 ```
 

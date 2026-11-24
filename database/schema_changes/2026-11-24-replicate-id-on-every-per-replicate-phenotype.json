@@ -1,0 +1,729 @@
+{
+  "record_version": 1,
+  "slug": "replicate-id-on-every-per-replicate-phenotype",
+  "date": "2026-11-24",
+  "pr": 1181,
+  "author_kind": "agent",
+  "base_commit": "937d081ade7884afb59c5a574a91312858c8726f",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "CalMorphPhenotype",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "24e5d71ccd0277272e647c000f08f2d7a95878be52a4080f1cc2360f41b35f63",
+      "fingerprint_after": "1ed85ff122b5281d1fe8d414b5e232547a7a5a3e9d6005214cbd1a89b3d32ff7",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'replicate_id'"
+      ]
+    },
+    {
+      "symbol": "FitnessPhenotype",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "bcf8c373be6e5bf81b63fee55699827007a68ed83e6b1d27471da769c43b8188",
+      "fingerprint_after": "f5fb6c45b416cb2ba8212c65ef9ef0132a5706ff0f93515008bd42744fca9054",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'replicate_id'"
+      ]
+    },
+    {
+      "symbol": "FluxPhenotype",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "2ba4a74e440c0f1735494065915fbbff82459800da0c863a5a14d12fe103b8f6",
+      "fingerprint_after": "a0c72c5fac7aac1c1cbff040f58ba5fa622a2178b4633d9608d9fb6aef8dc96b",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'replicate_id'"
+      ]
+    },
+    {
+      "symbol": "GeneInteractionPhenotype",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "e2fb00d2244132c56ba0146acc7512d2968412ba4a4cb24a9cf0f3f1cf92ecbc",
+      "fingerprint_after": "2c3d84256edc5c1af654b3101861fc9c26f05891467bf9b84b178c843208d747",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'replicate_id'"
+      ]
+    },
+    {
+      "symbol": "MicroarrayExpressionPhenotype",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "28762389af4d43487e90a19686deaa8dd1eb627ef0d740527a7b3bda6a96bbc7",
+      "fingerprint_after": "6f2d62edf7064f5783da3b1e99ed5b1c6fc55710f035d2c1f7e731f180813562",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'replicate_id'"
+      ]
+    },
+    {
+      "symbol": "MorphologyPhenotype",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "c7dc3580e2279d46d3729b9ca751d724518641e7f11f0d8e8df822ede34e2625",
+      "fingerprint_after": "82d9bf666c2498be3238c9e6b31871141b47910676969a5f232e0746aa50dc76",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'replicate_id'"
+      ]
+    },
+    {
+      "symbol": "ProteinFoldChangePhenotype",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "046eeafc59f4d6cc1a8d86ac503a06afe7568e2dd14f648d74895854cab3537f",
+      "fingerprint_after": "76cbb46edc6e0dc777d3c06533d6517fce54ade954ac4fd40f83eb0611e42e06",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'replicate_id'"
+      ]
+    },
+    {
+      "symbol": "ProteinTurnoverPhenotype",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "3407e86f31cda6561435b0d01701e3154aaa308bfc200236b775945437764b3d",
+      "fingerprint_after": "5a518fed0c1c2f4d2d552a29f2b7235c54ba02469c3a1f573135d3c449a43941",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'replicate_id'"
+      ]
+    },
+    {
+      "symbol": "RNASeqExpressionPhenotype",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "1bd8731da47fa00ae3c61cf81bfdd4b7e1996d2caf907487b655ef4da583addb",
+      "fingerprint_after": "96ba59501ff300f9f1edaaa51ece2043b31047eedccc3dfd53d9c3a1be1d470f",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'replicate_id'"
+      ]
+    },
+    {
+      "symbol": "VisualScorePhenotype",
+      "status": "modified",
+      "kinds": [
+        "additive_field"
+      ],
+      "fingerprint_before": "ad02bab504a4ba90e5494b90796731fe67b9c5fde04f7faea1cb303e11ef8f9a",
+      "fingerprint_after": "24b3340cd2ef788cefd5c9461487eda396df3f129062c5839524222422fb4a4c",
+      "impact": "stale",
+      "reasons": [
+        "added optional field 'replicate_id'"
+      ]
+    }
+  ],
+  "correctness_argument": "The 2026-11-17 record gave ProductTiterPhenotype, MetabolitePhenotype and ProteinAbundancePhenotype an optional replicate_id so that Xue 2025 and Carruthers 2025 could store one record per released replicate (#1178, constitution principle 2: a released record is never collapsed into a mean). The loaders still to convert under #1178 store their replicates through ten more phenotype classes, each read from the loader source: FitnessPhenotype (Rapp 2026 platforms, Schmidt 2016 growth rate, Choe 2019 growth rate, Kuzmin 2018, Rachwalski 2024, Campos 2018, Caglar 2017 doubling time), GeneInteractionPhenotype (Kuzmin 2018, Butland 2008), ProteinFoldChangePhenotype (Lim 2025, Yunus 2026, Caglar 2017), MorphologyPhenotype (Campos 2018), MicroarrayExpressionPhenotype (Kemmeren 2014, Sameith 2015), ProteinTurnoverPhenotype (Gupta 2024, Muenzner 2024), RNASeqExpressionPhenotype (Caudal 2024, Caglar 2017), FluxPhenotype (Ishii 2007, Caglar 2017), VisualScorePhenotype (Ozaydin 2013) and CalMorphPhenotype (Ohya 2005, Ohnuki 2018, Ohnuki 2022). Without the field, replicates of one (strain, condition) are records with identical genotype and environment: the L1 uniqueness rules read them as duplicates, and two replicates with the same value hash to one phenotype node because the node id is the sha256 of the phenotype dump (Ozaydin 2013's 31 colliding plate pairs are this defect on VisualScorePhenotype). Each class gains the same field EnvironmentResponsePhenotype.replicate_id (#776) and the 2026-11-17 classes carry, with the same type and reading: the source's own replicate label, or the replicate's position in the release, and None on a record that states an aggregate. It is optional by construction, so no served record of any dataset changes meaning; every served record gains replicate_id None, which moves its phenotype node id and therefore its experiment id, the full rebuild the 2026-11-17 record already requires. The adapter projects it on every node site of the ten classes, the BioCypher schema declares it, and the L1 keys of the fitness, gene-interaction, protein-fold-change, bacterial-morphology, visual-score, RNA-seq and protein-abundance verifiers join it with .get (empty when unset), so a store that holds one aggregate per key keys exactly as before. Three classes are left: EnvironmentResponsePhenotype already carries replicate_id; InductionTimecourseExpressionPhenotype identifies each released time course by its verbatim timecourse_id and experiment_date (Hackett 2020); GenomeArchitecturePhenotype identifies its sequenced sample by sample_id (Puddu 2019), whose folding into one replicate field is the open question in #1171. Outside the fingerprinted surface, ProvenanceGapReason (torchcell/verification/sourced.py) gains not_applicable_single_measurement: a per-replicate record with n = 1 has no dispersion, so its missing uncertainty, uncertainty type or standard error is not a value the primary withheld (not_reported_by_primary) but a value that does not exist. Carruthers 2025's per-culture titer records (titer_uncertainty, titer_uncertainty_type) and its per-replicate panel and campaign proteome records (protein_abundance_se) now carry it; aggregate records and the yield and productivity gaps keep not_reported_by_primary. Xue 2025's per-replicate records carry metabolite_level_se None with no gap, so nothing of theirs changes.",
+  "measurement_type_decision": false,
+  "source_quotes": [],
+  "alternatives_rejected": [
+    {
+      "alternative": "One replicate_id on the base Phenotype class instead of per class",
+      "why_rejected": "It would also have to absorb GenomeArchitecturePhenotype.sample_id and PhosphositeIntensityPhenotype.sample_label + replicate, renames of served fields that need the owner's sign-off; that question is open in #1171 and is not taken on an agent's authority. The per-class field does not preclude it."
+    },
+    {
+      "alternative": "Add the field to each class in the PR that converts its loader",
+      "why_rejected": "Every addition moves the phenotype node id of every served record of that class, so each conversion PR would carry its own full rebuild; adding the field to every class the conversions need, in the PR that already carries a full rebuild, pays for it once."
+    },
+    {
+      "alternative": "Keep not_reported_by_primary on a single measurement's missing uncertainty",
+      "why_rejected": "It states that the primary could have reported a value and did not, which is false for one culture: the dispersion does not exist. The two absences are different facts, and a query for withheld values would count every per-replicate record."
+    }
+  ],
+  "served_release": "2026.10.17-4295f7ca",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/ecoli/babu2014.py",
+      "dataset_classes": [
+        "GeneInteractionBabu2014Dataset"
+      ],
+      "served_classes": [
+        "GeneInteractionBabu2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GeneInteractionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/butland2008.py",
+      "dataset_classes": [
+        "GeneInteractionButland2008Dataset"
+      ],
+      "served_classes": [
+        "GeneInteractionButland2008Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "GeneInteractionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017.py",
+      "dataset_classes": [
+        "RnaseqCaglar2017Dataset",
+        "ProteomeCaglar2017Dataset",
+        "ProteinFoldChangeCaglar2017Dataset"
+      ],
+      "served_classes": [
+        "ProteinFoldChangeCaglar2017Dataset",
+        "ProteomeCaglar2017Dataset",
+        "RnaseqCaglar2017Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProteinFoldChangePhenotype",
+        "RNASeqExpressionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/campos2018.py",
+      "dataset_classes": [
+        "GrowthRateCampos2018Dataset",
+        "MorphologyCampos2018Dataset"
+      ],
+      "served_classes": [
+        "GrowthRateCampos2018Dataset",
+        "MorphologyCampos2018Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "FitnessPhenotype",
+        "MorphologyPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/choe2019_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateChoe2019Dataset",
+        "TranscriptionFactorKnockoutChoe2019Dataset"
+      ],
+      "served_classes": [
+        "GrowthRateChoe2019Dataset",
+        "TranscriptionFactorKnockoutChoe2019Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "FitnessPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gupta2024.py",
+      "dataset_classes": [
+        "ProteinTurnoverGupta2024Dataset"
+      ],
+      "served_classes": [
+        "ProteinTurnoverGupta2024Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProteinTurnoverPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/guzman2018.py",
+      "dataset_classes": [
+        "RnaseqGuzman2018Dataset"
+      ],
+      "served_classes": [
+        "RnaseqGuzman2018Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "RNASeqExpressionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/ishii2007.py",
+      "dataset_classes": [
+        "_Ishii2007Dataset",
+        "MetabolomeIshii2007Dataset",
+        "ProteomeIshii2007Dataset",
+        "FluxIshii2007Dataset"
+      ],
+      "served_classes": [
+        "FluxIshii2007Dataset",
+        "MetabolomeIshii2007Dataset",
+        "ProteomeIshii2007Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "FluxPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023.py",
+      "dataset_classes": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "served_classes": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "RNASeqExpressionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023_public_k12.py",
+      "dataset_classes": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "served_classes": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "RNASeqExpressionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2021.py",
+      "dataset_classes": [
+        "FluxLi2021Dataset"
+      ],
+      "served_classes": [
+        "FluxLi2021Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "FluxPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rachwalski2024.py",
+      "dataset_classes": [
+        "CrispriCrossRachwalski2024Dataset"
+      ],
+      "served_classes": [
+        "CrispriCrossRachwalski2024Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "FitnessPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rapp2026_platforms.py",
+      "dataset_classes": [
+        "_Rapp2026Dataset",
+        "GrowthAucRapp2026Dataset",
+        "_AccumulationDataset",
+        "TargetedMetabolomeRapp2026Dataset",
+        "MetaboliteIntensityRapp2026Dataset"
+      ],
+      "served_classes": [
+        "GrowthAucRapp2026Dataset",
+        "MetaboliteIntensityRapp2026Dataset",
+        "TargetedMetabolomeRapp2026Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "FitnessPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateSchmidt2016Dataset"
+      ],
+      "served_classes": [
+        "GrowthRateSchmidt2016Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "FitnessPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/tong2020.py",
+      "dataset_classes": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "served_classes": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "FitnessPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2015_growth.py",
+      "dataset_classes": [
+        "GrowthWang2015Dataset"
+      ],
+      "served_classes": [
+        "GrowthWang2015Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "FitnessPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/carruthers2025.py",
+      "dataset_classes": [
+        "IsoprenolTiterCarruthers2025Dataset",
+        "ProteomeCarruthers2025Dataset",
+        "CampaignProteomeCarruthers2025Dataset",
+        "ProteomeFoldChangeCarruthers2025Dataset"
+      ],
+      "served_classes": [
+        "CampaignProteomeCarruthers2025Dataset",
+        "IsoprenolTiterCarruthers2025Dataset",
+        "ProteomeCarruthers2025Dataset",
+        "ProteomeFoldChangeCarruthers2025Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProteinFoldChangePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2022.py",
+      "dataset_classes": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "served_classes": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "RNASeqExpressionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2025.py",
+      "dataset_classes": [
+        "IsoprenolToleranceLim2025Dataset",
+        "ProteomeLim2025Dataset",
+        "ProteomeFoldChangeLim2025Dataset"
+      ],
+      "served_classes": [
+        "IsoprenolToleranceLim2025Dataset",
+        "ProteomeFoldChangeLim2025Dataset",
+        "ProteomeLim2025Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProteinFoldChangePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/yunus2026.py",
+      "dataset_classes": [
+        "_Yunus2026Dataset",
+        "_Yunus2026BenchlingDataset",
+        "CrispriKnockdownYunus2026Dataset",
+        "CrispriArrayYunus2026Dataset",
+        "CrispriDifferentialProteomeYunus2026Dataset",
+        "IsoprenolTiterYunus2026Dataset",
+        "CrispriPanelProteomeYunus2026Dataset"
+      ],
+      "served_classes": [
+        "CrispriArrayYunus2026Dataset",
+        "CrispriDifferentialProteomeYunus2026Dataset",
+        "CrispriKnockdownYunus2026Dataset",
+        "CrispriPanelProteomeYunus2026Dataset",
+        "IsoprenolTiterYunus2026Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProteinFoldChangePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/baryshnikova2010.py",
+      "dataset_classes": [
+        "SmfBaryshnikova2010Dataset"
+      ],
+      "served_classes": [
+        "SmfBaryshnikova2010Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "FitnessPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/caudal2024.py",
+      "dataset_classes": [
+        "CaudalPanTranscriptome2024Dataset"
+      ],
+      "served_classes": [
+        "CaudalPanTranscriptome2024Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "RNASeqExpressionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/costanzo2016.py",
+      "dataset_classes": [
+        "SmfCostanzo2016Dataset",
+        "DmfCostanzo2016Dataset",
+        "DmiCostanzo2016Dataset"
+      ],
+      "served_classes": [
+        "DmfCostanzo2016Dataset",
+        "DmiCostanzo2016Dataset",
+        "SmfCostanzo2016Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "FitnessPhenotype",
+        "GeneInteractionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kemmeren2014.py",
+      "dataset_classes": [
+        "MicroarrayKemmeren2014Dataset"
+      ],
+      "served_classes": [
+        "MicroarrayKemmeren2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "MicroarrayExpressionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2018.py",
+      "dataset_classes": [
+        "SmfKuzmin2018Dataset",
+        "DmfKuzmin2018Dataset",
+        "TmfKuzmin2018Dataset",
+        "DmiKuzmin2018Dataset",
+        "TmiKuzmin2018Dataset"
+      ],
+      "served_classes": [
+        "DmfKuzmin2018Dataset",
+        "DmiKuzmin2018Dataset",
+        "SmfKuzmin2018Dataset",
+        "TmfKuzmin2018Dataset",
+        "TmiKuzmin2018Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "FitnessPhenotype",
+        "GeneInteractionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2020.py",
+      "dataset_classes": [
+        "SmfKuzmin2020Dataset",
+        "DmfKuzmin2020Dataset",
+        "TmfKuzmin2020Dataset",
+        "DmiKuzmin2020Dataset",
+        "TmiKuzmin2020Dataset"
+      ],
+      "served_classes": [
+        "DmfKuzmin2020Dataset",
+        "DmiKuzmin2020Dataset",
+        "SmfKuzmin2020Dataset",
+        "TmfKuzmin2020Dataset",
+        "TmiKuzmin2020Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "FitnessPhenotype",
+        "GeneInteractionPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/muenzner2024.py",
+      "dataset_classes": [
+        "_MuenznerIsolateDataset",
+        "ProteomeMuenzner2024Dataset",
+        "ProteinTurnoverMuenzner2024Dataset"
+      ],
+      "served_classes": [
+        "ProteinTurnoverMuenzner2024Dataset",
+        "ProteomeMuenzner2024Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "ProteinTurnoverPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/oduibhir2014.py",
+      "dataset_classes": [
+        "SmfODuibhir2014Dataset"
+      ],
+      "served_classes": [
+        "SmfODuibhir2014Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "FitnessPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohnuki2018.py",
+      "dataset_classes": [
+        "ScmdOhnuki2018Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhnuki2018Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "CalMorphPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohnuki2022.py",
+      "dataset_classes": [
+        "ScmdOhnuki2022Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhnuki2022Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "CalMorphPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ohya2005.py",
+      "dataset_classes": [
+        "ScmdOhya2005Dataset"
+      ],
+      "served_classes": [
+        "ScmdOhya2005Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "CalMorphPhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/ozaydin2013.py",
+      "dataset_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "served_classes": [
+        "CarotenoidOzaydin2013Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "VisualScorePhenotype"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/scerevisiae/sameith2015.py",
+      "dataset_classes": [
+        "SmMicroarraySameith2015Dataset",
+        "DmMicroarraySameith2015Dataset"
+      ],
+      "served_classes": [
+        "DmMicroarraySameith2015Dataset",
+        "SmMicroarraySameith2015Dataset"
+      ],
+      "impact": "stale",
+      "via": [
+        "MicroarrayExpressionPhenotype"
+      ]
+    }
+  ],
+  "served_datasets": [
+    "CampaignProteomeCarruthers2025Dataset",
+    "CarbonSourceTong2020Dataset",
+    "CarotenoidOzaydin2013Dataset",
+    "CaudalPanTranscriptome2024Dataset",
+    "CrispriArrayYunus2026Dataset",
+    "CrispriCrossRachwalski2024Dataset",
+    "CrispriDifferentialProteomeYunus2026Dataset",
+    "CrispriKnockdownYunus2026Dataset",
+    "CrispriPanelProteomeYunus2026Dataset",
+    "DmMicroarraySameith2015Dataset",
+    "DmfCostanzo2016Dataset",
+    "DmfKuzmin2018Dataset",
+    "DmfKuzmin2020Dataset",
+    "DmiCostanzo2016Dataset",
+    "DmiKuzmin2018Dataset",
+    "DmiKuzmin2020Dataset",
+    "FluxIshii2007Dataset",
+    "FluxLi2021Dataset",
+    "GeneInteractionBabu2014Dataset",
+    "GeneInteractionButland2008Dataset",
+    "GrowthAucRapp2026Dataset",
+    "GrowthRateCampos2018Dataset",
+    "GrowthRateChoe2019Dataset",
+    "GrowthRateSchmidt2016Dataset",
+    "GrowthWang2015Dataset",
+    "IsoprenolTiterCarruthers2025Dataset",
+    "IsoprenolTiterYunus2026Dataset",
+    "IsoprenolToleranceLim2025Dataset",
+    "MetaboliteIntensityRapp2026Dataset",
+    "MetabolomeIshii2007Dataset",
+    "MicroarrayKemmeren2014Dataset",
+    "MorphologyCampos2018Dataset",
+    "ProteinFoldChangeCaglar2017Dataset",
+    "ProteinTurnoverGupta2024Dataset",
+    "ProteinTurnoverMuenzner2024Dataset",
+    "ProteomeCaglar2017Dataset",
+    "ProteomeCarruthers2025Dataset",
+    "ProteomeFoldChangeCarruthers2025Dataset",
+    "ProteomeFoldChangeLim2025Dataset",
+    "ProteomeIshii2007Dataset",
+    "ProteomeLim2025Dataset",
+    "ProteomeMuenzner2024Dataset",
+    "PutidaPrecise321Lim2022Dataset",
+    "RnaseqCaglar2017Dataset",
+    "RnaseqGuzman2018Dataset",
+    "RnaseqLamoureux2023Dataset",
+    "RnaseqPublicK12Lamoureux2023Dataset",
+    "ScmdOhnuki2018Dataset",
+    "ScmdOhnuki2022Dataset",
+    "ScmdOhya2005Dataset",
+    "SmMicroarraySameith2015Dataset",
+    "SmfBaryshnikova2010Dataset",
+    "SmfCostanzo2016Dataset",
+    "SmfKuzmin2018Dataset",
+    "SmfKuzmin2020Dataset",
+    "SmfODuibhir2014Dataset",
+    "TargetedMetabolomeRapp2026Dataset",
+    "TmfKuzmin2018Dataset",
+    "TmfKuzmin2020Dataset",
+    "TmiKuzmin2018Dataset",
+    "TmiKuzmin2020Dataset",
+    "TranscriptionFactorKnockoutChoe2019Dataset"
+  ],
+  "rebuild_scope": "full_kg_rebuild",
+  "owner_sign_off": {
+    "signed": true,
+    "quote": "Owner (Michael Volk), in session 2026-11-24, on the field and the conversions: \"ok let's proceed with trying to identify every last dataset that needs this update, and make the correct updates.\" On the gap reason: \"yes this is glaring issue and needs to be fixed.\"",
+    "url": null
+  }
+}

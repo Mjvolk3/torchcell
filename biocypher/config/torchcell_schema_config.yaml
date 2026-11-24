@@ -288,6 +288,7 @@ fitness phenotype:
         fitness: float
         fitness_std: float
         screen_id: str
+        replicate_id: str
 
 # gene interaction phenotype also projects the replicate-design quartet (#793): a
 # sourced eight-colony design (Babu 2014) and a per-record measured colony count
@@ -308,6 +309,7 @@ gene interaction phenotype:
         sample_unit: str
         gene_interaction_uncertainty: float
         gene_interaction_uncertainty_type: str
+        replicate_id: str
 
 gene essentiality phenotype:
     is_a: phenotypic feature
@@ -358,6 +360,7 @@ calmorph phenotype:
         label_statistic_name: str
         calmorph: str
         calmorph_coefficient_of_variation: str
+        replicate_id: str
 
 microarray expression phenotype:
     is_a: phenotypic feature
@@ -368,6 +371,7 @@ microarray expression phenotype:
         label_statistic_name: str
         expression_log2_ratio: str
         expression_log2_ratio_se: str
+        replicate_id: str
 
 # --- begin #1022: the error-model microarray score family ---
 # A two-color microarray release that carries a per-gene error-model score and its
@@ -442,6 +446,7 @@ rnaseq expression phenotype:
         expression_tpm: str
         measurement_type: str
         n_mapped_reads: int
+        replicate_id: str
 
 # Single-cell Perturb-seq collapsed to pseudobulk per genotype (Nadal-Ribelles 2025):
 # per-gene log2 fold-change vs the same-condition WT as a JSON string, plus the two
@@ -469,6 +474,7 @@ visual score phenotype:
         n_replicates: int
         target_product: str
         target_metabolite_id: str
+        replicate_id: str
 
 metabolite phenotype:
     is_a: phenotypic feature
@@ -516,6 +522,7 @@ protein fold change phenotype:
         reference_basis: str
         n_replicates: str
         measurement_type: str
+        replicate_id: str
 # --- end #770 ---
 
 # A strain's signed growth/fitness RESPONSE in a perturbed environment
@@ -617,6 +624,7 @@ protein turnover phenotype:
         interval_method: str
         censoring: str
         # --- end #753 ---
+        replicate_id: str
 
 # --- begin #857: the protein synthesis-rate family ---
 # Per-protein synthesis rates with no degradation (ProteinSynthesisRatePhenotype): every
@@ -685,6 +693,7 @@ flux phenotype:
         exchange_flux: str
         exchange_flux_lower: str
         exchange_flux_upper: str
+        replicate_id: str
 
 # Transcription from ONE promoter read through a reporter fusion
 # (PromoterActivityPhenotype). Every field but provenance_gaps is projected, enums as
@@ -789,6 +798,7 @@ bacterial morphology phenotype:
         morphology_coefficient_of_variation: str
         n_samples: int
         sample_unit: str
+        replicate_id: str
 # A count-less transcriptome (MrnaNumberFractionPhenotype, issue #854): each gene's share
 # of the cell's mRNA molecules, released without the read counts behind it. The per-gene
 # dict serializes to a JSON string, the multi-valued phenotype convention. A property is

@@ -1715,6 +1715,7 @@ class CellAdapter:
             # The screen a measurement came from (Kuzmin 2020 main vs pilot screens,
             # issue #602); None for a source with one screen per measurement.
             "screen_id": phenotype.screen_id,
+            "replicate_id": phenotype.replicate_id,
         }
 
         return BioCypherNode(
@@ -1760,6 +1761,7 @@ class CellAdapter:
                 if phenotype.gene_interaction_uncertainty_type is not None
                 else None
             ),
+            "replicate_id": phenotype.replicate_id,
         }
 
         return BioCypherNode(
@@ -2023,6 +2025,7 @@ class CellAdapter:
                 "fitness": fitness,
                 "fitness_std": fitness_std,
                 "screen_id": phenotype.screen_id,
+                "replicate_id": phenotype.replicate_id,
             }
 
             node = BioCypherNode(
@@ -2070,6 +2073,7 @@ class CellAdapter:
                     if phenotype.gene_interaction_uncertainty_type is not None
                     else None
                 ),
+                "replicate_id": phenotype.replicate_id,
             }
 
             node = BioCypherNode(
@@ -2190,6 +2194,7 @@ class CellAdapter:
             )
             if calmorph_coefficient_of_variation
             else None,
+            "replicate_id": phenotype.replicate_id,
         }
 
         return BioCypherNode(
@@ -2226,6 +2231,7 @@ class CellAdapter:
                 )
                 if calmorph_coefficient_of_variation
                 else None,
+                "replicate_id": phenotype.replicate_id,
             }
 
             node = BioCypherNode(
@@ -2259,6 +2265,7 @@ class CellAdapter:
                 if phenotype.expression_log2_ratio_se is not None
                 else None
             ),
+            "replicate_id": phenotype.replicate_id,
         }
         return BioCypherNode(
             node_id=phenotype_id,
@@ -2286,6 +2293,7 @@ class CellAdapter:
                     if phenotype.expression_log2_ratio_se is not None
                     else None
                 ),
+                "replicate_id": phenotype.replicate_id,
             }
             nodes.append(
                 BioCypherNode(
@@ -2519,6 +2527,7 @@ class CellAdapter:
             "expression_tpm": json.dumps(phenotype.expression_tpm),
             "measurement_type": phenotype.measurement_type,
             "n_mapped_reads": phenotype.n_mapped_reads,
+            "replicate_id": phenotype.replicate_id,
         }
         return BioCypherNode(
             node_id=phenotype_id,
@@ -2541,6 +2550,7 @@ class CellAdapter:
                 "expression_tpm": json.dumps(phenotype.expression_tpm),
                 "measurement_type": phenotype.measurement_type,
                 "n_mapped_reads": phenotype.n_mapped_reads,
+                "replicate_id": phenotype.replicate_id,
             }
             nodes.append(
                 BioCypherNode(
@@ -2620,6 +2630,7 @@ class CellAdapter:
             "n_replicates": phenotype.n_replicates,
             "target_product": phenotype.target_product,
             "target_metabolite_id": phenotype.target_metabolite_id,
+            "replicate_id": phenotype.replicate_id,
         }
         return BioCypherNode(
             node_id=phenotype_id,
@@ -2643,6 +2654,7 @@ class CellAdapter:
                 "n_replicates": phenotype.n_replicates,
                 "target_product": phenotype.target_product,
                 "target_metabolite_id": phenotype.target_metabolite_id,
+                "replicate_id": phenotype.replicate_id,
             }
             nodes.append(
                 BioCypherNode(
@@ -2878,6 +2890,7 @@ class CellAdapter:
             "reference_basis": phenotype.reference_basis,
             "n_replicates": json.dumps(phenotype.n_replicates),
             "measurement_type": phenotype.measurement_type,
+            "replicate_id": phenotype.replicate_id,
         }
 
     @data_chunker
@@ -2961,6 +2974,7 @@ class CellAdapter:
                 else None
             ),
             # --- end #753 ---
+            "replicate_id": phenotype.replicate_id,
         }
 
     @data_chunker
@@ -3178,6 +3192,7 @@ class CellAdapter:
                 if target_reaction_ids is not None
                 else None
             ),
+            "replicate_id": phenotype.replicate_id,
         }
 
     @data_chunker
@@ -3444,6 +3459,7 @@ class CellAdapter:
             ),
             "n_samples": phenotype.n_samples,
             "sample_unit": sample_unit.value if sample_unit is not None else None,
+            "replicate_id": phenotype.replicate_id,
         }
 
     @data_chunker

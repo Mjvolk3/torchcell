@@ -627,8 +627,8 @@
   ],
   "rebuild_scope": "full_kg_rebuild",
   "owner_sign_off": {
-    "signed": false,
-    "quote": null,
+    "signed": true,
+    "quote": "Owner (Michael Volk), in session 2026-11-24, on the field and the conversions: \"ok let's proceed with trying to identify every last dataset that needs this update, and make the correct updates.\"",
     "url": null
   }
 }

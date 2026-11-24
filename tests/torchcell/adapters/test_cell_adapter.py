@@ -855,6 +855,7 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "fitness": 0.5,
             "fitness_std": 0.1,
             "screen_id": None,
+            "replicate_id": None,
         },
     ),
     (
@@ -876,6 +877,7 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "sample_unit": None,
             "gene_interaction_uncertainty": None,
             "gene_interaction_uncertainty_type": None,
+            "replicate_id": None,
         },
     ),
     (
@@ -937,6 +939,7 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "label_statistic_name": "calmorph_coefficient_of_variation",
             "calmorph": '{"A101_A": 1.5}',
             "calmorph_coefficient_of_variation": '{"CCV101_C": 0.2}',
+            "replicate_id": None,
         },
     ),
     (
@@ -950,6 +953,7 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "label_statistic_name": "calmorph_coefficient_of_variation",
             "calmorph": '{"A101_A": 1.5}',
             "calmorph_coefficient_of_variation": None,
+            "replicate_id": None,
         },
     ),
     (
@@ -968,6 +972,7 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "label_statistic_name": "expression_log2_ratio_se",
             "expression_log2_ratio": '{"YAL001C": 1.0}',
             "expression_log2_ratio_se": '{"YAL001C": 0.1}',
+            "replicate_id": None,
         },
     ),
     (
@@ -985,6 +990,7 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "label_statistic_name": "expression_log2_ratio_se",
             "expression_log2_ratio": '{"YAL001C": 1.0}',
             "expression_log2_ratio_se": None,
+            "replicate_id": None,
         },
     ),
     (
@@ -1004,6 +1010,7 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "expression_tpm": '{"YAL001C": 10.0}',
             "measurement_type": "tpm",
             "n_mapped_reads": 100,
+            "replicate_id": None,
         },
     ),
     (
@@ -1046,6 +1053,7 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "n_replicates": 3,
             "target_product": "betaxanthin",
             "target_metabolite_id": None,
+            "replicate_id": None,
         },
     ),
     (
@@ -1065,6 +1073,7 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "metabolite_level": '{"s_0001": 1.25}',
             "metabolite_level_se": '{"s_0001": 0.5}',
             "measurement_type": "ms_abundance",
+            "replicate_id": None,
         },
     ),
     (
@@ -1083,6 +1092,7 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "metabolite_level": '{"s_0001": 1.25}',
             "metabolite_level_se": None,
             "measurement_type": "ms_abundance",
+            "replicate_id": None,
         },
     ),
     (
@@ -1102,6 +1112,7 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "protein_abundance": '{"YAL001C": 7.5}',
             "protein_abundance_se": '{"YAL001C": 0.5}',
             "measurement_type": "swath",
+            "replicate_id": None,
         },
     ),
     (
@@ -1120,6 +1131,7 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "protein_abundance": '{"YAL001C": 7.5}',
             "protein_abundance_se": None,
             "measurement_type": "swath",
+            "replicate_id": None,
         },
     ),
     (

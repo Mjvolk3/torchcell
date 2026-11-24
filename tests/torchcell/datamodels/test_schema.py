@@ -4109,6 +4109,8 @@ def test_the_served_microarray_leaf_keeps_its_contract_under_the_parent() -> Non
         "expression",
         "expression_log2_ratio_variance",
         "n_replicates",
+        # #1178: the additive optional replicate label, required-ness unchanged
+        "replicate_id",
     }
     assert {name for name, info in fields.items() if info.is_required()} == {
         "expression_log2_ratio",

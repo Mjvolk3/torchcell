@@ -60,6 +60,10 @@ def _contrast(record: Record) -> tuple[Any, ...]:
     perturbation at all (Caglar 2017); keying on the genotype alone would collapse the
     second panel's records into one contrast. A record that repeats all three IS the
     same measurement stored twice, which is what the rule exists to catch.
+
+    ``replicate_id`` joins the contrast (read with ``.get``, empty when unset), so the
+    replicate records of a per-replicate release stay distinct and a dataset that
+    stores one aggregate per contrast is keyed exactly as before.
     """
     perturbations = tuple(
         sorted(
@@ -71,10 +75,12 @@ def _contrast(record: Record) -> tuple[Any, ...]:
         )
     )
     environment = json.dumps(record["experiment"]["environment"], sort_keys=True)
+    replicate_id = record["experiment"]["phenotype"].get("replicate_id")
     return (
         perturbations,
         environment,
         str(record["experiment"]["phenotype"]["reference_basis"]),
+        "" if replicate_id is None else str(replicate_id),
     )
 
 

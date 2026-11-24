@@ -757,6 +757,7 @@ def test_create_expression_experiment_from_pairs() -> None:
         "expression_log2_ratio_variance": {"YAL001C": _SD2**2},
         "n_replicates": {"YAL001C": 2},
         "provenance_gaps": [],
+        "replicate_id": None,
     }
     assert reference.phenotype_reference.model_dump() == {
         "graph_level": "node",
@@ -768,6 +769,7 @@ def test_create_expression_experiment_from_pairs() -> None:
         "expression_log2_ratio_variance": None,
         "n_replicates": {"YAL001C": 2},
         "provenance_gaps": [],
+        "replicate_id": None,
     }
     assert reference.genome_reference.strain == "BY4741"
     assert publication == _PUBLICATION

@@ -296,6 +296,9 @@ def _calmorph_node(
             "label_statistic_name": "calmorph_coefficient_of_variation",
             "calmorph": json_pair[0],
             "calmorph_coefficient_of_variation": json_pair[1],
+            # #1178: which replicate a per-replicate record is; None on every Ohya
+            # record, which states one profile per strain.
+            "replicate_id": None,
         },
     )
 

@@ -1,0 +1,31 @@
+{
+  "mmseqs_version": "8cc5ce367b5638c4306c2d7cfc652dd099a4643f",
+  "mmseqs_binary_sha256": "b7ef6e0e33df5dd4fa9cf988cbd8b4988c11a3a1255d2c377f13e1bb40c157fb",
+  "command": "mmseqs easy-search <fasta> <fasta> <hits> <tmp> --min-seq-id <t> -c 0.8 --cov-mode 0 -s 7.5 -e 1e-3 --max-seqs 5000 --threads 1, then connected components of the hit graph",
+  "clusters": {
+    "ecoli_K12_BW25113_ASM75055v1.seqid30": {
+      "proteins": 4131,
+      "clusters": 3386,
+      "proteins_in_clusters_of_two_or_more": 1146,
+      "largest_cluster": 31
+    },
+    "ecoli_K12_BW25113_ASM75055v1.seqid50": {
+      "proteins": 4131,
+      "clusters": 3909,
+      "proteins_in_clusters_of_two_or_more": 381,
+      "largest_cluster": 10
+    },
+    "ecoli_K12_MG1655_ASM584v2.seqid30": {
+      "proteins": 4290,
+      "clusters": 3536,
+      "proteins_in_clusters_of_two_or_more": 1158,
+      "largest_cluster": 31
+    },
+    "ecoli_K12_MG1655_ASM584v2.seqid50": {
+      "proteins": 4290,
+      "clusters": 4057,
+      "proteins_in_clusters_of_two_or_more": 395,
+      "largest_cluster": 12
+    }
+  }
+}

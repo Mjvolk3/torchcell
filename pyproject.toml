@@ -309,6 +309,7 @@ torchcell = [
     "datamodels/*.json", # pinned data tables (e.g. compound_identity_table.json)
     "models/genslm_assets/*.json", # GenSLM codon tokenizer + GPT-NeoX configs (vendored, MIT)
     "knowledge_graphs/supported_queries/registry.json", # supported-query registry (T5)
+    "tasks/data/*.csv.gz", # pinned benchmark splits (torchcell.tasks)
 ]
 
 [tool.setuptools.packages.find]

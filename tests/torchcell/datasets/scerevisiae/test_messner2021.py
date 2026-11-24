@@ -670,6 +670,7 @@ def test_verify_build_passes_the_synthetic_store(
         "se_nonnegative",
         "reference_finite",
         "measurement_type_consistent",
+        "replicate_id_names_one_replicate",
         "wild_type_genotype",
         "runs_per_compound",
         "release_layout",

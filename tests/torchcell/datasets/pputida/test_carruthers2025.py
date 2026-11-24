@@ -71,6 +71,7 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
 )
 from torchcell.verification.report import Level, VerificationReport
+from torchcell.verification.sourced import ProvenanceGapReason
 
 
 # --------------------------------------------------------------------------- #
@@ -133,6 +134,18 @@ def test_titer_phenotype_gaps_the_uncertainty_the_yield_and_the_productivity() -
     }
     assert pheno.product_yield is None
     assert pheno.productivity is None
+    reasons = {gap.field: gap.reason for gap in pheno.provenance_gaps}
+    # One culture has no dispersion of its own; the yield and productivity were never
+    # reported. The two absences are different facts, so they carry different reasons.
+    assert reasons["titer_uncertainty"] is (
+        ProvenanceGapReason.not_applicable_single_measurement
+    )
+    assert reasons["titer_uncertainty_type"] is (
+        ProvenanceGapReason.not_applicable_single_measurement
+    )
+    assert {reasons[field] for field in ("product_yield", "productivity")} == {
+        ProvenanceGapReason.not_reported_by_primary
+    }
 
 
 def test_titer_phenotype_refuses_a_culture_with_no_released_label() -> None:
@@ -334,6 +347,8 @@ def test_the_proteome_replicate_phenotype_stores_one_replicates_cells() -> None:
     assert pheno.replicate_id == "JBEI_OTS_PP_0378_48hr/R2"
     assert pheno.measurement_type == "dia_nn_top3_peptide_signal_mean"
     assert pheno.gapped_fields() == {"protein_abundance_se"}
+    [gap] = pheno.provenance_gaps
+    assert gap.reason is ProvenanceGapReason.not_applicable_single_measurement
 
 
 def test_the_proteome_aggregation_gives_the_mean_the_se_and_the_replicate_count() -> (
@@ -2585,6 +2600,10 @@ def test_the_titer_battery_fails_a_store_that_fabricated_a_standard_error(
             }
         ),
     )
+    # ``len`` and the group-size helpers above read the store through the dataset's own
+    # handle, and LMDB refuses a second open of one environment in a process, so the
+    # handle goes back before ``load_records`` opens its own.
+    built_titer.close_lmdb()
     records = load_records(built_titer.root)
     records[0]["experiment"]["phenotype"]["titer_se"] = 99.0
     report = c25.titer_report(records, str(synthetic_mirror))

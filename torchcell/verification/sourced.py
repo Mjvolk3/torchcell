@@ -145,6 +145,16 @@ class ProvenanceGapReason(StrEnum):
     ``deferred_pending_source_review`` (no SI of ours holds it): the artifact was
     withheld, and closing the gap takes a request to the authors or the registry, not
     another pass over the mirror.
+
+    ``not_applicable_single_measurement`` is the per-replicate case: the record states
+    ONE released measurement (``n_samples`` 1, or every ``n_replicates`` value 1), and a
+    single measurement has no dispersion of its own, so an uncertainty, its type or a
+    standard error does not exist to be reported. It is not ``not_reported_by_primary``,
+    which says the primary could have reported the value and did not: Carruthers 2025
+    releases every culture and states its error bars over groups of cultures, which is
+    what each ``phenotype_reference`` carries. Nothing closes this gap, because there
+    is no value to find; an aggregate record over replicates keeps the reason that
+    describes its own absence.
     """
 
     not_reported_by_primary = (
@@ -152,6 +162,7 @@ class ProvenanceGapReason(StrEnum):
     )
     not_carried_by_curation = "not_carried_by_curation"  # primary had it; the secondary DB (YeastPhenome/SPELL) dropped it in aggregation
     not_released_by_primary = "not_released_by_primary"  # primary reported the value but released no artifact carrying it (sequence "upon request", "verified" but not deposited)
+    not_applicable_single_measurement = "not_applicable_single_measurement"  # the record is ONE measurement (n = 1), so a dispersion (uncertainty, its type, an SE) does not exist
     deferred_pending_source_review = "deferred_pending_source_review"  # recoverable -- the per-paper SI comb just isn't done yet
 
 

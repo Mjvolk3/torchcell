@@ -213,8 +213,8 @@ def test_l1_provenance_gaps_clean_when_fully_sourced():
     assert "fully sourced" in result.message
 
 
-def test_the_gap_vocabulary_is_exactly_four_members():
-    """Pinned so a fifth reason is a deliberate change (2026-10-15).
+def test_the_gap_vocabulary_is_exactly_five_members():
+    """Pinned so a sixth reason is a deliberate change (2026-10-15, 2026-11-24).
 
     ``not_released_by_primary`` joined for the construct store: the primary MEASURED and
     reports the value and releases no artifact carrying it. Kang 2026 states the
@@ -224,13 +224,36 @@ def test_the_gap_vocabulary_is_exactly_four_members():
     it), ``not_carried_by_curation`` (there is no curation layer in between) nor
     ``deferred_pending_source_review`` (no SI of ours holds it, so no comb would close
     the gap). Closing it takes a request to the authors or the registry.
+
+    ``not_applicable_single_measurement`` joined for the per-replicate records (#1178):
+    a record that states ONE released measurement has no dispersion, so its uncertainty
+    is not a value the primary withheld but a value that does not exist. Owner,
+    2026-11-24: "yes this is glaring issue and needs to be fixed."
     """
     assert [member.value for member in ProvenanceGapReason] == [
         "not_reported_by_primary",
         "not_carried_by_curation",
         "not_released_by_primary",
+        "not_applicable_single_measurement",
         "deferred_pending_source_review",
     ]
+
+
+def test_a_single_measurement_gap_is_not_on_the_deferred_worklist():
+    """A single measurement's missing dispersion is terminal: nothing would close it."""
+    census = provenance_gap_census(
+        [
+            _pheno_dict(
+                (
+                    "titer_uncertainty",
+                    ProvenanceGapReason.not_applicable_single_measurement,
+                )
+            )
+        ]
+    )
+    assert census.n_gaps == 1
+    assert census.worklist_fields == []
+    assert census.by_reason == {"not_applicable_single_measurement": 1}
 
 
 def test_a_not_released_gap_is_not_on_the_deferred_worklist():

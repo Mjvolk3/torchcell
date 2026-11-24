@@ -1587,7 +1587,14 @@ def check_admission(
             dev_experiment_ids(dataset_class, data_root),
             served_source,
         )
-        if superset.n_missing:
+        if superset.n_served == 0:
+            reasons.append(
+                f"{dataset_class_name} is recorded as served, but the store at "
+                f"{served_source} returned no experiment ids for it; the superset "
+                "proof cannot hold against an empty read (wrong or empty store, or a "
+                "failed query)"
+            )
+        elif superset.n_missing:
             reasons.append(
                 f"{dataset_class_name} is already in the served store and its dev LMDB "
                 f"no longer produces {superset.n_missing} of the {superset.n_served} "

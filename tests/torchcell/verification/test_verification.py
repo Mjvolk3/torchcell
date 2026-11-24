@@ -217,3 +217,44 @@ def test_report_assembly_end_to_end():
     assert report.passed
     assert report.levels_covered == {Level.L0, Level.L1, Level.L2, Level.L3}
     assert not math.isnan(0.0)  # sanity
+
+
+def test_cross_checks_read_a_nan_pair_as_a_disagreement():
+    """``abs(nan - x) > tol`` is False, so a NaN pair must not count as agreeing."""
+    nan = float("nan")
+    l2 = l2_cross_method([1.0, nan], [1.0, 5.0], tol=1e-9)
+    assert not l2.passed
+    assert l2.details["n_disagreements"] == 1
+    assert not l2_cross_method([nan], [nan]).passed
+    l4 = l4_cross_source([("YAL001C", nan, 3.0)], tol=0.0)
+    assert not l4.passed
+    assert l4.details["n_disagreements"] == 1
+
+
+def test_worst_deviation_reads_a_non_finite_deviation_as_infinite():
+    from torchcell.verification.levels import worst_deviation
+
+    assert worst_deviation(0.25, 0.5) == 0.5
+    assert worst_deviation(0.5, 0.25) == 0.5
+    assert worst_deviation(0.5, float("nan")) == math.inf
+    assert worst_deviation(0.0, float("inf")) == math.inf
+    assert worst_deviation(math.inf, 0.0) == math.inf
+
+
+def test_reference_rules_fail_on_a_nan_reference():
+    """The four reference-convention rules a NaN used to pass through."""
+    from torchcell.verification.expression import _l3_reference_zero as expr_zero
+    from torchcell.verification.fitness import _l3_reference_one
+    from torchcell.verification.metabolite import _l3_reference_zero as met_zero
+
+    nan = float("nan")
+    fitness = [{"reference": {"phenotype_reference": {"fitness": nan}}}]
+    assert not _l3_reference_one(fitness).passed
+    expression = [
+        {"reference": {"phenotype_reference": {"expression_log2_ratio": {"a": nan}}}}
+    ]
+    assert not expr_zero(expression).passed
+    metabolite = [
+        {"reference": {"phenotype_reference": {"metabolite_level": {"a": nan}}}}
+    ]
+    assert not met_zero(metabolite).passed

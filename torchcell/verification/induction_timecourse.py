@@ -56,6 +56,7 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.scerevisiae import hackett2020 as h
 from torchcell.verification.common import SharedRecordRules
+from torchcell.verification.levels import worst_deviation
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -723,7 +724,7 @@ def _ev1_result(
         values = ev1[columns[key]].to_numpy(dtype=float)
         stored = np.array([layer[key_of[g]] for g in names], dtype=float)
         n += len(values)
-        worst = max(worst, float(np.max(np.abs(values - stored))))
+        worst = worst_deviation(worst, float(np.max(np.abs(values - stored))))
         zero_mismatch += int(((values == 0) != (stored == 0)).sum())
     passed = (
         not missing

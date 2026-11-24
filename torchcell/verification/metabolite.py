@@ -27,7 +27,12 @@ import math
 from collections.abc import Callable, Sequence
 from typing import Any
 
-from torchcell.verification.levels import l0_structural, l1_count, l2_value_fidelity
+from torchcell.verification.levels import (
+    l0_structural,
+    l1_count,
+    l2_value_fidelity,
+    worst_deviation,
+)
 from torchcell.verification.perturbation_families import (
     addition_perturbation_types,
     heterologous_identifier,
@@ -173,7 +178,7 @@ def _l3_reference_zero(records: Sequence[Record]) -> LevelResult:
         levels = rec["reference"]["phenotype_reference"]["metabolite_level"]
         for v in levels.values():
             n += 1
-            worst = max(worst, abs(float(v)))
+            worst = worst_deviation(worst, abs(float(v)))
     holds = worst == 0.0
     return LevelResult(
         level=Level.L3,

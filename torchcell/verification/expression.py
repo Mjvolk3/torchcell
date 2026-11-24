@@ -32,6 +32,7 @@ from torchcell.verification.levels import (
     l1_count,
     l2_value_fidelity,
     l3_convention,
+    worst_deviation,
 )
 from torchcell.verification.report import (
     Level,
@@ -98,7 +99,7 @@ def _l3_reference_zero(records: Sequence[Record]) -> LevelResult:
         ref_log2 = rec["reference"]["phenotype_reference"]["expression_log2_ratio"]
         for value in ref_log2.values():
             n += 1
-            worst = max(worst, abs(float(value)))
+            worst = worst_deviation(worst, abs(float(value)))
     holds = worst == 0.0
     return l3_convention(
         "reference_log2_zero",

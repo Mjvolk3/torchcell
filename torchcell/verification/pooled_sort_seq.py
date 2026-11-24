@@ -51,7 +51,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from typing import Any
 
-from torchcell.verification.levels import l1_count, l2_value_fidelity
+from torchcell.verification.levels import l1_count, l2_value_fidelity, worst_deviation
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -335,8 +335,8 @@ def l2_released_values(
                 )
             continue
         delta = abs(float(stored) - expected)
-        worst = max(worst, delta)
-        if delta > tolerance and len(drifted) < 20:
+        worst = worst_deviation(worst, delta)
+        if not delta <= tolerance and len(drifted) < 20:
             drifted.append({"sequence_id": sequence_id, "delta": delta})
     passed = not missing and not drifted
     return LevelResult(

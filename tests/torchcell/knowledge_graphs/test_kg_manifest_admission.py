@@ -878,6 +878,23 @@ def test_superset_readmission_admits_a_strict_superset(toy: _Toy) -> None:
     }
 
 
+def test_superset_readmission_blocks_when_the_store_returns_no_ids(toy: _Toy) -> None:
+    """An empty read is a wrong or empty store, never a superset of nothing."""
+    report = _admit(
+        toy,
+        _bootstrap(toy),
+        "ServedDataset",
+        served_experiment_ids=_served_ids([]),
+        served_source="bolt://wrong:7687",
+    )
+    assert report.verdict == "blocked"
+    assert report.reasons == [
+        "ServedDataset is recorded as served, but the store at bolt://wrong:7687 "
+        "returned no experiment ids for it; the superset proof cannot hold against "
+        "an empty read (wrong or empty store, or a failed query)"
+    ]
+
+
 def test_superset_readmission_blocks_on_a_missing_id_or_nothing_new(toy: _Toy) -> None:
     manifest = _bootstrap(toy)
     gone = "f" * 64

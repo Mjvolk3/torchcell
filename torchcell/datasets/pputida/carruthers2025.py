@@ -2258,7 +2258,7 @@ def titer_phenotype(titer_mg_per_l: float, replicate_id: str) -> ProductTiterPhe
             *(
                 ProvenanceGap(
                     field=field,
-                    reason=ProvenanceGapReason.not_reported_by_primary,
+                    reason=ProvenanceGapReason.not_applicable_single_measurement,
                     note=_SINGLE_CULTURE_UNCERTAINTY_NOTE,
                 )
                 for field in ("titer_uncertainty", "titer_uncertainty_type")
@@ -4584,7 +4584,7 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
             provenance_gaps=[
                 ProvenanceGap(
                     field="protein_abundance_se",
-                    reason=ProvenanceGapReason.not_reported_by_primary,
+                    reason=ProvenanceGapReason.not_applicable_single_measurement,
                     note=_SINGLE_REPLICATE_SE_NOTE,
                 )
             ],
@@ -5613,7 +5613,7 @@ class CampaignProteomeCarruthers2025Dataset(ExperimentDataset):
                             provenance_gaps=[
                                 ProvenanceGap(
                                     field="protein_abundance_se",
-                                    reason=ProvenanceGapReason.not_reported_by_primary,
+                                    reason=ProvenanceGapReason.not_applicable_single_measurement,
                                     note=_SINGLE_CULTURE_CAMPAIGN_SE_NOTE,
                                 )
                             ],

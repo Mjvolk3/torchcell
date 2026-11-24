@@ -1420,3 +1420,18 @@ the accounting proves: titer 1,506 source rows = 1,416 stored + 90 control refer
 109 panel cultures stored and 36 induced cultures dropped (1,561 candidates = 1,525 kept +
 36 dropped); campaign proteome 1,497 deposited cultures = 1,407 stored + 90 control
 references.
+
+## 2026.11.24 - A single culture's missing dispersion is `not_applicable_single_measurement`
+
+The per-culture and per-replicate records gapped their missing dispersion as `not_reported_by_primary`, which says the paper could have reported a value and did not. One culture has no dispersion to report, so those gaps now carry the new `ProvenanceGapReason.not_applicable_single_measurement` ([[torchcell.datamodels.schema]], 2026.11.24): `titer_uncertainty` and `titer_uncertainty_type` on every titer record, and `protein_abundance_se` on every panel and campaign proteome record. The four yield and productivity gaps keep `not_reported_by_primary`, because the campaign measured titer only, and the references keep their aggregates unchanged. The notes quoted on each gap are unchanged.
+
+Rebuilt into the throwaway root `$DATA_ROOT/tmp/scratch/per-replicate-carruthers-v2/` on 2026-11-24 against the real raw mirror, with the gap reasons counted over every stored record:
+
+| store | records | `verify_build` | gaps by reason |
+|---|---|---|---|
+| titer | 1,525 | PASS | `titer_uncertainty` and `titer_uncertainty_type`: 1,525 each, `not_applicable_single_measurement`; four yield and productivity fields: 1,525 each, `not_reported_by_primary` |
+| panel proteome | 63 | PASS | `protein_abundance_se`: 63, `not_applicable_single_measurement` |
+| campaign proteome | 1,407 | PASS | `protein_abundance_se`: 1,407, `not_applicable_single_measurement` |
+| fold change | 16 | PASS | none on the experiment phenotypes |
+
+The synthetic-fixture test of the fabricated-SE titer battery now hands the dataset's LMDB handle back before `load_records` opens its own, since `len` had opened it and LMDB refuses a second open of one environment in a process (the CI failure on PR #1181).

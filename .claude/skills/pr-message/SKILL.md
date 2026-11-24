@@ -27,8 +27,9 @@ already shows is left to the diff.
 - <the step>
 ```
 
-The whole body fits on one screen: about 150 words, 25 lines at most. A one-commit fix needs
-only the opening sentence and `Tested`.
+The whole body fits on one screen: about 150 words, 25 lines at most. A new feature with an
+`After merging` section may reach 250 words. A one-commit fix needs only the opening sentence
+and `Tested`.
 
 **Title.** What changes, in the repository's commit style (`fix(scope): ...`), under 70
 characters, no trailing period.

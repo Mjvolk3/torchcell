@@ -1192,8 +1192,11 @@ def split_colonies(colonies: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
             f"{len(wild_type)} wild-type colonies in Table 3, expected "
             f"{N_WILD_TYPE_COLONIES}"
         )
-    wt_strata = wild_type["Deletion"].value_counts().value_counts().to_dict()
-    if {int(k): int(v) for k, v in wt_strata.items()} != WILD_TYPE_COLONIES_PER_STRAIN:
+    wt_counts = wild_type["Deletion"].value_counts().value_counts()
+    wt_strata = dict(
+        zip(wt_counts.index.astype(int).tolist(), wt_counts.astype(int).tolist())
+    )
+    if wt_strata != WILD_TYPE_COLONIES_PER_STRAIN:
         raise ReleaseShapeError(
             f"wild-type colonies per strain id {wt_strata}, expected "
             f"{WILD_TYPE_COLONIES_PER_STRAIN}"
@@ -1381,58 +1384,23 @@ class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
             for row in tqdm(
                 colonies.to_dict("records"), total=len(colonies), desc="colonies"
             ):
-                colony = str(row["SDname"])
-                strain_id = str(row["Deletion"])
-                label = self._strain_label(strain_id)
-                if colony in wild_type_ids:
-                    # The BY4743 background itself: an empty genotype, the background
-                    # being what the reference genome states.
-                    genotype = Genotype(perturbations=[])
-                    rows.append(
-                        {
-                            "colony_id": colony,
-                            "strain_id": strain_id,
-                            "systematic_gene_name": None,
-                            "perturbed_gene_name": None,
-                            "strain_label": label,
-                            "ena_sample_accession": str(row["ERSno"]),
-                            "barcode_row": colony in barcodes.index,
-                            "wild_type": True,
-                        }
-                    )
-                else:
-                    genotype, gene, has_row = self._knockout_genotype(
-                        colony=colony,
-                        strain_id=strain_id,
-                        label=label,
-                        barcodes=barcodes,
-                        gene_of_common=gene_of_common,
-                        common_of_gene=common_of_gene,
-                    )
-                    if released_genes[colony] != gene:
-                        raise ReleaseShapeError(
-                            f"colony {colony}: released deletion {gene!r} differs from "
-                            f"{released_genes[colony]!r}"
-                        )
-                    if has_row:
-                        if gene_of_common.get(label, gene) != gene:
-                            label_disagrees += 1
-                    else:
+                genotype, csv_row = self._plan_colony(
+                    row,
+                    wild_type_ids=wild_type_ids,
+                    barcodes=barcodes,
+                    gene_of_common=gene_of_common,
+                    common_of_gene=common_of_gene,
+                    released_genes=released_genes,
+                )
+                rows.append(csv_row)
+                gene = csv_row["systematic_gene_name"]
+                if gene is not None:
+                    gene_names.add(gene)
+                    if not csv_row["barcode_row"]:
                         without_row += 1
                         gene_from_table4 += 1
-                    gene_names.add(gene)
-                    rows.append(
-                        {
-                            "colony_id": colony,
-                            "strain_id": strain_id,
-                            "systematic_gene_name": gene,
-                            "perturbed_gene_name": common_of_gene.get(gene, gene),
-                            "strain_label": label,
-                            "ena_sample_accession": str(row["ERSno"]),
-                            "barcode_row": has_row,
-                            "wild_type": False,
-                        }
-                    )
+                    elif gene_of_common.get(csv_row["strain_label"], gene) != gene:
+                        label_disagrees += 1
                 experiment = GenomeArchitectureExperiment(
                     dataset_name=self.name,
                     genotype=genotype,
@@ -1471,6 +1439,55 @@ class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
         log.info(
             "Wrote %d Puddu 2019 colony records over %d genes", idx, len(gene_names)
         )
+
+    @classmethod
+    def _plan_colony(
+        cls,
+        row: Mapping[Hashable, Any],
+        *,
+        wild_type_ids: frozenset[str],
+        barcodes: pd.DataFrame,
+        gene_of_common: dict[str, str],
+        common_of_gene: dict[str, str],
+        released_genes: dict[str, str],
+    ) -> tuple[Genotype, dict[str, Any]]:
+        """``(genotype, data.csv row)`` of one Table 3 colony, wild type or knockout.
+
+        A wild-type colony is the BY4743 background itself: an empty genotype, the
+        background being what the reference genome states, and its strain label kept
+        in the csv row since an empty genotype has no perturbation to carry it.
+        """
+        colony = str(row["SDname"])
+        strain_id = str(row["Deletion"])
+        label = cls._strain_label(strain_id)
+        csv_row: dict[str, Any] = {
+            "colony_id": colony,
+            "strain_id": strain_id,
+            "systematic_gene_name": None,
+            "perturbed_gene_name": None,
+            "strain_label": label,
+            "ena_sample_accession": str(row["ERSno"]),
+            "barcode_row": colony in barcodes.index,
+            "wild_type": colony in wild_type_ids,
+        }
+        if csv_row["wild_type"]:
+            return Genotype(perturbations=[]), csv_row
+        genotype, gene, _ = cls._knockout_genotype(
+            colony=colony,
+            strain_id=strain_id,
+            label=label,
+            barcodes=barcodes,
+            gene_of_common=gene_of_common,
+            common_of_gene=common_of_gene,
+        )
+        if released_genes[colony] != gene:
+            raise ReleaseShapeError(
+                f"colony {colony}: released deletion {gene!r} differs from "
+                f"{released_genes[colony]!r}"
+            )
+        csv_row["systematic_gene_name"] = gene
+        csv_row["perturbed_gene_name"] = common_of_gene.get(gene, gene)
+        return genotype, csv_row
 
     @staticmethod
     def _knockout_genotype(

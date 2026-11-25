@@ -173,9 +173,11 @@ headline metric: pearson (mean over targets)
 
 A frozen representation of each deleted gene with a ridge regression on top, for every split of this task. The representations and the fitting procedure are described in the [overview](./index.mdx#linear-probe-baselines).
 
-<img src={require("./linear_probes_morphology-campos2018.png").default} alt="Linear-probe test Pearson for Cell shape and cell cycle (Campos 2018)" style={{display: "block", width: "100%", maxWidth: "180mm", maxHeight: "170mm", height: "auto", objectFit: "contain"}} />
+### Pearson correlation
 
-**Test Pearson correlation of each linear probe on Cell shape and cell cycle (Campos 2018).** Each panel is one split family and each bar is one gene representation. A bar is the mean over the seeds of that family (five seeds for random splits and three for every other family) and its whisker is the sample standard deviation over those seeds. The correlation is computed on the test part at the ridge penalty chosen on validation, separately for each target, and then averaged over the targets. Random features carry no biology and mark the level a representation must exceed. A representation with no bar has an undefined correlation: one-hot features predict the training mean for a gene that was not in training. Panels to the right of Random hold out genes that are increasingly unlike the training genes or far from them on the chromosome.
+<img src={require("./linear_probes_pearson_morphology-campos2018.png").default} alt="Linear-probe test Pearson correlation for Cell shape and cell cycle (Campos 2018)" style={{display: "block", width: "100%", maxWidth: "180mm", maxHeight: "170mm", height: "auto", objectFit: "contain"}} />
+
+**Test Pearson correlation of each linear probe on Cell shape and cell cycle (Campos 2018).** The Pearson correlation is the linear correlation between predicted and measured values. Each panel is one split family and each bar is one gene representation. A bar is the mean over the seeds of that family (five seeds for random splits and three for every other family) and its whisker is the sample standard deviation over those seeds. The correlation is computed on the test part at the ridge penalty chosen on validation, separately for each target, and then averaged over the targets. Random features carry no biology and mark the level a representation must exceed. A representation with no bar has an undefined correlation: one-hot features predict the training mean for a gene that was not in training. Panels after Random hold out genes that are unlike the training genes in sequence or far from them on the chromosome.
 
 The table gives the same numbers: mean ± sample standard deviation of the test Pearson correlation over the seeds of each split family. The highest mean of each row is in bold. `undefined` marks a constant prediction.
 
@@ -185,6 +187,61 @@ The table gives the same numbers: mean ± sample standard deviation of the test 
 | Sequence identity 30 % | **0.035 ± 0.015** | undefined | -0.021 ± 0.020 | 0.003 ± 0.025 | 0.004 ± 0.030 | 0.006 ± 0.020 | 0.018 ± 0.029 | -0.018 ± 0.036 | -0.003 ± 0.010 | 0.014 ± 0.019 |
 | Sequence identity 50 % | 0.025 ± 0.003 | undefined | **0.047 ± 0.046** | 0.037 ± 0.027 | 0.014 ± 0.030 | 0.027 ± 0.006 | 0.044 ± 0.004 | 0.032 ± 0.027 | -0.008 ± 0.050 | 0.023 ± 0.046 |
 | Chromosome position | **0.023 ± 0.017** | undefined | -0.008 ± 0.046 | -0.011 ± 0.032 | 0.004 ± 0.039 | 0.001 ± 0.032 | -0.013 ± 0.030 | -0.025 ± 0.031 | 0.008 ± 0.027 | 0.018 ± 0.053 |
+
+### Spearman correlation
+
+<img src={require("./linear_probes_spearman_morphology-campos2018.png").default} alt="Linear-probe test Spearman correlation for Cell shape and cell cycle (Campos 2018)" style={{display: "block", width: "100%", maxWidth: "180mm", maxHeight: "170mm", height: "auto", objectFit: "contain"}} />
+
+**Test Spearman correlation of each linear probe on Cell shape and cell cycle (Campos 2018).** The Spearman correlation is the correlation between the ranks of predicted and measured values, which does not depend on the scale of the predictions and is not moved by a few extreme strains. Each panel is one split family and each bar is one gene representation. A bar is the mean over the seeds of that family (five seeds for random splits and three for every other family) and its whisker is the sample standard deviation over those seeds. The correlation is computed on the test part at the ridge penalty chosen on validation, separately for each target, and then averaged over the targets. Random features carry no biology and mark the level a representation must exceed. A representation with no bar has an undefined correlation: one-hot features predict the training mean for a gene that was not in training. Panels after Random hold out genes that are unlike the training genes in sequence or far from them on the chromosome.
+
+The table gives the same numbers: mean ± sample standard deviation of the test Spearman correlation over the seeds of each split family. The highest mean of each row is in bold. `undefined` marks a constant prediction.
+
+| Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Random | **0.023 ± 0.025** | undefined | 0.022 ± 0.020 | 0.015 ± 0.017 | 0.017 ± 0.028 | 0.006 ± 0.013 | 0.017 ± 0.015 | -0.003 ± 0.035 | -0.006 ± 0.010 | 0.015 ± 0.011 |
+| Sequence identity 30 % | **0.023 ± 0.009** | undefined | -0.023 ± 0.009 | -0.001 ± 0.019 | 0.015 ± 0.046 | 0.009 ± 0.026 | 0.014 ± 0.035 | -0.019 ± 0.039 | 0.004 ± 0.007 | 0.003 ± 0.006 |
+| Sequence identity 50 % | 0.013 ± 0.007 | undefined | **0.028 ± 0.031** | 0.009 ± 0.019 | 0.008 ± 0.027 | 0.014 ± 0.006 | 0.020 ± 0.004 | 0.008 ± 0.010 | -0.016 ± 0.043 | 0.012 ± 0.037 |
+| Chromosome position | 0.011 ± 0.006 | undefined | -0.001 ± 0.043 | -0.010 ± 0.034 | -0.003 ± 0.049 | 0.009 ± 0.034 | -0.007 ± 0.030 | -0.018 ± 0.052 | 0.007 ± 0.028 | **0.018 ± 0.059** |
+
+### R2, mean squared error and mean absolute error
+
+The other three standard metrics, as tables. Each cell is the mean ± sample standard deviation over the seeds of the split family, and the best mean of each row is in bold: the highest for R2 and the lowest for the two errors.
+
+<details>
+<summary>R2: one minus the squared error divided by the variance of the measured values; 0 is the score of predicting the test mean and it is negative for a worse model</summary>
+
+| Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Random | -0.005 ± 0.006 | -0.005 ± 0.005 | -0.011 ± 0.013 | -0.005 ± 0.005 | -0.004 ± 0.005 | -0.005 ± 0.005 | **-0.004 ± 0.005** | -0.006 ± 0.006 | -0.005 ± 0.005 | -0.005 ± 0.006 |
+| Sequence identity 30 % | **-0.003 ± 0.001** | -0.003 ± 0.001 | -0.005 ± 0.002 | -0.003 ± 0.002 | -0.011 ± 0.010 | -0.003 ± 0.000 | -0.003 ± 0.002 | -0.023 ± 0.021 | -0.003 ± 0.001 | -0.006 ± 0.004 |
+| Sequence identity 50 % | -0.004 ± 0.003 | -0.004 ± 0.003 | -0.004 ± 0.002 | -0.003 ± 0.003 | -0.006 ± 0.002 | -0.003 ± 0.004 | **-0.003 ± 0.004** | -0.003 ± 0.004 | -0.008 ± 0.006 | -0.014 ± 0.009 |
+| Chromosome position | **-0.007 ± 0.006** | -0.007 ± 0.006 | -0.007 ± 0.006 | -0.013 ± 0.010 | -0.008 ± 0.005 | -0.007 ± 0.005 | -0.010 ± 0.005 | -0.008 ± 0.006 | -0.007 ± 0.006 | -0.007 ± 0.006 |
+
+</details>
+
+<details>
+<summary>Mean squared error: the mean of the squared errors, in squared label units</summary>
+
+| Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Random | 0.042 ± 0.011 | 0.042 ± 0.011 | 0.042 ± 0.010 | 0.042 ± 0.010 | 0.042 ± 0.011 | 0.042 ± 0.011 | **0.042 ± 0.010** | 0.042 ± 0.010 | 0.042 ± 0.011 | 0.042 ± 0.010 |
+| Sequence identity 30 % | 0.038 ± 0.010 | 0.038 ± 0.010 | 0.038 ± 0.010 | 0.038 ± 0.010 | 0.038 ± 0.010 | 0.038 ± 0.010 | **0.038 ± 0.010** | 0.039 ± 0.010 | 0.038 ± 0.010 | 0.038 ± 0.010 |
+| Sequence identity 50 % | 0.046 ± 0.004 | 0.046 ± 0.004 | 0.046 ± 0.004 | 0.046 ± 0.004 | 0.047 ± 0.004 | 0.046 ± 0.004 | **0.046 ± 0.004** | 0.046 ± 0.004 | 0.047 ± 0.005 | 0.047 ± 0.005 |
+| Chromosome position | **0.034 ± 0.009** | 0.034 ± 0.009 | 0.034 ± 0.009 | 0.034 ± 0.009 | 0.034 ± 0.009 | 0.034 ± 0.009 | 0.034 ± 0.009 | 0.034 ± 0.009 | 0.034 ± 0.009 | 0.034 ± 0.009 |
+
+</details>
+
+<details>
+<summary>Mean absolute error: the mean of the absolute errors, in label units</summary>
+
+| Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Random | 0.093 ± 0.005 | 0.093 ± 0.005 | 0.093 ± 0.005 | 0.093 ± 0.005 | **0.093 ± 0.005** | 0.093 ± 0.005 | 0.093 ± 0.005 | 0.093 ± 0.005 | 0.093 ± 0.005 | 0.093 ± 0.005 |
+| Sequence identity 30 % | 0.090 ± 0.005 | **0.090 ± 0.005** | 0.090 ± 0.005 | 0.090 ± 0.005 | 0.091 ± 0.006 | 0.090 ± 0.005 | 0.090 ± 0.005 | 0.092 ± 0.006 | 0.090 ± 0.005 | 0.091 ± 0.006 |
+| Sequence identity 50 % | 0.094 ± 0.002 | **0.094 ± 0.002** | 0.094 ± 0.002 | 0.094 ± 0.002 | 0.094 ± 0.003 | 0.094 ± 0.002 | 0.094 ± 0.002 | 0.094 ± 0.002 | 0.095 ± 0.002 | 0.095 ± 0.003 |
+| Chromosome position | **0.087 ± 0.007** | 0.087 ± 0.007 | 0.087 ± 0.007 | 0.088 ± 0.007 | 0.087 ± 0.007 | 0.087 ± 0.007 | 0.087 ± 0.007 | 0.087 ± 0.007 | 0.087 ± 0.007 | 0.087 ± 0.007 |
+
+</details>
 
 ## Boards
 

@@ -82,3 +82,19 @@ Now: the `ORF` cell (stripped, upper-cased) is both names with no genome; a blan
 | L2 | `cv_nonnegative` | gate | ok | 244640 values checked |
 | L3 | `vocabulary_parity` | gate | ok | CALMORPH_LABELS(281) + CALMORPH_STATISTICS(220) == CALMORPH_PARAMETERS(501), disjoint=True |
 | L4 | `gene_containment_sgd` | report | ok | 1.000 of 1112 measured genes are S288C reference genes (>= 0.9) |
+
+## 2026.11.24 - One record per released wild-type replicate (#1178, part of #1171)
+
+Per-replicate policy (#1178): the 114 rows of `wt114data.tsv` used to be folded into one plain per-feature mean with no SD or n; each is now its own record. The heterozygote records do not change.
+
+**Replicate evidence** (mirror `ohnukiHighdimensionalSinglecellPhenotyping2018/`, `paper.md` sha256 `8c9d991f...`):
+
+- Heterozygotes, one culture each: "Three colonies from each strain were inoculated into $2 \mathrm { m L }$ of YPD liquid medium" (line 181), then "analyzed more than 200 cells for each strain" (line 57). `replicate_id = None`, records byte-identical.
+- Wild type: "The yeast diploid strain BY4743 was used as the wild type" (line 179); "a null distribution estimated from 114 replicated wild-type strains" (line 191); "114 wild-type replicates" (Fig. 1B caption, line 68); the SCMD2 datasheet page lists "114 replicated wild-type (BY4743)" (`data/summary_ess1112het.html` line 42, sha256 `fc384542...`). The paper never calls them biological or technical; each replicate is one pass of the per-strain culture protocol of line 181, so each is treated as one culture. The authors used them only as the null distribution ("To minimize the effects of confounding factors affecting microscopic output, we applied the linear model using dummy variables (S1 Table, and S1 Text)", line 193; S1 Text is not mirrored).
+- Genotype: empty, on the existing `BY4743` diploid reference genome. Withdrawn samples: none quoted (114 in the paper, 114 rows).
+
+**Loader:** records 0..1111 heterozygotes (unchanged), 1112..1225 wild-type replicates in release order, `replicate_id` = `NAME` (`WBD001N` ... `WBD138S`; suffix letters 43 K, 40 S, 25 M, 6 N, meaning unsourced). Reference unchanged, `replicate_id = None`. Blank or repeated `NAME` refuses; a non-numeric wild-type cell refuses (0 in the pinned file).
+
+**Counts and mean reproduction** (same script and output as the Ohya 2005 section): 1,112 -> 1,226 records; first 1,112 identical; the 114 wild-type records equal the released cells; mutant groups max abs diff 0.0; wild-type mean vs the old reference max abs 7.3e-12 (max rel 9.1e-16).
+
+**Verifier** (`run_morphology_ohnuki`, oracle 1,226 and 114) on `$DATA_ROOT/tmp/scratch/per-replicate-scmd-morphology/scmd_ohnuki2018`: PASS. L0 1226; L1 count 1226/1226, `record_uniqueness` 1226 keys, `replicate_records` 114 of 114 distinct, completeness and reference full; L2 344,506 base and 269,720 CV values; L3 parity; L4 `gene_containment_sgd` 1.000 of 1112 (report).

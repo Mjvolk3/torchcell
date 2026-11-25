@@ -16,8 +16,15 @@ Features (4 of the 501): base ``A101_A``, ``C103_A1B``; CV ``ACV103_A1B``, ``CCV
     YDR001C  7.0  8.0  (blank) 1.0     kept; the blank CV cell is key-absent
 
 ``wt114data.tsv`` (NAME + the same features): wt1 1.0 3.0 0.25 0.5; wt2 3.0 5.0 0.75 1.0;
-wt3 5.0 7.0 n.d. 1.5. Means: A101_A 3.0, C103_A1B 5.0, ACV103_A1B 0.5 (``n.d.`` coerced
-to NaN and skipped), CCV103_A1B 1.0.
+wt3 5.0 7.0 (blank) 1.5. Means: A101_A 3.0, C103_A1B 5.0, ACV103_A1B 0.5 (the blank cell
+skipped), CCV103_A1B 1.0.
+
+2026.11.24 (per-replicate policy, #1178 / #1171): each wild-type row is also its own
+record, after the four heterozygote records (indices 4, 5, 6): an EMPTY genotype on the
+BY4743 reference genome with ``replicate_id`` = its ``NAME``; wt3's blank ACV103_A1B is
+key-absent in its record. The heterozygote records and the shared reference are
+unchanged. A blank or repeated ``NAME`` and a non-numeric wild-type cell are refused
+before the store opens.
 
 2026.09.30 (Phase 16): the same matrices, plus
 
@@ -53,7 +60,9 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import re
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -99,7 +108,7 @@ _MUTANT_ROWS = [
 _WT_ROWS = [
     ["wt1", "1.0", "3.0", "0.25", "0.5"],
     ["wt2", "3.0", "5.0", "0.75", "1.0"],
-    ["wt3", "5.0", "7.0", "n.d.", "1.5"],
+    ["wt3", "5.0", "7.0", "", "1.5"],
 ]
 
 
@@ -185,13 +194,57 @@ def test_four_heterozygote_records_including_the_renamed_and_retired_names(
     perturbation with a KanMX marker on the diploid BY4743 reference; the reference
     phenotype is the WT mean.
     """
-    assert len(dataset) == 4
+    assert len(dataset) == 7
     assert dataset[0]["experiment"] == _experiment("YAL001C", [1.0, 2.0, 0.5, 0.25])
     assert dataset[1]["experiment"] == _experiment("YBR002C", [3.0, 4.0, 0.25, 0.5])
     assert dataset[2]["experiment"] == _experiment("YCR001W", [5.0, 6.0, 0.125, 0.75])
     assert dataset[0]["reference"] == _REFERENCE
     assert dataset[0]["publication"] == _PUBLICATION
     assert dataset[0]["reference"]["genome_reference"]["ploidy"] == "diploid"
+    assert all(
+        dataset[i]["experiment"]["phenotype"]["replicate_id"] is None for i in range(4)
+    )
+
+
+def _wt_experiment(name: str, values: list[float | None]) -> dict[str, Any]:
+    """One BY4743 wild-type replicate record: empty genotype, ``replicate_id`` = NAME."""
+    experiment = _experiment("YAL001C", values)
+    experiment["genotype"] = Genotype(perturbations=[]).model_dump()
+    experiment["phenotype"]["replicate_id"] = name
+    return CalMorphExperiment.model_validate(experiment).model_dump()
+
+
+def test_each_wild_type_replicate_is_an_empty_genotype_record(
+    dataset: m.ScmdOhnuki2018Dataset,
+) -> None:
+    """#1178: wt1, wt2 and wt3 are records 4, 5 and 6 in release order, each an empty
+    genotype on the BY4743 reference with ``replicate_id`` its NAME and its own released
+    values (wt3's blank ACV103_A1B key-absent); they carry the same summary reference
+    (``replicate_id`` None), and the per-trait mean over the three records is it.
+    """
+    expected: list[tuple[str, list[float | None]]] = [
+        ("wt1", [1.0, 3.0, 0.25, 0.5]),
+        ("wt2", [3.0, 5.0, 0.75, 1.0]),
+        ("wt3", [5.0, 7.0, None, 1.5]),
+    ]
+    traits: dict[str, list[float]] = {}
+    for offset, (name, values) in enumerate(expected):
+        record = dataset[4 + offset]
+        assert record["experiment"] == _wt_experiment(name, values)
+        assert record["experiment"]["genotype"]["perturbations"] == []
+        assert record["reference"] == _REFERENCE
+        assert record["publication"] == _PUBLICATION
+        phenotype = record["experiment"]["phenotype"]
+        for key, value in {
+            **phenotype["calmorph"],
+            **phenotype["calmorph_coefficient_of_variation"],
+        }.items():
+            traits.setdefault(key, []).append(value)
+    assert _REFERENCE["phenotype_reference"]["replicate_id"] is None
+    assert {k: sum(v) / len(v) for k, v in traits.items()} == {
+        **_WT_PHENOTYPE.calmorph,
+        **(_WT_PHENOTYPE.calmorph_coefficient_of_variation or {}),
+    }
 
 
 def test_missing_calmorph_value_is_key_absent_never_zero(
@@ -210,8 +263,8 @@ def test_missing_calmorph_value_is_key_absent_never_zero(
 
 
 def test_side_files(dataset: m.ScmdOhnuki2018Dataset) -> None:
-    """``data.csv`` keeps the blank cell blank; one reference covers all four records;
-    the gene set is the four released names.
+    """``data.csv`` keeps the blank cell blank; one reference covers all seven records;
+    the gene set is the four released names (a wild-type record perturbs no gene).
     """
     preprocess = Path(dataset.root) / "preprocess"
     assert (preprocess / "data.csv").read_text() == (
@@ -229,7 +282,7 @@ def test_side_files(dataset: m.ScmdOhnuki2018Dataset) -> None:
         "YDR001C",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [[0, 1, 2, 3]]
+    assert [entry["member_indices"] for entry in index] == [list(range(7))]
     assert index[0]["reference"]["phenotype_reference"] == _WT_PHENOTYPE.model_dump()
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert manifest["dataset_name"] == "scmd_ohnuki2018"
@@ -276,7 +329,7 @@ def test_items_retype_through_the_calmorph_classes(
     136 to 144), dumping back to exactly the stored dictionaries, copy-number
     perturbation and diploid reference included.
     """
-    for index in range(4):
+    for index in range(7):
         item = dataset[index]
         typed = dataset.transform_item(item)
         assert type(typed["experiment"]) is CalMorphExperiment
@@ -307,11 +360,12 @@ def test_generic_hooks_are_inert_and_create_experiment_raises(
 def test_build_logs_the_strain_count_then_processing(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """All four rows are kept, so the count line says 4."""
+    """All four rows are kept, so the count line says 4; the three WT rows follow."""
     with caplog.at_level(logging.INFO, logger=m.log.name):
         m.ScmdOhnuki2018Dataset(root=str(_root(tmp_path)))
     assert [r.getMessage() for r in caplog.records if r.name == m.log.name] == [
         "Ohnuki 2018: 4 essential-gene heterozygote strains (0 dropped for naming)",
+        "Ohnuki 2018: 3 wild-type replicates, one record each",
         "Processing Ohnuki 2018 CalMorph morphology data...",
     ]
 
@@ -357,6 +411,7 @@ def test_blank_orf_rows_are_dropped_with_a_counted_warning(
             "INFO",
             "Ohnuki 2018: 2 essential-gene heterozygote strains (0 dropped for naming)",
         ),
+        ("INFO", "Ohnuki 2018: 2 wild-type replicates, one record each"),
         ("INFO", "Processing Ohnuki 2018 CalMorph morphology data..."),
     ]
     reference = CalMorphExperimentReference(
@@ -374,7 +429,7 @@ def test_blank_orf_rows_are_dropped_with_a_counted_warning(
             calmorph_coefficient_of_variation={"ACV103_A1B": 0.4},
         ),
     ).model_dump()
-    assert len(dataset) == 2
+    assert len(dataset) == 4
     for index, (orf, base, cv) in enumerate(
         (("YAL001C", 1.0, 0.1), ("YDR001C", 2.0, 0.2))
     ):
@@ -410,11 +465,12 @@ def test_two_spellings_of_one_strain_are_refused_before_the_store_opens(
         assert not (root / "processed" / "lmdb").exists()
 
 
-def test_a_wt_feature_with_no_numeric_cell_refuses_the_reference(
+def test_a_wt_feature_with_every_cell_blank_refuses_the_reference(
     tmp_path: Path,
 ) -> None:
-    """Every WT cell of ACV103_A1B is "n.d.", so its coerced mean is NaN and the reference
-    ``CalMorphPhenotype`` refuses it by name. Contract (issue #537): every record is
+    """Every WT cell of ACV103_A1B is blank, so its mean is NaN and the reference
+    ``CalMorphPhenotype`` refuses it by name (each WT record alone would store the
+    other traits with that key absent). Contract (issue #537): every record is
     built before the store is opened, so the refusal leaves no ``processed/lmdb`` and a
     retry on the same root refuses again instead of serving 0 records; ``data.csv`` is
     written only after every record is built, so it is absent too.
@@ -429,7 +485,7 @@ def test_a_wt_feature_with_no_numeric_cell_refuses_the_reference(
     _write_tsv(
         root / "raw" / "wt114data.tsv",
         ["NAME", "A101_A", "ACV103_A1B"],
-        [["w1", "1.0", "n.d."], ["w2", "3.0", "n.d."]],
+        [["w1", "1.0", ""], ["w2", "3.0", ""]],
     )
     for _ in range(2):
         with pytest.raises(pydantic.ValidationError) as info:
@@ -508,8 +564,143 @@ def test_download_copies_both_pinned_matrices_then_reverifies_in_place(
     dataset = m.ScmdOhnuki2018Dataset(root=str(tmp_path / "fresh"))
     raw = tmp_path / "fresh" / "raw"
     assert {name: (raw / name).read_bytes() for name in content} == content
-    assert len(dataset) == 4
+    assert len(dataset) == 7
     for name in content:
         (mirror / name).unlink()
     dataset.download()
     assert {name: (raw / name).read_bytes() for name in content} == content
+
+
+# --------------------------------------------------------------------------- #
+# 2026.11.24: one record per released wild-type replicate (#1178 / #1171)
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize(
+    ("wt_rows", "message"),
+    [
+        (
+            [["w1", "1.0", "0.3"], ["", "2.0", "0.3"]],
+            "Ohnuki 2018: 1 wild-type row(s) with a blank NAME; the NAME is the "
+            "replicate's replicate_id",
+        ),
+        (
+            [["w1", "1.0", "0.3"], ["w1", "2.0", "0.3"]],
+            "Ohnuki 2018: wild-type replicate NAME(s) listed more than once: "
+            "['w1', 'w1']",
+        ),
+    ],
+)
+def test_a_blank_or_repeated_wild_type_name_is_refused_before_the_store_opens(
+    tmp_path: Path, wt_rows: list[list[str]], message: str
+) -> None:
+    """The NAME is the replicate's ``replicate_id``, so a blank or repeated one refuses
+    (0 blank and 0 repeated among the 114 pinned rows) and nothing is written.
+    """
+    root = _edge_root(tmp_path, [["YAL001C", "1.0", "0.1"]])
+    _write_tsv(
+        root / "raw" / "wt114data.tsv", ["NAME", "A101_A", "ACV103_A1B"], wt_rows
+    )
+    with pytest.raises(RuntimeError) as info:
+        m.ScmdOhnuki2018Dataset(root=str(root))
+    assert str(info.value) == message
+    assert not (root / "processed" / "lmdb").exists()
+    assert not (root / "preprocess" / "data.csv").exists()
+
+
+def test_a_non_numeric_wild_type_cell_refuses_before_the_store_opens(
+    tmp_path: Path,
+) -> None:
+    """A wild-type cell ``n.d.`` is no released value for that replicate's record, so it
+    refuses (the earlier per-strain build coerced it to NaN inside the reference mean;
+    the pinned matrix has 0 such cells).
+    """
+    root = _edge_root(tmp_path, [["YAL001C", "1.0", "0.1"]])
+    _write_tsv(
+        root / "raw" / "wt114data.tsv",
+        ["NAME", "A101_A", "ACV103_A1B"],
+        [["w1", "1.0", "0.3"], ["w2", "3.0", "n.d."]],
+    )
+    with pytest.raises(
+        ValueError, match=r'^Unable to parse string "n.d." at position 1$'
+    ):
+        m.ScmdOhnuki2018Dataset(root=str(root))
+    assert not (root / "processed" / "lmdb").exists()
+
+
+_MIRROR_DATA = Path(os.environ.get("DATA_ROOT", "/nonexistent"), m._MIRROR_DIR)
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not (_MIRROR_DATA / "wt114data.tsv").exists(),
+    reason=f"requires the Ohnuki 2018 mirror matrices under {_MIRROR_DATA}",
+)
+def test_the_pinned_release_holds_1112_heterozygotes_and_114_named_wild_types() -> None:
+    """The pinned matrices hold 1112 heterozygote rows and 114 BY4743 wild-type rows
+    whose 114 NAMEs are distinct ``WBD<nnn><letter>`` labels (43 K, 40 S, 25 M, 6 N), 0
+    blank cells in either.
+    """
+    for name, spec in m._RAW_FILES.items():
+        digest = hashlib.sha256((_MIRROR_DATA / name).read_bytes()).hexdigest()
+        assert digest == spec["sha256"]
+    mutant = pd.read_csv(_MIRROR_DATA / "ess1112data.tsv", sep="\t")
+    wt = pd.read_csv(_MIRROR_DATA / "wt114data.tsv", sep="\t")
+    assert mutant.shape == (1112, 502)
+    assert wt.shape == (114, 502)
+    assert wt["NAME"].is_unique
+    assert wt["NAME"].str.fullmatch(r"WBD\d{3}[KSMN]").all()
+    assert wt["NAME"].str[-1].value_counts().to_dict() == {
+        "K": 43,
+        "S": 40,
+        "M": 25,
+        "N": 6,
+    }
+    assert int(wt.isna().sum().sum()) == 0
+    assert int(mutant.isna().sum().sum()) == 0
+
+
+@pytest.mark.slow
+@pytest.mark.data
+@pytest.mark.skipif(
+    not (_MIRROR_DATA / "wt114data.tsv").exists(),
+    reason=f"requires the Ohnuki 2018 mirror matrices under {_MIRROR_DATA}",
+)
+def test_the_full_build_stores_1226_records_and_the_wild_type_mean_is_the_reference(
+    tmp_path: Path,
+) -> None:
+    """The pinned release builds 1226 records: 1112 heterozygotes (``replicate_id``
+    None) then 114 empty-genotype wild-type replicates with their NAME as
+    ``replicate_id``; the per-trait mean over the 114 equals the shared reference to
+    1e-12 relative (summation order only).
+    """
+    root = tmp_path / "scmd_ohnuki2018"
+    (root / "raw").mkdir(parents=True)
+    for name in m._RAW_FILES:
+        shutil.copyfile(_MIRROR_DATA / name, root / "raw" / name)
+    built = m.ScmdOhnuki2018Dataset(root=str(root))
+    assert len(built) == 1226
+    names = pd.read_csv(root / "raw" / "wt114data.tsv", sep="\t")["NAME"].tolist()
+    assert all(
+        built[i]["experiment"]["phenotype"]["replicate_id"] is None for i in range(1112)
+    )
+    sums: dict[str, float] = {}
+    for offset in range(114):
+        experiment = built[1112 + offset]["experiment"]
+        assert experiment["genotype"]["perturbations"] == []
+        assert experiment["phenotype"]["replicate_id"] == names[offset]
+        for key, value in {
+            **experiment["phenotype"]["calmorph"],
+            **experiment["phenotype"]["calmorph_coefficient_of_variation"],
+        }.items():
+            sums[key] = sums.get(key, 0.0) + value
+    reference = built[0]["reference"]["phenotype_reference"]
+    assert reference["replicate_id"] is None
+    summary = {
+        **reference["calmorph"],
+        **reference["calmorph_coefficient_of_variation"],
+    }
+    assert set(sums) == set(summary)
+    for key, value in summary.items():
+        assert sums[key] / 114 == pytest.approx(value, rel=1e-12)
+    built.close_lmdb()

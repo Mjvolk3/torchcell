@@ -9,7 +9,7 @@ dicts from ``model_dump()``; an optional sibling ``processed/interned`` env hold
 content-addressed sub-objects that the record points at with ``{"$ref": key}``. The data
 root is ``tmp_path``; a runner's dataset registry is monkeypatched down to the datasets
 built here (as ``scripts/verify_datasets.py`` narrows it), and the count oracles that are
-module constants (Ohya 4718, Ohnuki 2018 1112, Ohnuki 2022 1982) are monkeypatched to
+module constants (Ohya 4840, Ohnuki 2018 1226, Ohnuki 2022 2731) are monkeypatched to
 the built record count where a pass is wanted. ``_genome`` and ``_sgd_gene_set`` are
 stubbed; nothing here loads the genome or reads the real data root.
 
@@ -145,6 +145,8 @@ EXPRESSION_NAMES = [
 MORPHOLOGY_NAMES = [
     "structural",
     "count",
+    "record_uniqueness",
+    "replicate_records",
     "calmorph_completeness",
     "reference_populated",
     "value_fidelity",
@@ -1164,6 +1166,7 @@ def test_run_morphology_adds_containment_for_each_built_deletion_source(
     kemmeren_root = tmp_path / runners.DELETION_GENE_SOURCES["microarray_kemmeren2014"]
     _write_lmdb(kemmeren_root, [_expression_record(g, GENES) for g in GENES[:2]])
     monkeypatch.setattr(runners, "OHYA_EXPECTED_COUNT", 3)
+    monkeypatch.setattr(runners, "OHYA_EXPECTED_REPLICATE_RECORDS", 0)
 
     assert runners.run_morphology(str(tmp_path)) is True
     report = _read_report(tmp_path / runners.OHYA_REPORT_ROOT)
@@ -1191,9 +1194,12 @@ def test_run_morphology_adds_containment_for_each_built_deletion_source(
     )
 
 
-def test_run_morphology_pins_the_4718_mutant_oracle(
+def test_run_morphology_pins_the_4840_record_and_122_replicate_oracles(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """4718 mutants + 122 wild-type samples (#1178): three synthetic mutant records
+    with no replicate_id fail both oracles.
+    """
     _write_lmdb(
         tmp_path / runners.OHYA_SOURCE_ROOT, [_morphology_record(g) for g in GENES]
     )
@@ -1202,7 +1208,10 @@ def test_run_morphology_pins_the_4718_mutant_oracle(
     assert _names(report) == MORPHOLOGY_NAMES  # no deletion source built -> no L4
     count = _result(report, "count")
     assert count["passed"] is False
-    assert count["details"] == {"observed": 3, "expected": 4718}
+    assert count["details"] == {"observed": 3, "expected": 4840}
+    replicates = _result(report, "replicate_records")
+    assert replicates["passed"] is False
+    assert replicates["details"] == {"observed": 0, "expected": 122, "n_distinct": 0}
     assert capsys.readouterr().out.startswith("scmd_ohya2005: FAIL\n")
 
 
@@ -1214,6 +1223,7 @@ def test_run_morphology_ohnuki_uses_sgd_containment(
     )
     sgd_calls = _stub_sgd(monkeypatch, {"YAL001C", "YBR085W"})
     monkeypatch.setattr(runners, "OHNUKI_EXPECTED_COUNT", 3)
+    monkeypatch.setattr(runners, "OHNUKI_EXPECTED_REPLICATE_RECORDS", 0)
 
     # genome-reference rows are reported, never gated (owner, 2026-10-12)
     assert runners.run_morphology_ohnuki(str(tmp_path)) is True
@@ -1225,7 +1235,7 @@ def test_run_morphology_ohnuki_uses_sgd_containment(
     assert _result(report, "gene_containment_sgd") == expected.model_dump(mode="json")
     assert _result(report, "gene_containment_sgd")["passed"] is False
     assert _result(report, "gene_containment_sgd")["finding_class"] == "report"
-    assert [r["passed"] for r in report["results"][:-1]] == [True] * 7
+    assert [r["passed"] for r in report["results"][:-1]] == [True] * 9
 
 
 def test_run_ohnuki_morphology_adds_ohya_containment_only_when_ohya_is_built(
@@ -1233,6 +1243,7 @@ def test_run_ohnuki_morphology_adds_ohya_containment_only_when_ohya_is_built(
 ) -> None:
     monkeypatch.setattr(runners, "OHNUKI2022_EXPECTED_COUNT", 2)
     monkeypatch.setattr(runners, "OHNUKI2022_EXPECTED_INCOMPLETE", 0)
+    monkeypatch.setattr(runners, "OHNUKI2022_EXPECTED_REPLICATE_RECORDS", 0)
     _write_lmdb(
         tmp_path / runners.OHNUKI2022_SOURCE_ROOT,
         [_morphology_record(g) for g in ["YAL001C", "YDR001C"]],
@@ -2136,8 +2147,14 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "sm_microarray_sameith2015": 144,
         "microarray_kemmeren2014": 3061,
     }
-    assert (runners.OHYA_EXPECTED_COUNT, runners.OHNUKI_EXPECTED_COUNT) == (4718, 1112)
-    assert runners.OHNUKI2022_EXPECTED_COUNT == 1982
+    # mutants + released wild-type samples, one record each (#1178)
+    assert (runners.OHYA_EXPECTED_COUNT, runners.OHNUKI_EXPECTED_COUNT) == (4840, 1226)
+    assert runners.OHNUKI2022_EXPECTED_COUNT == 2731
+    assert (
+        runners.OHYA_EXPECTED_REPLICATE_RECORDS,
+        runners.OHNUKI_EXPECTED_REPLICATE_RECORDS,
+        runners.OHNUKI2022_EXPECTED_REPLICATE_RECORDS,
+    ) == (122, 114, 749)
     assert runners.OHNUKI2022_EXPECTED_INCOMPLETE == 1
     assert _oracles(runners.VISUAL_SCORE_DATASETS) == {"carotenoid_ozaydin2013": None}
     assert _oracles(runners.METABOLITE_DATASETS) == {

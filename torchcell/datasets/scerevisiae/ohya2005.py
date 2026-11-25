@@ -11,9 +11,37 @@ drug-hypersensitive quadruple-deletion counterpart is
 
 Values are RAW per-strain CalMorph population averages, one 501-length vector per strain:
 281 base parameters (``CALMORPH_LABELS``: 220 mean + 61 ratio) + 220 coefficient-of-
-variation / noise parameters (``CALMORPH_STATISTICS``, prefixed CCV/ACV/DCV). The
-122-row wildtype matrix (122 independent ``his3`` WT replicate averages) is aggregated
-per-feature into a single mean-WT reference phenotype.
+variation / noise parameters (``CALMORPH_STATISTICS``, prefixed CCV/ACV/DCV).
+
+ONE RECORD PER RELEASED SAMPLE (per-replicate policy, #1178 / #1171; 2026.11.24). The
+store holds the 4718 mutant rows (indices 0..4717, unchanged) and then the 122 wild-type
+rows of ``wt122data.tsv`` (indices 4718..4839), 4840 records:
+
+- A mutant row is ONE culture's CalMorph population average, not a mean over cultures:
+  "Statistical tests are not applicable to our data set because we have only one set of
+  data for each deletion strain" (paper.md line 25). Mutant records carry
+  ``replicate_id = None`` and are byte-identical to the per-strain build.
+- Each wild-type row is ONE independent wild-type sample: "Data sets were obtained from
+  126 independent wild-type samples and compared with all data sets from the 4,718
+  mutant strains" (paper.md line 28, Fig. 1B). Each is its own record, with
+  ``replicate_id`` = the row's released ``NAME`` verbatim (``04his3-1`` ... ``his3old-5``,
+  0 duplicates).
+- The wild type is the collection's ``his3`` deletion strain, so a wild-type record's
+  genotype is ``KanMxDeletionPerturbation(YOR202W)``: every ``NAME`` is a ``his3`` label,
+  the Supporting Text calls the control "the control cells (his3 deletion strain)"
+  (si/si12.md line 59), and the same lab's later CalMorph platform names its wild type
+  "his3Δ (BY4741; MATa his3Δ1 leu2Δ0 met15Δ0 ura3Δ0 YOR202wΔ:: kanMX4)" from EUROSCARF
+  (Ohnuki 2022 paper.md line 128). The mutant matrix also carries one ``yor202w`` row; it
+  stays its own record (``replicate_id = None``).
+- ``phenotype_reference`` stays the per-feature mean over the 122 wild-type rows, a
+  summary with ``replicate_id = None``; the 122 samples it summarizes are records too.
+- Not stored: the paper imaged 126 wild-type samples but ``wt122data.tsv`` has 122 rows.
+  The SSBD repository ssbd-repos-000349 holds per-cell data for 126 wild-type
+  directories, and ``04his3-11``, ``04his3-20``, ``04his3-26`` and ``04his3-59`` have no
+  averaged row in the release. No averaged value exists for them to store (deriving one
+  from per-cell files is a recomputation, not a released value); hypothesis (untested):
+  they were removed by the quality control of the Suzuki 2018 re-analysis the SCMD2
+  datasheet page mentions.
 
 DATA PROVENANCE -- the 501-trait CalMorph matrices are Ohya 2005's OWN published data,
 distributed via the SCMD (Saccharomyces cerevisiae Morphological Database) portal. The
@@ -26,8 +54,8 @@ SOURCING / SHA256 PINS (loader reads the library-mirror ``data/`` files and veri
 hashes, never the live URL):
 - ``mt4718data.tsv`` (mutant matrix, 4718 strains x 501 features; ID column ``ORF``)
   sha256 ``c4ba1e84b4ea6273f0162ef9230e15634933c8c0c4910dd7546a21c6293e0fc0``.
-- ``wt122data.tsv`` (122 WT ``his3`` replicate averages; ID column ``NAME``; feature
-  columns byte-compatible with the mutant file) sha256
+- ``wt122data.tsv`` (122 WT ``his3`` sample averages, one record each; ID column
+  ``NAME``; feature columns byte-compatible with the mutant file) sha256
   ``ab2c31b5150b2a33c15b5d22f1bef8687719975223559a740ea233c1f67b27c3``.
 - Historical retrieval URLs (SCMD portal): ``http://www.yeast.ib.k.u-tokyo.ac.jp/SCMD/
   download.php?path=mt4718data.tsv`` and ``...=wt122data.tsv`` (Box mirror fallbacks in
@@ -51,7 +79,7 @@ annotation renames (17 strains, e.g. yal043c-a, which R64-4-1 lists as YAL042C-A
 merges, or has retired keeps its released name and its record; the previous build
 remapped the 17 to the current id. A strain with a blank CalMorph cell keeps every
 measured trait and the blank one is key-absent, never imputed (0 of 4718 rows). Net built
-records: 4718, 0 dropped.
+records: 4718 mutants + 122 wild-type samples = 4840, 0 dropped.
 """
 
 # torchcell/datasets/scerevisiae/ohya2005
@@ -162,6 +190,10 @@ the Ohya-lab recipe Ohnuki 2018 attributes to it. Same ``media_identity`` as
 # TCV parameter exists, #494); everything else is a base parameter.
 _CV_PREFIXES = ("CCV", "ACV", "DCV")
 
+# The wild type is the deletion collection's his3 strain (YOR202W::kanMX4; sourced in the
+# module docstring), so every ``wt122data.tsv`` row is a record of this deletion.
+_WT_DELETED_ORF = "YOR202W"
+
 # sha256-pinned raw matrices in the library mirror ``data/`` directory.
 _RAW_FILES: dict[str, dict[str, str]] = {
     "mt4718data.tsv": {
@@ -251,17 +283,26 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         df_wt = pd.read_csv(osp.join(self.raw_dir, "wt122data.tsv"), sep="\t")
 
         df = self.preprocess_calmorph_data(df_mutant)
+        df_wt = self.preprocess_wt_data(df_wt)
 
-        # Aggregate the 122 WT replicate averages into a single mean-WT reference.
+        # The reference is a summary: the per-feature mean over the 122 WT samples, each
+        # of which is also a record (written after the mutants, below).
         self.wt_reference_phenotype = self._calculate_wt_reference(df_wt)
 
         log.info("Processing Ohya 2005 CalMorph morphology data...")
 
+        # Mutant records first (their order and indices are unchanged from the
+        # per-strain build), then one record per released wild-type sample.
         records = [
             self.create_calmorph_experiment(
                 self.name, row, wt_reference_phenotype=self.wt_reference_phenotype
             )
             for _, row in tqdm(df.iterrows(), total=df.shape[0])
+        ] + [
+            self.create_wt_calmorph_experiment(
+                self.name, row, wt_reference_phenotype=self.wt_reference_phenotype
+            )
+            for _, row in df_wt.iterrows()
         ]
         os.makedirs(self.preprocess_dir, exist_ok=True)
         df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
@@ -338,13 +379,35 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         )
         return df_mutant
 
+    def preprocess_wt_data(self, df_wt: pd.DataFrame) -> pd.DataFrame:
+        """Check the WT matrix names every sample once; each row becomes one record.
+
+        ``NAME`` is the sample's released label and its ``replicate_id``, so a blank
+        or repeated ``NAME`` is refused (0 blank, 0 repeated among the 122 pinned rows).
+        """
+        names = df_wt["NAME"].astype("string").str.strip()
+        blank = names.isna() | (names == "")
+        if blank.any():
+            raise RuntimeError(
+                f"Ohya 2005: {int(blank.sum())} wild-type row(s) with a blank NAME; "
+                "the NAME is the sample's replicate_id"
+            )
+        repeated = names[names.duplicated(keep=False)].tolist()
+        if repeated:
+            raise RuntimeError(
+                f"Ohya 2005: wild-type sample NAME(s) listed more than once: {repeated}"
+            )
+        log.info("Ohya 2005: %d wild-type samples, one record each", len(df_wt))
+        return df_wt.reset_index(drop=True)
+
     def _calculate_wt_reference(self, df_wt: pd.DataFrame) -> dict[str, Any]:
-        """Aggregate the WT replicate averages into a per-feature mean reference."""
+        """Summarize the WT samples as a per-feature mean (blank cells skipped)."""
         info_columns = [c for c in ("NAME", "ORF") if c in df_wt.columns]
         morphology_columns = [c for c in df_wt.columns if c not in info_columns]
         wt_means: dict[str, Any] = {}
         for col in morphology_columns:
-            numeric_values = pd.to_numeric(df_wt[col], errors="coerce")
+            # A non-numeric cell refuses here, as it does in the sample's own record.
+            numeric_values = pd.to_numeric(df_wt[col], errors="raise")
             wt_means[col] = numeric_values.mean()
         return wt_means
 
@@ -355,36 +418,14 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         )
 
     @staticmethod
-    def create_calmorph_experiment(
-        dataset_name: str, row: pd.Series, wt_reference_phenotype: dict[str, Any]
-    ) -> tuple[CalMorphExperiment, CalMorphExperimentReference, Publication]:
-        """Build a CalMorph experiment and reference pair from one data row."""
-        # Genome reference - haploid BY4741 (MATa his3D1 leu2D0 lys2D0 ura3D0).
-        genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae",
-            strain="BY4741",
-            assembly_set=SGD_S288C_R64,
-            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
-        )
+    def _split_traits(
+        row: pd.Series, info_columns: set[str], replicate_id: str | None
+    ) -> CalMorphPhenotype:
+        """Split one released row into base and CV traits; a blank cell is key-absent.
 
-        # Create genotype for the non-essential single-gene deletion mutant (kanMX4).
-        genotype = Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=row["systematic_gene_name"],
-                    perturbed_gene_name=row["perturbed_gene_name"],
-                )
-            ]
-        )
-
-        # Environment -- Ohya 2005 Methods: YPD, logarithmic-phase (liquid) culture.
-        # Temperature 25 C from the Ohya-lab CalMorph standard (see module docstring).
-        environment = Environment(media=OHYA_YPD, temperature=Temperature(value=25))
-        environment_reference = environment.model_copy()
-
-        # Extract morphology measurements and separate base from CV parameters. A blank
-        # cell is key-absent (never imputed).
-        info_columns = {"ORF", "systematic_gene_name", "perturbed_gene_name"}
+        ``replicate_id`` is the released sample label of a wild-type row and None on a
+        mutant row (one culture per strain, the per-strain build's record).
+        """
         base_measurements: dict[str, float] = {}
         cv_measurements: dict[str, float] = {}
         for col in row.index:
@@ -395,16 +436,37 @@ class ScmdOhya2005Dataset(ExperimentDataset):
                 cv_measurements[col] = float_value
             else:
                 base_measurements[col] = float_value
-
-        # Create phenotype with separated base and CV measurements
-        phenotype = CalMorphPhenotype(
+        return CalMorphPhenotype(
             calmorph=base_measurements,
             calmorph_coefficient_of_variation=(
                 cv_measurements if cv_measurements else None
             ),
+            replicate_id=replicate_id,
         )
 
-        # Reference phenotype from the aggregated WT, split the same way.
+    @staticmethod
+    def _build_record(
+        dataset_name: str,
+        genotype: Genotype,
+        phenotype: CalMorphPhenotype,
+        wt_reference_phenotype: dict[str, Any],
+    ) -> tuple[CalMorphExperiment, CalMorphExperimentReference, Publication]:
+        """Pair one experiment with the shared WT-summary reference and publication."""
+        # Genome reference - haploid BY4741 (MATa his3D1 leu2D0 met15D0 ura3D0).
+        genome_reference = ReferenceGenome(
+            species="Saccharomyces cerevisiae",
+            strain="BY4741",
+            assembly_set=SGD_S288C_R64,
+            assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
+        )
+
+        # Environment -- Ohya 2005 Methods: YPD, logarithmic-phase (liquid) culture.
+        # Temperature 25 C from the Ohya-lab CalMorph standard (see module docstring).
+        environment = Environment(media=OHYA_YPD, temperature=Temperature(value=25))
+        environment_reference = environment.model_copy()
+
+        # Reference phenotype from the WT summary, split the same way; it states an
+        # aggregate over the WT samples, so it carries no replicate_id.
         wt_base = {
             k: v
             for k, v in wt_reference_phenotype.items()
@@ -419,15 +481,12 @@ class ScmdOhya2005Dataset(ExperimentDataset):
             calmorph=wt_base, calmorph_coefficient_of_variation=wt_cv if wt_cv else None
         )
 
-        # Create reference
         reference = CalMorphExperimentReference(
             dataset_name=dataset_name,
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
         )
-
-        # Create experiment
         experiment = CalMorphExperiment(
             dataset_name=dataset_name,
             genotype=genotype,
@@ -444,6 +503,49 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         )
 
         return experiment, reference, publication
+
+    @staticmethod
+    def create_calmorph_experiment(
+        dataset_name: str, row: pd.Series, wt_reference_phenotype: dict[str, Any]
+    ) -> tuple[CalMorphExperiment, CalMorphExperimentReference, Publication]:
+        """Build the record of one mutant row (one culture; ``replicate_id`` None)."""
+        # Non-essential single-gene deletion mutant (kanMX4).
+        genotype = Genotype(
+            perturbations=[
+                KanMxDeletionPerturbation(
+                    systematic_gene_name=row["systematic_gene_name"],
+                    perturbed_gene_name=row["perturbed_gene_name"],
+                )
+            ]
+        )
+        phenotype = ScmdOhya2005Dataset._split_traits(
+            row, {"ORF", "systematic_gene_name", "perturbed_gene_name"}, None
+        )
+        return ScmdOhya2005Dataset._build_record(
+            dataset_name, genotype, phenotype, wt_reference_phenotype
+        )
+
+    @staticmethod
+    def create_wt_calmorph_experiment(
+        dataset_name: str, row: pd.Series, wt_reference_phenotype: dict[str, Any]
+    ) -> tuple[CalMorphExperiment, CalMorphExperimentReference, Publication]:
+        """Build the record of one released wild-type sample.
+
+        The genotype is the collection's his3 deletion strain (``YOR202W``, kanMX4) and
+        ``replicate_id`` is the row's released ``NAME`` verbatim.
+        """
+        genotype = Genotype(
+            perturbations=[
+                KanMxDeletionPerturbation(
+                    systematic_gene_name=_WT_DELETED_ORF,
+                    perturbed_gene_name=_WT_DELETED_ORF,
+                )
+            ]
+        )
+        phenotype = ScmdOhya2005Dataset._split_traits(row, {"NAME"}, str(row["NAME"]))
+        return ScmdOhya2005Dataset._build_record(
+            dataset_name, genotype, phenotype, wt_reference_phenotype
+        )
 
 
 if __name__ == "__main__":

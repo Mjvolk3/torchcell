@@ -21,18 +21,27 @@ guarantees those. This verifier adds the checks the schema does NOT encode:
 4. L3 `vocabulary_parity` -- the label vocabulary is internally consistent
    (281 + 220 == 501 == `CALMORPH_PARAMETERS`, base and CV disjoint), i.e. the
    convention the records adhere to holds.
+5. L1 `record_uniqueness` -- one record per (genotype, environment, replicate_id), so
+   a strain stored twice is caught while the replicate records of one strain stay
+   distinct by their ``replicate_id``.
+6. L1 `replicate_records` -- the number of records carrying a ``replicate_id`` (the
+   released wild-type samples) is the count the loader declares, and their ids are
+   distinct.
 
 L4 (cross-source perturbed-gene overlap with the deletion expression datasets) is
 asserted by the caller across datasets, not here.
 
-NOTE on the WT: the 122 wildtype profiles are AGGREGATED into each record's reference
-phenotype (a single mean-WT baseline, itself carrying the full 281+220 vocabulary),
-not stored as 122 separate records. So the record-count oracle is the mutant count
-(4718; all strains retained, ORF names reconciled to R64); the WT is verified as a populated reference, not counted from records.
+NOTE on the WT (per-replicate policy, #1178 / #1171; 2026.11.24): every released
+wild-type sample is its own record carrying its ``replicate_id`` (Ohya 2005 122,
+Ohnuki 2018 114, Ohnuki 2022 749), and each record's reference phenotype is a summary
+(the per-feature mean over those samples, ``replicate_id`` None) carrying the full
+281+220 vocabulary. So the record-count oracle is mutants + wild-type samples (Ohya
+4718 + 122 = 4840), and ``replicate_records`` counts the wild-type part.
 """
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable, Sequence
 from typing import Any
 
@@ -116,8 +125,8 @@ def _l1_calmorph_completeness(
 def _l1_reference_populated(records: Sequence[Record]) -> LevelResult:
     """L1: every record's WT reference phenotype carries the full vocabulary.
 
-    The 122 WT profiles are aggregated into this reference; verifying it is populated
-    is how the WT is accounted for (the 122 count is not record-recoverable).
+    The reference summarizes the released WT samples (each of which is also a record,
+    counted by ``replicate_records``); every record must carry it fully populated.
     """
     bad: list[dict[str, Any]] = []
     for i, rec in enumerate(records):
@@ -138,6 +147,75 @@ def _l1_reference_populated(records: Sequence[Record]) -> LevelResult:
             else f"{len(bad)}/{len(records)} records have an under-populated WT reference"
         ),
         details={"n_bad": len(bad), "bad": bad[:20]},
+    )
+
+
+def _l1_record_uniqueness(records: Sequence[Record]) -> LevelResult:
+    """L1: one record per (genotype, environment, replicate_id).
+
+    The genotype and environment are their whole stored objects, so two strains or two
+    conditions are never merged by a key that forgot a field. ``replicate_id`` joins the
+    key (read with ``.get``, empty when unset), so the wild-type sample records of one
+    strain stay distinct and a mutant stored once per strain keys as before.
+    """
+    seen: dict[tuple[str, str, str], int] = {}
+    for rec in records:
+        experiment = rec["experiment"]
+        replicate_id = experiment["phenotype"].get("replicate_id")
+        key = (
+            json.dumps(experiment["genotype"], sort_keys=True),
+            json.dumps(experiment["environment"], sort_keys=True),
+            "" if replicate_id is None else str(replicate_id),
+        )
+        seen[key] = seen.get(key, 0) + 1
+    duplicated = {key: n for key, n in seen.items() if n > 1}
+    return LevelResult(
+        level=Level.L1,
+        name="record_uniqueness",
+        passed=not duplicated,
+        message=(
+            f"{len(seen)} unique (genotype, environment, replicate_id) records, one each"
+            if not duplicated
+            else f"{len(duplicated)} (genotype, environment, replicate_id) keys appear "
+            "in more than one record"
+        ),
+        details={
+            "n_keys": len(seen),
+            "n_duplicated": len(duplicated),
+            "n_genotypes": len({genotype for genotype, _, _ in seen}),
+        },
+    )
+
+
+def _l1_replicate_records(
+    records: Sequence[Record], expected_replicate_records: int
+) -> LevelResult:
+    """L1: the records carrying a ``replicate_id`` are the declared count, all distinct.
+
+    In the SCMD family these are the released wild-type samples; a mutant row is one
+    culture per strain and carries none.
+    """
+    ids = [
+        rec["experiment"]["phenotype"].get("replicate_id")
+        for rec in records
+        if rec["experiment"]["phenotype"].get("replicate_id") is not None
+    ]
+    distinct = len(set(ids)) == len(ids)
+    passed = len(ids) == expected_replicate_records and distinct
+    return LevelResult(
+        level=Level.L1,
+        name="replicate_records",
+        passed=passed,
+        message=(
+            f"{len(ids)} records carry a replicate_id (expected "
+            f"{expected_replicate_records}), "
+            + ("all distinct" if distinct else f"{len(ids) - len(set(ids))} repeated")
+        ),
+        details={
+            "observed": len(ids),
+            "expected": expected_replicate_records,
+            "n_distinct": len(set(ids)),
+        },
     )
 
 
@@ -168,6 +246,7 @@ def verify_morphology_dataset(
     dataset_name: str,
     provenance: Provenance,
     expected_count: int,
+    expected_replicate_records: int,
     expected_incomplete: int = 0,
 ) -> VerificationReport:
     """Run the L0-L3 record-level gate for the Ohya2005 CalMorph dataset.
@@ -176,7 +255,10 @@ def verify_morphology_dataset(
         records: the per-LMDB-entry dicts (experiment/reference/publication).
         dataset_name: dataset identity for the report.
         provenance: where the records came from.
-        expected_count: the mutant record-count oracle (Ohya2005 = 4718).
+        expected_count: the record-count oracle, mutants plus released wild-type
+            samples (Ohya2005 = 4718 + 122 = 4840).
+        expected_replicate_records: how many records carry a ``replicate_id`` (the
+            released wild-type samples; Ohya2005 = 122).
         expected_incomplete: how many records the loader declares short of the full
             CalMorph vocabulary (Ohnuki 2022's HRD1 row, two blank cells key-absent).
 
@@ -196,8 +278,11 @@ def verify_morphology_dataset(
     # enforces label-vocabulary membership + no-NaN via CalMorphPhenotype validators).
     report.add(l0_structural((rec["experiment"] for rec in records), validate))
 
-    # L1: exact mutant count + full-vocabulary coverage + populated WT reference.
+    # L1: exact record count + one record per key + the declared replicate records +
+    # full-vocabulary coverage + populated WT reference.
     report.add(l1_count(len(records), expected_count))
+    report.add(_l1_record_uniqueness(records))
+    report.add(_l1_replicate_records(records, expected_replicate_records))
     report.add(_l1_calmorph_completeness(records, expected_incomplete))
     report.add(_l1_reference_populated(records))
 

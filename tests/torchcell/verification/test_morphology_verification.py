@@ -53,11 +53,13 @@ def _record(
     cv: dict[str, float] | None = None,
     ref_base: dict[str, float] | None = None,
     ref_cv: dict[str, float] | None = None,
+    replicate_id: str | None = None,
 ) -> dict[str, Any]:
     """A schema-valid CalMorph {experiment, reference} record for one deletion mutant."""
     phenotype = CalMorphPhenotype(
         calmorph=base if base is not None else _full_base(),
         calmorph_coefficient_of_variation=cv if cv is not None else _full_cv(),
+        replicate_id=replicate_id,
     )
     reference_phenotype = CalMorphPhenotype(
         calmorph=ref_base if ref_base is not None else _full_base(),
@@ -99,7 +101,11 @@ def _good_records() -> list[dict[str, Any]]:
 
 def test_good_dataset_passes_all_levels():
     report = verify_morphology_dataset(
-        _good_records(), dataset_name="good", provenance=PROV, expected_count=3
+        _good_records(),
+        dataset_name="good",
+        provenance=PROV,
+        expected_count=3,
+        expected_replicate_records=0,
     )
     assert report.passed, report.summary()
     assert {Level.L0, Level.L1, Level.L2, Level.L3} <= report.levels_covered
@@ -111,7 +117,11 @@ def test_dropped_parameter_fails_completeness():
     records = _good_records()
     records.append(_record("YAL007C", base=partial))
     report = verify_morphology_dataset(
-        records, dataset_name="dropped", provenance=PROV, expected_count=4
+        records,
+        dataset_name="dropped",
+        provenance=PROV,
+        expected_count=4,
+        expected_replicate_records=0,
     )
     comp = [r for r in report.results if r.name == "calmorph_completeness"]
     assert comp and not comp[0].passed
@@ -123,7 +133,11 @@ def test_negative_cv_fails():
     records = _good_records()
     records.append(_record("YAL007C", cv=bad_cv))
     report = verify_morphology_dataset(
-        records, dataset_name="negcv", provenance=PROV, expected_count=4
+        records,
+        dataset_name="negcv",
+        provenance=PROV,
+        expected_count=4,
+        expected_replicate_records=0,
     )
     cv = [r for r in report.results if r.name == "cv_nonnegative"]
     assert cv and not cv[0].passed
@@ -136,7 +150,11 @@ def test_non_finite_base_value_fails():
     records = _good_records()
     records.append(_record("YAL007C", base=inf_base))
     report = verify_morphology_dataset(
-        records, dataset_name="inf", provenance=PROV, expected_count=4
+        records,
+        dataset_name="inf",
+        provenance=PROV,
+        expected_count=4,
+        expected_replicate_records=0,
     )
     vf = [
         r for r in report.results if r.level is Level.L2 and r.name == "value_fidelity"
@@ -146,7 +164,11 @@ def test_non_finite_base_value_fails():
 
 def test_wrong_count_fails():
     report = verify_morphology_dataset(
-        _good_records(), dataset_name="miscount", provenance=PROV, expected_count=99
+        _good_records(),
+        dataset_name="miscount",
+        provenance=PROV,
+        expected_count=99,
+        expected_replicate_records=0,
     )
     count = [r for r in report.results if r.level is Level.L1 and r.name == "count"]
     assert count and not count[0].passed
@@ -158,7 +180,11 @@ def test_underpopulated_reference_fails():
     records = _good_records()
     records.append(_record("YAL007C", ref_base=partial_ref))
     report = verify_morphology_dataset(
-        records, dataset_name="badref", provenance=PROV, expected_count=4
+        records,
+        dataset_name="badref",
+        provenance=PROV,
+        expected_count=4,
+        expected_replicate_records=0,
     )
     ref = [r for r in report.results if r.name == "reference_populated"]
     assert ref and not ref[0].passed
@@ -166,3 +192,81 @@ def test_underpopulated_reference_fails():
 
 def test_perturbed_gene_set():
     assert perturbed_gene_set(_good_records()) == set(GENES)
+
+
+def _rule(report: Any, name: str) -> Any:
+    return next(r for r in report.results if r.name == name)
+
+
+def test_wild_type_replicates_of_one_strain_are_distinct_records() -> None:
+    """#1178: three mutants plus two wild-type sample records of one genotype, told
+    apart by their replicate_id, pass uniqueness and the declared replicate count.
+    """
+    records = _good_records() + [
+        _record("YOR202W", replicate_id="04his3-1"),
+        _record("YOR202W", replicate_id="04his3-2"),
+    ]
+    report = verify_morphology_dataset(
+        records,
+        dataset_name="replicates",
+        provenance=PROV,
+        expected_count=5,
+        expected_replicate_records=2,
+    )
+    assert report.passed, report.summary()
+    assert _rule(report, "record_uniqueness").details == {
+        "n_keys": 5,
+        "n_duplicated": 0,
+        "n_genotypes": 4,
+    }
+    assert _rule(report, "replicate_records").details == {
+        "observed": 2,
+        "expected": 2,
+        "n_distinct": 2,
+    }
+
+
+def test_a_strain_stored_twice_fails_uniqueness() -> None:
+    """Two records of one genotype and environment with no replicate_id are one key."""
+    records = _good_records() + [_record(GENES[0])]
+    report = verify_morphology_dataset(
+        records,
+        dataset_name="dup",
+        provenance=PROV,
+        expected_count=4,
+        expected_replicate_records=0,
+    )
+    rule = _rule(report, "record_uniqueness")
+    assert not rule.passed
+    assert rule.details["n_duplicated"] == 1
+
+
+def test_replicate_records_fail_on_a_wrong_count_or_a_repeated_id() -> None:
+    """The count must equal the declared one and the ids must be distinct."""
+    repeated = _good_records() + [
+        _record("YOR202W", replicate_id="w1"),
+        _record("YOR202W", replicate_id="w1"),
+    ]
+    report = verify_morphology_dataset(
+        repeated,
+        dataset_name="rep",
+        provenance=PROV,
+        expected_count=5,
+        expected_replicate_records=2,
+    )
+    assert not _rule(report, "replicate_records").passed
+    assert _rule(report, "replicate_records").details["n_distinct"] == 1
+    assert not _rule(report, "record_uniqueness").passed
+    short = verify_morphology_dataset(
+        _good_records(),
+        dataset_name="short",
+        provenance=PROV,
+        expected_count=3,
+        expected_replicate_records=1,
+    )
+    assert _rule(short, "replicate_records").details == {
+        "observed": 0,
+        "expected": 1,
+        "n_distinct": 0,
+    }
+    assert not short.passed

@@ -295,3 +295,31 @@ Now: the `ORF` cell (stripped, upper-cased) is both names; no genome is injected
 | L4 | `gene_containment_microarray_kemmeren2014` | report | ok | 0.969 of microarray_kemmeren2014's 1484 deletion genes are in Ohya (>= 0.9) |
 | L4 | `gene_containment_sm_microarray_sameith2015` | report | ok | 0.988 of sm_microarray_sameith2015's 82 deletion genes are in Ohya (>= 0.9) |
 | L4 | `gene_containment_dm_microarray_sameith2015` | report | ok | 0.988 of dm_microarray_sameith2015's 82 deletion genes are in Ohya (>= 0.9) |
+
+## 2026.11.24 - One record per released wild-type sample (#1178, part of #1171)
+
+Per-replicate policy (#1178): a record is one biological replicate as the source releases it. The 122 rows of `wt122data.tsv` used to be folded into one plain per-feature mean (the reference) with no SD or n; each is now its own record. The mutant records do not change.
+
+**Replicate evidence** (mirror `ohyaHighdimensionalLargescalePhenotyping2005/`):
+
+- Mutants, one culture each: "Statistical tests are not applicable to our data set because we have only one set of data for each deletion strain" (`paper.md` line 25, sha256 `86bf457c...`). Each mutant record keeps `replicate_id = None` and is byte-identical to the per-strain build.
+- Wild type, independent samples: "Data sets were obtained from 126 independent wild-type samples and compared with all data sets from the 4,718 mutant strains" (`paper.md` line 28, Fig. 1B). The SI Supporting Text "only one datum for each deletion strain, we estimated the distribution of wildtype data" (`si/si12.md` line 5, sha256 `a051f44e...`) uses them as the null distribution. They were not combined by the authors beyond that use.
+- Wild-type genotype, the his3 deletion strain: every `NAME` is a `his3` label; "Whereas cell wall layers of the control cells (his3 deletion strain)" (`si/si12.md` line 59); the same lab's later platform names its wild type "his3Δ (BY4741; MATa his3Δ1 leu2Δ0 met15Δ0 ura3Δ0 YOR202wΔ:: kanMX4)" from EUROSCARF (Ohnuki 2022 `paper.md` line 128, sha256 `de2cad9b...`). So a wild-type record is `KanMxDeletionPerturbation(YOR202W)`, the same leaf the mutant matrix's own `yor202w` row carries (that row stays a separate record with `replicate_id = None`). Same choice as Messner 2023's HIS3 controls (PR #1206).
+- Withdrawn samples: none quoted. The paper says 126, the release has 122. The SSBD repository ssbd-repos-000349 lists per-cell directories for 126 wild-type samples, and `04his3-11`, `04his3-20`, `04his3-26`, `04his3-59` have no averaged row (listing fetched 2026-11-24 in the sweep). Ohnuki 2018 cites the set as "122 replicated wild-type and 4,718 nonessential gene-deletion mutant strains [15]" (its `paper.md` line 195). No averaged value exists for the four, so nothing is stored for them; hypothesis (untested): the Suzuki 2018 re-analysis QC removed them.
+- Other sourced values re-checked: n_samples and uncertainty fields do not exist on `CalMorphPhenotype`, so no gap is needed; the module comment's BY4741 genotype now reads `met15D0` (was `lys2D0`, #494).
+
+**Loader:** records 0..4717 are the mutants in matrix order (unchanged), 4718..4839 the wild-type rows in release order, `replicate_id` = `NAME` verbatim. The reference stays the per-feature mean over the 122 with `replicate_id = None`. A blank or repeated `NAME` refuses; a non-numeric wild-type cell now refuses (the per-strain build coerced it to NaN inside the mean; 0 such cells in the pinned file). `data.csv` is still the mutant matrix only.
+
+**Counts and mean reproduction** (`experiments/036-dataset-fixes-before-kg-build/scripts/scmd_morphology_per_replicate_counts.py`, output `experiments/036-dataset-fixes-before-kg-build/results/scmd_morphology_per_replicate_counts.json`; before = origin/main loader, after = this branch, both built under `$DATA_ROOT/tmp/scratch/per-replicate-scmd-morphology/`):
+
+| | before | after |
+|---|---|---|
+| mutant records | 4,718 | 4,718 (identical dicts) |
+| wild-type records | 0 | 122 (83 `04his3-<n>`, 12 `04his3<n>`, 15 `his3new`, 6 `his3cnt`, 6 `his3old`) |
+| total | 4,718 | 4,840 |
+
+Grouping the after-records by (genotype, environment, replicate or not) and averaging per trait: each mutant group reproduces its old record exactly (max abs diff 0.0); the wild-type group reproduces the old reference to max abs 5.5e-12 (max rel 1.0e-15, summation order). Every after-record carries the old reference exactly.
+
+**Verifier** (`run_morphology`, two new L1 gates `record_uniqueness` and `replicate_records`, oracle 4,840 and 122) on the scratch build: PASS. L0 4840 validated; L1 count 4840/4840; `record_uniqueness` 4840 unique keys; `replicate_records` 122 of 122, all distinct; `calmorph_completeness` all 4840 full; `reference_populated` all 4840; L2 1,360,040 base and 1,064,800 CV values; L3 parity; L4 Kemmeren 0.969, Sameith SM 0.988, DM 0.988 (report).
+
+**Not done:** the four SSBD-only wild-type samples (averages would have to be recomputed from per-cell files, not a released value). The served graph needs the KG-side admission or rebuild; not run here.

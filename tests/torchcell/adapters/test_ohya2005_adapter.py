@@ -19,6 +19,10 @@ Features (4 of the 501): base ``A101_A``, ``C103_A1B``; CV ``ACV103_A1B``, ``CCV
 reference phenotype is the WT mean: A101_A (1 + 3) / 2 = 2.0, C103_A1B (3 + 5) / 2 = 4.0,
 ACV103_A1B (0.25 + 0.75) / 2 = 0.5, CCV103_A1B (0.5 + 1.0) / 2 = 0.75.
 
+2026.11.24 (per-replicate policy, #1178): each WT row is also a record, after the two
+mutants: the his3 deletion strain (``YOR202W`` kanMX) with ``replicate_id`` = its NAME.
+The store holds four records, so the per-record nodes and edges come four times.
+
 Ids: every record-side id is ``sha256(json.dumps(model_dump()))`` (``cell_adapter.py``
 line 527 for the experiment, the same formula for genome, genotype, perturbation,
 phenotype, reference and publication); environment, media and temperature ids are
@@ -126,34 +130,45 @@ def _deletion(orf: str) -> KanMxDeletionPerturbation:
     return KanMxDeletionPerturbation(systematic_gene_name=orf, perturbed_gene_name=orf)
 
 
-def _phenotype(values: tuple[float, float, float, float]) -> CalMorphPhenotype:
+def _phenotype(
+    values: tuple[float, float, float, float], replicate_id: str | None
+) -> CalMorphPhenotype:
     return CalMorphPhenotype(
         calmorph={"A101_A": values[0], "C103_A1B": values[1]},
         calmorph_coefficient_of_variation={
             "ACV103_A1B": values[2],
             "CCV103_A1B": values[3],
         },
+        replicate_id=replicate_id,
     )
 
 
 def _experiment(
-    orf: str, values: tuple[float, float, float, float]
+    orf: str, values: tuple[float, float, float, float], replicate_id: str | None
 ) -> CalMorphExperiment:
     return CalMorphExperiment(
         dataset_name=DATASET,
         genotype=Genotype(perturbations=[_deletion(orf)]),
         environment=ENVIRONMENT,
-        phenotype=_phenotype(values),
+        phenotype=_phenotype(values, replicate_id),
     )
 
 
-RECORDS = [("YAL001C", (1.0, 2.0, 0.5, 0.25)), ("YBR001C", (3.0, 4.0, 0.25, 0.5))]
-EXPERIMENTS = [_experiment(orf, values) for orf, values in RECORDS]
+# (orf, values, replicate_id): the two mutants, then the two WT samples (#1178)
+RECORDS: list[tuple[str, tuple[float, float, float, float], str | None]] = [
+    ("YAL001C", (1.0, 2.0, 0.5, 0.25), None),
+    ("YBR001C", (3.0, 4.0, 0.25, 0.5), None),
+    ("YOR202W", (1.0, 3.0, 0.25, 0.5), "wt1"),
+    ("YOR202W", (3.0, 5.0, 0.75, 1.0), "wt2"),
+]
+EXPERIMENTS = [_experiment(orf, values, rid) for orf, values, rid in RECORDS]
 
 # The calmorph JSON strings, written out rather than dumped, per record then reference.
 CALMORPH_JSON = [
     ('{"A101_A": 1.0, "C103_A1B": 2.0}', '{"ACV103_A1B": 0.5, "CCV103_A1B": 0.25}'),
     ('{"A101_A": 3.0, "C103_A1B": 4.0}', '{"ACV103_A1B": 0.25, "CCV103_A1B": 0.5}'),
+    ('{"A101_A": 1.0, "C103_A1B": 3.0}', '{"ACV103_A1B": 0.25, "CCV103_A1B": 0.5}'),
+    ('{"A101_A": 3.0, "C103_A1B": 5.0}', '{"ACV103_A1B": 0.75, "CCV103_A1B": 1.0}'),
     ('{"A101_A": 2.0, "C103_A1B": 4.0}', '{"ACV103_A1B": 0.5, "CCV103_A1B": 0.75}'),
 ]
 
@@ -251,12 +266,20 @@ def _build(tmp_path: Path) -> Path:
     _write_tsv(
         root / "raw" / "mt4718data.tsv",
         ["ORF", *FEATURES],
-        [[orf, *(str(v) for v in values)] for orf, values in RECORDS],
+        [
+            [orf, *(str(v) for v in values)]
+            for orf, values, rid in RECORDS
+            if rid is None
+        ],
     )
     _write_tsv(
         root / "raw" / "wt122data.tsv",
         ["NAME", *FEATURES],
-        [["wt1", "1.0", "3.0", "0.25", "0.5"], ["wt2", "3.0", "5.0", "0.75", "1.0"]],
+        [
+            [str(rid), *(str(v) for v in values)]
+            for _, values, rid in RECORDS
+            if rid is not None
+        ],
     )
     return root
 
@@ -296,9 +319,9 @@ def _calmorph_node(
             "label_statistic_name": "calmorph_coefficient_of_variation",
             "calmorph": json_pair[0],
             "calmorph_coefficient_of_variation": json_pair[1],
-            # #1178: which replicate a per-replicate record is; None on every Ohya
-            # record, which states one profile per strain.
-            "replicate_id": None,
+            # #1178: which replicate a per-replicate record is; None on a mutant
+            # record and on the reference, the WT sample's NAME on a WT record.
+            "replicate_id": phenotype.replicate_id,
         },
     )
 
@@ -397,7 +420,7 @@ def _expected_nodes() -> list[BioCypherNode]:
                     "perturbation_types": ["kanmx_deletion"],
                 },
             )
-            for (orf, _), experiment in zip(RECORDS, EXPERIMENTS, strict=True)
+            for (orf, _, _), experiment in zip(RECORDS, EXPERIMENTS, strict=True)
         ],
         *[
             BioCypherNode(
@@ -413,23 +436,21 @@ def _expected_nodes() -> list[BioCypherNode]:
                     "strain_id": None,
                 },
             )
-            for orf, _ in RECORDS
+            for orf, _, _ in RECORDS
         ],
-        environment,
-        environment,
-        environment,  # two per-record nodes, then the reference collector's one
-        media,
-        media,
-        media,
-        temperature,
-        temperature,
-        temperature,
-        _calmorph_node(EXPERIMENTS[0].phenotype, CALMORPH_JSON[0], None),
-        _calmorph_node(EXPERIMENTS[1].phenotype, CALMORPH_JSON[1], None),
-        _calmorph_node(WT_PHENOTYPE, CALMORPH_JSON[2], "calmorph phenotype"),
+        # one per-record node each, then the reference collector's one
+        *[environment] * (len(RECORDS) + 1),
+        *[media] * (len(RECORDS) + 1),
+        *[temperature] * (len(RECORDS) + 1),
+        *[
+            _calmorph_node(experiment.phenotype, json_pair, None)
+            for experiment, json_pair in zip(
+                EXPERIMENTS, CALMORPH_JSON[:-1], strict=True
+            )
+        ],
+        _calmorph_node(WT_PHENOTYPE, CALMORPH_JSON[-1], "calmorph phenotype"),
         BioCypherNode(node_id=DATASET, preferred_id=DATASET, node_label="dataset"),
-        publication,
-        publication,
+        *[publication] * len(RECORDS),
     ]
 
 
@@ -450,7 +471,7 @@ def _expected_edges() -> list[BioCypherEdge]:
         ],
         *[
             _edge(_sha(_deletion(orf)), g, "perturbation member of")
-            for (orf, _), g in zip(RECORDS, genotypes, strict=True)
+            for (orf, _, _), g in zip(RECORDS, genotypes, strict=True)
         ],
         *[_edge(ENVIRONMENT_ID, e, "environment member of") for e in exp],
         _edge(ENVIRONMENT_ID, REFERENCE_ID, "environment member of"),
@@ -458,10 +479,9 @@ def _expected_edges() -> list[BioCypherEdge]:
             _edge(_sha(experiment.phenotype), e, "phenotype member of")
             for experiment, e in zip(EXPERIMENTS, exp, strict=True)
         ],
-        _edge(MEDIA_ID, ENVIRONMENT_ID, "media member of"),
-        _edge(MEDIA_ID, ENVIRONMENT_ID, "media member of"),
-        _edge(TEMPERATURE_ID, ENVIRONMENT_ID, "temperature member of"),
-        _edge(TEMPERATURE_ID, ENVIRONMENT_ID, "temperature member of"),
+        *[_edge(MEDIA_ID, ENVIRONMENT_ID, "media member of")] * len(RECORDS),
+        *[_edge(TEMPERATURE_ID, ENVIRONMENT_ID, "temperature member of")]
+        * len(RECORDS),
         _edge(_sha(GENOME), REFERENCE_ID, "genome member of"),
         _edge(_sha(WT_PHENOTYPE), REFERENCE_ID, "phenotype member of"),
         *[_edge(_sha(PUBLICATION), e, "mentions") for e in exp],
@@ -524,8 +544,8 @@ def test_ids_are_the_sha256_of_the_literal_json() -> None:
 def test_get_nodes_emits_the_exact_ohya_node_list(
     tmp_path: Path, recorder: _WandbRecorder
 ) -> None:
-    """Two records, one shared reference: 25 nodes, in the registration-table order,
-    compared by value (id, label, preferred id and every property). The event log names
+    """Four records (two mutants, two WT samples), one shared reference: 43 nodes, in
+    the registration-table order, compared by value (id, label, preferred id and every property). The event log names
     the 15 node methods the conf enables, which is the conf's whole contract.
 
     The medium is the loader's sourced ``OHYA_YPD`` since ca0734254 (#622): library
@@ -543,7 +563,8 @@ def test_get_nodes_emits_the_exact_ohya_node_list(
     )
     # The sourced medium takes the environment past the Neo4j pointer floor, so each
     # Experiment node points at one ``interned constant`` node (emitted per record,
-    # deduplicated by the sink: 23 nodes before #622, 25 now); the genotype is not.
+    # deduplicated by the sink: 23 nodes before #622 and 25 after it for two records;
+    # 43 for the four records of #1178); the genotype is not.
     assert ENVIRONMENT_CONSTANT_ID == constant_id("environment", ENVIRONMENT_JSON)
     assert len(json.dumps(ENVIRONMENT.model_dump())) == 5223
     assert EXPERIMENT_POINTER_MIN_BYTES["environment"] == 512
@@ -553,9 +574,8 @@ def test_get_nodes_emits_the_exact_ohya_node_list(
     # perturbation (ontology-unify, 2026-10-15); 477 before lane Q put ``construction``
     # on ``KanMxDeletionPerturbation`` (22 bytes of ``"construction": null``)
     assert [len(json.dumps(cast(Genotype, g).model_dump())) for g in genotypes] == [
-        499,
-        499,
-    ]
+        499
+    ] * 4
     assert EXPERIMENT_POINTER_MIN_BYTES["genotype"] == 8192
     adapter = _adapter(_dataset(_build(tmp_path)))
     recorder.logged.clear()
@@ -568,8 +588,8 @@ def test_get_nodes_emits_the_exact_ohya_node_list(
 def test_get_edges_emits_the_exact_ohya_edge_list(
     tmp_path: Path, recorder: _WandbRecorder
 ) -> None:
-    """22 edges from the 13 edge methods the conf enables, part to whole, in table
-    order; per-record media and temperature edges repeat once per record. The media
+    """40 edges (22 before #1178 added the two WT records) from the 13 edge methods the
+    conf enables, part to whole, in table order; per-record media and temperature edges repeat once per record. The media
     endpoint is the library YPD node of the sourced ``OHYA_YPD`` medium (ca0734254,
     #622; see the node test).
     """

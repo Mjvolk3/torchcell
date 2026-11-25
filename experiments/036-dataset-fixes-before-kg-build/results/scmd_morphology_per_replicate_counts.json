@@ -1,0 +1,85 @@
+{
+  "scmd_ohya2005": {
+    "records_before": 4718,
+    "records_after": 4840,
+    "mutant_records": 4718,
+    "wild_type_records": 122,
+    "wild_type_records_per_name_pattern": {
+      "#his#-#": 83,
+      "#his#": 12,
+      "his#new-#": 10,
+      "his#cnt-#": 6,
+      "his#old-#": 5,
+      "his#new-#a": 1,
+      "his#new-#b": 1,
+      "his#new-#c": 1,
+      "his#new-#d": 1,
+      "his#new-#e": 1,
+      "his#old": 1
+    },
+    "first_n_after_records_equal_before": true,
+    "wild_type_values_equal_released_cells": true,
+    "every_reference_equal_before": true,
+    "mean_reproduction_max_abs_diff_mutant_groups": 0.0,
+    "mean_reproduction_max_abs_diff_wild_type_vs_old_reference": 5.4569682106375694e-12,
+    "mean_reproduction_max_rel_diff_wild_type_vs_old_reference": 1.0068312499353789e-15,
+    "n_groups": 4719,
+    "wild_type_acquisition_dates_from_name": 0,
+    "wild_type_records_per_date_min_max": []
+  },
+  "scmd_ohnuki2018": {
+    "records_before": 1112,
+    "records_after": 1226,
+    "mutant_records": 1112,
+    "wild_type_records": 114,
+    "wild_type_records_per_name_pattern": {
+      "WBD#K": 43,
+      "WBD#S": 40,
+      "WBD#M": 25,
+      "WBD#N": 6
+    },
+    "first_n_after_records_equal_before": true,
+    "wild_type_values_equal_released_cells": true,
+    "every_reference_equal_before": true,
+    "mean_reproduction_max_abs_diff_mutant_groups": 0.0,
+    "mean_reproduction_max_abs_diff_wild_type_vs_old_reference": 7.275957614183426e-12,
+    "mean_reproduction_max_rel_diff_wild_type_vs_old_reference": 9.112295646141205e-16,
+    "n_groups": 1113,
+    "wild_type_acquisition_dates_from_name": 0,
+    "wild_type_records_per_date_min_max": []
+  },
+  "scmd_ohnuki2022": {
+    "records_before": 1982,
+    "records_after": 2731,
+    "mutant_records": 1982,
+    "wild_type_records": 749,
+    "wild_type_records_per_name_pattern": {
+      "Q#E#": 71,
+      "Q#F#": 65,
+      "Q#K#": 62,
+      "Q#J#": 58,
+      "Q#H#": 55,
+      "Q#C#": 55,
+      "Q#B#": 54,
+      "Q#D#": 52,
+      "Q#G#": 52,
+      "Q#I#": 52,
+      "Q#L#": 48,
+      "Q#M#": 47,
+      "Q#N#": 46,
+      "Q#O#": 32
+    },
+    "first_n_after_records_equal_before": true,
+    "wild_type_values_equal_released_cells": true,
+    "every_reference_equal_before": true,
+    "mean_reproduction_max_abs_diff_mutant_groups": 0.0,
+    "mean_reproduction_max_abs_diff_wild_type_vs_old_reference": 1.6370904631912708e-11,
+    "mean_reproduction_max_rel_diff_wild_type_vs_old_reference": 2.621719972784937e-15,
+    "n_groups": 1983,
+    "wild_type_acquisition_dates_from_name": 125,
+    "wild_type_records_per_date_min_max": [
+      3,
+      24
+    ]
+  }
+}

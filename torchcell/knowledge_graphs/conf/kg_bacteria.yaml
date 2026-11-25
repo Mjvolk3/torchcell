@@ -104,6 +104,7 @@ datasets:
   - MetabolomeSchastnaya2021Dataset
   - EnvChemgenShiver2016Dataset
   - ProteomeSchmidt2016Dataset
+  - ProteomeReplicateIntensitySchmidt2016Dataset
   - ProteomeSrmSet1Schmidt2016Dataset
   - ProteomeSrmSet2Schmidt2016Dataset
   - GrowthRateSchmidt2016Dataset

@@ -377,3 +377,17 @@ Rebuilt because schmidt2016's condition table gained the stationary arms.
 | L3 | `media_membership` | pass | 6 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
 | L4 | `gene_containment_sgd` | finding (genome reference; reports, does not gate) | 0.000 of 3 measured genes are BW25113 (ecoli_K12_BW25113_ASM75055v1) genes (>= 0.9) |
 | L4 | `current_genome_genes` | finding (genome reference; reports, does not gate) | 3 systematic names are absent from the current genome over 6 records: rimI x2, rimJ x2, rimL x2 |
+
+## 2026.11.24 - One record per released culture rate (#1175, #1178)
+
+The store holds one `EnvironmentResponseExperiment` per released Table S24 `Replicate k` cell, the absolute rate in h^-1 (`MeasurementType.growth_rate`, `AssayType.other`), `n_samples=1`, `replicate_id` the released header (`Replicate 1` .. `Replicate 3`), and `not_applicable_single_measurement` gaps on the uncertainty and the SE. The wild-type cultures are records with the empty genotype on BW25113. Each medium's `phenotype_reference` is the released wild-type `Average` with its `Stdev` (sample SD, back-solved n), `replicate_id` None.
+
+Records: **6 -> 22** (17 deletion + 5 wild type). Per position: `Replicate 1` 8, `Replicate 2` 8, `Replicate 3` 6. Per row: Glucose WT 2, rimI 3, rimJ 3, rimL 3; Acetate WT 3, rimI 3, rimJ 2, rimL 3.
+
+Why one cell is one culture: `paper.md`, Online Methods: "The growth rate of the cultures was determined from the cell counts over time ... The growth rate was calculated from at least four consecutive measurements." Table S24 does not itself name the replicate kind; Table S21's title ("... from biological triplicates") is the corroboration the loader already quoted.
+
+The old ratio `mean(strain) / mean(WT)` over a loader-computed wild-type mean is a modeling-time step now (policy item 6). Adapter conf: `fitness phenotype` -> `environment response phenotype`. Changing the served experiment class makes this a full-rebuild change.
+
+Scratch build `$DATA_ROOT/tmp/scratch/per-replicate-schmidt2016/after/growth_rate_schmidt2016`: verifier PASS (absolute branch, `reference_centered=False`): count 22/22, pair_uniqueness 22, value_fidelity 22, reference finite on all 22, all 22 environments perturbed as declared; genome findings reported (rimI, rimJ, rimL are released symbols, not BW25113 locus tags).
+
+Mean reproduction (`experiments/036-dataset-fixes-before-kg-build/scripts/schmidt2016_per_replicate_counts.py`): mean of the culture records of each (gene, medium) over the mean of that medium's wild-type records reproduces all 6 stored fitness values, max abs diff 0.0; each reference equals the mean of its wild-type records, max abs diff 0.0.

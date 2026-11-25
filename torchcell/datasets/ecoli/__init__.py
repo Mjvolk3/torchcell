@@ -159,7 +159,12 @@ sourcing layer.
   for which the schema has no bacterial perturbation leaf, so they are accounted for in
   the retention ledger rather than stored under a leaf that would misstate them.
 - ``schmidt2016`` -- ``ProteomeSchmidt2016Dataset``: the condition-dependent BW25113
-  proteome, one record per loaded growth condition in absolute protein copies per cell.
+  proteome, one record per loaded growth condition in absolute protein copies per cell
+  (the authors' aggregate over three cultures; no loader-computed SE since 2026-11-24).
+- ``schmidt2016_replicate_intensity`` -- ``ProteomeReplicateIntensitySchmidt2016Dataset``:
+  the same proteome per culture (#1178): Table S8's SafeQuant-normalized LC-MS intensity
+  of each of the 66 BW25113 cultures (22 conditions x 3, glucose included), one record
+  each, keyed like the copies/cell store so the two join.
 - ``schmidt2016_srm`` -- ``ProteomeSrmSet1Schmidt2016Dataset`` and
   ``ProteomeSrmSet2Schmidt2016Dataset``: the same paper's Tables S2 and S3, the 41-protein
   SRM + stable-isotope-dilution panel the proteome-wide estimates were anchored on. A
@@ -169,9 +174,11 @@ sourcing layer.
   dispersions are of different things (two SRM injections against three grown cultures)
   and one dataset carries one ``measurement_type``.
 - ``schmidt2016_growth_rate`` -- ``GrowthRateSchmidt2016Dataset``: the same paper's Table
-  S24, the only gene-perturbation phenotype it releases. Six records: the KEIO ``rimI``,
-  ``rimJ`` and ``rimL`` deletions in glucose and in acetate, each a ``FitnessPhenotype``
-  ratio to the wild-type row of its own medium.
+  S24, the only gene-perturbation phenotype it releases. One record per released culture
+  rate (#1178): 22 = 17 KEIO ``rimI`` / ``rimJ`` / ``rimL`` deletion cultures + 5
+  wild-type cultures in glucose and acetate, each the absolute rate in h^-1 as a
+  ``MeasurementType.growth_rate`` environment response; the reference is the released
+  wild-type Average.
 - ``schmidt2016_s23_growth_rate`` -- ``GrowthRateS23Schmidt2016Dataset``: the same
   paper's Table S23, the per-condition growth rates. 15 records of the 26 released rows,
   one ``EnvironmentResponsePhenotype`` per kept (condition, BW25113) row carrying the
@@ -356,6 +363,9 @@ from .schastnaya2021 import (
 from .schmidt2016 import ProteomeSchmidt2016Dataset as ProteomeSchmidt2016Dataset
 from .schmidt2016_growth_rate import (
     GrowthRateSchmidt2016Dataset as GrowthRateSchmidt2016Dataset,
+)
+from .schmidt2016_replicate_intensity import (
+    ProteomeReplicateIntensitySchmidt2016Dataset as ProteomeReplicateIntensitySchmidt2016Dataset,
 )
 from .schmidt2016_s23_growth_rate import (
     GrowthRateS23Schmidt2016Dataset as GrowthRateS23Schmidt2016Dataset,

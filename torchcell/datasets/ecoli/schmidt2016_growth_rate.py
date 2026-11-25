@@ -2,20 +2,44 @@
 # [[torchcell.datasets.ecoli.schmidt2016_growth_rate]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/ecoli/schmidt2016_growth_rate
 # Test file: tests/torchcell/datasets/ecoli/test_schmidt2016_growth_rate.py
-"""Schmidt 2016 Table S24: the rim-deletion growth rates, as WT-relative fitness.
+"""Schmidt 2016 Table S24: the rim-deletion and wild-type growth rates, one per culture.
 
 Schmidt et al. 2016 (Nat Biotechnol 34:104, doi:10.1038/nbt.3418) released one table of
 gene-perturbation phenotype: Supplementary Table 24, "Growth rates determined for WT,
 ΔrimI, ΔrimJ and ΔrimL E. coli strains grown in glucose and acetate medium". This module
-serves it as :class:`GrowthRateSchmidt2016Dataset`, one
-``FitnessExperiment`` per (deletion strain, medium): **six records and two
-references**, the wild-type row of each medium being that medium's reference.
+serves it as :class:`GrowthRateSchmidt2016Dataset`.
+
+ONE RECORD PER RELEASED REPLICATE RATE (#1175, #1178, 2026-11-24). Each non-empty
+``Replicate k`` cell is one culture's growth rate, stored verbatim in h^-1 as an
+``EnvironmentResponseExperiment`` with ``MeasurementType.growth_rate``: **22 records**,
+17 deletion rates (Glucose: ΔrimI 3, ΔrimJ 3, ΔrimL 3; Acetate: ΔrimI 3, ΔrimJ 2, ΔrimL
+3) and 5 wild-type rates (Glucose 2, Acetate 3), the wild-type cultures being records
+with the empty genotype on BW25113. ``n_samples=1``, ``replicate_id`` is the released
+column header (``"Replicate 1"`` .. ``"Replicate 3"``), and the uncertainty and SE carry
+``not_applicable_single_measurement`` gaps. Before 2026-11-24 the store held 6
+``FitnessExperiment`` records, each the ratio ``mean(strain) / mean(WT)`` over a
+wild-type mean the loader computed; that ratio is a modeling-time step now. The
+``phenotype_reference`` of each medium is the authors' own released wild-type
+``Average`` with its ``Stdev`` (a sample SD, see below) and its released replicate count,
+``replicate_id=None``: a statistic the source reports is data.
+
+WHY ONE REPLICATE IS ONE CULTURE. The Methods fit a growth rate to one culture's time
+course: "The growth rate of the cultures was determined from the cell counts over time",
+"from at least four consecutive measurements". Table S24 itself does not name the
+replicate kind; Table S21 quantifies the same four strains in the same glucose medium
+"from biological triplicates", and Table S20 lists Replicates 1, 2 and 3 for every strain
+in acetate. The four consecutive cell counts are technical points of one curve, combined
+by the authors into the one released rate.
+
+The sections below describe the released statistics and the medium check, which still
+run at build time; the ratio arithmetic they mention is history (the pre-2026-11-24
+store).
 
 It is a SEPARATE MODULE from ``schmidt2016.py`` on purpose. ``build_manifest`` keys a
 built store's staleness on the schema closure of the loader MODULE's own
 ``torchcell.datamodels`` imports (``provenance/schema_deps.py:loader_closure``), so
-adding ``FitnessPhenotype`` and ``DeletionStrainPerturbation`` to ``schmidt2016.py``
-would mark the already-served ``proteome_schmidt2016`` store stale and force a full
+adding ``EnvironmentResponsePhenotype`` and ``ReleasedIdentifierPerturbation`` to
+``schmidt2016.py`` would mark the already-served ``proteome_schmidt2016`` store stale and force a full
 rebuild for a change that does not touch one of its records. The pinned artifact, the
 media objects and the condition table are imported FROM ``schmidt2016`` instead, so
 there is still exactly one copy of each.
@@ -33,14 +57,11 @@ annotation. Until #1045 part 2 each symbol was resolved to a BW25113 locus tag
 (``rimI -> BW25113_4373``, ``rimJ -> BW25113_1066``, ``rimL -> BW25113_1427``); that
 crosswalk is a modeling-time join now.
 
-WHY ``FitnessPhenotype`` AND NOT A LOG RATIO. ``FitnessPhenotype`` is documented as
-``ko_growth_rate/wt_growth_rate`` and its validator CLAMPS a non-positive value to 0.0,
-which would silently destroy a measurement. Measured on the released table, every one of
-the six ratios is strictly positive -- 0.454350 (ΔrimJ acetate) to 1.012567 (ΔrimI
-acetate) -- so the clamp never fires and no information is lost. The log2 route through
-``EnvironmentResponsePhenotype`` is therefore not taken. (Table S23's per-condition
-growth rates DO include non-positive values, which is one of the reasons that table is
-not loaded here; see the dendron note.)
+WHY NOT ``FitnessPhenotype`` ANY MORE. ``FitnessPhenotype`` is documented as
+``ko_growth_rate/wt_growth_rate``: a ratio. One culture's absolute rate is not a ratio,
+and the wild-type cultures, which are records now, have no ratio of their own, so the
+absolute ``MeasurementType.growth_rate`` (an ``ABSOLUTE_MEASUREMENT_TYPES`` member, the
+route Table S23 and Campos 2018 already take) is what a record states.
 
 THE REPLICATE DESIGN IS BACK-SOLVED, NOT ASSUMED. Table S24 releases three ``Replicate``
 columns plus ``Average`` and ``Stdev``, and the Methods never name the replicate count
@@ -57,24 +78,13 @@ glucose: "... from biological triplicates"; Table S20 lists Replicates 1, 2 and 
 every strain in acetate), but only two growth rates are released, and the released
 count is both the back-solved denominator and the conservative one.
 
-WHAT THE STORED UNCERTAINTY IS, EXACTLY. ``fitness`` is a ratio of two independently
-measured means, and the released ``Stdev`` is a dispersion of the NUMERATOR in h^-1, so
-it cannot be stored verbatim against a dimensionless ratio. Two numbers are stored and
-each is named:
-
-- ``fitness_uncertainty`` is ``Stdev_strain / mean(WT)`` with
-  ``fitness_uncertainty_type=sample_sd`` and ``n_samples`` the strain's released
-  replicate count. This is exact arithmetic: it is the sample standard deviation of the
-  n released ratio observations ``{rate_r / mean(WT)}``, so the released statistic's kind
-  and n survive the change of units.
-- ``fitness_se`` is supplied explicitly as the delta-method standard error of the ratio,
-  ``fitness * sqrt((SE_strain/mean_strain)^2 + (SE_WT/mean_WT)^2)`` with
-  ``SE_x = Stdev_x / sqrt(n_x)``. The ONE assumption is that the strain's and the
-  wild-type's cultures are independent, which the cultivation protocol makes true (each
-  is its own shake flask inoculated from a preculture). It is always at least as large as
-  the auto-derived ``fitness_uncertainty / sqrt(n)``, which conditions on the wild-type
-  mean as a fixed denominator and so understates the spread; the build asserts that
-  direction over every record, so the stored SE can never be the optimistic one.
+WHAT THE REFERENCE'S UNCERTAINTY IS. The wild type's released ``Stdev`` is a sample SD
+in h^-1 on the same scale as the reference's released ``Average``, so it is stored
+verbatim as ``environment_response_uncertainty`` with ``sample_sd`` and the back-solved
+``n_samples`` (2 in glucose, 3 in acetate); the schema derives the SE from it. The
+deletion rows' released ``Average`` and ``Stdev`` are the authors' statistics over
+cultures that are records now, so they are not stored on any record (a record is one
+culture); ``check_released_statistics`` still pins them to the replicate cells.
 
 THE MEDIUM HEADERS ARE VERIFIED AGAINST THE VALUES, NOT TRUSTED. This release is already
 known to mislabel a block: Table S6 carries LB's coefficient of variation under the
@@ -120,13 +130,15 @@ from torchcell.data import (
     verify_raw_files,
 )
 from torchcell.datamodels.schema import (
+    AssayType,
     Environment,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
+    EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
-    FitnessExperiment,
-    FitnessExperimentReference,
-    FitnessPhenotype,
     Genotype,
+    MeasurementType,
     ReleasedIdentifierPerturbation,
     ReleasedKind,
     SampleUnit,
@@ -175,9 +187,20 @@ MEDIUM_BLOCKS: tuple[tuple[str, str], ...] = (
 SCHMIDT_REFERENCE_STRAIN: EcoliK12StrainName = sm.SCHMIDT_REFERENCE_STRAIN
 BW25113_NAMESPACE = STRAIN_GENE_NAMESPACES[SCHMIDT_REFERENCE_STRAIN]
 KEIO_COLLECTION = "KEIO collection"
-#: 3 deletions x 2 media; the two wild-type rows are the references, not records.
-EXPECTED_RECORDS = 6
+#: One record per released replicate rate (2026-11-24): 17 deletion cultures (3 + 3 + 3
+#: in glucose, 3 + 2 + 3 in acetate) and 5 wild-type cultures (2 + 3), measured on the
+#: pinned sheet. 6 FitnessExperiment ratios before.
+EXPECTED_DELETION_RECORDS = 17
+EXPECTED_WILD_TYPE_RECORDS = 5
+EXPECTED_RECORDS = EXPECTED_DELETION_RECORDS + EXPECTED_WILD_TYPE_RECORDS
+#: One aggregate reference per medium: the authors' released wild-type Average.
 EXPECTED_REFERENCES = 2
+#: What one stored number is: the released header plus the Methods' fit (the same words
+#: ``schmidt2016_s23_growth_rate`` uses for Table S23's rates).
+UNITS = "growth rate in h^-1, from flow-cytometry cell counts over time"
+#: Every record and reference is in an M9 carbon-source medium, so every environment
+#: carries its carbon-source perturbation.
+EXPECTED_UNPERTURBED = 0
 #: Relative tolerance of the released-statistics identities against the bytes.
 IDENTITY_RTOL = 1e-9
 #: Table S23's own BW25113 rate is within this relative distance of Table S24's
@@ -284,6 +307,16 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "strain in acetate, so one Table S24 replicate is one independently grown "
         "culture",
     ),
+    # 2026-11-24 (#1178): a released rate is fit to ONE culture's cell counts, so a
+    # Replicate cell is one culture and one record.
+    "one_rate_per_culture": _paper(
+        "one released Replicate cell is the growth rate of one culture, fit to that "
+        "culture's flow-cytometry cell counts",
+        _Q_GROWTH_RATE_FIT,
+        note="the at-least-four consecutive cell counts are technical points of one "
+        "curve, combined by the authors into the one released rate; Table S24 does not "
+        "itself name the replicate kind (see sample_unit)",
+    ),
     "growth_table": _si2("Table S24", _Q_TABLE_S24),
     "condition_details_table": _si2(
         "Table S23",
@@ -326,8 +359,17 @@ class StrainRates(BaseModel):
     replicates: tuple[float, ...] = Field(
         description="the non-empty Replicate cells, in sheet order"
     )
+    replicate_labels: tuple[str, ...] = Field(
+        description="the released column header of each non-empty Replicate cell "
+        "(``Replicate 1`` .. ``Replicate 3``), aligned with ``replicates``"
+    )
     average_released: float
     stdev_released: float
+
+    @property
+    def is_wild_type(self) -> bool:
+        """True for the ``WT`` row, whose cultures carry the empty genotype."""
+        return self.strain == WILD_TYPE_LABEL
 
     @property
     def n_samples(self) -> int:
@@ -343,11 +385,6 @@ class StrainRates(BaseModel):
     def sample_sd(self) -> float:
         """Sample (n-1) standard deviation of the released replicates."""
         return statistics.stdev(self.replicates)
-
-    @property
-    def standard_error(self) -> float:
-        """Standard error of this strain's mean growth rate."""
-        return self.sample_sd / math.sqrt(self.n_samples)
 
     @property
     def gene_symbol(self) -> str:
@@ -410,11 +447,12 @@ def read_table_s24(path: str) -> tuple[MediumBlock, ...]:
             strain = "" if row[0] is None else str(row[0]).strip()
             if strain not in (WILD_TYPE_LABEL, *DELETION_LABELS):
                 break
-            replicates = tuple(
-                float(cell)
-                for cell in row[1:4]
+            present = [
+                (REPLICATE_HEADERS[position], float(cell))
+                for position, cell in enumerate(row[1:4])
                 if isinstance(cell, (int, float)) and not isinstance(cell, bool)
-            )
+            ]
+            replicates = tuple(value for _, value in present)
             if len(replicates) < 2:
                 raise RuntimeError(
                     f"Table S24 {medium}/{strain} releases {len(replicates)} replicate"
@@ -425,6 +463,7 @@ def read_table_s24(path: str) -> tuple[MediumBlock, ...]:
                 strain=strain,
                 row_number=offset,
                 replicates=replicates,
+                replicate_labels=tuple(label for label, _ in present),
                 average_released=float(row[4]),
                 stdev_released=float(row[5]),
             )
@@ -590,53 +629,65 @@ def check_medium_headers(
 # --------------------------------------------------------------------------- #
 # Records
 # --------------------------------------------------------------------------- #
-def fitness_phenotype(strain: StrainRates, wild_type: StrainRates) -> FitnessPhenotype:
-    """One deletion strain's growth rate as a ratio to the wild type of its medium.
+#: A record is one culture's one released rate, so it has no dispersion of its own.
+RECORD_GAPS: tuple[ProvenanceGap, ...] = (
+    ProvenanceGap(
+        field="environment_response_uncertainty",
+        reason=ProvenanceGapReason.not_applicable_single_measurement,
+        note="one culture, one released Table S24 Replicate rate: a single measurement "
+        "has no dispersion of its own",
+    ),
+    ProvenanceGap(
+        field="environment_response_se",
+        reason=ProvenanceGapReason.not_applicable_single_measurement,
+        note="a single measurement has no standard error",
+    ),
+)
 
-    ``fitness_uncertainty`` is the released ``Stdev`` divided by the wild-type mean,
-    which is the sample standard deviation of the n released ratio observations, and
-    ``fitness_se`` is the delta-method standard error of the ratio, which also carries
-    the wild type's own spread. The second is never smaller than what the first derives.
-    """
-    fitness = strain.mean / wild_type.mean
-    uncertainty = strain.stdev_released / wild_type.mean
-    propagated = fitness * math.sqrt(
-        (strain.standard_error / strain.mean) ** 2
-        + (wild_type.standard_error / wild_type.mean) ** 2
-    )
-    conditioned = uncertainty / math.sqrt(strain.n_samples)
-    if propagated < conditioned:
-        raise RuntimeError(
-            f"{strain.medium}/{strain.strain}: the propagated SE {propagated} is "
-            f"smaller than the wild-type-conditioned {conditioned}"
-        )
-    return FitnessPhenotype(
-        fitness=fitness,
-        fitness_se=propagated,
-        fitness_uncertainty=uncertainty,
-        fitness_uncertainty_type=UncertaintyType.sample_sd,
-        n_samples=strain.n_samples,
+
+def replicate_phenotype(
+    strain: StrainRates, position: int
+) -> EnvironmentResponsePhenotype:
+    """One culture's released growth rate in h^-1, verbatim: n = 1, no dispersion."""
+    return EnvironmentResponsePhenotype(
+        measurement_type=MeasurementType.growth_rate,
+        assay_type=AssayType.other,
+        environment_response=strain.replicates[position],
+        units=UNITS,
+        n_samples=1,
         sample_unit=SampleUnit.biological_replicate,
+        replicate_id=strain.replicate_labels[position],
+        provenance_gaps=list(RECORD_GAPS),
     )
 
 
-def reference_phenotype(wild_type: StrainRates) -> FitnessPhenotype:
-    """The wild type of one medium: the ratio of its own mean to itself, 1.0.
+def reference_phenotype(wild_type: StrainRates) -> EnvironmentResponsePhenotype:
+    """The wild type of one medium: the authors' released ``Average`` and ``Stdev``.
 
-    Its uncertainty is the wild type's own relative spread, ``Stdev / mean``, which is
-    the sample standard deviation of the n ratio observations the reference contributes.
+    An aggregate over the wild-type cultures, each of which is also a record, so
+    ``replicate_id`` is None. ``Stdev`` is the sample SD of the released replicates and
+    ``n_samples`` their count (both back-solved and asserted by
+    :func:`check_released_statistics`); the schema derives the SE from them.
     """
-    return FitnessPhenotype(
-        fitness=1.0,
-        fitness_uncertainty=wild_type.stdev_released / wild_type.mean,
-        fitness_uncertainty_type=UncertaintyType.sample_sd,
+    if not wild_type.is_wild_type:
+        raise ValueError(f"{wild_type.strain!r} is not the wild-type row")
+    return EnvironmentResponsePhenotype(
+        measurement_type=MeasurementType.growth_rate,
+        assay_type=AssayType.other,
+        environment_response=wild_type.average_released,
+        environment_response_uncertainty=wild_type.stdev_released,
+        environment_response_uncertainty_type=UncertaintyType.sample_sd,
         n_samples=wild_type.n_samples,
         sample_unit=SampleUnit.biological_replicate,
+        units=UNITS,
+        replicate_id=None,
     )
 
 
 def build_genotype(strain: StrainRates) -> Genotype:
-    """One KEIO single deletion, keyed by the symbol its row label releases."""
+    """One KEIO single deletion keyed by its released symbol; the wild type is empty."""
+    if strain.is_wild_type:
+        return Genotype(perturbations=[])
     return Genotype(
         perturbations=[
             ReleasedIdentifierPerturbation(
@@ -673,7 +724,7 @@ def build_environments() -> dict[str, Environment]:
 # --------------------------------------------------------------------------- #
 @register_dataset
 class GrowthRateSchmidt2016Dataset(ExperimentDataset):
-    """Schmidt 2016 Table S24: rim-deletion growth rates as WT-relative fitness."""
+    """Schmidt 2016 Table S24: one absolute growth rate per released culture."""
 
     organism = Organism.ecoli
 
@@ -693,12 +744,12 @@ class GrowthRateSchmidt2016Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return FitnessExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return FitnessExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -726,7 +777,7 @@ class GrowthRateSchmidt2016Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Build one fitness record per (deletion strain, medium) and write the LMDB."""
+        """Build one record per released replicate rate and write the LMDB."""
         verify_raw_files(self.raw_dir, sm.DATA_SHA256)
         path = osp.join(self.raw_dir, sm.SI2)
         blocks = read_table_s24(path)
@@ -746,53 +797,62 @@ class GrowthRateSchmidt2016Dataset(ExperimentDataset):
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for block in tqdm(blocks, desc="schmidt2016 growth rate"):
                 environment = environments[block.medium]
-                reference = FitnessExperimentReference(
+                reference = EnvironmentResponseExperimentReference(
                     dataset_name=self.name,
                     genome_reference=reference_genome,
                     environment_reference=environment,
                     phenotype_reference=reference_phenotype(block.wild_type),
                 )
-                for strain in block.deletions:
-                    phenotype = fitness_phenotype(strain, block.wild_type)
-                    experiment = FitnessExperiment(
-                        dataset_name=self.name,
-                        genotype=build_genotype(strain),
-                        environment=environment,
-                        phenotype=phenotype,
-                    )
-                    txn.put(
-                        f"{index}".encode(),
-                        self._intern_record(experiment, reference, pub, itxn),
-                    )
-                    index += 1
-                    rows.append(
-                        {
-                            "medium": block.medium,
-                            "strain": strain.strain,
-                            "gene_symbol": strain.gene_symbol,
-                            "n_samples": strain.n_samples,
-                            "growth_rate_h1": strain.mean,
-                            "wild_type_growth_rate_h1": block.wild_type.mean,
-                            "wild_type_n_samples": block.wild_type.n_samples,
-                            "fitness": phenotype.fitness,
-                            "fitness_uncertainty": phenotype.fitness_uncertainty,
-                            "fitness_se": phenotype.fitness_se,
-                        }
-                    )
+                for strain in block.rows:
+                    genotype = build_genotype(strain)
+                    for position in range(strain.n_samples):
+                        phenotype = replicate_phenotype(strain, position)
+                        experiment = EnvironmentResponseExperiment(
+                            dataset_name=self.name,
+                            genotype=genotype,
+                            environment=environment,
+                            phenotype=phenotype,
+                        )
+                        txn.put(
+                            f"{index}".encode(),
+                            self._intern_record(experiment, reference, pub, itxn),
+                        )
+                        index += 1
+                        rows.append(
+                            {
+                                "medium": block.medium,
+                                "strain": strain.strain,
+                                "gene_symbol": (
+                                    None if strain.is_wild_type else strain.gene_symbol
+                                ),
+                                "sheet_row": strain.row_number,
+                                "replicate_id": phenotype.replicate_id,
+                                "growth_rate_h1": phenotype.environment_response,
+                                "released_row_average_h1": strain.average_released,
+                                "released_row_n": strain.n_samples,
+                            }
+                        )
         env.close()
         interned_env.close()
 
         if index != EXPECTED_RECORDS:
             raise RuntimeError(f"{index} records, the module states {EXPECTED_RECORDS}")
+        wild_type = sum(1 for row in rows if row["gene_symbol"] is None)
+        if wild_type != EXPECTED_WILD_TYPE_RECORDS:
+            raise RuntimeError(
+                f"{wild_type} wild-type records, the module states "
+                f"{EXPECTED_WILD_TYPE_RECORDS}"
+            )
         self._write_ledgers(blocks, rows, statistics_check, header_check)
         log.info(
-            "Schmidt 2016 Table S24: %d records (+ %d wild-type references) over %d "
-            "media; fitness range %.6f to %.6f",
+            "Schmidt 2016 Table S24: %d records (%d deletion + %d wild-type cultures) "
+            "over %d media; rate range %.6f to %.6f h^-1",
             index,
+            index - wild_type,
+            wild_type,
             len(blocks),
-            len(blocks),
-            min(row["fitness"] for row in rows),
-            max(row["fitness"] for row in rows),
+            min(row["growth_rate_h1"] for row in rows),
+            max(row["growth_rate_h1"] for row in rows),
         )
 
     def _write_ledgers(
@@ -804,30 +864,47 @@ class GrowthRateSchmidt2016Dataset(ExperimentDataset):
     ) -> None:
         """The retention ledger, the sourcing table and the released-statistics checks."""
         out = Path(self.preprocess_dir)
-        released = sum(len(block.rows) for block in blocks)
+        released_rows = sum(len(block.rows) for block in blocks)
+        released_cells = sum(row.n_samples for block in blocks for row in block.rows)
         (out / "dropped_records.json").write_text(
             json.dumps(
                 {
                     "dataset": self.name,
-                    "source_rows": released,
+                    "source_rows": released_rows,
+                    "source_replicate_cells": released_cells,
                     "kept_records": len(rows),
+                    "records_by_kind": {
+                        "deletion": sum(
+                            1 for r in rows if r["gene_symbol"] is not None
+                        ),
+                        "wild_type": sum(1 for r in rows if r["gene_symbol"] is None),
+                    },
+                    "records_by_row": {
+                        f"{block.medium}/{row.strain}": row.n_samples
+                        for block in blocks
+                        for row in block.rows
+                    },
                     "reference_rows": [
                         f"{block.medium}/{WILD_TYPE_LABEL}" for block in blocks
                     ],
                     "dropped_records": 0,
                     "rules": [],
                     "notes": [
-                        f"{released} released Table S24 rows = {len(rows)} records + "
-                        f"{len(blocks)} wild-type rows, which are the per-medium "
-                        "phenotype_reference rather than records: an unperturbed parent "
-                        "is the reference a fitness ratio is taken against",
-                        "no row is dropped; both media have a MEDIA_LIBRARY entry, and "
-                        "each deletion is keyed by the symbol its row label releases "
-                        "(#1045 part 2)",
-                        "Table S23's 26 per-condition growth rates are NOT loaded: an "
-                        "absolute rate has no MeasurementType member (gap 1 of the E. "
-                        "coli SI audit), two of its rows are negative, and its Stdev's "
-                        "replicate design is neither stated nor back-solvable",
+                        f"{released_cells} released Replicate cells over "
+                        f"{released_rows} Table S24 rows = {len(rows)} records, one per "
+                        "culture (2026-11-24, #1178): the wild-type cultures are records "
+                        "with the empty genotype, and each medium's phenotype_reference "
+                        "is the authors' released wild-type Average and Stdev "
+                        "(replicate_id None)",
+                        "no released cell is dropped; both media have a MEDIA_LIBRARY "
+                        "entry, and each deletion is keyed by the symbol its row label "
+                        "releases (#1045 part 2)",
+                        "the released per-row Average and Stdev of the deletion rows "
+                        "are not stored on any record (each record is one culture); they "
+                        "are asserted against the replicate cells in "
+                        "released_statistics_check.json",
+                        "Table S23's per-condition rates are served by "
+                        "GrowthRateS23Schmidt2016Dataset, not here",
                     ],
                 },
                 indent=2,
@@ -864,7 +941,7 @@ class GrowthRateSchmidt2016Dataset(ExperimentDataset):
                 indent=2,
             )
         )
-        pd.DataFrame(list(rows)).to_csv(out / "strains.csv", index=False)
+        pd.DataFrame(list(rows)).to_csv(out / "records.csv", index=False)
 
     def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
         """Preprocessing is handled inside process() for this dataset."""
@@ -887,19 +964,23 @@ def verify_build(
     genome: EcoliK12Genome | None = None,
     expected_count: int = EXPECTED_RECORDS,
 ) -> VerificationReport:
-    """Run the fitness L0-L4 gate over a built tree and write the report.
+    """Run the environment-response L0-L4 gate over a built tree and write the report.
 
-    The gene universe and the canonical-name resolver are the record's own pinned
-    BW25113 assembly, not the yeast default, which is how the landed Campos 2018 loader
-    states the same situation for the same collection.
+    ``reference_centered=False`` selects the absolute branch: each reference states the
+    released wild-type rate on the records' own h^-1 scale, and the branch refuses any
+    record whose ``measurement_type`` is not in ``ABSOLUTE_MEASUREMENT_TYPES``. The gene
+    universe and the canonical-name resolver are the record's own pinned BW25113
+    assembly.
     """
-    from torchcell.verification.fitness import verify_fitness_dataset
+    from torchcell.verification.environment_response import (
+        verify_environment_response_dataset,
+    )
     from torchcell.verification.runners import load_records
 
     records = load_records(dataset_root)
     if genome is None:
         genome = bacterial_genome("ecoli", SCHMIDT_REFERENCE_STRAIN, data_root)
-    report = verify_fitness_dataset(
+    report = verify_environment_response_dataset(
         records,
         dataset_name=osp.basename(osp.normpath(dataset_root)),
         provenance=Provenance(
@@ -907,10 +988,11 @@ def verify_build(
             citation_key=sm.CITATION_KEY,
             sha256=sm.SI2_SHA256,
             method=(
-                "Table S24 'Growth rate (h-1)' replicate columns: one "
-                "FitnessExperiment per (KEIO deletion strain, medium), "
-                "fitness = mean(strain replicates) / mean(WT replicates) of the SAME "
-                "medium, fitness_se = the delta-method SE of that ratio"
+                "Table S24 'Replicate 1..3' growth rates (h-1): one "
+                "EnvironmentResponseExperiment per released culture rate "
+                "(MeasurementType.growth_rate, absolute, n = 1), the wild-type "
+                "cultures included with the empty genotype; each medium's reference "
+                "is the released wild-type Average and Stdev"
             ),
             page=f"si2.xlsx sheets '{SHEET_S24}' and '{SHEET_S23}'",
             retrieved=sm.SI2_RETRIEVED_AT,
@@ -919,6 +1001,8 @@ def verify_build(
         sgd_genes=set(genome.genbank.loci),
         gene_universe_label=f"BW25113 ({genome.ASSEMBLY_SET})",
         resolve_gene_name=genome.resolve_gene_name,
+        reference_centered=False,
+        expected_unperturbed=EXPECTED_UNPERTURBED,
     )
     out = osp.join(dataset_root, "preprocess", "verification_report.json")
     os.makedirs(osp.dirname(out), exist_ok=True)
@@ -945,7 +1029,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "build":
         dataset = GrowthRateSchmidt2016Dataset(root=root)
         print(f"len = {len(dataset)}")
-        print(Path(root, "preprocess", "strains.csv").read_text())
+        print(Path(root, "preprocess", "records.csv").read_text())
         return 0
     report = verify_build(root, data_root)
     print(report.summary())

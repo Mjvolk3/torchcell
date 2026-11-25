@@ -13,9 +13,10 @@ object and the loader reads no annotation (#1045 part 2), so nothing reads
 
 The ``@pytest.mark.data`` tests read the real mirror and pin the numbers the dendron note
 states: eight released cells, the two cells that release two replicates rather than
-three, that the released ``Stdev`` is a sample and not a population standard deviation,
-that every fitness ratio is strictly positive so ``FitnessPhenotype``'s clamp never
-fires, and that Table S24's medium headers agree with Table S23's own growth rates.
+three, the 22 released replicate rates (17 deletion + 5 wild-type cultures) that are the
+records since 2026-11-24, that the released ``Stdev`` is a sample and not a population
+standard deviation, that the per-culture rates reproduce the six ratios the store held
+before, and that Table S24's medium headers agree with Table S23's own growth rates.
 """
 
 from __future__ import annotations
@@ -36,9 +37,11 @@ import torchcell.datasets.ecoli.schmidt2016 as sm
 import torchcell.datasets.ecoli.schmidt2016_growth_rate as gr
 from torchcell.data import file_sha256
 from torchcell.datamodels.schema import (
+    AssayType,
     BacterialAssemblySet,
     BacterialGeneNamespace,
     EnvironmentPhysicalPerturbation,
+    MeasurementType,
     ReferenceGenome,
     ReleasedKind,
     SampleUnit,
@@ -46,6 +49,7 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.sequence.genome.base import GeneNameResolution, GeneNameStatus
 from torchcell.verification.report import FindingClass, finding_class_of
+from torchcell.verification.sourced import ProvenanceGapReason
 
 ASSEMBLY_SET: BacterialAssemblySet = "ecoli_K12_BW25113_ASM75055v1"
 NAMESPACE: BacterialGeneNamespace = "ecoli_k12_bw25113_locus_tag"
@@ -123,8 +127,11 @@ def workbook(tmp_path: Path) -> Path:
 def test_declared_shape_is_three_deletions_in_two_media() -> None:
     assert gr.DELETION_LABELS == ("ΔrimI", "ΔrimJ", "ΔrimL")
     assert [medium for medium, _ in gr.MEDIUM_BLOCKS] == ["Glucose", "Acetate"]
-    assert gr.EXPECTED_RECORDS == len(gr.DELETION_LABELS) * len(gr.MEDIUM_BLOCKS)
+    # one record per released culture: 17 deletion + 5 wild-type rates
+    assert (gr.EXPECTED_DELETION_RECORDS, gr.EXPECTED_WILD_TYPE_RECORDS) == (17, 5)
+    assert gr.EXPECTED_RECORDS == 22
     assert gr.EXPECTED_REFERENCES == len(gr.MEDIUM_BLOCKS)
+    assert gr.EXPECTED_UNPERTURBED == 0
     # Both media are conditions the proteome loader already sources a medium for.
     for _medium, column in gr.MEDIUM_BLOCKS:
         assert sm.CONDITIONS_BY_COLUMN[column].drop is None
@@ -134,6 +141,7 @@ def test_sourced_values_quote_the_pinned_artifacts() -> None:
     assert gr.SOURCED_VALUES["deletion_collection"].value == gr.KEIO_COLLECTION
     assert gr.SOURCED_VALUES["sample_unit"].value == "biological_replicate"
     assert gr.SOURCED_VALUES["reference_strain"].value == "BW25113"
+    assert gr.SOURCED_VALUES["one_rate_per_culture"].quote == gr._Q_GROWTH_RATE_FIT
     assert {v.provenance.sha256 for v in gr.SOURCED_VALUES.values()} == {
         sm.PAPER_MD_SHA256,
         sm.SI2_SHA256,
@@ -161,9 +169,9 @@ def test_read_table_s24_parses_both_blocks_and_their_replicate_counts(
             assert row.n_samples == len(RATES[block.medium][row.strain])
             assert row.mean == pytest.approx(row.average_released)
             assert row.sample_sd == pytest.approx(row.stdev_released)
-            assert row.standard_error == pytest.approx(
-                row.sample_sd / math.sqrt(row.n_samples)
-            )
+            # each value carries the header of the column it was read from
+            assert row.replicate_labels == gr.REPLICATE_HEADERS[: row.n_samples]
+            assert row.is_wild_type is (row.strain == gr.WILD_TYPE_LABEL)
     glucose = blocks[0]
     assert glucose.deletions[2].n_samples == 2
     assert [row.gene_symbol for row in glucose.deletions] == ["rimI", "rimJ", "rimL"]
@@ -277,61 +285,51 @@ def test_medium_headers_agree_with_table_s23_and_a_swap_is_refused(
 # --------------------------------------------------------------------------- #
 # Phenotype and genotype
 # --------------------------------------------------------------------------- #
-def test_fitness_is_the_ratio_to_the_wild_type_of_the_same_medium(
-    workbook: Path,
-) -> None:
+def test_a_replicate_record_is_one_culture_rate_verbatim(workbook: Path) -> None:
+    """Policy #1178: n = 1, no dispersion, the released header as replicate_id."""
     blocks = gr.read_table_s24(str(workbook))
     for block in blocks:
-        for strain in block.deletions:
-            phenotype = gr.fitness_phenotype(strain, block.wild_type)
-            assert phenotype.fitness == pytest.approx(
-                strain.mean / block.wild_type.mean
-            )
-            assert phenotype.fitness > 0.0
-            assert phenotype.n_samples == strain.n_samples
-            assert phenotype.sample_unit == SampleUnit.biological_replicate
-            assert phenotype.fitness_uncertainty_type == UncertaintyType.sample_sd
-            # the uncertainty is the released SD rescaled into the ratio's units
-            assert phenotype.fitness_uncertainty == pytest.approx(
-                strain.stdev_released / block.wild_type.mean
-            )
-            # the stored SE also carries the wild type's own spread, so it is never
-            # smaller than what the uncertainty alone would derive
-            assert phenotype.fitness_se is not None
-            uncertainty = phenotype.fitness_uncertainty
-            assert uncertainty is not None
-            assert phenotype.fitness_se >= uncertainty / math.sqrt(strain.n_samples)
+        for strain in block.rows:
+            for position, value in enumerate(strain.replicates):
+                phenotype = gr.replicate_phenotype(strain, position)
+                assert phenotype.measurement_type is MeasurementType.growth_rate
+                assert phenotype.assay_type is AssayType.other
+                assert phenotype.environment_response == value
+                assert phenotype.units == gr.UNITS
+                assert phenotype.n_samples == 1
+                assert phenotype.sample_unit == SampleUnit.biological_replicate
+                assert phenotype.replicate_id == f"Replicate {position + 1}"
+                assert phenotype.environment_response_uncertainty is None
+                assert phenotype.environment_response_se is None
+                assert {
+                    (gap.field, gap.reason) for gap in phenotype.provenance_gaps
+                } == {
+                    (field, ProvenanceGapReason.not_applicable_single_measurement)
+                    for field in (
+                        "environment_response_uncertainty",
+                        "environment_response_se",
+                    )
+                }
 
 
-def test_reference_fitness_is_one_with_the_wild_types_own_relative_spread(
-    workbook: Path,
-) -> None:
+def test_reference_is_the_released_wild_type_average_and_stdev(workbook: Path) -> None:
     blocks = gr.read_table_s24(str(workbook))
     for block in blocks:
         reference = gr.reference_phenotype(block.wild_type)
-        assert reference.fitness == 1.0
+        assert reference.replicate_id is None
+        assert reference.environment_response == block.wild_type.average_released
+        assert (
+            reference.environment_response_uncertainty == block.wild_type.stdev_released
+        )
+        assert reference.environment_response_uncertainty_type is (
+            UncertaintyType.sample_sd
+        )
         assert reference.n_samples == block.wild_type.n_samples
-        uncertainty = reference.fitness_uncertainty
-        assert uncertainty is not None
-        assert uncertainty == pytest.approx(
-            block.wild_type.stdev_released / block.wild_type.mean
+        assert reference.environment_response_se == pytest.approx(
+            block.wild_type.stdev_released / math.sqrt(block.wild_type.n_samples)
         )
-        assert reference.fitness_se == pytest.approx(
-            uncertainty / math.sqrt(block.wild_type.n_samples)
-        )
-
-
-def test_fitness_refuses_a_propagated_se_below_the_conditioned_one(
-    workbook: Path,
-) -> None:
-    """The conservatism direction is asserted, not assumed."""
-    blocks = gr.read_table_s24(str(workbook))
-    strain = blocks[0].deletions[0]
-    # A wild type with a huge mean and no spread makes the propagated SE the smaller of
-    # the two only if the released SD is inflated past its own replicates.
-    inflated = strain.model_copy(update={"stdev_released": strain.sample_sd * 100.0})
-    with pytest.raises(RuntimeError, match="propagated SE"):
-        gr.fitness_phenotype(inflated, blocks[0].wild_type)
+    with pytest.raises(ValueError, match="not the wild-type row"):
+        gr.reference_phenotype(blocks[0].deletions[0])
 
 
 def test_genotype_is_one_keio_deletion_keyed_by_its_released_symbol(
@@ -349,6 +347,8 @@ def test_genotype_is_one_keio_deletion_keyed_by_its_released_symbol(
     assert perturbation.released_kind is ReleasedKind.deletion
     assert perturbation.collection == gr.KEIO_COLLECTION
     assert perturbation.cassette is None
+    # a wild-type culture is a record with the empty genotype
+    assert gr.build_genotype(blocks[0].wild_type).perturbations == []
 
 
 def test_both_media_build_distinct_environments_from_the_proteome_condition_table() -> (
@@ -447,7 +447,7 @@ def test_download_links_the_mirror(
         dataset.download()
 
 
-def test_process_builds_six_records_and_two_references(
+def test_process_builds_one_record_per_culture_and_two_references(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     root = tmp_path / "growth_rate_schmidt2016"
@@ -462,26 +462,44 @@ def test_process_builds_six_records_and_two_references(
     assert dataset.gene_set == set(LOCUS_TAGS)
 
     items = [dataset.transform_item(dataset[i]) for i in range(len(dataset))]
-    assert {len(i["experiment"].genotype.perturbations) for i in items} == {1}
+    assert sorted(len(i["experiment"].genotype.perturbations) for i in items) == (
+        [0] * gr.EXPECTED_WILD_TYPE_RECORDS + [1] * gr.EXPECTED_DELETION_RECORDS
+    )
     assert {i["publication"].doi for i in items} == {sm.PAPER_DOI}
-    assert {i["reference"].phenotype_reference.fitness for i in items} == {1.0}
-    assert all(i["experiment"].phenotype.fitness > 0.0 for i in items)
-    # six distinct (strain, medium) pairs over three strains and two environments
-    pairs = {
+    # every record is one released rate, verbatim, in sheet order
+    released = [
+        value
+        for strains in RATES.values()
+        for replicates in strains.values()
+        for value in replicates
+    ]
+    assert [i["experiment"].phenotype.environment_response for i in items] == released
+    assert {i["experiment"].phenotype.n_samples for i in items} == {1}
+    assert {i["reference"].phenotype_reference.replicate_id for i in items} == {None}
+    # (genotype, environment, replicate_id) is unique; two references, one per medium
+    keys = {
         (
-            i["experiment"].genotype.perturbations[0].systematic_gene_name,
+            tuple(
+                p.systematic_gene_name for p in i["experiment"].genotype.perturbations
+            ),
             i["experiment"].environment.model_dump_json(),
+            i["experiment"].phenotype.replicate_id,
         )
         for i in items
     }
-    assert len(pairs) == gr.EXPECTED_RECORDS
-    assert len({pair[1] for pair in pairs}) == gr.EXPECTED_REFERENCES
+    assert len(keys) == gr.EXPECTED_RECORDS
+    references = {
+        i["reference"].phenotype_reference.environment_response for i in items
+    }
+    assert references == {statistics.fmean(RATES[medium]["WT"]) for medium in RATES}
     dataset.close_lmdb()
 
     preprocess = Path(dataset.preprocess_dir)
     ledger = json.loads((preprocess / "dropped_records.json").read_text())
     assert ledger["source_rows"] == 8
+    assert ledger["source_replicate_cells"] == gr.EXPECTED_RECORDS
     assert ledger["kept_records"] == gr.EXPECTED_RECORDS
+    assert ledger["records_by_kind"] == {"deletion": 17, "wild_type": 5}
     assert ledger["dropped_records"] == 0
     assert ledger["rules"] == []
     assert ledger["reference_rows"] == ["Glucose/WT", "Acetate/WT"]
@@ -493,9 +511,10 @@ def test_process_builds_six_records_and_two_references(
     assert {gap["field"] for gap in gaps["gaps"]} == {"cassette", "construction"}
     sourced = json.loads((preprocess / "sourced_values.json").read_text())
     assert sourced["deletion_collection"]["value"] == gr.KEIO_COLLECTION
-    strains = pd.read_csv(preprocess / "strains.csv")
-    assert len(strains) == gr.EXPECTED_RECORDS
-    assert set(strains["gene_symbol"]) == set(LOCUS_TAGS)
+    records = pd.read_csv(preprocess / "records.csv")
+    assert len(records) == gr.EXPECTED_RECORDS
+    assert set(records["gene_symbol"].dropna()) == set(LOCUS_TAGS)
+    assert int(records["gene_symbol"].isna().sum()) == gr.EXPECTED_WILD_TYPE_RECORDS
     assert (preprocess / "build_manifest.json").exists()
 
     report = gr.verify_build(str(root), genome=FakeGenome())  # type: ignore[arg-type]
@@ -566,17 +585,31 @@ def test_real_medium_headers_are_not_swapped() -> None:
 
 
 @pytest.mark.data
-def test_real_fitness_ratios_are_all_positive_so_the_clamp_never_fires() -> None:
+def test_real_release_is_22_culture_rates_17_deletion_and_5_wild_type() -> None:
+    blocks = gr.read_table_s24(_real_workbook())
+    per_row = {
+        f"{block.medium}/{row.strain}": row.replicate_labels
+        for block in blocks
+        for row in block.rows
+    }
+    assert sum(len(labels) for labels in per_row.values()) == gr.EXPECTED_RECORDS
+    assert per_row["Glucose/WT"] == ("Replicate 1", "Replicate 2")
+    assert per_row["Acetate/ΔrimJ"] == ("Replicate 1", "Replicate 2")
+    wild_type = sum(len(per_row[f"{m}/WT"]) for m, _ in gr.MEDIUM_BLOCKS)
+    assert wild_type == gr.EXPECTED_WILD_TYPE_RECORDS
+
+
+@pytest.mark.data
+def test_real_culture_rates_reproduce_the_six_ratios_stored_before() -> None:
+    """mean(deletion cultures) / mean(wild-type cultures) is the pre-2026-11-24 value."""
     blocks = gr.read_table_s24(_real_workbook())
     ratios = {
-        f"{block.medium}/{strain.strain}": gr.fitness_phenotype(
-            strain, block.wild_type
-        ).fitness
+        f"{block.medium}/{strain.strain}": statistics.fmean(strain.replicates)
+        / statistics.fmean(block.wild_type.replicates)
         for block in blocks
         for strain in block.deletions
     }
-    assert len(ratios) == gr.EXPECTED_RECORDS
-    assert min(ratios.values()) > 0.0
+    assert len(ratios) == 6
     assert ratios["Acetate/ΔrimJ"] == pytest.approx(0.454350, abs=1e-6)
     assert ratios["Glucose/ΔrimJ"] == pytest.approx(0.611440, abs=1e-6)
     assert ratios["Acetate/ΔrimI"] == pytest.approx(1.012567, abs=1e-6)

@@ -1,0 +1,233 @@
+{
+  "source": {
+    "workbook": "$DATA_ROOT/torchcell-raw/schmidtQuantitativeConditiondependentEscherichia2016/data/si2.xlsx",
+    "sha256": "3280a13ff67a73f25440cff6ee73fb99b5ce3ef57854213dbbf6272be241912f"
+  },
+  "growth_rate": {
+    "records_before": 6,
+    "records_after": 22,
+    "released_replicate_cells": 22,
+    "released_cells_by_row": {
+      "Glucose/WT": [
+        "Replicate 1",
+        "Replicate 2"
+      ],
+      "Glucose/ΔrimI": [
+        "Replicate 1",
+        "Replicate 2",
+        "Replicate 3"
+      ],
+      "Glucose/ΔrimJ": [
+        "Replicate 1",
+        "Replicate 2",
+        "Replicate 3"
+      ],
+      "Glucose/ΔrimL": [
+        "Replicate 1",
+        "Replicate 2",
+        "Replicate 3"
+      ],
+      "Acetate/WT": [
+        "Replicate 1",
+        "Replicate 2",
+        "Replicate 3"
+      ],
+      "Acetate/ΔrimI": [
+        "Replicate 1",
+        "Replicate 2",
+        "Replicate 3"
+      ],
+      "Acetate/ΔrimJ": [
+        "Replicate 1",
+        "Replicate 2"
+      ],
+      "Acetate/ΔrimL": [
+        "Replicate 1",
+        "Replicate 2",
+        "Replicate 3"
+      ]
+    },
+    "records_by_replicate_position": {
+      "Replicate 1": 8,
+      "Replicate 2": 8,
+      "Replicate 3": 6
+    },
+    "records_by_kind": {
+      "wild_type": 5,
+      "deletion": 17
+    },
+    "mean_reproduction": {
+      "rule": "mean(after records of a (gene, medium)) / mean(after wild-type records of that medium) against the before-store fitness",
+      "n_groups_compared": 6,
+      "max_abs_diff": 0.0,
+      "groups": [
+        {
+          "genes": [
+            "rimI"
+          ],
+          "before_fitness": 0.9196081742948825,
+          "after_mean_over_wild_type_mean": 0.9196081742948825,
+          "n_cultures": 3
+        },
+        {
+          "genes": [
+            "rimJ"
+          ],
+          "before_fitness": 0.6114395090919327,
+          "after_mean_over_wild_type_mean": 0.6114395090919327,
+          "n_cultures": 3
+        },
+        {
+          "genes": [
+            "rimL"
+          ],
+          "before_fitness": 0.8977087203738106,
+          "after_mean_over_wild_type_mean": 0.8977087203738106,
+          "n_cultures": 3
+        },
+        {
+          "genes": [
+            "rimI"
+          ],
+          "before_fitness": 1.0125671321160044,
+          "after_mean_over_wild_type_mean": 1.0125671321160044,
+          "n_cultures": 3
+        },
+        {
+          "genes": [
+            "rimJ"
+          ],
+          "before_fitness": 0.45435016111707843,
+          "after_mean_over_wild_type_mean": 0.45435016111707843,
+          "n_cultures": 2
+        },
+        {
+          "genes": [
+            "rimL"
+          ],
+          "before_fitness": 0.6835660580021481,
+          "after_mean_over_wild_type_mean": 0.6835660580021481,
+          "n_cultures": 3
+        }
+      ]
+    },
+    "reference_is_mean_of_wild_type_records_max_abs_diff": 0.0
+  },
+  "copies_per_cell": {
+    "records_before": 21,
+    "records_after": 21,
+    "values_compared": 48335,
+    "max_abs_diff": 0.0,
+    "records_with_se_map_before": 21,
+    "records_with_se_map_after": 0
+  },
+  "replicate_intensity": {
+    "records": 66,
+    "records_by_condition": {
+      "Glucose": 3,
+      "Acetate": 3,
+      "Fumarate": 3,
+      "Glucosamine": 3,
+      "Glycerol": 3,
+      "Pyruvate": 3,
+      "Chemostat µ=0.5": 3,
+      "Chemostat µ=0.35": 3,
+      "LB": 3,
+      "Chemostat µ=0.20": 3,
+      "Chemostat µ=0.12": 3,
+      "Stationary phase 1 day": 3,
+      "Stationary phase 3 days": 3,
+      "Osmotic-stress glucose": 3,
+      "42°C glucose": 3,
+      "pH6 glucose": 3,
+      "Xylose": 3,
+      "Mannose": 3,
+      "Galactose": 3,
+      "Glycerol + AA": 3,
+      "Succinate": 3,
+      "Fructose": 3
+    },
+    "replicate_ids": [
+      "A14-07032",
+      "A14-07033",
+      "A14-07034",
+      "A14-07036",
+      "A14-07037",
+      "A14-07038",
+      "A14-07040",
+      "A14-07041",
+      "A14-07042",
+      "A14-07044",
+      "A14-07045",
+      "A14-07046",
+      "A14-07048",
+      "A14-07049",
+      "A14-07050",
+      "A14-07052",
+      "A14-07053",
+      "A14-07054",
+      "A14-07056",
+      "A14-07057",
+      "A14-07058",
+      "A14-07060",
+      "A14-07061",
+      "A14-07062",
+      "A14-07064",
+      "A14-07065",
+      "A14-07066",
+      "A14-07068",
+      "A14-07069",
+      "A14-07070",
+      "A14-07072",
+      "A14-07073",
+      "A14-07074",
+      "A14-07076",
+      "A14-07077",
+      "A14-07078",
+      "A14-07080",
+      "A14-07081",
+      "A14-07082",
+      "A14-07084",
+      "A14-07085",
+      "A14-07086",
+      "A14-07092",
+      "A14-07093",
+      "A14-07094",
+      "A14-07096",
+      "A14-07097",
+      "A14-07098",
+      "A14-07100",
+      "A14-07101",
+      "A14-07102",
+      "A14-07109",
+      "A14-07110",
+      "A14-07111",
+      "A14-07113",
+      "A14-07114",
+      "A14-07115",
+      "A14-07117",
+      "A14-07118",
+      "A14-07119",
+      "A14-07121",
+      "A14-07122",
+      "A14-07123",
+      "A14-07125",
+      "A14-07126",
+      "A14-07127"
+    ],
+    "protein_keys_per_record": [
+      2058
+    ],
+    "median_reproduction": {
+      "rule": "median over a condition's three culture records against the released Table S8 medianNormInt (the two P63284 rows skipped: Table S8 files that accession twice)",
+      "n_values_compared": 45232,
+      "max_abs_diff": 0.0
+    },
+    "reference_vs_released_glucose_median_max_abs_diff": 0.0
+  },
+  "expected": {
+    "growth_rate": 22,
+    "replicate_intensity": 66,
+    "copies_per_cell": 21
+  }
+}

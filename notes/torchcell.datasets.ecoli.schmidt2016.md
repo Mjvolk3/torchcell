@@ -549,3 +549,13 @@ The schema gained a typed gap on Environment.aerobicity, the regime 'transition'
 | L2 | `se_matches_replicate_count` | pass | SUPPLEMENTARY: 0 of 48335 values disagree with their replicate count (2 keys whose replicate cells the release files twice carry nan by rule) |
 | L3 | `assembly_pin` | pass | SUPPLEMENTARY: assembly pins ["('ecoli_K12_BW25113_ASM75055v1', 'GCA_000750555.1')"] |
 | L4 | `gene_containment_bw25113` | pass | 2359 measured protein keys; 2359 are released symbols outside the ecoli_K12_BW25113_ASM75055v1 locus universe, stored as released |
+
+## 2026.11.24 - Per-replicate review: copies/cell stays, the loader SE leaves (#1174, #1176, #1178)
+
+Values unchanged: 21 records, 48,335 copies/cell values identical to the origin/main build (max abs diff 0.0). What changed: `protein_abundance_se` is `None` on every record and reference, with a typed `not_reported_by_primary` gap (`SE_GAP`). The SE was `scale * stdev(three Table S8 normInt) / sqrt(3)`, a statistic the loader computed from released replicates, which owner decision 2 of #1178 takes off the experiment record; the release states a CV, not an SE. The three per-culture values are records of the new `ProteomeReplicateIntensitySchmidt2016Dataset` ([[torchcell.datasets.ecoli.schmidt2016_replicate_intensity]]). The supplementary verifier row `se_matches_replicate_count` is replaced by `no_loader_computed_se`.
+
+The copies/cell value is the authors' aggregate (released only as one value per protein and condition), so it is data and stays. #1174's "averages released replicates" is not exact: this loader averages nothing.
+
+Docstring fact 3 corrected: the bytes say `copies[i, c] / copies[i, glucose] = k[c] * medianNormInt[i, c] / medianNormInt[i, glucose]` with one protein-independent constant per condition (LB 1.5353, acetate 0.8004), relative spread over 2,056 proteins at most 1.7e-9. The earlier text omitted `k[c]`.
+
+Scratch build `$DATA_ROOT/tmp/scratch/per-replicate-schmidt2016/after/proteome_schmidt2016`: verifier PASS (21/21, environment_uniqueness 21, no_loader_computed_se 0 of 42 phenotypes bad, reference finite on 48,335 values).

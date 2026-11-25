@@ -83,6 +83,7 @@ def test_every_registered_bacterial_dataset_is_mapped_to_its_adapter() -> None:
         + 1  # #879 Wang 2018 Supplementary Data 5 gene-level calls
         + 1
         + 2  # #1175 Choe 2019 per-culture absolute growth rates and metabolites
+        + 1  # #1178 Schmidt 2016 Table S8 per-culture intensities
     )
     assert registered_bacterial_classes() == set(expected)
     mapped = {
@@ -125,6 +126,7 @@ def test_each_adapter_has_its_own_module() -> None:
         + 1  # #879 Wang 2018 Supplementary Data 5 gene-level calls
         + 1
         + 2  # #1175 Choe 2019 per-culture absolute growth rates and metabolites
+        + 1  # #1178 Schmidt 2016 Table S8 per-culture intensities
     )
     assert modules == [f"torchcell.adapters.{b.module}" for b in BACTERIAL]
 
@@ -170,6 +172,7 @@ def test_kg_bacteria_names_exactly_the_registered_bacterial_datasets() -> None:
         + 1  # #879 Wang 2018 Supplementary Data 5 gene-level calls
         + 1
         + 2  # #1175 Choe 2019 per-culture absolute growth rates and metabolites
+        + 1  # #1178 Schmidt 2016 Table S8 per-culture intensities
     )
     classes = [dataset_registry[name] for name in names]
     assert all(cls in dataset_adapter_map for cls in classes)

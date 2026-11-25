@@ -501,3 +501,35 @@ The 9 quality-flagged samples stored, the authors' flag kept in samples.json (88
 | L1 | `withdrawn_samples_refused_not_stored` | pass | SUPPLEMENTARY: 0 records of the 4 samples the authors withdrew (['set1IT007', 'set1IT008', 'set1IT043', 'set1IT044']); 0 of them are in the store; 97 samples stored, expected 97 |
 | L2 | `t_statistic_matches_the_stored_se` | pass | SUPPLEMENTARY: max /t - fit / sqrt(0.1^2 + SE^2)/ = 1.99e-13 over 353662 records (tolerance 1e-09); 0 records lack a t or an SE |
 | L4 | `compendium_cross_check_price2018` | pass | SUPPLEMENTARY: 88 of 92 shared samples compared against data/torchcell/rbtnseq_price2018_ecoli (320848 values); per-sample Pearson r min 0.9890 / median 0.9971 against the bar 0... |
+
+## 2026.11.24 - Per-replicate review (#1178, part of #1172): already one record per biological replicate
+
+Review under the per-replicate policy (one stored record per biological replicate as the source releases it). The store already held one: a record is one (released gene, sample) of `fit_logratios.tab`, and a sample is one culture of KEIO_ML9 grown in one condition, extracted and amplified with its own index. Records 353,662 before and after; nothing is combined across cultures.
+
+### What a replicate is, sourced
+
+- Release page `data/rbarseq/html/Keio/index.html` (sha256 `9085883893edd0d5...`): "Samples with the same value are replicates." (`short`, `REPLICATE_DEFINITION`) and "These experiment names are the column names in most of the other tables." (`name`, `SAMPLE_NAME`).
+- paper.md (sha256 `ca3e7ef27a22a2a2...`) line 52: "all but 5 with at least two biological replicates" (`REPLICATE_DESIGN`).
+- Inside a record the gene value combines the gene's insertion strains of that one culture ("Gene fitness is the weighted average of the strain fitness", line 134); the stored SE is the paper's own over those strains, a statistic the source releases, so it stays.
+- For the 48-well plate samples, "we combined the contents of two replicate wells" before pelleting (line 124): one released value per sample, nothing to split.
+
+Stored samples per `short` label, measured on the deposited Data Set S1: 44 labels with 2 samples, 2 single samples (`D-Glucose (C) M9`, `D-Galacturonic Acid (C) M9`), and the 7 `LB` samples (5 `LB` group + 2 `stress` rows) = 97 samples. The 4 withdrawn sucrose and D-mannitol samples (two more pairs) stay refused, the one author withdrawal.
+
+### Record change: `replicate_id`
+
+Each `EnvironmentResponsePhenotype` now carries the release's sample name as `replicate_id` (`set1IT003`, the same name `screen_id` keys as `Keio:set1IT003`). The reference stays the sample's typical gene, response 0, `replicate_id` None. New L1 verifier row `replicate_id_is_the_released_sample`: every record's `replicate_id` is its sample, every sample holds each stored gene once, no (sample, gene) pair twice. `preprocess/replicates.json` records the replicate groups and the time-zero account.
+
+### The time-zero columns: not records, settled by the source
+
+`fit_logratios.tab` carries 5 `Time0` columns (set1IT002, set1IT049, set1IT050, set2IT091, set2IT092; 18,230 values). They are not stored, and the source settles why:
+
+- The time zeros of a set are pellets of the set's one reference culture: "After the mutant library recovered and reached mid-log phase, we collected cell pellets as a common reference for BarSeq (termed time-zero samples)" (paper.md line 124, `TIME_ZERO_COMMON_REFERENCE`). They are technical replicates of the reference, and the analysis sums them: "We sum the per-strain counts across replicate time-zero samples." (line 134).
+- The release calls their values a negative control, in quotation marks: "not a Time0 (Time0 "fitness" values are computed as a negative control)" and "If this is a Time0 sample, then the self-counts were subtracted out of the other side of the comparison as a negative control." (release page, `TIME_ZERO_NEGATIVE_CONTROL`, `TIME_ZERO_SELF_COUNTS`). The paper uses them only to fit the false-positive count of the moderated t: "Control experiments are comparisons of one time-zero sample versus another from the same day and in the same Illumina sequencing lane." (line 200; Fig. S5).
+- Measured: set2's two columns are one comparison printed twice with the sign flipped (max over genes of |set2IT091 + set2IT092| = 2.1e-15); set1's three columns correlate -0.46 to -0.55 pairwise.
+- Data Set S1 lists 10 time-zero rows; set1IT001 ("virtually no reads", line 64), set2IT011, set2IT012, set2IT035 and set2IT036 have no released per-gene column.
+
+Under policy 2 (technical measurements of one culture are combined, and the source combined them) they are not phenotype records. Storing them would also need an environment for a zero-generation reference pellet and would store set2's comparison twice. Left for the owner only if a null-control dataset is wanted.
+
+### Build and checks
+
+Scratch build `$DATA_ROOT/tmp/scratch/per-replicate-wetmore2015/rbtnseq_wetmore2015_ecoli`: 353,662 records, verifier PASS (3 genome-reference findings reported, not gated), L4 cross-check against the Price 2018 store min r 0.9890. Against the dev store record by record: 353,662 matched, 0 records differ apart from `replicate_id`, max |value difference| 0.0. Grouping by (gene, environment) gives 309,910 groups (284,388 of size 1, 21,876 of size 2, 3,646 of size 7: most replicate pairs differ in `duration_generations`, Data Set S1's per-sample Total Generations), and the group means equal the old ones exactly.

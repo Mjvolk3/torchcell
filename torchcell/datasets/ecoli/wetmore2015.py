@@ -54,7 +54,20 @@ fitness table (``fit_logratios.tab``; for the successful samples it is byte-iden
   quoted beside it), ``Condition_1`` / ``Concentration_1`` / ``Units_1``
   as a carbon- or nitrogen-source ``EnvironmentPhysicalPerturbation``, ``Temperature
   (°C)``, and ``Total Generations`` as ``duration_generations``;
-* reference: the typical gene of the same sample, response 0 by the normalization.
+* reference: the typical gene of the same sample, response 0 by the normalization;
+* replicate_id: the release's sample name (``SAMPLE_NAME``, e.g. ``set1IT003``).
+
+REPLICATES (#1178, reviewed 2026-11-25). A sample is one biological replicate: one
+culture of the library grown in one condition, pelleted, extracted and amplified with its
+own index, released as its own column. Samples sharing a ``short`` label are replicates
+(``REPLICATE_DEFINITION``), and each is its own set of records, so nothing is combined
+across cultures (:data:`EXPECTED_REPLICATE_GROUP_SIZES`). Inside a record the gene value
+combines the gene's insertion strains of that one culture (``GENE_FITNESS``), with the
+paper's own SE over them. The time-zero samples are pellets of each set's one reference
+culture (``TIME_ZERO_COMMON_REFERENCE``), technical replicates whose counts the analysis
+sums into the denominator (``TIME_ZERO_POOLING``); the release's five Time0 "fitness"
+columns are its negative control (``TIME_ZERO_NEGATIVE_CONTROL``,
+``TIME_ZERO_SELF_COUNTS``) and are accounted, not stored (:func:`time_zero_account`).
 
 Not stored, with its typed reason in ``preprocess/dropped_records.json``: only the 4
 sucrose and D-mannitol samples the authors themselves withdrew in 2021
@@ -620,6 +633,54 @@ REPLICATE_DEFINITION = _release(
     page="Documentation, 'The quality scores in the table of experiments'",
     note="each biological replicate is its own sample with its own gene fitness "
     "column, so a stored value is ONE sample and replication lies across records",
+)
+SAMPLE_NAME = _release(
+    "name",
+    "<LI><B>name</B> -- set1H1 means index H1 in set1 for that organism. These "
+    "experiment names are the column names in most of the other tables.",
+    relpath=RELEASE_PAGE,
+    page="Documentation, 'The quality scores in the table of experiments'",
+    note="the release's own label of one sample (one culture of the library grown in "
+    "one condition, one gDNA extraction, one indexed BarSeq PCR): stored verbatim as "
+    "replicate_id (#1178 policy 1), so a record names the replicate it is",
+)
+# Time zeros: the reference culture, measured as technical replicates ---------- #
+TIME_ZERO_COMMON_REFERENCE = _paper(
+    "one recovered culture per set, pelleted as the common reference",
+    "After the mutant library recovered and reached mid-log phase, we collected cell "
+    "pellets as a common reference for BarSeq (termed time-zero samples)",
+    page="Materials and Methods, 'Competitive mutant fitness assays' (paper.md line "
+    "124)",
+    note="the time-zero samples of a set are pellets of ONE culture, the one every "
+    "condition culture of the set is inoculated from: technical replicates of the "
+    "reference, not biological replicates of a condition",
+)
+TIME_ZERO_NEGATIVE_CONTROL = _release(
+    "Time0 'fitness' is a negative control",
+    'not a Time0 (Time0 "fitness" values are computed as a negative control)',
+    relpath=RELEASE_PAGE,
+    page="Documentation, 'As of April 9, 2014, the requirements for a successful "
+    "experiment are'",
+    note="the authors' own quotation marks: the five Time0 columns of "
+    "fit_logratios.tab are a null comparison, never a fitness, and no Time0 sample "
+    "can be a successful experiment",
+)
+TIME_ZERO_SELF_COUNTS = _release(
+    "a Time0 column is that time zero against the set's other time zeros",
+    "If this is a Time0 sample, then the self-counts were subtracted out of the other "
+    "side of the comparison as a negative control.",
+    relpath=RELEASE_PAGE,
+    page="Documentation, 'The quality scores in the table of experiments', t0set",
+    note="so a set with two time-zero columns releases ONE comparison twice, with the "
+    "sign flipped (set2IT091 = -set2IT092 to 2e-15, measured by time_zero_account)",
+)
+TIME_ZERO_CONTROL_COMPARISONS = _paper(
+    "control experiments: one time zero against another of the same day and lane",
+    "Control experiments are comparisons of one time-zero sample versus another from "
+    "the same day and in the same Illumina sequencing lane.",
+    page="Materials and Methods, '(iv) t-like test statistic' (paper.md line 200)",
+    note="used only to fit the false-positive count of the moderated t (Fig. S5); the "
+    "paper reports no phenotype from them",
 )
 REPLICATE_DESIGN = _paper(
     2,
@@ -2280,9 +2341,20 @@ def build_genotype(gene: StoredGene) -> Genotype:
 
 
 def build_phenotype(
-    fitness: float, standard_error: float, t_statistic: float, *, screen_id: str
+    fitness: float,
+    standard_error: float,
+    t_statistic: float,
+    *,
+    screen_id: str,
+    replicate_id: str,
 ) -> EnvironmentResponsePhenotype:
-    """One gene's fitness in one sample, with the paper's SE and the released t."""
+    """One gene's fitness in one sample, with the paper's SE and the released t.
+
+    ``replicate_id`` is the release's sample name (``SAMPLE_NAME``): one sample is one
+    biological replicate of its ``short`` condition (``REPLICATE_DEFINITION``). The SE
+    is the paper's within-sample uncertainty over the gene's insertion strains, a
+    statistic the source releases, so it stays (#1178 policy 4).
+    """
     return EnvironmentResponsePhenotype(
         measurement_type=MeasurementType.log2_ratio,
         assay_type=AssayType.pooled_competitive_growth_barcode,
@@ -2291,6 +2363,7 @@ def build_phenotype(
         environment_response_uncertainty_type=UncertaintyType.standard_error,
         environment_response_t_statistic=t_statistic,
         screen_id=screen_id,
+        replicate_id=replicate_id,
         units=UNITS,
         provenance_gaps=[N_SAMPLES_GAP, SAMPLE_UNIT_GAP],
     )
@@ -2381,6 +2454,7 @@ def iter_records(
                         float(release.standard_error[i, j]),
                         float(release.t[i, j]),
                         screen_id=sample.spec.screen_id,
+                        replicate_id=sample.spec.name,
                     ),
                 ),
                 sample.reference,
@@ -2529,6 +2603,120 @@ def inventory(specs: Sequence[SampleSpec], n_genes: int) -> Inventory:
     )
 
 
+# Replicates (#1178): one record per (gene, sample), a sample is one replicate ------- #
+#: Stored samples per ``short`` label (``REPLICATE_DEFINITION``: same ``short``, same
+#: replicate group) -> how many labels have that many: 44 labels with 2 samples, the 2
+#: single M9 samples ``D-Glucose (C) M9`` and ``D-Galacturonic Acid (C) M9``, and the 7
+#: ``LB`` samples (5 ``LB`` group + 2 ``stress`` rows), measured on the deposited Data
+#: Set S1 2026-11-25. The 4 withdrawn samples are two more pairs, never stored.
+EXPECTED_REPLICATE_GROUP_SIZES: dict[int, int] = {2: 44, 1: 2, 7: 1}
+
+
+def replicate_groups(specs: Sequence[SampleSpec]) -> dict[str, tuple[str, ...]]:
+    """Each ``short`` label -> its stored samples, in Data Set S1 order.
+
+    The stored unit is one sample, so a label's replicates are separate records that
+    share genotype and environment and differ in ``replicate_id``; nothing is combined.
+    """
+    groups: dict[str, list[str]] = {}
+    for spec in specs:
+        if spec.drop_rule is None:
+            groups.setdefault(spec.short, []).append(spec.name)
+    return {short: tuple(names) for short, names in groups.items()}
+
+
+class TimeZeroSet(BaseModel):
+    """The released Time0 columns compared within one ``t0set``."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    t0set: str
+    columns: tuple[str, ...]
+    n_values: int
+    max_abs_column_sum: float = Field(
+        description="max over genes of |sum of the set's Time0 columns|: ~0 for a set "
+        "of two, whose columns are one comparison printed twice with the sign flipped "
+        "(TIME_ZERO_SELF_COUNTS)"
+    )
+
+
+class TimeZeroAccount(BaseModel):
+    """Data Set S1's time-zero samples and the release's Time0 columns, none stored.
+
+    A time-zero sample is a pellet of the set's one recovered reference culture
+    (``TIME_ZERO_COMMON_REFERENCE``), so the time zeros of a set are technical
+    replicates of the reference: the analysis sums their counts into the denominator of
+    every log ratio (``TIME_ZERO_POOLING``). The release's Time0 "fitness" columns are a
+    negative control by the authors' own description (``TIME_ZERO_NEGATIVE_CONTROL``,
+    ``TIME_ZERO_SELF_COUNTS``), not a phenotype of a genotype in a condition, so no
+    record is built from them (#1178 policy 2: technical measurements of one culture
+    are combined, and the source combined these).
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    data_set_s1_time_zeros: tuple[str, ...]
+    released_columns: tuple[str, ...]
+    without_a_released_column: tuple[str, ...] = Field(
+        description="Data Set S1 Time0 rows the per-gene tables carry no column for "
+        "(no quality row either); their counts exist only in the raw read tables"
+    )
+    sets: tuple[TimeZeroSet, ...]
+    n_values: int
+    stored_records: int = 0
+
+
+def time_zero_account(
+    experiments: pd.DataFrame, quality: pd.DataFrame, fitness: pd.DataFrame
+) -> TimeZeroAccount:
+    """Account every Time0 row of Data Set S1 against the all-sample fitness table.
+
+    A released Time0 column is the column of a Data Set S1 Time0 row. Refused: a column
+    headed ``... Time0`` whose sample is no Data Set S1 Time0 row, a released Time0
+    column with no quality row, and a missing value.
+    """
+    rows = tuple(
+        str(n) for n in experiments.loc[experiments["Group"] == "Time0", "name"]
+    )
+    columns = _fitness_columns(fitness, "fitness all")
+    released = tuple(name for name in rows if name in columns)
+    strays = sorted(
+        name
+        for name, header in columns.items()
+        if header.endswith(" Time0") and name not in set(rows)
+    )
+    if strays:
+        raise ValueError(f"Time0 columns with no Data Set S1 Time0 row: {strays}")
+    scored = _unique_index(quality, "Expt_Quality_Keio")
+    unscored = sorted(set(released) - set(scored.index))
+    if unscored:
+        raise ValueError(f"Time0 columns with no quality row: {unscored}")
+    values = fitness[[columns[name] for name in released]]
+    if values.isna().any().any():
+        raise ValueError("a released Time0 column has a missing value")
+    by_set: dict[str, list[str]] = {}
+    for name in released:
+        by_set.setdefault(str(scored.loc[name, "t0set"]), []).append(name)
+    sets = tuple(
+        TimeZeroSet(
+            t0set=t0set,
+            columns=tuple(names),
+            n_values=int(values[[columns[n] for n in names]].size),
+            max_abs_column_sum=float(
+                values[[columns[n] for n in names]].sum(axis=1).abs().max()
+            ),
+        )
+        for t0set, names in by_set.items()
+    )
+    return TimeZeroAccount(
+        data_set_s1_time_zeros=rows,
+        released_columns=released,
+        without_a_released_column=tuple(n for n in rows if n not in set(released)),
+        sets=sets,
+        n_values=int(values.size),
+    )
+
+
 # Dataset ------------------------------------------------------------------------ #
 @register_dataset
 class RbTnseqWetmore2015Dataset(ExperimentDataset):
@@ -2592,9 +2780,13 @@ class RbTnseqWetmore2015Dataset(ExperimentDataset):
             self.raw_dir, {name: pin for name, (_, _, pin) in LOADER_FILE_NAMES.items()}
         )
         s1 = osp.join(self.raw_dir, "si1.xlsx")
-        specs = classify_samples(
-            pd.read_excel(s1, sheet_name=DATA_SET_S1_EXPERIMENTS_SHEET),
-            pd.read_excel(s1, sheet_name=DATA_SET_S1_QUALITY_SHEET),
+        experiments = pd.read_excel(s1, sheet_name=DATA_SET_S1_EXPERIMENTS_SHEET)
+        quality = pd.read_excel(s1, sheet_name=DATA_SET_S1_QUALITY_SHEET)
+        specs = classify_samples(experiments, quality)
+        time_zero = time_zero_account(
+            experiments,
+            quality,
+            pd.read_csv(osp.join(self.raw_dir, "fit_logratios.tab"), sep="\t"),
         )
         release = read_release(
             self.raw_dir, [s.name for s in specs if s.drop_rule is None]
@@ -2638,18 +2830,34 @@ class RbTnseqWetmore2015Dataset(ExperimentDataset):
             raise RuntimeError(
                 f"wrote {idx} records, inventory says {counts.stored_records}"
             )
-        self._write_reports(specs, release, counts)
+        self._write_reports(specs, release, counts, time_zero)
         log.info("Wrote %d Wetmore 2015 Keio records", idx)
 
     def _write_reports(
-        self, specs: Sequence[SampleSpec], release: ReleaseTables, counts: Inventory
+        self,
+        specs: Sequence[SampleSpec],
+        release: ReleaseTables,
+        counts: Inventory,
+        time_zero: TimeZeroAccount,
     ) -> None:
         """``dropped_records.json``, ``samples.json`` (each sample's quality verdict as
-        released) and ``standard_error.json`` in ``preprocess/``.
+        released), ``standard_error.json`` and ``replicates.json`` (the replicate groups
+        and the time-zero account, #1178) in ``preprocess/``.
         """
+        groups = replicate_groups(specs)
         payloads: dict[str, Any] = {
             "dropped_records.json": counts.model_dump(mode="json"),
             "samples.json": [s.model_dump(mode="json") for s in specs],
+            "replicates.json": {
+                "unit": REPLICATE_DEFINITION.quote,
+                "replicate_id": SAMPLE_NAME.quote,
+                "replicate_groups": {k: list(v) for k, v in groups.items()},
+                "group_size_histogram": {
+                    str(size): n
+                    for size, n in sorted(Counter(map(len, groups.values())).items())
+                },
+                "time_zero": time_zero.model_dump(mode="json"),
+            },
             "standard_error.json": {
                 "rule": PER_GENE_STANDARD_ERROR.quote,
                 "n_values": release.n_values,
@@ -2736,6 +2944,7 @@ class StoredValue(BaseModel):
     value: float
     standard_error: float | None
     t_statistic: float | None
+    replicate_id: str | None = None
 
 
 def stored_values(records: Iterable[Mapping[str, Any]]) -> list[StoredValue]:
@@ -2754,9 +2963,44 @@ def stored_values(records: Iterable[Mapping[str, Any]]) -> list[StoredValue]:
                 value=float(phenotype["environment_response"]),
                 standard_error=phenotype["environment_response_se"],
                 t_statistic=phenotype.get("environment_response_t_statistic"),
+                replicate_id=phenotype.get("replicate_id"),
             )
         )
     return out
+
+
+def replicate_ids_name_their_samples(
+    values: Sequence[StoredValue], n_genes: int
+) -> LevelResult:
+    """SUPPLEMENTARY L1: one record per (gene, sample), and the sample is its replicate.
+
+    Every record's ``replicate_id`` is the release's sample name its ``screen_id``
+    carries (``SAMPLE_NAME``), each sample holds each of the ``n_genes`` genes exactly
+    once, and no sample's values were combined with another's (#1178).
+    """
+    mismatched = sorted({v.sample for v in values if v.replicate_id != v.sample})
+    per_sample = Counter(v.sample for v in values)
+    keys = Counter((v.sample, v.tag) for v in values)
+    repeated = sum(1 for n in keys.values() if n > 1)
+    short = sorted(s for s, n in per_sample.items() if n != n_genes)
+    passed = not mismatched and not short and repeated == 0
+    return LevelResult(
+        level=Level.L1,
+        name="replicate_id_is_the_released_sample",
+        passed=passed,
+        message=(
+            f"SUPPLEMENTARY: {len(per_sample)} samples, each its own replicate_id; "
+            f"{len(mismatched)} samples whose records carry another replicate_id; "
+            f"{len(short)} samples without exactly {n_genes} genes; {repeated} "
+            "(sample, gene) pairs stored twice"
+        ),
+        details={
+            "n_samples": len(per_sample),
+            "mismatched": mismatched[:20],
+            "not_every_gene_once": short[:20],
+            "repeated_pairs": repeated,
+        },
+    )
 
 
 def withdrawal_census(values: Sequence[StoredValue]) -> LevelResult:
@@ -3022,8 +3266,10 @@ def verify_build(
     """Run the environment-response L0-L4 verifier on a built tree and write its report.
 
     The gene universe and resolver are MG1655's, the namespace every released b-number
-    is stored in (#1057); its genome-reference rows report and never gate. Three
-    SUPPLEMENTARY rows are added: no record of a withdrawn sample is stored (L1), every
+    is stored in (#1057); its genome-reference rows report and never gate. Four
+    SUPPLEMENTARY rows are added: no record of a withdrawn sample is stored (L1), each
+    record's replicate_id is its released sample and every sample holds every stored
+    gene once (L1, #1178), every
     stored t matches its stored SE (L2), and the cross-check against the Price 2018
     compendium's dev store (L4, :func:`compendium_cross_check`), which reads that store
     read-only and refuses when it is absent; both stores key a gene by its released
@@ -3047,6 +3293,7 @@ def verify_build(
     )
     own = stored_values(stream_records(dataset_root))
     report.add(withdrawal_census(own))
+    report.add(replicate_ids_name_their_samples(own, len({v.tag for v in own})))
     report.add(t_identity(own, float(T_STATISTIC_SIGMA.value)))
     superset_root = osp.join(root, SUPERSET_DATASET_ROOT_REL)
     if not osp.isdir(osp.join(superset_root, "processed", "lmdb")):
@@ -3100,6 +3347,19 @@ def loader_inventory(
     return inventory(specs, len(b_numbers)), identifiers
 
 
+def release_replicates(
+    data_root: str | None = None,
+) -> tuple[dict[str, tuple[str, ...]], TimeZeroAccount]:
+    """The stored replicate groups and the time-zero account off the pinned files."""
+    root = str(_data_root(data_root))
+    s1 = loader_source_path("si1.xlsx", root)
+    experiments = pd.read_excel(s1, sheet_name=DATA_SET_S1_EXPERIMENTS_SHEET)
+    quality = pd.read_excel(s1, sheet_name=DATA_SET_S1_QUALITY_SHEET)
+    return replicate_groups(classify_samples(experiments, quality)), time_zero_account(
+        experiments, quality, pd.read_csv(raw_path(RELEASE_FITNESS_ALL, root), sep="\t")
+    )
+
+
 def all_sample_comparison(data_root: str | None = None) -> ReleaseComparison:
     """:func:`compare_fitness_tables` with EVERY sample of this release on the left.
 
@@ -3136,7 +3396,12 @@ def report(data_root: str | None = None) -> dict[str, Any]:
     """Every number the dendron note states, recomputed from the pinned files."""
     record = subsumption_record(data_root)
     counts, _ = loader_inventory(data_root)
+    groups, time_zero = release_replicates(data_root)
     return {
+        "replicate_group_sizes": dict(
+            sorted(Counter(len(v) for v in groups.values()).items())
+        ),
+        "time_zero": time_zero.model_dump(mode="json"),
         "condition_samples": len(record.experiments),
         "successful": len(record.successful),
         "carried_by_superset": len(record.carried),

@@ -127,7 +127,38 @@
 <span class="sd">+/- ATc and +/- a small-molecule inhibitor, and each guide's abundance was tracked by</span>
 <span class="sd">amplicon sequencing.</span>
 
-<span class="sd">RECORD = one (pool x guide x drug-condition) ``EnvironmentResponseExperiment``:</span>
+<span class="sd">RECORD = one biological replicate of one (pool x guide x drug-condition), as released</span>
+<span class="sd">(2026.11.24, #1178). Two record shapes, one ``EnvironmentResponseExperiment`` class:</span>
+
+<span class="sd">- an A RECORD per Additional file 10 row: the ATc-induced fold change A of ONE replicate</span>
+<span class="sd">  pair of cultures (+ATc, -ATc). Every Additional file 10 row is replicate 1 of its</span>
+<span class="sd">  condition, so ``replicate_id = "1"``. Two checks ``process()`` re-runs on every build:</span>
+<span class="sd">  Additional file 5 lists replicate 1 for each of the 67 (pool, drug, concentration)</span>
+<span class="sd">  groups, and in the 1% DMSO and 20 uM fluconazole groups the row's ``-ATC_count`` /</span>
+<span class="sd">  ``+ATC_count`` equal Additional files 6 / 7's ``Rep-1`` counts (2,148 of 2,148</span>
+<span class="sd">  comparable cells). Measured once beside them (2026.11.24, not re-run by the build</span>
+<span class="sd">  because Additional file 9 is not read): those counts also equal Additional file 9's</span>
+<span class="sd">  ``Count_perfect`` for replicate 1 in all 67 groups.</span>
+<span class="sd">- a CULTURE RECORD per replicate culture that Additional file 6 (1% DMSO, eight</span>
+<span class="sd">  replicates, gene-tiling pools) or Additional file 7 (20 uM fluconazole, three</span>
+<span class="sd">  replicates in the gene-tiling pools, two in the mutant pools) releases and whose A</span>
+<span class="sd">  Additional file 10 does not: the culture's guide fitness ``f`` (``Rep-k_noATC_f_mean``</span>
+<span class="sd">  / ``Rep-k_plusATC_f_mean``) with its released ``f_var``. The source releases no A for</span>
+<span class="sd">  replicates 2-8, only the two cultures' ``f``; ``A_k = f(+ATc) - f(-ATc)`` is left to</span>
+<span class="sd">  model time (policy: store the per-culture value the source releases, never a loader</span>
+<span class="sd">  ratio). The +ATc culture's environment carries anhydrotetracycline at the dose</span>
+<span class="sd">  Additional file 5 states for every sequenced pooled sample (column ``ATC (250ng/ml)``);</span>
+<span class="sd">  the -ATc culture's environment is the drug alone.</span>
+
+<span class="sd">The combined statistics of Additional files 6 / 7 (``Combined_A_mean``,</span>
+<span class="sd">``Combined_A_var``, ``Combined_*ATC_*``) are the authors' summary over the released</span>
+<span class="sd">replicates and are not stored: the replicates are. Measured on the pinned files,</span>
+<span class="sd">``Combined_A_mean`` is the plain mean of the per-replicate ``f(+ATc) - f(-ATc)`` (max</span>
+<span class="sd">|difference| 0.0009 over 451 + 637 guides) and ``Combined_A_var`` their sample variance</span>
+<span class="sd">(ddof 1), not the inverse-variance combination the Methods describe; that is a</span>
+<span class="sd">modeling-time derivation over these records.</span>
+
+<span class="sd">Shared by both shapes:</span>
 
 <span class="sd">- GENOTYPE: a ``CrisprInterferencePerturbation`` whose ``crispr`` construct carries the</span>
 <span class="sd">  effector ``dCas9-Mxi1``, the 18/20 nt ``Specificity_sequence`` spacer (joined from</span>
@@ -141,9 +172,15 @@
 <span class="sd">  drug at its released concentration as a ``SmallMoleculePerturbation``, 30 C, aerobic,</span>
 <span class="sd">  ``duration_generations = 20``.</span>
 <span class="sd">- PHENOTYPE: ``measurement_type=log2_ratio``, ``assay_type=pooled_competitive_growth_barcode``,</span>
-<span class="sd">  ``environment_response = A`` (the ATc-induced fold change), uncertainty = the released</span>
-<span class="sd">  ``var(A)`` stored VERBATIM as ``UncertaintyType.variance``. Reference = the uninduced</span>
-<span class="sd">  (-ATc) baseline in the same drug environment, A = 0.</span>
+<span class="sd">  ``n_samples = 1``, ``replicate_id`` = the source's replicate label. An A record holds</span>
+<span class="sd">  ``environment_response = A`` with the released ``var(A)`` VERBATIM as</span>
+<span class="sd">  ``UncertaintyType.variance`` (``UNITS``), reference = the uninduced (-ATc) baseline in</span>
+<span class="sd">  the same drug environment, A = 0. A culture record holds ``environment_response = f``</span>
+<span class="sd">  with the released ``f_var`` as ``UncertaintyType.variance`` (``CULTURE_UNITS``),</span>
+<span class="sd">  reference = the pool's median guide in the same culture environment, f = 0. Both</span>
+<span class="sd">  variances are the source's per-measurement read-resampling variance ("used the</span>
+<span class="sd">  variance s^2 of the simulated values as a variance estimate"), not a dispersion over</span>
+<span class="sd">  replicates, so they are data and stay.</span>
 
 <span class="sd">SOURCED VALUES (module-level ``SourcedValue``s anchored to the sha256 of</span>
 <span class="sd">``smithQuantitativeCRISPRInterference2016/paper.md``):</span>
@@ -159,24 +196,29 @@
 <span class="sd">- the 1% DMSO vehicle-control dose, from the Methods sentence that also gives the eight</span>
 <span class="sd">  and three replicate experiments for the tiling pools and for 20 uM fluconazole.</span>
 
-<span class="sd">``n_samples = 1`` is KEPT and is a deliberate, documented choice rather than an oversight.</span>
-<span class="sd">The released ``var(A)`` is the variance of the SINGLE released A estimate: for the 1% DMSO</span>
-<span class="sd">and 20 uM fluconazole conditions the paper has already inverse-variance-combined the eight</span>
-<span class="sd">and three replicate experiments into that one estimate ("We combined the R replicates</span>
-<span class="sd">... to obtain the variance"), so ``derive_se`` must divide by 1, not by 8 or 3. Recording</span>
-<span class="sd">the replicate count instead would silently shrink the stored SE by sqrt(8). The replicate</span>
-<span class="sd">structure is recorded here, in ``REPLICATE_STRUCTURE``, rather than in a field whose</span>
-<span class="sd">arithmetic it would corrupt.</span>
+<span class="sd">``n_samples = 1`` because every record is one replicate. Until 2026.11.24 this docstring</span>
+<span class="sd">said the 1% DMSO and 20 uM fluconazole rows of Additional file 10 were the paper's</span>
+<span class="sd">inverse-variance combination of the eight and three replicates; measured, they are</span>
+<span class="sd">replicate 1 alone (see RECORD), so the released ``var(A)`` is one replicate's variance</span>
+<span class="sd">and ``derive_se`` dividing by 1 was right for that reason.</span>
 
-<span class="sd">ATc is NOT asserted as an environment dose. The induction is what turns the CRISPRi</span>
-<span class="sd">genotype on, but the pooled-screen Methods say only "grown +/- a drug listed in Additional</span>
-<span class="sd">file 8, and +/- ATc"; the single released number, 250 ng/mL, appears in the qPCR section</span>
-<span class="sd">and in Additional file 5's sample-metadata header, neither of which is the pooled screen.</span>
-<span class="sd">The induced-vs-uninduced definition rides in the phenotype ``units`` string and in the</span>
-<span class="sd">uninduced reference. No solvent is asserted either: "Drugs were dissolved in DMSO" sits in</span>
-<span class="sd">the individual-strain growth-assay section, and the pooled section does not restate it, so</span>
-<span class="sd">the 1% DMSO control condition is served as a compound in its own right and the other</span>
-<span class="sd">drugs carry no ``Solvent``. Both are flagged for review rather than guessed.</span>
+<span class="sd">An A record carries NO ATc in its environment: A is the contrast between the induced and</span>
+<span class="sd">uninduced cultures, and its reference is the uninduced (-ATc) culture. A culture record</span>
+<span class="sd">is one culture, so its environment states whether ATc was in it. The dose is Additional</span>
+<span class="sd">file 5's: that workbook lists every sequenced pooled-screen sample (pools broad_tiling,</span>
+<span class="sd">gene_tiling18 &amp; gene_tiling20, mutant18 &amp; mutant20) with the column ``ATC (250ng/ml)``,</span>
+<span class="sd">README '"yes" if ATC was included, or "no" if it was not'; ``process()`` reads the dose</span>
+<span class="sd">from that header. (Before 2026.11.24 this docstring said the 250 ng/mL was not the pooled</span>
+<span class="sd">screen's; Additional file 5 is the pooled screen's sample sheet.) No solvent is asserted:</span>
+<span class="sd">"Drugs were dissolved in DMSO" sits in the individual-strain growth-assay section, and the</span>
+<span class="sd">pooled section does not restate it, so the 1% DMSO control condition is served as a</span>
+<span class="sd">compound in its own right and the other drugs carry no ``Solvent``.</span>
+
+<span class="sd">NOT STORED (``dropped_records.json`` lists each under ``replicates_not_stored``): the</span>
+<span class="sd">second replicate of 1% DMSO in the mutant pools, which only Additional file 9 releases,</span>
+<span class="sd">as read counts (no ``MeasurementType`` holds a read count, and computing ``f`` from the</span>
+<span class="sd">counts would be a loader derivation); and Additional file 5's Rapamycin 10 nM samples of</span>
+<span class="sd">the gene-tiling pools, for which no file releases a count, fitness or effect.</span>
 
 <span class="sd">The screening doses were set by a rule the SI states ("Concentration(s) used for library</span>
 <span class="sd">screening. These concentrations were selected to inhibit growth of a wild-type strain by</span>
@@ -213,11 +255,16 @@
 <span class="sd">duplicate to drop. ``library_pool`` therefore joins the strain identity.</span>
 
 <span class="sd">DATA SOURCE: Additional file 10 ``13059_2016_900_MOESM10_ESM.xlsx`` sheet 'Fitness and</span>
-<span class="sd">Effect Data' (14,463 rows) and Additional file 4 ``13059_2016_900_MOESM4_ESM.xlsx`` sheet</span>
-<span class="sd">'gRNAs' (the guide -&gt; spacer join), both deposited in the raw mirror</span>
+<span class="sd">Effect Data' (14,463 rows), Additional file 4 ``13059_2016_900_MOESM4_ESM.xlsx`` sheet</span>
+<span class="sd">'gRNAs' (the guide -&gt; spacer join), Additional file 5 ``13059_2016_900_MOESM5_ESM.xlsx``</span>
+<span class="sd">sheet 'Metadata' (the sequenced samples: replicate labels and the ATc dose), and</span>
+<span class="sd">Additional files 6 / 7 ``13059_2016_900_MOESM6_ESM.xlsx`` sheet 'DMSO_replicate_data' and</span>
+<span class="sd">``13059_2016_900_MOESM7_ESM.xlsx`` sheet 'Fluconazole_replicate_data' (per-replicate</span>
+<span class="sd">counts and fitness), all deposited in the raw mirror</span>
 <span class="sd">``$DATA_ROOT/torchcell-raw/smithQuantitativeCRISPRInterference2016/`` with a</span>
-<span class="sd">``manifest.json`` recording their Springer ESM URLs (re-retrieved and sha256-verified</span>
-<span class="sd">2026-09-12) and hashes.</span>
+<span class="sd">``manifest.json`` recording their Springer ESM URLs and hashes (Additional files 10 and</span>
+<span class="sd">4 re-retrieved 2026-09-12; 5, 6 and 7 retrieved 2026-11-25 UTC, Additional file 5's</span>
+<span class="sd">bytes identical to the literature mirror's copy).</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -320,6 +367,23 @@
 <span class="n">GUIDE_SHEET</span> <span class="o">=</span> <span class="s2">"gRNAs"</span>
 <span class="n">GUIDE_SHA256</span> <span class="o">=</span> <span class="s2">"e5eb4e3c7856782e36edff5ef55e680cb43fa8e9944bf8e40d7cb7b4f376c1e5"</span>
 <span class="n">SI_RETRIEVED_AT</span> <span class="o">=</span> <span class="s2">"2026-09-12"</span>
+<span class="n">SAMPLES_FILENAME</span> <span class="o">=</span> <span class="s2">"13059_2016_900_MOESM5_ESM.xlsx"</span>
+<span class="n">SAMPLES_REL</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"si/si_data/</span><span class="si">{</span><span class="n">SAMPLES_FILENAME</span><span class="si">}</span><span class="s2">"</span>
+<span class="n">SAMPLES_SHEET</span> <span class="o">=</span> <span class="s2">"Metadata"</span>
+<span class="n">SAMPLES_SHA256</span> <span class="o">=</span> <span class="s2">"9477066f538248c18b256ed2fec811bbd5914b2039bd2f78baa41000e70eaf9c"</span>
+<span class="n">DMSO_REPLICATES_FILENAME</span> <span class="o">=</span> <span class="s2">"13059_2016_900_MOESM6_ESM.xlsx"</span>
+<span class="n">DMSO_REPLICATES_REL</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"si/si_data/</span><span class="si">{</span><span class="n">DMSO_REPLICATES_FILENAME</span><span class="si">}</span><span class="s2">"</span>
+<span class="n">DMSO_REPLICATES_SHEET</span> <span class="o">=</span> <span class="s2">"DMSO_replicate_data"</span>
+<span class="n">DMSO_REPLICATES_SHA256</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"7f70c60de3702e49caa5142b73b32b2de64ad1cbfd4db47e3a58a76b616ae676"</span>
+<span class="p">)</span>
+<span class="n">FLUCONAZOLE_REPLICATES_FILENAME</span> <span class="o">=</span> <span class="s2">"13059_2016_900_MOESM7_ESM.xlsx"</span>
+<span class="n">FLUCONAZOLE_REPLICATES_REL</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"si/si_data/</span><span class="si">{</span><span class="n">FLUCONAZOLE_REPLICATES_FILENAME</span><span class="si">}</span><span class="s2">"</span>
+<span class="n">FLUCONAZOLE_REPLICATES_SHEET</span> <span class="o">=</span> <span class="s2">"Fluconazole_replicate_data"</span>
+<span class="n">FLUCONAZOLE_REPLICATES_SHA256</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"3d26fb3e6e613e21e427abeaa7a8cc6a9053b34d4770ecc185db7900053a592b"</span>
+<span class="p">)</span>
+<span class="n">REPLICATES_RETRIEVED_AT</span> <span class="o">=</span> <span class="s2">"2026-11-25"</span>
 
 <span class="n">PAPER_MD</span> <span class="o">=</span> <span class="s2">"paper.md"</span>
 <span class="n">PAPER_MD_SHA256</span> <span class="o">=</span> <span class="s2">"346be6968eced82706cffb163a76dfc5adf381e602bd11006fea608436ca7b2f"</span>
@@ -417,10 +481,46 @@
     <span class="p">{</span><span class="s2">"1% DMSO"</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="s2">"20 uM fluconazole"</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
     <span class="s2">"We combined the $R$ replicates $k _ { I } , . . . , k _ { R }$ in a natural way to "</span>
     <span class="s2">"obtain the variance"</span><span class="p">,</span>
-    <span class="n">note</span><span class="o">=</span><span class="s2">"these replicate experiments are ALREADY inverse-variance-combined into the "</span>
-    <span class="s2">"single released (A, var(A)) pair, so n_samples stays 1 and derive_se divides by 1. "</span>
-    <span class="s2">"Recording 8 or 3 here would shrink the stored SE by sqrt(8) or sqrt(3) against a "</span>
-    <span class="s2">"variance that is already the combined estimate's"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the replicates are released one by one in Additional files 6 (eight, 1% DMSO) "</span>
+    <span class="s2">"and 7 (three, 20 uM fluconazole; two in the mutant pools), and each is its own "</span>
+    <span class="s2">"record. Additional file 10's row for these conditions is replicate 1, not the "</span>
+    <span class="s2">"combination (measured 2026.11.24: its counts equal the Rep-1 counts on every row "</span>
+    <span class="s2">"both files release), so its var(A) is one replicate's"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">REPLICATE_DOSE</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="p">{</span><span class="n">DMSO</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s2">"Fluconazole"</span><span class="p">:</span> <span class="s2">"20uM"</span><span class="p">},</span>
+    <span class="s2">"For the control condition $( 1 ~ </span><span class="se">\\</span><span class="s2">% ~ </span><span class="se">\\</span><span class="s2">mathrm { D M S O } )$ , we had eight "</span>
+    <span class="s2">"replicate experiments for the tiling pools, and three replicate experiments for $2 "</span>
+    <span class="s2">"0 ~ </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M }$ fluconazole."</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the dose of each per-replicate workbook's condition, written as the released "</span>
+    <span class="s2">"Concentration cell of Additional file 10 so one condition has one environment: "</span>
+    <span class="s1">'Additional file 6 is the 1% DMSO control (</span><span class="se">\'</span><span class="s1">Counts and analysis for 8 "no drug" '</span>
+    <span class="s2">"replicates') and Additional file 7 the 20 uM fluconazole one ('Analysis of "</span>
+    <span class="s2">"replicates  in 20 µM Fluconazole '); neither workbook carries a concentration "</span>
+    <span class="s2">"column"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">BIOLOGICAL_REPLICATES</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="s2">"biological"</span><span class="p">,</span>
+    <span class="s2">"The guide counts following competitive growth were highly reproducible between "</span>
+    <span class="s2">"biological replicates, indicating that the assay is robust (Additional file 2: "</span>
+    <span class="s2">"Figure S3A-B, Additional files 6 and 7)."</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"Additional files 6 and 7 are the per-replicate tables this loader stores, so "</span>
+    <span class="s2">"each replicate there is an independent pooled culture pair, not a repeat read"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">ATC_COMPOUND</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="s2">"anhydrotetracycline"</span><span class="p">,</span>
+    <span class="s2">"ATc: Anhydrotetracycline"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the dose is read at build time from Additional file 5's 'ATC (250ng/ml)' "</span>
+    <span class="s2">"column header (sheet 'Metadata', sha256 9477066f538248c1...), the sample sheet of "</span>
+    <span class="s2">"every sequenced pooled culture"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">CULTURE_FITNESS</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="s2">"log2 median-centred guide count"</span><span class="p">,</span>
+    <span class="s2">"we calculated the $</span><span class="se">\\</span><span class="s2">log _ { 2 }$ -scale median centered counts $l _ { i j k } = "</span>
+    <span class="s2">"</span><span class="se">\\</span><span class="s2">log _ { 2 } ( c _ { i j k } + 0 . 5 )$ - mediani’ in pool $_ j ( </span><span class="se">\\</span><span class="s2">log _ { 2 } ( "</span>
+    <span class="s2">"c _ { i ^ { </span><span class="se">\\</span><span class="s2">prime } j k } + 0 . 5 ) )$ )."</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"Additional files 6 / 7 release l as 'Rep-k_&lt;arm&gt;_f_mean' ('Replicate k no ATc "</span>
+    <span class="s2">"mean fitness f') with its resampling variance 'Rep-k_&lt;arm&gt;_f_var'"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">COMPOUND_LIST</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
     <span class="s2">"Additional file 8"</span><span class="p">,</span>
@@ -451,6 +551,62 @@
     <span class="s2">"CRISPRi ON) and uninduced (-ATc) pooled cultures in this drug condition; negative = "</span>
     <span class="s2">"CRISPRi repression of the target causes a growth/fitness defect (drug-sensitivity)"</span>
 <span class="p">)</span>
+
+<span class="n">CULTURE_UNITS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"guide fitness f in ONE pooled culture: log2(c + 0.5) minus the median over the "</span>
+    <span class="s2">"pool's guides of log2(c' + 0.5), c = the guide's perfect-match read count after "</span>
+    <span class="s2">"approximately 20 doublings; 0 = the pool's median guide. The culture is induced "</span>
+    <span class="s2">"(+ATc, dCas9-Mxi1 CRISPRi ON) when its environment carries anhydrotetracycline and "</span>
+    <span class="s2">"uninduced (-ATc) otherwise; A = f(+ATc) - f(-ATc) of one replicate is a "</span>
+    <span class="s2">"model-time derivation over the two records of one replicate"</span>
+<span class="p">)</span>
+
+<span class="c1">#: Additional file 10 ``#Pool`` -&gt; the ``Pool Name`` Additional file 5 lists the</span>
+<span class="c1">#: sequenced sample under. The 18 bp and 20 bp halves of one library were sequenced as</span>
+<span class="c1">#: one sample, so two pools share one sample row and one replicate label.</span>
+<span class="n">POOL_TO_SAMPLE_POOL</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"broad_tiling"</span><span class="p">:</span> <span class="s2">"broad_tiling"</span><span class="p">,</span>
+    <span class="s2">"gene_tiling_18bp"</span><span class="p">:</span> <span class="s2">"gene_tiling18 &amp; gene_tiling20"</span><span class="p">,</span>
+    <span class="s2">"gene_tiling_20bp"</span><span class="p">:</span> <span class="s2">"gene_tiling18 &amp; gene_tiling20"</span><span class="p">,</span>
+    <span class="s2">"mutant18"</span><span class="p">:</span> <span class="s2">"mutant18 &amp; mutant20"</span><span class="p">,</span>
+    <span class="s2">"mutant20"</span><span class="p">:</span> <span class="s2">"mutant18 &amp; mutant20"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1">#: The per-replicate workbook each multi-replicate condition's cultures come from, keyed</span>
+<span class="c1">#: by the Additional file 10 ``Drug`` label: (file, sheet, how many replicate blocks the</span>
+<span class="c1">#: sheet carries).</span>
+<span class="n">REPLICATE_WORKBOOKS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">DMSO</span><span class="p">:</span> <span class="p">(</span><span class="n">DMSO_REPLICATES_FILENAME</span><span class="p">,</span> <span class="n">DMSO_REPLICATES_SHEET</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span>
+    <span class="s2">"Fluconazole"</span><span class="p">:</span> <span class="p">(</span><span class="n">FLUCONAZOLE_REPLICATES_FILENAME</span><span class="p">,</span> <span class="n">FLUCONAZOLE_REPLICATES_SHEET</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="c1">#: The pin of each per-replicate workbook, by file name (recorded in the ledger).</span>
+<span class="n">REPLICATE_SHA256S</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">DMSO_REPLICATES_FILENAME</span><span class="p">:</span> <span class="n">DMSO_REPLICATES_SHA256</span><span class="p">,</span>
+    <span class="n">FLUCONAZOLE_REPLICATES_FILENAME</span><span class="p">:</span> <span class="n">FLUCONAZOLE_REPLICATES_SHA256</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1">#: The replicate label every Additional file 10 row carries (proved on every build by</span>
+<span class="c1">#: ``_check_effect_rows_are_replicate_one``).</span>
+<span class="n">FIRST_REPLICATE</span> <span class="o">=</span> <span class="s2">"1"</span>
+
+<span class="c1">#: A released replicate culture this loader stores no record for, and why. Measured on</span>
+<span class="c1">#: the pinned Additional files 5 and 9 (2026.11.24); the vendor-code conditions are held</span>
+<span class="c1">#: out by ``UNIDENTIFIED_COMPOUND_RULE`` for every replicate, so they are not listed.</span>
+<span class="n">REPLICATE_NOT_STORED_REASONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">(</span><span class="s2">"mutant18 &amp; mutant20"</span><span class="p">,</span> <span class="n">DMSO</span><span class="p">,</span> <span class="s2">"1.0percent_v/v"</span><span class="p">,</span> <span class="s2">"2"</span><span class="p">):</span> <span class="p">(</span>
+        <span class="s2">"released only as read counts (Additional file 9's Count_all / Count_perfect): "</span>
+        <span class="s2">"no MeasurementType holds a read count, and computing this culture's fitness f "</span>
+        <span class="s2">"from the counts would be a loader derivation, not a released value. Additional "</span>
+        <span class="s2">"file 6 covers the eight 1% DMSO replicates of the gene-tiling pools only"</span>
+    <span class="p">),</span>
+    <span class="p">(</span><span class="s2">"gene_tiling18 &amp; gene_tiling20"</span><span class="p">,</span> <span class="s2">"Rapamycin"</span><span class="p">,</span> <span class="s2">"10.0nM"</span><span class="p">,</span> <span class="s2">"1"</span><span class="p">):</span> <span class="p">(</span>
+        <span class="s2">"Additional file 5 lists the sequenced sample pair, and no released file carries "</span>
+        <span class="s2">"a count, a fitness or an effect for it: Additional file 9 holds no 10 nM "</span>
+        <span class="s2">"Rapamycin rows and Additional file 10 releases only the 2.2 nM and 4.375 nM "</span>
+        <span class="s2">"doses"</span>
+    <span class="p">),</span>
+<span class="p">}</span>
 
 <span class="n">_CONC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^\s*([0-9]*\.?[0-9]+)\s*(M|mM|uM|nM)\s*$"</span><span class="p">)</span>
 <span class="n">_UNIT_MAP</span> <span class="o">=</span> <span class="p">{</span>
@@ -506,6 +662,48 @@
     <span class="k">return</span> <span class="n">Concentration</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span> <span class="n">unit</span><span class="o">=</span><span class="n">_UNIT_MAP</span><span class="p">[</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)])</span>
 
 
+<span class="n">_ATC_HEADER_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\(\s*(?P&lt;value&gt;[0-9]*\.?[0-9]+)\s*ng/m[lL]\s*\)"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">dose_key</span><span class="p">(</span><span class="n">drug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The TYPED dose of a condition, as a string, so two spellings key as one.</span>
+
+<span class="sd">    Additional file 5 writes a dose with the trailing space Additional file 10 omits</span>
+<span class="sd">    (``'20uM '`` against ``'20uM'``), so a condition is matched between the two files by</span>
+<span class="sd">    the ``Concentration`` the cell parses to, never by the cell's characters.</span>
+<span class="sd">    """</span>
+    <span class="n">dose</span> <span class="o">=</span> <span class="n">parse_concentration</span><span class="p">(</span><span class="n">drug</span><span class="p">,</span> <span class="n">raw</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dose</span><span class="o">.</span><span class="n">unit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"the parsed dose </span><span class="si">{</span><span class="n">raw</span><span class="si">!r}</span><span class="s2"> of </span><span class="si">{</span><span class="n">drug</span><span class="si">!r}</span><span class="s2"> carries no unit"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dose</span><span class="o">.</span><span class="n">value</span><span class="si">}{</span><span class="n">dose</span><span class="o">.</span><span class="n">unit</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">atc_column</span><span class="p">(</span><span class="n">columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Additional file 5's induction column, the one whose header states the ATc dose."""</span>
+    <span class="n">named</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">columns</span> <span class="k">if</span> <span class="n">_ATC_HEADER_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">name</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">named</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"Additional file 5 must carry exactly one ATc-dose column header, "</span>
+            <span class="sa">f</span><span class="s2">"found </span><span class="si">{</span><span class="n">named</span><span class="si">!r}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">named</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">atc_concentration</span><span class="p">(</span><span class="n">column</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Concentration</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The induction dose that column header states, in the schema's ug/mL.</span>
+
+<span class="sd">    ``ATC (250ng/ml)`` -&gt; 0.25 ug/mL. The dose is released only inside the header, so it</span>
+<span class="sd">    is parsed rather than hardcoded: a different pinned file would carry its own number</span>
+<span class="sd">    or fail loud.</span>
+<span class="sd">    """</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">_ATC_HEADER_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no ATc dose in Additional file 5 column header </span><span class="si">{</span><span class="n">column</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Concentration</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"value"</span><span class="p">))</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">ug_per_ml</span>
+    <span class="p">)</span>
+
+
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># Raw mirror</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
@@ -532,26 +730,53 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">effect_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">guide_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">samples_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">dmso_replicates_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">fluconazole_replicates_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">retrieved_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">SI_RETRIEVED_AT</span><span class="p">,</span>
+    <span class="n">replicates_retrieved_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">REPLICATES_RETRIEVED_AT</span><span class="p">,</span>
     <span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Write the raw mirror from the two retrieved SI workbooks plus its ``manifest.json``.</span>
+<span class="w">    </span><span class="sd">"""Write the raw mirror from the five retrieved SI workbooks plus its ``manifest.json``.</span>
 
 <span class="sd">    Idempotent by sha256. ``static-content.springer.com`` is a directly scriptable CDN, so</span>
-<span class="sd">    the recorded ``springer_esm`` retrieval re-runs as-is; both URLs were re-retrieved on</span>
-<span class="sd">    2026-09-12 and reproduced the pinned hashes exactly.</span>
+<span class="sd">    the recorded ``springer_esm`` retrieval re-runs as-is; the effect and guide URLs were</span>
+<span class="sd">    re-retrieved on 2026-09-12 and the three per-replicate workbooks (Additional files 5,</span>
+<span class="sd">    6 and 7) on 2026-11-25, each reproducing the pinned hash exactly. Additional file 5's</span>
+<span class="sd">    bytes are identical to the literature mirror's copy of it.</span>
 <span class="sd">    """</span>
     <span class="n">root</span> <span class="o">=</span> <span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
     <span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArtifactRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">deposits</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="p">(</span><span class="n">effect_path</span><span class="p">,</span> <span class="n">EFFECT_REL</span><span class="p">,</span> <span class="n">EFFECT_FILENAME</span><span class="p">,</span> <span class="n">EFFECT_SHA256</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">guide_path</span><span class="p">,</span> <span class="n">GUIDE_REL</span><span class="p">,</span> <span class="n">GUIDE_FILENAME</span><span class="p">,</span> <span class="n">GUIDE_SHA256</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">effect_path</span><span class="p">,</span> <span class="n">EFFECT_REL</span><span class="p">,</span> <span class="n">EFFECT_FILENAME</span><span class="p">,</span> <span class="n">EFFECT_SHA256</span><span class="p">,</span> <span class="n">retrieved_at</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">guide_path</span><span class="p">,</span> <span class="n">GUIDE_REL</span><span class="p">,</span> <span class="n">GUIDE_FILENAME</span><span class="p">,</span> <span class="n">GUIDE_SHA256</span><span class="p">,</span> <span class="n">retrieved_at</span><span class="p">),</span>
+        <span class="p">(</span>
+            <span class="n">samples_path</span><span class="p">,</span>
+            <span class="n">SAMPLES_REL</span><span class="p">,</span>
+            <span class="n">SAMPLES_FILENAME</span><span class="p">,</span>
+            <span class="n">SAMPLES_SHA256</span><span class="p">,</span>
+            <span class="n">replicates_retrieved_at</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="p">(</span>
+            <span class="n">dmso_replicates_path</span><span class="p">,</span>
+            <span class="n">DMSO_REPLICATES_REL</span><span class="p">,</span>
+            <span class="n">DMSO_REPLICATES_FILENAME</span><span class="p">,</span>
+            <span class="n">DMSO_REPLICATES_SHA256</span><span class="p">,</span>
+            <span class="n">replicates_retrieved_at</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="p">(</span>
+            <span class="n">fluconazole_replicates_path</span><span class="p">,</span>
+            <span class="n">FLUCONAZOLE_REPLICATES_REL</span><span class="p">,</span>
+            <span class="n">FLUCONAZOLE_REPLICATES_FILENAME</span><span class="p">,</span>
+            <span class="n">FLUCONAZOLE_REPLICATES_SHA256</span><span class="p">,</span>
+            <span class="n">replicates_retrieved_at</span><span class="p">,</span>
+        <span class="p">),</span>
     <span class="p">)</span>
-    <span class="c1"># Both workbooks are verified before anything is written, so a refusal leaves no</span>
+    <span class="c1"># Every workbook is verified before anything is written, so a refusal leaves no</span>
     <span class="c1"># mirror directory and no partial deposit behind.</span>
-    <span class="k">for</span> <span class="n">source</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">expected</span> <span class="ow">in</span> <span class="n">deposits</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">source</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">expected</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">deposits</span><span class="p">:</span>
         <span class="n">verify_sha256</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">expected</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">source</span><span class="p">,</span> <span class="n">relpath</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">expected</span> <span class="ow">in</span> <span class="n">deposits</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">source</span><span class="p">,</span> <span class="n">relpath</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">expected</span><span class="p">,</span> <span class="n">retrieved</span> <span class="ow">in</span> <span class="n">deposits</span><span class="p">:</span>
         <span class="n">dest</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">relpath</span>
         <span class="n">dest</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">dest</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
@@ -573,7 +798,7 @@
                     <span class="n">retriever</span><span class="o">=</span><span class="s2">"torchcell.literature.retrieve.springer_esm"</span><span class="p">,</span>
                     <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">"url"</span><span class="p">:</span> <span class="n">url</span><span class="p">},</span>
                     <span class="n">sha256</span><span class="o">=</span><span class="n">expected</span><span class="p">,</span>
-                    <span class="n">retrieved_at</span><span class="o">=</span><span class="n">retrieved_at</span><span class="p">,</span>
+                    <span class="n">retrieved_at</span><span class="o">=</span><span class="n">retrieved</span><span class="p">,</span>
                 <span class="p">),</span>
             <span class="p">)</span>
         <span class="p">)</span>
@@ -588,12 +813,21 @@
         <span class="n">si_data_sources</span><span class="o">=</span><span class="p">[</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ESM_BASE</span><span class="si">}{</span><span class="n">EFFECT_FILENAME</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ESM_BASE</span><span class="si">}{</span><span class="n">GUIDE_FILENAME</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ESM_BASE</span><span class="si">}{</span><span class="n">SAMPLES_FILENAME</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ESM_BASE</span><span class="si">}{</span><span class="n">DMSO_REPLICATES_FILENAME</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ESM_BASE</span><span class="si">}{</span><span class="n">FLUCONAZOLE_REPLICATES_FILENAME</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
         <span class="p">],</span>
         <span class="n">si_expected</span><span class="o">=</span><span class="p">[</span>
             <span class="s2">"Additional file 10 (ATc effects A, drug effects D, no-drug ATc effects A0 "</span>
             <span class="s2">"for each gRNA in every tested condition)"</span><span class="p">,</span>
             <span class="s2">"Additional file 4 (the five gRNA libraries and their Specificity_sequence "</span>
             <span class="s2">"spacers)"</span><span class="p">,</span>
+            <span class="s2">"Additional file 5 (the sequenced samples: pool, drug, dose, replicate "</span>
+            <span class="s2">"label and whether ATc was in the culture, with its dose in the header)"</span><span class="p">,</span>
+            <span class="s2">"Additional file 6 (counts and analysis for the eight 'no drug' 1% DMSO "</span>
+            <span class="s2">"replicates of the gene-tiling pools)"</span><span class="p">,</span>
+            <span class="s2">"Additional file 7 (counts and analysis of the 20 uM fluconazole "</span>
+            <span class="s2">"replicates: three for the gene-tiling pools, two for the mutant pools)"</span><span class="p">,</span>
         <span class="p">],</span>
         <span class="n">provenance_complete</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">created_at</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
@@ -647,12 +881,45 @@
     <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">ReplicateNotStored</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One released replicate culture that reaches no record, and why (#1178).</span>
+
+<span class="sd">    Not a drop rule: the rules above are about Additional file 10's rows. This is the</span>
+<span class="sd">    accounting of the replicate axis itself, so a replicate the source releases and this</span>
+<span class="sd">    loader cannot represent is named rather than left silent.</span>
+<span class="sd">    """</span>
+
+    <span class="n">sample_pool</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">drug</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">concentration</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">replicate</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">StoredReplicates</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""What the replicate axis produced, per source file (#1178)."""</span>
+
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">sheet</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">sha256</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">n_guides</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_replicates</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">records_per_replicate</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">DropLog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Every retention rule applied to a build, in order, plus the gapped compounds.</span>
 
 <span class="sd">    ``compound_identity_gaps`` are not drops: those rows are stored, each identified</span>
 <span class="sd">    compound carrying its typed gap. ``unidentified_compounds_held_out`` are the rows of</span>
 <span class="sd">    the ``UNIDENTIFIED_COMPOUND_RULE`` rule, per drug, with the quote that grounds it.</span>
+
+<span class="sd">    ``source_records``, ``kept_records``, ``dropped_records`` and ``rules`` account for</span>
+<span class="sd">    Additional file 10's rows, one A record each (#1178). ``culture_replicates`` accounts</span>
+<span class="sd">    for the per-replicate culture records of Additional files 6 and 7, and</span>
+<span class="sd">    ``stored_records`` is the store's length: ``kept_records`` plus every file's</span>
+<span class="sd">    ``n_records``.</span>
 <span class="sd">    """</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
@@ -663,6 +930,9 @@
     <span class="n">compound_identity_gaps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">GappedCompound</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">unidentified_compounds_held_out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">HeldOutDrug</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">unidentified_compound_sources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">culture_replicates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">StoredReplicates</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">replicates_not_stored</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReplicateNotStored</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">stored_records</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
 
 
 <div class="viewcode-block" id="CrispriChemgenSmith2016Dataset">
@@ -696,15 +966,21 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The two sha256-pinned SI workbooks (effect table + guide-&gt;spacer map)."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">EFFECT_FILENAME</span><span class="p">,</span> <span class="n">GUIDE_FILENAME</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""The five sha256-pinned SI workbooks (effects, guides, samples, replicates)."""</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">EFFECT_FILENAME</span><span class="p">,</span>
+            <span class="n">GUIDE_FILENAME</span><span class="p">,</span>
+            <span class="n">SAMPLES_FILENAME</span><span class="p">,</span>
+            <span class="n">DMSO_REPLICATES_FILENAME</span><span class="p">,</span>
+            <span class="n">FLUCONAZOLE_REPLICATES_FILENAME</span><span class="p">,</span>
+        <span class="p">]</span>
 
 <div class="viewcode-block" id="CrispriChemgenSmith2016Dataset.download">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.smith2016.CrispriChemgenSmith2016Dataset.html#torchcell.datasets.scerevisiae.smith2016.CrispriChemgenSmith2016Dataset.download">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Link the mirror files into ``raw/`` after verifying each against its pin.</span>
 
-<span class="sd">        ``EFFECT_SHA256`` and ``GUIDE_SHA256`` are the pins; the manifest is the</span>
+<span class="sd">        ``EFFECT_SHA256`` and its four siblings are the pins; the manifest is the</span>
 <span class="sd">        retrieval record and must carry the same digests, else</span>
 <span class="sd">        ``ManifestPinMismatchError`` names both.</span>
 <span class="sd">        """</span>
@@ -714,6 +990,13 @@
         <span class="k">for</span> <span class="n">relpath</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">expected</span> <span class="ow">in</span> <span class="p">(</span>
             <span class="p">(</span><span class="n">EFFECT_REL</span><span class="p">,</span> <span class="n">EFFECT_FILENAME</span><span class="p">,</span> <span class="n">EFFECT_SHA256</span><span class="p">),</span>
             <span class="p">(</span><span class="n">GUIDE_REL</span><span class="p">,</span> <span class="n">GUIDE_FILENAME</span><span class="p">,</span> <span class="n">GUIDE_SHA256</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">SAMPLES_REL</span><span class="p">,</span> <span class="n">SAMPLES_FILENAME</span><span class="p">,</span> <span class="n">SAMPLES_SHA256</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">DMSO_REPLICATES_REL</span><span class="p">,</span> <span class="n">DMSO_REPLICATES_FILENAME</span><span class="p">,</span> <span class="n">DMSO_REPLICATES_SHA256</span><span class="p">),</span>
+            <span class="p">(</span>
+                <span class="n">FLUCONAZOLE_REPLICATES_REL</span><span class="p">,</span>
+                <span class="n">FLUCONAZOLE_REPLICATES_FILENAME</span><span class="p">,</span>
+                <span class="n">FLUCONAZOLE_REPLICATES_SHA256</span><span class="p">,</span>
+            <span class="p">),</span>
         <span class="p">):</span>
             <span class="n">check_manifest_pin</span><span class="p">(</span><span class="n">relpath</span><span class="p">,</span> <span class="n">manifest_sha256</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">relpath</span><span class="p">),</span> <span class="n">expected</span><span class="p">)</span>
             <span class="n">src</span> <span class="o">=</span> <span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span> <span class="o">/</span> <span class="n">relpath</span>
@@ -750,26 +1033,88 @@
             <span class="p">)</span>
         <span class="p">}</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">drug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conc_raw</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""SC-Ura liquid carrying the row's drug at its released dose, 30 C, 20 doublings."""</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_target_perturbation</span><span class="p">(</span>
+        <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">gene</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">construct</span><span class="p">:</span> <span class="n">CrisprConstruct</span><span class="p">,</span> <span class="n">placed</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CrisprInterferencePerturbation</span> <span class="o">|</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The genotype leaf of one guide: CRISPRi, or the released-identifier leaf."""</span>
+        <span class="k">if</span> <span class="n">placed</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">CrisprInterferencePerturbation</span><span class="p">(</span>
+                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span> <span class="n">crispr</span><span class="o">=</span><span class="n">construct</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">(</span>
+            <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+            <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
+            <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
+            <span class="n">identifier_kind</span><span class="o">=</span><span class="s2">"gene identifier of the guide table, as released"</span><span class="p">,</span>
+            <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedKind</span><span class="o">.</span><span class="n">crispr_interference</span><span class="p">,</span>
+            <span class="n">crispr</span><span class="o">=</span><span class="n">construct</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_target_map</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Guide name -&gt; its released ``(ORF, Gene_name)`` in Additional file 4.</span>
+
+<span class="sd">        The per-replicate workbooks carry only a pool and a guide name, so the target</span>
+<span class="sd">        comes from the guide design table, as released. Measured on the pinned files: a</span>
+<span class="sd">        guide name repeated there (63 of them, a broad-tiling guide also in a gene-tiling</span>
+<span class="sd">        set) agrees on ORF, gene and spacer in every case, and where Additional file 10</span>
+<span class="sd">        also names the guide's target the two files agree on every row.</span>
+<span class="sd">        """</span>
+        <span class="n">guides</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">GUIDE_FILENAME</span><span class="p">),</span> <span class="n">sheet_name</span><span class="o">=</span><span class="n">GUIDE_SHEET</span>
+        <span class="p">)</span>
+        <span class="n">targets</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">orf</span><span class="p">,</span> <span class="n">gene</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="n">guides</span><span class="p">[</span><span class="s2">"Guide_name"</span><span class="p">],</span> <span class="n">guides</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">],</span> <span class="n">guides</span><span class="p">[</span><span class="s2">"Gene_name"</span><span class="p">],</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">):</span>
+            <span class="n">released</span> <span class="o">=</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s2">""</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">gene</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">gene</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+            <span class="n">held</span> <span class="o">=</span> <span class="n">targets</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">released</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">held</span> <span class="o">!=</span> <span class="n">released</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Additional file 4 gives guide </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> two targets: "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">held</span><span class="si">!r}</span><span class="s2"> and </span><span class="si">{</span><span class="n">released</span><span class="si">!r}</span><span class="s2">"</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">targets</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">drug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conc_raw</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">atc</span><span class="p">:</span> <span class="n">Concentration</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""SC-Ura liquid carrying the row's drug at its released dose, 30 C, 20 doublings.</span>
+
+<span class="sd">        ``atc`` is the induction dose of ONE culture (a culture record); an A record</span>
+<span class="sd">        contrasts the induced and uninduced cultures, so it carries none.</span>
+<span class="sd">        """</span>
+        <span class="n">perturbations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">SmallMoleculePerturbation</span><span class="p">(</span>
+                <span class="n">compound</span><span class="o">=</span><span class="n">released_compound</span><span class="p">(</span><span class="n">drug</span><span class="p">),</span>
+                <span class="n">concentration</span><span class="o">=</span><span class="n">parse_concentration</span><span class="p">(</span><span class="n">drug</span><span class="p">,</span> <span class="n">conc_raw</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">atc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SmallMoleculePerturbation</span><span class="p">(</span>
+                    <span class="n">compound</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="n">ATC_COMPOUND</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="n">concentration</span><span class="o">=</span><span class="n">atc</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="n">Environment</span><span class="p">(</span>
             <span class="n">media</span><span class="o">=</span><span class="n">SC_URA</span><span class="p">,</span>
             <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">TEMPERATURE_C</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
-            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">SmallMoleculePerturbation</span><span class="p">(</span>
-                    <span class="n">compound</span><span class="o">=</span><span class="n">released_compound</span><span class="p">(</span><span class="n">drug</span><span class="p">),</span>
-                    <span class="n">concentration</span><span class="o">=</span><span class="n">parse_concentration</span><span class="p">(</span><span class="n">drug</span><span class="p">,</span> <span class="n">conc_raw</span><span class="p">),</span>
-                <span class="p">)</span>
-            <span class="p">],</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="n">perturbations</span><span class="p">,</span>
             <span class="n">aerobicity</span><span class="o">=</span><span class="n">AEROBICITY</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="n">duration_generations</span><span class="o">=</span><span class="n">DURATION_GENERATIONS</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">DURATION_HOURS_GAP</span><span class="p">],</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_reference</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">:</span> <span class="n">Environment</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">:</span> <span class="n">Environment</span><span class="p">,</span> <span class="n">units</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">UNITS</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Uninduced (-ATc) baseline: no ATc-induced fold change -&gt; A = 0 (log2 ratio 0)."""</span>
+<span class="w">        </span><span class="sd">"""The readout's own zero in this environment, over the control replicates.</span>
+
+<span class="sd">        For an A record the uninduced (-ATc) baseline: no ATc-induced fold change, A = 0.</span>
+<span class="sd">        For a culture record the pool's median guide in that same culture, f = 0 by the</span>
+<span class="sd">        median centring. ``replicate_id`` stays None: a reference is the aggregate</span>
+<span class="sd">        baseline of the condition, not one replicate of it.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">(</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">genome_reference</span><span class="o">=</span><span class="n">ReferenceGenome</span><span class="p">(</span>
@@ -783,17 +1128,143 @@
                 <span class="n">measurement_type</span><span class="o">=</span><span class="n">MeasurementType</span><span class="o">.</span><span class="n">log2_ratio</span><span class="p">,</span>
                 <span class="n">assay_type</span><span class="o">=</span><span class="n">ASSAY</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                 <span class="n">environment_response</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-                <span class="n">units</span><span class="o">=</span><span class="n">UNITS</span><span class="p">,</span>
+                <span class="n">units</span><span class="o">=</span><span class="n">units</span><span class="p">,</span>
             <span class="p">),</span>
         <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_samples</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Concentration</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Additional file 5: the induction dose, the replicate inventory, the spellings.</span>
+
+<span class="sd">        The replicate labels are the source's own (``Replicate``, "Replicate</span>
+<span class="sd">        Identifier"), keyed by the sample's pool name, its drug and its TYPED dose</span>
+<span class="sd">        (:func:`dose_key`). The third return is that dose key's released spelling, for</span>
+<span class="sd">        the ledger.</span>
+<span class="sd">        """</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">SAMPLES_FILENAME</span><span class="p">),</span> <span class="n">sheet_name</span><span class="o">=</span><span class="n">SAMPLES_SHEET</span>
+        <span class="p">)</span>
+        <span class="n">column</span> <span class="o">=</span> <span class="n">atc_column</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">samples</span><span class="o">.</span><span class="n">columns</span><span class="p">])</span>
+        <span class="n">inventory</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">spellings</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">pool</span><span class="p">,</span> <span class="n">drug</span><span class="p">,</span> <span class="n">dose</span><span class="p">,</span> <span class="n">replicate</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="n">samples</span><span class="p">[</span><span class="s2">"Pool Name"</span><span class="p">],</span>
+            <span class="n">samples</span><span class="p">[</span><span class="s2">"Drug"</span><span class="p">],</span>
+            <span class="n">samples</span><span class="p">[</span><span class="s2">"Drug concentration"</span><span class="p">],</span>
+            <span class="n">samples</span><span class="p">[</span><span class="s2">"Replicate"</span><span class="p">],</span>
+            <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="n">named</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">drug</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">typed</span> <span class="o">=</span> <span class="n">dose_key</span><span class="p">(</span><span class="n">named</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">dose</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+            <span class="n">spellings</span><span class="p">[</span><span class="n">typed</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">dose</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">named</span><span class="p">,</span> <span class="n">typed</span><span class="p">)</span>
+            <span class="n">inventory</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">replicate</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">atc_concentration</span><span class="p">(</span><span class="n">column</span><span class="p">),</span>
+            <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">labels</span> <span class="ow">in</span> <span class="n">inventory</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+            <span class="n">spellings</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_replicate_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sheet</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n_replicates</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""One per-replicate workbook, every statistic column coerced to a number.</span>
+
+<span class="sd">        The blank cells of a guide the condition released no data for are the literal</span>
+<span class="sd">        string ``nan`` in these workbooks, so every column but the pool and the guide is</span>
+<span class="sd">        coerced; a cell where the count, the fitness and its variance disagree about</span>
+<span class="sd">        being present is refused rather than patched.</span>
+<span class="sd">        """</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="n">sheet_name</span><span class="o">=</span><span class="n">sheet</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">replicate</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_replicates</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">arm</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"noATC"</span><span class="p">,</span> <span class="s2">"plusATC"</span><span class="p">):</span>
+                <span class="n">names</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="sa">f</span><span class="s2">"Rep-</span><span class="si">{</span><span class="n">replicate</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">arm</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"count"</span><span class="p">,</span> <span class="s2">"f_mean"</span><span class="p">,</span> <span class="s2">"f_var"</span><span class="p">)</span>
+                <span class="p">]</span>
+                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+                    <span class="n">frame</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">frame</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span>
+                <span class="n">present</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="n">names</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
+                <span class="n">partial</span> <span class="o">=</span> <span class="n">present</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">present</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="n">partial</span><span class="o">.</span><span class="n">any</span><span class="p">()):</span>
+                    <span class="n">guides</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">partial</span><span class="p">,</span> <span class="s2">"Guide"</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> replicate </span><span class="si">{</span><span class="n">replicate</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">arm</span><span class="si">}</span><span class="s2"> releases a partial "</span>
+                        <span class="sa">f</span><span class="s2">"measurement for </span><span class="si">{</span><span class="n">guides</span><span class="si">!r}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+        <span class="k">return</span> <span class="n">frame</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_effect_rows_are_replicate_one</span><span class="p">(</span>
+        <span class="n">df</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">inventory</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
+        <span class="n">replicate_frames</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Refuse unless every Additional file 10 row is replicate 1 of its condition.</span>
+
+<span class="sd">        Two checks, both over the pinned bytes, because ``replicate_id = "1"`` on an A</span>
+<span class="sd">        record is an assertion about which culture pair it came from:</span>
+
+<span class="sd">        1. Additional file 5 lists the (pool, drug, dose) sample and its replicate labels</span>
+<span class="sd">           start at 1, so a condition whose first released replicate is not 1 is refused.</span>
+<span class="sd">        2. where a per-replicate workbook also covers that (pool, guide), Additional file</span>
+<span class="sd">           10's ``-ATC_count`` and ``+ATC_count`` equal its ``Rep-1`` counts. Measured</span>
+<span class="sd">           2026.11.24 on the pinned files: 440 of 440 DMSO rows and 634 of 646</span>
+<span class="sd">           fluconazole rows (the other 12 have no Rep-1 cells at all), 0 mismatches.</span>
+<span class="sd">        """</span>
+        <span class="k">for</span> <span class="n">keys</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s2">"#Pool"</span><span class="p">,</span> <span class="s2">"Drug"</span><span class="p">,</span> <span class="s2">"Concentration"</span><span class="p">]):</span>
+            <span class="n">pool</span><span class="p">,</span> <span class="n">drug</span><span class="p">,</span> <span class="n">dose</span> <span class="o">=</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pool</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">POOL_TO_SAMPLE_POOL</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Additional file 10 names an unknown pool </span><span class="si">{</span><span class="n">pool</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">POOL_TO_SAMPLE_POOL</span><span class="p">[</span><span class="n">pool</span><span class="p">],</span> <span class="n">drug</span><span class="p">,</span> <span class="n">dose_key</span><span class="p">(</span><span class="n">drug</span><span class="p">,</span> <span class="n">dose</span><span class="p">))</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Additional file 5 lists no sample for </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">labels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Additional file 5's first replicate of </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2"> is </span><span class="si">{</span><span class="n">labels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, "</span>
+                    <span class="s2">"so Additional file 10's row is not replicate 1"</span>
+                <span class="p">)</span>
+        <span class="k">for</span> <span class="n">drug</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">replicate_frames</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">counts</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">set_index</span><span class="p">([</span><span class="s2">"#Pool"</span><span class="p">,</span> <span class="s2">"Guide"</span><span class="p">])[</span>
+                <span class="p">[</span><span class="s2">"Rep-1_noATC_count"</span><span class="p">,</span> <span class="s2">"Rep-1_plusATC_count"</span><span class="p">]</span>
+            <span class="p">]</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"Drug"</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="o">==</span> <span class="n">drug</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"#Pool"</span><span class="p">]),</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Guide"</span><span class="p">]))</span>
+                <span class="k">if</span> <span class="n">index</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">first</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">released</span><span class="p">,</span> <span class="n">pinned</span> <span class="ow">in</span> <span class="p">(</span>
+                    <span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"-ATC_count"</span><span class="p">],</span> <span class="n">first</span><span class="p">[</span><span class="s2">"Rep-1_noATC_count"</span><span class="p">]),</span>
+                    <span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"+ATC_count"</span><span class="p">],</span> <span class="n">first</span><span class="p">[</span><span class="s2">"Rep-1_plusATC_count"</span><span class="p">]),</span>
+                <span class="p">):</span>
+                    <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">pinned</span><span class="p">):</span>
+                        <span class="k">continue</span>
+                    <span class="k">if</span> <span class="nb">float</span><span class="p">(</span><span class="n">released</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">float</span><span class="p">(</span><span class="n">pinned</span><span class="p">):</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"Additional file 10's </span><span class="si">{</span><span class="n">drug</span><span class="si">}</span><span class="s2"> row for </span><span class="si">{</span><span class="n">index</span><span class="si">!r}</span><span class="s2"> carries "</span>
+                            <span class="sa">f</span><span class="s2">"count </span><span class="si">{</span><span class="n">released</span><span class="si">}</span><span class="s2"> where replicate 1 carries </span><span class="si">{</span><span class="n">pinned</span><span class="si">}</span><span class="s2">, so "</span>
+                            <span class="s2">"the row is not replicate 1"</span>
+                        <span class="p">)</span>
 
 <div class="viewcode-block" id="CrispriChemgenSmith2016Dataset.process">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.smith2016.CrispriChemgenSmith2016Dataset.html#torchcell.datasets.scerevisiae.smith2016.CrispriChemgenSmith2016Dataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build one env x geno -&gt; A record per (pool, guide, drug, condition); write LMDB."""</span>
+<span class="w">        </span><span class="sd">"""Build one record per released replicate measurement; write the LMDB (#1178).</span>
+
+<span class="sd">        An A record per Additional file 10 row (replicate 1 of its condition) and a</span>
+<span class="sd">        culture record per replicate culture Additional files 6 and 7 release.</span>
+<span class="sd">        """</span>
         <span class="n">verify_raw_files</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">EFFECT_FILENAME</span><span class="p">:</span> <span class="n">EFFECT_SHA256</span><span class="p">,</span> <span class="n">GUIDE_FILENAME</span><span class="p">:</span> <span class="n">GUIDE_SHA256</span><span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span>
+            <span class="p">{</span>
+                <span class="n">EFFECT_FILENAME</span><span class="p">:</span> <span class="n">EFFECT_SHA256</span><span class="p">,</span>
+                <span class="n">GUIDE_FILENAME</span><span class="p">:</span> <span class="n">GUIDE_SHA256</span><span class="p">,</span>
+                <span class="n">SAMPLES_FILENAME</span><span class="p">:</span> <span class="n">SAMPLES_SHA256</span><span class="p">,</span>
+                <span class="n">DMSO_REPLICATES_FILENAME</span><span class="p">:</span> <span class="n">DMSO_REPLICATES_SHA256</span><span class="p">,</span>
+                <span class="n">FLUCONAZOLE_REPLICATES_FILENAME</span><span class="p">:</span> <span class="n">FLUCONAZOLE_REPLICATES_SHA256</span><span class="p">,</span>
+            <span class="p">},</span>
         <span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span>
             <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">EFFECT_FILENAME</span><span class="p">),</span> <span class="n">sheet_name</span><span class="o">=</span><span class="n">EFFECT_SHEET</span>
@@ -801,6 +1272,13 @@
         <span class="n">df</span><span class="p">[</span><span class="s2">"A"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"A"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span>
         <span class="n">df</span><span class="p">[</span><span class="s2">"var(A)"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"var(A)"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span>
         <span class="n">spacer_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spacer_map</span><span class="p">()</span>
+        <span class="n">target_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_map</span><span class="p">()</span>
+        <span class="n">atc_dose</span><span class="p">,</span> <span class="n">inventory</span><span class="p">,</span> <span class="n">dose_spellings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span><span class="p">()</span>
+        <span class="n">replicate_frames</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">drug</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_replicate_frame</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">sheet</span><span class="p">,</span> <span class="n">n_replicates</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">drug</span><span class="p">,</span> <span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">sheet</span><span class="p">,</span> <span class="n">n_replicates</span><span class="p">)</span> <span class="ow">in</span> <span class="n">REPLICATE_WORKBOOKS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_effect_rows_are_replicate_one</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">inventory</span><span class="p">,</span> <span class="n">replicate_frames</span><span class="p">)</span>
         <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span><span class="n">doi</span><span class="o">=</span><span class="n">DOI</span><span class="p">,</span> <span class="n">doi_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://doi.org/</span><span class="si">{</span><span class="n">DOI</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="n">source_records</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
@@ -809,6 +1287,7 @@
         <span class="n">env_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">prepared</span><span class="p">(</span><span class="n">drug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conc_raw</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">            </span><span class="sd">"""The A-record environment of one drug condition, and its A = 0 reference."""</span>
             <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">drug</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">conc_raw</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">env_cache</span><span class="p">:</span>
                 <span class="n">environment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span><span class="n">drug</span><span class="p">,</span> <span class="n">conc_raw</span><span class="p">)</span>
@@ -817,6 +1296,23 @@
                     <span class="s2">"reference"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">(</span><span class="n">environment</span><span class="p">),</span>
                 <span class="p">}</span>
             <span class="k">return</span> <span class="n">env_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+        <span class="n">culture_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">prepared_culture</span><span class="p">(</span>
+            <span class="n">drug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">conc_raw</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">induced</span><span class="p">:</span> <span class="nb">bool</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">            </span><span class="sd">"""One culture's environment (ATc when induced), and its f = 0 reference."""</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">drug</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">conc_raw</span><span class="p">),</span> <span class="n">induced</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">culture_cache</span><span class="p">:</span>
+                <span class="n">environment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span>
+                    <span class="n">drug</span><span class="p">,</span> <span class="n">conc_raw</span><span class="p">,</span> <span class="n">atc</span><span class="o">=</span><span class="n">atc_dose</span> <span class="k">if</span> <span class="n">induced</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="p">)</span>
+                <span class="n">culture_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">"environment"</span><span class="p">:</span> <span class="n">environment</span><span class="p">,</span>
+                    <span class="s2">"reference"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">(</span><span class="n">environment</span><span class="p">,</span> <span class="n">CULTURE_UNITS</span><span class="p">),</span>
+                <span class="p">}</span>
+            <span class="k">return</span> <span class="n">culture_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -827,6 +1323,8 @@
         <span class="n">held_out_doses</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">released_targets</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="n">no_spacer_guides</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">stored_replicates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">StoredReplicates</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">stored_samples</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"smith2016"</span><span class="p">):</span>
                 <span class="n">drug</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Drug"</span><span class="p">])</span>
@@ -853,28 +1351,22 @@
                 <span class="n">compound</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"environment"</span><span class="p">]</span><span class="o">.</span><span class="n">perturbations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">compound</span>
                 <span class="k">if</span> <span class="n">compound</span><span class="o">.</span><span class="n">provenance_gaps</span><span class="p">:</span>
                     <span class="n">gapped_records</span><span class="p">[</span><span class="n">drug</span><span class="p">]</span> <span class="o">=</span> <span class="n">gapped_records</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">drug</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">pool</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"#Pool"</span><span class="p">])</span>
                 <span class="n">construct</span> <span class="o">=</span> <span class="n">CrisprConstruct</span><span class="p">(</span>
                     <span class="n">effector</span><span class="o">=</span><span class="n">EFFECTOR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                     <span class="n">guide_sequence</span><span class="o">=</span><span class="n">spacer</span><span class="p">,</span>
                     <span class="n">n_guides</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                    <span class="n">library_pool</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"#Pool"</span><span class="p">]),</span>
+                    <span class="n">library_pool</span><span class="o">=</span><span class="n">pool</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="n">target</span><span class="p">:</span> <span class="n">CrisprInterferencePerturbation</span> <span class="o">|</span> <span class="n">ReleasedIdentifierPerturbation</span>
-                <span class="k">if</span> <span class="n">placed</span><span class="p">:</span>
-                    <span class="n">target</span> <span class="o">=</span> <span class="n">CrisprInterferencePerturbation</span><span class="p">(</span>
-                        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-                        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
-                        <span class="n">crispr</span><span class="o">=</span><span class="n">construct</span><span class="p">,</span>
+                <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_perturbation</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">gene</span><span class="p">,</span> <span class="n">construct</span><span class="p">,</span> <span class="n">placed</span><span class="p">)</span>
+                <span class="n">stored_samples</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="n">POOL_TO_SAMPLE_POOL</span><span class="p">[</span><span class="n">pool</span><span class="p">],</span>
+                        <span class="n">drug</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                        <span class="n">dose_key</span><span class="p">(</span><span class="n">drug</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Concentration"</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()),</span>
+                        <span class="n">FIRST_REPLICATE</span><span class="p">,</span>
                     <span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">target</span> <span class="o">=</span> <span class="n">ReleasedIdentifierPerturbation</span><span class="p">(</span>
-                        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
-                        <span class="n">gene_namespace</span><span class="o">=</span><span class="s2">"scerevisiae_s288c_sgd_systematic"</span><span class="p">,</span>
-                        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">gene</span><span class="p">,</span>
-                        <span class="n">identifier_kind</span><span class="o">=</span><span class="s2">"gene identifier of the guide table, as released"</span><span class="p">,</span>
-                        <span class="n">released_kind</span><span class="o">=</span><span class="n">ReleasedKind</span><span class="o">.</span><span class="n">crispr_interference</span><span class="p">,</span>
-                        <span class="n">crispr</span><span class="o">=</span><span class="n">construct</span><span class="p">,</span>
-                    <span class="p">)</span>
+                <span class="p">)</span>
                 <span class="n">experiment</span> <span class="o">=</span> <span class="n">EnvironmentResponseExperiment</span><span class="p">(</span>
                     <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                     <span class="n">genotype</span><span class="o">=</span><span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="n">target</span><span class="p">]),</span>
@@ -887,6 +1379,7 @@
                         <span class="n">environment_response_uncertainty_type</span><span class="o">=</span><span class="n">UncertaintyType</span><span class="o">.</span><span class="n">variance</span><span class="p">,</span>
                         <span class="n">n_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                         <span class="n">sample_unit</span><span class="o">=</span><span class="n">SampleUnit</span><span class="o">.</span><span class="n">pooled</span><span class="p">,</span>
+                        <span class="n">replicate_id</span><span class="o">=</span><span class="n">FIRST_REPLICATE</span><span class="p">,</span>
                         <span class="n">units</span><span class="o">=</span><span class="n">UNITS</span><span class="p">,</span>
                     <span class="p">),</span>
                 <span class="p">)</span>
@@ -897,6 +1390,88 @@
                     <span class="p">),</span>
                 <span class="p">)</span>
                 <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">kept_effect_records</span> <span class="o">=</span> <span class="n">idx</span>
+            <span class="k">for</span> <span class="n">drug</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">replicate_frames</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">filename</span><span class="p">,</span> <span class="n">sheet</span><span class="p">,</span> <span class="n">n_replicates</span> <span class="o">=</span> <span class="n">REPLICATE_WORKBOOKS</span><span class="p">[</span><span class="n">drug</span><span class="p">]</span>
+                <span class="n">dose</span> <span class="o">=</span> <span class="n">REPLICATE_DOSE</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">drug</span><span class="p">]</span>
+                <span class="n">per_replicate</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span>
+                    <span class="n">frame</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">frame</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="sa">f</span><span class="s2">"smith2016 </span><span class="si">{</span><span class="n">drug</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">):</span>
+                    <span class="n">pool</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"#Pool"</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">pool</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">POOL_TO_SAMPLE_POOL</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> names an unknown pool </span><span class="si">{</span><span class="n">pool</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+                    <span class="n">guide_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Guide"</span><span class="p">])</span>
+                    <span class="n">spacer</span> <span class="o">=</span> <span class="n">spacer_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">guide_name</span><span class="p">)</span>
+                    <span class="n">released</span> <span class="o">=</span> <span class="n">target_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">guide_name</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">spacer</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">released</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> releases replicates for guide </span><span class="si">{</span><span class="n">guide_name</span><span class="si">!r}</span><span class="s2">, "</span>
+                            <span class="s2">"which Additional file 4 does not list"</span>
+                        <span class="p">)</span>
+                    <span class="n">orf</span><span class="p">,</span> <span class="n">gene</span><span class="p">,</span> <span class="n">placed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_released_target</span><span class="p">(</span><span class="o">*</span><span class="n">released</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">placed</span><span class="p">:</span>
+                        <span class="n">released_targets</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
+                    <span class="n">construct</span> <span class="o">=</span> <span class="n">CrisprConstruct</span><span class="p">(</span>
+                        <span class="n">effector</span><span class="o">=</span><span class="n">EFFECTOR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                        <span class="n">guide_sequence</span><span class="o">=</span><span class="n">spacer</span><span class="p">,</span>
+                        <span class="n">n_guides</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                        <span class="n">library_pool</span><span class="o">=</span><span class="n">pool</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_perturbation</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">gene</span><span class="p">,</span> <span class="n">construct</span><span class="p">,</span> <span class="n">placed</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">replicate</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_replicates</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                        <span class="k">for</span> <span class="n">arm</span><span class="p">,</span> <span class="n">induced</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"noATC"</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span> <span class="p">(</span><span class="s2">"plusATC"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)):</span>
+                            <span class="n">fitness</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="sa">f</span><span class="s2">"Rep-</span><span class="si">{</span><span class="n">replicate</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">arm</span><span class="si">}</span><span class="s2">_f_mean"</span><span class="p">]</span>
+                            <span class="n">variance</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="sa">f</span><span class="s2">"Rep-</span><span class="si">{</span><span class="n">replicate</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">arm</span><span class="si">}</span><span class="s2">_f_var"</span><span class="p">]</span>
+                            <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">fitness</span><span class="p">):</span>
+                                <span class="k">continue</span>
+                            <span class="n">item</span> <span class="o">=</span> <span class="n">prepared_culture</span><span class="p">(</span><span class="n">drug</span><span class="p">,</span> <span class="n">dose</span><span class="p">,</span> <span class="n">induced</span><span class="o">=</span><span class="n">induced</span><span class="p">)</span>
+                            <span class="n">experiment</span> <span class="o">=</span> <span class="n">EnvironmentResponseExperiment</span><span class="p">(</span>
+                                <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                <span class="n">genotype</span><span class="o">=</span><span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="n">target</span><span class="p">]),</span>
+                                <span class="n">environment</span><span class="o">=</span><span class="n">item</span><span class="p">[</span><span class="s2">"environment"</span><span class="p">],</span>
+                                <span class="n">phenotype</span><span class="o">=</span><span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
+                                    <span class="n">measurement_type</span><span class="o">=</span><span class="n">MeasurementType</span><span class="o">.</span><span class="n">log2_ratio</span><span class="p">,</span>
+                                    <span class="n">assay_type</span><span class="o">=</span><span class="n">ASSAY</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                                    <span class="n">environment_response</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">fitness</span><span class="p">),</span>
+                                    <span class="n">environment_response_uncertainty</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">variance</span><span class="p">),</span>
+                                    <span class="n">environment_response_uncertainty_type</span><span class="o">=</span><span class="p">(</span>
+                                        <span class="n">UncertaintyType</span><span class="o">.</span><span class="n">variance</span>
+                                    <span class="p">),</span>
+                                    <span class="n">n_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                    <span class="n">sample_unit</span><span class="o">=</span><span class="n">SampleUnit</span><span class="o">.</span><span class="n">pooled</span><span class="p">,</span>
+                                    <span class="n">replicate_id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">replicate</span><span class="p">),</span>
+                                    <span class="n">units</span><span class="o">=</span><span class="n">CULTURE_UNITS</span><span class="p">,</span>
+                                <span class="p">),</span>
+                            <span class="p">)</span>
+                            <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_intern_record</span><span class="p">(</span>
+                                    <span class="n">experiment</span><span class="p">,</span> <span class="n">item</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">],</span> <span class="n">publication</span><span class="p">,</span> <span class="n">itxn</span>
+                                <span class="p">),</span>
+                            <span class="p">)</span>
+                            <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="n">label</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">replicate</span><span class="p">)</span>
+                            <span class="n">per_replicate</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">per_replicate</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+                            <span class="n">stored_samples</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                                <span class="p">(</span>
+                                    <span class="n">POOL_TO_SAMPLE_POOL</span><span class="p">[</span><span class="n">pool</span><span class="p">],</span>
+                                    <span class="n">drug</span><span class="p">,</span>
+                                    <span class="n">dose_key</span><span class="p">(</span><span class="n">drug</span><span class="p">,</span> <span class="n">dose</span><span class="p">),</span>
+                                    <span class="n">label</span><span class="p">,</span>
+                                <span class="p">)</span>
+                            <span class="p">)</span>
+                <span class="n">stored_replicates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">StoredReplicates</span><span class="p">(</span>
+                        <span class="n">source</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
+                        <span class="n">sheet</span><span class="o">=</span><span class="n">sheet</span><span class="p">,</span>
+                        <span class="n">sha256</span><span class="o">=</span><span class="n">REPLICATE_SHA256S</span><span class="p">[</span><span class="n">filename</span><span class="p">],</span>
+                        <span class="n">n_guides</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">frame</span><span class="p">),</span>
+                        <span class="n">n_replicates</span><span class="o">=</span><span class="n">n_replicates</span><span class="p">,</span>
+                        <span class="n">n_records</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">per_replicate</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+                        <span class="n">records_per_replicate</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">per_replicate</span><span class="o">.</span><span class="n">items</span><span class="p">())),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
         <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="n">interned_env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
@@ -958,11 +1533,38 @@
                     <span class="n">n_records</span><span class="o">=</span><span class="n">count</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
+        <span class="c1"># The replicate axis: every (pool, drug, dose, replicate) Additional file 5</span>
+        <span class="c1"># releases either reached a record or is named with its reason. A condition whose</span>
+        <span class="c1"># drug is held out under UNIDENTIFIED_COMPOUND_RULE is accounted by that rule for</span>
+        <span class="c1"># all of its replicates, so it is not listed twice.</span>
+        <span class="n">replicates_not_stored</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReplicateNotStored</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">pool</span><span class="p">,</span> <span class="n">drug</span><span class="p">,</span> <span class="n">typed</span><span class="p">),</span> <span class="n">labels</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">inventory</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">drug_is_identified</span><span class="p">(</span><span class="n">drug</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">released_label</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">:</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">pool</span><span class="p">,</span> <span class="n">drug</span><span class="p">,</span> <span class="n">typed</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">released_label</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">stored_samples</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">reason</span> <span class="o">=</span> <span class="n">REPLICATE_NOT_STORED_REASONS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">reason</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"released replicate </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2"> reached no record and no reason is "</span>
+                        <span class="s2">"recorded for it"</span>
+                    <span class="p">)</span>
+                <span class="n">replicates_not_stored</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">ReplicateNotStored</span><span class="p">(</span>
+                        <span class="n">sample_pool</span><span class="o">=</span><span class="n">pool</span><span class="p">,</span>
+                        <span class="n">drug</span><span class="o">=</span><span class="n">drug</span><span class="p">,</span>
+                        <span class="n">concentration</span><span class="o">=</span><span class="n">dose_spellings</span><span class="p">[</span><span class="n">typed</span><span class="p">],</span>
+                        <span class="n">replicate</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">released_label</span><span class="p">),</span>
+                        <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
         <span class="n">drop_log</span> <span class="o">=</span> <span class="n">DropLog</span><span class="p">(</span>
             <span class="n">dataset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">source_records</span><span class="o">=</span><span class="n">source_records</span><span class="p">,</span>
-            <span class="n">kept_records</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span>
-            <span class="n">dropped_records</span><span class="o">=</span><span class="n">source_records</span> <span class="o">-</span> <span class="n">idx</span><span class="p">,</span>
+            <span class="n">kept_records</span><span class="o">=</span><span class="n">kept_effect_records</span><span class="p">,</span>
+            <span class="n">dropped_records</span><span class="o">=</span><span class="n">source_records</span> <span class="o">-</span> <span class="n">kept_effect_records</span><span class="p">,</span>
             <span class="n">rules</span><span class="o">=</span><span class="n">rules</span><span class="p">,</span>
             <span class="n">compound_identity_gaps</span><span class="o">=</span><span class="n">compound_identity_gaps</span><span class="p">,</span>
             <span class="n">unidentified_compounds_held_out</span><span class="o">=</span><span class="p">[</span>
@@ -974,6 +1576,9 @@
                 <span class="k">for</span> <span class="n">drug</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">held_out</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
             <span class="p">],</span>
             <span class="n">unidentified_compound_sources</span><span class="o">=</span><span class="p">[</span><span class="n">COMPOUND_LIST</span><span class="p">],</span>
+            <span class="n">culture_replicates</span><span class="o">=</span><span class="n">stored_replicates</span><span class="p">,</span>
+            <span class="n">replicates_not_stored</span><span class="o">=</span><span class="n">replicates_not_stored</span><span class="p">,</span>
+            <span class="n">stored_records</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">drop_log</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
@@ -983,20 +1588,30 @@
                 <span class="sa">f</span><span class="s2">"drop accounting mismatch: rules total </span><span class="si">{</span><span class="n">accounted</span><span class="si">}</span><span class="s2">, "</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span><span class="si">}</span><span class="s2"> records missing from the build"</span>
             <span class="p">)</span>
+        <span class="n">culture_records</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">n_records</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">stored_replicates</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">kept_effect_records</span> <span class="o">+</span> <span class="n">culture_records</span> <span class="o">!=</span> <span class="n">idx</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"record accounting mismatch: </span><span class="si">{</span><span class="n">kept_effect_records</span><span class="si">}</span><span class="s2"> A records plus "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">culture_records</span><span class="si">}</span><span class="s2"> culture records is not the </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2"> written"</span>
+            <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Smith2016: wrote </span><span class="si">%d</span><span class="s2"> of </span><span class="si">%d</span><span class="s2"> rows (</span><span class="si">%d</span><span class="s2"> under a typed compound-identity gap on "</span>
-            <span class="s2">"</span><span class="si">%d</span><span class="s2"> drugs); held out </span><span class="si">%d</span><span class="s2"> rows of </span><span class="si">%d</span><span class="s2"> unidentified vendor-code drugs; </span><span class="si">%d</span><span class="s2"> with "</span>
-            <span class="s2">"no A/var(A), </span><span class="si">%d</span><span class="s2"> targets on the released-identifier leaf, </span><span class="si">%d</span><span class="s2"> guides with no "</span>
-            <span class="s2">"spacer"</span><span class="p">,</span>
+            <span class="s2">"Smith2016: wrote </span><span class="si">%d</span><span class="s2"> records -- </span><span class="si">%d</span><span class="s2"> of </span><span class="si">%d</span><span class="s2"> Additional file 10 rows (</span><span class="si">%d</span><span class="s2"> under a "</span>
+            <span class="s2">"typed compound-identity gap on </span><span class="si">%d</span><span class="s2"> drugs) plus </span><span class="si">%d</span><span class="s2"> replicate cultures; held "</span>
+            <span class="s2">"out </span><span class="si">%d</span><span class="s2"> rows of </span><span class="si">%d</span><span class="s2"> unidentified vendor-code drugs; </span><span class="si">%d</span><span class="s2"> with no A/var(A), </span><span class="si">%d</span><span class="s2"> "</span>
+            <span class="s2">"targets on the released-identifier leaf, </span><span class="si">%d</span><span class="s2"> guides with no spacer, </span><span class="si">%d</span><span class="s2"> "</span>
+            <span class="s2">"released replicates not stored"</span><span class="p">,</span>
             <span class="n">idx</span><span class="p">,</span>
+            <span class="n">kept_effect_records</span><span class="p">,</span>
             <span class="n">source_records</span><span class="p">,</span>
             <span class="nb">sum</span><span class="p">(</span><span class="n">gapped_records</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">gapped_records</span><span class="p">),</span>
+            <span class="n">culture_records</span><span class="p">,</span>
             <span class="nb">sum</span><span class="p">(</span><span class="n">held_out</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">held_out</span><span class="p">),</span>
             <span class="n">n_nan</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">released_targets</span><span class="p">),</span>
             <span class="n">n_no_spacer</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">replicates_not_stored</span><span class="p">),</span>
         <span class="p">)</span></div>
 
 

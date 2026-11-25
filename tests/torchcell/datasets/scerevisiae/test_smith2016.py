@@ -406,7 +406,7 @@ def test_every_effect_row_is_replicate_one_of_its_condition() -> None:
                 (row["-ATC_count"], "Rep-1_noATC_count"),
                 (row["+ATC_count"], "Rep-1_plusATC_count"),
             ):
-                pinned = pd.to_numeric(first.loc[index, column], errors="coerce")
+                pinned = pd.to_numeric(pd.Series([first.loc[index, column]]))[0]
                 if pd.isna(pinned):
                     continue
                 assert float(released) == float(pinned), (drug, index, column)

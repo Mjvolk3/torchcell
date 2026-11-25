@@ -21,7 +21,14 @@ RUN pip install --no-cache-dir \
     "authlib>=1.8" \
     "httpx2>=2.13" \
     "itsdangerous>=2.2" \
-    "numpy>=2.0"
+    "numpy>=2.0" \
+    "model2vec>=0.10"
+
+# The embedding model of the hybrid dataset search (torchcell.benchmark.search), baked
+# in so the running service never reaches the network for it. Only the files the
+# loader reads are kept (about 30 MB; the ONNX export would double it). Downloaded
+# before the code is copied, so a code change does not fetch it again.
+RUN python -c "from huggingface_hub import snapshot_download; snapshot_download('minishlab/potion-base-8M', local_dir='/app/models/potion-base-8M', allow_patterns=['*.json', '*.safetensors', '*.txt'])"
 
 WORKDIR /app
 COPY torchcell/__init__.py torchcell/__version__.py torchcell/api_keys.py /app/torchcell/
@@ -32,7 +39,9 @@ COPY torchcell/benchmark/ /app/torchcell/benchmark/
 ENV PYTHONPATH=/app \
     PYTHONDONTWRITEBYTECODE=1 \
     TC_BENCH_HOST=0.0.0.0 \
-    TC_BENCH_PORT=8725
+    TC_BENCH_PORT=8725 \
+    TC_BENCH_SEARCH_MODEL=/app/models/potion-base-8M \
+    HF_HUB_OFFLINE=1
 
 EXPOSE 8725
 

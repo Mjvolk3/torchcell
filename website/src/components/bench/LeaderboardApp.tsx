@@ -1,7 +1,7 @@
 import React, {useMemo, useState, type ReactNode} from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
-import {useLocation} from '@docusaurus/router';
+import {useHistory, useLocation} from '@docusaurus/router';
 import type {Data, Layout} from 'plotly.js';
 import {
   MACRO_TARGET,
@@ -19,6 +19,7 @@ import {
 import {useBenchApi} from '@site/src/lib/useBenchApi';
 import {useLoad} from '@site/src/lib/useLoad';
 import StatusBadge from '@site/src/components/StatusBadge';
+import DatasetPicker from './DatasetPicker';
 import Plot, {baseLayout, SERIES_COLORS, usePlotTheme, type PlotTheme} from './Plot';
 import {BenchFrame, CodeLink, FlagChips, LoadGate, fmtDate, fmtMetric, isHttpUrl} from './common';
 import styles from './bench.module.css';
@@ -610,106 +611,122 @@ function Board({
   );
 }
 
+/** The `?dataset=<slug>` of the page URL, or null when absent. */
+function slugFromSearch(search: string): string | null {
+  return new URLSearchParams(search).get('dataset');
+}
+
+/**
+ * The dataset the URL names, or, with no `?dataset=`, the first dataset in the API's
+ * browse order (organism, task group, title); null when no dataset is registered.
+ */
+function loadSelected(api: BenchApi, slug: string | null): Promise<BenchmarkDatasetPublic | null> {
+  if (slug !== null) {
+    return api.dataset(slug);
+  }
+  return api.searchDatasets({limit: 1}).then((page) => page.results[0]?.dataset ?? null);
+}
+
 function Leaderboard(): ReactNode {
   const api = useBenchApi();
   const location = useLocation();
-  const requestedSlug = new URLSearchParams(location.search).get('dataset');
+  const history = useHistory();
+  // The URL holds the selection, so a board can be linked and the back button works.
+  const slug = slugFromSearch(location.search);
 
-  const [datasetsState, reloadDatasets] = useLoad(() => api.datasets(), [api]);
-  const [slug, setSlug] = useState<string | null>(requestedSlug);
+  const [datasetState, reloadDataset] = useLoad(() => loadSelected(api, slug), [api, slug]);
   // Null means the dataset's primary metric; a choice lasts until the dataset changes.
   const [chosenMetric, setMetric] = useState<MetricName | null>(null);
   const [target, setTarget] = useState<string>(MACRO_TARGET);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
 
+  const choose = (next: BenchmarkDatasetPublic): void => {
+    setTarget(MACRO_TARGET);
+    setMetric(null);
+    if (next.slug !== slug) {
+      const params = new URLSearchParams(location.search);
+      params.set('dataset', next.slug);
+      history.push({pathname: location.pathname, search: `?${params.toString()}`});
+    }
+  };
+
+  const selected = datasetState.status === 'ok' ? datasetState.data : null;
+
   return (
-    <LoadGate state={datasetsState} onRetry={reloadDatasets}>
-      {(datasets) => {
-        if (datasets.length === 0) {
+    <>
+      <div className={styles.controls}>
+        <DatasetPicker api={api} selected={selected} onSelect={choose} />
+      </div>
+      <LoadGate state={datasetState} onRetry={reloadDataset}>
+        {(dataset) => {
+          if (dataset === null) {
+            return (
+              <div className={styles.empty}>
+                <p className={styles.emptyTitle}>No benchmark datasets are registered</p>
+                <p>The API answered with an empty dataset list.</p>
+              </div>
+            );
+          }
+          const activeTarget = dataset.targets.includes(target) ? target : MACRO_TARGET;
+          const metrics = metricsFor(dataset.task);
+          const metric =
+            chosenMetric !== null && metrics.some((m) => m.key === chosenMetric)
+              ? chosenMetric
+              : dataset.primary_metric;
           return (
-            <div className={styles.empty}>
-              <p className={styles.emptyTitle}>No benchmark datasets are registered</p>
-              <p>The API answered with an empty dataset list.</p>
-            </div>
-          );
-        }
-        const dataset = datasets.find((d) => d.slug === slug) ?? datasets[0];
-        const activeTarget = dataset.targets.includes(target) ? target : MACRO_TARGET;
-        const metrics = metricsFor(dataset.task);
-        const metric =
-          chosenMetric !== null && metrics.some((m) => m.key === chosenMetric)
-            ? chosenMetric
-            : dataset.primary_metric;
-        return (
-          <>
-            <div className={styles.controls}>
-              <label className={styles.field}>
-                <span className={styles.fieldLabel}>Dataset</span>
-                <select
-                  className={styles.select}
-                  value={dataset.slug}
-                  onChange={(e) => {
-                    setSlug(e.target.value);
-                    setTarget(MACRO_TARGET);
-                    setMetric(null);
-                  }}>
-                  {datasets.map((d) => (
-                    <option key={d.slug} value={d.slug}>
-                      {d.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className={styles.field}>
-                <span className={styles.fieldLabel}>Metric</span>
-                <select
-                  className={styles.select}
-                  value={metric}
-                  onChange={(e) => setMetric(e.target.value as MetricName)}>
-                  {metrics.map((m) => (
-                    <option key={m.key} value={m.key}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {dataset.targets.length > 1 ? (
+            <>
+              <div className={styles.controls}>
                 <label className={styles.field}>
-                  <span className={styles.fieldLabel}>Target</span>
+                  <span className={styles.fieldLabel}>Metric</span>
                   <select
                     className={styles.select}
-                    value={activeTarget}
-                    onChange={(e) => setTarget(e.target.value)}>
-                    <option value={MACRO_TARGET}>Macro average over targets</option>
-                    {dataset.targets.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
+                    value={metric}
+                    onChange={(e) => setMetric(e.target.value as MetricName)}>
+                    {metrics.map((m) => (
+                      <option key={m.key} value={m.key}>
+                        {m.label}
                       </option>
                     ))}
                   </select>
                 </label>
-              ) : null}
-              <label className={styles.checkbox}>
-                <input
-                  type="checkbox"
-                  checked={verifiedOnly}
-                  onChange={(e) => setVerifiedOnly(e.target.checked)}
-                />
-                Verified only
-              </label>
-            </div>
-            <DatasetPanel dataset={dataset} api={api} />
-            <Board
-              api={api}
-              dataset={dataset}
-              metric={metric}
-              target={activeTarget}
-              verifiedOnly={verifiedOnly}
-            />
-          </>
-        );
-      }}
-    </LoadGate>
+                {dataset.targets.length > 1 ? (
+                  <label className={styles.field}>
+                    <span className={styles.fieldLabel}>Target</span>
+                    <select
+                      className={styles.select}
+                      value={activeTarget}
+                      onChange={(e) => setTarget(e.target.value)}>
+                      <option value={MACRO_TARGET}>Macro average over targets</option>
+                      {dataset.targets.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+                <label className={styles.checkbox}>
+                  <input
+                    type="checkbox"
+                    checked={verifiedOnly}
+                    onChange={(e) => setVerifiedOnly(e.target.checked)}
+                  />
+                  Verified only
+                </label>
+              </div>
+              <DatasetPanel dataset={dataset} api={api} />
+              <Board
+                api={api}
+                dataset={dataset}
+                metric={metric}
+                target={activeTarget}
+                verifiedOnly={verifiedOnly}
+              />
+            </>
+          );
+        }}
+      </LoadGate>
+    </>
   );
 }
 

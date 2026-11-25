@@ -370,3 +370,194 @@
   border-left: 3px solid var(--ifm-color-primary);
   background: var(--ifm-background-surface-color);
 }
+
+/* Dataset picker: a search combobox over /datasets/search, and a browse tree. */
+.picker {
+  display: flex;
+  flex: 1 1 100%;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.pickerBox {
+  position: relative;
+  max-width: 44rem;
+}
+
+.pickerInput {
+  width: 100%;
+}
+
+.pickerInput::placeholder {
+  color: var(--tc-ink-muted);
+  opacity: 1;
+}
+
+.pickerPopup {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 24rem;
+  overflow-y: auto;
+  border: 1px solid var(--tc-border);
+  border-radius: 6px;
+  background: var(--tc-surface);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 18%);
+}
+
+.pickerPopup[hidden] {
+  display: none;
+}
+
+.pickerList {
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+}
+
+.pickerOption {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+}
+
+.pickerOptionActive {
+  background: var(--tc-surface-raised);
+  box-shadow: inset 3px 0 0 var(--ifm-color-primary);
+}
+
+.pickerNote {
+  margin: 0;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.86rem;
+  color: var(--tc-ink-muted);
+}
+
+.pickerNoteError {
+  color: var(--tc-chip-bad-ink);
+}
+
+.pickerSelected {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.15rem 0 0;
+  font-size: 0.8rem;
+}
+
+.optionTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.optionMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.6rem;
+  font-size: 0.78rem;
+  color: var(--tc-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.optionMeta code,
+.pickerSelected code {
+  font-size: 0.76rem;
+}
+
+/* Organism names are italic binomials; the chip uses the neutral chip colors. */
+.organismChip {
+  background: var(--tc-chip-planned-bg);
+  color: var(--tc-chip-planned-ink);
+  border: 1px solid var(--tc-border);
+  font-style: italic;
+  font-weight: 500;
+}
+
+.browse {
+  max-width: 44rem;
+  margin-top: 0.35rem;
+  font-size: 0.88rem;
+}
+
+.browseSummary {
+  cursor: pointer;
+  padding: 0.15rem 0;
+  font-weight: 600;
+}
+
+.browseSummary:focus-visible,
+.boardButton:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 1px;
+}
+
+.browseTree {
+  margin: 0.35rem 0 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--tc-border);
+  border-radius: var(--ifm-global-radius);
+  background: var(--tc-surface-raised);
+}
+
+.browseList {
+  margin: 0;
+  padding: 0 0 0 1rem;
+  list-style: none;
+}
+
+.browseList li {
+  margin: 0.15rem 0;
+}
+
+.browseCount {
+  margin-left: 0.3rem;
+  color: var(--tc-ink-muted);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.browseNote {
+  margin: 0.35rem 0;
+  font-size: 0.8rem;
+  color: var(--tc-ink-muted);
+}
+
+.boardList {
+  margin: 0.25rem 0 0.4rem;
+  padding: 0 0 0 1rem;
+  list-style: none;
+}
+
+.boardButton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  width: 100%;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.boardButton:hover {
+  background: var(--tc-surface);
+  border-color: var(--tc-border);
+}
+
+.boardButtonCurrent {
+  border-color: var(--ifm-color-primary);
+  background: var(--tc-surface);
+}

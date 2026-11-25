@@ -70,6 +70,9 @@ const DATASETS = [
     primary_metric: 'pearson',
     docs_url: null,
     tc_data_slug: null,
+    organism: '[mock] Organism',
+    task_group: 'mock-task-single',
+    split_name: 'random_s0',
   },
   {
     slug: 'mock-multi-target',
@@ -86,6 +89,9 @@ const DATASETS = [
     primary_metric: 'pearson',
     docs_url: null,
     tc_data_slug: null,
+    organism: '[mock] Organism',
+    task_group: 'mock-task-multi',
+    split_name: 'random_s0',
   },
 ];
 

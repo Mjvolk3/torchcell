@@ -66,7 +66,60 @@ export type BenchmarkDatasetPublic = {
   tc_data_slug: string | null;
   /** Absent on bundles written before 2026-10-08 and in the mock fixtures. */
   provenance?: BundleProvenance | null;
+  /** Binomial name of the organism, e.g. "Escherichia coli"; null when not set. */
+  organism?: string | null;
+  /** The task the board belongs to, shared by its split boards; null when not set. */
+  task_group?: string | null;
+  /** Name of the split within the task, e.g. "seqid30_s0"; null when not set. */
+  split_name?: string | null;
 };
+
+/**
+ * How the API scored a search: word and prefix matches only, or those plus an
+ * embedding model (torchcell.benchmark.search).
+ */
+export type SearchMode = 'lexical' | 'hybrid';
+
+export type SearchHit = {dataset: BenchmarkDatasetPublic; score: number};
+
+/** One page of GET /datasets/search, best first; `total` counts every match. */
+export type SearchPage = {
+  mode: SearchMode;
+  total: number;
+  limit: number;
+  offset: number;
+  results: SearchHit[];
+};
+
+/** Arguments of GET /datasets/search. An empty `q` lists everything in browse order. */
+export type DatasetSearchQuery = {
+  q?: string;
+  organism?: string;
+  taskGroup?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export type TaskGroupFacet = {task_group: string; title: string; count: number};
+
+export type OrganismFacet = {
+  organism: string;
+  count: number;
+  task_groups: TaskGroupFacet[];
+  /** Boards of this organism with no task group; reachable by search only. */
+  n_without_task_group: number;
+};
+
+/** GET /datasets/facets: the browse tree of organisms and their task groups. */
+export type DatasetFacets = {
+  total: number;
+  organisms: OrganismFacet[];
+  /** Boards with no organism set; reachable by search only. */
+  n_without_organism: number;
+};
+
+/** Largest page GET /datasets/search answers. */
+export const MAX_SEARCH_LIMIT = 100;
 
 export type SubmissionStatus = 'rejected' | 'provisional' | 'verified' | 'withdrawn';
 
@@ -382,6 +435,10 @@ export interface BenchApi {
 
   datasets(): Promise<BenchmarkDatasetPublic[]>;
   dataset(slug: string): Promise<BenchmarkDatasetPublic>;
+  /** Ranked search over the datasets, one page; see DatasetSearchQuery. */
+  searchDatasets(query: DatasetSearchQuery): Promise<SearchPage>;
+  /** Board counts per organism and task group, for browsing. */
+  datasetFacets(): Promise<DatasetFacets>;
   /** URL of the split file (`record_id,split`), or null in mock mode. */
   splitsUrl(slug: string): string | null;
   /** URL of the empty predictions template, or null in mock mode. */
@@ -485,6 +542,17 @@ function createHttpApi(baseUrl: string): BenchApi {
     datasets: () => request<BenchmarkDatasetPublic[]>('/datasets'),
     dataset: (slug) =>
       request<BenchmarkDatasetPublic>(`/datasets/${encodeURIComponent(slug)}`),
+    searchDatasets({q = '', organism, taskGroup, limit = 20, offset = 0}) {
+      const params = new URLSearchParams({q, limit: String(limit), offset: String(offset)});
+      if (organism !== undefined) {
+        params.set('organism', organism);
+      }
+      if (taskGroup !== undefined) {
+        params.set('task_group', taskGroup);
+      }
+      return request<SearchPage>(`/datasets/search?${params.toString()}`);
+    },
+    datasetFacets: () => request<DatasetFacets>('/datasets/facets'),
     splitsUrl: (slug) => `${baseUrl}/datasets/${encodeURIComponent(slug)}/splits.csv`,
     templateUrl: (slug) => `${baseUrl}/datasets/${encodeURIComponent(slug)}/template.csv`,
     submissionSchema: () => request<Record<string, unknown>>('/submission-schema'),
@@ -533,6 +601,42 @@ function createHttpApi(baseUrl: string): BenchApi {
     userHistory: (userId) =>
       request<UserHistory>(`/users/${encodeURIComponent(userId)}/submissions`),
   };
+}
+
+/** Browse order of the API: organism, task group, title, slug; unset values last. */
+function browseOrder(a: BenchmarkDatasetPublic, b: BenchmarkDatasetPublic): number {
+  const key = (d: BenchmarkDatasetPublic): string[] => [
+    d.organism == null ? '1' : `0${d.organism}`,
+    d.task_group == null ? '1' : `0${d.task_group}`,
+    d.title,
+    d.slug,
+  ];
+  const [ka, kb] = [key(a), key(b)];
+  for (let i = 0; i < ka.length; i += 1) {
+    if (ka[i] !== kb[i]) {
+      return ka[i] < kb[i] ? -1 : 1;
+    }
+  }
+  return 0;
+}
+
+/** Common leading words of `titles`, without trailing separators; the API's rule. */
+function commonTitle(titles: string[], fallback: string): string {
+  if (new Set(titles).size === 1) {
+    return titles[0];
+  }
+  let prefix = titles.reduce((acc, title) => {
+    let n = 0;
+    while (n < acc.length && n < title.length && acc[n] === title[n]) {
+      n += 1;
+    }
+    return acc.slice(0, n);
+  });
+  if (titles.some((t) => t.length > prefix.length && /[A-Za-z0-9]/.test(t[prefix.length]))) {
+    prefix = prefix.replace(/[A-Za-z0-9]+$/, '');
+  }
+  prefix = prefix.replace(/[ ,;:\-(\/]+$/, '');
+  return prefix === '' ? fallback : prefix;
 }
 
 /**
@@ -589,6 +693,69 @@ function createMockApi(baseUrl: string, mockBaseUrl: string): BenchApi {
         throw new BenchApiError(404, `No mock dataset named ${slug}`, [], null);
       }
       return found;
+    },
+    // MOCK ONLY: a case-insensitive substring match over the datasets fixture, in
+    // browse order with score 0. The real API ranks by word and prefix matches (and
+    // embeddings in hybrid mode); none of that is imitated here.
+    async searchDatasets({q = '', organism, taskGroup, limit = 20, offset = 0}) {
+      const all = await fixture<BenchmarkDatasetPublic[]>('datasets');
+      const needle = q.trim().toLowerCase();
+      const matches = all
+        .filter(
+          (d) =>
+            (organism === undefined || d.organism === organism) &&
+            (taskGroup === undefined || d.task_group === taskGroup) &&
+            (needle === '' ||
+              [d.title, d.slug, d.description, d.organism, d.task_group, d.split_name]
+                .filter((field): field is string => typeof field === 'string')
+                .some((field) => field.toLowerCase().includes(needle))),
+        )
+        .sort(browseOrder);
+      return {
+        mode: 'lexical',
+        total: matches.length,
+        limit,
+        offset,
+        results: matches.slice(offset, offset + limit).map((dataset) => ({dataset, score: 0})),
+      };
+    },
+    // MOCK ONLY: the facets computed from the datasets fixture.
+    async datasetFacets() {
+      const all = await fixture<BenchmarkDatasetPublic[]>('datasets');
+      const byOrganism = new Map<string, BenchmarkDatasetPublic[]>();
+      for (const d of all) {
+        if (d.organism != null) {
+          byOrganism.set(d.organism, [...(byOrganism.get(d.organism) ?? []), d]);
+        }
+      }
+      const organisms = [...byOrganism.keys()].sort().map((organism) => {
+        const members = byOrganism.get(organism) ?? [];
+        const groups = new Map<string, string[]>();
+        for (const d of members) {
+          if (d.task_group != null) {
+            groups.set(d.task_group, [...(groups.get(d.task_group) ?? []), d.title]);
+          }
+        }
+        const taskGroups = [...groups.entries()]
+          .map(([name, titles]) => ({
+            task_group: name,
+            title: commonTitle(titles, name),
+            count: titles.length,
+          }))
+          .sort((a, b) => a.title.localeCompare(b.title) || a.task_group.localeCompare(b.task_group));
+        const grouped = taskGroups.reduce((sum, g) => sum + g.count, 0);
+        return {
+          organism,
+          count: members.length,
+          task_groups: taskGroups,
+          n_without_task_group: members.length - grouped,
+        };
+      });
+      return {
+        total: all.length,
+        organisms,
+        n_without_organism: all.filter((d) => d.organism == null).length,
+      };
     },
     splitsUrl: () => null,
     templateUrl: () => null,

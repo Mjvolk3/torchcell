@@ -20,7 +20,11 @@ A bundle is a directory ``<datasets_root>/<slug>/`` with four files:
 ``(record_id, target) -> value`` map), so it does not import a dataset loader; the
 script that extracts those inputs from a built dataset lives with that dataset's
 experiment. :meth:`BenchmarkBundle.load` verifies each file against the recorded
-sha256 and refuses a bundle whose bytes changed.
+sha256 and refuses a bundle whose bytes changed. ``benchmark.json`` holds those hashes
+and is not itself hashed anywhere, so a descriptive field of it (the grouping fields
+``organism``, ``task_group``, ``split_name``) can be set in place without touching the
+pinned files; ``experiments/035-benchmark-bundles/scripts/set_bundle_grouping.py`` does
+that.
 """
 
 from __future__ import annotations
@@ -134,6 +138,21 @@ class BenchmarkDatasetPublic(BaseModel):
     template_sha256: str
     provenance: BundleProvenance | None = Field(
         default=None, description="Sources, label rule and split rule of this bundle."
+    )
+    organism: str | None = Field(
+        default=None,
+        description="Binomial name of the organism measured, e.g. 'Escherichia coli'.",
+    )
+    task_group: str | None = Field(
+        default=None,
+        description=(
+            "The task the board belongs to, shared by all its split boards, e.g. "
+            "'ecoli-growth-rate-campos2018'."
+        ),
+    )
+    split_name: str | None = Field(
+        default=None,
+        description="Name of the split within the task, e.g. 'seqid30_s0'.",
     )
 
     @model_validator(mode="after")
@@ -252,12 +271,17 @@ def write_bundle(
     tc_data_slug: str | None = None,
     built_at: datetime | None = None,
     provenance: BundleProvenance | None = None,
+    organism: str | None = None,
+    task_group: str | None = None,
+    split_name: str | None = None,
 ) -> BenchmarkDataset:
     """Write ``<datasets_root>/<slug>/`` from split id lists and a label map.
 
     ``splits`` lists the record ids of each of the three splits; ``values`` maps
     ``(record_id, target)`` to the label for validation and test records (a pair that
-    was not measured is simply absent). Raises ``ValueError`` when the splits overlap, a
+    was not measured is simply absent). ``organism``, ``task_group`` and ``split_name``
+    group the board for search and browsing (:mod:`torchcell.benchmark.search`) and
+    change nothing about grading. Raises ``ValueError`` when the splits overlap, a
     scored record has no label, a label names a record outside the scored splits, a label
     is not finite, a label of a ``binary`` task is not 0 or 1, or a target has fewer
     than two records or constant labels in a scored split (its correlation, or its
@@ -331,6 +355,9 @@ def write_bundle(
         labels_sha256=sha256_bytes(labels_bytes),
         built_at=built_at or datetime.now(UTC),
         provenance=provenance,
+        organism=organism,
+        task_group=task_group,
+        split_name=split_name,
     )
     root = datasets_root / dataset.slug
     root.mkdir(parents=True, exist_ok=False)
@@ -348,7 +375,7 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     ``--meta`` holds the keyword fields of :func:`write_bundle` (slug, title,
     description, loader_class, citation_key, version, primary_metric, and optionally
-    task, docs_url and tc_data_slug). ``--splits`` is ``{"train": [...], "val": [...],
+    task, docs_url, tc_data_slug, organism, task_group and split_name). ``--splits`` is ``{"train": [...], "val": [...],
     "test": [...]}``. ``--values`` is a CSV with the header ``record_id,target,value``.
     """
     parser = argparse.ArgumentParser(description=main.__doc__)

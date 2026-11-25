@@ -17,7 +17,10 @@ sign-in is refused (a forged or replayed state, an ID token
 with the wrong nonce, audience, issuer, expiry or signature, a provider that is down, a
 cancelled sign-in, a missing email, a provider or domain the policy excludes, a second
 identity on one address, too many new accounts from one address, a disabled account);
-the profile route; the public dataset routes and their sha256 header; a scored
+the profile route; the public dataset routes and their sha256 header; dataset search
+(lexical, and hybrid with the fake embedder of ``_fake_embedder.py``), its paging
+limits and the browse facets, a search model that does not load, and the route names
+no bundle may take as a slug; a scored
 submission, its archive and its board row; a rejected submission and its reasons; the
 quota (one hour apart, three per 24 hours, rejected attempts counted); the upload size
 guard; the integrity flag; admin verify, withdraw, approve, disable and baselines; and
@@ -41,6 +44,7 @@ from fastapi.testclient import TestClient
 from pydantic import SecretStr, ValidationError
 from sqlalchemy import create_engine, select
 
+from tests.torchcell.benchmark._fake_embedder import FakeEmbedder
 from tests.torchcell.benchmark._fake_idp import (
     CLIENT_ID,
     CLIENT_SECRET,
@@ -95,7 +99,13 @@ class Clock:
 class Bench:
     """The app under test with its collaborators."""
 
-    def __init__(self, tmp_path: Path, datasets_root: Path, **overrides: Any) -> None:
+    def __init__(
+        self,
+        tmp_path: Path,
+        datasets_root: Path,
+        embedder: FakeEmbedder | None = None,
+        **overrides: Any,
+    ) -> None:
         """Build the app on a SQLite file under ``tmp_path``."""
         self.submissions_root = tmp_path / "submissions"
         self.submissions_root.mkdir()
@@ -128,6 +138,7 @@ class Bench:
             engine=self.engine,
             oidc_transport=self.idp.transport(),
             clock=self.clock,
+            embedder=embedder,
         )
         self.client = TestClient(self.app, base_url=SERVICE)
 
@@ -208,6 +219,7 @@ def test_health_and_schema(bench: Bench) -> None:
         "n_datasets": 1,
         "tier": "production",
         "build": None,
+        "search": "lexical",
     }
     schema = bench.client.get(bench.url("/submission-schema")).json()
     assert schema["columns"] == ["record_id", "split", "target", "prediction"]
@@ -735,6 +747,160 @@ def test_dataset_routes(bench: Bench, datasets_root: Path) -> None:
     )
 
 
+GROWTH = "ecoli-growth-rate"
+
+
+def _grouped_root(datasets_root: Path) -> Path:
+    """``datasets_root`` (holding ``toy-fitness``, no organism) plus two E. coli
+    boards of one task: ``random_s0`` and ``seqid30_s0``.
+    """
+    from torchcell.benchmark.bundle import write_bundle
+    from torchcell.benchmark.submission import Split
+
+    for split_name, title in (
+        ("random_s0", "E. coli growth rate, random split"),
+        ("seqid30_s0", "E. coli growth rate, sequence identity 30 % split"),
+    ):
+        write_bundle(
+            datasets_root,
+            slug=f"{GROWTH}-{split_name.replace('_', '-')}",
+            title=title,
+            description="Growth rate of single-gene deletions.",
+            loader_class="GrowthRateDataset",
+            citation_key="campos2018",
+            version="1",
+            primary_metric="pearson",
+            splits={
+                Split.TRAIN: ["t1"],
+                Split.VAL: ["v1", "v2"],
+                Split.TEST: ["s1", "s2"],
+            },
+            values={
+                ("v1", "y"): 0.0,
+                ("v2", "y"): 1.0,
+                ("s1", "y"): 1.0,
+                ("s2", "y"): 0.0,
+            },
+            organism="Escherichia coli",
+            task_group=GROWTH,
+            split_name=split_name,
+        )
+    return datasets_root
+
+
+def test_dataset_search_and_facets_routes(tmp_path: Path, datasets_root: Path) -> None:
+    bench = Bench(tmp_path, _grouped_root(datasets_root))
+    random_board, seqid_board = f"{GROWTH}-random-s0", f"{GROWTH}-seqid30-s0"
+
+    everything = bench.client.get(bench.url("/datasets/search")).json()
+    assert (everything["mode"], everything["total"]) == ("lexical", 3)
+    assert (everything["limit"], everything["offset"]) == (20, 0)
+    assert [(r["dataset"]["slug"], r["score"]) for r in everything["results"]] == [
+        (random_board, 0.0),
+        (seqid_board, 0.0),
+        (SLUG, 0.0),
+    ]
+    one = bench.client.get(bench.url(f"/datasets/{seqid_board}")).json()
+    assert everything["results"][1]["dataset"] == one
+    assert one["split_name"] == "seqid30_s0"
+
+    def hits(params: dict[str, Any]) -> list[tuple[str, float]]:
+        body = bench.client.get(bench.url("/datasets/search"), params=params).json()
+        return [(r["dataset"]["slug"], r["score"]) for r in body["results"]]
+
+    # "growth" is a title word (weight 3) of both E. coli boards.
+    assert hits({"q": "growth"}) == [(random_board, 1.0), (seqid_board, 1.0)]
+    # "seqid" is a letter run of the slug word "seqid30".
+    assert hits({"q": "seqid"}) == [(seqid_board, 1.0)]
+    # "toy" is a whole title word (weight 3) of the board with no organism.
+    assert hits({"q": "toy"}) == [(SLUG, 1.0)]
+    assert hits({"q": "zebrafish"}) == []
+
+    page = bench.client.get(
+        bench.url("/datasets/search"),
+        params={
+            "organism": "Escherichia coli",
+            "task_group": GROWTH,
+            "limit": 1,
+            "offset": 1,
+        },
+    ).json()
+    assert (page["total"], page["limit"], page["offset"]) == (2, 1, 1)
+    assert [r["dataset"]["slug"] for r in page["results"]] == [seqid_board]
+
+    for params in ({"limit": 101}, {"limit": 0}, {"offset": -1}, {"q": "x" * 201}):
+        response = bench.client.get(bench.url("/datasets/search"), params=params)
+        assert response.status_code == 422, params
+    capped = bench.client.get(bench.url("/datasets/search"), params={"limit": 100})
+    assert capped.json()["limit"] == 100
+
+    assert bench.client.get(bench.url("/datasets/facets")).json() == {
+        "total": 3,
+        "organisms": [
+            {
+                "organism": "Escherichia coli",
+                "count": 2,
+                "task_groups": [
+                    {"task_group": GROWTH, "title": "E. coli growth rate", "count": 2}
+                ],
+                "n_without_task_group": 0,
+            }
+        ],
+        "n_without_organism": 1,
+    }
+    # The full list is unchanged by search: every bundle, in directory order.
+    listing = bench.client.get(bench.url("/datasets")).json()
+    assert [d["slug"] for d in listing] == [random_board, seqid_board, SLUG]
+
+
+def test_search_is_hybrid_with_an_embedder_and_health_says_so(
+    tmp_path: Path, datasets_root: Path
+) -> None:
+    embedder = FakeEmbedder()
+    bench = Bench(tmp_path, _grouped_root(datasets_root), embedder=embedder)
+    assert bench.client.get(bench.url("/health")).json()["search"] == "hybrid"
+    assert len(embedder.calls) == 1
+    assert len(embedder.calls[0]) == 3
+    body = bench.client.get(
+        bench.url("/datasets/search"), params={"q": "growth"}
+    ).json()
+    # The fake embedder has no growth axis: cosine 0, so the score is half of lex 1.
+    assert body["mode"] == "hybrid"
+    assert [(r["dataset"]["slug"], r["score"]) for r in body["results"]] == [
+        (f"{GROWTH}-random-s0", 0.5),
+        (f"{GROWTH}-seqid30-s0", 0.5),
+    ]
+    assert embedder.calls[-1] == ["growth"]
+
+
+def test_search_model_that_does_not_load_fails_startup(
+    tmp_path: Path, datasets_root: Path
+) -> None:
+    with pytest.raises(FileNotFoundError, match="TC_BENCH_SEARCH_MODEL="):
+        Bench(tmp_path, datasets_root, search_model=tmp_path / "no-such-model")
+
+
+def test_a_bundle_cannot_take_a_route_name_as_its_slug(tmp_path: Path) -> None:
+    from tests.torchcell.benchmark.conftest import LABELS, SPLITS
+    from torchcell.benchmark.bundle import write_bundle
+
+    datasets_root = tmp_path / "datasets"
+    write_bundle(
+        datasets_root,
+        slug="search",
+        title="t",
+        description="d",
+        loader_class="L",
+        citation_key="c",
+        version="1",
+        primary_metric="pearson",
+        splits=SPLITS,
+        values=LABELS,
+    )
+    with pytest.raises(ValueError, match=r"bundle slugs \['search'\] are reserved"):
+        Bench(tmp_path, datasets_root)
+
+
 # -------------------------------------------------------------------- submissions
 
 
@@ -1117,6 +1283,7 @@ def test_config_from_env(
     assert (config.host, config.port) == ("127.0.0.1", 8725)
     assert (config.trust_proxy, config.require_approval) == (True, False)
     assert (config.tier, config.build) == ("production", None)
+    assert config.search_model is None
     assert config.account_policy.blocked_domains == {"mailinator.com", "trashmail.com"}
     assert config.account_policy.allowed_domain_suffixes == (".edu", ".ac.uk")
     assert config.account_policy.allowed_idps == {
@@ -1303,6 +1470,8 @@ def test_tier_and_build_come_from_the_environment_and_show_in_health(
     )
     config = BenchServerConfig.from_env()
     assert (config.tier, config.build) == ("staging", "abc1234")
+    _set_env(monkeypatch, {**env, "TC_BENCH_SEARCH_MODEL": "/app/models/potion"})
+    assert BenchServerConfig.from_env().search_model == Path("/app/models/potion")
 
     bench = Bench(tmp_path, datasets_root, tier="staging", build="abc1234")
     assert bench.client.get(bench.url("/health")).json() == {
@@ -1310,6 +1479,7 @@ def test_tier_and_build_come_from_the_environment_and_show_in_health(
         "n_datasets": 1,
         "tier": "staging",
         "build": "abc1234",
+        "search": "lexical",
     }
 
     _set_env(monkeypatch, {**env, "TC_BENCH_TIER": "preview"})

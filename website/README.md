@@ -131,7 +131,7 @@ npm run gen-mock   # rewrites static/mock/*.json, deterministic
 
 | Page | Path | Function |
 | :-- | :-- | :-- |
-| Leaderboard | `/benchmark/leaderboard/` | Board and charts per dataset. `?dataset=<slug>` preselects one |
+| Leaderboard | `/benchmark/leaderboard/` | Board and charts per dataset, picked by search (`GET /datasets/search`) or the organism and task tree (`GET /datasets/facets`). `?dataset=<slug>` selects one and is kept in the URL; mock mode searches the fixture by substring |
 | Submit | `/benchmark/submit/` | Quota, metadata form, CSV upload, scores or rejection reasons |
 | Account | `/benchmark/account/` | Sign in through CILogon, edit the public profile, sign out, own submissions. The API returns here with `#login_code=<code>` or `#login_error=<reason>` |
 | User history | `/benchmark/user/?id=<user_id>` | Public record of one user's scored submissions |

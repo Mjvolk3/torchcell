@@ -11,4 +11,12 @@ Validation and test scores for every scored submission on one dataset. Scores ar
 [provisional](./status.mdx) until reproduced; rows marked "baseline" are the
 [standard baselines](./baselines.mdx). Click a column header to sort.
 
+Choose a dataset by typing in the **Dataset** box: it searches titles, slugs, organisms,
+tasks, split names, targets, loader classes and citation keys, and the start of a word
+is enough (`morph` finds the morphology boards, `babu` the Babu 2014 ones). Arrow keys
+move through the results and Enter opens one. **Browse by organism and task** lists the
+same boards as a tree: organism, then task, then one board per split. The open dataset
+is kept in the address as `?dataset=<slug>`, so a board can be linked; without it the
+page opens the first dataset by organism, task and title.
+
 <LeaderboardApp />

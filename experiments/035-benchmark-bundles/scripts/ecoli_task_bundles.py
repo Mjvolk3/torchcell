@@ -7,7 +7,9 @@
 ``torchcell.tasks`` lives) writes one directory per board: ``board.json``, ``splits.csv``
 and ``labels.csv``. This script turns each into a bundle with
 :func:`torchcell.benchmark.bundle.write_bundle`, which checks the splits and labels and
-pins the three CSVs by sha256.
+pins the three CSVs by sha256. Each bundle is grouped for search and browsing with
+organism ``Escherichia coli``, ``task_group`` = the board's ``task`` and ``split_name``
+= its ``split``.
 
     python experiments/035-benchmark-bundles/scripts/ecoli_task_bundles.py \
         --boards <export>/boards --datasets-root <datasets root>
@@ -24,6 +26,7 @@ from torchcell.benchmark.bundle import BundleProvenance, SourceRecord, write_bun
 from torchcell.benchmark.submission import Split
 
 EXPORT_SCRIPT = "experiments/050-ecoli-benchmark/scripts/export_boards.py"
+ORGANISM = "Escherichia coli"
 
 
 def main() -> None:
@@ -58,6 +61,9 @@ def main() -> None:
             task="regression",
             docs_url=meta["docs_url"],
             tc_data_slug=meta["tc_data_slug"],
+            organism=ORGANISM,
+            task_group=meta["task"],
+            split_name=meta["split"],
             provenance=BundleProvenance(
                 script=EXPORT_SCRIPT,
                 label_rule=(

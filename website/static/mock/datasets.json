@@ -15,7 +15,10 @@
     "n_test": 10,
     "primary_metric": "pearson",
     "docs_url": null,
-    "tc_data_slug": null
+    "tc_data_slug": null,
+    "organism": "[mock] Organism",
+    "task_group": "mock-task-single",
+    "split_name": "random_s0"
   },
   {
     "slug": "mock-multi-target",
@@ -35,6 +38,9 @@
     "n_test": 10,
     "primary_metric": "pearson",
     "docs_url": null,
-    "tc_data_slug": null
+    "tc_data_slug": null,
+    "organism": "[mock] Organism",
+    "task_group": "mock-task-multi",
+    "split_name": "random_s0"
   }
 ]

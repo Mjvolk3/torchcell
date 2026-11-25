@@ -13,6 +13,7 @@ verifies each file against the sha256 in ``benchmark.json``, so one changed byte
 import hashlib
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -397,3 +398,61 @@ def test_provenance_is_written_served_publicly_and_round_trips(tmp_path: Path) -
     )
     loaded = load_bundles(tmp_path / "a")
     assert loaded["with-prov"].dataset.provenance == provenance
+
+
+def test_grouping_fields_are_written_and_served_publicly(tmp_path: Path) -> None:
+    """``organism``, ``task_group`` and ``split_name`` reach ``benchmark.json`` and the
+    public record as given; a bundle written without them has all three ``null``.
+    """
+    splits = {Split.TRAIN: ["t1"], Split.VAL: ["v1", "v2"], Split.TEST: ["s1", "s2"]}
+    values = {("v1", "y"): 0.0, ("v2", "y"): 1.0, ("s1", "y"): 1.0, ("s2", "y"): 0.0}
+    common: dict[str, Any] = {
+        "title": "t",
+        "description": "d",
+        "loader_class": "L",
+        "citation_key": "c",
+        "version": "1",
+        "primary_metric": "pearson",
+        "splits": splits,
+        "values": values,
+    }
+    grouped = write_bundle(
+        tmp_path,
+        slug="grouped",
+        organism="Escherichia coli",
+        task_group="ecoli-growth-rate-campos2018",
+        split_name="seqid30_s0",
+        **common,
+    )
+    plain = write_bundle(tmp_path, slug="plain", **common)
+    assert (grouped.organism, grouped.task_group, grouped.split_name) == (
+        "Escherichia coli",
+        "ecoli-growth-rate-campos2018",
+        "seqid30_s0",
+    )
+    assert grouped.public().split_name == "seqid30_s0"
+    written = json.loads((tmp_path / "grouped" / "benchmark.json").read_text())
+    assert written["organism"] == "Escherichia coli"
+    assert written["task_group"] == "ecoli-growth-rate-campos2018"
+    assert (plain.organism, plain.task_group, plain.split_name) == (None, None, None)
+    assert load_bundles(tmp_path)["grouped"].dataset == grouped
+
+
+def test_bundle_written_before_the_grouping_fields_still_loads(
+    datasets_root: Path,
+) -> None:
+    """A ``benchmark.json`` without the three keys (every bundle before 2026-11-24)
+    loads, with each field ``None`` and every other field unchanged.
+    """
+    path = datasets_root / SLUG / "benchmark.json"
+    record = json.loads(path.read_text())
+    for key in ("organism", "task_group", "split_name"):
+        del record[key]
+    path.write_text(json.dumps(record, indent=2) + "\n")
+    loaded = BenchmarkBundle.load(datasets_root / SLUG).dataset
+    assert (loaded.organism, loaded.task_group, loaded.split_name) == (None, None, None)
+    assert (
+        loaded.model_dump(mode="json", exclude={"organism", "task_group", "split_name"})
+        == record
+    )
+    assert loaded.slug == SLUG

@@ -171,6 +171,7 @@ module = [
     "intermine", "intermine.*",
     "lmdb", "lmdb.*",
     "mineru", "mineru.*",
+    "model2vec", "model2vec.*", "httpx2", "httpx2.*", "joserfc", "joserfc.*",
     "neo4j", "neo4j.*",
     "neo4j_utils", "neo4j_utils.*",
     "networkx", "networkx.*",

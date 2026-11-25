@@ -75,6 +75,10 @@ environment-driven (``TC_BENCH_*``), with every secret read from a file:
   ``TC_BENCH_TIER`` (``production`` by default; ``staging`` or ``development``
   otherwise) and ``TC_BENCH_BUILD_COMMIT`` (the commit the image was built from, set
   by the image). ``/health`` reports both, which is how a deploy is checked.
+- Optional: ``TC_BENCH_SEARCH_MODEL``, a local directory holding a Model2Vec model.
+  When set, dataset search is ``hybrid`` (embeddings plus word matches, see
+  :mod:`torchcell.benchmark.search`) and a model that does not load fails startup;
+  unset, it is ``lexical``. ``/health`` reports the mode as ``search``.
 
 Staging and production are two deployments of this one service from one branch: each
 has its own database, archive directory, secrets, port and site, and nothing is shared
@@ -103,6 +107,7 @@ from fastapi import (
     File,
     Form,
     HTTPException,
+    Query,
     Request,
     UploadFile,
     status,
@@ -167,6 +172,15 @@ from torchcell.benchmark.oidc import (
 )
 from torchcell.benchmark.ratelimit import QuotaStatus, SubmissionLimits, evaluate_quota
 from torchcell.benchmark.results import Quota, SubmissionResult
+from torchcell.benchmark.search import (
+    SEARCH_MODEL_VAR,
+    DatasetFacets,
+    DatasetIndex,
+    Embedder,
+    SearchMode,
+    SearchPage,
+    embedder_from_path,
+)
 from torchcell.benchmark.security import (
     JWT_SECRET_MIN_BYTES,
     AccountPolicy,
@@ -205,6 +219,11 @@ BASELINE_USER_EMAIL = "baselines@torchcell.invalid"
 BASELINE_USER_NAME = "TorchCell baselines"
 LOGIN_CODE_FRAGMENT = "login_code"
 LOGIN_ERROR_FRAGMENT = "login_error"
+DEFAULT_SEARCH_LIMIT = 20
+MAX_SEARCH_LIMIT = 100
+MAX_SEARCH_QUERY_LENGTH = 200
+# Paths under /datasets/ that are routes, so no bundle may take them as its slug.
+RESERVED_DATASET_SLUGS = frozenset({"search", "facets"})
 
 
 class BenchServerConfig(BaseModel):
@@ -236,6 +255,10 @@ class BenchServerConfig(BaseModel):
     max_api_tokens: int = 5
     api_token_default_days: int = 90
     api_token_max_days: int = 365
+    search_model: Path | None = Field(
+        default=None,
+        description="Model2Vec model directory of the hybrid search; None is lexical.",
+    )
 
     @model_validator(mode="after")
     def _check(self) -> Self:
@@ -315,6 +338,7 @@ class BenchServerConfig(BaseModel):
                 "require_approval": env.get("TC_BENCH_REQUIRE_APPROVAL", "0") == "1",
                 "tier": env.get("TC_BENCH_TIER", "production"),
                 "build": env.get("TC_BENCH_BUILD_COMMIT") or None,
+                "search_model": env.get(SEARCH_MODEL_VAR) or None,
                 "account_policy": AccountPolicy(
                     blocked_domains=blocked,
                     allowed_domain_suffixes=suffixes,
@@ -394,6 +418,9 @@ class Health(BaseModel):
     tier: Tier = Field(description="Which deployment answered.")
     build: str | None = Field(
         description="The git commit the running image was built from, when recorded."
+    )
+    search: SearchMode = Field(
+        description="Dataset search mode: lexical, or hybrid with an embedding model."
     )
 
 
@@ -587,17 +614,31 @@ def create_app(
     engine: Engine | None = None,
     oidc_transport: Any = None,
     clock: Callable[[], datetime] = utcnow,
+    embedder: Embedder | None = None,
 ) -> FastAPI:
     """Build the FastAPI app bound to ``config``.
 
     ``engine`` and ``clock`` default to what ``config`` describes and the wall clock.
     ``oidc_transport`` replaces the HTTP transport of the calls to the identity
-    provider; tests pass one that answers as CILogon.
+    provider; tests pass one that answers as CILogon. ``embedder`` replaces the
+    Model2Vec model ``config.search_model`` names (and makes search hybrid); tests pass
+    a deterministic one. A bundle whose slug is a ``/datasets/`` route name
+    (:data:`RESERVED_DATASET_SLUGS`) raises ``ValueError``.
     """
     db_engine = engine or make_engine(config.database_url.get_secret_value())
     sessions = make_session_factory(db_engine)
     provider = build_provider(config.oidc, oidc_transport)
     bundles = load_bundles(config.datasets_root)
+    reserved = sorted(RESERVED_DATASET_SLUGS & bundles.keys())
+    if reserved:
+        raise ValueError(f"bundle slugs {reserved} are reserved dataset routes")
+    search_index = DatasetIndex(
+        [bundle.dataset.public() for bundle in bundles.values()],
+        embedder if embedder is not None else embedder_from_path(config.search_model),
+    )
+    log.info(
+        "dataset search: %s mode over %d datasets", search_index.mode, len(bundles)
+    )
     secret = config.jwt_secret.get_secret_value()
 
     app = FastAPI(
@@ -866,7 +907,11 @@ def create_app(
     def health() -> Health:
         """Liveness and the number of benchmark datasets loaded. No account needed."""
         return Health(
-            status="ok", n_datasets=len(bundles), tier=config.tier, build=config.build
+            status="ok",
+            n_datasets=len(bundles),
+            tier=config.tier,
+            build=config.build,
+            search=search_index.mode,
         )
 
     @router.get("/submission-schema", tags=["service"])
@@ -1156,6 +1201,32 @@ def create_app(
     def list_datasets() -> list[BenchmarkDatasetPublic]:
         """Every benchmark dataset: targets, split sizes, primary metric, file hashes."""
         return [bundle.dataset.public() for bundle in bundles.values()]
+
+    # Declared before /datasets/{slug}, which would otherwise take "search" and
+    # "facets" as slugs; RESERVED_DATASET_SLUGS keeps a bundle from claiming them.
+    @router.get("/datasets/search", response_model=SearchPage, tags=["datasets"])
+    def search_datasets(
+        q: Annotated[str, Query(max_length=MAX_SEARCH_QUERY_LENGTH)] = "",
+        organism: str | None = None,
+        task_group: str | None = None,
+        limit: Annotated[int, Query(ge=1, le=MAX_SEARCH_LIMIT)] = DEFAULT_SEARCH_LIMIT,
+        offset: Annotated[int, Query(ge=0)] = 0,
+    ) -> SearchPage:
+        """Datasets matching ``q``, best first, one page. No account needed.
+
+        An empty ``q`` lists every dataset that passes the filters in browse order
+        (organism, task group, title) with score 0. ``organism`` and ``task_group``
+        keep exact matches only. ``mode`` says how the scores were computed; the
+        formula is in :mod:`torchcell.benchmark.search`.
+        """
+        return search_index.search(
+            q, organism=organism, task_group=task_group, limit=limit, offset=offset
+        )
+
+    @router.get("/datasets/facets", response_model=DatasetFacets, tags=["datasets"])
+    def dataset_facets() -> DatasetFacets:
+        """Board counts per organism and, within each, per task group."""
+        return search_index.facets()
 
     @router.get(
         "/datasets/{slug}", response_model=BenchmarkDatasetPublic, tags=["datasets"]

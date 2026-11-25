@@ -17,6 +17,8 @@ passes through them:
 - :mod:`torchcell.benchmark.oidc`, :mod:`torchcell.benchmark.security`,
   :mod:`torchcell.benchmark.db`: sign-in through CILogon, session tokens and the
   account policy, and the SQL schema.
+- :mod:`torchcell.benchmark.search`: ranked search and the organism and task browse
+  tree over the loaded datasets (numpy; an optional Model2Vec model for embeddings).
 - :mod:`torchcell.benchmark.app`: the FastAPI service that ties them together.
 
 Nothing here imports torch, PyG, or a dataset loader, so the service image stays slim

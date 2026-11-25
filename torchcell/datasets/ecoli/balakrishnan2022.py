@@ -37,6 +37,24 @@ twice and the data cannot be shown to belong to another sample: its log10 Pearso
 against ``a4`` is 0.9888 and against ``a3`` 0.9882, measured on the pinned bytes, so the
 header stands.)
 
+ONE RECORD IS ONE BIOLOGICAL REPLICATE (per-replicate review, #1178 and #1171,
+2026-11-24). Each released column is one sequencing library from one culture: "Cells
+were pelleted from 8-10 ml cultures at OD600 of ~ 0.4" and "each sample was barcoded"
+(SI Methods, RNA extraction and RNA sequencing). The description sheet names the
+replicate structure itself: each of the 14 ``_1`` samples has the Description cell
+"Biological replicate of sample <x>" (``SampleSpec.replicate_of``, which
+``check_sample_metadata`` re-reads cell for cell), and the SI's Fig. S3B legend calls the
+wild-type pair "two biological replicates for glucose minimal media". So the 28 records
+are 13 replicate pairs that share a genotype and an environment plus ``r5`` (released
+alone) and ``a3`` (its replicate ``a3_1`` is described at 30 uM IPTG against ``a3``'s 28
+uM and is not released). No technical level is combined in a released column, and no
+record is a loader mean. The only aggregate is each ``phenotype_reference`` (the mean of
+the medium's two wild-type replicate libraries), which is a reference summary, not a
+record. ``MrnaNumberFractionPhenotype`` has no ``replicate_id`` field (the 2026-11-24
+schema record did not list it), so the two members of a pair are told apart by their
+values only; the sample id of each record is in ``samples.csv`` (row ``i`` is LMDB
+key ``"i"``).
+
 THE GENE KEYS. 4,342 released rows = 4,342 stored keys, every row under the
 identifier the release gives it and no annotation read (the owner's rule of
 2026-10-12: the data is the data, and the genome is a separate layer joined at
@@ -95,7 +113,10 @@ THE REFERENCE. "For E. coli K-12 strain NCM3722 growing exponentially in glucose
 medium (reference condition, growth rate 0.91/h)". Each record's reference is its base
 medium's wild-type condition: ``c5`` and ``c0_1`` (NCM3722 in M9) for the C- and
 A-limitation series, ``r0`` and ``r0_1`` (NCM3722 in MOPS) for the R-limitation series,
-stored as the per-gene mean of the two libraries with ``n_libraries=2``.
+stored as the per-gene mean of the two libraries with ``n_libraries=2``. The two are
+biological replicates, and each is also stored as its own record; the mean is a
+reference summary only (the per-replicate policy keeps ``phenotype_reference`` an
+aggregate over the control replicates).
 
 DATA. Two files are consumed from this paper's scripted retrievals and deposited under
 ``$DATA_ROOT/torchcell-raw/balakrishnanPrinciplesGeneRegulation2022/data/``: the GEO
@@ -119,6 +140,7 @@ import pickle
 import shutil
 import statistics
 import subprocess
+from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -460,9 +482,23 @@ _Q_SI_NQ1390 = (
 )
 _Q_SI_NQ393 = "NCM3722, ∆gdhA, PLlac-01-   titration of Nitrogen assimilation"
 _Q_SI_NQ393_OPERON = "gltBD                       (A-limitation)"
+#: The replicate unit (per-replicate review, 2026-11-24): one culture, one library.
+_Q_SI_CULTURE = "Cells were pelleted from 8-10 ml cultures at OD600 of ~ 0.4"
+_Q_SI_BARCODED = "each sample was barcoded"
+_Q_SI_BIOLOGICAL = (
+    "fractions obtained with RNA sequencing (RNA-seq; see SI Methods) in two "
+    "biological replicates"
+)
+_Q_SI_SAMPLE_TOTAL = (
+    "we obtained 29 mass-spec samples and 31 RNA-seq samples for different growth "
+    "rates ranging"
+)
 #: Description-sheet cells, verbatim.
 _Q_PU_PTSG = "Titratable glucose uptake (Pu-ptsG)"
 _Q_PLAC_GOGAT = "Titratable ammonia assimilation (Plac-GOGAT)"
+_Q_BIOLOGICAL_REPLICATE = "Biological replicate of sample c5"
+#: The Description cell of every ``_1`` sample, ``{}`` = the sample it replicates.
+REPLICATE_DESCRIPTION = "Biological replicate of sample {}"
 
 PAPER_QUOTES: dict[str, str] = {
     "psi": _Q_PSI,
@@ -479,8 +515,16 @@ MORI_QUOTES: dict[str, str] = {
     "lower": _Q_MORI_LOWER,
     "nq393": _Q_MORI_NQ393,
 }
-WORKBOOK_QUOTES: dict[str, str] = {"pu_ptsg": _Q_PU_PTSG, "plac_gogat": _Q_PLAC_GOGAT}
+WORKBOOK_QUOTES: dict[str, str] = {
+    "pu_ptsg": _Q_PU_PTSG,
+    "plac_gogat": _Q_PLAC_GOGAT,
+    "biological_replicate": _Q_BIOLOGICAL_REPLICATE,
+}
 SI_QUOTES: dict[str, str] = {
+    "culture": _Q_SI_CULTURE,
+    "barcoded": _Q_SI_BARCODED,
+    "biological_replicates": _Q_SI_BIOLOGICAL,
+    "sample_total": _Q_SI_SAMPLE_TOTAL,
     "temperature": _Q_SI_TEMPERATURE,
     "culturing": _Q_SI_CULTURING,
     "table_s1": _Q_SI_TABLE_S1,
@@ -621,6 +665,40 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "the wild-type reference (0.91, 0.95 /h), measured on Table S3",
     ),
     "gogat_decreased": _mori("decreased", _Q_MORI_NQ393),
+    "replicate_unit_culture": _si(
+        "one culture per library",
+        _Q_SI_CULTURE,
+        note="SI Methods, 'RNA extraction': every library's RNA comes from one pelleted "
+        "culture; no technical level (repeat library, repeat lane) is combined into a "
+        "released column",
+    ),
+    "replicate_unit_library": _si(
+        "one barcoded library per sample",
+        _Q_SI_BARCODED,
+        note="SI Methods, 'RNA sequencing'; each described sample names its own FASTQ "
+        "in the description sheet's 'File name' column",
+    ),
+    "replicate_kind": _table(
+        "biological",
+        _Q_BIOLOGICAL_REPLICATE,
+        note="the Description cell of every one of the 14 '_1' samples reads "
+        "'Biological replicate of sample <x>' (SampleSpec.replicate_of, checked cell "
+        "for cell by check_sample_metadata); so each record is one biological replicate "
+        "and the two members of a pair share genotype and environment",
+    ),
+    "wild_type_pair_biological": _si(
+        "biological",
+        _Q_SI_BIOLOGICAL,
+        note="Fig. S3B legend: the wild-type glucose minimal medium pair the reference "
+        "averages",
+    ),
+    "rnaseq_sample_total": _si(
+        31,
+        _Q_SI_SAMPLE_TOTAL,
+        note="Fig. S4A legend. The description sheet lists 29 steady-state samples (28 "
+        "released). Unverified: the two pre-rifampicin libraries RIF_A0 and RIF_B0 of "
+        "sheet '3 - RNAseq-deg (description)' would make 31; they are not loaded here",
+    ),
 }
 
 # --------------------------------------------------------------------------- #
@@ -689,6 +767,12 @@ class SampleSpec(BaseModel):
     medium: str
     supplement: str | None
     growth_rate_per_h: float
+    replicate_of: str | None = Field(
+        default=None,
+        description="the sample this one is a biological replicate of, as its "
+        "Description cell names it ('Biological replicate of sample <x>'); None on a "
+        "first-series sample",
+    )
     drop: DropReason | None = None
 
 
@@ -701,6 +785,8 @@ def _s(
     supplement: str | None = None,
     drop: DropReason | None = None,
 ) -> SampleSpec:
+    """One description row; a ``_1`` sample is the replicate of its first-series twin."""
+    twin = {"c0_1": "c5"}.get(sample, sample.removesuffix("_1"))
     return SampleSpec(
         sample=sample,
         series=series,
@@ -708,6 +794,7 @@ def _s(
         medium=medium,
         supplement=supplement,
         growth_rate_per_h=rate,
+        replicate_of=twin if sample.endswith("_1") else None,
         drop=drop,
     )
 
@@ -754,6 +841,32 @@ RELEASED_HEADERS: tuple[str, ...] = (
 )  # fmt: skip
 #: 29 released columns - 1 duplicate = 28.
 EXPECTED_RECORDS = 28
+#: ``{replicates per condition: conditions}`` over the 28 records: 13 biological
+#: replicate pairs, plus ``r5`` (released alone) and ``a3`` (``a3_1`` unreleased).
+EXPECTED_REPLICATE_GROUP_SIZES: dict[int, int] = {2: 13, 1: 2}
+
+
+def replicate_groups(specs: Sequence[SampleSpec]) -> dict[str, list[str]]:
+    """The loaded samples grouped by the condition that fixes genotype and environment.
+
+    Strain, medium and supplement are what :func:`strain_genotype` and
+    :func:`build_environment` read, so two samples in one group are records with the
+    same genotype and environment: biological replicates of one condition. Each group
+    of two must be a declared ``replicate_of`` pair.
+    """
+    groups: dict[str, list[str]] = {}
+    for spec in specs:
+        key = f"{spec.strain} | {spec.medium} | {spec.supplement}"
+        groups.setdefault(key, []).append(spec.sample)
+    by_name = {spec.sample: spec for spec in specs}
+    for members in groups.values():
+        if len(members) > 2 or (
+            len(members) == 2 and by_name[members[1]].replicate_of != members[0]
+        ):
+            raise RuntimeError(f"{members} share a condition but are not one pair")
+    return groups
+
+
 #: The wild-type reference libraries of each base medium.
 REFERENCE_SAMPLES: dict[str, tuple[str, str]] = {
     "M9": ("c5", "c0_1"),
@@ -996,6 +1109,7 @@ def check_sample_metadata(path: str) -> dict[str, Any]:
     series = ""
     seen: list[str] = []
     fill: dict[str, str] = {}
+    replicates: dict[str, str] = {}
     for row, spec in zip(rows[1:], SAMPLES, strict=True):
         cells = dict(
             zip(DESCRIPTION_HEADER, row[: len(DESCRIPTION_HEADER)], strict=True)
@@ -1022,6 +1136,18 @@ def check_sample_metadata(path: str) -> dict[str, Any]:
             raise RuntimeError(f"release says {released}, module declares {declared}")
         if str(cells["Carbon source"]) != CARBON_SOURCE:
             raise RuntimeError(f"{spec.sample}: carbon source {cells['Carbon source']}")
+        description = str(cells["Description"])
+        is_replicate = description.startswith(REPLICATE_DESCRIPTION.format(""))
+        if is_replicate != (spec.replicate_of is not None) or (
+            is_replicate
+            and description != REPLICATE_DESCRIPTION.format(spec.replicate_of)
+        ):
+            raise RuntimeError(
+                f"{spec.sample}: Description {description!r}, module declares "
+                f"replicate_of={spec.replicate_of!r}"
+            )
+        if is_replicate:
+            replicates[spec.sample] = str(spec.replicate_of)
         nitrogen = str(cells["Nitrogen source"])
         expected = M9_NITROGEN if spec.medium == "M9" else MOPS_NITROGEN
         if nitrogen != expected:
@@ -1031,7 +1157,11 @@ def check_sample_metadata(path: str) -> dict[str, Any]:
         raise RuntimeError(
             f"off-recipe nitrogen cells {fill}, declared {NITROGEN_FILL_SERIES}"
         )
-    return {"n_described": len(seen), "nitrogen_fill_series": fill}
+    return {
+        "n_described": len(seen),
+        "nitrogen_fill_series": fill,
+        "biological_replicate_of": replicates,
+    }
 
 
 class FractionRow(BaseModel):
@@ -1426,6 +1556,12 @@ class MrnaFractionBalakrishnan2022Dataset(ExperimentDataset):
             raise RuntimeError(f"{len(kept)} keys, {n_zero_locus} keyed by gene")
         if len(LOADED) != EXPECTED_RECORDS:
             raise RuntimeError(f"{len(LOADED)} records, declared {EXPECTED_RECORDS}")
+        groups = replicate_groups(LOADED)
+        sizes = dict(Counter(len(members) for members in groups.values()))
+        if sizes != EXPECTED_REPLICATE_GROUP_SIZES:
+            raise RuntimeError(
+                f"replicate groups {sizes}, declared {EXPECTED_REPLICATE_GROUP_SIZES}"
+            )
 
         reference_genome = assembly_reference(
             self.REFERENCE_STRAIN, background=NCM3722_BACKGROUND
@@ -1472,7 +1608,9 @@ class MrnaFractionBalakrishnan2022Dataset(ExperimentDataset):
                 )
         env.close()
         interned_env.close()
-        self._write_ledgers(rows, kept, sample_rows, quotes, metadata, sheet_check)
+        self._write_ledgers(
+            rows, kept, sample_rows, quotes, metadata, sheet_check, groups
+        )
 
     def _write_ledgers(
         self,
@@ -1482,6 +1620,7 @@ class MrnaFractionBalakrishnan2022Dataset(ExperimentDataset):
         quotes: Mapping[str, Any],
         metadata: Mapping[str, Any],
         sheet_check: Mapping[str, Any],
+        groups: Mapping[str, Sequence[str]],
     ) -> None:
         """The drop log, the sourcing table, the sample and gene-key tables."""
         out = Path(self.preprocess_dir)
@@ -1508,6 +1647,16 @@ class MrnaFractionBalakrishnan2022Dataset(ExperimentDataset):
                 "reason": "the release writes locus 0 for these rows, which "
                 "identifies nothing, so the released gene cell is the key",
                 "items": [item.key for item in by_gene],
+            },
+            "replicate_structure": {
+                "record_unit": "one biological replicate: one culture, one barcoded "
+                "library, one released column",
+                "group_sizes": {
+                    str(k): v for k, v in EXPECTED_REPLICATE_GROUP_SIZES.items()
+                },
+                "groups": {key: list(members) for key, members in groups.items()},
+                "not_released": "a3_1, the replicate of a3, is described at 30 uM IPTG "
+                "(a3: 28 uM) and has no fractions column",
             },
             "untyped_edits": UNTYPED_EDITS,
             "nitrogen_fill_series": NITROGEN_FILL_SERIES,

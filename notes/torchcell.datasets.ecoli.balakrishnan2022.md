@@ -222,3 +222,28 @@ The owner's rule of 2026-10-12 ([[database.genome-gating-sweep.2026.10.12]], row
 Still loader-declared, flagged for follow-up: the three strain edits name their targets by symbol in Table S1 (`Pu-ptsG`, `∆gdhA`, `PLlac-01-gltBD`) and the loader stores them on the placed leaves under b-numbers it declares (`b1101`, `b1761`, `b3212`), a symbol-to-b-number mapping the release does not state.
 
 Released vs stored: 4,342 released rows, 4,342 keys on every one of the 28 records (29 released columns minus the duplicated `a4_1` header); 0 dropped.
+
+## 2026.11.24 - Per-replicate review: already one record per biological replicate (#1178, #1171)
+
+Under the per-replicate policy (#1178) the store needs no record change: each of the 28 records is one biological replicate, one culture sequenced as one barcoded library, stored as its released column verbatim with `n_libraries=1`. Records before 28, after 28.
+
+Evidence, every quote checked as a substring of the pinned bytes by `check_quotes`:
+
+| what | quote | file (sha256) | where |
+|---|---|---|---|
+| replicate kind | "Biological replicate of sample c5" (and the same cell for all 14 `_1` samples) | `data/GSE205717_Processed_data_Table_S3.xlsx` (`9d7df03b...`) | sheet `1 - RNAseq-ss (description)`, column `Description`, rows 7-11, 16-19, 26-30 |
+| one culture per library | "Cells were pelleted from 8-10 ml cultures at OD600 of ~ 0.4" | `si/science.abk2066_sm.layout.txt` (`3ae343b2...`) | SI Methods, RNA extraction, line 119 |
+| one library per sample | "each sample was barcoded" | same | SI Methods, RNA sequencing, line 134 |
+| the wild-type pair | "fractions obtained with RNA sequencing (RNA-seq; see SI Methods) in two biological replicates" | same | Fig. S3B legend, line 1270 |
+| the paper's sample total | "we obtained 29 mass-spec samples and 31 RNA-seq samples for different growth rates ranging" | same | Fig. S4A legend, line 1297 |
+
+Structure: grouped by genotype and environment the 28 records are 13 replicate pairs plus `r5` (released alone) and `a3` (its replicate `a3_1` is described at 30 uM IPTG against `a3`'s 28 uM and has no column). No technical level is combined inside a column, and no author withdrew a sample (searched SI and main text for replicate, triplicate, duplicate, biological, technical, independent, colony, isolate, culture, n =, exclude, discard). The earlier audit's "whether the `_1` series are separate cultures is unverified" is settled by the Description cells.
+
+Changes, no record changes: `SampleSpec.replicate_of` declares the 14 pairs and `check_sample_metadata` refuses a Description cell that disagrees; `replicate_groups` and `EXPECTED_REPLICATE_GROUP_SIZES` ({2: 13, 1: 2}) refuse a build whose conditions stop pairing; five new sourced values (`replicate_unit_culture`, `replicate_unit_library`, `replicate_kind`, `wild_type_pair_biological`, `rnaseq_sample_total`); `dropped_records.json` gains `replicate_structure`, `samples.csv` gains `replicate_of`; 26 quotes checked (21 before). The runner's provenance text for this dataset no longer says 4,176 keys (4,342 since #1069).
+
+Scratch build (`$DATA_ROOT/tmp/scratch/per-replicate-balakrishnan2022/mrna_fraction_balakrishnan2022`): verifier PASS, L1 replicate_groups 28 distinct profiles over 15 groups; the experiments and references equal the dev store's as multisets; mean per (genotype, environment) group equals the dev store's to max abs difference 0.0; each reference equals the mean of its two wild-type records below 1e-15.
+
+Not done, needs the owner:
+
+- `MrnaNumberFractionPhenotype` has no `replicate_id` (the 2026-11-24 schema record left it out). Proposed: the same optional field the other per-replicate classes carry, `replicate_id: str | None = None`, set to the released Sample ID (`c5`, `c0_1`, ...), None on the `phenotype_reference`; adapter projection and BioCypher property as for the 2026-11-24 classes. Until then the two members of a pair are told apart by their values only (no two of the 28 profiles are equal, checked by L1).
+- Sheet `3 - RNAseq-deg (description)` releases two pre-rifampicin libraries, `RIF_A0` (NCM3722, M9, 10 mM NH4Cl) and `RIF_B0` (NQ1390, 40 uM 3MBA), each "0 (pre-shift)". Hypothesis (untested): these are the two RNA-seq samples that make Fig. S4A's 31 out of the 29 described. They belong with the time courses (#853) unless the owner wants them as steady-state records here.

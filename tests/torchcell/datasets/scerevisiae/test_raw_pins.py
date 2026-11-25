@@ -73,6 +73,7 @@ def _pins_from_constants(
         "BetaxanthinCachera2023Dataset": lambda: {m.DATA_FILENAME: m.DATA_SHA256},
         "CaudalPanTranscriptome2024Dataset": lambda: {
             m.CAUDAL_ZIP_BASENAME: m.CAUDAL_ZIP_SHA256,
+            m.REPLICATE_TAB_BASENAME: m.REPLICATE_TAB_SHA256,
             **{name: genome(name) for name in m.GENOTYPE_FILES},
         },
         "InductionTimecourseHackett2020Dataset": lambda: {

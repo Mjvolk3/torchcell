@@ -152,22 +152,39 @@
 <span class="sd">``MAA``; the ``SACE_`` prefix is the same one that once dropped an isolate's variants</span>
 <span class="sd">(issue #73), so the mapping is explicit and a parent absent from the index raises.</span>
 
-<span class="sd">PHENOTYPE. ``phenotypes.tsv.gz`` has 13,950 rows x 40 trait columns; 38 are served.</span>
-<span class="sd">Trait names are ``Condition;Concentration;PermutationGroup`` (``rr_fx.R``); the</span>
-<span class="sd">trailing digit is the plate BATCH, not a replicate index. For 36 conditions the stored</span>
+<span class="sd">PHENOTYPE. ``phenotypes.tsv.gz`` has 13,950 rows x 40 trait columns, all 40 served:</span>
+<span class="sd">13,950 x 40 = 558,000 records over 38 conditions. Trait names are</span>
+<span class="sd">``Condition;Concentration;PermutationGroup`` (``rr_fx.R``); the trailing digit is the</span>
+<span class="sd">plate batch, which is the phenotyping round (``process_images.R`` reads</span>
+<span class="sd">``RR_Round1/2/3`` and sets ``PermutationGroup`` 1, 2, 3). For 36 conditions the stored</span>
 <span class="sd">value is ``residuals(lm(s.radius.mean ~ ctrl.s.radius.mean))`` against the same-cross,</span>
 <span class="sd">same-batch, same-layout YPD plate (or YNB plate for the YNB conditions;</span>
 <span class="sd">``process_images.R``), served as ``MeasurementType.control_regression_residual``; for</span>
-<span class="sd">``YPD;;1`` and ``YNB;;1`` the value is the raw colony mean radius in image pixels</span>
-<span class="sd">(``MeasurementType.colony_size``). ``YPD;;2`` and ``YPD;;3`` are the batch-2 and</span>
-<span class="sd">batch-3 control plates: they are the regressors for those batches and are dropped from</span>
-<span class="sd">every analysis in the source (``mapping.R``: "remove the results from the two</span>
-<span class="sd">additional YPD replicates"), so they are not served as conditions. ``mapping.R`` averages</span>
+<span class="sd">``YPD;;1``, ``YPD;;2``, ``YPD;;3`` and ``YNB;;1`` the value is the raw colony mean radius</span>
+<span class="sd">in image pixels (``MeasurementType.colony_size``; ``process_images.R`` L302-305 copies</span>
+<span class="sd">``s.radius.mean`` unregressed for every ``YPD;;``/``YNB;;`` plate). ``mapping.R`` averages</span>
 <span class="sd">the duplicate plates and then mean-imputes missing cells per trait within a cross; the</span>
 <span class="sd">release carries no missingness mask, so imputed cells cannot be identified (a</span>
 <span class="sd">dataset-level limitation, not a per-record gap). The reference is 0 for every condition:</span>
 <span class="sd">exact by construction for a residual, and the scale's physical zero (no colony) with a</span>
-<span class="sd">``ProvenanceGap`` for the two absolute conditions, whose parental radii are not released.</span>
+<span class="sd">``ProvenanceGap`` for the absolute conditions, whose parental radii are not released.</span>
+
+<span class="sd">YPD REPLICATES (2026.11.24, one record per released replicate, #1176). ``YPD;;1``,</span>
+<span class="sd">``YPD;;2`` and ``YPD;;3`` are the same condition (YPD, 30 C, 48 h, solid) measured in</span>
+<span class="sd">the three phenotyping rounds: the authors call the last two "the two additional YPD</span>
+<span class="sd">replicates (very similar to rep 1)" (``mapping.R`` L139) and "the two extra YPD</span>
+<span class="sd">replicate experiments" (``mapping_fx.R`` L574). They are released for every segregant</span>
+<span class="sd">(0 NaN in 13,950 rows) and are served as three records of the one YPD condition, with</span>
+<span class="sd">``replicate_id`` = the batch digit the release prints (``"1"``, ``"2"``, ``"3"``); every</span>
+<span class="sd">other condition is measured in one round only and keeps ``replicate_id=None``. The</span>
+<span class="sd">source excludes rounds 2 and 3 from its QTL-count summaries; that is a reporting choice,</span>
+<span class="sd">not a withdrawal (the values are released and the R code still maps them), so they are</span>
+<span class="sd">stored. Before 2026.11.24 the loader dropped them (``NOT_SERVED``) and stored 530,100</span>
+<span class="sd">records. Within one round, each value is the authors' mean over the duplicate liquid</span>
+<span class="sd">plates ("Segregants were arrayed to 384-well liquid plates in duplicate"); the per-plate</span>
+<span class="sd">values (``NORMpheno.RData``, linked from the repository README on Google Drive) are not in</span>
+<span class="sd">the raw mirror and the link answered 404 on 2026-11-25, so the round mean is what is</span>
+<span class="sd">stored, with ``n_samples=2``.</span>
 
 <span class="sd">ENVIRONMENT. Temperature lives on ``Environment.temperature`` (15, 30, 37 C for the YPD</span>
 <span class="sd">temperature series); the 30 C of every other plate is a documented representative with a</span>
@@ -323,7 +340,10 @@
 <span class="p">}</span>  <span class="c1"># fmt: skip</span>
 <span class="n">N_SEGREGANTS</span> <span class="o">=</span> <span class="mi">13950</span>
 <span class="n">N_CONDITIONS</span> <span class="o">=</span> <span class="mi">38</span>
-<span class="n">EXPECTED_RECORDS</span> <span class="o">=</span> <span class="n">N_SEGREGANTS</span> <span class="o">*</span> <span class="n">N_CONDITIONS</span>
+<span class="c1"># The two additional YPD rounds are replicate columns of the YPD;;1 condition, so the</span>
+<span class="c1"># release's 40 columns are 38 conditions; every column is one record per segregant.</span>
+<span class="n">N_COLUMNS</span> <span class="o">=</span> <span class="mi">40</span>
+<span class="n">EXPECTED_RECORDS</span> <span class="o">=</span> <span class="n">N_SEGREGANTS</span> <span class="o">*</span> <span class="n">N_COLUMNS</span>
 
 <span class="c1"># README parent label -&gt; Peter 2018 strain id (None = BY, the S288C reference). The xls</span>
 <span class="c1"># "Strain ID of Parent 1 in Peter et al. 2018" column supplies these; 273614 is written</span>
@@ -387,7 +407,16 @@
 <span class="c1"># Documented representative: the Methods state the 48 h incubation but not its</span>
 <span class="c1"># temperature; 30 C is carried with a ProvenanceGap on every non-temperature plate.</span>
 <span class="n">DEFAULT_TEMPERATURE_C</span> <span class="o">=</span> <span class="mf">30.0</span>
-<span class="n">NOT_SERVED</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"YPD;;2"</span><span class="p">,</span> <span class="s2">"YPD;;3"</span><span class="p">}</span>
+<span class="c1"># The YPD control plate of each phenotyping round, keyed by column: the replicate_id is</span>
+<span class="c1"># the batch digit the release prints. YPD;;2 and YPD;;3 are served as further replicates</span>
+<span class="c1"># of the YPD;;1 condition (same environment, measurement and reference).</span>
+<span class="n">YPD_REPLICATE_IDS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"YPD;;1"</span><span class="p">:</span> <span class="s2">"1"</span><span class="p">,</span> <span class="s2">"YPD;;2"</span><span class="p">:</span> <span class="s2">"2"</span><span class="p">,</span> <span class="s2">"YPD;;3"</span><span class="p">:</span> <span class="s2">"3"</span><span class="p">}</span>
+<span class="n">YPD_REPLICATE_COLUMNS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"YPD;;2"</span><span class="p">,</span> <span class="s2">"YPD;;3"</span><span class="p">)</span>
+<span class="n">YPD_REPLICATE_QUOTE</span> <span class="o">=</span> <span class="s2">"# remove the results from the two additional YPD replicates (very similar to rep 1)"</span>
+<span class="n">YPD_REPLICATE_EXPERIMENTS_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"# by default remove indices 37 and 38 corresponding to the two extra YPD "</span>
+    <span class="s2">"replicate experiments"</span>
+<span class="p">)</span>
 <span class="c1"># The control plate a residual was regressed on, by batch, and the served column that</span>
 <span class="c1"># carries that plate's ENVIRONMENT: the batch-2 and batch-3 YPD plates are the same</span>
 <span class="c1"># medium and temperature as the batch-1 plate (only the batch differs), so their</span>
@@ -419,6 +448,9 @@
     <span class="n">measurement_type</span><span class="p">:</span> <span class="n">MeasurementType</span>
     <span class="n">control_column</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">dose_quote</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># the batch digit for the three YPD rounds (YPD_REPLICATE_IDS); None for every</span>
+    <span class="c1"># condition measured in one round only</span>
+    <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_smp</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SmallMoleculePerturbation</span><span class="p">:</span>
@@ -454,6 +486,7 @@
         <span class="n">measurement_type</span><span class="o">=</span><span class="n">measurement_type</span><span class="p">,</span>
         <span class="n">control_column</span><span class="o">=</span><span class="n">control</span><span class="p">,</span>
         <span class="n">dose_quote</span><span class="o">=</span><span class="n">dose_quote</span><span class="p">,</span>
+        <span class="n">replicate_id</span><span class="o">=</span><span class="n">YPD_REPLICATE_IDS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">),</span>
     <span class="p">)</span>
 
 
@@ -514,6 +547,30 @@
     <span class="k">if</span> <span class="n">n_residual</span> <span class="o">!=</span> <span class="mi">36</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">specs</span><span class="p">)</span> <span class="o">-</span> <span class="n">n_residual</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"expected exactly 36 residual and 2 absolute conditions"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">conditions</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_served_columns</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ConditionSpec</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""All 40 released columns, keyed by header: the 38 conditions, then the two</span>
+<span class="sd">    additional YPD rounds as replicates of the ``YPD;;1`` condition.</span>
+
+<span class="sd">    ``YPD;;2`` and ``YPD;;3`` take the ``YPD;;1`` spec (environment, measurement type,</span>
+<span class="sd">    reference) with their own column, control plate and ``replicate_id``, so a record's</span>
+<span class="sd">    (genotype, environment) is the YPD condition and ``replicate_id`` tells the rounds</span>
+<span class="sd">    apart.</span>
+<span class="sd">    """</span>
+    <span class="n">served</span> <span class="o">=</span> <span class="n">build_conditions</span><span class="p">()</span>
+    <span class="n">ypd</span> <span class="o">=</span> <span class="n">served</span><span class="p">[</span><span class="s2">"YPD;;1"</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">YPD_REPLICATE_COLUMNS</span><span class="p">:</span>
+        <span class="n">served</span><span class="p">[</span><span class="n">column</span><span class="p">]</span> <span class="o">=</span> <span class="n">ypd</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span>
+            <span class="n">update</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"column"</span><span class="p">:</span> <span class="n">column</span><span class="p">,</span>
+                <span class="s2">"control_column"</span><span class="p">:</span> <span class="n">column</span><span class="p">,</span>
+                <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">YPD_REPLICATE_IDS</span><span class="p">[</span><span class="n">column</span><span class="p">],</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">served</span><span class="p">)</span> <span class="o">!=</span> <span class="n">N_COLUMNS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"expected </span><span class="si">{</span><span class="n">N_COLUMNS</span><span class="si">}</span><span class="s2"> served columns, built </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">served</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">served</span>
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
@@ -984,7 +1041,11 @@
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.bloom2019.Bloom2019Dataset.html#torchcell.datasets.scerevisiae.bloom2019.Bloom2019Dataset">[docs]</a>
 <span class="nd">@register_dataset</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Bloom2019Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Bloom 2019: one record per (segregant, condition), 530,100 records."""</span>
+<span class="w">    </span><span class="sd">"""Bloom 2019: one record per (segregant, released column), 558,000 records.</span>
+
+<span class="sd">    38 conditions; the YPD condition carries three records per segregant, one per</span>
+<span class="sd">    phenotyping round (``replicate_id`` "1", "2", "3").</span>
+<span class="sd">    """</span>
 
     <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
 
@@ -1000,6 +1061,7 @@
 <span class="w">        </span><span class="sd">"""A genome is REQUIRED (the gene set is the genes the mosaics span)."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">conditions</span> <span class="o">=</span> <span class="n">build_conditions</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">served_columns</span> <span class="o">=</span> <span class="n">build_served_columns</span><span class="p">()</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -1080,6 +1142,7 @@
             <span class="n">n_samples</span><span class="o">=</span><span class="n">N_SAMPLES</span><span class="p">,</span>
             <span class="n">sample_unit</span><span class="o">=</span><span class="n">SampleUnit</span><span class="o">.</span><span class="n">technical_replicate</span><span class="p">,</span>
             <span class="n">units</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_units</span><span class="p">(</span><span class="n">spec</span><span class="p">),</span>
+            <span class="n">replicate_id</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
             <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">ProvenanceGap</span><span class="p">(</span>
                     <span class="n">field</span><span class="o">=</span><span class="s2">"environment_response_se"</span><span class="p">,</span>
@@ -1174,7 +1237,7 @@
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.bloom2019.Bloom2019Dataset.html#torchcell.datasets.scerevisiae.bloom2019.Bloom2019Dataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build 13,950 x 38 records, one cross at a time, interning each genotype."""</span>
+<span class="w">        </span><span class="sd">"""Build 13,950 x 40 records, one cross at a time, interning each genotype."""</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>  <span class="c1"># noqa: F401  (opened via _open_write_lmdb)</span>
 
         <span class="n">data_root</span> <span class="o">=</span> <span class="n">_data_root</span><span class="p">()</span>
@@ -1206,12 +1269,12 @@
         <span class="p">)</span>
         <span class="n">phenotypes</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">phenotypes</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
         <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">phenotypes</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
-        <span class="n">unknown</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conditions</span><span class="p">)</span> <span class="o">-</span> <span class="n">NOT_SERVED</span>
+        <span class="n">unknown</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">served_columns</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"phenotype columns not in the condition table: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
-        <span class="n">missing</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conditions</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">missing</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">served_columns</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"condition table columns absent from the release: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
@@ -1225,13 +1288,13 @@
         <span class="c1"># by an id is a scalar for the type checker (a ``.loc`` row read is typed</span>
         <span class="c1"># ``Any | Series``), and the cell values are the same float64s.</span>
         <span class="n">served</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">col</span><span class="p">:</span> <span class="n">phenotypes</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"float64"</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditions</span>
+            <span class="n">col</span><span class="p">:</span> <span class="n">phenotypes</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"float64"</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">served_columns</span>
         <span class="p">}</span>
         <span class="n">references</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">col</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditions</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="n">col</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">served_columns</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="p">}</span>
         <span class="n">environments</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">col</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditions</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="n">col</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">served_columns</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="p">}</span>
         <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span><span class="n">doi</span><span class="o">=</span><span class="n">PAPER_DOI</span><span class="p">,</span> <span class="n">doi_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://doi.org/</span><span class="si">{</span><span class="n">PAPER_DOI</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_markers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Marker</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -1254,7 +1317,7 @@
                         <span class="p">)</span>
                     <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">seg_id</span><span class="p">)</span>
                     <span class="n">counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">genotype</span><span class="o">.</span><span class="n">n_blocks</span><span class="p">)</span>
-                    <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">served_columns</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                         <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">served</span><span class="p">[</span><span class="n">col</span><span class="p">][</span><span class="n">seg_id</span><span class="p">])</span>
                         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
                             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">seg_id</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s2">: NaN in the release"</span><span class="p">)</span>

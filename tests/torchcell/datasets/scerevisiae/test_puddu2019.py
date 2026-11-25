@@ -15,13 +15,15 @@ from __future__ import annotations
 
 import os
 import os.path as osp
+from collections.abc import Hashable
 from pathlib import Path
 
 import pytest
 
 from torchcell.datamodels.genome_architecture_features import PUDDU2019_WGS_COVERAGE
-from torchcell.datamodels.schema import Zygosity
+from torchcell.datamodels.schema import SampleUnit, Zygosity
 from torchcell.datasets.scerevisiae import puddu2019 as p
+from torchcell.verification.sourced import ProvenanceGapReason
 
 
 def _data_root() -> str:
@@ -161,8 +163,74 @@ def test_the_loader_takes_no_genome_and_the_ledger_has_no_refusal() -> None:
     assert not hasattr(p, "constructed_orf")
     assert not hasattr(p, "ResolvedGenes")
     assert not hasattr(p, "N_RETIRED_ORF_COLONIES")
-    assert p.N_SERVED_RECORDS == p.N_KNOCKOUT_COLONIES == 8835
+    assert p.N_KNOCKOUT_COLONIES == 8835
+    assert p.N_SERVED_RECORDS == p.N_KNOCKOUT_COLONIES + p.N_WILD_TYPE_COLONIES == 8843
     assert "refused" not in p.ReleaseLedger.model_fields
+
+
+def test_a_colony_is_one_record_with_n_1_and_a_single_measurement_gap() -> None:
+    """One Table 3 row: its values verbatim, n = 1, no dispersion, a typed gap on it."""
+    row: dict[Hashable, object] = {
+        symbol: 2.0 for symbol in PUDDU2019_WGS_COVERAGE.by_symbol if symbol != "GCR"
+    }
+    row.update({"GCR": 0.0, "ANtot": 0.0, "rDNA": 109.306122, "Ty5": 1.071429})
+    row.update({"SDname": "SD5624b", "ERSno": "ERS1076728"})
+    phenotype = p.colony_phenotype(row)
+    assert phenotype.genome_architecture["rDNA"] == 109.306122
+    assert set(phenotype.genome_architecture) == set(PUDDU2019_WGS_COVERAGE.by_symbol)
+    assert (phenotype.n_samples, phenotype.sample_unit) == (1, SampleUnit.colony)
+    assert (phenotype.sample_id, phenotype.sample_accession) == (
+        "SD5624b",
+        "ERS1076728",
+    )
+    assert phenotype.genome_architecture_sd is None
+    assert phenotype.uncertainty_type is None
+    assert [(g.field, g.reason) for g in phenotype.provenance_gaps] == [
+        (
+            "genome_architecture_sd",
+            ProvenanceGapReason.not_applicable_single_measurement,
+        )
+    ]
+
+
+def test_the_ledger_requires_every_released_colony_to_be_served() -> None:
+    fields = {
+        name: 0
+        for name, info in p.ReleaseLedger.model_fields.items()
+        if info.annotation is int
+    }
+    good = {
+        **fields,
+        "n_colonies_released": 8843,
+        "n_colonies_served": 8843,
+        "n_knockout_colonies_served": 8835,
+        "n_wild_type_colonies_served": 8,
+    }
+    rest: dict[str, object] = {
+        "workbook_sha256": p.SI_TABLES_XLSX_SHA256,
+        "colonies_per_knockout_strain": {},
+        "uptag_notes": {},
+        "aneuploid_fraction": 0.521,
+        "wild_type_mean_published": {},
+        "wild_type_mean_from_table3": {},
+        "wild_type_sd_published": {},
+        "wild_type_sd_from_table3": {},
+    }
+    ledger = p.ReleaseLedger.model_validate({**good, **rest})
+    assert ledger.n_colonies_served == 8843
+    with pytest.raises(ValueError, match="every released colony is served"):
+        p.ReleaseLedger.model_validate(
+            {
+                **good,
+                **rest,
+                "n_colonies_served": 8835,
+                "n_wild_type_colonies_served": 0,
+            }
+        )
+    with pytest.raises(ValueError, match="knockout \\+ wild type must equal served"):
+        p.ReleaseLedger.model_validate(
+            {**good, **rest, "n_wild_type_colonies_served": 7}
+        )
 
 
 def test_the_published_wild_type_sd_is_an_n_denominator_sd() -> None:
@@ -254,6 +322,35 @@ def test_table_3_is_the_8843_colony_matrix_the_assay_vocabulary_names() -> None:
 @pytest.mark.skipif(
     not osp.isfile(_WORKBOOK), reason="Puddu 2019 raw mirror not on disk"
 )
+def test_every_table_3_colony_is_a_record_the_8_wild_type_colonies_last() -> None:
+    """8,843 records: 8,835 knockout colonies in release order, then the 8 wild type."""
+    colonies = p.read_colonies(_WORKBOOK)
+    knockout, wild_type = p.split_colonies(colonies)
+    assert (len(knockout), len(wild_type)) == (8835, 8)
+    assert len(knockout) + len(wild_type) == p.N_SERVED_RECORDS == len(colonies)
+    assert wild_type.index.tolist() == list(range(8835, 8843))
+    assert wild_type["SDname"].tolist() == [
+        "SD5624b",
+        "SD5624b2",
+        "SD5625b",
+        "SD5625b2",
+        "SD5626b",
+        "SD5626b2",
+        "SD5627b",
+        "SD5627b2",
+    ]
+    strata = knockout["Deletion"].value_counts().value_counts().to_dict()
+    assert strata == p.COLONIES_PER_STRAIN_LEGEND
+    phenotypes = [p.colony_phenotype(row) for row in wild_type.to_dict("records")]
+    assert [ph.sample_id for ph in phenotypes] == wild_type["SDname"].tolist()
+    assert phenotypes[2].genome_architecture["chr09"] == 3.0  # SD5625b, one trisomy
+    assert {ph.n_samples for ph in phenotypes} == {1}
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not osp.isfile(_WORKBOOK), reason="Puddu 2019 raw mirror not on disk"
+)
 def test_the_other_tables_have_the_released_shapes_and_agree_with_table_3() -> None:
     accessions = p.read_accessions(_WORKBOOK)
     assert len(accessions) == p.N_ACCESSION_ROWS == 9014
@@ -289,7 +386,7 @@ def test_every_knockout_colony_has_a_released_deletion_name_the_retired_included
         p.GenomeArchitecturePuddu2019Dataset
     )
     released = dataset._released_gene_of_colony(served, barcodes, genes)
-    assert len(released) == p.N_SERVED_RECORDS == 8835
+    assert len(released) == p.N_KNOCKOUT_COLONIES == 8835
     assert len(set(released.values())) == 4437
     retired = {"YAR037W", "YAR040C", "YAR043C", "YCL013W", "YCL026C"}
     on_retired = sorted(c for c, g in released.items() if g in retired)

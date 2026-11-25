@@ -1,5 +1,6 @@
-# Puddu 2019 realized genome architecture: 8,835 sequenced-colony records,
-# GenomeArchitectureExperiment. One BarcodedKanMxDeletionPerturbation per record, served
+# Puddu 2019 realized genome architecture: 8,843 sequenced-colony records,
+# GenomeArchitectureExperiment. One BarcodedKanMxDeletionPerturbation per knockout record
+# (8,835) and an empty genotype on the 8 wild-type BY4743 colonies, served
 # as `perturbation`, so the deleted gene and the DETECTED barcodes are queryable per
 # colony. The screen is one medium (liquid YPAD) at one temperature with no environment
 # perturbation, so the environment-perturbation pair is left off. The phenotype node

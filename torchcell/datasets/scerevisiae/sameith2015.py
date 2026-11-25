@@ -5,6 +5,7 @@
 """Sameith 2015 GSTF single/double deletion-mutant microarray expression datasets."""
 
 import logging
+import math
 import os
 import os.path as osp
 import pickle
@@ -12,7 +13,7 @@ import re
 import urllib.request
 from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor
-from typing import Any, cast
+from typing import Any
 
 import GEOparse
 import lmdb
@@ -48,50 +49,78 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 # ============================================================================
-# Replicate Metadata - Extracted from Sameith et al. 2015
+# One record per array: what a replicate is in GSE42536 (#1174, #1172, #1178)
 # ============================================================================
-
-# CRITICAL: Replicate structure for GSTF deletion mutant expression measurements
-# Quote: "Each mutant strain was grown twice, from two independently inoculated
-#         cultures. Each culture was expression-profiled in technical replicate
-#         to yield four measurements for each profiling mutant."
-# Quote: "This included four replicates per responsive mutant, robotic procedures
-#         optimized with external calibration controls, a common reference design
-#         with wildtype (WT) reference RNA applied in dye-swap to each microarray"
-# Source: Sameith et al. 2015, Cell Reports, Expression Profiling section
-# Paper: papers/sameithHighresolutionGeneExpression2015/sameithHighresolutionGeneExpression2015.mmd
-# Date extracted: 2026-01-27
 #
-# Experimental design:
-# - 2 biological replicates (two independently inoculated cultures)
-# - Each culture profiled in technical replicate (dye-swap: mutant-Cy5/ref-Cy3 and mutant-Cy3/ref-Cy5)
-# - Total: 4 measurements per gene per deletion mutant (2 biological × 2 dye orientations)
-# - Common reference RNA (WT pool) used in dye-swap on each microarray
-# - Applies to BOTH single and double GSTF deletion mutants
+# ONE RECORD PER GEO ARRAY, AND ONE ARRAY IS ONE CULTURE. Every array GSE42536 releases
+# is its own record: value verbatim from that array, ``n_replicates = 1`` per gene, no
+# SE and no variance (one culture has no dispersion), ``replicate_id`` = the array's
+# GEO sample accession (``GSM1044376``). SM: 144 arrays over 82 single mutants (62 x 2,
+# 20 x 1); DM: 143 arrays over 72 pairs (71 x 2, 1 x 1). Before 2026-11-24 the loaders
+# stored one record per mutant holding the mean, SD / sqrt(n) and variance over its
+# arrays (82 and 72 records); that mean is now a modeling-time derivation over the
+# records of one genotype.
 #
-# NOTE: Actual n_replicates are COMPUTED from raw data (may be < 4 due to QC)
-N_EXPECTED_BIOLOGICAL_REPLICATES = 2
-N_EXPECTED_DYE_SWAP_TECHNICAL_REPLICATES = 2
-N_EXPECTED_MAX_REPLICATES_DELETION = 4  # 2 biological × 2 dye-swap measurements
-
-# Reference pool measurements
-# Quote: "a common reference design was adopted with a batch of WT RNA applied
-#         in dye-swap to one of the channels of each microarray"
-# Quote: "Additional WT cultures were grown alongside batches of mutants on each
-#         day and profiled in parallel to monitor batch effects"
-# Source: Sameith et al. 2015, Cell Reports, Expression Profiling section
-# Date extracted: 2026-01-27
+# Sources (sha256 of each file read; line numbers are lines of the decompressed file
+# or of the OCR markdown):
+#   Sameith 2015 paper.md (library mirror sameithHighresolutionGeneExpression2015,
+#   sha256 7064a1ebcf6dddf51ab23658b92457ded9b56e2eecb27b88694fd852e16c9161)
+#   L33: "With the exception of single mutants that behave like WT, each mutant was
+#         grown and profiled four times from two independent cultures."
+#   L119 (Methods, "Gene expression profiling"): "Full details of all gene expression
+#         profiling procedures have been described before [46]." and "Single mutants
+#         differing from WT as well as all double mutants were profiled another two
+#         times from an independently inoculated culture. The reported FC is then the
+#         average of four replicate mutant expression profiles versus the average of
+#         all WTs."
+#   L115: "Double mutants were generated in duplicate" and "Of the selected 90 double
+#         mutants, 18 failed quality control criteria even after remake. They were
+#         therefore excluded from further analyses." (the 18 are not in GSE42536)
+#   Reference [46] is Kemmeren et al. 2014, Cell (L232); its paper.md (library mirror
+#   kemmerenLargeScaleGeneticPerturbations2014, sha256
+#   299eac4b07fc977a89c24ce190d05cfd182342a9f0d56a05e7e477d72e4ad08d) L307:
+#         "Two independent cultures were hybridized on two separate microarrays. For
+#         the first hybridization the Cy5 (red) labeled cRNA from the deletion mutant
+#         is hybridized together with the Cy3 (green) labeled cRNA from the common
+#         reference. For the replicate hybridization from the independent cultures,
+#         the labels are swapped. Each gene is represented twice on the microarray,
+#         resulting in four measurements per mutant."
+#   GSE42536_family.soft.gz (sha256 below) line 14, ``!Series_overall_design``: "Two
+#         independent cultures were hybridized on two separate microarrays. [...] For
+#         the replicate hybridization, the labels are swapped. Each gene is represented
+#         twice on the microarray, resulting in four measurements per mutant."
 #
-# The reference pool is:
-# - Batch of WT RNA used as common reference across all experiments
-# - Applied in dye-swap to one channel of each microarray
-# - Additional WT cultures grown alongside mutants for batch effect monitoring
+# So the "four measurements" are 2 arrays (one per independent culture, dye orientation
+# swapped BETWEEN the two cultures) x 2 spots per gene, never 4 arrays: GSE42536 holds
+# at most 2 arrays per mutant. A two-array pair is two biological replicates and so two
+# records; it is not one culture dye-swapped. The 20 one-array single mutants are
+# exactly the Additional file 1 "Single mutants - info" rows whose ``comments`` reads
+# "2 replicates" (L33's WT-like singles, profiled from one culture: 1 array x 2 spots),
+# and the one-array pair cin5+yap6 is the one "Double mutants - info" row with that
+# comment. No released array is dropped and the authors withdrew none.
 #
-# The stored reference ``expression`` of a record is the mean refpool-channel signal
-# over that record's own arrays, so the reference ``n_replicates`` of a gene is the
-# number of arrays whose refpool value entered that mean (#630, as kemmeren2014 does
-# for #484). Neither the WT RNA batch nor the additional WT cultures above is a stored
-# value, so no count of them is stored.
+# THE TECHNICAL LEVEL IS THE SPOT, COMBINED INSIDE THE RECORD. GPL11232 prints 6,157
+# ORFs twice and 12 four times (``ORF`` column, 15,552 rows). Kemmeren L390 obtains its
+# statistics from limma "(Smyth et al., 2005)", which its reference list (L481) names
+# "Use of within-array replicate spots for assessing differential expression in
+# microarray experiments": the spots are within-array replicates of one culture. A
+# record's per-gene value combines all of the gene's spots on its array: ``expression``
+# and the reference ``expression`` are the geometric means of the spots' mutant and
+# refpool ``Signal Norm`` values, and ``expression_log2_ratio`` is the mean of the
+# spots' log2(mutant / refpool), which equals log2 of the ratio of the two geometric
+# means. Until 2026-11-24 the loaders kept only the last spot of each gene (the probe
+# map overwrote the first). ``MicroarrayExpressionPhenotype`` has no field for the
+# technical count (2, or 4 for the 12 ORFs) or the array's dye orientation, so the
+# record cannot state either; both are fixed by the platform and by
+# ``source_name_ch1``, and adding the fields is an owner decision (schema change).
+#
+# The reference of a record is the refpool channel of that same array (spots
+# combined), with ``n_replicates = 1`` per gene and ``replicate_id = None``: GEO line 14
+# "RNA isolated from a large amount of wt yeast from a single culture was used as a
+# common reference", so the refpool is one RNA batch measured on every array, the
+# denominator of that array's ratio, not a set of control replicates. GSE42536 holds no
+# wild-type-vs-refpool array (every one of the 287 titles names a deletion), so there
+# is no control replicate to store as a record.
 
 # PubMed ID of Sameith et al. 2015, BMC Biology (DOI 10.1186/s12915-015-0222-5).
 # Source: the GEO series record this loader reads, GSE42536_family.soft.gz (sha256
@@ -187,6 +216,79 @@ def release_gene_symbols(symbol_map: dict[str, str]) -> dict[str, str]:
     return symbols
 
 
+_MUTANT_AND_REFPOOL_COLUMNS = ("Signal Norm_Cy5", "Signal Norm_Cy3")
+
+
+def combine_spots(
+    accession: str, gene: str, spots: list[tuple[float, float]]
+) -> tuple[float, float, float]:
+    """(mutant, refpool, log2 ratio) of one gene on one array, from all its spots.
+
+    ``spots`` holds one (mutant signal, refpool signal) pair per spot of the gene.
+    The channel values are the geometric means over the spots and the log2 ratio is
+    the mean of the spots' log2(mutant / refpool), so it equals log2 of the ratio of
+    the two geometric means. One spot returns its own values unchanged. A signal that
+    is not a positive number has no log ratio, so it raises instead of being skipped:
+    GSE42536 holds none (all 4,463,424 signals of the 287 arrays are positive).
+    """
+    for mutant, refpool in spots:
+        if not (mutant > 0 and refpool > 0):
+            raise ValueError(
+                f"{accession} {gene}: spot signals mutant={mutant!r}, "
+                f"refpool={refpool!r} are not both positive numbers"
+            )
+    n = len(spots)
+    mutant_value = math.prod(m for m, _ in spots) ** (1 / n)
+    refpool_value = math.prod(r for _, r in spots) ** (1 / n)
+    log2_ratio = sum(float(np.log2(m / r)) for m, r in spots) / n
+    return mutant_value, refpool_value, log2_ratio
+
+
+def extract_array_expression(
+    gsm: Any, probe_to_gene_map: dict[str, str] | None
+) -> tuple[SortedDict, SortedDict, SortedDict]:
+    """(mutant, refpool, log2 ratio) per gene of one GEO array, spots combined.
+
+    The mutant channel is Cy5 unless ``source_name_ch1`` names the refpool, then Cy3
+    (``label_ch1 = Cy5`` on all 287 arrays of GSE42536). The log2 ratio is recomputed
+    from the two ``Signal Norm`` columns, never read from ``VALUE``: as numbers, VALUE
+    is log2(Cy5/Cy3) on 217 arrays and log2(Cy3/Cy5) on 70, and on those 70 the
+    ``#VALUE`` header says the opposite of the numbers (#72, #481), while the signals
+    are orientation-proof. Every probe the platform map names a gene contributes one
+    spot to that gene (``combine_spots``). A GSM without a table, without ``ID_REF`` or
+    either signal column, or a missing probe map yields three empty maps.
+    """
+    mutant_data = SortedDict()
+    refpool_data = SortedDict()
+    log2_ratio_data = SortedDict()
+    table = getattr(gsm, "table", None)
+    if table is None or "ID_REF" not in table.columns or not probe_to_gene_map:
+        return mutant_data, refpool_data, log2_ratio_data
+    if not set(_MUTANT_AND_REFPOOL_COLUMNS) <= set(table.columns):
+        log.warning(f"Missing required columns. Available: {list(table.columns)}")
+        return mutant_data, refpool_data, log2_ratio_data
+    metadata = getattr(gsm, "metadata", {})
+    source_ch1 = metadata.get("source_name_ch1", [""])[0]
+    accession = metadata.get("geo_accession", [getattr(gsm, "name", "")])[0]
+    cy5, cy3 = _MUTANT_AND_REFPOOL_COLUMNS
+    mutant_column, refpool_column = (
+        (cy3, cy5) if "refpool" in source_ch1.lower() else (cy5, cy3)
+    )
+    spots: dict[str, list[tuple[float, float]]] = {}
+    for probe, mutant, refpool in zip(
+        table["ID_REF"], table[mutant_column], table[refpool_column], strict=True
+    ):
+        gene = probe_to_gene_map.get(str(int(probe)))
+        if gene is None:
+            continue
+        spots.setdefault(gene, []).append((float(mutant), float(refpool)))
+    for gene, gene_spots in spots.items():
+        mutant_data[gene], refpool_data[gene], log2_ratio_data[gene] = combine_spots(
+            accession, gene, gene_spots
+        )
+    return mutant_data, refpool_data, log2_ratio_data
+
+
 def title_token_to_systematic(symbol_map: dict[str, str], token: str) -> str | None:
     """The ORF a title token names through the release, or None when it names no gene.
 
@@ -206,7 +308,9 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
     """Single mutant GSTF expression profiling from Sameith et al. 2015.
 
     Microarray gene expression data for 82 single mutant yeast strains with
-    deletions in general stress transcription factors (GSTFs). All single mutants
+    deletions in general stress transcription factors (GSTFs), one record per GEO
+    array (one culture): 144 records, 62 mutants with 2 arrays and 20 with 1 (see the
+    module comment). All single mutants
     are from the yeast deletion library (BY4742, MATalpha, KanMX marker). Title tokens
     resolve to ORFs only through the release's Additional file 1
     (``release_symbol_map``), and ``perturbed_gene_name`` is the workbook's symbol.
@@ -420,7 +524,10 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
     def _group_single_mutant_replicates(
         self, single_mutant_samples: dict[str, list[Any]]
     ) -> list[Any]:
-        """Group technical replicates by gene using authoritative single mutant list.
+        """Group the arrays of each single mutant (one array per culture) by gene.
+
+        A group orders the records of one genotype; every array of a group is its own
+        record. A gene outside the SI's single-mutant list is kept.
 
         Args:
             single_mutant_samples: Dict mapping gene -> list of sample_info dicts
@@ -449,128 +556,58 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
     def _process_sequential(
         self, single_mutant_groups: list[Any], probe_to_gene_map: dict[str, str]
     ) -> None:
-        """Process single mutant replicate groups sequentially."""
+        """Write one record per array of every single-mutant group, in group order.
+
+        A group not flagged single or naming no gene writes nothing. An array that
+        yields no expression value raises: every released array is a record, so none
+        is skipped.
+        """
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(5e12))
 
         idx = 0
         with env.begin(write=True) as txn:
             for replicate_group in tqdm(single_mutant_groups):
-                # Use first sample for metadata
                 sample_info = replicate_group[0]
-
                 if (
                     not sample_info["is_single_mutant"]
                     or len(sample_info["gene_names"]) < 1
                 ):
                     continue
-
-                # Extract and average data from all replicates
-                all_mutant_data = []
-                all_refpool_data = []
-                all_log2_ratio_data = []
-
-                for rep_info in replicate_group:
-                    gsm = rep_info["gsm_object"]
+                for array_info in replicate_group:
+                    accession = array_info["geo_accession"]
                     mutant_data, refpool_data, log2_ratio_data = (
-                        self._extract_expression_from_gsm(gsm, probe_to_gene_map)
+                        self._extract_expression_from_gsm(
+                            array_info["gsm_object"], probe_to_gene_map
+                        )
                     )
-
-                    if mutant_data and refpool_data and log2_ratio_data:
-                        all_mutant_data.append(mutant_data)
-                        all_refpool_data.append(refpool_data)
-                        all_log2_ratio_data.append(log2_ratio_data)
-
-                # Skip if no data from any replicate
-                if not all_mutant_data:
-                    log.warning(f"No data for {sample_info['gene_names']}, skipping...")
-                    continue
-
-                # Calculate statistics across replicates
-                mutant_mean, mutant_se, mutant_var, mutant_n = (
-                    self._calculate_replicate_statistics(all_mutant_data)
-                )
-                refpool_mean, refpool_se, refpool_var, refpool_n = (
-                    self._calculate_replicate_statistics(all_refpool_data)
-                )
-                log2_mean, log2_se, log2_var, log2_n = (
-                    self._calculate_replicate_statistics(all_log2_ratio_data)
-                )
-
-                experiment, reference, publication = (
-                    self.create_single_mutant_expression_experiment(
-                        self.name,
-                        sample_info,
-                        mutant_mean,
-                        refpool_mean,
-                        log2_mean,
-                        log2_se,
-                        log2_var,
-                        log2_n,
-                        refpool_n_replicates=refpool_n,
-                        gene_symbols=self.gene_symbols,
+                    if not mutant_data:
+                        raise RuntimeError(
+                            f"array {accession} ({array_info['gene_names']}) yields "
+                            "no expression value; a released array is never skipped"
+                        )
+                    experiment, reference, publication = (
+                        self.create_single_mutant_expression_experiment(
+                            self.name,
+                            array_info,
+                            mutant_data,
+                            refpool_data,
+                            log2_ratio_data,
+                            replicate_id=accession,
+                            gene_symbols=self.gene_symbols,
+                        )
                     )
-                )
-
-                # Serialize the Pydantic objects
-                serialized_data = pickle.dumps(
-                    {
-                        "experiment": experiment.model_dump(),
-                        "reference": reference.model_dump(),
-                        "publication": publication.model_dump(),
-                    }
-                )
-                txn.put(f"{idx}".encode(), serialized_data)
-                idx += 1
+                    serialized_data = pickle.dumps(
+                        {
+                            "experiment": experiment.model_dump(),
+                            "reference": reference.model_dump(),
+                            "publication": publication.model_dump(),
+                        }
+                    )
+                    txn.put(f"{idx}".encode(), serialized_data)
+                    idx += 1
 
         env.close()
-        log.info(f"Wrote {idx} single mutant experiments to LMDB")
-
-    def _calculate_replicate_statistics(
-        self, data_list: list[Any]
-    ) -> tuple[SortedDict, SortedDict, SortedDict, SortedDict]:
-        """Calculate statistics across biological/technical replicates.
-
-        Args:
-            data_list: List of SortedDict objects containing gene -> value mappings
-
-        Returns:
-            tuple: (mean_dict, se_dict, variance_dict, n_replicates_dict)
-                - mean_dict: Mean values per gene
-                - se_dict: Standard error per gene
-                - variance_dict: Variance per gene
-                - n_replicates_dict: Number of replicates per gene
-        """
-        if not data_list:
-            return SortedDict(), SortedDict(), SortedDict(), SortedDict()
-
-        # Collect all values per gene across replicates
-        all_values: dict[str, list[float]] = {}
-        for data_dict in data_list:
-            for gene, value in data_dict.items():
-                if gene not in all_values:
-                    all_values[gene] = []
-                all_values[gene].append(value)
-
-        # Calculate statistics
-        mean_dict = SortedDict()
-        se_dict = SortedDict()
-        variance_dict = SortedDict()
-        n_replicates_dict = SortedDict()
-
-        for gene, values in all_values.items():
-            n = len(values)
-            mean_dict[gene] = np.mean(values)
-            n_replicates_dict[gene] = n
-
-            if n > 1:
-                sd = np.std(values, ddof=1)
-                variance_dict[gene] = sd**2
-                se_dict[gene] = sd / np.sqrt(n)
-            else:
-                variance_dict[gene] = np.nan
-                se_dict[gene] = np.nan
-
-        return mean_dict, se_dict, variance_dict, n_replicates_dict
+        log.info(f"Wrote {idx} single mutant array records to LMDB")
 
     def _extract_gene_names_from_title(self, title: str) -> list[str]:
         """Every gene a sample title names: systematic names, then workbook symbols.
@@ -700,89 +737,13 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
     def _extract_expression_from_gsm(
         self, gsm: Any, probe_to_gene_map: dict[str, str] | None = None
     ) -> tuple[SortedDict, SortedDict, SortedDict]:
-        """Extract expression values and log2 ratios from a GSM object.
+        """(mutant, refpool, log2 ratio) per gene of one array, spots combined.
 
-        Handles dye swaps between technical replicates by checking metadata to determine
-        which channel contains the mutant vs. reference pool.
-
-        Returns:
-            tuple: (mutant_data, refpool_data, log2_ratio_data)
-                - mutant_data: Expression values for the deletion mutant
-                - refpool_data: Expression values for the reference pool
-                - log2_ratio_data: log2(mutant/refpool) ratios
+        Delegates to ``extract_array_expression``; the dye orientation of the array
+        (the two cultures of a mutant are hybridized in opposite orientations) is read
+        from ``source_name_ch1``.
         """
-        mutant_data = SortedDict()
-        refpool_data = SortedDict()
-        log2_ratio_data = SortedDict()
-
-        if hasattr(gsm, "table") and gsm.table is not None:
-            table = gsm.table
-
-            # Log available columns for the first sample
-            if not hasattr(self, "_logged_columns"):
-                log.info(f"Available columns in GSM table: {list(table.columns)}")
-                self._logged_columns = True
-
-            if "ID_REF" not in table.columns:
-                return mutant_data, refpool_data, log2_ratio_data
-
-            # Check for required columns
-            has_cy5 = "Signal Norm_Cy5" in table.columns
-            has_cy3 = "Signal Norm_Cy3" in table.columns
-            if not (has_cy5 and has_cy3):
-                log.warning(
-                    f"Missing required columns. Available: {list(table.columns)}"
-                )
-                return mutant_data, refpool_data, log2_ratio_data
-
-            # Determine which channel has mutant vs refpool by checking metadata
-            # Due to dye swaps, this varies between technical replicates
-            source_ch1 = (
-                gsm.metadata.get("source_name_ch1", [""])[0]
-                if hasattr(gsm, "metadata")
-                else ""
-            )
-
-            # Determine which dye (Cy5/Cy3) corresponds to which sample (mutant/refpool)
-            # Ch1 = Cy5, Ch2 = Cy3 (based on GEO data structure)
-            # ch1 == Cy5 throughout GSE42536; the a/b title suffix is the dye swap.
-            if "refpool" in source_ch1.lower():
-                mutant_channel = "Cy3"  # ch1=Cy5=refpool -> mutant is Cy3
-            else:
-                mutant_channel = "Cy5"  # ch1=Cy5=mutant
-
-            for _, row in table.iterrows():
-                probe_id = str(int(row["ID_REF"]))
-
-                # Map probe ID to gene name
-                if probe_to_gene_map and probe_id in probe_to_gene_map:
-                    gene = probe_to_gene_map[probe_id]
-                    try:
-                        cy5_value = float(row["Signal Norm_Cy5"])
-                        cy3_value = float(row["Signal Norm_Cy3"])
-
-                        # Assign to mutant/refpool by the dye assignment.
-                        if mutant_channel == "Cy5":
-                            mutant_data[gene] = cy5_value
-                            refpool_data[gene] = cy3_value
-                        else:
-                            mutant_data[gene] = cy3_value
-                            refpool_data[gene] = cy5_value
-
-                        # log2(mutant / refpool) recomputed from the Signal columns
-                        # + dye assignment -- NOT from the VALUE column. VALUE's
-                        # orientation is inconsistent within GSE42536 (#72): 132
-                        # arrays are log2(Cy5/Cy3), 127 log2(Cy3/Cy5), so trusting it
-                        # mis-signs ~24% of arrays. The signals are orientation-proof.
-                        if mutant_data[gene] > 0 and refpool_data[gene] > 0:
-                            log2_ratio_data[gene] = float(
-                                np.log2(mutant_data[gene] / refpool_data[gene])
-                            )
-
-                    except (ValueError, TypeError):
-                        continue
-
-        return mutant_data, refpool_data, log2_ratio_data
+        return extract_array_expression(gsm, probe_to_gene_map)
 
     def _calculate_wt_reference_with_std(
         self, wt_gsm_list: list[Any], probe_to_gene_map: dict[str, str]
@@ -836,33 +797,23 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         mutant_data: SortedDict,
         refpool_data: SortedDict,
         log2_ratio_data: SortedDict,
-        log2_ratio_se: SortedDict | None = None,
-        log2_ratio_variance: SortedDict | None = None,
-        n_replicates: SortedDict | None = None,
         *,
-        refpool_n_replicates: SortedDict,
+        replicate_id: str,
         gene_symbols: dict[str, str],
     ) -> tuple[Any, Any, Any]:
-        """Create experiment for single deletion mutant.
+        """Create the record of one single-mutant array (one culture).
 
-        The reference ``expression`` is the mean refpool signal over the record's
-        arrays, so the reference ``n_replicates`` of a gene is the number of arrays
-        whose refpool value entered that mean (1 or 2 on GEO for a single mutant),
-        counted per gene: a gene missing from one array's refpool channel counts only
-        the arrays that carry it (#630; the WT RNA batch and the additional WT cultures
-        are not the stored value, see the module comment at the reference pool quotes).
+        The phenotype is that array's values (``array_phenotypes``): ``n_replicates``
+        1 per gene, no SE or variance, ``replicate_id`` the GEO sample accession. The
+        reference is the refpool channel of the same array.
 
         Args:
             dataset_name: Name of the dataset
-            sample_info: Sample metadata dictionary
-            mutant_data: Expression values for deletion mutant
-            refpool_data: Mean refpool expression over the record's arrays
-            log2_ratio_data: log2(mutant/refpool) ratios
-            log2_ratio_se: Standard error for log2 ratios (optional)
-            log2_ratio_variance: Variance for log2 ratios (optional)
-            n_replicates: Number of replicates per gene (optional)
-            refpool_n_replicates: Arrays in each gene's refpool mean, same keys as
-                ``refpool_data``
+            sample_info: Sample metadata dictionary of the array
+            mutant_data: The array's mutant-channel values, spots combined
+            refpool_data: The array's refpool-channel values, spots combined
+            log2_ratio_data: The array's log2(mutant/refpool), spots combined
+            replicate_id: The array's GEO sample accession
             gene_symbols: The workbook's ORF -> gene symbol map
                 (``release_gene_symbols``); ``perturbed_gene_name`` is that symbol, or
                 the ORF when the workbook gives the ORF no symbol
@@ -900,30 +851,8 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         )
         environment_reference = environment.model_copy()
 
-        # Use pre-computed log2 ratios
-        log2_ratios = log2_ratio_data
-
-        # Create phenotype with expression data from mutant
-        phenotype = MicroarrayExpressionPhenotype(
-            expression=mutant_data,
-            expression_log2_ratio=log2_ratios,
-            expression_log2_ratio_se=log2_ratio_se,
-            expression_log2_ratio_variance=log2_ratio_variance,
-            n_replicates=cast("dict[str, int]", n_replicates),
-        )
-
-        # Create reference phenotype from reference pool
-        # Reference is self-referential, so log2 ratios are all 0
-        reference_log2_ratios = SortedDict()
-        for gene in refpool_data:
-            reference_log2_ratios[gene] = 0.0
-
-        phenotype_reference = MicroarrayExpressionPhenotype(
-            expression=refpool_data,
-            expression_log2_ratio=reference_log2_ratios,
-            expression_log2_ratio_se=None,
-            expression_log2_ratio_variance=None,
-            n_replicates=refpool_n_replicates,  # Arrays in each refpool mean
+        phenotype, phenotype_reference = array_phenotypes(
+            mutant_data, refpool_data, log2_ratio_data, replicate_id
         )
 
         # Create reference
@@ -942,15 +871,50 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
             phenotype=phenotype,
         )
 
-        # Publication for Sameith et al. 2015
-        publication = Publication(
-            pubmed_id=SAMEITH2015_PUBMED_ID,
-            pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{SAMEITH2015_PUBMED_ID}/",
-            doi="10.1186/s12915-015-0222-5",
-            doi_url="https://doi.org/10.1186/s12915-015-0222-5",
-        )
+        return experiment, reference, sameith2015_publication()
 
-        return experiment, reference, publication
+
+def sameith2015_publication() -> Publication:
+    """The publication every Sameith 2015 record cites."""
+    return Publication(
+        pubmed_id=SAMEITH2015_PUBMED_ID,
+        pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{SAMEITH2015_PUBMED_ID}/",
+        doi="10.1186/s12915-015-0222-5",
+        doi_url="https://doi.org/10.1186/s12915-015-0222-5",
+    )
+
+
+def array_phenotypes(
+    mutant_data: SortedDict,
+    refpool_data: SortedDict,
+    log2_ratio_data: SortedDict,
+    replicate_id: str,
+) -> tuple[MicroarrayExpressionPhenotype, MicroarrayExpressionPhenotype]:
+    """(phenotype, phenotype_reference) of one array record.
+
+    The phenotype is that one culture's values: ``n_replicates`` 1 per gene and no SE
+    or variance (one value has no dispersion; the two fields accept no typed gap, so
+    they are ``None``), ``replicate_id`` the array's GEO accession. The reference is
+    the refpool channel of the same array, ``n_replicates`` 1 per gene, its log2
+    ratios 0 (self-referential) and ``replicate_id`` None: it is the common reference
+    RNA batch, not a control replicate.
+    """
+    phenotype = MicroarrayExpressionPhenotype(
+        expression=mutant_data,
+        expression_log2_ratio=log2_ratio_data,
+        expression_log2_ratio_se=None,
+        expression_log2_ratio_variance=None,
+        n_replicates=dict.fromkeys(mutant_data, 1),
+        replicate_id=replicate_id,
+    )
+    phenotype_reference = MicroarrayExpressionPhenotype(
+        expression=refpool_data,
+        expression_log2_ratio=dict.fromkeys(refpool_data, 0.0),
+        expression_log2_ratio_se=None,
+        expression_log2_ratio_variance=None,
+        n_replicates=dict.fromkeys(refpool_data, 1),
+    )
+    return phenotype, phenotype_reference
 
 
 @register_dataset
@@ -959,7 +923,9 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
     Microarray gene expression data for double-deletion yeast strains pairing
     general stress transcription factors (GSTFs), profiled against a common
-    wildtype reference pool. Authoritative GSTF pairs and per-sample strain are
+    wildtype reference pool, one record per GEO array (one culture): 143 records, 71
+    pairs with 2 arrays and cin5+yap6 with 1 (see the module comment). Authoritative
+    GSTF pairs and per-sample strain are
     read from the paper's supplementary table. Title tokens resolve to ORFs only
     through the release's Additional file 1 (``release_symbol_map``), and
     ``perturbed_gene_name`` is the workbook's symbol.
@@ -1191,10 +1157,10 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
             f"Found {len(single_mutant_samples)} single mutant genes (not processed separately)"
         )
 
-        # Group double mutant samples by base name (to handle technical replicates)
-        double_mutant_groups = self._group_technical_replicates(double_mutant_samples)
+        # Group the arrays of each pair (one array per culture; each is a record)
+        double_mutant_groups = self._group_arrays_by_pair(double_mutant_samples)
         log.info(
-            f"Grouped {len(double_mutant_samples)} samples into {len(double_mutant_groups)} replicate groups"
+            f"Grouped {len(double_mutant_samples)} arrays into {len(double_mutant_groups)} pair groups"
         )
 
         # Choose processing method based on process_workers
@@ -1220,15 +1186,17 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
             f"Saved {len(double_mutant_df)} double mutant samples to preprocess data.csv"
         )
 
-        log.info(f"Processed {len(double_mutant_samples)} double mutant experiments")
+        log.info(f"Processed {len(double_mutant_samples)} double mutant arrays")
 
-    def _group_technical_replicates(
-        self, double_mutant_samples: list[Any]
-    ) -> list[Any]:
-        """Group technical replicates by genotype using authoritative GSTF pairs.
+    def _group_arrays_by_pair(self, double_mutant_samples: list[Any]) -> list[Any]:
+        """Group the arrays of each double mutant by its pair of deleted genes.
 
-        Matches GEO samples to authoritative GSTF pairs from supplementary file.
-        Samples with the same pair of deleted genes are technical replicates.
+        Each array is one culture (two biological replicates per pair, module
+        comment), and every array of a group becomes its own record; the group only
+        orders them. An array whose pair is not a ``passed`` row of the SI's "Double
+        mutants - info" is left out and logged: the paper excludes the 18 pairs that
+        "failed quality control criteria even after remake" (L115), and GSE42536
+        holds no array of them (0 unmatched on the release).
         """
         groups: dict[Any, list[Any]] = {}
         matched_count = 0
@@ -1271,311 +1239,118 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
     def _process_sequential(
         self, double_mutant_groups: list[Any], probe_to_gene_map: dict[str, str]
     ) -> None:
-        """Process double mutant replicate groups sequentially."""
-        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(5e12))
+        """Write one record per array of every pair group, in group order.
 
-        idx = 0
-        with env.begin(write=True) as txn:
-            for replicate_group in tqdm(double_mutant_groups):
-                # Use first sample for metadata
-                sample_info = replicate_group[0]
-
-                if (
-                    not sample_info["is_double_mutant"]
-                    or len(sample_info["gene_names"]) < 2
-                ):
-                    continue
-
-                # Extract and average data from all replicates
-                all_mutant_data = []
-                all_refpool_data = []
-                all_log2_ratio_data = []
-
-                for rep_info in replicate_group:
-                    gsm = rep_info["gsm_object"]
-                    mutant_data, refpool_data, log2_ratio_data = (
-                        self._extract_expression_from_gsm(gsm, probe_to_gene_map)
-                    )
-
-                    if mutant_data and refpool_data and log2_ratio_data:
-                        all_mutant_data.append(mutant_data)
-                        all_refpool_data.append(refpool_data)
-                        all_log2_ratio_data.append(log2_ratio_data)
-
-                # Skip if no data from any replicate
-                if not all_mutant_data:
-                    log.warning(f"No data for {sample_info['gene_names']}, skipping...")
-                    continue
-
-                # Calculate statistics across replicates
-                mutant_mean, mutant_se, mutant_var, mutant_n = (
-                    self._calculate_replicate_statistics(all_mutant_data)
-                )
-                refpool_mean, refpool_se, refpool_var, refpool_n = (
-                    self._calculate_replicate_statistics(all_refpool_data)
-                )
-                log2_mean, log2_se, log2_var, log2_n = (
-                    self._calculate_replicate_statistics(all_log2_ratio_data)
-                )
-
-                # Extract strain for this genotype from gstf_pairs
-                gene_names = sample_info["gene_names"]
-                genotype_key = tuple(
-                    sorted([gene_names[0].upper(), gene_names[1].upper()])
-                )
-                strain = self.gstf_pairs.get(genotype_key, {}).get("strain", "BY4742")
-
-                experiment, reference, publication = (
-                    self.create_double_mutant_expression_experiment(
-                        self.name,
-                        sample_info,
-                        mutant_mean,
-                        refpool_mean,
-                        log2_mean,
-                        log2_se,
-                        log2_var,
-                        log2_n,
-                        strain=strain,  # NEW: Pass per-sample strain
-                        refpool_n_replicates=refpool_n,
-                        gene_symbols=self.gene_symbols,
-                    )
-                )
-
-                # Serialize the Pydantic objects
-                serialized_data = pickle.dumps(
-                    {
-                        "experiment": experiment.model_dump(),
-                        "reference": reference.model_dump(),
-                        "publication": publication.model_dump(),
-                    }
-                )
-                txn.put(f"{idx}".encode(), serialized_data)
-                idx += 1
-
-        env.close()
-        log.info(f"Wrote {idx} double mutant experiments to LMDB")
-
-    def _calculate_replicate_statistics(
-        self, data_list: list[Any]
-    ) -> tuple[SortedDict, SortedDict, SortedDict, SortedDict]:
-        """Calculate statistics across biological/technical replicates.
-
-        Args:
-            data_list: List of SortedDict objects containing gene -> value mappings
-
-        Returns:
-            tuple: (mean_dict, se_dict, variance_dict, n_replicates_dict)
-                - mean_dict: Mean values per gene
-                - se_dict: Standard error per gene
-                - variance_dict: Variance per gene
-                - n_replicates_dict: Number of replicates per gene
+        Builds the records through ``_process_batch`` (the worker path), so the
+        sequential and parallel builds cannot diverge.
         """
-        if not data_list:
-            return SortedDict(), SortedDict(), SortedDict(), SortedDict()
-
-        # Collect all values per gene across replicates
-        all_values: dict[str, list[float]] = {}
-        for data_dict in data_list:
-            for gene, value in data_dict.items():
-                if gene not in all_values:
-                    all_values[gene] = []
-                all_values[gene].append(value)
-
-        # Calculate statistics
-        mean_dict = SortedDict()
-        se_dict = SortedDict()
-        variance_dict = SortedDict()
-        n_replicates_dict = SortedDict()
-
-        for gene, values in all_values.items():
-            n = len(values)
-            mean_dict[gene] = np.mean(values)
-            n_replicates_dict[gene] = n
-
-            if n > 1:
-                sd = np.std(values, ddof=1)
-                variance_dict[gene] = sd**2
-                se_dict[gene] = sd / np.sqrt(n)
-            else:
-                variance_dict[gene] = np.nan
-                se_dict[gene] = np.nan
-
-        return mean_dict, se_dict, variance_dict, n_replicates_dict
+        records = self._process_batch(
+            double_mutant_groups,
+            probe_to_gene_map,
+            self.name,
+            self.gstf_pairs,
+            self.gene_symbols,
+        )
+        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(5e12))
+        with env.begin(write=True) as txn:
+            for idx, serialized_data in enumerate(records):
+                txn.put(f"{idx}".encode(), serialized_data)
+        env.close()
+        log.info(f"Wrote {len(records)} double mutant array records to LMDB")
 
     def _process_parallel(
         self, double_mutant_groups: list[Any], probe_to_gene_map: dict[str, str]
     ) -> None:
-        """Process double mutant replicate groups in parallel."""
-        # Create batches
-        batches = []
-        for i in range(0, len(double_mutant_groups), self.batch_size):
-            batch = double_mutant_groups[i : i + self.batch_size]
-            batches.append(batch)
-
+        """Write the same records as ``_process_sequential``, batches built in workers."""
+        batches = [
+            double_mutant_groups[i : i + self.batch_size]
+            for i in range(0, len(double_mutant_groups), self.batch_size)
+        ]
         log.info(f"Created {len(batches)} batches of size {self.batch_size}")
 
-        # Process batches in parallel
-        all_results = []
+        all_results: list[bytes] = []
         with ProcessPoolExecutor(max_workers=self.process_workers) as executor:
-            futures = []
-            for batch in batches:
-                future = executor.submit(
+            futures = [
+                executor.submit(
                     self._process_batch,
                     batch,
                     probe_to_gene_map,
                     self.name,
-                    self.gstf_pairs,  # NEW: Pass gstf_pairs for strain extraction
+                    self.gstf_pairs,
                     self.gene_symbols,
                 )
-                futures.append(future)
-
-            # Collect results with progress bar
+                for batch in batches
+            ]
             for future in tqdm(futures, desc="Processing batches"):
-                batch_results = future.result()
-                all_results.extend(batch_results)
+                all_results.extend(future.result())
 
-        # Write all results to LMDB
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(5e12))
-
-        written_count = 0
         with env.begin(write=True) as txn:
             for idx, serialized_data in enumerate(all_results):
-                if serialized_data is not None:
-                    txn.put(f"{written_count}".encode(), serialized_data)
-                    written_count += 1
-
+                txn.put(f"{idx}".encode(), serialized_data)
         env.close()
-        log.info(f"Wrote {written_count} double mutant experiments to LMDB")
+        log.info(f"Wrote {len(all_results)} double mutant array records to LMDB")
 
     @staticmethod
     def _process_batch(
         batch_items: list[Any],
         probe_to_gene_map: dict[str, str],
         dataset_name: str,
-        gstf_pairs: dict[tuple[str, str], dict[str, Any]],  # NEW: strain extraction
+        gstf_pairs: dict[tuple[str, str], dict[str, Any]],
         gene_symbols: dict[str, str],
     ) -> list[bytes]:
-        """Process a batch of replicate groups. Static method for multiprocessing."""
+        """One serialized record per array of each pair group (static, for workers).
+
+        A group not flagged double or naming fewer than two genes writes nothing. An
+        array that yields no expression value raises: every released array is a
+        record, so none is skipped. The strain is looked up under the sorted,
+        upper-cased pair.
+        """
         results = []
-
         for replicate_group in batch_items:
-            # Use first sample for metadata
             sample_info = replicate_group[0]
-
             if (
                 not sample_info["is_double_mutant"]
                 or len(sample_info["gene_names"]) < 2
             ):
                 continue
-
-            # Extract and average data from all replicates
-            all_mutant_data = []
-            all_refpool_data = []
-            all_log2_ratio_data = []
-
-            for rep_info in replicate_group:
-                gsm = rep_info["gsm_object"]
-                mutant_data, refpool_data, log2_ratio_data = (
-                    DmMicroarraySameith2015Dataset._extract_expression_from_gsm_static(
-                        gsm, probe_to_gene_map
-                    )
-                )
-
-                if mutant_data and refpool_data and log2_ratio_data:
-                    all_mutant_data.append(mutant_data)
-                    all_refpool_data.append(refpool_data)
-                    all_log2_ratio_data.append(log2_ratio_data)
-
-            # Skip if no data from any replicate
-            if not all_mutant_data:
-                continue
-
-            # Calculate statistics across replicates
-            mutant_mean, mutant_se, mutant_var, mutant_n = (
-                DmMicroarraySameith2015Dataset._calculate_replicate_statistics_static(
-                    all_mutant_data
-                )
-            )
-            refpool_mean, refpool_se, refpool_var, refpool_n = (
-                DmMicroarraySameith2015Dataset._calculate_replicate_statistics_static(
-                    all_refpool_data
-                )
-            )
-            log2_mean, log2_se, log2_var, log2_n = (
-                DmMicroarraySameith2015Dataset._calculate_replicate_statistics_static(
-                    all_log2_ratio_data
-                )
-            )
-
-            # Extract strain for this genotype from gstf_pairs
             gene_names = sample_info["gene_names"]
             genotype_key = tuple(sorted([gene_names[0].upper(), gene_names[1].upper()]))
             strain = gstf_pairs.get(genotype_key, {}).get("strain", "BY4742")
-
-            experiment, reference, publication = (
-                DmMicroarraySameith2015Dataset.create_double_mutant_expression_experiment(
-                    dataset_name,
-                    sample_info,
-                    mutant_mean,
-                    refpool_mean,
-                    log2_mean,
-                    log2_se,
-                    log2_var,
-                    log2_n,
-                    strain=strain,  # NEW: Pass per-sample strain
-                    refpool_n_replicates=refpool_n,
-                    gene_symbols=gene_symbols,
+            for array_info in replicate_group:
+                accession = array_info["geo_accession"]
+                mutant_data, refpool_data, log2_ratio_data = (
+                    DmMicroarraySameith2015Dataset._extract_expression_from_gsm_static(
+                        array_info["gsm_object"], probe_to_gene_map
+                    )
                 )
-            )
-
-            # Serialize the Pydantic objects
-            serialized_data = pickle.dumps(
-                {
-                    "experiment": experiment.model_dump(),
-                    "reference": reference.model_dump(),
-                    "publication": publication.model_dump(),
-                }
-            )
-            results.append(serialized_data)
-
+                if not mutant_data:
+                    raise RuntimeError(
+                        f"array {accession} ({array_info['gene_names']}) yields no "
+                        "expression value; a released array is never skipped"
+                    )
+                experiment, reference, publication = (
+                    DmMicroarraySameith2015Dataset.create_double_mutant_expression_experiment(
+                        dataset_name,
+                        array_info,
+                        mutant_data,
+                        refpool_data,
+                        log2_ratio_data,
+                        strain=strain,
+                        replicate_id=accession,
+                        gene_symbols=gene_symbols,
+                    )
+                )
+                results.append(
+                    pickle.dumps(
+                        {
+                            "experiment": experiment.model_dump(),
+                            "reference": reference.model_dump(),
+                            "publication": publication.model_dump(),
+                        }
+                    )
+                )
         return results
-
-    @staticmethod
-    def _calculate_replicate_statistics_static(
-        data_list: list[Any],
-    ) -> tuple[SortedDict, SortedDict, SortedDict, SortedDict]:
-        """Static version of _calculate_replicate_statistics for multiprocessing."""
-        if not data_list:
-            return SortedDict(), SortedDict(), SortedDict(), SortedDict()
-
-        # Collect all values per gene across replicates
-        all_values: dict[str, list[float]] = {}
-        for data_dict in data_list:
-            for gene, value in data_dict.items():
-                if gene not in all_values:
-                    all_values[gene] = []
-                all_values[gene].append(value)
-
-        # Calculate statistics
-        mean_dict = SortedDict()
-        se_dict = SortedDict()
-        variance_dict = SortedDict()
-        n_replicates_dict = SortedDict()
-
-        for gene, values in all_values.items():
-            n = len(values)
-            mean_dict[gene] = np.mean(values)
-            n_replicates_dict[gene] = n
-
-            if n > 1:
-                sd = np.std(values, ddof=1)
-                variance_dict[gene] = sd**2
-                se_dict[gene] = sd / np.sqrt(n)
-            else:
-                variance_dict[gene] = np.nan
-                se_dict[gene] = np.nan
-
-        return mean_dict, se_dict, variance_dict, n_replicates_dict
 
     def _extract_gene_names_from_title(self, title: str) -> list[str]:
         """Up to two genes a sample title names: systematic names, then workbook symbols."""
@@ -1710,160 +1485,18 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
     def _extract_expression_from_gsm(
         self, gsm: Any, probe_to_gene_map: dict[str, str] | None = None
     ) -> tuple[SortedDict, SortedDict, SortedDict]:
-        """Extract expression values and log2 ratios from a GSM object.
+        """(mutant, refpool, log2 ratio) per gene of one array, spots combined.
 
-        Handles dye swaps between technical replicates by checking metadata to determine
-        which channel contains the mutant vs. reference pool.
-
-        Returns:
-            tuple: (mutant_data, refpool_data, log2_ratio_data)
-                - mutant_data: Expression values for the deletion mutant
-                - refpool_data: Expression values for the reference pool
-                - log2_ratio_data: log2(mutant/refpool) ratios
+        Delegates to ``extract_array_expression``.
         """
-        mutant_data = SortedDict()
-        refpool_data = SortedDict()
-        log2_ratio_data = SortedDict()
-
-        if hasattr(gsm, "table") and gsm.table is not None:
-            table = gsm.table
-
-            # Log available columns for the first sample
-            if not hasattr(self, "_logged_columns"):
-                log.info(f"Available columns in GSM table: {list(table.columns)}")
-                self._logged_columns = True
-
-            if "ID_REF" not in table.columns:
-                return mutant_data, refpool_data, log2_ratio_data
-
-            # Check for required columns
-            has_cy5 = "Signal Norm_Cy5" in table.columns
-            has_cy3 = "Signal Norm_Cy3" in table.columns
-            if not (has_cy5 and has_cy3):
-                log.warning(
-                    f"Missing required columns. Available: {list(table.columns)}"
-                )
-                return mutant_data, refpool_data, log2_ratio_data
-
-            # Determine which channel has mutant vs refpool by checking metadata
-            # Due to dye swaps, this varies between technical replicates
-            source_ch1 = (
-                gsm.metadata.get("source_name_ch1", [""])[0]
-                if hasattr(gsm, "metadata")
-                else ""
-            )
-
-            # Determine which dye (Cy5/Cy3) corresponds to which sample (mutant/refpool)
-            # Ch1 = Cy5, Ch2 = Cy3 (based on GEO data structure)
-            # ch1 == Cy5 throughout GSE42536; the a/b title suffix is the dye swap.
-            if "refpool" in source_ch1.lower():
-                mutant_channel = "Cy3"  # ch1=Cy5=refpool -> mutant is Cy3
-            else:
-                mutant_channel = "Cy5"  # ch1=Cy5=mutant
-
-            for _, row in table.iterrows():
-                probe_id = str(int(row["ID_REF"]))
-
-                # Map probe ID to gene name
-                if probe_to_gene_map and probe_id in probe_to_gene_map:
-                    gene = probe_to_gene_map[probe_id]
-                    try:
-                        cy5_value = float(row["Signal Norm_Cy5"])
-                        cy3_value = float(row["Signal Norm_Cy3"])
-
-                        # Assign to mutant/refpool by the dye assignment.
-                        if mutant_channel == "Cy5":
-                            mutant_data[gene] = cy5_value
-                            refpool_data[gene] = cy3_value
-                        else:
-                            mutant_data[gene] = cy3_value
-                            refpool_data[gene] = cy5_value
-
-                        # log2(mutant / refpool) recomputed from the Signal columns
-                        # + dye assignment -- NOT from the VALUE column. VALUE's
-                        # orientation is inconsistent within GSE42536 (#72): 132
-                        # arrays are log2(Cy5/Cy3), 127 log2(Cy3/Cy5), so trusting it
-                        # mis-signs ~24% of arrays. The signals are orientation-proof.
-                        if mutant_data[gene] > 0 and refpool_data[gene] > 0:
-                            log2_ratio_data[gene] = float(
-                                np.log2(mutant_data[gene] / refpool_data[gene])
-                            )
-
-                    except (ValueError, TypeError):
-                        continue
-
-        return mutant_data, refpool_data, log2_ratio_data
+        return extract_array_expression(gsm, probe_to_gene_map)
 
     @staticmethod
     def _extract_expression_from_gsm_static(
         gsm: Any, probe_to_gene_map: dict[str, str] | None = None
     ) -> tuple[SortedDict, SortedDict, SortedDict]:
-        """Static version of _extract_expression_from_gsm for multiprocessing.
-
-        Handles dye swaps between technical replicates.
-
-        Returns:
-            tuple: (mutant_data, refpool_data, log2_ratio_data)
-        """
-        mutant_data = SortedDict()
-        refpool_data = SortedDict()
-        log2_ratio_data = SortedDict()
-
-        if hasattr(gsm, "table") and gsm.table is not None:
-            table = gsm.table
-
-            if "ID_REF" not in table.columns:
-                return mutant_data, refpool_data, log2_ratio_data
-
-            has_cy5 = "Signal Norm_Cy5" in table.columns
-            has_cy3 = "Signal Norm_Cy3" in table.columns
-            if not (has_cy5 and has_cy3):
-                return mutant_data, refpool_data, log2_ratio_data
-
-            # Determine which channel has mutant vs refpool by checking metadata
-            source_ch1 = (
-                gsm.metadata.get("source_name_ch1", [""])[0]
-                if hasattr(gsm, "metadata")
-                else ""
-            )
-
-            # ch1 == Cy5 throughout GSE42536; the a/b title suffix is the dye swap.
-            if "refpool" in source_ch1.lower():
-                mutant_channel = "Cy3"  # ch1=Cy5=refpool -> mutant is Cy3
-            else:
-                mutant_channel = "Cy5"  # ch1=Cy5=mutant
-
-            for _, row in table.iterrows():
-                probe_id = str(int(row["ID_REF"]))
-
-                if probe_to_gene_map and probe_id in probe_to_gene_map:
-                    gene = probe_to_gene_map[probe_id]
-                    try:
-                        cy5_value = float(row["Signal Norm_Cy5"])
-                        cy3_value = float(row["Signal Norm_Cy3"])
-
-                        # Assign to mutant/refpool by the dye assignment.
-                        if mutant_channel == "Cy5":
-                            mutant_data[gene] = cy5_value
-                            refpool_data[gene] = cy3_value
-                        else:
-                            mutant_data[gene] = cy3_value
-                            refpool_data[gene] = cy5_value
-
-                        # log2(mutant / refpool) recomputed from the Signal columns
-                        # + dye assignment -- NOT from the VALUE column. VALUE's
-                        # orientation is inconsistent within GSE42536 (#72): 132
-                        # arrays are log2(Cy5/Cy3), 127 log2(Cy3/Cy5), so trusting it
-                        # mis-signs ~24% of arrays. The signals are orientation-proof.
-                        if mutant_data[gene] > 0 and refpool_data[gene] > 0:
-                            log2_ratio_data[gene] = float(
-                                np.log2(mutant_data[gene] / refpool_data[gene])
-                            )
-
-                    except (ValueError, TypeError):
-                        continue
-
-        return mutant_data, refpool_data, log2_ratio_data
+        """Static form of ``_extract_expression_from_gsm`` for worker processes."""
+        return extract_array_expression(gsm, probe_to_gene_map)
 
     def _calculate_wt_reference_with_std(
         self, wt_gsm_list: list[Any], probe_to_gene_map: dict[str, str]
@@ -1917,35 +1550,25 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         mutant_data: SortedDict,
         refpool_data: SortedDict,
         log2_ratio_data: SortedDict,
-        log2_ratio_se: SortedDict | None = None,
-        log2_ratio_variance: SortedDict | None = None,
-        n_replicates: SortedDict | None = None,
-        strain: str = "BY4742",  # NEW: Accept per-sample strain parameter
+        strain: str = "BY4742",
         *,
-        refpool_n_replicates: SortedDict,
+        replicate_id: str,
         gene_symbols: dict[str, str],
     ) -> tuple[Any, Any, Any]:
-        """Create experiment for double deletion mutant with PER-SAMPLE strain.
+        """Create the record of one double-mutant array (one culture), with its strain.
 
-        The reference ``expression`` is the mean refpool signal over the record's
-        arrays, so the reference ``n_replicates`` of a gene is the number of arrays
-        whose refpool value entered that mean, counted per gene: a gene missing from
-        one array's refpool channel counts only the arrays that carry it (#630; the WT
-        RNA batch and the additional WT cultures are not the stored value, see the
-        module comment at the reference pool quotes).
+        The phenotype is that array's values (``array_phenotypes``): ``n_replicates``
+        1 per gene, no SE or variance, ``replicate_id`` the GEO sample accession. The
+        reference is the refpool channel of the same array.
 
         Args:
             dataset_name: Name of the dataset
-            sample_info: Sample metadata dictionary
-            mutant_data: Expression values for deletion mutant
-            refpool_data: Mean refpool expression over the record's arrays
-            log2_ratio_data: log2(mutant/refpool) ratios
-            log2_ratio_se: Standard error for log2 ratios (optional)
-            log2_ratio_variance: Variance for log2 ratios (optional)
-            n_replicates: Number of replicates per gene (optional)
+            sample_info: Sample metadata dictionary of the array
+            mutant_data: The array's mutant-channel values, spots combined
+            refpool_data: The array's refpool-channel values, spots combined
+            log2_ratio_data: The array's log2(mutant/refpool), spots combined
             strain: Strain background (BY4742 or BY4741), extracted from Excel comments
-            refpool_n_replicates: Arrays in each gene's refpool mean, same keys as
-                ``refpool_data``
+            replicate_id: The array's GEO sample accession
             gene_symbols: The workbook's ORF -> gene symbol map
                 (``release_gene_symbols``); ``perturbed_gene_name`` is that symbol, or
                 the ORF when the workbook gives the ORF no symbol
@@ -1992,30 +1615,8 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         )
         environment_reference = environment.model_copy()
 
-        # Use pre-computed log2 ratios
-        log2_ratios = log2_ratio_data
-
-        # Create phenotype with expression data from mutant
-        phenotype = MicroarrayExpressionPhenotype(
-            expression=mutant_data,
-            expression_log2_ratio=log2_ratios,
-            expression_log2_ratio_se=log2_ratio_se,
-            expression_log2_ratio_variance=log2_ratio_variance,
-            n_replicates=cast("dict[str, int]", n_replicates),
-        )
-
-        # Create reference phenotype from reference pool
-        # Reference is self-referential, so log2 ratios are all 0
-        reference_log2_ratios = SortedDict()
-        for gene in refpool_data:
-            reference_log2_ratios[gene] = 0.0
-
-        phenotype_reference = MicroarrayExpressionPhenotype(
-            expression=refpool_data,  # Reference pool
-            expression_log2_ratio=reference_log2_ratios,
-            expression_log2_ratio_se=None,
-            expression_log2_ratio_variance=None,
-            n_replicates=refpool_n_replicates,  # Arrays in each refpool mean
+        phenotype, phenotype_reference = array_phenotypes(
+            mutant_data, refpool_data, log2_ratio_data, replicate_id
         )
 
         # Create reference
@@ -2034,15 +1635,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
             phenotype=phenotype,
         )
 
-        # Publication for Sameith et al. 2015
-        publication = Publication(
-            pubmed_id=SAMEITH2015_PUBMED_ID,
-            pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{SAMEITH2015_PUBMED_ID}/",
-            doi="10.1186/s12915-015-0222-5",
-            doi_url="https://doi.org/10.1186/s12915-015-0222-5",
-        )
-
-        return experiment, reference, publication
+        return experiment, reference, sameith2015_publication()
 
 
 if __name__ == "__main__":

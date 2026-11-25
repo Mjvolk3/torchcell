@@ -2132,8 +2132,8 @@ def _oracles(registry: dict[str, dict[str, Any]]) -> dict[str, int | None]:
 
 def test_registry_count_oracles_and_flags_are_pinned() -> None:
     assert _oracles(runners.EXPRESSION_DATASETS) == {
-        "dm_microarray_sameith2015": 72,
-        "sm_microarray_sameith2015": 82,
+        "dm_microarray_sameith2015": 143,
+        "sm_microarray_sameith2015": 144,
         "microarray_kemmeren2014": 1484,
     }
     assert (runners.OHYA_EXPECTED_COUNT, runners.OHNUKI_EXPECTED_COUNT) == (4718, 1112)

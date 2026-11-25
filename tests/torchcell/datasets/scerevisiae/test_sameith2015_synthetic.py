@@ -12,9 +12,16 @@ token resolves only through the workbook's own (systematic name, gene symbol) pa
 from all three sheets (``List of 215 GSTFs`` too), or as an ORF-shaped token, and
 ``perturbed_gene_name`` is the workbook's symbol for the ORF (else the ORF).
 
-Platform probes: 1 YAL001C, 2 YBR001C, 3 YCR001W. The mutant channel is Cy5 unless
-``source_name_ch1`` names the refpool, then Cy3; log2 ratio = log2(mutant / refpool),
-dropped where either channel is 0 (which then fails validation, see the Finding test).
+Platform probes: 1 YAL001C, 2 YBR001C, 3 YCR001W (one spot per gene; the spot test
+adds a second YAL001C probe). The mutant channel is Cy5 unless ``source_name_ch1``
+names the refpool, then Cy3; log2 ratio = log2(mutant / refpool). A signal that is not
+a positive number raises.
+
+ONE RECORD PER ARRAY (2026-11-24, #1174, #1178): an array is one culture, so every
+array is its own record with that array's values, ``n_replicates`` 1 per gene, no SE or
+variance, ``replicate_id`` = the GSM name, and the reference = that array's refpool
+channel (``n_replicates`` 1, ``replicate_id`` None). Records come in group order (first
+appearance of a genotype), arrays in GSE order inside a group.
 
 Single-mutant GSE (title: Cy5 / Cy3, source):
 
@@ -30,22 +37,20 @@ Single-mutant GSE (title: Cy5 / Cy3, source):
     S8 "yzz999w-del"              no gene name: ignored
     S9 "yer001w-del"              1 1 1 / 1 1 1             -> not in the SI list, kept
 
-YAL001C statistics over S1, S2: mutant mean 5 3 5; refpool mean 1.5 3 2; log2 mean 1.5
-0 1, sample SD sqrt(0.5), 0, sqrt(2), so variance sd**2 = 0.5000000000000001, 0.0,
-2.0000000000000004 and SE sd/sqrt(2) = 0.5, 0.0, 1.0. Single-array groups store NaN SE
-and variance.
+So four records: S1, S2 (YAL001C), S3 (YBR001C), S9 (YER001W).
 
 Double-mutant GSE: S4 wildtype, S1 (one gene, ignored), D1 "ycr001w-del+ydr001c-del"
-(2 2 2 / 1 1 1) and D2 "ycr001w-del+ydr001c-del-b" (refpool in ch1, mutant Cy3 4 4 4,
-refpool 1 1 1) -> pair (YCR001W, YDR001C), log2 1.5 per gene with the same SD as above;
-D3 "yal001c-del+nth2-del" (1 2 4 / 1 1 1, log2 0 1 2, n = 1) -> pair (YAL001C, YBR001C);
-D4 "yel001c-del+yfl001w-del" is a pair that failed curation and is skipped.
+(2 2 2 / 1 1 1, log2 1) and D2 "ycr001w-del+ydr001c-del-b" (refpool in ch1, mutant Cy3
+4 4 4, refpool 1 1 1, log2 2) -> pair (YCR001W, YDR001C), two records; D3
+"yal001c-del+nth2-del" (1 2 4 / 1 1 1, log2 0 1 2) -> pair (YAL001C, YBR001C); D4
+"yel001c-del+yfl001w-del" is a pair that failed curation and is skipped.
 """
 
 from __future__ import annotations
 
 import json
 import math
+import os
 import pickle
 import re
 import urllib.request
@@ -54,6 +59,7 @@ from typing import Any
 
 import GEOparse
 import lmdb
+import numpy as np
 import openpyxl
 import pandas as pd
 import pytest
@@ -83,7 +89,6 @@ _SM = "SmMicroarraySameith2015Dataset"
 _DM = "DmMicroarraySameith2015Dataset"
 _NAN = "NaN"
 _NANF = float("nan")
-_SD_HALF = math.sqrt(0.5)
 _SD_TWO = math.sqrt(2.0)
 _GENES = ("YAL001C", "YBR001C", "YCR001W")
 _GAP = " " * 11
@@ -105,8 +110,9 @@ def _gsm(
     return GSM(name=name, metadata=metadata, table=table, columns=_describe(table))
 
 
-def _gse(gsms: list[GSM]) -> GSE:
-    platform = pd.DataFrame({"ID": [1, 2, 3], "ORF": list(_GENES)})
+def _gse(gsms: list[GSM], platform: pd.DataFrame | None = None) -> GSE:
+    if platform is None:
+        platform = pd.DataFrame({"ID": [1, 2, 3], "ORF": list(_GENES)})
     gpl = GPL(name="GPL", metadata={}, table=platform, columns=_describe(platform))
     return GSE(
         name="GSE42536",
@@ -184,12 +190,14 @@ def _write_workbook(path: Path) -> None:
     workbook.save(path)
 
 
-def _write_raw(raw: Path, gsms: list[GSM]) -> None:
+def _write_raw(
+    raw: Path, gsms: list[GSM], platform: pd.DataFrame | None = None
+) -> None:
     raw.mkdir(parents=True)
     (raw / "GSE42536_family.soft.gz").write_bytes(b"placeholder: process reads .pkl")
     _write_workbook(raw / "12915_2015_222_MOESM1_ESM.xlsx")
     with open(raw / "GSE42536.pkl", "wb") as handle:
-        pickle.dump(_gse(gsms), handle)
+        pickle.dump(_gse(gsms, platform), handle)
 
 
 @pytest.fixture
@@ -241,11 +249,9 @@ def _record(
     mutant: dict[str, float],
     refpool: dict[str, float],
     log2: dict[str, float],
-    se: dict[str, float],
-    var: dict[str, float],
-    n: dict[str, int],
-    ref_n: dict[str, int],
+    replicate_id: str,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
+    """One array's record: its own values, n = 1 per gene, no SE or variance."""
     experiment = MicroarrayExpressionExperiment(
         dataset_name=dataset,
         genotype=Genotype(perturbations=perturbations),
@@ -253,9 +259,10 @@ def _record(
         phenotype=MicroarrayExpressionPhenotype(
             expression=mutant,
             expression_log2_ratio=log2,
-            expression_log2_ratio_se=se,
-            expression_log2_ratio_variance=var,
-            n_replicates=n,
+            expression_log2_ratio_se=None,
+            expression_log2_ratio_variance=None,
+            n_replicates=dict.fromkeys(mutant, 1),
+            replicate_id=replicate_id,
         ),
     )
     reference = MicroarrayExpressionExperimentReference(
@@ -272,7 +279,7 @@ def _record(
             expression_log2_ratio=dict.fromkeys(refpool, 0.0),
             expression_log2_ratio_se=None,
             expression_log2_ratio_variance=None,
-            n_replicates=ref_n,
+            n_replicates=dict.fromkeys(refpool, 1),
         ),
     )
     return _nan_safe(experiment.model_dump()), reference.model_dump()
@@ -290,22 +297,26 @@ def _nat(orf: str, name: str) -> SgaNatMxDeletionPerturbation:
     )
 
 
-_N1 = dict.fromkeys(_GENES, 1)
-_N2 = dict.fromkeys(_GENES, 2)
-_NANS = _three(_NANF, _NANF, _NANF)
+_ALL_ONES = _three(1.0, 1.0, 1.0)
 
 _SINGLE_EXPECTED = [
     _record(
         _SM,
         "BY4742",
         [_kan("YAL001C", "TFC3")],
-        _three(5.0, 3.0, 5.0),
-        _three(1.5, 3.0, 2.0),
-        _three(1.5, 0.0, 1.0),
-        _three(_SD_HALF / math.sqrt(2), 0.0, _SD_TWO / math.sqrt(2)),
-        _three(_SD_HALF**2, 0.0, _SD_TWO**2),
-        _N2,
-        _N2,
+        _three(2.0, 4.0, 8.0),
+        _three(1.0, 4.0, 2.0),
+        _three(1.0, 0.0, 2.0),
+        "S1",
+    ),
+    _record(
+        _SM,
+        "BY4742",
+        [_kan("YAL001C", "TFC3")],
+        _three(8.0, 2.0, 2.0),
+        _three(2.0, 2.0, 2.0),
+        _three(2.0, 0.0, 0.0),
+        "S2",
     ),
     _record(
         _SM,
@@ -314,34 +325,31 @@ _SINGLE_EXPECTED = [
         _three(4.0, 1.0, 1.0),
         _three(2.0, 2.0, 1.0),
         _three(1.0, -1.0, 0.0),
-        _NANS,
-        _NANS,
-        _N1,
-        _N1,
+        "S3",
     ),
     _record(
         _SM,
         "BY4742",
         [_kan("YER001W", "YER001W")],
-        _three(1.0, 1.0, 1.0),
-        _three(1.0, 1.0, 1.0),
+        _ALL_ONES,
+        _ALL_ONES,
         _three(0.0, 0.0, 0.0),
-        _NANS,
-        _NANS,
-        _N1,
-        _N1,
+        "S9",
     ),
 ]
 
 
-def test_single_mutant_records_average_replicates_per_gene(
+def test_single_mutant_records_are_one_per_array(
     single: m.SmMicroarraySameith2015Dataset,
 ) -> None:
-    """Three groups in first-appearance order: YAL001C (S1 + S2), YBR001C (S3, named
-    NTH2) and YER001W (S9, outside the SI list but still processed). The
-    double-deletion arrays S6 and S7 make no record.
+    """One record per array, groups in first-appearance order: YAL001C (S1, then S2,
+    two cultures and two records, never their mean), YBR001C (S3, named NTH2) and
+    YER001W (S9, outside the SI list but still processed). Each record is its array's
+    values verbatim with n = 1 and no SE or variance, ``replicate_id`` the GSM name,
+    and its reference is that array's own refpool channel. The double-deletion arrays
+    S6 and S7 make no record.
     """
-    assert len(single) == 3
+    assert len(single) == 4
     for i, (experiment, reference) in enumerate(_SINGLE_EXPECTED):
         assert _nan_safe(single[i]["experiment"]) == experiment
         assert single[i]["reference"] == reference
@@ -371,11 +379,10 @@ def test_double_deletion_arrays_are_not_single_mutant_records(
         for i in range(len(single))
         for perturbation in single[i]["experiment"]["genotype"]["perturbations"]
     ]
-    assert stored == ["YAL001C", "YBR001C", "YER001W"]
+    assert stored == ["YAL001C", "YAL001C", "YBR001C", "YER001W"]
     assert [
-        single[i]["experiment"]["phenotype"]["n_replicates"]["YAL001C"]
-        for i in range(len(single))
-    ] == [2, 1, 1]
+        single[i]["experiment"]["phenotype"]["replicate_id"] for i in range(len(single))
+    ] == ["S1", "S2", "S3", "S9"]
 
 
 def test_both_loaders_store_the_geo_series_pubmed_id(
@@ -388,7 +395,7 @@ def test_both_loaders_store_the_geo_series_pubmed_id(
     publications = [single[i]["publication"] for i in range(len(single))] + [
         double[i]["publication"] for i in range(len(double))
     ]
-    assert len(publications) == 5
+    assert len(publications) == 7
     assert all(p == _PUBLICATION.model_dump() for p in publications)
     assert {p["pubmed_url"] for p in publications} == {
         "https://pubmed.ncbi.nlm.nih.gov/26700642/"
@@ -432,7 +439,7 @@ def test_a_gene_named_with_wt_is_classified_as_wildtype(
 def test_single_side_files_and_wildtype_reference(
     single: m.SmMicroarraySameith2015Dataset,
 ) -> None:
-    """Each of the three records has its own refpool and reference; the wildtype
+    """Each of the four records has its own refpool and reference; the wildtype
     reference averages the refpool channel of S4 (Cy3 5) and S5 (Cy3 7), mean 6 with
     sample SD sqrt(2). ``_calculate_wt_reference_with_std``'s output is used by no
     record: ``process()`` stores it on ``wt_reference_expression`` /
@@ -446,7 +453,7 @@ def test_single_side_files_and_wildtype_reference(
         "YER001W",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [[0], [1], [2]]
+    assert [entry["member_indices"] for entry in index] == [[0], [1], [2], [3]]
     assert single.experiment_class is MicroarrayExpressionExperiment
     assert single.reference_class is MicroarrayExpressionExperimentReference
     assert single.raw_file_names == ["GSE42536_family.soft.gz"]
@@ -529,41 +536,45 @@ _DOUBLE_EXPECTED = [
         _DM,
         "BY4741",
         [_kan("YCR001W", "CCR1"), _nat("YDR001C", "DSY1")],
-        _three(3.0, 3.0, 3.0),
-        _three(1.0, 1.0, 1.0),
-        _three(1.5, 1.5, 1.5),
-        _three(*[_SD_HALF / math.sqrt(2)] * 3),
-        _three(*[_SD_HALF**2] * 3),
-        _N2,
-        _N2,
+        _three(2.0, 2.0, 2.0),
+        _ALL_ONES,
+        _ALL_ONES,
+        "D1",
+    ),
+    _record(
+        _DM,
+        "BY4741",
+        [_kan("YCR001W", "CCR1"), _nat("YDR001C", "DSY1")],
+        _three(4.0, 4.0, 4.0),
+        _ALL_ONES,
+        _three(2.0, 2.0, 2.0),
+        "D2",
     ),
     _record(
         _DM,
         "BY4741",
         [_kan("YAL001C", "TFC3"), _nat("YBR001C", "NTH2")],
         _three(1.0, 2.0, 4.0),
-        _three(1.0, 1.0, 1.0),
+        _ALL_ONES,
         _three(0.0, 1.0, 2.0),
-        _NANS,
-        _NANS,
-        _N1,
-        _N1,
+        "D3",
     ),
 ]
 
 
-def test_double_mutant_records_pair_replicates_and_take_the_strain_from_comments(
+def test_double_mutant_records_are_one_per_array_and_take_the_strain_from_comments(
     double: m.DmMicroarraySameith2015Dataset,
 ) -> None:
-    """Pair (YCR001W, YDR001C) over D1 + D2 carries comment ``MATa strain`` and is built
-    in BY4741; pair (YAL001C, YBR001C) from D3 carries ``matA`` and is built in BY4741;
-    the failed-curation pair D4 and the one-gene S1 write nothing.
+    """Pair (YCR001W, YDR001C) is two arrays, D1 and D2 (two cultures in opposite dye
+    orientations), so two records; it carries comment ``MATa strain`` and is built in
+    BY4741. Pair (YAL001C, YBR001C) from D3 carries ``matA`` and is built in BY4741.
+    The failed-curation pair D4 and the one-gene S1 write nothing.
     """
-    assert len(double) == 2
+    assert len(double) == 3
     for i, (experiment, reference) in enumerate(_DOUBLE_EXPECTED):
         assert _nan_safe(double[i]["experiment"]) == experiment
         assert double[i]["reference"] == reference
-    assert double[1]["publication"] == _PUBLICATION.model_dump()
+    assert double[2]["publication"] == _PUBLICATION.model_dump()
 
 
 def test_gstf_pairs_map_mating_comments_onto_strains(
@@ -620,11 +631,10 @@ def test_double_side_files(double: m.DmMicroarraySameith2015Dataset) -> None:
         "['YAL001C', 'YBR001C']",
         "['YEL001C', 'YFL001W']",
     ]
-    # Both pairs are BY4741 with the same all-ones refpool, but the reference
-    # n_replicates counts the arrays in each refpool mean (#630): 2 for D1 + D2, 1 for
-    # D3, so the two records no longer share one reference.
+    # The three arrays are BY4741 with the same all-ones refpool channel and
+    # n_replicates 1, so their three references are one reference.
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [[0], [1]]
+    assert [entry["member_indices"] for entry in index] == [[0, 1, 2]]
     assert double.raw_file_names == ["GSE42536_family.soft.gz"]
 
 
@@ -638,23 +648,22 @@ def test_double_parallel_build_writes_the_same_records(tmp_path: Path) -> None:
     dataset = m.DmMicroarraySameith2015Dataset(
         root=str(root), process_workers=1, batch_size=1
     )
-    assert len(dataset) == 2
+    assert len(dataset) == 3
     for i, (experiment, reference) in enumerate(_DOUBLE_EXPECTED):
         assert _nan_safe(dataset[i]["experiment"]) == experiment
         assert dataset[i]["reference"] == reference
 
 
-def test_a_zero_signal_probe_fails_phenotype_validation(tmp_path: Path) -> None:
-    """Finding: ``_extract_expression_from_gsm`` keeps a 0 mutant signal in
-    ``mutant_data`` but drops its log2 ratio (sameith2015.py lines 671-674), and
-    ``create_single_mutant_expression_experiment`` (lines 782-788) then pairs the
-    three-gene ``expression`` with two-gene ``n_replicates``, so one zero cell aborts
-    the whole build with a validation error instead of skipping the probe.
+def test_a_zero_signal_probe_refuses_the_build(tmp_path: Path) -> None:
+    """A 0 signal has no log ratio, so ``combine_spots`` raises naming the array and
+    the gene; GSE42536 has no non-positive signal. Before 2026-11-24 the zero was kept
+    in ``expression`` and its log2 dropped, and the build died later on mismatched
+    ``n_replicates`` keys.
     """
     root = tmp_path / "sm_zero"
     _write_raw(root / "raw", [_gsm("Z1", "yal001c-del-a", [4.0, 0.0, 1.0], _ONES)])
     with pytest.raises(
-        ValueError, match="n_replicates must have the same keys as expression"
+        ValueError, match=r"^Z1 YBR001C: spot signals mutant=0\.0, refpool=1\.0 are not"
     ):
         m.SmMicroarraySameith2015Dataset(root=str(root))
 
@@ -668,17 +677,12 @@ def _two_probe_gsm(name: str, title: str, source: str) -> GSM:
     return GSM(name=name, metadata=metadata, table=table, columns=_describe(table))
 
 
-def test_reference_n_replicates_counts_the_arrays_in_each_refpool_mean(
-    tmp_path: Path,
-) -> None:
-    """#630: the reference ``expression`` is the refpool-channel mean over a record's
-    arrays, so its ``n_replicates`` is, per gene, the number of arrays whose refpool
-    value entered that mean, not a constant 1 and not the record's array count.
-
-    M1 carries all three probes (refpool Cy3 1 4 2); M2 names the refpool in ch1
-    (refpool Cy5 2 _ 2) and has no row for YBR001C. The YBR001C reference is then M1's
-    value alone (4, n = 1) while YAL001C (1.5) and YCR001W (2.0) average both arrays
-    (n = 2). The same holds for the double-mutant loader.
+def test_each_array_record_keeps_its_own_genes_and_refpool(tmp_path: Path) -> None:
+    """#630 superseded: with one record per array the reference is that array's refpool
+    channel, n = 1 per gene. M1 carries all three probes (refpool Cy3 1 4 2); M2 names
+    the refpool in ch1 (refpool Cy5 2 _ 2) and has no row for YBR001C, so M2's record
+    and reference hold YAL001C and YCR001W only. The same holds for the double-mutant
+    loader.
     """
     single_root = tmp_path / "sm_missing"
     _write_raw(
@@ -689,15 +693,20 @@ def test_reference_n_replicates_counts_the_arrays_in_each_refpool_mean(
         ],
     )
     single = m.SmMicroarraySameith2015Dataset(root=str(single_root))
-    assert len(single) == 1
-    reference = single[0]["reference"]["phenotype_reference"]
-    assert reference["expression"] == {"YAL001C": 1.5, "YBR001C": 4.0, "YCR001W": 2.0}
-    assert reference["n_replicates"] == {"YAL001C": 2, "YBR001C": 1, "YCR001W": 2}
-    assert single[0]["experiment"]["phenotype"]["n_replicates"] == {
-        "YAL001C": 2,
-        "YBR001C": 1,
-        "YCR001W": 2,
+    assert len(single) == 2
+    assert single[0]["reference"]["phenotype_reference"]["expression"] == {
+        "YAL001C": 1.0,
+        "YBR001C": 4.0,
+        "YCR001W": 2.0,
     }
+    reference = single[1]["reference"]["phenotype_reference"]
+    assert reference["expression"] == {"YAL001C": 2.0, "YCR001W": 2.0}
+    assert reference["n_replicates"] == {"YAL001C": 1, "YCR001W": 1}
+    assert reference["replicate_id"] is None
+    phenotype = single[1]["experiment"]["phenotype"]
+    assert phenotype["expression"] == {"YAL001C": 8.0, "YCR001W": 2.0}
+    assert phenotype["n_replicates"] == {"YAL001C": 1, "YCR001W": 1}
+    assert phenotype["replicate_id"] == "M2"
 
     double_root = tmp_path / "dm_missing"
     _write_raw(
@@ -708,10 +717,71 @@ def test_reference_n_replicates_counts_the_arrays_in_each_refpool_mean(
         ],
     )
     double = m.DmMicroarraySameith2015Dataset(root=str(double_root))
-    assert len(double) == 1
-    reference = double[0]["reference"]["phenotype_reference"]
-    assert reference["expression"] == {"YAL001C": 1.5, "YBR001C": 4.0, "YCR001W": 2.0}
-    assert reference["n_replicates"] == {"YAL001C": 2, "YBR001C": 1, "YCR001W": 2}
+    assert len(double) == 2
+    reference = double[1]["reference"]["phenotype_reference"]
+    assert reference["expression"] == {"YAL001C": 2.0, "YCR001W": 2.0}
+    assert reference["n_replicates"] == {"YAL001C": 1, "YCR001W": 1}
+
+
+def test_spots_of_one_gene_are_combined_inside_the_array_record(tmp_path: Path) -> None:
+    """A gene printed twice (probes 1 and 4 both YAL001C, as GPL11232 prints every ORF
+    twice) contributes both spots to its array's record: mutant and refpool are the
+    geometric means of the spots and the log2 ratio is the mean of the spot log2
+    ratios. A1 (mutant Cy5): YAL001C spots (2 / 1) and (8 / 4) -> mutant 4, refpool 2,
+    log2 1; YCR001W spot (1 / 4) -> log2 -2. Before 2026-11-24 the loader kept only the
+    last spot (8 / 4). A2 (mutant Cy3) spots (1 / 4) and (4 / 1) for YAL001C -> mutant
+    2, refpool 2, log2 mean(-2, 2) = 0.
+    """
+    platform = pd.DataFrame(
+        {"ID": [1, 2, 3, 4], "ORF": ["YAL001C", "YBR001C", "YCR001W", "YAL001C"]}
+    )
+
+    def four_probe_gsm(
+        name: str, title: str, cy5: list[float], cy3: list[float], source: str
+    ) -> GSM:
+        table = pd.DataFrame(
+            {"ID_REF": [1, 2, 3, 4], "Signal Norm_Cy5": cy5, "Signal Norm_Cy3": cy3}
+        )
+        metadata = {"title": [title], "source_name_ch1": [source]}
+        return GSM(name=name, metadata=metadata, table=table, columns=_describe(table))
+
+    root = tmp_path / "sm_spots"
+    _write_raw(
+        root / "raw",
+        [
+            four_probe_gsm(
+                "A1", "yal001c-del-a", [2.0, 1.0, 1.0, 8.0], [1.0, 1.0, 4.0, 4.0], ""
+            ),
+            four_probe_gsm(
+                "A2",
+                "yal001c-del-b",
+                [4.0, 1.0, 1.0, 1.0],
+                [1.0, 1.0, 1.0, 4.0],
+                "refpool",
+            ),
+        ],
+        platform,
+    )
+    dataset = m.SmMicroarraySameith2015Dataset(root=str(root))
+    assert len(dataset) == 2
+    first = dataset[0]["experiment"]["phenotype"]
+    assert first["expression"] == {"YAL001C": 4.0, "YBR001C": 1.0, "YCR001W": 1.0}
+    assert first["expression_log2_ratio"] == {
+        "YAL001C": 1.0,
+        "YBR001C": 0.0,
+        "YCR001W": -2.0,
+    }
+    assert dataset[0]["reference"]["phenotype_reference"]["expression"] == {
+        "YAL001C": 2.0,
+        "YBR001C": 1.0,
+        "YCR001W": 4.0,
+    }
+    second = dataset[1]["experiment"]["phenotype"]
+    assert second["expression"]["YAL001C"] == 2.0
+    assert second["expression_log2_ratio"]["YAL001C"] == 0.0
+    assert (
+        dataset[1]["reference"]["phenotype_reference"]["expression"]["YAL001C"] == 2.0
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -926,24 +996,19 @@ _BATCH_GROUPS = [
     ],
     [_info("N1", ["YCR001W", "YDR001C"], _D1, double=False)],
     [_info("N2", ["YAL001C"], _D3)],
-    [_info("X1", ["YEL001C", "YFL001W"], _no_id_ref_gsm())],
     [_info("D3", ["YAL001C", "YBR001C"], _D3)],
     [_info("U1", ["YFL001W", "YEL001C"], _DOUBLE_GSMS[5])],
 ]
 _BATCH_EXPECTED = [
-    _DOUBLE_EXPECTED[0],
-    _DOUBLE_EXPECTED[1],
+    *_DOUBLE_EXPECTED,
     _record(
         _DM,
         "BY4742",
         [_kan("YFL001W", "FFA1"), _nat("YEL001C", "EAA1")],
-        _three(1.0, 1.0, 1.0),
-        _three(1.0, 1.0, 1.0),
+        _ALL_ONES,
+        _ALL_ONES,
         _three(0.0, 0.0, 0.0),
-        _NANS,
-        _NANS,
-        _N1,
-        _N1,
+        "U1",
     ),
 ]
 
@@ -951,20 +1016,19 @@ _BATCH_EXPECTED = [
 def test_double_process_batch_matches_process_sequential_record_by_record(
     double: m.DmMicroarraySameith2015Dataset,
 ) -> None:
-    """The static batch path (lines 1372-1460, run in worker processes under
-    ``process_workers > 0`` and so invisible to coverage there) and the sequential path
-    (lines 1194-1278) produce the same records, in order, on six hand-made groups:
-    D1 + D2 and D3 as in ``_DOUBLE_EXPECTED``; a group flagged not double and a
-    one-gene group are skipped; a group whose only array has no ``ID_REF`` column has
-    no data and is skipped; the pair (YFL001W, YEL001C), absent from the SI pairs
-    (D4's pair is ``failed``), takes the default strain BY4742 and all-ones signals
-    (log2 0, n 1, NaN SE).
+    """The static batch path (run in worker processes under ``process_workers > 0``)
+    and the sequential path (which now writes what ``_process_batch`` returns) produce
+    the same records, in order, on five hand-made groups: D1 + D2 (two records) and D3
+    as in ``_DOUBLE_EXPECTED``; a group flagged not double and a one-gene group are
+    skipped; the pair (YFL001W, YEL001C), absent from the SI pairs (D4's pair is
+    ``failed``), takes the default strain BY4742 and all-ones signals (log2 0, n 1).
+    A group whose array has no ``ID_REF`` column raises instead of being skipped.
     """
     batch = m.DmMicroarraySameith2015Dataset._process_batch(
         _BATCH_GROUPS, _PROBES, _DM, double.gstf_pairs, double.gene_symbols
     )
     batch_records = [pickle.loads(blob) for blob in batch]
-    assert len(batch_records) == 3
+    assert len(batch_records) == 4
     for record, (experiment, reference) in zip(
         batch_records, _BATCH_EXPECTED, strict=True
     ):
@@ -982,6 +1046,12 @@ def test_double_process_batch_matches_process_sequential_record_by_record(
         sequential = [pickle.loads(value) for _, value in txn.cursor()]
     env.close()
     assert [_nan_safe(r) for r in sequential] == [_nan_safe(r) for r in batch_records]
+
+    no_data = [[_info("X1", ["YEL001C", "YFL001W"], _no_id_ref_gsm())]]
+    with pytest.raises(RuntimeError, match=r"^array X1 .* yields no expression value"):
+        m.DmMicroarraySameith2015Dataset._process_batch(
+            no_data, _PROBES, _DM, double.gstf_pairs, double.gene_symbols
+        )
 
 
 def test_double_process_batch_takes_strain_from_the_sorted_upper_pair() -> None:
@@ -1003,27 +1073,20 @@ def test_double_process_batch_takes_strain_from_the_sorted_upper_pair() -> None:
     ] == [("YAL001C", "NatMX_YAL001C"), ("YBR001C", "KanMX_YBR001C")]
 
 
-def test_static_replicate_statistics_equal_the_instance_method(
-    double: m.DmMicroarraySameith2015Dataset,
-) -> None:
-    """Values A = [1, 3] (two arrays) and B = [5] (one array): mean A 2, sample SD
-    sqrt(2), variance 2.0000000000000004 (float sd**2), SE sqrt(2)/sqrt(2) = 1; B mean
-    5, NaN SE and variance, n 1. An empty list returns four empty SortedDicts.
+def test_combine_spots_takes_geometric_channel_means_and_the_mean_log_ratio() -> None:
+    """Spots (2 / 1) and (8 / 4): mutant sqrt(16) = 4, refpool sqrt(4) = 2, log2 mean(1,
+    1) = 1. Spots (1 / 4) and (4 / 1): mutant 2, refpool 2, log2 mean(-2, 2) = 0, which
+    is log2 of the ratio of the two geometric means. One spot returns its own values.
+    A zero, negative or NaN signal raises, naming the array and the gene.
     """
-    data = [{"A": 1.0, "B": 5.0}, {"A": 3.0}]
-    static = m.DmMicroarraySameith2015Dataset._calculate_replicate_statistics_static
-    mean, se, var, n = static(data)
-    assert dict(mean) == {"A": 2.0, "B": 5.0}
-    assert dict(n) == {"A": 2, "B": 1}
-    assert se["A"] == pytest.approx(1.0, abs=1e-15)
-    assert var["A"] == _SD_TWO**2
-    assert math.isnan(se["B"]) and math.isnan(var["B"])
-    instance = double._calculate_replicate_statistics(data)
-    assert [_nan_safe(dict(d)) for d in instance] == [
-        _nan_safe(dict(d)) for d in (mean, se, var, n)
-    ]
-    assert static([]) == ({}, {}, {}, {})
-    assert double._calculate_replicate_statistics([]) == ({}, {}, {}, {})
+    assert m.combine_spots("G", "A", [(2.0, 1.0), (8.0, 4.0)]) == (4.0, 2.0, 1.0)
+    assert m.combine_spots("G", "A", [(1.0, 4.0), (4.0, 1.0)]) == (2.0, 2.0, 0.0)
+    assert m.combine_spots("G", "A", [(3.0, 7.0)]) == (3.0, 7.0, math.log2(3.0 / 7.0))
+    for bad in ((0.0, 1.0), (1.0, -2.0), (_NANF, 1.0)):
+        with pytest.raises(
+            ValueError, match=r"^G A: spot signals .* not both positive"
+        ):
+            m.combine_spots("G", "A", [(1.0, 1.0), bad])
 
 
 class _NoTable:
@@ -1052,22 +1115,36 @@ _EXTRACT_CASES: list[
     ),
     ("no probe map", _D3, None, ({}, {}, {})),
     (
-        "unmapped probe, non-numeric cell, zero signal",
+        "unmapped probe",
         _gsm_table(
             pd.DataFrame(
                 {
-                    "ID_REF": [1, 2, 3, 9],
-                    "Signal Norm_Cy5": [4.0, "bad", 0.0, 7.0],
-                    "Signal Norm_Cy3": [1.0, 1.0, 2.0, 7.0],
+                    "ID_REF": [1, 3, 9],
+                    "Signal Norm_Cy5": [4.0, 2.0, 7.0],
+                    "Signal Norm_Cy3": [1.0, 2.0, 7.0],
                 }
             )
         ),
         _PROBES,
         (
-            {"YAL001C": 4.0, "YCR001W": 0.0},
+            {"YAL001C": 4.0, "YCR001W": 2.0},
             {"YAL001C": 1.0, "YCR001W": 2.0},
-            {"YAL001C": 2.0},
+            {"YAL001C": 2.0, "YCR001W": 0.0},
         ),
+    ),
+    (
+        "two spots of one gene",
+        _gsm_table(
+            pd.DataFrame(
+                {
+                    "ID_REF": [1, 4],
+                    "Signal Norm_Cy5": [2.0, 8.0],
+                    "Signal Norm_Cy3": [1.0, 4.0],
+                }
+            )
+        ),
+        {"1": "YAL001C", "4": "YAL001C"},
+        ({"YAL001C": 4.0}, {"YAL001C": 2.0}, {"YAL001C": 1.0}),
     ),
     (
         "refpool in ch1 swaps the channels",
@@ -1098,9 +1175,8 @@ def test_static_expression_extraction_equals_the_instance_method_on_every_branch
 ) -> None:
     """Each branch returns (mutant, refpool, log2): a missing table, a missing
     ``ID_REF`` or Cy3 column, or no probe map give three empty dicts; probe 9 is not
-    mapped, probe 2's ``"bad"`` Cy5 cell is skipped by the ``ValueError`` guard, probe
-    3's 0 mutant signal stays in mutant/refpool but has no log2 (log2(4/1) = 2 for probe
-    1); a ``refpool`` source (any case) makes Cy3 the mutant, log2(8/2) = 2. The static,
+    mapped; two probes of one gene are combined (``combine_spots``); a ``refpool``
+    source (any case) makes Cy3 the mutant, log2(8/2) = 2. The static,
     double-instance and single-instance extractors agree on every case.
     """
     static = m.DmMicroarraySameith2015Dataset._extract_expression_from_gsm_static
@@ -1110,6 +1186,34 @@ def test_static_expression_extraction_equals_the_instance_method_on_every_branch
         single._extract_expression_from_gsm,
     ):
         assert tuple(dict(d) for d in extractor(gsm, probes)) == expected
+
+
+def test_a_non_numeric_or_zero_cell_raises_in_every_extractor(
+    single: m.SmMicroarraySameith2015Dataset, double: m.DmMicroarraySameith2015Dataset
+) -> None:
+    """A ``"bad"`` cell fails float conversion and a 0 signal has no log ratio: both
+    raise instead of being skipped (until 2026-11-24 the first was skipped and the
+    second kept without a log2). GSE42536 has neither.
+    """
+    bad_cell = _gsm_table(
+        pd.DataFrame(
+            {"ID_REF": [2], "Signal Norm_Cy5": ["bad"], "Signal Norm_Cy3": [1.0]}
+        )
+    )
+    zero = _gsm_table(
+        pd.DataFrame(
+            {"ID_REF": [3], "Signal Norm_Cy5": [0.0], "Signal Norm_Cy3": [2.0]}
+        )
+    )
+    for extractor in (
+        m.DmMicroarraySameith2015Dataset._extract_expression_from_gsm_static,
+        double._extract_expression_from_gsm,
+        single._extract_expression_from_gsm,
+    ):
+        with pytest.raises(ValueError, match="could not convert string to float"):
+            extractor(bad_cell, _PROBES)
+        with pytest.raises(ValueError, match=r"^T YCR001W: spot signals mutant=0\.0"):
+            extractor(zero, _PROBES)
 
 
 @pytest.mark.parametrize("fixture", ["single", "double"])
@@ -1178,19 +1282,26 @@ def test_double_convert_to_systematic_and_name_validation(
 def test_single_process_sequential_skips_non_single_empty_and_no_data_groups(
     single: m.SmMicroarraySameith2015Dataset,
 ) -> None:
-    """Four groups: one flagged not single, one with no gene, one whose only array has
-    no ``ID_REF`` (no data), and S1 + S2 for YAL001C. Only the last writes a record,
-    at key 0, equal to the fixture's first record (``_SINGLE_EXPECTED[0]``).
+    """Three groups: one flagged not single, one with no gene, and S1 + S2 for
+    YAL001C. Only the last writes, one record per array at keys 0 and 1, equal to the
+    fixture's first two records. A group whose array has no ``ID_REF`` (no data) raises
+    instead of being skipped.
     """
 
-    def info(genes: list[str], gsm: object, is_single: bool = True) -> dict[str, Any]:
-        return {"is_single_mutant": is_single, "gene_names": genes, "gsm_object": gsm}
+    def info(
+        accession: str, genes: list[str], gsm: object, is_single: bool = True
+    ) -> dict[str, Any]:
+        return {
+            "geo_accession": accession,
+            "is_single_mutant": is_single,
+            "gene_names": genes,
+            "gsm_object": gsm,
+        }
 
     groups = [
-        [info(["YAL001C"], _S1, is_single=False)],
-        [info([], _S1)],
-        [info(["YBR001C"], _no_id_ref_gsm())],
-        [info(["YAL001C"], _S1), info(["YAL001C"], _S2)],
+        [info("S1", ["YAL001C"], _S1, is_single=False)],
+        [info("S1", [], _S1)],
+        [info("S1", ["YAL001C"], _S1), info("S2", ["YAL001C"], _S2)],
     ]
     single.close_lmdb()
     lmdb_dir = Path(single.processed_dir) / "lmdb"
@@ -1201,25 +1312,140 @@ def test_single_process_sequential_skips_non_single_empty_and_no_data_groups(
     with env.begin() as txn:
         stored = [(key, pickle.loads(value)) for key, value in txn.cursor()]
     env.close()
-    experiment, reference = _SINGLE_EXPECTED[0]
-    assert [key for key, _ in stored] == [b"0"]
-    assert _nan_safe(stored[0][1]["experiment"]) == experiment
-    assert stored[0][1]["reference"] == reference
+    assert [key for key, _ in stored] == [b"0", b"1"]
+    for (_, record), (experiment, reference) in zip(
+        stored, _SINGLE_EXPECTED[:2], strict=True
+    ):
+        assert _nan_safe(record["experiment"]) == experiment
+        assert record["reference"] == reference
+
+    for child in lmdb_dir.iterdir():
+        child.unlink()
+    with pytest.raises(RuntimeError, match=r"^array X1 .* yields no expression value"):
+        single._process_sequential(
+            [[info("X1", ["YBR001C"], _no_id_ref_gsm())]], _PROBES
+        )
 
 
 def test_double_class_surface_and_empty_helpers(
     single: m.SmMicroarraySameith2015Dataset, double: m.DmMicroarraySameith2015Dataset
 ) -> None:
     """The double-mutant class's schema classes and ``preprocess_raw`` pass-through;
-    empty inputs give four (replicate statistics) and two (wildtype reference) empty
-    SortedDicts; one wildtype array (_S4, refpool Cy3 5) gives mean 5 and std 0.0,
-    the ``len(values) > 1`` guard's fallback instead of a ddof=1 NaN.
+    an empty input gives two (wildtype reference) empty SortedDicts; one wildtype
+    array (_S4, refpool Cy3 5) gives mean 5 and std 0.0, the ``len(values) > 1``
+    guard's fallback instead of a ddof=1 NaN.
     """
     assert double.experiment_class is MicroarrayExpressionExperiment
     assert double.reference_class is MicroarrayExpressionExperimentReference
     frame = pd.DataFrame({"a": [1]})
     assert double.preprocess_raw(frame) is frame
-    assert single._calculate_replicate_statistics([]) == ({}, {}, {}, {})
     assert double._calculate_wt_reference_with_std([], _PROBES) == ({}, {})
     mean, std = double._calculate_wt_reference_with_std([_S4], {"1": "YAL001C"})
     assert (dict(mean), dict(std)) == ({"YAL001C": 5.0}, {"YAL001C": 0.0})
+
+
+# ---------------------------------------------------------------------------
+# 2026.11.24: the released GSE42536, one record per array (#1174, #1178).
+# ---------------------------------------------------------------------------
+
+_DEV_RAW = {
+    kind: Path(
+        os.environ["DATA_ROOT"],
+        "data",
+        "torchcell",
+        f"{kind}_microarray_sameith2015",
+        "raw",
+    )
+    for kind in ("sm", "dm")
+}
+_RAW_FILES = ("GSE42536_family.soft.gz", "GSE42536.pkl", m.WORKBOOK_FILE_NAME)
+
+
+def _link_raw(kind: str, root: Path) -> None:
+    (root / "raw").mkdir(parents=True)
+    for name in _RAW_FILES:
+        (root / "raw" / name).symlink_to(_DEV_RAW[kind] / name)
+
+
+def _arrays_per_genotype(dataset: Any) -> dict[tuple[str, ...], list[str]]:
+    groups: dict[tuple[str, ...], list[str]] = {}
+    for i in range(len(dataset)):
+        experiment = dataset[i]["experiment"]
+        key = tuple(
+            sorted(
+                p["systematic_gene_name"]
+                for p in experiment["genotype"]["perturbations"]
+            )
+        )
+        groups.setdefault(key, []).append(experiment["phenotype"]["replicate_id"])
+    return groups
+
+
+@pytest.mark.slow
+@pytest.mark.data
+@pytest.mark.skipif(
+    not all((_DEV_RAW[k] / n).exists() for k in _DEV_RAW for n in _RAW_FILES),
+    reason=f"requires the GSE42536 raw files under {_DEV_RAW['sm']} and {_DEV_RAW['dm']}",
+)
+def test_the_released_series_builds_one_record_per_array(tmp_path: Path) -> None:
+    """GSE42536 (287 arrays) builds 144 single-mutant records over 82 mutants (62 x 2
+    arrays, 20 x 1) and 143 double-mutant records over 72 pairs (71 x 2, cin5+yap6 x 1),
+    one per array, ``replicate_id`` the GSM accession, n = 1 and no SE on every record.
+    The 20 one-array singles are exactly the Additional file 1 "Single mutants - info"
+    rows whose ``comments`` reads "2 replicates" (one culture, two spots). On
+    GSM636383 (dot6-del-1-a, refpool in ch1) the YAL001C value is the mean of its two
+    spot log2(Cy3 / Cy5) ratios.
+    """
+    sm_root, dm_root = tmp_path / "sm", tmp_path / "dm"
+    _link_raw("sm", sm_root)
+    _link_raw("dm", dm_root)
+    single = m.SmMicroarraySameith2015Dataset(root=str(sm_root))
+    double = m.DmMicroarraySameith2015Dataset(root=str(dm_root))
+    assert (len(single), len(double)) == (144, 143)
+
+    sm_groups = _arrays_per_genotype(single)
+    dm_groups = _arrays_per_genotype(double)
+    assert len(sm_groups) == 82 and len(dm_groups) == 72
+    assert sorted(len(v) for v in sm_groups.values()) == [1] * 20 + [2] * 62
+    assert sorted(len(v) for v in dm_groups.values()) == [1] + [2] * 71
+    assert [k for k, v in dm_groups.items() if len(v) == 1] == [("YDR259C", "YOR028C")]
+    ids = [a for g in (sm_groups, dm_groups) for v in g.values() for a in v]
+    assert len(ids) == len(set(ids)) == 287 and all(a.startswith("GSM") for a in ids)
+
+    workbook = pd.read_excel(
+        _DEV_RAW["sm"] / m.WORKBOOK_FILE_NAME, sheet_name="Single mutants - info"
+    )
+    two_replicates = {
+        str(orf).strip().upper()
+        for orf, comment in zip(workbook["systematic name"], workbook["comments"])
+        if isinstance(comment, str) and "2 replicates" in comment
+    }
+    assert {k[0] for k, v in sm_groups.items() if len(v) == 1} == two_replicates
+
+    for dataset in (single, double):
+        for i in range(len(dataset)):
+            phenotype = dataset[i]["experiment"]["phenotype"]
+            assert set(phenotype["n_replicates"].values()) == {1}
+            assert phenotype["expression_log2_ratio_se"] is None
+            assert (
+                dataset[i]["reference"]["phenotype_reference"]["replicate_id"] is None
+            )
+
+    with open(_DEV_RAW["sm"] / "GSE42536.pkl", "rb") as handle:
+        gse = pickle.load(handle)
+    probes = gse.gpls["GPL11232"].table
+    spot_ids = set(probes.loc[probes["ORF"] == "YAL001C", "ID"].astype(int))
+    table = gse.gsms["GSM636383"].table
+    spots = table[table["ID_REF"].astype(int).isin(spot_ids)]
+    assert len(spots) == 2
+    expected = float(
+        np.mean(np.log2(spots["Signal Norm_Cy3"] / spots["Signal Norm_Cy5"]))
+    )
+    [record] = [
+        single[i]
+        for i in range(len(single))
+        if single[i]["experiment"]["phenotype"]["replicate_id"] == "GSM636383"
+    ]
+    assert record["experiment"]["phenotype"]["expression_log2_ratio"][
+        "YAL001C"
+    ] == pytest.approx(expected, abs=1e-12)

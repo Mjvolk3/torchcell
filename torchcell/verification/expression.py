@@ -154,7 +154,7 @@ def verify_expression_dataset(
         records: the per-LMDB-entry dicts (experiment/reference/publication).
         dataset_name: dataset identity for the report.
         provenance: where the records came from.
-        expected_count: the record-count oracle (e.g. Sameith DM=72, SM=82,
+        expected_count: the record-count oracle (e.g. Sameith DM=143, SM=144,
             Kemmeren=1450).
 
     Returns:

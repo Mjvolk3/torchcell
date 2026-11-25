@@ -150,22 +150,30 @@ from torchcell.verification.visual_score import (
 EXPRESSION_DATASETS: dict[str, dict[str, Any]] = {
     "dm_microarray_sameith2015": {
         "root": "data/torchcell/dm_microarray_sameith2015",
-        "expected_count": 72,
+        # 143 = one record per GSE42536 double-mutant array (one culture): 71 pairs x 2
+        # arrays + cin5+yap6 x 1 (#1174, #1178); 72 before 2026-11-24 (pair means).
+        "expected_count": 143,
         "provenance": Provenance(
             source_uri="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE42536",
             citation_key="sameithHighresolutionGeneExpression2015",
-            method="GEOparse GSE42536 (GPL11232), dye-swap-corrected log2(mutant/refpool)",
-            page="Cell Reports, Expression Profiling; SI 'Double mutants - info'",
+            method="GEOparse GSE42536 (GPL11232), one record per array, "
+            "log2(mutant/refpool) from the Signal Norm channels, spots per gene combined",
+            page="BMC Biology 13:112, Methods 'Gene expression profiling' (defers to "
+            "Kemmeren 2014); SI 'Double mutants - info'",
         ),
     },
     "sm_microarray_sameith2015": {
         "root": "data/torchcell/sm_microarray_sameith2015",
-        "expected_count": 82,
+        # 144 = one record per GSE42536 single-mutant array (one culture): 62 mutants
+        # x 2 arrays + 20 x 1 (#1174, #1178); 82 before 2026-11-24 (mutant means).
+        "expected_count": 144,
         "provenance": Provenance(
             source_uri="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE42536",
             citation_key="sameithHighresolutionGeneExpression2015",
-            method="GEOparse GSE42536 (GPL11232), dye-swap-corrected log2(mutant/refpool)",
-            page="Cell Reports, Expression Profiling; SI 'Single mutants - info'",
+            method="GEOparse GSE42536 (GPL11232), one record per array, "
+            "log2(mutant/refpool) from the Signal Norm channels, spots per gene combined",
+            page="BMC Biology 13:112, Methods 'Gene expression profiling' (defers to "
+            "Kemmeren 2014); SI 'Single mutants - info'",
         ),
     },
     "microarray_kemmeren2014": {

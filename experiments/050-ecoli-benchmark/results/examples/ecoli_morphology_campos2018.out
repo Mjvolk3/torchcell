@@ -1,0 +1,5 @@
+ecoli-morphology-campos2018: 3,573 samples, 15 targets, split seqid30_s0
+sizes {'train': 2859, 'val': 357, 'test': 357}
+penalty chosen on validation: 1e+06
+validation {'pearson': -0.0401, 'spearman': -0.0379, 'r2': -0.0028, 'mse': 0.047, 'mae': 0.0935}
+test       {'pearson': 0.0097, 'spearman': -0.0041, 'r2': -0.0034, 'mse': 0.0331, 'mae': 0.0893}

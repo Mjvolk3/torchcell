@@ -1,0 +1,5 @@
+ecoli-growth-rate-campos2018: 3,573 samples, 1 targets, split seqid30_s0
+sizes {'train': 2859, 'val': 357, 'test': 357}
+penalty chosen on validation: 1000
+validation {'pearson': 0.0782, 'spearman': 0.0588, 'r2': 0.0059, 'mse': 0.0062, 'mae': 0.0497}
+test       {'pearson': 0.0807, 'spearman': 0.1031, 'r2': 0.0063, 'mse': 0.0098, 'mae': 0.0504}

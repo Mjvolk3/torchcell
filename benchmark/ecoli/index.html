@@ -183,6 +183,7 @@
 </section>
 <section id="the-short-import">
 <h2>The short import<a class="headerlink" href="#the-short-import" title="Link to this heading"></a></h2>
+<p>Install with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">&quot;torchcell&gt;=1.8.8&quot;</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_task</span>
 
 <span class="n">task</span> <span class="o">=</span> <span class="n">load_task</span><span class="p">(</span><span class="s2">"ecoli-growth-rate-campos2018"</span><span class="p">)</span>
@@ -196,6 +197,7 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">load_task</span></code> downloads the built dataset store when <code class="docutils literal notranslate"><span class="pre">TC_DATA_URL</span></code> is set, fetches the genome the records name when it is absent, matches records to genes, reads the labels and attaches the pinned splits. The split files ship inside the package and are checked against a sha256 recorded in the code, and the samples built on your machine must equal the samples the file was written for, row for row, or the call raises.</p>
 <p>Because every script reaches the processed task through this one import, a submitted script can be checked for it: a script that builds its own samples or splits does not contain <code class="docutils literal notranslate"><span class="pre">load_task</span></code>, and a script that reads the test part contains <code class="docutils literal notranslate"><span class="pre">unlock_test</span></code>.</p>
+<p>Four complete scripts, one per task, are in <a class="reference external" href="https://github.com/Mjvolk3/torchcell/tree/main/examples/benchmark"><code class="docutils literal notranslate"><span class="pre">examples/benchmark</span></code></a>: each loads its task, fits a small model, selects on validation and scores the test part once.</p>
 </section>
 <section id="the-test-part-is-locked">
 <h2>The test part is locked<a class="headerlink" href="#the-test-part-is-locked" title="Link to this heading"></a></h2>

@@ -18,6 +18,8 @@ A record of a dataset is a benchmark sample when it perturbs the number of genes
 
 ## The short import
 
+Install with `pip install "torchcell>=1.8.8"`.
+
 ```python
 from torchcell.tasks import load_task
 
@@ -33,6 +35,8 @@ task.score(task.y[split.val], prediction)   # Pearson, Spearman, R2, MSE, MAE
 `load_task` downloads the built dataset store when `TC_DATA_URL` is set, fetches the genome the records name when it is absent, matches records to genes, reads the labels and attaches the pinned splits. The split files ship inside the package and are checked against a sha256 recorded in the code, and the samples built on your machine must equal the samples the file was written for, row for row, or the call raises.
 
 Because every script reaches the processed task through this one import, a submitted script can be checked for it: a script that builds its own samples or splits does not contain `load_task`, and a script that reads the test part contains `unlock_test`.
+
+Four complete scripts, one per task, are in [`examples/benchmark`](https://github.com/Mjvolk3/torchcell/tree/main/examples/benchmark): each loads its task, fits a small model, selects on validation and scores the test part once.
 
 ## The test part is locked
 

@@ -3,7 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/ecoli/test_girgis2009.py
 """The Girgis 2009 antibiotic transposon loader (``torchcell.datasets.ecoli.girgis2009``).
 
-Synthetic tests (run everywhere) build all four released sheets in ``tmp_path``. The
+Synthetic tests (run everywhere) build all five released sheets in ``tmp_path``. The
 hermetic build uses the real ``EcoliK12MG1655Genome`` over the synthetic MG1655 assembly
 of ``tests/torchcell/sequence/genome/_bacterial_fixtures.py``, with ``b0006`` given the
 extra ``/gene_synonym`` ``b0010`` so the merged-locus case exists, served through a
@@ -23,10 +23,17 @@ reference sets, so the combination rule's answer is that value:
     b0010   /gene_synonym of b0006  +5.0    5.0         5.0  -> stored as released (#1057)
     b0099   on no locus           -5.0     -5.0         -5.0 -> stored as released (#1057)
 
+Dataset S2 carries, for every hybridization, the ratio ``r = 2 ** (0.5 * S3 value)``,
+and the reference columns are set so both z-scores follow from it (S3 ``Average`` 0, S4
+``Average`` ``0.5 * (S3 - S4)``, both ``Stdev`` 0.5), which is what the ratio check reads.
+
 Five of the six distinct names resolve (0.833 < 0.98), so the build fixture lowers
 ``MIN_RESOLVED_FRACTION`` and a separate test shows the default stops the build. 101
-records: all six loci x 17 drugs minus the one ``ND`` cell, ``b0010`` and ``b0099``
-stored under their released b-numbers since #1057.
+combined records: all six loci x 17 drugs minus the one ``ND`` cell, ``b0010`` and
+``b0099`` stored under their released b-numbers since #1057. 450 per-selection records:
+6 loci x 2 reference sets x 38 selections (13 drugs x 2 + 4 drugs x 3), minus the two
+``fus`` selections of ``b0001`` (every array ``LQ``) and the first ``amk`` selection of
+``b0002`` (``LQ``), in both reference sets.
 
 Data-gated tests (``--data``) read the real raw mirror and the built dev-tree LMDB under
 ``$DATA_ROOT`` (they never build it): the manifest pins, the provenance audit of every
@@ -37,6 +44,7 @@ cells read off ``si24.xls``, and the recorded ledgers.
 from __future__ import annotations
 
 import json
+import math
 import os
 import os.path as osp
 from collections.abc import Mapping, Sequence
@@ -98,10 +106,14 @@ KEPT_LOCI = ("b0001", "b0002", "b0004", "b0005")
 AS_RELEASED = ("b0010", "b0099")
 #: The one drug whose b0001 cell is released as ND.
 ND_DRUG = "fus"
-#: The one hybridization released as LQ (b0002, amk, Dataset S3, first array).
+#: The one hybridization released as LQ (b0002, amk, first array, in S2, S3 and S4).
 LQ_CELL = ("b0002", "amk")
 SYNTHETIC_RECORDS = len(KEPT_LOCI) * len(m.DRUGS) - 1
-BUILT_RECORDS = SYNTHETIC_RECORDS + len(AS_RELEASED) * len(m.DRUGS)
+BUILT_COMBINED_RECORDS = SYNTHETIC_RECORDS + len(AS_RELEASED) * len(m.DRUGS)
+#: Selections per locus and reference set: 13 two-repetition + 4 three-repetition drugs.
+SELECTIONS_PER_LOCUS = sum(spec.repetitions for spec in m.DRUGS)
+BUILT_SELECTION_RECORDS = len(SYNTHETIC_ROWS) * 2 * SELECTIONS_PER_LOCUS - 2 * (2 + 1)
+BUILT_RECORDS = BUILT_COMBINED_RECORDS + BUILT_SELECTION_RECORDS
 #: The shared verifier's genome-reference rules. Under the owner rule (#1057) a
 #: b-number stored as released need not be a locus of the annotation, so these may read
 #: it as a failure until the verifier changes (a separate branch); nothing else may fail.
@@ -131,7 +143,9 @@ def _write_sheet(
     assert sheet is not None
     sheet.title = spec.sheet_name
     sheet.append([spec.title if title is None else title])
-    for _ in range(spec.header_row - 1):
+    for note in spec.notes:
+        sheet.append([note])
+    for _ in range(spec.header_row - 1 - len(spec.notes)):
         sheet.append(["a note"])
     sheet.append(list(columns))
     for row in rows:
@@ -150,23 +164,48 @@ def _reference_columns() -> list[str]:
     ]
 
 
+def _is_low_quality(b_number: str, code: str, n: int) -> bool:
+    """The synthetic LQ cells, identical in Datasets S2, S3 and S4."""
+    return (b_number == "b0001" and code == ND_DRUG) or (
+        (b_number, code) == LQ_CELL and n == 1
+    )
+
+
 def _reference_rows(which: str) -> list[list[Any]]:
     """Dataset S3 (``"s3"``) or S4 (``"s4"``) rows for the synthetic loci."""
     rows: list[list[Any]] = []
     for b_number, description, s3, s4, released in SYNTHETIC_ROWS:
         value = s3 if which == "s3" else s4
-        row: list[Any] = [b_number, description, 0.0, 0.5]
+        average = 0.0 if which == "s3" else 0.5 * (s3 - s4)
+        row: list[Any] = [b_number, description, average, 0.5]
         for spec in m.DRUGS:
             for n in range(1, spec.hybridizations + 1):
-                if b_number == "b0001" and spec.code == ND_DRUG:
-                    row.append(m.LOW_QUALITY_MARKER)
-                elif which == "s3" and (b_number, spec.code) == LQ_CELL and n == 1:
+                if _is_low_quality(b_number, spec.code, n):
                     row.append(m.LOW_QUALITY_MARKER)
                 else:
                     row.append(value)
-        del description, released
+        del released
         rows.append(row)
     return rows
+
+
+def _ratio_rows() -> list[list[Any]]:
+    """Dataset S2 rows: the ratio both synthetic z-scores of a locus follow from."""
+    rows: list[list[Any]] = []
+    for b_number, description, s3, _s4, _released in SYNTHETIC_ROWS:
+        row: list[Any] = [b_number, description, 1.0]
+        for spec in m.DRUGS:
+            for n in range(1, spec.hybridizations + 1):
+                if _is_low_quality(b_number, spec.code, n):
+                    row.append(m.LOW_QUALITY_MARKER)
+                else:
+                    row.append(2 ** (0.5 * s3))
+        row.append(1.0)
+        rows.append(row)
+    return rows
+
+
+RATIO_COLUMNS = ["bnum", "description", "Con_R1_D4", *_reference_columns(), "01_ref"]
 
 
 def _combined_rows() -> list[list[Any]]:
@@ -198,7 +237,7 @@ def _significant_rows() -> list[list[Any]]:
 
 
 def _write_raw(raw: Path) -> None:
-    """All four released sheets, under the names the loader links from the mirror."""
+    """All five released sheets, under the names the loader links from the mirror."""
     raw.mkdir(parents=True, exist_ok=True)
     reference_columns = [
         "bnum",
@@ -213,6 +252,9 @@ def _write_raw(raw: Path) -> None:
         m.SHEETS[m.DATASET_S1],
         combined_columns,
         _significant_rows(),
+    )
+    _write_sheet(
+        raw / m.DATASET_S2, m.SHEETS[m.DATASET_S2], RATIO_COLUMNS, _ratio_rows()
     )
     _write_sheet(
         raw / m.DATASET_S3,
@@ -257,7 +299,7 @@ def mg1655(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> EcoliK12MG1655Gen
 
 @pytest.fixture
 def raw_dir(tmp_path: Path) -> Path:
-    """A directory holding all four synthetic sheets."""
+    """A directory holding all five synthetic sheets."""
     raw = tmp_path / "sheets"
     _write_raw(raw)
     return raw
@@ -285,7 +327,7 @@ def synthetic(
     mg1655: EcoliK12MG1655Genome,
     presence_only_pins: list[Mapping[str, str]],
 ) -> Path:
-    """A dataset root whose ``raw/`` holds the four synthetic sheets."""
+    """A dataset root whose ``raw/`` holds the five synthetic sheets."""
     root = tmp_path / m.DATASET_ROOT_REL
     _write_raw(root / "raw")
     monkeypatch.setattr(m, "reference_genome", lambda *a, **k: REFERENCE)
@@ -432,6 +474,51 @@ def test_drug_z_scores_of_an_averaged_drug_with_one_usable_array() -> None:
     ) == [2.0]
 
 
+def test_drug_z_scores_keeps_a_technical_pair_one_selection_when_its_first_array_is_lq() -> (
+    None
+):
+    """The grouping is positional: with R1 LQ, R2 and R3 are still ONE selection."""
+    spec = m.DRUGS_BY_CODE["pip"]
+    assert m.drug_z_scores([[m.LOW_QUALITY_MARKER, 2.0, 4.0]], spec) == [3.0]
+
+
+def test_replicate_groups_pair_the_second_and_third_array_of_the_four_drugs() -> None:
+    assert m.replicate_groups(m.DRUGS_BY_CODE["amk"]) == ((0,), (1,))
+    assert m.replicate_groups(m.DRUGS_BY_CODE["amp"]) == ((0,), (1,), (2,))
+    for code in ("pip", "fox", "tet", "trm"):
+        assert m.replicate_groups(m.DRUGS_BY_CODE[code]) == ((0,), (1, 2))
+
+
+def test_selection_values_count_the_arrays_behind_each_selection() -> None:
+    spec = m.DRUGS_BY_CODE["tet"]
+    first, second = m.selection_values([1.0, 2.0, m.LOW_QUALITY_MARKER], spec)
+    assert (first.repetition, first.value, first.n_arrays) == (1, 1.0, 1)
+    assert (second.repetition, second.value, second.n_arrays) == (2, 2.0, 1)
+    assert second.n_group_arrays == 2
+    both = m.selection_values([1.0, 2.0, 4.0], spec)[1]
+    assert (both.value, both.n_arrays) == (3.0, 2)
+    assert m.selection_values([m.LOW_QUALITY_MARKER] * 3, spec) == []
+
+
+def test_selection_values_refuse_a_row_of_the_wrong_width() -> None:
+    with pytest.raises(m.SheetFormatError, match="3 hybridization cells, not 2"):
+        m.selection_values([1.0, 2.0, 3.0], m.DRUGS_BY_CODE["amk"])
+
+
+def test_selection_replicate_ids_are_the_released_headers() -> None:
+    frame = pd.DataFrame(
+        columns=["bnum", "TRM_R1", "TRM_R2", "TRM_R3", "AMK_R2", "AMK_R1"]
+    )
+    assert m.selection_replicate_ids(frame, m.DRUGS_BY_CODE["trm"]) == [
+        "TRM_R1",
+        "TRM_R2+TRM_R3",
+    ]
+    assert m.selection_replicate_ids(frame, m.DRUGS_BY_CODE["amk"]) == [
+        "AMK_R1",
+        "AMK_R2",
+    ]
+
+
 def test_hybridization_columns_are_ordered_by_their_number() -> None:
     frame = pd.DataFrame(
         columns=["bnum", "FOX_R3", "FOX_R1", "FOX_R2", "FUS_R1", "FUS_R2"]
@@ -461,6 +548,15 @@ def test_read_sheet_refuses_a_changed_title(tmp_path: Path) -> None:
         title="Dataset S5: something else",
     )
     with pytest.raises(m.SheetFormatError, match="title"):
+        m.read_sheet(path, spec)
+
+
+def test_read_sheet_refuses_a_changed_legend_row(tmp_path: Path) -> None:
+    spec = m.SHEETS[m.DATASET_S3]
+    altered = spec.model_copy(update={"notes": ("a different note", *spec.notes[1:])})
+    path = tmp_path / m.DATASET_S3
+    _write_sheet(path, altered, ["bnum", "Description"], [["b0001", "thrL"]])
+    with pytest.raises(m.SheetFormatError, match="legend row 1"):
         m.read_sheet(path, spec)
 
 
@@ -589,6 +685,50 @@ def test_check_combination_rule_refuses_a_wrong_hybridization_count(
     short = frames[m.DATASET_S3].drop(columns=["AMK_R2"])
     with pytest.raises(m.SheetFormatError, match="hybridization columns"):
         m.check_combination_rule(short, frames[m.DATASET_S4], frames[m.DATASET_S5])
+
+
+def test_check_z_from_ratios_reproduces_every_hybridization(raw_dir: Path) -> None:
+    frames = _frames(raw_dir)
+    for name in (m.DATASET_S3, m.DATASET_S4):
+        checks = m.check_z_from_ratios(frames[m.DATASET_S2], frames[name], name)
+        assert len(checks) == 42
+        assert max(check.max_abs_error for check in checks) < 1e-12
+        amk = {check.column: check for check in checks}["AMK_R1"]
+        assert (amk.n_numeric, amk.n_low_quality) == (5, 1)
+
+
+def test_check_z_from_ratios_refuses_a_z_score_its_ratio_does_not_give(
+    raw_dir: Path,
+) -> None:
+    frames = _frames(raw_dir)
+    frames[m.DATASET_S2].loc[0, "AMK_R1"] = 4.0
+    with pytest.raises(m.RatioZScoreError, match="AMK_R1 b0001"):
+        m.check_z_from_ratios(frames[m.DATASET_S2], frames[m.DATASET_S3], m.DATASET_S3)
+
+
+def test_check_z_from_ratios_refuses_an_lq_cell_in_one_sheet_only(
+    raw_dir: Path,
+) -> None:
+    frames = _frames(raw_dir)
+    frames[m.DATASET_S4].loc[0, "AMK_R1"] = m.LOW_QUALITY_MARKER
+    with pytest.raises(m.RatioZScoreError, match="LQ in only one"):
+        m.check_z_from_ratios(frames[m.DATASET_S2], frames[m.DATASET_S4], m.DATASET_S4)
+
+
+def test_check_z_from_ratios_floors_a_small_ratio(raw_dir: Path) -> None:
+    frames = _frames(raw_dir)
+    s2, s3 = frames[m.DATASET_S2], frames[m.DATASET_S3]
+    s2.loc[0, "AMK_R1"] = 0.01
+    s3.loc[0, "AMK_R1"] = (math.log2(m.RATIO_FLOOR) - 0.0) / 0.5
+    checks = m.check_z_from_ratios(s2, s3, m.DATASET_S3)
+    assert {check.column: check for check in checks}["AMK_R1"].n_floored == 1
+
+
+def test_check_z_from_ratios_refuses_differently_named_arrays(raw_dir: Path) -> None:
+    frames = _frames(raw_dir)
+    s2 = frames[m.DATASET_S2].rename(columns={"AMK_R2": "AMK_R9"})
+    with pytest.raises(m.SheetFormatError, match="name amk's hybridizations"):
+        m.check_z_from_ratios(s2, frames[m.DATASET_S3], m.DATASET_S3)
 
 
 def test_check_thresholds_proves_each_drug_repetition_count(raw_dir: Path) -> None:
@@ -933,6 +1073,82 @@ def test_the_reference_phenotype_scores_zero_in_the_same_condition() -> None:
     assert leaf.units == m.UNITS_REFERENCE
 
 
+def test_a_selection_phenotype_is_one_measurement_with_its_released_id() -> None:
+    spec = m.DRUGS_BY_CODE["amk"]
+    selection = m.SelectionValue(
+        repetition=2, value=-0.75, n_arrays=1, n_group_arrays=1
+    )
+    leaf = m.selection_phenotype(
+        selection, spec, m.REFERENCE_SETS_BY_KEY["no_antibiotic"], "AMK_R2"
+    )
+    assert leaf.environment_response == -0.75
+    assert leaf.n_samples == 1
+    assert leaf.sample_unit is SampleUnit.biological_replicate
+    assert leaf.replicate_id == "AMK_R2"
+    assert leaf.screen_id == spec.screen_id
+    assert leaf.environment_response_uncertainty is None
+    assert leaf.environment_response_se is None
+    assert [(gap.field, gap.reason) for gap in leaf.provenance_gaps] == [
+        (
+            "environment_response_uncertainty",
+            ProvenanceGapReason.not_applicable_single_measurement,
+        ),
+        (
+            "environment_response_se",
+            ProvenanceGapReason.not_applicable_single_measurement,
+        ),
+    ]
+    assert "six independent selections" in (leaf.units or "")
+    assert "(Dataset S4)" in (leaf.units or "")
+
+
+def test_selection_units_say_how_a_technical_pair_was_combined() -> None:
+    unselected = m.REFERENCE_SETS_BY_KEY["unselected_library"]
+    single = m.SelectionValue(repetition=1, value=1.0, n_arrays=1, n_group_arrays=1)
+    pair = m.SelectionValue(repetition=2, value=1.0, n_arrays=2, n_group_arrays=2)
+    half = m.SelectionValue(repetition=2, value=1.0, n_arrays=1, n_group_arrays=2)
+    base = m.selection_units(unselected, single)
+    assert "(Dataset S3)" in base and "unselected library" in base
+    assert m.selection_units(unselected, pair) == (
+        f"{base}; the mean of the z-scores of the 2 arrays hybridized from this one "
+        "selection (technical replicates, averaged as the authors did)"
+    )
+    assert m.selection_units(unselected, half) == (
+        f"{base}; 1 of the 2 arrays hybridized from this one selection, the others "
+        "low quality (LQ)"
+    )
+
+
+def test_a_selection_reference_summarizes_its_reference_set() -> None:
+    spec = m.DRUGS_BY_CODE["fox"]
+    no_drug = m.selection_reference_phenotype(
+        spec, m.REFERENCE_SETS_BY_KEY["no_antibiotic"]
+    )
+    assert no_drug.environment_response == 0.0
+    assert no_drug.replicate_id is None
+    assert (no_drug.n_samples, no_drug.sample_unit) == (
+        6,
+        SampleUnit.biological_replicate,
+    )
+    assert no_drug.provenance_gaps == []
+    unselected = m.selection_reference_phenotype(
+        spec, m.REFERENCE_SETS_BY_KEY["unselected_library"]
+    )
+    assert (unselected.n_samples, unselected.sample_unit) == (5, None)
+    assert [gap.field for gap in unselected.provenance_gaps] == ["sample_unit"]
+    assert (
+        unselected.provenance_gaps[0].reason
+        is ProvenanceGapReason.deferred_pending_source_review
+    )
+
+
+def test_the_reference_sets_come_from_text_s1() -> None:
+    assert {r.key: r.n_reference for r in m.REFERENCE_SETS} == (
+        m.SOURCED_VALUES["reference_sets"].value
+    )
+    assert [r.dataset for r in m.REFERENCE_SETS] == [m.DATASET_S3, m.DATASET_S4]
+
+
 def test_the_library_background_states_the_genotype_without_typing_an_allele() -> None:
     background = m.library_background()
     assert background.name == "MG1655 delta-lacZ"
@@ -954,6 +1170,26 @@ def test_build_experiment_and_reference_validate_as_the_assembly_pinned_pair() -
     assert experiment.phenotype.environment_response == 2.5
     assert reference.phenotype_reference.environment_response == 0.0
     assert reference.genome_reference.strain == m.LIBRARY_PARENT
+    cell = m.SelectionCell(
+        b_number="b0005",
+        symbol="proB",
+        drug="tob",
+        reference_set="unselected_library",
+        replicate_id="TOB_R1",
+        selection=m.SelectionValue(
+            repetition=1, value=-0.5, n_arrays=1, n_group_arrays=1
+        ),
+    )
+    selection = m.build_selection_experiment("girgis", "b0005", "proB", cell, env)
+    selection_reference = m.build_reference(
+        "girgis", REFERENCE, spec, env, m.REFERENCE_SETS_BY_KEY["unselected_library"]
+    )
+    EnvironmentResponseExperiment.model_validate(selection.model_dump())
+    EnvironmentResponseExperimentReference.model_validate(
+        selection_reference.model_dump()
+    )
+    assert selection.phenotype.replicate_id == "TOB_R1"
+    assert selection_reference.phenotype_reference.n_samples == 5
 
 
 # --------------------------------------------------------------------------- #
@@ -971,6 +1207,7 @@ def test_the_build_checks_every_pinned_raw_file(
     assert presence_only_pins == [m.DATA_SHA256]
     assert sorted(m.DATA_SHA256) == [
         m.DATASET_S1,
+        m.DATASET_S2,
         m.DATASET_S3,
         m.DATASET_S4,
         m.DATASET_S5,
@@ -980,7 +1217,8 @@ def test_the_build_checks_every_pinned_raw_file(
 def test_the_built_records_carry_the_released_values(
     built: m.EnvChemgenGirgis2009Dataset,
 ) -> None:
-    records = [built[i] for i in range(len(built))]
+    records = [built[i] for i in range(BUILT_COMBINED_RECORDS)]
+    assert {r["experiment"]["phenotype"]["replicate_id"] for r in records} == {None}
     first = records[0]["experiment"]
     assert first["genotype"]["perturbations"][0]["systematic_gene_name"] == "b0001"
     assert first["genotype"]["perturbations"][0]["perturbation_type"] == (
@@ -1006,10 +1244,69 @@ def test_the_built_records_carry_the_released_values(
     } == {None}
 
 
+def test_the_build_stores_one_record_per_usable_selection(
+    built: m.EnvChemgenGirgis2009Dataset,
+) -> None:
+    records = [
+        built[i]["experiment"]["phenotype"]
+        for i in range(BUILT_COMBINED_RECORDS, len(built))
+    ]
+    assert len(records) == BUILT_SELECTION_RECORDS == 450
+    assert {r["n_samples"] for r in records} == {1}
+    by_set = {
+        key: [r for r in records if f"(Dataset {tag})" in r["units"]]
+        for key, tag in (("unselected_library", "S3"), ("no_antibiotic", "S4"))
+    }
+    assert {key: len(rows) for key, rows in by_set.items()} == {
+        "unselected_library": 225,
+        "no_antibiotic": 225,
+    }
+    # b0004 is +1.0 against the unselected library and -1.0 against the no-drug set
+    ids = {r["replicate_id"] for r in records}
+    assert "TRM_R2+TRM_R3" in ids and "TRM_R2" not in ids and "TRM_R3" not in ids
+    assert "AMP_R3" in ids
+    assert {r["environment_response"] for r in by_set["unselected_library"]} == {
+        row[2] for row in SYNTHETIC_ROWS
+    }
+    assert {r["environment_response"] for r in by_set["no_antibiotic"]} == {
+        row[3] for row in SYNTHETIC_ROWS
+    }
+    paired = [r for r in records if r["replicate_id"] == "TRM_R2+TRM_R3"]
+    assert len(paired) == 12
+    assert all("technical replicates" in r["units"] for r in paired)
+    amk_b0002 = [
+        r
+        for i, r in zip(range(BUILT_COMBINED_RECORDS, len(built)), records, strict=True)
+        if r["screen_id"] == "amk day 4"
+        and built[i]["experiment"]["genotype"]["perturbations"][0][
+            "systematic_gene_name"
+        ]
+        == "b0002"
+    ]
+    assert sorted(r["replicate_id"] for r in amk_b0002) == ["AMK_R2", "AMK_R2"]
+
+
 def test_the_build_writes_every_ledger(built: m.EnvChemgenGirgis2009Dataset) -> None:
     out = Path(built.preprocess_dir)
     log = json.loads((out / "dropped_records.json").read_text())
-    assert log["kept_records"] == BUILT_RECORDS
+    assert log["kept_records"] == BUILT_COMBINED_RECORDS
+    selections = json.loads((out / "selection_records.json").read_text())
+    assert selections["kept_records"] == BUILT_SELECTION_RECORDS
+    assert selections["by_reference_set"] == {
+        "unselected_library": 225,
+        "no_antibiotic": 225,
+    }
+    assert selections["by_repetition"] == {"1": 200, "2": 202, "3": 48}
+    amk = {
+        (s["reference_set"], s["replicate_id"]): s["low_quality"]
+        for s in selections["selections"]
+        if s["drug"] == "amk"
+    }
+    assert amk[("unselected_library", "AMK_R1")] == 1
+    assert amk[("no_antibiotic", "AMK_R2")] == 0
+    ratios = json.loads((out / "z_from_ratio_check.json").read_text())
+    assert len(ratios) == 2 * 42
+    assert max(check["max_abs_error"] for check in ratios) < m.MAX_Z_FROM_RATIO_ERROR
     identifiers = json.loads((out / "identifier_reconciliation.json").read_text())
     assert identifiers["n_locus_tags"] == len(KEPT_LOCI)
     replicates = json.loads((out / "replicate_structure.json").read_text())
@@ -1084,6 +1381,19 @@ def test_the_build_refuses_a_cell_the_combination_rule_misses(
         m.EnvChemgenGirgis2009Dataset(root=str(synthetic), ecoli_genome=mg1655)
 
 
+def test_the_build_refuses_a_z_score_its_ratio_does_not_give(
+    synthetic: Path, monkeypatch: pytest.MonkeyPatch, mg1655: EcoliK12MG1655Genome
+) -> None:
+    monkeypatch.setattr(m, "MIN_RESOLVED_FRACTION", 0.8)
+    rows = _ratio_rows()
+    rows[3][5] = 9.0
+    _write_sheet(
+        synthetic / "raw" / m.DATASET_S2, m.SHEETS[m.DATASET_S2], RATIO_COLUMNS, rows
+    )
+    with pytest.raises(m.RatioZScoreError):
+        m.EnvChemgenGirgis2009Dataset(root=str(synthetic), ecoli_genome=mg1655)
+
+
 def test_the_dataset_is_registered_under_its_class_name() -> None:
     assert dataset_registry["EnvChemgenGirgis2009Dataset"] is (
         m.EnvChemgenGirgis2009Dataset
@@ -1097,6 +1407,7 @@ def test_the_dataset_declares_its_schema_classes() -> None:
     assert dataset.reference_class is (EnvironmentResponseExperimentReference)
     assert dataset.raw_file_names == [
         m.DATASET_S1,
+        m.DATASET_S2,
         m.DATASET_S3,
         m.DATASET_S4,
         m.DATASET_S5,
@@ -1112,7 +1423,7 @@ def test_the_dataset_declares_its_schema_classes() -> None:
 # The raw mirror
 # --------------------------------------------------------------------------- #
 def test_every_raw_file_records_a_re_runnable_pmc_retrieval() -> None:
-    assert len(m.RAW_FILES) == 4
+    assert len(m.RAW_FILES) == 5
     for raw in m.RAW_FILES:
         assert raw.retrieval.method is RetrievalMethod.pmc_cloud
         assert raw.retrieval.retriever == (
@@ -1296,6 +1607,68 @@ def test_hand_checked_cells_of_the_released_sheet() -> None:
     assert m._cell(row.at["b0002", "gen"]) == 0.0
 
 
+@pytest.fixture(scope="module")
+def real_frames() -> dict[str, pd.DataFrame]:
+    """The five released sheets of the real raw mirror, read once per module."""
+    root = _mirror()
+    return {
+        name: m.read_sheet(root / f"data/{name}", spec)
+        for name, spec in m.SHEETS.items()
+    }
+
+
+@pytest.mark.data
+def test_the_release_holds_one_record_per_usable_selection(
+    real_frames: dict[str, pd.DataFrame],
+) -> None:
+    """Counts of the per-selection records, measured on the pinned Datasets S3 and S4."""
+    ids = m.check_sheets_align(real_frames)
+    kept = dict.fromkeys(ids, "name")
+    log = m.build_selection_log("girgis", real_frames, ids, kept)
+    assert log.kept_records == m.EXPECTED_SELECTION_RECORDS == 299172
+    assert log.by_reference_set == {
+        "unselected_library": 149586,
+        "no_antibiotic": 149586,
+    }
+    assert log.by_repetition == {1: 134042, 2: 133434, 3: 31696}
+    assert len(log.selections) == 2 * 38
+    paired = [s for s in log.selections if "+" in s.replicate_id]
+    assert sorted({s.replicate_id for s in paired}) == [
+        "FOX_R2+FOX_R3",
+        "PIP_R2+PIP_R3",
+        "TET_R2+TET_R3",
+        "TRM_R2+TRM_R3",
+    ]
+    assert sum(s.n_partial_arrays for s in paired) == 2 * 408
+    assert sum(s.kept_records for s in paired) == 2 * (15492 + 408)
+    cells = [
+        c
+        for c in m.selection_cells(real_frames, ids, kept)
+        if c.b_number == "b0002" and c.drug == "amk"
+    ]
+    assert [(c.reference_set, c.replicate_id) for c in cells] == [
+        ("unselected_library", "AMK_R1"),
+        ("unselected_library", "AMK_R2"),
+        ("no_antibiotic", "AMK_R1"),
+        ("no_antibiotic", "AMK_R2"),
+    ]
+    assert cells[0].selection.value == pytest.approx(0.133900746736017, abs=1e-12)
+    assert cells[3].selection.value == pytest.approx(1.30649054728277, abs=1e-12)
+
+
+@pytest.mark.data
+def test_every_released_z_score_follows_from_its_dataset_s2_ratio(
+    real_frames: dict[str, pd.DataFrame],
+) -> None:
+    for name in (m.DATASET_S3, m.DATASET_S4):
+        checks = m.check_z_from_ratios(
+            real_frames[m.DATASET_S2], real_frames[name], name
+        )
+        assert len(checks) == 42
+        assert sum(check.n_numeric for check in checks) == 165078
+        assert max(check.max_abs_error for check in checks) < 1e-6
+
+
 @pytest.mark.data
 def test_the_built_store_holds_the_measured_record_count_and_sign_split() -> None:
     log = json.loads(
@@ -1305,7 +1678,7 @@ def test_the_built_store_holds_the_measured_record_count_and_sign_split() -> Non
     # every released b-number since #1057 (3,821 loci and 63,766 records before)
     assert log["kept_loci"] == 3976
     assert log["source_records"] == 67592
-    assert log["kept_records"] == m.EXPECTED_RECORDS == 66287
+    assert log["kept_records"] == m.EXPECTED_COMBINED_RECORDS == 66287
     rules = {rule["rule"]: rule["n_records"] for rule in log["rules"]}
     assert rules == {
         "b_number_is_not_a_locus_tag_of_the_pinned_annotation": 0,

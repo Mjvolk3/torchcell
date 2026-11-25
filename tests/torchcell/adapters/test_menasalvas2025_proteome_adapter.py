@@ -3,10 +3,11 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/adapters/test_menasalvas2025_proteome_adapter.py
 """``torchcell/adapters/menasalvas2025_proteome_adapter.py``: the conf it loads, the gate's view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Menasalvas 2025 deposited proteome: 6 samples (three strains over two growth phases),
+Menasalvas 2025 deposited proteome: 18 released (Sample, Replicate) units (three
+strains over two growth phases, three replicates each),
 ProteinAbundanceExperiment. Every genotype carries the integrated pathway and
 biosensor leaves and, for the two improved strains, the seven deletions, served as
-`perturbation`; the two TEAM-2595 records additionally carry the 75 called
+`perturbation`; the six TEAM-2595 records additionally carry the 75 called
 variants of data S1-5, served as `sequence variant perturbation`, so the
 variant pair is enabled. The Environment carries a SmallMoleculePerturbation (crystal
 violet) and an EnvironmentPhysicalPerturbation (pH), so the environment-perturbation

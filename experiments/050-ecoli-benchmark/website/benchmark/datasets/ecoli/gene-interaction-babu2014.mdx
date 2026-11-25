@@ -173,7 +173,7 @@ headline metric: pearson (mean over targets)
 
 A frozen representation of each deleted gene with a ridge regression on top, for every split of this task. The representations and the fitting procedure are described in the [overview](./index.mdx#linear-probe-baselines).
 
-<img src={require("./linear_probes_gene-interaction-babu2014.png").default} alt="Linear-probe test Pearson for Genetic interactions (Babu 2014)" style={{width: "100%"}} />
+<img src={require("./linear_probes_gene-interaction-babu2014.png").default} alt="Linear-probe test Pearson for Genetic interactions (Babu 2014)" style={{display: "block", width: "100%", maxWidth: "180mm", maxHeight: "170mm", height: "auto", objectFit: "contain"}} />
 
 **Test Pearson correlation of each linear probe on Genetic interactions (Babu 2014).** Each panel is one split family and each bar is one gene representation. A bar is the mean over the seeds of that family (five seeds for random splits and three for every other family) and its whisker is the sample standard deviation over those seeds. The correlation is computed on the test part at the ridge penalty chosen on validation. Random features carry no biology and mark the level a representation must exceed. Dark bars concatenate the representations of the two genes and light bars add them. Panels to the right of Random hold out genes that are increasingly unlike the training genes or far from them on the chromosome.
 

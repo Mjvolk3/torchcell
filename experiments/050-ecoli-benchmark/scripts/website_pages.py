@@ -9,7 +9,8 @@ Reads every ``results/probes/<task>.<feature>.csv`` (``linear_probes.py``),
 
 - ``results/linear_probes.csv``: every probe run in one table.
 - ``experiments/050-ecoli-benchmark/website/benchmark/datasets/ecoli/``: the overview
-  page ``index.mdx``, one page per task, and one figure per task (PNG and SVG).
+  page ``index.mdx``, one page per task, and one figure per task (PNG and SVG) at Nature Biotechnology print size, which the
+  page shows at most that large (180 mm wide, 170 mm tall) at any window width.
 
 The website branch copies that directory into ``website/docs/benchmark/datasets/ecoli/``.
 ``notebook_page.py`` writes ``processing.mdx`` into the same directory.
@@ -32,13 +33,18 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 from matplotlib.colors import to_rgb  # noqa: E402
 from matplotlib.patches import Patch  # noqa: E402
+from matplotlib.ticker import MaxNLocator  # noqa: E402
 
 from torchcell.tasks.ecoli import ECOLI_TASKS  # noqa: E402
-from torchcell.utils import PLOT_PALETTE  # noqa: E402
+from torchcell.utils import (  # noqa: E402
+    MAX_HEIGHT_MM,
+    PANEL_WIDTHS_MM,
+    PLOT_PALETTE,
+    mm_to_in,
+)
 
 RESULTS = "experiments/050-ecoli-benchmark/results"
 OUT = Path("experiments/050-ecoli-benchmark/website/benchmark/datasets/ecoli")
@@ -225,31 +231,40 @@ def result_table(
 
 
 def figure(task: str, runs: pd.DataFrame, features: list[str]) -> str:
-    """One panel per split family, one horizontal bar (or two) per representation."""
+    """One panel per split family, one horizontal bar (or two) per representation.
+
+    Drawn at Nature Biotechnology print size: the full page width (179 mm), at most
+    170 mm tall, 7 pt labels and 6 pt tick labels. The page shows it no larger than that.
+    """
     families = list(runs["family"].drop_duplicates())
     combines = list(runs["combine"].drop_duplicates())
     plt.rcParams.update(
         {
             "font.family": "Arial",
-            "font.size": 11,
-            "axes.labelsize": 11,
-            "axes.titlesize": 11,
-            "xtick.labelsize": 10,
-            "ytick.labelsize": 11,
-            "legend.fontsize": 11,
+            "font.size": 7,
+            "axes.labelsize": 7,
+            "axes.titlesize": 7,
+            "xtick.labelsize": 6,
+            "ytick.labelsize": 7,
+            "legend.fontsize": 7,
             "svg.fonttype": "none",
         }
     )
-    height = 0.42 * len(features) * (1.35 if len(combines) > 1 else 1.0) + 1.5
-    fig, axes = plt.subplots(
-        1,
-        len(families),
-        figsize=(2.6 * len(families) + 1.9, height),
+    ncols = min(len(families), 4) if len(families) <= 4 else 3
+    nrows = -(-len(families) // ncols)
+    row_mm = 4.2 * len(features) * (1.5 if len(combines) > 1 else 1.0) + 17
+    height_mm = min(nrows * row_mm, MAX_HEIGHT_MM)
+    fig, grid = plt.subplots(
+        nrows,
+        ncols,
+        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(height_mm)),
         sharey=True,
         sharex=True,
+        squeeze=False,
     )
+    axes = list(grid.ravel())
     span = 0.8 / len(combines)
-    for axis, family in zip(np.atleast_1d(axes), families):
+    for axis, family in zip(axes, families):
         part = runs[runs["family"] == family]
         for i, feature in enumerate(features):
             for j, combine in enumerate(combines):
@@ -269,46 +284,51 @@ def figure(task: str, runs: pd.DataFrame, features: list[str]) -> str:
                     xerr=std,
                     color=color if j == 0 else lighter(color),
                     edgecolor="black",
-                    linewidth=0.6,
-                    error_kw={"elinewidth": 0.9, "capsize": 2, "capthick": 0.9},
+                    linewidth=0.4,
+                    error_kw={"elinewidth": 0.5, "capsize": 1.2, "capthick": 0.5},
                 )
-        axis.axvline(0, color="black", linewidth=0.8)
-        axis.set_title(
-            FAMILIES[family].replace("Gene holdout, ", "Gene holdout,\n"), pad=6
-        )
-        axis.set_xlabel("Test Pearson r")
-        axis.xaxis.grid(True, linewidth=0.5, color="#cccccc")
+        axis.axvline(0, color="black", linewidth=0.5)
+        axis.set_title(FAMILIES[family], pad=3)
+        axis.xaxis.set_major_locator(MaxNLocator(nbins=5))
+        axis.xaxis.grid(True, linewidth=0.3, color="#cccccc")
         axis.set_axisbelow(True)
+        axis.tick_params(width=0.5, length=2, labelbottom=True)
         for spine in axis.spines.values():
             spine.set_visible(True)
-            spine.set_linewidth(0.8)
+            spine.set_linewidth(0.5)
             spine.set_color("black")
-    first = np.atleast_1d(axes)[0]
-    first.set_yticks(range(len(features)))
-    first.set_yticklabels([REPRESENTATIONS[f][0] for f in features])
-    first.invert_yaxis()
+    for axis in axes[len(families) :]:
+        axis.axis("off")
+    for row in range(nrows):
+        left = grid[row, 0]
+        left.set_yticks(range(len(features)))
+        left.set_yticklabels([REPRESENTATIONS[f][0] for f in features])
+    grid[0, 0].invert_yaxis()
+    for axis in axes[: len(families)]:
+        axis.set_xlabel("Test Pearson r")
     if len(combines) > 1:
-        fig.legend(
-            handles=[
-                Patch(
-                    facecolor="#666666",
-                    edgecolor="black",
-                    label="Two genes concatenated",
-                ),
-                Patch(
-                    facecolor=lighter("#666666"),
-                    edgecolor="black",
-                    label="Two genes summed",
-                ),
-            ],
-            loc="upper center",
-            ncol=2,
-            frameon=False,
-            bbox_to_anchor=(0.5, 1.0),
-        )
-    fig.tight_layout(rect=(0, 0, 1, 0.93 if len(combines) > 1 else 1.0))
+        handles = [
+            Patch(
+                facecolor="#666666",
+                edgecolor="black",
+                linewidth=0.4,
+                label="Two genes concatenated",
+            ),
+            Patch(
+                facecolor=lighter("#666666"),
+                edgecolor="black",
+                linewidth=0.4,
+                label="Two genes summed",
+            ),
+        ]
+        spare = axes[len(families) :]
+        if spare:
+            spare[0].legend(handles=handles, loc="center", frameon=False)
+        else:
+            fig.legend(handles=handles, loc="upper center", ncol=2, frameon=False)
+    fig.tight_layout(pad=0.6, w_pad=1.0, h_pad=1.2)
     name = f"linear_probes_{PAGES[task][0]}"
-    fig.savefig(OUT / f"{name}.png", dpi=200)
+    fig.savefig(OUT / f"{name}.png", dpi=300)
     fig.savefig(OUT / f"{name}.svg")
     plt.close(fig)
     return f"{name}.png"
@@ -444,7 +464,7 @@ def task_page(
         + "Panels to the right of Random hold out genes that are increasingly unlike the training genes or far from them on the chromosome."
     )
     page += [
-        f'<img src={{require("./{image}").default}} alt="Linear-probe test Pearson for {label}" style={{{{width: "100%"}}}} />',
+        f'<img src={{require("./{image}").default}} alt="Linear-probe test Pearson for {label}" style={{{{display: "block", width: "100%", maxWidth: "180mm", maxHeight: "170mm", height: "auto", objectFit: "contain"}}}} />',
         "",
         caption,
         "",

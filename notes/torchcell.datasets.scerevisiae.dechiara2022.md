@@ -228,3 +228,49 @@ Reviewed against the owner rule of 2026.10.12 (store what the authors released; 
 - NA cells (7,178 / 7,187 / 3,163) are the release's own blanks.
 
 No loader code changes in `fix/genome-gate-reversals-yeast-3`; the stores are not rebuilt.
+
+## 2026.11.24 - Per-replicate review (#1178, part of #1176): no record changes, three schema decisions block the validation replicates
+
+Reviewed under the per-replicate policy of #1178 (one stored record per biological replicate, technical measurements combined inside a record, never average or drop a released replicate). Numbers below are measured by [[experiments.036-dataset-fixes-before-kg-build.scripts.dechiara2022_per_replicate]] (`results/dechiara2022_per_replicate.json`), which reads the sha256-pinned literature mirror and Peter 2018 Table S1 and writes no store.
+
+### The three served stores stay as they are
+
+- Growth (`DoublingTimeDeChiara2022Dataset` 36,295, `CellYieldDeChiara2022Dataset` 36,286): the released value is the authors' own median, "Automatic growth curve were conducted in 4 replicates, median values were taken for each isolates." (`si/si2.pdftotext.txt`, Reporting Summary 'Replication', sha256 `ce323f8d2b0c2e59f4fef4551794599b350eb372ef247652aea814fef5075757`). No per-curve file is in MOESM4-20, so the source statistic stays (policy 4).
+- Life cycle (`LifeCycleDeChiara2022Dataset` 4,039): CLS "Experiments were run in a single replicate" (`paper.md`, Methods 'Viability in all environments', sha256 `ca68d65691eaff4d6c1b6bf474a4ecef57a5bc41467b51ac993d816cfa033ea1`), stored as n = 1, which is right; `LifeCyclePhenotype` has no uncertainty field, so there is nothing to gap with `not_applicable_single_measurement`. The KAc and water sporulation replicate count is unstated and keeps its `not_reported_by_primary` gaps.
+- Every Source Data workbook `si6`-`si20` was re-scanned: the collection-wide sheets are per-isolate or per-clade restatements of Supplementary Table 3, GWAS matrices, or cytometry events (`si8` c, instrument-level, out of scope).
+
+### The unread per-replicate data: engineered validation strains
+
+| sheet (mirror `si/`) | figure | rows | numeric | `na` | strains | design |
+|---|---|---|---|---|---|---|
+| `si14.xlsx` d | Extended Data Fig. 3d | 114 | 110 | 4 | 13 | KAc sporulation time courses (9-336 h), `replicat` 1-3 per strain and time |
+| `si9.xlsx` e | Fig. 4e | 33 | 33 | 0 | 11 | value-for-value subset of `si14` d (33 of 33 rows found, 33 equal) |
+| `si11.xlsx` d | Fig. 6f | 420 | 413 | 7 | 10 | CLS in SDC and CR, days 0-35, VAR560 deletion vs wild type, `replicat` 1-3 |
+| `si11.xlsx` f | Fig. 6d | 252 | 252 | 0 | 6 | CLS in SDC and CR, days 0-35, WHI2 rescue vs wild type, `replicat` 1-3 |
+
+Distinct released values: 110 + 413 + 252 = 775 over 786 rows (11 `na` cells). This corrects #1007's "757 rows", which counted the 18-row `si9` e block in place of the 54-row left block of `si14` d.
+
+What a replicate is:
+
+- Sporulation validation: "For each mutant, two independent biological replicates run in technical triplicates were considered." (`paper.md`, Methods 'Validation of IME1 H78R and C-181T mutations'). Supplementary Table 11 names the two biological replicates as two strains per edit (C-181T in YPS128: YGL4056, YGL4059; T-181C in YJS5833: YGL4074, YGL4075; H78R in BY4743: YGL4076, YGL4077), so a strain is the biological replicate and `replicat` 1-3 is the technical triplicate. R78H in DBVPG6765 (YGL3971) and H78R in YPS128 (YGL3970) are one strain each. The authors combined both levels by the mean: the Extended Data Fig. 3d caption percentages are the mean over every numeric `replicat` of both strains, 7 of 8 within rounding (86 / 4, 98 / 58, 1.7 / 22.5, 35 / 59, 37 / 2, 43 / 4, 3.5 / 7.7); BY4743 H78R at 72 h pools to 2.91 against the caption's 2.
+- The readout is not the collection's: "sporulation efficiency was monitored using DAPI staining" and "Each cell displaying at least two distinct nuclei was counted as sporulating." (same paragraph), not an ascus count.
+- CLS validation: no statement says whether `replicat` 1-3 are independent cultures or repeat stains of one culture. The collection paragraph's "Isogenic cultures were independently grown overnight in liquid SDC" describes the 1,011 panel, and its replicate sentence says single replicate, so it does not settle the validation design.
+
+### Why nothing was converted (owner decisions)
+
+1. `LifeCyclePhenotype` has no `replicate_id` (PR #1181 added it to other phenotype classes, not this one). Without it, the three CLS replicates of one strain, environment and time course share the L1 uniqueness key and the phenotype node id. Proposed shape: `replicate_id: str | None = None` on `LifeCyclePhenotype`, same description and key semantics as the other classes; additive, no served record changes.
+2. `LifeCycleAssay` has no DAPI-nuclei member, and storing the validation under `microscopy_ascus_count` would put a different physical measurement under the ascus-count leaf. Proposed shape: `LifeCycleAssay.fluorescence_microscopy_dapi_nuclei` producing `sporulation_efficiency` (the source's own name for the value), plus how many cells per sample ("Approximately 100 cells per sample").
+3. The genotype of an engineered strain on a natural-isolate background (#1007, with #1002): an IME1 promoter or codon edit on an isolate whose IME1 allele already differs from S288C, `var560::KanMX` on a non-reference pangenome ORF, a WHI2 allele swap to the BY4743 ORF, the `ho::HygMX; ura3::KanMX` marker deletions of YGL3969-YGL3975, and the BY4743 marker set for YGL598 / YGL4076 / YGL4077. Proposed shape: the isolate's `NaturalIsolateGenotypes` set with each designed edit as its own perturbation that supersedes the isolate's perturbation at that gene, so the realized allele is stated (#1007 holds the detail).
+4. If technical triplicates are combined inside a record (policy 2), `LifeCyclePhenotype.n_samples` is per record while the technical n is per time point (4 sporulation time points carry 2 values, not 3). That needs either a per-key n or a decision to store each `replicat` as its own record with `sample_unit=technical_replicate`.
+
+Even the wild-type controls (natural isolates whose genotype is statable today) wait on item 1 (CLS) or item 2 (sporulation).
+
+### Strain identity disagreements the genotype work must settle
+
+Measured against Peter 2018 Table S1 (`peterGenomeEvolution10112018/si/si3.xls`):
+
+- Supplementary Table 11 says BIF is DBVPG1074; Peter says DBVPG1074 is BIE and BIF is DBVPG1076. The Source Data label is `DBVPG1074_BIF`.
+- Supplementary Table 11 and the main text say YJS4945 is SACE_YBZ (Peter: YJM1338); the Source Data label is `YJS4945_SACE_YBS` (Peter: YJM1273).
+- DBVPG6765, YJS4945, YJS4948, YJS5833 and ZP611 are not Peter isolate names (ZP611 is `ZP_611`, BTI; YJS5833 is labeled CIA, Peter's SRC 147). YPS128 is AKN.
+
+No loader, verifier, test or projection change; the stores are not rebuilt.

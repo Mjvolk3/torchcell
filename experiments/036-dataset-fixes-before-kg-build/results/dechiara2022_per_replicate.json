@@ -1,0 +1,1471 @@
+{
+  "citation_key": "dechiaraDomesticationReprogrammedBudding2022",
+  "pins": {
+    "paper.md": "ca68d65691eaff4d6c1b6bf474a4ecef57a5bc41467b51ac993d816cfa033ea1",
+    "si/si2.pdftotext.txt": "ce323f8d2b0c2e59f4fef4551794599b350eb372ef247652aea814fef5075757",
+    "si/si4.xlsx": "b2eb2e28cdd2c3037ce14bb1eb8f58ee84609157dd592b3904595b24daf8c99e",
+    "si/si9.xlsx": "438d13504d07f0a2b2e026143efca599f357e61b3c1b46f83dd7b4e90f19278d",
+    "si/si11.xlsx": "59b309c2fbefe0508897d1997f1e4270deb4353e4138c701df1bc4571da1232e",
+    "si/si14.xlsx": "9ce3991473b16543a59f35491b3bdd234b1ef97f86aacbbdf2e4716e4e2744f4"
+  },
+  "peter_table_s1": {
+    "file": "peterGenomeEvolution10112018/si/si3.xls",
+    "sha256": "b11de13b50bcf91bb2a40cdbd0f2f35372bdef6fc9a018d7538cf5e5eea7f273"
+  },
+  "replicate_design_quotes": [
+    {
+      "file": "paper.md",
+      "sha256": "ca68d65691eaff4d6c1b6bf474a4ecef57a5bc41467b51ac993d816cfa033ea1",
+      "where": "Methods, 'Validation of IME1 H78R and C-181T mutations'",
+      "quote": "For each mutant, two independent biological replicates run in technical triplicates were considered."
+    },
+    {
+      "file": "paper.md",
+      "sha256": "ca68d65691eaff4d6c1b6bf474a4ecef57a5bc41467b51ac993d816cfa033ea1",
+      "where": "Methods, 'Validation of IME1 H78R and C-181T mutations'",
+      "quote": "sporulation efficiency was monitored using DAPI staining"
+    },
+    {
+      "file": "paper.md",
+      "sha256": "ca68d65691eaff4d6c1b6bf474a4ecef57a5bc41467b51ac993d816cfa033ea1",
+      "where": "Methods, 'Validation of IME1 H78R and C-181T mutations'",
+      "quote": "Each cell displaying at least two distinct nuclei was counted as sporulating."
+    },
+    {
+      "file": "paper.md",
+      "sha256": "ca68d65691eaff4d6c1b6bf474a4ecef57a5bc41467b51ac993d816cfa033ea1",
+      "where": "Methods, 'Chronological life span assay'",
+      "quote": "Isogenic cultures were independently grown overnight in liquid SDC"
+    },
+    {
+      "file": "paper.md",
+      "sha256": "ca68d65691eaff4d6c1b6bf474a4ecef57a5bc41467b51ac993d816cfa033ea1",
+      "where": "Methods, 'Viability in all environments'",
+      "quote": "Experiments were run in a single replicate and data were normalized to four internal controls distributed in each plate."
+    },
+    {
+      "file": "si/si2.pdftotext.txt",
+      "sha256": "ce323f8d2b0c2e59f4fef4551794599b350eb372ef247652aea814fef5075757",
+      "where": "Reporting Summary, 'Replication'",
+      "quote": "Automatic growth curve were conducted in 4 replicates, median values were taken for each isolates."
+    }
+  ],
+  "si9_e_is_subset_of_si14_d": {
+    "rows": 33,
+    "found": 33,
+    "same_value": 33
+  },
+  "sheets": {
+    "si14.xlsx d (Extended Data Fig. 3d)": {
+      "rows": 114,
+      "numeric_values": 110,
+      "na_cells": 4,
+      "strains": 13,
+      "per_strain": {
+        "OS1517": {
+          "background": [
+            "YJS5833_CIA"
+          ],
+          "genotype": [
+            "wt"
+          ],
+          "time_points": [
+            24.0,
+            72.0,
+            168.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 9,
+          "na_cells": 0
+        },
+        "OS983": {
+          "background": [
+            "YPS128"
+          ],
+          "genotype": [
+            "wt"
+          ],
+          "time_points": [
+            9.0,
+            24.0,
+            72.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 9,
+          "na_cells": 0
+        },
+        "YGL3969": {
+          "background": [
+            "YPS128"
+          ],
+          "genotype": [
+            "wt"
+          ],
+          "time_points": [
+            9.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 3,
+          "na_cells": 0
+        },
+        "YGL3970": {
+          "background": [
+            "YPS128"
+          ],
+          "genotype": [
+            "H78R"
+          ],
+          "time_points": [
+            9.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 3,
+          "na_cells": 0
+        },
+        "YGL3971": {
+          "background": [
+            "DBVPG6765"
+          ],
+          "genotype": [
+            "R78H"
+          ],
+          "time_points": [
+            24.0,
+            72.0,
+            168.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 9,
+          "na_cells": 0
+        },
+        "YGL3975": {
+          "background": [
+            "DBVPG6765"
+          ],
+          "genotype": [
+            "wt"
+          ],
+          "time_points": [
+            24.0,
+            72.0,
+            168.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 9,
+          "na_cells": 1
+        },
+        "YGL4056": {
+          "background": [
+            "YPS128"
+          ],
+          "genotype": [
+            "C-181T"
+          ],
+          "time_points": [
+            9.0,
+            24.0,
+            72.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 9,
+          "na_cells": 0
+        },
+        "YGL4059": {
+          "background": [
+            "YPS128"
+          ],
+          "genotype": [
+            "C-181T"
+          ],
+          "time_points": [
+            9.0,
+            24.0,
+            72.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 9,
+          "na_cells": 0
+        },
+        "YGL4074": {
+          "background": [
+            "YJS5833_CIA"
+          ],
+          "genotype": [
+            "T-181C"
+          ],
+          "time_points": [
+            24.0,
+            72.0,
+            168.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 9,
+          "na_cells": 0
+        },
+        "YGL4075": {
+          "background": [
+            "YJS5833_CIA"
+          ],
+          "genotype": [
+            "T-181C"
+          ],
+          "time_points": [
+            24.0,
+            72.0,
+            168.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 9,
+          "na_cells": 0
+        },
+        "YGL4076": {
+          "background": [
+            "BY4743"
+          ],
+          "genotype": [
+            "H78R"
+          ],
+          "time_points": [
+            24.0,
+            72.0,
+            240.0,
+            336.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 12,
+          "na_cells": 1
+        },
+        "YGL4077": {
+          "background": [
+            "BY4743"
+          ],
+          "genotype": [
+            "H78R"
+          ],
+          "time_points": [
+            24.0,
+            72.0,
+            240.0,
+            336.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 12,
+          "na_cells": 1
+        },
+        "YGL598": {
+          "background": [
+            "BY4743"
+          ],
+          "genotype": [
+            "wt"
+          ],
+          "time_points": [
+            24.0,
+            72.0,
+            240.0,
+            336.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 12,
+          "na_cells": 1
+        }
+      }
+    },
+    "si9.xlsx e (Fig. 4e)": {
+      "rows": 33,
+      "numeric_values": 33,
+      "na_cells": 0,
+      "strains": 11,
+      "per_strain": {
+        "OS1517": {
+          "background": [
+            "YJS5833_CIA"
+          ],
+          "genotype": [
+            "wt"
+          ],
+          "time_points": [
+            24.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 3,
+          "na_cells": 0
+        },
+        "OS983": {
+          "background": [
+            "YPS128"
+          ],
+          "genotype": [
+            "wt"
+          ],
+          "time_points": [
+            24.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 3,
+          "na_cells": 0
+        },
+        "YGL3971": {
+          "background": [
+            "DBVPG6765"
+          ],
+          "genotype": [
+            "R78H"
+          ],
+          "time_points": [
+            72.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 3,
+          "na_cells": 0
+        },
+        "YGL3975": {
+          "background": [
+            "DBVPG6765"
+          ],
+          "genotype": [
+            "wt"
+          ],
+          "time_points": [
+            72.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 3,
+          "na_cells": 0
+        },
+        "YGL4056": {
+          "background": [
+            "YPS128"
+          ],
+          "genotype": [
+            "C-181T"
+          ],
+          "time_points": [
+            24.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 3,
+          "na_cells": 0
+        },
+        "YGL4059": {
+          "background": [
+            "YPS128"
+          ],
+          "genotype": [
+            "C-181T"
+          ],
+          "time_points": [
+            24.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 3,
+          "na_cells": 0
+        },
+        "YGL4074": {
+          "background": [
+            "YJS5833_CIA"
+          ],
+          "genotype": [
+            "T-181C"
+          ],
+          "time_points": [
+            24.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 3,
+          "na_cells": 0
+        },
+        "YGL4075": {
+          "background": [
+            "YJS5833_CIA"
+          ],
+          "genotype": [
+            "T-181C"
+          ],
+          "time_points": [
+            24.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 3,
+          "na_cells": 0
+        },
+        "YGL4076": {
+          "background": [
+            "BY4743"
+          ],
+          "genotype": [
+            "H78R"
+          ],
+          "time_points": [
+            72.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 3,
+          "na_cells": 0
+        },
+        "YGL4077": {
+          "background": [
+            "BY4743"
+          ],
+          "genotype": [
+            "H78R"
+          ],
+          "time_points": [
+            72.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 3,
+          "na_cells": 0
+        },
+        "YGL598": {
+          "background": [
+            "BY4743"
+          ],
+          "genotype": [
+            "wt"
+          ],
+          "time_points": [
+            72.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 3,
+          "na_cells": 0
+        }
+      }
+    },
+    "si11.xlsx d (Fig. 6f, VAR560 deletion)": {
+      "rows": 420,
+      "numeric_values": 413,
+      "na_cells": 7,
+      "strains": 10,
+      "per_strain": {
+        "OS1212": {
+          "background": [
+            "DBVPG1608_BLD"
+          ],
+          "genotype": [
+            "wt"
+          ],
+          "time_points": [
+            0.0,
+            4.0,
+            9.0,
+            14.0,
+            21.0,
+            28.0,
+            35.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 42,
+          "na_cells": 0
+        },
+        "OS1213": {
+          "background": [
+            "DBVPG1611_BLE"
+          ],
+          "genotype": [
+            "wt"
+          ],
+          "time_points": [
+            0.0,
+            4.0,
+            9.0,
+            14.0,
+            21.0,
+            28.0,
+            35.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 42,
+          "na_cells": 1
+        },
+        "OS1713": {
+          "background": [
+            "YJS4945_SACE_YBS"
+          ],
+          "genotype": [
+            "wt"
+          ],
+          "time_points": [
+            0.0,
+            4.0,
+            9.0,
+            14.0,
+            21.0,
+            28.0,
+            35.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 42,
+          "na_cells": 0
+        },
+        "OS384": {
+          "background": [
+            "ZP611_BTI"
+          ],
+          "genotype": [
+            "wt"
+          ],
+          "time_points": [
+            0.0,
+            4.0,
+            9.0,
+            14.0,
+            21.0,
+            28.0,
+            35.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 42,
+          "na_cells": 0
+        },
+        "OS663": {
+          "background": [
+            "PB197_BBA"
+          ],
+          "genotype": [
+            "wt"
+          ],
+          "time_points": [
+            0.0,
+            4.0,
+            9.0,
+            14.0,
+            21.0,
+            28.0,
+            35.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 42,
+          "na_cells": 0
+        },
+        "YGL3998": {
+          "background": [
+            "ZP611_BTI"
+          ],
+          "genotype": [
+            "var560_KO"
+          ],
+          "time_points": [
+            0.0,
+            4.0,
+            9.0,
+            14.0,
+            21.0,
+            28.0,
+            35.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 42,
+          "na_cells": 0
+        },
+        "YGL3999": {
+          "background": [
+            "PB197_BBA"
+          ],
+          "genotype": [
+            "var560_KO"
+          ],
+          "time_points": [
+            0.0,
+            4.0,
+            9.0,
+            14.0,
+            21.0,
+            28.0,
+            35.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 42,
+          "na_cells": 2
+        },
+        "YGL4000": {
+          "background": [
+            "DBVPG1608_BLD"
+          ],
+          "genotype": [
+            "var560_KO"
+          ],
+          "time_points": [
+            0.0,
+            4.0,
+            9.0,
+            14.0,
+            21.0,
+            28.0,
+            35.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 42,
+          "na_cells": 0
+        },
+        "YGL4001": {
+          "background": [
+            "DBVPG1611_BLE"
+          ],
+          "genotype": [
+            "var560_KO"
+          ],
+          "time_points": [
+            0.0,
+            4.0,
+            9.0,
+            14.0,
+            21.0,
+            28.0,
+            35.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 42,
+          "na_cells": 0
+        },
+        "YGL4002": {
+          "background": [
+            "YJS4945_SACE_YBS"
+          ],
+          "genotype": [
+            "var560_KO"
+          ],
+          "time_points": [
+            0.0,
+            4.0,
+            9.0,
+            14.0,
+            21.0,
+            28.0,
+            35.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 42,
+          "na_cells": 4
+        }
+      }
+    },
+    "si11.xlsx f (Fig. 6d, WHI2 rescue)": {
+      "rows": 252,
+      "numeric_values": 252,
+      "na_cells": 0,
+      "strains": 6,
+      "per_strain": {
+        "OS1162": {
+          "background": [
+            "CLIB1083_BHT"
+          ],
+          "genotype": [
+            "wt"
+          ],
+          "time_points": [
+            0.0,
+            4.0,
+            9.0,
+            14.0,
+            21.0,
+            28.0,
+            35.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 42,
+          "na_cells": 0
+        },
+        "OS1170": {
+          "background": [
+            "DBVPG1074_BIF"
+          ],
+          "genotype": [
+            "wt"
+          ],
+          "time_points": [
+            0.0,
+            4.0,
+            9.0,
+            14.0,
+            21.0,
+            28.0,
+            35.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 42,
+          "na_cells": 0
+        },
+        "OS1716": {
+          "background": [
+            "YJS4948_SACE_YCC"
+          ],
+          "genotype": [
+            "wt"
+          ],
+          "time_points": [
+            0.0,
+            4.0,
+            9.0,
+            14.0,
+            21.0,
+            28.0,
+            35.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 42,
+          "na_cells": 0
+        },
+        "YGL4040": {
+          "background": [
+            "CLIB1083_BHT"
+          ],
+          "genotype": [
+            "WHI2_rescued"
+          ],
+          "time_points": [
+            0.0,
+            4.0,
+            9.0,
+            14.0,
+            21.0,
+            28.0,
+            35.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 42,
+          "na_cells": 0
+        },
+        "YGL4041": {
+          "background": [
+            "DBVPG1074_BIF"
+          ],
+          "genotype": [
+            "WHI2_rescued"
+          ],
+          "time_points": [
+            0.0,
+            4.0,
+            9.0,
+            14.0,
+            21.0,
+            28.0,
+            35.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 42,
+          "na_cells": 0
+        },
+        "YGL4042": {
+          "background": [
+            "YJS4948_SACE_YCC"
+          ],
+          "genotype": [
+            "WHI2_rescued"
+          ],
+          "time_points": [
+            0.0,
+            4.0,
+            9.0,
+            14.0,
+            21.0,
+            28.0,
+            35.0
+          ],
+          "replicat_labels": [
+            1,
+            2,
+            3
+          ],
+          "rows": 42,
+          "na_cells": 0
+        }
+      }
+    }
+  },
+  "distinct_replicate_values": {
+    "sporulation_values_si14_d": 110,
+    "cls_values_si11_d": 413,
+    "cls_values_si11_f": 252,
+    "total_numeric": 775,
+    "total_rows": 786
+  },
+  "extended_data_fig_3d_caption": [
+    {
+      "hours": 9.0,
+      "wt": {
+        "strains": [
+          "OS983"
+        ],
+        "background": [
+          "YPS128"
+        ],
+        "genotype": [
+          "wt"
+        ],
+        "n_values": 3,
+        "pooled_mean": 85.94,
+        "per_strain_mean": {
+          "OS983": 85.94
+        },
+        "caption_percent": 86.0
+      },
+      "edit": {
+        "strains": [
+          "YGL4056",
+          "YGL4059"
+        ],
+        "background": [
+          "YPS128"
+        ],
+        "genotype": [
+          "C-181T"
+        ],
+        "n_values": 6,
+        "pooled_mean": 3.588,
+        "per_strain_mean": {
+          "YGL4056": 6.293,
+          "YGL4059": 0.883
+        },
+        "caption_percent": 4.0
+      }
+    },
+    {
+      "hours": 24.0,
+      "wt": {
+        "strains": [
+          "OS983"
+        ],
+        "background": [
+          "YPS128"
+        ],
+        "genotype": [
+          "wt"
+        ],
+        "n_values": 3,
+        "pooled_mean": 97.67,
+        "per_strain_mean": {
+          "OS983": 97.67
+        },
+        "caption_percent": 98.0
+      },
+      "edit": {
+        "strains": [
+          "YGL4056",
+          "YGL4059"
+        ],
+        "background": [
+          "YPS128"
+        ],
+        "genotype": [
+          "C-181T"
+        ],
+        "n_values": 6,
+        "pooled_mean": 57.607,
+        "per_strain_mean": {
+          "YGL4056": 53.797,
+          "YGL4059": 61.417
+        },
+        "caption_percent": 58.0
+      }
+    },
+    {
+      "hours": 24.0,
+      "wt": {
+        "strains": [
+          "OS1517"
+        ],
+        "background": [
+          "YJS5833_CIA"
+        ],
+        "genotype": [
+          "wt"
+        ],
+        "n_values": 3,
+        "pooled_mean": 1.7,
+        "per_strain_mean": {
+          "OS1517": 1.7
+        },
+        "caption_percent": 1.7
+      },
+      "edit": {
+        "strains": [
+          "YGL4074",
+          "YGL4075"
+        ],
+        "background": [
+          "YJS5833_CIA"
+        ],
+        "genotype": [
+          "T-181C"
+        ],
+        "n_values": 6,
+        "pooled_mean": 22.477,
+        "per_strain_mean": {
+          "YGL4074": 30.19,
+          "YGL4075": 14.763
+        },
+        "caption_percent": 22.5
+      }
+    },
+    {
+      "hours": 168.0,
+      "wt": {
+        "strains": [
+          "OS1517"
+        ],
+        "background": [
+          "YJS5833_CIA"
+        ],
+        "genotype": [
+          "wt"
+        ],
+        "n_values": 3,
+        "pooled_mean": 34.63,
+        "per_strain_mean": {
+          "OS1517": 34.63
+        },
+        "caption_percent": 35.0
+      },
+      "edit": {
+        "strains": [
+          "YGL4074",
+          "YGL4075"
+        ],
+        "background": [
+          "YJS5833_CIA"
+        ],
+        "genotype": [
+          "T-181C"
+        ],
+        "n_values": 6,
+        "pooled_mean": 59.09,
+        "per_strain_mean": {
+          "YGL4074": 60.347,
+          "YGL4075": 57.833
+        },
+        "caption_percent": 59.0
+      }
+    },
+    {
+      "hours": 72.0,
+      "wt": {
+        "strains": [
+          "YGL3975"
+        ],
+        "background": [
+          "DBVPG6765"
+        ],
+        "genotype": [
+          "wt"
+        ],
+        "n_values": 3,
+        "pooled_mean": 37.193,
+        "per_strain_mean": {
+          "YGL3975": 37.193
+        },
+        "caption_percent": 37.0
+      },
+      "edit": {
+        "strains": [
+          "YGL3971"
+        ],
+        "background": [
+          "DBVPG6765"
+        ],
+        "genotype": [
+          "R78H"
+        ],
+        "n_values": 3,
+        "pooled_mean": 2.153,
+        "per_strain_mean": {
+          "YGL3971": 2.153
+        },
+        "caption_percent": 2.0
+      }
+    },
+    {
+      "hours": 168.0,
+      "wt": {
+        "strains": [
+          "YGL3975"
+        ],
+        "background": [
+          "DBVPG6765"
+        ],
+        "genotype": [
+          "wt"
+        ],
+        "n_values": 2,
+        "pooled_mean": 43.37,
+        "per_strain_mean": {
+          "YGL3975": 43.37
+        },
+        "caption_percent": 43.0
+      },
+      "edit": {
+        "strains": [
+          "YGL3971"
+        ],
+        "background": [
+          "DBVPG6765"
+        ],
+        "genotype": [
+          "R78H"
+        ],
+        "n_values": 3,
+        "pooled_mean": 3.653,
+        "per_strain_mean": {
+          "YGL3971": 3.653
+        },
+        "caption_percent": 4.0
+      }
+    },
+    {
+      "hours": 72.0,
+      "wt": {
+        "strains": [
+          "YGL598"
+        ],
+        "background": [
+          "BY4743"
+        ],
+        "genotype": [
+          "wt"
+        ],
+        "n_values": 3,
+        "pooled_mean": 0.263,
+        "per_strain_mean": {
+          "YGL598": 0.263
+        },
+        "caption_percent": 0.3
+      },
+      "edit": {
+        "strains": [
+          "YGL4076",
+          "YGL4077"
+        ],
+        "background": [
+          "BY4743"
+        ],
+        "genotype": [
+          "H78R"
+        ],
+        "n_values": 6,
+        "pooled_mean": 2.913,
+        "per_strain_mean": {
+          "YGL4076": 4.233,
+          "YGL4077": 1.593
+        },
+        "caption_percent": 2.0
+      }
+    },
+    {
+      "hours": 240.0,
+      "wt": {
+        "strains": [
+          "YGL598"
+        ],
+        "background": [
+          "BY4743"
+        ],
+        "genotype": [
+          "wt"
+        ],
+        "n_values": 2,
+        "pooled_mean": 3.51,
+        "per_strain_mean": {
+          "YGL598": 3.51
+        },
+        "caption_percent": 3.5
+      },
+      "edit": {
+        "strains": [
+          "YGL4076",
+          "YGL4077"
+        ],
+        "background": [
+          "BY4743"
+        ],
+        "genotype": [
+          "H78R"
+        ],
+        "n_values": 4,
+        "pooled_mean": 7.672,
+        "per_strain_mean": {
+          "YGL4076": 5.305,
+          "YGL4077": 10.04
+        },
+        "caption_percent": 7.7
+      }
+    }
+  ],
+  "identity": {
+    "source_strains_in_supplementary_table_11": {
+      "OS1162": null,
+      "OS1170": null,
+      "OS1212": null,
+      "OS1213": null,
+      "OS1517": null,
+      "OS1713": null,
+      "OS1716": null,
+      "OS384": null,
+      "OS663": null,
+      "OS983": {
+        "background": "YPS128 (North_American_Oak)",
+        "ploidy": "Diploid",
+        "genotype": "Mat A/\u03b1",
+        "additional_engineering": null
+      },
+      "YGL3969": {
+        "background": "YPS128 (North_American_Oak)",
+        "ploidy": "Diploid",
+        "genotype": "Mat A/\u03b1; ho::HygMX/ho::HygMX; ura3::KanMX/ura3::KanMX",
+        "additional_engineering": null
+      },
+      "YGL3970": {
+        "background": "YPS128 (North_American_Oak)",
+        "ploidy": "Diploid",
+        "genotype": "Mat A/\u03b1; ho::HygMX/ho::HygMX; ura3::KanMX/ura3::KanMX",
+        "additional_engineering": "IME1_H78R/IME1_H78R"
+      },
+      "YGL3971": {
+        "background": "DBVPG6765 (Wine_European)",
+        "ploidy": "Diploid",
+        "genotype": "Mat A/\u03b1; ho::HygMX/ho::HygMX; ura3::KanMX/ura3::KanMX",
+        "additional_engineering": "IME1_R78H/IME1_R78H"
+      },
+      "YGL3975": {
+        "background": "DBVPG6765 (Wine_European)",
+        "ploidy": "Diploid",
+        "genotype": "Mat A/\u03b1; ho::HygMX/ho::HygMX; ura3::KanMX/ura3::KanMX",
+        "additional_engineering": null
+      },
+      "YGL3998": {
+        "background": "ZP611 (Mosaic_Region3)",
+        "ploidy": "Diploid",
+        "genotype": "Mat A/\u03b1",
+        "additional_engineering": "var560::KanMX/var560::KanMX"
+      },
+      "YGL3999": {
+        "background": "PB197 (Wine_European)",
+        "ploidy": "Diploid",
+        "genotype": "Mat A/\u03b1",
+        "additional_engineering": "var560::KanMX/var560::KanMX"
+      },
+      "YGL4000": {
+        "background": "DBVPG1608 (Wine_European)",
+        "ploidy": "Diploid",
+        "genotype": "Mat A/\u03b1",
+        "additional_engineering": "var560::KanMX/var560::KanMX"
+      },
+      "YGL4001": {
+        "background": "DBVPG1611 (Wine_European)",
+        "ploidy": "Diploid",
+        "genotype": "Mat A/\u03b1",
+        "additional_engineering": "var560::KanMX/var560::KanMX"
+      },
+      "YGL4002": {
+        "background": "YJS4945 (Mosaic_Region3)",
+        "ploidy": "Diploid",
+        "genotype": "Mat A/\u03b1",
+        "additional_engineering": "var560::KanMX/var560::KanMX"
+      },
+      "YGL4040": {
+        "background": "CLIB1083 (Mosaic_Region1)",
+        "ploidy": "Diploid",
+        "genotype": "Mat A/\u03b1",
+        "additional_engineering": "whi2\u0394::WHI2_BY4743/whi2\u0394::WHI2_BY4743"
+      },
+      "YGL4041": {
+        "background": "DBVPG1074 (Wine_European)",
+        "ploidy": "Diploid",
+        "genotype": "Mat A/\u03b1",
+        "additional_engineering": "whi2\u0394::WHI2_BY4743/whi2\u0394::WHI2_BY4743"
+      },
+      "YGL4042": {
+        "background": "YJS4948 (Mosaic_Region2)",
+        "ploidy": "Diploid",
+        "genotype": "Mat A/\u03b1",
+        "additional_engineering": "whi2\u0394::WHI2_BY4743/whi2\u0394::WHI2_BY4743"
+      },
+      "YGL4056": {
+        "background": "YPS128 (North_American_Oak)",
+        "ploidy": "Diploid",
+        "genotype": "Mat A/\u03b1",
+        "additional_engineering": "IME1_C-181T/IME1_C-181T"
+      },
+      "YGL4059": {
+        "background": "YPS128 (North_American_Oak)",
+        "ploidy": "Diploid",
+        "genotype": "Mat A/\u03b1",
+        "additional_engineering": "IME1_C-181T/IME1_C-181T"
+      },
+      "YGL4074": {
+        "background": "YJS5833 (Wine_European)",
+        "ploidy": "Diploid",
+        "genotype": "Mat A/\u03b1",
+        "additional_engineering": "IME1_T-181C/IME1_T-181C"
+      },
+      "YGL4075": {
+        "background": "YJS5833 (Wine_European)",
+        "ploidy": "Diploid",
+        "genotype": "Mat A/\u03b1",
+        "additional_engineering": "IME1_T-181C/IME1_T-181C"
+      },
+      "YGL4076": {
+        "background": "BY4743",
+        "ploidy": "Diploid",
+        "genotype": "MATa/\u03b1; his3\u03941/his3\u03941; leu2\u03940/leu2\u03940; LYS2/lys2\u03940; met15\u03940/MET15; ura3\u03940/ura3\u03940",
+        "additional_engineering": "IME1_H78R/IME1_H78R"
+      },
+      "YGL4077": {
+        "background": "BY4743",
+        "ploidy": "Diploid",
+        "genotype": "MATa/\u03b1; his3\u03941/his3\u03941; leu2\u03940/leu2\u03940; LYS2/lys2\u03940; met15\u03940/MET15; ura3\u03940/ura3\u03940",
+        "additional_engineering": "IME1_H78R/IME1_H78R"
+      },
+      "YGL598": {
+        "background": "BY4743",
+        "ploidy": "Diploid",
+        "genotype": "MATa/\u03b1; his3\u03941/his3\u03941; leu2\u03940/leu2\u03940; LYS2/lys2\u03940; met15\u03940/MET15; ura3\u03940/ura3\u03940",
+        "additional_engineering": null
+      }
+    },
+    "backgrounds_against_peter_table_s1": {
+      "BY4743": {
+        "isolate_part": "BY4743",
+        "standard_part": null,
+        "peter_standard_for_isolate": null,
+        "peter_isolate_for_standard": null
+      },
+      "CLIB1083_BHT": {
+        "isolate_part": "CLIB1083",
+        "standard_part": "BHT",
+        "peter_standard_for_isolate": "BHT",
+        "peter_isolate_for_standard": "CLIB1083"
+      },
+      "DBVPG1074_BIF": {
+        "isolate_part": "DBVPG1074",
+        "standard_part": "BIF",
+        "peter_standard_for_isolate": "BIE",
+        "peter_isolate_for_standard": "DBVPG1076"
+      },
+      "DBVPG1608_BLD": {
+        "isolate_part": "DBVPG1608",
+        "standard_part": "BLD",
+        "peter_standard_for_isolate": "BLD",
+        "peter_isolate_for_standard": "DBVPG1608"
+      },
+      "DBVPG1611_BLE": {
+        "isolate_part": "DBVPG1611",
+        "standard_part": "BLE",
+        "peter_standard_for_isolate": "BLE",
+        "peter_isolate_for_standard": "DBVPG1611"
+      },
+      "DBVPG6765": {
+        "isolate_part": "DBVPG6765",
+        "standard_part": null,
+        "peter_standard_for_isolate": null,
+        "peter_isolate_for_standard": null
+      },
+      "PB197_BBA": {
+        "isolate_part": "PB197",
+        "standard_part": "BBA",
+        "peter_standard_for_isolate": "BBA",
+        "peter_isolate_for_standard": "PB197"
+      },
+      "YJS4945_SACE_YBS": {
+        "isolate_part": "YJS4945",
+        "standard_part": "SACE_YBS",
+        "peter_standard_for_isolate": null,
+        "peter_isolate_for_standard": "YJM1273"
+      },
+      "YJS4948_SACE_YCC": {
+        "isolate_part": "YJS4948",
+        "standard_part": "SACE_YCC",
+        "peter_standard_for_isolate": null,
+        "peter_isolate_for_standard": "YJM1355"
+      },
+      "YJS5833_CIA": {
+        "isolate_part": "YJS5833",
+        "standard_part": "CIA",
+        "peter_standard_for_isolate": null,
+        "peter_isolate_for_standard": "SRC 147"
+      },
+      "YPS128": {
+        "isolate_part": "YPS128",
+        "standard_part": null,
+        "peter_standard_for_isolate": "AKN",
+        "peter_isolate_for_standard": null
+      },
+      "ZP611_BTI": {
+        "isolate_part": "ZP611",
+        "standard_part": "BTI",
+        "peter_standard_for_isolate": null,
+        "peter_isolate_for_standard": "ZP_611"
+      }
+    },
+    "supplementary_table_11_wild_type_rows": {
+      "CLIB1083": "BHT",
+      "DBVPG1074": "BIF",
+      "DBVPG1608": "BLD",
+      "DBVPG1611": "BLE",
+      "YJS5833": "CIA",
+      "YJS4945": "SACE_YBZ",
+      "YJS4948": "SACE_YCC",
+      "PB197": "BBA",
+      "DBVPG6765": "OS980",
+      "YPS128": "OS983",
+      "YPS606": "BC233",
+      "UCD2120": "BC240"
+    }
+  }
+}

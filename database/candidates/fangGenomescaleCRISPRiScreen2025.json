@@ -37,8 +37,8 @@
     },
     {
       "gate": "G5",
-      "outcome": "unmeasured",
-      "reason": "not evaluated on this call",
+      "outcome": "pass",
+      "reason": "ProductTiterPhenotype exists; compounds resolve",
       "evidence": [],
       "issue": null,
       "blocked_kind": null
@@ -1066,8 +1066,13 @@
     "pmid_checked": false
   },
   "g4_value": null,
-  "g5": null,
+  "g5": {
+    "phenotype_class": "ProductTiterPhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": null
+  },
   "derived_from_compendium": null,
   "decided_at": "2026-11-25",
-  "torchcell_commit": "f03c57bf442fdd48b116fe92a4912853e3bbec0b"
+  "torchcell_commit": "037d324b76529159cd3e5002148ef15246dda8be"
 }

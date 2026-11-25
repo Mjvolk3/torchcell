@@ -170,6 +170,11 @@ SPLIT_NOTES = {
 }
 
 
+def board_url(task: str, family: str) -> str:
+    """Site path of the leaderboard with one board of a task selected."""
+    return f"/benchmark/leaderboard/?dataset={task}-{family.replace('_', '-')}-s0"
+
+
 def front_matter(title: str, label: str, description: str) -> list[str]:
     """Docusaurus front matter."""
     return [
@@ -368,6 +373,14 @@ def task_page(
         ],
         left=2,
     )
+    if task not in BOARDLESS:
+        links = ", ".join(
+            f"[{FAMILIES[f].lower()}]({board_url(task, f)})"
+            for f in mine["split"]
+            .str.replace(r"_s\d+$", "", regex=True)
+            .drop_duplicates()
+        )
+        page += [f"**Leaderboards for this task:** {links}.", ""]
     page += [
         "## Load the task",
         "",
@@ -520,9 +533,16 @@ def task_page(
             "",
         ]
         page += table(
-            ["Board", "Split"],
-            [[f"`{task}-{f.replace('_', '-')}-s0`", f"`{f}_s0`"] for f in families],
-            left=2,
+            ["Open the board", "Board name", "Split"],
+            [
+                [
+                    f"[{FAMILIES[f]}]({board_url(task, f)})",
+                    f"`{task}-{f.replace('_', '-')}-s0`",
+                    f"`{f}_s0`",
+                ]
+                for f in families
+            ],
+            left=3,
         )
         if not spec.n_targets_note.startswith("1 target"):
             page += [

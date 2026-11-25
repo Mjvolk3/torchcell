@@ -3,7 +3,9 @@
 
 The retention and encoding tests are pure (no build tree, no network). The mirror audit
 binds each module-level ``SourcedValue`` to its verbatim quote and skips when the
-``torchcell-library`` mirror is not mounted.
+``torchcell-library`` mirror is not mounted. The real-data tests at the end read the five
+pinned workbooks out of the raw mirror and pin the per-replicate record counts (#1178);
+they skip when the mirror is not mounted.
 """
 
 from __future__ import annotations
@@ -12,6 +14,7 @@ import os
 import os.path as osp
 from typing import cast
 
+import pandas as pd
 import pytest
 
 from torchcell.datamodels.compound_identity import (
@@ -149,10 +152,68 @@ def test_the_assay_is_a_pooled_barcode_competition() -> None:
     assert s.ASSAY.value is AssayType.pooled_competitive_growth_barcode
 
 
-def test_the_replicate_structure_is_recorded_outside_n_samples() -> None:
-    """n_samples stays 1 because var(A) is ALREADY the combined estimate's variance."""
+def test_the_replicate_structure_names_the_workbook_of_each_condition() -> None:
+    """Each of those replicates is its own record (#1178), so n_samples stays 1."""
     assert s.REPLICATE_STRUCTURE.value == {"1% DMSO": 8, "20 uM fluconazole": 3}
     assert "combined" in s.REPLICATE_STRUCTURE.quote
+    assert s.REPLICATE_WORKBOOKS[s.DMSO] == (
+        s.DMSO_REPLICATES_FILENAME,
+        s.DMSO_REPLICATES_SHEET,
+        8,
+    )
+    assert s.REPLICATE_WORKBOOKS["Fluconazole"] == (
+        s.FLUCONAZOLE_REPLICATES_FILENAME,
+        s.FLUCONAZOLE_REPLICATES_SHEET,
+        3,
+    )
+    assert s.REPLICATE_DOSE.value == {s.DMSO: 0.01, "Fluconazole": "20uM"}
+    assert s.FIRST_REPLICATE == "1"
+
+
+def test_the_replicates_are_biological_per_the_paper() -> None:
+    """The quote that makes a per-replicate record a culture, not a repeat read."""
+    assert s.BIOLOGICAL_REPLICATES.value == "biological"
+    assert "biological replicates" in s.BIOLOGICAL_REPLICATES.quote
+    assert "Additional files 6 and 7" in s.BIOLOGICAL_REPLICATES.quote
+
+
+def test_the_atc_dose_is_parsed_out_of_the_sample_sheet_header() -> None:
+    """Additional file 5 releases the induction dose only inside its column header."""
+    column = s.atc_column(["MiSeq Run #", "Pool Name", "ATC (250ng/ml)", "Replicate"])
+    assert column == "ATC (250ng/ml)"
+    dose = s.atc_concentration(column)
+    assert dose.value == 0.25
+    assert dose.unit is ConcentrationUnit.ug_per_ml
+
+
+@pytest.mark.parametrize(
+    "columns", [["Pool Name", "Replicate"], ["ATC (250ng/ml)", "ATC (125ng/ml)"]]
+)
+def test_a_sample_sheet_without_exactly_one_atc_column_is_refused(
+    columns: list[str],
+) -> None:
+    with pytest.raises(ValueError, match="exactly one ATc-dose column header"):
+        s.atc_column(columns)
+
+
+def test_two_spellings_of_one_dose_key_as_one_condition() -> None:
+    """Additional file 5 writes a trailing space Additional file 10 omits."""
+    assert s.dose_key("Fluconazole", "20uM ".strip()) == s.dose_key(
+        "Fluconazole", "20 uM"
+    )
+    assert s.dose_key(s.DMSO, 0.01) == "1.0percent_v/v"
+    assert s.dose_key("Rapamycin", "10nM") == "10.0nM"
+
+
+def test_every_screened_pool_maps_to_its_sequenced_sample_pool() -> None:
+    """The 18 bp and 20 bp halves of one library were sequenced as one sample."""
+    assert s.POOL_TO_SAMPLE_POOL == {
+        "broad_tiling": "broad_tiling",
+        "gene_tiling_18bp": "gene_tiling18 & gene_tiling20",
+        "gene_tiling_20bp": "gene_tiling18 & gene_tiling20",
+        "mutant18": "mutant18 & mutant20",
+        "mutant20": "mutant18 & mutant20",
+    }
 
 
 def test_the_environment_is_sc_ura_with_one_typed_drug_edit() -> None:
@@ -169,6 +230,43 @@ def test_the_environment_is_sc_ura_with_one_typed_drug_edit() -> None:
     assert perturbation.compound.name == "fluconazole"
     assert perturbation.compound.inchikey is not None
     assert perturbation.solvent is None
+
+
+def test_an_induced_culture_carries_the_atc_dose_beside_its_drug() -> None:
+    """A culture record states its own induction; an A record is the contrast, so not."""
+    dataset = s.CrispriChemgenSmith2016Dataset.__new__(s.CrispriChemgenSmith2016Dataset)
+    induced = s.CrispriChemgenSmith2016Dataset._environment(
+        dataset, "Fluconazole", "20uM", atc=s.atc_concentration("ATC (250ng/ml)")
+    )
+    uninduced = s.CrispriChemgenSmith2016Dataset._environment(
+        dataset, "Fluconazole", "20uM"
+    )
+    assert [
+        cast(SmallMoleculePerturbation, p).compound.name for p in induced.perturbations
+    ] == ["fluconazole", "anhydrotetracycline"]
+    assert (
+        cast(SmallMoleculePerturbation, induced.perturbations[1]).concentration.value
+        == 0.25
+    )
+    assert [
+        cast(SmallMoleculePerturbation, p).compound.name
+        for p in uninduced.perturbations
+    ] == ["fluconazole"]
+
+
+def test_a_culture_reference_is_the_pools_median_guide() -> None:
+    """The fitness f is median centred in its pool, so the culture reference is f = 0."""
+    dataset = s.CrispriChemgenSmith2016Dataset.__new__(s.CrispriChemgenSmith2016Dataset)
+    dataset.name = "crispri_chemgen_smith2016"
+    environment = s.CrispriChemgenSmith2016Dataset._environment(dataset, s.DMSO, 0.01)
+    reference = s.CrispriChemgenSmith2016Dataset._reference(
+        dataset, environment, s.CULTURE_UNITS
+    )
+    phenotype = reference.phenotype_reference
+    assert phenotype.environment_response == 0.0
+    assert phenotype.units == s.CULTURE_UNITS
+    assert phenotype.replicate_id is None
+    assert "median" in s.CULTURE_UNITS
 
 
 def test_reference_is_the_uninduced_zero_baseline() -> None:
@@ -213,3 +311,134 @@ def test_every_sourced_value_is_backed_by_its_verbatim_quote() -> None:
     for value in values:
         result = audit_sourced_value(value, root)
         assert result.passed, f"{value.value!r}: {result.message}"
+
+
+# --------------------------------------------------------------------------- #
+# Real data (#1178): the pinned workbooks in the raw mirror. Skips without it.
+# --------------------------------------------------------------------------- #
+def _mirror() -> str | None:
+    data_root = os.environ.get("DATA_ROOT")
+    if data_root is None:
+        return None
+    root = osp.join(data_root, s.RAW_DIR_REL, "si", "si_data")
+    files = [
+        s.EFFECT_FILENAME,
+        s.GUIDE_FILENAME,
+        s.SAMPLES_FILENAME,
+        s.DMSO_REPLICATES_FILENAME,
+        s.FLUCONAZOLE_REPLICATES_FILENAME,
+    ]
+    return root if all(osp.isfile(osp.join(root, name)) for name in files) else None
+
+
+def _sheet(filename: str, sheet: str) -> pd.DataFrame:
+    root = _mirror()
+    if root is None:
+        pytest.skip("the Smith 2016 raw mirror is not mounted")
+    return pd.read_excel(osp.join(root, filename), sheet_name=sheet)
+
+
+def test_the_released_replicate_counts_are_what_the_loader_stores() -> None:
+    """The record counts of a build, measured on the pinned workbooks.
+
+    7,053 A records (14,463 Additional file 10 rows minus the 7,410 vendor-code rows),
+    7,216 DMSO culture records (451 guides with data x 8 replicates x 2 arms) and 3,438
+    fluconazole ones (637 x 2 arms over replicates 1 and 2, 445 over replicate 3), so
+    17,707 in all.
+    """
+    effects = _sheet(s.EFFECT_FILENAME, s.EFFECT_SHEET)
+    assert len(effects) == 14463
+    held_out = sum(1 for drug in effects["Drug"] if not s.drug_is_identified(str(drug)))
+    assert held_out == 7410
+    assert len(effects) - held_out == 7053
+    counts = {}
+    for drug, (filename, sheet, n_replicates) in s.REPLICATE_WORKBOOKS.items():
+        frame = _sheet(filename, sheet)
+        total = 0
+        for replicate in range(1, n_replicates + 1):
+            for arm in ("noATC", "plusATC"):
+                column = pd.to_numeric(
+                    frame[f"Rep-{replicate}_{arm}_f_mean"], errors="coerce"
+                )
+                total += int(column.notna().sum())
+        counts[drug] = total
+    assert counts == {s.DMSO: 7216, "Fluconazole": 3438}
+    assert 7053 + sum(counts.values()) == 17707
+
+
+def test_every_effect_row_is_replicate_one_of_its_condition() -> None:
+    """The check the build runs: Additional file 10's counts are the Rep-1 counts."""
+    effects = _sheet(s.EFFECT_FILENAME, s.EFFECT_SHEET)
+    samples = _sheet(s.SAMPLES_FILENAME, s.SAMPLES_SHEET)
+    inventory: dict[tuple[str, str, str], set[int]] = {}
+    for pool, drug, dose, replicate in zip(
+        samples["Pool Name"],
+        samples["Drug"],
+        samples["Drug concentration"],
+        samples["Replicate"],
+        strict=True,
+    ):
+        named = str(drug).strip()
+        key = (str(pool).strip(), named, s.dose_key(named, str(dose).strip()))
+        inventory.setdefault(key, set()).add(int(replicate))
+    groups = effects.groupby(["#Pool", "Drug", "Concentration"]).size()
+    assert len(groups) == 67
+    for pool, drug, dose in groups.index:
+        key = (
+            s.POOL_TO_SAMPLE_POOL[str(pool).strip()],
+            str(drug).strip(),
+            s.dose_key(str(drug).strip(), str(dose).strip()),
+        )
+        assert min(inventory[key]) == 1, key
+    frames = {
+        drug: _sheet(filename, sheet)
+        for drug, (filename, sheet, _) in s.REPLICATE_WORKBOOKS.items()
+    }
+    compared = 0
+    for drug, frame in frames.items():
+        first = frame.set_index(["#Pool", "Guide"])
+        rows = effects[effects["Drug"].map(lambda value: str(value).strip()) == drug]
+        for _, row in rows.iterrows():
+            index = (str(row["#Pool"]), str(row["Guide"]))
+            if index not in first.index:
+                continue
+            for released, column in (
+                (row["-ATC_count"], "Rep-1_noATC_count"),
+                (row["+ATC_count"], "Rep-1_plusATC_count"),
+            ):
+                pinned = pd.to_numeric(first.loc[index, column], errors="coerce")
+                if pd.isna(pinned):
+                    continue
+                assert float(released) == float(pinned), (drug, index, column)
+                compared += 1
+    assert compared == 2148
+
+
+def test_the_eight_replicate_means_reproduce_the_released_combined_mean() -> None:
+    """The authors' summary is a derivation over these records, so it is not stored.
+
+    Measured on the pinned workbooks: the plain mean over a guide's replicates of
+    ``f(+ATc) - f(-ATc)`` equals the released ``Combined_A_mean`` to within 0.001, which
+    is the rounding of the released cells (three decimals): 0.000875 for Additional file
+    6 and 0.001 for Additional file 7.
+    """
+    for drug, (filename, sheet, n_replicates) in s.REPLICATE_WORKBOOKS.items():
+        frame = _sheet(filename, sheet)
+        for column in frame.columns[2:]:
+            frame[column] = pd.to_numeric(frame[column], errors="coerce")
+        worst = 0.0
+        compared = 0
+        for _, row in frame.iterrows():
+            if pd.isna(row["Combined_A_mean"]):
+                continue
+            per_replicate = [
+                row[f"Rep-{replicate}_plusATC_f_mean"]
+                - row[f"Rep-{replicate}_noATC_f_mean"]
+                for replicate in range(1, n_replicates + 1)
+                if not pd.isna(row[f"Rep-{replicate}_noATC_f_mean"])
+            ]
+            mean = sum(per_replicate) / len(per_replicate)
+            worst = max(worst, abs(mean - row["Combined_A_mean"]))
+            compared += 1
+        assert compared == {s.DMSO: 451, "Fluconazole": 637}[drug]
+        assert worst == pytest.approx(0.001, abs=1e-9) or worst < 0.001, (drug, worst)

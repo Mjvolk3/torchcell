@@ -2257,7 +2257,10 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "env_chemgen_parsons2006": 300834,
         # #1045: every released cell, the 5% ethanol columns included (4,729 x 4 x 2)
         "env_chemgen_yoshikawa2009": 37832,
-        "crispri_chemgen_smith2016": 7053,
+        # #1178: 7,053 A records (one per Additional file 10 row, replicate 1) plus
+        # 10,654 culture records, one per replicate culture Additional files 6 and 7
+        # release (7,216 + 3,438)
+        "crispri_chemgen_smith2016": 17707,
     }
     assert {
         name

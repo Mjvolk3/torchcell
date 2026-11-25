@@ -2544,37 +2544,62 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "crispri_chemgen_smith2016": {
         "root": "data/torchcell/crispri_chemgen_smith2016",
-        # 14,463 rows of Additional file 10 minus the 7,410 rows whose Drug label is a
+        # One record per released replicate (#1178, 2026.11.24): 7,053 A records (the
+        # 14,463 rows of Additional file 10 minus the 7,410 whose Drug label is a
         # ChemDiv / ChemBridge / TimTec catalog id with no released structure, held out
         # under UNIDENTIFIED_COMPOUND_RULE (2026.10.15, constitution principle 2; job
-        # 5083 dev rebuild). L1 strain identity keys on (gene, crispr_interference,
-        # guide spacer, library_pool).
-        "expected_count": 7053,
+        # 5083 dev rebuild)) plus 10,654 culture records, one per replicate culture
+        # Additional file 6 (7,216 = 451 guides x 8 replicates x 2 arms) and Additional
+        # file 7 (3,438) release. L1 strain identity keys on (gene, crispr_interference,
+        # guide spacer, library_pool), and the readout units plus replicate_id keep an
+        # A record and its replicate's two cultures distinct.
+        "expected_count": 17707,
         "background_genes": frozenset(),
         "provenance": Provenance(
             source_uri=(
                 "$DATA_ROOT/torchcell-raw/smithQuantitativeCRISPRInterference2016/"
                 "si/si_data/13059_2016_900_MOESM10_ESM.xlsx (Additional file 10, sheet "
                 "'Fitness and Effect Data') + 13059_2016_900_MOESM4_ESM.xlsx (Additional "
-                "file 4, sheet 'gRNAs', guide->spacer); raw mirror, both with a "
-                "springer_esm retrieval re-verified 2026-09-12"
+                "file 4, sheet 'gRNAs', guide->spacer and target) + "
+                "13059_2016_900_MOESM5_ESM.xlsx (Additional file 5, sheet 'Metadata', the "
+                "sequenced samples and the ATc dose) + 13059_2016_900_MOESM6_ESM.xlsx "
+                "(Additional file 6, sheet 'DMSO_replicate_data') + "
+                "13059_2016_900_MOESM7_ESM.xlsx (Additional file 7, sheet "
+                "'Fluconazole_replicate_data'); raw mirror, springer_esm retrievals "
+                "re-verified 2026-09-12 (files 10, 4) and 2026-11-25 (files 5, 6, 7)"
             ),
             citation_key="smithQuantitativeCRISPRInterference2016",
             sha256="02962e51e492b0505e8595fc1c80fab5fca8a8c8f05e05969dbff18ddff71cd0",
             method=(
-                "One EnvironmentResponseExperiment per (pool, guide, drug, concentration) "
-                "row of Additional file 10. measurement_type=log2_ratio, assay_type="
+                "One EnvironmentResponseExperiment per RELEASED REPLICATE (#1178). An A "
+                "record per (pool, guide, drug, concentration) row of Additional file 10, "
+                "which is replicate 1 of its condition (proved on every build: its counts "
+                "equal Additional files 6 / 7's Rep-1 counts, and Additional file 5's "
+                "replicate labels for that sample start at 1), so replicate_id='1'. A "
+                "CULTURE record per replicate culture Additional file 6 (eight 1% DMSO "
+                "replicates of the gene-tiling pools) and Additional file 7 (three 20 uM "
+                "fluconazole replicates, two in the mutant pools) release: "
+                "environment_response = that culture's 'Rep-k_<arm>_f_mean' (log2 "
+                "median-centred guide count), uncertainty = its 'Rep-k_<arm>_f_var' as "
+                "UncertaintyType.variance, replicate_id = k, units = CULTURE_UNITS, and "
+                "the +ATc culture's environment carries anhydrotetracycline at the dose "
+                "Additional file 5's 'ATC (250ng/ml)' header states (0.25 ug/mL). The "
+                "source releases no A for replicates 2-8, so A_k = f(+ATc) - f(-ATc) is "
+                "left to model time; the authors' combined statistics are not stored "
+                "(measured: Combined_A_mean is the plain mean of the per-replicate A, max "
+                "|difference| 0.001, and Combined_A_var their sample variance). Not stored, "
+                "named in the ledger: the mutant pools' second 1% DMSO replicate (released "
+                "only as read counts) and the gene-tiling pools' 10 nM Rapamycin sample "
+                "(no released count, fitness or effect). measurement_type=log2_ratio, "
+                "assay_type="
                 "pooled_competitive_growth_barcode, environment_response = column 'A' = the "
                 "ATc-induced fold change (A_ijk = f_ijk+ - f_ijk-, the difference of log2 "
                 "median-centred guide read-count fitness between induced +ATc and uninduced "
                 "-ATc cultures in that drug; negative = repression is a growth defect). "
                 "Uncertainty = column 'var(A)' stored VERBATIM as UncertaintyType.variance "
-                "with n_samples=1, DELIBERATELY: var(A) is the variance of the SINGLE "
-                "released estimate, already inverse-variance-combined across the 8 and 3 "
-                "replicate experiments for the 1% DMSO and 20 uM fluconazole conditions, so "
-                "derive_se must divide by 1 (recording 8 would shrink the SE by sqrt(8)); "
-                "the replicate structure is recorded in the loader's REPLICATE_STRUCTURE "
-                "SourcedValue instead. Genotype = CrisprInterferencePerturbation(target ORF, "
+                "with n_samples=1: every record is ONE replicate, and var(A) is that "
+                "replicate's read-resampling variance, so derive_se divides by 1. "
+                "Genotype = CrisprInterferencePerturbation(target ORF, "
                 "effector dCas9-Mxi1, guide_sequence = the 18/20 nt Specificity_sequence "
                 "spacer joined by guide name from Additional file 4 (sha256 e5eb4e3c...), "
                 "library_pool = #Pool; the same spacer in two pools is two independent "
@@ -2583,14 +2608,16 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
                 "honest state) + the row's Drug at its released dose as a "
                 "SmallMoleculePerturbation (uM/nM; the 1% DMSO vehicle control -> 1.0 "
                 "percent_v/v), 30 C, aerobic, duration_generations=20.0 ('approximately 20 "
-                "culture doublings') with duration_hours a typed ProvenanceGap. ATc is NOT "
-                "asserted: the pooled Methods say only '+/- ATc' and the one released "
-                "number (250 ng/mL) is from the qPCR section; no Solvent is asserted "
-                "either, since 'Drugs were dissolved in DMSO' sits in the individual-strain "
-                "section. The ~20%-growth-inhibition dose rule is real (Additional file 8 "
+                "culture doublings') with duration_hours a typed ProvenanceGap. An A record "
+                "carries no ATc (it is the contrast between the induced and uninduced "
+                "cultures); a culture record states its own induction. No Solvent is "
+                "asserted, since 'Drugs were dissolved in DMSO' sits in the "
+                "individual-strain section. The ~20%-growth-inhibition dose rule is real (Additional file 8 "
                 "ReadMe) but DoseBasis has no IC20 member and adding one is a full-rebuild "
-                "trigger, so it is documented not typed. Reference = uninduced -ATc "
-                "baseline (A=0) in BY4741. Common names from the genome's standard name. "
+                "trigger, so it is documented not typed. Reference = the readout's own zero "
+                "in BY4741: the uninduced -ATc baseline (A=0) for an A record, the pool's "
+                "median guide (f=0 by the median centring) for a culture record, each with "
+                "replicate_id=None. Common names from the genome's standard name. "
                 "20 target ORFs all current R64"
             ),
             page=(
@@ -2599,6 +2626,12 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
                 "sha256=02962e51e492b0505e8595fc1c80fab5fca8a8c8f05e05969dbff18ddff71cd0; "
                 "Additional file 4 'gRNAs' "
                 "sha256=e5eb4e3c7856782e36edff5ef55e680cb43fa8e9944bf8e40d7cb7b4f376c1e5; "
+                "Additional file 5 'Metadata' "
+                "sha256=9477066f538248c18b256ed2fec811bbd5914b2039bd2f78baa41000e70eaf9c; "
+                "Additional file 6 'DMSO_replicate_data' "
+                "sha256=7f70c60de3702e49caa5142b73b32b2de64ad1cbfd4db47e3a58a76b616ae676; "
+                "Additional file 7 'Fluconazole_replicate_data' "
+                "sha256=3d26fb3e6e613e21e427abeaa7a8cc6a9053b34d4770ecc185db7900053a592b; "
                 "paper.md sha256=346be6968eced82706cffb163a76dfc5adf381e602bd11006fea608436ca7b2f"
             ),
         ),

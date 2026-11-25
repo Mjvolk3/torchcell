@@ -17,6 +17,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +40,7 @@ from torchcell.datamodels.schema import (
     DoseBasis,
     Genotype,
     MediaComponentRole,
+    SampleUnit,
     SmallMoleculePerturbation,
 )
 from torchcell.datasets.dataset_registry import dataset_registry
@@ -185,9 +187,124 @@ def write_table_s4(path: Path, *, labels: tuple[str, ...] = SYNTHETIC_KEIO) -> P
     return path
 
 
+# --------------------------------------------------------------------------- #
+# The synthetic Zenodo deposit: per-replicate Keio tables and the replicate legends
+# --------------------------------------------------------------------------- #
+#: The two replicate values of every synthetic Keio cell. Their mean is ``NEUTRAL``,
+#: which is what the synthetic Table S4A carries, so the deposit reproduces the workbook
+#: exactly as the real one does.
+KEIO_R1 = NEUTRAL - 0.1
+KEIO_R2 = NEUTRAL + 0.1
+#: ``(R row index, Well.1536)`` per synthetic Keio row. Three colonies to a plate over
+#: two plates, so the derived plates are 1, 1, 1, 2, 2, 2 and every (plate, well) is
+#: distinct even where a label repeats.
+SYNTHETIC_KEIO_POSITIONS: tuple[tuple[int, str], ...] = (
+    (1, "0A01"),
+    (2, "0A02"),
+    (3, "0A03"),
+    (4, "0A01"),
+    (5, "0A02"),
+    (6, "0A03"),
+)
+#: The synthetic 1,536 legend: two strains, each pinned four times.
+SYNTHETIC_LEGEND: tuple[tuple[str, str, int], ...] = tuple(
+    (f"0A0{index}", symbol, pinning)
+    for index, (symbol, pinning) in enumerate(
+        [
+            (symbol, pinning)
+            for pinning in (1, 2, 3, 4)
+            for symbol in (r.EMPTY_VECTOR, "thrA")
+        ],
+        start=1,
+    )
+)
+
+
+def write_keio_replicate_table(path: Path, *, cross: str, dose: int) -> Path:
+    """One synthetic deposit table: the six Keio rows with both replicates."""
+    rows = [list(r.keio_table_columns(dose, cross))]
+    for (index, well), label in zip(
+        SYNTHETIC_KEIO_POSITIONS, SYNTHETIC_KEIO, strict=True
+    ):
+        row = [
+            str(index),
+            "1000",
+            "1000",
+            well,
+            "1",
+            well[2],
+            well[3:],
+            label,
+            cross,
+            "1000",
+            repr(KEIO_R1),
+            repr(KEIO_R2),
+            repr(KEIO_R1),
+            repr(KEIO_R2),
+            repr(NEUTRAL),
+        ]
+        if cross != "Vector":
+            row += [repr(NEUTRAL), repr(NEUTRAL), repr(NEUTRAL)]
+        rows.append(row)
+    path.write_text("\n".join(",".join(cell) for cell in rows) + "\n")
+    return path
+
+
+def write_legend_1536(path: Path) -> Path:
+    """The synthetic 1,536 layout: four pinning labels per strain."""
+    lines = ["Well 1536,CRISPRi_Plasmid,Replicate"]
+    lines += [
+        f"{well},{symbol},{pinning}" for well, symbol, pinning in SYNTHETIC_LEGEND
+    ]
+    path.write_text("\n".join(lines) + "\n")
+    return path
+
+
+def write_wt_lpp_table(path: Path, *, replicate: int) -> Path:
+    """One synthetic dose-response table: the wells of ONE legend pinning."""
+    want = r.WT_LPP_TABLE_PINNINGS[replicate]
+    lines = ["Well,Gene,0aTC,5aTC,10aTC,50aTC,100aTC,500aTC,Condition"]
+    for well, symbol, pinning in SYNTHETIC_LEGEND:
+        if str(pinning) != want:
+            continue
+        lines.append(f"{well},{symbol},1,1,1,1,1,1,WT_LB")
+    path.write_text("\n".join(lines) + "\n")
+    return path
+
+
+def write_deposit(out: Path) -> dict[str, Path]:
+    """Every synthetic deposit member, under the mirror names the loader links."""
+    out.mkdir(parents=True, exist_ok=True)
+    written: dict[str, Path] = {}
+    for cross in r.KEIO_TABLE_CROSS_NAMES:
+        for dose in (0, 50, 500):
+            name = r._keio_table_name(cross, dose)
+            written[name] = write_keio_replicate_table(
+                out / name, cross=cross, dose=dose
+            )
+    written[r.LEGEND_1536_FILE] = write_legend_1536(out / r.LEGEND_1536_FILE)
+    for background in ("WT", "Lpp"):
+        for medium in ("LB", "MOPS"):
+            for replicate in (1, 2):
+                name = r._wt_lpp_table_name(background, medium, replicate)
+                written[name] = write_wt_lpp_table(out / name, replicate=replicate)
+    (out / r.KEIO_README_FILE).write_text("K1 = Keio 384 Plate 1\nR1 = Replicate 1\n")
+    written[r.KEIO_README_FILE] = out / r.KEIO_README_FILE
+    (out / r.SCANS_README_FILE).write_text(
+        "Each strain pinned in technical quadruplicate\n"
+    )
+    written[r.SCANS_README_FILE] = out / r.SCANS_README_FILE
+    return written
+
+
 @pytest.fixture
 def pinned(monkeypatch: pytest.MonkeyPatch) -> None:
     """Pin the released-shape constants to the synthetic release's shape."""
+    monkeypatch.setattr(r, "KEIO_TABLE_ROWS", len(SYNTHETIC_KEIO))
+    monkeypatch.setattr(r, "COLONIES_PER_PLATE_1536", 3)
+    monkeypatch.setattr(r, "KEIO_ASSAY_PLATES", 2)
+    monkeypatch.setattr(r, "PINNINGS_PER_STRAIN", 4)
+    monkeypatch.setattr(r, "WELLS_PER_PINNING", 2)
     monkeypatch.setattr(r, "S1_ROWS", len(SYNTHETIC_WELLS))
     monkeypatch.setattr(r, "S1_FILLED_WELLS", len(SYNTHETIC_WELLS))
     monkeypatch.setattr(r, "S1_EMPTY_VECTOR_WELLS", 1)
@@ -213,15 +330,19 @@ def pinned(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.fixture
 def release(tmp_path: Path, pinned: None) -> dict[str, Path]:
-    """The four synthetic workbooks on disk."""
+    """The four synthetic workbooks plus the synthetic deposit members, on disk."""
     out = tmp_path / "release"
     out.mkdir()
-    return {
+    files = {
         r.TABLE_S1_FILE: write_table_s1(out / r.TABLE_S1_FILE),
         r.TABLE_S2_FILE: write_table_s2(out / r.TABLE_S2_FILE),
         r.TABLE_S3_FILE: write_table_s3(out / r.TABLE_S3_FILE),
         r.TABLE_S4_FILE: write_table_s4(out / r.TABLE_S4_FILE),
     }
+    files.update(
+        {f"zenodo/{name}": path for name, path in write_deposit(out / "zenodo").items()}
+    )
+    return files
 
 
 # --------------------------------------------------------------------------- #
@@ -325,31 +446,68 @@ def test_every_environment_is_an_aerobic_thirty_seven_degree_plate() -> None:
 # --------------------------------------------------------------------------- #
 # Phenotype
 # --------------------------------------------------------------------------- #
-def test_the_phenotype_stores_the_released_value_with_two_replicates() -> None:
-    phenotype = r.phenotype(0.4321, r.SCREEN_S2A)
+def test_a_collection_record_combines_its_two_technical_pinnings() -> None:
+    """Tables S2A and S3: one culture, its two pinnings averaged as the release does."""
+    phenotype = r.combined_technical_phenotype(0.4321, r.SCREEN_S2A, "A1")
     assert phenotype.fitness == 0.4321
     assert phenotype.n_samples == 2
+    assert phenotype.sample_unit is SampleUnit.technical_replicate
     assert phenotype.screen_id == r.SCREEN_S2A
+    assert phenotype.replicate_id == "A1"
     assert phenotype.label_name == "fitness"
 
 
-def test_the_absent_dispersion_and_the_contradicted_unit_are_typed_gaps() -> None:
-    """Five fields, each None with a reason -- never a zero and never a guessed unit."""
-    phenotype = r.phenotype(0.5, r.SCREEN_S4A)
+def test_a_keio_record_is_one_biological_replicate_with_no_dispersion() -> None:
+    """Table S4A: one assay-plate replicate, so n = 1 and nothing is averaged."""
+    phenotype = r.replicate_phenotype(0.5, "K3:0A01:R2")
+    assert phenotype.fitness == 0.5
+    assert phenotype.n_samples == 1
+    assert phenotype.sample_unit is SampleUnit.biological_replicate
+    assert phenotype.screen_id == r.SCREEN_S4A
+    assert phenotype.replicate_id == "K3:0A01:R2"
+
+
+def test_a_single_replicate_types_its_absent_dispersion_as_not_applicable() -> None:
+    """An n = 1 record has no dispersion of its own, which is not the same as unreported."""
+    phenotype = r.replicate_phenotype(0.5, "K1:0A01:R1")
     assert phenotype.gapped_fields() == {
-        "sample_unit",
         "fitness_uncertainty",
         "fitness_uncertainty_type",
         "fitness_se",
         "fitness_std",
     }
-    assert phenotype.sample_unit is None
-    assert phenotype.fitness_uncertainty is None
-    assert phenotype.fitness_se is None
-    unit_gap = next(
-        gap for gap in phenotype.provenance_gaps if gap.field == "sample_unit"
+    assert phenotype.sample_unit is not None
+    assert all(
+        gap.reason is ProvenanceGapReason.not_applicable_single_measurement
+        for gap in phenotype.provenance_gaps
     )
-    assert "technical" in str(unit_gap.note) and "biological" in str(unit_gap.note)
+
+
+def test_a_combined_record_types_its_absent_dispersion_as_unreported() -> None:
+    """The two pinnings exist, so their spread is unreleased rather than inapplicable."""
+    phenotype = r.combined_technical_phenotype(0.5, r.SCREEN_S2A, "A1")
+    assert phenotype.gapped_fields() == {
+        "fitness_uncertainty",
+        "fitness_uncertainty_type",
+        "fitness_se",
+        "fitness_std",
+    }
+    assert all(
+        gap.reason is ProvenanceGapReason.not_reported_by_primary
+        for gap in phenotype.provenance_gaps
+    )
+
+
+def test_the_replicate_unit_of_each_arm_is_sourced_and_not_guessed() -> None:
+    """The deposit types both units, so neither is a typed gap any more."""
+    technical = r.SOURCED_VALUES["s2_replicate_is_technical"]
+    biological = r.SOURCED_VALUES["s4_replicate_is_biological"]
+    assert technical.value == "technical_replicate"
+    assert technical.quote == "Each strain pinned in technical quadruplicate"
+    assert biological.value == "biological_replicate"
+    assert biological.quote == "R1 = Replicate 1"
+    assert technical.provenance.source_uri == f"data/zenodo/{r.SCANS_README_FILE}"
+    assert biological.provenance.source_uri == f"data/zenodo/{r.KEIO_README_FILE}"
 
 
 def test_the_reference_is_the_empty_vector_at_one_over_its_seventeen_wells() -> None:
@@ -357,6 +515,7 @@ def test_the_reference_is_the_empty_vector_at_one_over_its_seventeen_wells() -> 
     assert reference.fitness == 1.0
     assert reference.n_samples == r.S1_EMPTY_VECTOR_WELLS == 17
     assert reference.screen_id is None
+    assert reference.replicate_id is None
 
 
 # --------------------------------------------------------------------------- #
@@ -781,8 +940,10 @@ def _resolution(mapping: dict[str, str]) -> r.Resolution:
     )
 
 
-def test_the_empty_vector_wells_are_not_records(release: dict[str, Path]) -> None:
-    """They are the denominator, so they become the reference, not 17 nameless strains."""
+def test_an_empty_vector_well_is_a_record_with_an_empty_genotype(
+    release: dict[str, Path],
+) -> None:
+    """A control replicate the source releases is a record; its well tells it apart."""
     wells = r.read_table_s1(release[r.TABLE_S1_FILE])
     _, blocks = r.read_table_s2a(release[r.TABLE_S2_FILE])
     rows = list(
@@ -790,17 +951,21 @@ def test_the_empty_vector_wells_are_not_records(release: dict[str, Path]) -> Non
             wells,
             blocks,
             _resolution({"thrA": "BW25113_0002", "hokC": "BW25113_4412"}),
-            frozenset(),
             screen_id=r.SCREEN_S2A,
         )
     )
+    controls = [row for row in rows if not row.genotype.perturbations]
+    assert len(controls) == 2  # the one empty-vector well, in each medium block
+    assert {row.replicate_id for row in controls} == {"A1"}
     assert r.EMPTY_VECTOR not in {
         p.perturbed_gene_name for row in rows for p in row.genotype.perturbations
     }
-    assert len(rows) == 2 * 3  # two media blocks x (thrA at two wells + hokC)
 
 
-def test_a_construct_at_two_wells_is_dropped_whole(release: dict[str, Path]) -> None:
+def test_a_construct_at_two_wells_is_two_records_keyed_by_well(
+    release: dict[str, Path],
+) -> None:
+    """A2 and A7 share a spacer, so they are two pinned strains at two positions."""
     wells = r.read_table_s1(release[r.TABLE_S1_FILE])
     _, blocks = r.read_table_s2a(release[r.TABLE_S2_FILE])
     rows = list(
@@ -808,13 +973,16 @@ def test_a_construct_at_two_wells_is_dropped_whole(release: dict[str, Path]) -> 
             wells,
             blocks,
             _resolution({"thrA": "BW25113_0002", "hokC": "BW25113_4412"}),
-            frozenset({"AAAAAAAAAAAAAAAAAAAA"}),
             screen_id=r.SCREEN_S2A,
         )
     )
-    assert {
-        p.perturbed_gene_name for row in rows for p in row.genotype.perturbations
-    } == {"hokC"}
+    thra = [
+        row
+        for row in rows
+        if any(p.perturbed_gene_name == "thrA" for p in row.genotype.perturbations)
+    ]
+    assert len(thra) == 4  # two wells x two media blocks
+    assert {row.replicate_id for row in thra} == {"A2", "A7"}
 
 
 def test_a_background_block_puts_a_deletion_beside_every_knockdown(
@@ -822,15 +990,16 @@ def test_a_background_block_puts_a_deletion_beside_every_knockdown(
 ) -> None:
     wells = r.read_table_s1(release[r.TABLE_S1_FILE])
     _, blocks = r.read_table_s3(release[r.TABLE_S3_FILE])
-    rows = list(
-        r._guide_rows(
+    rows = [
+        row
+        for row in r._guide_rows(
             wells,
             blocks,
             _resolution({"hokC": "BW25113_4412", r.LPP_SYMBOL: "BW25113_0005"}),
-            frozenset(),
             screen_id=r.SCREEN_S3,
         )
-    )
+        if any(p.perturbed_gene_name == "hokC" for p in row.genotype.perturbations)
+    ]
     wild_type, deleted = rows
     assert len(wild_type.genotype) == 1
     assert len(deleted.genotype) == 2
@@ -849,49 +1018,169 @@ def _knockdowns() -> dict[str, CrisprInterferencePerturbation]:
     }
 
 
-def test_a_keio_row_pairs_its_deletion_with_each_block_s_plasmid(
-    release: dict[str, Path],
-) -> None:
-    labels, blocks = r.read_table_s4a(release[r.TABLE_S4_FILE])
-    resolution = _resolution({"thrL": "BW25113_0001"})
-    rows = list(r._keio_rows(labels, blocks, resolution, frozenset(), _knockdowns()))
-    assert [len(row.genotype) for row in rows] == [1, 2, 2, 2]
-    assert all(row.screen_id == r.SCREEN_S4A for row in rows)
-    assert all(not row.timed for row in rows)
-
-
-def test_a_keio_label_heading_two_rows_is_dropped_whole(
-    release: dict[str, Path],
-) -> None:
-    labels, blocks = r.read_table_s4a(release[r.TABLE_S4_FILE])
-    resolution = _resolution({"thrL": "BW25113_0001", "hokC": "BW25113_4412"})
-    rows = list(
-        r._keio_rows(labels, blocks, resolution, frozenset({"hokC"}), _knockdowns())
-    )
-    deleted = {
-        p.perturbed_gene_name
-        for row in rows
-        for p in row.genotype.perturbations
-        if p.perturbation_type == "deletion_strain"
+def _keio_tables(release: dict[str, Path]) -> dict[tuple[str, int], Any]:
+    """Every synthetic deposit table, read the way the build reads them."""
+    return {
+        (cross, dose): r.read_keio_replicate_table(
+            release[f"zenodo/{r._keio_table_name(cross, dose)}"], cross=cross, dose=dose
+        )
+        for cross in r.KEIO_TABLE_CROSS_NAMES
+        for dose in (0, 50, 500)
     }
-    assert deleted == {"thrL"}
+
+
+def test_a_deposit_table_derives_its_assay_plate_from_the_row_index(
+    release: dict[str, Path],
+) -> None:
+    """Three colonies to a plate over two plates, so the plates run 1, 1, 1, 2, 2, 2."""
+    rows = r.read_keio_replicate_table(
+        release[f"zenodo/{r._keio_table_name('Vector', 0)}"], cross="Vector", dose=0
+    )
+    assert [row.plate for row in rows] == [1, 1, 1, 2, 2, 2]
+    assert [row.values for row in rows] == [(KEIO_R1, KEIO_R2)] * len(SYNTHETIC_KEIO)
+    assert len({(row.plate, row.well) for row in rows}) == len(SYNTHETIC_KEIO)
+
+
+def test_a_deposit_table_refuses_a_header_that_moved(release: dict[str, Path]) -> None:
+    path = release[f"zenodo/{r._keio_table_name('Vector', 0)}"]
+    path.write_text(path.read_text().replace("TwoPass_Avg", "TwoPass_Average", 1))
+    with pytest.raises(r.TableLayoutError, match="header"):
+        r.read_keio_replicate_table(path, cross="Vector", dose=0)
+
+
+def test_a_deposit_table_refuses_a_repeated_position(release: dict[str, Path]) -> None:
+    """Without a unique position a replicate cannot be labeled, so the build stops."""
+    path = release[f"zenodo/{r._keio_table_name('Vector', 0)}"]
+    lines = path.read_text().splitlines()
+    lines[2] = lines[2].replace(",0A02,", ",0A01,")
+    path.write_text("\n".join(lines) + "\n")
+    with pytest.raises(r.TableLayoutError, match="position"):
+        r.read_keio_replicate_table(path, cross="Vector", dose=0)
+
+
+def test_a_keio_row_is_two_records_one_per_assay_plate_replicate(
+    release: dict[str, Path],
+) -> None:
+    resolution = _resolution({"thrL": "BW25113_0001"})
+    records = list(
+        r._keio_replicate_records(_keio_tables(release), resolution, _knockdowns())
+    )
+    # one writable label (thrL, one row) x 4 crosses x 3 doses x 2 replicates
+    assert len(records) == 24
+    assert {record.replicate_id for record in records} == {"K1:0A01:R1", "K1:0A01:R2"}
+    assert {record.value for record in records} == {KEIO_R1, KEIO_R2}
+    assert sorted({len(record.genotype) for record in records}) == [1, 2]
+
+
+def test_a_keio_label_heading_two_rows_is_two_records_keyed_by_position(
+    release: dict[str, Path],
+) -> None:
+    """The hokC label heads rows 3 and 6 at two distinct positions, so both stay."""
+    resolution = _resolution({"thrL": "BW25113_0001", "hokC": "BW25113_4412"})
+    records = [
+        record
+        for record in r._keio_replicate_records(
+            _keio_tables(release), resolution, _knockdowns()
+        )
+        if any(
+            p.perturbed_gene_name == "hokC" and p.perturbation_type == "deletion_strain"
+            for p in record.genotype.perturbations
+        )
+    ]
+    # two rows x 4 crosses x 3 doses x 2 replicates
+    assert len(records) == 48
+    assert {record.replicate_id for record in records} == {
+        "K1:0A03:R1",
+        "K1:0A03:R2",
+        "K2:0A02:R1",
+        "K2:0A02:R2",
+    }
+
+
+def test_the_deposit_must_reproduce_the_workbook_before_any_record_is_written(
+    release: dict[str, Path],
+) -> None:
+    _, blocks = r.read_table_s4a(release[r.TABLE_S4_FILE])
+    labels, _ = r.read_table_s4a(release[r.TABLE_S4_FILE])
+    check = r.check_deposit_reproduces_table_s4a(_keio_tables(release), labels, blocks)
+    assert check["cells_compared"] == len(SYNTHETIC_KEIO) * 12
+    assert check["worst_abs_cell_difference"] <= r.DEPOSIT_TOLERANCE
+    assert check["worst_abs_replicate_mean_difference"] <= r.DEPOSIT_TOLERANCE
+
+
+def test_a_deposit_that_disagrees_with_the_workbook_stops_the_build(
+    release: dict[str, Path],
+) -> None:
+    labels, blocks = r.read_table_s4a(release[r.TABLE_S4_FILE])
+    tables = _keio_tables(release)
+    moved = tables[("Vector", 0)]
+    tables[("Vector", 0)] = [
+        moved[0].model_copy(update={"released_mean": moved[0].released_mean + 0.5}),
+        *moved[1:],
+    ]
+    with pytest.raises(r.TableLayoutError, match="does not reproduce"):
+        r.check_deposit_reproduces_table_s4a(tables, labels, blocks)
+
+
+def test_the_collection_tables_map_onto_one_pinning_label_each(
+    release: dict[str, Path],
+) -> None:
+    """This is what types the Table S2A and S3 replicate as technical."""
+    check = r.check_collection_replicate_is_technical(
+        release[f"zenodo/{r.LEGEND_1536_FILE}"],
+        {
+            (background, medium, replicate): release[
+                f"zenodo/{r._wt_lpp_table_name(background, medium, replicate)}"
+            ]
+            for background in ("WT", "Lpp")
+            for medium in ("LB", "MOPS")
+            for replicate in (1, 2)
+        },
+    )
+    assert check["pinnings_per_strain"] == {"1": 2, "2": 2, "3": 2, "4": 2}
+    assert set(check["table_pinning"].values()) == {"3", "4"}
+
+
+def test_a_collection_table_on_two_pinnings_stops_the_build(
+    release: dict[str, Path],
+) -> None:
+    path = release[f"zenodo/{r._wt_lpp_table_name('WT', 'LB', 1)}"]
+    lines = path.read_text().splitlines()
+    lines[1] = lines[1].replace("0A05", "0A07")
+    path.write_text("\n".join(lines) + "\n")
+    with pytest.raises(r.TableLayoutError, match="pinnings"):
+        r.check_collection_replicate_is_technical(
+            release[f"zenodo/{r.LEGEND_1536_FILE}"], {("WT", "LB", 1): path}
+        )
 
 
 # --------------------------------------------------------------------------- #
 # The rule table and what is not loaded
 # --------------------------------------------------------------------------- #
-def test_every_drop_rule_is_listed_once_with_a_description() -> None:
+def test_only_the_genome_rules_still_drop_a_released_value() -> None:
+    """Every replicate rule was retired by the deposit; the three left are a genome gate."""
     rules = [rule for rule, _ in r.ROW_RULES]
-    assert len(rules) == len(set(rules)) == 6
+    assert len(rules) == len(set(rules)) == 3
     assert all(len(description) > 40 for _, description in r.ROW_RULES)
     assert set(rules) == {
-        r.DROP_EMPTY_VECTOR,
         r.DROP_NOT_IN_ANNOTATION,
         r.DROP_MERGED_LOCUS,
         r.DROP_AMBIGUOUS,
-        r.DROP_REPEATED_CONSTRUCT,
-        r.DROP_DUPLICATE_LABEL,
     }
+    assert all("GENOME GATE" in description for _, description in r.ROW_RULES)
+
+
+def test_every_retired_rule_names_the_key_that_retired_it() -> None:
+    retired = [rule for rule, _ in r.RETIRED_ROW_RULES]
+    assert retired == [
+        "row_is_an_empty_vector_control",
+        "construct_sits_in_more_than_one_collection_well",
+        "label_heads_more_than_one_row",
+    ]
+    assert all(
+        description.startswith("RETIRED 2026-11-25")
+        for _, description in r.RETIRED_ROW_RULES
+    )
 
 
 def test_the_four_consumed_workbooks_are_the_pmc_supplementary_files() -> None:
@@ -910,6 +1199,23 @@ def test_the_four_consumed_workbooks_are_the_pmc_supplementary_files() -> None:
     )
 
 
+def test_the_deposit_members_are_read_out_of_the_two_pinned_archives() -> None:
+    """23 members: the 12 per-replicate Keio tables, 8 collection tables, 3 legends."""
+    assert len(r.ZENODO_FILES) == 23
+    assert sum(1 for m in r.ZENODO_FILES if m.name.startswith("keio_")) == 13
+    assert all(m.mirror_relpath == f"data/zenodo/{m.name}" for m in r.ZENODO_FILES)
+    assert {m.archive for m in r.ZENODO_FILES} == {r.KEIO_ZIP, r.WT_LPP_ZIP}
+    for member in r.ZENODO_FILES:
+        record = member.retrieval
+        assert record.method == "zenodo"
+        assert record.retriever == "torchcell.literature.retrieve.zip_member"
+        assert record.params["member"] == member.member
+        assert record.params["container_sha256"] == r.ZIP_SHA256[member.archive]
+        assert record.params["url"] == r.zenodo_zip_url(member.archive)
+    assert set(r.ZIP_SHA256) == set(r.ZIP_BYTES) == {r.KEIO_ZIP, r.WT_LPP_ZIP}
+    assert all(len(digest) == 64 for digest in r.ZIP_SHA256.values())
+
+
 def test_what_is_not_loaded_names_the_images_the_subsets_and_the_ratios() -> None:
     text = " ".join(r.NOT_MIRRORED)
     assert "zenodo.10214517" in text
@@ -917,19 +1223,25 @@ def test_what_is_not_loaded_names_the_images_the_subsets_and_the_ratios() -> Non
     assert "Fold Change Growth" in text
     assert "GeneInteractionPhenotype" in text
     assert "mmc6.pdf" in text
+    # the archives are no longer dismissed as images plus code (#1203 item 7)
+    assert "ARE consumed" in text
 
 
 def test_the_record_counts_add_up_from_the_writable_rows() -> None:
-    assert r.EXPECTED_RECORDS == 48_900
-    assert r.EXPECTED_CROSSED_RECORDS == 32_499
+    """MEASURED on the real release: 112,872 records, 2.3x the 48,900 stored before."""
+    assert r.EXPECTED_RECORDS == 112_872
+    assert r.EXPECTED_CROSSED_RECORDS == 80_076
+    assert r.EXPECTED_EMPTY_GENOTYPE_RECORDS == 306
+    assert r.EXPECTED_WRITABLE_WELLS == 373
+    assert r.EXPECTED_WRITABLE_KEIO_ROWS == 4330
     assert (
-        r.EXPECTED_WRITABLE_WELLS * 12 * 2 + r.EXPECTED_WRITABLE_KEIO_ROWS * 12
+        r.EXPECTED_WRITABLE_WELLS * 12 * 2 + r.EXPECTED_WRITABLE_KEIO_ROWS * 4 * 3 * 2
         == r.EXPECTED_RECORDS
     )
     assert (
-        r.EXPECTED_WRITABLE_WELLS * 6 + r.EXPECTED_WRITABLE_KEIO_ROWS * 9
-        == r.EXPECTED_CROSSED_RECORDS
-    )
+        r.EXPECTED_WRITABLE_WELLS - r.S1_EMPTY_VECTOR_WELLS
+    ) * 6 + r.EXPECTED_WRITABLE_KEIO_ROWS * 3 * 3 * 2 == r.EXPECTED_CROSSED_RECORDS
+    assert r.EXPECTED_EMPTY_GENOTYPE_RECORDS == r.S1_EMPTY_VECTOR_WELLS * 18
 
 
 def test_the_dataset_is_registered_under_its_class_name() -> None:
@@ -950,7 +1262,7 @@ def test_the_library_dir_points_at_this_keys_literature_mirror() -> None:
 def deposited(
     release: dict[str, Path], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> tuple[dict[str, Path], Path]:
-    """A tmp DATA_ROOT whose raw mirror holds the four synthetic workbooks."""
+    """A tmp DATA_ROOT whose raw mirror holds the synthetic workbooks and deposit."""
     files = tuple(
         r.RawFile(
             name=name,
@@ -959,9 +1271,37 @@ def deposited(
             description=f"synthetic {name}",
         )
         for name, path in release.items()
+        if not name.startswith("zenodo/")
+    )
+    members = tuple(
+        r.ZenodoMember(
+            name=name.removeprefix("zenodo/"),
+            archive=(
+                r.WT_LPP_ZIP
+                if name.removeprefix("zenodo/")
+                in {r.LEGEND_1536_FILE, r.SCANS_README_FILE}
+                or "_R" in name
+                else r.KEIO_ZIP
+            ),
+            member=f"synthetic/{name.removeprefix('zenodo/')}",
+            sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+            bytes=path.stat().st_size,
+            description=f"synthetic {name}",
+        )
+        for name, path in release.items()
+        if name.startswith("zenodo/")
     )
     monkeypatch.setattr(r, "RAW_FILES", files)
-    monkeypatch.setattr(r, "DATA_SHA256", {f.name: f.sha256 for f in files})
+    monkeypatch.setattr(r, "ZENODO_FILES", members)
+    monkeypatch.setattr(
+        r, "ZENODO_FILES_BY_NAME", {member.name: member for member in members}
+    )
+    monkeypatch.setattr(
+        r,
+        "DATA_SHA256",
+        {f.name: f.sha256 for f in files}
+        | {f"zenodo/{m.name}": m.sha256 for m in members},
+    )
     monkeypatch.setattr(r, "RAW_FILES_BY_NAME", {f.name: f for f in files})
     data_root = tmp_path / "data_root"
     r.deposit_raw_mirror(sources=release, data_root=str(data_root))
@@ -1010,7 +1350,7 @@ def test_the_manifest_records_the_rerunnable_pmc_retrieval(
     assert [record.path for record in manifest.files] == [
         f"data/{name}"
         for name in (r.TABLE_S1_FILE, r.TABLE_S2_FILE, r.TABLE_S3_FILE, r.TABLE_S4_FILE)
-    ]
+    ] + [member.mirror_relpath for member in r.ZENODO_FILES]
     record = manifest.files[0]
     assert record.retrieval is not None
     assert record.retrieval.method == "pmc_cloud"
@@ -1054,13 +1394,14 @@ def built(
     _, data_root = deposited
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     _pin_assembly(monkeypatch)
-    # thrA sits at two wells under one spacer and notAGene resolves to nothing, leaving
-    # three writable wells (hokC, yaaX, thrL); the Keio label hokC heads two rows and
-    # notAGene resolves to nothing, leaving three writable rows (thrL, thrA, yaaX).
-    monkeypatch.setattr(r, "EXPECTED_WRITABLE_WELLS", 3)
-    monkeypatch.setattr(r, "EXPECTED_WRITABLE_KEIO_ROWS", 3)
-    monkeypatch.setattr(r, "EXPECTED_RECORDS", 3 * 12 * 2 + 3 * 12)
-    monkeypatch.setattr(r, "EXPECTED_CROSSED_RECORDS", 3 * 6 + 3 * 9)
+    # Only notAGene is unwritable, so six of the seven wells are records: the empty
+    # vector, thrA at BOTH its wells, hokC, yaaX and thrL. Of the six Keio rows five are
+    # writable, hokC's two rows among them, since their positions tell them apart.
+    monkeypatch.setattr(r, "EXPECTED_WRITABLE_WELLS", 6)
+    monkeypatch.setattr(r, "EXPECTED_WRITABLE_KEIO_ROWS", 5)
+    monkeypatch.setattr(r, "EXPECTED_RECORDS", 6 * 12 * 2 + 5 * 4 * 3 * 2)
+    monkeypatch.setattr(r, "EXPECTED_CROSSED_RECORDS", 5 * 6 + 5 * 3 * 3 * 2)
+    monkeypatch.setattr(r, "EXPECTED_EMPTY_GENOTYPE_RECORDS", 1 * 18)
     monkeypatch.setattr(r, "MIN_RESOLVED_TARGETS", 0.5)
     monkeypatch.setattr(r, "MIN_RESOLVED_KEIO", 0.5)
     dataset = r.CrispriCrossRachwalski2024Dataset(
@@ -1071,8 +1412,8 @@ def built(
 
 
 def test_the_build_writes_one_record_per_strain_condition(built: Any) -> None:
-    """The synthetic release: 3 writable wells x 24 columns + 3 Keio rows x 12."""
-    assert len(built) == 3 * 12 * 2 + 3 * 12 == 108
+    """6 writable wells x 24 columns, plus 5 Keio rows x 4 crosses x 3 doses x 2."""
+    assert len(built) == 6 * 12 * 2 + 5 * 4 * 3 * 2 == 264
 
 
 def test_the_build_refuses_a_record_count_that_does_not_match_the_tables(
@@ -1128,13 +1469,26 @@ def test_the_build_writes_its_four_ledgers(built: Any) -> None:
     assert [rule["rule"] for rule in dropped["rules"]] == [
         rule for rule, _ in r.ROW_RULES
     ]
+    assert [rule["rule"] for rule in dropped["retired_rules"]] == [
+        rule for rule, _ in r.RETIRED_ROW_RULES
+    ]
     assert dropped["kept_records"] == len(built)
+    assert dropped["empty_genotype_records"] == 18
+    # the restored rules say how many records they now write rather than drop
+    assert all(rule["records_now_written"] > 0 for rule in dropped["retired_rules"])
     extraction = json.loads((out / "extraction.json").read_text())
     assert [join["table"] for join in extraction["plate_order_joins"]] == [
         r.SCREEN_S2A,
         r.SCREEN_S3,
     ]
-    assert len(extraction["checks"]) == 4
+    assert [check["rule"] for check in extraction["checks"]] == [
+        "table_s2c_fixes_the_block_order",
+        "fifty_percent_reduction_count_reproduced",
+        "empty_vector_mean_is_one_per_column",
+        "empty_vector_mean_is_one_per_column",
+        "deposit_reproduces_table_s4a",
+        "collection_replicate_is_a_technical_pinning",
+    ]
     identifiers = json.loads((out / "identifier_reconciliation.json").read_text())
     assert identifiers["identifier_route"] == "gene_symbol"
     accounting = json.loads((out / "build_accounting.json").read_text())
@@ -1260,7 +1614,11 @@ def test_the_dev_store_holds_the_measured_record_count() -> None:
     try:
         assert len(dataset) == r.EXPECTED_RECORDS
         record = dataset[0]
-        assert record["experiment"]["phenotype"]["n_samples"] == 2
+        phenotype = record["experiment"]["phenotype"]
+        # the first record is a CRISPRi-collection culture: two technical pinnings
+        assert phenotype["n_samples"] == 2
+        assert phenotype["sample_unit"] == "technical_replicate"
+        assert phenotype["replicate_id"] is not None
     finally:
         # The handle MUST be closed before anything re-reads this store: a held
         # environment fails with "already open in this process", and that only shows
@@ -1276,18 +1634,37 @@ def test_every_text_sourced_value_audits_against_its_pinned_bytes() -> None:
     from torchcell.verification.sourced import audit_sourced_value
 
     load_dotenv()
-    # ``source_path`` prepends the citation key, so the root is the mirror's parent
+    # ``source_path`` prepends the citation key, so each root is the mirror's parent.
+    # The paper and SI quotes live in the literature mirror; the deposit quotes live in
+    # the raw mirror beside the files the loader consumes.
     library = r.library_dir().parent
+    raw = r.raw_mirror_dir().parent
     if not r.library_dir().exists():
         pytest.skip(f"literature mirror at {r.library_dir()} is absent")
     # a workbook is a zip, so its quote is XML; the next row checks it as a cell
     audits = {
-        key: audit_sourced_value(value, str(library))
+        key: audit_sourced_value(
+            value,
+            str(raw)
+            if str(value.provenance.source_uri).startswith("data/")
+            else str(library),
+        )
         for key, value in r.SOURCED_VALUES.items()
         if not str(value.provenance.source_uri).endswith(".xlsx")
     }
     assert [key for key, audit in audits.items() if not audit.passed] == []
     assert len(audits) == len(r.SOURCED_VALUES) - 1
+    # the three deposit quotes are audited, each against its own pinned member
+    deposited_keys = {
+        key
+        for key, value in r.SOURCED_VALUES.items()
+        if str(value.provenance.source_uri).startswith("data/zenodo/")
+    }
+    assert deposited_keys == {
+        "s2_replicate_is_technical",
+        "s2_four_pinnings_one_array",
+        "s4_replicate_is_biological",
+    }
 
 
 @pytest.mark.data
@@ -1312,3 +1689,71 @@ def test_the_workbook_sourced_value_is_the_cell_it_names() -> None:
     finally:
         book.close()
     assert str(header[2]).strip() == value.quote
+
+
+@pytest.mark.data
+def test_the_deposit_in_the_raw_mirror_is_per_replicate_table_s4a() -> None:
+    """The real deposit tables: 4,542 rows each, both replicates, unique positions.
+
+    This is the count test of the conversion's source. It needs no LMDB: it reads the
+    pinned mirror bytes and re-measures the three facts the build rests on, so a mirror
+    that drifted or a release that moved is caught here as well as at build time.
+    """
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    mirror = r.raw_mirror_dir()
+    if not (mirror / "data" / "zenodo" / r.LEGEND_1536_FILE).exists():
+        pytest.skip(f"deposit members are absent from {mirror}")
+    worst_mean = 0.0
+    rows_by_table: dict[tuple[str, int], int] = {}
+    for cross in r.KEIO_TABLE_CROSS_NAMES:
+        for dose in (0, 50, 500):
+            path = mirror / "data" / "zenodo" / r._keio_table_name(cross, dose)
+            rows = r.read_keio_replicate_table(path, cross=cross, dose=dose)
+            rows_by_table[(cross, dose)] = len(rows)
+            for row in rows:
+                mean = (row.values[0] + row.values[1]) / 2.0
+                worst_mean = max(worst_mean, abs(mean - row.released_mean))
+    assert set(rows_by_table.values()) == {4542}
+    assert len(rows_by_table) == 12
+    assert worst_mean <= r.DEPOSIT_TOLERANCE
+
+    # every deletion label that heads more than one row sits at distinct positions,
+    # which is what makes those 1,010 rows storable as replicates
+    rows = r.read_keio_replicate_table(
+        mirror / "data" / "zenodo" / r._keio_table_name("Vector", 0),
+        cross="Vector",
+        dose=0,
+    )
+    counts = Counter(row.label for row in rows)
+    repeated = {label for label, count in counts.items() if count > 1}
+    assert len(repeated) == 485
+    assert sum(counts[label] for label in repeated) == 1010
+    positions = [(row.plate, row.well) for row in rows if row.label in repeated]
+    assert len(set(positions)) == len(positions)
+
+
+@pytest.mark.data
+def test_the_real_legend_types_the_collection_replicate_as_technical() -> None:
+    """The deposit's own legend and tables, re-measured: four pinnings of 384 wells."""
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    mirror = r.raw_mirror_dir() / "data" / "zenodo"
+    if not (mirror / r.LEGEND_1536_FILE).exists():
+        pytest.skip(f"deposit members are absent from {mirror}")
+    check = r.check_collection_replicate_is_technical(
+        mirror / r.LEGEND_1536_FILE,
+        {
+            (background, medium, replicate): mirror
+            / r._wt_lpp_table_name(background, medium, replicate)
+            for background in ("WT", "Lpp")
+            for medium in ("LB", "MOPS")
+            for replicate in (1, 2)
+        },
+    )
+    assert check["legend_wells"] == 1536
+    assert check["pinnings_per_strain"] == {"1": 384, "2": 384, "3": 384, "4": 384}
+    assert set(check["table_pinning"].values()) == {"3", "4"}
+    assert len(check["table_pinning"]) == 8

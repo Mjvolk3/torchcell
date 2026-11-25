@@ -12,20 +12,28 @@ BW25113 ``lpp``, and separately conjugated three single knockdowns into the whol
 deletion collection. :class:`CrispriCrossRachwalski2024Dataset` serves the three released
 growth tables as ``FitnessExperiment`` records.
 
-RECORD = one (strain, medium, inducer dose) normalized colony growth:
+RECORD = one BIOLOGICAL REPLICATE of one (strain, medium, inducer dose) normalized
+colony growth:
 
 - GENOTYPE: a ``CrisprInterferencePerturbation`` on the
   ``ecoli_k12_bw25113_locus_tag`` namespace whose ``crispr`` construct carries the dCas9
   effector and the 20 nt Table S1 spacer, and/or a ``DeletionStrainPerturbation``.
   The crossed rows carry BOTH: an essential gene reachable only by knockdown together
   with a non-essential gene reachable only by deletion, which is the combination no
-  deletion collection can produce. 32,499 of the 48,900 records are such
-  two-perturbation genotypes.
+  deletion collection can produce. The 17 empty-vector wells of the collection carry an
+  EMPTY genotype on the stated BW25113 background: pFD152 with "a 20-nt spacer sequence
+  in lieu of a gene-specific sgRNA" perturbs no gene, and the plasmid's presence is not
+  statable as a gene perturbation, so nothing is asserted beyond the background.
 - ENVIRONMENT: solid LB or solid MOPS-glucose minimal at 37 C, plus anhydrotetracycline
   (aTc) at the column's dose as a ``SmallMoleculePerturbation``. The 0 ng/mL columns
   carry NO perturbation, because no aTc was added to those plates.
-- PHENOTYPE: ``FitnessPhenotype``, the released normalized colony growth, with
-  ``n_samples = 2`` and ``screen_id`` naming the released table.
+- PHENOTYPE: ``FitnessPhenotype``, the normalized colony growth verbatim, with
+  ``screen_id`` naming the released table and ``replicate_id`` naming the replicate.
+  The two arms of this release have DIFFERENT replicate units, and the deposit settles
+  which is which (see THE REPLICATE UNIT below): a Table S4A record is ONE assay-plate
+  biological replicate (``n_samples = 1``, no dispersion), and a Table S2A or Table S3
+  record is one culture whose two technical pinnings the design requires to be averaged
+  (``n_samples = 2``, ``sample_unit = technical_replicate``).
 
 WHY ``FitnessPhenotype`` AND NOT ``EnvironmentResponsePhenotype``. Every released value
 is a strictly positive relative colony growth whose neutral point is 1, not 0 (measured
@@ -78,31 +86,41 @@ Glycerol-3-phosphate dehydrogenase", operon ``yibN,secB,gpsA,grxC``) and the Res
 tables and Table S1's symbol is the one stored. The positional join is asserted at build
 time: the row counts must match and there must be exactly one disagreement, at that well.
 
-RECORDS DROPPED (rule, counts and items in ``preprocess/dropped_records.json``):
+RECORDS DROPPED (rule, counts and items in ``preprocess/dropped_records.json``). Only
+the genome rules drop anything now; every replicate rule this loader used to apply was
+retired by the deposit, which releases the key each one said the release lacked:
 
-1. ``row_is_an_empty_vector_control`` (17 rows x 2 tables): the empty-vector wells ARE the
-   denominator of Tables S2A and S3 -- their mean is 1.0000 by construction -- and their
-   genotype carries no gene perturbation, so 17 copies of the reference would be 17
-   strains nothing tells apart. They are typed as the ``phenotype_reference`` instead.
-2. ``label_is_not_in_the_bw25113_annotation``: ``lapA`` and ``lapB`` among the targets;
+1. ``label_is_not_in_the_bw25113_annotation``: ``lapA`` and ``lapB`` among the targets;
    124 Keio labels (JW strain ids the pinned annotation no longer carries, plus small-RNA
    and non-gene labels).
-3. ``label_is_a_fragment_of_a_merged_bw25113_locus``: ``ispU`` and ``uppS``, two target
+2. ``label_is_a_fragment_of_a_merged_bw25113_locus``: ``ispU`` and ``uppS``, two target
    symbols of ONE BW25113 locus, and 46 Keio labels.
-4. ``label_is_ambiguous_in_bw25113``: 10 Keio labels matching more than one locus.
-5. ``construct_sits_in_more_than_one_collection_well`` (10 wells x 2 tables = 20 rows):
-   MEASURED, the 360 guide wells carry only 355 distinct spacers. ``rbfA``, ``rplK``,
-   ``rplX`` and ``ydfO`` each head two wells whose 20 nt spacers are IDENTICAL, so they
-   are one construct pinned twice rather than two guides; the fifth repeated spacer is
-   shared by ``ispU`` and ``uppS``, which are two names for one gene (rule 3 removes
-   those two anyway). Two records of one strain in one condition cannot both be written,
-   and keeping one would be arbitrary (the rule Campos 2018 and Shiver 2016 already
-   apply).
-6. ``label_heads_more_than_one_row`` (951 rows of Table S4A): 458 Keio deletion labels
-   head 2 to 5 rows after resolution. Table S4A releases no plate, well or clone key, so
-   two rows naming one deletion are two measurements of a strain identity the release
-   gives nothing to separate. The Keio plate layout that would separate them is Baba
-   2006's table, which the mirror does not hold.
+3. ``label_is_ambiguous_in_bw25113``: 10 Keio labels matching more than one locus.
+
+These three are a GENOME GATE, and a genome gate is not supposed to decide whether a
+released value is stored ("the data is the data"; #1064, #1203). They survive here only
+because a bacterial perturbation leaf stores a locus tag of its declared namespace and
+nothing else, so a label the pinned assembly cannot place has no writable
+``systematic_gene_name``. They drop 2,592 of the released cells over 186 labels, and
+they are reported, not defended.
+
+RETIRED DROP RULES, and what the deposit released that retired each one:
+
+- ``row_is_an_empty_vector_control`` (was 17 rows x 2 tables): the 17 empty-vector wells
+  are now records with an empty genotype on BW25113, told apart by their Table S1 well
+  (``replicate_id``). They are ALSO still summarized by the ``phenotype_reference``,
+  which is what an aggregate reference is for; a control replicate the source releases is
+  a record as well (owner decision, 2026-11-24).
+- ``construct_sits_in_more_than_one_collection_well`` (was 10 wells x 2 tables): the
+  360 guide wells carry 355 distinct spacers, so five spacers sit in two wells each.
+  Table S1 gives each well its POSITION, and two wells of the arrayed collection are two
+  separately built, separately pinned strains, so they are two replicate records keyed by
+  well rather than one arbitrary survivor.
+- ``label_heads_more_than_one_row`` (was 951 rows of Table S4A): the claim that
+  "Table S4A releases no plate, well or clone key" is FALSE of the deposit. Every Keio
+  row carries ``Well.1536`` and an R row index from which its assay plate is recovered,
+  and MEASURED, all 485 duplicated labels (1,010 rows) sit at distinct
+  (assay plate, 1536-well) positions. They are records, keyed by position.
 
 WHAT IS NOT LOADED, AND WHY. Table S2B (the 52 LB-specific rows) and Table S2C (71
 rows at 500 ng/mL) are subsets of Table S2A whose values this build reproduces exactly:
@@ -113,25 +131,75 @@ while their MOPS values still match, which is a copy-paste in the subset. Table 
 block are RATIOS of columns this dataset already stores, and they are not the ratio of
 the stored averages (MEASURED: Table S4A's lolA_0aTC differs from col5/col1 in the third
 decimal on 498 of the first 500 rows), because the paper normalized per replicate and
-then averaged. Storing them as ``GeneInteractionPhenotype`` would also mistype them:
+then averaged, which the deposit's per-replicate columns now confirm directly. Storing
+them as ``GeneInteractionPhenotype`` would also mistype them:
 ``gene_interaction`` is an epsilon or tau, a deviation from an expected product, and a
 fold change is not one. Table S4B is the author's hit list (68 suppressors, 9 enhancers),
 a call over Table S4A rather than a measurement.
 
-THE DISPERSION IS A TYPED GAP, NEVER A ZERO. Every released value is a mean of two
-replicates and no table carries a spread. Figure S1B plots "the standard error of the
-data" for a handful of selected strains, so the quantity exists upstream and was simply
-not released per record; computing a sample SD from two values this loader never sees
-would be our statistic, not theirs.
+WHERE THE TABLE S4A VALUES COME FROM, AND WHY IT IS THE DEPOSIT AND NOT THE WORKBOOK.
+Table S4A releases one mean per (deletion row, CRISPRi plasmid, dose). The deposit's 12
+``Analysis Data Tables`` release the SAME rows in the SAME order with both replicates and
+the plate position, so this build reads the Keio arm from those files and keeps the
+workbook as the check rather than the source. It is the same data, proved cell by cell:
+MEASURED over all 54,504 released cells, the deposit's ``TwoPass_Avg`` equals the
+Table S4A cell to 4.5e-16, and ``TwoPass_Avg`` equals the mean of its own
+``TwoPass_norm_R1`` and ``TwoPass_norm_R2`` to 7.8e-15; all 12 tables carry the
+workbook's 4,542 labels in its own row order; and no cell of any of the 12 is blank, so
+NO row anywhere needs the authors' average as a fallback. The 4,542 rows are 4,017
+distinct deletion labels, and their (assay plate, 1536-well) positions are unique.
 
-AND THE REPLICATE TYPE IS CONTRADICTORY IN THE SOURCE, SO ``sample_unit`` IS A GAP. The
-Methods say "The average of the two technical replicates was then calculated and is
-reported in Table S2" and "CRISPRi Keio screens were conducted in technical duplicate",
-while the normalization paragraph of the SAME section says "the 12 Keio collection assay
-plates screened in biological duplicate" and three figure captions say biological (Figure
-S1A "two biological replicates (R1 and R2)", Figure S1B "the average of biological
-replicates", Figure 4C "two biological replicates of the pFD152_lolA Keio collection").
-``n_samples = 2`` is sourced either way; the unit is not, and is not guessed.
+THE DEPOSIT'S PLATE POSITION IS DERIVED, NOT PRINTED WHOLE. Each analysis table keeps R's
+row name, the index into the 12 x 1,536 concatenation the analysis script builds, so the
+assay plate is ``(row_name - 1) // 1536 + 1`` (MEASURED: 1 to 12, 371 to 383 rows each,
+4,542 in all) and ``Well.1536`` is the position within it. The printed ``Plate.384``,
+``Row.384`` and ``Col.384`` columns do NOT identify a row: ``Plate.384`` is the constant
+1 on every row of every table, and the three together take only 384 distinct values
+across 4,542 rows. The position key is therefore (derived plate, ``Well.1536``).
+
+THE REPLICATE UNIT: THE PAPER CONTRADICTS ITSELF, AND THE DEPOSIT SETTLES IT, ARM BY ARM.
+The prose cannot be read off: the Methods say "The average of the two technical
+replicates was then calculated and is reported in Table S2" and "CRISPRi Keio screens
+were conducted in technical duplicate", while the normalization paragraph of the SAME
+section says "the 12 Keio collection assay plates screened in biological duplicate" and
+three figure captions say biological (Figure S1A "two biological replicates (R1 and R2)",
+Figure S1B "the average of biological replicates", Figure 4C "two biological replicates
+of the pFD152_lolA Keio collection"). The contradiction is not about one thing: the two
+arms were replicated DIFFERENTLY, and the deposited files say how.
+
+- TABLE S4A (the CRISPRi-Keio cross) IS BIOLOGICAL DUPLICATE, so R1 and R2 are two
+  records. The deposit's own file legend reads "R1 = Replicate 1", and R1 and R2 are
+  SEPARATE PLATES: the deposit carries 24 plate scans named
+  ``Keio384_Plate<1..12>_R<1|2>.tiff`` (MEASURED: 12 plates x 2, exactly the Methods'
+  "24 assay plates at every aTc concentration -- the 12 Keio collection assay plates
+  screened in biological duplicate") and a separate ImageJ output per replicate
+  (``Grp2_K<plate>_R<1|2>_<dose>-P1-Results.csv``). Two separately grown, separately
+  pinned, separately imaged plates are two biological replicates, and the released
+  Table S4A cell is their mean.
+- TABLES S2A AND S3 ARE ONE CULTURE PINNED FOUR TIMES, so their two "replicates" are
+  TECHNICAL and are combined INSIDE one record. The deposit's scan legend reads "Each
+  strain pinned in technical quadruplicate", its ``CRISPRi_1536_Legend.csv`` assigns
+  every strain four pinning labels on the ONE 1,536-colony array (MEASURED: Replicate
+  1, 2, 3 and 4, 384 wells each), and the "R1"/"R2" analysis tables are pinnings 3 and 4
+  of that one array (MEASURED: all 384 wells of ``WT_LB R1.csv`` carry legend Replicate
+  3 and all 384 of ``R2.csv`` carry Replicate 4, with the target label agreeing on every
+  row). Both columns come out of the SINGLE per-dose ImageJ output of that one plate
+  (MEASURED: all 384 R1 values and all 384 R2 values of ``WT_LB`` at 0 ng/mL are cells of
+  ``WT_LB_0aTC-P1-Results.csv``, at the array positions their well names name). The
+  ``_1`` / ``_2`` in the scan file names are SCAN numbers, not replicates: the scan
+  legend assigns four dose plates to scan 1 and two to scan 2.
+
+So the Methods sentence about Table S2 is right and Figure S1A's "two biological
+replicates (R1 and R2)" is the mislabel, which is recorded rather than resolved silently.
+
+THE DISPERSION IS NEVER A COMPUTED NUMBER. A Table S4A record is one replicate, so it has
+no dispersion of its own: its uncertainty fields are typed absences with reason
+``not_applicable_single_measurement``. A Table S2A or S3 record combines two technical
+pinnings, and the release carries no spread for them either; Figure S1B plots "the
+standard error of the data" for a handful of selected strains, so the quantity exists
+upstream and was not released per record. A sample SD over two values would be our
+statistic, not theirs, and the per-strain mean and spread over the Table S4A replicate
+records are a modeling-time derivation.
 
 THE ONE ENVIRONMENT VALUE THE PAPER DOES NOT PIN. The base medium of the CRISPRi-Keio
 assay plates is never named: that paragraph says only "cultures are spotted onto a 1536-
@@ -155,6 +223,7 @@ its AMOUNT unset, which is the manufacturer's and is nowhere stated.
 
 from __future__ import annotations
 
+import csv
 import hashlib
 import json
 import logging
@@ -166,6 +235,7 @@ from collections.abc import Callable, Iterator, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
+from urllib.parse import quote
 
 import openpyxl
 import pandas as pd
@@ -203,6 +273,7 @@ from torchcell.datamodels.schema import (
     MediaComponent,
     MediaComponentRole,
     Publication,
+    SampleUnit,
     SmallMoleculePerturbation,
     StrainConstruction,
     Temperature,
@@ -352,9 +423,287 @@ RAW_FILES: tuple[RawFile, ...] = (
         "suppressor / enhancer hit list",
     ),
 )
-#: ``{raw file name: pinned sha256}``, the build-time check of every consumed file.
-DATA_SHA256: dict[str, str] = {f.name: f.sha256 for f in RAW_FILES}
 RAW_FILES_BY_NAME: dict[str, RawFile] = {f.name: f for f in RAW_FILES}
+
+# --------------------------------------------------------------------------- #
+# The Zenodo deposit: the per-replicate tables and the files that type a replicate
+# --------------------------------------------------------------------------- #
+#: The deposit's two data archives. Each is pinned by its own sha256, which
+#: :func:`torchcell.literature.retrieve.zip_member` asserts BEFORE reading a member, so a
+#: re-packed archive is detected instead of silently yielding different bytes.
+ZENODO_RECORD_ID = "10214517"
+KEIO_ZIP = "CRISPRi Keio Cross.zip"
+WT_LPP_ZIP = "WT and Lpp CRISPRi Assays.zip"
+#: When the archives were downloaded whole, hashed, and their members re-hashed.
+ZENODO_RETRIEVED_AT = "2026-11-25"
+ZIP_SHA256: dict[str, str] = {
+    WT_LPP_ZIP: "0c0da9b21e4e35bad3236039d95ba32c0211d93dc9478fdf1fce976cd5c2e8ca",
+    KEIO_ZIP: "2daaac97969d569c874839abf1b13c3803826c2e5f2f2ac9369e1b46c1657a4b",
+}
+ZIP_BYTES: dict[str, int] = {WT_LPP_ZIP: 363_817_156, KEIO_ZIP: 1_414_049_164}
+
+
+def zenodo_zip_url(archive: str) -> str:
+    """The Zenodo content URL of one archive of this record."""
+    return (
+        f"https://zenodo.org/api/records/{ZENODO_RECORD_ID}/files/"
+        f"{quote(archive)}/content"
+    )
+
+
+class ZenodoMember(BaseModel):
+    """One member file of a deposit archive: its pinned bytes and its retrieval."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    #: File name inside the raw mirror's ``data/zenodo/`` directory (no spaces).
+    name: str
+    #: Which archive holds it.
+    archive: str
+    #: Its path inside that archive, verbatim (these DO carry spaces).
+    member: str
+    sha256: str
+    bytes: int
+    description: str
+
+    @property
+    def mirror_relpath(self) -> str:
+        """Path inside the raw mirror (``data/zenodo/<name>``)."""
+        return f"data/zenodo/{self.name}"
+
+    @property
+    def source_url(self) -> str:
+        """HTTPS URL of the archive the member is read out of."""
+        return zenodo_zip_url(self.archive)
+
+    @property
+    def retrieval(self) -> RetrievalRecord:
+        """The re-runnable retrieval of these member bytes."""
+        return RetrievalRecord(
+            method=RetrievalMethod.zenodo,
+            source_url=self.source_url,
+            retriever="torchcell.literature.retrieve.zip_member",
+            params={
+                "url": self.source_url,
+                "member": self.member,
+                "container_sha256": ZIP_SHA256[self.archive],
+            },
+            sha256=self.sha256,
+            retrieved_at=ZENODO_RETRIEVED_AT,
+        )
+
+
+#: Table S4A's four CRISPRi plasmid blocks as the DEPOSIT's file names spell them, in
+#: the workbook's own block order. The knockdown symbol each one carries is read off
+#: :data:`S4A_BLOCKS` rather than repeated here, so the two orders cannot drift apart.
+KEIO_TABLE_CROSS_NAMES: tuple[str, ...] = ("Vector", "LolA", "PssA", "MreD")
+#: ``{(deposit cross name, dose): (sha256, bytes)}`` of the 12 per-replicate Keio tables.
+_KEIO_TABLE_PINS: dict[tuple[str, int], tuple[str, int]] = {
+    ("Vector", 0): (
+        "b532e147a00bc41f7380715cc19f3f5f1af92f38245fe121c382b4f71bb2a590",
+        661762,
+    ),
+    ("Vector", 50): (
+        "4592b63c2859e383113b27b4b1eb00bbe9760388678255f102ec34f0488ff3b4",
+        671790,
+    ),
+    ("Vector", 500): (
+        "447fb777ccb65098381f4e5013b11623855073458a358cc7c77aa5529fecfe7a",
+        672080,
+    ),
+    ("LolA", 0): (
+        "909bef596b0205846dce6fd1529abf25c71a04d4bc65a28933a6820aeedb5177",
+        892125,
+    ),
+    ("LolA", 50): (
+        "b6cadc043e459e20ddd457c89b321ec3d5ba1260a98d50728bfd628023e70757",
+        887668,
+    ),
+    ("LolA", 500): (
+        "69d8a808298acf4542216677764d5a42dc750a803cc6687d722bddcf7eee71b2",
+        885734,
+    ),
+    ("PssA", 0): (
+        "67eae9b0eb7aed0b9b482e1b0f8ad9f16a1e25bf42452e8027eb947ef85203a5",
+        889020,
+    ),
+    ("PssA", 50): (
+        "d2c37911d2793592ce14eaee2f2599397a8b7c7e7defcec2e4b76a34e072f9a8",
+        888689,
+    ),
+    ("PssA", 500): (
+        "8f69e1e6ddd643f7d8613b96a790f72bacf4fe0593b8a3c6b90c522553130d1b",
+        889023,
+    ),
+    ("MreD", 0): (
+        "ef12cc854709f70aafa7fc48c0ad320222e35a8db1af92e33e23974c640bedc5",
+        888343,
+    ),
+    ("MreD", 50): (
+        "ef1016ee6de2510ebba482ad5463981ec9ec53615419d8cf8734c10887bd2dec",
+        888330,
+    ),
+    ("MreD", 500): (
+        "3e7f30c65f34b86810eeb755f8d28a63fab91036f1f1e2bc6402353e61796978",
+        887155,
+    ),
+}
+#: ``{(background, medium, replicate): (sha256, bytes)}`` of the 8 CRISPRi-collection
+#: dose-response tables. They carry no stored value: they are what TYPES the Table S2A
+#: and Table S3 replicate as technical, by mapping every well to one legend pinning.
+_WT_LPP_TABLE_PINS: dict[tuple[str, str, int], tuple[str, int]] = {
+    ("WT", "LB", 1): (
+        "7725a236c75ef590d0deb86b579aba870870ba89026af3084a4b8b1b77c376a2",
+        20565,
+    ),
+    ("WT", "LB", 2): (
+        "b42e9bbbb21fb6a17c3e81f7e6ebbb16a6fcbae55e4b4c8da730a9295336f261",
+        20469,
+    ),
+    ("WT", "MOPS", 1): (
+        "608effde8fee028853e51a9229f92ea39fa0003e0e4bdace9e91be3c47d778d7",
+        20294,
+    ),
+    ("WT", "MOPS", 2): (
+        "a0d07b20289ec3791319824e7a668ed296c54fce236d23f15da626e41944e9e3",
+        20281,
+    ),
+    ("Lpp", "LB", 1): (
+        "68647aa727053ff5ebe53896348667555e667eddcf355666a745651f5bde5c49",
+        20519,
+    ),
+    ("Lpp", "LB", 2): (
+        "5c9a138f5b6bdb75c2338164a12834407922b93cbcd9ccbb9d895983ed980820",
+        20504,
+    ),
+    ("Lpp", "MOPS", 1): (
+        "8106154bad38795ec7cc4551a865b77ef2bc6a190242a307dc39569fee41be6b",
+        20573,
+    ),
+    ("Lpp", "MOPS", 2): (
+        "52883aa9cb599d91757ea6b100e7f2fa3a846597eadbbcbf2b7e47f5fd5ed95d",
+        20553,
+    ),
+}
+#: The 1,536-colony layout of the CRISPRi collection: ``Well 1536``,
+#: ``CRISPRi_Plasmid`` and ``Replicate``, the four technical pinnings per strain.
+LEGEND_1536_FILE = "CRISPRi_1536_Legend.csv"
+#: The two deposited legends that state, in the authors' own words, what a replicate is.
+KEIO_README_FILE = "keio_imagej_readme.txt"
+SCANS_README_FILE = "wt_lpp_scans_readme.txt"
+
+
+def keio_cross_symbols() -> dict[str, str | None]:
+    """``{deposit cross name: knockdown symbol}``, paired by the workbook's block order.
+
+    ``None`` is the empty-vector block. The symbols come from :data:`S4A_BLOCKS`, so the
+    deposit and the workbook can only ever name the same four blocks in the same order.
+    """
+    return {
+        cross: symbol
+        for cross, (symbol, _) in zip(KEIO_TABLE_CROSS_NAMES, S4A_BLOCKS, strict=True)
+    }
+
+
+def _keio_table_name(cross: str, dose: int) -> str:
+    """Mirror file name of one per-replicate Keio table."""
+    return f"keio_{cross}_{dose}aTc.csv"
+
+
+def _wt_lpp_table_name(background: str, medium: str, replicate: int) -> str:
+    """Mirror file name of one CRISPRi-collection dose-response table."""
+    return f"{background}_{medium}_R{replicate}.csv"
+
+
+ZENODO_FILES: tuple[ZenodoMember, ...] = (
+    *(
+        ZenodoMember(
+            name=_keio_table_name(cross, dose),
+            archive=KEIO_ZIP,
+            member=f"CRISPRi Keio Cross/Analysis Data Tables/{cross}_{dose}aTc.csv",
+            sha256=_KEIO_TABLE_PINS[(cross, dose)][0],
+            bytes=_KEIO_TABLE_PINS[(cross, dose)][1],
+            description=(
+                f"Table S4A's {cross} block at {dose} ng/mL aTc, per replicate: 4,542 "
+                "rows with the R row index, Well.1536, Keio_Gene, Cross, the two raw "
+                "colony densities, the one-pass and TWO-PASS normalized growth of each "
+                "replicate (TwoPass_norm_R1, TwoPass_norm_R2) and their mean "
+                "(TwoPass_Avg), which is the released Table S4A cell"
+            ),
+        )
+        for cross in KEIO_TABLE_CROSS_NAMES
+        for dose in (0, 50, 500)
+    ),
+    *(
+        ZenodoMember(
+            name=_wt_lpp_table_name(background, medium, replicate),
+            archive=WT_LPP_ZIP,
+            member=(
+                f"WT and Lpp CRISPRi Assays/Analysis Data Tables/"
+                f"{background}_{medium} R{replicate}.csv"
+            ),
+            sha256=_WT_LPP_TABLE_PINS[(background, medium, replicate)][0],
+            bytes=_WT_LPP_TABLE_PINS[(background, medium, replicate)][1],
+            description=(
+                f"the {background} CRISPRi collection on {medium}, pinning "
+                f"R{replicate}: 384 rows of raw colony density at the six aTc doses, "
+                "keyed by the 1,536-array well. No stored value comes from it; it is "
+                "what proves the Table S2A / Table S3 replicate is TECHNICAL, by "
+                f"mapping all 384 wells onto one {LEGEND_1536_FILE} pinning label"
+            ),
+        )
+        for background in ("WT", "Lpp")
+        for medium in ("LB", "MOPS")
+        for replicate in (1, 2)
+    ),
+    ZenodoMember(
+        name=LEGEND_1536_FILE,
+        archive=WT_LPP_ZIP,
+        member=f"WT and Lpp CRISPRi Assays/{LEGEND_1536_FILE}",
+        sha256="91a6105438ba5d17fba4a7dfd5a6cf8809eb66cc960356ac1d17e67f131c6e55",
+        bytes=20418,
+        description=(
+            "the CRISPRi collection's 1,536-colony layout: every one of the 1,536 wells "
+            "with its plasmid and its pinning label Replicate 1, 2, 3 or 4 (384 wells "
+            "each). This is the file that types the Table S2A / Table S3 replicate: the "
+            "four labels are four pinnings of one culture on one plate"
+        ),
+    ),
+    ZenodoMember(
+        name=KEIO_README_FILE,
+        archive=KEIO_ZIP,
+        member="CRISPRi Keio Cross/ImageJ Output Files/#Readme.txt",
+        sha256="6a81411621c7d896c323ab9a995e83984241bdb07f9dc465adbefbed2d034cbe",
+        bytes=457,
+        description=(
+            "the deposit's file-naming legend for the CRISPRi-Keio outputs, which reads "
+            "'K1 = Keio 384 Plate 1' and 'R1 = Replicate 1': the authors' own statement "
+            "that R1 and R2 are replicates of a whole assay plate"
+        ),
+    ),
+    ZenodoMember(
+        name=SCANS_README_FILE,
+        archive=WT_LPP_ZIP,
+        member="WT and Lpp CRISPRi Assays/High Resolution Scanned Images/#Readme.txt",
+        sha256="51323cceb480418d7f64b04ea3d5c3980045c4b1d342a770b335d3a29acb3a44",
+        bytes=567,
+        description=(
+            "the scan legend of the CRISPRi-collection assays, which reads 'Each strain "
+            "pinned in technical quadruplicate' and assigns four dose plates to scan 1 "
+            "and two to scan 2, so the _1 / _2 of a scan file name is a SCAN and not a "
+            "replicate"
+        ),
+    ),
+)
+ZENODO_FILES_BY_NAME: dict[str, ZenodoMember] = {f.name: f for f in ZENODO_FILES}
+
+#: ``{raw file name: pinned sha256}``, the build-time check of every consumed file. The
+#: deposit members are keyed by their mirror-relative path, since they live in a
+#: subdirectory of ``raw/``.
+DATA_SHA256: dict[str, str] = {
+    **{f.name: f.sha256 for f in RAW_FILES},
+    **{f"zenodo/{f.name}": f.sha256 for f in ZENODO_FILES},
+}
 
 #: What the article releases that the loader deliberately does not consume.
 NOT_MIRRORED = (
@@ -363,10 +712,11 @@ NOT_MIRRORED = (
     "statements; it carries no per-record value",
     "mmc6.pdf (Document S2, article plus supplemental information): a reprint of the "
     "article, byte-for-byte redundant with paper.pdf in the literature mirror",
-    f"Zenodo {ZENODO_DOI}: a 1.4 GB and a 364 MB archive of raw plate images plus the "
-    "ImageJ / R analysis code. No record here is built from an image, and the released "
-    "tables are the normalized values the code produces, so the archives are retrieval "
-    "metadata rather than a build input",
+    f"Zenodo {ZENODO_DOI}, the parts of the two archives this build does NOT consume: "
+    "the 32 high-resolution plate scans (86 MB each), the per-plate ImageJ outputs they "
+    "were quantified from, the R analysis scripts and the 833 kB CRISPRi-cross legend. "
+    "The PER-REPLICATE ANALYSIS TABLES of both archives ARE consumed and are mirrored "
+    "member by member (see ZENODO_FILES); no record is built from an image",
     "Table S2 sheets ST2B (52 LB-specific rows) and ST2C (71 rows at 500 ng/mL): both "
     "are subsets of ST2A, and this build reproduces 50 of ST2C's 52 joinable rows from "
     "ST2A to 1e-9; the two that differ (ygeN, yqcG) share one LB value in ST2C while "
@@ -432,6 +782,27 @@ def _table(
             citation_key=CITATION_KEY,
             sha256=RAW_FILES_BY_NAME[name].sha256,
             method="verbatim cell of the released workbook (raw mirror)",
+            page=page,
+        ),
+    )
+
+
+def _deposit(
+    value: Any, quote: str, *, name: str, page: str, note: str | None = None
+) -> SourcedValue:
+    """Bind a value to a verbatim line of one pinned member of the Zenodo deposit."""
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=f"data/zenodo/{name}",
+            citation_key=CITATION_KEY,
+            sha256=ZENODO_FILES_BY_NAME[name].sha256,
+            method=(
+                "verbatim line of a member of the deposited archive "
+                f"(raw mirror, Zenodo {ZENODO_DOI})"
+            ),
             page=page,
         ),
     )
@@ -621,8 +992,40 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "The average of the two technical replicates was then calculated and is "
         "reported in Table S2.",
         page=_NORMALIZATION,
-        note="n_samples for Tables S2A and S3; the TYPE is contradicted by the figure "
-        "legends, so sample_unit is a typed gap",
+        note="n_samples for Tables S2A and S3, and the statement the deposit CONFIRMS: "
+        "the two columns are two of the four technical pinnings of one culture on one "
+        "plate, so they are combined inside one record",
+    ),
+    "s2_replicate_is_technical": _deposit(
+        "technical_replicate",
+        "Each strain pinned in technical quadruplicate",
+        name=SCANS_README_FILE,
+        page="High Resolution Scanned Images/#Readme.txt",
+        note="sample_unit for Tables S2A and S3, from the authors' own scan legend. "
+        "The same file shows the _1 / _2 of a scan name is a SCAN, not a replicate: "
+        "'Scan 1' carries the 0, 5, 10 and 50 ng/mL plates and 'Scan 2' the 100 and "
+        "500 ng/mL plates",
+    ),
+    "s2_four_pinnings_one_array": _deposit(
+        4,
+        "Well 1536,CRISPRi_Plasmid,Replicate",
+        name=LEGEND_1536_FILE,
+        page="header row",
+        note="the 1,536-colony layout assigns each strain FOUR pinning labels on the "
+        "one array. MEASURED on the pinned bytes: Replicate 1, 2, 3 and 4, 384 wells "
+        "each; and the deposit's R1 / R2 dose-response tables are pinnings 3 and 4 of "
+        "that array, with the target label agreeing on all 384 rows of each",
+    ),
+    "s4_replicate_is_biological": _deposit(
+        "biological_replicate",
+        "R1 = Replicate 1",
+        name=KEIO_README_FILE,
+        page="ImageJ Output Files/#Readme.txt",
+        note="sample_unit for Table S4A. The same legend reads 'K1 = Keio 384 Plate 1', "
+        "and the deposit carries a separate plate scan and a separate ImageJ output per "
+        "(plate, replicate): MEASURED, 24 scans named Keio384_Plate<1..12>_R<1|2>.tiff, "
+        "which is the Methods' 24 assay plates as 12 plates in duplicate. Two "
+        "separately grown and separately imaged plates are two biological replicates",
     ),
     "n_samples_s4_technical": _paper(
         2,
@@ -796,52 +1199,62 @@ FIFTY_PERCENT_COUNT = 272
 #: Fraction of distinct labels that must resolve to one BW25113 locus, per table.
 MIN_RESOLVED_TARGETS = 0.98
 MIN_RESOLVED_KEIO = 0.95
+#: How close the deposit's own mean must sit to the workbook cell it is the source of,
+#: and to the mean of its own two replicates. MEASURED on the pinned bytes: 4.5e-16 and
+#: 7.8e-15 over all 54,504 cells, so this is floating-point agreement, not a tolerance.
+DEPOSIT_TOLERANCE = 1e-12
 
-DROP_EMPTY_VECTOR = "row_is_an_empty_vector_control"
 DROP_NOT_IN_ANNOTATION = "label_is_not_in_the_bw25113_annotation"
 DROP_MERGED_LOCUS = "label_is_a_fragment_of_a_merged_bw25113_locus"
 DROP_AMBIGUOUS = "label_is_ambiguous_in_bw25113"
-DROP_REPEATED_CONSTRUCT = "construct_sits_in_more_than_one_collection_well"
-DROP_DUPLICATE_LABEL = "label_heads_more_than_one_row"
 
+#: The only rules that still drop a released value, and all three are a GENOME GATE
+#: rather than a replicate rule: see the module docstring and #1064 / #1203.
 ROW_RULES: tuple[tuple[str, str], ...] = (
-    (
-        DROP_EMPTY_VECTOR,
-        "the 17 empty-vector wells of Tables S2A and S3 ARE their denominator -- the "
-        "mean of their raw colony densities is what every other value is divided by, "
-        "and it is 1.0000 in every column -- and their genotype carries no gene "
-        "perturbation, so they are the phenotype_reference rather than 17 records "
-        "nothing tells apart",
-    ),
     (
         DROP_NOT_IN_ANNOTATION,
         "the label is no locus tag, symbol or synonym of the pinned BW25113 assembly "
         "(Keio JW strain ids the annotation predates, small-RNA and non-gene labels), "
         "and a bacterial leaf stores a locus tag of its declared namespace and nothing "
-        "else",
+        "else. A GENOME GATE: it is reported, not defended",
     ),
     (
         DROP_MERGED_LOCUS,
         "two or more labels resolve to ONE current BW25113 locus, so no member IS the "
-        "locus tag; the whole group goes rather than merging distinct strains",
+        "locus tag; the whole group goes rather than merging distinct strains. A GENOME "
+        "GATE: it is reported, not defended",
     ),
     (
         DROP_AMBIGUOUS,
         "the label matches more than one locus of the pinned assembly, so no single "
-        "locus tag can be written for it",
+        "locus tag can be written for it. A GENOME GATE: it is reported, not defended",
+    ),
+)
+
+#: Rules this loader used to apply and no longer does, with the key the deposit releases
+#: that retired each one. They are kept in the ledger so a reader of the store can see
+#: that the records they used to remove are now present.
+RETIRED_ROW_RULES: tuple[tuple[str, str], ...] = (
+    (
+        "row_is_an_empty_vector_control",
+        "RETIRED 2026-11-25. The 17 empty-vector wells are control replicates the "
+        "source releases, and an empty genotype on the stated BW25113 background states "
+        "them, so they are records told apart by their Table S1 well. The "
+        "phenotype_reference still summarizes them as an aggregate",
     ),
     (
-        DROP_REPEATED_CONSTRUCT,
-        "the construct's 20 nt spacer sits in more than one well of Table S1, so the "
-        "wells hold one strain pinned twice rather than two guides; two records of one "
-        "strain in one condition cannot both be written and keeping one would be "
-        "arbitrary",
+        "construct_sits_in_more_than_one_collection_well",
+        "RETIRED 2026-11-25. Table S1 gives every well its position, and two wells of "
+        "the arrayed collection are two separately built, separately pinned strains, so "
+        "the five spacers that sit in two wells each are two replicate records keyed by "
+        "well rather than one arbitrary survivor",
     ),
     (
-        DROP_DUPLICATE_LABEL,
-        "the deletion label heads more than one row of Table S4A, which releases no "
-        "plate, well or clone key, so the rows are measurements of a strain identity "
-        "the release gives nothing to separate",
+        "label_heads_more_than_one_row",
+        "RETIRED 2026-11-25. The claim that Table S4A releases no plate, well or clone "
+        "key is false of the deposit: every row carries Well.1536 and an R row index "
+        "that gives its assay plate, and MEASURED, all 485 duplicated labels (1,010 "
+        "rows) sit at distinct positions, so they are records keyed by position",
     ),
 )
 
@@ -953,57 +1366,86 @@ def environment(medium: str, ng_per_ml: float, *, timed: bool) -> Environment:
 # --------------------------------------------------------------------------- #
 # Phenotype
 # --------------------------------------------------------------------------- #
-_GAP_SAMPLE_UNIT = ProvenanceGap(
-    field="sample_unit",
-    reason=ProvenanceGapReason.not_reported_by_primary,
-    note="the source contradicts itself: the Methods say 'The average of the two "
-    "technical replicates was then calculated and is reported in Table S2' and 'CRISPRi "
-    "Keio screens were conducted in technical duplicate', while the same section's "
-    "normalization paragraph says 'the 12 Keio collection assay plates screened in "
-    "biological duplicate' and Figures S1A, S1B and 4C all say biological. The count is "
-    "2 either way; the unit is not stated consistently and is not guessed",
+#: Why a Table S2A / Table S3 record carries no dispersion: its two technical pinnings
+#: are combined by the design, and the release prints no spread for them.
+_COMBINED_TECHNICAL_NOTE = (
+    "the stored value is the released mean of the two technical pinnings this record "
+    "combines, and no table carries their spread. Figure S1B plots 'the standard error "
+    "of the data' for a handful of selected strains, so the quantity exists upstream and "
+    "was not released per record; a sample SD over two values this loader never sees "
+    "would be our statistic, not theirs"
 )
-_GAP_UNCERTAINTY = ProvenanceGap(
-    field="fitness_uncertainty",
-    reason=ProvenanceGapReason.not_reported_by_primary,
-    note="every released value is the mean of the two replicates and no table carries a "
-    "spread. Figure S1B plots 'the standard error of the data' for a handful of selected "
-    "strains, so the quantity exists upstream and was not released per record; a sample "
-    "SD of two values this loader never sees would be our statistic, not theirs",
+#: Why a Table S4A record carries no dispersion: it IS one biological replicate.
+_SINGLE_REPLICATE_NOTE = (
+    "a record is ONE assay-plate biological replicate (the deposit's TwoPass_norm_R1 or "
+    "TwoPass_norm_R2), and one measurement has no dispersion of its own. The per-strain "
+    "mean and spread over the two replicate records are a modeling-time derivation; the "
+    "authors' own mean of them is the released Table S4A cell, which the build checks "
+    "and does not store"
 )
-_GAP_UNCERTAINTY_TYPE = ProvenanceGap(
-    field="fitness_uncertainty_type",
-    reason=ProvenanceGapReason.not_reported_by_primary,
-    note="no uncertainty is released, so there is no kind to name",
+_UNCERTAINTY_FIELDS: tuple[str, ...] = (
+    "fitness_uncertainty",
+    "fitness_uncertainty_type",
+    "fitness_se",
+    "fitness_std",
 )
-_GAP_SE = ProvenanceGap(
-    field="fitness_se",
-    reason=ProvenanceGapReason.not_reported_by_primary,
-    note="no uncertainty is released, so no standard error can be derived",
+#: Tables S2A and S3: a combined record, so the absence is "not released", not "n = 1".
+COMBINED_TECHNICAL_GAPS: tuple[ProvenanceGap, ...] = tuple(
+    ProvenanceGap(
+        field=field,
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        note=_COMBINED_TECHNICAL_NOTE,
+    )
+    for field in _UNCERTAINTY_FIELDS
 )
-_GAP_STD = ProvenanceGap(
-    field="fitness_std",
-    reason=ProvenanceGapReason.not_reported_by_primary,
-    note="no standard deviation is released",
+#: Table S4A: one measurement, so the absence is a typed not-applicable.
+SINGLE_REPLICATE_GAPS: tuple[ProvenanceGap, ...] = tuple(
+    ProvenanceGap(
+        field=field,
+        reason=ProvenanceGapReason.not_applicable_single_measurement,
+        note=_SINGLE_REPLICATE_NOTE,
+    )
+    for field in _UNCERTAINTY_FIELDS
 )
-PHENOTYPE_GAPS: tuple[ProvenanceGap, ...] = (
-    _GAP_SAMPLE_UNIT,
-    _GAP_UNCERTAINTY,
-    _GAP_UNCERTAINTY_TYPE,
-    _GAP_SE,
-    _GAP_STD,
-)
-N_REPLICATES = 2
+#: Technical pinnings combined inside one Table S2A / Table S3 record.
+N_TECHNICAL_PINNINGS = 2
 
 
-def phenotype(growth: float, screen_id: str) -> FitnessPhenotype:
-    """One released normalized colony growth, labelled with the screen it came from."""
+def combined_technical_phenotype(
+    growth: float, screen_id: str, replicate_id: str
+) -> FitnessPhenotype:
+    """One CRISPRi-collection culture: its two technical pinnings, combined as released.
+
+    The two pinnings are two colonies of ONE culture on ONE plate (the deposit's scan
+    legend and 1,536 layout; see the module docstring), so the design requires them to be
+    averaged to give one valid value and the record states that level: ``n_samples = 2``
+    with ``sample_unit = technical_replicate``. ``replicate_id`` is the culture's own
+    position, the Table S1 well, which is what tells two wells of one construct apart.
+    """
     return FitnessPhenotype(
         fitness=growth,
-        n_samples=N_REPLICATES,
-        sample_unit=None,
+        n_samples=N_TECHNICAL_PINNINGS,
+        sample_unit=SampleUnit.technical_replicate,
         screen_id=screen_id,
-        provenance_gaps=list(PHENOTYPE_GAPS),
+        replicate_id=replicate_id,
+        provenance_gaps=list(COMBINED_TECHNICAL_GAPS),
+    )
+
+
+def replicate_phenotype(growth: float, replicate_id: str) -> FitnessPhenotype:
+    """One Table S4A assay-plate biological replicate, verbatim from the deposit.
+
+    ``n_samples = 1`` and the uncertainty fields are typed not-applicable, because the
+    record IS the replicate. ``replicate_id`` carries the deposit's own replicate label
+    together with the position that tells two rows of one deletion label apart.
+    """
+    return FitnessPhenotype(
+        fitness=growth,
+        n_samples=1,
+        sample_unit=SampleUnit.biological_replicate,
+        screen_id=SCREEN_S4A,
+        replicate_id=replicate_id,
+        provenance_gaps=list(SINGLE_REPLICATE_GAPS),
     )
 
 
@@ -1013,12 +1455,17 @@ def reference_phenotype() -> FitnessPhenotype:
     MEASURED, not assumed: the mean of the 17 empty-vector wells is exactly 1.0000 in
     each of Table S2A's twelve and Table S3's twelve columns, and Table S4A's twelve
     stored columns have medians 0.9991 to 1.0033 after the two-pass IQM normalization.
+
+    This stays an AGGREGATE over the control replicates, with ``replicate_id=None``: it
+    is what a ``phenotype_reference`` is. The 17 control wells are ALSO stored as records
+    of their own, which is a separate thing (owner decision, 2026-11-24).
     """
     return FitnessPhenotype(
         fitness=1.0,
         n_samples=S1_EMPTY_VECTOR_WELLS,
-        sample_unit=None,
-        provenance_gaps=list(PHENOTYPE_GAPS),
+        sample_unit=SampleUnit.biological_replicate,
+        replicate_id=None,
+        provenance_gaps=list(COMBINED_TECHNICAL_GAPS),
     )
 
 
@@ -1307,6 +1754,229 @@ def read_table_s4a(path: str | Path) -> tuple[list[str], tuple[GrowthBlock, ...]
 
 
 # --------------------------------------------------------------------------- #
+# Reading the deposit's per-replicate tables
+# --------------------------------------------------------------------------- #
+#: Colonies on one CRISPRi-Keio assay plate, and how many such plates the screen used.
+COLONIES_PER_PLATE_1536 = 1536
+KEIO_ASSAY_PLATES = 12
+#: Rows of each deposited Keio table, and the distinct deletion labels they carry.
+KEIO_TABLE_ROWS = 4542
+#: Legend pinnings per strain on the CRISPRi collection's one 1,536-colony array.
+PINNINGS_PER_STRAIN = 4
+WELLS_PER_PINNING = 384
+#: The deposited R1 / R2 dose-response tables are these two of the four pinnings.
+WT_LPP_TABLE_PINNINGS: dict[int, str] = {1: "3", 2: "4"}
+
+
+class KeioReplicateRow(BaseModel):
+    """One row of a deposited Keio table: a strain at a position, with both replicates."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    #: ``Keio_Gene``, the released deletion label, verbatim.
+    label: str
+    #: The assay plate, DERIVED from R's row index (see the module docstring).
+    plate: int
+    #: ``Well.1536``, the position within that plate.
+    well: str
+    #: ``(TwoPass_norm_R1, TwoPass_norm_R2)``, the two replicates' normalized growth.
+    values: tuple[float, float]
+    #: ``TwoPass_Avg``, the authors' mean of the two, which is the Table S4A cell.
+    released_mean: float
+
+
+#: The three columns a KNOCKDOWN table carries beyond the vector table's fifteen: that
+#: block's growth divided by the empty-vector cross, per replicate and averaged. They are
+#: the per-replicate form of Table S4A's "Empty Vector Normalized Growth" block, and they
+#: are NOT stored: a ratio over a control goes to model time, and what this dataset stores
+#: is the absolute normalized growth both sides of that ratio are computed from.
+KEIO_VECTOR_RATIO_COLUMNS: tuple[str, ...] = (
+    "Vector_Norm_R1",
+    "Vector_Norm_R2",
+    "Vector_Norm_Avg",
+)
+
+
+def keio_table_columns(dose: int, cross: str) -> tuple[str, ...]:
+    """The deposited Keio table's header, in order.
+
+    The raw columns name the dose, and a knockdown table carries three ratio columns the
+    ``Vector`` table has nothing to divide by and so does not have.
+    """
+    columns = (
+        "",
+        f"Grp2_R1_{dose}_raw",
+        f"Grp2_R2_{dose}_raw",
+        "Well.1536",
+        "Plate.384",
+        "Row.384",
+        "Col.384",
+        "Keio_Gene",
+        "Cross",
+        "Avg_Raw",
+        "OnePass_norm_R1",
+        "OnePass_norm_R2",
+        "TwoPass_norm_R1",
+        "TwoPass_norm_R2",
+        "TwoPass_Avg",
+    )
+    if cross == "Vector":
+        return columns
+    return columns + KEIO_VECTOR_RATIO_COLUMNS
+
+
+def read_keio_replicate_table(
+    path: str | Path, *, cross: str, dose: int
+) -> list[KeioReplicateRow]:
+    """One deposited Keio table: its 4,542 rows, each with both replicates.
+
+    The header, the row count and the ``Cross`` column are all asserted, and the assay
+    plate is derived from R's row index, which the table keeps as its first column.
+    """
+    with open(path, newline="") as handle:
+        reader = csv.DictReader(handle)
+        want = keio_table_columns(dose, cross)
+        if tuple(reader.fieldnames or ()) != want:
+            raise TableLayoutError(
+                f"{cross}_{dose}aTc header {reader.fieldnames} is not {list(want)}"
+            )
+        rows = list(reader)
+    if len(rows) != KEIO_TABLE_ROWS:
+        raise TableLayoutError(
+            f"{cross}_{dose}aTc has {len(rows)} rows, not {KEIO_TABLE_ROWS}"
+        )
+    out: list[KeioReplicateRow] = []
+    for row in rows:
+        if row["Cross"] != cross:
+            raise TableLayoutError(f"{cross}_{dose}aTc carries a {row['Cross']!r} row")
+        index = int(str(row[""]))
+        out.append(
+            KeioReplicateRow(
+                label=str(row["Keio_Gene"]).strip(),
+                plate=(index - 1) // COLONIES_PER_PLATE_1536 + 1,
+                well=str(row["Well.1536"]),
+                values=(float(row["TwoPass_norm_R1"]), float(row["TwoPass_norm_R2"])),
+                released_mean=float(row["TwoPass_Avg"]),
+            )
+        )
+    plates = {row.plate for row in out}
+    if plates != set(range(1, KEIO_ASSAY_PLATES + 1)):
+        raise TableLayoutError(
+            f"{cross}_{dose}aTc derives assay plates {sorted(plates)}, not 1 to "
+            f"{KEIO_ASSAY_PLATES}"
+        )
+    positions = [(row.plate, row.well) for row in out]
+    if len(set(positions)) != len(positions):
+        raise TableLayoutError(
+            f"{cross}_{dose}aTc repeats a (plate, well) position, so a position cannot "
+            "label a replicate"
+        )
+    return out
+
+
+def check_deposit_reproduces_table_s4a(
+    tables: Mapping[tuple[str, int], Sequence[KeioReplicateRow]],
+    s4a_labels: Sequence[str],
+    s4a_blocks: Sequence[GrowthBlock],
+) -> dict[str, Any]:
+    """MEASURE that the deposit's tables ARE Table S4A, cell by cell.
+
+    Three things are proved before a single record is written: every table carries the
+    workbook's labels in the workbook's own row order, every ``TwoPass_Avg`` equals the
+    workbook cell it is the source of, and every ``TwoPass_Avg`` is the mean of its own
+    two replicates. The third is what makes the per-replicate conversion lossless: the
+    value this dataset used to store is recoverable from the two it now stores.
+    """
+    by_symbol = {
+        knockdown_symbol: cross
+        for cross, knockdown_symbol in keio_cross_symbols().items()
+    }
+    worst_cell = 0.0
+    worst_mean = 0.0
+    cells = 0
+    for block in s4a_blocks:
+        cross = by_symbol[block.knockdown]
+        dose = int(block.doses[0]) if len(block.doses) == 1 else None
+        for position, dose_value in enumerate(block.doses):
+            rows = tables[(cross, int(dose_value))]
+            labels = [row.label for row in rows]
+            if labels != list(s4a_labels):
+                raise TableLayoutError(
+                    f"{cross}_{int(dose_value)}aTc is not Table S4A's row order"
+                )
+            for row, values in zip(rows, block.values, strict=True):
+                worst_cell = max(worst_cell, abs(row.released_mean - values[position]))
+                mean = (row.values[0] + row.values[1]) / 2.0
+                worst_mean = max(worst_mean, abs(mean - row.released_mean))
+                cells += 1
+        del dose
+    if worst_cell > DEPOSIT_TOLERANCE or worst_mean > DEPOSIT_TOLERANCE:
+        raise TableLayoutError(
+            f"the deposit does not reproduce Table S4A: worst cell difference "
+            f"{worst_cell:.3g}, worst replicate-mean difference {worst_mean:.3g}"
+        )
+    return {
+        "rule": "deposit_reproduces_table_s4a",
+        "cells_compared": cells,
+        "worst_abs_cell_difference": worst_cell,
+        "worst_abs_replicate_mean_difference": worst_mean,
+        "tolerance": DEPOSIT_TOLERANCE,
+    }
+
+
+def check_collection_replicate_is_technical(
+    legend_path: str | Path, table_paths: Mapping[tuple[str, str, int], Path]
+) -> dict[str, Any]:
+    """MEASURE that the Table S2A / S3 replicate is a technical pinning, not a culture.
+
+    The 1,536 layout must assign four pinning labels of 384 wells each, and each
+    deposited dose-response table must map ALL of its wells onto ONE of those labels,
+    with the table's own target label agreeing on every row. That is what makes "the
+    average of the two technical replicates" the reading of the release rather than a
+    choice between two sentences that disagree.
+    """
+    with open(legend_path, newline="", encoding="utf-8-sig") as handle:
+        legend = list(csv.DictReader(handle))
+    columns = tuple((legend[0] if legend else {}).keys())
+    if columns != ("Well 1536", "CRISPRi_Plasmid", "Replicate"):
+        raise TableLayoutError(f"the 1,536 legend header is {list(columns)}")
+    if len(legend) != PINNINGS_PER_STRAIN * WELLS_PER_PINNING:
+        raise TableLayoutError(f"the 1,536 legend has {len(legend)} wells")
+    pinnings = Counter(row["Replicate"] for row in legend)
+    if sorted(pinnings) != [str(n) for n in range(1, PINNINGS_PER_STRAIN + 1)] or set(
+        pinnings.values()
+    ) != {WELLS_PER_PINNING}:
+        raise TableLayoutError(f"the legend's pinning labels are {dict(pinnings)}")
+    by_well = {row["Well 1536"]: row for row in legend}
+    seen: dict[str, str] = {}
+    for (background, medium, replicate), path in sorted(table_paths.items()):
+        with open(path, newline="") as handle:
+            rows = list(csv.DictReader(handle))
+        if len(rows) != WELLS_PER_PINNING:
+            raise TableLayoutError(f"{path} has {len(rows)} rows")
+        labels = {by_well[row["Well"]]["Replicate"] for row in rows}
+        disagree = [
+            row["Well"]
+            for row in rows
+            if by_well[row["Well"]]["CRISPRi_Plasmid"].strip() != row["Gene"].strip()
+        ]
+        want = WT_LPP_TABLE_PINNINGS[replicate]
+        if labels != {want} or disagree:
+            raise TableLayoutError(
+                f"{background}_{medium} R{replicate} maps onto pinnings {sorted(labels)} "
+                f"(expected {want}) with {len(disagree)} label disagreements"
+            )
+        seen[f"{background}_{medium}_R{replicate}"] = want
+    return {
+        "rule": "collection_replicate_is_a_technical_pinning",
+        "quote": str(SOURCED_VALUES["s2_replicate_is_technical"].quote),
+        "legend_wells": len(legend),
+        "pinnings_per_strain": dict(sorted(pinnings.items())),
+        "table_pinning": seen,
+    }
+
+
+# --------------------------------------------------------------------------- #
 # Joining the growth tables to the collection layout
 # --------------------------------------------------------------------------- #
 class PlateJoin(BaseModel):
@@ -1546,7 +2216,12 @@ def build_reference(dataset_name: str) -> FitnessExperimentReference:
 
 
 class Row(BaseModel):
-    """One writable (strain, screen) row: its genotype and its per-dose values."""
+    """One writable CRISPRi-collection culture: its genotype and its per-dose values.
+
+    One row is one well of the arrayed collection in one block, so one CULTURE: its
+    values are the released means of that culture's two technical pinnings, and
+    ``replicate_id`` is its well, the position the release gives it.
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -1556,17 +2231,24 @@ class Row(BaseModel):
     doses: tuple[float, ...]
     values: tuple[float, ...]
     timed: bool
+    replicate_id: str
 
 
 def _guide_rows(
     wells: Sequence[CollectionWell],
     blocks: Sequence[GrowthBlock],
     resolution: Resolution,
-    repeated_spacers: frozenset[str],
     *,
     screen_id: str,
 ) -> Iterator[Row]:
-    """Writable rows of a CRISPRi-collection table, one per (well, block)."""
+    """Every writable row of a CRISPRi-collection table, one per (well, block).
+
+    EVERY filled well is written, including the 17 empty-vector controls and the five
+    spacers that sit in two wells each. A well is a position the release prints, so two
+    wells of one construct are two replicate cultures told apart by ``replicate_id``, and
+    an empty-vector well is a control culture whose genotype is the background alone.
+    Only a target label the pinned assembly cannot place is skipped (the genome gate).
+    """
     for block in blocks:
         background: list[DeletionStrainPerturbation] = []
         if block.background is not None:
@@ -1579,56 +2261,85 @@ def _guide_rows(
             ]
         for well, values in zip(wells, block.values, strict=True):
             if well.is_empty_vector:
-                continue
-            locus_tag = resolution.locus_by_label.get(well.symbol)
-            if locus_tag is None or well.spacer in repeated_spacers:
-                continue
+                perturbations: list[Any] = [*background]
+            else:
+                locus_tag = resolution.locus_by_label.get(well.symbol)
+                if locus_tag is None:
+                    continue
+                perturbations = [
+                    knockdown(well, locus_tag, resolution.symbol_by_label[well.symbol]),
+                    *background,
+                ]
             yield Row(
-                genotype=Genotype(
-                    perturbations=[
-                        knockdown(
-                            well, locus_tag, resolution.symbol_by_label[well.symbol]
-                        ),
-                        *background,
-                    ]
-                ),
+                genotype=Genotype(perturbations=perturbations),
                 screen_id=screen_id,
                 medium=block.medium,
                 doses=block.doses,
                 values=values,
                 timed=True,
+                replicate_id=well.well,
             )
 
 
-def _keio_rows(
-    labels: Sequence[str],
-    blocks: Sequence[GrowthBlock],
+class ReplicateRecord(BaseModel):
+    """One writable Table S4A record: a strain, a condition and ONE replicate value."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    genotype: Genotype
+    medium: str
+    dose: float
+    value: float
+    replicate_id: str
+
+
+def keio_replicate_id(plate: int, well: str, replicate: int) -> str:
+    """The label of one Table S4A replicate: its assay plate, its well and its R number.
+
+    All three are needed. ``R1`` / ``R2`` is the deposit's own replicate label, and the
+    position is what tells apart the 1,010 rows whose deletion label heads more than one
+    row (MEASURED: all 485 such labels sit at distinct positions).
+    """
+    return f"K{plate}:{well}:R{replicate}"
+
+
+def _keio_replicate_records(
+    tables: Mapping[tuple[str, int], Sequence[KeioReplicateRow]],
     resolution: Resolution,
-    repeated_labels: frozenset[str],
     knockdowns: Mapping[str, CrisprInterferencePerturbation],
-) -> Iterator[Row]:
-    """Writable rows of Table S4A, one per (deletion row, CRISPRi plasmid block)."""
-    for block in blocks:
-        plasmid = [knockdowns[block.knockdown]] if block.knockdown is not None else []
-        for label, values in zip(labels, block.values, strict=True):
-            locus_tag = resolution.locus_by_label.get(label)
-            if locus_tag is None or label in repeated_labels:
+) -> Iterator[ReplicateRecord]:
+    """Every writable Table S4A replicate, one record per (row, cross, dose, replicate).
+
+    Nothing is dropped for being a repeat: a deletion label heading several rows is
+    several cultures at several released positions. Only a label the pinned assembly
+    cannot place is skipped (the genome gate).
+    """
+    for (cross, dose), rows in tables.items():
+        symbol = keio_cross_symbols()[cross]
+        plasmid = [knockdowns[symbol]] if symbol is not None else []
+        for row in rows:
+            locus_tag = resolution.locus_by_label.get(row.label)
+            if locus_tag is None:
                 continue
-            yield Row(
-                genotype=Genotype(
-                    perturbations=[
-                        deletion(
-                            label, locus_tag, symbol=resolution.symbol_by_label[label]
-                        ),
-                        *plasmid,
-                    ]
-                ),
-                screen_id=SCREEN_S4A,
-                medium=block.medium,
-                doses=block.doses,
-                values=values,
-                timed=False,
+            genotype = Genotype(
+                perturbations=[
+                    deletion(
+                        row.label,
+                        locus_tag,
+                        symbol=resolution.symbol_by_label[row.label],
+                        well=row.well,
+                    ),
+                    *plasmid,
+                ]
             )
+            for replicate, value in enumerate(row.values, start=1):
+                yield ReplicateRecord(
+                    genotype=genotype,
+                    medium=MEDIUM_LB,
+                    dose=float(dose),
+                    value=value,
+                    replicate_id=keio_replicate_id(row.plate, row.well, replicate),
+                )
 
 
 # --------------------------------------------------------------------------- #
@@ -1666,11 +2377,18 @@ def retrieve_raw_files(dest_dir: str | Path) -> dict[str, Path]:
     """
     dest = Path(dest_dir)
     dest.mkdir(parents=True, exist_ok=True)
+    (dest / "zenodo").mkdir(parents=True, exist_ok=True)
     out: dict[str, Path] = {}
     for raw in RAW_FILES:
         path = dest / raw.name
         write_verified(run_retriever(raw.retrieval), path, raw.sha256, raw.source_url)
         out[raw.name] = path
+    for member in ZENODO_FILES:
+        path = dest / "zenodo" / member.name
+        write_verified(
+            run_retriever(member.retrieval), path, member.sha256, member.source_url
+        )
+        out[f"zenodo/{member.name}"] = path
     return out
 
 
@@ -1713,13 +2431,38 @@ def deposit_raw_mirror(
                 retrieval=raw.retrieval,
             )
         )
+    for member in ZENODO_FILES:
+        src = Path(sources[f"zenodo/{member.name}"])
+        got = _sha256(src)
+        if got != member.sha256:
+            raise RuntimeError(
+                f"{src} sha256 mismatch: got {got}, expected {member.sha256}"
+            )
+        dest = root / member.mirror_relpath
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if dest.exists():
+            if _sha256(dest) != member.sha256:
+                raise RuntimeError(f"{dest} exists with a different sha256; refusing")
+        else:
+            shutil.copy2(src, dest)
+        records.append(
+            ArtifactRecord(
+                path=member.mirror_relpath,
+                role=ROLE_RAW_DATA,
+                bytes=dest.stat().st_size,
+                sha256=member.sha256,
+                source=member.source_url,
+                original_filename=Path(member.member).name,
+                retrieval=member.retrieval,
+            )
+        )
     manifest = Manifest(
         citation_key=CITATION_KEY,
         doi=DOI,
         title=TITLE,
         files=records,
         si_data_sources=[raw.source_url for raw in RAW_FILES]
-        + [f"https://doi.org/{DOI}"],
+        + [f"https://doi.org/{DOI}", f"https://doi.org/{ZENODO_DOI}"],
         si_expected=list(NOT_MIRRORED),
         provenance_complete=True,
         created_at=datetime.now(UTC).isoformat(),
@@ -1745,18 +2488,29 @@ def manifest_sha256(manifest: Manifest, relpath: str) -> str:
 # --------------------------------------------------------------------------- #
 # The dataset
 # --------------------------------------------------------------------------- #
-#: Records of the full build, MEASURED on the pinned bytes: 348 writable collection
-#: wells x 12 columns for Table S2A, the same 348 x 12 for Table S3, and 3,379 writable
-#: Table S4A rows x 12 columns.
-EXPECTED_WRITABLE_WELLS = 348
-EXPECTED_WRITABLE_KEIO_ROWS = 3379
-EXPECTED_RECORDS = (
-    EXPECTED_WRITABLE_WELLS * 12
-    + EXPECTED_WRITABLE_WELLS * 12
-    + EXPECTED_WRITABLE_KEIO_ROWS * 12
-)
-#: Records whose genotype carries BOTH a knockdown and a deletion.
-EXPECTED_CROSSED_RECORDS = EXPECTED_WRITABLE_WELLS * 6 + EXPECTED_WRITABLE_KEIO_ROWS * 9
+#: Records of the full build, MEASURED on the pinned bytes.
+#:
+#: The CRISPRi-collection arm: every filled well whose target the pinned assembly can
+#: place, plus all 17 empty-vector wells, x 12 columns, in each of Table S2A and
+#: Table S3. 375 of the 377 wells are writable (the two the genome gate removes are the
+#: ``lapA`` and ``lapB`` wells; ``ispU`` and ``uppS`` resolve to one locus and both go).
+EXPECTED_WRITABLE_WELLS = 373
+#: The CRISPRi-Keio arm: writable rows x 4 crosses x 3 doses x 2 replicates. 4,330 of the
+#: 4,542 released rows carry a label the pinned assembly places; the genome gate removes
+#: the other 212.
+EXPECTED_WRITABLE_KEIO_ROWS = 4330
+EXPECTED_KEIO_RECORDS = EXPECTED_WRITABLE_KEIO_ROWS * 4 * 3 * 2
+EXPECTED_COLLECTION_RECORDS = EXPECTED_WRITABLE_WELLS * 12 * 2
+EXPECTED_RECORDS = EXPECTED_COLLECTION_RECORDS + EXPECTED_KEIO_RECORDS
+#: Records whose genotype carries BOTH a knockdown and a deletion: the Table S3 dlpp
+#: block (half its columns) and the three knockdown blocks of the Keio cross.
+EXPECTED_CROSSED_RECORDS = (
+    EXPECTED_WRITABLE_WELLS - S1_EMPTY_VECTOR_WELLS
+) * 6 + EXPECTED_WRITABLE_KEIO_ROWS * 3 * 3 * 2
+#: Records whose genotype is EMPTY: the 17 empty-vector wells on the WT plates of
+#: Table S2A (12 columns) and the WT block of Table S3 (6 columns). In the dlpp block the
+#: same wells carry the lpp deletion, so their genotype is not empty.
+EXPECTED_EMPTY_GENOTYPE_RECORDS = S1_EMPTY_VECTOR_WELLS * (12 + 6)
 
 
 @register_dataset
@@ -1793,26 +2547,36 @@ class CrispriCrossRachwalski2024Dataset(ExperimentDataset):
 
     @property
     def raw_file_names(self) -> list[str]:
-        """Every consumed workbook, linked from the raw mirror."""
-        return [raw.name for raw in RAW_FILES]
+        """Every consumed workbook and deposit member, linked from the raw mirror."""
+        return [raw.name for raw in RAW_FILES] + [
+            f"zenodo/{member.name}" for member in ZENODO_FILES
+        ]
 
     def download(self) -> None:
         """Link each mirror file into ``raw/`` after checking the manifest and sha256."""
         data_root = _data_root()
         manifest = load_manifest(data_root)
         os.makedirs(self.raw_dir, exist_ok=True)
-        for raw in RAW_FILES:
+        os.makedirs(osp.join(self.raw_dir, "zenodo"), exist_ok=True)
+        wanted: list[tuple[str, str, str]] = [
+            (raw.mirror_relpath, raw.name, raw.sha256) for raw in RAW_FILES
+        ]
+        wanted += [
+            (member.mirror_relpath, f"zenodo/{member.name}", member.sha256)
+            for member in ZENODO_FILES
+        ]
+        for mirror_relpath, link_name, sha256 in wanted:
             check_manifest_pin(
-                raw.mirror_relpath,
-                manifest_sha256(manifest, raw.mirror_relpath),
-                raw.sha256,
+                mirror_relpath, manifest_sha256(manifest, mirror_relpath), sha256
             )
-            src = raw_mirror_dir(data_root) / raw.mirror_relpath
+            src = raw_mirror_dir(data_root) / mirror_relpath
             if not src.exists():
                 raise RuntimeError(f"required raw artifact missing from mirror: {src}")
-            link_verified(src, osp.join(self.raw_dir, raw.name), raw.sha256)
+            link_verified(src, osp.join(self.raw_dir, link_name), sha256)
         log.info(
-            "Rachwalski 2024 raw files linked into %s (sha256 verified)", self.raw_dir
+            "Rachwalski 2024: %d raw files linked into %s (sha256 verified)",
+            len(wanted),
+            self.raw_dir,
         )
 
     def _raw(self, name: str) -> str:
@@ -1838,6 +2602,16 @@ class CrispriCrossRachwalski2024Dataset(ExperimentDataset):
         s3_labels, s3_blocks = read_table_s3(self._raw(TABLE_S3_FILE))
         s4a_labels, s4a_blocks = read_table_s4a(self._raw(TABLE_S4_FILE))
 
+        keio_tables = {
+            (cross, dose): read_keio_replicate_table(
+                self._raw(f"zenodo/{_keio_table_name(cross, dose)}"),
+                cross=cross,
+                dose=dose,
+            )
+            for cross in KEIO_TABLE_CROSS_NAMES
+            for dose in (0, 50, 500)
+        }
+
         joins = [
             join_growth_rows_to_wells(s2a_labels, wells, table=SCREEN_S2A),
             join_growth_rows_to_wells(s3_labels, wells, table=SCREEN_S3),
@@ -1847,6 +2621,20 @@ class CrispriCrossRachwalski2024Dataset(ExperimentDataset):
             check_fifty_percent_reduction(wells, s2a_blocks),
             check_empty_vector_mean_is_one(wells, s2a_blocks, table=SCREEN_S2A),
             check_empty_vector_mean_is_one(wells, s3_blocks, table=SCREEN_S3),
+            check_deposit_reproduces_table_s4a(keio_tables, s4a_labels, s4a_blocks),
+            check_collection_replicate_is_technical(
+                self._raw(f"zenodo/{LEGEND_1536_FILE}"),
+                {
+                    (background, medium, replicate): Path(
+                        self._raw(
+                            f"zenodo/{_wt_lpp_table_name(background, medium, replicate)}"
+                        )
+                    )
+                    for background in ("WT", "Lpp")
+                    for medium in ("LB", "MOPS")
+                    for replicate in (1, 2)
+                },
+            ),
         ]
 
         genome = self._genome()
@@ -1867,21 +2655,6 @@ class CrispriCrossRachwalski2024Dataset(ExperimentDataset):
             genome,
             label=f"{self.name}:keio",
             min_resolved=MIN_RESOLVED_KEIO,
-        )
-
-        spacer_counts = Counter(
-            well.spacer for well in wells if not well.is_empty_vector
-        )
-        repeated_spacers = frozenset(
-            spacer
-            for spacer, count in spacer_counts.items()
-            if count > 1 and spacer is not None
-        )
-        keio_counts = Counter(
-            label for label in s4a_labels if label in keio_resolution.locus_by_label
-        )
-        repeated_labels = frozenset(
-            label for label, count in keio_counts.items() if count > 1
         )
 
         knockdowns = {
@@ -1907,24 +2680,12 @@ class CrispriCrossRachwalski2024Dataset(ExperimentDataset):
             )
 
         rows = [
-            *_guide_rows(
-                wells,
-                s2a_blocks,
-                target_resolution,
-                repeated_spacers,
-                screen_id=SCREEN_S2A,
-            ),
-            *_guide_rows(
-                wells,
-                s3_blocks,
-                target_resolution,
-                repeated_spacers,
-                screen_id=SCREEN_S3,
-            ),
-            *_keio_rows(
-                s4a_labels, s4a_blocks, keio_resolution, repeated_labels, knockdowns
-            ),
+            *_guide_rows(wells, s2a_blocks, target_resolution, screen_id=SCREEN_S2A),
+            *_guide_rows(wells, s3_blocks, target_resolution, screen_id=SCREEN_S3),
         ]
+        keio_records = list(
+            _keio_replicate_records(keio_tables, keio_resolution, knockdowns)
+        )
 
         reference = build_reference(self.name)
         publication = Publication(doi=DOI, doi_url=f"https://doi.org/{DOI}")
@@ -1942,62 +2703,79 @@ class CrispriCrossRachwalski2024Dataset(ExperimentDataset):
         )
         idx = 0
         crossed = 0
+        empty_genotype = 0
         with lmdb_env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for row in tqdm(rows, desc="rachwalski2024"):
-                is_crossed = len(row.genotype.perturbations) > 1
+            for row in tqdm(rows, desc="rachwalski2024 collection"):
+                n_perturbations = len(row.genotype.perturbations)
                 for dose, growth in zip(row.doses, row.values, strict=True):
                     experiment = FitnessExperiment(
                         dataset_name=self.name,
                         genotype=row.genotype,
                         environment=environments[(row.medium, dose, row.timed)],
-                        phenotype=phenotype(growth, row.screen_id),
+                        phenotype=combined_technical_phenotype(
+                            growth, row.screen_id, row.replicate_id
+                        ),
                     )
                     txn.put(
                         f"{idx}".encode(),
                         self._intern_record(experiment, reference, publication, itxn),
                     )
                     idx += 1
-                    crossed += is_crossed
+                    crossed += n_perturbations > 1
+                    empty_genotype += n_perturbations == 0
+            for record in tqdm(keio_records, desc="rachwalski2024 keio"):
+                experiment = FitnessExperiment(
+                    dataset_name=self.name,
+                    genotype=record.genotype,
+                    environment=environments[(record.medium, record.dose, False)],
+                    phenotype=replicate_phenotype(record.value, record.replicate_id),
+                )
+                txn.put(
+                    f"{idx}".encode(),
+                    self._intern_record(experiment, reference, publication, itxn),
+                )
+                idx += 1
+                crossed += len(record.genotype.perturbations) > 1
         lmdb_env.close()
         interned_env.close()
 
-        if idx != EXPECTED_RECORDS or crossed != EXPECTED_CROSSED_RECORDS:
+        if (
+            idx != EXPECTED_RECORDS
+            or crossed != EXPECTED_CROSSED_RECORDS
+            or empty_genotype != EXPECTED_EMPTY_GENOTYPE_RECORDS
+        ):
             raise RuntimeError(
-                f"wrote {idx} records ({crossed} two-perturbation), expected "
-                f"{EXPECTED_RECORDS} ({EXPECTED_CROSSED_RECORDS})"
+                f"wrote {idx} records ({crossed} two-perturbation, {empty_genotype} "
+                f"empty-genotype), expected {EXPECTED_RECORDS} "
+                f"({EXPECTED_CROSSED_RECORDS}, {EXPECTED_EMPTY_GENOTYPE_RECORDS})"
             )
         self._write_ledgers(
             wells=wells,
             s4a_labels=s4a_labels,
             target_resolution=target_resolution,
             keio_resolution=keio_resolution,
-            repeated_spacers=repeated_spacers,
-            repeated_labels=repeated_labels,
             joins=joins,
             checks=checks,
             kept_records=idx,
             crossed_records=crossed,
+            empty_genotype_records=empty_genotype,
         )
         log.info(
-            "Rachwalski2024: wrote %d records (%d two-perturbation) from %d writable "
-            "collection wells over %d target loci and %d writable Table S4A rows; "
-            "dropped %d target labels and %d Keio labels",
+            "Rachwalski2024: wrote %d records (%d two-perturbation, %d empty-genotype) "
+            "from %d writable collection wells over %d target loci and %d writable "
+            "Table S4A rows x 2 replicates; the genome gate dropped %d target labels "
+            "and %d Keio labels",
             idx,
             crossed,
+            empty_genotype,
             sum(
                 1
                 for well in wells
-                if not well.is_empty_vector
-                and well.symbol in target_resolution.locus_by_label
-                and well.spacer not in repeated_spacers
+                if well.is_empty_vector
+                or well.symbol in target_resolution.locus_by_label
             ),
             len(target_resolution.locus_by_label) - 1,
-            sum(
-                1
-                for label in s4a_labels
-                if label in keio_resolution.locus_by_label
-                and label not in repeated_labels
-            ),
+            sum(1 for label in s4a_labels if label in keio_resolution.locus_by_label),
             sum(len(names) for names in target_resolution.unwritable.values()),
             sum(len(names) for names in keio_resolution.unwritable.values()),
         )
@@ -2009,26 +2787,26 @@ class CrispriCrossRachwalski2024Dataset(ExperimentDataset):
         s4a_labels: Sequence[str],
         target_resolution: Resolution,
         keio_resolution: Resolution,
-        repeated_spacers: frozenset[str],
-        repeated_labels: frozenset[str],
         joins: Sequence[PlateJoin],
         checks: Sequence[Mapping[str, Any]],
         kept_records: int,
         crossed_records: int,
+        empty_genotype_records: int,
     ) -> None:
         """The drop log, the identifier ledger, the build checks and the accounting."""
         out = Path(self.preprocess_dir)
         guide_wells = [well for well in wells if not well.is_empty_vector]
+        spacer_counts = Counter(well.spacer for well in guide_wells)
         repeated_wells = [
-            well for well in guide_wells if well.spacer in repeated_spacers
+            well
+            for well in guide_wells
+            if well.spacer is not None and spacer_counts[well.spacer] > 1
         ]
-        repeated_symbols = sorted({well.symbol for well in repeated_wells})
+        keio_counts = Counter(s4a_labels)
+        repeated_labels = sorted(
+            label for label, count in keio_counts.items() if count > 1
+        )
         dropped: dict[str, dict[str, Any]] = {
-            DROP_EMPTY_VECTOR: {
-                "collection_wells": S1_EMPTY_VECTOR_WELLS,
-                "rows": S1_EMPTY_VECTOR_WELLS * 2,
-                "labels": [EMPTY_VECTOR],
-            },
             DROP_NOT_IN_ANNOTATION: {
                 "labels": target_resolution.unwritable[DROP_NOT_IN_ANNOTATION],
                 "keio_labels": keio_resolution.unwritable[DROP_NOT_IN_ANNOTATION],
@@ -2041,16 +2819,33 @@ class CrispriCrossRachwalski2024Dataset(ExperimentDataset):
                 "labels": target_resolution.unwritable[DROP_AMBIGUOUS],
                 "keio_labels": keio_resolution.unwritable[DROP_AMBIGUOUS],
             },
-            DROP_REPEATED_CONSTRUCT: {
-                "labels": repeated_symbols,
-                "wells": [well.well for well in repeated_wells],
-                "spacers": sorted(repeated_spacers),
-                # the same rows in Table S2A and in Table S3
-                "rows": len(repeated_wells) * 2,
+        }
+        restored: dict[str, dict[str, Any]] = {
+            "row_is_an_empty_vector_control": {
+                "collection_wells": S1_EMPTY_VECTOR_WELLS,
+                "labels": [EMPTY_VECTOR],
+                "records_now_written": S1_EMPTY_VECTOR_WELLS * 12 * 2,
+                "records_with_an_empty_genotype": empty_genotype_records,
             },
-            DROP_DUPLICATE_LABEL: {
-                "labels": sorted(repeated_labels),
-                "rows": sum(1 for label in s4a_labels if label in repeated_labels),
+            "construct_sits_in_more_than_one_collection_well": {
+                "labels": sorted({well.symbol for well in repeated_wells}),
+                "wells": [well.well for well in repeated_wells],
+                "spacers": sorted(
+                    {well.spacer for well in repeated_wells if well.spacer}
+                ),
+                "records_now_written": len(repeated_wells) * 12 * 2,
+            },
+            "label_heads_more_than_one_row": {
+                "labels": repeated_labels,
+                "rows": sum(keio_counts[label] for label in repeated_labels),
+                "records_now_written": sum(
+                    keio_counts[label]
+                    for label in repeated_labels
+                    if label in keio_resolution.locus_by_label
+                )
+                * 4
+                * 3
+                * 2,
             },
         }
         (out / "dropped_records.json").write_text(
@@ -2059,14 +2854,20 @@ class CrispriCrossRachwalski2024Dataset(ExperimentDataset):
                     "dataset": self.name,
                     "kept_records": kept_records,
                     "crossed_records": crossed_records,
+                    "empty_genotype_records": empty_genotype_records,
                     "released_cells": {
                         SCREEN_S2A: S2A_ROWS * 12,
                         SCREEN_S3: S3_ROWS * 12,
                         SCREEN_S4A: S4A_ROWS * 12,
+                        f"{SCREEN_S4A} (deposit, per replicate)": S4A_ROWS * 12 * 2,
                     },
                     "rules": [
                         {"rule": rule, "description": description, **dropped[rule]}
                         for rule, description in ROW_RULES
+                    ],
+                    "retired_rules": [
+                        {"rule": rule, "description": description, **restored[rule]}
+                        for rule, description in RETIRED_ROW_RULES
                     ],
                 },
                 indent=2,
@@ -2145,18 +2946,31 @@ VERIFIER_PROVENANCE = Provenance(
     citation_key=CITATION_KEY,
     sha256=RAW_FILES_BY_NAME[TABLE_S2_FILE].sha256,
     method=(
-        "One FitnessExperiment per (strain, medium, aTc dose). fitness = the "
-        "released average normalized colony growth, verbatim: for Tables S2A and S3 the "
-        "strain's colony density over the mean of the 17 empty-vector wells of that "
-        "plate (MEASURED to be exactly 1.0000 in each of the 24 columns), for Table S4A "
-        "the two-pass inter-quartile-mean normalized density. n_samples=2 from 'The "
-        "average of the two technical replicates was then calculated and is reported in "
-        "Table S2' and 'CRISPRi Keio screens were conducted in technical duplicate'; "
-        "sample_unit is a typed gap because the same methods section and three figure "
-        "legends call the same duplicate biological, and the dispersion is a typed gap "
-        "because no table releases one. screen_id names the released table, which is "
-        "what keeps Table S2A's and Table S3's two independent MOPS runs of the same "
-        "strains distinguishable. Genotype = a CrisprInterferencePerturbation "
+        "One FitnessExperiment per REPLICATE of a (strain, medium, aTc dose). The two "
+        "arms have different replicate units and the Zenodo deposit settles which is "
+        "which. TABLE S4A: one record per assay-plate BIOLOGICAL replicate, fitness = "
+        "the deposit's TwoPass_norm_R1 or TwoPass_norm_R2 verbatim (two-pass "
+        "inter-quartile-mean normalized colony density), n_samples=1, "
+        "sample_unit=biological_replicate, uncertainty fields typed "
+        "not_applicable_single_measurement, replicate_id = assay plate, 1536-well and R "
+        "number. The deposit's own mean of the two equals the released Table S4A cell "
+        "(MEASURED over all 54,504 cells: 4.5e-16) and equals the mean of its two "
+        "replicates (7.8e-15), so the conversion is lossless and the workbook is the "
+        "check rather than the source. TABLES S2A AND S3: one record per CULTURE, "
+        "fitness = the released average normalized growth verbatim (the strain's colony "
+        "density over the mean of the 17 empty-vector wells of that plate, MEASURED to "
+        "be exactly 1.0000 in each of the 24 columns), n_samples=2 with "
+        "sample_unit=technical_replicate, because the two columns are two of the FOUR "
+        "technical pinnings of one culture on one 1,536 array ('Each strain pinned in "
+        "technical quadruplicate'; MEASURED, the deposit's R1 and R2 tables are legend "
+        "pinnings 3 and 4, and both are cells of the single per-dose ImageJ output of "
+        "that one plate), which is what 'The average of the two technical replicates "
+        "was then calculated and is reported in Table S2' states and what Figure S1A's "
+        "'two biological replicates' mislabels. replicate_id = the Table S1 well. The "
+        "dispersion is never computed: no table releases a spread. screen_id names the "
+        "released table, which is what keeps Table S2A's and Table S3's two independent "
+        "MOPS runs of the same strains distinguishable. Genotype = a "
+        "CrisprInterferencePerturbation "
         "(dCas9, the 20 nt Table S1 spacer of the row's well, n_guides=1) and/or a "
         "DeletionStrainPerturbation of the Keio collection (kanamycin cassette); the "
         "crossed rows carry both. Environment = solid LB (15 g/L agar) or solid "
@@ -2228,7 +3042,9 @@ def crossed_genotypes_carry_both_kinds(
 
     The row this dataset exists for. A genotype of two perturbations must be exactly one
     ``bacterial_crispr_interference`` and one ``bacterial_deletion``; two of either would
-    be a cross the release never ran.
+    be a cross the release never ran. The EMPTY genotype is allowed because the 17
+    empty-vector control wells of Tables S2A and S3 are records of their own: pFD152 with
+    no gene-specific sgRNA perturbs no gene.
     """
     kinds = Counter(
         tuple(
@@ -2240,6 +3056,7 @@ def crossed_genotypes_carry_both_kinds(
         for record in records
     )
     allowed = {
+        (),
         ("crispr_interference",),
         ("deletion_strain",),
         ("crispr_interference", "deletion_strain"),
@@ -2262,12 +3079,16 @@ def crossed_genotypes_carry_both_kinds(
     )
 
 
-def run_verification(data_root: str | None = None) -> Any:
-    """Run the L0-L4 fitness gate over the built dev-tree LMDB and write the report."""
+def run_verification(data_root: str | None = None, root: str | None = None) -> Any:
+    """Run the L0-L4 fitness gate over a built LMDB and write the report.
+
+    ``root`` verifies a store built somewhere other than the dev tree (a scratch build),
+    and the report is written beside that store.
+    """
     from torchcell.verification.fitness import fitness_gene_set, verify_fitness_dataset
     from torchcell.verification.runners import load_records
 
-    root = osp.join(data_root or _data_root(), DATASET_ROOT_REL)
+    root = root or osp.join(data_root or _data_root(), DATASET_ROOT_REL)
     records = load_records(root)
     genome = bacterial_genome("ecoli", BW25113_STRAIN, data_root)
     if not isinstance(genome, EcoliK12BW25113Genome):

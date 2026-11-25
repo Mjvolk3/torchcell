@@ -4,12 +4,12 @@
 """``torchcell/adapters/rachwalski2024_adapter.py``: the conf it loads, the gate's view
 of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Rachwalski 2024 mobile CRISPRi crosses: 48,900 (strain, medium, aTc dose) records,
-FitnessExperiment. A genotype carries a
-CrisprInterferencePerturbation, a DeletionStrainPerturbation or BOTH, all
-served as `perturbation`; every knockdown carries a CrisprConstruct with the
-20 nt spacer, and an induced plate carries anhydrotetracycline as a
-SmallMoleculePerturbation.
+Rachwalski 2024 mobile CRISPRi crosses: 112,872 records, one per REPLICATE of a
+(strain, medium, aTc dose), FitnessExperiment. A genotype carries a
+CrisprInterferencePerturbation, a DeletionStrainPerturbation, BOTH, or NEITHER (the
+empty-vector control wells), all served as `perturbation`; every knockdown carries a
+CrisprConstruct with the 20 nt spacer, and an induced plate carries anhydrotetracycline
+as a SmallMoleculePerturbation.
 """
 
 from __future__ import annotations

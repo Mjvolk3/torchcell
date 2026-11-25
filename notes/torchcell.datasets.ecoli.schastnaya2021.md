@@ -315,3 +315,47 @@ Report `verification_report.json` (written 2026-10-11 08:04 UTC):
 The owner's rule of 2026-10-12 ([[database.genome-gating-sweep.2026.10.12]], row 383): the loader reads no annotation. `resolve_deletions`, `ResolvedDeletion`, `MIN_RESOLVED_FRACTION`, the `ecoli_genome` constructor parameter and `preprocess/identifier_reconciliation.json` are gone. Each of the 29 KEIO deletion columns now carries a `BacterialReleasedStrainPerturbation` of `released_kind=deletion`, keyed by the gene symbol its column token releases (`sucB knockout` -> `sucB`) with `strain_label` the whole token, and the KEIO `collection` and `cassette` from Baba 2006 as before; the release names no b-number for a deletion strain, so the resolution to a locus is a modeling-time join and the L4 genome-reference rows report what the pinned MG1655 annotation makes of the stored symbols (#1069). The phosphomutant arm (#1057) already stored its released token on the same leaf, so both arms are now one `perturbation_type`: `bacterial_released_strain`, 103 distinct strain labels (16 deletion + 87 phosphomutant).
 
 Released vs stored: 200 released columns, 200 records, 0 dropped (unchanged since #1057); what changed is the identifier on the 29 deletion records, from a resolved b-number to the released symbol.
+
+## 2026.11.24 - Per-replicate review: the Source Data file mirrored, records stay one per released column
+
+Review under the per-replicate policy (issue #1178; tracked here as #1172 and #1177). Verdict: Supplementary Data 3 is aggregate-only, so the 200 records stay one per released (strain, carbon source) column. The article's Source Data file releases per-injection intensities for two ions; it is now in the raw mirror and read, but it does NOT become records, because the pairing of injections to extracts is not released.
+
+### What a replicate is, from the source
+
+- Supplementary Data 3 (`si6.xlsx`, sha256 `ad9fb64f...`): one pooled log2 fold change and one adjusted p-value per (strain, carbon source) and ion; no replicate column anywhere in the sheet. The Methods (`paper.md`, sha256 `f299eee7...`, "FIA TOF-MS measurement and untargeted metabolomics data processing") say how it was pooled: "For every ion, the abundances from all replicates of a given mutant were pooled and compared to the pooled abundances of the wild-type sample."
+- Replicate kind: Fig. 3 legend (`paper.md` L41): "$n = 1 0 ,$ , 3, 4, 5 biological replicates with two technical replicates were measured for the wild-type, knockout, S115E, S115A mutants, respectively." and "$n = 3$ biological replicates with two technical replicates were measured for each strain." The two technical replicates are the double injection of one extract: "Metabolite extracts were analyzed by direct flow double injection" (L68).
+- Withdrawn samples: none stated anywhere in `paper.md` or `si/`.
+- The per-replicate abundances of the 464 ions exist only as MassIVE MSV000087795 spectra (raw instrument files, out of scope).
+
+### The Source Data file (fetched 2026-11-25)
+
+The Data Availability statement (`paper.md` L90): "Source data are provided with this paper." PMC's article XML (`PMC8463566.1/PMC8463566.1.xml`, sha256 `bce020fa...`, back matter `<app id="App1">`, title "Source data") links `41467_2021_25988_MOESM13_ESM.xlsx`. Retrieved with the recorded retriever `torchcell.literature.retrieve.pmc_cloud_object` (key `PMC8463566.1/41467_2021_25988_MOESM13_ESM.xlsx`, `https://pmc-oa-opendata.s3.amazonaws.com/...`) at `2026-11-25T06:10:14.592052+00:00`: 3,111,259 bytes, sha256 `6342f82c5438f0906bee4f727c61122a9dfb1db6d316110081b0d71a68de56c7`, the same bytes as the audit's session copy. Deposited as `torchcell-raw/schastnayaExtensiveRegulationEnzyme2021/data/source_data.xlsx` with its retrieval record in the raw mirror's `manifest.json`; re-running the retrieval reproduces the hash.
+
+Sheets read: `Figure 3b` (2-oxoglutarate, `C5H6O5`, fructose) and `Figure 3d` ((R)-S-lactoylglutathione, `C13H21N3O8S`, glucose). Injection counts (measured): 3b Wild-type 20, SucB knockout 6, SucB S115E 8, SucB S115A 10; 3d five columns of 6. That is exactly the legends' biological counts x 2, which the build asserts. The other sheets (Fig. 1b growth percentages with no strain label, Fig. 3c and Supplementary Fig. 1 in vitro activities, Fig. 3e growth curves, Fig. 4 fluxes as mean +/- SD strings, Supplementary Fig. 3 gel ratios) are not read.
+
+### Why the injections are not records
+
+A per-replicate record is one extract with its two injections combined inside it. The sheets list injections top-aligned under each strain and do not say which two belong to one extract. Measured on the pinned bytes: pairing adjacent rows gives the smaller within-pair spread in 7 of 9 columns, but not in `SucB S115A` (adjacent pairing ranks at the 62nd percentile of all 945 possible pairings; rows i and i+5 rank at the 25th) and ties in `TpiA T179A`. So the pairing is not inferred, and the 37 would-be records (Fig. 3b 10 + 3 + 4 + 5 = 22; Fig. 3d 5 x 3 = 15) are left to the owner. Every injection is written to `preprocess/source_data_replicates.json` with `records_written: 0` and the reason.
+
+### What the Source Data does change: one replicate count, back-solved
+
+Pooled the Methods' way, `log2(mean(mutant injections) / mean(wild-type injections))` against Supplementary Data 3 (four printed decimals):
+
+| sheet | column | injections | biological (legend) | pooled | SD3 | reproduced |
+|---|---|---|---|---|---|---|
+| Figure 3b | SucB knockout | 6 | 3 | 0.4273 | 0.4273 | yes |
+| Figure 3b | SucB S115E | 8 | 4 | 1.0422 | 1.0422 | yes |
+| Figure 3b | SucB S115A | 10 | 5 | 0.0643 | 0.0608 | no |
+| Figure 3d | TpiA S177E | 6 | 3 | 1.6828 | 1.6828 | yes |
+| Figure 3d | TpiA S177A | 6 | 3 | 0.0181 | 0.0248 | no |
+| Figure 3d | TpiA T179E | 6 | 3 | 0.3307 | 0.3307 | yes |
+| Figure 3d | TpiA T179A | 6 | 3 | 0.0388 | 0.0388 | yes |
+
+A reproduced value was pooled over exactly those injections, so its record's `n_replicates` is the legend's count rather than the floor of 3. Only one record moves: `SucB-S115E` on fructose, 3 -> 4 on all 284 keys. The two non-reproducing columns keep the floor. `TpiA S177A`'s first two injections equal the wild type's first two (24791, 24317), recorded as `positions_equal_to_wild_type`; a copy in the release is a plausible reading but is unverified, and the value is stored as released.
+
+### Build and verification
+
+- Scratch build: `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-schastnaya2021/metabolome_schastnaya2021`, 200 records, `verify_build` PASS (L0 200 validated, L1 200 = 200, 200 unique (strain, medium) pairs, L2 58,218 values, L3 reference zero and one measurement type, every sourced value audited).
+- Against `origin/main`'s loader built into `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-schastnaya2021/baseline_main/metabolome_schastnaya2021`: same 200 keys in the same order, max absolute difference of every stored level 0, and exactly one record differs (`SucB-S115E` fructose `n_replicates`).
+- The L4 rule `gene_containment_mg1655_b_numbers` reads `perturbation_type == "deletion_strain"`, which no record has carried since 2026-10-12, so it reports "0 of 0" (report-class, not changed here).
+- The data-gated `test_real_build_counts_and_the_gnd_record` looked the gnd record up by `b2029`, which the store has not held since 2026-10-12; it now looks it up by its released token `gnd knockout`.

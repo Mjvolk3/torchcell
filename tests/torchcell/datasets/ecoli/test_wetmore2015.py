@@ -18,6 +18,7 @@ import math
 import os
 import os.path as osp
 import shutil
+from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
@@ -768,7 +769,8 @@ def _s1_quality(name: str, short: str, g_med: float = 200.0) -> dict[str, Any]:
     """A quality row whose ``u`` is what the paper's rules make of its metrics."""
     metrics = {"gMed": g_med, "mad12": 0.2, "cor12": 0.3, "adjcor": 0.01, "gccor": 0.02}
     successful = g_med >= 50.0
-    return {"name": name, "short": short, **metrics, "u": successful}
+    t0set = f"6/19/2014 Keio_ML9_{name[:4]}"
+    return {"name": name, "short": short, "t0set": t0set, **metrics, "u": successful}
 
 
 _M9C = "M9 minimal media_noCarbon"
@@ -1160,13 +1162,16 @@ def test_gene_symbol_keeps_a_symbol_only_when_it_resolves_back() -> None:
 
 
 def test_build_phenotype_stores_the_t_and_the_papers_se() -> None:
-    kept = w.build_phenotype(-1.5, 0.25, -5.57, screen_id="Keio:set1IT003")
+    kept = w.build_phenotype(
+        -1.5, 0.25, -5.57, screen_id="Keio:set1IT003", replicate_id="set1IT003"
+    )
     assert (
         kept.environment_response,
         kept.environment_response_se,
         kept.environment_response_uncertainty_type,
         kept.environment_response_t_statistic,
-    ) == (-1.5, 0.25, UncertaintyType.standard_error, -5.57)
+        kept.replicate_id,
+    ) == (-1.5, 0.25, UncertaintyType.standard_error, -5.57, "set1IT003")
     assert [g.field for g in kept.provenance_gaps] == ["n_samples", "sample_unit"]
 
 
@@ -1277,6 +1282,10 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> N
     first = dataset[0]
     phenotype = first["experiment"]["phenotype"]
     assert phenotype["screen_id"] == "Keio:set1IT003"
+    # #1178: the record names the released sample it is; the reference stays the
+    # sample's typical gene with no replicate_id
+    assert phenotype["replicate_id"] == "set1IT003"
+    assert first["reference"]["phenotype_reference"]["replicate_id"] is None
     assert phenotype["environment_response"] == -2.0
     assert phenotype["environment_response_se"] == pytest.approx(0.3)
     assert phenotype["environment_response_t_statistic"] == pytest.approx(
@@ -1343,6 +1352,23 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> N
         w.RAW_FILES[w.SUPERSET_TOP_PAGE].sha256
     )
     assert drops["quality_rules_reproduce_u"] is True
+    # every stored record's replicate_id is its own sample, one per sample
+    assert {
+        (p["screen_id"], p["replicate_id"])
+        for p in (dataset[i]["experiment"]["phenotype"] for i in range(len(dataset)))
+    } == {(f"Keio:{n}", n) for n in SUCCESSFUL if n != "set1IT007"} | {
+        ("Keio:set1IT030", "set1IT030")
+    }
+    replicates = json.loads((root / "preprocess" / "replicates.json").read_text())
+    # set1IT003 (M9) and set1IT067 (MOPS) share the label "D-Glucose (carbon source)"
+    assert replicates["group_size_histogram"] == {"1": 4, "2": 1}
+    assert replicates["replicate_groups"]["D-Glucose (carbon source)"] == [
+        "set1IT003",
+        "set1IT067",
+    ]
+    assert replicates["time_zero"]["released_columns"] == ["set1IT001"]
+    assert replicates["time_zero"]["n_values"] == 7
+    assert replicates["time_zero"]["stored_records"] == 0
     standard_error = json.loads(
         (root / "preprocess" / "standard_error.json").read_text()
     )
@@ -1409,6 +1435,11 @@ def test_verify_build_runs_every_row_and_the_compendium_cross_check(
         GENOME_REFERENCE_RULES
     )
     assert results["count"].passed is True
+    assert results["replicate_id_is_the_released_sample"].message == (
+        "SUPPLEMENTARY: 6 samples, each its own replicate_id; 0 samples whose records "
+        "carry another replicate_id; 0 samples without exactly 7 genes; 0 (sample, "
+        "gene) pairs stored twice"
+    )
     assert results["withdrawn_samples_refused_not_stored"].message == (
         "SUPPLEMENTARY: 0 records of the 1 samples the authors withdrew "
         "(['set1IT007']); 0 of them are in the store; 6 samples stored, expected 6"
@@ -1574,6 +1605,10 @@ def test_stored_values_reads_one_perturbation_per_record() -> None:
         standard_error=0.2,
         t_statistic=-4.47,
     )
+    # a record built since #1178 carries its sample as replicate_id
+    named = json.loads(json.dumps(record))
+    named["experiment"]["phenotype"]["replicate_id"] = "set1IT007"
+    assert w.stored_values([named])[0].replicate_id == "set1IT007"
     # a compendium record written before the t field existed reads None for it
     old = json.loads(json.dumps(record))
     del old["experiment"]["phenotype"]["environment_response_t_statistic"]
@@ -1582,6 +1617,106 @@ def test_stored_values_reads_one_perturbation_per_record() -> None:
     two["experiment"]["genotype"]["perturbations"] *= 2
     with pytest.raises(ValueError, match="expected one perturbation, got 2"):
         w.stored_values([two])
+
+
+def test_replicate_id_row_wants_one_record_per_gene_and_sample() -> None:
+    def named(sample: str, tag: str, replicate_id: str | None = None) -> w.StoredValue:
+        value = _value(sample, tag, 0.5)
+        return value.model_copy(
+            update={"replicate_id": sample if replicate_id is None else replicate_id}
+        )
+
+    good = [named(s, g) for s in ("set1IT003", "set1IT004") for g in ("a", "b")]
+    result = w.replicate_ids_name_their_samples(good, 2)
+    assert (result.passed, result.details["n_samples"]) == (True, 2)
+    # a record naming another sample, a missing gene, or a doubled pair each fail it
+    swapped = [*good[:3], named("set1IT004", "b", "set1IT003")]
+    assert w.replicate_ids_name_their_samples(swapped, 2).details["mismatched"] == [
+        "set1IT004"
+    ]
+    assert w.replicate_ids_name_their_samples(good[:3], 2).details[
+        "not_every_gene_once"
+    ] == ["set1IT004"]
+    doubled = w.replicate_ids_name_their_samples([*good, good[0]], 2)
+    assert (doubled.passed, doubled.details["repeated_pairs"]) == (False, 1)
+    # a store built before #1178 carries no replicate_id and fails the row
+    old = [v.model_copy(update={"replicate_id": None}) for v in good]
+    assert w.replicate_ids_name_their_samples(old, 2).passed is False
+
+
+def _time_zero_frames(
+    columns: dict[str, list[float]],
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Data Set S1 time-zero rows and quality rows, and a fitness table over them."""
+    experiments = pd.DataFrame(
+        [
+            {"name": "setXIT001", "Group": "Time0"},
+            {"name": "setXIT002", "Group": "Time0"},
+            {"name": "setXIT003", "Group": "Time0"},
+            {"name": "setXIT004", "Group": "carbon source"},
+        ]
+    )
+    quality = pd.DataFrame(
+        [
+            {"name": "setXIT002", "t0set": "day X"},
+            {"name": "setXIT003", "t0set": "day X"},
+            {"name": "setXIT004", "t0set": "day X"},
+        ]
+    )
+    fitness = pd.DataFrame(
+        {"locusId": [1, 2], "sysName": ["b0001", "b0002"], "desc": ["g", "g"]}
+        | {
+            f"{name} {'Time0' if name != 'setXIT004' else 'Glucose'}": values
+            for name, values in columns.items()
+        }
+    )
+    return experiments, quality, fitness
+
+
+def test_time_zero_account_measures_the_negative_control_columns() -> None:
+    experiments, quality, fitness = _time_zero_frames(
+        {"setXIT002": [0.25, -0.5], "setXIT003": [-0.25, 0.5], "setXIT004": [1.0, 2.0]}
+    )
+    account = w.time_zero_account(experiments, quality, fitness)
+    assert account.data_set_s1_time_zeros == ("setXIT001", "setXIT002", "setXIT003")
+    assert account.released_columns == ("setXIT002", "setXIT003")
+    # a time zero with no column (too few reads) is named, not invented
+    assert account.without_a_released_column == ("setXIT001",)
+    (only,) = account.sets
+    # a set of two is one comparison printed twice with the sign flipped
+    assert (only.t0set, only.columns, only.n_values) == (
+        "day X",
+        ("setXIT002", "setXIT003"),
+        4,
+    )
+    assert only.max_abs_column_sum == 0.0
+    assert (account.n_values, account.stored_records) == (4, 0)
+
+
+def test_time_zero_account_refuses_what_the_release_does_not_state() -> None:
+    experiments, quality, fitness = _time_zero_frames(
+        {"setXIT002": [0.1, 0.2], "setXIT004": [1.0, 2.0]}
+    )
+    stray = fitness.rename(columns={"setXIT004 Glucose": "setXIT004 Time0"})
+    with pytest.raises(ValueError, match="no Data Set S1 Time0 row"):
+        w.time_zero_account(experiments, quality, stray)
+    unscored = quality.loc[quality["name"] != "setXIT002"]
+    with pytest.raises(ValueError, match="no quality row"):
+        w.time_zero_account(experiments, unscored, fitness)
+    gap = fitness.copy()
+    gap.loc[0, "setXIT002 Time0"] = np.nan
+    with pytest.raises(ValueError, match="missing value"):
+        w.time_zero_account(experiments, quality, gap)
+
+
+def test_replicate_groups_keep_each_stored_sample_under_its_short_label() -> None:
+    specs = _specs()
+    groups = w.replicate_groups(specs)
+    # the withdrawn set1IT007 is in no group; every other sample is in exactly one
+    assert "Sucrose (C)" not in groups
+    assert sorted(n for names in groups.values() for n in names) == sorted(
+        s.name for s in specs if s.drop_rule is None
+    )
 
 
 def test_stored_tags_are_loci_accepts_genes_and_self_resolving_pseudogenes() -> None:
@@ -1799,6 +1934,81 @@ def test_the_loader_inventory_off_the_deposited_bytes() -> None:
         "Sodium L-Lactate": 2,
         "casamino acids": 4,
     }
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not MIRRORS_PRESENT, reason="requires the mirrors")
+def test_the_release_replicates_and_time_zeros_off_the_deposited_bytes() -> None:
+    """#1178: 97 stored samples in 47 replicate groups; the 5 Time0 columns unstored."""
+    groups, time_zero = w.release_replicates()
+    sizes = Counter(len(names) for names in groups.values())
+    assert dict(sizes) == w.EXPECTED_REPLICATE_GROUP_SIZES
+    assert sum(len(names) for names in groups.values()) == w.EXPECTED_SAMPLES
+    assert groups["LB"] == (
+        "set2IT024",
+        "set2IT034",
+        "set2IT045",
+        "set2IT055",
+        "set2IT069",
+        "set2IT079",
+        "set2IT090",
+    )
+    assert sorted(k for k, v in groups.items() if len(v) == 1) == [
+        "D-Galacturonic Acid (C) M9",
+        "D-Glucose (C) M9",
+    ]
+    assert time_zero.data_set_s1_time_zeros == (
+        "set1IT001",
+        "set1IT002",
+        "set1IT049",
+        "set1IT050",
+        "set2IT011",
+        "set2IT012",
+        "set2IT035",
+        "set2IT036",
+        "set2IT091",
+        "set2IT092",
+    )
+    assert time_zero.released_columns == (
+        "set1IT002",
+        "set1IT049",
+        "set1IT050",
+        "set2IT091",
+        "set2IT092",
+    )
+    assert time_zero.n_values == 5 * w.EXPECTED_GENES == 18230
+    set1, set2 = time_zero.sets
+    assert (set1.t0set, set1.columns) == (
+        "6/19/2014 Keio_ML9_set1",
+        ("set1IT002", "set1IT049", "set1IT050"),
+    )
+    # set2's two columns are one comparison printed twice, sign flipped
+    assert set2.columns == ("set2IT091", "set2IT092")
+    assert set2.max_abs_column_sum < 1e-12
+    assert set1.max_abs_column_sum == pytest.approx(0.3867, abs=1e-4)
+
+
+STORE = os.environ.get("WETMORE2015_STORE", osp.join(DATA_ROOT, w.DATASET_ROOT_REL))
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not osp.isfile(osp.join(STORE, "preprocess", "replicates.json")),
+    reason="requires a store built since #1178 (WETMORE2015_STORE, default the dev "
+    "store)",
+)
+def test_the_store_holds_one_record_per_gene_and_released_sample() -> None:
+    from torchcell.verification.runners import stream_records
+
+    values = w.stored_values(stream_records(STORE))
+    assert len(values) == w.EXPECTED_RECORDS
+    result = w.replicate_ids_name_their_samples(values, w.EXPECTED_GENES)
+    assert (result.passed, result.details["n_samples"]) == (True, w.EXPECTED_SAMPLES)
+    replicates = json.loads(Path(STORE, "preprocess", "replicates.json").read_text())
+    assert replicates["group_size_histogram"] == {
+        str(k): v for k, v in sorted(w.EXPECTED_REPLICATE_GROUP_SIZES.items())
+    }
+    assert replicates["time_zero"]["stored_records"] == 0
 
 
 @pytest.mark.data

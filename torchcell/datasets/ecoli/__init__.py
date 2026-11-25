@@ -119,7 +119,9 @@ sourcing layer.
   on thirty carbon sources, against two assembly pins.
 - ``fang2025`` -- ``CrispriGuideFfaEnrichmentFang2025Dataset``: the two-round
   CRISPRi-FACS free-fatty-acid enrichment screen over the SAME 55,671-guide library
-  ``wang2018`` serves, 15,708 records.
+  ``wang2018`` serves, 15,708 records; and ``FfaTiterFang2025Dataset``, the reverse-
+  engineered strains' FFA titers, one record per released biological replicate culture
+  (306 records over 102 strains).
 - ``wang2018`` -- ``CrispriGuideFitnessWang2018Dataset``: the genome-scale pooled CRISPRi
   library, one signed log2 fitness per (guide, screen) over five screens; and
   ``CrispriGeneFitnessWang2018Dataset``, Supplementary Data 5's gene-level call (gene
@@ -295,6 +297,7 @@ from .cui2018 import CrispriKnockdownCui2018Dataset as CrispriKnockdownCui2018Da
 from .fang2025 import (
     CrispriGuideFfaEnrichmentFang2025Dataset as CrispriGuideFfaEnrichmentFang2025Dataset,
 )
+from .fang2025 import FfaTiterFang2025Dataset as FfaTiterFang2025Dataset
 from .fitness_browser_ecoli import (
     FitnessBrowserEcoliDataset as FitnessBrowserEcoliDataset,
 )

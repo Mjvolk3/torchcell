@@ -488,6 +488,7 @@ BACTERIAL_DATASETS = {
     "CrispriCrossRachwalski2024Dataset",
     "CrispriDifferentialProteomeYunus2026Dataset",
     "CrispriGuideFfaEnrichmentFang2025Dataset",
+    "FfaTiterFang2025Dataset",
     "CrispriGeneFitnessWang2018Dataset",
     "CrispriGuideFitnessWang2018Dataset",
     "CrispriKnockdownCui2018Dataset",
@@ -690,6 +691,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         + 1  # #1178 Schmidt 2016 Table S8 per-culture intensities
         + 1  # #1176 Muenzner 2024 SI Table 13 time course
         + 1  # #1178 Lim 2025 TALE lineages' initial growth rates
+        + 1  # #1178 Fang 2025's per-replicate FFA titers
     )
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {

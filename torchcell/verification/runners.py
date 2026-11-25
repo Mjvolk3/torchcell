@@ -2100,7 +2100,10 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
         # name or structure (HIP 2,649 + HOP 2,618 columns, 27,180,760 cells) are held
         # out under UNIDENTIFIED_COMPOUND_RULE (constitution principle 2), leaving HIP
         # 1,760,690 + HOP 1,367,124, measured by the job 5082 dev rebuild.
-        "expected_count": 3127814,
+        # 2026.11.25 (#1177, #1203): the two Benomyl positive-control matrices the paper
+        # lists (Dryad HIP_scores-benomyl.txt / HOP_scores-benomyl.txt, 94 + 97
+        # one-study columns) add HIP 544,437 + HOP 438,704 = 983,141 records.
+        "expected_count": 4110955,
         # ~3.1M records -> single-pass streaming gate.
         "stream": True,
         # HIP heterozygous + HOP homozygous kanMX4 deletion diploid collections (BY4743):
@@ -2111,6 +2114,10 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             source_uri=(
                 "https://datadryad.org/downloads/file_stream/4834608 (HIP_scores.txt); "
                 "https://datadryad.org/downloads/file_stream/4834609 (HOP_scores.txt); "
+                "https://datadryad.org/downloads/file_stream/4834606 "
+                "(HIP_scores-benomyl.txt); "
+                "https://datadryad.org/downloads/file_stream/4834607 "
+                "(HOP_scores-benomyl.txt); "
                 "Dryad doi:10.5061/dryad.v5m8v"
             ),
             citation_key="hoepfnerHighresolutionChemicalDissection2014",
@@ -2148,7 +2155,11 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
                 "HOP_scores.txt "
                 "sha256=99b386a84384eae847657ed41bf222c9550a87ef961f0ab191833c918771ffd7, "
                 "Table_S1.xls "
-                "sha256=115bb31cc5e696588d1ecb4ffa262475e05025e22347f7e004f77fd635898209"
+                "sha256=115bb31cc5e696588d1ecb4ffa262475e05025e22347f7e004f77fd635898209, "
+                "HIP_scores-benomyl.txt "
+                "sha256=1692d6cf8f14d85920d037a702e37d0f575104286ded189f6c953915ba293aa7, "
+                "HOP_scores-benomyl.txt "
+                "sha256=2e219495ed2fecc8ffa0aaffea8ffcd1d040f95fbd92a526ba17fb6d281eb5a4"
             ),
         ),
     },

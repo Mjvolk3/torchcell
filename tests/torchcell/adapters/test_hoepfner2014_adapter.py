@@ -212,6 +212,10 @@ def _small_build(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         (raw / name).write_text(
             "\n".join("\t".join(f'"{c}"' for c in row) for row in rows) + "\n"
         )
+    # The Benomyl positive-control matrices (2026.11.25): the row-name column only, no
+    # sensitivity column, so this build stays at the compound matrices' records.
+    for name in ("HIP_scores-benomyl.txt", "HOP_scores-benomyl.txt"):
+        (raw / name).write_text('"Systematic Name"\n')
     book = openpyxl.Workbook()
     known = book.active
     known.title = "Reference Substances known MoA"

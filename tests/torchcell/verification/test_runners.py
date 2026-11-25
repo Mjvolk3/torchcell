@@ -2252,8 +2252,8 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "crispr_magic_lian2019": 798912,
         "crispri_mormino2022": 12,
         "env_chemgen_costanzo2021": 61640,
-        "env_chemgen_hillenmeyer2008_het": 2963683,
-        "env_chemgen_hillenmeyer2008_hom": 1182916,
+        "env_chemgen_hillenmeyer2008_het": 4094099,
+        "env_chemgen_hillenmeyer2008_hom": 1750292,
         # #1045: every released ratio (Table S7's non-blank cells), the nine name-only
         # compounds and the 14 ORFs the annotation does not call genes included
         "env_chemgen_parsons2006": 300834,

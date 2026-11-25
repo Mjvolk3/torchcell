@@ -29,18 +29,17 @@ HET rows (A1..A8):
     YDL227C:ctrl_1     5.0   5.0                                 'ctrl_' batch, stored
     YPL999W:chr1_1     9     9     9    9    9   NA   NA   4.0  no current gene, stored
 
-Every row is stored under its released ORF and batch, and nothing averages across rows.
-Records: 0-4 YAL001C/chr00_1 in G1 (1.0, 3.0: mean 2.0, sample SD sqrt(2)), G2 0.5, G3
-2.0, G4 1.0, G5 1.0; 5 YAL001C/chr1_2 G1 2.0; 6 YBR001C G1 (0.25 twice: an SD of exactly
-0, stored as a typed gap); 7 YAR044W G1 4.0; 8 YOR202W G1 1.0; 9 YDL227C/ctrl_1 G1 (5.0
-twice); 10-12 YPL999W G1 (9 twice), G2 9, G3 9.
+Every row is stored under its released ORF and batch, and nothing averages, neither
+across rows nor across the arrays of one group: one record per (row, array) value cell
+(2026.11.24, #1178). Records: 0-5 YAL001C/chr00_1 A1 1.0, A2 3.0 (G1), A3 0.5, A4 2.0, A6
+1.0, A7 1.0; 6 YAL001C/chr1_2 A1 2.0; 7-8 YBR001C A1 0.25, A2 0.25; 9 YAR044W A1 4.0; 10
+YOR202W A1 1.0; 11-12 YDL227C/ctrl_1 A1 5.0, A2 5.0; 13-16 YPL999W A1, A2, A3, A4 9.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
-import math
 import os
 import re
 from pathlib import Path
@@ -64,6 +63,7 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     PreCultureSource,
     Publication,
+    SampleUnit,
     SmallMoleculePerturbation,
     StrainConstruction,
     StrainEnvironmentResponseExperiment,
@@ -204,33 +204,42 @@ def _reference(
     )
 
 
-#: (released ORF, batch, mean, n, sd, control set, pool), in record order
+#: (released ORF, batch, released value, array filename, control set, pool), in
+#: record order
 _HET_EXPECTED = [
-    ("YAL001C", "chr00_1", 2.0, 2, math.sqrt(2.0), _CS1, "het_01"),
-    ("YAL001C", "chr00_1", 0.5, 1, None, _CS2, "het_02"),
-    ("YAL001C", "chr00_1", 2.0, 1, None, _CS1, "het_01"),
-    ("YAL001C", "chr00_1", 1.0, 1, None, _CS1, "het_01"),
-    ("YAL001C", "chr00_1", 1.0, 1, None, _CS0, "het_02"),
-    ("YAL001C", "chr1_2", 2.0, 1, None, _CS1, "het_01"),
-    ("YBR001C", "chr3_9", 0.25, 2, None, _CS1, "het_01"),
-    ("YAR044W", "chr5_1", 4.0, 1, None, _CS1, "het_01"),
-    ("YOR202W", "chr15_3", 1.0, 1, None, _CS1, "het_01"),
-    ("YDL227C", "ctrl_1", 5.0, 2, None, _CS1, "het_01"),
-    ("YPL999W", "chr1_1", 9.0, 2, None, _CS1, "het_01"),
-    ("YPL999W", "chr1_1", 9.0, 1, None, _CS2, "het_02"),
-    ("YPL999W", "chr1_1", 9.0, 1, None, _CS1, "het_01"),
+    ("YAL001C", "chr00_1", 1.0, "A1", _CS1, "het_01"),
+    ("YAL001C", "chr00_1", 3.0, "A2", _CS1, "het_01"),
+    ("YAL001C", "chr00_1", 0.5, "A3", _CS2, "het_02"),
+    ("YAL001C", "chr00_1", 2.0, "A4", _CS1, "het_01"),
+    ("YAL001C", "chr00_1", 1.0, "A6", _CS1, "het_01"),
+    ("YAL001C", "chr00_1", 1.0, "A7", _CS0, "het_02"),
+    ("YAL001C", "chr1_2", 2.0, "A1", _CS1, "het_01"),
+    ("YBR001C", "chr3_9", 0.25, "A1", _CS1, "het_01"),
+    ("YBR001C", "chr3_9", 0.25, "A2", _CS1, "het_01"),
+    ("YAR044W", "chr5_1", 4.0, "A1", _CS1, "het_01"),
+    ("YOR202W", "chr15_3", 1.0, "A1", _CS1, "het_01"),
+    ("YDL227C", "ctrl_1", 5.0, "A1", _CS1, "het_01"),
+    ("YDL227C", "ctrl_1", 5.0, "A2", _CS1, "het_01"),
+    ("YPL999W", "chr1_1", 9.0, "A1", _CS1, "het_01"),
+    ("YPL999W", "chr1_1", 9.0, "A2", _CS1, "het_01"),
+    ("YPL999W", "chr1_1", 9.0, "A3", _CS2, "het_02"),
+    ("YPL999W", "chr1_1", 9.0, "A4", _CS1, "het_01"),
 ]
 
 
-def test_het_records_are_one_per_released_strain_and_control_set(
+def test_het_records_are_one_per_released_strain_and_array(
     het: m.HetHillenmeyer2008Dataset,
 ) -> None:
-    """Thirteen records in row-then-group order, each keyed on the released ORF and
-    batch with no ``ConstructedOrf``: the merged-by-SGD ORF (YAR044W), the ORF with no
-    current gene (YPL999W) and the ``ctrl_`` row of YDL227C are stored like the rest.
+    """Seventeen records, one per released (row, array) cell in row, group, array
+    order, each keyed on the released ORF and batch with no ``ConstructedOrf``: the
+    merged-by-SGD ORF (YAR044W), the ORF with no current gene (YPL999W) and the
+    ``ctrl_`` row of YDL227C are stored like the rest. Each value is the released cell
+    verbatim with n = 1, the array filename as ``replicate_id`` and the two uncertainty
+    fields as ``not_applicable_single_measurement`` gaps; the two arrays of G1 are two
+    records, never their mean.
     """
-    assert len(het) == 13
-    for i, (orf, batch, mean, n, sd, cs, pool) in enumerate(_HET_EXPECTED):
+    assert len(het) == 17
+    for i, (orf, batch, value, array, cs, pool) in enumerate(_HET_EXPECTED):
         experiment = _experiment(het, i)
         assert experiment.experiment_type == "strain_environment_response"
         (pert,) = _genotype(experiment).perturbations
@@ -244,23 +253,42 @@ def test_het_records_are_one_per_released_strain_and_control_set(
         assert pert.construction == StrainConstruction(batch=batch)
         assert pert.constructed_orf is None
         phenotype = experiment.phenotype
-        assert (phenotype.screen_id, phenotype.n_samples) == (cs, n)
-        assert phenotype.environment_response == pytest.approx(mean)
-        if sd is None:
-            assert phenotype.environment_response_uncertainty is None
-        else:
-            assert phenotype.environment_response_uncertainty == pytest.approx(sd)
+        assert (phenotype.screen_id, phenotype.replicate_id) == (cs, array)
+        assert (phenotype.n_samples, phenotype.sample_unit) == (
+            1,
+            SampleUnit.biological_replicate,
+        )
+        assert phenotype.environment_response == value
+        assert phenotype.environment_response_uncertainty is None
+        assert phenotype.environment_response_uncertainty_type is None
+        assert phenotype.environment_response_se is None
         assert phenotype.units == m.UNITS_HET
-    # the zero-SD groups are a typed gap, not a dispersion of 0
-    for i in (6, 9, 10):
-        assert _experiment(het, i).phenotype.gapped_fields() == {
-            "environment_response_uncertainty"
-        }
+        assert [(g.field, g.reason, g.note) for g in phenotype.provenance_gaps] == [
+            (
+                "environment_response_uncertainty",
+                ProvenanceGapReason.not_applicable_single_measurement,
+                m.SINGLE_ARRAY_UNCERTAINTY_NOTE,
+            ),
+            (
+                "environment_response_uncertainty_type",
+                ProvenanceGapReason.not_applicable_single_measurement,
+                m.SINGLE_ARRAY_UNCERTAINTY_NOTE,
+            ),
+        ]
+    # the mean of G1's two arrays (2.0) is not stored anywhere
+    assert [_experiment(het, i).phenotype.environment_response for i in (0, 1)] == [
+        1.0,
+        3.0,
+    ]
+    # the two records of one row and pool share one genotype; the two arrays of one
+    # group share one environment
+    assert _genotype(_experiment(het, 0)) == _genotype(_experiment(het, 1))
+    assert _experiment(het, 0).environment == _experiment(het, 1).environment
     # G2: HIS3 is null in BY4743 before and after the deletion
-    his3 = _genotype(_experiment(het, 8)).perturbations[0]
+    his3 = _genotype(_experiment(het, 10)).perturbations[0]
     assert isinstance(his3, HeterozygousDeletionPerturbation)
     assert his3.gapped_fields() == {"barcode", "downtag_barcode", "replaced_allele"}
-    background = _reference(het, 8).genome_reference.background
+    background = _reference(het, 10).genome_reference.background
     assert isinstance(background, EukaryoticStrainBackground)
     assert heterozygous_deletion_functional_copies(background, his3) == 0
     doi = "10.1126/science.1150021"
@@ -274,7 +302,7 @@ def test_het_environment_carries_the_pre_culture_its_generation_sign_implies(
     het: m.HetHillenmeyer2008Dataset,
 ) -> None:
     """20gen and -5gen of one drug: same compound, different pre-culture (#505 E3)."""
-    grown, frozen = _experiment(het, 0).environment, _experiment(het, 1).environment
+    grown, frozen = _experiment(het, 0).environment, _experiment(het, 2).environment
     for environment, generations in ((grown, 20.0), (frozen, 5.0)):
         assert isinstance(environment, CultureEnvironment)
         assert environment.media == YPD_LIQUID
@@ -300,7 +328,7 @@ def test_an_unidentified_compound_is_stored_with_the_inchikey_gap(
     """A4 amphotericin: the curated table gives no structure, so the record keeps the
     released label and the typed ``inchikey`` gap ``resolved_compound`` attaches.
     """
-    environment = _experiment(het, 2).environment
+    environment = _experiment(het, 3).environment
     (drug,) = environment.perturbations
     assert isinstance(drug, SmallMoleculePerturbation)
     assert drug.compound == resolved_compound("amphotericin")
@@ -316,7 +344,7 @@ def test_a_key_header_compound_disagreement_is_served_under_the_header(
     het: m.HetHillenmeyer2008Dataset,
 ) -> None:
     """A6: header colchicine, key file colchiceine; the header's compound is served."""
-    (drug,) = _experiment(het, 3).environment.perturbations
+    (drug,) = _experiment(het, 4).environment.perturbations
     assert isinstance(drug, SmallMoleculePerturbation)
     assert drug.compound == resolved_compound("colchicine")
     assert drug.concentration == Concentration(
@@ -330,7 +358,7 @@ def test_a_zero_generation_array_is_stored_with_a_typed_pre_culture_gap(
     """A7 minimal media at 0gen: duration 0.0, no pre-culture, and the gap says why;
     its 0gen control set gets the same treatment on the reference.
     """
-    environment = _experiment(het, 4).environment
+    environment = _experiment(het, 5).environment
     assert isinstance(environment, CultureEnvironment)
     assert environment.media == SD
     assert (environment.duration_generations, environment.pre_culture) == (0.0, None)
@@ -343,11 +371,11 @@ def test_a_zero_generation_array_is_stored_with_a_typed_pre_culture_gap(
     gap = next(g for g in environment.provenance_gaps if g.field == "pre_culture")
     assert gap.reason is ProvenanceGapReason.not_reported_by_primary
     assert gap.note is not None and "'0gen'" in gap.note
-    reference = _reference(het, 4).environment_reference
+    reference = _reference(het, 5).environment_reference
     assert isinstance(reference, CultureEnvironment)
     assert (reference.duration_generations, reference.pre_culture) == (0.0, None)
     assert "pre_culture" in reference.gapped_fields()
-    assert _reference(het, 4).phenotype_reference.n_samples == 1
+    assert _reference(het, 5).phenotype_reference.n_samples == 1
 
 
 def test_het_reference_is_by4743_with_the_matched_control_set(
@@ -363,16 +391,18 @@ def test_het_reference_is_by4743_with_the_matched_control_set(
     assert genome.background == m.hillenmeyer_background()
     assert reference.phenotype_reference.screen_id == _CS1
     assert reference.phenotype_reference.n_samples == 3
+    # the reference stays the control-set summary: no single array names it
+    assert reference.phenotype_reference.replicate_id is None
     assert reference.environment_reference.perturbations == []
     assert reference.environment_reference.duration_generations == 20.0
     assert reference.environment_reference.pre_culture is not None
     assert (
-        _reference(het, 1).environment_reference.pre_culture
-        == _experiment(het, 1).environment.pre_culture
+        _reference(het, 2).environment_reference.pre_culture
+        == _experiment(het, 2).environment.pre_culture
     )
     assert [
-        het[i]["reference"]["phenotype_reference"]["screen_id"] for i in range(13)
-    ] == [entry[5] for entry in _HET_EXPECTED]
+        het[i]["reference"]["phenotype_reference"]["screen_id"] for i in range(17)
+    ] == [entry[4] for entry in _HET_EXPECTED]
 
 
 def test_het_side_files_gene_set_reference_index_and_manifest(
@@ -394,7 +424,11 @@ def test_het_side_files_gene_set_reference_index_and_manifest(
             entry["reference"]["phenotype_reference"]["screen_id"],
         )
         for entry in index
-    ) == [([0, 2, 3, 5, 6, 7, 8, 9, 10, 12], _CS1), ([1, 11], _CS2), ([4], _CS0)]
+    ) == [
+        ([0, 1, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16], _CS1),
+        ([2, 15], _CS2),
+        ([5], _CS0),
+    ]
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert manifest["dataset_name"] == "het"
     assert manifest["loader_class"] == _HET
@@ -543,13 +577,13 @@ def test_het_ledgers_count_the_remaining_rule_the_gaps_and_every_cell(
     """The heat-shock array (needs schema) and the ChemDiv-code array (unidentified
     agent) are not stored; each is counted over the stored rows. The compound gap ledger
     lists amphotericin with its two records, and the 21 released value cells split into
-    17 stored + 2 in each dropped array.
+    17 stored (one record each) + 2 in each dropped array.
     """
     preprocess = Path(het.root) / "preprocess"
     report = json.loads((preprocess / "dropped_records.json").read_text())
     assert report["dataset"] == _HET
     assert report["matrix"] == "het.ratio_result_nm.pub"
-    assert report["kept_records"] == 13
+    assert report["kept_records"] == 17
     assert (
         sorted(report["rules"])
         == sorted(m.DROP_RULES)
@@ -704,6 +738,11 @@ def test_hom_record_is_a_barcoded_kanmx4_deletion_and_pdr5_is_dropped(
         1.5,
     )
     assert (phenotype.screen_id, phenotype.units) == (_HOM_CS, m.UNITS_HOM)
+    assert (phenotype.replicate_id, phenotype.n_samples) == ("B1", 1)
+    assert phenotype.gapped_fields() == {
+        "environment_response_uncertainty",
+        "environment_response_uncertainty_type",
+    }
     reference = _reference(hom, 0)
     assert reference.genome_reference.strain == "BY4743"
     assert reference.phenotype_reference.n_samples == 2

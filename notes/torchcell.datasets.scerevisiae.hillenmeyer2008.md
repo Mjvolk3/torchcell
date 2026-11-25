@@ -469,3 +469,48 @@ Observation, follow-up: four het labels carry the hybridization-volume suffix in
 ### Rebuild (slurm 4443_1 and 4443_2, `--retire-existing --verify`)
 
 `env_chemgen_hillenmeyer2008_hom`: 1,228,676 records in 1,042 s (17.4 min) on commit `7f67ede3e`, exactly the measured expectation; `cell_accounting`: 1,804,800 value cells = 1,796,052 in stored records + 8,740 in the two unnamed-agent arrays (needs schema) + 8 in the withdrawn PDR5 row. `env_chemgen_hillenmeyer2008_het`: 3,074,132 records written (the expectation), post-processing in flight at the landing. Neither arm declares a per-dataset verifier; the environment-response family entries run as slurm 4509 (het) and 4510 (hom), and their L0-L4 tables go in the docs follow-up after the landing. The hom manifest reads `torchcell_dirty: True` from a notes-only edit in the worktree during the array.
+
+## 2026.11.24 - One record per array (per-replicate policy, #1178, part of #1175)
+
+Each matrix column is one array and each array is one experiment, so every released (strain row, array) value cell is now its own record. Before this change the loader stored one record per (strain row, environment, control set) holding the mean over that group's arrays with the across-array sample SD.
+
+### Replicate evidence (verbatim, pinned bytes)
+
+- `paper.md` (SOM, sha256 `cf4759f00083de78dd953b12dd66d4360a2f645321305f768403f26b451c1df0`) line 75: "One array is used per experiment (control or treatment)."
+- `paper.md` line 122 (experiment-name table, field `filename`): "Unique identifier of the array, and the name of the corresponding .cel intensity file." This is the `replicate_id`.
+- `paper.md` line 126: "Certain conditions were tested in replicate (number of replicates ranged from 1 to 14), with a median replicate correlation of 0.72 (Fig. S6)."
+- `paper.md` line 292: "SAM requires replicates, and few of our treatment experiments contained true replicates"; line 300 distinguishes "true replicates, varying concentrations, and varying timepoints of collection".
+- `paper.md` line 158: "We averaged the log-ratios of the up- and downtags to yield one log-" (ratio): the technical combination inside one array's value, done by the authors.
+- `si/si1.md` (main article, sha256 `d2c544882fdd09b49aa7555bb5fb75b738263540eeb920b944fcd216597eaa34`) line 43: "We performed 726 treatment experiments in each of the heterozygous deletion strains and 418 separate experiments in each of the homozygous strains".
+- `paper.md` line 400 (Fig. S6 caption): "The bimodal distribution suggests that a small subset of replicates that were not correct." No array is named, so nothing is withdrawn.
+
+Not stated anywhere in the mirror: whether two same-day arrays of one group (filename `YY_MM_DD` shared; 52 of 124 het and 47 of 93 hom multi-array groups) were parallel cultures. By the one-array-per-experiment sentence each is its own experiment and its own record. The SOM's "1 to 14" maximum does not match the measured group maximum of 12 (het, methotrexate 250 uM 20 gen); the SOM's grouping for that count is not stated.
+
+Control arrays are not matrix columns; they exist only as CEL files (raw instrument files, out of scope), so `phenotype_reference` stays the control-set summary (`n_samples` = control arrays, `replicate_id=None`).
+
+### Record shape
+
+`environment_response` = the released cell verbatim, `n_samples=1`, `sample_unit=biological_replicate`, `replicate_id` = array filename, `screen_id` = control set (unchanged), `environment_response_uncertainty` and `environment_response_uncertainty_type` = `None` with `not_applicable_single_measurement` gaps (`SINGLE_ARRAY_UNCERTAINTY_NOTE`). The old zero-SD `not_reported_by_primary` gap is gone with the SD. `UNITS_HET` / `UNITS_HOM` now say "ONE array ... as released" instead of "Mean over the replicate arrays". `count_records` and every ledger count (`n_records_not_written`, the compound gap `n_records`) count (row, array) cells now. Seven new `SOURCED_VALUES` carry the quotes above.
+
+### Counts (loader functions on the pinned matrices; `test_the_real_release_stores_one_record_per_array_cell`)
+
+| | HET | HOM |
+|---|---|---|
+| stored arrays / (environment, control set) groups | 706 / 511 | 405 / 275 |
+| group sizes | {1: 387, 2: 89, 3: 19, 4: 9, 5: 3, 7: 3, 12: 1} | {1: 182, 2: 66, 3: 19, 4: 6, 5: 2} |
+| records before (one per row x group) | 2,963,683 | 1,182,916 |
+| records after (one per row x array) | 4,094,099 | 1,750,292 |
+| records by array position in its group | 1: 2,963,564; 2: 719,250; 3: 202,809; 4: 92,719; 5: 40,512; 6: 23,175; 7: 23,175; 8-12: 5,779 each | 1: 1,182,916; 2: 404,786; 3: 118,951; 4: 35,355; 5: 8,284 |
+
+Every stored array filename is distinct within its arm, so `replicate_id` never collides.
+
+### Scratch builds and checks
+
+Built with the worktree loader into `$DATA_ROOT/tmp/scratch/per-replicate-hillenmeyer2008/env_chemgen_hillenmeyer2008_{het,hom}` (not the shared dev roots). The registered environment-response verifier was run on each with its `root` pointed at the scratch build (script in the session scratchpad, `verify.py`).
+
+- HOM: 1,750,292 records in 1,609 s; `cell_accounting` 1,804,800 = 1,750,292 stored + 8,740 unnamed-agent + 45,760 unidentified-compound + 8 PDR5. Verifier PASS (L1 count 1,750,292, pair_uniqueness 1,750,292 unique, 2 genome findings reported, not gated).
+- Mean reproduction, HOM: reading the new store in build order and grouping consecutive records by (ORF, batch, pool, environment sha1, `screen_id`) gives 1,182,916 groups whose keys match the old dev store (`$DATA_ROOT/data/torchcell/env_chemgen_hillenmeyer2008_hom`) record by record, with run lengths equal to the old `n_samples` in every record and max |mean(new) - old| = 0.0.
+- HET: 4,094,099 records in 3,870 s; `cell_accounting` 4,210,387 = 4,094,099 stored + 5,839 heat-shock + 110,449 unidentified-compound. Verifier PASS (L1 count 4,094,099, pair_uniqueness 4,094,099 unique, 2 genome findings reported, not gated).
+- Mean reproduction, HET: 2,963,683 groups, keys match the old dev store record by record, run lengths equal the old `n_samples` everywhere (distribution {1: 2,244,552; 2: 516,322; 3: 110,090; 4: 52,207; 5: 17,337; 7: 17,396; 12: 5,779}), max |mean(new) - old| = 0.0.
+
+The shared dev roots under `$DATA_ROOT/data/torchcell/` were read, never written; they still hold the per-group stores until the next rebuild.

@@ -841,3 +841,116 @@ def test_a_held_out_label_carries_its_vendor_and_product_name(
     catalog lookup (e.g. Biomol's telomerase inhibitor ix) can admit it later.
     """
     assert hillenmeyer2008.vendor_catalog_entry(label) == expected
+
+
+# 2026.11.24: one record per released array (#1178, #1175)
+
+
+def test_build_phenotype_stores_one_array_verbatim_with_typed_absences() -> None:
+    """One array's cell is the record: n = 1, the filename as replicate_id, no SD."""
+    from torchcell.datamodels.schema import SampleUnit
+    from torchcell.verification.sourced import ProvenanceGapReason
+
+    phenotype = hillenmeyer2008.build_phenotype(
+        MATRICES["het"], -0.731, "het_06_03::new scanner::20::tag3::YPD::dmso::0", "x1"
+    )
+    assert (phenotype.environment_response, phenotype.n_samples) == (-0.731, 1)
+    assert (phenotype.replicate_id, phenotype.sample_unit) == (
+        "x1",
+        SampleUnit.biological_replicate,
+    )
+    assert phenotype.environment_response_uncertainty is None
+    assert phenotype.environment_response_se is None
+    assert {g.field: g.reason for g in phenotype.provenance_gaps} == {
+        "environment_response_uncertainty": (
+            ProvenanceGapReason.not_applicable_single_measurement
+        ),
+        "environment_response_uncertainty_type": (
+            ProvenanceGapReason.not_applicable_single_measurement
+        ),
+    }
+    with pytest.raises(ValueError, match="non-finite released score"):
+        hillenmeyer2008.build_phenotype(MATRICES["het"], float("inf"), "cs", "x1")
+
+
+def test_the_real_release_stores_one_record_per_array_cell() -> None:
+    """Counted on the pinned matrices through the loader's own functions.
+
+    HET 706 stored arrays in 511 (environment, control set) groups, HOM 405 in 275; every
+    stored array filename is distinct, so the replicate_id never collides inside one
+    arm. The per-array record count equals the stored value cells (4,094,099 and
+    1,750,292); the (row, group) count the store held before 2026.11.24 is 2,963,683
+    and 1,182,916. Records by the array's position inside its group are pinned too.
+    """
+    import os
+    from collections import Counter
+    from pathlib import Path
+
+    data_root = os.environ.get("DATA_ROOT")
+    if data_root is None:
+        pytest.skip("DATA_ROOT is not set")
+    raw = Path(data_root) / "torchcell-raw" / CITATION_KEY / "data"
+    if not raw.exists():
+        pytest.skip("the raw mirror is not mounted on this machine")
+    expected = {
+        "het": (
+            726,
+            706,
+            511,
+            4_094_099,
+            2_963_683,
+            {1: 387, 2: 89, 3: 19, 4: 9, 5: 3, 7: 3, 12: 1},
+            {
+                1: 2_963_564,
+                2: 719_250,
+                3: 202_809,
+                4: 92_719,
+                5: 40_512,
+                6: 23_175,
+                7: 23_175,
+                8: 5_779,
+                9: 5_779,
+                10: 5_779,
+                11: 5_779,
+                12: 5_779,
+            },
+        ),
+        "hom": (
+            418,
+            405,
+            275,
+            1_750_292,
+            1_182_916,
+            {1: 182, 2: 66, 3: 19, 4: 6, 5: 2},
+            {1: 1_182_916, 2: 404_786, 3: 118_951, 4: 35_355, 5: 8_284},
+        ),
+    }
+    for arm, spec in MATRICES.items():
+        with open(raw / spec.filename) as handle:
+            header = handle.readline().rstrip("\n").split("\t")
+        columns = parse_columns(
+            header,
+            read_control_set_map(raw / spec.keyfile),
+            read_key_conditions(raw / spec.keyfile),
+        )
+        kept, _ = hillenmeyer2008.group_columns(columns)
+        matrix = read_matrix_rows(raw / spec.filename, len(header), arm)
+        filenames = [c.filename for members in kept.values() for c in members]
+        by_position: Counter[int] = Counter()
+        n_groups_with_value = 0
+        for row in matrix.rows:
+            for members in kept.values():
+                cells = hillenmeyer2008.array_cells(row.values, members)
+                n_groups_with_value += bool(cells)
+                for column, _ in cells:
+                    by_position[members.index(column) + 1] += 1
+        assert (
+            len(columns),
+            len(filenames),
+            len(kept),
+            hillenmeyer2008.count_records(matrix.rows, kept),
+            n_groups_with_value,
+            dict(Counter(len(m) for m in kept.values())),
+            dict(by_position),
+        ) == expected[arm], arm
+        assert len(set(filenames)) == len(filenames)

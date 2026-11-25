@@ -892,3 +892,145 @@ Every gene under its released b-number; an assay whose Media label no library ca
 | L1 | `experiment_kind_census` | pass | SUPPLEMENTARY: {'no_phage_control': 36921, 'phage': 250894} |
 | L1 | `assay_format_census` | pass | SUPPLEMENTARY: {'liquid': 247214, 'solid': 40601} |
 | L1 | `gene_set_size` | pass | SUPPLEMENTARY: 3716 distinct stored genes |
+
+## 2026.11.25 - Per-replicate review (#1178): one record per assay culture, and the three experiments the S1 Table publishes
+
+### What a replicate is in this release
+
+A record was already one released (gene, experiment) cell, and an experiment IS one
+assay culture, so the store was already one record per biological replicate. The sources,
+all in `Methods, 'Competitive growth experiments with RB-TnSeq library'` unless noted
+(paper.md, sha256 `c7aab1a1c4384a37f1f75f6ecafe2f538fc6ff22c7c39aceeebe988aba2e6cb5`):
+
+| what | verbatim | consequence |
+|---|---|---|
+| the common pre-culture | "A single aliquot (1 ml) of a mutant library was thawed, inoculated into $2 5 \mathrm { m l }$ of medium supplemented with kanamycin $( 5 0 \mu \mathrm { g } / \mathrm { m l } )$ , and grown to OD600 of 0.6-0.8" | the cultures of one set are siblings of one recovered library, not independent recoveries |
+| the assay unit | "After the mutant library recovered and reached mid-log phase, we collected cell pellets as a common reference for BarSeq (termed time-zero or start samples) and used the remaining cells to set up competitive mutant fitness assays in the presence of different phages at different MOI." | one culture per phage and MOI; the start samples are the log ratios' denominator |
+| the planktonic vessel | "The mutant library experiments were grown in the wells of a 48-well microplate ${ 7 0 0 \mu \mathrm { l } }$ per well)" | one well is one record |
+| the solid vessel | "The next day, the resistant colonies were scraped, resuspended in $1 \mathrm { m l }$ LB media, and pelleted." | the PLATE is the unit; the colonies of a plate are pooled into one measurement, so they are not replicates |
+| the batch | "All experiments done on the same day and sequenced on the same lane are considered as a “set.”" (Methods, BarSeq) | the `setNN` prefix is the day and lane; there is no batch field, so it rides `replicate_id` and `screen_id` |
+
+So the conversion is a LABEL, not a split: every record now carries
+`replicate_id = <the release's own expName>` (`set16IT008`), and the reference keeps
+`replicate_id=None` because it is the experiment's normalization rather than one
+culture's measurement. `EnvironmentResponsePhenotype` has carried `replicate_id` since
+PR #1181, so no schema change was needed.
+
+The label is load-bearing: the release runs the planktonic no-phage control in EIGHT
+cultures that share one stored environment identity (`set16IT007`, `set16IT033`,
+`set16IT044`, `set16IT052`, `set16IT056`, `set19IT072`, `set28IT004`, `set28IT007`),
+which is the one entry in the new `replicate_groups` report. T2 at 0.01875 MOI is also
+run twice (`set16IT012`, `set16IT019`) but does NOT group, because the release states
+that dose twice and the two statements differ in the seventeenth digit: S13's formula
+gives 0.01875000000000001 for the row it has, and the other's own description gives
+0.01875. The dose rule stays the Methods' (S13 first), so the arithmetic of the released
+formula stands.
+
+### The released columns, all 190 of them
+
+`ColumnAccount` in `preprocess/assay_ledger.json` now partitions every released
+gene-fitness column of the three Keio analysis sets (measured 2026-11-25):
+
+| class | n | what it is |
+|---|---|---|
+| stored, on the authors' list | 78 | the non-start rows of `Keio_exps_used.tab` |
+| stored, published only by the S1 Table | 3 | `set16IT005`, `set30IT059`, `set30IT061` |
+| start samples, listed | 21 | the log ratios' common reference |
+| start samples, not listed | 12 | same, outside the authors' list |
+| outside both statements | 76 | stored nowhere; one is the authors' own withdrawal |
+| total | 190 | |
+
+**Correction to the earlier sections.** This module claimed the release "gives a
+time-zero sample no fitness column". That is wrong: all 33 start samples DO have a
+released column (near zero, sd about 0.19, `maxFit` 1.1 to 1.4 for the three checked).
+They bear no record because a start sample is the common reference, not a measured
+end-point condition.
+
+### The three experiments the authors' list omits and the S1 Table publishes
+
+The S1 Table is the paper's own "S1 Table. RB-TnSeq E. coli K-12 dataset." and is a
+pinned raw-mirror artifact (`data/S1_Table_RB-TnSeq_K12.xlsx`, sha256
+`7db056cf673e0d3262222e41efef5e37373d42b04a88cdf04b4f27a887c54b4c`) that the loader had
+never read. Its `Solid plate assays` sheet is the figshare `set30` table for twelve
+experiments: `set30IT059` (P2 at 0.5625 MOI) and `set30IT061` (CEV1 at 0.3125 MOI) carry
+their full 3,691-gene columns there, matching the figshare columns to a maximum absolute
+difference of 9.8e-17 over all 3,691 genes (measured). `set16IT005` (T7 at 0.00078125
+MOI) is one of the columns behind the main text's Fig 2A heatmap, and its 24 genes in the
+`Fig 2A data` sheet are bit-equal (difference exactly 0.0) to its figshare column.
+
+An experiment whose gene fitness the authors PUBLISH is a released record whatever a
+second file leaves out, so the selection rule is now the union of the authors' two
+statements of their own dataset rather than one of them. The added experiments take
+their `t0set`, `gMean` and `maxFit` from the release's own `fit_quality.tab`, which
+`check_quality_agrees_with_the_list` first proves prints the same three values that
+`Keio_exps_used.tab` prints for every listed experiment.
+
+The `Keio_hits_fit5` sheet admits nothing: the Overview calls it "filtered data that pass
+our stringent filters", and the 68 experiments its rows name are asserted to be a subset
+of the authors' list.
+
+### The one allowed drop, quoted
+
+`Methods, 'Data processing and analysis of BarSeq reads'`: "Phage T2 assays on solid agar
+showed poor consistency and were dropped out of the analysis." That names exactly one
+released Keio column, `set30IT052` (`T2_phage_9.6875_MOI` on `LB_agar`), and the S1
+Table's solid sheet omits it too. `check_withdrawal` asserts it is absent from both
+released statements, so the withdrawal is the authors' and no rule of ours drops it.
+
+The Methods' other experiment filter, "We applied filters on experiments such that the
+mean reads per gene is ${ \ge } 1 0$ .", is stated as a rule and never resolved to a list
+of experiments, so it withdraws nothing here.
+
+### Counts, and the build
+
+| | before | after |
+|---|---|---|
+| records | 287,815 | 298,883 |
+| record-bearing cultures | 78 | 81 |
+| distinct genes | 3,716 | 3,716 |
+| declared unedited control records (#888) | 29,544 | 29,544 |
+
+298,883 = 59 x 3,686 + 9 x 3,714 + 13 x 3,691. Scratch build (the shared dev tree was
+NOT touched):
+`/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-mutalik2020/phage_rbtnseq_mutalik2020`.
+
+Old store against new store, keyed on (released b-number, experiment): every one of the
+287,815 previously stored records keeps its fitness, SE and t EXACTLY (0 differing
+values), and the 11,068 added records are exactly the three S1-published cultures. No
+record's value changed, so there is nothing to average back: grouping the new records by
+genotype and environment and taking the mean reproduces the old stored values on every
+condition except the eight-culture no-phage control group, which was eight records
+before as well.
+
+### Verifier (scratch build, `verify_build`)
+
+22 rows: 19 pass, and the same three genome-reference findings the previous build
+reported (`canonical_gene_names`, `gene_containment_sgd` 0.998 of 3,716, and
+`current_genome_genes`, now 7 names over 554 records rather than 535 because three more
+cultures carry those genes). Those are `report`-class by the owner's rule: the genome
+never gates a record. The new SUPPLEMENTARY row `replicate_id_per_culture` passes: 81
+replicate ids, one per record-bearing culture, each with its own analysis set's gene rows.
+
+### Left for the owner
+
+The 75 released columns outside both of the authors' statements, with no statement either
+way, are still stored nowhere. They are additional CONDITIONS rather than replicates of a
+stored one, and several could not be stated with the existing schema even if admitted:
+phages outside the panel of 14 (`T4delta9`, `T4delta11`, `T4delta12`, `Papa`), the three
+`in droplets` experiments (a microfluidic vessel `Environment` cannot hold), the
+`cacl2` and `cacl2 maltose` buffer variants (no stated concentration), and
+`T5phage_small_colonies_ML9a` (a colony-size selection step). Four of them repeat a
+stored condition exactly (`set16IT077`, `set19IT081`, `set30IT093` whose stored twin is
+`set30IT057`, and `set30IT095`), so admitting them would add replicates rather than
+conditions. The open question is whether absence
+from `Keio_exps_used.tab` is an author withdrawal. The figshare README's first paragraph
+says only, wrapped across two lines, "Keio_exps_used.tab describes which experiments for
+E. col BW25113 were" / "included in our analysis." (sha256
+`ebf050b56ed1d6f99a12ffde3e049fb7fb7883b70d97fee9a62c3c4e0e5fdecd`). It is not for the three the S1 Table publishes, which is why those three are
+now stored; for the remaining 75 nothing in the release says either way.
+
+Also unresolved, and unchanged by this pass: `n_samples` and `sample_unit` stay typed
+gaps. A gene fitness value is "the weighted average of the fitness of its strains", so
+the within-record level is the insertion strain, which `SampleUnit` has no member for and
+`EnvironmentResponsePhenotype` has no technical-count field to state; the release's own
+per-record standard error stays the stored uncertainty.

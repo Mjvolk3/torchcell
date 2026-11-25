@@ -33,9 +33,23 @@ experiment name against the 162 successful ``Keio`` samples of the Price 2018 co
 is empty. The library is shared with Wetmore 2015 and Price 2018 (one pool, KEIO_ML9)
 while the experiments are disjoint, which is exactly the case the superset rule is for.
 
-WHAT THE RECORDS ARE. One record per (gene, experiment) over the 68 phage assays and 10
-no-phage controls the paper's own ``Keio_exps_used.tab`` names: **286,344 records over
-3,697 genes and 78 experiments** (measured, see ``EXPECTED_RECORDS``). The phenotype is
+WHAT THE RECORDS ARE. One record per (gene, experiment), and **one experiment is one
+assay culture**: one well of a 48-well microplate in the planktonic format, one plate in
+the solid-agar format. The record-bearing experiments are the union of the authors' TWO
+released statements of their own dataset -- ``Keio_exps_used.tab`` (78 non-start
+experiments) and the S1 Table's per-experiment data sheets (3 further experiments,
+:func:`s1_published_experiments`) -- which is **298,883 records over 3,716 genes and 81
+cultures** (measured, see ``EXPECTED_RECORDS``). Each record's
+``replicate_id`` is the release's own name for that culture (``set16IT008``), which is
+what keeps the repeated cultures of one condition distinct records: the release runs the
+planktonic no-phage control in eight cultures, which share one stored environment
+identity and are told apart by nothing else (``replicate_groups`` in
+``assay_ledger.json``). It also runs T2 at 0.01875 MOI twice (``set16IT012`` and
+``set16IT019``), which do NOT share an identity, because the release states that dose
+twice and the two statements differ in the seventeenth digit: S13's formula gives
+0.01875000000000001 for the one it has a row for, and the other's own description gives
+0.01875. The dose rule is the Methods' (S13 first), so the arithmetic of the released
+formula stands and the pair is reported rather than reconciled. The phenotype is
 ``EnvironmentResponsePhenotype`` (``measurement_type=log2_ratio``,
 ``assay_type=pooled_competitive_growth_barcode``) under
 ``EnvironmentResponseExperiment``, NOT ``FitnessPhenotype``: the value is a
@@ -43,6 +57,35 @@ signed log2 ratio, and 106,536 of the 250,960 released S1 Table cells (42.45%) a
 negative, which ``FitnessPhenotype.validate_fitness`` would clamp to 0.0. The genotype is
 one ``TransposonInsertionPerturbation`` per gene, and the environment of a challenge
 carries exactly one ``PhagePerturbation``.
+
+WHICH EXPERIMENTS BEAR RECORDS, and the one drop the authors themselves state. The
+release carries 190 gene-fitness columns over the three Keio analysis sets, and the
+build accounts for every one of them (``released_column_account``):
+
+1. **81 are stored**, one record per gene each: the 78 non-start experiments of
+   ``Keio_exps_used.tab`` plus the 3 the S1 Table publishes and that file omits
+   (``set16IT005``, ``set30IT059``, ``set30IT061``). The S1 Table is the paper's own
+   ``RB-TnSeq E. coli K-12 dataset``, and its ``Solid plate assays`` sheet carries the
+   full 3,691-gene column of ``set30IT059`` and ``set30IT061`` (matched against the
+   figshare columns to 1e-16, :func:`s1_published_experiments`), while ``set16IT005``
+   is one of the columns behind the main text's Fig 2A heatmap. A column the authors
+   PUBLISH is a released record whatever a second file leaves out, so the selection is
+   the union and not one of the two lists.
+2. **33 are start samples** (21 listed, 12 not). A start sample is the common reference
+   every log ratio is taken against (``ASSAY_SETUP``), so its column is that pellet
+   scored against its own time-zero set rather than a measured end-point condition. It
+   is NOT, as this module said before 2026-11-25, a column the release does not carry:
+   the release does carry one for each of the 33 (near zero, sd about 0.19).
+3. **76 are released columns outside both of the authors' statements** and are stored
+   nowhere. One of them is an author withdrawal, quoted: ``set30IT052`` is T2 on solid
+   agar, and the Methods say those assays "showed poor consistency and were dropped out
+   of the analysis" (``T2_SOLID_AGAR_WITHDRAWN``), which is also why the S1 Table's
+   solid sheet omits it. The other 75 carry no statement either way and are left for
+   the owner (see the dendron note): they are additional conditions rather than
+   replicates of a stored one -- phages outside the panel (``T4delta9``,
+   ``T4delta11``, ``T4delta12``, ``Papa``), a microfluidic-droplet format the
+   ``Environment`` cannot state, buffer variants (``cacl2``, ``cacl2 maltose``) with no
+   stated concentration, and a colony-size selection step.
 
 THE RELEASED t IS STORED. The release carries a t-like statistic per (gene, experiment)
 (``fit_t.tab``) beside the fitness and the estimated standard error, and the paper's hit
@@ -504,6 +547,12 @@ def sourced_values() -> dict[str, SourcedValue]:
             "nine, and read_experiment_axis reports what the file holds",
         ),
         "no_phage_control": NO_PHAGE_CONTROL,
+        "replicate_unit": COMMON_PRECULTURE,
+        "assay_setup": ASSAY_SETUP,
+        "batch": SET_IS_A_DAY_AND_A_LANE,
+        "solid_unit": SOLID_COLONIES_ARE_POOLED,
+        "author_withdrawal": T2_SOLID_AGAR_WITHDRAWN,
+        "experiment_filter": MEAN_READS_FILTER,
         "measurement_type": _paper(
             "log2_ratio",
             "which we define as the normalized log2 change in the abundance of mutants "
@@ -961,9 +1010,408 @@ def parse_experiment_axis(
 
 
 def read_experiment_axis(data_root: str | None = None) -> ExperimentAxis:
-    """:func:`parse_experiment_axis` on the experiment list of the deposited raw mirror."""
+    """:func:`parse_experiment_axis` on the experiment list of the deposited raw mirror.
+
+    This is the AUTHORS' LIST alone. The axis a build selects on is the union of that
+    list with the experiments the S1 Table publishes (:func:`axis_with_s1_published`),
+    which needs the per-set ``exps`` and ``fit_quality.tab`` members as well and is
+    therefore assembled from a built tree's ``raw/`` (:func:`read_axis_union`).
+    """
     return parse_experiment_axis(
         raw_mirror_dir(data_root) / EXPS_USED_REL, read_moi_table(data_root)
+    )
+
+
+# --------------------------------------------------------------------------- #
+# The S1 Table: the paper's own statement of its RB-TnSeq dataset
+# --------------------------------------------------------------------------- #
+_S1_OVERVIEW_PAGE = "S1 Table, 'Overview' sheet"
+
+#: The S1 Table sheets that publish gene fitness per experiment. ``Keio_hits_fit5`` is
+#: NOT one of them: the Overview calls it "filtered data that pass our stringent
+#: filters", and the 68 experiments its rows name are all in ``Keio_exps_used.tab``
+#: anyway, which :func:`s1_published_experiments` asserts rather than assumes.
+S1_DATA_SHEETS: tuple[str, ...] = (
+    "planktonic assays1",
+    "planktonic assays2",
+    "Solid plate assays",
+)
+#: The main text's Fig 2A heatmap sheet. It carries a top-gene extract rather than a
+#: full column, so it admits an experiment without being the source of its values: the
+#: values come from the figshare deposit the Data Availability statement names.
+S1_FIGURE_SHEET = "Fig 2A data"
+S1_HITS_SHEET = "Keio_hits_fit5"
+
+#: How deep into a sheet the header row can sit before the parse gives up.
+_S1_HEADER_ROWS = 4
+_S1_EXPERIMENT = re.compile(r"^(set\d+IT\d+)")
+
+
+def _s1(value: Any, quote: str, *, note: str | None = None) -> SourcedValue:
+    """Bind a value to one row of the sha256-pinned S1 Table in the raw mirror."""
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/{S1_TABLE_REL}",
+            citation_key=CITATION_KEY,
+            sha256=artifact(S1_TABLE_REL).sha256,
+            method="row rendering of the publisher xlsx deposited in the raw mirror",
+            page=_S1_OVERVIEW_PAGE,
+            retrieved=RETRIEVED_AT,
+        ),
+    )
+
+
+S1_IS_THE_PAPERS_DATASET = _paper(
+    S1_TABLE_REL,
+    "S1 Table. RB-TnSeq E. coli K-12 dataset.",
+    page="Supporting information",
+    note="the paper's own released RB-TnSeq dataset, deposited in the raw mirror and "
+    "pinned. An experiment whose gene fitness it publishes is a released record of this "
+    "study whatever Keio_exps_used.tab leaves out",
+)
+
+S1_SHEETS_PUBLISH_PER_EXPERIMENT_FITNESS = _s1(
+    S1_DATA_SHEETS,
+    "Solid plate assay | sheet provide fitness score data for each gene at different "
+    "condition. Column headers provide information on phages and its multiplicity of "
+    "infection value.",
+    note="the Overview says the same of 'Planktonic assay1' and 'Planktonic assay2'; "
+    "each of the three sheets is a full per-gene fitness table whose column headers are "
+    "the released experiment names",
+)
+
+S1_FIGURE_SHEET_IS_THE_MAIN_TEXT_FIGURE = _s1(
+    S1_FIGURE_SHEET,
+    "Fig2 data | dataset used in generating Fig 2 heatmap in the main text",
+    note="a top-gene extract, not a full column, so it admits the experiment and is not "
+    "the source of the stored values: set16IT005's 24 genes in this sheet are bit-equal "
+    "to its figshare column",
+)
+
+S1_HITS_SHEET_IS_FILTERED = _s1(
+    S1_HITS_SHEET,
+    "keio_hits | sheet provides filtered data that pass our stringent filters (Methods)",
+    note="which is why the hit sheet admits nothing: it is the paper's filtered hit "
+    "list, and s1_published_experiments asserts its experiments are a subset of "
+    "Keio_exps_used.tab",
+)
+
+EXPS_USED_IS_THE_ANALYSIS_LIST = SourcedValue(
+    value=EXPS_USED_REL,
+    quote="Keio_exps_used.tab describes which experiments for E. col BW25113 were\n"
+    "included in our analysis.",
+    note="the figshare deposit's own description of the list. It states what the "
+    "analysis INCLUDED; it is not a statement that a released column outside it was "
+    "withdrawn, and for three of them the S1 Table publishes the values",
+    provenance=Provenance(
+        source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/{FIGSHARE_README_REL}",
+        citation_key=CITATION_KEY,
+        sha256=artifact(FIGSHARE_README_REL).sha256,
+        method="the README deposited beside the tarball in the figshare release",
+        page="README.txt, first paragraph",
+        retrieved=RETRIEVED_AT,
+    ),
+)
+
+
+def read_s1_experiment_columns(path: str | Path) -> dict[str, tuple[str, ...]]:
+    """The experiments each S1 Table sheet names in its header row, keyed by sheet.
+
+    The data sheets label a column ``"<expName> <expDescription>"`` exactly as the
+    released fitness tables do, and the figure sheet labels its columns the same way, so
+    their experiments come from the header row. The hit sheet is one row per HIT and
+    names its experiment in an ``expName`` column instead, so its experiments are that
+    column's values, in released order. A sheet with no experiment name at all raises:
+    the workbook changed shape.
+    """
+    workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    out: dict[str, tuple[str, ...]] = {}
+    for sheet in (*S1_DATA_SHEETS, S1_FIGURE_SHEET):
+        names: list[str] = []
+        for index, values in enumerate(workbook[sheet].iter_rows(values_only=True)):
+            if index >= _S1_HEADER_ROWS:
+                break
+            found = [
+                match.group(1)
+                for match in (
+                    _S1_EXPERIMENT.match(str(cell))
+                    for cell in values
+                    if isinstance(cell, str)
+                )
+                if match is not None
+            ]
+            if found:
+                names = found
+                break
+        if not names:
+            raise ValueError(f"{sheet!r} of the S1 Table names no experiment")
+        if len(set(names)) != len(names):
+            raise ValueError(f"{sheet!r} of the S1 Table names an experiment twice")
+        out[sheet] = tuple(names)
+    out[S1_HITS_SHEET] = _s1_hit_experiments(workbook[S1_HITS_SHEET])
+    return out
+
+
+def _s1_hit_experiments(sheet: Any) -> tuple[str, ...]:
+    """The experiments the S1 Table's hit sheet names, from its ``expName`` column.
+
+    One row per high-scoring (gene, experiment) hit, so a name repeats and the distinct
+    names are returned in released order. A sheet with no ``expName`` column raises.
+    """
+    column: int | None = None
+    names: list[str] = []
+    for values in sheet.iter_rows(values_only=True):
+        if column is None:
+            labels = [str(cell).strip() if cell is not None else "" for cell in values]
+            if "expName" in labels:
+                column = labels.index("expName")
+            continue
+        cell = values[column] if column < len(values) else None
+        if isinstance(cell, str) and _S1_EXPERIMENT.match(cell.strip()):
+            names.append(cell.strip())
+    if column is None:
+        raise ValueError(f"{S1_HITS_SHEET!r} of the S1 Table has no expName column")
+    if not names:
+        raise ValueError(f"{S1_HITS_SHEET!r} of the S1 Table names no experiment")
+    return tuple(dict.fromkeys(names))
+
+
+def s1_published_experiments(
+    path: str | Path, listed: Iterable[str]
+) -> tuple[str, ...]:
+    """The experiments the S1 Table publishes that the authors' list omits, sorted.
+
+    ``listed`` is ``Keio_exps_used.tab``'s own set. The filtered hit sheet admits
+    nothing and is asserted to be a subset of ``listed`` instead (68 experiments), so a future release
+    that put a new experiment there would be detected rather than silently admitted.
+    """
+    columns = read_s1_experiment_columns(path)
+    names = set(listed)
+    stray = sorted(set(columns[S1_HITS_SHEET]) - names)
+    if stray:
+        raise ValueError(
+            f"the S1 Table's {S1_HITS_SHEET!r} names {stray}, which "
+            f"{EXPS_USED_NAME} does not list"
+        )
+    published: set[str] = set()
+    for sheet in (*S1_DATA_SHEETS, S1_FIGURE_SHEET):
+        published |= set(columns[sheet])
+    return tuple(sorted(published - names))
+
+
+class QualityRow(BaseModel):
+    """One row of an analysis set's ``fit_quality.tab``: the release's own per-experiment
+    statistics, which carry the same ``t0set``, ``gMean`` and ``maxFit`` values that
+    ``Keio_exps_used.tab`` prints for a listed experiment (checked by
+    :func:`check_quality_agrees_with_the_list`).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    exp_name: str
+    t0set: str
+    g_mean: float
+    max_fit: float
+    usable: bool
+
+
+def read_quality_rows(paths: Mapping[str, str | Path]) -> dict[str, QualityRow]:
+    """Every experiment's released quality row, keyed by experiment name."""
+    rows: dict[str, QualityRow] = {}
+    for _analysis_set, path in paths.items():
+        with open(path, newline="") as handle:
+            for row in csv.DictReader(handle, delimiter="\t"):
+                exp_name = str(row["name"])
+                if exp_name in rows:
+                    raise ValueError(f"{exp_name} has two quality rows")
+                rows[exp_name] = QualityRow(
+                    exp_name=exp_name,
+                    t0set=str(row["t0set"]),
+                    g_mean=float(row["gMean"]),
+                    max_fit=float(row["maxFit"]),
+                    usable=str(row["u"]).strip().upper() == "TRUE",
+                )
+    return rows
+
+
+def check_quality_agrees_with_the_list(
+    axis: ExperimentAxis, quality: Mapping[str, QualityRow]
+) -> None:
+    """Refuse a quality table whose statistics differ from the authors' list.
+
+    The two released files print ``t0set``, ``gMean`` and ``maxFit`` for a listed
+    experiment, and they agree exactly; that is what lets an S1-published experiment the
+    list omits take the same three values from the quality table instead of from
+    nowhere.
+    """
+    for assay in axis.assays:
+        row = quality.get(assay.exp_name)
+        if row is None:
+            raise ValueError(f"{assay.exp_name} is listed but has no quality row")
+        if (row.t0set, row.g_mean, row.max_fit) != (
+            assay.time_zero_set,
+            assay.g_mean,
+            assay.max_fit,
+        ):
+            raise ValueError(
+                f"{assay.exp_name}: the quality table says "
+                f"{(row.t0set, row.g_mean, row.max_fit)}, the experiment list says "
+                f"{(assay.time_zero_set, assay.g_mean, assay.max_fit)}"
+            )
+
+
+def check_withdrawal(
+    axis: ExperimentAxis,
+    published: Iterable[str],
+    released: Mapping[str, ReleasedAssay],
+) -> str:
+    """Assert the one experiment the Methods withdraw is in neither released statement.
+
+    The withdrawal is the authors' own ("Phage T2 assays on solid agar showed poor
+    consistency and were dropped out of the analysis"), and nothing here drops it: the
+    check is that the released statements already agree with the sentence, so the
+    build's own selection never has to.
+    """
+    withdrawn = str(T2_SOLID_AGAR_WITHDRAWN.value)
+    if withdrawn in {assay.exp_name for assay in axis.assays}:
+        raise ValueError(f"{withdrawn} is withdrawn by the Methods but is listed")
+    if withdrawn in set(published):
+        raise ValueError(
+            f"{withdrawn} is withdrawn by the Methods but the S1 Table publishes it"
+        )
+    row = released.get(withdrawn)
+    if row is None or row.media_label != "LB_agar":
+        raise ValueError(
+            f"{withdrawn} is not the released solid-agar T2 assay the Methods withdraw"
+        )
+    return withdrawn
+
+
+def axis_with_s1_published(
+    axis: ExperimentAxis,
+    released: Mapping[str, ReleasedAssay],
+    quality: Mapping[str, QualityRow],
+    published: Iterable[str],
+    moi_table: Mapping[str, MoiRow],
+) -> ExperimentAxis:
+    """Extend the authors' list with the experiments the S1 Table publishes.
+
+    Each added experiment is built the same way a listed one is: its kind, phage and
+    dose from its own released description (and the S13 Table where it has a row), and
+    its ``t0set``, ``gMean`` and ``maxFit`` from the release's own ``fit_quality.tab``,
+    which :func:`check_quality_agrees_with_the_list` has already shown to print the same
+    values the authors' list does.
+    """
+    listed = {assay.exp_name for assay in axis.assays}
+    extra: list[Assay] = []
+    for exp_name in sorted(set(published)):
+        if exp_name in listed:
+            continue
+        row = released.get(exp_name)
+        if row is None:
+            raise ValueError(f"{exp_name} is published by the S1 Table but unreleased")
+        quality_row = quality.get(exp_name)
+        if quality_row is None:
+            raise ValueError(f"{exp_name} is published by the S1 Table but unscored")
+        set_match = re.match(r"(set\d+)", exp_name)
+        if set_match is None:
+            raise ValueError(f"unreadable experiment name: {exp_name!r}")
+        kind = _assay_kind(row.description)
+        phage: str | None = None
+        moi: float | None = None
+        source: Literal["s13_table", "experiment_description"] | None = None
+        if kind == "phage":
+            if exp_name in moi_table:
+                phage = moi_table[exp_name].phage
+                moi = moi_table[exp_name].moi
+                source = "s13_table"
+            else:
+                phage, moi = _phage_and_moi_from_description(row.description)
+                source = "experiment_description"
+        extra.append(
+            Assay(
+                exp_name=exp_name,
+                set_name=set_match.group(1),
+                analysis_set=ANALYSIS_SETS[set_match.group(1)],
+                description=row.description,
+                kind=kind,
+                phage=phage,
+                moi=moi,
+                moi_source=source,
+                time_zero_set=quality_row.t0set,
+                g_mean=quality_row.g_mean,
+                max_fit=quality_row.max_fit,
+            )
+        )
+    return ExperimentAxis(assays=(*axis.assays, *extra))
+
+
+def read_axis_union(
+    raw_dir: str,
+) -> tuple[ExperimentAxis, dict[str, ReleasedAssay], tuple[str, ...]]:
+    """The axis a build selects on, from a built tree's own ``raw/`` files.
+
+    Reads the authors' list, the S13 doses, the per-experiment metadata, the quality
+    tables and the S1 Table, runs the two release checks, and returns the union axis,
+    the released metadata, and the experiments only the S1 Table publishes.
+    """
+    analysis_sets = sorted(set(ANALYSIS_SETS.values()))
+    moi_table = read_moi_workbook(osp.join(raw_dir, S13_NAME))
+    axis = parse_experiment_axis(osp.join(raw_dir, EXPS_USED_NAME), moi_table)
+    released = read_released_assays(
+        {name: osp.join(raw_dir, name, "exps") for name in analysis_sets}
+    )
+    quality = read_quality_rows(
+        {name: osp.join(raw_dir, name, "fit_quality.tab") for name in analysis_sets}
+    )
+    check_quality_agrees_with_the_list(axis, quality)
+    published = s1_published_experiments(
+        osp.join(raw_dir, S1_NAME), (assay.exp_name for assay in axis.assays)
+    )
+    check_withdrawal(axis, published, released)
+    return (
+        axis_with_s1_published(axis, released, quality, published, moi_table),
+        released,
+        published,
+    )
+
+
+def replicate_groups(
+    kept: Sequence[Assay], released: Mapping[str, ReleasedAssay]
+) -> tuple[ReplicateGroup, ...]:
+    """The conditions the release ran more than one culture of, with their replicate ids.
+
+    The key is the STORED environment identity of the assay: its released medium label
+    and format, and its phage and dose. A group of more than one culture is where
+    ``replicate_id`` is load-bearing, because the records of that group share a
+    (genotype, environment) key. Two cultures the release states the same condition for
+    but gives two doses (``set16IT012`` and ``set16IT019``, see the module docstring) are
+    therefore not one group: the key follows what is stored, not what the labels say.
+    """
+    groups: dict[tuple[str, str, str | None, float | None], list[str]] = {}
+    for assay in kept:
+        key = (
+            released[assay.exp_name].media_label,
+            released[assay.exp_name].state,
+            assay.phage,
+            assay.moi,
+        )
+        groups.setdefault(key, []).append(assay.exp_name)
+    return tuple(
+        ReplicateGroup(
+            media_label=media_label,
+            state=state,
+            phage=phage,
+            moi=moi,
+            replicate_ids=tuple(sorted(names)),
+        )
+        for (media_label, state, phage, moi), names in sorted(
+            groups.items(), key=lambda item: (-len(item[1]), sorted(item[1])[0])
+        )
+        if len(names) > 1
     )
 
 
@@ -1389,6 +1837,71 @@ NO_PHAGE_CONTROL = _paper(
 )
 
 
+COMMON_PRECULTURE = _paper(
+    "one thawed library aliquot recovered in 25 mL, split into the assay cultures",
+    "A single aliquot (1 ml) of a mutant library was thawed, inoculated into "
+    "$2 5 \\mathrm { m l }$ of medium supplemented with kanamycin "
+    "$( 5 0 \\mu \\mathrm { g } / \\mathrm { m l } )$ , and grown to OD600 of 0.6–0.8",
+    page=_CULTURE_PAGE,
+    note="the assay cultures of one set come from one recovered library culture, so a "
+    "stored record is a sibling culture of its set rather than an independently "
+    "recovered library; the replicate unit is still the assay culture, which is what "
+    "the release labels and what replicate_id carries",
+)
+
+ASSAY_SETUP = _paper(
+    "the remaining cells set up one competitive fitness assay per phage and MOI",
+    "After the mutant library recovered and reached mid-log phase, we collected cell "
+    "pellets as a common reference for BarSeq (termed time-zero or start samples) and "
+    "used the remaining cells to set up competitive mutant fitness assays in the "
+    "presence of different phages at different MOI.",
+    page=_CULTURE_PAGE,
+    note="the start samples are the common reference of the log ratios, which is why "
+    "their released columns are not stored as measured conditions; every other released "
+    "column is one assay culture",
+)
+
+SET_IS_A_DAY_AND_A_LANE = _paper(
+    "a set is the experiments run on one day and sequenced on one lane",
+    "All experiments done on the same day and sequenced on the same lane are considered "
+    "as a “set.”",
+    page="Methods, 'BarSeq of RB-TnSeq and Dub-seq pooled fitness assay samples'",
+    note="the batch structure of the release: the setNN prefix of an experiment name is "
+    "its day and lane. There is no batch field on EnvironmentResponsePhenotype, so the "
+    "batch rides the replicate_id and the screen_id, which both carry the setNN prefix",
+)
+
+SOLID_COLONIES_ARE_POOLED = _paper(
+    "the colonies of one plate are scraped into one sample",
+    "The next day, the resistant colonies were scraped, resuspended in "
+    "$1 \\mathrm { m l }$ LB media, and pelleted.",
+    page=_CULTURE_PAGE,
+    note="the solid format's unit is the PLATE, not the colony: every surviving colony "
+    "of a plate goes into one pellet and one barcode measurement, so a plate assay is "
+    "one record and the colonies are not replicates",
+)
+
+T2_SOLID_AGAR_WITHDRAWN = _paper(
+    "set30IT052",
+    "Phage T2 assays on solid agar showed poor consistency and were dropped out of the "
+    "analysis.",
+    page="Methods, 'Data processing and analysis of BarSeq reads'",
+    note="the one drop the authors themselves state, and the only released Keio column "
+    "it names: set30IT052, T2_phage_9.6875_MOI on LB_agar. It is absent from BOTH of "
+    "the authors' statements of their dataset, which is what check_withdrawal asserts",
+)
+
+MEAN_READS_FILTER = _paper(
+    "mean reads per gene >= 10",
+    "We applied filters on experiments such that the mean reads per gene is "
+    "${ \\ge } 1 0$ .",
+    page="Methods, 'Data processing and analysis of BarSeq reads'",
+    note="the authors' own experiment-level filter. It is stated as a rule and never "
+    "resolved to a list of experiments, so it is not a per-experiment withdrawal and no "
+    "released column is dropped by it here",
+)
+
+
 def _lb_lines(provenance: SourcedValue) -> list[MediaComponent]:
     """The three LB ingredients, named with no amounts (the recipe is deferred)."""
     return [
@@ -1614,6 +2127,10 @@ class ReleasedAssay(BaseModel):
 
     exp_name: str
     set_name: str
+    description: str = Field(
+        description="the row's own 'Description', which is what the authors' list and "
+        "the fitness-table column labels also print"
+    )
     media_label: str
     state: str = Field(description="'liquid' or 'solid', from 'Liquid v. solid'")
     growth_method: str
@@ -1663,6 +2180,7 @@ def read_released_assays(paths: Mapping[str, str | Path]) -> dict[str, ReleasedA
                 assays[exp_name] = ReleasedAssay(
                     exp_name=exp_name,
                     set_name=analysis_set,
+                    description=str(row["Description"]).strip(),
                     media_label=str(row["Media"]).strip(),
                     state=state,
                     growth_method=str(row["Growth Method"]).strip(),
@@ -2156,7 +2674,15 @@ def build_phenotype(
     exp_name: str,
     state: str,
 ) -> EnvironmentResponsePhenotype:
-    """One released (gene, experiment) cell with its own standard error and t."""
+    """One released (gene, experiment) cell with its own standard error and t.
+
+    ``replicate_id`` is the release's own name for the assay culture the cell was
+    measured in -- one 48-well microplate well (``COMMON_PRECULTURE``, ``ASSAY_SETUP``)
+    or one plate (``SOLID_COLONIES_ARE_POOLED``) -- so the eight cultures of the
+    planktonic no-phage control and the two cultures of T2 at 0.01875 MOI stay distinct
+    records instead of being told apart only by ``screen_id``. It is the bare
+    ``setNNITNNN``; ``screen_id`` is the same name qualified by the organism id.
+    """
     return EnvironmentResponsePhenotype(
         measurement_type=MeasurementType.log2_ratio,
         assay_type=AssayType.pooled_competitive_growth_barcode,
@@ -2166,6 +2692,7 @@ def build_phenotype(
         environment_response_t_statistic=t_statistic,
         units=units_for(state),
         screen_id=screen_id(exp_name),
+        replicate_id=exp_name,
         provenance_gaps=[N_SAMPLES_GAP, SAMPLE_UNIT_GAP],
     )
 
@@ -2173,7 +2700,11 @@ def build_phenotype(
 def build_reference(
     dataset_name: str, assay_environment: Environment, *, exp_name: str, state: str
 ) -> EnvironmentResponseExperimentReference:
-    """The typical gene of the same experiment: fitness 0 by the normalization."""
+    """The typical gene of the same experiment: fitness 0 by the normalization.
+
+    ``replicate_id`` stays unset: the reference is the experiment's normalization, which
+    is a summary over the culture's genes and not one replicate's own measurement.
+    """
     return EnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=assembly_reference(REFERENCE_STRAIN),
@@ -2221,20 +2752,92 @@ class DropLog(BaseModel):
     rules: tuple[DropRule, ...]
 
 
-class AssayLedger(BaseModel):
-    """The experiment-level accounting, which record counts alone cannot show.
+class ReplicateGroup(BaseModel):
+    """Cultures of ONE condition: where ``replicate_id`` is what tells records apart.
 
-    The 21 start samples carry no fitness column by construction, so they are not source
-    records at all; the release also carries far more fitness columns than the paper's
-    analysis used. Both are selection, not record drops, and they are reported here
-    rather than inside :class:`DropLog`, whose arithmetic is over cells.
+    The condition is the stored environment identity of the assay (its released medium
+    label and format, and its phage and dose), so a group of more than one culture is a
+    set of records that a (genotype, environment) key alone would collapse.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    used_experiments: int
+    media_label: str
+    state: str
+    phage: str | None
+    moi: float | None
+    replicate_ids: tuple[str, ...]
+
+    @property
+    def n_cultures(self) -> int:
+        """How many cultures the release ran of this condition."""
+        return len(self.replicate_ids)
+
+
+class ColumnAccount(BaseModel):
+    """Every released gene-fitness column of the three Keio sets, by what became of it.
+
+    The counts partition the columns: a column is stored, is a start sample, or is
+    outside both of the authors' statements of their dataset. A start sample's column IS
+    released (that pellet scored against its own time-zero set); it is not a measured
+    end-point condition, which is why it bears no record.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    released_columns: int
+    stored: int
+    listed_by_the_authors: int
+    published_only_by_the_s1_table: tuple[str, ...]
+    time_zero_listed: int
+    time_zero_unlisted: int
+    outside_both_statements: tuple[str, ...]
+    withdrawn_by_the_authors: str
+
+    def check(self) -> None:
+        """Refuse an account that does not add up to the released columns."""
+        total = (
+            self.stored
+            + self.time_zero_listed
+            + self.time_zero_unlisted
+            + len(self.outside_both_statements)
+        )
+        if total != self.released_columns:
+            raise RuntimeError(
+                f"column accounting mismatch: {total} accounted, "
+                f"{self.released_columns} released"
+            )
+        if self.withdrawn_by_the_authors not in self.outside_both_statements:
+            raise RuntimeError(
+                f"{self.withdrawn_by_the_authors} is the authors' own withdrawal but is "
+                "not among the unstored columns"
+            )
+
+
+class AssayLedger(BaseModel):
+    """The experiment-level accounting, which record counts alone cannot show.
+
+    The start samples and the released columns outside the authors' two statements of
+    their dataset are selection, not record drops, so they are reported here rather than
+    inside :class:`DropLog`, whose arithmetic is over cells. ``column_account`` is the
+    partition of all 190 released columns and ``replicate_groups`` names the conditions
+    the release ran more than one culture of.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    axis_experiments: int = Field(
+        description="experiments on the selection axis: the authors' list plus the ones "
+        "only the S1 Table publishes, start samples included"
+    )
     time_zero: int
     record_bearing: int
+    column_account: ColumnAccount
+    replicate_groups: tuple[ReplicateGroup, ...]
+    n_replicate_ids: int = Field(
+        description="distinct replicate_id values over the stored records, which is one "
+        "per record-bearing culture"
+    )
     unlisted_media: tuple[str, ...] = Field(
         description="experiments whose released Media label has no library entry, "
         "stored with the label as released and the composition a typed gap (#1057)"
@@ -2256,11 +2859,15 @@ class AssayLedger(BaseModel):
 # --------------------------------------------------------------------------- #
 S13_NAME = "S13_Table_MOI.xlsx"
 EXPS_USED_NAME = "Keio_exps_used.tab"
+#: The paper's own dataset, read for the experiments it publishes and the authors' list
+#: omits (:func:`s1_published_experiments`); no stored VALUE comes from it.
+S1_NAME = "S1_Table_RB-TnSeq_K12.xlsx"
 
 #: Mirror artifacts linked into ``raw/`` under these names.
 LINKED_ARTIFACTS: dict[str, str] = {
     S13_NAME: S13_TABLE_REL,
     EXPS_USED_NAME: EXPS_USED_REL,
+    S1_NAME: S1_TABLE_REL,
 }
 
 #: The per-analysis-set tables the build reads, as ``raw/`` path -> tarball member. A
@@ -2461,15 +3068,9 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
         import pandas as pd
 
         verify_raw_files(self.raw_dir, raw_pins())
-        moi_table = read_moi_workbook(osp.join(self.raw_dir, S13_NAME))
-        axis = parse_experiment_axis(osp.join(self.raw_dir, EXPS_USED_NAME), moi_table)
         analysis_sets = sorted(set(ANALYSIS_SETS.values()))
-        released = read_released_assays(
-            {
-                analysis_set: osp.join(self.raw_dir, analysis_set, "exps")
-                for analysis_set in analysis_sets
-            }
-        )
+        axis, released, s1_only = read_axis_union(self.raw_dir)
+        moi_table = read_moi_workbook(osp.join(self.raw_dir, S13_NAME))
         kept, unlisted_media = self._kept_assays(axis, released)
         by_set: dict[str, list[Assay]] = {name: [] for name in analysis_sets}
         for assay in kept:
@@ -2597,6 +3198,7 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
             unlisted_media=unlisted_media,
             tables=tables,
             kept_records=idx,
+            s1_only=s1_only,
         )
         n_values = sum(check.n_values for check in t_checks)
         with open(osp.join(self.preprocess_dir, "t_statistic.json"), "w") as handle:
@@ -2629,14 +3231,14 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
         unlisted_media: Sequence[str],
         tables: Mapping[str, tuple[Any, Any]],
         kept_records: int,
+        s1_only: Sequence[str],
     ) -> None:
         """Write the retention ledger and the assay ledger."""
-        import pandas as pd
 
-        #: Source records are the cells of every record-bearing used experiment. The 21
-        #: start samples are not source records at all: the release gives a time-zero
-        #: sample no fitness column (see :class:`AssayLedger`). No rule drops one since
-        #: #1057.
+        #: Source records are the cells of every record-bearing experiment. A start
+        #: sample's released column is not a source record: it is the common reference
+        #: of the log ratios rather than a measured condition (see
+        #: :class:`ColumnAccount`). No rule drops a record since #1057.
         def cells(exp_name: str) -> int:
             return len(tables[released[exp_name].set_name][0])
 
@@ -2658,23 +3260,52 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
         with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as handle:
             handle.write(drop_log.model_dump_json(indent=2))
 
-        quality: Counter[str] = Counter()
-        for analysis_set in sorted(tables):
-            frame = pd.read_csv(
-                osp.join(self.raw_dir, analysis_set, "fit_quality.tab"), sep="\t"
-            )
-            flags = frame.set_index("name")["u"]
-            for assay in kept:
-                if assay.analysis_set == analysis_set:
-                    quality[str(flags[assay.exp_name])] += 1
+        quality_rows = read_quality_rows(
+            {
+                analysis_set: osp.join(self.raw_dir, analysis_set, "fit_quality.tab")
+                for analysis_set in sorted(tables)
+            }
+        )
+        quality: Counter[str] = Counter(
+            str(quality_rows[assay.exp_name].usable) for assay in kept
+        )
+        released_columns = sorted(
+            name
+            for frame, _ in tables.values()
+            for name in fitness_columns(frame.columns)
+        )
+        on_axis = {assay.exp_name for assay in axis.assays}
+        time_zero_unlisted = [
+            name
+            for name in released_columns
+            if name not in on_axis
+            and _assay_kind(released[name].description) == "time_zero"
+        ]
+        outside = tuple(
+            name
+            for name in released_columns
+            if name not in on_axis and name not in time_zero_unlisted
+        )
+        account = ColumnAccount(
+            released_columns=len(released_columns),
+            stored=len(kept),
+            listed_by_the_authors=len(kept) - len(s1_only),
+            published_only_by_the_s1_table=tuple(sorted(s1_only)),
+            time_zero_listed=len(axis.time_zero),
+            time_zero_unlisted=len(time_zero_unlisted),
+            outside_both_statements=outside,
+            withdrawn_by_the_authors=str(T2_SOLID_AGAR_WITHDRAWN.value),
+        )
+        account.check()
         ledger = AssayLedger(
-            used_experiments=len(axis.assays),
+            axis_experiments=len(axis.assays),
             time_zero=len(axis.time_zero),
             record_bearing=len(kept),
+            column_account=account,
+            replicate_groups=replicate_groups(kept, released),
+            n_replicate_ids=len({assay.exp_name for assay in kept}),
             unlisted_media=tuple(unlisted_media),
-            released_columns=sum(
-                len(fitness_columns(tables[name][0].columns)) for name in tables
-            ),
+            released_columns=len(released_columns),
             kind_census=dict(Counter(a.kind for a in kept)),
             format_census=dict(Counter(released[a.exp_name].state for a in kept)),
             media_census=dict(Counter(released[a.exp_name].media_label for a in kept)),
@@ -2701,26 +3332,48 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
 # --------------------------------------------------------------------------- #
 # Verification (L0-L4) of a built tree
 # --------------------------------------------------------------------------- #
-#: The frozen record-count oracle, measured 2026-10-07 on the deposited release and again
-#: 2026-10-12 for #1057: every measured gene of each analysis set (the 19 no ECK pair
-#: places stored as released since #1057, 1,471 cells more) times its record-bearing used
-#: experiments.
+#: The gene rows each analysis set's released fitness table carries, measured 2026-10-07
+#: and unchanged since: every row is one released MG1655 b-number (#1057), and every
+#: experiment of a set contributes one record per row of its own set.
+EXPECTED_GENE_ROWS: dict[str, int] = {
+    "Keio_ML9_set16_set19": 3686,
+    "Keio_ML9_set28_set29": 3714,
+    "Keio_ML9_set30": 3691,
+}
+
+#: Record-bearing cultures per analysis set, measured 2026-11-25: the authors' list's
+#: non-start experiments plus the three only the S1 Table publishes (set16IT005 in
+#: set16/19, set30IT059 and set30IT061 in set30).
+EXPECTED_CULTURES_PER_SET: dict[str, int] = {
+    "Keio_ML9_set16_set19": 59,
+    "Keio_ML9_set28_set29": 9,
+    "Keio_ML9_set30": 13,
+}
+
+#: Cultures that bear records, which is the number of distinct ``replicate_id`` values.
+EXPECTED_CULTURES = sum(EXPECTED_CULTURES_PER_SET.values())
+
+#: The frozen record-count oracle: each set's gene rows times its record-bearing
+#: cultures. 287,815 before 2026-11-25, when the three S1-published experiments the
+#: authors' list omits were admitted (11,068 records more).
 EXPECTED_SET_CENSUS: dict[str, int] = {
-    "Keio_ML9_set16_set19": 213788,
-    "Keio_ML9_set28_set29": 33426,
-    "Keio_ML9_set30": 40601,
+    name: EXPECTED_GENE_ROWS[name] * EXPECTED_CULTURES_PER_SET[name]
+    for name in EXPECTED_GENE_ROWS
 }
 EXPECTED_RECORDS = sum(EXPECTED_SET_CENSUS.values())
+
+#: Released gene-fitness columns over the three sets, which ``ColumnAccount`` partitions.
+EXPECTED_RELEASED_COLUMNS = 190
 
 #: The frozen gene-set oracle: distinct stored genes over the kept records, every one a
 #: released MG1655 b-number (#1057).
 EXPECTED_GENES = 3716
 
-#: Records per kind of experiment: 68 phage challenges and 10 no-phage controls.
-EXPECTED_KIND_CENSUS: dict[str, int] = {"phage": 250894, "no_phage_control": 36921}
+#: Records per kind of experiment: 71 phage challenges and 10 no-phage controls.
+EXPECTED_KIND_CENSUS: dict[str, int] = {"phage": 261962, "no_phage_control": 36921}
 
-#: Records per assay format, the split the 68 challenges must not collapse across.
-EXPECTED_FORMAT_CENSUS: dict[str, int] = {"liquid": 247214, "solid": 40601}
+#: Records per assay format, the split the 71 challenges must not collapse across.
+EXPECTED_FORMAT_CENSUS: dict[str, int] = {"liquid": 250900, "solid": 47983}
 
 #: The released medium label of the no-phage controls that ARE the planktonic assay
 #: culture with the phage left out (``NO_PHAGE_CONTROL``). Their records carry no
@@ -2784,16 +3437,7 @@ def declared_unperturbed_records(
 
 def read_declared_unperturbed(dataset_root: str) -> int:
     """:func:`declared_unperturbed_records` over a built tree's own raw files."""
-    raw = osp.join(dataset_root, "raw")
-    axis = parse_experiment_axis(
-        osp.join(raw, EXPS_USED_NAME), read_moi_workbook(osp.join(raw, S13_NAME))
-    )
-    released = read_released_assays(
-        {
-            analysis_set: osp.join(raw, analysis_set, "exps")
-            for analysis_set in sorted(set(ANALYSIS_SETS.values()))
-        }
-    )
+    axis, released, _ = read_axis_union(osp.join(dataset_root, "raw"))
     return declared_unperturbed_records(axis, released)
 
 
@@ -2811,6 +3455,14 @@ VERIFY_PROVENANCE = Provenance(
     page="html/<analysis set>/fit_logratios.tab + fit_standard_error_obs.tab + exps",
     retrieved=RETRIEVED_AT,
 )
+
+
+def analysis_set_of(exp_name: str) -> str:
+    """The analysis set an experiment name belongs to, from its ``setNN`` prefix."""
+    match = re.match(r"(set\d+)", exp_name)
+    if match is None:
+        raise ValueError(f"unreadable experiment name: {exp_name!r}")
+    return ANALYSIS_SETS[match.group(1)]
 
 
 def experiment_census(records: Iterable[Mapping[str, Any]]) -> list[LevelResult]:
@@ -2856,6 +3508,50 @@ def experiment_census(records: Iterable[Mapping[str, Any]]) -> list[LevelResult]
             )
         )
     return rows
+
+
+def replicate_id_census(records: Iterable[Mapping[str, Any]]) -> LevelResult:
+    """SUPPLEMENTARY L1: every record names its culture, one culture per experiment.
+
+    Each stored value was measured in one assay culture, so every record carries a
+    ``replicate_id``; the distinct ids are the record-bearing cultures
+    (:data:`EXPECTED_CULTURES`); and each culture contributes exactly its analysis set's
+    gene rows, which is what would break if two cultures' columns were read as one.
+    """
+    per_id: Counter[str] = Counter()
+    missing = 0
+    for record in records:
+        phenotype = record["experiment"]["phenotype"]
+        replicate = phenotype.get("replicate_id")
+        if replicate is None:
+            missing += 1
+            continue
+        per_id[str(replicate)] += 1
+    wrong_size = sorted(
+        name
+        for name, count in per_id.items()
+        if count != EXPECTED_GENE_ROWS[analysis_set_of(name)]
+    )
+    passed = missing == 0 and len(per_id) == EXPECTED_CULTURES and not wrong_size
+    return LevelResult(
+        level=Level.L1,
+        name="replicate_id_per_culture",
+        passed=passed,
+        message=(
+            f"SUPPLEMENTARY: {len(per_id)} replicate ids, one per record-bearing "
+            f"culture, each with its set's gene rows"
+            if passed
+            else f"SUPPLEMENTARY: {len(per_id)} replicate ids (expected "
+            f"{EXPECTED_CULTURES}), {missing} records carry none, "
+            f"{len(wrong_size)} do not carry their set's gene rows"
+        ),
+        details={
+            "observed": len(per_id),
+            "expected": EXPECTED_CULTURES,
+            "n_missing": missing,
+            "wrong_size": wrong_size[:20],
+        },
+    )
 
 
 def stored_tags_are_loci(
@@ -2906,8 +3602,9 @@ def verify_build(
     The gene universe and the resolver are MG1655's, the namespace every released
     b-number is stored in (#1057); its genome-reference rows report and never gate. The
     verifier is the STREAMING one: the records, each with a component-level medium on
-    its environment, are not materialized. Four SUPPLEMENTARY rows are appended -- the
-    three censuses of :func:`experiment_census` and the gene-set size -- and the shared
+    its environment, are not materialized. Five SUPPLEMENTARY rows are appended -- the
+    three censuses of :func:`experiment_census`, :func:`replicate_id_census` and the
+    gene-set size -- and the shared
     ``pair_uniqueness`` and ``canonical_gene_names`` rows keep their own verdicts.
     ``expected_unperturbed`` is the tree's own :func:`read_declared_unperturbed`: the
     no-phage controls in the planktonic assay culture, which carry no environmental edit
@@ -2936,6 +3633,7 @@ def verify_build(
     )
     for row in experiment_census(stream_records(dataset_root)):
         report.add(row)
+    report.add(replicate_id_census(stream_records(dataset_root)))
     tags = {
         str(perturbation["systematic_gene_name"])
         for record in stream_records(dataset_root)

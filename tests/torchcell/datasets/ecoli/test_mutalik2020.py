@@ -302,6 +302,50 @@ class TestDepositedMirror:
             assert (root / record.rel).stat().st_mtime_ns == before[record.rel]
             assert mut._sha256(root / record.rel) == record.sha256
 
+    def test_the_statements_about_the_dataset_quote_the_deposited_files(self) -> None:
+        """The README and S1 Overview quotes are verbatim in the pinned raw mirror."""
+        import openpyxl
+
+        root = mut.raw_mirror_dir()
+        readme = (root / mut.FIGSHARE_README_REL).read_bytes()
+        assert (
+            hashlib.sha256(readme).hexdigest()
+            == mut.artifact(mut.FIGSHARE_README_REL).sha256
+        )
+        assert mut.EXPS_USED_IS_THE_ANALYSIS_LIST.quote in readme.decode()
+        workbook = openpyxl.load_workbook(
+            root / mut.S1_TABLE_REL, read_only=True, data_only=True
+        )
+        rendered = {
+            " | ".join(
+                str(cell) for cell in row if cell is not None and str(cell).strip()
+            )
+            for row in workbook["Overview"].iter_rows(values_only=True)
+        }
+        for sourced in (
+            mut.S1_SHEETS_PUBLISH_PER_EXPERIMENT_FITNESS,
+            mut.S1_FIGURE_SHEET_IS_THE_MAIN_TEXT_FIGURE,
+            mut.S1_HITS_SHEET_IS_FILTERED,
+        ):
+            assert sourced.quote in rendered
+            assert sourced.provenance.sha256 == mut.artifact(mut.S1_TABLE_REL).sha256
+
+    def test_the_s1_table_publishes_three_experiments_the_list_omits(self) -> None:
+        """The real S1 Table admits exactly set16IT005, set30IT059 and set30IT061."""
+        axis = mut.read_experiment_axis()
+        published = mut.s1_published_experiments(
+            mut.raw_mirror_dir() / mut.S1_TABLE_REL,
+            (assay.exp_name for assay in axis.assays),
+        )
+        assert published == ("set16IT005", "set30IT059", "set30IT061")
+        # the withdrawn plate assay is published by no sheet
+        assert str(mut.T2_SOLID_AGAR_WITHDRAWN.value) not in published
+        columns = mut.read_s1_experiment_columns(
+            mut.raw_mirror_dir() / mut.S1_TABLE_REL
+        )
+        assert len(columns["Solid plate assays"]) == 12
+        assert len(columns[mut.S1_HITS_SHEET]) == 68
+
     def test_the_experiment_axis_is_the_paper_s_own_analysis_set(self) -> None:
         """99 experiments: 21 start samples, 10 no-phage controls, 68 challenges."""
         axis = mut.read_experiment_axis()
@@ -1063,11 +1107,13 @@ def _released(
     units_2: str | None = None,
     temperature_c: float = 37.0,
     aerobicity: str = "aerobic",
+    description: str = "LB_plus_SM_buffer with T2_phage 187.5 MOI",
 ) -> mut.ReleasedAssay:
     """A released metadata row, built directly (no file) for the refusal branches."""
     return mut.ReleasedAssay(
         exp_name=exp_name,
         set_name="Keio_ML9_set16_set19",
+        description=description,
         media_label=media_label,
         state=state,
         growth_method="48 well microplate; Tecan Infinite F200",
@@ -1358,6 +1404,7 @@ def test_the_released_metadata_reader_types_the_format_and_the_oxygen_regime(
     assays = mut.read_released_assays({"Keio_ML9_set30": path})
     assert sorted(assays) == ["set30IT064", "set30IT066"]
     challenge = assays["set30IT064"]
+    assert challenge.description == "N4_phage_1937.5_MOI"
     assert challenge.state == "solid"
     assert challenge.aerobicity == "aerobic"
     assert challenge.media_label == "LB_agar"
@@ -1598,16 +1645,17 @@ def test_the_censuses_pin_the_set_kind_and_format_splits() -> None:
 
 
 def _release_shaped_axis() -> tuple[mut.ExperimentAxis, dict[str, mut.ReleasedAssay]]:
-    """An axis with the release's shape: 58 / 9 / 11 kept experiments and 10 controls.
+    """An axis with the release's shape: 59 / 9 / 13 kept experiments and 10 controls.
 
     Seven controls in set16/19 (six in the planktonic buffer culture, one in plain LB),
     two in set28/29 (both buffer) and one solid-agar control in set30, plus one start
-    sample, which is never record-bearing.
+    sample, which is never record-bearing. The kept counts are the union of the authors'
+    list with the three experiments only the S1 Table publishes.
     """
     layout = {
-        "Keio_ML9_set16_set19": ("set16", 58, ["LB_plus_SM_buffer"] * 6 + ["LB"]),
+        "Keio_ML9_set16_set19": ("set16", 59, ["LB_plus_SM_buffer"] * 6 + ["LB"]),
         "Keio_ML9_set28_set29": ("set28", 9, ["LB_plus_SM_buffer"] * 2),
-        "Keio_ML9_set30": ("set30", 11, ["LB_agar"]),
+        "Keio_ML9_set30": ("set30", 13, ["LB_agar"]),
     }
     assays = [
         _assay("set16IT001", kind="time_zero", phage=None, moi=None, moi_source=None)
@@ -1646,13 +1694,9 @@ def test_the_declared_controls_are_the_planktonic_buffer_controls() -> None:
     axis, released = _release_shaped_axis()
     assert axis.counts["no_phage_control"] == 10
     kept, dropped = mut.kept_assays(axis, released)
-    assert (len(kept), dropped) == (78, [])
+    assert (len(kept), dropped) == (mut.EXPECTED_CULTURES, [])
     # every measured gene of the set since #1057 (the ECK-unplaced ones as released)
-    assert mut.records_per_experiment(kept) == {
-        "Keio_ML9_set16_set19": 3686,
-        "Keio_ML9_set28_set29": 3714,
-        "Keio_ML9_set30": 3691,
-    }
+    assert mut.records_per_experiment(kept) == mut.EXPECTED_GENE_ROWS
     declared = mut.declared_unperturbed_records(axis, released)
     assert declared == 6 * 3686 + 2 * 3714 == 29544
     # the two undeclared controls are what the gate reads as a medium edit
@@ -1854,18 +1898,26 @@ def _t_table(genes: list[str], columns: dict[str, float], se: float) -> str:
 
 
 def _quality(columns: dict[str, float], usable: set[str]) -> str:
-    """A released ``fit_quality.tab``: one row per experiment with its ``u`` flag."""
+    """A released ``fit_quality.tab``: one row per experiment with its ``u`` flag.
+
+    The ``t0set``, ``gMean`` and ``maxFit`` of a row are :data:`RELEASE_STATS`, which is
+    also what the synthetic ``Keio_exps_used.tab`` prints, because the two released files
+    agree on those three values and the loader refuses a release where they do not.
+    """
     lines = ["name\tshort\tt0set\tgMean\tmaxFit\tu"]
     for label in columns:
         name = label.split(" ", 1)[0]
+        t0set, g_mean, max_fit = RELEASE_STATS[name]
         lines.append(
-            f"{name}\tshort\tt0\t600.0\t12.0\t{'TRUE' if name in usable else 'FALSE'}"
+            f"{name}\tshort\t{t0set}\t{g_mean}\t{max_fit}"
+            f"\t{'TRUE' if name in usable else 'FALSE'}"
         )
     return "\n".join(lines) + "\n"
 
 
-#: The synthetic release: three analysis sets, six record-bearing experiments and one
-#: start sample, matching the seven rows of ``RELEASE_EXPS_USED`` below.
+#: The synthetic release: three analysis sets, nine released columns. Seven bear records
+#: (six on the authors' list, ``set30IT059`` only in the S1 Table), one is a start sample
+#: and one is the assay the Methods withdraw (``set30IT052``, T2 on solid agar).
 SET_16_19_COLUMNS = {
     "set16IT001 Time0": 0.0,
     "set16IT007 LB_plus_SM_buffer": 0.1,
@@ -1874,20 +1926,81 @@ SET_16_19_COLUMNS = {
     "set19IT073 P2 dilution 10-1": -1.0,
 }
 SET_28_29_COLUMNS = {"set28IT004 LB_plus_SM_buffer": 0.2}
-SET_30_COLUMNS = {"set30IT064 N4_phage_1937.5_MOI": 3.0}
+SET_30_COLUMNS = {
+    "set30IT064 N4_phage_1937.5_MOI": 3.0,
+    "set30IT052 T2_phage_9.6875_MOI": 1.5,
+    "set30IT059 P2_phage_0.5625_MOI": 2.5,
+}
 
-RELEASE_EXPS_USED = (
-    "expName\texpDescription\tt0set\tgMean\tmaxFit\n"
-    "set16IT001\tTime0\t22-Nov-16 Keio_ML9_set16\t557.2\t1.37\n"
-    "set16IT007\tLB_plus_SM_buffer\t22-Nov-16 Keio_ML9_set16\t633.4\t3.30\n"
-    "set16IT008\tLB_plus_SM_buffer with T2_phage 187.5 MOI\t22-Nov-16 Keio_ML9_set16"
-    "\t659.5\t16.75\n"
-    "set16IT019\tLB_plus_SM_buffer with T2_phage 0.01875 MOI\t22-Nov-16 Keio_ML9_set16"
-    "\t640.2\t14.70\n"
-    "set19IT073\tP2 dilution 10-1\t13-Dec-16 Keio_ML9_set19\t500.0\t9.00\n"
-    "set28IT004\tLB_plus_SM_buffer\t16-Nov-18 Keio_ML9_set28\t610.0\t2.10\n"
-    "set30IT064\tN4_phage_1937.5_MOI\t28-Jan-19 Keio_ML9_set30\t720.0\t12.30\n"
+#: ``(t0set, gMean, maxFit)`` per released experiment, printed by both released files.
+RELEASE_STATS: dict[str, tuple[str, float, float]] = {
+    "set16IT001": ("22-Nov-16 Keio_ML9_set16", 557.2, 1.37),
+    "set16IT007": ("22-Nov-16 Keio_ML9_set16", 633.4, 3.30),
+    "set16IT008": ("22-Nov-16 Keio_ML9_set16", 659.5, 16.75),
+    "set16IT019": ("22-Nov-16 Keio_ML9_set16", 640.2, 14.70),
+    "set19IT073": ("13-Dec-16 Keio_ML9_set19", 500.0, 9.00),
+    "set28IT004": ("16-Nov-18 Keio_ML9_set28", 610.0, 2.10),
+    "set30IT064": ("28-Jan-19 Keio_ML9_set30", 720.0, 12.30),
+    "set30IT052": ("28-Jan-19 Keio_ML9_set30", 605.7, 11.24),
+    "set30IT059": ("28-Jan-19 Keio_ML9_set30", 562.2, 1.53),
+}
+
+#: The experiments the synthetic authors' list names: every released column except the
+#: withdrawn T2 plate assay and the one only the S1 Table publishes.
+RELEASE_LISTED: tuple[str, ...] = tuple(
+    name for name in RELEASE_STATS if name not in ("set30IT052", "set30IT059")
 )
+
+#: Each released column's own description, as the column label prints it.
+RELEASE_DESCRIPTIONS: dict[str, str] = {
+    label.split(" ", 1)[0]: label.split(" ", 1)[1]
+    for label in (*SET_16_19_COLUMNS, *SET_28_29_COLUMNS, *SET_30_COLUMNS)
+}
+
+RELEASE_EXPS_USED = "".join(
+    [
+        "expName\texpDescription\tt0set\tgMean\tmaxFit\n",
+        *(
+            f"{name}\t{RELEASE_DESCRIPTIONS[name]}\t{RELEASE_STATS[name][0]}"
+            f"\t{RELEASE_STATS[name][1]}\t{RELEASE_STATS[name][2]}\n"
+            for name in RELEASE_LISTED
+        ),
+    ]
+)
+
+#: The synthetic S1 Table: which experiments each sheet names. The solid sheet publishes
+#: ``set30IT059``, which the authors' list omits, and omits the withdrawn ``set30IT052``.
+RELEASE_S1_SHEETS: dict[str, tuple[str, ...]] = {
+    "planktonic assays1": ("set16IT007", "set16IT008", "set16IT019", "set19IT073"),
+    "planktonic assays2": ("set28IT004",),
+    "Solid plate assays": ("set30IT064", "set30IT059"),
+    "Keio_hits_fit5": ("set16IT008",),
+    "Fig 2A data": ("set16IT008", "set30IT064"),
+}
+
+
+def _write_s1(path: Path, sheets: dict[str, tuple[str, ...]]) -> None:
+    """Write a synthetic S1 Table: one sheet per name, experiments in the header row."""
+    import openpyxl
+
+    workbook = openpyxl.Workbook()
+    overview = workbook.active
+    assert overview is not None
+    overview.title = "Overview"
+    overview.append(["S1 Table"])
+    for sheet_name, experiments in sheets.items():
+        sheet = workbook.create_sheet(sheet_name)
+        if sheet_name == mut.S1_HITS_SHEET:
+            # the hit sheet is one row per hit, naming its experiment in a column
+            sheet.append(["phage", "sysName", "name", "expName", "fit", "t"])
+            for name in experiments:
+                sheet.append(["T2", "b0001", "thrL", name, 16.7, 94.7])
+            continue
+        labels = [f"{name} {RELEASE_DESCRIPTIONS[name]}" for name in experiments]
+        sheet.append(["locusId", "sysName", "desc", *labels])
+        sheet.append([1, "b0001", "thrL", *[0.5] * len(labels)])
+    workbook.save(path)
+
 
 _LIQUID = {
     "media": "LB_plus_SM_buffer",
@@ -1943,18 +2056,23 @@ RELEASE_EXPS: dict[str, str] = {
         [
             _exps_row(
                 "Keio_ML9_set30",
-                "IT064",
-                "N4_phage_1937.5_MOI",
+                index,
+                RELEASE_DESCRIPTIONS[f"set30{index}"],
                 media="LB_agar",
                 state="Solid",
                 growth_method="plate",
                 shaking="",
-                condition_1="N4_phage",
-                concentration_1="1937.5",
+                condition_1=condition_1,
+                concentration_1=concentration_1,
                 units_1="MOI",
                 condition_2="Kan",
                 concentration_2="50",
                 units_2="ug/ml",
+            )
+            for index, condition_1, concentration_1 in (
+                ("IT064", "N4_phage", "1937.5"),
+                ("IT052", "T2_phage", "9.6875"),
+                ("IT059", "P2_phage", "0.5625"),
             )
         ]
     ),
@@ -2042,8 +2160,10 @@ def release_mirror(
     src.mkdir()
     s13 = src / "s13.xlsx"
     _write_s13(s13, RELEASE_S13_ROWS)
+    s1 = src / "s1.xlsx"
+    _write_s1(s1, RELEASE_S1_SHEETS)
     payloads: dict[str, bytes] = {
-        mut.S1_TABLE_REL: b"synthetic S1 table",
+        mut.S1_TABLE_REL: s1.read_bytes(),
         mut.S13_TABLE_REL: s13.read_bytes(),
         mut.EXPS_USED_REL: RELEASE_EXPS_USED.encode(),
         mut.FIGSHARE_README_REL: b"synthetic README",
@@ -2097,7 +2217,7 @@ class TestSyntheticRelease:
     def test_download_links_the_mirror_and_extracts_the_pinned_members(
         self, tmp_path: Path, release_mirror: str
     ) -> None:
-        """Two links and fifteen extracted members, every one sha256-verified."""
+        """Three links and sixteen extracted members, every one sha256-verified."""
         root = tmp_path / "linked"
         dataset = mut.PhageRbTnseqMutalik2020Dataset.__new__(
             mut.PhageRbTnseqMutalik2020Dataset
@@ -2149,19 +2269,23 @@ class TestSyntheticRelease:
     def test_the_loader_builds_the_synthetic_release_end_to_end(
         self, tmp_path: Path, release_mirror: str
     ) -> None:
-        """Six record-bearing experiments x all seven genes, with the start sample out."""
+        """Seven record-bearing cultures x all seven genes, start sample out."""
         root = tmp_path / "dataset"
         dataset = mut.PhageRbTnseqMutalik2020Dataset(root=str(root))
-        assert len(dataset) == 42
+        assert len(dataset) == 49
         # #1057: every measured gene under its released b-number
         assert sorted(dataset.gene_set) == sorted(SYNTHETIC_GENES)
         references = dataset.experiment_reference_index
         assert references is not None
-        assert len(references) == 6
+        assert len(references) == 7
         census: dict[str, int] = {}
+        replicates: dict[str, int] = {}
         for index in range(len(dataset)):
-            screen = dataset[index]["experiment"]["phenotype"]["screen_id"]
+            phenotype = dataset[index]["experiment"]["phenotype"]
+            screen = phenotype["screen_id"]
             census[screen] = census.get(screen, 0) + 1
+            replicate = phenotype["replicate_id"]
+            replicates[replicate] = replicates.get(replicate, 0) + 1
         assert census == {
             "Keio:set16IT007": 7,
             "Keio:set16IT008": 7,
@@ -2169,8 +2293,16 @@ class TestSyntheticRelease:
             "Keio:set19IT073": 7,
             "Keio:set28IT004": 7,
             "Keio:set30IT064": 7,
+            # the one the authors' list omits and the S1 Table publishes
+            "Keio:set30IT059": 7,
+        }
+        # one replicate_id per culture, the release's own bare experiment name
+        assert replicates == {
+            name.removeprefix("Keio:"): count for name, count in census.items()
         }
         assert "Keio:set16IT001" not in census
+        # the assay the Methods withdraw bears no record
+        assert "Keio:set30IT052" not in census
         assert (root / "preprocess" / "build_manifest.json").is_file()
         # every record carries its released t, on the SE bound in this release
         for index in range(len(dataset)):
@@ -2181,8 +2313,8 @@ class TestSyntheticRelease:
                 fit / math.sqrt(0.1**2 + se**2), rel=1e-9
             )
         report = json.loads((root / "preprocess" / "t_statistic.json").read_text())
-        # six record-bearing experiments x seven released genes, all at the bound
-        assert (report["n_values"], report["n_at_bound"]) == (42, 42)
+        # seven record-bearing cultures x seven released genes, all at the bound
+        assert (report["n_values"], report["n_at_bound"]) == (49, 49)
 
     def test_each_built_record_carries_its_phage_dose_and_derived_mapping(
         self, tmp_path: Path, release_mirror: str
@@ -2244,7 +2376,7 @@ class TestSyntheticRelease:
     def test_the_build_accounts_for_every_dropped_synthetic_record(
         self, tmp_path: Path, release_mirror: str
     ) -> None:
-        """Seven genes x six experiments in, all 42 out since #1057."""
+        """Seven genes x seven cultures in, all 49 out since #1057."""
         import json as _json
 
         root = tmp_path / "dataset"
@@ -2254,25 +2386,41 @@ class TestSyntheticRelease:
             drops["source_records"],
             drops["kept_records"],
             drops["dropped_records"],
-        ) == (42, 42, 0)
+        ) == (49, 49, 0)
         assert drops["rules"] == []
         ledger = _json.loads((root / "preprocess" / "assay_ledger.json").read_text())
         assert (
-            ledger["used_experiments"],
+            ledger["axis_experiments"],
             ledger["time_zero"],
             ledger["record_bearing"],
-        ) == (7, 1, 6)
-        assert ledger["kind_census"] == {"phage": 4, "no_phage_control": 2}
-        assert ledger["format_census"] == {"liquid": 5, "solid": 1}
-        assert ledger["media_census"] == {"LB_plus_SM_buffer": 5, "LB_agar": 1}
-        assert ledger["phage_census"] == {"T2": 2, "P2": 1, "N4": 1}
+        ) == (8, 1, 7)
+        assert ledger["kind_census"] == {"phage": 5, "no_phage_control": 2}
+        assert ledger["format_census"] == {"liquid": 5, "solid": 2}
+        assert ledger["media_census"] == {"LB_plus_SM_buffer": 5, "LB_agar": 2}
+        assert ledger["phage_census"] == {"T2": 2, "P2": 2, "N4": 1}
         assert ledger["moi_source_census"] == {
             "s13_table": 3,
-            "experiment_description": 1,
+            "experiment_description": 2,
         }
-        assert ledger["release_quality_flag"] == {"True": 1, "False": 5}
+        assert ledger["release_quality_flag"] == {"True": 1, "False": 6}
         assert ledger["unlisted_media"] == []
-        assert ledger["released_columns"] == 7
+        assert ledger["released_columns"] == 9
+        assert ledger["n_replicate_ids"] == 7
+        # the two planktonic buffer controls are one condition in two cultures
+        assert [group["replicate_ids"] for group in ledger["replicate_groups"]] == [
+            ["set16IT007", "set28IT004"]
+        ]
+        account = ledger["column_account"]
+        assert account == {
+            "released_columns": 9,
+            "stored": 7,
+            "listed_by_the_authors": 6,
+            "published_only_by_the_s1_table": ["set30IT059"],
+            "time_zero_listed": 1,
+            "time_zero_unlisted": 0,
+            "outside_both_statements": ["set30IT052"],
+            "withdrawn_by_the_authors": "set30IT052",
+        }
         # the ECK crosswalk is no part of the build (#1057)
         assert not (root / "preprocess" / "identifier_mapping.json").exists()
 
@@ -2285,12 +2433,12 @@ class TestSyntheticRelease:
         monkeypatch.delitem(mut.MEDIA_BY_LABEL, "LB_agar")
         root = tmp_path / "dataset"
         dataset = mut.PhageRbTnseqMutalik2020Dataset(root=str(root))
-        assert len(dataset) == 42
+        assert len(dataset) == 49
         drops = _json.loads((root / "preprocess" / "dropped_records.json").read_text())
-        assert drops["source_records"] == 42 and drops["kept_records"] == 42
+        assert drops["source_records"] == 49 and drops["kept_records"] == 49
         ledger = _json.loads((root / "preprocess" / "assay_ledger.json").read_text())
-        assert ledger["unlisted_media"] == ["set30IT064"]
-        assert ledger["record_bearing"] == 6
+        assert ledger["unlisted_media"] == ["set30IT064", "set30IT059"]
+        assert ledger["record_bearing"] == 7
         solid = next(
             dataset[i]["experiment"]
             for i in range(len(dataset))
@@ -2320,11 +2468,256 @@ class TestSyntheticRelease:
             lambda *a, **k: pytest.fail("the build read a genome"),
         )
         dataset = mut.PhageRbTnseqMutalik2020Dataset(root=str(tmp_path / "nogenome"))
-        assert len(dataset) == 42
+        assert len(dataset) == 49
         # the guard on an injected genome still names the strain it needs
         with pytest.raises(TypeError, match="needs the BW25113 genome"):
             dataset.ecoli_genome = k12[0]
             dataset._bw25113()
+
+
+# --------------------------------------------------------------------------- #
+# The authors' two statements of their dataset (hermetic)
+# --------------------------------------------------------------------------- #
+def _s1_workbook(tmp_path: Path, **overrides: tuple[str, ...]) -> Path:
+    """A synthetic S1 Table, optionally with one sheet's experiments overridden."""
+    path = tmp_path / "s1.xlsx"
+    _write_s1(path, {**RELEASE_S1_SHEETS, **overrides})
+    return path
+
+
+def test_the_s1_sheets_are_read_from_their_own_header_rows(tmp_path: Path) -> None:
+    """Every sheet's experiments come from its header row, in the released order."""
+    columns = mut.read_s1_experiment_columns(_s1_workbook(tmp_path))
+    assert columns == RELEASE_S1_SHEETS
+    assert set(mut.S1_DATA_SHEETS) <= set(columns)
+    assert mut.S1_FIGURE_SHEET in columns and mut.S1_HITS_SHEET in columns
+
+
+def test_a_sheet_naming_no_experiment_stops_the_parse(tmp_path: Path) -> None:
+    """A workbook whose shape changed is detected, not read as empty."""
+    import openpyxl
+
+    path = tmp_path / "empty.xlsx"
+    workbook = openpyxl.Workbook()
+    for name in (*mut.S1_DATA_SHEETS, mut.S1_FIGURE_SHEET, mut.S1_HITS_SHEET):
+        workbook.create_sheet(name).append(["locusId", "sysName", "desc"])
+    workbook.save(path)
+    with pytest.raises(ValueError, match="names no experiment"):
+        mut.read_s1_experiment_columns(path)
+
+
+def test_the_s1_table_admits_only_what_the_authors_list_omits(tmp_path: Path) -> None:
+    """The published-but-unlisted experiments, with the hit sheet admitting nothing."""
+    published = mut.s1_published_experiments(_s1_workbook(tmp_path), RELEASE_LISTED)
+    assert published == ("set30IT059",)
+    # the withdrawn plate assay is in no sheet, so nothing admits it
+    assert "set30IT052" not in published
+
+
+def test_a_hit_sheet_naming_an_unlisted_experiment_is_refused(tmp_path: Path) -> None:
+    """The filtered hit list is asserted to be a subset, never used to admit."""
+    path = _s1_workbook(tmp_path, **{mut.S1_HITS_SHEET: ("set30IT052",)})
+    with pytest.raises(ValueError, match="Keio_exps_used.tab does not list"):
+        mut.s1_published_experiments(path, RELEASE_LISTED)
+
+
+def _axis_of(*names: str) -> mut.ExperimentAxis:
+    """A listed axis over ``names``, with each one's released statistics."""
+    return mut.ExperimentAxis(
+        assays=tuple(
+            _assay(
+                name,
+                kind=cast(Any, mut._assay_kind(RELEASE_DESCRIPTIONS[name])),
+                phage=None,
+                moi=None,
+                moi_source=None,
+            ).model_copy(
+                update={
+                    "description": RELEASE_DESCRIPTIONS[name],
+                    "time_zero_set": RELEASE_STATS[name][0],
+                    "g_mean": RELEASE_STATS[name][1],
+                    "max_fit": RELEASE_STATS[name][2],
+                }
+            )
+            for name in names
+        )
+    )
+
+
+def _quality_rows(*names: str) -> dict[str, mut.QualityRow]:
+    """Quality rows carrying the same statistics the authors' list prints."""
+    return {
+        name: mut.QualityRow(
+            exp_name=name,
+            t0set=RELEASE_STATS[name][0],
+            g_mean=RELEASE_STATS[name][1],
+            max_fit=RELEASE_STATS[name][2],
+            usable=False,
+        )
+        for name in names
+    }
+
+
+def test_the_quality_table_reads_back_the_released_statistics(tmp_path: Path) -> None:
+    """``fit_quality.tab`` is read into typed rows, and a name twice is refused."""
+    path = tmp_path / "fit_quality.tab"
+    path.write_text(_quality(SET_30_COLUMNS, {"set30IT064"}))
+    rows = mut.read_quality_rows({"Keio_ML9_set30": path})
+    assert sorted(rows) == ["set30IT052", "set30IT059", "set30IT064"]
+    assert rows["set30IT064"].usable is True
+    assert rows["set30IT059"].usable is False
+    assert (rows["set30IT052"].g_mean, rows["set30IT052"].max_fit) == (605.7, 11.24)
+    doubled = tmp_path / "doubled.tab"
+    doubled.write_text(
+        _quality(SET_30_COLUMNS, set()) + _quality(SET_30_COLUMNS, set()).split("\n")[1]
+    )
+    with pytest.raises(ValueError, match="has two quality rows"):
+        mut.read_quality_rows({"Keio_ML9_set30": doubled})
+
+
+def test_the_quality_table_must_agree_with_the_authors_list() -> None:
+    """A quality row whose three statistics differ from the list stops the build."""
+    axis = _axis_of("set16IT008")
+    quality = _quality_rows("set16IT008")
+    mut.check_quality_agrees_with_the_list(axis, quality)
+    drifted = {"set16IT008": quality["set16IT008"].model_copy(update={"max_fit": 1.0})}
+    with pytest.raises(ValueError, match="the quality table says"):
+        mut.check_quality_agrees_with_the_list(axis, drifted)
+    with pytest.raises(ValueError, match="is listed but has no quality row"):
+        mut.check_quality_agrees_with_the_list(axis, {})
+
+
+def test_the_withdrawn_plate_assay_must_be_absent_from_both_statements() -> None:
+    """The Methods' own drop is asserted, never applied by a rule of ours."""
+    axis = _axis_of("set16IT008")
+    released = {
+        "set30IT052": _released(
+            "set30IT052",
+            media_label="LB_agar",
+            state="solid",
+            description="T2_phage_9.6875_MOI",
+        )
+    }
+    assert mut.check_withdrawal(axis, (), released) == "set30IT052"
+    assert mut.T2_SOLID_AGAR_WITHDRAWN.value == "set30IT052"
+    assert "poor consistency" in mut.T2_SOLID_AGAR_WITHDRAWN.quote
+    with pytest.raises(ValueError, match="but the S1 Table publishes it"):
+        mut.check_withdrawal(axis, ("set30IT052",), released)
+    with pytest.raises(ValueError, match="but is listed"):
+        mut.check_withdrawal(_axis_of("set30IT052"), (), released)
+    with pytest.raises(ValueError, match="not the released solid-agar T2 assay"):
+        mut.check_withdrawal(axis, (), {})
+
+
+def test_an_s1_published_experiment_joins_the_axis_with_its_released_statistics() -> (
+    None
+):
+    """The added assay is built from the released description and the quality row."""
+    axis = _axis_of("set16IT008")
+    released = {
+        "set30IT059": _released(
+            "set30IT059",
+            media_label="LB_agar",
+            state="solid",
+            description="P2_phage_0.5625_MOI",
+            condition_2="Kan",
+            concentration_2=50.0,
+            units_2="ug/ml",
+        )
+    }
+    quality = _quality_rows("set30IT059")
+    union = mut.axis_with_s1_published(
+        axis, released, quality, ("set30IT059", "set16IT008"), {}
+    )
+    assert [a.exp_name for a in union.assays] == ["set16IT008", "set30IT059"]
+    added = union.assays[1]
+    assert (added.kind, added.phage, added.moi) == ("phage", "P2", 0.5625)
+    # no S13 row, so the dose is the experiment's own description
+    assert added.moi_source == "experiment_description"
+    assert added.analysis_set == "Keio_ML9_set30"
+    assert (added.time_zero_set, added.g_mean, added.max_fit) == RELEASE_STATS[
+        "set30IT059"
+    ]
+    with pytest.raises(ValueError, match="but unreleased"):
+        mut.axis_with_s1_published(axis, {}, quality, ("set30IT059",), {})
+    with pytest.raises(ValueError, match="but unscored"):
+        mut.axis_with_s1_published(axis, released, {}, ("set30IT059",), {})
+
+
+def test_the_replicate_groups_name_the_cultures_of_one_condition() -> None:
+    """Only a condition with more than one culture is a group, keyed on what is stored."""
+    axis, released = _release_shaped_axis()
+    kept, _ = mut.kept_assays(axis, released)
+    groups = mut.replicate_groups(kept, released)
+    (buffer_controls,) = [g for g in groups if g.phage is None]
+    assert buffer_controls.media_label == "LB_plus_SM_buffer"
+    assert buffer_controls.n_cultures == 8
+    assert all(group.n_cultures > 1 for group in groups)
+    # one culture of a condition is not a group
+    singles = {name for group in groups for name in group.replicate_ids}
+    assert len(singles) < len(kept)
+
+
+def test_the_column_account_must_add_up_and_name_the_withdrawal() -> None:
+    """A partition that loses a column, or forgets the withdrawal, is refused."""
+    account = mut.ColumnAccount(
+        released_columns=9,
+        stored=7,
+        listed_by_the_authors=6,
+        published_only_by_the_s1_table=("set30IT059",),
+        time_zero_listed=1,
+        time_zero_unlisted=0,
+        outside_both_statements=("set30IT052",),
+        withdrawn_by_the_authors="set30IT052",
+    )
+    account.check()
+    with pytest.raises(RuntimeError, match="column accounting mismatch"):
+        account.model_copy(update={"released_columns": 10}).check()
+    with pytest.raises(RuntimeError, match="not among the unstored columns"):
+        account.model_copy(update={"outside_both_statements": ("set30IT093",)}).check()
+
+
+def _replicate_records(census: dict[str, int]) -> list[dict[str, Any]]:
+    """Records shaped like the store's, carrying ``n`` rows per replicate id."""
+    return [
+        {"experiment": {"phenotype": {"replicate_id": name}}}
+        for name, count in census.items()
+        for _ in range(count)
+    ]
+
+
+def test_the_replicate_id_row_counts_one_culture_per_experiment() -> None:
+    """The row passes on one id per culture with its set's gene rows, and names a gap."""
+    full = {
+        f"set16IT{index:03d}": mut.EXPECTED_GENE_ROWS["Keio_ML9_set16_set19"]
+        for index in range(mut.EXPECTED_CULTURES_PER_SET["Keio_ML9_set16_set19"])
+    }
+    full.update(
+        {
+            f"set28IT{index:03d}": mut.EXPECTED_GENE_ROWS["Keio_ML9_set28_set29"]
+            for index in range(mut.EXPECTED_CULTURES_PER_SET["Keio_ML9_set28_set29"])
+        }
+    )
+    full.update(
+        {
+            f"set30IT{index:03d}": mut.EXPECTED_GENE_ROWS["Keio_ML9_set30"]
+            for index in range(mut.EXPECTED_CULTURES_PER_SET["Keio_ML9_set30"])
+        }
+    )
+    row = mut.replicate_id_census(_replicate_records(full))
+    assert row.passed
+    assert row.details["observed"] == mut.EXPECTED_CULTURES
+    # one culture short of its gene rows fails the row and is named
+    short = {**full, "set30IT000": 1}
+    failed = mut.replicate_id_census(_replicate_records(short))
+    assert not failed.passed
+    assert failed.details["wrong_size"] == ["set30IT000"]
+    # a record with no replicate_id fails too
+    missing = mut.replicate_id_census(
+        [*_replicate_records(full), {"experiment": {"phenotype": {}}}]
+    )
+    assert not missing.passed
+    assert missing.details["n_missing"] == 1
 
 
 # --------------------------------------------------------------------------- #
@@ -2347,14 +2740,26 @@ def test_the_oracles_are_internally_consistent() -> None:
     assert sum(mut.EXPECTED_SET_CENSUS.values()) == mut.EXPECTED_RECORDS
     assert sum(mut.EXPECTED_KIND_CENSUS.values()) == mut.EXPECTED_RECORDS
     assert sum(mut.EXPECTED_FORMAT_CENSUS.values()) == mut.EXPECTED_RECORDS
+    # one record per (gene row, culture) in every set
+    assert mut.EXPECTED_SET_CENSUS == {
+        name: mut.EXPECTED_GENE_ROWS[name] * mut.EXPECTED_CULTURES_PER_SET[name]
+        for name in mut.EXPECTED_GENE_ROWS
+    }
+    # 287,815 over 78 cultures before 2026-11-25, when the three experiments only the
+    # S1 Table publishes were admitted: set16IT005 (3,686) and set30IT059 + set30IT061
+    # (3,691 each)
+    assert mut.EXPECTED_CULTURES == 81 == 78 + 3
+    assert mut.EXPECTED_RECORDS == 298883 == 287815 + 3686 + 2 * 3691
     # 286,344 and 3,697 before #1057 stored the 19 ECK-unplaced genes (1,471 records);
     # since then every gene is its released b-number
-    assert mut.EXPECTED_RECORDS == 287815 == 286344 + 1471
+    assert 287815 == 286344 + 1471
     assert mut.EXPECTED_GENES == 3716 == 3697 + 19
     # every solid-agar assay is in set30 and set30 holds nothing else
     assert (
         mut.EXPECTED_FORMAT_CENSUS["solid"] == mut.EXPECTED_SET_CENSUS["Keio_ML9_set30"]
     )
+    # the released columns the build accounts for: 81 stored, 33 start samples, 76 out
+    assert mut.EXPECTED_RELEASED_COLUMNS == 190 == 81 + 21 + 12 + 76
 
 
 def test_the_verify_provenance_points_at_the_deposited_tarball() -> None:
@@ -2377,30 +2782,59 @@ class TestDevStore:
         preprocess = osp.join(DEV_ROOT, "preprocess")
         drops = _json.loads(Path(preprocess, "dropped_records.json").read_text())
         assert drops["kept_records"] == mut.EXPECTED_RECORDS
-        assert drops["source_records"] == 287815
+        assert drops["source_records"] == mut.EXPECTED_RECORDS
         assert drops["dropped_records"] == 0
         # #1057: no retention rule remains, and the crosswalk is no part of the build
         assert drops["rules"] == []
         assert not Path(preprocess, "identifier_mapping.json").exists()
         ledger = _json.loads(Path(preprocess, "assay_ledger.json").read_text())
         assert (
-            ledger["used_experiments"],
+            ledger["axis_experiments"],
             ledger["time_zero"],
             ledger["record_bearing"],
-        ) == (99, 21, 78)
-        assert ledger["kind_census"] == {"phage": 68, "no_phage_control": 10}
-        assert ledger["format_census"] == {"liquid": 67, "solid": 11}
+        ) == (102, 21, mut.EXPECTED_CULTURES)
+        assert ledger["kind_census"] == {"phage": 71, "no_phage_control": 10}
+        assert ledger["format_census"] == {"liquid": 68, "solid": 13}
         assert len(ledger["phage_census"]) == 14
-        assert sum(ledger["phage_census"].values()) == 68
+        assert sum(ledger["phage_census"].values()) == 71
         assert ledger["moi_source_census"] == {
             "s13_table": 67,
-            "experiment_description": 1,
+            "experiment_description": 4,
         }
-        assert ledger["dropped_for_medium"] == []
-        # the release's own usability flag is FALSE for 68 of the 78 kept experiments;
+        assert ledger["unlisted_media"] == []
+        # the release's own usability flag is FALSE for 69 of the 81 kept cultures;
         # the paper states its standard metrics are unsuitable under phage selection,
-        # which is why the selection rule is Keio_exps_used.tab and not `u`
-        assert ledger["release_quality_flag"] == {"True": 10, "False": 68}
+        # which is why the selection rule is the authors' own two statements, not `u`
+        assert ledger["release_quality_flag"] == {"True": 12, "False": 69}
+        # every released column is accounted for: 81 stored, 33 start samples, 76 out
+        account = ledger["column_account"]
+        assert account["released_columns"] == mut.EXPECTED_RELEASED_COLUMNS
+        assert (account["stored"], account["listed_by_the_authors"]) == (
+            mut.EXPECTED_CULTURES,
+            78,
+        )
+        assert account["published_only_by_the_s1_table"] == [
+            "set16IT005",
+            "set30IT059",
+            "set30IT061",
+        ]
+        assert (account["time_zero_listed"], account["time_zero_unlisted"]) == (21, 12)
+        assert len(account["outside_both_statements"]) == 76
+        assert account["withdrawn_by_the_authors"] == "set30IT052"
+        # the planktonic no-phage control is the one condition run in many cultures
+        assert [group["replicate_ids"] for group in ledger["replicate_groups"]] == [
+            [
+                "set16IT007",
+                "set16IT033",
+                "set16IT044",
+                "set16IT052",
+                "set16IT056",
+                "set19IT072",
+                "set28IT004",
+                "set28IT007",
+            ]
+        ]
+        assert ledger["n_replicate_ids"] == mut.EXPECTED_CULTURES
 
     def test_the_declared_controls_come_from_the_tree_s_own_release_files(self) -> None:
         """#888: the raw experiment list declares 29,544 unedited control records."""
@@ -2427,11 +2861,16 @@ class TestDevStore:
         assert len(dataset.gene_set) == mut.EXPECTED_GENES
         references = dataset.experiment_reference_index
         assert references is not None
-        assert len(references) == 78
+        assert len(references) == mut.EXPECTED_CULTURES
         record = dataset[0]["experiment"]
         assert record["experiment_type"] == "environment_response"
         assert record["phenotype"]["measurement_type"] == "log2_ratio"
-        assert str(record["phenotype"]["screen_id"]).startswith(f"{mut.ORG_ID}:")
+        screen = str(record["phenotype"]["screen_id"])
+        assert screen.startswith(f"{mut.ORG_ID}:")
+        # the record names the culture it was measured in
+        assert record["phenotype"]["replicate_id"] == screen.removeprefix(
+            f"{mut.ORG_ID}:"
+        )
         (perturbation,) = record["genotype"]["perturbations"]
         # #1057: the released b-number, no derived mapping
         assert perturbation["gene_namespace"] == "ecoli_k12_mg1655_bnumber"

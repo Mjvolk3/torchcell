@@ -123,7 +123,8 @@ quotes (``unidentified_compound_sources``). Measured on the raw mirror through t
 loader's own ``parse_columns``, ``group_columns`` and ``count_records`` (2026-10-15):
 HET 12 labels, 19 environments, 19 arrays, 110,449 records and value cells; HOM 10
 labels (no RIL1 or telomerase array), 11 environments, 11 arrays, 45,760 records and
-value cells. Stored after the hold-out: HET 2,963,683 records, HOM 1,182,916. The
+value cells. Stored after the hold-out: HET 2,963,683 records, HOM 1,182,916 (one per
+group; one per array since 2026.11.24: HET 4,094,099, HOM 1,750,292). The
 ``chemical diversity labs 14a`` array of each arm is the header/key conflict whose key
 file says ``Tyrphostin``; the header is what the values are released under, so it is
 held out with the key string kept beside it. A label is
@@ -162,9 +163,27 @@ NOT STORED (counted per rule in ``preprocess/dropped_records.json`` and
 - ARRAYS, not representable: an unidentified perturbing agent
   (``UNIDENTIFIED_COMPOUND_RULE``, above).
 
-REPLICATE AGGREGATION. Within one (strain row, environment, control set) group each array
-contributes ONE value and the record's value is the mean over arrays with the sample SD
-across arrays as the uncertainty (``n_samples`` = arrays).
+ONE RECORD PER ARRAY (per-replicate policy, #1178 / #1175). Each matrix column is one
+array, and the SOM states "One array is used per experiment (control or treatment)."; the
+main article counts each array as an experiment ("We performed 726 treatment experiments
+in each of the heterozygous deletion strains and 418 separate experiments in each of the
+homozygous strains"). So every released (strain row, array) cell is its own record: the
+value verbatim, ``n_samples=1``, ``sample_unit=biological_replicate`` (one pooled
+competitive-growth experiment), ``replicate_id`` = the array's filename, the release's own
+"Unique identifier of the array", and the two uncertainty fields are typed
+``not_applicable_single_measurement`` absences. Arrays of one condition ("Certain
+conditions were tested in replicate (number of replicates ranged from 1 to 14)") are no
+longer averaged: before 2026.11.24 the loader stored one record per (strain row,
+environment, control set) holding the mean over that group's arrays with the
+across-array sample SD (HET 2,963,683 records, HOM 1,182,916); the mean and its
+dispersion are now a modeling-time derivation over the records that share genotype,
+environment and ``screen_id``. The up- and downtag log-ratios are combined INSIDE one
+array's value by the authors ("We averaged the log-ratios of the up- and downtags to yield
+one log-"), which is the per-array technical level and is not ours to undo. Same-day
+arrays of one group (filenames sharing ``YY_MM_DD``) are separate experiments by the
+quote above; whether they were parallel cultures is not stated. The Fig. S6 caption notes
+"a small subset of replicates that were not correct" without naming one, so no array is
+withdrawn.
 
 SUSPICIOUS BATCHES. The SOM names ten construction batches whose strains share a
 secondary genotype; the ORFs with a row in them are written to
@@ -251,7 +270,6 @@ from torchcell.datamodels.schema import (
     StrainEnvironmentResponseExperimentReference,
     StrainReferenceGenome,
     Temperature,
-    UncertaintyType,
 )
 from torchcell.datamodels.strain_background import (
     BRACHMANN_1998,
@@ -425,6 +443,43 @@ QUOTE_TABLE_S1_CHEMDIV = (
 )
 #: SOM Table S1, the Biomol telomerase inhibitor as the OCR carries it.
 QUOTE_TABLE_S1_TELOMERASE = "telomerase inhibitor ix (Biomol)"
+#: The replicate structure (per-replicate policy, #1178): one array per experiment, the
+#: array's filename as its identifier, the replicate counts and the authors' own use of
+#: "true replicates", and the in-array combination of the two tags.
+QUOTE_ONE_ARRAY = "One array is used per experiment (control or treatment)."
+QUOTE_ARRAY_FILENAME = (
+    "Unique identifier of the array, and the name of the corresponding .cel intensity "
+    "file."
+)
+QUOTE_REPLICATES = (
+    "Certain conditions were tested in replicate (number of replicates ranged from 1 to "
+    "14), with a median replicate correlation of 0.72 (Fig. S6)."
+)
+QUOTE_TRUE_REPLICATES = (
+    "SAM requires replicates, and few of our treatment experiments contained true "
+    "replicates"
+)
+QUOTE_TAG_AVERAGE = (
+    "We averaged the log-ratios of the up- and downtags to yield one log-"
+)
+#: Main article (si/si1.md): each array is counted as one experiment.
+QUOTE_EXPERIMENT_COUNT = (
+    "We performed 726 treatment experiments in each of the heterozygous deletion strains "
+    "and 418 separate experiments in each of the homozygous strains"
+)
+#: Fig. S6 caption: a subset of replicates is called incorrect, none is named.
+QUOTE_FIG_S6 = (
+    "The bimodal distribution suggests that a small subset of replicates that were not "
+    "correct."
+)
+#: Why a per-array record has no dispersion of its own (the typed-absence note).
+SINGLE_ARRAY_UNCERTAINTY_NOTE = (
+    "a record is ONE released array (one treatment experiment: "
+    f"{QUOTE_ONE_ARRAY!r}), and one measurement has no dispersion of its own, so neither "
+    "an uncertainty number nor its type exists to store. The mean and SD over the arrays "
+    "of one (strain row, environment, control set) are a modeling-time derivation over "
+    "the records that share them"
+)
 
 #: The ten construction batches the SOM names as carrying a shared secondary genotype.
 SUSPICIOUS_BATCHES: tuple[str, ...] = (
@@ -575,6 +630,48 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         note="a vendor product designation (Biomol, inhibitor number ix) with no "
         "released name or structure; absent from Table S2",
     ),
+    "one_array_per_experiment": _som_sv(
+        1,
+        QUOTE_ONE_ARRAY,
+        note="each matrix column is one experiment, so each (strain row, array) cell is "
+        "one record with n_samples 1",
+    ),
+    "array_filename_identifier": _som_sv(
+        "filename",
+        QUOTE_ARRAY_FILENAME,
+        note="the per-record replicate_id is this filename, the release's own label "
+        "for the array",
+    ),
+    "replicate_counts": _som_sv(
+        "1 to 14 arrays per condition",
+        QUOTE_REPLICATES,
+        note="measured through parse_columns / group_columns on the pinned matrices: "
+        "HET 706 stored arrays in 511 (environment, control set) groups of 1 to 12, HOM "
+        "405 in 275 groups of 1 to 5. The SOM's maximum of 14 counts replicates over "
+        "some grouping the release does not state",
+    ),
+    "true_replicates": _som_sv(
+        "true replicates",
+        QUOTE_TRUE_REPLICATES,
+        note="the authors' own term for repeated arrays of one condition, as distinct "
+        "from varying dose or time point",
+    ),
+    "tag_average": _som_sv(
+        "up- and downtag log-ratios averaged within one array",
+        QUOTE_TAG_AVERAGE,
+        note="the technical combination inside one array's released value",
+    ),
+    "experiment_count": _main_sv(
+        {"het": 726, "hom": 418},
+        QUOTE_EXPERIMENT_COUNT,
+        note="the matrix column counts of het.ratio_result_nm.pub and "
+        "hom.z_result_nm.pub",
+    ),
+    "fig_s6_incorrect_replicates": _som_sv(
+        "no array withdrawn",
+        QUOTE_FIG_S6,
+        note="the caption names no array, so nothing is dropped on it",
+    ),
 }
 _PRE_CULTURE_FROZEN = SOURCED_VALUES["pre_culture_frozen"]
 _PRE_CULTURE_LOG_PHASE = SOURCED_VALUES["pre_culture_log_phase"]
@@ -586,15 +683,17 @@ UNITS_HET = (
     "HIP fitness-defect log-ratio, log2(mean control intensity / treatment intensity) "
     "averaged over the up and down tags (Hillenmeyer 2008 scoring method 1); positive = "
     "fitness defect. Control = the matched no-drug control set named in screen_id "
-    "(same deletion pool, generation count and scanner). Mean over the replicate arrays "
-    "of that control set for ONE constructed strain (one matrix row ORF:batch)"
+    "(same deletion pool, generation count and scanner). ONE array (one treatment "
+    "experiment, named by its filename in replicate_id) for ONE constructed strain (one "
+    "matrix row ORF:batch), as released"
 )
 UNITS_HOM = (
     "HOP fitness-defect z-score, (mean control intensity - treatment intensity) / SD of "
     "the control intensities (Hillenmeyer 2008 scoring method 2); positive = fitness "
     "defect. Control = the matched no-drug control set named in screen_id (same deletion "
-    "pool, generation count and scanner). Mean over the replicate arrays of that control "
-    "set for ONE constructed strain (one matrix row ORF:batch)"
+    "pool, generation count and scanner). ONE array (one treatment experiment, named by "
+    "its filename in replicate_id) for ONE constructed strain (one matrix row ORF:batch), "
+    "as released"
 )
 
 
@@ -1417,9 +1516,11 @@ def parse_columns(
                 f"{key_check.key_condition!r})"
             )
         environment = build_environment(parse, generations)
-        # Group replicate arrays by the CANONICAL environment plus the control set the
-        # score was computed against: two arrays of one condition normalized against
-        # different control sets are different measurements.
+        # Group the arrays of one condition by the CANONICAL environment plus the
+        # control set the score was computed against (two arrays of one condition
+        # normalized against different control sets are different measurements). Each
+        # array is still its own record; the group orders records and keys the drop
+        # and compound ledgers.
         group_key = json.dumps(
             [environment.model_dump(), control_set], sort_keys=True, default=str
         )
@@ -1737,58 +1838,58 @@ def build_reference(
 
 
 def build_phenotype(
-    spec: _MatrixSpec, values: list[float], control_set: str
+    spec: _MatrixSpec, value: float, control_set: str, filename: str
 ) -> EnvironmentResponsePhenotype:
-    """Mean over the replicate arrays of one group, with the across-array sample SD.
+    """One released array's score for one strain row, verbatim.
 
-    A sample SD of exactly 0 is NOT reported as a dispersion. The matrices print four
-    to six decimals, so two arrays agreeing to the last printed digit means the
-    dispersion is below the release's resolution, not that it was measured to be zero.
-    Storing 0 would give those records a standard error of 0 and claim infinite
-    precision, so the uncertainty is a typed absence instead.
+    ``n_samples`` is 1 (one array is one experiment), ``replicate_id`` is the array's
+    filename, and the two uncertainty fields are ``not_applicable_single_measurement``
+    absences (:data:`SINGLE_ARRAY_UNCERTAINTY_NOTE`).
     """
-    n = len(values)
-    mean = sum(values) / n
-    sd = math.sqrt(sum((v - mean) ** 2 for v in values) / (n - 1)) if n >= 2 else None
-    gaps: list[ProvenanceGap] = []
-    if sd == 0.0:
-        sd = None
-        gaps.append(
-            ProvenanceGap(
-                field="environment_response_uncertainty",
-                reason=ProvenanceGapReason.not_reported_by_primary,
-                looked_in=_SOM_PROVENANCE,
-                note=f"the {n} arrays of this group print the identical score to the "
-                "release's last decimal, so the replicate dispersion is below the "
-                "released precision rather than measured to be zero",
-            )
-        )
+    if not math.isfinite(value):
+        raise ValueError(f"non-finite released score {value!r} on array {filename!r}")
     return EnvironmentResponsePhenotype(
         measurement_type=spec.measurement_type,
         assay_type=AssayType.pooled_competitive_growth_barcode,
-        environment_response=mean,
-        n_samples=n,
+        environment_response=value,
+        n_samples=1,
         sample_unit=SampleUnit.biological_replicate,
-        environment_response_uncertainty=sd,
-        environment_response_uncertainty_type=(
-            UncertaintyType.sample_sd if sd is not None else None
-        ),
+        environment_response_uncertainty=None,
+        environment_response_uncertainty_type=None,
         screen_id=control_set,
+        replicate_id=filename,
         units=spec.units,
-        provenance_gaps=gaps,
+        provenance_gaps=[
+            ProvenanceGap(
+                field=field,
+                reason=ProvenanceGapReason.not_applicable_single_measurement,
+                note=SINGLE_ARRAY_UNCERTAINTY_NOTE,
+            )
+            for field in (
+                "environment_response_uncertainty",
+                "environment_response_uncertainty_type",
+            )
+        ],
     )
+
+
+def array_cells(
+    row_values: list[float | None], members: list[ColumnSpec]
+) -> list[tuple[ColumnSpec, float]]:
+    """Each ARRAY of a group that carries a value for one strain row, with that value."""
+    cells: list[tuple[ColumnSpec, float]] = []
+    for column in members:
+        value = row_values[column.index]
+        if value is not None:
+            cells.append((column, value))
+    return cells
 
 
 def array_values(
     row_values: list[float | None], members: list[ColumnSpec]
 ) -> list[float]:
-    """One value per replicate ARRAY of a group for one strain row (missing skipped)."""
-    values: list[float] = []
-    for column in members:
-        value = row_values[column.index]
-        if value is not None:
-            values.append(value)
-    return values
+    """One value per ARRAY of a group for one strain row (missing skipped)."""
+    return [value for _, value in array_cells(row_values, members)]
 
 
 def group_columns(
@@ -1810,45 +1911,45 @@ def iter_records(
     groups: dict[str, list[ColumnSpec]],
     background: EukaryoticStrainBackground,
 ) -> Iterator[tuple[StrainEnvironmentResponseExperiment, str]]:
-    """Every record of a matrix: (experiment, control set), strain row by strain row.
+    """Every record of a matrix: (experiment, control set), one per (strain row, array).
 
-    Shared by ``process()`` and the measurement script, so a sliced run goes through
-    the same builders as the full build.
+    Strain row by strain row, then group by group in column order, then array by array
+    within the group. Shared by ``process()`` and the measurement script, so a sliced
+    run goes through the same builders as the full build.
     """
     markers = marker_loci(background)
     group_list = [(members[0], members) for members in groups.values()]
     for row in matrix.rows:
         genotypes: dict[str, Genotype] = {}
         for head, members in group_list:
-            values = array_values(row.values, members)
-            if not values:
-                continue
-            if head.pool not in genotypes:
-                genotypes[head.pool] = Genotype(
-                    perturbations=[
-                        strain_perturbation(spec.key, row, head.pool, markers)
-                    ]
+            for column, value in array_cells(row.values, members):
+                if head.pool not in genotypes:
+                    genotypes[head.pool] = Genotype(
+                        perturbations=[
+                            strain_perturbation(spec.key, row, head.pool, markers)
+                        ]
+                    )
+                yield (
+                    StrainEnvironmentResponseExperiment(
+                        dataset_name=dataset_name,
+                        genotype=genotypes[head.pool],
+                        environment=head.environment,
+                        phenotype=build_phenotype(
+                            spec, value, column.control_set, column.filename
+                        ),
+                    ),
+                    column.control_set,
                 )
-            yield (
-                StrainEnvironmentResponseExperiment(
-                    dataset_name=dataset_name,
-                    genotype=genotypes[head.pool],
-                    environment=head.environment,
-                    phenotype=build_phenotype(spec, values, head.control_set),
-                ),
-                head.control_set,
-            )
 
 
 def count_records(
     rows: list[StrainRow] | list[DroppedStrain], groups: dict[str, list[ColumnSpec]]
 ) -> int:
-    """How many (row, group) pairs carry at least one value: the record count."""
+    """How many (row, array) cells carry a value: the record count, one per array."""
     return sum(
-        1
+        len(array_values(row.values, members))
         for row in rows
         for members in groups.values()
-        if array_values(row.values, members)
     )
 
 
@@ -1938,9 +2039,9 @@ def compound_identity_gaps(
 class UnidentifiedCompoundHeldOut(BaseModel):
     """One label held out under ``UNIDENTIFIED_COMPOUND_RULE``, with what it carried.
 
-    ``n_records_not_written`` counts the (stored strain row, environment, control set)
-    records its arrays would have written; ``n_value_cells`` the released value cells of
-    those arrays over every row, the figure the cell accounting sums.
+    ``n_records_not_written`` counts the (stored strain row, array) records its arrays
+    would have written, one per value cell over the stored rows; ``n_value_cells`` the
+    released value cells of those arrays, the figure the cell accounting sums.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -2093,7 +2194,7 @@ class _Hillenmeyer2008Base(ExperimentDataset):
     # ---- build ----------------------------------------------------------------
     @post_process
     def process(self) -> None:
-        """Build one record per (strain row, environment, control set)."""
+        """Build one record per (strain row, array): every released value cell."""
         spec = self.spec
         data_root = _data_root()
         manifest = load_manifest(data_root)
@@ -2189,8 +2290,8 @@ class _Hillenmeyer2008Base(ExperimentDataset):
         """Write ``dropped_records.json``: the array rules, counts and cell accounting.
 
         A dropped environment's records-not-written count is over the stored strain
-        rows, keyed by the GROUP, so one condition dropped at several control sets is
-        counted once per group. ``cell_accounting`` splits every released value cell into
+        rows, one per (row, array) value cell, listed per GROUP, so one condition
+        dropped at several control sets is listed once per group. ``cell_accounting`` splits every released value cell into
         stored, dropped-array and withdrawn-strain cells and raises if they do not sum.
         The ``UNIDENTIFIED_COMPOUND_RULE`` arrays are also listed per label, with the
         source quotes that the labels are codes with no released structure.

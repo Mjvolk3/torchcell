@@ -211,6 +211,8 @@ def test_strain_resolved_record_emits_genome_reference_experiment_and_phenotype_
     assert phenotype.get_label() == "environment response phenotype"
     assert phenotype.get_properties()["screen_id"] == _CS
     assert phenotype.get_properties()["environment_response"] == 0.7
+    # one record per array (#1178): the array filename is the emitted replicate_id
+    assert phenotype.get_properties()["replicate_id"] == "a1"
     assert isinstance(experiment, StrainEnvironmentResponseExperiment)
     assert experiment.experiment_type == "strain_environment_response"
 

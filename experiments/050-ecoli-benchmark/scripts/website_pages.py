@@ -110,18 +110,18 @@ REPRESENTATIONS: dict[str, tuple[str, str, str, str]] = {
     "prot_t5": (
         "ProtT5-XL",
         "protein sequence",
-        "ProtT5-XL-UniRef50 encoder (`Rostlab/prot_t5_xl_uniref50`), mean over residues",
+        "ProtT5-XL-UniRef50 encoder (`Rostlab/prot_t5_xl_uniref50`), last layer, mean over residues",
         "1,024",
     ),
 }
 FAMILIES = {
     "random": "Random",
-    "seqid30": "Sequence identity 30 %",
-    "seqid50": "Sequence identity 50 %",
+    "seqid30": "Sequence identity 30%",
+    "seqid50": "Sequence identity 50%",
     "position": "Chromosome position",
     "gene_holdout": "Gene holdout, random",
-    "seqid30_gene_holdout": "Gene holdout, identity 30 %",
-    "seqid50_gene_holdout": "Gene holdout, identity 50 %",
+    "seqid30_gene_holdout": "Gene holdout, identity 30%",
+    "seqid50_gene_holdout": "Gene holdout, identity 50%",
     "position_gene_holdout": "Gene holdout, position",
 }
 # Task: page file, page title, sidebar label, example script, what was measured.
@@ -138,7 +138,7 @@ PAGES: dict[str, tuple[str, str, str, str, str]] = {
         "Cell shape and cell cycle of single-gene deletions (Campos 2018)",
         "Cell shape and cell cycle (Campos 2018)",
         "ecoli_morphology_campos2018",
-        "The same imaging screen of the Keio collection measured the shape and the cell-cycle state of thousands of cells per strain. The label is 15 numbers per strain: population means of features such as cell length, width, area and, for strains imaged with a nucleoid stain, nucleoid and cell-cycle features. The six nucleoid and cell-cycle features are missing for strains imaged without that stain. A model receives the deleted gene and predicts all 15 features, and each feature is scored on the strains that measured it.",
+        "Campos and colleagues also imaged the Keio strains in phase contrast and, for most strains, with a DAPI nucleoid stain, and measured the shape and the cell-cycle state of the cells of each strain (the paper reports 291 ± 116 cells per strain). The label is 15 numbers per strain: population means of features such as cell length, width and area and, for strains imaged with the nucleoid stain, nucleoid and cell-cycle features. Those six features are missing for strains imaged without the stain. A model receives the deleted gene and predicts all 15 features, and each feature is scored on the strains that measured it.",
     ),
     "ecoli-gene-interaction-babu2014": (
         "gene-interaction-babu2014",
@@ -156,7 +156,7 @@ PAGES: dict[str, tuple[str, str, str, str, str]] = {
     ),
 }
 BOARDLESS = {
-    "ecoli-metabolome-fuhrer2017": "This task has no board yet. A submission to a board is one row per record and target, and with 7,534 targets one upload is about 5.4 million rows, far above the 16 MB the service accepts. The results below were scored offline with the same splits."
+    "ecoli-metabolome-fuhrer2017": "This task has no board yet. A submission to a board is one row per record and target, and with 7,534 targets one upload is about 5.4 million rows, well over the service's 16 MB upload limit. The results above were scored offline with the same splits."
 }
 # The standard metrics of a regression task, in the order every page shows them. They
 # are the five the benchmark service grades a regression board with, so a task page and
@@ -202,14 +202,17 @@ METRICS: dict[str, tuple[str, str, str, bool, bool]] = {
         False,
     ),
 }
+PAIR_RANDOM_NOTE = (
+    "Pairs assigned at random; both orders and repeats of a pair stay together."
+)
 SPLIT_NOTES = {
-    "random": "Genes (or pairs) assigned at random.",
-    "seqid30": "Whole protein clusters at 30 % sequence identity.",
-    "seqid50": "Whole protein clusters at 50 % sequence identity.",
+    "random": "Genes assigned at random.",
+    "seqid30": "Whole protein clusters at 30% sequence identity.",
+    "seqid50": "Whole protein clusters at 50% sequence identity.",
     "position": "Whole chromosome blocks (40 contiguous blocks).",
     "gene_holdout": "Genes split at random; a pair follows its genes.",
-    "seqid30_gene_holdout": "Genes split by 30 % identity cluster; a pair follows its genes.",
-    "seqid50_gene_holdout": "Genes split by 50 % identity cluster; a pair follows its genes.",
+    "seqid30_gene_holdout": "Genes split by 30% identity cluster; a pair follows its genes.",
+    "seqid50_gene_holdout": "Genes split by 50% identity cluster; a pair follows its genes.",
     "position_gene_holdout": "Genes split by chromosome block; a pair follows its genes.",
 }
 
@@ -217,6 +220,23 @@ SPLIT_NOTES = {
 def board_url(task: str, family: str) -> str:
     """Site path of the leaderboard with one board of a task selected."""
     return f"/benchmark/leaderboard/?dataset={task}-{family.replace('_', '-')}-s0"
+
+
+def aligned(lines: list[tuple[str, str]], limit: int = 88) -> list[str]:
+    """Code lines with their comments on the same line, aligned in one column.
+
+    A comment goes after its code, two spaces past the longest commented line of the
+    block. A line that would then pass ``limit`` characters raises, so a block is
+    never published with a comment that wraps.
+    """
+    column = max(len(code) for code, comment in lines if comment) + 2
+    out = []
+    for code, comment in lines:
+        line = f"{code.ljust(column)}# {comment}" if comment else code
+        if len(line) > limit:
+            raise ValueError(f"{len(line)} characters, over {limit}: {line}")
+        out.append(line)
+    return out
 
 
 def front_matter(title: str, label: str, description: str) -> list[str]:
@@ -432,22 +452,49 @@ def task_page(
         )
         page += [f"**Leaderboards for this task:** {links}.", ""]
     page += [
-        "## Load the task",
+        "## Loading the task",
         "",
         "```python",
+        "import os",
+        "",
+        "from torchcell.endpoint_http import DEFAULT_URL",
         "from torchcell.tasks import load_task",
+        "",
+        *aligned(
+            [
+                (
+                    'os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)',
+                    "download the built store",
+                ),
+                (
+                    'os.environ.setdefault("DATA_ROOT", ".")',
+                    "files go under this folder",
+                ),
+            ]
+        ),
         "",
         f'task = load_task("{task}")',
         f'split = task.split("{first_split}")',
         "",
-        "task.genes[split.train]  # locus tags of the deleted genes, shape (n, "
-        + ("2)" if pair else "1)"),
-        "task.y[split.train]      # labels, one column per target",
-    ]
-    page += [
-        "task.genome              # the genome: sequence, protein and annotation of each gene",
-        "split.val                # row indices for model selection",
-        'split.unlock_test(reason="final evaluation")  # test row indices, with a warning',
+        *aligned(
+            [
+                (
+                    "task.genes[split.train]",
+                    f"locus tags of the deleted genes, shape (n, {2 if pair else 1})",
+                ),
+                ("task.y[split.train]", "labels, one column per target"),
+                ("task.genome", "sequence, protein and annotation of each gene"),
+                ("split.val", "row indices for model selection"),
+            ]
+        ),
+        *aligned(
+            [
+                (
+                    'split.unlock_test(reason="final evaluation")',
+                    "test indices, with a warning",
+                )
+            ]
+        ),
         "```",
         "",
         "A sample is a benchmark sample when every deleted gene resolves to one protein-coding gene of the genome. See the [overview](./index.mdx) for what a task object holds and how the test part is locked.",
@@ -469,7 +516,9 @@ def task_page(
             [
                 FAMILIES[family],
                 f"`{family}_s0` to `{family}_s{len(part) - 1}`",
-                SPLIT_NOTES[family],
+                PAIR_RANDOM_NOTE
+                if pair and family == "random"
+                else SPLIT_NOTES[family],
                 span("train"),
                 span("val"),
                 span("test"),
@@ -483,7 +532,7 @@ def task_page(
     page += [
         "## Example script",
         "",
-        f"[`{example}.py`]({GITHUB}/{EXAMPLES.as_posix()}/{example}.py) is a complete run in one file: it loads this task, builds 21 features from the protein of each deleted gene, fits a ridge regression, chooses the penalty on validation and scores the test part once. Replace `gene_features` and `ridge` with your model and keep the rest.",
+        f"[`{example}.py`]({GITHUB}/{EXAMPLES.as_posix()}/{example}.py) is a complete run in one file: it loads this task, builds 21 features from the protein of each deleted gene, fits a ridge regression (a linear model with an L2 penalty), chooses the penalty on validation and scores the test part once. Replace `protein_features` and `fit_predict_ridge` with your model and keep the rest.",
         "",
         "```bash",
         'pip install "torchcell>=1.8.8"',
@@ -519,17 +568,26 @@ def task_page(
         image = figure(task, group, features, metric)
         caption = (
             f"**Test {metric_name} of each linear probe on {label}.** The {metric_name} is {metric_meaning}. "
-            "Each panel is one split family and each bar is one gene representation. "
+            + (
+                "Each panel is one split family and each pair of bars is one gene representation. "
+                if pair
+                else "Each panel is one split family and each bar is one gene representation. "
+            )
+            + ""
             f"A bar is the mean over the seeds of that family ({seeds}) and its whisker is the sample standard deviation over those seeds. "
             "The correlation is computed on the test part at the ridge penalty chosen on validation"
             + per_target
             + "Random features carry no biology and mark the level a representation must exceed. "
             + (
-                "Dark bars concatenate the representations of the two genes and light bars add them. "
+                "Dark bars concatenate the representations of the two genes and light bars sum them. "
                 if pair
                 else "A representation with no bar has an undefined correlation: one-hot features predict the training mean for a gene that was not in training. "
             )
-            + "Panels after Random hold out genes that are unlike the training genes in sequence or far from them on the chromosome."
+            + (
+                "The gene-holdout panels split the genes first: at random, by protein cluster (30% identity is the stricter cut) or by chromosome block."
+                if pair
+                else "The other panels hold out whole protein clusters (30% identity is the stricter cut) or whole chromosome blocks."
+            )
         )
         page += [
             f"### {metric_name}",
@@ -607,6 +665,19 @@ def task_page(
                         for f in sub["family"].drop_duplicates()
                     ],
                 )
+    at_edge = int((group["alpha"] == group["alpha"].max()).sum())
+    page += [
+        "### Reading these numbers",
+        "",
+        f"- This task has {len(group):,} probe runs, one per split"
+        + (", representation and pair combination" if pair else " and representation")
+        + f". In {at_edge:,} of them the penalty chosen on validation is the largest value tried (1,000,000), which means the best linear model in that run is close to predicting the training mean.",
+        "- Differences smaller than the standard deviations shown are not resolved by three to five seeds.",
+        "- These are frozen, mean-pooled representations with a linear readout. They are a floor for models that are fine-tuned, nonlinear or use the cell graph, and they say nothing about what such models reach.",
+        "",
+        f"Every run, with validation scores, the chosen penalty and four more metrics, is in [`linear_probes.csv`]({GITHUB}/{RESULTS}/linear_probes.csv).",
+        "",
+    ]
     page += ["## Boards", ""]
     if task in BOARDLESS:
         page += [BOARDLESS[task], ""]
@@ -633,19 +704,6 @@ def task_page(
                 "The board names a target with letters, digits and `_.:|+-` only, so a feature written `<L>` in the dataset is `mean_L` on the board, `<SA/V>` is `mean_SA_per_V` and `%2N` is `pct_2N`.",
                 "",
             ]
-    at_edge = int((group["alpha"] == group["alpha"].max()).sum())
-    page += [
-        "### Reading these numbers",
-        "",
-        f"- This task has {len(group):,} probe runs, one per split, representation"
-        + (" and pair combination" if pair else "")
-        + f". In {at_edge:,} of them the penalty chosen on validation is the largest value tried (1,000,000), which means the best linear model in that run is close to predicting the training mean.",
-        "- Differences smaller than the standard deviations shown are not resolved by three to five seeds.",
-        "- These are frozen, mean-pooled representations with a linear readout. They are a floor for models that are fine-tuned, nonlinear or use the cell graph, and they say nothing about what such models reach.",
-        "",
-        f"Every run, with validation scores, the chosen penalty and four more metrics, is in [`linear_probes.csv`]({GITHUB}/{RESULTS}/linear_probes.csv).",
-        "",
-    ]
     (OUT / f"{stem}.mdx").write_text("\n".join(page), encoding="utf-8")
 
 
@@ -669,12 +727,40 @@ def overview(runs: pd.DataFrame, sizes: pd.DataFrame, features: list[str]) -> No
     page += [
         "- [Processing notebook](./processing.mdx): how a dataset becomes a task, step by step.",
         "",
+        "## Terms",
+        "",
+        "- **Locus tag.** The identifier a genome annotation gives a gene, for example `b0002` in MG1655 or `BW25113_0002` in BW25113.",
+        "- **Keio collection.** The set of *E. coli* K-12 BW25113 strains that each have one non-essential gene deleted (Baba 2006).",
+        "- **eSGA.** *E. coli* synthetic genetic array: double mutants are made by conjugation between an arrayed set of single mutants and a donor mutant, and scored by colony size.",
+        "- **S-score.** The interaction score of a gene pair from eSGA: negative when the double mutant grows worse than expected from its single mutants, positive when it grows better.",
+        "- **Modified z-score.** The level of an ion in one strain standardized across strains.",
+        "- **Target.** One number a model predicts for a sample. A task has 1, 15 or 7,534 targets.",
+        "- **Seed.** One random assignment of units to train, validation and test. A split family has three or five seeds.",
+        "- **Representation.** A fixed vector of numbers that stands for a gene, for example a protein language model's output averaged over the positions of the sequence.",
+        "- **Ridge regression.** A linear model with an L2 penalty on its weights. The penalty is its one hyperparameter (`alpha` in the results table).",
+        "",
         "## Loading a task",
         "",
         'Install with `pip install "torchcell>=1.8.8"`. One function returns a processed task; its argument is the task name.',
         "",
         "```python",
+        "import os",
+        "",
+        "from torchcell.endpoint_http import DEFAULT_URL",
         "from torchcell.tasks import load_task",
+        "",
+        *aligned(
+            [
+                (
+                    'os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)',
+                    "download the built stores",
+                ),
+                (
+                    'os.environ.setdefault("DATA_ROOT", ".")',
+                    "files go under this folder",
+                ),
+            ]
+        ),
         "",
         'growth = load_task("ecoli-growth-rate-campos2018")',
         'morphology = load_task("ecoli-morphology-campos2018")',
@@ -682,26 +768,49 @@ def overview(runs: pd.DataFrame, sizes: pd.DataFrame, features: list[str]) -> No
         'metabolome = load_task("ecoli-metabolome-fuhrer2017")',
         "```",
         "",
-        "`load_task` downloads the built dataset store when `TC_DATA_URL` is set, fetches the genome the records name when it is absent, matches each record to genes of that genome, reads the labels and attaches the pinned splits. Every task object has the same parts:",
+        "`TC_DATA_URL` names the server the built dataset stores are downloaded from, and `DEFAULT_URL` is the public one; without it a store is built from the publisher's files, which is slow. `load_task` downloads the store, fetches the genome the records name when it is absent, matches each record to genes of that genome, reads the labels and attaches the pinned splits. Every task object has the same parts:",
         "",
         "```python",
         "task = growth",
-        "task.samples        # one row per sample: record index, stored identifiers, locus tags",
-        "task.genes          # locus tags of the deleted genes, shape (n, 1) or (n, 2)",
-        "task.y              # labels, shape (n, n_targets); nan where a target was not measured",
-        "task.targets        # name of each label column",
-        "task.genome         # the genome; task.genome[locus_tag].protein.seq is a protein",
-        "task.excluded       # records of the dataset that are not samples, each with its reason",
-        "task.split_names    # names of the pinned splits",
+        *aligned(
+            [
+                (
+                    "task.samples",
+                    "one row per sample: record index, identifiers, locus tags",
+                ),
+                (
+                    "task.genes",
+                    "locus tags of the deleted genes, shape (n, 1) or (n, 2)",
+                ),
+                (
+                    "task.y",
+                    "labels, (n, n_targets); nan where a target was not measured",
+                ),
+                ("task.targets", "name of each label column"),
+                (
+                    "task.genome",
+                    "the genome; task.genome[locus_tag].protein.seq is a protein",
+                ),
+                ("task.excluded", "records that are not samples, each with its reason"),
+                ("task.split_names", "names of the pinned splits"),
+            ]
+        ),
         "",
         'split = task.split("seqid30_s0")',
-        "split.train, split.val                     # row indices into task.genes and task.y",
-        "task.score(task.y[split.val], prediction)  # Pearson, Spearman, R2, MSE, MAE",
+        *aligned(
+            [
+                ("split.train, split.val", "row indices into task.genes and task.y"),
+                (
+                    "task.score(task.y[split.val], prediction)",
+                    "Pearson, Spearman, R2, MSE, MAE",
+                ),
+            ]
+        ),
         "```",
         "",
         "The split files ship inside the package and are checked against a sha256 recorded in the code. The samples built on your machine must equal the samples the split file was written for, row for row, or `load_task` raises.",
         "",
-        "Because a script reaches the processed task through this one import, a submitted script can be checked for it: a script that builds its own samples or splits does not call `load_task`, and a script that reads the test part calls `unlock_test`.",
+        "Because every script reaches the processed task through `load_task`, a submitted script can be checked: one that never calls `load_task` built its own samples or splits, and one that calls `unlock_test` read the test part.",
         "",
         "## The test part is locked",
         "",
@@ -715,10 +824,10 @@ def overview(runs: pd.DataFrame, sizes: pd.DataFrame, features: list[str]) -> No
         "",
         "## Split families",
         "",
-        "Train, validation and test hold about 80 %, 10 % and 10 % of the unit that is split, and a unit is never divided. Each task page lists its own splits and their sizes.",
+        "Train, validation and test hold about 80%, 10% and 10% of the unit that is split, and a unit is never divided. Each task page lists its own splits and their sizes.",
         "",
         "- **Random.** Genes at random. For pairs, pairs at random, with the two orders of a pair and repeated measurements of it kept together.",
-        "- **Sequence identity 30 % and 50 %.** Whole protein clusters. A cluster is a connected component of an all-against-all MMseqs2 search at that identity over 80 % of both sequences, so a test protein has no reported hit to a training protein at or above the threshold.",
+        "- **Sequence identity 30% and 50%.** Whole protein clusters. A cluster is a connected component of an all-against-all MMseqs2 search at that identity over 80% of both sequences, so a test protein has no reported hit to a training protein at or above the threshold.",
         "- **Chromosome position.** Whole chromosome blocks (40 contiguous blocks of equal gene count), so the genes of an operon stay on one side.",
         "- **Gene holdout** (pair task). The genes are split first, at random, by cluster or by block. A pair is test when either gene is a test gene, validation when neither is test and either is validation, and train when both are training genes.",
         "",
@@ -741,7 +850,7 @@ def overview(runs: pd.DataFrame, sizes: pd.DataFrame, features: list[str]) -> No
         left=3,
     )
     page += [
-        "A single-gene sample is its gene's representation. A gene-pair sample is the two representations concatenated in stored order or added. Features are standardized with the training mean and standard deviation, and one ridge regression is fit per task, split and representation, on all targets at once. The penalty is the one of eight values from 0.1 to 1,000,000 with the lowest validation mean squared error. The test part is unlocked once per split, after that choice. A sequence longer than a model's window is truncated from its end.",
+        "A single-gene sample is its gene's representation. A gene-pair sample is the two representations concatenated in stored order, or summed. Features are standardized with the training mean and standard deviation, and one ridge regression is fit per task, split and representation, on all targets at once. The penalty is the one of eight values from 0.1 to 1,000,000 with the lowest validation mean squared error. The test part is unlocked once per split, after that choice. A sequence longer than a model's window is truncated from its end.",
         "",
         "### Metrics",
         "",

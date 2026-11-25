@@ -17,21 +17,27 @@ Babu and colleagues crossed *Escherichia coli* K-12 single-gene deletion strains
 | Records of the dataset set aside | 2,047 (listed with a reason in `task.excluded`) |
 | Pinned splits | 17 |
 
-**Leaderboards for this task:** [random](/benchmark/leaderboard/?dataset=ecoli-gene-interaction-babu2014-random-s0), [gene holdout, random](/benchmark/leaderboard/?dataset=ecoli-gene-interaction-babu2014-gene-holdout-s0), [gene holdout, identity 30 %](/benchmark/leaderboard/?dataset=ecoli-gene-interaction-babu2014-seqid30-gene-holdout-s0), [gene holdout, identity 50 %](/benchmark/leaderboard/?dataset=ecoli-gene-interaction-babu2014-seqid50-gene-holdout-s0), [gene holdout, position](/benchmark/leaderboard/?dataset=ecoli-gene-interaction-babu2014-position-gene-holdout-s0).
+**Leaderboards for this task:** [random](/benchmark/leaderboard/?dataset=ecoli-gene-interaction-babu2014-random-s0), [gene holdout, random](/benchmark/leaderboard/?dataset=ecoli-gene-interaction-babu2014-gene-holdout-s0), [gene holdout, identity 30%](/benchmark/leaderboard/?dataset=ecoli-gene-interaction-babu2014-seqid30-gene-holdout-s0), [gene holdout, identity 50%](/benchmark/leaderboard/?dataset=ecoli-gene-interaction-babu2014-seqid50-gene-holdout-s0), [gene holdout, position](/benchmark/leaderboard/?dataset=ecoli-gene-interaction-babu2014-position-gene-holdout-s0).
 
-## Load the task
+## Loading the task
 
 ```python
+import os
+
+from torchcell.endpoint_http import DEFAULT_URL
 from torchcell.tasks import load_task
+
+os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)  # download the built store
+os.environ.setdefault("DATA_ROOT", ".")            # files go under this folder
 
 task = load_task("ecoli-gene-interaction-babu2014")
 split = task.split("gene_holdout_s0")
 
 task.genes[split.train]  # locus tags of the deleted genes, shape (n, 2)
 task.y[split.train]      # labels, one column per target
-task.genome              # the genome: sequence, protein and annotation of each gene
+task.genome              # sequence, protein and annotation of each gene
 split.val                # row indices for model selection
-split.unlock_test(reason="final evaluation")  # test row indices, with a warning
+split.unlock_test(reason="final evaluation")  # test indices, with a warning
 ```
 
 A sample is a benchmark sample when every deleted gene resolves to one protein-coding gene of the genome. See the [overview](./index.mdx) for what a task object holds and how the test part is locked.
@@ -42,15 +48,15 @@ Each family has several seeds. The name of a split is the family, `_s` and the s
 
 | Family | Split names | What is kept whole | Train | Validation | Test |
 | :-- | :-- | :-- | --: | --: | --: |
-| Random | `random_s0` to `random_s4` | Genes (or pairs) assigned at random. | 32,527 | 4,066 | 4,065 |
+| Random | `random_s0` to `random_s4` | Pairs assigned at random; both orders and repeats of a pair stay together. | 32,527 | 4,066 | 4,065 |
 | Gene holdout, random | `gene_holdout_s0` to `gene_holdout_s2` | Genes split at random; a pair follows its genes. | 25,669 to 26,149 | 6,289 to 8,642 | 6,168 to 8,220 |
-| Gene holdout, identity 30 % | `seqid30_gene_holdout_s0` to `seqid30_gene_holdout_s2` | Genes split by 30 % identity cluster; a pair follows its genes. | 24,969 to 25,549 | 6,336 to 9,347 | 6,342 to 8,773 |
-| Gene holdout, identity 50 % | `seqid50_gene_holdout_s0` to `seqid50_gene_holdout_s2` | Genes split by 50 % identity cluster; a pair follows its genes. | 23,607 to 25,589 | 6,822 to 9,060 | 7,377 to 8,582 |
+| Gene holdout, identity 30% | `seqid30_gene_holdout_s0` to `seqid30_gene_holdout_s2` | Genes split by 30% identity cluster; a pair follows its genes. | 24,969 to 25,549 | 6,336 to 9,347 | 6,342 to 8,773 |
+| Gene holdout, identity 50% | `seqid50_gene_holdout_s0` to `seqid50_gene_holdout_s2` | Genes split by 50% identity cluster; a pair follows its genes. | 23,607 to 25,589 | 6,822 to 9,060 | 7,377 to 8,582 |
 | Gene holdout, position | `position_gene_holdout_s0` to `position_gene_holdout_s2` | Genes split by chromosome block; a pair follows its genes. | 25,297 to 28,414 | 6,795 to 8,496 | 3,748 to 8,532 |
 
 ## Example script
 
-[`ecoli_gene_interaction_babu2014.py`](https://github.com/Mjvolk3/torchcell/blob/main/examples/benchmark/ecoli_gene_interaction_babu2014.py) is a complete run in one file: it loads this task, builds 21 features from the protein of each deleted gene, fits a ridge regression, chooses the penalty on validation and scores the test part once. Replace `gene_features` and `ridge` with your model and keep the rest.
+[`ecoli_gene_interaction_babu2014.py`](https://github.com/Mjvolk3/torchcell/blob/main/examples/benchmark/ecoli_gene_interaction_babu2014.py) is a complete run in one file: it loads this task, builds 21 features from the protein of each deleted gene, fits a ridge regression (a linear model with an L2 penalty), chooses the penalty on validation and scores the test part once. Replace `protein_features` and `fit_predict_ridge` with your model and keep the rest.
 
 ```bash
 pip install "torchcell>=1.8.8"
@@ -59,7 +65,7 @@ python ecoli_gene_interaction_babu2014.py
 
 ```python
 # examples/benchmark/ecoli_gene_interaction_babu2014.py
-"""Genetic interaction score of *E. coli* double mutants (Babu 2014), gene-holdout split.
+"""Genetic interactions of *E. coli* double mutants (Babu 2014), gene-holdout split.
 
 A complete benchmark run in one file: load the standardized task, describe each deleted
 gene by the composition of its protein, fit a ridge regression, choose the ridge
@@ -83,9 +89,9 @@ from torchcell.endpoint_http import DEFAULT_URL
 from torchcell.tasks import load_task
 
 TASK = "ecoli-gene-interaction-babu2014"
-# Split names are <family>_s<seed>; task.split_names lists them all. gene_holdout splits
-# the genes first: a pair is test when either of its genes is a test gene.
-SPLIT = "gene_holdout_s0"
+# gene_holdout splits the genes first: a pair is test when either of its genes is a
+# test gene, so every test pair holds a gene no training pair has.
+SPLIT = "gene_holdout_s0"  # <family>_s<seed>; task.split_names lists every split
 AMINO_ACIDS = "ACDEFGHIKLMNPQRSTVWY"
 PENALTIES = (1e-1, 1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6)
 SELECT_ON = "mse"  # lower is better, and defined even when a prediction is constant
@@ -125,7 +131,7 @@ def rounded(metrics: dict[str, float]) -> dict[str, float]:
     return {name: round(value, 4) for name, value in metrics.items()}
 
 
-os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)  # unset, the store is built from raw
+os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)  # download the built dataset store
 os.environ.setdefault("DATA_ROOT", ".")  # the store and genome files go under here
 
 task = load_task(TASK)  # samples, deleted genes, labels, genome and the pinned splits
@@ -179,7 +185,7 @@ A frozen representation of each deleted gene with a ridge regression on top, for
 
 <img src={require("./linear_probes_pearson_gene-interaction-babu2014.png").default} alt="Linear-probe test Pearson correlation for Genetic interactions (Babu 2014)" style={{display: "block", width: "100%", maxWidth: "180mm", maxHeight: "170mm", height: "auto", objectFit: "contain"}} />
 
-**Test Pearson correlation of each linear probe on Genetic interactions (Babu 2014).** The Pearson correlation is the linear correlation between predicted and measured values. Each panel is one split family and each bar is one gene representation. A bar is the mean over the seeds of that family (five seeds for random splits and three for every other family) and its whisker is the sample standard deviation over those seeds. The correlation is computed on the test part at the ridge penalty chosen on validation. Random features carry no biology and mark the level a representation must exceed. Dark bars concatenate the representations of the two genes and light bars add them. Panels after Random hold out genes that are unlike the training genes in sequence or far from them on the chromosome.
+**Test Pearson correlation of each linear probe on Genetic interactions (Babu 2014).** The Pearson correlation is the linear correlation between predicted and measured values. Each panel is one split family and each pair of bars is one gene representation. A bar is the mean over the seeds of that family (five seeds for random splits and three for every other family) and its whisker is the sample standard deviation over those seeds. The correlation is computed on the test part at the ridge penalty chosen on validation. Random features carry no biology and mark the level a representation must exceed. Dark bars concatenate the representations of the two genes and light bars sum them. The gene-holdout panels split the genes first: at random, by protein cluster (30% identity is the stricter cut) or by chromosome block.
 
 The table gives the same numbers: mean ± sample standard deviation of the test Pearson correlation over the seeds of each split family. The highest mean of each row is in bold. `undefined` marks a constant prediction.
 
@@ -189,8 +195,8 @@ Pair representation: the two genes concatenated (`concat`).
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | Random | 0.461 ± 0.009 | 0.449 ± 0.005 | 0.252 ± 0.013 | 0.437 ± 0.002 | 0.404 ± 0.008 | 0.459 ± 0.006 | **0.466 ± 0.007** | 0.448 ± 0.009 | 0.457 ± 0.008 | 0.445 ± 0.008 |
 | Gene holdout, random | 0.283 ± 0.028 | **0.295 ± 0.044** | 0.173 ± 0.014 | 0.243 ± 0.067 | 0.237 ± 0.041 | 0.245 ± 0.023 | 0.258 ± 0.018 | 0.142 ± 0.056 | 0.291 ± 0.035 | 0.290 ± 0.030 |
-| Gene holdout, identity 30 % | 0.260 ± 0.045 | **0.274 ± 0.014** | 0.155 ± 0.068 | 0.195 ± 0.004 | 0.191 ± 0.044 | 0.238 ± 0.041 | 0.252 ± 0.040 | 0.213 ± 0.016 | 0.243 ± 0.048 | 0.221 ± 0.019 |
-| Gene holdout, identity 50 % | 0.278 ± 0.010 | **0.288 ± 0.008** | 0.150 ± 0.034 | 0.192 ± 0.076 | 0.224 ± 0.015 | 0.228 ± 0.043 | 0.260 ± 0.014 | 0.221 ± 0.029 | 0.222 ± 0.049 | 0.215 ± 0.035 |
+| Gene holdout, identity 30% | 0.260 ± 0.045 | **0.274 ± 0.014** | 0.155 ± 0.068 | 0.195 ± 0.004 | 0.191 ± 0.044 | 0.238 ± 0.041 | 0.252 ± 0.040 | 0.213 ± 0.016 | 0.243 ± 0.048 | 0.221 ± 0.019 |
+| Gene holdout, identity 50% | 0.278 ± 0.010 | **0.288 ± 0.008** | 0.150 ± 0.034 | 0.192 ± 0.076 | 0.224 ± 0.015 | 0.228 ± 0.043 | 0.260 ± 0.014 | 0.221 ± 0.029 | 0.222 ± 0.049 | 0.215 ± 0.035 |
 | Gene holdout, position | 0.265 ± 0.059 | **0.297 ± 0.044** | 0.121 ± 0.023 | 0.193 ± 0.094 | 0.221 ± 0.072 | 0.240 ± 0.066 | 0.267 ± 0.047 | 0.244 ± 0.039 | 0.251 ± 0.074 | 0.214 ± 0.073 |
 
 Pair representation: the two genes summed (`sum`).
@@ -199,15 +205,15 @@ Pair representation: the two genes summed (`sum`).
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | Random | 0.448 ± 0.011 | 0.458 ± 0.007 | 0.228 ± 0.015 | 0.430 ± 0.009 | 0.396 ± 0.011 | 0.455 ± 0.009 | **0.464 ± 0.008** | 0.440 ± 0.012 | 0.448 ± 0.010 | 0.430 ± 0.012 |
 | Gene holdout, random | 0.281 ± 0.028 | **0.308 ± 0.047** | 0.171 ± 0.030 | 0.235 ± 0.068 | 0.251 ± 0.064 | 0.244 ± 0.013 | 0.245 ± 0.053 | 0.154 ± 0.076 | 0.306 ± 0.042 | 0.298 ± 0.037 |
-| Gene holdout, identity 30 % | 0.252 ± 0.061 | **0.287 ± 0.017** | 0.144 ± 0.076 | 0.204 ± 0.011 | 0.180 ± 0.044 | 0.250 ± 0.048 | 0.236 ± 0.047 | 0.192 ± 0.029 | 0.244 ± 0.044 | 0.231 ± 0.032 |
-| Gene holdout, identity 50 % | 0.274 ± 0.012 | **0.301 ± 0.006** | 0.150 ± 0.034 | 0.185 ± 0.068 | 0.238 ± 0.053 | 0.235 ± 0.048 | 0.244 ± 0.031 | 0.210 ± 0.025 | 0.221 ± 0.051 | 0.228 ± 0.023 |
+| Gene holdout, identity 30% | 0.252 ± 0.061 | **0.287 ± 0.017** | 0.144 ± 0.076 | 0.204 ± 0.011 | 0.180 ± 0.044 | 0.250 ± 0.048 | 0.236 ± 0.047 | 0.192 ± 0.029 | 0.244 ± 0.044 | 0.231 ± 0.032 |
+| Gene holdout, identity 50% | 0.274 ± 0.012 | **0.301 ± 0.006** | 0.150 ± 0.034 | 0.185 ± 0.068 | 0.238 ± 0.053 | 0.235 ± 0.048 | 0.244 ± 0.031 | 0.210 ± 0.025 | 0.221 ± 0.051 | 0.228 ± 0.023 |
 | Gene holdout, position | 0.263 ± 0.081 | **0.321 ± 0.030** | 0.106 ± 0.035 | 0.228 ± 0.086 | 0.249 ± 0.070 | 0.258 ± 0.041 | 0.282 ± 0.039 | 0.277 ± 0.007 | 0.271 ± 0.057 | 0.204 ± 0.109 |
 
 ### Spearman correlation
 
 <img src={require("./linear_probes_spearman_gene-interaction-babu2014.png").default} alt="Linear-probe test Spearman correlation for Genetic interactions (Babu 2014)" style={{display: "block", width: "100%", maxWidth: "180mm", maxHeight: "170mm", height: "auto", objectFit: "contain"}} />
 
-**Test Spearman correlation of each linear probe on Genetic interactions (Babu 2014).** The Spearman correlation is the correlation between the ranks of predicted and measured values, which does not depend on the scale of the predictions and is not moved by a few extreme strains. Each panel is one split family and each bar is one gene representation. A bar is the mean over the seeds of that family (five seeds for random splits and three for every other family) and its whisker is the sample standard deviation over those seeds. The correlation is computed on the test part at the ridge penalty chosen on validation. Random features carry no biology and mark the level a representation must exceed. Dark bars concatenate the representations of the two genes and light bars add them. Panels after Random hold out genes that are unlike the training genes in sequence or far from them on the chromosome.
+**Test Spearman correlation of each linear probe on Genetic interactions (Babu 2014).** The Spearman correlation is the correlation between the ranks of predicted and measured values, which does not depend on the scale of the predictions and is not moved by a few extreme strains. Each panel is one split family and each pair of bars is one gene representation. A bar is the mean over the seeds of that family (five seeds for random splits and three for every other family) and its whisker is the sample standard deviation over those seeds. The correlation is computed on the test part at the ridge penalty chosen on validation. Random features carry no biology and mark the level a representation must exceed. Dark bars concatenate the representations of the two genes and light bars sum them. The gene-holdout panels split the genes first: at random, by protein cluster (30% identity is the stricter cut) or by chromosome block.
 
 The table gives the same numbers: mean ± sample standard deviation of the test Spearman correlation over the seeds of each split family. The highest mean of each row is in bold. `undefined` marks a constant prediction.
 
@@ -217,8 +223,8 @@ Pair representation: the two genes concatenated (`concat`).
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | Random | 0.451 ± 0.009 | 0.452 ± 0.003 | 0.245 ± 0.013 | 0.426 ± 0.005 | 0.399 ± 0.011 | 0.452 ± 0.007 | **0.458 ± 0.009** | 0.438 ± 0.012 | 0.451 ± 0.011 | 0.439 ± 0.012 |
 | Gene holdout, random | 0.272 ± 0.028 | **0.283 ± 0.037** | 0.164 ± 0.028 | 0.223 ± 0.065 | 0.225 ± 0.046 | 0.225 ± 0.024 | 0.242 ± 0.017 | 0.127 ± 0.061 | 0.275 ± 0.044 | 0.281 ± 0.040 |
-| Gene holdout, identity 30 % | 0.230 ± 0.064 | **0.275 ± 0.022** | 0.150 ± 0.075 | 0.171 ± 0.002 | 0.170 ± 0.046 | 0.216 ± 0.040 | 0.245 ± 0.053 | 0.198 ± 0.023 | 0.229 ± 0.057 | 0.213 ± 0.021 |
-| Gene holdout, identity 50 % | 0.235 ± 0.016 | **0.281 ± 0.016** | 0.135 ± 0.041 | 0.167 ± 0.075 | 0.201 ± 0.017 | 0.193 ± 0.045 | 0.231 ± 0.017 | 0.191 ± 0.030 | 0.193 ± 0.056 | 0.195 ± 0.051 |
+| Gene holdout, identity 30% | 0.230 ± 0.064 | **0.275 ± 0.022** | 0.150 ± 0.075 | 0.171 ± 0.002 | 0.170 ± 0.046 | 0.216 ± 0.040 | 0.245 ± 0.053 | 0.198 ± 0.023 | 0.229 ± 0.057 | 0.213 ± 0.021 |
+| Gene holdout, identity 50% | 0.235 ± 0.016 | **0.281 ± 0.016** | 0.135 ± 0.041 | 0.167 ± 0.075 | 0.201 ± 0.017 | 0.193 ± 0.045 | 0.231 ± 0.017 | 0.191 ± 0.030 | 0.193 ± 0.056 | 0.195 ± 0.051 |
 | Gene holdout, position | 0.225 ± 0.066 | **0.292 ± 0.043** | 0.121 ± 0.021 | 0.183 ± 0.076 | 0.202 ± 0.064 | 0.219 ± 0.070 | 0.246 ± 0.046 | 0.234 ± 0.034 | 0.238 ± 0.071 | 0.206 ± 0.068 |
 
 Pair representation: the two genes summed (`sum`).
@@ -227,8 +233,8 @@ Pair representation: the two genes summed (`sum`).
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | Random | 0.439 ± 0.013 | 0.456 ± 0.008 | 0.219 ± 0.015 | 0.421 ± 0.011 | 0.391 ± 0.014 | 0.448 ± 0.012 | **0.457 ± 0.011** | 0.428 ± 0.015 | 0.440 ± 0.013 | 0.422 ± 0.017 |
 | Gene holdout, random | 0.275 ± 0.034 | 0.289 ± 0.038 | 0.164 ± 0.043 | 0.218 ± 0.065 | 0.237 ± 0.068 | 0.225 ± 0.009 | 0.236 ± 0.048 | 0.134 ± 0.087 | **0.294 ± 0.044** | 0.288 ± 0.044 |
-| Gene holdout, identity 30 % | 0.236 ± 0.071 | **0.279 ± 0.023** | 0.138 ± 0.082 | 0.181 ± 0.011 | 0.162 ± 0.046 | 0.234 ± 0.054 | 0.227 ± 0.060 | 0.181 ± 0.043 | 0.233 ± 0.059 | 0.224 ± 0.040 |
-| Gene holdout, identity 50 % | 0.234 ± 0.018 | **0.280 ± 0.010** | 0.132 ± 0.040 | 0.161 ± 0.070 | 0.221 ± 0.054 | 0.212 ± 0.047 | 0.224 ± 0.018 | 0.179 ± 0.025 | 0.195 ± 0.063 | 0.207 ± 0.016 |
+| Gene holdout, identity 30% | 0.236 ± 0.071 | **0.279 ± 0.023** | 0.138 ± 0.082 | 0.181 ± 0.011 | 0.162 ± 0.046 | 0.234 ± 0.054 | 0.227 ± 0.060 | 0.181 ± 0.043 | 0.233 ± 0.059 | 0.224 ± 0.040 |
+| Gene holdout, identity 50% | 0.234 ± 0.018 | **0.280 ± 0.010** | 0.132 ± 0.040 | 0.161 ± 0.070 | 0.221 ± 0.054 | 0.212 ± 0.047 | 0.224 ± 0.018 | 0.179 ± 0.025 | 0.195 ± 0.063 | 0.207 ± 0.016 |
 | Gene holdout, position | 0.221 ± 0.092 | **0.307 ± 0.028** | 0.106 ± 0.035 | 0.216 ± 0.079 | 0.230 ± 0.065 | 0.248 ± 0.045 | 0.266 ± 0.030 | 0.265 ± 0.013 | 0.263 ± 0.052 | 0.202 ± 0.100 |
 
 ### R2, mean squared error and mean absolute error
@@ -244,8 +250,8 @@ Pair representation: the two genes concatenated (`concat`).
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | Random | 0.212 ± 0.008 | 0.196 ± 0.006 | 0.063 ± 0.006 | 0.190 ± 0.002 | 0.162 ± 0.008 | 0.210 ± 0.006 | **0.217 ± 0.007** | 0.199 ± 0.009 | 0.208 ± 0.008 | 0.197 ± 0.008 |
 | Gene holdout, random | 0.056 ± 0.022 | **0.077 ± 0.036** | 0.018 ± 0.010 | 0.053 ± 0.038 | 0.029 ± 0.051 | 0.042 ± 0.006 | 0.050 ± 0.020 | -0.015 ± 0.054 | 0.075 ± 0.021 | 0.057 ± 0.033 |
-| Gene holdout, identity 30 % | 0.062 ± 0.018 | **0.071 ± 0.012** | 0.011 ± 0.006 | 0.016 ± 0.017 | 0.030 ± 0.024 | 0.046 ± 0.015 | 0.054 ± 0.019 | 0.034 ± 0.017 | 0.055 ± 0.024 | 0.036 ± 0.015 |
-| Gene holdout, identity 50 % | 0.073 ± 0.006 | **0.082 ± 0.005** | 0.020 ± 0.011 | 0.030 ± 0.030 | 0.044 ± 0.004 | 0.045 ± 0.021 | 0.064 ± 0.006 | 0.042 ± 0.013 | 0.043 ± 0.028 | 0.038 ± 0.016 |
+| Gene holdout, identity 30% | 0.062 ± 0.018 | **0.071 ± 0.012** | 0.011 ± 0.006 | 0.016 ± 0.017 | 0.030 ± 0.024 | 0.046 ± 0.015 | 0.054 ± 0.019 | 0.034 ± 0.017 | 0.055 ± 0.024 | 0.036 ± 0.015 |
+| Gene holdout, identity 50% | 0.073 ± 0.006 | **0.082 ± 0.005** | 0.020 ± 0.011 | 0.030 ± 0.030 | 0.044 ± 0.004 | 0.045 ± 0.021 | 0.064 ± 0.006 | 0.042 ± 0.013 | 0.043 ± 0.028 | 0.038 ± 0.016 |
 | Gene holdout, position | 0.068 ± 0.029 | **0.085 ± 0.028** | 0.008 ± 0.007 | 0.020 ± 0.060 | 0.046 ± 0.035 | 0.048 ± 0.041 | 0.063 ± 0.024 | 0.055 ± 0.017 | 0.055 ± 0.047 | 0.031 ± 0.048 |
 
 Pair representation: the two genes summed (`sum`).
@@ -254,8 +260,8 @@ Pair representation: the two genes summed (`sum`).
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | Random | 0.200 ± 0.009 | 0.209 ± 0.006 | 0.051 ± 0.006 | 0.185 ± 0.008 | 0.156 ± 0.009 | 0.205 ± 0.008 | **0.213 ± 0.009** | 0.192 ± 0.012 | 0.200 ± 0.009 | 0.184 ± 0.011 |
 | Gene holdout, random | 0.052 ± 0.013 | **0.083 ± 0.035** | 0.020 ± 0.009 | 0.049 ± 0.038 | 0.041 ± 0.057 | 0.040 ± 0.008 | 0.052 ± 0.031 | -0.013 ± 0.045 | 0.080 ± 0.040 | 0.073 ± 0.024 |
-| Gene holdout, identity 30 % | 0.047 ± 0.035 | **0.079 ± 0.015** | 0.008 ± 0.006 | 0.029 ± 0.007 | 0.021 ± 0.028 | 0.054 ± 0.027 | 0.045 ± 0.021 | 0.008 ± 0.041 | 0.052 ± 0.026 | 0.044 ± 0.006 |
-| Gene holdout, identity 50 % | 0.069 ± 0.006 | **0.089 ± 0.004** | 0.017 ± 0.006 | 0.020 ± 0.042 | 0.043 ± 0.028 | 0.029 ± 0.044 | 0.057 ± 0.020 | 0.040 ± 0.009 | 0.038 ± 0.025 | 0.046 ± 0.014 |
+| Gene holdout, identity 30% | 0.047 ± 0.035 | **0.079 ± 0.015** | 0.008 ± 0.006 | 0.029 ± 0.007 | 0.021 ± 0.028 | 0.054 ± 0.027 | 0.045 ± 0.021 | 0.008 ± 0.041 | 0.052 ± 0.026 | 0.044 ± 0.006 |
+| Gene holdout, identity 50% | 0.069 ± 0.006 | **0.089 ± 0.004** | 0.017 ± 0.006 | 0.020 ± 0.042 | 0.043 ± 0.028 | 0.029 ± 0.044 | 0.057 ± 0.020 | 0.040 ± 0.009 | 0.038 ± 0.025 | 0.046 ± 0.014 |
 | Gene holdout, position | 0.067 ± 0.037 | **0.097 ± 0.020** | 0.004 ± 0.012 | 0.034 ± 0.069 | 0.057 ± 0.037 | 0.047 ± 0.027 | 0.073 ± 0.028 | 0.062 ± 0.013 | 0.071 ± 0.036 | 0.009 ± 0.096 |
 
 </details>
@@ -269,8 +275,8 @@ Pair representation: the two genes concatenated (`concat`).
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | Random | 23.216 ± 0.138 | 23.704 ± 0.268 | 27.623 ± 0.216 | 23.867 ± 0.150 | 24.703 ± 0.174 | 23.287 ± 0.089 | **23.094 ± 0.177** | 23.599 ± 0.168 | 23.340 ± 0.145 | 23.666 ± 0.078 |
 | Gene holdout, random | 27.683 ± 0.730 | **27.059 ± 0.680** | 28.774 ± 0.424 | 27.754 ± 0.743 | 28.437 ± 0.851 | 28.075 ± 0.639 | 27.853 ± 0.400 | 29.740 ± 1.059 | 27.121 ± 0.922 | 27.660 ± 1.443 |
-| Gene holdout, identity 30 % | 27.937 ± 0.528 | **27.683 ± 1.268** | 29.465 ± 1.205 | 29.311 ± 1.564 | 28.881 ± 0.457 | 28.416 ± 0.824 | 28.165 ± 0.634 | 28.769 ± 0.576 | 28.143 ± 1.160 | 28.693 ± 0.678 |
-| Gene holdout, identity 50 % | 26.483 ± 0.386 | **26.241 ± 0.493** | 27.994 ± 0.720 | 27.721 ± 1.213 | 27.313 ± 0.382 | 27.280 ± 0.240 | 26.760 ± 0.500 | 27.383 ± 0.470 | 27.356 ± 1.151 | 27.508 ± 0.873 |
+| Gene holdout, identity 30% | 27.937 ± 0.528 | **27.683 ± 1.268** | 29.465 ± 1.205 | 29.311 ± 1.564 | 28.881 ± 0.457 | 28.416 ± 0.824 | 28.165 ± 0.634 | 28.769 ± 0.576 | 28.143 ± 1.160 | 28.693 ± 0.678 |
+| Gene holdout, identity 50% | 26.483 ± 0.386 | **26.241 ± 0.493** | 27.994 ± 0.720 | 27.721 ± 1.213 | 27.313 ± 0.382 | 27.280 ± 0.240 | 26.760 ± 0.500 | 27.383 ± 0.470 | 27.356 ± 1.151 | 27.508 ± 0.873 |
 | Gene holdout, position | 27.408 ± 2.213 | **26.906 ± 2.183** | 29.124 ± 1.737 | 28.843 ± 3.271 | 28.041 ± 2.494 | 28.000 ± 2.486 | 27.539 ± 1.956 | 27.753 ± 1.889 | 27.789 ± 2.644 | 28.502 ± 2.755 |
 
 Pair representation: the two genes summed (`sum`).
@@ -279,8 +285,8 @@ Pair representation: the two genes summed (`sum`).
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | Random | 23.578 ± 0.149 | 23.310 ± 0.239 | 27.973 ± 0.224 | 24.031 ± 0.146 | 24.872 ± 0.184 | 23.424 ± 0.224 | **23.208 ± 0.214** | 23.819 ± 0.220 | 23.584 ± 0.198 | 24.049 ± 0.165 |
 | Gene holdout, random | 27.774 ± 0.458 | **26.857 ± 0.670** | 28.722 ± 0.602 | 27.871 ± 0.726 | 28.075 ± 1.081 | 28.143 ± 0.620 | 27.767 ± 0.346 | 29.679 ± 1.147 | 26.982 ± 1.374 | 27.180 ± 1.210 |
-| Gene holdout, identity 30 % | 28.360 ± 0.418 | **27.434 ± 1.124** | 29.545 ± 1.167 | 28.926 ± 1.226 | 29.140 ± 0.877 | 28.178 ± 0.902 | 28.448 ± 0.692 | 29.535 ± 1.647 | 28.253 ± 1.387 | 28.487 ± 1.209 |
-| Gene holdout, identity 50 % | 26.588 ± 0.335 | **26.029 ± 0.396** | 28.099 ± 0.577 | 28.019 ± 1.445 | 27.334 ± 0.566 | 27.736 ± 1.024 | 26.949 ± 0.177 | 27.447 ± 0.539 | 27.499 ± 1.023 | 27.255 ± 0.606 |
+| Gene holdout, identity 30% | 28.360 ± 0.418 | **27.434 ± 1.124** | 29.545 ± 1.167 | 28.926 ± 1.226 | 29.140 ± 0.877 | 28.178 ± 0.902 | 28.448 ± 0.692 | 29.535 ± 1.647 | 28.253 ± 1.387 | 28.487 ± 1.209 |
+| Gene holdout, identity 50% | 26.588 ± 0.335 | **26.029 ± 0.396** | 28.099 ± 0.577 | 28.019 ± 1.445 | 27.334 ± 0.566 | 27.736 ± 1.024 | 26.949 ± 0.177 | 27.447 ± 0.539 | 27.499 ± 1.023 | 27.255 ± 0.606 |
 | Gene holdout, position | 27.429 ± 2.494 | **26.533 ± 1.961** | 29.258 ± 1.839 | 28.432 ± 3.453 | 27.741 ± 2.532 | 28.017 ± 2.272 | 27.241 ± 2.046 | 27.559 ± 1.742 | 27.330 ± 2.431 | 29.162 ± 4.099 |
 
 </details>
@@ -294,8 +300,8 @@ Pair representation: the two genes concatenated (`concat`).
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | Random | 3.981 ± 0.013 | 3.984 ± 0.016 | 4.565 ± 0.005 | 4.057 ± 0.034 | 4.140 ± 0.014 | 3.973 ± 0.018 | **3.963 ± 0.022** | 3.999 ± 0.025 | 3.983 ± 0.028 | 4.023 ± 0.022 |
 | Gene holdout, random | 4.547 ± 0.055 | 4.463 ± 0.084 | 4.745 ± 0.051 | 4.529 ± 0.159 | 4.594 ± 0.073 | 4.552 ± 0.054 | 4.510 ± 0.037 | 4.703 ± 0.144 | 4.466 ± 0.058 | **4.424 ± 0.050** |
-| Gene holdout, identity 30 % | 4.598 ± 0.038 | **4.483 ± 0.091** | 4.761 ± 0.073 | 4.628 ± 0.053 | 4.604 ± 0.070 | 4.624 ± 0.038 | 4.578 ± 0.035 | 4.588 ± 0.031 | 4.532 ± 0.083 | 4.625 ± 0.074 |
-| Gene holdout, identity 50 % | 4.543 ± 0.014 | **4.426 ± 0.030** | 4.702 ± 0.094 | 4.588 ± 0.216 | 4.581 ± 0.032 | 4.599 ± 0.112 | 4.470 ± 0.061 | 4.571 ± 0.098 | 4.579 ± 0.164 | 4.575 ± 0.161 |
+| Gene holdout, identity 30% | 4.598 ± 0.038 | **4.483 ± 0.091** | 4.761 ± 0.073 | 4.628 ± 0.053 | 4.604 ± 0.070 | 4.624 ± 0.038 | 4.578 ± 0.035 | 4.588 ± 0.031 | 4.532 ± 0.083 | 4.625 ± 0.074 |
+| Gene holdout, identity 50% | 4.543 ± 0.014 | **4.426 ± 0.030** | 4.702 ± 0.094 | 4.588 ± 0.216 | 4.581 ± 0.032 | 4.599 ± 0.112 | 4.470 ± 0.061 | 4.571 ± 0.098 | 4.579 ± 0.164 | 4.575 ± 0.161 |
 | Gene holdout, position | 4.530 ± 0.185 | **4.415 ± 0.145** | 4.763 ± 0.085 | 4.579 ± 0.220 | 4.577 ± 0.202 | 4.493 ± 0.192 | 4.470 ± 0.143 | 4.519 ± 0.143 | 4.490 ± 0.208 | 4.572 ± 0.205 |
 
 Pair representation: the two genes summed (`sum`).
@@ -304,8 +310,8 @@ Pair representation: the two genes summed (`sum`).
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | Random | 4.044 ± 0.021 | 3.995 ± 0.029 | 4.625 ± 0.006 | 4.070 ± 0.028 | 4.181 ± 0.019 | 3.984 ± 0.029 | **3.960 ± 0.028** | 4.027 ± 0.036 | 4.032 ± 0.030 | 4.083 ± 0.031 |
 | Gene holdout, random | 4.591 ± 0.073 | 4.471 ± 0.074 | 4.734 ± 0.063 | 4.551 ± 0.153 | 4.556 ± 0.103 | 4.541 ± 0.032 | 4.552 ± 0.056 | 4.667 ± 0.208 | **4.372 ± 0.098** | 4.425 ± 0.060 |
-| Gene holdout, identity 30 % | 4.623 ± 0.018 | **4.489 ± 0.085** | 4.780 ± 0.065 | 4.636 ± 0.065 | 4.629 ± 0.060 | 4.572 ± 0.054 | 4.634 ± 0.019 | 4.643 ± 0.101 | 4.552 ± 0.068 | 4.627 ± 0.097 |
-| Gene holdout, identity 50 % | 4.582 ± 0.020 | **4.434 ± 0.015** | 4.745 ± 0.041 | 4.632 ± 0.190 | 4.532 ± 0.153 | 4.572 ± 0.133 | 4.572 ± 0.042 | 4.609 ± 0.106 | 4.597 ± 0.179 | 4.566 ± 0.083 |
+| Gene holdout, identity 30% | 4.623 ± 0.018 | **4.489 ± 0.085** | 4.780 ± 0.065 | 4.636 ± 0.065 | 4.629 ± 0.060 | 4.572 ± 0.054 | 4.634 ± 0.019 | 4.643 ± 0.101 | 4.552 ± 0.068 | 4.627 ± 0.097 |
+| Gene holdout, identity 50% | 4.582 ± 0.020 | **4.434 ± 0.015** | 4.745 ± 0.041 | 4.632 ± 0.190 | 4.532 ± 0.153 | 4.572 ± 0.133 | 4.572 ± 0.042 | 4.609 ± 0.106 | 4.597 ± 0.179 | 4.566 ± 0.083 |
 | Gene holdout, position | 4.557 ± 0.206 | **4.363 ± 0.095** | 4.779 ± 0.092 | 4.539 ± 0.187 | 4.514 ± 0.256 | 4.441 ± 0.198 | 4.450 ± 0.120 | 4.439 ± 0.081 | 4.480 ± 0.198 | 4.660 ± 0.175 |
 
 </details>
@@ -321,8 +327,8 @@ Test pairs with one gene new:
 | Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | Gene holdout, random | 0.313 ± 0.021 | **0.322 ± 0.046** | 0.187 ± 0.012 | 0.268 ± 0.059 | 0.263 ± 0.036 | 0.280 ± 0.020 | 0.285 ± 0.010 | 0.168 ± 0.060 | 0.317 ± 0.029 | 0.312 ± 0.028 |
-| Gene holdout, identity 30 % | 0.290 ± 0.043 | **0.303 ± 0.012** | 0.172 ± 0.067 | 0.228 ± 0.012 | 0.221 ± 0.048 | 0.267 ± 0.045 | 0.275 ± 0.037 | 0.242 ± 0.017 | 0.269 ± 0.053 | 0.249 ± 0.024 |
-| Gene holdout, identity 50 % | 0.313 ± 0.009 | **0.318 ± 0.006** | 0.170 ± 0.037 | 0.224 ± 0.074 | 0.257 ± 0.018 | 0.262 ± 0.043 | 0.299 ± 0.022 | 0.251 ± 0.029 | 0.256 ± 0.044 | 0.247 ± 0.031 |
+| Gene holdout, identity 30% | 0.290 ± 0.043 | **0.303 ± 0.012** | 0.172 ± 0.067 | 0.228 ± 0.012 | 0.221 ± 0.048 | 0.267 ± 0.045 | 0.275 ± 0.037 | 0.242 ± 0.017 | 0.269 ± 0.053 | 0.249 ± 0.024 |
+| Gene holdout, identity 50% | 0.313 ± 0.009 | **0.318 ± 0.006** | 0.170 ± 0.037 | 0.224 ± 0.074 | 0.257 ± 0.018 | 0.262 ± 0.043 | 0.299 ± 0.022 | 0.251 ± 0.029 | 0.256 ± 0.044 | 0.247 ± 0.031 |
 | Gene holdout, position | 0.292 ± 0.058 | **0.322 ± 0.043** | 0.136 ± 0.017 | 0.219 ± 0.089 | 0.237 ± 0.067 | 0.269 ± 0.062 | 0.297 ± 0.049 | 0.266 ± 0.034 | 0.280 ± 0.072 | 0.239 ± 0.070 |
 
 Test pairs with both genes new:
@@ -330,8 +336,8 @@ Test pairs with both genes new:
 | Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | Gene holdout, random | 0.087 ± 0.098 | undefined | 0.092 ± 0.051 | 0.088 ± 0.133 | 0.077 ± 0.087 | 0.011 ± 0.035 | 0.081 ± 0.092 | -0.011 ± 0.067 | 0.129 ± 0.083 | **0.150 ± 0.072** |
-| Gene holdout, identity 30 % | 0.030 ± 0.106 | undefined | 0.071 ± 0.088 | 0.002 ± 0.028 | 0.030 ± 0.048 | 0.066 ± 0.047 | **0.114 ± 0.093** | 0.046 ± 0.035 | 0.104 ± 0.048 | 0.070 ± 0.024 |
-| Gene holdout, identity 50 % | -0.004 ± 0.025 | undefined | 0.041 ± 0.072 | 0.011 ± 0.093 | 0.045 ± 0.021 | 0.025 ± 0.026 | 0.022 ± 0.072 | **0.051 ± 0.018** | 0.026 ± 0.068 | 0.028 ± 0.062 |
+| Gene holdout, identity 30% | 0.030 ± 0.106 | undefined | 0.071 ± 0.088 | 0.002 ± 0.028 | 0.030 ± 0.048 | 0.066 ± 0.047 | **0.114 ± 0.093** | 0.046 ± 0.035 | 0.104 ± 0.048 | 0.070 ± 0.024 |
+| Gene holdout, identity 50% | -0.004 ± 0.025 | undefined | 0.041 ± 0.072 | 0.011 ± 0.093 | 0.045 ± 0.021 | 0.025 ± 0.026 | 0.022 ± 0.072 | **0.051 ± 0.018** | 0.026 ± 0.068 | 0.028 ± 0.062 |
 | Gene holdout, position | 0.010 ± 0.036 | undefined | 0.037 ± 0.032 | 0.022 ± 0.087 | **0.108 ± 0.063** | 0.033 ± 0.048 | 0.067 ± 0.066 | 0.094 ± 0.037 | 0.045 ± 0.052 | 0.032 ± 0.071 |
 
 Pair representation: `sum`.
@@ -341,8 +347,8 @@ Test pairs with one gene new:
 | Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | Gene holdout, random | 0.309 ± 0.018 | **0.336 ± 0.049** | 0.184 ± 0.025 | 0.260 ± 0.059 | 0.274 ± 0.061 | 0.278 ± 0.008 | 0.273 ± 0.048 | 0.181 ± 0.082 | 0.330 ± 0.036 | 0.320 ± 0.031 |
-| Gene holdout, identity 30 % | 0.283 ± 0.059 | **0.316 ± 0.014** | 0.163 ± 0.079 | 0.234 ± 0.010 | 0.208 ± 0.046 | 0.281 ± 0.054 | 0.260 ± 0.043 | 0.224 ± 0.019 | 0.270 ± 0.043 | 0.254 ± 0.034 |
-| Gene holdout, identity 50 % | 0.308 ± 0.012 | **0.332 ± 0.004** | 0.170 ± 0.039 | 0.215 ± 0.071 | 0.269 ± 0.054 | 0.270 ± 0.051 | 0.278 ± 0.035 | 0.242 ± 0.024 | 0.253 ± 0.047 | 0.259 ± 0.016 |
+| Gene holdout, identity 30% | 0.283 ± 0.059 | **0.316 ± 0.014** | 0.163 ± 0.079 | 0.234 ± 0.010 | 0.208 ± 0.046 | 0.281 ± 0.054 | 0.260 ± 0.043 | 0.224 ± 0.019 | 0.270 ± 0.043 | 0.254 ± 0.034 |
+| Gene holdout, identity 50% | 0.308 ± 0.012 | **0.332 ± 0.004** | 0.170 ± 0.039 | 0.215 ± 0.071 | 0.269 ± 0.054 | 0.270 ± 0.051 | 0.278 ± 0.035 | 0.242 ± 0.024 | 0.253 ± 0.047 | 0.259 ± 0.016 |
 | Gene holdout, position | 0.293 ± 0.078 | **0.348 ± 0.027** | 0.125 ± 0.036 | 0.258 ± 0.078 | 0.274 ± 0.067 | 0.286 ± 0.036 | 0.316 ± 0.036 | 0.300 ± 0.007 | 0.302 ± 0.056 | 0.232 ± 0.095 |
 
 Test pairs with both genes new:
@@ -350,9 +356,17 @@ Test pairs with both genes new:
 | Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | Gene holdout, random | 0.111 ± 0.125 | undefined | 0.089 ± 0.083 | 0.088 ± 0.144 | 0.111 ± 0.102 | 0.021 ± 0.046 | 0.063 ± 0.106 | -0.018 ± 0.039 | **0.168 ± 0.090** | 0.155 ± 0.074 |
-| Gene holdout, identity 30 % | 0.042 ± 0.073 | undefined | 0.054 ± 0.077 | 0.024 ± 0.040 | 0.039 ± 0.044 | 0.069 ± 0.049 | 0.091 ± 0.112 | 0.016 ± 0.057 | 0.097 ± 0.074 | **0.105 ± 0.033** |
-| Gene holdout, identity 50 % | 0.012 ± 0.037 | undefined | 0.042 ± 0.065 | 0.023 ± 0.043 | **0.079 ± 0.056** | 0.037 ± 0.019 | 0.039 ± 0.037 | 0.037 ± 0.014 | 0.040 ± 0.077 | 0.042 ± 0.044 |
+| Gene holdout, identity 30% | 0.042 ± 0.073 | undefined | 0.054 ± 0.077 | 0.024 ± 0.040 | 0.039 ± 0.044 | 0.069 ± 0.049 | 0.091 ± 0.112 | 0.016 ± 0.057 | 0.097 ± 0.074 | **0.105 ± 0.033** |
+| Gene holdout, identity 50% | 0.012 ± 0.037 | undefined | 0.042 ± 0.065 | 0.023 ± 0.043 | **0.079 ± 0.056** | 0.037 ± 0.019 | 0.039 ± 0.037 | 0.037 ± 0.014 | 0.040 ± 0.077 | 0.042 ± 0.044 |
 | Gene holdout, position | -0.001 ± 0.056 | undefined | 0.012 ± 0.011 | 0.045 ± 0.104 | 0.096 ± 0.047 | 0.074 ± 0.036 | 0.059 ± 0.046 | **0.114 ± 0.045** | 0.068 ± 0.041 | 0.025 ± 0.167 |
+
+### Reading these numbers
+
+- This task has 340 probe runs, one per split, representation and pair combination. In 8 of them the penalty chosen on validation is the largest value tried (1,000,000), which means the best linear model in that run is close to predicting the training mean.
+- Differences smaller than the standard deviations shown are not resolved by three to five seeds.
+- These are frozen, mean-pooled representations with a linear readout. They are a floor for models that are fine-tuned, nonlinear or use the cell graph, and they say nothing about what such models reach.
+
+Every run, with validation scores, the chosen penalty and four more metrics, is in [`linear_probes.csv`](https://github.com/Mjvolk3/torchcell/blob/main/experiments/050-ecoli-benchmark/results/linear_probes.csv).
 
 ## Boards
 
@@ -362,14 +376,6 @@ The [leaderboard](../../leaderboard.mdx) has one board per split family of this 
 | :-- | :-- | :-- |
 | [Random](/benchmark/leaderboard/?dataset=ecoli-gene-interaction-babu2014-random-s0) | `ecoli-gene-interaction-babu2014-random-s0` | `random_s0` |
 | [Gene holdout, random](/benchmark/leaderboard/?dataset=ecoli-gene-interaction-babu2014-gene-holdout-s0) | `ecoli-gene-interaction-babu2014-gene-holdout-s0` | `gene_holdout_s0` |
-| [Gene holdout, identity 30 %](/benchmark/leaderboard/?dataset=ecoli-gene-interaction-babu2014-seqid30-gene-holdout-s0) | `ecoli-gene-interaction-babu2014-seqid30-gene-holdout-s0` | `seqid30_gene_holdout_s0` |
-| [Gene holdout, identity 50 %](/benchmark/leaderboard/?dataset=ecoli-gene-interaction-babu2014-seqid50-gene-holdout-s0) | `ecoli-gene-interaction-babu2014-seqid50-gene-holdout-s0` | `seqid50_gene_holdout_s0` |
+| [Gene holdout, identity 30%](/benchmark/leaderboard/?dataset=ecoli-gene-interaction-babu2014-seqid30-gene-holdout-s0) | `ecoli-gene-interaction-babu2014-seqid30-gene-holdout-s0` | `seqid30_gene_holdout_s0` |
+| [Gene holdout, identity 50%](/benchmark/leaderboard/?dataset=ecoli-gene-interaction-babu2014-seqid50-gene-holdout-s0) | `ecoli-gene-interaction-babu2014-seqid50-gene-holdout-s0` | `seqid50_gene_holdout_s0` |
 | [Gene holdout, position](/benchmark/leaderboard/?dataset=ecoli-gene-interaction-babu2014-position-gene-holdout-s0) | `ecoli-gene-interaction-babu2014-position-gene-holdout-s0` | `position_gene_holdout_s0` |
-
-### Reading these numbers
-
-- This task has 340 probe runs, one per split, representation and pair combination. In 8 of them the penalty chosen on validation is the largest value tried (1,000,000), which means the best linear model in that run is close to predicting the training mean.
-- Differences smaller than the standard deviations shown are not resolved by three to five seeds.
-- These are frozen, mean-pooled representations with a linear readout. They are a floor for models that are fine-tuned, nonlinear or use the cell graph, and they say nothing about what such models reach.
-
-Every run, with validation scores, the chosen penalty and four more metrics, is in [`linear_probes.csv`](https://github.com/Mjvolk3/torchcell/blob/main/experiments/050-ecoli-benchmark/results/linear_probes.csv).

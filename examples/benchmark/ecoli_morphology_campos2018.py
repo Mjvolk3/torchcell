@@ -1,5 +1,5 @@
 # examples/benchmark/ecoli_morphology_campos2018.py
-"""Cell shape and cell cycle of *E. coli* single-gene deletions (Campos 2018), 15 targets.
+"""Cell shape and cell cycle of *E. coli* deletions (Campos 2018), seqid30 split.
 
 A complete benchmark run in one file: load the standardized task, describe each deleted
 gene by the composition of its protein, fit a ridge regression, choose the ridge
@@ -23,9 +23,9 @@ from torchcell.endpoint_http import DEFAULT_URL
 from torchcell.tasks import load_task
 
 TASK = "ecoli-morphology-campos2018"
-# Split names are <family>_s<seed>; task.split_names lists them all. seqid30 keeps
-# each cluster of proteins at >= 30% identity whole, so no test gene has a train homolog.
-SPLIT = "seqid30_s0"
+# seqid30 keeps each 30% identity protein cluster whole, so no test protein has a
+# reported hit to a training protein at or above 30% identity.
+SPLIT = "seqid30_s0"  # <family>_s<seed>; task.split_names lists every split
 AMINO_ACIDS = "ACDEFGHIKLMNPQRSTVWY"
 PENALTIES = (1e-1, 1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6)
 SELECT_ON = "mse"  # lower is better, and defined even when a prediction is constant
@@ -65,7 +65,7 @@ def rounded(metrics: dict[str, float]) -> dict[str, float]:
     return {name: round(value, 4) for name, value in metrics.items()}
 
 
-os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)  # unset, the store is built from raw
+os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)  # download the built dataset store
 os.environ.setdefault("DATA_ROOT", ".")  # the store and genome files go under here
 
 task = load_task(TASK)  # samples, deleted genes, labels, genome and the pinned splits

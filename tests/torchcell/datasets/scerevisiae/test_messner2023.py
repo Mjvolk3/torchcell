@@ -67,6 +67,8 @@ import hashlib
 import json
 import logging
 import math
+import os
+import shutil
 import socket
 from pathlib import Path
 
@@ -101,6 +103,7 @@ from torchcell.sequence.genome.registry import (
     SGD_S288C_R64,
     SGD_S288C_R64_GENBANK_ACCESSION,
 )
+from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 KO_A = "10_9_hpr1_ko_YAL059W_ECM1_0.47"
 KO_B = "3_4_ko_YML009c_yml009c_0.9"
@@ -147,6 +150,26 @@ PUBLICATION = Publication(
     doi="10.1016/j.cell.2023.03.026",
     doi_url="https://doi.org/10.1016/j.cell.2023.03.026",
 )
+
+
+def _sample_phenotype(
+    abundance: dict[str, float], replicate_id: str
+) -> ProteinAbundancePhenotype:
+    """One released sample: verbatim values, n = 1, no SE map and its typed absence."""
+    return ProteinAbundancePhenotype(
+        protein_abundance=abundance,
+        protein_abundance_se=None,
+        n_replicates=dict.fromkeys(abundance, 1),
+        measurement_type=MEASUREMENT_TYPE,
+        replicate_id=replicate_id,
+        provenance_gaps=[
+            ProvenanceGap(
+                field="protein_abundance_se",
+                reason=ProvenanceGapReason.not_applicable_single_measurement,
+                note=m._SINGLE_SAMPLE_SE_NOTE,
+            )
+        ],
+    )
 
 
 def _write_csv(path: Path, rows: list[list[str]]) -> None:
@@ -268,31 +291,43 @@ def test_build_orf_to_gene_name_map_missing_gff_raises(tmp_path: Path) -> None:
 def test_len_data_csv_and_side_files(
     dataset: tuple[ProteomeMessner2023Dataset, Path],
 ) -> None:
-    """Three KO records: ``bad_ko`` (no ORF form) is stored on the released-gene-name
-    leaf and ``absent_ko`` (no column) is ignored.
+    """Five records, one per released sample: the three KOs (``bad_ko``, with no ORF
+    form, on the released-identifier leaf), then the two HIS3 controls; ``qc_1`` (a
+    pooled digest) and ``absent_ko`` (no column) are not records.
 
-    ``preprocess/data.csv`` lists filename, ORF (uppercased), gene (the ORF again: no
-    name is looked up), and the count of measured proteins (2 for KO_A, 1 for KO_B, 3
-    for bad_ko). The gene set is the three released identifiers; the manifest records
-    this loader's module and class.
+    ``preprocess/data.csv`` lists filename, sampletype, ORF (uppercased), gene (the ORF
+    again: no name is looked up), and the count of measured proteins (2 for KO_A, 1 for
+    KO_B, 3 for bad_ko, 3 for wt_a, 2 for wt_b). The gene set is the three released KO
+    identifiers plus YOR202W, the controls' his3D::kanMX4; the manifest records this
+    loader's module and class.
     """
     ds, root = dataset
-    assert len(ds) == 3
+    assert len(ds) == 5
     assert (root / "preprocess" / "data.csv").read_text() == (
-        "filename,orf,gene,n_proteins\n"
-        f"{KO_A},YAL059W,YAL059W,2\n"
-        f"{KO_B},YML009C,YML009C,1\n"
-        "bad_ko,YOR202W-NOT,YOR202W-NOT,3\n"
+        "filename,sampletype,orf,gene,n_proteins\n"
+        f"{KO_A},ko,YAL059W,YAL059W,2\n"
+        f"{KO_B},ko,YML009C,YML009C,1\n"
+        "bad_ko,ko,YOR202W-NOT,YOR202W-NOT,3\n"
+        "wt_a,HIS3,YOR202W,YOR202W,3\n"
+        "wt_b,HIS3,YOR202W,YOR202W,2\n"
     )
     (released,) = ds[2]["experiment"]["genotype"]["perturbations"]
     assert (released["perturbation_type"], released["systematic_gene_name"]) == (
         "released_identifier",
         "YOR202W-NOT",
     )
+    assert [ds[i]["experiment"]["phenotype"]["replicate_id"] for i in range(5)] == [
+        KO_A,
+        KO_B,
+        "bad_ko",
+        "wt_a",
+        "wt_b",
+    ]
     pre = root / "preprocess"
     assert json.loads((pre / "gene_set.json").read_text()) == [
         "YAL059W",
         "YML009C",
+        "YOR202W",
         "YOR202W-NOT",
     ]
     manifest = json.loads((pre / "build_manifest.json").read_text())
@@ -313,12 +348,14 @@ def test_len_data_csv_and_side_files(
 def test_record_0_single_replicate_ko_with_restricted_wt_reference(
     dataset: tuple[ProteomeMessner2023Dataset, Path],
 ) -> None:
-    """Record 0 = KO_A (YAL059W): abundances P00001 8.0 and P00410 3.0, n = 1, SE None.
+    """Record 0 = KO_A (YAL059W): abundances P00001 8.0 and P00410 3.0, n = 1, SE None
+    with a ``not_applicable_single_measurement`` gap, ``replicate_id`` the Filename.
 
     The blank P00002 cell is dropped (no imputation), so the reference is the WT
     aggregate restricted to {P00001, P00410}: means 11.0 / 2.0, SEs 1.0 / 0.0 (SD of
-    (10, 12) is sqrt(2), / sqrt(2) = 1.0; SD of (2, 2) is 0), n 2 / 2. Environment is the
-    fully specified ``SM`` medium at 30 C; background BY4741.
+    (10, 12) is sqrt(2), / sqrt(2) = 1.0; SD of (2, 2) is 0), n 2 / 2, and no
+    ``replicate_id`` (it summarizes the controls). Environment is the fully specified
+    ``SM`` medium at 30 C; background BY4741.
     """
     ds, _ = dataset
     record = ds[0]
@@ -332,12 +369,7 @@ def test_record_0_single_replicate_ko_with_restricted_wt_reference(
             ]
         ),
         environment=ENVIRONMENT,
-        phenotype=ProteinAbundancePhenotype(
-            protein_abundance={"P00001": 8.0, "P00410": 3.0},
-            protein_abundance_se=None,
-            n_replicates={"P00001": 1, "P00410": 1},
-            measurement_type=MEASUREMENT_TYPE,
-        ),
+        phenotype=_sample_phenotype({"P00001": 8.0, "P00410": 3.0}, KO_A),
     )
     expected_reference = ProteinAbundanceExperimentReference(
         dataset_name="ProteomeMessner2023Dataset",
@@ -352,11 +384,68 @@ def test_record_0_single_replicate_ko_with_restricted_wt_reference(
     )
     assert record["experiment"] == expected.model_dump()
     assert record["reference"] == expected_reference.model_dump()
+    assert record["reference"]["phenotype_reference"]["replicate_id"] is None
     assert record["publication"] == PUBLICATION.model_dump()
     assert (
         ProteinAbundanceExperiment.model_validate(record["experiment"]).model_dump()
         == record["experiment"]
     )
+
+
+def test_each_his3_control_culture_is_its_own_record(
+    dataset: tuple[ProteomeMessner2023Dataset, Path],
+) -> None:
+    """Records 3 and 4 are the HIS3 controls ``wt_a`` and ``wt_b``, after the KOs.
+
+    Each is the library's his3D::kanMX4 strain (metadata ORF YOR202W, the same KanMX
+    leaf as a KO), its own values verbatim (wt_a 10 / 4 / 2; wt_b 12 / 2 with the blank
+    P00002 dropped), n = 1, the SE gap, ``replicate_id`` its Filename. Its reference is
+    the same restricted summary every KO gets, so wt_a's covers the three proteins with
+    P00002 at n = 1 and a NaN SE.
+    """
+    ds, _ = dataset
+    his3 = Genotype(
+        perturbations=[
+            KanMxDeletionPerturbation(
+                systematic_gene_name="YOR202W", perturbed_gene_name="YOR202W"
+            )
+        ]
+    )
+    for index, values, name in (
+        (3, {"P00001": 10.0, "P00002": 4.0, "P00410": 2.0}, "wt_a"),
+        (4, {"P00001": 12.0, "P00410": 2.0}, "wt_b"),
+    ):
+        expected = ProteinAbundanceExperiment(
+            dataset_name="ProteomeMessner2023Dataset",
+            genotype=his3,
+            environment=ENVIRONMENT,
+            phenotype=_sample_phenotype(values, name),
+        )
+        assert ds[index]["experiment"] == expected.model_dump()
+    reference = ds[3]["reference"]["phenotype_reference"]
+    assert reference["protein_abundance"] == {
+        "P00001": 11.0,
+        "P00002": 4.0,
+        "P00410": 2.0,
+    }
+    assert reference["n_replicates"] == {"P00001": 2, "P00002": 1, "P00410": 2}
+    assert math.isnan(reference["protein_abundance_se"]["P00002"])
+    assert ds[4]["reference"] == ds[0]["reference"]
+
+
+def test_grouping_the_control_records_reproduces_the_reference_summary(
+    dataset: tuple[ProteomeMessner2023Dataset, Path],
+) -> None:
+    """The mean over the control records of each protein is the reference abundance and
+    the count is its n: the summary is computed from exactly the records stored.
+    """
+    ds, _ = dataset
+    controls = [ds[i]["experiment"]["phenotype"]["protein_abundance"] for i in (3, 4)]
+    reference = ds[3]["reference"]["phenotype_reference"]
+    for protein, level in reference["protein_abundance"].items():
+        values = [c[protein] for c in controls if protein in c]
+        assert sum(values) / len(values) == level
+        assert len(values) == reference["n_replicates"][protein]
 
 
 def test_record_1_lowercase_orf_uppercased_and_single_wt_measurement_nan_se(
@@ -386,21 +475,22 @@ def test_record_1_lowercase_orf_uppercased_and_single_wt_measurement_nan_se(
 def test_reference_index_splits_on_restricted_reference(
     dataset: tuple[ProteomeMessner2023Dataset, Path],
 ) -> None:
-    """The three KOs measured different protein sets -> three references, one member
-    each.
+    """The restricted reference follows the measured protein set: KO_A and wt_b
+    measured {P00001, P00410}, KO_B {P00002}, bad_ko and wt_a all three, so three
+    references with members [0, 4], [1], [2, 3].
     """
     ds, root = dataset
     index = json.loads(
         (root / "preprocess" / "experiment_reference_index.json").read_text()
     )
-    assert [e["member_indices"] for e in index] == [[0], [1], [2]]
+    assert [e["member_indices"] for e in index] == [[0, 4], [1], [2, 3]]
     assert [
         sorted(e["reference"]["phenotype_reference"]["protein_abundance"])
         for e in index
     ] == [["P00001", "P00410"], ["P00002"], ["P00001", "P00002", "P00410"]]
     loaded = ds.experiment_reference_index
     assert loaded is not None
-    assert [eri.member_indices for eri in loaded] == [[0], [1], [2]]
+    assert [eri.member_indices for eri in loaded] == [[0, 4], [1], [2, 3]]
 
 
 def test_missing_wt_columns_raises(
@@ -487,12 +577,7 @@ def test_numeric_filename_token_is_not_the_gene_name_issue_485(
             ]
         ),
         environment=ENVIRONMENT,
-        phenotype=ProteinAbundancePhenotype(
-            protein_abundance={"P00001": 0.0313},
-            protein_abundance_se=None,
-            n_replicates={"P00001": 1},
-            measurement_type=MEASUREMENT_TYPE,
-        ),
+        phenotype=_sample_phenotype({"P00001": 0.0313}, KO_NUM),
     )
     assert numeric[1]["experiment"] == expected.model_dump()
     assert numeric[1]["reference"] == _shared_reference()
@@ -543,23 +628,34 @@ def test_values_are_linear_and_the_reference_is_the_arithmetic_wt_mean(
     numeric: ProteomeMessner2023Dataset,
 ) -> None:
     """The KO value 393221 is stored as 393221.0 (no log2); the WT reference over 1 and
-    1001 is 501.0 with SE 500.0 (a log2 mean would be 4.98), shared by both strains of
-    the ORF, so one reference covers [0, 1] and the two strains stay two records.
+    1001 is 501.0 with SE 500.0 (a log2 mean would be 4.98), shared by all four records,
+    so one reference covers [0, 1, 2, 3]. The two strains of the ORF stay two records,
+    told apart by ``replicate_id`` (their Filenames); the controls 1 and 1001 are
+    records 2 and 3, stored linear.
     """
-    assert len(numeric) == 2
+    assert len(numeric) == 4
     assert numeric[0]["experiment"]["phenotype"]["protein_abundance"] == {
         "P00001": 393221.0
     }
     assert numeric[0]["reference"] == _shared_reference()
+    assert [
+        numeric[i]["experiment"]["phenotype"]["replicate_id"] for i in range(4)
+    ] == [KO_SLA1, KO_NUM, "wt_a", "wt_b"]
+    assert numeric[0]["experiment"]["genotype"] == numeric[1]["experiment"]["genotype"]
+    assert [
+        numeric[i]["experiment"]["phenotype"]["protein_abundance"] for i in (2, 3)
+    ] == [{"P00001": 1.0}, {"P00001": 1001.0}]
     index = numeric.experiment_reference_index
     assert index is not None
-    assert [e.member_indices for e in index] == [[0, 1]]
+    assert [e.member_indices for e in index] == [[0, 1, 2, 3]]
     pre = Path(numeric.preprocess_dir)
-    assert json.loads((pre / "gene_set.json").read_text()) == ["YBL007C"]
+    assert json.loads((pre / "gene_set.json").read_text()) == ["YBL007C", "YOR202W"]
     assert (pre / "data.csv").read_text() == (
-        "filename,orf,gene,n_proteins\n"
-        f"{KO_SLA1},YBL007C,YBL007C,1\n"
-        f"{KO_NUM},YBL007C,YBL007C,1\n"
+        "filename,sampletype,orf,gene,n_proteins\n"
+        f"{KO_SLA1},ko,YBL007C,YBL007C,1\n"
+        f"{KO_NUM},ko,YBL007C,YBL007C,1\n"
+        "wt_a,HIS3,YOR202W,YOR202W,1\n"
+        "wt_b,HIS3,YOR202W,YOR202W,1\n"
     )
 
 
@@ -599,8 +695,9 @@ def test_a_ko_protein_no_wt_sample_measured_is_refused_by_name(
 def test_the_build_summary_is_logged_exactly(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """First fixture: 3 KO strains, 3 WT proteins, 1 ORF on the released-identifier leaf
-    (``bad_ko``; the ``absent_ko`` row has no matrix column and is not counted).
+    """First fixture: 3 KO strains and 2 HIS3 controls, 3 WT proteins, 1 ORF on the
+    released-identifier leaf (``bad_ko``; the ``absent_ko`` row has no matrix column and
+    is not counted), 5 records written.
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     _write_gff(tmp_path)
@@ -609,9 +706,9 @@ def test_the_build_summary_is_logged_exactly(
         ProteomeMessner2023Dataset(root=str(root))
     messages = [r.getMessage() for r in caplog.records if r.name == m.log.name]
     assert messages == [
-        "Messner: 3 KO strains, WT reference with 3 proteins, 1 KO ORFs on the "
-        "released-identifier leaf",
-        "Wrote 3 Messner proteome experiments to LMDB",
+        "Messner: 3 KO strains and 2 HIS3 control samples, WT reference with 3 "
+        "proteins, 1 ORFs on the released-identifier leaf",
+        "Wrote 5 Messner proteome sample records to LMDB",
     ]
 
 
@@ -743,7 +840,7 @@ def test_main_builds_from_data_root_and_prints_the_length(
     m.main()
     # the build's own progress line comes first; main's two prints are the last two
     lines = capsys.readouterr().out.splitlines()
-    assert lines[-2] == "proteome len = 3"
+    assert lines[-2] == "proteome len = 5"
     assert lines[-1] == str(ProteomeMessner2023Dataset(root=str(root))[0])
 
 
@@ -764,3 +861,113 @@ def test_items_retype_through_the_abundance_classes_and_the_hooks_are_inert(
     assert numeric.raw_file_names == [MATRIX_FILENAME, METADATA_FILENAME]
     frame = pd.DataFrame({"a": [1]})
     assert numeric.preprocess_raw(frame) is frame
+
+
+# --------------------------------------------------------------------------- #
+# 2026.11.24: one record per released sample, counted on the pinned release
+# --------------------------------------------------------------------------- #
+
+_MIRROR_DATA = Path(
+    os.environ.get("DATA_ROOT", "/nonexistent"),
+    "torchcell-library",
+    m._CITATION_KEY,
+    "data",
+)
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not (_MIRROR_DATA / METADATA_FILENAME).exists(),
+    reason=f"requires the Messner 2023 mirror files under {_MIRROR_DATA}",
+)
+def test_the_pinned_release_holds_4699_ko_and_388_his3_samples_one_culture_each() -> (
+    None
+):
+    """The pinned metadata (sha256 48864282...) lists 4,699 ``ko``, 388 ``HIS3`` and
+    389 ``qc`` samples, every one a column of the pinned matrix header. The 5,087 KO and
+    HIS3 samples occupy 5,087 distinct (plate, well) positions, so each is one culture;
+    the ``qc`` pooled digests repeat their position (repeat injections). The HIS3
+    controls sit on all 57 plates in the paper's wells (row-wise 1-based: 11, 20, 29,
+    38, 71, 80, 89 = A11, B8, C5, D2, F11, G8, H5) plus 46 on one plate, and no ``ko``
+    sample deletes YOR202W. KO ORFs, upper-cased: 4,549 distinct, multiplicity
+    {1: 4403, 2: 142, 3: 4}.
+    """
+    for name, pin in (
+        (METADATA_FILENAME, m.METADATA_SHA256),
+        (MATRIX_FILENAME, m.MATRIX_SHA256),
+    ):
+        digest = hashlib.sha256((_MIRROR_DATA / name).read_bytes()).hexdigest()
+        assert digest == pin
+    meta = pd.read_csv(_MIRROR_DATA / METADATA_FILENAME)
+    header = pd.read_csv(_MIRROR_DATA / MATRIX_FILENAME, nrows=0).columns[1:]
+    assert meta["sampletype"].value_counts().to_dict() == {
+        "ko": 4699,
+        "qc": 389,
+        "HIS3": 388,
+    }
+    assert set(meta["Filename"]) == set(header)
+    assert meta["Filename"].is_unique
+    cultures = meta[meta["sampletype"].isin(["ko", "HIS3"])]
+    positions = list(
+        zip(
+            cultures["Plate (batch) nr"],
+            cultures["Well nr (counted row-wise)"],
+            strict=True,
+        )
+    )
+    assert len(set(positions)) == len(positions) == 5087
+    his3 = meta[meta["sampletype"] == "HIS3"]
+    assert set(his3["ORF"]) == {"YOR202W"}
+    assert his3["Plate (batch) nr"].nunique() == 57
+    assert sorted(set(his3["Well nr (counted row-wise)"])) == [
+        11,
+        20,
+        29,
+        38,
+        46,
+        71,
+        80,
+        89,
+    ]
+    ko_orfs = meta.loc[meta["sampletype"] == "ko", "ORF"].str.upper()
+    assert "YOR202W" not in set(ko_orfs)
+    assert ko_orfs.nunique() == 4549
+    assert ko_orfs.value_counts().value_counts().to_dict() == {1: 4403, 2: 142, 3: 4}
+
+
+@pytest.mark.slow
+@pytest.mark.data
+@pytest.mark.skipif(
+    not (_MIRROR_DATA / MATRIX_FILENAME).exists(),
+    reason=f"requires the Messner 2023 mirror files under {_MIRROR_DATA}",
+)
+def test_the_full_build_stores_5087_sample_records(tmp_path: Path) -> None:
+    """The pinned release builds 5,087 records: 4,699 KO strains then 388 HIS3
+    cultures, each ``replicate_id`` a distinct released Filename, every control on the
+    YOR202W KanMX leaf, and the mean over the 388 control records of each protein equal
+    to the shared reference summary (to 1e-9 relative).
+    """
+    root = tmp_path / "proteome_messner2023"
+    (root / "raw").mkdir(parents=True)
+    for name in (MATRIX_FILENAME, METADATA_FILENAME):
+        shutil.copyfile(_MIRROR_DATA / name, root / "raw" / name)
+    built = ProteomeMessner2023Dataset(root=str(root))
+    assert len(built) == 5087
+    summary = pd.read_csv(root / "preprocess" / "data.csv")
+    assert summary["sampletype"].tolist() == ["ko"] * 4699 + ["HIS3"] * 388
+    assert summary["filename"].is_unique
+    sums: dict[str, float] = {}
+    counts: dict[str, int] = {}
+    for i in range(4699, 5087):
+        experiment = built[i]["experiment"]
+        (perturbation,) = experiment["genotype"]["perturbations"]
+        assert perturbation["systematic_gene_name"] == "YOR202W"
+        assert perturbation["perturbation_type"] == "kanmx_deletion"
+        assert experiment["phenotype"]["replicate_id"] == summary["filename"][i]
+        for protein, value in experiment["phenotype"]["protein_abundance"].items():
+            sums[protein] = sums.get(protein, 0.0) + value
+            counts[protein] = counts.get(protein, 0) + 1
+    reference = built[4699]["reference"]["phenotype_reference"]
+    for protein, level in reference["protein_abundance"].items():
+        assert sums[protein] / counts[protein] == pytest.approx(level, rel=1e-9)
+        assert counts[protein] == reference["n_replicates"][protein]

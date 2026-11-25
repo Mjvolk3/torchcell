@@ -1,0 +1,44 @@
+{
+  "before_records": 4699,
+  "after_records": 5087,
+  "after_by_sampletype": {
+    "ko": 4699,
+    "HIS3": 388
+  },
+  "his3_records_per_plate": {
+    "4": 1,
+    "5": 1,
+    "6": 7,
+    "7": 47,
+    "8": 1
+  },
+  "his3_plates": 57,
+  "replicate_ids_distinct": 5087,
+  "ko_genotype_groups": 4549,
+  "ko_group_multiplicity": {
+    "1": 4403,
+    "2": 142,
+    "3": 4
+  },
+  "ko_records_differing_from_before": 0,
+  "ko_references_differing_from_before": 0,
+  "mean_reproduction": {
+    "ko_one_strain": {
+      "groups": 4403,
+      "max_abs": 0.0,
+      "max_rel": 0.0
+    },
+    "ko_multi_strain": {
+      "groups": 146,
+      "max_abs": 0.0,
+      "max_rel": 0.0
+    },
+    "his3_vs_before_reference": {
+      "groups": 1,
+      "records": 388,
+      "proteins": 1850,
+      "max_abs": 5.820766091346741e-11,
+      "max_rel": 1.926453684013131e-15
+    }
+  }
+}

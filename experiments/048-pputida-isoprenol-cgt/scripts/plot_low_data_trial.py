@@ -48,6 +48,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from dotenv import load_dotenv
 from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
 from matplotlib.ticker import MultipleLocator
 
 from torchcell.timestamp import timestamp
@@ -67,7 +68,7 @@ TRIAL = osp.join(
 )
 
 FIG_WIDTH_MM = 179.0
-FIG_HEIGHT_MM = 58.0
+FIG_HEIGHT_MM = 62.0
 FS_AXIS = 6.0
 FS_TICK = 6.0
 FS_LEGEND = 5.0
@@ -76,11 +77,13 @@ FS_ANNOTATION = 5.0
 
 #: Measured by cycle_confound_audit.py on the 44-record design-split test set.
 CHRONOLOGY_RHO = 0.807
+CHRONOLOGY_GUIDE_COUNT = 0.748
 CHRONOLOGY_WITHIN_CYCLE = 0.426
 
 POOLED_COLOR = PLOT_PALETTE[0]
 FLUX_COLOR = PLOT_PALETTE[2]
 NULL_COLOR = PLOT_PALETTE[5]
+TREES_COLOR = PLOT_PALETTE[3]
 
 
 def box(ax: plt.Axes) -> None:
@@ -263,43 +266,90 @@ def panel_rank_versus_scale(ax: plt.Axes, cells: pd.DataFrame) -> None:
 
 
 def panel_confound(ax: plt.Axes, cells: pd.DataFrame) -> None:
-    """The chronology null beside the models, on both splits."""
+    """Trivial rankers beside the models, on each split.
+
+    An earlier version put a cycle-number bar next to a guide-count-within-cycle
+    bar under the labels "cycle no." and "within cycle", which read as one
+    ranker measured two ways. They are two different rankers. Each bar now names
+    its own ranker and the legend names what the colors mean, because a reader
+    cannot be expected to infer that gray is a trivial ranker and tan is a tree.
+    """
     design = cells[cells.split == "design"]
     cycle = cells[cells.split == "cycle"]
     bars = [
-        ("cycle\nno.", CHRONOLOGY_RHO, NULL_COLOR, "design"),
-        ("within\ncycle", CHRONOLOGY_WITHIN_CYCLE, NULL_COLOR, "design"),
-        ("trees", float(design.trees_test_spearman.mean()), PLOT_PALETTE[3], "design"),
-        ("CGT", float(design.test_spearman.max()), POOLED_COLOR, "design"),
-        ("trees", float(cycle.trees_test_spearman.mean()), PLOT_PALETTE[3], "cycle"),
-        ("CGT", float(cycle.test_spearman.max()), POOLED_COLOR, "cycle"),
+        ("cycle no.", CHRONOLOGY_RHO, NULL_COLOR, False),
+        ("guide ct.", CHRONOLOGY_GUIDE_COUNT, NULL_COLOR, False),
+        ("guide ct.\nin cycle", CHRONOLOGY_WITHIN_CYCLE, NULL_COLOR, False),
+        ("", float(design.trees_test_spearman.mean()), TREES_COLOR, False),
+        ("", float(design.test_spearman.max()), POOLED_COLOR, False),
+        ("cycle no.", 0.0, NULL_COLOR, True),
+        ("", float(cycle.trees_test_spearman.mean()), TREES_COLOR, False),
+        ("", float(cycle.test_spearman.max()), POOLED_COLOR, False),
     ]
-    for index, (label, value, color, _) in enumerate(bars):
+    for index, (_, value, color, unavailable) in enumerate(bars):
         ax.bar(
             index,
             value,
-            width=0.68,
-            facecolor=color,
-            edgecolor="black",
+            width=0.7,
+            facecolor="none" if unavailable else color,
+            edgecolor="black" if unavailable else "black",
+            hatch="///" if unavailable else None,
             linewidth=0.4,
             zorder=3,
         )
         ax.text(
             index,
-            value + 0.02,
-            f"{value:.2f}",
+            (0.03 if unavailable else value + 0.02),
+            "n/a" if unavailable else f"{value:.2f}",
             ha="center",
             va="bottom",
             fontsize=FS_ANNOTATION,
+            rotation=90 if unavailable else 0,
         )
-    ax.axvline(3.5, color="black", linewidth=0.5, linestyle=":", zorder=2)
-    ax.text(1.5, 0.95, "design split", ha="center", fontsize=FS_ANNOTATION)
-    ax.text(4.5, 0.95, "cycle split", ha="center", fontsize=FS_ANNOTATION)
+    ax.axvline(4.5, color="black", linewidth=0.5, linestyle=":", zorder=2)
+    ax.text(2.0, 0.97, "design split", ha="center", fontsize=FS_ANNOTATION)
+    ax.text(6.5, 0.97, "cycle split", ha="center", fontsize=FS_ANNOTATION)
     ax.set_xticks(range(len(bars)))
-    ax.set_xticklabels([b[0] for b in bars], fontsize=FS_ANNOTATION)
+    ax.set_xticklabels(
+        [b[0] for b in bars],
+        fontsize=FS_ANNOTATION,
+        rotation=35,
+        ha="right",
+        rotation_mode="anchor",
+    )
     ax.set_ylabel("held-out Spearman $\\rho$", fontsize=FS_AXIS)
-    ax.set_ylim(0.0, 1.05)
+    ax.set_ylim(0.0, 1.08)
+    ax.set_xlim(-0.7, len(bars) - 0.3)
     ticks(ax, major=0.2, minor=0.1)
+    handles = [
+        Patch(
+            facecolor=NULL_COLOR,
+            edgecolor="black",
+            linewidth=0.4,
+            label="trivial ranker",
+        ),
+        Patch(
+            facecolor=TREES_COLOR,
+            edgecolor="black",
+            linewidth=0.4,
+            label="boosted trees",
+        ),
+        Patch(
+            facecolor=POOLED_COLOR,
+            edgecolor="black",
+            linewidth=0.4,
+            label="CGT, best cell",
+        ),
+    ]
+    ax.legend(
+        handles=handles,
+        fontsize=FS_LEGEND,
+        frameon=False,
+        loc="lower left",
+        bbox_to_anchor=(0.005, 0.005),
+        handlelength=1.1,
+        handleheight=0.9,
+    )
 
 
 def main() -> None:
@@ -330,14 +380,14 @@ def main() -> None:
         ax.set_axisbelow(True)
         ax.text(
             -0.16,
-            1.03,
+            1.02,
             "abc"[index],
             transform=ax.transAxes,
             fontsize=FS_PANEL_LETTER,
             fontweight="bold",
             va="bottom",
         )
-    fig.subplots_adjust(left=0.055, right=0.995, top=0.94, bottom=0.21)
+    fig.subplots_adjust(left=0.055, right=0.995, top=0.90, bottom=0.22)
 
     out_dir = osp.join(ASSET_IMAGES_DIR, "048-pputida-isoprenol-cgt")
     os.makedirs(out_dir, exist_ok=True)

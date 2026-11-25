@@ -398,3 +398,33 @@ gap for the same reason as before: the only XII-5 coordinate in the release
 The placement census is unchanged and correctly so: 4 additions, 4
 `host_placed_without_coordinate`, 0 `sequence_backed`, 0 untyped. Full measurement in
 [[experiments.036-dataset-fixes-before-kg-build.scripts.cachera2023_construct_span_parts]].
+
+## 2026.11.24 - One record per colony (#1177; policy #1178)
+
+The loader stored one record per gene from `GA1_2_4_6.csv` (the authors' colony mean, std / sqrt(count) and count). The authors also release every colony, and owner policy (#1178) makes each biological replicate its own record, value verbatim, `n_replicates` 1, no dispersion, controls included, `phenotype_reference` the control summary with `replicate_id=None`.
+
+### What a replicate is (sources read in full)
+
+- Literature mirror `paper.md` (sha256 `5fb7310d...`): L126 "using CRI-SPA in quadruplicate amounting to a total volume of 19148 transfer events" (a colony is one transfer event, so a biological replicate); L117 calls the four colonies of a strain four "trials"; L64 the authors' processing: Grubbs outliers within quadruplicates "deleted", "Genes represented by two colonies or less were deleted from the analysis. Finally, the mean of the colony replicate was used as the final score for each gene."; L68 the same Grubbs step after the screens are pooled; L145 "with a median of 15 replicates (16 is maximum) per gene"; L175 Data Availability names the CRI-SPA GitHub repository for the individual and the corrected, filtered datasets. SI archive (`gkad656_supplemental_files.zip`: Supplementary Material.docx, Supp Methods S1/S2, Figure S8) read: no per-colony table and no withdrawn sample; Figure S2 describes the colony shuffling, S9 the screen-repeat overlap.
+- No technical replicate is combined inside a colony value: the value is the mean filtered pixel value of one colony image (L60).
+- Repository README (now raw-mirrored): the QD files are "(Quadruplicate) Size and Yellowness raw and corrected data for colony quadruplicates"; the `1_2_4_6` files are "data extracted from several screen repeats, pooled and processed after pooling"; repeats 1, 2, 4, 6 are each a "Screen repeat with final antibiotic selection" (7 is without, and is not in the pooled files).
+- `Colony_Analysis.py` (read in the repository, not mirrored): `Filter_Z` and `Filter_3` set a deleted colony's corrected value to NaN, which is how a colony the authors withdrew reads in `QD1_2_4_6.csv` (raw value present, corrected blank).
+
+### The fetch
+
+`QD1_2_4_6.csv` was not in either mirror. It is fetched from the repository the paper names, at the pinned commit `2c800ab7b9811456f353d325be75b24e938440c6` (tip, last pushed 2023-08-02) through `torchcell.literature.retrieve.direct_url`, sha256 `58fc1cba...` (10,645,057 bytes; equal to the sweep-1 copy), retrieved 2026-11-25T05:46:18Z. It, `GA1_2_4_6.csv` (`71f55609...`, byte-identical to the library-mirror copy and the loader pin) and `README.md` (`e116c0ad...`) now sit in `$DATA_ROOT/torchcell-raw/cacheraCRISPAHighthroughputMethod2023/data/` with `manifest.json`, written by `experiments/036-dataset-fixes-before-kg-build/scripts/cachera2023_raw_mirror_deposit.py`. The loader downloads QD from the commit URL and verifies both pins.
+
+### The store: 4,759 -> 68,834 records
+
+- `QD1_2_4_6.csv`: 79,872 rows = 4 repeats x 13 plates x 1,536 positions, unique on (repeat, plate, row, column). Each measured colony is one record; `replicate_id` = `repeat<r>/plate<p>/row<i>/column<j>` (the file prints no other colony label).
+- 68,822 colonies of 4,759 gene tokens (17,045 under a systematic name, 51,777 under a released symbol) plus 12 WT control colonies (8 in repeat 4, 4 in repeat 6; repeats 1 and 2 grew none at the 8 WT positions). Per repeat: 17,074 / 18,077 / 15,256 / 18,427.
+- Not records, each in `dropped_records.json` by position: 10,825 positions with neither a raw nor a corrected value (no colony), 126 colonies the authors withdrew (raw value, corrected blank: L64, L68), 87 colonies at library wells the map labels `0` (no strain named).
+- WT colonies: genotype = the Btx cassette, no deletion. The final plate selected the cassette (L131 "we employed NTC selection in the final step of CRI-SPA as a safety measure to ensure that all cells contain the Btx-cassette") and the Figure 5 legend (L148) calls that point "the BY-Btx strain". Why WT grew only in repeats 4 and 6 under a G418 step is not stated anywhere I read.
+- `phenotype_reference` is now the authors' WT row of `GA1_2_4_6.csv`: 0.2224, SE 0.5270 / sqrt(12), n 12. It was the constant 0.0 (the screen mean, not the control). The verifier's `reference_centered` is now False for this dataset.
+- The 61 gene tokens on two or three library wells (60 x 2, 1 x 3; e.g. ACO2 at plate 0 r5 c17 and plate 1 r5 c16) keep every well's colonies apart by position; the per-gene file merged them.
+- The 48 h columns are released and still not stored.
+
+### Mean reproduction, verifier
+
+- `experiments/036-dataset-fixes-before-kg-build/scripts/cachera2023_per_colony_mean_check.py` (`--new-root` the scratch build), result `experiments/036-dataset-fixes-before-kg-build/results/cachera2023_per_colony_mean_check.json`: grouping the new records by genotype and environment and averaging reproduces all 4,759 old dev-store values, max absolute difference 1.3e-15; recomputed SD / sqrt(n) vs old SE 4.4e-16; record count per group equals the old `n_replicates` for all 4,759; the 12 control colonies' mean and SE equal the new reference to 8.3e-17 and 0.
+- Scratch build: `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-cachera2023/betaxanthin_cachera2023` (90 s in-process, LMDB 810 MB vs 56 MB before).

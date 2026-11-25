@@ -70,7 +70,10 @@ def _pins_from_constants(
     by_class: dict[str, Callable[[], dict[str, str]]] = {
         "EnvChemgenAuesukaree2009Dataset": lambda: {m._PDF_FILENAME: m._PDF_SHA256},
         "SmfBaryshnikova2010Dataset": lambda: {m.XLS_NAME: m.XLS_SHA256},
-        "BetaxanthinCachera2023Dataset": lambda: {m.DATA_FILENAME: m.DATA_SHA256},
+        "BetaxanthinCachera2023Dataset": lambda: {
+            m.DATA_FILENAME: m.DATA_SHA256,
+            m.QD_FILENAME: m.QD_SHA256,
+        },
         "CaudalPanTranscriptome2024Dataset": lambda: {
             m.CAUDAL_ZIP_BASENAME: m.CAUDAL_ZIP_SHA256,
             m.REPLICATE_TAB_BASENAME: m.REPLICATE_TAB_SHA256,

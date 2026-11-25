@@ -23,9 +23,10 @@ S3     YAL015C+YBR001C_tm99        YCR002C_tsa1      tri   0.6       0.01  0.77 
        ntg1Δ+nth2-5001             cdc10-1
 =====  ==========================  ================  ====  ========  ====  ========  =======  ======
 
-S5 (``Mutant type, Allele1, ORF1, Gene1, Query Strain ID, Fitness, St.dev.``) has two
-single mutants (NTG1 ``delta`` sn123 0.98/0.01; NTH2 ``nth2-5001`` sn124 0.8/0.02), a
-single mutant with no fitness (CDC10 sn125, dropped), and the double mutant ``tm72``
+S5 (``Mutant type, Allele1, ORF1, Gene1, Query Strain ID, Fitness, St.dev., ORF2, Gene2,
+Allele2``) has two single mutants (NTG1 ``delta`` sn123 0.98/0.01, written with HO in
+ORF1 and the gene in ORF2; NTH2 ``nth2-5001`` sn124 0.8/0.02, HO in ORF2), a single
+mutant with no fitness (CDC10 sn125, dropped), and the double mutant ``tm72``
 (1.0133/0.008) that the Dmf join finds on the bare tm number. ``tm99`` has no S5 row,
 so its query-strain record falls back to the S1/S3 column (0.77, no SD).
 ``YCR002C_tsa1`` is a ts array (an array strain that is neither ``dma`` nor ``tsa`` is
@@ -33,8 +34,8 @@ refused, pinned in ``test_kuzmin2020.py``; it used to be stored as an
 ``SgaAllelePerturbation``). Every record names its screen (issue #602): S1 rows the main
 diagnostic-array screen, S3 rows the pilot screen, Table S5 values the query-fitness
 array; the tm99 fallback keeps the S3 screen it was read from. Perturbed gene names are the allele name
-before the first ``_`` (``ntg1`` from ``ntg1_delta``), except Smf, which stores
-``Gene1`` verbatim. PubMed 32586993 / DOI 10.1126/science.aaz5667 on every record.
+before the first ``_`` (``ntg1`` from ``ntg1_delta``), except Smf, which stores the
+gene name of the non-HO side verbatim (#1202). PubMed 32586993 / DOI 10.1126/science.aaz5667 on every record.
 """
 
 import json
@@ -99,7 +100,7 @@ S13_COLUMNS = [
     "Adjusted genetic interaction score (epsilon or tau)",
     "P-value",
 ]
-S5_COLUMNS = ["Mutant type", "Allele1", "ORF1", "Gene1", "Query Strain ID", "Fitness", "St.dev."]  # fmt: skip
+S5_COLUMNS = ["Mutant type", "Allele1", "ORF1", "Gene1", "Query Strain ID", "Fitness", "St.dev.", "ORF2", "Gene2", "Allele2"]  # fmt: skip
 DIGENIC_QUERY = "YAL015C+YDL227C_tm461"
 TM72_QUERY = "YAL015C+YOL043C_tm72"
 TM99_QUERY = "YAL015C+YBR001C_tm99"
@@ -115,11 +116,11 @@ S3_ROWS: list[list[Any]] = [
     [TM99_QUERY, "ntg1Δ+nth2-5001", ARRAY_TS_CDC10, "cdc10-1", "trigenic", 0.6, 0.01, 0.77, 0.85, -0.15, 0.001],
 ]  # fmt: skip
 S5_SINGLE_ROWS: list[list[Any]] = [
-    ["Single mutant", "delta", "YAL015C", "NTG1", "sn123", 0.98, 0.01],
-    ["Single mutant", "nth2-5001", "YBR001C", "NTH2", "sn124", 0.8, 0.02],
-    ["Single mutant", "delta", "YCR002C", "CDC10", "sn125", None, None],
+    ["Single mutant", "hoΔ", "YDL227C", "HO", "sn123", 0.98, 0.01, "YAL015C", "NTG1", "delta"],
+    ["Single mutant", "nth2-5001", "YBR001C", "NTH2", "sn124", 0.8, 0.02, "YDL227C", "HO", "hoΔ"],
+    ["Single mutant", "delta", "YCR002C", "CDC10", "sn125", None, None, "YDL227C", "HO", "hoΔ"],
 ]  # fmt: skip
-S5_DOUBLE_ROW: list[Any] = ["Double mutant", "delta", "YAL015C", "NTG1", "tm72", 1.0133, 0.008]  # fmt: skip
+S5_DOUBLE_ROW: list[Any] = ["Double mutant", "delta", "YAL015C", "NTG1", "tm72", 1.0133, 0.008, "YOL043C", "NTG2", "delta"]  # fmt: skip
 S5_ROWS = [*S5_SINGLE_ROWS, S5_DOUBLE_ROW]
 
 ENVIRONMENT = Environment(media=SGA_TM_SELECTION, temperature=Temperature(value=26))
@@ -287,10 +288,11 @@ def assert_side_files(ds: Any, gene_set: list[str], n: int) -> None:
 def test_smf_records(tmp_path: Path) -> None:
     """Smf: the two S5 single mutants with a fitness; the fitness-less one is dropped.
 
-    ``Allele1 == "delta"`` gives a KanMX deletion, anything else an SGA allele; the
-    perturbed gene name is ``Gene1`` verbatim (upper case, unlike the other four
-    loaders) and the strain id the S5 "Query Strain ID". The reference is fitness
-    1.0 with no SD.
+    The gene is the side of the S5 pair that is not YDL227C (HO): NTG1 is read off
+    ORF2/Gene2/Allele2 because S5 writes HO first for it (#1202). An allele containing
+    "delta" gives a KanMX deletion, anything else an SGA allele; the perturbed gene name
+    is the gene name verbatim (upper case, unlike the other four loaders) and the
+    strain id the S5 "Query Strain ID". The reference is fitness 1.0 with no SD.
 
     The S5 "St.dev." is a query-strain fitness SD, which the SI calls a bootstrap
     quantity over 12-24 colonies (``N_SAMPLES_QUERY_STRAIN_FITNESS``): it is stored as

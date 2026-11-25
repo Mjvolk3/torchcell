@@ -60,10 +60,6 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../datasets/index.html">Datasets</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Benchmark</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../benchmark/index.html">Benchmark</a></li>
-</ul>
 <p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../modules/adapters.html">torchcell.adapters</a></li>
@@ -142,9 +138,10 @@
 <dt class="sig sig-object py" id="torchcell.tasks.task.regression_metrics">
 <span class="sig-name descname"><span class="pre">regression_metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y_true</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">float64</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_pred</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">float64</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">NDArray</span><span class="p"><span class="pre">[</span></span><span class="pre">float64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/torchcell/tasks/task.html#regression_metrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.tasks.task.regression_metrics" title="Link to this definition"></a></dt>
 <dd><p>Pearson, Spearman, R2, MSE and MAE of each target column.</p>
-<p>A sample whose true value is <code class="docutils literal notranslate"><span class="pre">nan</span></code> is left out of that target. A target with
-fewer than three measured samples, or with no variance in truth or prediction,
-gets <code class="docutils literal notranslate"><span class="pre">nan</span></code> for the correlations. A prediction is treated as constant when its
+<p>A sample whose true value is <code class="docutils literal notranslate"><span class="pre">nan</span></code> is left out of that target. A target with no
+measured sample gets <code class="docutils literal notranslate"><span class="pre">nan</span></code> for every metric. A target whose true values do not
+vary gets <code class="docutils literal notranslate"><span class="pre">nan</span></code> for R2 and the correlations, and a target with fewer than three
+measured samples or a constant prediction gets <code class="docutils literal notranslate"><span class="pre">nan</span></code> for the correlations. A prediction is treated as constant when its
 standard deviation is below 1e-9 of its largest magnitude (or of 1), so the
 rounding noise of a constant model is not scored as a correlation.</p>
 <dl class="field-list simple">

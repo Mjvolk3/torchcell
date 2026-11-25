@@ -57,10 +57,6 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../datasets/index.html">Datasets</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Benchmark</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../benchmark/index.html">Benchmark</a></li>
-</ul>
 <p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
@@ -160,7 +156,20 @@
 <div class="viewcode-block" id="TaskSpec">
 <a class="viewcode-back" href="../../../generated/torchcell.tasks.task.TaskSpec.html#torchcell.tasks.task.TaskSpec">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TaskSpec</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""What one benchmark task is: the dataset, the genome, the label and the metric."""</span>
+<span class="w">    </span><span class="sd">"""What one benchmark task is: the dataset, the genome, the label and the metric.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        name: The task name passed to ``load_task``.</span>
+<span class="sd">        title: A one-line title for people.</span>
+<span class="sd">        dataset_slug: Directory name of the dataset's store.</span>
+<span class="sd">        dataset_module: Module that defines the dataset class.</span>
+<span class="sd">        dataset_class: Name of the dataset class.</span>
+<span class="sd">        assembly_set: Id of the genome assembly the records are written against.</span>
+<span class="sd">        kind: ``single_gene`` (a sample deletes one gene) or ``gene_pair`` (two).</span>
+<span class="sd">        label: Field of a record's phenotype that holds the label.</span>
+<span class="sd">        n_targets_note: How many targets a sample has and what one target is.</span>
+<span class="sd">        headline_metric: The metric results are reported by.</span>
+<span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
@@ -187,7 +196,13 @@
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">parts</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">str_</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Hold the part of every sample of ``task`` under the split ``name``."""</span>
+<span class="w">        </span><span class="sd">"""Hold the part of every sample under one split.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task: Name of the task (a string, not the task object).</span>
+<span class="sd">            name: Name of the split.</span>
+<span class="sd">            parts: ``"train"``, ``"val"`` or ``"test"`` for every sample of the task.</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">task</span> <span class="o">=</span> <span class="n">task</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_parts</span> <span class="o">=</span> <span class="n">parts</span>
@@ -223,6 +238,9 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Row indices of the test samples.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: ``reason`` is empty.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">reason</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"unlock_test needs a non-empty reason"</span><span class="p">)</span>
@@ -310,7 +328,18 @@
 <div class="viewcode-block" id="BenchmarkTask.score">
 <a class="viewcode-back" href="../../../generated/torchcell.tasks.task.BenchmarkTask.html#torchcell.tasks.task.BenchmarkTask.score">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Mean over targets of each metric; see :func:`regression_metrics`."""</span>
+<span class="w">        </span><span class="sd">"""Mean over targets of each metric; see :func:`regression_metrics`.</span>
+
+<span class="sd">        A target whose metric is ``nan`` (for example the correlation of a constant</span>
+<span class="sd">        prediction) is left out of that metric's mean.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            y_true: True labels, ``(n_samples, n_targets)``.</span>
+<span class="sd">            y_pred: Predictions of the same shape.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``pearson``, ``spearman``, ``r2``, ``mse`` and ``mae``, each one number.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="n">k</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">regression_metrics</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
@@ -324,9 +353,10 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">regression_metrics</span><span class="p">(</span><span class="n">y_true</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">FloatArray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Pearson, Spearman, R2, MSE and MAE of each target column.</span>
 
-<span class="sd">    A sample whose true value is ``nan`` is left out of that target. A target with</span>
-<span class="sd">    fewer than three measured samples, or with no variance in truth or prediction,</span>
-<span class="sd">    gets ``nan`` for the correlations. A prediction is treated as constant when its</span>
+<span class="sd">    A sample whose true value is ``nan`` is left out of that target. A target with no</span>
+<span class="sd">    measured sample gets ``nan`` for every metric. A target whose true values do not</span>
+<span class="sd">    vary gets ``nan`` for R2 and the correlations, and a target with fewer than three</span>
+<span class="sd">    measured samples or a constant prediction gets ``nan`` for the correlations. A prediction is treated as constant when its</span>
 <span class="sd">    standard deviation is below 1e-9 of its largest magnitude (or of 1), so the</span>
 <span class="sd">    rounding noise of a constant model is not scored as a correlation.</span>
 

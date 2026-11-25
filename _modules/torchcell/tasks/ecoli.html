@@ -57,10 +57,6 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../datasets/index.html">Datasets</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Benchmark</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../benchmark/index.html">Benchmark</a></li>
-</ul>
 <p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
@@ -122,8 +118,8 @@
 <span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/tasks/ecoli.py</span>
 <span class="sd">"""The four *E. coli* benchmark tasks and the helpers that match records to genes.</span>
 
-<span class="sd">A task is built in three steps, each a function here so the processing notebook and</span>
-<span class="sd">:func:`load_task` run the same code:</span>
+<span class="sd">A task is built in three steps, each a function here, so that a script which walks</span>
+<span class="sd">through them one at a time and :func:`load_task` run the same code:</span>
 
 <span class="sd">1. :func:`match_records` resolves every perturbed gene of every record against the</span>
 <span class="sd">   genome the records name and says whether the record is a benchmark sample.</span>
@@ -228,7 +224,11 @@
 <div class="viewcode-block" id="open_dataset">
 <a class="viewcode-back" href="../../../generated/torchcell.tasks.ecoli.open_dataset.html#torchcell.tasks.ecoli.open_dataset">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">open_dataset</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">TaskSpec</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Open the task's dataset with its loader (downloaded when ``TC_DATA_URL`` is set)."""</span>
+<span class="w">    </span><span class="sd">"""Open the task's dataset with its loader.</span>
+
+<span class="sd">    With ``TC_DATA_URL`` set the loader downloads the built store. Without it the</span>
+<span class="sd">    loader builds the store from the publisher's files, which is slow.</span>
+<span class="sd">    """</span>
     <span class="n">loader</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">dataset_module</span><span class="p">),</span> <span class="n">spec</span><span class="o">.</span><span class="n">dataset_class</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">loader</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span> <span class="ow">or</span> <span class="n">dataset_root</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">dataset_slug</span><span class="p">))</span></div>
 
@@ -335,7 +335,13 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        The task with ``samples``, ``genes``, ``y``, ``targets``, ``excluded`` and</span>
 <span class="sd">        ``genome`` set and no splits.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        KeyError: ``name`` is not a task; the message lists the task names.</span>
+<span class="sd">        ValueError: The records name another genome assembly than the task pins.</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ECOLI_TASKS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no task </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">; the tasks are </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">ECOLI_TASKS</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">spec</span> <span class="o">=</span> <span class="n">ECOLI_TASKS</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
     <span class="n">dataset</span> <span class="o">=</span> <span class="n">open_dataset</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
     <span class="n">genome</span> <span class="o">=</span> <span class="n">genome_for</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
@@ -402,8 +408,9 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">load_task</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BenchmarkTask</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The processed benchmark task ``name`` with its pinned splits.</span>
 
-<span class="sd">    Opens the dataset (downloading the built store when ``TC_DATA_URL`` is set), loads</span>
-<span class="sd">    the genome its records name (fetched when absent), matches records to genes, reads</span>
+<span class="sd">    Opens the dataset (downloading the built store when ``TC_DATA_URL`` is set, building</span>
+<span class="sd">    it from the publisher's files otherwise), loads the genome its records name (fetched</span>
+<span class="sd">    when absent), matches records to genes, reads</span>
 <span class="sd">    the labels and attaches the pinned splits. The samples built here must equal the</span>
 <span class="sd">    samples the split file was written for, row for row, or this raises.</span>
 
@@ -414,6 +421,11 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        The task; ``task.split(split_name)`` gives train and validation indices and a</span>
 <span class="sd">        locked test part.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        KeyError: ``name`` is not a task.</span>
+<span class="sd">        ValueError: The pinned split file fails its sha256 check, or the samples built</span>
+<span class="sd">            here differ from the samples the split file was written for.</span>
 <span class="sd">    """</span>
     <span class="n">task</span> <span class="o">=</span> <span class="n">build_task</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
     <span class="n">pinned</span> <span class="o">=</span> <span class="n">read_splits</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>

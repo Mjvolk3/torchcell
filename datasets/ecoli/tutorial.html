@@ -84,10 +84,6 @@
 </ul>
 </li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Benchmark</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../benchmark/index.html">Benchmark</a></li>
-</ul>
 <p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../modules/adapters.html">torchcell.adapters</a></li>
@@ -152,7 +148,7 @@
 <p>Four built <em>Escherichia coli</em> K-12 datasets load with one constructor call each, from a plain install of torchcell and with no account or key.</p>
 <section id="quick-start">
 <h2>Quick start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchcell<span class="w">      </span><span class="c1"># Python 3.13 or newer; or: uv pip install torchcell</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torchcell<span class="w">  </span><span class="c1"># Python 3.13 or newer; or: uv pip install torchcell</span>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
@@ -164,19 +160,19 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.ecoli.campos2018</span><span class="w"> </span><span class="kn">import</span> <span class="n">GrowthRateCampos2018Dataset</span>
 
 <span class="n">growth</span> <span class="o">=</span> <span class="n">GrowthRateCampos2018Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="s2">"data/torchcell/ecoli_growth_rate_campos2018"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">growth</span><span class="p">))</span>                                 <span class="c1"># 3664</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">growth</span><span class="p">))</span>  <span class="c1"># 3664</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">growth</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">][</span><span class="s2">"fitness"</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>The constructor downloads the store on first use and opens it from disk after that. Nothing else is needed: no repository checkout, no database, no <code class="docutils literal notranslate"><span class="pre">DATA_ROOT</span></code>. The four downloads together take seconds to a few tens of seconds (<a class="reference internal" href="download.html"><span class="doc">Downloading the E. coli archives</span></a>).</p>
-<p>This page says what each dataset holds and shows one figure of its values. The full walkthrough, with every record, table and plot, is a notebook:</p>
+<p>The constructor downloads the store on first use and opens it from disk after that. Nothing else is needed: no repository checkout and no database. Loading a genome as well needs <code class="docutils literal notranslate"><span class="pre">DATA_ROOT</span></code>, the folder its files go under, which the notebook sets to the current directory. The four downloads together take seconds to a few tens of seconds (<a class="reference internal" href="download.html"><span class="doc">Downloading the E. coli archives</span></a>).</p>
+<p>Each section below describes one dataset and shows one figure of its values. The full walkthrough, with every record, table and plot, is a notebook:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="notebook.html"><span class="doc">E. coli datasets in torchcell</span></a>: the notebook rendered here, with its outputs and the plotting code collapsed.</p></li>
 <li><p><a class="reference external" href="https://colab.research.google.com/github/Mjvolk3/torchcell/blob/main/experiments/034-showcase-datasets/notebooks/ecoli_datasets.ipynb">Open it in Google Colab</a> to run it in the browser with nothing installed: the first cell installs <code class="docutils literal notranslate"><span class="pre">torchcell</span></code>.</p></li>
 <li><p><a class="reference download internal" download="" href="../../_downloads/6b237fadc8da15c371fb135f70bb8aed/ecoli_datasets.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">ecoli_datasets.ipynb</span></code></a> to run it yourself.</p></li>
 <li><p><a class="reference external" href="https://github.com/Mjvolk3/torchcell/blob/main/experiments/034-showcase-datasets/notebooks/ecoli_datasets.ipynb">View it on GitHub</a>.</p></li>
 </ul>
-<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-20T00:02:03Z). Do not edit by hand. -->
+<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-25T03:28:20Z). Do not edit by hand. -->
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Dataset</p></th>
@@ -222,7 +218,7 @@
 <section id="at-a-glance">
 <h2>At a glance<a class="headerlink" href="#at-a-glance" title="Link to this heading"></a></h2>
 <p>Every dataset is described by the same rows, counted from the loaded records: the shape of the labels, the genotype and how it was perturbed, and the growth condition. The same card, for one dataset, opens each section below.</p>
-<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-20T00:02:03Z). Do not edit by hand. -->
+<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-25T03:28:20Z). Do not edit by hand. -->
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Property</p></th>
@@ -305,7 +301,7 @@
 <td><p>Hfr Cavalli (Hfr C) donor query strains (42,705); Keio collection (40,226); SPA-tag essential (2,479)</p></td>
 <td><p>KEIO knockout collection</p></td>
 </tr>
-<tr class="row-even"><td><p><strong>Distinct genes perturbed</strong></p></td>
+<tr class="row-even"><td><p><strong>Distinct gene symbols</strong></p></td>
 <td><p>3,664</p></td>
 <td><p>3,664</p></td>
 <td><p>3,876</p></td>
@@ -336,7 +332,7 @@
 <section id="how-each-dataset-names-its-genes">
 <h2>How each dataset names its genes<a class="headerlink" href="#how-each-dataset-names-its-genes" title="Link to this heading"></a></h2>
 <p>Every perturbation in every record names its gene twice. <code class="docutils literal notranslate"><span class="pre">perturbed_gene_name</span></code> is the gene symbol. <code class="docutils literal notranslate"><span class="pre">systematic_gene_name</span></code> is an identifier in the namespace that <code class="docutils literal notranslate"><span class="pre">gene_namespace</span></code> names. The identifier is not the same kind in every dataset: the Campos 2018 stores hold BW25113 locus tags that the loader mapped from the released gene symbol, the Babu 2014 store holds the MG1655 b-numbers the paper released, and the Fuhrer 2017 store holds the Keio JW ids its deposit released. A row whose <code class="docutils literal notranslate"><span class="pre">perturbation_type</span></code> is <code class="docutils literal notranslate"><span class="pre">released_identifier</span></code> holds the identifier exactly as the source released it, not resolved against a genome annotation.</p>
-<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-20T00:02:03Z). Do not edit by hand. -->
+<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-25T03:28:20Z). Do not edit by hand. -->
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>                     dataset   perturbation_type                   namespace                 identifier_kind    mapped_from  perturbations  genes example_symbol example_identifier
 ecoli_growth_rate_campos2018     deletion_strain ecoli_k12_bw25113_locus_tag                locus identifier    gene_symbol           3664   3664           hchA       BW25113_1967
  ecoli_morphology_campos2018     deletion_strain ecoli_k12_bw25113_locus_tag                locus identifier    gene_symbol           3664   3664           hchA       BW25113_1967
@@ -349,7 +345,7 @@ ecoli_growth_rate_campos2018     deletion_strain ecoli_k12_bw25113_locus_tag    
 </pre></div>
 </div>
 <p>The gene symbol is the one name all four datasets carry, so it is the key to join them on. The table counts the symbols each pair of datasets shares, with each dataset’s own count on the diagonal.</p>
-<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-20T00:02:03Z). Do not edit by hand. -->
+<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-25T03:28:20Z). Do not edit by hand. -->
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>                              ecoli_growth_rate_campos2018  ecoli_morphology_campos2018  gene_interaction_babu2014  metabolome_fuhrer2017
 ecoli_growth_rate_campos2018                          3664                         3664                       3176                   3154
 ecoli_morphology_campos2018                           3664                         3664                       3176                   3154
@@ -361,7 +357,7 @@ metabolome_fuhrer2017                                 3154                      
 <section id="the-genome-behind-each-dataset">
 <h2>The genome behind each dataset<a class="headerlink" href="#the-genome-behind-each-dataset" title="Link to this heading"></a></h2>
 <p>Every record names the genome assembly it is written against, and <code class="docutils literal notranslate"><span class="pre">genome_for(dataset)</span></code> returns that genome: it reads the assembly id from the records, downloads the files into <code class="docutils literal notranslate"><span class="pre">./torchcell-genomes/</span></code> and builds the genome object. Each file is taken from its original source when the bytes there still match the recorded sha256 and from the torchcell mirror otherwise. <code class="docutils literal notranslate"><span class="pre">load_genome(&quot;&lt;assembly</span> <span class="pre">set&gt;&quot;)</span></code> loads one of these by its id without a dataset.</p>
-<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-20T00:02:03Z). Do not edit by hand. -->
+<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-25T03:28:20Z). Do not edit by hand. -->
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ecoli_B_REL606_ASM1798v1         Escherichia coli B REL606 -&gt; EcoliBREL606Genome
 ecoli_K12_BW25113_ASM75055v1     Escherichia coli K-12 BW25113 -&gt; EcoliK12BW25113Genome
 ecoli_K12_MG1655_ASM584v2        Escherichia coli K-12 MG1655 -&gt; EcoliK12MG1655Genome
@@ -372,7 +368,7 @@ sgd_S288C_R64-4-1_20230830       Saccharomyces cerevisiae S288C -&gt; SCerevisia
 </pre></div>
 </div>
 <p>Three of the four datasets are written against BW25113, the Keio parent strain, and the Babu 2014 pairs against MG1655. <code class="docutils literal notranslate"><span class="pre">resolve_gene_name</span></code> maps each identifier a dataset stores to a locus tag of its genome and reports how it resolved: <code class="docutils literal notranslate"><span class="pre">current</span></code>, <code class="docutils literal notranslate"><span class="pre">renamed</span></code> (an alias of one current gene), <code class="docutils literal notranslate"><span class="pre">non_gene_feature</span></code> (a locus the annotation does not class as a gene) or <code class="docutils literal notranslate"><span class="pre">retired</span></code> (not in the annotation). The records themselves are never filtered by the genome.</p>
-<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-20T00:02:03Z). Do not edit by hand. -->
+<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-25T03:28:20Z). Do not edit by hand. -->
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ecoli_growth_rate_campos2018
   genome        EcoliK12BW25113Genome (ecoli_K12_BW25113_ASM75055v1)
   genome genes  4,303
@@ -392,7 +388,7 @@ metabolome_fuhrer2017
 </pre></div>
 </div>
 <p>The genes of the genome are the nodes of a cell graph. A record becomes model input as the indices of the nodes its strain perturbs, with the phenotype as the label, and each node carries its sequence, protein and GO terms.</p>
-<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-20T00:02:03Z). Do not edit by hand. -->
+<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-25T03:28:20Z). Do not edit by hand. -->
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>stored identifiers  ['b0002', 'b0015']
 genome locus tags   ['b0002', 'b0015']
 perturbed nodes     [1, 14] of 4,506
@@ -404,7 +400,7 @@ b0015 dnaJ: 1,131 bp, protein 376 aa, GO terms 22
 </section>
 <section id="growth-rate-campos-2018">
 <h2>Growth rate (Campos 2018)<a class="headerlink" href="#growth-rate-campos-2018" title="Link to this heading"></a></h2>
-<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-20T00:02:03Z). Do not edit by hand. -->
+<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-25T03:28:20Z). Do not edit by hand. -->
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Property</p></th>
@@ -448,7 +444,7 @@ b0015 dnaJ: 1,131 bp, protein 376 aa, GO terms 22
 <tr class="row-odd"><td><p><strong>Strain collection</strong></p></td>
 <td><p>Keio collection</p></td>
 </tr>
-<tr class="row-even"><td><p><strong>Distinct genes perturbed</strong></p></td>
+<tr class="row-even"><td><p><strong>Distinct gene symbols</strong></p></td>
 <td><p>3,664</p></td>
 </tr>
 <tr class="row-odd"><td><p><strong>Gene identifier namespace</strong></p></td>
@@ -479,7 +475,7 @@ b0015 dnaJ: 1,131 bp, protein 376 aa, GO terms 22
 </section>
 <section id="cell-shape-and-cell-cycle-campos-2018">
 <h2>Cell shape and cell cycle (Campos 2018)<a class="headerlink" href="#cell-shape-and-cell-cycle-campos-2018" title="Link to this heading"></a></h2>
-<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-20T00:02:03Z). Do not edit by hand. -->
+<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-25T03:28:20Z). Do not edit by hand. -->
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Property</p></th>
@@ -523,7 +519,7 @@ b0015 dnaJ: 1,131 bp, protein 376 aa, GO terms 22
 <tr class="row-odd"><td><p><strong>Strain collection</strong></p></td>
 <td><p>Keio collection</p></td>
 </tr>
-<tr class="row-even"><td><p><strong>Distinct genes perturbed</strong></p></td>
+<tr class="row-even"><td><p><strong>Distinct gene symbols</strong></p></td>
 <td><p>3,664</p></td>
 </tr>
 <tr class="row-odd"><td><p><strong>Gene identifier namespace</strong></p></td>
@@ -537,8 +533,8 @@ b0015 dnaJ: 1,131 bp, protein 376 aa, GO terms 22
 </tr>
 </tbody>
 </table>
-<p>The same Keio strains from the same screen, imaged in phase contrast and, for most strains, with a DAPI nucleoid channel. A record summarizes the cells measured for one strain (the paper reports 291 ± 116 cells per strain), and its <code class="docutils literal notranslate"><span class="pre">n_samples</span></code> is that strain’s number of cells. The features fall in two groups. The cell-shape features (length, width, area, volume, surface area, perimeter, circularity, aspect ratio, surface-to-volume ratio) are stored as a mean in <code class="docutils literal notranslate"><span class="pre">morphology</span></code> and as a coefficient of variation in <code class="docutils literal notranslate"><span class="pre">morphology_coefficient_of_variation</span></code>. The nucleoid and cell-cycle features (nucleoid area, the timing of constriction and of nucleoid separation, the fraction of cells with two nucleoids) exist only for strains imaged with a nucleoid channel, so a strain without one holds 9 mean features and not 15. Feature names are the symbols the paper gives them:</p>
-<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-20T00:02:03Z). Do not edit by hand. -->
+<p>The same Keio strains from the same screen, imaged in phase contrast and, for most strains, with a DAPI nucleoid channel. A record summarizes the cells measured for one strain (the paper reports 291 ± 116 cells per strain), and its <code class="docutils literal notranslate"><span class="pre">n_samples</span></code> is that strain’s number of cells. The features fall in two groups. The cell-shape features (length, width, area, volume, surface area, perimeter, circularity, aspect ratio, surface-to-volume ratio) are stored as a mean in <code class="docutils literal notranslate"><span class="pre">morphology</span></code> and as a coefficient of variation in <code class="docutils literal notranslate"><span class="pre">morphology_coefficient_of_variation</span></code>. The nucleoid and cell-cycle features (nucleoid area, the correlation of nucleoid and cell constriction, the nucleoid constriction degree when cell constriction starts, the relative timing of cell constriction and of nucleoid separation, the fraction of cells with two nucleoids) exist only for strains imaged with a nucleoid channel, so a strain without one holds 9 mean features and not 15. Feature names are the symbols the paper gives them:</p>
+<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-25T03:28:20Z). Do not edit by hand. -->
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>        symbol                                                                name         group                statistic unit
            &lt;L&gt;                                                    Mean cell length morphological                     mean   µm
           CV_L                                             Cell length variability morphological coefficient_of_variation None
@@ -584,7 +580,7 @@ Rel.timing nuc                              Relative timing of nucleoid separati
 </section>
 <section id="genetic-interactions-babu-2014">
 <h2>Genetic interactions (Babu 2014)<a class="headerlink" href="#genetic-interactions-babu-2014" title="Link to this heading"></a></h2>
-<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-20T00:02:03Z). Do not edit by hand. -->
+<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-25T03:28:20Z). Do not edit by hand. -->
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Property</p></th>
@@ -628,7 +624,7 @@ Rel.timing nuc                              Relative timing of nucleoid separati
 <tr class="row-odd"><td><p><strong>Strain collection</strong></p></td>
 <td><p>Hfr Cavalli (Hfr C) donor query strains (42,705); Keio collection (40,226); SPA-tag essential (2,479)</p></td>
 </tr>
-<tr class="row-even"><td><p><strong>Distinct genes perturbed</strong></p></td>
+<tr class="row-even"><td><p><strong>Distinct gene symbols</strong></p></td>
 <td><p>3,876</p></td>
 </tr>
 <tr class="row-odd"><td><p><strong>Gene identifier namespace</strong></p></td>
@@ -662,7 +658,7 @@ Rel.timing nuc                              Relative timing of nucleoid separati
 </section>
 <section id="metabolome-fuhrer-2017">
 <h2>Metabolome (Fuhrer 2017)<a class="headerlink" href="#metabolome-fuhrer-2017" title="Link to this heading"></a></h2>
-<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-20T00:02:03Z). Do not edit by hand. -->
+<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-25T03:28:20Z). Do not edit by hand. -->
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Property</p></th>
@@ -706,7 +702,7 @@ Rel.timing nuc                              Relative timing of nucleoid separati
 <tr class="row-odd"><td><p><strong>Strain collection</strong></p></td>
 <td><p>KEIO knockout collection</p></td>
 </tr>
-<tr class="row-even"><td><p><strong>Distinct genes perturbed</strong></p></td>
+<tr class="row-even"><td><p><strong>Distinct gene symbols</strong></p></td>
 <td><p>3,806</p></td>
 </tr>
 <tr class="row-odd"><td><p><strong>Gene identifier namespace</strong></p></td>
@@ -721,7 +717,7 @@ Rel.timing nuc                              Relative timing of nucleoid separati
 </tbody>
 </table>
 <p>One record per Keio strain, measured by flow-injection time-of-flight mass spectrometry. The label maps each detected ion to a modified z-score, the strain’s level of that ion standardized across strains. An ion here is a mass feature, a peak at one mass-to-charge ratio in the negative or the positive ionization mode, keyed <code class="docutils literal notranslate"><span class="pre">neg_0001</span></code>, <code class="docutils literal notranslate"><span class="pre">pos_0001</span></code> and so on. The store does not name a metabolite for an ion: <code class="docutils literal notranslate"><span class="pre">preprocess/ions.csv</span></code> gives each ion’s mode and mass-to-charge ratio, and matching an ion to a compound is left to the reader. Every record holds the same ions in the same order, so the labels stack into one strains-by-ions matrix. The first lines printed on loading give the number of ions in each mode and their mass-to-charge range:</p>
-<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-20T00:02:03Z). Do not edit by hand. -->
+<!-- Generated by experiments/034-showcase-datasets/scripts/ecoli_download_tutorial_page.py (run 2026-11-25T03:28:20Z). Do not edit by hand. -->
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>3,806 records
 strain aaeA
 ions 7534 first {'neg_0001': -0.4309, 'neg_0002': -0.1195, 'neg_0003': -0.6621, 'neg_0004': 0.9284}

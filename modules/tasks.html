@@ -60,10 +60,6 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../datasets/index.html">Datasets</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Benchmark</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../benchmark/index.html">Benchmark</a></li>
-</ul>
 <p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="adapters.html">torchcell.adapters</a></li>
@@ -151,7 +147,7 @@
              
   <section id="module-torchcell.tasks">
 <span id="torchcell-tasks"></span><h1>torchcell.tasks<a class="headerlink" href="#module-torchcell.tasks" title="Link to this heading"></a></h1>
-<p>Standardized benchmark tasks. A task pins one dataset, the genome its records are written against, one label and a set of pinned train, validation and test splits. <a class="reference internal" href="../generated/torchcell.tasks.ecoli.load_task.html#torchcell.tasks.ecoli.load_task" title="torchcell.tasks.ecoli.load_task"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_task()</span></code></a> is the one import a benchmark script needs; the test part of every split is locked until <a class="reference internal" href="../generated/torchcell.tasks.task.Split.html#torchcell.tasks.task.Split.unlock_test" title="torchcell.tasks.task.Split.unlock_test"><code class="xref py py-meth docutils literal notranslate"><span class="pre">unlock_test()</span></code></a> is called. The overview is at <a class="reference internal" href="../benchmark/ecoli/index.html"><span class="doc">E. coli tasks</span></a>.</p>
+<p>Standardized benchmark tasks. A task pins one dataset, the genome its records are written against, one label and a set of pinned train, validation and test splits. <a class="reference internal" href="../generated/torchcell.tasks.ecoli.load_task.html#torchcell.tasks.ecoli.load_task" title="torchcell.tasks.ecoli.load_task"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_task()</span></code></a> is the one import a benchmark script needs; the test part of every split is locked until <a class="reference internal" href="../generated/torchcell.tasks.task.Split.html#torchcell.tasks.task.Split.unlock_test" title="torchcell.tasks.task.Split.unlock_test"><code class="xref py py-meth docutils literal notranslate"><span class="pre">unlock_test()</span></code></a> is called. The tasks, their splits, example scripts and baseline results are on the benchmark website.</p>
 <nav class="contents local" id="contents">
 <p class="topic-title">Contents</p>
 <ul class="simple">
@@ -200,7 +196,7 @@
 <td><p>Build a task from its dataset and genome, without splits.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.tasks.ecoli.open_dataset.html#torchcell.tasks.ecoli.open_dataset" title="torchcell.tasks.ecoli.open_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">open_dataset</span></code></a></p></td>
-<td><p>Open the task's dataset with its loader (downloaded when <code class="docutils literal notranslate"><span class="pre">TC_DATA_URL</span></code> is set).</p></td>
+<td><p>Open the task's dataset with its loader.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.tasks.ecoli.match_records.html#torchcell.tasks.ecoli.match_records" title="torchcell.tasks.ecoli.match_records"><code class="xref py py-obj docutils literal notranslate"><span class="pre">match_records</span></code></a></p></td>
 <td><p>Match every record of <code class="docutils literal notranslate"><span class="pre">dataset</span></code> to genes of <code class="docutils literal notranslate"><span class="pre">genome</span></code>.</p></td>

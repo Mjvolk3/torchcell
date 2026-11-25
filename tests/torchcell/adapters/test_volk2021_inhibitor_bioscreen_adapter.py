@@ -164,8 +164,8 @@ def test_phenotype_nodes_carry_the_rate_or_the_call(records: v.RunRecords) -> No
     node_fn = CellAdapter._environment_response_phenotype_node.__wrapped__  # type: ignore[attr-defined]  # functools.wraps
     grown = node_fn(_bare(), _data(records, 1), "x").get_properties()
     flat = node_fn(_bare(), _data(records, 2), "x").get_properties()
-    assert grown["measurement_type"] == "relative_growth_rate"
-    assert grown["environment_response"] == pytest.approx(2.25 / 4.0)
+    assert grown["measurement_type"] == "growth_rate"
+    assert grown["environment_response"] == pytest.approx(4.0)
     assert grown["assay_type"] == "liquid_od_growth"
     assert grown["screen_id"] == "ex26:well2"
     assert flat["measurement_type"] == "categorical"

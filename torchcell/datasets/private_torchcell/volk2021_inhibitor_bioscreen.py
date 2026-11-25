@@ -34,18 +34,34 @@ RECORD SHAPE. ``StrainEnvironmentResponseExperiment`` with
   wells under a lid in room air; no mirrored source states the oxygen regime, and
   ``aerobicity`` is a required string that cannot carry a gap.
 - phenotype: ``EnvironmentResponsePhenotype``, ``assay_type=liquid_od_growth``. A grown
-  well is ``relative_growth_rate`` = the run's mean WT generation time / the well's
-  (``bioscreen.relative_growth_rate``; the raw-curve derivation, the same method on all
-  five runs). A well that never grew is ``categorical`` / ``severely_reduced`` ("growth
-  or signal essentially abolished"), ``category_label`` "no growth within <h> h",
-  ``environment_response=None``. ``n_samples=1`` (one well), ``screen_id`` =
-  ``<run>:well<n>``. The Bioscreen software's trait calls are a documented check in the
-  note, never a served value.
-- reference: the run's inhibitor-free environment, ``relative_growth_rate`` 1.0 with the
-  sample SD of the WT wells' own relative growth rates and their count. Those wells are
+  well is ``growth_rate`` carrying the well's own ABSOLUTE generation time in hours per
+  doubling (``bioscreen.generation_time``, the raw-curve derivation, the same method on
+  all five runs). A well that never grew is ``categorical`` / ``severely_reduced``
+  ("growth or signal essentially abolished"), ``category_label`` "no growth within <h>
+  h", ``environment_response=None``. ``n_samples=1`` (one well), ``replicate_id`` = the
+  well number as the export's column header prints it, ``screen_id`` =
+  ``<run>:well<n>``, and the two dispersion fields carry
+  ``not_applicable_single_measurement`` gaps. The Bioscreen software's trait calls are a
+  documented check in the note, never a served value.
+- reference: the run's inhibitor-free environment, ``growth_rate`` = the mean generation
+  time of the run's grown WT wells, with their sample SD and their count,
+  ``replicate_id=None``: an aggregate over wells that are each a record. Those wells are
   ``biological_replicate`` samples when every grown WT well comes from a different
   biological replicate (the isoboles: one per plate), else ``technical_replicate``
   (ex21's 17 grown WT wells and ex23's 8 come from three pre-cultures).
+
+ONE RECORD PER WELL, ABSOLUTE VALUE (#1178, 2026-11-24). A well is one culture: the
+report calls the ex21 titrations "biological triplicates of BY4742- iAID6." (Fig 11
+caption, ``volk2021_sources.EX21_REPLICATES``) and ex23 "Biological triplicates in all
+media combinations" (``EX23_FITNESS_AS_PROJECT_1``), and each replicate of a condition
+sits in its own well with its own OD600 curve. Nothing is combined across wells. Until
+2026-11-24 a grown well stored ``relative_growth_rate`` = the run's mean WT generation
+time / the well's: a ratio over a mean the LOADER computed from released wells. Under
+the per-replicate policy that ratio is a model-time step, so the record states the
+well's own generation time and the WT mean rides on the reference (the old value is
+``reference / record``, reproduced exactly; see the dendron note's 2026.11.24
+section). The ``relative_growth_rate`` helper stays in ``bioscreen`` for the 039
+analysis.
 
 RECORDS DROPPED (``preprocess/dropped_records.json``): ex23's three uninoculated
 ``blank`` wells, and the wells of a run's export the layout assigns to no condition
@@ -126,7 +142,11 @@ from torchcell.verification.report import (
     Provenance,
     VerificationReport,
 )
-from torchcell.verification.sourced import SourcedValue
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
+)
 
 log = logging.getLogger(__name__)
 
@@ -170,11 +190,26 @@ SPECIES = "Saccharomyces cerevisiae"
 TEMPERATURE_C = 30.0
 #: The readout definition every record carries in ``units``.
 UNITS = (
-    "relative growth rate = mean generation time of the run's grown uninhibited (WT) "
-    "wells / this well's generation time; generation time = 1 / the largest "
+    "generation time, hours per doubling, of this well's culture = 1 / the largest "
     "least-squares slope of log2(OD600 - baseline) over any 3 h window whose readings "
     "all exceed baseline + 0.05, baseline = median of the first three readings; a well "
-    "grew when its baseline-subtracted OD600 rose by at least 0.3"
+    "grew when its baseline-subtracted OD600 rose by at least 0.3; the reference is "
+    "the mean over the run's grown uninhibited (WT) wells"
+)
+
+#: A record is one well's one curve, so it has no dispersion of its own.
+RECORD_GAPS: tuple[ProvenanceGap, ...] = (
+    ProvenanceGap(
+        field="environment_response_uncertainty",
+        reason=ProvenanceGapReason.not_applicable_single_measurement,
+        note="one well, one OD600 curve, one generation time: a single measurement "
+        "has no dispersion of its own",
+    ),
+    ProvenanceGap(
+        field="environment_response_se",
+        reason=ProvenanceGapReason.not_applicable_single_measurement,
+        note="a single measurement has no standard error",
+    ),
 )
 
 #: Name passed to the compound-identity resolver for each inhibitor: the report's own
@@ -279,13 +314,21 @@ def no_growth_label(run: b.Run) -> str:
     return f"no growth within {round(s.RUN_EVENTS[run.value].value)} h"
 
 
-def phenotype(
-    well: b.Well, wt_generation_time_h: float
-) -> EnvironmentResponsePhenotype:
-    """One well: its relative growth rate, or the no-growth call."""
+def replicate_id(well: b.WellLayout) -> str:
+    """The well number as the export's column header prints it (``"150"``).
+
+    A well is one culture, so it is the replicate a record holds. The layouts' own
+    ``biological_replicate_id`` (ex23's map column, ex21's block, the isobole plate)
+    names the pre-culture or plate above it and is not unique per well: ex23's eight
+    WT wells carry ids 1, 1, 1, 1, 1, 1, 2, 3, and ex21's 18 WT wells six per block.
+    """
+    return str(well.well)
+
+
+def phenotype(well: b.Well) -> EnvironmentResponsePhenotype:
+    """One well: its absolute generation time in hours, or the no-growth call."""
     screen_id = f"{well.run.value}:well{well.well}"
-    rate = b.relative_growth_rate(well, wt_generation_time_h)
-    if rate is None:
+    if well.generation_time_h is None:
         return EnvironmentResponsePhenotype(
             measurement_type=MeasurementType.categorical,
             assay_type=AssayType.liquid_od_growth,
@@ -296,15 +339,19 @@ def phenotype(
             sample_unit=SampleUnit.biological_replicate,
             units=UNITS,
             screen_id=screen_id,
+            replicate_id=replicate_id(well),
+            provenance_gaps=list(RECORD_GAPS),
         )
     return EnvironmentResponsePhenotype(
-        measurement_type=MeasurementType.relative_growth_rate,
+        measurement_type=MeasurementType.growth_rate,
         assay_type=AssayType.liquid_od_growth,
-        environment_response=rate,
+        environment_response=well.generation_time_h,
         n_samples=1,
         sample_unit=SampleUnit.biological_replicate,
         units=UNITS,
         screen_id=screen_id,
+        replicate_id=replicate_id(well),
+        provenance_gaps=list(RECORD_GAPS),
     )
 
 
@@ -320,12 +367,11 @@ def genome_reference() -> StrainReferenceGenome:
     )
 
 
-def reference_phenotype(
-    wells: list[b.Well], wt_generation_time_h: float
-) -> EnvironmentResponsePhenotype:
-    """1.0, with the sample SD of the grown WT wells' relative growth rates.
+def reference_phenotype(wells: list[b.Well]) -> EnvironmentResponsePhenotype:
+    """The mean generation time of the run's grown WT wells, with their sample SD.
 
-    The unit is ``biological_replicate`` when each grown WT well comes from a different
+    An aggregate over wells that are each a record, so ``replicate_id`` is None. The
+    unit is ``biological_replicate`` when each grown WT well comes from a different
     biological replicate, else ``technical_replicate``. Fewer than two grown WT wells
     leave no SD, which raises: every run here has at least two.
     """
@@ -336,7 +382,7 @@ def reference_phenotype(
     ]
     if len(grown) < 2:
         raise ValueError(f"{wells[0].run}: {len(grown)} grown WT wells, need >= 2")
-    rates = [wt_generation_time_h / gt for _, gt in grown]
+    times = [gt for _, gt in grown]
     replicates = {replicate for replicate, _ in grown}
     unit = (
         SampleUnit.biological_replicate
@@ -344,27 +390,27 @@ def reference_phenotype(
         else SampleUnit.technical_replicate
     )
     return EnvironmentResponsePhenotype(
-        measurement_type=MeasurementType.relative_growth_rate,
+        measurement_type=MeasurementType.growth_rate,
         assay_type=AssayType.liquid_od_growth,
-        environment_response=1.0,
-        environment_response_uncertainty=float(np.std(rates, ddof=1)),
+        environment_response=b.wild_type_generation_time(wells),
+        environment_response_uncertainty=float(np.std(times, ddof=1)),
         environment_response_uncertainty_type=UncertaintyType.sample_sd,
         n_samples=len(grown),
         sample_unit=unit,
         units=UNITS,
+        replicate_id=None,
     )
 
 
 def reference(
     run: b.Run, wells: list[b.Well], dataset_name: str
 ) -> StrainEnvironmentResponseExperimentReference:
-    """The run's inhibitor-free YPD and its WT wells as the 1.0 baseline."""
-    wt = b.wild_type_generation_time(wells)
+    """The run's inhibitor-free YPD and its WT wells' mean generation time."""
     return StrainEnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome_reference(),
         environment_reference=environment(run, b.no_doses()),
-        phenotype_reference=reference_phenotype(wells, wt),
+        phenotype_reference=reference_phenotype(wells),
     )
 
 
@@ -428,7 +474,7 @@ def run_records(run: b.Run, wells: list[b.Well], dataset_name: str) -> RunRecord
                 dataset_name=dataset_name,
                 genotype=Genotype(perturbations=[]),
                 environment=environment(run, well.doses_g_per_l),
-                phenotype=phenotype(well, wt),
+                phenotype=phenotype(well),
             )
             for well in wells
         ],
@@ -488,7 +534,7 @@ def dropped_wells(
 # --------------------------------------------------------------------------- #
 @register_dataset
 class InhibitorBioscreenVolk2021Dataset(ExperimentDataset):
-    """bAID in YPD with dosed inhibitors: relative growth rate per Bioscreen C well."""
+    """bAID in YPD with dosed inhibitors: generation time per Bioscreen C well."""
 
     organism = Organism.scerevisiae
     visibility = Visibility.private
@@ -723,8 +769,49 @@ def l1_wells_per_run(records: list[dict[str, Any]]) -> LevelResult:
     )
 
 
+def l1_one_well_per_record(records: list[dict[str, Any]]) -> LevelResult:
+    """L1: every record is one well, n = 1, keyed by its own well number.
+
+    ``replicate_id`` must equal the well of the record's ``screen_id``, ``n_samples``
+    must be 1, and both dispersion fields must carry the
+    ``not_applicable_single_measurement`` gap, so no record can come to hold a
+    statistic computed over several wells.
+    """
+    defects: list[str] = []
+    for record in records:
+        phenotype = record["experiment"]["phenotype"]
+        screen_id = phenotype["screen_id"]
+        gaps = {
+            str(gap["field"]): str(gap["reason"])
+            for gap in phenotype.get("provenance_gaps") or []
+        }
+        if (
+            phenotype.get("replicate_id") != screen_id.split(":well")[1]
+            or phenotype["n_samples"] != 1
+            or phenotype["environment_response_uncertainty"] is not None
+            or gaps.get("environment_response_uncertainty")
+            != ProvenanceGapReason.not_applicable_single_measurement.value
+            or gaps.get("environment_response_se")
+            != ProvenanceGapReason.not_applicable_single_measurement.value
+        ):
+            defects.append(screen_id)
+    holds = not defects
+    return LevelResult(
+        level=Level.L1,
+        name="one_well_per_record",
+        passed=holds,
+        message=(
+            f"all {len(records)} records are one well (n = 1, replicate_id = the well, "
+            "not_applicable_single_measurement on both dispersion fields)"
+            if holds
+            else f"{len(defects)} records are not one well's single measurement"
+        ),
+        details={"n_defects": len(defects), "defects": defects[:20]},
+    )
+
+
 def l2_readout_split(records: list[dict[str, Any]]) -> LevelResult:
-    """L2: a record carries a rate or a no-growth call, never both or neither.
+    """L2: a record carries a generation time or a no-growth call, never both or neither.
 
     The dataset's readout is MIXED by construction: a well that never grew has no
     generation time, so there is no rate to store and the call is the measurement. The
@@ -739,7 +826,7 @@ def l2_readout_split(records: list[dict[str, Any]]) -> LevelResult:
         rate = phenotype["environment_response"]
         category = phenotype.get("category")
         measurement = str(phenotype["measurement_type"])
-        rated = measurement == MeasurementType.relative_growth_rate.value
+        rated = measurement == MeasurementType.growth_rate.value
         called = measurement == MeasurementType.categorical.value
         if rated and (rate is None or category is not None):
             malformed.append({"screen_id": phenotype["screen_id"], "rule": "rate"})
@@ -756,7 +843,8 @@ def l2_readout_split(records: list[dict[str, Any]]) -> LevelResult:
         passed=holds,
         message=(
             f"{sum(no_growth.values())} no-growth calls and "
-            f"{len(records) - sum(no_growth.values())} rates, split per run {no_growth}"
+            f"{len(records) - sum(no_growth.values())} generation times, split per run "
+            f"{no_growth}"
             if holds
             else f"{len(malformed)} records malformed; no-growth per run {no_growth} "
             f"vs declared {EXPECTED_NO_GROWTH}"
@@ -770,48 +858,69 @@ def l2_readout_split(records: list[dict[str, Any]]) -> LevelResult:
     )
 
 
-def l3_reference_one(records: list[dict[str, Any]]) -> LevelResult:
-    """L3: the reference is the run's own WT baseline, a relative growth rate of 1.0.
+#: Tolerance of the reference-reproduction row: the served mean and SD are float64
+#: arithmetic over the same stored generation times.
+REFERENCE_TOL = 1e-9
 
-    The env-response verifier's ``reference_zero`` rule does not apply: this readout is a
-    RATIO against the wild type measured in the same run, so its control is 1.0, not 0.
-    The reference also carries the sample SD of the grown WT wells' own rates and their
-    count, so the baseline's spread is served with it.
+
+def l3_reference_wild_type_mean(records: list[dict[str, Any]]) -> LevelResult:
+    """L3: each run's reference IS the mean of its own grown WT records, recomputed.
+
+    The reference is an aggregate over records the store also serves, so the gate
+    recomputes it from them: per run, the generation times of the inhibitor-free
+    records that grew give the mean (``environment_response``), the sample SD
+    (``environment_response_uncertainty``, ``sample_sd``) and the count
+    (``n_samples``). The reference is ``growth_rate`` with ``replicate_id=None``. This
+    is what keeps the model-time ratio (reference / record, the pre-2026-11-24
+    ``relative_growth_rate``) exactly reproducible from the store alone.
     """
+    wild_type: dict[str, list[float]] = {}
+    for record in records:
+        phenotype = record["experiment"]["phenotype"]
+        if record["experiment"]["environment"]["perturbations"]:
+            continue
+        if str(phenotype["measurement_type"]) != MeasurementType.growth_rate.value:
+            continue
+        run = _run_of(phenotype["screen_id"])
+        wild_type.setdefault(run, []).append(float(phenotype["environment_response"]))
     worst = 0.0
     counts: dict[str, int] = {}
     bad: list[str] = []
     for record in records:
         reference = record["reference"]["phenotype_reference"]
         run = _run_of(record["experiment"]["phenotype"]["screen_id"])
-        value = reference["environment_response"]
-        if value is None:
-            bad.append(f"{run}: no reference response")
+        times = wild_type.get(run, [])
+        if len(times) < 2 or reference["environment_response"] is None:
+            bad.append(f"{run}: {len(times)} grown WT records or no reference value")
             continue
-        worst = max(worst, abs(float(value) - 1.0))
         counts[run] = int(reference["n_samples"])
+        unc = reference["environment_response_uncertainty"]
+        worst = max(
+            worst,
+            abs(float(reference["environment_response"]) - float(np.mean(times))),
+            abs(float(unc) - float(np.std(times, ddof=1))) if unc is not None else 1.0,
+        )
         if (
-            reference["environment_response_uncertainty"] is None
-            or float(reference["environment_response_uncertainty"]) <= 0.0
+            int(reference["n_samples"]) != len(times)
             or str(reference["environment_response_uncertainty_type"])
             != UncertaintyType.sample_sd.value
-            or str(reference["measurement_type"])
-            != MeasurementType.relative_growth_rate.value
+            or str(reference["measurement_type"]) != MeasurementType.growth_rate.value
+            or reference.get("replicate_id") is not None
         ):
-            bad.append(f"{run}: reference carries no positive sample SD")
-    holds = not bad and worst == 0.0
+            bad.append(f"{run}: reference is not the WT records' mean, SD and count")
+    holds = not bad and worst <= REFERENCE_TOL
     return LevelResult(
         level=Level.L3,
-        name="reference_one",
+        name="reference_wild_type_mean",
         passed=holds,
         message=(
-            f"reference relative growth rate == 1.0 for all {len(records)} records, "
-            f"with the sample SD of {counts} grown WT wells per run"
+            f"every run's reference equals the mean and sample SD of its {counts} grown "
+            f"WT records (max |diff| {worst:.3g} h)"
             if holds
-            else f"max|v-1|={worst:.3g}; {len(set(bad))} reference defects"
+            else f"max|diff|={worst:.3g} h; {len(set(bad))} reference defects"
         ),
         details={
-            "worst_abs_deviation": worst,
+            "worst_abs_deviation_h": worst,
             "n_wild_type_wells": counts,
             "defects": sorted(set(bad))[:20],
         },
@@ -948,8 +1057,7 @@ def l4_software_agreement(records: list[dict[str, Any]], mirror: Path) -> LevelR
             phenotype = record["experiment"]["phenotype"]
             well = int(phenotype["screen_id"].split("well")[1])
             served_grew = (
-                str(phenotype["measurement_type"])
-                == MeasurementType.relative_growth_rate.value
+                str(phenotype["measurement_type"]) == MeasurementType.growth_rate.value
             )
             if served_grew == (software[well] is not None):
                 agree += 1
@@ -1015,7 +1123,7 @@ def verify_build(dataset_root: str, data_root: str | None = None) -> Verificatio
         for run in RUNS
         for well in b.layout(run, Path(dataset_root) / "raw").wells
     ]
-    rates = [
+    generation_times = [
         record["experiment"]["phenotype"]["environment_response"]
         for record in records
         if record["experiment"]["phenotype"]["environment_response"] is not None
@@ -1034,9 +1142,10 @@ def verify_build(dataset_root: str, data_root: str | None = None) -> Verificatio
         )
     )
     report.add(l1_wells_per_run(records))
-    report.add(l2_value_fidelity(rates, minimum=0.0))
+    report.add(l1_one_well_per_record(records))
+    report.add(l2_value_fidelity(generation_times, minimum=0.0))
     report.add(l2_readout_split(records))
-    report.add(l3_reference_one(records))
+    report.add(l3_reference_wild_type_mean(records))
     report.add(l3_wild_type_wells(records))
     report.add(l3_no_growth_label(records))
     report.add(l3_strain_background(records))

@@ -280,3 +280,77 @@ Report `verification_report.json` (written 2026-10-11 07:11 UTC):
 | L3 | `no_growth_label` | pass | every no-growth call is severely_reduced, labelled {'ex21': ['no growth within 72 h'], 'ex23': ['no growth within 85 h'], 'ex26': ['no growth within 96 h'], 'ex27': ['no growth within 96 h'], 'ex28': ['no growth within 96 h']} |
 | L3 | `strain_background` | pass | all 977 references carry bAID (parent BY4742) with the integration 'Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]' |
 | L4 | `software_trait_agreement` | pass | the served grew/no-grew call equals the Bioscreen software's on ex21 0.9778, ex23 0.9391, ex26 0.9850 |
+
+## 2026.11.24 - One record per well, absolute generation time (#1178)
+
+### What a replicate is here
+
+A record was already one inoculated well, and a well is one culture with one OD600
+curve, so the store already held one record per biological replicate; no record count
+changes. Sources, all in the library mirror `paper.md` (sha256 `61f2b850...cf33`):
+
+- ex21: "biological triplicates of BY4742- iAID6." (Fig 11 caption, panel (a);
+  `volk2021_sources.EX21_REPLICATES`).
+- ex23: "Biological triplicates in all media combinations were screened and a fitness
+  value was computed as described in project 1." (2.2.1, paragraph after Fig 11;
+  `EX23_FITNESS_AS_PROJECT_1`). The well map `MV_ex23_preprocessed.csv` carries one row
+  per well with its `biological_replicate_id`.
+- isoboles (ex26, ex27, ex28): not in the report; the two plates of each run are the
+  replicate unit (`bioscreen.isobole_layout`).
+
+No well combines technical measurements of more than one culture, and the report and the
+archive name no withdrawn sample; the only wells not stored are the three uninoculated
+ex23 blanks and ex21's 20 wells outside any block (`preprocess/dropped_records.json`,
+unchanged).
+
+### What changed
+
+The value was a ratio over a mean the loader computed: the run's mean WT generation time
+divided by the well's (`relative_growth_rate`). Under the 2026-11-24 policy (a ratio over
+a loader-computed control mean leaves the record), a grown well now stores its own
+generation time in hours per doubling as `MeasurementType.growth_rate` ("absolute or
+normalized growth rate / doubling time"). Each record also gains `replicate_id` = the
+well number as the export's column header prints it, and
+`not_applicable_single_measurement` gaps on `environment_response_uncertainty` and
+`environment_response_se`. The no-growth call records are unchanged apart from those
+two additions. The layouts' `biological_replicate_id` is not used as `replicate_id`
+because it names the pre-culture or plate above the well and is not unique per well
+(ex23's 8 WT wells carry ids 1 x6, 2, 3; ex21 has six WT wells per block).
+
+The reference is the same aggregate on the new scale: `growth_rate` = the mean generation
+time of the run's grown WT wells, their sample SD and count (17 / 8 / 2 / 2 / 2), the
+same `technical_replicate` / `biological_replicate` unit rule, `replicate_id=None`.
+
+The gate: `reference_one` became `reference_wild_type_mean`, which recomputes each run's
+reference mean, SD and count from the served WT records themselves (tolerance 1e-9 h), and
+a new L1 row `one_well_per_record` checks n = 1, `replicate_id` = the well of `screen_id`
+and both gaps on all records.
+
+### Measured
+
+Built into `/bulk/torchcell-scratch-overflow/per-replicate/per-replicate-volk2021/inhibitor_bioscreen_volk2021`
+(script `build_and_compare.py` in the session scratchpad `sweep2/volk2021/`), compared
+with the dev store `$DATA_ROOT/data/torchcell/inhibitor_bioscreen_volk2021`, read only:
+
+| measured | value |
+|---|---|
+| records before / after | 977 / 977, same 977 `<run>:well<n>` keys |
+| per run | ex21 180, ex23 197, ex26 200, ex27 200, ex28 200 |
+| readout | 360 `growth_rate` + 617 `categorical` (was 360 `relative_growth_rate` + 617) |
+| distinct `replicate_id` per record | 977 |
+| reference / record vs the old stored ratio, per grown well | n = 360, max abs diff 0 |
+| mean of the old ratio per (run, environment) vs the same from the new records | 150 groups, max abs diff 0 |
+| `verify_build` | PASS, 12 rows L0 to L4 |
+
+### Run ex1: left out, and why
+
+`MV_ex1.bsm` in the raw mirror holds 19,493 `A` (OD) records over 48 h from 2020-01-03,
+15 months before ex21. The thesis archive (`/bulk/thesis/thesis_archive/MANIFEST.tsv`)
+also lists `ex1.csv`, `ex1_results.*` and `ex1_BY4741_WT.JPG`, none in the raw mirror.
+The image's own file name labels ex1 as uninhibited BY4741, its legend shows wells 1 to
+100, and `ex1_results.csv` has 100 well columns. The report never names ex1, and BY4741
+is not bAID (BY4742 + pAID6). So ex1 is not a run of this dataset (no inhibitor, a
+different strain), and no ex1 plate layout exists in the mirror or the archive listing.
+Whether ex1 should be its own private dataset is an owner decision; nothing was added.
+The plan's reading of `S,1,101-200` as the measured well range is contradicted by the
+archive's own ex1 exports (wells 1 to 100); the `.bsm` setting is left undecoded.

@@ -67,6 +67,8 @@ datasets:
   - GrowthRateCampos2018Dataset
   - MorphologyCampos2018Dataset
   - GrowthRateChoe2019Dataset
+  - AbsoluteGrowthRateChoe2019Dataset
+  - MetaboliteChoe2019Dataset
   - TranscriptionFactorKnockoutChoe2019Dataset
   - CrispriChemgenChoe2025Dataset
   - CrispriKnockdownCui2018Dataset

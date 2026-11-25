@@ -2,15 +2,15 @@
 # [[torchcell.adapters.choe2019_growth_rate_adapter]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/choe2019_growth_rate_adapter.py
 # Test file: tests/torchcell/adapters/test_choe2019_growth_rate_adapter.py
-"""BioCypher adapter exposing Choe 2019's two designed MS56 deletions as
+"""BioCypher adapter exposing Choe 2019's Fig. 2f released growth-rate ratios as
 knowledge-graph nodes and edges.
 
-One record per designed deletion strain: a ``DeletionStrainPerturbation`` per deleted
-gene, served as ``perturbation`` (21 for the large deletion, 1 for ``rpoS``),
-and the strain's growth rate as a ratio to its isogenic parent MS56. The panel is one M9
-glucose medium with no added compound, so the environment-perturbation pair is off; the
-environment declares a ``ProvenanceGap`` on temperature, for which the temperature
-methods emit nothing.
+One record per released Fig. 2f set (12): the three reconstructed single-allele MS56
+strains, each a ``ReleasedIdentifierPerturbation`` served as ``perturbation``, and
+eMS57 over MS56 on its named background with an empty genotype, each phenotype the
+set's ratio verbatim with its ``replicate_id``. The panel is one M9 glucose medium with
+no added compound, so the environment-perturbation pair is off; the environment declares
+a ``ProvenanceGap`` on temperature, for which the temperature methods emit nothing.
 """
 
 import os.path as osp

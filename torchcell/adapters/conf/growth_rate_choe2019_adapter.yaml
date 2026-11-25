@@ -1,7 +1,8 @@
-# Choe 2019 Fig. 2c designed deletions: 2 records, FitnessExperiment. One
-# BacterialDeletionPerturbation per deleted gene (21 for the large deletion, 1 for
-# rpoS), served as `perturbation`. The panel is one medium with no added compound, so
-# the environment-perturbation pair is left off; the environment also declares a
+# Choe 2019 Fig. 2f released ratios: 12 records, FitnessExperiment, one per released
+# set. The three reconstructed alleles (9 records) carry one ReleasedIdentifierPerturbation
+# each, served as `perturbation`; eMS57 over MS56 (3 records) is an empty genotype on
+# its named background. The panel is one medium with no added compound, so the
+# environment-perturbation pair is left off; the environment also declares a
 # ProvenanceGap on temperature, which the temperature methods emit nothing for.
 cell_adapter:
   node_methods:

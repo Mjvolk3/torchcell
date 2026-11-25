@@ -263,3 +263,31 @@ All 128 derivative samples dropped until now, each on a BacterialStrainBackgroun
 This store is derived from putidaPRECISE321 (`limMachinelearningPseudomonasPutida2022`). Data collected from a compendium, a database aggregate or a follow-up study may embed that source's preprocessing (normalization, filtering, re-keying, merged conditions) and may lack ontological representation the primary release carries (per-sample metadata, replicate structure, the released statistic). Its records are a derived copy, and the primary release is still to be collected from source ([[torchcell.knowledge_graphs.dataset-admission-loop]], 2026.10.13).
 
 What it may hide here: 225 of the 321 samples were reprocessed from other studies (SRA) to log2(TPM + 1) on AE015451.2, so the normalization is the compendium's; genotype and condition detail sit in each source study, not in the compendium's metadata. The source studies' own releases are still to be collected.
+
+## 2026.11.24 - Per-replicate review (#1171, #1178): each record names its library
+
+**Finding.** The store already held one record per biological replicate. Each of the 321 records is one sequenced library's own X column (`2**X - 1`) with its own paired `counts.csv` column; no profile is a mean over libraries. The only change is that each record now names its library: `replicate_id` is the sample sheet's `Sample_name` (an SRX accession, or an in-house name such as `CJ522_f_1`), the label the release itself gives the library. Record count unchanged, 321 -> 321.
+
+**What a replicate is.** The paper calls the libraries of a condition biological replicates: "samples with low correlation within biological replicates $( \mathbb { R } ^ { 2 } < 0 . 9 5 )$ were discarded" (paper.md line 148, sha256 `d5f49a99...`). The 321 libraries fall into 118 conditions of 2 (40 conditions), 3 (71) or 4 (7) replicates; `rep_name` positions are 1: 117, 2: 118, 3: 78, 4: 8.
+
+**Why not `rep_name`.** It repeats inside two conditions that pool two series: `ALE:IL_Control` carries 1, 2, 1, 2 (SRX8245718-21, GSM4513733-6) and `Phase:WT_Tr` carries 1, 2 from PRJNA338850 and 1, 2 from PRJNA338876. An id built on it would key two libraries alike. `rep_name` stays in `preprocess/sample_ledger.json`.
+
+**What is not stored, accounted row by row** (`release_account`, written to `build_report.json` as `release`). The sheet's 550 rows are the 321 libraries, two blank rows, the heading row `Samples not included in PRECISE321`, 220 libraries under it, and 6 rows flagged `0`.
+
+| rows | n | status | evidence |
+|---|---|---|---|
+| flagged `putidaPRECISE321` = 1 | 321 | stored, one record each | Methods 4.1 |
+| under the exclusion heading | 220 | author withdrawal; 182 keep a `5-X` column | SI Fig. 1a caption, si1.docx sha256 `64e1df31...` |
+| flagged 0, sequenced after the compendium was fixed | 6 | no column in `5-X` or `counts.csv`, so nothing released | `Note` cells |
+
+The SI Fig. 1a caption states the four discards: "40 Samples were discarded owing to failure in their processing with the pipeline or passing FastQC; 54 samples were discarded because of too low read counts; 62 samples were discarded for consistency because they showed poor global correlation or were prepared with non-KT2440 strains; 64 additional samples with poor replicate correlation (<0.95) were discarded." 40 + 54 + 62 + 64 = 220 = 541 - 321, which the build checks against the sheet. The sheet gives no per-sample reason, so the four steps are counted, not assigned. The 6 post-hoc rows are `Del_relA_glc_R1/R2`, `A3_F85_I1_glc_R1/R2`, `A4_F88_I1_glc_R1/R2` (the latter two are the Results 2.5 evolved strains); their `Note` reads "newly generated sample after obtaining 84 iMs from putidaPRECISE321, ...".
+
+**Reference.** Each project's `phenotype_reference` stays the aggregate `2**mean(X) - 1` over its baseline condition's libraries with `replicate_id=None`; those baseline libraries are records too.
+
+**Verification** (scratch build `$DATA_ROOT/tmp/scratch/per-replicate-lim2022/putida_precise321_lim2022`).
+
+- Runner gate (`verify_rnaseq_store`): PASS, 321 records, 118 replicate groups.
+- Module gate (`verify_records`): PASS, with a new L1 rule `replicate_id_per_library` (321 distinct ids, none missing, none shared). The L4 symbol finding (9 released deletion symbols outside the locus set) is report-class, as before.
+- Against the dev store built before this change, record for record by LMDB index: same sample name, max |TPM difference| 0.0, max |count difference| 0; genotype, environment, reference and publication identical except the `replicate_id` key the schema now dumps. Grouping by (genotype, environment) and taking the mean reproduces the old group means exactly (max |difference| 0.0), as it must when the values are unchanged.
+
+**Other fix.** The built-store test compared a record's perturbation order with the ledger's label order; `Genotype` sorts its perturbations, so `Crc:Del_crcZ_crcY` failed on the dev store too. It now compares the sorted lists.

@@ -470,19 +470,82 @@ def test_build_environment_of_an_unstressed_arm_carries_glucose_only() -> None:
     assert environment.duration_hours == pytest.approx(10 + 40 / 60)
 
 
-def test_build_phenotype_is_a_signed_log2_ratio_with_typed_gaps() -> None:
-    phenotype = b23.build_phenotype(-2.68, "Exp6A")
+def test_build_phenotype_is_one_culture_with_single_measurement_gaps() -> None:
+    phenotype = b23.build_phenotype(-2.68, "Exp6A", "6A")
     assert phenotype.environment_response == -2.68
     assert phenotype.measurement_type == "log2_ratio"
     assert phenotype.assay_type == "pooled_competitive_growth_barcode"
     assert phenotype.screen_id == "Exp6A"
+    assert phenotype.replicate_id == "6A"
+    assert phenotype.n_samples == 1
+    assert phenotype.sample_unit == "biological_replicate"
     assert phenotype.environment_response_se is None
-    assert {gap.field for gap in phenotype.provenance_gaps} == {
-        "environment_response_uncertainty",
-        "environment_response_se",
-        "n_samples",
-        "sample_unit",
+    assert phenotype.environment_response_uncertainty is None
+    assert {(gap.field, gap.reason) for gap in phenotype.provenance_gaps} == {
+        ("environment_response_uncertainty", "not_applicable_single_measurement"),
+        ("environment_response_se", "not_applicable_single_measurement"),
     }
+
+
+def test_replicate_id_is_the_table_s3_key_and_unique_per_culture() -> None:
+    ids = [e.replicate_id(r) for e in b23.EXPERIMENTS for r in b23.REPLICATES]
+    assert len(set(ids)) == b23.N_ARMS
+    assert ids[:3] == ["1A", "1B", "1C"]
+    assert ids[-3:] == ["14A", "14B", "14C"]
+    # experiments 1 and 13 share the sheet column name but are two cultures
+    glucose, later = b23.COLUMNS_BY_EXPERIMENT[1], b23.COLUMNS_BY_EXPERIMENT[13]
+    assert glucose.column("A") == later.column("A")
+    assert glucose.replicate_id("A") != later.replicate_id("A")
+
+
+def test_records_by_replicate_sums_each_position() -> None:
+    by_arm = {"Exp1A": ("x", "y"), "Exp1B": ("x",), "Exp13A": ("z",)}
+    assert b23.records_by_replicate(by_arm) == {"A": 3, "B": 1, "C": 0}
+
+
+def _write_growth_sheet(path: Path, header: list[Any], rows: list[list[Any]]) -> Path:
+    """A Supplementary File 1 whose five growth sheets all carry one layout."""
+    import openpyxl
+
+    workbook = openpyxl.Workbook()
+    workbook.active.title = b23.SHEET_ORDER[0]
+    for name in b23.GROWTH_SHEETS:
+        sheet = workbook.create_sheet(name)
+        sheet.append(header)
+        for row in rows:
+            sheet.append(row)
+    workbook.save(path)
+    return path
+
+
+def test_account_growth_curves_counts_triplicates(tmp_path: Path) -> None:
+    header: list[Any] = ["Time (h)", "KT2440 A", None, None, "AJB225 A", None, None]
+    rows: list[list[Any]] = [[0.0, 1, 2, 3, 4, 5, 6], [0.25, 1, 2, 3, 4, 5, None]]
+    accounts = b23.account_growth_curves(
+        _write_growth_sheet(tmp_path / "g.xlsx", header, rows)
+    )
+    assert [a.sheet for a in accounts] == list(b23.GROWTH_SHEETS)
+    assert {a.curves for a in accounts} == {6}
+    assert {a.readings for a in accounts} == {11}
+    assert {a.labels for a in accounts} == {("KT2440 A", "AJB225 A")}
+
+
+def test_account_growth_curves_refuses_a_missing_replicate(tmp_path: Path) -> None:
+    header: list[Any] = ["Time (h)", "KT2440 A", None, None]
+    rows: list[list[Any]] = [[0.0, 1, None, 3], [0.25, 1, None, 3]]
+    with pytest.raises(ValueError, match="does not carry 3 replicate columns"):
+        b23.account_growth_curves(
+            _write_growth_sheet(tmp_path / "g.xlsx", header, rows)
+        )
+
+
+def test_account_growth_curves_refuses_an_unlabelled_curve(tmp_path: Path) -> None:
+    header: list[Any] = ["Time (h)", "KT2440 A", None, None, None]
+    rows: list[list[Any]] = [[0.0, 1, 2, 3, 9]]
+    with pytest.raises(ValueError, match="under no label"):
+        b23.account_growth_curves(
+            _write_growth_sheet(tmp_path / "g.xlsx", header, rows)
+        )
 
 
 def test_assert_dose_agrees_refuses_a_different_compendium_dose(
@@ -701,8 +764,21 @@ def test_process_stores_only_the_loci_the_compendium_dropped(
     assert perturbation.perturbed_gene_name == "ttgB"
     assert perturbation.library_pool == b23.MUTANT_LIBRARY
     assert first["experiment"].phenotype.screen_id == "Exp1A"
+    assert first["experiment"].phenotype.replicate_id == "1A"
+    assert first["experiment"].phenotype.n_samples == 1
     assert first["experiment"].environment.duration_hours == pytest.approx(10 + 40 / 60)
     assert first["reference"].phenotype_reference.environment_response == 0.0
+    assert first["reference"].phenotype_reference.replicate_id is None
+    pairs = {
+        (
+            dataset[i]["experiment"]["phenotype"]["screen_id"],
+            dataset[i]["experiment"]["phenotype"]["replicate_id"],
+        )
+        for i in range(len(dataset))
+    }
+    assert pairs == {
+        (e.arm(r), e.replicate_id(r)) for e in b23.EXPERIMENTS for r in b23.REPLICATES
+    }
     assert first["publication"].doi == b23.DOI
 
     screens = {
@@ -722,6 +798,7 @@ def test_process_stores_only_the_loci_the_compendium_dropped(
     new_loci = json.loads((preprocess / "new_loci.json").read_text())
     assert new_loci["n_loci"] == len(NEW_GENES)
     assert new_loci["n_records"] == len(dataset)
+    assert sum(new_loci["n_records_by_replicate_position"].values()) == len(dataset)
     not_stored = json.loads((preprocess / "not_stored.json").read_text())
     assert len(not_stored["quantities"]) == 6
     assert "20 mM" in not_stored["read_me_conflict"]
@@ -786,7 +863,7 @@ def test_every_quote_is_verbatim_in_its_pinned_mirror() -> None:
         if not audit_sourced_value(sv, library).passed
     ]
     assert failures == []
-    assert len(b23.SOURCED_VALUES) == 16 + b23.N_EXPERIMENTS
+    assert len(b23.SOURCED_VALUES) == 19 + b23.N_EXPERIMENTS
 
 
 def _real_comparisons() -> tuple[b23.Comparison, ...]:
@@ -830,11 +907,28 @@ def test_real_subsumption_and_the_measured_partition() -> None:
     tags = {tag for loci in by_arm.values() for tag in loci}
     assert len(tags) == b23.EXPECTED_NEW_LOCI
     assert sum(len(loci) for loci in by_arm.values()) == b23.EXPECTED_RECORDS
+    # one record per (locus, culture): every replicate position carries a third
+    assert b23.records_by_replicate(by_arm) == {"A": 3608, "B": 3608, "C": 3608}
     quantities = b23.not_stored(matches, comparisons)
     significance = next(q for q in quantities if "t-statistic" in q.quantity)
     assert significance.values == 64853 * len(b23.STAT_COLUMNS)
     subsumed = next(q for q in quantities if "4,732 compendium loci" in q.quantity)
     assert subsumed.values == b23.N_ARMS * b24.N_GENES == 198744
+
+
+@pytest.mark.data
+def test_real_growth_curves_are_all_triplicate() -> None:
+    """The five growth sheets: 62 labels, each with three curves, none missing."""
+    path = b23.raw_mirror_dir(_data_root()) / b23.DATA_RELPATH
+    if not path.exists():
+        pytest.skip(f"raw mirror not deposited: {path}")
+    accounts = b23.account_growth_curves(path)
+    assert [len(a.labels) for a in accounts] == [16, 30, 4, 2, 10]
+    assert sum(len(a.labels) for a in accounts) == b23.N_GROWTH_LABELS
+    assert sum(a.curves for a in accounts) == b23.N_GROWTH_CURVES
+    assert sum(a.readings for a in accounts) == b23.N_GROWTH_READINGS
+    # Figure 3 releases two blocks, each with its own time axis
+    assert [a.time_columns for a in accounts] == [1, 2, 1, 1, 1]
 
 
 @pytest.mark.data

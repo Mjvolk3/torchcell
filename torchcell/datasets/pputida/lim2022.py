@@ -84,7 +84,30 @@ its carbon source, plus the stated 2.5 g/L carbon source as an
 REFERENCE. Each project's reference is its own baseline condition (the sample sheet's
 ``reference_condition``, the condition the paper centers each project on):
 ``expression_tpm = 2**mean(X) - 1`` over that condition's replicates, counts their rounded
-mean, on the KT2440 assembly pin.
+mean, on the KT2440 assembly pin. It is an aggregate, so its ``replicate_id`` is ``None``;
+the baseline libraries it summarizes are records of their own.
+
+REPLICATES (#1171, #1178). A record is ONE sequenced library, which the paper calls a
+biological replicate ("samples with low correlation within biological replicates ... were
+discarded", ``REPLICATE_FILTER``). The 321 libraries fall into 118 conditions of 2 (40),
+3 (71) or 4 (7) replicates, and no profile is a mean over libraries: the value is the
+library's own X column. ``replicate_id`` is the sample sheet's ``Sample_name`` (an SRX
+accession, or the in-house name such as ``CJ522_f_1``), the release's own label for that
+library. The sheet's ``rep_name`` (1-4) is not used as the id because it repeats inside two
+conditions that pool two series: ``ALE:IL_Control`` (1, 2, 1, 2 over GSM4513733-6) and
+``Phase:WT_Tr`` (1, 2 from PRJNA338850 and 1, 2 from PRJNA338876); it stays in
+``preprocess/sample_ledger.json``.
+
+WHAT IS NOT STORED, and why (:func:`release_account`). The sample sheet's 550 rows are the
+321 compendium libraries, two blank rows, the heading row ``Samples not included in
+PRECISE321``, the 220 libraries under that heading, and 6 more rows flagged ``0``. The 220
+are the authors' own exclusion, 40 + 54 + 62 + 64 by the four QC steps Supplementary Fig. 1
+names (``QC_DISCARDS``), so they are an author withdrawal; 182 of them still have a column
+in ``5-X``. The 6 flagged ``0`` are libraries sequenced after the compendium was fixed
+(``Del_relA``, ``A3_F85_I1``, ``A4_F88_I1`` on glucose, two each; the latter two are
+Results 2.5's evolved strains), whose ``Note`` cells read "newly generated sample after
+obtaining 84 iMs from putidaPRECISE321, ..."; they have no column in ``5-X`` or in
+``counts.csv``, so no expression value of theirs is released.
 """
 
 from __future__ import annotations
@@ -334,7 +357,28 @@ REPLICATE_FILTER = _paper(
     "2 } < 0 . 9 5 )$ were discarded",
     page="Methods 4.1 (paper.md line 148)",
     note="each record is one biological-replicate library; the replicates of a "
-    "condition share its project:condition identifier",
+    "condition share its project:condition identifier, and each carries its "
+    "Sample_name as replicate_id",
+)
+QC_DISCARDS = _si_docx(
+    {
+        "collected": 541,
+        "pipeline_or_fastqc": 40,
+        "low_read_counts": 54,
+        "global_correlation_or_non_kt2440": 62,
+        "replicate_correlation": 64,
+        "compendium": 321,
+    },
+    "40 Samples were discarded owing to failure in their processing with the pipeline or "
+    "passing FastQC; 54 samples were discarded because of too low read counts; 62 "
+    "samples were discarded for consistency because they showed poor global correlation "
+    "or were prepared with non-KT2440 strains; 64 additional samples with poor replicate "
+    "correlation (<0.95) were discarded. Finally, 321 RNA-seq samples that passed the "
+    "quality control were utilized as putidaPRECISE321.",
+    page="Supplementary Figure 1 (a), caption",
+    note="40 + 54 + 62 + 64 = 220 = 541 - 321, the number of sample-sheet rows under the "
+    "heading 'Samples not included in PRECISE321' (measured by release_account); the "
+    "sheet gives no per-sample reason, so the four steps are counted, not assigned",
 )
 CONDITION_IDENTIFIERS = _paper(
     "project:condition",
@@ -444,6 +488,7 @@ SOURCED_VALUES: tuple[SourcedValue, ...] = (
     KT2440_ONLY,
     EXPRESSION_UNIT,
     REPLICATE_FILTER,
+    QC_DISCARDS,
     CONDITION_IDENTIFIERS,
     PROJECT_BASELINE,
     COUNTS_REPOSITORY,
@@ -675,6 +720,99 @@ def compendium_samples(samples: pd.DataFrame) -> pd.DataFrame:
     if flagged["Sample_name"].duplicated().any():
         raise ValueError("sample sheet repeats a compendium Sample_name")
     return flagged
+
+
+#: The sample sheet's heading row above the libraries the authors left out.
+EXCLUDED_HEADING = "Samples not included in PRECISE321"
+#: The ``Note`` prefix of the 6 libraries sequenced after the compendium was fixed.
+POST_HOC_NOTE = "newly generated sample after obtaining 84 iMs from putidaPRECISE321"
+
+
+class ReleaseAccount(BaseModel):
+    """Every sample-sheet library: stored, excluded by the authors, or never released.
+
+    Written to ``preprocess/build_report.json`` so the one allowed drop (an author
+    withdrawal) is counted against the authors' own numbers (``QC_DISCARDS``).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    n_compendium: int = Field(description="rows flagged putidaPRECISE321 = 1, stored")
+    n_excluded_by_authors: int = Field(
+        description="named rows under the EXCLUDED_HEADING row (flag blank)"
+    )
+    n_excluded_with_x_column: int = Field(
+        description="of those, rows whose library still has a column in 5-X"
+    )
+    post_hoc_samples: list[str] = Field(
+        description="rows flagged 0 whose Note starts POST_HOC_NOTE; no X or count column"
+    )
+    replicate_positions: dict[str, int] = Field(
+        description="compendium libraries by rep_name, e.g. {'1': 117}"
+    )
+    conditions_repeating_rep_name: list[str] = Field(
+        description="conditions in which two libraries carry the same rep_name"
+    )
+
+
+def release_account(
+    samples: pd.DataFrame, x_columns: Collection[str], count_columns: Collection[str]
+) -> ReleaseAccount:
+    """Account for every sample-sheet row; raise where a library would go unstored.
+
+    The excluded rows must number the four discards ``QC_DISCARDS`` states, and a post-hoc
+    row must have no expression column in either released matrix (else a released
+    library would be ignored, which the per-replicate policy forbids).
+    """
+    flag = samples["putidaPRECISE321"]
+    names = samples["Sample_name"]
+    named = names.notna() & (names.astype(str) != EXCLUDED_HEADING)
+    compendium = samples[flag == 1]
+    excluded = samples[named & flag.isna()]
+    post_hoc = samples[flag == 0]
+    stated = QC_DISCARDS.value
+    n_discarded = sum(
+        stated[k]
+        for k in (
+            "pipeline_or_fastqc",
+            "low_read_counts",
+            "global_correlation_or_non_kt2440",
+            "replicate_correlation",
+        )
+    )
+    if (
+        len(excluded) != n_discarded
+        or len(compendium) + n_discarded != (stated["collected"])
+    ):
+        raise ValueError(
+            f"{len(excluded)} excluded rows; Supplementary Fig. 1 states {n_discarded}"
+        )
+    if len(samples) != len(compendium) + len(excluded) + len(post_hoc) + int(
+        (~named).sum()
+    ):
+        raise ValueError("a sample-sheet row is neither stored, excluded nor post hoc")
+    for _, row in post_hoc.iterrows():
+        name = str(row["Sample_name"])
+        if not str(row["Note"]).startswith(POST_HOC_NOTE):
+            raise ValueError(f"{name}: flagged 0 without the post-hoc Note")
+        if name in set(x_columns) or name in set(count_columns):
+            raise ValueError(f"{name}: a post-hoc library has released values")
+    repeating = compendium.groupby("full_name")["rep_name"].apply(
+        lambda reps: bool(reps.duplicated().any())
+    )
+    positions = Counter(str(int(r)) for r in compendium["rep_name"])
+    return ReleaseAccount(
+        n_compendium=len(compendium),
+        n_excluded_by_authors=len(excluded),
+        n_excluded_with_x_column=int(
+            excluded["Sample_name"].astype(str).isin(set(x_columns)).sum()
+        ),
+        post_hoc_samples=post_hoc["Sample_name"].astype(str).tolist(),
+        replicate_positions=dict(sorted(positions.items())),
+        conditions_repeating_rep_name=sorted(
+            str(c) for c in repeating[repeating].index
+        ),
+    )
 
 
 def tpm_from_log(log_tpm: pd.DataFrame) -> pd.DataFrame:
@@ -1614,14 +1752,19 @@ def condition_environment(
 # Phenotype
 # --------------------------------------------------------------------------- #
 def expression_phenotype(
-    tpm: Mapping[str, float], counts: Mapping[str, int]
+    tpm: Mapping[str, float], counts: Mapping[str, int], replicate_id: str | None = None
 ) -> RNASeqExpressionPhenotype:
-    """One sample's (or one reference's) absolute expression."""
+    """One library's (or one reference's) absolute expression.
+
+    A library record carries its ``Sample_name`` as ``replicate_id``; a reference is an
+    aggregate over libraries and carries ``None``.
+    """
     return RNASeqExpressionPhenotype(
         expression_tpm=dict(tpm),
         expression_count=dict(counts),
         measurement_type=MEASUREMENT_TYPE,
         n_mapped_reads=None,
+        replicate_id=replicate_id,
         provenance_gaps=[N_MAPPED_READS_GAP],
     )
 
@@ -1705,6 +1848,7 @@ class BuildReport(BaseModel):
     replicates_per_condition: dict[str, int] = Field(
         description="stored conditions by replicate count, e.g. {'3': 40}"
     )
+    release: ReleaseAccount
 
 
 def drop_log(rows: Sequence[SampleRecord]) -> DropLog:
@@ -1810,6 +1954,12 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
         sample_names = compendium["Sample_name"].astype(str).tolist()
         log_tpm = data.log_tpm[sample_names]
         tpm = tpm_from_log(log_tpm)
+        counts = pd.read_csv(osp.join(self.raw_dir, COUNTS_NAME), index_col=0)
+        release = release_account(
+            data.samples,
+            [str(c) for c in data.log_tpm.columns],
+            [str(c) for c in counts.columns],
+        )
 
         # Genes: every X id must be a current KT2440 locus tag.
         _stored_genes, gene_report = reconcile_locus_tags(
@@ -1822,7 +1972,6 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
             )
 
         # Counts: pair each X column with the counts.csv column that reproduces it.
-        counts = pd.read_csv(osp.join(self.raw_dir, COUNTS_NAME), index_col=0)
         genome_lengths = pd.Series(
             {tag: gene_length(genome, str(tag)) for tag in log_tpm.index}, dtype=float
         )
@@ -1856,6 +2005,7 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
             count_pairing=pairing,
             drops=drop_log(rows),
             replicates_per_condition={str(k): v for k, v in sorted(replicates.items())},
+            release=release,
         )
         self._write_json("build_report.json", build_report.model_dump(mode="json"))
         self._write_json(
@@ -1940,6 +2090,7 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
                     environment=environments[full_name],
                     tpm=dict(zip(genes, tpm[sample].tolist(), strict=True)),
                     counts=dict(zip(genes, counts[column].tolist(), strict=True)),
+                    replicate_id=sample,
                 )
                 records.append(
                     {
@@ -1977,13 +2128,17 @@ class PutidaPrecise321Lim2022Dataset(ExperimentDataset):
         environment: Environment,
         tpm: Mapping[str, float],
         counts: Mapping[str, int],
+        replicate_id: str,
     ) -> RNASeqExpressionExperiment:
-        """One sample's experiment: its genotype on KT2440, its condition, its profile."""
+        """One library's experiment: its genotype on KT2440, its condition, its profile.
+
+        ``replicate_id`` is the library's ``Sample_name``.
+        """
         return RNASeqExpressionExperiment(
             dataset_name=self.name,
             genotype=Genotype(perturbations=list(perturbations)),
             environment=environment,
-            phenotype=expression_phenotype(tpm, counts),
+            phenotype=expression_phenotype(tpm, counts, replicate_id),
         )
 
     def _project_references(
@@ -2068,7 +2223,8 @@ def verify_records(
     The family verifier (``verify_rnaseq_dataset``) keys L1 on one record per (strain,
     environment), which a replicate-level compendium breaks by design: replicates share
     both, and a wild-type record carries no perturbation to hold a strain id. L1 here
-    is per sample instead: the count matches, and no two records carry the same profile.
+    is per sample instead: the count matches, no two records carry the same profile, and
+    every record carries its own library's ``replicate_id`` (one per library, none shared).
     """
     from pydantic import TypeAdapter
 
@@ -2100,6 +2256,21 @@ def verify_records(
             passed=n_repeated == 0,
             message=f"{len(profiles)} distinct count profiles over {len(records)} records",
             details={"n_records": len(records), "n_in_repeated_profiles": n_repeated},
+        )
+    )
+    replicate_ids = Counter(
+        r["experiment"]["phenotype"].get("replicate_id") for r in records
+    )
+    n_unlabelled = replicate_ids.pop(None, 0)
+    n_shared = sum(n for n in replicate_ids.values() if n > 1)
+    report.add(
+        LevelResult(
+            level=Level.L1,
+            name="replicate_id_per_library",
+            passed=n_unlabelled == 0 and n_shared == 0,
+            message=f"{len(replicate_ids)} distinct replicate ids over {len(records)} "
+            f"records; {n_unlabelled} without one, {n_shared} sharing one",
+            details={"n_unlabelled": n_unlabelled, "n_sharing": n_shared},
         )
     )
 

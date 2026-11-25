@@ -10,7 +10,8 @@ absent; build it with ``python -m torchcell.database.build_dataset_lmdb --datase
 PutidaPrecise321Lim2022Dataset``).
 
 Expected values of the data tests are the build's measured counts: 321 compendium
-samples, all 321 stored (180 until #1045 part 2 stored the 11 deletion samples whose
+samples, each one library (biological replicate) carrying its Sample_name as
+replicate_id, all 321 stored (180 until #1045 part 2 stored the 11 deletion samples whose
 symbols the annotation does not resolve and the 2 ``ALE:IL_PP5350`` samples, 193 until
 part 3 stored the 128 engineered, evolved, UWC1 and plasmid-bearing samples on their
 released backgrounds); 291 count columns paired by name and 30 by an in-house ``SBRG_*``
@@ -458,6 +459,91 @@ def test_reference_phenotype_is_the_log_mean_level() -> None:
     assert dict(phenotype.expression_count) == {"g1": 2, "g2": 12}
     assert phenotype.measurement_type == "rnaseq_tpm"
     assert [g.field for g in phenotype.provenance_gaps] == ["n_mapped_reads"]
+    # an aggregate over the baseline libraries names no single library
+    assert phenotype.replicate_id is None
+
+
+def test_a_library_phenotype_carries_its_sample_name_as_replicate_id() -> None:
+    """A library's phenotype names it; the id joins the phenotype's own fields."""
+    phenotype = m.expression_phenotype({"PP_0001": 1e6}, {"PP_0001": 7}, "SRX8245718")
+    assert phenotype.replicate_id == "SRX8245718"
+    assert m.expression_phenotype({"PP_0001": 1e6}, {"PP_0001": 7}).replicate_id is None
+
+
+def _release_sheet() -> pd.DataFrame:
+    """A miniature sample sheet in the release's layout (counts scaled down)."""
+    rows: list[dict[str, Any]] = [
+        {
+            "Sample_name": "a1",
+            "putidaPRECISE321": 1.0,
+            "full_name": "P:a",
+            "rep_name": 1.0,
+        },
+        {
+            "Sample_name": "a2",
+            "putidaPRECISE321": 1.0,
+            "full_name": "P:a",
+            "rep_name": 2.0,
+        },
+        {
+            "Sample_name": "b1",
+            "putidaPRECISE321": 1.0,
+            "full_name": "P:b",
+            "rep_name": 1.0,
+        },
+        {
+            "Sample_name": "b2",
+            "putidaPRECISE321": 1.0,
+            "full_name": "P:b",
+            "rep_name": 1.0,
+        },
+        {"Sample_name": None},
+        {"Sample_name": m.EXCLUDED_HEADING},
+        {"Sample_name": "x1"},
+        {"Sample_name": "x2"},
+        {
+            "Sample_name": "late",
+            "putidaPRECISE321": 0.0,
+            "Note": f"{m.POST_HOC_NOTE}, Del_relA_glc_rep1",
+        },
+    ]
+    return pd.DataFrame(rows)
+
+
+def test_release_account_counts_every_row_against_the_stated_discards(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stored, excluded and post-hoc rows add up; a repeated rep_name is named."""
+    stated = {
+        "collected": 6,
+        "pipeline_or_fastqc": 1,
+        "low_read_counts": 0,
+        "global_correlation_or_non_kt2440": 0,
+        "replicate_correlation": 1,
+        "compendium": 4,
+    }
+    discards = m.QC_DISCARDS
+    monkeypatch.setattr(m, "QC_DISCARDS", discards.model_copy(update={"value": stated}))
+    account = m.release_account(
+        _release_sheet(), ["a1", "a2", "b1", "b2", "x1"], ["a1", "a2", "b1", "b2"]
+    )
+    assert (
+        account.n_compendium,
+        account.n_excluded_by_authors,
+        account.n_excluded_with_x_column,
+        account.post_hoc_samples,
+        account.replicate_positions,
+        account.conditions_repeating_rep_name,
+    ) == (4, 2, 1, ["late"], {"1": 3, "2": 1}, ["P:b"])
+    with pytest.raises(ValueError, match="post-hoc library has released values"):
+        m.release_account(_release_sheet(), ["late"], [])
+    monkeypatch.setattr(
+        m,
+        "QC_DISCARDS",
+        discards.model_copy(update={"value": {**stated, "low_read_counts": 1}}),
+    )
+    with pytest.raises(ValueError, match="Supplementary Fig. 1 states 3"):
+        m.release_account(_release_sheet(), [], [])
 
 
 # --------------------------------------------------------------------------- #
@@ -550,13 +636,15 @@ _PIN = ReferenceGenome(
 )
 
 
-def _record(tpm: dict[str, float], counts: dict[str, int]) -> dict[str, Any]:
+def _record(
+    tpm: dict[str, float], counts: dict[str, int], replicate_id: str | None = "s1"
+) -> dict[str, Any]:
     env = m.aromatic_environment("Aromatic:Glucose")
     experiment = RNASeqExpressionExperiment(
         dataset_name="d",
         genotype=Genotype(perturbations=[]),
         environment=env,
-        phenotype=m.expression_phenotype(tpm, counts),
+        phenotype=m.expression_phenotype(tpm, counts, replicate_id),
     )
     reference = RNASeqExpressionExperimentReference(
         dataset_name="d",
@@ -574,8 +662,8 @@ def _record(tpm: dict[str, float], counts: dict[str, int]) -> dict[str, Any]:
 def test_verify_records_passes_distinct_scaled_profiles() -> None:
     """Two distinct profiles on the KT2440 pin, each summing to 1e6 TPM, pass L0-L4."""
     records = [
-        _record({"PP_0001": 4e5, "PP_0002": 6e5}, {"PP_0001": 4, "PP_0002": 6}),
-        _record({"PP_0001": 5e5, "PP_0002": 5e5}, {"PP_0001": 5, "PP_0002": 5}),
+        _record({"PP_0001": 4e5, "PP_0002": 6e5}, {"PP_0001": 4, "PP_0002": 6}, "s1"),
+        _record({"PP_0001": 5e5, "PP_0002": 5e5}, {"PP_0001": 5, "PP_0002": 5}, "s2"),
     ]
     report = m.verify_records(
         records, expected_count=2, gene_universe={"PP_0001", "PP_0002"}
@@ -584,13 +672,33 @@ def test_verify_records_passes_distinct_scaled_profiles() -> None:
 
 
 def test_verify_records_fails_a_repeated_profile_and_an_unknown_gene() -> None:
-    """A duplicated profile fails L1; a gene outside the universe fails L4."""
+    """A duplicated library fails both L1 rules; a gene outside the universe fails L4."""
     record = _record({"PP_0001": 4e5, "PP_0002": 6e5}, {"PP_0001": 4, "PP_0002": 6})
     report = m.verify_records(
         [record, record], expected_count=2, gene_universe={"PP_0001"}
     )
     failed = {r.name for r in report.results if not r.passed}
-    assert failed == {"sample_uniqueness", "gene_containment_kt2440"}
+    assert failed == {
+        "sample_uniqueness",
+        "replicate_id_per_library",
+        "gene_containment_kt2440",
+    }
+
+
+def test_verify_records_fails_a_library_without_a_replicate_id() -> None:
+    """Distinct profiles still fail when one record does not name its library."""
+    records = [
+        _record({"PP_0001": 4e5, "PP_0002": 6e5}, {"PP_0001": 4, "PP_0002": 6}, "s1"),
+        _record({"PP_0001": 5e5, "PP_0002": 5e5}, {"PP_0001": 5, "PP_0002": 5}, None),
+    ]
+    report = m.verify_records(
+        records, expected_count=2, gene_universe={"PP_0001", "PP_0002"}
+    )
+    (result,) = [r for r in report.results if not r.passed]
+    assert (result.name, result.details) == (
+        "replicate_id_per_library",
+        {"n_unlabelled": 1, "n_sharing": 0},
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -633,6 +741,37 @@ def test_raw_mirror_manifest_carries_the_module_pins() -> None:
     assert si["sha256"] == m.SI_XLSX_SHA256
 
 
+@pytest.mark.data
+def test_the_release_holds_one_column_per_library_and_the_stated_discards() -> None:
+    """Every sample-sheet row is a stored library, an author exclusion or unreleased.
+
+    Read from the raw mirror, not a build: 321 libraries in 118 conditions of 2, 3 or 4
+    replicates, rep_name positions 1-4, two conditions repeating a rep_name, the 220
+    excluded rows (40 + 54 + 62 + 64, Supplementary Fig. 1) of which 182 keep an X
+    column, and the 6 Results 2.5 libraries with no released value.
+    """
+    data = m.read_supplementary_data(m.raw_mirror_dir() / m.SI_XLSX_REL)
+    counts = pd.read_csv(m.raw_mirror_dir() / m.COUNTS_REL, index_col=0, nrows=1)
+    account = m.release_account(
+        data.samples,
+        [str(c) for c in data.log_tpm.columns],
+        [str(c) for c in counts.columns],
+    )
+    assert (
+        account.n_compendium,
+        account.n_excluded_by_authors,
+        account.n_excluded_with_x_column,
+        len(account.post_hoc_samples),
+    ) == (321, 220, 182, 6)
+    assert account.replicate_positions == {"1": 117, "2": 118, "3": 78, "4": 8}
+    assert account.conditions_repeating_rep_name == ["ALE:IL_Control", "Phase:WT_Tr"]
+    assert data.log_tpm.shape[1] == 321 + 182
+    compendium = m.compendium_samples(data.samples)
+    sizes = compendium.groupby("full_name").size().value_counts().to_dict()
+    assert sizes == {3: 71, 2: 40, 4: 7}
+    assert compendium["Sample_name"].astype(str).is_unique
+
+
 def _build_root() -> str:
     return osp.join(os.environ["DATA_ROOT"], "data/torchcell/putida_precise321_lim2022")
 
@@ -673,6 +812,12 @@ def test_build_report_states_the_measured_aggregation_and_drops() -> None:
     genes = report["expression_genes"]
     assert genes["unique_names"] == 5564
     assert genes["status_histogram"]["current"] == 5564
+    assert report["replicates_per_condition"] == {"2": 40, "3": 71, "4": 7}
+    assert (
+        report["release"]["n_excluded_by_authors"],
+        report["release"]["n_excluded_with_x_column"],
+        len(report["release"]["post_hoc_samples"]),
+    ) == (220, 182, 6)
 
 
 @pytest.mark.data
@@ -700,12 +845,16 @@ def test_built_records_pass_the_gate_and_carry_their_sources() -> None:
     assert sorted(by_key) == list(range(321))
     for index, record in by_key.items():
         row = by_index[index]
+        assert record["experiment"]["phenotype"]["replicate_id"] == row["sample_name"]
+        assert record["reference"]["phenotype_reference"]["replicate_id"] is None
         assert record["publication"] == row["publication"]
         tags = [
             p["systematic_gene_name"]
             for p in record["experiment"]["genotype"]["perturbations"]
         ]
-        assert tags == row["deleted_genes"]
+        # Genotype sorts its perturbations; the ledger keeps the condition label's order
+        # (Crc:Del_crcZ_crcY lists crcZ first)
+        assert sorted(tags) == sorted(row["deleted_genes"])
         for tag in tags:
             deletions[tag] = deletions.get(tag, 0) + 1
         total = sum(record["experiment"]["phenotype"]["expression_tpm"].values())

@@ -567,3 +567,67 @@ censoring flag and the published interval both travel on the record, and the thi
 absent is absent in the SOURCE, not in the schema: no per-protein uncertainty of a
 two-replicate MEAN is published, and no per-protein synthesis rate exists at all, which
 is the one typed `ProvenanceGap` left on the phenotype.
+
+## 2026.11.24 - One record per biological replicate (#1174, #1178)
+
+The store now holds one `ProteinTurnoverExperiment` per released biological replicate:
+13 conditions x 2 replicate columns = **26 records** (was 13, one per condition holding
+the authors' "Average of half-lives (hrs)").
+
+### What a replicate is, sourced
+
+- Results (`paper.md` L38, sha256 `1be6b9d9...`): "13 different growth conditions, each
+  with two biological replicates".
+- Reporting Summary (`si/si12.md` L62, sha256 `e7fd2a45...`): "Replication A in
+  duplicates. These are biological replicates measures months apart." [sic, OCR]
+- Reporting Summary (`si/si12.md` L60): "No data was excluded from analyses." No replicate
+  cell is a withdrawn sample, so none is dropped.
+- Supplementary Data 1 (`torchcell-raw/.../si/41467_2024_49920_MOESM4_ESM.xlsx`, sha256
+  `546cc57b...`), sheet `TableS1`, header row 4: per condition the columns
+  `Half-life (hrs) in <condition>, replicate 1`, `..., replicate 2`, `Average of
+  half-lives (hrs) in <condition>`. `replicate_id` is the number the header prints.
+- One replicate is one chemostat (or batch) time course; the eight TMTpro time points and
+  every quantified peptide are combined by the authors' own fit into one half-life, so the
+  technical level is inside the record. `ProteinTurnoverPhenotype` has no field for the
+  technical n or its sample unit (schema gap, reported).
+
+### What each record stores
+
+- `half_life`: the replicate cell verbatim (the `*` ceiling flag moves to `censoring`);
+  `degradation_rate = ln 2 / half_life`.
+- `n_replicates` 1 for every key; `degradation_rate_se` `None` with a `ProvenanceGap`
+  reason `not_applicable_single_measurement`.
+- `censoring`: `right` exactly where this replicate's cell is capped (2,082 keys over the
+  26 records), `uncensored` otherwise (59,705).
+- The released Supplementary Data 7 interval of the same cell, inverted onto the rate
+  scale: 59,621 bound pairs (was 4,270, only the one-replicate keys of the condition
+  means). 84 cells with a non-positive released upper endpoint are refused, never clamped,
+  and listed in `build_accounting.json`.
+- `phenotype_reference` is unchanged: the N-lim 6 h wild-type aggregate built from the
+  authors' mean column, `replicate_id=None`, with the paper's two-replicate sd/sqrt(2).
+
+### Counts and checks (scratch build)
+
+Build: `$DATA_ROOT/tmp/scratch/per-replicate-gupta2024/protein_turnover_gupta2024`
+(before: `.../before/protein_turnover_gupta2024`).
+
+| quantity | before | after |
+|---|---|---|
+| records | 13 | 26 (13 per replicate position) |
+| stored protein keys | 33,187 | 61,787 (30,603 replicate 1, 31,184 replicate 2) |
+| right-censored keys | 1,989 | 2,082 |
+| stored bound pairs | 4,270 | 59,621 |
+| refused bounds | 25 | 84 |
+
+- 61,811 released replicate cells; the two isoform rows (`sp|P07363-2|CHEA_ECOLI`,
+  `sp|P63284-2|CLPB_ECOLI`) hold 24 of them, so 61,787 are stored.
+- Each condition's two records union to Table 1's count less the isoform rows (13 of 13).
+- Mean reproduction: grouping the 26 records by condition and averaging `half_life`
+  reproduces every one of the 33,187 old stored half-lives; max |difference| 1.78e-15 h
+  (float rounding). `ln 2` over that mean reproduces the old `degradation_rate` to the same
+  1.78e-15. The mean of the two replicate RATES is not the old rate (harmonic vs arithmetic
+  mean), and five released replicate cells are below 1e-7 h (e.g. 2.4e-9 h for b0953 in a
+  C-limited replicate 2), so a replicate record can carry a rate near 3e8 per hour that the
+  authors' mean had averaged away. Those are the released values, kept as released.
+- Verifier (`verify_build`): PASS, 26 of 26, including the new
+  `every_record_is_one_biological_replicate_and_each_condition_has_both`.

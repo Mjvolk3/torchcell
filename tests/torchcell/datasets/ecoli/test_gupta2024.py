@@ -44,6 +44,7 @@ from torchcell.datamodels.schema import (
     StrainReferenceGenome,
 )
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
+from torchcell.verification.sourced import ProvenanceGapReason
 
 # --------------------------------------------------------------------------- #
 # A synthetic MG1655 assembly: four protease / SsrA loci plus three others.
@@ -304,10 +305,33 @@ def test_a_protein_key_of_another_shape_is_refused() -> None:
 # Synthetic: the condition table
 # --------------------------------------------------------------------------- #
 def test_every_condition_is_distinct_in_what_identifies_a_record() -> None:
-    """13 conditions, 13 identities: no two records could collide."""
-    assert len(gp.CONDITIONS) == gp.EXPECTED_RECORDS
+    """13 conditions, 13 identities, two replicate records each: 26 records."""
+    assert len(gp.CONDITIONS) == 13
+    assert gp.REPLICATE_IDS == ("1", "2")
+    assert gp.EXPECTED_RECORDS == len(gp.CONDITIONS) * len(gp.REPLICATE_IDS) == 26
     identities = {gp._condition_identity(c) for c in gp.CONDITIONS}
-    assert len(identities) == gp.EXPECTED_RECORDS
+    assert len(identities) == len(gp.CONDITIONS)
+
+
+def test_every_condition_pins_its_two_replicate_records() -> None:
+    """Measured on the pinned workbooks: 61,787 replicate keys, 2,082 capped, 59,621 bounds.
+
+    A condition's two records union to its stored count, so each is at most that count
+    and together they are at least it.
+    """
+    assert sum(sum(c.replicate_proteins) for c in gp.CONDITIONS) == 61787
+    assert sum(sum(c.replicate_censored_keys) for c in gp.CONDITIONS) == 2082
+    assert sum(sum(c.replicate_interval_keys) for c in gp.CONDITIONS) == 59621
+    for condition in gp.CONDITIONS:
+        for number in (0, 1):
+            keys = condition.replicate_proteins[number]
+            assert keys <= condition.stored_proteins
+            assert (
+                condition.replicate_censored_keys[number]
+                + (condition.replicate_interval_keys[number])
+                <= keys
+            )
+        assert sum(condition.replicate_proteins) >= condition.stored_proteins
 
 
 def test_every_condition_pins_its_censored_and_interval_key_counts() -> None:
@@ -866,6 +890,183 @@ def test_every_stored_key_states_whether_it_is_censored() -> None:
 
 
 # --------------------------------------------------------------------------- #
+# Synthetic: one record per biological replicate (#1174, #1178)
+# --------------------------------------------------------------------------- #
+def test_each_replicate_column_is_its_own_record_with_its_own_value() -> None:
+    """Replicate 1 and 2 keep their released cells verbatim; nothing is averaged."""
+    condition = _condition("wt_nlim_6h")
+    cells = _triple(2.0, 4.0)
+    intervals = _pair((1.6, 2.5), (3.5, 4.6))
+    first = gp.replicate_values(condition, ["b0001"], cells, intervals, "1")
+    second = gp.replicate_values(condition, ["b0001"], cells, intervals, "2")
+    assert first.replicate_id == "1"
+    assert second.replicate_id == "2"
+    assert first.half_life == {"b0001": 2.0}
+    assert second.half_life == {"b0001": 4.0}
+    assert first.degradation_rate["b0001"] == pytest.approx(math.log(2.0) / 2.0)
+    assert second.degradation_rate["b0001"] == pytest.approx(math.log(2.0) / 4.0)
+    assert first.censoring == {"b0001": Censoring.uncensored}
+    assert first.degradation_rate_lower == {"b0001": pytest.approx(math.log(2.0) / 2.5)}
+    assert first.degradation_rate_upper == {"b0001": pytest.approx(math.log(2.0) / 1.6)}
+    assert second.degradation_rate_lower == {
+        "b0001": pytest.approx(math.log(2.0) / 4.6)
+    }
+    aggregate = gp.condition_values(condition, ["b0001"], cells, intervals)
+    assert (first.half_life["b0001"] + second.half_life["b0001"]) / 2 == (
+        aggregate.half_life["b0001"]
+    )
+
+
+def test_a_protein_one_replicate_did_not_quantify_is_not_a_key_of_that_record() -> None:
+    """The empty cell is an absent key in that replicate only, never a zero."""
+    condition = _condition("wt_nlim_6h")
+    cells = _triple(None, 4.0)
+    intervals = _pair(None, (3.5, 4.6))
+    first = gp.replicate_values(condition, ["b0001"], cells, intervals, "1")
+    second = gp.replicate_values(condition, ["b0001"], cells, intervals, "2")
+    assert first.half_life == {}
+    assert first.censoring == {}
+    assert second.half_life == {"b0001": 4.0}
+
+
+def test_a_ceiling_cell_is_right_censored_in_its_own_record_only() -> None:
+    """The cap belongs to the culture it capped, and it carries no bound."""
+    condition = _condition("wt_nlim_6h")
+    cells = _triple(8.0, 4.0, ceiling=True)
+    intervals = _pair("Undetermined", (3.5, 4.6))
+    first = gp.replicate_values(condition, ["b0001"], cells, intervals, "1")
+    second = gp.replicate_values(condition, ["b0001"], cells, intervals, "2")
+    assert first.half_life == {"b0001": 8.0}
+    assert first.censoring == {"b0001": Censoring.right}
+    assert first.degradation_rate_lower == {}
+    assert second.censoring == {"b0001": Censoring.uncensored}
+    assert set(second.degradation_rate_lower) == {"b0001"}
+
+
+def test_a_ceiling_cell_with_a_determined_interval_stops_the_build() -> None:
+    """``*`` and ``Undetermined`` are one fact, so a determined interval is a conflict."""
+    with pytest.raises(RuntimeError, match="the two workbooks disagree"):
+        gp.replicate_values(
+            _condition("wt_nlim_6h"),
+            ["b0001"],
+            _triple(8.0, None, ceiling=True),
+            _pair((7.0, 9.0), None),
+            "1",
+        )
+
+
+def test_a_replicate_estimate_with_no_interval_cell_is_refused() -> None:
+    """The release publishes an interval for every determined fit."""
+    with pytest.raises(RuntimeError, match="publishes an interval for every"):
+        gp.replicate_values(
+            _condition("wt_nlim_6h"),
+            ["b0001"],
+            _triple(2.0, 4.0),
+            _pair(None, (3.5, 4.6)),
+            "1",
+        )
+
+
+def test_a_replicate_interval_with_a_non_positive_endpoint_is_refused_not_clamped() -> (
+    None
+):
+    """The cell keeps its value and loses only the bound, which is listed."""
+    values = gp.replicate_values(
+        _condition("wt_nlim_6h"),
+        ["b0001"],
+        _triple(0.5, None),
+        _pair((0.169, -0.523), None),
+        "1",
+    )
+    assert values.half_life == {"b0001": 0.5}
+    assert values.degradation_rate_lower == {}
+    assert len(values.refused_intervals) == 1
+    refused = values.refused_intervals[0]
+    assert refused.replicate_id == "1"
+    assert refused.locus_tag == "b0001"
+    assert refused.released_upper_hours == pytest.approx(-0.523)
+
+
+def test_a_replicate_interval_that_does_not_bracket_its_rate_stops_the_build() -> None:
+    """A stored bound that excludes the stored value would misreport both."""
+    with pytest.raises(RuntimeError, match="does not bracket the stored rate"):
+        gp.replicate_values(
+            _condition("wt_nlim_6h"),
+            ["b0001"],
+            _triple(2.0, None),
+            _pair((3.0, 4.0), None),
+            "1",
+        )
+
+
+def test_dropping_the_isoform_rows_clears_every_map_and_their_refusals() -> None:
+    """The isoform key is no key of any record, and its refused bound goes with it."""
+    values = gp.replicate_values(
+        _condition("wt_nlim_6h"),
+        ["b0001", "iso"],
+        _triple(2.0, None) + _triple(0.5, None),
+        _pair((1.6, 2.5), None) + _pair((0.169, -0.523), None),
+        "1",
+    )
+    values.drop({"iso"})
+    assert set(values.half_life) == {"b0001"}
+    assert set(values.degradation_rate) == {"b0001"}
+    assert set(values.censoring) == {"b0001"}
+    assert values.refused_intervals == ()
+
+
+def test_a_replicate_phenotype_is_one_measurement_with_no_standard_error() -> None:
+    """Every key has n = 1, SE None and gapped as not applicable, the interval kept."""
+    values = gp.replicate_values(
+        _condition("wt_nlim_6h"),
+        ["b0001", "b0002"],
+        _triple(2.0, 4.0) + _triple(8.0, 4.0, ceiling=True),
+        _pair((1.6, 2.5), (3.5, 4.6)) + _pair("Undetermined", (3.5, 4.6)),
+        "1",
+    )
+    phenotype = gp.replicate_phenotype(values)
+    assert phenotype.replicate_id == "1"
+    assert phenotype.n_replicates == {"b0001": 1, "b0002": 1}
+    assert phenotype.degradation_rate_se is None
+    assert phenotype.gapped_fields() == {"synthesis_rate", "degradation_rate_se"}
+    gap = next(g for g in phenotype.provenance_gaps if g.field == "degradation_rate_se")
+    assert gap.reason is ProvenanceGapReason.not_applicable_single_measurement
+    assert phenotype.half_life == {"b0001": 2.0, "b0002": 8.0}
+    assert phenotype.censoring == {
+        "b0001": Censoring.uncensored,
+        "b0002": Censoring.right,
+    }
+    assert set(phenotype.degradation_rate_lower or {}) == {"b0001"}
+    assert phenotype.confidence_level == gp.CONFIDENCE_LEVEL
+    assert phenotype.interval_method == gp.INTERVAL_METHOD
+    assert phenotype.measurement_type == gp.MEASUREMENT_TYPE
+
+
+def test_the_replicate_id_is_the_number_each_column_header_prints() -> None:
+    """``replicate_id`` is the source's own label, read off the pinned headers."""
+    assert gp.REPLICATE_COLUMNS.quote == gp.CONDITIONS[0].header_replicate_1
+    assert gp.REPLICATE_COLUMNS.value == gp.REPLICATE_IDS
+    for condition in gp.CONDITIONS:
+        assert condition.header_replicate_1.endswith("replicate 1")
+        assert condition.header_replicate_2.endswith("replicate 2")
+    assert gp.REPLICATES_ARE_BIOLOGICAL.provenance.sha256 == gp.SI12_MD_SHA256
+    assert "biological replicates" in gp.REPLICATES_ARE_BIOLOGICAL.quote
+
+
+def test_the_reference_stays_the_aggregate_with_no_replicate_id() -> None:
+    """The phenotype_reference summarizes both replicates, so it names neither."""
+    condition = _condition("wt_nlim_6h")
+    values = gp.condition_values(
+        condition, ["b0001"], _triple(2.0, 4.0), _pair(None, None)
+    )
+    reference = gp.phenotype(condition, values)
+    assert reference.replicate_id is None
+    assert reference.n_replicates == {"b0001": 2}
+    assert reference.half_life is not None
+    assert reference.half_life["b0001"] == pytest.approx(3.0)
+
+
+# --------------------------------------------------------------------------- #
 # Synthetic: the workbook readers
 # --------------------------------------------------------------------------- #
 def test_the_readers_return_every_released_row_in_order(tmp_path: Path) -> None:
@@ -1179,8 +1380,10 @@ def _accounting(**overrides: Any) -> gp.BuildAccounting:
         "kept_protein_keys": 9,
         "dropped_protein_keys": 1,
         "per_condition_keys": {},
-        "per_condition_censored_keys": {},
-        "per_condition_interval_keys": {},
+        "per_record_keys": {},
+        "per_record_censored_keys": {},
+        "per_record_interval_keys": {},
+        "mean_reproduction_max_abs_diff_hours": 0.0,
         "rules": [],
         "identifier_route": gp.IdentifierRoute(
             source_rows=10,
@@ -1261,6 +1464,20 @@ SYNTHETIC_CENSORED = {condition.key: 1 for condition in gp.CONDITIONS}
 #: published interval.
 SYNTHETIC_INTERVALS = {condition.key: 0 for condition in gp.CONDITIONS}
 SYNTHETIC_INTERVALS[gp.CONDITIONS[0].key] = 1
+#: Per replicate RECORD: replicate 1 keys every stored row (``clpP`` capped, so one
+#: right-censored key and one bound fewer); replicate 2 keys every stored row except, in
+#: the first condition, ``thrA``, whose second cell is empty. Every determined cell's
+#: synthetic interval inverts, so a record's bounds are its uncensored keys.
+SYNTHETIC_REPLICATE_KEYS = {
+    condition.key: (SYNTHETIC_STORED[condition.key], SYNTHETIC_STORED[condition.key])
+    for condition in gp.CONDITIONS
+}
+SYNTHETIC_REPLICATE_KEYS[gp.CONDITIONS[0].key] = (6, 5)
+SYNTHETIC_REPLICATE_CENSORED = {condition.key: (1, 0) for condition in gp.CONDITIONS}
+SYNTHETIC_REPLICATE_INTERVALS = {
+    key: (first - 1, second)
+    for key, (first, second) in SYNTHETIC_REPLICATE_KEYS.items()
+}
 
 
 def _pin(
@@ -1311,6 +1528,13 @@ def mirrored(
                     "stored_proteins": SYNTHETIC_STORED[condition.key],
                     "censored_keys": SYNTHETIC_CENSORED[condition.key],
                     "interval_keys": SYNTHETIC_INTERVALS[condition.key],
+                    "replicate_proteins": SYNTHETIC_REPLICATE_KEYS[condition.key],
+                    "replicate_censored_keys": SYNTHETIC_REPLICATE_CENSORED[
+                        condition.key
+                    ],
+                    "replicate_interval_keys": SYNTHETIC_REPLICATE_INTERVALS[
+                        condition.key
+                    ],
                 }
             )
             for condition in gp.CONDITIONS
@@ -1326,23 +1550,31 @@ def mirrored(
 def test_the_loader_builds_the_synthetic_release_end_to_end(
     tmp_path: Path, mirrored: Path, genome: EcoliK12MG1655Genome
 ) -> None:
-    """One record per condition, with the counts, keys and gene set the ledger states."""
+    """One record per replicate, with the counts, keys and gene set the ledger states."""
     root = tmp_path / "dataset"
     dataset = gp.ProteinTurnoverGupta2024Dataset(root=str(root), ecoli_genome=genome)
-    assert len(dataset) == gp.EXPECTED_RECORDS
+    assert len(dataset) == gp.EXPECTED_RECORDS == 26
     assert sorted(dataset.gene_set) == ["b0437", "b0439", "b2621", "b3932"]
     references = dataset.experiment_reference_index
     assert references is not None
 
     records = [dataset[index] for index in range(len(dataset))]
-    by_identity = {
-        gp._record_identity({"experiment": record["experiment"]}): record
+    by_key = {
+        (
+            gp._record_identity({"experiment": record["experiment"]}),
+            record["experiment"]["phenotype"]["replicate_id"],
+        ): record
         for record in records
     }
-    assert len(by_identity) == gp.EXPECTED_RECORDS
-    wild_type = by_identity[
-        gp._condition_identity(next(c for c in gp.CONDITIONS if c.key == "wt_nlim_6h"))
-    ]
+    assert len(by_key) == gp.EXPECTED_RECORDS
+
+    def record_of(condition_key: str, replicate_id: str) -> dict[str, Any]:
+        condition = next(c for c in gp.CONDITIONS if c.key == condition_key)
+        return cast(
+            dict[str, Any], by_key[(gp._condition_identity(condition), replicate_id)]
+        )
+
+    wild_type = record_of("wt_nlim_6h", "1")
     assert wild_type["experiment"]["genotype"]["perturbations"] == []
     phenotype = wild_type["experiment"]["phenotype"]
     assert set(phenotype["degradation_rate"]) == {
@@ -1357,38 +1589,45 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
     assert DROPPED not in phenotype["degradation_rate"]
     for key, rate in phenotype["degradation_rate"].items():
         assert rate == pytest.approx(math.log(2.0) / phenotype["half_life"][key])
-    assert math.isnan(phenotype["degradation_rate_se"]["b0437"])
+    # Replicate 1's released cells, verbatim: row r is 1.0 + r h, clpP is its ceiling.
+    assert phenotype["half_life"]["b0001"] == pytest.approx(1.0)
+    assert phenotype["half_life"]["b0437"] == pytest.approx(
+        next(c for c in gp.CONDITIONS if c.key == "wt_nlim_6h").ceiling_hours
+    )
+    assert phenotype["degradation_rate_se"] is None
+    assert set(phenotype["n_replicates"].values()) == {1}
     assert phenotype["measurement_type"] == gp.MEASUREMENT_TYPE
     assert phenotype["confidence_level"] == gp.CONFIDENCE_LEVEL
     assert phenotype["interval_method"] == gp.INTERVAL_METHOD
     assert set(phenotype["censoring"]) == set(phenotype["degradation_rate"])
     assert phenotype["censoring"]["b0437"] == Censoring.right.value
     assert phenotype["censoring"]["b0001"] == Censoring.uncensored.value
-    assert phenotype["degradation_rate_lower"] == {}
-    assert phenotype["degradation_rate_upper"] == {}
+    assert set(phenotype["degradation_rate_lower"]) == set(
+        phenotype["degradation_rate"]
+    ) - {"b0437"}
     assert wild_type["experiment"]["environment"][
         "dilution_rate_per_hour"
     ] == pytest.approx(math.log(2.0) / 6.0)
-
-    batch = by_identity[
-        gp._condition_identity(
-            next(c for c in gp.CONDITIONS if c.key == "wt_minimal_batch_42min")
+    second = record_of("wt_nlim_6h", "2")["experiment"]["phenotype"]
+    assert second["half_life"]["b0001"] == pytest.approx(1.5)
+    assert second["censoring"]["b0437"] == Censoring.uncensored.value
+    # Grouping the two records and averaging reproduces the authors' mean column.
+    for key, hours in phenotype["half_life"].items():
+        assert (hours + second["half_life"][key]) / 2 == pytest.approx(
+            float(_mean(*_cells(6, ROWS.index(next(r for r in ROWS if r[2] == key)))))
         )
-    ]
-    assert batch["experiment"]["environment"]["dilution_rate_per_hour"] is None
-    batch_phenotype = batch["experiment"]["phenotype"]
-    assert set(batch_phenotype["degradation_rate_lower"]) == {"b0002"}
-    assert set(batch_phenotype["degradation_rate_upper"]) == {"b0002"}
-    low = batch_phenotype["degradation_rate_lower"]["b0002"]
-    high = batch_phenotype["degradation_rate_upper"]["b0002"]
-    assert low < batch_phenotype["degradation_rate"]["b0002"] < high
-    assert batch_phenotype["n_replicates"]["b0002"] == 1
+    reference = wild_type["reference"]["phenotype_reference"]
+    assert reference["replicate_id"] is None
+    assert reference["n_replicates"]["b0001"] == 2
 
-    triple = by_identity[
-        gp._condition_identity(
-            next(c for c in gp.CONDITIONS if c.key == "clpp_lon_hslv_nlim_6h")
-        )
-    ]
+    batch_first = record_of("wt_minimal_batch_42min", "1")
+    assert batch_first["experiment"]["environment"]["dilution_rate_per_hour"] is None
+    assert "b0439" not in batch_first["experiment"]["phenotype"]["half_life"]
+    batch_second = record_of("wt_minimal_batch_42min", "2")["experiment"]["phenotype"]
+    assert "b0002" not in batch_second["half_life"]
+    assert "b0002" in batch_first["experiment"]["phenotype"]["half_life"]
+
+    triple = record_of("clpp_lon_hslv_nlim_6h", "2")
     assert sorted(
         p["systematic_gene_name"]
         for p in triple["experiment"]["genotype"]["perturbations"]
@@ -1399,20 +1638,37 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
     assert accounting["kept_records"] == gp.EXPECTED_RECORDS
     assert accounting["dropped_protein_keys"] == 1
     assert accounting["rules"][0]["items"] == [DROPPED]
+    assert accounting["candidate_records"] == gp.EXPECTED_RECORDS
     assert accounting["per_condition_keys"] == SYNTHETIC_STORED
-    assert accounting["ceiling_cells"] == gp.EXPECTED_RECORDS
-    assert accounting["censored_keys"] == gp.EXPECTED_RECORDS
-    assert accounting["uncensored_keys"] == sum(SYNTHETIC_STORED.values()) - (
-        gp.EXPECTED_RECORDS
+    assert accounting["per_record_keys"] == {
+        f"{key}/{replicate_id}": SYNTHETIC_REPLICATE_KEYS[key][number]
+        for key in SYNTHETIC_REPLICATE_KEYS
+        for number, replicate_id in enumerate(gp.REPLICATE_IDS)
+    }
+    assert accounting["per_record_censored_keys"] == {
+        f"{key}/{replicate_id}": SYNTHETIC_REPLICATE_CENSORED[key][number]
+        for key in SYNTHETIC_REPLICATE_CENSORED
+        for number, replicate_id in enumerate(gp.REPLICATE_IDS)
+    }
+    assert accounting["per_record_interval_keys"] == {
+        f"{key}/{replicate_id}": SYNTHETIC_REPLICATE_INTERVALS[key][number]
+        for key in SYNTHETIC_REPLICATE_INTERVALS
+        for number, replicate_id in enumerate(gp.REPLICATE_IDS)
+    }
+    stored_cells = sum(sum(pair) for pair in SYNTHETIC_REPLICATE_KEYS.values())
+    assert accounting["released_cells"] == stored_cells
+    assert accounting["ceiling_cells"] == len(gp.CONDITIONS)
+    assert accounting["censored_keys"] == len(gp.CONDITIONS)
+    assert accounting["uncensored_keys"] == stored_cells - len(gp.CONDITIONS)
+    assert accounting["interval_keys"] == sum(
+        sum(pair) for pair in SYNTHETIC_REPLICATE_INTERVALS.values()
     )
-    assert accounting["interval_keys"] == 1
     assert accounting["one_replicate_keys"] == 1
+    assert accounting["mean_reproduction_max_abs_diff_hours"] < 1e-9
     assert accounting["refused_intervals"] == []
     assert accounting["confidence_level"] == gp.CONFIDENCE_LEVEL
     assert accounting["interval_method"] == gp.INTERVAL_METHOD
     assert accounting["measurement_type"] == gp.MEASUREMENT_TYPE
-    assert accounting["per_condition_censored_keys"] == SYNTHETIC_CENSORED
-    assert accounting["per_condition_interval_keys"] == SYNTHETIC_INTERVALS
     assert accounting["dilution_rate_per_hour"]["wt_nlim_6h"] == pytest.approx(
         math.log(2.0) / 6.0
     )
@@ -1432,7 +1688,7 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
     assert "sp|P00002|THRA_ECOLI,P00002,thrA,gene_symbol,thrA,b0002,yes" in route
     assert f"{DROPPED},P00002,,,,{DROPPED},no" in route
     ceilings = (root / "preprocess" / "ceiling_cells.csv").read_text()
-    assert ceilings.count("b0437,1,") == gp.EXPECTED_RECORDS
+    assert ceilings.count("b0437,1,") == len(gp.CONDITIONS)
     assert (root / "preprocess" / "build_manifest.json").is_file()
     assert (root / "raw" / gp.HALF_LIVES_FILENAME).is_file()
 
@@ -1450,7 +1706,10 @@ def test_the_verifier_passes_on_the_synthetic_build(
     assert "stored_protein_keys_are_loci_of_the_pinned_assembly" in names
     assert "dilution_rate_per_hour_is_ln2_over_the_doubling_time" in names
     assert "stored_interval_brackets_the_stored_rate" in names
-    assert "per_condition_censored_and_interval_key_counts_are_the_pinned_ones" in names
+    assert "per_replicate_censored_and_interval_key_counts_are_the_pinned_ones" in names
+    assert (
+        "every_record_is_one_biological_replicate_and_each_condition_has_both" in names
+    )
     assert (root / "preprocess" / "verification_report.json").is_file()
 
 
@@ -1460,7 +1719,7 @@ def test_the_verifier_fails_a_record_count_that_is_not_the_pinned_one(
     """L1 is an oracle, so a wrong expectation must FAIL rather than be tolerated."""
     root = tmp_path / "dataset"
     gp.ProteinTurnoverGupta2024Dataset(root=str(root), ecoli_genome=genome)
-    report = gp.verify_build(str(root), genome=genome, expected_count=12)
+    report = gp.verify_build(str(root), genome=genome, expected_count=13)
     assert not report.passed
 
 
@@ -1636,6 +1895,77 @@ def test_the_released_intervals_reproduce_the_pinned_censoring_and_bound_counts(
 
 
 @requires_mirror
+def test_the_real_release_is_26_replicate_records_with_the_pinned_counts() -> None:
+    """One record per released replicate column, measured on the real bytes.
+
+    13 conditions x 2 replicates; 61,811 released replicate cells, of which the two
+    isoform rows hold 24, so 61,787 are stored keys: 30,603 in replicate 1 and 31,184 in
+    replicate 2. 2,082 are capped, 59,621 carry their own released bound and 84 bounds
+    are refused for a non-positive endpoint. Each condition's two records union to its
+    stored count, and their mean reproduces the authors' mean column.
+    """
+    half_path = _mirror_path(gp.HALF_LIVES_REL)
+    ci_path = _mirror_path(gp.CONFIDENCE_REL)
+    assert half_path is not None and ci_path is not None
+    protein_ids, _, cells = gp.read_half_lives(str(half_path))
+    _, intervals = gp.read_confidence_intervals(str(ci_path))
+    dropped = set(gp.DROPPED_PROTEIN_KEYS)
+    records = 0
+    per_position = {replicate_id: 0 for replicate_id in gp.REPLICATE_IDS}
+    released = 0
+    censored = 0
+    bounds = 0
+    refused = 0
+    worst = 0.0
+    for condition in gp.CONDITIONS:
+        aggregate = gp.condition_values(
+            condition, protein_ids, cells[condition.key], intervals[condition.key]
+        )
+        replicates = []
+        for number, replicate_id in enumerate(gp.REPLICATE_IDS):
+            values = gp.replicate_values(
+                condition,
+                protein_ids,
+                cells[condition.key],
+                intervals[condition.key],
+                replicate_id,
+            )
+            released += len(values.half_life)
+            values.drop(dropped)
+            records += 1
+            per_position[replicate_id] += len(values.half_life)
+            assert len(values.half_life) == condition.replicate_proteins[number]
+            this_censored = sum(
+                1 for state in values.censoring.values() if state is Censoring.right
+            )
+            assert this_censored == condition.replicate_censored_keys[number]
+            assert (
+                len(values.degradation_rate_lower)
+                == (condition.replicate_interval_keys[number])
+            )
+            censored += this_censored
+            bounds += len(values.degradation_rate_lower)
+            refused += len(values.refused_intervals)
+            replicates.append(values)
+        union = set(replicates[0].half_life) | set(replicates[1].half_life)
+        assert len(union) == condition.stored_proteins, condition.key
+        for key, hours in aggregate.half_life.items():
+            if key in dropped:
+                continue
+            own = [r.half_life[key] for r in replicates if key in r.half_life]
+            worst = max(worst, abs(sum(own) / len(own) - hours))
+    assert records == gp.EXPECTED_RECORDS == 26
+    assert released == 61811
+    assert per_position == {"1": 30603, "2": 31184}
+    assert sum(per_position.values()) == 61787
+    assert censored == 2082
+    assert bounds == 59621
+    assert refused == 84
+    assert bounds + refused + censored == 61787
+    assert worst < 1e-12
+
+
+@requires_mirror
 def test_every_sourced_quote_is_still_verbatim_in_its_pinned_mirror_file() -> None:
     """A quote that drifted is a sourced value that no longer says what it claims."""
     import os
@@ -1648,8 +1978,12 @@ def test_every_sourced_quote_is_still_verbatim_in_its_pinned_mirror_file() -> No
     texts = {
         gp.PAPER_MD: (library / gp.PAPER_MD).read_text(),
         gp.SI1_MD: (library / gp.SI1_MD).read_text(),
+        gp.SI12_MD: (library / gp.SI12_MD).read_text(),
     }
     for sourced in (
+        gp.REPLICATES,
+        gp.REPLICATES_ARE_BIOLOGICAL,
+        gp.NO_DATA_EXCLUDED,
         gp.CONFIDENCE_LEVEL_SOURCE,
         gp.INTERVAL_FROM_CURVE_FIT_VARIANCE,
         gp.INTERVAL_T_QUANTILE,

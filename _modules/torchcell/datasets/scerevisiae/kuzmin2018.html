@@ -453,6 +453,26 @@
         <span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_refuse_varying_strain_fitness</span><span class="p">(</span>
+    <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">strain_column</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fitness_column</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Refuse a strain whose single-mutant fitness differs between its rows.</span>
+
+<span class="sd">    Data S1 repeats a strain's own fitness on every row the strain is on, so</span>
+<span class="sd">    SmfKuzmin2018Dataset stores one record per strain from its first row. That is only</span>
+<span class="sd">    a lossless reading while the value is the same on every row (blank included): 0 of</span>
+<span class="sd">    the 1,181 array strains and 0 of the 364 digenic query strains vary. A strain that</span>
+<span class="sd">    did would be two released values, and nothing records which one is right.</span>
+<span class="sd">    """</span>
+    <span class="n">n_values</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">strain_column</span><span class="p">)[</span><span class="n">fitness_column</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">(</span><span class="n">dropna</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">varying</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">n_values</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">n_values</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">varying</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Kuzmin 2018 Data S1 gives </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">varying</span><span class="p">)</span><span class="si">}</span><span class="s2"> strain(s) more than one "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">fitness_column</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="n">varying</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_combined_mutant_uncertainty</span><span class="p">(</span><span class="n">std_val</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Ontology fields for a combined-mutant-fitness sample SD over colonies.</span>
 
@@ -669,33 +689,37 @@
             <span class="s2">"Combined mutant fitness standard deviation"</span>
         <span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
 
-        <span class="c1"># array single mutants</span>
-        <span class="n">unique_array_allele_names</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"Array allele name"</span><span class="p">]</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span>
-        <span class="n">df_array</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span>
-            <span class="n">df</span><span class="p">[</span><span class="s2">"Array allele name"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">unique_array_allele_names</span><span class="p">)</span>
-        <span class="p">]</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">"Array allele name"</span><span class="p">])</span>
+        <span class="c1"># One record per STRAIN, never per allele name: a single-mutant fitness is a</span>
+        <span class="c1"># property of the strain measured, repeated on every row the strain is on.</span>
+        <span class="c1"># Array side: one record per array strain (1,181 strains, 1,181 names).</span>
+        <span class="n">_refuse_varying_strain_fitness</span><span class="p">(</span>
+            <span class="n">df</span><span class="p">,</span> <span class="s2">"Array strain ID"</span><span class="p">,</span> <span class="s2">"Array single mutant fitness"</span>
+        <span class="p">)</span>
+        <span class="n">df_array</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">"Array strain ID"</span><span class="p">])</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">df_array</span><span class="p">[</span><span class="s2">"smf_type"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"array_smf"</span>
-        <span class="c1"># query single mutants, trigenic is not smf</span>
+        <span class="c1"># Query side (trigenic is not smf): one record per digenic query strain. MAD2,</span>
+        <span class="c1"># SET1 and SRN2 each have TWO single-mutant control strains of one genotype,</span>
+        <span class="c1"># each built as the control of a different double-mutant query (Additional</span>
+        <span class="c1"># Data S3: tm3288 / tm3211, tm3287 / tm3346, tm3122 / tm3057) and each with its</span>
+        <span class="c1"># own fitness; keying on the allele name kept only the first (#1176).</span>
         <span class="n">digenic_df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"Combined mutant type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"digenic"</span><span class="p">]</span>
-
-        <span class="c1"># Get unique 'Query allele name' and find first instances</span>
-        <span class="n">unique_query_allele_names</span> <span class="o">=</span> <span class="n">digenic_df</span><span class="p">[</span>
-            <span class="s2">"Query allele name no ho"</span>
-        <span class="p">]</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span>
-        <span class="n">df_query</span> <span class="o">=</span> <span class="n">digenic_df</span><span class="p">[</span>
-            <span class="n">digenic_df</span><span class="p">[</span><span class="s2">"Query allele name no ho"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">unique_query_allele_names</span><span class="p">)</span>
-        <span class="p">]</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">"Query allele name"</span><span class="p">])</span>
+        <span class="n">_refuse_varying_strain_fitness</span><span class="p">(</span>
+            <span class="n">digenic_df</span><span class="p">,</span> <span class="s2">"Query strain ID"</span><span class="p">,</span> <span class="s2">"Query single/double mutant fitness"</span>
+        <span class="p">)</span>
+        <span class="n">df_query</span> <span class="o">=</span> <span class="n">digenic_df</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">"Query strain ID"</span><span class="p">])</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">df_query</span><span class="p">[</span><span class="s2">"smf_type"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"query_smf"</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df_array</span><span class="p">,</span> <span class="n">df_query</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="c1"># replace delta symbol for neo4j import</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"'"</span><span class="p">,</span> <span class="s2">"_prime"</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"Δ"</span><span class="p">,</span> <span class="s2">"_delta"</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">df</span><span class="p">[</span><span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="s2">"Query single/double mutant fitness"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()]</span>
-            <span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># A strain with no released fitness has no record: keep a row on the value</span>
+        <span class="c1"># it stores (array fitness for an array single, query fitness for a query</span>
+        <span class="c1"># single). Data S1 leaves 3 digenic query strains blank and 0 array strains.</span>
+        <span class="n">stored_value</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"Array single mutant fitness"</span><span class="p">]</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">df</span><span class="p">[</span><span class="s2">"smf_type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"array_smf"</span><span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s2">"Query single/double mutant fitness"</span><span class="p">]</span>
         <span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">stored_value</span><span class="o">.</span><span class="n">notna</span><span class="p">()]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_attach_query_strain_sd</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">df_s4</span><span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s2">"smf_type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"query_smf"</span><span class="p">)</span></div>
 
 

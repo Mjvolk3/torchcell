@@ -1269,10 +1269,9 @@ RNASEQ_DATASETS: dict[str, dict[str, Any]] = {
             ),
         ),
     },
-    # Issue #854: the count-less transcriptome. One record per released sample column
-    # (replicates of a condition share a genotype and an environment), and L4 is every
-    # key a gene of the MG1655 gene set, since the loader refuses the 148 b-numbers
-    # that are not.
+    # Issue #854: the count-less transcriptome. One record per released sample column,
+    # each one biological replicate (13 pairs share a genotype and an environment, #1178);
+    # every released row is a key (#1069), so L4 containment is a reported finding.
     "mrna_fraction_balakrishnan2022": {
         "root": "data/torchcell/mrna_fraction_balakrishnan2022",
         # 29 released columns - 1 duplicate 'a4_1' column.
@@ -1288,10 +1287,10 @@ RNASEQ_DATASETS: dict[str, dict[str, Any]] = {
             sha256="9d7df03bbbcdf1f92e93027014e746da5bcf42bf4d6b4be9061dd1803f71cc20",
             method=(
                 "Table S3 sheet '2 - RNAseq-ss (fractions)': one "
-                "MrnaNumberFractionExperiment per released sample column of NCM3722 or "
-                "an NCM3722 derivative, the column's mRNA number fractions verbatim over "
-                "the 4,176 b-numbers in the MG1655 gene set; the reference is the "
-                "medium's wild-type library pair mean"
+                "MrnaNumberFractionExperiment per released sample column (one "
+                "biological replicate) of NCM3722 or an NCM3722 derivative, the "
+                "column's mRNA number fractions verbatim over all 4,342 released rows; "
+                "the reference is the medium's wild-type replicate pair mean"
             ),
             page="Science 378:eabk2066; GEO GSE205717 Table S3",
         ),

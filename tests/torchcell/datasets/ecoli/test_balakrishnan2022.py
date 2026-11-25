@@ -61,6 +61,13 @@ GENE_SET = {"b0001", "b0002", "b1101", "b3212"}
 LOCI = {*GENE_SET, "b0003"}
 RETIRED = {"b3036"}
 UNIQUE = list(dict.fromkeys(bk.RELEASED_HEADERS))
+#: The 14 '_1' samples and the sample each Description cell says it replicates.
+REPLICATE_OF = {
+    "c0_1": "c5",
+    **{f"c{i}_1": f"c{i}" for i in range(1, 5)},
+    **{f"a{i}_1": f"a{i}" for i in range(1, 5)},
+    **{f"r{i}_1": f"r{i}" for i in range(5)},
+}
 
 
 class FakeGenome:
@@ -99,7 +106,11 @@ def _description_row(spec: bk.SampleSpec, first: bool) -> list[Any]:
         bk.CARBON_SOURCE,
         nitrogen,
         spec.supplement,
-        text.get(spec.strain, "wild type"),
+        (
+            text.get(spec.strain, "wild type")
+            if spec.replicate_of is None
+            else bk.REPLICATE_DESCRIPTION.format(spec.replicate_of)
+        ),
         f"{spec.sample}.fastq",
     ]
 
@@ -158,6 +169,25 @@ def test_twenty_nine_described_samples_become_twenty_eight_records() -> None:
     assert len(bk.RELEASED_HEADERS) == 29
     assert len(set(bk.RELEASED_HEADERS)) == len(bk.LOADED) == bk.EXPECTED_RECORDS == 28
     assert {s.sample for s in bk.LOADED} == set(bk.RELEASED_HEADERS)
+
+
+def test_records_are_thirteen_replicate_pairs_and_two_single_libraries() -> None:
+    assert {s.sample: s.replicate_of for s in bk.SAMPLES if s.replicate_of} == (
+        REPLICATE_OF
+    )
+    groups = bk.replicate_groups(bk.LOADED)
+    sizes = {n: sum(1 for m in groups.values() if len(m) == n) for n in (1, 2)}
+    assert sizes == bk.EXPECTED_REPLICATE_GROUP_SIZES == {2: 13, 1: 2}
+    assert sorted(m[0] for m in groups.values() if len(m) == 1) == ["a3", "r5"]
+    assert ["c5", "c0_1"] in groups.values()
+    assert sum(len(m) for m in groups.values()) == bk.EXPECTED_RECORDS
+
+
+def test_replicate_groups_refuse_a_condition_shared_by_unpaired_samples() -> None:
+    c1, c2 = (next(s for s in bk.SAMPLES if s.sample == n) for n in ("c1", "c2"))
+    clash = c2.model_copy(update={"supplement": c1.supplement})
+    with pytest.raises(RuntimeError, match="not one pair"):
+        bk.replicate_groups([c1, clash])
 
 
 def test_strain_genotypes_type_the_table_s1_edits() -> None:
@@ -236,7 +266,7 @@ def test_media_defer_the_base_and_state_the_nitrogen_salt() -> None:
 # Released-bytes checks
 # --------------------------------------------------------------------------- #
 def test_check_quotes_reads_all_four_files(release: dict[str, str]) -> None:
-    assert bk.check_quotes(release) == {"n_quotes_checked": 21}
+    assert bk.check_quotes(release) == {"n_quotes_checked": 26}
 
 
 @pytest.mark.parametrize(
@@ -260,7 +290,11 @@ def test_sample_metadata_matches_and_pins_the_fill_series(
     release: dict[str, str],
 ) -> None:
     out = bk.check_sample_metadata(release[bk.TABLE_S3])
-    assert out == {"n_described": 29, "nitrogen_fill_series": bk.NITROGEN_FILL_SERIES}
+    assert out == {
+        "n_described": 29,
+        "nitrogen_fill_series": bk.NITROGEN_FILL_SERIES,
+        "biological_replicate_of": REPLICATE_OF,
+    }
 
 
 @pytest.mark.parametrize(
@@ -270,6 +304,10 @@ def test_sample_metadata_matches_and_pins_the_fill_series(
         ("F2", "0.4% glucose", "carbon source"),
         ("G2", "11.34 mM (NH4)2SO8", "off-recipe nitrogen"),
         ("A1", "Sample", "header"),
+        # c0_1 (row 7) is the replicate of c5, not of c1
+        ("I7", "Biological replicate of sample c1", "replicate_of='c5'"),
+        # c5 (row 2) is a first-series sample, not a replicate
+        ("I2", "Biological replicate of sample c0_1", "replicate_of=None"),
     ],
 )
 def test_sample_metadata_refuses_a_changed_cell(
@@ -481,8 +519,16 @@ def test_process_builds_twenty_eight_records_and_verifies(
     assert ledger["keyed_by_released_gene_cell"]["n"] == 1
     assert ledger["keyed_by_released_gene_cell"]["items"] == ["insJK"]
     assert "refused_rows" not in ledger
+    structure = ledger["replicate_structure"]
+    assert structure["group_sizes"] == {"2": 13, "1": 2}
+    assert structure["groups"]["NCM3722 | M9 | None"] == ["c5", "c0_1"]
     samples = pd.read_csv(preprocess / "samples.csv")
     assert list(samples["sample"]) == [s.sample for s in bk.LOADED]
+    assert {
+        k: v
+        for k, v in zip(samples["sample"], samples["replicate_of"], strict=True)
+        if isinstance(v, str)
+    } == {k: v for k, v in REPLICATE_OF.items() if k != "a3_1"}
     assert (
         dict(zip(samples["sample"], samples["nitrogen_cell_verbatim"], strict=True))[
             "a4_1"
@@ -538,7 +584,7 @@ def test_raw_mirror_matches_every_pin_and_every_quote() -> None:
     assert file_sha256(str(si_text)) == bk.SI_TEXT_SHA256
     assert bk.check_quotes(
         {**paths, bk.MORI_APPENDIX: str(mori), bk.SI_TEXT: str(si_text)}
-    ) == {"n_quotes_checked": 21}
+    ) == {"n_quotes_checked": 26}
     assert bk.si_layout_text(root / bk.SI_PDF_RELPATH) == si_text.read_text()
 
 
@@ -571,3 +617,57 @@ def test_built_lmdb_numbers() -> None:
     assert ledger["keyed_by_released_gene_cell"]["items"][:2] == ["insAB-1", "insAB-2"]
     samples = pd.read_csv(Path(root, "preprocess", "samples.csv"))
     assert set(samples["n_gene_keys"]) == {4342}
+
+
+@pytest.mark.data
+def test_real_description_sheet_names_fourteen_biological_replicates() -> None:
+    """The real Table S3: 14 'Biological replicate of sample <x>' cells, as declared."""
+    table = bk.raw_mirror_dir(_data_root()) / bk.MIRROR_RELPATH[bk.TABLE_S3]
+    out = bk.check_sample_metadata(str(table))
+    assert out["biological_replicate_of"] == REPLICATE_OF
+    assert out["n_described"] == 29
+
+
+@pytest.mark.data
+def test_dev_store_is_one_record_per_released_replicate_column() -> None:
+    """Every dev-store record is its released column verbatim; pairs share a condition.
+
+    Each record is matched to the one released column it equals (a bijection over the
+    28 loaded samples). Grouped by genotype and environment the 28 records are 13 pairs
+    and 2 singletons, and each reference is the mean of its medium's two wild-type
+    records to float precision.
+    """
+    from torchcell.verification.runners import load_records
+
+    data_root = _data_root()
+    store = osp.join(data_root, "data", "torchcell", "mrna_fraction_balakrishnan2022")
+    if not osp.isdir(osp.join(store, "processed", "lmdb")):
+        pytest.skip(f"no dev store under {store}")
+    records = load_records(store)
+    assert len(records) == bk.EXPECTED_RECORDS
+    table = bk.raw_mirror_dir(data_root) / bk.MIRROR_RELPATH[bk.TABLE_S3]
+    keyed = bk.gene_keys(bk.read_fractions(str(table))[0])
+    columns = {
+        spec.sample: {k.key: k.row.values[spec.sample] for k in keyed}
+        for spec in bk.LOADED
+    }
+    by_sample: dict[str, Any] = {}
+    for rec in records:
+        stored = dict(rec["experiment"]["phenotype"]["mrna_number_fraction"])
+        assert rec["experiment"]["phenotype"]["n_libraries"] == 1
+        (sample,) = [name for name, column in columns.items() if column == stored]
+        by_sample[sample] = rec
+    assert set(by_sample) == set(columns)
+    conditions: dict[str, list[str]] = {}
+    for sample, rec in by_sample.items():
+        exp = rec["experiment"]
+        key = json.dumps([exp["genotype"], exp["environment"]], sort_keys=True)
+        conditions.setdefault(key, []).append(sample)
+    assert sorted(len(m) for m in conditions.values()) == [1, 1] + [2] * 13
+    for medium, (first, second) in bk.REFERENCE_SAMPLES.items():
+        ref = by_sample[first]["reference"]["phenotype_reference"]
+        assert ref["n_libraries"] == 2
+        a = by_sample[first]["experiment"]["phenotype"]["mrna_number_fraction"]
+        b = by_sample[second]["experiment"]["phenotype"]["mrna_number_fraction"]
+        worst = max(abs(ref["mrna_number_fraction"][k] - (a[k] + b[k]) / 2) for k in a)
+        assert worst < 1e-15, medium

@@ -1,0 +1,516 @@
+{
+  "release": {
+    "release_sha256": "9edcf6f6f34b957661b23f2a5e7f6f14e25c387ab825e0b4c79a5f995f8de690",
+    "table_s2_sha256": "54be9cbc384bdbc7b1aa5a1da872d0e10ca513526f1f446ed068d27675f10fa8",
+    "doubled_labels": 12,
+    "doubled_labels_stored": 11,
+    "doubled_columns_stored": 22,
+    "nonblank_cells_stored": 1212,
+    "batch0_conditions_matched_to_table_s2": 235,
+    "own_row_r": {
+      "min": 0.4109,
+      "max": 0.9504
+    },
+    "other_row_r": {
+      "min": -0.2934,
+      "max": 0.6408
+    },
+    "study_r_between_columns": {
+      "min": -0.3786,
+      "max": 0.7268
+    },
+    "every_column_matches_its_own_row_better": true,
+    "labels": {
+      "ymjC": {
+        "columns": [
+          {
+            "release_field": 595,
+            "replicate_id": "S1 Dataset column 595",
+            "nonblank_study_cells": 52,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 586": {
+                "r": 0.5943,
+                "cells": 230
+              },
+              "Table S2 row 3299": {
+                "r": -0.0481,
+                "cells": 230
+              }
+            }
+          },
+          {
+            "release_field": 3480,
+            "replicate_id": "S1 Dataset column 3480",
+            "nonblank_study_cells": 56,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 586": {
+                "r": -0.1161,
+                "cells": 200
+              },
+              "Table S2 row 3299": {
+                "r": 0.7336,
+                "cells": 200
+              }
+            }
+          }
+        ],
+        "study_r_between_the_two_columns": {
+          "r": 0.1312,
+          "cells": 51
+        }
+      },
+      "mgrB": {
+        "columns": [
+          {
+            "release_field": 963,
+            "replicate_id": "S1 Dataset column 963",
+            "nonblank_study_cells": 56,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 962": {
+                "r": 0.754,
+                "cells": 231
+              },
+              "Table S2 row 3333": {
+                "r": 0.2388,
+                "cells": 231
+              }
+            }
+          },
+          {
+            "release_field": 3706,
+            "replicate_id": "S1 Dataset column 3706",
+            "nonblank_study_cells": 56,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 962": {
+                "r": 0.2427,
+                "cells": 200
+              },
+              "Table S2 row 3333": {
+                "r": 0.6383,
+                "cells": 200
+              }
+            }
+          }
+        ],
+        "study_r_between_the_two_columns": {
+          "r": 0.5719,
+          "cells": 55
+        }
+      },
+      "yhfL": {
+        "columns": [
+          {
+            "release_field": 1744,
+            "replicate_id": "S1 Dataset column 1744",
+            "nonblank_study_cells": 57,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 1754": {
+                "r": 0.7928,
+                "cells": 227
+              },
+              "Table S2 row 3276": {
+                "r": 0.2564,
+                "cells": 226
+              }
+            }
+          },
+          {
+            "release_field": 3300,
+            "replicate_id": "S1 Dataset column 3300",
+            "nonblank_study_cells": 45,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 1754": {
+                "r": -0.0218,
+                "cells": 199
+              },
+              "Table S2 row 3276": {
+                "r": 0.6364,
+                "cells": 198
+              }
+            }
+          }
+        ],
+        "study_r_between_the_two_columns": {
+          "r": 0.376,
+          "cells": 45
+        }
+      },
+      "dppA": {
+        "columns": [
+          {
+            "release_field": 1806,
+            "replicate_id": "S1 Dataset column 1806",
+            "nonblank_study_cells": 51,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 1786": {
+                "r": 0.6231,
+                "cells": 227
+              },
+              "Table S2 row 3353": {
+                "r": 0.112,
+                "cells": 227
+              }
+            }
+          },
+          {
+            "release_field": 3793,
+            "replicate_id": "S1 Dataset column 3793",
+            "nonblank_study_cells": 56,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 1786": {
+                "r": 0.033,
+                "cells": 200
+              },
+              "Table S2 row 3353": {
+                "r": 0.5992,
+                "cells": 200
+              }
+            }
+          }
+        ],
+        "study_r_between_the_two_columns": {
+          "r": 0.1939,
+          "cells": 50
+        }
+      },
+      "bamE": {
+        "columns": [
+          {
+            "release_field": 2174,
+            "replicate_id": "S1 Dataset column 2174",
+            "nonblank_study_cells": 55,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 2154": {
+                "r": 0.9179,
+                "cells": 228
+              },
+              "Table S2 row 3359": {
+                "r": 0.6408,
+                "cells": 227
+              }
+            }
+          },
+          {
+            "release_field": 3838,
+            "replicate_id": "S1 Dataset column 3838",
+            "nonblank_study_cells": 56,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 2154": {
+                "r": 0.5224,
+                "cells": 200
+              },
+              "Table S2 row 3359": {
+                "r": 0.9504,
+                "cells": 199
+              }
+            }
+          }
+        ],
+        "study_r_between_the_two_columns": {
+          "r": 0.7268,
+          "cells": 54
+        }
+      },
+      "ykgO": {
+        "columns": [
+          {
+            "release_field": 2964,
+            "replicate_id": "S1 Dataset column 2964",
+            "nonblank_study_cells": 57,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 2974": {
+                "r": 0.8555,
+                "cells": 228
+              },
+              "Table S2 row 3357": {
+                "r": -0.1612,
+                "cells": 228
+              }
+            }
+          },
+          {
+            "release_field": 3830,
+            "replicate_id": "S1 Dataset column 3830",
+            "nonblank_study_cells": 56,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 2974": {
+                "r": -0.0229,
+                "cells": 200
+              },
+              "Table S2 row 3357": {
+                "r": 0.6468,
+                "cells": 200
+              }
+            }
+          }
+        ],
+        "study_r_between_the_two_columns": {
+          "r": -0.0495,
+          "cells": 56
+        }
+      },
+      "gnsB": {
+        "columns": [
+          {
+            "release_field": 3017,
+            "replicate_id": "S1 Dataset column 3017",
+            "nonblank_study_cells": 57,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 3003": {
+                "r": 0.6291,
+                "cells": 228
+              },
+              "Table S2 row 3320": {
+                "r": -0.1011,
+                "cells": 228
+              }
+            }
+          },
+          {
+            "release_field": 3652,
+            "replicate_id": "S1 Dataset column 3652",
+            "nonblank_study_cells": 56,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 3003": {
+                "r": -0.0622,
+                "cells": 200
+              },
+              "Table S2 row 3320": {
+                "r": 0.8705,
+                "cells": 200
+              }
+            }
+          }
+        ],
+        "study_r_between_the_two_columns": {
+          "r": -0.0072,
+          "cells": 56
+        }
+      },
+      "ydgU": {
+        "columns": [
+          {
+            "release_field": 3308,
+            "replicate_id": "S1 Dataset column 3308",
+            "nonblank_study_cells": 54,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 3280": {
+                "r": 0.702,
+                "cells": 200
+              },
+              "Table S2 row 3894": {
+                "r": -0.2934,
+                "cells": 200
+              }
+            }
+          },
+          {
+            "release_field": 3841,
+            "replicate_id": "S1 Dataset column 3841",
+            "nonblank_study_cells": 56,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 3280": {
+                "r": -0.0437,
+                "cells": 200
+              },
+              "Table S2 row 3894": {
+                "r": 0.5795,
+                "cells": 200
+              }
+            }
+          }
+        ],
+        "study_r_between_the_two_columns": {
+          "r": -0.3786,
+          "cells": 54
+        }
+      },
+      "ypfM": {
+        "columns": [
+          {
+            "release_field": 3656,
+            "replicate_id": "S1 Dataset column 3656",
+            "nonblank_study_cells": 56,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 3322": {
+                "r": 0.6781,
+                "cells": 200
+              },
+              "Table S2 row 3952": {
+                "r": 0.2405,
+                "cells": 199
+              }
+            }
+          },
+          {
+            "release_field": 3929,
+            "replicate_id": "S1 Dataset column 3929",
+            "nonblank_study_cells": 56,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 3322": {
+                "r": 0.1337,
+                "cells": 200
+              },
+              "Table S2 row 3952": {
+                "r": 0.4617,
+                "cells": 199
+              }
+            }
+          }
+        ],
+        "study_r_between_the_two_columns": {
+          "r": 0.1396,
+          "cells": 56
+        }
+      },
+      "yfiO*": {
+        "columns": [
+          {
+            "release_field": 3694,
+            "replicate_id": "S1 Dataset column 3694",
+            "nonblank_study_cells": 56,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 3455": {
+                "r": 0.8437,
+                "cells": 199
+              },
+              "Table S2 row 3867": {
+                "r": 0.1434,
+                "cells": 200
+              }
+            }
+          },
+          {
+            "release_field": 3801,
+            "replicate_id": "S1 Dataset column 3801",
+            "nonblank_study_cells": 56,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 3455": {
+                "r": 0.0217,
+                "cells": 199
+              },
+              "Table S2 row 3867": {
+                "r": 0.7799,
+                "cells": 200
+              }
+            }
+          }
+        ],
+        "study_r_between_the_two_columns": {
+          "r": 0.1562,
+          "cells": 56
+        }
+      },
+      "hokD": {
+        "columns": [
+          {
+            "release_field": 3783,
+            "replicate_id": "S1 Dataset column 3783",
+            "nonblank_study_cells": 56,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 3348": {
+                "r": 0.7161,
+                "cells": 199
+              },
+              "Table S2 row 3877": {
+                "r": 0.119,
+                "cells": 198
+              }
+            }
+          },
+          {
+            "release_field": 3807,
+            "replicate_id": "S1 Dataset column 3807",
+            "nonblank_study_cells": 56,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 3348": {
+                "r": 0.1889,
+                "cells": 199
+              },
+              "Table S2 row 3877": {
+                "r": 0.8805,
+                "cells": 198
+              }
+            }
+          }
+        ],
+        "study_r_between_the_two_columns": {
+          "r": 0.0645,
+          "cells": 56
+        }
+      },
+      "ryfB": {
+        "columns": [
+          {
+            "release_field": 3848,
+            "replicate_id": "S1 Dataset column 3848",
+            "nonblank_study_cells": 56,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 3365": {
+                "r": 0.4109,
+                "cells": 200
+              },
+              "Table S2 row 3936": {
+                "r": 0.0848,
+                "cells": 200
+              }
+            }
+          },
+          {
+            "release_field": 3920,
+            "replicate_id": "S1 Dataset column 3920",
+            "nonblank_study_cells": 56,
+            "batch0_r_with_table_s2_rows": {
+              "Table S2 row 3365": {
+                "r": -0.0355,
+                "cells": 200
+              },
+              "Table S2 row 3936": {
+                "r": 0.526,
+                "cells": 200
+              }
+            }
+          }
+        ],
+        "study_r_between_the_two_columns": {
+          "r": 0.1075,
+          "cells": 56
+        }
+      }
+    }
+  },
+  "stores": {
+    "records_before": 210998,
+    "records_after": 212210,
+    "after_records_identical_to_a_before_record": 210998,
+    "after_records_with_replicate_id": 1212,
+    "records_per_replicate_id": {
+      "S1 Dataset column 1744": 57,
+      "S1 Dataset column 1806": 51,
+      "S1 Dataset column 2174": 55,
+      "S1 Dataset column 2964": 57,
+      "S1 Dataset column 3017": 57,
+      "S1 Dataset column 3300": 45,
+      "S1 Dataset column 3308": 54,
+      "S1 Dataset column 3480": 56,
+      "S1 Dataset column 3652": 56,
+      "S1 Dataset column 3656": 56,
+      "S1 Dataset column 3706": 56,
+      "S1 Dataset column 3783": 56,
+      "S1 Dataset column 3793": 56,
+      "S1 Dataset column 3807": 56,
+      "S1 Dataset column 3830": 56,
+      "S1 Dataset column 3838": 56,
+      "S1 Dataset column 3841": 56,
+      "S1 Dataset column 3848": 56,
+      "S1 Dataset column 3920": 56,
+      "S1 Dataset column 3929": 56,
+      "S1 Dataset column 595": 52,
+      "S1 Dataset column 963": 56
+    },
+    "groups_after": 211621,
+    "groups_compared_with_before": 210998,
+    "groups_new_doubled_labels": 623,
+    "group_mean_max_abs_diff": 0.0
+  }
+}

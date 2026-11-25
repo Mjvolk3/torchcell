@@ -143,14 +143,30 @@
 <span class="sd">  columns it is paired with, as the paper's per-compound edgeR fit does. The library</span>
 <span class="sd">  size each factor multiplies is the column total over EVERY released barcode, before</span>
 <span class="sd">  any retention rule, so the stored value does not depend on this loader's gene policy.</span>
-<span class="sd">- per gene and replicate ``log2((TMM-CPM_rep + 1) / (mean TMM-CPM of the paired</span>
-<span class="sd">  controls + 1))``; the response is the mean of the three, the uncertainty their sample</span>
-<span class="sd">  SD (SE = SD/sqrt(3)). The pseudocount of 1 CPM is a loader choice the paper does not</span>
-<span class="sd">  state (``PSEUDOCOUNT_GAP``); cells whose control mean sits near it carry a large SD,</span>
-<span class="sd">  which is the low-count flag (no separate field).</span>
+<span class="sd">- per gene and inhibitor replicate column ``log2((TMM-CPM_rep + 1) / (mean TMM-CPM of</span>
+<span class="sd">  the paired controls + 1))``, stored as that replicate's own record. The pseudocount of</span>
+<span class="sd">  1 CPM is a loader choice the paper does not state (``PSEUDOCOUNT_GAP``); a record</span>
+<span class="sd">  whose control mean sits near it has a pseudocount-dominated denominator (no separate</span>
+<span class="sd">  field flags it).</span>
 
 <span class="sd">It is NOT the published edgeR logFC (no dispersion shrinkage, no prior count) and must</span>
 <span class="sd">not be treated as such; nothing mirrored carries the published numbers.</span>
+
+<span class="sd">ONE RECORD PER BIOLOGICAL REPLICATE (#1175, #1178). "Growth of the yeast deletion</span>
+<span class="sd">library in all inhibitory and control conditions were performed in independent</span>
+<span class="sd">biological triplicate" (``N_REPLICATES``), and the matrix releases each culture as its</span>
+<span class="sd">own count column, ``&lt;token&gt;_CG&lt;batch&gt;_rep&lt;n&gt;``. Each (library row, inhibitor column) is</span>
+<span class="sd">one record: ``n_samples=1``, ``sample_unit=biological_replicate``, ``replicate_id`` the</span>
+<span class="sd">release's own column label, and no dispersion fields (typed</span>
+<span class="sd">``not_applicable_single_measurement`` gaps, ``_single_replicate_gaps``). The loader no</span>
+<span class="sd">longer averages the three replicates or computes their SD; grouping the records by</span>
+<span class="sd">genotype and environment back to a mean is a model-time step. The mean of a strain's</span>
+<span class="sd">three records is exactly the value the earlier build stored for that (strain, condition)</span>
+<span class="sd">cell. Not converted (needs an owner decision, dataset note 2026.11.24): the denominator</span>
+<span class="sd">is still the loader's mean over the same batch's 4 control cultures (16 for the unpaired</span>
+<span class="sd">tokens), and the 16 control columns are not records, because storing each culture's</span>
+<span class="sd">absolute abundance (its count or CPM) needs an absolute ``MeasurementType`` member the</span>
+<span class="sd">schema does not have.</span>
 
 <span class="sd">CONTROL PAIRING. Each replicate is paired with the control columns of its OWN ``CG00n``</span>
 <span class="sd">batch, because the paper's design is paired and its comparison is "to the paired SynBase</span>
@@ -189,9 +205,9 @@
 <span class="sd">release's own ``std_name`` for that row (the ORF again when the cell is empty). No</span>
 <span class="sd">annotation lookup renames, merges or refuses a row: the 22 ORFs a current R64 annotation</span>
 <span class="sd">no longer lists as genes and the 17 ORFs it folds into another library ORF are stored</span>
-<span class="sd">under their released names, each its own barcoded strain. Every (row, condition) cell is</span>
-<span class="sd">stored with the method's value; a cell whose three replicate counts are all 0 is stored</span>
-<span class="sd">as the log2 of the CPM prior ratio with its sample SD, exactly 0, stored as 0.0. A</span>
+<span class="sd">under their released names, each its own barcoded strain. Every (row, inhibitor</span>
+<span class="sd">replicate column) is stored with the method's value; a replicate whose count is 0 is</span>
+<span class="sd">stored as the log2 of the CPM prior over its control mean plus the prior. A</span>
 <span class="sd">compound whose curated identity row resolves no structure (the QUADRIS formulation) is</span>
 <span class="sd">stored with the ``inchikey`` gap ``resolved_compound`` attaches and is counted in the</span>
 <span class="sd">ledger's ``compound_identity_gaps``.</span>
@@ -202,18 +218,20 @@
 <span class="sd">already deleted contradicts the strain's own construction. The rows are stored as</span>
 <span class="sd">released, the contradiction is written in the dataset note, and it is not resolved here.</span>
 
-<span class="sd">LEDGER (``preprocess/dropped_records.json``). Source cells = released rows x released</span>
-<span class="sd">condition tokens = stored + not-a-value + dropped. ``not_a_value``: a row whose EVERY</span>
-<span class="sd">count column is missing (2 rows of GSE186866) has no value in any condition and is not a</span>
-<span class="sd">record. Rules: a row whose gene column is not ORF-shaped would need the released</span>
-<span class="sd">gene-name leaf (none in GSE186866); a cell one of whose counts (a replicate or a paired</span>
-<span class="sd">control) is a source NaN has no value the method defines (none in GSE186866).</span>
+<span class="sd">LEDGER (``preprocess/dropped_records.json``). Source records = released rows x released</span>
+<span class="sd">inhibitor replicate columns (45 tokens x 3) = stored + not-a-value + dropped, and</span>
+<span class="sd">``stored_by_replicate`` counts the stored records per replicate position. ``not_a_value``:</span>
+<span class="sd">a row whose EVERY count column is missing (2 rows of GSE186866) has no value in any</span>
+<span class="sd">column and is not a record. Rules: a row whose gene column is not ORF-shaped would need</span>
+<span class="sd">the released gene-name leaf (none in GSE186866); a replicate record one of whose counts</span>
+<span class="sd">(its own or a paired control's) is a source NaN has no value the method defines (none in</span>
+<span class="sd">GSE186866).</span>
 
-<span class="sd">MISSING COUNTS AND BARCODES (#524). A missing count removes only the cells that use it,</span>
-<span class="sd">never the strain's row: the paper's per-compound edgeR fit permits no NA count and its</span>
-<span class="sd">design is three replicates against the paired controls, so a cell with a missing member</span>
-<span class="sd">count has no value the method defines, while the strain's other cells are untouched. TMM</span>
-<span class="sd">for a condition runs over the rows complete in that condition's own columns. A row whose</span>
+<span class="sd">MISSING COUNTS AND BARCODES (#524). A missing count removes only the records that use it,</span>
+<span class="sd">never the strain's row and never a sibling replicate: a replicate's value is its own</span>
+<span class="sd">count over its paired controls, so a record with a missing member count has no value the</span>
+<span class="sd">method defines, while the strain's other replicates and conditions are untouched. TMM for</span>
+<span class="sd">a condition runs over the rows complete in that condition's own columns. A row whose</span>
 <span class="sd">gene column carries no ``_&lt;barcode&gt;`` suffix is stored with ``barcode=None`` and a typed</span>
 <span class="sd">``ProvenanceGap`` (``BARCODE_ABSENT_GAP``), never an empty string. GSE186866 itself has</span>
 <span class="sd">no row with a partly missing count and no row without a barcode.</span>
@@ -277,7 +295,6 @@
     <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">,</span>
     <span class="n">StrainReferenceGenome</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
-    <span class="n">UncertaintyType</span><span class="p">,</span>
     <span class="n">Zygosity</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.strain_background</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -699,9 +716,33 @@
     <span class="p">),</span>
     <span class="n">note</span><span class="o">=</span><span class="s2">"the paper presents 'the log2 of the normalized read counts for "</span>
     <span class="s2">"inhibitor/control ratio' and states no pseudocount; the loader adds 1 CPM "</span>
-    <span class="s2">"(CPM_PRIOR) to both sides, a loader choice, so a cell whose control mean is near "</span>
-    <span class="s2">"1 CPM has a pseudocount-dominated denominator and a large replicate SD"</span><span class="p">,</span>
+    <span class="s2">"(CPM_PRIOR) to both sides, a loader choice, so a record whose control mean is near "</span>
+    <span class="s2">"1 CPM has a pseudocount-dominated denominator"</span><span class="p">,</span>
 <span class="p">)</span>
+
+<span class="c1">#: Why a per-replicate record carries no dispersion (``_single_replicate_gaps``).</span>
+<span class="n">_SINGLE_REPLICATE_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"one record is one biological replicate culture (one inhibitor count column of "</span>
+    <span class="s2">"GSE186866), a single measurement with no dispersion of its own; the dispersion "</span>
+    <span class="s2">"over a strain's three replicates is a model-time statistic over its three records"</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_single_replicate_gaps</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ProvenanceGap</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The typed absence of every dispersion field on an n = 1 replicate record."""</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">ProvenanceGap</span><span class="p">(</span>
+            <span class="n">field</span><span class="o">=</span><span class="n">field</span><span class="p">,</span>
+            <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_applicable_single_measurement</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="n">_SINGLE_REPLICATE_NOTE</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="s2">"environment_response_uncertainty"</span><span class="p">,</span>
+            <span class="s2">"environment_response_uncertainty_type"</span><span class="p">,</span>
+            <span class="s2">"environment_response_se"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+
 
 <span class="c1">#: The typed absence a library row with no ``_&lt;barcode&gt;`` suffix is served with (#524):</span>
 <span class="c1">#: the GSE186866 gene column is the release's only barcode source.</span>
@@ -1202,21 +1243,21 @@
 
 
 <span class="n">_PAIRED_UNITS</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"log2((TMM-normalized CPM of the inhibitor replicate + 1) / (mean TMM-normalized "</span>
-    <span class="s2">"CPM of the SAME CG batch's inhibitor-free control columns + 1)), mean of 3 "</span>
-    <span class="s2">"biological replicates; TMM factors (edgeR 3.26.8 calcNormFactors defaults) "</span>
-    <span class="s2">"computed per condition over its replicates and paired controls; the 1 CPM "</span>
-    <span class="s2">"pseudocount is a loader choice the paper does not state; recomputed from the GEO "</span>
-    <span class="s2">"GSE186866 raw up-tag counts, NOT the paper's edgeR glmQLFit logFC"</span>
+    <span class="s2">"log2((TMM-normalized CPM of ONE inhibitor biological replicate + 1) / (mean "</span>
+    <span class="s2">"TMM-normalized CPM of the SAME CG batch's inhibitor-free control columns + 1)); "</span>
+    <span class="s2">"TMM factors (edgeR 3.26.8 calcNormFactors defaults) computed per condition over "</span>
+    <span class="s2">"its 3 replicates and their paired controls; the 1 CPM pseudocount is a loader "</span>
+    <span class="s2">"choice the paper does not state; recomputed from the GEO GSE186866 raw up-tag "</span>
+    <span class="s2">"counts, NOT the paper's edgeR glmQLFit logFC"</span>
 <span class="p">)</span>
 <span class="n">_POOLED_UNITS</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"log2((TMM-normalized CPM of the inhibitor replicate + 1) / (mean TMM-normalized "</span>
-    <span class="s2">"CPM of all 16 inhibitor-free control columns + 1)), mean of 3 biological "</span>
-    <span class="s2">"replicates; pooled rather than batch-matched because the paper analyzed this "</span>
-    <span class="s2">"compound unpaired; TMM factors (edgeR 3.26.8 calcNormFactors defaults) computed "</span>
-    <span class="s2">"over its replicates and the 16 controls; the 1 CPM pseudocount is a loader choice "</span>
-    <span class="s2">"the paper does not state; recomputed from the GEO GSE186866 raw up-tag counts, NOT "</span>
-    <span class="s2">"the paper's edgeR glmQLFit logFC"</span>
+    <span class="s2">"log2((TMM-normalized CPM of ONE inhibitor biological replicate + 1) / (mean "</span>
+    <span class="s2">"TMM-normalized CPM of all 16 inhibitor-free control columns + 1)); pooled rather "</span>
+    <span class="s2">"than batch-matched because the paper analyzed this compound unpaired; TMM factors "</span>
+    <span class="s2">"(edgeR 3.26.8 calcNormFactors defaults) computed over its 3 replicates and the 16 "</span>
+    <span class="s2">"controls; the 1 CPM pseudocount is a loader choice the paper does not state; "</span>
+    <span class="s2">"recomputed from the GEO GSE186866 raw up-tag counts, NOT the paper's edgeR "</span>
+    <span class="s2">"glmQLFit logFC"</span>
 <span class="p">)</span>
 
 
@@ -1441,10 +1482,12 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">DropLog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Every released cell of a build: stored, not a value, or dropped by a rule.</span>
+<span class="w">    </span><span class="sd">"""Every released (row, replicate column) of a build: stored, not a value, or dropped.</span>
 
 <span class="sd">    ``source_records`` = ``kept_records`` + the ``not_a_value`` cells +</span>
 <span class="sd">    ``dropped_records``, and ``dropped_records`` is the sum of the rules.</span>
+<span class="sd">    ``stored_by_replicate`` is the stored records per replicate position (the ``rep&lt;n&gt;``</span>
+<span class="sd">    of the column label), which sum to ``kept_records``.</span>
 <span class="sd">    """</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
@@ -1454,6 +1497,7 @@
     <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DropRule</span><span class="p">]</span>
     <span class="n">not_a_value</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">NotAValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">compound_identity_gaps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CompoundIdentityGap</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">stored_by_replicate</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">LibraryRows</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -1706,18 +1750,24 @@
         <span class="k">return</span> <span class="n">_POOLED_UNITS</span> <span class="k">if</span> <span class="n">compound</span> <span class="ow">in</span> <span class="n">UNPAIRED_COMPOUND_TOKENS</span> <span class="k">else</span> <span class="n">_PAIRED_UNITS</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_phenotype</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">compound</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sd</span><span class="p">:</span> <span class="nb">float</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">compound</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""One log2-ratio response with its across-replicate sample SD."""</span>
+<span class="w">        </span><span class="sd">"""One biological replicate's log2-ratio response, n = 1, no dispersion.</span>
+
+<span class="sd">        ``replicate_id`` is the release's own count-column label</span>
+<span class="sd">        (``&lt;token&gt;_CG&lt;batch&gt;_rep&lt;n&gt;``), which names the culture and its batch.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
             <span class="n">measurement_type</span><span class="o">=</span><span class="n">READOUT</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="n">assay_type</span><span class="o">=</span><span class="n">ASSAY</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="n">environment_response</span><span class="o">=</span><span class="n">response</span><span class="p">,</span>
-            <span class="n">environment_response_uncertainty</span><span class="o">=</span><span class="n">sd</span><span class="p">,</span>
-            <span class="n">environment_response_uncertainty_type</span><span class="o">=</span><span class="n">UncertaintyType</span><span class="o">.</span><span class="n">sample_sd</span><span class="p">,</span>
-            <span class="n">n_samples</span><span class="o">=</span><span class="n">N_REPLICATES</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">environment_response_uncertainty</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">environment_response_uncertainty_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">n_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
             <span class="n">sample_unit</span><span class="o">=</span><span class="n">SampleUnit</span><span class="o">.</span><span class="n">biological_replicate</span><span class="p">,</span>
+            <span class="n">replicate_id</span><span class="o">=</span><span class="n">replicate_id</span><span class="p">,</span>
             <span class="n">units</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_units</span><span class="p">(</span><span class="n">compound</span><span class="p">),</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="n">_single_replicate_gaps</span><span class="p">(),</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_genotype</span><span class="p">(</span>
@@ -1766,7 +1816,8 @@
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"no ControlN_CG* columns found in GSE186866 matrix"</span><span class="p">)</span>
         <span class="n">controls</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">cols</span> <span class="ow">in</span> <span class="n">control_by_batch</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">]</span>
 
-        <span class="n">source_records</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">compound_cols</span><span class="p">)</span>
+        <span class="n">n_replicate_columns</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span> <span class="k">for</span> <span class="n">cols</span> <span class="ow">in</span> <span class="n">compound_cols</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">source_records</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_replicate_columns</span>
         <span class="n">compounds</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">compound_cols</span><span class="p">)</span>
         <span class="n">undosed</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">compounds</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">TABLE_S1_DOSES</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">undosed</span><span class="p">:</span>
@@ -1785,7 +1836,7 @@
                     <span class="s2">"systematic_gene_name a typed gap), which the schema does not have "</span>
                     <span class="s2">"yet. Items are the gene column as released"</span>
                 <span class="p">),</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">not_an_orf</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">compounds</span><span class="p">),</span>
+                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">not_an_orf</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_replicate_columns</span><span class="p">,</span>
                 <span class="n">items</span><span class="o">=</span><span class="n">library</span><span class="o">.</span><span class="n">not_an_orf</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">]</span>
@@ -1794,10 +1845,11 @@
                 <span class="n">rule</span><span class="o">=</span><span class="s2">"every_count_of_the_row_is_missing"</span><span class="p">,</span>
                 <span class="n">description</span><span class="o">=</span><span class="p">(</span>
                     <span class="s2">"every count column of this library row is missing (NaN) in the "</span>
-                    <span class="s2">"release, so the row holds no value in any condition; it is counted "</span>
-                    <span class="s2">"here and is not a record. Items are the gene column as released"</span>
+                    <span class="s2">"release, so the row holds no value in any replicate column; it is "</span>
+                    <span class="s2">"counted here (one cell per inhibitor replicate column) and is not "</span>
+                    <span class="s2">"a record. Items are the gene column as released"</span>
                 <span class="p">),</span>
-                <span class="n">n_cells</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">every_count_missing</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">compounds</span><span class="p">),</span>
+                <span class="n">n_cells</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">every_count_missing</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_replicate_columns</span><span class="p">,</span>
                 <span class="n">items</span><span class="o">=</span><span class="n">library</span><span class="o">.</span><span class="n">every_count_missing</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">]</span>
@@ -1834,8 +1886,9 @@
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">missing_cells</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">missing_records</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">stored_by_token</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">stored_by_replicate</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">normalization</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TmmFactors</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">compound</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">compounds</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Vanacloig conditions"</span><span class="p">):</span>
@@ -1868,6 +1921,8 @@
                 <span class="p">)</span>
                 <span class="n">tmm_cpm</span> <span class="o">=</span> <span class="n">kept_counts</span><span class="p">[:,</span> <span class="n">member_idx</span><span class="p">]</span> <span class="o">/</span> <span class="n">effective</span> <span class="o">*</span> <span class="mf">1e6</span>
                 <span class="n">position</span> <span class="o">=</span> <span class="p">{</span><span class="n">column</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">column</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">members</span><span class="p">)}</span>
+                <span class="c1"># One value per (row, inhibitor replicate column): the replicate's own</span>
+                <span class="c1"># TMM-CPM over the mean of its paired controls. Each is its own record.</span>
                 <span class="n">log_rep</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span>
                     <span class="p">[</span>
                         <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">tmm_cpm</span><span class="p">[:,</span> <span class="n">position</span><span class="p">[</span><span class="n">c</span><span class="p">]]</span> <span class="o">+</span> <span class="n">CPM_PRIOR</span><span class="p">)</span>
@@ -1878,57 +1933,71 @@
                         <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span>
                     <span class="p">]</span>
                 <span class="p">)</span>
-                <span class="n">response</span> <span class="o">=</span> <span class="n">log_rep</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-                <span class="n">sd</span> <span class="o">=</span> <span class="n">log_rep</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-                <span class="c1"># A cell with a missing (source NaN) replicate or paired-control count</span>
-                <span class="c1"># has no value the method defines. A cell whose three replicate counts</span>
-                <span class="c1"># are all 0 is stored: its value is the log2 of the CPM prior ratio and</span>
-                <span class="c1"># its sample SD is exactly 0.</span>
-                <span class="n">missing</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">kept_counts</span><span class="p">[:,</span> <span class="n">member_idx</span><span class="p">])</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-                <span class="n">missing_cells</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">library</span><span class="o">.</span><span class="n">systematic</span><span class="p">[</span><span class="n">row</span><span class="p">]</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">compound</span><span class="si">}</span><span class="s2">"</span>
-                    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span>
+                <span class="c1"># A replicate record with a missing (source NaN) count of its own or of</span>
+                <span class="c1"># one of its paired controls has no value the method defines; its</span>
+                <span class="c1"># sibling replicates are stored.</span>
+                <span class="n">missing</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span>
+                            <span class="n">kept_counts</span><span class="p">[:,</span> <span class="p">[</span><span class="n">col_idx</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="n">c</span><span class="p">,</span> <span class="o">*</span><span class="n">paired</span><span class="p">[</span><span class="n">c</span><span class="p">]]]]</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span>
+                    <span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">missing_records</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">library</span><span class="o">.</span><span class="n">systematic</span><span class="p">[</span><span class="n">row</span><span class="p">]</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">cols</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="k">for</span> <span class="n">row</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">missing</span><span class="p">),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                 <span class="p">)</span>
                 <span class="n">stored_by_token</span><span class="p">[</span><span class="n">compound</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="o">~</span><span class="n">missing</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+                <span class="n">replicate_position</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">c</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"rep</span><span class="si">{</span><span class="n">_SAMPLE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">'rep'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>  <span class="c1"># type: ignore[union-attr]  # every column matched above</span>
+                    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span>
+                <span class="p">}</span>
                 <span class="n">environment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span><span class="n">compound</span><span class="p">)</span>
                 <span class="n">reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">(</span><span class="n">compound</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_rows</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="n">missing</span><span class="p">[</span><span class="n">row</span><span class="p">]:</span>
-                        <span class="k">continue</span>
-                    <span class="n">experiment</span> <span class="o">=</span> <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">(</span>
-                        <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                        <span class="n">genotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_genotype</span><span class="p">(</span>
-                            <span class="n">library</span><span class="o">.</span><span class="n">systematic</span><span class="p">[</span><span class="n">row</span><span class="p">],</span>
-                            <span class="n">library</span><span class="o">.</span><span class="n">perturbed</span><span class="p">[</span><span class="n">row</span><span class="p">],</span>
-                            <span class="n">library</span><span class="o">.</span><span class="n">barcode</span><span class="p">[</span><span class="n">row</span><span class="p">],</span>
-                        <span class="p">),</span>
-                        <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
-                        <span class="n">phenotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_phenotype</span><span class="p">(</span>
-                            <span class="n">compound</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="n">row</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">sd</span><span class="p">[</span><span class="n">row</span><span class="p">])</span>
-                        <span class="p">),</span>
+                    <span class="n">genotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_genotype</span><span class="p">(</span>
+                        <span class="n">library</span><span class="o">.</span><span class="n">systematic</span><span class="p">[</span><span class="n">row</span><span class="p">],</span>
+                        <span class="n">library</span><span class="o">.</span><span class="n">perturbed</span><span class="p">[</span><span class="n">row</span><span class="p">],</span>
+                        <span class="n">library</span><span class="o">.</span><span class="n">barcode</span><span class="p">[</span><span class="n">row</span><span class="p">],</span>
                     <span class="p">)</span>
-                    <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">_intern_record</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span><span class="p">,</span> <span class="n">itxn</span><span class="p">),</span>
-                    <span class="p">)</span>
-                    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">column</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cols</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">missing</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">j</span><span class="p">]:</span>
+                            <span class="k">continue</span>
+                        <span class="n">experiment</span> <span class="o">=</span> <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">(</span>
+                            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                            <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+                            <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+                            <span class="n">phenotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_phenotype</span><span class="p">(</span>
+                                <span class="n">compound</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">log_rep</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">j</span><span class="p">]),</span> <span class="n">column</span>
+                            <span class="p">),</span>
+                        <span class="p">)</span>
+                        <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_intern_record</span><span class="p">(</span>
+                                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span><span class="p">,</span> <span class="n">itxn</span>
+                            <span class="p">),</span>
+                        <span class="p">)</span>
+                        <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="n">rep</span> <span class="o">=</span> <span class="n">replicate_position</span><span class="p">[</span><span class="n">column</span><span class="p">]</span>
+                        <span class="n">stored_by_replicate</span><span class="p">[</span><span class="n">rep</span><span class="p">]</span> <span class="o">=</span> <span class="n">stored_by_replicate</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">rep</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
         <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="n">interned_env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
         <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">DropRule</span><span class="p">(</span>
-                <span class="n">rule</span><span class="o">=</span><span class="s2">"a_count_the_cell_uses_is_missing"</span><span class="p">,</span>
+                <span class="n">rule</span><span class="o">=</span><span class="s2">"a_count_the_record_uses_is_missing"</span><span class="p">,</span>
                 <span class="n">scope</span><span class="o">=</span><span class="s2">"cell"</span><span class="p">,</span>
                 <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">"one of the counts this (strain, compound) cell is computed from, a "</span>
-                    <span class="s2">"replicate or one of its paired controls, is a source NaN in the "</span>
-                    <span class="s2">"release; the paper's per-compound edgeR fit permits no NA count and "</span>
-                    <span class="s2">"its design is three replicates against the paired controls, so the "</span>
-                    <span class="s2">"cell has no value the method defines, while the strain's other "</span>
-                    <span class="s2">"cells are stored. Items are '&lt;ORF&gt;:&lt;token&gt;'"</span>
+                    <span class="s2">"one of the counts this (strain, replicate column) record is "</span>
+                    <span class="s2">"computed from, the replicate's own or one of its paired controls', "</span>
+                    <span class="s2">"is a source NaN in the release; edgeR permits no NA count and the "</span>
+                    <span class="s2">"value is the replicate over its paired controls, so the record has "</span>
+                    <span class="s2">"no value the method defines, while the strain's sibling replicates "</span>
+                    <span class="s2">"and other conditions are stored. Items are '&lt;ORF&gt;:&lt;column&gt;'"</span>
                 <span class="p">),</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">missing_cells</span><span class="p">),</span>
-                <span class="n">items</span><span class="o">=</span><span class="n">missing_cells</span><span class="p">,</span>
+                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">missing_records</span><span class="p">),</span>
+                <span class="n">items</span><span class="o">=</span><span class="n">missing_records</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
         <span class="n">n_not_a_value</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">n_cells</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">not_a_value</span><span class="p">)</span>
@@ -1943,6 +2012,7 @@
                 <span class="n">gap</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_records"</span><span class="p">:</span> <span class="n">stored_by_token</span><span class="p">[</span><span class="n">gap</span><span class="o">.</span><span class="n">token</span><span class="p">]})</span>
                 <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="n">compound_identity_gaps</span>
             <span class="p">],</span>
+            <span class="n">stored_by_replicate</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">stored_by_replicate</span><span class="o">.</span><span class="n">items</span><span class="p">())),</span>
         <span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">drop_log</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>

@@ -181,6 +181,30 @@
 <span class="sd">``NOT_ORF_SHAPED_RULE`` (a released token the ``GenePerturbation`` pattern rejects;</span>
 <span class="sd">measured 0 scored cells, the four ``R00x0`` tokens and ``YBR160W_AS`` carry no score) and</span>
 <span class="sd">the CMB4019 exclusion (6 columns, HIP 17,397 + HOP 13,623 scored cells over every row).</span>
+<span class="sd">Those are the compound matrices; the Benomyl matrices below add 983,141 records.</span>
+
+<span class="sd">BENOMYL POSITIVE CONTROL (2026.11.25, #1177, #1203 item 13). Every plate carried one</span>
+<span class="sd">Benomyl (CMB991) well (*"Each plate contained two no drug controls, one positive control</span>
+<span class="sd">(Benomyl, CMB991), 10 experimental compounds in duplicates and one contamination control</span>
+<span class="sd">that received no cells."*, line 68), and its scores are deposited apart from the compound</span>
+<span class="sd">matrices: *"The data matrices of the scores for the Benomyl HIP and HOP experiments are</span>
+<span class="sd">contained in the files HIP Benomyl-scores.txt and HOP Benomyl-scores.txt"* (line 48;</span>
+<span class="sd">Dryad names them ``HIP_scores-benomyl.txt`` and ``HOP_scores-benomyl.txt``). They carry</span>
+<span class="sd">the compound matrices' header format and row set, one column per study: HIP 94 columns</span>
+<span class="sd">(91 ``Ad.``, 3 ``MADL``) over 92 studies and HOP 97 (96 ``Ad.``, 1 ``MADL``) over 95, the</span>
+<span class="sd">paper's *"97 independent benomyl HIP and HOP experiments"* (line 113). Each column is one</span>
+<span class="sd">independent experiment of the same unit as a compound column, so it is stored the same</span>
+<span class="sd">way: one record per scored cell, the study as ``screen_id``, the study's own control set</span>
+<span class="sd">as the reference, ``n_samples`` from the column prefix. The Benomyl matrices stream after</span>
+<span class="sd">the compound matrices, so the compound records keep their positions; the ledger keys</span>
+<span class="sd">every count by deposited matrix (``HIP``, ``HOP``, ``HIP_benomyl``, ``HOP_benomyl``).</span>
+<span class="sd">Measured on the retrieved matrices: HIP 544,437 + HOP 438,704 = 983,141 scored cells, all</span>
+<span class="sd">on ORF-shaped tokens, all stored, for 4,110,955 records in all. Table S1 gives Benomyl an</span>
+<span class="sd">IC30 of 57.746 uM while the columns are dosed at 26.835 to 37.8 uM (the paper's Fig. 1A</span>
+<span class="sd">states IC30 = 27 uM), so the 187 columns at 26.835 or 26.84 uM (ratio 0.46) are listed in</span>
+<span class="sd">``dose_outside_ic30_range``; the four pilot columns at 31.6 and 37.8 uM are inside the band.</span>
+<span class="sd">The 10 HIP strains scored only in the Benomyl matrix raise ``hip_construction`` from 5,859</span>
+<span class="sd">to 5,869 distinct stored HIP strains.</span>
 
 <span class="sd">SCREEN (study) IDENTITY -- ``EnvironmentResponsePhenotype.screen_id`` carries the</span>
 <span class="sd">deposited study number. It is a real batch covariate, *"&lt;Study number&gt;: an internal id</span>
@@ -327,13 +351,23 @@
 <span class="sd">- No per-cell uncertainty is released: the replicate t-test p-value is folded into the</span>
 <span class="sd">  adjusted score (line 84), so ``environment_response_se``,</span>
 <span class="sd">  ``environment_response_uncertainty`` and ``environment_response_uncertainty_type`` are</span>
-<span class="sd">  typed ``ProvenanceGap``s on every phenotype, never silent Nones.</span>
+<span class="sd">  typed ``ProvenanceGap``s on every phenotype, never silent Nones. The reason is</span>
+<span class="sd">  ``not_reported_by_primary`` on an ``Ad.`` record and the reference (aggregates over</span>
+<span class="sd">  samples), and ``not_applicable_single_measurement`` on a ``MADL`` record, which is one</span>
+<span class="sd">  sample (per-replicate policy, #1178; 2026.11.25).</span>
+<span class="sd">- What one record is: the release combines a compound's two wells inside one column</span>
+<span class="sd">  (``Ad.``) and releases no per-well score, so the per-column score is the unit stored;</span>
+<span class="sd">  ``replicate_id`` stays None because the column is that aggregate, and two studies of</span>
+<span class="sd">  the same compound and dose are kept apart by ``screen_id``.</span>
 
 <span class="sd">DATA SOURCE (scriptable + sha256-pinned): Dryad doi:10.5061/dryad.v5m8v files</span>
 <span class="sd">``HIP_scores.txt`` (644 MB) and ``HOP_scores.txt`` (505 MB) -- the deposited processed</span>
 <span class="sd">score matrices (rows = systematic ORF names, columns = per-experiment scores) -- and</span>
 <span class="sd">``Table_S1.xls`` (compound IC30 + common name + SMILES for the reference/novel MoA</span>
-<span class="sd">compounds; the ~1641 proprietary CMB compounds have no released name and are held out).</span>
+<span class="sd">compounds; the ~1641 proprietary CMB compounds have no released name and are held out),</span>
+<span class="sd">plus the Benomyl matrices ``HIP_scores-benomyl.txt`` (20.6 MB) and</span>
+<span class="sd">``HOP_scores-benomyl.txt`` (16.9 MB), retrieved 2026-11-25 by the same ``_dryad_get``</span>
+<span class="sd">route (their bytes match the MD5 Dryad's API v2 lists for them).</span>
 <span class="sd">The canonical copy</span>
 <span class="sd">is the RAW MIRROR</span>
 <span class="sd">``$DATA_ROOT/torchcell-raw/hoepfnerHighresolutionChemicalDissection2014/`` and its</span>
@@ -498,9 +532,35 @@
         <span class="s2">"url"</span><span class="p">:</span> <span class="s2">"https://datadryad.org/downloads/file_stream/4834600"</span><span class="p">,</span>
         <span class="s2">"sha256"</span><span class="p">:</span> <span class="s2">"115bb31cc5e696588d1ecb4ffa262475e05025e22347f7e004f77fd635898209"</span><span class="p">,</span>
     <span class="p">},</span>
+    <span class="c1"># The positive-control (Benomyl, CMB991) score matrices the paper lists beside the</span>
+    <span class="c1"># compound matrices (paper.md line 48), retrieved 2026-11-25 (#1177, #1203 item 13).</span>
+    <span class="c1"># Dryad API v2 lists them in version 1 (2014-11-19) and version 3 (2026-06-26) with</span>
+    <span class="c1"># MD5 7a36f4a4c8368ffc74da80818ddeabad / 0e5681ccb5fee30e00af7f958ccb7032, which</span>
+    <span class="c1"># the retrieved bytes match.</span>
+    <span class="s2">"HIP_scores-benomyl.txt"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"url"</span><span class="p">:</span> <span class="s2">"https://datadryad.org/downloads/file_stream/4834606"</span><span class="p">,</span>
+        <span class="s2">"sha256"</span><span class="p">:</span> <span class="s2">"1692d6cf8f14d85920d037a702e37d0f575104286ded189f6c953915ba293aa7"</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s2">"HOP_scores-benomyl.txt"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"url"</span><span class="p">:</span> <span class="s2">"https://datadryad.org/downloads/file_stream/4834607"</span><span class="p">,</span>
+        <span class="s2">"sha256"</span><span class="p">:</span> <span class="s2">"2e219495ed2fecc8ffa0aaffea8ffcd1d040f95fbd92a526ba17fb6d281eb5a4"</span><span class="p">,</span>
+    <span class="p">},</span>
 <span class="p">}</span>
 
+<span class="c1">#: The two compound score matrices, one per arm (kept for the 036 inputs script).</span>
 <span class="n">_ASSAYS</span> <span class="o">=</span> <span class="p">((</span><span class="s2">"HIP_scores.txt"</span><span class="p">,</span> <span class="s2">"HIP"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"HOP_scores.txt"</span><span class="p">,</span> <span class="s2">"HOP"</span><span class="p">))</span>
+
+<span class="c1">#: Every deposited score matrix the build streams, as (file, arm, ledger label), in</span>
+<span class="c1">#: record order. The Benomyl matrices come LAST so the compound records keep their</span>
+<span class="c1">#: positions. Each Benomyl column is one independent positive-control experiment (one</span>
+<span class="c1">#: study), the same unit as a compound column: *"Data for each strain from 97</span>
+<span class="c1">#: independent benomyl HIP and HOP experiments"* (paper.md line 113).</span>
+<span class="n">_MATRICES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="s2">"HIP_scores.txt"</span><span class="p">,</span> <span class="s2">"HIP"</span><span class="p">,</span> <span class="s2">"HIP"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"HOP_scores.txt"</span><span class="p">,</span> <span class="s2">"HOP"</span><span class="p">,</span> <span class="s2">"HOP"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"HIP_scores-benomyl.txt"</span><span class="p">,</span> <span class="s2">"HIP"</span><span class="p">,</span> <span class="s2">"HIP_benomyl"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"HOP_scores-benomyl.txt"</span><span class="p">,</span> <span class="s2">"HOP"</span><span class="p">,</span> <span class="s2">"HOP_benomyl"</span><span class="p">),</span>
+<span class="p">)</span>
 
 <span class="c1"># Experiment column header: '(Ad.|MADL) scores for Exp. &lt;CMB&gt;_&lt;conc&gt;_&lt;HIP|HOP&gt;_&lt;study&gt;'</span>
 <span class="c1"># with an optional trailing ' z-score' (the companion gene-wise z-score column).</span>
@@ -620,7 +680,8 @@
 <span class="c1">#: A kept column's dose outside [low, high] x its Table S1 IC30 is listed in the ledger.</span>
 <span class="n">IC30_RATIO_RANGE</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
 
-<span class="c1">#: The positive control on every plate; its scores are in separate Benomyl files.</span>
+<span class="c1">#: The positive control on every plate; its scores are in the two Benomyl matrices</span>
+<span class="c1">#: (``HIP_scores-benomyl.txt``, ``HOP_scores-benomyl.txt``), none in the compound ones.</span>
 <span class="n">POSITIVE_CONTROL_CMB</span> <span class="o">=</span> <span class="s2">"991"</span>
 
 <span class="n">_UA</span> <span class="o">=</span> <span class="p">(</span>
@@ -885,8 +946,28 @@
         <span class="s2">"Each plate contained two no drug controls, one positive control (Benomyl, "</span>
         <span class="s2">"CMB991), 10 experimental compounds in duplicates and one contamination control "</span>
         <span class="s2">"that received no cells."</span><span class="p">,</span>
-        <span class="n">note</span><span class="o">=</span><span class="s2">"its scores are in the separate Benomyl score files (not in the raw mirror); "</span>
-        <span class="s2">"the build counts its columns in the two deposited matrices (ledger)"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"its scores are in the separate Benomyl matrices (benomyl_matrices), stored "</span>
+        <span class="s2">"like any compound column; the ledger's positive_control counts its columns "</span>
+        <span class="s2">"per deposited matrix"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"benomyl_matrices"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"HIP Benomyl-scores.txt, HOP Benomyl-scores.txt on Dryad doi:10.5061/dryad.v5m8v"</span><span class="p">,</span>
+        <span class="s2">"The data matrices of the scores for the Benomyl HIP and HOP experiments are "</span>
+        <span class="s2">"contained in the files HIP Benomyl-scores.txt and HOP Benomyl-scores.txt which "</span>
+        <span class="s2">"can be downloaded from Drayd digital repository at: http://doi.org/ "</span>
+        <span class="s2">"10.5061/dryad.v5m8v."</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"Dryad deposits them as HIP_scores-benomyl.txt (94 sensitivity columns) and "</span>
+        <span class="s2">"HOP_scores-benomyl.txt (97), the same row set and header format as the compound "</span>
+        <span class="s2">"matrices; the OCR'd names differ only in punctuation"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"benomyl_experiments"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="mi">97</span><span class="p">,</span>
+        <span class="s2">"Using benomyl data from 97 independent experiments, a comparison of the mean of "</span>
+        <span class="s2">"either the sensitivity or $z </span><span class="se">\\</span><span class="s2">cdot$ -scores of each strain, plotted against the "</span>
+        <span class="s2">"coefficient of variation for each strain for HIP and HOP assays (Fig. 1D)"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"97 is the HOP matrix's column count; the HIP matrix deposits 94 (91 'Ad.', "</span>
+        <span class="s2">"3 'MADL'). Each column is one study's Benomyl experiment, stored as its own "</span>
+        <span class="s2">"record per strain with the study as screen_id"</span><span class="p">,</span>
     <span class="p">),</span>
     <span class="s2">"proprietary_compounds"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
         <span class="mi">1641</span><span class="p">,</span>
@@ -1111,13 +1192,30 @@
 <span class="sd">"""Loci where the background carries an allele (the HIP ``replaced_allele`` gap)."""</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_phenotype_gaps</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ProvenanceGap</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""The three uncertainty absences every Hoepfner phenotype declares."""</span>
+<span class="n">_SINGLE_SAMPLE_GAP_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"a 'MADL' column is ONE sample: only one of the compound's two samples passed QC, so "</span>
+    <span class="s2">"no adjustment for variability is made (paper.md line 52) and the record has no "</span>
+    <span class="s2">"dispersion of its own"</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_phenotype_gaps</span><span class="p">(</span><span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ProvenanceGap</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The three uncertainty absences every Hoepfner phenotype declares.</span>
+
+<span class="sd">    An aggregate over the two samples (an ``Ad.`` column, and the reference over its</span>
+<span class="sd">    control samples) states ``not_reported_by_primary``: the replicate t-test p-value is</span>
+<span class="sd">    folded into the score and no dispersion is released. A ``MADL`` column is one sample</span>
+<span class="sd">    (``n_samples`` 1), so the dispersion does not exist and the reason is</span>
+<span class="sd">    ``not_applicable_single_measurement`` (per-replicate policy, #1178).</span>
+<span class="sd">    """</span>
+    <span class="n">single</span> <span class="o">=</span> <span class="n">n_samples</span> <span class="o">==</span> <span class="mi">1</span>
     <span class="k">return</span> <span class="p">[</span>
         <span class="n">ProvenanceGap</span><span class="p">(</span>
             <span class="n">field</span><span class="o">=</span><span class="n">field</span><span class="p">,</span>
-            <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
-            <span class="n">note</span><span class="o">=</span><span class="n">_SE_GAP_NOTE</span><span class="p">,</span>
+            <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_applicable_single_measurement</span>
+            <span class="k">if</span> <span class="n">single</span>
+            <span class="k">else</span> <span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="n">_SINGLE_SAMPLE_GAP_NOTE</span> <span class="k">if</span> <span class="n">single</span> <span class="k">else</span> <span class="n">_SE_GAP_NOTE</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">_UNCERTAINTY_FIELDS</span>
     <span class="p">]</span>
@@ -1140,9 +1238,14 @@
 <span class="sd">    Run once by hand. Idempotent by sha256: a mirror file already carrying the pinned</span>
 <span class="sd">    hash is left alone, one carrying a different hash raises rather than being silently</span>
 <span class="sd">    overwritten. Every file's sha256 is verified against ``_DRYAD_FILES`` before it is</span>
-<span class="sd">    recorded, so the manifest can only ever describe the bytes the build consumed.</span>
+<span class="sd">    recorded, so the manifest can only ever describe the bytes the build consumed. A file</span>
+<span class="sd">    the existing manifest already records under the same sha256 keeps that record (its</span>
+<span class="sd">    own ``retrieved_at``); ``retrieved_at`` dates only the files this call adds.</span>
 <span class="sd">    """</span>
     <span class="n">root</span> <span class="o">=</span> <span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
+    <span class="n">previous</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArtifactRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"manifest.json"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">previous</span> <span class="o">=</span> <span class="p">{</span><span class="n">record</span><span class="o">.</span><span class="n">path</span><span class="p">:</span> <span class="n">record</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span><span class="o">.</span><span class="n">files</span><span class="p">}</span>
     <span class="c1"># Every file (the mirror copy when present, else the staged source) is verified</span>
     <span class="c1"># before anything is written, so a refusal leaves no mirror directory, no partial</span>
     <span class="c1"># deposit and no unverified bytes in the mirror.</span>
@@ -1158,6 +1261,10 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">dest</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">source_dir</span><span class="p">)</span> <span class="o">/</span> <span class="n">name</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
         <span class="n">digest</span> <span class="o">=</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"sha256"</span><span class="p">]</span>
+        <span class="n">kept</span> <span class="o">=</span> <span class="n">previous</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">kept</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">kept</span><span class="o">.</span><span class="n">sha256</span> <span class="o">==</span> <span class="n">digest</span><span class="p">:</span>
+            <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">kept</span><span class="p">)</span>
+            <span class="k">continue</span>
         <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">ArtifactRecord</span><span class="p">(</span>
                 <span class="n">path</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
@@ -1315,8 +1422,11 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">DroppedRecordReport</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""The build's ledger: what was stored, what is held out, and under which rule.</span>
 
-<span class="sd">    Every scored sensitivity cell is accounted for per arm: ``n_source_cells =</span>
-<span class="sd">    n_stored + n_not_orf_shaped + n_excluded_condition + n_unidentified_compound``.</span>
+<span class="sd">    Every scored sensitivity cell is accounted for per deposited matrix: ``n_source_cells</span>
+<span class="sd">    = n_stored + n_not_orf_shaped + n_excluded_condition + n_unidentified_compound``.</span>
+<span class="sd">    Every ``*_by_assay`` / ``accounting`` / ``positive_control`` key is a deposited-matrix</span>
+<span class="sd">    label of ``_MATRICES``: ``HIP`` and ``HOP`` (the compound matrices), ``HIP_benomyl``</span>
+<span class="sd">    and ``HOP_benomyl`` (the positive-control matrices, 2026.11.25).</span>
 <span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
@@ -1361,9 +1471,9 @@
     <span class="p">)</span>
     <span class="n">columns_by_assay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"stored sensitivity columns"</span><span class="p">)</span>
     <span class="n">positive_control</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"per assay, deposited sensitivity columns of the plate positive control "</span>
-        <span class="s2">"Benomyl (CMB991); its 97 experiments are in the separate Benomyl score files, "</span>
-        <span class="s2">"which are not in the raw mirror"</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"per deposited matrix, sensitivity columns of the plate positive "</span>
+        <span class="s2">"control Benomyl (CMB991): none in the compound matrices (HIP, HOP), every column "</span>
+        <span class="s2">"of the Benomyl matrices (HIP_benomyl, HOP_benomyl), all stored"</span>
     <span class="p">)</span>
     <span class="n">solvent_gap_columns</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"per assay, stored columns dosed above 200 uM (solvent is a gap)"</span>
@@ -1788,7 +1898,13 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""The Dryad score matrices + compound table required before processing."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">"HIP_scores.txt"</span><span class="p">,</span> <span class="s2">"HOP_scores.txt"</span><span class="p">,</span> <span class="s2">"Table_S1.xls"</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="s2">"HIP_scores.txt"</span><span class="p">,</span>
+            <span class="s2">"HOP_scores.txt"</span><span class="p">,</span>
+            <span class="s2">"HIP_scores-benomyl.txt"</span><span class="p">,</span>
+            <span class="s2">"HOP_scores-benomyl.txt"</span><span class="p">,</span>
+            <span class="s2">"Table_S1.xls"</span><span class="p">,</span>
+        <span class="p">]</span>
 
     <span class="c1"># ---- retrieval ------------------------------------------------------------ #</span>
 <div class="viewcode-block" id="EnvChemgenHoepfner2014Dataset.download">
@@ -2145,15 +2261,16 @@
             <span class="n">conc</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"conc"</span><span class="p">))</span>
             <span class="n">study</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"study"</span><span class="p">)</span>
             <span class="n">environment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span><span class="n">assay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_treatment</span><span class="p">(</span><span class="n">cmb</span><span class="p">,</span> <span class="n">compound</span><span class="p">,</span> <span class="n">conc</span><span class="p">))</span>
+            <span class="n">n_samples</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"prefix"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"Ad."</span> <span class="k">else</span> <span class="mi">1</span>
             <span class="n">phenotype</span> <span class="o">=</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
                 <span class="n">measurement_type</span><span class="o">=</span><span class="n">MeasurementType</span><span class="o">.</span><span class="n">sensitivity_score</span><span class="p">,</span>
                 <span class="n">assay_type</span><span class="o">=</span><span class="n">AssayType</span><span class="o">.</span><span class="n">pooled_competitive_growth_barcode</span><span class="p">,</span>
                 <span class="n">environment_response</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-                <span class="n">n_samples</span><span class="o">=</span><span class="mi">2</span> <span class="k">if</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"prefix"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"Ad."</span> <span class="k">else</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="n">n_samples</span><span class="o">=</span><span class="n">n_samples</span><span class="p">,</span>
                 <span class="n">sample_unit</span><span class="o">=</span><span class="n">SampleUnit</span><span class="o">.</span><span class="n">technical_replicate</span><span class="p">,</span>
                 <span class="n">units</span><span class="o">=</span><span class="n">MEASUREMENT_UNITS</span><span class="p">,</span>
                 <span class="n">screen_id</span><span class="o">=</span><span class="n">study</span><span class="p">,</span>
-                <span class="n">provenance_gaps</span><span class="o">=</span><span class="n">_phenotype_gaps</span><span class="p">(),</span>
+                <span class="n">provenance_gaps</span><span class="o">=</span><span class="n">_phenotype_gaps</span><span class="p">(</span><span class="n">n_samples</span><span class="p">),</span>
             <span class="p">)</span>
             <span class="c1"># The template experiment is a real model dump; only the genotype, the score</span>
             <span class="c1"># and the interned environment pointer differ per record.</span>
@@ -2244,8 +2361,16 @@
         <span class="n">strains</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">TableS5Entry</span><span class="p">]],</span>
         <span class="n">validate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">object</span><span class="p">],</span>
         <span class="n">census</span><span class="p">:</span> <span class="n">_ColumnCensus</span><span class="p">,</span>
+        <span class="n">matrix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">genotypes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Yield one pickled record per (row, stored column) scored cell.</span>
+
+<span class="sd">        ``matrix`` is the ledger label every count is keyed by (default: ``assay``, the</span>
+<span class="sd">        compound matrix of that arm; ``HIP_benomyl`` / ``HOP_benomyl`` for the Benomyl</span>
+<span class="sd">        matrices). ``genotypes`` is the arm's genotype cache, shared across the arm's</span>
+<span class="sd">        matrices so a strain's genotype is built, and its Table S5 construction match</span>
+<span class="sd">        counted, once per arm.</span>
 
 <span class="sd">        The row's 'Systematic Name' is stored exactly as released: no genome lookup, no</span>
 <span class="sd">        rename, no detection threshold. A row scored in no stored column carries no</span>
@@ -2262,27 +2387,29 @@
         <span class="k">def</span><span class="w"> </span><span class="nf">filled</span><span class="p">(</span><span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="ow">and</span> <span class="n">parts</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">'"'</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">""</span>
 
+        <span class="n">label</span> <span class="o">=</span> <span class="n">assay</span> <span class="k">if</span> <span class="n">matrix</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">matrix</span>
+        <span class="k">if</span> <span class="n">genotypes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">genotypes</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">not_orf_shaped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">NotOrfShapedRow</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">validated</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="n">genotypes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">handle</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Hoepfner2014 </span><span class="si">{</span><span class="n">assay</span><span class="si">}</span><span class="s2">"</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Hoepfner2014 </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">"</span><span class="p">):</span>
                 <span class="n">parts</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
-                <span class="n">counts</span><span class="o">.</span><span class="n">rows</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">counts</span><span class="o">.</span><span class="n">rows</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="n">orf</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">'"'</span><span class="p">)</span>
-                <span class="n">counts</span><span class="o">.</span><span class="n">source_cells</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span>
+                <span class="n">counts</span><span class="o">.</span><span class="n">source_cells</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span>
                     <span class="mi">1</span> <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">census</span><span class="o">.</span><span class="n">sensitivity</span> <span class="k">if</span> <span class="n">filled</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
                 <span class="p">)</span>
                 <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">cmb</span> <span class="ow">in</span> <span class="n">census</span><span class="o">.</span><span class="n">excluded</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">filled</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
-                        <span class="n">counts</span><span class="o">.</span><span class="n">excluded</span><span class="p">[(</span><span class="n">assay</span><span class="p">,</span> <span class="n">cmb</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="n">counts</span><span class="o">.</span><span class="n">excluded</span><span class="p">[(</span><span class="n">label</span><span class="p">,</span> <span class="n">cmb</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="ow">in</span> <span class="n">census</span><span class="o">.</span><span class="n">unidentified</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">filled</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
-                        <span class="n">counts</span><span class="o">.</span><span class="n">unidentified</span><span class="p">[(</span><span class="n">assay</span><span class="p">,</span> <span class="n">index</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="n">counts</span><span class="o">.</span><span class="n">unidentified</span><span class="p">[(</span><span class="n">label</span><span class="p">,</span> <span class="n">index</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="n">n_scored</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">columns</span> <span class="k">if</span> <span class="n">filled</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
                 <span class="k">if</span> <span class="n">n_scored</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">counts</span><span class="o">.</span><span class="n">empty_rows</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">counts</span><span class="o">.</span><span class="n">empty_rows</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
                     <span class="k">continue</span>
                 <span class="k">if</span> <span class="n">_ORF_SHAPED</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">not_orf_shaped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -2325,7 +2452,7 @@
                         <span class="c1"># if what a reader reconstructs still satisfies the schema.</span>
                         <span class="n">validate</span><span class="p">({</span><span class="o">**</span><span class="n">experiment</span><span class="p">,</span> <span class="s2">"environment"</span><span class="p">:</span> <span class="n">col</span><span class="o">.</span><span class="n">env_dump</span><span class="p">})</span>
                         <span class="n">validated</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
-                    <span class="n">counts</span><span class="o">.</span><span class="n">kept</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">counts</span><span class="o">.</span><span class="n">kept</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
                     <span class="n">col</span><span class="o">.</span><span class="n">n_records</span> <span class="o">+=</span> <span class="mi">1</span>
                     <span class="k">if</span> <span class="n">flagged</span><span class="p">:</span>
                         <span class="n">counts</span><span class="o">.</span><span class="n">flagged</span><span class="p">[</span><span class="n">orf</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -2336,26 +2463,29 @@
                             <span class="s2">"publication"</span><span class="p">:</span> <span class="n">pub_ref</span><span class="p">,</span>
                         <span class="p">}</span>
                     <span class="p">)</span>
-        <span class="n">counts</span><span class="o">.</span><span class="n">not_orf_shaped</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="n">counts</span><span class="o">.</span><span class="n">not_orf_shaped</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
             <span class="n">not_orf_shaped</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="n">row</span><span class="o">.</span><span class="n">source_name</span>
         <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Hoepfner2014 </span><span class="si">%s</span><span class="s2">: wrote </span><span class="si">%d</span><span class="s2"> records from </span><span class="si">%d</span><span class="s2"> rows; </span><span class="si">%d</span><span class="s2"> rows scored nowhere; held "</span>
             <span class="s2">"out </span><span class="si">%d</span><span class="s2"> rows (</span><span class="si">%d</span><span class="s2"> cells) whose token is not ORF-shaped: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
-            <span class="n">assay</span><span class="p">,</span>
-            <span class="n">counts</span><span class="o">.</span><span class="n">kept</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
-            <span class="n">counts</span><span class="o">.</span><span class="n">rows</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
-            <span class="n">counts</span><span class="o">.</span><span class="n">empty_rows</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
+            <span class="n">label</span><span class="p">,</span>
+            <span class="n">counts</span><span class="o">.</span><span class="n">kept</span><span class="p">[</span><span class="n">label</span><span class="p">],</span>
+            <span class="n">counts</span><span class="o">.</span><span class="n">rows</span><span class="p">[</span><span class="n">label</span><span class="p">],</span>
+            <span class="n">counts</span><span class="o">.</span><span class="n">empty_rows</span><span class="p">[</span><span class="n">label</span><span class="p">],</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">not_orf_shaped</span><span class="p">),</span>
             <span class="nb">sum</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">n_records</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">not_orf_shaped</span><span class="p">),</span>
-            <span class="p">[</span><span class="n">row</span><span class="o">.</span><span class="n">source_name</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">not_orf_shaped</span><span class="p">[</span><span class="n">assay</span><span class="p">]],</span>
+            <span class="p">[</span><span class="n">row</span><span class="o">.</span><span class="n">source_name</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">not_orf_shaped</span><span class="p">[</span><span class="n">label</span><span class="p">]],</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="EnvChemgenHoepfner2014Dataset.process">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.hoepfner2014.EnvChemgenHoepfner2014Dataset.html#torchcell.datasets.scerevisiae.hoepfner2014.EnvChemgenHoepfner2014Dataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Stream both score matrices into the LMDB (one record per (ORF, experiment)).</span>
+<span class="w">        </span><span class="sd">"""Stream the four score matrices into the LMDB (one record per (ORF, experiment)).</span>
+
+<span class="sd">        The two compound matrices first (HIP, HOP), then the two Benomyl</span>
+<span class="sd">        positive-control matrices (``_MATRICES``).</span>
 
 <span class="sd">        The constant sub-objects are interned FIRST and their transaction committed before</span>
 <span class="sd">        any record is written, so a crash can only ever leave orphan interned rows, never</span>
@@ -2383,46 +2513,53 @@
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
 
+        <span class="c1"># Keyed by the deposited-matrix label of ``_MATRICES``; the reference stays keyed</span>
+        <span class="c1"># by (arm, study), because a study's Benomyl wells share its control samples.</span>
         <span class="n">columns</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">_ColumnMeta</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">censuses</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_ColumnCensus</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">reference_refs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">with</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">assay</span> <span class="ow">in</span> <span class="n">_ASSAYS</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">assay</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">_MATRICES</span><span class="p">:</span>
                 <span class="n">header</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_header</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
                 <span class="n">kept</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_column_meta</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">assay</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="n">itxn</span><span class="p">)</span>
-                <span class="n">columns</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">=</span> <span class="n">kept</span>
-                <span class="n">censuses</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_column_census</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">assay</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span>
+                <span class="n">columns</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">kept</span>
+                <span class="n">censuses</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_column_census</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">assay</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                     <span class="s2">"Hoepfner2014 </span><span class="si">%s</span><span class="s2">: </span><span class="si">%d</span><span class="s2"> stored sensitivity experiments (</span><span class="si">%d</span><span class="s2"> with no "</span>
                     <span class="s2">"InChIKey, stored with the typed gap), </span><span class="si">%d</span><span class="s2"> excluded by rule, </span><span class="si">%d</span><span class="s2"> held "</span>
                     <span class="s2">"out as unidentified compounds"</span><span class="p">,</span>
-                    <span class="n">assay</span><span class="p">,</span>
+                    <span class="n">label</span><span class="p">,</span>
                     <span class="nb">len</span><span class="p">(</span><span class="n">kept</span><span class="p">),</span>
                     <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">kept</span> <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">inchikey</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">),</span>
-                    <span class="nb">len</span><span class="p">(</span><span class="n">censuses</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span><span class="o">.</span><span class="n">excluded</span><span class="p">),</span>
-                    <span class="nb">len</span><span class="p">(</span><span class="n">censuses</span><span class="p">[</span><span class="n">assay</span><span class="p">]</span><span class="o">.</span><span class="n">unidentified</span><span class="p">),</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">censuses</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">excluded</span><span class="p">),</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">censuses</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">unidentified</span><span class="p">),</span>
                 <span class="p">)</span>
                 <span class="k">for</span> <span class="n">study</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">col</span><span class="o">.</span><span class="n">study</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">}):</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">assay</span><span class="p">,</span> <span class="n">study</span><span class="p">)</span> <span class="ow">in</span> <span class="n">reference_refs</span><span class="p">:</span>
+                        <span class="k">continue</span>
                     <span class="n">reference_refs</span><span class="p">[(</span><span class="n">assay</span><span class="p">,</span> <span class="n">study</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intern_ref</span><span class="p">(</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">(</span><span class="n">assay</span><span class="p">,</span> <span class="n">study</span><span class="p">),</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">assay</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">study</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">itxn</span>
                     <span class="p">)</span>
             <span class="n">pub_ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intern_ref</span><span class="p">(</span><span class="n">publication</span><span class="p">,</span> <span class="n">DOI</span><span class="p">,</span> <span class="n">itxn</span><span class="p">)</span>
 
         <span class="n">counts</span> <span class="o">=</span> <span class="n">_BuildCounts</span><span class="p">()</span>
+        <span class="n">genotypes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"HIP"</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">"HOP"</span><span class="p">:</span> <span class="p">{}}</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">500_000</span>
         <span class="n">txn</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">assay</span> <span class="ow">in</span> <span class="n">_ASSAYS</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">assay</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">_MATRICES</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_records</span><span class="p">(</span>
                 <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span>
                 <span class="n">assay</span><span class="p">,</span>
-                <span class="n">columns</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
+                <span class="n">columns</span><span class="p">[</span><span class="n">label</span><span class="p">],</span>
                 <span class="n">reference_refs</span><span class="p">,</span>
                 <span class="n">pub_ref</span><span class="p">,</span>
                 <span class="n">counts</span><span class="p">,</span>
                 <span class="n">strains</span><span class="p">,</span>
                 <span class="n">validate</span><span class="p">,</span>
-                <span class="n">censuses</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
+                <span class="n">censuses</span><span class="p">[</span><span class="n">label</span><span class="p">],</span>
+                <span class="n">matrix</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+                <span class="n">genotypes</span><span class="o">=</span><span class="n">genotypes</span><span class="p">[</span><span class="n">assay</span><span class="p">],</span>
             <span class="p">):</span>
                 <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">value</span><span class="p">)</span>
                 <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>

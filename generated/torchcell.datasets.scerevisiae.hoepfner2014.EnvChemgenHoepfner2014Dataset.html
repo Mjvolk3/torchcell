@@ -230,7 +230,9 @@ recorded retrieval command, run only where the mirror has not been deposited.</p
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.hoepfner2014.EnvChemgenHoepfner2014Dataset.process">
 <span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/scerevisiae/hoepfner2014.html#EnvChemgenHoepfner2014Dataset.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.scerevisiae.hoepfner2014.EnvChemgenHoepfner2014Dataset.process" title="Link to this definition"></a></dt>
-<dd><p>Stream both score matrices into the LMDB (one record per (ORF, experiment)).</p>
+<dd><p>Stream the four score matrices into the LMDB (one record per (ORF, experiment)).</p>
+<p>The two compound matrices first (HIP, HOP), then the two Benomyl
+positive-control matrices (<code class="docutils literal notranslate"><span class="pre">_MATRICES</span></code>).</p>
 <p>The constant sub-objects are interned FIRST and their transaction committed before
 any record is written, so a crash can only ever leave orphan interned rows, never
 a record with a dangling <code class="docutils literal notranslate"><span class="pre">$ref</span></code>. Records then commit in batches so a multi-

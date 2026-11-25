@@ -153,3 +153,65 @@ A metadata ORF with no ORF form goes on `ReleasedGeneNamePerturbation` (0 of 4,6
 | L3 | `reference_finite` | gate | ok | reference abundance finite + key-matched for all 8466210 values |
 | L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'swath_ms_maxlfq_batch_corrected_quantity' |
 | L4 | `gene_containment_scmd_ohya2005` | report | ok | 0.948 of scmd_ohya2005's 4549 deletion genes are in Ohya (>= 0.9) |
+
+## 2026.11.24 - One record per released sample, the 388 HIS3 controls included (#1178, #1171)
+
+The loader stored one record per KO sample (already one culture each) and folded the 388 HIS3 control samples into a per-protein mean, SE and n that every record carries as its reference. Under the per-replicate policy (#1178) each control culture is now a record too, every record names its sample, and the reference stays a summary with `replicate_id = None`.
+
+| | before | after |
+|---|---|---|
+| records | 4,699 (one per `ko` sample) | 5,087 (4,699 `ko` then 388 `HIS3`) |
+| HIS3 controls | reference only | 388 records, genotype `KanMxDeletionPerturbation(YOR202W)`, plus the reference summary |
+| `replicate_id` | `None` | the sample's `Filename`, verbatim (5,087 distinct) |
+| `protein_abundance_se` | `None` | `None` with a `ProvenanceGap` of reason `not_applicable_single_measurement` |
+| `n_replicates` | 1 per protein | 1 per protein |
+| `phenotype_reference` | mean, sample SD / sqrt(n), n over the HIS3 columns | unchanged, `replicate_id = None` |
+| `preprocess/data.csv` | filename, orf, gene, n_proteins | adds `sampletype` |
+
+### What a sample is (paper.md sha256 `edd0fe28...`, metadata sha256 `48864282...`)
+
+- KOs, one culture each: "Strains were not measured in replicates." (STAR Methods, paper.md L579). The Discussion repeats it: "our study reports a single proteome per KO strain" (L240).
+- HIS3 controls, biological replicates: "The control strain (388 replicates) is the complemented his3D deletion strain, haploid from a BY4741 prototrophic deletion collection. This control strain was introduced in 7 positions on each plate: A11, B8, C5, D2, F11, G8, H5. Plates 56 and 57 contain additional controls." (L507). Figure 1D: "$1 1 . 3 \%$ across the biological replicates of the wild-type strain" (L69), and Results: "for the WT replicates $( \mathsf { n } = 3 8 8$ reflecting both technical and biological variation)" (L81).
+- QC samples, technical and not a strain: "QC samples for repeat injections were prepared by pooling digested and cleaned-up samples from 4 different 96-well plates." (L525); "pooled digests $( \mathsf { n } = 3 8 9$ ; reflecting technical variation)" (L81). They stay out of the store.
+- Measured on the pinned metadata: 4,699 `ko`, 388 `HIS3`, 389 `qc`, all 5,476 in the matrix header; the 5,087 `ko` and `HIS3` samples sit at 5,087 distinct (plate, well) positions, so none is a repeat injection of another; the 389 `qc` rows share well 0 and repeat their (plate, well) 332 times. HIS3 wells (row-wise, 1-based) are 11, 20, 29, 38, 71, 80 and 89, which are the paper's A11, B8, C5, D2, F11, G8 and H5, plus well 46 on one plate. HIS3 records per plate over the 57 plates: 47 plates with 7, 7 with 6, and one each with 4, 5 and 8.
+- Withdrawn samples: "Samples were removed if the number of identified precursors was less than $80 \%$ of the maximum number of precursors." (L571). The release is the post-QC matrix (388 HIS3 matches the paper's n), so nothing the authors removed is in it and nothing is dropped here.
+
+### The control genotype
+
+The metadata `ORF` of every HIS3 sample is `YOR202W`, and no `ko` sample deletes YOR202W. Messner defers the culture and the collection to Mulleder 2016 (its ref 15) and Mulleder 2012 (ref 94). Mulleder 2016 (`mullederFunctionalMetabolomicsDescribes2016/paper.md`, sha256 `20412bec...`) names "the complemented deletion strains his3D::kanMX4 and met17D::kanMX4" (L379) and describes the prototrophic collection as "created by transformation with a minichromosome carrying the genes HIS3, LEU2, URA3 and MET17 (Mu¨ lleder et al., 2012)" (L487). So the control is the library's own his3D::kanMX4 strain carrying the same minichromosome as every strain of the collection, and it is stored as `KanMxDeletionPerturbation(YOR202W)` under the same convention as each KO, where the minichromosome is modeled on no record (the docstring's standing note). An empty genotype would have stated a strain without the KanMX cassette at HIS3, which the paper does not describe.
+
+### Duplicate strains
+
+"for 145 ORFs, more than one strain exists in the library (these strains have different origins). 141 gene deletions are duplicated and 4 triplicated." (L579) matches the metadata read case-sensitively. The loader upper-cases the ORF, which joins `34_32_hpr37_ko_YML009C_MRPL39_0.62` and `63_58_hpr3_ko_YML009c_MRPL39_0.89`, so 146 ORFs carry 2 or 3 KO samples (142 x 2, 4 x 3) over 4,549 ORFs. Whether those two are two strains or one strain labeled twice is not stated (unverified). Each sample is its own record and `replicate_id` (the Filename) tells siblings apart, which the L1 key and the phenotype node id now read.
+
+### Counts and the mean-reproduction check
+
+Measured by `experiments/036-dataset-fixes-before-kg-build/scripts/messner2023_per_replicate_counts.py` (results `experiments/036-dataset-fixes-before-kg-build/results/messner2023_per_replicate_counts.json`) on two scratch builds: `$DATA_ROOT/tmp/scratch/per-replicate-messner2023/before/proteome_messner2023` (origin/main loader) and `$DATA_ROOT/tmp/scratch/per-replicate-messner2023/after/proteome_messner2023` (this loader).
+
+- 4,699 before, 5,087 after (4,699 `ko` + 388 `HIS3`); 5,087 distinct `replicate_id`.
+- The first 4,699 after-records equal the before-records in genotype, environment and every phenotype field except the two added ones (0 differ), and their references are identical (0 differ).
+- Grouped by (genotype, environment) and averaged per protein: the 4,403 one-strain KO groups reproduce their record exactly (max abs 0.0); the 146 multi-strain groups reproduce the mean of their before-records exactly (max abs 0.0; before, each strain was already its own record, so no single before-record is that mean); the YOR202W group (388 records, 1,850 proteins) reproduces the before-store's reference summary to max abs 5.8e-11, max rel 1.9e-15, which is floating-point summation order (pandas mean against a running sum).
+
+### L0-L3 on the scratch build
+
+`verify_protein_dataset` under the `proteome_messner2023` runner configuration (`expected_count` 5,087), report at `$DATA_ROOT/tmp/scratch/per-replicate-messner2023/after/proteome_messner2023/preprocess/verification_report.json`. Verdict PASS.
+
+| level | rule | outcome | message |
+|---|---|---|---|
+| L0 | `structural` | ok | 5087 records validated |
+| L1 | `count` | ok | observed 5087, expected 5087 |
+| L1 | `orf_uniqueness` | ok | 4550 unique knocked-out ORFs, one record each |
+| L2 | `value_fidelity` | ok | 9167829 values checked |
+| L2 | `se_nonnegative` | ok | 0 values checked |
+| L3 | `reference_finite` | ok | reference abundance finite + key-matched for all 9167829 values |
+| L3 | `measurement_type_consistent` | ok | single measurement_type: 'swath_ms_maxlfq_batch_corrected_quantity' |
+| L3 | `replicate_id_names_one_replicate` | ok | 5087 of 5087 records carry a replicate_id; 0 break it |
+| L4 | `gene_containment_scmd_ohya2005` | ok (report) | 0.948 of scmd_ohya2005's 4550 deletion genes are in Ohya (>= 0.9) |
+
+`orf_uniqueness` now reads "one record each" because `replicate_id` joins its key; the 4,550 ORFs are the 4,549 KO ORFs plus YOR202W.
+
+### Not done
+
+- The 389 `qc` pooled-digest injections are not records: they are technical repeats of a pool of four plates, with no strain genotype.
+- The prototrophy minichromosome is still modeled on no record (unchanged, standing note).
+- `duration_hours` stays None (#486, unchanged).

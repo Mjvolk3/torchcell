@@ -1048,15 +1048,17 @@ PROTEIN_DATASETS: dict[str, dict[str, Any]] = {
     },
     "proteome_messner2023": {
         "root": "data/torchcell/proteome_messner2023",
-        "expected_count": 4699,
+        # 4,699 KO strains + 388 HIS3 control cultures, one record per sample (#1178)
+        "expected_count": 5087,
         "allow_duplicate_orfs": True,
         "provenance": Provenance(
             source_uri="https://data.mendeley.com/datasets/w8jtmnszd9/1",
             citation_key="messnerProteomicLandscapeGenomewide2023",
             method=(
                 "microflow-SWATH-MS (DIA-NN MaxLFQ), plate-median batch-corrected, "
-                "no imputation; single-replicate KOs vs a 388-replicate HIS3 WT "
-                "reference; UniProt->ORF via SGD GFF"
+                "no imputation; one record per released KO and HIS3 sample "
+                "(replicate_id = Filename) vs a summary over the 388 HIS3 controls; "
+                "protein keys are the released UniProt accessions"
             ),
             page="Cell 186:2018; Mendeley 10.17632/w8jtmnszd9.1 yeast5k_noimpute_wide.csv",
         ),

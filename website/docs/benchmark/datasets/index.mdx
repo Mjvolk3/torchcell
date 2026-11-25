@@ -65,11 +65,16 @@ Every dataset is also listed by the API, unranked or searched:
 | Purpose | Route | Answer |
 | :-- | :-- | :-- |
 | Every dataset | `GET /datasets` | the public record of each dataset |
-| Search | `GET /datasets/search?q=&organism=&task_group=&limit=20&offset=0` | `{mode, total, limit, offset, results: [{dataset, score}]}`, best first; an empty `q` lists every dataset by organism, task and title; `limit` is at most 100 |
-| Browse tree | `GET /datasets/facets` | board counts per organism and, within each, per task group |
+| Search | `GET /datasets/search?q=&organism=&task_group=&limit=20&offset=0` | `{mode, total, limit, offset, results: [{dataset, score}]}`, best first; an empty `q` lists every dataset by organism, task, split and title; `limit` is at most 100 |
+| Task search | `GET /tasks/search?q=&organism=&key=&limit=20&offset=0` | `{mode, total, limit, offset, results: [{key, task_group, title, organism, n_boards, score, boards}]}`, one row per task, best first; `boards` lists at most 50 boards (`slug, split_name, title, n_train, n_val, n_test`) by split family, then seed; an empty `q` lists every task by organism and title; `key` keeps one task |
+| Browse tree | `GET /datasets/facets` | board and task counts per organism and, within each, board counts per task group |
 
 A dataset record names its `organism`, its `task_group` (the task its split boards
-share) and its `split_name` when the bundle sets them. `mode` is `lexical` (word and
+share) and its `split_name` when the bundle sets them. A **task** is the boards that
+share a `task_group`, or one board without one (its `key` is then the board's slug);
+the task search matches the task's title, organism, targets, loader class, citation
+key and the part of the description its boards share, never a split name, so a query
+answers each task once. `mode` is `lexical` (word and
 word-start matches, titles, slugs and organisms weighted above descriptions) or
 `hybrid` (the same, averaged with the cosine similarity of a small text-embedding
 model); `GET /health` reports which one the service runs as `search`.

@@ -1,4 +1,4 @@
-import React, {useMemo, useState, type ReactNode} from 'react';
+import React, {useEffect, useMemo, useState, type ReactNode} from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import {useHistory, useLocation} from '@docusaurus/router';
@@ -617,14 +617,18 @@ function slugFromSearch(search: string): string | null {
 }
 
 /**
- * The dataset the URL names, or, with no `?dataset=`, the first dataset in the API's
- * browse order (organism, task group, title); null when no dataset is registered.
+ * The dataset the URL names, or, with no `?dataset=`, the first board (in split
+ * order) of the first task in the API's task order (organism, title); null when no
+ * dataset is registered.
  */
 function loadSelected(api: BenchApi, slug: string | null): Promise<BenchmarkDatasetPublic | null> {
   if (slug !== null) {
     return api.dataset(slug);
   }
-  return api.searchDatasets({limit: 1}).then((page) => page.results[0]?.dataset ?? null);
+  return api.searchTasks({limit: 1}).then((page) => {
+    const first = page.results[0];
+    return first === undefined ? null : api.dataset(first.boards[0].slug);
+  });
 }
 
 function Leaderboard(): ReactNode {
@@ -640,22 +644,34 @@ function Leaderboard(): ReactNode {
   const [target, setTarget] = useState<string>(MACRO_TARGET);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
 
-  const choose = (next: BenchmarkDatasetPublic): void => {
+  const choose = (nextSlug: string): void => {
     setTarget(MACRO_TARGET);
     setMetric(null);
-    if (next.slug !== slug) {
+    if (nextSlug !== slug) {
       const params = new URLSearchParams(location.search);
-      params.set('dataset', next.slug);
+      params.set('dataset', nextSlug);
       history.push({pathname: location.pathname, search: `?${params.toString()}`});
     }
   };
 
-  const selected = datasetState.status === 'ok' ? datasetState.data : null;
+  // The last dataset that loaded, kept while the next one loads, so the picker keeps
+  // its organism, task and split instead of blanking on every split change.
+  const [shown, setShown] = useState<BenchmarkDatasetPublic | null>(null);
+  useEffect(() => {
+    if (datasetState.status === 'ok') {
+      setShown(datasetState.data);
+    }
+  }, [datasetState]);
 
   return (
     <>
       <div className={styles.controls}>
-        <DatasetPicker api={api} selected={selected} onSelect={choose} />
+        <DatasetPicker
+          api={api}
+          selected={shown}
+          selectedSlug={slug ?? shown?.slug ?? null}
+          onSelect={choose}
+        />
       </div>
       <LoadGate state={datasetState} onRetry={reloadDataset}>
         {(dataset) => {

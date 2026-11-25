@@ -11,12 +11,16 @@ Validation and test scores for every scored submission on one dataset. Scores ar
 [provisional](./status.mdx) until reproduced; rows marked "baseline" are the
 [standard baselines](./baselines.mdx). Click a column header to sort.
 
-Choose a dataset by typing in the **Dataset** box: it searches titles, slugs, organisms,
-tasks, split names, targets, loader classes and citation keys, and the start of a word
-is enough (`morph` finds the morphology boards, `babu` the Babu 2014 ones). Arrow keys
-move through the results and Enter opens one. **Browse by organism and task** lists the
-same boards as a tree: organism, then task, then one board per split. The open dataset
-is kept in the address as `?dataset=<slug>`, so a board can be linked; without it the
-page opens the first dataset by organism, task and title.
+A board is chosen in three steps, left to right. **Organism** narrows the tasks to one
+organism (choosing one opens its first task). **Task** searches the tasks by title,
+organism, target, loader class and citation key, one row per task however many splits
+it has, and the start of a word is enough (`morph` finds the morphology task, `babu`
+the Babu 2014 one); with the box empty it lists every task of the chosen organism,
+more as you scroll or hold the down arrow. Arrow keys, Page Up, Page Down, Home and End
+move through the list, and Enter opens a task at its first split. **Split** then lists
+the task's boards, such as "Random, seed 0" or "Sequence identity 30%, seed 0"; it
+appears only for a task with more than one. The open board is kept in the address as
+`?dataset=<slug>`, so a board can be linked; without it the page opens the first split
+of the first task by organism and title.
 
 <LeaderboardApp />

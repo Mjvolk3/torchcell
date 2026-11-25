@@ -179,6 +179,7 @@ from torchcell.benchmark.search import (
     Embedder,
     SearchMode,
     SearchPage,
+    TaskPage,
     embedder_from_path,
 )
 from torchcell.benchmark.security import (
@@ -1215,7 +1216,9 @@ def create_app(
         """Datasets matching ``q``, best first, one page. No account needed.
 
         An empty ``q`` lists every dataset that passes the filters in browse order
-        (organism, task group, title) with score 0. ``organism`` and ``task_group``
+        (organism, task group, split family and seed within the task, title) with
+        score 0, so ``task_group`` pages a task's boards past the 50 that
+        ``/tasks/search`` lists. ``organism`` and ``task_group``
         keep exact matches only. ``mode`` says how the scores were computed; the
         formula is in :mod:`torchcell.benchmark.search`.
         """
@@ -1225,8 +1228,31 @@ def create_app(
 
     @router.get("/datasets/facets", response_model=DatasetFacets, tags=["datasets"])
     def dataset_facets() -> DatasetFacets:
-        """Board counts per organism and, within each, per task group."""
+        """Board and task counts per organism and, within each, per task group."""
         return search_index.facets()
+
+    @router.get("/tasks/search", response_model=TaskPage, tags=["datasets"])
+    def search_tasks(
+        q: Annotated[str, Query(max_length=MAX_SEARCH_QUERY_LENGTH)] = "",
+        organism: str | None = None,
+        key: str | None = None,
+        limit: Annotated[int, Query(ge=1, le=MAX_SEARCH_LIMIT)] = DEFAULT_SEARCH_LIMIT,
+        offset: Annotated[int, Query(ge=0)] = 0,
+    ) -> TaskPage:
+        """Tasks matching ``q``, best first, one page, each with its split boards.
+
+        A task is the boards sharing a task group (a board without one is its own
+        task), so a query that matches every split of a task answers it once. An
+        empty ``q`` lists every task that passes the filters in task order
+        (organism, title) with score 0. ``organism`` and ``key`` keep exact matches
+        only; ``key`` (a task group, or the slug of a board without one) finds the
+        task of a board. Each task lists at most 50 boards, ordered by
+        split family then seed; ``n_boards`` is the true count and
+        ``/datasets/search?task_group=`` pages the rest. No account needed.
+        """
+        return search_index.search_tasks(
+            q, organism=organism, key=key, limit=limit, offset=offset
+        )
 
     @router.get(
         "/datasets/{slug}", response_model=BenchmarkDatasetPublic, tags=["datasets"]

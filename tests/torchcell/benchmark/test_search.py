@@ -10,7 +10,9 @@ group, and one board with no organism. The lexical score of the module docstring
 ``morph`` (a prefix of ``morphology`` in the slug, weight 3) scores 2.4 / 3 = 0.8 and
 ``deletions`` (whole word, description only, weight 1) scores 1 / 3. The hybrid tests
 use :class:`FakeEmbedder`, whose cosines are 1 or 0 by construction, so
-``0.5 * cos + 0.5 * lex`` is exact too.
+``0.5 * cos + 0.5 * lex`` is exact too. The task tests group the same five cards into
+four tasks (the two shape boards are one) and check board order, the 50-board cap and
+the split-free task card.
 """
 
 from pathlib import Path
@@ -22,13 +24,19 @@ import pytest
 from tests.torchcell.benchmark._fake_embedder import FakeEmbedder
 from torchcell.benchmark.bundle import BenchmarkDatasetPublic
 from torchcell.benchmark.search import (
+    MAX_TASK_BOARDS,
     DatasetIndex,
     Model2VecEmbedder,
+    board_order,
     card_text,
     card_tokens,
     embedder_from_path,
     group_title,
     query_tokens,
+    split_parts,
+    task_card_text,
+    task_description,
+    tasks_of,
 )
 
 ECOLI = "Escherichia coli"
@@ -302,9 +310,9 @@ def test_hybrid_adds_half_cosine_to_half_lexical() -> None:
     embedder = FakeEmbedder()
     index = DatasetIndex(ALL, embedder)
     assert index.mode == "hybrid"
-    # Cards embedded once, in browse order.
+    # Cards embedded once: the 5 boards in browse order, then the 4 tasks.
     assert len(embedder.calls) == 1
-    assert len(embedder.calls[0]) == 5
+    assert len(embedder.calls[0]) == 9
     # "shape random": lex 1.0 / 0.5 / 0.5; cos 1 / 1 / 0.
     assert _hits(index, "shape random") == [
         (SHAPE_RANDOM.slug, 1.0),
@@ -346,7 +354,7 @@ def test_embedder_of_the_wrong_shape_is_refused() -> None:
         def embed(self, texts: list[str]) -> npt.NDArray[np.float64]:
             return np.ones((len(texts) - 1, 3))
 
-    with pytest.raises(ValueError, match=r"shape \(4, 3\) for 5 cards"):
+    with pytest.raises(ValueError, match=r"shape \(8, 3\) for 9 cards"):
         DatasetIndex(ALL, Short())
 
 
@@ -356,8 +364,16 @@ def test_empty_index_answers_empty_pages() -> None:
     assert index.search("shape").total == 0
     assert index.facets().model_dump() == {
         "total": 0,
+        "n_tasks": 0,
         "organisms": [],
         "n_without_organism": 0,
+    }
+    assert index.search_tasks("shape").model_dump() == {
+        "mode": "hybrid",
+        "total": 0,
+        "limit": 20,
+        "offset": 0,
+        "results": [],
     }
 
 
@@ -379,10 +395,12 @@ def test_model_path_that_is_not_a_directory_fails_loudly(tmp_path: Path) -> None
 def test_facets_count_organisms_and_task_groups(lexical: DatasetIndex) -> None:
     assert lexical.facets().model_dump() == {
         "total": 5,
+        "n_tasks": 4,
         "organisms": [
             {
                 "organism": ECOLI,
                 "count": 3,
+                "n_tasks": 2,
                 "task_groups": [
                     {
                         "task_group": SHAPE_TASK,
@@ -400,6 +418,7 @@ def test_facets_count_organisms_and_task_groups(lexical: DatasetIndex) -> None:
             {
                 "organism": YEAST,
                 "count": 1,
+                "n_tasks": 1,
                 "task_groups": [],
                 "n_without_task_group": 1,
             },
@@ -417,3 +436,280 @@ def test_group_title_is_the_common_prefix_cut_to_whole_words() -> None:
     )
     assert group_title(["Foo", "Foo bar"], "t") == "Foo"
     assert group_title(["Alpha", "Beta"], "the-task") == "the-task"
+    # "_" is part of a word, so a split name in a title is cut whole.
+    assert group_title(["Growth, random_s1", "Growth, random_s10"], "t") == "Growth"
+
+
+# ------------------------------------------------------------------------ tasks
+
+# Task order: organism (missing last), then display title, then key. The shape task's
+# title "E. coli cell shape (Campos 2018)" sorts before "E. coli genetic ...".
+TASK_ORDER = [SHAPE_TASK, GI_TASK, ESSENTIAL.slug, TOY.slug]
+
+
+def _task_hits(
+    index: DatasetIndex, query: str, *, organism: str | None = None
+) -> list[tuple[str, float]]:
+    """``(key, score rounded to 6 places)`` of the first page of a task search."""
+    page = index.search_tasks(query, organism=organism)
+    return [(hit.key, round(hit.score, 6)) for hit in page.results]
+
+
+def _split_board(
+    slug: str, split_name: str | None, task_group: str
+) -> BenchmarkDatasetPublic:
+    return _card(
+        slug,
+        f"Growth, {split_name}",
+        description=f"Growth of deletions. Split {split_name} of the task.",
+        loader_class="GrowthDataset",
+        citation_key="campos2018",
+        targets=["growth"],
+        organism=ECOLI,
+        task_group=task_group,
+        split_name=split_name,
+    )
+
+
+def test_a_query_matching_every_split_answers_the_task_once(
+    lexical: DatasetIndex,
+) -> None:
+    # Two boards match "shape" (title, weight 3); one task does.
+    assert _hits(lexical, "shape") == [
+        (SHAPE_RANDOM.slug, 1.0),
+        (SHAPE_SEQID.slug, 1.0),
+    ]
+    page = lexical.search_tasks("shape")
+    assert (page.mode, page.total, page.limit, page.offset) == ("lexical", 1, 20, 0)
+    assert page.results[0].model_dump() == {
+        "key": SHAPE_TASK,
+        "task_group": SHAPE_TASK,
+        "title": "E. coli cell shape (Campos 2018)",
+        "organism": ECOLI,
+        "n_boards": 2,
+        "score": 1.0,
+        "boards": [
+            {
+                "slug": SHAPE_RANDOM.slug,
+                "split_name": "random_s0",
+                "title": SHAPE_RANDOM.title,
+                "n_train": 8,
+                "n_val": 1,
+                "n_test": 1,
+            },
+            {
+                "slug": SHAPE_SEQID.slug,
+                "split_name": "seqid30_s0",
+                "title": SHAPE_SEQID.title,
+                "n_train": 8,
+                "n_val": 1,
+                "n_test": 1,
+            },
+        ],
+    }
+    # "morph" starts the task-group word "morphology" (weight 3): 0.8.
+    assert _task_hits(lexical, "morph") == [(SHAPE_TASK, 0.8)]
+    # Split names are not on a task card: "seqid" and "30" find boards, not tasks.
+    assert _hits(lexical, "seqid") == [(SHAPE_SEQID.slug, 1.0)]
+    assert _task_hits(lexical, "seqid") == []
+    assert _task_hits(lexical, "30") == []
+
+
+def test_task_scores_are_the_documented_formula(lexical: DatasetIndex) -> None:
+    # shape (title, 3) + pairwise (absent) on the shape task: 3 / 6. pairwise is in
+    # the GI description only (weight 1): 1 / 6.
+    assert _task_hits(lexical, "shape pairwise") == [
+        (SHAPE_TASK, 0.5),
+        (GI_TASK, round(1 / 6, 6)),
+    ]
+    # A tie (coli, title weight 3, on both E. coli tasks) keeps the task order.
+    assert _task_hits(lexical, "coli") == [(SHAPE_TASK, 1.0), (GI_TASK, 1.0)]
+    # "deletions" survives in the shape task's description (both boards share it).
+    assert _task_hits(lexical, "deletions") == [(SHAPE_TASK, round(1 / 3, 6))]
+    np.testing.assert_allclose(
+        lexical.task_lexical_scores(["shape", "pairwise"]), [3 / 6, 1 / 6, 0.0, 0.0]
+    )
+    assert lexical.search_tasks("zebrafish").total == 0
+
+
+def test_empty_task_query_lists_tasks_in_order_and_pages(lexical: DatasetIndex) -> None:
+    for query in ("", "  ", "%%"):
+        page = lexical.search_tasks(query)
+        assert page.total == 4
+        assert [(h.key, h.score) for h in page.results] == [
+            (key, 0.0) for key in TASK_ORDER
+        ]
+    pages = [lexical.search_tasks("", limit=3, offset=offset) for offset in (0, 3, 6)]
+    assert [[h.key for h in p.results] for p in pages] == [
+        TASK_ORDER[0:3],
+        TASK_ORDER[3:4],
+        [],
+    ]
+    assert {(p.total, p.limit) for p in pages} == {(4, 3)}
+    assert [t.key for t in lexical.tasks] == TASK_ORDER
+
+
+def test_task_search_filters_by_organism(lexical: DatasetIndex) -> None:
+    assert _task_hits(lexical, "", organism=ECOLI) == [
+        (SHAPE_TASK, 0.0),
+        (GI_TASK, 0.0),
+    ]
+    assert _task_hits(lexical, "", organism=YEAST) == [(ESSENTIAL.slug, 0.0)]
+    assert lexical.search_tasks("shape", organism=YEAST).total == 0
+    assert lexical.search_tasks("", organism="Escherichia").total == 0
+    # The key filter finds the task of a board: its task group, or its own slug.
+    assert _task_hits_key(lexical, GI_TASK) == [(GI_TASK, 0.0)]
+    assert _task_hits_key(lexical, ESSENTIAL.slug) == [(ESSENTIAL.slug, 0.0)]
+    assert _task_hits_key(lexical, SHAPE_RANDOM.slug) == []
+    assert lexical.search_tasks("shape", key=GI_TASK).total == 0
+
+
+def _task_hits_key(index: DatasetIndex, key: str) -> list[tuple[str, float]]:
+    return [(h.key, h.score) for h in index.search_tasks("", key=key).results]
+
+
+def test_a_board_without_a_task_group_is_its_own_task(lexical: DatasetIndex) -> None:
+    page = lexical.search_tasks("essentiality")
+    assert [hit.model_dump() for hit in page.results] == [
+        {
+            "key": ESSENTIAL.slug,
+            "task_group": None,
+            "title": "Gene essentiality (SGD)",
+            "organism": YEAST,
+            "n_boards": 1,
+            "score": 1.0,
+            "boards": [
+                {
+                    "slug": ESSENTIAL.slug,
+                    "split_name": None,
+                    "title": "Gene essentiality (SGD)",
+                    "n_train": 8,
+                    "n_val": 1,
+                    "n_test": 1,
+                }
+            ],
+        }
+    ]
+    # The toy board has neither organism nor task group: a task with no organism.
+    toy = lexical.search_tasks("toy").results
+    assert [(h.key, h.task_group, h.organism, h.n_boards) for h in toy] == [
+        (TOY.slug, None, None, 1)
+    ]
+
+
+def test_task_card_text_has_no_split_and_no_board_slug() -> None:
+    shape = tasks_of(ALL)[0]
+    assert task_card_text(shape) == (
+        "E. coli cell shape (Campos 2018)\n"
+        "ecoli morphology campos2018\n"
+        "Escherichia coli\n"
+        "mean_L mean_W\n"
+        "Cell shape of deletions.\n"
+        "MorphologyCampos2018Dataset\n"
+        "campos2018"
+    )
+
+
+def test_task_description_drops_the_split_specific_sentences() -> None:
+    def board(split_name: str, description: str) -> BenchmarkDatasetPublic:
+        return SHAPE_RANDOM.model_copy(
+            update={"split_name": split_name, "description": description}
+        )
+
+    random_board = board(
+        "random_s0",
+        "E. coli growth rate. One target. Split random_s0 of the task t: random split.",
+    )
+    seqid_board = board(
+        "seqid30_s0",
+        "E. coli growth rate. One target. Split seqid30_s0 of the task t: "
+        "sequence identity 30 % split.",
+    )
+    # "E." and "coli growth rate." are two sentences, both shared, rejoined by a space.
+    assert task_description([random_board, seqid_board]) == (
+        "E. coli growth rate. One target."
+    )
+    # One board: the sentence naming its split is dropped.
+    assert task_description([random_board]) == "E. coli growth rate. One target."
+    # A sentence only some boards have is dropped, even without a split name.
+    other = board("position_s0", "E. coli growth rate. Ordered by locus.")
+    assert task_description([other, random_board]) == "E. coli growth rate."
+    assert task_description([board("random_s0", "Split random_s0.")]) == ""
+
+
+def test_board_order_is_split_family_then_seed() -> None:
+    names = [
+        "position_s0",
+        "seqid50_s0",
+        "random_s1",
+        "weird_s0",
+        "seqid30_gene_holdout_s0",
+        "random_s0",
+        "seqid30_s0",
+        "gene_holdout_s0",
+        "aaa_s0",
+        "seqid5_gene_holdout_s0",
+        "random_s10",
+        "random_s2",
+    ]
+    boards = [_split_board(f"g-{i}", name, "g") for i, name in enumerate(names)]
+    ordered = board_order(boards)
+    assert [b.split_name for b in ordered] == [
+        "random_s0",
+        "random_s1",
+        "random_s2",
+        "random_s10",
+        "seqid30_s0",
+        "seqid50_s0",
+        "gene_holdout_s0",
+        "seqid5_gene_holdout_s0",
+        "seqid30_gene_holdout_s0",
+        "position_s0",
+        # Unknown families in the order the boards were loaded.
+        "weird_s0",
+        "aaa_s0",
+    ]
+    assert split_parts("seqid30_gene_holdout_s12") == ("seqid30_gene_holdout", 12)
+    assert split_parts("custom") == ("custom", -1)
+    assert split_parts(None) == (None, -1)
+
+
+def test_a_task_lists_at_most_fifty_boards_and_search_pages_the_rest() -> None:
+    # 60 seeds of one family, loaded out of order.
+    seeds = [(7 * i) % 60 for i in range(60)]
+    boards = [
+        _split_board(f"big-s{seed:02d}", f"random_s{seed}", "big") for seed in seeds
+    ]
+    index = DatasetIndex(boards)
+    hit = index.search_tasks("growth").results[0]
+    assert (hit.key, hit.title, hit.n_boards) == ("big", "Growth", 60)
+    assert len(hit.boards) == MAX_TASK_BOARDS == 50
+    assert [b.split_name for b in hit.boards] == [f"random_s{s}" for s in range(50)]
+    # The board search with the task group continues where the task's list stops.
+    rest = index.search("", task_group="big", limit=50, offset=50)
+    assert rest.total == 60
+    assert [h.dataset.split_name for h in rest.results] == [
+        f"random_s{s}" for s in range(50, 60)
+    ]
+
+
+def test_tasks_refuse_mixed_organisms_and_a_slug_that_names_a_group() -> None:
+    mixed = SHAPE_SEQID.model_copy(update={"organism": YEAST})
+    with pytest.raises(ValueError, match="boards of different organisms"):
+        DatasetIndex([SHAPE_RANDOM, mixed])
+    clash = TOY.model_copy(update={"slug": SHAPE_TASK})
+    with pytest.raises(ValueError, match="has no task group but its slug names one"):
+        DatasetIndex([SHAPE_RANDOM, clash])
+
+
+def test_hybrid_task_search_finds_a_task_by_meaning() -> None:
+    embedder = FakeEmbedder()
+    index = DatasetIndex(ALL, embedder)
+    # The task cards follow the board cards in the one startup call.
+    assert embedder.calls[0][5:] == [task_card_text(t) for t in index.tasks]
+    # No task card holds "epistasis"; its vector is the interaction axis: cos 1, lex 0.
+    assert _task_hits(index, "epistasis") == [(GI_TASK, 0.5)]
+    assert embedder.calls[-1] == ["epistasis"]
+    # "shape": lex 1 and cos 1 on the shape task only.
+    assert _task_hits(index, "shape") == [(SHAPE_TASK, 1.0)]
+    assert index.search_tasks("epistasis").mode == "hybrid"

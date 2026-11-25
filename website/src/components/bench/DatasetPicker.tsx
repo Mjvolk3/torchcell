@@ -5,38 +5,40 @@ import React, {
   useState,
   type KeyboardEvent,
   type ReactNode,
+  type RefObject,
 } from 'react';
 import clsx from 'clsx';
-import type {
-  BenchApi,
-  BenchmarkDatasetPublic,
-  OrganismFacet,
-  SearchPage,
-  TaskGroupFacet,
+import {
+  BenchApiError,
+  MAX_TASK_BOARDS,
+  splitLabel,
+  type BenchApi,
+  type BenchmarkDatasetPublic,
+  type TaskBoard,
+  type TaskHit,
 } from '@site/src/lib/benchApi';
-import {failureState, useLoad, type LoadState} from '@site/src/lib/useLoad';
+import {failureState, useLoad} from '@site/src/lib/useLoad';
 import {LoadGate} from './common';
 import styles from './bench.module.css';
 
 /** Wait after the last keystroke before searching, in milliseconds. */
 const SEARCH_DEBOUNCE_MS = 150;
-/** Ranked results shown under the search box. */
-const SEARCH_RESULTS = 20;
-/** Boards loaded per "Show more" in the browse tree. */
-const BROWSE_PAGE = 50;
-/** Task groups (or organisms) rendered per "Show more" in the browse tree. */
-const GROUP_PAGE = 50;
+/** Tasks loaded per page of the task list (the first page, and each "Show more"). */
+const TASK_PAGE = 20;
+/** Rows PageUp and PageDown move the active option by. */
+const PAGE_STEP = 5;
+/** A task with more boards than this picks its split with a select, not buttons. */
+const SPLIT_BUTTONS_MAX = 12;
 
 function fmtCount(n: number): string {
   return n.toLocaleString('en-US');
 }
 
-/** Train, validation and test record counts in one short line. */
-function splitCounts(d: BenchmarkDatasetPublic): string {
-  return `train ${fmtCount(d.n_train)} / val ${fmtCount(d.n_val)} / test ${fmtCount(d.n_test)}`;
+function plural(n: number, one: string, many: string): string {
+  return `${fmtCount(n)} ${n === 1 ? one : many}`;
 }
 
-/** The organism as an italic chip, or nothing when the dataset has none. */
+/** The organism as an italic chip, or nothing when the task has none. */
 function OrganismChip({organism}: {organism: string | null | undefined}): ReactNode {
   if (organism == null) {
     return null;
@@ -44,337 +46,222 @@ function OrganismChip({organism}: {organism: string | null | undefined}): ReactN
   return <span className={clsx('tc-chip', styles.organismChip)}>{organism}</span>;
 }
 
-/**
- * A <details> whose content is mounted only while it is open, so a closed branch of
- * the browse tree sends no request and renders no rows.
- */
-function Disclosure({
-  summary,
-  children,
-  className,
-}: {
-  summary: ReactNode;
-  children: () => ReactNode;
-  className?: string;
-}): ReactNode {
-  const [open, setOpen] = useState(false);
-  return (
-    <details
-      className={className}
-      onToggle={(e) => setOpen(e.currentTarget.open)}>
-      <summary className={styles.browseSummary}>{summary}</summary>
-      {open ? children() : null}
-    </details>
-  );
-}
-
-/** A choosable board in the browse tree: title, split, counts. */
-function BoardButton({
-  dataset,
-  current,
-  onSelect,
-}: {
-  dataset: BenchmarkDatasetPublic;
-  current: boolean;
-  onSelect: (dataset: BenchmarkDatasetPublic) => void;
-}): ReactNode {
-  return (
-    <li>
-      <button
-        type="button"
-        className={clsx(styles.boardButton, current && styles.boardButtonCurrent)}
-        aria-current={current ? 'true' : undefined}
-        onClick={() => onSelect(dataset)}>
-        <span className={styles.optionTitle}>{dataset.title}</span>
-        <span className={styles.optionMeta}>
-          {dataset.split_name ? <code>{dataset.split_name}</code> : null}
-          <span>{splitCounts(dataset)}</span>
-        </span>
-      </button>
-    </li>
-  );
-}
-
-/**
- * The boards of one task group, fetched from /datasets/search with the organism and
- * task-group filters, BROWSE_PAGE at a time.
- */
-function TaskGroupBoards({
-  api,
-  organism,
-  group,
-  selectedSlug,
-  onSelect,
-}: {
-  api: BenchApi;
-  organism: string;
-  group: TaskGroupFacet;
-  selectedSlug: string | null;
-  onSelect: (dataset: BenchmarkDatasetPublic) => void;
-}): ReactNode {
-  const [boards, setBoards] = useState<BenchmarkDatasetPublic[]>([]);
-  const [total, setTotal] = useState<number | null>(null);
-  const [state, setState] = useState<LoadState<null>>({status: 'loading'});
-  const [offset, setOffset] = useState(0);
-  // Bumped by Retry, so a failed page is requested again at the same offset.
-  const [attempt, setAttempt] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    setState({status: 'loading'});
-    api
-      .searchDatasets({organism, taskGroup: group.task_group, limit: BROWSE_PAGE, offset})
-      .then(
-        (page) => {
-          if (!cancelled) {
-            setBoards((prev) => [...prev, ...page.results.map((hit) => hit.dataset)]);
-            setTotal(page.total);
-            setState({status: 'ok', data: null});
-          }
-        },
-        (error: unknown) => {
-          if (!cancelled) {
-            setState(failureState<null>(error));
-          }
-        },
-      );
-    return () => {
-      cancelled = true;
-    };
-  }, [api, organism, group.task_group, offset, attempt]);
-
-  return (
-    <>
-      {boards.length > 0 ? (
-        <ul className={styles.boardList}>
-          {boards.map((d) => (
-            <BoardButton
-              key={d.slug}
-              dataset={d}
-              current={d.slug === selectedSlug}
-              onSelect={onSelect}
-            />
-          ))}
-        </ul>
-      ) : null}
-      {state.status === 'ok' ? null : (
-        <LoadGate state={state} onRetry={() => setAttempt((n) => n + 1)}>
-          {() => null}
-        </LoadGate>
-      )}
-      {state.status === 'ok' && total !== null && boards.length < total ? (
-        <button
-          type="button"
-          className="button button--secondary button--sm"
-          onClick={() => setOffset(boards.length)}>
-          Show more ({fmtCount(total - boards.length)} left)
-        </button>
-      ) : null}
-    </>
-  );
-}
-
-/** One organism: its task groups, GROUP_PAGE at a time. */
-function OrganismBranch({
-  api,
-  facet,
-  selectedSlug,
-  onSelect,
-}: {
-  api: BenchApi;
-  facet: OrganismFacet;
-  selectedSlug: string | null;
-  onSelect: (dataset: BenchmarkDatasetPublic) => void;
-}): ReactNode {
-  const [shown, setShown] = useState(GROUP_PAGE);
-  const groups = facet.task_groups.slice(0, shown);
-  return (
-    <>
-      <ul className={styles.browseList}>
-        {groups.map((group) => (
-          <li key={group.task_group}>
-            <Disclosure
-              summary={
-                <>
-                  {group.title} <span className={styles.browseCount}>{fmtCount(group.count)}</span>
-                </>
-              }>
-              {() => (
-                <TaskGroupBoards
-                  api={api}
-                  organism={facet.organism}
-                  group={group}
-                  selectedSlug={selectedSlug}
-                  onSelect={onSelect}
-                />
-              )}
-            </Disclosure>
-          </li>
-        ))}
-      </ul>
-      {facet.task_groups.length > shown ? (
-        <button
-          type="button"
-          className="button button--secondary button--sm"
-          onClick={() => setShown((n) => n + GROUP_PAGE)}>
-          Show more tasks ({fmtCount(facet.task_groups.length - shown)} left)
-        </button>
-      ) : null}
-      {facet.n_without_task_group > 0 ? (
-        <p className={styles.browseNote}>
-          {fmtCount(facet.n_without_task_group)}{' '}
-          {facet.n_without_task_group === 1 ? 'board has' : 'boards have'} no task group;
-          find {facet.n_without_task_group === 1 ? 'it' : 'them'} with the search box.
-        </p>
-      ) : null}
-    </>
-  );
-}
-
-/** Organisms, then task groups, then boards, each level opened on demand. */
-function BrowseTree({
-  api,
-  selectedSlug,
-  onSelect,
-}: {
-  api: BenchApi;
-  selectedSlug: string | null;
-  onSelect: (dataset: BenchmarkDatasetPublic) => void;
-}): ReactNode {
-  const [state, reload] = useLoad(() => api.datasetFacets(), [api]);
-  const [shown, setShown] = useState(GROUP_PAGE);
-  return (
-    <LoadGate state={state} onRetry={reload}>
-      {(facets) => (
-        <div className={styles.browseTree}>
-          {facets.organisms.length === 0 ? (
-            <p className={styles.browseNote}>No dataset names its organism yet.</p>
-          ) : (
-            <ul className={styles.browseList}>
-              {facets.organisms.slice(0, shown).map((facet) => (
-                <li key={facet.organism}>
-                  <Disclosure
-                    summary={
-                      <>
-                        <em>{facet.organism}</em>{' '}
-                        <span className={styles.browseCount}>{fmtCount(facet.count)}</span>
-                      </>
-                    }>
-                    {() => (
-                      <OrganismBranch
-                        api={api}
-                        facet={facet}
-                        selectedSlug={selectedSlug}
-                        onSelect={onSelect}
-                      />
-                    )}
-                  </Disclosure>
-                </li>
-              ))}
-            </ul>
-          )}
-          {facets.organisms.length > shown ? (
-            <button
-              type="button"
-              className="button button--secondary button--sm"
-              onClick={() => setShown((n) => n + GROUP_PAGE)}>
-              Show more organisms ({fmtCount(facets.organisms.length - shown)} left)
-            </button>
-          ) : null}
-          {facets.n_without_organism > 0 ? (
-            <p className={styles.browseNote}>
-              {fmtCount(facets.n_without_organism)}{' '}
-              {facets.n_without_organism === 1 ? 'board has' : 'boards have'} no organism
-              set; find {facets.n_without_organism === 1 ? 'it' : 'them'} with the search box.
-            </p>
-          ) : null}
-        </div>
-      )}
-    </LoadGate>
-  );
-}
-
 /** Why a search failed, in words for the list's note. */
 function failureMessage(error: unknown): string {
-  const failure = failureState<SearchPage>(error);
+  const failure = failureState<null>(error);
   if (failure.status === 'unreachable') {
     return `The benchmark API is not reachable at ${failure.url}`;
   }
   return failure.status === 'error' ? failure.message : 'Search failed';
 }
 
+/** The label of a board in the split control: its readable split, or its title. */
+function boardLabel(board: TaskBoard): string {
+  return board.split_name === null ? board.title : splitLabel(board.split_name);
+}
+
+function asTaskBoard(d: BenchmarkDatasetPublic): TaskBoard {
+  return {
+    slug: d.slug,
+    split_name: d.split_name ?? null,
+    title: d.title,
+    n_train: d.n_train,
+    n_val: d.n_val,
+    n_test: d.n_test,
+  };
+}
+
+/** The task of a board: its task group, or its own slug when it has none. */
+function taskKeyOf(d: BenchmarkDatasetPublic): string {
+  return d.task_group ?? d.slug;
+}
+
 /**
- * Picks the dataset of the leaderboard. A search box (an ARIA combobox) asks
- * /datasets/search as the user types and lists up to SEARCH_RESULTS ranked boards;
- * the Browse section walks organism, task group and board, loading each level only
- * when it is opened. Neither renders more than a page of rows at once.
+ * The first control: All organisms, then each organism with its task count from
+ * /datasets/facets. Disabled until the facets arrive.
  */
-export default function DatasetPicker({
+function OrganismSelect({
   api,
-  selected,
-  onSelect,
+  id,
+  value,
+  onChange,
 }: {
   api: BenchApi;
-  /** The dataset on the board now, or null while none is loaded. */
-  selected: BenchmarkDatasetPublic | null;
-  onSelect: (dataset: BenchmarkDatasetPublic) => void;
+  id: string;
+  value: string | null;
+  onChange: (organism: string | null) => void;
+}): ReactNode {
+  const [state, reload] = useLoad(() => api.datasetFacets(), [api]);
+  if (state.status === 'unreachable' || state.status === 'error') {
+    return (
+      <LoadGate state={state} onRetry={reload}>
+        {() => null}
+      </LoadGate>
+    );
+  }
+  const facets = state.status === 'ok' ? state.data : null;
+  return (
+    <select
+      id={id}
+      className={clsx(styles.select, styles.pickerOrganismSelect)}
+      value={value ?? ''}
+      disabled={facets === null}
+      onChange={(e) => onChange(e.target.value === '' ? null : e.target.value)}>
+      <option value="">
+        All organisms{facets === null ? '' : ` (${plural(facets.n_tasks, 'task', 'tasks')})`}
+      </option>
+      {(facets?.organisms ?? []).map((facet) => (
+        <option key={facet.organism} value={facet.organism}>
+          {facet.organism} ({plural(facet.n_tasks, 'task', 'tasks')})
+        </option>
+      ))}
+    </select>
+  );
+}
+
+/** The active option and whether the keyboard put it there (only then is it scrolled to). */
+type Nav = {index: number; byKey: boolean};
+
+/**
+ * The second control: an ARIA combobox over /tasks/search. Typing ranks tasks (one
+ * row per task, never one per split); an empty box lists the tasks of the chosen
+ * organism in task order. Either list is paged TASK_PAGE at a time with a "Show
+ * more" row at its end, which loads by itself when the keyboard reaches the last
+ * loaded row, so a held ArrowDown walks the whole list.
+ */
+function TaskCombobox({
+  api,
+  inputId,
+  inputRef,
+  organism,
+  currentKey,
+  currentTitle,
+  onChoose,
+}: {
+  api: BenchApi;
+  inputId: string;
+  inputRef: RefObject<HTMLInputElement | null>;
+  organism: string | null;
+  currentKey: string | null;
+  currentTitle: string;
+  onChoose: (task: TaskHit) => void;
 }): ReactNode {
   const baseId = useId();
-  const inputId = `${baseId}-input`;
   const listId = `${baseId}-list`;
   const optionId = (index: number): string => `${baseId}-option-${index}`;
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState('');
   const [open, setOpen] = useState(false);
-  const [active, setActive] = useState(-1);
+  const [nav, setNav] = useState<Nav>({index: -1, byKey: false});
   // The last answer stays listed while the next one is pending, so typing does not
   // blank the list between keystrokes.
-  const [page, setPage] = useState<SearchPage | null>(null);
+  const [items, setItems] = useState<TaskHit[]>([]);
+  const [total, setTotal] = useState(0);
+  const [answered, setAnswered] = useState(false);
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  // Bumped for every new list (query, organism, open or close); an answer that
+  // arrives for an older list is dropped.
+  const generation = useRef(0);
 
   const query = text.trim();
 
   useEffect(() => {
-    if (!open || query === '') {
-      setPage(null);
+    generation.current += 1;
+    const mine = generation.current;
+    setLoadingMore(false);
+    if (!open) {
+      setItems([]);
+      setTotal(0);
+      setAnswered(false);
       setPending(false);
       setFailed(null);
       return undefined;
     }
-    let cancelled = false;
     setPending(true);
     const timer = window.setTimeout(() => {
-      api.searchDatasets({q: query, limit: SEARCH_RESULTS}).then(
-        (answer) => {
-          if (!cancelled) {
-            setPage(answer);
-            setPending(false);
-            setFailed(null);
-            setActive(answer.results.length > 0 ? 0 : -1);
+      api
+        .searchTasks({q: query, organism: organism ?? undefined, limit: TASK_PAGE, offset: 0})
+        .then(
+          (page) => {
+            if (generation.current === mine) {
+              setItems(page.results);
+              setTotal(page.total);
+              setAnswered(true);
+              setPending(false);
+              setFailed(null);
+              setNav({index: query !== '' && page.results.length > 0 ? 0 : -1, byKey: true});
+            }
+          },
+          (error: unknown) => {
+            if (generation.current === mine) {
+              setItems([]);
+              setTotal(0);
+              setPending(false);
+              setFailed(failureMessage(error));
+            }
+          },
+        );
+    }, SEARCH_DEBOUNCE_MS);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [api, query, organism, open]);
+
+  const hasMore = answered && failed === null && items.length < total;
+  const optionCount = items.length + (hasMore ? 1 : 0);
+
+  // The next page loads when the keyboard reaches the last loaded task or the "Show
+  // more" row (a click on that row counts as the keyboard).
+  const wantMore =
+    open && hasMore && !pending && nav.byKey && nav.index >= 0 && nav.index >= items.length - 1;
+  useEffect(() => {
+    if (!wantMore || loadingMore) {
+      return;
+    }
+    const mine = generation.current;
+    setLoadingMore(true);
+    api
+      .searchTasks({
+        q: query,
+        organism: organism ?? undefined,
+        limit: TASK_PAGE,
+        offset: items.length,
+      })
+      .then(
+        (page) => {
+          if (generation.current === mine) {
+            setItems((prev) => [...prev, ...page.results]);
+            setTotal(page.total);
+            setLoadingMore(false);
           }
         },
         (error: unknown) => {
-          if (!cancelled) {
-            setPending(false);
+          if (generation.current === mine) {
+            setLoadingMore(false);
             setFailed(failureMessage(error));
           }
         },
       );
-    }, SEARCH_DEBOUNCE_MS);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-    };
-  }, [api, query, open]);
+    // `query`, `organism` and `api` are fixed for a generation; listing them would
+    // start a second request for the same page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantMore, loadingMore, items.length]);
 
-  const results = failed === null && page !== null ? page.results : [];
+  // Keep the active option in view when the keyboard moved it; a hover never scrolls.
+  useEffect(() => {
+    if (open && nav.byKey && nav.index >= 0) {
+      document.getElementById(optionId(nav.index))?.scrollIntoView({block: 'nearest'});
+    }
+    // optionId is derived from baseId, which is stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, nav, optionCount]);
 
   const close = (): void => {
     setOpen(false);
-    setActive(-1);
+    setNav({index: -1, byKey: false});
   };
 
   const finishEditing = (): void => {
@@ -383,32 +270,58 @@ export default function DatasetPicker({
     setText('');
   };
 
-  const choose = (dataset: BenchmarkDatasetPublic): void => {
+  const choose = (task: TaskHit): void => {
     finishEditing();
     inputRef.current?.blur();
-    onSelect(dataset);
+    onChoose(task);
+  };
+
+  /** Moves the active option to `to(current)`, clamped to the list: no wrap-around. */
+  const move = (e: KeyboardEvent<HTMLInputElement>, to: (index: number) => number): void => {
+    e.preventDefault();
+    if (!open) {
+      setOpen(true);
+      return;
+    }
+    if (optionCount === 0) {
+      return;
+    }
+    const last = optionCount - 1;
+    setNav((prev) => ({index: Math.max(0, Math.min(last, to(prev.index))), byKey: true}));
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>): void => {
+    // Key repeat is not filtered: a held arrow keeps moving, one row per repeat.
     switch (e.key) {
       case 'ArrowDown':
-        e.preventDefault();
-        if (!open) {
-          setOpen(true);
-        } else if (results.length > 0) {
-          setActive((i) => Math.min(i + 1, results.length - 1));
-        }
+        move(e, (i) => i + 1);
         break;
       case 'ArrowUp':
-        e.preventDefault();
-        if (results.length > 0) {
-          setActive((i) => Math.max(i - 1, 0));
+        move(e, (i) => i - 1);
+        break;
+      case 'PageDown':
+        move(e, (i) => i + PAGE_STEP);
+        break;
+      case 'PageUp':
+        move(e, (i) => i - PAGE_STEP);
+        break;
+      case 'Home':
+        if (open && optionCount > 0) {
+          move(e, () => 0);
+        }
+        break;
+      case 'End':
+        if (open && optionCount > 0) {
+          move(e, () => optionCount - 1);
         }
         break;
       case 'Enter':
-        if (open && active >= 0 && active < results.length) {
+        if (open && nav.index >= 0 && nav.index < items.length) {
           e.preventDefault();
-          choose(results[active].dataset);
+          choose(items[nav.index]);
+        } else if (open && hasMore && nav.index === items.length) {
+          // The "Show more" row: its page is already loading (wantMore).
+          e.preventDefault();
         }
         break;
       case 'Escape':
@@ -425,103 +338,431 @@ export default function DatasetPicker({
     }
   };
 
-  const showList = open && query !== '';
+  const hover = (index: number): void => {
+    if (nav.index !== index || nav.byKey) {
+      setNav({index, byKey: false});
+    }
+  };
+
   let status = '';
-  if (showList && page !== null && !pending && failed === null) {
-    const {total} = page;
+  if (open && answered && !pending && failed === null) {
     status =
       total === 0
-        ? 'No datasets match.'
-        : `${fmtCount(total)} ${total === 1 ? 'dataset matches' : 'datasets match'}` +
-          (total > results.length ? `; showing the best ${results.length}.` : '.');
+        ? 'No tasks match.'
+        : `${plural(total, 'task', 'tasks')}${total > items.length ? `; ${fmtCount(items.length)} listed.` : '.'}`;
   }
 
   return (
-    <div className={styles.picker}>
-      <label htmlFor={inputId} className={styles.fieldLabel}>
-        Dataset
-      </label>
-      <div className={styles.pickerBox}>
-        <input
-          ref={inputRef}
-          id={inputId}
-          type="text"
-          className={clsx(styles.input, styles.pickerInput)}
-          role="combobox"
-          aria-expanded={showList}
-          aria-controls={listId}
-          aria-autocomplete="list"
-          aria-activedescendant={showList && active >= 0 ? optionId(active) : undefined}
-          autoComplete="off"
-          spellCheck={false}
-          placeholder={
-            selected ? selected.title : 'Search by name, organism, task, split, or citation'
-          }
-          value={editing ? text : (selected?.title ?? '')}
-          onFocus={() => {
-            setEditing(true);
-            setText('');
-          }}
-          onBlur={finishEditing}
-          onChange={(e) => {
-            setEditing(true);
-            setText(e.target.value);
-            setOpen(true);
-            setActive(-1);
-          }}
-          onKeyDown={onKeyDown}
-        />
-        <div className={styles.pickerPopup} hidden={!showList}>
-          <ul id={listId} role="listbox" aria-label="Matching datasets" className={styles.pickerList}>
-            {results.map((hit, index) => (
-              <li
-                key={hit.dataset.slug}
-                id={optionId(index)}
-                role="option"
-                aria-selected={index === active}
-                className={clsx(
-                  styles.pickerOption,
-                  index === active && styles.pickerOptionActive,
-                )}
-                // Keep the input focused so its blur does not close the list first.
-                onMouseDown={(e) => e.preventDefault()}
-                onMouseEnter={() => setActive(index)}
-                onClick={() => choose(hit.dataset)}>
-                <span className={styles.optionTitle}>{hit.dataset.title}</span>
-                <span className={styles.optionMeta}>
-                  <OrganismChip organism={hit.dataset.organism} />
-                  {hit.dataset.split_name ? <code>{hit.dataset.split_name}</code> : null}
-                  <span>{splitCounts(hit.dataset)}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-          {pending && results.length === 0 ? (
-            <p className={styles.pickerNote}>Searching</p>
+    <div className={styles.pickerBox}>
+      <input
+        ref={inputRef}
+        id={inputId}
+        type="text"
+        className={clsx(styles.input, styles.pickerInput)}
+        role="combobox"
+        aria-expanded={open}
+        aria-controls={listId}
+        aria-autocomplete="list"
+        aria-activedescendant={open && nav.index >= 0 ? optionId(nav.index) : undefined}
+        autoComplete="off"
+        spellCheck={false}
+        placeholder={
+          currentTitle !== '' ? currentTitle : 'Search tasks by name, organism, target, or citation'
+        }
+        value={editing ? text : currentTitle}
+        onFocus={() => {
+          setEditing(true);
+          setText('');
+          setOpen(true);
+        }}
+        onBlur={finishEditing}
+        onChange={(e) => {
+          setEditing(true);
+          setText(e.target.value);
+          setOpen(true);
+        }}
+        onKeyDown={onKeyDown}
+      />
+      <div className={styles.pickerPopup} hidden={!open}>
+        <ul id={listId} role="listbox" aria-label="Tasks" className={styles.pickerList}>
+          {items.map((hit, index) => (
+            <li
+              key={hit.key}
+              id={optionId(index)}
+              role="option"
+              aria-selected={index === nav.index}
+              className={clsx(
+                styles.pickerOption,
+                index === nav.index && styles.pickerOptionActive,
+              )}
+              // Keep the input focused so its blur does not close the list first.
+              onMouseDown={(e) => e.preventDefault()}
+              // mousemove, not mouseenter: a list scrolled under a still pointer must
+              // not take the active row from the keyboard.
+              onMouseMove={() => hover(index)}
+              onClick={() => choose(hit)}>
+              <span className={styles.optionTitle}>
+                {hit.title}
+                {hit.key === currentKey ? (
+                  <span className={styles.optionCurrent}> (current)</span>
+                ) : null}
+              </span>
+              <span className={styles.optionMeta}>
+                <OrganismChip organism={hit.organism} />
+                <span>{plural(hit.n_boards, 'split', 'splits')}</span>
+              </span>
+            </li>
+          ))}
+          {hasMore ? (
+            <li
+              id={optionId(items.length)}
+              role="option"
+              aria-selected={nav.index === items.length}
+              className={clsx(
+                styles.pickerOption,
+                styles.pickerMore,
+                nav.index === items.length && styles.pickerOptionActive,
+              )}
+              onMouseDown={(e) => e.preventDefault()}
+              onMouseMove={() => hover(items.length)}
+              onClick={() => setNav({index: items.length, byKey: true})}>
+              {loadingMore
+                ? 'Loading more tasks'
+                : `Show more (${fmtCount(total - items.length)} more)`}
+            </li>
           ) : null}
-          {failed !== null ? (
-            <p className={clsx(styles.pickerNote, styles.pickerNoteError)}>{failed}</p>
-          ) : null}
-          {!pending && failed === null && page !== null && page.total === 0 ? (
-            <p className={styles.pickerNote}>No datasets match.</p>
-          ) : null}
-        </div>
+        </ul>
+        {pending && items.length === 0 && failed === null ? (
+          <p className={styles.pickerNote}>Searching</p>
+        ) : null}
+        {failed !== null ? (
+          <p className={clsx(styles.pickerNote, styles.pickerNoteError)}>{failed}</p>
+        ) : null}
+        {!pending && failed === null && answered && total === 0 ? (
+          <p className={styles.pickerNote}>No tasks match.</p>
+        ) : null}
       </div>
       <p className={styles.srOnly} role="status" aria-live="polite">
         {status}
       </p>
-      {selected ? (
+    </div>
+  );
+}
+
+/**
+ * The third control: one board per split of the chosen task. Up to SPLIT_BUTTONS_MAX
+ * boards are a radio group of buttons (arrow keys move and choose); more are a
+ * select, with a button that pages boards past the first MAX_TASK_BOARDS.
+ */
+function SplitPicker({
+  api,
+  labelId,
+  task,
+  selected,
+  selectedSlug,
+  onSelect,
+}: {
+  api: BenchApi;
+  labelId: string;
+  task: TaskHit;
+  selected: BenchmarkDatasetPublic | null;
+  selectedSlug: string | null;
+  onSelect: (slug: string) => void;
+}): ReactNode {
+  // Boards paged past the task's first MAX_TASK_BOARDS, for this task only.
+  const [extra, setExtra] = useState<{key: string; boards: TaskBoard[]}>({
+    key: task.key,
+    boards: [],
+  });
+  const [moreFailed, setMoreFailed] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const buttons = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const known = [...task.boards, ...(extra.key === task.key ? extra.boards : [])];
+  // A board linked by URL past the loaded pages is still listed, last.
+  const boards =
+    selected !== null &&
+    selected.slug === selectedSlug &&
+    taskKeyOf(selected) === task.key &&
+    !known.some((b) => b.slug === selected.slug)
+      ? [...known, asTaskBoard(selected)]
+      : known;
+
+  const loadMore = (): void => {
+    if (task.task_group === null) {
+      return;
+    }
+    setLoadingMore(true);
+    api
+      .searchDatasets({
+        organism: task.organism ?? undefined,
+        taskGroup: task.task_group,
+        limit: MAX_TASK_BOARDS,
+        offset: known.length,
+      })
+      .then(
+        (page) => {
+          setExtra((prev) => ({
+            key: task.key,
+            boards: [
+              ...(prev.key === task.key ? prev.boards : []),
+              ...page.results.map((hit) => asTaskBoard(hit.dataset)),
+            ],
+          }));
+          setLoadingMore(false);
+          setMoreFailed(null);
+        },
+        (error: unknown) => {
+          setLoadingMore(false);
+          setMoreFailed(failureMessage(error));
+        },
+      );
+  };
+
+  if (task.n_boards <= 1) {
+    return null;
+  }
+
+  if (task.n_boards > SPLIT_BUTTONS_MAX) {
+    const listed = boards.some((b) => b.slug === selectedSlug);
+    return (
+      <div className={styles.splitSelectRow}>
+        <select
+          aria-labelledby={labelId}
+          className={clsx(styles.select, styles.splitSelect)}
+          value={listed && selectedSlug !== null ? selectedSlug : ''}
+          onChange={(e) => onSelect(e.target.value)}>
+          {listed ? null : (
+            <option value="" disabled>
+              Choose a split
+            </option>
+          )}
+          {boards.map((b) => (
+            <option key={b.slug} value={b.slug}>
+              {boardLabel(b)}
+            </option>
+          ))}
+        </select>
+        {known.length < task.n_boards && task.task_group !== null ? (
+          <button
+            type="button"
+            className="button button--secondary button--sm"
+            disabled={loadingMore}
+            onClick={loadMore}>
+            {loadingMore
+              ? 'Loading splits'
+              : `More splits (${fmtCount(task.n_boards - known.length)} left)`}
+          </button>
+        ) : null}
+        {moreFailed !== null ? (
+          <span className={clsx(styles.pickerNote, styles.pickerNoteError)}>{moreFailed}</span>
+        ) : null}
+      </div>
+    );
+  }
+
+  const checkedIndex = boards.findIndex((b) => b.slug === selectedSlug);
+  const pick = (index: number): void => {
+    buttons.current[index]?.focus();
+    if (boards[index].slug !== selectedSlug) {
+      onSelect(boards[index].slug);
+    }
+  };
+  const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>, index: number): void => {
+    const last = boards.length - 1;
+    const to: Record<string, number> = {
+      ArrowRight: Math.min(index + 1, last),
+      ArrowDown: Math.min(index + 1, last),
+      ArrowLeft: Math.max(index - 1, 0),
+      ArrowUp: Math.max(index - 1, 0),
+      Home: 0,
+      End: last,
+    };
+    if (e.key in to) {
+      e.preventDefault();
+      pick(to[e.key]);
+    }
+  };
+
+  return (
+    <div role="radiogroup" aria-labelledby={labelId} className={styles.splitGroup}>
+      {boards.map((b, index) => {
+        const checked = index === checkedIndex;
+        return (
+          <button
+            key={b.slug}
+            ref={(el) => {
+              buttons.current[index] = el;
+            }}
+            type="button"
+            role="radio"
+            aria-checked={checked}
+            // Roving focus: Tab enters the group at the chosen split (or the first).
+            tabIndex={checked || (checkedIndex < 0 && index === 0) ? 0 : -1}
+            className={clsx(styles.splitButton, checked && styles.splitButtonChecked)}
+            title={b.split_name ?? b.title}
+            onClick={() => pick(index)}
+            onKeyDown={(e) => onKeyDown(e, index)}>
+            {boardLabel(b)}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Picks the board of the leaderboard in three steps that read left to right:
+ * organism, task, split. The organism filters the task search; choosing a task
+ * opens its first split; the split row lists the task's boards.
+ *
+ * The task shown is resolved from the selected board with /tasks/search?key=, and
+ * kept while another split of it loads, so switching splits does not reload it.
+ */
+export default function DatasetPicker({
+  api,
+  selected,
+  selectedSlug,
+  onSelect,
+}: {
+  api: BenchApi;
+  /** The last board that loaded, kept while the next one loads; null before any. */
+  selected: BenchmarkDatasetPublic | null;
+  /** The board asked for (the URL's), which may still be loading. */
+  selectedSlug: string | null;
+  onSelect: (slug: string) => void;
+}): ReactNode {
+  const baseId = useId();
+  const organismId = `${baseId}-organism`;
+  const taskId = `${baseId}-task`;
+  const splitLabelId = `${baseId}-split`;
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const [task, setTask] = useState<TaskHit | null>(null);
+  const [organism, setOrganism] = useState<string | null>(null);
+  const [organismFailed, setOrganismFailed] = useState<string | null>(null);
+
+  const show = (next: TaskHit): void => {
+    setTask(next);
+    setOrganism(next.organism);
+  };
+
+  // The task of the selected board is fetched only when the board is not one the
+  // shown task already holds, and only once the board asked for has loaded (a stale
+  // board would fetch the task being left).
+  const holdsSelected =
+    task !== null &&
+    (task.boards.some((b) => b.slug === selectedSlug) ||
+      (selected !== null && selected.slug === selectedSlug && taskKeyOf(selected) === task.key));
+  const resolveKey =
+    !holdsSelected && selected !== null && selected.slug === selectedSlug
+      ? taskKeyOf(selected)
+      : null;
+  const [taskState, reloadTask] = useLoad(
+    resolveKey === null
+      ? null
+      : () =>
+          api.searchTasks({key: resolveKey, limit: 1}).then((page) => {
+            const hit = page.results[0];
+            if (hit === undefined) {
+              throw new BenchApiError(404, `No task has the key ${resolveKey}`, [], null);
+            }
+            return hit;
+          }),
+    [api, resolveKey],
+  );
+  useEffect(() => {
+    if (taskState.status === 'ok') {
+      show(taskState.data);
+    }
+    // `show` only sets state; the effect runs once per answer.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskState]);
+
+  const chooseTask = (next: TaskHit): void => {
+    show(next);
+    onSelect(next.boards[0].slug);
+  };
+
+  // A named organism other than the shown task's opens that organism's first task,
+  // so the three controls always describe the board below. "All organisms" only
+  // widens the task search.
+  const chooseOrganism = (next: string | null): void => {
+    setOrganism(next);
+    setOrganismFailed(null);
+    if (next === null || next === task?.organism) {
+      return;
+    }
+    api.searchTasks({organism: next, limit: 1}).then(
+      (page) => {
+        const first = page.results[0];
+        if (first !== undefined) {
+          chooseTask(first);
+        }
+      },
+      (error: unknown) => setOrganismFailed(failureMessage(error)),
+    );
+  };
+
+  const currentTitle = task?.title ?? selected?.title ?? '';
+  const board = selected !== null && selected.slug === selectedSlug ? selected : null;
+
+  return (
+    <div className={styles.picker}>
+      <div className={styles.pickerRow}>
+        <div className={clsx(styles.field, styles.pickerOrganism)}>
+          <label htmlFor={organismId} className={styles.fieldLabel}>
+            Organism
+          </label>
+          <OrganismSelect api={api} id={organismId} value={organism} onChange={chooseOrganism} />
+        </div>
+        <div className={clsx(styles.field, styles.pickerTask)}>
+          <label htmlFor={taskId} className={styles.fieldLabel}>
+            Task
+          </label>
+          <TaskCombobox
+            api={api}
+            inputId={taskId}
+            inputRef={inputRef}
+            organism={organism}
+            currentKey={task?.key ?? null}
+            currentTitle={currentTitle}
+            onChoose={chooseTask}
+          />
+        </div>
+        {task !== null && task.n_boards > 1 ? (
+          <div className={clsx(styles.field, styles.pickerSplit)}>
+            <span id={splitLabelId} className={styles.fieldLabel}>
+              Split ({fmtCount(task.n_boards)})
+            </span>
+            <SplitPicker
+              api={api}
+              labelId={splitLabelId}
+              task={task}
+              selected={selected}
+              selectedSlug={selectedSlug}
+              onSelect={onSelect}
+            />
+          </div>
+        ) : null}
+      </div>
+      {taskState.status === 'unreachable' || taskState.status === 'error' ? (
+        <LoadGate state={taskState} onRetry={reloadTask}>
+          {() => null}
+        </LoadGate>
+      ) : null}
+      {organismFailed !== null ? (
+        <p className={clsx(styles.pickerNote, styles.pickerNoteError)}>{organismFailed}</p>
+      ) : null}
+      {board !== null ? (
         <p className={styles.pickerSelected}>
-          <OrganismChip organism={selected.organism} />
-          {selected.split_name ? <code>{selected.split_name}</code> : null}
-          <code>{selected.slug}</code>
+          <code>{board.slug}</code>
+          <span>
+            train {fmtCount(board.n_train)} / val {fmtCount(board.n_val)} / test{' '}
+            {fmtCount(board.n_test)}
+          </span>
         </p>
       ) : null}
-      <Disclosure className={styles.browse} summary="Browse by organism and task">
-        {() => (
-          <BrowseTree api={api} selectedSlug={selected?.slug ?? null} onSelect={onSelect} />
-        )}
-      </Disclosure>
     </div>
   );
 }

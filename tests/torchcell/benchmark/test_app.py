@@ -19,7 +19,8 @@ cancelled sign-in, a missing email, a provider or domain the policy excludes, a 
 identity on one address, too many new accounts from one address, a disabled account);
 the profile route; the public dataset routes and their sha256 header; dataset search
 (lexical, and hybrid with the fake embedder of ``_fake_embedder.py``), its paging
-limits and the browse facets, a search model that does not load, and the route names
+limits and the browse facets, task search (one answer per task, its boards in split
+order), a search model that does not load, and the route names
 no bundle may take as a slug; a scored
 submission, its archive and its board row; a rejected submission and its reasons; the
 quota (one hour apart, three per 24 hours, rejected attempts counted); the upload size
@@ -836,10 +837,12 @@ def test_dataset_search_and_facets_routes(tmp_path: Path, datasets_root: Path) -
 
     assert bench.client.get(bench.url("/datasets/facets")).json() == {
         "total": 3,
+        "n_tasks": 2,
         "organisms": [
             {
                 "organism": "Escherichia coli",
                 "count": 2,
+                "n_tasks": 1,
                 "task_groups": [
                     {"task_group": GROWTH, "title": "E. coli growth rate", "count": 2}
                 ],
@@ -859,8 +862,9 @@ def test_search_is_hybrid_with_an_embedder_and_health_says_so(
     embedder = FakeEmbedder()
     bench = Bench(tmp_path, _grouped_root(datasets_root), embedder=embedder)
     assert bench.client.get(bench.url("/health")).json()["search"] == "hybrid"
+    # One startup call: the 3 board cards, then the 2 task cards.
     assert len(embedder.calls) == 1
-    assert len(embedder.calls[0]) == 3
+    assert len(embedder.calls[0]) == 5
     body = bench.client.get(
         bench.url("/datasets/search"), params={"q": "growth"}
     ).json()
@@ -871,6 +875,68 @@ def test_search_is_hybrid_with_an_embedder_and_health_says_so(
         (f"{GROWTH}-seqid30-s0", 0.5),
     ]
     assert embedder.calls[-1] == ["growth"]
+    tasks = bench.client.get(bench.url("/tasks/search"), params={"q": "growth"}).json()
+    assert tasks["mode"] == "hybrid"
+    assert [(r["key"], r["score"]) for r in tasks["results"]] == [(GROWTH, 0.5)]
+
+
+def test_task_search_route(tmp_path: Path, datasets_root: Path) -> None:
+    bench = Bench(tmp_path, _grouped_root(datasets_root))
+
+    def board(split_name: str, title: str) -> dict[str, Any]:
+        return {
+            "slug": f"{GROWTH}-{split_name.replace('_', '-')}",
+            "split_name": split_name,
+            "title": title,
+            "n_train": 1,
+            "n_val": 2,
+            "n_test": 2,
+        }
+
+    growth = {
+        "key": GROWTH,
+        "task_group": GROWTH,
+        "title": "E. coli growth rate",
+        "organism": "Escherichia coli",
+        "n_boards": 2,
+        "score": 0.0,
+        "boards": [
+            board("random_s0", "E. coli growth rate, random split"),
+            board("seqid30_s0", "E. coli growth rate, sequence identity 30 % split"),
+        ],
+    }
+    everything = bench.client.get(bench.url("/tasks/search")).json()
+    assert {k: everything[k] for k in ("mode", "total", "limit", "offset")} == {
+        "mode": "lexical",
+        "total": 2,
+        "limit": 20,
+        "offset": 0,
+    }
+    # The E. coli task first, then the toy board, which is a task with no organism.
+    assert everything["results"][0] == growth
+    assert [
+        (r["key"], r["task_group"], r["organism"], r["n_boards"])
+        for r in everything["results"][1:]
+    ] == [(SLUG, None, None, 1)]
+
+    def hits(params: dict[str, Any]) -> list[tuple[str, float]]:
+        body = bench.client.get(bench.url("/tasks/search"), params=params).json()
+        return [(r["key"], r["score"]) for r in body["results"]]
+
+    # "growth" matches both split boards and answers their task once.
+    assert hits({"q": "growth"}) == [(GROWTH, 1.0)]
+    # Split names are not on a task card.
+    assert hits({"q": "seqid"}) == []
+    assert hits({"organism": "Escherichia coli"}) == [(GROWTH, 0.0)]
+    assert hits({"q": "toy", "organism": "Escherichia coli"}) == []
+    assert hits({"limit": 1, "offset": 1}) == [(SLUG, 0.0)]
+    # key finds the task of a board, by task group or by the slug of a lone board.
+    assert hits({"key": GROWTH}) == [(GROWTH, 0.0)]
+    assert hits({"key": SLUG}) == [(SLUG, 0.0)]
+    assert hits({"key": f"{GROWTH}-random-s0"}) == []
+    for params in ({"limit": 101}, {"limit": 0}, {"offset": -1}, {"q": "x" * 201}):
+        response = bench.client.get(bench.url("/tasks/search"), params=params)
+        assert response.status_code == 422, params
 
 
 def test_search_model_that_does_not_load_fails_startup(

@@ -371,7 +371,7 @@
   background: var(--ifm-background-surface-color);
 }
 
-/* Dataset picker: a search combobox over /datasets/search, and a browse tree. */
+/* Dataset picker: organism select, task combobox over /tasks/search, split buttons. */
 .picker {
   display: flex;
   flex: 1 1 100%;
@@ -380,9 +380,33 @@
   min-width: 0;
 }
 
+.pickerRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.6rem 1rem;
+}
+
+.pickerOrganism {
+  flex: 0 1 15rem;
+}
+
+.pickerOrganismSelect {
+  width: 100%;
+}
+
+.pickerTask {
+  flex: 1 1 22rem;
+  max-width: 36rem;
+}
+
+/* Beside the task when the row has room, under it otherwise. */
+.pickerSplit {
+  flex: 1 1 20rem;
+}
+
 .pickerBox {
   position: relative;
-  max-width: 44rem;
 }
 
 .pickerInput {
@@ -400,8 +424,6 @@
   left: 0;
   right: 0;
   z-index: 20;
-  max-height: 24rem;
-  overflow-y: auto;
   border: 1px solid var(--tc-border);
   border-radius: 6px;
   background: var(--tc-surface);
@@ -412,7 +434,10 @@
   display: none;
 }
 
+/* The listbox scrolls itself, so the active option is kept in view inside it. */
 .pickerList {
+  max-height: 22rem;
+  overflow-y: auto;
   margin: 0;
   padding: 0.25rem 0;
   list-style: none;
@@ -432,6 +457,17 @@
   box-shadow: inset 3px 0 0 var(--ifm-color-primary);
 }
 
+.pickerMore {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ifm-color-primary);
+}
+
+.optionCurrent {
+  font-weight: 400;
+  color: var(--tc-ink-muted);
+}
+
 .pickerNote {
   margin: 0;
   padding: 0.45rem 0.75rem;
@@ -447,9 +483,11 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.4rem 0.8rem;
   margin: 0.15rem 0 0;
   font-size: 0.8rem;
+  color: var(--tc-ink-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .optionTitle {
@@ -482,82 +520,48 @@
   font-weight: 500;
 }
 
-.browse {
-  max-width: 44rem;
-  margin-top: 0.35rem;
-  font-size: 0.88rem;
+/* The split row: a radio group of buttons, or a select for a task with many boards. */
+.splitGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
 }
 
-.browseSummary {
+.splitButton {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--tc-border);
+  border-radius: 6px;
+  background: var(--tc-surface);
+  color: var(--ifm-font-color-base);
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1.3;
   cursor: pointer;
-  padding: 0.15rem 0;
-  font-weight: 600;
 }
 
-.browseSummary:focus-visible,
-.boardButton:focus-visible {
+.splitButton:hover {
+  background: var(--tc-surface-raised);
+}
+
+.splitButton:focus-visible {
   outline: 2px solid var(--ifm-color-primary);
   outline-offset: 1px;
 }
 
-.browseTree {
-  margin: 0.35rem 0 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--tc-border);
-  border-radius: var(--ifm-global-radius);
-  background: var(--tc-surface-raised);
-}
-
-.browseList {
-  margin: 0;
-  padding: 0 0 0 1rem;
-  list-style: none;
-}
-
-.browseList li {
-  margin: 0.15rem 0;
-}
-
-.browseCount {
-  margin-left: 0.3rem;
-  color: var(--tc-ink-muted);
-  font-weight: 400;
-  font-variant-numeric: tabular-nums;
-}
-
-.browseNote {
-  margin: 0.35rem 0;
-  font-size: 0.8rem;
-  color: var(--tc-ink-muted);
-}
-
-.boardList {
-  margin: 0.25rem 0 0.4rem;
-  padding: 0 0 0 1rem;
-  list-style: none;
-}
-
-.boardButton {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  width: 100%;
-  padding: 0.3rem 0.5rem;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.boardButton:hover {
-  background: var(--tc-surface);
-  border-color: var(--tc-border);
-}
-
-.boardButtonCurrent {
+.splitButtonChecked {
   border-color: var(--ifm-color-primary);
-  background: var(--tc-surface);
+  background: var(--tc-surface-raised);
+  box-shadow: inset 0 -2px 0 var(--ifm-color-primary);
+  font-weight: 650;
+}
+
+.splitSelectRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.splitSelect {
+  max-width: 28rem;
 }

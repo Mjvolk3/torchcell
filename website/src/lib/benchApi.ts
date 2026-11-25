@@ -105,6 +105,8 @@ export type TaskGroupFacet = {task_group: string; title: string; count: number};
 export type OrganismFacet = {
   organism: string;
   count: number;
+  /** Tasks of this organism: its task groups plus its boards that have none. */
+  n_tasks: number;
   task_groups: TaskGroupFacet[];
   /** Boards of this organism with no task group; reachable by search only. */
   n_without_task_group: number;
@@ -113,6 +115,8 @@ export type OrganismFacet = {
 /** GET /datasets/facets: the browse tree of organisms and their task groups. */
 export type DatasetFacets = {
   total: number;
+  /** Every task, with or without an organism. */
+  n_tasks: number;
   organisms: OrganismFacet[];
   /** Boards with no organism set; reachable by search only. */
   n_without_organism: number;
@@ -120,6 +124,155 @@ export type DatasetFacets = {
 
 /** Largest page GET /datasets/search answers. */
 export const MAX_SEARCH_LIMIT = 100;
+
+/** One board of a task in GET /tasks/search. */
+export type TaskBoard = {
+  slug: string;
+  split_name: string | null;
+  title: string;
+  n_train: number;
+  n_val: number;
+  n_test: number;
+};
+
+/**
+ * One task of GET /tasks/search: the boards sharing a task group, or one board that
+ * has none (then `key` is its slug and `task_group` is null). `boards` holds at most
+ * MAX_TASK_BOARDS boards in split order; `n_boards` is the true count, and
+ * searchDatasets with `taskGroup` pages the rest in the same order.
+ */
+export type TaskHit = {
+  key: string;
+  task_group: string | null;
+  title: string;
+  organism: string | null;
+  n_boards: number;
+  score: number;
+  boards: TaskBoard[];
+};
+
+/** One page of GET /tasks/search, best first; `total` counts every matching task. */
+export type TaskPage = {
+  mode: SearchMode;
+  total: number;
+  limit: number;
+  offset: number;
+  results: TaskHit[];
+};
+
+/**
+ * Arguments of GET /tasks/search. An empty `q` lists every task in task order
+ * (organism, title); `key` keeps only the task with that key, which finds a board's
+ * task (its task group, or its slug when it has none).
+ */
+export type TaskSearchQuery = {
+  q?: string;
+  organism?: string;
+  key?: string;
+  limit?: number;
+  offset?: number;
+};
+
+/** Boards a task lists in GET /tasks/search before the rest must be paged. */
+export const MAX_TASK_BOARDS = 50;
+
+/** The family and seed of a split name: `seqid30_s0` is {family: 'seqid30', seed: 0}. */
+export function splitParts(splitName: string | null): {family: string | null; seed: number} {
+  if (splitName === null) {
+    return {family: null, seed: -1};
+  }
+  const match = /^(.+?)_s([0-9]+)$/.exec(splitName);
+  return match === null
+    ? {family: splitName, seed: -1}
+    : {family: match[1], seed: Number(match[2])};
+}
+
+/**
+ * A readable label for a split name, or the raw name for a pattern not listed here:
+ * `random_s0` is "Random, seed 0", `seqid30_s0` "Sequence identity 30%, seed 0",
+ * `gene_holdout_s0` "Gene holdout, random, seed 0", `seqid30_gene_holdout_s0`
+ * "Gene holdout, identity 30%, seed 0", `position_s0` "Chromosome position, seed 0".
+ */
+export function splitLabel(splitName: string): string {
+  const {family, seed} = splitParts(splitName);
+  if (family === null || seed < 0) {
+    return splitName;
+  }
+  const seqid = /^seqid([0-9]+)$/.exec(family);
+  const seqidGene = /^seqid([0-9]+)_gene_holdout$/.exec(family);
+  let what: string;
+  if (family === 'random') {
+    what = 'Random';
+  } else if (seqid !== null) {
+    what = `Sequence identity ${seqid[1]}%`;
+  } else if (family === 'gene_holdout') {
+    what = 'Gene holdout, random';
+  } else if (seqidGene !== null) {
+    what = `Gene holdout, identity ${seqidGene[1]}%`;
+  } else if (family === 'position') {
+    what = 'Chromosome position';
+  } else {
+    return splitName;
+  }
+  return `${what}, seed ${seed}`;
+}
+
+/**
+ * Sort key of a split family within a task, the API's rule
+ * (torchcell.benchmark.search.family_rank): no split name; random; seqid<N> by N;
+ * gene_holdout, then seqid<N>_gene_holdout by N; position; any other family in the
+ * order first seen.
+ */
+function familyRank(family: string | null, unknownRank: number): number[] {
+  if (family === null) {
+    return [0, 0, 0];
+  }
+  if (family === 'random') {
+    return [1, 0, 0];
+  }
+  const seqid = /^seqid([0-9]+)$/.exec(family);
+  if (seqid !== null) {
+    return [2, Number(seqid[1]), 0];
+  }
+  if (family === 'gene_holdout') {
+    return [3, 0, 0];
+  }
+  const seqidGene = /^seqid([0-9]+)_gene_holdout$/.exec(family);
+  if (seqidGene !== null) {
+    return [3, 1, Number(seqidGene[1])];
+  }
+  if (family === 'position') {
+    return [4, 0, 0];
+  }
+  return [5, unknownRank, 0];
+}
+
+/**
+ * A task's boards in the API's board order: split family, then seed, then slug. The
+ * real API orders boards itself; the mock client uses this.
+ */
+function boardOrder<T extends {slug: string; split_name?: string | null}>(boards: T[]): T[] {
+  const firstSeen = new Map<string | null, number>();
+  for (const b of boards) {
+    const {family} = splitParts(b.split_name ?? null);
+    if (!firstSeen.has(family)) {
+      firstSeen.set(family, firstSeen.size);
+    }
+  }
+  const key = (b: T): (number | string)[] => {
+    const {family, seed} = splitParts(b.split_name ?? null);
+    return [...familyRank(family, firstSeen.get(family) ?? 0), seed, b.slug];
+  };
+  return [...boards].sort((a, b) => {
+    const [ka, kb] = [key(a), key(b)];
+    for (let i = 0; i < ka.length; i += 1) {
+      if (ka[i] !== kb[i]) {
+        return ka[i] < kb[i] ? -1 : 1;
+      }
+    }
+    return 0;
+  });
+}
 
 export type SubmissionStatus = 'rejected' | 'provisional' | 'verified' | 'withdrawn';
 
@@ -437,8 +590,10 @@ export interface BenchApi {
   dataset(slug: string): Promise<BenchmarkDatasetPublic>;
   /** Ranked search over the datasets, one page; see DatasetSearchQuery. */
   searchDatasets(query: DatasetSearchQuery): Promise<SearchPage>;
-  /** Board counts per organism and task group, for browsing. */
+  /** Board and task counts per organism and task group. */
   datasetFacets(): Promise<DatasetFacets>;
+  /** Ranked search over the tasks, one page, each with its split boards. */
+  searchTasks(query: TaskSearchQuery): Promise<TaskPage>;
   /** URL of the split file (`record_id,split`), or null in mock mode. */
   splitsUrl(slug: string): string | null;
   /** URL of the empty predictions template, or null in mock mode. */
@@ -553,6 +708,16 @@ function createHttpApi(baseUrl: string): BenchApi {
       return request<SearchPage>(`/datasets/search?${params.toString()}`);
     },
     datasetFacets: () => request<DatasetFacets>('/datasets/facets'),
+    searchTasks({q = '', organism, key, limit = 20, offset = 0}) {
+      const params = new URLSearchParams({q, limit: String(limit), offset: String(offset)});
+      if (organism !== undefined) {
+        params.set('organism', organism);
+      }
+      if (key !== undefined) {
+        params.set('key', key);
+      }
+      return request<TaskPage>(`/tasks/search?${params.toString()}`);
+    },
     splitsUrl: (slug) => `${baseUrl}/datasets/${encodeURIComponent(slug)}/splits.csv`,
     templateUrl: (slug) => `${baseUrl}/datasets/${encodeURIComponent(slug)}/template.csv`,
     submissionSchema: () => request<Record<string, unknown>>('/submission-schema'),
@@ -632,11 +797,67 @@ function commonTitle(titles: string[], fallback: string): string {
     }
     return acc.slice(0, n);
   });
-  if (titles.some((t) => t.length > prefix.length && /[A-Za-z0-9]/.test(t[prefix.length]))) {
-    prefix = prefix.replace(/[A-Za-z0-9]+$/, '');
+  // "_" is part of a word, so a split name such as random_s0 is cut whole.
+  if (titles.some((t) => t.length > prefix.length && /[A-Za-z0-9_]/.test(t[prefix.length]))) {
+    prefix = prefix.replace(/[A-Za-z0-9_]+$/, '');
   }
   prefix = prefix.replace(/[ ,;:\-(\/]+$/, '');
   return prefix === '' ? fallback : prefix;
+}
+
+/**
+ * MOCK ONLY: the tasks of the datasets fixture in task order (organism with missing
+ * last, title, key), each with the text the mock task search matches against.
+ */
+function mockTasks(all: BenchmarkDatasetPublic[]): {hit: TaskHit; text: string[]}[] {
+  const groups = new Map<string, BenchmarkDatasetPublic[]>();
+  for (const d of all) {
+    const key = d.task_group ?? d.slug;
+    groups.set(key, [...(groups.get(key) ?? []), d]);
+  }
+  const tasks = [...groups.entries()].map(([key, members]) => {
+    const boards = boardOrder(members);
+    const hit: TaskHit = {
+      key,
+      task_group: members[0].task_group ?? null,
+      title: commonTitle(
+        members.map((d) => d.title),
+        key,
+      ),
+      organism: members[0].organism ?? null,
+      n_boards: boards.length,
+      score: 0,
+      boards: boards.slice(0, MAX_TASK_BOARDS).map((d) => ({
+        slug: d.slug,
+        split_name: d.split_name ?? null,
+        title: d.title,
+        n_train: d.n_train,
+        n_val: d.n_val,
+        n_test: d.n_test,
+      })),
+    };
+    const text = [
+      hit.title,
+      key,
+      hit.organism ?? '',
+      ...members.flatMap((d) => [...d.targets, d.loader_class, d.citation_key]),
+    ];
+    return {hit, text};
+  });
+  const sortKey = ({hit}: {hit: TaskHit}): string[] => [
+    hit.organism === null ? '1' : `0${hit.organism}`,
+    hit.title,
+    hit.key,
+  ];
+  return tasks.sort((a, b) => {
+    const [ka, kb] = [sortKey(a), sortKey(b)];
+    for (let i = 0; i < ka.length; i += 1) {
+      if (ka[i] !== kb[i]) {
+        return ka[i] < kb[i] ? -1 : 1;
+      }
+    }
+    return 0;
+  });
 }
 
 /**
@@ -747,14 +968,38 @@ function createMockApi(baseUrl: string, mockBaseUrl: string): BenchApi {
         return {
           organism,
           count: members.length,
+          n_tasks: taskGroups.length + members.length - grouped,
           task_groups: taskGroups,
           n_without_task_group: members.length - grouped,
         };
       });
       return {
         total: all.length,
+        n_tasks: mockTasks(all).length,
         organisms,
         n_without_organism: all.filter((d) => d.organism == null).length,
+      };
+    },
+    // MOCK ONLY: the tasks of the datasets fixture (task group, or the slug of a board
+    // without one), filtered by a case-insensitive substring match over the task's
+    // title, key, organism, targets, loader and citation (never its split names), in
+    // task order with score 0. The real API ranks by word and prefix matches (and
+    // embeddings in hybrid mode); none of that is imitated here.
+    async searchTasks({q = '', organism, key, limit = 20, offset = 0}) {
+      const all = await fixture<BenchmarkDatasetPublic[]>('datasets');
+      const needle = q.trim().toLowerCase();
+      const matches = mockTasks(all).filter(
+        ({hit, text}) =>
+          (organism === undefined || hit.organism === organism) &&
+          (key === undefined || hit.key === key) &&
+          (needle === '' || text.some((field) => field.toLowerCase().includes(needle))),
+      );
+      return {
+        mode: 'lexical',
+        total: matches.length,
+        limit,
+        offset,
+        results: matches.slice(offset, offset + limit).map(({hit}) => hit),
       };
     },
     splitsUrl: () => null,

@@ -702,7 +702,8 @@ def test_a_metabolite_phenotype_stores_one_replicate_and_no_invented_dispersion(
     assert phenotype.target_metabolite_ids is None
     gaps = {gap.field: gap.reason for gap in phenotype.provenance_gaps}
     assert gaps == {
-        "metabolite_level_se": ProvenanceGapReason.not_reported_by_primary,
+        # One culture sample measured once: a dispersion does not exist (#1178).
+        "metabolite_level_se": ProvenanceGapReason.not_applicable_single_measurement,
         "target_metabolite_ids": ProvenanceGapReason.not_reported_by_primary,
     }
 
@@ -712,8 +713,12 @@ def test_a_protein_phenotype_keeps_the_released_peak_area_verbatim() -> None:
     phenotype = brunk.protein_phenotype({"b2779": -104.0})
     assert phenotype.protein_abundance == {"b2779": -104.0}
     assert phenotype.protein_abundance_se is None
+    assert phenotype.n_replicates == {"b2779": 1}
+    assert phenotype.replicate_id is None
     assert phenotype.measurement_type == brunk.MEASUREMENT_TYPE_PROTEIN
-    assert [gap.field for gap in phenotype.provenance_gaps] == ["protein_abundance_se"]
+    assert [(gap.field, gap.reason) for gap in phenotype.provenance_gaps] == [
+        ("protein_abundance_se", ProvenanceGapReason.not_applicable_single_measurement)
+    ]
 
 
 def test_the_isopentenol_titer_is_the_canonical_isoprenol_entity() -> None:
@@ -1104,6 +1109,9 @@ def built_stores(
         ("EXPECTED_TITER_RECORDS", 8 * len(HOURS)),
         ("EXPECTED_PROTEIN_KEYS", 4),
         ("EXPECTED_RELEASED_KEYS", 1),
+        ("EXPECTED_TRIPLICATE_SAMPLES", 1),
+        ("EXPECTED_TRIPLICATE_ROWS", len(UNIPROT_ROWS)),
+        ("EXPECTED_TRIPLICATE_TWO_ROW_PROTEINS", 0),
     ):
         monkeypatch.setattr(brunk, attribute, value)
     monkeypatch.setattr(
@@ -1336,6 +1344,55 @@ def test_the_released_peptides_key_21_of_the_24_unnamed_host_proteins() -> None:
     )
     assert len(no_locus) == brunk.EXPECTED_RELEASED_KEYS
     assert len(host) - len(no_locus) == brunk.EXPECTED_PROTEIN_KEYS
+
+
+@requires_mirror
+def test_the_served_sheets_release_one_sample_per_strain_hour() -> None:
+    """#1178: every served record is one culture sample; no replicate is collapsed.
+
+    The proteomics sheet's ``Replicate`` is its ``Sample Name`` on every row, one per
+    strain-hour (89 = 9 strains x 9 hours + 8 ``72C``); the metabolomics sheet repeats
+    no strain-hour (126 rows).
+    """
+    raw = pd.read_excel(
+        brunk.raw_mirror_dir() / brunk.PROTEOMICS_REL, sheet_name=brunk.SHEET_PROTEOMICS
+    )
+    assert (raw["Replicate"] == raw["Sample Name"]).all()
+    samples = raw.drop_duplicates("Sample Name")
+    assert len(samples) == 89
+    assert not samples.duplicated(["Strain", "Hour"]).any()
+    unexplained = raw[raw["Hour"].astype(str) == brunk.UNEXPLAINED_HOUR_LABEL]
+    assert len(unexplained) == 1_208
+    assert sorted(unexplained["Sample Name"].unique()) == list(range(10, 90, 10))
+    assert set(unexplained["Strain"]) == set(brunk.STRAINS) - {brunk.WILD_TYPE}
+    assert len(samples) - unexplained["Sample Name"].nunique() == (
+        brunk.EXPECTED_PROTEOME_RECORDS
+    )
+    metabolites = brunk.read_metabolite_samples(
+        brunk.raw_mirror_dir() / brunk.METABOLOMICS_REL
+    )
+    assert len(metabolites) == brunk.EXPECTED_EXOMETABOLITE_RECORDS
+
+
+@requires_mirror
+def test_the_unstored_triplicate_sheet_reads_as_the_module_pins_it() -> None:
+    """#1176: 72 replicate samples of 84 rows, measured and pinned, NOT stored yet."""
+    design = brunk.read_triplicate_design(brunk.raw_mirror_dir() / brunk.PROTEOMICS_REL)
+    assert design.n_rows == brunk.EXPECTED_TRIPLICATE_ROWS
+    assert design.n_samples == brunk.EXPECTED_TRIPLICATE_SAMPLES
+    assert design.labels == {
+        "DH1": ("DH1.1", "DH1.2", "DH1.3"),
+        "I1": ("1A.1", "1A.2", "1A.3"),
+        "I2": ("2B.1", "2B.2", "2B.3"),
+        "I3": ("3A.1", "3A.2", "3A.3"),
+    }
+    assert design.hours == (0, 6, 12, 24, 36, 48)
+    assert design.rows_per_sample == (84,)
+    assert (design.n_protein_names, design.n_uniprot_ids) == (58, 38)
+    assert design.n_blank_areas == 73
+    assert len(design.two_row_proteins) == brunk.EXPECTED_TRIPLICATE_TWO_ROW_PROTEINS
+    assert "sp|P0A799|PGK_ECOLI" in design.two_row_proteins
+    assert design.n_two_row_groups_that_differ == 1_819
 
 
 @requires_stores

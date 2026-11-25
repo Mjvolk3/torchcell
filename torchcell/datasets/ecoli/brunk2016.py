@@ -92,6 +92,26 @@ typed gap. The SI is explicit that where the paper needed a spread it estimated 
 the variance using the average variance for all metabolites or peptides measured", which
 is a derived quantity and is not ingested.
 
+PER-REPLICATE REVIEW (2026-11-24, #1176, #1178): EVERY SERVED RECORD IS ONE CULTURE
+SAMPLE, MEASURED ONCE. The served proteomics sheet's ``Replicate`` column equals its
+``Sample Name`` on every row (1 to 89), one sample per strain-hour, and the metabolomics
+sheet repeats no strain-hour, so ``n_replicates`` is 1 per key and the SE gap carries
+``not_applicable_single_measurement`` (a single measurement has no dispersion), on the
+record and on its hour-matched DH1 reference alike. The triplicate proteomics sheet
+(:data:`SHEET_PROTEOMICS_TRIPLICATE`) is a SEPARATE run and is NOT stored; its measured
+design is :func:`read_triplicate_design` (72 samples = I1, I2, I3, DH1 x hours 0, 6,
+12, 24, 36, 48 x three labels ``1A.1-3``, ``2B.1-3``, ``3A.1-3``, ``DH1.1-3``; 84 rows
+each). Storing it waits on the owner for four reasons, none of which the bytes settle:
+the only replicate wording, :data:`TRIPLICATE_REPLICATION`, does not say whether a
+label is a culture or a repeat injection (72 records or 24); 26 of its 58 proteins
+carry TWO unlabeled ``TotalArea`` rows per sample (the sheet has no peptide column), so
+a per-protein value needs a combination rule; ``TotalArea`` is not the served sheet's
+``ProteinArea`` (the mean of the background-corrected peptide areas), so it is a second
+measurement type and needs its own dataset class under the one-type gate; and the run's
+6 h grid is described nowhere in the article. The endometabolomics triplicate sheet
+releases only ``avg_conc``/``std_conc``/``var_conc``/``%RSD`` over 4 strains x 5 early
+hours, an aggregate over a grid no served record shares, and is not stored either.
+
 WHAT IS MEASURED AND NOT STORED, WITH THE COUNTS.
 
 1. The 26 metabolite columns with NO unit in their header (the 20 amino acids, Cystine
@@ -121,7 +141,11 @@ WHAT IS MEASURED AND NOT STORED, WITH THE COUNTS.
    they cannot be protein keys; the pathway ones are on the GENOTYPE of every record.
 4. The eight ``72C`` proteomics samples. ``72C`` is not a time the article states and
    no mirrored byte says what the ``C`` is, so those samples get no ``duration_hours``
-   and are dropped rather than filed under 72 h beside the real 72 h sample.
+   and are dropped rather than filed under 72 h beside the real 72 h sample. Measured:
+   ``Sample Name`` 10, 20, ..., 80 (I1, I2, I3, B1, B2, L1, L2, L3; DH1 has none),
+   1,208 rows, each strain also carrying its own ``72`` sample. Whether ``72C`` is a
+   second 72 h culture (a released replicate, so 81 -> 89 records with a gapped
+   duration) or another condition is the owner's question (#1064 row 224).
 5. Nine metabolome rows at hour 2 and the two hour-2 rows that survive it: no ``(uM)``
    cell is filled at hour 2 for any strain, so seven rows carry no value at all, and
    I1 and I3 at hour 2 share no measured metabolite with the DH1 sample of that hour,
@@ -339,6 +363,12 @@ EXPECTED_PROTEIN_KEYS = 65
 EXPECTED_RELEASED_KEYS = 3
 #: Every host SRM protein; every one is stored (#904).
 EXPECTED_HOST_PROTEINS = 68
+#: The triplicate proteomics sheet, measured 2026-11-24 (#1176): 72 replicate samples
+#: (4 strains x 6 hours x 3 labels) of 84 rows each, NOT stored (module docstring).
+EXPECTED_TRIPLICATE_SAMPLES = 72
+EXPECTED_TRIPLICATE_ROWS = 6_048
+#: The proteins of that sheet with two unlabeled ``TotalArea`` rows per sample, of 58.
+EXPECTED_TRIPLICATE_TWO_ROW_PROTEINS = 26
 #: The ``(uM)`` columns of the metabolomics sheet.
 EXPECTED_UM_COLUMNS = 51
 #: The columns with no unit in their header, declined.
@@ -651,6 +681,15 @@ UNCERTAINTY_NOT_RELEASED = _si(
     note="the served sheets hold ONE number per strain-hour. Where the paper needed a "
     "spread it estimated one from the average variance of all measurements, which is a "
     "derived quantity, so no dispersion is stored and n_replicates is 1 per key",
+)
+TRIPLICATE_REPLICATION = _paper(
+    None,
+    _Q_TRIPLICATE_OR_ESTIMATE,
+    page=_FIGURE_3,
+    note="the only replicate wording in the article; it does not say whether a "
+    "triplicate is three cultures or three injections of one, and no Methods sentence "
+    "describes the triplicate run, so the triplicate proteomics sheet is not stored "
+    "until the owner decides (#1176)",
 )
 
 
@@ -1450,6 +1489,69 @@ def read_protein_areas(path: str | Path) -> pd.DataFrame:
     return grouped["ProteinArea"].first().reset_index()
 
 
+class TriplicateDesign(BaseModel):
+    """The measured layout of the triplicate proteomics sheet, which is not stored.
+
+    Read so the build ledger and the tests pin what the release holds while the
+    owner decides how it is stored (module docstring, #1176).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    n_rows: int
+    #: ``strain -> the replicate labels the sheet prints for it``.
+    labels: dict[str, tuple[str, ...]]
+    hours: tuple[int, ...]
+    #: ``(label, hour)`` samples, and the rows each one carries (one value if uniform).
+    n_samples: int
+    rows_per_sample: tuple[int, ...]
+    n_protein_names: int
+    n_uniprot_ids: int
+    n_blank_areas: int
+    #: Proteins carrying two ``TotalArea`` rows in every sample (no peptide column).
+    two_row_proteins: tuple[str, ...]
+    #: Sample-protein groups of those proteins whose two rows carry different areas.
+    n_two_row_groups_that_differ: int
+
+
+def read_triplicate_design(path: str | Path) -> TriplicateDesign:
+    """Measure the triplicate sheet: labels, hours, rows and the repeated protein rows."""
+    frame = pd.read_excel(path, sheet_name=SHEET_PROTEOMICS_TRIPLICATE, index_col=0)
+    frame["Strain"] = frame["Strain"].astype(str)
+    frame["Replicate"] = frame["Replicate"].astype(str)
+    frame["ProteinName"] = frame["ProteinName"].astype(str)
+    labels = {
+        str(strain): tuple(sorted(set(block.astype(str))))
+        for strain, block in frame.groupby("Strain")["Replicate"]
+    }
+    if any(set(labels[s]) & set(labels[t]) for s in labels for t in labels if s < t):
+        raise RuntimeError("a triplicate replicate label is printed for two strains")
+    per_sample = frame.groupby(["Replicate", "Hour"]).size()
+    per_group = frame.groupby(["Replicate", "Hour", "ProteinName"])
+    rows = per_group.size()
+    shapes = rows.groupby("ProteinName").agg(["min", "max"])
+    if (shapes["min"] != shapes["max"]).any():
+        raise RuntimeError(
+            "a triplicate protein carries a different row count by sample"
+        )
+    two_row = shapes[shapes["min"] == 2].index
+    if int(shapes["max"].max()) > 2:
+        raise RuntimeError("a triplicate protein carries more than two rows per sample")
+    distinct = per_group["TotalArea"].nunique()
+    return TriplicateDesign(
+        n_rows=len(frame),
+        labels=labels,
+        hours=tuple(sorted(int(h) for h in frame["Hour"].unique())),
+        n_samples=len(per_sample),
+        rows_per_sample=tuple(sorted({int(n) for n in per_sample})),
+        n_protein_names=int(frame["ProteinName"].nunique()),
+        n_uniprot_ids=int(frame["Uniprot ID"].nunique()),
+        n_blank_areas=int(frame["TotalArea"].isna().sum()),
+        two_row_proteins=tuple(sorted(str(name) for name in two_row)),
+        n_two_row_groups_that_differ=int((distinct[rows == 2] == 2).sum()),
+    )
+
+
 def read_host_peptides(path: str | Path) -> dict[str, tuple[str, ...]]:
     """Every host protein of the proteomics sheet with its distinct released peptides."""
     raw = pd.read_excel(path, sheet_name=SHEET_PROTEOMICS)
@@ -1829,8 +1931,9 @@ def check_pathway_organisms(path: str | Path) -> int:
 # Phenotypes
 # --------------------------------------------------------------------------- #
 _SE_GAP_NOTE = (
-    "the served sheet releases ONE number per strain-hour, so there is no dispersion "
-    "to store: n_replicates is 1 per key and the SE map is None. The two triplicate "
+    "the served sheet releases ONE number per strain-hour, one culture sample measured "
+    "once, so a dispersion does not exist: n_replicates is 1 per key and the SE map is "
+    "None. The two triplicate "
     "sheets cover other grids (4 strains x 5 early hours for metabolites, 4 strains x "
     "6 hours for proteins), and where the paper needed a spread for a point outside "
     f"them it estimated one ('{_Q_ESTIMATED_VARIANCE}')"
@@ -1850,7 +1953,7 @@ def metabolite_phenotype(
         provenance_gaps=[
             ProvenanceGap(
                 field="metabolite_level_se",
-                reason=ProvenanceGapReason.not_reported_by_primary,
+                reason=ProvenanceGapReason.not_applicable_single_measurement,
                 note=_SE_GAP_NOTE,
             ),
             ProvenanceGap(
@@ -1873,7 +1976,7 @@ def protein_phenotype(areas: Mapping[str, float]) -> ProteinAbundancePhenotype:
         provenance_gaps=[
             ProvenanceGap(
                 field="protein_abundance_se",
-                reason=ProvenanceGapReason.not_reported_by_primary,
+                reason=ProvenanceGapReason.not_applicable_single_measurement,
                 note=_SE_GAP_NOTE,
             )
         ],
@@ -2415,6 +2518,22 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
                 )
             key_of[key.protein] = key.protein
 
+        triplicate = read_triplicate_design(workbook)
+        if (
+            triplicate.n_samples,
+            triplicate.n_rows,
+            len(triplicate.two_row_proteins),
+        ) != (
+            EXPECTED_TRIPLICATE_SAMPLES,
+            EXPECTED_TRIPLICATE_ROWS,
+            EXPECTED_TRIPLICATE_TWO_ROW_PROTEINS,
+        ):
+            raise RuntimeError(
+                f"{self.name}: the triplicate sheet no longer reads as "
+                f"{EXPECTED_TRIPLICATE_SAMPLES} samples of "
+                f"{EXPECTED_TRIPLICATE_ROWS} rows: {triplicate}"
+            )
+
         areas = read_protein_areas(workbook)
         reference_genome = host_reference()
         pub = publication()
@@ -2551,6 +2670,18 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
                     f"{organisms_checked} pathway-gene organisms were re-read from the "
                     "workbook's own Organism column before a genotype was built",
                     str(UNCERTAINTY_NOT_RELEASED.note),
+                    f"the sheet {SHEET_PROTEOMICS_TRIPLICATE.strip()!r} holds "
+                    f"{triplicate.n_samples} replicate samples ("
+                    + ", ".join(
+                        f"{strain}: {'/'.join(labels)}"
+                        for strain, labels in sorted(triplicate.labels.items())
+                    )
+                    + f" at hours {list(triplicate.hours)}; {triplicate.n_rows} "
+                    "rows) and is NOT stored, pending the owner (#1176): "
+                    f"{TRIPLICATE_REPLICATION.note}; "
+                    f"{len(triplicate.two_row_proteins)} of its "
+                    f"{triplicate.n_protein_names} proteins carry two unlabeled "
+                    "TotalArea rows per sample",
                 ],
             ),
             self.preprocess_dir,

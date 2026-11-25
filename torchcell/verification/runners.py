@@ -870,10 +870,18 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
     # not centered on 0.
     "metabolome_fuhrer2017": {
         "root": "data/torchcell/metabolome_fuhrer2017",
-        # 3,807 deposit columns - 25 pooled Keio names - 46 JW ids off a BW25113 locus
-        # - the `wt` reference = 3,735 kept records.
-        "expected_count": 3735,
+        # 3,806 z-score records (every mutant column of the z-score matrix; the
+        # pooled and annotation-absent names are stored as released since 2026-10-12)
+        # + 7,764 raw-intensity clone records (#1177: 7,668 Keio clones + 96 wt
+        # cultures, technical pair combined; the 3 withdrawn mutants' 6 clones left
+        # out) = 11,570.
+        "expected_count": 11570,
         "reference_centered": False,
+        # Must equal the loader's PROTOCOL_MEASUREMENT_TYPES: the per-strain z-score
+        # and the per-clone raw intensity, each against its own wt reference.
+        "protocol_measurement_types": frozenset(
+            {"fia_tof_ms_ion_modified_z_score", "fia_tof_ms_ion_raw_intensity_clone"}
+        ),
         "provenance": Provenance(
             source_uri="https://www.ebi.ac.uk/biostudies/studies/S-BSST5",
             citation_key="fuhrerGenomewideLandscapeGene2017",
@@ -881,10 +889,15 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
                 "FIA-TOF-MS modified ion z-scores per Keio deletion strain (7,534 ions, "
                 "negative and positive mode), two biological replicates per strain; "
                 "reference = the deposit's measured `wt` profile on the same scale. "
+                "Plus one raw-intensity record per clone (two technical injections "
+                "combined) against the mean of the 96 wt cultures. "
                 "Deposit column names are gene NAMES, joined to Table EV1A and stored "
                 "under the strain's BW25113 locus tag through its Keio JW synonym"
             ),
-            page="Mol Syst Biol 13:907; S-BSST5 zscore_neg.tsv, zscore_pos.tsv",
+            page=(
+                "Mol Syst Biol 13:907; S-BSST5 zscore_neg.tsv, zscore_pos.tsv, "
+                "rawdata_neg_all.tsv, rawdata_pos_all.tsv"
+            ),
         ),
     },
     # The paired-modality chemostat metabolome, one record per culture: 24 BW25113 Keio

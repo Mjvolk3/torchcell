@@ -19,11 +19,37 @@ HTTPS tree. The loader consumes ``zscore_neg.tsv`` / ``zscore_pos.tsv`` (rows io
 columns strains), ``sample_id_zscore.xls`` (the column names), ``sample_id_all.xls``
 (the raw matrix's column names, four per strain, read to COUNT replicates),
 ``neg_ionMz.xls`` / ``pos_ionMz.xls`` (each row's m/z), the study record
-``S-BSST5.json`` (the files' own descriptions, read to check the design), and the
+``S-BSST5.json`` (the files' own descriptions, read to check the design), the
 publisher's Table EV1 workbook (``si2.xlsx``, captured in the literature mirror), whose
 sheet ``Table EV1A`` ties each strain name to its Keio JW id and Blattner number and whose
-``Table EV1B`` lists the ions. The raw-intensity matrices and the KEGG annotation files
-of S-BSST5 are NOT consumed and NOT mirrored.
+``Table EV1B`` lists the ions, and (since 2026-11-24, #1177) the raw-intensity matrices
+``rawdata_neg_all.tsv`` / ``rawdata_pos_all.tsv`` (rows ions, 15,540 columns named by
+``sample_id_all.xls``). The KEGG annotation files of S-BSST5 are NOT consumed and NOT
+mirrored.
+
+TWO MEASUREMENT TYPES, ONE RECORD PER CLONE FOR THE RAW ONE (#1177, per-replicate policy
+of 2026-11-17). The z-score matrices release one value per strain over its replicates
+("replicates are averaged"); the per-replicate z-scores are not released, so those 3,806
+records stay as the deposit released them (``MEASUREMENT_TYPE``). The raw matrices
+release every injection: 4 columns per strain, 2 independent clones ("two different
+clones contained on separate plates in the library were separately processed on
+different days") x 2 technical injections of one extract. Each CLONE is one
+``RAW_MEASUREMENT_TYPE`` record: its two injections are a technical pair the design
+combines into one value (the mean of the two, which is also their median, the authors'
+own summary statistic), ``n_replicates`` 1, ``replicate_id`` the clone's position inside
+the name's block of the release (``"1"``, ``"2"``; ``"1"``..``"4"`` or ``"6"`` for a
+pooled name), and a ``not_applicable_single_measurement`` gap on the SE that states the
+technical pair. The pairing is not labelled by the deposit; it is MEASURED at build time:
+columns ``(2k, 2k+1)`` are one extract (``technical_pairing.json``; the build refuses a
+deposit where the adjacent pair is not the best pairing for at least
+``MIN_TECHNICAL_PAIRING`` of the four-column strains). The ``wt`` block's 192 columns are
+96 cultures, each a record with an empty genotype; the raw records' reference is the
+mean over those 96 cultures (``replicate_id=None``). Three names the raw matrix carries
+(flhC, hrpB, yhfW) are the mutants the authors removed for "inconsistent $z$ -score
+among the replicates" (``SOURCED_VALUES["withdrawn_mutants"]``); they are the one
+allowed drop, listed in ``dropped_records.json``. The raw values are released
+intensities, not the z-score: the plate-drift, low-pass and harvest-OD LOWESS
+corrections between them have unreleased inputs, so neither is derived from the other.
 
 STRAIN (``SOURCED_VALUES["background_strain"]``). The paper says the strains come "from
 the KEIO knockout collection (Baba et al, 2006)" and never names the background; Baba
@@ -54,8 +80,9 @@ genotype names every DISTINCT JW id the name matches, with ``n_replicates`` from
 whole raw column count, and ``dropped_records.json`` lists them: the value is stored as
 the deposit released it, and what it pools is stated rather than hidden.
 
-RECORDS DROPPED: none. Every one of the 3,806 mutant columns is a record; the ``wt``
-column is the reference.
+RECORDS DROPPED: none of the z-score matrix. Every one of the 3,806 mutant columns is a
+record; the ``wt`` column is the reference. Of the raw matrix, only the three withdrawn
+mutants' six clones (above).
 
 PHENOTYPE. ``MetabolitePhenotype`` keyed ``neg_NNNN`` / ``pos_NNNN`` (the 1-based ion
 row, which is Table EV1B's ``Ion Index``; ``preprocess/ions.csv`` gives each key's m/z in
@@ -63,7 +90,8 @@ both files). ``n_replicates`` = the strain's raw-matrix columns over the two tec
 injections: 2 independent clones per strain (``SOURCED_VALUES["n_biological_replicates"]``),
 96 cultures for ``wt`` (192 columns, a back-solve; the paper states no WT count).
 ``metabolite_level_se`` is a typed gap: no per-strain uncertainty is released.
-The reference is the measured ``wt`` profile on the same z-score scale.
+The reference is the measured ``wt`` profile on the same z-score scale. The raw records
+use the same keys under ``RAW_MEASUREMENT_TYPE`` (one clone each, above).
 """
 
 from __future__ import annotations
@@ -174,6 +202,14 @@ SAMPLE_ID_ZSCORE = "sample_id_zscore.xls"
 SAMPLE_ID_ALL = "sample_id_all.xls"
 NEG_ION_MZ = "neg_ionMz.xls"
 POS_ION_MZ = "pos_ionMz.xls"
+RAW_NEG = "rawdata_neg_all.tsv"
+RAW_POS = "rawdata_pos_all.tsv"
+#: When each raw-intensity matrix was retrieved (#1177, the recorded ``direct_url``
+#: retriever); the other S-BSST5 files keep ``DATA_RETRIEVED_AT``.
+RAW_DATA_RETRIEVED_AT: dict[str, str] = {
+    RAW_NEG: "2026-11-25T05:51:42.686608+00:00",
+    RAW_POS: "2026-11-25T05:56:31.229704+00:00",
+}
 TABLE_EV1 = "si2.xlsx"
 TABLE_EV1A_SHEET = "Table EV1A"
 TABLE_EV1B_SHEET = "Table EV1B"
@@ -184,6 +220,7 @@ IonMode = Literal["neg", "pos"]
 ION_MODES: tuple[IonMode, IonMode] = ("neg", "pos")
 ZSCORE_FILES: dict[IonMode, str] = {"neg": ZSCORE_NEG, "pos": ZSCORE_POS}
 ION_MZ_FILES: dict[IonMode, str] = {"neg": NEG_ION_MZ, "pos": POS_ION_MZ}
+RAW_INTENSITY_FILES: dict[IonMode, str] = {"neg": RAW_NEG, "pos": RAW_POS}
 
 
 class RawFile(BaseModel):
@@ -204,7 +241,13 @@ class RawFile(BaseModel):
 
 
 def _biostudies_file(
-    name: str, sha256: str, size: int, description: str, *, under_files: bool = True
+    name: str,
+    sha256: str,
+    size: int,
+    description: str,
+    *,
+    under_files: bool = True,
+    retrieved_at: str = DATA_RETRIEVED_AT,
 ) -> RawFile:
     url = (
         f"{BIOSTUDIES_ROOT}/Files/{name}"
@@ -222,7 +265,7 @@ def _biostudies_file(
             retriever="torchcell.literature.retrieve.direct_url",
             params={"url": url},
             sha256=sha256,
-            retrieved_at=DATA_RETRIEVED_AT,
+            retrieved_at=retrieved_at,
         ),
     )
 
@@ -276,6 +319,22 @@ RAW_FILES: tuple[RawFile, ...] = (
         203264,
         "accurate m/z of each positive-mode row",
     ),
+    _biostudies_file(
+        RAW_NEG,
+        "4e802c06fae13f3007f8909d20e002b5f55a106d2ac3926f4db32d2ce82999af",
+        229189456,
+        "raw ion intensities, negative mode; rows ions, 4 columns per strain (2 clones "
+        "x 2 technical injections), named by sample_id_all.xls",
+        retrieved_at=RAW_DATA_RETRIEVED_AT[RAW_NEG],
+    ),
+    _biostudies_file(
+        RAW_POS,
+        "968cb6ea3d11a087354edf5e8274016eb01ced916d72fd5c70099e6b8f7d4a15",
+        314326485,
+        "raw ion intensities, positive mode; rows ions, 4 columns per strain (2 clones "
+        "x 2 technical injections), named by sample_id_all.xls",
+        retrieved_at=RAW_DATA_RETRIEVED_AT[RAW_POS],
+    ),
     RawFile(
         name=TABLE_EV1,
         sha256=_TABLE_EV1_SHA256,
@@ -296,11 +355,9 @@ RAW_FILES: tuple[RawFile, ...] = (
 DATA_SHA256: dict[str, str] = {f.name: f.sha256 for f in RAW_FILES}
 RAW_FILES_BY_NAME: dict[str, RawFile] = {f.name: f for f in RAW_FILES}
 
-#: S-BSST5 files deliberately not mirrored (the loader does not read them).
+#: S-BSST5 files deliberately not mirrored (the loader does not read them). The raw
+#: intensity matrices were on this list until 2026-11-24 (#1177); they are now consumed.
 NOT_MIRRORED = (
-    "S-BSST5 rawdata_neg_all.tsv / rawdata_pos_all.tsv (raw ion intensities, 4 columns "
-    "per strain; 219 MB + 300 MB): not consumed; the replicate count is read from "
-    "sample_id_all.xls instead",
     "S-BSST5 neg_kegg_all_3mD.xls / pos_kegg_all_3mD.xls (putative KEGG annotations, "
     "'refer to Table EV1B'): not consumed",
 )
@@ -497,6 +554,32 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "(tabseparated and excel files) can be downloaded from https://www.eb "
         "i.ac.uk/biostudies/, accession code: S-BSST5.",
     ),
+    "withdrawn_mutants": _paper(
+        ("flhC", "hrpB", "yhfW"),
+        "three additional mutants were removed from the dataset having inconsistent "
+        "$z$ -score among the replicates (flhC, hrpB, and yhfW)",
+        note="Methods, 'Data normalization and calculation of differential ions'. The "
+        "raw matrices still carry their 4 columns each; they are the one drop the "
+        "per-replicate policy allows (a sample the authors withdrew), so their six "
+        "clones are not records and dropped_records.json lists them",
+    ),
+    "raw_names_analyzed": _paper(
+        3810,
+        "The remaining 3,810 unique gene knockouts were further analyzed.",
+        note="Methods, 'Physiology'; sample_id_all.xls carries exactly 3,810 distinct "
+        "names, wt included (process() requires it), the same count the paper's 3,807 "
+        "'mutants' of the z-score matrix (wt included) reaches after the three "
+        "withdrawals",
+    ),
+    "raw_intensity": _paper(
+        "intensity of each mass peak in each analyzed sample",
+        "The resulting matrix lists the intensity of each mass peak in each analyzed "
+        "sample.",
+        note="what the raw matrices hold (Methods, 'Spectral data processing and "
+        "annotation'): the merged peak intensities before the drift, plate and "
+        "harvest-OD corrections of 'Data normalization'. The released values are "
+        "integers and include zeros and negative numbers, stored as released",
+    ),
     "no_internal_standards": _paper(
         "relative ion intensities only",
         "Notably, no internal standards were used because they are not suited to "
@@ -513,15 +596,31 @@ EXPERIMENTAL_DESIGN = SOURCED_VALUES["design"].quote
 EXPECTED_ION_COUNTS: dict[str, int] = SOURCED_VALUES["ion_counts"].value
 COLLECTION: str = SOURCED_VALUES["collection"].value
 CASSETTE: str = SOURCED_VALUES["cassette"].value
+WITHDRAWN_MUTANTS: tuple[str, ...] = SOURCED_VALUES["withdrawn_mutants"].value
+RAW_NAMES_ANALYZED: int = SOURCED_VALUES["raw_names_analyzed"].value
 
 MEASUREMENT_TYPE = "fia_tof_ms_ion_modified_z_score"
+#: One clone's raw ion intensity, its two technical injections combined (#1177).
+RAW_MEASUREMENT_TYPE = "fia_tof_ms_ion_raw_intensity_clone"
 WILD_TYPE_COLUMN = "wt"
 #: What ``systematic_gene_name`` is on a record whose column name Table EV1A lists.
 IDENTIFIER_KIND = "Keio JW id"
 #: What it is on a column name Table EV1A does not list (none on the pinned deposit).
 DEPOSIT_NAME_KIND = "deposit column name"
-#: Every mutant column of the deposit is a record: 3,807 columns minus ``wt``.
-EXPECTED_RECORDS = 3806
+#: Every mutant column of the z-score matrix is a record: 3,807 columns minus ``wt``.
+EXPECTED_ZSCORE_RECORDS = 3806
+#: One raw record per clone: (15,540 raw columns - 192 ``wt`` - 3 x 4 withdrawn) / 2
+#: mutant clones plus the 192 / 2 ``wt`` cultures (measured on the pinned deposit).
+EXPECTED_CLONE_RECORDS = 7668 + 96
+EXPECTED_RECORDS = EXPECTED_ZSCORE_RECORDS + EXPECTED_CLONE_RECORDS
+#: Minimum share of the four-column strains whose best technical pairing (highest mean
+#: within-pair correlation of log intensity over the 500 most intense ions of the mode)
+#: is the adjacent one, columns (1, 2) and (3, 4); measured 3,750 / 3,784 (neg) and 3,678 / 3,784
+#: (pos) on the pinned deposit. Below it the ``(2k, 2k+1)`` pairing read here would not
+#: be what the deposit holds.
+MIN_TECHNICAL_PAIRING = 0.95
+#: Ions per mode the pairing check correlates over (the most intense by median).
+PAIRING_TOP_IONS = 500
 #: Minimum share of Table EV1B ions whose nearest deposit m/z is the same row; below it
 #: the ``neg_NNNN`` / ``pos_NNNN`` keys would not mean Table EV1B's Ion Index.
 MIN_ION_ALIGNMENT = 0.999
@@ -543,6 +642,18 @@ METABOLITE_LEVEL_SE_GAP = ProvenanceGap(
     "re-normalized to them (plate drift, low-pass and harvest-OD LOWESS corrections "
     "with unreleased inputs). The only stated spread is dataset-level "
     "(SOURCED_VALUES['replicate_noise'])",
+)
+
+SINGLE_CLONE_SE_GAP = ProvenanceGap(
+    field="metabolite_level_se",
+    reason=ProvenanceGapReason.not_applicable_single_measurement,
+    note="a record is ONE biological replicate (one Keio clone, or one wt culture) and "
+    "has no dispersion of its own. Its value per ion is the mean of the clone "
+    f"extract's {TECHNICAL_REPLICATES} technical injections (technical level: n = "
+    f"{TECHNICAL_REPLICATES}, sample unit = repeat FIA-TOF-MS injection of one "
+    "extract, the raw-matrix columns (2k, 2k+1)); MetabolitePhenotype has no field for "
+    "the technical count, so it is stated here. The per-strain mean and SE over a "
+    "strain's clone records are a modeling-time derivation",
 )
 
 PUBLICATION = Publication(
@@ -885,6 +996,106 @@ def zscore_scale(mode: IonMode, matrix: FloatMatrix) -> ZScoreScale:
     return scale
 
 
+def read_raw_intensities(path: str | Path, n_rows: int, n_columns: int) -> FloatMatrix:
+    """A headerless tab-separated raw-intensity matrix, refusing a wrong shape or a
+    non-finite cell. Zeros and negative values are released values and are kept.
+    """
+    matrix = pd.read_csv(path, sep="\t", header=None, dtype=np.float64).to_numpy()
+    if matrix.shape != (n_rows, n_columns):
+        raise ValueError(
+            f"{path}: shape {matrix.shape}, expected ({n_rows}, {n_columns})"
+        )
+    if not np.isfinite(matrix).all():
+        raise NonFiniteZScoreError(f"{path}: non-finite raw intensities")
+    return matrix
+
+
+class TechnicalPairing(BaseModel):
+    """How well the adjacent-column technical pairing fits one mode's raw matrix.
+
+    For every name with exactly four raw columns, the three ways to split them into two
+    pairs are scored by the mean within-pair Pearson correlation of centered log2
+    intensity over the ``PAIRING_TOP_IONS`` most intense ions; ``adjacent_best`` counts
+    the names whose best split is (1, 2) + (3, 4). ``*_median_correlation`` are over
+    all those names.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    mode: IonMode
+    n_ions_used: int
+    n_four_column_names: int
+    adjacent_best: int
+    within_pair_median_correlation: float
+    across_pair_median_correlation: float
+
+    @property
+    def agreement(self) -> float:
+        """Share of four-column names whose best split is the adjacent one."""
+        return self.adjacent_best / self.n_four_column_names
+
+
+def technical_pairing(
+    mode: IonMode, matrix: FloatMatrix, raw_names: Sequence[str]
+) -> TechnicalPairing:
+    """Measure the ``(2k, 2k+1)`` technical pairing on one mode; refuse a deposit
+    where it is the best split for fewer than ``MIN_TECHNICAL_PAIRING`` of the
+    four-column names.
+    """
+    top = np.argsort(-np.median(matrix, axis=1), kind="stable")[:PAIRING_TOP_IONS]
+    logged = np.log2(np.maximum(matrix[top], 1.0))
+    logged = logged - np.median(logged, axis=1, keepdims=True)
+    splits = (((0, 1), (2, 3)), ((0, 2), (1, 3)), ((0, 3), (1, 2)))
+    adjacent_best = 0
+    within: list[float] = []
+    across: list[float] = []
+    blocks = name_blocks(raw_names)
+    four = [(start, stop) for start, stop in blocks.values() if stop - start == 4]
+    for start, stop in four:
+        corr = np.corrcoef(logged[:, start:stop].T)
+        scores = [(corr[a, b] + corr[c, d]) / 2 for (a, b), (c, d) in splits]
+        adjacent_best += int(int(np.argmax(scores)) == 0)
+        within.append(float(scores[0]))
+        across.append(float(np.mean([corr[0, 2], corr[0, 3], corr[1, 2], corr[1, 3]])))
+    result = TechnicalPairing(
+        mode=mode,
+        n_ions_used=int(top.size),
+        n_four_column_names=len(four),
+        adjacent_best=adjacent_best,
+        within_pair_median_correlation=float(np.median(within)),
+        across_pair_median_correlation=float(np.median(across)),
+    )
+    if result.agreement < MIN_TECHNICAL_PAIRING:
+        raise ValueError(
+            f"{mode}: the adjacent technical pairing is best for only "
+            f"{adjacent_best} of {len(four)} four-column names "
+            f"(< {MIN_TECHNICAL_PAIRING})"
+        )
+    return result
+
+
+def name_blocks(raw_names: Sequence[str]) -> dict[str, tuple[int, int]]:
+    """``{name: (start, stop)}`` of each name's contiguous column block in the raw
+    matrix, refusing a name split over two blocks or a block that does not start on an
+    even column and hold whole technical pairs (a pair would straddle two names).
+    """
+    blocks: dict[str, tuple[int, int]] = {}
+    start = 0
+    for i in range(1, len(raw_names) + 1):
+        if i < len(raw_names) and raw_names[i] == raw_names[start]:
+            continue
+        name = raw_names[start]
+        if name in blocks:
+            raise RawColumnCountError(f"{name!r} appears in two raw-matrix blocks")
+        if start % TECHNICAL_REPLICATES or (i - start) % TECHNICAL_REPLICATES:
+            raise RawColumnCountError(
+                f"{name!r}: raw columns {start + 1}..{i} are not whole technical pairs"
+            )
+        blocks[name] = (start, i)
+        start = i
+    return blocks
+
+
 # --------------------------------------------------------------------------- #
 # Strain selection and the retention ledger
 # --------------------------------------------------------------------------- #
@@ -1013,18 +1224,125 @@ def select_strains(
     )
 
 
-def build_drop_log(dataset_name: str, selection: StrainSelection) -> DropLog:
-    """The retention ledger: every mutant column is a record, nothing is dropped."""
+class KeioClone(BaseModel):
+    """One biological replicate of the raw matrix: one clone of a named strain (or one
+    ``wt`` culture), its two technical injection columns, and its position.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    deposit_name: str
+    entries: list[KeioEntry]
+    replicate_id: str
+    raw_columns: tuple[int, int]
+
+    @property
+    def is_wild_type(self) -> bool:
+        """A ``wt`` culture (empty genotype), not a Keio clone."""
+        return self.deposit_name == WILD_TYPE_COLUMN
+
+
+class CloneSelection(BaseModel):
+    """Every clone of the raw matrix, and the withdrawn names' blocks left out."""
+
+    clones: list[KeioClone]
+    withdrawn: dict[str, tuple[int, int]]
+
+    @property
+    def mutant_clones(self) -> list[KeioClone]:
+        """The Keio clones (every clone but the ``wt`` cultures)."""
+        return [c for c in self.clones if not c.is_wild_type]
+
+    @property
+    def wt_clones(self) -> list[KeioClone]:
+        """The ``wt`` cultures, the raw records' reference replicates."""
+        return [c for c in self.clones if c.is_wild_type]
+
+
+def select_clones(
+    raw_names: Sequence[str], selection: StrainSelection
+) -> CloneSelection:
+    """One clone per technical pair ``(2k, 2k+1)`` of every raw-matrix name the
+    z-score matrix also carries, in release order.
+
+    The raw matrix must carry exactly ``RAW_NAMES_ANALYZED`` names, every z-score name
+    among them, and nothing else but ``WITHDRAWN_MUTANTS`` (the authors' own removals,
+    left out); anything else is refused by name. A clone of a pooled name keeps every
+    Table EV1A entry of the name, because the release does not say which entry each
+    clone is.
+    """
+    blocks = name_blocks(raw_names)
+    if len(blocks) != RAW_NAMES_ANALYZED:
+        raise RawColumnCountError(
+            f"{len(blocks)} raw-matrix names, the paper states {RAW_NAMES_ANALYZED}"
+        )
+    entries_of = {s.deposit_name: s.entries for s in selection.strains}
+    entries_of[WILD_TYPE_COLUMN] = []
+    missing = sorted(set(entries_of) - set(blocks))
+    if missing:
+        raise RawColumnCountError(
+            f"z-score names absent from the raw matrix: {missing}"
+        )
+    extra = sorted(set(blocks) - set(entries_of))
+    if extra != sorted(WITHDRAWN_MUTANTS):
+        raise RawColumnCountError(
+            f"raw-only names {extra}, expected the withdrawn {sorted(WITHDRAWN_MUTANTS)}"
+        )
+    clones: list[KeioClone] = []
+    for name, (start, stop) in blocks.items():
+        if name in WITHDRAWN_MUTANTS:
+            continue
+        for k, first in enumerate(range(start, stop, TECHNICAL_REPLICATES)):
+            clones.append(
+                KeioClone(
+                    deposit_name=name,
+                    entries=entries_of[name],
+                    replicate_id=str(k + 1),
+                    raw_columns=(first, first + 1),
+                )
+            )
+    return CloneSelection(
+        clones=clones, withdrawn={n: blocks[n] for n in WITHDRAWN_MUTANTS}
+    )
+
+
+def build_drop_log(
+    dataset_name: str, selection: StrainSelection, clones: CloneSelection
+) -> DropLog:
+    """The retention ledger: every z-score mutant column and every raw clone is a
+    record, except the clones of the three mutants the authors withdrew.
+    """
     n = len(selection.strains)
+    n_withdrawn = sum(
+        (stop - start) // TECHNICAL_REPLICATES
+        for start, stop in clones.withdrawn.values()
+    )
+    withdrawn = SOURCED_VALUES["withdrawn_mutants"]
     return DropLog(
         dataset=dataset_name,
         deposit_columns=n + 1,
         reference_columns=[WILD_TYPE_COLUMN],
-        source_records=n,
-        kept_records=n,
-        dropped_records=0,
-        rules=[],
+        source_records=n + len(clones.clones) + n_withdrawn,
+        kept_records=n + len(clones.clones),
+        dropped_records=n_withdrawn,
+        rules=[
+            DropRule(
+                rule="withdrawn_by_authors",
+                description=f"{withdrawn.quote!r} (paper.md sha256 "
+                f"{withdrawn.provenance.sha256}): the raw matrices still carry these "
+                "names, the z-score matrix does not; their clones are not records",
+                n_records=n_withdrawn,
+                items=[
+                    f"{name}: raw columns {start + 1}..{stop}"
+                    for name, (start, stop) in sorted(clones.withdrawn.items())
+                ],
+            )
+        ],
         notes=[
+            f"{n} z-score records ({MEASUREMENT_TYPE}), one per mutant column of the "
+            f"z-score matrix, and {len(clones.clones)} raw records "
+            f"({RAW_MEASUREMENT_TYPE}), one per clone: {len(clones.mutant_clones)} "
+            f"Keio clones and {len(clones.wt_clones)} wt cultures",
             "every mutant deposit column is a record under the Keio JW id(s) Table "
             "EV1A lists for its name (ReleasedIdentifierPerturbation); no "
             "annotation is read and no column is dropped for a JW id the BW25113 "
@@ -1067,6 +1385,109 @@ def metabolite_phenotype(
     )
 
 
+def clone_phenotype(
+    keys: Sequence[str], values: Sequence[float], replicate_id: str
+) -> MetabolitePhenotype:
+    """One clone's raw intensity profile (its technical pair already combined): n = 1,
+    no dispersion, the clone's position as ``replicate_id``.
+    """
+    if len(keys) != len(values):
+        raise ValueError(f"{len(keys)} keys for {len(values)} values")
+    return MetabolitePhenotype(
+        metabolite_level={k: float(v) for k, v in zip(keys, values, strict=True)},
+        metabolite_level_se=None,
+        n_replicates=dict.fromkeys(keys, 1),
+        measurement_type=RAW_MEASUREMENT_TYPE,
+        target_metabolite_ids=None,
+        replicate_id=replicate_id,
+        provenance_gaps=[SINGLE_CLONE_SE_GAP],
+    )
+
+
+def clone_reference_phenotype(
+    keys: Sequence[str], wt_profiles: FloatMatrix
+) -> MetabolitePhenotype:
+    """The raw records' reference: the mean over the ``wt`` culture records (rows ions,
+    columns cultures) with ``SD / sqrt(n)``; an aggregate, so ``replicate_id`` is None.
+    """
+    n = int(wt_profiles.shape[1])
+    if len(keys) != wt_profiles.shape[0] or n < 2:
+        raise ValueError(f"wt profiles {wt_profiles.shape} for {len(keys)} keys")
+    mean = wt_profiles.mean(axis=1)
+    se = wt_profiles.std(axis=1, ddof=1) / np.sqrt(n)
+    return MetabolitePhenotype(
+        metabolite_level={k: float(v) for k, v in zip(keys, mean, strict=True)},
+        metabolite_level_se={k: float(v) for k, v in zip(keys, se, strict=True)},
+        n_replicates=dict.fromkeys(keys, n),
+        measurement_type=RAW_MEASUREMENT_TYPE,
+        target_metabolite_ids=None,
+    )
+
+
+def combine_technical_pair(matrix: FloatMatrix, clone: KeioClone) -> FloatMatrix:
+    """The clone's value per ion: the mean of its two injection columns."""
+    first, second = clone.raw_columns
+    return (matrix[:, first] + matrix[:, second]) / 2.0
+
+
+class RawZScoreAgreement(BaseModel):
+    """How the raw clone records line up with the released z-scores, per strain.
+
+    Each ion of the clone records is standardized over all clone records (median 0, SD
+    1, the paper's z-score formula without its drift, plate and OD corrections); a
+    strain's profile is the median over its clones; ``own`` is that profile's Pearson
+    correlation with the strain's released z-score column, ``shifted`` the same against
+    the NEXT strain's released column (a null). A FINDING that the raw columns carry
+    the strains the z-score matrix names, never a gate.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    n_strains: int
+    median_own_correlation: float
+    p05_own_correlation: float
+    median_shifted_correlation: float
+    n_own_above_shifted: int
+
+
+def raw_zscore_agreement(
+    clones: CloneSelection,
+    clone_values: FloatMatrix,
+    zscores: FloatMatrix,
+    selection: StrainSelection,
+) -> RawZScoreAgreement:
+    """Per-strain correlation of the clone records with the released z-scores."""
+    median = np.median(clone_values, axis=1, keepdims=True)
+    sd = clone_values.std(axis=1, ddof=1, keepdims=True)
+    standardized = (clone_values - median) / np.where(sd > 0, sd, 1.0)
+    by_name: dict[str, list[int]] = {}
+    for j, clone in enumerate(clones.clones):
+        by_name.setdefault(clone.deposit_name, []).append(j)
+    profiles = np.column_stack(
+        [
+            np.median(standardized[:, by_name[s.deposit_name]], axis=1)
+            for s in selection.strains
+        ]
+    )
+    released = zscores[:, [s.column for s in selection.strains]]
+
+    def corr(a: FloatMatrix, b: FloatMatrix) -> FloatMatrix:
+        a = a - a.mean(axis=0)
+        b = b - b.mean(axis=0)
+        out = (a * b).sum(axis=0) / np.sqrt((a * a).sum(axis=0) * (b * b).sum(axis=0))
+        return np.asarray(out, dtype=np.float64)
+
+    own = corr(profiles, released)
+    shifted = corr(profiles, np.roll(released, -1, axis=1))
+    return RawZScoreAgreement(
+        n_strains=int(own.size),
+        median_own_correlation=float(np.median(own)),
+        p05_own_correlation=float(np.percentile(own, 5)),
+        median_shifted_correlation=float(np.median(shifted)),
+        n_own_above_shifted=int((own > shifted).sum()),
+    )
+
+
 def environment() -> Environment:
     """Fuhrer's screening medium at 37 C, shaken (aerobic)."""
     return Environment(
@@ -1077,13 +1498,13 @@ def environment() -> Environment:
 
 
 def _released_perturbation(
-    strain: KeioStrain, identifier: str, gene_name: str, kind: str
+    deposit_name: str, identifier: str, gene_name: str, kind: str
 ) -> ReleasedIdentifierPerturbation:
     return ReleasedIdentifierPerturbation(
         systematic_gene_name=identifier,
         perturbed_gene_name=gene_name,
         gene_namespace=STRAIN_GENE_NAMESPACES["BW25113"],
-        strain_label=strain.deposit_name,
+        strain_label=deposit_name,
         identifier_kind=kind,
         released_kind=ReleasedKind.deletion,
         collection=COLLECTION,
@@ -1091,28 +1512,27 @@ def _released_perturbation(
     )
 
 
-def deletion_genotype(strain: KeioStrain) -> Genotype:
+def deletion_genotype(strain: KeioStrain | KeioClone) -> Genotype:
     """The Keio deletion(s) a deposit column names, exactly as released.
 
     One perturbation per distinct JW id Table EV1A lists for the column name (a JW id
     listed twice with two delivery statuses is one strain id, so one perturbation),
     each carrying the entry's own gene name; a name Table EV1A does not list is stored
-    under the name itself.
+    under the name itself. A ``wt`` clone has an empty genotype.
     """
+    name = strain.deposit_name
+    if isinstance(strain, KeioClone) and strain.is_wild_type:
+        return Genotype(perturbations=[])
     if not strain.entries:
         return Genotype(
-            perturbations=[
-                _released_perturbation(
-                    strain, strain.deposit_name, strain.deposit_name, DEPOSIT_NAME_KIND
-                )
-            ]
+            perturbations=[_released_perturbation(name, name, name, DEPOSIT_NAME_KIND)]
         )
     first_of: dict[str, KeioEntry] = {}
     for entry in strain.entries:
         first_of.setdefault(entry.jw_id, entry)
     return Genotype(
         perturbations=[
-            _released_perturbation(strain, jw_id, entry.gene_name, IDENTIFIER_KIND)
+            _released_perturbation(name, jw_id, entry.gene_name, IDENTIFIER_KIND)
             for jw_id, entry in first_of.items()
         ]
     )
@@ -1131,6 +1551,38 @@ def build_experiment(
         genotype=deletion_genotype(strain),
         environment=env,
         phenotype=metabolite_phenotype(keys, values, strain.n_biological),
+    )
+
+
+def build_clone_experiment(
+    dataset_name: str,
+    clone: KeioClone,
+    keys: Sequence[str],
+    values: Sequence[float],
+    env: Environment,
+) -> MetaboliteExperiment:
+    """The record of one raw-matrix clone (or ``wt`` culture)."""
+    return MetaboliteExperiment(
+        dataset_name=dataset_name,
+        genotype=deletion_genotype(clone),
+        environment=env,
+        phenotype=clone_phenotype(keys, values, clone.replicate_id),
+    )
+
+
+def build_clone_reference(
+    dataset_name: str,
+    genome_reference: ReferenceGenome,
+    keys: Sequence[str],
+    wt_profiles: FloatMatrix,
+    env: Environment,
+) -> MetaboliteExperimentReference:
+    """The raw records' reference: the ``wt`` cultures' mean, same medium."""
+    return MetaboliteExperimentReference(
+        dataset_name=dataset_name,
+        genome_reference=genome_reference,
+        environment_reference=env.model_copy(),
+        phenotype_reference=clone_reference_phenotype(keys, wt_profiles),
     )
 
 
@@ -1214,7 +1666,9 @@ class MetabolomeFuhrer2017Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Parse the S-BSST5 matrices and Table EV1 into per-strain records + LMDB."""
+        """Parse the S-BSST5 matrices and Table EV1 into records + LMDB: one z-score
+        record per mutant column, then one raw-intensity record per clone.
+        """
         verify_raw_files(self.raw_dir, DATA_SHA256)
         design = read_study_design(self._raw(STUDY_JSON))
         if design != EXPERIMENTAL_DESIGN:
@@ -1226,11 +1680,14 @@ class MetabolomeFuhrer2017Dataset(ExperimentDataset):
         column_names = read_name_column(self._raw(SAMPLE_ID_ZSCORE))
         if len(set(column_names)) != len(column_names):
             raise ValueError(f"{SAMPLE_ID_ZSCORE} repeats a column name")
-        raw_column_counts = Counter(read_name_column(self._raw(SAMPLE_ID_ALL)))
+        raw_names = read_name_column(self._raw(SAMPLE_ID_ALL))
+        raw_column_counts = Counter(raw_names)
 
         alignments: list[IonAlignment] = []
         scales: list[ZScoreScale] = []
+        pairings: list[TechnicalPairing] = []
         matrices: dict[IonMode, FloatMatrix] = {}
+        raw_matrices: dict[IonMode, FloatMatrix] = {}
         deposit_mz: dict[IonMode, list[float]] = {}
         for mode in ION_MODES:
             deposit_mz[mode] = [
@@ -1248,30 +1705,52 @@ class MetabolomeFuhrer2017Dataset(ExperimentDataset):
                 len(column_names),
             )
             scales.append(zscore_scale(mode, matrices[mode]))
+            raw_matrices[mode] = read_raw_intensities(
+                self._raw(RAW_INTENSITY_FILES[mode]),
+                EXPECTED_ION_COUNTS[mode],
+                len(raw_names),
+            )
+            pairings.append(technical_pairing(mode, raw_matrices[mode], raw_names))
         keys = ion_keys(EXPECTED_ION_COUNTS["neg"], EXPECTED_ION_COUNTS["pos"])
         stacked = np.vstack([matrices["neg"], matrices["pos"]])
+        raw_stacked = np.vstack([raw_matrices["neg"], raw_matrices["pos"]])
+        del matrices, raw_matrices
 
         selection = select_strains(column_names, entries, raw_column_counts)
-        drop_log = build_drop_log(self.name, selection)
-        if drop_log.kept_records != EXPECTED_RECORDS:
+        if len(selection.strains) != EXPECTED_ZSCORE_RECORDS:
             raise ValueError(
-                f"{drop_log.kept_records} mutant columns, the module declares "
-                f"{EXPECTED_RECORDS}"
+                f"{len(selection.strains)} z-score mutant columns, the module declares "
+                f"{EXPECTED_ZSCORE_RECORDS}"
             )
+        clones = select_clones(raw_names, selection)
+        if len(clones.clones) != EXPECTED_CLONE_RECORDS:
+            raise ValueError(
+                f"{len(clones.clones)} raw clones, the module declares "
+                f"{EXPECTED_CLONE_RECORDS}"
+            )
+        drop_log = build_drop_log(self.name, selection, clones)
         log.info(
-            "Fuhrer 2017: %d deposit mutant columns -> %d records under their released "
-            "JW ids (%d pooled names, %d unlisted names); nothing dropped",
-            drop_log.source_records,
+            "Fuhrer 2017: %d z-score mutant columns and %d raw clones (%d wt) -> %d "
+            "records (%d pooled names, %d unlisted names); %d withdrawn clones dropped",
+            len(selection.strains),
+            len(clones.clones),
+            len(clones.wt_clones),
             drop_log.kept_records,
             len(selection.pooled),
             len(selection.unlisted),
+            drop_log.dropped_records,
         )
+        clone_values = np.column_stack(
+            [combine_technical_pair(raw_stacked, c) for c in clones.clones]
+        )
+        del raw_stacked
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
         self._write_ledgers(
             drop_log, alignments, scales, deposit_mz, ev1b_mz, selection.strains
         )
+        self._write_clone_ledgers(pairings, clones, clone_values, stacked, selection)
 
         env = environment()
         reference = build_reference(
@@ -1282,11 +1761,20 @@ class MetabolomeFuhrer2017Dataset(ExperimentDataset):
             selection.wt_n_biological,
             env,
         )
+        wt_index = [i for i, c in enumerate(clones.clones) if c.is_wild_type]
+        clone_reference = build_clone_reference(
+            self.name,
+            assembly_reference(self.REFERENCE_STRAIN),
+            keys,
+            clone_values[:, wt_index],
+            env,
+        )
         env_out, interned_env = self._open_write_lmdb(
             osp.join(self.processed_dir, "lmdb")
         )
+        idx = 0
         with env_out.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for idx, item in enumerate(tqdm(selection.strains, desc="fuhrer2017")):
+            for item in tqdm(selection.strains, desc="fuhrer2017 z-score"):
                 experiment = build_experiment(
                     self.name, item, keys, stacked[:, item.column].tolist(), env
                 )
@@ -1294,11 +1782,62 @@ class MetabolomeFuhrer2017Dataset(ExperimentDataset):
                     f"{idx}".encode(),
                     self._intern_record(experiment, reference, PUBLICATION, itxn),
                 )
+                idx += 1
+            for j, clone in enumerate(tqdm(clones.clones, desc="fuhrer2017 clones")):
+                experiment = build_clone_experiment(
+                    self.name, clone, keys, clone_values[:, j].tolist(), env
+                )
+                txn.put(
+                    f"{idx}".encode(),
+                    self._intern_record(experiment, clone_reference, PUBLICATION, itxn),
+                )
+                idx += 1
         env_out.close()
         interned_env.close()
-        log.info(
-            "Wrote %d Fuhrer 2017 metabolome experiments to LMDB",
-            len(selection.strains),
+        if idx != EXPECTED_RECORDS:
+            raise ValueError(
+                f"wrote {idx} records, the module declares {EXPECTED_RECORDS}"
+            )
+        log.info("Wrote %d Fuhrer 2017 metabolome experiments to LMDB", idx)
+
+    def _write_clone_ledgers(
+        self,
+        pairings: Sequence[TechnicalPairing],
+        clones: CloneSelection,
+        clone_values: FloatMatrix,
+        zscores: FloatMatrix,
+        selection: StrainSelection,
+    ) -> None:
+        """The technical-pairing check, the clone table, and the raw-vs-z-score
+        agreement (a FINDING, never a gate: the two quantities differ by unreleased
+        corrections).
+        """
+        out = Path(self.preprocess_dir)
+        (out / "technical_pairing.json").write_text(
+            json.dumps(
+                [p.model_dump() | {"agreement": p.agreement} for p in pairings],
+                indent=2,
+            )
+        )
+        n_records = len(selection.strains)
+        pd.DataFrame(
+            [
+                {
+                    "record": n_records + j,
+                    "deposit_name": c.deposit_name,
+                    "replicate_id": c.replicate_id,
+                    "raw_column_first": c.raw_columns[0] + 1,
+                    "raw_column_second": c.raw_columns[1] + 1,
+                    "jw_ids": ";".join(e.jw_id for e in c.entries),
+                    "wild_type": c.is_wild_type,
+                }
+                for j, c in enumerate(clones.clones)
+            ]
+        ).to_csv(out / "clones.csv", index=False)
+        (out / "raw_zscore_agreement.json").write_text(
+            raw_zscore_agreement(
+                clones, clone_values, zscores, selection
+            ).model_dump_json(indent=2)
         )
 
     def _write_ledgers(
@@ -1404,10 +1943,18 @@ def released_jw_ids_finding(identifiers: set[str], genome: Any) -> LevelResult:
     )
 
 
-def run_verification(data_root: str | None = None) -> VerificationReport:
+#: The dev-tree root of the built store, relative to ``DATA_ROOT``.
+DATASET_ROOT_REL = "data/torchcell/metabolome_fuhrer2017"
+#: The two measurement types the store holds (z-score per strain, raw per clone).
+PROTOCOL_MEASUREMENT_TYPES = frozenset({MEASUREMENT_TYPE, RAW_MEASUREMENT_TYPE})
+
+
+def run_verification(
+    data_root: str | None = None, root: str | None = None
+) -> VerificationReport:
     """Run the metabolite family verifier (L0-L3), the L4 genome FINDING and the
-    provenance audit of every ``SOURCED_VALUES`` entry on the built dev LMDB, and write
-    ``preprocess/verification_report.json``.
+    provenance audit of every ``SOURCED_VALUES`` entry on a built LMDB (the dev tree's
+    by default, or ``root``), and write ``preprocess/verification_report.json``.
     """
     from torchcell.verification.metabolite import (
         metabolite_gene_set,
@@ -1416,7 +1963,7 @@ def run_verification(data_root: str | None = None) -> VerificationReport:
     from torchcell.verification.runners import _write_report, load_records
 
     base = data_root or _data_root()
-    abs_root = osp.join(base, "data/torchcell/metabolome_fuhrer2017")
+    abs_root = root or osp.join(base, DATASET_ROOT_REL)
     records = load_records(abs_root)
     drops = DropLog.model_validate_json(
         Path(abs_root, "preprocess", "dropped_records.json").read_text()
@@ -1427,6 +1974,7 @@ def run_verification(data_root: str | None = None) -> VerificationReport:
         provenance=VERIFIER_PROVENANCE,
         expected_count=drops.kept_records,
         reference_centered=False,
+        protocol_measurement_types=PROTOCOL_MEASUREMENT_TYPES,
     )
     genome = bacterial_genome("ecoli", "BW25113", base)
     report.add(released_jw_ids_finding(metabolite_gene_set(records), genome))
@@ -1453,8 +2001,14 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="run every BioStudies retriever into --download-dir first",
     )
-    sub.add_parser("build", help="build (or load) the dev-tree LMDB")
-    sub.add_parser("verify", help="run L0-L4 on the built dev-tree LMDB")
+    for name, text in (
+        ("build", "build (or load) the dev-tree LMDB"),
+        ("verify", "run L0-L4 on the built dev-tree LMDB"),
+    ):
+        command = sub.add_parser(name, help=text)
+        command.add_argument(
+            "--root", default=None, help="a dataset root other than the dev tree's"
+        )
     args = parser.parse_args(argv)
 
     load_dotenv()
@@ -1473,11 +2027,11 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "build":
         dataset = MetabolomeFuhrer2017Dataset(
-            root=osp.join(data_root, "data/torchcell/metabolome_fuhrer2017")
+            root=args.root or osp.join(data_root, DATASET_ROOT_REL)
         )
         print(f"len = {len(dataset)}")
         return 0
-    report = run_verification(data_root)
+    report = run_verification(data_root, args.root)
     print(report.summary())
     return 0 if report.passed else 1
 

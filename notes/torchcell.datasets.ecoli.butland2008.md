@@ -649,3 +649,45 @@ The 1,854 cells Babu 2014 re-released and the 488 printed 0.0 cells over all-zer
 | L3 | `provenance_audit` | pass | value backed by verbatim cells of si5.xls (footnote g, over two consecutive cells) |
 | L3 | `provenance_audit` | pass | value backed by verbatim cells of si4.xls (footnote g, over two consecutive cells) |
 | L3 | `provenance_audit` | pass | value backed by verbatim cells of si2.xls (footnote d of the block below the roster) |
+
+## 2026.11.24 - Per-replicate review (#1176, #1178 policy): no record changes, colony sizes wait on the owner
+
+The store already holds the release's own unit: one record per (query strain, recipient strain) cell carrying the authors' S score, which is their one statistic over every screen of that cell. Records before and after: 314,769 and 314,769. Every record keeps `replicate_id=None`.
+
+### What a replicate is in this release
+
+- Biological replicate = the replicate SCREEN. Fig. 3a legend (`paper.md`, sha256 `a3da20a9...`): "An example showing biological reproducibility between replicate experiments from ΔsufA-cat genomewide screens." The raw sheet labels each screen group `1:`, `2:`, ... (footnote g of `Raw Colony Sizes`, `si5.xls`, sha256 `74a6ea3a...`).
+- The colony level is stated two ways. Results (`paper.md`): "tion was performed on solid medium in a 384-spot configuration using four biological replicate recipient colonies, two for each of isolate 1 and isolate 2." Supplementary Methods step (D) (`si/si1.md`, sha256 `a5e1648b...`): "On this day, two 384 colony density conjugation plates are combined in duplicate onto a LB medium containing chloramphenicol and kanamycin antibiotics to create 1,536 colony density plate." The paper's word is "biological"; the protocol reads as one conjugation spot pinned twice (technical). Not classified here.
+- Screens below r = 0.5 were redone: "we repeated and rescored screens with a coefficient $< 0 . 5$" (`paper.md`, Evaluation of data quality). Whether the 8 sufC and 13 iscU screens are such repeats is not stated (unverified). No screen or colony is marked withdrawn, and the matrix title says "without any filtering parameters".
+- Plate controls: "In each plate, we included “donor specific control or DSC” and “recipient specific control or RSC” as an internal quality controls." (`si/si1.md`). No released row holds them (every row is `Non-essential` 7,924 or `SPA-tag essential` 149), so there is no control replicate to store.
+
+### The raw sheet, measured (`RAW_COLONY_SIZE_DESIGN`, pinned by `test_the_real_raw_sheet_holds_the_measured_replicate_design`)
+
+| quantity | count |
+|---|---:|
+| cells | 314,847 |
+| colony values | 1,845,090 (22,407 at 0) |
+| (cell, screen) groups | 766,935 |
+| cells with 2 / 8 / 13 screens | 298,701 / 8,073 / 8,073 |
+| queries with more than 2 screens | sufC (b1682) 8, iscU (b2529) 13 |
+| recipient rows with more than 2 colonies per screen | 806 (the same rows in all 37 two-screen queries) |
+
+The per-replicate plan and the #1176 second-sweep comment gave 1,845,086 colonies, 298,700 two-screen cells and 766,933 groups; the loader's own parser counts 4, 1 and 2 more.
+
+### Not done: storing the per-screen colony sizes (owner decision)
+
+The only per-replicate values released are the raw colony pixel areas. Three questions are open, and the sources do not settle any of them:
+
+1. Class. `EnvironmentResponsePhenotype` with `MeasurementType.colony_size` and `AssayType.colony_size_array` holds Bloom 2019's raw control-plate radii, so a raw colony size has a home in the served schema. But that class is defined as a strain's response to an environmental perturbation, and a double mutant's colony on the selection plate of a genetic-interaction screen is not one. The alternative is a new colony-area leaf (plate, screen, colony position), the same shape the Baryshnikova 2010 review asked for.
+2. Raw area or instrument-level data. These are pre-normalization image areas, before the plate, edge and competition corrections the S score depends on; the same question is open for Baryshnikova 2010 Supplementary Data 4.
+3. Record unit. One per (cell, screen) with the colonies combined inside would be 766,935 records, and one per colony would be 1,845,090. Policy 2 combines technical measurements inside a record, but the paper calls these colonies biological replicates, and 806 rows carry 4 to 20 colonies per screen, so no combination rule can be quoted.
+
+### Other corrections in this change
+
+- Stale counts: `n_samples` runs 4 to 260 (268,814 records at 4, 45,955 above), not 4 to 182 with 258,364 at 4. The `GeneInteractionPhenotype.n_samples` field description in `schema.py` still says "4 to 182". It is left alone, because it is a served-class field description.
+- `ReplicateStructure` and the `replicate_design` note no longer say the phenotype has no `n_samples` field (#793 added it).
+- The `phenotype()` docstring no longer says the S score is an average over colonies. The combining algorithm is Collins 2006, which is not mirrored.
+
+### Scratch build and verification (2026-11-25)
+
+Built into `$DATA_ROOT/tmp/scratch/per-replicate-butland2008/gene_interaction_butland2008` and verified with this module's own L0-L4 gate. The verdict is PASS with 1 genome finding reported and not gated (the one `rpoF`/`fliA` spelling, 78 records). The checks: L1 count 314,769 of 314,769; L2 `gene_interaction_equals_its_matrix_cell` 314,769 of 314,769; and 25 `provenance_audit` passes, 6 of them the new replicate quotes. Against the dev store, keyed by genotype: the same 314,769 keys, max |S difference| 0.0, 0 records whose `n_samples`/`sample_unit` differ, and `replicate_id` is `None` on every record.

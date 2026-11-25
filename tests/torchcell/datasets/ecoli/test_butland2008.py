@@ -42,10 +42,12 @@ from __future__ import annotations
 import json
 import os
 import os.path as osp
+from collections import Counter
 from collections.abc import Iterator, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import openpyxl
 import pandas as pd
 import pytest
@@ -466,7 +468,8 @@ def test_the_four_consumed_files_are_pinned_with_their_own_retrieval() -> None:
 
 def test_the_two_colony_size_sheets_are_recorded_as_not_loaded() -> None:
     joined = " ".join(m.NOT_LOADED)
-    assert "no colony-size phenotype class" in joined
+    assert "only per-replicate content" in joined
+    assert "owner decision (#1176" in joined
     assert "'Z scores'" in joined
     assert "issue #793" in joined
     assert "PROPER SUBSET" in joined
@@ -504,7 +507,51 @@ def test_the_replicate_design_is_four_colonies_two_per_isolate() -> None:
     assert "pinned twice leaving four replicate recipient colonies" in str(
         m.SOURCED_VALUES["replicate_design"].quote
     )
-    assert "issue #793" in str(m.SOURCED_VALUES["replicate_design"].note)
+    note = str(m.SOURCED_VALUES["replicate_design"].note)
+    assert "n_samples with sample_unit=colony" in note
+    assert "(#793)" in note
+
+
+def test_the_replicate_review_quotes_both_readings_of_the_colony_level() -> None:
+    """#1176 per-replicate review: the screen is the biological replicate, and the
+    colony level is quoted both ways rather than classified (an owner decision).
+    """
+    sourced = m.SOURCED_VALUES
+    assert "biological reproducibility between replicate experiments" in str(
+        sourced["replicate_screens_are_biological"].quote
+    )
+    assert "four biological replicate recipient colonies" in str(
+        sourced["colonies_called_biological_replicates"].quote
+    )
+    assert "conjugation plates are combined in duplicate" in str(
+        sourced["colonies_pinned_in_duplicate"].quote
+    )
+    assert "owner decision (#1176)" in str(
+        sourced["colonies_called_biological_replicates"].note
+    )
+    for name in (
+        "replicate_screens_are_biological",
+        "colonies_called_biological_replicates",
+        "screens_repeated_below_r_0_5",
+    ):
+        assert sourced[name].provenance.sha256 == m.PAPER_MD_SHA256, name
+    for name in (
+        "colonies_pinned_in_duplicate",
+        "plates_filtered_in_normalization",
+        "plate_controls_not_released",
+    ):
+        assert sourced[name].provenance.sha256 == m.METHODS_MD_SHA256, name
+
+
+def test_the_raw_colony_design_constant_is_internally_consistent() -> None:
+    design = m.RAW_COLONY_SIZE_DESIGN
+    assert sum(design.screens_per_cell.values()) == design.cells == 39 * 8073
+    assert design.screen_groups == sum(
+        screens * cells for screens, cells in design.screens_per_cell.items()
+    )
+    assert design.screens_per_cell[8] == design.screens_per_cell[13] == 8073
+    assert sorted(design.queries_with_extra_screens.values()) == [8, 13]
+    assert sum(design.recipient_row_labels.values()) == 8073
 
 
 def test_the_two_kanamycin_doses_disagree_and_neither_is_asserted() -> None:
@@ -1353,6 +1400,48 @@ def test_the_real_matrix_is_the_unfiltered_314847_cell_release() -> None:
 
 
 @pytest.mark.data
+def test_the_real_raw_sheet_holds_the_measured_replicate_design() -> None:
+    """#1176 per-replicate review, counted off the released bytes.
+
+    One colony group per (cell, biological replicate screen); 2 screens for 37 queries,
+    8 for sufC and 13 for iscU; no plate-control row is released; and the 806 recipient
+    rows with more than two colonies per screen are the same rows in every two-screen
+    query. The S-score store is unchanged by the review: 314,769 records.
+    """
+    path = m.raw_mirror_dir(_data_root()) / f"data/{m.TABLE_S4}"
+    raw = m.read_matrix_sheet(path, m.SHEET_RAW)
+    colonies, zeros, screens = m.colony_counts(raw)
+    design = m.RAW_COLONY_SIZE_DESIGN
+    assert colonies.size == design.cells
+    assert int(colonies.sum()) == design.colonies
+    assert int(zeros.sum()) == design.zero_colonies
+    assert int(screens.sum()) == design.screen_groups
+    assert dict(Counter(int(n) for n in screens.ravel())) == design.screens_per_cell
+    assert dict(Counter(raw.labels)) == design.recipient_row_labels
+    extra = {
+        tag: int(screens[0, column])
+        for column, tag in enumerate(raw.query_tags)
+        if int(screens[0, column]) != 2
+    }
+    assert extra == design.queries_with_extra_screens
+    two_screen = [
+        column
+        for column, tag in enumerate(raw.query_tags)
+        if tag not in design.queries_with_extra_screens
+    ]
+    assert len(two_screen) == 37
+    wide_rows = {
+        tuple(int(row) for row in np.flatnonzero(colonies[:, column] > 4))
+        for column in two_screen
+    }
+    assert len(wide_rows) == 1
+    assert (
+        len(next(iter(wide_rows))) == design.rows_with_more_than_two_colonies_per_screen
+    )
+    assert m.EXPECTED_RECORDS == 314769
+
+
+@pytest.mark.data
 def test_the_real_high_confidence_table_is_a_subset_of_the_real_matrix() -> None:
     mirror = m.raw_mirror_dir(_data_root())
     table = m.read_high_confidence(mirror / f"data/{m.TABLE_S3}")
@@ -1452,6 +1541,9 @@ def test_the_dev_store_records_validate_as_the_schema_pair() -> None:
         rows.add(_recipient(experiment.genotype))
         references.add(reference.phenotype_reference.gene_interaction)
         assert experiment.phenotype.screen_id is None
+        # an S score is the authors' statistic over every screen of its cell, so it
+        # names no single replicate (#1176 per-replicate review)
+        assert experiment.phenotype.replicate_id is None
         assert experiment.environment.media.base_medium == "LB"
         seen += 1
         if seen == 50:
@@ -1464,7 +1556,7 @@ def test_the_dev_store_records_validate_as_the_schema_pair() -> None:
 
 @pytest.mark.data
 def test_the_dev_store_holds_the_spa_tag_half_on_the_marked_allele_leaf() -> None:
-    """#792: the 5,413 hypomorph records, and no record stored twice against Babu.
+    """#792: the 5,811 hypomorph records, and the overlap with Babu stored, not dropped.
 
     The hypomorph half is read off the built store rather than counted from the ledger,
     and every one of its recipient leaves carries the four fields footnote a states with
@@ -1499,9 +1591,11 @@ def test_the_dev_store_holds_the_spa_tag_half_on_the_marked_allele_leaf() -> Non
         assert recipient["collection"] == m.LABEL_SPA_TAG
         assert recipient["insertion_site"] is None
         assert recipient["construction"] is None
-    assert hypomorphs == 5413
+    # every SPA-tag cell is a record since #1057 (5,413 before), and the pairs the
+    # Babu 2014 store also holds are stored in both stores, not removed here
+    assert hypomorphs == 5811
     served, _ = m.read_served_babu(osp.join(_data_root(), m.BABU_ROOT_REL))
-    assert pairs & set(served) == set()
+    assert len(pairs & set(served)) == m.SERVED_OVERLAP_PAIRS
 
 
 # --------------------------------------------------------------------------- #

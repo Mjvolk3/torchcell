@@ -120,6 +120,36 @@ def test_record_count_oracle_is_the_release_row_count() -> None:
     assert sum(b._SV_COMPOSITION.value.values()) == b._EXPECTED_ROWS
 
 
+def test_per_replicate_review_keeps_the_aggregate_release() -> None:
+    """#1178 review: Supplementary Data 1 is the authors' median over control screens.
+
+    The record count stays the release row count, the replicate count stays the SI's
+    80 screens (array side), and the one per-screen release (Supplementary Data 4, raw
+    colony areas) is recorded as unretrievable rather than substituted.
+    """
+    assert b._SV_SMF_IS_MEDIAN_OVER_SCREENS.value == "median over control screens"
+    assert b._SV_QUADRUPLICATE_PINNING.value == 4
+    assert b._SV_N_SAMPLES_ARRAY.value == 80
+    assert b._SV_RAW_COLONY_DATA_RELEASE.value == "Supplementary Data 4"
+    for sourced in (
+        b._SV_SMF_IS_MEDIAN_OVER_SCREENS,
+        b._SV_QUADRUPLICATE_PINNING,
+        b._SV_RAW_COLONY_DATA_RELEASE,
+        b._SV_RAW_COLONY_DATA_URL,
+    ):
+        assert sourced in b.SOURCED_VALUES
+    attempts = b.SUPPLEMENTARY_DATA_4_ATTEMPTS
+    assert len(attempts) == 5
+    assert {a.checked_at for a in attempts} == {"2026-11-25"}
+    assert any(a.url == b._SV_RAW_COLONY_DATA_URL.value for a in attempts)
+    # the raw mirror carries only the file the loader reads
+    assert b.raw_mirror_dir("/x").as_posix().endswith(b.RAW_DIR_REL)
+    assert b.XLS_REL == "data/SupplementaryData1_SMF.xls"
+    # a record is not a replicate of anything: no replicate_id on the phenotype
+    phenotype = _dataset()._phenotype("deletion", 0.98, 0.005)
+    assert phenotype.replicate_id is None
+
+
 def test_read_smf_rejects_a_drifted_release(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -230,3 +260,29 @@ def test_released_supplement_matches_the_frozen_release_facts() -> None:
     duplicated = sorted(set(frame["allele"][frame["allele"].duplicated(keep=False)]))
     assert duplicated == ["YDL227C"]
     assert frame.loc[frame["allele"] == "YDL227C", "fitness"].nunique() == 2
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    _mirror_root() is None, reason="Baryshnikova 2010 raw mirror not on disk"
+)
+def test_release_is_one_aggregate_value_per_strain_and_the_loader_keeps_every_row() -> (
+    None
+):
+    """#1178 per-replicate review, measured on the mirror.
+
+    One sheet, three columns (id, median fitness, bootstrap SE): no per-screen column,
+    6,022 distinct ids over 6,023 rows (YDL227C twice), every SE positive, so each row is
+    one source statistic and the loader's 6,023 records map one to one onto the rows.
+    """
+    root = _mirror_root()
+    assert root is not None
+    sheets = pd.read_excel(osp.join(root, b.XLS_REL), sheet_name=None, header=None)
+    assert list(sheets) == [b.XLS_SHEET]
+    frame = sheets[b.XLS_SHEET]
+    assert frame.shape == (b._EXPECTED_ROWS, 3)
+    assert frame[0].nunique() == b._EXPECTED_ROWS - 1
+    assert (frame[2] > 0).all()
+    assert b.EXPECTED_RECORDS == len(frame) == 6023
+    manifest = b.load_manifest(osp.dirname(osp.dirname(root)))
+    assert [f.path for f in manifest.files] == [b.XLS_REL]

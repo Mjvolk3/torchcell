@@ -1069,13 +1069,13 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
 def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Contract (issue #518's sweep): with both workbooks already in ``raw/`` PyG skips
-    ``download()``, so ``process()`` verifies them against ``EFFECT_SHA256`` and
-    ``GUIDE_SHA256`` first. The effect workbook off its pin raises
+    """Contract (issue #518's sweep): with all five workbooks already in ``raw/`` PyG
+    skips ``download()``, so ``process()`` verifies them against ``EFFECT_SHA256`` and
+    its four siblings first. The effect workbook off its pin raises
     ``RawSha256MismatchError`` naming it and both digests; no store is written.
     """
     monkeypatch.delenv("TC_DATA_URL", raising=False)
-    staged = off_pin_raw(s, [s.EFFECT_FILENAME, s.GUIDE_FILENAME])
+    staged = off_pin_raw(s, [name for _, name, _ in _PINNED])
     raw = staged.root / "raw" / s.EFFECT_FILENAME
     with pytest.raises(RawSha256MismatchError) as err:
         s.CrispriChemgenSmith2016Dataset(root=str(staged.root))

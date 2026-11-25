@@ -36,3 +36,14 @@ Findings:
 - `convert_gene_name` (lines 1266-1295) has no caller.
 - `_log_processing_summary` counts dict keys (line 1320), so its duplicate branch (lines 1324-1326) is unreachable.
 - `_process_parallel` logs the written count as "Total gene deletions attempted" and can never log skipped genes, because `_process_batch` drops skips instead of returning `None` (5 genes in, log says 2 attempted; the sequential path says 5 and 3 skipped). Reach: the served build takes the sequential path (`build_dataset_lmdb` passes no `process_workers`); only `experiments/012-sameith-kemmeren/scripts/kemmeren_volcano.py` (`process_workers=10`) reaches the log line, and no record differs.
+
+## 2026.11.24 - One record per array (#1178)
+
+Rewritten for the per-array loader. The fixture adds the second spot of YAL001C (probe 5), the GSE42215 pickle and a MATalpha WT array in GSE42215, and drops the `wt control` array from the deletion series (a non-deletion array there now raises). `VALUE` is 99 on every fixture row, because the loader no longer reads it.
+
+- Nine arrays give nine records in release order: four deletion arrays (CUP9's two dye-swapped arrays stay two records), then the WT series GSE42215, GSE42217, GSE42240, GSE42241 with empty genotypes. Each record: `n_replicates` 1, no SE or variance, two `not_applicable_single_measurement` gaps, `replicate_id` the GEO title, reference the refpool on the same array.
+- `_array_signals`: a gene's spots averaged (YAL001C on GSM2: log2 1 and 2 -> 1.5), `VALUE` never read, a 0 or missing signal raises, a non-numeric cell raises, an unmapped probe is ignored.
+- Refusals: a deletion-series array naming no deletion, a WT-series array naming one, a WT culture whose `matA` naming disagrees with the series strain, and a deletion ORF without a Table S1 mating type all raise.
+- Reference index: records share a reference only when two refpool readings are identical (fixture: [[0], [1], [2], [3, 4, 5], [6, 8], [7]]).
+- `@pytest.mark.slow` real-series test: 3,061 records, per-series counts, 1,149 mutants with two arrays and 335 with one, unique titles, 6,169 genes per record.
+- Removed with the code they pinned: the replicate-pair, per-mutant mean/SE, reference `n_replicates` (#484), `_process_batch`, `_log_processing_summary` and skipped-gene log tests.

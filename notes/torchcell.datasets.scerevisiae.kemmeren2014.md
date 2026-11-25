@@ -403,3 +403,42 @@ Building at the landing (expected 1,484 records); the expression family runner (
 ## 2026.11.17 - Table S1 fetched with httpx
 
 Table S1 is fetched with `httpx.get(url, timeout=60, follow_redirects=True)` instead of `requests.get(url, timeout=60)`. The Box share link redirects three times before the file (`uofi.box.com/shared/static` to `public/static` to `uofi.app.box.com` to `public.boxcloud.com`, observed 2026-11-17), so the redirect flag carries the default `requests` behavior over.
+
+## 2026.11.24 - One record per GEO array, the WT series stored, the spots combined (#1178, #1174)
+
+Part of #1178 (per-replicate policy), tracking #1174, #1172, #482, #1203. Records: 1,484 (one mean per mutant) -> 3,061 (one per array).
+
+### What a replicate is (paper.md sha256 `299eac4b07fc977a89c24ce190d05cfd182342a9f0d56a05e7e477d72e4ad08d`)
+
+- Line 307: "Two independent cultures were hybridized on two separate microarrays. For the first hybridization the Cy5 (red) labeled cRNA from the deletion mutant is hybridized together with the Cy3 (green) labeled cRNA from the common reference. For the replicate hybridization from the independent cultures, the labels are swapped. Each gene is represented twice on the microarray, resulting in four measurements per mutant."
+- Line 247: "For each mutant strain two cultures from two isolates were grown in batches in parallel with two WT cultures (same day WTs)."
+- Line 311: "Each gene probe is spotted twice on the array"; line 394: "for some of the nonresponsive mutants there are four replicate measurements while for others there are only two."
+- So an `-a` / `-b` array pair is two biological replicates (two cultures of two isolates, dyes swapped between them), and the "technical replicate" of line 130 is the duplicate spot. The pairing question of #1172 is settled this way; the old module comment ("each culture profiled in technical replicate with the dyes swapped", "2 biological x 2 dye orientations") was wrong (#482, #1203 item 8) and is replaced.
+- Withdrawn samples: none in the deposit. Lines 237, 354 and 360-364 describe hybridizations removed and repeated before deposition; nothing in the six series is marked withdrawn.
+
+### The records
+
+- One record per array of GSE42527 (1,387) and GSE42526 (1,246): 1,484 mutants, 1,149 with two arrays, 335 with one, none with more.
+- One record per array of the four WT series, empty genotype: GSE42215 (200) and GSE42217 (200) on BY4742, GSE42240 (8) and GSE42241 (20) on BY4741. These were downloaded and never read before. GSE42240's characteristics say `strain: BY4742` beside `genotype: wt-matA` on all 8 arrays; the paper (line 388, "8 WT MATa replicates ... GSE42240"), the series summary and the mating-type genes (below) say MATa, so it is BY4741.
+- `n_replicates` 1 per gene, `expression_log2_ratio_se` and `_variance` None with `not_applicable_single_measurement` gaps, `replicate_id` the GEO sample title (unique over all 3,061 arrays).
+- The two spots of a gene (four for 12 genes; 6,157 genes have two) are averaged inside the record: mean of the spots' log2(test / reference), mean of their linear `Signal Norm` values. Before, the last spot was kept and the other dropped.
+- The reference is the refpool signal on the record's own array (log2 0, n 1, same gaps, `replicate_id` None). The refpool is one RNA batch, so there are no reference replicates to summarize; the WT cultures are records.
+- `preprocess/data.csv` is now one row per record: series, GSM, title, deletion, strain, and the dye of the reference channel (1,523 Cy5, 1,538 Cy3).
+- A non-deletion array in a deletion series, a deletion array in a WT series, a WT culture name that disagrees with its series' mating type, a non-positive or missing signal, and a deletion ORF without a Table S1 mating type now raise instead of being skipped (0 of each on the release).
+
+### GEO VALUE is not used (finding)
+
+The GEO `VALUE` column does not have one orientation across the deposit. Under the GEO channel assignment (source names), `VALUE` = log2(test / reference) on 2,169 deletion arrays and log2(reference / test) on 464; on the WT series 261 and 166, and 1 array (GSM1035586) matches neither within 1e-4. The column description does not say which: "normalized log2 ratio (Cy3/Cy5)" heads both kinds, and "normalized log2 ratio test/ref" heads 3 reversed arrays (GSM630089, GSM630339, GSM630363). The channel assignment itself holds on both kinds: the deleted gene reads lower in the deletion channel on 2,603 of 2,625 deletion arrays with a probe for it (the old "702 of 705" in the module comment is replaced by this count), and on all 48 MATa arrays the a-specific genes minus the alpha-specific ones read +5.9 to +9.1 log2 against the refpool. The stored ratio is therefore computed from the two `Signal Norm` columns, as before.
+
+### Checks (`experiments/036-dataset-fixes-before-kg-build/scripts/kemmeren2014_per_array_records.py`, `results/kemmeren2014_per_array_records.json`)
+
+- Scratch build: `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-kemmeren2014/microarray_kemmeren2014` (raw files symlinked from the dev tree; 3,061 records, 342 s).
+- Verifier (`verify_expression_dataset`, `expected_count` 3061): PASS. L1 count 3,061; every record measures all 6,169 genes; L3 reference log2 zero; deleted-gene median log2 -2.610, frac_neg 0.992 over 2,625.
+- Mean reproduction against the served-tree store (`$DATA_ROOT/data/torchcell/microarray_kemmeren2014`, 1,484 records): recomputing each array with the OLD last-spot rule and averaging a mutant's arrays reproduces every stored log2 ratio to 2.2e-16 and every stored linear and refpool signal exactly. With the spots averaged (the new rule), the grouped means differ from the old values by up to 2.66 log2 (linear up to 37,850, refpool up to 34,862): that difference is the dropped spot, not the record split. Per array, spot mean vs last spot differs by up to 2.87 log2 (median over arrays of the per-array max 0.35).
+
+### Not done / open
+
+- Dye orientation is not a field of `MicroarrayExpressionPhenotype`; it is in `data.csv` only. Needs an owner decision on a field (proposal: `reference_dye: Literal["Cy5", "Cy3"] | None`).
+- The spot count (technical n) has no field either; it is stated in the gap note. Proposal: `n_technical: dict[str, int] | None` with a sample-unit literal `duplicate_spot`.
+- 28 arrays of Sameith's GSE42536 are the same arrays as in GSE42527 / GSE42526; with both loaders per array, those arrays are held by both datasets. Coordinate with the Sameith conversion.
+- No raw mirror exists for this key (`$DATA_ROOT/torchcell-raw/kemmerenLargeScaleGeneticPerturbations2014/` is absent); the GEO files and Table S1 live only in the dev tree's `raw/` with no retrieval record.

@@ -1,0 +1,70 @@
+{
+  "deleted_gene_sign_on_deletion_arrays": {
+    "negative": 2603,
+    "not_negative": 22
+  },
+  "deletion_records": 2633,
+  "genes_per_record": {
+    "6169": 3061
+  },
+  "mata_marker_contrast": {
+    "max": 9.141959330897592,
+    "min": 5.882605306989296,
+    "n_arrays": 48
+  },
+  "mean_reproduction_last_spot_vs_old_max_abs_diff": {
+    "expression": 0.0,
+    "log2_ratio": 2.220446049250313e-16,
+    "reference_expression": 0.0
+  },
+  "mean_reproduction_spot_mean_vs_old_max_abs_diff": {
+    "expression": 37849.52375,
+    "log2_ratio": 2.663359586041564,
+    "reference_expression": 34861.64
+  },
+  "mutants_by_array_count": {
+    "1": 335,
+    "2": 1149
+  },
+  "n_replicates_values": [
+    1
+  ],
+  "new_root": "/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-kemmeren2014/microarray_kemmeren2014",
+  "old_root": "/scratch/projects/torchcell-scratch/data/torchcell/microarray_kemmeren2014",
+  "per_array_spot_mean_vs_last_spot_log2_max_abs_diff": {
+    "max": 2.8721232534985655,
+    "median_of_per_array_max": 0.3514616578958371
+  },
+  "platform_spots_per_gene": {
+    "2": 6157,
+    "4": 12
+  },
+  "records_new": 3061,
+  "records_old": 1484,
+  "records_per_series": {
+    "GSE42215": 200,
+    "GSE42217": 200,
+    "GSE42240": 8,
+    "GSE42241": 20,
+    "GSE42526": 1246,
+    "GSE42527": 1387
+  },
+  "records_with_se": 0,
+  "reference_dye_counts": {
+    "Cy3": 1538,
+    "Cy5": 1523
+  },
+  "replicate_ids_unique": true,
+  "strain_counts": {
+    "BY4741": 48,
+    "BY4742": 3013
+  },
+  "value_orientation": {
+    "deletion_value_equals_log2_reference_over_test": 464,
+    "deletion_value_equals_log2_test_over_reference": 2169,
+    "wildtype_value_equals_log2_reference_over_test": 166,
+    "wildtype_value_equals_log2_test_over_reference": 261,
+    "wildtype_value_matches_neither": 1
+  },
+  "wildtype_records": 428
+}

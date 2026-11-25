@@ -138,7 +138,7 @@ DATASET_FULL_RECORDS: dict[str, int] = {
     "SynthLethalityYeastSynthLethDbDataset": 14000,
     "SynthRescueYeastSynthLethDbDataset": 6948,
     "ScmdOhya2005Dataset": 4718,
-    "MicroarrayKemmeren2014Dataset": 1484,
+    "MicroarrayKemmeren2014Dataset": 3061,
     "SmMicroarraySameith2015Dataset": 82,
     "DmMicroarraySameith2015Dataset": 72,
     "CaudalPanTranscriptome2024Dataset": 943,

@@ -455,8 +455,8 @@ def test_the_committed_job_966_file_self_checks_at_zero_error() -> None:
 
 def test_dataset_sizes_cover_the_same_datasets_as_the_adapter_map() -> None:
     """One typed row per committed count, keyed in the same order, with the subpath.
-    The committed total is 44,358,116 records: the two Costanzo double-mutant sets,
-    2 x 20,705,612 = 41,411,224, plus 2,946,892 for the other 31 datasets.
+    The committed total is 44,359,693 records: the two Costanzo double-mutant sets,
+    2 x 20,705,612 = 41,411,224, plus 2,948,469 for the other 31 datasets.
     """
     sizes = dataset_sizes()
     assert list(sizes) == list(DATASET_FULL_RECORDS)
@@ -467,14 +467,14 @@ def test_dataset_sizes_cover_the_same_datasets_as_the_adapter_map() -> None:
         lmdb_subpath="data/torchcell/dmi_costanzo2016",
         source="lmdb",
     )
-    assert sum(s.full_records for s in sizes.values()) == 44_358_116
+    assert sum(s.full_records for s in sizes.values()) == 44_359_693
     assert (
         sum(
             s.full_records
             for name, s in sizes.items()
             if name not in ("DmfCostanzo2016Dataset", "DmiCostanzo2016Dataset")
         )
-        == 2_946_892
+        == 2_948_469
     )
 
 

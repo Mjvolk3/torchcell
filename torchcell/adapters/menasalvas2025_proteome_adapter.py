@@ -4,11 +4,12 @@
 # Test file: tests/torchcell/adapters/test_menasalvas2025_proteome_adapter.py
 """BioCypher adapter exposing the Menasalvas 2025 deposited growth-phase and production-phase proteome as knowledge-graph nodes and edges.
 
-One record per released sample of Supplementary Data 2 sheet 4: the pathway,
-biosensor and deletion leaves served as ``perturbation`` nodes, the
-TEAM-2595 records' 75 called variants of data S1-5 served as ``bacterial sequence
-variant perturbation`` nodes, and the per-sample mean Counts_sum profile as a
-``ProteinAbundancePhenotype``.
+One record per released (``Sample``, ``Replicate``) unit of Supplementary Data 2
+sheet 4, 18 in all: the pathway, biosensor and deletion leaves served as
+``perturbation`` nodes, the TEAM-2595 records' 75 called variants of data S1-5 served
+as ``bacterial sequence variant perturbation`` nodes, and that unit's own Counts_sum
+profile as a ``ProteinAbundancePhenotype`` whose ``replicate_id`` is the release's own
+``<Sample>/<Replicate>`` label.
 """
 
 import os.path as osp

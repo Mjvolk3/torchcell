@@ -14,12 +14,39 @@ families, one per released readout:
   ``EnvironmentResponseExperiment`` per enriched knockdown target of
   Supplementary Tables 1 and 2 (58 records).
 - :class:`ProteomeMenasalvas2025Dataset` -- a ``ProteinAbundanceExperiment``
-  per released sample of the Dryad deposit's Supplementary Data 2 sheet 4: the three
-  designed strains in the growth and the production phase (6 records over 2,090 loci).
+  per released (``Sample``, ``Replicate``) unit of the Dryad deposit's Supplementary
+  Data 2 sheet 4: the three designed strains in the growth and the production phase,
+  each released three times (18 records over 2,090 loci).
 - :class:`MetaboliteGrowthPhaseMenasalvas2025Dataset` and
   :class:`MetaboliteProductionPhaseMenasalvas2025Dataset` -- a ``MetaboliteExperiment``
   per released strain of data S1-1's 48 ``Absolute`` rows, one dataset per growth phase
   because the two phases are two environments (3 records each).
+
+ONE PROTEOME RECORD IS ONE RELEASED REPLICATE, NOT A SAMPLE MEAN (issue #1174). Sheet
+4 prints a ``Replicate`` column and releases ``R1``, ``R2`` and ``R3`` of every one of
+its six samples: 18 units over one shared set of 2,187 protein keys, which this module
+asserts rather than assumes (:func:`proteome_replicate_levels`). Each unit is its own
+record, carrying its released ``Counts_sum`` verbatim, ``n_replicates`` 1 per key,
+``replicate_id`` the two released cells joined as ``<Sample>/<Replicate>``, and
+``protein_abundance_se`` ``None`` beside a typed
+``not_applicable_single_measurement`` gap, because one measurement has no dispersion of
+its own. The per-sample MEAN this module used to store is now only what a
+``phenotype_reference`` states: the matching-phase TEAM-2595 profile with its mean, its
+SD / sqrt(3) and its n, and ``replicate_id=None``. The per-sample mean and SE over the
+records of one sample are a modeling-time derivation, and the 301 released zeros, all
+of them in ``2595_production/R1``, are the measurement that averaging hid.
+
+WHETHER R1-R3 ARE CULTURES OR INJECTIONS IS NOT STATED, AND NOTHING HERE ASSERTS IT.
+No mirrored byte says what one proteomics replicate of this release is. The Methods for
+this arm state only the harvest points ("TEAM-2595, TEAM-3175, and TEAM-3184 P. putida
+strains were grown for isoprenol production in deep-well plates"), the Fig. 7 caption's
+"Mean values from three biological replicates for each sample are reported." sits with
+its panel E, the metabolite map, and the production Methods' "All production runs were
+performed in quadruplicate" is the titer arm's n = 4, not this sheet's n = 3. So the
+record keeps the source's own label and states no sample unit: the three units are
+never pooled, which is what keeps the question answerable later. PRIDE ``PXD061547``
+deposits one raw file per unit (``PRT1125_2595_growth-R1.raw`` and its 17 siblings), so
+the release treats each as its own run.
 
 THE DRYAD DEPOSIT IS A MANUAL ONE, AND THE RECIPE IS THE ONLY WAY BACK TO IT.
 datadryad.org serves an Anubis JavaScript proof-of-work challenge to scripts, so the
@@ -490,10 +517,13 @@ EXPECTED_METABOLITE_ROWS: dict[str, int] = {
 }
 #: One record per (strain, phase) of the three released strains, per phase dataset.
 EXPECTED_METABOLITE_RECORDS = len(RELEASED_STRAINS)
-#: One record per released proteome sample: three strains x two phases.
-EXPECTED_PROTEOME_RECORDS = len(RELEASED_STRAINS) * len(PHASES)
+#: Released proteome samples: three strains x two phases.
+EXPECTED_PROTEOME_SAMPLES = len(RELEASED_STRAINS) * len(PHASES)
 #: Replicates the proteome sheet's own ``Replicate`` column holds per sample.
 EXPECTED_PROTEOME_REPLICATES = 3
+#: One record per released (``Sample``, ``Replicate``) unit of the proteome sheet: the
+#: six samples at three replicates each, measured on the pinned workbook.
+EXPECTED_PROTEOME_RECORDS = EXPECTED_PROTEOME_SAMPLES * EXPECTED_PROTEOME_REPLICATES
 #: Rows data S1-5 releases, and the rows each named clone carries.
 EXPECTED_WGS_ROWS = 584
 EXPECTED_WGS_ROWS_PER_CLONE: dict[str, int] = {
@@ -506,8 +536,10 @@ EXPECTED_WGS_ROWS_PER_CLONE: dict[str, int] = {
 #: ever silently pooled. The deposit README calls the column only "Counts_Sum" and the
 #: Methods name the acquisition (DIA on an Orbitrap Exploris 480), so the string says
 #: SUM of DIA protein counts, which is neither Carruthers' Top3 peptide signal nor its
-#: percent-of-proteome.
-PROTEOME_MEASUREMENT_TYPE = "dia_protein_counts_sum_mean"
+#: percent-of-proteome. No ``_mean`` suffix: a record stores ONE released replicate's
+#: own cell, and the aggregate over a sample's replicates lives only in a
+#: ``phenotype_reference``, which states the same measurement summarized.
+PROTEOME_MEASUREMENT_TYPE = "dia_protein_counts_sum"
 #: What one number of data S1-1 IS: an absolute concentration in micromolar, following
 #: the ``intracellular_concentration_mM`` precedent of Mulleder 2016.
 METABOLITE_MEASUREMENT_TYPE = "lc_ms_intracellular_concentration_uM"
@@ -1016,6 +1048,11 @@ _Q_PRODUCTION_RUN = (
     "with a gas-permeable film and M9 minimal media supplemented with "
     "$1 \\mu \\mathrm { M }$ crystal violet as an inducer."
 )
+#: The production Methods' own replicate sentence, which is about the TITER arm.
+_Q_PRODUCTION_QUADRUPLICATE = (
+    "All production runs were performed in quadruplicate, with two biological "
+    "replicates prepared for each strain when multiple clones were tested."
+)
 _Q_ADAPTATION_TEMPERATURE = (
     "These plates were sealed with a gas-permeable film and incubated at "
     "$3 0 ^ { \\circ } \\mathrm { C }$ with $1 0 0 0 \\mathrm { r p m }$ linear shaking "
@@ -1119,7 +1156,23 @@ PROTEOME_COLUMN = _readme(
     note="the README describes the sheet's key column as a UniProt 'Tertiary "
     "Protein.ID' and leaves 'Counts_Sum' itself undescribed, so the measurement_type "
     f"names what the column IS as far as the mirror states it: {PROTEOME_MEASUREMENT_TYPE!r}"
-    ", the per-sample MEAN over the released replicate Counts_sum values",
+    ", ONE released replicate's Counts_sum cell. The sheet releases the column per "
+    "(Sample, Replicate) and a record is one of those units, so no mean reaches a "
+    "record; the aggregate lives in the phenotype_reference (#1174)",
+)
+PROTEOME_REPLICATE_NATURE_UNSTATED = _paper(
+    None,
+    f"{_Q_PROTEOMICS_HARVEST} | {_Q_PRODUCTION_QUADRUPLICATE}",
+    page=f"{_PAGE_METHODS_PROTEOMICS} | {_PAGE_METHODS_PRODUCTION}",
+    note="what one proteomics replicate of sheet 4 IS, which no mirrored byte states. "
+    "The two quotes are joined by ' | ' and are unaltered: the proteomics Methods state "
+    "the harvest points and NO replicate count, and the production Methods' "
+    "quadruplicate sentence is the TITER arm's n = 4, not this sheet's n = 3. The Fig. "
+    "7 caption's 'Mean values from three biological replicates for each sample are "
+    "reported.' sits with its panel E, the metabolite map, and is absent from paper.md "
+    "entirely (the MinerU OCR dropped it; measured 2026-11-24, grep returns 0). So the "
+    "records keep the sheet's own R1-R3 labels, state no sample unit, and are never "
+    "pooled; a later statement can still say what they were",
 )
 PROTEOME_HARVEST = _paper(
     {"growth": "OD600 0.7", "production": "24 h"},
@@ -1619,8 +1672,17 @@ def deposit_raw_mirror(
             "Fig. 7E sentence) and the replicon data S1-5's bare position column is on",
             f"Zenodo {ZENODO_DOI} -- Supplementary Data 3, AlphaFold3 output. NOT "
             "deposited: no loader consumes structure predictions",
-            f"PRIDE {PRIDE_ACCESSION} -- 97 raw proteomics files at 8, 24 and 48 h. "
-            "NOT deposited: no loader consumes raw spectra",
+            f"PRIDE {PRIDE_ACCESSION} -- 158 files, measured 2026-11-24 on the EBI API "
+            "(/pride/ws/archive/v3/projects/PXD061547/files/all): 150 RAW-category "
+            ".raw spectra, 7 SEARCH-category per-run CSVs "
+            "(Menasalvas_et_al_Proteomics_set1-set7) and one EXPERIMENTAL DESIGN SDRF "
+            "(PXD061547_community_annotated.sdrf.tsv). The earlier '97 raw files' "
+            "count is corrected (#1203 item 10), and so is the claim that the project "
+            "holds raw spectra only: the seven CSVs are processed tables. NOT "
+            "deposited: the per-protein table this arm loads is the Dryad workbook's "
+            "own sheet 4, and the SDRF annotates all 150 runs 'biological replicate 1, "
+            "technical replicate 1', which distinguishes nothing, so neither changes a "
+            "stored value",
             f"BioProject {BIOPROJECT_ACCESSION} -- three whole-genome resequencing "
             "runs. NOT deposited: no loader consumes reads",
         ],
@@ -2689,6 +2751,46 @@ def resolve_protein_keys(
     )
 
 
+def proteome_replicate_levels(
+    rows: Sequence[ProteomeRow], sample: str, locus_of: Mapping[str, str], *, label: str
+) -> dict[str, dict[str, float]]:
+    """``replicate -> locus -> Counts_sum`` for one released sample, verbatim.
+
+    One (``Sample``, ``Replicate``) unit is one record's value, so nothing here is
+    averaged: a released 0 is the number the sheet reports for a protein with no signal
+    in THAT replicate and is kept as the record's value, and the unit's own cell is
+    never combined with its siblings' (issue #1174).
+
+    The sheet releases one shared protein-key set across its 18 units, measured
+    2026-11-24 on the pinned workbook, and that is ASSERTED rather than assumed: a
+    release in which two units quantify different proteins would make a record's key set
+    depend on which replicate it is, which is a new fact about the release.
+    """
+    levels: dict[str, dict[str, float]] = defaultdict(dict)
+    for row in rows:
+        if row.sample != sample:
+            continue
+        locus = locus_of.get(row.protein)
+        if locus is None:
+            continue
+        if locus in levels[row.replicate]:
+            raise RuntimeError(
+                f"{label}: {sample}/{row.replicate} quantifies {locus} twice; one "
+                "(sample, replicate, locus) is one released cell and one record's value"
+            )
+        levels[row.replicate][locus] = row.counts_sum
+    if not levels:
+        raise RuntimeError(f"{label}: sample {sample!r} measures no kept protein")
+    key_sets = {frozenset(unit) for unit in levels.values()}
+    if len(key_sets) != 1:
+        raise RuntimeError(
+            f"{label}: the replicates of {sample!r} quantify "
+            f"{sorted(len(keys) for keys in key_sets)} proteins; the pinned workbook "
+            "releases one shared key set across all 18 units"
+        )
+    return dict(levels)
+
+
 class ProteomeAggregate(BaseModel):
     """One proteome sample's per-locus mean, SE and replicate count."""
 
@@ -2705,11 +2807,14 @@ def aggregate_proteome_sample(
 ) -> ProteomeAggregate:
     """Mean, SE and replicate count per locus over one sample's released replicates.
 
-    A released 0 is the number the sheet reports for a protein with no signal in that
-    replicate; it is averaged in verbatim, never imputed and never dropped, so
-    ``n_replicates`` is the replicate count the sample actually has. The SE is
-    ``SD / sqrt(n)`` over the released values, and ``nan`` for a protein with exactly
-    one replicate, which is the convention both Carruthers 2025 proteome families use.
+    This is the AGGREGATE a ``phenotype_reference`` states, NOT a record: a record is
+    one (``Sample``, ``Replicate``) unit and carries that unit's own cell
+    (:func:`proteome_replicate_levels`). A released 0 is the number the sheet reports
+    for a protein with no signal in that replicate; it is averaged in verbatim, never
+    imputed and never dropped, so ``n_replicates`` is the replicate count the sample
+    actually has. The SE is ``SD / sqrt(n)`` over the released values, and ``nan`` for a
+    protein with exactly one replicate, which is the convention both Carruthers 2025
+    proteome families use.
     """
     values: dict[str, list[float]] = defaultdict(list)
     replicates: set[str] = set()
@@ -3340,13 +3445,63 @@ def metabolite_phenotype(
     )
 
 
-def proteome_phenotype(aggregate: ProteomeAggregate) -> ProteinAbundancePhenotype:
-    """One proteome sample's profile: the per-locus mean of its released replicates."""
+_PROTEOME_SINGLE_REPLICATE_SE_GAP = (
+    "a record is ONE released (Sample, Replicate) unit of the proteome sheet, and one "
+    "measurement has no dispersion of its own, so there is no standard error to store. "
+    "The sheet releases no SD, SE or n column either: its seven columns are the four "
+    "protein identifiers, the Sample, the Replicate and the Counts_sum. The dispersion "
+    "over a sample's three units is what this dataset's phenotype_reference carries "
+    "(SD / sqrt(n) with n), and the per-sample mean and SE over the records of one "
+    "sample are a modeling-time derivation"
+)
+
+
+def proteome_replicate_phenotype(
+    levels: Mapping[str, float], replicate_id: str
+) -> ProteinAbundancePhenotype:
+    """One released (``Sample``, ``Replicate``) unit's profile, verbatim.
+
+    ``n_replicates`` is 1 per key and ``protein_abundance_se`` is ``None`` beside a
+    typed gap, because the record states one measurement. ``replicate_id`` is the two
+    released cells joined as ``<Sample>/<Replicate>``: the sample cell alone would not
+    tell three records of one strain-phase apart, and the replicate cell alone repeats
+    across the six samples.
+    """
+    if not replicate_id:
+        raise RuntimeError(
+            "a per-replicate proteome record needs the release's own replicate label"
+        )
+    return ProteinAbundancePhenotype(
+        protein_abundance=dict(levels),
+        protein_abundance_se=None,
+        n_replicates=dict.fromkeys(levels, 1),
+        measurement_type=PROTEOME_MEASUREMENT_TYPE,
+        replicate_id=replicate_id,
+        provenance_gaps=[
+            ProvenanceGap(
+                field="protein_abundance_se",
+                reason=ProvenanceGapReason.not_applicable_single_measurement,
+                note=_PROTEOME_SINGLE_REPLICATE_SE_GAP,
+            )
+        ],
+    )
+
+
+def proteome_reference_phenotype(
+    aggregate: ProteomeAggregate,
+) -> ProteinAbundancePhenotype:
+    """One sample's aggregate profile: the per-locus mean of its released replicates.
+
+    This is what a ``phenotype_reference`` states and never what a record states:
+    ``replicate_id`` is ``None`` because it summarizes the sample's replicates rather
+    than being one of them.
+    """
     return ProteinAbundancePhenotype(
         protein_abundance=aggregate.abundance,
         protein_abundance_se=aggregate.se,
         n_replicates=aggregate.n_replicates,
         measurement_type=PROTEOME_MEASUREMENT_TYPE,
+        replicate_id=None,
     )
 
 
@@ -3469,13 +3624,17 @@ def _variant_locus_index(
 class ProteomeMenasalvas2025Dataset(ExperimentDataset):
     """Menasalvas 2025 growth-phase and production-phase proteome of the three strains.
 
-    One ``ProteinAbundanceExperiment`` per released sample of Supplementary
-    Data 2 sheet 4: the control TEAM-2595 and the two improved producers TEAM-3174 and
-    TEAM-3185, each sampled in the growth phase and in the production phase. The
-    reference of every record is the matching-phase TEAM-2595 profile, which is a real
-    released sample rather than a synthetic baseline; the two TEAM-2595 records are
-    therefore their own reference, which is what keeping every released sample as a
-    record costs and is cheaper than dropping two samples.
+    One ``ProteinAbundanceExperiment`` per released (``Sample``, ``Replicate``) unit of
+    Supplementary Data 2 sheet 4: the control TEAM-2595 and the two improved producers
+    TEAM-3174 and TEAM-3185, each sampled in the growth phase and in the production
+    phase, and each sample released three times. 18 records, each carrying its own
+    ``Counts_sum`` cells and the sheet's own replicate label (issue #1174).
+
+    The reference of every record is the matching-phase TEAM-2595 profile AGGREGATED
+    over its three released replicates, which is a real released sample rather than a
+    synthetic baseline; the six TEAM-2595 records are therefore summarized into their
+    own reference, which is what keeping every released unit as a record costs and is
+    cheaper than dropping six of them.
     """
 
     organism = Organism.pputida
@@ -3530,7 +3689,7 @@ class ProteomeMenasalvas2025Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Build one record per released proteome sample; write LMDB."""
+        """Build one record per released (``Sample``, ``Replicate``) unit; write LMDB."""
         verify_raw_files(
             self.raw_dir, {DRYAD_INNER_ZIP_FILENAME: DRYAD_INNER_ZIP_SHA256}
         )
@@ -3555,6 +3714,12 @@ class ProteomeMenasalvas2025Dataset(ExperimentDataset):
 
         aggregates = {
             key: aggregate_proteome_sample(
+                rows, sample, resolution.locus_of, label=self.name
+            )
+            for key, sample in by_key.items()
+        }
+        per_replicate = {
+            key: proteome_replicate_levels(
                 rows, sample, resolution.locus_of, label=self.name
             )
             for key, sample in by_key.items()
@@ -3584,7 +3749,7 @@ class ProteomeMenasalvas2025Dataset(ExperimentDataset):
                 dataset_name=self.name,
                 genome_reference=reference_genome,
                 environment_reference=environments[phase].model_copy(),
-                phenotype_reference=proteome_phenotype(
+                phenotype_reference=proteome_reference_phenotype(
                     aggregates[(CONTROL_STRAIN, phase)]
                 ),
             )
@@ -3600,33 +3765,41 @@ class ProteomeMenasalvas2025Dataset(ExperimentDataset):
             for (strain, phase), sample in tqdm(
                 sorted(by_key.items()), desc="menasalvas2025-proteome"
             ):
-                aggregate = aggregates[(strain, phase)]
                 perturbations = [
                     *designed_perturbations(strain, common),
                     *attached.get(strain, []),
                 ]
-                experiment = ProteinAbundanceExperiment(
-                    dataset_name=self.name,
-                    genotype=Genotype(perturbations=perturbations),
-                    environment=environments[phase],
-                    phenotype=proteome_phenotype(aggregate),
-                )
-                txn.put(
-                    f"{idx}".encode(),
-                    self._intern_record(experiment, references[phase], pub, itxn),
-                )
-                sample_rows.append(
-                    {
-                        "sample": sample,
-                        "strain": strain,
-                        "phase": phase,
-                        "n_replicates": len(aggregate.replicates),
-                        "n_proteins": len(aggregate.abundance),
-                        "n_perturbations": len(perturbations),
-                        "n_called_variants": len(attached.get(strain, [])),
-                    }
-                )
-                idx += 1
+                genotype = Genotype(perturbations=perturbations)
+                units = per_replicate[(strain, phase)]
+                for replicate in sorted(units):
+                    levels = units[replicate]
+                    replicate_id = f"{sample}/{replicate}"
+                    experiment = ProteinAbundanceExperiment(
+                        dataset_name=self.name,
+                        genotype=genotype,
+                        environment=environments[phase],
+                        phenotype=proteome_replicate_phenotype(levels, replicate_id),
+                    )
+                    txn.put(
+                        f"{idx}".encode(),
+                        self._intern_record(experiment, references[phase], pub, itxn),
+                    )
+                    sample_rows.append(
+                        {
+                            "sample": sample,
+                            "strain": strain,
+                            "phase": phase,
+                            "replicate": replicate,
+                            "replicate_id": replicate_id,
+                            "n_proteins": len(levels),
+                            "n_released_zeros": sum(
+                                1 for value in levels.values() if value == 0.0
+                            ),
+                            "n_perturbations": len(perturbations),
+                            "n_called_variants": len(attached.get(strain, [])),
+                        }
+                    )
+                    idx += 1
         env.close()
         interned_env.close()
 
@@ -3638,21 +3811,25 @@ class ProteomeMenasalvas2025Dataset(ExperimentDataset):
             BuildAccounting(
                 dataset=self.name,
                 source_rows=len(rows),
-                candidate_records=len(by_key),
+                candidate_records=sum(len(units) for units in per_replicate.values()),
                 kept_records=idx,
-                dropped_records=len(by_key) - idx,
+                dropped_records=sum(len(units) for units in per_replicate.values())
+                - idx,
                 distinct_targets=len(set(resolution.locus_of.values())),
                 rules=_proteome_drop_rules(resolution),
                 reconciliation=resolution.reconciliation,
                 notes=[
-                    f"no SAMPLE is dropped: all {len(by_key)} released samples of "
-                    f"{SHEET_PROTEOME!r} are records, and the two TEAM-2595 records "
-                    "are the matching-phase reference of every record including their "
-                    "own",
-                    "the record's number is the per-sample MEAN of the released "
-                    f"Counts_sum replicates, named {PROTEOME_MEASUREMENT_TYPE!r} so it "
-                    "is never pooled with Carruthers 2025's Top3 peptide signal or its "
-                    "percent-of-proteome",
+                    f"no released unit is dropped: all {idx} (Sample, Replicate) units "
+                    f"of {SHEET_PROTEOME!r} over {len(by_key)} samples are records, and "
+                    "the six TEAM-2595 records are summarized into the matching-phase "
+                    "reference of every record including their own",
+                    "the record's number is ONE released Counts_sum cell, named "
+                    f"{PROTEOME_MEASUREMENT_TYPE!r} so it is never pooled with "
+                    "Carruthers 2025's Top3 peptide signal or its percent-of-proteome; "
+                    "n_replicates is 1 per key and the SE is a typed "
+                    "not_applicable_single_measurement gap (#1174)",
+                    "what one replicate IS is not stated anywhere in the mirror: "
+                    + str(PROTEOME_REPLICATE_NATURE_UNSTATED.note),
                     "growth phase and production phase are different environments: the "
                     f"harvest points are {dict(PROTEOME_HARVEST.value)} and the "
                     "growth-phase duration is a typed absence because its 'roughly 8 "
@@ -3673,10 +3850,12 @@ class ProteomeMenasalvas2025Dataset(ExperimentDataset):
         )
 
         log.info(
-            "Menasalvas2025 proteome: %d records over %d loci (%d replicates each)",
+            "Menasalvas2025 proteome: %d records (%d samples x %d replicates) over "
+            "%d loci",
             idx,
-            len(set(resolution.locus_of.values())),
+            len(by_key),
             EXPECTED_PROTEOME_REPLICATES,
+            len(set(resolution.locus_of.values())),
         )
 
     def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
@@ -4060,10 +4239,11 @@ NOTE2_MEASURED_LOCI: tuple[str, ...] = (
 #: Note 2 states it per improved strain.
 NOTE2_SIGX_FOLD: dict[str, float] = {"TEAM-3185": 34.0, "TEAM-3174": 20.0}
 #: Relative tolerance on that fold. The SI states two ROUNDED integers computed on the
-#: authors' own normalized intensities, while the store holds the ratio of the MEANS of
-#: the released Counts_sum replicates, so the two statistics do not have to agree to
-#: the digit. Measured 2026-10-09: 31.895 against 34 (6.2%) and 18.555 against 20
-#: (7.2%), and the named statistic is the ratio of the per-sample means.
+#: authors' own normalized intensities, while the verifier derives the ratio of the
+#: MEANS over each strain's stored production-phase replicate records, so the two
+#: statistics do not have to agree to the digit. Measured 2026-10-09 on the per-sample
+#: means and again 2026-11-24 on the 18 per-replicate records, which give the same two
+#: numbers: 31.895 against 34 (6.2%) and 18.555 against 20 (7.2%).
 NOTE2_SIGX_FOLD_TOL = 0.10
 _Q_NOTE2_SIGX = (
     "This gene (PP_2088, SigX, RNA polymerase sigma-70 factor) was upregulated during "
@@ -4141,24 +4321,56 @@ def _record_phase(record: Mapping[str, Any]) -> str:
     return "production" if duration is not None else "growth"
 
 
+def _record_replicate_id(record: Mapping[str, Any]) -> str:
+    """The released replicate label one record is of, read off its phenotype."""
+    replicate_id = record["experiment"]["phenotype"].get("replicate_id")
+    if replicate_id is None:
+        raise RuntimeError(
+            "a stored proteome record carries no replicate_id; every record of this "
+            "dataset is ONE released (Sample, Replicate) unit"
+        )
+    return str(replicate_id)
+
+
 def _l1_proteome_sample_partition(records: Sequence[dict[str, Any]]) -> LevelResult:
-    """L1: exactly one record per (released strain, growth phase)."""
-    keys = Counter((_record_strain(r), _record_phase(r)) for r in records)
+    """L1: exactly one record per released (strain, growth phase, replicate).
+
+    The partition is over UNITS, not samples: three records share each (strain, phase)
+    key and are told apart by the sheet's own ``Replicate`` cell, which rides each
+    record's ``replicate_id`` as ``<Sample>/<Replicate>``.
+    """
+    keys = Counter(
+        (_record_strain(r), _record_phase(r), _record_replicate_id(r)) for r in records
+    )
+    per_sample = Counter((strain, phase) for strain, phase, _ in keys)
     expected = {(strain, phase) for strain in RELEASED_STRAINS for phase in PHASES}
     duplicates = sorted(key for key, n in keys.items() if n > 1)
-    passed = set(keys) == expected and not duplicates
+    wrong_depth = sorted(
+        f"{strain}:{phase}={n}"
+        for (strain, phase), n in per_sample.items()
+        if n != EXPECTED_PROTEOME_REPLICATES
+    )
+    passed = (
+        set(per_sample) == expected
+        and not duplicates
+        and not wrong_depth
+        and len(records) == EXPECTED_PROTEOME_RECORDS
+    )
     return LevelResult(
         level=Level.L1,
-        name="one_record_per_strain_and_growth_phase",
+        name="one_record_per_strain_phase_and_replicate",
         passed=passed,
         message=(
-            f"{len(keys)} (strain, phase) keys over {len(records)} records; "
-            f"{len(duplicates)} repeated, {len(expected - set(keys))} missing"
+            f"{len(keys)} (strain, phase, replicate) keys over {len(records)} records "
+            f"(expected {EXPECTED_PROTEOME_RECORDS}); {len(duplicates)} repeated, "
+            f"{len(expected - set(per_sample))} sample(s) missing, {len(wrong_depth)} "
+            f"not at {EXPECTED_PROTEOME_REPLICATES} replicates"
         ),
         details={
-            "keys": sorted(f"{s}:{p}" for s, p in keys),
-            "duplicated": [f"{s}:{p}" for s, p in duplicates],
-            "missing": sorted(f"{s}:{p}" for s, p in expected - set(keys)),
+            "keys": sorted(f"{s}:{p}:{r}" for s, p, r in keys),
+            "duplicated": [f"{s}:{p}:{r}" for s, p, r in duplicates],
+            "missing": sorted(f"{s}:{p}" for s, p in expected - set(per_sample)),
+            "wrong_replicate_depth": wrong_depth,
         },
     )
 
@@ -4185,6 +4397,53 @@ def _l3_proteome_keys_are_one_locus_set(
             "n_key_sets": len(key_sets),
             "n_loci": len(shared),
             "not_a_locus_tag": not_a_tag[:20],
+        },
+    )
+
+
+def _l3_every_record_is_one_released_replicate(
+    records: Sequence[dict[str, Any]],
+) -> LevelResult:
+    """L3: every record states ONE measurement, with no dispersion and a label.
+
+    The per-replicate policy is a property of the written store, so it is checked there:
+    ``n_replicates`` is 1 for every key, ``protein_abundance_se`` is absent, and the
+    typed gap on it names the single-measurement reason rather than a missing report.
+    """
+    findings: list[dict[str, Any]] = []
+    for record in records:
+        phenotype = record["experiment"]["phenotype"]
+        counts = sorted(set(phenotype["n_replicates"].values()))
+        reasons = sorted(
+            str(gap["reason"])
+            for gap in phenotype.get("provenance_gaps") or []
+            if str(gap["field"]) == "protein_abundance_se"
+        )
+        if (
+            counts != [1]
+            or phenotype.get("protein_abundance_se") is not None
+            or reasons != [ProvenanceGapReason.not_applicable_single_measurement.value]
+        ):
+            findings.append(
+                {
+                    "replicate_id": phenotype.get("replicate_id"),
+                    "n_replicates": counts,
+                    "se_present": phenotype.get("protein_abundance_se") is not None,
+                    "se_gap_reasons": reasons,
+                }
+            )
+    return LevelResult(
+        level=Level.L3,
+        name="every_record_states_one_released_replicate",
+        passed=not findings,
+        message=(
+            f"{len(records)} records checked for n_replicates = 1, no stored SE and a "
+            f"typed single-measurement gap; {len(findings)} disagree"
+        ),
+        details={
+            "n_records": len(records),
+            "reason": ProvenanceGapReason.not_applicable_single_measurement.value,
+            "worst": findings[:6],
         },
     )
 
@@ -4352,15 +4611,22 @@ def _l4_note2_loci_are_measured(records: Sequence[dict[str, Any]]) -> LevelResul
 def _l4_note2_sigx_fold(records: Sequence[dict[str, Any]]) -> LevelResult:
     """L4 cross-source: ``PP_2088``'s production-phase fold is Note 2's 34x and 20x.
 
-    The statistic is the ratio of the per-sample MEANS of the released ``Counts_sum``
-    replicates; Note 2 states two rounded integers computed on the authors' own
-    normalized intensities, so the row holds to a declared relative tolerance of
-    :data:`NOTE2_SIGX_FOLD_TOL` and names both numbers in its details.
+    The statistic is the ratio of the MEANS over each strain's stored production-phase
+    replicate records, which is a derivation over records and not a stored number; Note
+    2 states two rounded integers computed on the authors' own normalized intensities,
+    so the row holds to a declared relative tolerance of :data:`NOTE2_SIGX_FOLD_TOL` and
+    names both numbers in its details.
     """
-    production = {
-        _record_strain(record): record["experiment"]["phenotype"]["protein_abundance"]
-        for record in records
-        if _record_phase(record) == "production"
+    levels: dict[str, list[float]] = defaultdict(list)
+    for record in records:
+        if _record_phase(record) != "production":
+            continue
+        value = record["experiment"]["phenotype"]["protein_abundance"].get("PP_2088")
+        if value is not None:
+            levels[_record_strain(record)].append(float(value))
+    production: dict[str, dict[str, float]] = {
+        strain: {"PP_2088": statistics.fmean(values)}
+        for strain, values in levels.items()
     }
     control = production.get(CONTROL_STRAIN, {}).get("PP_2088")
     observed: dict[str, float] = {}
@@ -4395,7 +4661,11 @@ def _l4_note2_sigx_fold(records: Sequence[dict[str, Any]]) -> LevelResult:
             f"{NOTE2_SIGX_FOLD} (relative tolerance {NOTE2_SIGX_FOLD_TOL})"
         ),
         details={
-            "statistic": "ratio of the per-sample means of the released Counts_sum",
+            "statistic": (
+                "ratio of the means over each strain's stored production-phase "
+                "replicate records"
+            ),
+            "n_records_per_strain": {k: len(v) for k, v in sorted(levels.items())},
             "stored": observed,
             "note_2": dict(NOTE2_SIGX_FOLD),
             "tol": NOTE2_SIGX_FOLD_TOL,
@@ -4595,18 +4865,23 @@ def proteome_report(
         [dict(record) for record in records],
         dataset_name="proteome_menasalvas2025",
         provenance=_deposit_provenance(
-            "Supplementary Data 2 sheet 4, the per-replicate Counts_sum of the three "
-            "designed strains in the growth and production phases, averaged per sample "
-            f"with SE = SD / sqrt(n) over n={EXPECTED_PROTEOME_REPLICATES} released "
-            f"replicates; measurement_type {PROTEOME_MEASUREMENT_TYPE!r}",
+            "Supplementary Data 2 sheet 4, one record per released (Sample, Replicate) "
+            "unit of the three designed strains in the growth and production phases: "
+            f"{EXPECTED_PROTEOME_SAMPLES} samples at "
+            f"{EXPECTED_PROTEOME_REPLICATES} replicates, each record carrying its own "
+            "Counts_sum cells verbatim with n_replicates = 1 and no dispersion. The "
+            "per-sample mean with SE = SD / sqrt(n) is what each phenotype_reference "
+            f"states; measurement_type {PROTEOME_MEASUREMENT_TYPE!r}",
             SHEET_PROTEOME,
         ),
         expected_count=EXPECTED_PROTEOME_RECORDS,
-        # Three strains x two phases, so every genotype appears twice by design; the
-        # (strain, phase) partition is what the L1 row below asserts.
+        # Three strains x two phases at three replicates, so every genotype appears six
+        # times by design; the (strain, phase, replicate) partition is what the L1 row
+        # below asserts.
         allow_duplicate_orfs=True,
     )
     report.add(_l1_proteome_sample_partition(records))
+    report.add(_l3_every_record_is_one_released_replicate(records))
     report.add(_l3_proteome_keys_are_one_locus_set(records))
     report.add(_l3_called_variants_only_on_the_control(records))
     report.add(_l3_one_coordinate_per_call(records))

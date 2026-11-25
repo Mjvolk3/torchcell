@@ -39,7 +39,8 @@ Measured on the deposit, Dryad `10.5061/dryad.sbcc2frjq` carries Supplementary D
 (metabolite concentrations, the designed gRNA library, its read distribution, the
 lost-guide list, the WGS polymorphisms, a ShinyGO enrichment) and Supplementary Data 2
 (five proteomics sheets); Zenodo `10.5281/zenodo.17155686` carries AlphaFold3 output;
-PRIDE `PXD061547` carries 97 raw proteomics files; BioProject `PRJNA1226229` carries
+PRIDE `PXD061547` carries 97 raw proteomics files (CORRECTED 2026-11-24: 150 raw files,
+7 processed CSVs and one SDRF; see the 2026.11.24 row); BioProject `PRJNA1226229` carries
 three resequencing runs. None is a titer table.
 
 The only per-strain titers in the mirrored bytes are prose, and all but one are
@@ -938,3 +939,113 @@ Built with `build_dataset_lmdb --retire-existing --verify` in slurm array 4475 a
 | L4 | `perturbed_gene_containment_assembly` | report | pass | 1.000 of 73 measured genes are loci of pputida_KT2440_ASM756v2 (>= 1.0) |
 | L4 | `results_prose_amino_acids_are_not_in_data_s1_1` | gate | pass | the Results cite data S1-1 for ['leucine', 'phenylalanine', 'tryptophan']; 0 of the three are stored, measured 0 on 2026-10-09 |
 | L4 | `specific_block_recovers_one_harvest_od600_per_strain` | gate | pass | 3 records against the released Specific block; recovered OD600 {'TEAM-2595': 15.511, 'TEAM-3174': 12.9202, 'TEAM-3185': 13.9954}, 0 finding(s) |
+
+## 2026.11.24 - One proteome record per released replicate, and two stale provenance statements corrected
+
+Issue #1174 (averages of released replicates), part of the per-replicate policy in
+#1178; #1176 (the sheets no class reads); #1203 item 10 (the stale PRIDE file count).
+
+### What changed, and what the release holds
+
+`ProteomeMenasalvas2025Dataset` stored the per-sample MEAN of Supplementary Data 2
+sheet 4's three released replicates: 6 records, `measurement_type`
+`dia_protein_counts_sum_mean`, `protein_abundance_se = SD / sqrt(3)`. It now stores one
+record per released (`Sample`, `Replicate`) unit: **6 -> 18 records**, each carrying its
+own `Counts_sum` cells verbatim, `n_replicates` 1 per key, no SE, and `replicate_id` the
+two released cells joined as `<Sample>/<Replicate>` (`2595_growth/R1` and its 17
+siblings). `measurement_type` is now `dia_protein_counts_sum`, because the number is no
+longer a mean.
+
+Measured on the pinned workbook (`Menasalvas et al Supplementary Data 2.xlsx`, sha256
+`d6fa89134445612c1f9c04a18390858204e15b69ac179dd44739630dd64eff32`), sheet
+`Sheet 4. GrowthProduction phase`:
+
+| property | measured |
+|---|---|
+| released rows | 39,438 |
+| `(Sample, Replicate)` units | 18 (six samples x `R1 R2 R3`) |
+| rows per unit | 2,191 over 2,187 distinct `Protein` keys (4 keys are filed under two `Protein.Group` accessions) |
+| key sets across the 18 units | ONE shared set (asserted by the loader, not assumed) |
+| released zeros | 301, **all of them in `2595_production/R1`** |
+
+That last row is the measurement the mean hid: 285 of the 301 zeros sit on kept loci and
+reached the store as values of one record, where a per-sample mean reported 0 for
+nothing at all (measured: 0 zeros among the old 6 records' 12,540 values).
+
+What one replicate IS is not stated anywhere in the mirror, and nothing in the loader
+asserts it. The proteomics Methods state only the harvest points; the Fig. 7 caption's
+"Mean values from three biological replicates for each sample are reported." sits with
+its panel E, the metabolite map, and is absent from `paper.md` entirely (the MinerU OCR
+dropped it); the production Methods' "All production runs were performed in
+quadruplicate, with two biological replicates prepared for each strain when multiple
+clones were tested." is the TITER arm's n = 4, not this sheet's n = 3. So the records
+keep the sheet's own labels and are never pooled, and
+`PROTEOME_REPLICATE_NATURE_UNSTATED` carries both quotes verbatim. PRIDE `PXD061547`
+deposits one raw file per unit (`PRT1125_2595_growth-R1.raw` and 17 siblings), so the
+release treats each as its own run.
+
+### The reference, which is where the aggregate now lives
+
+`phenotype_reference` is unchanged in substance: the matching-phase TEAM-2595 profile
+aggregated over its three released replicates, with its mean, its `SD / sqrt(3)`, its n
+and `replicate_id = None`. Measured against the old build, the new references' SE map
+equals the old control records' SE map exactly (max absolute difference 0.0 over 4,180
+values). The six TEAM-2595 records are therefore summarized into their own reference,
+which is what keeping every released unit costs.
+
+### Build and proof
+
+Scratch roots (dev tree untouched):
+
+- new: `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-menasalvas2025/proteome_menasalvas2025`
+- old, built from `origin/main` for the comparison: `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-menasalvas2025/proteome_menasalvas2025_old`
+
+`verify_build(..., family="proteome")`: **PASS**, 18 records, every row green, including
+the two new ones:
+
+| level | rule | message |
+|---|---|---|
+| L1 | `one_record_per_strain_phase_and_replicate` | 18 (strain, phase, replicate) keys over 18 records (expected 18); 0 repeated, 0 sample(s) missing, 0 not at 3 replicates |
+| L3 | `every_record_states_one_released_replicate` | 18 records checked for n_replicates = 1, no stored SE and a typed single-measurement gap; 0 disagree |
+| L3 | `replicate_id_names_one_replicate` | 18 of 18 records carry a replicate_id; 0 break it |
+| L3 | `every_record_measures_the_same_kt2440_locus_set` | 1 distinct key set over 18 records, 2,090 loci |
+| L4 | `pp_2088_production_fold_is_supplementary_note_2s` | stored {'TEAM-3174': 18.555, 'TEAM-3185': 31.895} against Note 2's 20 and 34 |
+
+The mean-reproduction check, run over both stores: grouping the 18 new records by
+genotype and environment, each group holds exactly 3 records, the 6 groups key on the
+same 2,090 loci as the old records, and the group mean equals the old stored value for
+all **12,540 values with a maximum absolute difference of 0.0**. The L4 Note 2 fold is
+the same 18.555 / 31.895 it was before, now computed as a derivation over records rather
+than read off a stored mean.
+
+### Two provenance statements corrected (#1203 item 10)
+
+The note's "PRIDE `PXD061547` carries 97 raw proteomics files" (2026.10.07 row above)
+and the raw mirror's matching `si_expected` line are both wrong. Measured 2026-11-24 on
+the EBI API, `GET /pride/ws/archive/v3/projects/PXD061547/files/all`: **158 files, 150
+RAW-category `.raw` spectra, 7 SEARCH-category per-run CSVs**
+(`Menasalvas_et_al_Proteomics_set1` to `set7`) and one EXPERIMENTAL DESIGN SDRF
+(`PXD061547_community_annotated.sdrf.tsv`). So the project is not raw spectra only, and
+the `si_expected` entry now says so.
+
+The SDRF was fetched and read as evidence, NOT deposited, because no loader consumes it
+and it changes no stored value: it annotates all 150 runs
+`characteristics[biological replicate] = 1`, `comment[technical replicate] = 1`, which
+distinguishes nothing. Retrieval, for the record:
+`curl -L -o sdrf.tsv https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/09/PXD061547/PXD061547_community_annotated.sdrf.tsv`,
+97,872 B, sha256 `19bdfadd73a83f81cf8d246c989071175ca256486cebae83e733220dd5926968`,
+retrieved 2026-11-24.
+
+### Supplementary Data 2 sheets 2, 3 and 5 are still read by no class (#1176)
+
+Measured on the pinned workbook, each is per replicate and each needs a decision this
+conversion did not make:
+
+| sheet | units | why it is not loaded here |
+|---|---|---|
+| Sheet 2. PJ23119-yiaYZ | 8 samples x `R1 R2` = 16 | the strain is a `PJ23119` promoter replacement on `yiaY,yiaZ`, and `PromoterReplacementPerturbation` requires `expression_direction`, which no mirrored byte states for `yiaYZ` itself (the same refusal the loader already makes for `PJ23119-PP_1697`). Its value column is `value_sum`, which the deposit README describes as "Mean of protein counts across replicates" while the sheet also prints a `Replicate` column, so what the number is needs the owner |
+| Sheet 3. Proteomics Culture Format | 6 samples x `R1 R2 R3` = 18 | one genotype (TEAM-2595) in TWO CULTURE FORMATS, test tube and 24-deep-well, at 8, 24 and 48 h. The format is the measured variable ("Aeration differences from headspace can affect strain productivity"), and the schema has no vessel or aeration-regime field that separates them: `Environment.aerobicity` holds the regime word, not the vessel. A new field is out of scope here |
+| Sheet 5. Isoprenol pathway over | 6 samples x `R1 R2 R3 R4` = 24 | the loader already defers it with its reason recorded in `SHEET_5_DEFERRAL`: the same three strains carry an ADDITIONAL plasmid copy of the five integrated pathway genes, so every genotype would carry each part twice under two localizations, and the inducer the Supplementary Figure 18 caption states ("2% of arabinose") names no w/v or v/v basis |
+
+Sheet 1 has no `Replicate` column at all (`Counts_mean` over six samples), so it is
+aggregate-only as released.

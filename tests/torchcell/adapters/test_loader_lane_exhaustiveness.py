@@ -50,8 +50,8 @@ SURFACE = load_default_surface()
 #: be there (an entry for a module that dropped the import is dead), and the named
 #: sibling must be a mapped class of the same module that serves the leaf.
 SIBLING_IMPORT_ALLOWLIST: dict[str, dict[str, str]] = {
-    # menasalvas2025.py: the selection class (2138-2798) builds no called variant; the
-    # variant leaves are imported for ProteomeMenasalvas2025Dataset (3433), whose conf
+    # menasalvas2025.py: the selection class (2234-2420) builds no called variant; the
+    # variant leaves are imported for ProteomeMenasalvas2025Dataset (3624), whose conf
     # enables the bacterial sequence variant lane (review 3 finding 6).
     "IsoprenolSelectionMenasalvas2025Dataset": {
         "LocusVariantCallPerturbation": "ProteomeMenasalvas2025Dataset",

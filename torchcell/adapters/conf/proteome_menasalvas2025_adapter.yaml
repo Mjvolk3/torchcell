@@ -1,7 +1,8 @@
-# Menasalvas 2025 deposited proteome: 6 samples (three strains x two growth phases),
-# ProteinAbundanceExperiment. Every genotype carries the five integrated
+# Menasalvas 2025 deposited proteome: 18 released (Sample, Replicate) units (three
+# strains x two growth phases x three replicates), ProteinAbundanceExperiment. Every
+# genotype carries the five integrated
 # pathway genes, the mCherry biosensor copies and (for the two improved strains) seven
-# deletions, served as `perturbation`. The two TEAM-2595 records additionally carry the
+# deletions, served as `perturbation`. The six TEAM-2595 records additionally carry the
 # 75 called variants of data S1-5, served as `sequence variant perturbation`. The
 # environment carries a SmallMoleculePerturbation (crystal violet) and an
 # EnvironmentPhysicalPerturbation (pH), so the environment-perturbation pair is enabled.

@@ -14,9 +14,10 @@ build and verify hermetically.
 A separate ``@pytest.mark.data`` block, skipped without the mirror and the built stores,
 pins the numbers measured on the REAL bytes: 58 selection records over 60 distinct
 targets from 28/30 rows, a 170-member inner zip holding the two workbooks, 48 Absolute
-and 10 Relative metabolite rows, 39,438 proteome rows over 2,187 protein keys, 584
-breseq calls, the growth-phase harvest OD600 of 2.4 / 1.2 / 2.7, and PP_2088's
-production folds of 31.895 and 18.555 against Supplementary Note 2's 34 and 20.
+and 10 Relative metabolite rows, 39,438 proteome rows over 2,187 protein keys shared by
+all 18 released (Sample, Replicate) units, 584 breseq calls, the growth-phase harvest
+OD600 of 2.4 / 1.2 / 2.7, and PP_2088's production folds of 31.895 and 18.555 against
+Supplementary Note 2's 34 and 20.
 """
 
 from __future__ import annotations
@@ -50,8 +51,7 @@ NOTE2_LOCI: tuple[str, ...] = mv.NOTE2_MEASURED_LOCI
 #: Deletions the three designed strains carry, beyond those the selection tables name.
 DESIGNED_DELETION_LOCI: tuple[str, ...] = ("PP_2664", "PP_2675", "PP_3540", "PP_4622")
 #: Host protein keys that exist only to keep the resolved fraction above the loader's
-#: 0.95 floor beside the one retired key, and to carry the released-0 and the
-#: single-replicate protein.
+#: 0.95 floor beside the one retired key, and to carry the released-0 protein.
 FILLER_PROTEIN_LOCI: tuple[str, ...] = (
     "PP_0100",
     "PP_0200",
@@ -907,11 +907,13 @@ SIGX_PRODUCTION_MEAN: dict[str, float] = {
     "TEAM-3185": 100.0 * mv.NOTE2_SIGX_FOLD["TEAM-3185"],
 }
 SIGX_KEY = "Pp_2088"
-#: The key measured in exactly ONE replicate of every sample, whose SE is therefore nan.
-SINGLE_REPLICATE_KEY = "Pp_0800"
-#: The key whose first replicate of one sample is a released 0, averaged in verbatim.
+#: The key whose first replicate of one sample is a released 0: a MEASUREMENT, stored as
+#: that replicate's own record value and never imputed. On the real sheet all 301
+#: released zeros sit in one replicate, ``2595_production/R1``, which is the information
+#: a per-sample mean hid.
 ZEROED_PROTEIN_KEY = "Pp_0700"
 ZEROED_PROTEIN_SAMPLE = "2595_growth"
+ZEROED_PROTEIN_REPLICATE = "R1"
 #: The six released samples, as the sheet's own ``Sample`` cells.
 PROTEOME_SAMPLES: tuple[str, ...] = tuple(
     f"{strain.removeprefix('TEAM-')}_{phase}"
@@ -929,7 +931,7 @@ def _counts_sum(key: str, sample: str, replicate: str) -> float:
     if key == SIGX_KEY and phase == "production":
         return SIGX_PRODUCTION_MEAN[strain]
     if key == ZEROED_PROTEIN_KEY and sample == ZEROED_PROTEIN_SAMPLE:
-        return 0.0 if replicate == "R1" else 300.0
+        return 0.0 if replicate == ZEROED_PROTEIN_REPLICATE else 300.0
     return (
         (index + 1) * 100.0
         + _STRAIN_FACTOR[strain] * 10.0
@@ -944,8 +946,6 @@ def _proteome_rows() -> list[tuple[str, str, str, str, str, str, float]]:
     for sample in PROTEOME_SAMPLES:
         for replicate in PROTEOME_REPLICATES:
             for key in ALL_HOST_PROTEIN_KEYS:
-                if key == SINGLE_REPLICATE_KEY and replicate != "R1":
-                    continue
                 if key == MERGED_PROTEIN_KEY:
                     group = MERGED_PROTEIN_GROUPS[
                         PROTEOME_REPLICATES.index(replicate) % 2
@@ -1392,6 +1392,151 @@ def built(synthetic_mirror: Path, synthetic_kt2440: Any, tmp_path: Path) -> Any:
     )
 
 
+@pytest.fixture
+def built_proteome(
+    synthetic_mirror: Path, synthetic_kt2440: Any, tmp_path: Path
+) -> Any:
+    """The deposited proteome arm built over the synthetic deposit and annotation."""
+    return mv.ProteomeMenasalvas2025Dataset(
+        root=str(tmp_path / "build-proteome"), pputida_genome=synthetic_kt2440
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Hermetic: one record per released (Sample, Replicate) unit (#1174)
+# --------------------------------------------------------------------------- #
+def test_the_proteome_build_writes_one_record_per_released_replicate(
+    built_proteome: Any,
+) -> None:
+    """18 records: the six samples at the sheet's own three replicates."""
+    assert len(built_proteome) == mv.EXPECTED_PROTEOME_RECORDS == 18
+    assert mv.EXPECTED_PROTEOME_SAMPLES == 6
+    labels = sorted(
+        built_proteome[i]["experiment"]["phenotype"]["replicate_id"]
+        for i in range(len(built_proteome))
+    )
+    assert labels == sorted(
+        f"{sample}/{replicate}"
+        for sample in PROTEOME_SAMPLES
+        for replicate in PROTEOME_REPLICATES
+    )
+
+
+def test_each_proteome_record_states_one_measurement_with_a_typed_se_gap(
+    built_proteome: Any,
+) -> None:
+    """``n_replicates`` is 1 per key, the SE map is absent, and the gap is typed."""
+    for index in range(len(built_proteome)):
+        phenotype = built_proteome[index]["experiment"]["phenotype"]
+        assert set(phenotype["n_replicates"].values()) == {1}
+        assert phenotype["protein_abundance_se"] is None
+        assert phenotype["measurement_type"] == "dia_protein_counts_sum"
+        assert [
+            (gap["field"], gap["reason"]) for gap in phenotype["provenance_gaps"]
+        ] == [("protein_abundance_se", "not_applicable_single_measurement")]
+
+
+def test_a_proteome_record_carries_its_own_replicates_released_cell(
+    built_proteome: Any, deposited_workbooks: Any
+) -> None:
+    """The stored value is that unit's cell, and the released 0 is one record's value."""
+    _data_1, data_2 = deposited_workbooks
+    rows = mv.read_proteome_rows(data_2)
+    released = {
+        (row.sample, row.replicate, row.protein): row.counts_sum for row in rows
+    }
+    zeroed: list[float] = []
+    for index in range(len(built_proteome)):
+        phenotype = built_proteome[index]["experiment"]["phenotype"]
+        sample, replicate = str(phenotype["replicate_id"]).split("/")
+        for key, locus in HOST_PROTEIN_KEYS.items():
+            assert (
+                phenotype["protein_abundance"][locus]
+                == released[(sample, replicate, key)]
+            )
+        if (sample, replicate) == (ZEROED_PROTEIN_SAMPLE, ZEROED_PROTEIN_REPLICATE):
+            zeroed.append(
+                phenotype["protein_abundance"][HOST_PROTEIN_KEYS[ZEROED_PROTEIN_KEY]]
+            )
+    assert zeroed == [0.0]
+
+
+def test_the_matching_phase_control_aggregate_is_the_reference_not_a_record(
+    built_proteome: Any, deposited_workbooks: Any
+) -> None:
+    """Every reference is the TEAM-2595 mean over its three units, with no label."""
+    _data_1, data_2 = deposited_workbooks
+    rows = mv.read_proteome_rows(data_2)
+    locus_of = {key: locus for key, locus in HOST_PROTEIN_KEYS.items()}
+    for index in range(len(built_proteome)):
+        record = built_proteome[index]
+        phase = mv._record_phase(record)
+        reference = record["reference"]["phenotype_reference"]
+        assert reference["replicate_id"] is None
+        assert set(reference["n_replicates"].values()) == {
+            mv.EXPECTED_PROTEOME_REPLICATES
+        }
+        aggregate = mv.aggregate_proteome_sample(
+            rows,
+            f"{mv.CONTROL_STRAIN.removeprefix('TEAM-')}_{phase}",
+            locus_of,
+            label="check",
+        )
+        for locus, mean in aggregate.abundance.items():
+            assert reference["protein_abundance"][locus] == pytest.approx(mean)
+
+
+def test_grouping_the_records_by_sample_reproduces_the_old_stored_mean(
+    built_proteome: Any, deposited_workbooks: Any
+) -> None:
+    """The mean over a sample's records is the per-sample mean this arm used to store."""
+    _data_1, data_2 = deposited_workbooks
+    rows = mv.read_proteome_rows(data_2)
+    locus_of = dict(HOST_PROTEIN_KEYS)
+    grouped: dict[str, dict[str, list[float]]] = {}
+    for index in range(len(built_proteome)):
+        phenotype = built_proteome[index]["experiment"]["phenotype"]
+        sample = str(phenotype["replicate_id"]).split("/")[0]
+        bucket = grouped.setdefault(sample, {})
+        for locus, value in phenotype["protein_abundance"].items():
+            bucket.setdefault(locus, []).append(float(value))
+    worst = 0.0
+    for sample, levels in grouped.items():
+        aggregate = mv.aggregate_proteome_sample(rows, sample, locus_of, label="check")
+        assert set(levels) == set(aggregate.abundance)
+        for locus, values in levels.items():
+            assert len(values) == mv.EXPECTED_PROTEOME_REPLICATES
+            worst = max(
+                worst, abs(sum(values) / len(values) - aggregate.abundance[locus])
+            )
+    assert worst < 1e-9
+
+
+def test_a_sheet_whose_replicates_quantify_different_proteins_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The one shared key set across the released units is asserted, not assumed."""
+    _pin_synthetic_sizes(monkeypatch)
+    rows = [
+        row
+        for row in _proteome_rows()
+        if not (row[4] == PROTEOME_SAMPLES[0] and row[5] == "R2" and row[2] == "Sotb")
+    ]
+    data_2 = tmp_path / mv.SI_DATA_2_BASENAME
+    write_data_2(data_2, rows=rows)
+    parsed = mv.read_proteome_rows(data_2)
+    with pytest.raises(RuntimeError, match="one shared key set"):
+        mv.proteome_replicate_levels(
+            parsed, PROTEOME_SAMPLES[0], dict(HOST_PROTEIN_KEYS), label="check"
+        )
+
+
+def test_a_replicate_phenotype_refuses_an_empty_label() -> None:
+    """A per-replicate record without the release's own label is refused."""
+    with pytest.raises(RuntimeError, match="replicate label"):
+        mv.proteome_replicate_phenotype({"PP_0100": 1.0}, "")
+
+
 def test_the_build_writes_one_record_per_selected_target(built: Any) -> None:
     """Record count equals the parsed rows, and the two references are the rounds'."""
     assert len(built) == len(ROUND1_CELLS) + len(ROUND2_CELLS)
@@ -1658,7 +1803,13 @@ def test_main_builds_verifies_and_prints(
     assert "proteome_menasalvas2025: PASS" in out
     assert "metabolite_growth_menasalvas2025: PASS" in out
     assert "metabolite_production_menasalvas2025: PASS" in out
-    assert out.count("ProteomeMenasalvas2025Dataset: len = 6") == 1
+    assert (
+        out.count(
+            f"ProteomeMenasalvas2025Dataset: len = {mv.EXPECTED_PROTEOME_RECORDS}"
+        )
+        == 1
+    )
+    assert mv.EXPECTED_PROTEOME_RECORDS == 18
 
 
 # --------------------------------------------------------------------------- #
@@ -1672,6 +1823,54 @@ LIBRARY_SI = osp.join(
 requires_real_si = pytest.mark.skipif(
     not osp.isfile(LIBRARY_SI), reason="requires the Menasalvas 2025 library mirror"
 )
+#: The deposited inner zip of the REAL raw mirror, which holds Supplementary Data 2.
+REAL_INNER_ZIP = osp.join(
+    "/scratch/projects/torchcell-scratch/torchcell-raw",
+    mv.CITATION_KEY,
+    mv.DRYAD_INNER_ZIP_REL,
+)
+requires_real_deposit = pytest.mark.skipif(
+    not osp.isfile(REAL_INNER_ZIP),
+    reason="requires the Menasalvas 2025 Dryad deposit in the raw mirror",
+)
+
+
+@requires_real_deposit
+@pytest.mark.data
+def test_the_real_proteome_sheet_releases_18_units_over_one_key_set(
+    tmp_path: Path,
+) -> None:
+    """Measured on the pinned workbook: 39,438 rows = 18 units x 2,191 rows.
+
+    Each unit quantifies the same 2,187 distinct ``Protein`` keys, four of which the
+    sheet files under two ``Protein.Group`` accessions and so releases twice. The 301
+    released zeros all sit in ONE unit, ``2595_production/R1``, which is the measurement
+    a per-sample mean hid and the reason a record is one unit (#1174).
+    """
+    written = mv.extract_dryad_members(REAL_INNER_ZIP, str(tmp_path / "dryad"))
+    rows = mv.read_proteome_rows(written[mv.SI_DATA_2_MEMBER])
+    assert len(rows) == 39_438
+    units = Counter((row.sample, row.replicate) for row in rows)
+    assert len(units) == mv.EXPECTED_PROTEOME_RECORDS == 18
+    assert set(units.values()) == {2_191}
+    assert len({row.protein for row in rows}) == 2_187
+    assert sorted({row.sample for row in rows}) == sorted(
+        f"{strain.removeprefix('TEAM-')}_{phase}"
+        for strain in mv.RELEASED_STRAINS
+        for phase in mv.PHASES
+    )
+    assert sorted({row.replicate for row in rows}) == ["R1", "R2", "R3"]
+    keys = {
+        unit: frozenset(
+            row.protein for row in rows if (row.sample, row.replicate) == unit
+        )
+        for unit in units
+    }
+    assert len({frozenset(value) for value in keys.values()}) == 1
+    zeros = Counter(
+        (row.sample, row.replicate) for row in rows if row.counts_sum == 0.0
+    )
+    assert dict(zeros) == {("2595_production", "R1"): 301}
 
 
 @requires_real_si

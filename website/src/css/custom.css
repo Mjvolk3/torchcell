@@ -392,3 +392,16 @@ html.tc-sidebar-dragging .theme-doc-sidebar-container {
   height: auto;
   object-fit: contain;
 }
+
+/* Fold-out blocks (<details>) in the site palette. The theme's default is its light
+ * blue "info" tint, which is not one of the project colors. */
+.theme-doc-markdown details {
+  --docusaurus-details-decoration-color: var(--ifm-color-primary);
+  background-color: var(--tc-surface-raised);
+  border: 1px solid var(--tc-border);
+  color: inherit;
+}
+.theme-doc-markdown details > summary {
+  color: var(--ifm-color-primary);
+  font-weight: 600;
+}

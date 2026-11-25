@@ -237,9 +237,9 @@ Pair representation: the two genes summed (`sum`).
 | Gene holdout, identity 50% | 0.234 ± 0.018 | **0.280 ± 0.010** | 0.132 ± 0.040 | 0.161 ± 0.070 | 0.221 ± 0.054 | 0.212 ± 0.047 | 0.224 ± 0.018 | 0.179 ± 0.025 | 0.195 ± 0.063 | 0.207 ± 0.016 |
 | Gene holdout, position | 0.221 ± 0.092 | **0.307 ± 0.028** | 0.106 ± 0.035 | 0.216 ± 0.079 | 0.230 ± 0.065 | 0.248 ± 0.045 | 0.266 ± 0.030 | 0.265 ± 0.013 | 0.263 ± 0.052 | 0.202 ± 0.100 |
 
-### R2, mean squared error and mean absolute error
+### R2, MSE and MAE
 
-The other three standard metrics, as tables. Each cell is the mean ± sample standard deviation over the seeds of the split family, and the best mean of each row is in bold: the highest for R2 and the lowest for the two errors.
+The other three standard metrics (R2, mean squared error and mean absolute error), as tables. Each cell is the mean ± sample standard deviation over the seeds of the split family, and the best mean of each row is in bold: the highest for R2 and the lowest for MSE and MAE.
 
 <details>
 <summary>R2: one minus the squared error divided by the variance of the measured values; 0 is the score of predicting the test mean and it is negative for a worse model</summary>
@@ -267,7 +267,7 @@ Pair representation: the two genes summed (`sum`).
 </details>
 
 <details>
-<summary>Mean squared error: the mean of the squared errors, in squared label units</summary>
+<summary>MSE: mean squared error, the mean of the squared errors in squared label units</summary>
 
 Pair representation: the two genes concatenated (`concat`).
 
@@ -292,7 +292,7 @@ Pair representation: the two genes summed (`sum`).
 </details>
 
 <details>
-<summary>Mean absolute error: the mean of the absolute errors, in label units</summary>
+<summary>MAE: mean absolute error, the mean of the absolute errors in label units</summary>
 
 Pair representation: the two genes concatenated (`concat`).
 

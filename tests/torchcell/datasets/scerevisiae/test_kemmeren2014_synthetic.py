@@ -7,56 +7,55 @@
 opens them, their presence only stops PyG calling ``download()``), Table S1 as
 ``kemmeren2014_table_s1.xlsx`` (openpyxl), and pickled REAL ``GEOparse.GEOTypes.GSE``
 objects built in memory (``GSM``/``GPL`` with a ``description`` column frame) at the
-``<accession>.pkl`` paths ``process()`` checks first. The two deletion GSEs both have
-one, so ``GEOparse.get_GEO`` (the network branch) is never reached. The four wildtype
-series have pickles too (GSE42215 excepted) but ``process()`` no longer opens them
-(#484); a test removes them and gets the same records. No genome is involved: a title
-token resolves only through Table S1 (``gene`` -> ``orf name``, or a token that is an
-``orf name``) or through the module's pinned ``RELEASE_TITLE_NAMES_WITHOUT_AN_ORF``.
+``<accession>.pkl`` paths ``process()`` checks first, so ``GEOparse.get_GEO`` (the
+network branch) is never reached. No genome is involved: a title token resolves only
+through Table S1 (``gene`` -> ``orf name``, or a token that is an ``orf name``) or
+through the module's pinned ``RELEASE_TITLE_NAMES_WITHOUT_AN_ORF``.
+
+ONE RECORD PER ARRAY (2026.11.24, #1178): every array of the two deletion series and of
+the four wildtype series is its own record, in release order (deletion arrays grouped
+by deleted ORF in first-appearance order, then GSE42215, GSE42217, GSE42240, GSE42241),
+``n_replicates`` 1, no dispersion (typed ``not_applicable_single_measurement`` gaps),
+``replicate_id`` the GEO title. The reference is the refpool signal on the same array.
 
 Channels follow GEO's own metadata, as on the real series: ``label_ch1`` is Cy5 and
 ``label_ch2`` Cy3 on every array, and ``source_name_ch1`` / ``source_name_ch2`` say
 which channel holds the reference pool ("refpool", or "ref1" on GSE42217). The title
-suffix is not consulted.
+suffix and the ``VALUE`` column are not consulted (``VALUE`` is 99 on every fixture
+row).
 
-Platform probes: 1 YAL001C, 2 YBR001C, 3 Q0010, 4 NaN (unmapped). Table S1: YPL177C
-CUP9 MATa, YHR127W HSN1 MATalpha, TLC1 and CMS1 (``orf name`` cells that are common
-names, kept as released) MATa, YXX001W with mating type ``diploid`` (skipped), YPL042C
-SSN3 MATalpha.
+Platform probes: 1 YAL001C, 2 YBR001C, 3 Q0010, 4 NaN (unmapped), 5 YAL001C (the
+second spot of YAL001C). Signals are listed per array for probes 1, 2, 3, 5; probe 4
+reads 9 in both channels. Table S1: YPL177C CUP9 MATa, YHR127W HSN1 MATalpha, TLC1 and
+CMS1 (``orf name`` cells that are common names, kept as released) MATa, YXX001W with
+mating type ``diploid`` (skipped), YPL042C SSN3 MATalpha.
 
-Deletion samples (responsive GSE42527 then non-responsive GSE42526), signals listed
-as YAL001C, YBR001C, Q0010:
+Deletion arrays (GSE42527 then GSE42526) and the records they give (log2 ratio, culture
+signal, refpool signal per gene; YAL001C is the mean of its two spots):
 
-    GSM1 "[HS1991] cup9-del-a"   refpool Cy5 4, 4, 1   deletion Cy3 2, 8, 0
-    GSM2 "cup9-del-b"            deletion Cy5 8, 2, 4  refpool Cy3 4, 4, 1  (dye swap)
-    GSM3 "Sample X"              deletion Cy5 3, 6, 1  refpool Cy3 3, 3, 2; the gene is
-                                 named only in ``characteristics_ch1``
-    GSM4 "wt control"            wildtype, ignored
-    GSM5 "cdk8-del-a"            CDK8 is in RELEASE_TITLE_NAMES_WITHOUT_AN_ORF ->
-                                 YPL042C, whose Table S1 row gives MATalpha (BY4742);
-                                 stored with perturbed_gene_name CDK8, all-ones signals
-                                 (log2 0, n 1, linear and refpool 1)
+    0 GSM1 "[HS1991] cup9-del-a"  refpool Cy5 4,4,1,4 / deletion Cy3 2,8,4,8
+        YAL001C (-1, +1) -> 0, 5, 4; YBR001C 1, 8, 4; Q0010 2, 4, 1        BY4741
+    1 GSM2 "cup9-del-b"           deletion Cy5 8,2,1,8 / refpool Cy3 4,4,2,2
+        YAL001C (+1, +2) -> 1.5, 8, 3; YBR001C -1, 2, 4; Q0010 -1, 1, 2   BY4741
+    2 GSM3 "Sample X" (HSN1 named only in characteristics_ch1)
+                                  deletion Cy5 3,6,1,3 / refpool Cy3 3,3,2,3
+        YAL001C 0, 3, 3; YBR001C 1, 6, 3; Q0010 -1, 1, 2                  BY4742
+    3 GSM5 "cdk8-del-a" (CDK8 -> YPL042C through RELEASE_TITLE_NAMES_WITHOUT_AN_ORF,
+        MATalpha through YPL042C's Table S1 row), all ones -> 0, 1, 1      BY4742
 
-CUP9 -> YPL177C (BY4741): the log2 ratio is taken within each array, log2(deletion /
-refpool). YAL001C 2/4 -> -1 and 8/4 -> +1, mean 0, sample SD sqrt(2), SE sqrt(2)/sqrt(2)
-= 1, variance 2 (stored as sqrt(2)**2 = 2.0000000000000004); YBR001C the mirror image,
-same statistics; Q0010 drops the array with the 0 signal and keeps 4/1 -> +2 alone (n =
-1, SE and variance NaN). The linear ``expression`` is the mean deletion signal over the
-kept arrays, 5, 5, 4, and the reference ``expression`` the mean refpool signal over the
-same arrays, 4, 4, 1. HSN1 -> YHR127W (BY4742): 3/3 -> 0, 6/3 -> +1, 1/2 -> -1, all n
-= 1, linear 3, 6, 1, refpool 3, 3, 2. ``perturbed_gene_name`` is the release's own
-name: CUP9, HSN1, CDK8.
+Wildtype arrays (empty genotype, strain of the series):
 
-The reference ``n_replicates`` of a gene is the number of arrays whose refpool value
-entered its reference ``expression`` mean, the same arrays as the mutant's count (#484):
-CUP9 YAL001C 2, YBR001C 2, Q0010 1; HSN1 1 each. The wildtype arrays (MATa W1, W2, W3;
-MATalpha W4) once gave counts of 3, 2, 2 and 1, 1, 1 here; they enter no record.
+    4 W5 GSE42215 "wt-ic004-a"        refpool Cy5 1s / wt Cy3 1s -> 0, 1, 1      BY4742
+    5 W4 GSE42217 "wt-htp07-a"        ref1 Cy5 1s / culture Cy3 4s -> 2, 4, 1    BY4742
+    6 W3 GSE42240 "wt-matA-THM012-a"  refpool Cy5 2s / wt-matA Cy3 2s -> 0, 2, 2 BY4741
+    7 W1 GSE42241 "wt-matA-1-a"       refpool Cy5 1s / wt-matA Cy3 2s -> 1, 2, 1 BY4741
+    8 W2 GSE42241 "wt-matA-1-b"       wt-matA Cy5 1s / refpool Cy3 2s -> -1, 1, 2 BY4741
 """
 
 from __future__ import annotations
 
 import json
-import math
+import os
 import pickle
 import re
 from pathlib import Path
@@ -64,7 +63,6 @@ from typing import Any, cast
 
 import GEOparse
 import httpx
-import lmdb
 import numpy as np
 import openpyxl
 import pandas as pd
@@ -73,6 +71,7 @@ from GEOparse.GEOTypes import GPL, GSE, GSM
 
 from torchcell.datamodels.schema import (
     Environment,
+    GenePerturbationType,
     Genotype,
     KanMxDeletionPerturbation,
     Media,
@@ -88,10 +87,11 @@ from torchcell.sequence.genome.registry import (
     SGD_S288C_R64,
     SGD_S288C_R64_GENBANK_ACCESSION,
 )
+from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 _DATASET = "MicroarrayKemmeren2014Dataset"
-_NAN = "NaN"
-_PROBES = {"1": "YAL001C", "2": "YBR001C", "3": "Q0010"}
+_PROBES = {"1": "YAL001C", "2": "YBR001C", "3": "Q0010", "5": "YAL001C"}
+_GENES = ("Q0010", "YAL001C", "YBR001C")
 
 
 def _describe(table: pd.DataFrame) -> pd.DataFrame:
@@ -112,16 +112,18 @@ def _gsm(
 ) -> GSM:
     """A two-channel array with GEO-style channel metadata.
 
-    ``label_ch1`` is Cy5 and ``label_ch2`` Cy3, as on every real array; ``refpool_in``
-    says which dye carries the reference (named ``reference``), and ``test`` names the
-    other channel. ``characteristics`` are attached to the test channel.
+    ``cy5`` / ``cy3`` are the signals of probes 1, 2, 3 and 5; the unmapped probe 4
+    reads 9 in both. ``label_ch1`` is Cy5 and ``label_ch2`` Cy3, as on every real array;
+    ``refpool_in`` says which dye carries the reference (named ``reference``), and
+    ``test`` names the other channel. ``characteristics`` are attached to the test
+    channel. ``VALUE`` is 99 on every row: the loader never reads it.
     """
     table = pd.DataFrame(
         {
-            "ID_REF": [1, 2, 3, 4],
-            "VALUE": [0.0, 0.0, 0.0, 0.0],
-            "Signal Norm_Cy5": [*cy5, 9.0],
-            "Signal Norm_Cy3": [*cy3, 9.0],
+            "ID_REF": [1, 2, 3, 4, 5],
+            "VALUE": [99.0] * 5,
+            "Signal Norm_Cy5": [*cy5[:3], 9.0, cy5[3]],
+            "Signal Norm_Cy3": [*cy3[:3], 9.0, cy3[3]],
         }
     )
     reference_channel = 1 if refpool_in == "Cy5" else 2
@@ -140,7 +142,10 @@ def _gsm(
 
 def _gpl() -> GPL:
     table = pd.DataFrame(
-        {"ID": [1, 2, 3, 4], "ORF": ["YAL001C", "YBR001C", "Q0010", np.nan]}
+        {
+            "ID": [1, 2, 3, 4, 5],
+            "ORF": ["YAL001C", "YBR001C", "Q0010", np.nan, "YAL001C"],
+        }
     )
     return GPL(name="GPL11232", metadata={}, table=table, columns=_describe(table))
 
@@ -167,36 +172,28 @@ def _write_table_s1(path: Path) -> None:
     workbook.save(path)
 
 
-def _write_raw(raw: Path) -> None:
-    raw.mkdir(parents=True)
-    for accession in (
-        "GSE42527",
-        "GSE42526",
-        "GSE42241",
-        "GSE42240",
-        "GSE42217",
-        "GSE42215",
-    ):
-        name = f"{accession}_family.soft.gz"
-        (raw / name).write_bytes(b"placeholder: process() reads the .pkl")
-    _write_table_s1(raw / "kemmeren2014_table_s1.xlsx")
-    gses = {
+_ALL_SERIES = ["GSE42527", "GSE42526", "GSE42241", "GSE42240", "GSE42217", "GSE42215"]
+_ONES = [1.0] * 4
+
+
+def _fixture_series() -> dict[str, GSE]:
+    return {
         "GSE42527": _gse(
             "GSE42527",
             [
                 _gsm(
                     "GSM1",
                     "[HS1991] cup9-del-a",
-                    [4.0, 4.0, 1.0],
-                    [2.0, 8.0, 0.0],
+                    [4.0, 4.0, 1.0, 4.0],
+                    [2.0, 8.0, 4.0, 8.0],
                     refpool_in="Cy5",
                     test="cup9-del",
                 ),
                 _gsm(
                     "GSM2",
                     "cup9-del-b",
-                    [8.0, 2.0, 4.0],
-                    [4.0, 4.0, 1.0],
+                    [8.0, 2.0, 1.0, 8.0],
+                    [4.0, 4.0, 2.0, 2.0],
                     refpool_in="Cy3",
                     test="cup9-del",
                 ),
@@ -208,65 +205,18 @@ def _write_raw(raw: Path) -> None:
                 _gsm(
                     "GSM3",
                     "Sample X",
-                    [3.0, 6.0, 1.0],
-                    [3.0, 3.0, 2.0],
+                    [3.0, 6.0, 1.0, 3.0],
+                    [3.0, 3.0, 2.0, 3.0],
                     refpool_in="Cy3",
                     test="hsn1-del",
                     characteristics=["strain: BY4742", "genotype/variation: hsn1-del"],
                 ),
-                _gsm(
-                    "GSM4",
-                    "wt control",
-                    [1.0, 1.0, 1.0],
-                    [1.0, 1.0, 1.0],
-                    refpool_in="Cy5",
-                    test="wt",
-                    characteristics=["genotype/variation: wt"],
-                ),
-                _gsm(
-                    "GSM5",
-                    "cdk8-del-a",
-                    [1.0, 1.0, 1.0],
-                    [1.0, 1.0, 1.0],
-                    refpool_in="Cy5",
-                    test="cdk8-del",
-                ),
+                _gsm("GSM5", "cdk8-del-a", _ONES, _ONES, "Cy5", "cdk8-del"),
             ],
             with_platform=False,
         ),
-        "GSE42241": _gse(
-            "GSE42241",
-            [
-                _gsm(
-                    "W1",
-                    "wt-matA-1-a",
-                    [1.0, 1.0, 1.0],
-                    [0.0, 0.0, 0.0],
-                    refpool_in="Cy5",
-                    test="wt-matA",
-                ),
-                _gsm(
-                    "W2",
-                    "wt-matA-1-b",
-                    [0.0, 0.0, 0.0],
-                    [2.0, 0.0, 2.0],
-                    refpool_in="Cy3",
-                    test="wt-matA",
-                ),
-            ],
-        ),
-        "GSE42240": _gse(
-            "GSE42240",
-            [
-                _gsm(
-                    "W3",
-                    "wt-matA-THM012-a",
-                    [3.0, 3.0, 0.0],
-                    [0.0, 0.0, 0.0],
-                    refpool_in="Cy5",
-                    test="wt-matA",
-                )
-            ],
+        "GSE42215": _gse(
+            "GSE42215", [_gsm("W5", "wt-ic004-a", _ONES, _ONES, "Cy5", "wt")]
         ),
         "GSE42217": _gse(
             "GSE42217",
@@ -274,16 +224,35 @@ def _write_raw(raw: Path) -> None:
                 _gsm(
                     "W4",
                     "wt-htp07-a",
-                    [5.0, 5.0, 5.0],
-                    [0.0, 0.0, 0.0],
+                    _ONES,
+                    [4.0] * 4,
                     refpool_in="Cy5",
                     test="wt-htp07-a",
                     reference="ref1",
                 )
             ],
         ),
+        "GSE42240": _gse(
+            "GSE42240",
+            [_gsm("W3", "wt-matA-THM012-a", [2.0] * 4, [2.0] * 4, "Cy5", "wt-matA")],
+        ),
+        "GSE42241": _gse(
+            "GSE42241",
+            [
+                _gsm("W1", "wt-matA-1-a", _ONES, [2.0] * 4, "Cy5", "wt-matA"),
+                _gsm("W2", "wt-matA-1-b", _ONES, [2.0] * 4, "Cy3", "wt-matA"),
+            ],
+        ),
     }
-    for accession, gse in gses.items():
+
+
+def _write_raw(raw: Path, series: dict[str, GSE] | None = None) -> None:
+    raw.mkdir(parents=True)
+    for accession in _ALL_SERIES:
+        name = f"{accession}_family.soft.gz"
+        (raw / name).write_bytes(b"placeholder: process() reads the .pkl")
+    _write_table_s1(raw / "kemmeren2014_table_s1.xlsx")
+    for accession, gse in (series or _fixture_series()).items():
         with open(raw / f"{accession}.pkl", "wb") as handle:
             pickle.dump(gse, handle)
 
@@ -293,17 +262,6 @@ def dataset(tmp_path: Path) -> m.MicroarrayKemmeren2014Dataset:
     root = tmp_path / "kemmeren"
     _write_raw(root / "raw")
     return m.MicroarrayKemmeren2014Dataset(root=str(root))
-
-
-def _nan_safe(value: Any) -> Any:
-    """Replace float NaN by a string so two dumps compare exactly (NaN != NaN)."""
-    if isinstance(value, dict):
-        return {k: _nan_safe(v) for k, v in value.items()}
-    if isinstance(value, list):
-        return [_nan_safe(v) for v in value]
-    if isinstance(value, float) and math.isnan(value):
-        return _NAN
-    return value
 
 
 _ENVIRONMENT = Environment(
@@ -318,37 +276,52 @@ _PUBLICATION = Publication(
 )
 
 
+def _gaps(note: str) -> list[ProvenanceGap]:
+    return [
+        ProvenanceGap(
+            field=field,
+            reason=ProvenanceGapReason.not_applicable_single_measurement,
+            note=note,
+        )
+        for field in ("expression_log2_ratio_se", "expression_log2_ratio_variance")
+    ]
+
+
+def _per_gene(q0010: float, yal001c: float, ybr001c: float) -> dict[str, float]:
+    return {"Q0010": q0010, "YAL001C": yal001c, "YBR001C": ybr001c}
+
+
 def _experiment(
-    orf: str,
-    name: str,
+    deletion: tuple[str, str] | None,
+    replicate_id: str,
     log2: dict[str, float],
-    se: dict[str, float],
-    var: dict[str, float],
-    n: dict[str, int],
     linear: dict[str, float],
 ) -> MicroarrayExpressionExperiment:
+    perturbations: list[GenePerturbationType] = (
+        []
+        if deletion is None
+        else [
+            KanMxDeletionPerturbation(
+                systematic_gene_name=deletion[0], perturbed_gene_name=deletion[1]
+            )
+        ]
+    )
     return MicroarrayExpressionExperiment(
         dataset_name=_DATASET,
-        genotype=Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=orf, perturbed_gene_name=name
-                )
-            ]
-        ),
+        genotype=Genotype(perturbations=perturbations),
         environment=_ENVIRONMENT,
         phenotype=MicroarrayExpressionPhenotype(
             expression=linear,
             expression_log2_ratio=log2,
-            expression_log2_ratio_se=se,
-            expression_log2_ratio_variance=var,
-            n_replicates=n,
+            n_replicates=dict.fromkeys(_GENES, 1),
+            replicate_id=replicate_id,
+            provenance_gaps=_gaps(m._SINGLE_CULTURE_NOTE),
         ),
     )
 
 
 def _reference(
-    strain: str, refpool: dict[str, float], n: dict[str, int]
+    strain: str, refpool: dict[str, float]
 ) -> MicroarrayExpressionExperimentReference:
     return MicroarrayExpressionExperimentReference(
         dataset_name=_DATASET,
@@ -361,75 +334,81 @@ def _reference(
         environment_reference=_ENVIRONMENT,
         phenotype_reference=MicroarrayExpressionPhenotype(
             expression=refpool,
-            expression_log2_ratio=dict.fromkeys(refpool, 0.0),
-            n_replicates=n,
+            expression_log2_ratio=dict.fromkeys(_GENES, 0.0),
+            n_replicates=dict.fromkeys(_GENES, 1),
+            provenance_gaps=_gaps(m._REFERENCE_READING_NOTE),
         ),
     )
 
 
-_NANF = float("nan")
-# The variance is stored as sd**2 with sd = np.std(ddof=1) = sqrt(2), which squares back
-# to 2.0000000000000004 in floating point, not 2.0.
-_SD2 = math.sqrt(2.0)
-_CUP9 = _experiment(
-    "YPL177C",
-    "CUP9",
-    {"Q0010": 2.0, "YAL001C": 0.0, "YBR001C": 0.0},
-    {"Q0010": _NANF, "YAL001C": 1.0, "YBR001C": 1.0},
-    {"Q0010": _NANF, "YAL001C": _SD2**2, "YBR001C": _SD2**2},
-    {"Q0010": 1, "YAL001C": 2, "YBR001C": 2},
-    {"Q0010": 4.0, "YAL001C": 5.0, "YBR001C": 5.0},
-)
-_HSN1 = _experiment(
-    "YHR127W",
-    "HSN1",
-    {"Q0010": -1.0, "YAL001C": 0.0, "YBR001C": 1.0},
-    dict.fromkeys(("Q0010", "YAL001C", "YBR001C"), _NANF),
-    dict.fromkeys(("Q0010", "YAL001C", "YBR001C"), _NANF),
-    {"Q0010": 1, "YAL001C": 1, "YBR001C": 1},
-    {"Q0010": 1.0, "YAL001C": 3.0, "YBR001C": 6.0},
-)
-_REF_CUP9 = _reference(
-    "BY4741",
-    {"Q0010": 1.0, "YAL001C": 4.0, "YBR001C": 4.0},
-    {"Q0010": 1, "YAL001C": 2, "YBR001C": 2},
-)
-_REF_HSN1 = _reference(
-    "BY4742",
-    {"Q0010": 2.0, "YAL001C": 3.0, "YBR001C": 3.0},
-    {"Q0010": 1, "YAL001C": 1, "YBR001C": 1},
-)
-_ONES = dict.fromkeys(("Q0010", "YAL001C", "YBR001C"), 1)
-_CDK8 = _experiment(
-    "YPL042C",
-    "CDK8",
-    dict.fromkeys(("Q0010", "YAL001C", "YBR001C"), 0.0),
-    dict.fromkeys(("Q0010", "YAL001C", "YBR001C"), _NANF),
-    dict.fromkeys(("Q0010", "YAL001C", "YBR001C"), _NANF),
-    _ONES,
-    dict.fromkeys(("Q0010", "YAL001C", "YBR001C"), 1.0),
-)
-_REF_CDK8 = _reference(
-    "BY4742", dict.fromkeys(("Q0010", "YAL001C", "YBR001C"), 1.0), _ONES
-)
+def _flat(value: float) -> dict[str, float]:
+    return dict.fromkeys(_GENES, value)
 
 
-def test_two_deletions_build_with_within_array_log2_statistics(
+_CUP9 = ("YPL177C", "CUP9")
+_HSN1 = ("YHR127W", "HSN1")
+_CDK8 = ("YPL042C", "CDK8")
+# (experiment, reference) of records 0..8, the module docstring's table
+_EXPECTED = [
+    (
+        _experiment(
+            _CUP9, "[HS1991] cup9-del-a", _per_gene(2, 0, 1), _per_gene(4, 5, 8)
+        ),
+        _reference("BY4741", _per_gene(1, 4, 4)),
+    ),
+    (
+        _experiment(_CUP9, "cup9-del-b", _per_gene(-1, 1.5, -1), _per_gene(1, 8, 2)),
+        _reference("BY4741", _per_gene(2, 3, 4)),
+    ),
+    (
+        _experiment(_HSN1, "Sample X", _per_gene(-1, 0, 1), _per_gene(1, 3, 6)),
+        _reference("BY4742", _per_gene(2, 3, 3)),
+    ),
+    (
+        _experiment(_CDK8, "cdk8-del-a", _flat(0.0), _flat(1.0)),
+        _reference("BY4742", _flat(1.0)),
+    ),
+    (
+        _experiment(None, "wt-ic004-a", _flat(0.0), _flat(1.0)),
+        _reference("BY4742", _flat(1.0)),
+    ),
+    (
+        _experiment(None, "wt-htp07-a", _flat(2.0), _flat(4.0)),
+        _reference("BY4742", _flat(1.0)),
+    ),
+    (
+        _experiment(None, "wt-matA-THM012-a", _flat(0.0), _flat(2.0)),
+        _reference("BY4741", _flat(2.0)),
+    ),
+    (
+        _experiment(None, "wt-matA-1-a", _flat(1.0), _flat(2.0)),
+        _reference("BY4741", _flat(1.0)),
+    ),
+    (
+        _experiment(None, "wt-matA-1-b", _flat(-1.0), _flat(1.0)),
+        _reference("BY4741", _flat(2.0)),
+    ),
+]
+
+
+def _assert_records(built: m.MicroarrayKemmeren2014Dataset) -> None:
+    assert len(built) == len(_EXPECTED)
+    for i, (experiment, reference) in enumerate(_EXPECTED):
+        assert built[i]["experiment"] == experiment.model_dump(), i
+        assert built[i]["reference"] == reference.model_dump(), i
+        assert built[i]["publication"] == _PUBLICATION.model_dump()
+
+
+def test_every_array_is_one_record_in_release_order(
     dataset: m.MicroarrayKemmeren2014Dataset,
 ) -> None:
-    """Record 0 is CUP9 (two dye-swapped arrays, MATa), record 1 HSN1 (one array,
-    MATalpha, named only in ``characteristics_ch1``), record 2 CDK8 (the pinned
-    release title name -> YPL042C, MATalpha through YPL042C's Table S1 row). The deleted
-    gene is not on the platform, so the ratios are the docstring's within-array values.
+    """Nine arrays, nine records (the module docstring's table): CUP9's two dye-swapped
+    arrays stay two records, the WT series follow with empty genotypes, and a gene's
+    two spots are averaged inside its record (YAL001C on GSM2: log2 1 and 2 -> 1.5,
+    signals 8 and 8 -> 8, refpool 4 and 2 -> 3). Every record has n_replicates 1, no
+    SE or variance (two typed gaps) and its GEO title as replicate_id.
     """
-    assert len(dataset) == 3
-    assert _nan_safe(dataset[0]["experiment"]) == _nan_safe(_CUP9.model_dump())
-    assert _nan_safe(dataset[1]["experiment"]) == _nan_safe(_HSN1.model_dump())
-    assert _nan_safe(dataset[2]["experiment"]) == _nan_safe(_CDK8.model_dump())
-    assert dataset[0]["reference"] == _REF_CUP9.model_dump()
-    assert dataset[1]["reference"] == _REF_HSN1.model_dump()
-    assert dataset[2]["reference"] == _REF_CDK8.model_dump()
-    assert dataset[0]["publication"] == _PUBLICATION.model_dump()
+    _assert_records(dataset)
     assert (
         dataset.resolved_by_table_s1_gene,
         dataset.resolved_by_table_s1_orf,
@@ -442,11 +421,14 @@ def test_two_deletions_build_with_within_array_log2_statistics(
     }
 
 
-def test_side_files_gene_set_reference_index_and_sample_table(
+def test_side_files_gene_set_reference_index_and_record_table(
     dataset: m.MicroarrayKemmeren2014Dataset,
 ) -> None:
-    """One reference per record; ``data.csv`` lists all five deletion-GSE samples with
-    the resolved ORF (empty for the wildtype).
+    """Each record's reference is its own array's refpool reading, so records share
+    a reference only when two readings are identical (here CDK8 and two MATalpha WT
+    arrays read 1 everywhere, and two MATa WT arrays read 2). ``data.csv`` has one row
+    per record with its series, GSM, title, deletion, strain and the dye of the
+    reference channel. The gene set holds the three deleted ORFs.
     """
     preprocess = Path(dataset.root) / "preprocess"
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
@@ -455,26 +437,52 @@ def test_side_files_gene_set_reference_index_and_sample_table(
         "YPL177C",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [[0], [1], [2]]
+    groups = [[0], [1], [2], [3, 4, 5], [6, 8], [7]]
+    assert [entry["member_indices"] for entry in index] == groups
     assert [entry["reference"] for entry in index] == [
-        _REF_CUP9.model_dump(),
-        _REF_HSN1.model_dump(),
-        _REF_CDK8.model_dump(),
+        _EXPECTED[members[0]][1].model_dump() for members in groups
     ]
     samples = pd.read_csv(preprocess / "data.csv", keep_default_na=False)
     assert samples.to_dict(orient="list") == {
-        "geo_accession": ["GSM1", "GSM2", "GSM3", "GSM4", "GSM5"],
-        "title": [
+        "record_index": list(range(9)),
+        "series": [
+            "GSE42527",
+            "GSE42527",
+            "GSE42526",
+            "GSE42526",
+            "GSE42215",
+            "GSE42217",
+            "GSE42240",
+            "GSE42241",
+            "GSE42241",
+        ],
+        "geo_accession": ["GSM1", "GSM2", "GSM3", "GSM5", "W5", "W4", "W3", "W1", "W2"],
+        "replicate_id": [
             "[HS1991] cup9-del-a",
             "cup9-del-b",
             "Sample X",
-            "wt control",
             "cdk8-del-a",
+            "wt-ic004-a",
+            "wt-htp07-a",
+            "wt-matA-THM012-a",
+            "wt-matA-1-a",
+            "wt-matA-1-b",
         ],
-        "systematic_gene_name": ["YPL177C", "YPL177C", "YHR127W", "", "YPL042C"],
-        "is_deletion": [True, True, True, False, True],
-        "is_wildtype": [False, False, False, True, False],
-        "is_responsive_mutant": [True, True, False, False, False],
+        "systematic_gene_name": ["YPL177C", "YPL177C", "YHR127W", "YPL042C"] + [""] * 5,
+        "perturbed_gene_name": ["CUP9", "CUP9", "HSN1", "CDK8"] + [""] * 5,
+        "strain": ["BY4741", "BY4741", "BY4742", "BY4742", "BY4742", "BY4742"]
+        + ["BY4741"] * 3,
+        "reference_dye": [
+            "Cy5",
+            "Cy3",
+            "Cy3",
+            "Cy5",
+            "Cy5",
+            "Cy5",
+            "Cy5",
+            "Cy5",
+            "Cy3",
+        ],
     }
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert manifest["dataset_name"] == "kemmeren"
@@ -530,7 +538,7 @@ def test_channels_come_from_geo_metadata_not_from_the_title() -> None:
     not mistaken for a reference.
     """
     columns = m.MicroarrayKemmeren2014Dataset._channel_columns
-    ones = [1.0, 1.0, 1.0]
+    ones = _ONES
     assert columns(_gsm("A", "cup9-del-a", ones, ones, "Cy5", "cup9-del")) == (
         "Signal Norm_Cy3",
         "Signal Norm_Cy5",
@@ -565,87 +573,332 @@ def test_channels_come_from_geo_metadata_not_from_the_title() -> None:
         columns(swapped)
 
 
-def test_extract_channels_pairs_the_two_signals_of_each_row() -> None:
-    """``ycr087c-a-del-b`` with the refpool in Cy3: the deletion values are the Cy5
-    column and the refpool values the Cy3 column, row by row, the unmapped probe 4
-    skipped; a missing signal column raises.
+def test_array_signals_average_a_genes_spots_and_never_read_value() -> None:
+    """GSM2 (deletion Cy5 8, 2, 1, 8; refpool Cy3 4, 4, 2, 2): YAL001C's two spots give
+    log2 1 and 2, mean 1.5, signals 8 and 8, refpool 4 and 2; the one-spot genes keep
+    their spot; the unmapped probe 4 is left out. ``VALUE`` (99) is not read, and a
+    table without it still builds. A missing signal column, a 0 or a missing signal
+    raises naming the array, and a non-numeric cell raises from the float cast.
     """
-    extract = m.MicroarrayKemmeren2014Dataset._extract_channels_from_gsm_static
-    gsm = _gsm(
-        "G", "ycr087c-a-del-b", [8.0, 2.0, 4.0], [4.0, 4.0, 1.0], "Cy3", "ycr087c-a-del"
-    )
-    deletion, refpool = extract(gsm, _PROBES)
-    assert dict(deletion) == {"Q0010": 4.0, "YAL001C": 8.0, "YBR001C": 2.0}
-    assert dict(refpool) == {"Q0010": 1.0, "YAL001C": 4.0, "YBR001C": 4.0}
-    gsm.table = gsm.table.drop(columns=["Signal Norm_Cy3"])
-    with pytest.raises(
-        ValueError, match=re.escape("G: column 'Signal Norm_Cy3' missing")
-    ):
-        extract(gsm, _PROBES)
-
-
-def test_replicate_pairs_are_one_pair_per_array_in_array_order() -> None:
-    """GSM1 (refpool Cy5 4, 4, 1; deletion Cy3 2, 8, 0) then GSM2 (deletion Cy5 8, 2,
-    4; refpool Cy3 4, 4, 1) give per gene the (deletion, refpool) pairs in that order,
-    the 0 signal kept here and dropped later by ``create_expression_experiment``.
-    """
-    collect = m.MicroarrayKemmeren2014Dataset._collect_replicate_pairs_static
-    first = _gsm(
-        "GSM1", "cup9-del-a", [4.0, 4.0, 1.0], [2.0, 8.0, 0.0], "Cy5", "cup9-del"
-    )
-    second = _gsm(
-        "GSM2", "cup9-del-b", [8.0, 2.0, 4.0], [4.0, 4.0, 1.0], "Cy3", "cup9-del"
-    )
-    assert dict(collect([first, second], _PROBES)) == {
-        "Q0010": [(0.0, 1.0), (4.0, 1.0)],
-        "YAL001C": [(2.0, 4.0), (8.0, 4.0)],
-        "YBR001C": [(8.0, 4.0), (2.0, 4.0)],
+    signals = m.MicroarrayKemmeren2014Dataset._array_signals
+    gsm = _gsm("G", "cup9-del-b", [8.0, 2.0, 1.0, 8.0], [4.0, 4.0, 2.0, 2.0], "Cy3")
+    frame = signals(gsm, _PROBES)
+    assert frame.to_dict(orient="index") == {
+        "Q0010": {"log2_ratio": -1.0, "test": 1.0, "reference": 2.0, "n_spots": 1},
+        "YAL001C": {"log2_ratio": 1.5, "test": 8.0, "reference": 3.0, "n_spots": 2},
+        "YBR001C": {"log2_ratio": -1.0, "test": 2.0, "reference": 4.0, "n_spots": 1},
     }
-    assert dict(collect([], _PROBES)) == {}
+    gsm.table = gsm.table.drop(columns=["VALUE"])
+    assert signals(gsm, _PROBES).equals(frame)
+
+    missing = _gsm("M", "x", _ONES, _ONES, "Cy5", "cup9-del")
+    missing.table = missing.table.drop(columns=["Signal Norm_Cy3"])
+    with pytest.raises(
+        ValueError, match=re.escape("M: column 'Signal Norm_Cy3' missing")
+    ):
+        signals(missing, _PROBES)
+    zero = _gsm("Z", "x", [1.0, 1.0, 0.0, 1.0], _ONES, "Cy5", "cup9-del")
+    with pytest.raises(
+        ValueError,
+        match=re.escape("Z: 1 gene spots carry a signal that is not positive"),
+    ):
+        signals(zero, _PROBES)
+    blank = _gsm("B", "x", _ONES, [1.0, float("nan"), 1.0, 1.0], "Cy5", "cup9-del")
+    with pytest.raises(ValueError, match="B: 1 gene spots carry a signal"):
+        signals(blank, _PROBES)
+    # the unmapped probe 4 may read anything: it is not a gene
+    unmapped = _gsm("U", "x", _ONES, _ONES, "Cy5", "cup9-del")
+    unmapped.table.loc[3, "Signal Norm_Cy3"] = 0.0
+    assert list(signals(unmapped, _PROBES).index) == list(_GENES)
+    text = _gsm("T", "x", _ONES, _ONES, "Cy5", "cup9-del")
+    text.table["Signal Norm_Cy3"] = text.table["Signal Norm_Cy3"].astype(object)
+    text.table.loc[1, "Signal Norm_Cy3"] = "n/a"
+    with pytest.raises(ValueError, match="could not convert string to float"):
+        signals(text, _PROBES)
 
 
-def test_channel_check_counts_arrays_with_the_deleted_gene_depleted() -> None:
-    """For YAL001C (probe 1) on two arrays: 2/4 on the first is depleted, 8/4 on the
-    second is not, so the fraction is 0.5; a gene with no probe on the platform, or an
-    array with a 0 signal at that probe, is not counted (NaN when none is).
+def test_create_array_experiment_states_one_culture() -> None:
+    """No strain raises; a deletion gives one ``KanMxDeletionPerturbation``, a
+    ``systematic_gene_name`` of ``None`` the empty genotype. The phenotype carries the
+    frame's per-gene values as floats, n 1, ``replicate_id`` and the two gaps; the
+    reference the refpool values with log2 0, n 1, no replicate_id.
     """
-    check = m.MicroarrayKemmeren2014Dataset._validate_channel_assignment
-    depleted = _gsm("A", "yal001c-del-a", [4.0, 4.0, 1.0], [2.0, 8.0, 0.0], "Cy5", "x")
-    raised = _gsm("B", "yal001c-del-b", [8.0, 2.0, 4.0], [4.0, 4.0, 1.0], "Cy3", "x")
-    zero = _gsm("C", "yal001c-del-a", [4.0, 4.0, 1.0], [0.0, 8.0, 0.0], "Cy5", "x")
-    assert check({"YAL001C": [depleted, raised, zero]}, _PROBES) == 0.5
-    assert check({"YAL001C": [depleted]}, _PROBES) == 1.0
-    assert math.isnan(check({"YPL177C": [depleted], "YAL001C": [zero]}, _PROBES))
+    build = m.MicroarrayKemmeren2014Dataset.create_array_experiment
+    frame = pd.DataFrame(
+        {"log2_ratio": [-1.0], "test": [2.0], "reference": [4.0], "n_spots": [2]},
+        index=pd.Index(["YAL001C"], name="gene"),
+    )
+    with pytest.raises(
+        ValueError,
+        match=re.escape("Strain (BY4741 or BY4742) must be specified in sample_info"),
+    ):
+        build("d", {"systematic_gene_name": None}, frame)
+    info = {
+        "systematic_gene_name": "YAL001C",
+        "perturbed_gene_name": "TFC3",
+        "strain": "BY4741",
+        "replicate_id": "tfc3-del-1-a",
+    }
+    experiment, reference, publication = build("d", info, frame)
+    assert experiment.phenotype.model_dump() == {
+        "graph_level": "node",
+        "label_name": "expression_log2_ratio",
+        "label_statistic_name": "expression_log2_ratio_se",
+        "expression": {"YAL001C": 2.0},
+        "expression_log2_ratio": {"YAL001C": -1.0},
+        "expression_log2_ratio_se": None,
+        "expression_log2_ratio_variance": None,
+        "n_replicates": {"YAL001C": 1},
+        "provenance_gaps": [g.model_dump() for g in _gaps(m._SINGLE_CULTURE_NOTE)],
+        "replicate_id": "tfc3-del-1-a",
+    }
+    assert reference.phenotype_reference.model_dump() == {
+        "graph_level": "node",
+        "label_name": "expression_log2_ratio",
+        "label_statistic_name": "expression_log2_ratio_se",
+        "expression": {"YAL001C": 4.0},
+        "expression_log2_ratio": {"YAL001C": 0.0},
+        "expression_log2_ratio_se": None,
+        "expression_log2_ratio_variance": None,
+        "n_replicates": {"YAL001C": 1},
+        "provenance_gaps": [g.model_dump() for g in _gaps(m._REFERENCE_READING_NOTE)],
+        "replicate_id": None,
+    }
+    assert [p.systematic_gene_name for p in experiment.genotype.perturbations] == [
+        "YAL001C"
+    ]
+    assert reference.genome_reference.strain == "BY4741"
+    assert publication == _PUBLICATION
+    wildtype, _, _ = build("d", {**info, "systematic_gene_name": None}, frame)
+    assert wildtype.genotype.perturbations == []
 
 
-def test_reference_n_replicates_count_the_arrays_in_the_refpool_mean(
+def test_wt_series_strains_are_the_papers_pools() -> None:
+    """GSE42215 and GSE42217 are the MATalpha pools (BY4742), GSE42240 and GSE42241 the
+    MATa pools (BY4741), in the order the records are written.
+    """
+    assert m.WT_SERIES_STRAIN == {
+        "GSE42215": "BY4742",
+        "GSE42217": "BY4742",
+        "GSE42240": "BY4741",
+        "GSE42241": "BY4741",
+    }
+
+
+def _build_with(tmp_path: Path, **changes: list[GSM]) -> None:
+    series = _fixture_series()
+    for accession, gsms in changes.items():
+        series[accession] = _gse(accession, gsms)
+    root = tmp_path / "changed"
+    _write_raw(root / "raw", series)
+    m.MicroarrayKemmeren2014Dataset(root=str(root))
+
+
+def test_an_array_the_build_cannot_state_raises_instead_of_being_dropped(
     tmp_path: Path,
 ) -> None:
-    """#484: the reference ``n_replicates`` describes the stored reference value, the
-    refpool mean over the mutant's own arrays, so it equals the mutant's own count gene
-    by gene (CUP9: Q0010 1 after the 0-signal array is dropped, YAL001C 2, YBR001C 2),
-    never a wildtype-series count (the fixture's MATa series would give 3, 2, 2, and the
-    real series 28 and 400). With the wildtype pickles removed the build is identical,
-    because no stored value reads them.
+    """Every released array becomes a record or stops the build: a deletion-series
+    array that names no deletion, a WT-series array that names one, a WT culture whose
+    name disagrees with its series' mating type (a ``wt-matA`` culture in a MATalpha
+    series, or a plain ``wt`` in a MATa one), and a deletion whose ORF has no Table S1
+    mating type all raise.
+    """
+    wildtype = _gsm("GSM4", "wt control", _ONES, _ONES, "Cy5", "wt")
+    with pytest.raises(ValueError, match="GSM4 of GSE42526 names no deletion"):
+        _build_with(tmp_path / "a", GSE42526=[wildtype])
+    deletion = _gsm("W9", "cup9-del-a", _ONES, _ONES, "Cy5", "cup9-del")
+    with pytest.raises(ValueError, match="W9 of WT series GSE42215 names a deletion"):
+        _build_with(tmp_path / "b", GSE42215=[deletion])
+    mata = _gsm("W8", "wt-matA-9-a", _ONES, _ONES, "Cy5", "wt-matA")
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "W8 of GSE42217: culture 'wt-matA' does not match the series strain BY4742"
+        ),
+    ):
+        _build_with(tmp_path / "c", GSE42217=[mata])
+    plain = _gsm("W7", "wt-7-a", _ONES, _ONES, "Cy5", "wt")
+    with pytest.raises(ValueError, match="does not match the series strain BY4741"):
+        _build_with(tmp_path / "d", GSE42241=[plain])
+    tlc1 = _gsm("GSM8", "tlc1-del-a", _ONES, _ONES, "Cy5", "tlc1-del")
+    series_e = _fixture_series()
+    series_e["GSE42526"] = _gse("GSE42526", [tlc1])
+    root = tmp_path / "e"
+    _write_raw(root / "raw", series_e)
+    workbook = openpyxl.Workbook()
+    workbook.active.append(["orf name", "gene", "mating type"])
+    workbook.active.append(["YPL177C", "CUP9", "MATa"])
+    workbook.active.append(["TLC1", "TLC1", None])
+    workbook.save(root / "raw" / "kemmeren2014_table_s1.xlsx")
+    with pytest.raises(ValueError, match="YNCB0010W has no Table S1 mating type"):
+        m.MicroarrayKemmeren2014Dataset(root=str(root))
+
+
+def test_parallel_build_writes_the_same_records(tmp_path: Path) -> None:
+    """``process_workers=1`` routes through ``_process_parallel`` (one worker process,
+    batches of two arrays); the nine records equal the sequential build's.
     """
     root = tmp_path / "kemmeren"
     _write_raw(root / "raw")
-    for accession in ("GSE42241", "GSE42240", "GSE42217"):
+    dataset = m.MicroarrayKemmeren2014Dataset(
+        root=str(root), process_workers=1, batch_size=2
+    )
+    _assert_records(dataset)
+
+
+class _Done:
+    def __init__(self, value: Any) -> None:
+        self._value = value
+
+    def result(self) -> Any:
+        return self._value
+
+
+class _InlineExecutor:
+    """Runs each submitted batch at once in this process (no pickling, no workers)."""
+
+    def __init__(self, max_workers: int) -> None:
+        self.max_workers = max_workers
+
+    def __enter__(self) -> _InlineExecutor:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+    def submit(self, fn: Any, *args: Any) -> _Done:
+        return _Done(fn(*args))
+
+
+def test_parallel_path_batches_arrays_and_keeps_their_order(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Five arrays in batches of 2 go to ``_build_records`` as [a0, a1], [a2, a3],
+    [a4], and the blobs come back concatenated in submission order.
+    """
+    import logging
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(m, "ProcessPoolExecutor", _InlineExecutor)
+    calls: list[list[str]] = []
+
+    def build(units: list[Any], probes: Any, name: str) -> list[bytes]:
+        calls.append([info for info, _ in units])
+        return [info.encode() for info, _ in units]
+
+    fake = SimpleNamespace(
+        batch_size=2, process_workers=1, _build_records=build, name=_DATASET
+    )
+    units = [(f"a{i}", None) for i in range(5)]
+    with caplog.at_level(logging.INFO, logger=m.__name__):
+        blobs = m.MicroarrayKemmeren2014Dataset._process_parallel(
+            cast(Any, fake), cast(Any, units), {}
+        )
+    assert calls == [["a0", "a1"], ["a2", "a3"], ["a4"]]
+    assert blobs == [b"a0", b"a1", b"a2", b"a3", b"a4"]
+    assert [r.getMessage() for r in caplog.records if r.name == m.__name__] == [
+        "Created 3 batches of size 2"
+    ]
+
+
+def test_channel_check_counts_arrays_with_the_deleted_gene_depleted() -> None:
+    """For YAL001C (probes 1 and 5) on two arrays: depleted on the first (median of
+    -1 and -1), raised on the second, so the fraction is 0.5; a gene with no probe on
+    the platform, or an array with a 0 signal at those probes, is not counted (NaN when
+    none is).
+    """
+    check = m.MicroarrayKemmeren2014Dataset._validate_channel_assignment
+    depleted = _gsm("A", "a", [4.0, 4.0, 1.0, 4.0], [2.0, 8.0, 1.0, 2.0], "Cy5", "x")
+    raised = _gsm("B", "b", [8.0, 2.0, 4.0, 8.0], [4.0, 4.0, 1.0, 4.0], "Cy3", "x")
+    zero = _gsm("C", "c", [4.0, 4.0, 1.0, 4.0], [0.0, 8.0, 1.0, 0.0], "Cy5", "x")
+    assert check({"YAL001C": [depleted, raised, zero]}, _PROBES) == 0.5
+    assert check({"YAL001C": [depleted]}, _PROBES) == 1.0
+    assert np.isnan(check({"YPL177C": [depleted], "YAL001C": [zero]}, _PROBES))
+
+
+def test_process_refetches_missing_pickles(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Without ``GSE42526.pkl`` and ``GSE42240.pkl``, ``process`` calls
+    ``get_GEO(geo=..., destdir=<raw_dir>, silent=False)`` once for each, in build
+    order, and writes the same nine records from the objects it returns.
+    """
+    root = tmp_path / "kemmeren"
+    _write_raw(root / "raw")
+    returned = {}
+    for accession in ("GSE42526", "GSE42240"):
+        with open(root / "raw" / f"{accession}.pkl", "rb") as handle:
+            returned[accession] = pickle.load(handle)
         (root / "raw" / f"{accession}.pkl").unlink()
-    dataset = m.MicroarrayKemmeren2014Dataset(root=str(root))
-    assert len(dataset) == 3
-    for i in range(3):
-        experiment_n = dataset[i]["experiment"]["phenotype"]["n_replicates"]
-        reference = dataset[i]["reference"]["phenotype_reference"]
-        assert reference["n_replicates"] == experiment_n
-        assert set(reference["n_replicates"]) == set(reference["expression"])
-    assert dataset[0]["reference"]["phenotype_reference"]["n_replicates"] == {
-        "Q0010": 1,
-        "YAL001C": 2,
-        "YBR001C": 2,
-    }
-    assert dataset[0]["reference"] == _REF_CUP9.model_dump()
-    assert dataset[1]["reference"] == _REF_HSN1.model_dump()
+    calls: list[dict[str, Any]] = []
+
+    def get_geo(**kwargs: Any) -> Any:
+        calls.append(kwargs)
+        return returned[kwargs["geo"]]
+
+    monkeypatch.setattr(GEOparse, "get_GEO", get_geo)
+    rebuilt = m.MicroarrayKemmeren2014Dataset(root=str(root))
+    assert calls == [
+        {"geo": accession, "destdir": str(root / "raw"), "silent": False}
+        for accession in ("GSE42526", "GSE42240")
+    ]
+    _assert_records(rebuilt)
+
+
+def test_process_reads_genes_from_characteristics_and_refuses_unknown_ones(
+    tmp_path: Path,
+) -> None:
+    """Four arrays titled ``Sample A..D`` name CUP9 only as ``genotype/variation:
+    [HS1991] cup9-del`` (the ``[HS1991]`` prefix is stripped) and give four CUP9
+    records; ``hsn1-del-a`` resolves through the pinned release title names. A
+    ``Sample Z`` naming ``zzz9-del`` in its characteristics is on no release route, so
+    the build raises instead of storing nothing for it.
+    """
+    cup9 = [
+        _gsm(
+            f"C{i}",
+            f"Sample {letter}",
+            _ONES,
+            [2.0] * 4,
+            "Cy5",
+            "cup9-del",
+            characteristics=["genotype/variation: [HS1991] cup9-del"],
+        )
+        for i, letter in enumerate("ABCD")
+    ]
+    hsn1 = _gsm("H1", "hsn1-del-a", _ONES, [4.0] * 4, "Cy5", "hsn1-del")
+    unresolved = _gsm(
+        "Z1",
+        "Sample Z",
+        _ONES,
+        _ONES,
+        "Cy5",
+        "zzz9-del",
+        characteristics=["genotype/variation: zzz9-del"],
+    )
+    with pytest.raises(ValueError, match="title token 'ZZZ9' is neither"):
+        _build_with(tmp_path / "a", GSE42527=[*cup9, hsn1], GSE42526=[unresolved])
+    series = _fixture_series()
+    series["GSE42527"] = _gse("GSE42527", [*cup9, hsn1])
+    series["GSE42526"] = _gse("GSE42526", [])
+    root = tmp_path / "b"
+    _write_raw(root / "raw", series)
+    built = m.MicroarrayKemmeren2014Dataset(root=str(root))
+    assert len(built) == 10
+    for i, letter in enumerate("ABCD"):
+        assert (
+            built[i]["experiment"]
+            == _experiment(
+                _CUP9, f"Sample {letter}", _flat(1.0), _flat(2.0)
+            ).model_dump()
+        )
+    assert (
+        built[4]["experiment"]
+        == _experiment(_HSN1, "hsn1-del-a", _flat(2.0), _flat(4.0)).model_dump()
+    )
+    samples = pd.read_csv(root / "preprocess" / "data.csv", keep_default_na=False)
+    assert samples["geo_accession"].tolist()[:5] == ["C0", "C1", "C2", "C3", "H1"]
+    assert samples["systematic_gene_name"].tolist()[:5] == ["YPL177C"] * 4 + ["YHR127W"]
 
 
 def test_resolution_routes_are_release_only(
@@ -701,7 +954,7 @@ def test_an_unknown_title_token_raises_instead_of_being_skipped(
     _write_raw(root / "raw")
     with open(root / "raw" / "GSE42526.pkl", "rb") as handle:
         gse = pickle.load(handle)
-    zzz9 = _gsm("GSM6", "zzz9-del-a", [1.0] * 3, [1.0] * 3, "Cy5", "zzz9-del")
+    zzz9 = _gsm("GSM6", "zzz9-del-a", _ONES, _ONES, "Cy5", "zzz9-del")
     gse.gsms["GSM6"] = zzz9
     with open(root / "raw" / "GSE42526.pkl", "wb") as handle:
         pickle.dump(gse, handle)
@@ -725,82 +978,11 @@ def test_release_title_names_without_an_orf_is_the_pinned_kg_3_residue() -> None
     assert len(set(table.values())) == 38
 
 
-def test_create_expression_experiment_from_pairs() -> None:
-    """No strain raises; no pair, or only pairs with a non-positive signal, returns the
-    ``(None, None, None)`` skip; pairs (2, 4) and (8, 4) give log2 -1 and +1, mean 0,
-    SE 1, variance 2.0000000000000004, n 2, linear 5, refpool 4, and the reference
-    ``n_replicates`` is the 2 arrays of that refpool mean.
-    """
-    build = m.MicroarrayKemmeren2014Dataset.create_expression_experiment
-    with pytest.raises(
-        ValueError,
-        match=re.escape("Strain (BY4741 or BY4742) must be specified in sample_info"),
-    ):
-        build("d", {"systematic_gene_name": "YAL001C"}, {})
-    info = {
-        "systematic_gene_name": "YAL001C",
-        "perturbed_gene_name": "TFC3",
-        "strain": "BY4741",
-    }
-    assert build("d", info, {}) == (None, None, None)
-    assert build("d", info, {"YAL001C": [(0.0, 1.0), (1.0, 0.0)]}) == (None, None, None)
-    experiment, reference, publication = build(
-        "d", info, {"YAL001C": [(2.0, 4.0), (8.0, 4.0)]}
-    )
-    assert experiment.phenotype.model_dump() == {
-        "graph_level": "node",
-        "label_name": "expression_log2_ratio",
-        "label_statistic_name": "expression_log2_ratio_se",
-        "expression": {"YAL001C": 5.0},
-        "expression_log2_ratio": {"YAL001C": 0.0},
-        "expression_log2_ratio_se": {"YAL001C": 1.0},
-        "expression_log2_ratio_variance": {"YAL001C": _SD2**2},
-        "n_replicates": {"YAL001C": 2},
-        "provenance_gaps": [],
-        "replicate_id": None,
-    }
-    assert reference.phenotype_reference.model_dump() == {
-        "graph_level": "node",
-        "label_name": "expression_log2_ratio",
-        "label_statistic_name": "expression_log2_ratio_se",
-        "expression": {"YAL001C": 4.0},
-        "expression_log2_ratio": {"YAL001C": 0.0},
-        "expression_log2_ratio_se": None,
-        "expression_log2_ratio_variance": None,
-        "n_replicates": {"YAL001C": 2},
-        "provenance_gaps": [],
-        "replicate_id": None,
-    }
-    assert reference.genome_reference.strain == "BY4741"
-    assert publication == _PUBLICATION
-
-
-def test_parallel_build_writes_the_same_records(tmp_path: Path) -> None:
-    """``process_workers=1`` routes through ``_process_parallel`` and the static batch
-    helpers (one worker process, batches of one gene); the three stored records, their
-    references and the publication equal the sequential build's.
-    """
-    root = tmp_path / "kemmeren"
-    _write_raw(root / "raw")
-    dataset = m.MicroarrayKemmeren2014Dataset(
-        root=str(root), process_workers=1, batch_size=1
-    )
-    assert len(dataset) == 3
-    assert _nan_safe(dataset[0]["experiment"]) == _nan_safe(_CUP9.model_dump())
-    assert _nan_safe(dataset[1]["experiment"]) == _nan_safe(_HSN1.model_dump())
-    assert _nan_safe(dataset[2]["experiment"]) == _nan_safe(_CDK8.model_dump())
-    assert dataset[0]["reference"] == _REF_CUP9.model_dump()
-    assert dataset[1]["reference"] == _REF_HSN1.model_dump()
-    assert dataset[2]["reference"] == _REF_CDK8.model_dump()
-    assert dataset[0]["publication"] == _PUBLICATION.model_dump()
-
-
 # ---------------------------------------------------------------------------
 # 2026.10.06 (Phase 21): download, the batch path, resolution and Table S1 branches.
 # ---------------------------------------------------------------------------
 
 _TABLE_S1_URL = "https://uofi.box.com/shared/static/9n6ruj58ueup0cebhnek8ijdcy4om0bi"
-_ALL_SERIES = ["GSE42527", "GSE42526", "GSE42241", "GSE42240", "GSE42217", "GSE42215"]
 
 
 class _FakeResponse:
@@ -993,88 +1175,6 @@ def test_geo_download_refusal_names_the_failing_series(
     assert sorted(p.name for p in raw.glob("*.pkl")) == written
 
 
-def test_process_refetches_a_missing_deletion_pickle(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Without ``GSE42526.pkl``, ``process`` calls ``get_GEO(geo="GSE42526",
-    destdir=<raw_dir>, silent=False)`` once and builds the same three records
-    from the object it returns.
-    """
-    root = tmp_path / "kemmeren"
-    _write_raw(root / "raw")
-    with open(root / "raw" / "GSE42526.pkl", "rb") as handle:
-        gse = pickle.load(handle)
-    (root / "raw" / "GSE42526.pkl").unlink()
-    calls: list[dict[str, Any]] = []
-
-    def get_geo(**kwargs: Any) -> Any:
-        calls.append(kwargs)
-        return gse
-
-    monkeypatch.setattr(GEOparse, "get_GEO", get_geo)
-    rebuilt = m.MicroarrayKemmeren2014Dataset(root=str(root))
-    assert calls == [{"geo": "GSE42526", "destdir": str(root / "raw"), "silent": False}]
-    assert len(rebuilt) == 3
-    assert _nan_safe(rebuilt[0]["experiment"]) == _nan_safe(_CUP9.model_dump())
-    assert _nan_safe(rebuilt[1]["experiment"]) == _nan_safe(_HSN1.model_dump())
-
-
-def _raw_gsms(dataset: m.MicroarrayKemmeren2014Dataset) -> dict[str, GSM]:
-    gsms: dict[str, GSM] = {}
-    for accession in ("GSE42527", "GSE42526"):
-        with open(Path(dataset.raw_dir) / f"{accession}.pkl", "rb") as handle:
-            gsms.update(pickle.load(handle).gsms)
-    return gsms
-
-
-def test_process_batch_matches_process_sequential_record_by_record(
-    dataset: m.MicroarrayKemmeren2014Dataset,
-) -> None:
-    """Five genes in order: YPL177C (GSM1 + GSM2) -> ``_CUP9``; YPL042C (GSM5) ->
-    ``_CDK8``; YAL001C with no arrays has no pairs and is skipped; YHR127W (GSM3) ->
-    ``_HSN1``; YNCB0010W has no key of its own in the Table S1 strain map (only the
-    TLC1 row does; the join is made by ``resolve_gene_name_comprehensive``, not run
-    here) and is skipped by the kept "not in Table S1" path. The static batch path
-    (only ever run in worker processes) and the sequential path write the same three
-    records in order.
-    """
-    gsms = _raw_gsms(dataset)
-    zero = _gsm("Z", "tlc1-del-a", [1.0, 1.0, 1.0], [0.0, 0.0, 0.0], "Cy5", "tlc1-del")
-    groups = {
-        "YPL177C": [gsms["GSM1"], gsms["GSM2"]],
-        "YPL042C": [gsms["GSM5"]],
-        "YAL001C": [],
-        "YHR127W": [gsms["GSM3"]],
-        "YNCB0010W": [zero],
-    }
-    strains, _ = dataset._load_mating_type_map()
-    batch = m.MicroarrayKemmeren2014Dataset._process_batch(
-        list(groups.items()), _PROBES, strains, _DATASET, dataset.released_gene_names
-    )
-    records = [pickle.loads(blob) for blob in batch]
-    expected = [
-        (_CUP9.model_dump(), _REF_CUP9.model_dump()),
-        (_CDK8.model_dump(), _REF_CDK8.model_dump()),
-        (_HSN1.model_dump(), _REF_HSN1.model_dump()),
-    ]
-    assert len(records) == 3
-    for record, (experiment, reference) in zip(records, expected, strict=True):
-        assert _nan_safe(record["experiment"]) == _nan_safe(experiment)
-        assert record["reference"] == reference
-        assert record["publication"] == _PUBLICATION.model_dump()
-
-    dataset.close_lmdb()
-    lmdb_dir = Path(dataset.processed_dir) / "lmdb"
-    for child in lmdb_dir.iterdir():
-        child.unlink()
-    dataset._process_sequential(groups, _PROBES, strains)
-    env = lmdb.open(str(lmdb_dir), readonly=True, lock=False)
-    with env.begin() as txn:
-        sequential = [pickle.loads(value) for _, value in txn.cursor()]
-    env.close()
-    assert [_nan_safe(r) for r in sequential] == [_nan_safe(r) for r in records]
-
-
 def test_probe_mapping_branches(dataset: m.MicroarrayKemmeren2014Dataset) -> None:
     """Finding: the three "Clean and validate gene name" arms (kemmeren2014.py lines
     923-937) all store ``gene_name.upper()``, so a control probe ``Empty`` maps to the
@@ -1205,296 +1305,59 @@ def test_already_assigned_is_accepted_and_ignored(
     assert resolve("cup9", common, {}, None) == "YPL177C"
 
 
-def test_processing_summary_cannot_report_duplicate_deletions(
-    dataset: m.MicroarrayKemmeren2014Dataset, caplog: pytest.LogCaptureFixture
-) -> None:
-    """Finding: ``_log_processing_summary`` counts the KEYS of a dict (line 1320), so
-    every count is 1 and the "duplicate gene deletions" branch (lines 1324-1326) can
-    never run, however many arrays a gene has. The logged lines are exact. Pinned
-    until it counts arrays per gene or the branch is removed.
+# ---------------------------------------------------------------------------
+# 2026.11.24: the real six GEO series, one record per array (#1178)
+# ---------------------------------------------------------------------------
+
+_REAL_RAW = Path(
+    os.environ.get("DATA_ROOT", "/nonexistent"),
+    "data/torchcell/microarray_kemmeren2014/raw",
+)
+
+
+@pytest.mark.slow
+@pytest.mark.timeout(1800)  # the build loads 2.5 GB of GEO pickles (342 s)
+@pytest.mark.skipif(
+    not (_REAL_RAW / "GSE42527.pkl").exists(),
+    reason=f"requires the six Kemmeren 2014 GEO pickles and Table S1 in {_REAL_RAW}",
+)
+def test_the_real_series_give_one_record_per_array(tmp_path: Path) -> None:
+    """3,061 records: the 1,387 + 1,246 deletion arrays of 1,484 mutants (1,149 with
+    two arrays, 335 with one) and the 200 + 200 + 8 + 20 WT arrays, each a distinct
+    GEO title, every one measuring all 6,169 platform genes with n_replicates 1. The
+    raw files are linked into ``tmp_path``; nothing is written beside them.
     """
-    samples = [
-        {"is_deletion": True, "is_wildtype": False},
-        {"is_deletion": True, "is_wildtype": False},
-        {"is_deletion": False, "is_wildtype": True},
-    ]
-    with caplog.at_level("INFO", logger=m.log.name):
-        dataset._log_processing_summary({"YAL001C": ["a", "b"]}, samples)
-    assert [r.getMessage() for r in caplog.records if r.name == m.log.name] == [
-        "Processed 1 unique gene deletion experiments",
-        "Total samples: 3, Deletion samples: 2, Wildtype: 1",
-        "Unique gene deletions: 1",
-    ]
-
-
-def test_process_reads_genes_from_characteristics_and_refuses_unknown_ones(
-    tmp_path: Path,
-) -> None:
-    """A build whose Table S1 matches the resolved ORFs exactly: four arrays titled
-    ``Sample A..D`` name CUP9 only as ``genotype/variation: [HS1991] cup9-del`` (the
-    ``[HS1991]`` prefix is stripped); ``hsn1-del-a`` resolves through the pinned
-    release title names. A ``Sample Z`` naming ``zzz9-del`` in its characteristics is on
-    no release route, so the build raises instead of storing nothing for it.
-
-    CUP9: four identical arrays, deletion 2 and refpool 1 -> log2 1, sample SD 0, so
-    SE 0 and variance 0, n 4, linear 2, refpool 1. HSN1: deletion 4, refpool 1 -> log2
-    2, n 1, NaN SE and variance.
-    """
-    raw = tmp_path / "k2" / "raw"
+    raw = tmp_path / "kemmeren" / "raw"
     raw.mkdir(parents=True)
-    for accession in _ALL_SERIES:
-        (raw / f"{accession}_family.soft.gz").write_bytes(b"placeholder")
-    _write_sheet(
-        raw / "kemmeren2014_table_s1.xlsx",
-        [
-            ["orf name", "gene", "mating type"],
-            ["YPL177C", "CUP9", "MATa"],
-            ["YHR127W", "HSN1", "MATalpha"],
-        ],
-    )
-    cup9 = [
-        _gsm(
-            f"C{i}",
-            f"Sample {letter}",
-            [1.0, 1.0, 1.0],
-            [2.0, 2.0, 2.0],
-            "Cy5",
-            "cup9-del",
-            characteristics=["genotype/variation: [HS1991] cup9-del"],
-        )
-        for i, letter in enumerate("ABCD")
-    ]
-    hsn1 = _gsm("H1", "hsn1-del-a", [1.0, 1.0, 1.0], [4.0, 4.0, 4.0], "Cy5", "hsn1-del")
-    unresolved = _gsm(
-        "Z1",
-        "Sample Z",
-        [1.0, 1.0, 1.0],
-        [1.0, 1.0, 1.0],
-        "Cy5",
-        "zzz9-del",
-        characteristics=["genotype/variation: zzz9-del"],
-    )
-    for accession, gsms in (("GSE42527", [*cup9, hsn1]), ("GSE42526", [unresolved])):
-        with open(raw / f"{accession}.pkl", "wb") as handle:
-            pickle.dump(_gse(accession, gsms), handle)
-    with pytest.raises(ValueError, match="title token 'ZZZ9' is neither"):
-        m.MicroarrayKemmeren2014Dataset(root=str(raw.parent))
-    with open(raw / "GSE42526.pkl", "wb") as handle:
-        pickle.dump(_gse("GSE42526", []), handle)
+    for source in _REAL_RAW.iterdir():
+        (raw / source.name).symlink_to(source)
     built = m.MicroarrayKemmeren2014Dataset(root=str(raw.parent))
-    genes = ("Q0010", "YAL001C", "YBR001C")
-    cup9_expected = _experiment(
-        "YPL177C",
-        "CUP9",
-        dict.fromkeys(genes, 1.0),
-        dict.fromkeys(genes, 0.0),
-        dict.fromkeys(genes, 0.0),
-        dict.fromkeys(genes, 4),
-        dict.fromkeys(genes, 2.0),
-    )
-    hsn1_expected = _experiment(
-        "YHR127W",
-        "HSN1",
-        dict.fromkeys(genes, 2.0),
-        dict.fromkeys(genes, _NANF),
-        dict.fromkeys(genes, _NANF),
-        dict.fromkeys(genes, 1),
-        dict.fromkeys(genes, 4.0),
-    )
-    assert len(built) == 2
-    assert _nan_safe(built[0]["experiment"]) == _nan_safe(cup9_expected.model_dump())
-    assert _nan_safe(built[1]["experiment"]) == _nan_safe(hsn1_expected.model_dump())
-    assert (
-        built[0]["reference"]
-        == _reference(
-            "BY4741", dict.fromkeys(genes, 1.0), dict.fromkeys(genes, 4)
-        ).model_dump()
-    )
+    assert len(built) == 3061
     samples = pd.read_csv(raw.parent / "preprocess" / "data.csv", keep_default_na=False)
-    assert samples[
-        ["geo_accession", "systematic_gene_name", "is_deletion", "is_wildtype"]
-    ].to_dict(orient="list") == {
-        "geo_accession": ["C0", "C1", "C2", "C3", "H1"],
-        "systematic_gene_name": ["YPL177C"] * 4 + ["YHR127W"],
-        "is_deletion": [True] * 5,
-        "is_wildtype": [False] * 5,
+    assert samples["series"].value_counts().to_dict() == {
+        "GSE42527": 1387,
+        "GSE42526": 1246,
+        "GSE42215": 200,
+        "GSE42217": 200,
+        "GSE42241": 20,
+        "GSE42240": 8,
     }
-
-
-def test_parallel_path_logs_written_records_as_attempted_genes(
-    dataset: m.MicroarrayKemmeren2014Dataset, caplog: pytest.LogCaptureFixture
-) -> None:
-    """Finding: ``_process_batch`` drops a skipped gene instead of returning ``None``
-    for it, so in ``_process_parallel`` (lines 693-713) every result is bytes: the
-    ``skipped_genes`` branch can never run and "Total gene deletions attempted" logs
-    the WRITTEN count. Five genes go in (the five-group set of the batch test), three
-    records are written, and the log says 3 attempted with no skip warning, where
-    ``_process_sequential`` says 5 attempted and warns of 2 skipped. Reach: the served
-    build takes the sequential path (``build_dataset_lmdb`` passes no
-    ``process_workers``); only ``experiments/012-sameith-kemmeren/scripts/
-    kemmeren_volcano.py`` (``process_workers=10``) reaches this log line, and no record
-    differs. Pinned until the batch path reports its skips.
-    """
-    gsms = _raw_gsms(dataset)
-    zero = _gsm("Z", "tlc1-del-a", [1.0, 1.0, 1.0], [0.0, 0.0, 0.0], "Cy5", "tlc1-del")
-    groups = {
-        "YPL177C": [gsms["GSM1"], gsms["GSM2"]],
-        "YPL042C": [gsms["GSM5"]],
-        "YAL001C": [],
-        "YHR127W": [gsms["GSM3"]],
-        "YNCB0010W": [zero],
+    deletions = samples[samples["systematic_gene_name"] != ""]
+    assert deletions["systematic_gene_name"].nunique() == 1484
+    assert deletions.groupby(
+        "systematic_gene_name"
+    ).size().value_counts().to_dict() == {2: 1149, 1: 335}
+    assert samples["replicate_id"].is_unique
+    assert samples.groupby("series")["strain"].unique().map(sorted).to_dict() == {
+        "GSE42215": ["BY4742"],
+        "GSE42217": ["BY4742"],
+        "GSE42240": ["BY4741"],
+        "GSE42241": ["BY4741"],
+        "GSE42526": ["BY4741", "BY4742"],
+        "GSE42527": ["BY4741", "BY4742"],
     }
-    strains, _ = dataset._load_mating_type_map()
-    dataset.close_lmdb()
-    dataset.process_workers = 1
-    dataset.batch_size = 2
-    lmdb_dir = Path(dataset.processed_dir) / "lmdb"
-
-    def messages(run: Any) -> list[str]:
-        for child in lmdb_dir.iterdir():
-            child.unlink()
-        caplog.clear()
-        with caplog.at_level("INFO", logger=m.log.name):
-            run(groups, _PROBES, strains)
-        return [
-            r.getMessage()
-            for r in caplog.records
-            if r.name == m.log.name
-            and r.getMessage().startswith(("Wrote", "Total", "Skipped"))
-        ]
-
-    assert messages(dataset._process_parallel) == [
-        "Wrote 3 experiments to LMDB",
-        "Total gene deletions attempted: 3",
-    ]
-    assert messages(dataset._process_sequential) == [
-        "Wrote 3 experiments to LMDB",
-        "Total gene deletions attempted: 5",
-        "Skipped 2 genes (could not calculate log2 ratios)",
-    ]
-
-
-def test_extract_channels_skips_a_non_numeric_cell() -> None:
-    """A row whose signal cell is not a number is skipped by the ``ValueError`` guard;
-    the other rows keep their (test, reference) pair.
-    """
-    gsm = _gsm("N", "cup9-del-a", [4.0, 4.0, 1.0], [2.0, 8.0, 0.0], "Cy5", "cup9-del")
-    gsm.table["Signal Norm_Cy3"] = gsm.table["Signal Norm_Cy3"].astype(object)
-    gsm.table.loc[1, "Signal Norm_Cy3"] = "n/a"
-    deletion, refpool = (
-        m.MicroarrayKemmeren2014Dataset._extract_channels_from_gsm_static(gsm, _PROBES)
-    )
-    assert dict(deletion) == {"Q0010": 0.0, "YAL001C": 2.0}
-    assert dict(refpool) == {"Q0010": 1.0, "YAL001C": 4.0}
-
-
-# Phase 24: the parallel writer's skipped-gene accounting and the summary log
-
-
-class _Done:
-    def __init__(self, value: Any) -> None:
-        self._value = value
-
-    def result(self) -> Any:
-        return self._value
-
-
-class _InlineExecutor:
-    """Runs each submitted batch at once in this process (no pickling, no workers)."""
-
-    def __init__(self, max_workers: int) -> None:
-        self.max_workers = max_workers
-
-    def __enter__(self) -> _InlineExecutor:
-        return self
-
-    def __exit__(self, *exc: object) -> None:
-        return None
-
-    def submit(self, fn: Any, *args: Any) -> _Done:
-        return _Done(fn(*args))
-
-
-def test_parallel_writer_packs_written_records_and_logs_the_skipped_indices(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
-) -> None:
-    """Four genes in batches of 2; the batch function returns ``None`` for the second
-    gene of each batch, so ``all_results`` is ``[b"r0", None, b"r2", None]``.
-
-    Written records are renumbered densely (keys ``0`` and ``1`` hold ``r0`` and ``r2``)
-    and the warnings name the 2 skipped genes and their result indices ``[1, 3]``.
-    ``_process_parallel`` runs unbound on a namespace carrying the four attributes it
-    reads; ``ProcessPoolExecutor`` is an inline executor on the module.
-    """
-    import logging
-    from types import SimpleNamespace
-
-    monkeypatch.setattr(m, "ProcessPoolExecutor", _InlineExecutor)
-    calls: list[tuple[list[str], str]] = []
-
-    def batch(
-        items: list[Any], probes: Any, strains: Any, name: str, names: Any
-    ) -> list[Any]:
-        calls.append(([gene for gene, _ in items], name))
-        return [
-            f"r{int(gene[1:])}".encode() if gene in ("g0", "g2") else None
-            for gene, _ in items
-        ]
-
-    fake = SimpleNamespace(
-        batch_size=2,
-        process_workers=1,
-        _process_batch=batch,
-        processed_dir=str(tmp_path),
-        name="MicroarrayKemmeren2014Dataset",
-        released_gene_names={},
-    )
-    genes: dict[str, list[Any]] = {f"g{i}": [] for i in range(4)}
-    with caplog.at_level(logging.INFO, logger=m.__name__):
-        m.MicroarrayKemmeren2014Dataset._process_parallel(
-            cast(Any, fake), genes, {}, {}
-        )
-    assert calls == [
-        (["g0", "g1"], "MicroarrayKemmeren2014Dataset"),
-        (["g2", "g3"], "MicroarrayKemmeren2014Dataset"),
-    ]
-    env = lmdb.open(str(tmp_path / "lmdb"), readonly=True, lock=False)
-    with env.begin() as txn:
-        stored = dict(txn.cursor())
-    env.close()
-    assert stored == {b"0": b"r0", b"1": b"r2"}
-    messages = [r.getMessage() for r in caplog.records if r.name == m.__name__]
-    assert messages == [
-        "Created 2 batches of size 2",
-        "Wrote 2 experiments to LMDB",
-        "Total gene deletions attempted: 4",
-        "Skipped 2 genes (could not calculate log2 ratios)",
-        "Indices of skipped genes: [1, 3]",
-    ]
-
-
-def test_processing_summary_on_a_dict_never_reports_duplicates(
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    """Finding: ``_log_processing_summary`` counts ``Counter(dict.keys())``; dict keys
-    are unique, so every count is 1 and the ``Found N duplicate gene deletions`` lines
-    (kemmeren2014.py 1324 to 1326) cannot fire on the dict the signature takes. Pinned:
-    the exact summary for two genes over three samples (2 deletion, 1 wild type).
-    """
-    import logging
-
-    samples = [
-        {"is_deletion": True, "is_wildtype": False},
-        {"is_deletion": True, "is_wildtype": False},
-        {"is_deletion": False, "is_wildtype": True},
-    ]
-    with caplog.at_level(logging.INFO, logger=m.__name__):
-        m.MicroarrayKemmeren2014Dataset._log_processing_summary(
-            cast(Any, None), {"YAL001C": [], "YBR001C": []}, samples
-        )
-    messages = [r.getMessage() for r in caplog.records if r.name == m.__name__]
-    assert messages == [
-        "Processed 2 unique gene deletion experiments",
-        "Total samples: 3, Deletion samples: 2, Wildtype: 1",
-        "Unique gene deletions: 2",
-    ]
+    for i in (0, 1484, 2632, 2633, 3060):
+        phenotype = built[i]["experiment"]["phenotype"]
+        assert len(phenotype["expression_log2_ratio"]) == 6169
+        assert set(phenotype["n_replicates"].values()) == {1}
+        assert phenotype["replicate_id"] == samples["replicate_id"][i]

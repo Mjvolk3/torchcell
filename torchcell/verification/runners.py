@@ -178,14 +178,17 @@ EXPRESSION_DATASETS: dict[str, dict[str, Any]] = {
     },
     "microarray_kemmeren2014": {
         "root": "data/torchcell/microarray_kemmeren2014",
-        # 1484 = every deletion strain in the source Excel (the current loader's
-        # deterministic output; all L0-valid, full 6169-gene vector each). The prior
-        # 1450 was a stale oracle from an older LMDB build (loader logic predates it).
-        "expected_count": 1484,
+        # 3061 = one record per GEO array (2026.11.24, #1178): the 2,633 deletion
+        # arrays of GSE42527 + GSE42526 (1,484 Table S1 mutants, 1,149 with two
+        # arrays, 335 with one) and the 428 WT arrays of GSE42215, GSE42217, GSE42240
+        # and GSE42241; each a full 6169-gene vector. Was 1484, one mean per mutant.
+        "expected_count": 3061,
         "provenance": Provenance(
             source_uri="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE42527",
             citation_key="kemmerenLargeScaleGeneticPerturbations2014",
-            method="GEOparse GSE42527/GSE42526 (GPL11232), log2(mutant/wt-reference)",
+            method="GEOparse GSE42527/GSE42526 + WT GSE42215/GSE42217/GSE42240/"
+            "GSE42241 (GPL11232), one record per array, log2(culture/refpool) with "
+            "the two spots of a gene averaged",
             page="Cell 2014, Expression Profiling",
         ),
     },

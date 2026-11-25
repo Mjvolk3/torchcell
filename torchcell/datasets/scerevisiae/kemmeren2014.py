@@ -2,7 +2,7 @@
 # [[torchcell.datasets.scerevisiae.kemmeren2014]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/kemmeren2014
 # Test file: tests/torchcell/datasets/scerevisiae/test_kemmeren2014.py
-"""Kemmeren 2014 deletion-mutant microarray expression dataset."""
+"""Kemmeren 2014 deletion-mutant and wildtype microarray expression, one record per array."""
 
 import logging
 import os
@@ -19,7 +19,6 @@ import lmdb
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-from sortedcontainers import SortedDict
 from tqdm import tqdm
 
 from torchcell.data import ExperimentDataset, Organism, post_process
@@ -27,6 +26,7 @@ from torchcell.datamodels.schema import (
     Environment,
     Experiment,
     ExperimentReference,
+    GenePerturbationType,
     Genotype,
     KanMxDeletionPerturbation,
     Media,
@@ -42,61 +42,86 @@ from torchcell.sequence.genome.registry import (
     SGD_S288C_R64,
     SGD_S288C_R64_GENBANK_ACCESSION,
 )
+from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 # ============================================================================
-# Replicate Metadata - Extracted from Kemmeren et al. 2014
+# The record unit: one GEO array is one culture (2026.11.24, #1178, #1174)
 # ============================================================================
+# Source: torchcell-library kemmerenLargeScaleGeneticPerturbations2014/paper.md (sha256
+# 299eac4b07fc977a89c24ce190d05cfd182342a9f0d56a05e7e477d72e4ad08d).
+#
+# Design, Extended Experimental Procedures, "Experiment Design" (paper.md line 307):
+#     "Two independent cultures were hybridized on two separate microarrays. For the
+#     first hybridization the Cy5 (red) labeled cRNA from the deletion mutant is
+#     hybridized together with the Cy3 (green) labeled cRNA from the common
+#     reference. For the replicate hybridization from the independent cultures, the
+#     labels are swapped. Each gene is represented twice on the microarray, resulting
+#     in four measurements per mutant."
+# The cultures come from two isolates (line 247): "For each mutant strain two cultures
+# from two isolates were grown in batches in parallel with two WT cultures (same day
+# WTs)." The Figure S1B legend (line 496): "cRNA from replicate mutant cultures (a, b)
+# was cohybridized in dye-swap with cRNA from a batch of common reference WT RNA."
+# The main text's "Each culture was expression-profiled in technical replicate to yield
+# four measurements for each profiling mutant" (line 130) is the duplicate spot: "Each
+# gene probe is spotted twice on the array" (line 311), and one culture gives two
+# measurements (line 394): "for some of the nonresponsive mutants there are four
+# replicate measurements while for others there are only two."
+#
+# So an "-a" / "-b" array pair is two biological replicates (two cultures of two
+# isolates) whose dye orientation differs, NOT one culture profiled twice with the dyes
+# swapped, and each array is its own record. Measured on the GEO SOFT files
+# (2026.11.24): GSE42527 1,387 arrays and GSE42526 1,246, every one a deletion; no
+# mutant has more than 2 arrays (1,149 mutants with 2, 335 with 1, 2,633 arrays).
+# GEO labels ch1 = Cy5 and ch2 = Cy3 on every array, and source_name_ch1 / ch2 name the
+# channel of the common reference pool ("refpool"; "ref1" on 193 GSE42217 arrays);
+# 3,061 of 3,061 arrays of the six series name it in exactly one channel. Under that
+# assignment (2026.11.24, per array, mean over the gene's spots): the deleted gene reads
+# lower in the deletion channel on 2,603 of the 2,625 deletion arrays that carry a probe
+# for it, and on all 48 MATa arrays (28 WT, 20 deletion) the a-specific genes (STE2,
+# MFA1, MFA2, BAR1, AGA2, STE6) minus the alpha-specific ones (STE3, MF(ALPHA)1,
+# MF(ALPHA)2, SAG1) read +5.9 to +9.1 log2 against the refpool, a MATalpha RNA.
+#
+# The stored log2 ratio is log2(test / reference) of each spot's two "Signal Norm"
+# values (as GEO releases them, after the LOESS and gene-specific dye bias correction
+# its Sample_data_processing names), NOT the GEO VALUE column: VALUE's orientation is
+# not uniform across the deposit. On 2,169 deletion arrays VALUE equals
+# log2(test / reference) and on 464 it equals log2(reference / test); on the WT series
+# 261 and 166, with one array (GSM1035586) matching neither within 1e-4. VALUE's column
+# description does not say which (the same "normalized log2 ratio (Cy3/Cy5)" heads
+# both kinds, and "normalized log2 ratio test/ref" heads 3 reversed arrays), and the
+# deleted-gene and mating-type checks above hold on both kinds, so the channel signals
+# are the consistent release value.
+#
+# The two spots of a gene on one array are technical (one hybridization of one
+# culture's RNA) and are combined INSIDE the record: the record's log2 ratio of a gene
+# is the mean of its spots' log2 ratios, and its linear signals are the means of its
+# spots' "Signal Norm" values. GPL11232 carries 2 spots for 6,157 genes and 4 for 12
+# (measured 2026.11.24). Before 2026.11.24 the loader kept the last spot of each gene
+# and dropped the other.
+#
+# n_replicates is 1 for every gene of a record (one culture); the spot count is the
+# technical level and is stated in the uncertainty gap note, because the phenotype class
+# has no field for it. A record carries no dispersion: expression_log2_ratio_se and
+# expression_log2_ratio_variance are None with a not_applicable_single_measurement gap.
+# The mean and dispersion over a mutant's arrays are a modeling-time derivation.
+#
+# The reference of a record is the common reference pool's signal on that same array
+# (log2 ratio 0, n 1): it is what the record's ratio is taken against. The refpool is one
+# batch of RNA (GEO overall design: "RNA isolated from a large amount of wt yeast from a
+# single culture was used as a common reference"), so there are no reference replicates
+# to summarize; the wildtype cultures are records of their own (below).
+#
+# Withdrawn samples: none in the deposit. The paper removed failed hybridizations and
+# profiles of remade strains before deposition (lines 237, 354, 360-364); nothing the
+# six GEO series release is marked withdrawn, so no array is dropped.
 
-# CRITICAL: Replicate structure for deletion mutant expression measurements
-# Quote: "Each mutant strain was grown twice, from two independently inoculated
-#         cultures. Each culture was expression-profiled in technical replicate
-#         to yield four measurements for each profiling mutant."
-# Quote: "This included four replicates per responsive mutant, robotic procedures
-#         optimized with external calibration controls, a common reference design
-#         with wildtype (WT) reference RNA applied in dye-swap to each microarray"
-# Source: Kemmeren et al. 2014, Cell, Expression Profiling section
-# Paper: papers/kemmerenLargeScaleGeneticPerturbations2014/kemmerenLargeScaleGeneticPerturbations2014.mmd
-# Date extracted: 2026-01-27
-#
-# Experimental design:
-# - 2 biological replicates (two independently inoculated cultures)
-# - Each culture profiled in technical replicate with the dyes swapped. GEO labels
-#   ch1 = Cy5 and ch2 = Cy3 on every array of the six series, and source_name_ch1/ch2
-#   say which channel holds the common reference pool ("refpool"; "ref1" on 193
-#   GSE42217 arrays) and which the deletion or wildtype culture. On the "-a" arrays
-#   the reference pool is in Cy5 and the deletion in Cy3; the "-b" arrays are the
-#   swap. Measured 2026-09-28 on the raw SOFT files: 3061 of 3061 arrays name the
-#   reference in exactly one channel, and the deleted gene's own probes read lower
-#   in the deletion channel on 702 of 705 arrays that carry one.
-# - Total: 4 measurements per gene per deletion mutant (2 biological x 2 dye orientations)
-# - Common reference RNA (WT pool) used in dye-swap on each microarray
-# - Applies to 1,484 deletion mutants (gene-specific regulators focus)
-#
-# NOTE: Actual n_replicates are COMPUTED from raw data (may be < 4 due to QC)
-N_EXPECTED_BIOLOGICAL_REPLICATES = 2
-N_EXPECTED_DYE_SWAP_TECHNICAL_REPLICATES = 2
-N_EXPECTED_MAX_REPLICATES_DELETION = 4  # 2 biological × 2 dye-swap measurements
-
-# Reference pool measurements
-# Quote: "a common reference design was adopted with a batch of WT RNA applied
-#         in dye-swap to one of the channels of each microarray"
-# Quote: "Additional WT cultures were grown alongside batches of mutants on each
-#         day and profiled in parallel to monitor batch effects"
-# Source: Kemmeren et al. 2014, Cell, Expression Profiling section
-# Date extracted: 2026-01-27
-#
-# Reference n_replicates (#484, decided 2026-10-02). The stored reference
-# ``expression`` is the mean common-reference (refpool) signal over the mutant's own
-# arrays (``create_expression_experiment``), so its ``n_replicates`` is the number of
-# those arrays whose refpool value entered the mean: 1 or 2 per gene, the same arrays
-# as the mutant's own count. It is NOT a count of wildtype arrays. The paper's WT
-# pools are the comparison sets of its limma analysis, chosen per growth protocol,
-# and none of them is the stored value. Paper (torchcell-library
-# kemmerenLargeScaleGeneticPerturbations2014/paper.md, sha256
-# 299eac4b07fc977a89c24ce190d05cfd182342a9f0d56a05e7e477d72e4ad08d, line 388):
+# ============================================================================
+# Wildtype cultures: the four WT series are records too (2026.11.24)
+# ============================================================================
+# The paper's WT pools (paper.md line 388):
 #     "For the MATalpha mutants grown on the Tecan plate shaker, the WT pool consisted
 #     of 200 MATalpha WTs (BY4742, ArrayExpress accession E-TABM-984, GEO accession
 #     GSE42217). For the MATa mutants grown on the Tecan plate shaker, the WT pool
@@ -106,11 +131,51 @@ N_EXPECTED_MAX_REPLICATES_DELETION = 4  # 2 biological × 2 dye-swap measurement
 #     accession GSE42215). For MATa mutants grown in Erlenmeyers, the WT pool
 #     consisted of 8 WT MATa replicates (ArrayExpress accession E-MTAB-1352, GEO
 #     accession GSE42240)."
-# The loader used to store the number of WT arrays of the two series of the mutant's
-# mating type (400 for BY4742, 28 for BY4741), a count the paper never compares a
-# mutant against. Nothing stored is computed from the four WT series any more, so
-# process() no longer reads them; they stay in raw_file_names as the paper's named
-# comparison pools.
+# Each WT array is one WT culture against the same refpool (GSE42215 summary: "by
+# randomly taking 100 wt vs. refpool (pooled wts) and 100 refpool vs. wt
+# hybridizations"; GSE42240 / GSE42241 sample description: "Growth curves were made for
+# the mutant cultures (two cultures from two isolates) as well as for two wildtype (wt)
+# inoculates, grown in parallel."). 428 arrays (200 + 200 + 8 + 20), stored with an
+# empty genotype on the strain of their series. GSE42240's characteristics read
+# "strain: BY4742" beside "genotype: wt-matA" on all 8 arrays; BY4742 is the MATalpha
+# strain, and the paper, the series summary ("wildtype matA") and the mating-type genes
+# (above) all say MATa, so the series is stored as BY4741. (The strain characteristic is
+# per series, not per channel: GSE42241 gives "strain: BY4741" to its refpool channel
+# too, while the marker genes show the refpool is MATalpha.) Before 2026.11.24 the four
+# series were downloaded and never read.
+WT_SERIES_STRAIN: dict[str, str] = {
+    "GSE42215": "BY4742",  # MATalpha, Erlenmeyer, 200 arrays
+    "GSE42217": "BY4742",  # MATalpha, Tecan plate, 200 arrays
+    "GSE42240": "BY4741",  # MATa, Erlenmeyer, 8 arrays
+    "GSE42241": "BY4741",  # MATa, Tecan plate, 20 arrays
+}
+
+_SINGLE_CULTURE_NOTE = (
+    "a record is ONE GEO array, the hybridization of one culture's RNA against the "
+    "common reference pool, and one culture has no dispersion of its own. The gene's "
+    "two spots on the array (four for 12 genes on GPL11232; paper: 'Each gene probe is "
+    "spotted twice on the array') are technical and are combined inside the record as "
+    "the mean of their released log2 ratios, so n_replicates counts the one culture. "
+    "The mean and dispersion over a mutant's arrays are a modeling-time derivation"
+)
+_REFERENCE_READING_NOTE = (
+    "the reference is the common reference pool's signal on this record's own array "
+    "(the mean of the gene's spots), one reading of one RNA batch, so there is no "
+    "dispersion to store"
+)
+
+
+def _single_measurement_gaps(note: str) -> list[ProvenanceGap]:
+    """The two uncertainty fields of a one-array phenotype, as typed absences."""
+    return [
+        ProvenanceGap(
+            field=field,
+            reason=ProvenanceGapReason.not_applicable_single_measurement,
+            note=note,
+        )
+        for field in ("expression_log2_ratio_se", "expression_log2_ratio_variance")
+    ]
+
 
 # ============================================================================
 # Gene names in GEO titles: the release's own crosswalk, plus one pinned residue
@@ -180,19 +245,23 @@ RELEASE_TITLE_NAMES_WITHOUT_AN_ORF: dict[str, str] = {
 
 @register_dataset
 class MicroarrayKemmeren2014Dataset(ExperimentDataset):
-    """Deletion-mutant microarray expression profiling from Kemmeren et al. 2014.
+    """Deletion-mutant and wildtype microarray expression from Kemmeren et al. 2014.
 
-    Microarray gene expression data for single-gene deletion mutants profiled
-    against a common wildtype reference pool in a dye-swap design. Combines the
-    responsive and non-responsive mutant GEO series. The four wildtype series
-    (BY4741 MATa, BY4742 MATalpha) are downloaded as the paper's named WT pools but
-    no stored value is computed from them (#484).
+    One record per GEO array, that is per culture: 2,633 deletion arrays of the
+    responsive (GSE42527) and non-responsive (GSE42526) series, then 428 wildtype
+    arrays of the four WT series (GSE42215, GSE42217, GSE42240, GSE42241), 3,061 in
+    all. A record's ``expression_log2_ratio`` is that array's log2(culture / common
+    reference pool), its gene's duplicate spots combined, with ``n_replicates`` 1,
+    ``replicate_id`` the array's GEO sample title, and no dispersion (typed
+    ``not_applicable_single_measurement`` gaps). Its reference is the refpool signal on
+    the same array. See the module comment for the design quotes.
 
     Each deletion is keyed by the ORF the release pairs with its GEO title token
     (Table S1, or the pinned ``RELEASE_TITLE_NAMES_WITHOUT_AN_ORF`` residue), and
-    ``perturbed_gene_name`` is the release's own name for it; no genome is consulted.
+    ``perturbed_gene_name`` is the release's own name for it; no genome is consulted. A
+    wildtype record has an empty genotype on its series' strain (``WT_SERIES_STRAIN``).
 
-    Data source: GEO accessions GSE42527, GSE42526, and wildtype references.
+    Data source: GEO accessions GSE42527, GSE42526 and the four WT series.
     Paper: Kemmeren et al. (2014) Cell.
     """
 
@@ -333,9 +402,39 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                 log.error(f"Failed to download WT data: {e}")
                 raise RuntimeError(f"Failed to download {geo_accession} from GEO")
 
+    def _load_series(self, geo_accession: str) -> Any:
+        """The parsed GEO series: its ``raw/<accession>.pkl``, else ``get_GEO``."""
+        geo_pkl_path = osp.join(self.raw_dir, f"{geo_accession}.pkl")
+        if osp.exists(geo_pkl_path):
+            with open(geo_pkl_path, "rb") as f:
+                return pickle.load(f)
+        return GEOparse.get_GEO(geo=geo_accession, destdir=self.raw_dir, silent=False)
+
+    @staticmethod
+    def _deletion_token(gsm: Any) -> str | None:
+        """The deleted gene's name as the array's title or characteristics print it.
+
+        The title's token before ``-del`` (an ``[HS1991]``-style prefix stripped);
+        when the title names no deletion, the first ``genotype/variation:`` value that
+        does, in either channel. ``None`` when neither names one.
+        """
+        title = str(gsm.metadata.get("title", [""])[0])
+        if "-del" in title.lower():
+            gene_part = title.split("-del")[0].strip()
+            return gene_part.split("]")[-1].strip().upper()
+        for channel in ("characteristics_ch1", "characteristics_ch2"):
+            for char in gsm.metadata.get(channel, []):
+                if "genotype/variation:" not in char:
+                    continue
+                genotype = str(char).split("genotype/variation:")[-1].strip()
+                if "-del" in genotype:
+                    gene_part = genotype.replace("-del", "").strip()
+                    return gene_part.split("]")[-1].strip().upper()
+        return None
+
     @post_process
     def process(self) -> None:
-        """Parse GEO expression data into experiments and write the LMDB store."""
+        """Write one experiment per GEO array: deletion arrays, then WT arrays."""
         # Resolution census: every deletion array resolves through exactly one route
         self.resolved_by_table_s1_gene = 0
         self.resolved_by_table_s1_orf = 0
@@ -343,468 +442,198 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         # ORF -> the release's own name for the deleted gene (perturbed_gene_name)
         self.released_gene_names: dict[str, str] = {}
 
-        # Load mating type information from supplementary table
         systematic_to_strain, common_to_systematic = self._load_mating_type_map()
 
-        # Load both GEO objects and extract platform annotation
-        all_gsms = {}
         probe_to_gene_map: dict[str, str] = {}
-        responsive_gsm_names = set()  # Track which samples are responsive mutants
-
-        for geo_accession in [
+        deletion_arrays: dict[str, list[tuple[str, Any]]] = {}
+        for geo_accession in (
             self.geo_accession_responsive,
             self.geo_accession_nonresponsive,
-        ]:
-            geo_pkl_path = osp.join(self.raw_dir, f"{geo_accession}.pkl")
-            if osp.exists(geo_pkl_path):
-                with open(geo_pkl_path, "rb") as f:
-                    gse = pickle.load(f)
-            else:
-                # Re-download if pickle doesn't exist
-                gse = GEOparse.get_GEO(
-                    geo=geo_accession, destdir=self.raw_dir, silent=False
-                )
-
-            # Extract platform annotation for probe-to-gene mapping
+        ):
+            gse = self._load_series(geo_accession)
             if not probe_to_gene_map and hasattr(gse, "gpls"):
                 probe_to_gene_map = self._extract_probe_to_gene_mapping(gse)
-
-            # Track responsive mutant GSM names
-            if geo_accession == self.geo_accession_responsive:
-                responsive_gsm_names.update(gse.gsms.keys())
-
-            # Combine GSMs from both datasets
-            all_gsms.update(gse.gsms)
-
-        log.info(f"Processing {len(all_gsms)} GEO samples from both datasets...")
-        log.info(f"Found {len(probe_to_gene_map)} probe-to-gene mappings")
-        log.info(f"Loaded {len(systematic_to_strain)} systematic to strain mappings")
-        log.info(f"Loaded {len(common_to_systematic)} common to systematic mappings")
-
-        # Debug: Check for specific missing genes if needed
-        # (Removed verbose YCR087C-A search to reduce output clutter)
-
-        # Parse samples and extract metadata
-        samples_data = []
-        wt_samples = []
-        deletion_samples_by_gene: dict[
-            str, list[Any]
-        ] = {}  # Group samples by gene for dye-swap averaging
-        already_assigned: set[str] = set()  # Track assigned systematic names
-
-        for sample_idx, (gsm_name, gsm) in enumerate(all_gsms.items()):
-            # Extract metadata from characteristics
-            sample_info = {
-                "geo_accession": gsm_name,
-                "title": gsm.metadata.get("title", [""])[0],
-            }
-
-            # Parse from title - look for gene-del pattern
-            title = sample_info["title"]
-            systematic_gene_name = None
-            is_deletion = False
-            is_wildtype = False
-            gene_resolved_from_title = (
-                False  # Track if we already tried resolution from title
-            )
-
-            # Check if it's a deletion mutant (contains -del)
-            if "-del" in title.lower():
-                is_deletion = True
-                # Extract gene name before -del
-                gene_part = title.split("-del")[0].strip()
-
-                # Remove [HS1991] or similar prefixes if present
-                if "]" in gene_part:
-                    gene_part = gene_part.split("]")[-1].strip()
-
-                common_name = gene_part.upper()
-
-                # Convert to systematic name using comprehensive resolution
-                systematic_gene_name = self.resolve_gene_name_comprehensive(
-                    common_name,
-                    common_to_systematic,
-                    systematic_to_strain,
-                    already_assigned,
+            for gsm in gse.gsms.values():
+                token = self._deletion_token(gsm)
+                if token is None:
+                    raise ValueError(
+                        f"{gsm.name} of {geo_accession} names no deletion; every array "
+                        "of the two deletion series is a deletion culture"
+                    )
+                orf = self.resolve_gene_name_comprehensive(
+                    token, common_to_systematic, systematic_to_strain
                 )
-                gene_resolved_from_title = True  # Mark that we attempted resolution
+                deletion_arrays.setdefault(orf, []).append((geo_accession, gsm))
 
-            # Check the channel characteristics for confirmation. The deletion is in
-            # ch2 on the "-a" arrays and in ch1 on the "-b" arrays (the dye swap), so
-            # both channels are read; the other one names the reference pool.
-            for channel in ("characteristics_ch1", "characteristics_ch2"):
-                for char in gsm.metadata.get(channel, []):
-                    if "genotype/variation:" not in char:
-                        continue
-                    genotype = char.split("genotype/variation:")[-1].strip()
-                    if "-del" not in genotype:
-                        continue
-                    is_deletion = True
-                    is_wildtype = False
-
-                    # Only extract gene name if we haven't already tried from title
-                    if not gene_resolved_from_title and not systematic_gene_name:
-                        gene_part = genotype.replace("-del", "").strip()
-                        # Remove [HS1991] or similar prefixes if present
-                        if "]" in gene_part:
-                            gene_part = gene_part.split("]")[-1].strip()
-                        common_name = gene_part.upper()
-                        systematic_gene_name = self.resolve_gene_name_comprehensive(
-                            common_name,
-                            common_to_systematic,
-                            systematic_to_strain,
-                            already_assigned,
-                        )
-
-            # Final check: Only mark as wildtype if no deletion was found
-            # Most samples should be deletion mutants (with or without dye-swap)
-            if not is_deletion and not systematic_gene_name:
-                # This might be a true wildtype/control sample
-                is_wildtype = True
-            else:
-                is_wildtype = False
-
-            sample_info["systematic_gene_name"] = systematic_gene_name
-            sample_info["is_deletion"] = is_deletion
-            sample_info["is_wildtype"] = is_wildtype
-
-            # Determine if this is a responsive mutant based on GEO accession
-            sample_info["is_responsive_mutant"] = gsm_name in responsive_gsm_names
-
-            sample_info["gsm_object"] = gsm
-
-            if is_wildtype:
-                wt_samples.append(gsm)
-            elif is_deletion and systematic_gene_name:
-                # Group deletion samples by gene for dye-swap averaging
-                if systematic_gene_name not in deletion_samples_by_gene:
-                    deletion_samples_by_gene[systematic_gene_name] = []
-                    already_assigned.add(systematic_gene_name)  # Mark as assigned
-                deletion_samples_by_gene[systematic_gene_name].append(gsm)
-
-            samples_data.append(sample_info)
-
-        log.info(f"Found {len(deletion_samples_by_gene)} unique gene deletions")
-        log.info(f"Found {len(wt_samples)} wildtype reference samples")
-
-        # Analyze sample distribution per gene
-        replicate_counts = {}
-        for gene, samples in deletion_samples_by_gene.items():
-            count = len(samples)
-            if count not in replicate_counts:
-                replicate_counts[count] = 0
-            replicate_counts[count] += 1
-
-        log.info("\n=== Replicates per Gene Analysis ===")
+        n_deletion_arrays = sum(len(arrays) for arrays in deletion_arrays.values())
         log.info(
-            f"Average samples per gene: {2633 / len(deletion_samples_by_gene):.2f}"
+            f"{n_deletion_arrays} deletion arrays of {len(deletion_arrays)} deletion "
+            f"mutants; {len(probe_to_gene_map)} probes map to a gene"
         )
-        for count in sorted(replicate_counts.keys()):
-            log.info(f"Genes with {count} samples: {replicate_counts[count]}")
-            # Print out genes with 4 samples to investigate YCR087C-A
-            if count == 4:
-                genes_with_4 = [
-                    gene
-                    for gene, samples in deletion_samples_by_gene.items()
-                    if len(samples) == 4
-                ]
-                for gene in genes_with_4:
-                    log.info(f"  Gene with 4 samples: {gene}")
-                    for sample in deletion_samples_by_gene[gene]:
-                        log.info(f"    - {sample.metadata.get('title', [''])[0]}")
-
-        log.info("===")
-
-        # Log gene resolution summary
-        log.info("=== Gene Resolution Summary ===")
-        log.info(f"Resolved by Table S1 gene: {self.resolved_by_table_s1_gene}")
-        log.info(f"Resolved by Table S1 orf name: {self.resolved_by_table_s1_orf}")
         log.info(
-            "Resolved by RELEASE_TITLE_NAMES_WITHOUT_AN_ORF: "
+            "Resolved by Table S1 gene / Table S1 orf name / "
+            "RELEASE_TITLE_NAMES_WITHOUT_AN_ORF: "
+            f"{self.resolved_by_table_s1_gene} / {self.resolved_by_table_s1_orf} / "
             f"{self.resolved_by_release_title_names}"
         )
 
-        # Check for one-to-one mapping with Excel ORF names
-        excel_orf_names = set(systematic_to_strain.keys())
-        resolved_orf_names = set(deletion_samples_by_gene.keys())
-
-        missing_in_geo = excel_orf_names - resolved_orf_names
-        extra_in_geo = resolved_orf_names - excel_orf_names
-
-        if missing_in_geo:
-            log.warning("\n=== Missing ORFs Analysis ===")
-            log.warning(
-                f"Found {len(missing_in_geo)} ORFs in Excel but not in GEO: {missing_in_geo}"
-            )
-            for missing_orf in missing_in_geo:
-                log.warning(
-                    f"Missing: {missing_orf} (strain: {systematic_to_strain.get(missing_orf, 'Unknown')})"
-                )
-                # Try to find if it appears anywhere in common names
-                for common, systematic in common_to_systematic.items():
-                    if systematic == missing_orf:
-                        log.warning(f"  - Has common name in Excel: {common}")
-
-        if extra_in_geo:
-            log.warning(
-                f"Found {len(extra_in_geo)} ORFs in GEO but not in Excel: {extra_in_geo}"
-            )
-
-        # For now, just warn instead of asserting
-        if excel_orf_names != resolved_orf_names:
-            log.warning(
-                f"\nWARNING: ORF name sets do not match exactly!\n"
-                f"Excel has {len(excel_orf_names)} ORFs, GEO resolved to {len(resolved_orf_names)} ORFs\n"
-                f"Missing in GEO: {missing_in_geo}\n"
-                f"Extra in GEO: {extra_in_geo}\n"
-                f"Continuing with {len(resolved_orf_names)} genes..."
-            )
-        else:
-            log.info(
-                f"✓ Perfect match: All {len(excel_orf_names)} Excel ORF names matched with GEO deletions"
-            )
-
-        # Debug: Check which genes from GEO are not in systematic_to_strain map
-        missing_genes = []
-        for gene in deletion_samples_by_gene.keys():
-            if gene not in systematic_to_strain:
-                missing_genes.append(gene)
-
-        if missing_genes:
-            log.warning(
-                f"Found {len(missing_genes)} genes in GEO that are not in Excel systematic_to_strain map:"
-            )
-            log.warning(f"First 10 missing genes: {missing_genes[:10]}")
-
         # Check the channel assignment on the deleted genes' own probes
-        self._validate_channel_assignment(deletion_samples_by_gene, probe_to_gene_map)
+        self._validate_channel_assignment(
+            {
+                orf: [gsm for _, gsm in arrays]
+                for orf, arrays in deletion_arrays.items()
+            },
+            probe_to_gene_map,
+        )
 
-        # Choose processing method based on process_workers
+        units: list[tuple[dict[str, Any], Any]] = []
+        for orf, arrays in deletion_arrays.items():
+            if orf not in systematic_to_strain:
+                raise ValueError(
+                    f"{orf} has no Table S1 mating type, so its strain (BY4741 or "
+                    "BY4742) cannot be stated"
+                )
+            for geo_accession, gsm in arrays:
+                units.append(
+                    (
+                        {
+                            "series": geo_accession,
+                            "geo_accession": gsm.name,
+                            "replicate_id": gsm.metadata["title"][0],
+                            "systematic_gene_name": orf,
+                            "perturbed_gene_name": self.released_gene_names[orf],
+                            "strain": systematic_to_strain[orf],
+                        },
+                        gsm,
+                    )
+                )
+
+        for geo_accession, strain in WT_SERIES_STRAIN.items():
+            gse = self._load_series(geo_accession)
+            for gsm in gse.gsms.values():
+                title = gsm.metadata["title"][0]
+                test_name = self._test_source_name(gsm)
+                if "-del" in title.lower() or "-del" in test_name.lower():
+                    raise ValueError(
+                        f"{gsm.name} of WT series {geo_accession} names a deletion"
+                    )
+                if ("mata" in test_name.lower()) != (strain == "BY4741"):
+                    raise ValueError(
+                        f"{gsm.name} of {geo_accession}: culture {test_name!r} does not "
+                        f"match the series strain {strain}"
+                    )
+                units.append(
+                    (
+                        {
+                            "series": geo_accession,
+                            "geo_accession": gsm.name,
+                            "replicate_id": title,
+                            "systematic_gene_name": None,
+                            "perturbed_gene_name": None,
+                            "strain": strain,
+                        },
+                        gsm,
+                    )
+                )
+        log.info(f"{len(units) - n_deletion_arrays} wildtype arrays")
+
         if self.process_workers > 0:
-            log.info(
-                f"Processing {len(deletion_samples_by_gene)} gene deletions in parallel with {self.process_workers} workers..."
-            )
-            self._process_parallel(
-                deletion_samples_by_gene, probe_to_gene_map, systematic_to_strain
-            )
+            blobs = self._process_parallel(units, probe_to_gene_map)
         else:
-            log.info(
-                f"Processing {len(deletion_samples_by_gene)} gene deletions sequentially..."
-            )
-            self._process_sequential(
-                deletion_samples_by_gene, probe_to_gene_map, systematic_to_strain
-            )
+            blobs = self._build_records(units, probe_to_gene_map, self.name)
+        self._write_lmdb(blobs)
 
-        # Save preprocessed data
         os.makedirs(self.preprocess_dir, exist_ok=True)
-        samples_df = pd.DataFrame(samples_data)
-        samples_df = samples_df.drop(
-            "gsm_object", axis=1
-        )  # Remove GSM object before saving
-        samples_df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
+        pd.DataFrame(
+            [
+                {
+                    "record_index": index,
+                    "series": info["series"],
+                    "geo_accession": info["geo_accession"],
+                    "replicate_id": info["replicate_id"],
+                    "systematic_gene_name": info["systematic_gene_name"] or "",
+                    "perturbed_gene_name": info["perturbed_gene_name"] or "",
+                    "strain": info["strain"],
+                    "reference_dye": self._reference_dye(gsm),
+                }
+                for index, (info, gsm) in enumerate(units)
+            ]
+        ).to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
-        # Log final processing summary
-        self._log_processing_summary(deletion_samples_by_gene, samples_data)
+    def _process_parallel(
+        self, units: list[tuple[dict[str, Any], Any]], probe_to_gene_map: dict[str, str]
+    ) -> list[bytes]:
+        """``_build_records`` over batches of arrays in a ProcessPoolExecutor."""
+        batches = [
+            units[i : i + self.batch_size]
+            for i in range(0, len(units), self.batch_size)
+        ]
+        log.info(f"Created {len(batches)} batches of size {self.batch_size}")
+        blobs: list[bytes] = []
+        with ProcessPoolExecutor(max_workers=self.process_workers) as executor:
+            futures = [
+                executor.submit(
+                    self._build_records, batch, probe_to_gene_map, self.name
+                )
+                for batch in batches
+            ]
+            for future in tqdm(futures, desc="Processing batches"):
+                blobs.extend(future.result())
+        return blobs
 
-    def _process_sequential(
-        self,
-        deletion_samples_by_gene: dict[str, list[Any]],
-        probe_to_gene_map: dict[str, str],
-        systematic_to_strain: dict[str, str],
-    ) -> None:
-        """Process gene deletions sequentially (original implementation)."""
-        # Initialize LMDB environment
+    def _write_lmdb(self, blobs: list[bytes]) -> None:
+        """Write the serialized records to ``processed/lmdb`` under keys 0..N-1."""
         env = lmdb.open(
             osp.join(self.processed_dir, "lmdb"),
             map_size=int(5e12),  # 5TB for expression data
         )
-
-        idx = 0
         with env.begin(write=True) as txn:
-            # Process each unique gene deletion (collect replicate-level data)
-            for gene_name, gsm_list in tqdm(deletion_samples_by_gene.items()):
-                # Per-array (deletion, refpool) signal pairs, one pair per array
-                replicate_pairs = self._collect_replicate_pairs_static(
-                    gsm_list, probe_to_gene_map
+            for idx, blob in enumerate(blobs):
+                txn.put(f"{idx}".encode(), blob)
+        env.close()
+        log.info(f"Wrote {len(blobs)} experiments to LMDB")
+
+    @staticmethod
+    def _build_records(
+        units: list[tuple[dict[str, Any], Any]],
+        probe_to_gene_map: dict[str, str],
+        dataset_name: str,
+    ) -> list[bytes]:
+        """One serialized record per array, in order. Static for multiprocessing."""
+        blobs = []
+        for sample_info, gsm in units:
+            signals = MicroarrayKemmeren2014Dataset._array_signals(
+                gsm, probe_to_gene_map
+            )
+            experiment, reference, publication = (
+                MicroarrayKemmeren2014Dataset.create_array_experiment(
+                    dataset_name, sample_info, signals
                 )
-
-                # Skip if no expression data was extracted
-                if not replicate_pairs:
-                    log.warning(f"No expression data for gene {gene_name}, skipping...")
-                    continue
-
-                # Determine strain from systematic_to_strain map - REQUIRED
-                if gene_name not in systematic_to_strain:
-                    log.error(
-                        f"No mating type found for {gene_name} in Table S1. This gene deletion is in GEO but not in the Excel file."
-                    )
-                    log.error(
-                        f"Skipping {gene_name} - cannot determine correct strain (BY4741 vs BY4742)"
-                    )
-                    continue  # Skip this gene since we don't know the strain
-                strain = systematic_to_strain[gene_name]
-
-                # Create sample info for this gene deletion
-                sample_info = {
-                    "systematic_gene_name": gene_name,
-                    "perturbed_gene_name": self.released_gene_names[gene_name],
-                    "num_replicates": len(gsm_list),
-                    "strain": strain,
-                }
-
-                experiment, reference, publication = self.create_expression_experiment(
-                    self.name, sample_info, replicate_pairs
-                )
-
-                # Skip if experiment creation failed (returns None when log2 ratios can't be calculated)
-                if experiment is None:
-                    log.error(
-                        f"Could not calculate log2 ratios for {gene_name}, skipping..."
-                    )
-                    continue
-
-                # Serialize the Pydantic objects
-                serialized_data = pickle.dumps(
+            )
+            blobs.append(
+                pickle.dumps(
                     {
                         "experiment": experiment.model_dump(),
                         "reference": reference.model_dump(),
                         "publication": publication.model_dump(),
                     }
                 )
-                txn.put(f"{idx}".encode(), serialized_data)
-                idx += 1
-
-        env.close()
-        log.info(f"Wrote {idx} experiments to LMDB")
-        log.info(f"Total gene deletions attempted: {len(deletion_samples_by_gene)}")
-        if idx < len(deletion_samples_by_gene):
-            log.warning(
-                f"Skipped {len(deletion_samples_by_gene) - idx} genes (could not calculate log2 ratios)"
             )
-
-    def _process_parallel(
-        self,
-        deletion_samples_by_gene: dict[str, list[Any]],
-        probe_to_gene_map: dict[str, str],
-        systematic_to_strain: dict[str, str],
-    ) -> None:
-        """Process gene deletions in parallel using ProcessPoolExecutor."""
-        # Convert dictionary to list of tuples for batching
-        gene_items = list(deletion_samples_by_gene.items())
-
-        # Create batches
-        batches = []
-        for i in range(0, len(gene_items), self.batch_size):
-            batch = gene_items[i : i + self.batch_size]
-            batches.append(batch)
-
-        log.info(f"Created {len(batches)} batches of size {self.batch_size}")
-
-        # Process batches in parallel
-        all_results = []
-        with ProcessPoolExecutor(max_workers=self.process_workers) as executor:
-            # Submit all batches
-            futures = []
-            for batch in batches:
-                future = executor.submit(
-                    self._process_batch,
-                    batch,
-                    probe_to_gene_map,
-                    systematic_to_strain,
-                    self.name,
-                    self.released_gene_names,
-                )
-                futures.append(future)
-
-            # Collect results with progress bar
-            for future in tqdm(futures, desc="Processing batches"):
-                batch_results = future.result()
-                all_results.extend(batch_results)
-
-        # Write all results to LMDB
-        env = lmdb.open(
-            osp.join(self.processed_dir, "lmdb"),
-            map_size=int(5e12),  # 5TB for expression data
-        )
-
-        written_count = 0
-        skipped_genes: list[int] = []
-        with env.begin(write=True) as txn:
-            for idx, serialized_data in enumerate(all_results):
-                if serialized_data is not None:
-                    txn.put(f"{written_count}".encode(), serialized_data)
-                    written_count += 1
-                else:
-                    skipped_genes.append(idx)
-
-        env.close()
-
-        # Log statistics about experiments
-        log.info(f"Wrote {written_count} experiments to LMDB")
-        log.info(f"Total gene deletions attempted: {len(all_results)}")
-        if skipped_genes:
-            log.warning(
-                f"Skipped {len(skipped_genes)} genes (could not calculate log2 ratios)"
-            )
-            log.warning(f"Indices of skipped genes: {skipped_genes}")
+        return blobs
 
     @staticmethod
-    def _process_batch(
-        batch_items: list[Any],
-        probe_to_gene_map: dict[str, str],
-        systematic_to_strain: dict[str, str],
-        dataset_name: str,
-        released_gene_names: dict[str, str],
-    ) -> list[bytes]:
-        """Process a batch of gene deletions. Static method for multiprocessing."""
-        results = []
+    def _test_source_name(gsm: Any) -> str:
+        """The ``source_name`` of the channel that is not the reference pool."""
+        test_column, _ = MicroarrayKemmeren2014Dataset._channel_columns(gsm)
+        dye = test_column.removeprefix("Signal Norm_")
+        channel = 1 if gsm.metadata.get("label_ch1", [""])[0] == dye else 2
+        return str(gsm.metadata.get(f"source_name_ch{channel}", [""])[0])
 
-        for gene_name, gsm_list in batch_items:
-            # Per-array (deletion, refpool) signal pairs, one pair per array
-            replicate_pairs = (
-                MicroarrayKemmeren2014Dataset._collect_replicate_pairs_static(
-                    gsm_list, probe_to_gene_map
-                )
-            )
-
-            # Skip if no expression data was extracted
-            if not replicate_pairs:
-                continue
-
-            # Determine strain from systematic_to_strain map - REQUIRED
-            if gene_name not in systematic_to_strain:
-                continue  # Skip this gene since we don't know the strain
-            strain = systematic_to_strain[gene_name]
-
-            # Create sample info for this gene deletion
-            sample_info = {
-                "systematic_gene_name": gene_name,
-                "perturbed_gene_name": released_gene_names[gene_name],
-                "num_replicates": len(gsm_list),
-                "strain": strain,
-            }
-
-            experiment, reference, publication = (
-                MicroarrayKemmeren2014Dataset.create_expression_experiment(
-                    dataset_name, sample_info, replicate_pairs
-                )
-            )
-
-            # Skip if experiment creation failed (returns None when log2 ratios can't be calculated)
-            if experiment is None:
-                continue
-
-            # Serialize the Pydantic objects
-            serialized_data = pickle.dumps(
-                {
-                    "experiment": experiment.model_dump(),
-                    "reference": reference.model_dump(),
-                    "publication": publication.model_dump(),
-                }
-            )
-            results.append(serialized_data)
-
-        return results
+    @staticmethod
+    def _reference_dye(gsm: Any) -> str:
+        """The dye carrying the reference pool on this array (Cy5 or Cy3)."""
+        _, reference_column = MicroarrayKemmeren2014Dataset._channel_columns(gsm)
+        return reference_column.removeprefix("Signal Norm_")
 
     @staticmethod
     def _channel_columns(gsm: Any) -> tuple[str, str]:
@@ -850,14 +679,19 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         return f"Signal Norm_{test_dye}", f"Signal Norm_{reference_dye}"
 
     @staticmethod
-    def _extract_channels_from_gsm_static(
-        gsm: Any, probe_to_gene_map: dict[str, str]
-    ) -> tuple[SortedDict, SortedDict]:
-        """Per-gene (test, reference) normalized signals of one array.
+    def _array_signals(gsm: Any, probe_to_gene_map: dict[str, str]) -> pd.DataFrame:
+        """Per-gene values of one array, its duplicate spots combined.
 
-        Both values of a gene come from the same table row, so the pair shares its
-        spot. Rows whose probe is not in the map and rows with a non-numeric cell are
-        skipped; a gene with two probes keeps the last row, as before.
+        Each mapped spot has two ``Signal Norm`` values, the test culture's and the
+        reference pool's, assigned by ``_channel_columns``; its log2 ratio is
+        log2(test / reference). The GEO ``VALUE`` column is not read: its orientation
+        differs between arrays (module comment). A spot whose signal is not positive
+        (or missing) raises, so no spot is dropped. Rows whose probe is not in the map
+        are not genes and are left out.
+
+        Returns:
+            A frame indexed by gene (sorted) with ``log2_ratio``, ``test`` and
+            ``reference`` (the means over the gene's spots) and ``n_spots``.
         """
         test_column, reference_column = MicroarrayKemmeren2014Dataset._channel_columns(
             gsm
@@ -868,45 +702,30 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                 raise ValueError(
                     f"{gsm.name}: column {column!r} missing from the sample table"
                 )
-
-        test_data = SortedDict()
-        reference_data = SortedDict()
-        for _, row in table.iterrows():
-            probe_id = str(int(row["ID_REF"]))
-            if probe_id not in probe_to_gene_map:
-                continue
-            gene = probe_to_gene_map[probe_id]
-            try:
-                test_value = float(row[test_column])
-                reference_value = float(row[reference_column])
-            except (ValueError, TypeError):
-                continue
-            test_data[gene] = test_value
-            reference_data[gene] = reference_value
-
-        return test_data, reference_data
-
-    @staticmethod
-    def _collect_replicate_pairs_static(
-        gsm_list: list[Any], probe_to_gene_map: dict[str, str]
-    ) -> SortedDict:
-        """Per-gene list of (deletion, refpool) signal pairs, one pair per array.
-
-        The pairs feed ``create_expression_experiment``, which takes the log2 ratio
-        within each array before averaging over arrays.
-        """
-        pairs = SortedDict()
-        for gsm in gsm_list:
-            deletion, refpool = (
-                MicroarrayKemmeren2014Dataset._extract_channels_from_gsm_static(
-                    gsm, probe_to_gene_map
-                )
+        probe = table["ID_REF"].astype(int).astype(str)
+        mapped = probe.isin(set(probe_to_gene_map)).to_numpy()
+        test = table[test_column][mapped].astype(float).to_numpy()
+        reference = table[reference_column][mapped].astype(float).to_numpy()
+        not_positive = int((~((test > 0) & (reference > 0))).sum())
+        if not_positive:
+            raise ValueError(
+                f"{gsm.name}: {not_positive} gene spots carry a signal that is not "
+                "positive"
             )
-            for gene, deletion_value in deletion.items():
-                if gene not in pairs:
-                    pairs[gene] = []
-                pairs[gene].append((deletion_value, refpool[gene]))
-        return pairs
+        spots = pd.DataFrame(
+            {
+                "gene": probe[mapped].map(probe_to_gene_map).to_numpy(),
+                "log2_ratio": np.log2(test / reference),
+                "test": test,
+                "reference": reference,
+            }
+        )
+        return spots.groupby("gene", sort=True).agg(
+            log2_ratio=("log2_ratio", "mean"),
+            test=("test", "mean"),
+            reference=("reference", "mean"),
+            n_spots=("log2_ratio", "size"),
+        )
 
     def _extract_probe_to_gene_mapping(self, gse: Any) -> dict[str, str]:
         """Extract probe ID to gene name mapping from GEO platform annotation."""
@@ -1201,38 +1020,8 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         return df
 
     def create_experiment(self) -> None:
-        """Required by base class but not used - see create_expression_experiment."""
+        """Required by base class but not used - see create_array_experiment."""
         pass
-
-    def _log_processing_summary(
-        self,
-        deletion_samples_by_gene: dict[str, list[Any]],
-        samples_data: list[dict[str, Any]],
-    ) -> None:
-        """Log consistent summary statistics for both sequential and parallel processing."""
-        log.info(
-            f"Processed {len(deletion_samples_by_gene)} unique gene deletion experiments"
-        )
-
-        # Find and log duplicate genes (genes appearing in multiple deletion experiments)
-        from collections import Counter
-
-        gene_counter = Counter(deletion_samples_by_gene.keys())
-        duplicates = {gene: count for gene, count in gene_counter.items() if count > 1}
-
-        if duplicates:
-            log.info(f"Found {len(duplicates)} duplicate gene deletions:")
-            for gene, count in sorted(duplicates.items()):
-                log.info(f"  {gene}: {count} experiments")
-
-        # Log statistics
-        total_samples = len(samples_data)
-        deletion_samples = sum(1 for s in samples_data if s["is_deletion"])
-        wt_samples_count = sum(1 for s in samples_data if s["is_wildtype"])
-        log.info(
-            f"Total samples: {total_samples}, Deletion samples: {deletion_samples}, Wildtype: {wt_samples_count}"
-        )
-        log.info(f"Unique gene deletions: {len(deletion_samples_by_gene)}")
 
     @staticmethod
     def _validate_channel_assignment(
@@ -1295,143 +1084,87 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         return fraction
 
     @staticmethod
-    def create_expression_experiment(
-        dataset_name: str, sample_info: dict[str, Any], replicate_pairs: SortedDict
+    def create_array_experiment(
+        dataset_name: str, sample_info: dict[str, Any], signals: pd.DataFrame
     ) -> tuple[Any, Any, Any]:
-        """Build an experiment, reference, and publication from per-array signal pairs.
+        """Build the experiment, reference and publication of ONE array.
 
-        ``replicate_pairs`` maps a gene to its (deletion, refpool) normalized signals,
-        one pair per array (``_collect_replicate_pairs_static``). The log2 ratio is
-        taken within each array, log2(deletion / refpool), so the two-color design
-        cancels the spot; the mean, sample SD, SE and variance are then taken over the
-        arrays. An array on which either signal is not positive is dropped for that
-        gene. The stored linear ``expression`` is the mean deletion signal and the
-        reference ``expression`` the mean refpool signal over the same arrays, so the
-        reference ``n_replicates`` of a gene is the number of arrays whose refpool value
-        entered that mean (1 or 2 on GEO), equal to the mutant's own count (#484; the
-        paper's WT pools of 200, 200, 20 and 8 arrays are not the stored value, see the
-        module comment at the reference pool constants).
+        ``signals`` is ``_array_signals`` of the array. The phenotype is the array's
+        per-gene log2 ratio and linear culture signal, ``n_replicates`` 1 per gene, no
+        dispersion (typed gaps) and ``replicate_id`` the array's GEO title; the
+        reference is the refpool signal on the same array with log2 ratio 0. A
+        ``systematic_gene_name`` of ``None`` is a wildtype culture: empty genotype.
         """
-        # Genome reference - strain MUST be specified (BY4741 or BY4742)
         if "strain" not in sample_info:
             raise ValueError(
                 "Strain (BY4741 or BY4742) must be specified in sample_info"
             )
-        strain = sample_info["strain"]
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae",
-            strain=strain,
+            strain=sample_info["strain"],
             assembly_set=SGD_S288C_R64,
             assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
-        # Create genotype for deletion mutant
         # ``perturbed_gene_name`` is the release's own name for the deleted gene
-        # (``resolve_gene_name_comprehensive``)
-        genotype = Genotype(
-            perturbations=[
+        # (``resolve_gene_name_comprehensive``); a wildtype culture deletes nothing
+        perturbations: list[GenePerturbationType] = []
+        if sample_info["systematic_gene_name"] is not None:
+            perturbations.append(
                 KanMxDeletionPerturbation(
                     systematic_gene_name=sample_info["systematic_gene_name"],
                     perturbed_gene_name=sample_info["perturbed_gene_name"],
                 )
-            ]
-        )
+            )
+        genotype = Genotype(perturbations=perturbations)
 
-        # Environment - YPD medium at 30°C (or SC depending on dataset)
         environment = Environment(
             media=Media(
                 name="SC", state="liquid", is_synthetic=True
             ),  # Kemmeren used SC medium
             temperature=Temperature(value=30),
         )
-        environment_reference = environment.model_copy()
 
-        # Within-array log2 ratios, then statistics over the arrays on the log2 scale
-        mean_log2_ratios = SortedDict()
-        log2_se = SortedDict()
-        log2_variance = SortedDict()
-        n_replicates_dict = SortedDict()
-        mean_expression = SortedDict()  # Mean LINEAR deletion signal (for QC)
-        refpool_expression = SortedDict()  # Mean LINEAR refpool signal (reference)
-        refpool_n_replicates = SortedDict()  # Arrays in each refpool mean
-
-        for gene, pairs in replicate_pairs.items():
-            kept = [(d, r) for d, r in pairs if d > 0 and r > 0]
-            if not kept:
-                continue
-
-            log2_ratios_per_array = [float(np.log2(d / r)) for d, r in kept]
-            n = len(log2_ratios_per_array)
-            mean_log2 = float(np.mean(log2_ratios_per_array))
-
-            se_log2: float
-            var_log2: float
-            if n > 1:
-                sd_log2 = float(np.std(log2_ratios_per_array, ddof=1))
-                se_log2 = sd_log2 / n**0.5
-                var_log2 = sd_log2**2
-            else:
-                # n=1: SE and variance are undefined
-                se_log2 = float("nan")
-                var_log2 = float("nan")
-
-            mean_log2_ratios[gene] = mean_log2
-            log2_se[gene] = se_log2
-            log2_variance[gene] = var_log2
-            n_replicates_dict[gene] = n
-            mean_expression[gene] = float(np.mean([d for d, _ in kept]))
-            refpool_expression[gene] = float(np.mean([r for _, r in kept]))
-            refpool_n_replicates[gene] = n
-
-        if not mean_log2_ratios:
-            # No array with both signals positive - return None to signal skip
-            return None, None, None
-
-        # Create phenotype with new schema fields
+        genes = [str(gene) for gene in signals.index]
+        ones = dict.fromkeys(genes, 1)
         phenotype = MicroarrayExpressionPhenotype(
-            expression=mean_expression,  # Mean LINEAR expression (for QC)
-            expression_log2_ratio=mean_log2_ratios,  # Mean log2 ratios
-            expression_log2_ratio_se=log2_se,  # SE on log2 scale
-            expression_log2_ratio_variance=log2_variance,  # Variance on log2 scale
-            n_replicates=n_replicates_dict,  # Number of replicates per gene
+            expression={g: float(v) for g, v in zip(genes, signals["test"])},
+            expression_log2_ratio={
+                g: float(v) for g, v in zip(genes, signals["log2_ratio"])
+            },
+            expression_log2_ratio_se=None,
+            expression_log2_ratio_variance=None,
+            n_replicates=ones,
+            replicate_id=sample_info["replicate_id"],
+            provenance_gaps=_single_measurement_gaps(_SINGLE_CULTURE_NOTE),
         )
-
-        # Create reference phenotype (refpool expression)
-        # For reference, create self-referential log2 ratios (all zeros)
-        reference_log2_ratios = SortedDict()
-        for gene in refpool_expression:
-            reference_log2_ratios[gene] = 0.0  # log2(1) = 0
-
         phenotype_reference = MicroarrayExpressionPhenotype(
-            expression=refpool_expression,
-            expression_log2_ratio=reference_log2_ratios,
-            n_replicates=refpool_n_replicates,  # Arrays in each refpool mean
+            expression={g: float(v) for g, v in zip(genes, signals["reference"])},
+            expression_log2_ratio=dict.fromkeys(genes, 0.0),
+            expression_log2_ratio_se=None,
+            expression_log2_ratio_variance=None,
+            n_replicates=ones,
+            provenance_gaps=_single_measurement_gaps(_REFERENCE_READING_NOTE),
         )
 
-        # Create reference
         reference = MicroarrayExpressionExperimentReference(
             dataset_name=dataset_name,
             genome_reference=genome_reference,
-            environment_reference=environment_reference,
+            environment_reference=environment.model_copy(),
             phenotype_reference=phenotype_reference,
         )
-
-        # Create experiment
         experiment = MicroarrayExpressionExperiment(
             dataset_name=dataset_name,
             genotype=genotype,
             environment=environment,
             phenotype=phenotype,
         )
-
-        # Publication
         publication = Publication(
             pubmed_id="24766815",
             pubmed_url="https://pubmed.ncbi.nlm.nih.gov/24766815/",
             doi="10.1016/j.cell.2014.02.054",
             doi_url="https://doi.org/10.1016/j.cell.2014.02.054",
         )
-
         return experiment, reference, publication
 
 
@@ -1444,77 +1177,10 @@ if __name__ == "__main__":
         io_workers=10,
         process_workers=10,
     )
-    # dataset = MicroarrayKemmeren2014Dataset(
-    #     root=osp.join(DATA_ROOT, "data/torchcell/microarray_kemmeren2014"),
-    # )
     print(f"Dataset size: {len(dataset)}")
     print(f"Dataset gene set size: {len(dataset.gene_set)}")
-    print(f"First 10 genes in gene_set: {list(dataset.gene_set)[:10]}")
-
-    if len(dataset) > 0:
-        # Get raw data (dictionary format) - this is what dataset[0] returns
-        data = dataset[0]
-
-        # The data is returned as a dictionary with deserialized content
-        print("\nFirst dataset item (index 0):")
-        print(f"  Data type: {type(data)}")
-        print(f"  Keys: {data.keys()}")
-
-        # Access the dictionaries
-        experiment = data["experiment"]
-        reference = data["reference"]
-        publication = data["publication"]
-
-        print("\n=== Experiment Details ===")
-        print(f"  Dataset: {experiment['dataset_name']}")
-        perturbed_gene = experiment["genotype"]["perturbations"][0][
-            "systematic_gene_name"
-        ]
-        print(f"  Perturbed gene: {perturbed_gene}")
-
-        # Show expression data summary
-        exp_expression = experiment["phenotype"]["expression"]
-        print(f"  Expression measurements: {len(exp_expression)} genes")
-
-        # Show first 5 expression values
-        print("  First 5 expression values:")
-        for i, (gene, value) in enumerate(list(exp_expression.items())[:5]):
-            print(f"    {gene}: {value:.4f}")
-
-        print("\n=== Reference Details ===")
-        print(f"  Dataset: {reference['dataset_name']}")
-        print(f"  Genome: {reference['genome_reference']}")
-        print(f"  Environment: {reference['environment_reference']}")
-
-        # Show reference expression (wildtype baseline)
-        ref_expression = reference["phenotype_reference"]["expression"]
-        print(f"  Reference expression: {len(ref_expression)} genes")
-
-        # Show first 5 reference expression values
-        print("  First 5 reference expression values (wildtype):")
-        for i, (gene, value) in enumerate(list(ref_expression.items())[:5]):
-            print(f"    {gene}: {value:.4f}")
-
-        # Compare specific gene between experiment and reference
-        print("\n=== Gene Comparison (exp vs ref) ===")
-        # Pick first 3 genes for comparison
-        sample_genes = list(exp_expression.keys())[:3]
-        for gene in sample_genes:
-            if gene in ref_expression:
-                exp_val = exp_expression[gene]
-                ref_val = ref_expression[gene]
-                log2_ratio = np.log2(exp_val / ref_val) if ref_val != 0 else np.nan
-                print(f"  {gene}:")
-                print(f"    Deletion mutant: {exp_val:.4f}")
-                print(f"    Wildtype (ref): {ref_val:.4f}")
-                print(f"    Log2 ratio: {log2_ratio:.4f}")
-
-        # Check perturbed gene presence
-        print("\n=== Perturbed Gene Status ===")
-        print(f"  Gene: {perturbed_gene}")
-        print(f"  In deletion mutant expression: {perturbed_gene in exp_expression}")
-        print(f"  In wildtype reference expression: {perturbed_gene in ref_expression}")
-
-        print("\n=== Publication ===")
-        print(f"  PubMed ID: {publication['pubmed_id']}")
-        print(f"  DOI: {publication['doi']}")
+    record = dataset[0]
+    experiment = record["experiment"]
+    phenotype = experiment["phenotype"]
+    print(f"Record 0: {phenotype['replicate_id']}, genotype {experiment['genotype']}")
+    print(f"  {len(phenotype['expression_log2_ratio'])} genes measured")

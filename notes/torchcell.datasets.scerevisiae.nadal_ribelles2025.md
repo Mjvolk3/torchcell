@@ -115,3 +115,42 @@ A genotype label with no ORF form is stored on `ReleasedGeneNamePerturbation` un
 | L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'pseudobulk_scrnaseq_log2fc' |
 | L3 | `reference_finite` | gate | ok | reference expression finite for all 41970137 values |
 | L4 | `gene_containment_sgd` | report | finding | 0.220 of 6796 measured genes are S288C reference genes (>= 0.9) |
+
+## 2026.11.24 - Per-replicate review (#1178): one record is already one culture
+
+Review under the per-replicate policy (part of #1172, #1064; tracking #1178). Outcome: the store already holds one record per biological replicate, so no record changes (6,188 before and after). The question the plan left for the owner, whether co-cultured transformant clones are record units, is answered below as far as the release can answer it; what remains is a modeling decision about per-cell data.
+
+### What one record is (quotes in `REPLICATE_SOURCED_VALUES`, mirror `paper.md`, sha256 `86f4a416...`)
+
+| question | evidence | line |
+|---|---|---|
+| culture | "to generate the YKOC each mutant was grown and transformed individually"; "Frozen glycerol stocks of each individual mutant from the transcriptionally barcoded yeast knock out collection were recovered on URA- media" then refreshed into a 96-well plate of YPD | 23, 172 |
+| pooling and conditions | "Cells then were pooled together into large flasks and shacked vigorously to ensure a homogeneous mixture."; "We subjected or not cell pools to osmostress" | 172, 174 |
+| cartridges (technical) | "For each condition methanol-fixed cells were split into 20 different aliquots"; "A total of 29 matrixcartridges were run (14 control and 15 NaCl)." | 174, 178 |
+| clone | "added a clone barcode (5 random nucleotides) downstream of the URA3 STOP codon" | 124 |
+| WT | "A total of 7 different WT strains were generated with distinct clone and genotype barcodes as controls." | 138 |
+| combining | "Each mutant was compared to wild type in control and stress samples separately." | 238 |
+
+So a (genotype label, condition) record is one mutant culture (one well), sampled once per condition from the pooled culture. The cells of that genotype across the 14 or 15 cartridges are technical samples of the one culture (aliquots of one fixed pool), combined inside the record by the authors' Wilcoxon DE and counted by `n_cells` (policy item 2). Replacement strains (`bc_YBR020W-1`, `-2`) are separately built strains and are already separate records.
+
+Clones are independent transformants (each carries its own random N5 barcode) that grew together in their mutant's single well. The paper does not say this in one sentence; it follows from the transformation and the stock being per well ("Grown cells were mixed with URA- $50 \%$ glycerol to make frozen stocks", L168) and the growth being per mutant ("the whole collection of mutants was grown independently (96-well plates) and pooled", L25). On the other side, the authors call them "fully independent clones" (L23). They are not independent cultures, and the release gives no per-clone value: `FC_genotype.Rdata` keys and `ptb_summary.Rdata` rows are per genotype label. Per-clone identity exists only in the per-cell Seurat metadata (`seus_split.RData`, column `clone`). The authors' clone analysis (paper L214; Zenodo `clone.comparison_Rev.R`, md5 `2fa7a992...`, sha256 `207fcab04087e5c6192b74528f2e6a4efa8233991a007c8c2fadcc79b2f1b4c3`, read from the Zenodo record and not added to the raw mirror because the loader does not read it) runs `FindMarkers` of one clone against the other clones of its genotype for the control condition only and writes `clone`, `ncellsInClon`, `nmarkers` (DE gene counts) to `Clone_comparison_summary.xlsx`, which is not deposited on Zenodo (the record's 22 files were listed through the Zenodo API on 2026.11.24). No per-clone expression profile is released.
+
+Synonym search in `paper.md` and `si/si1.md` (replicate, triplicate, duplicate, biological, technical, independent, colony, isolate, culture, n =): every "three independent" / "n = 3" / "biological replicates" hit belongs to the validation assays (bud scars, MitoTracker, competition, ChIP, flow cytometry, growth curves; Figs 2e-f, 3f, 4e-i, S3d), none of which this class stores. No withdrawn sample is stated.
+
+The raw mirror files are the Zenodo bytes: md5 of `README.txt`, `FC_genotype.Rdata`, `ptb_summary.Rdata`, `DEG.Rdata`, `DEGs_summary.R`, `Figures_Rev.R`, `summary.genotypes_Rev.R` and `deleteome_all_mutants_controls.txt` each equal the md5 the Zenodo API lists. The raw key still has no `manifest.json` (#1172).
+
+### Measured on the release (`test_the_release_is_one_table_per_genotype_label_and_condition`, `--data`)
+
+`DEG.Rdata` (written in the same loop as `fcs`, `DEGs_summary.R`): 6,188 tables, Control 3,091, NaCl 3,097, no (genotype, condition) twice, no WT table. `ptb_summary.Rdata`: control 3,207 rows, nacl 3,204, no label twice, one `WT` row per condition (500 and 458 cells, the 7 WT strains under one label), every DEG genotype has a row, and 115 control plus 106 nacl mutant labels have a row and no DEG table.
+
+### Scratch build and verifier
+
+Built from this branch at `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-nadal-ribelles2025/nadal_ribelles_perturbseq2025` (529 s). `verify_rnaseq_store` verdict PASS (`preprocess/verification_report.json` there): L0 6,188 records validated; L1 count 6,188 of 6,188; L1 strain uniqueness 6,188 unique (strain, condition) records over 3,150 strains; L2 36,352,922 log2 ratio values checked; L3 one measurement type, reference finite for 41,970,137 values; L4 `gene_containment_sgd` report-class finding 0.220 of 6,796 measured genes (released names, not gated).
+
+Against the dev store `$DATA_ROOT/data/torchcell/nadal_ribelles_perturbseq2025` (built 2026.10.16): the same 6,188 (strain id, condition) keys, one record per key (control 3,091, nacl 3,097). Grouping the new records by (strain id, condition) and taking the mean reproduces every stored value: 36,352,922 log2 ratios compared, maximum absolute difference 0.0, 0 gene-key-set mismatches, 0 dispersion and 0 `n_cells` mismatches.
+
+### Not done, for the owner
+
+- Per-clone records. They would be loader-derived (a per-clone DE against WT recomputed from per-cell counts, which the authors did not release) and would need a `replicate_id` (or clone field) that `PseudobulkExpressionPhenotype` does not have. Proposed shape if wanted: `replicate_id: str | None` on `PseudobulkExpressionPhenotype` holding the N5 clone barcode, records built from `seus_split.RData` per (label, clone, condition), the per-genotype record kept as the authors' released value.
+- The 221 `ptbs` mutant rows with no DEG table (released `cell_number` and `sd_lvscore_scaledFU2`, no log2 ratio vector) are not stored: `PseudobulkExpressionPhenotype` rejects an empty `expression_log2_ratio`. Storing them needs an owner call on an optional ratio or a separate leaf.
+- `GROWTH_TEMP_C = 30.0` stays the flagged representative: line 172 states 25 C for the 48 h URA- recovery and no temperature for the 6 h YPD growth or the 15 min NaCl treatment. A typed gap would change every environment, so it is reported, not changed.

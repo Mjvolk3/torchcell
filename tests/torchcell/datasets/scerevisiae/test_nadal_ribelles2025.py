@@ -280,3 +280,83 @@ def test_sha256_reads_in_chunks_and_matches_the_one_shot_digest(tmp_path: Path) 
     assert hashlib.sha256(b"abcdefghij").hexdigest() == expected
     assert m._sha256(str(path), chunk_size=3) == expected
     assert m._sha256(str(path)) == expected
+
+
+# --------------------------------------------------------------------------- #
+# #1178 per-replicate review (2026.11.24): the record unit, quoted and measured
+# --------------------------------------------------------------------------- #
+def test_every_replicate_sourced_value_quotes_the_mirrored_paper() -> None:
+    """The five replicate-structure values cite the mirror ``paper.md`` by its sha256."""
+    assert sorted(m.REPLICATE_SOURCED_VALUES) == [
+        "cartridges_are_aliquots",
+        "clone_barcode",
+        "culture_per_mutant",
+        "cultures_pooled",
+        "wt_strains",
+    ]
+    for key, value in m.REPLICATE_SOURCED_VALUES.items():
+        assert value.provenance.citation_key == m.MEDIUM_CITATION_KEY, key
+        assert value.provenance.source_uri == "paper.md", key
+        assert value.provenance.sha256 == m.MEDIUM_PAPER_SHA256, key
+        assert value.quote.strip(), key
+        assert value.note is not None and value.note.startswith(f"{key}: line "), key
+
+
+def _real_data_root() -> str:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    return os.environ.get("DATA_ROOT", "")
+
+
+_REAL_MIRROR = Path(_real_data_root(), m.RAW_DIR_REL)
+_REAL_PAPER = Path(
+    _real_data_root(), "torchcell-library", m.MEDIUM_CITATION_KEY, "paper.md"
+)
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not _REAL_PAPER.is_file(), reason="paper mirror not on disk")
+def test_the_replicate_quotes_are_verbatim_in_the_mirrored_paper() -> None:
+    """Every replicate quote is a substring of the pinned ``paper.md`` bytes."""
+    data = _REAL_PAPER.read_bytes()
+    assert hashlib.sha256(data).hexdigest() == m.MEDIUM_PAPER_SHA256
+    text = data.decode("utf-8")
+    for key, value in m.REPLICATE_SOURCED_VALUES.items():
+        assert value.quote in text, key
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not (_REAL_MIRROR / m.PTB_NAME).is_file(), reason="raw mirror not on disk"
+)
+def test_the_release_is_one_table_per_genotype_label_and_condition() -> None:
+    """#1178 review, measured on the raw mirror: the record unit is released once.
+
+    ``DEG.Rdata`` (the authors' per-table DEG counts, written in the same loop as
+    ``FC_genotype.Rdata``, ``DEGs_summary.R``) lists 6,188 tables, 3,091 Control and
+    3,097 NaCl, no (genotype, condition) twice: one record each, one per culture. No
+    clone and no WT strain has a table. ``ptb_summary.Rdata`` has one row per label
+    (3,207 control, 3,204 nacl), one ``WT`` row per condition (500 and 458 cells, the
+    7 WT strains as one label), a row for every DEG genotype, and 115 + 106 mutant
+    labels with a row but no table (no log2 ratio vector, so no record).
+    """
+    deg = rdata.read_rda(str(_REAL_MIRROR / "DEG.Rdata"))["DEG"]
+    assert len(deg) == 6188
+    assert deg["condition"].value_counts().to_dict() == {"NaCl": 3097, "Control": 3091}
+    assert not deg.duplicated(["genotype", "condition"]).any()
+    assert not deg["genotype"].astype(str).str.upper().str.contains("WT").any()
+    ptbs = rdata.read_rda(str(_REAL_MIRROR / m.PTB_NAME))["ptbs"]
+    shapes = {}
+    for cond, table in ptbs.items():
+        labels = [str(x).replace("bc-", "", 1) for x in table["assignment_consensus2"]]
+        assert len(labels) == len(set(labels)), cond
+        wt = table[table["assignment_consensus2"] == "WT"]
+        released = {str(g) for g in deg[deg["condition"].str.lower() == cond].genotype}
+        shapes[str(cond)] = (
+            len(labels),
+            int(wt["cell_number"].iloc[0]),
+            len(released - set(labels)),
+            len(set(labels) - released - {"WT"}),
+        )
+    assert shapes == {"control": (3207, 500, 0, 115), "nacl": (3204, 458, 0, 106)}

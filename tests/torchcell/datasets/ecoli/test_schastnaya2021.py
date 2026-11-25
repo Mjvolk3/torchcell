@@ -4,7 +4,7 @@
 """The Schastnaya 2021 deletion metabolome loader
 (``torchcell.datasets.ecoli.schastnaya2021``).
 
-Synthetic tests (run everywhere) write both workbooks into ``tmp_path`` and build over
+Synthetic tests (run everywhere) write the three workbooks into ``tmp_path`` and build over
 the real ``EcoliK12MG1655Genome`` class on the synthetic MG1655 assembly of
 ``tests/torchcell/sequence/genome/_bacterial_fixtures.py`` (thrA on b0002, proB on
 b0005), served through a stubbed ``resolve`` with the network refused, and replace the
@@ -146,11 +146,52 @@ def _write_sd1(
     workbook.save(path)
 
 
+#: A synthetic Source Data panel over the synthetic Supplementary Data 3: glucose
+#: (C6H12O6) in the two ThrL phosphomutants. ThrL-S2A's injections pool to its
+#: released 0.1 (reproduced, so its count is back-solved to 2); ThrL-S2E's pool to 0.5
+#: against a released 0.6 (not reproduced, so it keeps the floor of 3), and its first
+#: injection equals the wild type's.
+SYNTHETIC_PANEL = m.SourceDataPanel(
+    sheet="Figure 9z",
+    title="Intracellular abundance of glucose, arb. units (intensity)",
+    formula="C6H12O6",
+    carbon_source="GLUCOSE",
+    n_biological={"Wild-type": 3, "ThrL S2A": 2, "ThrL S2E": 1},
+    sd3_token={"ThrL S2A": "ThrL-S2A", "ThrL S2E": "ThrL-S2E"},
+)
+SYNTHETIC_INJECTIONS: dict[str, list[float]] = {
+    "Wild-type": [100.0, 100.0, 90.0, 110.0, 95.0, 105.0],
+    "ThrL S2A": [2**0.1 * 100.0] * 4,
+    "ThrL S2E": [100.0, 2 * 2**0.5 * 100.0 - 100.0],
+}
+
+
+def _write_source_data(
+    path: Path,
+    panel: m.SourceDataPanel = SYNTHETIC_PANEL,
+    injections: Mapping[str, Sequence[Any]] = SYNTHETIC_INJECTIONS,
+) -> None:
+    """A synthetic Source Data workbook: one decoy sheet, then the panel's sheet."""
+    workbook = openpyxl.Workbook()
+    decoy = workbook.active
+    assert decoy is not None
+    decoy.title = "Figure 1b"
+    decoy.append(["Growth rates of mutants, % wild-type"])
+    sheet = workbook.create_sheet(panel.sheet)
+    sheet.append([panel.title])
+    sheet.append(list(injections))
+    depth = max(len(v) for v in injections.values())
+    for i in range(depth):
+        sheet.append([v[i] if i < len(v) else None for v in injections.values()])
+    workbook.save(path)
+
+
 def _write_raw(raw: Path) -> None:
-    """Both synthetic workbooks under a dataset root's ``raw/``."""
+    """The three synthetic workbooks under a dataset root's ``raw/``."""
     raw.mkdir(parents=True, exist_ok=True)
     _write_sd3(raw / m.SD3_FILE, COLUMNS)
     _write_sd1(raw / m.SD1_FILE)
+    _write_source_data(raw / m.SOURCE_DATA_FILE)
 
 
 @pytest.fixture
@@ -190,6 +231,7 @@ def synthetic(
     root = tmp_path / "metabolome_schastnaya2021"
     _write_raw(root / "raw")
     monkeypatch.setattr(m, "assembly_reference", lambda strain, **kwargs: REFERENCE)
+    monkeypatch.setattr(m, "SOURCE_DATA_PANELS", (SYNTHETIC_PANEL,))
     return root
 
 
@@ -341,6 +383,106 @@ def test_read_sd1_refuses_a_wrong_title(tmp_path: Path) -> None:
 # --------------------------------------------------------------------------- #
 # Retention, identity and the detected-ion ledger
 # --------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
+# The Source Data file (per-injection intensities; read, never stored as records)
+# --------------------------------------------------------------------------- #
+def test_read_source_data_reads_every_column_top_aligned(tmp_path: Path) -> None:
+    path = tmp_path / m.SOURCE_DATA_FILE
+    _write_source_data(path)
+    columns = m.read_source_data(path, [SYNTHETIC_PANEL])
+    assert [(c.sheet, c.header, len(c.values)) for c in columns] == [
+        ("Figure 9z", "Wild-type", 6),
+        ("Figure 9z", "ThrL S2A", 4),
+        ("Figure 9z", "ThrL S2E", 2),
+    ]
+    assert columns[0].values == (100.0, 100.0, 90.0, 110.0, 95.0, 105.0)
+
+
+@pytest.mark.parametrize(
+    ("panel_update", "injections", "match"),
+    [
+        ({"sheet": "Figure 3x"}, SYNTHETIC_INJECTIONS, "no sheet"),
+        ({"title": "another title"}, SYNTHETIC_INJECTIONS, "title"),
+        (
+            {"n_biological": {"Wild-type": 3, "ThrL S2E": 1, "ThrL S2A": 2}},
+            SYNTHETIC_INJECTIONS,
+            "headers",
+        ),
+        ({}, {**SYNTHETIC_INJECTIONS, "ThrL S2E": [100.0, None, 1.0]}, "non-numeric"),
+        ({}, {**SYNTHETIC_INJECTIONS, "ThrL S2E": [100.0, "nd"]}, "non-numeric"),
+        ({}, {**SYNTHETIC_INJECTIONS, "ThrL S2A": [1.0, 2.0, 3.0]}, "3 injections"),
+    ],
+)
+def test_read_source_data_refuses_any_other_geometry(
+    tmp_path: Path,
+    panel_update: dict[str, Any],
+    injections: Mapping[str, Sequence[Any]],
+    match: str,
+) -> None:
+    path = tmp_path / m.SOURCE_DATA_FILE
+    _write_source_data(path, SYNTHETIC_PANEL, injections)
+    panel = SYNTHETIC_PANEL.model_copy(update=panel_update)
+    with pytest.raises(m.TableFormatError, match=match):
+        m.read_source_data(path, [panel])
+
+
+def test_check_source_data_pools_the_methods_way_and_back_solves(
+    tmp_path: Path,
+) -> None:
+    _write_sd3(tmp_path / m.SD3_FILE, COLUMNS)
+    _write_source_data(tmp_path / m.SOURCE_DATA_FILE)
+    table = m.read_sd3(tmp_path / m.SD3_FILE)
+    columns = m.read_source_data(tmp_path / m.SOURCE_DATA_FILE, [SYNTHETIC_PANEL])
+    reproduced, missed = m.check_source_data([SYNTHETIC_PANEL], columns, table)
+    assert (reproduced.sd3_token, reproduced.n_injections) == ("ThrL-S2A", 4)
+    assert reproduced.pooled_log2_ratio == pytest.approx(0.1)
+    assert reproduced.sd3_log2_fold_change == 0.1
+    assert reproduced.reproduced is True
+    assert reproduced.positions_equal_to_wild_type == ()
+    assert missed.pooled_log2_ratio == pytest.approx(0.5)
+    assert missed.abs_difference == pytest.approx(0.1)
+    assert missed.reproduced is False
+    assert missed.positions_equal_to_wild_type == (1,)
+    assert m.back_solved_replicates([reproduced, missed]) == {
+        ("ThrL-S2A", "GLUCOSE"): 2
+    }
+
+
+def test_check_source_data_refuses_an_ion_sd3_did_not_detect(tmp_path: Path) -> None:
+    _write_sd3(tmp_path / m.SD3_FILE, COLUMNS)
+    table = m.read_sd3(tmp_path / m.SD3_FILE)
+    panel = SYNTHETIC_PANEL.model_copy(
+        update={
+            "formula": "C4H6O4",
+            "n_biological": {"Wild-type": 1, "thrA knockout": 1},
+            "sd3_token": {"thrA knockout": "thrA knockout"},
+        }
+    )
+    columns = [
+        m.SourceDataColumn(sheet=panel.sheet, header=h, values=(1.0, 1.0))
+        for h in panel.n_biological
+    ]
+    with pytest.raises(m.TableFormatError, match="is 'nd'"):
+        m.check_source_data([panel], columns, table)
+
+
+def test_source_data_panels_take_their_counts_from_the_legends() -> None:
+    fig3b, fig3d = m.SOURCE_DATA_PANELS
+    assert fig3b.n_biological == {
+        "Wild-type": 10,
+        "SucB knockout": 3,
+        "SucB S115E": 4,
+        "SucB S115A": 5,
+    }
+    assert (fig3b.formula, fig3b.carbon_source) == ("C5H6O5", "FRUCTOSE")
+    assert set(fig3d.n_biological.values()) == {3}
+    assert (fig3d.formula, fig3d.carbon_source) == ("C13H21N3O8S", "GLUCOSE")
+    assert m.N_TECHNICAL_REPLICATES == 2
+    for panel in m.SOURCE_DATA_PANELS:
+        assert list(panel.n_biological)[0] == m.WILD_TYPE_HEADER
+        assert set(panel.sd3_token) == set(panel.n_biological) - {m.WILD_TYPE_HEADER}
+
+
 def test_check_phosphomutants_named_accepts_every_catalogued_strain(
     tmp_path: Path,
 ) -> None:
@@ -605,6 +747,12 @@ def test_build_stores_the_two_deletions_and_the_two_phosphomutants(
     assert third["phenotype"]["metabolite_level"]["C3H5O6P"] == 0.4
     assert len(third["phenotype"]["metabolite_level"]) == 5
 
+    # the Source Data back-solves ThrL-S2A's count; ThrL-S2E does not reproduce
+    assert set(third["phenotype"]["n_replicates"].values()) == {2}
+    fourth = dataset[3]["experiment"]
+    assert set(fourth["phenotype"]["n_replicates"].values()) == {3}
+    assert set(first["phenotype"]["n_replicates"].values()) == {3}
+
     reference = dataset[0]["reference"]
     assert reference["genome_reference"] == REFERENCE.model_dump()
     assert set(reference["phenotype_reference"]["metabolite_level"].values()) == {0.0}
@@ -635,6 +783,12 @@ def test_build_stores_the_two_deletions_and_the_two_phosphomutants(
     assert strains[3].startswith(
         "2,phosphomutant,7,ThrL-S2A,ThrL,,b0001,phospho-abolishing,GLUCOSE,cold,5,"
     )
+    assert [line.rsplit(",", 1)[1] for line in strains[1:]] == ["3", "3", "2", "3"]
+    source_data = json.loads((preprocess / "source_data_replicates.json").read_text())
+    assert source_data["records_written"] == 0
+    assert source_data["why_not_records"] == m.SOURCE_DATA_NOT_RECORDS
+    assert [len(c["values"]) for c in source_data["columns"]] == [6, 4, 2]
+    assert [c["reproduced"] for c in source_data["checks"]] == [True, False]
     p_values = (preprocess / "adjusted_p_values.csv").read_text().splitlines()
     assert p_values[0] == (
         "formula,thrA knockout|GLUCOSE,proB knockout|ACETATE,ThrL-S2A|GLUCOSE,"
@@ -836,7 +990,12 @@ def test_main_dispatches_deposit_build_and_verify(
     monkeypatch.setattr(m, "verify_build", lambda root, data_root: _FakeReport(False))
     assert m.main(["verify"]) == 1
     out = capsys.readouterr().out.splitlines()
-    assert out == ["['si4.xlsx', 'si6.xlsx']", "len = 0", "fake", "fake"]
+    assert out == [
+        "['si4.xlsx', 'si6.xlsx', 'source_data.xlsx']",
+        "len = 0",
+        "fake",
+        "fake",
+    ]
 
 
 class _FakeReport:
@@ -850,7 +1009,11 @@ class _FakeReport:
 
 
 def test_every_consumed_file_is_pinned_once() -> None:
-    assert [raw.name for raw in m.RAW_FILES] == [m.SD1_FILE, m.SD3_FILE]
+    assert [raw.name for raw in m.RAW_FILES] == [
+        m.SD1_FILE,
+        m.SD3_FILE,
+        m.SOURCE_DATA_FILE,
+    ]
     assert all(
         len(raw.sha256) == 64 and raw.sha256 == raw.retrieval.sha256
         for raw in m.RAW_FILES
@@ -859,7 +1022,13 @@ def test_every_consumed_file_is_pinned_once() -> None:
     assert [raw.mirror_relpath for raw in m.RAW_FILES] == [
         f"data/{m.SD1_FILE}",
         f"data/{m.SD3_FILE}",
+        f"data/{m.SOURCE_DATA_FILE}",
     ]
+    source_data = m.RAW_FILES_BY_NAME[m.SOURCE_DATA_FILE].retrieval
+    assert source_data.params == {
+        "key": "PMC8463566.1/41467_2021_25988_MOESM13_ESM.xlsx"
+    }
+    assert source_data.retrieved_at == "2026-11-25T06:10:14.592052+00:00"
 
 
 def test_sourced_value_root_is_the_literature_mirror(tmp_path: Path) -> None:
@@ -907,7 +1076,9 @@ def test_real_sourced_values_are_verbatim(key: str) -> None:
 @pytest.mark.data
 def test_real_build_counts_and_the_gnd_record() -> None:
     """200 records, one per released column (29 deletion + 171 phosphomutant, #1057);
-    gnd on fructose is b2029 with values read off Supplementary Data 3 by hand.
+    gnd on fructose (stored under its released symbol since 2026-10-12) with values
+    read off Supplementary Data 3 by hand; SucB-S115E on fructose carries the
+    back-solved 4 biological replicates, every other record the floor of 3.
     """
     from torchcell.verification.runners import load_records
 
@@ -921,8 +1092,8 @@ def test_real_build_counts_and_the_gnd_record() -> None:
     (gnd,) = [
         record
         for record in records
-        if record["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"]
-        == "b2029"
+        if record["experiment"]["genotype"]["perturbations"][0]["strain_label"]
+        == "gnd knockout"
         and record["experiment"]["environment"]["media"]["name"]
         == m.MEDIA["FRUCTOSE"].name
     ]
@@ -933,6 +1104,15 @@ def test_real_build_counts_and_the_gnd_record() -> None:
     assert set(
         gnd["reference"]["phenotype_reference"]["metabolite_level"].values()
     ) == {0.0}
+    counts = {
+        (
+            record["experiment"]["genotype"]["perturbations"][0]["strain_label"],
+            record["experiment"]["environment"]["media"]["name"],
+        ): set(record["experiment"]["phenotype"]["n_replicates"].values())
+        for record in records
+    }
+    assert counts.pop(("SucB-S115E", m.MEDIA["FRUCTOSE"].name)) == {4}
+    assert set(map(frozenset, counts.values())) == {frozenset({3})}
     by_type: dict[str, set[str]] = {}
     for record in records:
         (perturbation,) = record["experiment"]["genotype"]["perturbations"]
@@ -941,6 +1121,52 @@ def test_real_build_counts_and_the_gnd_record() -> None:
         )
     # one leaf for both arms now: 16 deletion strains + 87 phosphomutant strains
     assert {k: len(v) for k, v in by_type.items()} == {"released_identifier": 103}
+
+
+@pytest.mark.data
+def test_real_source_data_releases_two_injections_per_biological_replicate() -> None:
+    """The mirrored Source Data: 9 columns, 74 injections, the legends' counts x 2.
+
+    Pooled the Methods' way, 5 of the 7 mutant columns reproduce their Supplementary
+    Data 3 value to its four printed decimals; SucB S115A (0.0643 against 0.0608) and
+    TpiA S177A (0.0181 against 0.0248) do not, and TpiA S177A's first two injections
+    equal the wild type's first two (24791, 24317).
+    """
+    path = m.raw_mirror_dir(_real_data_root()) / "data" / m.SOURCE_DATA_FILE
+    columns = m.read_source_data(path, m.SOURCE_DATA_PANELS)
+    assert {(c.sheet, c.header): len(c.values) for c in columns} == {
+        ("Figure 3b", "Wild-type"): 20,
+        ("Figure 3b", "SucB knockout"): 6,
+        ("Figure 3b", "SucB S115E"): 8,
+        ("Figure 3b", "SucB S115A"): 10,
+        ("Figure 3d", "Wild-type"): 6,
+        ("Figure 3d", "TpiA S177E"): 6,
+        ("Figure 3d", "TpiA S177A"): 6,
+        ("Figure 3d", "TpiA T179E"): 6,
+        ("Figure 3d", "TpiA T179A"): 6,
+    }
+    sd3 = m.read_sd3(m.raw_mirror_dir(_real_data_root()) / "data" / m.SD3_FILE)
+    checks = m.check_source_data(m.SOURCE_DATA_PANELS, columns, sd3)
+    assert {c.header: c.reproduced for c in checks} == {
+        "SucB knockout": True,
+        "SucB S115E": True,
+        "SucB S115A": False,
+        "TpiA S177E": True,
+        "TpiA S177A": False,
+        "TpiA T179E": True,
+        "TpiA T179A": True,
+    }
+    by_header = {c.header: c for c in checks}
+    assert round(by_header["SucB S115A"].pooled_log2_ratio, 4) == 0.0643
+    assert round(by_header["TpiA S177A"].pooled_log2_ratio, 4) == 0.0181
+    assert by_header["TpiA S177A"].positions_equal_to_wild_type == (1, 2)
+    assert m.back_solved_replicates(checks) == {
+        ("sucB knockout", "FRUCTOSE"): 3,
+        ("SucB-S115E", "FRUCTOSE"): 4,
+        ("TpiA-S177E", "GLUCOSE"): 3,
+        ("TpiA-T179E", "GLUCOSE"): 3,
+        ("TpiA-T179A", "GLUCOSE"): 3,
+    }
 
 
 @pytest.mark.data

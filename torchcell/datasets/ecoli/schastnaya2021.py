@@ -25,7 +25,22 @@ LOG2(FC) block and the same 200 in an adjusted-p-value block) and Supplementary 
 (``si4.xlsx``, the 89 phosphomutant strains with the b-number of their enzyme and
 whether the substitution abolishes or mimics phosphorylation), read to name every
 phosphomutant strain with its enzyme. The MassIVE deposit MSV000087795 holds the raw
-spectra, not this matrix, and is NOT mirrored.
+spectra, not this matrix, and is NOT mirrored. Since 2026-11-25 the raw mirror also
+holds the article's Source Data file (``source_data.xlsx``, PMC ``MOESM13``), whose
+``Figure 3b`` and ``Figure 3d`` sheets the loader reads (below).
+
+ONE RECORD PER RELEASED COLUMN, AND THE COLUMN IS ALREADY THE SOURCE'S AGGREGATE
+(per-replicate review, issues #1172, #1177). Supplementary Data 3 releases one pooled
+log2 fold change per (strain, carbon source) and ion; no file the paper lists releases
+the per-replicate abundances of its 464 ions (those are MassIVE spectra, out of
+scope), so the 200 records stay as released. The Source Data releases per-INJECTION
+intensities for two ions only (2-oxoglutarate in 4 fructose strains, Fig. 3b;
+(R)-S-lactoylglutathione in 5 glucose strains, Fig. 3d), two injections per biological
+replicate, without saying which two injections share an extract. A per-replicate
+record combines its two injections inside the record, so it cannot be formed without
+guessing that pairing; those 37 would-be records (22 + 15) are NOT written and wait on
+the owner (``SOURCE_DATA_NOT_RECORDS``). Every injection is written to
+``preprocess/source_data_replicates.json``.
 
 STRAIN. ``REFERENCE_STRAIN = "MG1655"``: the wild type the fold change is taken against
 is "E. coli MG1655 dmutS with kanamycin resistance (referred to as wild-type)", carried
@@ -67,7 +82,12 @@ id wherever the row names exactly ONE; a row whose mass cannot separate several 
 compounds is ABSENT from the map rather than assigned one of its candidates, with every
 candidate set in ``preprocess/metabolite_identity.json`` (Rapp 2026's rule; a typed gap
 cannot sit beside a partially populated map, issue #753). ``n_replicates`` is 3 for
-every key, the conservative floor of a count the release does not carry per record.
+every key, the conservative floor of a count the release does not carry per record,
+except where the Source Data back-solves it: a Supplementary Data 3 value that the
+Source Data injections, pooled as the Methods pool them, reproduce to its printed four
+decimals takes that column's legend count (measured: 5 of 7 mutant columns reproduce;
+only ``SucB-S115E`` on fructose moves, 3 -> 4; ``SucB-S115A`` and ``TpiA-S177A``
+do not reproduce and keep the floor).
 ``metabolite_level_se`` is a typed gap. The reference is the wild type, whose level is 0
 for every key BY THE DEFINITION of the released statistic.
 
@@ -82,6 +102,7 @@ import argparse
 import hashlib
 import json
 import logging
+import math
 import os
 import os.path as osp
 import shutil
@@ -193,6 +214,10 @@ SD1_FILE = "si4.xlsx"
 SD1_SHEET = "SD1"
 SD3_FILE = "si6.xlsx"
 SD3_SHEET = "SD3"
+#: The article's "Source data" file (PMC back matter ``<app id="App1">``, media
+#: ``MOESM13``), the file the Data Availability statement means by "Source data are
+#: provided with this paper".
+SOURCE_DATA_FILE = "source_data.xlsx"
 MASSIVE_ACCESSION = "MSV000087795"
 PRIDE_ACCESSION = "PXD027243"
 
@@ -215,12 +240,19 @@ class RawFile(BaseModel):
 
 
 def _pmc_file(
-    name: str, moesm: int, sha256: str, size: int, description: str
+    name: str,
+    moesm: int,
+    sha256: str,
+    size: int,
+    description: str,
+    *,
+    retrieved_at: str = "2026-10-07T11:42:57.784551+00:00",
 ) -> RawFile:
     """A publisher supplementary workbook from the PMC Article Datasets bucket.
 
-    The retrieval record is copied from the literature mirror's ``manifest.json``, which
-    is where these bytes were first captured.
+    The retrieval record of Supplementary Data 1 and 3 is copied from the literature
+    mirror's ``manifest.json``, which is where those bytes were first captured; the
+    Source Data file was retrieved straight into the raw mirror on 2026-11-25.
     """
     key = f"{PMCID}.1/41467_2021_25988_MOESM{moesm}_ESM.xlsx"
     return RawFile(
@@ -234,7 +266,7 @@ def _pmc_file(
             retriever="torchcell.literature.retrieve.pmc_cloud_object",
             params={"key": key},
             sha256=sha256,
-            retrieved_at="2026-10-07T11:42:57.784551+00:00",
+            retrieved_at=retrieved_at,
         ),
     )
 
@@ -256,6 +288,17 @@ RAW_FILES: tuple[RawFile, ...] = (
         "Supplementary Data 3: per (strain, carbon source) log2 fold change of every "
         "annotated ion against the wild type, plus the adjusted p-value",
     ),
+    _pmc_file(
+        SOURCE_DATA_FILE,
+        13,
+        "6342f82c5438f0906bee4f727c61122a9dfb1db6d316110081b0d71a68de56c7",
+        3111259,
+        "Source Data (the article's back-matter 'Source data' file, MOESM13): the "
+        "per-injection intensities behind Fig. 3b (2-oxoglutarate) and Fig. 3d "
+        "((R)-S-lactoylglutathione), read to back-solve the replicate count of the "
+        "Supplementary Data 3 columns they reproduce; not stored as records",
+        retrieved_at="2026-11-25T06:10:14.592052+00:00",
+    ),
 )
 #: ``{raw file name: pinned sha256}``, the build-time check of every consumed file.
 DATA_SHA256: dict[str, str] = {f.name: f.sha256 for f in RAW_FILES}
@@ -270,6 +313,10 @@ NOT_MIRRORED = (
     "Supplementary Data 2, 4, 5, 6, 7, 8 (growth rates, local metabolic changes, "
     "Spearman correlations, melting temperatures, in vitro activities, oligos): not "
     "consumed",
+    "Source Data sheets other than 'Figure 3b' and 'Figure 3d' (Fig. 1b growth "
+    "percentages with no strain label, Fig. 3c and Supplementary Fig. 1 in vitro "
+    "activities, Fig. 3e growth curves, Fig. 4 fluxes as mean +/- SD strings, "
+    "Supplementary Fig. 3 gel ratios): in the mirrored workbook, not read",
 )
 
 
@@ -470,14 +517,44 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         _REPLICATE_QUOTE,
         note="Fig. 3b. The per-record count is not a released column and varies (10, "
         "3, 4, 5 for the wild type, the sucB knockout and two phosphomutants on "
-        "fructose), so the CONSERVATIVE LOWER END is stored, never the optimistic one. "
+        "fructose), so the CONSERVATIVE LOWER END is stored, never the optimistic one, "
+        "except on a record whose count the Source Data back-solves "
+        "(fig3b_biological_replicates, fig3d_biological_replicates). "
         + _REPORTING_SUMMARY_NOTE,
     ),
     "technical_replicates": _paper(
         2,
         _REPLICATE_QUOTE,
         note="two injections of one extract are not independent replicates, so "
-        "n_replicates counts biological replicates only",
+        "n_replicates counts biological replicates only. The Methods name the two: "
+        "'Metabolite extracts were analyzed by direct flow double injection'",
+    ),
+    "fig3b_biological_replicates": _paper(
+        {"Wild-type": 10, "SucB knockout": 3, "SucB S115E": 4, "SucB S115A": 5},
+        _REPLICATE_QUOTE,
+        note="keyed by the Source Data 'Figure 3b' column headers, in the legend's "
+        "order (wild-type, knockout, S115E, S115A); the sheet holds 20, 6, 8 and 10 "
+        "values, two injections per biological replicate",
+    ),
+    "fig3d_biological_replicates": _paper(
+        {
+            "Wild-type": 3,
+            "TpiA S177E": 3,
+            "TpiA S177A": 3,
+            "TpiA T179E": 3,
+            "TpiA T179A": 3,
+        },
+        "$n = 3$ biological replicates with two technical replicates were measured for "
+        "each strain.",
+        note="keyed by the Source Data 'Figure 3d' column headers; the sheet holds 6 "
+        "values per column",
+    ),
+    "source_data_file": _paper(
+        SOURCE_DATA_FILE,
+        "Source data are provided with this paper.",
+        note="the Data Availability statement's Source Data file; PMC's back matter "
+        "names it 'Source data' and links 41467_2021_25988_MOESM13_ESM.xlsx (PMC "
+        "article XML PMC8463566.1.xml, read 2026-11-25)",
     ),
     "screen_scope": _paper(
         {"phosphosites": 52, "enzymes": 23},
@@ -512,6 +589,7 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
 
 TEMPERATURE_C: float = SOURCED_VALUES["temperature_c"].value
 N_BIOLOGICAL_REPLICATES: int = SOURCED_VALUES["n_biological_replicates"].value
+N_TECHNICAL_REPLICATES: int = SOURCED_VALUES["technical_replicates"].value
 COLLECTION: str = SOURCED_VALUES["deletion_collection"].value
 CASSETTE: str = SOURCED_VALUES["cassette"].value
 HOT_EXTRACTION_ENZYMES: tuple[str, ...] = SOURCED_VALUES["extraction_split"].value
@@ -1011,6 +1089,226 @@ def read_sd1(path: str | Path) -> dict[str, PhosphomutantEntry]:
 
 
 # --------------------------------------------------------------------------- #
+# The Source Data file: per-injection intensities of two ions (Fig. 3b, Fig. 3d)
+#
+# NOT records. The two sheets release every INJECTION (two per biological replicate)
+# of one ion in a few strains, as absolute intensity, but not which two injections
+# share an extract, so a per-biological-replicate value cannot be formed without
+# guessing the pairing (issue #1177; the owner decides). The loader reads them to
+# back-solve the replicate count of every Supplementary Data 3 record whose released
+# log2 fold change they reproduce, and writes them to
+# preprocess/source_data_replicates.json.
+# --------------------------------------------------------------------------- #
+WILD_TYPE_HEADER = "Wild-type"
+#: Supplementary Data 3 prints four decimals, so a pooled log2 ratio reproduces a
+#: released value when it lies within half a unit of the fourth decimal.
+SD3_ROUNDING = 5e-5
+
+
+class SourceDataPanel(BaseModel):
+    """One Source Data sheet the loader reads, with the geometry it pins."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    sheet: str
+    title: str
+    formula: str
+    carbon_source: str
+    #: ``{column header: biological replicates}``, the figure legend's counts.
+    n_biological: dict[str, int]
+    #: ``{mutant column header: its Supplementary Data 3 token}``.
+    sd3_token: dict[str, str]
+
+
+SOURCE_DATA_PANELS: tuple[SourceDataPanel, ...] = (
+    SourceDataPanel(
+        sheet="Figure 3b",
+        title="Intracellular adundance of 2-oxoglutarate, arb. units (intensity)",
+        formula="C5H6O5",
+        carbon_source="FRUCTOSE",
+        n_biological=SOURCED_VALUES["fig3b_biological_replicates"].value,
+        sd3_token={
+            "SucB knockout": "sucB knockout",
+            "SucB S115E": "SucB-S115E",
+            "SucB S115A": "SucB-S115A",
+        },
+    ),
+    SourceDataPanel(
+        sheet="Figure 3d",
+        title="Intracellular abundance of (R)-S-lactoylglutathione, arb. units "
+        "(intensity)",
+        formula="C13H21N3O8S",
+        carbon_source="GLUCOSE",
+        n_biological=SOURCED_VALUES["fig3d_biological_replicates"].value,
+        sd3_token={
+            "TpiA S177E": "TpiA-S177E",
+            "TpiA S177A": "TpiA-S177A",
+            "TpiA T179E": "TpiA-T179E",
+            "TpiA T179A": "TpiA-T179A",
+        },
+    ),
+)
+"""The two sheets that release per-injection metabolite intensities.
+
+The title strings are the sheets' own (``adundance`` is the release's spelling)."""
+
+
+class SourceDataColumn(BaseModel):
+    """One strain's released injections in one Source Data sheet."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    sheet: str
+    header: str
+    values: tuple[float, ...]
+
+
+class SourceDataCheck(BaseModel):
+    """One mutant column pooled the paper's way and set against Supplementary Data 3."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    sheet: str
+    header: str
+    sd3_token: str
+    carbon_source: str
+    formula: str
+    n_injections: int
+    n_biological: int
+    pooled_log2_ratio: float
+    sd3_log2_fold_change: float
+    abs_difference: float
+    reproduced: bool
+    #: Positions (1-based) where this column's value equals the wild type's at the
+    #: same position; reported, never acted on.
+    positions_equal_to_wild_type: tuple[int, ...]
+
+
+def read_source_data(
+    path: str | Path, panels: Sequence[SourceDataPanel]
+) -> list[SourceDataColumn]:
+    """Every column of the pinned Source Data sheets, refusing any other geometry.
+
+    Each sheet is a title row, a header row naming the strains, then the injections
+    top-aligned under each header. A column must hold exactly ``2 x`` the legend's
+    biological count, the two technical injections per replicate the legend states.
+    """
+    workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    try:
+        columns: list[SourceDataColumn] = []
+        for panel in panels:
+            if panel.sheet not in workbook.sheetnames:
+                raise TableFormatError(f"{path}: no sheet {panel.sheet!r}")
+            rows = [
+                tuple(row) for row in workbook[panel.sheet].iter_rows(values_only=True)
+            ]
+            if rows[0][0] != panel.title:
+                raise TableFormatError(f"{panel.sheet}: title {rows[0][0]!r}")
+            headers = tuple(v for v in rows[1] if v is not None)
+            if headers != tuple(panel.n_biological):
+                raise TableFormatError(f"{panel.sheet}: headers {headers!r}")
+            for j, header in enumerate(headers):
+                cells = [row[j] if j < len(row) else None for row in rows[2:]]
+                while cells and cells[-1] is None:
+                    cells.pop()
+                values: list[float] = []
+                for v in cells:
+                    if isinstance(v, bool) or not isinstance(v, (int, float)):
+                        raise TableFormatError(
+                            f"{panel.sheet} {header!r}: a non-numeric or blank cell "
+                            "inside the column"
+                        )
+                    values.append(float(v))
+                expected = N_TECHNICAL_REPLICATES * panel.n_biological[header]
+                if len(values) != expected:
+                    raise TableFormatError(
+                        f"{panel.sheet} {header!r}: {len(values)} injections, the "
+                        f"legend's {panel.n_biological[header]} biological x "
+                        f"{N_TECHNICAL_REPLICATES} technical is {expected}"
+                    )
+                columns.append(
+                    SourceDataColumn(
+                        sheet=panel.sheet, header=str(header), values=tuple(values)
+                    )
+                )
+    finally:
+        workbook.close()
+    return columns
+
+
+def check_source_data(
+    panels: Sequence[SourceDataPanel],
+    columns: Sequence[SourceDataColumn],
+    table: Sd3Table,
+) -> list[SourceDataCheck]:
+    """Pool each mutant's injections against the wild type's, as the Methods do.
+
+    "the abundances from all replicates of a given mutant were pooled and compared to
+    the pooled abundances of the wild-type sample": ``log2(mean(mutant) /
+    mean(wild type))`` over every injection, set against the Supplementary Data 3
+    value of the same (strain, carbon source) and ion.
+    """
+    by_key = {(c.sheet, c.header): c for c in columns}
+    rows = {ion.formula: i for i, ion in enumerate(table.ions)}
+    sd3 = {(c.strain, c.carbon_source): c for c in table.columns}
+    checks: list[SourceDataCheck] = []
+    for panel in panels:
+        wild_type = by_key[(panel.sheet, WILD_TYPE_HEADER)].values
+        wt_mean = sum(wild_type) / len(wild_type)
+        for header, token in panel.sd3_token.items():
+            values = by_key[(panel.sheet, header)].values
+            released = sd3[(token, panel.carbon_source)].fold_change[
+                rows[panel.formula]
+            ]
+            if released is None:
+                raise TableFormatError(
+                    f"{token} {panel.carbon_source}: {panel.formula} is 'nd' in "
+                    "Supplementary Data 3"
+                )
+            pooled = math.log2((sum(values) / len(values)) / wt_mean)
+            difference = abs(pooled - released)
+            checks.append(
+                SourceDataCheck(
+                    sheet=panel.sheet,
+                    header=header,
+                    sd3_token=token,
+                    carbon_source=panel.carbon_source,
+                    formula=panel.formula,
+                    n_injections=len(values),
+                    n_biological=panel.n_biological[header],
+                    pooled_log2_ratio=pooled,
+                    sd3_log2_fold_change=released,
+                    abs_difference=difference,
+                    reproduced=difference <= SD3_ROUNDING,
+                    positions_equal_to_wild_type=tuple(
+                        i
+                        for i, (v, w) in enumerate(
+                            zip(values, wild_type, strict=False), start=1
+                        )
+                        if v == w
+                    ),
+                )
+            )
+    return checks
+
+
+def back_solved_replicates(
+    checks: Sequence[SourceDataCheck],
+) -> dict[tuple[str, str], int]:
+    """``{(SD3 token, carbon source): biological replicates}`` for reproduced columns.
+
+    A Supplementary Data 3 value the Source Data injections reproduce to its printed
+    precision was pooled over exactly those injections, so its record's replicate count
+    is the legend's count for that column (the back-solve rule), not the floor.
+    """
+    return {
+        (check.sd3_token, check.carbon_source): check.n_biological
+        for check in checks
+        if check.reproduced
+    }
+
+
+# --------------------------------------------------------------------------- #
 # Retention: every released column is a record (#1057)
 # --------------------------------------------------------------------------- #
 class DropRule(BaseModel):
@@ -1159,13 +1457,18 @@ def wild_type_background() -> StrainBackground:
 
 
 def metabolite_phenotype(
-    ions: Sequence[IonRow], values: Sequence[float | None]
+    ions: Sequence[IonRow],
+    values: Sequence[float | None],
+    n_replicates: int = N_BIOLOGICAL_REPLICATES,
 ) -> MetabolitePhenotype:
     """One column's detected ions: their log2 fold changes and their KEGG identities.
 
     An ``nd`` ion is absent from the record, because the release states no value for
     it. ``target_metabolite_ids`` carries only the ions naming exactly one KEGG
     compound; a merged isobaric set is left out rather than assigned a candidate.
+    ``n_replicates`` is the strain's biological replicate count, the same for every
+    ion (one injection measures the whole spectrum): the floor of 3 unless the Source
+    Data back-solves it (``back_solved_replicates``).
     """
     if len(ions) != len(values):
         raise ValueError(f"{len(ions)} ions for {len(values)} values")
@@ -1183,7 +1486,7 @@ def metabolite_phenotype(
     return MetabolitePhenotype(
         metabolite_level=levels,
         metabolite_level_se=None,
-        n_replicates=dict.fromkeys(levels, N_BIOLOGICAL_REPLICATES),
+        n_replicates=dict.fromkeys(levels, n_replicates),
         measurement_type=MEASUREMENT_TYPE,
         target_metabolite_ids=targets,
         provenance_gaps=[METABOLITE_LEVEL_SE_GAP],
@@ -1248,26 +1551,32 @@ def phosphomutant_genotype(column: StrainColumn) -> Genotype:
 
 
 def build_phosphomutant_experiment(
-    dataset_name: str, column: StrainColumn, ions: Sequence[IonRow]
+    dataset_name: str,
+    column: StrainColumn,
+    ions: Sequence[IonRow],
+    n_replicates: int = N_BIOLOGICAL_REPLICATES,
 ) -> MetaboliteExperiment:
     """The record of one phosphomutant strain in one carbon source."""
     return MetaboliteExperiment(
         dataset_name=dataset_name,
         genotype=phosphomutant_genotype(column),
         environment=environment(column.carbon_source),
-        phenotype=metabolite_phenotype(ions, column.fold_change),
+        phenotype=metabolite_phenotype(ions, column.fold_change, n_replicates),
     )
 
 
 def build_experiment(
-    dataset_name: str, column: StrainColumn, ions: Sequence[IonRow]
+    dataset_name: str,
+    column: StrainColumn,
+    ions: Sequence[IonRow],
+    n_replicates: int = N_BIOLOGICAL_REPLICATES,
 ) -> MetaboliteExperiment:
     """The record of one deletion strain in one carbon source."""
     return MetaboliteExperiment(
         dataset_name=dataset_name,
         genotype=deletion_genotype(column),
         environment=environment(column.carbon_source),
-        phenotype=metabolite_phenotype(ions, column.fold_change),
+        phenotype=metabolite_phenotype(ions, column.fold_change, n_replicates),
     )
 
 
@@ -1283,6 +1592,24 @@ def build_reference(
         environment_reference=experiment.environment.model_copy(),
         phenotype_reference=wild_type_phenotype(experiment.phenotype),
     )
+
+
+def _n_replicates(
+    column: StrainColumn, back_solved: Mapping[tuple[str, str], int]
+) -> int:
+    """A record's biological replicate count: back-solved where possible, else 3."""
+    return back_solved.get(
+        (column.strain, column.carbon_source), N_BIOLOGICAL_REPLICATES
+    )
+
+
+SOURCE_DATA_NOT_RECORDS = (
+    "each column releases every injection (two per biological replicate) but not "
+    "which two injections share one extract, and the per-replicate value combines "
+    "the two inside one record, so forming it needs a pairing the release does not "
+    "state; adjacent rows are the closer pair in most columns but not in 'SucB "
+    "S115A' (measured, 2026-11-25), so the pairing is not inferred (issue #1177)"
+)
 
 
 # --------------------------------------------------------------------------- #
@@ -1362,6 +1689,9 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
         )
         detected = detected_ion_ledger(table.columns)
         identities = identity_ledger(table.ions)
+        source_data = read_source_data(self._raw(SOURCE_DATA_FILE), SOURCE_DATA_PANELS)
+        checks = check_source_data(SOURCE_DATA_PANELS, source_data, table)
+        back_solved = back_solved_replicates(checks)
 
         n_records = len(knockout_columns) + len(phosphomutant_columns)
         drop_log = DropLog(
@@ -1389,6 +1719,13 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
             identities.n_ions,
             detected.groups,
         )
+        log.info(
+            "Schastnaya 2021 Source Data: %d of %d mutant columns reproduce their "
+            "Supplementary Data 3 value; replicate counts back-solved for %s",
+            sum(check.reproduced for check in checks),
+            len(checks),
+            sorted(back_solved),
+        )
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -1400,7 +1737,9 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
             knockout_columns,
             phosphomutant_columns,
             entries,
+            back_solved,
         )
+        self._write_source_data_ledger(source_data, checks)
 
         genome_reference = assembly_reference(
             self.REFERENCE_STRAIN, background=wild_type_background()
@@ -1410,10 +1749,14 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
         )
         with env_out.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             experiments = [
-                build_experiment(self.name, column, table.ions)
+                build_experiment(
+                    self.name, column, table.ions, _n_replicates(column, back_solved)
+                )
                 for column in knockout_columns
             ] + [
-                build_phosphomutant_experiment(self.name, column, table.ions)
+                build_phosphomutant_experiment(
+                    self.name, column, table.ions, _n_replicates(column, back_solved)
+                )
                 for column in phosphomutant_columns
             ]
             for idx, experiment in enumerate(tqdm(experiments, desc="schastnaya2021")):
@@ -1437,6 +1780,7 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
         deletions: Sequence[StrainColumn],
         phosphomutants: Sequence[StrainColumn],
         entries: Mapping[str, PhosphomutantEntry],
+        back_solved: Mapping[tuple[str, str], int],
     ) -> None:
         """The drop log, the ion tables, the strain table and the p-value matrix.
 
@@ -1488,6 +1832,7 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
                     "n_detected": column.n_detected,
                     "strain_background": SOURCED_VALUES["deletion_background"].value,
                     "reference_background": WILD_TYPE_BACKGROUND_NAME,
+                    "n_biological_replicates": _n_replicates(column, back_solved),
                 }
                 for idx, column in enumerate(deletions)
             ]
@@ -1506,6 +1851,7 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
                     "n_detected": column.n_detected,
                     "strain_background": WILD_TYPE_BACKGROUND_NAME,
                     "reference_background": WILD_TYPE_BACKGROUND_NAME,
+                    "n_biological_replicates": _n_replicates(column, back_solved),
                 }
                 for idx, column in enumerate(phosphomutants)
             ]
@@ -1520,6 +1866,23 @@ class MetabolomeSchastnaya2021Dataset(ExperimentDataset):
         )
         p_values.index.name = "formula"
         p_values.to_csv(out / "adjusted_p_values.csv")
+
+    def _write_source_data_ledger(
+        self, columns: Sequence[SourceDataColumn], checks: Sequence[SourceDataCheck]
+    ) -> None:
+        """``source_data_replicates.json``: every released injection and each check."""
+        ledger = {
+            "file": SOURCE_DATA_FILE,
+            "sha256": DATA_SHA256[SOURCE_DATA_FILE],
+            "records_written": 0,
+            "why_not_records": SOURCE_DATA_NOT_RECORDS,
+            "n_technical_replicates": N_TECHNICAL_REPLICATES,
+            "columns": [column.model_dump() for column in columns],
+            "checks": [check.model_dump() for check in checks],
+        }
+        Path(self.preprocess_dir, "source_data_replicates.json").write_text(
+            json.dumps(ledger, indent=2)
+        )
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None

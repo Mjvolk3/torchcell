@@ -1103,13 +1103,13 @@ PROTEIN_DATASETS: dict[str, dict[str, Any]] = {
             page="Nature 630:149; Supplementary Table 3",
         ),
     },
-    # A wild-type drug screen: one record per drug-treated run against the mean of the
-    # DMSO runs, no gene perturbation at all. The gate is the loader module's
+    # A wild-type drug screen: one record per drug-treated run and per DMSO run (one
+    # well each, #1178) against the mean of the DMSO runs, no gene perturbation at all. The gate is the loader module's
     # ``verify_build`` (it re-reads the deposited report), named by
     # ``verify_build_module`` so this entry dispatches there.
     "proteome_messner2021": {
         "root": "data/torchcell/proteome_messner2021",
-        "expected_count": 70,
+        "expected_count": 94,
         "verify_build_module": "torchcell.datasets.scerevisiae.messner2021",
         "provenance": Provenance(
             source_uri=(
@@ -1122,7 +1122,8 @@ PROTEIN_DATASETS: dict[str, dict[str, Any]] = {
                 "Scanning SWATH (DIA-NN 1.7.12 Genes.MaxLFQ.Unique), the paper's three "
                 "rules (proteotypic at 1% protein q, detected in > 50% of runs, runs "
                 "within 80% of the maximum identifications); one acquisition per drug "
-                "run vs the mean of 24 DMSO runs; UniProt->ORF via SGD GFF"
+                "run and per DMSO run vs the mean of 24 DMSO runs; UniProt->ORF via "
+                "SGD GFF"
             ),
             page="Nat Biotechnol 2021; PRIDE PXD023613 DIA-NN report",
         ),

@@ -8,9 +8,24 @@ Messner et al. 2021 (Nat Biotechnol, doi:10.1038/s41587-021-00860-4, PMID 337673
 proteomes of one prototrophic BY4741 strain grown in synthetic minimal medium and treated
 for one overnight culture with each of 16 drugs (statins, azoles, antifolates;
 Supplementary Table 4) plus folic acid and FIN56, at 10 uM, against DMSO-treated controls.
-``ProteomeMessner2021Dataset`` emits one ``ProteinAbundanceExperiment`` per drug-treated
-proteome run: genotype = the reference strain (no perturbation), environment = the
-medium plus the compound, phenotype = per-protein DIA-NN MaxLFQ quantities.
+``ProteomeMessner2021Dataset`` emits one ``ProteinAbundanceExperiment`` per proteome run
+of one well (one biological replicate): the 70 kept drug-treated runs, then the 24
+DMSO-treated control runs (#1171, #1178). Genotype = the reference strain (no
+perturbation), environment = the medium plus the compound (or the DMSO vehicle alone),
+phenotype = that run's per-protein DIA-NN MaxLFQ quantities, ``replicate_id`` = the run
+name the report prints.
+
+WHAT A REPLICATE IS (sourced, 2026-11-24). One preculture is split into the wells of a
+96-deep-well plate and each well is treated and grown on its own: "The yeast culture was
+transferred to 96-deep-well plates and drugs were added to achieve a working
+concentration of 10 uM (1 ml total volume per well)" (paper.md L167). "Samples were
+measured in quadruplicate" (L41), and the SI calls the four wells of a drug "n = 4
+biological replicates" (si1.md L39, Supplementary Fig. 4c) and the kept Table S4 runs "n
+= 62 for biological samples" (Fig. 4b). Each well is injected once (95 plate runs, 95
+distinct wells), so a run is one biological replicate with no technical level to combine.
+The seven QC runs are technical: "QC samples for repeat injections were prepared by
+pooling 3 ul of each digested sample" (L171), "injections of the same sample across
+measurements" (L41); they have no treatment and are not records (policy 2 and 8).
 
 WHAT IS RELEASED (measured from the bytes, 2026-10-11). The paper's tables carry no protein
 values. PRIDE PXD023613 holds the raw ``.wiff`` spectra and, for the drug screen, ONE
@@ -47,7 +62,11 @@ cells are quantities, applied in its order and reproduced from the bytes:
    before rule 2 against a threshold of 1,706.4). Applied before rule 2 instead, the rule
    would remove 26 runs, which contradicts the paper's quadruplicates; with rule 3 as read
    here, the 16 Table S4 drugs keep 62 runs, the "n=62 for biological samples" of
-   Supplementary Fig. 4b.
+   Supplementary Fig. 4b. The Reporting Summary states the same rule under "Data
+   exclusions" (paper.md L293). The run itself is in the deposited report and no source
+   names it as withdrawn; whether the reproduced rule counts as the authors withdrawing
+   it (the one drop the per-replicate policy allows) is an open owner decision (#1171),
+   so the build still sets it aside and lists it in the ledger as ``outlier``.
 
 No protein is refused. P03872 (REP2), a 2-micron plasmid protein that no feature of the
 S288C R64 GFF names, is stored under its released UniProt accession (the ledger lists it
@@ -59,8 +78,11 @@ mapper); an accession the GFF does not carry is likewise stored under the access
 THE REFERENCE. The paper's contrast is "drug-treated versus DMSO-treated", so the
 reference is the 24 DMSO runs: per protein the mean, its standard error (SD / sqrt(n)) and
 n = the DMSO runs that quantified it, restricted to the proteins each record measured (the
-Messner 2023 shape, so reference keys equal experiment keys). Each drug run is one
-acquisition: ``n_replicates = 1``, ``protein_abundance_se = None``.
+Messner 2023 shape, so reference keys equal experiment keys), with ``replicate_id=None``.
+The 24 DMSO runs it summarizes are also records of their own (indices 70 to 93, injection
+order), on the reference environment. Each record is one acquisition of one well:
+``n_replicates = 1``, ``protein_abundance_se = None`` with a ``ProvenanceGap`` of reason
+``not_applicable_single_measurement``.
 
 ENVIRONMENT. Synthetic minimal liquid medium at 30 C ("incubated at 30 C"), with the
 compound at 10 uM as a ``DoseBasis.fixed`` dose. The paper names the medium but prints no
@@ -148,7 +170,11 @@ from torchcell.verification.report import (
     Provenance,
     VerificationReport,
 )
-from torchcell.verification.sourced import SourcedValue
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -181,6 +207,13 @@ INFO_URL = f"{PRIDE_FTP}/{INFO_FILENAME}"
 RAW_RETRIEVED_AT = "2026-10-11"
 
 MEASUREMENT_TYPE = "swath_ms_diann_maxlfq_proteotypic_quantity"
+
+SINGLE_RUN_SE_NOTE = (
+    "a record is ONE run of one well: each well is its own treated culture ('n = 4 "
+    "biological replicates', Supplementary Fig. 4c) injected once, so one measurement "
+    "has no dispersion of its own; the per-protein SE over the 24 DMSO runs is what "
+    "phenotype_reference carries"
+)
 
 #: Columns of the DIA-NN 1.7.12 main report the loader reads.
 REPORT_COLUMNS = [
@@ -224,8 +257,10 @@ EXPECTED_PLATE_RUNS = 95
 EXPECTED_QC_RUNS = 7
 EXPECTED_ABSENT_INJECTIONS = [2]
 EXPECTED_OUTLIERS = ["5_plate_2_wt_101_Pemetrexed_NA"]
-EXPECTED_RECORDS = 70
+EXPECTED_DRUG_RECORDS = 70
 EXPECTED_REFERENCE_RUNS = 24
+#: Every kept drug run and every DMSO run is one record (#1171, #1178).
+EXPECTED_RECORDS = EXPECTED_DRUG_RECORDS + EXPECTED_REFERENCE_RUNS
 EXPECTED_TABLE_S4_RECORDS = 62  # Supplementary Fig. 4b: "n=62 for biological samples"
 PAPER_MEAN_IDENTIFICATIONS = 1980  # "On average 1,980 unique proteins ... per run"
 MIN_SGD_CONTAINMENT = 0.99
@@ -314,6 +349,23 @@ INJECTIONS_QUOTE = (
     "injections of digested Saccharomyces cerevisiae (quality control and samples)."
 )
 BIOLOGICAL_N_QUOTE = "$\\scriptstyle { \\mathtt { n } } = 6 2$ for biological samples"
+BIOLOGICAL_REPLICATES_QUOTE = "$\\mathrm { n } = 4$ biological replicates"
+WELL_QUOTE = (
+    "The yeast culture was transferred to 96-deep-well plates and drugs were added to "
+    "achieve a working concentration of $1 0 \\mu \\mathrm { M }$ (1 ml total volume per "
+    "well)."
+)
+QC_POOL_QUOTE = (
+    "QC samples for repeat injections were prepared by pooling $3 \\mu \\mathrm { l }$ "
+    "of each digested sample."
+)
+QC_REPEAT_QUOTE = (
+    "instrument control samples (injections of the same sample across measurements)"
+)
+DATA_EXCLUSIONS_QUOTE = (
+    "Data exclusions For the yeast drug screen samples were considered outliers if they "
+    "had less than $80 \\%$ of the maximum identification number across all samples."
+)
 ACCESSION_QUOTE = "with the dataset identifier PXD023613"
 
 #: Supplementary Table 4, in its row order: (Compound, Class). The OCR splits the table
@@ -378,6 +430,29 @@ SOURCED: dict[str, SourcedValue] = {
     "mean_ids": _paper_sv(1980, MEAN_IDS_QUOTE),
     "injections": _si_sv(103, INJECTIONS_QUOTE),
     "biological_n": _si_sv(62, BIOLOGICAL_N_QUOTE),
+    "biological_replicates": _si_sv(
+        4,
+        BIOLOGICAL_REPLICATES_QUOTE,
+        note="Supplementary Fig. 4c: the four wells of one drug are biological "
+        "replicates, so each run is one record",
+    ),
+    "well_culture": _paper_sv(
+        "one culture per well, 1 ml",
+        WELL_QUOTE,
+        note="each well is treated and grown on its own and injected once",
+    ),
+    "qc_pool": _paper_sv(
+        "QC runs are repeat injections of one pooled digest",
+        QC_POOL_QUOTE,
+        note="technical; no treatment, not records",
+    ),
+    "qc_repeat": _paper_sv("QC = injections of the same sample", QC_REPEAT_QUOTE),
+    "data_exclusions": _paper_sv(
+        "outlier rule: < 80% of the maximum identifications",
+        DATA_EXCLUSIONS_QUOTE,
+        note="Reporting Summary; states the rule, names no run. The run the rule "
+        "selects is still in the deposited report",
+    ),
     "accession": _paper_sv(PRIDE_ACCESSION, ACCESSION_QUOTE),
     **{
         f"table_s4_{index}": _si_sv(
@@ -509,6 +584,9 @@ SM_UNSTATED_MESSNER2021 = Media(
 # --------------------------------------------------------------------------- #
 # Ledger
 # --------------------------------------------------------------------------- #
+#: ``experiment`` a kept drug run (a record); ``reference`` a DMSO run (a record AND a
+#: member of the reference summary); ``qc`` a pooled-digest repeat injection (not a
+#: record); ``outlier`` the run rule 3 sets aside (not a record; owner decision, #1171).
 RunRole = Literal["experiment", "reference", "qc", "outlier"]
 
 
@@ -560,7 +638,8 @@ class BuildLedger(BaseModel):
         description="kept accessions with no ORF in the SGD GFF, keyed by the "
         "accession itself, each with the reason"
     )
-    n_records: int
+    n_records: int = Field(description="drug records plus DMSO control records")
+    n_control_records: int = Field(description="DMSO runs stored as records")
     n_reference_runs: int
     n_table_s4_records: int
     accession_to_orf: dict[str, str]
@@ -795,7 +874,7 @@ def report_is_the_drug_screen(info_text: str) -> bool:
 # --------------------------------------------------------------------------- #
 @register_dataset
 class ProteomeMessner2021Dataset(ExperimentDataset):
-    """Scanning SWATH proteomes of wild-type yeast under 18 compounds vs DMSO (70 runs)."""
+    """Scanning SWATH proteomes of wild-type yeast: 70 drug runs and 24 DMSO runs."""
 
     organism = Organism.scerevisiae
 
@@ -851,7 +930,7 @@ class ProteomeMessner2021Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Apply the paper's three rules to the report and write one record per run."""
+        """Apply the paper's three rules and write one record per drug and DMSO run."""
         verify_raw_files(
             self.raw_dir, {REPORT_FILENAME: REPORT_SHA256, INFO_FILENAME: INFO_SHA256}
         )
@@ -971,6 +1050,20 @@ class ProteomeMessner2021Dataset(ExperimentDataset):
                     "reference": reference,
                 }
             )
+        # The DMSO runs are biological replicates of the control condition, so each is
+        # a record too (after the drug runs, so the drug records keep their indices);
+        # the reference above stays their summary.
+        for run in dmso_runs:
+            series = by_orf[run].dropna()
+            record_index[run] = len(rows)
+            rows.append(
+                {
+                    "run": run,
+                    "agent": None,
+                    "abundance": {str(o): float(v) for o, v in sorted(series.items())},
+                    "reference": reference,
+                }
+            )
 
         entries: list[RunEntry] = []
         for run in runs:
@@ -1028,8 +1121,11 @@ class ProteomeMessner2021Dataset(ExperimentDataset):
             outliers=outliers,
             accessions_stored_as_released=stored_as_released,
             n_records=len(rows),
+            n_control_records=sum(1 for r in rows if r["agent"] is None),
             n_reference_runs=len(dmso_runs),
-            n_table_s4_records=sum(1 for r in rows if r["agent"].drug_class),
+            n_table_s4_records=sum(
+                1 for r in rows if r["agent"] is not None and r["agent"].drug_class
+            ),
             accession_to_orf=accession_to_orf,
             runs=entries,
         )
@@ -1076,18 +1172,33 @@ class ProteomeMessner2021Dataset(ExperimentDataset):
     ) -> tuple[
         ProteinAbundanceExperiment, ProteinAbundanceExperimentReference, Publication
     ]:
-        """One drug run against the DMSO profile restricted to the proteins it measured."""
+        """One run against the DMSO profile restricted to the proteins it measured.
+
+        The run is a drug well, or a DMSO well when ``row["agent"]`` is None.
+        """
         abundance: dict[str, float] = row["abundance"]
         ref: DmsoReference = row["reference"]
+        agent: AgentSpec | None = row["agent"]
+        environment = self.environment(
+            self.vehicle() if agent is None else self.treatment(agent)
+        )
         experiment = ProteinAbundanceExperiment(
             dataset_name=self.name,
             genotype=Genotype(perturbations=[]),
-            environment=self.environment(self.treatment(row["agent"])),
+            environment=environment,
             phenotype=ProteinAbundancePhenotype(
                 protein_abundance=abundance,
                 protein_abundance_se=None,
                 n_replicates={orf: 1 for orf in abundance},
                 measurement_type=MEASUREMENT_TYPE,
+                replicate_id=row["run"],
+                provenance_gaps=[
+                    ProvenanceGap(
+                        field="protein_abundance_se",
+                        reason=ProvenanceGapReason.not_applicable_single_measurement,
+                        note=SINGLE_RUN_SE_NOTE,
+                    )
+                ],
             ),
         )
         reference = ProteinAbundanceExperimentReference(
@@ -1104,6 +1215,7 @@ class ProteomeMessner2021Dataset(ExperimentDataset):
                 protein_abundance_se={k: ref.se[k] for k in abundance},
                 n_replicates={k: ref.n[k] for k in abundance},
                 measurement_type=MEASUREMENT_TYPE,
+                replicate_id=None,
             ),
         )
         publication = Publication(
@@ -1214,7 +1326,7 @@ def check_values_match_report(
 def check_design(
     records: list[dict[str, Any]], ledger: BuildLedger
 ) -> list[LevelResult]:
-    """L1: wild-type genotypes; one record per kept drug run; the measured plate."""
+    """L1: wild-type genotypes; one record per kept drug and DMSO run; the plate."""
     genotypes = sum(1 for r in records if r["experiment"]["genotype"]["perturbations"])
     per_compound = Counter(
         r["experiment"]["environment"]["perturbations"][0]["compound"]["name"]
@@ -1223,7 +1335,7 @@ def check_design(
     expected_per_label = Counter(
         e.compound_label
         for e in ledger.runs
-        if e.role == "experiment" and e.compound_label is not None
+        if e.role in ("experiment", "reference") and e.compound_label is not None
     )
     expected = Counter(
         {resolved_compound(label).name: n for label, n in expected_per_label.items()}
@@ -1415,7 +1527,8 @@ def verify_build(
             method=(
                 "DIA-NN 1.7.12 Genes.MaxLFQ.Unique; proteotypic, protein q <= 0.01, "
                 "detected in > 50% of runs, runs >= 80% of the maximum identifications; "
-                "one acquisition per drug run vs the mean of 24 DMSO runs"
+                "one record per drug run and per DMSO run (one well each), each vs "
+                "the mean of the 24 DMSO runs"
             ),
             page=f"PRIDE {PRIDE_ACCESSION} {REPORT_FILENAME}",
             retrieved=RAW_RETRIEVED_AT,

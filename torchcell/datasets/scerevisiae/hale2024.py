@@ -42,21 +42,37 @@ Perturbation = one ``CrisprInterferencePerturbation`` per lineage: the target OR
 lineage table releases it (``gene_orf``, verbatim; no genome is consulted, the data is
 the data), the released ``gene_name`` (or the ORF again for the 162,753 gene rows whose
 ``gene_name`` cell is ``NA``), and a ``CrisprConstruct`` with the ``dCas9-Mxi1``
-effector and the 20-nt guide. Control gRNAs ("Control gRNAs show 'NA' under
-the ORF column", 83 guides) perturb no gene, so they are never a record (the Hawkins 2020
-and Cui 2018 precedent); they are the normalization reference and are counted in the
-dropped-record ledger. Guides that bind near a BY/3S polymorphism are SERVED: the paper
-excludes them from its own analyses, but the measured lineage is real and the background
-mosaic says which allele the binding site carries.
+effector and the 20-nt guide. Guides that bind near a BY/3S polymorphism are SERVED: the
+paper excludes them from its own analyses, but the measured lineage is real and the
+background mosaic says which allele the binding site carries.
+
+CONTROL gRNA LINEAGES ARE RELEASED REPLICATES THAT ARE NOT YET RECORDS (#1171, per-
+replicate review 2026-11-24). The 83 control guides in the lineage tables ("Control gRNAs
+show 'NA' under the ORF column"; 91 in the library, ``CONTROL_GUIDES_IN_LIBRARY``) are not
+non-targeting: each "target[s] intergenic and noncoding regions", and Supplemental Data 3
+releases its target chromosome, strand and genome positions (all 83 present, measured).
+Their 106,796 lineages (ATC1 36,064, ATC2 35,257, CON 35,475) are per-lineage released
+fitnesses exactly like the gene rows, so under the per-replicate policy they belong in the
+store, but the schema cannot state their genotype: ``PerturbedSegregantGenotype`` needs at
+least one gene-keyed perturbation, ``CrisprInterferencePerturbation`` needs a systematic
+gene name, and an empty genotype would erase a guide the paper prints with its locus. They
+stay in the dropped-record ledger until the owner decides the shape (a locus-keyed CRISPRi
+leaf, as for the Carruthers 2025 controls, #1200). They are also the authors' own
+normalization reference: the stored 0.0 is the paper's CON-lineage mean, not a loader mean.
 
 RECORD = one double-barcode lineage in one assay (``replicate_id`` = the paper's double
 barcode ``<geno_bc>_<guide_bc>``, ``screen_id`` = ``ATC1`` / ``ATC2`` / ``CON``). A lineage
 is one independently integrated transformant of a (segregant, guide) design, so lineages
 of one design are biological replicates; nothing is averaged that the source did not
-average. Supplemental Data 6 = ATC1 (the primary induced assay), 7 = ATC2 (its replicate),
-8 = CON (uninduced); the released analysis code names the first two the other way round
-and says so ("Note that the names of ATC1 and ATC2 have been switched in the main text"),
-and the labels here follow the SI description and the main text.
+average. Replication is at three levels, all kept apart: distinct guide barcodes of one
+(segregant, guide) design (``BARCODES_PER_GUIDE``), distinct segregant barcodes of one
+segregant (``SEGREGANT_BARCODES``: 30 segregants carry 2-3), and the two induced assay
+flasks grown from the one T0 pool (``REPLICATE_ASSAYS``, ``ASSAYS_IN_PARALLEL``), which
+are separate records under one ``replicate_id`` and their own ``screen_id``. Supplemental
+Data 6 = ATC1 (the primary induced assay), 7 = ATC2 (its replicate), 8 = CON (uninduced);
+the released analysis code names the first two the other way round and says so ("Note
+that the names of ATC1 and ATC2 have been switched in the main text"), and the labels here
+follow the SI description and the main text.
 
 PHENOTYPE. ``EnvironmentResponsePhenotype`` with ``MeasurementType.relative_fitness``: the
 released ``fitness`` column, which is PyFitSeq's Malthusian lineage fitness relative to
@@ -70,7 +86,9 @@ second derivative of the negative log-likelihood at the fitted fitness (``fitseq
 the repository's last commit, deposited in the raw mirror), the observed-information
 standard error. ``n_samples = 1`` lineage, ``sample_unit = biological_replicate``.
 Reference: 0.0 = the mean fitness of all CON lineages ("such that the mean fitness of all
-lineages in CON was exactly zero").
+lineages in CON was exactly zero"). The ``error`` is the source's own statistic for this
+one lineage (the curvature of its likelihood over five time points), not a dispersion over
+replicates, so it stays on the n = 1 record (per-replicate policy, rule 4).
 
 ENVIRONMENT. SC minus uracil (``media.SC_URA``; "synthetic complete medium containing
 glucose ... and lacking uracil"), 21 C with shaking, 10 generations of serial batch
@@ -332,6 +350,9 @@ ASSAYS: list[AssaySpec] = [
     AssaySpec(screen_id="CON", released_file=SD8, zip_member="supplemental_data8.csv", induced=False, released_rows=2947298, gene_rows=2911823),
 ]  # fmt: skip
 EXPECTED_RECORDS = sum(a.gene_rows for a in ASSAYS)  # 8,692,635
+#: Released control-gRNA lineages kept out of the store (36,064 + 35,257 + 35,475): one
+#: biological replicate each, awaiting a schema shape for their genotype (#1171).
+CONTROL_LINEAGES = sum(a.released_rows - a.gene_rows for a in ASSAYS)  # 106,796
 N_BACKGROUNDS = 170  # 169 segregants + the BY parent (measured in every assay)
 #: Records are committed in chunks so one write transaction never holds the whole store.
 COMMIT_EVERY = 250_000
@@ -489,6 +510,53 @@ ERROR_COLUMN = _si(
     note="the kind of error is settled by fitseq.py (FITSEQ_ERROR_QUOTE)",
 )
 CONTROL_ORF_NA = _si("NA", "Control gRNAs show 'NA' under the ORF column.")
+# --- Replicate structure (per-replicate review 2026-11-24, #1171 / #1178) ---
+CONTROL_GUIDES_IN_LIBRARY = _paper(
+    91,
+    "91 unique gRNAs targeting intergenic and noncoding regions rather than promoters "
+    "were also included with the intent of serving as controls.",
+    note="the essential-collection rows of Supplemental Data 3 with ORF NA are exactly "
+    "91 (measured); 83 of them reach the lineage tables",
+)
+CONTROL_GUIDE_LOCUS = _si(
+    ("chrom", "strand", "start_gp", "end_gp"),
+    "columns describe the gRNA sequence, gRNA library of origin, target chromosome, "
+    "target strand, 5’ genome position",
+    note="every one of the 83 control guides in the lineage tables has a target "
+    "chromosome, strand and genome positions in Supplemental Data 3 (measured): a "
+    "control guide is aimed at a released locus, not at no locus",
+)
+REPLICATE_ASSAYS = _paper(
+    ("ATC1", "ATC2"),
+    "The T0 pool was split into three separate fitness assays: two replicate "
+    "experimental assays where the gRNA expression was induced with ATC (ATC1 and ATC2, "
+    "experimental conditions) and one control assay where no ATC was added and gRNA "
+    "expression was not induced (CON, control condition).",
+)
+ASSAYS_IN_PARALLEL = _paper(
+    "parallel flasks",
+    "The ATC1, ATC2, and CON assays were grown, harvested, and diluted in parallel, "
+    "under identical growth conditions.",
+)
+SAME_LINEAGES_IN_EVERY_ASSAY = _paper(
+    "same double barcode lineages",
+    "Because all three fitness assays contain the same double barcode lineages, we can "
+    "directly compare the fitnesses of lineages between assays.",
+    note="one replicate_id (the double barcode) therefore recurs across screen_id",
+)
+SEGREGANT_BARCODES = _paper(
+    30,
+    "To enable tests for reproducibility, 30 segregants were represented by 2–3 "
+    "distinct barcodes.",
+)
+BARCODES_PER_GUIDE = _paper(
+    10, "Roughly 10 distinct barcodes were generated for each gRNA on average"
+)
+REPLICATION_BY_BARCODES = _paper(
+    "distinct barcodes",
+    "This was possible due to the replication present in the data set, with most gRNAs "
+    "and many segregants each represented by multiple distinct barcodes.",
+)
 HMM_CALLS = _matsui(
     "HMM",
     "This vector of initial genotype calls was then corrected with a Hidden Markov "
@@ -587,7 +655,9 @@ SOURCED_VALUES: list[SourcedValue] = [
     DURATION_GENERATIONS, EFFECTOR, RELATIVE_TO_POPULATION, CON_MEAN_ZERO,
     CONTROL_GUIDES, CONTROL_GUIDES_REMOVED, CROSS_PARENTS, BY_PARENT_TRANSFORMED,
     BY_IS_S288C, ALLELE_CODING, LINEAGE_ROW, ERROR_COLUMN, CONTROL_ORF_NA, HMM_CALLS, CHROMOSOME_ENDS,
-    COLLAPSED_MARKERS, PARENT_GENOTYPES,
+    COLLAPSED_MARKERS, PARENT_GENOTYPES, CONTROL_GUIDES_IN_LIBRARY, CONTROL_GUIDE_LOCUS,
+    REPLICATE_ASSAYS, ASSAYS_IN_PARALLEL, SAME_LINEAGES_IN_EVERY_ASSAY, SEGREGANT_BARCODES,
+    BARCODES_PER_GUIDE, REPLICATION_BY_BARCODES,
 ]  # fmt: skip
 #: Anchored to the raw mirror's ``code/`` (library root ``$DATA_ROOT/torchcell-raw``).
 CODE_SOURCED_VALUES: list[SourcedValue] = [
@@ -1469,8 +1539,11 @@ class CrispriSegregantHale2024Dataset(ExperimentDataset):
                     description=(
                         "the lineage carries one of the control gRNAs that target "
                         "intergenic and noncoding regions ('Control gRNAs show 'NA' under "
-                        "the ORF column'); a guide that perturbs no gene is never a "
-                        "record, it is the reference the assays are normalized on"
+                        "the ORF column'); each lineage is a released biological "
+                        "replicate, held out only because the schema has no genotype "
+                        "for a CRISPRi guide aimed at a locus with no gene (owner "
+                        "decision, #1171); the guides are also the paper's own "
+                        "normalization reference"
                     ),
                     n_records=sum(dropped_control.values()),
                     per_assay=dropped_control,

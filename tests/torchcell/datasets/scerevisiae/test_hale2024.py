@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import pickle
 import zipfile
 from pathlib import Path
@@ -49,6 +50,7 @@ from torchcell.sequence.genome.registry import (
     HALE2024_3S_VARIANTS,
     load_genome_manifest,
 )
+from torchcell.verification.sourced import audit_sourced_value
 
 
 def _block(chrom: str, start: int, end: int, parent: int, n: int) -> HaplotypeBlock:
@@ -412,3 +414,76 @@ def test_the_module_pins_match_the_release_shape() -> None:
     assert h.ATC_DOSE_UG_PER_ML.value == 0.25
     assert h.TEMPERATURE_C.value == 21.0
     assert h.CHROMOSOMES[17] == "chrmt"
+
+
+# --------------------------------------------------------------------------- #
+# The real mirrors (``--data``): per-replicate review, 2026-11-24 (#1171, #1178)
+# --------------------------------------------------------------------------- #
+def _data_root() -> str:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    return os.environ.get("DATA_ROOT", "")
+
+
+_RAW = Path(_data_root(), h.RAW_DIR_REL, "data")
+_LIBRARY = Path(_data_root(), "torchcell-library")
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not Path(_data_root(), h.LIBRARY_DIR_REL, "paper.md").is_file(),
+    reason="Hale 2024 literature mirror not on disk",
+)
+def test_every_sourced_quote_is_in_its_pinned_mirror_file() -> None:
+    for sv in h.SOURCED_VALUES:
+        result = audit_sourced_value(sv, _LIBRARY)
+        assert result.passed, (sv.quote, result.message)
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not (_RAW / h.SD8).is_file(), reason="Hale 2024 raw mirror not on disk"
+)
+def test_the_release_is_one_lineage_per_row_and_the_controls_are_ledgered() -> None:
+    """Every released row is one double-barcode lineage (one biological replicate).
+
+    Gene rows are the 8,692,635 records; replicate lineages of one (segregant, guide)
+    design stay separate records. The 106,796 control-gRNA lineages are per-lineage
+    releases of 83 guides, each aimed at a released locus in Supplemental Data 3; they
+    are not records only because the schema cannot state their genotype (#1171).
+    """
+    sd3 = pd.read_csv(_RAW / h.SD3)
+    sd3_controls = sd3[sd3["ORF"].isna()]
+    assert (sd3_controls["category"] == "essential_collection").sum() == (
+        h.CONTROL_GUIDES_IN_LIBRARY.value
+    )
+    located = sd3_controls.dropna(subset=["chrom", "strand", "start_gp", "end_gp"])
+    control_guides: set[str] = set()
+    designs: dict[str, tuple[int, int]] = {}
+    con_mean = None
+    for spec in h.ASSAYS:
+        frame = h.read_lineage_table(_RAW / spec.released_file, spec.zip_member)
+        assert len(frame) == spec.released_rows
+        assert not frame.duplicated(["geno_bc", "guide_bc"]).any()
+        control = frame[frame["gene_orf"].isna()]
+        assert len(control) == spec.released_rows - spec.gene_rows
+        assert control["gene_name"].isna().all()
+        assert control["genotype"].nunique() == h.N_BACKGROUNDS
+        control_guides |= set(control["guide_seq"])
+        per_design = frame[frame["gene_orf"].notna()].groupby(["genotype", "guide_seq"])
+        sizes = per_design.size()
+        designs[spec.screen_id] = (len(sizes), int((sizes > 1).sum()))
+        if spec.screen_id == "CON":
+            con_mean = float(frame["fitness"].mean())
+    assert h.CONTROL_LINEAGES == 36064 + 35257 + 35475 == 106796
+    assert len(control_guides) == h.CONTROL_GUIDES.value == 83
+    assert control_guides <= set(located["guide"])
+    assert designs == {
+        "ATC1": (881342, 599300),
+        "ATC2": (871778, 589006),
+        "CON": (877379, 595950),
+    }
+    # The stored reference 0.0 is the paper's own CON mean over ALL lineages,
+    # controls included, not a loader statistic.
+    assert con_mean is not None and abs(con_mean) < 1e-12

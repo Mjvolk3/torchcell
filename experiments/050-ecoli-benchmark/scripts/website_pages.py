@@ -158,6 +158,50 @@ PAGES: dict[str, tuple[str, str, str, str, str]] = {
 BOARDLESS = {
     "ecoli-metabolome-fuhrer2017": "This task has no board yet. A submission to a board is one row per record and target, and with 7,534 targets one upload is about 5.4 million rows, far above the 16 MB the service accepts. The results below were scored offline with the same splits."
 }
+# The standard metrics of a regression task, in the order every page shows them. They
+# are the five the benchmark service grades a regression board with, so a task page and
+# its board report the same quantities for any dataset. Each entry: name in prose, axis
+# label, what it is, whether higher is better, whether the page draws a figure for it.
+METRICS: dict[str, tuple[str, str, str, bool, bool]] = {
+    "pearson": (
+        "Pearson correlation",
+        "Test Pearson r",
+        "the linear correlation between predicted and measured values",
+        True,
+        True,
+    ),
+    "spearman": (
+        "Spearman correlation",
+        "Test Spearman rho",
+        "the correlation between the ranks of predicted and measured values, which "
+        "does not depend on the scale of the predictions and is not moved by a few "
+        "extreme strains",
+        True,
+        True,
+    ),
+    "r2": (
+        "R2",
+        "Test R2",
+        "one minus the squared error divided by the variance of the measured values; "
+        "0 is the score of predicting the test mean and it is negative for a worse model",
+        True,
+        False,
+    ),
+    "mse": (
+        "Mean squared error",
+        "Test MSE",
+        "the mean of the squared errors, in squared label units",
+        False,
+        False,
+    ),
+    "mae": (
+        "Mean absolute error",
+        "Test MAE",
+        "the mean of the absolute errors, in label units",
+        False,
+        False,
+    ),
+}
 SPLIT_NOTES = {
     "random": "Genes (or pairs) assigned at random.",
     "seqid30": "Whole protein clusters at 30 % sequence identity.",
@@ -217,13 +261,19 @@ def result_table(
     features: list[str],
     column: str,
     rows: list[tuple[str, pd.DataFrame]],
+    higher_is_better: bool = True,
 ) -> list[str]:
-    """One row per split family, one column per representation, the best mean in bold."""
+    """One row per split family, one column per representation, the best mean in bold.
+
+    The best mean is the highest, or the lowest when ``higher_is_better`` is false.
+    """
     body = []
     for label, part in rows:
         stats = [seed_stats(part.loc[part["feature"] == f, column]) for f in features]
         means = [m for m, _, n in stats if n]
-        best = max(means) if means else float("nan")
+        best = (
+            (max(means) if higher_is_better else min(means)) if means else float("nan")
+        )
         cells = []
         for mean, std, n in stats:
             if n == 0:
@@ -235,7 +285,7 @@ def result_table(
     return table(["Split family", *[REPRESENTATIONS[f][0] for f in features]], body)
 
 
-def figure(task: str, runs: pd.DataFrame, features: list[str]) -> str:
+def figure(task: str, runs: pd.DataFrame, features: list[str], metric: str) -> str:
     """One panel per split family, one horizontal bar (or two) per representation.
 
     Drawn at Nature Biotechnology print size: the full page width (179 mm), at most
@@ -276,7 +326,7 @@ def figure(task: str, runs: pd.DataFrame, features: list[str]) -> str:
                 mean, std, n = seed_stats(
                     part.loc[
                         (part["feature"] == feature) & (part["combine"] == combine),
-                        "test_pearson",
+                        f"test_{metric}",
                     ]
                 )
                 if n == 0:
@@ -310,7 +360,7 @@ def figure(task: str, runs: pd.DataFrame, features: list[str]) -> str:
         left.set_yticklabels([REPRESENTATIONS[f][0] for f in features])
     grid[0, 0].invert_yaxis()
     for axis in axes[: len(families)]:
-        axis.set_xlabel("Test Pearson r")
+        axis.set_xlabel(METRICS[metric][1])
     if len(combines) > 1:
         handles = [
             Patch(
@@ -332,7 +382,7 @@ def figure(task: str, runs: pd.DataFrame, features: list[str]) -> str:
         else:
             fig.legend(handles=handles, loc="upper center", ncol=2, frameon=False)
     fig.tight_layout(pad=0.6, w_pad=1.0, h_pad=1.2)
-    name = f"linear_probes_{PAGES[task][0]}"
+    name = f"linear_probes_{metric}_{PAGES[task][0]}"
     fig.savefig(OUT / f"{name}.png", dpi=300)
     fig.savefig(OUT / f"{name}.svg")
     plt.close(fig)
@@ -457,53 +507,87 @@ def task_page(
         "A frozen representation of each deleted gene with a ridge regression on top, for every split of this task. The representations and the fitting procedure are described in the [overview](./index.mdx#linear-probe-baselines).",
         "",
     ]
-    image = figure(task, group, features)
     seeds = "five seeds for random splits and three for every other family"
-    caption = (
-        f"**Test Pearson correlation of each linear probe on {label}.** Each panel is one split family and each bar is one gene representation. "
-        f"A bar is the mean over the seeds of that family ({seeds}) and its whisker is the sample standard deviation over those seeds. "
-        "The correlation is computed on the test part at the ridge penalty chosen on validation"
-        + (
-            ", separately for each target, and then averaged over the targets. "
-            if not spec.n_targets_note.startswith("1 target")
-            else ". "
-        )
-        + "Random features carry no biology and mark the level a representation must exceed. "
-        + (
-            "Dark bars concatenate the representations of the two genes and light bars add them. "
-            if pair
-            else "A representation with no bar has an undefined correlation: one-hot features predict the training mean for a gene that was not in training. "
-        )
-        + "Panels to the right of Random hold out genes that are increasingly unlike the training genes or far from them on the chromosome."
+    per_target = (
+        ", separately for each target, and then averaged over the targets. "
+        if not spec.n_targets_note.startswith("1 target")
+        else ". "
     )
+    for metric, (metric_name, _, metric_meaning, higher, drawn) in METRICS.items():
+        if not drawn:
+            continue
+        image = figure(task, group, features, metric)
+        caption = (
+            f"**Test {metric_name} of each linear probe on {label}.** The {metric_name} is {metric_meaning}. "
+            "Each panel is one split family and each bar is one gene representation. "
+            f"A bar is the mean over the seeds of that family ({seeds}) and its whisker is the sample standard deviation over those seeds. "
+            "The correlation is computed on the test part at the ridge penalty chosen on validation"
+            + per_target
+            + "Random features carry no biology and mark the level a representation must exceed. "
+            + (
+                "Dark bars concatenate the representations of the two genes and light bars add them. "
+                if pair
+                else "A representation with no bar has an undefined correlation: one-hot features predict the training mean for a gene that was not in training. "
+            )
+            + "Panels after Random hold out genes that are unlike the training genes in sequence or far from them on the chromosome."
+        )
+        page += [
+            f"### {metric_name}",
+            "",
+            f'<img src={{require("./{image}").default}} alt="Linear-probe test {metric_name} for {label}" style={{{{display: "block", width: "100%", maxWidth: "180mm", maxHeight: "170mm", height: "auto", objectFit: "contain"}}}} />',
+            "",
+            caption,
+            "",
+            f"The table gives the same numbers: mean ± sample standard deviation of the test {metric_name} over the seeds of each split family. The highest mean of each row is in bold. `undefined` marks a constant prediction.",
+            "",
+        ]
+        for combine, sub in group.groupby("combine", sort=False):
+            if combine != "single":
+                page += [
+                    f"Pair representation: the two genes {'concatenated' if combine == 'concat' else 'summed'} (`{combine}`).",
+                    "",
+                ]
+            page += result_table(
+                sub,
+                features,
+                f"test_{metric}",
+                [
+                    (FAMILIES[f], sub[sub["family"] == f])
+                    for f in sub["family"].drop_duplicates()
+                ],
+            )
     page += [
-        f'<img src={{require("./{image}").default}} alt="Linear-probe test Pearson for {label}" style={{{{display: "block", width: "100%", maxWidth: "180mm", maxHeight: "170mm", height: "auto", objectFit: "contain"}}}} />',
+        "### R2, mean squared error and mean absolute error",
         "",
-        caption,
-        "",
-        "The table gives the same numbers: mean ± sample standard deviation of the test Pearson correlation over the seeds of each split family. The highest mean of each row is in bold. `undefined` marks a constant prediction.",
+        "The other three standard metrics, as tables. Each cell is the mean ± sample standard deviation over the seeds of the split family, and the best mean of each row is in bold: the highest for R2 and the lowest for the two errors.",
         "",
     ]
-    for combine, sub in group.groupby("combine", sort=False):
-        if combine != "single":
-            page += [
-                f"Pair representation: the two genes {'concatenated' if combine == 'concat' else 'summed'} (`{combine}`).",
-                "",
-            ]
-        page += result_table(
-            sub,
-            features,
-            "test_pearson",
-            [
-                (FAMILIES[f], sub[sub["family"] == f])
-                for f in sub["family"].drop_duplicates()
-            ],
-        )
+    for metric, (metric_name, _, metric_meaning, higher, drawn) in METRICS.items():
+        if drawn:
+            continue
+        page += ["<details>", f"<summary>{metric_name}: {metric_meaning}</summary>", ""]
+        for combine, sub in group.groupby("combine", sort=False):
+            if combine != "single":
+                page += [
+                    f"Pair representation: the two genes {'concatenated' if combine == 'concat' else 'summed'} (`{combine}`).",
+                    "",
+                ]
+            page += result_table(
+                sub,
+                features,
+                f"test_{metric}",
+                [
+                    (FAMILIES[f], sub[sub["family"] == f])
+                    for f in sub["family"].drop_duplicates()
+                ],
+                higher_is_better=higher,
+            )
+        page += ["</details>", ""]
     if pair:
         page += [
             "### Test pairs by how many genes are new",
             "",
-            "Under gene holdout a test pair has either one gene that was in no training pair or two. The table scores the two kinds separately.",
+            "Under gene holdout a test pair has either one gene that was in no training pair or two. The tables score the two kinds separately, by Pearson correlation.",
             "",
         ]
         holdout = group[group["family"].str.contains("gene_holdout")]
@@ -659,9 +743,17 @@ def overview(runs: pd.DataFrame, sizes: pd.DataFrame, features: list[str]) -> No
     page += [
         "A single-gene sample is its gene's representation. A gene-pair sample is the two representations concatenated in stored order or added. Features are standardized with the training mean and standard deviation, and one ridge regression is fit per task, split and representation, on all targets at once. The penalty is the one of eight values from 0.1 to 1,000,000 with the lowest validation mean squared error. The test part is unlocked once per split, after that choice. A sequence longer than a model's window is truncated from its end.",
         "",
+        "### Metrics",
+        "",
+        "Every regression task reports the same five metrics, the ones a regression board is graded with: "
+        + "; ".join(
+            f"**{name}**, {meaning}" for name, _, meaning, _, _ in METRICS.values()
+        )
+        + ". Each is computed on the test part for every target and averaged over the targets. A task page draws the two correlations and gives all five as tables.",
+        "",
         "### Best representation per task and split family",
         "",
-        "The representation with the highest mean test Pearson correlation in each split family, with the value for random features beside it. Means and sample standard deviations are over the seeds of the family. For the pair task the two genes are concatenated.",
+        "The representation with the highest mean test Pearson correlation and the one with the highest mean test Spearman correlation in each split family, with the Pearson correlation of random features beside them. Means and sample standard deviations are over the seeds of the family. For the pair task the two genes are concatenated.",
         "",
     ]
     rows = []
@@ -671,31 +763,40 @@ def overview(runs: pd.DataFrame, sizes: pd.DataFrame, features: list[str]) -> No
         ]
         for family in group["family"].drop_duplicates():
             part = group[group["family"] == family]
-            stats = {
-                f: seed_stats(part.loc[part["feature"] == f, "test_pearson"])
-                for f in features
-            }
-            defined = {f: s for f, s in stats.items() if s[2]}
-            best = max(defined, key=lambda f: defined[f][0])
+            names: list[str] = []
+            values: list[str] = []
+            for metric in ("pearson", "spearman"):
+                stats = {
+                    f: seed_stats(part.loc[part["feature"] == f, f"test_{metric}"])
+                    for f in features
+                }
+                defined = {f: v for f, v in stats.items() if v[2]}
+                best = max(defined, key=lambda f, d=defined: d[f][0])
+                names.append(REPRESENTATIONS[best][0])
+                values.append(f"{defined[best][0]:.3f} ± {defined[best][1]:.3f}")
+                if metric == "pearson":
+                    random_cell = f"{stats['random'][0]:.3f} ± {stats['random'][1]:.3f}"
             rows.append(
                 [
                     f"[{label}](./{stem}.mdx)",
                     FAMILIES[family],
-                    REPRESENTATIONS[best][0],
-                    f"{defined[best][0]:.3f} ± {defined[best][1]:.3f}",
-                    f"{stats['random'][0]:.3f} ± {stats['random'][1]:.3f}",
+                    *names,
+                    *values,
+                    random_cell,
                 ]
             )
     page += table(
         [
             "Task",
             "Split family",
-            "Best representation",
-            "Its test Pearson",
-            "Random features",
+            "Best by Pearson",
+            "Best by Spearman",
+            "Its Pearson",
+            "Its Spearman",
+            "Random features, Pearson",
         ],
         rows,
-        left=3,
+        left=4,
     )
     (OUT / "index.mdx").write_text("\n".join(page), encoding="utf-8")
 

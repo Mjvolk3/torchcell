@@ -590,3 +590,108 @@ key's first verdict: **admissible**, G1 to G5 pass; G3 reads 110 files across th
 library and raw mirrors, all intact (it counts worksheet rows only in `.xlsx` files, so
 the two `.xls` workbooks contribute none). One verdict per citation key, so G5 is run on
 the metabolome arm's class.
+
+## 2026.11.24 - One record per chemostat culture (#1178, part of #1176)
+
+### What a replicate is here
+
+Read in full: `paper.md`, the deposited SOM OCR (`si/ishii_som.md`, sha256
+`d9ffefad...0c4e0c3`), every sheet of `Quantitative_data.xls` (sha256 `2b7663f5...13888`)
+and the sheet list of `Flux_GC-MS_data.xls`. The replicate design, quoted:
+
+- SOM, Statistical analyses for AEIs: "For measurements performed by qRT-PCR, LC-MS/MS
+  absolute quantitative proteomics, CE-(TOF)MS metabolomics, and DNA microarray, a
+  single sample per condition was used, with the exception of the reference sample".
+  Every disruptant and dilution-rate culture is one biological replicate already.
+- SOM, Noise in quantitative measurement data: "LC-MS/MS absolute quantification of
+  proteins (57 proteins, a total of 6 measurement replicates including 2 biological
+  replicates), and CE-(TOF)MS metabolomics (139 metabolites, a total of 5 measurement
+  replicates including 5 biological replicates)".
+- Workbook `Information` sheet: "pfkA disruptant was cultured twice." and "CVs are
+  calculated using both technical replicates and biological replicates." (the authors'
+  Ave / SD / CV over the reference block, which stay in `preprocess/metabolites.csv`).
+- Workbook `Information` sheet, Protein: "The CVs reported in columns C to BH in sheet
+  "Protein" capture the technical variation (sample processing, digestion and
+  quantification) in duplicate sample preparation and independent LC-MS/MS
+  measurements performed in parallel from the same sampling of a single continous
+  culture for each condition (column)." A proteome value is the authors' mean of two
+  technical measurements of one culture, combined inside the record (n_replicates 2,
+  SE from the released CV), unchanged.
+- `IDs` sheet: every culture has its own Culture Date (RF02 38442, RF03 38526, RF04
+  38554, RF05 38596, RF06 38652; KO05x 38624, KO05 38652), and RF03 fills Protein
+  series 2, 3, 4, 5 and 6.
+- No sample is withdrawn by the authors anywhere in the SOM or the workbook.
+
+### What changed
+
+| store | before | after | added records |
+|---|---|---|---|
+| `metabolome_ishii2007` | 28 | 34 | `KO05x` (second pfkA culture), `RF02`-`RF06` (wild type, 0.2 h-1) |
+| `proteome_ishii2007` | 28 | 29 | `RF02` (wild type, 0.2 h-1) |
+| `flux_ishii2007` | 28 | 32 | `RF03`-`RF06` (wild type, 0.2 h-1) |
+
+- Retired drop rules: `reference_sample` and
+  `duplicate_culture_same_genotype_and_environment` (with `PREFERRED_DUPLICATE_SAMPLES`).
+  `classify_columns` now has two rules: `no_data_in_this_layer` and
+  `culture_measured_in_several_series`.
+- `replicate_id` is the culture's Sample ID on every metabolome and flux record and
+  `None` on every `phenotype_reference`. Proteome records keep `replicate_id=None`:
+  `verify_protein_dataset` reads a labeled protein record as one measurement with no SE,
+  and each proteome value is a released mean over two technical measurements; every
+  proteome record is the only culture of its condition.
+- Single-measurement gaps (`metabolite_level_se`, flux `confidence_level`) now carry
+  `not_applicable_single_measurement`, not `not_reported_by_primary`.
+- The reference rule is unchanged: series-matched on the metabolome and proteome
+  (SOM: "the reference sample that was analyzed on the same date as the other samples
+  ... was chosen"), `RF03` on the flux arm. A reference culture's record is therefore
+  scored against itself on the metabolome and proteome.
+- `check_replicate_cultures_are_distinct` asserts from the `IDs` sheet that every
+  condition with several records has distinct Culture Dates (pfkA: 2, wild type at 0.2
+  h-1: 5 on the metabolome, 4 on the flux arm).
+- `check_aerobic` no longer gates a record without an oxygen uptake rate: `KO05x`, `RF02`
+  and `RF04` have none in `Specific_Rates` and keep the SOM's "Cultures were grown
+  aerobically"; the set is pinned (`CULTURES_WITHOUT_OXYGEN_UPTAKE`).
+- Six new sourced values (35 in all, 11 from the SOM OCR, 14 from the `Information`
+  sheet), including `wild_type_strain`: the SOM names "E. coli K-12 strain BW25113 ...
+  (wild-type)", which corrects this module's earlier "Ishii never names its background".
+
+### Not done, owner decision
+
+The proteome's `RF03` is not a record. Its five series columns stay the same-series
+references of their records (nothing leaves the store). Under the per-replicate policy
+the culture is ONE biological replicate measured on five days; one record would need a
+loader mean across measurement days, which the SOM refuses ("we did not use the averages
+of multiple measurements or of merged data from multiple samples for the statistic
+analysis") and which `ProteinAbundancePhenotype` cannot label (no sample-unit or
+technical-replicate field), and five records would count one culture five times.
+Proposed shapes: one record with the five series combined inside plus a
+technical-replicate count and sample unit on the phenotype, or five records with
+`replicate_id` `RF03-Series2` to `RF03-Series6`. Adding it later is a superset
+admission (every current record survives).
+
+Source discrepancy noted, not acted on: the SOM text names "RF02-Series4 for LC-MS/MS
+absolute quantitative proteomic" as the growth-rate reference, while the workbook's
+`IDs` and `Protein` sheets put RF03 in protein series 4 and RF02 in series 1 only. The
+loader follows the workbook, as before.
+
+### Verification (scratch builds)
+
+Builds: `$DATA_ROOT/tmp/scratch/per-replicate-ishii2007/before/<store>` (origin/main
+code) and `.../after/<store>` (this branch). `ishii2007.run_verification` on the after
+builds:
+
+| store | L1 count | L1 uniqueness | L2 | L3 | L4 | quote audits |
+|---|---|---|---|---|---|---|
+| `metabolome_ishii2007` | 34 of 34 | 34 unique (strain, environment) per released replicate | 4,813 values | reference finite (4,062), one measurement type | 24 of 24 | 35 of 35 |
+| `proteome_ishii2007` | 29 of 29 | 24 unique ORFs | 1,631 values, 1,570 SEs | reference finite (1,631), one type, 0 labeled records | 65 of 65 | 35 of 35 |
+| `flux_ishii2007` | 32 of 32 | n/a | 1,340 values | one type, 0 half-stated intervals | 24 of 24 | 35 of 35 |
+
+Mean reproduction: grouping the after records by (genotype, environment) gives 29
+groups per store, the 28 old conditions plus the 0.2 h-1 wild type. All 28 old records
+are reproduced exactly (values and reference) by an after record in every store. The
+group mean equals the old value (max |difference| 0.0) everywhere except the metabolome
+pfkA group, where the old store held `KO05` alone and the mean now also covers `KO05x`
+(max |difference| 2.12 mM over its keys); that is a second culture entering, not a
+change to a stored value. Every metabolome and flux record equals its own released
+column value for value (`test_every_metabolome_record_is_its_cultures_released_column`,
+`test_every_flux_record_is_its_cultures_released_fit`).

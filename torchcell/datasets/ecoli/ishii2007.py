@@ -2,7 +2,7 @@
 # [[torchcell.datasets.ecoli.ishii2007]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/ecoli/ishii2007
 # Test file: tests/torchcell/datasets/ecoli/test_ishii2007.py
-"""Ishii 2007 paired metabolome, proteome and 13C flux of 28 Keio chemostat cultures.
+"""Ishii 2007 paired metabolome, proteome and 13C flux of E. coli chemostat cultures.
 
 Ishii et al. 2007 (Science 316:593, doi:10.1126/science.1132067) ran four quantitative
 layers on ONE set of glucose-limited chemostat cultures: "We collected data using these
@@ -13,11 +13,35 @@ are served here, one dataset class each, because
 these are three different quantities on three different scales:
 
 - :class:`MetabolomeIshii2007Dataset` -- CE-TOFMS intracellular concentrations in mM
-  (``MetabolitePhenotype``), 28 records.
+  (``MetabolitePhenotype``), 34 records.
 - :class:`ProteomeIshii2007Dataset` -- LC-MS/MS absolute abundances in
-  mg-protein/g-dry-cell-weight (``ProteinAbundancePhenotype``), 28 records.
+  mg-protein/g-dry-cell-weight (``ProteinAbundancePhenotype``), 29 records.
 - :class:`FluxIshii2007Dataset` -- fitted 13C net fluxes as a percentage of the specific
-  glucose uptake rate (``FluxPhenotype``), 28 records.
+  glucose uptake rate (``FluxPhenotype``), 32 records.
+
+ONE RECORD PER CHEMOSTAT CULTURE (2026.11.24, #1178). A record is one culture as the
+release prints it, under its own Sample ID, which is the record's ``replicate_id`` on the
+metabolome and flux arms. "For measurements performed by qRT-PCR, LC-MS/MS absolute
+quantitative proteomics, CE-(TOF)MS metabolomics, and DNA microarray, a single sample per
+condition was used, with the exception of the reference sample" (SOM, Statistical
+analyses), so each disruptant and each dilution-rate culture is already one biological
+replicate, and the replicated conditions are two: the pfkA disruptant ("pfkA disruptant
+was cultured twice."), whose second culture ``KO05x`` is now a metabolome record beside
+``KO05``, and the 0.2 h-1 wild type, whose released cultures are now records too
+(``RF02``-``RF06`` on the metabolome, ``RF02`` on the proteome, ``RF03``-``RF06`` on the
+flux arm). The SOM counts them: "LC-MS/MS absolute quantification of proteins (57
+proteins, a total of 6 measurement replicates including 2 biological replicates), and
+CE-(TOF)MS metabolomics (139 metabolites, a total of 5 measurement replicates including 5
+biological replicates)"; every one has its own Culture Date in the ``IDs`` sheet, which
+``check_replicate_cultures_are_distinct`` asserts. Nothing is averaged: each record is
+its culture's released column, and every record keeps the same-series reference column
+it had. The one released culture that is NOT a record is the proteome's ``RF03``,
+measured in five series (its 6 - 2 = 4 extra "measurement replicates"): each of the five
+columns stays the same-series reference of its series' records, and whether the culture
+becomes one record (a mean over five measurement days) or five is an owner decision,
+because the SOM itself refuses to average them ("we did not use the averages of multiple
+measurements") and ``ProteinAbundancePhenotype`` has no field that could say the count is
+of repeat measurements rather than cultures.
 
 EACH ARM IS 24 DISRUPTANTS AT 0.2 h-1 PLUS THE WILD TYPE AT FOUR OTHER DILUTION RATES.
 ``Environment.dilution_rate_per_hour`` (#753) is set on every environment this module
@@ -65,24 +89,24 @@ too (``SOURCED_VALUES["flux_fitting_procedure"]``): a genetic-algorithm global s
 then sequential quadratic programming, minimizing the squared residual of the
 amino-acid mass distributions; the SOM bounds only the reference sample's fluxes.
 
-RECORDS DROPPED, WITH THE ARITHMETIC. Each sheet's sample columns are classified in one
-fixed order, so each dropped column has exactly one reason:
+RECORDS NOT STORED, WITH THE ARITHMETIC. Each sheet's sample columns are classified in
+one fixed order, so each column that is not a record has exactly one reason:
 
 1. ``no_data_in_this_layer`` -- the column is empty in this sheet. ``KO05x`` (the first
    of the two pfkA cultures) in the Protein and Flux sheets, and ``GR04x`` in all three.
    ``GR04x`` is the release's second mRNA measurement of the 0.7 h-1 wild type ("Used
    for 2nd measurement of mRNAs."), so it is empty in all three served layers and is a
    fact about the bytes, not a schema limit.
-2. ``reference_sample`` -- an ``RF`` column; the reference, not a record.
-3. ``duplicate_culture_same_genotype_and_environment`` -- ``KO05x`` in the Metabolite
-   sheet, where it does carry data. pfkA is the one disruptant cultured twice
-   ("pfkA disruptant was cultured twice."), and both cultures are pfkA at 0.2 h-1, so
-   they would collide on genotype AND environment. ``KO05`` is kept because it is the
-   culture measured in all three served layers, which is what keeps the three datasets
-   paired on one culture.
+2. ``reference_culture_measured_in_several_series`` -- the five Protein columns of the
+   one reference culture the sheet repeats (``RF03``, series 2 to 6). Each is the
+   same-series reference of its records, so no measurement leaves the store; the
+   culture is not a record pending the owner decision above.
 
-Metabolite: 35 columns - 1 empty - 5 reference - 1 duplicate = **28**.
-Protein: 36 - 2 empty - 6 reference = **28**. Flux: 34 - 2 - 4 = **28**.
+Metabolite: 35 columns - 1 empty = **34** (24 + ``KO05x`` disruptants, 4 dilution-rate
+cultures, 5 reference cultures). Protein: 36 - 2 empty - 5 ``RF03`` = **29**. Flux:
+34 - 2 empty = **32**. Two rules of the earlier build are retired
+(``RETIRED_DROP_RULES``): ``reference_sample``, which never stored a reference culture,
+and ``duplicate_culture_same_genotype_and_environment``, which dropped ``KO05x``.
 
 THE RULE THIS LOADER NO LONGER CARRIES is ``culture_not_batch``, which the landed
 Schmidt 2016 and Lamoureux 2023 loaders state under the same name. It dropped
@@ -90,7 +114,7 @@ Schmidt 2016 and Lamoureux 2023 loaders state under the same name. It dropped
 cultures would have shared one byte-identical environment. The slot exists, the four
 cultures are loaded, and the rule is retired here rather than narrowed, because nothing
 is left for it to name: every sample column of every served sheet is kept or named by
-one of the three rules above. ``build_accounting.json`` records the retirement under
+one of the two rules above. ``build_accounting.json`` records the retirement under
 ``retired_drop_rules``.
 
 THE REFERENCE IS SERIES-MATCHED WHERE THE RELEASE STATES A SERIES, AND IT IS THE 0.2 h-1
@@ -109,12 +133,17 @@ the comparison the paper asks for ("To allow a comparison of the effects of thes
 perturbations with the effects of environmental perturbations") visible in the stored
 bytes instead of hidden in a matching denominator. The Flux sheet carries no series row,
 so that arm uses ``RF03``, the one reference culture measured in all three served layers;
-the other three reference fits are written to ``preprocess/flux_reference_fits.csv`` so
-nothing is lost, and the choice is flagged in ``build_accounting.json``.
+the other three reference fits are records of their own and are also written to
+``preprocess/flux_reference_fits.csv``, and the choice is flagged in
+``build_accounting.json``. A reference culture that is a record is scored against the
+same rule, so on the metabolome and proteome its reference is its own column (the one
+control of its series) and on the flux arm it is ``RF03``.
 
 IDENTIFIERS, MEASURED. Every stored gene identifier is a BW25113 locus tag from the
 pinned GenBank annotation through :func:`reconcile_locus_tags`, because the collection is
-the Keio collection and Ishii never names its background: Baba 2006 (mirrored) does.
+the Keio collection, whose background Baba 2006 (mirrored) states; the SOM names the
+same strain as its wild type ("E. coli K-12 strain BW25113 ... (wild-type)", 2026.11.24
+correction of an earlier "Ishii never names its background").
 24 of 24 disruptant symbols resolve (23 through the gene-symbol layer, 1 -- ``gapC`` --
 through a gene synonym onto a non-gene feature) with no collision and no ambiguity.
 66 of the 67 quantified protein symbols resolve; ``gpmG`` is retired on this annotation
@@ -344,13 +373,23 @@ MEASUREMENT_TYPE_METABOLITE = "ce_tofms_intracellular_concentration_mm"
 MEASUREMENT_TYPE_PROTEIN = "lc_ms_ms_absolute_mg_protein_per_g_dry_cell_weight"
 MEASUREMENT_TYPE_FLUX = "c13_mfa_net_flux_percent_of_specific_glucose_uptake"
 
-#: Records of the full build, MEASURED on the pinned workbook: the 24 disruptants at
-#: 0.2 h-1 plus the wild type at 0.1, 0.4, 0.5 and 0.7 h-1.
+#: Records of the full build, MEASURED on the pinned workbook, one per released culture:
+#: the 24 disruptants at 0.2 h-1 and the wild type at 0.1, 0.4, 0.5 and 0.7 h-1 in every
+#: arm, plus the second pfkA culture ``KO05x`` and the five 0.2 h-1 wild-type cultures
+#: ``RF02``-``RF06`` on the metabolome (28 + 1 + 5), the ``RF02`` culture on the proteome
+#: (28 + 1; ``RF03`` is held, see the module docstring) and the four reference fits
+#: ``RF03``-``RF06`` on the flux arm (28 + 4).
 EXPECTED_RECORDS: dict[str, int] = {
-    "metabolome_ishii2007": 28,
-    "proteome_ishii2007": 28,
-    "flux_ishii2007": 28,
+    "metabolome_ishii2007": 34,
+    "proteome_ishii2007": 29,
+    "flux_ishii2007": 32,
 }
+#: The loaded cultures the ``Specific_Rates`` sheet gives no oxygen uptake rate,
+#: MEASURED on the pinned workbook: ``KO05x`` (blank column) and ``RF02`` and ``RF04``
+#: (no column). Their aerobicity is the SOM's statement for every culture ("Cultures were
+#: grown aerobically"); the set is pinned so a re-export that loses another rate stops
+#: the build instead of quietly widening it.
+CULTURES_WITHOUT_OXYGEN_UPTAKE: frozenset[str] = frozenset({"KO05x", "RF02", "RF04"})
 #: The flux reference fit this arm stores; the sheet carries no series row.
 FLUX_REFERENCE_SAMPLE = "RF03"
 #: Record-side abundances dropped because their own series reference did not detect that
@@ -607,6 +646,33 @@ _LABELING_FEED_QUOTE = (
     "\\mathrm { g / l }$ of uniformly labeled [U- $^ { 1 3 } \\mathrm { C } ]$ glucose "
     "and $3 . 2 \\ \\mathrm { g } / 1$ of natural glucose."
 )
+_SOM_STATISTICS = "Materials and Methods, 'Statistical analyses for AEIs'"
+_SOM_NOISE = "Supporting text, 'Noise in quantitative measurement data'"
+_SINGLE_SAMPLE_QUOTE = (
+    "For measurements performed by qRT-PCR, LC-MS/MS absolute quantitative proteomics, "
+    "CE-(TOF)MS metabolomics, and DNA microarray, a single sample per condition was "
+    "used, with the exception of the reference sample"
+)
+_REFERENCE_REPLICATES_QUOTE = (
+    "LC-MS/MS absolute quantification of proteins (57 proteins, a total of 6 measurement "
+    "replicates including 2 biological replicates), and CE-(TOF)MS metabolomics (139 "
+    "metabolites, a total of 5 measurement replicates including 5 biological "
+    "replicates)"
+)
+_NO_AVERAGING_QUOTE = (
+    "measurements we did not use the averages of multiple measurements or of merged data "
+    "from multiple samples for the statistic analysis, to avoid comparisons in a "
+    "non-uniform way with cases where only a single sample was available."
+)
+_SAME_DATE_REFERENCE_QUOTE = (
+    "For LC-MS/MS absolute quantitative proteomics and CE-(TOF)MS metabolomics, the "
+    "reference sample that was analyzed on the same date as the other samples for growth "
+    "rate change was chosen"
+)
+_WILD_TYPE_STRAIN_QUOTE = (
+    "E. coli K-12 strain BW25113 (lacIq rrnBT14 ΔlacZWJ16 hsdR514 ΔaraBADAH33 "
+    "ΔrhaBADLD78) $( I )$ (wild-type)"
+)
 _OCR_L_AS_1 = (
     "the OCR reads the litre's 'l' as '1' in 'g/1' and 'mg/1' and splits '22 mM' across "
     "a math span ('2$ 2 mM'); the PDF's own text layer (pdftotext 21.01.0) reads "
@@ -711,8 +777,9 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "BW25113",
         "The Keio collection is comprised of 3985 deletions in duplicate (7970 total) "
         "of E. coli K-12 strain BW25113 (Datsenko and Wanner, 2000)",
-        note="the deferral target of Ishii's '(13)'; Ishii itself says only 'E. coli "
-        "K-12', which is the deliberately ambiguous label",
+        note="the deferral target of Ishii's '(13)'. The paper body says only 'E. coli "
+        "K-12'; the SOM names BW25113 as the wild type (SOURCED_VALUES"
+        "['wild_type_strain'])",
     ),
     "cassette": _baba(
         "kanamycin cassette flanked by FLP recognition target sites",
@@ -802,8 +869,60 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     "pfka_cultured_twice": _workbook(
         "pfkA",
         "pfkA disruptant was cultured twice.",
-        note="the two cultures are KO05x and KO05, both pfkA at 0.2 h-1, so one of them "
-        "is dropped under duplicate_culture_same_genotype_and_environment",
+        note="the two cultures are KO05x (Culture Date 38624) and KO05 (38652), both "
+        "pfkA at 0.2 h-1, so they are two biological replicates and two records, told "
+        "apart by replicate_id. KO05x carries data in the Metabolite sheet only (and in "
+        "the unserved mRNA sheet); the Protein and Flux sheets leave it blank",
+    ),
+    "single_sample_per_condition": _som(
+        1,
+        _SINGLE_SAMPLE_QUOTE,
+        page=_SOM_STATISTICS,
+        note="every disruptant and dilution-rate culture is ONE sample, so each record "
+        "is one biological replicate with n = 1; the exception the sentence names, the "
+        "0.2 h-1 reference, is the set of RF cultures this loader now stores as records",
+    ),
+    "reference_biological_replicates": _som(
+        {
+            "protein": {"measurements": 6, "biological": 2},
+            "metabolite": {"measurements": 5, "biological": 5},
+        },
+        _REFERENCE_REPLICATES_QUOTE,
+        page=_SOM_NOISE,
+        note="the metabolome's five RF columns are five cultures (RF02-RF06, five "
+        "Culture Dates), all stored. The proteome's six RF columns are two cultures: "
+        "RF02 (one column, stored) and RF03 (five series columns, the four extra "
+        "measurement replicates; held as same-series references pending the owner's "
+        "call on repeat measurements)",
+    ),
+    "reference_measurements_not_averaged": _som(
+        "no average over repeat measurements",
+        _NO_AVERAGING_QUOTE,
+        page=_SOM_STATISTICS,
+        note="why the proteome's RF03 is not collapsed to one mean record by this "
+        "loader: the authors themselves kept each series measurement apart",
+    ),
+    "same_date_reference": _som(
+        "the reference measured on the same date",
+        _SAME_DATE_REFERENCE_QUOTE,
+        page=_SOM_STATISTICS,
+        note="the authors' rule for which reference culture a sample is compared "
+        "against, which is the series-matched experiment_reference of the metabolome "
+        "and proteome records; it is a single released culture, not a loader mean",
+    ),
+    "wild_type_strain": _som(
+        "BW25113",
+        _WILD_TYPE_STRAIN_QUOTE,
+        page=_SOM_CULTURE,
+        note="the SOM names the wild type itself, which is what lets every RF and GR "
+        "culture be stored as Genotype(perturbations=[]) on the BW25113 assembly",
+    ),
+    "reference_dispersion_mixes_replicate_kinds": _workbook(
+        "technical and biological",
+        "CVs are calculated using both technical replicates and biological replicates.",
+        note="the authors' Ave / SD / CV columns over the reference block. They are the "
+        "source's own statistic and stay in preprocess/metabolites.csv; no record carries "
+        "them, because each RF culture is now its own record",
     ),
     "tpia_washed_out": _workbook(
         "tpiA",
@@ -819,15 +938,15 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "(Culture Date 38693 against GR04's 38631), so GR04 and GR04x are the second "
         "pair of cultures this release grew at one genotype and one dilution rate. "
         "GR04x carries no value in the Protein, Metabolite or Flux sheets, so all three "
-        "served layers drop it under no_data_in_this_layer; GR04 is named in "
-        "PREFERRED_DUPLICATE_SAMPLES so the unserved mRNA layer, where both carry data, "
-        "also resolves to one record per culture",
+        "served layers leave it out under no_data_in_this_layer. In the unserved mRNA "
+        "layer both carry data, and both would be records there, one per culture",
     ),
     "reference_columns": _workbook(
         "Control (Wild type, cultured at a dilution rate of 0.2h-1)",
         "Control (Wild type, cultured at a dilution rate of 0.2h-1)",
         note="the Samples table labels the trailing column block of every sheet this "
-        "way, which is what makes the RF columns references rather than records",
+        "way: the RF columns are the series references, and each RF culture is also a "
+        "record of the wild type at 0.2 h-1 (empty genotype), since 2026.11.24",
     ),
 }
 
@@ -862,17 +981,11 @@ DISRUPTANT_SYMBOLS: tuple[str, ...] = (
 CULTURE_REPLICATE = re.compile(r"^(?P<symbol>[A-Za-z]+)_(?P<replicate>[0-9]+)$")
 #: The only sample names allowed to carry that suffix, measured on the pinned workbook.
 SUFFIXED_SAMPLE_NAMES: frozenset[str] = frozenset({"pfkA_1", "pfkA_2"})
-#: Which culture is the record when one genotype was grown twice at one dilution rate.
-#: ``KO05`` (``pfkA_2``) is the pfkA culture measured in ALL THREE served layers --
-#: ``KO05x`` (``pfkA_1``) has metabolite and mRNA data only, and no oxygen uptake rate --
-#: so keeping ``KO05`` is what makes the three datasets' pfkA records the same culture.
-#: Column order alone would have picked ``KO05x``, which is why this is named rather than
-#: implicit. ``GR04`` is the same situation on the wild type at 0.7 h-1: ``GR04x`` is a
-#: second culture at that rate ("Used for 2nd measurement of mRNAs.", Culture Date 38693
-#: against 38631) and is EMPTY in all three served sheets, so the served arms drop it
-#: under ``no_data_in_this_layer`` and never reach the duplicate rule; naming ``GR04``
-#: keeps the unserved mRNA layer, where both carry data, resolvable to one record.
-PREFERRED_DUPLICATE_SAMPLES: frozenset[str] = frozenset({"KO05", "GR04"})
+#: ``PREFERRED_DUPLICATE_SAMPLES`` (``KO05``, ``GR04``) is gone with the duplicate-culture
+#: rule (2026.11.24): two cultures of one genotype at one dilution rate are two
+#: biological replicates, so both are records and their Sample IDs tell them apart.
+#: ``KO05`` is still the pfkA culture the three arms share; ``KO05x`` (``pfkA_1``, "Used
+#: for 1st measurement of mRNAs and metabolites.") is the metabolome's second one.
 
 COLLECTION = "Keio collection"
 CASSETTE: str = SOURCED_VALUES["cassette"].value
@@ -952,7 +1065,7 @@ compound identity table, so its InChIKey is a typed gap the resolver attaches.
 
 FLUX_INTERVAL_GAP = ProvenanceGap(
     field="confidence_level",
-    reason=ProvenanceGapReason.not_reported_by_primary,
+    reason=ProvenanceGapReason.not_applicable_single_measurement,
     looked_in=Provenance(
         source_uri=RAW_FILES_BY_NAME[QUANTITATIVE_FILE].mirror_relpath,
         citation_key=CITATION_KEY,
@@ -963,13 +1076,16 @@ FLUX_INTERVAL_GAP = ProvenanceGap(
     note="the release publishes ONE number per reaction and no interval, so "
     "net_flux_lower, net_flux_upper and confidence_level are all None. The fit's input "
     f"is mirrored ({GC_MS_FILE}) and its procedure is quoted from the SOM "
-    "(SOURCED_VALUES['flux_fitting_procedure']). The SOM computes 90% confidence "
-    "boundaries for the REFERENCE sample only (from RF03 to RF06, its Table S5B), so no "
-    "loaded record has a bound to promote",
+    "(SOURCED_VALUES['flux_fitting_procedure']). Each record is ONE culture's fit "
+    "(n_samples 1), so no dispersion of its own exists: the SOM's only 90% confidence "
+    "boundaries are computed ACROSS the four reference cultures RF03 to RF06 (its Table "
+    "S5B), each of which is now its own record, so no loaded record has a bound to "
+    "promote (2026.11.24: reason not_applicable_single_measurement, was "
+    "not_reported_by_primary)",
 )
 METABOLITE_SE_GAP = ProvenanceGap(
     field="metabolite_level_se",
-    reason=ProvenanceGapReason.not_reported_by_primary,
+    reason=ProvenanceGapReason.not_applicable_single_measurement,
     looked_in=Provenance(
         source_uri=RAW_FILES_BY_NAME[QUANTITATIVE_FILE].mirror_relpath,
         citation_key=CITATION_KEY,
@@ -980,8 +1096,11 @@ METABOLITE_SE_GAP = ProvenanceGap(
         page="sheets 'Metabolite' and 'Information'",
     ),
     note="each loaded culture is one CE-TOFMS measurement of one chemostat, so "
-    "n_replicates is 1 and no per-record SE exists. The reference-series dispersion is "
-    "written to preprocess/metabolites.csv rather than copied onto every record",
+    "n_replicates is 1 and no per-record SE exists (2026.11.24: reason "
+    "not_applicable_single_measurement, was not_reported_by_primary). The authors' "
+    "dispersion over the five reference cultures is written to "
+    "preprocess/metabolites.csv rather than copied onto any record; the five cultures "
+    "are records of their own",
 )
 
 
@@ -1477,11 +1596,74 @@ def culture_identity(
     """What makes one sample column a distinct culture: its genotype and its rate.
 
     The genotype side is the disrupted gene symbol, or the empty string for a wild-type
-    dilution-rate culture, which has no perturbation. Two columns collide only when both
-    halves match, which is the pfkA pair and nothing else in this release.
+    culture (a dilution-rate or a reference culture), which has no perturbation. Two
+    columns share an identity when both halves match: the pfkA pair, and the 0.2 h-1
+    wild-type cultures. Those are biological replicates of one condition, so every one is
+    a record, and :func:`check_replicate_cultures_are_distinct` asserts from the ``IDs``
+    sheet that they are separate cultures.
     """
-    symbol = "" if column.kind == "dilution_rate" else disruptant_symbol(column.name)
+    symbol = "" if column.kind != "disruptant" else disruptant_symbol(column.name)
     return symbol, culture_dilution_rate(column, dilution_rates)
+
+
+def read_ids_culture_dates(book: Any) -> dict[str, str]:
+    """``{Sample ID: Culture Date}`` from the ``IDs`` sheet's roster, verbatim text.
+
+    The release dates every culture (an Excel day number), so two columns of one
+    genotype at one dilution rate are two cultures exactly when their dates differ.
+    """
+    sheet = book.sheet_by_name(SHEET_IDS)
+    roster = read_ids_roster(book)
+    dates: dict[str, str] = {}
+    for row in range(sheet.nrows):
+        sample_id = _text(sheet, row, IDS_SAMPLE_ID_COLUMN)
+        if sample_id in roster:
+            dates[sample_id] = _text(sheet, row, IDS_SAMPLE_ID_COLUMN + 2)
+    return dates
+
+
+def check_replicate_cultures_are_distinct(
+    book: Any, kept: Sequence[SampleColumn], dilution_rates: Mapping[str, float]
+) -> dict[str, list[str]]:
+    """``{identity: [sample ids]}`` for every condition with more than one record.
+
+    MEASURED, never assumed: each such record must be its own culture, so every one has
+    a Culture Date in the ``IDs`` sheet and no two of one condition share it. A release
+    that listed one culture twice under two ids would stop the build here instead of
+    entering the store as two biological replicates. Every stored Sample ID must also be
+    unique, because it is the record's ``replicate_id``.
+    """
+    ids = [column.sample_id for column in kept]
+    if len(ids) != len(set(ids)):
+        raise RuntimeError(
+            f"a Sample ID fills two kept columns of one sheet ({sorted(ids)}); the "
+            "Sample ID is the record's replicate_id and must name one culture"
+        )
+    dates = read_ids_culture_dates(book)
+    groups: dict[tuple[str, float], list[SampleColumn]] = {}
+    for column in kept:
+        groups.setdefault(culture_identity(column, dilution_rates), []).append(column)
+    replicated: dict[str, list[str]] = {}
+    for (symbol, rate), group in groups.items():
+        if len(group) == 1:
+            continue
+        undated = [c.sample_id for c in group if not dates.get(c.sample_id)]
+        if undated:
+            raise RuntimeError(
+                f"{undated} have no Culture Date in the IDs sheet, so they cannot be "
+                "shown to be separate cultures"
+            )
+        stamped = [dates[c.sample_id] for c in group]
+        if len(set(stamped)) != len(stamped):
+            raise RuntimeError(
+                f"{[c.sample_id for c in group]} ({symbol or 'wild type'} at {rate} "
+                f"h-1) share a Culture Date ({stamped}), so they are not shown to be "
+                "separate biological replicates"
+            )
+        replicated[f"{symbol or 'wild type'} at {rate} h-1"] = [
+            c.sample_id for c in group
+        ]
+    return replicated
 
 
 def read_measurements_unit(book: Any, label: str) -> str:
@@ -1691,23 +1873,34 @@ def read_specific_rates(book: Any) -> dict[str, dict[str, float]]:
 
 def check_aerobic(
     rates: Mapping[str, Mapping[str, float]], loaded: Sequence[str]
-) -> None:
-    """Every loaded culture has a positive oxygen uptake rate.
+) -> list[str]:
+    """Every released oxygen uptake rate of a loaded culture is positive.
 
     This is what makes ``aerobicity="aerobic"`` a measured value on these records rather
-    than the field default left in place.
+    than the field default left in place. A culture the ``Specific_Rates`` sheet gives no
+    rate for keeps the SOM's statement for every culture ("Cultures were grown
+    aerobically") and is returned, because a missing rate never gates a record; the
+    set must equal :data:`CULTURES_WITHOUT_OXYGEN_UPTAKE` among the loaded ones, so a
+    re-export that loses another rate stops the build.
     """
     missing = [sid for sid in loaded if OXYGEN_UPTAKE_ROW not in rates.get(sid, {})]
-    if missing:
+    expected = sorted(set(loaded) & CULTURES_WITHOUT_OXYGEN_UPTAKE)
+    if sorted(missing) != expected:
         raise RuntimeError(
-            f"no oxygen uptake rate for {missing}; aerobicity cannot be asserted"
+            f"no oxygen uptake rate for {sorted(missing)}, the pinned workbook leaves "
+            f"only {expected} of these cultures without one"
         )
-    anaerobic = [sid for sid in loaded if rates[sid][OXYGEN_UPTAKE_ROW] <= 0.0]
+    anaerobic = [
+        sid
+        for sid in loaded
+        if sid not in missing and rates[sid][OXYGEN_UPTAKE_ROW] <= 0
+    ]
     if anaerobic:
         raise RuntimeError(
             f"{anaerobic} have a non-positive oxygen uptake rate, so the stored "
             "aerobicity would be wrong"
         )
+    return sorted(missing)
 
 
 # --------------------------------------------------------------------------- #
@@ -1719,19 +1912,31 @@ DROP_NO_DATA = DropReason(
     "row, so this layer measured nothing for that culture",
     sample_ids=(),
 )
-DROP_REFERENCE = DropReason(
-    rule="reference_sample",
-    description="an RF column: the Samples table labels this block 'Control (Wild type, "
-    "cultured at a dilution rate of 0.2h-1)', so it is the experiment_reference, not a "
-    "record",
+DROP_REPEAT_MEASUREMENT = DropReason(
+    rule="culture_measured_in_several_series",
+    description="every column of ONE culture the sheet measured in more than one series "
+    "under one Sample ID: the Protein sheet's RF03 (WT(Jun), series 2 to 6), which the "
+    "SOM counts among 'a total of 6 measurement replicates including 2 biological "
+    "replicates'. Each column stays the same-series experiment_reference of its series' "
+    "records, so no measurement leaves the store; the culture is not a record because "
+    "one record per culture needs a mean over five measurement days, which the authors "
+    "themselves refused ('we did not use the averages of multiple measurements'), and "
+    "five records would count one culture five times",
     sample_ids=(),
+    needed_addition="an owner decision: one record per culture with the series "
+    "combined inside and a technical-replicate count and sample unit on "
+    "ProteinAbundancePhenotype (no such field), or one record per measurement column "
+    "with replicate_id 'RF03-Series<k>'",
 )
 #: ``culture_not_batch`` WAS the third rule here: it dropped ``GR01``-``GR04``, the wild
 #: type at 0.1, 0.4, 0.5 and 0.7 h-1, because ``Environment`` had no dilution-rate slot
 #: and the five cultures would have shared one byte-identical environment. #753 added
 #: ``Environment.dilution_rate_per_hour``, the four cultures are records, and the rule is
-#: retired rather than narrowed because no sample column is left for it to name.
-#: :data:`RETIRED_DROP_RULES` carries that into ``build_accounting.json``.
+#: retired rather than narrowed because no sample column is left for it to name. The
+#: per-replicate conversion (2026.11.24, #1178) retired two more: ``reference_sample``,
+#: which kept every RF culture out of the records, and
+#: ``duplicate_culture_same_genotype_and_environment``, which dropped the second pfkA
+#: culture. :data:`RETIRED_DROP_RULES` carries all three into ``build_accounting.json``.
 RETIRED_DROP_RULES: tuple[dict[str, str], ...] = (
     {
         "rule": "culture_not_batch",
@@ -1742,15 +1947,27 @@ RETIRED_DROP_RULES: tuple[dict[str, str], ...] = (
         "reference and from one another in dilution rate, which is now a field of the "
         "environment, so they are four distinct environments and four records",
     },
-)
-DROP_DUPLICATE_CULTURE = DropReason(
-    rule="duplicate_culture_same_genotype_and_environment",
-    description="the second culture of the one disruptant grown twice ('pfkA "
-    "disruptant was cultured twice.'). Both are pfkA at 0.2 h-1 in one medium, so they "
-    "would carry the same genotype AND the same environment; the kept one is the "
-    "culture measured in all three served layers, which keeps the three datasets "
-    "paired on one culture",
-    sample_ids=(),
+    {
+        "rule": "reference_sample",
+        "retired_by": "one record per biological replicate (#1178, 2026.11.24)",
+        "was_dropping": "every RF column: RF02-RF06 in the Metabolite sheet, RF02 and "
+        "RF03 x5 in the Protein sheet, RF03-RF06 in the Flux sheet",
+        "why_it_no_longer_applies": "each RF culture is a released biological replicate "
+        "of the wild type at 0.2 h-1 (its own Culture Date and, for RF02-RF06, its own "
+        "dry cell weight in SOM Table S2), so it is a record with an empty genotype on "
+        "the BW25113 assembly; it also stays the series reference. The Protein sheet's "
+        "RF03, measured in five series, is held under "
+        "culture_measured_in_several_series",
+    },
+    {
+        "rule": "duplicate_culture_same_genotype_and_environment",
+        "retired_by": "one record per biological replicate (#1178, 2026.11.24)",
+        "was_dropping": "KO05x, the first of the two pfkA cultures, in the Metabolite "
+        "sheet (the only served sheet where it carries data)",
+        "why_it_no_longer_applies": "'pfkA disruptant was cultured twice.': KO05x "
+        "(Culture Date 38624) and KO05 (38652) are two biological replicates, so both "
+        "are records and replicate_id tells them apart",
+    },
 )
 
 
@@ -1760,48 +1977,28 @@ def classify_columns(
     value_rows: Sequence[int],
     *,
     dataset: str,
-    dilution_rates: Mapping[str, float],
 ) -> tuple[list[SampleColumn], DropLedger]:
-    """Split one sheet's sample columns into records and drop rules.
+    """Split one sheet's sample columns into records and the rules that hold the rest.
 
     The order is fixed and each column gets exactly one reason: emptiness first (a fact
-    about the bytes), then the reference block, then a duplicate culture of an
-    already-kept genotype. A dilution-rate column is a RECORD, because its rate is part
-    of its environment; the duplicate rule keys on (genotype, dilution rate) for the same
-    reason, so two cultures only collide when both match.
+    about the bytes), then a culture the sheet measured in several series under one
+    Sample ID. Every other column is a record, one per released culture: a disruptant,
+    a dilution-rate culture (its rate is part of its environment) and a reference
+    culture alike, and two cultures of one genotype at one rate are two records, which
+    :func:`check_replicate_cultures_are_distinct` then shows to be separate cultures.
     """
     empty: list[str] = []
-    reference: list[str] = []
-    duplicate: list[str] = []
-    candidates: list[SampleColumn] = []
+    measured: list[SampleColumn] = []
     for column in columns:
         if all(_number(sheet, row, column.column) is None for row in value_rows):
             empty.append(column.label)
-        elif column.kind == "reference":
-            reference.append(column.label)
         else:
-            candidates.append(column)
-    by_culture: dict[tuple[str, float], list[SampleColumn]] = {}
-    for column in candidates:
-        by_culture.setdefault(culture_identity(column, dilution_rates), []).append(
-            column
-        )
-    kept_ids: set[str] = set()
-    for culture, group in by_culture.items():
-        if len(group) == 1:
-            kept_ids.add(group[0].label)
-            continue
-        preferred = [c for c in group if c.sample_id in PREFERRED_DUPLICATE_SAMPLES]
-        if len(preferred) != 1:
-            raise RuntimeError(
-                f"{culture} has {len(group)} cultures with data in {sheet.name} "
-                f"({[c.label for c in group]}) and {len(preferred)} of them are named "
-                "in PREFERRED_DUPLICATE_SAMPLES; exactly one culture of a genotype at "
-                "one dilution rate can be the record"
-            )
-        kept_ids.add(preferred[0].label)
-        duplicate.extend(c.label for c in group if c.label != preferred[0].label)
-    kept = [column for column in candidates if column.label in kept_ids]
+            measured.append(column)
+    counts: dict[str, int] = {}
+    for column in measured:
+        counts[column.sample_id] = counts.get(column.sample_id, 0) + 1
+    repeat = [column.label for column in measured if counts[column.sample_id] > 1]
+    kept = [column for column in measured if counts[column.sample_id] == 1]
     ledger = DropLedger(
         dataset=dataset,
         sheet=sheet.name,
@@ -1809,8 +2006,7 @@ def classify_columns(
         kept_records=len(kept),
         rules=(
             DROP_NO_DATA.model_copy(update={"sample_ids": tuple(empty)}),
-            DROP_REFERENCE.model_copy(update={"sample_ids": tuple(reference)}),
-            DROP_DUPLICATE_CULTURE.model_copy(update={"sample_ids": tuple(duplicate)}),
+            DROP_REPEAT_MEASUREMENT.model_copy(update={"sample_ids": tuple(repeat)}),
         ),
     )
     ledger.check()
@@ -1872,21 +2068,30 @@ def deletion_genotype(resolved: ResolvedGene) -> Genotype:
 def wild_type_genotype() -> Genotype:
     """The wild type: no perturbation, so the dilution rate is the whole difference.
 
-    The release's ``GR`` cultures are the unmodified K-12 strain at another dilution
-    rate, so there is nothing to put in ``perturbations`` and nothing is invented. Two
-    such records stay distinct because their environments do.
+    The release's ``GR`` and ``RF`` cultures are the unmodified BW25113 strain the SOM
+    names as its wild type, at another dilution rate or at 0.2 h-1, so there is nothing
+    to put in ``perturbations`` and nothing is invented. Two such records stay distinct
+    because their environments do, or, for the 0.2 h-1 cultures, their ``replicate_id``.
     """
     return Genotype(perturbations=[])
 
 
-def metabolite_phenotype(levels: Mapping[str, float]) -> MetabolitePhenotype:
-    """One culture's CE-TOFMS concentrations; one measurement, so one replicate each."""
+def metabolite_phenotype(
+    levels: Mapping[str, float], replicate_id: str | None
+) -> MetabolitePhenotype:
+    """One culture's CE-TOFMS concentrations; one measurement, so one replicate each.
+
+    ``replicate_id`` is the culture's Sample ID on a record and ``None`` on a
+    ``phenotype_reference``, which is the series control rather than a replicate of the
+    record's own condition.
+    """
     return MetabolitePhenotype(
         metabolite_level=dict(levels),
         metabolite_level_se=None,
         n_replicates=dict.fromkeys(levels, 1),
         measurement_type=MEASUREMENT_TYPE_METABOLITE,
         target_metabolite_ids=None,
+        replicate_id=replicate_id,
         provenance_gaps=[METABOLITE_SE_GAP],
     )
 
@@ -1899,6 +2104,15 @@ def protein_phenotype(
     ``standard_errors`` carries ``nan`` for a protein the sheet gives a level but no CV
     for, which is the release's own per-cell reporting gap and is not read as zero
     spread.
+
+    One record is one culture, and its value is the authors' combination of that
+    culture's TECHNICAL measurements ("duplicate sample preparation and independent
+    LC-MS/MS measurements performed in parallel from the same sampling of a single
+    continous culture"), which is combined inside the record with the released CV, so
+    ``n_replicates`` is that technical 2 and ``replicate_id`` stays ``None``:
+    ``verify_protein_dataset`` reads a labeled protein record as ONE measurement with no
+    SE, and this one is a released mean over two. Every proteome record is the only
+    culture of its (genotype, environment), so nothing needs the label to stay distinct.
     """
     return ProteinAbundancePhenotype(
         protein_abundance=dict(levels),
@@ -1908,8 +2122,15 @@ def protein_phenotype(
     )
 
 
-def flux_phenotype(net_flux: Mapping[str, float]) -> FluxPhenotype:
-    """One culture's fitted 13C net-flux map, with no interval because none is released."""
+def flux_phenotype(
+    net_flux: Mapping[str, float], replicate_id: str | None
+) -> FluxPhenotype:
+    """One culture's fitted 13C net-flux map, with no interval because none is released.
+
+    ``replicate_id`` is the culture's Sample ID on a record (it separates the four 0.2
+    h-1 reference fits, which share genotype and environment) and ``None`` on the
+    ``phenotype_reference``.
+    """
     return FluxPhenotype(
         net_flux=dict(net_flux),
         net_flux_lower=None,
@@ -1919,6 +2140,7 @@ def flux_phenotype(net_flux: Mapping[str, float]) -> FluxPhenotype:
         n_samples=1,
         sample_unit=SampleUnit.biological_replicate,
         target_reaction_ids=None,
+        replicate_id=replicate_id,
         provenance_gaps=[FLUX_INTERVAL_GAP],
     )
 
@@ -2006,14 +2228,17 @@ class _Ishii2007Dataset(ExperimentDataset):
     def _disruptants(self, kept: Sequence[SampleColumn]) -> dict[str, ResolvedGene]:
         """``{released symbol: ResolvedGene}`` for the kept DISRUPTANT records.
 
-        The dilution-rate records have no perturbation, so they are not in the panel and
-        contribute no symbol; the panel check still sees exactly the paper's 24.
+        The wild-type records have no perturbation, so they are not in the panel and
+        contribute no symbol; the panel check still sees exactly the paper's 24. The two
+        pfkA cultures name one symbol, which is resolved once.
         """
-        symbols = [
-            disruptant_symbol(column.name)
-            for column in kept
-            if column.kind == "disruptant"
-        ]
+        symbols = list(
+            dict.fromkeys(
+                disruptant_symbol(column.name)
+                for column in kept
+                if column.kind == "disruptant"
+            )
+        )
         check_disruptant_panel(symbols)
         ledger = resolve_symbols(
             self._genome(), symbols, label=f"{self.name} disruptant symbols"
@@ -2027,7 +2252,7 @@ class _Ishii2007Dataset(ExperimentDataset):
         column: SampleColumn, genes: Mapping[str, ResolvedGene]
     ) -> Genotype:
         """The genotype of one kept culture: one Keio deletion, or the wild type."""
-        if column.kind == "dilution_rate":
+        if column.kind != "disruptant":
             return wild_type_genotype()
         return deletion_genotype(genes[disruptant_symbol(column.name)])
 
@@ -2036,8 +2261,15 @@ class _Ishii2007Dataset(ExperimentDataset):
         drops: DropLedger,
         rates: Mapping[str, Mapping[str, float]],
         dilution_rates: Mapping[str, float],
+        replicated: Mapping[str, Sequence[str]],
+        without_oxygen_uptake: Sequence[str],
     ) -> None:
-        """The drop ledger, the identifier ledger, the rates and the build accounting."""
+        """The drop ledger, the identifier ledger, the rates and the build accounting.
+
+        ``replicated`` is :func:`check_replicate_cultures_are_distinct`'s map of every
+        condition stored as more than one culture; ``without_oxygen_uptake`` is what
+        :func:`check_aerobic` returned.
+        """
         out = Path(self.preprocess_dir)
         out.mkdir(parents=True, exist_ok=True)
         (out / "dropped_records.json").write_text(drops.model_dump_json(indent=2))
@@ -2062,6 +2294,15 @@ class _Ishii2007Dataset(ExperimentDataset):
                         sorted(dilution_rates.items())
                     ),
                     "retired_drop_rules": [dict(rule) for rule in RETIRED_DROP_RULES],
+                    "record_unit": "one chemostat culture (biological replicate) per "
+                    "record, its released column verbatim; replicate_id is the "
+                    "culture's Sample ID on the metabolome and flux arms",
+                    "conditions_with_several_cultures": {
+                        key: list(ids) for key, ids in sorted(replicated.items())
+                    },
+                    "cultures_aerobic_by_som_statement_only": list(
+                        without_oxygen_uptake
+                    ),
                     "sourced_values": {
                         key: value.model_dump(mode="json")
                         for key, value in SOURCED_VALUES.items()
@@ -2094,9 +2335,10 @@ class _Ishii2007Dataset(ExperimentDataset):
 
 @register_dataset
 class MetabolomeIshii2007Dataset(_Ishii2007Dataset):
-    """CE-TOFMS intracellular metabolite concentrations of 28 chemostat cultures.
+    """CE-TOFMS intracellular metabolite concentrations of 34 chemostat cultures.
 
-    24 Keio disruptants at 0.2 h-1 plus the wild type at 0.1, 0.4, 0.5 and 0.7 h-1.
+    24 Keio disruptants at 0.2 h-1 (pfkA twice), the wild type at 0.1, 0.4, 0.5 and 0.7
+    h-1, and the five wild-type cultures at 0.2 h-1 the release uses as references.
     """
 
     organism = Organism.ecoli
@@ -2121,7 +2363,7 @@ class MetabolomeIshii2007Dataset(_Ishii2007Dataset):
 
     @post_process
     def process(self) -> None:
-        """Read the Metabolite sheet into one record per loaded disruptant culture."""
+        """Read the Metabolite sheet into one record per released culture."""
         verify_raw_files(self.raw_dir, DATA_SHA256)
         book = self._workbook()
         check_units(book)
@@ -2131,19 +2373,18 @@ class MetabolomeIshii2007Dataset(_Ishii2007Dataset):
         columns = read_sample_columns(sheet, paired=False, series_row=1, name_row=2)
         dilution_rates = check_dilution_rate_arm(book, columns)
         kept, drops = classify_columns(
-            sheet,
-            columns,
-            [row for row, _, _ in rows],
-            dataset=self.name,
-            dilution_rates=dilution_rates,
+            sheet, columns, [row for row, _, _ in rows], dataset=self.name
         )
         references = reference_by_series(columns, kept)
         rates = read_specific_rates(book)
-        check_aerobic(rates, [column.sample_id for column in kept])
+        without_oxygen_uptake = check_aerobic(rates, [c.sample_id for c in kept])
+        replicated = check_replicate_cultures_are_distinct(book, kept, dilution_rates)
         genes = self._disruptants(kept)
 
         os.makedirs(self.processed_dir, exist_ok=True)
-        self._write_common_ledgers(drops, rates, dilution_rates)
+        self._write_common_ledgers(
+            drops, rates, dilution_rates, replicated, without_oxygen_uptake
+        )
         self._write_metabolite_ledger(
             sheet, rows, keys, kept, references, dilution_rates
         )
@@ -2163,7 +2404,7 @@ class MetabolomeIshii2007Dataset(_Ishii2007Dataset):
                     environment=environment(
                         culture_dilution_rate(column, dilution_rates)
                     ),
-                    phenotype=metabolite_phenotype(levels),
+                    phenotype=metabolite_phenotype(levels, column.sample_id),
                 )
                 reference_column = references[normalize_series(column.series)]
                 reference_levels = {
@@ -2182,7 +2423,7 @@ class MetabolomeIshii2007Dataset(_Ishii2007Dataset):
                     dataset_name=self.name,
                     genome_reference=genome_reference,
                     environment_reference=reference_env.model_copy(),
-                    phenotype_reference=metabolite_phenotype(reference_levels),
+                    phenotype_reference=metabolite_phenotype(reference_levels, None),
                 )
                 reference_only += len(
                     self._levels(sheet, rows, keys, reference_column.column)
@@ -2282,9 +2523,10 @@ class MetabolomeIshii2007Dataset(_Ishii2007Dataset):
 
 @register_dataset
 class ProteomeIshii2007Dataset(_Ishii2007Dataset):
-    """LC-MS/MS absolute protein abundances of 28 chemostat cultures.
+    """LC-MS/MS absolute protein abundances of 29 chemostat cultures.
 
-    24 Keio disruptants at 0.2 h-1 plus the wild type at 0.1, 0.4, 0.5 and 0.7 h-1.
+    24 Keio disruptants at 0.2 h-1, the wild type at 0.1, 0.4, 0.5 and 0.7 h-1, and the
+    reference culture RF02 at 0.2 h-1 (RF03, measured in five series, is held).
     """
 
     organism = Organism.ecoli
@@ -2309,7 +2551,7 @@ class ProteomeIshii2007Dataset(_Ishii2007Dataset):
 
     @post_process
     def process(self) -> None:
-        """Read the Protein sheet into one record per loaded disruptant culture."""
+        """Read the Protein sheet into one record per culture measured in one series."""
         verify_raw_files(self.raw_dir, DATA_SHA256)
         book = self._workbook()
         check_units(book)
@@ -2319,15 +2561,12 @@ class ProteomeIshii2007Dataset(_Ishii2007Dataset):
         columns = read_sample_columns(sheet, paired=True, series_row=1, name_row=2)
         dilution_rates = check_dilution_rate_arm(book, columns)
         kept, drops = classify_columns(
-            sheet,
-            columns,
-            [row for row, _ in labels],
-            dataset=self.name,
-            dilution_rates=dilution_rates,
+            sheet, columns, [row for row, _ in labels], dataset=self.name
         )
         references = reference_by_series(columns, kept)
         rates = read_specific_rates(book)
-        check_aerobic(rates, [column.sample_id for column in kept])
+        without_oxygen_uptake = check_aerobic(rates, [c.sample_id for c in kept])
+        replicated = check_replicate_cultures_are_distinct(book, kept, dilution_rates)
         genes = self._disruptants(kept)
         proteins = resolve_symbols(
             self._genome(),
@@ -2346,7 +2585,9 @@ class ProteomeIshii2007Dataset(_Ishii2007Dataset):
             )
 
         os.makedirs(self.processed_dir, exist_ok=True)
-        self._write_common_ledgers(drops, rates, dilution_rates)
+        self._write_common_ledgers(
+            drops, rates, dilution_rates, replicated, without_oxygen_uptake
+        )
         self._write_protein_ledger(labels, proteins, kept, references, dilution_rates)
 
         reference_env = environment(DILUTION_RATE_PER_HOUR)
@@ -2495,9 +2736,10 @@ class ProteomeIshii2007Dataset(_Ishii2007Dataset):
 
 @register_dataset
 class FluxIshii2007Dataset(_Ishii2007Dataset):
-    """Fitted 13C net-flux maps of 28 chemostat cultures.
+    """Fitted 13C net-flux maps of 32 chemostat cultures.
 
-    24 Keio disruptants at 0.2 h-1 plus the wild type at 0.1, 0.4, 0.5 and 0.7 h-1.
+    24 Keio disruptants at 0.2 h-1, the wild type at 0.1, 0.4, 0.5 and 0.7 h-1, and the
+    four reference cultures RF03-RF06 at 0.2 h-1.
 
     The reaction network is the release's own 43 net reactions, keyed by the reaction
     STRING the sheet prints ("G6P <-> F6P"), because the release names no model and no
@@ -2527,7 +2769,7 @@ class FluxIshii2007Dataset(_Ishii2007Dataset):
 
     @post_process
     def process(self) -> None:
-        """Read the Flux sheet into one fitted flux map per loaded disruptant culture."""
+        """Read the Flux sheet into one fitted flux map per released culture."""
         verify_raw_files(self.raw_dir, DATA_SHA256)
         book = self._workbook()
         check_units(book)
@@ -2536,21 +2778,20 @@ class FluxIshii2007Dataset(_Ishii2007Dataset):
         columns = read_sample_columns(sheet, paired=False, series_row=None, name_row=1)
         dilution_rates = check_dilution_rate_arm(book, columns)
         kept, drops = classify_columns(
-            sheet,
-            columns,
-            [row for row, _ in net_rows],
-            dataset=self.name,
-            dilution_rates=dilution_rates,
+            sheet, columns, [row for row, _ in net_rows], dataset=self.name
         )
         rates = read_specific_rates(book)
-        check_aerobic(rates, [column.sample_id for column in kept])
+        without_oxygen_uptake = check_aerobic(rates, [c.sample_id for c in kept])
+        replicated = check_replicate_cultures_are_distinct(book, kept, dilution_rates)
         genes = self._disruptants(kept)
         reference_columns = [c for c in columns if c.kind == "reference"]
         stored_reference = self._stored_reference(reference_columns)
         self._check_fit_inputs(kept)
 
         os.makedirs(self.processed_dir, exist_ok=True)
-        self._write_common_ledgers(drops, rates, dilution_rates)
+        self._write_common_ledgers(
+            drops, rates, dilution_rates, replicated, without_oxygen_uptake
+        )
         self._write_flux_ledger(
             sheet, net_rows, exchange_rows, reference_columns, kept, dilution_rates
         )
@@ -2561,7 +2802,7 @@ class FluxIshii2007Dataset(_Ishii2007Dataset):
             genome_reference=genome_reference,
             environment_reference=environment(DILUTION_RATE_PER_HOUR),
             phenotype_reference=flux_phenotype(
-                self._net_flux(sheet, net_rows, stored_reference.column)
+                self._net_flux(sheet, net_rows, stored_reference.column), None
             ),
         )
         env_out, interned_env = self._open_write_lmdb(
@@ -2576,7 +2817,7 @@ class FluxIshii2007Dataset(_Ishii2007Dataset):
                         culture_dilution_rate(column, dilution_rates)
                     ),
                     phenotype=flux_phenotype(
-                        self._net_flux(sheet, net_rows, column.column)
+                        self._net_flux(sheet, net_rows, column.column), column.sample_id
                     ),
                 )
                 txn.put(
@@ -2637,10 +2878,10 @@ class FluxIshii2007Dataset(_Ishii2007Dataset):
         MEASURED on the pinned workbook: the labeling sheets of the disruptant cultures
         are named by CULTURE NAME (``galM`` ... ``talB``, ``pfkA_1``, ``pfkA_2``) and the
         dilution-rate and reference sheets by SAMPLE ID (``GR01``-``GR04``,
-        ``RF03``-``RF06``). A dilution-rate culture's name (``WT, 0.1h-1``) is not a
-        sheet name in that workbook, so the id is what the lookup uses.
+        ``RF03``-``RF06``). A wild-type culture's name (``WT, 0.1h-1``, ``WT(Jun)``) is
+        not a sheet name in that workbook, so the id is what the lookup uses.
         """
-        if column.kind == "dilution_rate":
+        if column.kind != "disruptant":
             return column.sample_id
         return column.name
 
@@ -2738,8 +2979,9 @@ class FluxIshii2007Dataset(_Ishii2007Dataset):
 METABOLITE_PROVENANCE = Provenance(
     source_uri=f"{PROJECT_SITE}{QUANTITATIVE_FILE}",
     citation_key=CITATION_KEY,
-    method="CE-TOFMS intracellular concentration in mM per chemostat culture (24 Keio "
-    "disruptants at 0.2 h-1 and the wild type at 0.1, 0.4, 0.5 and 0.7 h-1); the "
+    method="CE-TOFMS intracellular concentration in mM per chemostat culture, one "
+    "record per culture (24 Keio disruptants at 0.2 h-1 with pfkA twice, the wild type "
+    "at 0.1, 0.4, 0.5 and 0.7 h-1, and the five 0.2 h-1 wild-type cultures); the "
     "reference is the wild-type 0.2 h-1 control column of the record's OWN series, "
     "which for a dilution-rate record is a cross-environment reference",
     page="Science 316:593; project web site v1.0.0, sheet 'Metabolite'",
@@ -2747,8 +2989,9 @@ METABOLITE_PROVENANCE = Provenance(
 PROTEIN_PROVENANCE = Provenance(
     source_uri=f"{PROJECT_SITE}{QUANTITATIVE_FILE}",
     citation_key=CITATION_KEY,
-    method="LC-MS/MS absolute abundance in mg-protein/g-dry-cell-weight over 24 Keio "
-    "disruptants at 0.2 h-1 and the wild type at 0.1, 0.4, 0.5 and 0.7 h-1; SE = "
+    method="LC-MS/MS absolute abundance in mg-protein/g-dry-cell-weight, one record per "
+    "culture (24 Keio disruptants at 0.2 h-1, the wild type at 0.1, 0.4, 0.5 and 0.7 "
+    "h-1, and the 0.2 h-1 wild-type culture RF02); SE = "
     "level * CV / 100 / sqrt(2) over duplicate sample preparation and independent "
     "LC-MS/MS measurement; the reference is the 0.2 h-1 control of the record's own "
     "series",
@@ -2757,8 +3000,9 @@ PROTEIN_PROVENANCE = Provenance(
 FLUX_PROVENANCE = Provenance(
     source_uri=f"{PROJECT_SITE}{QUANTITATIVE_FILE}",
     citation_key=CITATION_KEY,
-    method="13C metabolic flux analysis over 24 Keio disruptants at 0.2 h-1 and the "
-    "wild type at 0.1, 0.4, 0.5 and 0.7 h-1, net flux as a percentage of the specific "
+    method="13C metabolic flux analysis, one fit per culture (24 Keio disruptants at "
+    "0.2 h-1, the wild type at 0.1, 0.4, 0.5 and 0.7 h-1, and the four 0.2 h-1 "
+    "wild-type cultures RF03-RF06), net flux as a percentage of the specific "
     f"glucose uptake rate; the fit's input is {GC_MS_FILE}, no interval is released",
     page="Science 316:593; project web site v1.0.0, sheet 'Flux'",
 )

@@ -2151,10 +2151,9 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "isobutanol_validated_lopez2024": 227,
         "ffa_xue2025": 519,
         "metabolome_fuhrer2017": 3735,
-        # #753: 24 Keio disruptants at 0.2 h-1 plus the wild type at 0.1, 0.4, 0.5
-        # and 0.7 h-1, which Environment.dilution_rate_per_hour keeps as four distinct
-        # environments instead of one byte-identical one.
-        "metabolome_ishii2007": 28,
+        # #753 + #1178: one record per culture, the 28 earlier ones plus the second
+        # pfkA culture KO05x and the five 0.2 h-1 wild-type cultures RF02-RF06.
+        "metabolome_ishii2007": 34,
         # #753: each gains the one record the loader used to drop, Rapp's `phnE`
         # released as `b4104`, a retired tag of the pinned strain's own namespace that
         # DerivedIdentifierRoute's new `locus_tag_synonym` member can now name.

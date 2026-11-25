@@ -322,3 +322,69 @@ silently losing its significance call.
 Recommendation recorded for the owner: open a follow-up for a fitness-contrast phenotype
 with a significance triple, and close #776's structural half against it. Nothing about the
 pair-of-environments grain blocks it.
+
+## 2026.11.24 - Per-replicate review (#1178): already one record per culture; growth curves wait on the owner
+
+Part of #1176. Policy: one stored record per biological replicate (#1178, owner decisions
+2026-11-17 and 2026-11-24).
+
+### What a replicate is, from the source
+
+- `paper.md` Methods, Transposon library experiments: "Three independent $^ \textrm { \scriptsize 1 m L }$ aliquots of ML-5, which were prepared in LB medium supplemented with kanamycin and stored in $2 0 \%$ glycerol at $- 8 0 ^ { \circ } \mathbf { C }$ , were thawed on ice and used to inoculate" (sha256 `e156d3b2...265a`).
+- `si/si2.md` Table S4: "for each of the three biological replicates" (sha256 `568d7edf...3891`).
+- `si/si2.md` Table S3 prints one `Exp./Rep.` key per culture, `1A` to `14C`, 42 keys,
+  each with its own BarSeq index.
+- The only withdrawal is the authors' own: "Gene data were excluded if fitness values
+  were not obtained for all three biological replicates from both conditions."
+- Within one culture, gene fitness is "the weighted average of the strain fitness for all
+  transposon insertions at that locus": the definition of the measurement, not a
+  combination of cultures.
+
+### What changed
+
+The store already held one record per (locus, culture), 10,824 records over 42 cultures,
+and the value of every record is unchanged. Each record's phenotype now states what it is:
+
+| field | before | after |
+|---|---|---|
+| `replicate_id` | None | Table S3 key verbatim, `1A` .. `14C` |
+| `n_samples` | gap, `not_carried_by_curation` | 1 |
+| `sample_unit` | gap, `not_carried_by_curation` | `biological_replicate` |
+| uncertainty, SE gaps | `not_reported_by_primary` | `not_applicable_single_measurement` |
+
+The sheets' own column names cannot serve as `replicate_id`: experiments 1 and 13 are two
+cultures that share the name `M9_Glucose_Rep{A,B,C}`. The reference stays the culture's
+typical gene (0.0) with `replicate_id=None`.
+
+### Measured on the scratch build
+
+Built into `$DATA_ROOT/tmp/scratch/per-replicate-borchert2023/rbtnseq_borchert2023`:
+
+- 10,824 records, 3,608 per replicate position (A, B, C), 42 distinct `replicate_id`s;
+- environment-response verifier: every rule passes, `count` 10,824 of 10,824;
+- against the dev store (`data/torchcell/rbtnseq_borchert2023`): every record matched by
+  (genotype, environment, screen) with max absolute difference 0.0; grouping by
+  (genotype, environment) gives 8,291 groups (5,758 of one record, 2,533 of two, because
+  Table S4 repeats a growth duration within some experiments) and the group means equal
+  the old store's to 0.0. Only `replicate_id`, `n_samples`, `sample_unit` and the gap
+  reasons differ.
+
+### Growth curves: counted, not stored (owner decision)
+
+`account_growth_curves` reads `Figure_2..6_growth_data`: 62 strain-condition labels, each
+with exactly 3 non-empty replicate columns, 186 curves and 28,161 readings ("Growth
+assessment was performed in biological triplicate using a BioLector"). Figure 3 releases
+two blocks with their own time axis, and two empty spacer columns sit between them. The
+audit ledger's "63 labels, 187 curves, 2 replicates missing in Fig 3" counted the second
+`Time:` header as a label; no replicate is missing.
+
+They stay unstored. The readout is back-scattered 620 nm light in arbitrary units over
+time; `MeasurementType.optical_density` (#927) is an end-point absorbance, a different
+physical measurement, and no phenotype carries a time series. A growth rate or lag fitted
+by the loader is not released. The decision is the owner's (#776 item 3): a growth-curve
+phenotype (strain, condition, replicate, time vector, back-scatter vector, gain), or a
+`backscatter` measurement type with one record per reading.
+
+The Table S4 OD600 at sampling also stays unstored, now for the accurate reason: it is the
+pooled culture's harvest rule (sampled at OD600 1.0), and no environment-response field
+carries a harvest optical density.

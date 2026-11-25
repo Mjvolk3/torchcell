@@ -35,6 +35,18 @@ replicate's gene fitness. Replicates are NOT averaged, matching the compendium; 
 ``_mean`` columns are MEASURED to be the arithmetic mean of their three replicates to
 7.3e-14, so they are a derived column and are not stored.
 
+ONE RECORD PER BIOLOGICAL REPLICATE (#1178, 2026-11-24). An arm is one culture grown
+from one of "Three independent" ML-5 aliquots, which Table S4 calls "the three
+biological replicates". Each record therefore states ``n_samples=1``,
+``sample_unit=biological_replicate`` and ``replicate_id`` = Table S3's own
+``Exp./Rep.`` key verbatim (``"1A"`` .. ``"14C"``); its uncertainty and SE are
+``not_applicable_single_measurement`` gaps. The gene fitness inside one record is the
+weighted mean over the locus's insertion strains in that culture, which is the
+measurement's definition, not a combination of cultures. The reference is the culture's
+typical gene (0.0) with ``replicate_id=None``. The authors withdrew genes "if fitness
+values were not obtained for all three biological replicates from both conditions";
+that is the only exclusion, and it is theirs.
+
 PHENOTYPE CLASS. RB-TnSeq gene fitness is a signed log2 ratio centered on zero, and
 ``FitnessPhenotype.validate_fitness`` clamps every non-positive value to 0.0, so the record
 family is ``EnvironmentResponsePhenotype`` with ``measurement_type=log2_ratio`` and
@@ -61,9 +73,11 @@ NOT STORED, each for a stated reason (``preprocess/not_stored.json``):
   ``insertion_position``, ``insertion_strand``), so the blocker is the phenotype side: a
   per-barcode sequencing read count is a raw read tally, not a phenotype, and no class or
   ``MeasurementType`` member holds one;
-* ``Figure_2..6_growth_data``: back-scattered 620 nm light in arbitrary units over time.
-  ``MeasurementType`` has no optical-density member (issue #776 item 3) and no phenotype
-  carries a time series.
+* ``Figure_2..6_growth_data``: 186 per-replicate BioLector curves (62 strain-condition
+  labels in biological triplicate, counted by :func:`account_growth_curves`) of
+  back-scattered 620 nm light in arbitrary units over time. ``optical_density`` is an
+  end-point absorbance, a different physical measurement, and no phenotype carries a
+  time series (issue #776 item 3); storing them is an owner decision.
 
 Design, the measurements and the partition: [[torchcell.datasets.pputida.borchert2023]].
 """
@@ -115,6 +129,7 @@ from torchcell.datamodels.schema import (
     PhysicalFactor,
     Publication,
     ReferenceGenome,
+    SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
 )
@@ -232,6 +247,21 @@ Q_TABLE_S4 = (
     "0 0 }$ readings and total growth duration taken at time of sampling for each of the "
     "three biological replicates. \\*These experiments were performed later than the "
     "preceding experiments."
+)
+Q_INDEPENDENT_ALIQUOTS = (
+    "Three independent $^ \\textrm { \\scriptsize 1 m L }$ aliquots of ML-5, which were "
+    "prepared in LB medium supplemented with kanamycin and stored in $2 0 \\%$ glycerol "
+    "at $- 8 0 ^ { \\circ } \\mathbf { C }$ , were thawed on ice and used to inoculate"
+)
+Q_TABLE_S3 = (
+    "Table S3. BarSeq forward primers (BarSeq_P2) used for each experiment and "
+    "replicatein this study (Wetmore et al., 2015)."
+)
+Q_TABLE_S3_HEADER = (
+    "<table><tr><td rowspan=1 colspan=1>Exp./Rep.</td><td rowspan=1 colspan=1>IT #</td>"
+)
+Q_GROWTH_TRIPLICATE = (
+    "Growth assessment was performed in biological triplicate using a BioLector"
 )
 
 
@@ -497,8 +527,12 @@ class ExperimentColumns(BaseModel):
         return f"{self.prefix}_Rep{replicate}"
 
     def arm(self, replicate: str) -> str:
-        """Table S3's own ``Exp./Rep.`` key for this culture, e.g. ``Exp1A``."""
+        """The culture's screen id, ``Exp`` plus its Table S3 key, e.g. ``Exp1A``."""
         return f"Exp{self.experiment}{replicate}"
+
+    def replicate_id(self, replicate: str) -> str:
+        """Table S3's own ``Exp./Rep.`` key for this culture, verbatim, e.g. ``1A``."""
+        return f"{self.experiment}{replicate}"
 
 
 EXPERIMENTS: tuple[ExperimentColumns, ...] = (
@@ -666,6 +700,22 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         Q_INSERTION_FILTER,
     ),
     "triplicate_filter": _sv(_PAPER, 3, b24.Q_BORCHERT23_TRIPLICATE),
+    "replicate_unit": _sv(
+        _PAPER,
+        "biological_replicate: one culture grown from one independent ML-5 aliquot",
+        Q_INDEPENDENT_ALIQUOTS,
+        note="Table S4 calls the same three cultures 'the three biological replicates' "
+        "(growth_duration_source). A record is one culture, so n_samples is 1 and the "
+        "uncertainty fields are a not_applicable_single_measurement gap",
+    ),
+    "replicate_label": _sv(
+        _SI2,
+        "Table S3 Exp./Rep. key, '1A' to '14C'",
+        Q_TABLE_S3_HEADER,
+        note="stored verbatim as replicate_id. The sheets' column names cannot serve: "
+        "experiments 1 and 13 are two different cultures that share the name "
+        "M9_Glucose_Rep{A,B,C}",
+    ),
     "library": _sv(
         _PAPER,
         "ML-5",
@@ -688,6 +738,13 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     "poolcount_is_raw_counts": _sv(_PAPER, "all.poolcount", Q_POOLCOUNT),
     "growth_curve_readout": _sv(
         _PAPER, "back-scattered 620 nm light [a.u.], gain 3", Q_BACKSCATTER
+    ),
+    "growth_curve_replicates": _sv(
+        _PAPER,
+        "biological triplicate",
+        Q_GROWTH_TRIPLICATE,
+        note="MEASURED on si1.xlsx Figure_2..6_growth_data: 62 strain-condition labels, "
+        "each with exactly 3 non-empty replicate columns, 186 curves. Not stored",
     ),
     "sra": _sv(_PAPER, "SRP385031", b24.Q_BORCHERT23_SRA),
     "growth_duration_source": _sv(
@@ -877,6 +934,85 @@ def read_read_me(path: str | Path) -> dict[str, str]:
     }
     del described["Tab"]
     return described
+
+
+#: Every growth curve is released in biological triplicate (``Q_GROWTH_TRIPLICATE``).
+CURVES_PER_LABEL = 3
+
+
+class GrowthSheetAccount(BaseModel):
+    """One ``Figure_N_growth_data`` sheet, counted: labels, curves, readings."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    sheet: str
+    labels: tuple[str, ...]
+    curves: int
+    readings: int
+    time_columns: int
+
+
+def account_growth_curves(path: str | Path) -> tuple[GrowthSheetAccount, ...]:
+    """Count the released BioLector curves of the five growth sheets, storing none.
+
+    A header cell that is not a time column names one strain-condition, and the column
+    under it plus the two unlabelled columns after it are its three biological
+    replicates. The account refuses a label without exactly three non-empty columns
+    and a non-empty column that belongs to no label and is not a time axis, so a
+    replicate that went missing or a curve nobody counted stops the build of the
+    account rather than shifting its numbers.
+    """
+    import openpyxl
+
+    workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    accounts: list[GrowthSheetAccount] = []
+    for sheet in GROWTH_SHEETS:
+        rows = list(workbook[sheet].iter_rows(values_only=True))
+        width = max(len(row) for row in rows)
+        header = list(rows[0]) + [None] * (width - len(rows[0]))
+        filled = [
+            sum(
+                1
+                for row in rows[1:]
+                if column < len(row) and isinstance(row[column], int | float)
+            )
+            for column in range(width)
+        ]
+        time_columns = [
+            c
+            for c, h in enumerate(header)
+            if h is not None and str(h).startswith("Time")
+        ]
+        labels = [
+            (c, str(h))
+            for c, h in enumerate(header)
+            if h is not None and c not in time_columns
+        ]
+        owned = set(time_columns)
+        for column, label in labels:
+            block = range(column, column + CURVES_PER_LABEL)
+            if any(header[c] is not None for c in block[1:]) or any(
+                filled[c] == 0 for c in block
+            ):
+                raise ValueError(
+                    f"{sheet}: {label!r} does not carry {CURVES_PER_LABEL} replicate "
+                    "columns"
+                )
+            owned.update(block)
+        stray = [c for c in range(width) if filled[c] and c not in owned]
+        if stray:
+            raise ValueError(f"{sheet}: columns {stray} hold readings under no label")
+        accounts.append(
+            GrowthSheetAccount(
+                sheet=sheet,
+                labels=tuple(label for _, label in labels),
+                curves=len(labels) * CURVES_PER_LABEL,
+                readings=sum(filled[c] for c in owned if c not in time_columns),
+                time_columns=len(time_columns),
+            )
+        )
+    workbook.close()
+    return tuple(accounts)
 
 
 # --------------------------------------------------------------------------- #
@@ -1079,6 +1215,14 @@ def new_loci_by_arm(
     return out
 
 
+def records_by_replicate(by_arm: Mapping[str, Sequence[str]]) -> dict[str, int]:
+    """Records per replicate position (``A``, ``B``, ``C``), summed over experiments."""
+    counts = dict.fromkeys(REPLICATES, 0)
+    for arm, loci in by_arm.items():
+        counts[arm[-1]] += len(loci)
+    return counts
+
+
 class ServedPartition(BaseModel):
     """What the already-served Borchert 2024 store holds, and the disjointness proof."""
 
@@ -1256,37 +1400,38 @@ UNITS_REFERENCE = "the typical gene of this culture (gene fitness is normalized 
 
 _GAP_UNCERTAINTY = ProvenanceGap(
     field="environment_response_uncertainty",
-    reason=ProvenanceGapReason.not_reported_by_primary,
+    reason=ProvenanceGapReason.not_applicable_single_measurement,
     looked_in=_RELEASE,
-    note="the sheets release no per-replicate uncertainty; their t, p, q and adjusted-q "
-    "are a two-sample contrast between two arms, not a dispersion of one value",
+    note="a record is ONE culture's gene fitness, so it has no dispersion of its own; "
+    "the sheets' t, p, q and adjusted-q are a two-sample contrast between two arms, "
+    "not a dispersion of one value",
 )
 _GAP_SE = ProvenanceGap(
     field="environment_response_se",
-    reason=ProvenanceGapReason.not_reported_by_primary,
+    reason=ProvenanceGapReason.not_applicable_single_measurement,
     looked_in=_RELEASE,
 )
-_GAP_N = ProvenanceGap(
-    field="n_samples",
-    reason=ProvenanceGapReason.not_carried_by_curation,
-    looked_in=_RELEASE,
-    note="a record is one biological replicate; the strains averaged into its gene "
-    "fitness are counted upstream and the sheets do not carry the count",
-)
-_GAP_UNIT = ProvenanceGap(
-    field="sample_unit", reason=ProvenanceGapReason.not_carried_by_curation
-)
+#: One record is one biological replicate culture (``SOURCED_VALUES["replicate_unit"]``).
+#: The gene fitness inside it is the weighted mean over the locus's insertion strains in
+#: that one culture, which is the measurement's definition (``UNITS_FITNESS``), not a
+#: combination of replicate cultures.
+N_SAMPLES_PER_RECORD = 1
 
 
-def build_phenotype(fitness: float, arm: str) -> EnvironmentResponsePhenotype:
-    """One locus's fitness in one culture."""
+def build_phenotype(
+    fitness: float, arm: str, replicate_id: str
+) -> EnvironmentResponsePhenotype:
+    """One locus's fitness in one culture: n = 1, the culture's Table S3 key."""
     return EnvironmentResponsePhenotype(
         measurement_type=MeasurementType.log2_ratio,
         assay_type=AssayType.pooled_competitive_growth_barcode,
         environment_response=fitness,
         screen_id=arm,
+        replicate_id=replicate_id,
+        n_samples=N_SAMPLES_PER_RECORD,
+        sample_unit=SampleUnit.biological_replicate,
         units=UNITS_FITNESS,
-        provenance_gaps=[_GAP_UNCERTAINTY, _GAP_SE, _GAP_N, _GAP_UNIT],
+        provenance_gaps=[_GAP_UNCERTAINTY, _GAP_SE],
     )
 
 
@@ -1456,6 +1601,11 @@ class NotStored(BaseModel):
 
 N_BARCODES = 186957
 N_POOLCOUNT_COLUMNS = 42
+#: MEASURED by :func:`account_growth_curves` on the pinned si1.xlsx: 62 strain-condition
+#: labels x 3 biological replicates, and the numeric readings under them.
+N_GROWTH_LABELS = 62
+N_GROWTH_CURVES = 186
+N_GROWTH_READINGS = 28161
 
 
 def not_stored(
@@ -1500,20 +1650,27 @@ def not_stored(
             "MeasurementType member holds a read count",
         ),
         NotStored(
-            quantity="OD600 growth curves of the deletion and overexpression strains",
+            quantity=f"BioLector growth curves of the deletion and overexpression "
+            f"strains: {N_GROWTH_CURVES} per-replicate curves, {N_GROWTH_LABELS} "
+            "strain-condition labels in biological triplicate",
             where=f"{DATA_FILE} {', '.join(GROWTH_SHEETS)}",
-            values=0,
-            reason="back-scattered 620 nm light in arbitrary units over time: "
-            "MeasurementType has no optical-density member and no phenotype carries a "
-            "time series",
+            values=N_GROWTH_READINGS,
+            reason="back-scattered 620 nm light in arbitrary units over time. "
+            "MeasurementType.optical_density (#927) is an END-POINT ABSORBANCE, a "
+            "different physical measurement, and no phenotype carries a time series; "
+            "a growth-curve class (or a rate the loader would fit, which the source "
+            "does not release) is an owner decision, #776 item 3, #1176",
             issue=776,
         ),
         NotStored(
             quantity="OD600 at the time of sampling, per replicate",
             where="si/si2.md Table S4",
             values=N_ARMS,
-            reason="the same missing MeasurementType member; the table's growth duration "
-            "IS stored, as Environment.duration_hours",
+            reason="the harvest rule of the pooled ML-5 culture (sampled at OD600 1.0), "
+            "a property of the culture rather than of any locus: "
+            "EnvironmentResponsePhenotype and Environment have no harvest optical "
+            "density field. The table's growth duration IS stored, as "
+            "Environment.duration_hours",
             issue=776,
         ),
     )
@@ -1658,7 +1815,11 @@ class RbTnseqBorchert2023Dataset(ExperimentDataset):
                             genotypes[tag] = b24.build_genotype(
                                 tag, names[tag], MUTANT_LIBRARY
                             ).model_dump()
-                        phenotype = build_phenotype(float(values[row_of[tag]]), arm)
+                        phenotype = build_phenotype(
+                            float(values[row_of[tag]]),
+                            arm,
+                            experiment.replicate_id(replicate),
+                        )
                         record = {
                             "experiment": {
                                 "experiment_type": "environment_response",
@@ -1738,6 +1899,7 @@ class RbTnseqBorchert2023Dataset(ExperimentDataset):
             "new_loci.json": {
                 "n_loci": len({tag for loci in by_arm.values() for tag in loci}),
                 "n_records": sum(len(loci) for loci in by_arm.values()),
+                "n_records_by_replicate_position": records_by_replicate(by_arm),
                 "by_arm": {arm: list(loci) for arm, loci in by_arm.items()},
             },
             "not_stored.json": {

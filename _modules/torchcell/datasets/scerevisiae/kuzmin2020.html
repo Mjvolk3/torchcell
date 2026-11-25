@@ -242,6 +242,44 @@
 <span class="c1"># Dmf double-mutant query-strain records read their value from it.</span>
 <span class="n">SCREEN_ID_QUERY_FITNESS</span> <span class="o">=</span> <span class="s2">"kuzmin2020_s5_query_fitness_array"</span>
 
+<span class="c1"># HO, the benign locus that carries the control marker of every single-mutant control</span>
+<span class="c1"># query strain (issue #1202). Verbatim, si/si1.md lines 29-31 (sha256 69179c57...):</span>
+<span class="c1">#   "Single mutant control strains (480 in total) deleted for one member of a paralog</span>
+<span class="c1">#   pair were constructed, such that each strain carried the deletion of one member of</span>
+<span class="c1">#   a paralog pair with the relevant control marker inserted at the benign $H O$ locus."</span>
+<span class="c1"># and line 91: "$H O$ is a benign control locus that houses the marker". Table S5 writes</span>
+<span class="c1"># each single mutant as a pair with YDL227C (HO) on either side: 240 of its 480 "Single</span>
+<span class="c1"># mutant" rows put HO in ORF1 and the gene in ORF2, 240 the reverse, 0 rows put HO on</span>
+<span class="c1"># both or neither side. The stored perturbation is the gene, never HO; HO is dropped as</span>
+<span class="c1"># the Dmf and Dmi digenic records here and SmfKuzmin2018Dataset drop it (their "no ho"</span>
+<span class="c1"># query columns), so a single-mutant control is named the same way everywhere.</span>
+<span class="n">HO_SYSTEMATIC_NAME</span> <span class="o">=</span> <span class="s2">"YDL227C"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_single_mutant_gene_side</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Table S5 single-mutant rows with the paralog gene's ORF, name and allele.</span>
+
+<span class="sd">    Adds ``query_orf``, ``query_gene`` and ``query_allele`` from whichever of the two</span>
+<span class="sd">    sides (``ORF1/Gene1/Allele1`` or ``ORF2/Gene2/Allele2``) is not HO. A row whose</span>
+<span class="sd">    sides are both HO or neither HO names no single gene and is refused (0 of the 480</span>
+<span class="sd">    released rows).</span>
+<span class="sd">    """</span>
+    <span class="n">ho_first</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"ORF1"</span><span class="p">]</span> <span class="o">==</span> <span class="n">HO_SYSTEMATIC_NAME</span>
+    <span class="n">ho_second</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"ORF2"</span><span class="p">]</span> <span class="o">==</span> <span class="n">HO_SYSTEMATIC_NAME</span>
+    <span class="n">unresolved</span> <span class="o">=</span> <span class="n">ho_first</span> <span class="o">==</span> <span class="n">ho_second</span>
+    <span class="k">if</span> <span class="n">unresolved</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Table S5 has </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">unresolved</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2"> 'Single mutant' row(s) without "</span>
+            <span class="sa">f</span><span class="s2">"exactly one </span><span class="si">{</span><span class="n">HO_SYSTEMATIC_NAME</span><span class="si">}</span><span class="s2"> (HO) side: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">unresolved</span><span class="p">,</span><span class="w"> </span><span class="s1">'Query Strain ID'</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"ORF"</span><span class="p">,</span> <span class="s2">"Gene"</span><span class="p">,</span> <span class="s2">"Allele"</span><span class="p">):</span>
+        <span class="n">df</span><span class="p">[</span><span class="sa">f</span><span class="s2">"query_</span><span class="si">{</span><span class="n">column</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">2"</span><span class="p">]</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">ho_first</span><span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">1"</span><span class="p">]</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span>
+
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_combine_screens</span><span class="p">(</span><span class="n">df_s1</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">df_s3</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Tables S1 then S3 in one frame, each row tagged with its ``screen_id``.</span>
@@ -548,8 +586,8 @@
 <div class="viewcode-block" id="SmfKuzmin2020Dataset.preprocess_raw">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.kuzmin2020.SmfKuzmin2020Dataset.html#torchcell.datasets.scerevisiae.kuzmin2020.SmfKuzmin2020Dataset.preprocess_raw">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>  <span class="c1"># type: ignore[override]  # dataset-specific signature</span>
-<span class="w">        </span><span class="sd">"""Filter to single mutants and clean allele names for processing."""</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"Mutant type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"Single mutant"</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Filter to single mutants, take the non-HO side, and clean allele names."""</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">_single_mutant_gene_side</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"Mutant type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"Single mutant"</span><span class="p">])</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"'"</span><span class="p">,</span> <span class="s2">"_prime"</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"Δ"</span><span class="p">,</span> <span class="s2">"_delta"</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">"Fitness"</span><span class="p">])</span>
@@ -572,17 +610,19 @@
             <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
         <span class="p">)</span>
 
+        <span class="c1"># The gene side of the S5 pair (``_single_mutant_gene_side``), never HO: reading</span>
+        <span class="c1"># ORF1/Gene1 stored 238 of the 472 records as an HO deletion (#1202).</span>
         <span class="n">perturbation</span><span class="p">:</span> <span class="n">GenePerturbationType</span>
-        <span class="k">if</span> <span class="s2">"delta"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"Allele1"</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="s2">"delta"</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s2">"query_allele"</span><span class="p">]:</span>
             <span class="n">perturbation</span> <span class="o">=</span> <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">(</span>
-                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"ORF1"</span><span class="p">],</span>
-                <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Gene1"</span><span class="p">],</span>
+                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"query_orf"</span><span class="p">],</span>
+                <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"query_gene"</span><span class="p">],</span>
                 <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Strain ID"</span><span class="p">],</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">perturbation</span> <span class="o">=</span> <span class="n">SgaAllelePerturbation</span><span class="p">(</span>
-                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"ORF1"</span><span class="p">],</span>
-                <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Gene1"</span><span class="p">],</span>
+                <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"query_orf"</span><span class="p">],</span>
+                <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"query_gene"</span><span class="p">],</span>
                 <span class="n">strain_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Query Strain ID"</span><span class="p">],</span>
             <span class="p">)</span>
 

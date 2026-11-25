@@ -59,6 +59,23 @@ SOURCED VALUES (paper Methods; OCR ``paper.md`` in the library mirror):
   - Dispersion: "standard deviation of the scaled leverage score" (SVD leverage score, Replogle
     2022 method; z-scored vs WT). n_cells: ``cell_number``.
 
+REPLICATE STRUCTURE (#1178 per-replicate review, 2026.11.24; quotes in
+``REPLICATE_SOURCED_VALUES``): a record is one biological replicate already. Each mutant
+was transformed individually and grown in its own 96-well culture (paper.md L23, L172),
+so a (genotype label, condition) record is that one culture. The cultures were pooled
+and the pool was split into the control and NaCl samples (L172, L174); the 14 control
+and 15 NaCl matrix-cartridges are aliquots of one fixed pool per condition (L174, L178),
+so the cells of one genotype across cartridges are technical samples of the one culture,
+combined inside the record by the authors' DE and counted by ``n_cells``. The clone
+barcode (5 random nt, L124) marks independent transformants that grew TOGETHER in that
+one well; the release gives no per-clone value (``FC_genotype.Rdata`` and
+``ptb_summary.Rdata`` are per genotype label; per-clone identity exists only in the
+per-cell Seurat metadata, and the authors' clone analysis, L214, released only DE-gene
+counts, in a table not deposited on Zenodo). The 7 WT strains (L138) are one label,
+``WT``, in the release, stored as the aggregate reference. Per-clone records would be
+loader-derived from per-cell data and would need a ``replicate_id`` the pseudobulk
+phenotype lacks: an owner decision, not done.
+
 DATA SOURCE + PROVENANCE (Zenodo 10.5281/zenodo.14062629; raw mirror
 ``$DATA_ROOT/torchcell-raw/nadalRibelles2025/``, read with the pure-Python ``rdata`` reader):
   - ``FC_genotype.Rdata`` (R object ``fcs``; sha256 c210fe54...): 6188 DEG tables keyed
@@ -148,6 +165,66 @@ MEDIUM_SOURCED_VALUES: dict[str, SourcedValue] = {
         "amount on the record is the library YPD_LIQUID object's (Tong and Boone 2006 "
         "/ Hoepfner 2014), a deferral, not a Nadal-Ribelles statement",
     )
+}
+
+
+def _paper_quote(key: str, value: Any, quote: str, note: str) -> SourcedValue:
+    """A replicate-structure value quoted from the mirror ``paper.md``."""
+    return SourcedValue(
+        value=value,
+        provenance=Provenance(
+            source_uri="paper.md",
+            citation_key=MEDIUM_CITATION_KEY,
+            sha256=MEDIUM_PAPER_SHA256,
+        ),
+        quote=quote,
+        note=f"{key}: {note}",
+    )
+
+
+#: The #1178 per-replicate review (2026.11.24): what one record is, quoted from the
+#: paper. None of these values is read by the build; they pin the evidence that one
+#: record per (genotype label, condition) is one culture, and why clones are not records.
+REPLICATE_SOURCED_VALUES: dict[str, SourcedValue] = {
+    "culture_per_mutant": _paper_quote(
+        "culture_per_mutant",
+        "one culture per mutant (its own 96-well culture)",
+        "Frozen glycerol stocks of each individual mutant from the transcriptionally "
+        "barcoded yeast knock out collection were recovered on URA- media",
+        "line 172; with line 23 'to generate the YKOC each mutant was grown and "
+        "transformed individually'",
+    ),
+    "cultures_pooled": _paper_quote(
+        "cultures_pooled",
+        "all mutant cultures pooled, then the pool split into control and NaCl",
+        "Cells then were pooled together into large flasks and shacked vigorously to "
+        "ensure a homogeneous mixture.",
+        "line 172; line 174 'We subjected or not cell pools to osmostress'",
+    ),
+    "cartridges_are_aliquots": _paper_quote(
+        "cartridges_are_aliquots",
+        "technical: 14 control and 15 NaCl cartridges from aliquots of one fixed pool",
+        "For each condition methanol-fixed cells were split into 20 different aliquots",
+        "line 174; line 178 'A total of 29 matrixcartridges were run (14 control and 15 "
+        "NaCl).' The cells of a genotype across cartridges are combined in the authors' "
+        "DE and counted by n_cells",
+    ),
+    "clone_barcode": _paper_quote(
+        "clone_barcode",
+        "clone = an independent transformant co-grown in its mutant's one culture",
+        "added a clone barcode (5 random nucleotides) downstream of the URA3 STOP codon",
+        "line 124; per-clone values are not released (per genotype label only); the "
+        "clone analysis (line 214) compared clones within a genotype and released DE "
+        "gene counts only",
+    ),
+    "wt_strains": _paper_quote(
+        "wt_strains",
+        "7 WT strains, released as one label 'WT' (the aggregate reference)",
+        "A total of 7 different WT strains were generated with distinct clone and "
+        "genotype barcodes as controls.",
+        "line 138; ptb_summary.Rdata has one 'WT' row per condition (500 control, 458 "
+        "NaCl cells) and FC_genotype.Rdata has no WT table",
+    ),
 }
 
 NADAL_RIBELLES_YPD: Media = restated(YPD_LIQUID, *MEDIUM_SOURCED_VALUES.values())

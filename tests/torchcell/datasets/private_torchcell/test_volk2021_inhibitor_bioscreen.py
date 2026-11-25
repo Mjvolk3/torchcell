@@ -145,7 +145,7 @@ def test_wild_type_mean_is_the_mean_of_the_two_doubling_times(
     ]
 
 
-def test_a_grown_inhibitor_well_is_its_relative_growth_rate(
+def test_a_grown_inhibitor_well_is_its_own_generation_time(
     synthetic: v.RunRecords,
 ) -> None:
     grown = synthetic.experiments[1]
@@ -163,13 +163,21 @@ def test_a_grown_inhibitor_well_is_its_relative_growth_rate(
     assert perturbation.solvent is None
     assert perturbation.gapped_fields() == {"solvent"}
     phenotype = grown.phenotype
-    assert phenotype.measurement_type is MeasurementType.relative_growth_rate
+    # the ABSOLUTE generation time of the well (#1178): no WT mean in the record
+    assert phenotype.measurement_type is MeasurementType.growth_rate
     assert phenotype.assay_type is AssayType.liquid_od_growth
-    assert phenotype.environment_response == pytest.approx(2.25 / 4.0, rel=1e-6)
+    assert phenotype.environment_response == pytest.approx(4.0, rel=1e-6)
     assert phenotype.category is None
     assert phenotype.n_samples == 1
     assert phenotype.sample_unit is SampleUnit.biological_replicate
     assert phenotype.units == v.UNITS
+    assert phenotype.replicate_id == "2"
+    assert phenotype.environment_response_uncertainty is None
+    assert phenotype.environment_response_se is None
+    assert {g.field: g.reason.value for g in phenotype.provenance_gaps} == {
+        "environment_response_uncertainty": "not_applicable_single_measurement",
+        "environment_response_se": "not_applicable_single_measurement",
+    }
 
 
 def test_a_flat_well_is_the_no_growth_call(synthetic: v.RunRecords) -> None:
@@ -180,6 +188,12 @@ def test_a_flat_well_is_the_no_growth_call(synthetic: v.RunRecords) -> None:
     assert flat.environment_response is None
     assert flat.assay_type is AssayType.liquid_od_growth
     assert flat.screen_id == "ex26:well3"
+    assert flat.replicate_id == "3"
+    assert flat.n_samples == 1
+    assert flat.gapped_fields() == {
+        "environment_response_uncertainty",
+        "environment_response_se",
+    }
 
 
 def test_a_wild_type_well_is_a_record_with_no_inhibitor(
@@ -187,7 +201,8 @@ def test_a_wild_type_well_is_a_record_with_no_inhibitor(
 ) -> None:
     wt = synthetic.experiments[0]
     assert wt.environment.perturbations == []
-    assert wt.phenotype.environment_response == pytest.approx(2.25 / 2.0, rel=1e-6)
+    assert wt.phenotype.environment_response == pytest.approx(2.0, rel=1e-6)
+    assert wt.phenotype.replicate_id == "1"
     assert wt.environment == synthetic.reference.environment_reference
 
 
@@ -203,10 +218,12 @@ def test_the_reference_is_bAID_and_the_wild_type_spread(
         "Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]"
     ]
     phenotype = reference.phenotype_reference
-    assert phenotype.environment_response == 1.0
-    rates = [2.25 / 2.0, 2.25 / 2.5]
+    # the mean generation time of the two WT wells, both of them records too
+    assert phenotype.measurement_type is MeasurementType.growth_rate
+    assert phenotype.environment_response == pytest.approx(2.25, rel=1e-6)
+    assert phenotype.replicate_id is None
     assert phenotype.environment_response_uncertainty == pytest.approx(
-        float(np.std(rates, ddof=1)), rel=1e-6
+        float(np.std([2.0, 2.5], ddof=1)), rel=1e-6
     )
     assert phenotype.environment_response_uncertainty_type is UncertaintyType.sample_sd
     assert phenotype.n_samples == 2
@@ -240,10 +257,10 @@ def test_wild_type_wells_of_one_replicate_are_technical(
         )
         for w in _layout({1: 0.0, 11: 0.0}).wells
     ]
-    reference = v.reference_phenotype(wells, 2.0)
+    reference = v.reference_phenotype(wells)
     assert reference.sample_unit is SampleUnit.technical_replicate
     with pytest.raises(ValueError, match="1 grown WT wells, need >= 2"):
-        v.reference_phenotype(wells[:1], 2.0)
+        v.reference_phenotype(wells[:1])
 
 
 def test_the_empty_genotype_round_trips_and_keys_in_the_genotype_aggregator(
@@ -429,14 +446,23 @@ def test_record_counts_per_run_from_the_layouts() -> None:
 
 @needs_mirror
 def test_ex23_single_inhibitor_means_from_the_served_records() -> None:
-    """Mean relative growth rate of the three single-inhibitor wells, measured 2026-10-08."""
+    """Mean relative growth rate of the three single-inhibitor wells, measured 2026-10-08.
+
+    Since 2026-11-24 a record holds the well's absolute generation time, so the ratio is
+    taken here the way a model takes it: the reference (the WT wells' mean) over the
+    record. The 2026-10-08 means come back unchanged.
+    """
     plate = b.layout(b.Run.ex23, MIRROR)
     wells = v.layout_wells(plate, b.raw_curve_generation_times(b.Run.ex23, MIRROR))
     records = v.run_records(b.Run.ex23, wells, "X")
+    wt = records.reference.phenotype_reference.environment_response
+    assert wt is not None
     measured = {}
     for inhibitor in b.INHIBITORS:
         values = [
-            e.phenotype.environment_response
+            wt / e.phenotype.environment_response
+            if e.phenotype.environment_response is not None
+            else None
             for w, e in zip(wells, records.experiments, strict=True)
             if w.present() == [inhibitor]
         ]
@@ -510,9 +536,10 @@ def test_verify_build_covers_l0_to_l4_and_writes_its_report(
         ("L1", "count", True),
         ("L1", "completeness", True),
         ("L1", "wells_per_run", True),
+        ("L1", "one_well_per_record", True),
         ("L2", "value_fidelity", True),
         ("L2", "readout_split", True),
-        ("L3", "reference_one", True),
+        ("L3", "reference_wild_type_mean", True),
         ("L3", "wild_type_wells", True),
         ("L3", "no_growth_label", True),
         ("L3", "strain_background", True),
@@ -572,16 +599,36 @@ def test_the_gate_fails_a_record_holding_both_a_rate_and_a_call(
     assert row.details["malformed"][0]["rule"] == "call"
 
 
-def test_the_gate_fails_a_reference_centered_on_zero(
+def test_the_gate_fails_a_reference_that_is_not_the_wild_type_mean(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """L3 ``reference_one``: 0 is the log2-ratio convention, not this ratio's control."""
+    """L3 ``reference_wild_type_mean``: the reference is recomputed from the WT records.
+
+    The synthetic run's two WT wells double every 2.0 and 2.5 h, so the reference must
+    be 2.25 h; the old ratio convention's 1.0 is off by 1.25 h and fails.
+    """
     root, _ = _synthetic_verification(tmp_path, monkeypatch)
     records = _records(root)
-    records[0]["reference"]["phenotype_reference"]["environment_response"] = 0.0
-    row = v.l3_reference_one(records)
+    assert v.l3_reference_wild_type_mean(records).passed is True
+    records[0]["reference"]["phenotype_reference"]["environment_response"] = 1.0
+    row = v.l3_reference_wild_type_mean(records)
     assert row.passed is False
-    assert row.details["worst_abs_deviation"] == 1.0
+    assert row.details["worst_abs_deviation_h"] == pytest.approx(1.25, rel=1e-4)
+
+
+def test_the_gate_fails_a_record_that_is_not_one_well(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L1 ``one_well_per_record``: n = 1, replicate_id = the well, the n = 1 gaps."""
+    root, _ = _synthetic_verification(tmp_path, monkeypatch)
+    records = _records(root)
+    assert v.l1_one_well_per_record(records).passed is True
+    by_id = {r["experiment"]["phenotype"]["screen_id"]: r for r in records}
+    by_id["ex26:well2"]["experiment"]["phenotype"]["replicate_id"] = "1"
+    by_id["ex26:well3"]["experiment"]["phenotype"]["n_samples"] = 3
+    row = v.l1_one_well_per_record(records)
+    assert row.passed is False
+    assert sorted(row.details["defects"]) == ["ex26:well2", "ex26:well3"]
 
 
 def test_the_gate_fails_when_an_inhibitor_free_well_is_dropped(
@@ -676,3 +723,36 @@ def test_the_gate_oracles_equal_what_the_raw_mirror_gives() -> None:
     assert wild_type == v.EXPECTED_WILD_TYPE_WELLS
     assert agreement == pytest.approx(v.SOFTWARE_GREW_AGREEMENT, abs=v.AGREEMENT_TOL)
     assert sum(records_per_run.values()) == 977
+
+
+@needs_mirror
+def test_the_pre_per_replicate_ratio_is_reproduced_from_the_records() -> None:
+    """2026-11-24 (#1178): reference / record IS the old served ``relative_growth_rate``.
+
+    For every grown well of all five runs, the run's reference (mean generation time of
+    its grown WT wells) divided by the record's own generation time equals what the
+    store served before the change (``bioscreen.relative_growth_rate`` against
+    ``bioscreen.wild_type_generation_time``), and every record holds one well.
+    """
+    n_records = 0
+    n_grown = 0
+    worst = 0.0
+    for run in b.Run:
+        wells = v.layout_wells(
+            b.layout(run, MIRROR), b.raw_curve_generation_times(run, MIRROR)
+        )
+        records = v.run_records(run, wells, "X")
+        wt = records.reference.phenotype_reference.environment_response
+        assert wt == b.wild_type_generation_time(wells)
+        for well, experiment in zip(wells, records.experiments, strict=True):
+            n_records += 1
+            assert experiment.phenotype.replicate_id == str(well.well)
+            assert experiment.phenotype.n_samples == 1
+            old = b.relative_growth_rate(well, b.wild_type_generation_time(wells))
+            value = experiment.phenotype.environment_response
+            assert (old is None) == (value is None)
+            if old is not None and value is not None:
+                n_grown += 1
+                worst = max(worst, abs(wt / value - old))
+    assert (n_records, n_grown) == (977, 360)
+    assert worst <= 1e-12

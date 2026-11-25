@@ -5,10 +5,11 @@
 """BioCypher adapter exposing the Campos 2018 Keio growth-rate screen as
 knowledge-graph nodes and edges.
 
-One record per deletion strain: a single ``DeletionStrainPerturbation`` served as a
-``perturbation`` node, and the strain's maximal growth rate relative to the
-parent as a ``FitnessPhenotype``. The screen is one medium at one temperature, so no
-environment perturbation is served.
+One record per released well: a single ``DeletionStrainPerturbation`` served as a
+``perturbation`` node for a deletion well (the 240 wild-type wells carry the empty
+genotype), and the well's absolute maximal growth rate in min^-1 as an
+``EnvironmentResponsePhenotype`` (``MeasurementType.growth_rate``). The screen is one
+medium at one temperature, so no environment perturbation is served.
 """
 
 import os.path as osp

@@ -4,9 +4,9 @@
 """``torchcell/adapters/campos2018_adapter.py``: the conf it loads, the gate's view of
 it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Campos 2018 Keio growth rate: 3,664 deletion-strain records,
-FitnessExperiment. One DeletionStrainPerturbation per record, served as
-`perturbation`. The screen is one medium at one temperature with no
+Campos 2018 Keio growth rate: 4,024 well records (3,784 deletion wells + 240 wild-type
+wells), EnvironmentResponseExperiment with the absolute alpha_max. One
+DeletionStrainPerturbation per deletion record, served as `perturbation`. The screen is one medium at one temperature with no
 environment perturbation, so the environment-perturbation pair is left off.
 """
 

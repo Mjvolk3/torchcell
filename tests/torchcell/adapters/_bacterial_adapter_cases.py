@@ -474,12 +474,14 @@ BACTERIAL: list[Bacterial] = [
         FOLD_CHANGE,
         perturbation=False,
     ),
+    # Campos 2018 growth (#1178, 2026-11-24): the absolute alpha_max per well, so an
+    # environment response; the 240 wild-type wells carry the empty genotype.
     _case(
         GrowthRateCampos2018Adapter,
         "campos2018",
         "ecoli_growth_rate_campos2018",
         GrowthRateCampos2018Dataset,
-        "fitness phenotype",
+        RESPONSE,
         env_perturbation=False,
     ),
     _case(

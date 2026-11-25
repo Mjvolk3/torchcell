@@ -2,7 +2,7 @@
 # [[torchcell.datasets.ecoli.campos2018]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/ecoli/campos2018
 # Test file: tests/torchcell/datasets/ecoli/test_campos2018.py
-r"""Campos 2018: the imaged Keio collection, served as a fitness and a morphology row.
+r"""Campos 2018: the imaged Keio collection, served as a growth-rate and a morphology row.
 
 Campos et al. 2018 (Mol Syst Biol 14:e7573, doi:10.15252/msb.20177573; PMC6018989)
 imaged the Keio single-gene deletion collection in one medium and quantified a
@@ -37,18 +37,54 @@ is the 26 plus the mean and CV of nucleoid area (Appendix Table S1 lists those u
 morphological, giving 21 there and 28 symbols in all) plus %non-div and %1N, the raw
 proportions the two relative timings are computed from.
 
-RECORDS = TWO datasets over the same 3,664 strains, split by READOUT, not 26 datasets
-and not one record carrying everything:
+RECORDS = TWO datasets over the same 4,024 released wells, split by READOUT, not 26
+datasets and not one record carrying everything. A record is ONE well of the screen,
+which is one culture: "Cultures were diluted 1:300 in 150 ul of fresh M9 medium ... and
+grown in 96-well plates", and the release holds one row per Keio (plate, well) position
+(measured: 4,467 labelled rows, 4,467 distinct positions). The per-replicate policy of
+#1178 (2026-11-24) applies to it directly:
 
-- :class:`GrowthRateCampos2018Dataset` -- one ``FitnessExperiment`` per strain,
-  the Gompertz maximal growth rate as a parent-relative ratio.
+- :class:`GrowthRateCampos2018Dataset` -- one ``EnvironmentResponseExperiment`` per
+  well, the released Gompertz maximal growth rate ``alpha_max`` in min^-1 as an
+  ABSOLUTE ``MeasurementType.growth_rate`` (until 2026-11-24 a ``FitnessExperiment``
+  holding the well's rate over the loader's median of the wild-type wells; that ratio
+  is a statistic the loader computed, so it left the record and is a model-time step).
 - :class:`MorphologyCampos2018Dataset` -- one ``MorphologyExperiment`` per
-  strain, the 26 morphology symbols of Appendix Table S1 as a
+  well, the 26 morphology symbols of Appendix Table S1 as a
   ``MorphologyPhenotype`` against the ``campos2018`` assay vocabulary
-  (issue #774). Measured on the release: 93,570 determined values over 3,664 records.
+  (issue #774). Measured on the release: 102,881 determined values over 4,024 records.
+
+THE 240 WILD-TYPE WELLS ARE RECORDS (#1171). "To provide a reference, 240 replicates of
+the parental strain (BW25113, here referred to as WT) were also grown and imaged under
+the same conditions as the mutants", and Fig 4's legend calls them "the 240 independent
+WT replicates used as controls": biological replicates, one culture per well, released
+as rows ``WT0813`` x96 (plate ``WT1``), ``WT0815`` x96 (``WT2``) and ``WT0511`` x48
+(``WT3``). Each is a record with the EMPTY genotype of the BW25113 background the
+reference genome states. The reference stays an aggregate over them with
+``replicate_id=None``: the per-feature MEDIAN of the 240 wells, because the median of
+the parental strain is the statistic the authors anchor every correction and score on
+("For each plate, we set the median values of each feature, F, to the median feature
+value of the parental strain").
+
+THE 120 ROWS OF REPEATED LABELS ARE RECORDS (#1176, #1172). 56 labels head 2 to 4 rows
+each (50 x 2, 4 x 3, 2 x 4) at distinct Keio plate/well positions. Each row is its own
+culture of its own released position, so each is stored with its plate and well on
+``construction`` and the position as ``replicate_id``; nothing tells the rows apart but
+the position, and nothing in the release says which of them is the "right" one. The
+release does not say per row whether a repeat is a second copy of one Keio strain or a
+distinct construct the current gene name merges; the Methods counts both kinds, "The
+Keio collection contains 3,787 annotated single-gene in-frame deletion strains, 412
+strains (referred to as JW strains) with kanamycin cassette inserted at unknown
+locations, and the remainder (28) were repeats (Baba et al, 2006)", and 3,787 + 412 +
+28 is the 4,227 imaged strains. The rows are listed per label in
+``preprocess/dropped_records.json`` under ``labels_heading_more_than_one_row``.
+
+``replicate_id`` IS THE RELEASED POSITION, ``"<Plate nb>/<Well nb>"`` (``"5/H012"``,
+``"WT1/A001"``): the source prints no other label for a well, and the position is what
+identifies one culture in both released sheets.
 
 Both read one release and share ``read_normalized_table`` and ``resolve_rows``, so a
-strain is writable for both or for neither and the drop ledger is identical.
+well is writable for both or for neither and the drop ledger is identical.
 
 - GENOTYPE: one ``DeletionStrainPerturbation`` against BW25113
   (``ecoli_k12_bw25113_locus_tag``), the Keio background -- "240 replicates of the
@@ -63,14 +99,16 @@ strain is writable for both or for neither and the drop ledger is identical.
 - ENVIRONMENT: :data:`CAMPOS2018_M9_CASAMINO_GLUCOSE` at 30 C, aerobic, with NO
   environment perturbation -- the screen is one medium, which is exactly why the 26
   features cannot be spread across an environment axis.
-- PHENOTYPE: ``FitnessPhenotype``, the DERIVED ratio of the strain's corrected maximal
-  growth rate to the parent's, with the reference at 1.0.
+- PHENOTYPE: ``EnvironmentResponsePhenotype`` with ``MeasurementType.growth_rate``, the
+  well's released corrected maximal growth rate in min^-1, verbatim, with the reference
+  at the median of the 240 wild-type wells on the same scale.
 
 WHAT IS SERVED, AND WHAT THE ONE REMAINING GAP IS. 27 of the release's 28 named
 features have a faithful home; issue #774 added the class that took 25 of them:
 
-1. ``alpha_max`` (max growth rate, min^-1) IS a growth rate, and ``FitnessPhenotype``
-   is documented as ``ko_growth_rate/wt_growth_rate``. It is served.
+1. ``alpha_max`` (max growth rate, min^-1) IS a growth rate, and
+   ``MeasurementType.growth_rate`` is "absolute or normalized growth rate / doubling
+   time", a member of ``ABSOLUTE_MEASUREMENT_TYPES``. It is served as released.
 2. The 26 morphology symbols are served as a ``MorphologyPhenotype``.
    ``CalMorphPhenotype`` had the right SHAPE (a dict of named means plus a dict of named
    CVs, which is exactly Campos's split) and the wrong VOCABULARY: its two
@@ -126,8 +164,8 @@ in the same order. The counts corroborate the paper -- ``nb Cells`` sums to 1,30
 with mean 291.26 and SD 116.71, against "retaining about 1,300,000 identified cells (
 $2 9 1 \pm 1 1 6$ cells/strain)". The morphology REFERENCE is a different statistic and
 says so: the per-feature median over the 240 parental replicate wells, with
-``n_samples=240`` and ``sample_unit=biological_replicate``, the convention the fitness
-reference already uses.
+``n_samples=240`` and ``sample_unit=biological_replicate``, the convention the
+growth-rate reference uses.
 
 A MORPHOLOGY FEATURE'S UNIT COMES FROM THE RELEASE AND NOWHERE ELSE. Appendix Table S1
 has no unit column and ``paper.md`` states no feature unit, so the 8 units come from
@@ -138,20 +176,18 @@ moved stops the build. The other 18 features state no unit, which is the honest 
 a CV, a correlation, a shape factor, a relative timing and a population fraction are
 dimensionless.
 
-THE FITNESS IS DERIVED, AND THE DERIVATION IS VERIFIED. The loader reads the
-``alpha_max (min-1)`` column of Dataset EV2's "Normalized data" sheet, the authors'
-plate-, position-, time- and OD-corrected value, and divides it by the MEDIAN of the same
-column over the 240 wild-type replicate rows (``WT0511`` x48, ``WT0813`` x96, ``WT0815``
-x96), which is 0.0097366516 min^-1. The WT median is the right denominator because the
-correction is anchored on it: "For each plate, we set the median values of each feature,
-$F _ { ; }$ , to the median feature value of the parental strain." Cross-check, measured
-over the 3,664 kept rows: the released ``alpha_max`` SCORE is an exact affine function of
-the derived fitness, ``score = 23.777071 * (fitness - 1)``, with a maximum absolute
+THE GROWTH RATE IS STORED AS RELEASED, AND THE REFERENCE IS CHECKED AGAINST THE SCORES.
+The loader reads the ``alpha_max (min-1)`` column of Dataset EV2's "Normalized data"
+sheet, the authors' plate-, position-, time- and OD-corrected value, and stores it per
+well unchanged. The reference is the MEDIAN of the same column over the 240 wild-type
+wells, 0.0097366516 min^-1, the anchor of the correction: "For each plate, we set the
+median values of each feature, $F _ { ; }$ , to the median feature value of the parental
+strain." Cross-check, measured over the 3,664 deletion wells the store held until
+2026-11-24: the released ``alpha_max`` SCORE is an exact affine function of
+``alpha_max / reference``, ``score = 23.777071 * (ratio - 1)``, with a maximum absolute
 residual of 1.4e-13 and a Pearson r of 1.000000000000. That is the algebra the paper
-states -- ``s = 1.35 * (F_i - median(F_i^WT)) / iqr(F_i^WT)`` -- so the ratio is the
-released number in different units, not a reinterpretation. No kept fitness is
-non-positive (measured range 0.121789 to 1.351417, median 1.004160), so
-``FitnessPhenotype``'s clamp never fires.
+states -- ``s = 1.35 * (F_i - median(F_i^WT)) / iqr(F_i^WT)`` -- so the reference is the
+authors' median and a model-time ratio over it is the released score in other units.
 
 IDENTIFIERS, measured on the release. 4,158 distinct non-wild-type labels reach the
 reconciler and 3,720 resolve to one BW25113 locus (3,586 RENAMED, 134
@@ -180,50 +216,58 @@ RECORDS DROPPED (rule + counts + items in ``preprocess/dropped_records.json``):
 
 1. ``row_is_a_table_footer_summary`` -- 4 rows. The "Normalized data" sheet ends with a
    blank row and three unlabelled summary rows (``Mean``, ``Stdev``, ``CV`` in the Well
-   column). They carry no gene.
-2. ``row_is_a_wild_type_replicate`` -- 240 rows, the ``WT0511`` / ``WT0813`` / ``WT0815``
-   labels. An unperturbed parent is the experiment REFERENCE, not a record; their median
-   is the fitness denominator and their count is the reference ``n_samples``.
-3. ``label_carries_a_different_culture_or_check_annotation`` -- 5 rows (``hfq*``,
+   column). They carry no gene and are no culture.
+2. ``label_carries_a_different_culture_or_check_annotation`` -- 5 rows (``hfq*``,
    ``pgm*``, ``rapZ*``, ``rodZ*``, ``fabH``+degree). The Dataset EV2 legend defines the
    two markers: ``*`` is "Re-imaged from 2mL liquid cultures" and the degree sign is
    "Strains independently checked with a different phenotype". A 2 mL tube is not the
    96-well screen environment, and an independent check with a different phenotype is a
    QC statement about the strain, so neither row is a measurement of this screen. None of
-   the five bare names appears on another row (measured), so nothing is lost twice.
-4. ``label_is_not_in_the_bw25113_annotation`` -- 438 rows, the retired labels above.
+   the five bare names appears on another row (measured), so nothing is lost twice. The
+   "Legend normalized data" sheet words the degree sign differently from the other two
+   legends, as "unreliable phenotype", which is the authors' own flag on ``fabH``+degree.
+3. ``label_is_not_in_the_bw25113_annotation`` -- 438 rows, the retired labels above.
    ``DeletionStrainPerturbation`` stores a locus tag of the declared namespace and
-   nothing else, so a label with no locus cannot be written.
-5. ``label_is_a_fragment_of_a_merged_bw25113_locus`` -- 0 rows on this release, because
+   nothing else, so a label with no locus cannot be written. This is a genome gate the
+   2026-10-12 owner rule retires ("the genome never gates a record"); it is tracked in
+   #1064 (row 101) and is outside the per-replicate change. 412 of the 438 are the JW
+   strains the Methods describe as having the "kanamycin cassette inserted at unknown
+   locations", so no locus deletion is the honest genotype for them either.
+4. ``label_is_a_fragment_of_a_merged_bw25113_locus`` -- 0 rows on this release, because
    the reconciler reports no collision here. The rule exists so a future annotation that
-   merges two of these labels onto one locus is dropped rather than silently merged.
-6. ``label_is_ambiguous_in_bw25113`` -- 0 rows on this release (no label matches more
+   merges two DIFFERENT labels onto one locus is reported rather than silently merged.
+5. ``label_is_ambiguous_in_bw25113`` -- 0 rows on this release (no label matches more
    than one locus). Same reason: a rule, not a measured count.
-7. ``label_heads_more_than_one_row`` -- 120 rows, 56 labels. Each label heads 2 to 4
-   rows at distinct Keio plate/well positions, so they are distinct strains the release
-   names identically (``ygaQ`` heads four rows, and Shiver 2016 shows why: the current
-   annotation merges the ``ygaQ_1``..``ygaQ_4`` fragments into one locus). Keeping them
-   would put several records on one locus tag; keeping one would be an arbitrary choice
-   between real measurements, so the whole group goes.
 
-Arithmetic: 4,471 released rows - 4 - 240 - 5 - 438 - 0 - 0 - 120 = 3,664 records, each
-one a distinct BW25113 locus tag.
+Until 2026-11-24 two more rules dropped 360 released wells: ``row_is_a_wild_type_replicate``
+(the 240 parental wells, now records) and ``label_heads_more_than_one_row`` (the 120 rows
+of repeated labels, now records).
+
+Arithmetic: 4,471 released rows - 4 - 5 - 438 - 0 - 0 = 4,024 records = 3,784 deletion
+wells (3,664 labels heading one row + 120 rows of 56 repeated labels) + 240 wild-type
+wells, one per released position.
 
 SOURCED VALUES are module-level ``SourcedValue``s anchored to the sha256 of
 ``camposGenomewidePhenotypicAnalysis2018/paper.md`` in the literature mirror, or to the
 sha256 of Dataset EV2 for the column-legend values, or typed ``ProvenanceGap``s. The
 genuine absences:
 
-- Uncertainty. Dataset EV2 releases one corrected ``alpha_max`` per strain and no
-  dispersion, so ``fitness_uncertainty`` and ``fitness_se`` carry
-  ``not_reported_by_primary`` gaps. There is one growth curve per strain -- "Cultures
-  were diluted 1:300 in $1 5 0 ~ \mu \mathrm { l }$ of fresh M9 medium ... and grown in
-  96-well plates at $3 0 ^ { \circ } \mathrm { C }$ with continuous shaking in a BioTek
-  plate reader." -- one well per row (measured: 4,467 rows, 4,467 distinct (plate, well)
-  pairs), so ``n_samples`` is 1 ``biological_replicate`` for a record and 240 for the
-  reference. The 360 +/- 165 imaged cells per strain are the replicate design of the
-  MORPHOLOGICAL features, not of the growth curve, so they are not this phenotype's
-  ``n_samples``.
+- Uncertainty. A record is one well's one growth curve -- "Cultures were diluted 1:300
+  in $1 5 0 ~ \mu \mathrm { l }$ of fresh M9 medium ... and grown in 96-well plates at
+  $3 0 ^ { \circ } \mathrm { C }$ with continuous shaking in a BioTek plate reader." --
+  one well per row (measured: 4,467 rows, 4,467 distinct (plate, well) pairs), so
+  ``n_samples`` is 1 ``biological_replicate`` and ``environment_response_uncertainty``
+  and ``environment_response_se`` carry ``not_applicable_single_measurement`` gaps: a
+  single measurement has no dispersion of its own. The reference is the median over 240
+  wells and states no dispersion, so its two gaps stay ``not_reported_by_primary``. The
+  360 +/- 165 imaged cells per strain are the replicate design of the MORPHOLOGICAL
+  features, not of the growth curve, so they are not this phenotype's ``n_samples``.
+- The reproducibility repeat. "we verified the reproducibility of our experimental
+  approach by separately imaging two independent replicates of 178 strains that included
+  two copies of the parental (WT) strain and 176 mutants with severe morphological
+  defects" (Fig 1D). Neither released sheet holds a second row for those strains (one row
+  per position, measured), so the repeat is reported and not released; nothing more is
+  stored.
 - ``Environment.duration_hours``. The endpoint is an optical-density rule, not a clock:
   every strain was sampled at an OD600 of 0.2 +/- 0.1. The field carries a
   ``not_reported_by_primary`` gap.
@@ -233,7 +277,7 @@ DATA SOURCE: Dataset EV2 (``MSB-14-e7573-s004.xlsx``) and Dataset EV1
 ``PMC6018989.1/MSB-14-e7573-s004.xlsx`` and ``...-s003.xlsx``), both deposited in
 ``$DATA_ROOT/torchcell-raw/camposGenomewidePhenotypicAnalysis2018/`` with a
 ``manifest.json`` recording each one's retrieval and sha256. Both are build inputs: the
-fitness dataset consumes Dataset EV2 and the morphology dataset consumes both. The
+growth-rate dataset consumes Dataset EV2 and the morphology dataset consumes both. The
 Appendix (whose Table S1 names every feature) is read only to source the vocabulary, not
 at build time, so it stays in the literature mirror and ``si_expected`` names it with its
 sha256.
@@ -276,6 +320,7 @@ from torchcell.datamodels.morphology_features import (
 )
 from torchcell.datamodels.morphology_features import MorphologyFeature
 from torchcell.datamodels.schema import (
+    AssayType,
     ComponentDefinition,
     Compound,
     Concentration,
@@ -283,12 +328,13 @@ from torchcell.datamodels.schema import (
     DeletionStrainPerturbation,
     DerivedIdentifierMapping,
     Environment,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
+    EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
-    FitnessExperiment,
-    FitnessExperimentReference,
-    FitnessPhenotype,
     Genotype,
+    MeasurementType,
     Media,
     MediaComponent,
     MediaComponentRole,
@@ -359,7 +405,7 @@ PAPER_MD_SHA256 = "1bf2f74bbd528f1cd88e46bf96e829b06a7c70dca9a8ad35502fa45e9c594
 #: Dataset EV1, the pre-normalization raw table. Its ``nb Cells`` column is the number
 #: of segmented cells each strain's morphology means and CVs are computed over, which is
 #: the morphology phenotype's ``n_samples``, so the morphology dataset CONSUMES it and it
-#: is deposited in the raw mirror beside Dataset EV2 (the fitness dataset does not read
+#: is deposited in the raw mirror beside Dataset EV2 (the growth-rate dataset does not read
 #: it). The literature mirror holds the same bytes as ``si/si3.xlsx``.
 RAW_CELL_COUNTS_FILENAME = "MSB-14-e7573-s003.xlsx"
 CELL_COUNTS_REL = f"data/{RAW_CELL_COUNTS_FILENAME}"
@@ -506,8 +552,8 @@ UNSERVED_FEATURES: dict[str, str] = {
 }
 
 UNITS = (
-    "fitness: the strain's corrected maximal growth rate (Gompertz alpha_max, min^-1) "
-    "divided by the median of the 240 wild-type replicates"
+    "min^-1: the well's corrected maximal growth rate (Gompertz alpha_max), as Dataset "
+    "EV2's 'Normalized data' sheet releases it"
 )
 
 
@@ -592,8 +638,9 @@ LIBRARY_STRAIN = _paper(
     "referred to as WT) were also grown and imaged under the same conditions as the "
     "mutants.",
     page=_RESULTS,
-    note="the Keio background, hence the pinned assembly and the gene namespace; the "
-    "240 replicates are the reference's n_samples and the fitness denominator",
+    note="the Keio background, hence the pinned assembly and the gene namespace; each "
+    "of the 240 replicate wells is a record with the empty genotype, and the "
+    "reference is their median with n_samples 240",
 )
 SCREEN_SIZE = _paper(
     IMAGED_STRAINS,
@@ -632,7 +679,7 @@ GROWTH_FEATURE_DEFINITION = _paper(
     "Gompertz function to estimate the maximal growth rate "
     "$\\left( \\mathsf { a } _ { \\mathrm { m a x } } \\right)$ and used the last hour of",
     page=_RESULTS,
-    note="alpha_max is a growth RATE, which is what FitnessPhenotype's ratio is of",
+    note="alpha_max is a growth RATE, stored as MeasurementType.growth_rate in min^-1",
 )
 ODMAX_DEFINITION = _paper(
     "ODmax",
@@ -667,8 +714,8 @@ NORMALIZATION_ANCHOR = _paper(
     "For each plate, we set the median values of each feature, $F _ { ; }$ , to the "
     "median feature value of the parental strain.",
     page=_DATA_PROCESSING,
-    note="why the wild-type median is the fitness denominator: the correction is "
-    "anchored on it, so the ratio is plate-comparable",
+    note="why the reference is the wild-type median: the correction is anchored on "
+    "it, so a model-time ratio over it is plate-comparable",
 )
 SCORE_TRANSFORM = _paper(
     "robust z-score",
@@ -676,7 +723,7 @@ SCORE_TRANSFORM = _paper(
     "to a $z$ -score transformation but more robust to outliers.",
     page=_DATA_PROCESSING,
     note="s = 1.35 * (F_i - median(F_i^WT)) / iqr(F_i^WT), which makes the released "
-    "score an exact affine function of the derived fitness ratio",
+    "score an exact affine function of alpha_max over the reference median",
 )
 CASSETTE = _paper(
     KEIO_CASSETTE,
@@ -694,6 +741,33 @@ CELLS_PER_STRAIN = _paper(
     page=_RESULTS,
     note="the replicate design of the MORPHOLOGICAL features, not of the growth curve, "
     "so it is not this phenotype's n_samples",
+)
+WILD_TYPE_WELLS_ARE_INDEPENDENT = _paper(
+    WILD_TYPE_ROWS,
+    "plus the 240 independent WT replicates used as controls",
+    page="Figure 4 legend, panel A",
+    note="the 240 parental wells are biological replicates, so each is a record with "
+    "the empty genotype; the reference is an aggregate over them",
+)
+KEIO_COMPOSITION = _paper(
+    (3787, 412, 28),
+    "The Keio collection contains 3,787 annotated single-gene in-frame deletion "
+    "strains, 412 strains (referred to as JW strains) with kanamycin cassette inserted "
+    "at unknown locations, and the remainder (28) were repeats (Baba et al, 2006).",
+    page="Materials and Methods, 'Bacterial strains and growth conditions'",
+    note="3,787 + 412 + 28 = 4,227 imaged strains. The release names no repeat per row, "
+    "so the 120 rows of the 56 repeated labels are each stored at their own position; "
+    "the 412 JW strains are the label_is_not_in_the_bw25113_annotation rows",
+)
+REPRODUCIBILITY_REPEAT = _paper(
+    178,
+    "In addition, we verified the reproducibility of our experimental approach by "
+    "separately imaging two independent replicates of 178 strains that included two "
+    "copies of the parental (WT) strain and 176 mutants with severe morphological "
+    "defects.",
+    page="Results, 'High-throughput dataset curation using a support vector machine'",
+    note="not released: Dataset EV1 and EV2 hold one row per Keio position, so this "
+    "repeat has no row to store",
 )
 LABELS_ARE_GENE_NAMES = _legend(
     "gene names",
@@ -718,6 +792,13 @@ MARKER_CHECKED = _legend(
     "Strains independently checked with a different phenotype",
     page=_LEGEND_SCORES,
     note="a QC statement about the strain, so these rows are dropped",
+)
+MARKER_UNRELIABLE = _legend(
+    "°",
+    "unreliable phenotype",
+    page="Dataset EV2, sheet 'Legend normalized data'",
+    note="the same marker as MARKER_CHECKED, worded by the normalized sheet's own legend "
+    "as the authors' flag on the row's value",
 )
 
 # --------------------------------------------------------------------------- #
@@ -870,6 +951,9 @@ SOURCED_VALUES: tuple[SourcedValue, ...] = (
     SCORE_TRANSFORM,
     CASSETTE,
     CELLS_PER_STRAIN,
+    WILD_TYPE_WELLS_ARE_INDEPENDENT,
+    KEIO_COMPOSITION,
+    REPRODUCIBILITY_REPEAT,
     FEATURE_TABLE_IS_THE_AUTHORITY,
     CV_DEFINITION,
     DIMENSIONS_MEASURED,
@@ -883,6 +967,7 @@ LEGEND_SOURCED_VALUES: tuple[SourcedValue, ...] = (
     PLATE_AND_WELL,
     MARKER_REIMAGED,
     MARKER_CHECKED,
+    MARKER_UNRELIABLE,
     FEATURE_UNITS,
     NON_DETERMINED_FIELDS,
 )
@@ -1052,7 +1137,7 @@ def deposit_raw_mirror(
 ) -> Path:
     """Write the raw mirror from Dataset EV2 and Dataset EV1 plus their ``manifest.json``.
 
-    Both files are build inputs: the fitness dataset consumes Dataset EV2 and the
+    Both files are build inputs: the growth-rate dataset consumes Dataset EV2 and the
     morphology dataset consumes both (EV2 for the corrected feature values, EV1 for the
     per-strain segmented-cell count that is the morphology ``n_samples``). Idempotent by
     sha256: an existing mirror file with the recorded hash is left alone and a differing
@@ -1088,10 +1173,10 @@ def deposit_raw_mirror(
         si_data_sources=[DATA_URL, CELL_COUNTS_URL],
         si_expected=[
             f"Dataset EV2 ({DATA_FILENAME}): the corrected per-strain table. The "
-            f"fitness loader consumes the '{NORMALIZED_SHEET}' sheet's "
+            f"growth-rate loader consumes the '{NORMALIZED_SHEET}' sheet's "
             f"'{ALPHA_COLUMN}' column and the morphology loader its 26 morphology "
             "columns; the 'Scores' sheet is the released robust z-score of the same "
-            "values and is the fitness derivation's cross-check",
+            "values and is the growth-rate reference's cross-check",
             f"Dataset EV1 ({RAW_CELL_COUNTS_FILENAME}): the pre-normalization raw "
             f"table. The morphology loader consumes its '{RAW_SHEET}' sheet's "
             f"'{CELL_COUNT_COLUMN}' column, the per-strain segmented-cell count that "
@@ -1130,6 +1215,17 @@ def manifest_sha256(manifest: Manifest, relpath: str) -> str:
 # --------------------------------------------------------------------------- #
 # Reader
 # --------------------------------------------------------------------------- #
+def median(values: Sequence[float]) -> float:
+    """The sample median: the middle value, or the midpoint of the two middle values."""
+    ordered = sorted(values)
+    if not ordered:
+        raise ValueError("the median of no values is undefined")
+    middle = len(ordered) // 2
+    if len(ordered) % 2:
+        return ordered[middle]
+    return (ordered[middle - 1] + ordered[middle]) / 2
+
+
 class StrainRow(BaseModel):
     """One row of Dataset EV2's normalized table, as the loader reads it."""
 
@@ -1139,6 +1235,15 @@ class StrainRow(BaseModel):
     plate: str
     well: str
     alpha_max: float
+
+    @property
+    def replicate_id(self) -> str:
+        """The released Keio position, ``"<Plate nb>/<Well nb>"``: one culture's id.
+
+        The source prints no other label for a well, and the position is what both
+        released sheets key a culture on, so it is the record's ``replicate_id``.
+        """
+        return f"{self.plate}/{self.well}"
 
 
 class NormalizedTable(BaseModel):
@@ -1153,14 +1258,10 @@ class NormalizedTable(BaseModel):
 
     @property
     def wild_type_median_alpha_max(self) -> float:
-        """The fitness denominator: the median wild-type corrected growth rate."""
-        values = sorted(row.alpha_max for row in self.wild_type)
-        if not values:
-            raise ValueError("no wild-type replicate rows: no fitness denominator")
-        middle = len(values) // 2
-        if len(values) % 2:
-            return values[middle]
-        return (values[middle - 1] + values[middle]) / 2
+        """The growth-rate reference: the median wild-type corrected growth rate."""
+        if not self.wild_type:
+            raise ValueError("no wild-type replicate rows: no growth-rate reference")
+        return median([row.alpha_max for row in self.wild_type])
 
 
 def read_normalized_table(path: str | Path) -> NormalizedTable:
@@ -1244,6 +1345,11 @@ class MorphologyRow(BaseModel):
     values: dict[str, float]
     coefficients_of_variation: dict[str, float]
 
+    @property
+    def replicate_id(self) -> str:
+        """The released Keio position, the same id :class:`StrainRow` gives the well."""
+        return f"{self.plate}/{self.well}"
+
 
 def read_morphology_rows(
     data_path: str | Path, cell_counts_path: str | Path
@@ -1256,8 +1362,8 @@ def read_morphology_rows(
     from the other stops the build.
 
     Keyed by ``(plate, well)`` rather than by gene label because the release names
-    several distinct strains identically; the position is what the fitness reader's row
-    identity already uses, so the two datasets drop exactly the same rows.
+    several rows identically; the position is what the growth-rate reader's row identity
+    already uses, so the two datasets store exactly the same rows.
     """
     frame = pd.read_excel(data_path, sheet_name=NORMALIZED_SHEET, dtype=POSITION_DTYPES)
     missing = [
@@ -1328,7 +1434,7 @@ def released_alpha_max_scores(path: str | Path) -> dict[tuple[str, str], float]:
     """Dataset EV2's released ``alpha_max`` score, keyed by (plate, well).
 
     The cross-check the module docstring states: the score is an exact affine function
-    of the derived fitness ratio.
+    of ``alpha_max`` over the reference median.
     """
     frame = pd.read_excel(path, sheet_name=SCORES_SHEET, dtype=POSITION_DTYPES)
     plates = [str(value).strip() for value in frame[PLATE_COLUMN].tolist()]
@@ -1344,52 +1450,41 @@ def released_alpha_max_scores(path: str | Path) -> dict[tuple[str, str], float]:
 # Row resolution
 # --------------------------------------------------------------------------- #
 DROP_FOOTER = "row_is_a_table_footer_summary"
-DROP_WILD_TYPE = "row_is_a_wild_type_replicate"
 DROP_ANNOTATED = "label_carries_a_different_culture_or_check_annotation"
 DROP_NOT_IN_ANNOTATION = "label_is_not_in_the_bw25113_annotation"
 DROP_MERGED_LOCUS = "label_is_a_fragment_of_a_merged_bw25113_locus"
 DROP_AMBIGUOUS = "label_is_ambiguous_in_bw25113"
-DROP_DUPLICATE_LABEL = "label_heads_more_than_one_row"
 
 ROW_RULES: tuple[tuple[str, str], ...] = (
     (
         DROP_FOOTER,
         "the normalized sheet's trailing blank and Mean/Stdev/CV summary rows carry no "
-        "gene label",
-    ),
-    (
-        DROP_WILD_TYPE,
-        "an unperturbed BW25113 parent is the experiment reference, not a record; the "
-        "240 replicates supply the fitness denominator and the reference n_samples",
+        "gene label and are no culture",
     ),
     (
         DROP_ANNOTATED,
         "the Dataset EV2 legend marks the row '*' (re-imaged from 2 mL liquid cultures, "
         "which is not the 96-well screen environment) or with a degree sign (the strain "
-        "was independently checked with a different phenotype)",
+        "was independently checked with a different phenotype; 'unreliable phenotype' "
+        "in the normalized sheet's legend)",
     ),
     (
         DROP_NOT_IN_ANNOTATION,
         "the label is no locus tag, symbol or synonym of the pinned BW25113 assembly "
         "(Keio JW strain ids and gene names the annotation predates), and a bacterial "
-        "deletion leaf stores a locus tag of its declared namespace and nothing else",
+        "deletion leaf stores a locus tag of its declared namespace and nothing else "
+        "(a genome gate, tracked in #1064)",
     ),
     (
         DROP_MERGED_LOCUS,
-        "two or more labels resolve to ONE current locus, because the collection "
-        "deleted fragments of a region the pinned annotation merges; no member IS the "
-        "locus tag, so the whole group goes rather than merging distinct strains",
+        "two or more DIFFERENT labels resolve to ONE current locus, because the "
+        "collection deleted fragments of a region the pinned annotation merges; no "
+        "member IS the locus tag, so the group is reported rather than merging labels",
     ),
     (
         DROP_AMBIGUOUS,
         "the label matches more than one locus of the pinned assembly, so no single "
         "locus tag can be written for it",
-    ),
-    (
-        DROP_DUPLICATE_LABEL,
-        "the label heads more than one row, at distinct Keio plate/well positions, so "
-        "the rows are distinct strains the release names identically; mapping them onto "
-        "one locus would merge strains and keeping one would be arbitrary",
     ),
 )
 
@@ -1401,7 +1496,7 @@ MIN_RESOLVED_FRACTION = 0.89
 
 
 class StrainRecord(BaseModel):
-    """One kept row: its source label, its BW25113 locus tag and its growth rate."""
+    """One kept deletion well: its source row and its BW25113 locus tag."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -1410,24 +1505,38 @@ class StrainRecord(BaseModel):
 
 
 class RowResolution(BaseModel):
-    """What the row rules did to Dataset EV2's normalized sheet."""
+    """What the row rules did to Dataset EV2's normalized sheet.
+
+    ``kept`` are the deletion wells in released order and ``wild_type`` the parental
+    wells in released order; both are records. ``repeated_labels`` lists, per label that
+    heads more than one kept row, the released positions it heads, which is what
+    ``label_heads_more_than_one_row`` dropped until 2026-11-24.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
     kept: list[StrainRecord]
+    wild_type: list[StrainRow]
     dropped_rows: dict[str, int]
     dropped_labels: dict[str, list[str]]
+    repeated_labels: dict[str, list[str]]
     reconciliation: LocusTagReconciliation
+
+    @property
+    def records(self) -> int:
+        """Records the resolution writes: every kept deletion well plus every parent."""
+        return len(self.kept) + len(self.wild_type)
 
 
 def resolve_rows(
     table: NormalizedTable, genome: EcoliK12BW25113Genome, *, label: str
 ) -> RowResolution:
-    """Map each mutant row to a BW25113 locus tag, applying the five row rules.
+    """Map each mutant row to a BW25113 locus tag, applying the row rules.
 
     The retain-all reconciliation decides which labels resolve; this function decides
     which rows can be WRITTEN. Every dropped row is attributed to exactly one rule, in
-    :data:`ROW_RULES` order.
+    :data:`ROW_RULES` order. A label that heads several rows keeps every row, each at its
+    own released position, and every wild-type well is kept as its own record.
     """
     rows = list(table.mutants)
     annotated = [row for row in rows if ANNOTATION_MARKER.search(row.label)]
@@ -1443,20 +1552,19 @@ def resolve_rows(
     }
     unwritable = set().union(*by_rule.values())
     tags = [str(value) for value in stored.tolist()]
-    resolved = [
+    kept = [
         StrainRecord(row=row, locus_tag=tag)
         for row, tag in zip(rest, tags, strict=True)
         if row.label not in unwritable
     ]
-    counts = Counter(record.row.label for record in resolved)
-    repeated = {name for name, count in counts.items() if count > 1}
-    kept = [record for record in resolved if record.row.label not in repeated]
-    claimed = Counter(record.locus_tag for record in kept)
-    collisions = sorted(tag for tag, count in claimed.items() if count > 1)
+    labels_by_tag: dict[str, set[str]] = {}
+    for record in kept:
+        labels_by_tag.setdefault(record.locus_tag, set()).add(record.row.label)
+    collisions = sorted(tag for tag, names in labels_by_tag.items() if len(names) > 1)
     if collisions:
         raise RuntimeError(
             f"{label}: {len(collisions)} locus tags are claimed by more than one kept "
-            f"row after the drop rules: {collisions[:10]}"
+            f"label after the drop rules: {collisions[:10]}"
         )
     outside = sorted(
         {
@@ -1471,27 +1579,30 @@ def resolve_rows(
             f"{label}: {len(outside)} kept tags are not loci of the pinned assembly: "
             f"{outside[:10]}"
         )
+    positions: dict[str, list[str]] = {}
+    for record in kept:
+        positions.setdefault(record.row.label, []).append(record.row.replicate_id)
     return RowResolution(
         kept=kept,
+        wild_type=list(table.wild_type),
         dropped_rows={
             DROP_FOOTER: table.footer_rows,
-            DROP_WILD_TYPE: len(table.wild_type),
             DROP_ANNOTATED: len(annotated),
             **{
                 rule: sum(1 for row in rest if row.label in names)
                 for rule, names in by_rule.items()
             },
-            DROP_DUPLICATE_LABEL: len(resolved) - len(kept),
         },
         dropped_labels={
             DROP_FOOTER: [],
-            DROP_WILD_TYPE: sorted({row.label for row in table.wild_type}),
             DROP_ANNOTATED: sorted({row.label for row in annotated}),
             **{
                 rule: sorted({row.label for row in rest if row.label in names})
                 for rule, names in by_rule.items()
             },
-            DROP_DUPLICATE_LABEL: sorted(repeated),
+        },
+        repeated_labels={
+            name: heads for name, heads in sorted(positions.items()) if len(heads) > 1
         },
         reconciliation=reconciliation,
     )
@@ -1500,37 +1611,71 @@ def resolve_rows(
 # --------------------------------------------------------------------------- #
 # Records
 # --------------------------------------------------------------------------- #
-_GAP_UNCERTAINTY = ProvenanceGap(
-    field="fitness_uncertainty",
-    reason=ProvenanceGapReason.not_reported_by_primary,
-    note="Dataset EV2 releases one corrected alpha_max per strain and no dispersion; "
-    "there is one growth curve per well, so no within-strain spread exists to report",
+#: A record is one well's one growth curve, so it has no dispersion of its own.
+RECORD_GAPS: tuple[ProvenanceGap, ...] = (
+    ProvenanceGap(
+        field="environment_response_uncertainty",
+        reason=ProvenanceGapReason.not_applicable_single_measurement,
+        note="one well, one growth curve, one released alpha_max: a single measurement "
+        "has no dispersion of its own",
+    ),
+    ProvenanceGap(
+        field="environment_response_se",
+        reason=ProvenanceGapReason.not_applicable_single_measurement,
+        note="a single measurement has no standard error",
+    ),
 )
-_GAP_SE = ProvenanceGap(
-    field="fitness_se",
-    reason=ProvenanceGapReason.not_reported_by_primary,
-    note="no uncertainty is reported, so no standard error can be derived",
+#: The reference is the median of 240 wells and states no dispersion.
+REFERENCE_GAPS: tuple[ProvenanceGap, ...] = (
+    ProvenanceGap(
+        field="environment_response_uncertainty",
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        note="the reference is the median alpha_max of the 240 wild-type wells, each of "
+        "them a record; the paper scores on the wild-type interquartile range and "
+        "releases no dispersion of its own for the parent",
+    ),
+    ProvenanceGap(
+        field="environment_response_se",
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        note="no dispersion is stated for the reference median, so no standard error",
+    ),
 )
-PHENOTYPE_GAPS: tuple[ProvenanceGap, ...] = (_GAP_UNCERTAINTY, _GAP_SE)
 
 
-def phenotype(alpha_max: float, wild_type_median: float) -> FitnessPhenotype:
-    """One strain's corrected maximal growth rate, as a ratio to the parent's."""
-    return FitnessPhenotype(
-        fitness=alpha_max / wild_type_median,
+def growth_rate_phenotype(row: StrainRow) -> EnvironmentResponsePhenotype:
+    """One well's released corrected maximal growth rate, in min^-1, verbatim."""
+    return EnvironmentResponsePhenotype(
+        measurement_type=MeasurementType.growth_rate,
+        assay_type=AssayType.liquid_od_growth,
+        environment_response=row.alpha_max,
+        units=UNITS,
         n_samples=1,
         sample_unit=SampleUnit.biological_replicate,
-        provenance_gaps=list(PHENOTYPE_GAPS),
+        replicate_id=row.replicate_id,
+        provenance_gaps=list(RECORD_GAPS),
     )
 
 
-def reference_phenotype(n_replicates: int = WILD_TYPE_ROWS) -> FitnessPhenotype:
-    """The parent in the same medium: the ratio of its own median to itself, 1.0."""
-    return FitnessPhenotype(
-        fitness=1.0,
-        n_samples=n_replicates,
+def growth_rate_reference_phenotype(
+    wild_type: Sequence[StrainRow],
+) -> EnvironmentResponsePhenotype:
+    """The parent in the same medium: the median of its replicate wells, in min^-1.
+
+    An aggregate over the wild-type wells, each of which is also a record, so
+    ``replicate_id`` is None. The median is the authors' own anchor: every plate's
+    feature median is set to the parental median before scoring.
+    """
+    if not wild_type:
+        raise ValueError("no wild-type replicate rows: no growth-rate reference")
+    return EnvironmentResponsePhenotype(
+        measurement_type=MeasurementType.growth_rate,
+        assay_type=AssayType.liquid_od_growth,
+        environment_response=median([row.alpha_max for row in wild_type]),
+        units=UNITS,
+        n_samples=len(wild_type),
         sample_unit=SampleUnit.biological_replicate,
-        provenance_gaps=list(PHENOTYPE_GAPS),
+        replicate_id=None,
+        provenance_gaps=list(REFERENCE_GAPS),
     )
 
 
@@ -1539,11 +1684,12 @@ MORPHOLOGY_ASSAY_NAME = MORPHOLOGY_ASSAY.name
 
 
 def morphology_phenotype(row: MorphologyRow) -> MorphologyPhenotype:
-    """One strain's morphology profile over the features the release determined for it.
+    """One well's morphology profile over the features the release determined for it.
 
-    ``n_samples`` is Dataset EV1's ``nb Cells``, the strain's retained segmented cells,
+    A record is one culture (one well), so ``replicate_id`` is its released position.
+    ``n_samples`` is Dataset EV1's ``nb Cells``, the well's retained segmented cells,
     and the sample unit is the CELL: each mean and each CV is computed over those cells
-    from one well, so ``biological_replicate`` would report 1 for a mean over hundreds.
+    from one well, which is the within-culture level the record combines and says so.
     """
     return MorphologyPhenotype(
         assay=MORPHOLOGY_ASSAY_NAME,
@@ -1551,6 +1697,7 @@ def morphology_phenotype(row: MorphologyRow) -> MorphologyPhenotype:
         morphology_coefficient_of_variation=dict(row.coefficients_of_variation),
         n_samples=row.n_cells,
         sample_unit=SampleUnit.cell,
+        replicate_id=row.replicate_id,
     )
 
 
@@ -1564,7 +1711,7 @@ def morphology_reference_phenotype(
     segmented cells; the reference's is the median of that number across the parental
     replicate wells, so its sample unit is the biological replicate and its
     ``n_samples`` is the number of those wells, the same convention
-    :func:`reference_phenotype` uses for the fitness reference. The median is taken per
+    :func:`growth_rate_reference_phenotype` uses for the growth-rate reference. The median is taken per
     feature over the wells that determined it, so a feature no replicate determined is
     absent rather than imputed.
     """
@@ -1588,16 +1735,10 @@ def morphology_reference_phenotype(
         )
         if not observed:
             continue
-        middle = len(observed) // 2
-        median = (
-            observed[middle]
-            if len(observed) % 2
-            else (observed[middle - 1] + observed[middle]) / 2
-        )
         if feature.symbol in cv_symbols:
-            coefficients[feature.symbol] = median
+            coefficients[feature.symbol] = median(observed)
         else:
-            values[feature.symbol] = median
+            values[feature.symbol] = median(observed)
     return MorphologyPhenotype(
         assay=MORPHOLOGY_ASSAY_NAME,
         morphology=values,
@@ -1605,6 +1746,11 @@ def morphology_reference_phenotype(
         n_samples=len(rows),
         sample_unit=SampleUnit.biological_replicate,
     )
+
+
+def wild_type_genotype() -> Genotype:
+    """A parental BW25113 well: no perturbation, on the background the reference pins."""
+    return Genotype(perturbations=[])
 
 
 def genotype(record: StrainRecord) -> Genotype:
@@ -1628,16 +1774,55 @@ def genotype(record: StrainRecord) -> Genotype:
     )
 
 
+def stored_wells_ledger(resolution: RowResolution) -> dict[str, Any]:
+    """What the drop ledger states about the stored wells beside the dropped rows.
+
+    The wild-type wells and the rows of repeated labels are records since 2026-11-24
+    (until then ``row_is_a_wild_type_replicate`` and ``label_heads_more_than_one_row``
+    dropped them), so the ledger names them with their positions.
+    """
+    return {
+        "records_by_kind": {
+            "deletion_wells": len(resolution.kept),
+            "wild_type_wells": len(resolution.wild_type),
+        },
+        "wild_type_wells_by_label": dict(
+            sorted(Counter(row.label for row in resolution.wild_type).items())
+        ),
+        "labels_heading_more_than_one_row": resolution.repeated_labels,
+        "notes": [
+            "every released well is one culture and one record; replicate_id is the "
+            "released '<Plate nb>/<Well nb>' position",
+            "a repeated label's rows are each stored at their own position; the release "
+            "does not say per row whether a repeat is a second copy of one Keio strain "
+            "or a distinct construct the current gene name merges (Methods: 3,787 "
+            "annotated deletions, 412 JW strains, 28 repeats)",
+        ],
+    }
+
+
 # --------------------------------------------------------------------------- #
 # Dataset
 # --------------------------------------------------------------------------- #
-#: Records of the full build: 4,471 released rows - 4 - 240 - 5 - 438 - 120.
-EXPECTED_RECORDS = 3664
+#: Records of the full build, per class: 4,471 released rows - 4 footer - 5 annotated -
+#: 438 not in the annotation = 3,784 deletion wells + 240 wild-type wells.
+EXPECTED_RECORDS = 4024
+#: Deletion wells among them: 3,664 labels heading one row + 120 rows of 56 labels.
+EXPECTED_DELETION_RECORDS = 3784
+#: The labels that head more than one stored row, and the rows they head.
+EXPECTED_REPEATED_LABELS = 56
+EXPECTED_REPEATED_LABEL_ROWS = 120
 
 
 @register_dataset
 class GrowthRateCampos2018Dataset(ExperimentDataset):
-    """Campos 2018 Keio maximal-growth-rate fitness in M9 casamino-acid glucose."""
+    """Campos 2018 Keio maximal growth rate per well, in M9 casamino-acid glucose.
+
+    One ``EnvironmentResponseExperiment`` per released well, deletion and wild type
+    alike, carrying the well's released ``alpha_max`` in min^-1 as an absolute
+    ``MeasurementType.growth_rate``; the reference is the median of the 240 wild-type
+    wells on the same scale.
+    """
 
     organism = Organism.ecoli
 
@@ -1661,12 +1846,12 @@ class GrowthRateCampos2018Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return FitnessExperiment
+        return EnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return FitnessExperimentReference
+        return EnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1704,20 +1889,28 @@ class GrowthRateCampos2018Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Parse Dataset EV2 into one fitness record per kept strain; write the LMDB."""
+        """Parse Dataset EV2 into one growth-rate record per well; write the LMDB.
+
+        Records follow the release's row order: the kept deletion wells, then the
+        wild-type wells, which the sheet lists last.
+        """
         verify_raw_files(self.raw_dir, {DATA_FILENAME: DATA_SHA256})
         path = osp.join(self.raw_dir, DATA_FILENAME)
         table = read_normalized_table(path)
         genome = self._genome()
         resolution = resolve_rows(table, genome, label=self.name)
-        denominator = table.wild_type_median_alpha_max
+        reference_phenotype = growth_rate_reference_phenotype(resolution.wild_type)
         env = environment()
-        reference = FitnessExperimentReference(
+        reference = EnvironmentResponseExperimentReference(
             dataset_name=self.name,
             genome_reference=assembly_reference(self.REFERENCE_STRAIN),
             environment_reference=env.model_copy(),
-            phenotype_reference=reference_phenotype(len(table.wild_type)),
+            phenotype_reference=reference_phenotype,
         )
+        wells: list[tuple[Genotype, StrainRow]] = [
+            *((genotype(record), record.row) for record in resolution.kept),
+            *((wild_type_genotype(), row) for row in resolution.wild_type),
+        ]
         publication = Publication(doi=DOI, doi_url=f"https://doi.org/{DOI}")
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -1727,12 +1920,12 @@ class GrowthRateCampos2018Dataset(ExperimentDataset):
         )
         idx = 0
         with lmdb_env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for record in tqdm(resolution.kept, desc="campos2018"):
-                experiment = FitnessExperiment(
+            for strain, row in tqdm(wells, desc="campos2018"):
+                experiment = EnvironmentResponseExperiment(
                     dataset_name=self.name,
-                    genotype=genotype(record),
+                    genotype=strain,
                     environment=env,
-                    phenotype=phenotype(record.row.alpha_max, denominator),
+                    phenotype=growth_rate_phenotype(row),
                 )
                 txn.put(
                     f"{idx}".encode(),
@@ -1742,11 +1935,14 @@ class GrowthRateCampos2018Dataset(ExperimentDataset):
         lmdb_env.close()
         interned_env.close()
 
+        denominator = table.wild_type_median_alpha_max
         self._write_reports(table, resolution, denominator, kept_records=idx)
         log.info(
-            "Campos2018: wrote %d records from %d released rows; dropped rows %s; "
-            "wild-type median alpha_max %.10f min^-1",
+            "Campos2018: wrote %d records (%d deletion wells, %d wild-type wells) from "
+            "%d released rows; dropped rows %s; wild-type median alpha_max %.10f min^-1",
             idx,
+            len(resolution.kept),
+            len(resolution.wild_type),
             table.released_rows,
             resolution.dropped_rows,
             denominator,
@@ -1786,6 +1982,7 @@ class GrowthRateCampos2018Dataset(ExperimentDataset):
                         }
                         for rule, description in ROW_RULES
                     ],
+                    **stored_wells_ledger(resolution),
                 },
                 indent=2,
             )
@@ -1834,11 +2031,12 @@ class GrowthRateCampos2018Dataset(ExperimentDataset):
 
 @register_dataset
 class MorphologyCampos2018Dataset(ExperimentDataset):
-    """Campos 2018 Keio cell-morphology profiles: 26 features per imaged strain.
+    """Campos 2018 Keio cell-morphology profiles: 26 features per imaged well.
 
-    The same 3,664 strains, the same medium and the same row rules as
-    :class:`GrowthRateCampos2018Dataset` -- deliberately, since both datasets read one
-    release and a row either names a writable BW25113 locus or it does not. What differs
+    The same 4,024 wells (3,784 deletion wells and 240 wild-type wells), the same medium
+    and the same row rules as :class:`GrowthRateCampos2018Dataset` -- deliberately, since
+    both datasets read one release and a row either is a writable well or it is not.
+    What differs
     is the phenotype: a ``MorphologyPhenotype`` over the 26 morphology symbols
     of Appendix Table S1, against the ``campos2018`` assay vocabulary.
 
@@ -1919,7 +2117,11 @@ class MorphologyCampos2018Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Parse both sheets into one morphology record per kept strain; write the LMDB."""
+        """Parse both sheets into one morphology record per well; write the LMDB.
+
+        Records follow the release's row order: the kept deletion wells, then the
+        wild-type wells, which the sheet lists last.
+        """
         verify_raw_files(
             self.raw_dir,
             {DATA_FILENAME: DATA_SHA256, RAW_CELL_COUNTS_FILENAME: DATASET_EV1_SHA256},
@@ -1931,7 +2133,7 @@ class MorphologyCampos2018Dataset(ExperimentDataset):
         genome = self._genome()
         resolution = resolve_rows(table, genome, label=self.name)
         env = environment()
-        parental = [morphology[(row.plate, row.well)] for row in table.wild_type]
+        parental = [morphology[(row.plate, row.well)] for row in resolution.wild_type]
         reference = MorphologyExperimentReference(
             dataset_name=self.name,
             genome_reference=assembly_reference(self.REFERENCE_STRAIN),
@@ -1945,18 +2147,27 @@ class MorphologyCampos2018Dataset(ExperimentDataset):
         lmdb_env, interned_env = self._open_write_lmdb(
             osp.join(self.processed_dir, "lmdb")
         )
+        wells: list[tuple[Genotype, MorphologyRow]] = [
+            *(
+                (genotype(record), morphology[(record.row.plate, record.row.well)])
+                for record in resolution.kept
+            ),
+            *(
+                (wild_type_genotype(), morphology[(row.plate, row.well)])
+                for row in resolution.wild_type
+            ),
+        ]
         idx = 0
         determined = Counter[str]()
         with lmdb_env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for record in tqdm(resolution.kept, desc="campos2018-morphology"):
-                row = morphology[(record.row.plate, record.row.well)]
+            for strain, row in tqdm(wells, desc="campos2018-morphology"):
                 # .keys(), not the dicts: Counter.update(mapping) ADDS the mapping's
                 # values as counts, which would sum the measurements themselves.
                 determined.update(row.values.keys())
                 determined.update(row.coefficients_of_variation.keys())
                 experiment = MorphologyExperiment(
                     dataset_name=self.name,
-                    genotype=genotype(record),
+                    genotype=strain,
                     environment=env,
                     phenotype=morphology_phenotype(row),
                 )
@@ -2012,6 +2223,7 @@ class MorphologyCampos2018Dataset(ExperimentDataset):
                         }
                         for rule, description in ROW_RULES
                     ],
+                    **stored_wells_ledger(resolution),
                 },
                 indent=2,
             )
@@ -2099,14 +2311,15 @@ def verify_build(
     This module builds two stores from one release, and
     ``torchcell.database.build_dataset_lmdb --verify`` resolves both to this one entry
     point by module, so the store's directory name picks the gate:
-    ``ecoli_growth_rate_campos2018`` runs :func:`verify_fitness_build` and
+    ``ecoli_growth_rate_campos2018`` runs :func:`verify_growth_rate_build` and
     ``ecoli_morphology_campos2018`` runs :func:`verify_morphology_build`. A root that is
-    neither is refused before any record is read. Running the fitness gate on the
-    morphology store is what array 4011 task 53 did: it read ``phenotype["fitness"]``
-    from a record that carries ``morphology`` and raised ``KeyError: 'fitness'``.
+    neither is refused before any record is read. Running the growth-rate gate on the
+    morphology store is what array 4011 task 53 did (then the fitness gate): it read
+    ``phenotype["fitness"]`` from a record that carries ``morphology`` and raised
+    ``KeyError: 'fitness'``.
     """
     verifiers = {
-        osp.basename(DATASET_ROOT_REL): verify_fitness_build,
+        osp.basename(DATASET_ROOT_REL): verify_growth_rate_build,
         osp.basename(MORPHOLOGY_ROOT_REL): verify_morphology_build,
     }
     name = osp.basename(osp.normpath(dataset_root))
@@ -2120,28 +2333,33 @@ def verify_build(
     )
 
 
-def verify_fitness_build(
+def verify_growth_rate_build(
     dataset_root: str,
     *,
     genome: EcoliK12BW25113Genome | None = None,
     data_root: str | None = None,
     expected_count: int = EXPECTED_RECORDS,
 ) -> VerificationReport:
-    """Run the fitness L0-L4 verifier on a built tree and write its report.
+    """Run the environment-response L0-L4 verifier, absolute branch, and write its report.
 
-    Every record is checked against the BW25113 genome its references pin: the resolver
-    of the canonical-name rule, and as the L4 universe every GenBank locus of the
-    assembly. One resolver cannot serve two strains, which is why the host-aware gene set
-    is read from the record's own pinned assembly rather than from the yeast default. The
-    report is written to ``preprocess/verification_report.json``.
+    ``reference_centered=False`` because ``alpha_max`` is an ABSOLUTE rate in min^-1: the
+    reference states the wild-type median on the records' own scale instead of 0, and
+    the branch refuses any record whose type is not in ``ABSOLUTE_MEASUREMENT_TYPES``.
+    Every record sits in the one screen medium with no environmental edit, so
+    ``expected_unperturbed`` is the whole count. Every record is checked against the
+    BW25113 genome its references pin: the resolver of the canonical-name rule, and as
+    the L4 universe every GenBank locus of the assembly. The report is written to
+    ``preprocess/verification_report.json``.
     """
-    from torchcell.verification.fitness import verify_fitness_dataset
+    from torchcell.verification.environment_response import (
+        verify_environment_response_dataset,
+    )
     from torchcell.verification.runners import stream_records
 
     if genome is None:
         genome = _bw25113(data_root)
     records: Sequence[Any] = list(stream_records(dataset_root))
-    report = verify_fitness_dataset(
+    report = verify_environment_response_dataset(
         records,
         dataset_name=osp.basename(osp.normpath(dataset_root)),
         provenance=Provenance(
@@ -2149,13 +2367,16 @@ def verify_fitness_build(
             citation_key=CITATION_KEY,
             sha256=DATA_SHA256,
             method="Dataset EV2 'Normalized data' sheet, column 'alpha_max (min-1)'; "
-            "one FitnessExperiment per kept Keio deletion row, fitness = the "
-            "strain's corrected maximal growth rate over the median of the 240 "
-            "wild-type replicates",
+            "one EnvironmentResponseExperiment per released well (deletion and "
+            "wild type), MeasurementType.growth_rate carrying the well's ABSOLUTE "
+            "corrected maximal growth rate in min^-1; the reference is the median of "
+            "the 240 wild-type wells",
             page=f"Dataset EV2 ({DATA_FILENAME}), sheet '{NORMALIZED_SHEET}'",
             retrieved=DATA_RETRIEVED_AT,
         ),
         expected_count=expected_count,
+        reference_centered=False,
+        expected_unperturbed=expected_count,
         sgd_genes=set(genome.genbank.loci),
         gene_universe_label=f"BW25113 ({genome.ASSEMBLY_SET})",
         resolve_gene_name=genome.resolve_gene_name,
@@ -2179,7 +2400,7 @@ def verify_morphology_build(
     ``required_features`` is the measured 19 the release determines for every strain, so
     the 7 it leaves non-determined for the 278 strains with no DAPI channel are absent
     without failing the gate. The gene universe and the canonical-name resolver come from
-    the BW25113 assembly the records pin, as they do for the fitness build.
+    the BW25113 assembly the records pin, as they do for the growth-rate build.
     """
     from torchcell.verification.bacterial_morphology import (
         verify_bacterial_morphology_dataset,
@@ -2198,9 +2419,9 @@ def verify_morphology_build(
             sha256=DATA_SHA256,
             method="Dataset EV2 'Normalized data' sheet, the 26 morphology columns of "
             "Appendix Table S1, joined on the Keio (plate, well) to Dataset EV1 'Raw "
-            "data' column 'nb Cells'; one MorphologyExperiment per kept Keio "
-            "deletion row against the campos2018 assay vocabulary, n_samples = that "
-            "strain's segmented cells",
+            "data' column 'nb Cells'; one MorphologyExperiment per released well "
+            "(deletion and wild type) against the campos2018 assay vocabulary, "
+            "n_samples = that well's segmented cells",
             page=f"Dataset EV2 ({DATA_FILENAME}), sheet '{NORMALIZED_SHEET}'",
             retrieved=DATA_RETRIEVED_AT,
         ),
@@ -2233,8 +2454,8 @@ def main(argv: list[str] | None = None) -> int:
         "bytes; without it the literature mirror's captured Dataset EV2 is used",
     )
     for command, help_text in (
-        ("build", "build (or load) the fitness dev-tree LMDB"),
-        ("verify", "run L0-L4 on the built fitness dev-tree LMDB"),
+        ("build", "build (or load) the growth-rate dev-tree LMDB"),
+        ("verify", "run L0-L4 on the built growth-rate dev-tree LMDB"),
         ("build-morphology", "build (or load) the morphology dev-tree LMDB"),
         ("verify-morphology", "run L0-L4 on the built morphology dev-tree LMDB"),
     ):
@@ -2275,7 +2496,7 @@ def main(argv: list[str] | None = None) -> int:
         dataset = GrowthRateCampos2018Dataset(root=root)
         print(f"len = {len(dataset)}")
         return 0
-    report = verify_fitness_build(root, data_root=data_root)
+    report = verify_growth_rate_build(root, data_root=data_root)
     print(report.summary())
     return 0 if report.passed else 1
 

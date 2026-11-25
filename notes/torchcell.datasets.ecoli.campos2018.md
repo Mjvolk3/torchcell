@@ -661,3 +661,102 @@ dropped the prefix from the experiment pair (`MorphologyExperiment`,
 `database/schema_changes/2026-10-15-morphology-phenotype-is-the-general-class-calmorph-is-the-specific-one.json`;
 the naming argument, including why `CalMorphPhenotype` keeps its name, in
 [[torchcell.verification.perturbation_families]].
+
+## 2026.11.24 - One record per released well (#1178): the 240 parents and the 120 repeats
+
+Part of #1171, #1176, #1172 under the per-replicate policy of #1178. Both stores go from
+3,664 to **4,024** records, one per released Keio (plate, well) position, and the growth
+store changes readout.
+
+### What a replicate is here
+
+- One well is one culture. Methods, 'Screening setup and microscopy' (`paper.md`, sha256
+  `1bf2f74b...`): "Cultures were diluted 1:300 in $1 5 0 ~ \mu \mathrm { l }$ of fresh M9
+  medium supplemented with $0 . 1 \%$ casamino acids and $0 . 2 \%$ glucose and grown in
+  96-well plates". Dataset EV2 (`MSB-14-e7573-s004.xlsx`, sha256 `10188365...`), sheet
+  'Normalized data', holds one row per position: 4,467 labelled rows, 4,467 distinct
+  (plate, well) pairs (measured).
+- The parental wells are biological replicates: "To provide a reference, 240 replicates
+  of the parental strain (BW25113, here referred to as WT) were also grown and imaged
+  under the same conditions as the mutants" (Results) and "plus the 240 independent WT
+  replicates used as controls" (Fig 4 legend). Released as `WT0813` x96 (plate `WT1`),
+  `WT0815` x96 (`WT2`), `WT0511` x48 (`WT3`).
+- Within a well, the morphology means and CVs are over that well's segmented cells
+  (Dataset EV1 `nb Cells`, `n_samples`, `sample_unit=cell`); that is the within-culture
+  level the record combines and states. The growth curve is one per well.
+- Repeated labels: 56 labels head 120 rows (50 x 2, 4 x 3, 2 x 4) at distinct positions.
+  Methods, 'Bacterial strains and growth conditions': "The Keio collection contains 3,787
+  annotated single-gene in-frame deletion strains, 412 strains (referred to as JW
+  strains) with kanamycin cassette inserted at unknown locations, and the remainder (28)
+  were repeats (Baba et al, 2006)." The release does not say which rows are the 28
+  repeats and which are distinct constructs a current gene name merges, so each row is
+  stored at its own position either way (#1172 decides only the label).
+- Not released: "two independent replicates of 178 strains that included two copies of
+  the parental (WT) strain and 176 mutants" (Fig 1D reproducibility check). Neither
+  sheet has a second row for them.
+- No sample withdrawn by the authors. The "Legend normalized data" sheet words the degree
+  sign as "unreliable phenotype" (the other two legends: "Strains independently checked
+  with a different phenotype"); that row (`fabH`+degree) and the four `*` rows
+  ("Re-imaged from 2mL liquid cultures") stay dropped, unchanged.
+
+### What changed in the loader
+
+- `GrowthRateCampos2018Dataset` is now an `EnvironmentResponseExperiment` with
+  `MeasurementType.growth_rate`: the released `alpha_max (min-1)` verbatim per well
+  (decision 2 of 2026-11-24: the old `FitnessPhenotype` was the well over the loader's
+  wild-type median, a loader-computed statistic). The reference is the median of the 240
+  wild-type wells, 0.0097366516 min^-1, `n_samples=240`, `replicate_id=None`; the median
+  is the authors' own anchor ("For each plate, we set the median values of each feature,
+  ... to the median feature value of the parental strain").
+- Every record: `n_samples=1`, `replicate_id = "<Plate nb>/<Well nb>"` (`"5/H012"`,
+  `"WT1/A001"`). Growth records carry `not_applicable_single_measurement` gaps on
+  `environment_response_uncertainty` and `environment_response_se`; the reference keeps
+  `not_reported_by_primary`.
+- The wild-type wells are records with the empty genotype on the BW25113 background.
+- Rules `row_is_a_wild_type_replicate` and `label_heads_more_than_one_row` are gone; the
+  last-line guard now refuses two DIFFERENT labels on one locus tag (one label at several
+  positions is kept). `dropped_records.json` adds `records_by_kind`,
+  `wild_type_wells_by_label` and `labels_heading_more_than_one_row` (positions per label).
+- Records follow the release's row order: 3,784 deletion wells, then the 240 wild-type
+  wells.
+- The growth gate is `verify_environment_response_dataset`, absolute branch
+  (`reference_centered=False`, `expected_unperturbed` = the whole count).
+
+### Proof on the release
+
+`experiments/036-dataset-fixes-before-kg-build/scripts/campos2018_per_replicate_counts.py`
+-> `experiments/036-dataset-fixes-before-kg-build/results/campos2018_per_replicate_counts.json`,
+before = origin/main build, after = this loader, both under
+`$DATA_ROOT/tmp/scratch/per-replicate-campos2018/{before,after}/`.
+
+| | growth before | growth after | morphology before | morphology after |
+|---|---:|---:|---:|---:|
+| deletion wells, label heading one row | 3,664 | 3,664 | 3,664 | 3,664 |
+| deletion wells, repeated label (56 loci) | 0 | 120 | 0 | 120 |
+| wild-type wells | 0 | 240 | 0 | 240 |
+| total | 3,664 | 4,024 | 3,664 | 4,024 |
+
+- Per position: every before-record has one after-record at the same position; growth
+  `alpha_max / reference` reproduces the stored ratio with max abs difference 0.0;
+  morphology 93,570 feature values, max abs difference 0.0, `n_samples` equal.
+- Mean reproduction, grouped by (deleted locus set, environment): the 3,664 groups the
+  before-store held reproduce it exactly (max abs difference 0.0, each is one well). The
+  56 repeated-label groups have no before value (they were dropped). The wild-type group:
+  its median over the reference is 1.0 exactly (the before reference fitness) and its
+  morphology medians equal the before reference exactly (0.0); its MEAN is not the
+  reference (growth mean / reference 1.00527; morphology max abs 0.0230), because the
+  reference was always a median.
+- Morphology determined values: 102,881 over 4,024 records (93,570 before).
+- Verifier (L0-L4) on both scratch stores: PASS, count 4,024, pair uniqueness 4,024.
+
+### Not done
+
+- `torchcell/tasks/ecoli.py`: the two Campos tasks pin 3,573 samples and the growth
+  task reads `fitness`. A store rebuilt from this loader holds 120 more eligible samples
+  (several on one locus key) and an `environment_response` label, so `load_task` raises
+  on it until the splits are regenerated; left for the owner (the split files are
+  locked).
+- The 438 `label_is_not_in_the_bw25113_annotation` rows (#1064 row 101), a genome gate;
+  412 of them are JW strains with the cassette at an unknown locus, so a locus deletion
+  is not their genotype.
+- The 5 annotated rows (a 2 mL tube culture, or a flagged phenotype).

@@ -1,0 +1,62 @@
+# Choe 2019 Fig. 2c and Fig. 2g absolute growth rates: 29 records, one per released
+# culture, EnvironmentResponseExperiment (MeasurementType.growth_rate). The two
+# designed MS56 deletion strains (6 records) carry one ReleasedIdentifierPerturbation per
+# deleted gene, served as `perturbation`; the other 23 are MG1655, MS56 or eMS57 with
+# no edit, a measured condition for an absolute readout. Fig. 2g's 9 supplemented
+# records carry L-valine (and L-isoleucine) as SmallMoleculePerturbation edits, so the
+# environment-perturbation pair is enabled.
+cell_adapter:
+  node_methods:
+    - method_name: "experiment reference"
+    - method_name: "genome"
+    - method_name: "experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "perturbation (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment reference"
+    - method_name: "media (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media reference"
+    - method_name: "temperature (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature reference"
+    - method_name: "environment perturbation (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation reference"
+    - method_name: "environment response phenotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment response phenotype reference"
+    - method_name: "dataset"
+    - method_name: "publication (chunked)"
+      memory_reduction_factor: 1.0
+
+  edge_methods:
+    - method_name: "experiment reference to dataset"
+    - method_name: "experiment to dataset (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "experiment reference to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "perturbation to genotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment reference"
+    - method_name: "phenotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation to environment reference"
+    - method_name: "genome to experiment reference"
+    - method_name: "phenotype to experiment reference"
+    - method_name: "publication to experiment (chunked)"
+      memory_reduction_factor: 1.0

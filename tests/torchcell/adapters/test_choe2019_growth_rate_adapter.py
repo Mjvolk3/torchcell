@@ -4,10 +4,11 @@
 """``torchcell/adapters/choe2019_growth_rate_adapter.py``: the conf it loads, the gate's
 view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Choe 2019 Fig. 2c: two designed MS56 deletion strains, FitnessExperiment. One
-``DeletionStrainPerturbation`` per deleted gene, so the perturbation pair is enabled;
-the panel adds no compound to its medium, so the environment-perturbation pair is off,
-and the environment declares a ``ProvenanceGap`` on temperature.
+Choe 2019 Fig. 2f: one FitnessExperiment per released set (#1175), the three
+reconstructed MS56 alleles on ``ReleasedIdentifierPerturbation`` and eMS57 over MS56,
+so the perturbation pair is enabled; the panel adds no compound to its medium, so the
+environment-perturbation pair is off, and the environment declares a ``ProvenanceGap``
+on temperature.
 """
 
 from __future__ import annotations
@@ -52,12 +53,12 @@ def test_kg_manifest_resolves_the_dataset_to_its_own_module_and_conf() -> None:
     assert_gate_resolves_own_files(CASE)
 
 
-def test_conf_serves_the_deletions_and_no_environment_perturbation() -> None:
-    """The deletions are served and the environment axis carries nothing extra.
+def test_conf_serves_the_alleles_and_no_environment_perturbation() -> None:
+    """The reconstructed alleles are served and the environment axis carries nothing.
 
-    Both strains are "MS56, <lesion>::kan" in one M9 glucose medium with no added
-    compound, so the environment-perturbation pair must stay off: enabling it would
-    announce an axis no record populates.
+    The Fig. 2f strains are "MS56, <gene>::<allele>-kanR" in one M9 glucose medium with
+    no added compound, so the environment-perturbation pair must stay off: enabling it
+    would announce an axis no record populates.
     """
     conf = yaml.safe_load(
         (REPO_ROOT / "torchcell/adapters/conf" / CASE.case.conf_name).read_text(

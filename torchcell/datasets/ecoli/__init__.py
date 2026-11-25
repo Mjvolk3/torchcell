@@ -58,13 +58,17 @@ sourcing layer.
   as an absolute ``MeasurementType.growth_rate`` in min^-1 and the 26 morphology
   symbols as a ``MorphologyPhenotype`` against the ``campos2018`` assay vocabulary.
   Only the saturating optical density has no phenotype class left.
-- ``choe2019_growth_rate`` -- ``GrowthRateChoe2019Dataset`` and
-  ``TranscriptionFactorKnockoutChoe2019Dataset``: the two writable arms of the
-  genome-reduced ALE campaign. The first serves the two designed deletions built on the
-  reduced parent MS56 as parent-relative fitness, the second the two Keio BW25113
-  deletions whose growth rate the Supplementary Fig. 6 legend states. Every evolved
-  strain is refused: the release gives population allele frequencies rather than clone
-  genotypes, and no perturbation leaf holds a called bacterial variant.
+- ``choe2019_growth_rate`` -- ``GrowthRateChoe2019Dataset``,
+  ``AbsoluteGrowthRateChoe2019Dataset``, ``MetaboliteChoe2019Dataset`` and
+  ``TranscriptionFactorKnockoutChoe2019Dataset``: the writable arms of the
+  genome-reduced ALE campaign, one record per released culture or set (#1175). The
+  first serves the Fig. 2f reconstructed alleles and eMS57/MS56 as released per-set
+  ratios, the second the Fig. 2c and Fig. 2g absolute growth rates per culture (the two
+  designed deletions built on the reduced parent MS56 among them), the third the
+  Fig. 1g pyruvate and Fig. 3d NAD(P)H-ratio and ATP levels per culture, the fourth the
+  two Keio BW25113 deletions whose growth rate the Supplementary Fig. 6 legend states.
+  Every evolved strain is refused: the release gives population allele frequencies
+  rather than clone genotypes, and no perturbation leaf holds a called bacterial variant.
 - ``choe2025`` -- ``CrispriChemgenChoe2025Dataset``: the genome-scale MG1655 CRISPRi
   guide library scored against twelve antibiotics, one record per (guide, drug).
 - ``foo2014`` -- ``IsopentenolTiterFoo2014Dataset``: the nine released isopentenol
@@ -268,7 +272,11 @@ from .caglar2017_doubling_time import (
 )
 from .campos2018 import GrowthRateCampos2018Dataset as GrowthRateCampos2018Dataset
 from .campos2018 import MorphologyCampos2018Dataset as MorphologyCampos2018Dataset
+from .choe2019_growth_rate import (
+    AbsoluteGrowthRateChoe2019Dataset as AbsoluteGrowthRateChoe2019Dataset,
+)
 from .choe2019_growth_rate import GrowthRateChoe2019Dataset as GrowthRateChoe2019Dataset
+from .choe2019_growth_rate import MetaboliteChoe2019Dataset as MetaboliteChoe2019Dataset
 from .choe2019_growth_rate import (
     TranscriptionFactorKnockoutChoe2019Dataset as TranscriptionFactorKnockoutChoe2019Dataset,
 )

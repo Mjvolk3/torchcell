@@ -58,6 +58,7 @@ from tests.torchcell.adapters._adapter_init_harness import (
     install_recorder,
 )
 from torchcell.adapters import (
+    AbsoluteGrowthRateChoe2019Adapter,
     BiofuelTiterBrunk2016Adapter,
     CampaignProteomeCarruthers2025Adapter,
     CarbonSourceTong2020Adapter,
@@ -109,6 +110,7 @@ from torchcell.adapters import (
     IsoprenolToleranceLim2025Adapter,
     IsoprenylAcetateTiterKang2026Adapter,
     LactamGrowthRateThompson2019Adapter,
+    MetaboliteChoe2019Adapter,
     MetaboliteGrowthPhaseMenasalvas2025Adapter,
     MetaboliteIntensityRapp2026Adapter,
     MetaboliteProductionPhaseMenasalvas2025Adapter,
@@ -188,7 +190,9 @@ from torchcell.datasets.ecoli.campos2018 import (
     MorphologyCampos2018Dataset,
 )
 from torchcell.datasets.ecoli.choe2019_growth_rate import (
+    AbsoluteGrowthRateChoe2019Dataset,
     GrowthRateChoe2019Dataset,
+    MetaboliteChoe2019Dataset,
     TranscriptionFactorKnockoutChoe2019Dataset,
 )
 from torchcell.datasets.ecoli.choe2025 import CrispriChemgenChoe2025Dataset
@@ -498,6 +502,25 @@ BACTERIAL: list[Bacterial] = [
         "growth_rate_choe2019",
         GrowthRateChoe2019Dataset,
         "fitness phenotype",
+        env_perturbation=False,
+    ),
+    # #1175 (2026-11-24): the Fig. 2c and Fig. 2g cultures as absolute rates; the
+    # deletion strains carry perturbations and Fig. 2g adds L-valine / L-isoleucine.
+    _case(
+        AbsoluteGrowthRateChoe2019Adapter,
+        "choe2019_absolute_growth_rate",
+        "absolute_growth_rate_choe2019",
+        AbsoluteGrowthRateChoe2019Dataset,
+        RESPONSE,
+    ),
+    # #1175: Fig. 1g and Fig. 3d per culture, MG1655 and eMS57 only, nothing added.
+    _case(
+        MetaboliteChoe2019Adapter,
+        "choe2019_metabolite",
+        "metabolite_choe2019",
+        MetaboliteChoe2019Dataset,
+        METABOLITE,
+        perturbation=False,
         env_perturbation=False,
     ),
     _case(

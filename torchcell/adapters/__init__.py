@@ -87,8 +87,14 @@ from .caudal2024_adapter import (
     CaudalPanTranscriptome2024Adapter as CaudalPanTranscriptome2024Adapter,
 )
 from .cell_adapter import CellAdapter as CellAdapter
+from .choe2019_absolute_growth_rate_adapter import (
+    AbsoluteGrowthRateChoe2019Adapter as AbsoluteGrowthRateChoe2019Adapter,
+)
 from .choe2019_growth_rate_adapter import (
     GrowthRateChoe2019Adapter as GrowthRateChoe2019Adapter,
+)
+from .choe2019_metabolite_adapter import (
+    MetaboliteChoe2019Adapter as MetaboliteChoe2019Adapter,
 )
 from .choe2019_tf_knockout_adapter import (
     TranscriptionFactorKnockoutChoe2019Adapter as TranscriptionFactorKnockoutChoe2019Adapter,
@@ -546,6 +552,8 @@ ecoli_adapters = [
     "GrowthRateCampos2018Adapter",
     "MorphologyCampos2018Adapter",
     "GrowthRateChoe2019Adapter",
+    "AbsoluteGrowthRateChoe2019Adapter",
+    "MetaboliteChoe2019Adapter",
     "MetabolomeBrunk2016Adapter",
     "ExometaboliteBrunk2016Adapter",
     "ProteomeBrunk2016Adapter",

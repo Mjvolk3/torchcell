@@ -3,10 +3,13 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/ecoli/test_choe2019_growth_rate.py
 """Choe 2019 loader (``torchcell.datasets.ecoli.choe2019_growth_rate``).
 
-The synthetic tests write a Source Data workbook with the Fig. 2c and Fig. 2f sheets'
-exact layout and three variant tables with each of the three column layouts the release
-uses, then drive the readers, all three cross-checks, the phenotype and genotype
-builders and a full ``process()`` for both dataset classes into ``tmp_path``. The
+The synthetic tests write a Source Data workbook with the Fig. 1g, 2c, 2f, 2g and 3d
+sheets' exact layout and three variant tables with each of the three column layouts the
+release uses, then drive the readers, the cross-checks, the phenotype and genotype
+builders and a full ``process()`` for all four dataset classes into ``tmp_path``. Since
+#1175 (2026-11-24) every record is one released culture or set, so the process tests
+pin the per-replicate counts and that the mean over a genotype's records reproduces the
+aggregate the loader used to store. The
 verifier's genome is an in-test object and the loaders read no annotation (#1045 part
 2), so nothing reads ``$DATA_ROOT``.
 
@@ -17,6 +20,8 @@ gap. That refusal is pinned so a future schema change that makes the gap express
 fails this test and sends someone back to the background.
 
 The ``@pytest.mark.data`` tests read the real mirror and pin what the note states: the
+released cell counts of every sheet the classes read (15 Fig. 2c cultures, 12 Fig. 2f
+sets, 14 Fig. 2g numbers and 4 dashes, 24 Fig. 1g pyruvate cells, 14 Fig. 3d cells), the
 Fig. 2c strain means, that the two deletion strains reproduce the paper's own "80% of
 eMS57" claim, that the two panels' eMS57/MS56 ratios disagree by a factor near 2, the
 exact 117 / 101 / 145 call counts of the three variant tables, and that the 21 named
@@ -45,11 +50,13 @@ from torchcell.datamodels.schema import (
     BackgroundAllele,
     BacterialAssemblySet,
     BacterialGeneNamespace,
+    MeasurementType,
     ReferenceGenome,
     ReleasedIdentifierPerturbation,
     ReleasedKind,
     SampleUnit,
     SequenceVariantPerturbation,
+    SmallMoleculePerturbation,
     StrainBackground,
     StrainReferenceGenome,
     UncertaintyType,
@@ -84,6 +91,58 @@ FIG2F: dict[str, tuple[float, float, float]] = {
     "cspC*/cspCWT": (1.193092236328973, 1.1627038768390179, 1.0976646038935256),
     "yifB*/yifBWT": (0.6154782959906288, 0.7074886092907978, 0.7420058326965318),
 }
+#: The Fig. 2g rows, verbatim from the real sheet: (medium cell, strain, Rep1-Rep3).
+FIG2G: tuple[tuple[str | None, str, tuple[float | str, ...]], ...] = (
+    ("M9", "MG1655", (0.3014083886729206, 0.31200028010069325, "-")),
+    (None, "eMS57", (0.3271973417144539, 0.3161449332680825, 0.29334934084744146)),
+    ("M9 + valine", "MG1655", ("-", "-", "-")),
+    (None, "eMS57", (0.3050925248217111, 0.30163864718222, 0.30877666097050155)),
+    (
+        "M9 + valine + isoleucine",
+        "MG1655",
+        (0.344927246930508, 0.3324932874283402, 0.36495973723955627),
+    ),
+    (None, "eMS57", (0.40893911251574255, 0.360815084072167, 0.39466308493917945)),
+)
+#: The Fig. 1g blocks, verbatim from the real sheet: (label, OD, intra, extra) at 4/6/8 h.
+FIG1G: dict[str, tuple[tuple[float, float, float], ...]] = {
+    "MG1655 Rep 1": (
+        (0.5, 1.124, 1.592),
+        (1.660245183887916, 0.6684283675389994, 0.4499291554092705),
+        (1.8213660245183891, 1.9964973730297721, 2.2591943957968477),
+    ),
+    "MG1655 Rep 2": (
+        (0.417, 1.012, 1.508),
+        (1.549723443661883, 0.7337518949488796, 0.43434432588367006),
+        (1.9089316987740803, 1.9089316987740803, 2.084063047285464),
+    ),
+    "eMS57 Rep1": (
+        (0.415, 0.92, 1.392),
+        (1.852594264975841, 0.6929109875885173, 0.5397366990760313),
+        (1.8213660245183891, 3.134851138353765, 15.218914185639232),
+    ),
+    "eMS57 Rep2": (
+        (0.432, 0.972, 1.396),
+        (1.9215800739443474, 0.8180003315243636, 0.5319175628139444),
+        (1.8213660245183891, 4.010507880910683, 17.23292469352014),
+    ),
+}
+#: The Fig. 3d rows, verbatim from the real sheet.
+FIG3D_RATIOS: dict[str, tuple[float, float, float, float]] = {
+    "NADH/NAD+": (
+        0.01196149447197865,
+        0.01203220005138306,
+        0.004380424261316094,
+        0.0037107556321487626,
+    ),
+    "NADPH/NADP+": (
+        0.00211546335471544,
+        0.007096179288778417,
+        0.020523523784676936,
+        0.021570415588766267,
+    ),
+}
+FIG3D_ATP: tuple[float, ...] = (16.764, 14.423, 17.948, 7.406, 8.826, 10.981)
 
 
 # --------------------------------------------------------------------------- #
@@ -112,6 +171,48 @@ def write_source_data(path: Path) -> Path:
         fig2f.cell(row=4 + offset, column=2, value=label)
         for column, value in enumerate(ratios, start=3):
             fig2f.cell(row=4 + offset, column=column, value=value)
+
+    fig2g = book.create_sheet(ch.SUPPLEMENT_SHEET)
+    fig2g.cell(row=1, column=2, value=ch.SUPPLEMENT_SHEET_TITLE)
+    for column, header in enumerate(ch.SUPPLEMENT_HEADERS, start=2):
+        fig2g.cell(row=3, column=column, value=header)
+    for offset, (medium, strain, cells) in enumerate(FIG2G):
+        if medium is not None:
+            fig2g.cell(row=4 + offset, column=2, value=medium)
+        fig2g.cell(row=4 + offset, column=3, value=strain)
+        for column, cell in enumerate(cells, start=4):
+            fig2g.cell(row=4 + offset, column=column, value=cell)
+
+    fig1g = book.create_sheet(ch.PYRUVATE_SHEET)
+    fig1g.cell(row=1, column=2, value=ch.PYRUVATE_SHEET_TITLE)
+    labels = (ch.PYRUVATE_OD_ROW, *(label for label, _m in ch.PYRUVATE_ROWS))
+    for block, (name, body) in enumerate(FIG1G.items()):
+        top = 3 + 6 * block
+        fig1g.cell(row=top, column=2, value=name)
+        for column, (header, _hours) in enumerate(ch.PYRUVATE_TIMEPOINTS, start=3):
+            fig1g.cell(row=top, column=column, value=header)
+        for offset, (label, row_values) in enumerate(zip(labels, body, strict=True)):
+            fig1g.cell(row=top + 1 + offset, column=2, value=label)
+            for column, value in enumerate(row_values, start=3):
+                fig1g.cell(row=top + 1 + offset, column=column, value=value)
+
+    fig3d = book.create_sheet(ch.COFACTOR_SHEET)
+    fig3d.cell(row=1, column=2, value=ch.COFACTOR_SHEET_TITLE)
+    for column, text in ((2, "Ratio"), (3, "MG1655"), (5, "eMS57")):
+        fig3d.cell(row=3, column=column, value=text)
+    for column, text in enumerate(("Rep1", "Rep2", "Rep1", "Rep2"), start=3):
+        fig3d.cell(row=4, column=column, value=text)
+    for offset, (label, cofactor_ratios) in enumerate(FIG3D_RATIOS.items()):
+        fig3d.cell(row=5 + offset, column=2, value=label)
+        for column, ratio in enumerate(cofactor_ratios, start=3):
+            fig3d.cell(row=5 + offset, column=column, value=ratio)
+    for column, text in ((2, "Concentration"), (3, "MG1655"), (6, "eMS57")):
+        fig3d.cell(row=9, column=column, value=text)
+    for column, text in enumerate(("Rep1", "Rep2", "Rep3") * 2, start=3):
+        fig3d.cell(row=10, column=column, value=text)
+    fig3d.cell(row=11, column=2, value=ch.ATP_ROW)
+    for column, value in enumerate(FIG3D_ATP, start=3):
+        fig3d.cell(row=11, column=column, value=value)
     book.save(path)
     book.close()
     return path
@@ -217,8 +318,17 @@ def test_the_large_deletion_genotype_string_expands_to_the_declared_symbols() ->
 
 
 def test_every_declared_count_and_quote_is_present() -> None:
-    assert ch.GROWTH_EXPECTED_RECORDS == 8
-    assert ch.GROWTH_EXPECTED_REFERENCES == 7
+    # #1175: one record per released set (4 x 3), culture (15 + 14) or cell (24 + 14)
+    assert ch.GROWTH_EXPECTED_RECORDS == 12
+    assert ch.GROWTH_EXPECTED_REFERENCES == 4
+    assert ch.ABSOLUTE_EXPECTED_RECORDS == 29
+    assert ch.ABSOLUTE_EXPECTED_REFERENCES == 5
+    assert ch.ABSOLUTE_EXPECTED_UNPERTURBED == 20
+    assert ch.FIG2G_DASH_CELLS == 4
+    assert ch.METABOLITE_EXPECTED_RECORDS == 38
+    assert ch.METABOLITE_EXPECTED_REFERENCES == 18
+    assert ch.FIG1G_OD_CELLS == 12
+    assert len(ch.METABOLITE_PROTOCOLS) == 5
     assert ch.TF_EXPECTED_RECORDS == 2
     assert ch.KEIO_PANEL_STRAINS == 62
     assert [fitness for _, fitness in ch.KEIO_FITNESS] == [0.724, 0.698]
@@ -302,6 +412,33 @@ def test_the_two_environments_differ_only_in_what_the_paper_states() -> None:
     assert growth.media == keio.media
 
 
+def test_a_supplemented_medium_adds_each_amino_acid_at_the_methods_dose() -> None:
+    """Fig. 2g: M9 is the Fig. 2c environment; valine and isoleucine are 0.15 mM edits."""
+    assert ch.supplemented_environment(ch.BASE_MEDIUM_LABEL) == ch.growth_environment()
+    both = ch.supplemented_environment(ch.VALINE_ISOLEUCINE_LABEL)
+    assert both.media == ch.growth_environment().media
+    assert [
+        (p.compound.name, p.concentration.value, str(p.concentration.unit))
+        for p in both.perturbations
+        if isinstance(p, SmallMoleculePerturbation)
+    ] == [("L-valine", 0.15, "mM"), ("L-isoleucine", 0.15, "mM")]
+    assert len(ch.supplemented_environment(ch.VALINE_LABEL).perturbations) == 1
+    assert ch.SOURCED_VALUES["supplement_mm"].value == 0.15
+
+
+def test_the_metabolite_environments_state_the_assay_and_gap_the_rest() -> None:
+    """Fig. 1g: 37 C and the sampling hour; Fig. 3d: no temperature is stated."""
+    four = ch.pyruvate_environment(4.0)
+    assert four.temperature is not None and four.temperature.value == 37.0
+    assert four.duration_hours == 4.0
+    assert four.gapped_fields() == {"aerobicity"}
+    assert four != ch.pyruvate_environment(8.0)
+    cofactor = ch.cofactor_environment()
+    assert cofactor.temperature is None
+    assert cofactor.gapped_fields() == {"temperature", "aerobicity"}
+    assert cofactor.media == ch.growth_environment().media
+
+
 # --------------------------------------------------------------------------- #
 # Reading the Source Data workbook
 # --------------------------------------------------------------------------- #
@@ -365,6 +502,123 @@ def test_read_reconstruction_ratios_reads_the_refused_panel(source_data: Path) -
     ratios = ch.read_reconstruction_ratios(str(source_data))
     assert list(ratios) == list(ch.RATIO_ROW_ORDER)
     assert ratios["cspC*/cspCWT"] == pytest.approx(FIG2F["cspC*/cspCWT"])
+
+
+def test_read_supplement_panel_reads_every_number_and_every_dash(
+    source_data: Path,
+) -> None:
+    panel = ch.read_supplement_panel(str(source_data))
+    assert len(panel.rates) == 14
+    assert [(d.medium, d.strain, d.replicate_id) for d in panel.dashes] == [
+        ("M9", "MG1655", "Rep3"),
+        ("M9 + valine", "MG1655", "Rep1"),
+        ("M9 + valine", "MG1655", "Rep2"),
+        ("M9 + valine", "MG1655", "Rep3"),
+    ]
+    # the blank medium cell carries the block's medium down to the eMS57 row
+    assert {c.medium for c in panel.rates if c.strain == "eMS57"} == {
+        "M9",
+        "M9 + valine",
+        "M9 + valine + isoleucine",
+    }
+    assert panel.base_rates("MG1655") == pytest.approx(FIG2G[0][2][:2], abs=1e-12)
+    assert panel.base_rates("eMS57") == pytest.approx(FIG2G[1][2], abs=1e-12)
+
+
+def test_read_supplement_panel_refuses_a_cell_that_is_neither_number_nor_dash(
+    tmp_path: Path, source_data: Path
+) -> None:
+    book = openpyxl.load_workbook(source_data)
+    book[ch.SUPPLEMENT_SHEET].cell(row=4, column=6, value="n.d.")
+    path = tmp_path / "bad.xlsx"
+    book.save(path)
+    book.close()
+    with pytest.raises(ch.TableFormatError, match="neither a number"):
+        ch.read_supplement_panel(str(path))
+
+
+def test_read_supplement_panel_refuses_a_reordered_block(
+    tmp_path: Path, source_data: Path
+) -> None:
+    book = openpyxl.load_workbook(source_data)
+    sheet = book[ch.SUPPLEMENT_SHEET]
+    sheet.cell(row=4, column=3, value="eMS57")
+    sheet.cell(row=5, column=3, value="MG1655")
+    path = tmp_path / "swapped.xlsx"
+    book.save(path)
+    book.close()
+    with pytest.raises(ch.TableFormatError, match="row order"):
+        ch.read_supplement_panel(str(path))
+
+
+def test_read_pyruvate_panel_reads_two_rows_per_block_and_counts_the_od_cells(
+    source_data: Path,
+) -> None:
+    values, od_cells = ch.read_pyruvate_panel(str(source_data))
+    assert od_cells == 12
+    assert len(values) == 24
+    assert [v.replicate_id for v in values[::6]] == list(ch.PYRUVATE_BLOCK_LABELS)
+    first = values[0]
+    assert (first.strain, first.hours, first.metabolite) == ("MG1655", 4.0, "pyruvate")
+    assert first.value == pytest.approx(FIG1G["MG1655 Rep 1"][1][0], abs=1e-12)
+    assert first.measurement_type == "intracellular_pyruvate_umol_per_1e9_cells"
+    assert values[5].measurement_type == "extracellular_pyruvate_uM"
+    assert values[5].value == pytest.approx(FIG1G["MG1655 Rep 1"][2][2], abs=1e-12)
+
+
+def test_read_pyruvate_panel_refuses_a_moved_row(
+    tmp_path: Path, source_data: Path
+) -> None:
+    book = openpyxl.load_workbook(source_data)
+    book[ch.PYRUVATE_SHEET].cell(row=4, column=2, value="OD")
+    path = tmp_path / "moved.xlsx"
+    book.save(path)
+    book.close()
+    with pytest.raises(ch.TableFormatError, match="out of order"):
+        ch.read_pyruvate_panel(str(path))
+
+
+def test_read_cofactor_panel_reads_each_block_by_its_own_header(
+    source_data: Path,
+) -> None:
+    values = ch.read_cofactor_panel(str(source_data))
+    assert len(values) == 14
+    counts: dict[tuple[str, str], int] = {}
+    for v in values:
+        counts[(v.measurement_type, v.strain)] = (
+            counts.get((v.measurement_type, v.strain), 0) + 1
+        )
+    assert counts == {
+        ("intracellular_nadh_to_nad_ratio", "MG1655"): 2,
+        ("intracellular_nadh_to_nad_ratio", "eMS57"): 2,
+        ("intracellular_nadph_to_nadp_ratio", "MG1655"): 2,
+        ("intracellular_nadph_to_nadp_ratio", "eMS57"): 2,
+        ("intracellular_atp_nmol_per_1e9_cells", "MG1655"): 3,
+        ("intracellular_atp_nmol_per_1e9_cells", "eMS57"): 3,
+    }
+    atp = [v for v in values if v.metabolite == "ATP"]
+    assert [(v.strain, v.replicate_id, v.value) for v in atp][3] == (
+        "eMS57",
+        "Rep1",
+        7.406,
+    )
+    folds = ch.check_cofactor_fold_changes(values)
+    assert folds["measured_nadh_fold_lower"] == pytest.approx(2.9654, abs=1e-4)
+    assert folds["measured_nadph_fold_higher"] == pytest.approx(4.5696, abs=1e-4)
+
+
+def test_check_cofactor_fold_changes_refuses_a_swapped_strain_block(
+    source_data: Path,
+) -> None:
+    values = ch.read_cofactor_panel(str(source_data))
+    swapped = [
+        v.model_copy(update={"strain": "eMS57" if v.strain == "MG1655" else "MG1655"})
+        if v.measurement_type == "intracellular_nadh_to_nad_ratio"
+        else v
+        for v in values
+    ]
+    with pytest.raises(ch.TableFormatError, match="from the stated 3.0"):
+        ch.check_cofactor_fold_changes(swapped)
 
 
 def test_read_reconstruction_ratios_refuses_a_reordered_sheet(
@@ -583,34 +837,103 @@ def test_check_deleted_region_reports_a_missing_gene_feature() -> None:
 # --------------------------------------------------------------------------- #
 # Records
 # --------------------------------------------------------------------------- #
-def test_fitness_phenotype_is_the_ratio_to_the_isogenic_parent(
-    source_data: Path,
-) -> None:
-    panel = ch.read_growth_panel(str(source_data))
-    parent = panel.rates("MS56")
-    phenotype = ch.fitness_phenotype(panel.rates("ΔrpoS"), parent)
-    assert phenotype.fitness == pytest.approx(
-        statistics.fmean(FIG2C["ΔrpoS"]) / statistics.fmean(FIG2C["MS56"])
-    )
-    assert phenotype.fitness_uncertainty == pytest.approx(
-        statistics.stdev(FIG2C["ΔrpoS"]) / statistics.fmean(FIG2C["MS56"])
-    )
-    assert phenotype.fitness_uncertainty_type is UncertaintyType.sample_sd
-    assert phenotype.n_samples == 3
+def _gap_reasons(phenotype: Any) -> dict[str, ProvenanceGapReason]:
+    return {gap.field: gap.reason for gap in phenotype.provenance_gaps}
+
+
+def test_released_ratio_phenotype_is_one_set_verbatim() -> None:
+    """#1175: one Fig. 2f set is one record, its ratio as the sheet prints it."""
+    ratio = FIG2F["yifB*/yifBWT"][1]
+    phenotype = ch.released_ratio_phenotype(ratio, "Set2")
+    assert phenotype.fitness == ratio
+    assert (phenotype.n_samples, phenotype.replicate_id) == (1, "Set2")
     assert phenotype.sample_unit is SampleUnit.biological_replicate
-    # the stored SE carries the parent's spread too, so it is never the optimistic one
-    assert phenotype.fitness_se is not None
-    assert phenotype.fitness_uncertainty is not None
-    assert phenotype.fitness_se > phenotype.fitness_uncertainty / math.sqrt(3)
+    assert (phenotype.fitness_se, phenotype.fitness_uncertainty) == (None, None)
+    assert phenotype.fitness_uncertainty_type is None
+    single = ProvenanceGapReason.not_applicable_single_measurement
+    assert _gap_reasons(phenotype) == {
+        "fitness_se": single,
+        "fitness_uncertainty": single,
+        "fitness_uncertainty_type": single,
+    }
+    with pytest.raises(ch.TableFormatError, match="non-finite"):
+        ch.released_ratio_phenotype(math.nan, "Set1")
 
 
-def test_parent_phenotype_is_identically_one(source_data: Path) -> None:
-    panel = ch.read_growth_panel(str(source_data))
-    phenotype = ch.parent_phenotype(panel.rates("MS56"))
-    assert phenotype.fitness == 1.0
-    assert phenotype.fitness_uncertainty == pytest.approx(
-        statistics.stdev(FIG2C["MS56"]) / statistics.fmean(FIG2C["MS56"])
+def test_culture_rate_phenotype_is_one_culture_verbatim() -> None:
+    """#1175: one Fig. 2c culture is one absolute rate, never divided by a parent mean."""
+    phenotype = ch.culture_rate_phenotype(FIG2C["ΔrpoS"][2], "Rep3", "Fig2c")
+    assert phenotype.measurement_type is MeasurementType.growth_rate
+    assert phenotype.environment_response == 0.3897
+    assert (phenotype.n_samples, phenotype.replicate_id, phenotype.screen_id) == (
+        1,
+        "Rep3",
+        "Fig2c",
     )
+    assert phenotype.environment_response_uncertainty is None
+    reasons = _gap_reasons(phenotype)
+    assert reasons.pop("assay_type") is ProvenanceGapReason.not_reported_by_primary
+    assert set(reasons.values()) == {
+        ProvenanceGapReason.not_applicable_single_measurement
+    }
+    assert set(reasons) == {
+        "environment_response_se",
+        "environment_response_uncertainty",
+        "environment_response_uncertainty_type",
+    }
+    with pytest.raises(ch.TableFormatError, match="non-finite"):
+        ch.culture_rate_phenotype(math.inf, "Rep1", "Fig2c")
+
+
+def test_culture_reference_phenotype_states_the_aggregate() -> None:
+    """The reference is the only aggregate: mean, sample SD, n, no replicate_id."""
+    reference = ch.culture_reference_phenotype(FIG2C["MS56"], "Fig2c")
+    assert reference.environment_response == pytest.approx(
+        statistics.fmean(FIG2C["MS56"])
+    )
+    assert reference.environment_response_uncertainty == pytest.approx(
+        statistics.stdev(FIG2C["MS56"])
+    )
+    assert reference.environment_response_uncertainty_type is UncertaintyType.sample_sd
+    assert (reference.n_samples, reference.replicate_id) == (3, None)
+    assert reference.environment_response_se == pytest.approx(
+        statistics.stdev(FIG2C["MS56"]) / math.sqrt(3)
+    )
+    with pytest.raises(ch.TableFormatError, match="two cultures"):
+        ch.culture_reference_phenotype((0.3,), "Fig2g")
+
+
+def test_metabolite_phenotypes_are_one_cell_and_its_strain_summary() -> None:
+    values = [
+        ch.MetaboliteValue(
+            sheet=ch.COFACTOR_SHEET,
+            strain="MG1655",
+            replicate_id=f"Rep{i}",
+            measurement_type=ch.ATP_MEASUREMENT_TYPE,
+            metabolite=ch.ATP_KEY,
+            value=value,
+        )
+        for i, value in enumerate(FIG3D_ATP[:3], start=1)
+    ]
+    record = ch.metabolite_value_phenotype(values[0])
+    assert record.metabolite_level == {"ATP": 16.764}
+    assert record.n_replicates == {"ATP": 1}
+    assert (record.replicate_id, record.metabolite_level_se) == ("Rep1", None)
+    assert _gap_reasons(record) == {
+        "metabolite_level_se": ProvenanceGapReason.not_applicable_single_measurement
+    }
+    reference = ch.metabolite_reference_phenotype(values)
+    assert reference.metabolite_level["ATP"] == pytest.approx(
+        statistics.fmean(FIG3D_ATP[:3])
+    )
+    assert reference.metabolite_level_se is not None
+    assert reference.metabolite_level_se["ATP"] == pytest.approx(
+        statistics.stdev(FIG3D_ATP[:3]) / math.sqrt(3)
+    )
+    assert (reference.n_replicates, reference.replicate_id) == ({"ATP": 3}, None)
+    assert reference.measurement_type == ch.ATP_MEASUREMENT_TYPE
+    with pytest.raises(ch.TableFormatError, match="two cultures"):
+        ch.metabolite_reference_phenotype(values[:1])
 
 
 def test_keio_phenotype_carries_the_ratio_and_no_invented_statistics() -> None:
@@ -742,17 +1065,7 @@ def test_control_background_names_the_kan_marked_wild_type_allele_strain() -> No
     )
 
 
-def test_reconstruction_phenotype_is_the_mean_and_sample_sd_of_the_released_ratios() -> (
-    None
-):
-    ratios = FIG2F["yifB*/yifBWT"]
-    phenotype = ch.reconstruction_phenotype(ratios)
-    assert phenotype.fitness == pytest.approx(statistics.fmean(ratios))
-    assert phenotype.fitness == pytest.approx(0.688324, abs=1e-6)
-    assert phenotype.fitness_uncertainty == pytest.approx(statistics.stdev(ratios))
-    assert phenotype.fitness_uncertainty_type is UncertaintyType.sample_sd
-    assert phenotype.n_samples == 3
-    assert phenotype.sample_unit is SampleUnit.biological_replicate
+def test_control_phenotype_is_the_released_ratios_denominator() -> None:
     control = ch.control_phenotype()
     assert (control.fitness, control.n_samples, control.fitness_uncertainty) == (
         1.0,
@@ -898,7 +1211,14 @@ def test_download_links_the_mirror_and_refuses_an_absent_file(
         dataset.download()
 
 
-def test_process_builds_the_deletion_and_reconstructed_allele_records(
+def _group_means(items: list[dict[str, Any]], value: Any, key: Any) -> dict[Any, float]:
+    groups: dict[Any, list[float]] = {}
+    for item in items:
+        groups.setdefault(key(item), []).append(value(item))
+    return {k: statistics.fmean(v) for k, v in groups.items()}
+
+
+def test_process_builds_one_record_per_released_fig2f_set(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _deposit(tmp_path, monkeypatch)
@@ -909,91 +1229,75 @@ def test_process_builds_the_deletion_and_reconstructed_allele_records(
     )
     root = tmp_path / "growth_rate_choe2019"
     dataset = ch.GrowthRateChoe2019Dataset(root=str(root))
-    assert len(dataset) == ch.GROWTH_EXPECTED_RECORDS
-    # every gene is stored under its released symbol (#1045 part 2)
-    assert dataset.gene_set == set(ch.LARGE_DELETION_SYMBOLS) | {"ilvN", "cspC", "yifB"}
+    assert len(dataset) == ch.GROWTH_EXPECTED_RECORDS == 12
+    # the designed deletions moved to the absolute class; only the alleles remain
+    assert dataset.gene_set == {"ilvN", "cspC", "yifB"}
 
     items = [dataset.transform_item(dataset[i]) for i in range(len(dataset))]
-    assert sorted(len(i["experiment"].genotype.perturbations) for i in items) == [
-        0,
-        0,
-        0,
-        1,
-        1,
-        1,
-        1,
-        21,
-    ]
+    assert sorted(len(i["experiment"].genotype.perturbations) for i in items) == (
+        [0] * 3 + [1] * 9
+    )
     assert {i["publication"].doi for i in items} == {ch.PAPER_DOI}
     assert {i["reference"].phenotype_reference.fitness for i in items} == {1.0}
+    phenotypes = [i["experiment"].phenotype for i in items]
+    assert {p.n_samples for p in phenotypes} == {1}
+    assert sorted(p.replicate_id for p in phenotypes) == sorted(
+        ["Set1", "Set2", "Set3"] * 4
+    )
+    assert {p.fitness_uncertainty for p in phenotypes} == {None}
     by_reference = {
         i["reference"].genome_reference.strain: i["reference"].genome_reference
         for i in items
     }
-    assert sorted(by_reference) == ["MS56", "cspCWT", "eMS57", "ilvNWT", "yifBWT"]
-    assert {
-        strain: genome.background.genotype_statement
-        for strain, genome in by_reference.items()
-    } == {
-        "MS56": ch.MS56_GENOTYPE_STATEMENT,
-        "eMS57": "E. coli MS56 adaptively evolved in M9 glucosemedium",
-        "ilvNWT": "MS56, ilvN::ilvN-kan",
-        "cspCWT": "MS56, cspC::cspC-kan",
-        "yifBWT": "MS56, yifB::yifB-kanR",
-    }
-    assert {len(g.background.alleles) for g in by_reference.values()} == {0}
+    assert sorted(by_reference) == ["cspCWT", "eMS57", "ilvNWT", "yifBWT"]
     assert by_reference["eMS57"].background.parents == ["MS56"]
-    edited = [i for i in items if i["experiment"].genotype.perturbations]
-    deletions = [i for i in edited if i["reference"].genome_reference.strain == "MS56"]
-    # both designed deletions grow FASTER than the reduced parent, so fitness > 1
-    assert all(i["experiment"].phenotype.fitness > 1.0 for i in deletions)
-    alleles = {
-        i["experiment"].genotype.perturbations[0].strain_label: i[
-            "experiment"
-        ].phenotype
-        for i in edited
-        if i["reference"].genome_reference.strain != "MS56"
-    }
-    assert {k: round(v.fitness, 6) for k, v in alleles.items()} == {
-        "ilvNmut": round(statistics.fmean(FIG2F["ilvN*/ilvNWT"]), 6),
-        "cspCmut": round(statistics.fmean(FIG2F["cspC*/cspCWT"]), 6),
-        "yifBmut": round(statistics.fmean(FIG2F["yifB*/yifBWT"]), 6),
-    }
-    assert {v.n_samples for v in alleles.values()} == {3}
-    # #1045 part 3: MS56 over MG1655, and eMS57 over MS56 once per panel, each on its
-    # named background with an empty genotype
-    unedited = {
+    assert {len(g.background.alleles) for g in by_reference.values()} == {0}
+    # every released set is stored verbatim, and the mean over a strain's three sets
+    # reproduces the aggregate the class stored before #1175 exactly
+    stored = {
         (
             i["reference"].genome_reference.strain,
-            i["experiment"].phenotype.screen_id,
+            i["experiment"].phenotype.replicate_id,
         ): i["experiment"].phenotype.fitness
         for i in items
-        if not i["experiment"].genotype.perturbations
     }
-    mean = statistics.fmean
-    assert unedited == pytest.approx(
+    for allele in ch.RECONSTRUCTED_ALLELES:
+        for set_label, value in zip(
+            ("Set1", "Set2", "Set3"), FIG2F[allele.ratio_label], strict=True
+        ):
+            assert stored[(allele.control_strain, set_label)] == pytest.approx(
+                value, abs=1e-12
+            )
+    means = _group_means(
+        items,
+        lambda i: i["experiment"].phenotype.fitness,
+        lambda i: i["reference"].genome_reference.strain,
+    )
+    assert means == pytest.approx(
         {
-            ("MS56", None): mean(FIG2C["MS56"]) / mean(FIG2C["MG1655"]),
-            ("eMS57", "Fig2c"): mean(FIG2C["eMS57"]) / mean(FIG2C["MS56"]),
-            ("eMS57", "Fig2f"): mean(FIG2F["eMS57/MS56"]),
-        }
+            "eMS57": statistics.fmean(FIG2F["eMS57/MS56"]),
+            "ilvNWT": statistics.fmean(FIG2F["ilvN*/ilvNWT"]),
+            "cspCWT": statistics.fmean(FIG2F["cspC*/cspCWT"]),
+            "yifBWT": statistics.fmean(FIG2F["yifB*/yifBWT"]),
+        },
+        abs=1e-12,
     )
     assert {i["experiment"].environment.temperature for i in items} == {None}
     dataset.close_lmdb()
 
     preprocess = Path(dataset.preprocess_dir)
     ledger = json.loads((preprocess / "dropped_records.json").read_text())
-    assert ledger["source_rows"] == 9
-    assert ledger["kept_records"] == ch.GROWTH_EXPECTED_RECORDS
-    # nothing is dropped since #1045 part 3; MG1655 is MS56's reference
+    assert (ledger["source_rows"], ledger["source_values"]) == (4, 12)
+    assert ledger["kept_records"] == 12
+    assert ledger["stored_by_replicate"] == {"Set1": 4, "Set2": 4, "Set3": 4}
     assert ledger["dropped_records"] == 0
     assert ledger["rules"] == []
-    assert ledger["reference_rows"] == ["MG1655", "MS56", "ilvNWT", "cspCWT", "yifBWT"]
+    assert ledger["reference_rows"] == ["ilvNWT", "cspCWT", "yifBWT"]
     assert {rule["reason"] for rule in ledger["retired_rules"]} == {
         "evolved_clone_has_no_writable_genotype",
-        "parent_genotype_not_enumerated_by_this_paper",
+        "loader_mean_over_released_sets",
+        "fig2c_rates_as_parent_relative_fitness",
     }
-    assert any("ilvN*/ilvNWT" in note for note in ledger["notes"])
 
     variants = json.loads((preprocess / "called_variants.json").read_text())
     assert variants["carrier"] is None
@@ -1011,29 +1315,206 @@ def test_process_builds_the_deletion_and_reconstructed_allele_records(
     checks = json.loads((preprocess / "released_statistics_check.json").read_text())
     assert checks["recovery_fraction"]["stated_recovery_fraction_of_evolved"] == 0.80
     assert checks["panel_disagreement"]["factor"] == pytest.approx(2.013, abs=1e-3)
-    # the region cross-check is a verification finding now, not a build check
-    assert "deleted_region" not in checks
 
     sourced = json.loads((preprocess / "sourced_values.json").read_text())
     assert sourced["cassette"]["value"] == ch.KAN_CASSETTE
     strains = pd.read_csv(preprocess / "strains.csv")
-    assert sorted(strains["deleted_genes"].dropna()) == [1, 21]
-    assert list(strains["strain"].iloc[2:5]) == ["ilvNmut", "cspCmut", "yifBmut"]
-    assert list(strains["strain"].iloc[5:]) == ["MS56", "eMS57", "eMS57/MS56"]
+    assert list(strains["strain"].iloc[::3]) == [
+        "eMS57",
+        "ilvNmut",
+        "cspCmut",
+        "yifBmut",
+    ]
     assert (preprocess / "build_manifest.json").exists()
 
     report = ch.verify_growth_build(
         str(root),
         genome=FakeGenome(MG1655_TAGS, MG1655_ASSEMBLY),  # type: ignore[arg-type]
     )
-    # a released gene symbol is not a locus of the pinned annotation; the rules that
-    # say so report and never gate (#1057)
+    failed = {r.name for r in report.results if not r.passed}
+    assert failed <= GENOME_REFERENCE_RULES, failed
+    assert report.passed
+    assert (preprocess / "verification_report.json").exists()
+
+
+def test_process_builds_one_absolute_record_per_released_culture(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _deposit(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        ch,
+        "assembly_reference",
+        _reference_genome("MG1655", MG1655_ASSEMBLY, "GCA_000005845.2"),
+    )
+    root = tmp_path / "absolute_growth_rate_choe2019"
+    dataset = ch.AbsoluteGrowthRateChoe2019Dataset(root=str(root))
+    assert len(dataset) == ch.ABSOLUTE_EXPECTED_RECORDS == 29
+    assert dataset.gene_set == set(ch.LARGE_DELETION_SYMBOLS)
+
+    items = [dataset.transform_item(dataset[i]) for i in range(len(dataset))]
+    phenotypes = [i["experiment"].phenotype for i in items]
+    assert {p.measurement_type for p in phenotypes} == {MeasurementType.growth_rate}
+    assert {p.n_samples for p in phenotypes} == {1}
+    counts: dict[tuple[str | None, str | None], int] = {}
+    for p in phenotypes:
+        counts[(p.screen_id, p.replicate_id)] = (
+            counts.get((p.screen_id, p.replicate_id), 0) + 1
+        )
+    assert counts == {
+        ("Fig2c", "Rep1"): 5,
+        ("Fig2c", "Rep2"): 5,
+        ("Fig2c", "Rep3"): 5,
+        ("Fig2g", "Rep1"): 5,
+        ("Fig2g", "Rep2"): 5,
+        ("Fig2g", "Rep3"): 4,
+    }
+    assert sum(1 for i in items if not i["experiment"].environment.perturbations) == 20
+    assert sorted(len(i["experiment"].genotype.perturbations) for i in items)[-6:] == (
+        [1] * 3 + [21] * 3
+    )
+
+    def label(item: dict[str, Any]) -> tuple[Any, ...]:
+        experiment = item["experiment"]
+        return (
+            experiment.phenotype.screen_id,
+            item["reference"].genome_reference.strain,
+            len(experiment.genotype.perturbations),
+            tuple(p.compound.name for p in experiment.environment.perturbations),
+        )
+
+    means = _group_means(
+        items, lambda i: i["experiment"].phenotype.environment_response, label
+    )
+    mean = statistics.fmean
+    # the Fig. 2c ratios the class stored before #1175 are ratios of these means
+    assert means[("Fig2c", "MS56", 21, ())] / means[("Fig2c", "MS56", 0, ())] == (
+        pytest.approx(mean(FIG2C["Δ21 kb"]) / mean(FIG2C["MS56"]))
+    )
+    assert means[("Fig2c", "MS56", 0, ())] / means[("Fig2c", "MG1655", 0, ())] == (
+        pytest.approx(0.30945, abs=1e-5)
+    )
+    assert means[("Fig2c", "eMS57", 0, ())] == pytest.approx(mean(FIG2C["eMS57"]))
+    assert means[("Fig2g", "MG1655", 0, ())] == pytest.approx(
+        mean(float(v) for v in FIG2G[0][2][:2])
+    )
+    assert means[("Fig2g", "eMS57", 0, ("L-valine",))] == pytest.approx(
+        mean(float(v) for v in FIG2G[3][2])
+    )
+    # each reference is the background strain's own cultures in the panel's M9
+    references = {
+        (
+            i["experiment"].phenotype.screen_id,
+            i["reference"].genome_reference.strain,
+        ): i["reference"].phenotype_reference
+        for i in items
+    }
+    assert sorted(references) == [
+        ("Fig2c", "MG1655"),
+        ("Fig2c", "MS56"),
+        ("Fig2c", "eMS57"),
+        ("Fig2g", "MG1655"),
+        ("Fig2g", "eMS57"),
+    ]
+    assert references[("Fig2c", "MS56")].environment_response == pytest.approx(
+        mean(FIG2C["MS56"])
+    )
+    assert references[("Fig2g", "MG1655")].n_samples == 2
+    assert {r.replicate_id for r in references.values()} == {None}
+    assert {
+        i["reference"].environment_reference.perturbations == [] for i in items
+    } == {True}
+    dataset.close_lmdb()
+
+    preprocess = Path(dataset.preprocess_dir)
+    ledger = json.loads((preprocess / "dropped_records.json").read_text())
+    assert ledger["source_cells"] == {"Fig2c": 15, "Fig2g": 18}
+    assert ledger["stored_by_panel"] == {"Fig2c": 15, "Fig2g": 14}
+    assert ledger["stored_by_replicate"] == {"Rep1": 10, "Rep2": 10, "Rep3": 9}
+    assert ledger["dropped_records"] == 0
+    assert len(ledger["unreleased_cells"]) == 4
+    cultures = pd.read_csv(preprocess / "cultures.csv")
+    assert len(cultures) == 29
+
+    report = ch.verify_absolute_growth_build(
+        str(root),
+        genome=FakeGenome(MG1655_TAGS, MG1655_ASSEMBLY),  # type: ignore[arg-type]
+    )
     failed = {r.name for r in report.results if not r.passed}
     assert failed <= GENOME_REFERENCE_RULES, failed
     assert report.passed
     (region,) = [r for r in report.results if r.name == ch.DELETED_REGION_RULE]
     assert region.passed and region.details["genes_inside_window"] == 21
-    assert (preprocess / "verification_report.json").exists()
+
+
+def test_process_builds_one_metabolite_record_per_released_cell(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _deposit(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        ch,
+        "assembly_reference",
+        _reference_genome("MG1655", MG1655_ASSEMBLY, "GCA_000005845.2"),
+    )
+    root = tmp_path / "metabolite_choe2019"
+    dataset = ch.MetaboliteChoe2019Dataset(root=str(root))
+    assert len(dataset) == ch.METABOLITE_EXPECTED_RECORDS == 38
+    assert dataset.gene_set == set()
+
+    items = [dataset.transform_item(dataset[i]) for i in range(len(dataset))]
+    assert {len(i["experiment"].genotype.perturbations) for i in items} == {0}
+    phenotypes = [i["experiment"].phenotype for i in items]
+    assert {tuple(p.n_replicates.values()) for p in phenotypes} == {(1,)}
+    by_type: dict[str, int] = {}
+    for p in phenotypes:
+        by_type[p.measurement_type] = by_type.get(p.measurement_type, 0) + 1
+    assert by_type == {
+        "intracellular_pyruvate_umol_per_1e9_cells": 12,
+        "extracellular_pyruvate_uM": 12,
+        "intracellular_nadh_to_nad_ratio": 4,
+        "intracellular_nadph_to_nadp_ratio": 4,
+        "intracellular_atp_nmol_per_1e9_cells": 6,
+    }
+    hours = sorted(
+        {
+            i["experiment"].environment.duration_hours
+            for i in items
+            if i["experiment"].environment.duration_hours is not None
+        }
+    )
+    assert hours == [4.0, 6.0, 8.0]
+    for item in items:
+        reference = item["reference"].phenotype_reference
+        assert (
+            reference.measurement_type == item["experiment"].phenotype.measurement_type
+        )
+        assert reference.replicate_id is None
+        assert item["reference"].environment_reference == item["experiment"].environment
+    # the reference of each record is its strain's mean at the same condition
+    extra_8h = [
+        i
+        for i in items
+        if i["experiment"].phenotype.measurement_type == "extracellular_pyruvate_uM"
+        and i["experiment"].environment.duration_hours == 8.0
+        and i["reference"].genome_reference.strain == "eMS57"
+    ]
+    assert len(extra_8h) == 2
+    assert extra_8h[0]["reference"].phenotype_reference.metabolite_level[
+        "pyruvate"
+    ] == pytest.approx(
+        statistics.fmean([FIG1G["eMS57 Rep1"][2][2], FIG1G["eMS57 Rep2"][2][2]])
+    )
+    dataset.close_lmdb()
+
+    preprocess = Path(dataset.preprocess_dir)
+    ledger = json.loads((preprocess / "dropped_records.json").read_text())
+    assert ledger["source_cells"] == {"Fig1g": 36, "Fig3d": 14}
+    assert ledger["kept_records"] == 38
+    assert ledger["not_records"][0]["cells"] == 12
+    checks = json.loads((preprocess / "released_statistics_check.json").read_text())
+    assert checks["cofactor_fold_changes"]["stated_nadph_fold_higher"] == 4.5
+
+    report = ch.verify_metabolite_build(str(root))
+    assert report.passed, report.summary()
 
 
 def test_process_builds_the_two_keio_records(
@@ -1137,11 +1618,19 @@ def test_growth_process_refuses_a_record_count_the_module_does_not_state(
     monkeypatch.setattr(ch, "GROWTH_EXPECTED_RECORDS", 3)
     with pytest.raises(RuntimeError, match="the module states 3"):
         ch.GrowthRateChoe2019Dataset(root=str(tmp_path / "growth_short"))
+    monkeypatch.setattr(ch, "ABSOLUTE_EXPECTED_RECORDS", 30)
+    with pytest.raises(RuntimeError, match="the module states 30"):
+        ch.AbsoluteGrowthRateChoe2019Dataset(root=str(tmp_path / "absolute_short"))
+    monkeypatch.setattr(ch, "FIG1G_OD_CELLS", 11)
+    with pytest.raises(ch.TableFormatError, match="the module states 11"):
+        ch.MetaboliteChoe2019Dataset(root=str(tmp_path / "metabolite_short"))
 
 
 def test_create_experiment_is_not_the_entry_point() -> None:
     for klass in (
         ch.GrowthRateChoe2019Dataset,
+        ch.AbsoluteGrowthRateChoe2019Dataset,
+        ch.MetaboliteChoe2019Dataset,
         ch.TranscriptionFactorKnockoutChoe2019Dataset,
     ):
         dataset = klass.__new__(klass)
@@ -1176,6 +1665,43 @@ def test_real_fig2c_releases_the_five_strain_means() -> None:
         "ΔrpoS": 0.409,
     }
     assert {row.n_samples for row in panel.rows} == {3}
+
+
+@pytest.mark.data
+def test_real_release_cell_counts_per_replicate_position() -> None:
+    """#1175: every released value the four record sets are made of, counted per column."""
+    path = _real(ch.SOURCE_DATA.name)
+    panel = ch.read_growth_panel(path)
+    assert sum(row.n_samples for row in panel.rows) == 15
+    assert {label for row in panel.rows for label, _v in row.labelled} == {
+        "Rep1",
+        "Rep2",
+        "Rep3",
+    }
+    ratios = ch.read_reconstruction_ratios(path)
+    assert {label: len(values) for label, values in ratios.items()} == {
+        label: 3 for label in ch.RATIO_ROW_ORDER
+    }
+    supplement = ch.read_supplement_panel(path)
+    per_column: dict[str, int] = {}
+    for cell in supplement.rates:
+        per_column[cell.replicate_id] = per_column.get(cell.replicate_id, 0) + 1
+    assert per_column == {"Rep1": 5, "Rep2": 5, "Rep3": 4}
+    assert len(supplement.dashes) == ch.FIG2G_DASH_CELLS
+    pyruvate, od_cells = ch.read_pyruvate_panel(path)
+    assert (len(pyruvate), od_cells) == (24, 12)
+    assert {v.replicate_id for v in pyruvate} == set(ch.PYRUVATE_BLOCK_LABELS)
+    cofactors = ch.read_cofactor_panel(path)
+    assert len(cofactors) == 14
+    assert sorted({v.replicate_id for v in cofactors}) == ["Rep1", "Rep2", "Rep3"]
+    folds = ch.check_cofactor_fold_changes(cofactors)
+    assert folds["measured_nadh_fold_lower"] == pytest.approx(2.9654, abs=1e-4)
+    assert folds["measured_nadph_fold_higher"] == pytest.approx(4.5696, abs=1e-4)
+    assert (
+        15 + 14 == ch.ABSOLUTE_EXPECTED_RECORDS
+        and 12 == ch.GROWTH_EXPECTED_RECORDS
+        and 24 + 14 == ch.METABOLITE_EXPECTED_RECORDS
+    )
 
 
 @pytest.mark.data

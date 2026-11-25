@@ -8,20 +8,43 @@ Choe et al. 2019 (Nat Commun 10:935, doi:10.1038/s41467-019-08888-6) evolved the
 genome-reduced *E. coli* MS56 for 807 generations in M9 glucose, resequenced the
 population at 20 timepoints, isolated the clone eMS57, and profiled it against MG1655 by
 RNA-seq, Ribo-seq, ChIP-seq, a Biolog phenotype microarray and intracellular metabolites.
-Two dataset classes serve what is BOTH released as a number AND keyed to a strain whose
-genotype this schema can write:
+Four dataset classes serve what is BOTH released as a number AND keyed to a strain
+whose genotype this schema can write:
 
-- :class:`GrowthRateChoe2019Dataset` -- ``FitnessExperiment``, eight records:
-  ``MS56 Delta21kb`` (21 gene deletions) and ``MS56 DeltarpoS`` (one), each against their
-  isogenic parent MS56, from the Fig. 2c sheet of the Source Data workbook; since #1057
-  the three reconstructed single-allele strains of the Fig. 2f sheet (``cspCmut``,
-  ``ilvNmut``, ``yifBmut``), each against its own kan-marked wild-type-allele control;
-  and since #1045 part 3 MS56 over MG1655 (Fig. 2c) and the evolved clone eMS57 over
-  MS56, once from each panel (Fig. 2c rates, Fig. 2f released ratios).
+- :class:`GrowthRateChoe2019Dataset` -- ``FitnessExperiment``, twelve records, one per
+  released Fig. 2f set (#1175, 2026-11-24): the three reconstructed single-allele strains
+  (``cspCmut``, ``ilvNmut``, ``yifBmut``, #1057), each against its own kan-marked
+  wild-type-allele control, and the evolved clone eMS57 over MS56 (#1045 part 3), each
+  ratio stored as the sheet releases it for ``Set1``, ``Set2`` and ``Set3``.
+- :class:`AbsoluteGrowthRateChoe2019Dataset` -- ``EnvironmentResponseExperiment``,
+  29 records, one per released culture (#1175, 2026-11-24): the Fig. 2c growth rates of
+  MG1655, MS56, eMS57, ``MS56 Delta21kb`` (21 gene deletions) and ``MS56 DeltarpoS``
+  (one), three cultures each, and the Fig. 2g growth rates of MG1655 and eMS57 in M9,
+  M9 + valine and M9 + valine + isoleucine, every numeric cell of that sheet.
+- :class:`MetaboliteChoe2019Dataset` -- ``MetaboliteExperiment``, 38 records, one per
+  released culture cell (#1175, 2026-11-24): Fig. 1g's intracellular and extracellular
+  pyruvate of two MG1655 and two eMS57 cultures at 4, 6 and 8 h after inoculation, and
+  Fig. 3d's NADH/NAD+ and NADPH/NADP+ ratios (two cultures per strain) and ATP (three).
 - :class:`TranscriptionFactorKnockoutChoe2019Dataset` --
   ``FitnessExperiment``, two records: the Keio BW25113 ``DeltaydaS`` and
   ``DeltaabgR`` single deletions, whose growth rates the Supplementary Fig. 6 legend
   states as a percentage of wild-type BW25113 in the same medium.
+
+ONE RECORD PER RELEASED CULTURE (#1175, #1178, 2026-11-24). "All bacterial growth
+measurements were biologically triplicated", and the Fig. 2c legend calls the three
+values "three individual cultures shown in red circles". Until 2026-11-24 the Fig. 2c
+rows were stored as mean(strain) / mean(parent) with a sample SD and a delta-method SE,
+and the Fig. 2f rows as the mean of the three released ratios: eight loader-computed
+aggregates. Now each released value is its own record with ``n_samples = 1``,
+``replicate_id`` = the sheet's own column label (``Rep1``-``Rep3``, ``Set1``-``Set3``)
+and ``not_applicable_single_measurement`` gaps on the dispersion fields. A Fig. 2c value
+is an ABSOLUTE growth rate, so it is no longer divided by a loader-computed parent mean:
+it is an ``EnvironmentResponsePhenotype`` of ``MeasurementType.growth_rate`` with the
+released number verbatim, and the strain-over-parent ratio is a modeling-time
+derivation over the records. A Fig. 2f value is a ratio the SOURCE releases per set, so
+it stays a ``FitnessPhenotype`` ratio, one record per set. Each reference states an
+aggregate: the background strain's own released cultures in the panel's base medium,
+with their mean, sample SD and n, and ``replicate_id = None``.
 
 THE GENOTYPE FINDING: EVERY VARIANT THIS PAPER RELEASES IS A POPULATION ALLELE
 FREQUENCY, AND NO LEAF HOLDS ONE. The three variant tables release 363 calls (117 in
@@ -72,14 +95,19 @@ the gene symbol and the allele exactly as Supplementary Table 3 writes them, the
 name, the marker as written, and no coordinate, because the release gives a CDS-relative
 change and no replicon position. The reference of each is its control, a
 ``StrainBackground`` named as released whose ``genotype_statement`` is its
-Supplementary Table 3 row; the fitness is the mean of the three released ratios with
-their sample SD (n = 3 biological replicates, the Fig. 2f legend).
+Supplementary Table 3 row; each record is ONE released set's ratio (n = 1, the Fig. 2f
+legend's "three biological replicates"), and the reference is the control's 1.0.
 
 A SECOND REASON NOT TO MIX THE TWO GROWTH PANELS, measured here: Fig. 2c's rates give
 eMS57/MS56 = 2.8159, while Fig. 2f releases eMS57/MS56 directly as 1.3990 (mean of three
 sets). The two panels disagree by a factor of 2.013 on the same strain pair, so they are
 not the same measurement and nothing may be derived across them. Both are stored (#1045
-part 3), each eMS57 record naming its panel in ``FitnessPhenotype.screen_id``.
+part 3): the Fig. 2c cultures as absolute rates in
+:class:`AbsoluteGrowthRateChoe2019Dataset` (``screen_id = "Fig2c"``), the Fig. 2f sets as
+released ratios in :class:`GrowthRateChoe2019Dataset`. Fig. 2g's M9 arm disagrees with
+Fig. 2c the same way (MG1655 0.30-0.31 against 0.58-0.60, eMS57 0.29-0.33 against
+0.51), so its records carry ``screen_id = "Fig2g"`` and keep the two panels apart in
+one environment.
 
 THE EVOLVED CLONE IS A RECORD ON ITS RELEASED BACKGROUND (#1045 part 3). eMS57 is a
 ``StrainBackground`` named ``eMS57`` whose ``genotype_statement`` is its
@@ -92,8 +120,9 @@ consistent with the paper's own prose instead: it puts ``Delta21kb`` at 0.7763 a
 that of eMS57", and ``check_recovery_fraction`` asserts that agreement on every build.
 
 WHY THE REFERENCE IS MS56 AND NOT MG1655. Both deletion strains are "MS56, <lesion>::kan"
-(Supplementary Table 3), so their isogenic parent is MS56 and the ratio a
-``FitnessPhenotype`` means is to that parent. MS56 itself is carried as a
+(Supplementary Table 3), so their isogenic parent is MS56, and their reference is MS56's
+own released Fig. 2c cultures on MS56's background: the record differs from its
+reference by exactly the deletions. MS56 itself is carried as a
 ``StrainBackground`` whose ``genotype_statement`` is Supplementary Table 3's own
 words and whose ``alleles`` list is EMPTY, which is the same statement the landed Girgis
 2009 loader makes for MG1655 ``delta-lacZ``: this paper defers MS56's content to its
@@ -101,10 +130,12 @@ reference 4 as "large deletions MD1 to MD56" and enumerates no gene, the reduced
 has no deposited assembly, and typing 55 regions nobody released would be an invention.
 Two consequences are stated rather than typed:
 
-- MS56's own Fig. 2c growth rate is loaded over MG1655 (#1045 part 3) on MS56's named
-  background, not as an empty genotype against a bare MG1655 reference: the record's
-  strain is the background its reference genome names, so it does not assert that MS56
-  is genotypically MG1655, and the 55 regions stay in the statement.
+- MS56's own Fig. 2c cultures are records (#1045 part 3) on MS56's named background,
+  not an empty genotype against a bare MG1655 reference: the record's strain is the
+  background its reference genome names, so it does not assert that MS56 is
+  genotypically MG1655, and the 55 regions stay in the statement. The same holds for
+  eMS57 on its background and for MG1655 on the bare assembly; each such record's
+  reference is its own strain's released cultures in the panel's base medium.
 - The background's unenumerated content has no TYPED home either. A ``ProvenanceGap`` on
   ``alleles`` is refused by ``ProvenanceGapMixin`` (``field 'alleles' has a
   ProvenanceGap but is not None``), because the field defaults to ``[]`` rather than
@@ -144,18 +175,36 @@ WHAT ELSE IS RELEASED AND WHY IT IS NOT HERE. Every refusal is counted in
   neither a growth rate, a ratio, a z-score nor a colony size.
 - Fig. 1a/1b/1d/1h release OD-over-time growth CURVES, not rates; no phenotype class
   holds a growth curve.
-- Fig. 1g and Fig. 3d release intracellular metabolite levels for MG1655 and eMS57, and
-  Supplementary Table 1 a fed-batch biomass and specific growth rate for the same pair.
-  Until #1045 part 3 the evolved clone had no writable strain, which blocked them; it
-  now has its released background, and these MG1655-referenced eMS57 rows are not yet
-  loaded (a metabolite level has its own phenotype class, and the fed-batch rows are a
-  different culture from the Fig. 2c flasks).
-- Fig. 2g's MG1655 valine arm releases no number at all (the cells did not grow), and
-  eMS57 is the only other strain in the panel.
+- Fig. 1g's OD600 row (12 cells, one per culture and timepoint) is a growth-curve
+  point, which no phenotype class holds; its pyruvate rows are records. Supplementary
+  Table 1 releases a fed-batch biomass and specific growth rate for MG1655 and eMS57 as
+  mean +- s.d. over a fermentation "repeated twice in different days"; that aggregate
+  is not loaded yet (a different culture from the Fig. 2c flasks, and a biomass yield has
+  no MeasurementType member).
+- METABOLITE RECORDS (#1175, 2026-11-24). Each Fig. 1g and Fig. 3d cell is one record:
+  the level verbatim, ``n_replicates = 1``, ``replicate_id`` the sheet's own label
+  (``MG1655 Rep 1`` ... ``eMS57 Rep2`` for a Fig. 1g block, ``Rep1``-``Rep3`` for a
+  Fig. 3d column), and ``measurement_type`` naming the compartment and unit
+  (``intracellular_pyruvate_umol_per_1e9_cells``, ``extracellular_pyruvate_uM``,
+  ``intracellular_atp_nmol_per_1e9_cells``) or the released ratio
+  (``intracellular_nadh_to_nad_ratio``, ``intracellular_nadph_to_nadp_ratio``, keyed by
+  the row label ``NADH/NAD+`` and ``NADPH/NADP+``). The three timepoints of one Fig. 1g
+  culture are three environments (``duration_hours``). Fig. 3d's legend states "three
+  biological replicates", and its sheet releases three ATP cells but two cells per ratio
+  row per strain; every released cell is stored and none is invented.
+  ``check_cofactor_fold_changes`` asserts that the two ratio rows reproduce the prose's
+  "3.0 times lower" and "4.5 times higher" (measured 2.965 and 4.570).
+- Fig. 2g releases a dash, not a number, in four cells: MG1655's M9 ``Rep3`` and all
+  three of MG1655's M9 + valine cells (the paper: valine "inhibits cell growth" and
+  only eMS57 "was completely resistant"). A dash is no released value, so those four
+  cells are counted in the ledger and are not records; the other 14 cells are.
 
 DATA. ``GrowthRateChoe2019Dataset`` consumes ``si12.xlsx`` (the Source Data workbook) and
 the three variant tables ``si5.xlsx``, ``si6.xlsx`` and ``si7.xlsx``, which it reads only
 to type each refused call into ``preprocess/called_variants.json``.
+``AbsoluteGrowthRateChoe2019Dataset`` consumes ``si12.xlsx`` alone (sheets ``Fig2c``
+and ``Fig2g``), and ``MetaboliteChoe2019Dataset`` the same workbook (sheets ``Fig1g`` and
+``Fig3d``).
 ``TranscriptionFactorKnockoutChoe2019Dataset`` pins ``si1.pdf``, the Supplementary
 Information whose Fig. 6 legend carries its two numbers; the numbers themselves are
 ``SourcedValue``s quoting that PDF's OCR, so the build reads no table for them. All five
@@ -197,20 +246,28 @@ from torchcell.datamodels.schema import (
     Concentration,
     ConcentrationUnit,
     Environment,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
+    EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
     FitnessExperiment,
     FitnessExperimentReference,
     FitnessPhenotype,
     Genotype,
+    MeasurementType,
     Media,
     MediaComponent,
     MediaComponentRole,
+    MetaboliteExperiment,
+    MetaboliteExperimentReference,
+    MetabolitePhenotype,
     Publication,
     ReferenceGenome,
     ReleasedIdentifierPerturbation,
     ReleasedKind,
     SampleUnit,
+    SmallMoleculePerturbation,
     StrainBackground,
     Temperature,
     UncertaintyType,
@@ -253,6 +310,8 @@ RAW_DIR_REL = f"torchcell-raw/{CITATION_KEY}"
 LIBRARY_DIR_REL = f"torchcell-library/{CITATION_KEY}"
 
 GROWTH_DATASET_ROOT_REL = "data/torchcell/growth_rate_choe2019"
+ABSOLUTE_DATASET_ROOT_REL = "data/torchcell/absolute_growth_rate_choe2019"
+METABOLITE_DATASET_ROOT_REL = "data/torchcell/metabolite_choe2019"
 TF_DATASET_ROOT_REL = "data/torchcell/tf_knockout_growth_choe2019"
 
 #: The two reference strains, one per dataset class.
@@ -409,6 +468,85 @@ RATIO_ROW_ORDER: tuple[str, ...] = (
     "cspC*/cspCWT",
     "yifB*/yifBWT",
 )
+#: The Fig. 2f sheet's own header row, verbatim and in order.
+RATIO_HEADERS: tuple[str, ...] = ("Mutated/Parental", "Set1", "Set2", "Set3")
+#: The Fig. 2g sheet (#1175, 2026-11-24): growth rate per (medium, strain, culture).
+SUPPLEMENT_SHEET = "Fig2g"
+SUPPLEMENT_SHEET_TITLE = (
+    "Growth rate of MG1655 and eMS57 in valine or isoleucin supplemented M9 glucose "
+    "medium"
+)
+SUPPLEMENT_HEADERS: tuple[str, ...] = ("Media", "Strain", "Rep1", "Rep2", "Rep3")
+BASE_MEDIUM_LABEL = "M9"
+VALINE_LABEL = "M9 + valine"
+VALINE_ISOLEUCINE_LABEL = "M9 + valine + isoleucine"
+#: The Fig. 2g (medium, strain) rows, verbatim and in sheet order; the medium cell is
+#: written once per block and blank on the second row of it.
+SUPPLEMENT_ROW_ORDER: tuple[tuple[str, str], ...] = (
+    (BASE_MEDIUM_LABEL, WILD_TYPE_LABEL),
+    (BASE_MEDIUM_LABEL, EVOLVED_LABEL),
+    (VALINE_LABEL, WILD_TYPE_LABEL),
+    (VALINE_LABEL, EVOLVED_LABEL),
+    (VALINE_ISOLEUCINE_LABEL, WILD_TYPE_LABEL),
+    (VALINE_ISOLEUCINE_LABEL, EVOLVED_LABEL),
+)
+#: The compounds each Fig. 2g medium adds to M9 glucose, at the Methods' 0.15 mM.
+SUPPLEMENTS: dict[str, tuple[str, ...]] = {
+    BASE_MEDIUM_LABEL: (),
+    VALINE_LABEL: ("L-valine",),
+    VALINE_ISOLEUCINE_LABEL: ("L-valine", "L-isoleucine"),
+}
+SUPPLEMENT_MM = 0.15
+#: The cell the Fig. 2g sheet writes where it releases no number.
+NOT_RELEASED_CELL = "-"
+#: The Fig. 1g sheet (#1175, 2026-11-24): one block per culture, three timepoints.
+PYRUVATE_SHEET = "Fig1g"
+PYRUVATE_SHEET_TITLE = "Intra and extracellular pyruvate level in MG1655 and eMS57"
+#: The block labels, verbatim and in sheet order; each is the replicate_id it releases.
+PYRUVATE_BLOCK_LABELS: tuple[str, ...] = (
+    "MG1655 Rep 1",
+    "MG1655 Rep 2",
+    "eMS57 Rep1",
+    "eMS57 Rep2",
+)
+#: The timepoint header of every block, verbatim, and the hours after inoculation.
+PYRUVATE_TIMEPOINTS: tuple[tuple[str, float], ...] = (
+    ("4h", 4.0),
+    ("6h", 6.0),
+    ("8h", 8.0),
+)
+PYRUVATE_OD_ROW = "Optical density (OD600nm)"
+#: The two pyruvate rows of a block: (row label verbatim, measurement_type).
+PYRUVATE_ROWS: tuple[tuple[str, str], ...] = (
+    (
+        "intracellular pyruvate (umol/109 cells)",
+        "intracellular_pyruvate_umol_per_1e9_cells",
+    ),
+    ("extracellular pyruvate (uM)", "extracellular_pyruvate_uM"),
+)
+PYRUVATE_KEY = "pyruvate"
+#: The Fig. 3d sheet: two ratio rows over Rep1-Rep2, one ATP row over Rep1-Rep3.
+COFACTOR_SHEET = "Fig3d"
+COFACTOR_SHEET_TITLE = "Intracellular NAD, NADP, and ATP level in MG1655 and eMS57"
+#: (row label verbatim, measurement_type); the label is also the level's key.
+COFACTOR_RATIO_ROWS: tuple[tuple[str, str], ...] = (
+    ("NADH/NAD+", "intracellular_nadh_to_nad_ratio"),
+    ("NADPH/NADP+", "intracellular_nadph_to_nadp_ratio"),
+)
+ATP_ROW = "ATP (nmol/109 cells)"
+ATP_MEASUREMENT_TYPE = "intracellular_atp_nmol_per_1e9_cells"
+ATP_KEY = "ATP"
+METABOLITE_PROTOCOLS: frozenset[str] = frozenset(
+    {
+        *(measurement for _row, measurement in PYRUVATE_ROWS),
+        *(measurement for _row, measurement in COFACTOR_RATIO_ROWS),
+        ATP_MEASUREMENT_TYPE,
+    }
+)
+#: The paper's own statement about Fig. 3d, the cross-check of the two ratio rows.
+NADH_FOLD_LOWER = 3.0
+NADPH_FOLD_HIGHER = 4.5
+COFACTOR_RTOL = 0.05
 
 
 class ReconstructedAllele(BaseModel):
@@ -532,9 +670,30 @@ KEIO_FITNESS: tuple[tuple[str, float], tuple[str, float]] = (
 #: Strains in the Supplementary Fig. 6 panel; only two carry a released number.
 KEIO_PANEL_STRAINS = 62
 
-#: Expected record counts, asserted at the end of each build.
-GROWTH_EXPECTED_RECORDS = 8
-GROWTH_EXPECTED_REFERENCES = 7
+#: Expected record counts, asserted at the end of each build, measured on the pinned
+#: workbook (#1175, 2026-11-24): Fig. 2f 4 rows x 3 sets; Fig. 2c 5 strains x 3
+#: cultures; Fig. 2g 18 cells less the 4 dashes.
+GROWTH_EXPECTED_RECORDS = 12
+GROWTH_EXPECTED_REFERENCES = 4
+ABSOLUTE_FIG2C_RECORDS = 15
+ABSOLUTE_FIG2G_RECORDS = 14
+ABSOLUTE_EXPECTED_RECORDS = ABSOLUTE_FIG2C_RECORDS + ABSOLUTE_FIG2G_RECORDS
+#: Fig. 2c: MG1655, MS56 (also the deletions'), eMS57; Fig. 2g: MG1655, eMS57 in M9.
+ABSOLUTE_EXPECTED_REFERENCES = 5
+#: Records in M9 glucose with no supplement: all of Fig. 2c plus Fig. 2g's M9 arm.
+ABSOLUTE_EXPECTED_UNPERTURBED = 20
+#: Fig. 1g: 4 cultures x 3 timepoints x 2 pyruvate rows; Fig. 3d: 2 ratio rows x 4
+#: cells plus 6 ATP cells.
+METABOLITE_FIG1G_RECORDS = 24
+METABOLITE_FIG3D_RECORDS = 14
+METABOLITE_EXPECTED_RECORDS = METABOLITE_FIG1G_RECORDS + METABOLITE_FIG3D_RECORDS
+#: One reference per (strain, measurement_type, environment): Fig. 1g 2 x 2 x 3,
+#: Fig. 3d 2 x 3.
+METABOLITE_EXPECTED_REFERENCES = 18
+#: The Fig. 1g OD600 cells, a growth-curve readout no phenotype class holds.
+FIG1G_OD_CELLS = 12
+#: Fig. 2g cells that print a dash instead of a number.
+FIG2G_DASH_CELLS = 4
 TF_EXPECTED_RECORDS = 2
 TF_EXPECTED_REFERENCES = 1
 #: Every deletion symbol must resolve; a renamed label stops the build.
@@ -594,6 +753,44 @@ _Q_FIG2F = (
     "fitness, whereas ilvN mutation showed no effect. The yifB mutation on MS56 "
     "decreased the growth rate. Error bars indicate s.d. of three biological replicates "
     "shown as red circles."
+)
+_Q_FIG2C = (
+    "c Growth rates of MS56 with rpoS deletion or a large deletion compared to MG1655 "
+    "and eMS57. Error bars indicate the s.d. of three individual cultures shown in red "
+    "circles."
+)
+_Q_FIG2G = (
+    "g Growth rate of MG1655 and eMS57 in response to valine supplementation which "
+    "inhibits cell growth (white bar: MG1655, blue bar: eMS57, error bars indicate s.d. "
+    "of three biological replicates shown as red circles). eMS57 was completely "
+    "resistant to valine toxicity."
+)
+_Q_SUPPLEMENT = (
+    "Isoleucine or valine was supplemented with a final concentration of "
+    "$0 . 1 5 \\mathrm { m M }$ , when appropriate."
+)
+_Q_FIG1G = (
+    "Intracellular pyruvate level is presented as mole pyruvate per "
+    "$1 0 ^ { 9 }$ cells and extracellular pyruvate level was measured in molar "
+    "concentration. Individual data points are shown as blue circles and error bars "
+    "indicate the s.d. of two biological replicates."
+)
+_Q_FIG1G_TIME = (
+    "g Intracellular and extracellular pyruvate concentrations for MG1655 and eMG57 at "
+    "$4 , 6 ,$ and $^ { 8 \\mathrm { h } }$ after inoculation."
+)
+_Q_PYRUVATE_ASSAY = (
+    "Intracellular and extracellular pyruvate assay. Cells were grown in M9 glucose "
+    "medium at $3 7 ^ { \\circ } \\mathrm { C }$ ."
+)
+_Q_FIG3D = (
+    "ATP intracellular level was decreased in eMS57. Red circles indicate three "
+    "independent assays from biological replicates. Error bars indicate the s.d. of "
+    "three biological replicates."
+)
+_Q_COFACTOR_FOLD = (
+    "In eMS57, the NADH level was 3.0 times lower and the NADPH level was 4.5 times "
+    "higher than MG1655."
 )
 _Q_TRIPLICATED = (
     "All bacterial growth measurements were biologically triplicated and their "
@@ -691,6 +888,38 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         _Q_TRIPLICATED,
         note="one Fig. 2c Rep column is one independently grown culture",
     ),
+    "fig2c_replicate": _paper(
+        "three individual cultures",
+        _Q_FIG2C,
+        note="each Fig. 2c Rep1-Rep3 cell is one culture's growth rate, so each is "
+        "one record with n_samples 1 (#1175)",
+    ),
+    "fig2g_replicate": _paper(
+        "three biological replicates",
+        _Q_FIG2G,
+        note="each numeric Fig. 2g Rep1-Rep3 cell is one culture's growth rate; four "
+        "cells print a dash and release no number",
+    ),
+    "supplement_mm": _paper(SUPPLEMENT_MM, _Q_SUPPLEMENT),
+    "fig1g_replicate": _paper(
+        "two biological replicates",
+        _Q_FIG1G,
+        note="each Fig. 1g block (MG1655 Rep 1 ... eMS57 Rep2) is one culture sampled "
+        "at 4, 6 and 8 h, so each (block, timepoint, row) cell is one record",
+    ),
+    "fig1g_hours_after_inoculation": _paper("4, 6 and 8 h", _Q_FIG1G_TIME),
+    "pyruvate_temperature_c": _paper(37.0, _Q_PYRUVATE_ASSAY),
+    "fig3d_replicate": _paper(
+        "three biological replicates",
+        _Q_FIG3D,
+        note="the legend states three replicates for the panel, and the sheet releases "
+        "three ATP cells but only two NADH/NAD+ and two NADPH/NADP+ cells per strain; "
+        "every released cell is a record and none is invented",
+    ),
+    "cofactor_fold_changes": _paper(
+        {"nadh_fold_lower": NADH_FOLD_LOWER, "nadph_fold_higher": NADPH_FOLD_HIGHER},
+        _Q_COFACTOR_FOLD,
+    ),
     "keio_collection": _si1(KEIO_COLLECTION, _Q_KEIO_PANEL),
     "keio_reference_strain": _si1(BW25113, _Q_KEIO_PANEL),
     "keio_temperature_c": _si1(37.0, _Q_KEIO_PANEL),
@@ -730,10 +959,54 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
 _GAP_TEMPERATURE = ProvenanceGap(
     field="temperature",
     reason=ProvenanceGapReason.not_reported_by_primary,
-    note="the paper states no cultivation temperature for the Fig. 2c growth-rate "
-    "panel. Every temperature it does state is 37 C (the ALE flask, the pyruvate "
-    "assay, the Supplementary Fig. 6 microplate), but none of those is this panel, so "
-    "the field is left unset rather than carried across",
+    note="the paper states no cultivation temperature for the Fig. 2c, 2f and 2g "
+    "growth-rate panels. Every temperature it does state is 37 C (the ALE flask, the "
+    "pyruvate assay, the Supplementary Fig. 6 microplate), but none of those is these "
+    "panels, so the field is left unset rather than carried across",
+)
+#: One culture or one set is one measurement, so a dispersion does not exist (#1178).
+_SINGLE_MEASUREMENT_NOTE = (
+    "the record is one released culture (Fig. 2c, Fig. 2g) or one released set "
+    "(Fig. 2f), so no dispersion of its own exists; the dispersion the legends state "
+    "is over the panel's three cultures, which the reference summarizes and the "
+    "records of one genotype reproduce at modeling time"
+)
+
+
+def _single_measurement_gaps(fields: Sequence[str]) -> list[ProvenanceGap]:
+    """``not_applicable_single_measurement`` on each dispersion field of an n = 1 record."""
+    return [
+        ProvenanceGap(
+            field=field,
+            reason=ProvenanceGapReason.not_applicable_single_measurement,
+            note=_SINGLE_MEASUREMENT_NOTE,
+        )
+        for field in fields
+    ]
+
+
+_FITNESS_DISPERSION_FIELDS: tuple[str, ...] = (
+    "fitness_se",
+    "fitness_uncertainty",
+    "fitness_uncertainty_type",
+)
+_RESPONSE_DISPERSION_FIELDS: tuple[str, ...] = (
+    "environment_response_se",
+    "environment_response_uncertainty",
+    "environment_response_uncertainty_type",
+)
+_GAP_ASSAY = ProvenanceGap(
+    field="assay_type",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    note="the paper states that the growth measurements were biologically triplicated "
+    "but neither the instrument nor the fit behind a Fig. 2c or Fig. 2g rate, so no "
+    "AssayType member is sourced; liquid_od_growth would be a reading, not a "
+    "released fact",
+)
+#: What the absolute readout's number is; the sheets print no unit.
+ABSOLUTE_UNITS = (
+    "growth rate as the Source Data sheet releases it; neither the sheet nor the "
+    "legend prints a unit"
 )
 _GAP_CASSETTE_SEQUENCE = ProvenanceGap(
     field="cassette",
@@ -849,6 +1122,74 @@ def growth_environment() -> Environment:
     )
 
 
+def supplemented_environment(medium_label: str) -> Environment:
+    """One Fig. 2g medium: M9 glucose plus each named amino acid at 0.15 mM.
+
+    ``M9`` returns exactly :func:`growth_environment`, so the Fig. 2g M9 arm and Fig. 2c
+    share one environment and are told apart by ``screen_id`` alone. Each supplement is
+    a ``SmallMoleculePerturbation`` on the base medium, the Lamoureux 2023 convention
+    for a compound added to a defined medium.
+    """
+    compounds = SUPPLEMENTS[medium_label]
+    if not compounds:
+        return growth_environment()
+    return Environment(
+        media=M9_GLUCOSE_CHOE2019,
+        temperature=None,
+        aerobicity="aerobic",
+        perturbations=[
+            SmallMoleculePerturbation(
+                compound=resolved_compound(name),
+                concentration=Concentration(
+                    value=SOURCED_VALUES["supplement_mm"].value, unit=_MM
+                ),
+            )
+            for name in compounds
+        ],
+        provenance_gaps=[_GAP_TEMPERATURE],
+    )
+
+
+_GAP_METABOLITE_AEROBICITY = ProvenanceGap(
+    field="aerobicity",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    note="the pyruvate, NAD(P)H and ATP assay Methods state the medium and, for "
+    "pyruvate, 37 C, but no vessel, agitation or oxygen regime for these cultures",
+)
+_GAP_COFACTOR_TEMPERATURE = ProvenanceGap(
+    field="temperature",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    note="the NAD/NADH, NADP/NADPH and ATP assay Methods count cells and state no "
+    "cultivation temperature; the medium is the Methods default, M9 glucose 'unless "
+    "stated otherwise'",
+)
+
+
+def pyruvate_environment(hours: float) -> Environment:
+    """The Fig. 1g culture at one sampling time: M9 glucose, 37 C, hours after inoculation.
+
+    Each timepoint is its own environment (``duration_hours``), so the three samples of
+    one culture are three records that differ in the environment, not three replicates.
+    """
+    return Environment(
+        media=M9_GLUCOSE_CHOE2019,
+        temperature=Temperature(value=SOURCED_VALUES["pyruvate_temperature_c"].value),
+        aerobicity=None,
+        duration_hours=hours,
+        provenance_gaps=[_GAP_METABOLITE_AEROBICITY],
+    )
+
+
+def cofactor_environment() -> Environment:
+    """The Fig. 3d cultures: M9 glucose, temperature and oxygen regime unstated."""
+    return Environment(
+        media=M9_GLUCOSE_CHOE2019,
+        temperature=None,
+        aerobicity=None,
+        provenance_gaps=[_GAP_COFACTOR_TEMPERATURE, _GAP_METABOLITE_AEROBICITY],
+    )
+
+
 def keio_environment() -> Environment:
     """The Supplementary Fig. 6 panel: M9 glucose, 37 C, shaken 96-well plate."""
     return Environment(
@@ -904,6 +1245,11 @@ class StrainRates(BaseModel):
         """Standard error of this strain's mean growth rate."""
         return self.sample_sd / math.sqrt(self.n_samples)
 
+    @property
+    def labelled(self) -> tuple[tuple[str, float], ...]:
+        """``(replicate label, rate)`` per released culture, labels from the header."""
+        return tuple(zip(GROWTH_HEADERS[1:], self.replicates, strict=True))
+
 
 class GrowthPanel(BaseModel):
     """The Fig. 2c sheet: its five strain rows, keyed by their verbatim labels."""
@@ -958,11 +1304,14 @@ def read_growth_panel(path: str) -> GrowthPanel:
 
 
 def read_reconstruction_ratios(path: str) -> dict[str, tuple[float, ...]]:
-    """Read the Fig. 2f sheet: ``{row label: released ratios}``, for the ledger only."""
+    """Read the Fig. 2f sheet: ``{row label: released ratios}`` in ``Set1``-``Set3`` order."""
     rows = _sheet_rows(path, RATIO_SHEET)
     title = rows[0][1]
     if title != RATIO_SHEET_TITLE:
         raise TableFormatError(f"{RATIO_SHEET} title is {title!r}")
+    headers = tuple(str(cell) for cell in rows[2][1:5])
+    if headers != RATIO_HEADERS:
+        raise TableFormatError(f"{RATIO_SHEET} headers are {headers}")
     out: dict[str, tuple[float, ...]] = {}
     for row in rows[3:]:
         if row[1] is None:
@@ -972,6 +1321,283 @@ def read_reconstruction_ratios(path: str) -> dict[str, tuple[float, ...]]:
     if order != RATIO_ROW_ORDER:
         raise TableFormatError(f"{RATIO_SHEET} row order is {order}")
     return out
+
+
+class CultureRate(BaseModel):
+    """One released Fig. 2g cell that carries a number: one culture's growth rate."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    medium: str = Field(description="the medium label, verbatim")
+    strain: str = Field(description="the strain label, verbatim")
+    replicate_id: str = Field(description="the column header, verbatim (Rep1-Rep3)")
+    rate: float
+
+
+class DashCell(BaseModel):
+    """One released Fig. 2g cell that prints a dash: no number is released for it."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    medium: str
+    strain: str
+    replicate_id: str
+
+
+class SupplementPanel(BaseModel):
+    """The Fig. 2g sheet: every numeric cell, and every dash, in sheet order."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    rates: tuple[CultureRate, ...]
+    dashes: tuple[DashCell, ...]
+
+    def base_rates(self, strain: str) -> tuple[float, ...]:
+        """One strain's released M9 rates: the reference of its supplemented records."""
+        return tuple(
+            cell.rate
+            for cell in self.rates
+            if cell.medium == BASE_MEDIUM_LABEL and cell.strain == strain
+        )
+
+
+def read_supplement_panel(path: str) -> SupplementPanel:
+    """Read the Fig. 2g sheet, checking its title, its headers and its row order.
+
+    The medium cell is written on the first row of each two-row block, so a blank one
+    carries the medium above it. A cell is either a number or the release's dash; any
+    other content stops the build rather than being coerced.
+    """
+    rows = _sheet_rows(path, SUPPLEMENT_SHEET)
+    title = rows[0][1]
+    if title != SUPPLEMENT_SHEET_TITLE:
+        raise TableFormatError(f"{SUPPLEMENT_SHEET} title is {title!r}")
+    headers = tuple(str(cell) for cell in rows[2][1:6])
+    if headers != SUPPLEMENT_HEADERS:
+        raise TableFormatError(f"{SUPPLEMENT_SHEET} headers are {headers}")
+    medium: str | None = None
+    order: list[tuple[str, str]] = []
+    rates: list[CultureRate] = []
+    dashes: list[DashCell] = []
+    for row in rows[3:]:
+        if row[2] is None:
+            continue
+        if row[1] is not None:
+            medium = str(row[1])
+        if medium is None:
+            raise TableFormatError(
+                f"{SUPPLEMENT_SHEET}: a strain row before any medium"
+            )
+        strain = str(row[2])
+        order.append((medium, strain))
+        for replicate_id, cell in zip(SUPPLEMENT_HEADERS[2:], row[3:6], strict=True):
+            if cell == NOT_RELEASED_CELL:
+                dashes.append(
+                    DashCell(medium=medium, strain=strain, replicate_id=replicate_id)
+                )
+            elif isinstance(cell, int | float) and not isinstance(cell, bool):
+                rates.append(
+                    CultureRate(
+                        medium=medium,
+                        strain=strain,
+                        replicate_id=replicate_id,
+                        rate=float(cell),
+                    )
+                )
+            else:
+                raise TableFormatError(
+                    f"{SUPPLEMENT_SHEET} ({medium}, {strain}, {replicate_id}) holds "
+                    f"{cell!r}, neither a number nor the release's dash"
+                )
+    if tuple(order) != SUPPLEMENT_ROW_ORDER:
+        raise TableFormatError(f"{SUPPLEMENT_SHEET} row order is {tuple(order)}")
+    return SupplementPanel(rates=tuple(rates), dashes=tuple(dashes))
+
+
+class MetaboliteValue(BaseModel):
+    """One released Fig. 1g or Fig. 3d cell: one culture's level at one condition."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    sheet: str
+    strain: str = Field(description="MG1655 or eMS57, as the block or column names it")
+    replicate_id: str = Field(description="the sheet's own label for the culture")
+    measurement_type: str
+    metabolite: str = Field(description="the level's key: pyruvate, NADH/NAD+, ...")
+    hours: float | None = Field(
+        default=None, description="hours after inoculation (Fig. 1g); None for Fig. 3d"
+    )
+    value: float
+
+
+def _released_number(sheet: str, cell: Any, where: str) -> float:
+    """A released numeric cell, refusing anything that is not a finite number."""
+    if isinstance(cell, bool) or not isinstance(cell, int | float):
+        raise TableFormatError(f"{sheet} {where} holds {cell!r}, not a number")
+    value = float(cell)
+    if not math.isfinite(value):
+        raise TableFormatError(f"{sheet} {where} holds a non-finite {cell!r}")
+    return value
+
+
+def read_pyruvate_panel(path: str) -> tuple[tuple[MetaboliteValue, ...], int]:
+    """Read the Fig. 1g sheet: every pyruvate cell, and the count of OD600 cells.
+
+    Each block is one culture: its label row (``MG1655 Rep 1`` with the ``4h``, ``6h``,
+    ``8h`` headers), an OD600 row, an intracellular and an extracellular pyruvate row.
+    The block order, the headers and the row labels are checked verbatim.
+    """
+    rows = _sheet_rows(path, PYRUVATE_SHEET)
+    title = rows[0][1]
+    if title != PYRUVATE_SHEET_TITLE:
+        raise TableFormatError(f"{PYRUVATE_SHEET} title is {title!r}")
+    hours = dict(PYRUVATE_TIMEPOINTS)
+    values: list[MetaboliteValue] = []
+    od_cells = 0
+    blocks: list[str] = []
+    expected_rows = (PYRUVATE_OD_ROW, *(label for label, _m in PYRUVATE_ROWS))
+    measurement = dict(PYRUVATE_ROWS)
+    index = 0
+    while index < len(rows):
+        label = rows[index][1]
+        if label is None or str(label) not in PYRUVATE_BLOCK_LABELS:
+            if label is not None and index > 0:
+                raise TableFormatError(f"{PYRUVATE_SHEET} row {index} is {label!r}")
+            index += 1
+            continue
+        block = str(label)
+        blocks.append(block)
+        headers = tuple(str(cell) for cell in rows[index][2:5])
+        if headers != tuple(header for header, _h in PYRUVATE_TIMEPOINTS):
+            raise TableFormatError(f"{PYRUVATE_SHEET} {block} headers are {headers}")
+        body = rows[index + 1 : index + 1 + len(expected_rows)]
+        if tuple(str(row[1]) for row in body) != expected_rows:
+            raise TableFormatError(f"{PYRUVATE_SHEET} {block} rows are out of order")
+        strain = block.split(" ")[0]
+        for row in body:
+            row_label = str(row[1])
+            for header, cell in zip(headers, row[2:5], strict=True):
+                number = _released_number(
+                    PYRUVATE_SHEET, cell, f"({block}, {row_label}, {header})"
+                )
+                if row_label == PYRUVATE_OD_ROW:
+                    od_cells += 1
+                    continue
+                values.append(
+                    MetaboliteValue(
+                        sheet=PYRUVATE_SHEET,
+                        strain=strain,
+                        replicate_id=block,
+                        measurement_type=measurement[row_label],
+                        metabolite=PYRUVATE_KEY,
+                        hours=hours[header],
+                        value=number,
+                    )
+                )
+        index += 1 + len(expected_rows)
+    if tuple(blocks) != PYRUVATE_BLOCK_LABELS:
+        raise TableFormatError(f"{PYRUVATE_SHEET} blocks are {tuple(blocks)}")
+    return tuple(values), od_cells
+
+
+def _strain_columns(
+    header: Sequence[Any], replicates: Sequence[Any]
+) -> list[tuple[str, str]]:
+    """``(strain, replicate label)`` per column of a Fig. 3d block, strain carried right."""
+    columns: list[tuple[str, str]] = []
+    strain: str | None = None
+    for name, replicate in zip(header, replicates, strict=True):
+        if replicate is None:
+            break
+        if name is not None:
+            strain = str(name)
+        if strain not in (WILD_TYPE_LABEL, EVOLVED_LABEL):
+            raise TableFormatError(f"{COFACTOR_SHEET} column strain is {strain!r}")
+        columns.append((strain, str(replicate)))
+    return columns
+
+
+def read_cofactor_panel(path: str) -> tuple[MetaboliteValue, ...]:
+    """Read the Fig. 3d sheet: the two ratio rows and the ATP row, every cell.
+
+    The ratio block releases ``Rep1``-``Rep2`` per strain and the ATP block
+    ``Rep1``-``Rep3``; both blocks are read by their own header rows, so a culture that
+    is in one block and not the other is neither invented nor dropped.
+    """
+    rows = _sheet_rows(path, COFACTOR_SHEET)
+    title = rows[0][1]
+    if title != COFACTOR_SHEET_TITLE:
+        raise TableFormatError(f"{COFACTOR_SHEET} title is {title!r}")
+    if rows[2][1] != "Ratio" or rows[8][1] != "Concentration":
+        raise TableFormatError(f"{COFACTOR_SHEET} block headers moved")
+    values: list[MetaboliteValue] = []
+    ratio_columns = _strain_columns(rows[2][2:], rows[3][2:])
+    for offset, (row_label, measurement) in enumerate(COFACTOR_RATIO_ROWS):
+        row = rows[4 + offset]
+        if row[1] != row_label:
+            raise TableFormatError(f"{COFACTOR_SHEET} row {4 + offset} is {row[1]!r}")
+        for (strain, replicate), cell in zip(ratio_columns, row[2:], strict=False):
+            values.append(
+                MetaboliteValue(
+                    sheet=COFACTOR_SHEET,
+                    strain=strain,
+                    replicate_id=replicate,
+                    measurement_type=measurement,
+                    metabolite=row_label,
+                    value=_released_number(
+                        COFACTOR_SHEET, cell, f"({row_label}, {strain}, {replicate})"
+                    ),
+                )
+            )
+    atp_columns = _strain_columns(rows[8][2:], rows[9][2:])
+    if rows[10][1] != ATP_ROW:
+        raise TableFormatError(f"{COFACTOR_SHEET} row 10 is {rows[10][1]!r}")
+    for (strain, replicate), cell in zip(atp_columns, rows[10][2:], strict=False):
+        values.append(
+            MetaboliteValue(
+                sheet=COFACTOR_SHEET,
+                strain=strain,
+                replicate_id=replicate,
+                measurement_type=ATP_MEASUREMENT_TYPE,
+                metabolite=ATP_KEY,
+                value=_released_number(
+                    COFACTOR_SHEET, cell, f"({ATP_ROW}, {strain}, {replicate})"
+                ),
+            )
+        )
+    return tuple(values)
+
+
+def check_cofactor_fold_changes(values: Sequence[MetaboliteValue]) -> dict[str, Any]:
+    """The two ratio rows reproduce the paper's "3.0 times lower" and "4.5 times higher".
+
+    The prose is the independent statistic for the Fig. 3d sheet: a swapped strain block
+    or a rescaled row would stop matching it.
+    """
+
+    def mean(measurement: str, strain: str) -> float:
+        return statistics.fmean(
+            v.value
+            for v in values
+            if v.measurement_type == measurement and v.strain == strain
+        )
+
+    nadh, nadph = (measurement for _row, measurement in COFACTOR_RATIO_ROWS)
+    lower = mean(nadh, WILD_TYPE_LABEL) / mean(nadh, EVOLVED_LABEL)
+    higher = mean(nadph, EVOLVED_LABEL) / mean(nadph, WILD_TYPE_LABEL)
+    for measured, stated in ((lower, NADH_FOLD_LOWER), (higher, NADPH_FOLD_HIGHER)):
+        if abs(measured - stated) > COFACTOR_RTOL * stated:
+            raise TableFormatError(
+                f"{COFACTOR_SHEET}: measured fold change {measured:.4f} is more than "
+                f"{COFACTOR_RTOL:.0%} from the stated {stated}"
+            )
+    return {
+        "stated_nadh_fold_lower": NADH_FOLD_LOWER,
+        "measured_nadh_fold_lower": lower,
+        "stated_nadph_fold_higher": NADPH_FOLD_HIGHER,
+        "measured_nadph_fold_higher": higher,
+        "relative_tolerance": COFACTOR_RTOL,
+    }
 
 
 class VariantTable(BaseModel):
@@ -1231,54 +1857,119 @@ def evolved_background() -> StrainBackground:
     )
 
 
-def fitness_phenotype(
-    strain: StrainRates, parent: StrainRates, *, screen_id: str | None = None
-) -> FitnessPhenotype:
-    """One strain's growth rate as a ratio to the strain it is compared with.
+def released_ratio_phenotype(ratio: float, replicate_id: str) -> FitnessPhenotype:
+    """One released Fig. 2f set: the mutant-over-control ratio the sheet prints.
 
-    The deletion strains and eMS57 are ratios to MS56; MS56 is a ratio to MG1655
-    (#1045 part 3). ``screen_id`` names the panel when one strain pair is released by
-    two panels with different values (eMS57/MS56 in Fig. 2c and Fig. 2f).
-
-    ``fitness_uncertainty`` is the strain's sample standard deviation divided by the
-    parent mean, which is exactly the sample standard deviation of the n released ratio
-    observations, so the released statistic's kind and n survive the change of units.
-    ``fitness_se`` is supplied as the delta-method standard error of the ratio, which
-    also carries the parent's own spread and is therefore never the optimistic one.
+    The ratio is the SOURCE's own per-set value, so it is stored verbatim with
+    ``n_samples = 1`` and the set's label (#1175, policy item 6: a per-replicate ratio the
+    release itself prints is stored as that ratio). A single set has no dispersion of
+    its own, so the three dispersion fields are ``not_applicable_single_measurement``
+    gaps; the mean and SD over the three sets are a modeling-time derivation.
     """
-    fitness = strain.mean / parent.mean
-    uncertainty = strain.sample_sd / parent.mean
-    propagated = fitness * math.sqrt(
-        (strain.standard_error / strain.mean) ** 2
-        + (parent.standard_error / parent.mean) ** 2
-    )
-    conditioned = uncertainty / math.sqrt(strain.n_samples)
-    if propagated < conditioned:
-        raise RuntimeError(
-            f"{strain.strain}: the propagated SE {propagated} is smaller than the "
-            f"parent-conditioned {conditioned}"
-        )
+    if not math.isfinite(ratio):
+        raise TableFormatError(f"non-finite released ratio {ratio!r}")
     return FitnessPhenotype(
-        fitness=fitness,
-        fitness_se=propagated,
-        fitness_uncertainty=uncertainty,
-        fitness_uncertainty_type=UncertaintyType.sample_sd,
-        n_samples=strain.n_samples,
+        fitness=ratio,
+        n_samples=1,
         sample_unit=SampleUnit.biological_replicate,
+        replicate_id=replicate_id,
+        provenance_gaps=_single_measurement_gaps(_FITNESS_DISPERSION_FIELDS),
+    )
+
+
+def culture_rate_phenotype(
+    rate: float, replicate_id: str, screen_id: str
+) -> EnvironmentResponsePhenotype:
+    """One released culture's ABSOLUTE growth rate, verbatim (Fig. 2c or Fig. 2g).
+
+    ``screen_id`` names the panel, because Fig. 2c and Fig. 2g release the same strain
+    in the same medium with values a factor near 2 apart (``check_panels_disagree`` for
+    the Fig. 2c / Fig. 2f pair). ``replicate_id`` is the sheet's own column header.
+    """
+    if not math.isfinite(rate):
+        raise TableFormatError(f"non-finite released rate {rate!r}")
+    return EnvironmentResponsePhenotype(
+        measurement_type=MeasurementType.growth_rate,
+        environment_response=rate,
+        n_samples=1,
+        sample_unit=SampleUnit.biological_replicate,
+        units=ABSOLUTE_UNITS,
         screen_id=screen_id,
+        replicate_id=replicate_id,
+        provenance_gaps=[
+            _GAP_ASSAY,
+            *_single_measurement_gaps(_RESPONSE_DISPERSION_FIELDS),
+        ],
     )
 
 
-def parent_phenotype(parent: StrainRates) -> FitnessPhenotype:
-    """A reference strain's ratio of its own mean to itself, 1.0, with its own relative
-    spread: MS56 for the strains built on or evolved from it, MG1655 for MS56.
+def culture_reference_phenotype(
+    rates: Sequence[float], screen_id: str
+) -> EnvironmentResponsePhenotype:
+    """A background strain's released cultures in the panel's base medium, summarized.
+
+    The only aggregate this class states: mean, sample SD and n over the released
+    cultures, ``replicate_id = None`` because no one culture is what it reports, and the
+    cultures it summarizes are themselves records. It needs two cultures for a sample
+    SD; Fig. 2g's MG1655 M9 arm releases exactly two.
     """
-    return FitnessPhenotype(
-        fitness=1.0,
-        fitness_uncertainty=parent.sample_sd / parent.mean,
-        fitness_uncertainty_type=UncertaintyType.sample_sd,
-        n_samples=parent.n_samples,
+    n = len(rates)
+    if n < 2:
+        raise TableFormatError(
+            f"a reference needs two cultures for a sample SD, got {n}"
+        )
+    return EnvironmentResponsePhenotype(
+        measurement_type=MeasurementType.growth_rate,
+        environment_response=statistics.fmean(rates),
+        environment_response_uncertainty=statistics.stdev(rates),
+        environment_response_uncertainty_type=UncertaintyType.sample_sd,
+        n_samples=n,
         sample_unit=SampleUnit.biological_replicate,
+        units=ABSOLUTE_UNITS,
+        screen_id=screen_id,
+        provenance_gaps=[_GAP_ASSAY],
+    )
+
+
+def metabolite_value_phenotype(value: MetaboliteValue) -> MetabolitePhenotype:
+    """One released culture's metabolite level, verbatim, as the sheet prints it.
+
+    ``measurement_type`` says what the number is: the compartment and the unit for
+    pyruvate and ATP (the row label's own unit), and for the two Fig. 3d ratio rows the
+    released reduced-over-oxidized ratio, keyed by the row label. One culture is one
+    measurement, so ``metabolite_level_se`` is a ``not_applicable_single_measurement``
+    gap.
+    """
+    return MetabolitePhenotype(
+        metabolite_level={value.metabolite: value.value},
+        n_replicates={value.metabolite: 1},
+        measurement_type=value.measurement_type,
+        replicate_id=value.replicate_id,
+        provenance_gaps=_single_measurement_gaps(("metabolite_level_se",)),
+    )
+
+
+def metabolite_reference_phenotype(
+    values: Sequence[MetaboliteValue],
+) -> MetabolitePhenotype:
+    """A strain's released cultures at one condition, summarized: mean, SE and n.
+
+    The class carries a standard error, not an SD, so the summary's dispersion is the
+    sample SD over sqrt(n). ``replicate_id`` is ``None``: the reference states the
+    aggregate, and the cultures it summarizes are themselves records.
+    """
+    if len(values) < 2:
+        raise TableFormatError(
+            f"a metabolite reference needs two cultures, got {len(values)}"
+        )
+    (key,) = {v.metabolite for v in values}
+    (measurement,) = {v.measurement_type for v in values}
+    levels = [v.value for v in values]
+    return MetabolitePhenotype(
+        metabolite_level={key: statistics.fmean(levels)},
+        metabolite_level_se={key: statistics.stdev(levels) / math.sqrt(len(levels))},
+        n_replicates={key: len(levels)},
+        measurement_type=measurement,
     )
 
 
@@ -1330,20 +2021,6 @@ def control_background(allele: ReconstructedAllele) -> StrainBackground:
             SOURCED_VALUES[f"{allele.control_strain}_genotype"],
             SOURCED_VALUES["parent_genotype_statement"],
         ],
-    )
-
-
-def reconstruction_phenotype(
-    ratios: Sequence[float], *, screen_id: str | None = None
-) -> FitnessPhenotype:
-    """The mean of the released Fig. 2f ratios, with their sample SD."""
-    return FitnessPhenotype(
-        fitness=statistics.fmean(ratios),
-        fitness_uncertainty=statistics.stdev(ratios),
-        fitness_uncertainty_type=UncertaintyType.sample_sd,
-        n_samples=len(ratios),
-        sample_unit=SampleUnit.biological_replicate,
-        screen_id=screen_id,
     )
 
 
@@ -1485,11 +2162,17 @@ def _link_raw(raw_dir: str, names: Sequence[str]) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# The designed-deletion dataset
+# The released-ratio dataset (Fig. 2f)
 # --------------------------------------------------------------------------- #
+def _link_and_check(dataset: ExperimentDataset, names: Sequence[str]) -> None:
+    """Link the mirrored files into ``raw/`` after checking manifest and sha256."""
+    _link_raw(dataset.raw_dir, names)
+    log.info("Choe 2019 raw files linked into %s (sha256 verified)", dataset.raw_dir)
+
+
 @register_dataset
 class GrowthRateChoe2019Dataset(ExperimentDataset):
-    """Choe 2019 Fig. 2c: the two MS56 designed deletions, as parent-relative fitness."""
+    """Choe 2019 Fig. 2f: each released set's mutant-over-control growth-rate ratio."""
 
     organism = Organism.ecoli
 
@@ -1532,15 +2215,14 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
 
     def download(self) -> None:
         """Link the mirrored files into ``raw/`` after checking manifest and sha256."""
-        _link_raw(self.raw_dir, self.raw_file_names)
-        log.info("Choe 2019 raw files linked into %s (sha256 verified)", self.raw_dir)
+        _link_and_check(self, self.raw_file_names)
 
     def _raw(self, name: str) -> str:
         return osp.join(self.raw_dir, name)
 
     @post_process
     def process(self) -> None:
-        """Build the designed-deletion and reconstructed-allele records, write the LMDB."""
+        """Build one record per released Fig. 2f set and write the LMDB (#1175)."""
         verify_raw_files(self.raw_dir, self._consumed_sha256())
         source = self._raw(SOURCE_DATA.name)
         panel = read_growth_panel(source)
@@ -1560,21 +2242,44 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
         )
 
         environment = growth_environment()
-        reference_genome = assembly_reference(
-            self.REFERENCE_STRAIN, background=parent_background()
-        )
-        parent = panel.rates(PARENT_LABEL)
-        reference = FitnessExperimentReference(
-            dataset_name=self.name,
-            genome_reference=reference_genome,
-            environment_reference=environment,
-            phenotype_reference=parent_phenotype(parent),
-        )
         pub = publication()
-        strains: tuple[tuple[str, tuple[str, ...]], ...] = (
-            (LARGE_DELETION_LABEL, LARGE_DELETION_SYMBOLS),
-            (RPOS_DELETION_LABEL, (RPOS_SYMBOL,)),
-        )
+
+        def control(genome: ReferenceGenome) -> FitnessExperimentReference:
+            return FitnessExperimentReference(
+                dataset_name=self.name,
+                genome_reference=genome,
+                environment_reference=environment,
+                phenotype_reference=control_phenotype(),
+            )
+
+        # (row label, strain label, reference strain, genotype, reference)
+        arms: list[tuple[str, str, str, Genotype, FitnessExperimentReference]] = [
+            (
+                RATIO_ROW_ORDER[0],
+                EVOLVED_LABEL,
+                PARENT_LABEL,
+                Genotype(perturbations=[]),
+                control(
+                    assembly_reference(
+                        self.REFERENCE_STRAIN, background=evolved_background()
+                    )
+                ),
+            ),
+            *(
+                (
+                    allele.ratio_label,
+                    allele.strain,
+                    allele.control_strain,
+                    reconstructed_genotype(allele),
+                    control(
+                        assembly_reference(
+                            self.REFERENCE_STRAIN, background=control_background(allele)
+                        )
+                    ),
+                )
+                for allele in RECONSTRUCTED_ALLELES
+            ),
+        ]
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -1582,104 +2287,34 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
         rows: list[dict[str, Any]] = []
         index = 0
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for label, symbols in tqdm(strains, desc="choe2019 growth rate"):
-                rates = panel.rates(label)
-                phenotype = fitness_phenotype(rates, parent)
-                experiment = FitnessExperiment(
-                    dataset_name=self.name,
-                    genotype=build_growth_genotype(symbols, label),
-                    environment=environment,
-                    phenotype=phenotype,
-                )
-                txn.put(
-                    f"{index}".encode(),
-                    self._intern_record(experiment, reference, pub, itxn),
-                )
-                index += 1
-                rows.append(
-                    {
-                        "panel": GROWTH_SHEET,
-                        "strain": label,
-                        "deleted_genes": len(symbols),
-                        "deleted_symbols": ";".join(symbols),
-                        "growth_rate_replicates": ";".join(
-                            f"{value}" for value in rates.replicates
-                        ),
-                        "growth_rate_mean": rates.mean,
-                        "parent_growth_rate_mean": parent.mean,
-                        "n_samples": rates.n_samples,
-                        "fitness": phenotype.fitness,
-                        "fitness_uncertainty": phenotype.fitness_uncertainty,
-                        "fitness_se": phenotype.fitness_se,
-                    }
-                )
-            for allele in RECONSTRUCTED_ALLELES:
-                released = ratios[allele.ratio_label]
-                phenotype = reconstruction_phenotype(released)
-                control = FitnessExperimentReference(
-                    dataset_name=self.name,
-                    genome_reference=assembly_reference(
-                        self.REFERENCE_STRAIN, background=control_background(allele)
-                    ),
-                    environment_reference=environment,
-                    phenotype_reference=control_phenotype(),
-                )
-                experiment = FitnessExperiment(
-                    dataset_name=self.name,
-                    genotype=reconstructed_genotype(allele),
-                    environment=environment,
-                    phenotype=phenotype,
-                )
-                txn.put(
-                    f"{index}".encode(),
-                    self._intern_record(experiment, control, pub, itxn),
-                )
-                index += 1
-                rows.append(
-                    {
-                        "panel": RATIO_SHEET,
-                        "strain": allele.strain,
-                        "reference_strain": allele.control_strain,
-                        "allele": allele.allele,
-                        "released_ratios": ";".join(f"{v}" for v in released),
-                        "n_samples": len(released),
-                        "fitness": phenotype.fitness,
-                        "fitness_uncertainty": phenotype.fitness_uncertainty,
-                        "fitness_se": phenotype.fitness_se,
-                    }
-                )
-            # #1045 part 3: the rows refused until now, each strain on its released
-            # background with an empty genotype (nothing is edited on top of it).
-            for (
-                strain_label,
-                background,
-                versus,
-                record_reference,
-                phenotype,
-            ) in self._background_records(panel, ratios, environment, reference_genome):
-                experiment = FitnessExperiment(
-                    dataset_name=self.name,
-                    genotype=Genotype(perturbations=[]),
-                    environment=environment,
-                    phenotype=phenotype,
-                )
-                txn.put(
-                    f"{index}".encode(),
-                    self._intern_record(experiment, record_reference, pub, itxn),
-                )
-                index += 1
-                rows.append(
-                    {
-                        "panel": phenotype.screen_id or GROWTH_SHEET,
-                        "strain": strain_label,
-                        "background": background,
-                        "reference_strain": versus,
-                        "n_samples": phenotype.n_samples,
-                        "fitness": phenotype.fitness,
-                        "fitness_uncertainty": phenotype.fitness_uncertainty,
-                        "fitness_se": phenotype.fitness_se,
-                    }
-                )
+            for label, strain, versus, genotype, reference in tqdm(
+                arms, desc="choe2019 Fig. 2f sets"
+            ):
+                for replicate_id, ratio in zip(
+                    RATIO_HEADERS[1:], ratios[label], strict=True
+                ):
+                    phenotype = released_ratio_phenotype(ratio, replicate_id)
+                    experiment = FitnessExperiment(
+                        dataset_name=self.name,
+                        genotype=genotype,
+                        environment=environment,
+                        phenotype=phenotype,
+                    )
+                    txn.put(
+                        f"{index}".encode(),
+                        self._intern_record(experiment, reference, pub, itxn),
+                    )
+                    index += 1
+                    rows.append(
+                        {
+                            "panel": RATIO_SHEET,
+                            "row_label": label,
+                            "strain": strain,
+                            "reference_strain": versus,
+                            "replicate_id": replicate_id,
+                            "fitness": phenotype.fitness,
+                        }
+                    )
         env.close()
         interned_env.close()
 
@@ -1689,72 +2324,12 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
             )
         self._write_ledgers(panel, ratios, rows, recovery, disagreement, variants)
         log.info(
-            "Choe 2019 Fig. 2c + 2f: %d records (%d references); fitness %.6f to %.6f",
+            "Choe 2019 Fig. 2f: %d records (%d references); fitness %.6f to %.6f",
             index,
             GROWTH_EXPECTED_REFERENCES,
             min(row["fitness"] for row in rows),
             max(row["fitness"] for row in rows),
         )
-
-    def _background_records(
-        self,
-        panel: GrowthPanel,
-        ratios: Mapping[str, Sequence[float]],
-        environment: Environment,
-        parent_genome: ReferenceGenome,
-    ) -> list[tuple[str, str, str, FitnessExperimentReference, FitnessPhenotype]]:
-        """MS56 over MG1655, and eMS57 over MS56 from both panels (#1045 part 3).
-
-        Each record's strain is the background its reference genome names, as for a
-        released background elsewhere; the phenotype reference is the denominator the
-        release divides by. Fig. 2c and Fig. 2f release eMS57/MS56 with different values
-        (``check_panels_disagree``), so each eMS57 record names its panel in
-        ``screen_id`` and neither is derived from the other.
-        """
-        parent = panel.rates(PARENT_LABEL)
-        evolved_genome = assembly_reference(
-            self.REFERENCE_STRAIN, background=evolved_background()
-        )
-
-        def reference(
-            genome: ReferenceGenome, denominator: FitnessPhenotype
-        ) -> FitnessExperimentReference:
-            return FitnessExperimentReference(
-                dataset_name=self.name,
-                genome_reference=genome,
-                environment_reference=environment,
-                phenotype_reference=denominator,
-            )
-
-        return [
-            (
-                PARENT_LABEL,
-                PARENT_LABEL,
-                WILD_TYPE_LABEL,
-                reference(
-                    parent_genome, parent_phenotype(panel.rates(WILD_TYPE_LABEL))
-                ),
-                fitness_phenotype(parent, panel.rates(WILD_TYPE_LABEL)),
-            ),
-            (
-                EVOLVED_LABEL,
-                EVOLVED_LABEL,
-                PARENT_LABEL,
-                reference(evolved_genome, parent_phenotype(parent)),
-                fitness_phenotype(
-                    panel.rates(EVOLVED_LABEL), parent, screen_id=GROWTH_SHEET
-                ),
-            ),
-            (
-                RATIO_ROW_ORDER[0],
-                EVOLVED_LABEL,
-                PARENT_LABEL,
-                reference(evolved_genome, control_phenotype()),
-                reconstruction_phenotype(
-                    ratios[RATIO_ROW_ORDER[0]], screen_id=RATIO_SHEET
-                ),
-            ),
-        ]
 
     def _write_ledgers(
         self,
@@ -1768,43 +2343,52 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
         """The retention ledger, the refused calls, the gaps and the cross-checks."""
         out = Path(self.preprocess_dir)
         total_calls = sum(table.rows for table in variants)
+        released_sets = sum(len(values) for values in ratios.values())
         (out / "dropped_records.json").write_text(
             json.dumps(
                 {
                     "dataset": self.name,
-                    "source_rows": len(panel.rows) + len(ratios),
+                    "source_rows": len(ratios),
+                    "source_values": released_sets,
                     "kept_records": len(rows),
-                    "reference_rows": [
-                        WILD_TYPE_LABEL,
-                        PARENT_LABEL,
-                        *(a.control_strain for a in RECONSTRUCTED_ALLELES),
-                    ],
-                    "dropped_records": 0,
+                    "stored_by_replicate": {
+                        replicate_id: sum(
+                            1 for row in rows if row["replicate_id"] == replicate_id
+                        )
+                        for replicate_id in RATIO_HEADERS[1:]
+                    },
+                    "reference_rows": [a.control_strain for a in RECONSTRUCTED_ALLELES],
+                    "dropped_records": released_sets - len(rows),
                     "rules": [],
                     "retired_rules": [
                         {
                             "reason": "evolved_clone_has_no_writable_genotype",
                             "retired": "no longer applied (#1045 part 3): eMS57 is "
                             "stored on a StrainBackground named eMS57, its "
-                            "Supplementary Table 3 row the genotype statement, once "
-                            "per panel (screen_id Fig2c and Fig2f)",
+                            "Supplementary Table 3 row the genotype statement",
                         },
                         {
-                            "reason": "parent_genotype_not_enumerated_by_this_paper",
-                            "retired": "no longer applied (#1045 part 3): MS56 is "
-                            "stored over MG1655 on its own named background, so the "
-                            "record does not assert MS56 is genotypically MG1655",
+                            "reason": "loader_mean_over_released_sets",
+                            "retired": "no longer applied (#1175, 2026-11-24): each "
+                            "released Fig. 2f set is its own record; the mean and "
+                            "sample SD over the three sets are a modeling-time "
+                            "derivation",
+                        },
+                        {
+                            "reason": "fig2c_rates_as_parent_relative_fitness",
+                            "retired": "no longer applied (#1175, 2026-11-24): the "
+                            "Fig. 2c cultures are absolute growth rates in "
+                            "AbsoluteGrowthRateChoe2019Dataset, not ratios over a "
+                            "loader-computed parent mean in this class",
                         },
                     ],
                     "notes": [
-                        f"{len(panel.rows)} released Fig. 2c rows = 4 records (the "
-                        "two deletion strains, MS56 over MG1655, eMS57 over MS56) + "
-                        "MG1655 as MS56's reference; "
-                        f"{len(ratios)} released Fig. 2f rows = 4 records (the three "
-                        "reconstructions and eMS57/MS56)",
+                        f"{len(ratios)} released Fig. 2f rows x 3 sets = "
+                        f"{released_sets} records: the three reconstructions and "
+                        "eMS57/MS56, each set's ratio as the sheet prints it",
                         f"Fig. 2f releases three reconstructed single-allele strains "
                         f"({', '.join(RATIO_ROW_ORDER[1:])}) as mutant-over-control "
-                        "growth-rate ratios for three sets. Since #1057 each is a record "
+                        "growth-rate ratios for three sets. Since #1057 each is stored "
                         "on ReleasedIdentifierPerturbation (sequence_allele), the "
                         "gene and allele as Supplementary Table 3 writes them, against "
                         "its kan-marked wild-type-allele control",
@@ -1820,9 +2404,6 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
                         "and Supplementary Data 5 (839 ChIP-seq peaks) are not "
                         "mirrored: an Omnilog respiration endpoint has no "
                         "MeasurementType member and a binding peak has no class",
-                        "each deletion is keyed by the gene symbol the release names "
-                        "(#1045 part 2); where the pinned MG1655 assembly places them "
-                        f"is the verification row {DELETED_REGION_RULE}",
                     ],
                 },
                 indent=2,
@@ -1899,6 +2480,510 @@ class GrowthRateChoe2019Dataset(ExperimentDataset):
         """Experiment construction is handled inline in process() for this dataset."""
         raise NotImplementedError(
             "GrowthRateChoe2019Dataset builds records in process()"
+        )
+
+
+# --------------------------------------------------------------------------- #
+# The absolute growth-rate dataset (Fig. 2c, Fig. 2g)
+# --------------------------------------------------------------------------- #
+class CultureArm(BaseModel):
+    """One released strain row of Fig. 2c or Fig. 2g and how its records are written.
+
+    ``background`` names the strain the reference genome carries (the strain an empty
+    genotype stands for, or the parent the deletions are made on); the reference is
+    that background strain's own released cultures in the panel's base medium.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    panel: str
+    strain: str
+    medium: str
+    background: str
+    deleted_symbols: tuple[str, ...] = ()
+
+
+@register_dataset
+class AbsoluteGrowthRateChoe2019Dataset(ExperimentDataset):
+    """Choe 2019 Fig. 2c and Fig. 2g: one absolute growth rate per released culture."""
+
+    organism = Organism.ecoli
+
+    REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = MG1655
+
+    def __init__(
+        self,
+        root: str = ABSOLUTE_DATASET_ROOT_REL,
+        io_workers: int = 0,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize; the loader reads no annotation (#1045 part 2)."""
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
+
+    @property
+    def experiment_class(self) -> type[Experiment]:
+        """Experiment schema class produced by this dataset."""
+        return EnvironmentResponseExperiment
+
+    @property
+    def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference schema class produced by this dataset."""
+        return EnvironmentResponseExperimentReference
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        """The Source Data workbook (sheets ``Fig2c`` and ``Fig2g``)."""
+        return [SOURCE_DATA.name]
+
+    def _consumed_sha256(self) -> dict[str, str]:
+        """``{name: sha256}`` of the files this loader reads."""
+        return {name: DATA_SHA256[name] for name in self.raw_file_names}
+
+    def download(self) -> None:
+        """Link the mirrored workbook into ``raw/`` after checking manifest and sha256."""
+        _link_and_check(self, self.raw_file_names)
+
+    def _genome(self, background: str) -> ReferenceGenome:
+        """The reference genome a background label names (bare MG1655 for MG1655)."""
+        if background == WILD_TYPE_LABEL:
+            return assembly_reference(self.REFERENCE_STRAIN)
+        if background == PARENT_LABEL:
+            return assembly_reference(
+                self.REFERENCE_STRAIN, background=parent_background()
+            )
+        if background == EVOLVED_LABEL:
+            return assembly_reference(
+                self.REFERENCE_STRAIN, background=evolved_background()
+            )
+        raise KeyError(f"no background is declared for {background!r}")
+
+    @post_process
+    def process(self) -> None:
+        """Build one record per released culture of Fig. 2c and Fig. 2g (#1175)."""
+        verify_raw_files(self.raw_dir, self._consumed_sha256())
+        source = osp.join(self.raw_dir, SOURCE_DATA.name)
+        panel = read_growth_panel(source)
+        supplement = read_supplement_panel(source)
+        recovery = check_recovery_fraction(panel)
+        if len(supplement.dashes) != FIG2G_DASH_CELLS:
+            raise TableFormatError(
+                f"{SUPPLEMENT_SHEET} prints {len(supplement.dashes)} dashes, the "
+                f"module states {FIG2G_DASH_CELLS}"
+            )
+
+        base = growth_environment()
+        pub = publication()
+        references: dict[tuple[str, str], EnvironmentResponseExperimentReference] = {}
+
+        def reference(
+            panel_id: str, background: str
+        ) -> EnvironmentResponseExperimentReference:
+            key = (panel_id, background)
+            if key not in references:
+                rates = (
+                    panel.rates(background).replicates
+                    if panel_id == GROWTH_SHEET
+                    else supplement.base_rates(background)
+                )
+                references[key] = EnvironmentResponseExperimentReference(
+                    dataset_name=self.name,
+                    genome_reference=self._genome(background),
+                    environment_reference=base,
+                    phenotype_reference=culture_reference_phenotype(rates, panel_id),
+                )
+            return references[key]
+
+        deletions = {
+            LARGE_DELETION_LABEL: LARGE_DELETION_SYMBOLS,
+            RPOS_DELETION_LABEL: (RPOS_SYMBOL,),
+        }
+        cells: list[tuple[CultureArm, str, float]] = []
+        for row in panel.rows:
+            arm = CultureArm(
+                panel=GROWTH_SHEET,
+                strain=row.strain,
+                medium=BASE_MEDIUM_LABEL,
+                background=PARENT_LABEL if row.strain in deletions else row.strain,
+                deleted_symbols=deletions.get(row.strain, ()),
+            )
+            cells.extend(
+                (arm, replicate_id, rate) for replicate_id, rate in row.labelled
+            )
+        for cell in supplement.rates:
+            arm = CultureArm(
+                panel=SUPPLEMENT_SHEET,
+                strain=cell.strain,
+                medium=cell.medium,
+                background=cell.strain,
+            )
+            cells.append((arm, cell.replicate_id, cell.rate))
+
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        os.makedirs(self.processed_dir, exist_ok=True)
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
+        rows: list[dict[str, Any]] = []
+        index = 0
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            for arm, replicate_id, rate in tqdm(cells, desc="choe2019 cultures"):
+                phenotype = culture_rate_phenotype(rate, replicate_id, arm.panel)
+                genotype = (
+                    build_growth_genotype(arm.deleted_symbols, arm.strain)
+                    if arm.deleted_symbols
+                    else Genotype(perturbations=[])
+                )
+                experiment = EnvironmentResponseExperiment(
+                    dataset_name=self.name,
+                    genotype=genotype,
+                    environment=supplemented_environment(arm.medium),
+                    phenotype=phenotype,
+                )
+                record_reference = reference(arm.panel, arm.background)
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, record_reference, pub, itxn),
+                )
+                index += 1
+                rows.append(
+                    {
+                        "panel": arm.panel,
+                        "medium": arm.medium,
+                        "strain": arm.strain,
+                        "background": arm.background,
+                        "deleted_genes": len(arm.deleted_symbols),
+                        "replicate_id": replicate_id,
+                        "growth_rate": rate,
+                        "reference_growth_rate_mean": (
+                            record_reference.phenotype_reference.environment_response
+                        ),
+                    }
+                )
+        env.close()
+        interned_env.close()
+
+        if index != ABSOLUTE_EXPECTED_RECORDS:
+            raise RuntimeError(
+                f"{index} records, the module states {ABSOLUTE_EXPECTED_RECORDS}"
+            )
+        if len(references) != ABSOLUTE_EXPECTED_REFERENCES:
+            raise RuntimeError(
+                f"{len(references)} references, the module states "
+                f"{ABSOLUTE_EXPECTED_REFERENCES}"
+            )
+        self._write_ledgers(panel, supplement, rows, recovery)
+        log.info(
+            "Choe 2019 Fig. 2c + 2g: %d culture records (%d references)",
+            index,
+            len(references),
+        )
+
+    def _write_ledgers(
+        self,
+        panel: GrowthPanel,
+        supplement: SupplementPanel,
+        rows: Sequence[Mapping[str, Any]],
+        recovery: Mapping[str, Any],
+    ) -> None:
+        """The retention ledger (every released cell accounted for) and the checks."""
+        out = Path(self.preprocess_dir)
+        fig2c_cells = sum(row.n_samples for row in panel.rows)
+        fig2g_cells = len(supplement.rates) + len(supplement.dashes)
+        (out / "dropped_records.json").write_text(
+            json.dumps(
+                {
+                    "dataset": self.name,
+                    "source_cells": {
+                        GROWTH_SHEET: fig2c_cells,
+                        SUPPLEMENT_SHEET: fig2g_cells,
+                    },
+                    "kept_records": len(rows),
+                    "stored_by_panel": {
+                        panel_id: sum(1 for row in rows if row["panel"] == panel_id)
+                        for panel_id in (GROWTH_SHEET, SUPPLEMENT_SHEET)
+                    },
+                    "stored_by_replicate": {
+                        replicate_id: sum(
+                            1 for row in rows if row["replicate_id"] == replicate_id
+                        )
+                        for replicate_id in GROWTH_HEADERS[1:]
+                    },
+                    "dropped_records": 0,
+                    "unreleased_cells": [
+                        dash.model_dump(mode="json") for dash in supplement.dashes
+                    ],
+                    "rules": [],
+                    "notes": [
+                        f"{len(panel.rows)} Fig. 2c strain rows x 3 cultures = "
+                        f"{fig2c_cells} records, MG1655, MS56 and eMS57 included",
+                        f"Fig. 2g releases {fig2g_cells} cells: {len(supplement.rates)} "
+                        f"numbers are records and {len(supplement.dashes)} print a "
+                        "dash, which is no released value (MG1655 M9 Rep3 and the "
+                        "three MG1655 M9 + valine cells)",
+                        "each record is one culture's absolute growth rate verbatim; "
+                        "a ratio to a parent is a modeling-time derivation over these "
+                        "records",
+                        "each reference is the background strain's released cultures "
+                        "in the panel's M9 glucose: mean, sample SD, n, replicate_id "
+                        "None",
+                        "each deletion is keyed by the gene symbol the release names "
+                        "(#1045 part 2); where the pinned MG1655 assembly places them "
+                        f"is the verification row {DELETED_REGION_RULE}",
+                    ],
+                },
+                indent=2,
+            )
+        )
+        (out / "released_statistics_check.json").write_text(
+            json.dumps(
+                {
+                    "recovery_fraction": dict(recovery),
+                    "fig2c_strain_means": {row.strain: row.mean for row in panel.rows},
+                },
+                indent=2,
+            )
+        )
+        (out / "sourced_values.json").write_text(
+            json.dumps(
+                {
+                    name: value.model_dump(mode="json")
+                    for name, value in SOURCED_VALUES.items()
+                    if not name.startswith("keio")
+                },
+                indent=2,
+            )
+        )
+        pd.DataFrame(list(rows)).to_csv(out / "cultures.csv", index=False)
+
+    def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
+        """Preprocessing is handled inside process() for this dataset."""
+        return df
+
+    def create_experiment(self) -> None:
+        """Experiment construction is handled inline in process() for this dataset."""
+        raise NotImplementedError(
+            "AbsoluteGrowthRateChoe2019Dataset builds records in process()"
+        )
+
+
+# --------------------------------------------------------------------------- #
+# The metabolite dataset (Fig. 1g, Fig. 3d)
+# --------------------------------------------------------------------------- #
+@register_dataset
+class MetaboliteChoe2019Dataset(ExperimentDataset):
+    """Choe 2019 Fig. 1g and Fig. 3d: one metabolite level per released culture cell."""
+
+    organism = Organism.ecoli
+    #: MG1655 and eMS57 only: every genotype is empty, so the gene set is empty.
+    has_gene_perturbations = False
+
+    REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = MG1655
+
+    def __init__(
+        self,
+        root: str = METABOLITE_DATASET_ROOT_REL,
+        io_workers: int = 0,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize; the loader reads no annotation (#1045 part 2)."""
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
+
+    @property
+    def experiment_class(self) -> type[Experiment]:
+        """Experiment schema class produced by this dataset."""
+        return MetaboliteExperiment
+
+    @property
+    def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference schema class produced by this dataset."""
+        return MetaboliteExperimentReference
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        """The Source Data workbook (sheets ``Fig1g`` and ``Fig3d``)."""
+        return [SOURCE_DATA.name]
+
+    def _consumed_sha256(self) -> dict[str, str]:
+        """``{name: sha256}`` of the files this loader reads."""
+        return {name: DATA_SHA256[name] for name in self.raw_file_names}
+
+    def download(self) -> None:
+        """Link the mirrored workbook into ``raw/`` after checking manifest and sha256."""
+        _link_and_check(self, self.raw_file_names)
+
+    def _genome(self, strain: str) -> ReferenceGenome:
+        """Bare MG1655, or eMS57 on its released background."""
+        if strain == WILD_TYPE_LABEL:
+            return assembly_reference(self.REFERENCE_STRAIN)
+        if strain == EVOLVED_LABEL:
+            return assembly_reference(
+                self.REFERENCE_STRAIN, background=evolved_background()
+            )
+        raise KeyError(f"no background is declared for {strain!r}")
+
+    @staticmethod
+    def _environment(value: MetaboliteValue) -> Environment:
+        """The culture condition one value was measured in."""
+        if value.sheet == PYRUVATE_SHEET:
+            if value.hours is None:
+                raise TableFormatError("a Fig. 1g value without its timepoint")
+            return pyruvate_environment(value.hours)
+        return cofactor_environment()
+
+    @post_process
+    def process(self) -> None:
+        """Build one record per released Fig. 1g and Fig. 3d culture cell (#1175)."""
+        verify_raw_files(self.raw_dir, self._consumed_sha256())
+        source = osp.join(self.raw_dir, SOURCE_DATA.name)
+        pyruvate, od_cells = read_pyruvate_panel(source)
+        cofactors = read_cofactor_panel(source)
+        folds = check_cofactor_fold_changes(cofactors)
+        if od_cells != FIG1G_OD_CELLS:
+            raise TableFormatError(
+                f"{PYRUVATE_SHEET} releases {od_cells} OD600 cells, the module states "
+                f"{FIG1G_OD_CELLS}"
+            )
+        values = (*pyruvate, *cofactors)
+        groups: dict[tuple[str, str, str, float | None], list[MetaboliteValue]] = {}
+        for value in values:
+            key = (value.sheet, value.strain, value.measurement_type, value.hours)
+            groups.setdefault(key, []).append(value)
+        references = {
+            key: MetaboliteExperimentReference(
+                dataset_name=self.name,
+                genome_reference=self._genome(members[0].strain),
+                environment_reference=self._environment(members[0]),
+                phenotype_reference=metabolite_reference_phenotype(members),
+            )
+            for key, members in groups.items()
+        }
+        pub = publication()
+
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        os.makedirs(self.processed_dir, exist_ok=True)
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
+        rows: list[dict[str, Any]] = []
+        index = 0
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            for value in tqdm(values, desc="choe2019 metabolites"):
+                experiment = MetaboliteExperiment(
+                    dataset_name=self.name,
+                    genotype=Genotype(perturbations=[]),
+                    environment=self._environment(value),
+                    phenotype=metabolite_value_phenotype(value),
+                )
+                reference = references[
+                    (value.sheet, value.strain, value.measurement_type, value.hours)
+                ]
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, pub, itxn),
+                )
+                index += 1
+                rows.append(value.model_dump(mode="json"))
+        env.close()
+        interned_env.close()
+
+        if index != METABOLITE_EXPECTED_RECORDS:
+            raise RuntimeError(
+                f"{index} records, the module states {METABOLITE_EXPECTED_RECORDS}"
+            )
+        if len(references) != METABOLITE_EXPECTED_REFERENCES:
+            raise RuntimeError(
+                f"{len(references)} references, the module states "
+                f"{METABOLITE_EXPECTED_REFERENCES}"
+            )
+        self._write_ledgers(rows, od_cells, folds)
+        log.info(
+            "Choe 2019 Fig. 1g + 3d: %d metabolite records (%d references)",
+            index,
+            len(references),
+        )
+
+    def _write_ledgers(
+        self, rows: Sequence[Mapping[str, Any]], od_cells: int, folds: Mapping[str, Any]
+    ) -> None:
+        """The retention ledger (every released cell accounted for) and the checks."""
+        out = Path(self.preprocess_dir)
+        (out / "dropped_records.json").write_text(
+            json.dumps(
+                {
+                    "dataset": self.name,
+                    "source_cells": {
+                        PYRUVATE_SHEET: sum(
+                            1 for row in rows if row["sheet"] == PYRUVATE_SHEET
+                        )
+                        + od_cells,
+                        COFACTOR_SHEET: sum(
+                            1 for row in rows if row["sheet"] == COFACTOR_SHEET
+                        ),
+                    },
+                    "kept_records": len(rows),
+                    "stored_by_measurement_type": {
+                        measurement: sum(
+                            1 for row in rows if row["measurement_type"] == measurement
+                        )
+                        for measurement in sorted(METABOLITE_PROTOCOLS)
+                    },
+                    "dropped_records": 0,
+                    "not_records": [
+                        {
+                            "cells": od_cells,
+                            "sheet": PYRUVATE_SHEET,
+                            "row": PYRUVATE_OD_ROW,
+                            "reason": "growth_curve_point_has_no_phenotype_class",
+                            "detail": "the OD600 of each culture at 4, 6 and 8 h is a "
+                            "point of a growth curve, which no phenotype class holds "
+                            "(the Fig. 1a, 1b, 1d and 1h curves are refused for the "
+                            "same reason)",
+                        }
+                    ],
+                    "rules": [],
+                    "notes": [
+                        "each record is one released cell verbatim: one culture's "
+                        "level at one condition, n_replicates 1, replicate_id the "
+                        "sheet's own block or column label",
+                        "Fig. 1g's three timepoints of one culture are three "
+                        "environments (duration_hours 4, 6, 8 after inoculation), so "
+                        "a culture is three records per pyruvate row",
+                        "Fig. 3d releases two NADH/NAD+ and two NADPH/NADP+ cells per "
+                        "strain and three ATP cells, against a legend that states "
+                        "three biological replicates; every released cell is stored",
+                        "each reference is the strain's own released cultures at the "
+                        "same condition: mean, SE (sample SD / sqrt n), n, "
+                        "replicate_id None",
+                    ],
+                },
+                indent=2,
+            )
+        )
+        (out / "released_statistics_check.json").write_text(
+            json.dumps({"cofactor_fold_changes": dict(folds)}, indent=2)
+        )
+        (out / "sourced_values.json").write_text(
+            json.dumps(
+                {
+                    name: value.model_dump(mode="json")
+                    for name, value in SOURCED_VALUES.items()
+                    if name.startswith(
+                        ("fig1g", "fig3d", "pyruvate", "cofactor", "media")
+                    )
+                },
+                indent=2,
+            )
+        )
+        pd.DataFrame(list(rows)).to_csv(out / "values.csv", index=False)
+
+    def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
+        """Preprocessing is handled inside process() for this dataset."""
+        return df
+
+    def create_experiment(self) -> None:
+        """Experiment construction is handled inline in process() for this dataset."""
+        raise NotImplementedError(
+            "MetaboliteChoe2019Dataset builds records in process()"
         )
 
 
@@ -2148,7 +3233,7 @@ def verify_growth_build(
     genome: EcoliK12Genome | None = None,
     expected_count: int = GROWTH_EXPECTED_RECORDS,
 ) -> VerificationReport:
-    """L0-L4 over the designed-deletion tree."""
+    """L0-L4 over the released-ratio (Fig. 2f) tree."""
     return _verify(
         dataset_root,
         data_root,
@@ -2160,16 +3245,115 @@ def verify_growth_build(
             citation_key=CITATION_KEY,
             sha256=SOURCE_DATA.sha256,
             method=(
-                "Source Data sheet 'Fig2c' Rep1-Rep3 growth rates: one "
-                "FitnessExperiment per designed MS56 deletion strain, "
-                "fitness = mean(strain replicates) / mean(MS56 replicates), "
-                "fitness_se = the delta-method SE of that ratio"
+                "Source Data sheet 'Fig2f' Set1-Set3 mutant-over-control growth-rate "
+                "ratios: one FitnessExperiment per released set, the ratio verbatim, "
+                "n_samples 1, replicate_id the set label"
             ),
-            page=f"si12.xlsx sheets '{GROWTH_SHEET}' and '{RATIO_SHEET}'",
+            page=f"si12.xlsx sheet '{RATIO_SHEET}'",
             retrieved=RETRIEVED_AT,
         ),
-        extra=lambda pinned: (deleted_region_rule(pinned),),
     )
+
+
+def verify_absolute_growth_build(
+    dataset_root: str,
+    data_root: str | None = None,
+    *,
+    genome: EcoliK12Genome | None = None,
+    expected_count: int = ABSOLUTE_EXPECTED_RECORDS,
+) -> VerificationReport:
+    """L0-L4 over the absolute growth-rate (Fig. 2c, Fig. 2g) tree.
+
+    ``reference_centered=False`` selects the absolute branch: each reference states its
+    own finite rate on the records' scale, and the branch refuses any record whose
+    ``measurement_type`` is not an absolute one. ``expected_unperturbed`` is the 20
+    records in M9 glucose with no supplement, an oracle the build must equal.
+    """
+    from torchcell.verification.environment_response import (
+        verify_environment_response_dataset,
+    )
+    from torchcell.verification.runners import load_records
+
+    records = load_records(dataset_root)
+    if genome is None:
+        genome = bacterial_genome("ecoli", MG1655, data_root)
+    report = verify_environment_response_dataset(
+        records,
+        dataset_name=osp.basename(osp.normpath(dataset_root)),
+        provenance=Provenance(
+            source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/{SOURCE_DATA.mirror_relpath}",
+            citation_key=CITATION_KEY,
+            sha256=SOURCE_DATA.sha256,
+            method=(
+                "Source Data sheets 'Fig2c' and 'Fig2g' Rep1-Rep3 growth rates: one "
+                "EnvironmentResponseExperiment (MeasurementType.growth_rate) per "
+                "released culture, the rate verbatim, n_samples 1, replicate_id the "
+                "column header, screen_id the sheet"
+            ),
+            page=f"si12.xlsx sheets '{GROWTH_SHEET}' and '{SUPPLEMENT_SHEET}'",
+            retrieved=RETRIEVED_AT,
+        ),
+        expected_count=expected_count,
+        reference_centered=False,
+        expected_unperturbed=ABSOLUTE_EXPECTED_UNPERTURBED,
+        sgd_genes=set(genome.genbank.loci),
+        gene_universe_label=f"{MG1655} ({genome.ASSEMBLY_SET})",
+        resolve_gene_name=genome.resolve_gene_name,
+    )
+    report.add(deleted_region_rule(genome))
+    out = osp.join(dataset_root, "preprocess", "verification_report.json")
+    os.makedirs(osp.dirname(out), exist_ok=True)
+    with open(out, "w") as handle:
+        handle.write(report.model_dump_json(indent=2))
+    return report
+
+
+def verify_metabolite_build(
+    dataset_root: str,
+    data_root: str | None = None,
+    *,
+    expected_count: int = METABOLITE_EXPECTED_RECORDS,
+) -> VerificationReport:
+    """L0-L3 over the metabolite (Fig. 1g, Fig. 3d) tree.
+
+    The five readouts are declared protocols (``protocol_measurement_types``), so L1
+    keys on (strain, protocol) and L3 requires each record's reference to share its
+    protocol; ``environment_keyed`` adds the environment to the key, since one Fig. 1g
+    culture is measured at three timepoints. ``reference_centered=False``: every level
+    is absolute and every reference states its own finite value. ``data_root`` is
+    unused (no genotype carries a gene) and kept for the shared call shape.
+    """
+    from torchcell.verification.metabolite import verify_metabolite_dataset
+    from torchcell.verification.runners import load_records
+
+    del data_root
+    records = load_records(dataset_root)
+    report = verify_metabolite_dataset(
+        records,
+        dataset_name=osp.basename(osp.normpath(dataset_root)),
+        provenance=Provenance(
+            source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/{SOURCE_DATA.mirror_relpath}",
+            citation_key=CITATION_KEY,
+            sha256=SOURCE_DATA.sha256,
+            method=(
+                "Source Data sheets 'Fig1g' (pyruvate per culture block x 4, 6, 8 h) "
+                "and 'Fig3d' (NADH/NAD+, NADPH/NADP+ Rep1-Rep2, ATP Rep1-Rep3): one "
+                "MetaboliteExperiment per released cell, the level verbatim, "
+                "n_replicates 1, replicate_id the sheet's label"
+            ),
+            page=f"si12.xlsx sheets '{PYRUVATE_SHEET}' and '{COFACTOR_SHEET}'",
+            retrieved=RETRIEVED_AT,
+        ),
+        expected_count=expected_count,
+        reference_centered=False,
+        protocol_measurement_types=METABOLITE_PROTOCOLS,
+        environment_keyed=True,
+    )
+    out = osp.join(dataset_root, "preprocess", "verification_report.json")
+    os.makedirs(osp.dirname(out), exist_ok=True)
+    with open(out, "w") as handle:
+        handle.write(report.model_dump_json(indent=2))
+    return report
 
 
 def verify_tf_build(
@@ -2211,7 +3395,11 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("deposit", help="write the raw mirror from the library mirror")
     for name in ("build", "verify"):
         command = sub.add_parser(name, help=f"{name} a dev-tree LMDB")
-        command.add_argument("--arm", choices=("growth", "tf", "both"), default="both")
+        command.add_argument(
+            "--arm",
+            choices=("growth", "absolute", "metabolite", "tf", "all"),
+            default="all",
+        )
     args = parser.parse_args(argv)
 
     load_dotenv()
@@ -2221,7 +3409,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     arms: list[tuple[str, str, Any, Any]] = []
-    if args.arm in ("growth", "both"):
+    if args.arm in ("growth", "all"):
         arms.append(
             (
                 "growth",
@@ -2230,7 +3418,25 @@ def main(argv: list[str] | None = None) -> int:
                 verify_growth_build,
             )
         )
-    if args.arm in ("tf", "both"):
+    if args.arm in ("absolute", "all"):
+        arms.append(
+            (
+                "absolute",
+                ABSOLUTE_DATASET_ROOT_REL,
+                AbsoluteGrowthRateChoe2019Dataset,
+                verify_absolute_growth_build,
+            )
+        )
+    if args.arm in ("metabolite", "all"):
+        arms.append(
+            (
+                "metabolite",
+                METABOLITE_DATASET_ROOT_REL,
+                MetaboliteChoe2019Dataset,
+                verify_metabolite_build,
+            )
+        )
+    if args.arm in ("tf", "all"):
         arms.append(
             (
                 "tf",
@@ -2246,7 +3452,10 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "build":
             dataset = klass(root=root)
             print(f"{label}: len = {len(dataset)}")
-            print(Path(root, "preprocess", "strains.csv").read_text())
+            table = {"absolute": "cultures.csv", "metabolite": "values.csv"}.get(
+                label, "strains.csv"
+            )
+            print(Path(root, "preprocess", table).read_text())
             dataset.close_lmdb()
             continue
         report = verifier(root, data_root)

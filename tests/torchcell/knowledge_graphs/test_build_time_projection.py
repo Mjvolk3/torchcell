@@ -524,6 +524,8 @@ BACTERIAL_DATASETS = {
     "GrowthWang2015Dataset",
     "MismatchCrispriFitnessHawkins2020Dataset",
     "GrowthRateChoe2019Dataset",
+    "AbsoluteGrowthRateChoe2019Dataset",
+    "MetaboliteChoe2019Dataset",
     "GrowthRateS23Schmidt2016Dataset",
     "GrowthRateSchmidt2016Dataset",
     "IsopentenolTiterFoo2014Dataset",
@@ -637,6 +639,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 2 (#909: Goodall 2018's unclear calls and Royet 2025's Table S4, graded).
     # + 1 (#879, Wang 2018 Supplementary Data 5 gene-level calls)
     # + 1 (#913, Borchert 2023 two-arm fitness contrasts).
+    # + 2 (#1175, Choe 2019's per-culture absolute growth rates and metabolites).
     assert (
         len(dataset_adapter_map)
         == 110
@@ -680,6 +683,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         + 2
         + 1  # #879 Wang 2018 Supplementary Data 5 gene-level calls
         + 1
+        + 2  # #1175 Choe 2019 absolute growth rates and metabolites
     )
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {

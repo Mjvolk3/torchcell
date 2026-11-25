@@ -203,6 +203,16 @@ MODULE_ROUTES: dict[str, ModuleRoute] = {
         entry="verify_growth_build",
         positional=(DATASET_ROOT, DATA_ROOT),
     ),
+    "AbsoluteGrowthRateChoe2019Dataset": ModuleRoute(
+        module="torchcell.datasets.ecoli.choe2019_growth_rate",
+        entry="verify_absolute_growth_build",
+        positional=(DATASET_ROOT, DATA_ROOT),
+    ),
+    "MetaboliteChoe2019Dataset": ModuleRoute(
+        module="torchcell.datasets.ecoli.choe2019_growth_rate",
+        entry="verify_metabolite_build",
+        positional=(DATASET_ROOT, DATA_ROOT),
+    ),
     "TranscriptionFactorKnockoutChoe2019Dataset": ModuleRoute(
         module="torchcell.datasets.ecoli.choe2019_growth_rate",
         entry="verify_tf_build",

@@ -324,3 +324,57 @@ MS56 over MG1655 on MS56's named background, and eMS57 over MS56 from the Fig. 2
 | L4 | `gene_containment_sgd` | finding (genome reference; reports, does not gate) | 0.000 of 24 measured genes are MG1655 (ecoli_K12_MG1655_ASM584v2) genes (>= 0.9) |
 | L4 | `current_genome_genes` | finding (genome reference; reports, does not gate) | 24 systematic names are absent from the current genome over 5 records: cspC x1, fhlA x1, hycA x1, hycB x1, hycC x1, hycD x1, hycE x1, hypA x1, hypB x1, hypC x1 |
 | L4 | `deleted_symbols_are_one_contiguous_run_of_the_pinned_assembly` | pass | the 21 released deletion symbols are one contiguous run of ecoli_K12_MG1655_ASM584v2 with no unlisted gene inside |
+
+## 2026.11.24 - One record per released culture or set (#1175, #1178)
+
+### What a replicate is, from the source
+
+Every quote is verbatim from the pinned `paper.md` (sha256 `11a04220...7f7713`) or `si/si1.md` (sha256 `fcadf7fa...cb3ec5`) of the library mirror; the sheets are the raw mirror's `data/si12.xlsx` (sha256 `fcc30417...544705`).
+
+| sheet | columns | what one value is | source statement |
+|---|---|---|---|
+| `Fig2c` | `Rep1`-`Rep3` x 5 strains | one culture's growth rate | Fig. 2c legend: "Error bars indicate the s.d. of three individual cultures shown in red circles." Methods: "All bacterial growth measurements were biologically triplicated" |
+| `Fig2f` | `Set1`-`Set3` x 4 ratio rows | one set's mutant-over-control ratio | Fig. 2f legend: "Error bars indicate s.d. of three biological replicates shown as red circles." |
+| `Fig2g` | `Rep1`-`Rep3` x 6 (medium, strain) rows | one culture's growth rate, or a dash | Fig. 2g legend: "error bars indicate s.d. of three biological replicates shown as red circles" |
+| `Fig1g` | 4 blocks (`MG1655 Rep 1`, `MG1655 Rep 2`, `eMS57 Rep1`, `eMS57 Rep2`) x `4h`/`6h`/`8h` | one culture at one sampling time | Fig. 1g legend: "error bars indicate the s.d. of two biological replicates" |
+| `Fig3d` | ratio rows `Rep1`-`Rep2`, ATP row `Rep1`-`Rep3`, per strain | one assay of one culture | Fig. 3d legend: "Red circles indicate three independent assays from biological replicates. Error bars indicate the s.d. of three biological replicates." |
+
+The authors combined the values only into the figures' mean and s.d.; no released file states a combined value, and no sample is withdrawn anywhere in the paper, the Supplementary Information or the reporting summary (`si/si11.md`: "Data exclusions ... Not applicable"). Synonyms searched in `paper.md`, `si/si1.md` and `si/si11.md`: replicate, triplicate, duplicate, biological, technical, independent, culture, isolate, n =. The only technical replicates the paper names are qPCR reactions (Supplementary Figs. 7, 9, 10), which no class stores.
+
+Two counts in the release disagree with their legends and are stored as released, not reconciled: Fig. 3d's legend says three replicates, and its sheet holds three ATP cells but two NADH/NAD+ and two NADPH/NADP+ cells per strain; Fig. 2g's MG1655 M9 arm holds two numbers and a dash. Fig. 2g prints a dash in four cells (MG1655 M9 `Rep3` and all three MG1655 M9 + valine cells); a dash is no released value, so those cells are counted in the ledger and are not records.
+
+### What changed
+
+Before: `GrowthRateChoe2019Dataset` held 8 `FitnessPhenotype` records, each a loader aggregate: Fig. 2c as mean(strain) / mean(parent) with a sample SD and a delta-method SE (`fitness_phenotype`), Fig. 2f as the mean and SD of the three released ratios (`reconstruction_phenotype`). Fig. 2g, Fig. 1g and Fig. 3d were read by no class.
+
+After, one record per released value:
+
+| class | experiment | records | what a record is |
+|---|---|---|---|
+| `GrowthRateChoe2019Dataset` | `FitnessExperiment` | 12 | one Fig. 2f set's ratio verbatim (3 reconstructed alleles and eMS57/MS56 x `Set1`-`Set3`), reference the control's 1.0 |
+| `AbsoluteGrowthRateChoe2019Dataset` (new) | `EnvironmentResponseExperiment`, `MeasurementType.growth_rate` | 29 | one Fig. 2c culture (15) or one numeric Fig. 2g cell (14), the absolute rate verbatim, `screen_id` the sheet |
+| `MetaboliteChoe2019Dataset` (new) | `MetaboliteExperiment` | 38 | one Fig. 1g pyruvate cell (24) or one Fig. 3d cell (14) |
+| `TranscriptionFactorKnockoutChoe2019Dataset` | `FitnessExperiment` | 2 | unchanged; the Supplementary Fig. 6 legend states only two percentages (aggregate-only) |
+
+Every new record has `n_samples` (or `n_replicates`) 1, `replicate_id` the sheet's own label, and `not_applicable_single_measurement` gaps on its dispersion fields. A Fig. 2c value is an absolute rate, so it is no longer divided by a loader-computed parent mean (policy item 6); a Fig. 2f value is the source's own per-set ratio, so it stays a ratio. Each reference states an aggregate, `replicate_id = None`: for the absolute class the background strain's own released cultures in the panel's M9 glucose (mean, sample SD, n), for the metabolite class the strain's own cultures at the same condition (mean, SE, n). The Fig. 2g supplements are `SmallMoleculePerturbation` edits of L-valine and L-isoleucine at the Methods' 0.15 mM ("Isoleucine or valine was supplemented with a final concentration of $0 . 1 5 \mathrm { m M }$ , when appropriate."). The three Fig. 1g timepoints are three environments (`duration_hours` 4, 6, 8) at the pyruvate assay's 37 C; Fig. 3d's environment gaps its temperature. Both metabolite environments gap `aerobicity`, which no assay Method states. The Fig. 1g OD600 row (12 cells) is a growth-curve point and is not stored, as Fig. 1a, 1b, 1d and 1h are not.
+
+A new build check, `check_cofactor_fold_changes`, asserts that the Fig. 3d ratio rows reproduce "In eMS57, the NADH level was 3.0 times lower and the NADPH level was 4.5 times higher than MG1655." Measured: 2.965 and 4.570 (5% tolerance). The prose's "approximately 9-fold higher extracellular pyruvate" is NOT reproduced by the sheet at any timepoint I computed (8 h: 16.23 uM against 2.17 uM, 7.47-fold); not asserted.
+
+### Build, verification and mean reproduction
+
+Built on 2026-11-24 into the throwaway root `$DATA_ROOT/tmp/scratch/per-replicate-choe2019/` against the real raw mirror, each class constructed with `root=` there and its `verify_*_build` run on it (the counts are the build's own `preprocess/dropped_records.json`):
+
+| store | records | references | verifier |
+|---|---|---|---|
+| `growth_rate_choe2019` | 12 (`Set1` 4, `Set2` 4, `Set3` 4) | 4 | `verify_growth_build` PASS (3 genome-reference findings, not gated) |
+| `absolute_growth_rate_choe2019` | 29 (Fig2c `Rep1`-`Rep3` 5 each; Fig2g `Rep1` 5, `Rep2` 5, `Rep3` 4) | 5 | `verify_absolute_growth_build` PASS, 20 of 29 unperturbed as declared, deleted-region row passes |
+| `metabolite_choe2019` | 38 (12 + 12 pyruvate, 4 + 4 ratio, 6 ATP) | 18 | `verify_metabolite_build` PASS |
+| `tf_knockout_growth_choe2019` | 2 | 1 | `verify_tf_build` PASS |
+
+Mean reproduction against the served dev store `$DATA_ROOT/data/torchcell/growth_rate_choe2019` (8 records): the mean over each strain's three Fig. 2f set records equals the old stored fitness for all four strains, and the ratio of the Fig. 2c group means (strain over its old denominator) equals the old stored fitness for all four Fig. 2c records; maximum absolute difference 0.0 over the 8 old values. The same reproduction is pinned on the real sheet values by `test_process_builds_one_record_per_released_fig2f_set` and `test_process_builds_one_absolute_record_per_released_culture` in `tests/torchcell/datasets/ecoli/test_choe2019_growth_rate.py`.
+
+### Not done
+
+- Supplementary Table 1 (fed-batch biomass and specific growth rate, MG1655 and eMS57, LB and M9) is an aggregate, "mean +- s.d.", over a fermentation "repeated twice in different days"; it stays unloaded (a biomass yield has no `MeasurementType` member).
+- RNA-seq (Supplementary Data 6, `si/si9.xlsx` in the LIBRARY mirror, six per-sample RPKM columns), Ribo-seq (Supplementary Data 7, `si/si10.xlsx`) and the Biolog plates (Supplementary Data 1, `si/si4.xlsx`, `MG1`, `MG2`, `eMS1`, `eMS2`) remain blocked by the schema, as recorded on 2026.10.08: RPKM without a count, and no respiration `MeasurementType`.
+- The candidate verdict `database/candidates/choeAdaptiveLaboratoryEvolution2019.json` was written with G5 on `EnvironmentResponsePhenotype` (admissible). The same gate run on `MetabolitePhenotype` with the compounds pyruvate and ATP blocks on `unfiled_gap`, because `resolved_compound("ATP")` carries no InChIKey; the metabolite records key their levels by name (`ATP`, `NADH/NAD+`) and carry no `Compound`, so no record is affected.

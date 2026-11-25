@@ -20,6 +20,7 @@ yeast datasets and says so.
 from collections.abc import Mapping
 
 from torchcell.adapters import (
+    AbsoluteGrowthRateChoe2019Adapter,
     AminoAcidCooper2010Adapter,
     AminoAcidMulleder2016Adapter,
     BetaxanthinCachera2023Adapter,
@@ -108,6 +109,7 @@ from torchcell.adapters import (
     LactamGrowthRateThompson2019Adapter,
     Lian2019Adapter,
     LifeCycleDeChiara2022Adapter,
+    MetaboliteChoe2019Adapter,
     MetaboliteDaSilveira2014Adapter,
     MetaboliteGrowthPhaseMenasalvas2025Adapter,
     MetaboliteIntensityRapp2026Adapter,
@@ -231,7 +233,9 @@ from torchcell.datasets.ecoli.campos2018 import (
     MorphologyCampos2018Dataset,
 )
 from torchcell.datasets.ecoli.choe2019_growth_rate import (
+    AbsoluteGrowthRateChoe2019Dataset,
     GrowthRateChoe2019Dataset,
+    MetaboliteChoe2019Dataset,
     TranscriptionFactorKnockoutChoe2019Dataset,
 )
 from torchcell.datasets.ecoli.choe2025 import CrispriChemgenChoe2025Dataset
@@ -556,6 +560,8 @@ dataset_adapter_map: dict[type, type] = {
     GrowthRateCampos2018Dataset: GrowthRateCampos2018Adapter,
     MorphologyCampos2018Dataset: MorphologyCampos2018Adapter,
     GrowthRateChoe2019Dataset: GrowthRateChoe2019Adapter,
+    AbsoluteGrowthRateChoe2019Dataset: AbsoluteGrowthRateChoe2019Adapter,
+    MetaboliteChoe2019Dataset: MetaboliteChoe2019Adapter,
     MetabolomeBrunk2016Dataset: MetabolomeBrunk2016Adapter,
     ExometaboliteBrunk2016Dataset: ExometaboliteBrunk2016Adapter,
     ProteomeBrunk2016Dataset: ProteomeBrunk2016Adapter,

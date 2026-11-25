@@ -246,10 +246,22 @@
 <span class="sd">    distinguished by ``Environment.dilution_rate_per_hour`` alone. For a dataset whose</span>
 <span class="sd">    records share one environment the key is the strain plus a constant, so the verdict</span>
 <span class="sd">    and the unique-key count are unchanged.</span>
+
+<span class="sd">    ``replicate_id`` joins the key on the ``environment_response`` precedent (#776): a</span>
+<span class="sd">    release that gives one value PER REPLICATE culture (Xue 2025's three titer columns</span>
+<span class="sd">    per fatty acid) has measured each culture, so the records of one strain are told</span>
+<span class="sd">    apart by the replicate they state and none is a duplicate of another. It is read</span>
+<span class="sd">    with ``.get`` and joins only when set, so a dataset whose records state one</span>
+<span class="sd">    aggregate per strain keys exactly as before.</span>
 <span class="sd">    """</span>
     <span class="n">seen</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">per_replicate</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
         <span class="n">sig</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">_genotype_signature</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">])</span>
+        <span class="n">replicate_id</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"replicate_id"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">replicate_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sig</span> <span class="o">=</span> <span class="p">(</span><span class="n">sig</span><span class="p">,</span> <span class="p">(</span><span class="s2">"replicate_id"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">replicate_id</span><span class="p">)))</span>
+            <span class="n">per_replicate</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="n">per_protocol</span><span class="p">:</span>
             <span class="n">sig</span> <span class="o">=</span> <span class="p">(</span><span class="n">sig</span><span class="p">,</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">][</span><span class="s2">"measurement_type"</span><span class="p">])</span>
         <span class="k">if</span> <span class="n">per_environment</span><span class="p">:</span>
@@ -261,6 +273,8 @@
         <span class="n">unit</span> <span class="o">=</span> <span class="s2">"(strain, protocol) pairs"</span>
     <span class="k">elif</span> <span class="n">per_environment</span><span class="p">:</span>
         <span class="n">unit</span> <span class="o">=</span> <span class="s2">"(strain, environment) pairs"</span>
+    <span class="k">if</span> <span class="n">per_replicate</span><span class="p">:</span>
+        <span class="n">unit</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2"> per released replicate"</span>
     <span class="n">dup_unit</span> <span class="o">=</span> <span class="s2">"deletion sets"</span> <span class="k">if</span> <span class="n">unit</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"sets)"</span><span class="p">)</span> <span class="k">else</span> <span class="n">unit</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">dups</span><span class="p">:</span>
         <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">seen</span><span class="p">)</span><span class="si">}</span><span class="s2"> unique </span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">, one record each"</span>

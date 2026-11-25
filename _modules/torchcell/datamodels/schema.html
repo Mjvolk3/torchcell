@@ -7142,6 +7142,17 @@
         <span class="s2">"instead of storing two values nothing tells apart. None when the source "</span>
         <span class="s2">"releases one screen per measurement."</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which ONE replicate measurement this record is, when the release is "</span>
+        <span class="s2">"per replicate and the record stores that replicate's own value rather than an "</span>
+        <span class="s2">"aggregate: the source's own replicate label where it prints one, otherwise "</span>
+        <span class="s2">"the replicate's position in the release. It joins the L1 uniqueness key and the phenotype node id, "</span>
+        <span class="s2">"so replicates of one (strain, condition) stay distinct records even when two "</span>
+        <span class="s2">"of them carry the same value. None on a record that states an aggregate over "</span>
+        <span class="s2">"replicates, which is what ``phenotype_reference`` summaries and aggregate-only "</span>
+        <span class="s2">"releases carry."</span><span class="p">,</span>
+    <span class="p">)</span>
 
 <div class="viewcode-block" id="FitnessPhenotype.validate_fitness">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.FitnessPhenotype.html#torchcell.datamodels.schema.FitnessPhenotype.validate_fitness">[docs]</a>
@@ -8022,6 +8033,17 @@
     <span class="c1"># ----------------------------------------------------------------------- #</span>
     <span class="c1"># end ADDITIVE (#793)</span>
     <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which ONE replicate measurement this record is, when the release is "</span>
+        <span class="s2">"per replicate and the record stores that replicate's own value rather than an "</span>
+        <span class="s2">"aggregate: the source's own replicate label where it prints one, otherwise "</span>
+        <span class="s2">"the replicate's position in the release. It joins the L1 uniqueness key and the phenotype node id, "</span>
+        <span class="s2">"so replicates of one (strain, condition) stay distinct records even when two "</span>
+        <span class="s2">"of them carry the same value. None on a record that states an aggregate over "</span>
+        <span class="s2">"replicates, which is what ``phenotype_reference`` summaries and aggregate-only "</span>
+        <span class="s2">"releases carry."</span><span class="p">,</span>
+    <span class="p">)</span>
 
 <div class="viewcode-block" id="GeneInteractionPhenotype.validate_fitness">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.GeneInteractionPhenotype.html#torchcell.datamodels.schema.GeneInteractionPhenotype.validate_fitness">[docs]</a>
@@ -8094,6 +8116,17 @@
     <span class="n">calmorph_coefficient_of_variation</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"Dictionary of coefficient of variation values for CalMorph parameters (220 parameters)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which ONE replicate measurement this record is, when the release is "</span>
+        <span class="s2">"per replicate and the record stores that replicate's own value rather than an "</span>
+        <span class="s2">"aggregate: the source's own replicate label where it prints one, otherwise "</span>
+        <span class="s2">"the replicate's position in the release. It joins the phenotype node id, "</span>
+        <span class="s2">"so replicates of one (strain, condition) stay distinct records even when two "</span>
+        <span class="s2">"of them carry the same value. None on a record that states an aggregate over "</span>
+        <span class="s2">"replicates, which is what ``phenotype_reference`` summaries and aggregate-only "</span>
+        <span class="s2">"releases carry."</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># CALMORPH_PARAMETERS: All 501 parameters from Ohya et al. 2005</span>
@@ -8530,6 +8563,17 @@
     <span class="n">n_replicates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"SortedDict of number of independent biological/technical replicates per gene"</span><span class="p">,</span>
         <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Hide in repr to avoid clutter</span>
+    <span class="p">)</span>
+    <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which ONE replicate measurement this record is, when the release is "</span>
+        <span class="s2">"per replicate and the record stores that replicate's own value rather than an "</span>
+        <span class="s2">"aggregate: the source's own replicate label where it prints one, otherwise "</span>
+        <span class="s2">"the replicate's position in the release. It joins the phenotype node id, "</span>
+        <span class="s2">"so replicates of one (strain, condition) stay distinct records even when two "</span>
+        <span class="s2">"of them carry the same value. None on a record that states an aggregate over "</span>
+        <span class="s2">"replicates, which is what ``phenotype_reference`` summaries and aggregate-only "</span>
+        <span class="s2">"releases carry."</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -9344,6 +9388,17 @@
             <span class="s2">"with &gt;= 1e6 mapped reads). Per-isolate scalar, not per-gene."</span>
         <span class="p">),</span>
     <span class="p">)</span>
+    <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which ONE replicate measurement this record is, when the release is "</span>
+        <span class="s2">"per replicate and the record stores that replicate's own value rather than an "</span>
+        <span class="s2">"aggregate: the source's own replicate label where it prints one, otherwise "</span>
+        <span class="s2">"the replicate's position in the release. It joins the L1 uniqueness key and the phenotype node id, "</span>
+        <span class="s2">"so replicates of one (strain, condition) stay distinct records even when two "</span>
+        <span class="s2">"of them carry the same value. None on a record that states an aggregate over "</span>
+        <span class="s2">"replicates, which is what ``phenotype_reference`` summaries and aggregate-only "</span>
+        <span class="s2">"releases carry."</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Summary repr instead of dumping the per-gene dicts."""</span>
@@ -9639,6 +9694,17 @@
             <span class="s2">"records on these as if they were all quality failures."</span>
         <span class="p">),</span>
     <span class="p">)</span>
+    <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which ONE replicate measurement this record is, when the release is "</span>
+        <span class="s2">"per replicate and the record stores that replicate's own value rather than an "</span>
+        <span class="s2">"aggregate: the source's own replicate label where it prints one, otherwise "</span>
+        <span class="s2">"the replicate's position in the release. It joins the L1 uniqueness key and the phenotype node id, "</span>
+        <span class="s2">"so replicates of one (strain, condition) stay distinct records even when two "</span>
+        <span class="s2">"of them carry the same value. None on a record that states an aggregate over "</span>
+        <span class="s2">"replicates, which is what ``phenotype_reference`` summaries and aggregate-only "</span>
+        <span class="s2">"releases carry."</span><span class="p">,</span>
+    <span class="p">)</span>
 
 <div class="viewcode-block" id="VisualScorePhenotype.validate_visual_score">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.VisualScorePhenotype.html#torchcell.datamodels.schema.VisualScorePhenotype.validate_visual_score">[docs]</a>
@@ -9725,6 +9791,17 @@
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"metabolite key -&gt; Yeast9 s_NNNN id for CBM linkage; None until decided"</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which ONE replicate culture or sample this record is, when the release is "</span>
+        <span class="s2">"per replicate and the record stores that replicate's own value rather than an "</span>
+        <span class="s2">"aggregate: the source's own replicate label where it prints one, otherwise "</span>
+        <span class="s2">"the replicate's position in the release (Xue 2025's titer sheet has three unlabelled replicate columns per fatty acid). It joins the L1 "</span>
+        <span class="s2">"uniqueness key and the phenotype node id, so replicates of one (strain, "</span>
+        <span class="s2">"condition) stay distinct records even when two of them carry the same value. "</span>
+        <span class="s2">"None on a record that states an aggregate over replicates, which is what "</span>
+        <span class="s2">"``phenotype_reference`` summaries and aggregate-only releases carry."</span><span class="p">,</span>
+    <span class="p">)</span>
 
 <div class="viewcode-block" id="MetabolitePhenotype.validate_metabolite_level">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.MetabolitePhenotype.html#torchcell.datamodels.schema.MetabolitePhenotype.validate_metabolite_level">[docs]</a>
@@ -9798,6 +9875,17 @@
     <span class="p">)</span>
     <span class="n">measurement_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"what the level is, e.g. 'swath_ms_label_free_log_signal_sva'"</span>
+    <span class="p">)</span>
+    <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which ONE replicate sample this record is, when the release is "</span>
+        <span class="s2">"per replicate and the record stores that replicate's own value rather than an "</span>
+        <span class="s2">"aggregate: the source's own replicate label where it prints one, otherwise "</span>
+        <span class="s2">"the replicate's position in the release (Carruthers 2025's ``R1``..``R6`` suffix of a line name). It joins the L1 "</span>
+        <span class="s2">"uniqueness key and the phenotype node id, so replicates of one (strain, "</span>
+        <span class="s2">"condition) stay distinct records even when two of them carry the same value. "</span>
+        <span class="s2">"None on a record that states an aggregate over replicates, which is what "</span>
+        <span class="s2">"``phenotype_reference`` summaries and aggregate-only releases carry."</span><span class="p">,</span>
     <span class="p">)</span>
 
 <div class="viewcode-block" id="ProteinAbundancePhenotype.validate_protein_abundance">
@@ -9945,6 +10033,17 @@
         <span class="n">description</span><span class="o">=</span><span class="s2">"what the number is and how it was tested, e.g. "</span>
         <span class="s2">"'dia_top3_ratio_to_control' or "</span>
         <span class="s2">"'dia_log2_fold_change_paired_two_tailed_t_test'"</span>
+    <span class="p">)</span>
+    <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which ONE replicate measurement this record is, when the release is "</span>
+        <span class="s2">"per replicate and the record stores that replicate's own value rather than an "</span>
+        <span class="s2">"aggregate: the source's own replicate label where it prints one, otherwise "</span>
+        <span class="s2">"the replicate's position in the release. It joins the L1 uniqueness key and the phenotype node id, "</span>
+        <span class="s2">"so replicates of one (strain, condition) stay distinct records even when two "</span>
+        <span class="s2">"of them carry the same value. None on a record that states an aggregate over "</span>
+        <span class="s2">"replicates, which is what ``phenotype_reference`` summaries and aggregate-only "</span>
+        <span class="s2">"releases carry."</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
@@ -11710,6 +11809,17 @@
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"what one sample in n_samples is (biological_replicate, ...)"</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which ONE replicate culture this record is, when the release is "</span>
+        <span class="s2">"per replicate and the record stores that replicate's own value rather than an "</span>
+        <span class="s2">"aggregate: the source's own replicate label where it prints one, otherwise "</span>
+        <span class="s2">"the replicate's position in the release (Carruthers 2025's ``R1``..``R6`` suffix of a line name). It joins the L1 "</span>
+        <span class="s2">"uniqueness key and the phenotype node id, so replicates of one (strain, "</span>
+        <span class="s2">"condition) stay distinct records even when two of them carry the same value. "</span>
+        <span class="s2">"None on a record that states an aggregate over replicates, which is what "</span>
+        <span class="s2">"``phenotype_reference`` summaries and aggregate-only releases carry."</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">product_yield</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"product per substrate consumed; None when not released"</span><span class="p">,</span>
@@ -11925,6 +12035,17 @@
         <span class="s2">"so it must travel with the record. None means the source reports no censoring "</span>
         <span class="s2">"at all; a key absent from a present map means the source does not say for "</span>
         <span class="s2">"that key."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which ONE replicate measurement this record is, when the release is "</span>
+        <span class="s2">"per replicate and the record stores that replicate's own value rather than an "</span>
+        <span class="s2">"aggregate: the source's own replicate label where it prints one, otherwise "</span>
+        <span class="s2">"the replicate's position in the release. It joins the phenotype node id, "</span>
+        <span class="s2">"so replicates of one (strain, condition) stay distinct records even when two "</span>
+        <span class="s2">"of them carry the same value. None on a record that states an aggregate over "</span>
+        <span class="s2">"replicates, which is what ``phenotype_reference`` summaries and aggregate-only "</span>
+        <span class="s2">"releases carry."</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="c1"># --- end #753 ---------------------------------------------------------------- #</span>
 
@@ -12221,6 +12342,17 @@
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"exchange id -&gt; upper confidence bound of the exchange flux, at "</span>
         <span class="s2">"confidence_level, verbatim"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which ONE replicate measurement this record is, when the release is "</span>
+        <span class="s2">"per replicate and the record stores that replicate's own value rather than an "</span>
+        <span class="s2">"aggregate: the source's own replicate label where it prints one, otherwise "</span>
+        <span class="s2">"the replicate's position in the release. It joins the phenotype node id, "</span>
+        <span class="s2">"so replicates of one (strain, condition) stay distinct records even when two "</span>
+        <span class="s2">"of them carry the same value. None on a record that states an aggregate over "</span>
+        <span class="s2">"replicates, which is what ``phenotype_reference`` summaries and aggregate-only "</span>
+        <span class="s2">"releases carry."</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
@@ -13097,6 +13229,17 @@
     <span class="p">)</span>
     <span class="n">sample_unit</span><span class="p">:</span> <span class="n">SampleUnit</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"what one sample in n_samples physically is"</span>
+    <span class="p">)</span>
+    <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which ONE replicate measurement this record is, when the release is "</span>
+        <span class="s2">"per replicate and the record stores that replicate's own value rather than an "</span>
+        <span class="s2">"aggregate: the source's own replicate label where it prints one, otherwise "</span>
+        <span class="s2">"the replicate's position in the release. It joins the L1 uniqueness key and the phenotype node id, "</span>
+        <span class="s2">"so replicates of one (strain, condition) stay distinct records even when two "</span>
+        <span class="s2">"of them carry the same value. None on a record that states an aggregate over "</span>
+        <span class="s2">"replicates, which is what ``phenotype_reference`` summaries and aggregate-only "</span>
+        <span class="s2">"releases carry."</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="nd">@property</span>

@@ -278,6 +278,16 @@
 <span class="sd">    ``deferred_pending_source_review`` (no SI of ours holds it): the artifact was</span>
 <span class="sd">    withheld, and closing the gap takes a request to the authors or the registry, not</span>
 <span class="sd">    another pass over the mirror.</span>
+
+<span class="sd">    ``not_applicable_single_measurement`` is the per-replicate case: the record states</span>
+<span class="sd">    ONE released measurement (``n_samples`` 1, or every ``n_replicates`` value 1), and a</span>
+<span class="sd">    single measurement has no dispersion of its own, so an uncertainty, its type or a</span>
+<span class="sd">    standard error does not exist to be reported. It is not ``not_reported_by_primary``,</span>
+<span class="sd">    which says the primary could have reported the value and did not: Carruthers 2025</span>
+<span class="sd">    releases every culture and states its error bars over groups of cultures, which is</span>
+<span class="sd">    what each ``phenotype_reference`` carries. Nothing closes this gap, because there</span>
+<span class="sd">    is no value to find; an aggregate record over replicates keeps the reason that</span>
+<span class="sd">    describes its own absence.</span>
 <span class="sd">    """</span>
 
     <span class="n">not_reported_by_primary</span> <span class="o">=</span> <span class="p">(</span>
@@ -285,6 +295,7 @@
     <span class="p">)</span>
     <span class="n">not_carried_by_curation</span> <span class="o">=</span> <span class="s2">"not_carried_by_curation"</span>  <span class="c1"># primary had it; the secondary DB (YeastPhenome/SPELL) dropped it in aggregation</span>
     <span class="n">not_released_by_primary</span> <span class="o">=</span> <span class="s2">"not_released_by_primary"</span>  <span class="c1"># primary reported the value but released no artifact carrying it (sequence "upon request", "verified" but not deposited)</span>
+    <span class="n">not_applicable_single_measurement</span> <span class="o">=</span> <span class="s2">"not_applicable_single_measurement"</span>  <span class="c1"># the record is ONE measurement (n = 1), so a dispersion (uncertainty, its type, an SE) does not exist</span>
     <span class="n">deferred_pending_source_review</span> <span class="o">=</span> <span class="s2">"deferred_pending_source_review"</span>  <span class="c1"># recoverable -- the per-paper SI comb just isn't done yet</span></div>
 
 

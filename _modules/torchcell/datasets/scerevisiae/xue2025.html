@@ -132,13 +132,24 @@
 <span class="sd">true wild type (``wt BY4741``), one baseline-only positive control (``+ve Ctrl`` = the</span>
 <span class="sd">three-deletion chassis alone), and 175 combinatorial TF-deletion strains.</span>
 
-<span class="sd">Maps to ``MetaboliteExperiment`` / ``MetabolitePhenotype`` (one record per genotype row,</span>
-<span class="sd">EXCEPT ``wt BY4741`` which is the measured reference). Each record's</span>
-<span class="sd">``metabolite_level`` carries all five FFA titers at once (multi-metabolite pattern, like</span>
-<span class="sd">``dasilveira2014``): ``metabolite_level = {FFA -&gt; mean of the replicate titers (mg/L)}``,</span>
-<span class="sd">``metabolite_level_se = {FFA -&gt; sample-SD / sqrt(n)}``, ``n_replicates = {FFA -&gt; n}``,</span>
+<span class="sd">ONE RECORD PER RELEASED REPLICATE, AND NO VALUE IS AVERAGED. The sheet releases every</span>
+<span class="sd">replicate titer, so each replicate of each genotype row is its own</span>
+<span class="sd">``MetaboliteExperiment`` / ``MetabolitePhenotype`` record: 177 rows -&gt; 519 records (166</span>
+<span class="sd">rows x 3 replicates + 10 x 2 + 1 x 1, measured on the pinned bytes), the three</span>
+<span class="sd">``wt BY4741`` replicates included, as records with an empty genotype. Each record's</span>
+<span class="sd">``metabolite_level`` carries the five FFA titers of that one replicate (multi-metabolite</span>
+<span class="sd">pattern, like ``dasilveira2014``): ``metabolite_level = {FFA -&gt; that replicate's titer</span>
+<span class="sd">(mg/L)}``, ``n_replicates = {FFA -&gt; 1}``, ``metabolite_level_se = None`` (one value has</span>
+<span class="sd">no dispersion), ``replicate_id`` = the replicate's position (below), and</span>
 <span class="sd">``measurement_type = "titer_mg_per_l"`` (ABSOLUTE FFA titer, not a ratio nor a centered</span>
-<span class="sd">score). ``target_metabolite_ids = None`` (the FFAs are acyl species; the Yeast9</span>
+<span class="sd">score). Before 2026-11-17 the loader stored one record per row holding the mean and</span>
+<span class="sd">SD / sqrt(n) over the row's replicates (176 records); the mean and its dispersion are now</span>
+<span class="sd">a modeling-time derivation over the records of one genotype.</span>
+
+<span class="sd">THE REFERENCE IS A SUMMARY, AND IT SAYS SO. ``phenotype_reference`` is the ``wt BY4741``</span>
+<span class="sd">row's mean over its replicates with ``SD / sqrt(n)`` and ``n_replicates = 3``, and its</span>
+<span class="sd">``replicate_id`` is ``None``: one reference per record cannot hold three cultures, so it</span>
+<span class="sd">states the aggregate, and the three cultures it summarizes are themselves records. ``target_metabolite_ids = None`` (the FFAs are acyl species; the Yeast9</span>
 <span class="sd">``s_NNNN`` / ChEBI mapping is deferred). ``reference_centered = False`` for verification</span>
 <span class="sd">(the reference is a MEASURED WT baseline, not an identically-zero centered origin; this is</span>
 <span class="sd">a verifier parameter set in ``verification/runners.py``, not a schema field).</span>
@@ -152,7 +163,8 @@
 <span class="sd">  - ``raw-titer (mg-L)``: col0 = genotype string; then 5 FFAs x 3 replicate columns of raw</span>
 <span class="sd">    per-replicate titer (mg/L): C14:0 = cols 1-3, C16:0 = cols 4-6, C18:0 = cols 7-9,</span>
 <span class="sd">    C16:1 = cols 10-12, C18:1 = cols 13-15. Cols 16-21 are the authors' per-FFA averages +</span>
-<span class="sd">    total titer and are IGNORED (we recompute mean/SD from the 3 replicate columns).</span>
+<span class="sd">    total titer; they are spreadsheet formulas with no cached value in the pinned file</span>
+<span class="sd">    (every cell reads blank) and are not consumed.</span>
 
 <span class="sd">GENOTYPE DECODING (validated): every non-WT strain carries the IMPLICIT FFA-chassis</span>
 <span class="sd">baseline of THREE deletions (POX1, FAA1, FAA4). The genotype string is</span>
@@ -170,13 +182,17 @@
 <span class="sd">to R64 is a modeling-time act. Before #1045 the loader resolved every name through</span>
 <span class="sd">``resolve_gene_name_strict`` with a pin for TFC7 (#886).</span>
 
-<span class="sd">REPLICATE STRUCTURE: 3 GC replicate columns per FFA. Some strains released fewer than 3</span>
-<span class="sd">replicates (an entire replicate column is blank across all FFAs -- 10 strains have 2, one</span>
-<span class="sd">strain (``G-O-T 6d``) has 1). We therefore compute ``n_replicates`` PER FFA from the count</span>
-<span class="sd">of non-blank replicates (never hardcode 3), the mean over the present replicates, and the</span>
-<span class="sd">sample SD (ddof=1) over the present replicates; ``SE = SD / sqrt(n)``. For ``n == 1`` the</span>
-<span class="sd">sample SD is undefined, so that FFA's SE is stored as NaN (the schema permits NaN SE) and</span>
-<span class="sd">``n_replicates = 1``.</span>
+<span class="sd">REPLICATE STRUCTURE: 3 replicate columns per FFA. The sheet prints NO replicate label</span>
+<span class="sd">(the header row names only the FFA over the first column of each block), so</span>
+<span class="sd">``replicate_id`` is the column's position inside its block, ``"1"``, ``"2"`` or ``"3"``.</span>
+<span class="sd">The k-th column of every FFA block is read as ONE replicate, which makes a record the</span>
+<span class="sd">five titers of one replicate. That alignment is not stated by the sheet; what supports it</span>
+<span class="sd">is measured: a strain released with fewer than 3 replicates is blank at the SAME</span>
+<span class="sd">positions in all five blocks (10 strains have 2 replicates, one strain, ``G-O-T 6d``, has</span>
+<span class="sd">1), and ``process()`` refuses a row whose blank positions differ between FFAs, so a file</span>
+<span class="sd">that breaks the alignment stops the build. WHAT A REPLICATE IS (an independent culture or</span>
+<span class="sd">a repeat injection) is not stated anywhere in the release; ``MetabolitePhenotype`` has no</span>
+<span class="sd">replicate-kind field, and none is asserted here.</span>
 
 <span class="sd">DELETION MARKER (documented flag, NOT asserted fidelity): these are IN-HOUSE COMBINATORIAL</span>
 <span class="sd">strains carrying up to SIX deletions. Six independent KanMX cassettes cannot be stacked</span>
@@ -407,9 +423,7 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">code_to_gene</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_decode_genotype</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">code_to_gene</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_decode_genotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">code_to_gene</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Decode a genotype string into a list of deleted common gene names.</span>
 
 <span class="sd">        Returns [] for the true wild type (``wt BY4741``), the baseline chassis for the</span>
@@ -436,17 +450,54 @@
         <span class="n">tf_genes</span> <span class="o">=</span> <span class="p">[</span><span class="n">code_to_gene</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">letters</span><span class="p">]</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">_BASELINE_GENES</span><span class="p">)</span> <span class="o">+</span> <span class="n">tf_genes</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_phenotype_from_row</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetabolitePhenotype</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Compute a MetabolitePhenotype (5 FFA titers) from one titer-sheet row."""</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_replicate_titers</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""``{replicate_id: {FFA: titer}}`` for one titer-sheet row, blanks left out.</span>
+
+<span class="sd">        The k-th column of each FFA block is replicate ``k``. A replicate present for</span>
+<span class="sd">        one FFA and blank for another would mean the columns are not aligned as</span>
+<span class="sd">        replicates, so it raises.</span>
+<span class="sd">        """</span>
+        <span class="n">replicates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">ffa</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="n">_FFA_COLUMNS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">position</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">col</span><span class="p">]):</span>
+                    <span class="n">replicates</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">position</span><span class="p">),</span> <span class="p">{})[</span><span class="n">ffa</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">col</span><span class="p">])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">replicates</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"row </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">!r}</span><span class="s2"> has no replicate values"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">replicate_id</span><span class="p">,</span> <span class="n">titers</span> <span class="ow">in</span> <span class="n">replicates</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">titers</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">_FFA_COLUMNS</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"row </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">!r}</span><span class="s2"> replicate </span><span class="si">{</span><span class="n">replicate_id</span><span class="si">}</span><span class="s2"> carries "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">titers</span><span class="p">)</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_FFA_COLUMNS</span><span class="p">)</span><span class="si">}</span><span class="s2">: the replicate columns "</span>
+                    <span class="s2">"are not blank at the same positions across the FFA blocks"</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">replicates</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_replicate_phenotype</span><span class="p">(</span>
+        <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">titers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetabolitePhenotype</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""One replicate's five FFA titers, verbatim: n = 1 and no dispersion."""</span>
+        <span class="k">return</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
+            <span class="n">metabolite_level</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">titers</span><span class="p">),</span>
+            <span class="n">metabolite_level_se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">titers</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+            <span class="n">target_metabolite_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># FFAs are acyl species; s_NNNN/ChEBI mapping deferred</span>
+            <span class="n">replicate_id</span><span class="o">=</span><span class="n">replicate_id</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_summary_phenotype</span><span class="p">(</span>
+        <span class="n">replicates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetabolitePhenotype</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The reference summary: mean, SD / sqrt(n) and n over a row's replicates."""</span>
         <span class="n">level</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">se</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">n_rep</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">ffa</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="n">_FFA_COLUMNS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">c</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">c</span><span class="p">])]</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">values</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"FFA </span><span class="si">{</span><span class="n">ffa</span><span class="si">}</span><span class="s2"> has no replicate values in row </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">!r}</span><span class="s2">"</span>
-                <span class="p">)</span>
+        <span class="k">for</span> <span class="n">ffa</span> <span class="ow">in</span> <span class="n">_FFA_COLUMNS</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">titers</span><span class="p">[</span><span class="n">ffa</span><span class="p">]</span> <span class="k">for</span> <span class="n">titers</span> <span class="ow">in</span> <span class="n">replicates</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
             <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
             <span class="n">mean</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span>
             <span class="n">level</span><span class="p">[</span><span class="n">ffa</span><span class="p">]</span> <span class="o">=</span> <span class="n">mean</span>
@@ -463,7 +514,7 @@
             <span class="n">metabolite_level_se</span><span class="o">=</span><span class="n">se</span><span class="p">,</span>
             <span class="n">n_replicates</span><span class="o">=</span><span class="n">n_rep</span><span class="p">,</span>
             <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
-            <span class="n">target_metabolite_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># FFAs are acyl species; s_NNNN/ChEBI mapping deferred</span>
+            <span class="n">target_metabolite_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
@@ -486,7 +537,7 @@
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.xue2025.FattyAcidXue2025Dataset.html#torchcell.datasets.scerevisiae.xue2025.FattyAcidXue2025Dataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Parse the raw-titer sheet into per-strain Metabolite experiments; write LMDB."""</span>
+<span class="w">        </span><span class="sd">"""Write one Metabolite experiment per released replicate of every row."""</span>
         <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">DATA_FILENAME</span><span class="p">:</span> <span class="n">DATA_SHA256</span><span class="p">})</span>
         <span class="n">code_to_gene</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_code_to_gene</span><span class="p">()</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">DATA_FILENAME</span><span class="p">)</span>
@@ -507,14 +558,15 @@
             <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="c1"># Measured WT reference: the wt BY4741 row's 5 FFA titers (constant across records).</span>
+        <span class="c1"># Measured WT reference: the wt BY4741 row's summary over its replicates (constant</span>
+        <span class="c1"># across records). The replicates themselves are records, written below.</span>
         <span class="n">wt_rows</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">_WT_LABELS</span><span class="p">)]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">wt_rows</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"expected exactly 1 wild-type row, found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">wt_rows</span><span class="p">)</span><span class="si">}</span><span class="s2">: "</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">wt_rows</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
-        <span class="n">wt_phenotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_phenotype_from_row</span><span class="p">(</span><span class="n">wt_rows</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">wt_phenotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_summary_phenotype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_replicate_titers</span><span class="p">(</span><span class="n">wt_rows</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
         <span class="n">reference</span> <span class="o">=</span> <span class="n">MetaboliteExperimentReference</span><span class="p">(</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">genome_reference</span><span class="o">=</span><span class="n">genome_reference</span><span class="p">,</span>
@@ -530,24 +582,25 @@
         <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
             <span class="n">label</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
             <span class="n">deleted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decode_genotype</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">code_to_gene</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">deleted</span><span class="p">:</span>  <span class="c1"># true WT -&gt; reference only, not an experiment record</span>
-                <span class="k">continue</span>
-            <span class="n">genotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_genotype</span><span class="p">(</span><span class="n">deleted</span><span class="p">)</span>
-            <span class="n">experiments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">MetaboliteExperiment</span><span class="p">(</span>
-                    <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                    <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
-                    <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
-                    <span class="n">phenotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_phenotype_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">),</span>
+            <span class="n">genotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_genotype</span><span class="p">(</span><span class="n">deleted</span><span class="p">)</span>  <span class="c1"># wt BY4741 -&gt; the empty genotype</span>
+            <span class="k">for</span> <span class="n">replicate_id</span><span class="p">,</span> <span class="n">titers</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_replicate_titers</span><span class="p">(</span><span class="n">row</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">experiments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">MetaboliteExperiment</span><span class="p">(</span>
+                        <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                        <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+                        <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+                        <span class="n">phenotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_replicate_phenotype</span><span class="p">(</span><span class="n">replicate_id</span><span class="p">,</span> <span class="n">titers</span><span class="p">),</span>
+                    <span class="p">)</span>
                 <span class="p">)</span>
-            <span class="p">)</span>
-            <span class="n">summary</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">{</span>
-                    <span class="s2">"genotype"</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span>
-                    <span class="s2">"n_deletions"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">deleted</span><span class="p">),</span>
-                    <span class="s2">"genes"</span><span class="p">:</span> <span class="s2">";"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">genotype</span><span class="o">.</span><span class="n">systematic_gene_names</span><span class="p">),</span>
-                <span class="p">}</span>
-            <span class="p">)</span>
+                <span class="n">summary</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">"genotype"</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span>
+                        <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">replicate_id</span><span class="p">,</span>
+                        <span class="s2">"n_deletions"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">deleted</span><span class="p">),</span>
+                        <span class="s2">"genes"</span><span class="p">:</span> <span class="s2">";"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">genotype</span><span class="o">.</span><span class="n">systematic_gene_names</span><span class="p">),</span>
+                        <span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">"titer_mg_per_l_</span><span class="si">{</span><span class="n">ffa</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">titers</span><span class="p">[</span><span class="n">ffa</span><span class="p">]</span> <span class="k">for</span> <span class="n">ffa</span> <span class="ow">in</span> <span class="n">titers</span><span class="p">},</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -571,8 +624,10 @@
             <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span>
         <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Xue2025 FFA metabolite experiments to LMDB (+ 1 measured WT reference)"</span><span class="p">,</span>
+            <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Xue2025 FFA replicate records over </span><span class="si">%d</span><span class="s2"> genotype rows to LMDB "</span>
+            <span class="s2">"(reference = the wt BY4741 summary)"</span><span class="p">,</span>
             <span class="n">idx</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span>
         <span class="p">)</span></div>
 
 

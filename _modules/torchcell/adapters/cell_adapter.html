@@ -1854,6 +1854,7 @@
             <span class="c1"># The screen a measurement came from (Kuzmin 2020 main vs pilot screens,</span>
             <span class="c1"># issue #602); None for a source with one screen per measurement.</span>
             <span class="s2">"screen_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">screen_id</span><span class="p">,</span>
+            <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
         <span class="p">}</span>
 
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1899,6 +1900,7 @@
                 <span class="k">if</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">gene_interaction_uncertainty_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                 <span class="k">else</span> <span class="kc">None</span>
             <span class="p">),</span>
+            <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
         <span class="p">}</span>
 
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -2162,6 +2164,7 @@
                 <span class="s2">"fitness"</span><span class="p">:</span> <span class="n">fitness</span><span class="p">,</span>
                 <span class="s2">"fitness_std"</span><span class="p">:</span> <span class="n">fitness_std</span><span class="p">,</span>
                 <span class="s2">"screen_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">screen_id</span><span class="p">,</span>
+                <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
             <span class="p">}</span>
 
             <span class="n">node</span> <span class="o">=</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -2209,6 +2212,7 @@
                     <span class="k">if</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">gene_interaction_uncertainty_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                     <span class="k">else</span> <span class="kc">None</span>
                 <span class="p">),</span>
+                <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
             <span class="p">}</span>
 
             <span class="n">node</span> <span class="o">=</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -2329,6 +2333,7 @@
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">calmorph_coefficient_of_variation</span>
             <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
         <span class="p">}</span>
 
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -2365,6 +2370,7 @@
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">calmorph_coefficient_of_variation</span>
                 <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
             <span class="p">}</span>
 
             <span class="n">node</span> <span class="o">=</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -2398,6 +2404,7 @@
                 <span class="k">if</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">expression_log2_ratio_se</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                 <span class="k">else</span> <span class="kc">None</span>
             <span class="p">),</span>
+            <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
             <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
@@ -2425,6 +2432,7 @@
                     <span class="k">if</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">expression_log2_ratio_se</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                     <span class="k">else</span> <span class="kc">None</span>
                 <span class="p">),</span>
+                <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
             <span class="p">}</span>
             <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -2658,6 +2666,7 @@
             <span class="s2">"expression_tpm"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">expression_tpm</span><span class="p">),</span>
             <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
             <span class="s2">"n_mapped_reads"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_mapped_reads</span><span class="p">,</span>
+            <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
             <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
@@ -2680,6 +2689,7 @@
                 <span class="s2">"expression_tpm"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">expression_tpm</span><span class="p">),</span>
                 <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
                 <span class="s2">"n_mapped_reads"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_mapped_reads</span><span class="p">,</span>
+                <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
             <span class="p">}</span>
             <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -2759,6 +2769,7 @@
             <span class="s2">"n_replicates"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_replicates</span><span class="p">,</span>
             <span class="s2">"target_product"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">target_product</span><span class="p">,</span>
             <span class="s2">"target_metabolite_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">target_metabolite_id</span><span class="p">,</span>
+            <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
             <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
@@ -2782,6 +2793,7 @@
                 <span class="s2">"n_replicates"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_replicates</span><span class="p">,</span>
                 <span class="s2">"target_product"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">target_product</span><span class="p">,</span>
                 <span class="s2">"target_metabolite_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">target_metabolite_id</span><span class="p">,</span>
+                <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
             <span class="p">}</span>
             <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -2812,6 +2824,7 @@
                 <span class="k">else</span> <span class="kc">None</span>
             <span class="p">),</span>
             <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
+            <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
             <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
@@ -2838,6 +2851,7 @@
                     <span class="k">else</span> <span class="kc">None</span>
                 <span class="p">),</span>
                 <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
+                <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
             <span class="p">}</span>
             <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -2868,6 +2882,7 @@
                 <span class="k">else</span> <span class="kc">None</span>
             <span class="p">),</span>
             <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
+            <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
             <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
@@ -2894,6 +2909,7 @@
                     <span class="k">else</span> <span class="kc">None</span>
                 <span class="p">),</span>
                 <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
+                <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
             <span class="p">}</span>
             <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -2934,6 +2950,7 @@
             <span class="p">),</span>
             <span class="s2">"n_samples"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_samples</span><span class="p">,</span>
             <span class="s2">"sample_unit"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">sample_unit</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">sample_unit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
             <span class="s2">"product_yield"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">product_yield</span><span class="p">,</span>
             <span class="s2">"product_yield_unit"</span><span class="p">:</span> <span class="p">(</span>
                 <span class="nb">str</span><span class="p">(</span><span class="n">yield_unit</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">yield_unit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
@@ -3012,6 +3029,7 @@
             <span class="s2">"reference_basis"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">reference_basis</span><span class="p">,</span>
             <span class="s2">"n_replicates"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">n_replicates</span><span class="p">),</span>
             <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
+            <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="nd">@data_chunker</span>
@@ -3095,6 +3113,7 @@
                 <span class="k">else</span> <span class="kc">None</span>
             <span class="p">),</span>
             <span class="c1"># --- end #753 ---</span>
+            <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="nd">@data_chunker</span>
@@ -3312,6 +3331,7 @@
                 <span class="k">if</span> <span class="n">target_reaction_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                 <span class="k">else</span> <span class="kc">None</span>
             <span class="p">),</span>
+            <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="nd">@data_chunker</span>
@@ -3578,6 +3598,7 @@
             <span class="p">),</span>
             <span class="s2">"n_samples"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_samples</span><span class="p">,</span>
             <span class="s2">"sample_unit"</span><span class="p">:</span> <span class="n">sample_unit</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">sample_unit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="nd">@data_chunker</span>

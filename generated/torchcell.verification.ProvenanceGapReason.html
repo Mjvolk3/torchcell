@@ -161,6 +161,15 @@ sequencing” without depositing them, so neither is
 <code class="docutils literal notranslate"><span class="pre">deferred_pending_source_review</span></code> (no SI of ours holds it): the artifact was
 withheld, and closing the gap takes a request to the authors or the registry, not
 another pass over the mirror.</p>
+<p><code class="docutils literal notranslate"><span class="pre">not_applicable_single_measurement</span></code> is the per-replicate case: the record states
+ONE released measurement (<code class="docutils literal notranslate"><span class="pre">n_samples</span></code> 1, or every <code class="docutils literal notranslate"><span class="pre">n_replicates</span></code> value 1), and a
+single measurement has no dispersion of its own, so an uncertainty, its type or a
+standard error does not exist to be reported. It is not <code class="docutils literal notranslate"><span class="pre">not_reported_by_primary</span></code>,
+which says the primary could have reported the value and did not: Carruthers 2025
+releases every culture and states its error bars over groups of cultures, which is
+what each <code class="docutils literal notranslate"><span class="pre">phenotype_reference</span></code> carries. Nothing closes this gap, because there
+is no value to find; an aggregate record over replicates keeps the reason that
+describes its own absence.</p>
 </dd></dl>
 
 </section>

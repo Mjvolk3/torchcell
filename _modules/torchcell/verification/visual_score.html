@@ -182,19 +182,26 @@
 <span class="sd">    With ``allow_duplicate_orfs`` a release that scores one ORF on more than one plate</span>
 <span class="sd">    (Ozaydin 2013: 130 ORFs on two plates) stores one record per released row, so the</span>
 <span class="sd">    rule reports the duplicated ORFs and holds.</span>
+
+<span class="sd">    ``replicate_id`` joins the key (read with ``.get``, empty when unset), so the</span>
+<span class="sd">    replicate records of a per-replicate release stay distinct and a dataset that</span>
+<span class="sd">    stores one aggregate per ORF is keyed exactly as before.</span>
 <span class="sd">    """</span>
-    <span class="n">seen</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">seen</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+        <span class="n">replicate_id</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"replicate_id"</span><span class="p">)</span>
+        <span class="n">replicate</span> <span class="o">=</span> <span class="s2">""</span> <span class="k">if</span> <span class="n">replicate_id</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">replicate_id</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">_deleted_genes</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]):</span>
-            <span class="n">seen</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="n">seen</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
-    <span class="n">dups</span> <span class="o">=</span> <span class="p">{</span><span class="n">g</span><span class="p">:</span> <span class="n">n</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">seen</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">}</span>
+            <span class="n">seen</span><span class="p">[(</span><span class="n">g</span><span class="p">,</span> <span class="n">replicate</span><span class="p">)]</span> <span class="o">=</span> <span class="n">seen</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">g</span><span class="p">,</span> <span class="n">replicate</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">dups</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">n</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">seen</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">}</span>
+    <span class="n">n_orfs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">({</span><span class="n">g</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">})</span>
     <span class="n">passed</span> <span class="o">=</span> <span class="n">allow_duplicate_orfs</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">dups</span>
     <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
         <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L1</span><span class="p">,</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">"orf_uniqueness"</span><span class="p">,</span>
         <span class="n">passed</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
         <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">seen</span><span class="p">)</span><span class="si">}</span><span class="s2"> unique deleted ORFs, one record each"</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_orfs</span><span class="si">}</span><span class="s2"> unique deleted ORFs, one record each"</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">dups</span>
             <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dups</span><span class="p">)</span><span class="si">}</span><span class="s2"> ORFs appear in multiple records"</span>
             <span class="o">+</span> <span class="p">(</span>
@@ -203,7 +210,7 @@
                 <span class="k">else</span> <span class="s2">""</span>
             <span class="p">)</span>
         <span class="p">),</span>
-        <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_orfs"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">seen</span><span class="p">),</span> <span class="s2">"n_duplicated"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">dups</span><span class="p">)},</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_orfs"</span><span class="p">:</span> <span class="n">n_orfs</span><span class="p">,</span> <span class="s2">"n_duplicated"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">dups</span><span class="p">)},</span>
     <span class="p">)</span>
 
 

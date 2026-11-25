@@ -512,6 +512,23 @@ def main() -> None:
     )
     parser.add_argument("--graph-reg-layer", type=int, default=1)
     parser.add_argument(
+        "--no-decay-bias",
+        action="store_true",
+        help=(
+            "exclude bias and normalization parameters from weight decay. Off "
+            "by default so the arms measured before 2026-11-24 stay comparable, "
+            "but suspected to matter here: the flux head reads the raw flux "
+            "vector over 2,958 reactions, whose magnitudes are large and "
+            "unnormalized, so it needs a large bias to center its output. "
+            "Measured on the design grid, the share of test MSE that is a "
+            "constant offset is 0 to 14 percent for every pooled cell and 12 to "
+            "86 percent for every flux cell, and the two flux cells at weight "
+            "decay 1e-2 are offset by 224 and 235 ug/mL against 37 to 125 for "
+            "the four at 1e-4. Decaying the bias toward zero is the mechanism "
+            "this flag tests"
+        ),
+    )
+    parser.add_argument(
         "--select-on",
         choices=("val_mse", "val_spearman"),
         default="val_mse",
@@ -656,9 +673,28 @@ def main() -> None:
             | {"n_params": n_params, "splits": {k: len(v) for k, v in splits.items()}},
         )
 
-    optimizer = torch.optim.AdamW(
-        model.parameters(), lr=args.lr, weight_decay=args.weight_decay
-    )
+    if args.no_decay_bias:
+        # A parameter is exempt when it is one-dimensional, which covers every
+        # bias, every LayerNorm weight and the flux layer's scalar parameters,
+        # and keeps every weight MATRIX decayed. Shape is the right test rather
+        # than the name: the heads are built by the model, not here, so a name
+        # filter would silently miss a head added later.
+        decayed = [p for p in model.parameters() if p.requires_grad and p.dim() > 1]
+        exempt = [p for p in model.parameters() if p.requires_grad and p.dim() <= 1]
+        groups: list[dict[str, Any]] = [
+            {"params": decayed, "weight_decay": args.weight_decay},
+            {"params": exempt, "weight_decay": 0.0},
+        ]
+        log.info(
+            "weight decay on %d parameter tensors, exempt on %d",
+            len(decayed),
+            len(exempt),
+        )
+        optimizer = torch.optim.AdamW(groups, lr=args.lr)
+    else:
+        optimizer = torch.optim.AdamW(
+            model.parameters(), lr=args.lr, weight_decay=args.weight_decay
+        )
     loss_fn = nn.MSELoss()
 
     # The selection rule, as a sign and a key, so the loop reads the same for

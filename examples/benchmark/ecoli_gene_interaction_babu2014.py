@@ -1,5 +1,5 @@
 # examples/benchmark/ecoli_gene_interaction_babu2014.py
-"""Genetic interaction score of *E. coli* double mutants (Babu 2014), gene-holdout split.
+"""Genetic interactions of *E. coli* double mutants (Babu 2014), gene-holdout split.
 
 A complete benchmark run in one file: load the standardized task, describe each deleted
 gene by the composition of its protein, fit a ridge regression, choose the ridge
@@ -23,9 +23,9 @@ from torchcell.endpoint_http import DEFAULT_URL
 from torchcell.tasks import load_task
 
 TASK = "ecoli-gene-interaction-babu2014"
-# Split names are <family>_s<seed>; task.split_names lists them all. gene_holdout splits
-# the genes first: a pair is test when either of its genes is a test gene.
-SPLIT = "gene_holdout_s0"
+# gene_holdout splits the genes first: a pair is test when either of its genes is a
+# test gene, so every test pair holds a gene no training pair has.
+SPLIT = "gene_holdout_s0"  # <family>_s<seed>; task.split_names lists every split
 AMINO_ACIDS = "ACDEFGHIKLMNPQRSTVWY"
 PENALTIES = (1e-1, 1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6)
 SELECT_ON = "mse"  # lower is better, and defined even when a prediction is constant
@@ -65,7 +65,7 @@ def rounded(metrics: dict[str, float]) -> dict[str, float]:
     return {name: round(value, 4) for name, value in metrics.items()}
 
 
-os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)  # unset, the store is built from raw
+os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)  # download the built dataset store
 os.environ.setdefault("DATA_ROOT", ".")  # the store and genome files go under here
 
 task = load_task(TASK)  # samples, deleted genes, labels, genome and the pinned splits

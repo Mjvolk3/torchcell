@@ -84,7 +84,8 @@ function readLatestRelease(dir: string): ReleaseCounts {
 
 // Applies the remembered page width (src/components/WidthToggle.tsx) before the first
 // paint, so a reload in wide mode does not flash the default width.
-const applyStoredLayout = `(function(){try{if(localStorage.getItem('tc-layout')==='wide'){document.documentElement.setAttribute('data-layout','wide');}}catch(e){}})();`;
+// It also applies the remembered sidebar width (src/components/SidebarResizer.tsx).
+const applyStoredLayout = `(function(){try{if(localStorage.getItem('tc-layout')==='wide'){document.documentElement.setAttribute('data-layout','wide');}var w=parseInt(localStorage.getItem('tc-sidebar-width'),10);if(w>=180&&w<=2000){document.documentElement.style.setProperty('--doc-sidebar-width',w+'px');}}catch(e){}})();`;
 
 const GITHUB_URL = 'https://github.com/Mjvolk3/torchcell';
 const SPHINX_URL = 'https://mjvolk3.github.io/torchcell/';

@@ -2,11 +2,14 @@ import React, {type ReactNode} from 'react';
 import {useLocation} from '@docusaurus/router';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import BrowserOnly from '@docusaurus/BrowserOnly';
+import SidebarResizer from '@site/src/components/SidebarResizer';
 
 // Wraps the whole site. It adds the two bars that say a build is not the public one:
 // the mock-data bar on every page under /benchmark/ when the site is built with
 // BENCH_API_MOCK=1, and the staging bar on every page when it is built with
 // SITE_ENV=staging.
+// It also mounts the handle that resizes the docs sidebar (SidebarResizer).
 export default function Root({children}: {children: ReactNode}): ReactNode {
   const {siteConfig} = useDocusaurusContext();
   const {pathname} = useLocation();
@@ -17,6 +20,7 @@ export default function Root({children}: {children: ReactNode}): ReactNode {
   return (
     <>
       {children}
+      <BrowserOnly>{() => <SidebarResizer />}</BrowserOnly>
       {mock && onBenchmarkPage ? (
         <div className="tc-mock-bar" role="status">
           MOCK DATA, not real results

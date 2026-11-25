@@ -348,3 +348,40 @@ html[data-layout='wide'] [class*='docItemCol'] {
   background: var(--ifm-color-warning-contrast-background);
   color: var(--ifm-color-warning-contrast-foreground);
 }
+
+/* The handle on the right edge of the docs sidebar (src/components/SidebarResizer.tsx):
+ * drag to resize, double-click to fit the longest entry. It is an 8 px strip that shows
+ * a line on hover and while it is dragged. */
+.tc-sidebar-resizer {
+  position: fixed;
+  top: var(--ifm-navbar-height);
+  bottom: 0;
+  width: 8px;
+  z-index: 150;
+  cursor: col-resize;
+  touch-action: none;
+}
+.tc-sidebar-resizer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 2px;
+  background: transparent;
+  transition: background var(--ifm-transition-fast);
+}
+.tc-sidebar-resizer:hover::after,
+html.tc-sidebar-dragging .tc-sidebar-resizer::after {
+  background: var(--ifm-color-primary);
+}
+html.tc-sidebar-dragging {
+  cursor: col-resize;
+  user-select: none;
+}
+html.tc-sidebar-dragging .theme-doc-sidebar-container {
+  transition: none;
+}
+html.tc-sidebar-measuring .theme-doc-sidebar-menu .menu__link {
+  white-space: nowrap;
+}

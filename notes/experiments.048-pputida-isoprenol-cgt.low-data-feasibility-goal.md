@@ -127,3 +127,149 @@ being killed by it, launching nothing whose projected finish passes it:
 1. all 16 configurations at seed 42, which ranks them,
 2. the top 3 configurations at seeds 43 and 44,
 3. the best configuration on the cycle split at 5 seeds.
+
+## 2026.11.25 - The design-split half, and why its objective was the wrong one
+
+The design pass ran 20:01 to 00:32 CST, 27 cells on one RTX 6000 at about 10
+minutes each. Every number below is from the per-cell reports under
+`results/low_data_trial/` and the committed scripts that wrote them.
+
+### The finding that reframed the trial
+
+**On the 44-record design-split test set, ranking the strains by DBTL cycle
+number alone scores Spearman 0.807.** That beats the boosted trees at 0.773 and
+every CGT cell trained all night. Titer rose across the campaign, as a
+successful optimization campaign's titer should, and the design split is random
+over designs rather than over cycles, so train and test both span all seven
+cycles and "a later cycle means a higher titer" is most of the available rank
+information.
+
+The model is never handed the cycle. It does not need to be: each cycle used its
+own sgRNA sets, so the cycle is recoverable from the guide identity the model
+does get.
+
+`cycle_confound_audit.py` reports the corrections:
+
+| ranker | overall test rho | within-cycle rho | cycle-partialed rho |
+|---|---|---|---|
+| cycle number | +0.807 | undefined by construction | +0.008 |
+| guide count | +0.748 | +0.426 | +0.153 |
+| control titer | -0.659 | undefined by construction | -0.080 |
+
+Guide count loses most of its apparent skill once the cycle is removed. The test
+split's cycle composition is also lopsided: 20 of the 44 records are cycle 0,
+the single-sgRNA lowest-titer cycle, so the split is largely a cycle-0 versus
+later contrast. Only 24 records across 6 groups support a within-cycle number at
+all.
+
+**So the design split cannot carry a clean rank objective at this campaign
+size.** The cycle split needs no correction, because every one of its test
+records is cycle 6 and the chronology therefore has zero variance inside the
+test set. The cycle arm scores much lower, and that is why it is the stronger
+evidence of the two, not the weaker.
+
+### What the grid measured
+
+Sixteen configurations at seed 42, then three at two further seeds. Ranked by
+VALIDATION Spearman, because ordering the table by the held-out score is how a
+test-set selection decision gets made without anyone intending it.
+
+| tag | best ep | val rho | test rho | test r | RMSE | offset |
+|---|---|---|---|---|---|---|
+| light_flux_reg1e-04 | 123 | 0.816 | 0.818 | 0.866 | 144.9 | 124.9 |
+| heavy_pooled_reg1e-05 | 45 | 0.804 | 0.756 | 0.861 | 71.5 | 11.2 |
+| heavy_pooled_reg1e-04 | 4 | 0.778 | 0.699 | 0.683 | 102.9 | 13.0 |
+| light_pooled_reg0 | 45 | 0.767 | 0.741 | 0.831 | 82.0 | 9.6 |
+| heavy_flux_reg0 | 77 | 0.764 | 0.776 | 0.767 | 241.8 | 223.9 |
+| heavy_flux_reg1e-05 | 77 | 0.728 | 0.675 | 0.670 | 273.1 | 252.3 |
+| light_pooled_reg1e-04 | 3 | 0.717 | 0.788 | 0.766 | 95.0 | 26.3 |
+| heavy_flux_reg1e-04 | 60 | 0.717 | 0.707 | 0.668 | 104.6 | 4.1 |
+| heavy_flux_reg1e-06 | 41 | 0.686 | 0.735 | 0.363 | 269.4 | 235.4 |
+
+RMSE and the offset are in ug/mL. The eight omitted rows are pooled cells with
+offsets between 1.7 and 44.6.
+
+The three-seed replication, and the nulls it is measured against:
+
+| tag | n | test rho | test r | RMSE | offset |
+|---|---|---|---|---|---|
+| light_flux_reg1e-04 | 3 | +0.775 ± 0.038 | +0.757 ± 0.120 | 159 ± 68 | 108 ± 88 |
+| light_pooled_reg1e-04 | 3 | +0.753 ± 0.050 | +0.791 ± 0.022 | 94.7 ± 3.2 | 15.3 ± 9.5 |
+| heavy_flux_reg0 | 3 | +0.709 ± 0.077 | +0.692 ± 0.066 | 260 ± 145 | 223 ± 172 |
+| boosted trees | | +0.773 | +0.782 | 87.7 | |
+| ridge | | +0.731 | +0.751 | 98.0 | |
+
+**No configuration beats the trees.** The best is 0.775 ± 0.038 against 0.773, a
+gap of 0.002 on a seed standard deviation of 0.038, and the trees win Pearson
+and RMSE outright against all three.
+
+### The error is an offset, and the offset is unstable
+
+MSE decomposes exactly as `bias^2 + (sd_o^2 + sd_p^2 - 2 r sd_o sd_p)`, so the
+offset is recoverable from the reported Pearson and the two standard deviations
+without saving a single prediction. The share of test MSE that is a constant
+offset is 0 to 14 percent for all eight pooled cells and 12 to 86 percent for
+all six flux cells, reaching 252 ug/mL on a target whose own spread is 139.
+
+Strip the offset and the best flux cell's scatter is 73.6 ug/mL against the best
+pooled cell's 70.6, with a higher Pearson. **The metabolic module is not
+predicting worse than the pooled head, it is predicting off-center.** That
+matters for the MVP note's `design_flux` arm, whose Pearson 0.745 against
+`design` at 0.773 was reading a centering defect rather than the value of
+metabolism.
+
+**The first explanation offered for the offset was wrong and is withdrawn.**
+Weight decay applied to bias parameters looked like the cause: the two
+heavy-decay flux cells were offset by 224 and 235 ug/mL against 37 to 125 for
+the four light-decay ones. Then three seeds of ONE light-decay configuration came
+back offset by 13, 125 and 186. The within-configuration seed spread is as large
+as the between-decay contrast the story rested on, and every stage-1 cell was a
+single seed. The flux head's calibration is better described as unstable across
+seeds than as a decay effect: its RMSE seed standard deviations are 68 and 145
+ug/mL against 3.2 for the pooled cell.
+
+### Two defects in the trial's own method, both found and one fixed mid-flight
+
+**Checkpoint selection on validation Spearman is noisy.** Best epoch across the
+grid came out 1, 2, 3, 3, 3, 4, 12, 16, 37, 37, 39, 41, 45, 45, 60, 77, 77 and
+123 with no relation to the regularization lambda, and validation Spearman is
+computed on 46 records where its standard error is near 0.1. An unregularized
+cell selected at epoch 2 and a regularized one at 45, so an early account of
+this as a property of the KL term was wrong and is withdrawn. A paired arm tests
+the rule directly.
+
+**Stage 2 promoted on the test score.** The driver ranked configurations by
+`test_spearman` to choose which to replicate, which is a selection decision made
+on the held-out set. Each cell's own test score remains an honest held-out
+measurement, but the three promoted tags are test-selected, and they are recorded
+that way rather than as "the best three". Concretely it skipped
+`heavy_pooled_reg1e-05`, the cell with the best RMSE of all sixteen and the
+second-best validation Spearman. Fixed to promote on validation Spearman before
+the cycle pass used the same code.
+
+### The first cycle-split evidence
+
+Four seeds of the test-selected winner, on the split the chronology cannot
+inflate:
+
+| seed | best ep | val rho | test rho | test r | RMSE | offset | NMSE |
+|---|---|---|---|---|---|---|---|
+| 42 | 76 | 0.733 | 0.585 | 0.592 | 252.0 | 189.0 | 1.614 |
+| 43 | 75 | 0.809 | 0.385 | 0.425 | 192.9 | 66.4 | 0.946 |
+| 44 | 94 | 0.798 | 0.523 | 0.492 | 272.4 | 209.6 | 1.885 |
+| 45 | 61 | 0.762 | 0.514 | 0.532 | 180.7 | 63.5 | 0.829 |
+| mean | | | +0.502 ± 0.084 | +0.510 ± 0.070 | 224.5 | 132.1 | |
+| boosted trees | | | +0.510 | | | | |
+| ridge | | | +0.415 | | | | |
+
+**A prediction was recorded before these ran and it failed.** If lambda 1e-04's
+design-split lead had been a real graph-prior benefit it would have survived
+here; instead the configuration that led the design split at 0.818 scores
+0.502 ± 0.084 against the trees' 0.510, a tie. The design-split advantage was the
+confound.
+
+Validation and test diverge sharply here, 0.73 to 0.81 against 0.39 to 0.59,
+where on the design split they tracked each other. Cycle 5 does not tell you
+about cycle 6, which is extrapolation failure rather than ordinary overfitting.
+Three of the four seeds have NMSE at or above 1, meaning predictions worse than
+the test cycle's own mean titer.

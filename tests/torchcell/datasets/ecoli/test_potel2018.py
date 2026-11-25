@@ -18,6 +18,7 @@ from __future__ import annotations
 import hashlib
 import math
 import os
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -36,7 +37,7 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.literature.manifest import ArtifactRecord, Manifest
 from torchcell.verification.levels import l3_convention
-from torchcell.verification.sourced import ProvenanceGapReason
+from torchcell.verification.sourced import ProvenanceGapReason, audit_sourced_value
 
 COLUMNS = [spec.column for spec in po.SAMPLES]
 
@@ -458,3 +459,57 @@ def test_the_released_table_has_the_pinned_counts() -> None:
 def test_every_released_quote_is_verbatim_in_the_mirror() -> None:
     result = po._l3_quotes_are_verbatim(None)
     assert result.passed, result.message
+
+
+# ------------------------------------------- per-replicate review (#1178, #1172)
+@requires_mirror
+def test_the_twelve_records_are_one_per_released_replicate() -> None:
+    """Real Table 2: one record per sample column, three per condition, none combined."""
+    path = _real_mirror()
+    assert path is not None
+    rows = po.read_table_2(path)
+    phenotypes = [po.phenotype(spec, rows) for spec in po.SAMPLES]
+    assert len(phenotypes) == po.EXPECTED_RECORDS == 12
+    assert len({p.sample_label for p in phenotypes}) == 12
+    assert Counter(p.replicate for p in phenotypes) == {1: 4, 2: 4, 3: 4}
+    assert Counter((spec.carbon, spec.phase.value) for spec in po.SAMPLES) == {
+        ("glucose", "exponential"): 3,
+        ("glucose", "stationary"): 3,
+        ("glycerol", "exponential"): 3,
+        ("glycerol", "stationary"): 3,
+    }
+    assert {
+        p.sample_label: len(p.phosphosite_intensity) for p in phenotypes
+    } == po.QUANTIFIED_PER_SAMPLE
+    assert sum(len(p.phosphosite_intensity) for p in phenotypes) == (
+        po.SOURCE_SITES * 12 - po.ZERO_CELLS
+    )
+    for p in phenotypes:
+        assert p.replicate_unit is None
+        assert [g.field for g in p.provenance_gaps] == ["replicate_unit"]
+
+
+@requires_mirror
+def test_the_replicate_unit_evidence_is_verbatim_and_split_two_to_nine() -> None:
+    raw_root = Path(os.environ["DATA_ROOT"]) / "torchcell-raw"
+    for sv in po.REPLICATE_UNIT_EVIDENCE:
+        assert audit_sourced_value(sv, raw_root).passed, sv.quote
+    biological = [sv for sv in po.REPLICATE_UNIT_EVIDENCE if sv.value == "biological"]
+    assert len(biological) == 2
+    assert len(po.REPLICATE_UNIT_EVIDENCE) == 11
+    assert all(sv.provenance.source_uri == po.SI_TEXT_REL for sv in biological)
+    thesis = (raw_root / po.CITATION_KEY / po.THESIS_TEXT_REL).read_text()
+    assert "n=12" not in thesis
+    workbook = raw_root / po.CITATION_KEY / po.FIG1_SOURCE_DATA_REL
+    assert hashlib.sha256(workbook.read_bytes()).hexdigest() == (
+        po.FIG1_SOURCE_DATA_SHA256
+    )
+    book = openpyxl.load_workbook(workbook, read_only=True, data_only=True)
+    names = {
+        cell
+        for row in book["Sheet1"].iter_rows(values_only=True)
+        for cell in row
+        if isinstance(cell, str)
+    }
+    book.close()
+    assert set(po.FIG1_OPTIMIZED_RUNS) <= names

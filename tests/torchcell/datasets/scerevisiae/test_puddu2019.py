@@ -18,6 +18,7 @@ import os.path as osp
 from collections.abc import Hashable
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
 from torchcell.datamodels.genome_architecture_features import PUDDU2019_WGS_COVERAGE
@@ -230,6 +231,116 @@ def test_the_ledger_requires_every_released_colony_to_be_served() -> None:
     with pytest.raises(ValueError, match="knockout \\+ wild type must equal served"):
         p.ReleaseLedger.model_validate(
             {**good, **rest, "n_wild_type_colonies_served": 7}
+        )
+
+
+def _synthetic_table_3() -> pd.DataFrame:
+    """A Table 3 shaped like the release: the legend's knockout strata, then 4 x 2 WT."""
+    strains: list[str] = []
+    number = 1
+    for colonies, n_strains in sorted(p.COLONIES_PER_STRAIN_LEGEND.items()):
+        for _ in range(n_strains):
+            strains.extend([f"Del{number}_G{number}"] * colonies)
+            number += 1
+    for i in range(1, 5):
+        strains.extend([f"Del{4732 + i}_WT-{i}"] * 2)
+    return pd.DataFrame(
+        {"SDname": [f"SD{i}b" for i in range(len(strains))], "Deletion": strains}
+    )
+
+
+def test_split_colonies_keeps_both_halves_and_checks_their_shapes() -> None:
+    table = _synthetic_table_3()
+    knockout, wild_type = p.split_colonies(table)
+    assert (len(knockout), len(wild_type)) == (8835, 8)
+    assert wild_type.index.tolist() == list(range(8835, 8843))
+    assert knockout["Deletion"].nunique() == p.N_KNOCKOUT_STRAINS
+    with pytest.raises(p.ReleaseShapeError, match="7 wild-type colonies"):
+        p.split_colonies(table.iloc[:-1])
+    merged = table.copy()
+    merged.loc[8841:, "Deletion"] = "Del4735_WT-3"
+    with pytest.raises(p.ReleaseShapeError, match="wild-type colonies per strain id"):
+        p.split_colonies(merged)
+    short = pd.concat([table.iloc[1:8835], table.iloc[8835:]])
+    with pytest.raises(p.ReleaseShapeError, match="8834 knockout colonies"):
+        p.split_colonies(short)
+    regrouped = table.copy()
+    regrouped.loc[0, "Deletion"] = regrouped.loc[1, "Deletion"]
+    with pytest.raises(p.ReleaseShapeError, match="Extended Data Fig. 1c legend"):
+        p.split_colonies(regrouped)
+
+
+def _barcodes() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "SDname": ["SD0867b"],
+            "Confirmed_deletion": ["YBR273C"],
+            "UPTAG_seqs": ["ATTTGTGTCCCTGCGCCTG"],
+            "DNTAG_seqs": [None],
+        }
+    ).set_index("SDname")
+
+
+def test_a_wild_type_colony_plans_to_the_empty_genotype_with_its_label() -> None:
+    genotype, row = p.GenomeArchitecturePuddu2019Dataset._plan_colony(
+        {"SDname": "SD5624b", "Deletion": "Del4733_WT-1", "ERSno": "ERS1076728"},
+        wild_type_ids=frozenset({"SD5624b"}),
+        barcodes=_barcodes(),
+        gene_of_common={},
+        common_of_gene={},
+        released_genes={},
+    )
+    assert genotype.perturbations == []
+    assert row == {
+        "colony_id": "SD5624b",
+        "strain_id": "Del4733_WT-1",
+        "systematic_gene_name": None,
+        "perturbed_gene_name": None,
+        "strain_label": "WT-1",
+        "ena_sample_accession": "ERS1076728",
+        "barcode_row": False,
+        "wild_type": True,
+    }
+
+
+def test_a_knockout_colony_plans_to_its_released_deletion() -> None:
+    plan = p.GenomeArchitecturePuddu2019Dataset._plan_colony
+    kwargs = {
+        "wild_type_ids": frozenset({"SD5624b"}),
+        "barcodes": _barcodes(),
+        "gene_of_common": {"UBX7": "YBR273C", "MTQ2": "YDR140W"},
+        "common_of_gene": {"YBR273C": "UBX7", "YDR140W": "MTQ2"},
+    }
+    genotype, row = plan(
+        {"SDname": "SD0867b", "Deletion": "Del5_UBX7", "ERSno": "ERS1"},
+        released_genes={"SD0867b": "YBR273C"},
+        **kwargs,  # type: ignore[arg-type]
+    )
+    (deletion,) = genotype.perturbations
+    assert deletion.systematic_gene_name == "YBR273C"
+    assert (row["systematic_gene_name"], row["perturbed_gene_name"]) == (
+        "YBR273C",
+        "UBX7",
+    )
+    assert (row["barcode_row"], row["wild_type"]) == (True, False)
+    no_row, row = plan(
+        {"SDname": "SD2000b", "Deletion": "Del1821_MTQ2", "ERSno": "ERS2"},
+        released_genes={"SD2000b": "YDR140W"},
+        **kwargs,  # type: ignore[arg-type]
+    )
+    assert no_row.perturbations[0].systematic_gene_name == "YDR140W"
+    assert row["barcode_row"] is False
+    with pytest.raises(p.ReleaseShapeError, match="released deletion"):
+        plan(
+            {"SDname": "SD0867b", "Deletion": "Del5_UBX7", "ERSno": "ERS1"},
+            released_genes={"SD0867b": "YAL001C"},
+            **kwargs,  # type: ignore[arg-type]
+        )
+    with pytest.raises(p.ReleaseShapeError, match="is not a Table 4 common name"):
+        plan(
+            {"SDname": "SD3000b", "Deletion": "Del9_NOPE1", "ERSno": "ERS3"},
+            released_genes={},
+            **kwargs,  # type: ignore[arg-type]
         )
 
 

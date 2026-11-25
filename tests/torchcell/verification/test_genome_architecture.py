@@ -437,3 +437,13 @@ def test_a_missing_wild_type_record_fails_the_reference_rule(tmp_path: Path) -> 
     )
     assert result.passed is False
     assert result.details["n_replicate_records"] == 7
+
+
+def test_one_wild_type_record_cannot_give_a_sample_sd(tmp_path: Path) -> None:
+    records = [_wild_type_record(sample_id="WT0", rDNA=124.99)]
+    result = _result(
+        _run_with_reference_rule(records, tmp_path, sd_ddof=1), "reference_replicates"
+    )
+    assert result.passed is False
+    assert result.details["features_off"] == ["rDNA"]
+    assert result.details["by_feature"] == {}

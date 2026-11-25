@@ -257,15 +257,17 @@ def test_split_colonies_keeps_both_halves_and_checks_their_shapes() -> None:
     assert knockout["Deletion"].nunique() == p.N_KNOCKOUT_STRAINS
     with pytest.raises(p.ReleaseShapeError, match="7 wild-type colonies"):
         p.split_colonies(table.iloc[:-1])
-    merged = table.copy()
-    merged.loc[8841:, "Deletion"] = "Del4735_WT-3"
+    merged = table.assign(
+        Deletion=table["Deletion"].tolist()[:8841] + ["Del4735_WT-3"] * 2
+    )
     with pytest.raises(p.ReleaseShapeError, match="wild-type colonies per strain id"):
         p.split_colonies(merged)
     short = pd.concat([table.iloc[1:8835], table.iloc[8835:]])
     with pytest.raises(p.ReleaseShapeError, match="8834 knockout colonies"):
         p.split_colonies(short)
-    regrouped = table.copy()
-    regrouped.loc[0, "Deletion"] = regrouped.loc[1, "Deletion"]
+    deletions = table["Deletion"].tolist()
+    deletions[0] = deletions[1]  # a 1-colony strain merged into a 2-colony one
+    regrouped = table.assign(Deletion=deletions)
     with pytest.raises(p.ReleaseShapeError, match="Extended Data Fig. 1c legend"):
         p.split_colonies(regrouped)
 

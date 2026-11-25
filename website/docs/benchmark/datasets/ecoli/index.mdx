@@ -60,6 +60,8 @@ split.train, split.val                     # row indices into task.genes and tas
 task.score(task.y[split.val], prediction)  # Pearson, Spearman, R2, MSE, MAE
 ```
 
+[`load_ecoli_tasks.py`](https://github.com/Mjvolk3/torchcell/blob/main/examples/benchmark/load_ecoli_tasks.py) is this as one runnable file: it loads all four tasks and prints their samples, labels, splits and one gene's DNA, coding sequence and protein, with no model.
+
 The split files ship inside the package and are checked against a sha256 recorded in the code. The samples built on your machine must equal the samples the split file was written for, row for row, or `load_task` raises.
 
 Because every script reaches the processed task through `load_task`, a submitted script can be checked: one that never calls `load_task` built its own samples or splits, and one that calls `unlock_test` read the test part.

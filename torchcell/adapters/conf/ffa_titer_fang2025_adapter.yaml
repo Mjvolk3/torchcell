@@ -1,0 +1,75 @@
+# torchcell/adapters/conf/ffa_titer_fang2025_adapter.yaml
+# [[torchcell.adapters.conf.ffa_titer_fang2025_adapter.yaml]] Test file:
+# tests/torchcell/adapters/test_fang2025_titer_adapter.py
+#
+# Fang 2025 per-strain FFA titers: 306 records, ProductTiterExperiment, one per
+# released biological replicate culture of 102 strains. 441 perturbations over three
+# leaves served as `perturbation`: CrisprInterferencePerturbation (the knockdowns, each
+# carrying the Wang 2018 spacer, so the crispr-construct pair is enabled),
+# GeneAdditionPerturbation (the P_BAD and P_T7 fadR plasmids) and
+# DeletionStrainPerturbation (the lambda-RED pcnB deletion). The two unmodulated
+# control strains carry an EMPTY genotype, so a record can have zero perturbations.
+# The CultureEnvironment carries one SmallMoleculePerturbation for every record (1 mM
+# IPTG) and a second for the P_BAD strain (10 mM arabinose), so the
+# environment-perturbation pair is enabled; every record states 30 C and the one
+# modified-M9 medium. There are two experiment references, one per background plasmid
+# (pCF with tesA', pC without), each stating its released control mean and SD.
+cell_adapter:
+  node_methods:
+    - method_name: "experiment reference"
+    - method_name: "genome"
+    - method_name: "experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "perturbation (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "crispr construct (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment reference"
+    - method_name: "media (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media reference"
+    - method_name: "temperature (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature reference"
+    - method_name: "environment perturbation (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation reference"
+    - method_name: "product titer phenotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "product titer phenotype reference"
+    - method_name: "dataset"
+    - method_name: "publication (chunked)"
+      memory_reduction_factor: 1.0
+
+  edge_methods:
+    - method_name: "experiment reference to dataset"
+    - method_name: "experiment to dataset (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "experiment reference to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "perturbation to genotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "crispr construct to perturbation (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment reference"
+    - method_name: "phenotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation to environment reference"
+    - method_name: "genome to experiment reference"
+    - method_name: "phenotype to experiment reference"
+    - method_name: "publication to experiment (chunked)"
+      memory_reduction_factor: 1.0

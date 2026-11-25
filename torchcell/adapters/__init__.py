@@ -139,6 +139,7 @@ from .desiqueira2025_titer_adapter import (
 from .fang2025_adapter import (
     CrispriGuideFfaEnrichmentFang2025Adapter as CrispriGuideFfaEnrichmentFang2025Adapter,
 )
+from .fang2025_titer_adapter import FfaTiterFang2025Adapter as FfaTiterFang2025Adapter
 from .fitness_browser_ecoli_adapter import (
     RbTnseqFitnessBrowserEcoliAdapter as RbTnseqFitnessBrowserEcoliAdapter,
 )
@@ -614,6 +615,7 @@ ecoli_adapters = [
     "EnvChemgenWang2015Adapter",
     "GrowthWang2015Adapter",
     "CrispriGuideFfaEnrichmentFang2025Adapter",
+    "FfaTiterFang2025Adapter",
     "CrispriGuideFitnessWang2018Adapter",
     "CrispriGeneFitnessWang2018Adapter",
     "EnvChemgenWang2024Adapter",

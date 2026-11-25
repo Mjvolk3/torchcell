@@ -4674,6 +4674,13 @@ def _verify_foo_titer(dataset_root: str, data_root: str) -> VerificationReport:
     return foo2014.verify_build(dataset_root, data_root)
 
 
+def _verify_fang_titer(dataset_root: str, data_root: str) -> VerificationReport:
+    """Fang 2025 FFA titers: the shared titer gate, the panel ledger and its two L4s."""
+    from torchcell.datasets.ecoli import fang2025
+
+    return fang2025.verify_titer_build(dataset_root, data_root)
+
+
 def _verify_niu_pinene_fold_change(
     dataset_root: str, data_root: str
 ) -> VerificationReport:
@@ -4763,6 +4770,10 @@ PRODUCT_TITER_DATASETS: dict[str, dict[str, Any]] = {
     "isopentenol_titer_foo2014": {
         "root": "data/torchcell/isopentenol_titer_foo2014",
         "verify": _verify_foo_titer,
+    },
+    "ffa_titer_fang2025": {
+        "root": "data/torchcell/ffa_titer_fang2025",
+        "verify": _verify_fang_titer,
     },
     "pinene_fold_change_niu2019": {
         "root": "data/torchcell/pinene_fold_change_niu2019",

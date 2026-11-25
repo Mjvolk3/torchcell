@@ -70,6 +70,7 @@ from torchcell.adapters import (
     EnvMetalTnseqRoyet2025Adapter,
     ExometaboliteBrunk2016Adapter,
     FattyAcidXue2025Adapter,
+    FfaTiterFang2025Adapter,
     FitnessContrastBorchert2023Adapter,
     FluxIshii2007Adapter,
     FluxLi2021Adapter,
@@ -245,7 +246,10 @@ from torchcell.datasets.ecoli.choe2019_growth_rate import (
 )
 from torchcell.datasets.ecoli.choe2025 import CrispriChemgenChoe2025Dataset
 from torchcell.datasets.ecoli.cui2018 import CrispriKnockdownCui2018Dataset
-from torchcell.datasets.ecoli.fang2025 import CrispriGuideFfaEnrichmentFang2025Dataset
+from torchcell.datasets.ecoli.fang2025 import (
+    CrispriGuideFfaEnrichmentFang2025Dataset,
+    FfaTiterFang2025Dataset,
+)
 from torchcell.datasets.ecoli.fitness_browser_ecoli import FitnessBrowserEcoliDataset
 from torchcell.datasets.ecoli.foo2014 import IsopentenolTiterFoo2014Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
@@ -631,6 +635,7 @@ dataset_adapter_map: dict[type, type] = {
     EnvChemgenWang2015Dataset: EnvChemgenWang2015Adapter,
     GrowthWang2015Dataset: GrowthWang2015Adapter,
     CrispriGuideFfaEnrichmentFang2025Dataset: CrispriGuideFfaEnrichmentFang2025Adapter,
+    FfaTiterFang2025Dataset: FfaTiterFang2025Adapter,
     CrispriGuideFitnessWang2018Dataset: CrispriGuideFitnessWang2018Adapter,
     CrispriGeneFitnessWang2018Dataset: CrispriGeneFitnessWang2018Adapter,
     EnvChemgenWang2024Dataset: EnvChemgenWang2024Adapter,

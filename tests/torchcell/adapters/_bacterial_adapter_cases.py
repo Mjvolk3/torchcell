@@ -82,6 +82,7 @@ from torchcell.adapters import (
     EnvChemgenWang2024Adapter,
     EnvMetalTnseqRoyet2025Adapter,
     ExometaboliteBrunk2016Adapter,
+    FfaTiterFang2025Adapter,
     FitnessContrastBorchert2023Adapter,
     FluxIshii2007Adapter,
     FluxLi2021Adapter,
@@ -199,7 +200,10 @@ from torchcell.datasets.ecoli.choe2019_growth_rate import (
 )
 from torchcell.datasets.ecoli.choe2025 import CrispriChemgenChoe2025Dataset
 from torchcell.datasets.ecoli.cui2018 import CrispriKnockdownCui2018Dataset
-from torchcell.datasets.ecoli.fang2025 import CrispriGuideFfaEnrichmentFang2025Dataset
+from torchcell.datasets.ecoli.fang2025 import (
+    CrispriGuideFfaEnrichmentFang2025Dataset,
+    FfaTiterFang2025Dataset,
+)
 from torchcell.datasets.ecoli.fitness_browser_ecoli import FitnessBrowserEcoliDataset
 from torchcell.datasets.ecoli.foo2014 import IsopentenolTiterFoo2014Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
@@ -1168,6 +1172,14 @@ BACTERIAL: list[Bacterial] = [
         "crispri_guide_ffa_enrichment_fang2025",
         CrispriGuideFfaEnrichmentFang2025Dataset,
         RESPONSE,
+        crispr=True,
+    ),
+    _case(
+        FfaTiterFang2025Adapter,
+        "fang2025_titer",
+        "ffa_titer_fang2025",
+        FfaTiterFang2025Dataset,
+        TITER,
         crispr=True,
     ),
     _case(

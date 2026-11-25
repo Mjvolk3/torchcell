@@ -151,6 +151,7 @@ datasets:
   - IsoprenolTiterYunus2026Dataset
   - CrispriPanelProteomeYunus2026Dataset
   - CrispriGuideFfaEnrichmentFang2025Dataset
+  - FfaTiterFang2025Dataset
   - ValerolactamTiterThompson2019Dataset
   - LactamGrowthRateThompson2019Dataset
   - MetabolomeBrunk2016Dataset

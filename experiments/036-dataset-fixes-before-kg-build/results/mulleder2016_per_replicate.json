@@ -1,0 +1,56 @@
+{
+  "script": "experiments/036-dataset-fixes-before-kg-build/scripts/mulleder2016_per_replicate.py",
+  "previous_root": "/scratch/projects/torchcell-scratch/data/torchcell/amino_acid_mulleder2016",
+  "scratch_root": "/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-mulleder2016/amino_acid_mulleder2016",
+  "n_records_previous": 4678,
+  "n_records_scratch": 9731,
+  "n_records_by_measurement_type": {
+    "cell_extract_concentration_uM": 5053,
+    "intracellular_concentration_mM": 4678
+  },
+  "mm_records": {
+    "key_paths_differing_from_previous_store": {
+      "/experiment/phenotype/replicate_id (new key)": 4678,
+      "/reference/phenotype_reference/replicate_id (new key)": 4678
+    },
+    "max_abs_diff_metabolite_level_mM": 0.0
+  },
+  "raw_records": {
+    "n_data_raw_rows": 5290,
+    "n_qc_rows_not_records": 237,
+    "n_records": 5053,
+    "n_records_of_released_orfs": 4897,
+    "n_records_of_orfs_absent_from_mm_sheet": 156,
+    "n_orfs_absent_from_mm_sheet": 153,
+    "released_orfs_by_culture_count": {
+      "1": 4487,
+      "2": 167,
+      "3": 20,
+      "4": 4
+    },
+    "records_by_replicate_position": {
+      "1": 4831,
+      "2": 194,
+      "3": 24,
+      "4": 4
+    },
+    "max_abs_diff_vs_data_raw_uM": 0.0,
+    "n_blank_cells_left_out": 265,
+    "replicate_id_unique": true,
+    "control_rows": [
+      {
+        "identifier": "23_A_8",
+        "ORF": "YLR303W",
+        "batch": "02"
+      },
+      {
+        "identifier": "20_D_10",
+        "ORF": "YOR202W",
+        "batch": "04"
+      }
+    ],
+    "control_reference_n_replicates": [
+      2
+    ]
+  }
+}

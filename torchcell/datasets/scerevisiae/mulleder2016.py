@@ -53,6 +53,33 @@ field, and the previous value 1 described neither.
 Amino acids are NATIVE Yeast9 metabolites, so ``target_metabolite_ids`` (amino acid ->
 ``s_NNNN``) is populatable for constraint-based-model linkage; left ``None`` here and
 deferred to a follow-up that sources the ids from YeastGEM (never guessed).
+
+ONE RECORD PER RELEASED CULTURE (2026-11-24, tracking issue #1178). Beside the 4,678
+released mM rows, which stay exactly as they were, every strain row of the ``data_raw``
+sheet is its own record: ``measurement_type = "cell_extract_concentration_uM"``
+(``RAW_MEASUREMENT_TYPE``), ``metabolite_level`` = that row's raw cell-extract uM values
+verbatim (a blank cell is left out of the dict), ``n_replicates = 1`` per amino acid,
+``metabolite_level_se = None``, and ``replicate_id`` = the row's own ``identifier``
+(plate_row_column of the well, e.g. ``41_G_10``; batch 12 prints ``01_D12``), which is
+unique over the sheet. A row is one culture: each strain was grown in its own well of a
+96-deep-well plate and extracted on its own (Methods "Yeast", "Metabolite Extraction";
+``SOURCED_VALUES["batch_cultivation"]``), so no row is a repeat injection of another.
+On the pinned workbook that is 5,053 records: 4,897 rows of the 4,678 released ORFs
+(4,487 x 1, 167 x 2, 20 x 3, 4 x 4) and 156 rows of 153 ORFs the mM sheet does not carry
+(slow growers, the two complemented controls, and strains the authors left out of the
+analysis), every one stored because the sheet releases it. The raw uM precedes the
+batch normalization and the dilution / volume / cell-number corrections, so it is a
+measurement of its own and is never compared with the mM value; the mM-from-uM recipe
+is unpublished (#1172). The 237 ``QC_*`` rows are repeat injections of one pooled
+extract of 351 strains (``SOURCED_VALUES["qc_sample"]``); a pool has no statable
+genotype, so they are not records.
+
+The raw records' reference is the mean of the complemented control strains' ``data_raw``
+rows (``his3D::kanMX4`` YOR202W and ``met17D::kanMX4`` YLR303W, one row each), which the
+paper names as the isogenic reference wild type (``SOURCED_VALUES["reference_wt"]``):
+``SD / sqrt(n)`` and ``n`` per amino acid, ``replicate_id = None``, restricted to the
+amino acids the record measured. The two control rows are records themselves, under
+their released deletion. The mM records keep the robust-mean reference.
 """
 
 import logging
@@ -104,6 +131,14 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 MEASUREMENT_TYPE = "intracellular_concentration_mM"
+#: The ``data_raw`` sheet's unit: "Raw concentration data of the cell extract in [uM]"
+#: (Overview sheet), before batch normalization and the dilution / volume / cell-number
+#: corrections that give ``MEASUREMENT_TYPE``.
+RAW_MEASUREMENT_TYPE = "cell_extract_concentration_uM"
+#: The complemented deletion strains the paper uses as the isogenic wild type:
+#: his3D::kanMX4 and met17D::kanMX4 (``SOURCED_VALUES["reference_wt"]``).
+COMPLEMENTED_CONTROL_ORFS = ("YOR202W", "YLR303W")
+_QC_PREFIX = "QC_"
 _CONC_SHEET = "intracellular_concentration_mM"
 _SUMMARY_SHEET = "robust_summary_statistics"
 _RAW_SHEET = "data_raw"
@@ -193,6 +228,34 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "strain more than once. How repeated rows combine into the released value "
         "is not stated",
     ),
+    "batch_cultivation": _sv(
+        "one data_raw row is one culture",
+        "Strains from the same batch were cultivated and their metabolites extracted "
+        "on the same day and analyzed together by LC-MS/MS.",
+        note="paper.md line 341; line 333 grows each strain in its own well of "
+        "'96-deep well plates', and every data_raw row sits at its own plate "
+        "identifier (all 410 rows of the 191 multi-row released ORFs are at distinct "
+        "wells, measured on the pinned workbook), so each row is a separate culture "
+        "and extract",
+    ),
+    "qc_sample": _sv(
+        237,
+        "The QC was prepared by joining the extracts of the first batch including "
+        "metabolites of 351 deletion strains.",
+        note="paper.md line 341 (same paragraph: 'a quality control sample (QC) was "
+        "assessed every 24 samples and in total 237 times'); the 237 QC_* rows of "
+        "data_raw are repeat injections of this pool, which has no statable genotype",
+    ),
+    "reference_wt": _sv(
+        COMPLEMENTED_CONTROL_ORFS,
+        "contain a complemented his3 deletion strain representing the isogenic "
+        "reference wt strain",
+        note="paper.md line 487 (Figure S5B legend); line 459 (Figure S1F) shows the "
+        "WT profile 'for the complemented deletion strains his3D::kanMX4 and "
+        "met17D::kanMX4'. YOR202W is HIS3 and YLR303W is MET17 in data_raw; both are "
+        "left out of the mM sheet (line 379, 'we excluded the complemented deletion "
+        "strains')",
+    ),
 }
 
 # 19 amino acids measured (20 proteinogenic minus cysteine); the exact sheet columns.
@@ -244,6 +307,128 @@ def _concentration(value: Any, orf: str, amino_acid: str) -> float:
     raise InvalidConcentrationError(
         f"Mulleder Table S3: {orf} {amino_acid} concentration {value!r} is not a "
         "finite number"
+    )
+
+
+class InvalidRawRowError(ValueError):
+    """A ``data_raw`` row the loader cannot store as one culture without guessing.
+
+    Raised for a repeated ``identifier`` (the row's replicate label), a row with no ORF
+    that is not a ``QC_*`` injection, a text cell, a row blank in every amino acid, or a
+    complemented control strain with no row. The pinned workbook has none of these.
+    """
+
+
+def _raw_level(value: Any, identifier: str, amino_acid: str) -> float | None:
+    """One ``data_raw`` cell: a finite float, or None for a blank cell (left out)."""
+    if isinstance(value, numbers.Real) and math.isfinite(value):
+        return float(value)
+    if isinstance(value, numbers.Real) and math.isnan(value):
+        return None
+    if value is None:
+        return None
+    raise InvalidRawRowError(
+        f"Mulleder Table S3 data_raw: {identifier} {amino_acid} value {value!r} is not "
+        "a finite number"
+    )
+
+
+def _raw_cultures(raw: pd.DataFrame) -> tuple[list[dict[str, Any]], int]:
+    """Every strain row of ``data_raw`` as one culture, in sheet order, plus the QC count.
+
+    Each culture is ``{"identifier", "orf", "batch", "levels"}`` with ``levels`` the
+    row's non-blank uM values. A row with no ORF is a ``QC_*`` injection of the pooled
+    extract (counted, not a culture); any other ORF-less row, a repeated identifier, a
+    text cell or a row blank in all 19 amino acids raises ``InvalidRawRowError``.
+    """
+    cultures: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    n_qc = 0
+    for _, row in raw.iterrows():
+        identifier = str(row["identifier"]).strip()
+        if identifier in seen:
+            raise InvalidRawRowError(
+                f"Mulleder Table S3 data_raw: identifier {identifier} is on two rows; "
+                "a culture is one row"
+            )
+        seen.add(identifier)
+        if pd.isna(row["ORF"]):
+            if not identifier.startswith(_QC_PREFIX):
+                raise InvalidRawRowError(
+                    f"Mulleder Table S3 data_raw: row {identifier} has no ORF and is "
+                    "not a QC injection"
+                )
+            n_qc += 1
+            continue
+        levels = {
+            aa: level
+            for aa in AMINO_ACIDS
+            if (level := _raw_level(row[aa], identifier, aa)) is not None
+        }
+        if not levels:
+            raise InvalidRawRowError(
+                f"Mulleder Table S3 data_raw: row {identifier} is blank in every "
+                "amino acid"
+            )
+        cultures.append(
+            {
+                "identifier": identifier,
+                "orf": str(row["ORF"]).strip(),
+                "batch": str(row["batch"]).strip(),
+                "levels": levels,
+            }
+        )
+    return cultures, n_qc
+
+
+def _control_summary(cultures: list[dict[str, Any]]) -> MetabolitePhenotype:
+    """The raw-uM reference: mean, ``SD / sqrt(n)`` and n over the complemented controls.
+
+    One row per control ORF on the pinned workbook, so n = 2 per amino acid. A control
+    ORF with no row raises ``InvalidRawRowError``.
+    """
+    controls = [c for c in cultures if c["orf"] in COMPLEMENTED_CONTROL_ORFS]
+    absent = sorted(set(COMPLEMENTED_CONTROL_ORFS) - {c["orf"] for c in controls})
+    if absent:
+        raise InvalidRawRowError(
+            f"Mulleder Table S3 data_raw: complemented control {absent} has no row"
+        )
+    level: dict[str, float] = {}
+    se: dict[str, float] = {}
+    n_rep: dict[str, int] = {}
+    for aa in AMINO_ACIDS:
+        values = [c["levels"][aa] for c in controls if aa in c["levels"]]
+        if not values:
+            continue
+        n = len(values)
+        mean = sum(values) / n
+        level[aa] = mean
+        n_rep[aa] = n
+        if n >= 2:
+            var = sum((v - mean) ** 2 for v in values) / (n - 1)  # sample SD
+            se[aa] = math.sqrt(var) / math.sqrt(n)
+        else:
+            se[aa] = math.nan  # one control value: SD undefined
+    return MetabolitePhenotype(
+        metabolite_level=level,
+        metabolite_level_se=se,
+        n_replicates=n_rep,
+        measurement_type=RAW_MEASUREMENT_TYPE,
+        target_metabolite_ids=None,
+    )
+
+
+def _restricted(summary: MetabolitePhenotype, keys: set[str]) -> MetabolitePhenotype:
+    """``summary`` on the amino acids in ``keys`` only (a record's measured set)."""
+    se = summary.metabolite_level_se or {}
+    return MetabolitePhenotype(
+        metabolite_level={
+            k: v for k, v in summary.metabolite_level.items() if k in keys
+        },
+        metabolite_level_se={k: v for k, v in se.items() if k in keys},
+        n_replicates={k: v for k, v in summary.n_replicates.items() if k in keys},
+        measurement_type=summary.measurement_type,
+        target_metabolite_ids=None,
     )
 
 
@@ -314,12 +499,13 @@ class AminoAcidMulleder2016Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Parse Table S3 into per-ORF Metabolite experiments and write LMDB."""
+        """Parse Table S3 into per-ORF mM records plus one raw uM record per culture."""
         verify_raw_files(self.raw_dir, {DATA_FILENAME: DATA_SHA256})
         path = osp.join(self.raw_dir, DATA_FILENAME)
         conc = pd.read_excel(path, sheet_name=_CONC_SHEET)
         summary = pd.read_excel(path, sheet_name=_SUMMARY_SHEET)
-        raw = pd.read_excel(path, sheet_name=_RAW_SHEET)
+        # batch is a label ("01" ... "12", "03-2"), read as text so "01" stays "01"
+        raw = pd.read_excel(path, sheet_name=_RAW_SHEET, dtype={"batch": str})
         # Per ORF x amino acid: how many data_raw rows carry a value (issue #488).
         # QC rows have no ORF and drop out of the groupby.
         raw_counts = raw.groupby("ORF")[AMINO_ACIDS].count()
@@ -395,11 +581,38 @@ class AminoAcidMulleder2016Dataset(ExperimentDataset):
             [{k: v for k, v in r.items() if k != "n_replicates"} for r in rows]
         ).to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
+        # One record per data_raw culture (#1178), built before anything is written.
+        cultures, n_qc = _raw_cultures(raw)
+        self._control_summary = _control_summary(cultures)
+        released = {r["orf"] for r in rows}
+        log.info(
+            "Mulleder: %d data_raw cultures stored as raw uM records (%d of released "
+            "ORFs, %d of %d ORFs not in the mM sheet), %d QC injections not records",
+            len(cultures),
+            sum(c["orf"] in released for c in cultures),
+            sum(c["orf"] not in released for c in cultures),
+            len({c["orf"] for c in cultures} - released),
+            n_qc,
+        )
+        pd.DataFrame(
+            [
+                {
+                    "identifier": c["identifier"],
+                    "orf": c["orf"],
+                    "batch": c["batch"],
+                    **{aa: c["levels"].get(aa) for aa in AMINO_ACIDS},
+                }
+                for c in cultures
+            ]
+        ).to_csv(osp.join(self.preprocess_dir, "data_raw.csv"), index=False)
+
+        records = [self.create_experiment(record_row) for record_row in rows] + [
+            self.create_raw_experiment(culture) for culture in cultures
+        ]
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
         idx = 0
         with env.begin(write=True) as txn:
-            for record_row in tqdm(rows):
-                experiment, reference, publication = self.create_experiment(record_row)
+            for experiment, reference, publication in tqdm(records):
                 txn.put(
                     f"{idx}".encode(),
                     pickle.dumps(
@@ -412,7 +625,12 @@ class AminoAcidMulleder2016Dataset(ExperimentDataset):
                 )
                 idx += 1
         env.close()
-        log.info("Wrote %d Mulleder amino-acid experiments to LMDB", idx)
+        log.info(
+            "Wrote %d Mulleder amino-acid experiments to LMDB (%d mM, %d raw uM)",
+            idx,
+            len(rows),
+            len(cultures),
+        )
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
@@ -420,26 +638,77 @@ class AminoAcidMulleder2016Dataset(ExperimentDataset):
         """Preprocessing is handled inside process() for this dataset."""
         return df
 
-    def create_experiment(  # type: ignore[override]
-        self, row: dict[str, Any]
-    ) -> tuple[MetaboliteExperiment, MetaboliteExperimentReference, Publication]:
-        """Build the Metabolite experiment/reference/publication for one ORF."""
+    @staticmethod
+    def _genome_reference() -> ReferenceGenome:
+        """BY4741 on R64, the background of the prototrophic deletion collection."""
         # PROTOTROPHIC deletion collection (auxotrophy restored episomally, Mulleder 2012);
         # the prototrophy-restoring marker(s) are not yet modeled as a GeneAddition here.
-        genome_reference = ReferenceGenome(
+        return ReferenceGenome(
             species="Saccharomyces cerevisiae",
             strain="BY4741",
             assembly_set=SGD_S288C_R64,
             assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
-        genotype = Genotype(perturbations=[_released_deletion(row["orf"])])
+
+    @staticmethod
+    def _environment() -> Environment:
+        """SM agar at 30 C, the screen environment of every record."""
         # Synthetic minimal (SM) agar, 30 C, exponential growth (Methods "Yeast"):
         # 6.7 g/L YNB without amino acids (Sigma Y0626) + 2% glucose + 2% agar, sourced
         # and quoted on ``SM_AGAR``. The spots on that agar inoculate a liquid SM
         # subculture, which is what the amino acids are extracted from, so whether this
         # record's state should be liquid (``SM``) is an open question flagged in
         # [[torchcell.datamodels.media-components]]; the recipe is the same either way.
-        environment = Environment(media=SM_AGAR, temperature=Temperature(value=30))
+        return Environment(media=SM_AGAR, temperature=Temperature(value=30))
+
+    @staticmethod
+    def _publication() -> Publication:
+        """Mulleder et al. 2016, Cell."""
+        return Publication(
+            pubmed_id="27693354",
+            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/27693354/",
+            doi="10.1016/j.cell.2016.09.007",
+            doi_url="https://doi.org/10.1016/j.cell.2016.09.007",
+        )
+
+    def create_raw_experiment(
+        self, culture: dict[str, Any]
+    ) -> tuple[MetaboliteExperiment, MetaboliteExperimentReference, Publication]:
+        """One ``data_raw`` culture: its raw uM values verbatim, n = 1, no dispersion.
+
+        The reference is the complemented-control summary on the amino acids this
+        culture measured (``_control_summary``), ``replicate_id`` None.
+        """
+        environment = self._environment()
+        levels: dict[str, float] = culture["levels"]
+        experiment = MetaboliteExperiment(
+            dataset_name=self.name,
+            genotype=Genotype(perturbations=[_released_deletion(culture["orf"])]),
+            environment=environment,
+            phenotype=MetabolitePhenotype(
+                metabolite_level=dict(levels),
+                metabolite_level_se=None,  # one culture: no dispersion
+                n_replicates=dict.fromkeys(levels, 1),
+                measurement_type=RAW_MEASUREMENT_TYPE,
+                target_metabolite_ids=None,
+                replicate_id=culture["identifier"],
+            ),
+        )
+        reference = MetaboliteExperimentReference(
+            dataset_name=self.name,
+            genome_reference=self._genome_reference(),
+            environment_reference=environment.model_copy(),
+            phenotype_reference=_restricted(self._control_summary, set(levels)),
+        )
+        return experiment, reference, self._publication()
+
+    def create_experiment(  # type: ignore[override]
+        self, row: dict[str, Any]
+    ) -> tuple[MetaboliteExperiment, MetaboliteExperimentReference, Publication]:
+        """Build the Metabolite experiment/reference/publication for one ORF."""
+        genome_reference = self._genome_reference()
+        genotype = Genotype(perturbations=[_released_deletion(row["orf"])])
+        environment = self._environment()
         phenotype = MetabolitePhenotype(
             metabolite_level={aa: row[aa] for aa in AMINO_ACIDS},
             metabolite_level_se=None,  # no sheet releases a per-strain error
@@ -471,13 +740,7 @@ class AminoAcidMulleder2016Dataset(ExperimentDataset):
             environment_reference=environment.model_copy(),
             phenotype_reference=phenotype_reference,
         )
-        publication = Publication(
-            pubmed_id="27693354",
-            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/27693354/",
-            doi="10.1016/j.cell.2016.09.007",
-            doi_url="https://doi.org/10.1016/j.cell.2016.09.007",
-        )
-        return experiment, reference, publication
+        return experiment, reference, self._publication()
 
 
 def main() -> None:

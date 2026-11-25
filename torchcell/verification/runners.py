@@ -658,13 +658,25 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "amino_acid_mulleder2016": {
         "root": "data/torchcell/amino_acid_mulleder2016",
-        "expected_count": 4678,
-        "reference_centered": False,  # absolute mM concentrations, not centered scores
+        # 4,678 released mM rows + 5,053 data_raw cultures, one record each (#1178).
+        "expected_count": 9731,
+        "reference_centered": False,  # absolute concentrations, not centered scores
+        # Must equal the loader's MEASUREMENT_TYPE and RAW_MEASUREMENT_TYPE: the mM rows
+        # keep the robust-mean reference, the raw uM cultures the complemented controls.
+        "protocol_measurement_types": frozenset(
+            {"intracellular_concentration_mM", "cell_extract_concentration_uM"}
+        ),
         "provenance": Provenance(
             source_uri="https://data.mendeley.com/datasets/bnzdhd6ck8/1",
             citation_key="mullederFunctionalMetabolomicsDescribes2016",
-            method="LC-SRM intracellular amino-acid concentration (mM), batch-normalised",
-            page="Mendeley 10.17632/bnzdhd6ck8.1 Table_S3 intracellular_concentration_mM",
+            method=(
+                "LC-SRM intracellular amino-acid concentration (mM), batch-normalised; "
+                "plus one raw cell-extract uM record per data_raw culture"
+            ),
+            page=(
+                "Mendeley 10.17632/bnzdhd6ck8.1 Table_S3 intracellular_concentration_mM "
+                "and data_raw"
+            ),
         ),
     },
     "amino_acid_cooper2010": {

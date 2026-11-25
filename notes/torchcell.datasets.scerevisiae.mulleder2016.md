@@ -200,3 +200,74 @@ A released identifier with no ORF form goes on `ReleasedGeneNamePerturbation` (0
 | L3 | `reference_finite` | gate | ok | reference level finite + key-subset for all 88882 values |
 | L3 | `measurement_type_consistent` | gate | ok | single measurement_type: 'intracellular_concentration_mM' |
 | L4 | `gene_containment_scmd_ohya2005` | report | ok | 0.950 of scmd_ohya2005's 4678 deletion genes are in Ohya (>= 0.9) |
+
+## 2026.11.24 - One record per data_raw culture (#1178, #1176, #528, #1172)
+
+Policy: one stored record per biological replicate the source releases (tracking issue #1178, owner decisions 2026-11-17 and 2026-11-24).
+
+### Before and after
+
+- Before: 4,678 records, one per row of `intracellular_concentration_mM`. The `data_raw` sheet was read only to count `n_replicates` (2026.10.02 section); its 5,053 strain rows were never stored.
+- Now: 9,731 records. The 4,678 mM records are unchanged and come first, in the same order. Then one record per `data_raw` strain row, 5,053, in sheet order: `measurement_type = "cell_extract_concentration_uM"` (`RAW_MEASUREMENT_TYPE`), `metabolite_level` = that row's uM values verbatim with a blank cell left out of the dict, `n_replicates = 1` per amino acid, `metabolite_level_se = None`, `replicate_id` = the row's `identifier` (the well's plate_row_column, `41_G_10`; batch 12 prints `01_D12`), unique over the sheet.
+- The 237 `QC_*` rows are not records: they are repeat injections of one pooled extract of 351 strains, which has no statable genotype.
+- No schema change: `MetabolitePhenotype.measurement_type` is a free string and `replicate_id` exists since PR #1181.
+
+### What a data_raw row is (sources, all in `paper.md` sha256 `20412bec5b930d1fa43d326d8f9baca267130ddef5fdaa804f19e1209f925e6e`, and `Table_S3_Complete_Dataset.xls` sha256 `a7fcb4bc8aa5e394e7f6e2b99e327eaa88fa04111ab5602fc7cb3445f653802e`)
+
+- Overview sheet, row `data_raw`: "Raw concentration data of the cell extract in [µM]; includes QC sample  and slow growing strains. " (verbatim, with the double space).
+- Overview sheet, row `intracellular_concentration_mM`: "Intracellular concentration in [mM]. Batch-normalised data, adjusted for dilution and corrected for extraction volume, cell number and volume." So uM and mM are two measurements, never compared directly.
+- paper.md L333 (Yeast): each strain was "finally cultured in 96-deep well plates with ... SM medium"; L341: "Strains from the same batch were cultivated and their metabolites extracted on the same day and analyzed together by LC-MS/MS." One row is one well, one culture, one extract (`SOURCED_VALUES["batch_cultivation"]`).
+- L341: "In a second screening round, the 479 deletion strains that showed lowest metabolite concentrations were arranged on 6 additional plates and the analysis was repeated (batch 12)."
+- L341: "The QC was prepared by joining the extracts of the first batch including metabolites of 351 deletion strains." and "a quality control sample (QC) was assessed every 24 samples and in total 237 times" (`SOURCED_VALUES["qc_sample"]`).
+- Measured on the pinned workbook: all 410 rows of the 191 multi-row released ORFs sit at distinct identifiers (wells), and 161 of the 191 span two or more batch labels (160 if `03-2` is read as `03`). Only 14 of those 410 rows are batch 12 (7 ORFs), so most repeated ORFs are repeats across batches 01 to 11, not the batch 12 re-screen. Batch 12 holds 468 rows of 461 ORFs, against the paper's 479 strains.
+- Withdrawn samples: none in `data_raw`. The three cross-contaminated strains of L379 ("aco1D, lip5D and mtc1D", YLR304C, YOR196C, YJL123C) have no row, so there is nothing to drop. The other strains the authors left out of the analysis (slow growers, outdated annotations, the two complemented controls) are released in `data_raw` and stored.
+- How two to four rows become one released mM value is still unpublished (#1172); the mM rows stay as released, with `replicate_id = None`.
+
+### Reference of the raw records
+
+The paper names the complemented deletion strains as the isogenic wild type: L487 (Figure S5B) "contain a complemented his3 deletion strain representing the isogenic reference wt strain"; L459 (Figure S1F) shows the WT profile "for the complemented deletion strains his3D::kanMX4 and met17D::kanMX4". `data_raw` has one row each: `20_D_10` YOR202W (HIS3, batch 04) and `23_A_8` YLR303W (MET17, batch 02). Each raw record's reference is their mean, `SD / sqrt(n)` and n = 2 per amino acid, `replicate_id = None`, restricted to the amino acids the record measured (the verifier's key-subset rule). The two controls are records themselves under their released deletions. Open for review: the two rows come from two batches of un-normalized uM, so this reference carries batch effects; no released uM reference exists.
+
+### Counts (`experiments/036-dataset-fixes-before-kg-build/scripts/mulleder2016_per_replicate.py`, results `experiments/036-dataset-fixes-before-kg-build/results/mulleder2016_per_replicate.json`)
+
+Scratch build: `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-mulleder2016/amino_acid_mulleder2016`.
+
+| quantity | value |
+|---|---|
+| records, mM / raw uM / total | 4,678 / 5,053 / 9,731 |
+| `data_raw` rows / QC rows not stored | 5,290 / 237 |
+| raw records of released ORFs / of 153 ORFs absent from the mM sheet | 4,897 / 156 |
+| released ORFs with 1 / 2 / 3 / 4 cultures | 4,487 / 167 / 20 / 4 |
+| raw records by position within an ORF, 1st / 2nd / 3rd / 4th | 4,831 / 194 / 24 / 4 |
+| blank `data_raw` cells left out | 265 |
+| max abs difference, raw record vs `data_raw` cell | 0.0 |
+| mM records vs the previous dev store, key paths that differ | only `replicate_id` (new key, None) on experiment and reference, 4,678 each |
+| max abs difference, mM value vs the previous dev store | 0.0 |
+
+Mean reproduction: grouping the records by genotype and environment on the mM measurement type returns the previous store's values exactly (max abs difference 0.0), because those records are the released rows themselves. The raw uM records are a different measurement before batch normalization and the dilution corrections, so their per-strain mean does not, and is not meant to, reproduce the mM value.
+
+### L0-L4 on the scratch build
+
+**amino_acid_mulleder2016**: verdict PASS (`preprocess/verification_report.json` in the scratch root). `runners.py`: `expected_count` 9,731 and `protocol_measurement_types` = {mM, uM}, so L1 keys on (strain, measurement type, replicate) and L3 requires each record's reference on its own type.
+
+| level | rule | class | outcome | message |
+|---|---|---|---|---|
+| L0 | `structural` | gate | ok | 9731 records validated |
+| L1 | `count` | gate | ok | observed 9731, expected 9731 |
+| L1 | `genotype_uniqueness` | gate | ok | 9731 unique (strain, protocol) pairs per released replicate, one record each |
+| L2 | `value_fidelity` | gate | ok | 184624 values checked |
+| L2 | `se_nonnegative` | gate | ok | 0 values checked |
+| L3 | `reference_finite` | gate | ok | reference level finite + key-subset for all 184624 values |
+| L3 | `measurement_type_consistent` | gate | ok | 2 declared protocol measurement_types, each record's reference on its own protocol |
+| L4 | `gene_containment_scmd_ohya2005` | report | ok | 0.949 of scmd_ohya2005's 4831 deletion genes are in Ohya (>= 0.9) |
+
+### Also changed
+
+- `data_raw` is read with `batch` as text, so `01` stays `01` (it only fed `n_replicates` before, which did not use it).
+- New refusals, `InvalidRawRowError`: a repeated identifier, an ORF-less row that is not `QC_*`, a text cell, a row blank in all 19 amino acids, a missing complemented control (0 of each on the pinned workbook).
+- New side file `preprocess/data_raw.csv`, one row per raw record.
+- `build_time_projection.py`: 4,678 to 9,731.
+
+### Not done
+
+- The batch label of a culture is not stored: `MetabolitePhenotype` has no batch field, and the raw uM values are batch-dependent. It needs a schema field (owner decision).
+- The raw mirror `$DATA_ROOT/torchcell-raw/mullederFunctionalMetabolomicsDescribes2016/` does not exist; the workbook lives only in the dev store's `raw/` with its sha256 pin (#487, unchanged).

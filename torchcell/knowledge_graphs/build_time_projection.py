@@ -149,7 +149,7 @@ DATASET_FULL_RECORDS: dict[str, int] = {
     "MetaboliteDaSilveira2014Dataset": 127,
     "MetaboliteZelezniak2018Dataset": 95,
     "ProteomeZelezniak2018Dataset": 97,
-    "AminoAcidMulleder2016Dataset": 4678,
+    "AminoAcidMulleder2016Dataset": 9731,
     "OrganicAcidYoshida2012Dataset": 17,
     "IsobutanolScreenLopez2024Dataset": 4554,
     "IsobutanolValidatedLopez2024Dataset": 224,

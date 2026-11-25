@@ -2142,7 +2142,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
     assert _oracles(runners.VISUAL_SCORE_DATASETS) == {"carotenoid_ozaydin2013": None}
     assert _oracles(runners.METABOLITE_DATASETS) == {
         "betaxanthin_cachera2023": None,
-        "amino_acid_mulleder2016": 4678,
+        "amino_acid_mulleder2016": 9731,
         "amino_acid_cooper2010": 4382,
         "metabolite_zelezniak2018": 129,
         "metabolite_dasilveira2014": 127,
@@ -2179,12 +2179,13 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "targeted_metabolome_rapp2026",
         "metabolite_intensity_rapp2026",
     }
-    # Issue #595: only Zelezniak releases several protocols, verified per protocol.
+    # Issue #595: Zelezniak releases several protocols, verified per protocol; #1178:
+    # Mulleder's mM rows and its raw uM cultures are two declared measurement types.
     assert {
         name
         for name, spec in runners.METABOLITE_DATASETS.items()
         if spec.get("protocol_measurement_types") is not None
-    } == {"metabolite_zelezniak2018"}
+    } == {"metabolite_zelezniak2018", "amino_acid_mulleder2016"}
     assert _oracles(runners.PROTEIN_DATASETS) == {
         "proteome_zelezniak2018": 97,
         "proteome_messner2023": 4699,

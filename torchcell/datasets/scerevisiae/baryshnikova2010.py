@@ -77,6 +77,22 @@ GENOTYPE / REFERENCE: each strain is one gene perturbation in the BY4741 SGA bac
   fitness 1.0 is the mode-normalization convention, not an averaged control measurement, so
   every reference phenotype gaps ``n_samples`` and ``sample_unit``.
 
+REPLICATE STRUCTURE (per-replicate review under #1178, part of #1177, 2026.11.24): one
+  record per released row is already one record per value the authors release, and no
+  record is a loader-computed statistic. Supplementary Data 1 is the AUTHORS' aggregate:
+  each value is the median over the control screens after normalization
+  (``_SV_SMF_IS_MEDIAN_OVER_SCREENS``), pooled across array spatial configurations, with
+  its bootstrap SE. Inside one screen every array strain is pinned in quadruplicate
+  (``_SV_QUADRUPLICATE_PINNING``), a technical level; the biological replicate is the
+  control screen (80 on the array side). No file releases a per-screen fitness. The only
+  per-screen release is Supplementary Data 4, raw colony pixel areas before the published
+  normalization (``_SV_RAW_COLONY_DATA_RELEASE``); it is NOT on the publisher's ESM (the
+  article lists Supplementary Data 1-3 and Software 1 only) and the authors' site that
+  hosted it answers 404 with no archived copy of the file (``SUPPLEMENTARY_DATA_4_ATTEMPTS``,
+  checked 2026-11-25). So the store stays the source's aggregate release, 6023 records,
+  and whether pre-normalization colony areas would count as replicate values (they also
+  need a colony-area phenotype leaf the schema lacks) is an owner decision.
+
 DATA SOURCE: the publisher's Supplementary Data 1 (``SupplementaryData1_SMF.xls``, sha256
   086bfadf..., Springer ESM MediaObject MOESM168), deposited in
   ``$DATA_ROOT/torchcell-raw/baryshnikovaQuantitativeAnalysisFitness2010/`` with a
@@ -104,6 +120,7 @@ from types import MappingProxyType
 from typing import Any
 
 import pandas as pd
+from pydantic import BaseModel, ConfigDict
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -358,6 +375,50 @@ _SV_DAMP_IS_QUERY = _sv(
     page="DAmP query mutant SGA screens",
 )
 
+#: Per-replicate review (#1178): the released fitness is the authors' MEDIAN over the
+#: control screens, so a stored record is a source statistic, not one screen.
+_SV_SMF_IS_MEDIAN_OVER_SCREENS = _sv(
+    "median over control screens",
+    "We applied all normalization procedures to these screens and computed the median "
+    "over all control screens for each array strain to derive single mutant fitness "
+    "estimates for all non-essential genes.",
+    page="Supplementary Note 1, 'Fitness and interaction estimation procedure'",
+    note="with _SV_UNCERTAINTY_TYPE ('final fitness estimates were derived by pooling "
+    "across each array spatial configuration'), Supplementary Data 1 is aggregate-only: "
+    "no file releases a per-screen fitness",
+)
+
+#: The technical level inside one screen: four adjacent colonies of one strain.
+_SV_QUADRUPLICATE_PINNING = _sv(
+    4,
+    "Each array plate consists of 384 mutant strains pinned in quadruplicate for a total "
+    "of 1,536 colonies/plate, arranged on a grid containing 32 rows and 48 columns. "
+    "Mutant strain replicates are located next to each other on the same plate.",
+    page="Supplementary Table 2, 'Number of colonies and strains per plate'",
+    note="the four colonies are duplicate pinnings of one array strain in one screen "
+    "(technical); the biological replicate is the control screen",
+)
+
+#: The one per-screen release: raw colony areas, Supplementary Data 4.
+_SV_RAW_COLONY_DATA_RELEASE = _sv(
+    "Supplementary Data 4",
+    "The source code for normalization procedures and the raw colony size data are "
+    "available as Supplementary Software 1 and Supplementary Data 4.",
+    page="Supplementary Note 1",
+    note="pre-normalization colony areas; fitness needs the Software 1 pipeline. Not on "
+    "the publisher's ESM and gone at the authors' site (SUPPLEMENTARY_DATA_4_ATTEMPTS)",
+)
+
+#: ...and the URL the main text names for it.
+_SV_RAW_COLONY_DATA_URL = _sv(
+    "http://csbio.cs.umn.edu/SGAScore/",
+    "The raw colony size data are available at http://csbio.cs.umn.edu/ SGAScore/.",
+    uri=_PAPER_MD,
+    sha=_PAPER_MD_SHA,
+    page="Online Methods, 'SGA genetic interaction score'",
+    note="the OCR splits the URL with a space; the value is the URL as printed",
+)
+
 #: Every SourcedValue above, for the test that re-audits them against the mirror.
 SOURCED_VALUES: tuple[SourcedValue, ...] = (
     _SV_N_SAMPLES_ARRAY,
@@ -373,6 +434,60 @@ SOURCED_VALUES: tuple[SourcedValue, ...] = (
     _SV_TS_26_EITHER_SIDE,
     _SV_TSQ_IS_QUERY,
     _SV_DAMP_IS_QUERY,
+    _SV_SMF_IS_MEDIAN_OVER_SCREENS,
+    _SV_QUADRUPLICATE_PINNING,
+    _SV_RAW_COLONY_DATA_RELEASE,
+    _SV_RAW_COLONY_DATA_URL,
+)
+
+
+class RetrievalAttempt(BaseModel):
+    """One scripted request for a released file that did not yield the file."""
+
+    model_config = ConfigDict(frozen=True)
+
+    url: str
+    observed: str
+    checked_at: str
+
+
+#: Every place Supplementary Data 4 (raw colony sizes) was looked for, 2026-11-25. The
+#: authors' supplementary page (Wayback capture 20220815173113 of
+#: http://csbio.cs.umn.edu/SGAScore/) lists it as
+#: ``Supplementary_data_4_Raw_sgadata_fullgenome_100912.txt.gz - 240MB``, "raw SGA colony
+#: size data measured in pixels", updated 2010-12-09 "to include control (wild-type)
+#: screens", and links it under research.cs.umn.edu. No source answered with the file,
+#: so nothing was substituted and the raw mirror holds Supplementary Data 1 only.
+SUPPLEMENTARY_DATA_4_ATTEMPTS: tuple[RetrievalAttempt, ...] = (
+    RetrievalAttempt(
+        url="https://www.nature.com/articles/nmeth.1534",
+        observed="article ESM lists MOESM167 (SI pdf), MOESM168-170 (Supplementary Data "
+        "1-3) and MOESM171 (Software 1); no Supplementary Data 4",
+        checked_at="2026-11-25",
+    ),
+    RetrievalAttempt(
+        url="http://csbio.cs.umn.edu/SGAScore/",
+        observed="HTTP 404",
+        checked_at="2026-11-25",
+    ),
+    RetrievalAttempt(
+        url="http://csbio.cs.umn.edu/SGAScore/"
+        "Supplementary_data_4_Raw_sgadata_fullgenome_101209.txt.gz",
+        observed="HTTP 404",
+        checked_at="2026-11-25",
+    ),
+    RetrievalAttempt(
+        url="https://research.cs.umn.edu/csbio/SGAScore/"
+        "Supplementary_data_4_Raw_sgadata_fullgenome_101209.txt.gz",
+        observed="HTTP 301 to the csbio.cs.umn.edu URL above, then HTTP 404",
+        checked_at="2026-11-25",
+    ),
+    RetrievalAttempt(
+        url="http://web.archive.org/cdx/search/cdx?url=csbio.cs.umn.edu/SGAScore/*",
+        observed="captures of the data file URL on both hosts are 404/301/302 only "
+        "(2024-06-22/23); no 200 capture of the file exists",
+        checked_at="2026-11-25",
+    ),
 )
 
 # --------------------------------------------------------------------------- #

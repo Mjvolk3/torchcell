@@ -236,3 +236,41 @@ Now: the ORF token (upper-cased) is both names; `strain_id` keeps the raw id ver
 | L3 | `media_membership` | gate | ok | 6023 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
 | L4 | `gene_containment_sgd` | report | ok | 0.990 of 5497 measured genes are S288C reference genes (>= 0.9) |
 | L4 | `current_genome_genes` | report | finding | 53 systematic names are absent from the current genome over 53 records: YAL043C-A x1, YAL058C-A x1, YAR037W x1, YAR040C x1, YAR043C x1, YAR044W x1, YAR062W x1, YBR075W x1, YBR090C-A x1, YBR100W x1 |
+
+## 2026.11.24 - Per-replicate review: aggregate-only release, Supplementary Data 4 unretrievable
+
+Review under the per-replicate policy (#1178), part of #1177 (also listed in #1172). No record changes: the store already holds one record per value the authors release, 6023 records before and after.
+
+### What a replicate is here
+
+- The released value is the authors' statistic. si1.md (sha256 `f85ea57c...`), Supplementary Note 1, "Fitness and interaction estimation procedure": "We applied all normalization procedures to these screens and computed the median over all control screens for each array strain to derive single mutant fitness estimates for all non-essential genes." and "Variance in single mutant fitness estimates was estimated from bootstrap sampling of the median, and final fitness estimates were derived by pooling across each array spatial configuration."
+- Biological replicate = control screen; the array side has 80 (Supplementary Table 2: "Fitness measurements were based on 80 control screens."), the query side states no count (typed gap, unchanged).
+- Technical level = four adjacent colonies per strain per screen. Supplementary Table 2: "Each array plate consists of 384 mutant strains pinned in quadruplicate for a total of 1,536 colonies/plate, arranged on a grid containing 32 rows and 48 columns. Mutant strain replicates are located next to each other on the same plate."
+- No file releases a per-screen fitness. Supplementary Data 1 (the raw mirror's only file) is one sheet, three columns, 6,023 rows, 6,022 distinct ids (YDL227C twice, kept as two records since 2026.10.12). Supplementary Data 2 and 3 are the complex standard and complex-pair table.
+- No sample is withdrawn by the authors; nothing is dropped.
+
+### Supplementary Data 4 (raw colony sizes): blocked
+
+si1.md L90: "The source code for normalization procedures and the raw colony size data are available as Supplementary Software 1 and Supplementary Data 4." paper.md (sha256 `7ebd3880...`) L171: "The raw colony size data are available at http://csbio.cs.umn.edu/ SGAScore/."
+
+Looked for on 2026-11-25 (recorded in the loader as `SUPPLEMENTARY_DATA_4_ATTEMPTS`):
+
+- Publisher article page: ESM is MOESM167 (SI pdf), MOESM168-170 (Supplementary Data 1-3), MOESM171 (Software 1). Data 4 was never on the publisher ESM.
+- `http://csbio.cs.umn.edu/SGAScore/` and the file URL `.../Supplementary_data_4_Raw_sgadata_fullgenome_101209.txt.gz`: HTTP 404. The `research.cs.umn.edu/csbio/SGAScore/` link 301s back to the same 404.
+- Wayback CDX: the index page is captured (2015, 2022); every capture of the file URL on either host is a 404/301/302 from 2024-06; there is no 200 capture.
+
+The 2022 Wayback capture of the index page (kept at `$DATA_ROOT/tmp/scratch/per-replicate-baryshnikova2010/wayback_index_2022.html`, sha256 `c15e8dd3...`, not a mirror artifact) describes the file: "Supplementary_data_4_Raw_sgadata_fullgenome_100912.txt.gz - 240MB", "Update (Dec. 9, 2010) . The raw data file was updated to include control (wild-type) screens.", "This archive contains the raw SGA colony size data measured in pixels (the original image data is available upon request)", columns Query ORF, Array ORF, array plate number, set number, plate ID, batch number, row, column, colony pixel area. Nothing was substituted; the raw mirror is unchanged.
+
+### Re-checked sourced values
+
+- `n_samples = 80` (array side), `sample_unit = screen`: stand.
+- Uncertainty type `bootstrap_se`: stands. The authors' site calls the column "Single mutant fitness standard deviation"; with the SI sentence it is the bootstrap SD of the median, i.e. the SE of the estimate. The Fig. 6 legend (paper.md L89) reads "s.e.m. derived from bootstrapping $( n = 8 0 0 )$" for single mutants; what the 800 counts is not stated (unverified, possibly bootstrap draws), so it changes nothing stored.
+- Stale verifier text fixed: the `smf_baryshnikova2010` provenance method in `torchcell/verification/runners.py` still said "6023 released alleles minus the 30 frozen in _UNRESOLVABLE = 5993", which has been false since 2026.10.12.
+
+### Build and verification
+
+Scratch build of this branch: `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-baryshnikova2010/smf_baryshnikova2010`, 6023 records (4635 deletions, 1082 DAmP, 306 TS), verifier PASS (report in its `preprocess/verification_report.json`; 2 genome findings reported, not gated). Against the dev store the (strain_id, perturbation type, temperature) keys are identical, max |fitness difference| 0.0, max |SE difference| 0.0, n_samples identical; the only per-record difference is the `replicate_id: None` field the #1181 schema adds.
+
+### Needs owner decision
+
+If Supplementary Data 4 resurfaces (authors on request): do pre-normalization colony pixel areas count as released replicate values (Butland 2008's colony sizes were counted so in #1176), or as instrument-level data out of scope? Storing them would also need a schema change: a colony-area phenotype leaf (pixel area, with plate id, set, batch, row, column; one record per colony or per strain x screen with the four colonies combined and declared), plus the control (wild-type) screens as records.

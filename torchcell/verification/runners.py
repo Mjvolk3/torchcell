@@ -2857,9 +2857,10 @@ FITNESS_DATASETS: dict[str, dict[str, Any]] = {
                 "SGA_DM_SELECTION at 30 C for deletions and DAmP (Tong and Boone 2006 SGA "
                 "protocol step 18) and at 26 C for the TS alleles (Costanzo 2016 SI "
                 "semipermissive final selection, back-solved against Costanzo's 26/30 C "
-                "SMF columns on 291 shared strain ids); 6023 released alleles minus the 30 "
-                "frozen in _UNRESOLVABLE = 5993, with the raw allele id on strain_id so the "
-                "TS allelic series stays distinct"
+                "SMF columns on 291 shared strain ids); all 6023 released alleles stored "
+                "(#1045), with the raw allele id on strain_id so the TS allelic series "
+                "stays distinct; each value is the authors' median over control screens "
+                "(aggregate-only release, #1178 review)"
             ),
             page="Nat Methods 7:1017; Supplementary Data 1 sheet 'S1_SMF_standard_100209'",
             sha256="086bfadf2684f28940500dd87e3be74c53a957448d2016f7a02370540da8a04e",

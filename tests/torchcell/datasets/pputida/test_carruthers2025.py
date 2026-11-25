@@ -25,6 +25,7 @@ abundance map.
 
 from __future__ import annotations
 
+import csv
 import hashlib
 import json
 import math
@@ -773,12 +774,12 @@ def test_the_built_proteome_store_has_one_record_per_replicate_and_passes_l0_to_
 
 @pytest.mark.data
 @requires_built
-def test_the_titer_build_accounting_drops_only_the_induced_cultures() -> None:
-    """Every released culture is in a record bar the induced overexpression cultures.
+def test_the_titer_build_accounting_drops_no_released_culture() -> None:
+    """Every released non-control culture is in a record, the induced ones included.
 
-    Measured on the pinned workbook: 1,416 campaign cultures plus the four panels' 109
-    non-control cultures, plus the 36 induced overexpression cultures that are dropped
-    because the inducer's unit is released nowhere in the mirror.
+    Measured on the pinned workbook: 1,416 campaign cultures plus the four panels' 145
+    non-control cultures, of which 36 are the induced overexpression cultures the code
+    release's stated inducer unit made storable (#1200 item 3).
     """
     accounting = c25.BuildAccounting.model_validate_json(
         Path(osp.join(TITER_ROOT, "preprocess/build_accounting.json")).read_text()
@@ -787,20 +788,21 @@ def test_the_titer_build_accounting_drops_only_the_induced_cultures() -> None:
     assert accounting.source_rows == 1506
     assert accounting.control_rows == 90
     assert accounting.candidate_records == 1561
-    assert accounting.kept_records == c25.EXPECTED_TITER_RECORDS == 1525
-    assert accounting.dropped_records == 36
+    assert accounting.kept_records == c25.EXPECTED_TITER_RECORDS == 1561
+    assert accounting.dropped_records == 0
+    assert accounting.rules == []
 
 
 @pytest.mark.data
 @requires_built
-def test_the_proteome_build_accounting_drops_keys_and_the_induced_replicates() -> None:
-    """77 of 1,501 protein keys are dropped, and the 36 induced sample-replicates."""
+def test_the_proteome_build_accounting_drops_keys_and_no_replicate() -> None:
+    """77 of 1,501 protein keys are dropped, and no sample-replicate is."""
     accounting = c25.BuildAccounting.model_validate_json(
         Path(osp.join(PROTEOME_ROOT, "preprocess/build_accounting.json")).read_text()
     )
     accounting.check()
-    assert accounting.kept_records == c25.EXPECTED_PROTEOME_RECORDS == 63
-    assert accounting.dropped_records == 36
+    assert accounting.kept_records == c25.EXPECTED_PROTEOME_RECORDS == 99
+    assert accounting.dropped_records == 0
     dropped = pd.read_csv(
         osp.join(PROTEOME_ROOT, "preprocess/dropped_protein_keys.csv")
     )
@@ -952,8 +954,11 @@ OFFTARGET_DISTINCT_TARGETS = 2
 KO_ARRAY_PROSE_LINE = "PP_0368_PP_0812-15_KO with PP_0528_PP_0815"
 KO_ARRAY_PROSE_TITERS: tuple[float, ...] = (980.0, 981.0, 982.0)
 #: What the four synthetic panels build, in released GROUPS: 2 Figure 6a + 3 Figure 6d +
-#: 1 off-target Target + its off-target samples + 2 uninduced overexpression strains.
-SYNTHETIC_PANEL_TITER_GROUPS = 2 + 3 + 1 + len(OFFTARGET_SAMPLES) + 2
+#: 1 off-target Target + its off-target samples + the two overexpression labels at each
+#: of the seven released inducer levels.
+SYNTHETIC_PANEL_TITER_GROUPS = (
+    2 + 3 + 1 + len(OFFTARGET_SAMPLES) + 2 * len(c25.OVEREXPRESSION_LEVELS)
+)
 #: And in CULTURES, which is the record unit (#776): every synthetic panel group is a
 #: triplicate.
 SYNTHETIC_PANEL_TITER_RECORDS = SYNTHETIC_PANEL_TITER_GROUPS * 3
@@ -1712,6 +1717,80 @@ def _write_dryad_deposit(root: Path) -> dict[str, str]:
     }
 
 
+def _write_code_release(mirror_root: Path, source_data: Path) -> dict[str, str]:
+    """Write a miniature of the authors' code release into ``mirror_root``.
+
+    The four Figure S12 tables are CSV exports of the synthetic workbook's own two
+    overexpression sheets, split the way the release splits them (one file per label,
+    the Control rows shared between them), so
+    :func:`assert_overexpression_unit_source` has a real export to compare the sheets
+    against. The notebook carries the unit line in as many code cells as the real one.
+    The four per-replicate proteome tables are placeholders: no loader reads them, and
+    the deposit only records their bytes.
+    """
+    code_dir = mirror_root / c25.CODE_DIR_REL
+    code_dir.mkdir(parents=True, exist_ok=True)
+    book = openpyxl.load_workbook(source_data, read_only=True, data_only=True)
+    try:
+        labels = list(c25.OVEREXPRESSION_SHEET_LABELS)
+        for sheet, tables, column in (
+            (c25.SHEET_OVEREXPRESSION_TITER, c25.CODE_PSTABL_TITER, "Strain"),
+            (c25.SHEET_OVEREXPRESSION_PROTEOME, c25.CODE_PSTABL_PROTEOME, "Sample"),
+        ):
+            rows = list(book[sheet].iter_rows(values_only=True))
+            header = list(rows[0])
+            index = header.index(column)
+            split: dict[str, list[list[Any]]] = {label: [] for label in labels}
+            controls = 0
+            for row in rows[1:]:
+                cell = str(row[index])
+                owner = next((label for label in labels if label in cell), None)
+                if owner is None:
+                    # A Control row: the release puts half in each label's file.
+                    owner = labels[controls // 3 % len(labels)]
+                    controls += 1
+                split[owner].append(list(row))
+            for label, body in split.items():
+                path = code_dir / osp.basename(c25.CODE_RELEASE_FILES[tables[label]][0])
+                with open(path, "w", newline="", encoding="utf-8") as handle:
+                    writer = csv.writer(handle)
+                    writer.writerow(header)
+                    writer.writerows(body)
+    finally:
+        book.close()
+    notebook = {
+        "cells": [
+            {
+                "cell_type": "code",
+                "source": [
+                    'filename = "pSTABL1_GCFID.csv"\n',
+                    f"{c25._Q_CODE_INDUCER_UM}\n",
+                ],
+            }
+            for _ in range(c25.CODE_INDUCER_UM_CELLS)
+        ],
+        "metadata": {},
+        "nbformat": 4,
+        "nbformat_minor": 5,
+    }
+    (
+        code_dir / osp.basename(c25.CODE_RELEASE_FILES[c25.CODE_FIG_S12_NB][0])
+    ).write_text(json.dumps(notebook), encoding="utf-8")
+    for path_in_repo in (
+        *c25.CODE_DBTL_PROTEOME.values(),
+        *c25.CODE_FIG6_PROTEOME.values(),
+    ):
+        relpath = c25.CODE_RELEASE_FILES[path_in_repo][0]
+        (code_dir / osp.basename(relpath)).write_text(
+            f"Protein.Group,Sample,Replicate\nQ00000,{osp.basename(relpath)},R1\n",
+            encoding="utf-8",
+        )
+    return {
+        relpath: _sha256_bytes(code_dir / osp.basename(relpath))
+        for relpath, _, _ in c25.CODE_RELEASE_FILES.values()
+    }
+
+
 #: Which module constant pins which deposited Dryad file.
 _DRYAD_PIN_OF_REL: dict[str, str] = {
     c25.DRYAD_TOP3_REL: "DRYAD_TOP3_SHA256",
@@ -1792,6 +1871,26 @@ def synthetic_mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     # module's pins at them; `deposit_raw_mirror` then verifies and describes them.
     for relpath, digest in _write_dryad_deposit(data_root / c25.RAW_DIR_REL).items():
         monkeypatch.setattr(c25, _DRYAD_PIN_OF_REL[relpath], digest)
+    # The code release is FETCHED (a public repository at a pinned commit), so the
+    # fixture writes a miniature of it in place and re-points every pin at those bytes:
+    # the deposit then describes them without a clone, exactly as it does for Dryad.
+    digests = _write_code_release(data_root / c25.RAW_DIR_REL, source_data)
+    monkeypatch.setattr(
+        c25,
+        "CODE_RELEASE_FILES",
+        {
+            path_in_repo: (relpath, role, digests[relpath])
+            for path_in_repo, (relpath, role, _) in c25.CODE_RELEASE_FILES.items()
+        },
+    )
+    monkeypatch.setattr(
+        c25,
+        "UNIT_SOURCE_PINS",
+        tuple(
+            (relpath, name, digests[relpath])
+            for relpath, name, _ in c25.UNIT_SOURCE_PINS
+        ),
+    )
     root = c25.deposit_raw_mirror(
         source_data_path=source_data, targets_path=targets, data_root=str(data_root)
     )
@@ -1803,7 +1902,9 @@ def synthetic_mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def test_the_deposit_writes_both_files_and_a_manifest_that_pins_them(
     synthetic_mirror: Path,
 ) -> None:
-    """Two scripted `pmc_cloud` records, then the four manual Dryad ones."""
+    """Two scripted `pmc_cloud` records, the four manual Dryad ones, then the code
+    release's nine.
+    """
     manifest = c25.load_manifest(str(synthetic_mirror))
     assert manifest.citation_key == c25.CITATION_KEY
     assert manifest.doi == c25.DOI
@@ -1815,6 +1916,7 @@ def test_the_deposit_writes_both_files_and_a_manifest_that_pins_them(
         c25.DRYAD_TOP3_REL,
         c25.DRYAD_METADATA_REL,
         c25.DRYAD_README_REL,
+        *(relpath for relpath, _, _ in c25.CODE_RELEASE_FILES.values()),
     ]
     for record in manifest.files[:2]:
         assert record.role == ROLE_SI_DATA
@@ -1826,7 +1928,7 @@ def test_the_deposit_writes_both_files_and_a_manifest_that_pins_them(
         assert record.retrieval.params["key"].startswith("PMC12748988.1/")
         assert record.retrieval.sha256 == record.sha256
     assert c25.manifest_sha256(manifest, c25.SOURCE_DATA_REL) == c25.SOURCE_DATA_SHA256
-    assert len(manifest.si_data_sources) == 10
+    assert len(manifest.si_data_sources) == 12
     assert manifest.provenance_complete is True
 
 
@@ -1839,7 +1941,7 @@ def test_the_four_dryad_files_are_manual_browser_records_carrying_the_recipe(
     members a loader reads, so a rebuild re-runs one recipe and verifies four digests.
     """
     manifest = c25.load_manifest(str(synthetic_mirror))
-    dryad = {record.path: record for record in manifest.files[2:]}
+    dryad = {record.path: record for record in manifest.files[2:6]}
     assert set(dryad) == {
         c25.DRYAD_ZIP_REL,
         c25.DRYAD_TOP3_REL,
@@ -2167,6 +2269,7 @@ def test_the_titer_loader_writes_one_record_per_released_culture(
     assert built_titer.raw_file_names == [
         c25.SOURCE_DATA_FILENAME,
         c25.TARGETS_FILENAME,
+        *c25.UNIT_SOURCE_FILENAMES,
     ]
     record = built_titer[0]
     experiment = record["experiment"]
@@ -2191,20 +2294,14 @@ def test_the_titer_loader_writes_its_accounting_the_controls_and_the_filter(
     accounting.check()
     assert accounting.source_rows == len(_titer_rows())
     assert accounting.control_rows == 90
-    # The only drops are the induced overexpression CULTURES, whose dose has no unit.
-    assert (
-        accounting.dropped_records
-        == len(c25.OVEREXPRESSION_INDUCED_LEVELS)
-        * len(c25.OVEREXPRESSION_SHEET_LABELS)
-        * 3
-    )
-    assert [rule.rule for rule in accounting.rules] == [
-        "inducer_concentration_has_no_released_unit"
-    ]
+    # Nothing is dropped: the induced overexpression cultures carry their dose in the
+    # unit the code release states for the released column.
+    assert accounting.dropped_records == 0
+    assert accounting.rules == []
     assert accounting.kept_records == len(built_titer)
     assert accounting.reconciliation is not None
     assert accounting.reconciliation.resolved_fraction == 1.0
-    assert len(accounting.notes) == 6 + len(
+    assert len(accounting.notes) == 7 + len(
         json.loads(
             Path(osp.join(built_titer.root, "preprocess/panel_proofs.json")).read_text()
         )
@@ -2286,7 +2383,10 @@ def test_the_proteome_loader_writes_one_record_per_replicate_and_drops_two_keys(
         (len(PROTEOME_SAMPLES) - 1) * replicates
         + c25.EXPECTED_OVEREXPRESSION_PROTEOME_RECORDS
     )
-    assert built_proteome.raw_file_names == [c25.SOURCE_DATA_FILENAME]
+    assert built_proteome.raw_file_names == [
+        c25.SOURCE_DATA_FILENAME,
+        *c25.UNIT_SOURCE_FILENAMES,
+    ]
     record = built_proteome[0]
     experiment = record["experiment"]
     dumped = experiment if isinstance(experiment, dict) else experiment.model_dump()
@@ -2332,17 +2432,17 @@ def test_the_proteome_loader_records_the_target_control_and_the_off_target_sampl
     replicates = int(c25.PROTEOME_N_REPLICATES.value)
     assert sorted(targets) == sorted(["PP_0378", "PP_0815", "PP_0977"] * replicates)
     samples = pd.read_csv(osp.join(built_proteome.root, "preprocess/samples.csv"))
+    conditions = [
+        f"{label}_Condition_{index + 1}"
+        for label in c25.OVEREXPRESSION_SHEET_LABELS
+        for index in range(len(c25.OVEREXPRESSION_LEVELS))
+    ]
     assert sorted(samples["sample"]) == sorted(
-        [*PROTEOME_SAMPLES[1:], "pSTABL1_Condition_7", "pSTABL2_Condition_7"]
-        * replicates
+        [*PROTEOME_SAMPLES[1:], *conditions] * replicates
     )
     assert sorted(samples["replicate_id"]) == sorted(
         f"{sample}/R{n}"
-        for sample in [
-            *PROTEOME_SAMPLES[1:],
-            "pSTABL1_Condition_7",
-            "pSTABL2_Condition_7",
-        ]
+        for sample in [*PROTEOME_SAMPLES[1:], *conditions]
         for n in range(1, replicates + 1)
     )
     by_sheet = dict(zip(samples["sample"], samples["sheet"], strict=False))
@@ -2363,6 +2463,7 @@ def test_the_proteome_loader_records_the_target_control_and_the_off_target_sampl
     assert sorted(additions) == sorted(
         [*c25.OVEREXPRESSION_OPERONS["pSTABL1"], *c25.OVEREXPRESSION_OPERONS["pSTABL2"]]
         * replicates
+        * len(c25.OVEREXPRESSION_LEVELS)
     )
 
 
@@ -2376,21 +2477,20 @@ def test_the_proteome_loaders_accounting_names_both_drop_rules(
         ).read_text()
     )
     accounting.check()
-    # The only dropped records are the induced overexpression sample-REPLICATES.
-    assert accounting.dropped_records == len(c25.OVEREXPRESSION_INDUCED_LEVELS) * len(
-        c25.OVEREXPRESSION_SHEET_LABELS
-    ) * int(c25.PROTEOME_N_REPLICATES.value)
+    # No sample-replicate is dropped any more: the induced cultures carry their dose.
+    assert accounting.dropped_records == 0
     by_rule = {rule.rule: rule for rule in accounting.rules}
     assert by_rule["protein_key_is_not_a_locus_of_the_pinned_assembly"].items == [
         PROTEOME_UNRESOLVED
     ]
     assert by_rule["protein_key_merges_two_accessions"].items == [PROTEOME_MERGED]
-    assert by_rule["inducer_concentration_has_no_released_unit"].n_records == len(
-        by_rule["inducer_concentration_has_no_released_unit"].items
-    )
+    assert set(by_rule) == {
+        "protein_key_is_not_a_locus_of_the_pinned_assembly",
+        "protein_key_merges_two_accessions",
+    }
     assert accounting.reconciliation is not None
     assert accounting.reconciliation.resolved_fraction >= 0.94
-    assert len(accounting.notes) == 7 + len(
+    assert len(accounting.notes) == 8 + len(
         json.loads(
             Path(
                 osp.join(built_proteome.root, "preprocess/panel_proofs.json")
@@ -2620,19 +2720,44 @@ def test_the_titer_battery_fails_a_store_that_fabricated_a_standard_error(
 
 
 # --- the build-time refusals, each driven by a doctored workbook ----------- #
-def _doctor(data_root: Path, mutate: Any) -> None:
-    """Rewrite the deposited Source Data workbook through ``mutate``, re-pinning it."""
+def _doctor(
+    data_root: Path, mutate: Any, monkeypatch: pytest.MonkeyPatch | None = None
+) -> None:
+    """Rewrite the deposited Source Data workbook through ``mutate``, re-pinning it.
+
+    With ``monkeypatch``, the code-release export is rewritten from the mutated
+    workbook and re-pinned too, which a mutation of either overexpression sheet needs:
+    the build proves the export is that sheet before it reads anything else.
+    """
     path = c25.raw_mirror_dir(str(data_root)) / c25.SOURCE_DATA_REL
     book = openpyxl.load_workbook(path)
     mutate(book)
     book.save(path)
-    digest = _sha256_bytes(path)
+    digests = {c25.SOURCE_DATA_REL: _sha256_bytes(path)}
+    if monkeypatch is not None:
+        digests.update(_write_code_release(c25.raw_mirror_dir(str(data_root)), path))
+        monkeypatch.setattr(
+            c25,
+            "CODE_RELEASE_FILES",
+            {
+                path_in_repo: (relpath, role, digests[relpath])
+                for path_in_repo, (relpath, role, _) in c25.CODE_RELEASE_FILES.items()
+            },
+        )
+        monkeypatch.setattr(
+            c25,
+            "UNIT_SOURCE_PINS",
+            tuple(
+                (relpath, name, digests[relpath])
+                for relpath, name, _ in c25.UNIT_SOURCE_PINS
+            ),
+        )
     manifest = c25.load_manifest(str(data_root))
     for record in manifest.files:
-        if record.path == c25.SOURCE_DATA_REL:
-            record.sha256 = digest
+        if record.path in digests:
+            record.sha256 = digests[record.path]
             assert record.retrieval is not None
-            record.retrieval.sha256 = digest
+            record.retrieval.sha256 = digests[record.path]
     (c25.raw_mirror_dir(str(data_root)) / "manifest.json").write_text(
         manifest.model_dump_json(indent=2)
     )
@@ -2842,17 +2967,10 @@ def test_main_builds_all_three_families_and_prints_their_accounting(
         f"{_synthetic_campaign_cultures()}" in out
     )
     assert "ProteomeFoldChangeCarruthers2025Dataset: len =" in out
-    # The titer and panel families drop exactly the induced overexpression CULTURES, so
-    # both print it; the campaign family drops no record, only accessions, and the
-    # fold-change family drops its own unsourced contrasts and the refused heatmap
-    # columns instead.
-    dropped = (
-        len(c25.OVEREXPRESSION_INDUCED_LEVELS)
-        * len(c25.OVEREXPRESSION_SHEET_LABELS)
-        * int(c25.PROTEOME_N_REPLICATES.value)
-    )
-    assert out.count(f'"dropped_records": {dropped}') == 2
-    assert out.count('"dropped_records": 0') == 1
+    # The titer, proteome and campaign families drop no RECORD (the campaign drops
+    # accessions and the proteome protein keys); the fold-change family drops its own
+    # unsourced contrasts and the refused heatmap columns.
+    assert out.count('"dropped_records": 0') == 3
     fold_change_dropped = len(FOLD_CHANGE_UNSOURCED) + len(BEST_ARRAY_HEATMAP_STRAINS)
     assert out.count(f'"dropped_records": {fold_change_dropped}') == 1
 
@@ -3107,24 +3225,150 @@ def test_the_overexpression_panel_refuses_a_changed_strain_label() -> None:
         c25._overexpression_titer_groups(rows)
 
 
-def test_the_overexpression_panel_keeps_only_the_uninduced_arm() -> None:
-    """One record per label at level 0, and the induced groups in a typed drop rule."""
-    levels = (c25.OVEREXPRESSION_UNINDUCED_LEVEL, *c25.OVEREXPRESSION_INDUCED_LEVELS)
+def test_the_overexpression_panel_keeps_every_level_with_its_dose() -> None:
+    """One group per (label, level), each culture labeled with the level it carries."""
+    levels = c25.OVEREXPRESSION_LEVELS
     labels = tuple(c25.OVEREXPRESSION_SHEET_LABELS.values())
     records, reference, proofs, drops = c25._overexpression_titer_groups(
         _overexpression_titer_rows(levels, labels)
     )
-    assert len(records) == len(labels)
-    assert {record.group.split("/")[1] for record in records} == {"0"}
+    assert len(records) == len(labels) * len(levels)
+    assert {record.group.split("/")[1] for record in records} == {
+        f"{level:g}" for level in levels
+    }
     assert all(record.overexpression_environment for record in records)
+    assert {record.inducer_level for record in records} == set(levels)
     assert {record.native_copies for record in records} == {
         c25.OVEREXPRESSION_OPERONS["pSTABL1"],
         c25.OVEREXPRESSION_OPERONS["pSTABL2"],
     }
+    # Every replicate label carries its level, so no two cultures of one label collide.
+    labelled = [
+        replicate_id for record in records for replicate_id in record.replicate_ids
+    ]
+    assert len(set(labelled)) == len(labelled) == len(labels) * len(levels)
     assert reference.key == "overexpression_control"
-    assert drops[0].rule == "inducer_concentration_has_no_released_unit"
-    assert drops[0].n_records == len(c25.OVEREXPRESSION_INDUCED_LEVELS) * len(labels)
-    assert any("uninduced cultures kept as records" in proof for proof in proofs)
+    assert drops == []
+    assert any("no culture of this panel is dropped" in proof for proof in proofs)
+
+
+def test_the_inducer_unit_is_quoted_from_the_mirrored_code_release() -> None:
+    """The unit is a verbatim line of a sha256-pinned file, not a loader's assumption."""
+    unit = c25.INDUCER_UNIT
+    relpath, _, digest = c25.CODE_RELEASE_FILES[c25.CODE_FIG_S12_NB]
+    assert unit.value is ConcentrationUnit.micromolar
+    assert unit.quote == (
+        'df["Strain_Conc"] = df["Strain"] + ": " + '
+        'df["Inducer concentration"].astype(str) + " \u00b5M"'
+    )
+    assert unit.provenance.source_uri == relpath
+    assert unit.provenance.sha256 == digest
+    assert unit.provenance.page == c25.CODE_FIG_S12_NB
+    method = str(unit.provenance.method)
+    assert c25.CODE_COMMIT in method
+    assert c25.CODE_ZENODO_DOI in method
+
+
+def test_every_code_release_record_names_its_file_in_the_pinned_commit(
+    synthetic_mirror: Path,
+) -> None:
+    """Nine git_repository records, each re-runnable for exactly those bytes."""
+    manifest = c25.load_manifest(str(synthetic_mirror))
+    code = {
+        record.path: record
+        for record in manifest.files
+        if record.path.startswith(f"{c25.CODE_DIR_REL}/")
+    }
+    assert len(code) == len(c25.CODE_RELEASE_FILES) == 9
+    by_relpath = {
+        relpath: path_in_repo
+        for path_in_repo, (relpath, _, _) in c25.CODE_RELEASE_FILES.items()
+    }
+    for relpath, record in code.items():
+        assert record.retrieval is not None
+        assert record.retrieval.method is RetrievalMethod.git_repository
+        assert record.retrieval.retriever == (
+            "torchcell.literature.retrieve.git_repository"
+        )
+        assert record.retrieval.params["repo"] == c25.CODE_REPO
+        assert record.retrieval.params["commit"] == c25.CODE_COMMIT
+        assert record.retrieval.params["path_in_repo"] == by_relpath[relpath]
+        assert record.retrieval.sha256 == record.sha256
+        assert record.original_filename == by_relpath[relpath]
+
+
+def test_the_unit_proof_refuses_a_notebook_that_lost_the_unit_line(
+    synthetic_mirror: Path, tmp_path: Path
+) -> None:
+    """The quote is re-read from the bytes, so a notebook without it stops the build."""
+    raw = tmp_path / "raw_without_the_line"
+    raw.mkdir()
+    mirror = c25.raw_mirror_dir(str(synthetic_mirror))
+    shutil.copy2(mirror / c25.SOURCE_DATA_REL, raw / c25.SOURCE_DATA_FILENAME)
+    for _, name, _ in c25.UNIT_SOURCE_PINS:
+        shutil.copy2(mirror / c25.CODE_DIR_REL / name, raw / name)
+    assert c25.assert_overexpression_unit_source(str(raw))
+    notebook = raw / osp.basename(c25.CODE_RELEASE_FILES[c25.CODE_FIG_S12_NB][0])
+    content = json.loads(notebook.read_text())
+    content["cells"] = content["cells"][:-1]
+    notebook.write_text(json.dumps(content))
+    with pytest.raises(RuntimeError, match="carries the unit line in 3 of its"):
+        c25.assert_overexpression_unit_source(str(raw))
+
+
+def test_the_unit_proof_refuses_an_export_that_is_not_the_released_sheet(
+    synthetic_mirror: Path, tmp_path: Path
+) -> None:
+    """The unit is only a statement about these numbers if the export IS the sheet."""
+    raw = tmp_path / "raw_with_a_changed_export"
+    raw.mkdir()
+    mirror = c25.raw_mirror_dir(str(synthetic_mirror))
+    shutil.copy2(mirror / c25.SOURCE_DATA_REL, raw / c25.SOURCE_DATA_FILENAME)
+    for _, name, _ in c25.UNIT_SOURCE_PINS:
+        shutil.copy2(mirror / c25.CODE_DIR_REL / name, raw / name)
+    table = raw / osp.basename(
+        c25.CODE_RELEASE_FILES[c25.CODE_PSTABL_TITER["pSTABL1"]][0]
+    )
+    rows = table.read_text().splitlines()
+    rows[1] = rows[1].rsplit(",", 1)[0] + ",999999.0"
+    table.write_text("\n".join(rows) + "\n")
+    with pytest.raises(RuntimeError, match="code-release export differ in"):
+        c25.assert_overexpression_unit_source(str(raw))
+
+
+def test_the_overexpression_panel_refuses_an_inducer_level_off_the_series() -> None:
+    """An environment is built only for a level the release prints."""
+    with pytest.raises(RuntimeError, match="is not one of the released"):
+        c25.overexpression_environment(7.5)
+
+
+def _compound(perturbation: Any) -> Any:
+    """The typed ``Compound`` of a small-molecule environment perturbation."""
+    assert isinstance(perturbation, SmallMoleculePerturbation)
+    return perturbation.compound
+
+
+def _dose(perturbation: Any) -> Any:
+    """The typed ``Concentration`` of a small-molecule environment perturbation."""
+    assert isinstance(perturbation, SmallMoleculePerturbation)
+    return perturbation.concentration
+
+
+def test_the_uninduced_environment_carries_no_inducer_and_an_induced_one_does() -> None:
+    """At level 0 no dose is invented; above it the dose is the released number."""
+    uninduced = c25.overexpression_environment()
+    induced = c25.overexpression_environment(250.0)
+    assert [_compound(p).name for p in uninduced.perturbations] == ["L-arabinose"]
+    assert [_compound(p).name for p in induced.perturbations] == [
+        "L-arabinose",
+        str(c25.INDUCER_COMPOUND.value),
+    ]
+    dose = _dose(induced.perturbations[-1])
+    assert (dose.value, dose.unit) == (250.0, c25.INDUCER_UNIT.value)
+    # The inducer the Methods name has no curated identity row, so its InChIKey is a
+    # typed gap rather than a guess.
+    gaps = {gap.field for gap in _compound(induced.perturbations[-1]).provenance_gaps}
+    assert gaps == {"inchikey"}
 
 
 def _overexpression_proteome_row(
@@ -3190,24 +3434,28 @@ def test_the_operon_proof_refuses_a_sample_name_it_cannot_read() -> None:
 
 
 def test_the_overexpression_proteome_pairs_each_record_with_its_own_control() -> None:
-    """Each uninduced sample is referenced against its own label's Control sample."""
+    """Every condition sample is referenced against its own label's Control sample."""
     rows: list[Any] = []
+    levels = list(reversed(c25.OVEREXPRESSION_INDUCED_LEVELS)) + [
+        c25.OVEREXPRESSION_UNINDUCED_LEVEL
+    ]
     for label, keys in (("pSTABL1", ("Phnw",)), ("pSTABL2", ("Pp_2791",))):
-        for sample, level, strain in (
-            (f"{label}_Condition_1", 1000.0, f"{label} (x)"),
-            (f"{label}_Condition_7", 0.0, f"{label} (x)"),
-            (f"{label}_Control", 0.0, c25.OVEREXPRESSION_CONTROL_STRAIN),
-        ):
+        samples = [
+            (f"{label}_Condition_{index + 1}", level, f"{label} (x)")
+            for index, level in enumerate(levels)
+        ]
+        samples.append((f"{label}_Control", 0.0, c25.OVEREXPRESSION_CONTROL_STRAIN))
+        for sample, level, strain in samples:
             rows.extend(
                 _overexpression_proteome_row(sample, key, level, "d", strain)
                 for key in keys
             )
     pairs, proofs = c25.overexpression_proteome_samples(rows)
-    assert pairs == {
-        "pSTABL1_Condition_7": "pSTABL1_Control",
-        "pSTABL2_Condition_7": "pSTABL2_Control",
-    }
-    assert any("12 induced samples dropped" not in proof for proof in proofs)
+    assert len(pairs) == c25.EXPECTED_OVEREXPRESSION_PROTEOME_SAMPLES
+    assert pairs["pSTABL1_Condition_7"] == ("pSTABL1_Control", 0.0)
+    assert pairs["pSTABL2_Condition_1"] == ("pSTABL2_Control", 1000.0)
+    assert all(control.endswith("_Control") for control, _ in pairs.values())
+    assert any("no sample of this panel is dropped" in proof for proof in proofs)
 
 
 def test_the_overexpression_proteome_refuses_a_sample_with_two_inducer_levels() -> None:
@@ -3367,14 +3615,14 @@ def test_the_off_target_panel_refuses_a_missing_arm() -> None:
 
 
 def test_the_overexpression_proteome_refuses_a_changed_record_count() -> None:
-    """The uninduced arm is two samples on the pinned bytes, and that is asserted."""
+    """The panel is 14 condition samples on the pinned bytes, and that is asserted."""
     rows = [
         _overexpression_proteome_row("pSTABL1_Condition_7", "Phnw", 0.0, "d", "s"),
         _overexpression_proteome_row(
             "pSTABL1_Control", "Phnw", 0.0, "d", c25.OVEREXPRESSION_CONTROL_STRAIN
         ),
     ]
-    with pytest.raises(RuntimeError, match="yields 1 uninduced samples"):
+    with pytest.raises(RuntimeError, match="yields 1 condition samples"):
         c25.overexpression_proteome_samples(rows)
 
 
@@ -3390,6 +3638,7 @@ def test_the_proteome_build_refuses_a_panel_key_the_other_sheet_lacks(
         lambda book: book[c25.SHEET_OVEREXPRESSION_PROTEOME].cell(
             row=2, column=3, value="Phnz"
         ),
+        monkeypatch,
     )
     monkeypatch.setattr(
         c25,

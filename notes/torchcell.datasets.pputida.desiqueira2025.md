@@ -587,3 +587,85 @@ The L4 gene-containment rows exempt `bacterial_site_variant` along with
 the claim the leaf exists to make, so checking it against the locus universe would fail
 the record for stating something true. The flanking loci of an intergenic call ARE
 checked, which is what keeps the exemption from hiding a bad identifier.
+
+## 2026.11.24 - Replicate sweep: PT is a four-run sample, and the per-run table is precursor-level
+
+Tracking: #1178 (per-replicate policy), #1199 (per-run proteome tables on PRIDE), #1203
+(wrong replicate counts and provenance text), #1064 (genotype gates).
+
+### What the PRIDE deposit holds
+
+PXD055153 (EBI file listing and the archive directory index, both read 2026-11-25) holds
+63 files: 62 raw DIA runs (category RAW, 5,938,419,248 bytes, `<sample>-R<k>.raw`) and
+ONE processed file, `Siqueira_et_al_Proteomics.csv` (category SEARCH, 10,660,423 bytes,
+published 2025-02-27). The CSV is a DIA-NN PRECURSOR table, not a protein table: 22,729
+rows keyed on `Precursor.Id` over 2,271 protein groups, with `Protein.Group`,
+`Protein.Ids`, `Protein.Names`, `Genes`, `First.Protein.Description`, `Proteotypic`,
+`Stripped.Sequence`, `Modified.Sequence`, `Precursor.Charge`, `Precursor.Id` and one
+column per run (62). No protein-level per-run table exists in the deposit. The paper's
+Data Availability names the deposit by accession only: "The generated mass spectrometry
+proteomics data have been deposited to the ProteomeXchange Consortium via the PRIDE
+partner repository (74) with the data set identifier PXD055153." (paper.md L182).
+
+The CSV was NOT added to the raw mirror: it is precursor-level, and storing per-run
+precursor values, a per-run protein rollup, or both is an owner decision (#1199). The copy
+the sweep read has sha256
+`1e89c78f0c52f8f0eadecddd24e1e868a899ad58dea8e4628f39105d9f8170cd`.
+
+### Replicate structure, measured
+
+Data Set S1's `Sample` column (pinned workbook) labels each (strain, condition) with the
+PRIDE run prefix: WT `WT_ac/glu/gluAc`, PT `PreALE_ac/glu`, Sigma1 to Sigma5 `2H`, `4P`,
+`5G`, `5H`, `5P` (the Table 1 batch codes). The index lists `-R1..R3` for 18 samples and
+`-R1..R4` for `PreALE_ac` and `PreALE_glu`.
+
+Against the precursor CSV, a per-run Top3 (mean of the three most intense precursors)
+averaged over a sample's runs reproduces Data Set S1's `Top_3pep_counts_rep_mean`
+exactly (relative 1e-9) on 52 to 107 of 1,730 cells per sample. On those cells the
+ddof=1 SD over the same runs reproduces `Top_3pep_counts_rep_std` on every cell (ddof=0
+on none). For PT, only the all-four-run mean reproduces anything (54 cells for
+`PreALE_ac`, 67 for `PreALE_glu`); every 3-run and 2-run subset reproduces 0. This check
+reads the unmirrored CSV, so it is not a committed test; its result is recorded here and
+in the loader's `PROTEOME_RUNS_PER_SAMPLE` comment, and the committed data test pins the
+run counts against the mirrored index instead.
+
+So Data Set S1's PT statistics are four-run statistics, while the Methods say "Each of
+these initial cell suspensions was used to inoculate three cultures of either M9 acetate,
+M9 glucose, or M9 glucose-acetate" (paper.md L62). What PT's fourth run is (a fourth
+culture or a repeat injection) is not stated. Unverified observation: `PreALE_ac-R2.raw`
+is 65M in the index against 87M to 97M for its siblings.
+
+### What changed in the loader
+
+- `n_replicates` per record is now the sample's run count from the mirrored PRIDE index
+  (`pride/PXD055153_index.html`, sha256
+  `3652f9e1690cf5d3c3b6323a345c5befaa8e2814aec2bf4bfaf04bfdd4ac17d5`, `direct_url`
+  retrieval of `https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD055153/`,
+  byte-identical on two fetches): 4 for PT's two samples, 3 for the other 15. PT's SE is
+  now SD / sqrt(4). This is #1203 item 1.
+- The build asserts every row's `Sample` label against `PROTEOME_SAMPLE_LABELS`, so a
+  relabeled release stops rather than taking a wrong n.
+- The provenance text that said PRIDE holds raw spectra only (#1203 item 5) now names the
+  precursor table; the raw-mirror manifest lists the index as deposited and the 62 raw
+  files and the precursor table as not deposited, with the reason.
+
+### Counts and the mean-reproduction check
+
+Records unchanged: 17 per proteome class (51 in all), 10 titer. Scratch build:
+`/bulk/torchcell-scratch-overflow/per-replicate/per-replicate-desiqueira2025/`
+(`proteome_desiqueira2025`, `proteome_percent_desiqueira2025`,
+`proteome_log10_percent_desiqueira2025`); `verify_build` PASS on all three. Against the
+dev-tree stores (read-only), per class: the same 17 (genotype, environment) keys, max
+absolute mean difference 0.0 over 26,027 cells, 2 records whose n changed (3 to 4), and
+their SE ratio new / old is exactly sqrt(3) / 2 = 0.866025; the 15 others are identical.
+
+### Not done, and why
+
+- Per-run records (#1199): the only per-run release is precursor-level. Owner decision:
+  store per-run precursor values, a per-run protein rollup we compute (the authors' rollup
+  is not recoverable: most cells do not reproduce), or both. Either way the count would be
+  53 runs over the 17 writable samples per class.
+- Sigma3 (`5G_*`, 3 samples, 9 runs) stays out because it was never sequenced (#1064);
+  that is a genotype gate and is the owner's call.
+- 197 protein keys (`not_a_locus_of_the_pinned_assembly`) and 1 merged key are dropped
+  from every abundance map: a genome gate on measured values, untouched here.

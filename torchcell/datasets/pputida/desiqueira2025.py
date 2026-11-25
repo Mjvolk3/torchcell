@@ -19,7 +19,7 @@ silent cross-assay mixing"):
 - :class:`ProteomePercentDeSiqueira2025Dataset` -- the same five samples as percent of
   each sample's total abundance, the scale the paper's own analysis runs on.
 - :class:`ProteomeLog10PercentDeSiqueira2025Dataset` -- the same five samples as the
-  mean of the three replicates' log10 percent.
+  mean of the replicate runs' log10 percent.
 - :class:`IsoprenolTiterDeSiqueira2025Dataset` -- ``ProductTiterExperiment``, one record
   per released Table S2 titer of a WRITABLE strain in a medium the library holds.
 
@@ -44,7 +44,7 @@ they cannot be re-derived from the first, and that was MEASURED over every one o
   ``log10(released percent)``, 33,914 of 34,600 cells sit STRICTLY BELOW the released
   value, 686 agree to within 5e-5, and ZERO sit above it. A one-sided result over 34,600
   cells is Jensen's inequality for a mean of logarithms, with equality only where the
-  three replicates coincide; the largest gap is 1.378950 in log10 units. The first
+  replicate runs coincide; the largest gap is 1.378950 in log10 units. The first
   released row (protein ``Csda``) gives -2.23385590492606 against a log10 of the mean of
   -2.19547. Its SD is likewise not the delta-method transform of the percent SD
   (``pct_sd / (pct_mean * ln 10)`` disagrees on 34,496 of 34,600 cells).
@@ -174,6 +174,21 @@ detectable isoprenol", while Table S2 releases 0.05 mM for that cell. 0.05 mM is
 4.3 mg/L, a trace near the GC-FID floor. The released number is stored, because the
 table is the explicit numeric release and the text's claim is qualitative, and the
 disagreement is a counted finding in the accounting and in the verification report.
+
+REPLICATES (second replicate sweep, issues #1178, #1199, #1203). Every proteome record
+is still one released SAMPLE MEAN, because the only per-run release is PRIDE PXD055153's
+``Siqueira_et_al_Proteomics.csv``, a DIA-NN PRECURSOR table (22,729 precursors, one
+column per run, 62 runs). A per-run protein value would have to be rolled up from it by
+a rule the paper does not state (a per-run Top3 reproduces Data Set S1 exactly on only
+52 to 107 of 1,730 cells per sample), so whether to store per-run precursor values, a
+per-run protein rollup, or both is an owner decision and nothing is converted yet. What
+IS corrected: ``n_replicates`` is the sample's run count from the mirrored PRIDE index
+(:data:`PROTEOME_RUNS_PER_SAMPLE`), which is 4 for PT's two samples (``PreALE_ac``,
+``PreALE_glu``) and 3 elsewhere, so PT's SE is the released SD over sqrt(4), not sqrt(3).
+The Methods' "three cultures" (:data:`PROTEOME_N_REPLICATES`) is kept as the paper's
+statement; what PT's fourth run is, is not stated anywhere mirrored. The titer class
+stays aggregate-only: Table S2 releases maxima, and the per-replicate titers are
+"available from the corresponding author upon reasonable request".
 """
 
 from __future__ import annotations
@@ -184,6 +199,7 @@ import logging
 import math
 import os
 import os.path as osp
+import re
 import shutil
 from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable, Sequence
@@ -261,6 +277,7 @@ from torchcell.datasets.pputida.carruthers2025 import (
     PIY670_PARTS,
 )
 from torchcell.literature.manifest import (
+    ROLE_RAW_DATA,
     ROLE_SI_DATA,
     ArtifactRecord,
     Manifest,
@@ -318,10 +335,27 @@ SI3_PDF_SHA256 = "de5fcfc522e7b7a6fb164eac9632e333f90bb2eba7617a925eb5154a7293ea
 THOMPSON_KEY = "thompsonFattyAcidAlcohol2020"
 THOMPSON_SHA256 = "389d0d6cd196f9f159d0485f6b8ed09743dfbe3b6682369db489d7356a469b45"
 
-#: The two deposited accessions this study's primary data live in. Neither is consumed
-#: by a loader here: PRIDE holds raw DIA spectra and the BioProject holds raw reads.
+#: The two deposited accessions this study's primary data live in. The BioProject holds
+#: raw reads. PRIDE holds 62 raw DIA runs (``<sample>-R<k>.raw``, 5,938,419,248 bytes)
+#: plus ONE processed file, ``Siqueira_et_al_Proteomics.csv`` (10,660,423 bytes,
+#: category SEARCH), a DIA-NN PRECURSOR table with one column per run (22,729 precursor
+#: rows over 2,271 protein groups). No loader reads either deposit's data files: the
+#: per-run table is precursor-level, and whether to store per-run precursor values, a
+#: per-run protein rollup, or both is an owner decision (issue #1199). The deposit's
+#: directory index IS mirrored (:data:`PRIDE_INDEX_REL`), because it is what states how
+#: many runs each released sample averages (:data:`PROTEOME_RUNS_PER_SAMPLE`).
 SRA_BIOPROJECT = "PRJNA1153078"
 PRIDE_ACCESSION = "PXD055153"
+#: The PRIDE archive directory of PXD055153 and the mirrored copy of its HTML index.
+#: Fetched twice on :data:`PRIDE_INDEX_RETRIEVED_AT` with the registered ``direct_url``
+#: retriever and byte-identical both times.
+PRIDE_INDEX_URL = "https://ftp.pride.ebi.ac.uk/pride/data/archive/2025/02/PXD055153/"
+PRIDE_INDEX_FILENAME = "PXD055153_index.html"
+PRIDE_INDEX_REL = f"pride/{PRIDE_INDEX_FILENAME}"
+PRIDE_INDEX_SHA256 = "3652f9e1690cf5d3c3b6323a345c5befaa8e2814aec2bf4bfaf04bfdd4ac17d5"
+PRIDE_INDEX_RETRIEVED_AT = "2026-11-25"
+#: The processed per-run table the index lists and no loader consumes (issue #1199).
+PRIDE_PRECURSOR_TABLE = "Siqueira_et_al_Proteomics.csv"
 
 KT2440_NAMESPACE: BacterialGeneNamespace = "pputida_kt2440_locus_tag"
 KT2440_ASSEMBLY_SET: BacterialAssemblySet = "pputida_KT2440_ASM756v2"
@@ -492,6 +526,22 @@ def _data_s1(
             citation_key=CITATION_KEY,
             sha256=PROTEOME_SHA256,
             method="openpyxl read of the deposited Data Set S1 workbook (raw mirror)",
+            page=page,
+        ),
+    )
+
+
+def _pride_index(value: Any, quote: str, *, page: str, note: str) -> SourcedValue:
+    """Bind a value to a verbatim line of the mirrored PXD055153 directory index."""
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=PRIDE_INDEX_REL,
+            citation_key=CITATION_KEY,
+            sha256=PRIDE_INDEX_SHA256,
+            method="direct_url GET of the PRIDE archive directory index (raw mirror)",
             page=page,
         ),
     )
@@ -742,22 +792,86 @@ PROTEOME_N_REPLICATES = _paper(
     3,
     _Q_PROTEOME_TRIPLICATE,
     page=_METHODS_PROTEOMICS,
-    note="three independent cultures per (strain, condition); the released "
-    "Top_3pep_counts_rep_std is the sample SD over them, so SE = SD / sqrt(3)",
+    note="the METHODS count, three cultures per (strain, condition). It holds for 18 of "
+    "the 20 released samples and NOT for PT's two: the deposit holds four runs for "
+    "each of them and Data Set S1's PT statistics are over all four (issue #1203). The "
+    "build therefore takes n per sample from PROTEOME_RUNS_PER_SAMPLE, not from here",
+)
+#: Data Set S1's ``Sample`` label of each released (strain, condition), measured on the
+#: pinned workbook (one label per pair, 1,730 rows each). The label is the run prefix
+#: PRIDE uses, which is what ties a released sample to its runs; the Table 1 batch codes
+#: (Sigma1 "Batch 2H" .. Sigma5 "Batch 5P") are the same strings. Asserted per row at
+#: build time.
+PROTEOME_SAMPLE_LABELS: dict[tuple[str, str], str] = {
+    **{
+        (WT_LABEL, condition): f"WT_{suffix}"
+        for condition, suffix in (
+            (CONDITION_ACETATE, "ac"),
+            (CONDITION_GLUCOSE, "glu"),
+            (CONDITION_MIXED, "gluAc"),
+        )
+    },
+    (PT_STRAIN, CONDITION_ACETATE): "PreALE_ac",
+    (PT_STRAIN, CONDITION_GLUCOSE): "PreALE_glu",
+    **{
+        (strain, condition): f"{batch}_{suffix}"
+        for strain, batch in zip(
+            SIGMA_STRAINS, ("2H", "4P", "5G", "5H", "5P"), strict=True
+        )
+        for condition, suffix in (
+            (CONDITION_ACETATE, "ac"),
+            (CONDITION_GLUCOSE, "glu"),
+            (CONDITION_MIXED, "gluAc"),
+        )
+    },
+}
+#: The two index lines that make PT's samples four-run samples (verbatim).
+_PRIDE_Q_PREALE_AC_R4 = '<a href="PreALE_ac-R4.raw">PreALE_ac-R4.raw</a>'
+_PRIDE_Q_PREALE_GLU_R4 = '<a href="PreALE_glu-R4.raw">PreALE_glu-R4.raw</a>'
+#: How many raw DIA runs PRIDE PXD055153 holds for each released sample, which is the n
+#: of Data Set S1's mean and SD for that sample. MEASURED, two ways:
+#:
+#: 1. the mirrored directory index lists ``<sample>-R1..R3.raw`` for 18 samples and
+#:    ``-R1..R4.raw`` for ``PreALE_ac`` and ``PreALE_glu`` (62 runs);
+#: 2. against the deposit's precursor table (``Siqueira_et_al_Proteomics.csv``, sha256
+#:    ``1e89c78f0c52f8f0eadecddd24e1e868a899ad58dea8e4628f39105d9f8170cd``, NOT mirrored:
+#:    it is precursor-level and its use waits on issue #1199), a per-run Top3 averaged
+#:    over ALL FOUR PreALE runs reproduces Data Set S1's mean exactly on 54
+#:    (``PreALE_ac``) and 67 (``PreALE_glu``) of 1,730 cells, and the ddof=1 SD over the
+#:    same four runs reproduces the released SD on every one of those cells; no 3-run or
+#:    2-run subset reproduces a single cell. The 3-run samples behave the same way over
+#:    their three runs (52 to 107 exact cells each). The per-run Top3 is not the
+#:    authors' exact rollup (most cells do not reproduce), which is why only the count,
+#:    and not a per-run value, is taken from it.
+#:
+#: What PT's fourth run is (a fourth culture or a repeat injection) is not stated: the
+#: Methods say three cultures (:data:`PROTEOME_N_REPLICATES`). Unverified observation:
+#: ``PreALE_ac-R2.raw`` is 65M in the index against 87M to 97M for its siblings.
+PROTEOME_RUNS_PER_SAMPLE = _pride_index(
+    {
+        label: 4 if label in ("PreALE_ac", "PreALE_glu") else 3
+        for label in PROTEOME_SAMPLE_LABELS.values()
+    },
+    _PRIDE_Q_PREALE_AC_R4,
+    page="PRIDE PXD055153 archive directory index",
+    note="the index lists four runs for PreALE_ac and PreALE_glu (this line and "
+    f"{_PRIDE_Q_PREALE_GLU_R4!r}) and three for every other sample; Data Set S1 maps "
+    "PreALE to PT (its Strain column), and its PT mean and SD are over all four runs",
 )
 PROTEOME_UNCERTAINTY = _paper(
     "sample_sd",
     _Q_PROTEOME_TRIPLICATE,
     page=_METHODS_PROTEOMICS,
-    note="the released _rep_std column is the SD of the three replicate measurements, "
-    "not an SE; it is divided by sqrt(n) before being stored",
+    note="the released _rep_std column is the ddof=1 SD over a sample's runs (three, or "
+    "four for PT; measured against the deposit's precursor table), not an SE; it is "
+    "divided by sqrt(n) before being stored",
 )
 TOP3 = _paper(
     PROTEOME_MEASUREMENT_TYPE,
     _Q_TOP3,
     page=_METHODS_PROTEOMICS,
-    note="what one stored abundance IS: the mean, over a sample's three replicates, of "
-    "the Top3 signal",
+    note="what one stored abundance IS: the mean, over a sample's runs (three, or four "
+    "for PT), of the Top3 signal",
 )
 PERCENT_OF_TOTAL = _paper(
     PERCENT_MEASUREMENT_TYPE,
@@ -776,7 +890,7 @@ LOG10_PERCENT_OF_TOTAL = _data_s1(
     note="the released header is the only statement of this scale: the paper names "
     "'other summary statistics for the proteomics data set' in File S1 and never "
     "describes this column in prose. Measured over all 34,600 cells, it is the MEAN of "
-    "the three replicates' log10 percent rather than the log10 of the released percent",
+    "the replicate runs' log10 percent rather than the log10 of the released percent",
 )
 DIANN_DATABASE = _paper(
     "P. putida KT2440 UniProt proteome + common proteomic contaminants",
@@ -949,8 +1063,10 @@ DATA_AVAILABILITY = _paper(
     {"sra_bioproject": SRA_BIOPROJECT, "pride": PRIDE_ACCESSION},
     _Q_DATA_AVAILABILITY,
     page="Data availability",
-    note="neither deposit is consumed here: PRIDE holds raw DIA spectra and the "
-    "BioProject holds raw reads, and no loader reads either",
+    note="neither deposit's data files are consumed here. The BioProject holds raw "
+    "reads. PRIDE holds 62 raw DIA runs plus one processed per-run DIA-NN precursor "
+    f"table ({PRIDE_PRECURSOR_TABLE}), whose use is an open owner decision (issue "
+    "#1199); only its directory index is mirrored, for the per-sample run counts",
 )
 
 
@@ -985,26 +1101,65 @@ def deposit_raw_mirror(
     *,
     proteome_path: str | Path,
     variants_path: str | Path,
+    pride_index_path: str | Path,
     retrieved_at: str = SI_RETRIEVED_AT,
+    pride_index_retrieved_at: str = PRIDE_INDEX_RETRIEVED_AT,
     data_root: str | None = None,
 ) -> Path:
-    """Write the raw mirror (Data Sets S1 and S2) and its ``manifest.json``.
+    """Write the raw mirror (Data Sets S1 and S2, the PRIDE index) and ``manifest.json``.
 
     Idempotent by sha256: an existing mirror file whose digest matches is left alone and
-    a differing one raises rather than being overwritten. Both files are verified BEFORE
-    anything is written, so a refusal leaves no partial deposit. Both come from the PMC
-    Article Datasets bucket, which is directly scriptable: the recorded retrieval re-runs
-    as-is and reproduced both pinned digests on ``retrieved_at``.
+    a differing one raises rather than being overwritten. Every file is verified BEFORE
+    anything is written, so a refusal leaves no partial deposit. The two workbooks come
+    from the PMC Article Datasets bucket and the index from the PRIDE archive over HTTPS;
+    both retrievals are directly scriptable, re-run as recorded, and reproduced the
+    pinned digests on their ``retrieved_at`` dates.
     """
     root = raw_mirror_dir(data_root)
-    deposits = (
-        (proteome_path, PROTEOME_REL, PROTEOME_FILENAME, PROTEOME_SHA256),
-        (variants_path, VARIANTS_REL, VARIANTS_FILENAME, VARIANTS_SHA256),
+    pmc = {
+        filename: f"https://pmc-oa-opendata.s3.amazonaws.com/{pmc_cloud_key(filename)}"
+        for filename in (PROTEOME_FILENAME, VARIANTS_FILENAME)
+    }
+    deposits: tuple[tuple[str | Path, str, str, str, RetrievalRecord], ...] = (
+        *(
+            (
+                source,
+                relpath,
+                ROLE_SI_DATA,
+                expected,
+                RetrievalRecord(
+                    method=RetrievalMethod.pmc_cloud,
+                    source_url=pmc[filename],
+                    retriever="torchcell.literature.retrieve.pmc_cloud_object",
+                    params={"key": pmc_cloud_key(filename)},
+                    sha256=expected,
+                    retrieved_at=retrieved_at,
+                ),
+            )
+            for source, relpath, filename, expected in (
+                (proteome_path, PROTEOME_REL, PROTEOME_FILENAME, PROTEOME_SHA256),
+                (variants_path, VARIANTS_REL, VARIANTS_FILENAME, VARIANTS_SHA256),
+            )
+        ),
+        (
+            pride_index_path,
+            PRIDE_INDEX_REL,
+            ROLE_RAW_DATA,
+            PRIDE_INDEX_SHA256,
+            RetrievalRecord(
+                method=RetrievalMethod.direct_url,
+                source_url=PRIDE_INDEX_URL,
+                retriever="torchcell.literature.retrieve.direct_url",
+                params={"url": PRIDE_INDEX_URL},
+                sha256=PRIDE_INDEX_SHA256,
+                retrieved_at=pride_index_retrieved_at,
+            ),
+        ),
     )
-    for source, _, _, expected in deposits:
+    for source, _, _, expected, _ in deposits:
         verify_sha256(source, expected)
     files: list[ArtifactRecord] = []
-    for source, relpath, filename, expected in deposits:
+    for source, relpath, role, expected, retrieval in deposits:
         dest = root / relpath
         dest.parent.mkdir(parents=True, exist_ok=True)
         if dest.exists():
@@ -1012,23 +1167,14 @@ def deposit_raw_mirror(
                 raise RuntimeError(f"{dest} exists with a different sha256; refusing")
         else:
             shutil.copy2(source, dest)
-        key = pmc_cloud_key(filename)
-        url = f"https://pmc-oa-opendata.s3.amazonaws.com/{key}"
         files.append(
             ArtifactRecord(
                 path=relpath,
-                role=ROLE_SI_DATA,
+                role=role,
                 bytes=dest.stat().st_size,
                 sha256=expected,
-                source=url,
-                retrieval=RetrievalRecord(
-                    method=RetrievalMethod.pmc_cloud,
-                    source_url=url,
-                    retriever="torchcell.literature.retrieve.pmc_cloud_object",
-                    params={"key": key},
-                    sha256=expected,
-                    retrieved_at=retrieved_at,
-                ),
+                source=retrieval.source_url,
+                retrieval=retrieval,
             )
         )
     manifest = Manifest(
@@ -1037,8 +1183,8 @@ def deposit_raw_mirror(
         title=TITLE,
         files=files,
         si_data_sources=[
-            f"https://pmc-oa-opendata.s3.amazonaws.com/{pmc_cloud_key(PROTEOME_FILENAME)}",
-            f"https://pmc-oa-opendata.s3.amazonaws.com/{pmc_cloud_key(VARIANTS_FILENAME)}",
+            pmc[PROTEOME_FILENAME],
+            pmc[VARIANTS_FILENAME],
             "https://pmc-oa-opendata.s3.amazonaws.com/"
             f"{pmc_cloud_key('aem.02123-24-s0003.pdf')}",
             f"https://www.ncbi.nlm.nih.gov/bioproject/{SRA_BIOPROJECT}",
@@ -1057,9 +1203,15 @@ def deposit_raw_mirror(
             f"NCBI SRA BioProject {SRA_BIOPROJECT} -- the raw resequencing reads. NOT "
             "deposited: no loader consumes raw reads, and the called variants are the "
             "released derivative",
-            f"PRIDE {PRIDE_ACCESSION} -- the raw DIA mass-spectrometry files. NOT "
-            "deposited: no loader consumes raw spectra, and Data Set S1 is the released "
-            "processed matrix",
+            f"PRIDE {PRIDE_ACCESSION} directory index ({PRIDE_INDEX_REL}) -- deposited; "
+            "it lists the 62 raw DIA runs by sample and is the source of the per-sample "
+            "run counts the proteome records carry as n",
+            f"PRIDE {PRIDE_ACCESSION} raw DIA runs (62 .raw files, 5,938,419,248 bytes) "
+            "-- NOT deposited: raw instrument files are out of scope",
+            f"PRIDE {PRIDE_ACCESSION} {PRIDE_PRECURSOR_TABLE} (10,660,423 bytes, "
+            "category SEARCH) -- NOT deposited: a processed DIA-NN PRECURSOR table with "
+            "one column per run; storing per-run precursor values, a per-run protein "
+            "rollup, or both waits on an owner decision (issue #1199)",
             "the per-time-point isoprenol titers plotted in Fig. 3B and 3C were never "
             "released as a table; Table S2's maximum is the only numeric release",
         ],
@@ -1095,6 +1247,31 @@ def _link_mirror_files(raw_dir: str, pins: Iterable[tuple[str, str, str]]) -> No
         if not src.exists():
             raise RuntimeError(f"required raw artifact missing from mirror: {src}")
         link_verified(src, osp.join(raw_dir, filename), expected)
+
+
+#: One run file of the PRIDE index: ``<sample>-R<k>.raw`` in an anchor's href.
+_PRIDE_RUN_HREF = re.compile(r'<a href="([^"/?]+)-R(\d+)\.raw">')
+
+
+def runs_per_sample(index_html: str) -> dict[str, int]:
+    """``{sample label: number of raw runs}`` read from the PRIDE directory index.
+
+    Refuses an index whose run numbers for a sample are not exactly ``1..n``, because a
+    gap would mean a run was withdrawn or renamed and the count would no longer be the n
+    of the released statistic.
+    """
+    seen: dict[str, set[int]] = defaultdict(set)
+    for sample, k in _PRIDE_RUN_HREF.findall(index_html):
+        seen[sample].add(int(k))
+    if not seen:
+        raise RuntimeError("the PRIDE index lists no <sample>-R<k>.raw run")
+    for sample, ks in seen.items():
+        if ks != set(range(1, len(ks) + 1)):
+            raise RuntimeError(
+                f"{sample}: runs {sorted(ks)} are not numbered 1..{len(ks)}; the index "
+                "no longer states a clean run count"
+            )
+    return {sample: len(ks) for sample, ks in sorted(seen.items())}
 
 
 # --------------------------------------------------------------------------- #
@@ -1149,8 +1326,8 @@ PROTEOME_NORMALIZATIONS: tuple[ProteomeNormalization, ...] = (
         sd_column="%_of protein_abundance_Top3-rep_std",
         root_slug="proteome_percent_desiqueira2025",
         recoverable_from_top3=False,
-        note="percent of a sample's total abundance, averaged over the three "
-        "replicates. NOT the released percent of the released mean: measured over all "
+        note="percent of a sample's total abundance, averaged over the sample's runs "
+        "(three, or four for PT). NOT the released percent of the released mean: measured over all "
         "34,600 cells, zero agree exactly and the per-cell ratio runs 0.914506 to "
         "1.083554, which is a replicate-wise mean of per-replicate percentages",
     ),
@@ -1160,7 +1337,8 @@ PROTEOME_NORMALIZATIONS: tuple[ProteomeNormalization, ...] = (
         sd_column="log10_%_abundance_rep_std",
         root_slug="proteome_log10_percent_desiqueira2025",
         recoverable_from_top3=False,
-        note="the mean of the three replicates' log10 percent. NOT the log10 of the "
+        note="the mean of the runs' log10 percent (three, or four for PT). NOT the "
+        "log10 of the "
         "released percent: measured over all 34,600 cells, 33,914 disagree, 686 agree "
         "to 5e-5 and ZERO exceed it, which is Jensen's inequality for a mean of logs",
     ),
@@ -2317,9 +2495,10 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
     ) -> ProteinAbundancePhenotype:
         """One sample's abundances with SE = SD / sqrt(n) per protein.
 
-        The released SD is the sample SD over the three replicates on THIS class's
-        scale, so the SE is that SD over sqrt(n) on the same scale. A log10 SD divided
-        by sqrt(n) is the SE of the log10 mean, which is the quantity the record stores.
+        The released SD is the ddof=1 SD over the sample's ``n_replicates`` runs on THIS
+        class's scale (three, or four for PT; :data:`PROTEOME_RUNS_PER_SAMPLE`), so the SE
+        is that SD over sqrt(n) on the same scale. A log10 SD divided by sqrt(n) is the SE
+        of the log10 mean, which is the quantity the record stores.
         """
         if not cells:
             raise RuntimeError("a proteome sample carries no measured protein")
@@ -2372,6 +2551,13 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
         all_samples: set[tuple[str, str]] = set()
         for row in rows:
             all_samples.add((row.strain, row.condition))
+            if PROTEOME_SAMPLE_LABELS.get((row.strain, row.condition)) != row.sample:
+                raise RuntimeError(
+                    f"{(row.strain, row.condition)} is released as sample "
+                    f"{row.sample!r}, not the "
+                    f"{PROTEOME_SAMPLE_LABELS.get((row.strain, row.condition))!r} the "
+                    "pinned workbook labels it; the run count n is keyed on that label"
+                )
             if row.strain not in WRITABLE_STRAINS or row.protein in set(dropped_keys):
                 continue
             tag = stored_by_key[row.protein]
@@ -2390,13 +2576,14 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
                 f"{EXPECTED_PROTEOME_RECORDS} the pinned workbook holds "
                 f"({sorted(samples)}); the released sample set changed"
             )
-        n_replicates = int(PROTEOME_N_REPLICATES.value)
+        runs: dict[str, int] = PROTEOME_RUNS_PER_SAMPLE.value
+        n_of = {key: runs[PROTEOME_SAMPLE_LABELS[key]] for key in samples}
         reference_key = (PROTEOME_REFERENCE_STRAIN, PROTEOME_REFERENCE_CONDITION)
         if reference_key not in samples:
             raise RuntimeError(
                 f"{self.name}: the reference sample {reference_key} is not released"
             )
-        baseline = self._phenotype(samples[reference_key], n_replicates)
+        baseline = self._phenotype(samples[reference_key], n_of[reference_key])
         references = {
             strain: ProteinAbundanceExperimentReference(
                 dataset_name=self.name,
@@ -2424,7 +2611,7 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
                         strain, with_pathway=False, calls=ledger.calls
                     ),
                     environment=proteome_environment(condition),
-                    phenotype=self._phenotype(cells, n_replicates),
+                    phenotype=self._phenotype(cells, n_of[(strain, condition)]),
                 )
                 txn.put(
                     f"{idx}".encode(),
@@ -2434,13 +2621,14 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
                     {
                         "strain": strain,
                         "condition": condition,
+                        "sample": PROTEOME_SAMPLE_LABELS[(strain, condition)],
                         "n_proteins": len(cells),
                         "n_perturbations": len(
                             strain_genotype(
                                 strain, with_pathway=False, calls=ledger.calls
                             )
                         ),
-                        "n_replicates": n_replicates,
+                        "n_replicates": n_of[(strain, condition)],
                         "measurement_type": self.NORMALIZATION.measurement_type,
                         "mean_column": self.NORMALIZATION.mean_column,
                         "sd_column": self.NORMALIZATION.sd_column,
@@ -2524,6 +2712,11 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
                     "used as a baseline. genome_reference is the RECORD's own strain, "
                     "so a PT record carries the PT background and a WT record carries "
                     "none",
+                    "each record's n_replicates is its sample's run count in PRIDE "
+                    f"{PRIDE_ACCESSION} ({PRIDE_INDEX_REL}): "
+                    f"{ {PROTEOME_SAMPLE_LABELS[key]: n_of[key] for key in sorted(n_of)} }. "
+                    "PT's two samples are four-run means (the Methods say three "
+                    "cultures; issue #1203), every other sample a three-run mean",
                     f"{len(dropped_keys)} of {len(keys)} protein KEYS are dropped, "
                     f"leaving {len(kept)} in every record's abundance map",
                     "every sequenced strain's genotype is PT's PP_2675 deletion plus "
@@ -2609,7 +2802,7 @@ class ProteomeLog10PercentDeSiqueira2025Dataset(ProteomeDeSiqueira2025Dataset):
     """de Siqueira 2025 mean log10 percent-of-total abundance, the third released scale.
 
     Read from ``log10_%_abundance_rep_mean`` with its ``_rep_std``. It is the MEAN of
-    the three replicates' log10, not the log10 of the mean: measured over all 34,600
+    the replicate runs' log10, not the log10 of the mean: measured over all 34,600
     released cells, 33,914 sit strictly below ``log10`` of the released percent, 686
     agree to within 5e-5 and ZERO sit above it, which is exactly Jensen's inequality for
     a mean of logs. Its SD is likewise not the delta-method transform of the percent SD
@@ -3121,9 +3314,9 @@ def verify_build(
             provenance=_provenance(
                 PROTEOME_REL,
                 PROTEOME_SHA256,
-                f"Data Set S1 {normalization.mean_column} (the replicate-wise mean over "
-                f"three biological replicates), with SE = {normalization.sd_column} / "
-                "sqrt(3)",
+                f"Data Set S1 {normalization.mean_column} (the run-wise mean over three "
+                "runs, four for PT's two samples per the PRIDE PXD055153 index), with "
+                f"SE = {normalization.sd_column} / sqrt(n) for that n",
                 "Data Set S1, sheet 'Sheet1'",
             ),
             expected_count=EXPECTED_PROTEOME_RECORDS,

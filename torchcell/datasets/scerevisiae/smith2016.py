@@ -12,7 +12,38 @@ libraries against 20 drug-partner genes were grown as POOLS in competitive-growt
 +/- ATc and +/- a small-molecule inhibitor, and each guide's abundance was tracked by
 amplicon sequencing.
 
-RECORD = one (pool x guide x drug-condition) ``EnvironmentResponseExperiment``:
+RECORD = one biological replicate of one (pool x guide x drug-condition), as released
+(2026.11.24, #1178). Two record shapes, one ``EnvironmentResponseExperiment`` class:
+
+- an A RECORD per Additional file 10 row: the ATc-induced fold change A of ONE replicate
+  pair of cultures (+ATc, -ATc). Every Additional file 10 row is replicate 1 of its
+  condition, so ``replicate_id = "1"``. Two checks ``process()`` re-runs on every build:
+  Additional file 5 lists replicate 1 for each of the 67 (pool, drug, concentration)
+  groups, and in the 1% DMSO and 20 uM fluconazole groups the row's ``-ATC_count`` /
+  ``+ATC_count`` equal Additional files 6 / 7's ``Rep-1`` counts (2,148 of 2,148
+  comparable cells). Measured once beside them (2026.11.24, not re-run by the build
+  because Additional file 9 is not read): those counts also equal Additional file 9's
+  ``Count_perfect`` for replicate 1 in all 67 groups.
+- a CULTURE RECORD per replicate culture that Additional file 6 (1% DMSO, eight
+  replicates, gene-tiling pools) or Additional file 7 (20 uM fluconazole, three
+  replicates in the gene-tiling pools, two in the mutant pools) releases and whose A
+  Additional file 10 does not: the culture's guide fitness ``f`` (``Rep-k_noATC_f_mean``
+  / ``Rep-k_plusATC_f_mean``) with its released ``f_var``. The source releases no A for
+  replicates 2-8, only the two cultures' ``f``; ``A_k = f(+ATc) - f(-ATc)`` is left to
+  model time (policy: store the per-culture value the source releases, never a loader
+  ratio). The +ATc culture's environment carries anhydrotetracycline at the dose
+  Additional file 5 states for every sequenced pooled sample (column ``ATC (250ng/ml)``);
+  the -ATc culture's environment is the drug alone.
+
+The combined statistics of Additional files 6 / 7 (``Combined_A_mean``,
+``Combined_A_var``, ``Combined_*ATC_*``) are the authors' summary over the released
+replicates and are not stored: the replicates are. Measured on the pinned files,
+``Combined_A_mean`` is the plain mean of the per-replicate ``f(+ATc) - f(-ATc)`` (max
+|difference| 0.0009 over 451 + 637 guides) and ``Combined_A_var`` their sample variance
+(ddof 1), not the inverse-variance combination the Methods describe; that is a
+modeling-time derivation over these records.
+
+Shared by both shapes:
 
 - GENOTYPE: a ``CrisprInterferencePerturbation`` whose ``crispr`` construct carries the
   effector ``dCas9-Mxi1``, the 18/20 nt ``Specificity_sequence`` spacer (joined from
@@ -26,9 +57,15 @@ RECORD = one (pool x guide x drug-condition) ``EnvironmentResponseExperiment``:
   drug at its released concentration as a ``SmallMoleculePerturbation``, 30 C, aerobic,
   ``duration_generations = 20``.
 - PHENOTYPE: ``measurement_type=log2_ratio``, ``assay_type=pooled_competitive_growth_barcode``,
-  ``environment_response = A`` (the ATc-induced fold change), uncertainty = the released
-  ``var(A)`` stored VERBATIM as ``UncertaintyType.variance``. Reference = the uninduced
-  (-ATc) baseline in the same drug environment, A = 0.
+  ``n_samples = 1``, ``replicate_id`` = the source's replicate label. An A record holds
+  ``environment_response = A`` with the released ``var(A)`` VERBATIM as
+  ``UncertaintyType.variance`` (``UNITS``), reference = the uninduced (-ATc) baseline in
+  the same drug environment, A = 0. A culture record holds ``environment_response = f``
+  with the released ``f_var`` as ``UncertaintyType.variance`` (``CULTURE_UNITS``),
+  reference = the pool's median guide in the same culture environment, f = 0. Both
+  variances are the source's per-measurement read-resampling variance ("used the
+  variance s^2 of the simulated values as a variance estimate"), not a dispersion over
+  replicates, so they are data and stay.
 
 SOURCED VALUES (module-level ``SourcedValue``s anchored to the sha256 of
 ``smithQuantitativeCRISPRInterference2016/paper.md``):
@@ -44,24 +81,29 @@ SOURCED VALUES (module-level ``SourcedValue``s anchored to the sha256 of
 - the 1% DMSO vehicle-control dose, from the Methods sentence that also gives the eight
   and three replicate experiments for the tiling pools and for 20 uM fluconazole.
 
-``n_samples = 1`` is KEPT and is a deliberate, documented choice rather than an oversight.
-The released ``var(A)`` is the variance of the SINGLE released A estimate: for the 1% DMSO
-and 20 uM fluconazole conditions the paper has already inverse-variance-combined the eight
-and three replicate experiments into that one estimate ("We combined the R replicates
-... to obtain the variance"), so ``derive_se`` must divide by 1, not by 8 or 3. Recording
-the replicate count instead would silently shrink the stored SE by sqrt(8). The replicate
-structure is recorded here, in ``REPLICATE_STRUCTURE``, rather than in a field whose
-arithmetic it would corrupt.
+``n_samples = 1`` because every record is one replicate. Until 2026.11.24 this docstring
+said the 1% DMSO and 20 uM fluconazole rows of Additional file 10 were the paper's
+inverse-variance combination of the eight and three replicates; measured, they are
+replicate 1 alone (see RECORD), so the released ``var(A)`` is one replicate's variance
+and ``derive_se`` dividing by 1 was right for that reason.
 
-ATc is NOT asserted as an environment dose. The induction is what turns the CRISPRi
-genotype on, but the pooled-screen Methods say only "grown +/- a drug listed in Additional
-file 8, and +/- ATc"; the single released number, 250 ng/mL, appears in the qPCR section
-and in Additional file 5's sample-metadata header, neither of which is the pooled screen.
-The induced-vs-uninduced definition rides in the phenotype ``units`` string and in the
-uninduced reference. No solvent is asserted either: "Drugs were dissolved in DMSO" sits in
-the individual-strain growth-assay section, and the pooled section does not restate it, so
-the 1% DMSO control condition is served as a compound in its own right and the other
-drugs carry no ``Solvent``. Both are flagged for review rather than guessed.
+An A record carries NO ATc in its environment: A is the contrast between the induced and
+uninduced cultures, and its reference is the uninduced (-ATc) culture. A culture record
+is one culture, so its environment states whether ATc was in it. The dose is Additional
+file 5's: that workbook lists every sequenced pooled-screen sample (pools broad_tiling,
+gene_tiling18 & gene_tiling20, mutant18 & mutant20) with the column ``ATC (250ng/ml)``,
+README '"yes" if ATC was included, or "no" if it was not'; ``process()`` reads the dose
+from that header. (Before 2026.11.24 this docstring said the 250 ng/mL was not the pooled
+screen's; Additional file 5 is the pooled screen's sample sheet.) No solvent is asserted:
+"Drugs were dissolved in DMSO" sits in the individual-strain growth-assay section, and the
+pooled section does not restate it, so the 1% DMSO control condition is served as a
+compound in its own right and the other drugs carry no ``Solvent``.
+
+NOT STORED (``dropped_records.json`` lists each under ``replicates_not_stored``): the
+second replicate of 1% DMSO in the mutant pools, which only Additional file 9 releases,
+as read counts (no ``MeasurementType`` holds a read count, and computing ``f`` from the
+counts would be a loader derivation); and Additional file 5's Rapamycin 10 nM samples of
+the gene-tiling pools, for which no file releases a count, fitness or effect.
 
 The screening doses were set by a rule the SI states ("Concentration(s) used for library
 screening. These concentrations were selected to inhibit growth of a wild-type strain by
@@ -98,11 +140,16 @@ units: they are two independent pooled measurements, not replicates to average a
 duplicate to drop. ``library_pool`` therefore joins the strain identity.
 
 DATA SOURCE: Additional file 10 ``13059_2016_900_MOESM10_ESM.xlsx`` sheet 'Fitness and
-Effect Data' (14,463 rows) and Additional file 4 ``13059_2016_900_MOESM4_ESM.xlsx`` sheet
-'gRNAs' (the guide -> spacer join), both deposited in the raw mirror
+Effect Data' (14,463 rows), Additional file 4 ``13059_2016_900_MOESM4_ESM.xlsx`` sheet
+'gRNAs' (the guide -> spacer join), Additional file 5 ``13059_2016_900_MOESM5_ESM.xlsx``
+sheet 'Metadata' (the sequenced samples: replicate labels and the ATc dose), and
+Additional files 6 / 7 ``13059_2016_900_MOESM6_ESM.xlsx`` sheet 'DMSO_replicate_data' and
+``13059_2016_900_MOESM7_ESM.xlsx`` sheet 'Fluconazole_replicate_data' (per-replicate
+counts and fitness), all deposited in the raw mirror
 ``$DATA_ROOT/torchcell-raw/smithQuantitativeCRISPRInterference2016/`` with a
-``manifest.json`` recording their Springer ESM URLs (re-retrieved and sha256-verified
-2026-09-12) and hashes.
+``manifest.json`` recording their Springer ESM URLs and hashes (Additional files 10 and
+4 re-retrieved 2026-09-12; 5, 6 and 7 retrieved 2026-11-25 UTC, Additional file 5's
+bytes identical to the literature mirror's copy).
 """
 
 from __future__ import annotations
@@ -205,6 +252,23 @@ GUIDE_REL = f"si/si_data/{GUIDE_FILENAME}"
 GUIDE_SHEET = "gRNAs"
 GUIDE_SHA256 = "e5eb4e3c7856782e36edff5ef55e680cb43fa8e9944bf8e40d7cb7b4f376c1e5"
 SI_RETRIEVED_AT = "2026-09-12"
+SAMPLES_FILENAME = "13059_2016_900_MOESM5_ESM.xlsx"
+SAMPLES_REL = f"si/si_data/{SAMPLES_FILENAME}"
+SAMPLES_SHEET = "Metadata"
+SAMPLES_SHA256 = "9477066f538248c18b256ed2fec811bbd5914b2039bd2f78baa41000e70eaf9c"
+DMSO_REPLICATES_FILENAME = "13059_2016_900_MOESM6_ESM.xlsx"
+DMSO_REPLICATES_REL = f"si/si_data/{DMSO_REPLICATES_FILENAME}"
+DMSO_REPLICATES_SHEET = "DMSO_replicate_data"
+DMSO_REPLICATES_SHA256 = (
+    "7f70c60de3702e49caa5142b73b32b2de64ad1cbfd4db47e3a58a76b616ae676"
+)
+FLUCONAZOLE_REPLICATES_FILENAME = "13059_2016_900_MOESM7_ESM.xlsx"
+FLUCONAZOLE_REPLICATES_REL = f"si/si_data/{FLUCONAZOLE_REPLICATES_FILENAME}"
+FLUCONAZOLE_REPLICATES_SHEET = "Fluconazole_replicate_data"
+FLUCONAZOLE_REPLICATES_SHA256 = (
+    "3d26fb3e6e613e21e427abeaa7a8cc6a9053b34d4770ecc185db7900053a592b"
+)
+REPLICATES_RETRIEVED_AT = "2026-11-25"
 
 PAPER_MD = "paper.md"
 PAPER_MD_SHA256 = "346be6968eced82706cffb163a76dfc5adf381e602bd11006fea608436ca7b2f"
@@ -302,10 +366,46 @@ REPLICATE_STRUCTURE = _paper(
     {"1% DMSO": 8, "20 uM fluconazole": 3},
     "We combined the $R$ replicates $k _ { I } , . . . , k _ { R }$ in a natural way to "
     "obtain the variance",
-    note="these replicate experiments are ALREADY inverse-variance-combined into the "
-    "single released (A, var(A)) pair, so n_samples stays 1 and derive_se divides by 1. "
-    "Recording 8 or 3 here would shrink the stored SE by sqrt(8) or sqrt(3) against a "
-    "variance that is already the combined estimate's",
+    note="the replicates are released one by one in Additional files 6 (eight, 1% DMSO) "
+    "and 7 (three, 20 uM fluconazole; two in the mutant pools), and each is its own "
+    "record. Additional file 10's row for these conditions is replicate 1, not the "
+    "combination (measured 2026.11.24: its counts equal the Rep-1 counts on every row "
+    "both files release), so its var(A) is one replicate's",
+)
+REPLICATE_DOSE = _paper(
+    {DMSO: 0.01, "Fluconazole": "20uM"},
+    "For the control condition $( 1 ~ \\% ~ \\mathrm { D M S O } )$ , we had eight "
+    "replicate experiments for the tiling pools, and three replicate experiments for $2 "
+    "0 ~ \\mu \\mathrm { M }$ fluconazole.",
+    note="the dose of each per-replicate workbook's condition, written as the released "
+    "Concentration cell of Additional file 10 so one condition has one environment: "
+    'Additional file 6 is the 1% DMSO control (\'Counts and analysis for 8 "no drug" '
+    "replicates') and Additional file 7 the 20 uM fluconazole one ('Analysis of "
+    "replicates  in 20 µM Fluconazole '); neither workbook carries a concentration "
+    "column",
+)
+BIOLOGICAL_REPLICATES = _paper(
+    "biological",
+    "The guide counts following competitive growth were highly reproducible between "
+    "biological replicates, indicating that the assay is robust (Additional file 2: "
+    "Figure S3A-B, Additional files 6 and 7).",
+    note="Additional files 6 and 7 are the per-replicate tables this loader stores, so "
+    "each replicate there is an independent pooled culture pair, not a repeat read",
+)
+ATC_COMPOUND = _paper(
+    "anhydrotetracycline",
+    "ATc: Anhydrotetracycline",
+    note="the dose is read at build time from Additional file 5's 'ATC (250ng/ml)' "
+    "column header (sheet 'Metadata', sha256 9477066f538248c1...), the sample sheet of "
+    "every sequenced pooled culture",
+)
+CULTURE_FITNESS = _paper(
+    "log2 median-centred guide count",
+    "we calculated the $\\log _ { 2 }$ -scale median centered counts $l _ { i j k } = "
+    "\\log _ { 2 } ( c _ { i j k } + 0 . 5 )$ - mediani’ in pool $_ j ( \\log _ { 2 } ( "
+    "c _ { i ^ { \\prime } j k } + 0 . 5 ) )$ ).",
+    note="Additional files 6 / 7 release l as 'Rep-k_<arm>_f_mean' ('Replicate k no ATc "
+    "mean fitness f') with its resampling variance 'Rep-k_<arm>_f_var'",
 )
 COMPOUND_LIST = _paper(
     "Additional file 8",
@@ -336,6 +436,62 @@ UNITS = (
     "CRISPRi ON) and uninduced (-ATc) pooled cultures in this drug condition; negative = "
     "CRISPRi repression of the target causes a growth/fitness defect (drug-sensitivity)"
 )
+
+CULTURE_UNITS = (
+    "guide fitness f in ONE pooled culture: log2(c + 0.5) minus the median over the "
+    "pool's guides of log2(c' + 0.5), c = the guide's perfect-match read count after "
+    "approximately 20 doublings; 0 = the pool's median guide. The culture is induced "
+    "(+ATc, dCas9-Mxi1 CRISPRi ON) when its environment carries anhydrotetracycline and "
+    "uninduced (-ATc) otherwise; A = f(+ATc) - f(-ATc) of one replicate is a "
+    "model-time derivation over the two records of one replicate"
+)
+
+#: Additional file 10 ``#Pool`` -> the ``Pool Name`` Additional file 5 lists the
+#: sequenced sample under. The 18 bp and 20 bp halves of one library were sequenced as
+#: one sample, so two pools share one sample row and one replicate label.
+POOL_TO_SAMPLE_POOL = {
+    "broad_tiling": "broad_tiling",
+    "gene_tiling_18bp": "gene_tiling18 & gene_tiling20",
+    "gene_tiling_20bp": "gene_tiling18 & gene_tiling20",
+    "mutant18": "mutant18 & mutant20",
+    "mutant20": "mutant18 & mutant20",
+}
+
+#: The per-replicate workbook each multi-replicate condition's cultures come from, keyed
+#: by the Additional file 10 ``Drug`` label: (file, sheet, how many replicate blocks the
+#: sheet carries).
+REPLICATE_WORKBOOKS = {
+    DMSO: (DMSO_REPLICATES_FILENAME, DMSO_REPLICATES_SHEET, 8),
+    "Fluconazole": (FLUCONAZOLE_REPLICATES_FILENAME, FLUCONAZOLE_REPLICATES_SHEET, 3),
+}
+
+#: The pin of each per-replicate workbook, by file name (recorded in the ledger).
+REPLICATE_SHA256S = {
+    DMSO_REPLICATES_FILENAME: DMSO_REPLICATES_SHA256,
+    FLUCONAZOLE_REPLICATES_FILENAME: FLUCONAZOLE_REPLICATES_SHA256,
+}
+
+#: The replicate label every Additional file 10 row carries (proved on every build by
+#: ``_check_effect_rows_are_replicate_one``).
+FIRST_REPLICATE = "1"
+
+#: A released replicate culture this loader stores no record for, and why. Measured on
+#: the pinned Additional files 5 and 9 (2026.11.24); the vendor-code conditions are held
+#: out by ``UNIDENTIFIED_COMPOUND_RULE`` for every replicate, so they are not listed.
+REPLICATE_NOT_STORED_REASONS = {
+    ("mutant18 & mutant20", DMSO, "1.0percent_v/v", "2"): (
+        "released only as read counts (Additional file 9's Count_all / Count_perfect): "
+        "no MeasurementType holds a read count, and computing this culture's fitness f "
+        "from the counts would be a loader derivation, not a released value. Additional "
+        "file 6 covers the eight 1% DMSO replicates of the gene-tiling pools only"
+    ),
+    ("gene_tiling18 & gene_tiling20", "Rapamycin", "10.0nM", "1"): (
+        "Additional file 5 lists the sequenced sample pair, and no released file carries "
+        "a count, a fitness or an effect for it: Additional file 9 holds no 10 nM "
+        "Rapamycin rows and Additional file 10 releases only the 2.2 nM and 4.375 nM "
+        "doses"
+    ),
+}
 
 _CONC_RE = re.compile(r"^\s*([0-9]*\.?[0-9]+)\s*(M|mM|uM|nM)\s*$")
 _UNIT_MAP = {
@@ -391,6 +547,48 @@ def parse_concentration(drug: str, raw: Any) -> Concentration:
     return Concentration(value=float(match.group(1)), unit=_UNIT_MAP[match.group(2)])
 
 
+_ATC_HEADER_RE = re.compile(r"\(\s*(?P<value>[0-9]*\.?[0-9]+)\s*ng/m[lL]\s*\)")
+
+
+def dose_key(drug: str, raw: Any) -> str:
+    """The TYPED dose of a condition, as a string, so two spellings key as one.
+
+    Additional file 5 writes a dose with the trailing space Additional file 10 omits
+    (``'20uM '`` against ``'20uM'``), so a condition is matched between the two files by
+    the ``Concentration`` the cell parses to, never by the cell's characters.
+    """
+    dose = parse_concentration(drug, raw)
+    if dose.unit is None:
+        raise ValueError(f"the parsed dose {raw!r} of {drug!r} carries no unit")
+    return f"{dose.value}{dose.unit.value}"
+
+
+def atc_column(columns: list[str]) -> str:
+    """Additional file 5's induction column, the one whose header states the ATc dose."""
+    named = [name for name in columns if _ATC_HEADER_RE.search(name)]
+    if len(named) != 1:
+        raise ValueError(
+            "Additional file 5 must carry exactly one ATc-dose column header, "
+            f"found {named!r}"
+        )
+    return named[0]
+
+
+def atc_concentration(column: str) -> Concentration:
+    """The induction dose that column header states, in the schema's ug/mL.
+
+    ``ATC (250ng/ml)`` -> 0.25 ug/mL. The dose is released only inside the header, so it
+    is parsed rather than hardcoded: a different pinned file would carry its own number
+    or fail loud.
+    """
+    match = _ATC_HEADER_RE.search(column)
+    if match is None:
+        raise ValueError(f"no ATc dose in Additional file 5 column header {column!r}")
+    return Concentration(
+        value=float(match.group("value")) / 1000.0, unit=ConcentrationUnit.ug_per_ml
+    )
+
+
 # --------------------------------------------------------------------------- #
 # Raw mirror
 # --------------------------------------------------------------------------- #
@@ -417,26 +615,53 @@ def deposit_raw_mirror(
     *,
     effect_path: str | Path,
     guide_path: str | Path,
+    samples_path: str | Path,
+    dmso_replicates_path: str | Path,
+    fluconazole_replicates_path: str | Path,
     retrieved_at: str = SI_RETRIEVED_AT,
+    replicates_retrieved_at: str = REPLICATES_RETRIEVED_AT,
     data_root: str | None = None,
 ) -> Path:
-    """Write the raw mirror from the two retrieved SI workbooks plus its ``manifest.json``.
+    """Write the raw mirror from the five retrieved SI workbooks plus its ``manifest.json``.
 
     Idempotent by sha256. ``static-content.springer.com`` is a directly scriptable CDN, so
-    the recorded ``springer_esm`` retrieval re-runs as-is; both URLs were re-retrieved on
-    2026-09-12 and reproduced the pinned hashes exactly.
+    the recorded ``springer_esm`` retrieval re-runs as-is; the effect and guide URLs were
+    re-retrieved on 2026-09-12 and the three per-replicate workbooks (Additional files 5,
+    6 and 7) on 2026-11-25, each reproducing the pinned hash exactly. Additional file 5's
+    bytes are identical to the literature mirror's copy of it.
     """
     root = raw_mirror_dir(data_root)
     files: list[ArtifactRecord] = []
     deposits = (
-        (effect_path, EFFECT_REL, EFFECT_FILENAME, EFFECT_SHA256),
-        (guide_path, GUIDE_REL, GUIDE_FILENAME, GUIDE_SHA256),
+        (effect_path, EFFECT_REL, EFFECT_FILENAME, EFFECT_SHA256, retrieved_at),
+        (guide_path, GUIDE_REL, GUIDE_FILENAME, GUIDE_SHA256, retrieved_at),
+        (
+            samples_path,
+            SAMPLES_REL,
+            SAMPLES_FILENAME,
+            SAMPLES_SHA256,
+            replicates_retrieved_at,
+        ),
+        (
+            dmso_replicates_path,
+            DMSO_REPLICATES_REL,
+            DMSO_REPLICATES_FILENAME,
+            DMSO_REPLICATES_SHA256,
+            replicates_retrieved_at,
+        ),
+        (
+            fluconazole_replicates_path,
+            FLUCONAZOLE_REPLICATES_REL,
+            FLUCONAZOLE_REPLICATES_FILENAME,
+            FLUCONAZOLE_REPLICATES_SHA256,
+            replicates_retrieved_at,
+        ),
     )
-    # Both workbooks are verified before anything is written, so a refusal leaves no
+    # Every workbook is verified before anything is written, so a refusal leaves no
     # mirror directory and no partial deposit behind.
-    for source, _, _, expected in deposits:
+    for source, _, _, expected, _ in deposits:
         verify_sha256(source, expected)
-    for source, relpath, filename, expected in deposits:
+    for source, relpath, filename, expected, retrieved in deposits:
         dest = root / relpath
         dest.parent.mkdir(parents=True, exist_ok=True)
         if dest.exists():
@@ -458,7 +683,7 @@ def deposit_raw_mirror(
                     retriever="torchcell.literature.retrieve.springer_esm",
                     params={"url": url},
                     sha256=expected,
-                    retrieved_at=retrieved_at,
+                    retrieved_at=retrieved,
                 ),
             )
         )
@@ -473,12 +698,21 @@ def deposit_raw_mirror(
         si_data_sources=[
             f"{_ESM_BASE}{EFFECT_FILENAME}",
             f"{_ESM_BASE}{GUIDE_FILENAME}",
+            f"{_ESM_BASE}{SAMPLES_FILENAME}",
+            f"{_ESM_BASE}{DMSO_REPLICATES_FILENAME}",
+            f"{_ESM_BASE}{FLUCONAZOLE_REPLICATES_FILENAME}",
         ],
         si_expected=[
             "Additional file 10 (ATc effects A, drug effects D, no-drug ATc effects A0 "
             "for each gRNA in every tested condition)",
             "Additional file 4 (the five gRNA libraries and their Specificity_sequence "
             "spacers)",
+            "Additional file 5 (the sequenced samples: pool, drug, dose, replicate "
+            "label and whether ATc was in the culture, with its dose in the header)",
+            "Additional file 6 (counts and analysis for the eight 'no drug' 1% DMSO "
+            "replicates of the gene-tiling pools)",
+            "Additional file 7 (counts and analysis of the 20 uM fluconazole "
+            "replicates: three for the gene-tiling pools, two for the mutant pools)",
         ],
         provenance_complete=True,
         created_at=datetime.now(UTC).isoformat(),
@@ -532,12 +766,45 @@ class HeldOutDrug(BaseModel):
     n_records: int
 
 
+class ReplicateNotStored(BaseModel):
+    """One released replicate culture that reaches no record, and why (#1178).
+
+    Not a drop rule: the rules above are about Additional file 10's rows. This is the
+    accounting of the replicate axis itself, so a replicate the source releases and this
+    loader cannot represent is named rather than left silent.
+    """
+
+    sample_pool: str
+    drug: str
+    concentration: str
+    replicate: str
+    reason: str
+
+
+class StoredReplicates(BaseModel):
+    """What the replicate axis produced, per source file (#1178)."""
+
+    source: str
+    sheet: str
+    sha256: str
+    n_guides: int
+    n_replicates: int
+    n_records: int
+    records_per_replicate: dict[str, int]
+
+
 class DropLog(BaseModel):
     """Every retention rule applied to a build, in order, plus the gapped compounds.
 
     ``compound_identity_gaps`` are not drops: those rows are stored, each identified
     compound carrying its typed gap. ``unidentified_compounds_held_out`` are the rows of
     the ``UNIDENTIFIED_COMPOUND_RULE`` rule, per drug, with the quote that grounds it.
+
+    ``source_records``, ``kept_records``, ``dropped_records`` and ``rules`` account for
+    Additional file 10's rows, one A record each (#1178). ``culture_replicates`` accounts
+    for the per-replicate culture records of Additional files 6 and 7, and
+    ``stored_records`` is the store's length: ``kept_records`` plus every file's
+    ``n_records``.
     """
 
     dataset: str
@@ -548,6 +815,9 @@ class DropLog(BaseModel):
     compound_identity_gaps: list[GappedCompound] = []
     unidentified_compounds_held_out: list[HeldOutDrug] = []
     unidentified_compound_sources: list[SourcedValue] = []
+    culture_replicates: list[StoredReplicates] = []
+    replicates_not_stored: list[ReplicateNotStored] = []
+    stored_records: int = 0
 
 
 @register_dataset
@@ -579,13 +849,19 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
 
     @property
     def raw_file_names(self) -> list[str]:
-        """The two sha256-pinned SI workbooks (effect table + guide->spacer map)."""
-        return [EFFECT_FILENAME, GUIDE_FILENAME]
+        """The five sha256-pinned SI workbooks (effects, guides, samples, replicates)."""
+        return [
+            EFFECT_FILENAME,
+            GUIDE_FILENAME,
+            SAMPLES_FILENAME,
+            DMSO_REPLICATES_FILENAME,
+            FLUCONAZOLE_REPLICATES_FILENAME,
+        ]
 
     def download(self) -> None:
         """Link the mirror files into ``raw/`` after verifying each against its pin.
 
-        ``EFFECT_SHA256`` and ``GUIDE_SHA256`` are the pins; the manifest is the
+        ``EFFECT_SHA256`` and its four siblings are the pins; the manifest is the
         retrieval record and must carry the same digests, else
         ``ManifestPinMismatchError`` names both.
         """
@@ -595,6 +871,13 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
         for relpath, filename, expected in (
             (EFFECT_REL, EFFECT_FILENAME, EFFECT_SHA256),
             (GUIDE_REL, GUIDE_FILENAME, GUIDE_SHA256),
+            (SAMPLES_REL, SAMPLES_FILENAME, SAMPLES_SHA256),
+            (DMSO_REPLICATES_REL, DMSO_REPLICATES_FILENAME, DMSO_REPLICATES_SHA256),
+            (
+                FLUCONAZOLE_REPLICATES_REL,
+                FLUCONAZOLE_REPLICATES_FILENAME,
+                FLUCONAZOLE_REPLICATES_SHA256,
+            ),
         ):
             check_manifest_pin(relpath, manifest_sha256(manifest, relpath), expected)
             src = raw_mirror_dir(data_root) / relpath
@@ -630,26 +913,88 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
             )
         }
 
-    def _environment(self, drug: str, conc_raw: Any) -> Environment:
-        """SC-Ura liquid carrying the row's drug at its released dose, 30 C, 20 doublings."""
+    @staticmethod
+    def _target_perturbation(
+        orf: str, gene: str, construct: CrisprConstruct, placed: bool
+    ) -> CrisprInterferencePerturbation | ReleasedIdentifierPerturbation:
+        """The genotype leaf of one guide: CRISPRi, or the released-identifier leaf."""
+        if placed:
+            return CrisprInterferencePerturbation(
+                systematic_gene_name=orf, perturbed_gene_name=gene, crispr=construct
+            )
+        return ReleasedIdentifierPerturbation(
+            systematic_gene_name=orf,
+            gene_namespace="scerevisiae_s288c_sgd_systematic",
+            perturbed_gene_name=gene,
+            identifier_kind="gene identifier of the guide table, as released",
+            released_kind=ReleasedKind.crispr_interference,
+            crispr=construct,
+        )
+
+    def _target_map(self) -> dict[str, tuple[str, str]]:
+        """Guide name -> its released ``(ORF, Gene_name)`` in Additional file 4.
+
+        The per-replicate workbooks carry only a pool and a guide name, so the target
+        comes from the guide design table, as released. Measured on the pinned files: a
+        guide name repeated there (63 of them, a broad-tiling guide also in a gene-tiling
+        set) agrees on ORF, gene and spacer in every case, and where Additional file 10
+        also names the guide's target the two files agree on every row.
+        """
+        guides = pd.read_excel(
+            osp.join(self.raw_dir, GUIDE_FILENAME), sheet_name=GUIDE_SHEET
+        )
+        targets: dict[str, tuple[str, str]] = {}
+        for name, orf, gene in zip(
+            guides["Guide_name"], guides["ORF"], guides["Gene_name"], strict=True
+        ):
+            released = (str(orf).strip(), "" if pd.isna(gene) else str(gene).strip())
+            held = targets.setdefault(str(name), released)
+            if held != released:
+                raise ValueError(
+                    f"Additional file 4 gives guide {name!r} two targets: "
+                    f"{held!r} and {released!r}"
+                )
+        return targets
+
+    def _environment(
+        self, drug: str, conc_raw: Any, *, atc: Concentration | None = None
+    ) -> Environment:
+        """SC-Ura liquid carrying the row's drug at its released dose, 30 C, 20 doublings.
+
+        ``atc`` is the induction dose of ONE culture (a culture record); an A record
+        contrasts the induced and uninduced cultures, so it carries none.
+        """
+        perturbations: list[Any] = [
+            SmallMoleculePerturbation(
+                compound=released_compound(drug),
+                concentration=parse_concentration(drug, conc_raw),
+            )
+        ]
+        if atc is not None:
+            perturbations.append(
+                SmallMoleculePerturbation(
+                    compound=resolved_compound(ATC_COMPOUND.value), concentration=atc
+                )
+            )
         return Environment(
             media=SC_URA,
             temperature=Temperature(value=TEMPERATURE_C.value),
-            perturbations=[
-                SmallMoleculePerturbation(
-                    compound=released_compound(drug),
-                    concentration=parse_concentration(drug, conc_raw),
-                )
-            ],
+            perturbations=perturbations,
             aerobicity=AEROBICITY.value,
             duration_generations=DURATION_GENERATIONS.value,
             provenance_gaps=[DURATION_HOURS_GAP],
         )
 
     def _reference(
-        self, environment: Environment
+        self, environment: Environment, units: str = UNITS
     ) -> EnvironmentResponseExperimentReference:
-        """Uninduced (-ATc) baseline: no ATc-induced fold change -> A = 0 (log2 ratio 0)."""
+        """The readout's own zero in this environment, over the control replicates.
+
+        For an A record the uninduced (-ATc) baseline: no ATc-induced fold change, A = 0.
+        For a culture record the pool's median guide in that same culture, f = 0 by the
+        median centring. ``replicate_id`` stays None: a reference is the aggregate
+        baseline of the condition, not one replicate of it.
+        """
         return EnvironmentResponseExperimentReference(
             dataset_name=self.name,
             genome_reference=ReferenceGenome(
@@ -663,15 +1008,141 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                 measurement_type=MeasurementType.log2_ratio,
                 assay_type=ASSAY.value,
                 environment_response=0.0,
-                units=UNITS,
+                units=units,
             ),
         )
 
+    def _samples(
+        self,
+    ) -> tuple[Concentration, dict[tuple[str, str, str], list[int]], dict[str, str]]:
+        """Additional file 5: the induction dose, the replicate inventory, the spellings.
+
+        The replicate labels are the source's own (``Replicate``, "Replicate
+        Identifier"), keyed by the sample's pool name, its drug and its TYPED dose
+        (:func:`dose_key`). The third return is that dose key's released spelling, for
+        the ledger.
+        """
+        samples = pd.read_excel(
+            osp.join(self.raw_dir, SAMPLES_FILENAME), sheet_name=SAMPLES_SHEET
+        )
+        column = atc_column([str(name) for name in samples.columns])
+        inventory: dict[tuple[str, str, str], set[int]] = {}
+        spellings: dict[str, str] = {}
+        for pool, drug, dose, replicate in zip(
+            samples["Pool Name"],
+            samples["Drug"],
+            samples["Drug concentration"],
+            samples["Replicate"],
+            strict=True,
+        ):
+            named = str(drug).strip()
+            typed = dose_key(named, str(dose).strip())
+            spellings[typed] = str(dose).strip()
+            key = (str(pool).strip(), named, typed)
+            inventory.setdefault(key, set()).add(int(replicate))
+        return (
+            atc_concentration(column),
+            {key: sorted(labels) for key, labels in inventory.items()},
+            spellings,
+        )
+
+    def _replicate_frame(self, filename: str, sheet: str, n_replicates: int) -> Any:
+        """One per-replicate workbook, every statistic column coerced to a number.
+
+        The blank cells of a guide the condition released no data for are the literal
+        string ``nan`` in these workbooks, so every column but the pool and the guide is
+        coerced; a cell where the count, the fitness and its variance disagree about
+        being present is refused rather than patched.
+        """
+        frame = pd.read_excel(osp.join(self.raw_dir, filename), sheet_name=sheet)
+        for replicate in range(1, n_replicates + 1):
+            for arm in ("noATC", "plusATC"):
+                names = [
+                    f"Rep-{replicate}_{arm}_{field}"
+                    for field in ("count", "f_mean", "f_var")
+                ]
+                for name in names:
+                    frame[name] = pd.to_numeric(frame[name], errors="coerce")
+                present = frame[names].notna()
+                partial = present.any(axis=1) & ~present.all(axis=1)
+                if bool(partial.any()):
+                    guides = frame.loc[partial, "Guide"].tolist()
+                    raise ValueError(
+                        f"{filename} replicate {replicate} {arm} releases a partial "
+                        f"measurement for {guides!r}"
+                    )
+        return frame
+
+    @staticmethod
+    def _check_effect_rows_are_replicate_one(
+        df: Any,
+        inventory: dict[tuple[str, str, str], list[int]],
+        replicate_frames: dict[str, Any],
+    ) -> None:
+        """Refuse unless every Additional file 10 row is replicate 1 of its condition.
+
+        Two checks, both over the pinned bytes, because ``replicate_id = "1"`` on an A
+        record is an assertion about which culture pair it came from:
+
+        1. Additional file 5 lists the (pool, drug, dose) sample and its replicate labels
+           start at 1, so a condition whose first released replicate is not 1 is refused.
+        2. where a per-replicate workbook also covers that (pool, guide), Additional file
+           10's ``-ATC_count`` and ``+ATC_count`` equal its ``Rep-1`` counts. Measured
+           2026.11.24 on the pinned files: 440 of 440 DMSO rows and 634 of 646
+           fluconazole rows (the other 12 have no Rep-1 cells at all), 0 mismatches.
+        """
+        for keys, _ in df.groupby(["#Pool", "Drug", "Concentration"]):
+            pool, drug, dose = (str(value).strip() for value in keys)
+            if pool not in POOL_TO_SAMPLE_POOL:
+                raise ValueError(f"Additional file 10 names an unknown pool {pool!r}")
+            key = (POOL_TO_SAMPLE_POOL[pool], drug, dose_key(drug, dose))
+            labels = inventory.get(key)
+            if labels is None:
+                raise ValueError(f"Additional file 5 lists no sample for {key!r}")
+            if labels[0] != 1:
+                raise ValueError(
+                    f"Additional file 5's first replicate of {key!r} is {labels[0]}, "
+                    "so Additional file 10's row is not replicate 1"
+                )
+        for drug, frame in replicate_frames.items():
+            counts = frame.set_index(["#Pool", "Guide"])[
+                ["Rep-1_noATC_count", "Rep-1_plusATC_count"]
+            ]
+            rows = df[df["Drug"].map(lambda value: str(value).strip()) == drug]
+            for _, row in rows.iterrows():
+                index = (str(row["#Pool"]), str(row["Guide"]))
+                if index not in counts.index:
+                    continue
+                first = counts.loc[index]
+                for released, pinned in (
+                    (row["-ATC_count"], first["Rep-1_noATC_count"]),
+                    (row["+ATC_count"], first["Rep-1_plusATC_count"]),
+                ):
+                    if pd.isna(pinned):
+                        continue
+                    if float(released) != float(pinned):
+                        raise ValueError(
+                            f"Additional file 10's {drug} row for {index!r} carries "
+                            f"count {released} where replicate 1 carries {pinned}, so "
+                            "the row is not replicate 1"
+                        )
+
     @post_process
     def process(self) -> None:
-        """Build one env x geno -> A record per (pool, guide, drug, condition); write LMDB."""
+        """Build one record per released replicate measurement; write the LMDB (#1178).
+
+        An A record per Additional file 10 row (replicate 1 of its condition) and a
+        culture record per replicate culture Additional files 6 and 7 release.
+        """
         verify_raw_files(
-            self.raw_dir, {EFFECT_FILENAME: EFFECT_SHA256, GUIDE_FILENAME: GUIDE_SHA256}
+            self.raw_dir,
+            {
+                EFFECT_FILENAME: EFFECT_SHA256,
+                GUIDE_FILENAME: GUIDE_SHA256,
+                SAMPLES_FILENAME: SAMPLES_SHA256,
+                DMSO_REPLICATES_FILENAME: DMSO_REPLICATES_SHA256,
+                FLUCONAZOLE_REPLICATES_FILENAME: FLUCONAZOLE_REPLICATES_SHA256,
+            },
         )
         df = pd.read_excel(
             osp.join(self.raw_dir, EFFECT_FILENAME), sheet_name=EFFECT_SHEET
@@ -679,6 +1150,13 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
         df["A"] = pd.to_numeric(df["A"], errors="coerce")
         df["var(A)"] = pd.to_numeric(df["var(A)"], errors="coerce")
         spacer_map = self._spacer_map()
+        target_map = self._target_map()
+        atc_dose, inventory, dose_spellings = self._samples()
+        replicate_frames = {
+            drug: self._replicate_frame(filename, sheet, n_replicates)
+            for drug, (filename, sheet, n_replicates) in REPLICATE_WORKBOOKS.items()
+        }
+        self._check_effect_rows_are_replicate_one(df, inventory, replicate_frames)
         publication = Publication(doi=DOI, doi_url=f"https://doi.org/{DOI}")
 
         source_records = len(df)
@@ -687,6 +1165,7 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
         env_cache: dict[tuple[str, str], dict[str, Any]] = {}
 
         def prepared(drug: str, conc_raw: Any) -> dict[str, Any]:
+            """The A-record environment of one drug condition, and its A = 0 reference."""
             key = (drug, str(conc_raw))
             if key not in env_cache:
                 environment = self._environment(drug, conc_raw)
@@ -695,6 +1174,23 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                     "reference": self._reference(environment),
                 }
             return env_cache[key]
+
+        culture_cache: dict[tuple[str, str, bool], dict[str, Any]] = {}
+
+        def prepared_culture(
+            drug: str, conc_raw: Any, *, induced: bool
+        ) -> dict[str, Any]:
+            """One culture's environment (ATc when induced), and its f = 0 reference."""
+            key = (drug, str(conc_raw), induced)
+            if key not in culture_cache:
+                environment = self._environment(
+                    drug, conc_raw, atc=atc_dose if induced else None
+                )
+                culture_cache[key] = {
+                    "environment": environment,
+                    "reference": self._reference(environment, CULTURE_UNITS),
+                }
+            return culture_cache[key]
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -705,6 +1201,8 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
         held_out_doses: dict[str, set[str]] = {}
         released_targets: set[str] = set()
         no_spacer_guides: set[str] = set()
+        stored_replicates: list[StoredReplicates] = []
+        stored_samples: set[tuple[str, str, str, str]] = set()
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for _, row in tqdm(df.iterrows(), total=len(df), desc="smith2016"):
                 drug = str(row["Drug"])
@@ -731,28 +1229,22 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                 compound = item["environment"].perturbations[0].compound
                 if compound.provenance_gaps:
                     gapped_records[drug] = gapped_records.get(drug, 0) + 1
+                pool = str(row["#Pool"])
                 construct = CrisprConstruct(
                     effector=EFFECTOR.value,
                     guide_sequence=spacer,
                     n_guides=1,
-                    library_pool=str(row["#Pool"]),
+                    library_pool=pool,
                 )
-                target: CrisprInterferencePerturbation | ReleasedIdentifierPerturbation
-                if placed:
-                    target = CrisprInterferencePerturbation(
-                        systematic_gene_name=orf,
-                        perturbed_gene_name=gene,
-                        crispr=construct,
+                target = self._target_perturbation(orf, gene, construct, placed)
+                stored_samples.add(
+                    (
+                        POOL_TO_SAMPLE_POOL[pool],
+                        drug.strip(),
+                        dose_key(drug, str(row["Concentration"]).strip()),
+                        FIRST_REPLICATE,
                     )
-                else:
-                    target = ReleasedIdentifierPerturbation(
-                        systematic_gene_name=orf,
-                        gene_namespace="scerevisiae_s288c_sgd_systematic",
-                        perturbed_gene_name=gene,
-                        identifier_kind="gene identifier of the guide table, as released",
-                        released_kind=ReleasedKind.crispr_interference,
-                        crispr=construct,
-                    )
+                )
                 experiment = EnvironmentResponseExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(perturbations=[target]),
@@ -765,6 +1257,7 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                         environment_response_uncertainty_type=UncertaintyType.variance,
                         n_samples=1,
                         sample_unit=SampleUnit.pooled,
+                        replicate_id=FIRST_REPLICATE,
                         units=UNITS,
                     ),
                 )
@@ -775,6 +1268,88 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                     ),
                 )
                 idx += 1
+            kept_effect_records = idx
+            for drug, frame in replicate_frames.items():
+                filename, sheet, n_replicates = REPLICATE_WORKBOOKS[drug]
+                dose = REPLICATE_DOSE.value[drug]
+                per_replicate: dict[str, int] = {}
+                for _, row in tqdm(
+                    frame.iterrows(), total=len(frame), desc=f"smith2016 {drug}"
+                ):
+                    pool = str(row["#Pool"])
+                    if pool not in POOL_TO_SAMPLE_POOL:
+                        raise ValueError(f"{filename} names an unknown pool {pool!r}")
+                    guide_name = str(row["Guide"])
+                    spacer = spacer_map.get(guide_name)
+                    released = target_map.get(guide_name)
+                    if spacer is None or released is None:
+                        raise ValueError(
+                            f"{filename} releases replicates for guide {guide_name!r}, "
+                            "which Additional file 4 does not list"
+                        )
+                    orf, gene, placed = self._released_target(*released)
+                    if not placed:
+                        released_targets.add(orf)
+                    construct = CrisprConstruct(
+                        effector=EFFECTOR.value,
+                        guide_sequence=spacer,
+                        n_guides=1,
+                        library_pool=pool,
+                    )
+                    target = self._target_perturbation(orf, gene, construct, placed)
+                    for replicate in range(1, n_replicates + 1):
+                        for arm, induced in (("noATC", False), ("plusATC", True)):
+                            fitness = row[f"Rep-{replicate}_{arm}_f_mean"]
+                            variance = row[f"Rep-{replicate}_{arm}_f_var"]
+                            if pd.isna(fitness):
+                                continue
+                            item = prepared_culture(drug, dose, induced=induced)
+                            experiment = EnvironmentResponseExperiment(
+                                dataset_name=self.name,
+                                genotype=Genotype(perturbations=[target]),
+                                environment=item["environment"],
+                                phenotype=EnvironmentResponsePhenotype(
+                                    measurement_type=MeasurementType.log2_ratio,
+                                    assay_type=ASSAY.value,
+                                    environment_response=float(fitness),
+                                    environment_response_uncertainty=float(variance),
+                                    environment_response_uncertainty_type=(
+                                        UncertaintyType.variance
+                                    ),
+                                    n_samples=1,
+                                    sample_unit=SampleUnit.pooled,
+                                    replicate_id=str(replicate),
+                                    units=CULTURE_UNITS,
+                                ),
+                            )
+                            txn.put(
+                                f"{idx}".encode(),
+                                self._intern_record(
+                                    experiment, item["reference"], publication, itxn
+                                ),
+                            )
+                            idx += 1
+                            label = str(replicate)
+                            per_replicate[label] = per_replicate.get(label, 0) + 1
+                            stored_samples.add(
+                                (
+                                    POOL_TO_SAMPLE_POOL[pool],
+                                    drug,
+                                    dose_key(drug, dose),
+                                    label,
+                                )
+                            )
+                stored_replicates.append(
+                    StoredReplicates(
+                        source=filename,
+                        sheet=sheet,
+                        sha256=REPLICATE_SHA256S[filename],
+                        n_guides=len(frame),
+                        n_replicates=n_replicates,
+                        n_records=sum(per_replicate.values()),
+                        records_per_replicate=dict(sorted(per_replicate.items())),
+                    )
+                )
         env.close()
         interned_env.close()
 
@@ -836,11 +1411,38 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                     n_records=count,
                 )
             )
+        # The replicate axis: every (pool, drug, dose, replicate) Additional file 5
+        # releases either reached a record or is named with its reason. A condition whose
+        # drug is held out under UNIDENTIFIED_COMPOUND_RULE is accounted by that rule for
+        # all of its replicates, so it is not listed twice.
+        replicates_not_stored: list[ReplicateNotStored] = []
+        for (pool, drug, typed), labels in sorted(inventory.items()):
+            if not drug_is_identified(drug):
+                continue
+            for released_label in labels:
+                key = (pool, drug, typed, str(released_label))
+                if key in stored_samples:
+                    continue
+                reason = REPLICATE_NOT_STORED_REASONS.get(key)
+                if reason is None:
+                    raise RuntimeError(
+                        f"released replicate {key!r} reached no record and no reason is "
+                        "recorded for it"
+                    )
+                replicates_not_stored.append(
+                    ReplicateNotStored(
+                        sample_pool=pool,
+                        drug=drug,
+                        concentration=dose_spellings[typed],
+                        replicate=str(released_label),
+                        reason=reason,
+                    )
+                )
         drop_log = DropLog(
             dataset=self.name,
             source_records=source_records,
-            kept_records=idx,
-            dropped_records=source_records - idx,
+            kept_records=kept_effect_records,
+            dropped_records=source_records - kept_effect_records,
             rules=rules,
             compound_identity_gaps=compound_identity_gaps,
             unidentified_compounds_held_out=[
@@ -852,6 +1454,9 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                 for drug, count in sorted(held_out.items())
             ],
             unidentified_compound_sources=[COMPOUND_LIST],
+            culture_replicates=stored_replicates,
+            replicates_not_stored=replicates_not_stored,
+            stored_records=idx,
         )
         with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as handle:
             handle.write(drop_log.model_dump_json(indent=2))
@@ -861,20 +1466,30 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
                 f"drop accounting mismatch: rules total {accounted}, "
                 f"{drop_log.dropped_records} records missing from the build"
             )
+        culture_records = sum(entry.n_records for entry in stored_replicates)
+        if kept_effect_records + culture_records != idx:
+            raise RuntimeError(
+                f"record accounting mismatch: {kept_effect_records} A records plus "
+                f"{culture_records} culture records is not the {idx} written"
+            )
         log.info(
-            "Smith2016: wrote %d of %d rows (%d under a typed compound-identity gap on "
-            "%d drugs); held out %d rows of %d unidentified vendor-code drugs; %d with "
-            "no A/var(A), %d targets on the released-identifier leaf, %d guides with no "
-            "spacer",
+            "Smith2016: wrote %d records -- %d of %d Additional file 10 rows (%d under a "
+            "typed compound-identity gap on %d drugs) plus %d replicate cultures; held "
+            "out %d rows of %d unidentified vendor-code drugs; %d with no A/var(A), %d "
+            "targets on the released-identifier leaf, %d guides with no spacer, %d "
+            "released replicates not stored",
             idx,
+            kept_effect_records,
             source_records,
             sum(gapped_records.values()),
             len(gapped_records),
+            culture_records,
             sum(held_out.values()),
             len(held_out),
             n_nan,
             len(released_targets),
             n_no_spacer,
+            len(replicates_not_stored),
         )
 
     def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:

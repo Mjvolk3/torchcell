@@ -101,18 +101,19 @@ from torchcell.sequence.genome.registry import (
 )
 
 _EFFECT_HEADER = [
-    "#Pool", "Guide", "ORF", "Gene", "Drug", "Concentration", "A", "var(A)"
+    "#Pool", "Guide", "ORF", "Gene", "Drug", "Concentration",
+    "-ATC_count", "+ATC_count", "A", "var(A)",
 ]  # fmt: skip
 _EFFECT_ROWS: list[list[Any]] = [
-    ["broad_tiling", "ERG11_g1", "YHR007C", "ERG11", "Fluconazole", "20 uM", -1.5, 0.04],
-    ["gene_tiling_20bp", "ERG11_g1", "YHR007C", "ERG11", "Fluconazole", "20 uM", -0.7, 0.02],
-    ["broad_tiling", "TOR1_g5", "YJR066W", "TOR1", "DMSO", 0.01, 0.3, 0.01],
-    ["broad_tiling", "ERG11_g1", "YHR007C", "ERG11", "1181-0519", "5 uM", -2.0, 0.1],
-    ["broad_tiling", "ERG11_g2", "YHR007C", "ERG11", "Fluconazole", "20 uM", None, 0.03],
-    ["broad_tiling", "ERG11_g2", "YHR007C", "ERG11", "Fluconazole", "20 uM", 0.1, "n/a"],
-    ["broad_tiling", "GHOST_g1", "YOL999W", None, "Fluconazole", "20 uM", 0.1, 0.01],
-    ["broad_tiling", "ERG11_g9", "YHR007C", "ERG11", "Rapamycin", "1 nM", 0.5, 0.05],
-    ["broad_tiling", "ERG11_g3", " erg11 ", "ERG11", "Rapamycin", "1 nM", 0.25, 0.0025],
+    ["broad_tiling", "ERG11_g1", "YHR007C", "ERG11", "Fluconazole", "20 uM", 300, 200, -1.5, 0.04],
+    ["gene_tiling_20bp", "ERG11_g1", "YHR007C", "ERG11", "Fluconazole", "20 uM", 310, 210, -0.7, 0.02],
+    ["broad_tiling", "TOR1_g5", "YJR066W", "TOR1", "DMSO", 0.01, 100, 80, 0.3, 0.01],
+    ["broad_tiling", "ERG11_g1", "YHR007C", "ERG11", "1181-0519", "5 uM", 320, 220, -2.0, 0.1],
+    ["broad_tiling", "ERG11_g2", "YHR007C", "ERG11", "Fluconazole", "20 uM", 330, 230, None, 0.03],
+    ["broad_tiling", "ERG11_g2", "YHR007C", "ERG11", "Fluconazole", "20 uM", 340, 240, 0.1, "n/a"],
+    ["broad_tiling", "GHOST_g1", "YOL999W", None, "Fluconazole", "20 uM", 350, 250, 0.1, 0.01],
+    ["broad_tiling", "ERG11_g9", "YHR007C", "ERG11", "Rapamycin", "1 nM", 360, 260, 0.5, 0.05],
+    ["broad_tiling", "ERG11_g3", " erg11 ", "ERG11", "Rapamycin", "1 nM", 370, 270, 0.25, 0.0025],
 ]  # fmt: skip
 _SPACERS = {
     "ERG11_g1": "ACGTACGTACGTACGTACGT",
@@ -121,10 +122,116 @@ _SPACERS = {
     "TOR1_g5": "AATTAATTAATTAATTAATT",
     "GHOST_g1": "CCCCAAAATTTTGGGGCCCC",
 }
+#: Each fixture guide's released target in Additional file 4 (``ORF``, ``Gene_name``),
+#: which is where a culture record reads its target: the per-replicate workbooks carry
+#: only a pool and a guide name. ``GHOST_g1``'s gene cell is blank.
+_GUIDE_TARGETS = {
+    "ERG11_g1": ("YHR007C", "ERG11"),
+    "ERG11_g2": ("YHR007C", "ERG11"),
+    "ERG11_g3": ("YHR007C", "ERG11"),
+    "TOR1_g5": ("YJR066W", "TOR1"),
+    "GHOST_g1": ("YOL999W", None),
+}
+
+#: Additional file 5, the sequenced samples: every (pool, drug, dose) of the effect rows
+#: with replicate 1, plus the extra replicates the per-replicate workbooks release. One
+#: row per arm, as the released sheet writes it.
+_SAMPLE_HEADER = [
+    "MiSeq Run #", "Pool Name", "Drug", "Drug concentration",
+    "ATC (250ng/ml)", "Replicate",
+]  # fmt: skip
+_SAMPLE_CONDITIONS = [
+    ("broad_tiling", "Fluconazole", "20 uM", (1, 2, 3)),
+    ("gene_tiling18 & gene_tiling20", "Fluconazole", "20 uM", (1,)),
+    ("broad_tiling", "DMSO", 0.01, (1, 2)),
+    ("broad_tiling", "1181-0519", "5 uM", (1,)),
+    ("broad_tiling", "Rapamycin", "1 nM", (1,)),
+]
+_NAN = "nan"
 
 
-def _write_workbooks(raw: Path, effect_rows: list[list[Any]] = _EFFECT_ROWS) -> None:
-    """Write the two SI workbooks with the header on row 0 of the named sheets."""
+def _sample_rows(
+    conditions: list[tuple[str, str, Any, tuple[int, ...]]] = _SAMPLE_CONDITIONS,
+) -> list[list[Any]]:
+    """Additional file 5's rows: pool, drug, dose, induction arm, replicate label."""
+    rows: list[list[Any]] = []
+    for pool, drug, dose, replicates in conditions:
+        for replicate in replicates:
+            for arm in ("no", "yes"):
+                rows.append([1, pool, drug, dose, arm, replicate])
+    return rows
+
+
+def _replicate_header(n_replicates: int) -> list[str]:
+    """A per-replicate sheet's header: the combined block then each replicate's pair."""
+    header = [
+        "#Pool", "Guide", "Combined_A_mean", "Combined_A_var",
+        "Combined_noATC_mean", "Combined_noATC_var",
+        "Combined_plusATC_mean", "Combined_plusATC_var",
+    ]  # fmt: skip
+    for replicate in range(1, n_replicates + 1):
+        for arm in ("noATC", "plusATC"):
+            header += [
+                f"Rep-{replicate}_{arm}_count",
+                f"Rep-{replicate}_{arm}_f_mean",
+                f"Rep-{replicate}_{arm}_f_var",
+            ]
+    return header
+
+
+def _replicate_row(
+    pool: str,
+    guide: str,
+    cells: dict[int, tuple[tuple[float, float, float], ...]],
+    n: int,
+) -> list[Any]:
+    """One guide's row: the combined block, then (count, f, var) per replicate and arm.
+
+    A replicate the condition released no data for is the literal ``nan`` the workbooks
+    write, in all three cells of both arms.
+    """
+    row: list[Any] = [pool, guide, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    for replicate in range(1, n + 1):
+        arms = cells.get(replicate)
+        for arm in (0, 1):
+            if arms is None:
+                row += [_NAN, _NAN, _NAN]
+            else:
+                row += list(arms[arm])
+    return row
+
+
+#: Additional file 6: one guide with replicates 1 and 2, and one with nothing released.
+_DMSO_ROWS = [
+    _replicate_row(
+        "broad_tiling",
+        "TOR1_g5",
+        {1: ((100, 0.5, 0.01), (80, 0.8, 0.02)), 2: ((90, 0.4, 0.03), (70, 0.6, 0.04))},
+        8,
+    ),
+    _replicate_row("broad_tiling", "GHOST_g1", {}, 8),
+]
+#: Additional file 7: one guide with all three replicates.
+_FLUCONAZOLE_ROWS = [
+    _replicate_row(
+        "broad_tiling",
+        "ERG11_g1",
+        {
+            1: ((300, -0.2, 0.05), (200, -1.7, 0.06)),
+            2: ((290, -0.3, 0.07), (190, -1.8, 0.08)),
+            3: ((280, -0.4, 0.09), (180, -1.9, 0.10)),
+        },
+        3,
+    )
+]
+
+
+def _write_workbooks(
+    raw: Path,
+    effect_rows: list[list[Any]] = _EFFECT_ROWS,
+    sample_rows: list[list[Any]] | None = None,
+) -> None:
+    """Write the five SI workbooks with the header on row 0 of the named sheets."""
     raw.mkdir(parents=True, exist_ok=True)
     effect = openpyxl.Workbook()
     sheet = effect.active
@@ -136,10 +243,34 @@ def _write_workbooks(raw: Path, effect_rows: list[list[Any]] = _EFFECT_ROWS) -> 
     guides = openpyxl.Workbook()
     sheet = guides.active
     sheet.title = s.GUIDE_SHEET
-    sheet.append(["Guide_name", "Specificity_sequence"])
+    sheet.append(["Guide_name", "ORF", "Gene_name", "Specificity_sequence"])
     for name, spacer in _SPACERS.items():
-        sheet.append([name, spacer])
+        orf, gene = _GUIDE_TARGETS[name]
+        sheet.append([name, orf, gene, spacer])
     guides.save(raw / s.GUIDE_FILENAME)
+    samples = openpyxl.Workbook()
+    sheet = samples.active
+    sheet.title = s.SAMPLES_SHEET
+    sheet.append(_SAMPLE_HEADER)
+    for row in sample_rows if sample_rows is not None else _sample_rows():
+        sheet.append(row)
+    samples.save(raw / s.SAMPLES_FILENAME)
+    for filename, sheet_name, header_size, rows in (
+        (s.DMSO_REPLICATES_FILENAME, s.DMSO_REPLICATES_SHEET, 8, _DMSO_ROWS),
+        (
+            s.FLUCONAZOLE_REPLICATES_FILENAME,
+            s.FLUCONAZOLE_REPLICATES_SHEET,
+            3,
+            _FLUCONAZOLE_ROWS,
+        ),
+    ):
+        book = openpyxl.Workbook()
+        sheet = book.active
+        sheet.title = sheet_name
+        sheet.append(_replicate_header(header_size))
+        for row in rows:
+            sheet.append(row)
+        book.save(raw / filename)
 
 
 def _root(tmp_path: Path, slug: str = "crispri_chemgen_smith2016") -> Path:
@@ -156,16 +287,28 @@ def dataset(tmp_path: Path) -> s.CrispriChemgenSmith2016Dataset:
 _PUBLICATION = Publication(doi=s.DOI, doi_url=f"https://doi.org/{s.DOI}")
 
 
-def _environment(drug: str, value: float, unit: ConcentrationUnit) -> Environment:
+def _environment(
+    drug: str, value: float, unit: ConcentrationUnit, *, induced: bool = False
+) -> Environment:
+    perturbations: list[Any] = [
+        SmallMoleculePerturbation(
+            compound=resolved_compound(drug),
+            concentration=Concentration(value=value, unit=unit),
+        )
+    ]
+    if induced:
+        perturbations.append(
+            SmallMoleculePerturbation(
+                compound=resolved_compound("anhydrotetracycline"),
+                concentration=Concentration(
+                    value=0.25, unit=ConcentrationUnit.ug_per_ml
+                ),
+            )
+        )
     return Environment(
         media=SC_URA,
         temperature=Temperature(value=30.0),
-        perturbations=[
-            SmallMoleculePerturbation(
-                compound=resolved_compound(drug),
-                concentration=Concentration(value=value, unit=unit),
-            )
-        ],
+        perturbations=perturbations,
         aerobicity="aerobic",
         duration_generations=20.0,
         provenance_gaps=[s.DURATION_HOURS_GAP],
@@ -175,6 +318,10 @@ def _environment(drug: str, value: float, unit: ConcentrationUnit) -> Environmen
 _FLUCONAZOLE = _environment("Fluconazole", 20.0, ConcentrationUnit.micromolar)
 _DMSO = _environment("DMSO", 1.0, ConcentrationUnit.percent_v_v)
 _RAPAMYCIN = _environment("Rapamycin", 1.0, ConcentrationUnit.nanomolar)
+_FLUCONAZOLE_ATC = _environment(
+    "Fluconazole", 20.0, ConcentrationUnit.micromolar, induced=True
+)
+_DMSO_ATC = _environment("DMSO", 1.0, ConcentrationUnit.percent_v_v, induced=True)
 
 
 def _target(
@@ -198,7 +345,16 @@ def _target(
 
 
 def _experiment(
-    orf: str, gene: str, spacer: str, pool: str, env: Environment, a: float, var: float
+    orf: str,
+    gene: str,
+    spacer: str,
+    pool: str,
+    env: Environment,
+    a: float,
+    var: float,
+    *,
+    replicate: str = "1",
+    units: str = s.UNITS,
 ) -> EnvironmentResponseExperiment:
     return EnvironmentResponseExperiment(
         dataset_name="CrispriChemgenSmith2016Dataset",
@@ -212,12 +368,38 @@ def _experiment(
             environment_response_uncertainty_type=UncertaintyType.variance,
             n_samples=1,
             sample_unit=SampleUnit.pooled,
-            units=s.UNITS,
+            replicate_id=replicate,
+            units=units,
         ),
     )
 
 
-def _reference(env: Environment) -> EnvironmentResponseExperimentReference:
+def _culture(
+    orf: str,
+    gene: str,
+    spacer: str,
+    env: Environment,
+    fitness: float,
+    var: float,
+    replicate: str,
+) -> EnvironmentResponseExperiment:
+    """One culture record: that replicate's released guide fitness f in that culture."""
+    return _experiment(
+        orf,
+        gene,
+        spacer,
+        "broad_tiling",
+        env,
+        fitness,
+        var,
+        replicate=replicate,
+        units=s.CULTURE_UNITS,
+    )
+
+
+def _reference(
+    env: Environment, units: str = s.UNITS
+) -> EnvironmentResponseExperimentReference:
     return EnvironmentResponseExperimentReference(
         dataset_name="CrispriChemgenSmith2016Dataset",
         genome_reference=ReferenceGenome(
@@ -231,7 +413,7 @@ def _reference(env: Environment) -> EnvironmentResponseExperimentReference:
             measurement_type=MeasurementType.log2_ratio,
             assay_type=AssayType.pooled_competitive_growth_barcode,
             environment_response=0.0,
-            units=s.UNITS,
+            units=units,
         ),
     )
 
@@ -270,6 +452,25 @@ _EXPECTED = [
     _experiment(
         "erg11", "ERG11", _SPACERS["ERG11_g3"], "broad_tiling", _RAPAMYCIN, 0.25, 0.0025
     ),
+    # Additional file 6, the TOR1_g5 row: replicates 1 and 2, each culture its own
+    # record (the uninduced one first), replicates 3-8 released as ``nan``.
+    _culture("YJR066W", "TOR1", _SPACERS["TOR1_g5"], _DMSO, 0.5, 0.01, "1"),
+    _culture("YJR066W", "TOR1", _SPACERS["TOR1_g5"], _DMSO_ATC, 0.8, 0.02, "1"),
+    _culture("YJR066W", "TOR1", _SPACERS["TOR1_g5"], _DMSO, 0.4, 0.03, "2"),
+    _culture("YJR066W", "TOR1", _SPACERS["TOR1_g5"], _DMSO_ATC, 0.6, 0.04, "2"),
+    # Additional file 7, the ERG11_g1 row: all three replicates.
+    _culture("YHR007C", "ERG11", _SPACERS["ERG11_g1"], _FLUCONAZOLE, -0.2, 0.05, "1"),
+    _culture(
+        "YHR007C", "ERG11", _SPACERS["ERG11_g1"], _FLUCONAZOLE_ATC, -1.7, 0.06, "1"
+    ),
+    _culture("YHR007C", "ERG11", _SPACERS["ERG11_g1"], _FLUCONAZOLE, -0.3, 0.07, "2"),
+    _culture(
+        "YHR007C", "ERG11", _SPACERS["ERG11_g1"], _FLUCONAZOLE_ATC, -1.8, 0.08, "2"
+    ),
+    _culture("YHR007C", "ERG11", _SPACERS["ERG11_g1"], _FLUCONAZOLE, -0.4, 0.09, "3"),
+    _culture(
+        "YHR007C", "ERG11", _SPACERS["ERG11_g1"], _FLUCONAZOLE_ATC, -1.9, 0.10, "3"
+    ),
 ]
 
 
@@ -285,28 +486,74 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def test_build_keeps_five_records_in_row_order_with_exact_records(
+def test_build_keeps_fifteen_per_replicate_records_in_file_order(
     dataset: s.CrispriChemgenSmith2016Dataset,
 ) -> None:
-    """Records 0-4 are rows 0, 1, 2, 6 and 8 of the effect table, each equal to a
-    hand-built ``EnvironmentResponseExperiment``: the released ``Gene`` cell as the
-    perturbed name (the ORF again where it is blank, row 6), the released ORF whatever
-    the annotation says of it (YOL999W), the joined spacer, the row's pool, the drug
-    environment, and the SE derived from ``var(A)`` with n = 1: 0.2, sqrt(0.02), 0.1,
-    0.1, 0.05. Row 3's vendor code 1181-0519 is unidentified and held out, so no record
+    """Five A records then ten culture records, each equal to a hand-built experiment.
+
+    Records 0-4 are rows 0, 1, 2, 6 and 8 of the effect table: the released ``Gene`` cell
+    as the perturbed name (the ORF again where it is blank, row 6), the released ORF
+    whatever the annotation says of it (YOL999W), the joined spacer, the row's pool, the
+    drug environment, ``replicate_id = "1"`` (every effect row is replicate 1 of its
+    condition), and the SE derived from ``var(A)`` with n = 1: 0.2, sqrt(0.02), 0.1, 0.1,
+    0.05. Row 3's vendor code 1181-0519 is unidentified and held out, so no record
     carries it. The DMSO record carries the canonical compound name ``dimethyl sulfoxide`` at
     the sourced 1.0 percent v/v, not the released 0.01. Row 8's `` erg11 `` ORF cell is
     not ORF-shaped and is stored on the released-gene-name leaf with its construct
     (#1045).
+
+    Records 5-14 are the released replicate cultures, Additional file 6 first: TOR1_g5's
+    replicates 1 and 2 (the uninduced culture of each pair first, replicates 3-8 released
+    as ``nan``), then Additional file 7's ERG11_g1 replicates 1, 2 and 3. Each stores
+    that culture's ``f`` with its released ``f_var`` as the variance, its own
+    ``replicate_id``, and the induced culture's environment carries anhydrotetracycline
+    at the 0.25 ug/mL Additional file 5's header states. Their targets come from
+    Additional file 4, the only file that gives a per-replicate row's ORF.
     """
-    assert len(dataset) == 5
-    assert [dataset[i]["experiment"] for i in range(5)] == [
+    assert len(dataset) == 15
+    assert [dataset[i]["experiment"] for i in range(15)] == [
         e.model_dump() for e in _EXPECTED
     ]
     assert [
         dataset[i]["experiment"]["phenotype"]["environment_response_se"]
-        for i in range(5)
-    ] == [0.2, math.sqrt(0.02), 0.1, 0.1, 0.05]
+        for i in range(15)
+    ] == [
+        0.2,
+        math.sqrt(0.02),
+        0.1,
+        0.1,
+        0.05,
+        0.1,
+        math.sqrt(0.02),
+        math.sqrt(0.03),
+        0.2,
+        math.sqrt(0.05),
+        math.sqrt(0.06),
+        math.sqrt(0.07),
+        math.sqrt(0.08),
+        0.3,
+        math.sqrt(0.10),
+    ]
+    assert [
+        dataset[i]["experiment"]["phenotype"]["replicate_id"] for i in range(15)
+    ] == ["1"] * 5 + ["1", "1", "2", "2"] + ["1", "1", "2", "2", "3", "3"]
+    assert [
+        [
+            p["compound"]["name"]
+            for p in dataset[i]["experiment"]["environment"]["perturbations"]
+        ]
+        for i in (5, 6)
+    ] == [["dimethyl sulfoxide"], ["dimethyl sulfoxide", "anhydrotetracycline"]]
+    (atc,) = [
+        p
+        for p in dataset[6]["experiment"]["environment"]["perturbations"]
+        if p["compound"]["name"] == "anhydrotetracycline"
+    ]
+    assert atc["concentration"] == {
+        "value": 0.25,
+        "unit": ConcentrationUnit.ug_per_ml,
+        "basis": None,
+    }
     (released,) = dataset[4]["experiment"]["genotype"]["perturbations"]
     assert (
         released["perturbation_type"],
@@ -322,7 +569,7 @@ def test_build_keeps_five_records_in_row_order_with_exact_records(
     ]
     assert "1181-0519" not in {
         p["compound"]["name"]
-        for i in range(5)
+        for i in range(15)
         for p in dataset[i]["experiment"]["environment"]["perturbations"]
     }
     assert dataset[0]["publication"] == _PUBLICATION.model_dump()
@@ -339,30 +586,55 @@ def test_build_keeps_five_records_in_row_order_with_exact_records(
     }
 
 
-def test_one_reference_per_drug_environment_and_the_reference_carries_no_n(
+def test_one_reference_per_readout_and_environment_carries_no_replicate(
     dataset: s.CrispriChemgenSmith2016Dataset,
 ) -> None:
-    """Finding: the uninduced (-ATc) reference phenotype (smith2016.py 547-552) carries
-    ``environment_response = 0.0`` with ``n_samples``, ``sample_unit`` and the uncertainty
-    fields all None, while every record stores ``n_samples = 1`` and ``sample_unit =
-    pooled`` (636-645); the reference is built per environment, not per record, so the
-    replicate design is asserted on records only.
+    """A reference carries ``environment_response = 0.0`` with ``n_samples``,
+    ``sample_unit``, ``replicate_id`` and the uncertainty fields all None, while every
+    record stores ``n_samples = 1``, ``sample_unit = pooled`` and its own
+    ``replicate_id``: the reference is the condition's aggregate baseline, built per
+    (readout, environment) rather than per record.
 
     The same spacer in two pools (records 0 and 1) and the YOL999W guide (record 3)
-    share the Fluconazole 20 uM reference, so ``experiment_reference_index.json`` has
-    three entries with member indices [0, 1, 3], [2], [4], each reference equal to the
-    hand-built one.
+    share the Fluconazole 20 uM A reference, so ``experiment_reference_index.json`` has
+    seven entries: [0, 1, 3], [2], [4] for the A records and then one per culture
+    environment, [5, 7], [6, 8], [9, 11, 13], [10, 12, 14]. A culture reference states
+    ``CULTURE_UNITS`` (f = 0 is the pool's median guide), an A reference ``UNITS``.
     """
     index = json.loads(
         (
             Path(dataset.root) / "preprocess" / "experiment_reference_index.json"
         ).read_text()
     )
-    assert [entry["member_indices"] for entry in index] == [[0, 1, 3], [2], [4]]
-    assert [dataset[i]["reference"] for i in range(5)] == [
+    assert [entry["member_indices"] for entry in index] == [
+        [0, 1, 3],
+        [2],
+        [4],
+        [5, 7],
+        [6, 8],
+        [9, 11, 13],
+        [10, 12, 14],
+    ]
+    assert [dataset[i]["reference"] for i in range(15)] == [
         _reference(env).model_dump()
         for env in (_FLUCONAZOLE, _FLUCONAZOLE, _DMSO, _FLUCONAZOLE, _RAPAMYCIN)
+    ] + [
+        _reference(env, s.CULTURE_UNITS).model_dump()
+        for env in (
+            _DMSO,
+            _DMSO_ATC,
+            _DMSO,
+            _DMSO_ATC,
+            _FLUCONAZOLE,
+            _FLUCONAZOLE_ATC,
+            _FLUCONAZOLE,
+            _FLUCONAZOLE_ATC,
+            _FLUCONAZOLE,
+            _FLUCONAZOLE_ATC,
+        )
     ]
+    assert dataset[5]["reference"]["phenotype_reference"]["units"] == s.CULTURE_UNITS
+    assert dataset[0]["reference"]["phenotype_reference"]["units"] == s.UNITS
     reference_phenotype = dataset[0]["reference"]["phenotype_reference"]
     assert {
         key: reference_phenotype[key]
@@ -370,6 +642,7 @@ def test_one_reference_per_drug_environment_and_the_reference_carries_no_n(
             "environment_response",
             "n_samples",
             "sample_unit",
+            "replicate_id",
             "environment_response_uncertainty",
             "environment_response_uncertainty_type",
             "environment_response_se",
@@ -378,6 +651,7 @@ def test_one_reference_per_drug_environment_and_the_reference_carries_no_n(
         "environment_response": 0.0,
         "n_samples": None,
         "sample_unit": None,
+        "replicate_id": None,
         "environment_response_uncertainty": None,
         "environment_response_uncertainty_type": None,
         "environment_response_se": None,
@@ -391,13 +665,16 @@ def test_one_reference_per_drug_environment_and_the_reference_carries_no_n(
 def test_drop_log_accounts_for_every_rule_in_application_order(
     dataset: s.CrispriChemgenSmith2016Dataset,
 ) -> None:
-    """``dropped_records.json``: 9 source rows, 5 kept, 4 dropped = 1 unidentified
+    """``dropped_records.json``: the two axes. 9 effect rows, 5 kept, 4 dropped = 1 unidentified
     vendor-code drug (row 3, 1181-0519, PROPRIETARY in the identity table: held out and
     listed with its dose under ``unidentified_compounds_held_out`` plus the Additional
     file 8 quote) + 2 no-A/var(A) (rows 4 and 5: a blank A and a ``n/a`` variance both
     coerce to NaN) + 0 targets on the released-gene-name leaf (row 8, `` erg11 ``, is a
     record) + 1 guide with no spacer (row 7, item ERG11_g9). No stored compound is
-    gapped.
+    gapped. The replicate axis: 4 culture records from Additional file 6 (two replicates
+    of one guide, the other guide releasing nothing) and 6 from Additional file 7, so
+    ``stored_records`` is 15, and every released replicate reached a record, so
+    ``replicates_not_stored`` is empty.
     """
     drop_log = json.loads(
         (Path(dataset.root) / "preprocess" / "dropped_records.json").read_text()
@@ -454,6 +731,28 @@ def test_drop_log_accounts_for_every_rule_in_application_order(
             {"drug": "1181-0519", "concentrations": ["5 uM"], "n_records": 1}
         ],
         "unidentified_compound_sources": [s.COMPOUND_LIST.model_dump(mode="json")],
+        "culture_replicates": [
+            {
+                "source": s.DMSO_REPLICATES_FILENAME,
+                "sheet": s.DMSO_REPLICATES_SHEET,
+                "sha256": s.DMSO_REPLICATES_SHA256,
+                "n_guides": 2,
+                "n_replicates": 8,
+                "n_records": 4,
+                "records_per_replicate": {"1": 2, "2": 2},
+            },
+            {
+                "source": s.FLUCONAZOLE_REPLICATES_FILENAME,
+                "sheet": s.FLUCONAZOLE_REPLICATES_SHEET,
+                "sha256": s.FLUCONAZOLE_REPLICATES_SHA256,
+                "n_guides": 1,
+                "n_replicates": 3,
+                "n_records": 6,
+                "records_per_replicate": {"1": 2, "2": 2, "3": 2},
+            },
+        ],
+        "replicates_not_stored": [],
+        "stored_records": 15,
     }
     assert drop_log == s.DropLog.model_validate(drop_log).model_dump()
 
@@ -463,9 +762,10 @@ def test_gene_set_build_manifest_and_interned_store(
 ) -> None:
     """``gene_set.json`` is the four released identifiers sorted (uppercase before
     lowercase); the build manifest names the root slug, the loader class and module,
-    this host and the worktree HEAD; the ``interned`` store holds 6 entries: the three
-    distinct environments and the three references (the held-out vendor drug builds none) (each above ``INTERN_MIN_BYTES``),
-    while the four-field DOI-only publication stays inline.
+    this host and the worktree HEAD; the ``interned`` store holds 12 entries: the five
+    distinct environments (three drug conditions plus the two induced cultures) and the
+    seven references (the held-out vendor drug builds none), each above
+    ``INTERN_MIN_BYTES``, while the four-field DOI-only publication stays inline.
     """
     preprocess = Path(dataset.root) / "preprocess"
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
@@ -505,27 +805,27 @@ def test_gene_set_build_manifest_and_interned_store(
         "CrisprInterferencePerturbation",
         "SmallMoleculePerturbation",
     } <= set(manifest["closure"])
-    assert _interned_entries(Path(dataset.root)) == 6
+    assert _interned_entries(Path(dataset.root)) == 12
 
 
 def test_store_reopens_without_raw_files_and_serves_the_getters(
     dataset: s.CrispriChemgenSmith2016Dataset,
 ) -> None:
     """With ``processed/lmdb`` present a second instance on the same root skips both
-    ``download()`` and ``process()``, so it needs no raw files: its five records equal
+    ``download()`` and ``process()``, so it needs no raw files: its fifteen records equal
     the first instance's, ``get([0, 3])`` returns the two named records as a list while
     ``dataset[[0, 3]]`` is PyG's two-item subset view of the same records,
-    ``transform_item`` rebuilds the typed objects, and ``repr`` is ``ClassName(5)``.
+    ``transform_item`` rebuilds the typed objects, and ``repr`` is ``ClassName(15)``.
     The inline hooks: ``create_experiment`` raises ``NotImplementedError`` and
     ``preprocess_raw`` returns its input unchanged.
     """
-    records = [dataset[i] for i in range(5)]
+    records = [dataset[i] for i in range(15)]
     dataset.close_lmdb()
-    for name in (s.EFFECT_FILENAME, s.GUIDE_FILENAME):
+    for name in dataset.raw_file_names:
         (Path(dataset.root) / "raw" / name).unlink()
     reopened = s.CrispriChemgenSmith2016Dataset(root=dataset.root)
-    assert len(reopened) == 5
-    assert [reopened[i] for i in range(5)] == records
+    assert len(reopened) == 15
+    assert [reopened[i] for i in range(15)] == records
     assert reopened.get([0, 3]) == [records[0], records[3]]
     subset = reopened[[0, 3]]
     assert len(subset) == 2
@@ -538,7 +838,7 @@ def test_store_reopens_without_raw_files_and_serves_the_getters(
         "reference": _reference(_FLUCONAZOLE),
         "publication": _PUBLICATION,
     }
-    assert repr(reopened) == "CrispriChemgenSmith2016Dataset(5)"
+    assert repr(reopened) == "CrispriChemgenSmith2016Dataset(15)"
     assert reopened.gene_set == {"YHR007C", "YJR066W", "YOL999W", "erg11"}
     with pytest.raises(NotImplementedError):
         reopened.create_experiment()
@@ -547,18 +847,53 @@ def test_store_reopens_without_raw_files_and_serves_the_getters(
     reopened.close_lmdb()
 
 
-def _staged_workbooks(tmp_path: Path, name: str) -> tuple[Path, str, str]:
-    """Write the fixture workbooks to ``<tmp>/<name>`` and return (dir, effect, guide)."""
+#: Every pinned workbook, as (module pin attribute, file name, relative mirror path).
+_PINNED = [
+    ("EFFECT_SHA256", s.EFFECT_FILENAME, s.EFFECT_REL),
+    ("GUIDE_SHA256", s.GUIDE_FILENAME, s.GUIDE_REL),
+    ("SAMPLES_SHA256", s.SAMPLES_FILENAME, s.SAMPLES_REL),
+    ("DMSO_REPLICATES_SHA256", s.DMSO_REPLICATES_FILENAME, s.DMSO_REPLICATES_REL),
+    (
+        "FLUCONAZOLE_REPLICATES_SHA256",
+        s.FLUCONAZOLE_REPLICATES_FILENAME,
+        s.FLUCONAZOLE_REPLICATES_REL,
+    ),
+]
+
+
+def _staged_workbooks(tmp_path: Path, name: str) -> tuple[Path, dict[str, str]]:
+    """Write the fixture workbooks to ``<tmp>/<name>``; return (dir, digest per file)."""
     staging = tmp_path / name
     _write_workbooks(staging)
-    return (
-        staging,
-        _sha256(staging / s.EFFECT_FILENAME),
-        _sha256(staging / s.GUIDE_FILENAME),
-    )
+    return staging, {
+        filename: _sha256(staging / filename) for _, filename, _ in _PINNED
+    }
 
 
-def _artifact(relpath: str, filename: str, digest: str, size: int) -> ArtifactRecord:
+def _deposit_kwargs(staging: Path) -> dict[str, Any]:
+    """The five source paths ``deposit_raw_mirror`` takes, from a staging directory."""
+    return {
+        "effect_path": staging / s.EFFECT_FILENAME,
+        "guide_path": staging / s.GUIDE_FILENAME,
+        "samples_path": staging / s.SAMPLES_FILENAME,
+        "dmso_replicates_path": staging / s.DMSO_REPLICATES_FILENAME,
+        "fluconazole_replicates_path": staging / s.FLUCONAZOLE_REPLICATES_FILENAME,
+    }
+
+
+def _repin(monkeypatch: pytest.MonkeyPatch, digests: dict[str, str]) -> None:
+    """Patch every module pin to the fixture workbook's own digest."""
+    for attribute, filename, _ in _PINNED:
+        monkeypatch.setattr(s, attribute, digests[filename])
+
+
+def _artifact(
+    relpath: str,
+    filename: str,
+    digest: str,
+    size: int,
+    retrieved_at: str = "2026-09-12",
+) -> ArtifactRecord:
     url = f"{s._ESM_BASE}{filename}"
     return ArtifactRecord(
         path=relpath,
@@ -572,7 +907,7 @@ def _artifact(relpath: str, filename: str, digest: str, size: int) -> ArtifactRe
             retriever="torchcell.literature.retrieve.springer_esm",
             params={"url": url},
             sha256=digest,
-            retrieved_at="2026-09-12",
+            retrieved_at=retrieved_at,
         ),
     )
 
@@ -581,44 +916,36 @@ def test_deposit_raw_mirror_pins_hashes_and_writes_the_manifest(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """``deposit_raw_mirror`` refuses a source whose sha256 is not the pinned one, naming
-    both digests. With the pinned constants patched to the fixture digests it copies both
-    workbooks under ``$DATA_ROOT/torchcell-raw/<key>/si/si_data/`` and writes a
-    ``Manifest`` with two ``springer_esm`` artifact records (byte sizes from the copies,
-    ``retrieved_at`` 2026-09-12), the DOI, the two ESM URLs, ``provenance_complete``
-    True and a UTC ``created_at``. A second call with the same files is a no-op; a
-    different source file under a re-pinned digest is refused because the destination
-    already holds other bytes. ``manifest_sha256`` reads a record back and raises
-    ``KeyError`` for an unlisted path.
+    both digests. With the pinned constants patched to the fixture digests it copies all
+    five workbooks under ``$DATA_ROOT/torchcell-raw/<key>/si/si_data/`` and writes a
+    ``Manifest`` with five ``springer_esm`` artifact records (byte sizes from the copies,
+    ``retrieved_at`` 2026-09-12 for the effect and guide tables and 2026-11-25 for the
+    three per-replicate workbooks), the DOI, the five ESM URLs,
+    ``provenance_complete`` True and a UTC ``created_at``. A second call with the same
+    files is a no-op; a different source file under a re-pinned digest is refused because
+    the destination already holds other bytes. ``manifest_sha256`` reads a record back
+    and raises ``KeyError`` for an unlisted path.
     """
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
-    staging, effect_sha, guide_sha = _staged_workbooks(tmp_path, "staging")
-    effect_path = staging / s.EFFECT_FILENAME
-    guide_path = staging / s.GUIDE_FILENAME
-    with pytest.raises(RawSha256MismatchError) as err:
-        s.deposit_raw_mirror(effect_path=effect_path, guide_path=guide_path)
-    assert str(err.value) == (
-        f"sha256 mismatch for {effect_path}: expected {s.EFFECT_SHA256}, "
-        f"observed {effect_sha}"
-    )
-    assert not (data_root / "torchcell-raw").exists()
-    # The guide workbook off its pin is caught before the effect workbook is written.
-    monkeypatch.setattr(s, "EFFECT_SHA256", effect_sha)
-    with pytest.raises(RawSha256MismatchError) as err:
-        s.deposit_raw_mirror(effect_path=effect_path, guide_path=guide_path)
-    assert str(err.value) == (
-        f"sha256 mismatch for {guide_path}: expected {s.GUIDE_SHA256}, "
-        f"observed {guide_sha}"
-    )
-    assert not (data_root / "torchcell-raw").exists()
+    staging, digests = _staged_workbooks(tmp_path, "staging")
+    paths = _deposit_kwargs(staging)
+    # Each workbook off its pin is caught, in order, before anything is written.
+    for attribute, filename, _ in _PINNED:
+        with pytest.raises(RawSha256MismatchError) as err:
+            s.deposit_raw_mirror(**paths)
+        assert str(err.value) == (
+            f"sha256 mismatch for {staging / filename}: expected "
+            f"{getattr(s, attribute)}, observed {digests[filename]}"
+        )
+        assert not (data_root / "torchcell-raw").exists()
+        monkeypatch.setattr(s, attribute, digests[filename])
 
-    monkeypatch.setattr(s, "EFFECT_SHA256", effect_sha)
-    monkeypatch.setattr(s, "GUIDE_SHA256", guide_sha)
-    mirror = s.deposit_raw_mirror(effect_path=effect_path, guide_path=guide_path)
+    mirror = s.deposit_raw_mirror(**paths)
     assert mirror == data_root / "torchcell-raw" / s.CITATION_KEY
     assert mirror == s.raw_mirror_dir()
-    assert (mirror / s.EFFECT_REL).read_bytes() == effect_path.read_bytes()
-    assert (mirror / s.GUIDE_REL).read_bytes() == guide_path.read_bytes()
+    for _, filename, relpath in _PINNED:
+        assert (mirror / relpath).read_bytes() == (staging / filename).read_bytes()
     manifest = s.load_manifest()
     expected = Manifest(
         citation_key=s.CITATION_KEY,
@@ -629,21 +956,30 @@ def test_deposit_raw_mirror_pins_hashes_and_writes_the_manifest(
         ),
         files=[
             _artifact(
-                s.EFFECT_REL, s.EFFECT_FILENAME, effect_sha, effect_path.stat().st_size
-            ),
-            _artifact(
-                s.GUIDE_REL, s.GUIDE_FILENAME, guide_sha, guide_path.stat().st_size
-            ),
+                relpath,
+                filename,
+                digests[filename],
+                (staging / filename).stat().st_size,
+                retrieved_at=(
+                    "2026-09-12"
+                    if filename in (s.EFFECT_FILENAME, s.GUIDE_FILENAME)
+                    else "2026-11-25"
+                ),
+            )
+            for _, filename, relpath in _PINNED
         ],
-        si_data_sources=[
-            f"{s._ESM_BASE}{s.EFFECT_FILENAME}",
-            f"{s._ESM_BASE}{s.GUIDE_FILENAME}",
-        ],
+        si_data_sources=[f"{s._ESM_BASE}{filename}" for _, filename, _ in _PINNED],
         si_expected=[
             "Additional file 10 (ATc effects A, drug effects D, no-drug ATc effects A0 "
             "for each gRNA in every tested condition)",
             "Additional file 4 (the five gRNA libraries and their Specificity_sequence "
             "spacers)",
+            "Additional file 5 (the sequenced samples: pool, drug, dose, replicate "
+            "label and whether ATc was in the culture, with its dose in the header)",
+            "Additional file 6 (counts and analysis for the eight 'no drug' 1% DMSO "
+            "replicates of the gene-tiling pools)",
+            "Additional file 7 (counts and analysis of the 20 uM fluconazole "
+            "replicates: three for the gene-tiling pools, two for the mutant pools)",
         ],
         provenance_complete=True,
     )
@@ -652,32 +988,31 @@ def test_deposit_raw_mirror_pins_hashes_and_writes_the_manifest(
     )
     assert manifest.created_at is not None
     assert datetime.fromisoformat(manifest.created_at).tzinfo == UTC
-    assert s.manifest_sha256(manifest, s.EFFECT_REL) == effect_sha
-    assert s.manifest_sha256(manifest, s.GUIDE_REL) == guide_sha
+    for _, filename, relpath in _PINNED:
+        assert s.manifest_sha256(manifest, relpath) == digests[filename]
     with pytest.raises(KeyError, match="nope is not in the raw-mirror manifest"):
         s.manifest_sha256(manifest, "nope")
 
     written = (mirror / "manifest.json").read_text()
-    assert (
-        s.deposit_raw_mirror(effect_path=effect_path, guide_path=guide_path) == mirror
-    )
-    assert (mirror / s.EFFECT_REL).read_bytes() == effect_path.read_bytes()
+    assert s.deposit_raw_mirror(**paths) == mirror
+    assert (mirror / s.EFFECT_REL).read_bytes() == (
+        staging / s.EFFECT_FILENAME
+    ).read_bytes()
     assert s.load_manifest().files == Manifest.model_validate_json(written).files
 
-    other, other_sha, _ = _staged_workbooks(tmp_path, "other")
+    other, _ = _staged_workbooks(tmp_path, "other")
     (other / s.EFFECT_FILENAME).write_bytes(b"a different workbook")
-    other_sha = _sha256(other / s.EFFECT_FILENAME)
-    monkeypatch.setattr(s, "EFFECT_SHA256", other_sha)
+    monkeypatch.setattr(s, "EFFECT_SHA256", _sha256(other / s.EFFECT_FILENAME))
     with pytest.raises(
         RuntimeError,
         match=re.escape(
             f"{mirror / s.EFFECT_REL} exists with a different sha256; refusing"
         ),
     ):
-        s.deposit_raw_mirror(
-            effect_path=other / s.EFFECT_FILENAME, guide_path=guide_path
-        )
-    assert (mirror / s.EFFECT_REL).read_bytes() == effect_path.read_bytes()
+        s.deposit_raw_mirror(**{**paths, "effect_path": other / s.EFFECT_FILENAME})
+    assert (mirror / s.EFFECT_REL).read_bytes() == (
+        staging / s.EFFECT_FILENAME
+    ).read_bytes()
 
 
 def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
@@ -686,10 +1021,9 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
     """With no raw files, ``download()`` needs the mirror manifest (``FileNotFoundError``
     naming ``manifest.json`` when absent). Once the fixture workbooks are deposited, a
     root whose ``raw/`` already links the guide workbook keeps that link (``download()``
-    only creates a missing one), gets the effect workbook linked beside it and builds
-    the same five records. A
-    mirror file whose bytes drift from the manifest is refused naming both digests; a
-    removed mirror file is refused naming its path.
+    only creates a missing one), gets the other four linked beside it and builds the same
+    fifteen records. A mirror file whose bytes drift from the manifest is refused naming
+    both digests; a removed mirror file is refused naming its path.
     """
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
@@ -697,25 +1031,18 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
     with pytest.raises(FileNotFoundError, match=re.escape(str(manifest_path))):
         s.CrispriChemgenSmith2016Dataset(root=str(tmp_path / "a"))
 
-    staging, effect_sha, guide_sha = _staged_workbooks(tmp_path, "staging")
-    monkeypatch.setattr(s, "EFFECT_SHA256", effect_sha)
-    monkeypatch.setattr(s, "GUIDE_SHA256", guide_sha)
-    mirror = s.deposit_raw_mirror(
-        effect_path=staging / s.EFFECT_FILENAME, guide_path=staging / s.GUIDE_FILENAME
-    )
+    staging, digests = _staged_workbooks(tmp_path, "staging")
+    _repin(monkeypatch, digests)
+    mirror = s.deposit_raw_mirror(**_deposit_kwargs(staging))
     root = tmp_path / "b"
     (root / "raw").mkdir(parents=True)
     os.symlink(mirror / s.GUIDE_REL, root / "raw" / s.GUIDE_FILENAME)
     built = s.CrispriChemgenSmith2016Dataset(root=str(root))
-    assert (root / "raw" / s.EFFECT_FILENAME).is_symlink()
-    assert (root / "raw" / s.EFFECT_FILENAME).resolve() == (
-        mirror / s.EFFECT_REL
-    ).resolve()
-    assert (root / "raw" / s.GUIDE_FILENAME).resolve() == (
-        mirror / s.GUIDE_REL
-    ).resolve()
-    assert len(built) == 5
-    assert [built[i]["experiment"] for i in range(5)] == [
+    for _, filename, relpath in _PINNED:
+        assert (root / "raw" / filename).is_symlink()
+        assert (root / "raw" / filename).resolve() == (mirror / relpath).resolve()
+    assert len(built) == 15
+    assert [built[i]["experiment"] for i in range(15)] == [
         e.model_dump() for e in _EXPECTED
     ]
     built.close_lmdb()
@@ -725,8 +1052,8 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
     with pytest.raises(RawSha256MismatchError) as err:
         s.CrispriChemgenSmith2016Dataset(root=str(tmp_path / "c"))
     assert str(err.value) == (
-        f"sha256 mismatch for {mirror / s.EFFECT_REL}: expected {effect_sha}, "
-        f"observed {drifted}"
+        f"sha256 mismatch for {mirror / s.EFFECT_REL}: expected "
+        f"{digests[s.EFFECT_FILENAME]}, observed {drifted}"
     )
     assert list((tmp_path / "c" / "raw").iterdir()) == []
     (mirror / s.EFFECT_REL).unlink()
@@ -789,3 +1116,139 @@ def test_a_drop_log_that_disagrees_with_its_rules_refuses_after_writing_it(
     )
     log = json.loads((root / "preprocess" / "dropped_records.json").read_text())
     assert log["dropped_records"] == 5
+
+
+# Phase 25 (#1178): the replicate-axis guards
+
+
+def test_a_released_replicate_with_no_record_and_no_reason_refuses(
+    tmp_path: Path,
+) -> None:
+    """Additional file 5 gains a fourth DMSO replicate no released file carries data for.
+
+    Nothing can be stored for it and ``REPLICATE_NOT_STORED_REASONS`` does not name it,
+    so the build refuses instead of silently losing a released replicate.
+    """
+    root = tmp_path / "unaccounted"
+    _write_workbooks(
+        root / "raw",
+        sample_rows=_sample_rows(
+            [
+                ("broad_tiling", "Fluconazole", "20 uM", (1, 2, 3)),
+                ("gene_tiling18 & gene_tiling20", "Fluconazole", "20 uM", (1,)),
+                ("broad_tiling", "DMSO", 0.01, (1, 2, 4)),
+                ("broad_tiling", "1181-0519", "5 uM", (1,)),
+                ("broad_tiling", "Rapamycin", "1 nM", (1,)),
+            ]
+        ),
+    )
+    with pytest.raises(RuntimeError) as err:
+        s.CrispriChemgenSmith2016Dataset(root=str(root))
+    assert str(err.value) == (
+        "released replicate ('broad_tiling', 'DMSO', '1.0percent_v/v', '4') reached no "
+        "record and no reason is recorded for it"
+    )
+
+
+def test_an_effect_row_that_is_not_replicate_one_refuses(tmp_path: Path) -> None:
+    """The DMSO effect row's -ATc count stops matching Additional file 6's Rep-1 count.
+
+    ``replicate_id = "1"`` on an A record is then unproved, so the build refuses rather
+    than label the row with a replicate it may not be.
+    """
+    rows = [list(row) for row in _EFFECT_ROWS]
+    rows[2][6] = 101
+    root = tmp_path / "not-replicate-one"
+    _write_workbooks(root / "raw", effect_rows=rows)
+    with pytest.raises(ValueError) as err:
+        s.CrispriChemgenSmith2016Dataset(root=str(root))
+    assert str(err.value) == (
+        "Additional file 10's DMSO row for ('broad_tiling', 'TOR1_g5') carries count "
+        "101 where replicate 1 carries 100.0, so the row is not replicate 1"
+    )
+
+
+def test_an_effect_row_whose_condition_is_not_a_released_sample_refuses(
+    tmp_path: Path,
+) -> None:
+    """Additional file 5 no longer lists the Rapamycin samples the effect rows measure."""
+    root = tmp_path / "unlisted-condition"
+    _write_workbooks(
+        root / "raw",
+        sample_rows=_sample_rows(
+            [
+                ("broad_tiling", "Fluconazole", "20 uM", (1, 2, 3)),
+                ("gene_tiling18 & gene_tiling20", "Fluconazole", "20 uM", (1,)),
+                ("broad_tiling", "DMSO", 0.01, (1, 2)),
+                ("broad_tiling", "1181-0519", "5 uM", (1,)),
+            ]
+        ),
+    )
+    with pytest.raises(ValueError) as err:
+        s.CrispriChemgenSmith2016Dataset(root=str(root))
+    assert str(err.value) == (
+        "Additional file 5 lists no sample for ('broad_tiling', 'Rapamycin', '1.0nM')"
+    )
+
+
+def test_a_partially_released_replicate_measurement_refuses(tmp_path: Path) -> None:
+    """One cell of a replicate's (count, f, f_var) triple goes blank.
+
+    The three cells are present or absent together in the released workbooks, so a
+    partial triple is a file this loader does not understand, not a value to patch.
+    """
+    root = tmp_path / "partial"
+    _write_workbooks(root / "raw")
+    book = openpyxl.load_workbook(root / "raw" / s.DMSO_REPLICATES_FILENAME)
+    sheet = book[s.DMSO_REPLICATES_SHEET]
+    column = _replicate_header(8).index("Rep-1_noATC_f_var") + 1
+    sheet.cell(row=2, column=column, value=_NAN)
+    book.save(root / "raw" / s.DMSO_REPLICATES_FILENAME)
+    with pytest.raises(ValueError) as err:
+        s.CrispriChemgenSmith2016Dataset(root=str(root))
+    assert str(err.value) == (
+        f"{s.DMSO_REPLICATES_FILENAME} replicate 1 noATC releases a partial "
+        "measurement for ['TOR1_g5']"
+    )
+
+
+def test_a_replicate_row_whose_guide_is_not_in_the_guide_table_refuses(
+    tmp_path: Path,
+) -> None:
+    """A per-replicate row carries only a pool and a guide name, so the guide table is
+    the only source of its spacer and its target; a guide absent from it has neither.
+    """
+    root = tmp_path / "unknown-guide"
+    _write_workbooks(root / "raw")
+    book = openpyxl.load_workbook(root / "raw" / s.DMSO_REPLICATES_FILENAME)
+    sheet = book[s.DMSO_REPLICATES_SHEET]
+    sheet.cell(row=2, column=2, value="GHOST_g9")
+    book.save(root / "raw" / s.DMSO_REPLICATES_FILENAME)
+    with pytest.raises(ValueError) as err:
+        s.CrispriChemgenSmith2016Dataset(root=str(root))
+    assert str(err.value) == (
+        f"{s.DMSO_REPLICATES_FILENAME} releases replicates for guide 'GHOST_g9', which "
+        "Additional file 4 does not list"
+    )
+
+
+def test_a_guide_table_row_pair_that_disagrees_on_the_target_refuses(
+    tmp_path: Path,
+) -> None:
+    """Additional file 4 repeats a guide name once per library set it belongs to.
+
+    On the released file the repeats agree on ORF, gene and spacer (63 of 63); a pair
+    that disagreed would make the culture records' target ambiguous, so it refuses.
+    """
+    root = tmp_path / "two-targets"
+    _write_workbooks(root / "raw")
+    book = openpyxl.load_workbook(root / "raw" / s.GUIDE_FILENAME)
+    sheet = book[s.GUIDE_SHEET]
+    sheet.append(["TOR1_g5", "YKL203C", "TOR2", _SPACERS["TOR1_g5"]])
+    book.save(root / "raw" / s.GUIDE_FILENAME)
+    with pytest.raises(ValueError) as err:
+        s.CrispriChemgenSmith2016Dataset(root=str(root))
+    assert str(err.value) == (
+        "Additional file 4 gives guide 'TOR1_g5' two targets: ('YJR066W', 'TOR1') and "
+        "('YKL203C', 'TOR2')"
+    )

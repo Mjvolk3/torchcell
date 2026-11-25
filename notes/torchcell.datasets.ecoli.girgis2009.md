@@ -545,3 +545,55 @@ Every gene named by Dataset S5's released NAME cell.
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+
+## 2026.11.24 - One record per selection from Datasets S3 and S4 (#1176, #1178)
+
+The loader stored only Dataset S5, the authors' combined z-score per (gene, drug), and read the per-hybridization z-scores of Datasets S3 and S4 only to re-derive it. Under the per-replicate policy (#1178) every released selection is now its own record as well. The 66,287 combined records are unchanged, byte for byte (compared record by record against the dev store at the same LMDB index), because Dataset S5 is a statistic the source itself released, not one the loader computed.
+
+| | before | after |
+|---|---|---|
+| records | 66,287 | 365,459 |
+| combined (Dataset S5, `replicate_id` None) | 66,287 | 66,287, unchanged |
+| per selection, against the unselected library (Dataset S3) | 0 | 149,586 |
+| per selection, against the no-antibiotic selections (Dataset S4) | 0 | 149,586 |
+| files read | S1, S3, S4, S5 | S1, S2, S3, S4, S5 |
+
+Per-selection records by repetition (both reference sets): R1 134,042, R2 133,434, R3 31,696. Measured on the pinned sheets and pinned in `test_the_release_holds_one_record_per_usable_selection`.
+
+### What a replicate is here
+
+- Paper Methods (`paper.md`, sha256 `974add90...`): "Samples from at least two independent replicate selections were hybridized for each antibiotic. As controls, six samples from independent selections in the absence of any drug were hybridized."
+- Row 1 of Datasets S3 and S4 (`si22.xls` sha256 `7f190bec...`, `si23.xls` sha256 `6e76fc1c...`): "Note that repetitions two and three for PIP, FOX, TET, TRM are technical, not biological, replicates and were averaged."
+- Text S1 (`si/si1.md`, sha256 `36a4fec6...`), Array pre-processing: "For pipercillin, cefoxitin, tetracycline, and trimethoprim, two separate hybridizations were done for one of the samples. The data from the two arrays was similar. Corresponding values were averaged and treated as a single repetition during subsequent analysis."
+- Text S1: "Ratios from the duplicate spots on each slide were averaged." (a technical level combined inside each array before release).
+
+So one hybridization column is one selection culture, except `PIP/FOX/TET/TRM_R2` and `_R3`, which are two arrays of one culture. Those are combined INSIDE one record (mean of the usable z-scores, as the authors did), `replicate_id = "PIP_R2+PIP_R3"`, and `units` states whether two arrays or one usable array went into it (15,492 and 408 records per reference set). `EnvironmentResponsePhenotype` has no technical-replicate field, so `units` is the only in-record carrier.
+
+Not settled by the source: for DOX, LOM and SLF Table 1 says "Two samples from day 2 and one from day 3 were hybridized and analyzed", without saying which column is the day-3 sample or whether it comes from a third selection or from a later day of one of the first two. Every column is a separately hybridized sample, so each is a record either way; the per-record day is not asserted and `screen_id` keeps Table 1's `2/3`.
+
+No sample withdrawn by the authors was found. `LQ` cells ("LQ= Low quality array data") carry no value and are not records; they sit in the same cells of S2, S3 and S4.
+
+### Record shape
+
+`n_samples = 1`, `sample_unit = biological_replicate`, `screen_id` as the combined record, `environment_response_uncertainty` and `environment_response_se` typed `not_applicable_single_measurement`. The reference is the parent at 0 on the reference set's axis with `replicate_id = None`: `n_samples` 6, `biological_replicate` for the no-antibiotic set (Text S1, "All six no-antibiotic samples came from independent selections"), and `n_samples` 5 with a `deferred_pending_source_review` gap on `sample_unit` for the unselected library, whose five hybridizations come from Girgis 2007 (not mirrored).
+
+### New build-time checks
+
+- Every S3 and S4 z-score equals `(log2(max(r, 0.05)) - Average) / Stdev` of its own Dataset S2 ratio, worst case 8.5e-7 (S3) and 4.8e-7 (S4) over 165,078 cells each, bounded by `MAX_Z_FROM_RATIO_ERROR = 1e-6`; `LQ` must match across the three sheets.
+- The legend rows of S2 to S5 are read verbatim against the pinned bytes.
+- `drug_z_scores` is now built from the same per-selection values the records store, and groups positionally: before, a technical-pair drug whose R1 was `LQ` had R2 and R3 counted as two repetitions. That affected no stored value (all 10 such cells are `ND` in Dataset S5), but it was wrong.
+
+Dataset S2 (`si21.xls`, sha256 `59a6e9d1...`) was added to the raw mirror for the ratio check. Its recorded PMC retrieval was re-run on 2026-11-24 (`deposit --retrieve-into`), and all five files came back with their pinned sha256.
+
+### Reproduction of the old store
+
+Grouping the per-selection records by (gene, drug) and applying the paper's rule (the score closest to zero when all z-scores share a sign, else 0) over both reference sets reproduces every combined record: 66,240 exactly, 47 where the rule gives `|z| < 0.001` (max 0.000976) and the sheet prints 0, none disagreeing. The rule is a minimum, not a mean, so a mean of the new records does not reproduce the old values (max |mean - combined| 23.9, median 0.58), and none is expected to. 1,302 (gene, drug) cells that Dataset S5 releases as `ND` now carry per-selection records (one usable repetition); 3 `ND` cells have none.
+
+### Verification (scratch build, not the shared dev store)
+
+Built into `$DATA_ROOT/tmp/scratch/per-replicate-girgis2009/ecoli_env_chemgen_girgis2009` (311 s) and verified with `verify_build`: PASS, L1 count 365,459, `pair_uniqueness` 365,459 unique, `reference_zero` on all records, 41 of 41 provenance audits, and the same 2 genome-reference findings as before (155 released b-numbers that are not current locus tags; reported, not gated). The bacterial adapter graph check over 200 per-selection records of that build emits only declared labels and properties.
+
+### Not done
+
+- Dataset S2's six no-antibiotic control cultures (`Con_RX_DY`) and five unselected-library hybridizations (`0Z_ref`) are released only as transposon/genomic-DNA ratios. `MeasurementType` has no member for that ratio, so they are not records; this needs an owner decision on a new member (for example `normalized_footprint_ratio`).
+- The shared dev store and the knowledge graph were not rebuilt. The combined records are unchanged, so the change is additive; whether `admit` accepts it as a superset admission was not run.

@@ -4,9 +4,10 @@
 """``torchcell/adapters/girgis2009_adapter.py``: the conf it loads, the gate's view of
 it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Girgis 2009 antibiotic transposon selection: 63,766 (MG1655 gene x antibiotic) records
-from Dataset S5's combined z-scores, EnvironmentResponseExperiment. One
-gene-level TransposonInsertionPerturbation per record, served as `perturbation`.
+Girgis 2009 antibiotic transposon selection: 365,459 records, 66,287 combined (MG1655
+gene x antibiotic, Dataset S5) and 299,172 per selection (Datasets S3 and S4),
+EnvironmentResponseExperiment. One gene-level TransposonInsertionPerturbation per
+record, served as `perturbation`.
 Every record's environment carries exactly one SmallMoleculePerturbation, the drug at its
 Table 1 dose, on the experiment and on the reference, so the environment-perturbation pair
 is enabled; no phage and no CRISPRi construct appears in any record.

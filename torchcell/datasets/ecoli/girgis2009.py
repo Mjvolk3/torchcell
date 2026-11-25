@@ -13,9 +13,30 @@ genomic DNA was amplified, labeled and hybridized against labeled genomic DNA on
 arrays. Each locus therefore gets a signed per-drug score saying whether disrupting it
 helped or hurt in that drug.
 
-RECORD = one (gene x antibiotic) ``EnvironmentResponseExperiment``, from Dataset
-S5, "Combined Z-scores for all loci". 3,976 released loci x 17 antibiotics = 67,592 cells;
-63,766 are stored (the arithmetic is in RETENTION below).
+RECORDS. Two kinds of ``EnvironmentResponseExperiment``, 365,459 in all:
+
+1. COMBINED (66,287): one per (gene x antibiotic) cell of Dataset S5, "Combined Z-scores
+   for all loci", the authors' own released summary over the drug's selections and both
+   reference sets. 3,976 released loci x 17 antibiotics = 67,592 cells (the arithmetic is
+   in RETENTION below). ``replicate_id`` is None.
+2. PER SELECTION (299,172, since 2026-11-24, #1176/#1178): one per (gene x antibiotic x
+   reference set x selection) cell of Datasets S3 and S4, the released z-score of ONE
+   independent selection culture against the unselected library (S3) or against the
+   no-antibiotic selections (S4). 149,586 per reference set. ``n_samples=1``,
+   ``replicate_id`` = the released column header (``AMK_R1``), and the two uncertainty
+   fields are ``not_applicable_single_measurement`` gaps. For the four drugs whose second
+   and third hybridizations are "technical, not biological, replicates" (row 1 of both
+   sheets, :data:`TECHNICAL_REPLICATE_NOTE`; Text S1 "two separate hybridizations were
+   done for one of the samples"), the two arrays are ONE selection: the record holds the
+   mean of their usable z-scores, as the authors averaged them, its ``replicate_id`` is
+   ``PIP_R2+PIP_R3`` and ``units`` says how many arrays went into it (15,492 records per
+   reference set average two arrays, 408 hold the one usable array). A selection whose
+   every array is ``LQ`` has no value and is not a record. Each per-selection z-score is
+   re-derived on every build from its own Dataset S2 ratio and the reference set's
+   released ``Average``/``Stdev`` (:func:`check_z_from_ratios`), and the Dataset S5 cells
+   are re-derived from exactly the per-selection values the records store
+   (:func:`drug_z_scores`), so the combined records are provably the authors' rule over
+   the stored ones and nothing is averaged by the loader across cultures.
 
 PHENOTYPE. ``EnvironmentResponsePhenotype``, ``measurement_type=z_score``,
 ``assay_type=other``. The number is the COMBINED z-score: a z-score is computed for every
@@ -128,7 +149,9 @@ build whose Dataset S1 values disagree with the threshold that count implies. Th
 printed cells look transposed between the STR and SLF rows; both disagreements are recorded
 in ``preprocess/replicate_structure.json``.
 
-UNCERTAINTY. None exists per record. Datasets S3 and S4 release a per-gene ``Stdev`` column,
+UNCERTAINTY. None exists per record. For a per-selection record it does not exist at all
+(one measurement, ``not_applicable_single_measurement``); what follows is the combined
+record's case. Datasets S3 and S4 release a per-gene ``Stdev`` column,
 but that is the dispersion of the REFERENCE hybridizations, which is already the denominator
 of the z-score and carries a heuristic global component of 0.15 added to every standard
 deviation; it is not an error bar on the response. The combined score is additionally a
@@ -136,9 +159,11 @@ MINIMUM over the drug's z-scores, a deliberately conservative order statistic wi
 released spread. ``environment_response_uncertainty`` and ``environment_response_se`` carry
 ``not_reported_by_primary`` gaps.
 
-BUILD-TIME CHECKS (no fallbacks; each raises). Every sheet's title cell and header row must
-read as expected; the four sheets must carry the same 3,976 UNIQIDs in the same order with
-the same descriptions; every non-zero Dataset S1 value must equal its Dataset S5 cell and
+BUILD-TIME CHECKS (no fallbacks; each raises). Every sheet's title cell, legend rows and
+header row must read as expected; the five sheets must carry the same 3,976 UNIQIDs in the
+same order with the same descriptions; every Dataset S3 and S4 z-score must equal
+``(log2(max(r, 0.05)) - Average) / Stdev`` of its Dataset S2 ratio within
+:data:`MAX_Z_FROM_RATIO_ERROR`, with ``LQ`` in the same cells of all three; every non-zero Dataset S1 value must equal its Dataset S5 cell and
 clear its drug's threshold; and every Dataset S5 value must be reproducible from Datasets S3
 and S4 by the paper's own combination rule. The last check passes on 66,240 of the 66,287
 numeric cells exactly; the other 47 are cells where the rule gives ``|z| < 0.001`` and the
@@ -146,7 +171,17 @@ sheet prints 0, which ``MAX_ROUNDED_TO_ZERO`` bounds.
 
 REFERENCE. One per condition: the unperturbed MG1655 ``delta-lacZ`` parent in the same drug,
 scoring 0, which on this axis is "no consistent fitness effect" relative to the reference
-hybridizations.
+hybridizations. A per-selection record's reference is the same parent at 0 on its own
+reference set's axis, an aggregate with ``replicate_id=None``: ``n_samples`` 6
+``biological_replicate`` for the no-antibiotic set (Text S1, "All six no-antibiotic samples
+came from independent selections"), 5 with a ``sample_unit`` gap for the unselected library,
+whose hybridizations Girgis 2007 describes and this paper does not.
+
+NOT STORED. Dataset S2's normalized ratios of the six no-antibiotic control cultures
+(``Con_RX_DY``) and the five unselected-library hybridizations (``0Z_ref``) are read only
+for the ratio check: they are released as transposon/genomic-DNA ratios, and
+``MeasurementType`` has no member for that ratio, so a control-culture record waits on an
+owner decision (the antibiotic arrays' own ratios are the input of the stored z-scores).
 """
 
 from __future__ import annotations
@@ -256,6 +291,7 @@ TEXT_S1_MD = "si/si1.md"
 TEXT_S1_MD_SHA256 = "36a4fec61377744520f578041252c16b1f9aa9829e57366fbff1385717082dfe"
 
 DATASET_S1 = "si20.xls"
+DATASET_S2 = "si21.xls"
 DATASET_S3 = "si22.xls"
 DATASET_S4 = "si23.xls"
 DATASET_S5 = "si24.xls"
@@ -310,13 +346,24 @@ RAW_FILES: tuple[RawFile, ...] = (
         "how many hybridizations, each drug had",
     ),
     _pmc_file(
+        DATASET_S2,
+        "pone.0005629.s021.xls",
+        "59a6e9d1f95347e4e635894b29397b5fe3010f6b6f39e25c8fa938e6b8e30c69",
+        4229632,
+        "Dataset S2: the normalized transposon/genomic-DNA ratio of every "
+        "hybridization (the 42 antibiotic arrays, the six no-antibiotic control "
+        "cultures and the five unselected-library hybridizations); read to prove every "
+        "per-hybridization z-score of Datasets S3 and S4 from its own ratio and its "
+        "reference set's released Average and Stdev",
+    ),
+    _pmc_file(
         DATASET_S3,
         "pone.0005629.s022.xls",
         "7f190bec346242ce0d883ad22803d0eca7f09e350fee994f281f51f66915ee21",
         3575808,
         "Dataset S3: per-hybridization z-scores against the five hybridizations of the "
-        "unselected library; the first of the two reference sets the combined score "
-        "minimizes over",
+        "unselected library; stored one record per selection, and the first of the two "
+        "reference sets the combined score minimizes over",
     ),
     _pmc_file(
         DATASET_S4,
@@ -324,7 +371,7 @@ RAW_FILES: tuple[RawFile, ...] = (
         "6e76fc1c450cf9f63f1a5ecb06c9e7caeddcbdbe099458704a964ac4cd8c7d8b",
         3580416,
         "Dataset S4: per-hybridization z-scores against the six no-antibiotic "
-        "selections; the second reference set",
+        "selections; stored one record per selection, and the second reference set",
     ),
     _pmc_file(
         DATASET_S5,
@@ -332,7 +379,7 @@ RAW_FILES: tuple[RawFile, ...] = (
         "823c6aaffe26a2419a0fa5bbf0b0e72dc6cd14a390995a28696011a5e1ab9da5",
         1237504,
         "Dataset S5: the combined z-score of every locus in every one of the 17 "
-        "antibiotics; the values this loader stores",
+        "antibiotics; stored one record per (locus, antibiotic) cell",
     ),
 )
 #: ``{raw file name: pinned sha256}``, the build-time check of every consumed file.
@@ -341,9 +388,6 @@ RAW_FILES_BY_NAME: dict[str, RawFile] = {f.name: f for f in RAW_FILES}
 
 #: Released data deliberately not mirrored (the loader does not read it).
 NOT_MIRRORED = (
-    "Dataset S2 (pone.0005629.s021.xls): the normalized transposon/genomic-DNA ratios "
-    "the z-scores were computed from; the loader stores the combined z-score and "
-    "reconstructs it from Datasets S3 and S4, so the ratios are never read",
     "Text S1 and Figures S1-S11 and Tables S1-S7 (pone.0005629.s001-s019.pdf): the "
     "additional methods, the gel and dose-response images, the per-class heatmaps and "
     "the MIC tables. Text S1 is quoted from its OCR in the LITERATURE mirror "
@@ -516,6 +560,18 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         note="r is the normalized transposon/genomic-DNA ratio; the two reference sets "
         "are the five unselected-library hybridizations and the six no-antibiotic "
         "selections",
+    ),
+    "reference_sets": _text_s1(
+        {"unselected_library": 5, "no_antibiotic": 6},
+        "One z-score used five reference hybridizations of the unselected library (from "
+        "[1]) and the other used six reference hybridizations of the library selected in "
+        "the same media without antibiotics. All six no-antibiotic samples came from "
+        "independent selections; three selections lasted two days, and three lasted "
+        "four days.",
+        note="the two reference sets of Datasets S3 and S4, and what each per-selection "
+        "record's reference summarizes. The six no-antibiotic samples are independent "
+        "selections (biological replicates); what the five unselected-library "
+        "hybridizations are is stated in Girgis 2007 [1], which is not in the mirror",
     ),
     "combination_rule": _paper(
         "the z-score closest to zero when all agree in sign, else 0",
@@ -1175,6 +1231,16 @@ def manifest_sha256(manifest: Manifest, relpath: str) -> str:
 # --------------------------------------------------------------------------- #
 # Reading the released sheets
 # --------------------------------------------------------------------------- #
+#: Row 1 of Datasets S3 and S4, verbatim: the release's own statement that the second
+#: and third hybridization of four drugs are two arrays of ONE culture. It agrees with
+#: Text S1 (``SOURCED_VALUES["technical_replicates_averaged"]``) and is what makes the
+#: one-record-per-selection unit a (drug, repetition) rather than a (drug, array).
+TECHNICAL_REPLICATE_NOTE = (
+    "Note that repetitions two and three for PIP, FOX, TET, TRM are technical, not "
+    "biological, replicates and were averaged."
+)
+
+
 class SheetFormatError(ValueError):
     """A released sheet whose title, header, ids or a cell is not what the loader reads."""
 
@@ -1187,8 +1253,19 @@ class ThresholdError(ValueError):
     """A Dataset S1 value that disagrees with its drug's significance threshold."""
 
 
+class RatioZScoreError(ValueError):
+    """A Dataset S3/S4 z-score its Dataset S2 ratio and reference set do not give."""
+
+
 class SheetSpec(BaseModel):
-    """One released sheet: where its header is and what its first cell must say."""
+    """One released sheet: where its header is and what its first cells must say.
+
+    ``notes`` are the sheet's own legend lines, the first-column cells of the rows right
+    under the title, verbatim. They are pinned with the file's sha256 and re-read on
+    every build, so the statements the loader relies on (which hybridizations are
+    technical, what ``LQ`` and ``ND`` mean, what a control column is) are checked against
+    the released bytes rather than paraphrased.
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -1198,6 +1275,7 @@ class SheetSpec(BaseModel):
     header_row: int
     id_column: str
     description_column: str
+    notes: tuple[str, ...] = ()
 
 
 SHEETS: dict[str, SheetSpec] = {
@@ -1210,6 +1288,21 @@ SHEETS: dict[str, SheetSpec] = {
         id_column="UNIQID",
         description_column="NAME",
     ),
+    DATASET_S2: SheetSpec(
+        file=DATASET_S2,
+        sheet_name="S2-Normalized Ratios",
+        title="Dataset S2: Normalized ratios (transposon signal/genomic DNA signal)",
+        header_row=5,
+        id_column="bnum",
+        description_column="description",
+        notes=(
+            "Con_RX_DY refers to independent control culture #X of library, which was "
+            "propagated in media without antibiotics for Y days.  (Sample 5 wasn't "
+            "hybridized.)",
+            "0Z_ref refers to the Zth hybridization of the unselected library.",
+            "LQ: low quality spot that did not yield usable data.",
+        ),
+    ),
     DATASET_S3: SheetSpec(
         file=DATASET_S3,
         sheet_name="S3-z relative unselected",
@@ -1218,6 +1311,13 @@ SHEETS: dict[str, SheetSpec] = {
         header_row=5,
         id_column="bnum",
         description_column="Description",
+        notes=(
+            TECHNICAL_REPLICATE_NOTE,
+            "LQ= Low quality array data",
+            "Average is the average of the five hybridizations of the original, "
+            "unseleccted library from Girgis et al. (2007); stdev is the standard "
+            "deviation with the global component added in.",
+        ),
     ),
     DATASET_S4: SheetSpec(
         file=DATASET_S4,
@@ -1228,6 +1328,12 @@ SHEETS: dict[str, SheetSpec] = {
         header_row=4,
         id_column="bnum",
         description_column="Description",
+        notes=(
+            TECHNICAL_REPLICATE_NOTE,
+            "LQ= Low quality array data",
+            "Average is the average of the six no antibiotic controls; stdev is the "
+            "standard deviation with the global component added in.",
+        ),
     ),
     DATASET_S5: SheetSpec(
         file=DATASET_S5,
@@ -1237,6 +1343,7 @@ SHEETS: dict[str, SheetSpec] = {
         header_row=3,
         id_column="UNIQID",
         description_column="NAME",
+        notes=("ND: No data (a minimum of two repetitions were not available).",),
     ),
 }
 #: The sheets' own marker for a cell with fewer than two usable repetitions.
@@ -1253,12 +1360,18 @@ def read_sheet(path: str | Path, spec: SheetSpec) -> pd.DataFrame:
     so a re-released file with a shifted header fails here instead of silently loading
     the wrong row as column names.
     """
-    sheets = pd.read_excel(path, sheet_name=None, header=None, nrows=1)
+    sheets = pd.read_excel(
+        path, sheet_name=None, header=None, nrows=1 + len(spec.notes)
+    )
     if list(sheets) != [spec.sheet_name]:
         raise SheetFormatError(f"{spec.file}: sheets {list(sheets)}")
     title = sheets[spec.sheet_name].iat[0, 0]
     if title != spec.title:
         raise SheetFormatError(f"{spec.file}: title {title!r}, not {spec.title!r}")
+    for row, note in enumerate(spec.notes, start=1):
+        cell = sheets[spec.sheet_name].iat[row, 0]
+        if cell != note:
+            raise SheetFormatError(f"{spec.file}: legend row {row} reads {cell!r}")
     frame = pd.read_excel(path, sheet_name=spec.sheet_name, header=spec.header_row)
     for column in (spec.id_column, spec.description_column):
         if column not in frame.columns:
@@ -1316,28 +1429,80 @@ def combined_z(z_scores: Sequence[float]) -> float:
     return min(z_scores, key=abs)
 
 
+def replicate_groups(spec: DrugSpec) -> tuple[tuple[int, ...], ...]:
+    """The drug's hybridization columns grouped by the SELECTION they were hybridized from.
+
+    Positions are 0-based into the drug's columns in :func:`hybridization_columns`
+    order. A plain drug has one array per selection. For the four drugs of
+    :data:`TECHNICAL_REPLICATE_NOTE` the second and third columns are two arrays of one
+    selection, so they form one group, whichever of the two is usable.
+    """
+    if spec.code.upper() in AVERAGED_CODES:
+        return ((0,), tuple(range(1, spec.hybridizations)))
+    return tuple((i,) for i in range(spec.hybridizations))
+
+
+class SelectionValue(BaseModel):
+    """One selection's z-score in one reference set: the unit a replicate record holds.
+
+    ``value`` is the released per-hybridization z-score, or for a two-array selection the
+    mean of its usable arrays, which is what Text S1 and the Dataset S3/S4 legend say the
+    authors did ("were averaged and treated as a single repetition"). ``n_arrays`` is how
+    many usable arrays went into it, ``n_group_arrays`` how many the selection has.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    repetition: int
+    value: float
+    n_arrays: int
+    n_group_arrays: int
+
+
+def selection_values(row: Sequence[Any], spec: DrugSpec) -> list[SelectionValue]:
+    """Every usable selection of one drug in one gene and one reference set, in order.
+
+    ``row`` is the drug's hybridization cells of Dataset S3 or S4 in column order. An
+    ``LQ`` array drops out; a selection whose every array is ``LQ`` has no value. The
+    grouping is positional (:func:`replicate_groups`), so when the first array of a
+    technical-pair drug is ``LQ`` its second and third arrays still form ONE selection,
+    never two.
+    """
+    cells = [_cell(cell) for cell in row]
+    if len(cells) != spec.hybridizations:
+        raise SheetFormatError(
+            f"{spec.code}: {len(cells)} hybridization cells, not {spec.hybridizations}"
+        )
+    out: list[SelectionValue] = []
+    for repetition, group in enumerate(replicate_groups(spec), start=1):
+        usable = [value for value in (cells[i] for i in group) if value is not None]
+        if usable:
+            out.append(
+                SelectionValue(
+                    repetition=repetition,
+                    value=sum(usable) / len(usable),
+                    n_arrays=len(usable),
+                    n_group_arrays=len(group),
+                )
+            )
+    return out
+
+
 def drug_z_scores(
     reference_rows: Sequence[Sequence[Any]], spec: DrugSpec
 ) -> list[float]:
     """Every z-score of one drug in one gene, over both reference sets.
 
     ``reference_rows`` holds the drug's hybridization cells of Dataset S3 and of Dataset
-    S4, each in column order. An ``LQ`` array drops out of its set. For the four drugs
-    Text S1 names, the second and third hybridizations of a set are two arrays of one
-    sample and are averaged into a single repetition before the rule is applied.
+    S4, each in column order. These are exactly the values the replicate records store
+    (:func:`selection_values`), so the combination check re-derives Dataset S5 from the
+    stored records themselves.
     """
-    averaged = spec.code.upper() in AVERAGED_CODES
-    out: list[float] = []
-    for row in reference_rows:
-        values = [v for v in (_cell(cell) for cell in row) if v is not None]
-        if not values:
-            continue
-        if averaged and len(values) > 1:
-            out.append(values[0])
-            out.append(sum(values[1:]) / len(values[1:]))
-        else:
-            out.extend(values)
-    return out
+    return [
+        selection.value
+        for row in reference_rows
+        for selection in selection_values(row, spec)
+    ]
 
 
 class CombinationCheck(BaseModel):
@@ -1416,6 +1581,97 @@ def check_combination_rule(
                 disagreements=disagreements,
             )
         )
+    return checks
+
+
+#: Text S1: "Ratios smaller than 0.05 were set to 0.05."
+RATIO_FLOOR: Final[float] = SOURCED_VALUES["ratio_floor"].value
+#: The largest ``|z - (log2(max(r, RATIO_FLOOR)) - Average) / Stdev|`` the ratio check
+#: allows: the sheets print about 15 significant digits of every number, and the
+#: measured worst case over the 165,078 numeric cells of each sheet is 8.5e-7
+#: (Dataset S3) and 4.8e-7 (Dataset S4).
+MAX_Z_FROM_RATIO_ERROR = 1e-6
+
+
+class RatioCheck(BaseModel):
+    """How one hybridization column of Dataset S3 or S4 compares with its S2 ratio."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    dataset: str
+    column: str
+    n_numeric: int
+    n_low_quality: int
+    n_floored: int
+    max_abs_error: float
+
+
+def check_z_from_ratios(
+    s2: pd.DataFrame, reference: pd.DataFrame, dataset: str
+) -> list[RatioCheck]:
+    """Re-derive every per-hybridization z-score of one reference set from Dataset S2.
+
+    ``z = (log2(max(r, 0.05)) - Average) / Stdev`` with ``r`` the hybridization's own
+    Dataset S2 ratio and ``Average``/``Stdev`` the gene's reference-set columns of the
+    same sheet (Methods and Text S1). An ``LQ`` cell must be ``LQ`` in both sheets. This
+    is what makes each stored per-selection z-score traceable to ONE array's released
+    measurement and to nothing else.
+    """
+    averages = [_cell(v) for v in reference["Average"].tolist()]
+    sds = [_cell(v) for v in reference["Stdev"].tolist()]
+    if any(a is None for a in averages) or any(sd is None or sd <= 0 for sd in sds):
+        raise SheetFormatError(
+            f"{dataset}: an Average or Stdev cell is not a number > 0"
+        )
+    checks: list[RatioCheck] = []
+    for spec in DRUGS:
+        columns = hybridization_columns(reference, spec.code)
+        if hybridization_columns(s2, spec.code) != columns:
+            raise SheetFormatError(
+                f"{DATASET_S2} and {dataset} name {spec.code}'s hybridizations "
+                f"differently"
+            )
+        for column in columns:
+            numeric = low_quality = floored = 0
+            worst = 0.0
+            for gene, ratio_cell, z_cell, mean, sd in zip(
+                reference[SHEETS[dataset].id_column].tolist(),
+                s2[column].tolist(),
+                reference[column].tolist(),
+                averages,
+                sds,
+                strict=True,
+            ):
+                ratio, z = _cell(ratio_cell), _cell(z_cell)
+                if (ratio is None) != (z is None):
+                    raise RatioZScoreError(
+                        f"{dataset} {column} {gene}: LQ in only one of S2 and {dataset}"
+                    )
+                if ratio is None or z is None:
+                    low_quality += 1
+                    continue
+                if mean is None or sd is None:
+                    raise SheetFormatError(f"{dataset} {gene}: no reference mean or sd")
+                numeric += 1
+                floored += ratio < RATIO_FLOOR
+                predicted = (math.log2(max(ratio, RATIO_FLOOR)) - mean) / sd
+                error = abs(predicted - z)
+                if error > MAX_Z_FROM_RATIO_ERROR:
+                    raise RatioZScoreError(
+                        f"{dataset} {column} {gene}: z {z}, the S2 ratio {ratio} gives "
+                        f"{predicted}"
+                    )
+                worst = max(worst, error)
+            checks.append(
+                RatioCheck(
+                    dataset=dataset,
+                    column=column,
+                    n_numeric=numeric,
+                    n_low_quality=low_quality,
+                    n_floored=floored,
+                    max_abs_error=worst,
+                )
+            )
     return checks
 
 
@@ -1815,6 +2071,134 @@ def reference_phenotype(spec: DrugSpec) -> EnvironmentResponsePhenotype:
     )
 
 
+class ReferenceSet(BaseModel):
+    """One of the two reference sets a per-hybridization z-score is computed against.
+
+    ``dataset`` is the sheet that releases the z-scores against it (Dataset S3 or S4),
+    ``n_reference`` the number of reference hybridizations behind its Average and Stdev
+    columns, and ``sample_unit`` what one of them is, None where this paper does not say
+    (:data:`UNSELECTED_SAMPLE_UNIT_GAP`).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    key: str
+    dataset: str
+    label: str
+    n_reference: int
+    sample_unit: SampleUnit | None
+
+
+_N_REFERENCE: Final[dict[str, int]] = SOURCED_VALUES["reference_sets"].value
+REFERENCE_SETS: tuple[ReferenceSet, ...] = (
+    ReferenceSet(
+        key="unselected_library",
+        dataset=DATASET_S3,
+        label="the five hybridizations of the original, unselected library",
+        n_reference=_N_REFERENCE["unselected_library"],
+        sample_unit=None,
+    ),
+    ReferenceSet(
+        key="no_antibiotic",
+        dataset=DATASET_S4,
+        label="the six independent selections in the same medium without antibiotics",
+        n_reference=_N_REFERENCE["no_antibiotic"],
+        sample_unit=SampleUnit.biological_replicate,
+    ),
+)
+REFERENCE_SETS_BY_KEY: dict[str, ReferenceSet] = {r.key: r for r in REFERENCE_SETS}
+
+UNSELECTED_SAMPLE_UNIT_GAP = ProvenanceGap(
+    field="sample_unit",
+    reason=ProvenanceGapReason.deferred_pending_source_review,
+    resolve_with=_GIRGIS2007,
+    note="the five unselected-library hybridizations come from Girgis 2007 ('from "
+    "[1]', Text S1), which is not in the mirror; this paper does not say whether they "
+    "are hybridizations of one library sample or of several, so no sample unit is "
+    "asserted for the reference they make",
+)
+_SINGLE_SELECTION_NOTE = (
+    "one selection's own z-score (n = 1): a single measurement has no dispersion. The "
+    "Stdev column of Datasets S3 and S4 is the reference set's spread with a global 0.15 "
+    "added, the z-score's own denominator, not an error on this value"
+)
+SINGLE_SELECTION_GAPS: tuple[ProvenanceGap, ...] = tuple(
+    ProvenanceGap(
+        field=field,
+        reason=ProvenanceGapReason.not_applicable_single_measurement,
+        note=_SINGLE_SELECTION_NOTE,
+    )
+    for field in ("environment_response_uncertainty", "environment_response_se")
+)
+
+
+def selection_units(reference_set: ReferenceSet, selection: SelectionValue) -> str:
+    """What a per-selection record's number is, including how its arrays were combined.
+
+    The phenotype has no field for a technical-replicate count, so a two-array selection
+    states it here: the mean of its two arrays, or the one usable array of the two.
+    """
+    units = (
+        f"z-score of ONE selection against {reference_set.label} (Dataset "
+        f"{'S3' if reference_set.dataset == DATASET_S3 else 'S4'}): (log2(r) - mean) / "
+        "sd, r the selection's normalized transposon/genomic-DNA ratio floored at 0.05, "
+        "mean and sd those of the reference hybridizations' log2 ratios for the gene "
+        "with a global component of 0.15 added to sd. Positive = disrupting the gene is "
+        "beneficial in that drug"
+    )
+    if selection.n_group_arrays == 1:
+        return units
+    if selection.n_arrays == selection.n_group_arrays:
+        return (
+            f"{units}; the mean of the z-scores of the {selection.n_arrays} arrays "
+            "hybridized from this one selection (technical replicates, averaged as the "
+            "authors did)"
+        )
+    return (
+        f"{units}; {selection.n_arrays} of the {selection.n_group_arrays} arrays "
+        "hybridized from this one selection, the others low quality (LQ)"
+    )
+
+
+def selection_phenotype(
+    selection: SelectionValue,
+    spec: DrugSpec,
+    reference_set: ReferenceSet,
+    replicate_id: str,
+) -> EnvironmentResponsePhenotype:
+    """One selection's released z-score of one gene in one drug and reference set."""
+    return EnvironmentResponsePhenotype(
+        measurement_type=MeasurementType.z_score,
+        assay_type=AssayType.other,
+        environment_response=selection.value,
+        n_samples=1,
+        sample_unit=SampleUnit.biological_replicate,
+        units=selection_units(reference_set, selection),
+        screen_id=spec.screen_id,
+        replicate_id=replicate_id,
+        provenance_gaps=list(SINGLE_SELECTION_GAPS),
+    )
+
+
+def selection_reference_phenotype(
+    spec: DrugSpec, reference_set: ReferenceSet
+) -> EnvironmentResponsePhenotype:
+    """The reference of a per-selection record: 0, the reference set's own mean."""
+    return EnvironmentResponsePhenotype(
+        measurement_type=MeasurementType.z_score,
+        assay_type=AssayType.other,
+        environment_response=0.0,
+        n_samples=reference_set.n_reference,
+        sample_unit=reference_set.sample_unit,
+        units=f"the unperturbed parent in the same drug: 0 on this axis, the mean log2 "
+        f"ratio of {reference_set.label}",
+        screen_id=spec.screen_id,
+        provenance_gaps=[UNSELECTED_SAMPLE_UNIT_GAP]
+        if reference_set.sample_unit is None
+        else [],
+    )
+
+
 def library_background() -> StrainBackground:
     """MG1655 ``delta-lacZ``, the strain the transposon library was built in.
 
@@ -1865,14 +2249,45 @@ def build_experiment(
 
 
 def build_reference(
-    dataset_name: str, genome: ReferenceGenome, spec: DrugSpec, env: Environment
+    dataset_name: str,
+    genome: ReferenceGenome,
+    spec: DrugSpec,
+    env: Environment,
+    reference_set: ReferenceSet | None = None,
 ) -> EnvironmentResponseExperimentReference:
-    """The unperturbed parent of one condition, scoring 0."""
+    """The unperturbed parent of one condition, scoring 0.
+
+    With ``reference_set`` it is the reference of that set's per-selection records;
+    without it, of the combined Dataset S5 records.
+    """
     return EnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
         genome_reference=genome,
         environment_reference=env.model_copy(),
-        phenotype_reference=reference_phenotype(spec),
+        phenotype_reference=reference_phenotype(spec)
+        if reference_set is None
+        else selection_reference_phenotype(spec, reference_set),
+    )
+
+
+def build_selection_experiment(
+    dataset_name: str,
+    locus_tag: str,
+    symbol: str,
+    cell: SelectionCell,
+    env: Environment,
+) -> EnvironmentResponseExperiment:
+    """The record of one selection's z-score of one gene, drug and reference set."""
+    return EnvironmentResponseExperiment(
+        dataset_name=dataset_name,
+        genotype=insertion_genotype(locus_tag, symbol),
+        environment=env,
+        phenotype=selection_phenotype(
+            cell.selection,
+            DRUGS_BY_CODE[cell.drug],
+            REFERENCE_SETS_BY_KEY[cell.reference_set],
+            cell.replicate_id,
+        ),
     )
 
 
@@ -1894,6 +2309,154 @@ def stored_cells(
             if value is None:
                 continue
             yield b_number, symbol, spec, value
+
+
+class SelectionCell(BaseModel):
+    """One stored per-selection cell: where it sits and what it holds."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    b_number: str
+    symbol: str
+    drug: str
+    reference_set: str
+    replicate_id: str
+    selection: SelectionValue
+
+
+def selection_replicate_ids(frame: pd.DataFrame, spec: DrugSpec) -> list[str]:
+    """Each selection's ``replicate_id``: its released column header(s), '+'-joined.
+
+    ``AMK_R1`` for a one-array selection; ``PIP_R2+PIP_R3`` for the two arrays of one
+    selection, whichever of them is usable, so one selection keeps one id.
+    """
+    columns = hybridization_columns(frame, spec.code)
+    return ["+".join(columns[i] for i in group) for group in replicate_groups(spec)]
+
+
+def selection_cells(
+    frames: Mapping[str, pd.DataFrame],
+    b_numbers: Sequence[str],
+    kept: Mapping[str, str],
+) -> Iterator[SelectionCell]:
+    """Every stored per-selection cell, gene-major, then drug, reference set, selection.
+
+    ``frames`` maps Dataset S3 and S4 to their frames. A selection whose every array is
+    ``LQ`` has no value and contributes nothing.
+    """
+    tables: dict[tuple[str, str], tuple[list[str], list[list[Any]]]] = {}
+    for spec in DRUGS:
+        ids = [selection_replicate_ids(frames[r.dataset], spec) for r in REFERENCE_SETS]
+        if ids[0] != ids[1]:
+            raise SheetFormatError(
+                f"{spec.code}: S3 and S4 name its arrays differently"
+            )
+        for reference_set, replicate_ids in zip(REFERENCE_SETS, ids, strict=True):
+            frame = frames[reference_set.dataset]
+            columns = hybridization_columns(frame, spec.code)
+            tables[(spec.code, reference_set.key)] = (
+                replicate_ids,
+                frame[columns].to_numpy(dtype=object).tolist(),
+            )
+    for row, b_number in enumerate(b_numbers):
+        symbol = kept.get(b_number)
+        if symbol is None:
+            continue
+        for spec in DRUGS:
+            for reference_set in REFERENCE_SETS:
+                replicate_ids, rows = tables[(spec.code, reference_set.key)]
+                for selection in selection_values(rows[row], spec):
+                    yield SelectionCell(
+                        b_number=b_number,
+                        symbol=symbol,
+                        drug=spec.code,
+                        reference_set=reference_set.key,
+                        replicate_id=replicate_ids[selection.repetition - 1],
+                        selection=selection,
+                    )
+
+
+class SelectionLedger(BaseModel):
+    """Per (drug, reference set, selection) counts of the per-selection records."""
+
+    drug: str
+    reference_set: str
+    replicate_id: str
+    repetition: int
+    source_cells: int
+    low_quality: int
+    kept_records: int
+    n_partial_arrays: int
+
+
+class SelectionLog(BaseModel):
+    """The per-selection records of one build: totals and every selection's counts."""
+
+    dataset: str
+    kept_records: int
+    by_repetition: dict[int, int]
+    by_reference_set: dict[str, int]
+    low_quality_rule: str
+    selections: list[SelectionLedger]
+
+
+LOW_QUALITY_RULE = (
+    "a selection whose every array is 'LQ' in that sheet ('LQ= Low quality array data'; "
+    "Dataset S2: 'low quality spot that did not yield usable data') has no released "
+    "value, so there is no measurement to store. The LQ cells are identical in Datasets "
+    "S2, S3 and S4 (checked on every build)"
+)
+
+
+def build_selection_log(
+    dataset_name: str,
+    frames: Mapping[str, pd.DataFrame],
+    b_numbers: Sequence[str],
+    kept: Mapping[str, str],
+) -> SelectionLog:
+    """Count the per-selection records by selection, repetition and reference set."""
+    kept_by: Counter[tuple[str, str, str]] = Counter()
+    partial: Counter[tuple[str, str, str]] = Counter()
+    repetition_of: dict[tuple[str, str, str], int] = {}
+    for cell in selection_cells(frames, b_numbers, kept):
+        key = (cell.drug, cell.reference_set, cell.replicate_id)
+        kept_by[key] += 1
+        partial[key] += cell.selection.n_arrays < cell.selection.n_group_arrays
+        repetition_of[key] = cell.selection.repetition
+    n_loci = sum(1 for b in b_numbers if b in kept)
+    selections: list[SelectionLedger] = []
+    for spec in DRUGS:
+        for reference_set in REFERENCE_SETS:
+            ids = selection_replicate_ids(frames[reference_set.dataset], spec)
+            for repetition, replicate_id in enumerate(ids, start=1):
+                key = (spec.code, reference_set.key, replicate_id)
+                if key in repetition_of and repetition_of[key] != repetition:
+                    raise RuntimeError(f"{key}: repetition {repetition_of[key]}")
+                selections.append(
+                    SelectionLedger(
+                        drug=spec.code,
+                        reference_set=reference_set.key,
+                        replicate_id=replicate_id,
+                        repetition=repetition,
+                        source_cells=n_loci,
+                        low_quality=n_loci - kept_by[key],
+                        kept_records=kept_by[key],
+                        n_partial_arrays=partial[key],
+                    )
+                )
+    by_repetition: Counter[int] = Counter()
+    by_reference_set: Counter[str] = Counter()
+    for ledger in selections:
+        by_repetition[ledger.repetition] += ledger.kept_records
+        by_reference_set[ledger.reference_set] += ledger.kept_records
+    return SelectionLog(
+        dataset=dataset_name,
+        kept_records=sum(kept_by.values()),
+        by_repetition=dict(sorted(by_repetition.items())),
+        by_reference_set=dict(by_reference_set),
+        low_quality_rule=LOW_QUALITY_RULE,
+        selections=selections,
+    )
 
 
 def build_drop_log(
@@ -2042,7 +2605,12 @@ class EnvChemgenGirgis2009Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Parse Dataset S5 into per-gene, per-drug records + LMDB, checking it first."""
+        """Parse Datasets S5, S3 and S4 into records + LMDB, checking every sheet first.
+
+        The LMDB holds the combined Dataset S5 records first (gene-major, then drug),
+        then the per-selection records of Datasets S3 and S4 (gene-major, then drug,
+        reference set and selection).
+        """
         verify_raw_files(self.raw_dir, DATA_SHA256)
         frames = {
             name: read_sheet(osp.join(self.raw_dir, name), spec)
@@ -2060,6 +2628,13 @@ class EnvChemgenGirgis2009Dataset(ExperimentDataset):
                 f"reproduced by the combination rule: "
                 f"{[(c.drug, c.disagreements[0]) for c in failed[:3]]}"
             )
+        ratio_checks = [
+            check
+            for reference_set in REFERENCE_SETS
+            for check in check_z_from_ratios(
+                frames[DATASET_S2], frames[reference_set.dataset], reference_set.dataset
+            )
+        ]
 
         genome = self._genome()
         kept, identifiers = resolve_b_numbers(
@@ -2069,18 +2644,29 @@ class EnvChemgenGirgis2009Dataset(ExperimentDataset):
             label=f"{self.name} Dataset S5 UNIQID",
         )
         drop_log = build_drop_log(self.name, frames[DATASET_S5], b_numbers, kept)
+        selection_log = build_selection_log(self.name, frames, b_numbers, kept)
         log.info(
-            "Girgis 2009: %d loci x %d drugs = %d cells -> %d records; dropped %s",
+            "Girgis 2009: %d loci x %d drugs = %d cells -> %d combined records; "
+            "dropped %s; %d per-selection records %s",
             drop_log.source_loci,
             len(DRUGS),
             drop_log.source_records,
             drop_log.kept_records,
             {rule.rule: rule.n_records for rule in drop_log.rules},
+            selection_log.kept_records,
+            selection_log.by_reference_set,
         )
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
         self._write_ledgers(drop_log, identifiers, thresholds, combination)
+        out = Path(self.preprocess_dir)
+        (out / "selection_records.json").write_text(
+            selection_log.model_dump_json(indent=2)
+        )
+        (out / "z_from_ratio_check.json").write_text(
+            json.dumps([check.model_dump() for check in ratio_checks], indent=2)
+        )
 
         environments = {spec.code: environment(spec) for spec in DRUGS}
         genome_reference = reference_genome()
@@ -2090,6 +2676,18 @@ class EnvChemgenGirgis2009Dataset(ExperimentDataset):
             )
             for spec in DRUGS
         }
+        selection_references = {
+            (spec.code, reference_set.key): build_reference(
+                self.name,
+                genome_reference,
+                spec,
+                environments[spec.code],
+                reference_set,
+            )
+            for spec in DRUGS
+            for reference_set in REFERENCE_SETS
+        }
+        total = drop_log.kept_records + selection_log.kept_records
         env_out, interned_env = self._open_write_lmdb(
             osp.join(self.processed_dir, "lmdb")
         )
@@ -2110,12 +2708,28 @@ class EnvChemgenGirgis2009Dataset(ExperimentDataset):
                     ),
                 )
                 index += 1
+            for cell in tqdm(
+                selection_cells(frames, b_numbers, kept),
+                total=selection_log.kept_records,
+                desc="girgis2009 selections",
+            ):
+                experiment = build_selection_experiment(
+                    self.name, cell.b_number, cell.symbol, cell, environments[cell.drug]
+                )
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(
+                        experiment,
+                        selection_references[(cell.drug, cell.reference_set)],
+                        PUBLICATION,
+                        itxn,
+                    ),
+                )
+                index += 1
         env_out.close()
         interned_env.close()
-        if index != drop_log.kept_records:
-            raise RuntimeError(
-                f"wrote {index} records, the ledger counted {drop_log.kept_records}"
-            )
+        if index != total:
+            raise RuntimeError(f"wrote {index} records, the ledgers counted {total}")
         log.info("Wrote %d Girgis 2009 environment-response experiments to LMDB", index)
 
     def _write_ledgers(
@@ -2172,9 +2786,14 @@ class EnvChemgenGirgis2009Dataset(ExperimentDataset):
 # Verification (L0-L4) of a built tree
 # --------------------------------------------------------------------------- #
 DATASET_ROOT_REL = "data/torchcell/ecoli_env_chemgen_girgis2009"
-#: Records of the full build: all 3,976 released loci x 17 drugs, minus 1,305 ND cells
+#: Combined Dataset S5 records: all 3,976 released loci x 17 drugs, minus 1,305 ND cells
 #: (63,766 before #1057 stored the 155 b-numbers that are no locus tag of the annotation).
-EXPECTED_RECORDS = 66287
+EXPECTED_COMBINED_RECORDS = 66287
+#: Per-selection records (2026-11-24, #1176): 149,586 usable (locus, drug, selection)
+#: cells in each of the two reference sets, Datasets S3 and S4.
+EXPECTED_SELECTION_RECORDS = 299172
+#: Records of the full build.
+EXPECTED_RECORDS = EXPECTED_COMBINED_RECORDS + EXPECTED_SELECTION_RECORDS
 
 
 def verify_build(
@@ -2217,8 +2836,10 @@ def verify_build(
             citation_key=CITATION_KEY,
             sha256=DATA_SHA256[DATASET_S5],
             method="Dataset S5, the combined z-score of every locus in each of the 17 "
-            "antibiotics; one EnvironmentResponseExperiment per (gene, drug), "
-            "gene-level TransposonInsertionPerturbation against MG1655, reference = the "
+            "antibiotics, one EnvironmentResponseExperiment per (gene, drug); plus "
+            "Datasets S3 and S4, one record per (gene, drug, reference set, selection) "
+            "with replicate_id = the released hybridization column(s); gene-level "
+            "TransposonInsertionPerturbation against MG1655, reference = the "
             "unperturbed MG1655 delta-lacZ parent at 0",
             page="Dataset S5 (pone.0005629.s024.xls), sheet 'S5-Scores of All'",
             retrieved=DATA_RETRIEVED_AT,

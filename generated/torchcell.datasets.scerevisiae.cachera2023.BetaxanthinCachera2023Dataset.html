@@ -214,23 +214,24 @@ inheriting an organism it may not have.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.raw_file_names">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">raw_file_names</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.raw_file_names" title="Link to this definition"></a></dt>
-<dd><p>The gene-level CRI-SPA dataset required before processing.</p>
+<dd><p>The per-gene and the per-colony CRI-SPA files required before processing.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.download">
 <span class="sig-name descname"><span class="pre">download</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/scerevisiae/cachera2023.html#BetaxanthinCachera2023Dataset.download"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.download" title="Link to this definition"></a></dt>
-<dd><p>Download the gene-level CRI-SPA dataset from the authors’ GitHub repo.</p>
+<dd><p>Download the per-gene and per-colony files from the authors’ GitHub repo.</p>
 <p>The stored artifact’s sha256 is canonical: a freshly downloaded payload is
-verified before it is written, and the file in <code class="docutils literal notranslate"><span class="pre">raw/</span></code> (present or fresh) is
-verified against <code class="docutils literal notranslate"><span class="pre">DATA_SHA256</span></code> at the start of <code class="docutils literal notranslate"><span class="pre">process</span></code>. A mismatch means
-upstream drift or corruption and raises (never silently followed).</p>
+verified before it is written, and each file in <code class="docutils literal notranslate"><span class="pre">raw/</span></code> (present or fresh) is
+verified against its pin at the start of <code class="docutils literal notranslate"><span class="pre">process</span></code>. A mismatch means upstream
+drift or corruption and raises (never silently followed). A file already in
+<code class="docutils literal notranslate"><span class="pre">raw/</span></code> is not fetched again.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.process">
 <span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/scerevisiae/cachera2023.html#BetaxanthinCachera2023Dataset.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.process" title="Link to this definition"></a></dt>
-<dd><p>Store every released deletion row as a Metabolite experiment; write LMDB.</p>
+<dd><p>Store every measured colony as a Metabolite experiment; write LMDB.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -242,7 +243,9 @@ upstream drift or corruption and raises (never silently followed).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.create_experiment">
 <span class="sig-name descname"><span class="pre">create_experiment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.15)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="torchcell.datamodels.schema.MetaboliteExperiment.html#torchcell.datamodels.schema.MetaboliteExperiment" title="torchcell.datamodels.schema.MetaboliteExperiment"><span class="pre">MetaboliteExperiment</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.MetaboliteExperimentReference.html#torchcell.datamodels.schema.MetaboliteExperimentReference" title="torchcell.datamodels.schema.MetaboliteExperimentReference"><span class="pre">MetaboliteExperimentReference</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.Publication.html#torchcell.datamodels.schema.Publication" title="torchcell.datamodels.schema.Publication"><span class="pre">Publication</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/torchcell/datasets/scerevisiae/cachera2023.html#BetaxanthinCachera2023Dataset.create_experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.create_experiment" title="Link to this definition"></a></dt>
-<dd><p>Build the Metabolite experiment/reference/publication for one released row.</p>
+<dd><p>Build the Metabolite experiment/reference/publication for one colony.</p>
+<p><code class="docutils literal notranslate"><span class="pre">row[&quot;gene&quot;]</span></code> is the upper-cased released token, or <code class="docutils literal notranslate"><span class="pre">None</span></code> for a control
+colony (the Btx cassette and no deletion).</p>
 </dd></dl>
 
 </dd></dl>

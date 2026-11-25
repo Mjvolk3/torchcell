@@ -131,24 +131,67 @@
 <span class="sd">(``CACHERA_YPD_G418``, every value quoted from the mirror OCR), and the paper states no</span>
 <span class="sd">growth temperature, so ``temperature=None`` with a typed ``ProvenanceGap``.</span>
 
-<span class="sd">Source: the paper's Data Availability points to the CRI-SPA GitHub repo</span>
-<span class="sd">(github.com/pc2912/CRI-SPA_repo). We ingest `GA1_2_4_6.csv` -- the gene-level</span>
-<span class="sd">corrected+filtered dataset combining screen replicates 1/2/4/6 -- using the 24 h</span>
-<span class="sd">`corrected_mean_intensity` (mean/std/count) as the betaxanthin level + SE + n.</span>
+<span class="sd">Source: the paper's Data Availability (``paper.md`` line 175) points to the CRI-SPA</span>
+<span class="sd">GitHub repo (github.com/pc2912/CRI-SPA_repo) for the per-screen raw datasets and the</span>
+<span class="sd">individual and corrected, filtered datasets (``SOURCED_VALUES["data_availability"]``).</span>
+<span class="sd">Two of its files are read, both sha256-pinned and both deposited in the raw</span>
+<span class="sd">mirror ``$DATA_ROOT/torchcell-raw/cacheraCRISPAHighthroughputMethod2023/data/`` with a</span>
+<span class="sd">``manifest.json`` retrieval record (commit ``2c800ab7``):</span>
+
+<span class="sd">- ``QD1_2_4_6.csv`` (the repository README: "(Quadruplicate) Size and Yellowness raw and</span>
+<span class="sd">  corrected data for colony quadruplicates"; for the ``1_2_4_6`` files "data extracted</span>
+<span class="sd">  from several screen repeats, pooled and processed after pooling"; repeats 1, 2, 4 and</span>
+<span class="sd">  6 are each a "Screen repeat with final antibiotic selection"): one row per COLONY</span>
+<span class="sd">  POSITION of each of the four screen repeats (79,872 rows = 4 x 13 plates x 1,536),</span>
+<span class="sd">  keyed by ``repeat``, ``plate``, ``row`` and ``column``. The stored value is the 24 h</span>
+<span class="sd">  ``corrected_mean_intensity`` of one colony.</span>
+<span class="sd">- ``GA1_2_4_6.csv``: the authors' per-gene mean, std and count over those colonies. Only</span>
+<span class="sd">  its ``WT`` row is read, as the reference summary.</span>
+
+<span class="sd">ONE RECORD PER COLONY (#1177, tracking #1178). A colony is one biological replicate: one</span>
+<span class="sd">CRI-SPA transfer event ("using CRI-SPA in quadruplicate amounting to a total volume of</span>
+<span class="sd">19148 transfer events", line 126; the four colonies of a strain are four "trials", line</span>
+<span class="sd">117), and the gene score the authors report is "the mean of the colony replicate" (line</span>
+<span class="sd">64), "a median of 15 replicates (16 is maximum) per gene" over the four pooled screens</span>
+<span class="sd">(line 145). Each colony is a ``MetaboliteExperiment`` whose ``metabolite_level`` is that</span>
+<span class="sd">colony's value verbatim, ``n_replicates`` 1, ``metabolite_level_se`` ``None`` with a typed</span>
+<span class="sd">``not_applicable_single_measurement`` gap, and ``replicate_id`` the colony's position in</span>
+<span class="sd">the release, ``repeat&lt;r&gt;/plate&lt;p&gt;/row&lt;i&gt;/column&lt;j&gt;`` (the file prints no other colony</span>
+<span class="sd">label). The position also tells apart the two or three arrayed library strains that 61</span>
+<span class="sd">gene tokens occupy (e.g. ACO2 at plate 0 row 5 column 17 and plate 1 row 5 column 16):</span>
+<span class="sd">the per-gene file merges them into one mean, the colony records keep every one. Grouping</span>
+<span class="sd">the colony records of one gene and taking their mean reproduces ``GA1_2_4_6.csv`` to</span>
+<span class="sd">1.3e-15 (``experiments/036-dataset-fixes-before-kg-build/scripts/</span>
+<span class="sd">cachera2023_per_colony_mean_check.py``). Before 2026.11.24 the loader stored one record</span>
+<span class="sd">per gene from ``GA1_2_4_6.csv`` (mean, std / sqrt(count), count): 4,759 records.</span>
+
+<span class="sd">THE CONTROL COLONIES ARE RECORDS. The library positions the release labels ``WT`` (8 per</span>
+<span class="sd">repeat; 12 colonies carry a value, all in repeats 4 and 6) are stored as records with the</span>
+<span class="sd">Btx cassette and no deletion: every colony on the final plate of these four repeats grew</span>
+<span class="sd">under the cassette's own selection ("we employed NTC selection in the final step of</span>
+<span class="sd">CRI-SPA as a safety measure to ensure that all cells contain the Btx-cassette", line</span>
+<span class="sd">131), and the paper calls that point "the BY-Btx strain" (Figure 5 legend, line 148).</span>
+<span class="sd">``phenotype_reference`` is the authors' own summary of those colonies, the ``WT`` row of</span>
+<span class="sd">``GA1_2_4_6.csv`` (mean 0.2224, std / sqrt(12), n 12, ``replicate_id`` ``None``); before</span>
+<span class="sd">2026.11.24 it was a constant 0.0 asserted from the centering of the score.</span>
 
 <span class="sd">Maps to `MetabolitePhenotype` (WS4): `metabolite_level = {"betaxanthin": score}` with</span>
 <span class="sd">`measurement_type = "cri_spa_corrected_hsv_yellowness_24h"`.</span>
 
-<span class="sd">Every row that names a gene and carries a 24 h level is one record under the name the</span>
-<span class="sd">``gene`` column releases, verbatim (#1045): a systematic name goes on</span>
-<span class="sd">``KanMxDeletionPerturbation`` (both names the ORF), any other name on</span>
-<span class="sd">``ReleasedIdentifierPerturbation`` (the released symbol, kind ``deletion``, marker KanMX).</span>
-<span class="sd">The token is upper-cased (two systematic names are released in mixed case) and</span>
-<span class="sd">otherwise verbatim. No genome is consulted and nothing is renamed or merged; the pinned</span>
-<span class="sd">file (4,788 rows) repeats no gene token. The rows without a record are the 28 whose gene cell is ``0`` or</span>
-<span class="sd">blank or whose level is blank and the one ``WT`` control, listed in</span>
-<span class="sd">``preprocess/dropped_records.json``. Before #1045 the loader resolved every symbol</span>
-<span class="sd">through a genome (4,719 records), dropping 11 names and merging 30 collisions.</span>
+<span class="sd">Every colony whose position names a gene is stored under the name the ``gene`` column</span>
+<span class="sd">releases, verbatim (#1045): a systematic name goes on ``KanMxDeletionPerturbation``</span>
+<span class="sd">(both names the ORF), any other name on ``ReleasedIdentifierPerturbation`` (the released</span>
+<span class="sd">symbol, kind ``deletion``, marker KanMX). The token is upper-cased (two systematic names</span>
+<span class="sd">are released in mixed case) and otherwise verbatim; no two released tokens upper-case to</span>
+<span class="sd">one name. No genome is consulted and nothing is renamed or merged.</span>
+
+<span class="sd">The colony positions without a record, each listed in ``preprocess/dropped_records.json``</span>
+<span class="sd">under its rule: positions where no colony was measured (both the raw and the corrected</span>
+<span class="sd">24 h value blank, 10,825), colonies the AUTHORS withdrew (a raw value but a blank</span>
+<span class="sd">corrected one, 126: line 64 deletes Grubbs outliers within quadruplicates and genes with</span>
+<span class="sd">two colonies or less, ``SOURCED_VALUES["authors_withdrawal"]``), and colonies at a position the library map labels ``0`` (an</span>
+<span class="sd">empty library well, so no strain is named; 87). The 48 h columns are released and not</span>
+<span class="sd">stored.</span>
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
@@ -254,6 +297,34 @@
     <span class="s2">"For selection on solid medium, plates were supplemented with "</span>
     <span class="s2">"$2 0 0 ~ </span><span class="se">\\</span><span class="s2">mathrm { { m g / l } }$ geneticin (G418)"</span>
 <span class="p">)</span>
+<span class="c1"># line 126: a colony is one transfer event (the biological replicate, #1177).</span>
+<span class="n">TRANSFER_EVENTS_QUOTE</span> <span class="o">=</span> <span class="s2">"using CRI-SPA in quadruplicate amounting to a total volume of 19148 transfer events"</span>
+<span class="c1"># line 145: the four pooled screens give up to 16 colonies per gene.</span>
+<span class="n">REPLICATES_PER_GENE_QUOTE</span> <span class="o">=</span> <span class="s2">"with a median of 15 replicates (16 is maximum) per gene"</span>
+<span class="c1"># line 64: the authors' own deletions, and the gene score is the colony mean. The</span>
+<span class="c1"># apostrophe is the OCR's U+2019, kept verbatim.</span>
+<span class="n">WITHDRAWAL_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"outliers within quadruplicates were detected with Grubbs’ test for outliers "</span>
+    <span class="s2">"and deleted. Genes represented by two colonies or less were deleted from the "</span>
+    <span class="s2">"analysis. Finally, the mean of the colony replicate was used as the final score "</span>
+    <span class="s2">"for each gene."</span>
+<span class="p">)</span>
+<span class="c1"># line 68: the same deletion after the screens are pooled.</span>
+<span class="n">POOLED_WITHDRAWAL_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"the individual datasets were pooled and outliers removed with Grubbs’ test"</span>
+<span class="p">)</span>
+<span class="c1"># line 131: the final plate selects the cassette, so every measured colony carries it.</span>
+<span class="n">CASSETTE_SELECTION_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"we employed NTC selection in the final step of CRI-SPA as a safety measure to "</span>
+    <span class="s2">"ensure that all cells contain the Btx-cassette"</span>
+<span class="p">)</span>
+<span class="c1"># line 148: the WT position of the pooled screen is the BY-Btx strain.</span>
+<span class="n">BY_BTX_QUOTE</span> <span class="o">=</span> <span class="s2">"The position of the BY-Btx strain is marked with a black asterisk."</span>
+<span class="c1"># line 175: where the per-colony and per-gene files are released.</span>
+<span class="n">DATA_AVAILABILITY_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"the individual and the corrected $^ +$ filtered datasets are all available on our "</span>
+    <span class="s2">"CRI-SPA github repository"</span>
+<span class="p">)</span>
 
 <span class="c1">#: What the stored level IS: the 24 h ``corrected_mean_intensity`` column of</span>
 <span class="c1">#: ``GA1_2_4_6.csv``, an HSV yellowness score (``READOUT_QUOTE``), corrected for plate</span>
@@ -284,6 +355,43 @@
     <span class="p">),</span>
     <span class="s2">"agar"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span><span class="s2">"20 g/l"</span><span class="p">,</span> <span class="n">AGAR_QUOTE</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="s2">"line 31"</span><span class="p">),</span>
     <span class="s2">"g418"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span><span class="s2">"200 mg/l"</span><span class="p">,</span> <span class="n">G418_QUOTE</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="s2">"line 31"</span><span class="p">),</span>
+    <span class="c1"># --- #1177: what a stored record is (one colony), and what the authors withdrew ---</span>
+    <span class="s2">"replicate_unit"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span>
+        <span class="s2">"one colony = one CRI-SPA transfer event"</span><span class="p">,</span>
+        <span class="n">TRANSFER_EVENTS_QUOTE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"line 126; 4,787 strains x 4 colonies per screen repeat"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"replicates_per_gene"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span>
+        <span class="s2">"up to 16 colonies per gene over the four pooled screens"</span><span class="p">,</span>
+        <span class="n">REPLICATES_PER_GENE_QUOTE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"line 145; the released per-gene count is the number of colonies"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"authors_withdrawal"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span>
+        <span class="s2">"Grubbs outliers and genes with &lt;= 2 colonies deleted; gene score = colony mean"</span><span class="p">,</span>
+        <span class="n">WITHDRAWAL_QUOTE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"line 64 (and line 68 for the pooled screens); a colony with a raw value "</span>
+        <span class="s2">"and a blank corrected value in QD1_2_4_6.csv is one the authors deleted"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"pooled_withdrawal"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span>
+        <span class="s2">"pooled screens: Grubbs outliers removed after pooling"</span><span class="p">,</span>
+        <span class="n">POOLED_WITHDRAWAL_QUOTE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"line 68"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"control_cassette"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span>
+        <span class="s2">"the final plate selects the Btx-cassette (NTC)"</span><span class="p">,</span>
+        <span class="n">CASSETTE_SELECTION_QUOTE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"line 131; so a colony at a WT position carries the cassette"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"control_is_by_btx"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span>
+        <span class="s2">"the WT position of the screen is the BY-Btx strain"</span><span class="p">,</span>
+        <span class="n">BY_BTX_QUOTE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"line 148, Figure 5 legend"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"data_availability"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span>
+        <span class="s2">"per-colony and per-gene files on the CRI-SPA GitHub repository"</span><span class="p">,</span>
+        <span class="n">DATA_AVAILABILITY_QUOTE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"line 175"</span><span class="p">,</span>
+    <span class="p">),</span>
 <span class="p">}</span>
 
 <span class="n">CACHERA_YPD_G418</span><span class="p">:</span> <span class="n">Media</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
@@ -563,25 +671,66 @@
 <span class="n">_STD</span> <span class="o">=</span> <span class="s2">"corrected_mean_intensity.24_std"</span>
 <span class="n">_COUNT</span> <span class="o">=</span> <span class="s2">"corrected_mean_intensity.24_count"</span>
 
+<span class="c1">#: The commit of github.com/pc2912/CRI-SPA_repo the per-colony file was taken from (the</span>
+<span class="c1">#: repository tip on 2026-11-25, last pushed 2023-08-02); the GA file is byte-identical</span>
+<span class="c1">#: there and on ``main``.</span>
+<span class="n">REPO_COMMIT</span> <span class="o">=</span> <span class="s2">"2c800ab7b9811456f353d325be75b24e938440c6"</span>
+<span class="c1">#: The per-colony release (#1177): one row per colony position of each screen repeat.</span>
+<span class="n">QD_FILENAME</span> <span class="o">=</span> <span class="s2">"QD1_2_4_6.csv"</span>
+<span class="n">QD_URL</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"https://raw.githubusercontent.com/pc2912/CRI-SPA_repo/</span><span class="si">{</span><span class="n">REPO_COMMIT</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">QD_FILENAME</span><span class="si">}</span><span class="s2">"</span>
+<span class="p">)</span>
+<span class="n">QD_SHA256</span> <span class="o">=</span> <span class="s2">"58fc1cba88ce54fc0af073657b285a6d0a09cb0b703eb3178ee0f958659cf4ff"</span>
+<span class="n">QD_BYTES</span> <span class="o">=</span> <span class="mi">10645057</span>
+<span class="c1">#: The raw mirror holding both files and their retrieval records.</span>
+<span class="n">RAW_MIRROR_REL</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"torchcell-raw/</span><span class="si">{</span><span class="n">CITATION_KEY</span><span class="si">}</span><span class="s2">"</span>
+<span class="c1">#: One colony's 24 h value, corrected (edge effects, screen centering and scaling) and</span>
+<span class="c1">#: after the authors' outlier deletion; ``_COLONY_RAW`` is the same colony before any</span>
+<span class="c1">#: correction, read only to tell an unmeasured position from a deleted colony.</span>
+<span class="n">_COLONY_LEVEL</span> <span class="o">=</span> <span class="s2">"corrected_mean_intensity.24"</span>
+<span class="n">_COLONY_RAW</span> <span class="o">=</span> <span class="s2">"mean_intensity.24"</span>
+<span class="c1">#: The released key of one colony: screen repeat, then plate, row and column.</span>
+<span class="n">_POSITION</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"repeat"</span><span class="p">,</span> <span class="s2">"plate"</span><span class="p">,</span> <span class="s2">"row"</span><span class="p">,</span> <span class="s2">"column"</span><span class="p">)</span>
+
 <span class="c1">#: An S288C systematic name, the form that goes on the placed deletion leaf.</span>
 <span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
     <span class="sa">r</span><span class="s2">"^(Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?|Q\d</span><span class="si">{4}</span><span class="s2">|YNC[A-Q]\d</span><span class="si">{4}</span><span class="s2">[WC])$"</span>
 <span class="p">)</span>
 
-<span class="c1">#: The two kinds of released row that are not a record (#1045), by name.</span>
-<span class="n">RULE_NO_GENE_OR_LEVEL</span> <span class="o">=</span> <span class="s2">"gene_cell_is_0_or_blank_or_level_is_blank"</span>
-<span class="n">RULE_CONTROL_ROW</span> <span class="o">=</span> <span class="s2">"control_row"</span>
+<span class="c1">#: The three kinds of released colony position that are not a record, by name.</span>
+<span class="n">RULE_NO_COLONY</span> <span class="o">=</span> <span class="s2">"no_colony_measured"</span>
+<span class="n">RULE_WITHDRAWN</span> <span class="o">=</span> <span class="s2">"withdrawn_by_the_authors"</span>
+<span class="n">RULE_NO_GENE</span> <span class="o">=</span> <span class="s2">"gene_cell_is_0_or_blank"</span>
 <span class="n">_RULE_DESCRIPTIONS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n">RULE_NO_GENE_OR_LEVEL</span><span class="p">:</span> <span class="p">(</span>
-        <span class="s2">"the gene cell is '0' or blank (an empty plate position) or the 24 h corrected "</span>
-        <span class="s2">"level is blank, so the row names no deletion strain with a measurement"</span>
+    <span class="n">RULE_NO_COLONY</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"both the raw and the corrected 24 h value of the position are blank: no "</span>
+        <span class="s2">"colony was measured there (none grew, or the image gave none)"</span>
     <span class="p">),</span>
-    <span class="n">RULE_CONTROL_ROW</span><span class="p">:</span> <span class="p">(</span>
-        <span class="s2">"the gene cell is 'WT', the unperturbed CRI-SPA Donor background, which is the "</span>
-        <span class="s2">"reference and not a deletion strain"</span>
+    <span class="n">RULE_WITHDRAWN</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"the position has a raw 24 h value but a blank corrected one: the authors "</span>
+        <span class="s2">"deleted the colony as a Grubbs outlier or with a gene of two colonies or less "</span>
+        <span class="s2">"(paper.md line 64 and line 68)"</span>
+    <span class="p">),</span>
+    <span class="n">RULE_NO_GENE</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"the gene cell is '0' or blank, an empty library well, so the colony names no "</span>
+        <span class="s2">"strain"</span>
     <span class="p">),</span>
 <span class="p">}</span>
+<span class="c1">#: The library positions the release labels as the wild type: the BY-Btx control.</span>
 <span class="n">_CONTROL_TOKENS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"WT"</span><span class="p">})</span>
+
+<span class="c1">#: Why a colony record has no standard error.</span>
+<span class="n">_SINGLE_COLONY_SE_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"a record is ONE colony (one CRI-SPA transfer event) and one measurement has no "</span>
+    <span class="s2">"dispersion of its own; the per-gene mean and SE over the colony records of one "</span>
+    <span class="s2">"gene are a modeling-time derivation (the authors' own are in GA1_2_4_6.csv)"</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">replicate_id</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The colony's position in the release, ``repeat&lt;r&gt;/plate&lt;p&gt;/row&lt;i&gt;/column&lt;j&gt;``."""</span>
+    <span class="n">repeat</span><span class="p">,</span> <span class="n">plate</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">column</span> <span class="o">=</span> <span class="n">position</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"repeat</span><span class="si">{</span><span class="n">repeat</span><span class="si">}</span><span class="s2">/plate</span><span class="si">{</span><span class="n">plate</span><span class="si">}</span><span class="s2">/row</span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s2">/column</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_released_deletion</span><span class="p">(</span>
@@ -607,11 +756,19 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">RepeatedGeneError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Two released rows carry one gene token; one strain is one record."""</span>
+<span class="w">    </span><span class="sd">"""Two distinct released gene tokens upper-case to one name; nothing is merged."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">RepeatedPositionError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Two released rows carry one colony position; one colony is one record."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MissingControlSummaryError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""``GA1_2_4_6.csv`` has no usable ``WT`` row to summarize the control colonies."""</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">DropRule</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""One rule and the released rows it left without a record."""</span>
+<span class="w">    </span><span class="sd">"""One rule and the released colony positions it left without a record."""</span>
 
     <span class="n">rule</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
@@ -620,11 +777,12 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">DropLog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""The build's accounting: every released row is a record or listed here."""</span>
+<span class="w">    </span><span class="sd">"""The build's accounting: every released colony position is a record or listed."""</span>
 
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">source_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">kept_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">kept_control_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">kept_under_systematic_name</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">kept_under_released_symbol</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">dropped_records</span><span class="p">:</span> <span class="nb">int</span>
@@ -647,7 +805,7 @@
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize the dataset; every row is stored under its released gene name."""</span>
+<span class="w">        </span><span class="sd">"""Initialize the dataset; every colony is stored under its released gene name."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -662,107 +820,171 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The gene-level CRI-SPA dataset required before processing."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">DATA_FILENAME</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""The per-gene and the per-colony CRI-SPA files required before processing."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">DATA_FILENAME</span><span class="p">,</span> <span class="n">QD_FILENAME</span><span class="p">]</span>
 
 <div class="viewcode-block" id="BetaxanthinCachera2023Dataset.download">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.html#torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.download">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Download the gene-level CRI-SPA dataset from the authors' GitHub repo.</span>
+<span class="w">        </span><span class="sd">"""Download the per-gene and per-colony files from the authors' GitHub repo.</span>
 
 <span class="sd">        The stored artifact's sha256 is canonical: a freshly downloaded payload is</span>
-<span class="sd">        verified before it is written, and the file in ``raw/`` (present or fresh) is</span>
-<span class="sd">        verified against ``DATA_SHA256`` at the start of ``process``. A mismatch means</span>
-<span class="sd">        upstream drift or corruption and raises (never silently followed).</span>
+<span class="sd">        verified before it is written, and each file in ``raw/`` (present or fresh) is</span>
+<span class="sd">        verified against its pin at the start of ``process``. A mismatch means upstream</span>
+<span class="sd">        drift or corruption and raises (never silently followed). A file already in</span>
+<span class="sd">        ``raw/`` is not fetched again.</span>
 <span class="sd">        """</span>
-        <span class="n">dest</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">DATA_FILENAME</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
-            <span class="k">return</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Downloading CRI-SPA data from </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">DATA_URL</span><span class="p">)</span>
-        <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">DATA_URL</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"User-Agent"</span><span class="p">:</span> <span class="s2">"Mozilla/5.0"</span><span class="p">})</span>
-        <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">120</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">10000</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"CRI-SPA download too small: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2"> bytes"</span><span class="p">)</span>
-        <span class="n">write_verified</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">DATA_SHA256</span><span class="p">,</span> <span class="n">DATA_URL</span><span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrote </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%d</span><span class="s2"> bytes, sha256 verified)"</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span></div>
+        <span class="k">for</span> <span class="n">url</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">sha256</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">DATA_URL</span><span class="p">,</span> <span class="n">DATA_FILENAME</span><span class="p">,</span> <span class="n">DATA_SHA256</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">QD_URL</span><span class="p">,</span> <span class="n">QD_FILENAME</span><span class="p">,</span> <span class="n">QD_SHA256</span><span class="p">),</span>
+        <span class="p">):</span>
+            <span class="n">dest</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Downloading CRI-SPA data from </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+            <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"User-Agent"</span><span class="p">:</span> <span class="s2">"Mozilla/5.0"</span><span class="p">})</span>
+            <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">120</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">10000</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"CRI-SPA download too small: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2"> bytes"</span><span class="p">)</span>
+            <span class="n">write_verified</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">sha256</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrote </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%d</span><span class="s2"> bytes, sha256 verified)"</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_control_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetabolitePhenotype</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The authors' own summary of the control colonies: the ``WT`` row of GA.</span>
+
+<span class="sd">        Mean, std / sqrt(count) and count of the 24 h corrected level, ``replicate_id``</span>
+<span class="sd">        ``None``. It is the source's statistic, not one this loader computes.</span>
+<span class="sd">        """</span>
+        <span class="n">ga</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">DATA_FILENAME</span><span class="p">))</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">ga</span><span class="p">[</span><span class="n">ga</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">_CONTROL_TOKENS</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">MissingControlSummaryError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">DATA_FILENAME</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="si">}</span><span class="s2"> WT rows; the reference needs one"</span>
+            <span class="p">)</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">rows</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">_LEVEL</span><span class="p">])</span> <span class="ow">or</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">_STD</span><span class="p">])</span> <span class="ow">or</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">_COUNT</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="n">MissingControlSummaryError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">DATA_FILENAME</span><span class="si">}</span><span class="s2"> WT row lacks a level, std or count"</span>
+            <span class="p">)</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">_COUNT</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">count</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">MissingControlSummaryError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">DATA_FILENAME</span><span class="si">}</span><span class="s2"> WT row summarizes </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2"> colony; no SE"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
+            <span class="n">metabolite_level</span><span class="o">=</span><span class="p">{</span><span class="n">TARGET_METABOLITE</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">_LEVEL</span><span class="p">])},</span>
+            <span class="n">metabolite_level_se</span><span class="o">=</span><span class="p">{</span>
+                <span class="n">TARGET_METABOLITE</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">_STD</span><span class="p">])</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
+            <span class="p">},</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="p">{</span><span class="n">TARGET_METABOLITE</span><span class="p">:</span> <span class="n">count</span><span class="p">},</span>
+            <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+            <span class="n">target_metabolite_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="BetaxanthinCachera2023Dataset.process">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.html#torchcell.datasets.scerevisiae.cachera2023.BetaxanthinCachera2023Dataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Store every released deletion row as a Metabolite experiment; write LMDB."""</span>
-        <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">DATA_FILENAME</span><span class="p">:</span> <span class="n">DATA_SHA256</span><span class="p">})</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">DATA_FILENAME</span><span class="p">))</span>
+<span class="w">        </span><span class="sd">"""Store every measured colony as a Metabolite experiment; write LMDB."""</span>
+        <span class="n">verify_raw_files</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">DATA_FILENAME</span><span class="p">:</span> <span class="n">DATA_SHA256</span><span class="p">,</span> <span class="n">QD_FILENAME</span><span class="p">:</span> <span class="n">QD_SHA256</span><span class="p">}</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reference_phenotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_control_summary</span><span class="p">()</span>
+        <span class="n">qd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">QD_FILENAME</span><span class="p">))</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">no_gene_or_level</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">control</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">no_colony</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">withdrawn</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">no_gene</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">positions</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">released_token</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-            <span class="n">gene</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="n">level</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">_LEVEL</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">gene</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"0"</span><span class="p">,</span> <span class="s2">"nan"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="ow">or</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">level</span><span class="p">):</span>
-                <span class="n">no_gene_or_level</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gene</span><span class="p">)</span>
-                <span class="k">continue</span>
-            <span class="k">if</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">_CONTROL_TOKENS</span><span class="p">:</span>
-                <span class="n">control</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gene</span><span class="p">)</span>
-                <span class="k">continue</span>
-            <span class="c1"># two systematic names are released in mixed case (YAL043C-a, YML009c);</span>
-            <span class="c1"># a systematic name is case-insensitive, so the token is upper-cased</span>
-            <span class="n">gene</span> <span class="o">=</span> <span class="n">gene</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">RepeatedGeneError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"GA1_2_4_6.csv names </span><span class="si">{</span><span class="n">gene</span><span class="si">!r}</span><span class="s2"> on two rows; one strain is one record"</span>
+        <span class="k">for</span> <span class="n">token_cell</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">raw</span><span class="p">,</span> <span class="o">*</span><span class="n">key</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="n">qd</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="n">qd</span><span class="p">[</span><span class="n">_COLONY_LEVEL</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="n">qd</span><span class="p">[</span><span class="n">_COLONY_RAW</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="o">*</span><span class="p">(</span><span class="n">qd</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_POSITION</span><span class="p">),</span>
+            <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="n">position</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">3</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">position</span> <span class="ow">in</span> <span class="n">positions</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">RepeatedPositionError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">QD_FILENAME</span><span class="si">}</span><span class="s2"> names colony </span><span class="si">{</span><span class="n">replicate_id</span><span class="p">(</span><span class="n">position</span><span class="p">)</span><span class="si">}</span><span class="s2"> on two rows; "</span>
+                    <span class="s2">"one colony is one record"</span>
                 <span class="p">)</span>
-            <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gene</span><span class="p">)</span>
-            <span class="n">count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">_COUNT</span><span class="p">])</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">_COUNT</span><span class="p">])</span> <span class="k">else</span> <span class="mi">1</span>
-            <span class="n">std</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">_STD</span><span class="p">]</span>
-            <span class="n">se</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="nb">float</span><span class="p">(</span><span class="n">std</span><span class="p">)</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">std</span><span class="p">)</span> <span class="ow">and</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="mi">1</span>
-                <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">)</span>
-            <span class="p">)</span>
+            <span class="n">positions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+            <span class="n">rid</span> <span class="o">=</span> <span class="n">replicate_id</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+            <span class="n">token</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">token_cell</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">level</span><span class="p">):</span>
+                <span class="p">(</span><span class="n">no_colony</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="k">else</span> <span class="n">withdrawn</span><span class="p">)</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rid</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">token</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"0"</span><span class="p">,</span> <span class="s2">"nan"</span><span class="p">,</span> <span class="s2">""</span><span class="p">):</span>
+                <span class="n">no_gene</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rid</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">_CONTROL_TOKENS</span><span class="p">:</span>
+                <span class="n">gene</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># two systematic names are released in mixed case (YAL043C-a,</span>
+                <span class="c1"># YML009c); a systematic name is case-insensitive, so the token is</span>
+                <span class="c1"># upper-cased, and two distinct tokens may not meet on one name</span>
+                <span class="n">gene</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+                <span class="n">first</span> <span class="o">=</span> <span class="n">released_token</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">gene</span><span class="p">,</span> <span class="n">token</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">first</span> <span class="o">!=</span> <span class="n">token</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">RepeatedGeneError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">QD_FILENAME</span><span class="si">}</span><span class="s2"> releases </span><span class="si">{</span><span class="n">first</span><span class="si">!r}</span><span class="s2"> and </span><span class="si">{</span><span class="n">token</span><span class="si">!r}</span><span class="s2">, both "</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">gene</span><span class="si">!r}</span><span class="s2"> upper-cased; one name is one strain"</span>
+                    <span class="p">)</span>
             <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">{</span><span class="s2">"gene"</span><span class="p">:</span> <span class="n">gene</span><span class="p">,</span> <span class="s2">"level"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">level</span><span class="p">),</span> <span class="s2">"se"</span><span class="p">:</span> <span class="n">se</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="mi">1</span><span class="p">)}</span>
+                <span class="p">{</span>
+                    <span class="s2">"gene"</span><span class="p">:</span> <span class="n">gene</span><span class="p">,</span>
+                    <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">rid</span><span class="p">,</span>
+                    <span class="s2">"repeat"</span><span class="p">:</span> <span class="n">position</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="s2">"plate"</span><span class="p">:</span> <span class="n">position</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="s2">"row"</span><span class="p">:</span> <span class="n">position</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                    <span class="s2">"column"</span><span class="p">:</span> <span class="n">position</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
+                    <span class="s2">"level"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">level</span><span class="p">),</span>
+                <span class="p">}</span>
             <span class="p">)</span>
-        <span class="n">n_systematic</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span> <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]))</span>
+        <span class="n">deletions</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">n_systematic</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">deletions</span> <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]))</span>
         <span class="n">drop_log</span> <span class="o">=</span> <span class="n">DropLog</span><span class="p">(</span>
             <span class="n">dataset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-            <span class="n">source_records</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)),</span>
+            <span class="n">source_records</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">qd</span><span class="p">)),</span>
             <span class="n">kept_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
+            <span class="n">kept_control_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">deletions</span><span class="p">),</span>
             <span class="n">kept_under_systematic_name</span><span class="o">=</span><span class="n">n_systematic</span><span class="p">,</span>
-            <span class="n">kept_under_released_symbol</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="o">-</span> <span class="n">n_systematic</span><span class="p">,</span>
-            <span class="n">dropped_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">no_gene_or_level</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">control</span><span class="p">),</span>
+            <span class="n">kept_under_released_symbol</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">deletions</span><span class="p">)</span> <span class="o">-</span> <span class="n">n_systematic</span><span class="p">,</span>
+            <span class="n">dropped_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">no_colony</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">withdrawn</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">no_gene</span><span class="p">),</span>
             <span class="n">rules</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">DropRule</span><span class="p">(</span>
-                    <span class="n">rule</span><span class="o">=</span><span class="n">RULE_NO_GENE_OR_LEVEL</span><span class="p">,</span>
-                    <span class="n">description</span><span class="o">=</span><span class="n">_RULE_DESCRIPTIONS</span><span class="p">[</span><span class="n">RULE_NO_GENE_OR_LEVEL</span><span class="p">],</span>
-                    <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">no_gene_or_level</span><span class="p">),</span>
-                    <span class="n">items</span><span class="o">=</span><span class="n">no_gene_or_level</span><span class="p">,</span>
-                <span class="p">),</span>
-                <span class="n">DropRule</span><span class="p">(</span>
-                    <span class="n">rule</span><span class="o">=</span><span class="n">RULE_CONTROL_ROW</span><span class="p">,</span>
-                    <span class="n">description</span><span class="o">=</span><span class="n">_RULE_DESCRIPTIONS</span><span class="p">[</span><span class="n">RULE_CONTROL_ROW</span><span class="p">],</span>
-                    <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">control</span><span class="p">),</span>
-                    <span class="n">items</span><span class="o">=</span><span class="n">control</span><span class="p">,</span>
-                <span class="p">),</span>
+                    <span class="n">rule</span><span class="o">=</span><span class="n">rule</span><span class="p">,</span>
+                    <span class="n">description</span><span class="o">=</span><span class="n">_RULE_DESCRIPTIONS</span><span class="p">[</span><span class="n">rule</span><span class="p">],</span>
+                    <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">),</span>
+                    <span class="n">items</span><span class="o">=</span><span class="n">items</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">rule</span><span class="p">,</span> <span class="n">items</span> <span class="ow">in</span> <span class="p">(</span>
+                    <span class="p">(</span><span class="n">RULE_NO_COLONY</span><span class="p">,</span> <span class="n">no_colony</span><span class="p">),</span>
+                    <span class="p">(</span><span class="n">RULE_WITHDRAWN</span><span class="p">,</span> <span class="n">withdrawn</span><span class="p">),</span>
+                    <span class="p">(</span><span class="n">RULE_NO_GENE</span><span class="p">,</span> <span class="n">no_gene</span><span class="p">),</span>
+                <span class="p">)</span>
             <span class="p">],</span>
         <span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
             <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">drop_log</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Cachera: </span><span class="si">%d</span><span class="s2"> records (</span><span class="si">%d</span><span class="s2"> under a systematic name, </span><span class="si">%d</span><span class="s2"> under a released "</span>
-            <span class="s2">"symbol), </span><span class="si">%d</span><span class="s2"> rows without a gene or a level, </span><span class="si">%d</span><span class="s2"> control rows </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"Cachera: </span><span class="si">%d</span><span class="s2"> colony records (</span><span class="si">%d</span><span class="s2"> control, </span><span class="si">%d</span><span class="s2"> under a systematic name, </span><span class="si">%d</span><span class="s2"> "</span>
+            <span class="s2">"under a released symbol); </span><span class="si">%d</span><span class="s2"> positions without a colony, </span><span class="si">%d</span><span class="s2"> colonies "</span>
+            <span class="s2">"withdrawn by the authors, </span><span class="si">%d</span><span class="s2"> colonies on a position naming no strain"</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
+            <span class="n">drop_log</span><span class="o">.</span><span class="n">kept_control_records</span><span class="p">,</span>
             <span class="n">n_systematic</span><span class="p">,</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="o">-</span> <span class="n">n_systematic</span><span class="p">,</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">no_gene_or_level</span><span class="p">),</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">control</span><span class="p">),</span>
-            <span class="nb">sorted</span><span class="p">(</span><span class="n">control</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">deletions</span><span class="p">)</span> <span class="o">-</span> <span class="n">n_systematic</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">no_colony</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">withdrawn</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">no_gene</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
             <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span>
@@ -802,34 +1024,37 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span>  <span class="c1"># type: ignore[override]</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">MetaboliteExperiment</span><span class="p">,</span> <span class="n">MetaboliteExperimentReference</span><span class="p">,</span> <span class="n">Publication</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Build the Metabolite experiment/reference/publication for one released row."""</span>
+<span class="w">        </span><span class="sd">"""Build the Metabolite experiment/reference/publication for one colony.</span>
+
+<span class="sd">        ``row["gene"]`` is the upper-cased released token, or ``None`` for a control</span>
+<span class="sd">        colony (the Btx cassette and no deletion).</span>
+<span class="sd">        """</span>
         <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
             <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
             <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span><span class="p">,</span>
             <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
             <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
-            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="n">_released_deletion</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]),</span> <span class="o">*</span><span class="n">_betaxanthin_cassette</span><span class="p">()]</span>
-        <span class="p">)</span>
+        <span class="n">deletion</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="n">_released_deletion</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">])]</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="o">*</span><span class="n">deletion</span><span class="p">,</span> <span class="o">*</span><span class="n">_betaxanthin_cassette</span><span class="p">()])</span>
         <span class="c1"># Issue #509: YPD + G418 screen plate (line 117), no stated temperature.</span>
         <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
             <span class="n">media</span><span class="o">=</span><span class="n">CACHERA_YPD_G418</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">TEMPERATURE_GAP</span><span class="p">]</span>
         <span class="p">)</span>
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
             <span class="n">metabolite_level</span><span class="o">=</span><span class="p">{</span><span class="n">TARGET_METABOLITE</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s2">"level"</span><span class="p">]},</span>
-            <span class="n">metabolite_level_se</span><span class="o">=</span><span class="p">{</span><span class="n">TARGET_METABOLITE</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s2">"se"</span><span class="p">]},</span>
-            <span class="n">n_replicates</span><span class="o">=</span><span class="p">{</span><span class="n">TARGET_METABOLITE</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n"</span><span class="p">])},</span>
-            <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
-            <span class="n">target_metabolite_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="c1"># Reference = the CRI-SPA Donor background (4 betaxanthin genes, no extra</span>
-        <span class="c1"># deletion). Scores are population-centered, so the control level is 0.</span>
-        <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
-            <span class="n">metabolite_level</span><span class="o">=</span><span class="p">{</span><span class="n">TARGET_METABOLITE</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
             <span class="n">metabolite_level_se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">n_replicates</span><span class="o">=</span><span class="p">{</span><span class="n">TARGET_METABOLITE</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
             <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+            <span class="n">target_metabolite_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">replicate_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"replicate_id"</span><span class="p">],</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">ProvenanceGap</span><span class="p">(</span>
+                    <span class="n">field</span><span class="o">=</span><span class="s2">"metabolite_level_se"</span><span class="p">,</span>
+                    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_applicable_single_measurement</span><span class="p">,</span>
+                    <span class="n">note</span><span class="o">=</span><span class="n">_SINGLE_COLONY_SE_NOTE</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">],</span>
         <span class="p">)</span>
         <span class="n">experiment</span> <span class="o">=</span> <span class="n">MetaboliteExperiment</span><span class="p">(</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
@@ -837,11 +1062,13 @@
             <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
             <span class="n">phenotype</span><span class="o">=</span><span class="n">phenotype</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="c1"># Reference = the Btx background (4 betaxanthin genes, no deletion), summarized</span>
+        <span class="c1"># by the authors' own WT row: mean, std / sqrt(n) and n over its colonies.</span>
         <span class="n">reference</span> <span class="o">=</span> <span class="n">MetaboliteExperimentReference</span><span class="p">(</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">genome_reference</span><span class="o">=</span><span class="n">genome_reference</span><span class="p">,</span>
             <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(),</span>
-            <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">phenotype_reference</span><span class="p">,</span>
+            <span class="n">phenotype_reference</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference_phenotype</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(),</span>
         <span class="p">)</span>
         <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
             <span class="n">pubmed_id</span><span class="o">=</span><span class="s2">"37572348"</span><span class="p">,</span>

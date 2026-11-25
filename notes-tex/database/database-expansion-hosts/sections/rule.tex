@@ -86,13 +86,36 @@ the whole point of the measurement order is that a surprising position can be ch
 two numbers. The pin mechanism of the bacterial pass is the precedent: a stakeholder priority
 is a real criterion, so it is applied and reported rather than absorbed into the score.
 
+\subsection{The owner pin\secstatus{todo}}\label{sec:pin}
+
+One row is placed by the owner and not by the rule. Douglass et al. 2018, 128 MIC values on 32
+sequenced \org{P. kudriavzevii} isolates, is pinned to rank 1 from rank 38, where the host
+bootstrap band and tier 3 had put it. The pin is applied after the floor and is reported as a
+move with both ranks, and Table~\ref{tab:final} marks the row \emph{pin}.
+
+A transfer test needs labels of the same kind at both ends. No \org{P. kudriavzevii} deletion or CRISPR fitness data exists
+(Sec.~\ref{sec:pk}), so a model trained on \org{S. cerevisiae} deletion fitness has no
+target in this host. Growth of natural isolates is measured in both yeasts, and the Douglass
+panel is the one \org{P. kudriavzevii} growth-type panel that can be fetched today with no
+ask. Fluconazole is the one compound measured on natural isolates in both hosts. Peter et al.
+2018 grew 971 \org{S. cerevisiae} isolates on YPD with fluconazole at 20~\textmu g/ml, and Bloom
+et al. 2019 grew 13,950 segregants at 100~\textmu M. The other three drugs are
+measured in \org{S. cerevisiae} only in deletion or CRISPRi chemogenomic screens, in Parsons
+et al. 2006, Hillenmeyer et al. 2008, and Piotrowski et al. 2017, so they test a transfer across genotype
+classes as well as across hosts.
+
+The like-for-like test is therefore 32 labels, one drug across 32 isolates, with a
+single-dose growth ratio on the \org{S. cerevisiae} side and an MIC on the other. That is
+enough to build the isolate-genotype route against a \org{P. kudriavzevii} reference and to
+run a cross-host prediction end to end, and it is too few isolates to separate models.
+
 \subsection{Where the lines fall\secstatus{todo}}\label{sec:lines}
 
 The long-run cut is 200 additions against the 170 datasets served, so the target is 370. The
-pool ranked here does not reach the cut and the shortfall is reported rather than padded.
-Sec.~\ref{sec:state-gaps} names the four axes the next discovery pass would search, and
-Table~\ref{tab:asks} lists the nine asks that would convert unreachable rows into reachable
-ones. Table~\ref{tab:counts} gives the composition of the pool by class and by host, so the
+pool reaches 201 rows, 60 of them from the fill pass of 2026-11-24 (Sec.~\ref{sec:fill}), so
+the shortfall this document reported before that pass is closed. Reaching the count did not
+make every row reachable: 62 rows still need a by-hand fetch and 9 need a named request, which
+Table~\ref{tab:asks} lists with the owner of each. Table~\ref{tab:counts} gives the composition of the pool by class and by host, so the
 cost of the band order and of the floor is visible per host.
 
 \input{tables/counts}

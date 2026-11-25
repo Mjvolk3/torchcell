@@ -174,6 +174,23 @@
 <span class="sd">  - Dispersion: "standard deviation of the scaled leverage score" (SVD leverage score, Replogle</span>
 <span class="sd">    2022 method; z-scored vs WT). n_cells: ``cell_number``.</span>
 
+<span class="sd">REPLICATE STRUCTURE (#1178 per-replicate review, 2026.11.24; quotes in</span>
+<span class="sd">``REPLICATE_SOURCED_VALUES``): a record is one biological replicate already. Each mutant</span>
+<span class="sd">was transformed individually and grown in its own 96-well culture (paper.md L23, L172),</span>
+<span class="sd">so a (genotype label, condition) record is that one culture. The cultures were pooled</span>
+<span class="sd">and the pool was split into the control and NaCl samples (L172, L174); the 14 control</span>
+<span class="sd">and 15 NaCl matrix-cartridges are aliquots of one fixed pool per condition (L174, L178),</span>
+<span class="sd">so the cells of one genotype across cartridges are technical samples of the one culture,</span>
+<span class="sd">combined inside the record by the authors' DE and counted by ``n_cells``. The clone</span>
+<span class="sd">barcode (5 random nt, L124) marks independent transformants that grew TOGETHER in that</span>
+<span class="sd">one well; the release gives no per-clone value (``FC_genotype.Rdata`` and</span>
+<span class="sd">``ptb_summary.Rdata`` are per genotype label; per-clone identity exists only in the</span>
+<span class="sd">per-cell Seurat metadata, and the authors' clone analysis, L214, released only DE-gene</span>
+<span class="sd">counts, in a table not deposited on Zenodo). The 7 WT strains (L138) are one label,</span>
+<span class="sd">``WT``, in the release, stored as the aggregate reference. Per-clone records would be</span>
+<span class="sd">loader-derived from per-cell data and would need a ``replicate_id`` the pseudobulk</span>
+<span class="sd">phenotype lacks: an owner decision, not done.</span>
+
 <span class="sd">DATA SOURCE + PROVENANCE (Zenodo 10.5281/zenodo.14062629; raw mirror</span>
 <span class="sd">``$DATA_ROOT/torchcell-raw/nadalRibelles2025/``, read with the pure-Python ``rdata`` reader):</span>
 <span class="sd">  - ``FC_genotype.Rdata`` (R object ``fcs``; sha256 c210fe54...): 6188 DEG tables keyed</span>
@@ -263,6 +280,66 @@
         <span class="s2">"amount on the record is the library YPD_LIQUID object's (Tong and Boone 2006 "</span>
         <span class="s2">"/ Hoepfner 2014), a deferral, not a Nadal-Ribelles statement"</span><span class="p">,</span>
     <span class="p">)</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_paper_quote</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A replicate-structure value quoted from the mirror ``paper.md``."""</span>
+    <span class="k">return</span> <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="s2">"paper.md"</span><span class="p">,</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">MEDIUM_CITATION_KEY</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">MEDIUM_PAPER_SHA256</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">quote</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">note</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="c1">#: The #1178 per-replicate review (2026.11.24): what one record is, quoted from the</span>
+<span class="c1">#: paper. None of these values is read by the build; they pin the evidence that one</span>
+<span class="c1">#: record per (genotype label, condition) is one culture, and why clones are not records.</span>
+<span class="n">REPLICATE_SOURCED_VALUES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"culture_per_mutant"</span><span class="p">:</span> <span class="n">_paper_quote</span><span class="p">(</span>
+        <span class="s2">"culture_per_mutant"</span><span class="p">,</span>
+        <span class="s2">"one culture per mutant (its own 96-well culture)"</span><span class="p">,</span>
+        <span class="s2">"Frozen glycerol stocks of each individual mutant from the transcriptionally "</span>
+        <span class="s2">"barcoded yeast knock out collection were recovered on URA- media"</span><span class="p">,</span>
+        <span class="s2">"line 172; with line 23 'to generate the YKOC each mutant was grown and "</span>
+        <span class="s2">"transformed individually'"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"cultures_pooled"</span><span class="p">:</span> <span class="n">_paper_quote</span><span class="p">(</span>
+        <span class="s2">"cultures_pooled"</span><span class="p">,</span>
+        <span class="s2">"all mutant cultures pooled, then the pool split into control and NaCl"</span><span class="p">,</span>
+        <span class="s2">"Cells then were pooled together into large flasks and shacked vigorously to "</span>
+        <span class="s2">"ensure a homogeneous mixture."</span><span class="p">,</span>
+        <span class="s2">"line 172; line 174 'We subjected or not cell pools to osmostress'"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"cartridges_are_aliquots"</span><span class="p">:</span> <span class="n">_paper_quote</span><span class="p">(</span>
+        <span class="s2">"cartridges_are_aliquots"</span><span class="p">,</span>
+        <span class="s2">"technical: 14 control and 15 NaCl cartridges from aliquots of one fixed pool"</span><span class="p">,</span>
+        <span class="s2">"For each condition methanol-fixed cells were split into 20 different aliquots"</span><span class="p">,</span>
+        <span class="s2">"line 174; line 178 'A total of 29 matrixcartridges were run (14 control and 15 "</span>
+        <span class="s2">"NaCl).' The cells of a genotype across cartridges are combined in the authors' "</span>
+        <span class="s2">"DE and counted by n_cells"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"clone_barcode"</span><span class="p">:</span> <span class="n">_paper_quote</span><span class="p">(</span>
+        <span class="s2">"clone_barcode"</span><span class="p">,</span>
+        <span class="s2">"clone = an independent transformant co-grown in its mutant's one culture"</span><span class="p">,</span>
+        <span class="s2">"added a clone barcode (5 random nucleotides) downstream of the URA3 STOP codon"</span><span class="p">,</span>
+        <span class="s2">"line 124; per-clone values are not released (per genotype label only); the "</span>
+        <span class="s2">"clone analysis (line 214) compared clones within a genotype and released DE "</span>
+        <span class="s2">"gene counts only"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"wt_strains"</span><span class="p">:</span> <span class="n">_paper_quote</span><span class="p">(</span>
+        <span class="s2">"wt_strains"</span><span class="p">,</span>
+        <span class="s2">"7 WT strains, released as one label 'WT' (the aggregate reference)"</span><span class="p">,</span>
+        <span class="s2">"A total of 7 different WT strains were generated with distinct clone and "</span>
+        <span class="s2">"genotype barcodes as controls."</span><span class="p">,</span>
+        <span class="s2">"line 138; ptb_summary.Rdata has one 'WT' row per condition (500 control, 458 "</span>
+        <span class="s2">"NaCl cells) and FC_genotype.Rdata has no WT table"</span><span class="p">,</span>
+    <span class="p">),</span>
 <span class="p">}</span>
 
 <span class="n">NADAL_RIBELLES_YPD</span><span class="p">:</span> <span class="n">Media</span> <span class="o">=</span> <span class="n">restated</span><span class="p">(</span><span class="n">YPD_LIQUID</span><span class="p">,</span> <span class="o">*</span><span class="n">MEDIUM_SOURCED_VALUES</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>

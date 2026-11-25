@@ -14,7 +14,8 @@ const SIDEBAR = '.theme-doc-sidebar-container';
 const LINKS = '.theme-doc-sidebar-menu .menu__link';
 const MIN_WIDTH = 180;
 const DESKTOP = 997; // the theme shows the docs sidebar from this window width up
-const FIT_ROOM = 44; // space right of a label: the group arrow and the sidebar's padding
+const ARROW_ROOM = 36; // the open/close arrow right of a group's label
+const EDGE_ROOM = 28; // the sidebar's own right padding, its border and a scrollbar
 
 function maxWidth(): number {
   return Math.round(window.innerWidth * 0.6);
@@ -32,20 +33,43 @@ function setWidth(pixels: number | null): void {
   storage.set(String(width));
 }
 
-/** The narrowest sidebar in which no visible entry wraps. */
+/** Width of a string in the font an element renders its text in. */
+function textWidth(context: CanvasRenderingContext2D, element: HTMLElement): number {
+  const style = window.getComputedStyle(element);
+  let text = (element.textContent ?? '').trim();
+  if (style.textTransform === 'uppercase') {
+    text = text.toUpperCase();
+  }
+  context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+  const spacing = Number.parseFloat(style.letterSpacing) || 0;
+  return context.measureText(text).width + spacing * text.length;
+}
+
+/**
+ * The narrowest sidebar in which no visible entry wraps.
+ *
+ * Each label is measured as text, in its own font, on a canvas. Measuring the laid-out
+ * element does not work: the theme clips a label inside its own box, so the element
+ * never reports a width wider than the sidebar it is in.
+ */
 function fitWidth(sidebar: Element): number {
-  const root = document.documentElement;
-  root.classList.add('tc-sidebar-measuring'); // entries on one line while they are measured
+  const context = document.createElement('canvas').getContext('2d');
+  if (!context) {
+    return MIN_WIDTH;
+  }
   const left = sidebar.getBoundingClientRect().left;
   let widest = MIN_WIDTH;
   sidebar.querySelectorAll<HTMLElement>(LINKS).forEach((link) => {
     if (link.offsetParent === null) {
       return; // inside a closed group
     }
-    widest = Math.max(widest, link.getBoundingClientRect().left - left + link.scrollWidth + FIT_ROOM);
+    const style = window.getComputedStyle(link);
+    const padding = Number.parseFloat(style.paddingLeft) + Number.parseFloat(style.paddingRight);
+    const arrow = link.closest('.menu__list-item-collapsible') ? ARROW_ROOM : 0;
+    const indent = link.getBoundingClientRect().left - left;
+    widest = Math.max(widest, indent + padding + textWidth(context, link) + arrow + EDGE_ROOM);
   });
-  root.classList.remove('tc-sidebar-measuring');
-  return widest;
+  return Math.ceil(widest);
 }
 
 export default function SidebarResizer(): ReactNode {

@@ -382,6 +382,3 @@ html.tc-sidebar-dragging {
 html.tc-sidebar-dragging .theme-doc-sidebar-container {
   transition: none;
 }
-html.tc-sidebar-measuring .theme-doc-sidebar-menu .menu__link {
-  white-space: nowrap;
-}

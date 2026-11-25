@@ -4,9 +4,9 @@
 """``torchcell/adapters/mori2021_adapter.py``: the conf it loads, the gate's view of it,
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Mori 2021 proteome: 7 MG1655 (EQ353) calibration samples,
-ProteinAbundanceExperiment. Every genotype is the wild type (0 perturbations in
-7 of 7 records), so neither `perturbation` nor `perturbation to genotype` is
+Mori 2021 proteome: 3 MG1655 (EQ353) calibration cultures (one record per culture, its
+LC-MS injections combined), ProteinAbundanceExperiment. Every genotype is the wild type
+(0 perturbations in 3 of 3 records), so neither `perturbation` nor `perturbation to genotype` is
 enabled; the paper's engineered NCM3722 derivatives are all in samples dropped on their
 medium. The one environment the records share carries an EnvironmentPhysicalPerturbation
 for the released 0.2% glucose, and so does the reference, so the

@@ -8,7 +8,7 @@ Mori et al. 2021 (Mol Syst Biol 17:e9536, doi:10.15252/msb.20209536, PMID 340320
 measured absolute protein abundances for *E. coli* over 66 LC-MS samples spanning
 nutrient limitations, non-metabolic stresses and non-planktonic states, using DIA/SWATH
 with the xTop protein-inference algorithm. :class:`ProteomeMori2021Dataset` serves one
-``ProteinAbundanceExperiment`` per loaded sample.
+``ProteinAbundanceExperiment`` per loaded biological culture.
 
 WHICH PER-PROTEIN QUANTITY IS STORED, AND ITS DEFINITION. The release carries several
 per-protein quantities and they are NOT interchangeable: ribosome-profiling synthesis
@@ -31,7 +31,8 @@ the frequently used absolute unit "protein copies/cell" is avoided here, as cell
 highly variable across growth conditions". The ``measurement_type`` therefore names the
 quantity and the pipeline that produced it.
 
-SEVEN RECORDS FROM SIXTY-SIX RELEASED SAMPLES, AND EVERY DROP IS A MEDIUM. The released
+THREE RECORDS (SEVEN LOADED COLUMNS) FROM SIXTY-SIX RELEASED SAMPLES, AND EVERY DROP IS
+A MEDIUM. The released
 mass fractions are 30 columns of Dataset EV8 (``Lib-01`` .. ``Lib-30``, the Dataset EV2
 samples) plus 36 columns of Dataset EV9 (the Dataset EV3 samples), which is the paper's
 own "66 different samples". The Appendix names the base media: "Unless otherwise
@@ -68,15 +69,33 @@ adjusted to a final concentration of 10 mM (instead of 50 mM)."). The glucose is
 as ``EnvironmentPhysicalPerturbation(factor=carbon_source)``; the ammonium is already a
 component of the medium, so it is not a second edit of it.
 
-52 + 2 + 5 dropped + 7 loaded = 66.
+52 + 2 + 5 dropped + 7 loaded = 66 released sample columns; the 7 loaded columns are
+the injections of 3 biological cultures, so the store holds 3 records.
 
-ONE RECORD PER RELEASED SAMPLE COLUMN, AND NO VALUE IS AVERAGED. The seven loaded
-samples are three biological replicates of one culture condition, two of which were
-injected three times: ``A1-1`` .. ``A1-3`` are injections of culture ``A1``, ``F1-1`` ..
-``F1-3`` of culture ``F1``, and ``C1`` is a single injection ("Biological replicate of
-A1"). The stored value is the released column verbatim, so ``n_replicates`` is 1 for
-every protein of every record and ``protein_abundance_se`` is ``None``: one LC-MS
-injection has no replicate, and an SE of the group is not an SE of the injection.
+ONE RECORD PER BIOLOGICAL CULTURE, ITS INJECTIONS COMBINED INSIDE IT (2026-11-24,
+#1178). The seven loaded columns are three biological replicate cultures of one
+condition, two of which were injected three times. Dataset EV3's ``Description`` cells
+say so per column: ``A1-1`` .. ``A1-3`` are "Same strain and growth condition as Li et
+al. 2014 (technical replicate #1)" (#2, #3), ``C1`` is "Biological replicate of A1",
+and ``F1-1`` .. ``F1-3`` are "Biological replicate of A1 and C1 (technical replicate
+#1)" (#2, #3); the paper states "For two out of the three calibration samples (A1 and
+F1), we additionally performed three technical MS injection replicate measurements."
+Under the per-replicate policy a record is ONE biological replicate, so the store holds
+three records (``replicate_id`` ``A1``, ``C1``, ``F1``, the release's own culture
+labels) instead of the seven per-injection records it held before. A culture's value
+for a protein is the arithmetic mean of its injections that quantified the protein (a
+released 0 is "not quantified", not a measured zero, so it does not enter the mean);
+``C1`` has one injection, so its record IS that column verbatim. The release never
+combines the injections itself: where the authors compare biological replicates they
+take each culture's FIRST injection ("(C) Same as panel (B), but for three biological
+replicates (A1-1, C1, F1-1).", Appendix Figure S1), which would drop two injections of
+A1 and of F1, so the loader keeps all of them in the mean instead. ``n_replicates`` is 1
+(one culture) for every protein, ``protein_abundance_se`` is ``None`` with a typed
+``not_applicable_single_measurement`` gap that names the technical level (the number of
+LC-MS injections and the combination rule), and the per-protein count of quantifying
+injections per culture is in ``preprocess/protein_identifiers.csv``.
+``ProteinAbundancePhenotype`` has no field for the technical level, which is why it is
+in the gap note and the ledger rather than on the record.
 
 THE REFERENCE IS THE CALIBRATION SAMPLE, AND ITS SE IS DERIVED FROM THE RELEASED
 COLUMNS. The release designates this condition as the sample the absolute scale was set
@@ -86,7 +105,7 @@ strain K-12 MG1655 grown in glucose minimal media at exponential growth phase) a
 digestion and before C18 purification." ``phenotype_reference`` is therefore that
 sample's own profile: per protein, the mean of the three biological replicate means
 (``A1``, ``C1``, ``F1``), where a culture's mean is taken over its own quantified
-injections. ``n_replicates`` is how many of the three cultures quantified that protein
+injections, which is exactly the value that culture's record stores. ``n_replicates`` is how many of the three cultures quantified that protein
 and the SE is ``stdev(culture means) / sqrt(n)``, which is exact arithmetic on the
 released columns rather than a released summary statistic; a protein only one culture
 quantified stores ``nan``, which is what no replicate means. Measured on the pinned
@@ -116,9 +135,10 @@ keys: 4,342 - 2,265 - 4 = 2,073.
 - 4 of the 2,077 rows quantified in at least one loaded column carry no released
   ``Gene locus`` (``ygaU``, ``yghZ``, ``yifE``, ``ymfP``), so they name no gene.
 
-Each record carries the subset of the 2,073 its own column quantifies: 1,897 (``A1-1``),
-1,879 (``A1-2``), 1,911 (``A1-3``), 1,930 (``C1``), 1,896 (``F1-1``), 1,931 (``F1-2``)
-and 1,914 (``F1-3``). Every record's reference is key-matched to that record.
+Each record carries the subset of the 2,073 that at least one of its culture's
+injections quantifies: 1,999 (``A1``, whose injections hold 1,897, 1,879 and 1,911),
+1,930 (``C1``) and 2,011 (``F1``, from 1,896, 1,931 and 1,914). Every record's reference
+is key-matched to that record.
 
 AN IDENTITY FAULT IN THE RELEASED TABLES, FOUND BY MEASUREMENT AND NOT CONSUMED. EV8 and
 EV9 carry the same 4,342 rows in the same ``Gene name`` order, but their identity blocks
@@ -231,7 +251,11 @@ from torchcell.literature.provenance import run_retriever
 from torchcell.sequence import GeneSet
 from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12StrainName
 from torchcell.verification.report import Provenance, VerificationReport
-from torchcell.verification.sourced import SourcedValue
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
+)
 
 log = logging.getLogger(__name__)
 
@@ -406,6 +430,27 @@ _Q_EV3_DESCRIPTION = (
     "(EQ353), plus the three growth limitation series (C-, A- and R-limitation), "
     "obtained with either E. coli NCM3722 or NCM3722-derived strains."
 )
+_Q_TECHNICAL_INJECTIONS = (
+    "For two out of the three calibration samples (A1 and F1), we additionally performed "
+    "three technical MS injection replicate measurements."
+)
+_Q_SEVEN_DATASETS = (
+    "Two of the three biological replicates were injected 3 times, for a total of 7 "
+    "proteomics “calibration” datasets."
+)
+_Q_TECHNICAL_TRIPLICATES = (
+    "The A1, C1 and F1 samples are three biological replicates of the same condition "
+    "(glucose minimal media; see Dataset EV5). The A1 and F1 samples have been measured "
+    "in technical triplicates, which are identified as A1-1/2/3 and F1-1/2/3."
+)
+_Q_AUTHORS_FIRST_INJECTION = (
+    "(C) Same as panel (B), but for three biological replicates (A1-1, C1, F1-1)."
+)
+_Q_EV3_A1_TECHNICAL = (
+    "Same strain and growth condition as Li et al. 2014 (technical replicate #1)"
+)
+_Q_EV3_C1_BIOLOGICAL = "Biological replicate of A1 | CHLUDWIG_K151202_052_SW"
+_Q_EV3_F1_TECHNICAL = "Biological replicate of A1 and C1 (technical replicate #1)"
 _Q_EV11_NOT_DETECTED = (
     "Proteins that are not detected in all three growth limitations are assigned to the "
     "“X”-sector"
@@ -440,6 +485,8 @@ PAPER_QUOTES: dict[str, str] = {
     "sixty_six_samples": _Q_66_SAMPLES,
     "workflow": _Q_WORKFLOW,
     "schmidt_comparison": _Q_SCHMIDT_COMPARE,
+    "technical_injections": _Q_TECHNICAL_INJECTIONS,
+    "seven_calibration_datasets": _Q_SEVEN_DATASETS,
 }
 #: Quotes whose provenance is the pinned Appendix (``si1.docx``).
 APPENDIX_QUOTES: dict[str, str] = {
@@ -449,11 +496,18 @@ APPENDIX_QUOTES: dict[str, str] = {
     "calibration_identical": _Q_CALIBRATION_IDENTICAL,
     "neidhardt_nacl": _Q_NEIDHARDT_NACL,
     "three_biological_replicates": _Q_THREE_BIOLOGICAL,
+    "technical_triplicates": _Q_TECHNICAL_TRIPLICATES,
+    "authors_first_injection": _Q_AUTHORS_FIRST_INJECTION,
 }
 #: Quotes whose provenance is a workbook row rendering, by file name.
 WORKBOOK_QUOTES: dict[str, dict[str, str]] = {
     EV1: {"eq353_row": _Q_EV1_EQ353},
-    EV3: {"description": _Q_EV3_DESCRIPTION},
+    EV3: {
+        "description": _Q_EV3_DESCRIPTION,
+        "a1_technical": _Q_EV3_A1_TECHNICAL,
+        "c1_biological": _Q_EV3_C1_BIOLOGICAL,
+        "f1_technical": _Q_EV3_F1_TECHNICAL,
+    },
     EV8: {"description": _Q_EV8_DESCRIPTION},
     EV9: {"description": _Q_EV9_DESCRIPTION},
 }
@@ -533,6 +587,28 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         note="why the calibration sample's three-culture mean is the phenotype_reference",
     ),
     "calibration_matches_li2014": _appendix(None, _Q_CALIBRATION_IDENTICAL),
+    "record_unit": _appendix(
+        "one biological replicate culture (A1, C1, F1)",
+        _Q_TECHNICAL_TRIPLICATES,
+        note="the per-replicate policy (#1178): a record is one biological culture and "
+        "its technical LC-MS injections are combined inside it",
+    ),
+    "technical_injections_per_culture": _paper(
+        {"A1": 3, "C1": 1, "F1": 3},
+        _Q_TECHNICAL_INJECTIONS,
+        note="the column labels A1-1..A1-3 and F1-1..F1-3 and the Dataset EV3 "
+        "'(technical replicate #n)' cells say which column is which injection; "
+        "CULTURES is asserted against them by check_culture_structure",
+    ),
+    "authors_biological_representative": _appendix(
+        ["A1-1", "C1", "F1-1"],
+        _Q_AUTHORS_FIRST_INJECTION,
+        note="where the authors compare biological replicates they take each "
+        "culture's first injection; the loader does NOT, because that would drop two "
+        "released injections of A1 and of F1. A record's value is the arithmetic mean "
+        "of its culture's injections that quantified the protein, a loader rule the "
+        "release does not state",
+    ),
     # Dataset EV11 states the same convention for its own slopes, but it is not a
     # consumed file, so the convention is sourced from the paper's own definition.
     "not_detected_is_zero": _paper(
@@ -785,8 +861,10 @@ CULTURES: dict[str, tuple[str, ...]] = {
     culture: tuple(s.column for s in LOADED if s.culture == culture)
     for culture in dict.fromkeys(s.culture for s in LOADED if s.culture is not None)
 }
-#: 66 released samples - 52 - 2 - 5 = 7.
-EXPECTED_RECORDS = 7
+#: 66 released samples - 52 - 2 - 5 = 7 loaded injection columns.
+EXPECTED_LOADED_COLUMNS = 7
+#: The 7 loaded columns are injections of 3 biological cultures: one record each.
+EXPECTED_RECORDS = 3
 #: Released rows, rows quantified in at least one loaded column, and stored keys.
 EXPECTED_SOURCE_ROWS = 4342
 EXPECTED_QUANTIFIED_ROWS = 2077
@@ -1030,6 +1108,47 @@ def _nitrogen_sources(ev3_path: str) -> dict[str, str]:
     return out
 
 
+_TECHNICAL_REPLICATE = re.compile(r"\(technical replicate #(\d+)\)\s*$")
+
+
+def check_culture_structure(ev3_path: str) -> dict[str, list[str]]:
+    """Which loaded column is which injection of which culture, read off Dataset EV3.
+
+    A culture with several loaded columns must label them, in order, "(technical
+    replicate #1)", "#2", ... in its ``Description`` cell and share the culture label as
+    the column prefix (``A1-1`` is culture ``A1``); a single-column culture must carry no
+    technical-replicate label. This is what makes :data:`CULTURES` (and so the record
+    unit) a reading of the bytes rather than of the column names alone.
+    """
+    rows = _rows(ev3_path, SHEET_EV3)
+    index = {str(cell).strip(): i for i, cell in enumerate(rows[0]) if cell is not None}
+    description: dict[str, str] = {}
+    for row in rows[1:]:
+        name = row[index[COL_SAMPLE_ID]]
+        if name is None or not str(name).strip():
+            continue
+        cell = row[index[COL_DESCRIPTION]]
+        description[str(name).strip()] = "" if cell is None else str(cell).strip()
+    for culture, columns in CULTURES.items():
+        for position, column in enumerate(columns, start=1):
+            if column.split("-")[0] != culture:
+                raise RuntimeError(f"{column} is declared an injection of {culture}")
+            match = _TECHNICAL_REPLICATE.search(description[column])
+            if len(columns) == 1:
+                if match is not None:
+                    raise RuntimeError(
+                        f"{column} is a single-injection culture but Dataset EV3 calls "
+                        f"it {description[column]!r}"
+                    )
+                continue
+            if match is None or int(match.group(1)) != position:
+                raise RuntimeError(
+                    f"{column}: Dataset EV3 says {description[column]!r}, the module "
+                    f"declares technical replicate #{position} of {culture}"
+                )
+    return {culture: list(columns) for culture, columns in CULTURES.items()}
+
+
 def read_growth_rates(ev3_path: str) -> dict[str, float]:
     """``{Dataset EV3 sample id: its released growth rate in 1/h}``.
 
@@ -1117,8 +1236,13 @@ class DropLog(BaseModel):
 
     dataset: str
     source_samples: int
-    kept_records: int
-    dropped_records: int
+    loaded_columns: int = Field(
+        description="released sample columns read into a record (injections)"
+    )
+    kept_records: int = Field(
+        description="records written: one per biological culture of the loaded columns"
+    )
+    dropped_records: int = Field(description="released sample columns not loaded")
     source_protein_rows: int
     kept_protein_keys: int
     dropped_protein_rows: int
@@ -1129,10 +1253,15 @@ class DropLog(BaseModel):
     def check(self) -> None:
         """Refuse a ledger whose rules do not account for every drop."""
         samples = sum(r.n_items for r in self.rules if r.scope == "sample")
-        if self.kept_records + samples != self.source_samples:
+        if self.loaded_columns + samples != self.source_samples:
             raise RuntimeError(
-                f"{self.dataset}: {self.kept_records} records + {samples} dropped "
-                f"samples != {self.source_samples} released samples"
+                f"{self.dataset}: {self.loaded_columns} loaded columns + {samples} "
+                f"dropped samples != {self.source_samples} released samples"
+            )
+        if not 0 < self.kept_records <= self.loaded_columns:
+            raise RuntimeError(
+                f"{self.dataset}: {self.kept_records} records from "
+                f"{self.loaded_columns} loaded columns"
             )
         if self.dropped_records != samples:
             raise RuntimeError(
@@ -1268,25 +1397,60 @@ def build_environment() -> Environment:
     )
 
 
-def build_phenotype(
-    rows: Sequence[MassFractionRow], locus_tag: Mapping[str, str], column: str
-) -> ProteinAbundancePhenotype:
-    """One released sample column, verbatim, over the rows it quantifies.
+def culture_mean(row: MassFractionRow, columns: Sequence[str]) -> float | None:
+    """One culture's value for one protein: the mean of its quantifying injections.
 
-    One LC-MS injection has no replicate, so ``n_replicates`` is 1 for every protein and
-    there is no standard error: the spread of the culture's injections is a property of
-    the culture, not of this injection.
+    A released 0 is "not quantified in this injection", so it does not enter the mean;
+    ``None`` when no injection of the culture quantified the protein.
     """
-    abundance = {
-        locus_tag[row.gene_name]: row.mass_fraction[column]
-        for row in rows
-        if row.quantified(column)
-    }
+    values = [row.mass_fraction[c] for c in columns if row.quantified(c)]
+    return statistics.fmean(values) if values else None
+
+
+def single_culture_se_gap(culture: str) -> ProvenanceGap:
+    """Why a culture record has no standard error, naming its technical level."""
+    n_injections = len(CULTURES[culture])
+    combination = (
+        "its one column is stored verbatim"
+        if n_injections == 1
+        else "they are combined inside the record as the arithmetic mean of the "
+        "injections that quantified each protein (a released 0 is 'not quantified' and "
+        "is left out), a loader rule the release does not state; the per-protein count "
+        "of quantifying injections is in preprocess/protein_identifiers.csv"
+    )
+    return ProvenanceGap(
+        field="protein_abundance_se",
+        reason=ProvenanceGapReason.not_applicable_single_measurement,
+        note=f"a record is ONE biological culture ({culture}), and one culture has no "
+        "dispersion of its own, so there is no standard error to store. Technical level: "
+        f"{n_injections} LC-MS injection(s) of this culture's digest "
+        f"({', '.join(CULTURES[culture])}); {combination}. The reference carries the "
+        "mean, SE and n over the three cultures",
+    )
+
+
+def build_phenotype(
+    rows: Sequence[MassFractionRow], locus_tag: Mapping[str, str], culture: str
+) -> ProteinAbundancePhenotype:
+    """One biological culture, its injections combined, over the rows it quantifies.
+
+    ``n_replicates`` is 1 (one culture) for every protein and the SE is a typed
+    ``not_applicable_single_measurement`` gap; ``replicate_id`` is the release's own
+    culture label.
+    """
+    columns = CULTURES[culture]
+    abundance: dict[str, float] = {}
+    for row in rows:
+        value = culture_mean(row, columns)
+        if value is not None:
+            abundance[locus_tag[row.gene_name]] = value
     return ProteinAbundancePhenotype(
         protein_abundance=abundance,
         protein_abundance_se=None,
         n_replicates=dict.fromkeys(abundance, 1),
         measurement_type=MEASUREMENT_TYPE,
+        replicate_id=culture,
+        provenance_gaps=[single_culture_se_gap(culture)],
     )
 
 
@@ -1305,11 +1469,9 @@ def build_reference_phenotype(
     n_replicates: dict[str, int] = {}
     for row in rows:
         means = [
-            statistics.fmean(
-                [row.mass_fraction[c] for c in columns if row.quantified(c)]
-            )
+            value
             for columns in CULTURES.values()
-            if any(row.quantified(c) for c in columns)
+            if (value := culture_mean(row, columns)) is not None
         ]
         if not means:
             continue
@@ -1560,13 +1722,14 @@ class ProteomeMori2021Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Build one abundance record per loaded sample and write the LMDB."""
+        """Build one abundance record per biological culture and write the LMDB."""
         verify_raw_files(self.raw_dir, DATA_SHA256)
         paths = {name: osp.join(self.raw_dir, name) for name in CONSUMED}
         check_quotes(paths)
         check_sample_columns(paths[EV8], "EV8")
         check_sample_columns(paths[EV9], "EV9")
         metadata_check = check_sample_metadata(paths[EV2], paths[EV3])
+        culture_structure = check_culture_structure(paths[EV3])
         normalization = [
             check_normalization(paths[EV8], "EV8"),
             check_normalization(paths[EV9], "EV9"),
@@ -1589,10 +1752,8 @@ class ProteomeMori2021Dataset(ExperimentDataset):
 
         environment = build_environment()
         phenotypes = {
-            spec.column: build_phenotype(
-                selection.kept, selection.locus_tag, spec.column
-            )
-            for spec in LOADED
+            culture: build_phenotype(selection.kept, selection.locus_tag, culture)
+            for culture in CULTURES
         }
         reference_phenotype = build_reference_phenotype(
             selection.kept, selection.locus_tag
@@ -1601,19 +1762,26 @@ class ProteomeMori2021Dataset(ExperimentDataset):
             self.REFERENCE_STRAIN, background=EQ353_BACKGROUND
         )
         pub = publication()
-        if len(LOADED) != EXPECTED_RECORDS:
+        if len(LOADED) != EXPECTED_LOADED_COLUMNS:
             raise RuntimeError(
-                f"{len(LOADED)} records, the module states {EXPECTED_RECORDS}"
+                f"{len(LOADED)} loaded columns, the module states "
+                f"{EXPECTED_LOADED_COLUMNS}"
+            )
+        if len(CULTURES) != EXPECTED_RECORDS:
+            raise RuntimeError(
+                f"{len(CULTURES)} cultures, the module states {EXPECTED_RECORDS}"
             )
         growth_rates = read_growth_rates(paths[EV3])
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
-        sample_rows: list[dict[str, Any]] = []
+        record_rows: list[dict[str, Any]] = []
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for idx, spec in enumerate(tqdm(LOADED, desc="mori2021")):
-                phenotype = phenotypes[spec.column]
+            for idx, (culture, injections) in enumerate(
+                tqdm(CULTURES.items(), desc="mori2021")
+            ):
+                phenotype = phenotypes[culture]
                 experiment = ProteinAbundanceExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(perturbations=[]),
@@ -1632,40 +1800,67 @@ class ProteomeMori2021Dataset(ExperimentDataset):
                     f"{idx}".encode(),
                     self._intern_record(experiment, reference, pub, itxn),
                 )
-                sample_rows.append(
+                rates = {growth_rates.get(column) for column in injections}
+                if len(rates) != 1:
+                    raise RuntimeError(
+                        f"culture {culture}: its injections release growth rates "
+                        f"{sorted(map(str, rates))}, not one"
+                    )
+                record_rows.append(
                     {
-                        "column": spec.column,
-                        "table": spec.table,
-                        "culture": spec.culture,
-                        "strain": spec.strain,
-                        "medium": spec.medium,
+                        "record_index": idx,
+                        "replicate_id": culture,
+                        "injections": ";".join(injections),
+                        "n_injections": len(injections),
+                        "strain": EQ353_BACKGROUND.name,
                         "library_media": MOPS_MINIMAL.name,
                         "carbon_source": LOADED_CARBON_SOURCE,
                         "nitrogen_source": LOADED_NITROGEN_SOURCE,
                         "temperature_c": SOURCED_VALUES["temperature_c"].value,
-                        "growth_rate_per_h": growth_rates.get(spec.column),
+                        "growth_rate_per_h": next(iter(rates)),
                         "n_protein_keys": len(phenotype.protein_abundance),
                     }
                 )
         env.close()
         interned_env.close()
 
+        sample_rows = [
+            {
+                "column": spec.column,
+                "table": spec.table,
+                "culture": spec.culture,
+                "strain": spec.strain,
+                "medium": spec.medium,
+                "growth_rate_per_h": growth_rates.get(spec.column),
+                "n_quantified_rows": sum(
+                    1 for row in rows if row.quantified(spec.column)
+                ),
+            }
+            for spec in LOADED
+        ]
         self._write_ledgers(
             rows,
             selection,
             reference_phenotype,
+            record_rows,
             sample_rows,
-            metadata_check,
-            normalization,
-            identity_fault,
+            {
+                "sample_metadata": dict(metadata_check),
+                "culture_structure": culture_structure,
+                "normalization": [dict(row) for row in normalization],
+                "ev9_identity_fault": dict(identity_fault),
+                "normalization_atol": NORMALIZATION_ATOL,
+            },
         )
         log.info(
-            "Mori 2021: %d records (of %d released samples) x %d-%d protein keys from "
-            "%d released rows; %d rows dropped",
+            "Mori 2021: %d records (%d cultures from %d loaded columns of %d released "
+            "samples) x %d-%d protein keys from %d released rows; %d rows dropped",
+            len(record_rows),
+            len(CULTURES),
             len(LOADED),
             len(SAMPLES),
-            min(row["n_protein_keys"] for row in sample_rows),
-            max(row["n_protein_keys"] for row in sample_rows),
+            min(row["n_protein_keys"] for row in record_rows),
+            max(row["n_protein_keys"] for row in record_rows),
             len(rows),
             selection.dropped_rows,
         )
@@ -1675,12 +1870,11 @@ class ProteomeMori2021Dataset(ExperimentDataset):
         rows: Sequence[MassFractionRow],
         selection: ProteinSelection,
         reference_phenotype: ProteinAbundancePhenotype,
+        record_rows: Sequence[Mapping[str, Any]],
         sample_rows: Sequence[Mapping[str, Any]],
-        metadata_check: Mapping[str, Any],
-        normalization: Sequence[Mapping[str, Any]],
-        identity_fault: Mapping[str, Any],
+        checks: Mapping[str, Any],
     ) -> None:
-        """The drop log, the sourcing table, the identifier table, the sample table."""
+        """Write the drop log, checks, sourcing, identifier, sample and record tables."""
         out = Path(self.preprocess_dir)
         sample_rules = [
             DropRule(
@@ -1704,7 +1898,8 @@ class ProteomeMori2021Dataset(ExperimentDataset):
         log_model = DropLog(
             dataset=self.name,
             source_samples=len(SAMPLES),
-            kept_records=len(sample_rows),
+            loaded_columns=len(sample_rows),
+            kept_records=len(record_rows),
             dropped_records=len(SAMPLES) - len(sample_rows),
             source_protein_rows=len(rows),
             kept_protein_keys=len(selection.kept),
@@ -1716,37 +1911,37 @@ class ProteomeMori2021Dataset(ExperimentDataset):
                 "(Dataset EV9), which is the paper's own 66 samples",
                 f"{len(SAMPLES)} released samples - "
                 + " - ".join(f"{r.n_items} ({r.rule})" for r in sample_rules)
-                + f" = {len(sample_rows)} records",
+                + f" = {len(sample_rows)} loaded columns",
+                f"{len(sample_rows)} loaded columns are the LC-MS injections of "
+                f"{len(record_rows)} biological cultures ("
+                + ", ".join(f"{k}={len(v)} injection(s)" for k, v in CULTURES.items())
+                + f") = {len(record_rows)} records, one per culture (#1178); a "
+                "culture's value is the mean of its injections that quantified the "
+                "protein",
                 f"{len(rows)} released rows - "
                 + " - ".join(f"{r.n_items} ({r.rule})" for r in selection.rules)
                 + f" = {len(selection.kept)} protein keys",
-                "per-record keys are that column's own quantified subset: "
+                "per-record keys are the proteins at least one of that culture's "
+                "injections quantifies: "
                 + ", ".join(
-                    f"{row['column']} {row['n_protein_keys']}" for row in sample_rows
+                    f"{row['replicate_id']} {row['n_protein_keys']}"
+                    for row in record_rows
                 ),
                 f"the calibration reference quantifies "
                 f"{len(reference_phenotype.protein_abundance)} of those keys over "
-                f"{len(CULTURES)} biological cultures "
-                f"({', '.join(f'{k}={len(v)} injection(s)' for k, v in CULTURES.items())})",
-                "every loaded record carries one environment and one empty wild-type "
-                "genotype: the seven samples are injections of three cultures of ONE "
-                "condition, so they are seven measurements rather than seven conditions",
+                f"{len(CULTURES)} biological cultures",
+                "every record carries one environment and one empty wild-type "
+                "genotype: the three cultures are biological replicates of ONE "
+                "condition, told apart by replicate_id",
                 "Environment has no growth-rate, growth-phase or culture-mode slot, so "
-                "the released growth rate is in samples.csv and not on a record",
+                "the released growth rate is in records.csv and samples.csv and not on "
+                "a record",
             ],
         )
         log_model.check()
         (out / "dropped_records.json").write_text(log_model.model_dump_json(indent=2))
         (out / "released_statistics_check.json").write_text(
-            json.dumps(
-                {
-                    "sample_metadata": dict(metadata_check),
-                    "normalization": [dict(row) for row in normalization],
-                    "ev9_identity_fault": dict(identity_fault),
-                    "normalization_atol": NORMALIZATION_ATOL,
-                },
-                indent=2,
-            )
+            json.dumps(dict(checks), indent=2)
         )
         (out / "sourced_values.json").write_text(
             json.dumps(
@@ -1757,6 +1952,7 @@ class ProteomeMori2021Dataset(ExperimentDataset):
                 indent=2,
             )
         )
+        pd.DataFrame(list(record_rows)).to_csv(out / "records.csv", index=False)
         pd.DataFrame(list(sample_rows)).to_csv(out / "samples.csv", index=False)
         pd.DataFrame(
             [
@@ -1768,6 +1964,12 @@ class ProteomeMori2021Dataset(ExperimentDataset):
                     "n_quantified_samples": sum(
                         1 for spec in LOADED if row.quantified(spec.column)
                     ),
+                    **{
+                        f"n_injections_{culture}": sum(
+                            1 for column in columns if row.quantified(column)
+                        )
+                        for culture, columns in CULTURES.items()
+                    },
                 }
                 for row in selection.kept
             ]
@@ -1856,29 +2058,85 @@ def strain_label_rule(records: Sequence[Mapping[str, Any]]) -> Any:
     )
 
 
-def single_injection_rule(records: Sequence[Mapping[str, Any]]) -> Any:
-    """SUPPLEMENTARY L2: a record is one injection, so it has no replicate and no SE."""
+def one_culture_per_record_rule(records: Sequence[Mapping[str, Any]]) -> Any:
+    """SUPPLEMENTARY L2: a record is one biological culture, labeled, with no SE.
+
+    Every record carries a ``replicate_id`` that is one of :data:`CULTURES`, no two
+    records share one, every ``n_replicates`` value is 1, the SE map is ``None`` and a
+    ``not_applicable_single_measurement`` gap on ``protein_abundance_se`` says why.
+    """
     from torchcell.verification.report import Level, LevelResult
 
     bad = 0
     n = 0
+    labels: list[str] = []
     for record in records:
         phenotype = record["experiment"]["phenotype"]
-        if phenotype.get("protein_abundance_se") is not None:
+        label = phenotype.get("replicate_id")
+        labels.append(str(label))
+        gaps = [
+            gap
+            for gap in phenotype.get("provenance_gaps") or []
+            if gap["field"] == "protein_abundance_se"
+            and gap["reason"] == ProvenanceGapReason.not_applicable_single_measurement
+        ]
+        if label not in CULTURES or phenotype.get("protein_abundance_se") is not None:
+            bad += 1
+        if len(gaps) != 1:
             bad += 1
         for value in phenotype["n_replicates"].values():
             n += 1
             if int(value) != 1:
                 bad += 1
+    if sorted(labels) != sorted(CULTURES):
+        bad += 1
     return LevelResult(
         level=Level.L2,
-        name="one_injection_per_record",
+        name="one_culture_per_record",
         passed=bad == 0,
         message=(
-            f"SUPPLEMENTARY: {bad} of {n} stored values disagree with one injection per "
-            "record"
+            f"SUPPLEMENTARY: replicate_ids {sorted(labels)}; {bad} violations of one "
+            f"labeled culture per record over {n} stored values"
         ),
-        details={"n_values": n, "n_bad": bad},
+        details={"n_values": n, "n_bad": bad, "replicate_ids": sorted(labels)},
+    )
+
+
+def reference_is_mean_of_records_rule(records: Sequence[Mapping[str, Any]]) -> Any:
+    """SUPPLEMENTARY L3: the reference is the mean of the culture records it summarizes.
+
+    For every protein, the reference value equals the mean of the stored culture values
+    that carry the protein and its ``n_replicates`` equals how many records carry it, so
+    the aggregate is reproducible from the records (relative tolerance 1e-12).
+    """
+    from torchcell.verification.report import Level, LevelResult
+
+    values: dict[str, list[float]] = {}
+    for record in records:
+        for key, value in record["experiment"]["phenotype"][
+            "protein_abundance"
+        ].items():
+            values.setdefault(key, []).append(float(value))
+    bad = 0
+    worst = 0.0
+    for record in records:
+        reference = record["reference"]["phenotype_reference"]
+        for key, value in reference["protein_abundance"].items():
+            expected = statistics.fmean(values[key])
+            worst = max(worst, abs(float(value) - expected))
+            if not math.isclose(float(value), expected, rel_tol=1e-12) or int(
+                reference["n_replicates"][key]
+            ) != len(values[key]):
+                bad += 1
+    return LevelResult(
+        level=Level.L3,
+        name="reference_is_mean_of_culture_records",
+        passed=bad == 0,
+        message=(
+            f"SUPPLEMENTARY: {bad} reference values differ from the mean of the culture "
+            f"records (max abs difference {worst:.3g})"
+        ),
+        details={"n_bad": bad, "max_abs_difference": worst},
     )
 
 
@@ -1962,10 +2220,11 @@ def verify_build(
             sha256=DATA_SHA256[EV9],
             method=(
                 "Dataset EV9 'EV9-AbsoluteMassFractions-2': one "
-                "ProteinAbundanceExperiment per loaded MG1655 (EQ353) "
-                "calibration sample, storing that column's absolute protein mass "
-                "fraction verbatim, with the reference the mean of the three culture "
-                "means and SE = stdev(culture means) / sqrt(n)"
+                "ProteinAbundanceExperiment per MG1655 (EQ353) calibration culture "
+                "(A1, C1, F1), storing the mean of that culture's quantifying "
+                "injection columns of absolute protein mass fraction, with the "
+                "reference the mean of the three culture values and SE = "
+                "stdev(culture values) / sqrt(n)"
             ),
             page="si10.xlsx sheet 'EV9-AbsoluteMassFractions-2'",
             retrieved=RETRIEVED_AT,
@@ -1973,7 +2232,8 @@ def verify_build(
         expected_count=expected_count,
     )
     report.add(strain_label_rule(records))
-    report.add(single_injection_rule(records))
+    report.add(one_culture_per_record_rule(records))
+    report.add(reference_is_mean_of_records_rule(records))
     report.add(assembly_pin_rule(records))
     report.add(reference_replicate_rule(records))
     report.add(gene_containment_rule(records, set(genome.genbank.loci)))

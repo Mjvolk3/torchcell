@@ -556,3 +556,7 @@ A `MADL` column is one sample, so its three uncertainty gaps now carry `not_appl
 ### Not changed, for the owner
 
 `sample_unit=technical_replicate` labels the two wells of one plate. They are two cultures inoculated from one pool pre-culture; whether that is a technical or a biological replicate is the owner's call, and it changes no count.
+
+### Scratch build, verifier and the old-vs-new join (2026-11-25)
+
+Built into `$DATA_ROOT/tmp/scratch/per-replicate-hoepfner2014/env_chemgen_hoepfner2014` (1,806 s, 17 GB): 4,110,955 records; ledger HIP 1,760,690, HOP 1,367,124, HIP_benomyl 544,437, HOP_benomyl 438,704, every Benomyl cell stored. The environment-response verifier passes on it: count 4,110,955 = expected, 4,110,955 unique (study, strain, condition) records; the report-class findings are the ones the 3,127,814-record store already carried (62 released systematic names absent from the current genome, now over 46,571 records; gene containment 0.989 of 5,895 genes). Joining the dev store (read-only) to the scratch build on (leaf, ORF, compound, dose, study): every one of the 3,127,814 old records has exactly one new counterpart with the same score (max absolute difference 0.0), n_samples and reference study; 88,850 `MADL` records change only their uncertainty-gap reason; the 983,141 unmatched new records are all benomyl, over 191 columns of 4,448 to 5,821 records.

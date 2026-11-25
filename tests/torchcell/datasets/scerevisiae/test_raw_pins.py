@@ -110,7 +110,7 @@ def _pins_from_constants(
             name: spec["sha256"] for name, spec in m._DRYAD_FILES.items()
         },
         "CrisprMagicLian2019Dataset": lambda: {
-            m.TSV_FILENAME: m.TSV_SHA256,
+            m.REPLICATES_TSV_FILENAME: m.REPLICATES_TSV_SHA256,
             m.DESIGN_D_FILENAME: m.DESIGN_D_SHA256,
         },
         "IsobutanolScreenLopez2024Dataset": lambda: {m._XLSX_FILENAME: m._XLSX_SHA256},
@@ -527,13 +527,19 @@ MANIFEST_CHECKED_DOWNLOADS: list[
     tuple[str, str, str, str, tuple[tuple[str, str, str], ...]]
 ] = [
     ("baryshnikova2010", "SmfBaryshnikova2010Dataset", "XLS_REL", "XLS_SHA256", ()),
-    ("lian2019", "CrisprMagicLian2019Dataset", "TSV_REL", "TSV_SHA256", ()),
+    (
+        "lian2019",
+        "CrisprMagicLian2019Dataset",
+        "REPLICATES_TSV_REL",
+        "REPLICATES_TSV_SHA256",
+        (),
+    ),
     (
         "lian2019",
         "CrisprMagicLian2019Dataset",
         "DESIGN_D_REL",
         "DESIGN_D_SHA256",
-        (("TSV_REL", "TSV_SHA256", "TSV_FILENAME"),),
+        (("REPLICATES_TSV_REL", "REPLICATES_TSV_SHA256", "REPLICATES_TSV_FILENAME"),),
     ),
     ("messner2021", "ProteomeMessner2021Dataset", "REPORT_REL", "REPORT_SHA256", ()),
     (

@@ -19,7 +19,7 @@ accumulating integrated backgrounds: round 1 = bAID host (5 mM furfural); round 
 ``Genotype``, so a round-2/3 record is a genuine 2-/3-perturbation mixed-modality combo,
 the strain actually in the tube.
 
-RECORD = one (guide x round) ``StrainEnvironmentResponseExperiment``:
+RECORD = one (guide x round x biological replicate) ``StrainEnvironmentResponseExperiment``:
 
 - GENOTYPE: the library member as a ``CrisprActivation`` / ``CrisprInterference`` /
   ``CrisprDeletion`` perturbation (target gene, this guide's spacer, its effector), plus
@@ -32,9 +32,38 @@ RECORD = one (guide x round) ``StrainEnvironmentResponseExperiment``:
   the bAID host (``strain_background.baid_background()``): BY4742's four auxotrophies plus
   bAID's Delta-site CRISPR-AID cassette, each element sourced or a typed gap.
 - PHENOTYPE: ``measurement_type=log2_ratio``,
-  ``assay_type=pooled_competitive_growth_barcode``, ``environment_response`` = mean
-  log2(after/before) over 3 biological triplicates, uncertainty = SD (``sample_sd``,
-  n=3 -> SE = SD/sqrt(3)). Reference = no-enrichment baseline (log2FC 0) in the bAID host.
+  ``assay_type=pooled_competitive_growth_barcode``, ``environment_response`` = THAT
+  replicate's log2(furfural-after / untreated-before), ``n_samples=1``,
+  ``sample_unit=biological_replicate``, no dispersion (typed
+  ``not_applicable_single_measurement`` gaps on the two uncertainty fields and the derived
+  SE), ``replicate_id`` = the authors' own library-pair label (below). Reference =
+  no-enrichment baseline (log2FC 0) in the bAID host, which stays an aggregate summary
+  over the three replicates (``n_samples=3``, ``replicate_id=None``).
+
+ONE RECORD PER BIOLOGICAL REPLICATE (this build, 266,304 -> 798,912 records). The screen is
+run in biological triplicate and the enrichment is defined per replicate, verbatim: "A
+threshold of one read in all six libraries (biological triplicates for untreated and
+furfural stressed libraries) and five-fold enrichment (normalized no. of guide in the
+furfural stressed library/normalized no. of guide in the untreated library) for each
+replicate was set to keep a guide sequence." Our reprocessing computed exactly that --
+per round, per replicate ``log2(CPM[after] / CPM[before])`` -- and then wrote only the mean
+and the SD over the three replicates, so the three measurements were lost at the loader's
+doorstep. ``experiments/016-lian-magic-reprocess/scripts/replicate_enrichment.py`` emits
+them (``guide_enrichment_replicates.tsv``, one column per (round, replicate)) and this
+build stores one record per (guide, round, replicate). The emitted columns reproduce the
+previous build's stored mean and SD for every guide and round (max absolute difference
+1.3e-15, asserted at <= 1e-9 inside that script), so the mean a model wants is a
+grouping over these records rather than a number the loader precomputed.
+
+REPLICATE LABELS ARE THE AUTHORS' OWN, not positions. SRA ``PRJNA504483`` names each
+sequenced library: ``Ff1a`` / ``Ff1b`` ... ``3Ff3a`` / ``3Ff3b``, where the round-2 and
+round-3 libraries carry the prefixes ``2`` and ``3``, the digit is the replicate and ``a``
+/ ``b`` is the furfural-stressed / untreated library of that replicate pair. ``LibraryName``
+equals ``SampleName`` for all 21 runs of the project, and the pipeline's
+``run_manifest.tsv`` holds those names verbatim (21/21 agree with the SRA run report,
+mirrored as ``data/sra_runinfo_PRJNA504483.csv``). ``replicate_id`` is therefore the pair
+label, e.g. ``"2Ff1a/2Ff1b"``: one record IS the ratio of two libraries of one replicate,
+so naming a single library would misstate what the number is.
 
 THE MEDIUM IS SED-URA/G418, NOT SED/G418 (corrected this build, all records). Methods,
 verbatim: "The iMAGIC libraries in triplicates were inoculated into 50 mL SED-URA/G418
@@ -78,9 +107,11 @@ RECORDS DROPPED (rule + counts in ``preprocess/dropped_records.json``):
   library, so it is unrecoverable from our inputs.
 - guides whose target gene does not resolve to a current R64 gene (ncRNA/rDNA features
   absent from the ORF genome).
-- (guide, round) cells with no enrichment value, and the guide-round in which a guide
-  targets its OWN integrated background gene (redundant, and it would collapse to an empty
-  strain signature once the background is subtracted).
+- (guide, round, replicate) cells with no enrichment value, and the guide-round in which a
+  guide targets its OWN integrated background gene (redundant, and it would collapse to an
+  empty strain signature once the background is subtracted). A guide that the count matrix
+  holds at all carries all nine (round, replicate) values, so the undetected-guide drop is
+  per guide in practice: 9,264 of the 100,493 reference guides appear in no run.
 Nothing else is dropped. In particular, 150 groups of CRISPRd designs (318 records) share
 a resolved gene AND a 21 nt spacer, because the spacer maps to more than one site at a
 multicopy locus (tRNA genes, paralogs) and the designs differ only in their donor arms.
@@ -126,11 +157,17 @@ design libraries, Supplementary Data 1-3, and the guide reference, Supplementary
 were released; the Fig 2 profiles are excluded from Source Data). It is reprocessed from
 raw reads (NCBI SRA PRJNA504483, 21 runs) against the 100,493-guide reference by the
 versioned pipeline in ``experiments/016-lian-magic-reprocess/``, and validated against the
-paper's hits (PDR1i round-3 rank 1, SLX5i round-1 rank 1, SAP30d round-1 rank 2). The
-derived ``guide_enrichment_final.tsv`` and the published Supplementary Data 3 both live in
-the raw mirror ``$DATA_ROOT/torchcell-raw/lianMultifunctionalGenomewideCRISPR2019/`` with a
-``manifest.json`` recording the Springer ESM retrieval for the design file and the
-reprocessing chain (inputs + pipeline) for the derived table.
+paper's hits (PDR1i round-3 rank 1, SLX5i round-1 rank 1, SAP30d round-1 rank 2). This
+build consumes the per-replicate table ``data/guide_enrichment_replicates.tsv``; the mean
+table ``data/guide_enrichment_final.tsv`` that earlier builds read stays in the mirror as
+its ancestor, because it is where the ``is_control`` / ``corrupted_gene`` flags come from
+and the pinned numbers the per-replicate columns were checked against. Both of those, the
+SRA run report (``data/sra_runinfo_PRJNA504483.csv``, the replicate labels' source) and the
+published Supplementary Data 3 live in the raw mirror
+``$DATA_ROOT/torchcell-raw/lianMultifunctionalGenomewideCRISPR2019/`` with a
+``manifest.json`` recording the Springer ESM retrieval for the design file, the direct_url
+retrieval for the run report, and the reprocessing chain (inputs + pipeline) for the two
+derived tables.
 """
 
 from __future__ import annotations
@@ -184,7 +221,6 @@ from torchcell.datamodels.schema import (
     StrainEnvironmentResponseExperimentReference,
     StrainReferenceGenome,
     Temperature,
-    UncertaintyType,
 )
 from torchcell.datamodels.strain_background import (
     BAID_CONSTRUCTION,
@@ -228,6 +264,21 @@ RAW_DIR_REL = f"torchcell-raw/{CITATION_KEY}"
 TSV_FILENAME = "guide_enrichment_final.tsv"
 TSV_REL = f"data/{TSV_FILENAME}"
 TSV_SHA256 = "f9af849f97a2d460c3a6d628308491ec3966c6cc2a7f6cad130848d2bad32647"
+
+#: The per-replicate enrichment table this build consumes: the same CPM log2(after/before)
+#: the mean table summarized, one column per (round, replicate), emitted by
+#: ``experiments/016-lian-magic-reprocess/scripts/replicate_enrichment.py``.
+REPLICATES_TSV_FILENAME = "guide_enrichment_replicates.tsv"
+REPLICATES_TSV_REL = f"data/{REPLICATES_TSV_FILENAME}"
+REPLICATES_TSV_SHA256 = (
+    "46eaf7957ef410395177acf842ed0d36c12fd7c7f20ac5f5b2ee7dfd47d698ab"
+)
+#: The SRA run report for PRJNA504483: where the authors' own library labels come from.
+RUNINFO_FILENAME = "sra_runinfo_PRJNA504483.csv"
+RUNINFO_REL = f"data/{RUNINFO_FILENAME}"
+RUNINFO_SHA256 = "09e449b8d9e3490ea4772506774ebab88762c51230d1c718df28288fb8654b1e"
+RUNINFO_URL = "https://trace.ncbi.nlm.nih.gov/Traces/sra-db-be/runinfo?acc=PRJNA504483"
+RUNINFO_RETRIEVED_AT = "2026-11-24"
 
 _ESM_BASE = (
     "https://static-content.springer.com/esm/art%3A10.1038%2Fs41467-019-13621-4/"
@@ -304,8 +355,55 @@ FURFURAL_MM = _paper(
 N_REPLICATES = _paper(
     3,
     "biological triplicates for untreated and furfural stressed libraries",
-    note="the triplicate untreated and furfural-stressed libraries; the stored SD is the "
-    "sample SD across them, so SE = SD/sqrt(3)",
+    note="the triplicate untreated and furfural-stressed libraries. Each replicate is a "
+    "record of its own (n_samples=1); n=3 now appears only on the aggregate reference, "
+    "which summarizes the three",
+)
+#: The enrichment is defined PER REPLICATE by the source, which is what makes a replicate
+#: the record: a ratio of that replicate's stressed library to its untreated library.
+PER_REPLICATE_ENRICHMENT = _paper(
+    "log2(furfural stressed library / untreated library), per biological replicate",
+    "A threshold of one read in all six libraries (biological triplicates for untreated "
+    "and furfural stressed libraries) and five-fold enrichment (normalized no. of guide "
+    "in the furfural stressed library/normalized no. of guide in the untreated library) "
+    "for each replicate was set to keep a guide sequence.",
+    note="the authors' own per-replicate definition. The five-fold / one-read threshold "
+    "is their HIT-SELECTION filter for choosing targets to verify, not a condition on the "
+    "measurement, so no record is dropped by it",
+)
+#: ``{round: {replicate: the authors' library-pair label}}``, from the SRA run report for
+#: PRJNA504483 (``LibraryName`` = ``SampleName`` for all 21 runs; the pipeline's
+#: ``run_manifest.tsv`` carries the same names, 21/21 agreeing). ``a`` is the
+#: furfural-stressed and ``b`` the untreated library of one replicate, and a record is the
+#: ratio of the two, so ``replicate_id`` names the pair.
+REPLICATE_LIBRARY: dict[int, dict[int, str]] = {
+    1: {1: "Ff1a/Ff1b", 2: "Ff2a/Ff2b", 3: "Ff3a/Ff3b"},
+    2: {1: "2Ff1a/2Ff1b", 2: "2Ff2a/2Ff2b", 3: "2Ff3a/2Ff3b"},
+    3: {1: "3Ff1a/3Ff1b", 2: "3Ff2a/3Ff2b", 3: "3Ff3a/3Ff3b"},
+}
+#: The SRA runs behind each ``REPLICATE_LIBRARY`` pair, ``(stressed, untreated)``.
+REPLICATE_RUNS: dict[int, dict[int, tuple[str, str]]] = {
+    1: {
+        1: ("SRR8293138", "SRR8293135"),
+        2: ("SRR8293131", "SRR8293136"),
+        3: ("SRR8293132", "SRR8293137"),
+    },
+    2: {
+        1: ("SRR8293130", "SRR8293133"),
+        2: ("SRR8293142", "SRR8293134"),
+        3: ("SRR8293143", "SRR8293129"),
+    },
+    3: {
+        1: ("SRR8293147", "SRR8293144"),
+        2: ("SRR8293148", "SRR8293145"),
+        3: ("SRR8293149", "SRR8293146"),
+    },
+}
+
+_SINGLE_REPLICATE_NOTE = (
+    "one biological replicate's log2 enrichment, stored verbatim: a single measurement "
+    "has no dispersion. The sample SD over the three replicates of a (guide, round) is a "
+    "grouping over those three records, not a field of one of them"
 )
 ASSAY = _paper(
     AssayType.pooled_competitive_growth_barcode,
@@ -506,16 +604,21 @@ def deposit_raw_mirror(
     *,
     enrichment_path: str | Path,
     design_d_path: str | Path,
+    replicates_path: str | Path,
+    runinfo_path: str | Path,
     retrieved_at: str = SI_RETRIEVED_AT,
+    runinfo_retrieved_at: str = RUNINFO_RETRIEVED_AT,
     data_root: str | None = None,
 ) -> Path:
-    """Write the raw mirror (derived enrichment + published CRISPRd design) + manifest.
+    """Write the raw mirror (derived enrichment tables + design + run report) + manifest.
 
     Idempotent by sha256. The design file is a directly scriptable Springer ESM whose
-    pinned hash was reproduced on 2026-09-12. The enrichment table is DERIVED, not
-    retrieved: its ``ProcessingRecord`` names the versioned reprocessing pipeline and the
+    pinned hash was reproduced on 2026-09-12. The two enrichment tables are DERIVED, not
+    retrieved: each ``ProcessingRecord`` names the versioned reprocessing pipeline and the
     sha256 of its inputs (the Supplementary Data 4 guide reference and the raw SRA
-    project), so the rebuild chain is recorded rather than a fabricated download URL.
+    project, and for the per-replicate table the mean table it was checked against), so
+    the rebuild chain is recorded rather than a fabricated download URL. The SRA run
+    report is a scriptable direct_url retrieval and carries one.
     """
     root = raw_mirror_dir(data_root)
     design_url = f"{_ESM_BASE}{DESIGN_D_FILENAME}"
@@ -523,6 +626,8 @@ def deposit_raw_mirror(
     files: list[ArtifactRecord] = []
     deposits = (
         (enrichment_path, TSV_REL, TSV_SHA256),
+        (replicates_path, REPLICATES_TSV_REL, REPLICATES_TSV_SHA256),
+        (runinfo_path, RUNINFO_REL, RUNINFO_SHA256),
         (design_d_path, DESIGN_D_REL, DESIGN_D_SHA256),
     )
     # Both sources are verified before anything is written, so a refusal leaves no
@@ -565,6 +670,66 @@ def deposit_raw_mirror(
     )
     files.append(
         ArtifactRecord(
+            path=REPLICATES_TSV_REL,
+            role=ROLE_RAW_DATA,
+            bytes=(root / REPLICATES_TSV_REL).stat().st_size,
+            sha256=REPLICATES_TSV_SHA256,
+            source="derived: SRA PRJNA504483 reprocessing, per replicate",
+            processing=ProcessingRecord(
+                processor=(
+                    "experiments/016-lian-magic-reprocess/scripts/"
+                    "replicate_enrichment.py"
+                ),
+                tool="torchcell lian-magic-reprocess pipeline",
+                version="2026-11-24",
+                params={
+                    "sra_project": "PRJNA504483",
+                    "n_runs": 21,
+                    "barcode_window": "read[27:70] (43 bp activation) | read[27:71] "
+                    "(44 bp interference/deletion), forward, exact match",
+                    "normalization": "CPM(+1) per library; per round per replicate "
+                    "log2(furfural-after / untreated-before), one column per (round, "
+                    "replicate); NO mean and NO SD",
+                    "replicate_pairing": "the authors' library labels from the SRA run "
+                    "report, 'a' stressed over 'b' untreated of the same replicate "
+                    "(Ff1a/Ff1b ... 3Ff3a/3Ff3b)",
+                    "verification": "the mean and sample SD over the three emitted "
+                    "columns reproduce guide_enrichment_final.tsv's r{rnd}_log2fc_mean "
+                    "/ _sd for all 91,229 detected guides in all three rounds; max "
+                    "absolute difference 1.3e-15, asserted at <= 1e-9",
+                    "flags": "is_control / corrupted_gene carried over verbatim from "
+                    "guide_enrichment_final.tsv",
+                },
+                input_sha256=[REFERENCE_SHA256, TSV_SHA256],
+            ),
+        )
+    )
+    files.append(
+        ArtifactRecord(
+            path=RUNINFO_REL,
+            role=ROLE_RAW_DATA,
+            bytes=(root / RUNINFO_REL).stat().st_size,
+            sha256=RUNINFO_SHA256,
+            source=RUNINFO_URL,
+            retrieval=RetrievalRecord(
+                method=RetrievalMethod.direct_url,
+                source_url=RUNINFO_URL,
+                retriever="curl",
+                params={
+                    "command": f"curl -s '{RUNINFO_URL}' -o {RUNINFO_FILENAME}",
+                    "why": "the authors' own library labels (LibraryName = SampleName) "
+                    "for the 21 runs, which is what replicate_id states. Named by the "
+                    "Data availability statement: 'The raw reads of the NGS data were "
+                    "deposited into the NCBI Sequence Read Archive (SRA) database "
+                    "(accession number: PRJNA504483)'",
+                },
+                sha256=RUNINFO_SHA256,
+                retrieved_at=runinfo_retrieved_at,
+            ),
+        )
+    )
+    files.append(
+        ArtifactRecord(
             path=DESIGN_D_REL,
             role=ROLE_SI_DATA,
             bytes=(root / DESIGN_D_REL).stat().st_size,
@@ -599,10 +764,15 @@ def deposit_raw_mirror(
             "the archived lab design file, and the same holds for Supplementary Data 1 "
             "and 2 against the CRISPRa and CRISPRi lab files",
             "Supplementary Data 4 (100,493-guide reference) -- an INPUT to the derived "
-            "enrichment table, recorded in its processing record rather than mirrored "
+            "enrichment tables, recorded in their processing records rather than mirrored "
             "here, since the loader does not read it",
             "the per-guide furfural enrichment itself was NEVER released; it is "
-            "reprocessed from SRA PRJNA504483",
+            "reprocessed from SRA PRJNA504483, per biological replicate",
+            "the Source Data file (41467_2019_13621_MOESM8_ESM.xlsx) holds the "
+            "verification measurements of the INDIVIDUALLY constructed strains (relative "
+            "biomass accumulation, relative cellulase activity, qPCR Ct, reporter "
+            "fluorescence), three or more repeats each. No class reads them; see the "
+            "dataset note's 2026.11.24 section",
         ],
         provenance_complete=True,
         created_at=datetime.now(UTC).isoformat(),
@@ -645,7 +815,7 @@ class DropRule(BaseModel):
     """One retention rule, the records it removed, and the items it removed them for."""
 
     rule: str
-    scope: Literal["guide", "guide_round", "strain"]
+    scope: Literal["guide", "guide_round", "guide_round_replicate", "strain"]
     description: str
     n_records: int
     items: list[str] = []
@@ -692,21 +862,21 @@ class CrisprMagicLian2019Dataset(ExperimentDataset):
 
     @property
     def raw_file_names(self) -> list[str]:
-        """The derived enrichment table and the published CRISPRd design library."""
-        return [TSV_FILENAME, DESIGN_D_FILENAME]
+        """The per-replicate enrichment table and the published CRISPRd design library."""
+        return [REPLICATES_TSV_FILENAME, DESIGN_D_FILENAME]
 
     def download(self) -> None:
         """Link the mirror files into ``raw/`` after verifying each against its pin.
 
-        ``TSV_SHA256`` and ``DESIGN_D_SHA256`` are the pins; the manifest is the
-        retrieval record and must carry the same digests, else
+        ``REPLICATES_TSV_SHA256`` and ``DESIGN_D_SHA256`` are the pins; the manifest is
+        the retrieval record and must carry the same digests, else
         ``ManifestPinMismatchError`` names both.
         """
         data_root = _data_root()
         manifest = load_manifest(data_root)
         os.makedirs(self.raw_dir, exist_ok=True)
         for relpath, filename, expected in (
-            (TSV_REL, TSV_FILENAME, TSV_SHA256),
+            (REPLICATES_TSV_REL, REPLICATES_TSV_FILENAME, REPLICATES_TSV_SHA256),
             (DESIGN_D_REL, DESIGN_D_FILENAME, DESIGN_D_SHA256),
         ):
             check_manifest_pin(relpath, manifest_sha256(manifest, relpath), expected)
@@ -828,7 +998,13 @@ class CrisprMagicLian2019Dataset(ExperimentDataset):
     def _reference(
         self, environment: CultureEnvironment
     ) -> StrainEnvironmentResponseExperimentReference:
-        """No-enrichment baseline: a guide that neither enriches nor depletes -> log2FC 0."""
+        """No-enrichment baseline: a guide that neither enriches nor depletes -> log2FC 0.
+
+        It stays an AGGREGATE over the round's three replicates (``n_samples=3``,
+        ``replicate_id=None``) while every experiment record is one replicate: one
+        reference per record cannot hold three replicate baselines, and the baseline
+        itself is the same zero in each.
+        """
         return StrainEnvironmentResponseExperimentReference(
             dataset_name=self.name,
             genome_reference=self._genome_reference(),
@@ -843,13 +1019,46 @@ class CrisprMagicLian2019Dataset(ExperimentDataset):
             ),
         )
 
+    @staticmethod
+    def _replicate_phenotype(
+        value: float, rnd: int, replicate: int
+    ) -> EnvironmentResponsePhenotype:
+        """ONE replicate's log2 enrichment: n = 1, no dispersion, the authors' label."""
+        return EnvironmentResponsePhenotype(
+            measurement_type=MeasurementType.log2_ratio,
+            assay_type=ASSAY.value,
+            environment_response=value,
+            environment_response_uncertainty=None,
+            environment_response_uncertainty_type=None,
+            n_samples=1,
+            sample_unit=SampleUnit.biological_replicate,
+            units=UNITS,
+            replicate_id=REPLICATE_LIBRARY[rnd][replicate],
+            provenance_gaps=[
+                ProvenanceGap(
+                    field=field,
+                    reason=ProvenanceGapReason.not_applicable_single_measurement,
+                    note=_SINGLE_REPLICATE_NOTE,
+                )
+                for field in (
+                    "environment_response_uncertainty",
+                    "environment_response_uncertainty_type",
+                    "environment_response_se",
+                )
+            ],
+        )
+
     @post_process
     def process(self) -> None:
-        """Build one env x geno -> log2-enrichment record per (guide, round); write LMDB."""
+        """One record per (guide, round, biological replicate); write LMDB."""
         verify_raw_files(
-            self.raw_dir, {TSV_FILENAME: TSV_SHA256, DESIGN_D_FILENAME: DESIGN_D_SHA256}
+            self.raw_dir,
+            {
+                REPLICATES_TSV_FILENAME: REPLICATES_TSV_SHA256,
+                DESIGN_D_FILENAME: DESIGN_D_SHA256,
+            },
         )
-        table = pd.read_csv(osp.join(self.raw_dir, TSV_FILENAME), sep="\t")
+        table = pd.read_csv(osp.join(self.raw_dir, REPLICATES_TSV_FILENAME), sep="\t")
         resolve = self._resolver()
         assert self.genome is not None
         canonical = canonical_common_names(self.genome)
@@ -872,6 +1081,8 @@ class CrisprMagicLian2019Dataset(ExperimentDataset):
             rnd: {orf for orf, _, _ in ROUND_BACKGROUND[rnd]} for rnd in (1, 2, 3)
         }
         rounds = (1, 2, 3)
+        replicates = (1, 2, 3)
+        records_per_guide = len(rounds) * len(replicates)
 
         # --- pass 1: gene resolution -------------------------------------------- #
         # Two CRISPRd designs can share a gene AND a 21 nt spacer (multicopy loci where
@@ -934,51 +1145,40 @@ class CrisprMagicLian2019Dataset(ExperimentDataset):
                 spacer = row["true_spacer"]
                 donor = row["donor"]
                 for rnd in rounds:
-                    mean = row[f"r{rnd}_log2fc_mean"]
-                    if pd.isna(mean):
-                        n_nan += 1
-                        continue
                     if orf in background_orfs[rnd]:
-                        n_bg_self += 1
+                        n_bg_self += len(replicates)
                         continue
-                    sd = row[f"r{rnd}_log2fc_sd"]
-                    has_sd = not pd.isna(sd) and not math.isinf(float(sd))
                     item = prepared[rnd]
-                    experiment = StrainEnvironmentResponseExperiment(
-                        dataset_name=self.name,
-                        genotype=Genotype(
-                            perturbations=[
-                                crispr_perturbation(orf, common, mod, spacer, donor),
-                                *item["background"],
-                            ]
-                        ),
-                        environment=item["environment"],
-                        phenotype=EnvironmentResponsePhenotype(
-                            measurement_type=MeasurementType.log2_ratio,
-                            assay_type=ASSAY.value,
-                            environment_response=float(mean),
-                            environment_response_uncertainty=(
-                                float(sd) if has_sd else None
-                            ),
-                            environment_response_uncertainty_type=(
-                                UncertaintyType.sample_sd if has_sd else None
-                            ),
-                            n_samples=N_REPLICATES.value,
-                            sample_unit=SampleUnit.biological_replicate,
-                            units=UNITS,
-                        ),
+                    genotype = Genotype(
+                        perturbations=[
+                            crispr_perturbation(orf, common, mod, spacer, donor),
+                            *item["background"],
+                        ]
                     )
-                    txn.put(
-                        f"{idx}".encode(),
-                        self._intern_record(
-                            experiment, item["reference"], publication, itxn
-                        ),
-                    )
-                    idx += 1
+                    for replicate in replicates:
+                        value = row[f"r{rnd}_rep{replicate}_log2fc"]
+                        if pd.isna(value) or math.isinf(float(value)):
+                            n_nan += 1
+                            continue
+                        experiment = StrainEnvironmentResponseExperiment(
+                            dataset_name=self.name,
+                            genotype=genotype,
+                            environment=item["environment"],
+                            phenotype=self._replicate_phenotype(
+                                float(value), rnd, replicate
+                            ),
+                        )
+                        txn.put(
+                            f"{idx}".encode(),
+                            self._intern_record(
+                                experiment, item["reference"], publication, itxn
+                            ),
+                        )
+                        idx += 1
         env.close()
         interned_env.close()
 
-        source_records = len(table) * len(rounds)
+        source_records = len(table) * records_per_guide
         rules = [
             DropRule(
                 rule="random_negative_control_guide",
@@ -987,7 +1187,7 @@ class CrisprMagicLian2019Dataset(ExperimentDataset):
                     "one of the 300 random negative-control guides (100 per library); it "
                     "targets no gene, so there is no genotype to key a record to"
                 ),
-                n_records=n_ctrl * len(rounds),
+                n_records=n_ctrl * records_per_guide,
                 items=[],
             ),
             DropRule(
@@ -998,7 +1198,7 @@ class CrisprMagicLian2019Dataset(ExperimentDataset):
                     "in the released reference and the design library, so the target is "
                     "unrecoverable from our inputs"
                 ),
-                n_records=n_corrupt * len(rounds),
+                n_records=n_corrupt * records_per_guide,
                 items=[],
             ),
             DropRule(
@@ -1008,15 +1208,18 @@ class CrisprMagicLian2019Dataset(ExperimentDataset):
                     "the guide targets an ncRNA / rDNA feature or a name absent from the "
                     "current R64 ORF genome, so no gene entity exists to key the record to"
                 ),
-                n_records=n_unresolved * len(rounds),
+                n_records=n_unresolved * records_per_guide,
                 items=sorted(unresolved_genes)[:200],
             ),
             DropRule(
-                rule="guide_round_has_no_enrichment_value",
-                scope="guide_round",
+                rule="guide_round_replicate_has_no_enrichment_value",
+                scope="guide_round_replicate",
                 description=(
-                    "the guide was not detected in this round's before/after libraries, "
-                    "so the round has no log2 enrichment for it"
+                    "the guide was not detected in this replicate's before/after "
+                    "libraries, so that replicate has no finite log2 enrichment for it. "
+                    "A guide the count matrix holds at all carries all nine (round, "
+                    "replicate) values, so in practice this rule fires for the 9,264 "
+                    "reference guides that appear in no run"
                 ),
                 n_records=n_nan,
                 items=[],
@@ -1028,7 +1231,8 @@ class CrisprMagicLian2019Dataset(ExperimentDataset):
                     "in this round the guide's target gene is already an integrated "
                     "background perturbation, so the foreground edit is redundant and the "
                     "strain signature would collapse to empty once the background is "
-                    "subtracted"
+                    "subtracted. Counted in records, which is three (one per replicate) "
+                    "per skipped (guide, round)"
                 ),
                 n_records=n_bg_self,
                 items=[],
@@ -1050,9 +1254,10 @@ class CrisprMagicLian2019Dataset(ExperimentDataset):
                 f"{drop_log.dropped_records} records missing from the build"
             )
         log.info(
-            "Lian2019: wrote %d (guide x round) records; dropped %d control + %d "
-            "corrupted + %d unresolved-gene guides (%d distinct genes); %d guide-rounds "
-            "undetected; %d skipped (guide targets its own round background)",
+            "Lian2019: wrote %d (guide x round x replicate) records; dropped %d control "
+            "+ %d corrupted + %d unresolved-gene guides (%d distinct genes); %d "
+            "guide-round-replicates undetected; %d skipped (guide targets its own round "
+            "background)",
             idx,
             n_ctrl,
             n_corrupt,

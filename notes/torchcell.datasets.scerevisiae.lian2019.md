@@ -426,3 +426,151 @@ Tests: `test_the_reference_genome_is_the_one_shared_baid_background` in
 `test_baid_background_is_by4742_plus_the_delta_site_crispr_aid_cassette` plus
 `test_baid_background_round_trips_through_json_unchanged` in
 [[tests.torchcell.datamodels.test_strain_background]].
+
+## 2026.11.24 - One record per biological replicate (#1177), and the MOESM8 Source Data that stays unread
+
+### What changed
+
+The store went from **266,304 records (one per guide x round, holding the mean and SD over
+the triplicate)** to **798,912 records (one per guide x round x biological replicate,
+holding that replicate's value)**. Nothing was averaged away and nothing was dropped that
+was kept before: the count is exactly three times the old one, because a guide the count
+matrix holds at all carries all nine (round, replicate) values.
+
+- `n_samples=1`, `sample_unit=biological_replicate`, no uncertainty, no uncertainty type
+  and no derived SE, with three typed `not_applicable_single_measurement`
+  `ProvenanceGap`s naming those fields.
+- `replicate_id` is the authors' own library-pair label, `Ff1a/Ff1b`, `Ff2a/Ff2b`,
+  `Ff3a/Ff3b` for round 1 and the `2`- and `3`-prefixed names for rounds 2 and 3.
+- `phenotype_reference` stays the AGGREGATE no-enrichment baseline (log2FC 0,
+  `n_samples=3`, `replicate_id=None`): one reference per record cannot hold three
+  replicate baselines, and the baseline is the same zero in each.
+
+### Why a replicate is the record here
+
+The screen is run in biological triplicate and **the authors define the enrichment per
+replicate**, verbatim from the Methods (`paper.md` line 88, sha256
+`63fe2b7101fc48feb297f9e34b83d108b74f03f28bbc280e08c7219bc975086c`):
+
+> A threshold of one read in all six libraries (biological triplicates for untreated and
+> furfural stressed libraries) and five-fold enrichment (normalized no. of guide in the
+> furfural stressed library/normalized no. of guide in the untreated library) for each
+> replicate was set to keep a guide sequence.
+
+and the screening paragraph (line 78):
+
+> The iMAGIC libraries in triplicates were inoculated into $5 0 \mathrm { m L }$
+> SED-URA/G418 medium with or without furfural in a $2 5 0 \mathrm { m L }$ baffled flask.
+
+The five-fold / one-read threshold in that sentence is the authors' HIT-SELECTION filter
+for picking targets to verify, not a condition on the measurement, so no record is dropped
+by it.
+
+### Where the per-replicate numbers come from
+
+They were never missing from the data, only from the file the loader read. Our own
+reprocessing (`experiments/016-lian-magic-reprocess/`) already computed
+`log2(CPM[after] / CPM[before])` per round per replicate and then wrote only
+`r{rnd}_log2fc_mean` and `r{rnd}_log2fc_sd` (`scripts/enrichment.py`). The new step
+`scripts/replicate_enrichment.py` writes the nine per-replicate columns instead, as
+`data/guide_enrichment_replicates.tsv` (sha256
+`46eaf7957ef410395177acf842ed0d36c12fd7c7f20ac5f5b2ee7dfd47d698ab`, 22,513,709 bytes), and
+proves it is the same arithmetic: the mean and sample SD over the three emitted columns
+reproduce the pinned mean table for all 91,229 detected guides in all three rounds, **max
+absolute difference 1.3e-15**, asserted at 1e-9 inside the script. The mean table stays in
+the raw mirror as the per-replicate table's ancestor (it is where the `is_control` and
+`corrupted_gene` flags come from), and its `ProcessingRecord` names it among the new
+table's inputs.
+
+The counts the recomputation read are the 2026-07 pipeline's own
+`$DATA_ROOT/lian2019-magic-reprocess/counts/*.tsv`, which are still on disk; the 1.3e-15
+agreement with the pinned table is what shows they are the exact counts behind it. A
+rebuild from zero re-downloads the 21 SRA runs through `reproduce.sh`, which now runs the
+new step as `[7/7]`.
+
+### The replicate labels are the authors' own
+
+SRA `PRJNA504483`'s run report names every library: `LibraryName` = `SampleName` =
+`Ff1a` ... `3Ff3b`, where the digit is the replicate and `a` / `b` is the
+furfural-stressed / untreated library of that replicate pair. The pipeline's
+`run_manifest.tsv` carries those names verbatim, **21/21 runs agreeing** with the run
+report, which is now mirrored as `data/sra_runinfo_PRJNA504483.csv` (sha256
+`09e449b8d9e3490ea4772506774ebab88762c51230d1c718df28288fb8654b1e`, retrieved 2026-11-24
+by `curl` from `https://trace.ncbi.nlm.nih.gov/Traces/sra-db-be/runinfo?acc=PRJNA504483`,
+the accession the Data availability statement names). One record is the RATIO of two
+libraries of one replicate, so `replicate_id` names the pair rather than a single library.
+
+### Build and verification
+
+- Scratch build root (shared dev stores untouched):
+  `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-lian2019/crispr_magic_lian2019`.
+- Drop accounting, scaled by three with the records (`preprocess/dropped_records.json`):
+  2,700 control + 144 source-corrupted + 24,030 unresolved-gene records at guide scope
+  (300, 16 and 2,670 guides x 9 cells each), 78,489 undetected (guide, round, replicate)
+  cells and 162 own-background records. The last two are the mean build's 26,169 and 48
+  guide-rounds times three, with six guide-rounds moving from the value rule to the
+  background rule.
+- The own-background test is round-scoped and now runs BEFORE the per-replicate value
+  test, so a guide that is its own round's background and has no value for that round
+  counts as own-background rather than as a missing value. The earlier mean build counted
+  that one cell the other way round.
+- `environment_response_verifier` expected count updated to 798,912 in
+  `torchcell/verification/runners.py`.
+
+### Not done: the MOESM8 Source Data (#1176)
+
+`si/si_data/41467_2019_13621_MOESM8_ESM.xlsx` holds the verification measurements of the
+INDIVIDUALLY constructed strains, three or more repeats each, and **no class reads them**.
+Read in full on 2026-11-24, the ten sheets are:
+
+| sheet | readout | shape |
+|---|---|---|
+| `Fig. 2b-d-f` | relative biomass accumulation | 3 rounds x 8-9 strains x Repeat 1-3 |
+| `Fig. 3a-b-c-d-e-f` | relative biomass, qPCR Ct, fermentation time courses | WT/R1/R2/R3 x 3 doses x Repeat 1-3, plus Ct pairs and HPLC series |
+| `Fig. 4` | relative biomass (synergy panel) | 8 strains x 3 doses x Repeat 1-3 |
+| `Fig. 5b-d` | relative biomass (sMAGIC strains) | 2 panels x 4-6 strains x Repeat 1-3 |
+| `Fig. S1` | reporter fluorescence per locus | CRISPRa / CRISPRi x 10 loci x Clone 1-8 |
+| `Fig. S4`, `Fig. S6`, `Fig. S9`, `Fig. S10` | relative biomass | 4-6 strains x Repeat 1-3 (S10: Repeat 1-2) |
+| `Fig. S7a-c` | relative cellulase activity, qPCR Ct | 6 strains x Repeat 1-3; Ct x Repeat 1-4 |
+
+Every value is per repeat, so the per-replicate policy is satisfiable, but the sheets are
+not a (guide x round) enrichment and cannot enter `CrisprMagicLian2019Dataset`: they need a
+new dataset class and, for most sheets, schema the ontology does not have. Blocked items,
+with the shape each would need:
+
+- **Relative biomass accumulation** is the ratio of a strain's OD600 to the empty-vector
+  control's at a stated time ("normalized to that of the control strains with an empty
+  vector (relative biomass accumulation)"). `EnvironmentResponsePhenotype` could carry a
+  ratio, but `MeasurementType` has no member for a biomass ratio against a concurrent
+  control and `AssayType` none for an individual-tube OD endpoint, and the panels' strains
+  are integrated, marker-less gRNA cassettes at named landing pads (X3, X4, XI1), which is
+  not what a `CrisprActivation`/`Interference` perturbation on a plasmid states. Needs an
+  owner decision on both enum members and on how an integrated gRNA cassette differs from
+  a plasmid-borne one in the genotype.
+- **qPCR Ct values** (`Fig. 3b`, `Fig. S7c`) are raw cycle thresholds for a target and a
+  housekeeping gene, paired per repeat. No phenotype class holds a Ct pair.
+- **Relative cellulase activity** (`Fig. S7a`) is a secreted-enzyme activity ratio by the
+  DNS method. No phenotype class holds an enzyme activity.
+- **Reporter fluorescence per integration locus** (`Fig. S1`) measures the LOCUS, not a
+  gene perturbation: eight clones per locus, mCherry activation or mVenus repression
+  normalized to OD600. The genotype of such a record is an integration at a landing pad
+  with a reporter cassette, which has no leaf.
+- **Fermentation time courses** (`Fig. 3c-f`) are glucose, ethanol, furfural and furfuryl
+  alcohol against time, sampled every 24 h, for two strains. A time-series phenotype keyed
+  by sampling time has no class either.
+
+Issue #1176 stays open for this; nothing about it was changed in this build beyond
+recording the sheets in the raw mirror's `si_expected`.
+
+### Still open, outside the replicate policy
+
+- `target_gene_is_not_a_current_genome_gene` drops **24,030 records** (2,670 guides x 3
+  rounds x 3 replicates; 8,010 in the mean build) on a genome lookup, which the "the genome never gates a
+  record" rule forbids. Storing them needs a CRISPR perturbation leaf that can carry a
+  RELEASED gene name with no systematic name (the counterpart of
+  `ReleasedIdentifierPerturbation` for CRISPR), which is a schema change and so is not made
+  here.
+- The 300 random negative-control guides (2,700 records; 900 in the mean build) are
+  control lineages that
+  target no gene. They are records under the per-replicate policy's control clause only if
+  a guide that targets nothing can be stated, which again needs a leaf that does not exist.

@@ -33,7 +33,12 @@ echo "[4/6] count barcodes per run (offset-27 exact match)"
 echo "[5/6] CPM + per-round log2(after/before) enrichment"
 "$PY" "$HERE/enrichment.py"
 
-echo "[6/6] finalize (control/corrupted flags) + verify output sha256"
+echo "[6/7] finalize (control/corrupted flags) + verify output sha256"
 "$PY" "$HERE/finalize_enrichment.py"
 echo "f9af849f97a2d460c3a6d628308491ec3966c6cc2a7f6cad130848d2bad32647  $LIAN_WORK/guide_enrichment_final.tsv" | sha256sum -c
 echo "REPRODUCE_OK: guide_enrichment_final.tsv matches the pinned sha256"
+
+echo "[7/7] per-replicate log2FC (the loader's input) + verify output sha256"
+"$PY" "$HERE/replicate_enrichment.py"
+echo "46eaf7957ef410395177acf842ed0d36c12fd7c7f20ac5f5b2ee7dfd47d698ab  $LIAN_WORK/guide_enrichment_replicates.tsv" | sha256sum -c
+echo "REPRODUCE_OK: guide_enrichment_replicates.tsv matches the pinned sha256"

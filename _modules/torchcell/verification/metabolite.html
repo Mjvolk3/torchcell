@@ -253,11 +253,21 @@
 <span class="sd">    apart by the replicate they state and none is a duplicate of another. It is read</span>
 <span class="sd">    with ``.get`` and joins only when set, so a dataset whose records state one</span>
 <span class="sd">    aggregate per strain keys exactly as before.</span>
+
+<span class="sd">    The reference genome's ``strain`` joins the key too, on the #1057 precedent in</span>
+<span class="sd">    ``environment_response``: a release that measures several wild-type strains (da</span>
+<span class="sd">    Silveira 2014's ``Y7092``, ``Y7220`` and ``BY4741`` rows) stores records whose</span>
+<span class="sd">    genotypes are all empty, and what tells the strains apart is the strain the</span>
+<span class="sd">    reference genome names. A dataset whose records share one reference strain keys on</span>
+<span class="sd">    the strain plus a constant, so its verdict and counts are unchanged.</span>
 <span class="sd">    """</span>
     <span class="n">seen</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">per_replicate</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
-        <span class="n">sig</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">_genotype_signature</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">])</span>
+        <span class="n">sig</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">_genotype_signature</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]),</span>
+            <span class="p">(</span><span class="s2">"strain"</span><span class="p">,</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">][</span><span class="s2">"genome_reference"</span><span class="p">][</span><span class="s2">"strain"</span><span class="p">]),</span>
+        <span class="p">)</span>
         <span class="n">replicate_id</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"replicate_id"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">replicate_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">sig</span> <span class="o">=</span> <span class="p">(</span><span class="n">sig</span><span class="p">,</span> <span class="p">(</span><span class="s2">"replicate_id"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">replicate_id</span><span class="p">)))</span>

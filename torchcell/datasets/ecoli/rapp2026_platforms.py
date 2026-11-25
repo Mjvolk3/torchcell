@@ -14,17 +14,31 @@ its own dataset here so that no two platforms ever share one record set:
    the denominator. **1,515 records**, one per Table S2 library gene, ``phnE`` among them
    on a ``locus_tag_synonym`` mapping. 18 of those genes have no metabolome sample at
    all, so this family EXTENDS the strain coverage of the key.
+   NOT yet one record per culture (#1178, #1173): Table S2 releases 4,545 strain
+   cultures and 48 control cultures, but the per-culture record would store the
+   ABSOLUTE AUC, and no ``MeasurementType`` names an area under a growth curve, so
+   the conversion waits on that schema decision; the ratio is kept as it was.
 2. ``TargetedMetabolomeRapp2026Dataset`` -- the targeted LC-MS/MS screen of Table S6,
    the EIC peak-height fold change against the library median, a SECOND PLATFORM.
-   **407 records, 1,246 values.** MEASURED not to duplicate the stored FI-MS values:
+   One record per measured EXTRACT (#1178): every ``DataFile`` name carries the
+   FI-MS run code of the strain's Table S3 sample it was injected from
+   (``..._P2A1msAV950_neg.mzML`` -> ``ctrl11_R1_msAV950_B4``), MEASURED to match exactly
+   one of the strain's two samples on all 1,256 rows (1,036 replicate 1, 220
+   replicate 2), so 71 strains were measured from both extracts and carry two records.
+   **482 records, 1,256 values**, the 4 control wells' 5 records among them. MEASURED
+   not to duplicate the stored FI-MS values:
    joining Table S6 1:1 onto Table S5 on (gene, abbreviation, mode) gives Pearson
    r = 0.6722 on the linear fold change (0.6701 on log2) with a median absolute log2
    difference of 1.1649, reproduced at build time into
    ``preprocess/platform_agreement.json``.
 3. ``MetaboliteIntensityRapp2026Dataset`` -- Table S5's ABSOLUTE FI-MS intensity of each
-   accumulating annotated feature (``Mean_Int`` / ``R1_Int`` / ``R2_Int``), a different
-   scale from the stored fold change. **407 records, 1,375 values**, each with a real
-   per-replicate standard error.
+   accumulating annotated feature, a different scale from the stored fold change. One
+   record per plate (#1178): ``R1_Int`` and ``R2_Int`` are the two independent plates'
+   values and each is stored verbatim with ``replicate_id`` the Table S3 ``Sample ID``
+   (Table S5's ``R1_FC`` / ``R2_FC`` are MEASURED equal to Table S4's cells of exactly
+   those samples on all 1,385 rows), so ``Mean_Int``, the authors' mean, is read only
+   for the build's checks. **822 records, 2,770 values**: 407 strains x 2 plates plus
+   the 4 accumulating control wells (``ctrl4/7/8/11``, 10 rows) x 2.
 
 DATA. Every file is in the citation key's raw mirror under one manifest, pinned by
 ``rapp2026.RAW_FILES`` (seven workbooks; Table S2 ``si3.xlsx`` and Table S6 ``si7.xlsx``
@@ -52,6 +66,10 @@ REFERENCES, which is where the three families differ.
 * Growth: the control strain's own curves. ``fitness`` is the strain's mean AUC over the
   grand mean AUC of the 48 released control curves (16 ``ctrlN`` wells x 3 replicate
   cultures), so the reference is ``fitness = 1.0`` with ``n_samples = 48``.
+* Every n = 1 record of both accumulation families carries ``metabolite_level_se=None``
+  with a ``not_applicable_single_measurement`` gap, and the control wells' own rows,
+  which the release prints beside the strains', are records with an empty genotype on
+  ``YYdCas9`` (the paper prints no other control genotype).
 * Targeted LC-MS/MS: the released statistic's own denominator. A fold change against
   "the median peak height of the whole library" (Figure 2B) is 1.0 for a strain at that
   median, so the per-record reference is 1.0 on every key the record measures.
@@ -163,6 +181,7 @@ from torchcell.datasets.ecoli.rapp2026 import (
     SampleRow,
     SymbolDisagreement,
     canonical_symbol,
+    control_genotype,
     environment,
     host_background,
     load_manifest,
@@ -173,6 +192,7 @@ from torchcell.datasets.ecoli.rapp2026 import (
     read_guides,
     read_metabolites,
     read_sample_rows,
+    single_extract_se_gap,
 )
 from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12StrainName
 from torchcell.verification.report import (
@@ -398,9 +418,7 @@ INTENSITY_TOLERANCE: Final[float] = 1e-9
 #: What each stored number is. One per family, never shared.
 GROWTH_STATISTIC = "auc_trapz_od600_0_to_30h_mean_of_3_cultures_over_control_mean"
 TARGETED_MEASUREMENT_TYPE = "lc_msms_eic_peak_height_fold_change_vs_library_median"
-INTENSITY_MEASUREMENT_TYPE = (
-    "fi_ms_annotated_feature_absolute_intensity_mean_of_2_plates"
-)
+INTENSITY_MEASUREMENT_TYPE = "fi_ms_annotated_feature_absolute_intensity"
 
 #: Measured agreement between the two platforms, reproduced at build time.
 EXPECTED_PLATFORM_AGREEMENT = {
@@ -471,16 +489,17 @@ INTENSITY_COLUMNS: tuple[SourcedColumn, ...] = (
         TABLE_S5,
         "Mean_Int",
         "Mean intensity of annotated m/z-feature of both replicates.",
-        note="the stored level; MEASURED to equal mean(R1_Int, R2_Int) on all 1,385 "
-        "rows with a maximum absolute difference of 0.0",
+        note="the authors' mean of the two plates; NOT stored (each plate is its own "
+        "record), read only to check it is mean(R1_Int, R2_Int), which it is on all "
+        "1,385 rows with a maximum absolute difference of 0.0",
     ),
     _legend(
         TABLE_S5,
         "R1_Int+R2_Int",
         "Intensity of annotated m/z-feature in replicate 1 (R1) and replicate 2 (R2).",
-        note="the two released per-plate intensities, so n_replicates is 2 and "
-        "metabolite_level_se is |R1_Int - R2_Int| / 2, the standard error of the "
-        "stored mean over those two plates",
+        note="the two released per-plate intensities, each stored verbatim as its own "
+        "record (n_replicates 1, replicate_id the Table S3 Sample ID of that plate's "
+        "extract, since R1_FC / R2_FC equal Table S4's cells of those samples)",
     ),
     _legend(
         TABLE_S5,
@@ -537,7 +556,9 @@ TARGETED_COLUMNS: tuple[SourcedColumn, ...] = (
         "Name of LC-MS/MS datafile",
         note="one file per released row; its well MEASURED to be the strain's own "
         "Table S3 well on all 1,256 rows, while its plate number is the LC-MS/MS run "
-        "plate rather than the library plate",
+        "plate rather than the library plate. Its msAV run code is the one in the "
+        "Table S3 Sample ID of exactly one of the strain's two extracts on all 1,256 "
+        "rows, which is the record's replicate_id",
     ),
 )
 
@@ -710,22 +731,29 @@ def _drop_log(
     *,
     strain_tokens: int,
     reference_tokens: Sequence[str],
+    source_records: int,
     kept: int,
+    control_records: int,
     rule: DropRule,
 ) -> DropLog:
-    """The retention ledger of one build, with its single rule accounted for."""
-    source_records = strain_tokens - len(reference_tokens)
+    """The retention ledger of one build, with its single rule accounted for.
+
+    ``source_records`` counts the records the release could give (one per growth gene,
+    one per measured extract of an accumulation family) and ``rule.n_records`` the
+    records the rule removed.
+    """
     log_record = DropLog(
         dataset=dataset,
         strain_tokens=strain_tokens,
         reference_tokens=sorted(reference_tokens),
         source_records=source_records,
         kept_records=kept,
+        control_records=control_records,
         dropped_records=source_records - kept,
         rules=[rule],
     )
     if sum(r.n_records for r in log_record.rules) != log_record.dropped_records:
-        raise RuntimeError("drop rules do not account for every dropped strain")
+        raise RuntimeError("drop rules do not account for every dropped record")
     return log_record
 
 
@@ -978,7 +1006,13 @@ def fitness_phenotype(ratios: Sequence[float], n_samples: int) -> FitnessPhenoty
 # Families 2 and 3: the accumulation tables (Table S6 and Table S5)
 # --------------------------------------------------------------------------- #
 class Accumulation(BaseModel):
-    """One released strain-metabolite pair, on whichever platform released it."""
+    """One released strain-metabolite pair, on whichever platform released it.
+
+    ``value`` is the row's released summary (``Mean_Int`` for Table S5, the one fold
+    change for Table S6), read for the build's checks; what a record stores is
+    ``replicates``, one value per measured extract, with ``sample_ids`` naming each
+    extract by its Table S3 ``Sample ID`` in the same order.
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -993,6 +1027,7 @@ class Accumulation(BaseModel):
     kegg: str
     value: float
     replicates: tuple[float, ...]
+    sample_ids: tuple[str, ...]
     reference_level: float
     reference_n: int
     qc_passed: bool | None = None
@@ -1075,15 +1110,36 @@ def _check_identity(
     return metabolite
 
 
+def sample_of_run_code(samples: Mapping[str, SampleRow]) -> dict[tuple[str, str], str]:
+    """``{(strain token, FI-MS run code): Table S3 Sample ID}``, refusing a repeat.
+
+    The run code (``msAV950``) is shared by the 96 extracts of one library plate's one
+    replicate cultivation, so with the strain token it names exactly one extract.
+    """
+    out: dict[tuple[str, str], str] = {}
+    for row in samples.values():
+        key = (row.sample.gene, row.sample.injection)
+        if key in out:
+            raise ValueError(f"Table S3 gives {key} two samples")
+        out[key] = row.sample.column
+    return out
+
+
 def read_targeted(
-    path: str | Path, metabolites: Mapping[str, Metabolite], wells: Mapping[str, str]
+    path: str | Path,
+    metabolites: Mapping[str, Metabolite],
+    samples: Mapping[str, SampleRow],
 ) -> list[Accumulation]:
     """Table S6's targeted LC-MS/MS fold changes, one per strain-metabolite pair.
 
-    ``wells`` maps a strain token to its Table S3 well, which every released
-    ``DataFile`` name carries; the run plate in that name is the LC-MS/MS plate and not
-    the library plate, so only the well is checked.
+    Every released ``DataFile`` name carries the strain's Table S3 well and the FI-MS
+    run code of the extract it was injected from; the run plate in that name is the
+    LC-MS/MS plate and not the library plate, so the well is checked and the run code
+    is resolved to the ONE Table S3 sample of that strain carrying it, which is the
+    measured extract (refused when no sample carries it).
     """
+    wells = {row.sample.gene: row.well for row in samples.values()}
+    sample_of = sample_of_run_code(samples)
     frame = pd.read_excel(path, sheet_name=TABLE_S6_SHEET, header=0)
     if len(frame) != TARGETED_PAIRS:
         raise ValueError(
@@ -1129,6 +1185,12 @@ def read_targeted(
                 f"Table S6 row {row}: {datafile!r} is well {match['well']!r}, but "
                 f"Table S3 puts {gene!r} in {wells[gene]!r}"
             )
+        sample_id = sample_of.get((gene, match["injection"]))
+        if sample_id is None:
+            raise ValueError(
+                f"Table S6 row {row}: {datafile!r} carries run code "
+                f"{match['injection']!r}, which no Table S3 sample of {gene!r} carries"
+            )
         value = float(record["fold-change"])
         out.append(
             Accumulation(
@@ -1143,6 +1205,7 @@ def read_targeted(
                 kegg=metabolite.kegg,
                 value=value,
                 replicates=(value,),
+                sample_ids=(sample_id,),
                 reference_level=1.0,
                 reference_n=int(counts[key]),
                 qc_passed=bool(int(record["QC passed"])),
@@ -1188,6 +1251,7 @@ def read_intensities(
     path: str | Path,
     metabolites: Mapping[str, Metabolite],
     reference_n: Mapping[str, int],
+    samples: Mapping[str, SampleRow],
 ) -> list[Accumulation]:
     """Table S5's absolute FI-MS intensities, with the batch median they are ratios to.
 
@@ -1195,7 +1259,13 @@ def read_intensities(
     the two released plate intensities, ``Mean_Int / Mean_FC`` equals both
     ``R1_Int / R1_FC`` and ``R2_Int / R2_FC`` (so the denominator is one number per
     feature per batch), and that denominator is constant across the strains of a batch.
+    ``R1_Int`` and ``R2_Int`` are attached to the Table S3 samples of replicate 1 and 2
+    of the strain, which name the stored records.
     """
+    sample_of = {
+        (row.sample.gene, row.sample.replicate): row.sample.column
+        for row in samples.values()
+    }
     frame = pd.read_excel(path, sheet_name=TABLE_S5_SHEET, header=0)
     if len(frame) != INTENSITY_ROWS:
         raise ValueError(f"Table S5 holds {len(frame)} rows, expected {INTENSITY_ROWS}")
@@ -1251,6 +1321,7 @@ def read_intensities(
                 kegg=metabolite.kegg,
                 value=mean_intensity,
                 replicates=plates,
+                sample_ids=(sample_of[(gene, 1)], sample_of[(gene, 2)]),
                 reference_level=median,
                 reference_n=reference_n[gene],
             )
@@ -1386,35 +1457,81 @@ def check_platform_agreement(
     return result
 
 
-def metabolite_phenotype(
-    items: Sequence[Accumulation], measurement_type: str, target_ids: Mapping[str, str]
-) -> MetabolitePhenotype:
-    """One strain's released values on one platform, keyed by feature.
+class ExtractValues(BaseModel):
+    """One record of an accumulation family: one strain token's ONE measured extract.
 
-    ``metabolite_level_se`` is the standard error of the stored value over the released
-    replicates, which is ``|r1 - r2| / 2`` for the two FI-MS plates and is left off
-    entirely for the single targeted injection.
+    ``items`` are the released pairs measured in that extract and ``values`` their
+    values in it, in the same order. ``is_control`` marks a control well's extract,
+    stored with an empty genotype.
     """
-    level = {item.key: item.value for item in items}
-    n_replicates = {item.key: len(item.replicates) for item in items}
-    standard_error = {
-        item.key: float(
-            np.std(np.asarray(item.replicates, dtype=np.float64), ddof=1)
-            / np.sqrt(len(item.replicates))
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    token: str
+    sample_id: str
+    items: tuple[Accumulation, ...]
+    values: tuple[float, ...]
+
+    @property
+    def is_control(self) -> bool:
+        """True for a control well's extract (``ctrlN``)."""
+        return CONTROL_TOKEN_PATTERN.match(self.token) is not None
+
+
+def extract_values(items: Sequence[Accumulation]) -> list[ExtractValues]:
+    """Split the released pairs into one group per (strain token, measured extract).
+
+    Ordered by token, then by sample id, so replicate 1 precedes replicate 2.
+    """
+    grouped: dict[tuple[str, str], list[tuple[Accumulation, float]]] = {}
+    for item in items:
+        if len(item.replicates) != len(item.sample_ids):
+            raise ValueError(
+                f"row {item.row}: {len(item.replicates)} values for "
+                f"{len(item.sample_ids)} sample ids"
+            )
+        for value, sample_id in zip(item.replicates, item.sample_ids, strict=True):
+            grouped.setdefault((item.gene, sample_id), []).append((item, value))
+    return [
+        ExtractValues(
+            token=token,
+            sample_id=sample_id,
+            items=tuple(item for item, _ in pairs),
+            values=tuple(value for _, value in pairs),
         )
-        for item in items
-        if len(item.replicates) > 1
+        for (token, sample_id), pairs in sorted(grouped.items())
+    ]
+
+
+def metabolite_phenotype(
+    extract: ExtractValues, measurement_type: str, target_ids: Mapping[str, str]
+) -> MetabolitePhenotype:
+    """One extract's released values on one platform, keyed by feature, verbatim.
+
+    ``n_replicates`` is 1 on every key and ``metabolite_level_se`` is ``None`` with a
+    ``not_applicable_single_measurement`` gap: one extract measured once has no
+    dispersion of its own. ``replicate_id`` is the extract's Table S3 ``Sample ID``.
+    """
+    level = {
+        item.key: value
+        for item, value in zip(extract.items, extract.values, strict=True)
     }
     stored_ids = {
-        item.key: target_ids[item.key] for item in items if item.key in target_ids
+        item.key: target_ids[item.key]
+        for item in extract.items
+        if item.key in target_ids
     }
     return MetabolitePhenotype(
         metabolite_level=level,
-        metabolite_level_se=standard_error or None,
-        n_replicates=n_replicates,
+        metabolite_level_se=None,
+        n_replicates=dict.fromkeys(level, 1),
         measurement_type=measurement_type,
         target_metabolite_ids=stored_ids or None,
-        provenance_gaps=metabolite_identity_gaps(list(level), stored_ids),
+        replicate_id=extract.sample_id,
+        provenance_gaps=[
+            *metabolite_identity_gaps(list(level), stored_ids),
+            single_extract_se_gap(),
+        ],
     )
 
 
@@ -1464,6 +1581,7 @@ class AccumulationLedger(BaseModel):
     n_tokens: int
     control_tokens: tuple[str, ...]
     n_records: int
+    n_control_records: int
     n_values: int
     n_keys: int
     n_single_identity_keys: int
@@ -1475,19 +1593,20 @@ class AccumulationLedger(BaseModel):
 def accumulation_ledger(
     measurement_type: str,
     items: Sequence[Accumulation],
-    stored: Mapping[str, Sequence[Accumulation]],
+    stored: Sequence[ExtractValues],
     target_ids: Mapping[str, str],
     columns: Sequence[SourcedColumn],
 ) -> AccumulationLedger:
     """Count one family's released rows, kept records and identity coverage."""
-    sizes = [len(group) for group in stored.values()]
-    keys = {item.key for group in stored.values() for item in group}
+    sizes = [len(group.items) for group in stored]
+    keys = {item.key for group in stored for item in group.items}
     return AccumulationLedger(
         measurement_type=measurement_type,
         n_rows=len(items),
         n_tokens=len({item.gene for item in items}),
         control_tokens=tuple(sorted({item.gene for item in items if item.is_control})),
         n_records=len(stored),
+        n_control_records=sum(1 for group in stored if group.is_control),
         n_values=sum(sizes),
         n_keys=len(keys),
         n_single_identity_keys=len(keys & set(target_ids)),
@@ -1638,7 +1757,9 @@ class GrowthAucRapp2026Dataset(_Rapp2026Dataset):
             self.name,
             strain_tokens=len(strains),
             reference_tokens=[strain.token for strain in controls],
+            source_records=len(genes),
             kept=len(resolved),
+            control_records=0,
             rule=rule,
         )
         log.info(
@@ -1738,6 +1859,13 @@ class GrowthAucRapp2026Dataset(_Rapp2026Dataset):
         log.info("Wrote %d Rapp 2026 growth experiments to LMDB", len(resolved))
 
 
+def _identifier_route(resolved: ResolvedGene | None) -> str:
+    """The derived-identifier route a record's perturbation carries, or ``""``."""
+    if resolved is None or resolved.identifier_mapping is None:
+        return ""
+    return resolved.identifier_mapping.route
+
+
 class _AccumulationDataset(_Rapp2026Dataset):
     """Shared build for the two accumulation families (Table S6 and Table S5)."""
 
@@ -1763,7 +1891,11 @@ class _AccumulationDataset(_Rapp2026Dataset):
         raise NotImplementedError
 
     def _build_records(self) -> None:
-        """Parse one accumulation table into one record per CRISPRi strain."""
+        """Parse one accumulation table into one record per measured extract.
+
+        A kept CRISPRi strain gives one record per extract it was measured in, and a
+        control well's rows give records too, with an empty genotype.
+        """
         verify_raw_files(self.raw_dir, self._consumed_sha256())
         guides = read_guides(self._raw(TABLE_S1))
         metabolites = read_metabolites(self._raw(TABLE_S9))
@@ -1796,10 +1928,12 @@ class _AccumulationDataset(_Rapp2026Dataset):
             guides,
             label=f"{self.name} Table S1 b-numbers",
         )
-        by_gene: dict[str, list[Accumulation]] = {}
-        for item in items:
-            by_gene.setdefault(item.gene, []).append(item)
-        stored = {item.gene: by_gene[item.gene] for item in resolved}
+        resolved_of = {item.gene: item for item in resolved}
+        groups = extract_values(items)
+        stored = [
+            group for group in groups if group.is_control or group.token in resolved_of
+        ]
+        rule = rule.model_copy(update={"n_records": len(groups) - len(stored)})
         target_ids = target_metabolite_ids(items, metabolites)
         ledger = accumulation_ledger(
             self.MEASUREMENT_TYPE, items, stored, target_ids, self.COLUMNS
@@ -1808,17 +1942,20 @@ class _AccumulationDataset(_Rapp2026Dataset):
             self.name,
             strain_tokens=len(tokens),
             reference_tokens=controls,
-            kept=len(resolved),
+            source_records=len(groups),
+            kept=len(stored),
+            control_records=ledger.n_control_records,
             rule=rule,
         )
         log.info(
-            "%s: %d released rows over %d tokens (%d control) -> %d records, %d "
-            "values; drops %s; %d of %d keys carry one BiGG id",
+            "%s: %d released rows over %d tokens (%d control) -> %d extract records "
+            "(%d control), %d values; drops %s; %d of %d keys carry one BiGG id",
             self.name,
             ledger.n_rows,
             ledger.n_tokens,
             len(controls),
             ledger.n_records,
+            ledger.n_control_records,
             ledger.n_values,
             {rule.rule: rule.n_records},
             ledger.n_single_identity_keys,
@@ -1843,23 +1980,24 @@ class _AccumulationDataset(_Rapp2026Dataset):
             [
                 {
                     "record": index,
-                    "gene": item.gene,
-                    "b_number": item.guide.b_number,
-                    "locus_tag": item.locus_tag,
-                    "symbol": item.symbol,
-                    "identifier_route": (
+                    "replicate_id": group.sample_id,
+                    "gene": group.token,
+                    "control": group.is_control,
+                    "b_number": (
                         ""
-                        if item.identifier_mapping is None
-                        else item.identifier_mapping.route
+                        if group.is_control
+                        else resolved_of[group.token].guide.b_number
                     ),
-                    "sgrna_id": item.guide.sgrna_id,
-                    "spacer": item.guide.spacer,
-                    "n_values": len(stored[item.gene]),
-                    "keys": "; ".join(value.key for value in stored[item.gene]),
+                    "locus_tag": (
+                        "" if group.is_control else resolved_of[group.token].locus_tag
+                    ),
+                    "identifier_route": _identifier_route(resolved_of.get(group.token)),
+                    "n_values": len(group.items),
+                    "keys": "; ".join(item.key for item in group.items),
                 }
-                for index, item in enumerate(resolved)
+                for index, group in enumerate(stored)
             ]
-        ).to_csv(out / "strains.csv", index=False)
+        ).to_csv(out / "records.csv", index=False)
 
         env = environment()
         genome_reference = assembly_reference(
@@ -1869,14 +2007,17 @@ class _AccumulationDataset(_Rapp2026Dataset):
             osp.join(self.processed_dir, "lmdb")
         )
         with lmdb_env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for index, strain in enumerate(tqdm(resolved, desc=self.name)):
-                values = stored[strain.gene]
+            for index, group in enumerate(tqdm(stored, desc=self.name)):
                 experiment = MetaboliteExperiment(
                     dataset_name=self.name,
-                    genotype=crispri_genotype(strain),
+                    genotype=(
+                        control_genotype()
+                        if group.is_control
+                        else crispri_genotype(resolved_of[group.token])
+                    ),
                     environment=env,
                     phenotype=metabolite_phenotype(
-                        values, self.MEASUREMENT_TYPE, target_ids
+                        group, self.MEASUREMENT_TYPE, target_ids
                     ),
                 )
                 reference = MetaboliteExperimentReference(
@@ -1884,7 +2025,7 @@ class _AccumulationDataset(_Rapp2026Dataset):
                     genome_reference=genome_reference,
                     environment_reference=env.model_copy(),
                     phenotype_reference=reference_phenotype(
-                        values, self.MEASUREMENT_TYPE, target_ids
+                        group.items, self.MEASUREMENT_TYPE, target_ids
                     ),
                 )
                 txn.put(
@@ -1893,7 +2034,7 @@ class _AccumulationDataset(_Rapp2026Dataset):
                 )
         lmdb_env.close()
         interned_env.close()
-        log.info("Wrote %d %s experiments to LMDB", len(resolved), self.name)
+        log.info("Wrote %d %s extract records to LMDB", len(stored), self.name)
 
 
 @register_dataset
@@ -1934,13 +2075,14 @@ class TargetedMetabolomeRapp2026Dataset(_AccumulationDataset):
         Table S5 is read here too, and only for that comparison: a second platform has
         to be shown not to be a copy of the first.
         """
-        wells = {row.sample.gene: row.well for row in samples.values()}
         sizes = batch_sizes(samples)
         reference_n = {
             gene: sizes[batch] for gene, batch in batch_of_gene(samples).items()
         }
-        items = read_targeted(self._raw(TABLE_S6), metabolites, wells)
-        intensities = read_intensities(self._raw(TABLE_S5), metabolites, reference_n)
+        items = read_targeted(self._raw(TABLE_S6), metabolites, samples)
+        intensities = read_intensities(
+            self._raw(TABLE_S5), metabolites, reference_n, samples
+        )
         agreement = check_platform_agreement(items, intensities)
         return items, {"platform_agreement": agreement}
 
@@ -1981,7 +2123,7 @@ class MetaboliteIntensityRapp2026Dataset(_AccumulationDataset):
         sizes = batch_sizes(samples)
         batch_of = batch_of_gene(samples)
         reference_n = {gene: sizes[batch] for gene, batch in batch_of.items()}
-        items = read_intensities(self._raw(TABLE_S5), metabolites, reference_n)
+        items = read_intensities(self._raw(TABLE_S5), metabolites, reference_n, samples)
         medians = check_batch_medians(items, batch_of, sizes)
         return items, {"batch_median_check": medians}
 
@@ -2018,7 +2160,9 @@ TARGETED_PROVENANCE = Provenance(
     citation_key=CITATION_KEY,
     sha256=DATA_SHA256[TABLE_S6],
     method="targeted LC-MS/MS EIC peak-height fold change against the library median "
-    "(one injection per strain-metabolite pair, no released uncertainty); reference = "
+    "(one injection per strain-metabolite pair, no released uncertainty), one record "
+    "per measured extract (the Table S3 sample the DataFile run code names), the "
+    "control wells' rows included; reference = "
     "1.0, that median on the released scale. MEASURED distinct from the stored FI-MS "
     "fold changes: Pearson r 0.6722, median absolute log2 difference 1.1649",
     page="Cell Syst 2026 Table S6 (mmc7.xlsx, sheet Table_S6)",
@@ -2027,10 +2171,10 @@ INTENSITY_PROVENANCE = Provenance(
     source_uri=f"torchcell-raw/{CITATION_KEY}/data/{TABLE_S5}",
     citation_key=CITATION_KEY,
     sha256=DATA_SHA256[TABLE_S5],
-    method="absolute FI-MS intensity of each accumulating annotated m/z feature, the "
-    "mean of the strain's two plates (Mean_Int) with |R1_Int - R2_Int| / 2 as its "
-    "standard error; reference = the per-batch median intensity that intensity's fold "
-    "change is a ratio to, back-solved as Mean_Int / Mean_FC",
+    method="absolute FI-MS intensity of each accumulating annotated m/z feature, one "
+    "record per plate (R1_Int, R2_Int verbatim; replicate_id the Table S3 Sample ID), "
+    "the control wells' rows included; reference = the per-batch median intensity "
+    "that intensity's fold change is a ratio to, back-solved as Mean_Int / Mean_FC",
     page="Cell Syst 2026 Table S5 (mmc6.xlsx, sheet TableS5)",
 )
 

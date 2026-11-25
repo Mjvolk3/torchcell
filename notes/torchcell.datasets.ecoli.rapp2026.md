@@ -426,3 +426,65 @@ passing with `--data`. The synthetic assembly now files `b0099` on `b0005` alone
 recoverable case, so the hermetic build keeps three records rather than two) and `b0098`
 on BOTH `b0006` and the pseudogene `b0004`, which is the two-carrier case no route
 describes and which the `resolve_strains` tests build directly.
+
+## 2026.11.24 - One record per extract (#1178, #1173)
+
+The store now holds one record per released FI-MS extract instead of the mean of a
+strain's two plates.
+
+### Replicate evidence (paper.md, sha256 `3c63b665...43e5`)
+
+- L71: "Each CRISPRi strain was sampled twice from two independent plates to test
+  reproducibility." (biological replicates, one extract per plate)
+- L73: "Next, we used FI-MS24,25 to screen the 3,026 metabolite extracts (1,498 CRISPRi
+  strains and 15 control strains, each in biological duplicates). Each extract was
+  injected twice to measure ${ \mathsf { M } } { \mathsf { S } } ^ { 1 }$ mass spectra in
+  both positive and negative ionization mode." The two injections are the two polarities,
+  i.e. different feature keys, so there is no technical level to combine inside a record.
+- Table S3 (`si4.xlsx`, sha256 `4a7fd186...079f`) gives each extract its own row
+  (`Replicate` R1/R2, `Sample ID`, OD); Table S4 (`si5.xlsx`, sha256 `fdc5ac2c...b84`)
+  one column per extract. No withdrawn sample is stated anywhere in the paper or SI.
+- Release inconsistency, recorded not resolved: Table S3's `Replicate` column reads `R1`
+  on both `cydX` rows (wells D10 and G12) while the Sample IDs read `_R1_` and `_R2_`.
+  The record uses the Sample ID verbatim as `replicate_id`, so nothing collides.
+
+### What changed
+
+| | before | after |
+|---|---|---|
+| records | 1,497 (one per strain, mean of 2 plates) | 3,024 (one per extract) |
+| CRISPRi extracts | | 2,994 (1,497 x 2; 1,512 R1 + 1,512 R2 over all records) |
+| control extracts | reference only | 30 records, empty genotype on `YYdCas9`, plus the reference |
+| `n_replicates` | 2 | 1 |
+| `metabolite_level_se` | half the absolute plate difference | `None` + `not_applicable_single_measurement` gap |
+| `replicate_id` | `None` | Table S3 `Sample ID` |
+| `measurement_type` | `..._vs_batch_median_mean_of_2_plates` | `fi_ms_iml1515_feature_fold_change_vs_batch_median` |
+| dropped | argR, 1 strain | argR, 2 extracts (rule now counts records) |
+
+The reference stays the aggregate over the 30 control extracts (`replicate_id=None`,
+`n_replicates` 30). `DropLog` gained `control_records`, and `source_records` now counts
+extracts (3,026). `preprocess/records.csv` lists every record with its Sample ID, plate,
+well, batch and OD.
+
+### Verification
+
+Built into `$DATA_ROOT/tmp/scratch/per-replicate-rapp2026/metabolome_rapp2026`; the
+module verifier PASSES (L0 3,024 validated, L1 count 3,024 and 3,024 unique strain x
+replicate keys, L2 3,994,704 values, L3 reference finite and one measurement type, every
+sourced value audited, L4 MG1655 containment). Mean reproduction: grouping the 3,024
+records by genotype and environment and averaging per key reproduces all 1,977,537
+values of the old 1,497-record store with max abs difference 0.0, and the mean over the
+30 control records reproduces the reference with max abs difference 0.0.
+
+### Open (owner)
+
+- `argR`'s two extracts stay dropped by `no_target_gene_assigned`: Table S3 gives
+  `b0000` and Table S1 no sgRNA, so a record would have to name a guide-less knockdown.
+- Table S7 (`si8.xlsx`, literature mirror only, sha256 `bc548b1c...7d86`) stays unread.
+  Measured: 9,462 rows but 8,561 distinct (gene, mass, mode) measurements (901 rows
+  repeat one measurement under another annotation), `Mean_Int == Mean_FC` on all 9,462
+  rows (`R1_Int` / `R2_Int` are intensities), and paper.md L384 explains why its fold
+  changes differ from Table S5's: the global features were picked at a 10,000 cutoff,
+  binned, and normalized "relative to the mean on a per batch basis" rather than the
+  median. Whether to admit it as its own dataset (keys, which value columns, how to
+  treat the 901 repeated rows) is the owner's call.

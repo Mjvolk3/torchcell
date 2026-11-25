@@ -161,6 +161,9 @@ TARGETED_FOLD: dict[tuple[str, str], float] = {
     ("ctrl1", "didp[M-H]-"): 6.0,
 }
 QC_PASSED = {("thrL", "ppal[M+H]+"), ("thrA", "ppal[M+H]+"), ("ctrl1", "didp[M-H]-")}
+#: Which extract each targeted pair was injected from (default replicate 1): thrL's
+#: didp comes from its second plate, so thrL carries two targeted records.
+TARGETED_REPLICATE: dict[tuple[str, str], int] = {("thrL", "didp[M-H]-"): 2}
 
 REFERENCE = StrainReferenceGenome(
     species="Escherichia coli",
@@ -182,6 +185,17 @@ def _well_of(gene: str) -> str:
 def wells_map() -> dict[str, str]:
     """``{strain token: its Table S3 well}``, which every DataFile name carries."""
     return {gene: well for gene, _, _, well, _ in STRAINS}
+
+
+def run_code(gene: str, replicate: int) -> str:
+    """The synthetic FI-MS run code of ``gene``'s plate ``replicate`` (``msAV9NN``)."""
+    index = [row[0] for row in STRAINS].index(gene)
+    return f"msAV{900 + 2 * index + replicate - 1}"
+
+
+def sample_id(gene: str, replicate: int) -> str:
+    """The synthetic Table S3 ``Sample ID`` of ``gene``'s plate ``replicate``."""
+    return f"{gene}_R{replicate}_{run_code(gene, replicate)}_B{_batch_of(gene)}"
 
 
 def _plate_of(gene: str) -> str:
@@ -209,12 +223,8 @@ def _mz_of(abbreviation: str, adduct: str) -> float:
 
 
 def sample_columns() -> list[str]:
-    """The ten synthetic Table S3 sample ids."""
-    return [
-        f"{gene}_R{replicate}_msSYN{index:03d}_B{batch}"
-        for index, (gene, _, _, _, batch) in enumerate(STRAINS)
-        for replicate in (1, 2)
-    ]
+    """The ten synthetic Table S3 sample ids, one FI-MS run code per plate replicate."""
+    return [sample_id(gene, replicate) for gene, *_ in STRAINS for replicate in (1, 2)]
 
 
 def growth_hours() -> list[float]:
@@ -397,6 +407,7 @@ def _write_table_s6(
     path: Path,
     *,
     datafile_well: str | None = None,
+    datafile_code: str | None = None,
     legend: Sequence[tuple[str, str]] | None = None,
 ) -> None:
     workbook, sheet = _sheet(path, metabolome.TABLE_S6_SHEET)
@@ -419,6 +430,7 @@ def _write_table_s6(
         abbreviation, adduct = _split_key(key)
         polarity = "pos" if "+" in adduct else "neg"
         well = datafile_well or _well_of(gene)
+        code = datafile_code or run_code(gene, TARGETED_REPLICATE.get((gene, key), 1))
         sheet.append(
             [
                 int((gene, key) in QC_PASSED),
@@ -431,8 +443,7 @@ def _write_table_s6(
                 _mass_of(abbreviation),
                 TARGETED_FOLD[(gene, key)],
                 1_234.0,
-                f"{abbreviation}_{gene}_P{_plate_of(gene)}{well}msAV900_{polarity}"
-                ".mzML",
+                f"{abbreviation}_{gene}_P{_plate_of(gene)}{well}{code}_{polarity}.mzML",
             ]
         )
     sheet = workbook.create_sheet(metabolome.LEGEND_SHEET)
@@ -457,6 +468,11 @@ def synthetic_agreement() -> dict[str, float]:
             np.median(np.abs(np.log2(lc_ms) - np.log2(fi_ms)))
         ),
     }
+
+
+def _samples(raw_dir: Path) -> dict[str, metabolome.SampleRow]:
+    """The synthetic Table S3, parsed."""
+    return metabolome.read_sample_rows(raw_dir / metabolome.TABLE_S3)
 
 
 # --------------------------------------------------------------------------- #
@@ -705,11 +721,14 @@ def test_read_intensities_stores_the_mean_and_back_solves_the_batch_median(
     reference_n = {
         gene: sizes[batch] for gene, batch in m.batch_of_gene(samples).items()
     }
-    items = m.read_intensities(raw_dir / metabolome.TABLE_S5, metabolites, reference_n)
+    items = m.read_intensities(
+        raw_dir / metabolome.TABLE_S5, metabolites, reference_n, samples
+    )
     assert len(items) == len(PAIRS)
     first = next(item for item in items if (item.gene, item.key) == PAIRS[0][:2])
     assert first.value == pytest.approx(10_000.0 * 5.0)
     assert first.replicates == pytest.approx((40_000.0, 60_000.0))
+    assert first.sample_ids == (sample_id("thrL", 1), sample_id("thrL", 2))
     assert first.reference_level == pytest.approx(10_000.0)
     assert first.reference_n == 6
     assert first.monoisotopic_mass == pytest.approx(58.0419)
@@ -726,7 +745,7 @@ def test_read_intensities_refuses_a_mean_that_is_not_the_mean_of_the_plates(
     path = tmp_path / "s5.xlsx"
     _write_table_s5(path, pairs=PAIRS[:1], mean_int=1.0)
     with pytest.raises(ValueError, match="Mean_Int 1.0 is not the mean of"):
-        m.read_intensities(path, metabolites, {"thrL": 2})
+        m.read_intensities(path, metabolites, {"thrL": 2}, _samples(raw_dir))
 
 
 def test_read_intensities_refuses_a_row_count_the_release_does_not_have(
@@ -736,7 +755,10 @@ def test_read_intensities_refuses_a_row_count_the_release_does_not_have(
     monkeypatch.setattr(m, "INTENSITY_ROWS", 2)
     with pytest.raises(ValueError, match="holds 6 rows, expected 2"):
         m.read_intensities(
-            raw_dir / metabolome.TABLE_S5, metabolites, dict.fromkeys(wells_map(), 2)
+            raw_dir / metabolome.TABLE_S5,
+            metabolites,
+            dict.fromkeys(wells_map(), 2),
+            _samples(raw_dir),
         )
 
 
@@ -747,7 +769,10 @@ def test_read_intensities_refuses_a_flag_count_table_s6_does_not_match(
     monkeypatch.setattr(m, "TARGETED_PAIRS", 3)
     with pytest.raises(ValueError, match="flags 6 rows for targeted LC-MS/MS"):
         m.read_intensities(
-            raw_dir / metabolome.TABLE_S5, metabolites, dict.fromkeys(wells_map(), 2)
+            raw_dir / metabolome.TABLE_S5,
+            metabolites,
+            dict.fromkeys(wells_map(), 2),
+            _samples(raw_dir),
         )
 
 
@@ -762,6 +787,7 @@ def test_check_batch_medians_requires_one_median_per_feature_and_batch(
         raw_dir / metabolome.TABLE_S5,
         metabolites,
         {gene: sizes[batch] for gene, batch in batch_of.items()},
+        samples,
     )
     check = m.check_batch_medians(items, batch_of, sizes)
     assert check.batch_sizes == {1: 6, 2: 4}
@@ -780,13 +806,17 @@ def test_read_targeted_reads_the_fold_change_its_qc_flag_and_its_datafile(
     raw_dir: Path, small_counts: None
 ) -> None:
     metabolites = metabolome.read_metabolites(raw_dir / metabolome.TABLE_S9)
-    wells = wells_map()
-    items = m.read_targeted(raw_dir / metabolome.TABLE_S6, metabolites, wells)
+    items = m.read_targeted(
+        raw_dir / metabolome.TABLE_S6, metabolites, _samples(raw_dir)
+    )
     assert len(items) == len(PAIRS)
     first = items[0]
     assert (first.gene, first.key) == ("thrL", "ppal[M+H]+")
     assert first.value == pytest.approx(3.0)
     assert first.replicates == (3.0,)
+    assert first.sample_ids == (sample_id("thrL", 1),)
+    second = next(item for item in items if item.key == "didp[M-H]-")
+    assert second.sample_ids == (sample_id("thrL", 2),)
     assert first.reference_level == 1.0
     assert first.reference_n == 3
     assert first.qc_passed is True
@@ -801,7 +831,36 @@ def test_read_targeted_refuses_a_datafile_naming_another_well(
     path = tmp_path / "s6.xlsx"
     _write_table_s6(path, datafile_well="H9")
     with pytest.raises(ValueError, match="is well 'H9', but Table S3 puts"):
-        m.read_targeted(path, metabolites, wells_map())
+        m.read_targeted(path, metabolites, _samples(raw_dir))
+
+
+def test_read_targeted_refuses_a_run_code_no_sample_of_the_strain_carries(
+    tmp_path: Path, raw_dir: Path, small_counts: None
+) -> None:
+    """The DataFile's run code names the measured extract; a code no Table S3 sample
+    of that strain carries leaves the extract unknown, which is refused.
+    """
+    metabolites = metabolome.read_metabolites(raw_dir / metabolome.TABLE_S9)
+    path = tmp_path / "s6.xlsx"
+    _write_table_s6(path, datafile_code="msAV999")
+    with pytest.raises(ValueError, match="carries run code 'msAV999', which no"):
+        m.read_targeted(path, metabolites, _samples(raw_dir))
+
+
+def test_sample_of_run_code_refuses_a_code_two_samples_of_a_strain_share(
+    raw_dir: Path, small_counts: None
+) -> None:
+    samples = dict(_samples(raw_dir))
+    assert m.sample_of_run_code(samples)[("thrL", "msAV901")] == sample_id("thrL", 2)
+    key, row = next(iter(samples.items()))
+    twin = row.model_copy(
+        update={
+            "sample": row.sample.model_copy(update={"column": "twin", "replicate": 2})
+        }
+    )
+    samples["twin"] = twin
+    with pytest.raises(ValueError, match="gives \\('thrL', 'msAV900'\\) two samples"):
+        m.sample_of_run_code(samples)
 
 
 def test_read_targeted_refuses_more_metabolites_per_strain_than_the_method_states(
@@ -810,7 +869,7 @@ def test_read_targeted_refuses_more_metabolites_per_strain_than_the_method_state
     metabolites = metabolome.read_metabolites(raw_dir / metabolome.TABLE_S9)
     monkeypatch.setattr(m, "TARGETED_MAX_PER_STRAIN", 1)
     with pytest.raises(ValueError, match="above the stated maximum of 1"):
-        m.read_targeted(raw_dir / metabolome.TABLE_S6, metabolites, wells_map())
+        m.read_targeted(raw_dir / metabolome.TABLE_S6, metabolites, _samples(raw_dir))
 
 
 def test_read_targeted_refuses_a_qc_count_the_paper_does_not_state(
@@ -819,7 +878,7 @@ def test_read_targeted_refuses_a_qc_count_the_paper_does_not_state(
     metabolites = metabolome.read_metabolites(raw_dir / metabolome.TABLE_S9)
     monkeypatch.setattr(m, "TARGETED_QC_PASSED", 1)
     with pytest.raises(ValueError, match="marks 3 rows QC passed"):
-        m.read_targeted(raw_dir / metabolome.TABLE_S6, metabolites, wells_map())
+        m.read_targeted(raw_dir / metabolome.TABLE_S6, metabolites, _samples(raw_dir))
 
 
 def test_identity_join_refuses_a_mass_a_polarity_and_a_kegg_that_disagree(
@@ -877,9 +936,11 @@ def test_check_platform_agreement_refuses_a_number_other_than_the_pin(
         gene: sizes[batch] for gene, batch in m.batch_of_gene(samples).items()
     }
     intensities = m.read_intensities(
-        raw_dir / metabolome.TABLE_S5, metabolites, reference_n
+        raw_dir / metabolome.TABLE_S5, metabolites, reference_n, samples
     )
-    targeted = m.read_targeted(raw_dir / metabolome.TABLE_S6, metabolites, wells_map())
+    targeted = m.read_targeted(
+        raw_dir / metabolome.TABLE_S6, metabolites, _samples(raw_dir)
+    )
     agreement = m.check_platform_agreement(targeted, intensities)
     assert agreement.n_pairs == len(PAIRS)
     assert agreement.pearson_r_linear == pytest.approx(
@@ -898,31 +959,75 @@ def test_check_platform_agreement_refuses_a_number_other_than_the_pin(
         m.check_platform_agreement(targeted, intensities[1:])
 
 
-def test_metabolite_phenotype_keeps_the_released_replicate_structure(
+def test_extract_values_split_a_strain_by_the_extract_each_pair_was_measured_in(
     raw_dir: Path, small_counts: None
 ) -> None:
+    """#1178: thrL's ppal was injected from plate 1 and its didp from plate 2, so thrL
+    carries two targeted records; every record is one extract, n = 1, SE gapped.
+    """
     metabolites = metabolome.read_metabolites(raw_dir / metabolome.TABLE_S9)
-    items = m.read_targeted(raw_dir / metabolome.TABLE_S6, metabolites, wells_map())
-    mine = [item for item in items if item.gene == "thrL"]
+    items = m.read_targeted(
+        raw_dir / metabolome.TABLE_S6, metabolites, _samples(raw_dir)
+    )
+    groups = m.extract_values(items)
+    assert [(group.token, group.sample_id) for group in groups] == [
+        ("ctrl1", sample_id("ctrl1", 1)),
+        ("ghostG", sample_id("ghostG", 1)),
+        ("thrA", sample_id("thrA", 1)),
+        ("thrL", sample_id("thrL", 1)),
+        ("thrL", sample_id("thrL", 2)),
+    ]
+    assert [group.is_control for group in groups] == [True, False, False, False, False]
     target_ids = m.target_metabolite_ids(items, metabolites)
-    phenotype = m.metabolite_phenotype(mine, m.TARGETED_MEASUREMENT_TYPE, target_ids)
-    assert phenotype.metabolite_level == {"ppal[M+H]+": 3.0, "didp[M-H]-": 15.0}
+    first, second = groups[3], groups[4]
+    phenotype = m.metabolite_phenotype(first, m.TARGETED_MEASUREMENT_TYPE, target_ids)
+    assert phenotype.metabolite_level == {"ppal[M+H]+": 3.0}
     assert phenotype.metabolite_level_se is None
-    assert phenotype.n_replicates == {"ppal[M+H]+": 1, "didp[M-H]-": 1}
-    assert phenotype.target_metabolite_ids == {
-        "ppal[M+H]+": "ppal",
-        "didp[M-H]-": "didp",
-    }
-    reference = m.reference_phenotype(mine, m.TARGETED_MEASUREMENT_TYPE, target_ids)
+    assert phenotype.n_replicates == {"ppal[M+H]+": 1}
+    assert phenotype.replicate_id == sample_id("thrL", 1)
+    assert phenotype.target_metabolite_ids == {"ppal[M+H]+": "ppal"}
+    (gap,) = phenotype.provenance_gaps
+    assert (gap.field, gap.reason) == (
+        "metabolite_level_se",
+        "not_applicable_single_measurement",
+    )
+    assert m.metabolite_phenotype(
+        second, m.TARGETED_MEASUREMENT_TYPE, target_ids
+    ).metabolite_level == {"didp[M-H]-": 15.0}
+    reference = m.reference_phenotype(
+        [*first.items, *second.items], m.TARGETED_MEASUREMENT_TYPE, target_ids
+    )
     assert set(reference.metabolite_level.values()) == {1.0}
+    assert reference.replicate_id is None
     assert reference.n_replicates == {"ppal[M+H]+": 3, "didp[M-H]-": 2}
+
+    intensities = m.read_intensities(
+        raw_dir / metabolome.TABLE_S5,
+        metabolites,
+        dict.fromkeys(wells_map(), 2),
+        _samples(raw_dir),
+    )
+    plates = [group for group in m.extract_values(intensities) if group.token == "thrL"]
+    assert [group.sample_id for group in plates] == [
+        sample_id("thrL", 1),
+        sample_id("thrL", 2),
+    ]
+    assert [group.values for group in plates] == [
+        (40_000.0, 40_000.0),
+        (60_000.0, 60_000.0),
+    ]
+    broken = intensities[0].model_copy(update={"sample_ids": ("only-one",)})
+    with pytest.raises(ValueError, match="2 values for 1 sample ids"):
+        m.extract_values([broken])
 
 
 def test_target_metabolite_ids_skips_a_merged_isobaric_group(
     raw_dir: Path, small_counts: None
 ) -> None:
     metabolites = metabolome.read_metabolites(raw_dir / metabolome.TABLE_S9)
-    items = m.read_targeted(raw_dir / metabolome.TABLE_S6, metabolites, wells_map())
+    items = m.read_targeted(
+        raw_dir / metabolome.TABLE_S6, metabolites, _samples(raw_dir)
+    )
     target_ids = m.target_metabolite_ids(items, metabolites)
     assert "ac-gcald[M+H]+" not in target_ids
     assert target_ids["ppal[M+H]+"] == "ppal"
@@ -1005,8 +1110,16 @@ def test_crispri_genotype_carries_the_released_spacer_and_the_b_number(
 
 def test_drop_log_refuses_rules_that_do_not_account_for_the_drops() -> None:
     rule = DropRule(rule="r", description="d", n_records=0, items=[])
-    with pytest.raises(RuntimeError, match="do not account for every dropped strain"):
-        m._drop_log("x", strain_tokens=4, reference_tokens=["c"], kept=2, rule=rule)
+    with pytest.raises(RuntimeError, match="do not account for every dropped record"):
+        m._drop_log(
+            "x",
+            strain_tokens=4,
+            reference_tokens=["c"],
+            source_records=6,
+            kept=4,
+            control_records=1,
+            rule=rule,
+        )
 
 
 def test_batch_of_gene_refuses_a_strain_sampled_in_two_batches(
@@ -1082,6 +1195,7 @@ def test_growth_build_writes_its_ledgers(synthetic: Any) -> None:
     drops = json.loads((out / "dropped_records.json").read_text())
     assert (drops["strain_tokens"], drops["source_records"]) == (6, 4)
     assert (drops["kept_records"], drops["dropped_records"]) == (4, 0)
+    assert drops["control_records"] == 0
     assert drops["reference_tokens"] == ["ctrl1", "ctrl2"]
     baseline = json.loads((out / "control_baseline.json").read_text())
     assert baseline["n_control_cultures"] == 6
@@ -1098,65 +1212,112 @@ def test_growth_build_writes_its_ledgers(synthetic: Any) -> None:
     assert defects["cutoff"] == m.AUC_DEFECT_CUTOFF
 
 
-def test_targeted_build_stores_the_fold_change_on_its_own_measurement_type(
-    synthetic: Any,
-) -> None:
-    dataset = synthetic("targeted")
-    assert len(dataset) == 3
-    phenotypes = {
-        record["experiment"]["genotype"]["perturbations"][0]["perturbed_gene_name"]: (
-            record["experiment"]["phenotype"]
-        )
+def _by_replicate(dataset: Any) -> dict[str, dict[str, Any]]:
+    """``{replicate_id: record}`` over a built accumulation dataset."""
+    return {
+        record["experiment"]["phenotype"]["replicate_id"]: record
         for record in (dataset[index] for index in range(len(dataset)))
     }
-    assert sorted(phenotypes) == ["proB", "thrA", "thrL"]
-    assert phenotypes["thrL"]["metabolite_level"] == {
-        "ppal[M+H]+": 3.0,
-        "didp[M-H]-": 15.0,
-    }
-    assert phenotypes["thrL"]["metabolite_level_se"] is None
-    assert (
-        phenotypes["thrL"]["measurement_type"] == m.TARGETED_MEASUREMENT_TYPE
-    ) and m.TARGETED_MEASUREMENT_TYPE != m.INTENSITY_MEASUREMENT_TYPE
-    reference = dataset[0]["reference"]["phenotype_reference"]
-    assert set(reference["metabolite_level"].values()) == {1.0}
-    assert set(reference["metabolite_level"]) == set(
-        dataset[0]["experiment"]["phenotype"]["metabolite_level"]
-    )
 
-    ledger = json.loads(
-        (Path(dataset.preprocess_dir) / "accumulation_ledger.json").read_text()
+
+def test_targeted_build_stores_one_record_per_measured_extract(synthetic: Any) -> None:
+    dataset = synthetic("targeted")
+    assert len(dataset) == 5
+    records = _by_replicate(dataset)
+    assert sorted(records) == sorted(
+        [
+            sample_id("ctrl1", 1),
+            sample_id("ghostG", 1),
+            sample_id("thrA", 1),
+            sample_id("thrL", 1),
+            sample_id("thrL", 2),
+        ]
     )
-    assert (ledger["n_rows"], ledger["n_records"], ledger["n_values"]) == (6, 3, 5)
+    control = records[sample_id("ctrl1", 1)]["experiment"]
+    assert control["genotype"]["perturbations"] == []
+    assert control["phenotype"]["metabolite_level"] == {"didp[M-H]-": 6.0}
+    first = records[sample_id("thrL", 1)]["experiment"]
+    assert first["genotype"]["perturbations"][0]["perturbed_gene_name"] == "thrL"
+    assert first["phenotype"]["metabolite_level"] == {"ppal[M+H]+": 3.0}
+    assert records[sample_id("thrL", 2)]["experiment"]["phenotype"][
+        "metabolite_level"
+    ] == {"didp[M-H]-": 15.0}
+    assert first["phenotype"]["metabolite_level_se"] is None
+    assert first["phenotype"]["provenance_gaps"][-1]["reason"] == (
+        "not_applicable_single_measurement"
+    )
+    assert (
+        first["phenotype"]["measurement_type"] == m.TARGETED_MEASUREMENT_TYPE
+    ) and m.TARGETED_MEASUREMENT_TYPE != m.INTENSITY_MEASUREMENT_TYPE
+    reference = records[sample_id("thrL", 1)]["reference"]["phenotype_reference"]
+    assert reference["metabolite_level"] == {"ppal[M+H]+": 1.0}
+    assert reference["replicate_id"] is None
+
+    out = Path(dataset.preprocess_dir)
+    ledger = json.loads((out / "accumulation_ledger.json").read_text())
+    assert (
+        ledger["n_rows"],
+        ledger["n_records"],
+        ledger["n_control_records"],
+        ledger["n_values"],
+    ) == (6, 5, 1, 6)
     assert ledger["control_tokens"] == ["ctrl1"]
     assert ledger["measurement_type"] == m.TARGETED_MEASUREMENT_TYPE
-    agreement = json.loads(
-        (Path(dataset.preprocess_dir) / "platform_agreement.json").read_text()
+    drops = json.loads((out / "dropped_records.json").read_text())
+    assert (
+        drops["source_records"],
+        drops["kept_records"],
+        drops["control_records"],
+        drops["dropped_records"],
+    ) == (5, 5, 1, 0)
+    rows = (out / "records.csv").read_text().splitlines()
+    assert rows[0] == (
+        "record,replicate_id,gene,control,b_number,locus_tag,identifier_route,"
+        "n_values,keys"
     )
+    assert rows[1] == f"0,{sample_id('ctrl1', 1)},ctrl1,True,,,,1,didp[M-H]-"
+    agreement = json.loads((out / "platform_agreement.json").read_text())
     assert agreement["n_pairs"] == len(PAIRS)
 
 
-def test_intensity_build_stores_the_absolute_intensity_and_its_plate_se(
-    synthetic: Any,
-) -> None:
+def test_intensity_build_stores_each_plate_s_absolute_intensity(synthetic: Any) -> None:
     dataset = synthetic("intensity")
-    assert len(dataset) == 3
-    record = next(
-        dataset[index]
-        for index in range(len(dataset))
-        if dataset[index]["experiment"]["genotype"]["perturbations"][0][
-            "perturbed_gene_name"
-        ]
-        == "thrL"
+    assert len(dataset) == 8
+    records = _by_replicate(dataset)
+    assert sorted(records) == sorted(
+        sample_id(gene, replicate)
+        for gene in ("ctrl1", "ghostG", "thrA", "thrL")
+        for replicate in (1, 2)
     )
-    phenotype = record["experiment"]["phenotype"]
-    assert phenotype["metabolite_level"]["ppal[M+H]+"] == pytest.approx(50_000.0)
-    assert phenotype["metabolite_level_se"]["ppal[M+H]+"] == pytest.approx(10_000.0)
-    assert phenotype["n_replicates"] == {"ppal[M+H]+": 2, "didp[M-H]-": 2}
-    assert phenotype["measurement_type"] == m.INTENSITY_MEASUREMENT_TYPE
-    reference = record["reference"]["phenotype_reference"]
-    assert reference["metabolite_level"]["ppal[M+H]+"] == pytest.approx(10_000.0)
-    assert reference["n_replicates"]["ppal[M+H]+"] == 6
+    for replicate, level in ((1, 40_000.0), (2, 60_000.0)):
+        record = records[sample_id("thrL", replicate)]
+        phenotype = record["experiment"]["phenotype"]
+        assert phenotype["metabolite_level"]["ppal[M+H]+"] == pytest.approx(level)
+        assert phenotype["metabolite_level_se"] is None
+        assert phenotype["n_replicates"] == {"ppal[M+H]+": 1, "didp[M-H]-": 1}
+        assert phenotype["measurement_type"] == m.INTENSITY_MEASUREMENT_TYPE
+        reference = record["reference"]["phenotype_reference"]
+        assert reference["metabolite_level"]["ppal[M+H]+"] == pytest.approx(10_000.0)
+        assert reference["n_replicates"]["ppal[M+H]+"] == 6
+    # The mean of a strain's two plate records is the released Mean_Int.
+    assert float(
+        np.mean(
+            [
+                records[sample_id("thrL", replicate)]["experiment"]["phenotype"][
+                    "metabolite_level"
+                ]["ppal[M+H]+"]
+                for replicate in (1, 2)
+            ]
+        )
+    ) == pytest.approx(50_000.0)
+    controls = [
+        records[sample_id("ctrl1", replicate)]["experiment"] for replicate in (1, 2)
+    ]
+    assert [c["genotype"]["perturbations"] for c in controls] == [[], []]
+    assert [c["phenotype"]["metabolite_level"] for c in controls] == [
+        {"didp[M-H]-": pytest.approx(5_000.0 * 4.5)},
+        {"didp[M-H]-": pytest.approx(5_000.0 * 5.5)},
+    ]
     medians = json.loads(
         (Path(dataset.preprocess_dir) / "batch_median_check.json").read_text()
     )
@@ -1259,16 +1420,21 @@ def test_real_column_legends_are_verbatim_in_the_pinned_workbooks() -> None:
 
 @pytest.mark.data
 @pytest.mark.parametrize(
-    ("family", "expected"), [("growth", 1515), ("targeted", 407), ("intensity", 407)]
+    ("family", "expected", "controls"),
+    [("growth", 1515, 0), ("targeted", 482, 5), ("intensity", 822, 8)],
 )
 def test_real_builds_hold_the_measured_record_counts(
-    family: str, expected: int
+    family: str, expected: int, controls: int
 ) -> None:
-    """``phnE`` is kept in every family, on a ``locus_tag_synonym`` mapping."""
+    """``phnE`` is kept in every family, on a ``locus_tag_synonym`` mapping; the two
+    accumulation families store one record per measured extract, control wells
+    included (#1178).
+    """
     _, root_rel, _ = m.FAMILIES[family]
     preprocess = Path(_real_data_root(), root_rel, "preprocess")
     drops = json.loads((preprocess / "dropped_records.json").read_text())
-    assert drops["kept_records"] == expected
+    assert (drops["kept_records"], drops["control_records"]) == (expected, controls)
+    assert drops["dropped_records"] == 0
     assert drops["rules"][0]["rule"] == "b_number_remapped_by_the_annotation"
     assert drops["rules"][0]["n_records"] == 0
     identifiers = json.loads(
@@ -1278,16 +1444,71 @@ def test_real_builds_hold_the_measured_record_counts(
         "phnE (b4104): the annotation carries it as a gene synonym of pseudogene b4583 "
         "(not a gene feature), so the record stores b4583 with route locus_tag_synonym"
     ]
-    strains = (preprocess / "strains.csv").read_text().splitlines()
-    assert strains[0].split(",")[:6] == [
-        "record",
-        "gene",
-        "b_number",
-        "locus_tag",
-        "symbol",
-        "identifier_route",
-    ]
-    assert [line.split(",")[5] for line in strains[1:]].count("locus_tag_synonym") == 1
+    table = "strains.csv" if family == "growth" else "records.csv"
+    rows = (preprocess / table).read_text().splitlines()
+    route = rows[0].split(",").index("identifier_route")
+    synonyms = [line.split(",")[route] for line in rows[1:]].count("locus_tag_synonym")
+    assert synonyms == {"growth": 1, "targeted": 1, "intensity": 2}[family]
+    assert len(rows) - 1 == expected
+
+
+@pytest.mark.data
+def test_real_accumulation_tables_name_the_extract_of_every_value() -> None:
+    """#1178, measured on the pinned bytes: Table S5's R1_FC / R2_FC are Table S4's
+    cells of the strain's ``_R1_`` / ``_R2_`` samples, and every Table S6 DataFile
+    carries the run code of exactly one of the strain's two samples (1,036 plate 1,
+    220 plate 2), so 71 strains were measured from both extracts.
+    """
+    mirror = metabolome.raw_mirror_dir(_real_data_root()) / "data"
+    metabolites = metabolome.read_metabolites(mirror / metabolome.TABLE_S9)
+    samples = metabolome.read_sample_rows(mirror / metabolome.TABLE_S3)
+    targeted = m.read_targeted(mirror / metabolome.TABLE_S6, metabolites, samples)
+    replicate = [samples[item.sample_ids[0]].sample.replicate for item in targeted]
+    assert (replicate.count(1), replicate.count(2)) == (1036, 220)
+    groups = m.extract_values(targeted)
+    assert len(groups) == 482
+    per_token: dict[str, int] = {}
+    for group in groups:
+        per_token[group.token] = per_token.get(group.token, 0) + 1
+    assert sorted(per_token.values()).count(2) == 71
+    assert sum(1 for group in groups if group.is_control) == 5
+
+    intensities = m.read_intensities(
+        mirror / metabolome.TABLE_S5,
+        metabolites,
+        dict.fromkeys({row.sample.gene for row in samples.values()}, 1),
+        samples,
+    )
+    table = metabolome.read_feature_table(mirror / metabolome.TABLE_S4)
+    column_of = {sample.column: index for index, sample in enumerate(table.samples)}
+    row_of = {feature.key: index for index, feature in enumerate(table.features)}
+    worst = 0.0
+    for item in intensities:
+        for intensity, sample in zip(item.replicates, item.sample_ids, strict=True):
+            cell = float(table.matrix[row_of[item.key], column_of[sample]])
+            worst = max(worst, abs(intensity / item.reference_level - cell) / cell)
+    assert worst < 1e-12
+    plates = m.extract_values(intensities)
+    assert (len(plates), sum(1 for group in plates if group.is_control)) == (822, 8)
+    assert sum(len(group.items) for group in plates) == 2770
+
+
+@pytest.mark.data
+def test_real_growth_release_holds_three_cultures_per_strain() -> None:
+    """#1178 evidence: Table S2 releases 4,593 culture curves, 1,515 genes x 3 plus 16
+    control wells x 3, which a per-culture store would hold as 4,545 + 48 records.
+    The store still holds one AUC ratio per gene (owner decision pending, see the
+    2026.11.24 note section), so this pins the release, not the store.
+    """
+    table = m.read_growth_table(
+        metabolome.raw_mirror_dir(_real_data_root()) / "data" / metabolome.TABLE_S2
+    )
+    assert len(table.rows) == 4593
+    controls = [row for row in table.rows if row.is_control]
+    assert len(controls) == 48
+    assert len({row.token for row in controls}) == 16
+    by_replicate = [row.replicate for row in table.rows]
+    assert [by_replicate.count(r) for r in (1, 2, 3)] == [1531, 1531, 1531]
 
 
 @pytest.mark.data

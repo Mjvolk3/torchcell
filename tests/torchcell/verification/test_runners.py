@@ -2186,9 +2186,10 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         # #753: each gains the one record the loader used to drop, Rapp's `phnE`
         # released as `b4104`, a retired tag of the pinned strain's own namespace that
         # DerivedIdentifierRoute's new `locus_tag_synonym` member can now name.
-        "metabolome_rapp2026": 1497,
-        "targeted_metabolome_rapp2026": 407,
-        "metabolite_intensity_rapp2026": 407,
+        # #1178: one record per extract, control wells included.
+        "metabolome_rapp2026": 3024,
+        "targeted_metabolome_rapp2026": 482,
+        "metabolite_intensity_rapp2026": 822,
     }
     assert {
         name

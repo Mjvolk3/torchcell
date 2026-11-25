@@ -11,6 +11,22 @@ const DATASET_PAGES: Record<string, string> = {
   'gene-essentiality-sgd': '/benchmark/datasets/gene-essentiality-sgd',
 };
 
+/** A task with several boards (one per split): every slug that starts with the task name shares its page. */
+const TASK_PAGES: Record<string, string> = {
+  'ecoli-growth-rate-campos2018': '/benchmark/datasets/ecoli/growth-rate-campos2018',
+  'ecoli-morphology-campos2018': '/benchmark/datasets/ecoli/morphology-campos2018',
+  'ecoli-gene-interaction-babu2014': '/benchmark/datasets/ecoli/gene-interaction-babu2014',
+  'ecoli-metabolome-fuhrer2017': '/benchmark/datasets/ecoli/metabolome-fuhrer2017',
+};
+
+function pageOf(slug: string): string | undefined {
+  if (DATASET_PAGES[slug]) {
+    return DATASET_PAGES[slug];
+  }
+  const task = Object.keys(TASK_PAGES).find((name) => slug.startsWith(`${name}-`));
+  return task ? TASK_PAGES[task] : undefined;
+}
+
 function Table({datasets}: {datasets: BenchmarkDatasetPublic[]}): ReactNode {
   const sorted = [...datasets].sort((a, b) => a.task.localeCompare(b.task) || a.slug.localeCompare(b.slug));
   return (
@@ -37,7 +53,7 @@ function Table({datasets}: {datasets: BenchmarkDatasetPublic[]}): ReactNode {
         </thead>
         <tbody>
           {sorted.map((d) => {
-            const page = DATASET_PAGES[d.slug];
+            const page = pageOf(d.slug);
             return (
               <tr key={d.slug}>
                 <td>

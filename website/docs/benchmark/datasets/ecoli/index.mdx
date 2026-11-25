@@ -1,0 +1,109 @@
+---
+title: "E. coli tasks"
+sidebar_label: "Overview"
+description: "Four E. coli benchmark tasks, how to load them, their splits and the baseline method."
+---
+
+Four benchmark tasks built from four *Escherichia coli* K-12 datasets. Each asks a model to predict a measured phenotype of a deletion strain from the genes that were deleted. Every task has its own page with its splits, an example script and baseline results.
+
+- [Growth rate of single-gene deletions (Campos 2018)](./growth-rate-campos2018.mdx): 3,573 samples, 1 target, 14 splits.
+- [Cell shape and cell cycle of single-gene deletions (Campos 2018)](./morphology-campos2018.mdx): 3,573 samples, 15 targets, 14 splits.
+- [Genetic interaction score of double mutants (Babu 2014)](./gene-interaction-babu2014.mdx): 40,658 samples, 1 target, 17 splits.
+- [Metabolome of single-gene deletions (Fuhrer 2017)](./metabolome-fuhrer2017.mdx): 3,624 samples, 7,534 targets, 14 splits.
+- [Processing notebook](./processing.mdx): how a dataset becomes a task, step by step.
+
+## Loading a task
+
+Install with `pip install "torchcell>=1.8.8"`. One function returns a processed task; its argument is the task name.
+
+```python
+from torchcell.tasks import load_task
+
+growth = load_task("ecoli-growth-rate-campos2018")
+morphology = load_task("ecoli-morphology-campos2018")
+interactions = load_task("ecoli-gene-interaction-babu2014")
+metabolome = load_task("ecoli-metabolome-fuhrer2017")
+```
+
+`load_task` downloads the built dataset store when `TC_DATA_URL` is set, fetches the genome the records name when it is absent, matches each record to genes of that genome, reads the labels and attaches the pinned splits. Every task object has the same parts:
+
+```python
+task = growth
+task.samples        # one row per sample: record index, stored identifiers, locus tags
+task.genes          # locus tags of the deleted genes, shape (n, 1) or (n, 2)
+task.y              # labels, shape (n, n_targets); nan where a target was not measured
+task.targets        # name of each label column
+task.genome         # the genome; task.genome[locus_tag].protein.seq is a protein
+task.excluded       # records of the dataset that are not samples, each with its reason
+task.split_names    # names of the pinned splits
+
+split = task.split("seqid30_s0")
+split.train, split.val                     # row indices into task.genes and task.y
+task.score(task.y[split.val], prediction)  # Pearson, Spearman, R2, MSE, MAE
+```
+
+The split files ship inside the package and are checked against a sha256 recorded in the code. The samples built on your machine must equal the samples the split file was written for, row for row, or `load_task` raises.
+
+Because a script reaches the processed task through this one import, a submitted script can be checked for it: a script that builds its own samples or splits does not call `load_task`, and a script that reads the test part calls `unlock_test`.
+
+## The test part is locked
+
+`split.train` and `split.val` are plain index arrays. `split.test` raises `TestSplitLocked`. The test indices come from
+
+```python
+test = split.unlock_test(reason="final evaluation of the model selected on validation")
+```
+
+which requires a reason and emits a `TestSplitWarning` on every call. Fit on train, choose the model and every hyperparameter on validation, and unlock the test part once for the final number.
+
+## Split families
+
+Train, validation and test hold about 80 %, 10 % and 10 % of the unit that is split, and a unit is never divided. Each task page lists its own splits and their sizes.
+
+- **Random.** Genes at random. For pairs, pairs at random, with the two orders of a pair and repeated measurements of it kept together.
+- **Sequence identity 30 % and 50 %.** Whole protein clusters. A cluster is a connected component of an all-against-all MMseqs2 search at that identity over 80 % of both sequences, so a test protein has no reported hit to a training protein at or above the threshold.
+- **Chromosome position.** Whole chromosome blocks (40 contiguous blocks of equal gene count), so the genes of an operon stay on one side.
+- **Gene holdout** (pair task). The genes are split first, at random, by cluster or by block. A pair is test when either gene is a test gene, validation when neither is test and either is validation, and train when both are training genes.
+
+## Linear-probe baselines
+
+The first baselines are linear probes: a frozen representation of each deleted gene and a ridge regression on top. They measure how much of a label a linear readout of a gene representation recovers under each kind of split.
+
+| Representation | Reads | Model and pooling | Numbers per gene |
+| :-- | :-- | :-- | --: |
+| Random | nothing | 1,280 standard-normal numbers per gene, fixed seed | 1,280 |
+| One-hot | gene identity | one indicator per gene of the task | genes in task |
+| Codon frequency | coding sequence | relative frequency of the 64 codons | 64 |
+| CaLM | coding sequence, codons | CaLM (Outeiral and Deane 2024), last layer, mean over codons | 768 |
+| GenSLM 25M | coding sequence, codons | GenSLM 25M foundation model (Zvyagin 2023), last layer, mean over codons | 512 |
+| GenSLM 250M | coding sequence, codons | GenSLM 250M foundation model (Zvyagin 2023), last layer, mean over codons | 1,024 |
+| NT v1 2.5B | coding sequence, 6-mers | Nucleotide Transformer v1, 2.5B multi-species (`InstaDeepAI/nucleotide-transformer-2.5b-multi-species`), last layer, mean over tokens | 2,560 |
+| NT v2 500M | coding sequence, 6-mers | Nucleotide Transformer v2, 500M multi-species (`InstaDeepAI/nucleotide-transformer-v2-500m-multi-species`), last layer, mean over tokens | 1,024 |
+| ESM-2 650M | protein sequence | ESM-2 650M (`facebook/esm2_t33_650M_UR50D`), last layer, mean over residues | 1,280 |
+| ProtT5-XL | protein sequence | ProtT5-XL-UniRef50 encoder (`Rostlab/prot_t5_xl_uniref50`), mean over residues | 1,024 |
+
+A single-gene sample is its gene's representation. A gene-pair sample is the two representations concatenated in stored order or added. Features are standardized with the training mean and standard deviation, and one ridge regression is fit per task, split and representation, on all targets at once. The penalty is the one of eight values from 0.1 to 1,000,000 with the lowest validation mean squared error. The test part is unlocked once per split, after that choice. A sequence longer than a model's window is truncated from its end.
+
+### Best representation per task and split family
+
+The representation with the highest mean test Pearson correlation in each split family, with the value for random features beside it. Means and sample standard deviations are over the seeds of the family. For the pair task the two genes are concatenated.
+
+| Task | Split family | Best representation | Its test Pearson | Random features |
+| :-- | :-- | :-- | --: | --: |
+| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Random | CaLM | 0.102 ± 0.067 | 0.001 ± 0.057 |
+| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Sequence identity 30 % | Codon frequency | 0.095 ± 0.014 | -0.048 ± 0.036 |
+| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Sequence identity 50 % | CaLM | 0.120 ± 0.041 | 0.017 ± 0.029 |
+| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Chromosome position | Codon frequency | 0.097 ± 0.066 | 0.020 ± 0.061 |
+| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Random | NT v1 2.5B | 0.036 ± 0.022 | 0.018 ± 0.015 |
+| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Sequence identity 30 % | Random | 0.035 ± 0.015 | 0.035 ± 0.015 |
+| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Sequence identity 50 % | Codon frequency | 0.047 ± 0.046 | 0.025 ± 0.003 |
+| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Chromosome position | Random | 0.023 ± 0.017 | 0.023 ± 0.017 |
+| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Random | NT v1 2.5B | 0.466 ± 0.007 | 0.461 ± 0.009 |
+| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, random | One-hot | 0.295 ± 0.044 | 0.283 ± 0.028 |
+| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, identity 30 % | One-hot | 0.274 ± 0.014 | 0.260 ± 0.045 |
+| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, identity 50 % | One-hot | 0.288 ± 0.008 | 0.278 ± 0.010 |
+| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, position | One-hot | 0.297 ± 0.044 | 0.265 ± 0.059 |
+| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Random | ESM-2 650M | 0.010 ± 0.006 | -0.003 ± 0.001 |
+| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Sequence identity 30 % | ESM-2 650M | 0.010 ± 0.004 | -0.004 ± 0.004 |
+| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Sequence identity 50 % | GenSLM 25M | 0.006 ± 0.004 | -0.006 ± 0.003 |
+| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Chromosome position | Codon frequency | 0.004 ± 0.004 | -0.001 ± 0.006 |

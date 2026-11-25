@@ -4,6 +4,8 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 // then named groups of pages. Groups are headings, not dropdowns (sidebarCollapsible is
 // false in docusaurus.config.ts), so every page of a tab is visible at once and every
 // entry in the sidebar is a link that opens a page.
+// The one exception is the organism groups under Benchmark > Datasets: they are
+// dropdowns that start closed, so a long list of tasks does not bury the top-level pages.
 
 const SPHINX_URL = 'https://mjvolk3.github.io/torchcell/';
 const GITHUB_URL = 'https://github.com/Mjvolk3/torchcell';
@@ -93,24 +95,36 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Datasets and baselines',
+      label: 'Datasets',
       items: [
         'benchmark/datasets/index',
-        'benchmark/datasets/gene-essentiality-sgd',
-        'benchmark/baselines',
-        'benchmark/encodings',
-        'benchmark/metrics',
+        {
+          type: 'category',
+          label: 'Saccharomyces cerevisiae',
+          collapsible: true,
+          collapsed: true,
+          items: ['benchmark/datasets/gene-essentiality-sgd'],
+        },
+        {
+          type: 'category',
+          label: 'Escherichia coli',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            'benchmark/datasets/ecoli/index',
+            'benchmark/datasets/ecoli/growth-rate-campos2018',
+            'benchmark/datasets/ecoli/morphology-campos2018',
+            'benchmark/datasets/ecoli/gene-interaction-babu2014',
+            'benchmark/datasets/ecoli/metabolome-fuhrer2017',
+            'benchmark/datasets/ecoli/processing',
+          ],
+        },
       ],
     },
     {
       type: 'category',
-      label: 'E. coli tasks',
-      items: [
-        'benchmark/ecoli/index',
-        'benchmark/ecoli/examples',
-        'benchmark/ecoli/processing',
-        'benchmark/ecoli/results',
-      ],
+      label: 'Baselines and metrics',
+      items: ['benchmark/baselines', 'benchmark/encodings', 'benchmark/metrics'],
     },
     {
       type: 'category',

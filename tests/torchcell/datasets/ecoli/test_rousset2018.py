@@ -685,6 +685,8 @@ def test_the_loader_is_registered_and_receives_the_mg1655_genome(
         r.GROWTH_TABLE,
         r.PHAGE_TABLE,
         r.TRANSDUCTION_TABLE,
+        r.ESSENTIALITY_COUNTS,
+        r.PHAGE_COUNTS,
     ]
 
 
@@ -844,6 +846,7 @@ def mirrored(
     )
     data_root = tmp_path / "data_root"
     r.deposit_raw_mirror(table_paths=paths, data_root=str(data_root))
+    _deposit_synthetic_counts(data_root, monkeypatch)
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     monkeypatch.setattr(
@@ -851,6 +854,65 @@ def mirrored(
     )
     monkeypatch.setattr(r, "assembly_reference", _pin)
     return data_root
+
+
+#: A library guide no stored record names, so the count tables hold more rows than the
+#: records, as the real 92,026-guide tables do.
+_UNSTORED_SPACER = "GT" * 10
+
+
+def _count_frame(spacers: list[str], filename: str) -> pd.DataFrame:
+    """A count table over ``spacers`` with the pinned header; one zero per table."""
+    columns = list(r.COUNT_TABLE_HEADERS[filename])
+    frame = pd.DataFrame(
+        [[10 * (i + 1) + j for j in range(len(columns))] for i in range(len(spacers))],
+        index=spacers,
+        columns=columns,
+    )
+    frame.iloc[0, 0] = 0
+    return frame
+
+
+def _synthetic_counts() -> dict[str, pd.DataFrame]:
+    """Both synthetic count tables: every synthetic S1 / S4 spacer plus one unstored."""
+    growth = [spacer for spacer, _, _ in _SYNTHETIC_GROWTH] + [_UNSTORED_SPACER]
+    phage = list(_phage(_SYNTHETIC_PHAGE_GENES)["target"]) + [_UNSTORED_SPACER]
+    return {
+        r.ESSENTIALITY_COUNTS: _count_frame(growth, r.ESSENTIALITY_COUNTS),
+        r.PHAGE_COUNTS: _count_frame(phage, r.PHAGE_COUNTS),
+    }
+
+
+def _deposit_synthetic_counts(
+    data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    frames: dict[str, pd.DataFrame] | None = None,
+) -> None:
+    """Write the synthetic count tables into the raw mirror and record them, re-pinned."""
+    from torchcell.literature.manifest import ArtifactRecord
+
+    root = data_root / r.RAW_DIR_REL
+    pins: dict[str, str] = {}
+    records = []
+    for filename, frame in (frames or _synthetic_counts()).items():
+        path = root / r.table_rel(filename)
+        frame.to_csv(path, sep="\t")
+        pins[filename] = hashlib.sha256(path.read_bytes()).hexdigest()
+        records.append(
+            ArtifactRecord(
+                path=r.table_rel(filename),
+                role="raw_data",
+                bytes=path.stat().st_size,
+                sha256=pins[filename],
+            )
+        )
+    manifest = r.load_manifest(str(data_root))
+    (root / "manifest.json").write_text(
+        manifest.model_copy(
+            update={"files": [*manifest.files, *records]}
+        ).model_dump_json()
+    )
+    monkeypatch.setattr(r, "COUNT_TABLE_SHA256", pins)
 
 
 def test_the_loader_builds_the_synthetic_release_end_to_end(
@@ -926,6 +988,196 @@ def test_the_build_accounts_for_every_dropped_synthetic_record(
         (root / "preprocess" / "identifier_reconciliation.json").read_text()
     )
     assert (report["released_symbols"], report["stored_symbols"]) == (7, 7)
+
+
+def test_the_build_accounts_for_every_released_replicate_count(
+    tmp_path: Path, mirrored: Path
+) -> None:
+    """#1178: the count tables are read, and every column is a screen's replicate pair."""
+    import json as _json
+
+    root = tmp_path / "dataset"
+    dataset = r.CrispriScreenRousset2018Dataset(root=str(root))
+    # the counts change no record: one per (guide, screen), as before
+    assert len(dataset) == 19
+    assert (root / "raw" / r.ESSENTIALITY_COUNTS).is_file()
+    assert (root / "raw" / r.PHAGE_COUNTS).is_file()
+    release = r.ReplicateRelease.model_validate_json(
+        (root / "preprocess" / "replicates_not_stored.json").read_text()
+    )
+    assert release.reason == r.READ_COUNT_NOT_STORED
+    assert {
+        t.count_table: (t.guides, t.released_cells) for t in release.count_tables
+    } == {r.ESSENTIALITY_COUNTS: (10, 60), r.PHAGE_COUNTS: (4, 72)}
+    (phage,) = [t for t in release.count_tables if t.count_table == r.PHAGE_COUNTS]
+    assert phage.screens_by_column["Before_Lambda_186_transduction_2"] == [
+        "phage_lambda",
+        "phage_186cIts",
+        "lambda_transduction",
+    ]
+    assert phage.screens_by_column["Before_T4_3"] == ["phage_T4"]
+    accounts = {s.screen_id: s for s in release.screens}
+    assert {s: (a.stored_guides, a.count_cells) for s, a in accounts.items()} == {
+        "growth_LC-E75": (7, 42),
+        "phage_lambda": (3, 18),
+        "phage_T4": (3, 18),
+        "phage_186cIts": (3, 18),
+        "lambda_transduction": (3, 18),
+    }
+    assert sum(accounts["growth_LC-E75"].zero_count_cells.values()) == 1
+    assert accounts["phage_186cIts"].zero_count_cells["After_186_1"] == 1
+    assert [p.replicate for p in accounts["phage_T4"].pairs] == ["1", "2", "3"]
+    raw = _json.loads((root / "preprocess" / "replicates_not_stored.json").read_text())
+    assert raw["dataset"] == dataset.name
+
+
+def test_the_build_refuses_a_stored_guide_the_count_table_lacks(
+    tmp_path: Path, mirrored: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    frames = _synthetic_counts()
+    frames[r.PHAGE_COUNTS] = frames[r.PHAGE_COUNTS].drop(index="B" * 20)
+    root = mirrored / r.RAW_DIR_REL
+    manifest = r.load_manifest(str(mirrored))
+    (root / "manifest.json").write_text(
+        manifest.model_copy(
+            update={
+                "files": [
+                    f
+                    for f in manifest.files
+                    if f.path
+                    not in {r.table_rel(name) for name in r.COUNT_TABLE_SHA256}
+                ]
+            }
+        ).model_dump_json()
+    )
+    _deposit_synthetic_counts(mirrored, monkeypatch, frames)
+    with pytest.raises(RuntimeError, match="stored guides are not rows of"):
+        r.CrispriScreenRousset2018Dataset(root=str(tmp_path / "dataset"))
+    assert not (tmp_path / "dataset" / "processed" / "lmdb").exists()
+
+
+def test_screen_samples_name_every_count_column_and_pair_by_suffix() -> None:
+    named: dict[str, set[str]] = {name: set() for name in r.COUNT_TABLE_HEADERS}
+    for condition in r.CONDITIONS:
+        samples = r.SCREEN_SAMPLES[condition.screen_id]
+        for pair in samples.pairs:
+            assert pair.after.endswith(f"_{pair.replicate}")
+            assert pair.before.endswith(f"_{pair.replicate}")
+            named[samples.count_table] |= {pair.after, pair.before}
+    assert {k: sorted(v) for k, v in named.items()} == {
+        k: sorted(v) for k, v in r.COUNT_TABLE_HEADERS.items()
+    }
+    assert r.SCREEN_SAMPLES["phage_T4"].pairs[0].before == "Before_T4_1"
+    assert (
+        r.SCREEN_SAMPLES["phage_186cIts"].pairs[2].before
+        == "Before_Lambda_186_transduction_3"
+    )
+
+
+def test_replicate_release_refuses_a_column_no_screen_reads() -> None:
+    frames = _synthetic_counts()
+    frames[r.ESSENTIALITY_COUNTS]["Extra_1"] = 1
+    stored = {
+        c.screen_id: list(frames[r.SCREEN_SAMPLES[c.screen_id].count_table].index[:1])
+        for c in r.CONDITIONS
+    }
+    with pytest.raises(RuntimeError, match="no screen's replicate pairs name"):
+        r.replicate_release("d", stored, frames)
+    frames = _synthetic_counts()
+    frames[r.PHAGE_COUNTS] = frames[r.PHAGE_COUNTS].drop(columns="Before_T4_2")
+    with pytest.raises(RuntimeError, match="lacks the columns"):
+        r.replicate_release("d", stored, frames)
+
+
+def test_read_count_table_keeps_the_release_and_refuses_a_departure(
+    tmp_path: Path,
+) -> None:
+    frame = _synthetic_counts()[r.ESSENTIALITY_COUNTS]
+    path = tmp_path / "counts.txt"
+    frame.to_csv(path, sep="\t")
+    read = r.read_count_table(path, r.ESSENTIALITY_COUNTS)
+    assert list(read.columns) == list(r.COUNT_TABLE_HEADERS[r.ESSENTIALITY_COUNTS])
+    assert read.loc["A" * 20, "After_1"] == 0
+    for broken, message in (
+        (frame.rename(columns={"After_1": "after_1"}), "header"),
+        (frame.rename(index={"A" * 20: "A" * 19}), "20 nt"),
+        (frame.rename(index={"C" * 20: "A" * 20}), "repeats a spacer"),
+        (frame.astype(float).assign(After_2=0.5), "integer"),
+        (frame.assign(After_2=-1), "negative"),
+    ):
+        broken.to_csv(path, sep="\t")
+        with pytest.raises(ValueError, match=message):
+            r.read_count_table(path, r.ESSENTIALITY_COUNTS)
+    frame.astype(float).assign(After_2=float("nan")).to_csv(path, sep="\t")
+    with pytest.raises(ValueError, match="empty count"):
+        r.read_count_table(path, r.ESSENTIALITY_COUNTS)
+
+
+def test_the_repository_files_are_fetched_from_the_pinned_commit() -> None:
+    url = r.gitlab_raw_url(r.REPOSITORY_FILE[r.PHAGE_COUNTS].path_in_repo)
+    assert url == (
+        "https://gitlab.pasteur.fr/api/v4/projects/dbikard%2FdCas9_genome_wide_screen"
+        "/repository/files/Generating%20count%20tables%20from%20fastq%20files%2F"
+        "Counts_table_phages.txt/raw?ref=712b3b94c5457c75bcdb1dbc4ad7b9d270241bcc"
+    )
+    retrieval = r.repository_retrieval(r.REPOSITORY_FILE[r.PHAGE_COUNTS])
+    assert retrieval.method is RetrievalMethod.direct_url
+    assert retrieval.retriever == "torchcell.literature.retrieve.direct_url"
+    assert retrieval.params == {"url": url}
+    assert retrieval.sha256 == r.COUNT_TABLE_SHA256[r.PHAGE_COUNTS]
+    assert set(r.raw_sha256()) == {*r.TABLE_SHA256, *r.COUNT_TABLE_SHA256}
+
+
+def test_deposit_repository_files_is_idempotent_and_refuses_other_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import torchcell.literature.retrieve as retrieve
+
+    paths = _fake_tables(tmp_path, monkeypatch)
+    data_root = str(tmp_path / "data_root")
+    r.deposit_raw_mirror(table_paths=paths, data_root=data_root)
+    payloads = {
+        f.path_in_repo: f"{f.filename} bytes".encode() for f in r.REPOSITORY_FILES
+    }
+    monkeypatch.setattr(
+        r,
+        "REPOSITORY_FILES",
+        tuple(
+            f.model_copy(
+                update={"sha256": hashlib.sha256(payloads[f.path_in_repo]).hexdigest()}
+            )
+            for f in r.REPOSITORY_FILES
+        ),
+    )
+    by_url = {r.gitlab_raw_url(p): payload for p, payload in payloads.items()}
+    fetched: list[str] = []
+
+    def _fetch(url: str) -> bytes:
+        fetched.append(url)
+        return by_url[url]
+
+    monkeypatch.setattr(retrieve, "direct_url", _fetch)
+    root = r.deposit_repository_files(data_root)
+    r.deposit_repository_files(data_root)
+    assert len(fetched) == 4
+    manifest = r.load_manifest(data_root)
+    added = {f.path: f for f in manifest.files[len(r.TABLE_SHA256) :]}
+    assert sorted(added) == sorted(f.mirror_rel for f in r.REPOSITORY_FILES)
+    counts = added[f"data/{r.PHAGE_COUNTS}"]
+    assert counts.role == "raw_data"
+    assert counts.retrieval is not None
+    assert counts.retrieval.method is RetrievalMethod.direct_url
+    assert added[f"ref/{r.PHAGE_NOTEBOOK}"].role == "si_text"
+    assert len(manifest.si_expected) == 5 + 3
+    (root / f"data/{r.ESSENTIALITY_COUNTS}").write_bytes(b"changed")
+    with pytest.raises(RuntimeError, match="exists with a different sha256"):
+        r.deposit_repository_files(data_root)
+    (root / f"data/{r.ESSENTIALITY_COUNTS}").unlink()
+    by_url[r.gitlab_raw_url(r.REPOSITORY_FILE[r.ESSENTIALITY_COUNTS].path_in_repo)] = (
+        b"upstream drift"
+    )
+    with pytest.raises(RuntimeError, match="the pin is"):
+        r.deposit_repository_files(data_root)
 
 
 def test_the_two_screens_of_one_guide_are_two_records_on_one_strain(
@@ -1083,8 +1335,9 @@ def test_every_sourced_value_is_backed_by_its_verbatim_quote() -> None:
     values = [v for v in vars(r).values() if isinstance(v, SourcedValue)]
     deseq2 = [v for v in values if v.provenance.sha256 == r.DESEQ2_REFERENCE_SHA256]
     assert deseq2 == [r.PADJ_CORRECTION]
-    paper = [v for v in values if v is not r.PADJ_CORRECTION]
-    assert len(paper) == len(r.SOURCED_VALUES) == 26
+    notebooks = {id(v) for v in r.REPOSITORY_SOURCED_VALUES}
+    paper = [v for v in values if v is not r.PADJ_CORRECTION and id(v) not in notebooks]
+    assert len(paper) == len(r.SOURCED_VALUES) == 27
     assert {v.provenance.citation_key for v in paper} == {r.CITATION_KEY}
     for value in paper:
         result = audit_sourced_value(value, root)
@@ -1103,6 +1356,145 @@ def test_the_padj_correction_is_verbatim_in_the_deposited_deseq2_reference() -> 
     assert record.retrieval is not None
     assert record.retrieval.method is RetrievalMethod.pmc_cloud
     assert record.retrieval.params == {"key": r.DESEQ2_REFERENCE_KEY}
+
+
+@pytest.mark.data
+def test_every_notebook_value_is_verbatim_in_the_deposited_notebook() -> None:
+    """#1178: the replicate pairing quotes, re-read from the raw-mirror notebook bytes."""
+    root = osp.join(_data_root(), "torchcell-raw")
+    assert len(r.REPOSITORY_SOURCED_VALUES) == 4
+    for value in r.REPOSITORY_SOURCED_VALUES:
+        result = audit_sourced_value(value, root)
+        assert result.passed, f"{value.value!r}: {result.message}"
+
+
+@pytest.mark.data
+def test_the_repository_files_are_deposited_with_their_retrieval() -> None:
+    mirror = Path(_data_root()) / r.RAW_DIR_REL
+    manifest = r.load_manifest(_data_root())
+    by_path = {f.path: f for f in manifest.files}
+    for record in r.REPOSITORY_FILES:
+        payload = (mirror / record.mirror_rel).read_bytes()
+        assert hashlib.sha256(payload).hexdigest() == record.sha256
+        entry = by_path[record.mirror_rel]
+        assert entry.sha256 == record.sha256
+        assert entry.retrieval is not None
+        assert entry.retrieval.method is RetrievalMethod.direct_url
+        assert entry.retrieval.params == {"url": r.gitlab_raw_url(record.path_in_repo)}
+        assert entry.retrieval.retrieved_at == r.GITLAB_RETRIEVED_AT
+    assert manifest.provenance_complete
+
+
+@pytest.mark.data
+def test_the_count_tables_hold_every_stored_guide_in_three_replicate_pairs() -> None:
+    """#1178: 92,026 guides per table; every stored guide is a row of its screen's table."""
+    mirror = osp.join(_data_root(), r.RAW_DIR_REL)
+    counts = {
+        name: r.read_count_table(osp.join(mirror, r.table_rel(name)), name)
+        for name in r.COUNT_TABLE_SHA256
+    }
+    assert counts[r.ESSENTIALITY_COUNTS].shape == (92026, 6)
+    assert counts[r.PHAGE_COUNTS].shape == (92026, 18)
+    assert list(counts[r.ESSENTIALITY_COUNTS].index) == list(
+        counts[r.PHAGE_COUNTS].index
+    )
+    tables = {
+        filename: r.read_table(osp.join(mirror, r.table_rel(filename)), filename)
+        for filename in r.TABLE_SHA256
+    }
+    release = r.replicate_release(
+        "ecoli_crispri_rousset2018",
+        {
+            c.screen_id: [
+                str(s)
+                for s in tables[c.table].loc[
+                    r.coding_strand(tables[c.table], c.table), "target"
+                ]
+            ]
+            for c in r.CONDITIONS
+        },
+        counts,
+    )
+    assert {s.screen_id: s.stored_guides for s in release.screens} == (
+        r.EXPECTED_SCREEN_CENSUS
+    )
+    assert sum(s.count_cells for s in release.screens) == 6 * r.EXPECTED_RECORDS
+    zeros = {s.screen_id: sum(s.zero_count_cells.values()) for s in release.screens}
+    assert zeros == {
+        "growth_LC-E75": 1428,
+        "phage_lambda": 593,
+        "phage_T4": 1,
+        "phage_186cIts": 613,
+        "lambda_transduction": 2609,
+    }
+    # The third pre-infection sample of lambda / 186 / transduction is the shallow one
+    # (695,288 reads against 4.4-5.0 million for the other two).
+    before = counts[r.PHAGE_COUNTS].filter(like="Before_Lambda_186_transduction").sum()
+    assert before.to_dict() == {
+        "Before_Lambda_186_transduction_1": 5038582,
+        "Before_Lambda_186_transduction_2": 4373190,
+        "Before_Lambda_186_transduction_3": 695288,
+    }
+
+
+@pytest.mark.data
+def test_the_count_tables_are_the_counts_behind_the_released_log2fc() -> None:
+    """The mean of the three paired log2 ratios tracks each released DESeq2 log2FC.
+
+    Evidence, not a build step: on the control-guide normalization the authors state
+    (``GROWTH_REPLICATE_PAIRING``), log2(After_i / Before_i) averaged over the three
+    pairs agrees with S1 Table's log2FC to a median 0.0015 on the guides with no zero
+    count. DESeq2's negative-binomial fit is not the plain mean, so the agreement is
+    close rather than exact.
+    """
+    import numpy as np
+
+    mirror = osp.join(_data_root(), r.RAW_DIR_REL)
+    control = "TGAGACCAGTCTAGGTCTCG"
+    tables = {
+        filename: r.read_table(osp.join(mirror, r.table_rel(filename)), filename)
+        for filename in r.TABLE_SHA256
+    }
+    counts = {
+        name: r.read_count_table(osp.join(mirror, r.table_rel(name)), name)
+        for name in r.COUNT_TABLE_SHA256
+    }
+    medians: dict[str, float] = {}
+    finite: dict[str, int] = {}
+    for condition in r.CONDITIONS:
+        samples = r.SCREEN_SAMPLES[condition.screen_id]
+        table = counts[samples.count_table]
+        normalized = table / table.loc[control]
+        released = tables[condition.table].set_index("target")[condition.column]
+        with np.errstate(divide="ignore", invalid="ignore"):
+            ratios = np.stack(
+                [
+                    np.log2(
+                        normalized.loc[released.index, p.after].to_numpy(dtype=float)
+                        / normalized.loc[released.index, p.before].to_numpy(dtype=float)
+                    )
+                    for p in samples.pairs
+                ],
+                axis=1,
+            )
+        keep = np.isfinite(ratios).all(axis=1)
+        finite[condition.screen_id] = int(keep.sum())
+        difference = np.abs(ratios[keep].mean(axis=1) - released.to_numpy()[keep])
+        medians[condition.screen_id] = round(float(np.median(difference)), 4)
+    assert finite == {
+        "growth_LC-E75": 58317,
+        "phage_lambda": 16627,
+        "phage_T4": 17219,
+        "phage_186cIts": 16610,
+        "lambda_transduction": 15693,
+    }
+    assert medians == {
+        "growth_LC-E75": 0.0015,
+        "phage_lambda": 0.0807,
+        "phage_T4": 0.0122,
+        "phage_186cIts": 0.0814,
+        "lambda_transduction": 0.0822,
+    }
 
 
 @pytest.mark.data
@@ -1200,9 +1592,10 @@ def test_the_stored_records_carry_the_measured_sign_distribution() -> None:
 
     ``EnvironmentResponsePhenotype`` is the record type because the value is signed and
     routinely negative; these are the fractions that claim rests on, measured over the
-    stored records rather than over the released rows (the released coding-strand
-    fractions are the subject of the test above, and differ by the 444 unstorable-symbol
-    records).
+    stored records rather than over the released rows. Since #1069 every released
+    symbol is stored, so the phage-derived counts equal the released S4 / S6 negative
+    counts (re-measured 2026-11-24; the pins here predated #1069 and read 4,740, 14,359,
+    7,670 and 15,253 over the 68,436 records stored then).
     """
     from torchcell.verification.runners import stream_records
 
@@ -1224,10 +1617,10 @@ def test_the_stored_records_carry_the_measured_sign_distribution() -> None:
     assert growth_total == 23372
     assert round(growth_negative / growth_total, 4) == 0.9249
     assert dict(negative) == {
-        "phage_lambda": 4740,
-        "phage_T4": 14359,
-        "phage_186cIts": 7670,
-        "lambda_transduction": 15253,
+        "phage_lambda": 4775,
+        "phage_T4": 14456,
+        "phage_186cIts": 7717,
+        "lambda_transduction": 15350,
     }
     assert {screen: round(value, 4) for screen, value in minimum.items()} == {
         "phage_lambda": -2.5409,
@@ -1236,8 +1629,8 @@ def test_the_stored_records_carry_the_measured_sign_distribution() -> None:
         "lambda_transduction": -10.9705,
     }
     assert {screen: round(negative[screen] / total[screen], 4) for screen in total} == {
-        "phage_lambda": 0.277,
-        "phage_T4": 0.8393,
-        "phage_186cIts": 0.4483,
-        "lambda_transduction": 0.8915,
+        "phage_lambda": 0.2773,
+        "phage_T4": 0.8395,
+        "phage_186cIts": 0.4481,
+        "lambda_transduction": 0.8914,
     }

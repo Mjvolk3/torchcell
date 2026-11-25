@@ -610,3 +610,62 @@ The correction is sourced through the paper's deferral. Rousset: "computed the l
 The growth screen's culture and host come from the stated deferral to Cui 2018 (LB, 1 nM aTc, 37 C; Cui's Supplementary Table 7 record of LC-E75), and the 17 generations and triplicate are Rousset's own sentence. The two drop rules that compared S1 with Cui's released table are gone and Cui's table is no longer read. What they measured stays as a finding (#878): 54,326 shared spacers, maximum absolute difference 0.0066 against Cui's `fit75`, 426 bit-identical, so S1 is Rousset's own DESeq2 run of the same reads. Both releases are now stored, each under its own publication and screen id, and which to use is a modeling-time decision. The adapter conf enables `environment perturbation` for the growth screen's aTc beside `phage perturbation`.
 
 Only two rules remain, both on S1 rows with no stored carrier (#1045 row 29): 5,063 rows with no gene and 30,811 template-strand rows.
+
+## 2026.11.24 - Per-replicate review (#1177, #1178): records unchanged, the authors' count tables deposited
+
+Policy #1178: a record is one biological replicate as the source releases it. The review found that every stored value is a source statistic over three biological replicates, that the per-replicate values the authors release are read counts only, and that no `MeasurementType` holds a read count. So **no record changed** (92,252 before and after), the count tables are now in the raw mirror and read by the build, and the per-replicate records wait on an owner decision.
+
+### What a replicate is
+
+- Growth screen (S1 Table): `paper.md` line 194 (sha256 `46ea72979c7f11855477b557824fb62baa7a4937ae4787d930e706cd2b93db3f`), "This screen was performed over 17 generations in triplicates from independent aliquots of the library generated from 3 independent transformations into strain LC-E75." Biological.
+- Phage screens (S4, S6 Tables): line 196, "The phage screen was performed in triplicates as follows". The paper does not say biological or technical; the authors' phage notebook does, "Paired analysis is performed between biological replicates." (`ref/phage_screens_analysis.ipynb`, sha256 `e3f36bcb28c12d8ab56aad9229d999346856c343bc9df026ce10766b22d0155d`, markdown cell 7).
+- Inside one sample: the transduction sample was "split into 6 tubes from which library plasmids were extracted by miniprep ... before pooling back the 6 extractions into one sample for sequencing" (line 196), a technical split recombined before sequencing, so it is inside the sample.
+- How they were combined: one DESeq2 fit per screen, design `~ generation + replicate` (growth) or `~ condition + replicate` (phage, one model over all 18 samples), size factors the non-targeting control guide's counts over their mean, `betaPrior=FALSE`, After_i paired with Before_i by the column suffix ("Paired analysis is performed between replicates.", `ref/essentiality_screen_analysis.ipynb`, sha256 `6e87d2ee9c6189a4432095c208cfd238d30fae4b5c128535fa04edc0d4a0fe75`). The lambda, 186cIts and transduction contrasts share the three `Before_Lambda_186_transduction` samples and T4 has its own: "For technical reasons, the samples before infection are common between phages lambda and 186 (Before_lambda_186_transduction samples 1-3) but distinct from samples before T4 infection (Before_T4 samples 1-3)." (phage notebook, markdown cell 0). The old `PHAGE_SCREEN_TRIPLICATE` note said all four arms were "one triplicate series"; it now says T4's before samples are its own.
+- Withdrawn samples: none. Searched `paper.md`, `si/` (S1-S7 Table headers, S3 Table, S8-S10 docx) and the three notebooks for replicate, triplicate, duplicate, biological, technical, independent, colony, isolate, culture, `n =`, exclud, remov, withdr, outlier; the hits are the quotes above, the RT-qPCR and infection-dynamics validation replicates (figures only, no released values) and the guide filters.
+- `n_samples = 3`, `sample_unit = biological_replicate` and the `not_reported_by_primary` gap on the uncertainty are therefore correct on every record, and stay.
+
+### The released per-replicate quantity
+
+The Data Availability Statement (line 29): "The code and data tables used to perform the analyses are available at https://gitlab.pasteur.fr/dbikard/dCas9_genome_ wide_screen." At its HEAD commit `712b3b94c5457c75bcdb1dbc4ad7b9d270241bcc` (2019-10-31) the repository holds the count tables every S1/S4/S6 log2FC was fitted from. Retrieved 2026-11-24 by `direct_url` from the GitLab API route (`/api/v4/projects/dbikard%2FdCas9_genome_wide_screen/repository/files/<path>/raw?ref=<commit>`; the web `/-/raw/` route answers the retriever's User-Agent with 403) and deposited with a `RetrievalRecord` each (`deposit_repository_files`):
+
+| mirror path | repository path | bytes | sha256 |
+|---|---|---:|---|
+| `data/Counts_table_essentiality.txt` | `Generating count tables from fastq files/` | 3,834,385 | `c36da89ef3f0506fc2003583b2581053b630ff064b6e2edfabb4b8e7a3e75be1` |
+| `data/Counts_table_phages.txt` | `Generating count tables from fastq files/` | 6,502,122 | `11f58b0da5926238661288edd0aa169c595de25026516190163b6a87dc9ad21c` |
+| `ref/essentiality_screen_analysis.ipynb` | `Essentiality screen data analysis/` | 154,539 | `6e87d2ee9c6189a4432095c208cfd238d30fae4b5c128535fa04edc0d4a0fe75` |
+| `ref/phage_screens_analysis.ipynb` | `Phages screens analysis/` | 185,155 | `e3f36bcb28c12d8ab56aad9229d999346856c343bc9df026ce10766b22d0155d` |
+
+The copies of the two count tables in the analysis folders have the same bytes (measured). Each table has 92,026 guides; essentiality columns `After_1..3`, `Before_1..3`; phage columns `After_186_1..3`, `After_Lambda_1..3`, `After_T4_1..3`, `After_transduction_1..3`, `Before_Lambda_186_transduction_1..3`, `Before_T4_1..3`.
+
+Evidence that these are the counts behind the released fits (data test `test_the_count_tables_are_the_counts_behind_the_released_log2fc`): the mean over the three pairs of log2(After_i / Before_i) on the control-guide normalization, against the released log2FC, median absolute difference 0.0015 for S1 (58,317 guides with no zero count), 0.0122 for T4, 0.081 to 0.082 for lambda, 186cIts and transduction. DESeq2's negative-binomial fit is not the plain mean, so close rather than exact. Hypothesis (untested): the larger gap on the three arms that share `Before_Lambda_186_transduction_3` comes from that sample's depth (695,288 reads against 4.4 to 5.0 million for its two siblings, with 592 zero counts among the stored guides).
+
+### What the build does with them
+
+`raw_file_names` now lists the two count tables. `process()` reads them (`read_count_table`: pinned header, distinct 20-nt spacers, non-negative integers) BEFORE writing anything, refuses a stored guide that is not a row of its screen's table and a count column no screen's replicate pairs name (`SCREEN_SAMPLES`), and writes `preprocess/replicates_not_stored.json` (`ReplicateRelease`):
+
+| screen | stored guides | count cells of stored guides | zero counts |
+|---|---:|---:|---:|
+| growth_LC-E75 | 23,372 | 140,232 | 1,428 |
+| phage_lambda | 17,220 | 103,320 | 593 |
+| phage_T4 | 17,220 | 103,320 | 1 |
+| phage_186cIts | 17,220 | 103,320 | 613 |
+| lambda_transduction | 17,220 | 103,320 | 2,609 |
+
+Released cells: 552,156 (essentiality) and 1,656,468 (phage). A shared before sample is counted under each screen that used it.
+
+### Build and verification
+
+- Scratch build: `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-rousset2018/ecoli_crispri_rousset2018`. 92,252 records, census 23,372 / 17,220 x 4, drop rules unchanged (5,063 no gene, 30,811 template strand).
+- `verify_build`: PASS, the three genome-reference rows reported and not gated, as before.
+- Against the shared dev store: the same 92,252 (guide, screen) keys, max absolute difference of the stored value 0.0, and all 92,252 experiments and references serialize identically. No grouping step applies, since records are unchanged.
+- Data test fixed while here: `test_the_stored_records_carry_the_measured_sign_distribution` still pinned the pre-#1069 negative counts (4,740 / 14,359 / 7,670 / 15,253 over 68,436 records); since #1069 every symbol is stored and the counts equal the released S4/S6 ones (4,775 / 14,456 / 7,717 / 15,350).
+
+### Not done: per-replicate records (owner decision)
+
+The plan's action ("store per-replicate counts as released") needs a schema change, so it is left undone:
+
+- No `MeasurementType` member is a read count (the same gap Smith 2016 and Vanacloig 2022 reported). Proposed shape, additive: `MeasurementType.read_count` in `ABSOLUTE_MEASUREMENT_TYPES`; one `EnvironmentResponsePhenotype` per (guide, count column) with `n_samples=1`, `sample_unit=biological_replicate`, `replicate_id` = the column label (`After_T4_2`), `units` naming the column total as the library size; a `Before_*` column is a record of the pre-induction (growth) or pre-infection (phage) culture with the same genotype and its own environment (no phage; for the growth screen, before dCas9 induction). Stored guides only: 23,372 x 6 + 17,220 x 18 = 450,192 count records (the shared before samples stored once, not once per screen).
+- A per-replicate log2 ratio was not stored: it would be a loader derivation (After_i over Before_i on the control-guide normalization), it is undefined for the 4,060 distinct zero-count cells of stored guides (5,244 counted per screen) without a pseudocount the authors never state, and Smith 2016 declined the same derivation.
+- The released DESeq2 log2FC per (guide, screen) stays the stored value under policy point 4 (a statistic the source reports) whichever way the owner decides.
+
+Related, not acted on: the essentiality count table is the growth screen of Cui 2018 (paper line 194, "obtained from our previous study [26]"), so `CrispriKnockdownCui2018Dataset`'s conversion may find the same counts; Cui 2018's own release was not checked here.

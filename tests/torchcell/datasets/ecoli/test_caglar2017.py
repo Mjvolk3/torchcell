@@ -22,6 +22,7 @@ reproduced from Table S1, and the dev-tree builds (152 RNA-seq and 105 proteome 
 
 from __future__ import annotations
 
+import copy
 import csv
 import gzip
 import hashlib
@@ -1231,13 +1232,19 @@ def test_tpm_is_counts_per_base_scaled_to_a_million() -> None:
 
 
 def test_the_rnaseq_phenotype_and_reference_keep_counts_and_tpm() -> None:
-    phenotype = c.rnaseq_phenotype(GENES, np.array([0.0, 1.0, 7.0]), LENGTHS)
+    phenotype = c.rnaseq_phenotype(
+        GENES, np.array([0.0, 1.0, 7.0]), LENGTHS, "MURI_002"
+    )
     assert phenotype.expression_count is not None
     assert dict(phenotype.expression_count) == dict(zip(GENES, [0, 1, 7], strict=True))
     assert phenotype.measurement_type == "rnaseq_tpm"
+    assert phenotype.replicate_id == "MURI_002"
     assert [g.field for g in phenotype.provenance_gaps] == ["n_mapped_reads"]
+    with pytest.raises(RuntimeError, match="dataSet label"):
+        c.rnaseq_phenotype(GENES, np.array([0.0, 1.0, 7.0]), LENGTHS, "")
     block = np.array([[0.0, 1.0], [1.0, 0.0], [7.0, 12.0]])
     reference = c.rnaseq_reference_phenotype(GENES, block, LENGTHS)
+    assert reference.replicate_id is None
     expected = (c.tpm(block[:, 0], LENGTHS) + c.tpm(block[:, 1], LENGTHS)) / 2
     assert list(reference.expression_tpm.values()) == pytest.approx(expected)
     # mean counts 0.5, 0.5, 9.5 round half to even
@@ -1246,12 +1253,27 @@ def test_the_rnaseq_phenotype_and_reference_keep_counts_and_tpm() -> None:
 
 
 def test_the_protein_phenotype_is_the_count_over_the_size_factor() -> None:
-    phenotype = c.protein_phenotype(GENES, np.array([2.0, 0.0, 5.0]), 2.0)
+    phenotype = c.protein_phenotype(
+        GENES, np.array([2.0, 0.0, 5.0]), 2.0, "MURI_091", 2
+    )
     assert phenotype.protein_abundance == dict(zip(GENES, [1.0, 0.0, 2.5], strict=True))
     assert phenotype.n_replicates == dict.fromkeys(GENES, 1)
     assert phenotype.protein_abundance_se is None
+    assert phenotype.replicate_id == "MURI_091"
+    (gap,) = phenotype.provenance_gaps
+    assert (gap.field, gap.reason) == (
+        "protein_abundance_se",
+        ProvenanceGapReason.not_applicable_single_measurement,
+    )
+    assert gap.note is not None
+    assert "Table S1 counts 2 technical LC-MS/MS run(s)" in gap.note
+    with pytest.raises(RuntimeError, match="dataSet label"):
+        c.protein_phenotype(GENES, np.array([2.0, 0.0, 5.0]), 2.0, "", 1)
+    with pytest.raises(ValueError, match="0 technical runs"):
+        c.single_culture_se_gap(0)
     block = np.array([[1.0, 3.0], [0.0, 0.0], [2.0, 2.0]])
     reference = c.protein_reference_phenotype(GENES, block)
+    assert reference.replicate_id is None
     assert reference.protein_abundance == dict(zip(GENES, [2.0, 0.0, 2.0], strict=True))
     assert reference.protein_abundance_se == pytest.approx(
         dict(zip(GENES, [1.0, 0.0, 0.0], strict=True))
@@ -1440,6 +1462,11 @@ def test_the_rnaseq_build_writes_one_record_per_library(
             c.tpm(np.array(counts, dtype=float), LENGTHS)
         )
         assert samples[index]["library_size"] == sum(counts)
+        assert phenotype["replicate_id"] == sample
+        assert (
+            _record(rnaseq, index)["reference"]["phenotype_reference"]["replicate_id"]
+            is None
+        )
     lactate = _record(rnaseq, 3)["experiment"]
     assert lactate["genotype"]["perturbations"] == []
     assert lactate["environment"]["duration_hours"] == 9.0
@@ -1527,6 +1554,12 @@ def test_the_proteome_build_keys_table_s3_by_rel606_locus(
         )
         assert set(phenotype["n_replicates"].values()) == {1}
         assert samples[index]["size_factor"] == pytest.approx(factors[index])
+        assert phenotype["replicate_id"] == samples[index]["sample"]
+        assert phenotype["protein_abundance_se"] is None
+        (gap,) = phenotype["provenance_gaps"]
+        assert gap["reason"] == "not_applicable_single_measurement"
+        runs = samples[index]["technical_replicates"]
+        assert f"Table S1 counts {runs} technical LC-MS/MS run(s)" in gap["note"]
     reference = _record(proteome, 4)["reference"]["phenotype_reference"]  # stationary
     block = np.array([PROTEIN_COUNTS["MURI_004"]], dtype=float).T / factors[2]
     assert list(reference["protein_abundance"].values()) == pytest.approx(block[:, 0])
@@ -1673,6 +1706,7 @@ def test_the_verifiers_pass_the_built_records_and_catch_a_broken_scale(
         "structural",
         "count",
         "sample_uniqueness",
+        "replicate_id_per_sample",
         "tpm_value_fidelity",
         "count_value_fidelity",
         "tpm_scale",
@@ -1699,6 +1733,24 @@ def test_the_verifiers_pass_the_built_records_and_catch_a_broken_scale(
     assert protein_report.passed, protein_report.summary()
     off = protein_evidence.model_copy(update={"max_count_integer_deviation": 0.4})
     assert not c._l3_back_solve(off).passed
+
+    # one distinct replicate_id per record, none on a reference
+    assert c._l1_replicate_ids(proteins).passed
+    # records of one phase share their loaded reference, so relabel independent copies
+    proteins = [copy.deepcopy(r) for r in proteins]
+    proteins[1]["experiment"]["phenotype"]["replicate_id"] = proteins[0]["experiment"][
+        "phenotype"
+    ]["replicate_id"]
+    proteins[2]["experiment"]["phenotype"]["replicate_id"] = None
+    proteins[3]["reference"]["phenotype_reference"]["replicate_id"] = "MURI_004"
+    relabeled = c._l1_replicate_ids(proteins)
+    assert not relabeled.passed
+    assert relabeled.details == {
+        "n_records": 5,
+        "n_missing": 1,
+        "n_in_repeated_ids": 2,
+        "n_references_with_replicate_id": 1,
+    }
 
 
 def test_run_verification_writes_the_report_of_a_built_family(
@@ -1750,8 +1802,9 @@ def test_main_dispatches_build_and_verify(
 
 #: Module-level SourcedValues: 26 from the raw-mirror branch, 19 the loaders add, the
 #: 3 Houser 2015 attribution quotes (#771), and the 8 the Table S8 protein fold-change
-#: loader adds (#770).
-SOURCED_VALUE_COUNT = 26 + 19 + 3 + 8
+#: loader adds (#770), and the 2 the per-replicate review adds (#1171: the replicate
+#: label and what a batch is).
+SOURCED_VALUE_COUNT = 26 + 19 + 3 + 8 + 2
 
 
 def test_every_sourced_value_is_collected_by_name() -> None:
@@ -1985,6 +2038,69 @@ def test_the_sample_sheet_reproduces_the_paper_s_table_1_sample_counts(
     assert dict(Counter(r.na_level for r in rows)) == na
 
 
+def _environment_groups(rows: Sequence[c.SampleRow]) -> dict[Any, list[c.SampleRow]]:
+    """Samples by the Table S1 cells that define a record's environment, sheet order."""
+    groups: dict[Any, list[c.SampleRow]] = {}
+    for row in rows:
+        key = (row.carbon_source, row.mg_mm, row.na_mm, row.growth_time_hr)
+        groups.setdefault(key, []).append(row)
+    return groups
+
+
+#: Measured on the mirror (2026.11.24, #1171): per assay, the number of samples, of
+#: (carbon source, Mg2+, Na+, collection time) groups, the group-size histogram, the
+#: number of records at each replicate position (1st, 2nd, ... sample of its group in
+#: sheet order) and Table S1's technical-replicate histogram.
+REPLICATE_STRUCTURE: dict[str, dict[str, Any]] = {
+    "S2": {
+        "samples": 152,
+        "groups": 57,
+        "group_sizes": {1: 9, 2: 8, 3: 36, 4: 2, 5: 1, 6: 1},
+        "positions": {1: 57, 2: 48, 3: 40, 4: 4, 5: 2, 6: 1},
+        "technical": {1: 152},
+    },
+    "S3": {
+        "samples": 105,
+        "groups": 40,
+        "group_sizes": {1: 5, 2: 7, 3: 26, 4: 2},
+        "positions": {1: 40, 2: 35, 3: 28, 4: 2},
+        "technical": {1: 93, 2: 12},
+    },
+}
+
+
+@pytest.mark.data
+@_ON_DISK
+@pytest.mark.parametrize("table", ["S2", "S3"])
+def test_every_sample_of_an_environment_is_its_own_biological_replicate(
+    table: str,
+) -> None:
+    """#1171: one record per sample is one record per biological replicate.
+
+    Inside every environment group the samples carry distinct ``batchNumber`` values
+    (``BATCH_IS_A_CULTURE_SET``), every sample label is distinct, and the technical
+    counts are the ones the release has already combined into one column per sample.
+    """
+    rows = _sheet_rows(table)
+    groups = _environment_groups(rows)
+    positions = Counter(
+        index + 1 for members in groups.values() for index in range(len(members))
+    )
+    technical = Counter(
+        r.rna_technical_replicates if table == "S2" else r.protein_technical_replicates
+        for r in rows
+    )
+    assert {
+        "samples": len(rows),
+        "groups": len(groups),
+        "group_sizes": dict(sorted(Counter(len(m) for m in groups.values()).items())),
+        "positions": dict(sorted(positions.items())),
+        "technical": dict(sorted(technical.items())),
+    } == REPLICATE_STRUCTURE[table]
+    assert all(len({r.batch for r in m}) == len(m) for m in groups.values())
+    assert len({r.sample for r in rows}) == len(rows)
+
+
 _BUILT = pytest.mark.skipif(
     not all(
         (_DATA_ROOT / "data/torchcell" / slug / "processed/lmdb").is_dir()
@@ -2033,6 +2149,15 @@ def test_the_dev_tree_builds_pin_the_measured_counts_and_pass_l0_to_l4(
         built, expected_count=records, gene_universe=universe, back_solve=evidence
     )
     assert report.passed, report.summary()
+    # #1171: each record is one sample, labeled by its Table S1 dataSet (the LMDB
+    # cursor walks keys lexicographically, so compare as sorted lists)
+    rows = _sheet_rows(c.FAMILY_TABLES[family])
+    assert sorted(
+        r["experiment"]["phenotype"]["replicate_id"] for r in built
+    ) == sorted(row.sample for row in rows)
+    assert {r["reference"]["phenotype_reference"]["replicate_id"] for r in built} == {
+        None
+    }
 
 
 # --------------------------------------------------------------------------- #

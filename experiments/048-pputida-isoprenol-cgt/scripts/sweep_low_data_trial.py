@@ -246,7 +246,11 @@ def write_summary(rows: list[dict[str, Any]]) -> str:
     import pandas as pd
 
     frame = pd.DataFrame(rows)
-    frame = frame.sort_values("test_spearman", ascending=False)
+    # Sorted by VALIDATION Spearman, not test: a table ordered by the held-out
+    # score reads as a ranking of the configurations, and ordering by the number
+    # being reported is how a selection decision gets made on the test set
+    # without anyone intending it.
+    frame = frame.sort_values("val_spearman", ascending=False)
     path = osp.join(RESULTS, "sweep_summary.csv")
     frame.to_csv(path, index=False)
     return path
@@ -312,10 +316,16 @@ def main() -> None:
         if rows:
             print(f"stage 1 summary -> {write_summary(rows)}")
 
+        # Promote on VALIDATION Spearman. Ranking on the test score, which this
+        # did until 2026-11-24, chooses which configurations get replicated using
+        # the held-out set, so "the best three configurations" comes out
+        # optimistically biased even though each cell's own test score stays an
+        # honest held-out measurement. The design pass's stage 2 ran under the
+        # old key and its three promoted tags are recorded as test-selected.
         ranked = sorted(
             {row["tag"] for row in rows},
             key=lambda tag: max(
-                row["test_spearman"] for row in rows if row["tag"] == tag
+                row["val_spearman"] for row in rows if row["tag"] == tag
             ),
             reverse=True,
         )

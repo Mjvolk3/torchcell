@@ -69,6 +69,24 @@ REFUSED. Three time courses whose strain (SMY10, SMY19, SMY22) has no Table EV1 
 arrays. Their genotypes are stated only in McIsaac 2011/2012, which are not mirrored, and
 the record's reference genome needs the strain's background, which has no typed gap, so
 the refusal stays until a carrier exists.
+
+REPLICATES (2026.11.24, #1178). A record is one array of one chemostat culture at one
+time: each culture is one time course, and the fifteen repeated induction experiments
+("repeated at least once ... to verify reproducibility") are separate courses, so
+separate records. GEO GSE142864 carries 1,768 samples, three more than the arrays it
+shares with the release: a second hybridization at t = 0 of three courses
+(``GEO_REPEAT_T0``). Each is the same culture at the same time as its course's t0
+array, a technical repeat under the per-replicate policy, and the release does not
+carry it apart: the Methods aggregate spots "for each gene at a given time point within
+an experiment", and on the series matrices neither t0 hybridization alone reproduces
+the released t0 of its course (median |delta log2| 0.022 to 0.094 over 5,307 genes,
+against a median of 0.0022 and a 99th percentile of 0.0093 over the 208 other t0
+arrays, whose maximum is 0.025; the exact combining rule needs the per-spot files; script
+``experiments/036-dataset-fixes-before-kg-build/scripts/hackett2020_repeat_t0_check.py``).
+The released t0 is the authors' value of that culture at t = 0 and stays the one record;
+the verifier accounts for every GEO sample (``geo_repeat_t0_accounted``). The series
+matrices are not read for values: their VALUE is one log2 ratio per Agilent probe
+(6,316 probe ids, no gene key and no channel intensities), not the record's layers.
 """
 
 from __future__ import annotations
@@ -276,6 +294,58 @@ EXCEL_DATE_VALUE = datetime(2019, 10, 1)
 UNLISTED_STRAINS = ("SMY10", "SMY19", "SMY22")
 REFUSAL_UNLISTED_STRAIN = "strain_not_in_table_ev1"
 
+
+class GeoRepeatT0(BaseModel):
+    """A GEO sample that is a second t = 0 hybridization of a released time course.
+
+    Not a record: the same culture at the same time as the course's t0 array, and the
+    released t0 of the course is the authors' value with it (module docstring,
+    REPLICATES). ``title`` and ``strain`` are GEO's, verbatim.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    gsm: str
+    title: str
+    platform: str
+    strain: str
+    primary_gsm: str
+    primary_title: str
+    quote_key: str
+
+
+#: The three repeat t = 0 hybridizations GEO carries (series-matrix headers, both
+#: platforms); the verifier requires GEO's repeat titles to be exactly these.
+GEO_REPEAT_T0: tuple[GeoRepeatT0, ...] = (
+    GeoRepeatT0(
+        gsm="GSM4245040",
+        title="SMY57_HAP1_t0_rep",
+        platform="GPL16244",
+        strain="SMY57",
+        primary_gsm="GSM4245039",
+        primary_title="SMY57_HAP1_t0",
+        quote_key="geo_repeat_t0_smy57",
+    ),
+    GeoRepeatT0(
+        gsm="GSM4245184",
+        title="SMY26_MSN2__rep_t0",
+        platform="GPL20785",
+        strain="SMY26",
+        primary_gsm="GSM4245183",
+        primary_title="SMY26_MSN2_t0",
+        quote_key="geo_repeat_t0_smy26",
+    ),
+    GeoRepeatT0(
+        gsm="GSM4245196",
+        title="SMY27_MSN4_rep_t0",
+        platform="GPL20785",
+        strain="SMY27",
+        primary_gsm="GSM4245195",
+        primary_title="SMY27_MSN4_t0",
+        quote_key="geo_repeat_t0_smy27",
+    ),
+)
+
 INDUCER_UM = 1.0
 TEMPERATURE_C = 30.0
 VESSEL = "500 ml chemostat vessel (Infors Sixfors or Multifors)"
@@ -315,6 +385,17 @@ def _geo_sv(value: object, quote: str, note: str | None = None) -> SourcedValue:
         quote,
         uri=f"{RAW_DIR_REL}/{GEO_GPL20785_REL}",
         sha=GEO_GPL20785_SHA256,
+        note=note,
+    )
+
+
+def _geo16244_sv(value: object, quote: str, note: str | None = None) -> SourcedValue:
+    """A SourcedValue on the deposited GEO GSE142864 GPL16244 series matrix (gzip)."""
+    return _sv(
+        value,
+        quote,
+        uri=f"{RAW_DIR_REL}/{GEO_GPL16244_REL}",
+        sha=GEO_GPL16244_SHA256,
         note=note,
     )
 
@@ -407,6 +488,12 @@ Q_GEO = (
     "Microarray data, Gene Expression: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?"
     "acc $=$ GSE142864; http://idea.research.calicolabs.com."
 )
+Q_AGGREGATION = (
+    "For each microarray, we aggregated the data across individual spots. Specifically, "
+    "for each gene at a given time point within an experiment we aggregated the spot "
+    "values and measured the minimum value, maximum value, median value, and standard "
+    "deviation of the values."
+)
 Q_REPEATS = (
     "Fifteen induction experiments were repeated at least once using the same induced "
     "gene to either capture late changes in some experiments, confirm similar expression "
@@ -444,6 +531,9 @@ Q_GEO_METHIONINE = (
     "Methionine-limited cultures (McIsaac et al, 2012) were maintained at 7.5 mg/L "
     "methionine."
 )
+Q_GEO_REPEAT_SMY57 = "SMY57 inducing HAP1 at t0 replicate"
+Q_GEO_REPEAT_SMY26 = "SMY26 inducing MSN2 with estradiol at t0_2 minute timepoint"
+Q_GEO_REPEAT_SMY27 = "SMY27 inducing MSN4 with estradiol at t0_2 minute timepoint"
 # --- IDEA site page (the tall table's column dictionary) --------------------- #
 Q_SITE_TALL = (
     "For each of 10.4M gene expression observations, raw and progressively processed "
@@ -492,6 +582,9 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     "validation": _sv(10, Q_VALIDATION),
     "geo_accession": _sv("GSE142864", Q_GEO),
     "repeats": _sv("repeated time courses", Q_REPEATS),
+    "spot_aggregation": _sv(
+        "spots aggregated per gene, time point and experiment", Q_AGGREGATION
+    ),
     "noise_model": _appendix_sv("noise SD from the central quintile", Q_NOISE),
     "full_cleaned": _appendix_sv(1693, Q_FULL_CLEANED),
     "thresholded_timecourses": _appendix_sv(118134, Q_118134),
@@ -502,6 +595,9 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     "t0_before_inducer": _geo_sv("t = 0 sampled before estradiol", Q_GEO_T0),
     "background_s288c": _geo_sv("S288C", Q_GEO_BACKGROUND),
     "methionine_limitation": _geo_sv("7.5 mg/L methionine", Q_GEO_METHIONINE),
+    "geo_repeat_t0_smy57": _geo16244_sv("GSM4245040", Q_GEO_REPEAT_SMY57),
+    "geo_repeat_t0_smy26": _geo_sv("GSM4245184", Q_GEO_REPEAT_SMY26),
+    "geo_repeat_t0_smy27": _geo_sv("GSM4245196", Q_GEO_REPEAT_SMY27),
     "site_tall": _site_sv("tall table, raw and processed layers", Q_SITE_TALL),
     "site_green": _site_sv("green_median = reference channel", Q_SITE_GREEN),
     "site_red": _site_sv("red_median = sample channel", Q_SITE_RED),

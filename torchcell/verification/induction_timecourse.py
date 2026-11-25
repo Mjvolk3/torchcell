@@ -30,7 +30,10 @@ here, so this family has its own rules:
   Dataset EV1, a separately hosted file), ``release_matches_paper`` (the release
   reproduces the paper's counts: 217 courses, 1,693 arrays, 6,175 genes, 118,134
   thresholded and 100,036 selected time series), ``geo_sample_coverage`` (every array
-  is a GEO GSE142864 sample of the same strain and time) and
+  is a GEO GSE142864 sample of the same strain and time), ``geo_repeat_t0_accounted``
+  (every GEO sample is a stored array's, a refused course's, or one of the three
+  repeat t = 0 hybridizations of a stored course, which the authors' t0 carries; the
+  repeat titles are exactly ``hackett2020.GEO_REPEAT_T0``) and
   ``induced_gene_containment`` (the induced genes are S288C genes).
 """
 
@@ -655,6 +658,7 @@ def verify_induction_timecourse(
     report.add(_ev1_result(shrunken_of, key_of, library_root))
     report.add(_paper_counts_result(release, ledger))
     report.add(_geo_result(stored, release, data_root))
+    report.add(_geo_repeat_result(stored, release, data_root))
     if sgd_genes is not None:
         outside = sorted(induced_genes - sgd_genes)
         report.add(
@@ -835,6 +839,72 @@ def _geo_result(
         else f"{len(missing)} arrays have no GEO sample",
         missing=missing[:20],
         n_geo_samples=sum(samples.values()),
+    )
+
+
+#: A GEO title that marks a second hybridization (``SMY57_HAP1_t0_rep``,
+#: ``SMY26_MSN2__rep_t0``).
+_GEO_REPEAT = re.compile(r"(?:_rep_t[0-9.]+|_rep)$")
+
+
+def _stored_strain_times(
+    stored: Mapping[tuple[str, float], int], raw: Path, release: ReleaseIndex
+) -> set[tuple[str, float]]:
+    """(GEO strain, minutes) of every stored array, the pairing ``_geo_result`` uses."""
+    tables = h.read_strain_table(raw / h.STRAINS_REL)
+    prediction = {
+        h.parse_strain(row).insertion.gene_token.upper(): name  # type: ignore[union-attr]
+        for name, row in tables.items()
+        if row.strain_type == "Prediction"
+    }
+    out: set[tuple[str, float]] = set()
+    for tc, minutes in stored:
+        strain = release.course_strain.get(tc) or prediction[tc.split("_")[0].upper()]
+        out.add((strain, minutes))
+    return out
+
+
+def _geo_repeat_result(
+    stored: Mapping[tuple[str, float], int], release: ReleaseIndex, data_root: Path
+) -> LevelResult:
+    """Every GEO sample is accounted for, the three repeat t0 hybridizations included.
+
+    A sample is a stored array's (its strain and minutes are a stored array's), a
+    refused course's (strain without a Table EV1 row), or a repeat t = 0 hybridization
+    of a stored course. The repeat titles must be exactly ``h.GEO_REPEAT_T0``, each at a
+    stored t = 0 of its strain: the same culture at the same time as that course's t0
+    array, inside the authors' released t0, so not a record of its own.
+    """
+    raw = data_root / h.RAW_DIR_REL
+    samples = geo_samples(raw / rel for rel in (h.GEO_GPL16244_REL, h.GEO_GPL20785_REL))
+    covered = _stored_strain_times(stored, raw, release)
+    expected = {r.title: r.strain for r in h.GEO_REPEAT_T0}
+    repeats: dict[str, str] = {}
+    refused = 0
+    unaccounted: list[str] = []
+    for (strain, minutes, title), n in samples.items():
+        if _GEO_REPEAT.search(title):
+            repeats[title] = strain
+            if minutes != 0.0 or (strain, 0.0) not in covered:
+                unaccounted.append(title)
+        elif strain in h.UNLISTED_STRAINS:
+            refused += n
+        elif (strain, minutes) not in covered:
+            unaccounted.append(title)
+    passed = repeats == expected and not unaccounted
+    return _result(
+        Level.L4,
+        "geo_repeat_t0_accounted",
+        passed,
+        f"all {sum(samples.values())} GEO samples accounted for: stored arrays, "
+        f"{refused} of refused courses, {len(repeats)} repeat t0 hybridizations of "
+        "stored courses (inside the authors' t0, not records)"
+        if passed
+        else f"repeat titles {sorted(repeats)} vs {sorted(expected)}; "
+        f"{len(unaccounted)} samples unaccounted",
+        repeat_titles=sorted(repeats),
+        n_refused_course_samples=refused,
+        unaccounted=unaccounted[:20],
     )
 
 

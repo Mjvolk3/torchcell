@@ -1,0 +1,164 @@
+{
+  "sha256": {
+    "data/GSE142864-GPL16244_series_matrix.txt.gz": "871d1fddba1a32d2152d1dd6117d57b1b00876221a075f72ac54d8a50489cb08",
+    "data/GSE142864-GPL20785_series_matrix.txt.gz": "eed815375636378282ff082f5ecc93309a1f9499393d66f920bdeaacb7ff4f57",
+    "data/idea_tall_expression_data.zip": "2fec89f98c602049f2964ca80821d540b50e579fe799d8694fd742731830accc"
+  },
+  "n_geo_samples": 1768,
+  "n_repeat_samples": 3,
+  "n_probes": 6316,
+  "n_paired_arrays_gpl16244": 1438,
+  "n_probes_paired_r95": 6145,
+  "n_genes_one_probe_r99": 5307,
+  "value_slope_on_idea_log2_ratio": 0.9922663312662913,
+  "value_intercept": -0.0006020309487141047,
+  "value_pearson": 0.9965594385128652,
+  "calibration_n_arrays": 1651,
+  "calibration_quantiles": {
+    "q05": 0.00043949318533265114,
+    "q25": 0.0006785887925962845,
+    "q50": 0.0009794895344933108,
+    "q75": 0.001805295448820493,
+    "q95": 0.004308139843055208,
+    "q99": 0.008917313285787664,
+    "q100": 0.09352697551888345
+  },
+  "calibration_t0_n_arrays": 208,
+  "calibration_t0_quantiles": {
+    "q05": 0.0005723137058983307,
+    "q25": 0.0012337388734027649,
+    "q50": 0.002215100775442194,
+    "q75": 0.0034871489134364747,
+    "q95": 0.005234645226374253,
+    "q99": 0.009324099423963011,
+    "q100": 0.02510758494745513
+  },
+  "calibration_t0_at_or_above_smallest_course_diff": [
+    "SMY2085_MBP1_t0 (GSM4245399) 0.0251"
+  ],
+  "courses": [
+    {
+      "strain": "SMY57",
+      "tf": "HAP1",
+      "primary": {
+        "gsm": "GSM4245039",
+        "platform": "GPL16244",
+        "title": "SMY57_HAP1_t0",
+        "source": "SMY57 inducing HAP1 at t0",
+        "strain": "SMY57",
+        "tf": "HAP1",
+        "minutes": 0.0,
+        "repeat": false,
+        "supplementary_file": "GSM4245039_SG15074465_251632211067_S001_GE2_1200_Jun14_PEG200_1_1_HAP1_t0.txt.gz"
+      },
+      "repeat": {
+        "gsm": "GSM4245040",
+        "platform": "GPL16244",
+        "title": "SMY57_HAP1_t0_rep",
+        "source": "SMY57 inducing HAP1 at t0 replicate",
+        "strain": "SMY57",
+        "tf": "HAP1",
+        "minutes": 0.0,
+        "repeat": true,
+        "supplementary_file": "GSM4245040_SG15074465_251632211067_S001_GE2_1200_Jun14_PEG200_1_2_HAP1_t0.txt.gz"
+      },
+      "n_genes": 5307,
+      "median_abs_diff_primary": 0.09352697551888345,
+      "median_abs_diff_repeat": 0.023888072678692432,
+      "median_abs_diff_mean_of_both": 0.05150374662436541,
+      "pearson_primary_vs_repeat": 0.9267948686688275,
+      "later_arrays_median_abs_diff": {
+        "15": 0.013067183220948353,
+        "30": 0.002022300492593665,
+        "60": 0.009526659828409112,
+        "90": 0.019953350713235424
+      }
+    },
+    {
+      "strain": "SMY26",
+      "tf": "MSN2",
+      "primary": {
+        "gsm": "GSM4245183",
+        "platform": "GPL20785",
+        "title": "SMY26_MSN2_t0",
+        "source": "SMY26 inducing MSN2 with estradiol at t0 minute timepoint",
+        "strain": "SMY26",
+        "tf": "MSN2",
+        "minutes": 0.0,
+        "repeat": false,
+        "supplementary_file": "GSM4245183_118643.txt.gz"
+      },
+      "repeat": {
+        "gsm": "GSM4245184",
+        "platform": "GPL20785",
+        "title": "SMY26_MSN2__rep_t0",
+        "source": "SMY26 inducing MSN2 with estradiol at t0_2 minute timepoint",
+        "strain": "SMY26",
+        "tf": "MSN2",
+        "minutes": 0.0,
+        "repeat": true,
+        "supplementary_file": "GSM4245184_118644.txt.gz"
+      },
+      "n_genes": 5307,
+      "median_abs_diff_primary": 0.03241562438521911,
+      "median_abs_diff_repeat": 0.04916547021840795,
+      "median_abs_diff_mean_of_both": 0.01354196173177391,
+      "pearson_primary_vs_repeat": 0.9700791356435764,
+      "later_arrays_median_abs_diff": {
+        "5": 0.0008989188596236902,
+        "7.5": 0.0007410866111542402,
+        "10": 0.00030950150705122415,
+        "12.5": 0.0009063847089521015,
+        "15": 0.0008788409294391286,
+        "20": 0.000563573375198587,
+        "30": 0.00048204919066013874,
+        "45": 0.00045709974310814694,
+        "60": 0.0004254153830451912,
+        "90": 0.0005744258097280797
+      }
+    },
+    {
+      "strain": "SMY27",
+      "tf": "MSN4",
+      "primary": {
+        "gsm": "GSM4245195",
+        "platform": "GPL20785",
+        "title": "SMY27_MSN4_t0",
+        "source": "SMY27 inducing MSN4 with estradiol at t0 minute timepoint",
+        "strain": "SMY27",
+        "tf": "MSN4",
+        "minutes": 0.0,
+        "repeat": false,
+        "supplementary_file": "GSM4245195_118655.txt.gz"
+      },
+      "repeat": {
+        "gsm": "GSM4245196",
+        "platform": "GPL20785",
+        "title": "SMY27_MSN4_rep_t0",
+        "source": "SMY27 inducing MSN4 with estradiol at t0_2 minute timepoint",
+        "strain": "SMY27",
+        "tf": "MSN4",
+        "minutes": 0.0,
+        "repeat": true,
+        "supplementary_file": "GSM4245196_118656.txt.gz"
+      },
+      "n_genes": 5307,
+      "median_abs_diff_primary": 0.02260086253747262,
+      "median_abs_diff_repeat": 0.022130163015666865,
+      "median_abs_diff_mean_of_both": 0.012611050863970585,
+      "pearson_primary_vs_repeat": 0.9816632338174194,
+      "later_arrays_median_abs_diff": {
+        "5": 0.0005266632022549178,
+        "7.5": 0.00042940041709455673,
+        "10": 0.0010636425532309923,
+        "12.5": 0.0003488348484370629,
+        "15": 0.0003538041957908411,
+        "20": 0.0004653664225543752,
+        "30": 0.0003203497812650502,
+        "45": 0.00039934649888317963,
+        "60": 0.0003371270420354233,
+        "90": 0.0012278591002823358
+      }
+    }
+  ]
+}

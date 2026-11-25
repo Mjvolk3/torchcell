@@ -1,4 +1,5 @@
-# Lian 2019 MAGIC screen: 266,304 (guide, round) records across three CRISPR modalities.
+# Lian 2019 MAGIC screen: 798,912 (guide, round, biological replicate) records across
+# three CRISPR modalities.
 # Each record's genotype is a 1-/2-/3-perturbation mixed-modality combo (the screened
 # guide plus the round's accumulated integrated edits), and the host rides on the
 # reference genome's typed bAID StrainBackground (its serialized_data on the "genome"

@@ -2248,7 +2248,8 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "env_chemgen_wildenhain2015": 448655,
         "env_chemgen_auesukaree2009": 525,
         "env_chemgen_smith2006": 14310,
-        "crispr_magic_lian2019": 266304,
+        # #1177: one record per (guide, round, biological replicate), 3x the mean build
+        "crispr_magic_lian2019": 798912,
         "crispri_mormino2022": 12,
         "env_chemgen_costanzo2021": 61640,
         "env_chemgen_hillenmeyer2008_het": 2963683,

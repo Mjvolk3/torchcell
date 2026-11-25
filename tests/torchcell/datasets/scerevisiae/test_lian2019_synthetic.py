@@ -3,8 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_lian2019_synthetic.py
 """Hermetic end-to-end build of ``CrisprMagicLian2019Dataset`` from a TSV and a design xlsx.
 
-``guide_enrichment_final.tsv`` (``gene, mod, spacer, is_control, corrupted_gene,
-r{1,2,3}_log2fc_mean, r{1,2,3}_log2fc_sd``) and Supplementary Data 3
+``guide_enrichment_replicates.tsv`` (``gene, mod, spacer, is_control, corrupted_gene,
+r{1,2,3}_rep{1,2,3}_log2fc``) and Supplementary Data 3
 (``41467_2019_13621_MOESM5_ESM.xlsx``, one ``Sequence`` row per CRISPRd row of the TSV,
 in order) are written under ``<root>/raw/`` so PyG never calls ``download()``;
 ``process()`` runs once against a duck-typed genome stub carrying ``gene_set``,
@@ -12,41 +12,44 @@ in order) are written under ``<root>/raw/`` so PyG never calls ``download()``;
 authority for every mapping: PDR1 = YGL013C, SIZ1 = YDR409W, SAP30 = YMR263W,
 NAT1 = YDL040C.
 
-TSV rows, in file order (means/SDs as r1, r2, r3):
+TSV rows, in file order (each round's three biological replicates):
 
-===  =============  ===  ===============  =====  ========  ============  ============  ============
-row  gene           mod  spacer           ctrl   corrupt   r1            r2            r3
-===  =============  ===  ===============  =====  ========  ============  ============  ============
-0    PDR1           i    20 nt            no     no        0.5 / 0.1     1.2 / 0.2     2.5 / 0.3
-1    SIZ1           i    20 nt            no     no        1.0 / 0.1     0.4 / 0.05    0.2 / 0.01
-2    sap30          d    44 nt (lower)    no     no        0.9 / inf     blank         -0.3 / blank
-3    ctrl_random_1  a    23 nt            yes    no        0.0 / 0.1     0.0 / 0.1     0.0 / 0.1
-4    2-Sep          a    23 nt            no     yes       0.1 / 0.1     0.1 / 0.1     0.1 / 0.1
-5    RDN25-1        a    23 nt            no     no        0.2 / 0.1     0.2 / 0.1     0.2 / 0.1
-6    NAT1           a    23 nt            no     no        0.1 / 0.02    0.7 / 0.1     blank
-===  =============  ===  ===============  =====  ========  ============  ============  ============
+===  =============  ===  ===============  =====  ========  ===============  ===============  ================
+row  gene           mod  spacer           ctrl   corrupt   r1 rep 1/2/3     r2 rep 1/2/3     r3 rep 1/2/3
+===  =============  ===  ===============  =====  ========  ===============  ===============  ================
+0    PDR1           i    20 nt            no     no        0.4 / 0.5 / 0.6  1.1 / 1.2 / 1.3  2.4 / 2.5 / 2.6
+1    SIZ1           i    20 nt            no     no        0.9 / 1.0 / 1.1  0.3 / 0.4 / 0.5  0.1 / 0.2 / 0.3
+2    sap30          d    44 nt (lower)    no     no        0.8 / inf / 1.0  blank            -0.3 / -0.4 / blank
+3    ctrl_random_1  a    23 nt            yes    no        0.0 each         0.0 each         0.0 each
+4    2-Sep          a    23 nt            no     yes       0.1 each         0.1 each         0.1 each
+5    RDN25-1        a    23 nt            no     no        0.2 each         0.2 each         0.2 each
+6    NAT1           a    23 nt            no     no        0.1 each         0.6 / 0.7 / 0.8  blank
+===  =============  ===  ===============  =====  ========  ===============  ===============  ================
 
-Source records = 7 rows x 3 rounds = 21. Kept, in write order (row-major, round-minor):
-PDR1 r1/r2/r3 (records 0-2), SIZ1 r1 (3), SAP30 r1 and r3 (4, 5), NAT1 r1 and r2 (6, 7)
-= 8. Dropped 13 = control 1 x 3 + corrupted 1 x 3 + unresolved 1 x 3 (RDN25-1) + no
-enrichment value 2 (SAP30 r2, NAT1 r3) + own-background 2 (SIZ1 r2 and r3: SIZ1 is the
-integrated background of rounds 2 and 3).
+Source records = 7 rows x 3 rounds x 3 replicates = 63. Kept, in write order (row, then
+round, then replicate): PDR1 all nine (records 0-8), SIZ1 round 1 (9-11), SAP30 round 1
+replicates 1 and 3 (12, 13) and round 3 replicates 1 and 2 (14, 15), NAT1 round 1 (16-18)
+and round 2 (19-21) = 22. Dropped 41 = control 9 + corrupted 9 + unresolved 9 (RDN25-1)
++ no enrichment value 5 (SAP30's ``inf`` round-1 replicate, its blank round 2, its blank
+round-3 replicate) + own-background 9 (SIZ1 rounds 2 and 3, NAT1 round 3: both are
+integrated backgrounds of those rounds).
 
 The CRISPRd cassette is 121 nt: the upper-cased 44 nt barcode + 56 nt of donor tail +
-a 21 nt spacer; the stored guide is the last 21 nt and the donor the first 100 nt. An
-``inf`` or blank SD stores ``environment_response_uncertainty`` None with no type, so no
-SE; a finite SD is ``sample_sd`` with n = 3, SE = SD / sqrt(3) (0.1 -> 0.057735...).
+a 21 nt spacer; the stored guide is the last 21 nt and the donor the first 100 nt. Every
+record is ONE biological replicate: ``n_samples = 1``, no uncertainty, no type and no SE
+(three typed ``not_applicable_single_measurement`` gaps), and ``replicate_id`` the
+authors' own library pair for that (round, replicate), e.g. ``2Ff1a/2Ff1b``.
 Round 2 records carry the SIZ1 CRISPRi background, round 3 SIZ1 CRISPRi + NAT1 CRISPRa,
 each with no guide; the host is the one typed bAID ``StrainBackground`` on every round's
-reference. Furfural 5 / 10 / 15 mM by round in SED-URA/G418 at 30 C, 50 mL in a shaken
-250 mL baffled flask.
+reference, whose zero baseline stays the AGGREGATE over the three replicates (n = 3,
+``replicate_id`` None). Furfural 5 / 10 / 15 mM by round in SED-URA/G418 at 30 C, 50 mL
+in a shaken 250 mL baffled flask.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
-import math
 import os
 import re
 import socket
@@ -82,7 +85,6 @@ from torchcell.datamodels.schema import (
     StrainEnvironmentResponseExperimentReference,
     StrainReferenceGenome,
     Temperature,
-    UncertaintyType,
 )
 from torchcell.datamodels.strain_background import baid_background
 from torchcell.datasets.scerevisiae import lian2019 as ln
@@ -100,6 +102,7 @@ from torchcell.sequence.genome.registry import (
     SGD_S288C_R64_GENBANK_ACCESSION,
 )
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
+from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 _GENES = {"YGL013C", "YDR409W", "YMR263W", "YDL040C"}
 _STANDARD = {
@@ -155,57 +158,20 @@ _COLUMNS = [
     "spacer",
     "is_control",
     "corrupted_gene",
-    "r1_log2fc_mean",
-    "r1_log2fc_sd",
-    "r2_log2fc_mean",
-    "r2_log2fc_sd",
-    "r3_log2fc_mean",
-    "r3_log2fc_sd",
+    *(f"r{rnd}_rep{rep}_log2fc" for rnd in (1, 2, 3) for rep in (1, 2, 3)),
 ]
 _ROWS: list[list[Any]] = [
-    ["PDR1", "i", _PDR1_SPACER, False, False, 0.5, 0.1, 1.2, 0.2, 2.5, 0.3],
-    ["SIZ1", "i", _SIZ1_SPACER, False, False, 1.0, 0.1, 0.4, 0.05, 0.2, 0.01],
-    ["sap30", "d", _BARCODE, False, False, 0.9, "inf", "", "", -0.3, ""],
-    [
-        "ctrl_random_1",
-        "a",
-        "GGGGTTTTAAAACCCCGGGGTTT",
-        True,
-        False,
-        0.0,
-        0.1,
-        0.0,
-        0.1,
-        0.0,
-        0.1,
-    ],
-    [
-        "2-Sep",
-        "a",
-        "TTTTAAAACCCCGGGGTTTTAAA",
-        False,
-        True,
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-        0.1,
-    ],
-    [
-        "RDN25-1",
-        "a",
-        "AAAATTTTAAAATTTTAAAATTT",
-        False,
-        False,
-        0.2,
-        0.1,
-        0.2,
-        0.1,
-        0.2,
-        0.1,
-    ],
-    ["NAT1", "a", _NAT1_SPACER, False, False, 0.1, 0.02, 0.7, 0.1, "", ""],
+    ["PDR1", "i", _PDR1_SPACER, False, False]
+    + [0.4, 0.5, 0.6, 1.1, 1.2, 1.3, 2.4, 2.5, 2.6],
+    ["SIZ1", "i", _SIZ1_SPACER, False, False]
+    + [0.9, 1.0, 1.1, 0.3, 0.4, 0.5, 0.1, 0.2, 0.3],
+    ["sap30", "d", _BARCODE, False, False]
+    + [0.8, "inf", 1.0, "", "", "", -0.3, -0.4, ""],
+    ["ctrl_random_1", "a", "GGGGTTTTAAAACCCCGGGGTTT", True, False] + [0.0] * 9,
+    ["2-Sep", "a", "TTTTAAAACCCCGGGGTTTTAAA", False, True] + [0.1] * 9,
+    ["RDN25-1", "a", "AAAATTTTAAAATTTTAAAATTT", False, False] + [0.2] * 9,
+    ["NAT1", "a", _NAT1_SPACER, False, False]
+    + [0.1, 0.1, 0.1, 0.6, 0.7, 0.8, "", "", ""],
 ]
 
 
@@ -213,7 +179,7 @@ def _write_raw(raw: Path) -> None:
     """Write the enrichment TSV and the one-row CRISPRd design workbook."""
     raw.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(_ROWS, columns=_COLUMNS).to_csv(
-        raw / ln.TSV_FILENAME, sep="\t", index=False
+        raw / ln.REPLICATES_TSV_FILENAME, sep="\t", index=False
     )
     pd.DataFrame({"Gene": ["SAP30"], "Sequence": [_CASSETTE]}).to_excel(
         raw / ln.DESIGN_D_FILENAME, index=False
@@ -287,23 +253,35 @@ _BACKGROUND: dict[int, list[Any]] = {
 }
 
 
-def _phenotype(mean: float, sd: float | None) -> EnvironmentResponsePhenotype:
+def _phenotype(value: float, rnd: int, replicate: int) -> EnvironmentResponsePhenotype:
+    """One replicate's value: n = 1, no dispersion, the authors' library-pair label."""
     return EnvironmentResponsePhenotype(
         measurement_type=MeasurementType.log2_ratio,
         assay_type=AssayType.pooled_competitive_growth_barcode,
-        environment_response=mean,
-        environment_response_uncertainty=sd,
-        environment_response_uncertainty_type=(
-            UncertaintyType.sample_sd if sd is not None else None
-        ),
-        n_samples=3,
+        environment_response=value,
+        environment_response_uncertainty=None,
+        environment_response_uncertainty_type=None,
+        n_samples=1,
         sample_unit=SampleUnit.biological_replicate,
         units=ln.UNITS,
+        replicate_id=ln.REPLICATE_LIBRARY[rnd][replicate],
+        provenance_gaps=[
+            ProvenanceGap(
+                field=field,
+                reason=ProvenanceGapReason.not_applicable_single_measurement,
+                note=ln._SINGLE_REPLICATE_NOTE,
+            )
+            for field in (
+                "environment_response_uncertainty",
+                "environment_response_uncertainty_type",
+                "environment_response_se",
+            )
+        ],
     )
 
 
 def _experiment(
-    foreground: Any, rnd: int, mean: float, sd: float | None
+    foreground: Any, rnd: int, replicate: int, value: float
 ) -> StrainEnvironmentResponseExperiment:
     """The record: the screened guide plus the round's accumulated integrated edits.
 
@@ -315,7 +293,7 @@ def _experiment(
         dataset_name="CrisprMagicLian2019Dataset",
         genotype=Genotype(perturbations=[foreground, *_BACKGROUND[rnd]]),
         environment=_ENVIRONMENT[rnd],
-        phenotype=_phenotype(mean, sd),
+        phenotype=_phenotype(value, rnd, replicate),
     )
 
 
@@ -369,17 +347,34 @@ _NAT1 = CrisprActivationPerturbation(
         effector="dLbCas12a-VP", guide_sequence=_NAT1_SPACER, n_guides=1
     ),
 )
-_EXPECTED = [
-    _experiment(_PDR1, 1, 0.5, 0.1),
-    _experiment(_PDR1, 2, 1.2, 0.2),
-    _experiment(_PDR1, 3, 2.5, 0.3),
-    _experiment(_SIZ1, 1, 1.0, 0.1),
-    _experiment(_SAP30, 1, 0.9, None),
-    _experiment(_SAP30, 3, -0.3, None),
-    _experiment(_NAT1, 1, 0.1, 0.02),
-    _experiment(_NAT1, 2, 0.7, 0.1),
+#: ``(foreground, round, replicate, value)`` in the loader's write order.
+_EXPECTED_CELLS: list[tuple[Any, int, int, float]] = [
+    (_PDR1, 1, 1, 0.4),
+    (_PDR1, 1, 2, 0.5),
+    (_PDR1, 1, 3, 0.6),
+    (_PDR1, 2, 1, 1.1),
+    (_PDR1, 2, 2, 1.2),
+    (_PDR1, 2, 3, 1.3),
+    (_PDR1, 3, 1, 2.4),
+    (_PDR1, 3, 2, 2.5),
+    (_PDR1, 3, 3, 2.6),
+    (_SIZ1, 1, 1, 0.9),
+    (_SIZ1, 1, 2, 1.0),
+    (_SIZ1, 1, 3, 1.1),
+    (_SAP30, 1, 1, 0.8),
+    (_SAP30, 1, 3, 1.0),
+    (_SAP30, 3, 1, -0.3),
+    (_SAP30, 3, 2, -0.4),
+    (_NAT1, 1, 1, 0.1),
+    (_NAT1, 1, 2, 0.1),
+    (_NAT1, 1, 3, 0.1),
+    (_NAT1, 2, 1, 0.6),
+    (_NAT1, 2, 2, 0.7),
+    (_NAT1, 2, 3, 0.8),
 ]
-_EXPECTED_ROUNDS = [1, 2, 3, 1, 1, 3, 1, 2]
+_EXPECTED = [_experiment(*cell) for cell in _EXPECTED_CELLS]
+_N_RECORDS = len(_EXPECTED)
+_EXPECTED_ROUNDS = [cell[1] for cell in _EXPECTED_CELLS]
 
 
 def _interned_entries(root: Path) -> int:
@@ -394,37 +389,53 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def test_build_writes_eight_guide_round_records_with_round_backgrounds(
+def test_build_writes_one_record_per_guide_round_replicate(
     dataset: ln.CrisprMagicLian2019Dataset,
 ) -> None:
-    """The eight kept (guide, round) cells, in row-major then round order, each equal to
-    a hand-built ``StrainEnvironmentResponseExperiment``: the modality's effector and leaf
-    class (i -> ``dSpCas9-RD1152`` CRISPRi, a -> ``dLbCas12a-VP`` CRISPRa, d -> ``SaCas9``
-    CRISPRd), the round's integrated background with no guide, furfural 5/10/15 mM, and
-    the SE derived from a finite SD with n = 3 (0.1 / sqrt(3) = 0.057735...). The CRISPRd
-    row stores the last 21 nt of the 121 nt cassette as the guide and the first 100 nt
-    (the upper-cased barcode + 56 nt tail) as the donor; its ``inf`` and blank SDs store
-    no uncertainty, no type and no SE. ``sap30`` is written lowercase in the TSV and comes
-    back as the genome's ``SAP30``.
+    """The 22 kept (guide, round, replicate) cells, in row-major then round then replicate
+    order, each equal to a hand-built ``StrainEnvironmentResponseExperiment``: the
+    modality's effector and leaf class (i -> ``dSpCas9-RD1152`` CRISPRi, a ->
+    ``dLbCas12a-VP`` CRISPRa, d -> ``SaCas9`` CRISPRd), the round's integrated background
+    with no guide, furfural 5/10/15 mM, and that replicate's value verbatim with
+    ``n_samples = 1``, no uncertainty, no type, no derived SE and three typed
+    ``not_applicable_single_measurement`` gaps. ``replicate_id`` is the authors' own
+    library pair, so the three replicates of one (guide, round) are three distinct
+    records. The CRISPRd row stores the last 21 nt of the 121 nt cassette as the guide and
+    the first 100 nt (the upper-cased barcode + 56 nt tail) as the donor; ``sap30`` is
+    written lowercase in the TSV and comes back as the genome's ``SAP30``.
     """
-    assert len(dataset) == 8
-    assert [dataset[i]["experiment"] for i in range(8)] == [
+    assert len(dataset) == _N_RECORDS == 22
+    assert [dataset[i]["experiment"] for i in range(_N_RECORDS)] == [
         e.model_dump() for e in _EXPECTED
     ]
-    assert [
-        dataset[i]["experiment"]["phenotype"]["environment_response_se"]
-        for i in range(8)
-    ] == [
-        0.1 / math.sqrt(3),
-        0.2 / math.sqrt(3),
-        0.3 / math.sqrt(3),
-        0.1 / math.sqrt(3),
-        None,
-        None,
-        0.02 / math.sqrt(3),
-        0.1 / math.sqrt(3),
+    phenotypes = [dataset[i]["experiment"]["phenotype"] for i in range(_N_RECORDS)]
+    assert {p["environment_response_se"] for p in phenotypes} == {None}
+    assert {p["environment_response_uncertainty"] for p in phenotypes} == {None}
+    assert {p["environment_response_uncertainty_type"] for p in phenotypes} == {None}
+    assert {p["n_samples"] for p in phenotypes} == {1}
+    assert [p["replicate_id"] for p in phenotypes[:3]] == [
+        "Ff1a/Ff1b",
+        "Ff2a/Ff2b",
+        "Ff3a/Ff3b",
     ]
-    deletion = dataset[4]["experiment"]["genotype"]["perturbations"][0]
+    assert [p["replicate_id"] for p in phenotypes[3:6]] == [
+        "2Ff1a/2Ff1b",
+        "2Ff2a/2Ff2b",
+        "2Ff3a/2Ff3b",
+    ]
+    assert len({(p["replicate_id"], p["environment_response"]) for p in phenotypes}) > 1
+    assert {gap["field"] for gap in phenotypes[0]["provenance_gaps"]} == {
+        "environment_response_uncertainty",
+        "environment_response_uncertainty_type",
+        "environment_response_se",
+    }
+    assert {gap["reason"] for gap in phenotypes[0]["provenance_gaps"]} == {
+        "not_applicable_single_measurement"
+    }
+    # the three replicates of SAP30 round 1: the inf replicate is the one not stored
+    assert [p["environment_response"] for p in phenotypes[12:14]] == [0.8, 1.0]
+    assert [p["replicate_id"] for p in phenotypes[12:14]] == ["Ff1a/Ff1b", "Ff3a/Ff3b"]
+    deletion = dataset[12]["experiment"]["genotype"]["perturbations"][0]
     assert deletion["perturbation_type"] == "crispr_deletion"
     assert deletion["crispr"]["guide_sequence"] == _D_SPACER
     assert deletion["donor_sequence"] == _CASSETTE[:100]
@@ -432,30 +443,68 @@ def test_build_writes_eight_guide_round_records_with_round_backgrounds(
     # 1 / 2 / 3 perturbations by round: the round's accumulated integrated edits stay
     # in the genotype beside the screened guide.
     assert [
-        len(dataset[i]["experiment"]["genotype"]["perturbations"]) for i in range(8)
-    ] == [1, 2, 3, 1, 1, 3, 1, 2]
+        len(dataset[i]["experiment"]["genotype"]["perturbations"])
+        for i in range(_N_RECORDS)
+    ] == [1, 1, 1, 2, 2, 2, 3, 3, 3, 1, 1, 1, 1, 1, 3, 3, 1, 1, 1, 2, 2, 2]
     assert dataset[0]["publication"] == _PUBLICATION.model_dump()
 
 
-def test_drop_log_counts_guides_times_three_and_nan_before_own_background(
+def test_the_replicate_mean_reproduces_the_value_the_mean_build_stored(
     dataset: ln.CrisprMagicLian2019Dataset,
 ) -> None:
-    """Finding: the empty-value test (lian2019.py 777) runs before the own-background test
-    (780), so NAT1's blank round-3 cell is counted under
-    ``guide_round_has_no_enrichment_value`` although NAT1 is also round 3's integrated
-    background; the own-background rule therefore counts 2 (SIZ1 r2, SIZ1 r3), not 3.
+    """Grouping the new records by (genotype, environment) and averaging gives back what
+    the previous build stored for that (guide, round): PDR1's rounds average to 0.5, 1.2
+    and 2.5, the three numbers the mean table held for those cells. Nothing is
+    precomputed for query; the mean is this grouping.
+    """
+    grouped: dict[tuple[str, float], list[float]] = {}
+    for i in range(len(dataset)):
+        experiment = dataset[i]["experiment"]
+        # the screened guide is the one perturbation carrying a spacer; the round's
+        # integrated background edits carry none, and Genotype orders perturbations
+        # canonically rather than foreground-first
+        guides = [
+            p["crispr"]["guide_sequence"]
+            for p in experiment["genotype"]["perturbations"]
+            if p["crispr"]["guide_sequence"] is not None
+        ]
+        assert len(guides) == 1
+        guide = guides[0]
+        furfural = experiment["environment"]["perturbations"][0]["concentration"][
+            "value"
+        ]
+        grouped.setdefault((guide, furfural), []).append(
+            experiment["phenotype"]["environment_response"]
+        )
+    means = {key: sum(v) / len(v) for key, v in grouped.items()}
+    assert len(grouped[(_PDR1_SPACER, 5.0)]) == 3
+    for furfural, expected in ((5.0, 0.5), (10.0, 1.2), (15.0, 2.5)):
+        assert means[(_PDR1_SPACER, furfural)] == pytest.approx(expected)
+    # SAP30 round 1 kept two of three replicates, so its mean is over what was released
+    assert means[(_D_SPACER, 5.0)] == pytest.approx(0.9)
 
-    Guide-scoped rules multiply by the three rounds whatever the rows hold: control 3,
-    corrupted 3, unresolved 3 (item RDN25-1). 21 source, 8 kept, 13 dropped.
+
+def test_drop_log_counts_guides_times_nine_and_background_before_the_value(
+    dataset: ln.CrisprMagicLian2019Dataset,
+) -> None:
+    """The own-background test is round-scoped and now runs BEFORE the per-replicate value
+    test, so NAT1's three blank round-3 cells count as own-background (NAT1 is round 3's
+    integrated background) rather than as missing values: own-background 9, not 6. The
+    earlier mean build counted that cell the other way round, because its value test came
+    first.
+
+    Guide-scoped rules multiply by the nine (round, replicate) cells whatever the rows
+    hold: control 9, corrupted 9, unresolved 9 (item RDN25-1). 63 source, 22 kept, 41
+    dropped.
     """
     drop_log = json.loads(
         (Path(dataset.root) / "preprocess" / "dropped_records.json").read_text()
     )
     assert drop_log == {
         "dataset": "CrisprMagicLian2019Dataset",
-        "source_records": 21,
-        "kept_records": 8,
-        "dropped_records": 13,
+        "source_records": 63,
+        "kept_records": 22,
+        "dropped_records": 41,
         "rules": [
             {
                 "rule": "random_negative_control_guide",
@@ -464,7 +513,7 @@ def test_drop_log_counts_guides_times_three_and_nan_before_own_background(
                     "one of the 300 random negative-control guides (100 per library); "
                     "it targets no gene, so there is no genotype to key a record to"
                 ),
-                "n_records": 3,
+                "n_records": 9,
                 "items": [],
             },
             {
@@ -475,7 +524,7 @@ def test_drop_log_counts_guides_times_three_and_nan_before_own_background(
                     "in the released reference and the design library, so the target is "
                     "unrecoverable from our inputs"
                 ),
-                "n_records": 3,
+                "n_records": 9,
                 "items": [],
             },
             {
@@ -486,17 +535,20 @@ def test_drop_log_counts_guides_times_three_and_nan_before_own_background(
                     "current R64 ORF genome, so no gene entity exists to key the record "
                     "to"
                 ),
-                "n_records": 3,
+                "n_records": 9,
                 "items": ["RDN25-1"],
             },
             {
-                "rule": "guide_round_has_no_enrichment_value",
-                "scope": "guide_round",
+                "rule": "guide_round_replicate_has_no_enrichment_value",
+                "scope": "guide_round_replicate",
                 "description": (
-                    "the guide was not detected in this round's before/after libraries, "
-                    "so the round has no log2 enrichment for it"
+                    "the guide was not detected in this replicate's before/after "
+                    "libraries, so that replicate has no finite log2 enrichment for it. "
+                    "A guide the count matrix holds at all carries all nine (round, "
+                    "replicate) values, so in practice this rule fires for the 9,264 "
+                    "reference guides that appear in no run"
                 ),
-                "n_records": 2,
+                "n_records": 5,
                 "items": [],
             },
             {
@@ -506,9 +558,10 @@ def test_drop_log_counts_guides_times_three_and_nan_before_own_background(
                     "in this round the guide's target gene is already an integrated "
                     "background perturbation, so the foreground edit is redundant and "
                     "the strain signature would collapse to empty once the background "
-                    "is subtracted"
+                    "is subtracted. Counted in records, which is three (one per "
+                    "replicate) per skipped (guide, round)"
                 ),
-                "n_records": 2,
+                "n_records": 9,
                 "items": [],
             },
         ],
@@ -519,8 +572,8 @@ def test_drop_log_counts_guides_times_three_and_nan_before_own_background(
 def test_one_reference_per_round_gene_set_manifest_and_interned_store(
     dataset: ln.CrisprMagicLian2019Dataset,
 ) -> None:
-    """Three references in first-sighting order (rounds 1, 2, 3) with member indices
-    [0, 3, 4, 6], [1, 7], [2, 5], each the typed bAID host with the round's furfural
+    """Three references in first-sighting order (rounds 1, 2, 3), each the typed bAID
+    host with the round's furfural
     environment and a zero log2FC baseline at n = 3. ``gene_set.json`` is the four ORFs
     sorted (the round backgrounds contribute SIZ1 and NAT1 as well); the build manifest
     names the slug, class, module, host and HEAD; ``interned`` holds 6 entries (three
@@ -532,14 +585,14 @@ def test_one_reference_per_round_gene_set_manifest_and_interned_store(
         ).read_text()
     )
     assert [entry["member_indices"] for entry in index] == [
-        [0, 3, 4, 6],
-        [1, 7],
-        [2, 5],
+        [0, 1, 2, 9, 10, 11, 12, 13, 16, 17, 18],
+        [3, 4, 5, 19, 20, 21],
+        [6, 7, 8, 14, 15],
     ]
     assert [entry["reference"] for entry in index] == [
         _reference(rnd).model_dump() for rnd in (1, 2, 3)
     ]
-    assert [dataset[i]["reference"] for i in range(8)] == [
+    assert [dataset[i]["reference"] for i in range(_N_RECORDS)] == [
         _reference(rnd).model_dump() for rnd in _EXPECTED_ROUNDS
     ]
     preprocess = Path(dataset.root) / "preprocess"
@@ -577,18 +630,18 @@ def test_store_reopens_without_a_genome_and_serves_the_getters(
     dataset: ln.CrisprMagicLian2019Dataset,
 ) -> None:
     """With ``processed/lmdb`` present a second instance on the same root skips both
-    ``download()`` and ``process()`` (no genome, raw files deleted): eight equal records,
+    ``download()`` and ``process()`` (no genome, raw files deleted): 22 equal records,
     ``get([2, 5])`` as a list, ``dataset[[2, 5]]`` as PyG's two-item subset,
-    ``transform_item`` rebuilding the typed round-3 CRISPRd record, ``repr``
-    ``CrisprMagicLian2019Dataset(8)``, and the inline hooks.
+    ``transform_item`` rebuilding the typed round-2 CRISPRi record, ``repr``
+    ``CrisprMagicLian2019Dataset(22)``, and the inline hooks.
     """
-    records = [dataset[i] for i in range(8)]
+    records = [dataset[i] for i in range(_N_RECORDS)]
     dataset.close_lmdb()
-    for name in (ln.TSV_FILENAME, ln.DESIGN_D_FILENAME):
+    for name in (ln.REPLICATES_TSV_FILENAME, ln.DESIGN_D_FILENAME):
         (Path(dataset.root) / "raw" / name).unlink()
     reopened = ln.CrisprMagicLian2019Dataset(root=dataset.root, genome=None)
-    assert len(reopened) == 8
-    assert [reopened[i] for i in range(8)] == records
+    assert len(reopened) == _N_RECORDS
+    assert [reopened[i] for i in range(_N_RECORDS)] == records
     assert reopened.get([2, 5]) == [records[2], records[5]]
     subset = reopened[[2, 5]]
     assert len(subset) == 2
@@ -598,10 +651,10 @@ def test_store_reopens_without_a_genome_and_serves_the_getters(
     subset.close_lmdb()
     assert reopened.transform_item(reopened[5]) == {
         "experiment": _EXPECTED[5],
-        "reference": _reference(3),
+        "reference": _reference(2),
         "publication": _PUBLICATION,
     }
-    assert repr(reopened) == "CrisprMagicLian2019Dataset(8)"
+    assert repr(reopened) == f"CrisprMagicLian2019Dataset({_N_RECORDS})"
     assert reopened.gene_set == _GENES
     with pytest.raises(NotImplementedError):
         reopened.create_experiment()
@@ -613,7 +666,7 @@ def test_store_reopens_without_a_genome_and_serves_the_getters(
 def test_genome_is_required_before_the_store_is_opened(tmp_path: Path) -> None:
     """With the raw files present and ``genome=None`` the resolver (line 696) raises the
     loader's message before ``_open_write_lmdb`` (752), so no ``processed/lmdb`` is left
-    behind and a retry with a genome builds the eight records.
+    behind and a retry with a genome builds the 22 records.
     """
     root = _root(tmp_path)
     with pytest.raises(
@@ -625,24 +678,50 @@ def test_genome_is_required_before_the_store_is_opened(tmp_path: Path) -> None:
         ln.CrisprMagicLian2019Dataset(root=str(root), genome=None)
     assert not (root / "processed" / "lmdb").exists()
     retry = ln.CrisprMagicLian2019Dataset(root=str(root), genome=_genome())
-    assert len(retry) == 8
+    assert len(retry) == _N_RECORDS
     retry.close_lmdb()
 
 
-def _staged_raw(tmp_path: Path, name: str) -> tuple[Path, str, str]:
-    """Write the fixture raw files to ``<tmp>/<name>``; return (dir, tsv sha, design sha)."""
+class _Staged:
+    """The four fixture sources ``deposit_raw_mirror`` takes, and their digests."""
+
+    def __init__(self, staging: Path) -> None:
+        self.dir = staging
+        self.replicates = staging / ln.REPLICATES_TSV_FILENAME
+        self.design = staging / ln.DESIGN_D_FILENAME
+        self.mean = staging / ln.TSV_FILENAME
+        self.runinfo = staging / ln.RUNINFO_FILENAME
+        self.mean.write_text("guide_id\tr1_log2fc_mean\n1_i_0PDR1\t0.5\n")
+        self.runinfo.write_text("Run,LibraryName\nSRR8293138,Ff1a\n")
+        self.replicates_sha = _sha256(self.replicates)
+        self.design_sha = _sha256(self.design)
+        self.mean_sha = _sha256(self.mean)
+        self.runinfo_sha = _sha256(self.runinfo)
+
+    def pin(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Re-pin all four module digests to this fixture's bytes."""
+        monkeypatch.setattr(ln, "REPLICATES_TSV_SHA256", self.replicates_sha)
+        monkeypatch.setattr(ln, "DESIGN_D_SHA256", self.design_sha)
+        monkeypatch.setattr(ln, "TSV_SHA256", self.mean_sha)
+        monkeypatch.setattr(ln, "RUNINFO_SHA256", self.runinfo_sha)
+
+    def deposit(self) -> Path:
+        return ln.deposit_raw_mirror(
+            enrichment_path=self.mean,
+            replicates_path=self.replicates,
+            runinfo_path=self.runinfo,
+            design_d_path=self.design,
+        )
+
+
+def _staged_raw(tmp_path: Path, name: str) -> _Staged:
+    """Write the fixture raw + mirror sources to ``<tmp>/<name>``."""
     staging = tmp_path / name
     _write_raw(staging)
-    return (
-        staging,
-        _sha256(staging / ln.TSV_FILENAME),
-        _sha256(staging / ln.DESIGN_D_FILENAME),
-    )
+    return _Staged(staging)
 
 
-def _expected_manifest(
-    tsv_sha: str, tsv_bytes: int, design_sha: str, design_bytes: int
-) -> Manifest:
+def _expected_manifest(staged: _Staged) -> Manifest:
     design_url = f"{ln._ESM_BASE}{ln.DESIGN_D_FILENAME}"
     reference_url = f"{ln._ESM_BASE}{ln.REFERENCE_FILENAME}"
     return Manifest(
@@ -656,8 +735,8 @@ def _expected_manifest(
             ArtifactRecord(
                 path=ln.TSV_REL,
                 role=ROLE_RAW_DATA,
-                bytes=tsv_bytes,
-                sha256=tsv_sha,
+                bytes=staged.mean.stat().st_size,
+                sha256=staged.mean_sha,
                 source="derived: SRA PRJNA504483 reprocessing",
                 processing=ProcessingRecord(
                     processor="experiments/016-lian-magic-reprocess/scripts/reproduce.sh",
@@ -679,17 +758,76 @@ def _expected_manifest(
                 ),
             ),
             ArtifactRecord(
+                path=ln.REPLICATES_TSV_REL,
+                role=ROLE_RAW_DATA,
+                bytes=staged.replicates.stat().st_size,
+                sha256=staged.replicates_sha,
+                source="derived: SRA PRJNA504483 reprocessing, per replicate",
+                processing=ProcessingRecord(
+                    processor=(
+                        "experiments/016-lian-magic-reprocess/scripts/"
+                        "replicate_enrichment.py"
+                    ),
+                    tool="torchcell lian-magic-reprocess pipeline",
+                    version="2026-11-24",
+                    params={
+                        "sra_project": "PRJNA504483",
+                        "n_runs": 21,
+                        "barcode_window": "read[27:70] (43 bp activation) | read[27:71] "
+                        "(44 bp interference/deletion), forward, exact match",
+                        "normalization": "CPM(+1) per library; per round per replicate "
+                        "log2(furfural-after / untreated-before), one column per (round, "
+                        "replicate); NO mean and NO SD",
+                        "replicate_pairing": "the authors' library labels from the SRA "
+                        "run report, 'a' stressed over 'b' untreated of the same "
+                        "replicate (Ff1a/Ff1b ... 3Ff3a/3Ff3b)",
+                        "verification": "the mean and sample SD over the three emitted "
+                        "columns reproduce guide_enrichment_final.tsv's "
+                        "r{rnd}_log2fc_mean / _sd for all 91,229 detected guides in all "
+                        "three rounds; max absolute difference 1.3e-15, asserted at "
+                        "<= 1e-9",
+                        "flags": "is_control / corrupted_gene carried over verbatim from "
+                        "guide_enrichment_final.tsv",
+                    },
+                    input_sha256=[ln.REFERENCE_SHA256, staged.mean_sha],
+                ),
+            ),
+            ArtifactRecord(
+                path=ln.RUNINFO_REL,
+                role=ROLE_RAW_DATA,
+                bytes=staged.runinfo.stat().st_size,
+                sha256=staged.runinfo_sha,
+                source=ln.RUNINFO_URL,
+                retrieval=RetrievalRecord(
+                    method=RetrievalMethod.direct_url,
+                    source_url=ln.RUNINFO_URL,
+                    retriever="curl",
+                    params={
+                        "command": (
+                            f"curl -s '{ln.RUNINFO_URL}' -o {ln.RUNINFO_FILENAME}"
+                        ),
+                        "why": "the authors' own library labels (LibraryName = "
+                        "SampleName) for the 21 runs, which is what replicate_id "
+                        "states. Named by the Data availability statement: 'The raw "
+                        "reads of the NGS data were deposited into the NCBI Sequence "
+                        "Read Archive (SRA) database (accession number: PRJNA504483)'",
+                    },
+                    sha256=staged.runinfo_sha,
+                    retrieved_at=ln.RUNINFO_RETRIEVED_AT,
+                ),
+            ),
+            ArtifactRecord(
                 path=ln.DESIGN_D_REL,
                 role=ROLE_SI_DATA,
-                bytes=design_bytes,
-                sha256=design_sha,
+                bytes=staged.design.stat().st_size,
+                sha256=staged.design_sha,
                 source=design_url,
                 retrieval=RetrievalRecord(
                     method=RetrievalMethod.springer_esm,
                     source_url=design_url,
                     retriever="torchcell.literature.retrieve.springer_esm",
                     params={"url": design_url},
-                    sha256=design_sha,
+                    sha256=staged.design_sha,
                     retrieved_at="2026-09-12",
                 ),
             ),
@@ -705,92 +843,114 @@ def _expected_manifest(
             "the archived lab design file, and the same holds for Supplementary Data 1 "
             "and 2 against the CRISPRa and CRISPRi lab files",
             "Supplementary Data 4 (100,493-guide reference) -- an INPUT to the derived "
-            "enrichment table, recorded in its processing record rather than mirrored "
+            "enrichment tables, recorded in their processing records rather than mirrored "
             "here, since the loader does not read it",
             "the per-guide furfural enrichment itself was NEVER released; it is "
-            "reprocessed from SRA PRJNA504483",
+            "reprocessed from SRA PRJNA504483, per biological replicate",
+            "the Source Data file (41467_2019_13621_MOESM8_ESM.xlsx) holds the "
+            "verification measurements of the INDIVIDUALLY constructed strains (relative "
+            "biomass accumulation, relative cellulase activity, qPCR Ct, reporter "
+            "fluorescence), three or more repeats each. No class reads them; see the "
+            "dataset note's 2026.11.24 section",
         ],
         provenance_complete=True,
     )
 
 
-def test_deposit_raw_mirror_records_the_derived_table_and_the_esm_design(
+def test_deposit_raw_mirror_records_both_derived_tables_the_run_report_and_the_design(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """``deposit_raw_mirror`` refuses a source whose sha256 is not the pinned one. With
-    the pins patched to the fixture digests it copies the TSV to ``data/`` and the design
-    workbook to ``si/si_data/`` and writes a manifest whose first record is a derived
-    ``raw_data`` artifact with a ``ProcessingRecord`` (the 2026-07-13 reprocessing
-    pipeline, the Supplementary Data 4 sha256 as its input) and no retrieval, and whose
-    second is a ``springer_esm`` retrieval; ``provenance_complete`` is True and
+    the four pins patched to the fixture digests it copies the mean table, the
+    per-replicate table and the SRA run report to ``data/`` and the design workbook to
+    ``si/si_data/``, and writes a manifest whose first two records are derived
+    ``raw_data`` artifacts with a ``ProcessingRecord`` each (the mean table's 2026-07-13
+    pipeline; the per-replicate table's 2026-11-24 one, naming the mean table among its
+    inputs), whose third is the run report's ``direct_url`` retrieval and whose fourth is
+    the ``springer_esm`` design retrieval; ``provenance_complete`` is True and
     ``created_at`` is UTC. A repeat deposit is a no-op and a different source under a
     re-pinned digest is refused because the destination holds other bytes.
     """
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
-    staging, tsv_sha, design_sha = _staged_raw(tmp_path, "staging")
-    tsv_path = staging / ln.TSV_FILENAME
-    design_path = staging / ln.DESIGN_D_FILENAME
+    staged = _staged_raw(tmp_path, "staging")
     with pytest.raises(RawSha256MismatchError) as err:
-        ln.deposit_raw_mirror(enrichment_path=tsv_path, design_d_path=design_path)
+        staged.deposit()
     assert str(err.value) == (
-        f"sha256 mismatch for {tsv_path}: expected {ln.TSV_SHA256}, observed {tsv_sha}"
+        f"sha256 mismatch for {staged.mean}: expected {ln.TSV_SHA256}, "
+        f"observed {staged.mean_sha}"
     )
     assert not (data_root / "torchcell-raw").exists()
-    # A second source off its pin is caught before the first is written either.
-    monkeypatch.setattr(ln, "TSV_SHA256", tsv_sha)
+    # A later source off its pin is caught before the first is written either.
+    monkeypatch.setattr(ln, "TSV_SHA256", staged.mean_sha)
     with pytest.raises(RawSha256MismatchError) as err:
-        ln.deposit_raw_mirror(enrichment_path=tsv_path, design_d_path=design_path)
+        staged.deposit()
     assert str(err.value) == (
-        f"sha256 mismatch for {design_path}: expected {ln.DESIGN_D_SHA256}, "
-        f"observed {design_sha}"
+        f"sha256 mismatch for {staged.replicates}: expected "
+        f"{ln.REPLICATES_TSV_SHA256}, observed {staged.replicates_sha}"
     )
     assert not (data_root / "torchcell-raw").exists()
 
-    monkeypatch.setattr(ln, "TSV_SHA256", tsv_sha)
-    monkeypatch.setattr(ln, "DESIGN_D_SHA256", design_sha)
-    mirror = ln.deposit_raw_mirror(enrichment_path=tsv_path, design_d_path=design_path)
+    staged.pin(monkeypatch)
+    mirror = staged.deposit()
     assert (
         mirror == data_root / "torchcell-raw" / ln.CITATION_KEY == ln.raw_mirror_dir()
     )
-    assert (mirror / ln.TSV_REL).read_bytes() == tsv_path.read_bytes()
-    assert (mirror / ln.DESIGN_D_REL).read_bytes() == design_path.read_bytes()
+    assert (mirror / ln.TSV_REL).read_bytes() == staged.mean.read_bytes()
+    assert (
+        mirror / ln.REPLICATES_TSV_REL
+    ).read_bytes() == staged.replicates.read_bytes()
+    assert (mirror / ln.RUNINFO_REL).read_bytes() == staged.runinfo.read_bytes()
+    assert (mirror / ln.DESIGN_D_REL).read_bytes() == staged.design.read_bytes()
     manifest = ln.load_manifest()
-    expected = _expected_manifest(
-        tsv_sha, tsv_path.stat().st_size, design_sha, design_path.stat().st_size
-    )
+    expected = _expected_manifest(staged)
     assert manifest.model_dump(exclude={"created_at"}) == expected.model_dump(
         exclude={"created_at"}
     )
-    assert manifest.files[0].retrieval is None
-    assert manifest.files[1].processing is None
+    assert [record.retrieval is None for record in manifest.files] == [
+        True,
+        True,
+        False,
+        False,
+    ]
+    assert [record.processing is None for record in manifest.files] == [
+        False,
+        False,
+        True,
+        True,
+    ]
     assert manifest.created_at is not None
     assert datetime.fromisoformat(manifest.created_at).tzinfo == UTC
-    assert ln.manifest_sha256(manifest, ln.TSV_REL) == tsv_sha
-    assert ln.manifest_sha256(manifest, ln.DESIGN_D_REL) == design_sha
+    assert ln.manifest_sha256(manifest, ln.REPLICATES_TSV_REL) == staged.replicates_sha
+    assert ln.manifest_sha256(manifest, ln.DESIGN_D_REL) == staged.design_sha
     with pytest.raises(KeyError, match="nope is not in the raw-mirror manifest"):
         ln.manifest_sha256(manifest, "nope")
 
     written = (mirror / "manifest.json").read_text()
-    assert ln.deposit_raw_mirror(
-        enrichment_path=tsv_path, design_d_path=design_path
-    ) == (mirror)
+    assert staged.deposit() == mirror
     assert ln.load_manifest().files == Manifest.model_validate_json(written).files
 
     other = tmp_path / "other"
     other.mkdir()
-    (other / ln.TSV_FILENAME).write_bytes(b"a different table")
-    monkeypatch.setattr(ln, "TSV_SHA256", _sha256(other / ln.TSV_FILENAME))
+    (other / ln.REPLICATES_TSV_FILENAME).write_bytes(b"a different table")
+    monkeypatch.setattr(
+        ln, "REPLICATES_TSV_SHA256", _sha256(other / ln.REPLICATES_TSV_FILENAME)
+    )
     with pytest.raises(
         RuntimeError,
         match=re.escape(
-            f"{mirror / ln.TSV_REL} exists with a different sha256; refusing"
+            f"{mirror / ln.REPLICATES_TSV_REL} exists with a different sha256; refusing"
         ),
     ):
         ln.deposit_raw_mirror(
-            enrichment_path=other / ln.TSV_FILENAME, design_d_path=design_path
+            enrichment_path=staged.mean,
+            replicates_path=other / ln.REPLICATES_TSV_FILENAME,
+            runinfo_path=staged.runinfo,
+            design_d_path=staged.design,
         )
-    assert (mirror / ln.TSV_REL).read_bytes() == tsv_path.read_bytes()
+    assert (
+        mirror / ln.REPLICATES_TSV_REL
+    ).read_bytes() == staged.replicates.read_bytes()
 
 
 def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
@@ -798,10 +958,10 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
 ) -> None:
     """With no raw files ``download()`` needs the mirror manifest (``FileNotFoundError``
     naming it). After the fixture files are deposited, a root whose ``raw/`` already links
-    the TSV keeps that link (``download()`` only creates a missing one), gets the design
-    workbook linked beside it and builds the same eight records; a drifted design
-    workbook is refused
-    naming both digests and a removed one is refused naming its path.
+    the per-replicate table keeps that link (``download()`` only creates a missing one),
+    gets the design workbook linked beside it and builds the same 22 records; a drifted
+    design workbook is refused naming both digests and a removed one is refused naming
+    its path.
     """
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
@@ -809,24 +969,24 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
     with pytest.raises(FileNotFoundError, match=re.escape(str(manifest_path))):
         ln.CrisprMagicLian2019Dataset(root=str(tmp_path / "a"), genome=_genome())
 
-    staging, tsv_sha, design_sha = _staged_raw(tmp_path, "staging")
-    monkeypatch.setattr(ln, "TSV_SHA256", tsv_sha)
-    monkeypatch.setattr(ln, "DESIGN_D_SHA256", design_sha)
-    mirror = ln.deposit_raw_mirror(
-        enrichment_path=staging / ln.TSV_FILENAME,
-        design_d_path=staging / ln.DESIGN_D_FILENAME,
-    )
+    staged = _staged_raw(tmp_path, "staging")
+    staged.pin(monkeypatch)
+    mirror = staged.deposit()
     root = tmp_path / "b"
     (root / "raw").mkdir(parents=True)
-    os.symlink(mirror / ln.TSV_REL, root / "raw" / ln.TSV_FILENAME)
+    os.symlink(
+        mirror / ln.REPLICATES_TSV_REL, root / "raw" / ln.REPLICATES_TSV_FILENAME
+    )
     built = ln.CrisprMagicLian2019Dataset(root=str(root), genome=_genome())
-    assert (root / "raw" / ln.TSV_FILENAME).is_symlink()
-    assert (root / "raw" / ln.TSV_FILENAME).resolve() == (mirror / ln.TSV_REL).resolve()
+    assert (root / "raw" / ln.REPLICATES_TSV_FILENAME).is_symlink()
+    assert (root / "raw" / ln.REPLICATES_TSV_FILENAME).resolve() == (
+        mirror / ln.REPLICATES_TSV_REL
+    ).resolve()
     assert (root / "raw" / ln.DESIGN_D_FILENAME).resolve() == (
         mirror / ln.DESIGN_D_REL
     ).resolve()
-    assert len(built) == 8
-    assert [built[i]["experiment"] for i in range(8)] == [
+    assert len(built) == _N_RECORDS
+    assert [built[i]["experiment"] for i in range(_N_RECORDS)] == [
         e.model_dump() for e in _EXPECTED
     ]
     built.close_lmdb()
@@ -836,8 +996,8 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
     with pytest.raises(RawSha256MismatchError) as err:
         ln.CrisprMagicLian2019Dataset(root=str(tmp_path / "c"), genome=_genome())
     assert str(err.value) == (
-        f"sha256 mismatch for {mirror / ln.DESIGN_D_REL}: expected {design_sha}, "
-        f"observed {drifted}"
+        f"sha256 mismatch for {mirror / ln.DESIGN_D_REL}: expected "
+        f"{staged.design_sha}, observed {drifted}"
     )
     assert not (tmp_path / "c" / "raw" / ln.DESIGN_D_FILENAME).exists()
     (mirror / ln.DESIGN_D_REL).unlink()
@@ -854,18 +1014,19 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Contract (issue #518's sweep): with both files already in ``raw/`` PyG skips
-    ``download()``, so ``process()`` verifies them against ``TSV_SHA256`` and
-    ``DESIGN_D_SHA256`` first. The TSV off its pin raises ``RawSha256MismatchError``
-    naming it and both digests before a row is read; no store is written.
+    ``download()``, so ``process()`` verifies them against ``REPLICATES_TSV_SHA256`` and
+    ``DESIGN_D_SHA256`` first. The per-replicate table off its pin raises
+    ``RawSha256MismatchError`` naming it and both digests before a row is read; no store
+    is written.
     """
     monkeypatch.delenv("TC_DATA_URL", raising=False)
-    staged = off_pin_raw(ln, [ln.TSV_FILENAME, ln.DESIGN_D_FILENAME])
-    raw = staged.root / "raw" / ln.TSV_FILENAME
+    staged = off_pin_raw(ln, [ln.REPLICATES_TSV_FILENAME, ln.DESIGN_D_FILENAME])
+    raw = staged.root / "raw" / ln.REPLICATES_TSV_FILENAME
     with pytest.raises(RawSha256MismatchError) as err:
         ln.CrisprMagicLian2019Dataset(root=str(staged.root), genome=_genome())
     assert str(err.value) == (
         f"sha256 mismatch for {raw}: expected "
-        "f9af849f97a2d460c3a6d628308491ec3966c6cc2a7f6cad130848d2bad32647, "
+        "46eaf7957ef410395177acf842ed0d36c12fd7c7f20ac5f5b2ee7dfd47d698ab, "
         f"observed {staged.observed}"
     )
     assert list((staged.root / "processed").iterdir()) == []
@@ -881,9 +1042,9 @@ def test_a_drop_log_that_disagrees_with_its_rules_refuses_after_writing_it(
 ) -> None:
     """``DropLog`` is patched to report one more dropped record than the build lost.
 
-    The rules total 13 (the ``dropped_records`` of
-    ``test_drop_log_counts_guides_times_three_and_nan_before_own_background``) while the
-    log says 14: the exact mismatch message, and the tampered 14 already on disk.
+    The rules total 41 (the ``dropped_records`` of
+    ``test_drop_log_counts_guides_times_nine_and_background_before_the_value``) while the
+    log says 42: the exact mismatch message, and the tampered 42 already on disk.
     """
     real = ln.DropLog
 
@@ -896,7 +1057,7 @@ def test_a_drop_log_that_disagrees_with_its_rules_refuses_after_writing_it(
     with pytest.raises(RuntimeError) as err:
         ln.CrisprMagicLian2019Dataset(root=str(root), genome=_genome())
     assert str(err.value) == (
-        "drop accounting mismatch: rules total 13, 14 records missing from the build"
+        "drop accounting mismatch: rules total 41, 42 records missing from the build"
     )
     log = json.loads((root / "preprocess" / "dropped_records.json").read_text())
-    assert log["dropped_records"] == 14
+    assert log["dropped_records"] == 42

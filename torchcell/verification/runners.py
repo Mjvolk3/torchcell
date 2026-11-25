@@ -2232,34 +2232,47 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "crispr_magic_lian2019": {
         "root": "data/torchcell/crispr_magic_lian2019",
-        # 266,304 (guide x round) records of 301,479 cells. Rounds are iterative in
-        # accumulating backgrounds (R1 bAID / R2 +SIZ1i / R3 +SIZ1i+NAT1a), so the
-        # background is NOT constant across the dataset and belongs in the genotype
-        # signature -> background_genes stays empty.
-        "expected_count": 266304,
+        # 798,912 (guide x round x biological replicate) records of 904,437 cells, one
+        # per released replicate (#1177; 266,304 when the loader stored the mean over the
+        # three replicates). Rounds are iterative in accumulating backgrounds (R1 bAID /
+        # R2 +SIZ1i / R3 +SIZ1i+NAT1a), so the background is NOT constant across the
+        # dataset and belongs in the genotype signature -> background_genes stays empty.
+        "expected_count": 798912,
         "background_genes": frozenset(),
         # 266,304 records: the eager path materializes them all (~25 min wall clock).
         "stream": True,
         "provenance": Provenance(
             source_uri=(
                 "$DATA_ROOT/torchcell-raw/lianMultifunctionalGenomewideCRISPR2019/"
-                "data/guide_enrichment_final.tsv (DERIVED from NCBI SRA PRJNA504483 by the "
-                "versioned pipeline in experiments/016-lian-magic-reprocess/, with a "
+                "data/guide_enrichment_replicates.tsv (DERIVED from NCBI SRA PRJNA504483 by "
+                "the versioned pipeline in experiments/016-lian-magic-reprocess/, with a "
                 "ProcessingRecord naming its inputs) + si/si_data/"
                 "41467_2019_13621_MOESM5_ESM.xlsx (Supplementary Data 3, the CRISPRd design "
                 "library; springer_esm retrieval re-verified 2026-09-12)"
             ),
             citation_key="lianMultifunctionalGenomewideCRISPR2019",
-            sha256="f9af849f97a2d460c3a6d628308491ec3966c6cc2a7f6cad130848d2bad32647",
+            sha256="46eaf7957ef410395177acf842ed0d36c12fd7c7f20ac5f5b2ee7dfd47d698ab",
             method=(
                 "The furfural per-guide enrichment is NOT a released supplement; it is "
                 "reprocessed from raw reads (SRA PRJNA504483): barcode = read[27:70] (43bp "
                 "activation) | read[27:71] (44bp interference/deletion), forward, "
                 "exact-match to the 100,493-guide Supplementary Data 4 reference (sha256 "
                 "4e3f225a...); CPM(+1)/library; per round per replicate log2(furfural-after "
-                "/ untreated-before); mean +- SD over 3 biological triplicates. Validated "
+                "/ untreated-before). Validated "
                 "vs the paper's hits (PDR1i round-3 rank 1, SLX5i round-1 rank 1, SAP30d "
-                "round-1 rank 2). One record per (guide x round): genotype = the library "
+                "round-1 rank 2). ONE RECORD PER BIOLOGICAL REPLICATE (#1177): the authors "
+                "define the enrichment per replicate ('five-fold enrichment (normalized no. "
+                "of guide in the furfural stressed library/normalized no. of guide in the "
+                "untreated library) for each replicate'), and the pipeline now emits the "
+                "three per-replicate log2 values instead of their mean and SD "
+                "(replicate_enrichment.py; the mean and sample SD over the emitted columns "
+                "reproduce the previous build's stored numbers to 1.3e-15, asserted at "
+                "1e-9). n_samples=1, sample_unit=biological_replicate, no dispersion (typed "
+                "not_applicable_single_measurement gaps on both uncertainty fields and the "
+                "derived SE), replicate_id = the authors' own SRA library pair for that "
+                "replicate (Ff1a/Ff1b ... 3Ff3a/3Ff3b, from the mirrored run report "
+                "data/sra_runinfo_PRJNA504483.csv). Per (guide x round x replicate): "
+                "genotype = the library "
                 "member as a CrisprActivation/Interference/Deletion perturbation (target "
                 "gene + guide spacer + orthogonal effector dLbCas12a-VP / dSpCas9-RD1152 / "
                 "SaCas9) PLUS the round's integrated background (SIZ1 interference r2/r3, "
@@ -2284,22 +2297,28 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
                 "medium is SED-URA/G418, CORRECTED from the previous build's SED/G418, "
                 "which is the medium for the integrated validation strains in the same "
                 "paragraph and lacks the uracil dropout selecting the guide plasmid. "
-                "Phenotype = log2_ratio, uncertainty = SD (sample_sd, n=3 -> SE=SD/sqrt(3)); "
-                "reference = no-enrichment baseline (log2FC 0) in the bAID host (kept as "
+                "Phenotype = log2_ratio, one replicate's value verbatim; "
+                "reference = no-enrichment baseline (log2FC 0) in the bAID host, the one "
+                "AGGREGATE this dataset states (n_samples=3, replicate_id=None; kept as "
                 "the reference strain: pAID6's integration locus is never stated, so its "
                 "three Cas cassettes cannot be sourced as gene-keyed additions, and the "
                 "effectors ride on CrisprConstruct.effector instead). Common names from the "
                 "genome's standard name via the shared resolve_gene_name. Dropped: 300 "
-                "controls, 16 source-corrupted names, 2,670 unresolved-gene guides, 26,169 "
-                "undetected guide-rounds and 48 self-background guide-rounds. The 318 records in "
+                "controls, 16 source-corrupted names, 2,670 unresolved-gene guides, 78,489 "
+                "undetected guide-round-replicates and 162 self-background records (the "
+                "mean build's 26,169 and 48 guide-rounds x3, with six guide-rounds moving "
+                "from the value rule to the background rule because the round-scoped "
+                "background test now runs first). The 954 records in "
                 "150 groups where two CRISPRd designs share a gene AND a 21 nt spacer "
                 "(multicopy loci, differing only in their donor arms) are KEPT: "
                 "donor_sequence is what tells those strains apart"
             ),
             page=(
                 "Nat Commun 2019 10:5794 (doi:10.1038/s41467-019-13621-4; PMID 31857575); "
-                "guide_enrichment_final.tsv "
-                "sha256=f9af849f97a2d460c3a6d628308491ec3966c6cc2a7f6cad130848d2bad32647; "
+                "guide_enrichment_replicates.tsv "
+                "sha256=46eaf7957ef410395177acf842ed0d36c12fd7c7f20ac5f5b2ee7dfd47d698ab "
+                "(its mean-and-SD ancestor guide_enrichment_final.tsv "
+                "sha256=f9af849f97a2d460c3a6d628308491ec3966c6cc2a7f6cad130848d2bad32647); "
                 "Supplementary Data 3 "
                 "sha256=737074a76b9eee2dc015be8b17e29b4fbe65c8be5565e6fcbe71505dca4109e2; "
                 "paper.md sha256=63fe2b7101fc48feb297f9e34b83d108b74f03f28bbc280e08c7219bc975086c"

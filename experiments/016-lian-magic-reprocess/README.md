@@ -1,8 +1,10 @@
 # 016 — Lian 2019 MAGIC per-guide enrichment: reproducibility pipeline
 
-Regenerates `guide_enrichment_final.tsv` (**sha256 `f9af849f97a2d460c3a6d628308491ec3966c6cc2a7f6cad130848d2bad32647`**),
+Regenerates `guide_enrichment_replicates.tsv` (**sha256 `46eaf7957ef410395177acf842ed0d36c12fd7c7f20ac5f5b2ee7dfd47d698ab`**),
 the sha256-pinned input consumed by `torchcell/datasets/scerevisiae/lian2019.py`
-(`CrisprMagicLian2019Dataset`), **from raw NGS**. Lian did NOT release the per-guide furfural
+(`CrisprMagicLian2019Dataset`, one record per guide x round x biological replicate), and its
+mean-and-SD ancestor `guide_enrichment_final.tsv` (**sha256 `f9af849f97a2d460c3a6d628308491ec3966c6cc2a7f6cad130848d2bad32647`**),
+**from raw NGS**. Lian did NOT release the per-guide furfural
 enrichment (only the designed libraries + the reference); it is reprocessed from SRA. Because
 this pipeline fully regenerates the table, the ~12 GB of downloaded fastqs are **safe to
 delete** — this is the durable record of how they were used.
@@ -46,6 +48,13 @@ directly from ENA (`https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR829/00<lastdigit>/<r
    `log2(after/before)`; mean ± SD over the 3 triplicates.
 5. **finalize** (`finalize_enrichment.py`) — add `is_control` (100 random guides/library, blank
    design Score) + `corrupted_gene` (Excel date/serial artifact) flags → `guide_enrichment_final.tsv`.
+6. **per replicate** (`replicate_enrichment.py`) — the same CPM `log2(after/before)` written out
+   one column per (round, replicate), `r{rnd}_rep{rep}_log2fc`, with the flags carried over →
+   `guide_enrichment_replicates.tsv`, the loader's input. The mean and sample SD over the three
+   emitted columns must reproduce `guide_enrichment_final.tsv` for every guide and round
+   (asserted at 1e-9; measured 1.3e-15), which is what ties the per-replicate table to the
+   pinned numbers earlier builds stored. Replicate labels are the authors' own SRA library
+   names (`Ff1a/Ff1b` ... `3Ff3a/3Ff3b`), which is what the loader stores as `replicate_id`.
 
 **Validation**: recovers the paper's hits — PDR1i round-3 rank 1, SLX5i round-1 rank 1,
 SAP30d round-1 rank 2.

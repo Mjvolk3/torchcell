@@ -205,6 +205,8 @@ def lower_order_nulls(
             scores[split] = metrics["mse_raw"]
             scores[f"{split}_pearson"] = metrics["pearson"]
             scores[f"{split}_spearman"] = metrics["spearman"]
+            if split == "test":
+                scores["test_predictions"] = [float(x) for x in prediction]
         out[name] = scores
 
     record(
@@ -442,6 +444,42 @@ def regression_metrics(
         "predicted_sd": float(np.std(predicted_raw)),
         "n": len(observed_raw),
     }
+
+
+def predict(
+    model: nn.Module,
+    cell_graph: Any,
+    loader: Any,
+    device: torch.device,
+    mean: float,
+    std: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return ``(observed, predicted)`` in ug/mL, in loader order.
+
+    Saved alongside the metrics so a comparison against the nulls can be
+    bootstrapped on the records both models actually scored. Without the
+    predictions the only uncertainty available on a fixed split is the spread
+    over initializations, which says nothing about the test set being 59
+    records, and a seed standard deviation quietly standing in for a sampling
+    error is how a 0.11 gap gets called significant.
+    """
+    model.eval()
+    predictions: list[float] = []
+    observed: list[float] = []
+    with torch.no_grad():
+        for batch in loader:
+            batch = batch.to(device)
+            target, mask = titer_targets(batch)
+            if not bool(mask.all()):
+                raise ValueError(
+                    "a batch carried a sample with no titer; every record of "
+                    "this build has one, so this is a collation change"
+                )
+            _, reps = model(cell_graph, batch)
+            prediction = reps["head_outputs"][HEAD_NAME]
+            predictions.extend(prediction.view(-1).cpu().tolist())
+            observed.extend(target.view(-1).cpu().tolist())
+    return np.asarray(observed), np.asarray(predictions) * std + mean
 
 
 def evaluate(
@@ -795,6 +833,19 @@ def main() -> None:
         model.load_state_dict(best_state)
     test = evaluate(model, cell_graph, module.test_dataloader(), device, mean, std)
     val = evaluate(model, cell_graph, module.val_dataloader(), device, mean, std)
+    test_observed, test_predicted = predict(
+        model, cell_graph, module.test_dataloader(), device, mean, std
+    )
+    # The nulls are fit on the same splits in the same order, so one observed
+    # vector serves the model and every null and the bootstrap can resample
+    # record positions once and index all of them with it.
+    if len(test_observed) != len(targets_by_split["test"]):
+        raise ValueError(
+            f"the test loader yielded {len(test_observed)} records and the "
+            f"split holds {len(targets_by_split['test'])}; the saved "
+            f"predictions would not line up with the nulls' and a paired "
+            f"bootstrap over them would be comparing different records"
+        )
 
     report = {
         "args": vars(args),
@@ -823,6 +874,9 @@ def main() -> None:
         "epochs_run": len(history),
         "seconds": time.time() - started,
         "cgt": {"val": val, "test": test},
+        "test_indices": [int(i) for i in splits["test"]],
+        "test_observed": [float(x) for x in test_observed],
+        "test_predicted": [float(x) for x in test_predicted],
         "lower_order_nulls": nulls,
         "history": history,
     }

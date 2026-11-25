@@ -376,3 +376,11 @@ The 250 blank aerobicity cells store a typed gap, the 15 'transition' cells stor
 This store is derived from Public K-12 (Lamoureux 2023). Data collected from a compendium, a database aggregate or a follow-up study may embed that source's preprocessing (normalization, filtering, re-keying, merged conditions) and may lack ontological representation the primary release carries (per-sample metadata, replicate structure, the released statistic). Its records are a derived copy, and the primary release is still to be collected from source ([[torchcell.knowledge_graphs.dataset-admission-loop]], 2026.10.13).
 
 What it may hide here: these are other labs' SRA runs reprocessed through the PRECISE-1K pipeline, so the quantification and normalization are the compendium's, and strain, medium and condition come from the compendium's curation of SRA metadata rather than each study's Methods. Each study's own release is still to be collected.
+
+## 2026.11.24 - Per-replicate review: replicate_id on every library (#1171, #1178)
+
+- **Verdict:** already one record per biological-replicate library ("Only conditions with at least two biological replicates were kept at this step.", `paper.md` line 126). 1,675 records before and after; values identical to the pre-change dev store (max absolute TPM difference 0.0).
+- **replicate_id** is the release's `sample_id` cell (`mtase__dcm_exp__1`), unique over the 1,675. Records per `rep_id` position: 1: 621, 2: 619, 3: 363, 4: 39, 5: 21, 6: 9, 7: 1, 8: 1, 9: 1. The reference, the PRECISE-1K control mean, keeps `replicate_id` None; its two libraries are records of `RnaseqLamoureux2023Dataset`.
+- **Ledger additions** (`accession_ledger.json`): `count_columns` 3,125 (`INITIAL_CURATION`, "After initial curation, 3125 samples remained."), `count_columns_outside_compendium` 1,450 (the authors' QC and replicate exclusions), `distinct_sample_labels` 1,675, `experiments_with_several_runs` 104 (two to four SRA runs counted into one column by the release's pipeline: technical sequencing runs combined inside one record).
+- **Verifier:** `replicate_id_per_library` added to the registry entry; the scratch build `$DATA_ROOT/tmp/scratch/per-replicate-lamoureux2023/rnaseq_public_k12_lamoureux2023` passes all nine rules.
+- Docstring fix: the sibling serves 1,035 of the 1,055 PRECISE-1K count columns, not 1,055.

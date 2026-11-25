@@ -482,7 +482,9 @@ def test_the_phenotype_carries_the_released_counts_and_the_assigned_total() -> N
         np.array([3, 7], dtype=np.int64),
         np.array([10.0, 10.0], dtype=np.float64),
         n_mapped_reads=10,
+        replicate_id="mtase__dcm_exp__1",
     )
+    assert phenotype.replicate_id == "mtase__dcm_exp__1"
     assert phenotype.expression_count == {"b0001": 3, "b0002": 7}
     assert phenotype.n_mapped_reads == 10
     assert phenotype.measurement_type == "rnaseq_tpm_from_released_counts"
@@ -1036,6 +1038,15 @@ def test_the_accession_ledger_is_the_deduplication_evidence(
     assert ledger["identical_count_profiles_against_precise1k"] == 0
     assert ledger["distinct_pmids"] == 1
     assert ledger["distinct_geo_series"] == 1
+    assert ledger["distinct_sample_labels"] == 22
+    assert ledger["experiments_with_several_runs"] == 0
+    columns = pd.read_csv(
+        Path(built.raw_dir) / P.PUBLIC_COUNTS.name, index_col=0, nrows=1
+    ).columns
+    assert (ledger["count_columns"], ledger["count_columns_outside_compendium"]) == (
+        len(columns),
+        len(set(columns) - set(KEPT)),
+    )
     assert [r["experiment_accession"] for r in ledger["records"]] == KEPT
     assert ledger["records"][2] == {
         "experiment_accession": "SRX000003",
@@ -1104,6 +1115,9 @@ def test_every_record_stores_the_released_counts_and_a_one_million_tpm(
             phenotype["expression_count"].values()
         )
         assert phenotype["measurement_type"] == "rnaseq_tpm_from_released_counts"
+        # #1171: the library's own sample_id; the PRECISE-1K control mean names none
+        assert phenotype["replicate_id"] == f"sample__{index + 1}"
+        assert built[index]["reference"]["phenotype_reference"]["replicate_id"] is None
     first = built[0]["experiment"]["phenotype"]["expression_count"]
     assert first == {g: 100000 * (i + 1) for i, g in enumerate(GENES)}
 
@@ -1265,6 +1279,7 @@ def test_every_sourced_value_quotes_the_pinned_mirror() -> None:
     assert set(values) == {
         "CURATION",
         "CURATION_STRAIN_FILTER",
+        "INITIAL_CURATION",
         "REPLICATE_RULE",
         "COMBINED",
         "SUBSTRAINS",
@@ -1372,6 +1387,15 @@ def test_the_dev_store_pins_the_deduplication_measurement() -> None:
     assert ledger["distinct_pmids"] == 38
     assert ledger["distinct_geo_series"] == 30
     assert len(ledger["records"]) == 1675
+    # #1171, #1178: each record's replicate_id is its own sample_id; the count matrix
+    # holds the 3,125 curated samples, 1,450 of them the authors' exclusions; 104
+    # libraries list several SRA runs counted into one column (technical runs)
+    assert ledger["distinct_sample_labels"] == 1675
+    assert (ledger["count_columns"], ledger["count_columns_outside_compendium"]) == (
+        P.INITIAL_CURATION.value,
+        1450,
+    )
+    assert ledger["experiments_with_several_runs"] == 104
 
 
 @pytest.mark.data

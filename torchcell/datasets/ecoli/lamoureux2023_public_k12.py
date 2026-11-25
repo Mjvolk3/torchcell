@@ -26,7 +26,8 @@ at build time:
   BioSample for several libraries. Collapsing on BioSample would merge distinct genotypes.
 - **No library is counted twice, and none is a PRECISE-1K library.** Measured on the count
   matrix: 0 of the 1,675 count columns is byte-identical to another, and 0 is identical to
-  any of the 1,055 ``data/precise1k/counts.csv`` columns the sibling dataset serves. The
+  any of the 1,055 ``data/precise1k/counts.csv`` columns (the sibling dataset serves 1,035
+  of them; the other 20 are its authors' QC exclusions). The
   Public K-12 count file carries no ``p1k_`` column at all. The build asserts both.
 - **Against our own store: one BioProject overlaps, no record does.** ``PRJNA645443``
   appears in this table (12 ``phage_resist`` BW25113 RNA-seq samples) and in
@@ -74,6 +75,17 @@ RECORD GRAIN. One record per sequenced library, as in PRECISE-1K and putidaPRECI
 replicates of a condition share a genotype and an environment, so the RNA-seq verifier's
 ``strain_uniqueness`` rule cannot apply and the registry entry passes
 ``replicate_aware=True`` to get ``replicate_groups`` instead.
+
+PER-REPLICATE REVIEW (#1171, #1178, 2026-11-24). The store already holds one record per
+biological-replicate library (the curation kept "Only conditions with at least two
+biological replicates"), none a mean. Each record's ``replicate_id`` is now the release's
+``sample_id`` cell (``mtase__dcm_exp__1``), unique over the 1,675; the reference, the
+PRECISE-1K control mean, is an aggregate and keeps ``None`` (its two libraries are
+records of ``RnaseqLamoureux2023Dataset``). The count matrix holds 3,125 columns ("After
+initial curation, 3125 samples remained."): 1,675 records and 1,450 the authors' own QC
+and replicate exclusions. 104 libraries list two to four SRA runs in their ``Run`` cell,
+which the release's pipeline counted into one column: technical sequencing runs of one
+library, combined inside one record, as the policy asks.
 
 GENOTYPE SETTLING (first matching rule, counted in ``preprocess/dropped_records.json``).
 Since #1057 (the owner rule of 2026-10-12: "the data is the data", and the genome does not
@@ -318,6 +330,14 @@ CURATION = _paper(
     "Finally, the 0.95 minimum replicate correlation threshold was applied, yielding "
     "the final set of 1675 high-quality publicly-available samples",
     page="Methods, 'Compiling the public K-12 dataset'",
+)
+INITIAL_CURATION = _paper(
+    3125,
+    "After initial curation, 3125 samples remained.",
+    page="Methods, 'Compiling the public K-12 dataset'",
+    note="the release's k12_modulome/counts.csv keeps a column for each of the 3,125; "
+    "the 1,450 that are not among the 1,675 are the authors' own QC and replicate "
+    "exclusions (the one allowed drop under #1178), counted in the accession ledger",
 )
 CURATION_STRAIN_FILTER = _paper(
     "K-12 only",
@@ -1168,8 +1188,14 @@ def rnaseq_phenotype(
     counts: np.ndarray[Any, np.dtype[np.int64]],
     lengths: np.ndarray[Any, np.dtype[np.float64]],
     n_mapped_reads: int,
+    replicate_id: str,
 ) -> RNASeqExpressionPhenotype:
-    """One library's computed TPM, its released counts and its featureCounts total."""
+    """One library's computed TPM, its released counts and its featureCounts total.
+
+    ``replicate_id`` is the library's ``sample_id`` cell, verbatim (#1171): the
+    release's own label for one biological-replicate library
+    (``<project>__<condition>__<rep_id>``), unique over the 1,675.
+    """
     values = tpm(counts.astype(np.float64), lengths)
     if abs(float(values.sum()) - TPM_TOTAL) > TPM_TOTAL_TOLERANCE:
         raise RuntimeError(f"TPM sums to {values.sum()}, not {TPM_TOTAL}")
@@ -1178,6 +1204,7 @@ def rnaseq_phenotype(
         expression_count={g: int(c) for g, c in zip(genes, counts, strict=True)},
         measurement_type=MEASUREMENT_TYPE,
         n_mapped_reads=n_mapped_reads,
+        replicate_id=replicate_id,
     )
 
 
@@ -1367,6 +1394,15 @@ class AccessionLedger(BaseModel):
     distinct_bioprojects: int
     distinct_pmids: int
     distinct_geo_series: int
+    #: #1171, #1178: the release's own library labels, each record's replicate_id
+    distinct_sample_labels: int
+    #: the count matrix's columns (the 3,125 of INITIAL_CURATION) and those outside the
+    #: public compendium, the authors' QC and replicate exclusions
+    count_columns: int
+    count_columns_outside_compendium: int
+    #: libraries whose Run cell lists several SRA runs, which the release's pipeline
+    #: counted into one column (technical sequencing runs of one library)
+    experiments_with_several_runs: int
     records: list[AccessionRecord]
 
 
@@ -1648,7 +1684,11 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
                     ),
                     environment=environment_of(sample),
                     phenotype=rnaseq_phenotype(
-                        genes, count_values[:, idx], lengths, int(assigned[idx])
+                        genes,
+                        count_values[:, idx],
+                        lengths,
+                        int(assigned[idx]),
+                        rows[sample][COL_SAMPLE_LABEL],
                     ),
                 )
                 txn.put(
@@ -1747,6 +1787,11 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
             raise RuntimeError("public experiment accessions repeat")
         if len(set(runs)) != len(runs):
             raise RuntimeError("public run accessions repeat")
+        labels = [rows[s][COL_SAMPLE_LABEL] for s in samples]
+        if len(set(labels)) != len(labels):
+            raise RuntimeError(
+                f"public {COL_SAMPLE_LABEL} labels repeat; each is a record's replicate_id"
+            )
         public_columns = counts[list(samples)].to_numpy(dtype=np.int64)
         digests = [
             hashlib.sha256(public_columns[:, i].tobytes()).hexdigest()
@@ -1798,6 +1843,12 @@ class RnaseqPublicK12Lamoureux2023Dataset(ExperimentDataset):
             ),
             distinct_geo_series=len(
                 {rows[s][COL_GEO_SERIES] for s in samples if rows[s][COL_GEO_SERIES]}
+            ),
+            distinct_sample_labels=len(set(labels)),
+            count_columns=int(counts.shape[1]),
+            count_columns_outside_compendium=len(set(counts.columns) - set(samples)),
+            experiments_with_several_runs=sum(
+                1 for s in samples if ";" in rows[s][COL_RUN]
             ),
             records=[
                 AccessionRecord(

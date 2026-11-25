@@ -475,6 +475,10 @@ def test_process_writes_the_four_declared_ledgers(
     assert frame["is_base_condition"].sum() == len(SYNTHETIC_BASE)
     assert min(frame["n_environment_perturbations"]) >= 1  # L3 environment_perturbed
     assert (preprocess / "build_manifest.json").exists()
+    repetition = json.loads((preprocess / "rate_repetition.json").read_text())
+    assert repetition["conditions"] == len(
+        {r["full_name"] for _, r in frame.iterrows()}
+    )
 
 
 def test_verify_build_passes_every_level_on_the_absolute_branch(
@@ -493,6 +497,47 @@ def test_verify_build_passes_every_level_on_the_absolute_branch(
         for r in report.results
         if r.name == "reference_zero"
     )
+
+
+def _rate_row(sample: str, project: str, condition: str, rate: float) -> lg.RateRow:
+    return lg.RateRow(
+        sample=sample,
+        sample_name=f"{project}__{condition}__{sample[-1]}",
+        project=project,
+        full_name=f"{project}:{condition}",
+        rep_id=sample[-1],
+        rate=rate,
+        deleted_symbols=(),
+        description="Escherichia coli K-12 MG1655",
+    )
+
+
+def test_rate_repetition_classifies_each_multi_library_condition() -> None:
+    """#1178 evidence: a repeated rate, one rate per library, or a mix of the two."""
+    rows = [
+        _rate_row("s1", "a", "x", 0.5),
+        _rate_row("s2", "a", "x", 0.5),
+        _rate_row("s3", "b", "y", 0.4),
+        _rate_row("s4", "b", "y", 0.6),
+        _rate_row("s5", "b", "z", 0.7),
+        _rate_row("s6", "c", "w", 0.3),
+        _rate_row("s7", "c", "w", 0.3),
+        _rate_row("s8", "c", "w", 0.9),
+    ]
+    measured = lg.rate_repetition(rows)
+    assert (
+        measured.conditions,
+        measured.single_library_conditions,
+        measured.multi_library_conditions,
+        measured.all_identical_conditions,
+        measured.all_identical_rows,
+        measured.all_distinct_conditions,
+        measured.rows_sharing_their_rate_within_condition,
+    ) == (4, 1, 3, 1, 2, 1, 4)
+    assert {
+        project: (p.conditions, p.all_identical, p.all_distinct)
+        for project, p in measured.by_project.items()
+    } == {"a": (1, 1, 0), "b": (1, 0, 1), "c": (1, 0, 0)}
 
 
 # --------------------------------------------------------------------------- #
@@ -555,6 +600,52 @@ def test_real_base_condition_is_eight_rows_averaging_the_declared_mean() -> None
     assert len(aggregate.samples) == lg.EXPECTED_BASE_RECORDS
     assert sorted(aggregate.rates) == [0.58, 0.58, 0.63, 0.63, 0.66, 0.66, 0.68, 0.69]
     assert aggregate.mean == lg.BASE_RATE_MEAN
+
+
+@pytest.mark.data
+def test_real_rate_repetition_is_the_owner_questions_evidence() -> None:
+    """#1178: whether a rate repeated over a condition's libraries is one value.
+
+    Of 156 multi-library conditions, 73 repeat one rate on every library (146 rows),
+    82 carry one rate per library, and ica:wt_glc repeats one rate per library pair;
+    the split follows the project, which is why the record unit is the owner's call.
+    """
+    rows, _ = lg.read_rate_rows(_real_metadata())
+    measured = lg.rate_repetition(rows)
+    assert (
+        measured.conditions,
+        measured.single_library_conditions,
+        measured.multi_library_conditions,
+        measured.all_identical_conditions,
+        measured.all_identical_rows,
+        measured.all_distinct_conditions,
+        measured.rows_sharing_their_rate_within_condition,
+    ) == (194, 38, 156, 73, 146, 82, 152)
+    assert {
+        project: (p.conditions, p.all_identical, p.all_distinct)
+        for project, p in measured.by_project.items()
+    } == {
+        "cra_crp": (5, 5, 0),
+        "efeU": (6, 6, 0),
+        "fps": (6, 6, 0),
+        "fur": (4, 4, 0),
+        "hot_tale": (27, 0, 27),
+        "ica": (13, 12, 0),
+        "misc2": (5, 5, 0),
+        "nquinone": (1, 1, 0),
+        "omics": (4, 4, 0),
+        "ompr": (2, 2, 0),
+        "oxidative": (4, 4, 0),
+        "pal": (10, 10, 0),
+        "pcoli": (47, 0, 47),
+        "pdhr_ale": (4, 4, 0),
+        "rpoB": (4, 4, 0),
+        "ytf": (14, 6, 8),
+    }
+    ica = sorted(
+        (row.sample_name, row.rate) for row in rows if row.full_name == "ica:wt_glc"
+    )
+    assert [rate for _, rate in ica] == [0.58, 0.58, 0.66, 0.66, 0.63, 0.63]
 
 
 @pytest.mark.data

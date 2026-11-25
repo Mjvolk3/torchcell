@@ -1238,6 +1238,8 @@ RNASEQ_DATASETS: dict[str, dict[str, Any]] = {
         # two-compound supplement label too.
         "expected_count": 1035,
         "replicate_aware": True,
+        # #1171: each record names its library by the release's sample_id
+        "replicate_id_per_library": True,
         "min_containment": 0.99,
         "provenance": Provenance(
             source_uri="https://doi.org/10.5281/zenodo.8284223",
@@ -1268,6 +1270,8 @@ RNASEQ_DATASETS: dict[str, dict[str, Any]] = {
         # named as released), the media no library carries and a blank temperature too.
         "expected_count": 1675,
         "replicate_aware": True,
+        # #1171: each record names its library by the release's sample_id
+        "replicate_id_per_library": True,
         "min_containment": 0.99,
         "provenance": Provenance(
             source_uri="https://doi.org/10.5281/zenodo.8284223",
@@ -1765,6 +1769,7 @@ def verify_rnaseq_store(
         provenance=spec["provenance"],
         expected_count=spec.get("expected_count", len(records)),
         replicate_aware=spec.get("replicate_aware", False),
+        replicate_id_per_library=spec.get("replicate_id_per_library", False),
         l0_validator=(validate_by_type_tag if spec.get("natural_isolates") else None),
     )
     assembly_sets = _dataset_assembly_sets(records)

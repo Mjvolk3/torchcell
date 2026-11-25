@@ -46,6 +46,23 @@ phenotype class has no ``n_samples`` slot, so no record claims more than its own
 ``preprocess/replicate_groups.json`` lists every condition's records, and
 ``preprocess/record_samples.json`` maps each LMDB index to its sample id.
 
+PER-REPLICATE REVIEW (#1171, #1178, 2026-11-24). The store already holds one record per
+biological-replicate library: every one of the 1,035 post-QC samples is a record, none
+is a mean, and the reference's two control libraries are records too. Each record's
+``replicate_id`` is now the release's ``sample_id`` cell (``control__wt_glc__1``), the
+release's own label for that library (unique over the 1,035) and the id the growth-rate
+dataset stores for the same sample; the reference, an aggregate, keeps ``None``. The
+release account (``preprocess/release_account.json``): ``counts.csv`` has 1,055 columns,
+the paper's candidates ("Starting from 1055 candidate samples"), and the 20 not in the
+metadata are the authors' QC exclusions. Four SRA experiments (``SRX651938``,
+``SRX651942``, ``SRX651945``, ``SRX651946``, all GSE59377 ``rpoB``) are each named by two
+records with distinct ``Run`` accessions; SRA files one library per experiment and GEO
+one sample (``GSM1436050`` is ``WT_LB`` with runs SRR1514291 and SRR1514292), while the
+release calls the two rows ``rep_id`` 1 and 2 of a condition with ``Biological
+Replicates`` 2. Whether they are two cultures or two sequencing runs of one library is
+not settled by any mirrored source, so both stay records, as released, and the question
+is the owner's.
+
 REFERENCE. One reference for every record: the release centers its ICA input on the
 compendium's control condition ("After centering the Public K-12 dataset to the PRECISE-1K
 control condition"), the two ``control:wt_glc`` samples (MG1655, M9 + 2 g/L glucose). The
@@ -349,6 +366,15 @@ UNIT = _paper(
     "-transformed Transcripts Per Million $( \\log _ { 2 } [ \\mathrm { T P M } ] )$",
     page="Methods, 'RNA-seq processing and quality control'",
     note="no pseudocount is printed; it is back-solved from the release as 1",
+)
+CANDIDATES = _paper(
+    1055,
+    "Starting from 1055 candidate samples, data was processed using a Nextflow (21) "
+    "pipeline designed for processing microbial RNA-seq datasets (22)",
+    page="Methods, 'RNA-seq processing and quality control'",
+    note="the release's counts.csv keeps a column for every candidate; the 20 that are "
+    "not in metadata_qc.csv are the authors' own quality-control exclusions (the one "
+    "allowed drop under #1178), counted in preprocess/release_account.json",
 )
 COMPENDIUM = _paper(
     1035,
@@ -1557,13 +1583,21 @@ def rnaseq_phenotype(
     genes: list[str],
     log_tpm: np.ndarray[Any, np.dtype[np.float64]],
     counts: np.ndarray[Any, np.dtype[np.int64]],
+    replicate_id: str,
 ) -> RNASeqExpressionPhenotype:
-    """One library's absolute TPM and featureCounts count over the stored genes."""
+    """One library's absolute TPM and featureCounts count over the stored genes.
+
+    ``replicate_id`` is the library's ``sample_id`` cell, verbatim (#1171): the
+    release's own label for one biological-replicate library
+    (``<project>__<condition>__<rep_id>``), the same id the growth-rate dataset stores
+    for the same sample.
+    """
     return RNASeqExpressionPhenotype(
         expression_tpm=dict(zip(genes, to_tpm(log_tpm), strict=True)),
         expression_count={g: int(c) for g, c in zip(genes, counts, strict=True)},
         measurement_type=MEASUREMENT_TYPE,
         provenance_gaps=[MAPPED_READS_GAP],
+        replicate_id=replicate_id,
     )
 
 
@@ -1717,6 +1751,68 @@ class DropLog(BaseModel):
     rules: list[DropRule]
     kept_by_genotype_class: dict[str, int]
     kept_by_base_media: dict[str, int]
+
+
+#: The metadata column naming the SRA experiment of a library (blank for unsubmitted).
+COL_SRX = "SRX"
+
+
+class ReleaseAccount(BaseModel):
+    """Every released library: a stored record or an author quality-control exclusion.
+
+    Written to ``preprocess/release_account.json`` (#1171, #1178). ``counts.csv`` keeps
+    a column for each of the paper's 1,055 candidates (``CANDIDATES``) and
+    ``metadata_qc.csv`` lists the 1,035 that passed the authors' QC (``COMPENDIUM``), so
+    the columns outside the metadata are the authors' own exclusions, the one allowed
+    drop. ``sra_experiments_with_several_records`` lists the SRA experiments that two
+    stored records name (distinct ``Run`` accessions), an open question for the owner:
+    the release calls them two biological replicates, SRA files them as one library.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    count_columns: int
+    compendium_samples: int
+    author_qc_excluded: list[str]
+    replicate_positions: dict[str, int] = Field(
+        description="compendium libraries by their rep_id cell"
+    )
+    sra_experiments_with_several_records: dict[str, list[str]]
+
+
+def release_account(metadata: pd.DataFrame, count_columns: list[str]) -> ReleaseAccount:
+    """Account for every count column against the post-QC metadata.
+
+    Refuses a metadata sample with no count column, and a repeated ``sample_id``, since
+    that cell is each record's ``replicate_id``.
+    """
+    samples = [str(s) for s in metadata.index]
+    missing = sorted(set(samples) - set(count_columns))
+    if missing:
+        raise RuntimeError(f"counts.csv lacks metadata samples {missing[:5]}")
+    labels = metadata[COL_SAMPLE]
+    if not labels.is_unique:
+        repeated = sorted(set(labels[labels.duplicated()]))
+        raise RuntimeError(
+            f"the released {COL_SAMPLE} repeats ({repeated[:5]}); it is each record's "
+            "replicate_id"
+        )
+    by_srx: dict[str, list[str]] = {}
+    for sample in samples:
+        srx = str(metadata.loc[sample, COL_SRX]).strip()
+        if srx:
+            by_srx.setdefault(srx, []).append(sample)
+    return ReleaseAccount(
+        count_columns=len(count_columns),
+        compendium_samples=len(samples),
+        author_qc_excluded=sorted(set(count_columns) - set(samples)),
+        replicate_positions=dict(
+            sorted(Counter(str(v) for v in metadata[COL_REP]).items())
+        ),
+        sra_experiments_with_several_records={
+            srx: members for srx, members in sorted(by_srx.items()) if len(members) > 1
+        },
+    )
 
 
 #: The columns that define a sample's strain and condition; every replicate of one
@@ -1883,6 +1979,8 @@ class RnaseqLamoureux2023Dataset(ExperimentDataset):
             raise RuntimeError("counts.csv lacks samples of the released matrix")
         if not set(released.index) <= set(counts.index):
             raise RuntimeError("counts.csv lacks genes of the released matrix")
+        account = release_account(metadata, [str(c) for c in counts.columns])
+        self._write_json("release_account.json", account.model_dump())
 
         back_solve = back_solve_pseudocount(released, prefilter)
         self._write_json("pseudocount_back_solve.json", back_solve.model_dump())
@@ -2008,6 +2106,7 @@ class RnaseqLamoureux2023Dataset(ExperimentDataset):
                         genes,
                         log_values[:, column[sample]],
                         count_values[:, column[sample]],
+                        rows[sample][COL_SAMPLE],
                     ),
                 )
                 txn.put(

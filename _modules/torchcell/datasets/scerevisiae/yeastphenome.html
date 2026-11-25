@@ -203,6 +203,33 @@
 <span class="sd">``n_samples`` / ``environment_response_uncertainty`` / ``sample_unit`` (the replicate</span>
 <span class="sd">design is not carried). All are ``not_carried_by_curation`` and anchored by ``looked_in``</span>
 <span class="sd">= the Zenodo record. A future per-paper SI comb would upgrade these to sourced values.</span>
+
+<span class="sd">REPLICATES (2026.11.24 per-replicate review, #1177 / #1178): the store already holds</span>
+<span class="sd">every value the curation releases, one record per (ORF, growth column) of</span>
+<span class="sd">``&lt;stem&gt;_valuez.txt`` (no repeated row id in any of the 47 pinned files), so no record</span>
+<span class="sd">changes. The curation releases one value per (ORF, screen) and no replicate level:</span>
+<span class="sd">Turco2023 ``paper.md`` L301 (sha256 ``b666d48f...``), "All Yeast Phenome data (NPVs and</span>
+<span class="sd">phenotypic similarities) are available for browsing, searching, and downloading at</span>
+<span class="sd">www.yeastphenome.org. The original phenotypic values, along with Python code for data</span>
+<span class="sd">extraction and processing, are available at https://github.com/yeastphenome/yp-data".</span>
+<span class="sd">The per-screen notebook ``Datasets/&lt;pmid&gt;/code.ipynb`` builds that one value BEFORE the</span>
+<span class="sd">NPV transform, by two merges:</span>
+
+<span class="sd">- a row-wise mean over replicate columns of the primary table, in six retained screens</span>
+<span class="sd">  (``CURATOR_AVERAGED_REPLICATE_COLUMNS`` lists the averaged labels verbatim);</span>
+<span class="sd">- ``groupby(original_data.index).mean()`` over repeated ids after alias translation, in</span>
+<span class="sd">  every screen (repeated strains, plate rows, and released ids the translation merges</span>
+<span class="sd">  into one ORF).</span>
+
+<span class="sd">The NPV is then ``z_transform_mode`` of ``Utils/yp_utils.py`` at the pin, ``(x - m) /</span>
+<span class="sd">sqrt(nanmean((x - m)**2))`` with ``m`` the KDE mode (bandwidth 0.25), applied to the</span>
+<span class="sd">merged value; no per-replicate NPV exists in the release. The replicate values exist only</span>
+<span class="sd">in the primary tables yp-data re-hosts under ``Datasets/&lt;pmid&gt;/raw_data/``, in each</span>
+<span class="sd">primary's own units, so storing them is an ingestion of that primary paper (its own</span>
+<span class="sd">loader), not of this curation; the curated aggregate stays as released (policy 8 of</span>
+<span class="sd">#1178). The ``units`` string's pointer "note S4" is wrong: Turco2023 note S4 is the list</span>
+<span class="sd">of analysis datasets and the formula is the code above (the stored string is left as</span>
+<span class="sd">is so no record changes; [[torchcell.datasets.scerevisiae.yeastphenome]] 2026.11.24).</span>
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
@@ -592,6 +619,58 @@
         <span class="s2">"valuez_sha256"</span><span class="p">:</span> <span class="s2">"590b872331439342ab09c27fd9da9e534239540418d44a508abc4e2962b5d290"</span><span class="p">,</span>
     <span class="p">},</span>
 <span class="p">]</span>
+
+
+<span class="c1"># The six retained screens whose yp-data notebook (``Datasets/&lt;pmid&gt;/code.ipynb`` at</span>
+<span class="c1"># ``YP_PIN``) takes a row-wise mean over replicate columns of the primary table before the</span>
+<span class="c1"># NPV transform: PMID -&gt; the averaged labels, verbatim, as the notebook groups them. The</span>
+<span class="c1"># store holds the curated mean as released; the per-column values are the primary's own</span>
+<span class="c1"># release (re-hosted under ``Datasets/&lt;pmid&gt;/raw_data/``), in the primary's units, and are</span>
+<span class="c1"># NOT stored by this loader (#1177; evidence and per-column counts in the dataset note,</span>
+<span class="c1"># 2026.11.24). Berry 2011 is summarized by the notebook's regex groups (each group is one</span>
+<span class="c1"># stored column; DTT/NaCl/HS/TM 1-3 are the primary's repeat experiments, UP/DN the two</span>
+<span class="c1"># barcodes of one culture).</span>
+<span class="n">CURATOR_AVERAGED_REPLICATE_COLUMNS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1"># Doostzadeh 2007, kfl131supp.xls: three dated runs per agent (notebook cells 9, 15-16)</span>
+    <span class="s2">"17043098"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"z_result_nq:04_10_28_19:mpp+:250:ug/ml::::20:hom_09_02"</span><span class="p">,</span>
+        <span class="s2">"z_result_nq:04_10_28_25:mpp+:250:ug/ml::::20:hom_09_02"</span><span class="p">,</span>
+        <span class="s2">"z_result_nq:04_11_04_06:mpp+:250:ug/ml::::20:hom_09_02"</span><span class="p">,</span>
+        <span class="s2">"z_result_nq:04_10_28_21:paraquat:5000:uM::::20:hom_09_02"</span><span class="p">,</span>
+        <span class="s2">"z_result_nq:04_10_28_27:paraquat:5000:uM::::20:hom_09_02"</span><span class="p">,</span>
+        <span class="s2">"z_result_nq:04_11_04_08:paraquat:5000:uM::::20:hom_09_02"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="c1"># Berry 2011, pgen.1002353.s009.xlsx 'Hom-Het COMPILATION' (notebook cells 18-19)</span>
+    <span class="s2">"22102822"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"Sample1 vs Sample0 Array"</span><span class="p">,</span>
+        <span class="s2">"Sample2 vs Sample1 Array"</span><span class="p">,</span>
+        <span class="s2">"DTT[0-9] Sample3 vs Sample1 Array"</span><span class="p">,</span>
+        <span class="s2">"NaCl[0-9] Sample3 vs Sample1 Array"</span><span class="p">,</span>
+        <span class="s2">"HS[0-9] Sample3 vs Sample1 Array"</span><span class="p">,</span>
+        <span class="s2">"DTT[0-9] Sample4[A-Z]? vs Sample3 Array"</span><span class="p">,</span>
+        <span class="s2">"NaCl[0-9] Sample4[A-Z]? vs Sample3 Array"</span><span class="p">,</span>
+        <span class="s2">"HS[0-9] Sample4[A-Z]? vs Sample3 Array"</span><span class="p">,</span>
+        <span class="s2">"Sample1 vs Sample0 [(DN)(UP)]"</span><span class="p">,</span>
+        <span class="s2">"Sample2 vs Sample1 [(DN)(UP)]"</span><span class="p">,</span>
+        <span class="s2">"DTT[0-9] Sample3 vs Sample1 [(DN)(UP)]"</span><span class="p">,</span>
+        <span class="s2">"NaCl[0-9] Sample3 vs Sample1 [(DN)(UP)]"</span><span class="p">,</span>
+        <span class="s2">"HS[0-9] Sample3 vs Sample1 [(DN)(UP)]"</span><span class="p">,</span>
+        <span class="s2">"TM[0-9] Sample3 vs Sample1 [(DN)(UP)]"</span><span class="p">,</span>
+        <span class="s2">"DTT[0-9] Sample4[A-Z]? vs Sample3 [(DN)(UP)]"</span><span class="p">,</span>
+        <span class="s2">"NaCl[0-9] Sample4[A-Z]? vs Sample3 [(DN)(UP)]"</span><span class="p">,</span>
+        <span class="s2">"HS[0-9] Sample4[A-Z]? vs Sample3 [(DN)(UP)]"</span><span class="p">,</span>
+        <span class="s2">"TM[0-9] Sample4[A-Z]? vs Sample3 [(DN)(UP)]"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="c1"># Galardini 2019, Table_EV2_ko_scores.txt: S288C S-scores of one gene at 2 or 3</span>
+    <span class="c1"># library positions (notebook cell 9, groupby(['condition','gene'])['score'].mean())</span>
+    <span class="s2">"31885205"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"score (per library position)"</span><span class="p">,),</span>
+    <span class="c1"># Jin 2021, 'original data.xlsx': header row 'replicate 1/2/3' (notebook cells 13-14)</span>
+    <span class="s2">"33924665"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Score"</span><span class="p">,</span> <span class="s2">"Score.1"</span><span class="p">,</span> <span class="s2">"Score.2"</span><span class="p">),</span>
+    <span class="c1"># Jin 2021, Table S4 (notebook cell 13)</span>
+    <span class="s2">"34944020"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Score1"</span><span class="p">,</span> <span class="s2">"Score2"</span><span class="p">,</span> <span class="s2">"Score3"</span><span class="p">),</span>
+    <span class="c1"># Cao 2022, Table 1 sheets (notebook cells 6-10)</span>
+    <span class="s2">"35495664"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"First screening"</span><span class="p">,</span> <span class="s2">"Second screening"</span><span class="p">,</span> <span class="s2">"Third screening"</span><span class="p">),</span>
+<span class="p">}</span>
 
 
 <span class="n">_METHOD_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\((?P&lt;method&gt;[^)]+)\)"</span><span class="p">)</span>

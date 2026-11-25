@@ -2178,7 +2178,8 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "isobutanol_screen_lopez2024": 4805,
         "isobutanol_validated_lopez2024": 227,
         "ffa_xue2025": 519,
-        "metabolome_fuhrer2017": 3735,
+        # #1177: 3,806 z-score records + 7,764 raw clone records.
+        "metabolome_fuhrer2017": 11570,
         # #753 + #1178: one record per culture, the 28 earlier ones plus the second
         # pfkA culture KO05x and the five 0.2 h-1 wild-type cultures RF02-RF06.
         "metabolome_ishii2007": 34,
@@ -2207,12 +2208,17 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "metabolite_intensity_rapp2026",
     }
     # Issue #595: Zelezniak releases several protocols, verified per protocol; #1178:
-    # Mulleder's mM rows and its raw uM cultures are two declared measurement types.
+    # Mulleder's mM rows and its raw uM cultures are two declared measurement types;
+    # #1177: Fuhrer's per-strain z-scores and its per-clone raw intensities too.
     assert {
         name
         for name, spec in runners.METABOLITE_DATASETS.items()
         if spec.get("protocol_measurement_types") is not None
-    } == {"metabolite_zelezniak2018", "amino_acid_mulleder2016"}
+    } == {
+        "metabolite_zelezniak2018",
+        "amino_acid_mulleder2016",
+        "metabolome_fuhrer2017",
+    }
     assert _oracles(runners.PROTEIN_DATASETS) == {
         "proteome_zelezniak2018": 364,
         "proteome_messner2023": 5087,

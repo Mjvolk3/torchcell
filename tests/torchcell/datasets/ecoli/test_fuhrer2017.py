@@ -23,7 +23,12 @@ the deposit's alphabetical column order:
     6       yaaQ   JW9999 b9999 (ready)                    4   -> record, JW9999 (same)
 
 Each z-score row is a permutation of the standardized 1..6 scores (median 0, SD 1 over
-the six columns), so the build's standardization check passes. No genome is read in the
+the six columns), so the build's standardization check passes. The raw matrices
+(``RAW_LAYOUT``, 36 columns) carry the same names plus ``flhC``, the stand-in for a
+withdrawn mutant (4 columns, left out), so the build writes 5 z-score records and 16 clone
+records (hokC 2, ilvG 4, thrA 2, thrL 2, wt 4, yaaQ 2): clone ``g`` (0-based over the 18
+pairs, flhC's two included) has injections ``_raw(g, r)`` and ``_raw(g, r) + 2`` per ion
+row ``r``, so its stored value is ``_raw(g, r) + 1``. No genome is read in the
 build (owner rule of 2026-10-12: the data is the data); the L4 row of the verifier
 reports which JW ids the synthetic annotation places.
 
@@ -39,6 +44,7 @@ from __future__ import annotations
 import json
 import os
 import os.path as osp
+from collections import Counter
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -78,6 +84,21 @@ POS_ROWS = [
 ]
 COLUMNS = ["hokC", "ilvG", "thrA", "thrL", "wt", "yaaQ"]
 RAW_COUNTS = {"hokC": 4, "ilvG": 8, "thrA": 4, "thrL": 4, "wt": 8, "yaaQ": 4}
+#: The raw matrices' names in release order: the z-score names plus a withdrawn one.
+RAW_LAYOUT = [("flhC", 4), *RAW_COUNTS.items()]
+RAW_NAMES = [name for name, n in RAW_LAYOUT for _ in range(n)]
+#: Clone index ranges (0-based over the 18 technical pairs) per raw name.
+CLONES_OF = {"flhC": [0, 1], "hokC": [2, 3], "ilvG": [4, 5, 6, 7], "thrA": [8, 9]}
+CLONES_OF |= {"thrL": [10, 11], "wt": [12, 13, 14, 15], "yaaQ": [16, 17]}
+
+
+def _raw(clone: int, row: int) -> int:
+    """The first injection of clone ``clone`` at ion row ``row`` (neg rows 0-2, then
+    pos rows 3-4); the second injection is this plus 2.
+    """
+    return 1000 + 37 * ((5 * clone + 3 * row) % 13) + 11 * row
+
+
 EV1A_ROWS: list[tuple[str, str, str, str]] = [
     ("JW4367", "b0001", "hokC", "ready to distribute"),
     ("JW3740", "b3767", "ilvG", "ready to distribute"),
@@ -170,11 +191,19 @@ def _write_raw(raw: Path) -> None:
         (raw / name).write_text(
             "".join("\t".join(f"{v:.4f}" for v in row) + "\n" for row in rows)
         )
+    for name, ion_rows in ((m.RAW_NEG, range(3)), (m.RAW_POS, range(3, 5))):
+        (raw / name).write_text(
+            "".join(
+                "\t".join(
+                    f"{_raw(g, r)}\t{_raw(g, r) + 2}"
+                    for g in range(len(RAW_NAMES) // 2)
+                )
+                + "\n"
+                for r in ion_rows
+            )
+        )
     _write_column(raw / m.SAMPLE_ID_ZSCORE, COLUMNS)
-    _write_column(
-        raw / m.SAMPLE_ID_ALL,
-        [name for name in COLUMNS for _ in range(RAW_COUNTS[name])],
-    )
+    _write_column(raw / m.SAMPLE_ID_ALL, RAW_NAMES)
     _write_column(raw / m.NEG_ION_MZ, NEG_MZ)
     _write_column(raw / m.POS_ION_MZ, POS_MZ)
     _write_table_ev1(raw / m.TABLE_EV1)
@@ -218,6 +247,11 @@ def synthetic(
     _write_raw(root / "raw")
     monkeypatch.setattr(m, "EXPECTED_ION_COUNTS", {"neg": 3, "pos": 2})
     monkeypatch.setattr(m, "assembly_reference", lambda strain, **_: REFERENCE)
+    monkeypatch.setattr(m, "RAW_NAMES_ANALYZED", len(RAW_LAYOUT))
+    monkeypatch.setattr(m, "WITHDRAWN_MUTANTS", ("flhC",))
+    monkeypatch.setattr(m, "EXPECTED_ZSCORE_RECORDS", 5)
+    monkeypatch.setattr(m, "EXPECTED_CLONE_RECORDS", 16)
+    monkeypatch.setattr(m, "EXPECTED_RECORDS", 21)
     return root
 
 
@@ -367,6 +401,142 @@ def test_read_zscores_refuses_a_wrong_shape_and_a_nan(tmp_path: Path) -> None:
     assert "1 non-finite cells, first at row 2, column 2" in str(err.value)
 
 
+def test_name_blocks_refuses_a_split_name_and_a_straddling_pair() -> None:
+    assert m.name_blocks(["a", "a", "b", "b", "b", "b"]) == {"a": (0, 2), "b": (2, 6)}
+    with pytest.raises(m.RawColumnCountError, match="'a' appears in two raw-matrix"):
+        m.name_blocks(["a", "a", "b", "b", "a", "a"])
+    with pytest.raises(m.RawColumnCountError, match=r"'a': raw columns 1..3 are not"):
+        m.name_blocks(["a", "a", "a", "b"])
+
+
+def test_select_clones_pairs_columns_and_leaves_the_withdrawn_out(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(m, "RAW_NAMES_ANALYZED", len(RAW_LAYOUT))
+    monkeypatch.setattr(m, "WITHDRAWN_MUTANTS", ("flhC",))
+    selection = m.select_strains(COLUMNS, _entries(), RAW_COUNTS)
+    clones = m.select_clones(RAW_NAMES, selection)
+    assert [(c.deposit_name, c.replicate_id, c.raw_columns) for c in clones.clones] == [
+        ("hokC", "1", (4, 5)),
+        ("hokC", "2", (6, 7)),
+        ("ilvG", "1", (8, 9)),
+        ("ilvG", "2", (10, 11)),
+        ("ilvG", "3", (12, 13)),
+        ("ilvG", "4", (14, 15)),
+        ("thrA", "1", (16, 17)),
+        ("thrA", "2", (18, 19)),
+        ("thrL", "1", (20, 21)),
+        ("thrL", "2", (22, 23)),
+        ("wt", "1", (24, 25)),
+        ("wt", "2", (26, 27)),
+        ("wt", "3", (28, 29)),
+        ("wt", "4", (30, 31)),
+        ("yaaQ", "1", (32, 33)),
+        ("yaaQ", "2", (34, 35)),
+    ]
+    assert clones.withdrawn == {"flhC": (0, 4)}
+    assert [c.replicate_id for c in clones.wt_clones] == ["1", "2", "3", "4"]
+    assert len(clones.mutant_clones) == 12
+    assert m.deletion_genotype(clones.wt_clones[0]).perturbations == []
+    assert [
+        p.systematic_gene_name
+        for p in m.deletion_genotype(clones.clones[2]).perturbations
+    ] == ["JW3740", "JW3741"]
+
+
+@pytest.mark.parametrize(
+    ("raw_names", "withdrawn", "n_names", "message"),
+    [
+        (RAW_NAMES, ("flhC",), 8, "7 raw-matrix names, the paper states 8"),
+        (RAW_NAMES, ("yhfW",), 7, r"raw-only names \['flhC'\], expected the withdrawn"),
+        (RAW_NAMES[4:], ("flhC",), 6, r"raw-only names \[\], expected the withdrawn"),
+        (
+            [n for n in RAW_NAMES if n != "thrL"],
+            ("flhC",),
+            6,
+            r"z-score names absent from the raw matrix: \['thrL'\]",
+        ),
+    ],
+)
+def test_select_clones_refuses_an_unexpected_raw_matrix(
+    monkeypatch: pytest.MonkeyPatch,
+    raw_names: list[str],
+    withdrawn: tuple[str, ...],
+    n_names: int,
+    message: str,
+) -> None:
+    monkeypatch.setattr(m, "RAW_NAMES_ANALYZED", n_names)
+    monkeypatch.setattr(m, "WITHDRAWN_MUTANTS", withdrawn)
+    selection = m.select_strains(COLUMNS, _entries(), RAW_COUNTS)
+    with pytest.raises(m.RawColumnCountError, match=message):
+        m.select_clones(raw_names, selection)
+
+
+def test_technical_pairing_measures_the_adjacent_split() -> None:
+    """Two four-column names over 6 ions: each pair is one profile injected twice."""
+    rng = np.random.default_rng(0)
+    profiles = rng.uniform(500.0, 5000.0, size=(6, 4))
+    matrix = np.repeat(profiles, 2, axis=1) * rng.uniform(0.99, 1.01, size=(6, 8))
+    result = m.technical_pairing("neg", matrix, ["a"] * 4 + ["b"] * 4)
+    assert (result.n_ions_used, result.n_four_column_names, result.adjacent_best) == (
+        6,
+        2,
+        2,
+    )
+    assert result.agreement == 1.0
+    assert result.within_pair_median_correlation > 0.9
+    with pytest.raises(ValueError, match="best for only 0 of 2 four-column names"):
+        m.technical_pairing(
+            "neg", matrix[:, [0, 2, 1, 3, 4, 6, 5, 7]], ["a"] * 4 + ["b"] * 4
+        )
+
+
+def test_clone_phenotype_is_one_measurement_with_the_technical_pair_stated() -> None:
+    phenotype = m.clone_phenotype(["neg_0001", "pos_0001"], [1200.5, -3.0], "2")
+    assert phenotype.metabolite_level == {"neg_0001": 1200.5, "pos_0001": -3.0}
+    assert phenotype.n_replicates == {"neg_0001": 1, "pos_0001": 1}
+    assert (phenotype.replicate_id, phenotype.metabolite_level_se) == ("2", None)
+    assert phenotype.measurement_type == "fia_tof_ms_ion_raw_intensity_clone"
+    assert phenotype.provenance_gaps == [m.SINGLE_CLONE_SE_GAP]
+    assert m.SINGLE_CLONE_SE_GAP.reason.value == "not_applicable_single_measurement"
+    assert "n = 2" in (m.SINGLE_CLONE_SE_GAP.note or "")
+    with pytest.raises(ValueError, match="2 keys for 1 values"):
+        m.clone_phenotype(["neg_0001", "pos_0001"], [1.0], "1")
+
+
+def test_clone_reference_is_the_wt_mean_with_its_standard_error() -> None:
+    wt = np.array([[1.0, 3.0, 5.0], [10.0, 10.0, 10.0]])
+    phenotype = m.clone_reference_phenotype(["neg_0001", "pos_0001"], wt)
+    assert phenotype.metabolite_level == {"neg_0001": 3.0, "pos_0001": 10.0}
+    assert phenotype.metabolite_level_se == pytest.approx(
+        {"neg_0001": 2.0 / np.sqrt(3.0), "pos_0001": 0.0}
+    )
+    assert phenotype.n_replicates == {"neg_0001": 3, "pos_0001": 3}
+    assert phenotype.replicate_id is None
+    with pytest.raises(ValueError, match="wt profiles"):
+        m.clone_reference_phenotype(["neg_0001"], wt)
+
+
+def test_read_raw_intensities_keeps_negatives_and_refuses_nan(tmp_path: Path) -> None:
+    path = tmp_path / "raw.tsv"
+    path.write_text("-5\t0\n12\t7\n")
+    assert m.read_raw_intensities(path, 2, 2).tolist() == [[-5.0, 0.0], [12.0, 7.0]]
+    with pytest.raises(ValueError, match=r"shape \(2, 2\), expected \(3, 2\)"):
+        m.read_raw_intensities(path, 3, 2)
+    path.write_text("-5\tnan\n12\t7\n")
+    with pytest.raises(m.NonFiniteZScoreError, match="non-finite raw intensities"):
+        m.read_raw_intensities(path, 2, 2)
+
+
+def test_the_runner_spec_matches_the_loader() -> None:
+    from torchcell.verification.runners import METABOLITE_DATASETS
+
+    spec = METABOLITE_DATASETS["metabolome_fuhrer2017"]
+    assert spec["expected_count"] == m.EXPECTED_RECORDS == 11570
+    assert spec["protocol_measurement_types"] == m.PROTOCOL_MEASUREMENT_TYPES
+    assert spec["root"] == m.DATASET_ROOT_REL
+
+
 def test_read_study_design(tmp_path: Path) -> None:
     _write_raw(tmp_path)
     assert m.read_study_design(tmp_path / m.STUDY_JSON) == (
@@ -450,18 +620,16 @@ def test_build_reference_keeps_the_assembly_pin_through_a_dump() -> None:
 # Hermetic build
 # --------------------------------------------------------------------------- #
 def test_build_five_records_with_the_wt_reference_and_ledgers(
-    synthetic: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    presence_only_pins: list[Mapping[str, str]],
+    synthetic: Path, presence_only_pins: list[Mapping[str, str]]
 ) -> None:
-    """Five records, one per mutant column, each under the JW id(s) Table EV1A lists
-    for its name: ilvG is a pooled record with two JW ids, thrL and yaaQ carry JW ids
-    the synthetic annotation does not have and are records all the same.
+    """Five z-score records, one per mutant column, each under the JW id(s) Table EV1A
+    lists for its name: ilvG is a pooled record with two JW ids, thrL and yaaQ carry JW
+    ids the synthetic annotation does not have and are records all the same. Then the
+    16 clone records (checked in the next test).
     """
-    monkeypatch.setattr(m, "EXPECTED_RECORDS", 5)
     dataset = m.MetabolomeFuhrer2017Dataset(root=str(synthetic))
     assert presence_only_pins == [m.DATA_SHA256]
-    assert len(dataset) == 5
+    assert len(dataset) == 21
     keys = ["neg_0001", "neg_0002", "neg_0003", "pos_0001", "pos_0002"]
 
     first = dataset[0]["experiment"]
@@ -514,7 +682,23 @@ def test_build_five_records_with_the_wt_reference_and_ledgers(
         drops["kept_records"],
         drops["dropped_records"],
         drops["rules"],
-    ) == (6, 5, 5, 0, [])
+    ) == (
+        6,
+        23,
+        21,
+        2,
+        [
+            {
+                "rule": "withdrawn_by_authors",
+                "description": drops["rules"][0]["description"],
+                "n_records": 2,
+                "items": ["flhC: raw columns 1..4"],
+            }
+        ],
+    )
+    assert drops["rules"][0]["description"].startswith(
+        repr(m.SOURCED_VALUES["withdrawn_mutants"].quote)
+    )
     assert (
         "ilvG: JW3740 b3767 (ready to distribute), JW3741 b3768 (ready to "
         "distribute); 2 loci"
@@ -540,6 +724,77 @@ def test_build_five_records_with_the_wt_reference_and_ledgers(
     assert [s["mode"] for s in scale] == ["neg", "pos"]
 
 
+def test_build_one_record_per_clone_with_the_wt_mean_reference(synthetic: Path) -> None:
+    """Records 5..20 are the clones in release order, the withdrawn flhC left out: each
+    is the mean of its two injections, n = 1, its position as replicate_id; the wt
+    cultures are records with an empty genotype; the reference is their mean.
+    """
+    dataset = m.MetabolomeFuhrer2017Dataset(root=str(synthetic))
+    keys = ["neg_0001", "neg_0002", "neg_0003", "pos_0001", "pos_0002"]
+    expected = [
+        (name, str(k + 1), g)
+        for name, clones in CLONES_OF.items()
+        if name != "flhC"
+        for k, g in enumerate(clones)
+    ]
+    for idx, (name, replicate_id, g) in enumerate(expected, start=5):
+        experiment = dataset[idx]["experiment"]
+        phenotype = experiment["phenotype"]
+        assert phenotype["measurement_type"] == m.RAW_MEASUREMENT_TYPE
+        assert phenotype["replicate_id"] == replicate_id
+        assert phenotype["metabolite_level"] == {
+            key: float(_raw(g, r) + 1) for r, key in enumerate(keys)
+        }
+        assert phenotype["n_replicates"] == dict.fromkeys(keys, 1)
+        assert phenotype["metabolite_level_se"] is None
+        (gap,) = phenotype["provenance_gaps"]
+        assert (gap["field"], gap["reason"]) == (
+            "metabolite_level_se",
+            "not_applicable_single_measurement",
+        )
+        labels = {p["strain_label"] for p in experiment["genotype"]["perturbations"]}
+        assert labels == (set() if name == "wt" else {name})
+    # the pooled name's four clones each keep both JW ids (the release does not say
+    # which entry a clone is)
+    ilvg = dataset[7]["experiment"]["genotype"]["perturbations"]
+    assert [p["systematic_gene_name"] for p in ilvg] == ["JW3740", "JW3741"]
+    # one hand-computed value: hokC clone 1 (g = 2), neg row 1: 1000 + 37 * 10 + 1
+    assert dataset[5]["experiment"]["phenotype"]["metabolite_level"]["neg_0001"] == (
+        1371.0
+    )
+
+    reference = dataset[5]["reference"]["phenotype_reference"]
+    wt = np.array([[_raw(g, r) + 1 for g in CLONES_OF["wt"]] for r in range(5)])
+    assert reference["measurement_type"] == m.RAW_MEASUREMENT_TYPE
+    assert reference["replicate_id"] is None
+    assert reference["metabolite_level"] == pytest.approx(
+        dict(zip(keys, wt.mean(axis=1), strict=True))
+    )
+    assert reference["metabolite_level_se"] == pytest.approx(
+        dict(zip(keys, wt.std(axis=1, ddof=1) / 2.0, strict=True))
+    )
+    assert reference["n_replicates"] == dict.fromkeys(keys, 4)
+    # the z-score records keep their own reference
+    assert dataset[0]["reference"]["phenotype_reference"]["measurement_type"] == (
+        m.MEASUREMENT_TYPE
+    )
+
+    preprocess = synthetic / "preprocess"
+    clones = (preprocess / "clones.csv").read_text().splitlines()
+    assert clones[0] == (
+        "record,deposit_name,replicate_id,raw_column_first,raw_column_second,jw_ids,"
+        "wild_type"
+    )
+    assert clones[1] == "5,hokC,1,5,6,JW4367,False"
+    assert clones[-1] == "20,yaaQ,2,35,36,JW9999,False"
+    pairing = json.loads((preprocess / "technical_pairing.json").read_text())
+    assert [
+        (p["mode"], p["n_four_column_names"], p["adjacent_best"]) for p in pairing
+    ] == [("neg", 5, 5), ("pos", 5, 5)]
+    agreement = json.loads((preprocess / "raw_zscore_agreement.json").read_text())
+    assert agreement["n_strains"] == 5
+
+
 def test_build_refuses_a_design_other_than_two_by_two(synthetic: Path) -> None:
     study = synthetic / "raw" / m.STUDY_JSON
     study.write_text(study.read_text().replace("2 Biological", "3 Biological"))
@@ -550,8 +805,35 @@ def test_build_refuses_a_design_other_than_two_by_two(synthetic: Path) -> None:
 def test_build_refuses_a_column_count_other_than_the_declared_one(
     synthetic: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(m, "EXPECTED_RECORDS", 6)
-    with pytest.raises(ValueError, match="5 mutant columns, the module declares 6"):
+    monkeypatch.setattr(m, "EXPECTED_ZSCORE_RECORDS", 6)
+    with pytest.raises(
+        ValueError, match="5 z-score mutant columns, the module declares 6"
+    ):
+        m.MetabolomeFuhrer2017Dataset(root=str(synthetic))
+
+
+def test_build_refuses_a_clone_count_other_than_the_declared_one(
+    synthetic: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(m, "EXPECTED_CLONE_RECORDS", 18)
+    with pytest.raises(ValueError, match="16 raw clones, the module declares 18"):
+        m.MetabolomeFuhrer2017Dataset(root=str(synthetic))
+
+
+def test_build_refuses_a_swapped_technical_pairing(
+    synthetic: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Interleave every four-column block's injections (1, 3, 2, 4): the adjacent
+    columns are then two different clones, and the build stops.
+    """
+    path = synthetic / "raw" / m.RAW_NEG
+    rows = [line.split("\t") for line in path.read_text().splitlines()]
+    starts = [0, 4, 16, 20, 32]  # flhC, hokC, thrA, thrL, yaaQ
+    for row in rows:
+        for a in starts:
+            row[a + 1], row[a + 2] = row[a + 2], row[a + 1]
+    path.write_text("".join("\t".join(row) + "\n" for row in rows))
+    with pytest.raises(ValueError, match="neg: the adjacent technical pairing is best"):
         m.MetabolomeFuhrer2017Dataset(root=str(synthetic))
 
 
@@ -574,7 +856,6 @@ def test_run_verification_reports_the_jw_ids_as_a_finding(
     monkeypatch: pytest.MonkeyPatch,
     bw25113: EcoliK12BW25113Genome,
 ) -> None:
-    monkeypatch.setattr(m, "EXPECTED_RECORDS", 5)
     root = tmp_path / "data" / "torchcell" / "metabolome_fuhrer2017"
     root.parent.mkdir(parents=True)
     synthetic.rename(root)
@@ -714,6 +995,8 @@ def test_every_consumed_file_is_pinned_once() -> None:
         "sample_id_all.xls",
         "neg_ionMz.xls",
         "pos_ionMz.xls",
+        "rawdata_neg_all.tsv",
+        "rawdata_pos_all.tsv",
         "si2.xlsx",
     ]
     assert all(
@@ -740,7 +1023,12 @@ def _real_data_root() -> str:
 
 
 def _built_root() -> str:
-    return osp.join(_real_data_root(), "data/torchcell/metabolome_fuhrer2017")
+    """The built store the data tests read: the dev tree's, or ``FUHRER2017_ROOT``
+    (a scratch build of a branch, since the dev stores are shared).
+    """
+    return os.environ.get(
+        "FUHRER2017_ROOT", osp.join(_real_data_root(), m.DATASET_ROOT_REL)
+    )
 
 
 @pytest.mark.data
@@ -764,22 +1052,66 @@ def test_real_sourced_values_are_verbatim(key: str) -> None:
 
 
 @pytest.mark.data
+def test_real_release_has_two_clones_per_strain_and_96_wt_cultures() -> None:
+    """The pinned raw matrices' names, read without building: 3,810 names, 7,764 clone
+    records after the three withdrawn mutants (6 clones), 3,781 single-entry names with
+    clones "1" and "2", 25 pooled names with 4 or 6 clones, 96 wt cultures.
+    """
+    data = m.raw_mirror_dir(_real_data_root()) / "data"
+    names = m.read_name_column(data / m.SAMPLE_ID_ALL)
+    selection = m.select_strains(
+        m.read_name_column(data / m.SAMPLE_ID_ZSCORE),
+        m.read_table_ev1a(data / m.TABLE_EV1),
+        Counter(names),
+    )
+    clones = m.select_clones(names, selection)
+    assert len(clones.clones) == m.EXPECTED_CLONE_RECORDS == 7764
+    assert len(clones.wt_clones) == 96
+    assert {n: (b - a) // 2 for n, (a, b) in clones.withdrawn.items()} == {
+        "flhC": 2,
+        "hrpB": 2,
+        "yhfW": 2,
+    }
+    per_position = Counter(c.replicate_id for c in clones.mutant_clones)
+    assert per_position == {"1": 3806, "2": 3806, "3": 25, "4": 25, "5": 3, "6": 3}
+    per_name = Counter(Counter(c.deposit_name for c in clones.mutant_clones).values())
+    assert per_name == {2: 3781, 4: 22, 6: 3}
+
+
+@pytest.mark.data
 def test_real_build_counts_and_the_thra_record() -> None:
-    """3,806 records, one per mutant column, 25 of them pooled names with two or
-    three JW ids; thrA (JW0001) with values read off the deposit by hand.
+    """3,806 z-score records, one per mutant column, 25 of them pooled names with two
+    or three JW ids, then 7,764 clone records; thrA (JW0001) with values read off the
+    deposit by hand.
     """
     from torchcell.verification.runners import load_records
 
     drops = json.loads(
         Path(_built_root(), "preprocess", "dropped_records.json").read_text()
     )
-    assert (drops["source_records"], drops["kept_records"], drops["rules"]) == (
-        3806,
-        3806,
-        [],
+    assert (
+        drops["source_records"],
+        drops["kept_records"],
+        drops["dropped_records"],
+        [r["rule"] for r in drops["rules"]],
+    ) == (11576, 11570, 6, ["withdrawn_by_authors"])
+    all_records = load_records(_built_root())
+    assert len(all_records) == 11570
+    by_type = Counter(
+        r["experiment"]["phenotype"]["measurement_type"] for r in all_records
     )
-    records = load_records(_built_root())
-    assert len(records) == 3806
+    assert by_type == {m.MEASUREMENT_TYPE: 3806, m.RAW_MEASUREMENT_TYPE: 7764}
+    # load_records returns LMDB key order ("0", "1", "10", ...), so split by type
+    records = [
+        r
+        for r in all_records
+        if r["experiment"]["phenotype"]["measurement_type"] == m.MEASUREMENT_TYPE
+    ]
+    clone_records = [
+        r
+        for r in all_records
+        if r["experiment"]["phenotype"]["measurement_type"] == m.RAW_MEASUREMENT_TYPE
+    ]
     # 25 pooled names: 20 over two or three loci, dcuC over two JW ids of one locus,
     # and 4 that list one JW id twice (one perturbation each)
     assert (
@@ -805,10 +1137,48 @@ def test_real_build_counts_and_the_thra_record() -> None:
     )
     assert set(reference["n_replicates"].values()) == {96}
 
+    thra_clones = sorted(
+        (
+            r
+            for r in clone_records
+            if [
+                p["systematic_gene_name"]
+                for p in r["experiment"]["genotype"]["perturbations"]
+            ]
+            == ["JW0001"]
+        ),
+        key=lambda r: int(r["experiment"]["phenotype"]["replicate_id"]),
+    )
+    assert [r["experiment"]["phenotype"]["replicate_id"] for r in thra_clones] == [
+        "1",
+        "2",
+    ]
+    for clone, expected in zip(thra_clones, HAND_CHECKED_THRA_CLONES, strict=True):
+        levels = clone["experiment"]["phenotype"]["metabolite_level"]
+        assert {k: levels[k] for k in expected} == expected
+        assert set(clone["experiment"]["phenotype"]["n_replicates"].values()) == {1}
+        assert clone["experiment"]["phenotype"]["metabolite_level_se"] is None
+    wt_clones = [
+        r for r in clone_records if not r["experiment"]["genotype"]["perturbations"]
+    ]
+    assert len(wt_clones) == 96
+    clone_reference = thra_clones[0]["reference"]["phenotype_reference"]
+    assert clone_reference["replicate_id"] is None
+    assert set(clone_reference["n_replicates"].values()) == {96}
+    assert clone_reference["metabolite_level"]["neg_0001"] == pytest.approx(
+        np.mean(
+            [
+                r["experiment"]["phenotype"]["metabolite_level"]["neg_0001"]
+                for r in wt_clones
+            ]
+        )
+    )
+
 
 @pytest.mark.data
+@pytest.mark.timeout(1800)  # L0 validates 11,570 records of 7,534 ions (about 5 min)
 def test_real_build_passes_l0_to_l4() -> None:
-    report = m.run_verification(_real_data_root())
+    report = m.run_verification(_real_data_root(), _built_root())
     assert report.passed, report.summary()
 
 
@@ -822,3 +1192,12 @@ HAND_CHECKED_THRA: dict[str, float] = {
     "pos_4365": 1.3324,
 }
 HAND_CHECKED_WT: dict[str, float] = {"neg_0001": -0.1128, "pos_4365": -0.0166}
+#: thrA's two clones, read off the raw matrices by hand (thrA is columns 7,709-7,712 of
+#: ``sample_id_all.xls``): ``sed -n <row>p rawdata_neg_all.tsv | cut -f 7709-7712`` for
+#: rows 1 and 3169 gives 5765 5269 5730 5814 and 196 440 543 542, the same on
+#: ``rawdata_pos_all.tsv`` rows 1 and 4365 gives 957 1624 1316 1107 and 799 714 923 999;
+#: each clone is the mean of its two adjacent columns.
+HAND_CHECKED_THRA_CLONES: list[dict[str, float]] = [
+    {"neg_0001": 5517.0, "neg_3169": 318.0, "pos_0001": 1290.5, "pos_4365": 756.5},
+    {"neg_0001": 5772.0, "neg_3169": 542.5, "pos_0001": 1211.5, "pos_4365": 961.0},
+]

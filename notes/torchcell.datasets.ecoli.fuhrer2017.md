@@ -252,3 +252,46 @@ Rebuilt from this branch at `487bc2982` under slurm array 4675 (`gilahyper_build
 | L4 | `gene_containment_bw25113_jw_synonyms` | report | pass | 3,783 of 3,830 released identifiers resolve to a BW25113 locus; 47 do not |
 
 The real-data tests (`-m data --data`) pass against this store.
+
+## 2026.11.24 - One raw-intensity record per clone (#1177)
+
+Part of the per-replicate conversion (#1177; policy of 2026-11-17 and 2026-11-24): a record is one biological replicate as the source releases it.
+
+### What the release holds, sourced
+
+- Replicate design. `paper.md` (sha256 `ec87736b...055b`), Methods "Reproducibility between biological replicates": "For each knockout mutant, two different clones contained on separate plates in the library were separately processed on different days." Main text: "analyzed in technical duplicates by non-targeted mass spectrometry." Author checklist `si/si6.md` (sha256 `58a5a9b0...f874`): "Two biological replicates (independent clones) were extracted and measured with two technicalreplicates." [sic, OCR]. Study record `S-BSST5.json` (sha256 `65e4cb0e...77e4`): "2 Biological and 2 technical replicates".
+- Files. `zscore_neg.tsv` / `zscore_pos.tsv`: "Zscore transformed data matrix ..., replicates are averaged" (one value per strain; the per-replicate z-scores are NOT released). `rawdata_neg_all.tsv` / `rawdata_pos_all.tsv`: "Raw data matrix of negative ionization mode, rows correspond to ions, columns to genes, 4 columns per gene from technical and biological duplicates". The paper's Data Availability names S-BSST5 for "Raw data and modified $z$ -scores".
+- What the authors combined: "Modified $z$ -scores referring to technical and biological replicates are summarized into a unique median modified $z$ -score".
+- Withdrawn by the authors: "three additional mutants were removed from the dataset having inconsistent $z$ -score among the replicates (flhC, hrpB, and yhfW)". The raw matrices still carry their 4 columns each (measured: they are exactly the three names in `sample_id_all.xls` and not in `sample_id_zscore.xls`). Earlier exclusions (21 sick mutants, 16 injection errors, Methods "Physiology") are absent from both matrices: "The remaining 3,810 unique gene knockouts were further analyzed." `sample_id_all.xls` has exactly 3,810 names, wt included.
+
+### Retrieval (needs_fetch)
+
+The two raw matrices were not mirrored. Retrieved 2026-11-25 with the recorded `torchcell.literature.retrieve.direct_url` retriever from the source the paper names (BioStudies S-BSST5, `https://ftp.ebi.ac.uk/biostudies/fire/S-BSST/S-BSST0-99/S-BSST5/Files/<name>`), byte sizes equal to the study record's: `rawdata_neg_all.tsv` 229,189,456 B, sha256 `4e802c06fae13f3007f8909d20e002b5f55a106d2ac3926f4db32d2ce82999af`; `rawdata_pos_all.tsv` 314,326,485 B, sha256 `968cb6ea3d11a087354edf5e8274016eb01ced916d72fd5c70099e6b8f7d4a15`. Both are in `RAW_FILES` and the raw mirror's `manifest.json` (rewritten by `deposit`; the pre-change manifest is kept at `$DATA_ROOT/tmp/scratch/per-replicate-fuhrer2017/mirror_backup/manifest.json.pre-1177`).
+
+### Which columns are one extract (measured, not labelled)
+
+The deposit sorts the raw columns by name and does not say which of a name's 4 columns are the same clone. Measured on the pinned bytes (`technical_pairing.json`, the 500 most intense ions per mode, centered log2 intensity): for the 3,784 four-column names, the adjacent split (1,2)+(3,4) is the best of the three possible splits for 3,750 (neg) and 3,678 (pos); median within-pair correlation 0.744 / 0.685 against 0.240 / 0.005 across pairs. Over the whole matrix the even-start adjacent columns correlate at a median 0.76 (neg) and 0.69 (pos) against 0.11 and -0.02 for odd-start ones, and the 192 `wt` columns show the same parity (0.87 vs 0.53 neg, 0.74 vs 0.03 pos), so the `wt` block is 96 cultures x 2 injections. The build refuses a deposit where the adjacent split is best for fewer than 95% of the four-column names.
+
+### What the store holds now
+
+| measurement_type | records | what one record is |
+|---|---|---|
+| `fia_tof_ms_ion_modified_z_score` | 3,806 | unchanged: the deposit's per-strain summary over both clones |
+| `fia_tof_ms_ion_raw_intensity_clone` | 7,764 | one clone (7,668 Keio clones) or one wt culture (96, empty genotype) |
+
+A clone record is the mean of its two injection columns per ion (the median of two, the authors' statistic), `n_replicates` 1, `replicate_id` the clone's position inside the name's block (`"1"`, `"2"`; up to `"4"` / `"6"` for the 22 / 3 pooled names, up to `"96"` for wt), and a `not_applicable_single_measurement` gap on the SE that states the technical level (n = 2 repeat injections of one extract). A pooled name's clones keep every JW id of the name, because the release does not say which Table EV1A entry a clone is. The clone records' reference is the mean of the 96 wt culture records with SD / sqrt(96), `replicate_id=None`; the z-score records keep the deposit's `wt` column. The raw values are released integers (zeros and negatives included, 0.04% negative in a 200-record sample), not z-scores: the drift, plate and harvest-OD corrections between the two have unreleased inputs.
+
+Retention: 11,576 source records (3,806 + 7,770 clones), 11,570 kept, 6 dropped (`withdrawn_by_authors`: the clones of flhC, hrpB, yhfW).
+
+### Checks on the scratch build
+
+Scratch build `$DATA_ROOT/tmp/scratch/per-replicate-fuhrer2017/metabolome_fuhrer2017` (6 min 30 s, 5.3 GB peak RSS):
+
+- Clone positions: `"1"` and `"2"` 3,806 each over the mutants, `"3"`/`"4"` 25, `"5"`/`"6"` 3; clones per mutant genotype {2: 3,781, 4: 22, 6: 3}; wt 96.
+- The 3,806 z-score records equal the previous dev store's record for record (max absolute difference 0.0, reference too). The clone records are a different quantity, so no old stored value exists for them to reproduce.
+- Raw against z-score (`raw_zscore_agreement.json`, a finding): each ion standardized over the clone records, median over a strain's clones, Pearson with the strain's released z column: median 0.928, 5th percentile 0.708, against 0.012 for the next strain's column; own above shifted for 3,806 of 3,806 strains.
+- `thrA` (raw columns 7,709-7,712) hand-checked with `cut`: clone 1 neg_0001 = (5765 + 5269) / 2 = 5517.0, clone 2 = 5772.0.
+
+### Also fixed
+
+`runners.py` still declared `expected_count` 3,735 (the pre-2026-10-12 count) for a 3,806-record store; it now declares 11,570 and the two measurement types.

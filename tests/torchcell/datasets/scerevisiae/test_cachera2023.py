@@ -807,11 +807,13 @@ def test_cachera_build_stores_every_measured_colony_as_released(tmp_path: Path) 
     ga["token"] = ga["gene"].astype(str).str.strip().str.upper()
     ga = ga[ga[c._LEVEL].notna() & ~ga["token"].isin(["0", "NAN"])].set_index("token")
     assert len(ga) == 4760
+    counts = dict(zip(ga.index.tolist(), ga[c._COUNT].tolist(), strict=True))
+    means = dict(zip(ga.index.tolist(), ga[c._LEVEL].tolist(), strict=True))
     worst = 0.0
     for gene, values in levels.items():
-        row = ga.loc["WT" if gene is None else gene]
-        assert len(values) == int(row[c._COUNT]), gene
-        worst = max(worst, abs(sum(values) / len(values) - float(row[c._LEVEL])))
+        token = "WT" if gene is None else gene
+        assert len(values) == int(counts[token]), gene
+        worst = max(worst, abs(sum(values) / len(values) - float(means[token])))
     assert worst < 1e-12
 
     reference = dataset[0]["reference"]["phenotype_reference"]

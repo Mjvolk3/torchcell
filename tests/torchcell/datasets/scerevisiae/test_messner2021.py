@@ -18,9 +18,9 @@ wells), injection 2 absent as in the release, plus one QC run: 24 runs. Run ``i`
     P1;P2      -        every run, not proteotypic             rule 1 drops it
 
 After rule 2 a run identifies P1, P2, P5 and REP2 (4), but injection 5 (Pemetrexed)
-identifies 3, below 0.8 x 4 = 3.2: the outlier. Records are the other 16 drug runs; the
-reference is the six DMSO runs (injections 19-24), so P1's reference is the mean of
-1901..2401, 2151.0, with SE = SD / sqrt(6).
+identifies 3, below 0.8 x 4 = 3.2: the outlier. Records are the other 16 drug runs, then
+the six DMSO runs (injections 19-24), 22 in all; the reference is the six DMSO runs, so
+P1's reference is the mean of 1901..2401, 2151.0, with SE = SD / sqrt(6).
 """
 
 from __future__ import annotations
@@ -31,6 +31,7 @@ import math
 import os
 import os.path as osp
 import pickle
+from collections import Counter
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -53,6 +54,7 @@ from torchcell.datamodels.schema import (
     SmallMoleculePerturbation,
 )
 from torchcell.datasets.scerevisiae import messner2021 as m
+from torchcell.datasets.scerevisiae.messner2023 import build_uniprot_to_orf_map
 from torchcell.sequence.genome.registry import (
     SGD_S288C_R64,
     SGD_S288C_R64_GENBANK_ACCESSION,
@@ -311,7 +313,8 @@ def test_build_rows_ledger_counts_every_run_and_cell(
         "P2": "YBR001W",
         "P5": "YDR001C",
     }
-    assert (ledger.n_records, ledger.n_reference_runs) == (16, 6)
+    assert (ledger.n_records, ledger.n_control_records) == (22, 6)
+    assert ledger.n_reference_runs == 6
     assert ledger.n_table_s4_records == 14
     roles = {e.run: e.role for e in ledger.runs}
     assert roles[QC_RUN] == "qc" and roles[OUTLIER] == "outlier"
@@ -335,7 +338,21 @@ def test_build_rows_ledger_counts_every_run_and_cell(
     }
     assert [r["run"] for r in rows] == [
         plate_run(i) for i in INJECTIONS if i != 5 and i < 19
-    ]
+    ] + [plate_run(i) for i in range(19, 25)]
+    dmso_entries = [e for e in ledger.runs if e.role == "reference"]
+    assert sorted(
+        e.record_index for e in dmso_entries if e.record_index is not None
+    ) == list(range(16, 22))
+    assert all(e.record_index is not None for e in dmso_entries)
+    dmso_row = rows[16]
+    assert dmso_row["agent"] is None
+    assert dmso_row["abundance"] == {
+        "P03872": 1906.0,
+        "YAL001C": 1901.0,
+        "YBR001W": 1902.0,
+        "YDR001C": 1905.0,
+    }
+    assert dmso_row["reference"] is rows[0]["reference"]
     assert rows[0]["abundance"] == {
         "P03872": 106.0,
         "YAL001C": 101.0,
@@ -395,10 +412,10 @@ def test_build_rows_refuses_a_drug_protein_no_dmso_run_measured(
 # --------------------------------------------------------------------------- #
 # Records
 # --------------------------------------------------------------------------- #
-def test_store_holds_one_wild_type_record_per_kept_drug_run(
+def test_store_holds_one_wild_type_record_per_kept_drug_and_dmso_run(
     store: m.ProteomeMessner2021Dataset,
 ) -> None:
-    assert len(store) == 16
+    assert len(store) == 22
     records = _records(store.root)
     first = records[0]
     exp = ProteinAbundanceExperiment.model_validate(first["experiment"])
@@ -418,6 +435,17 @@ def test_store_holds_one_wild_type_record_per_kept_drug_run(
     }
     assert exp.phenotype.protein_abundance_se is None
     assert exp.phenotype.measurement_type == m.MEASUREMENT_TYPE
+    assert exp.phenotype.replicate_id == plate_run(1)
+    assert [
+        (g.field, g.reason.value, g.note) for g in exp.phenotype.provenance_gaps
+    ] == [
+        (
+            "protein_abundance_se",
+            "not_applicable_single_measurement",
+            m.SINGLE_RUN_SE_NOTE,
+        )
+    ]
+    assert ref.phenotype_reference.replicate_id is None
     treatment = exp.environment.perturbations[0]
     assert isinstance(treatment, SmallMoleculePerturbation)
     assert treatment.compound == resolved_compound("Rosuvastatin Calcium")
@@ -454,8 +482,44 @@ def test_store_holds_one_wild_type_record_per_kept_drug_run(
     }
     assert first["publication"]["doi"] == m.DOI
     assert first["publication"]["pubmed_id"] == m.PUBMED_ID
-    folic = records[-1]["experiment"]["environment"]["perturbations"][0]["compound"]
+    folic = records[15]["experiment"]["environment"]["perturbations"][0]["compound"]
     assert folic["name"] == "folic acid"
+    assert [r["experiment"]["phenotype"]["replicate_id"] for r in records] == [
+        plate_run(i) for i in INJECTIONS if i != 5 and i < 19
+    ] + [plate_run(i) for i in range(19, 25)]
+
+
+def test_dmso_runs_are_records_on_the_reference_environment(
+    store: m.ProteomeMessner2021Dataset,
+) -> None:
+    """Each DMSO well is a record: the vehicle environment, its own values, n = 1."""
+    records = _records(store.root)
+    dmso = [
+        (
+            ProteinAbundanceExperiment.model_validate(r["experiment"]),
+            ProteinAbundanceExperimentReference.model_validate(r["reference"]),
+        )
+        for r in records[16:]
+    ]
+    assert len(dmso) == 6
+    for offset, (exp, ref) in enumerate(dmso):
+        injection = 19 + offset
+        assert isinstance(exp.genotype, Genotype) and exp.genotype.perturbations == []
+        assert exp.environment == ref.environment_reference
+        assert exp.phenotype.replicate_id == plate_run(injection)
+        assert exp.phenotype.protein_abundance == {
+            "P03872": 100.0 * injection + 6,
+            "YAL001C": 100.0 * injection + 1,
+            "YBR001W": 100.0 * injection + 2,
+            "YDR001C": 100.0 * injection + 5,
+        }
+        assert set(exp.phenotype.n_replicates.values()) == {1}
+        assert exp.phenotype.protein_abundance_se is None
+        assert ref.phenotype_reference.replicate_id is None
+        assert ref.phenotype_reference.n_replicates["YAL001C"] == 6
+    # The six DMSO records average back to the reference summary they stand under.
+    mean = np.mean([e.phenotype.protein_abundance["YAL001C"] for e, _ in dmso])
+    assert mean == dmso[0][1].phenotype_reference.protein_abundance["YAL001C"]
 
 
 def test_store_writes_the_ledger_and_the_run_table(
@@ -464,7 +528,7 @@ def test_store_writes_the_ledger_and_the_run_table(
     ledger = m.BuildLedger.model_validate_json(
         Path(store.preprocess_dir, "build_ledger.json").read_text()
     )
-    assert ledger.n_records == 16
+    assert ledger.n_records == 22
     runs = pd.read_csv(osp.join(store.preprocess_dir, "runs.csv"))
     assert len(runs) == 24
     assert runs["role"].value_counts().to_dict() == {
@@ -642,7 +706,7 @@ def gate_env(
         "EXPECTED_RUNS": 24,
         "EXPECTED_PLATE_RUNS": 23,
         "EXPECTED_QC_RUNS": 1,
-        "EXPECTED_RECORDS": 16,
+        "EXPECTED_RECORDS": 22,
         "EXPECTED_REFERENCE_RUNS": 6,
         "EXPECTED_TABLE_S4_RECORDS": 14,
         "PAPER_MEAN_IDENTIFICATIONS": 0,
@@ -683,7 +747,8 @@ def test_verify_build_passes_the_synthetic_store(
         "messner2023_reference_agreement",
     ]
     by_name = {r.name: r for r in report.results}
-    assert by_name["values_match_report"].details == {"n_values": 64, "n_bad": 0}
+    assert by_name["values_match_report"].details == {"n_values": 88, "n_bad": 0}
+    assert by_name["runs_per_compound"].details["observed"]["dimethyl sulfoxide"] == 6
     assert by_name["messner2023_reference_agreement"].details["n_shared"] == 3
 
 
@@ -702,7 +767,7 @@ def test_verify_build_catches_a_changed_value_and_a_wrong_reference(
     report = m.verify_build(store.root, data_root=gate_env)
     by_name = {r.name: r for r in report.results}
     assert not report.passed
-    assert by_name["values_match_report"].details == {"n_values": 64, "n_bad": 1}
+    assert by_name["values_match_report"].details == {"n_values": 88, "n_bad": 1}
     assert by_name["reference_matches_report"].details["n_bad"] == 1
 
 
@@ -815,7 +880,8 @@ def test_run_protein_dispatches_a_verify_build_module_entry(
 def test_registry_entry_points_at_this_module_and_the_measured_count() -> None:
     spec = runners.PROTEIN_DATASETS["proteome_messner2021"]
     assert spec["verify_build_module"] == m.__name__
-    assert spec["expected_count"] == m.EXPECTED_RECORDS == 70
+    assert spec["expected_count"] == m.EXPECTED_RECORDS == 94
+    assert (m.EXPECTED_DRUG_RECORDS, m.EXPECTED_REFERENCE_RUNS) == (70, 24)
     assert spec["provenance"].sha256 == m.REPORT_SHA256
 
 
@@ -833,9 +899,14 @@ def test_every_sourced_value_audits_against_the_mirror(key: str) -> None:
 
 
 @pytest.mark.data
-def test_the_built_dev_store_passes_its_gate() -> None:
+def test_a_fresh_build_of_the_release_passes_its_gate(tmp_path: Path) -> None:
+    """Build the pinned release into a private root and run the loader's own gate.
+
+    A private root, never the shared dev store, which can be stale against this module.
+    """
     data_root = os.environ["DATA_ROOT"]
-    root = osp.join(data_root, "data/torchcell/proteome_messner2021")
+    root = str(tmp_path / "proteome_messner2021")
+    assert len(m.ProteomeMessner2021Dataset(root=root)) == m.EXPECTED_RECORDS == 94
     report = m.verify_build(root, data_root=data_root)
     assert report.passed, report.summary()
     ledger = m.BuildLedger.model_validate_json(
@@ -844,3 +915,39 @@ def test_the_built_dev_store_passes_its_gate() -> None:
     assert (ledger.n_proteins_identified, ledger.n_proteins_kept) == (4244, 2200)
     assert ledger.outliers == m.EXPECTED_OUTLIERS
     assert round(ledger.mean_identifications_after_detection_rule, 1) == 1976.4
+
+
+@pytest.mark.data
+def test_the_pinned_release_gives_one_record_per_kept_drug_and_dmso_run() -> None:
+    """The deposited report, through ``build_rows``: 70 drug + 24 DMSO records.
+
+    Per replicate block (four blocks of 24 wells): drug records 16, 18, 18, 18 (block 0
+    lacks injection 2 and sets aside the Pemetrexed outlier) and six DMSO records each.
+    Every record's replicate_id is its run name; the seven QC runs are not records.
+    """
+    data_root = os.environ["DATA_ROOT"]
+    report = m.read_report(m.raw_mirror_dir(data_root) / m.REPORT_REL)
+    ledger, rows = m.ProteomeMessner2021Dataset.build_rows(
+        report, build_uniprot_to_orf_map(data_root)
+    )
+    assert (len(rows), ledger.n_records) == (m.EXPECTED_RECORDS, 94)
+    assert ledger.n_control_records == m.EXPECTED_REFERENCE_RUNS == 24
+    assert sum(1 for r in rows if r["agent"] is not None) == m.EXPECTED_DRUG_RECORDS
+    assert all(r["agent"] is None for r in rows[70:])
+    stored = [e for e in ledger.runs if e.record_index is not None]
+    by_block = {
+        role: sorted(Counter(e.block for e in stored if e.role == role).items())
+        for role in ("experiment", "reference")
+    }
+    assert by_block == {
+        "experiment": [(0, 16), (1, 18), (2, 18), (3, 18)],
+        "reference": [(0, 6), (1, 6), (2, 6), (3, 6)],
+    }
+    assert len({r["run"] for r in rows}) == 94
+    assert Counter(e.role for e in ledger.runs) == {
+        "experiment": 70,
+        "reference": 24,
+        "qc": 7,
+        "outlier": 1,
+    }
+    assert ledger.outliers == m.EXPECTED_OUTLIERS

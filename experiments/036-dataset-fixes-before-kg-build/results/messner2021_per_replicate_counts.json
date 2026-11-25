@@ -1,0 +1,49 @@
+{
+  "before_records": 70,
+  "after_records": 94,
+  "runs_by_role": {
+    "experiment": 70,
+    "reference": 24,
+    "qc": 7,
+    "outlier": 1
+  },
+  "records_by_role_and_block": {
+    "experiment": {
+      "0": 16,
+      "1": 18,
+      "2": 18,
+      "3": 18
+    },
+    "reference": {
+      "0": 6,
+      "1": 6,
+      "2": 6,
+      "3": 6
+    }
+  },
+  "replicate_ids_distinct": 94,
+  "replicate_ids_are_run_names": true,
+  "group_multiplicity": {
+    "3": 2,
+    "4": 16,
+    "24": 1
+  },
+  "drug_records_differing_from_before": 0,
+  "drug_references_differing_from_before": 0,
+  "dmso_references_equal_shared_before_reference": true,
+  "mean_reproduction": {
+    "drug_groups": {
+      "groups": 18,
+      "max_abs": 0.0,
+      "max_rel": 0.0
+    },
+    "dmso_vs_before_reference": {
+      "groups": 1,
+      "records": 24,
+      "proteins_compared": 2200,
+      "proteins_only_in_dmso_records": [],
+      "max_abs": 2.1827872842550278e-11,
+      "max_rel": 6.41731325701231e-16
+    }
+  }
+}

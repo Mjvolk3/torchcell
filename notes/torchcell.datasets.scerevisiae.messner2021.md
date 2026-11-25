@@ -142,3 +142,50 @@ Owner rule of 2026-10-12, applied through the genome-gating sweep ([[database.ge
 | L4 (finding) | gene_containment_sgd | 0.9995 of 2,200 protein keys are S288C systematic names; outside: P03872 (reported, never gated) |
 
 The 138,701 stored values are 2,200 keys over the 70 drug runs less the cells the report leaves empty; P03872 is in every record and reference that quantified it.
+
+## 2026.11.24 - One record per well: the 24 DMSO runs become records (70 -> 94)
+
+Per-replicate policy of issue #1178, part of #1171. Branch `fix/per-replicate-messner2021`.
+
+### What a replicate is (sourced)
+
+Sources: `paper.md` sha256 `07756a75...`, `si/si1.md` sha256 `30bb3242...` (literature mirror `$DATA_ROOT/torchcell-library/messnerUltrafastProteomicsScanning2021/`).
+
+- One preculture is split into wells and each well is treated and grown on its own: "The yeast culture was transferred to 96-deep-well plates and drugs were added to achieve a working concentration of $1 0 \mu \mathrm { M }$ (1 ml total volume per well)." (paper.md L167).
+- "Samples were measured in quadruplicate and pooled samples were repeatedly injected for quality control." (L41). The SI calls the four wells of a drug biological replicates: "$\mathrm { n } = 4$ biological replicates" (si1.md L39, Supplementary Fig. 4c), and the kept Table S4 runs "$\scriptstyle { \mathtt { n } } = 6 2$ for biological samples" (Fig. 4b).
+- Measured: the 95 plate runs sit in 95 distinct wells (well = injection + 96), so each well is injected once and a run is one biological replicate with no technical level to combine.
+- The 7 QC runs are technical: "QC samples for repeat injections were prepared by pooling $3 \mu \mathrm { l }$ of each digested sample." (L171) and "instrument control samples (injections of the same sample across measurements)" (L41). They carry no treatment and stay out of the store.
+- The 24 DMSO wells are biological replicates of the control condition (six per replicate block), so each is now a record.
+
+### What changed
+
+- Records 70 -> 94: the 70 drug records keep indices 0 to 69 and their values; the 24 DMSO runs follow at 70 to 93 in injection order, genotype empty (BY4741, as every record), environment = the reference environment (medium + DMSO at an unstated fraction).
+- Every record carries `replicate_id` = its run name as the report prints it (for example `12_plate_2_wt_108_Atorvastatin_0.51`), 94 distinct, and a `ProvenanceGap(protein_abundance_se, not_applicable_single_measurement)`.
+- `phenotype_reference` is unchanged: the per-protein mean / SE / n over the 24 DMSO runs, `replicate_id=None`.
+- Ledger: `n_records` 94, new `n_control_records` 24, DMSO runs keep role `reference` and now carry a `record_index`.
+- `check_design.runs_per_compound` now counts the DMSO records (dimethyl sulfoxide 24); runner `expected_count` 70 -> 94.
+- Five quotes added to `SOURCED` (biological replicates, one culture per well, QC pool, QC repeat injection, the Reporting Summary data-exclusion rule); 37/37 verbatim.
+
+### Counts and checks
+
+Scratch builds (never the shared dev tree): `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-messner2021/{before,after}/proteome_messner2021`. `experiments/036-dataset-fixes-before-kg-build/scripts/messner2021_per_replicate_counts.py` writes `results/messner2021_per_replicate_counts.json`.
+
+| replicate block | drug records | DMSO records |
+|---|---|---|
+| 0 | 16 (injection 2 absent, Pemetrexed outlier set aside) | 6 |
+| 1 | 18 | 6 |
+| 2 | 18 | 6 |
+| 3 | 18 | 6 |
+| total | 70 | 24 |
+
+- The first 70 after-records equal the 70 before-records apart from the two added fields (0 differ); references identical (0 differ).
+- Mean reproduction, grouped by (genotype, environment): 18 drug groups (16 of 4 runs, 2 of 3) against the mean of their before-records, max abs 0.0; the DMSO group (24 records, 2,200 proteins) against the before-store's shared reference, max abs 2.2e-11, max rel 6.4e-16 (summation order).
+- Verifier (`messner2021.verify_build` on the after store): PASS. L1 count 94/94, runs_per_compound 19 compounds (DMSO 24), L2 values_match_report 185,942/185,942, reference_matches_report 185,942/185,942, L3 replicate_id_names_one_replicate 94 of 94, sourced 37/37, L4 paper n = 62 and mean 1976.4 unchanged, Messner 2023 agreement r 0.813.
+
+### Not done: the rule-3 outlier (owner decision)
+
+`5_plate_2_wt_101_Pemetrexed_NA` is still set aside. For dropping it: the paper and Reporting Summary state the rule ("Data exclusions For the yeast drug screen samples were considered outliers if they had less than $80 \%$ of the maximum identification number across all samples.", paper.md L293; Methods L203), and keeping 62 Table S4 runs reproduces Fig. 4b's n = 62. Against: the run is in the deposited report, no source names it, and which run the rule removes depends on applying rule 3 after rule 2 (before rule 2 it would remove 26 runs). Storing it would make 95 records.
+
+### Follow-ups
+
+- The shared dev store `$DATA_ROOT/data/torchcell/proteome_messner2021` still holds the 70-record build until it is rebuilt; the `--data` gate test now builds into a private root instead of reading it.

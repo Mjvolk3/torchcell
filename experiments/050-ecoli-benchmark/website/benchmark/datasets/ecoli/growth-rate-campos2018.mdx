@@ -209,9 +209,9 @@ The table gives the same numbers: mean ± sample standard deviation of the test 
 | Sequence identity 50% | -0.006 ± 0.042 | undefined | 0.049 ± 0.028 | 0.036 ± 0.044 | 0.037 ± 0.019 | 0.048 ± 0.042 | **0.082 ± 0.052** | 0.027 ± 0.061 | 0.018 ± 0.058 | 0.046 ± 0.047 |
 | Chromosome position | 0.024 ± 0.004 | undefined | **0.076 ± 0.063** | 0.054 ± 0.075 | 0.067 ± 0.052 | 0.065 ± 0.045 | 0.041 ± 0.050 | 0.042 ± 0.087 | 0.066 ± 0.052 | 0.068 ± 0.036 |
 
-### R2, mean squared error and mean absolute error
+### R2, MSE and MAE
 
-The other three standard metrics, as tables. Each cell is the mean ± sample standard deviation over the seeds of the split family, and the best mean of each row is in bold: the highest for R2 and the lowest for the two errors.
+The other three standard metrics (R2, mean squared error and mean absolute error), as tables. Each cell is the mean ± sample standard deviation over the seeds of the split family, and the best mean of each row is in bold: the highest for R2 and the lowest for MSE and MAE.
 
 <details>
 <summary>R2: one minus the squared error divided by the variance of the measured values; 0 is the score of predicting the test mean and it is negative for a worse model</summary>
@@ -226,7 +226,7 @@ The other three standard metrics, as tables. Each cell is the mean ± sample sta
 </details>
 
 <details>
-<summary>Mean squared error: the mean of the squared errors, in squared label units</summary>
+<summary>MSE: mean squared error, the mean of the squared errors in squared label units</summary>
 
 | Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
@@ -238,7 +238,7 @@ The other three standard metrics, as tables. Each cell is the mean ± sample sta
 </details>
 
 <details>
-<summary>Mean absolute error: the mean of the absolute errors, in label units</summary>
+<summary>MAE: mean absolute error, the mean of the absolute errors in label units</summary>
 
 | Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |

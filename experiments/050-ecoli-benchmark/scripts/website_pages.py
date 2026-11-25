@@ -188,16 +188,16 @@ METRICS: dict[str, tuple[str, str, str, bool, bool]] = {
         False,
     ),
     "mse": (
-        "Mean squared error",
+        "MSE",
         "Test MSE",
-        "the mean of the squared errors, in squared label units",
+        "mean squared error, the mean of the squared errors in squared label units",
         False,
         False,
     ),
     "mae": (
-        "Mean absolute error",
+        "MAE",
         "Test MAE",
-        "the mean of the absolute errors, in label units",
+        "mean absolute error, the mean of the absolute errors in label units",
         False,
         False,
     ),
@@ -615,9 +615,9 @@ def task_page(
                 ],
             )
     page += [
-        "### R2, mean squared error and mean absolute error",
+        "### R2, MSE and MAE",
         "",
-        "The other three standard metrics, as tables. Each cell is the mean ± sample standard deviation over the seeds of the split family, and the best mean of each row is in bold: the highest for R2 and the lowest for the two errors.",
+        "The other three standard metrics (R2, mean squared error and mean absolute error), as tables. Each cell is the mean ± sample standard deviation over the seeds of the split family, and the best mean of each row is in bold: the highest for R2 and the lowest for MSE and MAE.",
         "",
     ]
     for metric, (metric_name, _, metric_meaning, higher, drawn) in METRICS.items():

@@ -382,9 +382,13 @@ def _uncovered_keys(
 
 
 def _l4_containment(
-    measured: set[str], universe: set[str], minimum: float, name: str
+    measured: set[str],
+    universe: set[str],
+    minimum: float,
+    name: str,
+    what: str = "S288C systematic names",
 ) -> LevelResult:
-    """L4: the measured protein keys are S288C systematic names (fraction >= minimum)."""
+    """L4: the measured protein keys are ``what`` (fraction >= minimum)."""
     inside = measured & universe
     fraction = len(inside) / len(measured) if measured else 0.0
     return LevelResult(
@@ -392,8 +396,8 @@ def _l4_containment(
         name=name,
         passed=fraction >= minimum,
         message=(
-            f"{fraction:.4f} of {len(measured)} measured proteins are S288C systematic "
-            f"names (>= {minimum}); outside: {sorted(measured - universe)[:10]}"
+            f"{fraction:.4f} of {len(measured)} measured proteins are {what} "
+            f"(>= {minimum}); outside: {sorted(measured - universe)[:10]}"
         ),
         details={
             "n_measured": len(measured),
@@ -627,6 +631,176 @@ def verify_natural_isolate_turnover(
     return report
 
 
+def _duration(environment: Mapping[str, Any]) -> float:
+    """An environment's ``duration_hours``; a time-course record must state one."""
+    hours = environment.get("duration_hours")
+    if hours is None:
+        raise ValueError("a time-course record carries no duration_hours")
+    return float(hours)
+
+
+def _l1_sample_uniqueness(records: Sequence[Record]) -> LevelResult:
+    """L1: one record per (isolate, sampling time, replicate culture), each labeled."""
+    seen: dict[tuple[str | None, float, str | None], int] = {}
+    repeated = []
+    unlabeled = 0
+    for i, rec in enumerate(records):
+        replicate = rec["experiment"]["phenotype"].get("replicate_id")
+        if replicate is None:
+            unlabeled += 1
+        key = (
+            natural_isolate_of(rec),
+            _duration(rec["experiment"]["environment"]),
+            replicate,
+        )
+        if key in seen:
+            repeated.append((seen[key], i))
+        seen[key] = i
+    passed = not repeated and unlabeled == 0
+    return LevelResult(
+        level=Level.L1,
+        name="sample_uniqueness",
+        passed=passed,
+        message=(
+            f"{len(seen)} distinct (isolate, time, replicate) samples, "
+            f"{len(repeated)} repeated, {unlabeled} records without a replicate_id"
+        ),
+        details={"repeated": repeated[:20], "n_unlabeled": unlabeled},
+    )
+
+
+def _l3_timecourse_reference(
+    records: Sequence[Record], reference_isolate: str, min_replicates: int
+) -> LevelResult:
+    """L3: each record's reference is the reference isolate's replicate median at the
+    reference's own sampling time, recomputed here from the stored records.
+
+    Per sampling time of ``reference_isolate``, a key enters the reference when at
+    least ``min_replicates`` of that isolate's records measured it, at the median of
+    those values, with that count as ``n_replicates``. Every record must carry the
+    reference of one such time, so the store holds as many distinct references as the
+    reference isolate has sampling times.
+    """
+    by_time: dict[float, list[Mapping[str, float]]] = {}
+    for rec in records:
+        if natural_isolate_of(rec) == reference_isolate:
+            hours = _duration(rec["experiment"]["environment"])
+            by_time.setdefault(hours, []).append(
+                rec["experiment"]["phenotype"]["protein_abundance"]
+            )
+    expected: dict[float, tuple[dict[str, float], dict[str, int]]] = {}
+    for hours, profiles in by_time.items():
+        values: dict[str, list[float]] = {}
+        for profile in profiles:
+            for key, value in profile.items():
+                values.setdefault(key, []).append(float(value))
+        kept = {k: v for k, v in values.items() if len(v) >= min_replicates}
+        expected[hours] = (
+            {k: _median(v) for k, v in kept.items()},
+            {k: len(v) for k, v in kept.items()},
+        )
+    mismatched = 0
+    seen: set[str] = set()
+    for rec in records:
+        ref = rec["reference"]
+        hours = _duration(ref["environment_reference"])
+        phenotype = ref["phenotype_reference"]
+        seen.add(json.dumps(phenotype, sort_keys=True))
+        if hours not in expected:
+            mismatched += 1
+            continue
+        abundance, counts = expected[hours]
+        stored = {k: float(v) for k, v in phenotype["protein_abundance"].items()}
+        if (
+            set(stored) != set(abundance)
+            or any(
+                not math.isclose(stored[k], abundance[k], rel_tol=1e-12) for k in stored
+            )
+            or {k: int(v) for k, v in phenotype["n_replicates"].items()} != counts
+            or phenotype.get("replicate_id") is not None
+        ):
+            mismatched += 1
+    passed = bool(expected) and mismatched == 0 and len(seen) == len(expected)
+    from torchcell.verification.levels import l3_convention
+
+    return l3_convention(
+        "reference_is_reference_isolate_replicate_median",
+        passed,
+        detail=(
+            f"{len(expected)} sampling times of {reference_isolate}, {len(seen)} "
+            f"distinct stored references; {mismatched} records whose reference is not "
+            f"the median over >= {min_replicates} of its replicates"
+        ),
+    )
+
+
+def _median(values: list[float]) -> float:
+    ordered = sorted(values)
+    mid = len(ordered) // 2
+    if len(ordered) % 2:
+        return ordered[mid]
+    return (ordered[mid - 1] + ordered[mid]) / 2.0
+
+
+def verify_natural_isolate_timecourse_proteome(
+    records: Sequence[Record],
+    *,
+    dataset_name: str,
+    provenance: Provenance,
+    expected_count: int,
+    reference_isolate: str,
+    min_replicates: int,
+    sgd_names: set[str],
+    genotype_audit: IsolateGenotypeAudit,
+    min_containment: float = 0.99,
+) -> VerificationReport:
+    """L0-L4 for a natural-isolate proteome time course (Muenzner 2024 SI Table 13).
+
+    L1: one record per (isolate, sampling time, replicate culture), every record
+    labeled, and one isolate per genotype. L2: quantities finite and > 0. L3: each
+    labeled record is one replicate (``n_replicates`` 1, no SE map), one
+    measurement_type, and every reference is the reference isolate's replicate median
+    at its own sampling time. L4 (report): the released gene keys are S288C systematic
+    or standard names. ``genotype_audit`` adds the four isolate-genotype rules.
+    """
+    report = VerificationReport(dataset_name=dataset_name, provenance=provenance)
+    report.add(
+        l0_structural((rec["experiment"] for rec in records), validate_by_type_tag)
+    )
+    report.add(l1_count(len(records), expected_count))
+    report.add(_l1_sample_uniqueness(records))
+    report.add(_l1_genotype_strain_consistency(records))
+    levels = [
+        float(v)
+        for rec in records
+        for v in rec["experiment"]["phenotype"]["protein_abundance"].values()
+    ]
+    report.add(l2_value_fidelity(levels, allow_nan=False, minimum=0.0))
+    report.add(
+        _l3_replicate_id_names_one_replicate(
+            records, "protein_abundance", "protein_abundance_se"
+        )
+    )
+    report.add(_l3_measurement_type_consistent(records))
+    report.add(_l3_timecourse_reference(records, reference_isolate, min_replicates))
+    report.add(
+        _l4_containment(
+            _measured_keys(records, "protein_abundance"),
+            sgd_names,
+            min_containment,
+            "gene_containment_sgd_names",
+            what="S288C systematic or standard names",
+        )
+    )
+    isolates: dict[str, Record] = {}
+    for rec in records:
+        isolate = natural_isolate_of(rec)
+        if isolate is not None and isolate not in isolates:
+            isolates[isolate] = rec
+    _add_genotype_audit(report, list(isolates.values()), genotype_audit)
+    return report
+
+
 def _add_genotype_audit(
     report: VerificationReport, records: Sequence[Record], audit: IsolateGenotypeAudit
 ) -> None:
@@ -652,6 +826,7 @@ __all__ = [
     "verify_protein_dataset",
     "verify_natural_isolate_proteome",
     "verify_natural_isolate_turnover",
+    "verify_natural_isolate_timecourse_proteome",
     "protein_gene_set",
     "Record",
 ]

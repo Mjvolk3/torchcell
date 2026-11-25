@@ -641,6 +641,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (#879, Wang 2018 Supplementary Data 5 gene-level calls)
     # + 1 (#913, Borchert 2023 two-arm fitness contrasts).
     # + 2 (#1175, Choe 2019's per-culture absolute growth rates and metabolites).
+    # + 1 (#1176, Muenzner 2024 SI Table 13 time course, one record per culture).
     assert (
         len(dataset_adapter_map)
         == 110
@@ -686,6 +687,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         + 1
         + 2  # #1175 Choe 2019 absolute growth rates and metabolites
         + 1  # #1178 Schmidt 2016 Table S8 per-culture intensities
+        + 1  # #1176 Muenzner 2024 SI Table 13 time course
     )
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {
@@ -722,6 +724,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         "ProteomeMessner2023Dataset",
         "ProteomeMuenzner2024Dataset",
         "ProteinTurnoverMuenzner2024Dataset",
+        "ProteomeTimecourseMuenzner2024Dataset",
         "SmfBaryshnikova2010Dataset",
         "SmfODuibhir2014Dataset",
         "TfDeletionPseudobulkJackson2020Dataset",

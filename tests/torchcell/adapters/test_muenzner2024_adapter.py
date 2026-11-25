@@ -3,8 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/adapters/test_muenzner2024_adapter.py
 """``torchcell.adapters.muenzner2024_adapter`` constructor tests on a name-only dataset.
 
-The two adapters add no node or edge builder of their own; what they add is the conf they
-load (the knowledge-graph enable-list) and the ``CellAdapter`` wiring. Both confs are the
+The three adapters add no node or edge builder of their own; what they add is the conf they
+load (the knowledge-graph enable-list) and the ``CellAdapter`` wiring. All three confs are the
 compact-genotype shape Caudal 2024 uses (no per-perturbation node or edge), since every
 natural isolate carries thousands of perturbations held on its genotype node. The
 expected conf is rebuilt from that shape by ``_adapter_init_harness.expected_conf``.
@@ -24,10 +24,12 @@ from tests.torchcell.adapters._adapter_init_harness import (
 from torchcell.adapters.muenzner2024_adapter import (
     ProteinTurnoverMuenzner2024Adapter,
     ProteomeMuenzner2024Adapter,
+    ProteomeTimecourseMuenzner2024Adapter,
 )
 from torchcell.datasets.scerevisiae.muenzner2024 import (
     ProteinTurnoverMuenzner2024Dataset,
     ProteomeMuenzner2024Dataset,
+    ProteomeTimecourseMuenzner2024Dataset,
 )
 
 _INIT_CASES = [
@@ -42,6 +44,12 @@ _INIT_CASES = [
         "protein_turnover_muenzner2024_adapter.yaml",
         Shape("protein turnover phenotype", perturbation=False),
         ProteinTurnoverMuenzner2024Dataset,
+    ),
+    AdapterCase(
+        ProteomeTimecourseMuenzner2024Adapter,
+        "proteome_timecourse_muenzner2024_adapter.yaml",
+        Shape("protein abundance phenotype", perturbation=False),
+        ProteomeTimecourseMuenzner2024Dataset,
     ),
 ]
 

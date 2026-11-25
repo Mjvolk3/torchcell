@@ -56,6 +56,9 @@ from .muenzner2024 import (
     ProteinTurnoverMuenzner2024Dataset as ProteinTurnoverMuenzner2024Dataset,
 )
 from .muenzner2024 import ProteomeMuenzner2024Dataset as ProteomeMuenzner2024Dataset
+from .muenzner2024 import (
+    ProteomeTimecourseMuenzner2024Dataset as ProteomeTimecourseMuenzner2024Dataset,
+)
 from .mulleder2016 import AminoAcidMulleder2016Dataset as AminoAcidMulleder2016Dataset
 from .nadal_ribelles2025 import (
     NadalRibellesPerturbSeq2025Dataset as NadalRibellesPerturbSeq2025Dataset,

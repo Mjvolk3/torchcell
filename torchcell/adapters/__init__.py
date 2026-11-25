@@ -270,6 +270,9 @@ from .muenzner2024_adapter import (
 from .muenzner2024_adapter import (
     ProteomeMuenzner2024Adapter as ProteomeMuenzner2024Adapter,
 )
+from .muenzner2024_adapter import (
+    ProteomeTimecourseMuenzner2024Adapter as ProteomeTimecourseMuenzner2024Adapter,
+)
 from .mulleder2016_adapter import (
     AminoAcidMulleder2016Adapter as AminoAcidMulleder2016Adapter,
 )
@@ -502,6 +505,7 @@ proteome_metabolome_adapters = [
     "ProteomeMessner2023Adapter",
     "ProteomeMuenzner2024Adapter",
     "ProteinTurnoverMuenzner2024Adapter",
+    "ProteomeTimecourseMuenzner2024Adapter",
     "AminoAcidMulleder2016Adapter",
     "AminoAcidCooper2010Adapter",
 ]

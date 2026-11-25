@@ -19,6 +19,19 @@ for 55 of them. Two dataset classes, one per released measurement:
   ``degradation_rate`` and ``HL`` (h) as ``half_life``. The paper computed both "without
   doubling time or dilution rate correction", so the rate is total replacement
   (degradation plus dilution by growth), named in ``measurement_type``.
+- ``ProteomeTimecourseMuenzner2024Dataset`` (2026.11.24, #1176): one
+  ``ProteinAbundanceExperiment`` per (isolate, biological replicate, time point) of the
+  24 h batch time course of Supplementary Table 13 ("Proteomes of two natural isolates
+  (AMC, BBV) across different growth stages"): 2 isolates x 3 replicate cultures x 5
+  time points = 30 records. The peer review file states "The experiment was performed
+  in biological triplicates", so each released ``replicate`` is one culture, sampled at
+  five times; ``replicate_id`` is the release's replicate number and
+  ``Environment.duration_hours`` the released ``time (h)`` since the dilution into the
+  30 ml culture. A different instrument and search (Q Exactive Plus DIA, DIA-NN 1.8,
+  library-free against UniProt), so its own ``measurement_type``, and keyed by the
+  release's ``Genes`` column verbatim (mostly standard names), never re-mapped. The
+  reference is the paper's own: per time point, the median over the replicates of the
+  euploid isolate (AMC) for each protein measured in at least two of its three.
 
 GENOTYPE. Each isolate is a perturbation set off S288C built by
 ``torchcell.sequence.natural_isolate`` (``NaturalIsolateGenotypes``), the module every
@@ -141,7 +154,11 @@ from torchcell.sequence.natural_isolate import (
     parse_aneuploidy,
 )
 from torchcell.verification.report import Provenance
-from torchcell.verification.sourced import SourcedValue
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -157,6 +174,12 @@ PAPER_MD_SHA256 = "1534d1e3d1218b3a5e34c3b57c22cf038919cfa318e6049bd67401587aa86
 REPORTING_SUMMARY_MD = "si/si2.md"
 REPORTING_SUMMARY_MD_SHA256 = (
     "4b2c31e1595f606bde9052f549129952ba03933d521b0042ee48b24c9a357e06"
+)
+#: The peer review file (MOESM4): the only text that states the time course's replicate
+#: kind and count.
+PEER_REVIEW_MD = "si/si4.md"
+PEER_REVIEW_MD_SHA256 = (
+    "78ef93680a232b07a2dafdcf13931e36b7c1d03b8468bc8bead514cf9ad967db"
 )
 
 # The one raw file both loaders consume: the Supplementary Tables workbook (MOESM3),
@@ -193,6 +216,10 @@ GENOTYPE_CLASSES = (
 
 PROTEOME_MEASUREMENT_TYPE = "swath_ms_maxlfq_precursor_batch_corrected_quantity"
 TURNOVER_MEASUREMENT_TYPE = "dynamic_silac_lys8_kdp_per_hour_no_dilution_correction"
+#: SI Table 13: Q Exactive Plus DIA, DIA-NN 1.8 library-free against UniProt, keyed by
+#: the release's ``Genes`` column. Not the SWATH quantity of SI Table 3 (another
+#: instrument, search and normalization), so never pooled with it.
+TIMECOURSE_MEASUREMENT_TYPE = "dia_ms_dia_nn_1_8_library_free_gene_quantity"
 
 #: The release's spelling of the S288C-derived control column (SI Table 1: FY4).
 FY4_RELEASE_CODE = "Reference"
@@ -294,6 +321,50 @@ REPLICATION_QUOTE = (
     "strains) was acquired in triplicates, while the large dataset (> 1000 isolates) "
     "was acquired once."
 )
+TIMECOURSE_MEDIUM_QUOTE = (
+    "Yeast isolates were cultivated on SM medium (as above) in batch culture."
+)
+TIMECOURSE_CULTURE_QUOTE = (
+    "of 0.1 in 30 ml medium, and incubated for $2 4 \\mathrm { h }$ at "
+    "$3 0 ^ { \\circ } \\mathrm { C }$ , 750 rpm."
+)
+TIMECOURSE_SAMPLING_QUOTE = (
+    "at five time points to cover early exponential, mid-exponential, late exponential "
+    "and stationary phases of growth."
+)
+TIMECOURSE_REPLICATES_QUOTE = "The experiment was performed in biological triplicates."
+TIMECOURSE_STRAINS_QUOTE = (
+    "we performed an experiment to compare attenuation during the the growth of a "
+    "diploid aneuploid strain, BBV, and a diploid euploid strain, AMC"
+)
+TIMECOURSE_REFERENCE_QUOTE = (
+    "-transformed protein expression levels between the aneuploid and the euploid "
+    "isolate were calculated per time point for each protein present in at least two "
+    "of the three biological replicates of the euploid strain in the given time point"
+)
+TIMECOURSE_PROCESSING_QUOTE = (
+    "Raw data were processed using DIA-NN v.1.8 (ref. 42) with the scan window size "
+    "set to 7"
+)
+TIMECOURSE_LIBRARY_QUOTE = (
+    "A spectral library-free approach and yeast UniProt (UP000002311, reviewed, "
+    "canonical, downloaded 18 November 2021)63 were used for annotation."
+)
+
+
+def _peer_review_sv(value: object, quote: str, note: str | None = None) -> SourcedValue:
+    """A SourcedValue pinned to the mirrored peer review file (``si/si4.md``)."""
+    return SourcedValue(
+        value=value,
+        provenance=Provenance(
+            source_uri=PEER_REVIEW_MD,
+            citation_key=CITATION_KEY,
+            sha256=PEER_REVIEW_MD_SHA256,
+        ),
+        quote=quote,
+        note=note,
+    )
+
 
 SOURCED_VALUES: dict[str, SourcedValue] = {
     "proteome_medium": _paper_sv(
@@ -349,6 +420,40 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         ),
         quote=REPLICATION_QUOTE,
         note="one acquisition per natural isolate, so n_replicates = 1 per protein",
+    ),
+    "timecourse_medium": _paper_sv(
+        "SM as for the proteome cultures, batch culture", TIMECOURSE_MEDIUM_QUOTE
+    ),
+    "timecourse_culture": _paper_sv(
+        "30 ml culture from OD600 0.1, 24 h at 30 C, 750 rpm; time (h) counts from "
+        "this dilution",
+        TIMECOURSE_CULTURE_QUOTE,
+    ),
+    "timecourse_sampling": _paper_sv(
+        "five sampling times per culture, early exponential to stationary",
+        TIMECOURSE_SAMPLING_QUOTE,
+        note="the release names them t1..t5 with their own 'time (h)'; which phase "
+        "each one is, is not stated per time point, so no growth phase is stored",
+    ),
+    "timecourse_replicates": _peer_review_sv(
+        "3 biological replicate cultures per isolate",
+        TIMECOURSE_REPLICATES_QUOTE,
+        note="the authors' reply to Reviewer 2 point 8, which introduced the AMC/BBV "
+        "time course; SI Table 13's 'replicate' column numbers the three cultures, and "
+        "their OD600 differs at every time point",
+    ),
+    "timecourse_strains": _peer_review_sv(
+        "BBV is the aneuploid isolate, AMC the euploid one", TIMECOURSE_STRAINS_QUOTE
+    ),
+    "timecourse_reference": _paper_sv(
+        "per time point, the median over the euploid isolate's replicates of each "
+        "protein measured in at least 2 of its 3",
+        TIMECOURSE_REFERENCE_QUOTE,
+    ),
+    "timecourse_processing": _paper_sv("DIA-NN 1.8", TIMECOURSE_PROCESSING_QUOTE),
+    "timecourse_library": _paper_sv(
+        "library-free search annotated with UniProt UP000002311",
+        TIMECOURSE_LIBRARY_QUOTE,
     ),
 }
 
@@ -508,6 +613,24 @@ T7 = SheetSpec(
     ),
     header_row=4,
     header=("Standardized_name", "Ploidy", "Aneuploidies", "complex_aneuploidy"),
+)
+T13 = SheetSpec(
+    name="SI Table 13",
+    # The release's caption ends in a space; it is matched as released.
+    caption=(
+        "SI Table 13: Proteomes of two natural isolates (AMC, BBV) across different "
+        "growth stages. ",
+    ),
+    header_row=4,
+    header=(
+        "strain",
+        "replicate",
+        "timepoint",
+        "time (h)",
+        "OD600",
+        "Genes",
+        "abundance",
+    ),
 )
 T16 = SheetSpec(
     name="SI Table 16",
@@ -814,6 +937,41 @@ class TurnoverLedger(BaseModel):
         "the turnover experiment, which kdp is NOT corrected for; no record field "
         "carries it"
     )
+    karyotypes: list[IsolateKaryotype]
+
+
+class TimecourseSample(BaseModel):
+    """One released (isolate, replicate culture, time point) sample of SI Table 13."""
+
+    release_code: str
+    isolate: str = Field(description="the Peter 2018 code the genotype is built for")
+    replicate: int = Field(description="SI Table 13 'replicate', as released")
+    timepoint: str = Field(description="SI Table 13 'timepoint', as released")
+    time_hours: float = Field(description="SI Table 13 'time (h)', as released")
+    od600: float = Field(
+        description="SI Table 13 'OD600' at sampling, as released; no field of "
+        "ProteinAbundancePhenotype carries a harvest density, so it lives here"
+    )
+    n_measured: int = Field(description="genes with a numeric abundance")
+    n_missing: int = Field(description="genes the release writes 'NA' for")
+
+
+class TimecourseLedger(BaseModel):
+    """Every row and sample of SI Table 13, accounted for."""
+
+    sheet: str = T13.name
+    n_release_rows: int
+    n_genes: int
+    n_measured_cells: int
+    n_missing_cells: int
+    refused: list[RefusedIsolate]
+    samples: list[TimecourseSample]
+    reference_isolate: str = Field(
+        description="the euploid isolate (SI Table 1) whose replicates the per-time-point "
+        "reference medians run over"
+    )
+    reference_min_replicates: int
+    reference_genes_by_timepoint: dict[str, int]
     karyotypes: list[IsolateKaryotype]
 
 
@@ -1385,12 +1543,290 @@ class ProteinTurnoverMuenzner2024Dataset(_MuenznerIsolateDataset):
 
 
 # --------------------------------------------------------------------------- #
+# Time course (SI Table 13)
+# --------------------------------------------------------------------------- #
+#: The paper's own reference rule: a protein enters a time point's reference when the
+#: euploid isolate measured it in at least two of its three replicates.
+TIMECOURSE_REFERENCE_MIN_REPLICATES = 2
+SAMPLE_KEYS = ["strain", "replicate", "timepoint"]
+
+SINGLE_CULTURE_SE_NOTE = (
+    "one replicate culture at one time point is one measurement, so a standard error "
+    "over replicates does not apply to the record; the other two cultures of the "
+    "triplicate are their own records"
+)
+
+
+def timecourse_frame(table13: pd.DataFrame) -> pd.DataFrame:
+    """SI Table 13 typed: ``abundance`` float (the release's ``NA`` -> NaN).
+
+    Every abundance cell is a positive number or the text ``NA``; an empty or other
+    cell raises. A repeated (strain, replicate, timepoint, gene) row raises, and so does
+    a sample whose rows disagree on ``time (h)`` or ``OD600``, or a time point whose
+    replicates of one isolate were not sampled at one ``time (h)`` (the time is part of
+    the environment the replicates share).
+    """
+    frame = table13.copy()
+    for column in ("strain", "timepoint", "Genes"):
+        if bool(frame[column].isna().any()):
+            raise ValueError(f"SI Table 13 '{column}' holds an empty cell")
+        frame[column] = frame[column].astype(str)
+    frame["replicate"] = frame["replicate"].astype(int)
+    for column in ("time (h)", "OD600"):
+        frame[column] = pd.to_numeric(frame[column], errors="raise").astype(float)
+    raw = frame["abundance"]
+    if bool(raw.isna().any()):
+        raise ValueError("SI Table 13 holds an empty abundance cell (missing is 'NA')")
+    numeric = pd.to_numeric(raw.where(raw != RELEASE_MISSING), errors="coerce")
+    bad = int(((raw != RELEASE_MISSING) & numeric.isna()).sum())
+    if bad:
+        raise ValueError(f"SI Table 13 holds {bad} non-numeric cells other than 'NA'")
+    if bool((numeric <= 0).any()):
+        raise ValueError("SI Table 13 holds a non-positive abundance")
+    frame["abundance"] = numeric.astype(float)
+    if bool(frame.duplicated([*SAMPLE_KEYS, "Genes"]).any()):
+        raise ValueError(
+            "SI Table 13 repeats a (strain, replicate, timepoint, gene) row"
+        )
+    per_sample = frame.groupby(SAMPLE_KEYS)[["time (h)", "OD600"]].nunique()
+    if bool((per_sample > 1).to_numpy().any()):
+        raise ValueError("an SI Table 13 sample carries two times or two OD600 values")
+    per_time = frame.groupby(["strain", "timepoint"])["time (h)"].nunique()
+    if bool((per_time > 1).any()):
+        raise ValueError(
+            "the replicates of one SI Table 13 isolate and time point were sampled at "
+            "different times"
+        )
+    return frame
+
+
+def timecourse_samples(frame: pd.DataFrame) -> pd.DataFrame:
+    """One row per released sample: its time, OD600 and measured / missing counts."""
+    grouped = frame.groupby(SAMPLE_KEYS, sort=False)
+    samples = grouped.agg(
+        time_hours=("time (h)", "first"),
+        od600=("OD600", "first"),
+        n_measured=("abundance", "count"),
+        n_rows=("abundance", "size"),
+    ).reset_index()
+    samples["n_missing"] = samples["n_rows"] - samples["n_measured"]
+    out: pd.DataFrame = samples.sort_values(["strain", "replicate", "time_hours"])
+    return out.reset_index(drop=True)
+
+
+def timecourse_reference(
+    frame: pd.DataFrame, strain: str, min_replicates: int
+) -> dict[str, tuple[dict[str, float], dict[str, int]]]:
+    """Per time point, ``strain``'s per-gene median over its replicates and their count.
+
+    A gene enters a time point's reference only when at least ``min_replicates`` of the
+    strain's replicates measured it (the paper's rule); the median runs over those.
+    """
+    sub = frame[frame["strain"] == strain]
+    out: dict[str, tuple[dict[str, float], dict[str, int]]] = {}
+    for timepoint, block in sub.groupby("timepoint"):
+        wide = block.pivot(index="Genes", columns="replicate", values="abundance")
+        counts = wide.notna().sum(axis=1)
+        keep = counts >= min_replicates
+        medians = wide[keep].median(axis=1, skipna=True)
+        out[str(timepoint)] = (
+            {str(k): float(v) for k, v in medians.items()},
+            {str(k): int(v) for k, v in counts[keep].items()},
+        )
+    return out
+
+
+@register_dataset
+class ProteomeTimecourseMuenzner2024Dataset(_MuenznerIsolateDataset):
+    """SI Table 13: two isolates x 3 replicate cultures x 5 time points over 24 h."""
+
+    organism = Organism.scerevisiae
+
+    def __init__(
+        self,
+        root: str = "data/torchcell/proteome_timecourse_muenzner2024",
+        io_workers: int = 0,
+        transform: Any | None = None,
+        pre_transform: Any | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize the dataset (one record per replicate culture and time point)."""
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
+
+    @property
+    def experiment_class(self) -> type[Experiment]:
+        """Experiment schema class produced by this dataset."""
+        return ProteinAbundanceExperiment
+
+    @property
+    def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference schema class produced by this dataset."""
+        return ProteinAbundanceExperimentReference
+
+    @post_process
+    def process(self) -> None:
+        """Build one record per released sample and write the ledger."""
+        data_root = self._data_root()
+        self._verify_raw(data_root)
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        tables = read_sheets(
+            osp.join(self.raw_dir, SI_TABLES_FILENAME), [T1, T5, T6, T7, T13]
+        )
+        frame = timecourse_frame(tables[T13.name])
+        annotations = tables[T1.name]
+        release_codes = sorted(frame["strain"].unique())
+        matched, s288c, refused = match_isolates(
+            release_codes, panel_isolates(self.raw_dir), annotations
+        )
+        if s288c or refused:
+            raise RuntimeError(
+                "SI Table 13 names an isolate with no Peter 2018 genome or an "
+                f"S288C-derived column ({[r.release_code for r in refused]}, "
+                f"{[i.release_code for i in s288c]}); the released table has neither, "
+                "and this loader has no record path for one"
+            )
+        aneu = annotations.set_index("Standardized_name")["Aneuploidies"]
+        euploid = [c for c in release_codes if str(aneu[c]) == EUPLOID]
+        if len(euploid) != 1:
+            raise ValueError(
+                f"SI Table 13 must hold exactly one euploid isolate, got {euploid}"
+            )
+        reference_code = euploid[0]
+        references = timecourse_reference(
+            frame, reference_code, TIMECOURSE_REFERENCE_MIN_REPLICATES
+        )
+        samples = timecourse_samples(frame)
+        timepoints = set(samples["timepoint"])
+        if set(references) != timepoints:
+            raise ValueError(
+                f"the euploid isolate {reference_code} lacks time points "
+                f"{sorted(timepoints - set(references))}"
+            )
+        ref_time = (
+            samples[samples["strain"] == reference_code]
+            .groupby("timepoint")["time_hours"]
+            .first()
+        )
+        integrated, table5, table6 = _flags(tables)
+        ledger = TimecourseLedger(
+            n_release_rows=len(frame),
+            n_genes=int(frame["Genes"].nunique()),
+            n_measured_cells=int(frame["abundance"].notna().sum()),
+            n_missing_cells=int(frame["abundance"].isna().sum()),
+            refused=refused,
+            samples=[
+                TimecourseSample(
+                    release_code=str(row["strain"]),
+                    isolate=matched[str(row["strain"])],
+                    replicate=int(row["replicate"]),
+                    timepoint=str(row["timepoint"]),
+                    time_hours=float(row["time_hours"]),
+                    od600=float(row["od600"]),
+                    n_measured=int(row["n_measured"]),
+                    n_missing=int(row["n_missing"]),
+                )
+                for row in samples.to_dict("records")
+            ],
+            reference_isolate=matched[reference_code],
+            reference_min_replicates=TIMECOURSE_REFERENCE_MIN_REPLICATES,
+            reference_genes_by_timepoint={
+                t: len(references[t][0]) for t in sorted(references)
+            },
+            karyotypes=karyotypes(matched, annotations, integrated, table5, table6),
+        )
+        with open(osp.join(self.preprocess_dir, "muenzner2024_ledger.json"), "w") as f:
+            f.write(ledger.model_dump_json(indent=2))
+        log.info(
+            "SI Table 13: %d rows, %d samples, %d measured cells; reference isolate %s",
+            ledger.n_release_rows,
+            len(ledger.samples),
+            ledger.n_measured_cells,
+            reference_code,
+        )
+
+        def environment_at(hours: float) -> Environment:
+            return Environment(
+                media=MUENZNER_SM,
+                temperature=Temperature(value=30),
+                duration_hours=hours,
+            )
+
+        reference_by_timepoint: dict[str, ProteinAbundanceExperimentReference] = {}
+        for timepoint, (abundance, counts) in references.items():
+            reference_by_timepoint[timepoint] = ProteinAbundanceExperimentReference(
+                dataset_name=self.name,
+                genome_reference=GENOME_REFERENCE,
+                environment_reference=environment_at(float(ref_time[timepoint])),
+                phenotype_reference=ProteinAbundancePhenotype(
+                    protein_abundance=abundance,
+                    protein_abundance_se=None,
+                    n_replicates=counts,
+                    measurement_type=TIMECOURSE_MEASUREMENT_TYPE,
+                    replicate_id=None,
+                ),
+            )
+        strains = sorted(matched.values())
+        genotypes = self._genotypes(data_root, strains)
+        samples["isolate"] = samples["strain"].map(matched)
+        samples = samples.sort_values(["isolate", "replicate", "time_hours"])
+        samples[["isolate", "replicate", "timepoint", "time_hours"]].to_csv(
+            osp.join(self.preprocess_dir, "data.csv"), index=False
+        )
+        grouped = {
+            (str(s), int(r), str(t)): block
+            for (s, r, t), block in frame.groupby(SAMPLE_KEYS)
+        }
+
+        def records() -> Iterator[tuple[Experiment, ExperimentReference]]:
+            for row in samples.to_dict("records"):
+                block = grouped[
+                    (str(row["strain"]), int(row["replicate"]), str(row["timepoint"]))
+                ]
+                measured = block.dropna(subset=["abundance"])
+                abundance = dict(
+                    zip(
+                        measured["Genes"].tolist(),
+                        measured["abundance"].astype(float).tolist(),
+                        strict=True,
+                    )
+                )
+                experiment = ProteinAbundanceExperiment(
+                    dataset_name=self.name,
+                    genotype=genotypes.genotype(str(row["isolate"])),
+                    environment=environment_at(float(row["time_hours"])),
+                    phenotype=ProteinAbundancePhenotype(
+                        protein_abundance=abundance,
+                        protein_abundance_se=None,
+                        n_replicates=dict.fromkeys(abundance, 1),
+                        measurement_type=TIMECOURSE_MEASUREMENT_TYPE,
+                        replicate_id=str(row["replicate"]),
+                        provenance_gaps=[
+                            ProvenanceGap(
+                                field="protein_abundance_se",
+                                reason=ProvenanceGapReason.not_applicable_single_measurement,
+                                note=SINGLE_CULTURE_SE_NOTE,
+                            )
+                        ],
+                    ),
+                )
+                yield experiment, reference_by_timepoint[str(row["timepoint"])]
+
+        n = self._write_records(records(), len(samples), "time-course samples")
+        log.info("Wrote %d time-course records", n)
+
+
+# --------------------------------------------------------------------------- #
 # Verification (``build_dataset_lmdb --verify`` calls ``verify_build``)
 # --------------------------------------------------------------------------- #
 #: Records each built store must hold (measured from the release; see the ledger):
 #: 794 isolates with a Peter genome plus the S288C-derived FY4 column (#1045).
 EXPECTED_PROTEOME_RECORDS = 795
 EXPECTED_TURNOVER_RECORDS = 55
+#: SI Table 13: 2 isolates x 3 replicate cultures x 5 time points (measured).
+EXPECTED_TIMECOURSE_RECORDS = 30
+PROTEOME_STORE = "proteome_muenzner2024"
+TURNOVER_STORE = "protein_turnover_muenzner2024"
+TIMECOURSE_STORE = "proteome_timecourse_muenzner2024"
 #: Isolates of the built Caudal 2024 store that also carry a proteome (measured).
 EXPECTED_CAUDAL_OVERLAP = 759
 CAUDAL_ROOT = "data/torchcell/caudal_pantranscriptome2024"
@@ -1402,26 +1838,40 @@ def verify_build(dataset_root: str, *, data_root: str | None = None) -> Any:
     from torchcell.verification.protein import (
         natural_isolate_of,
         verify_natural_isolate_proteome,
+        verify_natural_isolate_timecourse_proteome,
         verify_natural_isolate_turnover,
     )
     from torchcell.verification.runners import load_records
 
     name = osp.basename(osp.normpath(dataset_root))
-    if name not in {"proteome_muenzner2024", "protein_turnover_muenzner2024"}:
+    methods = {
+        PROTEOME_STORE: (
+            T3.name,
+            "SI Table 3 non-imputed MaxLFQ quantities per natural isolate; genotype "
+            "vs S288C from Peter 2018 by torchcell.sequence.natural_isolate",
+        ),
+        TURNOVER_STORE: (
+            T17.name,
+            "SI Table 17 dynamic-SILAC kdp (1/h) and HL (h) per natural isolate",
+        ),
+        TIMECOURSE_STORE: (
+            T13.name,
+            "SI Table 13 DIA-NN 1.8 gene quantities per (isolate, replicate culture, "
+            "time point), keyed by the released gene names; reference = the euploid "
+            "isolate's per-time-point replicate median",
+        ),
+    }
+    if name not in methods:
         raise ValueError(f"{dataset_root} is not a Muenzner 2024 store")
     data_root = data_root or _env_data_root()
     records = load_records(dataset_root)
+    page, method = methods[name]
     provenance = Provenance(
         source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/{SI_TABLES_REL}",
         citation_key=CITATION_KEY,
         sha256=SI_TABLES_SHA256,
-        method=(
-            "SI Table 3 non-imputed MaxLFQ quantities per natural isolate; genotype "
-            "vs S288C from Peter 2018 by torchcell.sequence.natural_isolate"
-            if name == "proteome_muenzner2024"
-            else "SI Table 17 dynamic-SILAC kdp (1/h) and HL (h) per natural isolate"
-        ),
-        page=T3.name if name == "proteome_muenzner2024" else T17.name,
+        method=method,
+        page=page,
         retrieved=RAW_RETRIEVED_AT,
     )
     # The isolates of the Peter panel the store's genotypes name; FY4, an S288C-derived
@@ -1442,7 +1892,21 @@ def verify_build(dataset_root: str, *, data_root: str | None = None) -> Any:
         ),
         osp.join(data_root, "torchcell-library"),
     )
-    if name == "proteome_muenzner2024":
+    if name == TIMECOURSE_STORE:
+        ledger_t13 = TimecourseLedger.model_validate_json(
+            Path(dataset_root, "preprocess", "muenzner2024_ledger.json").read_text()
+        )
+        return verify_natural_isolate_timecourse_proteome(
+            records,
+            dataset_name=name,
+            provenance=provenance,
+            expected_count=EXPECTED_TIMECOURSE_RECORDS,
+            reference_isolate=ledger_t13.reference_isolate,
+            min_replicates=ledger_t13.reference_min_replicates,
+            sgd_names=sgd_gene_and_standard_names(data_root),
+            genotype_audit=audit,
+        )
+    if name == PROTEOME_STORE:
         caudal_order = caudal_strain_order(data_root)
         built = {
             strain for r in records if (strain := natural_isolate_of(r)) is not None
@@ -1526,6 +1990,26 @@ def _sgd_genes(data_root: str) -> set[str]:
     return _sgd_gene_set(data_root)
 
 
+def sgd_gene_and_standard_names(data_root: str) -> set[str]:
+    """Every S288C systematic AND standard name in the SGD ORF + RNA FASTA headers.
+
+    SI Table 13 keys its quantities by the release's ``Genes`` column, mostly standard
+    names (``AAC1``) and the systematic name where a gene has none (``YBL029C-A``); a
+    header reads ``>YAL069W YAL069W SGDID:...``, systematic then standard (or the
+    systematic again).
+    """
+    from torchcell.sequence.genome.registry import resolve
+    from torchcell.verification.runners import SGD_GENE_FASTAS
+
+    names: set[str] = set()
+    for fasta in SGD_GENE_FASTAS:
+        with open(resolve(SGD_S288C_R64, fasta, data_root=data_root)) as handle:
+            for line in handle:
+                if line.startswith(">"):
+                    names.update(line[1:].split()[:2])
+    return names
+
+
 def main() -> None:
     """Deposit the raw mirror (``--deposit-from``) or build/load both stores."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -1544,7 +2028,13 @@ def main() -> None:
     turnover = ProteinTurnoverMuenzner2024Dataset(
         root=osp.join(data_root, "data/torchcell/protein_turnover_muenzner2024")
     )
-    print(f"proteome {len(proteome)} records, turnover {len(turnover)} records")
+    timecourse = ProteomeTimecourseMuenzner2024Dataset(
+        root=osp.join(data_root, "data/torchcell/proteome_timecourse_muenzner2024")
+    )
+    print(
+        f"proteome {len(proteome)} records, turnover {len(turnover)} records, "
+        f"time course {len(timecourse)} records"
+    )
 
 
 if __name__ == "__main__":

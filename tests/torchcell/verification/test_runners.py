@@ -2205,7 +2205,8 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
     assert _oracles(runners.PROTEIN_DATASETS) == {
         "proteome_zelezniak2018": 364,
         "proteome_messner2023": 5087,
-        "proteome_muenzner2024": 794,
+        "proteome_muenzner2024": 795,
+        "proteome_timecourse_muenzner2024": 30,
         "proteome_messner2021": 94,
     }
     # The natural-isolate proteome is verified by its loader's own gate (one record per
@@ -2214,7 +2215,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         name
         for name, spec in runners.PROTEIN_DATASETS.items()
         if spec.get("natural_isolates")
-    } == {"proteome_muenzner2024"}
+    } == {"proteome_muenzner2024", "proteome_timecourse_muenzner2024"}
     # The wild-type drug screen's gate is its loader module's verify_build, which
     # re-reads the deposited DIA-NN report and the paper's own counts.
     assert {
@@ -2392,7 +2393,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         + 1  # EXPRESSION_SCORE_DATASETS
         + 1  # VISUAL_SCORE_DATASETS
         + 14  # METABOLITE_DATASETS
-        + 4  # PROTEIN_DATASETS
+        + 5  # PROTEIN_DATASETS
         + 6  # RNASEQ_DATASETS
         + 16  # ENVIRONMENT_RESPONSE_DATASETS
         + 11  # FITNESS_DATASETS

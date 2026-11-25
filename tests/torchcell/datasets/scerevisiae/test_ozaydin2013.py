@@ -33,6 +33,14 @@ pinned in ``test_ozaydin2013_synthetic.py`` and not repeated here. Added:
   ``ProvenanceGap`` and ``integration_locus`` None (P4, 2026.10.15: the paper deposits
   no map and names a JBEI registry handle, so the absence is stated, not silent);
 - ``main()`` under a stubbed ``load_dotenv`` and a ``tmp_path`` ``DATA_ROOT``.
+
+2026.11.24 (#1176, #1178): the second round of transformation. The synthetic workbook
+carries the released ``2ndRoundOfTransformations`` sheet (title line, blank row, header
+on row 3); each numeric ``2nd Screen`` cell is one more record with ``replicate_id``
+``round 2, 2ndRoundOfTransformations row N``, no collection position, the Gene-Name-only
+row on the released-identifier leaf and the ``WT`` row as the cassette alone; text cells
+and ``1st Screen`` cells off Sheet 1 are ledgered; a moved header is refused. The smoke
+test pins the real counts: 4,607 first-round and 120 second-round records, 4,727.
 """
 
 from __future__ import annotations
@@ -77,7 +85,38 @@ def test_ozaydin_build_smoke(tmp_path: Path) -> None:
     shutil.copy(mirror_si, root / "raw" / "1-s2.0-S109671761200081X-mmc1.xlsx")
 
     dataset = m.CarotenoidOzaydin2013Dataset(root=str(root))
-    assert len(dataset) == 4474
+    # 4,607 numeric Sheet 1 rows (round 1) + 120 numeric 2nd Screen cells (round 2)
+    assert len(dataset) == 4727
+    phenotypes = [dataset[i]["experiment"]["phenotype"] for i in range(len(dataset))]
+    kinds = Counter(p["replicate_id"].split(",")[0] for p in phenotypes)
+    assert kinds == {"round 1": 4607, "round 2": 120}
+    assert {p["n_replicates"] for p in phenotypes} == {1}
+    round_2 = [p["replicate_id"] for p in phenotypes[4607:]]
+    assert len(set(round_2)) == 120
+    assert (round_2[0], round_2[-1]) == (
+        "round 2, 2ndRoundOfTransformations row 4",
+        "round 2, 2ndRoundOfTransformations row 160",
+    )
+    # the trailing WT row is the cassette alone; PDR11 is stored by its gene name
+    last = dataset[4726]["experiment"]["genotype"]["perturbations"]
+    assert {p["perturbation_type"] for p in last} == {"gene_addition"}
+    released = [
+        p["systematic_gene_name"]
+        for i in range(4607, 4727)
+        for p in dataset[i]["experiment"]["genotype"]["perturbations"]
+        if p["perturbation_type"] == "released_identifier"
+    ]
+    assert released == ["PDR11"]
+    ledger = json.loads((root / "preprocess" / "dropped_records.json").read_text())
+    assert [
+        (r["rule"], r["n_records"], len(r.get("items", []))) for r in ledger["rules"]
+    ] == [
+        ("orf_cell_is_blank", 0, 0),
+        ("stored_on_released_gene_name_leaf", 0, 1),
+        ("color_cell_is_text_not_a_score", 546, 546),
+        ("round_2_cell_is_text_not_a_score", 37, 37),
+        ("round_2_first_screen_is_not_a_record", 157, 14),
+    ]
 
     # dataset[i] returns the stored dicts; validating through the schema IS the
     # round-trip test (the stale on-disk LMDB failed exactly here on media.is_synthetic).
@@ -102,6 +141,8 @@ def test_ozaydin_build_smoke(tmp_path: Path) -> None:
 Row = tuple[str | None, str | None, Any, str | None]
 #: The five released position cells of one row: record no., Batch, Plate, Row, Col.
 Position = tuple[int, str, int, str, int]
+#: One second-round row: Systematic name, Gene Name, 1st Screen, 2nd Screen.
+Round2Row = tuple[str | None, str | None, Any, Any]
 
 _ROWS: list[Row] = [
     ("YAL001C", "BY4741", 2, None),
@@ -115,9 +156,13 @@ _ROWS: list[Row] = [
 
 
 def _write_si(
-    raw: Path, rows: list[Row], positions: list[Position] | None = None
+    raw: Path,
+    rows: list[Row],
+    positions: list[Position] | None = None,
+    round_2: list[Round2Row] | None = None,
 ) -> Path:
-    """The two released sheets with their released headers; TOP200 is empty.
+    """The three released sheets with their released headers; TOP200 is empty and the
+    second-round sheet holds ``round_2`` (none by default) under its row-3 header.
 
     Every row carries the sheet's nine columns. ``positions`` gives the five position
     cells per row; by default row ``i`` is record ``338 + i`` of batch ``01_1`` at plate
@@ -147,17 +192,26 @@ def _write_si(
         screen.append([record, orf, strain, batch, plate, prow, col, comment, color])
     top200 = workbook.create_sheet("Names and Functions of TOP200")
     top200.append(["ORF name", "Gene name", "Gene Function", "Assigned Category"])
+    second = workbook.create_sheet(m.ROUND_2_SHEET)
+    second.append(["Deletions selected for further Bisabolene analysis"])
+    second.append([None])
+    second.append(list(m.ROUND_2_HEADER))
+    for round_2_row in round_2 or []:
+        second.append(list(round_2_row))
     path = raw / m.CarotenoidOzaydin2013Dataset.si_filename
     workbook.save(path)
     return path
 
 
 def _root(
-    tmp_path: Path, rows: list[Row] = _ROWS, positions: list[Position] | None = None
+    tmp_path: Path,
+    rows: list[Row] = _ROWS,
+    positions: list[Position] | None = None,
+    round_2: list[Round2Row] | None = None,
 ) -> Path:
     root = tmp_path / "carotenoid_ozaydin2013"
     (root / "raw").mkdir(parents=True)
-    _write_si(root / "raw", rows, positions)
+    _write_si(root / "raw", rows, positions, round_2)
     return root
 
 
@@ -278,6 +332,8 @@ def test_build_ledger_lines(tmp_path: Path, caplog: pytest.LogCaptureFixture) ->
     assert messages == [
         "Ozaydin: 7 released rows, 6 records (one per scored row); 1 text-only rows "
         "listed in the ledger, 1 names on the released-identifier leaf",
+        "Ozaydin second round: 0 released rows, 0 records; 0 text cells listed in the "
+        "ledger, 0 1st Screen cells off Sheet 1",
         "Wrote 6 Ozaydin visual-score experiments to LMDB",
     ]
     ledger = json.loads(
@@ -288,6 +344,8 @@ def test_build_ledger_lines(tmp_path: Path, caplog: pytest.LogCaptureFixture) ->
         ("orf_cell_is_blank", 0),
         ("stored_on_released_gene_name_leaf", 0),
         ("color_cell_is_text_not_a_score", 1),
+        ("round_2_cell_is_text_not_a_score", 0),
+        ("round_2_first_screen_is_not_a_record", 0),
     ]
     assert ledger["rules"][1]["items"] == ["YLR287-A"]
     assert ledger["rules"][2]["items"] == [
@@ -621,4 +679,146 @@ def test_a_sheet_without_the_position_columns_is_refused(tmp_path: Path) -> None
     with pytest.raises(
         KeyError, match=re.escape("['record no.', 'Batch', 'Plate', 'Row', 'Col']")
     ):
+        m.CarotenoidOzaydin2013Dataset(root=str(root))
+
+
+_ROUND_2: list[Round2Row] = [
+    ("YAL001C", None, 2, 5),
+    ("YAL001C", "TFC3", 3, "5 and 0"),
+    (None, "PDR11", 4, 4.5),
+    ("YCR001W", None, "3-slow growth", "--"),
+    ("YER001W", None, 4, 4),
+    ("YER001W", None, 4, 4),
+    (None, "WT", 0, 0),
+]
+
+
+def test_second_round_scores_are_records_of_their_own(tmp_path: Path) -> None:
+    """The second-round sheet adds one record per numeric ``2nd Screen`` cell after
+    the first-round records, in sheet order: YAL001C 5.0 (row 4), PDR11 4.5 (row 6, the
+    Systematic name cell blank, so the released-identifier leaf under the Gene Name),
+    YER001W 4.0 twice (rows 8 and 9, kept apart by ``replicate_id`` alone) and the WT
+    row 0.0 (row 10, the cassette with no deletion). Each is BY4741, n = 1, no Comment
+    flags and no collection position.
+    """
+    dataset = m.CarotenoidOzaydin2013Dataset(
+        root=str(_root(tmp_path, _ROWS, None, _ROUND_2))
+    )
+    assert len(dataset) == 11
+    second = [dataset[i] for i in range(6, 11)]
+    got = []
+    for record in second:
+        phenotype = record["experiment"]["phenotype"]
+        deletions = [
+            (p["perturbation_type"], p["systematic_gene_name"], p["construction"])
+            for p in record["experiment"]["genotype"]["perturbations"]
+            if p["perturbation_type"] != "gene_addition"
+        ]
+        got.append(
+            (
+                phenotype["visual_score"],
+                phenotype["n_replicates"],
+                phenotype["comment_annotations"],
+                phenotype["replicate_id"],
+                deletions,
+                record["reference"]["genome_reference"]["strain"],
+            )
+        )
+    sheet = "round 2, 2ndRoundOfTransformations row"
+    assert got == [
+        (5.0, 1, None, f"{sheet} 4", [("kanmx_deletion", "YAL001C", None)], "BY4741"),
+        (
+            4.5,
+            1,
+            None,
+            f"{sheet} 6",
+            [("released_identifier", "PDR11", None)],
+            "BY4741",
+        ),
+        (4.0, 1, None, f"{sheet} 8", [("kanmx_deletion", "YER001W", None)], "BY4741"),
+        (4.0, 1, None, f"{sheet} 9", [("kanmx_deletion", "YER001W", None)], "BY4741"),
+        (0.0, 1, None, f"{sheet} 10", [], "BY4741"),
+    ]
+    (pdr11,) = [
+        p
+        for p in second[1]["experiment"]["genotype"]["perturbations"]
+        if p["perturbation_type"] == "released_identifier"
+    ]
+    assert (pdr11["identifier_kind"], pdr11["cassette"]) == (
+        m.GENE_NAME_IDENTIFIER_KIND,
+        "KanMX",
+    )
+    assert second[2]["experiment"] != second[3]["experiment"]
+    first_round = dataset[0]["experiment"]["phenotype"]
+    assert first_round["replicate_id"] == m.ROUND_1_REPLICATE_ID
+    assert [g["reason"] for g in first_round["provenance_gaps"]] == [
+        "not_applicable_single_measurement"
+    ]
+
+
+def test_second_round_text_cells_and_first_screen_disagreements_are_ledgered(
+    tmp_path: Path,
+) -> None:
+    """``5 and 0`` and ``--`` carry no single score and are listed verbatim, never split.
+    ``1st Screen`` cells not among the Sheet 1 Color cells of their ORF are listed:
+    YAL001C 3 (Sheet 1: 2), PDR11 (not on Sheet 1), YCR001W ``3-slow growth`` (Sheet 1:
+    -3) and YER001W 4 twice (Sheet 1: 4, so not listed). The WT row is not compared.
+    """
+    dataset = m.CarotenoidOzaydin2013Dataset(
+        root=str(_root(tmp_path, _ROWS, None, _ROUND_2))
+    )
+    ledger = json.loads(
+        (Path(dataset.root) / "preprocess" / "dropped_records.json").read_text()
+    )
+    assert (
+        ledger["round_2_source_rows"],
+        ledger["kept_records_round_1"],
+        ledger["kept_records_round_2"],
+    ) == (7, 6, 5)
+    assert ledger["rules"][3]["items"] == [
+        {
+            "sheet_row": 5,
+            "systematic_name": "YAL001C",
+            "gene_name": "TFC3",
+            "text": "5 and 0",
+        },
+        {"sheet_row": 7, "systematic_name": "YCR001W", "gene_name": None, "text": "--"},
+    ]
+    assert ledger["rules"][4]["items"] == [
+        {
+            "sheet_row": 5,
+            "systematic_name": "YAL001C",
+            "gene_name": "TFC3",
+            "first_screen": "3",
+            "round_1_colors": ["2"],
+        },
+        {
+            "sheet_row": 6,
+            "systematic_name": None,
+            "gene_name": "PDR11",
+            "first_screen": "4",
+            "round_1_colors": [],
+        },
+        {
+            "sheet_row": 7,
+            "systematic_name": "YCR001W",
+            "gene_name": None,
+            "first_screen": "3-slow growth",
+            "round_1_colors": ["-3"],
+        },
+    ]
+
+
+def test_a_second_round_sheet_with_a_moved_header_is_refused(tmp_path: Path) -> None:
+    """The header is read on row 3 as released; a sheet whose row 3 is a strain row
+    stops the build naming what it read, never a guessed header.
+    """
+    root = tmp_path / "carotenoid_ozaydin2013"
+    (root / "raw").mkdir(parents=True)
+    path = _write_si(root / "raw", _ROWS, None, _ROUND_2[:1])
+    workbook = openpyxl.load_workbook(path)
+    second = workbook[m.ROUND_2_SHEET]
+    second.delete_rows(2)
+    workbook.save(path)
+    with pytest.raises(KeyError, match=re.escape("'2ndRoundOfTransformations' row 3")):
         m.CarotenoidOzaydin2013Dataset(root=str(root))

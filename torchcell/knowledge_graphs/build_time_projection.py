@@ -144,7 +144,7 @@ DATASET_FULL_RECORDS: dict[str, int] = {
     "CaudalPanTranscriptome2024Dataset": 971,
     "ScmdOhnuki2018Dataset": 1226,
     "ScmdOhnuki2022Dataset": 2731,
-    "CarotenoidOzaydin2013Dataset": 4474,
+    "CarotenoidOzaydin2013Dataset": 4727,
     "BetaxanthinCachera2023Dataset": 4735,
     "MetaboliteDaSilveira2014Dataset": 130,
     "MetaboliteZelezniak2018Dataset": 192,

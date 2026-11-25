@@ -38,6 +38,26 @@ stored verbatim on the deletion's ``construction`` (``StrainConstruction``:
 (ORF, strain, color, parsed comment flags) and differ only here, so the two records were
 byte-identical, shared one content id, and the graph held 4,576 Experiment nodes for 4,607
 stored records; the position is the released fact that tells the two strains apart.
+
+Per biological replicate (2026.11.24, #1176, #1178). The SI's third sheet,
+``2ndRoundOfTransformations``, holds a second, independent transformation of 156
+selected strains: "They were screened again by transforming individually and scoring the
+colony color of the transformants to confirm the results from the first round of
+transformation." (paper.md line 98). Each numeric ``2nd Screen`` cell is therefore one
+more biological replicate of that deletion carrying YB/I/BTS1 and is stored as its own
+record (120 records: 118 ORF rows, the PDR11 row whose ``Systematic name`` cell is blank,
+stored under its released ``Gene Name`` on the released-identifier leaf, and the trailing
+``WT`` row, stored with the cassette alone on BY4741). ``replicate_id`` says which round
+a record is: ``round 1`` for every Sheet 1 record (its collection position already tells
+two strains of one ORF apart) and ``round 2, 2ndRoundOfTransformations row N`` for a
+second-round record, N the sheet's own row number. The sheet prints no collection
+position, so a second-round deletion carries no ``construction``; it is not inferred
+from Sheet 1. A ``2nd Screen`` cell that is text (two scores such as ``5 and 0``,
+``Mixed 5 and 2`` or ``4/-1``; ``4 tiny``; ``--``; 37 cells) is listed verbatim in the
+ledger, not split or parsed. The sheet's ``1st Screen`` column is the first round's score
+of the strains selected from Sheet 1, not a third transformation (the paper describes two
+rounds), so it is not a record; where it differs from Sheet 1 the rows are listed in the
+ledger and Sheet 1 stays the stored first-round value.
 """
 
 import json
@@ -135,6 +155,26 @@ SCORING_PLATE_QUOTE = (
 )
 
 
+# line 98: the second round is a fresh transformation of each selected strain.
+SECOND_ROUND_QUOTE = (
+    "They were screened again by transforming individually and scoring the colony "
+    "color of the transformants to confirm the results from the first round of "
+    "transformation."
+)
+# line 98: the 156 strains of the second round are the first round's 3, 4 and 5 scores.
+SELECTION_QUOTE = (
+    "Out of these gene deletions, we focused on 156 strains that showed significant "
+    "color enhancement (scored 3, 4, or 5) (Supplementary File)."
+)
+# line 58: the wild-type parent on every transformation plate anchors the scale at 0.
+WILD_TYPE_QUOTE = (
+    "Each 96-well transformation plate included the parent wild-type strain. The color "
+    "of the carotenoidexpressing, wild-type, parent strain was labeled as 0."
+)
+# line 36: the parent strain the collection and the wild type are isogenic to.
+BACKGROUND_QUOTE = "The yeast strains used in this study were isogenic to BY4741"
+
+
 def _paper_sv(value: object, quote: str, note: str | None = None) -> SourcedValue:
     """A SourcedValue pinned to the Ozaydin mirror OCR (quote + sha256)."""
     return SourcedValue(value=value, provenance=_PAPER, quote=quote, note=note)
@@ -154,6 +194,30 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         note="line 42; the paper says agar plates and prints no agar amount, so the "
         "agar row carries no concentration (an open gap in Media.open_gaps) rather "
         "than a borrowed 2%",
+    ),
+    "replicate_unit": _paper_sv(
+        "one transformation of one collection strain, scored once: a biological "
+        "replicate; the second round is a second, independent transformation",
+        SECOND_ROUND_QUOTE,
+        note="line 98; every 2nd Screen number of sheet 2ndRoundOfTransformations is "
+        "one record, n_replicates 1, replicate_id 'round 2, 2ndRoundOfTransformations "
+        "row N'; Sheet 1 records are 'round 1'. The paper describes no technical "
+        "repeat of a score, so nothing is combined inside a record",
+    ),
+    "second_round_strains": _paper_sv(
+        156,
+        SELECTION_QUOTE,
+        note="line 98; the sheet holds 156 strain rows (155 under a systematic name, "
+        "one PDR11 row under its gene name alone) plus a trailing WT row; its "
+        "1st Screen column is the first round's score of these strains, so it is not a "
+        "third transformation and not a record",
+    ),
+    "wild_type_record": _paper_sv(
+        "the WT row is the parent BY4741 carrying YB/I/BTS1, the 0 of the scale",
+        WILD_TYPE_QUOTE,
+        note="line 58, with line 36 for the background ('" + BACKGROUND_QUOTE + "'); "
+        "the second-round WT row (0) is stored as a record whose genotype is the "
+        "cassette alone; the paper prints no further genotype for it",
     ),
 }
 
@@ -269,6 +333,39 @@ _SYSTEMATIC_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$")
 #: The released columns that place a row's strain in the deletion collection.
 POSITION_COLUMNS = ("record no.", "Batch", "Plate", "Row", "Col")
 
+#: The three SI sheets: the whole-collection first round, the curated TOP200 subset
+#: (metadata only) and the second round of transformation.
+ROUND_1_SHEET = "Color scores of all deletions"
+TOP200_SHEET = "Names and Functions of TOP200"
+ROUND_2_SHEET = "2ndRoundOfTransformations"
+#: The second-round sheet's header, released on its row 3 (row 1 is a title line).
+ROUND_2_HEADER = ("Systematic name", "Gene Name", "1st Screen", "2nd Screen")
+ROUND_2_HEADER_ROW = 3
+#: ``replicate_id`` of every Sheet 1 record (one first-round transformation per strain).
+ROUND_1_REPLICATE_ID = "round 1"
+#: The parent strain of the collection and of the WT row (paper line 36, Table 1).
+PARENT_STRAIN = "BY4741"
+#: What a Gene-Name-only second-round identifier is, as released.
+GENE_NAME_IDENTIFIER_KIND = (
+    "Gene Name column entry, as released (the Systematic name cell is blank)"
+)
+ORF_IDENTIFIER_KIND = "ORF column entry, as released"
+SYSTEMATIC_NAME_IDENTIFIER_KIND = "Systematic name column entry, as released"
+
+
+def round_2_replicate_id(sheet_row: int) -> str:
+    """``replicate_id`` of a second-round record: the round and the sheet's own row."""
+    return f"round 2, {ROUND_2_SHEET} row {sheet_row}"
+
+
+#: A record is one transformation scored once: its single value has no dispersion.
+SINGLE_SCORE_GAP = ProvenanceGap(
+    field="visual_score_min",
+    reason=ProvenanceGapReason.not_applicable_single_measurement,
+    note="one transformation of one strain, scored once: a single score has no "
+    "minimum over replicates",
+)
+
 
 def _cell_text(value: Any) -> str:
     """A released cell as text: an integral number without a decimal point, else
@@ -280,11 +377,14 @@ def _cell_text(value: Any) -> str:
     return str(value).strip()
 
 
-def _construction(row: "pd.Series[Any]") -> StrainConstruction:
+def _construction(row: "pd.Series[Any]") -> StrainConstruction | None:
     """The row's strain in its collection, verbatim: the record number as the
     collection accession, the construction batch, the plate and the well (``Row`` and
     ``Col`` joined, ``B3``). ``Plate`` and ``Col`` are integer cells in the release.
+    A second-round row prints no position, so its construction is None.
     """
+    if row["screen_round"] == 2:
+        return None
     return StrainConstruction(
         strain_accession=_cell_text(row["record_no"]),
         batch=_cell_text(row["batch"]),
@@ -294,12 +394,14 @@ def _construction(row: "pd.Series[Any]") -> StrainConstruction:
 
 
 def _released_deletion(
-    orf: str, construction: StrainConstruction
+    orf: str,
+    construction: StrainConstruction | None,
+    identifier_kind: str = ORF_IDENTIFIER_KIND,
 ) -> KanMxDeletionPerturbation | ReleasedIdentifierPerturbation:
     """The deletion under the released identifier (#1045): an ORF-shaped one on the
     placed KanMX leaf with both names the ORF, any other on the released-identifier leaf
     verbatim (kind deletion, marker KanMX). Either carries the strain's collection
-    position as its ``construction``.
+    position as its ``construction`` (None for a second-round row, which prints none).
     """
     if _SYSTEMATIC_RE.match(orf):
         return KanMxDeletionPerturbation(
@@ -309,7 +411,7 @@ def _released_deletion(
         systematic_gene_name=orf,
         gene_namespace="scerevisiae_s288c_sgd_systematic",
         perturbed_gene_name=orf,
-        identifier_kind="ORF column entry, as released",
+        identifier_kind=identifier_kind,
         released_kind=ReleasedKind.deletion,
         cassette="KanMX",
         construction=construction,
@@ -407,12 +509,14 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
         log.info("Wrote %s (%d bytes, sha256 verified)", dest, len(data))
 
     def _released_rows(self) -> tuple[pd.DataFrame, dict[str, Any]]:
-        """Read Sheet 1 as released: one row per scored plate, plus the accounting."""
+        """Read both rounds as released: one row per scored transformation (Sheet 1,
+        then the second-round sheet), plus the accounting.
+        """
         xlsx = osp.join(self.raw_dir, self.si_filename)
-        df = pd.read_excel(xlsx, sheet_name="Color scores of all deletions")
+        df = pd.read_excel(xlsx, sheet_name=ROUND_1_SHEET)
 
         # TOP200 curated subset (Sheet 2): gene name / function / category + membership.
-        top200 = pd.read_excel(xlsx, sheet_name="Names and Functions of TOP200")
+        top200 = pd.read_excel(xlsx, sheet_name=TOP200_SHEET)
         top200_orfs = set(
             top200["ORF name"].dropna().astype(str).str.strip().str.upper()
         )
@@ -464,7 +568,11 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
             meta = top200_meta.get(orf, {})
             rows.append(
                 {
+                    "screen_round": 1,
+                    "replicate_id": ROUND_1_REPLICATE_ID,
+                    "is_wild_type": False,
                     "orf": orf,
+                    "identifier_kind": ORF_IDENTIFIER_KIND,
                     "strain": strain,
                     **position,
                     "visual_score": num,
@@ -476,10 +584,21 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
                     **meta,
                 }
             )
+        n_round_1 = len(rows)
+        round_1_colors: dict[str, list[str]] = {}
+        for _, row in df.iterrows():
+            if pd.notna(row.get("ORF name")) and pd.notna(row.get("Color")):
+                key = str(row["ORF name"]).strip().upper()
+                round_1_colors.setdefault(key, []).append(_cell_text(row["Color"]))
+        round_2 = self._round_2_rows(xlsx, top200_orfs, top200_meta, round_1_colors)
+        rows.extend(round_2["rows"])
         accounting = {
             "dataset": self.name,
             "source_rows": int(len(df)),
+            "round_2_source_rows": round_2["source_rows"],
             "kept_records": len(rows),
+            "kept_records_round_1": n_round_1,
+            "kept_records_round_2": len(round_2["rows"]),
             "rules": [
                 {
                     "rule": "orf_cell_is_blank",
@@ -509,9 +628,144 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
                     "n_records": len(text_rows),
                     "items": text_rows,
                 },
+                {
+                    "rule": "round_2_cell_is_text_not_a_score",
+                    "description": (
+                        "the second-round 2nd Screen cell is text: two scores in one "
+                        "cell ('5 and 0', 'Mixed 5 and 2', '4/-1'), a score with a word "
+                        "('4 tiny', '3 mixed') or no score ('--'). The paper does not "
+                        "say whether two scores are two colonies, a mixed patch or a "
+                        "range, or whether '4 tiny' is a score or a colony count, so "
+                        "the cell is kept here verbatim and not split or parsed"
+                    ),
+                    "n_records": len(round_2["text_rows"]),
+                    "items": round_2["text_rows"],
+                },
+                {
+                    "rule": "round_2_first_screen_is_not_a_record",
+                    "description": (
+                        "the second-round sheet's 1st Screen column repeats the first "
+                        "round's score of the 156 selected strains; the paper describes "
+                        "two transformations, so it is not a third replicate. Sheet 1 "
+                        "stays the stored first-round value; the items are the rows "
+                        "whose 1st Screen cell is not among the Sheet 1 Color cells of "
+                        "that ORF (round_1_colors empty: the ORF is not on Sheet 1)"
+                    ),
+                    "n_records": round_2["source_rows"],
+                    "items": round_2["first_screen_disagreements"],
+                },
             ],
         }
         return pd.DataFrame(rows), accounting
+
+    def _round_2_rows(
+        self,
+        xlsx: str,
+        top200_orfs: set[str],
+        top200_meta: dict[str, dict[str, Any]],
+        round_1_colors: dict[str, list[str]],
+    ) -> dict[str, Any]:
+        """Read ``2ndRoundOfTransformations`` as released: one record per numeric
+        ``2nd Screen`` cell, the text cells and the ``1st Screen`` disagreements listed.
+
+        The header is the sheet's row 3 (row 1 is the title line "Deletions selected for
+        further Bisabolene analysis are highlighted in red", row 2 is blank). A row's
+        sheet row number is its position + 1, which is what ``replicate_id`` names.
+        """
+        raw = pd.read_excel(xlsx, sheet_name=ROUND_2_SHEET, header=None)
+        if len(raw) < ROUND_2_HEADER_ROW:
+            raise KeyError(
+                f"Ozaydin sheet {ROUND_2_SHEET!r} has {len(raw)} rows, no header on row "
+                f"{ROUND_2_HEADER_ROW}"
+            )
+        header = tuple(
+            str(v).strip()
+            for v in raw.iloc[ROUND_2_HEADER_ROW - 1, : len(ROUND_2_HEADER)]
+        )
+        if header != ROUND_2_HEADER:
+            raise KeyError(
+                f"Ozaydin sheet {ROUND_2_SHEET!r} row {ROUND_2_HEADER_ROW} reads "
+                f"{header}, not the released header {ROUND_2_HEADER}"
+            )
+        body = raw.iloc[ROUND_2_HEADER_ROW:, : len(ROUND_2_HEADER)]
+        body.columns = list(ROUND_2_HEADER)
+        rows: list[dict[str, Any]] = []
+        text_rows: list[dict[str, Any]] = []
+        disagreements: list[dict[str, Any]] = []
+        n_source = 0
+        for position, cells in body.iterrows():
+            if cells.isna().all():
+                continue
+            n_source += 1
+            sheet_row = int(str(position)) + 1
+            systematic = cells["Systematic name"]
+            gene_name = cells["Gene Name"]
+            gene_text = None if pd.isna(gene_name) else str(gene_name).strip()
+            is_wild_type = pd.isna(systematic) and gene_text == "WT"
+            if pd.notna(systematic):
+                orf: str | None = str(systematic).strip().upper()
+                kind: str | None = SYSTEMATIC_NAME_IDENTIFIER_KIND
+            elif is_wild_type:
+                orf, kind = None, None
+            elif gene_text:
+                orf, kind = gene_text.upper(), GENE_NAME_IDENTIFIER_KIND
+            else:
+                raise ValueError(
+                    f"Ozaydin {ROUND_2_SHEET!r} row {sheet_row} names no strain"
+                )
+            first = cells["1st Screen"]
+            first_text = None if pd.isna(first) else _cell_text(first)
+            if not is_wild_type and first_text not in round_1_colors.get(str(orf), []):
+                disagreements.append(
+                    {
+                        "sheet_row": sheet_row,
+                        "systematic_name": None if pd.isna(systematic) else orf,
+                        "gene_name": gene_text,
+                        "first_screen": first_text,
+                        "round_1_colors": round_1_colors.get(str(orf), []),
+                    }
+                )
+            num, text = _parse_color(cells["2nd Screen"])
+            if num is None:
+                text_rows.append(
+                    {
+                        "sheet_row": sheet_row,
+                        "systematic_name": None if pd.isna(systematic) else orf,
+                        "gene_name": gene_text,
+                        "text": text,
+                    }
+                )
+                continue
+            meta = top200_meta.get(str(orf), {}) if orf is not None else {}
+            rows.append(
+                {
+                    "screen_round": 2,
+                    "replicate_id": round_2_replicate_id(sheet_row),
+                    "is_wild_type": is_wild_type,
+                    "orf": orf,
+                    "identifier_kind": kind,
+                    "strain": PARENT_STRAIN,
+                    "record_no": None,
+                    "batch": None,
+                    "plate": None,
+                    "row": None,
+                    "col": None,
+                    "visual_score": num,
+                    "visual_score_min": None,
+                    "n_replicates": 1,
+                    "score_text": None,
+                    # the second-round sheet has no Comment column
+                    "comment_annotations": None,
+                    "in_top200": orf in top200_orfs,
+                    **meta,
+                }
+            )
+        return {
+            "source_rows": n_source,
+            "rows": rows,
+            "text_rows": text_rows,
+            "first_screen_disagreements": disagreements,
+        }
 
     @post_process
     def process(self) -> None:
@@ -522,9 +776,17 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
             "Ozaydin: %d released rows, %d records (one per scored row); %d text-only "
             "rows listed in the ledger, %d names on the released-identifier leaf",
             accounting["source_rows"],
-            len(usable),
+            accounting["kept_records_round_1"],
             accounting["rules"][2]["n_records"],
             len(accounting["rules"][1]["items"]),
+        )
+        log.info(
+            "Ozaydin second round: %d released rows, %d records; %d text cells listed "
+            "in the ledger, %d 1st Screen cells off Sheet 1",
+            accounting["round_2_source_rows"],
+            accounting["kept_records_round_2"],
+            accounting["rules"][3]["n_records"],
+            len(accounting["rules"][4]["items"]),
         )
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -562,20 +824,27 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
     def create_experiment(  # type: ignore[override]
         self, row: "pd.Series[Any]"
     ) -> tuple[VisualScoreExperiment, VisualScoreExperimentReference, Publication]:
-        """Build the VisualScore experiment/reference/publication for one ORF."""
-        # The row's own Strain cell, as released (BY4741 where the cell is blank).
+        """Build the VisualScore experiment/reference/publication for one scored
+        transformation: a deletion strain (or the WT parent) carrying YB/I/BTS1.
+        """
+        # The row's own Strain cell, as released (BY4741 where the cell is blank; the
+        # second-round sheet has no Strain column and its strains are BY4741's).
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae",
             strain=str(row["strain"]),
             assembly_set=SGD_S288C_R64,
             assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
-        genotype = Genotype(
-            perturbations=[
-                _released_deletion(row["orf"], _construction(row)),
-                *_carotenogenic_cassette(),
+        deletion = (
+            []
+            if row["is_wild_type"]
+            else [
+                _released_deletion(
+                    row["orf"], _construction(row), str(row["identifier_kind"])
+                )
             ]
         )
+        genotype = Genotype(perturbations=[*deletion, *_carotenogenic_cassette()])
         # Screen scored on SC-URA agar (URA-selective plasmid), 30 C.
         environment = Environment(
             media=OZAYDIN_SC_URA_AGAR, temperature=Temperature(value=30)
@@ -593,6 +862,8 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
             target_metabolite_id=None,
             score_text=row["score_text"] if pd.notna(row["score_text"]) else None,
             comment_annotations=row["comment_annotations"],
+            replicate_id=str(row["replicate_id"]),
+            provenance_gaps=[SINGLE_SCORE_GAP],
         )
         # Reference = WT carrying YB/I/BTS1, scored 0 by construction.
         phenotype_reference = VisualScorePhenotype(

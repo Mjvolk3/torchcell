@@ -621,8 +621,10 @@ def run_ohnuki_morphology(data_root: str) -> bool:
 VISUAL_SCORE_DATASETS: dict[str, dict[str, Any]] = {
     "carotenoid_ozaydin2013": {
         "root": "data/torchcell/carotenoid_ozaydin2013",
-        # One record per released scored row (#1045): 130 ORFs were scored on two
-        # plates, so they carry two records each.
+        # One record per scored transformation (#1045, #1176): Sheet 1's 4,607
+        # numeric rows (130 ORFs on two plates) plus the 120 numeric 2nd Screen cells
+        # of the second round of transformation (118 ORFs, PDR11 by name, the WT row).
+        "expected_count": 4727,
         "allow_duplicate_orfs": True,
         "provenance": Provenance(
             source_uri="https://ars.els-cdn.com/content/image/1-s2.0-S109671761200081X-mmc1.xlsx",
@@ -649,7 +651,7 @@ def run_visual_score(data_root: str) -> bool:
             records,
             dataset_name=name,
             provenance=spec["provenance"],
-            expected_count=len(records),
+            expected_count=int(spec["expected_count"]),
             allow_duplicate_orfs=bool(spec.get("allow_duplicate_orfs", False)),
         )
         if ohya_genes:

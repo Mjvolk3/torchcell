@@ -32,6 +32,12 @@ in ``dropped_records.json`` with their text; YLR287-A is stored on the
 released-gene-name leaf; the blank-ORF row is counted. The reference is the same
 WT-with-plasmid score 0.0 for every record, so the reference index splits only on the
 strain: BY4741 -> records [0, 1, 3, 4], BY4730 -> [2], W303 -> [5].
+
+2026.11.24 (#1176): the workbook also carries the released second-round sheet
+``2ndRoundOfTransformations`` (title line, blank row, header on row 3) with no strain
+rows, so every record here is a first-round one: ``replicate_id`` ``round 1`` and a
+``not_applicable_single_measurement`` gap on ``visual_score_min``. The second round is
+pinned in ``test_ozaydin2013.py``.
 """
 
 from __future__ import annotations
@@ -117,6 +123,12 @@ def _write_workbook(raw: Path) -> None:
     top200.append(["ORF name", "Gene name", "Gene Function", "Assigned Category"])
     for top_row in _TOP200_ROWS:
         top200.append(list(top_row))
+    # the second-round sheet as released, header on row 3, no strain rows here (the
+    # second round is pinned in test_ozaydin2013.py)
+    round_2 = workbook.create_sheet(m.ROUND_2_SHEET)
+    round_2.append(["Deletions selected for further Bisabolene analysis"])
+    round_2.append([None])
+    round_2.append(list(m.ROUND_2_HEADER))
     workbook.save(raw / m.CarotenoidOzaydin2013Dataset.si_filename)
 
 
@@ -146,6 +158,8 @@ def _phenotype(
         target_metabolite_id=None,
         score_text=text,
         comment_annotations=flags,
+        replicate_id="round 1",
+        provenance_gaps=[m.SINGLE_SCORE_GAP],
     )
 
 
@@ -304,6 +318,8 @@ def test_six_records_one_per_released_scored_row(
         ("orf_cell_is_blank", 1),
         ("stored_on_released_gene_name_leaf", 0),
         ("color_cell_is_text_not_a_score", 3),
+        ("round_2_cell_is_text_not_a_score", 0),
+        ("round_2_first_screen_is_not_a_record", 0),
     ]
     assert ledger["rules"][1]["items"] == ["YLR287-A"]
     assert ledger["rules"][2]["items"] == [
@@ -351,16 +367,21 @@ def test_data_csv_gene_set_and_build_manifest(
     assert dataset.experiment_class is VisualScoreExperiment
     assert dataset.reference_class is VisualScoreExperimentReference
     preprocess = Path(dataset.root) / "preprocess"
+    kind = f'"{m.ORF_IDENTIFIER_KIND}"'
     assert (preprocess / "data.csv").read_text() == (
-        "orf,strain,record_no,batch,plate,row,col,visual_score,visual_score_min,"
-        "n_replicates,score_text,in_top200,gene_name,gene_function,assigned_category\n"
-        "YAL001C,BY4741,338,01_1,1,A,1,3.0,,1,,True,TFC3,TFIIIC subunit,transcription\n"
-        "YAL001C,BY4741,339,01_1,1,A,2,1.0,,1,,True,TFC3,TFIIIC subunit,transcription\n"
-        "YBR001C,BY4730,340,01_1,1,A,3,-1.0,,1,,False,,,\n"
-        "YCR001W,BY4741,342,01_1,1,A,5,-2.0,,1,,True,,,unknown\n"
-        "YDR001C,BY4741,343,01_1,1,A,6,0.0,,1,,False,,,\n"
-        "YER001W,W303,345,01_1,1,A,8,5.0,,1,,False,,,\n"
-        "YLR287-A,BY4741,347,01_1,1,A,10,2.0,,1,,False,,,\n"
+        "screen_round,replicate_id,is_wild_type,orf,identifier_kind,strain,record_no,"
+        "batch,plate,row,col,visual_score,visual_score_min,n_replicates,score_text,"
+        "in_top200,gene_name,gene_function,assigned_category\n"
+        f"1,round 1,False,YAL001C,{kind},BY4741,338,01_1,1,A,1,3.0,,1,,True,TFC3,"
+        "TFIIIC subunit,transcription\n"
+        f"1,round 1,False,YAL001C,{kind},BY4741,339,01_1,1,A,2,1.0,,1,,True,TFC3,"
+        "TFIIIC subunit,transcription\n"
+        f"1,round 1,False,YBR001C,{kind},BY4730,340,01_1,1,A,3,-1.0,,1,,False,,,\n"
+        f"1,round 1,False,YCR001W,{kind},BY4741,342,01_1,1,A,5,-2.0,,1,,True,,,"
+        "unknown\n"
+        f"1,round 1,False,YDR001C,{kind},BY4741,343,01_1,1,A,6,0.0,,1,,False,,,\n"
+        f"1,round 1,False,YER001W,{kind},W303,345,01_1,1,A,8,5.0,,1,,False,,,\n"
+        f"1,round 1,False,YLR287-A,{kind},BY4741,347,01_1,1,A,10,2.0,,1,,False,,,\n"
     )
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YAL001C",

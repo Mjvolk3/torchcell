@@ -1087,7 +1087,9 @@ PROTEIN_DATASETS: dict[str, dict[str, Any]] = {
     # runs), so this entry dispatches there rather than to ``verify_protein_dataset``.
     "proteome_muenzner2024": {
         "root": "data/torchcell/proteome_muenzner2024",
-        "expected_count": 794,
+        # 794 isolates with a Peter genome plus the S288C-derived FY4 column (#1045);
+        # the gate itself pins muenzner2024.EXPECTED_PROTEOME_RECORDS.
+        "expected_count": 795,
         "natural_isolates": True,
         "provenance": Provenance(
             source_uri=(
@@ -1103,6 +1105,26 @@ PROTEIN_DATASETS: dict[str, dict[str, Any]] = {
                 "vs S288C from Peter 2018 by the Caudal 2024 construction"
             ),
             page="Nature 630:149; Supplementary Table 3",
+        ),
+    },
+    # #1176: the 24 h time course, one record per (isolate, replicate culture, time).
+    "proteome_timecourse_muenzner2024": {
+        "root": "data/torchcell/proteome_timecourse_muenzner2024",
+        "expected_count": 30,
+        "natural_isolates": True,
+        "provenance": Provenance(
+            source_uri=(
+                "https://pmc-oa-opendata.s3.amazonaws.com/PMC11153158.1/"
+                "41586_2024_7442_MOESM3_ESM.xlsx"
+            ),
+            citation_key="muenznerNaturalProteomeDiversity2024",
+            sha256="1e78de77ffeb5ffb4f64f3999765db62ec9f6b6729a71f75feb1b955f5d6e005",
+            method=(
+                "DIA-NN 1.8 library-free gene quantities of AMC and BBV, 3 biological "
+                "replicate cultures x 5 sampling times, keyed by the released gene "
+                "names; reference = AMC's per-time-point replicate median"
+            ),
+            page="Nature 630:149; Supplementary Table 13",
         ),
     },
     # A wild-type drug screen: one record per drug-treated run and per DMSO run (one

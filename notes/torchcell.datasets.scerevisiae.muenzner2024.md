@@ -169,3 +169,34 @@ All 14 rows pass (`preprocess.superseded.20261012-114548/verification_report.jso
 | L4 | loss_of_function_calls_match_release | stored loss-of-function calls are the release's 1s, row for row by the matrix's own key, over 55 isolates: {'nonsense_or_sift': 12695, 'homozygous_frameshift': 7830} |
 
 `caudal_genotype_agreement` compares four sampled isolates with the Caudal 2024 store as #1058 rebuilt it (10:30), so both stores carry the shared genotype.
+
+## 2026.11.24 - Per-replicate review (#1178, part of #1176): the SI Table 13 time course becomes a store
+
+Policy #1178: one stored record per biological replicate as the source releases it. Review of every Muenzner 2024 release table against the loaders.
+
+### Already per replicate, unchanged
+
+- `proteome_muenzner2024` (SI Table 3): one acquisition per isolate. Reporting summary (`si/si2.md`, sha256 `4b2c31e1...`): "The proteomic dataset for the small strain library (disomic lab-engineered strains) was acquired in triplicates, while the large dataset (> 1000 isolates) was acquired once." The 77 control samples of Extended Data Fig. 1d are "replicate injections of a reference sample (77 injections)" (same quote), technical and not in SI Table 3. Rebuilt into scratch: 795 records, every experiment and reference dump identical to the dev store once the `replicate_id: None` key the #1181 schema added is set aside.
+- `protein_turnover_muenzner2024` (SI Table 17): one culture per isolate, three SILAC time points fitted into one `kdp` by design ("protein turnover rates were calculated for proteins with valid SILAC ratios in at least two time points per strain by building a linear model", paper.md Methods, Dynamic SILAC). 55 records, unchanged.
+
+### New: `proteome_timecourse_muenzner2024` (`ProteomeTimecourseMuenzner2024Dataset`)
+
+SI Table 13, "Proteomes of two natural isolates (AMC, BBV) across different growth stages.", 104,130 rows = 30 samples x 3,471 genes, 87,998 numeric cells and 16,132 `NA`. No class read it before.
+
+- Replicate kind, biological: the peer review file (`si/si4.md`, sha256 `78ef93680a232b07a2dafdcf13931e36b7c1d03b8468bc8bead514cf9ad967db`), the authors' reply to Reviewer 2 point 8: "The experiment was performed in biological triplicates." and "we performed an experiment to compare attenuation during the the growth of a diploid aneuploid strain, BBV, and a diploid euploid strain, AMC". The released `OD600` differs between the three cultures at every time point (AMC t3: 1.25 / 1.39 / 1.18). The paper's Methods ("Twenty-four-hour time-course proteomics") state no replicate count.
+- Culture (paper.md): "Yeast isolates were cultivated on SM medium (as above) in batch culture." The pre-culture was diluted to OD600 0.1 in 30 ml and grown 24 h at 30 C and 750 rpm (paraphrase; `TIMECOURSE_CULTURE_QUOTE` holds the OCR text with its LaTeX), sampled "at five time points to cover early exponential, mid-exponential, late exponential and stationary phases of growth."
+- Record: one `ProteinAbundanceExperiment` per (isolate, replicate culture, time point), 30 = 2 x 3 x 5. `replicate_id` is the release's `replicate` (`"1"`..`"3"`); `Environment.duration_hours` is the released `time (h)` (AMC 4.5, 6.0, 8.0, 9.5, 23.75; BBV 4.5, 7.0, 9.0, 12.75, 23.75); `n_replicates` 1 per gene; `protein_abundance_se` is `None` with a `ProvenanceGap` `not_applicable_single_measurement`. Keys are the release's `Genes` column verbatim (3,471 names, mostly standard names, `IMP2'` included), never re-mapped; the L4 containment against SGD systematic plus standard names is 0.9963 (report class).
+- `measurement_type = dia_ms_dia_nn_1_8_library_free_gene_quantity`: Q Exactive Plus DIA, "Raw data were processed using DIA-NN v.1.8 (ref. 42) with the scan window size set to 7", "A spectral library-free approach and yeast UniProt (UP000002311, reviewed, canonical, downloaded 18 November 2021)63 were used for annotation." Not the SWATH quantity of SI Table 3, so a separate store, never pooled with it.
+- Reference, the paper's own (paper.md): "-transformed protein expression levels between the aneuploid and the euploid isolate were calculated per time point for each protein present in at least two of the three biological replicates of the euploid strain in the given time point". Per time-point label, the median over AMC's replicates of each gene measured in at least 2 of 3, `n_replicates` = how many measured it, `replicate_id=None`; `environment_reference` is AMC's sampling time, so BBV's 7.0 h sample carries AMC's 6.0 h reference. AMC's own 15 cultures are records too.
+- OD600 at sampling is released per culture but no field of `ProteinAbundancePhenotype` carries it; it lives in `preprocess/muenzner2024_ledger.json` (`TimecourseLedger.samples`).
+- Genotypes: the shared Peter construction (`natural_isolate`), AMC and BBV both in the panel; adapter `ProteomeTimecourseMuenzner2024Adapter`, conf `proteome_timecourse_muenzner2024_adapter.yaml`.
+- Verifier: `verify_natural_isolate_timecourse_proteome` (`torchcell/verification/protein.py`), dispatched from `muenzner2024.verify_build` by the store name: count, one record per (isolate, time, replicate), labeled records are single replicates, one measurement type, every reference recomputed from the AMC records, gene containment (report), and the four shared isolate-genotype rules.
+
+Counts (scratch build `$DATA_ROOT/tmp/scratch/per-replicate-muenzner2024/proteome_timecourse_muenzner2024`): 30 records, 10 per replicate number, 15 per isolate; 87,998 stored values = the release's numeric cells, max absolute difference 0 against the release. No mean-reproduction check applies: the table had no stored records before.
+
+### Not done (owner decisions)
+
+- SI Table 4, disomic W303 strains (38 samples: W303-WT x 3 and 12 disomes, disome 8 x 2; Methods: "Each disomic strain and the euploid wild type were set up in triplicate."). No schema leaf states an engineered whole-chromosome duplication (`ChromosomeCopyChange` lives only on `NaturalIsolateDescriptor`), W303 has no reference genome in the registry, and the markers the SD-His + G418 selection implies are not printed (Torres 2007 is not mirrored). Even the wild type needs the W303 background decision.
+- SI Table 15, ubiquitinome (8 isolates x 3 `sample_id`, 24 samples, 16,938 values; sheet note "Biological triplicates (sample numbers indicated by sample_id) of strains were performed."). K-GG remnant enrichment is a different physical measurement from a proteome abundance, so it needs its own phenotype leaf.
+- `XTRA.DGU` (KS11, triploid) stays refused for having no Peter genome; storing it needs a triploid `ReferenceGenome` (#1045, #1064).
+- The 795 SI Table 3 and 55 SI Table 17 records keep `protein_abundance_se=None` without a typed gap (they were already one acquisition each; records left unchanged).

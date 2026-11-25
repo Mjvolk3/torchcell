@@ -26,6 +26,20 @@ SI Table 17 (turnover): AAA YAL001C 0.5 / YBR001W 0.25; ZZZ YAL001C 0.3 / Q0010 
 SACE.YAU YAL001C 0.4 / R0040C 0.1, each HL = ln 2 / kdp. AAA and ZZZ are euploid, so the
 turnover reference is YAL001C 0.4 (n=2), YBR001W 0.25, Q0010 0.2; R0040C (only in the
 aneuploid SACE_YAU) has no reference key.
+
+SI Table 13 (time course, ``NA`` = missing): AAA (euploid) in 3 replicate cultures at
+t1 = 4.5 h and t2 = 6.0 h, SACE.YAU (aneuploid) in 1 culture at t1 = 4.5 h and
+t2 = 7.0 h::
+
+    AAA r1 t1  TFC3 10  COX1 2   YBR001W NA      AAA r1 t2  TFC3 20  COX1 6   YBR001W 7
+    AAA r2 t1  TFC3 12  COX1 NA  YBR001W 5       AAA r2 t2  TFC3 22  COX1 8   YBR001W 9
+    AAA r3 t1  TFC3 14  COX1 4   YBR001W NA      AAA r3 t2  TFC3 NA  COX1 NA  YBR001W 11
+    YAU r1 t1  TFC3 30  COX1 NA  YBR001W 3       YAU r1 t2  TFC3 40  COX1 1   YBR001W NA
+
+The reference per time point is AAA's median over the replicates that measured a gene,
+for genes measured in at least 2: t1 TFC3 12 (n=3), COX1 3 (n=2), YBR001W absent (n=1);
+t2 TFC3 21 (n=2), COX1 7 (n=2), YBR001W 9 (n=3). YAU's t2 record (7.0 h) takes AAA's
+t2 reference, whose environment is AAA's 6.0 h.
 """
 
 from __future__ import annotations
@@ -80,10 +94,15 @@ from torchcell.sequence.genome.registry import (
 from torchcell.verification.natural_isolate_genotype import IsolateGenotypeAudit
 from torchcell.verification.protein import (
     verify_natural_isolate_proteome,
+    verify_natural_isolate_timecourse_proteome,
     verify_natural_isolate_turnover,
 )
 from torchcell.verification.report import Provenance
-from torchcell.verification.sourced import audit_sourced_value
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    audit_sourced_value,
+)
 
 LN2 = math.log(2)
 
@@ -123,6 +142,28 @@ _T3_ROWS = [
     ["Q0010", 2.0, "NA", "NA", 3.0, 1.0],
 ]
 _T3_ISOLATES = ["AAA", "SACE.YAU", "ZZZ", "QQQ", "Reference"]
+
+
+def _t13(
+    strain: str, rep: int, tp: str, hours: float, od: float, values: list[Any]
+) -> list[list[Any]]:
+    """One released sample's rows: TFC3, COX1, YBR001W in that order."""
+    genes = ["TFC3", "COX1", "YBR001W"]
+    return [
+        [strain, rep, tp, hours, od, g, v] for g, v in zip(genes, values, strict=True)
+    ]
+
+
+_T13_ROWS = [
+    *_t13("AAA", 1, "t1", 4.5, 0.30, [10, 2, "NA"]),
+    *_t13("AAA", 2, "t1", 4.5, 0.32, [12, "NA", 5]),
+    *_t13("AAA", 3, "t1", 4.5, 0.31, [14, 4, "NA"]),
+    *_t13("AAA", 1, "t2", 6.0, 0.60, [20, 6, 7]),
+    *_t13("AAA", 2, "t2", 6.0, 0.62, [22, 8, 9]),
+    *_t13("AAA", 3, "t2", 6.0, 0.58, ["NA", "NA", 11]),
+    *_t13("SACE.YAU", 1, "t1", 4.5, 0.25, [30, "NA", 3]),
+    *_t13("SACE.YAU", 1, "t2", 7.0, 0.50, [40, 1, "NA"]),
+]
 _T17_ROWS = [
     ["AAA", 1, "euploid", "P1", "YAL001C", "TFC3", 0.5, 1e9, _hl(0.5)],
     ["AAA", 1, "euploid", "P2", "YBR001W", "X", 0.25, 1e9, _hl(0.25)],
@@ -174,6 +215,7 @@ def _release_sheets() -> dict[str, list[list[Any]]]:
             + [["ZZZ", 150.0, 0.01, 0.9]],
         ),
         m.T17.name: _sheet_rows(m.T17, _T17_ROWS),
+        m.T13.name: _sheet_rows(m.T13, _T13_ROWS),
     }
 
 
@@ -206,6 +248,15 @@ def turnover(data_root: Path, tmp_path: Path) -> m.ProteinTurnoverMuenzner2024Da
     root = tmp_path / "turnover"
     _write_raw(root / "raw")
     return m.ProteinTurnoverMuenzner2024Dataset(root=str(root))
+
+
+@pytest.fixture
+def timecourse(
+    data_root: Path, tmp_path: Path
+) -> m.ProteomeTimecourseMuenzner2024Dataset:
+    root = tmp_path / "timecourse"
+    _write_raw(root / "raw")
+    return m.ProteomeTimecourseMuenzner2024Dataset(root=str(root))
 
 
 # Genotypes: the Caudal construction on the shared synthetic Peter tier.
@@ -747,17 +798,17 @@ def _names(report: Any) -> list[str]:
 
 
 def _audit(
-    dataset: Any, data_root: Path, monkeypatch: pytest.MonkeyPatch
+    dataset: Any,
+    data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    isolates: tuple[str, ...] = ("AAA", "SACE_YAU", "ZZZ"),
 ) -> IsolateGenotypeAudit:
     """The shared genotype audit over the store's isolates, with Table S1 mirrored."""
     library = data_root / "torchcell-library"
     _library_tables(library, monkeypatch)
     return IsolateGenotypeAudit(
         ni.NaturalIsolateGenotypes(
-            dataset.raw_dir,
-            dataset.preprocess_dir,
-            ["AAA", "SACE_YAU", "ZZZ"],
-            str(data_root),
+            dataset.raw_dir, dataset.preprocess_dir, list(isolates), str(data_root)
         ),
         library,
     )
@@ -942,6 +993,244 @@ def test_caudal_sample_refuses_a_store_out_of_data_csv_order(
 
 
 # --------------------------------------------------------------------------- #
+# time course (SI Table 13): one record per replicate culture and time point
+# --------------------------------------------------------------------------- #
+def _tc_env(hours: float) -> Environment:
+    return Environment(
+        media=m.MUENZNER_SM, temperature=Temperature(value=30), duration_hours=hours
+    )
+
+
+def _tc_reference(
+    hours: float, values: dict[str, float], counts: dict[str, int]
+) -> ProteinAbundanceExperimentReference:
+    return ProteinAbundanceExperimentReference(
+        dataset_name="ProteomeTimecourseMuenzner2024Dataset",
+        genome_reference=_S288C,
+        environment_reference=_tc_env(hours),
+        phenotype_reference=ProteinAbundancePhenotype(
+            protein_abundance=values,
+            protein_abundance_se=None,
+            n_replicates=counts,
+            measurement_type=m.TIMECOURSE_MEASUREMENT_TYPE,
+        ),
+    )
+
+
+def _tc_record(
+    strain: str, replicate: str, hours: float, values: dict[str, float]
+) -> ProteinAbundanceExperiment:
+    return ProteinAbundanceExperiment(
+        dataset_name="ProteomeTimecourseMuenzner2024Dataset",
+        genotype=_genotype(strain),
+        environment=_tc_env(hours),
+        phenotype=ProteinAbundancePhenotype(
+            protein_abundance=values,
+            protein_abundance_se=None,
+            n_replicates=dict.fromkeys(values, 1),
+            measurement_type=m.TIMECOURSE_MEASUREMENT_TYPE,
+            replicate_id=replicate,
+            provenance_gaps=[
+                ProvenanceGap(
+                    field="protein_abundance_se",
+                    reason=ProvenanceGapReason.not_applicable_single_measurement,
+                    note=m.SINGLE_CULTURE_SE_NOTE,
+                )
+            ],
+        ),
+    )
+
+
+_TC_ISOLATES = ("AAA", "SACE_YAU")
+_TC_REF_T1 = _tc_reference(4.5, {"TFC3": 12.0, "COX1": 3.0}, {"TFC3": 3, "COX1": 2})
+_TC_REF_T2 = _tc_reference(
+    6.0,
+    {"TFC3": 21.0, "COX1": 7.0, "YBR001W": 9.0},
+    {"TFC3": 2, "COX1": 2, "YBR001W": 3},
+)
+
+
+def test_timecourse_builds_one_record_per_culture_and_time_point(
+    timecourse: m.ProteomeTimecourseMuenzner2024Dataset,
+) -> None:
+    """Eight released samples, eight records, each the culture's own released values
+    under the release's replicate number; ``NA`` is key-absent. Each record's reference
+    is AAA's replicate median at the same time-point label, so YAU's 7.0 h sample takes
+    the reference measured at AAA's 6.0 h.
+    """
+    expected = [
+        (_tc_record("AAA", "1", 4.5, {"TFC3": 10.0, "COX1": 2.0}), _TC_REF_T1),
+        (
+            _tc_record("AAA", "1", 6.0, {"TFC3": 20.0, "COX1": 6.0, "YBR001W": 7.0}),
+            _TC_REF_T2,
+        ),
+        (_tc_record("AAA", "2", 4.5, {"TFC3": 12.0, "YBR001W": 5.0}), _TC_REF_T1),
+        (
+            _tc_record("AAA", "2", 6.0, {"TFC3": 22.0, "COX1": 8.0, "YBR001W": 9.0}),
+            _TC_REF_T2,
+        ),
+        (_tc_record("AAA", "3", 4.5, {"TFC3": 14.0, "COX1": 4.0}), _TC_REF_T1),
+        (_tc_record("AAA", "3", 6.0, {"YBR001W": 11.0}), _TC_REF_T2),
+        (_tc_record("SACE_YAU", "1", 4.5, {"TFC3": 30.0, "YBR001W": 3.0}), _TC_REF_T1),
+        (_tc_record("SACE_YAU", "1", 7.0, {"TFC3": 40.0, "COX1": 1.0}), _TC_REF_T2),
+    ]
+    assert len(timecourse) == len(expected)
+    for i, (experiment, reference) in enumerate(expected):
+        assert timecourse[i]["experiment"] == experiment.model_dump()
+        assert timecourse[i]["reference"] == reference.model_dump()
+    assert timecourse[0]["publication"] == m.PUBLICATION.model_dump()
+
+
+def test_timecourse_ledger_keeps_every_sample_time_and_density(
+    timecourse: m.ProteomeTimecourseMuenzner2024Dataset,
+) -> None:
+    """The ledger accounts for every row and keeps the OD600 no record field carries."""
+    ledger = m.TimecourseLedger.model_validate_json(
+        Path(timecourse.preprocess_dir, "muenzner2024_ledger.json").read_text()
+    )
+    assert (ledger.n_release_rows, ledger.n_genes) == (24, 3)
+    assert (ledger.n_measured_cells, ledger.n_missing_cells) == (17, 7)
+    assert ledger.reference_isolate == "AAA"
+    assert ledger.reference_min_replicates == 2
+    assert ledger.reference_genes_by_timepoint == {"t1": 2, "t2": 3}
+    assert [
+        (s.isolate, s.replicate, s.timepoint, s.time_hours, s.od600, s.n_measured)
+        for s in ledger.samples
+    ] == [
+        ("AAA", 1, "t1", 4.5, 0.30, 2),
+        ("AAA", 1, "t2", 6.0, 0.60, 3),
+        ("AAA", 2, "t1", 4.5, 0.32, 2),
+        ("AAA", 2, "t2", 6.0, 0.62, 3),
+        ("AAA", 3, "t1", 4.5, 0.31, 2),
+        ("AAA", 3, "t2", 6.0, 0.58, 1),
+        ("SACE_YAU", 1, "t1", 4.5, 0.25, 2),
+        ("SACE_YAU", 1, "t2", 7.0, 0.50, 2),
+    ]
+    assert [k.isolate for k in ledger.karyotypes] == ["AAA", "SACE_YAU"]
+
+
+def test_timecourse_needs_exactly_one_euploid_isolate(
+    data_root: Path, tmp_path: Path
+) -> None:
+    """The reference isolate is the one SI Table 1 calls euploid; two is ambiguous."""
+    rows = [*_T13_ROWS, *_t13("ZZZ", 1, "t1", 4.5, 0.3, [1, 1, 1])]
+    rows += _t13("ZZZ", 1, "t2", 6.0, 0.6, [1, 1, 1])
+    sheets = {**_release_sheets(), m.T13.name: _sheet_rows(m.T13, rows)}
+    root = tmp_path / "two_euploid"
+    _write_raw(root / "raw", sheets)
+    with pytest.raises(ValueError, match="exactly one euploid isolate"):
+        m.ProteomeTimecourseMuenzner2024Dataset(root=str(root))
+
+
+def _t13_frame(rows: list[list[Any]]) -> pd.DataFrame:
+    return pd.DataFrame(rows, columns=list(m.T13.header or ()))
+
+
+@pytest.mark.parametrize(
+    ("rows", "message"),
+    [
+        (_T13_ROWS[:3] + _T13_ROWS[:1], "repeats a"),
+        (
+            _T13_ROWS[:2] + [["AAA", 1, "t1", 5.0, 0.30, "YBR001W", 1]],
+            "two times or two OD600",
+        ),
+        (
+            _T13_ROWS[:3] + [["AAA", 2, "t1", 5.0, 0.30, "TFC3", 1]],
+            "sampled at different times",
+        ),
+        (_T13_ROWS[:2] + [["AAA", 1, "t1", 4.5, 0.30, "YBR001W", None]], "empty"),
+        (_T13_ROWS[:2] + [["AAA", 1, "t1", 4.5, 0.30, "YBR001W", "x"]], "non-numeric"),
+        (_T13_ROWS[:2] + [["AAA", 1, "t1", 4.5, 0.30, "YBR001W", 0]], "non-positive"),
+    ],
+)
+def test_timecourse_frame_refuses_what_the_release_does_not_hold(
+    rows: list[list[Any]], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        m.timecourse_frame(_t13_frame(rows))
+
+
+def test_timecourse_gate_passes_the_synthetic_store_and_catches_a_bad_reference(
+    timecourse: m.ProteomeTimecourseMuenzner2024Dataset,
+    data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    records = [timecourse[i] for i in range(len(timecourse))]
+    kwargs: dict[str, Any] = {
+        "dataset_name": "proteome_timecourse_muenzner2024",
+        "provenance": PROV,
+        "expected_count": 8,
+        "reference_isolate": "AAA",
+        "min_replicates": 2,
+        "sgd_names": {"TFC3", "COX1", "YBR001W"},
+    }
+    report = verify_natural_isolate_timecourse_proteome(
+        records,
+        genotype_audit=_audit(timecourse, data_root, monkeypatch, _TC_ISOLATES),
+        **kwargs,
+    )
+    assert _names(report) == [
+        "structural",
+        "count",
+        "sample_uniqueness",
+        "genotype_strain_consistency",
+        "value_fidelity",
+        "replicate_id_names_one_replicate",
+        "measurement_type_consistent",
+        "reference_is_reference_isolate_replicate_median",
+        "gene_containment_sgd_names",
+        "isolate_genotype_identity",
+        "isolate_genotype_round_trip",
+        "isolate_descriptor_matches_table_s1",
+        "loss_of_function_calls_match_release",
+    ]
+    assert [r.name for r in report.results if not r.passed] == []
+    tampered = [dict(r) for r in records]
+    tampered[0] = {
+        **records[0],
+        "reference": {
+            **records[0]["reference"],
+            "phenotype_reference": _TC_REF_T2.phenotype_reference.model_dump(),
+        },
+    }
+    tampered[1] = {
+        **records[1],
+        "experiment": {
+            **records[1]["experiment"],
+            "phenotype": {**records[1]["experiment"]["phenotype"], "replicate_id": "2"},
+        },
+    }
+    failing = verify_natural_isolate_timecourse_proteome(
+        tampered,
+        genotype_audit=_audit(timecourse, data_root, monkeypatch, _TC_ISOLATES),
+        **kwargs,
+    )
+    assert sorted(r.name for r in failing.results if not r.passed) == [
+        "reference_is_reference_isolate_replicate_median",
+        "sample_uniqueness",
+    ]
+
+
+def test_verify_build_runs_the_timecourse_gate_from_its_ledger(
+    timecourse: m.ProteomeTimecourseMuenzner2024Dataset,
+    data_root: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _library_tables(data_root / "torchcell-library", monkeypatch)
+    timecourse.close_lmdb()
+    monkeypatch.setattr(
+        m, "sgd_gene_and_standard_names", lambda root: {"TFC3", "COX1", "YBR001W"}
+    )
+    monkeypatch.setattr(m, "EXPECTED_TIMECOURSE_RECORDS", 8)
+    link = tmp_path / m.TIMECOURSE_STORE
+    link.symlink_to(timecourse.root)
+    report = m.verify_build(str(link), data_root=str(data_root))
+    assert report.dataset_name == m.TIMECOURSE_STORE
+    assert [r.name for r in report.results if not r.passed] == []
+
+
+# --------------------------------------------------------------------------- #
 # the real release (mirror-backed; run with --data)
 # --------------------------------------------------------------------------- #
 _LIBRARY = osp.join(os.environ.get("DATA_ROOT", ""), "torchcell-library")
@@ -975,6 +1264,32 @@ def test_the_deposited_workbook_parses_to_the_measured_counts() -> None:
     frame = m.turnover_frame(tables[m.T17.name])
     assert (len(frame), frame["strain"].nunique()) == (58061, 55)
     assert m.half_life_identity_error(frame) < 1e-14
+
+
+@pytest.mark.data
+def test_the_deposited_time_course_holds_30_cultures_by_time_samples() -> None:
+    """SI Table 13: 104,130 rows = 30 samples x 3,471 genes; 87,998 numeric cells and
+    16,132 'NA'; AMC and BBV x replicates 1-3 x t1-t5, so 10 samples per replicate
+    number and 15 per isolate; the three AMC t3 cultures read OD600 1.25 / 1.39 / 1.18.
+    """
+    path = m.raw_mirror_dir() / m.SI_TABLES_REL
+    if not path.exists():
+        pytest.skip("raw mirror not deposited on this machine")
+    frame = m.timecourse_frame(m.read_sheets(str(path), [m.T13])[m.T13.name])
+    assert (len(frame), frame["Genes"].nunique()) == (104130, 3471)
+    assert int(frame["abundance"].notna().sum()) == 87998
+    assert int(frame["abundance"].isna().sum()) == 16132
+    samples = m.timecourse_samples(frame)
+    assert len(samples) == m.EXPECTED_TIMECOURSE_RECORDS == 30
+    assert samples.groupby("replicate").size().to_dict() == {1: 10, 2: 10, 3: 10}
+    assert samples.groupby("strain").size().to_dict() == {"AMC": 15, "BBV": 15}
+    times = samples.groupby("strain")["time_hours"].unique()
+    assert sorted(times["AMC"]) == [4.5, 6.0, 8.0, 9.5, 23.75]
+    assert sorted(times["BBV"]) == [4.5, 7.0, 9.0, 12.75, 23.75]
+    amc_t3 = samples[(samples["strain"] == "AMC") & (samples["timepoint"] == "t3")]
+    assert amc_t3["od600"].tolist() == [1.25, 1.39, 1.18]
+    reference = m.timecourse_reference(frame, "AMC", 2)
+    assert sorted(reference) == ["t1", "t2", "t3", "t4", "t5"]
 
 
 def test_the_loader_names_the_shared_genotype_files_and_classes() -> None:

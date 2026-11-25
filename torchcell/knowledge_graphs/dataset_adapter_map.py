@@ -156,6 +156,7 @@ from torchcell.adapters import (
     ProteomeSchmidt2016Adapter,
     ProteomeSrmSet1Schmidt2016Adapter,
     ProteomeSrmSet2Schmidt2016Adapter,
+    ProteomeTimecourseMuenzner2024Adapter,
     ProteomeZelezniak2018Adapter,
     PutidaPrecise321Lim2022Adapter,
     RbTnseqBorchert2023Adapter,
@@ -431,6 +432,7 @@ from torchcell.datasets.scerevisiae.mota2024 import EnvChemgenMota2024Dataset
 from torchcell.datasets.scerevisiae.muenzner2024 import (
     ProteinTurnoverMuenzner2024Dataset,
     ProteomeMuenzner2024Dataset,
+    ProteomeTimecourseMuenzner2024Dataset,
 )
 from torchcell.datasets.scerevisiae.mulleder2016 import AminoAcidMulleder2016Dataset
 from torchcell.datasets.scerevisiae.nadal_ribelles2025 import (
@@ -519,6 +521,7 @@ dataset_adapter_map: dict[type, type] = {
     ProteomeMessner2023Dataset: ProteomeMessner2023Adapter,
     ProteomeMuenzner2024Dataset: ProteomeMuenzner2024Adapter,
     ProteinTurnoverMuenzner2024Dataset: ProteinTurnoverMuenzner2024Adapter,
+    ProteomeTimecourseMuenzner2024Dataset: ProteomeTimecourseMuenzner2024Adapter,
     ProteomeZelezniak2018Dataset: ProteomeZelezniak2018Adapter,
     AminoAcidMulleder2016Dataset: AminoAcidMulleder2016Adapter,
     AminoAcidCooper2010Dataset: AminoAcidCooper2010Adapter,

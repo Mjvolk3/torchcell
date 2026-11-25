@@ -1249,6 +1249,7 @@ def test_a_verify_build_shared_by_several_mapped_stores_refuses_a_root_of_none(
         "torchcell.datasets.scerevisiae.muenzner2024.verify_build": [
             "protein_turnover_muenzner2024",
             "proteome_muenzner2024",
+            "proteome_timecourse_muenzner2024",
         ],
     }
     for kind in shared:

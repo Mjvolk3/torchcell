@@ -271,6 +271,10 @@ MULTI_CLASS_MODULE_CONFS: dict[str, dict[str, str]] = {
             "protein_turnover_muenzner2024_adapter.yaml"
         ),
         "ProteomeMuenzner2024Dataset": "proteome_muenzner2024_adapter.yaml",
+        # 2026-11-24 (#1176): the SI Table 13 time course, one record per culture.
+        "ProteomeTimecourseMuenzner2024Dataset": (
+            "proteome_timecourse_muenzner2024_adapter.yaml"
+        ),
     },
     "lopez2024_adapter.py": {
         "IsobutanolScreenLopez2024Dataset": (

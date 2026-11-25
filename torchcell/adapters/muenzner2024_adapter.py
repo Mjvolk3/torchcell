@@ -2,7 +2,9 @@
 # [[torchcell.adapters.muenzner2024_adapter]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/muenzner2024_adapter.py
 # Test file: tests/torchcell/adapters/test_muenzner2024_adapter.py
-"""BioCypher adapters exposing the Muenzner 2024 natural-isolate proteome and turnover."""
+"""BioCypher adapters exposing the Muenzner 2024 natural-isolate proteome, its time
+course and protein turnover.
+"""
 
 import os.path as osp
 
@@ -13,6 +15,7 @@ from torchcell.adapters.cell_adapter import CellAdapter
 from torchcell.datasets.scerevisiae.muenzner2024 import (
     ProteinTurnoverMuenzner2024Dataset,
     ProteomeMuenzner2024Dataset,
+    ProteomeTimecourseMuenzner2024Dataset,
 )
 
 
@@ -69,6 +72,33 @@ class ProteinTurnoverMuenzner2024Adapter(CellAdapter):
     ):
         """Load the adapter conf enable-list and initialize the base CellAdapter."""
         config = _load_conf("protein_turnover_muenzner2024_adapter.yaml")
+        super().__init__(
+            config, dataset, process_workers, io_workers, chunk_size, loader_batch_size
+        )
+        self.dataset = dataset
+        self.process_workers = process_workers
+        self.io_workers = io_workers
+        self.chunk_size = chunk_size
+        self.loader_batch_size = loader_batch_size
+
+
+class ProteomeTimecourseMuenzner2024Adapter(CellAdapter):
+    """Serves the 30 time-course samples of SI Table 13 (``ProteinAbundancePhenotype``).
+
+    One record per (isolate, replicate culture, sampling time); compact genotype, as
+    for the natural-isolate proteome.
+    """
+
+    def __init__(
+        self,
+        dataset: ProteomeTimecourseMuenzner2024Dataset,
+        process_workers: int,
+        io_workers: int,
+        chunk_size: int = int(1e4),
+        loader_batch_size: int = int(1e3),
+    ):
+        """Load the adapter conf enable-list and initialize the base CellAdapter."""
+        config = _load_conf("proteome_timecourse_muenzner2024_adapter.yaml")
         super().__init__(
             config, dataset, process_workers, io_workers, chunk_size, loader_batch_size
         )

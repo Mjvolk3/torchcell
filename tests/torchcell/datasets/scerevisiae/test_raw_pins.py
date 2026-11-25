@@ -134,6 +134,10 @@ def _pins_from_constants(
             m.SI_TABLES_FILENAME: m.SI_TABLES_SHA256,
             **{name: genome(name) for name in m.GENOTYPE_FILES},
         },
+        "ProteomeTimecourseMuenzner2024Dataset": lambda: {
+            m.SI_TABLES_FILENAME: m.SI_TABLES_SHA256,
+            **{name: genome(name) for name in m.GENOTYPE_FILES},
+        },
         "CrispriMormino2022Dataset": lambda: {
             m.PDF_FILENAME: m.PDF_SHA256,
             m.PAPER_MD: m.PAPER_MD_SHA256,
@@ -237,6 +241,7 @@ GENOME_TIER_PINNED = {
     "IsolateGrowthPeter2018Dataset",
     "ProteomeMuenzner2024Dataset",
     "ProteinTurnoverMuenzner2024Dataset",
+    "ProteomeTimecourseMuenzner2024Dataset",
     *DECHIARA_CLASSES,
 }
 
@@ -246,6 +251,7 @@ DATA_ROOT_METHOD = {
     "CaudalPanTranscriptome2024Dataset",
     "ProteomeMuenzner2024Dataset",
     "ProteinTurnoverMuenzner2024Dataset",
+    "ProteomeTimecourseMuenzner2024Dataset",
     *DECHIARA_CLASSES,
 }
 

@@ -5,7 +5,7 @@ torchcell.tasks
 
 .. currentmodule:: torchcell.tasks
 
-Standardized benchmark tasks. A task pins one dataset, the genome its records are written against, one label and a set of pinned train, validation and test splits. :func:`~torchcell.tasks.ecoli.load_task` is the one import a benchmark script needs; the test part of every split is locked until :meth:`~torchcell.tasks.task.Split.unlock_test` is called. The overview is at :doc:`../benchmark/ecoli/index`.
+Standardized benchmark tasks. A task pins one dataset, the genome its records are written against, one label and a set of pinned train, validation and test splits. :func:`~torchcell.tasks.ecoli.load_task` is the one import a benchmark script needs; the test part of every split is locked until :meth:`~torchcell.tasks.task.Split.unlock_test` is called. The tasks, their splits, example scripts and baseline results are on the benchmark website.
 
 .. contents:: Contents
     :local:

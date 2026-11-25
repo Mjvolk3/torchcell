@@ -1,5 +1,6 @@
-ecoli-gene-interaction-babu2014: 40,658 samples, 1 targets, split gene_holdout_s0
-sizes {'train': 25848, 'val': 8642, 'test': 6168}
-penalty chosen on validation: 0.1
+Genetic interaction score of double mutants (Babu 2014): 40,658 samples, 1 target(s)
+split gene_holdout_s0: {'train': 25848, 'val': 8642, 'test': 6168}
+penalty chosen on validation mse: 0.1
 validation {'pearson': 0.1168, 'spearman': 0.1195, 'r2': 0.0053, 'mse': 29.7949, 'mae': 4.8675}
 test       {'pearson': 0.0697, 'spearman': 0.0627, 'r2': 0.0033, 'mse': 29.7227, 'mae': 4.8552}
+headline metric: pearson (mean over targets)

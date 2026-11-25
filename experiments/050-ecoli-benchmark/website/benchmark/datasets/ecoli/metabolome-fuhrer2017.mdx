@@ -1,0 +1,197 @@
+---
+title: "Metabolome of single-gene deletions (Fuhrer 2017)"
+sidebar_label: "Metabolome (Fuhrer 2017)"
+description: "7,534 targets: modified z-score of each detected ion"
+---
+
+Fuhrer and colleagues profiled the metabolome of each Keio deletion strain by flow-injection time-of-flight mass spectrometry. The label is 7,534 numbers per strain: the modified z-score of each detected ion (a mass feature of the negative or the positive instrument mode) relative to the other strains. A model receives the deleted gene and predicts all 7,534 z-scores.
+
+| Property | Value |
+| :-- | :-- |
+| Task name | `ecoli-metabolome-fuhrer2017` |
+| Dataset class | `torchcell.datasets.ecoli.fuhrer2017.MetabolomeFuhrer2017Dataset` |
+| Genome | `ecoli_K12_BW25113_ASM75055v1` |
+| One sample is | one deleted gene |
+| Label | 7,534 targets: modified z-score of each detected ion |
+| Benchmark samples | 3,624 |
+| Records of the dataset set aside | 182 (listed with a reason in `task.excluded`) |
+| Pinned splits | 14 |
+
+## Load the task
+
+```python
+from torchcell.tasks import load_task
+
+task = load_task("ecoli-metabolome-fuhrer2017")
+split = task.split("seqid30_s0")
+
+task.genes[split.train]  # locus tags of the deleted genes, shape (n, 1)
+task.y[split.train]      # labels, one column per target
+task.genome              # the genome: sequence, protein and annotation of each gene
+split.val                # row indices for model selection
+split.unlock_test(reason="final evaluation")  # test row indices, with a warning
+```
+
+A sample is a benchmark sample when every deleted gene resolves to one protein-coding gene of the genome. See the [overview](./index.mdx) for what a task object holds and how the test part is locked.
+
+## Splits
+
+Each family has several seeds. The name of a split is the family, `_s` and the seed.
+
+| Family | Split names | What is kept whole | Train | Validation | Test |
+| :-- | :-- | :-- | --: | --: | --: |
+| Random | `random_s0` to `random_s4` | Genes (or pairs) assigned at random. | 2,900 | 362 | 362 |
+| Sequence identity 30 % | `seqid30_s0` to `seqid30_s2` | Whole protein clusters at 30 % sequence identity. | 2,900 to 2,903 | 359 to 362 | 362 |
+| Sequence identity 50 % | `seqid50_s0` to `seqid50_s2` | Whole protein clusters at 50 % sequence identity. | 2,900 to 2,901 | 361 to 362 | 362 |
+| Chromosome position | `position_s0` to `position_s2` | Whole chromosome blocks (40 contiguous blocks). | 2,900 to 2,988 | 363 to 451 | 273 |
+
+## Example script
+
+[`ecoli_metabolome_fuhrer2017.py`](https://github.com/Mjvolk3/torchcell/blob/main/examples/benchmark/ecoli_metabolome_fuhrer2017.py) is a complete run in one file: it loads this task, builds 21 features from the protein of each deleted gene, fits a ridge regression, chooses the penalty on validation and scores the test part once. Replace `gene_features` and `ridge` with your model and keep the rest.
+
+```bash
+pip install "torchcell>=1.8.8"
+python ecoli_metabolome_fuhrer2017.py
+```
+
+```python
+# examples/benchmark/ecoli_metabolome_fuhrer2017.py
+"""Metabolome of *E. coli* single-gene deletions (Fuhrer 2017), 7,534 ion targets.
+
+A complete benchmark run in one file: load the standardized task, describe each deleted
+gene by the composition of its protein, fit a ridge regression, choose the ridge
+penalty on the validation part, and score the test part once.
+
+Needs only ``pip install "torchcell>=1.8.8"``. Run it in an empty directory::
+
+    python ecoli_metabolome_fuhrer2017.py
+
+The first run downloads the dataset store and the genome into the current directory.
+"""
+
+from __future__ import annotations
+
+import os
+from typing import Any
+
+import numpy as np
+
+from torchcell.endpoint_http import DEFAULT_URL
+from torchcell.tasks import load_task
+
+TASK = "ecoli-metabolome-fuhrer2017"
+# Split names are <family>_s<seed>; task.split_names lists them all. random assigns
+# genes to train, validation and test at random.
+SPLIT = "random_s0"
+AMINO_ACIDS = "ACDEFGHIKLMNPQRSTVWY"
+PENALTIES = (1e-1, 1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6)
+SELECT_ON = "mse"  # lower is better, and defined even when a prediction is constant
+
+
+def protein_features(genome: Any, locus_tag: str) -> np.ndarray:
+    """Fraction of each of the 20 amino acids plus log length: 21 numbers per gene."""
+    protein = str(genome[locus_tag].protein.seq)
+    fractions = [protein.count(letter) / len(protein) for letter in AMINO_ACIDS]
+    return np.array([*fractions, np.log(len(protein))])
+
+
+def fit_predict_ridge(
+    x_fit: np.ndarray, y_fit: np.ndarray, x_new: np.ndarray, penalty: float
+) -> np.ndarray:
+    """Fit one closed-form ridge per target on ``x_fit`` and predict ``x_new``.
+
+    Features are standardized with the fitting rows' mean and spread. Each target is
+    fit only on the rows where it was measured (``y_fit`` is ``nan`` elsewhere).
+    """
+    mean = x_fit.mean(axis=0)
+    spread = x_fit.std(axis=0)
+    spread[spread == 0] = 1.0  # a constant feature stays zero instead of dividing by 0
+    z_fit, z_new = (x_fit - mean) / spread, (x_new - mean) / spread
+    predictions = np.empty((len(x_new), y_fit.shape[1]))
+    for target in range(y_fit.shape[1]):
+        measured = ~np.isnan(y_fit[:, target])
+        z, y = z_fit[measured], y_fit[measured, target]
+        gram = z.T @ z + penalty * np.eye(z.shape[1])
+        weights = np.linalg.solve(gram, z.T @ (y - y.mean()))
+        predictions[:, target] = z_new @ weights + y.mean()
+    return predictions
+
+
+def rounded(metrics: dict[str, float]) -> dict[str, float]:
+    """Metrics rounded to four decimals for printing."""
+    return {name: round(value, 4) for name, value in metrics.items()}
+
+
+os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)  # unset, the store is built from raw
+os.environ.setdefault("DATA_ROOT", ".")  # the store and genome files go under here
+
+task = load_task(TASK)  # samples, deleted genes, labels, genome and the pinned splits
+split = task.split(SPLIT)
+print(f"{task.spec.title}: {len(task):,} samples, {len(task.targets):,} target(s)")
+print(f"split {SPLIT}: {split.sizes()}")
+
+# task.genes holds locus tags, one column per deleted gene (two for a gene-pair task).
+# A sample's features are the sum over its genes, which ignores the order of a pair.
+by_gene = {tag: protein_features(task.genome, tag) for tag in np.unique(task.genes)}
+features = np.array([sum(by_gene[tag] for tag in tags) for tags in task.genes])
+labels = task.y  # (n_samples, n_targets); nan where a target was not measured
+
+# Model selection: fit on train, score on validation. The test part stays locked.
+x_train, y_train = features[split.train], labels[split.train]
+validation = {
+    penalty: task.score(
+        labels[split.val],
+        fit_predict_ridge(x_train, y_train, features[split.val], penalty),
+    )
+    for penalty in PENALTIES
+}
+best_penalty = min(PENALTIES, key=lambda penalty: validation[penalty][SELECT_ON])
+print(f"penalty chosen on validation {SELECT_ON}: {best_penalty:g}")
+print("validation", rounded(validation[best_penalty]))
+
+# One final evaluation of the chosen model; unlock_test warns by design.
+test = split.unlock_test(reason="final evaluation at the penalty chosen on validation")
+test_prediction = fit_predict_ridge(x_train, y_train, features[test], best_penalty)
+print("test      ", rounded(task.score(labels[test], test_prediction)))
+print(f"headline metric: {task.spec.headline_metric} (mean over targets)")
+```
+
+Output of one run:
+
+```text
+Metabolome of single-gene deletions (Fuhrer 2017): 3,624 samples, 7,534 target(s)
+split random_s0: {'train': 2900, 'val': 362, 'test': 362}
+penalty chosen on validation mse: 100000
+validation {'pearson': 0.0052, 'spearman': 0.0012, 'r2': -0.0036, 'mse': 0.994, 'mae': 0.7299}
+test       {'pearson': 0.0054, 'spearman': 0.0062, 'r2': -0.0029, 'mse': 0.993, 'mae': 0.7308}
+headline metric: pearson (mean over targets)
+```
+
+## Linear-probe baselines
+
+A frozen representation of each deleted gene with a ridge regression on top, for every split of this task. The representations and the fitting procedure are described in the [overview](./index.mdx#linear-probe-baselines).
+
+<img src={require("./linear_probes_metabolome-fuhrer2017.png").default} alt="Linear-probe test Pearson for Metabolome (Fuhrer 2017)" style={{width: "100%"}} />
+
+**Test Pearson correlation of each linear probe on Metabolome (Fuhrer 2017).** Each panel is one split family and each bar is one gene representation. A bar is the mean over the seeds of that family (five seeds for random splits and three for every other family) and its whisker is the sample standard deviation over those seeds. The correlation is computed on the test part at the ridge penalty chosen on validation, separately for each target, and then averaged over the targets. Random features carry no biology and mark the level a representation must exceed. A representation with no bar has an undefined correlation: one-hot features predict the training mean for a gene that was not in training. Panels to the right of Random hold out genes that are increasingly unlike the training genes or far from them on the chromosome.
+
+The table gives the same numbers: mean ± sample standard deviation of the test Pearson correlation over the seeds of each split family. The highest mean of each row is in bold. `undefined` marks a constant prediction.
+
+| Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Random | -0.003 ± 0.001 | undefined | 0.010 ± 0.003 | 0.010 ± 0.002 | 0.005 ± 0.003 | 0.007 ± 0.002 | 0.007 ± 0.002 | 0.003 ± 0.004 | **0.010 ± 0.006** | 0.005 ± 0.005 |
+| Sequence identity 30 % | -0.004 ± 0.004 | undefined | 0.010 ± 0.002 | 0.009 ± 0.008 | 0.009 ± 0.004 | 0.005 ± 0.001 | 0.002 ± 0.005 | 0.000 ± 0.004 | **0.010 ± 0.004** | 0.006 ± 0.004 |
+| Sequence identity 50 % | -0.006 ± 0.003 | undefined | 0.002 ± 0.008 | 0.003 ± 0.003 | **0.006 ± 0.004** | 0.003 ± 0.005 | 0.002 ± 0.008 | 0.001 ± 0.005 | 0.005 ± 0.008 | 0.002 ± 0.006 |
+| Chromosome position | -0.001 ± 0.006 | undefined | **0.004 ± 0.004** | 0.002 ± 0.006 | 0.001 ± 0.006 | -0.001 ± 0.001 | 0.003 ± 0.003 | -0.000 ± 0.005 | -0.001 ± 0.005 | 0.000 ± 0.008 |
+
+## Boards
+
+This task has no board yet. A submission to a board is one row per record and target, and with 7,534 targets one upload is about 5.4 million rows, far above the 16 MB the service accepts. The results below were scored offline with the same splits.
+
+### Reading these numbers
+
+- This task has 140 probe runs, one per split, representation. In 114 of them the penalty chosen on validation is the largest value tried (1,000,000), which means the best linear model in that run is close to predicting the training mean.
+- Differences smaller than the standard deviations shown are not resolved by three to five seeds.
+- These are frozen, mean-pooled representations with a linear readout. They are a floor for models that are fine-tuned, nonlinear or use the cell graph, and they say nothing about what such models reach.
+
+Every run, with validation scores, the chosen penalty and four more metrics, is in [`linear_probes.csv`](https://github.com/Mjvolk3/torchcell/blob/main/experiments/050-ecoli-benchmark/results/linear_probes.csv).

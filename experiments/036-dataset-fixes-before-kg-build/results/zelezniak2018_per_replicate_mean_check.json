@@ -1,0 +1,35 @@
+{
+  "metabolite_zelezniak2018": {
+    "cells_whose_record_count_differs_from_old_n": 0,
+    "max_abs_mean_difference": 2.842170943040401e-14,
+    "max_abs_se_difference": 1.9539925233402755e-14,
+    "new_records": 192,
+    "new_wt_records": 5,
+    "old_records": 129,
+    "old_records_without_a_matching_group": 0,
+    "records_per_group": {
+      "1": 100,
+      "2": 4,
+      "3": 28
+    },
+    "values_compared": 2187
+  },
+  "proteome_zelezniak2018": {
+    "cells_whose_record_count_differs_from_old_n": 0,
+    "max_abs_mean_difference": 1.7763568394002505e-15,
+    "max_abs_se_difference": 5.689893001203927e-16,
+    "new_records": 364,
+    "new_wt_records": 12,
+    "old_records": 97,
+    "old_records_without_a_matching_group": 0,
+    "records_per_group": {
+      "12": 1,
+      "2": 3,
+      "3": 72,
+      "4": 3,
+      "6": 15,
+      "7": 4
+    },
+    "values_compared": 70422
+  }
+}

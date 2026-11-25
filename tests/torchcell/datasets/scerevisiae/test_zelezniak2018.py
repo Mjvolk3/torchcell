@@ -10,30 +10,40 @@ records against hand-built ``ProteinAbundanceExperiment`` /
 metabolome's ``build_metabolite_s_id_map`` (which loads the Yeast9 model) is replaced by
 a recording stub that returns a fixed ``s_NNNN`` map.
 
-Proteome fixture (``proteins_dataset.data_prep.tsv``; ``groupby("ORF")`` mean / sample SD /
-count, SE = SD / sqrt(n)):
+Proteome fixture (``proteins_dataset.data_prep.tsv``; one record per released sample
+since #1174, ``sample`` column ``S_<KO_ORF>_<replicate>``; the reference is the WT
+summary, ``groupby("ORF")`` mean / sample SD / count, SE = SD / sqrt(n)):
 
-    WT       YAL001C 10, 12        -> mean 11.0, SD sqrt(2), SE 1.0, n 2
-    WT       YBR002C 5, 7, 9       -> mean 7.0,  SD 2.0,     SE 2/sqrt(3), n 3
-    YDR003W  YAL001C 8, 9          -> mean 8.5,  SD sqrt(.5), SE 0.5, n 2
-    YDR003W  YBR002C 6, 6          -> mean 6.0,  SD 0.0,     SE 0.0, n 2
-    YER004W  YAL001C 1, 3          -> mean 2.0,  SD sqrt(2), SE 1.0, n 2
-    YER004W  YBR002C 20, 24        -> mean 22.0, SD sqrt(8), SE 2.0, n 2
-    bad_ko   YAL001C 99            -> KO_ORF has no ORF form: the released-gene-name leaf
+    WT       YAL001C 10, 12        -> records 0-1; reference mean 11.0, SE 1.0, n 2
+    WT       YBR002C 5, 7, 9       -> records 0-2; reference mean 7.0, SE 2/sqrt(3), n 3
+    YDR003W  YAL001C 8, 9          -> records 3-4 (their mean 8.5 is the old record)
+    YDR003W  YBR002C 6, 6          -> records 3-4 (mean 6.0)
+    YER004W  YAL001C 1, 3          -> records 5-6 (mean 2.0)
+    YER004W  YBR002C 20, 24        -> records 5-6 (mean 22.0)
+    bad_ko   YAL001C 99            -> record 7: KO_ORF has no ORF form, the
+                                      released-gene-name leaf
 
 Metabolome fixture (``metabolites_dataset.data_prep.tsv``; one record per (protocol,
-strain), aggregated over that protocol's rows only, issue #595):
+strain, replicate) since #1173, the WT included; the reference is the same-protocol WT
+summary restricted to the record's metabolites, issue #595):
 
-    WT       pyr      protocol 1: 2         -> protocol-1 reference, n 1, SE NaN
-    WT       pyr      protocol 2: 4         -> protocol-2 reference, n 1, SE NaN
-    WT       3pg;2pg  protocol 1: 10        -> protocol-1 reference, n 1, SE NaN
-    YDR003W  pyr      protocol 1: 1, 3      -> record 0: mean 2.0, SE 1.0, n 2
-    YDR003W  atp      protocol 1: 5, 5      -> record 0: mean 5.0, SE 0.0, n 2 (no WT atp)
-    YER004W  3pg;2pg  protocol 1: 7         -> record 1: n 1, all-NaN SE collapses to None
-    YDR003W  pyr      protocol 2: 6, 8      -> record 2: mean 7.0, SE 1.0, n 2
+    WT       pyr, 3pg;2pg protocol 1: 2, 10   -> record 0 (WT, empty genotype)
+    YDR003W  pyr, atp     protocol 1: 1/3, 5/5 -> records 1-2 (no WT atp)
+    YER004W  3pg;2pg      protocol 1: 7        -> record 3
+    WT       pyr          protocol 2: 4        -> record 4 (WT)
+    YDR003W  pyr          protocol 2: 6, 8     -> records 5-6
 
-Records are ordered by (protocol, strain). Before issue #595 the WT pyr baseline was the
-pooled 3.0 (n 2) and protocol-2 rows joined the protocol-1 strain mean.
+Records are ordered by (protocol, strain, replicate). Before issue #595 the WT pyr
+baseline was the pooled 3.0 (n 2) and protocol-2 rows joined the protocol-1 strain mean;
+before #1173 / #1174 each (strain, protocol) or strain was one mean + SE record.
+
+2026.11.24 (issues #1173, #1174; policy #1178): every record is one released replicate,
+verbatim, n 1, no SE map and a typed ``not_applicable_single_measurement`` gap; WT
+replicates are records with the empty genotype; record means reproduce the old
+aggregates; a replicate label naming two samples and a sample under two labels refuse.
+Two ``slow`` + ``data`` tests build the pinned release from the raw mirror (364 and 192
+records) and check the per-strain means against the raw rows. The README column quotes
+are audited against the raw mirror.
 
 2026.09.30 (Phase 12): the uncovered paths. ``download()`` for both loaders runs against a
 fake ``urllib.request.urlopen`` that records the ``Request`` (URL, User-Agent, timeout
@@ -93,9 +103,17 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.scerevisiae import zelezniak2018
 from torchcell.datasets.scerevisiae.zelezniak2018 import (
+    _SINGLE_REFERENCE_SE_NOTE as SINGLE_REFERENCE_SE_NOTE,
+)
+from torchcell.datasets.scerevisiae.zelezniak2018 import (
+    _SINGLE_REPLICATE_SE_NOTE as SINGLE_REPLICATE_SE_NOTE,
+)
+from torchcell.datasets.scerevisiae.zelezniak2018 import (
     CALIBRATED_UNIT_GAP,
     METABOLITE_DATA_FILENAME,
     METABOLITE_SOURCED_VALUES,
+    README_SOURCED_VALUES,
+    REPLICATE_SOURCED_VALUES,
     ZELEZNIAK_METABOLITE_PROTOCOLS,
     MetaboliteZelezniak2018Dataset,
     ProteomeZelezniak2018Dataset,
@@ -112,7 +130,11 @@ from torchcell.sequence.genome.registry import (
     SGD_S288C_R64_GENBANK_ACCESSION,
 )
 from torchcell.verification import runners
-from torchcell.verification.sourced import audit_sourced_value
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    audit_sourced_value,
+)
 
 MTYPE_1 = ZELEZNIAK_METABOLITE_PROTOCOLS[1].measurement_type
 MTYPE_2 = ZELEZNIAK_METABOLITE_PROTOCOLS[2].measurement_type
@@ -176,13 +198,25 @@ def _write_tsv(path: Path, header: list[str], rows: list[tuple[Any, ...]]) -> No
     path.write_text("\n".join(lines) + "\n")
 
 
-def _proteome_root(tmp_path: Path, rows: list[tuple[Any, ...]]) -> Path:
+def _proteome_root(
+    tmp_path: Path,
+    rows: list[tuple[Any, ...]],
+    samples: dict[tuple[str, int], str] | None = None,
+) -> Path:
+    """Write ``rows`` (ORF, KO_ORF, KO_gene_name, replicate, value) in the release's
+    column order, with the ``sample`` column named ``S_<KO_ORF>_<replicate>`` unless
+    ``samples`` names a (KO_ORF, replicate) otherwise.
+    """
     root = tmp_path / "proteome_zelezniak2018"
     (root / "raw").mkdir(parents=True)
+    names = samples or {}
     _write_tsv(
         root / "raw" / PROTEOME_FILENAME,
-        ["ORF", "KO_ORF", "KO_gene_name", "replicate", "value"],
-        rows,
+        ["ORF", "sample", "replicate", "KO_ORF", "KO_gene_name", "value"],
+        [
+            (orf, names.get((ko, rep), f"S_{ko}_{rep}"), rep, ko, gene, value)
+            for orf, ko, gene, rep, value in rows
+        ],
     )
     return root
 
@@ -244,24 +278,76 @@ def _proteome_reference() -> ProteinAbundanceExperimentReference:
     )
 
 
-def test_proteome_len_and_gene_set_skip_non_systematic_ko(
+def _single_se_gap(field: str) -> list[ProvenanceGap]:
+    return [
+        ProvenanceGap(
+            field=field,
+            reason=ProvenanceGapReason.not_applicable_single_measurement,
+            note=SINGLE_REPLICATE_SE_NOTE,
+        )
+    ]
+
+
+def _kanmx(orf: str, gene: str) -> Genotype:
+    return Genotype(
+        perturbations=[
+            KanMxDeletionPerturbation(
+                systematic_gene_name=orf, perturbed_gene_name=gene
+            )
+        ]
+    )
+
+
+def _sample_phenotype(
+    abundance: dict[str, float], replicate_id: str
+) -> ProteinAbundancePhenotype:
+    return ProteinAbundancePhenotype(
+        protein_abundance=abundance,
+        protein_abundance_se=None,
+        n_replicates=dict.fromkeys(abundance, 1),
+        measurement_type=PROTEOME_MEASUREMENT_TYPE,
+        replicate_id=replicate_id,
+        provenance_gaps=_single_se_gap("protein_abundance_se"),
+    )
+
+
+def test_proteome_one_record_per_released_sample_wt_included(
     proteome: tuple[ProteomeZelezniak2018Dataset, Path],
 ) -> None:
-    """Three knockout strains: the ``bad_ko`` strain is stored on the released-gene-name
-    leaf (#1045), not skipped and not raised.
+    """Contract (#1174): every released sample is a record, the WT samples included.
 
-    ``KO_ORF`` values are grouped alphabetically (``groupby`` sorts), so YDR003W is
-    record 0, YER004W record 1 and ``bad_ko`` record 2; the WT rows are the reference
-    and never a record. A non-systematic protein ORF still raises (the protein axis
-    keys the matrix). ``preprocess/data.csv`` carries the three strains with their
-    gene names.
+    The fixture releases 3 WT samples, 2 for YDR003W, 2 for YER004W and 1 for ``bad_ko``,
+    so 8 records. ``KO_ORF`` groups sort (``WT`` < ``YDR003W`` < ``YER004W`` <
+    ``bad_ko``), and samples inside a strain sort by ``replicate``. The ``bad_ko`` strain
+    is stored on the released-gene-name leaf (#1045), not skipped and not raised; the WT
+    samples carry the empty genotype, so the gene set is still the three knockouts.
+    ``preprocess/data.csv`` lists every record with its replicate label and sample name.
     """
     ds, root = proteome
-    assert len(ds) == 3
+    assert len(ds) == 8
     assert (root / "preprocess" / "data.csv").read_text() == (
-        "orf,gene\nYDR003W,KIN3\nYER004W,KIN4\nbad_ko,BAD\n"
+        "orf,gene,replicate_id,sample\n"
+        "WT,WT,1,S_WT_1\nWT,WT,2,S_WT_2\nWT,WT,3,S_WT_3\n"
+        "YDR003W,KIN3,1,S_YDR003W_1\nYDR003W,KIN3,2,S_YDR003W_2\n"
+        "YER004W,KIN4,1,S_YER004W_1\nYER004W,KIN4,2,S_YER004W_2\n"
+        "bad_ko,BAD,1,S_bad_ko_1\n"
     )
-    (released,) = ds[2]["experiment"]["genotype"]["perturbations"]
+    assert [ds[i]["experiment"]["genotype"]["perturbations"] for i in range(3)] == [
+        [],
+        [],
+        [],
+    ]
+    assert [ds[i]["experiment"]["phenotype"]["replicate_id"] for i in range(8)] == [
+        "1",
+        "2",
+        "3",
+        "1",
+        "2",
+        "1",
+        "2",
+        "1",
+    ]
+    (released,) = ds[7]["experiment"]["genotype"]["perturbations"]
     assert (
         released["perturbation_type"],
         released["systematic_gene_name"],
@@ -272,101 +358,170 @@ def test_proteome_len_and_gene_set_skip_non_systematic_ko(
     )
 
 
-def test_proteome_record_0_is_ydr003w_with_hand_computed_se(
+def test_proteome_sample_records_are_verbatim_with_a_typed_se_gap(
     proteome: tuple[ProteomeZelezniak2018Dataset, Path],
 ) -> None:
-    """Record 0 = YDR003W/KIN3: means 8.5 and 6.0, SEs 0.5 and 0.0, n 2 and 2.
+    """Records 3 and 4 = the two YDR003W/KIN3 samples, each value verbatim.
 
-    SE for YAL001C: SD of (8, 9) is sqrt(0.5); / sqrt(2) = 0.5. SE for YBR002C: SD of
-    (6, 6) is 0.0. Environment is ``SM_DEFERRED`` at 30 C; genotype a single KanMX
-    deletion carrying the KO_gene_name; the reference is the WT aggregate over ALL
-    proteins (not restricted, unlike the metabolome loader). The whole dumps are
-    compared exactly: pandas ``std() / sqrt(n)`` on these fixtures gives exactly 0.5,
-    0.0, 1.0 and ``2.0 / math.sqrt(3)``.
+    Replicate 1 is {YAL001C 8, YBR002C 6}, replicate 2 {YAL001C 9, YBR002C 6}: n 1 per
+    protein, no SE map and a ``not_applicable_single_measurement`` gap on it. The
+    reference is the WT summary over ALL proteins (not restricted, unlike the
+    metabolome loader), unchanged from the per-strain loader. The whole dumps are
+    compared exactly and validate back into the schema classes unchanged.
     """
     ds, _ = proteome
-    record = ds[0]
-    expected = ProteinAbundanceExperiment(
-        dataset_name="ProteomeZelezniak2018Dataset",
-        genotype=Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name="YDR003W", perturbed_gene_name="KIN3"
-                )
-            ]
-        ),
-        environment=ENVIRONMENT,
-        phenotype=ProteinAbundancePhenotype(
-            protein_abundance={"YAL001C": 8.5, "YBR002C": 6.0},
-            protein_abundance_se={"YAL001C": 0.5, "YBR002C": 0.0},
-            n_replicates={"YAL001C": 2, "YBR002C": 2},
-            measurement_type=PROTEOME_MEASUREMENT_TYPE,
-        ),
-    )
-    assert record["experiment"] == expected.model_dump()
-    assert record["reference"] == _proteome_reference().model_dump()
-    assert record["publication"] == PUBLICATION.model_dump()
-    # the stored dicts validate back into the schema classes unchanged
-    assert (
-        ProteinAbundanceExperiment.model_validate(record["experiment"]).model_dump()
-        == record["experiment"]
-    )
+    for index, replicate_id, abundance in (
+        (3, "1", {"YAL001C": 8.0, "YBR002C": 6.0}),
+        (4, "2", {"YAL001C": 9.0, "YBR002C": 6.0}),
+    ):
+        record = ds[index]
+        expected = ProteinAbundanceExperiment(
+            dataset_name="ProteomeZelezniak2018Dataset",
+            genotype=_kanmx("YDR003W", "KIN3"),
+            environment=ENVIRONMENT,
+            phenotype=_sample_phenotype(abundance, replicate_id),
+        )
+        assert record["experiment"] == expected.model_dump()
+        assert record["reference"] == _proteome_reference().model_dump()
+        assert record["publication"] == PUBLICATION.model_dump()
+        assert (
+            ProteinAbundanceExperiment.model_validate(record["experiment"]).model_dump()
+            == record["experiment"]
+        )
 
 
-def test_proteome_record_1_is_yer004w(
+def test_proteome_wt_samples_are_records_with_the_empty_genotype(
     proteome: tuple[ProteomeZelezniak2018Dataset, Path],
 ) -> None:
-    """Record 1 = YER004W/KIN4: means 2.0 and 22.0, SEs 1.0 and 2.0.
+    """Contract (#1174, policy 7): the 3 WT samples are records of the parent strain.
 
-    SD of (1, 3) is sqrt(2), / sqrt(2) = 1.0; SD of (20, 24) is sqrt(8), / sqrt(2) = 2.0.
+    Each is ``Genotype(perturbations=[])`` with its own values; WT replicate 3 released
+    only YBR002C, so its record holds that one protein. The reference is still the WT
+    summary with ``replicate_id=None``.
     """
     ds, _ = proteome
-    experiment = ds[1]["experiment"]
-    assert experiment["genotype"]["perturbations"][0]["systematic_gene_name"] == (
-        "YER004W"
-    )
-    assert experiment["genotype"]["perturbations"][0]["perturbed_gene_name"] == "KIN4"
-    phenotype = experiment["phenotype"]
-    assert phenotype["protein_abundance"] == {"YAL001C": 2.0, "YBR002C": 22.0}
-    assert phenotype["n_replicates"] == {"YAL001C": 2, "YBR002C": 2}
-    assert phenotype["protein_abundance_se"] == {"YAL001C": 1.0, "YBR002C": 2.0}
+    expected = [
+        ("1", {"YAL001C": 10.0, "YBR002C": 5.0}),
+        ("2", {"YAL001C": 12.0, "YBR002C": 7.0}),
+        ("3", {"YBR002C": 9.0}),
+    ]
+    for index, (replicate_id, abundance) in enumerate(expected):
+        record = ds[index]
+        assert record["experiment"] == (
+            ProteinAbundanceExperiment(
+                dataset_name="ProteomeZelezniak2018Dataset",
+                genotype=Genotype(perturbations=[]),
+                environment=ENVIRONMENT,
+                phenotype=_sample_phenotype(abundance, replicate_id),
+            ).model_dump()
+        )
+        assert record["reference"]["phenotype_reference"]["replicate_id"] is None
+
+
+def test_proteome_record_means_reproduce_the_per_strain_aggregate(
+    proteome: tuple[ProteomeZelezniak2018Dataset, Path],
+) -> None:
+    """Grouping the records of one strain and averaging gives the values the per-strain
+    loader stored before #1174: YDR003W means 8.5 and 6.0, YER004W 2.0 and 22.0, and the
+    WT records average to the reference (11.0, 7.0). Nothing is lost or reweighted.
+    """
+    ds, _ = proteome
+    by_strain: dict[str, dict[str, list[float]]] = {}
+    for i in range(len(ds)):
+        experiment = ds[i]["experiment"]
+        perturbations = experiment["genotype"]["perturbations"]
+        strain = perturbations[0]["systematic_gene_name"] if perturbations else "WT"
+        for orf, value in experiment["phenotype"]["protein_abundance"].items():
+            by_strain.setdefault(strain, {}).setdefault(orf, []).append(value)
+    means = {
+        strain: {orf: sum(v) / len(v) for orf, v in cells.items()}
+        for strain, cells in by_strain.items()
+    }
+    assert means == {
+        "WT": {"YAL001C": 11.0, "YBR002C": 7.0},
+        "YDR003W": {"YAL001C": 8.5, "YBR002C": 6.0},
+        "YER004W": {"YAL001C": 2.0, "YBR002C": 22.0},
+        "bad_ko": {"YAL001C": 99.0},
+    }
+    reference = ds[0]["reference"]["phenotype_reference"]
+    assert reference["protein_abundance"] == means["WT"]
 
 
 def test_proteome_reference_index_has_one_shared_reference(
     proteome: tuple[ProteomeZelezniak2018Dataset, Path],
 ) -> None:
-    """All three strains share the single WT reference -> one index entry, [0, 1, 2]."""
+    """All eight records share the single WT reference -> one index entry, [0..7]."""
     ds, root = proteome
     index = json.loads(
         (root / "preprocess" / "experiment_reference_index.json").read_text()
     )
     assert len(index) == 1
-    assert index[0]["member_indices"] == [0, 1, 2]
+    assert index[0]["member_indices"] == list(range(8))
     assert index[0]["reference"]["dataset_name"] == "ProteomeZelezniak2018Dataset"
     assert index[0]["reference"]["experiment_reference_type"] == "protein_abundance"
     loaded = ds.experiment_reference_index
     assert loaded is not None
-    assert [eri.member_indices for eri in loaded] == [[0, 1, 2]]
+    assert [eri.member_indices for eri in loaded] == [list(range(8))]
 
 
-def test_proteome_single_replicate_protein_gets_nan_se(tmp_path: Path) -> None:
-    """A protein measured once in a strain stores SE NaN (not None, not 0).
+def test_proteome_single_replicate_wt_protein_gets_nan_reference_se(
+    tmp_path: Path,
+) -> None:
+    """A protein the WT released once has SE NaN in the reference summary (not None,
+    not 0), while the knockout sample record itself has no SE map at all.
+    """
+    rows = [("YAL001C", "WT", "WT", 1, 10.0), ("YAL001C", "YDR003W", "KIN3", 1, 8.0)]
+    ds = ProteomeZelezniak2018Dataset(root=str(_proteome_root(tmp_path, rows)))
+    assert len(ds) == 2
+    reference = ds[1]["reference"]["phenotype_reference"]
+    assert reference["protein_abundance"] == {"YAL001C": 10.0}
+    assert reference["n_replicates"] == {"YAL001C": 1}
+    assert list(reference["protein_abundance_se"]) == ["YAL001C"]
+    assert math.isnan(reference["protein_abundance_se"]["YAL001C"])
+    assert ds[1]["experiment"]["phenotype"]["protein_abundance_se"] is None
 
-    Finding: the loader writes ``float("nan")`` into ``protein_abundance_se`` for n = 1
-    rather than omitting the key; the module docstring says every protein has >= 2
-    replicates in the real file, so this is the guarded branch of ``_aggregate``.
+
+def test_proteome_replicate_label_naming_two_samples_refuses(tmp_path: Path) -> None:
+    """One (strain, replicate) label released under two sample names would make one
+    record out of two samples, so it refuses naming the strain and the label.
+    """
+    root = tmp_path / "proteome_zelezniak2018"
+    (root / "raw").mkdir(parents=True)
+    _write_tsv(
+        root / "raw" / PROTEOME_FILENAME,
+        ["ORF", "sample", "replicate", "KO_ORF", "KO_gene_name", "value"],
+        [
+            ("YAL001C", "w1", 1, "WT", "WT", 10.0),
+            ("YAL001C", "k1", 1, "YDR003W", "KIN3", 8.0),
+            ("YBR002C", "k1_other", 1, "YDR003W", "KIN3", 6.0),
+        ],
+    )
+    with pytest.raises(RuntimeError) as info:
+        ProteomeZelezniak2018Dataset(root=str(root))
+    assert str(info.value) == (
+        "Zelezniak proteome strain YDR003W: replicate 1 names 2 samples; one "
+        "replicate record would mix them"
+    )
+
+
+def test_proteome_sample_with_two_labels_refuses(tmp_path: Path) -> None:
+    """One sample name under two (KO_ORF, replicate) labels would be split across two
+    records, so it refuses before any record is built.
     """
     rows = [
         ("YAL001C", "WT", "WT", 1, 10.0),
-        ("YAL001C", "WT", "WT", 2, 12.0),
         ("YAL001C", "YDR003W", "KIN3", 1, 8.0),
+        ("YAL001C", "YDR003W", "KIN3", 2, 9.0),
     ]
-    ds = ProteomeZelezniak2018Dataset(root=str(_proteome_root(tmp_path, rows)))
-    phenotype = ds[0]["experiment"]["phenotype"]
-    assert phenotype["protein_abundance"] == {"YAL001C": 8.0}
-    assert phenotype["n_replicates"] == {"YAL001C": 1}
-    assert list(phenotype["protein_abundance_se"]) == ["YAL001C"]
-    assert math.isnan(phenotype["protein_abundance_se"]["YAL001C"])
+    root = _proteome_root(
+        tmp_path, rows, samples={("YDR003W", 1): "k", ("YDR003W", 2): "k"}
+    )
+    with pytest.raises(RuntimeError) as info:
+        ProteomeZelezniak2018Dataset(root=str(root))
+    assert str(info.value) == (
+        "Zelezniak proteome sample k carries more than one (KO_ORF, replicate) label; "
+        "it would be split across records"
+    )
 
 
 def test_proteome_non_systematic_protein_orf_raises(tmp_path: Path) -> None:
@@ -421,18 +576,20 @@ def metabolome(
 def test_metabolome_len_side_files_and_s_id_map_argument(
     metabolome: tuple[MetaboliteZelezniak2018Dataset, Path, list[dict[str, str]]],
 ) -> None:
-    """Three (protocol, strain) records; the mapper is called once with the deduplicated
-    metabolite -> KEGG map.
+    """Seven (protocol, strain, replicate) records, the two WT replicates included; the
+    mapper is called once with the deduplicated metabolite -> KEGG map.
 
-    ``preprocess/data.csv`` reports the protocol and ``n_metabolites`` per record, ordered
-    by (protocol, strain): YDR003W twice (protocols 1 and 2). The gene set is still the
-    two KO ORFs.
+    ``preprocess/data.csv`` reports the protocol, replicate label and ``n_metabolites``
+    per record, ordered by (protocol, strain, replicate): ``WT`` sorts before the ORFs.
+    The gene set is still the two KO ORFs (a WT record deletes nothing).
     """
     ds, root, calls = metabolome
-    assert len(ds) == 3
+    assert len(ds) == 7
     assert calls == [{"pyr": "C00022", "3pg;2pg": "C00197;C00631", "atp": "C00002"}]
     assert (root / "preprocess" / "data.csv").read_text() == (
-        "orf,dataset,n_metabolites\nYDR003W,1,2\nYER004W,1,1\nYDR003W,2,1\n"
+        "orf,dataset,replicate_id,n_metabolites\n"
+        "WT,1,1,2\nYDR003W,1,1,2\nYDR003W,1,2,2\nYER004W,1,1,1\n"
+        "WT,2,1,1\nYDR003W,2,1,1\nYDR003W,2,2,1\n"
     )
     _assert_side_files(root, MetaboliteZelezniak2018Dataset, ["YDR003W", "YER004W"])
 
@@ -447,86 +604,122 @@ def _ydr003w() -> Genotype:
     )
 
 
-def test_metabolome_record_0_reference_is_the_same_protocol_wt(
+def _replicate_metabolites(
+    level: dict[str, float], mtype: str, replicate_id: str
+) -> MetabolitePhenotype:
+    return MetabolitePhenotype(
+        metabolite_level=level,
+        metabolite_level_se=None,
+        n_replicates=dict.fromkeys(level, 1),
+        measurement_type=mtype,
+        target_metabolite_ids={m: S_ID_MAP[m] for m in level},
+        replicate_id=replicate_id,
+        provenance_gaps=_single_se_gap("metabolite_level_se"),
+    )
+
+
+def _single_wt_reference(level: dict[str, float], mtype: str) -> MetabolitePhenotype:
+    """The reference summary of a protocol whose WT released one replicate."""
+    return MetabolitePhenotype(
+        metabolite_level=level,
+        metabolite_level_se=None,
+        n_replicates=dict.fromkeys(level, 1),
+        measurement_type=mtype,
+        target_metabolite_ids={m: S_ID_MAP[m] for m in level},
+        provenance_gaps=[
+            ProvenanceGap(
+                field="metabolite_level_se",
+                reason=ProvenanceGapReason.not_applicable_single_measurement,
+                note=SINGLE_REFERENCE_SE_NOTE,
+            )
+        ],
+    )
+
+
+def test_metabolome_replicate_records_are_verbatim_against_the_same_protocol_wt(
     metabolome: tuple[MetaboliteZelezniak2018Dataset, Path, list[dict[str, str]]],
 ) -> None:
-    """Record 0 = YDR003W on protocol 1: pyr 2.0 / atp 5.0, SEs 1.0 / 0.0; reference has
-    pyr ONLY, at the protocol-1 WT value 2.0 (n 1), never the pooled 3.0 of protocols 1
-    and 2. WT never measured atp, so the reference is restricted to {pyr}; its single
-    replicate gives an all-NaN SE, stored as None. Genotype uses the ORF as both names
+    """Records 1 and 2 = YDR003W protocol 1, replicates 1 and 2, values verbatim (pyr 1
+    and 3, atp 5 and 5), n 1, no SE map and a typed gap. The reference has pyr ONLY, at
+    the protocol-1 WT value 2.0 (n 1), never the pooled 3.0 of protocols 1 and 2: WT
+    never measured atp, so the reference is restricted to {pyr}; its single replicate
+    has no dispersion, stored as None with a gap. Genotype uses the ORF as both names
     (no gene name column in the metabolome file). The dumps are compared exactly.
     """
     ds, _, _ = metabolome
-    record = ds[0]
-    expected = MetaboliteExperiment(
-        dataset_name="MetaboliteZelezniak2018Dataset",
-        genotype=_ydr003w(),
-        environment=ENVIRONMENT,
-        phenotype=MetabolitePhenotype(
-            metabolite_level={"pyr": 2.0, "atp": 5.0},
-            metabolite_level_se={"pyr": 1.0, "atp": 0.0},
-            n_replicates={"pyr": 2, "atp": 2},
-            measurement_type=MTYPE_1,
-            target_metabolite_ids={"pyr": "s_1399", "atp": "s_0434"},
-        ),
-    )
     expected_reference = MetaboliteExperimentReference(
         dataset_name="MetaboliteZelezniak2018Dataset",
         genome_reference=BY4741,
         environment_reference=ENVIRONMENT,
-        phenotype_reference=MetabolitePhenotype(
-            metabolite_level={"pyr": 2.0},
-            metabolite_level_se=None,
-            n_replicates={"pyr": 1},
-            measurement_type=MTYPE_1,
-            target_metabolite_ids={"pyr": "s_1399"},
-        ),
+        phenotype_reference=_single_wt_reference({"pyr": 2.0}, MTYPE_1),
     )
-    assert record["experiment"] == expected.model_dump()
-    assert record["reference"] == expected_reference.model_dump()
-    assert record["publication"] == PUBLICATION.model_dump()
-    assert (
-        MetaboliteExperiment.model_validate(record["experiment"]).model_dump()
-        == record["experiment"]
-    )
+    for index, replicate_id, level in (
+        (1, "1", {"pyr": 1.0, "atp": 5.0}),
+        (2, "2", {"pyr": 3.0, "atp": 5.0}),
+    ):
+        record = ds[index]
+        expected = MetaboliteExperiment(
+            dataset_name="MetaboliteZelezniak2018Dataset",
+            genotype=_ydr003w(),
+            environment=ENVIRONMENT,
+            phenotype=_replicate_metabolites(level, MTYPE_1, replicate_id),
+        )
+        assert record["experiment"] == expected.model_dump()
+        assert record["reference"] == expected_reference.model_dump()
+        assert record["publication"] == PUBLICATION.model_dump()
+        assert (
+            MetaboliteExperiment.model_validate(record["experiment"]).model_dump()
+            == record["experiment"]
+        )
 
 
-def test_metabolome_record_2_is_the_protocol_2_record_of_the_same_strain(
+def test_metabolome_protocol_2_records_of_the_same_strain(
     metabolome: tuple[MetaboliteZelezniak2018Dataset, Path, list[dict[str, str]]],
 ) -> None:
-    """Record 2 = YDR003W on protocol 2: pyr 7.0 (6, 8), SE 1.0, n 2, against the
-    protocol-2 WT pyr 4.0. The protocol-1 rows (1, 3) are not in it, and it carries the
-    protocol-2 measurement_type on both sides.
+    """Records 5 and 6 = YDR003W on protocol 2: pyr 6.0 and 8.0, against the protocol-2
+    WT pyr 4.0. The protocol-1 rows (1, 3) are in neither, and both sides carry the
+    protocol-2 measurement_type.
     """
     ds, _, _ = metabolome
-    record = ds[2]
-    expected = MetaboliteExperiment(
-        dataset_name="MetaboliteZelezniak2018Dataset",
-        genotype=_ydr003w(),
-        environment=ENVIRONMENT,
-        phenotype=MetabolitePhenotype(
-            metabolite_level={"pyr": 7.0},
-            metabolite_level_se={"pyr": 1.0},
-            n_replicates={"pyr": 2},
-            measurement_type=MTYPE_2,
-            target_metabolite_ids={"pyr": "s_1399"},
-        ),
-    )
-    reference = record["reference"]["phenotype_reference"]
-    assert record["experiment"] == expected.model_dump()
-    assert reference["metabolite_level"] == {"pyr": 4.0}
-    assert reference["n_replicates"] == {"pyr": 1}
-    assert reference["measurement_type"] == MTYPE_2
+    for index, replicate_id, value in ((5, "1", 6.0), (6, "2", 8.0)):
+        record = ds[index]
+        assert record["experiment"]["phenotype"] == (
+            _replicate_metabolites({"pyr": value}, MTYPE_2, replicate_id).model_dump()
+        )
+        reference = record["reference"]["phenotype_reference"]
+        assert reference == _single_wt_reference({"pyr": 4.0}, MTYPE_2).model_dump()
 
 
-def test_metabolome_record_1_all_nan_se_collapses_to_none(
+def test_metabolome_wt_replicates_are_records_with_the_empty_genotype(
     metabolome: tuple[MetaboliteZelezniak2018Dataset, Path, list[dict[str, str]]],
 ) -> None:
-    """Record 1 = YER004W: one single-row metabolite -> ``metabolite_level_se`` is None.
+    """Contract (#1173, policy 7): each WT replicate is a record of the parent strain,
+    ``Genotype(perturbations=[])``, against the summary of its own protocol's WT
+    restricted to its own metabolites.
+    """
+    ds, _, _ = metabolome
+    for index, mtype, level in (
+        (0, MTYPE_1, {"pyr": 2.0, "3pg;2pg": 10.0}),
+        (4, MTYPE_2, {"pyr": 4.0}),
+    ):
+        record = ds[index]
+        assert record["experiment"] == (
+            MetaboliteExperiment(
+                dataset_name="MetaboliteZelezniak2018Dataset",
+                genotype=Genotype(perturbations=[]),
+                environment=ENVIRONMENT,
+                phenotype=_replicate_metabolites(level, mtype, "1"),
+            ).model_dump()
+        )
+        reference = record["reference"]["phenotype_reference"]
+        assert reference == _single_wt_reference(level, mtype).model_dump()
 
-    Both the strain (7.0, n 1) and the WT baseline (10.0, n 1) for ``3pg;2pg`` have a
-    NaN SE, and an all-NaN SE dict is stored as None on both the experiment and the
-    reference. The ``;``-merged key is kept verbatim and maps to the stub's ``s_0188``.
+
+def test_metabolome_single_replicate_record_shape_is_pinned(
+    metabolome: tuple[MetaboliteZelezniak2018Dataset, Path, list[dict[str, str]]],
+) -> None:
+    """Record 3 = YER004W protocol 1, replicate 1: ``3pg;2pg`` 7.0, kept verbatim as the
+    ``;``-merged key and mapped to the stub's ``s_0188``.
 
     The literal dict also pins the schema envelope fields (``provenance_gaps``,
     ``graph_level``, ``label_name``, ``label_statistic_name``), so adding a field to
@@ -534,10 +727,12 @@ def test_metabolome_record_1_all_nan_se_collapses_to_none(
     a stored-record shape change should be noticed here.
     """
     ds, _, _ = metabolome
-    record = ds[1]
+    record = ds[3]
     phenotype = record["experiment"]["phenotype"]
     assert phenotype == {
-        "provenance_gaps": [],
+        "provenance_gaps": [
+            gap.model_dump() for gap in _single_se_gap("metabolite_level_se")
+        ],
         "graph_level": "metabolism",
         "label_name": "metabolite_level",
         "label_statistic_name": "metabolite_level_se",
@@ -546,34 +741,69 @@ def test_metabolome_record_1_all_nan_se_collapses_to_none(
         "n_replicates": {"3pg;2pg": 1},
         "measurement_type": MTYPE_1,
         "target_metabolite_ids": {"3pg;2pg": "s_0188"},
-        "replicate_id": None,
+        "replicate_id": "1",
     }
     reference = record["reference"]["phenotype_reference"]
     assert reference["metabolite_level"] == {"3pg;2pg": 10.0}
     assert reference["metabolite_level_se"] is None
     assert reference["n_replicates"] == {"3pg;2pg": 1}
+    assert reference["replicate_id"] is None
     assert reference["target_metabolite_ids"] == {"3pg;2pg": "s_0188"}
+
+
+def test_metabolome_reference_summary_with_several_wt_replicates_keeps_its_se(
+    tmp_path: Path, s_id_calls: list[dict[str, str]]
+) -> None:
+    """A protocol whose WT released three replicates (protocol 3 in the real file) gets
+    a reference with mean, SD / sqrt(n) and n 3, no gap, ``replicate_id=None``; the three
+    WT replicates are records too.
+    """
+    rows = [
+        ("pyr", "C00022", "Pyruvate", 3, "WT", 1, 1.0),
+        ("pyr", "C00022", "Pyruvate", 3, "WT", 2, 2.0),
+        ("pyr", "C00022", "Pyruvate", 3, "WT", 3, 6.0),
+        ("pyr", "C00022", "Pyruvate", 3, "YDR003W", 1, 5.0),
+    ]
+    ds = MetaboliteZelezniak2018Dataset(root=str(_metabolite_root(tmp_path, rows)))
+    assert len(ds) == 4
+    assert [ds[i]["experiment"]["phenotype"]["replicate_id"] for i in range(4)] == [
+        "1",
+        "2",
+        "3",
+        "1",
+    ]
+    reference = ds[3]["reference"]["phenotype_reference"]
+    assert reference["metabolite_level"] == {"pyr": 3.0}
+    assert reference["n_replicates"] == {"pyr": 3}
+    assert reference["metabolite_level_se"]["pyr"] == pytest.approx(
+        math.sqrt(7.0) / math.sqrt(3), rel=1e-12
+    )
+    assert reference["provenance_gaps"] == []
+    assert reference["replicate_id"] is None
 
 
 def test_metabolome_reference_index_splits_on_protocol_and_restriction(
     metabolome: tuple[MetaboliteZelezniak2018Dataset, Path, list[dict[str, str]]],
 ) -> None:
-    """Three distinct references: protocol-1 {pyr}, protocol-1 {3pg;2pg}, protocol-2 {pyr}."""
+    """Four distinct references: protocol-1 {pyr, 3pg;2pg} (the WT record),
+    protocol-1 {pyr} (both YDR003W replicates), protocol-1 {3pg;2pg}, protocol-2 {pyr}.
+    """
     _, root, _ = metabolome
     index = json.loads(
         (root / "preprocess" / "experiment_reference_index.json").read_text()
     )
-    assert [e["member_indices"] for e in index] == [[0], [1], [2]]
-    assert [
+    assert sorted(
         (
+            e["member_indices"],
             e["reference"]["phenotype_reference"]["measurement_type"],
             e["reference"]["phenotype_reference"]["metabolite_level"],
         )
         for e in index
-    ] == [
-        (MTYPE_1, {"pyr": 2.0}),
-        (MTYPE_1, {"3pg;2pg": 10.0}),
-        (MTYPE_2, {"pyr": 4.0}),
+    ) == [
+        ([0], MTYPE_1, {"pyr": 2.0, "3pg;2pg": 10.0}),
+        ([1, 2], MTYPE_1, {"pyr": 2.0}),
+        ([3], MTYPE_1, {"3pg;2pg": 10.0}),
+        ([4, 5, 6], MTYPE_2, {"pyr": 4.0}),
     ]
 
 
@@ -596,17 +826,24 @@ ISSUE_595_ROWS = [
 def test_issue_595_example_cells_are_kept_per_protocol(
     tmp_path: Path, s_id_calls: list[dict[str, str]]
 ) -> None:
-    """Contract (issue #595): YIL042C ``r5p`` was stored as mean 283.205, SE 282.456,
-    n 4 (protocol 1's 1130.574 pooled with protocol 2's 0.815, 0.853, 0.578), and the WT
-    ``3pg;2pg`` reference as mean 425.329, SE 424.941, n 2. Now YIL042C is two records:
-    protocol 1 stores r5p 1130.574 (n 1) against WT 3pg;2pg 850.270, protocol 2 stores
-    the mean of its three replicates (n 3) against WT 3pg;2pg 0.388.
+    """Contract (issue #595, then #1173): YIL042C ``r5p`` was stored as mean 283.205,
+    SE 282.456, n 4 (protocol 1's 1130.574 pooled with protocol 2's 0.815, 0.853,
+    0.578), and the WT ``3pg;2pg`` reference as mean 425.329, SE 424.941, n 2. Since
+    #595 the protocols are apart, and since #1173 every replicate is its own record:
+    YIL042C protocol 1 is record 1 (r5p 1130.574 against WT 3pg;2pg 850.270), protocol
+    2 is records 3, 4 and 5 holding the three replicate values verbatim against the
+    protocol-2 WT (r5p 0.7, 3pg;2pg 0.388). Their mean, 0.748563, is the value the per-(strain, protocol) loader
+    stored; it is now a modeling-time derivation. The WT replicates are records 0 and 2.
     """
     ds = MetaboliteZelezniak2018Dataset(
         root=str(_metabolite_root(tmp_path, ISSUE_595_ROWS))
     )
-    assert len(ds) == 2
-    p1, p2 = ds[0], ds[1]
+    assert len(ds) == 6
+    assert [ds[i]["experiment"]["genotype"]["perturbations"] for i in (0, 2)] == [
+        [],
+        [],
+    ]
+    p1 = ds[1]
     assert p1["experiment"]["phenotype"]["measurement_type"] == MTYPE_1
     assert p1["experiment"]["phenotype"]["metabolite_level"]["r5p"] == (
         1130.5742167158426
@@ -618,20 +855,31 @@ def test_issue_595_example_cells_are_kept_per_protocol(
     assert p1["reference"]["phenotype_reference"]["n_replicates"]["3pg;2pg"] == 1
 
     reps = [0.8147119220654774, 0.8534622605378177, 0.5775148013063441]
-    mean = sum(reps) / 3
-    sd = math.sqrt(sum((v - mean) ** 2 for v in reps) / 2)
-    phenotype = p2["experiment"]["phenotype"]
-    assert phenotype["measurement_type"] == MTYPE_2
-    assert phenotype["metabolite_level"]["r5p"] == pytest.approx(mean, rel=1e-12)
-    assert phenotype["metabolite_level_se"]["r5p"] == pytest.approx(
-        sd / math.sqrt(3), rel=1e-12
-    )
-    assert phenotype["n_replicates"]["r5p"] == 3
-    reference = p2["reference"]["phenotype_reference"]
-    assert reference["measurement_type"] == MTYPE_2
-    assert reference["metabolite_level"]["3pg;2pg"] == 0.387544549099187
-    assert reference["n_replicates"]["3pg;2pg"] == 1
-    assert round(mean, 6) == 0.748563
+    stored = []
+    for index, replicate_id in ((3, "1"), (4, "2"), (5, "3")):
+        phenotype = ds[index]["experiment"]["phenotype"]
+        assert phenotype["measurement_type"] == MTYPE_2
+        assert phenotype["replicate_id"] == replicate_id
+        assert phenotype["n_replicates"]["r5p"] == 1
+        assert phenotype["metabolite_level_se"] is None
+        stored.append(phenotype["metabolite_level"]["r5p"])
+        reference = ds[index]["reference"]["phenotype_reference"]
+        assert reference["measurement_type"] == MTYPE_2
+        assert reference["n_replicates"] == dict.fromkeys(
+            ds[index]["experiment"]["phenotype"]["metabolite_level"], 1
+        )
+    # replicate 1 also measured 3pg;2pg, replicates 2 and 3 only r5p, so each reference
+    # is the protocol-2 WT restricted to that replicate's own metabolites
+    assert ds[3]["reference"]["phenotype_reference"]["metabolite_level"] == {
+        "r5p": 0.7,
+        "3pg;2pg": 0.387544549099187,
+    }
+    for index in (4, 5):
+        assert ds[index]["reference"]["phenotype_reference"]["metabolite_level"] == {
+            "r5p": 0.7
+        }
+    assert stored == reps
+    assert round(sum(stored) / 3, 6) == 0.748563
 
 
 def test_metabolome_unknown_protocol_refuses(
@@ -671,8 +919,8 @@ def test_metabolome_protocol_without_wt_refuses(
 def test_metabolome_no_shared_metabolite_with_the_protocol_wt_refuses(
     tmp_path: Path, s_id_calls: list[dict[str, str]]
 ) -> None:
-    """A (strain, protocol) whose metabolites the same-protocol WT never measured
-    refuses before an empty reference reaches the schema.
+    """A replicate whose metabolites the same-protocol WT never measured refuses
+    before an empty reference reaches the schema.
     """
     rows = [
         ("pyr", "C00022", "Pyruvate", 1, "WT", 1, 2.0),
@@ -681,8 +929,8 @@ def test_metabolome_no_shared_metabolite_with_the_protocol_wt_refuses(
     with pytest.raises(RuntimeError) as info:
         MetaboliteZelezniak2018Dataset(root=str(_metabolite_root(tmp_path, rows)))
     assert str(info.value) == (
-        "Zelezniak metabolome strain YDR003W protocol 1 shares no metabolite with "
-        "that protocol's WT; its reference would be empty"
+        "Zelezniak metabolome strain YDR003W protocol 1 replicate 1 shares no "
+        "metabolite with that protocol's WT; its reference would be empty"
     )
 
 
@@ -743,7 +991,9 @@ def test_protocol_requires_exactly_one_of_unit_and_gap(unit: str | None) -> None
 
 
 def test_protocol_quotes_are_verbatim_in_the_mirrored_paper() -> None:
-    """Every protocol quote is still a substring of the pinned ``paper.md`` bytes."""
+    """Every protocol and replicate quote is still a substring of the pinned
+    ``paper.md`` bytes.
+    """
     from dotenv import load_dotenv
 
     load_dotenv()
@@ -751,7 +1001,23 @@ def test_protocol_quotes_are_verbatim_in_the_mirrored_paper() -> None:
     root = None if data_root is None else Path(data_root) / "torchcell-library"
     if root is None or not root.is_dir():
         pytest.skip("torchcell-library mirror not mounted")
-    for key, value in METABOLITE_SOURCED_VALUES.items():
+    for key, value in {**METABOLITE_SOURCED_VALUES, **REPLICATE_SOURCED_VALUES}.items():
+        result = audit_sourced_value(value, root)
+        assert result.passed, f"{key}: {result.message}"
+
+
+def test_replicate_quotes_are_verbatim_in_the_raw_mirrored_readme() -> None:
+    """Contract (#1173, #1174): the Zenodo README's column definitions that say what a
+    released replicate is are still substrings of the pinned raw-mirror bytes.
+    """
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    data_root = os.environ.get("DATA_ROOT")
+    root = None if data_root is None else Path(data_root) / "torchcell-raw"
+    if root is None or not (root / zelezniak2018.CITATION_KEY).is_dir():
+        pytest.skip("torchcell-raw mirror not mounted")
+    for key, value in README_SOURCED_VALUES.items():
         result = audit_sourced_value(value, root)
         assert result.passed, f"{key}: {result.message}"
 
@@ -954,7 +1220,7 @@ def test_proteome_build_without_raw_downloads_then_builds(
 ) -> None:
     """No ``raw/`` file: PyG calls ``download()``, which fetches the (synthetic) matrix,
     verifies it against the pin (set to its digest) and writes it; ``process()`` then
-    builds the two records of the main fixture.
+    builds the eight sample records of the main fixture.
     """
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     source = _proteome_root(tmp_path / "source", PROTEOME_ROWS)
@@ -967,10 +1233,10 @@ def test_proteome_build_without_raw_downloads_then_builds(
     ds = ProteomeZelezniak2018Dataset(root=str(root))
     assert len(calls) == 1
     assert (root / "raw" / PROTEOME_FILENAME).read_bytes() == payload
-    assert len(ds) == 3
-    assert ds[1]["experiment"]["phenotype"]["protein_abundance"] == {
-        "YAL001C": 2.0,
-        "YBR002C": 22.0,
+    assert len(ds) == 8
+    assert ds[5]["experiment"]["phenotype"]["protein_abundance"] == {
+        "YAL001C": 1.0,
+        "YBR002C": 20.0,
     }
     assert ds.experiment_class is ProteinAbundanceExperiment
     assert ds.reference_class is ProteinAbundanceExperimentReference
@@ -981,12 +1247,13 @@ def test_proteome_build_without_raw_downloads_then_builds(
 # --------------------------------------------------------------------------- #
 
 
-def test_proteome_first_gene_name_wins_and_n_counts_distinct_replicates(
+def test_proteome_first_gene_name_wins_and_reference_counts_distinct_replicates(
     tmp_path: Path,
 ) -> None:
     """Strain YDR003W: YAL001C rows (rep 1: 8), (rep 2: 10); YBR002C (rep 1: 6). The
-    first row's ``KO_gene_name`` (KIN3) is stored over the later ``kin3x``; YAL001C is
-    mean 9.0, SD sqrt(2), SE 1.0, n 2; YBR002C is n 1 with SE NaN.
+    first row's ``KO_gene_name`` (KIN3) is stored over the later ``kin3x`` on BOTH
+    sample records; replicate 1 is {YAL001C 8, YBR002C 6} and replicate 2 {YAL001C
+    10}. The WT reference counts its distinct replicates: YAL001C n 2, YBR002C n 1.
     """
     rows = [
         ("YAL001C", "WT", "WT", 1, 10.0),
@@ -998,18 +1265,21 @@ def test_proteome_first_gene_name_wins_and_n_counts_distinct_replicates(
     ]
     root = _proteome_root(tmp_path, rows)
     ds = ProteomeZelezniak2018Dataset(root=str(root))
-    assert len(ds) == 1
-    (perturbation,) = ds[0]["experiment"]["genotype"]["perturbations"]
-    assert perturbation["perturbed_gene_name"] == "KIN3"
-    phenotype = ds[0]["experiment"]["phenotype"]
-    assert phenotype["protein_abundance"] == {"YAL001C": 9.0, "YBR002C": 6.0}
-    assert phenotype["n_replicates"] == {"YAL001C": 2, "YBR002C": 1}
-    se = phenotype["protein_abundance_se"]
-    assert list(se) == ["YAL001C", "YBR002C"]
-    assert se["YAL001C"] == pytest.approx(1.0, abs=1e-12)
-    assert math.isnan(se["YBR002C"])
-    assert (root / "preprocess" / "data.csv").read_text() == "orf,gene\nYDR003W,KIN3\n"
-    reference = ds[0]["reference"]["phenotype_reference"]
+    assert len(ds) == 4
+    for index in (2, 3):
+        (perturbation,) = ds[index]["experiment"]["genotype"]["perturbations"]
+        assert perturbation["perturbed_gene_name"] == "KIN3"
+    assert ds[2]["experiment"]["phenotype"]["protein_abundance"] == {
+        "YAL001C": 8.0,
+        "YBR002C": 6.0,
+    }
+    assert ds[3]["experiment"]["phenotype"]["protein_abundance"] == {"YAL001C": 10.0}
+    assert (root / "preprocess" / "data.csv").read_text() == (
+        "orf,gene,replicate_id,sample\n"
+        "WT,WT,1,S_WT_1\nWT,WT,2,S_WT_2\n"
+        "YDR003W,KIN3,1,S_YDR003W_1\nYDR003W,KIN3,2,S_YDR003W_2\n"
+    )
+    reference = ds[2]["reference"]["phenotype_reference"]
     assert reference["n_replicates"] == {"YAL001C": 2, "YBR002C": 1}
 
 
@@ -1201,7 +1471,8 @@ def test_metabolome_build_runs_the_real_mapper_on_the_fake_model(
 ) -> None:
     """Without the mapper stub, ``process()`` feeds the deduplicated metabolite -> KEGG
     map to ``build_metabolite_s_id_map``; the fake model maps pyr to the cytosolic
-    s_1399, so record 0's targets are exactly {pyr: s_1399}.
+    s_1399, so the targets of record 1 (YDR003W protocol 1, replicate 1) are exactly
+    {pyr: s_1399}. The four records are the two WT replicates and the two YDR003W ones.
     """
     rows = [
         ("pyr", "C00022", "Pyruvate", 1, "WT", 1, 2.0),
@@ -1210,10 +1481,10 @@ def test_metabolome_build_runs_the_real_mapper_on_the_fake_model(
         ("pyr", "C00022", "Pyruvate", 1, "YDR003W", 2, 3.0),
     ]
     ds = MetaboliteZelezniak2018Dataset(root=str(_metabolite_root(tmp_path, rows)))
-    assert len(ds) == 1
-    phenotype = ds[0]["experiment"]["phenotype"]
+    assert len(ds) == 4
+    phenotype = ds[1]["experiment"]["phenotype"]
     assert phenotype["target_metabolite_ids"] == {"pyr": "s_1399"}
-    assert phenotype["metabolite_level"] == {"pyr": 2.0}
+    assert phenotype["metabolite_level"] == {"pyr": 1.0}
     assert ds.experiment_class is MetaboliteExperiment
     assert ds.reference_class is MetaboliteExperimentReference
 
@@ -1222,3 +1493,130 @@ def test_preprocess_raw_is_identity_for_both_loaders(tmp_path: Path) -> None:
     frame = object()
     for cls in (ProteomeZelezniak2018Dataset, MetaboliteZelezniak2018Dataset):
         assert _bare(cls, tmp_path).preprocess_raw(frame) is frame
+
+
+# --------------------------------------------------------------------------- #
+# The pinned release, built for real (2026.11.24, issues #1173 and #1174)
+# --------------------------------------------------------------------------- #
+
+_RAW_MIRROR = Path(
+    os.environ["DATA_ROOT"],
+    "torchcell-raw",
+    zelezniak2018.CITATION_KEY,
+    "data",
+    "zenodo",
+)
+
+
+def _copy_release(tmp_path: Path, name: str, filename: str) -> Path:
+    root = tmp_path / name
+    (root / "raw").mkdir(parents=True)
+    (root / "raw" / filename).write_bytes((_RAW_MIRROR / filename).read_bytes())
+    return root
+
+
+@pytest.mark.slow
+@pytest.mark.data
+@pytest.mark.skipif(
+    not (_RAW_MIRROR / PROTEOME_FILENAME).exists(),
+    reason=f"requires the Zelezniak raw mirror at {_RAW_MIRROR}",
+)
+def test_the_released_proteome_keeps_all_364_samples(tmp_path: Path) -> None:
+    """The pinned matrix (sha256 9ff81ecb...) builds 364 records, one per released
+    sample: 352 over 97 knockout strains (samples per strain {2: 3, 3: 72, 4: 3, 6: 15,
+    7: 4}) and the 12 WT samples. Grouping the records of one strain and averaging
+    reproduces the per-strain means the loader stored before #1174 (recomputed here
+    from the raw rows) to float rounding.
+    """
+    import pandas as pd
+
+    root = _copy_release(tmp_path, "proteome_zelezniak2018", PROTEOME_FILENAME)
+    built = ProteomeZelezniak2018Dataset(root=str(root))
+    assert len(built) == 364
+    summary = pd.read_csv(root / "preprocess" / "data.csv")
+    per_strain = summary.groupby("orf").size()
+    assert int(per_strain["WT"]) == 12
+    assert per_strain.drop("WT").value_counts().to_dict() == {
+        3: 72,
+        6: 15,
+        7: 4,
+        2: 3,
+        4: 3,
+    }
+    assert summary["sample"].nunique() == 364
+    assert summary["replicate_id"].value_counts().sort_index().to_dict() == {
+        1: 98,
+        2: 98,
+        3: 95,
+        4: 23,
+        5: 20,
+        6: 20,
+        7: 5,
+        8: 1,
+        9: 1,
+        10: 1,
+        11: 1,
+        12: 1,
+    }
+    raw = pd.read_csv(root / "raw" / PROTEOME_FILENAME, sep="\t")
+    expected = raw.groupby(["KO_ORF", "ORF"])["value"].mean()
+    sums: dict[tuple[str, str], list[float]] = {}
+    for i in range(len(built)):
+        experiment = built[i]["experiment"]
+        perturbations = experiment["genotype"]["perturbations"]
+        strain = perturbations[0]["systematic_gene_name"] if perturbations else "WT"
+        for orf, value in experiment["phenotype"]["protein_abundance"].items():
+            sums.setdefault((strain, orf), []).append(value)
+    assert len(sums) == len(expected) == 98 * 726
+    worst = max(abs(sum(v) / len(v) - expected[key]) for key, v in sums.items())
+    assert worst < 1e-12
+
+
+@pytest.mark.slow
+@pytest.mark.data
+@pytest.mark.skipif(
+    not (_RAW_MIRROR / METABOLITE_DATA_FILENAME).exists(),
+    reason=f"requires the Zelezniak raw mirror at {_RAW_MIRROR}",
+)
+def test_the_released_metabolome_keeps_all_192_replicates(tmp_path: Path) -> None:
+    """The pinned table (sha256 c4429fd8...) builds 192 records, one per (protocol,
+    strain, released biological replicate): protocol 1 95 knockouts + 1 WT (one
+    replicate each), protocol 2 51 + 1 WT, protocol 3 41 + 3 WT. The real YeastGEM
+    mapper runs (50 metabolite ids). Grouping the records of one (strain, protocol) and
+    averaging reproduces the means of the raw rows to float rounding.
+    """
+    import pandas as pd
+
+    root = _copy_release(tmp_path, "metabolite_zelezniak2018", METABOLITE_DATA_FILENAME)
+    built = MetaboliteZelezniak2018Dataset(root=str(root))
+    assert len(built) == 192
+    summary = pd.read_csv(root / "preprocess" / "data.csv")
+    wt = summary["orf"] == "WT"
+    assert summary[~wt].groupby("dataset").size().to_dict() == {1: 95, 2: 51, 3: 41}
+    assert summary[wt].groupby("dataset").size().to_dict() == {1: 1, 2: 1, 3: 3}
+    assert summary.groupby(["dataset", "replicate_id"]).size().to_dict() == {
+        (1, 1): 96,
+        (2, 1): 19,
+        (2, 2): 18,
+        (2, 3): 15,
+        (3, 1): 17,
+        (3, 2): 14,
+        (3, 3): 13,
+    }
+    raw = pd.read_csv(root / "raw" / METABOLITE_DATA_FILENAME, sep="\t")
+    expected = raw.groupby(["dataset", "genotype", "metabolite_id"])["value"].mean()
+    protocol_of = {
+        p.measurement_type: d for d, p in ZELEZNIAK_METABOLITE_PROTOCOLS.items()
+    }
+    cells: dict[tuple[int, str, str], list[float]] = {}
+    for i in range(len(built)):
+        experiment = built[i]["experiment"]
+        phenotype = experiment["phenotype"]
+        perturbations = experiment["genotype"]["perturbations"]
+        strain = perturbations[0]["systematic_gene_name"] if perturbations else "WT"
+        protocol = protocol_of[phenotype["measurement_type"]]
+        for metabolite, value in phenotype["metabolite_level"].items():
+            cells.setdefault((protocol, strain, metabolite), []).append(value)
+    assert len(cells) == len(expected)
+    worst = max(abs(sum(v) / len(v) - expected[key]) for key, v in cells.items())
+    assert worst < 1e-9

@@ -2144,7 +2144,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "betaxanthin_cachera2023": None,
         "amino_acid_mulleder2016": 4678,
         "amino_acid_cooper2010": 4382,
-        "metabolite_zelezniak2018": 129,
+        "metabolite_zelezniak2018": 192,
         "metabolite_dasilveira2014": 127,
         "organic_acid_yoshida2012": 17,
         "isobutanol_screen_lopez2024": 4805,
@@ -2186,7 +2186,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         if spec.get("protocol_measurement_types") is not None
     } == {"metabolite_zelezniak2018"}
     assert _oracles(runners.PROTEIN_DATASETS) == {
-        "proteome_zelezniak2018": 97,
+        "proteome_zelezniak2018": 364,
         "proteome_messner2023": 4699,
         "proteome_muenzner2024": 794,
         "proteome_messner2021": 70,

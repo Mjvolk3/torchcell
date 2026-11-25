@@ -10,16 +10,22 @@ both from the same Zenodo record 1320289 (concept DOI 10.5281/zenodo.1320288):
 
 - ``ProteomeZelezniak2018Dataset`` -- the quantitative PROTEOME of 97 kinase-deletion
   strains (plus WT) by SWATH-MS (data-independent acquisition). We ingest the authors'
-  processed per-strain matrix (``proteins_dataset.data_prep.tsv``): a long-format table
-  of batch-corrected (SVA-adjusted) label-free protein signal per (protein, sample, KO
-  strain, replicate), covering 726 proteins. We aggregate the replicate samples of each
-  knockout strain to a per-protein mean + standard error, mapping to
-  ``ProteinAbundancePhenotype`` (WS9): ``protein_abundance = {protein_ORF -> mean log
-  signal}`` with ``measurement_type = "swath_ms_label_free_log_signal_sva"``. The parent
-  **WT** strain (``KO_ORF == "WT"``) supplies the reference profile. Every protein has
-  >=2 replicate samples per strain, so the standard error is always defined. A blank or
-  non-finite value or a repeated (protein, strain, replicate) row refuses the build (none
-  occurs in the pinned release), since each would make ``n``, the mean or the SE wrong.
+  processed matrix (``proteins_dataset.data_prep.tsv``): a long-format table of
+  batch-corrected (SVA-adjusted) label-free protein signal per (protein, sample, KO
+  strain, replicate), covering 726 proteins in each of 364 samples. ONE RECORD PER
+  RELEASED SAMPLE (issue #1174, policy #1178): each sample is its own
+  ``ProteinAbundancePhenotype`` (WS9) with ``protein_abundance = {protein_ORF -> that
+  sample's log signal}`` verbatim, ``n_replicates = 1`` per protein, no SE map (a typed
+  ``not_applicable_single_measurement`` gap instead), ``replicate_id`` = the release's
+  own ``replicate`` label and ``measurement_type =
+  "swath_ms_label_free_log_signal_sva"``. 352 knockout samples over 97 strains plus the
+  12 parent **WT** samples (``KO_ORF == "WT"``), stored with an empty genotype. The
+  reference profile is the WT summary (mean, SD / sqrt(n), n over the 12 WT samples,
+  ``replicate_id=None``). Before 2026-11-24 the loader stored one mean + SE record per
+  knockout strain (97 records) and kept the WT samples only inside the reference. A
+  blank or non-finite value, a repeated (protein, strain, replicate) row, or a
+  (strain, replicate) label that names two samples refuses the build (none occurs in
+  the pinned release).
 
 - ``MetaboliteZelezniak2018Dataset`` -- the targeted central-carbon/amino-acid
   METABOLOME of the same 95 kinase-KO strains (plus a measured WT) by LC-SRM. The file
@@ -28,22 +34,40 @@ both from the same Zenodo record 1320289 (concept DOI 10.5281/zenodo.1320288):
   three LC-SRM protocols (``ZELEZNIAK_METABOLITE_PROTOCOLS``) that do not share a unit:
   Dataset 1 is an UNCALIBRATED batch-corrected SRM signal measured on the proteomics
   cultures, Datasets 2 and 3 are externally calibrated values measured on separately
-  re-grown cultures with different chromatography. One record is written per (strain,
-  protocol): a per-metabolite mean + standard error over that protocol's replicates,
-  mapping to ``MetabolitePhenotype`` (WS9) with the protocol's own ``measurement_type``,
-  and the reference is the WT measured under the SAME protocol, so no record or
-  reference ever averages or compares values from two protocols (issue #595). This is
-  the first dataset to populate ``target_metabolite_ids`` (metabolite -> Yeast9
-  ``s_NNNN``), sourced from ``YeastGEM`` (never invented), enabling constraint-based-model
-  linkage.
+  re-grown cultures with different chromatography. ONE RECORD PER (protocol, strain,
+  released biological replicate) (issue #1173, policy #1178): 187 knockout records and
+  5 WT records (protocol 1 x1, protocol 2 x1, protocol 3 x3), each the verbatim values
+  of one replicate, ``n_replicates = 1``, no SE map (typed gap), ``replicate_id`` = the
+  release's ``replicate`` label, with the protocol's own ``measurement_type``. The
+  reference is the summary of the WT measured under the SAME protocol, so no record or
+  reference ever averages or compares values from two protocols (issue #595). Before
+  2026-11-24 the loader stored one mean + SE record per (strain, protocol) (129
+  records). This is the first dataset to populate ``target_metabolite_ids`` (metabolite
+  -> Yeast9 ``s_NNNN``), sourced from ``YeastGEM`` (never invented), enabling
+  constraint-based-model linkage.
     - Columns (differ from the Zenodo README): ``metabolite_id, kegg_id, official_name,
       dataset, genotype, replicate, value``. ``genotype`` is the strain (systematic
       kinase ORF, or literal ``WT``); NOT a KO_ORF column. ``metabolite_id`` is a
       BiGG-style id (50 total); ~5 are co-elution merges joined with ``;`` (e.g.
       ``3pg;2pg``, ``ala-L;ala-B``, ``g6p;f6p;g6p-B``) which we KEEP verbatim as dict
       keys (honest to source; resolved via the FIRST sub-id). ``dataset`` is the protocol
-      used for generation (1/2/3) and is part of the aggregation key, so
-      ``n_replicates`` counts one protocol's rows only.
+      used for generation (1/2/3) and is part of the record key.
+
+WHAT A REPLICATE IS. The Zenodo ``README.txt`` (raw mirror
+``torchcell-raw/zelezniakMachineLearningPredicts2018/data/zenodo/README.txt``, sha256
+``9e301a8b...``) defines the metabolome column as ``replicate - biological replicate``
+and the proteome columns as ``sample - sample name from the study`` and ``replicate -
+replicate``. The paper (``REPLICATE_SOURCED_VALUES``) states triplicate cultures per
+strain and "3 independent cultures" for metabolome Datasets 2 and 3. For the proteome,
+24 strains (and WT) release more than three samples, named with an ``_1`` / ``_2``
+suffix on a culture letter (``KL_Try_101_a`` and ``KL_Try_101_a_1``); the release and
+the paper do not say whether a suffixed sample is a re-grown culture or a re-injection.
+Measured on the pinned bytes, a suffixed sample is no closer to its same-letter sample
+than to a different-letter sample of the other suffix group (median Pearson r of the
+protein-centered profiles 0.228 over 59 same-letter pairs vs 0.259 over 137
+different-letter pairs), so the data give no sign that it is a repeat injection of one
+digest; every released sample is a record, and the open question is recorded in the
+dataset note.
 
 For both, the background is BY4741 made prototrophic by the pHLUM minichromosome. The
 proteome ``?download=1`` URL works, but it 403s for the metabolome file, which is fetched
@@ -151,7 +175,12 @@ PAPER_MD_SHA256 = "072bfb2d5b601d578dd5370ed25bfe2709bba0273843c87b5580e248573ce
 ZENODO_CONCEPT_DOI_URL = "https://doi.org/10.5281/zenodo.1320288"
 
 
-def _paper_sv(value: Any, quote: str, note: str | None = None) -> SourcedValue:
+def _paper_sv(
+    value: Any,
+    quote: str,
+    note: str | None = None,
+    page: str = "STAR Methods, Metabolomics",
+) -> SourcedValue:
     """A ``SourcedValue`` anchored to the mirrored ``paper.md`` by sha256."""
     return SourcedValue(
         value=value,
@@ -160,11 +189,101 @@ def _paper_sv(value: Any, quote: str, note: str | None = None) -> SourcedValue:
             citation_key=CITATION_KEY,
             sha256=PAPER_MD_SHA256,
             method="MinerU OCR of the publisher PDF (mirrored artifact)",
-            page="STAR Methods, Metabolomics",
+            page=page,
         ),
         quote=quote,
         note=note,
     )
+
+
+# The Zenodo record's README, in the RAW mirror
+# ($DATA_ROOT/torchcell-raw/<citation_key>/data/zenodo/README.txt), fetched 2026-11-24
+# from https://zenodo.org/api/records/1320289/files/README.txt/content (md5 matches the
+# record's listing, 31cc2d70...).
+ZENODO_README = "data/zenodo/README.txt"
+ZENODO_README_SHA256 = (
+    "9e301a8bf7a4a46d15e1e57a121909a97bfe2fb011c998483fb28ec0dd39efbd"
+)
+
+
+def _readme_sv(value: Any, quote: str, note: str | None = None) -> SourcedValue:
+    """A ``SourcedValue`` anchored to the raw-mirrored Zenodo ``README.txt`` by sha256."""
+    return SourcedValue(
+        value=value,
+        provenance=Provenance(
+            source_uri=ZENODO_README,
+            citation_key=CITATION_KEY,
+            sha256=ZENODO_README_SHA256,
+            method="Zenodo record 1320289 README.txt, raw mirror",
+            page="README.txt column descriptions",
+        ),
+        quote=quote,
+        note=note,
+    )
+
+
+# What one released replicate is, per modality (issues #1173, #1174; policy #1178).
+# Paper quotes audit against the literature mirror, README quotes against the raw mirror.
+REPLICATE_SOURCED_VALUES: dict[str, SourcedValue] = {
+    "proteome_cultures": _paper_sv(
+        "three cultures per kinase-deletion strain",
+        "97 of the strains grew in triplicates",
+        page="STAR Methods, Strains and Culture",
+    ),
+    "proteome_sample_count": _paper_sv(
+        "397 whole-proteome samples stated; 364 released",
+        "The measurement of the 97 proteomes mounted to 397 whole-proteome samples "
+        "(triplicates plus controls)",
+        note=(
+            "the processed release holds 364 samples (352 knockout + 12 WT); the paper "
+            "does not identify the other 33, so none is recorded as withdrawn"
+        ),
+        page="Results, Kinase Knockout Proteomes Are Dominated by Differential Enzyme "
+        "Expression",
+    ),
+    "proteome_qc_samples": _paper_sv(
+        "QC samples are a pooled digest, not a strain sample",
+        "External standard quality control (QC) samples were prepared as a mixture of "
+        "all proteomes and were measured every 8-12 injections.",
+        page="STAR Methods, Proteomics",
+    ),
+    "dataset1_proteome_replicates_averaged_by_authors_for_modeling": _paper_sv(
+        "the authors average proteome replicates only to pair them with Dataset 1",
+        "For Dataset 1, replicates of proteomics experiments were averaged per genotype.",
+        page="STAR Methods, Statistical Modelling Data Preparation",
+    ),
+    "dataset23_biological_replicates": _paper_sv(
+        "Datasets 2 and 3 hold biological replicates",
+        "For Datasets 2 and 3, where multiple biological replicates were available",
+        page="STAR Methods, Statistical Modelling Data Preparation",
+    ),
+}
+
+README_SOURCED_VALUES: dict[str, SourcedValue] = {
+    "metabolome_replicate_column": _readme_sv(
+        "metabolome replicate = biological replicate",
+        "replicate - biological replicate",
+    ),
+    "proteome_sample_column": _readme_sv(
+        "proteome sample = the study's sample name",
+        "sample - sample name from the study",
+    ),
+    "proteome_replicate_column": _readme_sv(
+        "proteome replicate = the release's replicate label (kind unstated)",
+        "replicate - replicate",
+    ),
+}
+
+_SINGLE_REPLICATE_SE_NOTE = (
+    "a record is ONE released replicate (one proteome sample, or one metabolome "
+    "culture of one protocol), and one measurement has no dispersion of its own, so "
+    "there is no standard error to store; the per-strain mean and SE over the records "
+    "of one strain are a modeling-time derivation"
+)
+_SINGLE_REFERENCE_SE_NOTE = (
+    "the WT under this protocol is released as one replicate, so the reference summary "
+    "is that one measurement and has no dispersion"
+)
 
 
 METABOLITE_SOURCED_VALUES: dict[str, SourcedValue] = {
@@ -221,14 +340,18 @@ CALIBRATED_UNIT_GAP = ProvenanceGap(
     resolve_with=Provenance(
         source_uri=ZENODO_CONCEPT_DOI_URL,
         citation_key=CITATION_KEY,
-        method="Zenodo record 1320289 README (not mirrored) or the authors' "
-        "kinase_metabolism code (https://github.com/zelezniak-lab/kinase_metabolism)",
+        method="the authors' kinase_metabolism code "
+        "(https://github.com/zelezniak-lab/kinase_metabolism); the Zenodo record "
+        "1320289 README, raw-mirrored 2026-11-24 (sha256 9e301a8b...), was read and "
+        "states no unit",
     ),
     note=(
         "the calibration standards are stated (500 uM to 100 nM serial dilution) and a "
         "dilution + cell-volume conversion is described for Figures 4F-4H, but neither "
         "the paper nor metabolites_dataset.data_prep.tsv states the unit of the "
-        "deposited calibrated value, nor whether that conversion was applied to it"
+        "deposited calibrated value, nor whether that conversion was applied to it; "
+        "the Zenodo README describes the column only as 'metabolite signal obtained "
+        "from SRM-MS/MS experiment, corrected for batch effects'"
     ),
 )
 
@@ -324,7 +447,9 @@ METABOLITE_DATA_SHA256 = (
 
 @register_dataset
 class ProteomeZelezniak2018Dataset(ExperimentDataset):
-    """SWATH-MS proteome of the yeast kinase-knockout collection (97 strains)."""
+    """SWATH-MS proteome of the yeast kinase-knockout collection, one record per released
+    sample (352 knockout samples over 97 strains plus 12 WT samples).
+    """
 
     organism = Organism.scerevisiae
 
@@ -368,16 +493,18 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
         log.info("Wrote %s (%d bytes, sha256 verified)", dest, len(data))
 
     @staticmethod
-    def _aggregate(sub: pd.DataFrame, strain: str) -> dict[str, Any]:
-        """Aggregate one strain's replicate rows to per-protein mean/se/n dicts.
+    def _check_rows(sub: pd.DataFrame, strain: str) -> None:
+        """Refuse one strain's rows unless each is one distinct (protein, replicate) value.
 
-        ``n`` is the row count per protein, so every row must be one distinct replicate
-        with a value. A blank value (which pandas would leave out of ``n`` unrecorded)
-        and a repeated (protein, replicate) id (which would count as an extra replicate
-        and shrink the SE) both refuse, naming the strain, and so does a non-finite
-        value (``inf`` passes the blank check but has no mean or SE). Measured on the
-        pinned release (sha256 ``9ff81ecb...``): 0 blank, 0 non-finite and 0 repeated
-        (ORF, KO_ORF, replicate) rows of 264,264, so no refusal fires on the real file.
+        A blank value (which pandas would leave out of ``n`` unrecorded) and a repeated
+        (protein, replicate) id (which would count as an extra replicate, or put two
+        values under one replicate record) both refuse, naming the strain, and so does a
+        non-finite value (``inf`` passes the blank check but has no mean or SE). A
+        replicate label that names two released samples refuses too, since its record
+        would mix two samples. Measured on the pinned release (sha256 ``9ff81ecb...``):
+        0 blank, 0 non-finite and 0 repeated (ORF, KO_ORF, replicate) rows of 264,264,
+        and the 364 samples map one to one onto 364 (KO_ORF, replicate) labels, so no
+        refusal fires on the real file.
         """
         blank = sub[sub["value"].isna()]
         if len(blank):
@@ -402,6 +529,23 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
                 f"{repeated['replicate'].iloc[0]}; a repeated replicate would count "
                 "as an extra replicate"
             )
+        samples = sub.groupby("replicate")["sample"].nunique()
+        shared = samples[samples > 1]
+        if len(shared):
+            raise RuntimeError(
+                f"Zelezniak proteome strain {strain}: replicate {shared.index[0]} names "
+                f"{int(shared.iloc[0])} samples; one replicate record would mix them"
+            )
+
+    @classmethod
+    def _aggregate(cls, sub: pd.DataFrame, strain: str) -> dict[str, Any]:
+        """The per-protein mean / SE / n over one strain's samples.
+
+        This is the AGGREGATE the ``phenotype_reference`` states (the WT summary), not a
+        record. ``n`` is the row count per protein, so the rows pass ``_check_rows``
+        first.
+        """
+        cls._check_rows(sub, strain)
         grp = sub.groupby("ORF")["value"].agg(["mean", "std", "count"])
         abundance: dict[str, float] = {}
         se: dict[str, float] = {}
@@ -413,14 +557,46 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
             se[str(orf)] = float(r["std"]) / math.sqrt(n) if n > 1 else float("nan")
         return {"abundance": abundance, "se": se, "n": n_reps}
 
+    @classmethod
+    def _replicate_profiles(
+        cls, sub: pd.DataFrame, strain: str
+    ) -> list[tuple[str, str, dict[str, float]]]:
+        """``[(replicate_id, sample, {ORF: value})]`` for one strain, replicate order.
+
+        Each released sample is one record: its values verbatim, under the release's own
+        ``replicate`` label. The rows pass ``_check_rows`` first, so a label names one
+        sample and holds one value per protein.
+        """
+        cls._check_rows(sub, strain)
+        profiles: list[tuple[str, str, dict[str, float]]] = []
+        for replicate, rep_rows in sub.groupby("replicate", sort=True):
+            profiles.append(
+                (
+                    str(replicate),
+                    str(rep_rows["sample"].iloc[0]),
+                    {
+                        str(orf): float(v)
+                        for orf, v in zip(rep_rows["ORF"], rep_rows["value"])
+                    },
+                )
+            )
+        return profiles
+
     @post_process
     def process(self) -> None:
-        """Aggregate the proteome matrix into per-strain experiments and write LMDB."""
+        """Write one ProteinAbundance experiment per released sample to LMDB."""
         verify_raw_files(self.raw_dir, {DATA_FILENAME: DATA_SHA256})
         df = pd.read_csv(osp.join(self.raw_dir, DATA_FILENAME), sep="\t")
         bad = df[~df["ORF"].astype(str).str.match(_SYSTEMATIC_RE)]
         if len(bad):
             raise RuntimeError(f"non-systematic protein ORF ids present: {len(bad)}")
+        labels = df.groupby("sample")[["KO_ORF", "replicate"]].nunique()
+        relabeled = labels[(labels > 1).any(axis=1)]
+        if len(relabeled):
+            raise RuntimeError(
+                f"Zelezniak proteome sample {relabeled.index[0]} carries more than one "
+                "(KO_ORF, replicate) label; it would be split across records"
+            )
 
         wt_rows = df[df["KO_ORF"] == _WT]
         if wt_rows.empty:
@@ -430,29 +606,43 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
         os.makedirs(self.preprocess_dir, exist_ok=True)
         released_names: list[str] = []
         rows: list[dict[str, Any]] = []
-        for ko_orf, sub in df[df["KO_ORF"] != _WT].groupby("KO_ORF"):
-            if not _SYSTEMATIC_RE.match(str(ko_orf)):
+        for ko_orf, sub in df.groupby("KO_ORF"):
+            strain = str(ko_orf)
+            if strain != _WT and not _SYSTEMATIC_RE.match(strain):
                 # a released strain id with no ORF form goes on the released-gene-name
                 # leaf verbatim (#1045; 0 of 97 released strains)
-                released_names.append(str(ko_orf))
+                released_names.append(strain)
             gene = str(sub["KO_gene_name"].iloc[0])
-            rows.append(
-                {
-                    "orf": str(ko_orf),
-                    "gene": gene,
-                    "agg": self._aggregate(sub, str(ko_orf)),
-                }
-            )
+            for replicate_id, sample, profile in self._replicate_profiles(sub, strain):
+                rows.append(
+                    {
+                        "orf": strain,
+                        "gene": gene,
+                        "replicate_id": replicate_id,
+                        "sample": sample,
+                        "abundance": profile,
+                    }
+                )
         log.info(
-            "Zelezniak: %d knockout strains, WT reference with %d proteins, "
-            "%d strain ids on the released-identifier leaf",
+            "Zelezniak: %d sample records (%d WT) over %d strains, WT reference with "
+            "%d proteins, %d strain ids on the released-identifier leaf",
             len(rows),
+            sum(r["orf"] == _WT for r in rows),
+            df["KO_ORF"].nunique(),
             len(self._reference["abundance"]),
             len(released_names),
         )
-        pd.DataFrame([{"orf": r["orf"], "gene": r["gene"]} for r in rows]).to_csv(
-            osp.join(self.preprocess_dir, "data.csv"), index=False
-        )
+        pd.DataFrame(
+            [
+                {
+                    "orf": r["orf"],
+                    "gene": r["gene"],
+                    "replicate_id": r["replicate_id"],
+                    "sample": r["sample"],
+                }
+                for r in rows
+            ]
+        ).to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
         idx = 0
@@ -484,7 +674,7 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
     ) -> tuple[
         ProteinAbundanceExperiment, ProteinAbundanceExperimentReference, Publication
     ]:
-        """Build the ProteinAbundance experiment/reference/publication for one strain."""
+        """Build the ProteinAbundance experiment/reference/publication for one sample."""
         # Background = BY4741 kinase-deletion collection made prototrophic by the pHLUM
         # minichromosome (restores HIS3/LEU2/URA3/MET17); pHLUM not yet modeled here.
         genome_reference = ReferenceGenome(
@@ -493,18 +683,33 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
             assembly_set=SGD_S288C_R64,
             assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
-        genotype = Genotype(perturbations=[_released_deletion(row["orf"], row["gene"])])
+        # A WT sample is the parent strain itself: the empty genotype on the background.
+        genotype = Genotype(
+            perturbations=(
+                []
+                if row["orf"] == _WT
+                else [_released_deletion(row["orf"], row["gene"])]
+            )
+        )
         # SWATH-MS on cells in synthetic minimal (SM) liquid medium, 30 C. The
         # paper states NO recipe for that medium and sources both the strains and the
         # cultivation to Mulleder 2012, which is not mirrored, so ``SM_DEFERRED`` carries
         # the deferral rather than borrowing the Mulleder 2016 / Messner 2023 grams.
         environment = Environment(media=SM_DEFERRED, temperature=Temperature(value=30))
-        agg = row["agg"]
+        abundance = dict(row["abundance"])
         phenotype = ProteinAbundancePhenotype(
-            protein_abundance=agg["abundance"],
-            protein_abundance_se=agg["se"],
-            n_replicates=agg["n"],
+            protein_abundance=abundance,
+            protein_abundance_se=None,
+            n_replicates=dict.fromkeys(abundance, 1),
             measurement_type=MEASUREMENT_TYPE,
+            replicate_id=row["replicate_id"],
+            provenance_gaps=[
+                ProvenanceGap(
+                    field="protein_abundance_se",
+                    reason=ProvenanceGapReason.not_applicable_single_measurement,
+                    note=_SINGLE_REPLICATE_SE_NOTE,
+                )
+            ],
         )
         ref = self._reference
         phenotype_reference = ProteinAbundancePhenotype(
@@ -582,7 +787,8 @@ def build_metabolite_s_id_map(kegg_by_metabolite: dict[str, str]) -> dict[str, s
 @register_dataset
 class MetaboliteZelezniak2018Dataset(ExperimentDataset):
     """LC-SRM targeted metabolome of the kinase-knockout collection, one record per
-    (strain, protocol); each record and its WT reference share one protocol.
+    (protocol, strain, released biological replicate), WT included; each record and its
+    WT reference share one protocol.
     """
 
     organism = Organism.scerevisiae
@@ -629,16 +835,14 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
         log.info("Wrote %s (%d bytes, sha256 verified)", dest, len(data))
 
     @staticmethod
-    def _aggregate(sub: pd.DataFrame, strain: str, dataset: int) -> dict[str, Any]:
-        """Aggregate one (strain, protocol) block of rows to per-metabolite mean/se/n dicts.
+    def _check_rows(sub: pd.DataFrame, strain: str, dataset: int) -> None:
+        """Refuse one (strain, protocol) block unless each row is one distinct value.
 
-        ``sub`` holds the rows of ONE protocol (one ``dataset`` value) for one strain, so
-        mean = mean over that protocol's replicates, SE = sample_SD * n**-0.5 when n>1
-        else NaN, n = row count. Protocols are never pooled (issue #595): Dataset 1 is an
-        uncalibrated signal and Datasets 2/3 are calibrated values. ``n`` is the row
-        count, so a repeated (metabolite, replicate) id inside the block refuses, naming
-        the strain and protocol. Measured on the pinned release (sha256 ``c4429fd8...``):
-        0 repeated (dataset, metabolite, genotype, replicate) rows of 3,522.
+        A repeated (metabolite, replicate) id would put two values under one replicate
+        record (or count as an extra replicate in a summary), and a blank or non-finite
+        value is no measurement; each refuses, naming the strain and protocol. Measured
+        on the pinned release (sha256 ``c4429fd8...``): 0 repeated (dataset, metabolite,
+        genotype, replicate) rows and 0 blank or non-finite values of 3,522.
         """
         repeated = sub[sub.duplicated(["metabolite_id", "replicate"], keep=False)]
         if len(repeated):
@@ -649,6 +853,27 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
                 f"{repeated['replicate'].iloc[0]}; a repeated replicate would count as "
                 "an extra replicate"
             )
+        values = pd.to_numeric(sub["value"], errors="coerce").to_numpy(dtype="float64")
+        not_finite = sub[~np.isfinite(values)]
+        if len(not_finite):
+            raise RuntimeError(
+                f"Zelezniak metabolome strain {strain} protocol {dataset}: "
+                f"{len(not_finite)} blank or non-finite value(s), first "
+                f"{not_finite['metabolite_id'].iloc[0]} replicate "
+                f"{not_finite['replicate'].iloc[0]}"
+            )
+
+    @classmethod
+    def _aggregate(cls, sub: pd.DataFrame, strain: str, dataset: int) -> dict[str, Any]:
+        """The per-metabolite mean / SE / n over one (strain, protocol) block.
+
+        This is the AGGREGATE a ``phenotype_reference`` states (the same-protocol WT
+        summary), not a record. ``sub`` holds the rows of ONE protocol (one ``dataset``
+        value), so mean = mean over that protocol's replicates, SE = sample_SD * n**-0.5
+        when n>1 else NaN, n = row count. Protocols are never pooled (issue #595):
+        Dataset 1 is an uncalibrated signal and Datasets 2/3 are calibrated values.
+        """
+        cls._check_rows(sub, strain, dataset)
         grp = sub.groupby("metabolite_id")["value"].agg(["mean", "std", "count"])
         level: dict[str, float] = {}
         se: dict[str, float] = {}
@@ -664,7 +889,7 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Aggregate the metabolome into per-(strain, protocol) experiments and write LMDB."""
+        """Write one Metabolite experiment per (protocol, strain, replicate) to LMDB."""
         verify_raw_files(
             self.raw_dir, {METABOLITE_DATA_FILENAME: METABOLITE_DATA_SHA256}
         )
@@ -712,21 +937,37 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
                     f"Zelezniak metabolome protocol {protocol} has strain rows but no "
                     "WT rows; its records would have no same-protocol reference"
                 )
-        for (_, genotype), sub in strains.groupby(["dataset", "genotype"]):
+        # One record per released biological replicate of every (protocol, strain), the
+        # WT replicates included (empty genotype). The WT summary above is the reference.
+        for (_, genotype), sub in df.groupby(["dataset", "genotype"]):
             protocol = int(sub["dataset"].iloc[0])
-            agg = self._aggregate(sub, str(genotype), protocol)
-            shared = set(agg["level"]) & set(self._references[protocol]["level"])
-            if not shared:
-                raise RuntimeError(
-                    f"Zelezniak metabolome strain {genotype} protocol {protocol} shares "
-                    "no metabolite with that protocol's WT; its reference would be empty"
+            self._check_rows(sub, str(genotype), protocol)
+            for replicate, rep_rows in sub.groupby("replicate", sort=True):
+                level = {
+                    str(m): float(v)
+                    for m, v in zip(rep_rows["metabolite_id"], rep_rows["value"])
+                }
+                shared = set(level) & set(self._references[protocol]["level"])
+                if not shared:
+                    raise RuntimeError(
+                        f"Zelezniak metabolome strain {genotype} protocol {protocol} "
+                        f"replicate {replicate} shares no metabolite with that "
+                        "protocol's WT; its reference would be empty"
+                    )
+                rows.append(
+                    {
+                        "orf": str(genotype),
+                        "dataset": protocol,
+                        "replicate_id": str(replicate),
+                        "level": level,
+                    }
                 )
-            rows.append({"orf": str(genotype), "dataset": protocol, "agg": agg})
         log.info(
-            "Zelezniak metabolome: %d (strain, protocol) records over protocols %s, WT "
-            "reference metabolites per protocol %s, %d metabolite ids mapped to Yeast9 "
-            "s_NNNN",
+            "Zelezniak metabolome: %d (protocol, strain, replicate) records (%d WT) over "
+            "protocols %s, WT reference metabolites per protocol %s, %d metabolite ids "
+            "mapped to Yeast9 s_NNNN",
             len(rows),
+            sum(r["orf"] == _WT for r in rows),
             sorted(self._references),
             {d: len(r["level"]) for d, r in sorted(self._references.items())},
             len(self._s_id_map),
@@ -736,7 +977,8 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
                 {
                     "orf": r["orf"],
                     "dataset": r["dataset"],
-                    "n_metabolites": len(r["agg"]["level"]),
+                    "replicate_id": r["replicate_id"],
+                    "n_metabolites": len(r["level"]),
                 }
                 for r in rows
             ]
@@ -767,14 +1009,47 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
         """Preprocessing is handled inside process() for this dataset."""
         return df
 
+    def _replicate_phenotype(
+        self, level: dict[str, float], dataset: int, replicate_id: str
+    ) -> MetabolitePhenotype:
+        """One released replicate's values verbatim: n = 1 and no dispersion."""
+        return MetabolitePhenotype(
+            metabolite_level=dict(level),
+            metabolite_level_se=None,
+            n_replicates=dict.fromkeys(level, 1),
+            measurement_type=ZELEZNIAK_METABOLITE_PROTOCOLS[dataset].measurement_type,
+            target_metabolite_ids={m: self._s_id_map[m] for m in level},
+            replicate_id=replicate_id,
+            provenance_gaps=[
+                ProvenanceGap(
+                    field="metabolite_level_se",
+                    reason=ProvenanceGapReason.not_applicable_single_measurement,
+                    note=_SINGLE_REPLICATE_SE_NOTE,
+                )
+            ],
+        )
+
     def _phenotype(self, agg: dict[str, Any], dataset: int) -> MetabolitePhenotype:
-        """Build a MetabolitePhenotype for one protocol's aggregated per-metabolite dict."""
+        """The reference summary over one protocol's WT replicates (``replicate_id=None``).
+
+        When every key rests on one replicate the SE map is all NaN, so it is stored as
+        ``None`` with a typed ``not_applicable_single_measurement`` gap (protocols 1 and
+        2 release one WT replicate each).
+        """
         level = dict(agg["level"])
         se = dict(agg["se"])
         # SE keys must be a subset of level keys; the all-NaN case collapses to None.
         level_se: dict[str, float] | None = se
+        gaps: list[ProvenanceGap] = []
         if all(math.isnan(v) for v in se.values()):
             level_se = None
+            gaps.append(
+                ProvenanceGap(
+                    field="metabolite_level_se",
+                    reason=ProvenanceGapReason.not_applicable_single_measurement,
+                    note=_SINGLE_REFERENCE_SE_NOTE,
+                )
+            )
         targets = {m: self._s_id_map[m] for m in level}
         return MetabolitePhenotype(
             metabolite_level=level,
@@ -782,12 +1057,13 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
             n_replicates=dict(agg["n"]),
             measurement_type=ZELEZNIAK_METABOLITE_PROTOCOLS[dataset].measurement_type,
             target_metabolite_ids=targets,
+            provenance_gaps=gaps,
         )
 
     def create_experiment(  # type: ignore[override]
         self, row: dict[str, Any]
     ) -> tuple[MetaboliteExperiment, MetaboliteExperimentReference, Publication]:
-        """Build the Metabolite experiment/reference/publication for one (strain, protocol)."""
+        """Build the Metabolite experiment/reference/publication for one replicate."""
         # Background = BY4741 kinase-deletion collection made prototrophic by the pHLUM
         # minichromosome (restores HIS3/LEU2/URA3/MET17); pHLUM not yet modeled here.
         genome_reference = ReferenceGenome(
@@ -797,27 +1073,34 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
             assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         # No gene-name column in the metabolome file (only the systematic ORF), so the
-        # systematic id is used for both names (as in the Mulleder loader).
+        # systematic id is used for both names (as in the Mulleder loader). A WT
+        # replicate is the parent strain itself: the empty genotype on the background.
         genotype = Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=row["orf"], perturbed_gene_name=row["orf"]
-                )
-            ]
+            perturbations=(
+                []
+                if row["orf"] == _WT
+                else [
+                    KanMxDeletionPerturbation(
+                        systematic_gene_name=row["orf"], perturbed_gene_name=row["orf"]
+                    )
+                ]
+            )
         )
         # SRM-MS/MS on cells in synthetic minimal (SM) liquid medium, 30 C (as proteome);
         # same unstated recipe, deferred to Mulleder 2012 on ``SM_DEFERRED``.
         environment = Environment(media=SM_DEFERRED, temperature=Temperature(value=30))
         dataset = int(row["dataset"])
-        phenotype = self._phenotype(row["agg"], dataset)
+        phenotype = self._replicate_phenotype(
+            row["level"], dataset, row["replicate_id"]
+        )
         # Reference = the WT measured by the SAME protocol, RESTRICTED to the metabolites
-        # this strain measured under it. Targeted-metabolomics coverage is sparse (the
+        # this replicate measured under it. Targeted-metabolomics coverage is sparse (the
         # protocol-1 WT measured 13 of that protocol's 17 ids, never adp/amp/atp/e4p), so
         # a strain can measure metabolites the WT lacks; those simply have no WT
         # baseline. Restricting keeps reference keys a subset of the experiment's and
         # every reference value a real same-protocol WT measurement (never invented);
-        # process() refuses a (strain, protocol) that shares no metabolite with its WT.
-        exp_keys = set(row["agg"]["level"])
+        # process() refuses a replicate that shares no metabolite with its WT.
+        exp_keys = set(row["level"])
         ref = self._references[dataset]
         ref_agg = {
             "level": {k: v for k, v in ref["level"].items() if k in exp_keys},

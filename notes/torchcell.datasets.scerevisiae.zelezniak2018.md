@@ -238,3 +238,32 @@ A proteome `KO_ORF` with no ORF form goes on `ReleasedGeneNamePerturbation` with
 | L3 | `reference_finite` | gate | ok | reference level finite + key-subset for all 1946 values |
 | L3 | `measurement_type_consistent` | gate | ok | 3 declared protocol measurement_types, each record's reference on its own protocol |
 | L4 | `gene_containment_scmd_ohya2005` | report | ok | 0.979 of scmd_ohya2005's 95 deletion genes are in Ohya (>= 0.9) |
+
+## 2026.11.24 - One record per released replicate (#1173, #1174; policy #1178)
+
+Both loaders averaged replicate values the release gives one by one. Owner policy (#1178, 2026-11-17 and 2026-11-24): a record is one biological replicate as released, value verbatim, `n_replicates` 1, no dispersion; the WT replicates are records too; `phenotype_reference` stays the WT summary with `replicate_id=None`; the mean and SE are a modeling-time derivation.
+
+### What a replicate is (sources read in full)
+
+- Literature mirror `paper.md` (sha256 `072bfb2d...`): L364 (STAR Methods, Strains and Culture) "97 of the strains grew in triplicates"; L66 (Results) "The measurement of the 97 proteomes mounted to 397 whole-proteome samples (triplicates plus controls)"; L382 (Metabolomics) "Metabolomics datasets 2 and 3 were obtained by re-growing 3 independent cultures"; L408 (Statistical Modelling Data Preparation) "For Dataset 1, replicates of proteomics experiments were averaged per genotype. For Datasets 2 and 3, where multiple biological replicates were available"; L386 (Proteomics) QC samples are "a mixture of all proteomes" measured "every 8-12 injections". No SI file is mirrored (the SI holds 22 figures only); no sample withdrawal is stated anywhere.
+- Raw mirror, new 2026-11-24: `$DATA_ROOT/torchcell-raw/zelezniakMachineLearningPredicts2018/data/zenodo/` holds the three files Zenodo record 1320289 lists (API listing), each fetched with `torchcell.literature.retrieve.direct_url` from `https://zenodo.org/api/records/1320289/files/<name>/content` and recorded in `manifest.json`: `README.txt` (sha256 `9e301a8b...`, md5 equals the record's), `proteins_dataset.data_prep.tsv` (`9ff81ecb...`) and `metabolites_dataset.data_prep.tsv` (`c4429fd8...`), both byte-identical to the loader pins, so the upstream has not drifted. README L11 (metabolome) "replicate - biological replicate"; L17-18 (proteome) "sample - sample name from the study", "replicate - replicate". These quotes are `README_SOURCED_VALUES`, audited against the raw mirror by `test_replicate_quotes_are_verbatim_in_the_raw_mirrored_readme`; the paper quotes are `REPLICATE_SOURCED_VALUES`.
+- The README also describes the metabolome value only as "metabolite signal obtained from SRM-MS/MS experiment, corrected for batch effects", so it does not resolve the calibrated-unit gap of protocols 2 and 3; `CALIBRATED_UNIT_GAP` now says the README was read, and points at the authors' code only.
+
+### Proteome: 97 -> 364 records
+
+- 364 samples, each one (KO_ORF, replicate) label and one `sample` name (1:1, measured), 726 proteins each, 0 blank or non-finite values. Samples per strain {2: 3, 3: 72, 4: 3, 6: 15, 7: 4} over 97 knockouts (352) and 12 for WT. Each sample is a record, `replicate_id` = the release's `replicate` label; the sample name is written to `preprocess/data.csv`. WT samples carry `Genotype(perturbations=[])`.
+- 24 strains (and WT) release more than three samples, named with an `_1` / `_2` suffix on a culture letter (`KL_Try_101_a`, `KL_Try_101_a_1`, ...). Neither the paper nor the README says whether a suffixed sample is a re-grown culture or a repeat injection. Measured on the pinned bytes (protein profiles centered on the all-sample mean, Pearson r, pairs within the 24 strains): same letter, different suffix 0.228 (59 pairs); different letter, same suffix 0.593 (164); different letter, different suffix 0.259 (137). A suffixed sample is no closer to its same-letter sample than to any sample of the other suffix group, so nothing in the data marks it as a repeat injection of one digest; the suffix groups behave like batches. Under policy 3 every released sample is a record. Open: the paper's 397 samples vs 364 released (the other 33 are not identified; QC injections are a plausible reading, unverified).
+- New refusals: a replicate label naming two samples, a sample under two labels. Existing ones kept (blank, non-finite, repeated (protein, replicate)).
+
+### Metabolome: 129 -> 192 records
+
+- 192 (protocol, strain, replicate) cells: protocol 1 95 knockouts + 1 WT (one replicate each), protocol 2 51 + 1 WT, protocol 3 41 + 3 WT. Each is a record with the protocol's `measurement_type`; the reference is the same-protocol WT summary restricted to the record's metabolites (protocols 1 and 2 WT: one replicate, SE `None` with a `not_applicable_single_measurement` gap; protocol 3 WT: mean, SD / sqrt(3), n 3). A blank or non-finite value now refuses (0 in the release).
+
+### Build, verifier, mean reproduction
+
+- Scratch builds of the pinned files: `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-zelezniak2018/{proteome,metabolite}_zelezniak2018` (364 and 192 records).
+- Verifiers with the registry specs (`expected_count` 364 and 192): both PASS, L0-L3 plus L4 Ohya containment 0.979; the protein family's `replicate_id_names_one_replicate` rule holds for 364 of 364.
+- Grouping the new records by (genotype, measurement_type) and averaging reproduces every value of the old dev-tree stores (97 and 129 records): max absolute mean difference 1.8e-15 over 70,422 proteome values and 2.8e-14 over 2,187 metabolome values; the recomputed SD / sqrt(n) matches the old SE within 2.0e-14; per-cell replicate counts equal the old `n_replicates`. The WT reference profiles are unchanged. Script: `experiments/036-dataset-fixes-before-kg-build/scripts/zelezniak2018_per_replicate_mean_check.py` (`--new-parent` the scratch builds), result `experiments/036-dataset-fixes-before-kg-build/results/zelezniak2018_per_replicate_mean_check.json`. The same check against the raw rows is the `slow` + `data` tests `test_the_released_proteome_keeps_all_364_samples` and `test_the_released_metabolome_keeps_all_192_replicates`.
+- `DATASET_FULL_RECORDS`: proteome 97 -> 364, metabolome 95 (stale since #595) -> 192.
+
+Downstream: `MeanExperimentDeduplicator` groups by experiment type plus genes (read, not run), so applied to these stores it would merge a strain's replicates, and its protocols, into one record.

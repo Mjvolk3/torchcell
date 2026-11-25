@@ -27,9 +27,7 @@ for name in ECOLI_TASKS:  # the four task names
     task = load_task(name)
     print(f"\n{name}: {task.spec.title}")
     print(f"  samples  {len(task):,} ({len(task.excluded):,} records set aside)")
-    print(
-        f"  genes    task.genes {task.genes.shape}, first sample {task.genes[0].tolist()}"
-    )
+    print(f"  genes    task.genes {task.genes.shape}, first {task.genes[0].tolist()}")
     print(f"  labels   task.y {task.y.shape}, first targets {task.targets[:3]}")
 
     # Splits are named <family>_s<seed>. Each one gives row indices into task.genes

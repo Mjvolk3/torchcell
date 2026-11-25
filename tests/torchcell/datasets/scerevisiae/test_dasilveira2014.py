@@ -62,6 +62,12 @@ resolved or refused at load time. ``YBR002C`` (an alias of YBR001C in a genome) 
 systematic-name shape and so fails the perturbation schema) are stored under their
 released names, so the default matrix gives three records; an ambiguous standard name is
 stored with the ORF its own row gives; two rows naming one ORF are still refused.
+
+2026.11.24 (#1171, per-replicate policy #1178): every ``Quant`` row is a record, in
+release row order. The three wild-type rows are three empty-genotype records whose
+reference genome names the strain the row gives (``Y7092``, ``Y7220``, ``BY4741``), so
+the default matrix gives six records: WT1, WT2, WT3, then the three mutants. The
+reference stays the mean over the three wild-type rows.
 """
 
 from __future__ import annotations
@@ -71,7 +77,9 @@ import hashlib
 import inspect
 import json
 import logging
+import os
 import re
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -171,11 +179,14 @@ def _phenotype(level: dict[str, float], n: dict[str, int]) -> MetabolitePhenotyp
     )
 
 
-def _experiment(orf: str, gene: str, level: dict[str, float]) -> dict[str, Any]:
+def _experiment(orf: str | None, gene: str, level: dict[str, float]) -> dict[str, Any]:
+    """A mutant record, or a wild-type record (empty genotype) when ``orf`` is None."""
     return MetaboliteExperiment(
         dataset_name="MetaboliteDaSilveira2014Dataset",
         genotype=Genotype(
-            perturbations=[
+            perturbations=[]
+            if orf is None
+            else [
                 KanMxDeletionPerturbation(
                     systematic_gene_name=orf, perturbed_gene_name=gene
                 )
@@ -186,12 +197,14 @@ def _experiment(orf: str, gene: str, level: dict[str, float]) -> dict[str, Any]:
     ).model_dump()
 
 
-def _reference(level: dict[str, float], n: dict[str, int]) -> dict[str, Any]:
+def _reference(
+    level: dict[str, float], n: dict[str, int], strain: str = "BY4741"
+) -> dict[str, Any]:
     return MetaboliteExperimentReference(
         dataset_name="MetaboliteDaSilveira2014Dataset",
         genome_reference=ReferenceGenome(
             species="Saccharomyces cerevisiae",
-            strain="BY4741",
+            strain=strain,
             assembly_set=SGD_S288C_R64,
             assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         ),
@@ -200,32 +213,51 @@ def _reference(level: dict[str, float], n: dict[str, int]) -> dict[str, Any]:
     ).model_dump()
 
 
-def test_two_mutant_records_with_wt_reference_restricted_per_record(
+def test_every_quant_row_is_a_record_with_wt_reference_restricted_per_record(
     dataset: m.MetaboliteDaSilveira2014Dataset,
 ) -> None:
-    """Six Quant rows give three records, each under its released names. Record 0
-    (YAL001C/TFC3) measures all three lipids, n = 2 each, SE None; its reference is the
-    three WT means with n 3/2/2. Record 1 (YBR002C, blank standard name -> the ORF)
-    measured PC 32:1 and Erg only, so its reference drops PE 34:2. Record 2 is YPL999W,
-    which no annotation carries, stored as released. The index has one entry per
-    reference.
+    """Six Quant rows give six records in release row order, each under its released
+    names. Records 0-2 are the wild types (empty genotype, reference strain = the row's
+    strain id, n = 2 each). Record 3 (YAL001C/TFC3) measures all three lipids, n = 2
+    each, SE None; its reference is the three WT means with n 3/2/2. Record 4 (YBR002C,
+    blank standard name -> the ORF) measured PC 32:1 and Erg only, so its reference
+    drops PE 34:2. Record 5 is YPL999W, which no annotation carries, stored as released.
+    The index has one entry per reference: WT3 shares the BY4741 reference with the
+    mutants that measured all three lipids.
     """
-    assert len(dataset) == 3
-    assert dataset[0]["experiment"] == _experiment(
-        "YAL001C", "TFC3", {"PC 32:1": 1.5, "PE 34:2": 2.5, "Erg": 3.5}
-    )
-    assert dataset[0]["reference"] == _reference(
+    assert len(dataset) == 6
+    full_ref = (
         {"PC 32:1": 12.0, "PE 34:2": 21.0, "Erg": 6.0},
         {"PC 32:1": 3, "PE 34:2": 2, "Erg": 2},
     )
+    assert dataset[0]["experiment"] == _experiment(
+        None, "WT1", {"PC 32:1": 10.0, "PE 34:2": 20.0}
+    )
+    assert dataset[0]["reference"] == _reference(
+        {"PC 32:1": 12.0, "PE 34:2": 21.0}, {"PC 32:1": 3, "PE 34:2": 2}, "Y7092"
+    )
     assert dataset[1]["experiment"] == _experiment(
-        "YBR002C", "YBR002C", {"PC 32:1": 4.0, "Erg": 6.0}
+        None, "WT2", {"PC 32:1": 12.0, "Erg": 5.0}
     )
     assert dataset[1]["reference"] == _reference(
+        {"PC 32:1": 12.0, "Erg": 6.0}, {"PC 32:1": 3, "Erg": 2}, "Y7220"
+    )
+    assert dataset[2]["experiment"] == _experiment(
+        None, "WT3", {"PC 32:1": 14.0, "PE 34:2": 22.0, "Erg": 7.0}
+    )
+    assert dataset[2]["reference"] == _reference(*full_ref)
+    assert dataset[3]["experiment"] == _experiment(
+        "YAL001C", "TFC3", {"PC 32:1": 1.5, "PE 34:2": 2.5, "Erg": 3.5}
+    )
+    assert dataset[3]["reference"] == _reference(*full_ref)
+    assert dataset[4]["experiment"] == _experiment(
+        "YBR002C", "YBR002C", {"PC 32:1": 4.0, "Erg": 6.0}
+    )
+    assert dataset[4]["reference"] == _reference(
         {"PC 32:1": 12.0, "Erg": 6.0}, {"PC 32:1": 3, "Erg": 2}
     )
-    assert dataset[1]["publication"] == _PUBLICATION.model_dump()
-    assert dataset[2]["experiment"] == _experiment(
+    assert dataset[4]["publication"] == _PUBLICATION.model_dump()
+    assert dataset[5]["experiment"] == _experiment(
         "YPL999W", "GHOST", {"PC 32:1": 1.0, "PE 34:2": 1.0, "Erg": 1.0}
     )
     index = json.loads(
@@ -233,19 +265,48 @@ def test_two_mutant_records_with_wt_reference_restricted_per_record(
             Path(dataset.root) / "preprocess" / "experiment_reference_index.json"
         ).read_text()
     )
-    assert [entry["member_indices"] for entry in index] == [[0, 2], [1]]
+    assert sorted(entry["member_indices"] for entry in index) == [
+        [0],
+        [1],
+        [2, 3, 5],
+        [4],
+    ]
+
+
+def test_wild_type_records_state_no_replicate_and_the_reference_is_a_summary(
+    dataset: m.MetaboliteDaSilveira2014Dataset,
+) -> None:
+    """Policy #1178 item 7: a wild-type row is a record, aggregate as released, so its
+    phenotype has ``replicate_id`` None and no SE; the reference is the WT summary, also
+    with ``replicate_id`` None. The three wild types are told apart only by the strain
+    their reference genome names.
+    """
+    wild = [dataset[i] for i in range(3)]
+    assert [r["experiment"]["genotype"]["perturbations"] for r in wild] == [[], [], []]
+    assert [r["reference"]["genome_reference"]["strain"] for r in wild] == [
+        "Y7092",
+        "Y7220",
+        "BY4741",
+    ]
+    for record in wild:
+        assert record["experiment"]["phenotype"]["replicate_id"] is None
+        assert record["experiment"]["phenotype"]["metabolite_level_se"] is None
+        assert record["reference"]["phenotype_reference"]["replicate_id"] is None
 
 
 def test_side_files(dataset: m.MetaboliteDaSilveira2014Dataset) -> None:
     """``lipid_chebi.csv`` lists every Quant lipid with the Table S10 ChEBI id or blank;
-    ``data.csv`` has the released ORF, the stored gene name and the measured-lipid count.
+    ``data.csv`` has, per record, the released ORF (blank for a wild type), the stored
+    gene name (the row's ``WT1``-style label for a wild type), the reference strain and
+    the measured-lipid count. ``gene_set.json`` holds the mutants' ORFs only.
     """
     preprocess = Path(dataset.root) / "preprocess"
     assert (preprocess / "lipid_chebi.csv").read_text() == (
         "lipid,chebi\nPC 32:1,CHEBI:64998\nPE 34:2,\nErg,\n"
     )
     assert (preprocess / "data.csv").read_text() == (
-        "orf,gene,n_lipids\nYAL001C,TFC3,3\nYBR002C,YBR002C,2\nYPL999W,GHOST,3\n"
+        "orf,gene,strain,n_lipids\n,WT1,Y7092,2\n,WT2,Y7220,2\n,WT3,BY4741,3\n"
+        "YAL001C,TFC3,BY4741,3\nYBR002C,YBR002C,BY4741,2\nYPL999W,GHOST,BY4741,3\n"
     )
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YAL001C",
@@ -349,7 +410,7 @@ def test_items_retype_through_the_metabolite_classes(
     155 to 163), dumping back to exactly the stored dictionaries; ``preprocess_raw``
     returns its frame unchanged.
     """
-    for index in range(3):
+    for index in range(6):
         item = dataset[index]
         typed = dataset.transform_item(item)
         assert type(typed["experiment"]) is MetaboliteExperiment
@@ -366,7 +427,7 @@ def test_items_retype_through_the_metabolite_classes(
 def test_ledger_logs_chebi_coverage_and_the_record_count(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """One of three lipids has a ChEBI id; all three mutant rows become records."""
+    """One of three lipids has a ChEBI id; all six rows become records."""
     with caplog.at_level(logging.INFO, logger=m.log.name):
         m.MetaboliteDaSilveira2014Dataset(root=str(_root(tmp_path)))
     assert [
@@ -375,10 +436,10 @@ def test_ledger_logs_chebi_coverage_and_the_record_count(
         ("INFO", "da Silveira: 1/3 lipids have a Table S10 ChEBI id (2 missing)"),
         (
             "INFO",
-            "da Silveira: 3 mutant records, 3 WT control rows -> measured reference "
-            "(3 lipids)",
+            "da Silveira: 3 mutant records, 3 wild-type records; the 3 WT rows -> "
+            "measured reference (3 lipids)",
         ),
-        ("INFO", "Wrote 3 da Silveira lipidome experiments to LMDB"),
+        ("INFO", "Wrote 6 da Silveira lipidome experiments to LMDB"),
     ]
 
 
@@ -434,15 +495,15 @@ def test_padded_and_lowercase_systematic_names_are_stored_stripped_and_upper(
         {"PC 32:1": 12.0, "PE 34:2": 21.0, "Erg": 6.0},
         {"PC 32:1": 3, "PE 34:2": 2, "Erg": 2},
     )
-    assert len(dataset) == 2
-    assert dataset[0]["experiment"] == _experiment(
+    assert len(dataset) == 5
+    assert dataset[3]["experiment"] == _experiment(
         "YAL001C", "TFC3", {"PC 32:1": 1.5, "PE 34:2": 2.5, "Erg": 3.5}
     )
-    assert dataset[1]["experiment"] == _experiment(
+    assert dataset[4]["experiment"] == _experiment(
         "YBR001C", "NTH1", {"PC 32:1": 1.0, "PE 34:2": 2.0, "Erg": 3.0}
     )
-    assert dataset[0]["reference"] == reference
-    assert dataset[1]["reference"] == reference
+    assert dataset[3]["reference"] == reference
+    assert dataset[4]["reference"] == reference
     dataset.close_lmdb()
 
 
@@ -481,7 +542,7 @@ def test_two_rows_naming_one_orf_are_refused_before_anything_is_written(
     )
     assert [
         dataset[i]["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"]
-        for i in range(len(dataset))
+        for i in range(3, len(dataset))
     ] == ["YAL001C", "YAL003W"]
     dataset.close_lmdb()
 
@@ -512,7 +573,7 @@ def test_download_copies_both_verified_mirror_workbooks(
 ) -> None:
     """With both pins set to the synthetic workbooks' digests, an empty root copies
     Table S4 then Table S10 from ``<DATA_ROOT>/torchcell-library/<key>/data/``, logs one
-    "Verified" line per file and builds the three records.
+    "Verified" line per file and builds the six records.
     """
     source = tmp_path / "source"
     source.mkdir()
@@ -542,7 +603,7 @@ def test_download_copies_both_verified_mirror_workbooks(
         f"Verified {raw / name} (sha256 {pins[name]})"
         for name in (m.DATA_FILENAME, m.CHEBI_FILENAME)
     ]
-    assert len(dataset) == 3
+    assert len(dataset) == 6
 
 
 def test_main_builds_the_dataset_under_data_root(
@@ -561,7 +622,7 @@ def test_main_builds_the_dataset_under_data_root(
             calls.append(kwargs)
 
         def __len__(self) -> int:
-            return 127
+            return 130
 
         def __getitem__(self, index: int) -> str:
             return f"item[{index}]"
@@ -569,7 +630,7 @@ def test_main_builds_the_dataset_under_data_root(
     monkeypatch.setattr(m, "MetaboliteDaSilveira2014Dataset", _Dataset)
     m.main()
     assert calls == [{"root": f"{tmp_path}/data/torchcell/metabolite_dasilveira2014"}]
-    assert capsys.readouterr().out == "len = 127\nitem[0]\n"
+    assert capsys.readouterr().out == "len = 130\nitem[0]\n"
 
 
 def test_an_ambiguous_standard_name_is_stored_with_the_orf_its_row_gives(
@@ -583,10 +644,79 @@ def test_an_ambiguous_standard_name_is_stored_with_the_orf_its_row_gives(
     wt = [row for row in _QUANT_ROWS if row[0] in {"Y7092", "Y7220", "BY4741"}]
     rows = [*wt, ["YKL126W", "YPK1", 1.5, 2.5, 3.5], ["YJL093C", "YPK1", 1, 1, 1]]
     dataset = m.MetaboliteDaSilveira2014Dataset(root=str(_root(tmp_path, rows)))
-    assert dataset[0]["experiment"] == _experiment(
+    assert dataset[3]["experiment"] == _experiment(
         "YKL126W", "YPK1", {"PC 32:1": 1.5, "PE 34:2": 2.5, "Erg": 3.5}
     )
-    assert dataset[1]["experiment"] == _experiment(
+    assert dataset[4]["experiment"] == _experiment(
         "YJL093C", "YPK1", {"PC 32:1": 1.0, "PE 34:2": 1.0, "Erg": 1.0}
     )
     dataset.close_lmdb()
+
+
+def test_an_all_blank_wild_type_row_is_refused_before_anything_is_written(
+    tmp_path: Path,
+) -> None:
+    """A wild-type row is a record now, so a WT row with every lipid blank is refused by
+    name like a mutant row (it would be an empty phenotype). The pinned Table S4 has 0
+    such rows of 3.
+    """
+    rows: list[list[Any]] = [
+        ["Y7092", "WT1", 10, 20, 4],
+        ["Y7220", "WT2", None, None, None],
+        ["BY4741", "WT3", 14, 22, 7],
+        ["YAL001C", "TFC3", 1.5, 2.5, 3.5],
+    ]
+    _refused_twice(
+        _root(tmp_path, rows),
+        "da Silveira: wild-type row 'Y7220' has every lipid blank",
+    )
+
+
+_MIRROR = Path(
+    os.environ["DATA_ROOT"], "torchcell-library", m._LIBRARY_CITATION_KEY, "data"
+)
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not (_MIRROR / m.DATA_FILENAME).exists(),
+    reason=f"requires the da Silveira 2014 mirror Table S4 at {_MIRROR}",
+)
+def test_the_released_table_s4_builds_all_130_rows(tmp_path: Path) -> None:
+    """The pinned Table S4 (sha256 91409229...) builds 130 records, one per ``Quant``
+    row: 127 mutants and the 3 wild types at release rows 116-118 (``Y7092``,
+    ``Y7220``, ``BY4741``), which measure 147, 143 and 144 lipids. The mean over the
+    three wild-type records equals the reference every record carries, lipid by lipid.
+    """
+    root = tmp_path / "metabolite_dasilveira2014"
+    (root / "raw").mkdir(parents=True)
+    for name in (m.DATA_FILENAME, m.CHEBI_FILENAME):
+        shutil.copyfile(_MIRROR / name, root / "raw" / name)
+    built = m.MetaboliteDaSilveira2014Dataset(root=str(root))
+    assert len(built) == 130
+    wild = [
+        i
+        for i in range(len(built))
+        if not built[i]["experiment"]["genotype"]["perturbations"]
+    ]
+    assert wild == [116, 117, 118]
+    assert [built[i]["reference"]["genome_reference"]["strain"] for i in wild] == [
+        "Y7092",
+        "Y7220",
+        "BY4741",
+    ]
+    levels = [built[i]["experiment"]["phenotype"]["metabolite_level"] for i in wild]
+    assert [len(level) for level in levels] == [147, 143, 144]
+    summary = pd.read_csv(Path(built.root) / "preprocess" / "data.csv")
+    assert summary["strain"].value_counts().to_dict() == {
+        "BY4741": 128,
+        "Y7092": 1,
+        "Y7220": 1,
+    }
+    assert summary["orf"].notna().sum() == 127
+    reference = built[116]["reference"]["phenotype_reference"]["metabolite_level"]
+    assert len(reference) == 147
+    for lipid, value in reference.items():
+        measured = [level[lipid] for level in levels if lipid in level]
+        assert sum(measured) / len(measured) == pytest.approx(value, rel=1e-12)
+    built.close_lmdb()

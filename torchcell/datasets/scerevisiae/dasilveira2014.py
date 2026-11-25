@@ -24,21 +24,31 @@ daSystematicLipidomicAnalysis2014/data/``):
   Copied for provenance; its lipid-name -> ChEBI map is written to
   ``preprocess/lipid_chebi.csv`` for a deferred follow-up (see target ids below).
 
-Maps to ``MetaboliteExperiment`` / ``MetabolitePhenotype`` (one record per mutant):
+Maps to ``MetaboliteExperiment`` / ``MetabolitePhenotype``, ONE RECORD PER RELEASED
+``Quant`` ROW (130: 127 mutants and 3 wild types, in release row order):
 ``metabolite_level = {lipid_species_name -> relative abundance (a.u.)}`` with
 ``measurement_type = "lipidomics_ms_relative_abundance_au"``. The value is an ARBITRARY
 relative abundance, NOT a concentration.
 
-WILD-TYPE REFERENCE (deviates from a first-pass "no WT row" assumption -- verified against
-the data): the ``Quant`` sheet's 130 rows are NOT all mutants. THREE rows are wild-type
-controls -- ``Y7092`` (WT1), ``Y7220`` (WT2), ``BY4741`` (WT3) -- which are strain
-identifiers, not ORFs, so they cannot be deletion records. Excluding them leaves 127
-mutant rows (matching the paper's screened-mutant count), and their per-lipid MEAN is used
-as the measured WT baseline (like the Zelezniak metabolome loader's measured WT). This is
-strictly more faithful than a population mean over mutants: there is an actual measured WT.
-Each record's reference is RESTRICTED to the lipids that strain measured (and the WT
-measured), keeping reference keys a subset of the experiment's (WT covers all 147 lipids
-collectively; every mutant overlaps WT by >=125 lipids). ``reference_centered=False``.
+WILD-TYPE ROWS ARE RECORDS (#1171, 2026-11-24). THREE ``Quant`` rows are wild-type
+controls, ``Y7092`` (WT1), ``Y7220`` (WT2) and ``BY4741`` (WT3): strain identifiers, not
+ORFs, and three DIFFERENT strains, not three replicates of one. Each is stored as its own
+record with an EMPTY genotype, and its reference genome names the strain its row gives
+(``ReferenceGenome.strain = "Y7092"`` and so on), which is what tells the three apart; the
+mutants keep ``BY4741``. Before 2026-11-24 the three rows were read only into the
+reference and the store held 127 records. The release prints no genotype for any of the
+three (Table S1 lists them as ``Y7092 WT1``, ``Y7220 WT2``, ``BY4741 WT3`` with blank
+description cells), so no background allele is asserted. All three pin S288C R64 like the
+mutants: an empty genotype names no identifier to write against R64, and Y7092 is an SGA
+background on BY markers (Kuzmin 2016 mirror, "MATα can1Δ::STE2pr-Sp_his5 lyp1Δ ura3Δ0
+leu2Δ0 his3Δ1 met15Δ0"); Y7220's genotype is in no mirrored source (unverified).
+
+WILD-TYPE REFERENCE: each record's ``phenotype_reference`` is the per-lipid MEAN over the
+three wild-type rows, a loader-computed summary with ``replicate_id = None`` whose
+``n_replicates`` per lipid is the number of wild-type rows measuring it (1-3); the three
+rows it summarizes are records themselves. It is RESTRICTED to the lipids the record
+measured (WT covers all 147 lipids collectively; every mutant overlaps WT by >=125
+lipids), keeping reference keys a subset of the experiment's. ``reference_centered=False``.
 
 Missing values are NaN in the ``Quant`` sheet (1038 cells) and are DROPPED per strain, so
 each record carries only the lipids that strain measured (125-147 lipids/strain).
@@ -46,12 +56,30 @@ each record carries only the lipids that strain measured (125-147 lipids/strain)
 Replicate structure (sourced, Methods "Lipid extraction and analysis", MRM-MS paragraph):
 "Two independent biological replicates were analyzed, each of which comprised up to six
 technical replicates." (also Results: "biological duplicates with up to six technical
-replicates per biological replicate"). The ``Quant`` value is a single aggregated relative
-quantity per mutant x lipid (batch-adjusted/normalized across the extraction batch), with
-no released per-strain SE, so ``n_replicates = 2`` per lipid (the INDEPENDENT biological-
-replicate unit; the up-to-six technical replicates are not independent) and
-``metabolite_level_se = None``. The WT reference's ``n_replicates`` is the number of the
-three WT control rows measuring each lipid.
+replicates per biological replicate"). The Supplemental Information (PMC open-data
+``supp_E14-03-0851v1_CombinedSupMats.pdf``, sha256
+``f5b2afec39d23135b54a64e3a661ed618a063ab7bff4ad55abf0ca10b27fc4f4``, page 36, "MS data
+acquisition and processing"; not in the library mirror) states the combination:
+"For each biological replicate (BR), the MS analysis was done up to six sequential
+repetitions, herein called technical replicates (TR). ... we computed the median of the
+values obtained in the TRs for each lipid in each sample", then a batch correction whose
+"corrected values are herein referred as “Quant”". A biological replicate is an
+independent culture from an isolated colony ("isolated colonies were used for the two
+independent cell cultures"). Table S4 releases ONE ``Quant`` value per strain x lipid, an
+aggregate over the two cultures; the per-culture values are released in no SI table, so
+the records stay aggregate-only (``replicate_id = None``), as released. ``n_replicates =
+2`` per lipid is the biological-replicate count (the TR median is the technical level
+combined inside each culture), and ``metabolite_level_se = None`` (no per-strain SE is
+released; the ``SSMD`` sheet is a hit score, not an SE). For the three wild-type rows
+``n_replicates = 2`` is the conservative lower end: the SI states "Each batch contained a
+wild-type strain and up to 23 mutants" over "12 batches", so a wild-type row may pool more
+than two cultures, and the release does not say how many.
+
+Author withdrawals (the only allowed drop, and NOT a loader drop): the SI's biological-
+replicate QC, "A cutoff r=0.7 was established and two strains were excluded from the
+analysis (cla4Δ and ptc7Δ)." (same PDF, page 37). Table S1 lists 129 mutants (CLA4 =
+YNL298W and PTC7 = YHR076W included) and Table S4 releases the other 127, so the paper's
+"129 mutants" and Table S4's 127 rows agree; the loader drops nothing.
 
 Background strain (sourced): Methods "Strains" defer the strain list to Supplemental Table
 S1, which states "Kinase and phosphatase knockout collection was obtained from Claudine
@@ -85,8 +113,9 @@ holds as ambiguous (``YKL126W | YPK1``, ``YHR030C | SLT2``), which is the releas
 pairing the record now carries without a pin.
 
 Counting note: the paper prose reports 129 screened mutants; the released ``Quant`` matrix
-has 127 mutant rows (+ 3 WT controls). We keep all 127 released mutant rows and flag the
-129-vs-127 discrepancy.
+has 127 mutant rows (+ 3 WT controls). The two missing mutants are the authors' own QC
+exclusions (cla4Δ, ptc7Δ; see "Author withdrawals" above), so the counts are reconciled
+and every released row is stored: 130 records.
 """
 
 import logging
@@ -145,9 +174,13 @@ MEASUREMENT_TYPE = "lipidomics_ms_relative_abundance_au"
 _LIBRARY_CITATION_KEY = "daSystematicLipidomicAnalysis2014"
 _SYSTEMATIC_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$")
 
-# Wild-type control rows in the Quant sheet: strain ids (not ORFs), used as the measured
-# WT reference, NOT as deletion records.
+# Wild-type control rows in the Quant sheet: strain ids (not ORFs). Each is a record with
+# an empty genotype against the strain its row names, and the three are summarized into
+# the measured WT reference.
 _WT_ROW_IDS = {"Y7092", "Y7220", "BY4741"}
+
+# The deletion collection's background (see the module docstring).
+_MUTANT_BACKGROUND = "BY4741"
 
 _QUANT_SHEET = "Quant"
 _SYS_COL = "Systematic Name"
@@ -287,12 +320,13 @@ library YPD root's (the yeast extract and peptone amounts are swapped), so it do
 share ``YPD_LIQUID``'s ``media_identity``."""
 
 # Biological-replicate count per lipid (sourced: "Two independent biological replicates").
+# For a wild-type row it is the conservative lower end (a WT row may pool batches).
 _N_BIOLOGICAL_REPLICATES = 2
 
 
 @register_dataset
 class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
-    """MS lipidome of the yeast kinase/phosphatase deletion collection (127 mutants)."""
+    """MS lipidome of the kinase/phosphatase deletion collection (127 mutants, 3 WT)."""
 
     organism = Organism.scerevisiae
 
@@ -363,15 +397,17 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Parse the Quant sheet into per-mutant Metabolite experiments and write LMDB.
+        """Parse every Quant row into one Metabolite experiment and write LMDB.
 
-        Every record is built and every refusal raised BEFORE ``lipid_chebi.csv``,
-        ``data.csv`` or the store is written, so a refused matrix writes nothing under
-        ``preprocess/`` or ``processed/``. Refusals (each 0 in the pinned Table S4,
-        2026.10.01: 147 lipids, 127 mutant rows): a lipid that no WT control row
-        measured (it would have no reference value), two mutant rows naming one ORF, and
-        a mutant row with every lipid blank. No row is refused or dropped for its gene
-        name: each is stored under the names the release gives it.
+        Records follow the release row order; a wild-type row is a record with an empty
+        genotype against the strain it names. Every record is built and every refusal
+        raised BEFORE ``lipid_chebi.csv``, ``data.csv`` or the store is written, so a
+        refused matrix writes nothing under ``preprocess/`` or ``processed/``. Refusals
+        (each 0 in the pinned Table S4, 2026.10.01: 147 lipids, 127 mutant rows): a
+        lipid that no WT control row measured (it would have no reference value), two
+        mutant rows naming one ORF, and a row with every lipid blank. No row is refused
+        or dropped for its gene name: each is stored under the names the release gives
+        it.
         """
         verify_raw_files(
             self.raw_dir, {DATA_FILENAME: DATA_SHA256, CHEBI_FILENAME: CHEBI_SHA256}
@@ -410,26 +446,49 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
             len(chebi_missing),
         )
 
-        mut_df = df[~df[_SYS_COL].isin(_WT_ROW_IDS)]
         seen: set[str] = set()
         rows: list[dict[str, Any]] = []
-        for _, row in mut_df.iterrows():
-            orf = str(row[_SYS_COL]).strip().upper()
+        for _, row in df.iterrows():
+            row_id = str(row[_SYS_COL]).strip()
+            std = row[_STD_COL]
+            level = {c: float(row[c]) for c in lipid_cols if pd.notna(row[c])}
+            if row[_SYS_COL] in _WT_ROW_IDS:
+                if not level:
+                    raise RuntimeError(
+                        f"da Silveira: wild-type row {row_id!r} has every lipid blank"
+                    )
+                # A wild type: no perturbation, against the strain its row names.
+                rows.append(
+                    {
+                        "orf": None,
+                        "gene": str(std).strip(),
+                        "strain": row_id,
+                        "level": level,
+                    }
+                )
+                continue
+            orf = row_id.upper()
             if orf in seen:
                 raise RuntimeError(f"da Silveira: two mutant rows name {orf!r}")
             seen.add(orf)
-            std = row[_STD_COL]
             gene_name = str(std).strip() if pd.notna(std) else orf
-            level = {c: float(row[c]) for c in lipid_cols if pd.notna(row[c])}
             if not level:
                 raise RuntimeError(
                     f"da Silveira: mutant row {orf!r} has every lipid blank"
                 )
-            rows.append({"orf": orf, "gene": gene_name, "level": level})
+            rows.append(
+                {
+                    "orf": orf,
+                    "gene": gene_name,
+                    "strain": _MUTANT_BACKGROUND,
+                    "level": level,
+                }
+            )
         log.info(
-            "da Silveira: %d mutant records, %d WT control rows -> measured reference "
-            "(%d lipids)",
-            len(rows),
+            "da Silveira: %d mutant records, %d wild-type records; the %d WT rows -> "
+            "measured reference (%d lipids)",
+            len(seen),
+            len(rows) - len(seen),
             len(wt_df),
             len(self._wt_level),
         )
@@ -443,7 +502,12 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
         ).to_csv(osp.join(self.preprocess_dir, "lipid_chebi.csv"), index=False)
         pd.DataFrame(
             [
-                {"orf": r["orf"], "gene": r["gene"], "n_lipids": len(r["level"])}
+                {
+                    "orf": r["orf"],
+                    "gene": r["gene"],
+                    "strain": r["strain"],
+                    "n_lipids": len(r["level"]),
+                }
                 for r in rows
             ]
         ).to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
@@ -473,17 +537,22 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
     def create_experiment(  # type: ignore[override]
         self, row: dict[str, Any]
     ) -> tuple[MetaboliteExperiment, MetaboliteExperimentReference, Publication]:
-        """Build the Metabolite experiment/reference/publication for one mutant."""
-        # BY4741 nonessential kinase/phosphatase KanMX deletion collection (see docstring:
-        # BY4741 appears as a WT control row in the released matrix).
+        """Build the Metabolite experiment/reference/publication for one Quant row.
+
+        A mutant row is one KanMX deletion against BY4741 (the collection's background;
+        BY4741 appears as a WT control row in the released matrix). A wild-type row
+        (``orf`` None) has an empty genotype against the strain its row names.
+        """
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae",
-            strain="BY4741",
+            strain=row["strain"],
             assembly_set=SGD_S288C_R64,
             assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
         genotype = Genotype(
-            perturbations=[
+            perturbations=[]
+            if row["orf"] is None
+            else [
                 KanMxDeletionPerturbation(
                     systematic_gene_name=row["orf"], perturbed_gene_name=row["gene"]
                 )

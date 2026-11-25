@@ -738,12 +738,12 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "metabolite_dasilveira2014": {
         "root": "data/torchcell/metabolite_dasilveira2014",
-        "expected_count": 127,  # 130 Quant rows - 3 WT controls (measured reference)
+        "expected_count": 130,  # every Quant row: 127 mutants + 3 WT strains (#1171)
         "reference_centered": False,  # relative abundance (a.u.) vs measured WT baseline
         "provenance": Provenance(
             source_uri="https://doi.org/10.1091/mbc.E14-03-0851",
             citation_key="daSystematicLipidomicAnalysis2014",
-            method="MS lipidomics relative abundance (a.u.), Table S4 Quant sheet; measured WT baseline from 3 WT control rows",
+            method="MS lipidomics relative abundance (a.u.), Table S4 Quant sheet, one record per row (3 WT rows = empty-genotype records); measured WT baseline = mean of the 3 WT rows",
             page="library mirror daSystematicLipidomicAnalysis2014 TableS4 Quant sheet",
         ),
     },

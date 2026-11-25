@@ -134,11 +134,21 @@ def _l1_orf_uniqueness(
     apart by the replicate they state and none is a duplicate of another. It is read
     with ``.get`` and joins only when set, so a dataset whose records state one
     aggregate per strain keys exactly as before.
+
+    The reference genome's ``strain`` joins the key too, on the #1057 precedent in
+    ``environment_response``: a release that measures several wild-type strains (da
+    Silveira 2014's ``Y7092``, ``Y7220`` and ``BY4741`` rows) stores records whose
+    genotypes are all empty, and what tells the strains apart is the strain the
+    reference genome names. A dataset whose records share one reference strain keys on
+    the strain plus a constant, so its verdict and counts are unchanged.
     """
     seen: dict[tuple[Any, ...], int] = {}
     per_replicate = False
     for rec in records:
-        sig: tuple[Any, ...] = _genotype_signature(rec["experiment"])
+        sig: tuple[Any, ...] = (
+            _genotype_signature(rec["experiment"]),
+            ("strain", rec["reference"]["genome_reference"]["strain"]),
+        )
         replicate_id = rec["experiment"]["phenotype"].get("replicate_id")
         if replicate_id is not None:
             sig = (sig, ("replicate_id", str(replicate_id)))

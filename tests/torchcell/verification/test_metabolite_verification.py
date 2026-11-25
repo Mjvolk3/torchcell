@@ -555,3 +555,34 @@ def test_replicate_id_joins_the_uniqueness_key() -> None:
     }
     aggregate = _l1_orf_uniqueness([_record("YAL001C", 1.0), _record("YAL002W", 2.0)])
     assert aggregate.message == "2 unique strains (deletion sets), one record each"
+
+
+def test_the_reference_strain_joins_the_uniqueness_key() -> None:
+    """Da Silveira 2014's three wild-type rows are three strains, empty genotypes;
+    the reference genome's ``strain`` tells them apart, so three records naming three
+    strains are three keys and L1 passes. Two empty-genotype records naming ONE strain
+    are still a duplicate, and a dataset with one reference strain keys as before.
+    """
+    from torchcell.verification.metabolite import _l1_orf_uniqueness
+
+    def wild_type(strain: str, level: float) -> dict[str, Any]:
+        record = _record("YAL001C", level)
+        record["experiment"]["genotype"]["perturbations"] = []
+        record["reference"]["genome_reference"]["strain"] = strain
+        return record
+
+    strains = [wild_type(s, 1.0) for s in ("Y7092", "Y7220", "BY4741")]
+    passed = _l1_orf_uniqueness([*strains, _record("YAL001C", 2.0)])
+    assert passed.passed is True
+    assert passed.details == {
+        "n_strains": 4,
+        "n_duplicated": 0,
+        "n_duplicate_records": 0,
+    }
+    repeated = _l1_orf_uniqueness([*strains, wild_type("Y7092", 3.0)])
+    assert repeated.passed is False
+    assert repeated.details == {
+        "n_strains": 3,
+        "n_duplicated": 1,
+        "n_duplicate_records": 1,
+    }

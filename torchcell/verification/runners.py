@@ -887,19 +887,21 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
             page="Mol Syst Biol 13:907; S-BSST5 zscore_neg.tsv, zscore_pos.tsv",
         ),
     },
-    # The paired-modality chemostat metabolome. 24 BW25113 Keio disruptants at 0.2 h-1
-    # plus the wild type at 0.1, 0.4, 0.5 and 0.7 h-1; the reference is the wild-type
+    # The paired-modality chemostat metabolome, one record per culture: 24 BW25113 Keio
+    # disruptants at 0.2 h-1 (pfkA twice), the wild type at 0.1, 0.4, 0.5 and 0.7 h-1
+    # and the five 0.2 h-1 wild-type cultures; the reference is the wild-type
     # 0.2 h-1 control of each record's OWN measurement series, restricted to the
     # metabolites that record also detected, so it is an absolute baseline and not
     # centered on 0. L4 is the BW25113 locus universe, read off the records' own
     # assembly pin.
     "metabolome_ishii2007": {
         "root": "data/torchcell/metabolome_ishii2007",
-        # 35 Metabolite columns - 1 empty (GR04x) - 5 reference - 1 duplicate pfkA
-        # culture = 28 kept records: 24 disruptants at 0.2 h-1 plus the wild type at
-        # 0.1, 0.4, 0.5 and 0.7 h-1, which Environment.dilution_rate_per_hour (#753)
-        # keeps as four distinct environments.
-        "expected_count": 28,
+        # 35 Metabolite columns - 1 empty (GR04x) = 34 records, one per culture
+        # (#1178): 24 disruptants at 0.2 h-1 plus the second pfkA culture KO05x, the
+        # wild type at 0.1, 0.4, 0.5 and 0.7 h-1 (Environment.dilution_rate_per_hour,
+        # #753), and the five 0.2 h-1 wild-type cultures RF02-RF06, told apart by
+        # replicate_id.
+        "expected_count": 34,
         "reference_centered": False,
         # The four wild-type records share one empty genotype and differ only in
         # dilution rate, so L1 uniqueness keys on (strain, environment).

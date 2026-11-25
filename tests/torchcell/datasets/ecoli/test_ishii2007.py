@@ -14,19 +14,23 @@ colours and the protocol split is exercised rather than stubbed.
 
 The synthetic panel is two disruptants over the real ``EcoliK12BW25113Genome`` on the
 synthetic BW25113 assembly of ``_bacterial_fixtures`` (``thrA`` on BW25113_0002,
-``hokC`` on BW25113_4412), with ``thrA`` grown twice so the duplicate-culture rule and
-its named preference are both live, a GR column with data so the dilution-rate RECORD is
-live, a second GR column that is empty so the no-data drop is live, and a ``gpmG``
-protein row that carries nothing so the retired-symbol check is live:
+``hokC`` on BW25113_4412), with ``thrA`` grown twice so two cultures of one condition are
+two records, a GR column with data so the dilution-rate RECORD is live, a second GR
+column that is empty so the no-data drop is live, and a ``gpmG`` protein row that
+carries nothing so the retired-symbol check is live. Every culture is a record
+(2026.11.24, #1178), the reference cultures included:
 
-    sample   name        kind           series   fate
+    sample   name        kind           series   fate (metabolome)
     KO01     hokC        disruptant     1        record at 0.2 h-1, reference RF02
-    KO05x    thrA_1      disruptant     1        dropped, duplicate_culture (KO05 kept)
+    KO05x    thrA_1      disruptant     1        record at 0.2 h-1, reference RF02
     KO05     thrA_2      disruptant     2        record at 0.2 h-1, reference RF03
     GR01     WT, 0.1h-1  dilution_rate  2        record at 0.1 h-1, reference RF03
-    GR04x    WT, 0.7h-1  dilution_rate  -        dropped, no_data_in_this_layer
-    RF02     WT(Mar)     reference      1        reference of series 1, 0.2 h-1
-    RF03     WT(Jun)     reference      2        reference of series 2, 0.2 h-1
+    GR04x    WT, 0.7h-1  dilution_rate  -        not a record, no_data_in_this_layer
+    RF02     WT(Mar)     reference      1        record at 0.2 h-1 AND series 1 reference
+    RF03     WT(Jun)     reference      2        record at 0.2 h-1 AND series 2 reference
+
+The proteome has no ``KO05x`` column and the flux arm leaves it blank, so those arms
+hold five records each (the flux arm's references are ``RF03`` and ``RF04``).
 
 The fake also carries the ``IDs`` sheet, because the dilution rate of a ``GR`` column is
 read off its label and cross-checked against that roster, and the synthetic arm is
@@ -191,6 +195,7 @@ def _ids_sheet() -> FakeSheet:
         ["", "", "", ""],
         ["", "RF02", "WT, 0.2h-1", "38442"],
         ["", "RF03", "WT, 0.2h-1", "38526"],
+        ["", "RF04", "WT, 0.2h-1", "38554"],
     ]
     return FakeSheet(m.SHEET_IDS, rows)
 
@@ -334,8 +339,18 @@ def gc_ms_book() -> FakeBook:
             FakeSheet("thrA_2", [["Ala", "M-57", 0.6, 0.4]]),
             # Named by SAMPLE ID, as the real workbook names its GR and RF sheets.
             FakeSheet("GR01", [["Ala", "M-57", 0.5, 0.5]]),
+            FakeSheet("RF03", [["Ala", "M-57", 0.4, 0.6]]),
+            FakeSheet("RF04", [["Ala", "M-57", 0.3, 0.7]]),
         ]
     )
+
+
+#: Records of the synthetic build, one per culture with data in that arm's sheet.
+SYNTHETIC_RECORDS = {
+    "metabolome_ishii2007": 6,
+    "proteome_ishii2007": 5,
+    "flux_ishii2007": 5,
+}
 
 
 @pytest.fixture
@@ -373,7 +388,7 @@ def synthetic(
     monkeypatch.setattr(m, "DISRUPTANT_SYMBOLS", SYNTHETIC_DISRUPTANTS)
     monkeypatch.setattr(m, "SUFFIXED_SAMPLE_NAMES", frozenset({"thrA_1", "thrA_2"}))
     monkeypatch.setattr(m, "DILUTION_RATE_ARM", SYNTHETIC_DILUTION_RATE_ARM)
-    monkeypatch.setattr(m, "EXPECTED_RECORDS", dict.fromkeys(m.EXPECTED_RECORDS, 3))
+    monkeypatch.setattr(m, "EXPECTED_RECORDS", dict(SYNTHETIC_RECORDS))
     monkeypatch.setattr(m, "EXPECTED_PROTEIN_KEYS_WITHOUT_REFERENCE", 0)
     monkeypatch.setattr(m, "FLUX_REFERENCE_SAMPLE", "RF03")
     monkeypatch.setattr(m, "assembly_reference", lambda strain, **_: REFERENCE)
@@ -445,6 +460,7 @@ def test_read_ids_roster_reads_the_releases_own_sample_names() -> None:
         "GR04x": "WT, 0.7h-1",
         "RF02": "WT, 0.2h-1",
         "RF03": "WT, 0.2h-1",
+        "RF04": "WT, 0.2h-1",
     }
 
 
@@ -521,8 +537,48 @@ def test_culture_identity_separates_a_genotype_from_its_dilution_rate(
     assert m.culture_identity(by_id["KO05x"], rates) == ("thrA", 0.2)
     assert m.culture_identity(by_id["KO05"], rates) == ("thrA", 0.2)
     assert m.culture_identity(by_id["GR01"], rates) == ("", 0.1)
-    assert m.culture_identity(by_id["RF03"], rates) == ("WT(Jun)", 0.2)
+    # A reference culture is the wild type at 0.2 h-1, whatever its label says.
+    assert m.culture_identity(by_id["RF03"], rates) == ("", 0.2)
+    assert m.culture_identity(by_id["RF02"], rates) == ("", 0.2)
     assert m.culture_dilution_rate(by_id["GR04x"], rates) == 0.7
+
+
+def test_read_ids_culture_dates_reads_every_rostered_culture() -> None:
+    assert m.read_ids_culture_dates(quantitative_book()) == {
+        "KO01": "38512",
+        "KO05x": "38624",
+        "KO05": "38652",
+        "GR01": "38645",
+        "GR04x": "38693",
+        "RF02": "38442",
+        "RF03": "38526",
+        "RF04": "38554",
+    }
+
+
+def test_replicate_cultures_are_shown_distinct_by_their_culture_dates(
+    synthetic_constants: None,
+) -> None:
+    """Two cultures of one condition are two records only when the roster dates both."""
+    book = quantitative_book()
+    sheet = book.sheet_by_name(m.SHEET_METABOLITE)
+    columns = m.read_sample_columns(sheet, paired=False, series_row=1, name_row=2)
+    kept, _ = m.classify_columns(sheet, columns, [3, 4, 5], dataset="d")
+    assert m.check_replicate_cultures_are_distinct(book, kept, {"GR01": 0.1}) == {
+        "thrA at 0.2 h-1": ["KO05x", "KO05"],
+        "wild type at 0.2 h-1": ["RF02", "RF03"],
+    }
+    book.sheet_by_name(m.SHEET_IDS)._rows[4][3] = "38652"
+    with pytest.raises(RuntimeError, match="share a Culture Date"):
+        m.check_replicate_cultures_are_distinct(book, kept, {"GR01": 0.1})
+    book = quantitative_book()
+    book.sheet_by_name(m.SHEET_IDS)._rows[11][3] = ""
+    with pytest.raises(RuntimeError, match=r"\['RF03'\] have no Culture Date"):
+        m.check_replicate_cultures_are_distinct(book, kept, {"GR01": 0.1})
+    with pytest.raises(RuntimeError, match="fills two kept columns"):
+        m.check_replicate_cultures_are_distinct(
+            quantitative_book(), [*kept, kept[0]], {"GR01": 0.1}
+        )
 
 
 def test_wild_type_genotype_carries_no_perturbation() -> None:
@@ -532,16 +588,29 @@ def test_wild_type_genotype_carries_no_perturbation() -> None:
 
 
 def test_retired_drop_rules_records_that_culture_not_batch_is_gone() -> None:
-    """The rule is retired, not narrowed: the build still says what it used to drop."""
-    (retired,) = m.RETIRED_DROP_RULES
-    assert retired["rule"] == "culture_not_batch"
-    assert retired["retired_by"] == "Environment.dilution_rate_per_hour (#753)"
-    assert "GR01-GR04" in retired["was_dropping"]
-    assert not hasattr(m, "DROP_CULTURE_NOT_BATCH")
-    assert [rule.rule for rule in (m.DROP_NO_DATA, m.DROP_REFERENCE)] == [
+    """Retired rules are named, not deleted: the build still says what they dropped."""
+    not_batch, reference, duplicate = m.RETIRED_DROP_RULES
+    assert not_batch["rule"] == "culture_not_batch"
+    assert not_batch["retired_by"] == "Environment.dilution_rate_per_hour (#753)"
+    assert "GR01-GR04" in not_batch["was_dropping"]
+    assert reference["rule"] == "reference_sample"
+    assert "RF02-RF06" in reference["was_dropping"]
+    assert duplicate["rule"] == "duplicate_culture_same_genotype_and_environment"
+    assert "KO05x" in duplicate["was_dropping"]
+    for rule in (reference, duplicate):
+        assert rule["retired_by"].startswith("one record per biological replicate")
+    for gone in (
+        "DROP_CULTURE_NOT_BATCH",
+        "DROP_REFERENCE",
+        "DROP_DUPLICATE_CULTURE",
+        "PREFERRED_DUPLICATE_SAMPLES",
+    ):
+        assert not hasattr(m, gone), gone
+    assert [rule.rule for rule in (m.DROP_NO_DATA, m.DROP_REPEAT_MEASUREMENT)] == [
         "no_data_in_this_layer",
-        "reference_sample",
+        "culture_measured_in_several_series",
     ]
+    assert m.DROP_REPEAT_MEASUREMENT.needed_addition is not None
 
 
 def test_normalize_series_strips_the_unexplained_marker() -> None:
@@ -596,31 +665,36 @@ def test_metabolite_keys_refuses_a_second_repeated_name() -> None:
 def test_classify_columns_gives_every_column_exactly_one_reason(
     synthetic_constants: None,
 ) -> None:
-    """The order is emptiness, reference, duplicate culture; a GR column is a record."""
+    """Emptiness is the only reason here: every other culture is a record.
+
+    Both thrA cultures are records (two biological replicates of one condition), and so
+    are both reference cultures, which also stay the series references.
+    """
     sheet = _metabolite_sheet()
     columns = m.read_sample_columns(sheet, paired=False, series_row=1, name_row=2)
-    kept, ledger = m.classify_columns(
-        sheet, columns, [3, 4, 5], dataset="d", dilution_rates={"GR01": 0.1}
-    )
-    assert [column.sample_id for column in kept] == ["KO01", "KO05", "GR01"]
+    kept, ledger = m.classify_columns(sheet, columns, [3, 4, 5], dataset="d")
+    assert [column.sample_id for column in kept] == [
+        "KO01",
+        "KO05x",
+        "KO05",
+        "GR01",
+        "RF02",
+        "RF03",
+    ]
     assert {rule.rule: rule.sample_ids for rule in ledger.rules} == {
         "no_data_in_this_layer": ("GR04x",),
-        "reference_sample": ("RF02", "RF03"),
-        "duplicate_culture_same_genotype_and_environment": ("KO05x",),
+        "culture_measured_in_several_series": (),
     }
-    assert (ledger.sample_columns, ledger.kept_records) == (7, 3)
+    assert (ledger.sample_columns, ledger.kept_records) == (7, 6)
     ledger.check()
 
 
-def test_classify_columns_keeps_gr04_of_the_two_cultures_at_0_7(
-    synthetic_constants: None,
-) -> None:
-    """``GR04`` and ``GR04x`` are two wild-type cultures at ONE rate, so one is a record.
+def test_classify_columns_keeps_both_cultures_at_0_7() -> None:
+    """``GR04`` and ``GR04x`` are two wild-type cultures at ONE rate, so both are records.
 
     The release grew the 0.7 h-1 wild type twice ("Used for 2nd measurement of mRNAs.",
-    Culture Date 38693 against 38631). In the three served sheets ``GR04x`` is empty and
-    never reaches this rule; in the unserved mRNA layer both carry data, and ``GR04`` is
-    the named keeper.
+    Culture Date 38693 against 38631). In the three served sheets ``GR04x`` is empty; in
+    the unserved mRNA layer both carry data, and neither is dropped for the other.
     """
     sheet = FakeSheet(
         "mRNA",
@@ -632,28 +706,40 @@ def test_classify_columns_keeps_gr04_of_the_two_cultures_at_0_7(
         ],
     )
     columns = m.read_sample_columns(sheet, paired=False, series_row=1, name_row=2)
-    kept, ledger = m.classify_columns(
-        sheet, columns, [3], dataset="d", dilution_rates={"GR04": 0.7, "GR04x": 0.7}
+    kept, ledger = m.classify_columns(sheet, columns, [3], dataset="d")
+    assert [column.sample_id for column in kept] == ["GR04", "GR04x"]
+    assert ledger.kept_records == 2
+
+
+def test_classify_columns_holds_a_culture_measured_in_several_series() -> None:
+    """The Protein sheet's RF03 fills five series columns under one Sample ID.
+
+    Every one of its columns is held under ``culture_measured_in_several_series`` (they
+    stay the series references), and a culture measured in one column is a record.
+    """
+    sheet = FakeSheet(
+        "Protein",
+        [
+            ["Sample ID", "RF02", "", "RF03", "", "RF03", "", "KO01", ""],
+            ["Series ID", 1.0, "", 2.0, "", 3.0, "", 1.0, ""],
+            ["", "WT(Mar)", "", "WT(Jun)", "", "WT(Jun)", "", "hokC", ""],
+            ["", "Conc", "CV", "Conc", "CV", "Conc", "CV", "Conc", "CV"],
+            ["thrA", 1.0, 5.0, 2.0, 5.0, 3.0, 5.0, 4.0, 5.0],
+        ],
     )
-    assert [column.sample_id for column in kept] == ["GR04"]
-    assert {rule.rule: rule.sample_ids for rule in ledger.rules}[
-        "duplicate_culture_same_genotype_and_environment"
-    ] == ("GR04x",)
-    assert m.PREFERRED_DUPLICATE_SAMPLES == frozenset({"KO05", "GR04"})
-
-
-def test_classify_columns_refuses_a_duplicate_with_no_named_preference(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(m, "SUFFIXED_SAMPLE_NAMES", frozenset({"thrA_1", "thrA_2"}))
-    monkeypatch.setattr(m, "EXPECTED_PROTOCOL_ROWS", PROTOCOL_ROWS)
-    monkeypatch.setattr(m, "PREFERRED_DUPLICATE_SAMPLES", frozenset())
-    sheet = _metabolite_sheet()
-    columns = m.read_sample_columns(sheet, paired=False, series_row=1, name_row=2)
-    with pytest.raises(RuntimeError, match="PREFERRED_DUPLICATE_SAMPLES"):
-        m.classify_columns(
-            sheet, columns, [3, 4, 5], dataset="d", dilution_rates={"GR01": 0.1}
-        )
+    columns = m.read_sample_columns(sheet, paired=True, series_row=1, name_row=2)
+    kept, ledger = m.classify_columns(sheet, columns, [4], dataset="d")
+    assert [column.label for column in kept] == ["RF02", "KO01"]
+    assert {rule.rule: rule.sample_ids for rule in ledger.rules} == {
+        "no_data_in_this_layer": (),
+        "culture_measured_in_several_series": ("RF03@D", "RF03@F"),
+    }
+    references = m.reference_by_series(columns, kept)
+    assert {s: c.label for s, c in references.items()} == {
+        "1": "RF02",
+        "2": "RF03@D",
+        "3": "RF03@F",
+    }
 
 
 def test_sample_columns_label_each_repeated_sample_id_by_its_column() -> None:
@@ -696,9 +782,7 @@ def test_reference_by_series_requires_one_reference_per_record_series(
 ) -> None:
     sheet = _metabolite_sheet()
     columns = m.read_sample_columns(sheet, paired=False, series_row=1, name_row=2)
-    kept, _ = m.classify_columns(
-        sheet, columns, [3, 4, 5], dataset="d", dilution_rates={"GR01": 0.1}
-    )
+    kept, _ = m.classify_columns(sheet, columns, [3, 4, 5], dataset="d")
     references = m.reference_by_series(columns, kept)
     assert {series: column.sample_id for series, column in references.items()} == {
         "1": "RF02",
@@ -730,11 +814,18 @@ def test_net_flux_omits_a_dash_and_keeps_the_sign() -> None:
     }
 
 
-def test_check_aerobic_refuses_a_missing_or_non_positive_oxygen_uptake() -> None:
+def test_check_aerobic_returns_the_pinned_cultures_without_a_rate() -> None:
+    """A missing rate never gates a record, but only the pinned set may lack one."""
     rates = m.read_specific_rates(quantitative_book())
-    m.check_aerobic(rates, ["KO01", "KO05"])
+    assert m.check_aerobic(rates, ["KO01", "KO05"]) == []
+    assert m.check_aerobic(rates, ["KO05x", "KO01", "RF02", "RF04"]) == [
+        "KO05x",
+        "RF02",
+        "RF04",
+    ]
+    assert m.CULTURES_WITHOUT_OXYGEN_UPTAKE == frozenset({"KO05x", "RF02", "RF04"})
     with pytest.raises(RuntimeError, match="no oxygen uptake rate for"):
-        m.check_aerobic(rates, ["KO05x"])
+        m.check_aerobic(rates, ["KO01", "GR04x"])
     with pytest.raises(RuntimeError, match="non-positive oxygen uptake rate"):
         m.check_aerobic({"KO01": {m.OXYGEN_UPTAKE_ROW: 0.0}}, ["KO01"])
 
@@ -806,7 +897,9 @@ def test_environment_is_one_environment_per_dilution_rate() -> None:
 
 
 def test_flux_phenotype_states_no_interval_and_one_labeling_experiment() -> None:
-    phenotype = m.flux_phenotype({"G6P <-> F6P": -3.5})
+    phenotype = m.flux_phenotype({"G6P <-> F6P": -3.5}, "RF04")
+    assert phenotype.replicate_id == "RF04"
+    assert m.flux_phenotype({"G6P <-> F6P": -3.5}, None).replicate_id is None
     assert phenotype.net_flux == {"G6P <-> F6P": -3.5}
     assert (phenotype.net_flux_lower, phenotype.net_flux_upper) == (None, None)
     assert phenotype.confidence_level is None
@@ -815,6 +908,19 @@ def test_flux_phenotype_states_no_interval_and_one_labeling_experiment() -> None
     assert phenotype.sample_unit is not None
     assert phenotype.sample_unit.value == "biological_replicate"
     assert [gap.field for gap in phenotype.provenance_gaps] == ["confidence_level"]
+    assert [gap.reason.value for gap in phenotype.provenance_gaps] == [
+        "not_applicable_single_measurement"
+    ]
+
+
+def test_metabolite_phenotype_is_one_culture_with_a_single_measurement_gap() -> None:
+    phenotype = m.metabolite_phenotype({"Pyruvate": 1.0}, "KO05x")
+    assert phenotype.replicate_id == "KO05x"
+    assert phenotype.n_replicates == {"Pyruvate": 1}
+    assert phenotype.metabolite_level_se is None
+    assert [(g.field, g.reason.value) for g in phenotype.provenance_gaps] == [
+        ("metabolite_level_se", "not_applicable_single_measurement")
+    ]
 
 
 def test_not_mirrored_names_the_publisher_block_and_the_hand_deposit() -> None:
@@ -840,7 +946,7 @@ def test_not_mirrored_names_the_publisher_block_and_the_hand_deposit() -> None:
 def test_metabolome_build_pairs_each_record_with_its_own_series_reference(
     synthetic: Path, bw25113: EcoliK12BW25113Genome
 ) -> None:
-    """Two records, keyed by BW25113 locus tag, each referenced to its own series.
+    """One record per culture, keyed by BW25113 locus tag, each against its own series.
 
     The reference is restricted to the metabolites the record also detected: KO05's
     series reference RF03 has no ``Citrate (nucleotide)``, so that key is on the record
@@ -848,19 +954,42 @@ def test_metabolome_build_pairs_each_record_with_its_own_series_reference(
     """
     dataset = _build(m.MetabolomeIshii2007Dataset, synthetic, bw25113)
     try:
-        assert len(dataset) == 3
-        records = [dataset[i] for i in range(3)]
+        assert len(dataset) == 6
+        records = [dataset[i] for i in range(6)]
         loci = [
             r["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"]
-            for r in records[:2]
+            for r in records[:3]
         ]
-        assert loci == ["BW25113_4412", "BW25113_0002"]
+        assert loci == ["BW25113_4412", "BW25113_0002", "BW25113_0002"]
         assert [
             r["experiment"]["genotype"]["perturbations"][0]["perturbed_gene_name"]
-            for r in records[:2]
-        ] == ["hokC", "thrA"]
-        assert records[2]["experiment"]["genotype"]["perturbations"] == []
-        hok, thr, _wild_type = records
+            for r in records[:3]
+        ] == ["hokC", "thrA", "thrA"]
+        assert all(
+            r["experiment"]["genotype"]["perturbations"] == [] for r in records[3:]
+        )
+        assert [r["experiment"]["phenotype"]["replicate_id"] for r in records] == [
+            "KO01",
+            "KO05x",
+            "KO05",
+            "GR01",
+            "RF02",
+            "RF03",
+        ]
+        assert all(
+            r["reference"]["phenotype_reference"]["replicate_id"] is None
+            for r in records
+        )
+        hok, thr_1, thr, _wild_type, _rf02, _rf03 = records
+        # The first thrA culture is its own record, scored against series 1 (RF02).
+        assert thr_1["experiment"]["phenotype"]["metabolite_level"] == {
+            "Pyruvate": 2.0,
+            "Citrate (nucleotide)": 8.0,
+        }
+        assert thr_1["reference"]["phenotype_reference"]["metabolite_level"] == {
+            "Pyruvate": 5.0,
+            "Citrate (nucleotide)": 11.0,
+        }
         assert hok["experiment"]["phenotype"]["metabolite_level"] == {
             "Pyruvate": 1.0,
             "Citrate (nucleotide)": 7.0,
@@ -889,6 +1018,37 @@ def test_metabolome_build_pairs_each_record_with_its_own_series_reference(
         dataset.close_lmdb()
 
 
+def test_metabolome_build_stores_each_reference_culture_as_a_wild_type_record(
+    synthetic: Path, bw25113: EcoliK12BW25113Genome
+) -> None:
+    """RF02 and RF03 are records of the wild type at 0.2 h-1, each its own column.
+
+    The series rule makes each one its own reference (the one control of its series),
+    so a reference culture's record and reference carry the same released values.
+    """
+    dataset = _build(m.MetabolomeIshii2007Dataset, synthetic, bw25113)
+    try:
+        rf02, rf03 = dataset[4], dataset[5]
+        for record in (rf02, rf03):
+            assert record["experiment"]["genotype"]["perturbations"] == []
+            assert record["experiment"]["environment"]["dilution_rate_per_hour"] == 0.2
+            assert record["experiment"]["phenotype"]["n_replicates"] == dict.fromkeys(
+                record["experiment"]["phenotype"]["metabolite_level"], 1
+            )
+        assert rf02["experiment"]["phenotype"]["metabolite_level"] == {
+            "Pyruvate": 5.0,
+            "Citrate (nucleotide)": 11.0,
+        }
+        assert (
+            rf02["reference"]["phenotype_reference"]["metabolite_level"]
+            == rf02["experiment"]["phenotype"]["metabolite_level"]
+        )
+        assert rf03["experiment"]["phenotype"]["metabolite_level"] == {"Pyruvate": 6.0}
+        assert rf03["experiment"]["environment"] == rf02["experiment"]["environment"]
+    finally:
+        dataset.close_lmdb()
+
+
 def test_metabolome_build_serves_the_dilution_rate_culture_as_its_own_environment(
     synthetic: Path, bw25113: EcoliK12BW25113Genome
 ) -> None:
@@ -899,7 +1059,7 @@ def test_metabolome_build_serves_the_dilution_rate_culture_as_its_own_environmen
     """
     dataset = _build(m.MetabolomeIshii2007Dataset, synthetic, bw25113)
     try:
-        wild_type = dataset[2]
+        wild_type = dataset[3]
         assert wild_type["experiment"]["genotype"]["perturbations"] == []
         assert wild_type["experiment"]["environment"]["dilution_rate_per_hour"] == 0.1
         assert (
@@ -938,15 +1098,17 @@ def test_metabolome_build_writes_the_protocol_and_record_ledgers(
             "dilution_rate_per_hour,series_verbatim,reference_sample_id"
         )
         assert records[1] == "KO01,hokC,hokC,0.2,1,RF02"
-        assert records[2] == "KO05,thrA,thrA_2,0.2,2,RF03"
-        assert records[3] == 'GR01,,"WT, 0.1h-1",0.1,2,RF03'
-        assert len(records) == 4
+        assert records[2] == "KO05x,thrA,thrA_1,0.2,1,RF02"
+        assert records[3] == "KO05,thrA,thrA_2,0.2,2,RF03"
+        assert records[4] == 'GR01,,"WT, 0.1h-1",0.1,2,RF03'
+        assert records[5] == "RF02,,WT(Mar),0.2,1,RF02"
+        assert records[6] == "RF03,,WT(Jun),0.2,2,RF03"
+        assert len(records) == 7
         drops = json.loads((out / "dropped_records.json").read_text())
-        assert drops["kept_records"] == 3
+        assert drops["kept_records"] == 6
         assert [rule["rule"] for rule in drops["rules"]] == [
             "no_data_in_this_layer",
-            "reference_sample",
-            "duplicate_culture_same_genotype_and_environment",
+            "culture_measured_in_several_series",
         ]
         accounting = json.loads((out / "build_accounting.json").read_text())
         assert accounting["unpinned_environment_values"] == []
@@ -962,8 +1124,15 @@ def test_metabolome_build_writes_the_protocol_and_record_ledgers(
             "GR04x": 0.7,
         }
         assert [r["rule"] for r in accounting["retired_drop_rules"]] == [
-            "culture_not_batch"
+            "culture_not_batch",
+            "reference_sample",
+            "duplicate_culture_same_genotype_and_environment",
         ]
+        assert accounting["conditions_with_several_cultures"] == {
+            "thrA at 0.2 h-1": ["KO05x", "KO05"],
+            "wild type at 0.2 h-1": ["RF02", "RF03"],
+        }
+        assert accounting["cultures_aerobic_by_som_statement_only"] == ["KO05x", "RF02"]
     finally:
         dataset.close_lmdb()
 
@@ -974,7 +1143,7 @@ def test_proteome_build_derives_the_se_from_the_cv_over_duplicate_measurement(
     """Abundance keyed by locus tag; SE = level * CV / 100 / sqrt(2); ``gpmG`` unused."""
     dataset = _build(m.ProteomeIshii2007Dataset, synthetic, bw25113)
     try:
-        assert len(dataset) == 3
+        assert len(dataset) == 5
         hok = dataset[0]
         phenotype = hok["experiment"]["phenotype"]
         assert phenotype["protein_abundance"] == {
@@ -1015,6 +1184,27 @@ def test_proteome_build_derives_the_se_from_the_cv_over_duplicate_measurement(
             "BW25113_0002": 14.0,
             "BW25113_4412": 5.0,
         }
+        # The reference cultures are records too; each value is the authors' mean of
+        # two technical measurements with its released CV, so no replicate_id.
+        rf02 = dataset[3]
+        assert rf02["experiment"]["genotype"]["perturbations"] == []
+        assert rf02["experiment"]["environment"]["dilution_rate_per_hour"] == 0.2
+        assert rf02["experiment"]["phenotype"]["protein_abundance"] == {
+            "BW25113_0002": 13.0,
+            "BW25113_4412": 4.0,
+        }
+        assert rf02["experiment"]["phenotype"]["n_replicates"] == {
+            "BW25113_0002": 2,
+            "BW25113_4412": 2,
+        }
+        assert (
+            rf02["reference"]["phenotype_reference"]["protein_abundance"]
+            == rf02["experiment"]["phenotype"]["protein_abundance"]
+        )
+        assert all(
+            dataset[i]["experiment"]["phenotype"]["replicate_id"] is None
+            for i in range(5)
+        )
     finally:
         dataset.close_lmdb()
 
@@ -1025,8 +1215,24 @@ def test_flux_build_stores_one_fit_per_culture_against_one_reference_fit(
     """A dash is key absence, the sign is kept, and every record shares the RF03 fit."""
     dataset = _build(m.FluxIshii2007Dataset, synthetic, bw25113)
     try:
-        assert len(dataset) == 3
+        assert len(dataset) == 5
         hok, thr, wild_type = dataset[0], dataset[1], dataset[2]
+        rf03, rf04 = dataset[3], dataset[4]
+        assert [
+            dataset[i]["experiment"]["phenotype"]["replicate_id"] for i in range(5)
+        ] == ["KO01", "KO05", "GR01", "RF03", "RF04"]
+        assert rf04["experiment"]["genotype"]["perturbations"] == []
+        assert rf04["experiment"]["environment"]["dilution_rate_per_hour"] == 0.2
+        assert rf04["experiment"]["phenotype"]["net_flux"] == {
+            "Glucose + PEP -> G6P + PYR": 100.0,
+            "G6P <-> F6P": 81.0,
+            "Ru5P -> X5P": -1.0,
+        }
+        assert (
+            rf03["experiment"]["phenotype"]["net_flux"]
+            == rf04["reference"]["phenotype_reference"]["net_flux"]
+        )
+        assert rf04["reference"]["phenotype_reference"]["replicate_id"] is None
         assert wild_type["experiment"]["genotype"]["perturbations"] == []
         assert wild_type["experiment"]["environment"]["dilution_rate_per_hour"] == 0.1
         assert wild_type["experiment"]["phenotype"]["net_flux"] == {
@@ -1084,7 +1290,8 @@ def test_flux_build_refuses_a_record_whose_labeling_data_is_not_mirrored(
     monkeypatch.setattr(xlrd, "open_workbook", open_workbook)
     with pytest.raises(
         RuntimeError,
-        match=r"no mass-distribution sheet for \['GR01', 'hokC', 'thrA_2'\]",
+        match=r"no mass-distribution sheet for \['GR01', 'RF03', 'RF04', 'hokC', "
+        r"'thrA_2'\]",
     ):
         _build(m.FluxIshii2007Dataset, synthetic, bw25113)
 
@@ -1100,6 +1307,7 @@ def test_flux_fit_input_sheet_is_the_sample_id_for_a_dilution_rate_culture(
     assert pick(by_id["KO01"]) == "hokC"
     assert pick(by_id["KO05"]) == "thrA_2"
     assert pick(by_id["GR01"]) == "GR01"
+    assert pick(by_id["RF04"]) == "RF04"
 
 
 def test_flux_build_refuses_a_release_that_dropped_the_stored_reference(
@@ -1122,7 +1330,7 @@ def test_build_refuses_a_record_count_other_than_the_pinned_one(
     synthetic: Path, bw25113: EcoliK12BW25113Genome, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(m, "EXPECTED_RECORDS", dict.fromkeys(m.EXPECTED_RECORDS, 4))
-    with pytest.raises(RuntimeError, match="wrote 3 records, the pinned workbook"):
+    with pytest.raises(RuntimeError, match="wrote 6 records, the pinned workbook"):
         _build(m.MetabolomeIshii2007Dataset, synthetic, bw25113)
 
 
@@ -1217,23 +1425,24 @@ def test_raw_mirror_pins_both_workbooks_as_scriptable_direct_urls() -> None:
 def test_every_sourced_value_is_a_verbatim_quote_of_its_pinned_artifact() -> None:
     """Each quote is found byte for byte in the file its provenance names.
 
-    Seven are from the Ishii ``paper.md``, two from Baba 2006 (the Keio deferral), six
-    from the MinerU OCR of the deposited SOM, one from the ``IDs`` sheet and the rest
-    from the ``Information`` sheet of the mirrored workbook.
+    Seven are from the Ishii ``paper.md``, two from Baba 2006 (the Keio deferral),
+    eleven from the MinerU OCR of the deposited SOM (five of them the 2026.11.24
+    replicate design), one from the ``IDs`` sheet and the rest from the ``Information``
+    sheet of the mirrored workbook.
     """
     for key, value in m.SOURCED_VALUES.items():
         result = audit_sourced_value(value, m.sourced_value_root(value))
         assert result.passed, (key, result.message)
     keys = {value.provenance.citation_key for value in m.SOURCED_VALUES.values()}
     assert keys == {m.CITATION_KEY, m.BABA_KEY}
-    assert len(m.SOURCED_VALUES) == 29
+    assert len(m.SOURCED_VALUES) == 35
     som = [v for v in m.SOURCED_VALUES.values() if v.provenance.source_uri == m.SOM_MD]
-    assert len(som) == 6
+    assert len(som) == 11
     pages = sorted(
         (value.provenance.page or "paper") for value in m.SOURCED_VALUES.values()
     )
     assert pages.count("sheet 'IDs'") == 1
-    assert pages.count("sheet 'Information'") == 13
+    assert pages.count("sheet 'Information'") == 14
 
 
 @pytest.mark.data
@@ -1245,18 +1454,29 @@ def test_every_sourced_value_is_a_verbatim_quote_of_its_pinned_artifact() -> Non
         ("flux_ishii2007", "net_flux"),
     ],
 )
-def test_each_arm_holds_the_same_28_cultures(slug: str, label: str) -> None:
-    """The three arms are paired: 24 disruptants at 0.2 h-1 plus four wild-type rates."""
+def test_each_arm_holds_one_record_per_released_culture(slug: str, label: str) -> None:
+    """The three arms share the 24 disruptants and the four wild-type rates.
+
+    On top of those 28, each stores the cultures its own sheet released: the second
+    pfkA culture and five 0.2 h-1 wild-type cultures on the metabolome, the RF02
+    culture on the proteome, the four reference fits on the flux arm.
+    """
+    expected = {
+        "metabolome_ishii2007": (34, 25, 9, 5),
+        "proteome_ishii2007": (29, 24, 5, 1),
+        "flux_ishii2007": (32, 24, 8, 4),
+    }
+    total, n_disruptant, n_wild_type, n_reference = expected[slug]
     records = _records(slug)
-    assert len(records) == m.EXPECTED_RECORDS[slug] == 28
+    assert len(records) == m.EXPECTED_RECORDS[slug] == total
     disruptants = [r for r in records if r["experiment"]["genotype"]["perturbations"]]
     wild_type = [r for r in records if not r["experiment"]["genotype"]["perturbations"]]
-    assert (len(disruptants), len(wild_type)) == (24, 4)
+    assert (len(disruptants), len(wild_type)) == (n_disruptant, n_wild_type)
     symbols = [
         r["experiment"]["genotype"]["perturbations"][0]["perturbed_gene_name"]
         for r in disruptants
     ]
-    assert sorted(symbols) == sorted(m.DISRUPTANT_SYMBOLS)
+    assert sorted(set(symbols)) == sorted(m.DISRUPTANT_SYMBOLS)
     loci = {
         r["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"]
         for r in disruptants
@@ -1273,7 +1493,7 @@ def test_each_arm_holds_the_same_28_cultures(slug: str, label: str) -> None:
     } == {0.2}
     assert sorted(
         r["experiment"]["environment"]["dilution_rate_per_hour"] for r in wild_type
-    ) == [0.1, 0.4, 0.5, 0.7]
+    ) == sorted([0.1, 0.4, 0.5, 0.7] + [0.2] * n_reference)
 
 
 @pytest.mark.data
@@ -1281,13 +1501,13 @@ def test_each_arm_holds_the_same_28_cultures(slug: str, label: str) -> None:
     "slug", ["metabolome_ishii2007", "proteome_ishii2007", "flux_ishii2007"]
 )
 def test_every_record_has_its_own_content_addressed_id(slug: str) -> None:
-    """Four wild-type records share one empty genotype and still never collide.
+    """The wild-type records share one empty genotype and still never collide.
 
     The adapter's experiment id is the sha256 of the whole serialized experiment, the
-    environment included, so ``Environment.dilution_rate_per_hour`` is what separates
-    them. The 0.2 h-1 wild type is only ever a reference, never a record, so there is no
-    fifth wild-type experiment for them to collide with, and every record's
-    ``environment_reference`` carries that 0.2 h-1.
+    environment and phenotype included, so ``Environment.dilution_rate_per_hour``
+    separates the four dilution-rate cultures and the released values (and, on the
+    metabolome and flux arms, ``replicate_id``) separate the 0.2 h-1 cultures. Every
+    record's ``environment_reference`` carries 0.2 h-1.
     """
     import hashlib
 
@@ -1303,7 +1523,7 @@ def test_every_record_has_its_own_content_addressed_id(slug: str) -> None:
         ).hexdigest()
         for r in records
     }
-    assert len(ids) == len(records) == 28
+    assert len(ids) == len(records) == m.EXPECTED_RECORDS[slug]
     assert {
         r["reference"]["environment_reference"]["dilution_rate_per_hour"]
         for r in records
@@ -1322,14 +1542,16 @@ def _record_ledger(slug: str) -> list[dict[str, str]]:
 
 @pytest.mark.data
 def test_the_three_arms_agree_on_the_pfka_culture_they_kept() -> None:
-    """``KO05`` is the pfkA record in all three arms, which is what keeps them paired."""
+    """``KO05`` is a pfkA record in all three arms; ``KO05x`` only where it has data."""
     for slug in m.DATASET_ROOTS:
         rows = _record_ledger(slug)
-        assert len(rows) == 28, slug
+        assert len(rows) == m.EXPECTED_RECORDS[slug], slug
         (pfka,) = [row for row in rows if row["sample_id"] == "KO05"]
         assert pfka["perturbed_gene_symbol"] == "pfkA", slug
         assert pfka["culture_name_verbatim"] == "pfkA_2", slug
         assert pfka["dilution_rate_per_hour"] == "0.2", slug
+        first = [row for row in rows if row["sample_id"] == "KO05x"]
+        assert len(first) == (slug == "metabolome_ishii2007"), slug
 
 
 @pytest.mark.data
@@ -1371,16 +1593,16 @@ def test_the_record_ledger_names_the_dilution_rate_arm_and_its_reference() -> No
 
 @pytest.mark.data
 def test_the_drop_ledger_accounts_for_every_sample_column_of_every_arm() -> None:
-    """28 kept plus one reason each for the rest, and no ``culture_not_batch`` rule.
+    """One reason each for every column that is not a record; three retired rules.
 
-    35 - 1 - 5 - 1 = 28, 36 - 2 - 6 = 28, 34 - 2 - 4 = 28.
+    35 - 1 = 34, 36 - 2 - 5 (RF03 in five series) = 29, 34 - 2 = 32.
     """
     expected = {
-        "metabolome_ishii2007": (35, {"GR04x"}, 5, 1),
-        "proteome_ishii2007": (36, {"GR04x", "KO05x"}, 6, 0),
-        "flux_ishii2007": (34, {"GR04x", "KO05x"}, 4, 0),
+        "metabolome_ishii2007": (35, {"GR04x"}, 0),
+        "proteome_ishii2007": (36, {"GR04x", "KO05x"}, 5),
+        "flux_ishii2007": (34, {"GR04x", "KO05x"}, 0),
     }
-    for slug, (columns, empty, references, duplicates) in expected.items():
+    for slug, (columns, empty, repeats) in expected.items():
         drops = json.loads(
             (
                 Path(os.environ["DATA_ROOT"], m.DATASET_ROOTS[slug], "preprocess")
@@ -1388,16 +1610,17 @@ def test_the_drop_ledger_accounts_for_every_sample_column_of_every_arm() -> None
             ).read_text()
         )
         rules = {rule["rule"]: rule["sample_ids"] for rule in drops["rules"]}
-        assert (drops["sample_columns"], drops["kept_records"]) == (columns, 28), slug
-        assert set(rules["no_data_in_this_layer"]) == empty, slug
-        assert len(rules["reference_sample"]) == references, slug
-        assert len(rules["duplicate_culture_same_genotype_and_environment"]) == (
-            duplicates
+        assert (drops["sample_columns"], drops["kept_records"]) == (
+            columns,
+            m.EXPECTED_RECORDS[slug],
         ), slug
+        assert set(rules["no_data_in_this_layer"]) == empty, slug
+        held = rules["culture_measured_in_several_series"]
+        assert len(held) == repeats, slug
+        assert all(label.startswith("RF03@") for label in held), slug
         assert sorted(rules) == [
-            "duplicate_culture_same_genotype_and_environment",
+            "culture_measured_in_several_series",
             "no_data_in_this_layer",
-            "reference_sample",
         ], slug
         accounting = json.loads(
             (
@@ -1414,8 +1637,130 @@ def test_the_drop_ledger_accounts_for_every_sample_column_of_every_arm() -> None
             "GR04x": 0.7,
         }, slug
         assert [r["rule"] for r in accounting["retired_drop_rules"]] == [
-            "culture_not_batch"
+            "culture_not_batch",
+            "reference_sample",
+            "duplicate_culture_same_genotype_and_environment",
         ], slug
+
+
+RAW_QUANTITATIVE = f"data/{m.QUANTITATIVE_FILE}"
+
+
+def _real_book() -> Any:
+    """The pinned quantitative workbook from the raw mirror, with formatting."""
+    path = m.raw_mirror_dir() / RAW_QUANTITATIVE
+    assert m._sha256(path) == m.DATA_SHA256[m.QUANTITATIVE_FILE]
+    return xlrd.open_workbook(str(path), formatting_info=True)
+
+
+@pytest.mark.data
+def test_every_metabolome_record_is_its_cultures_released_column() -> None:
+    """Each record equals the Metabolite column its replicate_id names, value for value.
+
+    One record per culture and one culture per record: the replicate ids are exactly the
+    35 sample columns minus the empty ``GR04x``, and the pfkA and 0.2 h-1 wild-type
+    conditions hold two and five cultures.
+    """
+    book = _real_book()
+    sheet = book.sheet_by_name(m.SHEET_METABOLITE)
+    rows = m.read_metabolite_rows(book)
+    keys = m.metabolite_keys(rows)
+    columns = {
+        c.sample_id: c
+        for c in m.read_sample_columns(sheet, paired=False, series_row=1, name_row=2)
+    }
+    records = _records("metabolome_ishii2007")
+    by_id = {r["experiment"]["phenotype"]["replicate_id"]: r for r in records}
+    assert len(by_id) == len(records) == 34
+    assert sorted(by_id) == sorted(set(columns) - {"GR04x"})
+    for sample_id, record in by_id.items():
+        released = m.MetabolomeIshii2007Dataset._levels(
+            sheet, rows, keys, columns[sample_id].column
+        )
+        assert record["experiment"]["phenotype"]["metabolite_level"] == released
+        assert set(record["experiment"]["phenotype"]["n_replicates"].values()) == {1}
+    by_condition: dict[tuple[str, float], list[str]] = {}
+    for sample_id, record in by_id.items():
+        perturbations = record["experiment"]["genotype"]["perturbations"]
+        symbol = perturbations[0]["perturbed_gene_name"] if perturbations else ""
+        rate = record["experiment"]["environment"]["dilution_rate_per_hour"]
+        by_condition.setdefault((symbol, rate), []).append(sample_id)
+    replicated = {k: sorted(v) for k, v in by_condition.items() if len(v) > 1}
+    assert replicated == {
+        ("pfkA", 0.2): ["KO05", "KO05x"],
+        ("", 0.2): ["RF02", "RF03", "RF04", "RF05", "RF06"],
+    }
+    # The hand check on the culture the old build dropped: its ATP cell (row 565 of
+    # the sheet), read by eye, beside the second pfkA culture's and the RF02 culture's.
+    ko05x = by_id["KO05x"]["experiment"]["phenotype"]["metabolite_level"]
+    assert len(ko05x) == 122
+    assert ko05x["ATP"] == pytest.approx(0.483039278667462)
+    assert by_id["KO05"]["experiment"]["phenotype"]["metabolite_level"][
+        "ATP"
+    ] == pytest.approx(0.22399586683990122)
+    assert by_id["RF02"]["experiment"]["phenotype"]["metabolite_level"][
+        "ATP"
+    ] == pytest.approx(1.2621118701000826)
+    assert "Pyruvate" not in ko05x
+
+
+@pytest.mark.data
+def test_every_flux_record_is_its_cultures_released_fit() -> None:
+    """The four reference fits are records, and every record is its own column."""
+    book = _real_book()
+    sheet = book.sheet_by_name(m.SHEET_FLUX)
+    net_rows, _ = m.FluxIshii2007Dataset._split_rows(sheet)
+    columns = {
+        c.sample_id: c
+        for c in m.read_sample_columns(sheet, paired=False, series_row=None, name_row=1)
+    }
+    records = _records("flux_ishii2007")
+    by_id = {r["experiment"]["phenotype"]["replicate_id"]: r for r in records}
+    assert len(by_id) == len(records) == 32
+    assert sorted(by_id) == sorted(set(columns) - {"GR04x", "KO05x"})
+    for sample_id, record in by_id.items():
+        assert record["experiment"]["phenotype"][
+            "net_flux"
+        ] == m.FluxIshii2007Dataset._net_flux(
+            sheet, net_rows, columns[sample_id].column
+        )
+        assert record["experiment"]["phenotype"]["n_samples"] == 1
+        assert [
+            g["reason"] for g in record["experiment"]["phenotype"]["provenance_gaps"]
+        ] == ["not_applicable_single_measurement"]
+    assert {
+        sample_id
+        for sample_id, record in by_id.items()
+        if not record["experiment"]["genotype"]["perturbations"]
+        and record["experiment"]["environment"]["dilution_rate_per_hour"] == 0.2
+    } == {"RF03", "RF04", "RF05", "RF06"}
+    reference = by_id["RF03"]["experiment"]["phenotype"]["net_flux"]
+    for record in records:
+        assert record["reference"]["phenotype_reference"]["net_flux"] == reference
+
+
+@pytest.mark.data
+def test_the_proteome_stores_rf02_and_holds_the_five_rf03_series() -> None:
+    """RF02 is a record; RF03's five series columns stay the series references only."""
+    records = _records("proteome_ishii2007")
+    wild_type_02 = [
+        r
+        for r in records
+        if not r["experiment"]["genotype"]["perturbations"]
+        and r["experiment"]["environment"]["dilution_rate_per_hour"] == 0.2
+    ]
+    (rf02,) = wild_type_02
+    assert (
+        rf02["experiment"]["phenotype"]["protein_abundance"]
+        == rf02["reference"]["phenotype_reference"]["protein_abundance"]
+    )
+    assert set(rf02["experiment"]["phenotype"]["n_replicates"].values()) == {2}
+    assert all(r["experiment"]["phenotype"]["replicate_id"] is None for r in records)
+    rows = _record_ledger("proteome_ishii2007")
+    assert [
+        row["reference_sample_id"] for row in rows if row["sample_id"] == "RF02"
+    ] == ["RF02"]
+    assert {row["reference_sample_id"] for row in rows} == {"RF02", "RF03"}
 
 
 @pytest.mark.data
@@ -1725,7 +2070,7 @@ def test_cli_build_opens_and_closes_the_requested_arm(
     )
     monkeypatch.setattr(m, "bacterial_genome", lambda host, strain: bw25113)
     assert m.main(["build", "--dataset", "flux_ishii2007"]) == 0
-    assert capsys.readouterr().out.strip().endswith("len = 3")
+    assert capsys.readouterr().out.strip().endswith("len = 5")
 
 
 # --------------------------------------------------------------------------- #

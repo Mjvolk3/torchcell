@@ -273,3 +273,120 @@ where on the design split they tracked each other. Cycle 5 does not tell you
 about cycle 6, which is extrapolation failure rather than ordinary overfitting.
 Three of the four seeds have NMSE at or above 1, meaning predictions worse than
 the test cycle's own mean titer.
+
+## 2026.11.25 - The cycle split, the bootstrap, and what the trial answers
+
+The full run was 72 cells and 11.1 GPU hours on one RTX 6000, from 20:01 on
+2026-11-24 to 12:40 the next day, in four chained passes: the design grid, the
+cycle grid, a paired selection-rule arm and a paired bias-decay arm. Every table
+below is written by `summarize_low_data_trial.py` and every figure panel by
+`plot_low_data_trial.py`, both reading the per-cell reports.
+
+![](./assets/images/048-pputida-isoprenol-cgt/low_data_trial.svg)
+
+**Figure 1. The low-data trial.** **a**, Held-out Spearman on cycle 6 against
+the graph-regularization lambda, one line per readout head, error bars the
+standard deviation over seeds where a configuration has more than one. The
+dashed line is gradient-boosted trees on the multi-hot guide-target vector,
+which sees exactly what the transformer sees about the genotype minus the graph
+and the sequence. **b**, Rank against scale for all 72 cells. Circles are the
+cycle split, triangles the design split, orange the pooled head, purple the flux
+head. R-squared below zero means the predictions are worse than predicting the
+scored split's own mean titer; five cells fall below the axis and are drawn open
+on the floor. **c**, What the design split's rank score measures. Ranking the
+44-record design test set by DBTL cycle number alone scores 0.81, above every
+model, because titer rose across the campaign and that split mixes cycles across
+train and test. Within cycle the same ranker scores 0.43. The cycle split has no
+such escape, every one of its test records being cycle 6.
+
+### The result
+
+| configuration | n runs | test rho | R-squared | RMSE | offset | gap over trees |
+|---|---|---|---|---|---|---|
+| light_pooled_reg1e-05 | 3 | 0.615 ± 0.062 | +0.378 | 155.8 | 29.1 | +0.104 |
+| heavy_pooled_reg1e-04 | 1 | 0.606 | +0.355 | 159.3 | 24.5 | +0.096 |
+| selrule_val_mse | 3 | 0.598 ± 0.021 | +0.225 | 174.3 | 59.5 | +0.088 |
+| heavy_pooled_reg1e-05 | 8 | 0.596 ± 0.056 | +0.179 | 178.8 | 77.7 | +0.086 |
+| light_flux_reg1e-04 | 5 | 0.498 ± 0.073 | -0.343 | 227.2 | 138.0 | -0.012 |
+| biasdecay_decay | 6 | 0.518 ± 0.107 | -0.554 | 244.1 | 160.4 | +0.008 |
+| biasdecay_exempt | 5 | 0.545 ± 0.066 | -0.561 | 242.5 | 154.9 | +0.035 |
+
+R-squared is `1 - NMSE` exactly, since NMSE normalizes by the scored split's own
+variance. The two are one measurement reported twice for readers who expect one
+or the other.
+
+**Every flux configuration has negative R-squared while ranking at 0.50 to
+0.65.** The metabolic module as currently built orders strains usefully and
+predicts titers worse than a constant. The best pooled configuration explains 38
+percent of the held-out cycle's titer variance.
+
+### The headline claim, and the bootstrap that qualifies it
+
+`bootstrap_headline_gap.py` resamples the 59 cycle-6 records 10,000 times,
+scoring the model and each null on the same resampled records in every draw, with
+predictions pooled over the three seeds:
+
+| comparison | CGT rho | null rho | gap | 95 percent interval | reversal rate |
+|---|---|---|---|---|---|
+| vs boosted trees | 0.625 | 0.510 | +0.115 | [-0.038, +0.279] | 7.6 percent |
+| vs ridge | 0.625 | 0.415 | +0.210 | [+0.055, +0.363] | 0.2 percent |
+
+**Against ridge the lead is solid. Against boosted trees it is suggestive and
+not established:** the interval includes zero and the trees win in 7.6 percent
+of resamples.
+
+**A seed standard deviation was the wrong uncertainty and saying so is the
+point.** The cycle split is deterministic, so every seed scores the same 59
+records and the seed spread, 0.024 on the headline cell, measures initialization
+variance alone. The record-level uncertainty is six times wider. An earlier
+version of this note's analysis called the gap decisive on the strength of that
+0.024, which it never supported.
+
+**The limit is the test set, not the model.** Cycle 6 has 59 records and no
+further tuning changes that. Resolving the gap needs more cycle-6 measurements,
+or a repeated-holdout scheme over several held-out cycles that accumulates test
+records at some cost in extrapolation purity.
+
+### The two paired arms, both predictions wrong
+
+**Bias decay, refuted.** Five paired seeds, exempting one-dimensional parameters
+from weight decay: paired mean Spearman difference -0.010 ± 0.010, RMSE
++8.3 ± 33.5 ug/mL, offset 148.4 against 154.9. Weight decay on the intercept is
+not why the flux head is mis-centered. The defect is in the head, whose dense
+term reads the raw flux vector over 2,958 unnormalized reactions, and fixing it
+is a model change for the owner rather than a trainer flag.
+
+**Selection rule, underpowered.** Selecting on validation MSE rather than
+validation Spearman gives paired mean Spearman +0.018 ± 0.091 and RMSE
+-17.7 ± 38.0 ug/mL. Every aggregate favors MSE selection (rho 0.598 against
+0.580, RMSE 174 against 192, offset 60 against 91) but the per-seed differences
+flip sign and three pairs cannot resolve it. MSE selection does not stabilize the
+chosen epoch either, 23, 74 and 83 against 34, 60 and 81, so the earlier account
+of noisy Spearman selection pinning near-initial checkpoints is not supported.
+
+### Runs are not reproducible at a fixed seed
+
+`heavy_pooled_reg1e-05` and `selrule_val_spearman` are the same settings at the
+same three seeds, launched at different times, and their mean test Spearman
+differs by 0.040, which is larger than either group's own standard deviation.
+The trainer seeds python, numpy and torch and sets cudnn deterministic, but does
+not set `torch.use_deterministic_algorithms`, and the forward pass uses
+`index_add_` and scatter reductions whose CUDA accumulation order is not fixed.
+**Every per-tag standard deviation in this note understates run-to-run
+variation**, which is why `trial_pooled.csv` groups by hyperparameters instead of
+by tag. The epoch budget is part of that identity: a 2-epoch smoke cell shares
+every flag with the headline configuration and pooled into it until it was
+caught, moving the mean from 0.600 to 0.589.
+
+### What this trial answers, and what it does not
+
+Answered: a Cell Graph Transformer can be fit on 465 records. On the
+extrapolation split it reaches Spearman 0.625 and R-squared 0.378 on the next
+DBTL cycle, beating ridge decisively and boosted trees by a margin this test set
+cannot resolve. The pooled readout is the one that works; the flux readout ranks
+comparably and is not usable in absolute terms.
+
+Not answered: whether the graph prior helps. Lambda 1e-05 leads both pooled
+ladders on the cycle split, lambda 1e-04 led the design split, and the ladders
+are not monotone on either, so the ranking is not stable across splits and one
+seed per rung cannot separate an optimum from a draw.

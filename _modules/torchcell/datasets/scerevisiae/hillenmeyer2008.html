@@ -238,7 +238,8 @@
 <span class="sd">loader's own ``parse_columns``, ``group_columns`` and ``count_records`` (2026-10-15):</span>
 <span class="sd">HET 12 labels, 19 environments, 19 arrays, 110,449 records and value cells; HOM 10</span>
 <span class="sd">labels (no RIL1 or telomerase array), 11 environments, 11 arrays, 45,760 records and</span>
-<span class="sd">value cells. Stored after the hold-out: HET 2,963,683 records, HOM 1,182,916. The</span>
+<span class="sd">value cells. Stored after the hold-out: HET 2,963,683 records, HOM 1,182,916 (one per</span>
+<span class="sd">group; one per array since 2026.11.24: HET 4,094,099, HOM 1,750,292). The</span>
 <span class="sd">``chemical diversity labs 14a`` array of each arm is the header/key conflict whose key</span>
 <span class="sd">file says ``Tyrphostin``; the header is what the values are released under, so it is</span>
 <span class="sd">held out with the key string kept beside it. A label is</span>
@@ -277,9 +278,27 @@
 <span class="sd">- ARRAYS, not representable: an unidentified perturbing agent</span>
 <span class="sd">  (``UNIDENTIFIED_COMPOUND_RULE``, above).</span>
 
-<span class="sd">REPLICATE AGGREGATION. Within one (strain row, environment, control set) group each array</span>
-<span class="sd">contributes ONE value and the record's value is the mean over arrays with the sample SD</span>
-<span class="sd">across arrays as the uncertainty (``n_samples`` = arrays).</span>
+<span class="sd">ONE RECORD PER ARRAY (per-replicate policy, #1178 / #1175). Each matrix column is one</span>
+<span class="sd">array, and the SOM states "One array is used per experiment (control or treatment)."; the</span>
+<span class="sd">main article counts each array as an experiment ("We performed 726 treatment experiments</span>
+<span class="sd">in each of the heterozygous deletion strains and 418 separate experiments in each of the</span>
+<span class="sd">homozygous strains"). So every released (strain row, array) cell is its own record: the</span>
+<span class="sd">value verbatim, ``n_samples=1``, ``sample_unit=biological_replicate`` (one pooled</span>
+<span class="sd">competitive-growth experiment), ``replicate_id`` = the array's filename, the release's own</span>
+<span class="sd">"Unique identifier of the array", and the two uncertainty fields are typed</span>
+<span class="sd">``not_applicable_single_measurement`` absences. Arrays of one condition ("Certain</span>
+<span class="sd">conditions were tested in replicate (number of replicates ranged from 1 to 14)") are no</span>
+<span class="sd">longer averaged: before 2026.11.24 the loader stored one record per (strain row,</span>
+<span class="sd">environment, control set) holding the mean over that group's arrays with the</span>
+<span class="sd">across-array sample SD (HET 2,963,683 records, HOM 1,182,916); the mean and its</span>
+<span class="sd">dispersion are now a modeling-time derivation over the records that share genotype,</span>
+<span class="sd">environment and ``screen_id``. The up- and downtag log-ratios are combined INSIDE one</span>
+<span class="sd">array's value by the authors ("We averaged the log-ratios of the up- and downtags to yield</span>
+<span class="sd">one log-"), which is the per-array technical level and is not ours to undo. Same-day</span>
+<span class="sd">arrays of one group (filenames sharing ``YY_MM_DD``) are separate experiments by the</span>
+<span class="sd">quote above; whether they were parallel cultures is not stated. The Fig. S6 caption notes</span>
+<span class="sd">"a small subset of replicates that were not correct" without naming one, so no array is</span>
+<span class="sd">withdrawn.</span>
 
 <span class="sd">SUSPICIOUS BATCHES. The SOM names ten construction batches whose strains share a</span>
 <span class="sd">secondary genotype; the ORFs with a row in them are written to</span>
@@ -366,7 +385,6 @@
     <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">,</span>
     <span class="n">StrainReferenceGenome</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
-    <span class="n">UncertaintyType</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.strain_background</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BRACHMANN_1998</span><span class="p">,</span>
@@ -540,6 +558,43 @@
 <span class="p">)</span>
 <span class="c1">#: SOM Table S1, the Biomol telomerase inhibitor as the OCR carries it.</span>
 <span class="n">QUOTE_TABLE_S1_TELOMERASE</span> <span class="o">=</span> <span class="s2">"telomerase inhibitor ix (Biomol)"</span>
+<span class="c1">#: The replicate structure (per-replicate policy, #1178): one array per experiment, the</span>
+<span class="c1">#: array's filename as its identifier, the replicate counts and the authors' own use of</span>
+<span class="c1">#: "true replicates", and the in-array combination of the two tags.</span>
+<span class="n">QUOTE_ONE_ARRAY</span> <span class="o">=</span> <span class="s2">"One array is used per experiment (control or treatment)."</span>
+<span class="n">QUOTE_ARRAY_FILENAME</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Unique identifier of the array, and the name of the corresponding .cel intensity "</span>
+    <span class="s2">"file."</span>
+<span class="p">)</span>
+<span class="n">QUOTE_REPLICATES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Certain conditions were tested in replicate (number of replicates ranged from 1 to "</span>
+    <span class="s2">"14), with a median replicate correlation of 0.72 (Fig. S6)."</span>
+<span class="p">)</span>
+<span class="n">QUOTE_TRUE_REPLICATES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"SAM requires replicates, and few of our treatment experiments contained true "</span>
+    <span class="s2">"replicates"</span>
+<span class="p">)</span>
+<span class="n">QUOTE_TAG_AVERAGE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"We averaged the log-ratios of the up- and downtags to yield one log-"</span>
+<span class="p">)</span>
+<span class="c1">#: Main article (si/si1.md): each array is counted as one experiment.</span>
+<span class="n">QUOTE_EXPERIMENT_COUNT</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"We performed 726 treatment experiments in each of the heterozygous deletion strains "</span>
+    <span class="s2">"and 418 separate experiments in each of the homozygous strains"</span>
+<span class="p">)</span>
+<span class="c1">#: Fig. S6 caption: a subset of replicates is called incorrect, none is named.</span>
+<span class="n">QUOTE_FIG_S6</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"The bimodal distribution suggests that a small subset of replicates that were not "</span>
+    <span class="s2">"correct."</span>
+<span class="p">)</span>
+<span class="c1">#: Why a per-array record has no dispersion of its own (the typed-absence note).</span>
+<span class="n">SINGLE_ARRAY_UNCERTAINTY_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"a record is ONE released array (one treatment experiment: "</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">QUOTE_ONE_ARRAY</span><span class="si">!r}</span><span class="s2">), and one measurement has no dispersion of its own, so neither "</span>
+    <span class="s2">"an uncertainty number nor its type exists to store. The mean and SD over the arrays "</span>
+    <span class="s2">"of one (strain row, environment, control set) are a modeling-time derivation over "</span>
+    <span class="s2">"the records that share them"</span>
+<span class="p">)</span>
 
 <span class="c1">#: The ten construction batches the SOM names as carrying a shared secondary genotype.</span>
 <span class="n">SUSPICIOUS_BATCHES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
@@ -690,6 +745,48 @@
         <span class="n">note</span><span class="o">=</span><span class="s2">"a vendor product designation (Biomol, inhibitor number ix) with no "</span>
         <span class="s2">"released name or structure; absent from Table S2"</span><span class="p">,</span>
     <span class="p">),</span>
+    <span class="s2">"one_array_per_experiment"</span><span class="p">:</span> <span class="n">_som_sv</span><span class="p">(</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="n">QUOTE_ONE_ARRAY</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"each matrix column is one experiment, so each (strain row, array) cell is "</span>
+        <span class="s2">"one record with n_samples 1"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"array_filename_identifier"</span><span class="p">:</span> <span class="n">_som_sv</span><span class="p">(</span>
+        <span class="s2">"filename"</span><span class="p">,</span>
+        <span class="n">QUOTE_ARRAY_FILENAME</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the per-record replicate_id is this filename, the release's own label "</span>
+        <span class="s2">"for the array"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"replicate_counts"</span><span class="p">:</span> <span class="n">_som_sv</span><span class="p">(</span>
+        <span class="s2">"1 to 14 arrays per condition"</span><span class="p">,</span>
+        <span class="n">QUOTE_REPLICATES</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"measured through parse_columns / group_columns on the pinned matrices: "</span>
+        <span class="s2">"HET 706 stored arrays in 511 (environment, control set) groups of 1 to 12, HOM "</span>
+        <span class="s2">"405 in 275 groups of 1 to 5. The SOM's maximum of 14 counts replicates over "</span>
+        <span class="s2">"some grouping the release does not state"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"true_replicates"</span><span class="p">:</span> <span class="n">_som_sv</span><span class="p">(</span>
+        <span class="s2">"true replicates"</span><span class="p">,</span>
+        <span class="n">QUOTE_TRUE_REPLICATES</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the authors' own term for repeated arrays of one condition, as distinct "</span>
+        <span class="s2">"from varying dose or time point"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"tag_average"</span><span class="p">:</span> <span class="n">_som_sv</span><span class="p">(</span>
+        <span class="s2">"up- and downtag log-ratios averaged within one array"</span><span class="p">,</span>
+        <span class="n">QUOTE_TAG_AVERAGE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the technical combination inside one array's released value"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"experiment_count"</span><span class="p">:</span> <span class="n">_main_sv</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">"het"</span><span class="p">:</span> <span class="mi">726</span><span class="p">,</span> <span class="s2">"hom"</span><span class="p">:</span> <span class="mi">418</span><span class="p">},</span>
+        <span class="n">QUOTE_EXPERIMENT_COUNT</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the matrix column counts of het.ratio_result_nm.pub and "</span>
+        <span class="s2">"hom.z_result_nm.pub"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"fig_s6_incorrect_replicates"</span><span class="p">:</span> <span class="n">_som_sv</span><span class="p">(</span>
+        <span class="s2">"no array withdrawn"</span><span class="p">,</span>
+        <span class="n">QUOTE_FIG_S6</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the caption names no array, so nothing is dropped on it"</span><span class="p">,</span>
+    <span class="p">),</span>
 <span class="p">}</span>
 <span class="n">_PRE_CULTURE_FROZEN</span> <span class="o">=</span> <span class="n">SOURCED_VALUES</span><span class="p">[</span><span class="s2">"pre_culture_frozen"</span><span class="p">]</span>
 <span class="n">_PRE_CULTURE_LOG_PHASE</span> <span class="o">=</span> <span class="n">SOURCED_VALUES</span><span class="p">[</span><span class="s2">"pre_culture_log_phase"</span><span class="p">]</span>
@@ -701,15 +798,17 @@
     <span class="s2">"HIP fitness-defect log-ratio, log2(mean control intensity / treatment intensity) "</span>
     <span class="s2">"averaged over the up and down tags (Hillenmeyer 2008 scoring method 1); positive = "</span>
     <span class="s2">"fitness defect. Control = the matched no-drug control set named in screen_id "</span>
-    <span class="s2">"(same deletion pool, generation count and scanner). Mean over the replicate arrays "</span>
-    <span class="s2">"of that control set for ONE constructed strain (one matrix row ORF:batch)"</span>
+    <span class="s2">"(same deletion pool, generation count and scanner). ONE array (one treatment "</span>
+    <span class="s2">"experiment, named by its filename in replicate_id) for ONE constructed strain (one "</span>
+    <span class="s2">"matrix row ORF:batch), as released"</span>
 <span class="p">)</span>
 <span class="n">UNITS_HOM</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"HOP fitness-defect z-score, (mean control intensity - treatment intensity) / SD of "</span>
     <span class="s2">"the control intensities (Hillenmeyer 2008 scoring method 2); positive = fitness "</span>
     <span class="s2">"defect. Control = the matched no-drug control set named in screen_id (same deletion "</span>
-    <span class="s2">"pool, generation count and scanner). Mean over the replicate arrays of that control "</span>
-    <span class="s2">"set for ONE constructed strain (one matrix row ORF:batch)"</span>
+    <span class="s2">"pool, generation count and scanner). ONE array (one treatment experiment, named by "</span>
+    <span class="s2">"its filename in replicate_id) for ONE constructed strain (one matrix row ORF:batch), "</span>
+    <span class="s2">"as released"</span>
 <span class="p">)</span>
 
 
@@ -1532,9 +1631,11 @@
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key_check</span><span class="o">.</span><span class="n">key_condition</span><span class="si">!r}</span><span class="s2">)"</span>
             <span class="p">)</span>
         <span class="n">environment</span> <span class="o">=</span> <span class="n">build_environment</span><span class="p">(</span><span class="n">parse</span><span class="p">,</span> <span class="n">generations</span><span class="p">)</span>
-        <span class="c1"># Group replicate arrays by the CANONICAL environment plus the control set the</span>
-        <span class="c1"># score was computed against: two arrays of one condition normalized against</span>
-        <span class="c1"># different control sets are different measurements.</span>
+        <span class="c1"># Group the arrays of one condition by the CANONICAL environment plus the</span>
+        <span class="c1"># control set the score was computed against (two arrays of one condition</span>
+        <span class="c1"># normalized against different control sets are different measurements). Each</span>
+        <span class="c1"># array is still its own record; the group orders records and keys the drop</span>
+        <span class="c1"># and compound ledgers.</span>
         <span class="n">group_key</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
             <span class="p">[</span><span class="n">environment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span> <span class="n">control_set</span><span class="p">],</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">str</span>
         <span class="p">)</span>
@@ -1852,58 +1953,58 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">build_phenotype</span><span class="p">(</span>
-    <span class="n">spec</span><span class="p">:</span> <span class="n">_MatrixSpec</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">control_set</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">spec</span><span class="p">:</span> <span class="n">_MatrixSpec</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">control_set</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Mean over the replicate arrays of one group, with the across-array sample SD.</span>
+<span class="w">    </span><span class="sd">"""One released array's score for one strain row, verbatim.</span>
 
-<span class="sd">    A sample SD of exactly 0 is NOT reported as a dispersion. The matrices print four</span>
-<span class="sd">    to six decimals, so two arrays agreeing to the last printed digit means the</span>
-<span class="sd">    dispersion is below the release's resolution, not that it was measured to be zero.</span>
-<span class="sd">    Storing 0 would give those records a standard error of 0 and claim infinite</span>
-<span class="sd">    precision, so the uncertainty is a typed absence instead.</span>
+<span class="sd">    ``n_samples`` is 1 (one array is one experiment), ``replicate_id`` is the array's</span>
+<span class="sd">    filename, and the two uncertainty fields are ``not_applicable_single_measurement``</span>
+<span class="sd">    absences (:data:`SINGLE_ARRAY_UNCERTAINTY_NOTE`).</span>
 <span class="sd">    """</span>
-    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-    <span class="n">mean</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span>
-    <span class="n">sd</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">sum</span><span class="p">((</span><span class="n">v</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="k">else</span> <span class="kc">None</span>
-    <span class="n">gaps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ProvenanceGap</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">if</span> <span class="n">sd</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
-        <span class="n">sd</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">gaps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">ProvenanceGap</span><span class="p">(</span>
-                <span class="n">field</span><span class="o">=</span><span class="s2">"environment_response_uncertainty"</span><span class="p">,</span>
-                <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
-                <span class="n">looked_in</span><span class="o">=</span><span class="n">_SOM_PROVENANCE</span><span class="p">,</span>
-                <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">"the </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> arrays of this group print the identical score to the "</span>
-                <span class="s2">"release's last decimal, so the replicate dispersion is below the "</span>
-                <span class="s2">"released precision rather than measured to be zero"</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"non-finite released score </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2"> on array </span><span class="si">{</span><span class="n">filename</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
         <span class="n">measurement_type</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
         <span class="n">assay_type</span><span class="o">=</span><span class="n">AssayType</span><span class="o">.</span><span class="n">pooled_competitive_growth_barcode</span><span class="p">,</span>
-        <span class="n">environment_response</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span>
-        <span class="n">n_samples</span><span class="o">=</span><span class="n">n</span><span class="p">,</span>
+        <span class="n">environment_response</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">n_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">sample_unit</span><span class="o">=</span><span class="n">SampleUnit</span><span class="o">.</span><span class="n">biological_replicate</span><span class="p">,</span>
-        <span class="n">environment_response_uncertainty</span><span class="o">=</span><span class="n">sd</span><span class="p">,</span>
-        <span class="n">environment_response_uncertainty_type</span><span class="o">=</span><span class="p">(</span>
-            <span class="n">UncertaintyType</span><span class="o">.</span><span class="n">sample_sd</span> <span class="k">if</span> <span class="n">sd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="p">),</span>
+        <span class="n">environment_response_uncertainty</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">environment_response_uncertainty_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">screen_id</span><span class="o">=</span><span class="n">control_set</span><span class="p">,</span>
+        <span class="n">replicate_id</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
         <span class="n">units</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">units</span><span class="p">,</span>
-        <span class="n">provenance_gaps</span><span class="o">=</span><span class="n">gaps</span><span class="p">,</span>
+        <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">ProvenanceGap</span><span class="p">(</span>
+                <span class="n">field</span><span class="o">=</span><span class="n">field</span><span class="p">,</span>
+                <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_applicable_single_measurement</span><span class="p">,</span>
+                <span class="n">note</span><span class="o">=</span><span class="n">SINGLE_ARRAY_UNCERTAINTY_NOTE</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="s2">"environment_response_uncertainty"</span><span class="p">,</span>
+                <span class="s2">"environment_response_uncertainty_type"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">],</span>
     <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">array_cells</span><span class="p">(</span>
+    <span class="n">row_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span> <span class="n">members</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ColumnSpec</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">ColumnSpec</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Each ARRAY of a group that carries a value for one strain row, with that value."""</span>
+    <span class="n">cells</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">ColumnSpec</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">members</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">row_values</span><span class="p">[</span><span class="n">column</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cells</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">column</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">cells</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">array_values</span><span class="p">(</span>
     <span class="n">row_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span> <span class="n">members</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ColumnSpec</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""One value per replicate ARRAY of a group for one strain row (missing skipped)."""</span>
-    <span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">members</span><span class="p">:</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">row_values</span><span class="p">[</span><span class="n">column</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">values</span>
+<span class="w">    </span><span class="sd">"""One value per ARRAY of a group for one strain row (missing skipped)."""</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">value</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">array_cells</span><span class="p">(</span><span class="n">row_values</span><span class="p">,</span> <span class="n">members</span><span class="p">)]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">group_columns</span><span class="p">(</span>
@@ -1925,45 +2026,45 @@
     <span class="n">groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ColumnSpec</span><span class="p">]],</span>
     <span class="n">background</span><span class="p">:</span> <span class="n">EukaryoticStrainBackground</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">StrainEnvironmentResponseExperiment</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">"""Every record of a matrix: (experiment, control set), strain row by strain row.</span>
+<span class="w">    </span><span class="sd">"""Every record of a matrix: (experiment, control set), one per (strain row, array).</span>
 
-<span class="sd">    Shared by ``process()`` and the measurement script, so a sliced run goes through</span>
-<span class="sd">    the same builders as the full build.</span>
+<span class="sd">    Strain row by strain row, then group by group in column order, then array by array</span>
+<span class="sd">    within the group. Shared by ``process()`` and the measurement script, so a sliced</span>
+<span class="sd">    run goes through the same builders as the full build.</span>
 <span class="sd">    """</span>
     <span class="n">markers</span> <span class="o">=</span> <span class="n">marker_loci</span><span class="p">(</span><span class="n">background</span><span class="p">)</span>
     <span class="n">group_list</span> <span class="o">=</span> <span class="p">[(</span><span class="n">members</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">members</span><span class="p">)</span> <span class="k">for</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
     <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">matrix</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span>
         <span class="n">genotypes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Genotype</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">head</span><span class="p">,</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">group_list</span><span class="p">:</span>
-            <span class="n">values</span> <span class="o">=</span> <span class="n">array_values</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">members</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">values</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="k">if</span> <span class="n">head</span><span class="o">.</span><span class="n">pool</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">genotypes</span><span class="p">:</span>
-                <span class="n">genotypes</span><span class="p">[</span><span class="n">head</span><span class="o">.</span><span class="n">pool</span><span class="p">]</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
-                    <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
-                        <span class="n">strain_perturbation</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">head</span><span class="o">.</span><span class="n">pool</span><span class="p">,</span> <span class="n">markers</span><span class="p">)</span>
-                    <span class="p">]</span>
+            <span class="k">for</span> <span class="n">column</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">array_cells</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">members</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">head</span><span class="o">.</span><span class="n">pool</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">genotypes</span><span class="p">:</span>
+                    <span class="n">genotypes</span><span class="p">[</span><span class="n">head</span><span class="o">.</span><span class="n">pool</span><span class="p">]</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+                        <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                            <span class="n">strain_perturbation</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">head</span><span class="o">.</span><span class="n">pool</span><span class="p">,</span> <span class="n">markers</span><span class="p">)</span>
+                        <span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="k">yield</span> <span class="p">(</span>
+                    <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">(</span>
+                        <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+                        <span class="n">genotype</span><span class="o">=</span><span class="n">genotypes</span><span class="p">[</span><span class="n">head</span><span class="o">.</span><span class="n">pool</span><span class="p">],</span>
+                        <span class="n">environment</span><span class="o">=</span><span class="n">head</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span>
+                        <span class="n">phenotype</span><span class="o">=</span><span class="n">build_phenotype</span><span class="p">(</span>
+                            <span class="n">spec</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">column</span><span class="o">.</span><span class="n">control_set</span><span class="p">,</span> <span class="n">column</span><span class="o">.</span><span class="n">filename</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="n">column</span><span class="o">.</span><span class="n">control_set</span><span class="p">,</span>
                 <span class="p">)</span>
-            <span class="k">yield</span> <span class="p">(</span>
-                <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">(</span>
-                    <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
-                    <span class="n">genotype</span><span class="o">=</span><span class="n">genotypes</span><span class="p">[</span><span class="n">head</span><span class="o">.</span><span class="n">pool</span><span class="p">],</span>
-                    <span class="n">environment</span><span class="o">=</span><span class="n">head</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span>
-                    <span class="n">phenotype</span><span class="o">=</span><span class="n">build_phenotype</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">head</span><span class="o">.</span><span class="n">control_set</span><span class="p">),</span>
-                <span class="p">),</span>
-                <span class="n">head</span><span class="o">.</span><span class="n">control_set</span><span class="p">,</span>
-            <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">count_records</span><span class="p">(</span>
     <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">StrainRow</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">DroppedStrain</span><span class="p">],</span> <span class="n">groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ColumnSpec</span><span class="p">]]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""How many (row, group) pairs carry at least one value: the record count."""</span>
+<span class="w">    </span><span class="sd">"""How many (row, array) cells carry a value: the record count, one per array."""</span>
     <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
-        <span class="mi">1</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">array_values</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">members</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span>
         <span class="k">for</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">array_values</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">members</span><span class="p">)</span>
     <span class="p">)</span>
 
 
@@ -2053,9 +2154,9 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">UnidentifiedCompoundHeldOut</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""One label held out under ``UNIDENTIFIED_COMPOUND_RULE``, with what it carried.</span>
 
-<span class="sd">    ``n_records_not_written`` counts the (stored strain row, environment, control set)</span>
-<span class="sd">    records its arrays would have written; ``n_value_cells`` the released value cells of</span>
-<span class="sd">    those arrays over every row, the figure the cell accounting sums.</span>
+<span class="sd">    ``n_records_not_written`` counts the (stored strain row, array) records its arrays</span>
+<span class="sd">    would have written, one per value cell over the stored rows; ``n_value_cells`` the</span>
+<span class="sd">    released value cells of those arrays, the figure the cell accounting sums.</span>
 <span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
@@ -2208,7 +2309,7 @@
     <span class="c1"># ---- build ----------------------------------------------------------------</span>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build one record per (strain row, environment, control set)."""</span>
+<span class="w">        </span><span class="sd">"""Build one record per (strain row, array): every released value cell."""</span>
         <span class="n">spec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span>
         <span class="n">data_root</span> <span class="o">=</span> <span class="n">_data_root</span><span class="p">()</span>
         <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
@@ -2304,8 +2405,8 @@
 <span class="w">        </span><span class="sd">"""Write ``dropped_records.json``: the array rules, counts and cell accounting.</span>
 
 <span class="sd">        A dropped environment's records-not-written count is over the stored strain</span>
-<span class="sd">        rows, keyed by the GROUP, so one condition dropped at several control sets is</span>
-<span class="sd">        counted once per group. ``cell_accounting`` splits every released value cell into</span>
+<span class="sd">        rows, one per (row, array) value cell, listed per GROUP, so one condition</span>
+<span class="sd">        dropped at several control sets is listed once per group. ``cell_accounting`` splits every released value cell into</span>
 <span class="sd">        stored, dropped-array and withdrawn-strain cells and raises if they do not sum.</span>
 <span class="sd">        The ``UNIDENTIFIED_COMPOUND_RULE`` arrays are also listed per label, with the</span>
 <span class="sd">        source quotes that the labels are codes with no released structure.</span>

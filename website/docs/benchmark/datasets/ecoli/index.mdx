@@ -84,26 +84,30 @@ The first baselines are linear probes: a frozen representation of each deleted g
 
 A single-gene sample is its gene's representation. A gene-pair sample is the two representations concatenated in stored order or added. Features are standardized with the training mean and standard deviation, and one ridge regression is fit per task, split and representation, on all targets at once. The penalty is the one of eight values from 0.1 to 1,000,000 with the lowest validation mean squared error. The test part is unlocked once per split, after that choice. A sequence longer than a model's window is truncated from its end.
 
+### Metrics
+
+Every regression task reports the same five metrics, the ones a regression board is graded with: **Pearson correlation**, the linear correlation between predicted and measured values; **Spearman correlation**, the correlation between the ranks of predicted and measured values, which does not depend on the scale of the predictions and is not moved by a few extreme strains; **R2**, one minus the squared error divided by the variance of the measured values; 0 is the score of predicting the test mean and it is negative for a worse model; **Mean squared error**, the mean of the squared errors, in squared label units; **Mean absolute error**, the mean of the absolute errors, in label units. Each is computed on the test part for every target and averaged over the targets. A task page draws the two correlations and gives all five as tables.
+
 ### Best representation per task and split family
 
-The representation with the highest mean test Pearson correlation in each split family, with the value for random features beside it. Means and sample standard deviations are over the seeds of the family. For the pair task the two genes are concatenated.
+The representation with the highest mean test Pearson correlation and the one with the highest mean test Spearman correlation in each split family, with the Pearson correlation of random features beside them. Means and sample standard deviations are over the seeds of the family. For the pair task the two genes are concatenated.
 
-| Task | Split family | Best representation | Its test Pearson | Random features |
-| :-- | :-- | :-- | --: | --: |
-| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Random | CaLM | 0.102 ± 0.067 | 0.001 ± 0.057 |
-| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Sequence identity 30 % | Codon frequency | 0.095 ± 0.014 | -0.048 ± 0.036 |
-| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Sequence identity 50 % | CaLM | 0.120 ± 0.041 | 0.017 ± 0.029 |
-| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Chromosome position | Codon frequency | 0.097 ± 0.066 | 0.020 ± 0.061 |
-| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Random | NT v1 2.5B | 0.036 ± 0.022 | 0.018 ± 0.015 |
-| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Sequence identity 30 % | Random | 0.035 ± 0.015 | 0.035 ± 0.015 |
-| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Sequence identity 50 % | Codon frequency | 0.047 ± 0.046 | 0.025 ± 0.003 |
-| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Chromosome position | Random | 0.023 ± 0.017 | 0.023 ± 0.017 |
-| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Random | NT v1 2.5B | 0.466 ± 0.007 | 0.461 ± 0.009 |
-| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, random | One-hot | 0.295 ± 0.044 | 0.283 ± 0.028 |
-| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, identity 30 % | One-hot | 0.274 ± 0.014 | 0.260 ± 0.045 |
-| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, identity 50 % | One-hot | 0.288 ± 0.008 | 0.278 ± 0.010 |
-| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, position | One-hot | 0.297 ± 0.044 | 0.265 ± 0.059 |
-| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Random | ESM-2 650M | 0.010 ± 0.006 | -0.003 ± 0.001 |
-| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Sequence identity 30 % | ESM-2 650M | 0.010 ± 0.004 | -0.004 ± 0.004 |
-| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Sequence identity 50 % | GenSLM 25M | 0.006 ± 0.004 | -0.006 ± 0.003 |
-| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Chromosome position | Codon frequency | 0.004 ± 0.004 | -0.001 ± 0.006 |
+| Task | Split family | Best by Pearson | Best by Spearman | Its Pearson | Its Spearman | Random features, Pearson |
+| :-- | :-- | :-- | :-- | --: | --: | --: |
+| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Random | CaLM | CaLM | 0.102 ± 0.067 | 0.069 ± 0.031 | 0.001 ± 0.057 |
+| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Sequence identity 30 % | Codon frequency | ProtT5-XL | 0.095 ± 0.014 | 0.088 ± 0.050 | -0.048 ± 0.036 |
+| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Sequence identity 50 % | CaLM | NT v1 2.5B | 0.120 ± 0.041 | 0.082 ± 0.052 | 0.017 ± 0.029 |
+| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Chromosome position | Codon frequency | Codon frequency | 0.097 ± 0.066 | 0.076 ± 0.063 | 0.020 ± 0.061 |
+| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Random | NT v1 2.5B | Random | 0.036 ± 0.022 | 0.023 ± 0.025 | 0.018 ± 0.015 |
+| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Sequence identity 30 % | Random | Random | 0.035 ± 0.015 | 0.023 ± 0.009 | 0.035 ± 0.015 |
+| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Sequence identity 50 % | Codon frequency | Codon frequency | 0.047 ± 0.046 | 0.028 ± 0.031 | 0.025 ± 0.003 |
+| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Chromosome position | Random | ProtT5-XL | 0.023 ± 0.017 | 0.018 ± 0.059 | 0.023 ± 0.017 |
+| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Random | NT v1 2.5B | NT v1 2.5B | 0.466 ± 0.007 | 0.458 ± 0.009 | 0.461 ± 0.009 |
+| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, random | One-hot | One-hot | 0.295 ± 0.044 | 0.283 ± 0.037 | 0.283 ± 0.028 |
+| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, identity 30 % | One-hot | One-hot | 0.274 ± 0.014 | 0.275 ± 0.022 | 0.260 ± 0.045 |
+| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, identity 50 % | One-hot | One-hot | 0.288 ± 0.008 | 0.281 ± 0.016 | 0.278 ± 0.010 |
+| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, position | One-hot | One-hot | 0.297 ± 0.044 | 0.292 ± 0.043 | 0.265 ± 0.059 |
+| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Random | ESM-2 650M | Codon frequency | 0.010 ± 0.006 | 0.008 ± 0.003 | -0.003 ± 0.001 |
+| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Sequence identity 30 % | ESM-2 650M | Codon frequency | 0.010 ± 0.004 | 0.008 ± 0.000 | -0.004 ± 0.004 |
+| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Sequence identity 50 % | GenSLM 25M | GenSLM 25M | 0.006 ± 0.004 | 0.005 ± 0.003 | -0.006 ± 0.003 |
+| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Chromosome position | Codon frequency | Codon frequency | 0.004 ± 0.004 | 0.002 ± 0.003 | -0.001 ± 0.006 |

@@ -57,6 +57,12 @@ a repeated digenic (query strain, array strain) cross is refused by Dmf and Dmi 
 being stored twice. On the real Data S1 table each of these inputs occurs 0 times (0
 other array strains, 0 blank SDs and 0 repeated crosses in 501,510 rows), so no stored
 record changes.
+
+2026.11.24 (#1176, per-replicate policy): Smf keys its records on the STRAIN, not the
+allele name. A second digenic query strain of one allele (``TSQ_B``, cdc28-4 0.85) is its
+own record with its own S4 SD; a strain whose fitness differs between its rows is refused
+by name. On the real table this adds the second strain of mad2, set1 and srn2
+(1,539 -> 1,542 records).
 """
 
 import os
@@ -113,6 +119,7 @@ COLUMNS = [
     "P-value",
 ]
 TSQ = "YBR160W+YDL227C_tsq508"
+TSQ_B = "YBR160W+YDL227C_tsq509"
 TM801 = "YBR160W+YML107C_tm801"
 TM802 = "YAR002W+YBR160W_tm802"
 TSA = "YBR001C_tsa100"
@@ -167,6 +174,7 @@ NUP60_TM802 = SgaKanMxDeletionPerturbation(
 #: unknown-array strains are listed so a join never refuses before the array check.
 S4_ROWS: list[s4.S4Row] = [
     ("tsq508", 0.83, 0.012),
+    ("tsq509", 0.85, 0.02),
     ("tm801", 0.55, 0.02),
     ("tm802", None, None),
     ("tm3180", 0.9, 0.01),
@@ -473,6 +481,47 @@ def test_repeated_digenic_row_gives_smf_one_single_per_allele(tmp_path: Path) ->
     ]
 
 
+def test_smf_two_query_strains_of_one_allele_are_two_records(tmp_path: Path) -> None:
+    """Two digenic query strains of one allele name (cdc28-4+hoΔ: tsq508 0.83 and
+    tsq509 0.85, each the control of a different double-mutant query in the real
+    release) are two records, each tagged with its own strain id and carrying its own
+    Additional Data S4 SD (0.012, 0.02), in first-seen order after the array single.
+    Keying on the allele name kept only tsq508.
+    """
+    second = [TSQ_B, "cdc28-4+hoΔ", DMA, "gem1Δ", "digenic", 0.7, 0.04, 0.85, 0.95, 0.0, 0.9]  # fmt: skip
+    smf = build(tmp_path, k.SmfKuzmin2018Dataset, [ROWS[1], second])
+    assert stored(smf, "experiment") == [
+        fitness("SmfKuzmin2018Dataset", [GEM1], 0.95, None),
+        query_fitness("SmfKuzmin2018Dataset", [cdc28(TSQ)], 0.83, 0.012),
+        query_fitness("SmfKuzmin2018Dataset", [cdc28(TSQ_B)], 0.85, 0.02),
+    ]
+    assert {e["phenotype"]["replicate_id"] for e in stored(smf, "experiment")} == {None}
+
+
+@pytest.mark.parametrize(
+    ("column", "strain", "value"),
+    [
+        ("Query single/double mutant fitness", TSQ, 0.84),
+        ("Array single mutant fitness", DMA, 0.96),
+    ],
+)
+def test_smf_refuses_a_strain_whose_fitness_varies_between_rows(
+    tmp_path: Path, column: str, strain: str, value: float
+) -> None:
+    """A strain is stored once, from its first row, only because Data S1 repeats one
+    value on all its rows; a second row giving the query (or array) strain another
+    fitness is refused by name and no store is written.
+    """
+    repeat = pd.DataFrame([ROWS[1]], columns=COLUMNS)
+    repeat.loc[0, column] = value
+    with pytest.raises(ValueError) as info:
+        build(tmp_path, k.SmfKuzmin2018Dataset, [ROWS[1], repeat.iloc[0].tolist()])
+    assert str(info.value) == (
+        f"Kuzmin 2018 Data S1 gives 1 strain(s) more than one {column!r}: ['{strain}']"
+    )
+    assert not (tmp_path / "SmfKuzmin2018Dataset" / "processed" / "lmdb").exists()
+
+
 def test_subset_n_samples_rows_with_seed_42(tmp_path: Path) -> None:
     """``subset_n`` samples the preprocessed frame with ``random_state=42`` AFTER the
     reference SD is taken: Dmf ``subset_n=2`` keeps positions [1, 3] (0.72 and the tm802
@@ -774,3 +823,39 @@ def test_digenic_record_unchanged(built: tuple[Any, pd.DataFrame]) -> None:
         ),
     )
     assert experiment.model_dump() == expected.model_dump()
+
+
+@pytest.mark.data
+@_needs_raw
+def test_smf_one_record_per_strain_on_the_release(raw: pd.DataFrame) -> None:
+    """Real Data S1 + S4: 1,181 array strains and the 361 of 364 digenic query strains
+    that state a fitness (tm2843, tm2967, tm3141 are blank in Data S1 and S4), 1,542
+    records. The three allele names with two strains keep both, each at its own
+    released value and S4 SD (tm3287 is blank in S4, a typed gap).
+    """
+    dataset = k.SmfKuzmin2018Dataset.__new__(k.SmfKuzmin2018Dataset)
+    df = dataset.preprocess_raw(raw.copy(), pd.read_excel(_S4))
+    assert len(df) == 1542
+    assert df["smf_type"].value_counts().to_dict() == {
+        "array_smf": 1181,
+        "query_smf": 361,
+    }
+    query = df[df["smf_type"] == "query_smf"]
+    assert query["Query strain ID"].is_unique
+    assert df.loc[df["smf_type"] == "array_smf", "Array strain ID"].is_unique
+    two = query.groupby("Query allele name").filter(lambda g: len(g) == 2)
+    got = {
+        (r["Query allele name"], r["Query strain ID"]): (
+            r["Query single/double mutant fitness"],
+            None if pd.isna(r["query_strain_sd"]) else r["query_strain_sd"],
+        )
+        for _, r in two.iterrows()
+    }
+    assert got == {
+        ("mad2_delta+ho_delta", "YJL030W+YDL227C_tm3211"): (0.9693, 0.011),
+        ("mad2_delta+ho_delta", "YJL030W+YDL227C_tm3288"): (0.977, 0.016),
+        ("set1_delta+ho_delta", "YHR119W+YDL227C_tm3287"): (0.8105, None),
+        ("set1_delta+ho_delta", "YHR119W+YDL227C_tm3346"): (0.8763, 0.0155),
+        ("srn2_delta+ho_delta", "YLR119W+YDL227C_tm3057"): (0.8921, 0.012),
+        ("srn2_delta+ho_delta", "YLR119W+YDL227C_tm3122"): (0.8911, 0.0135),
+    }

@@ -300,30 +300,34 @@ def test_smf_reference_uses_mean_sd_over_all_rows(tmp_path: Path) -> None:
     assert_side_files(ds, ["YAL048C", "YAR002W", "YBR001C"], 3)
 
 
-def test_smf_drops_array_single_when_the_row_query_fitness_is_missing(
+def test_smf_keeps_array_single_when_the_row_query_fitness_is_missing(
     tmp_path: Path,
 ) -> None:
-    """Finding: an array single-mutant record is dropped by the QUERY-fitness filter.
+    """An array single is kept on its OWN fitness, whatever the row's query fitness.
 
-    ``preprocess_raw`` ends with ``df[~df["Query single/double mutant fitness"].isna()]``
-    applied to the concatenated array + query frame, so an array single whose only
-    row has an empty query fitness is dropped even though its own "Array single mutant
-    fitness" (0.88 here) is present. With a fourth trigenic row
-    (``YBL002W+YBL003C_tm7`` x ``YCR002C_dma77`` pol32Δ, query fitness empty) the
-    build still has 3 records and YCR002C is absent from the gene set.
+    ``preprocess_raw`` used to end with ``df[~df["Query single/double mutant
+    fitness"].isna()]`` over the concatenated array + query frame, so an array single
+    whose only row had an empty query fitness was dropped although its "Array single
+    mutant fitness" (0.88 here) was released (a Phase 5 test-campaign finding; 0 such
+    rows in the real Data S1). Each row is now kept on the value it stores (2026.11.24,
+    #1176):
+    with a fourth trigenic row (``YBL002W+YBL003C_tm7`` x ``YCR002C_dma77`` pol32Δ,
+    query fitness empty) the build has 4 records, the pol32 array single third.
     """
     extra = [
         "YBL002W+YBL003C_tm7", "htb2Δ+hta2Δ", "YCR002C_dma77", "pol32Δ", "trigenic",
         0.3, 0.05, None, 0.88, -0.2, 0.001,
     ]  # fmt: skip
     ds = build(tmp_path, SmfKuzmin2018Dataset, [*ROWS, extra])
-    assert len(ds) == 3
+    assert len(ds) == 4
     assert [e.genotype.systematic_gene_names for e in experiments(ds)] == [
         ["YAL048C"],
         ["YBR001C"],
+        ["YCR002C"],
         ["YAR002W"],
     ]
-    assert sorted(ds.gene_set) == ["YAL048C", "YAR002W", "YBR001C"]
+    assert experiments(ds)[2].phenotype.fitness == 0.88
+    assert sorted(ds.gene_set) == ["YAL048C", "YAR002W", "YBR001C", "YCR002C"]
 
 
 def test_dmf_records(tmp_path: Path) -> None:

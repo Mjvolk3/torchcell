@@ -124,7 +124,7 @@ DATASET_FULL_RECORDS: dict[str, int] = {
     "SmfCostanzo2016Dataset": 20484,
     "DmfCostanzo2016Dataset": 20705612,
     "DmiCostanzo2016Dataset": 20705612,
-    "SmfKuzmin2018Dataset": 1539,
+    "SmfKuzmin2018Dataset": 1542,
     "DmfKuzmin2018Dataset": 410399,
     "TmfKuzmin2018Dataset": 91111,
     "DmiKuzmin2018Dataset": 410399,

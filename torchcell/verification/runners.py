@@ -2893,9 +2893,9 @@ FITNESS_DATASETS: dict[str, dict[str, Any]] = {
     },
     "smf_kuzmin2018": {
         "root": "data/torchcell/smf_kuzmin2018",
-        # the 1,181 array alleles (each states an array SMF) + the 358 of 361 digenic
-        # query alleles that state a query fitness on some row
-        "expected_count": 1539,
+        # the 1,181 array strains (each states an array SMF) + the 361 of 364 digenic
+        # query STRAINS that state a query fitness (mad2, set1, srn2 have two each)
+        "expected_count": 1542,
         "stream": True,
         "experiment_class": "FitnessExperiment",
         "provenance": Provenance(

@@ -140,6 +140,7 @@ from torchcell.adapters import (
     ProteomeMenasalvas2025Adapter,
     ProteomeMori2021Adapter,
     ProteomePercentDeSiqueira2025Adapter,
+    ProteomeReplicateIntensitySchmidt2016Adapter,
     ProteomeSchmidt2016Adapter,
     ProteomeSrmSet1Schmidt2016Adapter,
     ProteomeSrmSet2Schmidt2016Adapter,
@@ -245,6 +246,9 @@ from torchcell.datasets.ecoli.schastnaya2021 import MetabolomeSchastnaya2021Data
 from torchcell.datasets.ecoli.schmidt2016 import ProteomeSchmidt2016Dataset
 from torchcell.datasets.ecoli.schmidt2016_growth_rate import (
     GrowthRateSchmidt2016Dataset,
+)
+from torchcell.datasets.ecoli.schmidt2016_replicate_intensity import (
+    ProteomeReplicateIntensitySchmidt2016Dataset,
 )
 from torchcell.datasets.ecoli.schmidt2016_s23_growth_rate import (
     GrowthRateS23Schmidt2016Dataset,
@@ -779,6 +783,15 @@ BACTERIAL: list[Bacterial] = [
         PROTEOME,
         perturbation=False,
     ),
+    # Schmidt 2016 Table S8 (#1178, 2026-11-24): one record per culture, wild type.
+    _case(
+        ProteomeReplicateIntensitySchmidt2016Adapter,
+        "schmidt2016_replicate_intensity",
+        "proteome_replicate_intensity_schmidt2016",
+        ProteomeReplicateIntensitySchmidt2016Dataset,
+        PROTEOME,
+        perturbation=False,
+    ),
     _case(
         ProteomeSrmSet1Schmidt2016Adapter,
         "schmidt2016_srm_set1",
@@ -795,12 +808,14 @@ BACTERIAL: list[Bacterial] = [
         PROTEOME,
         perturbation=False,
     ),
+    # Schmidt 2016 Table S24 (#1178, 2026-11-24): one absolute rate per culture, so an
+    # environment response; the wild-type cultures carry the empty genotype.
     _case(
         GrowthRateSchmidt2016Adapter,
         "schmidt2016_growth_rate",
         "growth_rate_schmidt2016",
         GrowthRateSchmidt2016Dataset,
-        "fitness phenotype",
+        RESPONSE,
     ),
     _case(
         GrowthRateS23Schmidt2016Adapter,

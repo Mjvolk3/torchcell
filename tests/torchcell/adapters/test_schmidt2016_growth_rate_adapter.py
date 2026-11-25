@@ -4,8 +4,9 @@
 """``torchcell/adapters/schmidt2016_growth_rate_adapter.py``: the conf it loads, the
 gate's view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Schmidt 2016 Table S24: six (KEIO deletion strain, medium) records,
-FitnessExperiment. One ``DeletionStrainPerturbation`` per record, so the
+Schmidt 2016 Table S24: 22 records, one per released culture (17 KEIO deletion
+cultures + 5 wild-type cultures), EnvironmentResponseExperiment with the absolute rate.
+One ``ReleasedIdentifierPerturbation`` per deletion record, so the
 perturbation pair is enabled -- this is the one Schmidt 2016 dataset that serves a gene
 perturbation, which is why the perturbation methods are pinned ON here and OFF in the
 three proteome confs of the same paper.
@@ -74,7 +75,8 @@ def test_conf_serves_the_deletion_perturbation_and_the_carbon_source() -> None:
     assert "perturbation (chunked)" in names
     assert "perturbation to genotype (chunked)" in names
     assert "environment perturbation (chunked)" in names
-    assert "fitness phenotype (chunked)" in names
+    assert "environment response phenotype (chunked)" in names
+    assert [n for n in names if "fitness" in n] == []
     assert [n for n in names if "crispr" in n] == []
 
 

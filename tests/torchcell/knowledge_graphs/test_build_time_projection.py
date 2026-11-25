@@ -563,6 +563,7 @@ BACTERIAL_DATASETS = {
     "ProteomeLog10PercentDeSiqueira2025Dataset",
     "ProteomeMori2021Dataset",
     "ProteomePercentDeSiqueira2025Dataset",
+    "ProteomeReplicateIntensitySchmidt2016Dataset",
     "ProteomeSchmidt2016Dataset",
     "ProteomeSrmSet1Schmidt2016Dataset",
     "ProteomeSrmSet2Schmidt2016Dataset",
@@ -680,6 +681,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         + 2
         + 1  # #879 Wang 2018 Supplementary Data 5 gene-level calls
         + 1
+        + 1  # #1178 Schmidt 2016 Table S8 per-culture intensities
     )
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {

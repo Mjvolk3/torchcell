@@ -22,10 +22,17 @@ copies/cell`` block of Table S6, the release's "Final table with combined global
 absolute abundance estimations from both datasets". The mass block is not stored,
 because it is derived from the stored number and the released molecular weight.
 
-HOW THE UNCERTAINTY IS OBTAINED, AND WHY IT IS AN EXACT SE RATHER THAN THE RELEASED CV.
-``ProteinAbundancePhenotype.protein_abundance_se`` is a standard error, and the release
-publishes a coefficient of variation instead. Three facts, all measured on the pinned
-workbook, turn one into the other without an assumption:
+NO STANDARD ERROR IS STORED, SINCE 2026-11-24 (#1178, owner decision 2: a statistic a
+loader computes from released replicates leaves the experiment record). The release
+states a coefficient of variation between the biological triplicates, not a standard
+error of copies/cell, and the three per-culture ``normInt`` values each SE was computed
+from are records of their own now, in
+:class:`~torchcell.datasets.ecoli.schmidt2016_replicate_intensity.ProteomeReplicateIntensitySchmidt2016Dataset`.
+So ``protein_abundance_se`` is ``None`` on every record and reference, with a typed
+``not_reported_by_primary`` gap. The stored copies/cell stays: it is the authors' own
+value, released only as this aggregate. Until 2026-11-24 the loader stored
+``scale[i, c] * stdev(three normInt) / sqrt(3)`` from the facts below, which still hold
+and are still asserted at build time (they pin what the bytes mean):
 
 1. ``medianNormInt_<group>`` of Table S8 equals the median of that group's three
    ``normInt_`` replicate columns for every one of the 47,334 released cells, exactly.
@@ -33,25 +40,27 @@ workbook, turn one into the other without an assumption:
    99.9th percentile of the relative deviation at 5.6e-8 (the export carries ten
    significant digits). The only cells above 1e-6 are the 23 belonging to ``P63284``,
    which Table S8 files on two rows, so its replicate cells cannot be attributed to
-   either of the two Table S6 ``clpB`` rows that carry it (both are stored, #1045 part 2,
-   with the SE that needs those cells left ``nan``).
+   either of the two Table S6 ``clpB`` rows that carry it (both are stored, #1045 part 2).
 3. Within one condition the stored copies/cell is a per-protein multiple of that
    protein's ``medianNormInt``: ``copies[i, c] / copies[i, glucose]`` equals
-   ``medianNormInt[i, c] / medianNormInt[i, glucose]`` for all 2,057 shared proteins and
-   all 21 condition pairs, to a maximum relative deviation of 9.3e-10.
+   ``k[c] * medianNormInt[i, c] / medianNormInt[i, glucose]`` with ONE constant ``k[c]``
+   per condition, the same for every protein (LB 1.5353, acetate 0.8004; the per-
+   condition protein-mass adjustment of the Methods). Re-measured on 2026-11-24 over the
+   2,056 attributable dataset-2 proteins and all 21 conditions: the relative spread of
+   that ratio over proteins is at most 1.7e-9. (Until 2026-11-24 this fact was written
+   without ``k[c]``, which is not what the bytes say.)
 
 So ``scale[i, c] = copies[i, c] / medianNormInt[i, c]`` converts that protein's
-replicate spread into copies per cell, and the stored SE is
-``scale[i, c] * stdev(three normInt replicates) / sqrt(3)``. Facts 1 and 2 are asserted
-at build time against the bytes; a drift in either stops the build.
+replicate spread into copies per cell; that conversion is a modeling-time step now, over
+the per-culture records. Facts 1 and 2 are asserted at build time against the bytes; a
+drift in either stops the build.
 
 ``n_replicates`` IS PER PROTEIN AND THE RELEASE STATES IT. Table S6 combines two
 LC-MS experiments and names which one each row came from in its ``Dataset`` column:
 2,058 of 2,359 rows are dataset 2, which was "prepared in biological triplicates", and
 301 are dataset 1, of which the release says "since this dataset contains no replicate
 measurements, no statical tests were performed". A dataset-2 protein therefore stores
-``n_replicates = 3`` and an exact SE; a dataset-1 protein stores ``n_replicates = 1``
-and ``nan``, which is what no replicate measurement means.
+``n_replicates = 3`` and a dataset-1 protein ``n_replicates = 1``.
 
 EVERY LOADED CONDITION IS WILD-TYPE BW25113: NONE IS A DELETION STRAIN. The three Keio
 deletion strains in the paper (``rimI``, ``rimJ``, ``rimL``) appear only in the
@@ -102,9 +111,8 @@ EVERY RELEASED ROW IS A KEY: 2,359 rows, 2,359 keys (2,340 until #1045 part 2).
   (``nrdA | Table S6 row 91``, :data:`TWICE_FILED_SEPARATOR`): both are stored, told
   apart by the row the release prints them on, and no row is preferred over the other.
   The two ``clpB`` rows share the accession ``P63284``, which Table S8 also files twice,
-  so their replicate cells cannot be attributed and their SE is ``nan`` beside
-  ``n_replicates = 3`` (``replicate_cells_attributable`` in
-  ``protein_identifiers.csv``; the L2 replicate rule reads it).
+  so their replicate cells cannot be attributed to either row
+  (``replicate_cells_attributable`` in ``protein_identifiers.csv``).
 - 5 rows are proteins of another organism. The search database was built that way --
   "The database consists of 4,431 E. coli proteins as well as known contaminants" --
   and the released ``Description`` names each row's organism in its ``OS=`` token:
@@ -155,7 +163,6 @@ import argparse
 import hashlib
 import json
 import logging
-import math
 import os
 import os.path as osp
 import pickle
@@ -219,7 +226,11 @@ from torchcell.literature.provenance import run_retriever
 from torchcell.sequence import GeneSet
 from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12StrainName
 from torchcell.verification.report import Provenance, VerificationReport
-from torchcell.verification.sourced import SourcedValue
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
+)
 
 log = logging.getLogger(__name__)
 
@@ -927,18 +938,6 @@ class ReplicateCell(BaseModel):
             / statistics.fmean(self.replicates)
         )
 
-    def standard_error(self, copies: float) -> float:
-        """The SE of ``copies`` per cell, from this cell's own replicate spread.
-
-        ``copies`` is a per-protein multiple of ``median_released`` within a condition
-        (measured, see the module docstring), so that ratio converts the replicate
-        standard deviation into copies per cell; the SE divides by sqrt(3).
-        """
-        scale = copies / self.median_released
-        return (
-            scale * statistics.stdev(self.replicates) / math.sqrt(N_REPLICATES_DATASET2)
-        )
-
 
 def _header_index(
     header: Sequence[Any], columns: Sequence[int] | None = None
@@ -1317,20 +1316,29 @@ def check_environments_distinct(environments: Mapping[str, Environment]) -> None
         seen[key] = name
 
 
+#: The typed absence every copies/cell record and reference carries on its SE map.
+SE_GAP = ProvenanceGap(
+    field="protein_abundance_se",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    note="the release states a coefficient of variation between the biological "
+    "triplicates (Table S6 CV block, Table S8 cv_ columns), not a standard error of "
+    "copies/cell; an SE would be a loader computation over the three Table S8 normInt "
+    "replicates, which are records of ProteomeReplicateIntensitySchmidt2016Dataset, so "
+    "it is a modeling-time derivation (#1178, 2026-11-24)",
+)
+
+
 def build_phenotype(
-    rows: Sequence[ProteinRow],
-    key: Mapping[int, str],
-    cells: Mapping[str, Mapping[str, ReplicateCell]],
-    column: str,
+    rows: Sequence[ProteinRow], key: Mapping[int, str], column: str
 ) -> ProteinAbundancePhenotype:
     """The abundance profile of one condition, over the rows the release quantified.
 
     A row the release writes as ``NA`` in this column is not in the profile: dataset 1
     did not cover the xylose, mannose and fructose conditions, so its 295 kept proteins
-    have no value there. A released 0 IS a value and is kept verbatim.
+    have no value there. A released 0 IS a value and is kept verbatim. No SE is stored
+    (:data:`SE_GAP`).
     """
     abundance: dict[str, float] = {}
-    standard_error: dict[str, float] = {}
     n_replicates: dict[str, int] = {}
     for row in rows:
         copies = row.copies[column]
@@ -1339,15 +1347,12 @@ def build_phenotype(
         tag = key[row.row_number]
         abundance[tag] = copies
         n_replicates[tag] = row.n_replicates
-        cell = cells.get(row.uniprot, {}).get(column)
-        standard_error[tag] = (
-            cell.standard_error(copies) if cell is not None else float("nan")
-        )
     return ProteinAbundancePhenotype(
         protein_abundance=abundance,
-        protein_abundance_se=standard_error,
+        protein_abundance_se=None,
         n_replicates=n_replicates,
         measurement_type=MEASUREMENT_TYPE,
+        provenance_gaps=[SE_GAP],
     )
 
 
@@ -1365,13 +1370,10 @@ def restrict(
         protein_abundance={
             k: v for k, v in phenotype.protein_abundance.items() if k in wanted
         },
-        protein_abundance_se={
-            k: v
-            for k, v in (phenotype.protein_abundance_se or {}).items()
-            if k in wanted
-        },
+        protein_abundance_se=None,
         n_replicates={k: v for k, v in phenotype.n_replicates.items() if k in wanted},
         measurement_type=phenotype.measurement_type,
+        provenance_gaps=list(phenotype.provenance_gaps),
     )
 
 
@@ -1391,9 +1393,10 @@ def check_released_statistics(
     """Both released statistics must be what the replicate columns say they are.
 
     ``medianNormInt`` is the median of the three replicates and ``cv`` is
-    ``100 * stdev / mean`` of the same three. The stored SE is derived from those
-    replicates, so a drift in either identity means the columns no longer mean what the
-    derivation assumes, and the build stops.
+    ``100 * stdev / mean`` of the same three. The per-culture records of
+    ``schmidt2016_replicate_intensity`` and the copies/cell scale both rest on those
+    identities, so a drift in either means the columns no longer mean what the docstring
+    states, and the build stops.
     """
     worst_median = 0.0
     worst_cv = 0.0
@@ -1644,7 +1647,7 @@ class ProteomeSchmidt2016Dataset(ExperimentDataset):
 
         phenotypes = {
             spec.s6_column: build_phenotype(
-                selection.kept, selection.key, cells, spec.s6_column
+                selection.kept, selection.key, spec.s6_column
             )
             for spec in loaded
         }
@@ -1692,11 +1695,6 @@ class ProteomeSchmidt2016Dataset(ExperimentDataset):
                         "carbon_g_per_l": spec.carbon_g_per_l,
                         "temperature_c": spec.temperature_c,
                         "n_protein_keys": len(phenotype.protein_abundance),
-                        "n_with_se": sum(
-                            1
-                            for v in (phenotype.protein_abundance_se or {}).values()
-                            if not math.isnan(v)
-                        ),
                     }
                 )
         env.close()
@@ -1885,55 +1883,37 @@ def environment_uniqueness_rule(records: Sequence[Mapping[str, Any]]) -> Any:
     )
 
 
-def replicate_rule(
-    records: Sequence[Mapping[str, Any]], unattributable: frozenset[str] = frozenset()
-) -> Any:
-    """SUPPLEMENTARY L2: a protein has an SE exactly when it has three replicates.
+def no_se_rule(records: Sequence[Mapping[str, Any]]) -> Any:
+    """SUPPLEMENTARY L2: no record or reference stores an SE map (2026-11-24, #1178).
 
-    Dataset 2 ran in biological triplicates and dataset 1 ran once, so a finite SE must
-    accompany ``n_replicates == 3`` and ``nan`` must accompany ``n_replicates == 1``.
-    ``unattributable`` names the keys whose replicate cells the release files twice
-    (the two ``clpB`` rows of ``P63284``; #1045 part 2): three replicates and an SE that
-    the release does not let anyone compute, so ``nan`` is what they must carry.
+    The release states a CV, not an SE, and the SE the loader used to compute is a
+    statistic over released replicates, which are records of the sibling replicate store
+    now; every phenotype states the absence with :data:`SE_GAP` instead.
     """
     from torchcell.verification.report import Level, LevelResult
 
     bad = 0
-    counts: dict[int, int] = {}
     for record in records:
-        phenotype = record["experiment"]["phenotype"]
-        errors = phenotype.get("protein_abundance_se") or {}
-        for key, n in phenotype["n_replicates"].items():
-            counts[int(n)] = counts.get(int(n), 0) + 1
-            finite = not math.isnan(float(errors[key]))
-            expected = int(n) == N_REPLICATES_DATASET2 and key not in unattributable
-            if finite != expected:
+        for phenotype in (
+            record["experiment"]["phenotype"],
+            record["reference"]["phenotype_reference"],
+        ):
+            gapped = {gap["field"] for gap in phenotype.get("provenance_gaps") or []}
+            if (
+                phenotype.get("protein_abundance_se") is not None
+                or "protein_abundance_se" not in gapped
+            ):
                 bad += 1
     return LevelResult(
         level=Level.L2,
-        name="se_matches_replicate_count",
+        name="no_loader_computed_se",
         passed=bad == 0,
         message=(
-            f"SUPPLEMENTARY: {bad} of {sum(counts.values())} values disagree with their "
-            f"replicate count ({len(unattributable)} keys whose replicate cells the "
-            "release files twice carry nan by rule)"
+            f"SUPPLEMENTARY: {bad} of {2 * len(records)} phenotypes store an SE map or "
+            "lack the protein_abundance_se gap"
         ),
-        details={
-            "n_bad": bad,
-            "n_by_replicates": counts,
-            "unattributable": sorted(unattributable),
-        },
+        details={"n_bad": bad, "n_phenotypes": 2 * len(records)},
     )
-
-
-def unattributable_keys(dataset_root: str) -> frozenset[str]:
-    """The stored keys whose replicate cells Table S8 files on two rows."""
-    frame = pd.read_csv(
-        osp.join(dataset_root, "preprocess", "protein_identifiers.csv"),
-        keep_default_na=False,
-    )
-    flags = frame["replicate_cells_attributable"].astype(str)
-    return frozenset(frame.loc[flags == "False", "stored_key"].astype(str))
 
 
 def gene_containment_rule(
@@ -1998,8 +1978,8 @@ def verify_build(
             method=(
                 "Table S6 'Protein copies/cell' block: one "
                 "ProteinAbundanceExperiment per loaded BW25113 growth "
-                "condition, with SE = (copies / medianNormInt) * stdev(three Table S8 "
-                "normInt replicates) / sqrt(3) for the dataset-2 proteins"
+                "condition, the authors' copies/cell verbatim, no SE (the Table S8 "
+                "replicates are records of the sibling replicate-intensity store)"
             ),
             page="si2.xlsx sheets 'Table S6', 'Table S8', 'Table S25'",
             retrieved=SI2_RETRIEVED_AT,
@@ -2007,7 +1987,7 @@ def verify_build(
         expected_count=expected_count,
     )
     report.add(environment_uniqueness_rule(records))
-    report.add(replicate_rule(records, unattributable_keys(dataset_root)))
+    report.add(no_se_rule(records))
     report.add(assembly_pin_rule(records))
     report.add(gene_containment_rule(records, set(genome.genbank.loci)))
     out = osp.join(dataset_root, "preprocess", "verification_report.json")

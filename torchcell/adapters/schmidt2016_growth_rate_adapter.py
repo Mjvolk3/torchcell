@@ -5,11 +5,12 @@
 """BioCypher adapter exposing Schmidt 2016's rim-deletion growth rates as
 knowledge-graph nodes and edges.
 
-One record per (KEIO deletion strain, medium): a single
-``DeletionStrainPerturbation`` served as a ``perturbation`` node, and the
-strain's growth rate relative to the wild type of the SAME medium as a
-``FitnessPhenotype``. The two media differ by their carbon source, which rides on
-``environment.perturbations``, so the environment-perturbation pair is enabled.
+One record per released culture (2026-11-24): a deletion culture's single
+``ReleasedIdentifierPerturbation`` served as a ``perturbation`` node (the wild-type
+cultures carry the empty genotype), and the culture's absolute growth rate in h^-1 as an
+``EnvironmentResponsePhenotype`` (``MeasurementType.growth_rate``). The two media differ
+by their carbon source, which rides on ``environment.perturbations``, so the
+environment-perturbation pair is enabled.
 """
 
 import os.path as osp

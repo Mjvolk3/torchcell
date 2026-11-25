@@ -20,7 +20,6 @@ twice-filed symbols, and that Table S6's first two CV headers are swapped.
 from __future__ import annotations
 
 import json
-import math
 import os
 import os.path as osp
 import statistics
@@ -391,16 +390,17 @@ def test_cv_header_swap_is_asserted_and_a_corrected_export_would_fail(
         sm.check_cv_header_swap([], cells)
 
 
-def test_standard_error_scales_the_replicate_spread_into_copies_per_cell() -> None:
+def test_replicate_cell_recomputes_the_released_median_and_cv() -> None:
     replicates = (90.0, 100.0, 110.0)
     cell = sm.ReplicateCell(
         replicates=replicates, median_released=100.0, cv_released=10.0
     )
     assert cell.median == 100.0
-    assert cell.cv == pytest.approx(10.0)
-    # copies = 2 * the median, so the SD doubles and the SE divides by sqrt(3).
-    expected = 2.0 * statistics.stdev(replicates) / math.sqrt(3)
-    assert cell.standard_error(200.0) == pytest.approx(expected)
+    assert cell.cv == pytest.approx(
+        100.0 * statistics.stdev(replicates) / statistics.fmean(replicates)
+    )
+    # 2026-11-24 (#1178): no SE is derived from the replicates any more
+    assert not hasattr(cell, "standard_error")
 
 
 # --------------------------------------------------------------------------- #
@@ -457,19 +457,30 @@ def test_select_proteins_refuses_two_rows_sharing_a_key(workbook: Path) -> None:
         sm.select_proteins([clash, *rows[1:]], label="test")
 
 
-def test_the_replicate_rule_exempts_a_key_whose_cells_the_release_files_twice() -> None:
-    """Three replicates and a ``nan`` SE hold only for an unattributable key."""
+def test_the_no_se_rule_refuses_an_se_map_and_a_missing_gap() -> None:
+    """2026-11-24 (#1178): the loader-computed SE left the record; the gap states it."""
+    gap = {"field": "protein_abundance_se"}
+    clean: dict[str, Any] = {"protein_abundance_se": None, "provenance_gaps": [gap]}
     record = {
-        "experiment": {
-            "phenotype": {
-                "protein_abundance_se": {"clpB | Table S6 row 1003": float("nan")},
-                "n_replicates": {"clpB | Table S6 row 1003": 3},
-            }
-        }
+        "experiment": {"phenotype": clean},
+        "reference": {"phenotype_reference": clean},
     }
-    assert sm.replicate_rule([record]).passed is False
-    exempt = sm.replicate_rule([record], frozenset({"clpB | Table S6 row 1003"}))
-    assert exempt.passed is True
+    assert sm.no_se_rule([record]).passed is True
+    with_se: dict[str, Any] = {
+        "protein_abundance_se": {"aceA": 1.0},
+        "provenance_gaps": [gap],
+    }
+    bad = {
+        "experiment": {"phenotype": with_se},
+        "reference": {"phenotype_reference": clean},
+    }
+    assert sm.no_se_rule([bad]).passed is False
+    no_gap: dict[str, Any] = {"protein_abundance_se": None, "provenance_gaps": []}
+    bad = {
+        "experiment": {"phenotype": clean},
+        "reference": {"phenotype_reference": no_gap},
+    }
+    assert sm.no_se_rule([bad]).passed is False
 
 
 # --------------------------------------------------------------------------- #
@@ -577,27 +588,25 @@ def test_chemostat_arms_differ_by_dilution_rate_and_stationary_arms_by_phase() -
     )
 
 
-def test_phenotype_skips_na_and_matches_se_to_the_replicate_count(
+def test_phenotype_skips_na_and_stores_no_se(
     workbook: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     rows, _ = sm.read_table_s6(str(workbook))
     selection = sm.select_proteins(rows, label="test")
-    loaded = [c.s6_column for c in sm.CONDITIONS if c.drop is None]
-    cells, _ = sm.read_table_s8(str(workbook), loaded)
 
-    glucose = sm.build_phenotype(selection.kept, selection.key, cells, "Glucose")
+    glucose = sm.build_phenotype(selection.kept, selection.key, "Glucose")
     # #1045 part 2: every released row is a key, as released
     assert set(glucose.protein_abundance) == set(STORED_KEYS)
     assert glucose.protein_abundance["aceA"] == pytest.approx(
         _copies("aceA", "Glucose")
     )
     assert {k: glucose.n_replicates[k] for k in KEPT_GENES} == {"aceA": 3, "aceB": 1}
-    assert glucose.protein_abundance_se is not None
-    assert not math.isnan(glucose.protein_abundance_se["aceA"])
-    assert math.isnan(glucose.protein_abundance_se["aceB"])
+    # 2026-11-24 (#1178): the copies/cell aggregate carries no loader-computed SE
+    assert glucose.protein_abundance_se is None
+    assert [gap.field for gap in glucose.provenance_gaps] == ["protein_abundance_se"]
     assert glucose.measurement_type == sm.MEASUREMENT_TYPE
 
-    xylose = sm.build_phenotype(selection.kept, selection.key, cells, "Xylose")
+    xylose = sm.build_phenotype(selection.kept, selection.key, "Xylose")
     assert set(xylose.protein_abundance) == set(STORED_KEYS) - {"aceB"}
 
 
@@ -606,12 +615,12 @@ def test_restrict_keeps_only_the_requested_keys_and_refuses_a_missing_one(
 ) -> None:
     rows, _ = sm.read_table_s6(str(workbook))
     selection = sm.select_proteins(rows, label="test")
-    loaded = [c.s6_column for c in sm.CONDITIONS if c.drop is None]
-    cells, _ = sm.read_table_s8(str(workbook), loaded)
-    glucose = sm.build_phenotype(selection.kept, selection.key, cells, "Glucose")
+    glucose = sm.build_phenotype(selection.kept, selection.key, "Glucose")
     narrowed = sm.restrict(glucose, ["aceA"])
     assert set(narrowed.protein_abundance) == {"aceA"}
     assert set(narrowed.n_replicates) == {"aceA"}
+    assert narrowed.protein_abundance_se is None
+    assert narrowed.provenance_gaps == glucose.provenance_gaps
     with pytest.raises(RuntimeError, match="quantifies none of"):
         sm.restrict(glucose, ["aceA", "absent"])
 
@@ -763,7 +772,7 @@ def test_process_builds_one_record_per_loaded_condition(
     assert list(identifiers["released_gene"]) == [row[0] for row in ROWS]
     assert list(identifiers["stored_key"]) == list(STORED_KEYS)
     # the synthetic Table S8 files the non-host accession twice, as the release does
-    # P63284's: that key keeps its three replicates and an SE of nan, by rule
+    # P63284's: its replicate cells cannot be attributed to one row
     assert list(identifiers["replicate_cells_attributable"]) == [
         True,
         True,

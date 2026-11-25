@@ -3,7 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_caudal2024_synthetic.py
 """Caudal 2024 pan-transcriptome loader built end to end on synthetic raw files.
 
-The seven ``raw_file_names`` are written under ``<root>/raw/`` so PyG never calls
+The eight ``raw_file_names`` are written under ``<root>/raw/`` so PyG never calls
 ``download()``. ``process()`` also reads the SGD S288C chromosome FASTA and GFF through
 the genomes registry. ``DATA_ROOT`` is pointed into ``tmp_path`` and a real
 ``GenomeManifest`` is written for each tier rather than monkeypatching ``resolve``: the
@@ -41,6 +41,10 @@ what removes them is the loader's explicit exclusions (caudal2024.py lines 457-4
 intersection. Reference = per-gene mean over the
 two built isolates: YAL001C tpm (2.0 + 3.0)/2 = 2.5, count round(22.5) = 22 (banker's
 rounding); YBR001W 4.0 / 20.
+
+Datafile 2 (``replicate_data_tpm_22042023.tab``) holds two cultures of XTRA_ABC alone, an
+excluded isolate, so the default build stores no replicate culture and both records keep
+``replicate_id`` None; the replicate path is built in ``test_caudal2024.py``.
 """
 
 from __future__ import annotations
@@ -158,6 +162,19 @@ _CAUDAL_CSV = (
     "QQQ,YAL001C,YAL001C,,present,TFC3,99,9.0\n"
 )
 
+#: Datafile 2 of the default fixture: two cultures of the excluded XTRA_ABC only, so the
+#: default build stores no replicate culture (``test_caudal2024.py`` builds one that
+#: does). The column order is the release's, with a column the loader does not read.
+_REPLICATE_HEADER = (
+    "ORF,SampleID,tpm,Sample.name.before.reassignement,Standardized.name,Final.Group,"
+    "Number.of.clean.mapped.reads\n"
+)
+_REPLICATE_CSV = (
+    _REPLICATE_HEADER
+    + 'YAL001C,R1.ABC,9.0,ABC_Yes_1,XTRA_ABC,Final_set,"1,000,000"\n'
+    + 'YAL001C,R2.ABD,8.0,ABD_Yes_2,XTRA_ABC,good_duplicate,"2,000,000"\n'
+)
+
 
 def _matrix_gz(rows: dict[str, list[str]], columns: list[str]) -> bytes:
     lines = ["\t".join(["strain", *columns])]
@@ -200,6 +217,7 @@ def _caudal_zip() -> bytes:
 def _raw_bytes() -> dict[str, bytes]:
     return {
         m.CAUDAL_ZIP_BASENAME: _caudal_zip(),
+        m.REPLICATE_TAB_BASENAME: _REPLICATE_CSV.encode(),
         ni.REFGENE_TAR_NAME: _refgene_tar(),
         ni.PRESENCE_NAME: _matrix_gz(_PRESENCE, _COLUMNS),
         ni.COPYNUMBER_NAME: _matrix_gz(_reversed(_COPYNUMBER), _COLUMNS[::-1]),
@@ -604,6 +622,7 @@ def test_side_files_gene_set_reference_index_and_strain_list(
     assert dataset.reference_class is RNASeqExpressionExperimentReference
     assert dataset.raw_file_names == [
         "final_data_annotated_merged_04052022.tab.zip",
+        "replicate_data_tpm_22042023.tab",
         "allReferenceGenesWithSNPsAndIndelsInferred.tar.gz",
         "genesMatrix_PresenceAbsence.tab.gz",
         "genesMatrix_CopyNumber.tab.gz",
@@ -707,11 +726,12 @@ def test_sgd_chromosomes_keys_roman_numerals_and_the_mitochondrion(
 
 
 def _write_mirror(data_root: Path) -> dict[str, bytes]:
-    """Library-mirror Caudal zip plus the Peter tier with its three files."""
+    """Library-mirror Caudal zip and Datafile 2 plus the Peter tier with its files."""
     raw = _raw_bytes()
     zip_path = data_root / m.CAUDAL_ZIP_REL
     zip_path.parent.mkdir(parents=True)
     zip_path.write_bytes(raw[m.CAUDAL_ZIP_BASENAME])
+    (data_root / m.REPLICATE_TAB_REL).write_bytes(raw[m.REPLICATE_TAB_BASENAME])
     _write_peter_tier(data_root)
     return raw
 
@@ -758,7 +778,7 @@ def test_download_symlinks_every_file_then_builds(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """With the Caudal zip pin repointed at the fixture's digest, each raw file becomes a
-    symlink to its mirror path (the three Peter files resolved through the registry),
+    symlink to its mirror path (the Peter files resolved through the registry),
     and the build yields the same two records.
     """
     data_root = tmp_path / "data_root"
@@ -768,6 +788,11 @@ def test_download_symlinks_every_file_then_builds(
     monkeypatch.setattr(
         m, "CAUDAL_ZIP_SHA256", hashlib.sha256(raw[m.CAUDAL_ZIP_BASENAME]).hexdigest()
     )
+    monkeypatch.setattr(
+        m,
+        "REPLICATE_TAB_SHA256",
+        hashlib.sha256(raw[m.REPLICATE_TAB_BASENAME]).hexdigest(),
+    )
     dataset = m.CaudalPanTranscriptome2024Dataset(root=str(tmp_path / "caudal"))
     tier = data_root / "torchcell-genomes" / PETER2018_1011
     links = {
@@ -775,6 +800,7 @@ def test_download_symlinks_every_file_then_builds(
     }
     assert links == {
         m.CAUDAL_ZIP_BASENAME: str(data_root / m.CAUDAL_ZIP_REL),
+        m.REPLICATE_TAB_BASENAME: str(data_root / m.REPLICATE_TAB_REL),
         **{name: str(tier / name) for name in ni.GENOTYPE_FILES},
     }
     assert len(dataset) == 2

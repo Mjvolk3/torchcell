@@ -12,8 +12,8 @@ its fixture helpers are reused here, with no mirror and no ``$DATA_ROOT`` outsid
 Columns. The released Datafile 1 is long format with the key columns ``systematic_name,
 ORF, Strain, count, tpm, Pangenome(Core/Accessory), Group, Precence_in_S288c`` (dendron
 note ``torchcell.datasets.scerevisiae.caudal2024``, 2026.07.07). The loader reads exactly
-``Strain, systematic_name, count, tpm`` (``usecols``); no replicate or per-sample column is
-consumed (the 29-replicate table, Datafile 2, is not a raw file of this loader). The
+``Strain, systematic_name, count, tpm`` (``usecols``). Datafile 2, the replicate-culture
+table, is read since 2026.11.24 (issue #1178; tests at the end of this file). The
 fixture table in that header order:
 
     AAA       YAL001C  ORF 1-YAL001C    10    1.5
@@ -57,6 +57,7 @@ from tests.torchcell.datasets.scerevisiae.test_caudal2024_synthetic import (
     _COLUMNS,
     _EXPECTED,
     _PRESENCE,
+    _WORKBOOK,
     _matrix_gz,
     _write_mirror,
     _write_peter_tier,
@@ -65,7 +66,11 @@ from tests.torchcell.datasets.scerevisiae.test_caudal2024_synthetic import (
 )
 from torchcell.data import RawSha256MismatchError
 from torchcell.data.experiment_dataset import verify_raw_files
-from torchcell.datamodels.schema import ArtifactRef, ReferenceGenome
+from torchcell.datamodels.schema import (
+    ArtifactRef,
+    ReferenceGenome,
+    RNASeqExpressionPhenotype,
+)
 from torchcell.datasets.scerevisiae import caudal2024 as m
 from torchcell.sequence import natural_isolate as ni
 from torchcell.sequence.genome.registry import (
@@ -443,6 +448,11 @@ def test_a_stale_raw_matrix_is_refused_at_build_time(
         "CAUDAL_ZIP_SHA256",
         hashlib.sha256(raw_bytes[m.CAUDAL_ZIP_BASENAME]).hexdigest(),
     )
+    monkeypatch.setattr(
+        m,
+        "REPLICATE_TAB_SHA256",
+        hashlib.sha256(raw_bytes[m.REPLICATE_TAB_BASENAME]).hexdigest(),
+    )
     raw = tmp_path / "caudal" / "raw"
     raw.mkdir(parents=True)
     stale = {**_PRESENCE, "AAA": ["1", "1", "1", "1", "0", "1"]}
@@ -456,6 +466,7 @@ def test_a_stale_raw_matrix_is_refused_at_build_time(
         f"observed {hashlib.sha256(stale_bytes).hexdigest()}"
     )
     assert [os.path.islink(raw / n) for n in m.RAW_FILES] == [
+        True,
         True,
         True,
         False,
@@ -657,3 +668,329 @@ def test_the_tier_manifest_lists_the_reference_gene_tarball() -> None:
         "b5400b89499fe84b1feada51abd7742c29838ae1f28c0cbd208b6622ca533f25",
         160_823_369,
     )
+
+
+# ---- 2026.11.24: one record per culture, Datafile 2 (issue #1178) ----------------- #
+# Datafile 1 with release-shaped ORFs: AAA's blank ``absent`` X9.contig_1 is dropped, and
+# SACE_YAU serves a blank YBR001W homolog row, a present pangenome ORF and a bad-annotation
+# ORF under their Datafile 1 ids.
+_REP_D1 = (
+    "Strain,systematic_name,ORF,Ortholog_in_SGD_2010,pan_absence,count,tpm\n"
+    "AAA,YAL001C,YAL001C,,present,10,1.5\n"
+    "AAA,YBR001W,YBR001W,,present,20,4.0\n"
+    "AAA,,X9.contig_1,,absent,7,0.7\n"
+    "SACE_YAU,YAL001C,YAL001C,,present,30,3.0\n"
+    "SACE_YAU,,YBR001W,YBR001W,present,8,2.0\n"
+    "SACE_YAU,,X5.contig_7,,present,4,1.0\n"
+    "SACE_YAU,,X7.contig_9,,bad annotation,3,0.3\n"
+)
+_REP_HEADER = (
+    "ORF,SampleID,tpm,Sample.name.before.reassignement,Standardized.name,Final.Group,"
+    "Number.of.clean.mapped.reads\n"
+)
+# Datafile 2 in a shuffled sample order: AAA Final_set + good_duplicate, SACE_YAU
+# Final_set + good_duplicate + good_duplicateBis, and the excluded XTRA_ABC. ORFs are in
+# the release's own spelling (``5-contig_7``), which ``r_make_names`` maps to Datafile 1's.
+_REP_D2 = _REP_HEADER + (
+    'YAL001C,Run1.AAA,1.4,AAA_1,AAA,Final_set,"1,000,000"\n'
+    'YBR001W,Run1.AAA,4.1,AAA_1,AAA,Final_set,"1,000,000"\n'
+    'YAL001C,Run3.SYB,2.8,SYB_3,SACE_YAU,good_duplicateBis,"3,000,000"\n'
+    'YBR001W,Run3.SYB,2.2,SYB_3,SACE_YAU,good_duplicateBis,"3,000,000"\n'
+    '5-contig_7,Run3.SYB,1.1,SYB_3,SACE_YAU,good_duplicateBis,"3,000,000"\n'
+    '7-contig_9,Run3.SYB,0.2,SYB_3,SACE_YAU,good_duplicateBis,"3,000,000"\n'
+    'YAL001C,Run2.AAB,1.6,AAB_2,AAA,good_duplicate,"2,500,000"\n'
+    'YBR001W,Run2.AAB,3.9,AAB_2,AAA,good_duplicate,"2,500,000"\n'
+    '9-contig_1,Run2.AAB,0.9,AAB_2,AAA,good_duplicate,"2,500,000"\n'
+    'YAL001C,Run2.SYA,0.00832811287968815,SYA_2,SACE_YAU,good_duplicate,"1,500,000"\n'
+    'YAL001C,Run1.SACE_YAU,2.9,SACE_YAU_1,SACE_YAU,Final_set,"4,000,000"\n'
+    'YAL001C,Run1.ABC,9.0,ABC_1,XTRA_ABC,Final_set,"1,000,000"\n'
+)
+
+
+def _replicate_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, d1: str, d2: str
+) -> Path:
+    """The synthetic raw set with Datafile 1 = ``d1`` and Datafile 2 = ``d2``."""
+    root = _root(tmp_path, monkeypatch, _zip({"final.tab": d1}))
+    (root / "raw" / m.REPLICATE_TAB_BASENAME).write_text(d2)
+    return root
+
+
+def _phenotype(
+    tpm: dict[str, float],
+    count: dict[str, int] | None,
+    replicate_id: str,
+    n_mapped_reads: int | None,
+) -> dict[str, Any]:
+    return RNASeqExpressionPhenotype(
+        expression_tpm=tpm,
+        expression_count=count,
+        measurement_type="rnaseq_tpm",
+        n_mapped_reads=n_mapped_reads,
+        replicate_id=replicate_id,
+        provenance_gaps=[] if count is not None else [m.REPLICATE_COUNT_GAP],
+    ).model_dump()
+
+
+def test_each_other_culture_of_a_built_isolate_is_its_own_record(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Five records: per isolate its Datafile 1 culture (counts kept, ``replicate_id`` the
+    ``Final_set`` SampleID, no mapped-read count), then its other Datafile 2 cultures in
+    ``Final.Group`` order (good_duplicate before good_duplicateBis): TPM verbatim under
+    the Datafile 1 gene id of the same ORF, the ``absent`` ORF 9-contig_1 left out, no
+    counts (the typed gap), the released mapped reads, ``replicate_id`` the SampleID.
+    ``0.00832811287968815`` (a released Run4.7.CCH value) is read to the exact float.
+    The cultures share their isolate's genotype; the reference is the Datafile 1 mean,
+    untouched by them. XTRA_ABC is not built and is counted in the ledger.
+    """
+    root = _replicate_root(tmp_path, monkeypatch, _REP_D1, _REP_D2)
+    dataset = m.CaudalPanTranscriptome2024Dataset(root=str(root))
+    assert len(dataset) == 5
+    sace = {"YAL001C": 3.0, "YBR001W": 2.0, "X5-contig_7": 1.0, "X7-contig_9": 0.3}
+    assert [dataset[i]["experiment"]["phenotype"] for i in range(5)] == [
+        _phenotype(
+            {"YAL001C": 1.5, "YBR001W": 4.0},
+            {"YAL001C": 10, "YBR001W": 20},
+            "Run1.AAA",
+            None,
+        ),
+        _phenotype({"YAL001C": 1.6, "YBR001W": 3.9}, None, "Run2.AAB", 2_500_000),
+        _phenotype(
+            sace,
+            {"YAL001C": 30, "YBR001W": 8, "X5-contig_7": 4, "X7-contig_9": 3},
+            "Run1.SACE_YAU",
+            None,
+        ),
+        _phenotype(
+            {"YAL001C": float("0.00832811287968815")}, None, "Run2.SYA", 1_500_000
+        ),
+        _phenotype(
+            {"YAL001C": 2.8, "YBR001W": 2.2, "X5-contig_7": 1.1, "X7-contig_9": 0.2},
+            None,
+            "Run3.SYB",
+            3_000_000,
+        ),
+    ]
+    genotypes = [e.model_dump()["genotype"] for e in _EXPECTED]
+    assert [dataset[i]["experiment"]["genotype"] for i in range(5)] == [
+        genotypes[0],
+        genotypes[0],
+        genotypes[1],
+        genotypes[1],
+        genotypes[1],
+    ]
+    references = {json.dumps(dataset[i]["reference"], sort_keys=True) for i in range(5)}
+    assert len(references) == 1
+    assert dataset[0]["reference"]["phenotype_reference"]["expression_tpm"] == {
+        "YAL001C": 2.25,
+        "YBR001W": 3.0,
+        "X5-contig_7": 1.0,
+        "X7-contig_9": 0.3,
+    }
+    ledger = m.ReplicateLedger.model_validate_json(
+        (root / "preprocess" / "replicate_culture_ledger.json").read_text()
+    )
+    assert ledger.model_dump(exclude={"samples"}) == {
+        "n_rows": 12,
+        "n_samples": 6,
+        "n_strains": 3,
+        "samples_by_group": {
+            m.ReplicateGroup.final_set: 3,
+            m.ReplicateGroup.good_duplicate: 2,
+            m.ReplicateGroup.good_duplicate_bis: 1,
+        },
+        "strains_not_built": ["XTRA_ABC"],
+        "final_set_sample_ids": {"AAA": "Run1.AAA", "SACE_YAU": "Run1.SACE_YAU"},
+        "n_culture_records": 3,
+        "n_rows_culture_records": 7,
+        "n_rows_absent_dropped": 1,
+    }
+    assert [(s["sample_id"], s["fate"]) for s in ledger.samples] == [
+        ("Run1.AAA", "datafile_1_record"),
+        ("Run1.ABC", "isolate_not_built"),
+        ("Run1.SACE_YAU", "datafile_1_record"),
+        ("Run2.AAB", "culture_record"),
+        ("Run2.SYA", "culture_record"),
+        ("Run3.SYB", "culture_record"),
+    ]
+
+
+def test_verify_build_passes_a_store_with_replicate_cultures(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The cultures of an isolate share one genotype, so the isolate rules see it once
+    (one genotype per isolate, two isolates), and ``replicate_id`` keeps the five
+    records apart under the (strain, condition) rule.
+    """
+    from torchcell.verification import runners
+
+    root = _replicate_root(tmp_path, monkeypatch, _REP_D1, _REP_D2)
+    dataset = m.CaudalPanTranscriptome2024Dataset(root=str(root))
+    data_root = Path(os.environ["DATA_ROOT"])
+    tables = data_root / "torchcell-library" / ni.CITATION_KEY / ni.LIBRARY_TABLES_REL
+    tables.parent.mkdir(parents=True)
+    tables.write_bytes(_WORKBOOK)
+    monkeypatch.setattr(ni, "TABLES_SHA256", hashlib.sha256(_WORKBOOK).hexdigest())
+    monkeypatch.setattr(
+        runners,
+        "_sgd_gene_set",
+        lambda root: {"YAL001C", "YBR001W", "Q0010", "X5-contig_7", "X7-contig_9"},
+    )
+    monkeypatch.setitem(
+        runners.RNASEQ_DATASETS["caudal_pantranscriptome2024"], "expected_count", 5
+    )
+    dataset.close_lmdb()
+    report = m.verify_build(str(root), data_root=str(data_root))
+    results = {r.name: r for r in report.results}
+    assert [name for name, r in results.items() if not r.passed] == []
+    assert results["strain_uniqueness"].details["n_records"] == 5
+    assert results["isolate_genotype_identity"].details["n_isolates"] == 2
+    assert results["isolate_genotype_round_trip"].message == (
+        "2 stored genotypes equal their re-derivation from the pinned Peter 2018 "
+        "releases"
+    )
+
+
+def _replicate_frames(
+    tmp_path: Path, d2: str
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    built = pd.read_csv(io.StringIO(_REP_D1))
+    built["Strain"] = built["Strain"].astype(str)
+    kept, _ = m.resolve_gene_ids(built)
+    path = tmp_path / "replicates.tab"
+    path.write_text(d2)
+    return m.read_replicate_table(str(path)), built, kept
+
+
+def test_r_make_names_gives_the_datafile_1_spelling() -> None:
+    """Dashes and parentheses become dots, and a leading digit or a dot before a digit
+    takes an ``X``; S288C names are kept.
+    """
+    assert [
+        m.r_make_names(o)
+        for o in [
+            "1003-augustus_masked-YCM-7680",
+            "46-PUT_LAC_TRASP(R)-14850-",
+            "YAL068C",
+            "Q0010",
+            ".5x",
+        ]
+    ] == [
+        "X1003.augustus_masked.YCM.7680",
+        "X46.PUT_LAC_TRASP.R..14850.",
+        "YAL068C",
+        "Q0010",
+        "X.5x",
+    ]
+
+
+def test_a_final_group_no_rule_covers_is_refused(tmp_path: Path) -> None:
+    path = tmp_path / "replicates.tab"
+    path.write_text(_REP_HEADER + 'YAL001C,R1,1.0,A_1,AAA,bad_group,"1,000"\n')
+    with pytest.raises(
+        m.ReplicateTableError, match=re.escape("no rule covers: ['bad_group']")
+    ):
+        m.read_replicate_table(str(path))
+
+
+@pytest.mark.parametrize(
+    ("rows", "match"),
+    [
+        (
+            'YAL001C,R2,1.0,A_2,AAA,good_duplicate,"1,000"\n',
+            "built isolates without exactly one Final_set sample: ['AAA']",
+        ),
+        (
+            'YAL001C,R1,1.0,A_1,AAA,Final_set,"1,000"\n'
+            'YAL001C,R1b,1.0,A_1,AAA,Final_set,"1,000"\n',
+            "built isolates without exactly one Final_set sample: ['AAA']",
+        ),
+        (
+            'YAL001C,R1,1.0,A_1,AAA,Final_set,"1,000"\n'
+            'YBR001W,R1,1.0,A_1,SACE_YAU,Final_set,"1,000"\n',
+            "more than one isolate, group or mapped-read count: ['R1']",
+        ),
+        (
+            'YAL001C,R1,1.0,A_1,AAA,Final_set,"1,000"\n'
+            'YCR001W,R2,1.0,A_2,AAA,good_duplicate,"1,000"\n',
+            "1 Datafile 2 rows name an ORF the isolate has no Datafile 1 row for: "
+            "[('R2', 'YCR001W')]",
+        ),
+        (
+            'YAL001C,R1,1.0,A_1,AAA,Final_set,"1,000"\n'
+            'YAL001C,R1,2.0,A_1,AAA,Final_set,"1,000"\n',
+            "repeats a (SampleID, ORF) row",
+        ),
+    ],
+)
+def test_a_replicate_table_of_another_shape_is_refused(
+    tmp_path: Path, rows: str, match: str
+) -> None:
+    """No Final_set or two for a built isolate, a sample on two isolates, an ORF the
+    isolate has no Datafile 1 row for, and a repeated row are each refused.
+    """
+    replicates, built, kept = _replicate_frames(tmp_path, _REP_HEADER + rows)
+    with pytest.raises(m.ReplicateTableError, match=re.escape(match)):
+        m.replicate_cultures(replicates, built, kept)
+
+
+_MIRROR_REPLICATES = osp.join(os.environ.get("DATA_ROOT", ""), m.REPLICATE_TAB_REL)
+
+
+@pytest.mark.data
+@_needs_mirror
+def test_the_replicate_sourced_values_audit_against_the_mirror() -> None:
+    """Each replicate-design quote is in ``paper.md`` / ``methods.md`` at its sha256."""
+    for name, sv in m.REPLICATE_SOURCED_VALUES.items():
+        assert audit_sourced_value(sv, _LIBRARY).passed, name
+
+
+@pytest.mark.data
+@pytest.mark.slow
+@_needs_mirror
+def test_the_released_replicate_table_gives_28_culture_records() -> None:
+    """Datafile 2: 387,360 rows, 60 samples of 29 isolates (29 Final_set, 29
+    good_duplicate, 2 good_duplicateBis). 26 isolates are built; XTRA_DGR, XTRA_DGT and
+    XTRA_DGU have no Peter genome. The 28 other cultures of the 26 become records with
+    169,036 keyed rows; 11,732 rows sit on blank-name ``absent`` ORFs and are left out.
+    Every built isolate's Final_set sample has the clean mapped reads Caudal's
+    Supplementary Table 1 prints for that isolate (the Datafile 1 culture).
+    """
+    from torchcell.sequence.genome.registry import PETER2018_1011, resolve
+
+    presence = pd.read_csv(
+        resolve(PETER2018_1011, ni.PRESENCE_NAME), sep="\t", index_col=0, usecols=[0]
+    )
+    built = m.restrict_to_built_isolates(
+        m.read_caudal_table(_MIRROR_ZIP), set(presence.index.astype(str))
+    )
+    kept, _ = m.resolve_gene_ids(built)
+    replicates = m.read_replicate_table(_MIRROR_REPLICATES)
+    cultures, ledger = m.replicate_cultures(replicates, built, kept)
+    assert (ledger.n_rows, ledger.n_samples, ledger.n_strains) == (387_360, 60, 29)
+    assert ledger.samples_by_group == {
+        m.ReplicateGroup.final_set: 29,
+        m.ReplicateGroup.good_duplicate: 29,
+        m.ReplicateGroup.good_duplicate_bis: 2,
+    }
+    assert ledger.strains_not_built == ["XTRA_DGR", "XTRA_DGT", "XTRA_DGU"]
+    assert len(ledger.final_set_sample_ids) == 26
+    assert (
+        len(cultures),
+        ledger.n_rows_culture_records,
+        ledger.n_rows_absent_dropped,
+    ) == (28, 169_036, 11_732)
+    per_isolate = pd.Series([c.strain for c in cultures]).value_counts()
+    assert sorted(per_isolate[per_isolate == 2].index) == ["AFD", "AKL"]
+    table_s1 = pd.read_excel(
+        osp.join(_LIBRARY, m.CITATION_KEY, m.SI_TABLES_XLSX), sheet_name="Table S1"
+    ).set_index("Standardized_name")
+    reads = {s["sample_id"]: s["n_mapped_reads"] for s in ledger.samples}
+    assert {
+        isolate: reads[sample]
+        for isolate, sample in ledger.final_set_sample_ids.items()
+    } == {
+        isolate: int(str(table_s1.loc[isolate, "Mapped_clean_reads"]).replace(",", ""))
+        for isolate in ledger.final_set_sample_ids
+    }

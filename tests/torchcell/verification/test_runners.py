@@ -2210,7 +2210,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         runners.PROTEIN_DATASETS["proteome_messner2023"]["allow_duplicate_orfs"] is True
     )
     assert _oracles(runners.RNASEQ_DATASETS) == {
-        "caudal_pantranscriptome2024": 943,
+        "caudal_pantranscriptome2024": 971,
         "nadal_ribelles_perturbseq2025": 6188,
         "rnaseq_lamoureux2023": 1035,
         "rnaseq_public_k12_lamoureux2023": 1675,

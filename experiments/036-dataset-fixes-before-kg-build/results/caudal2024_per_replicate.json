@@ -1,0 +1,910 @@
+{
+  "script": "experiments/036-dataset-fixes-before-kg-build/scripts/caudal2024_per_replicate.py",
+  "previous_root": "/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-caudal2024/baseline_origin_main/caudal_pantranscriptome2024",
+  "scratch_root": "/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-caudal2024/caudal_pantranscriptome2024",
+  "n_records_previous": 943,
+  "n_records_scratch": 971,
+  "n_isolates": 943,
+  "isolates_by_culture_count": {
+    "1": 917,
+    "2": 24,
+    "3": 2
+  },
+  "records_by_replicate_position": {
+    "1": 943,
+    "2": 26,
+    "3": 2
+  },
+  "datafile_1_records": {
+    "key_paths_differing_from_previous_store": {
+      "/experiment/phenotype/replicate_id": 26
+    },
+    "max_abs_diff_tpm": 0.0,
+    "max_abs_diff_count": 0.0,
+    "n_with_replicate_id": 26
+  },
+  "culture_records": {
+    "n": 28,
+    "all_tpm_equal_to_release": true,
+    "all_mapped_reads_equal_to_release": true,
+    "n_released_rows_total": 180768,
+    "n_genes_stored_total": 169036,
+    "vs_datafile_1_culture_pearson_range": [
+      0.81407,
+      0.98589
+    ],
+    "vs_datafile_1_culture_median_abs_dtpm_range": [
+      4.2143,
+      19.6289
+    ],
+    "per_culture": [
+      {
+        "isolate": "AAG",
+        "sample_id": "Run10.11.AAN",
+        "final_group": "good_duplicate",
+        "n_genes": 6017,
+        "n_genes_equal_to_release": 6017,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 1542282,
+        "n_mapped_reads_released": 1542282,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6017,
+          "median_abs_dtpm": 18.3741,
+          "pearson_log2_tpm": 0.81407
+        }
+      },
+      {
+        "isolate": "ACK",
+        "sample_id": "Run4.7.ACK",
+        "final_group": "good_duplicate",
+        "n_genes": 6000,
+        "n_genes_equal_to_release": 6000,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 1950474,
+        "n_mapped_reads_released": 1950474,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6000,
+          "median_abs_dtpm": 13.0652,
+          "pearson_log2_tpm": 0.93735
+        }
+      },
+      {
+        "isolate": "ADE",
+        "sample_id": "Run4.7.SACE_YCL",
+        "final_group": "good_duplicate",
+        "n_genes": 5989,
+        "n_genes_equal_to_release": 5989,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 6154949,
+        "n_mapped_reads_released": 6154949,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 5989,
+          "median_abs_dtpm": 10.6657,
+          "pearson_log2_tpm": 0.95174
+        }
+      },
+      {
+        "isolate": "AEA",
+        "sample_id": "Run10.11.AFF",
+        "final_group": "good_duplicate",
+        "n_genes": 6036,
+        "n_genes_equal_to_release": 6036,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 7091050,
+        "n_mapped_reads_released": 7091050,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6036,
+          "median_abs_dtpm": 4.612,
+          "pearson_log2_tpm": 0.98119
+        }
+      },
+      {
+        "isolate": "AFD",
+        "sample_id": "Run12.13.AGF",
+        "final_group": "good_duplicate",
+        "n_genes": 6011,
+        "n_genes_equal_to_release": 6011,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 6045660,
+        "n_mapped_reads_released": 6045660,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6011,
+          "median_abs_dtpm": 10.5325,
+          "pearson_log2_tpm": 0.94858
+        }
+      },
+      {
+        "isolate": "AFD",
+        "sample_id": "Run8.9.AGF",
+        "final_group": "good_duplicateBis",
+        "n_genes": 6011,
+        "n_genes_equal_to_release": 6011,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 2789172,
+        "n_mapped_reads_released": 2789172,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6011,
+          "median_abs_dtpm": 8.2739,
+          "pearson_log2_tpm": 0.95118
+        }
+      },
+      {
+        "isolate": "AIG",
+        "sample_id": "Run10.11.ASD",
+        "final_group": "good_duplicate",
+        "n_genes": 6019,
+        "n_genes_equal_to_release": 6019,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 6683855,
+        "n_mapped_reads_released": 6683855,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6019,
+          "median_abs_dtpm": 16.5238,
+          "pearson_log2_tpm": 0.8578
+        }
+      },
+      {
+        "isolate": "AKB",
+        "sample_id": "Run4.7.AKB",
+        "final_group": "good_duplicate",
+        "n_genes": 6048,
+        "n_genes_equal_to_release": 6048,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 2676776,
+        "n_mapped_reads_released": 2676776,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6048,
+          "median_abs_dtpm": 11.3687,
+          "pearson_log2_tpm": 0.92849
+        }
+      },
+      {
+        "isolate": "AKL",
+        "sample_id": "Run1.3.CFS",
+        "final_group": "good_duplicate",
+        "n_genes": 6044,
+        "n_genes_equal_to_release": 6044,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 7492047,
+        "n_mapped_reads_released": 7492047,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6044,
+          "median_abs_dtpm": 13.3012,
+          "pearson_log2_tpm": 0.93078
+        }
+      },
+      {
+        "isolate": "AKL",
+        "sample_id": "Run4.7.ADH",
+        "final_group": "good_duplicateBis",
+        "n_genes": 6044,
+        "n_genes_equal_to_release": 6044,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 7101340,
+        "n_mapped_reads_released": 7101340,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6044,
+          "median_abs_dtpm": 11.3138,
+          "pearson_log2_tpm": 0.94955
+        }
+      },
+      {
+        "isolate": "AVQ",
+        "sample_id": "Run12.13.AVR",
+        "final_group": "good_duplicate",
+        "n_genes": 6036,
+        "n_genes_equal_to_release": 6036,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 7200192,
+        "n_mapped_reads_released": 7200192,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6036,
+          "median_abs_dtpm": 18.3703,
+          "pearson_log2_tpm": 0.8563
+        }
+      },
+      {
+        "isolate": "BAF",
+        "sample_id": "Run12.13.CFA",
+        "final_group": "good_duplicate",
+        "n_genes": 6042,
+        "n_genes_equal_to_release": 6042,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 5086548,
+        "n_mapped_reads_released": 5086548,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6042,
+          "median_abs_dtpm": 14.1699,
+          "pearson_log2_tpm": 0.91006
+        }
+      },
+      {
+        "isolate": "BAQ",
+        "sample_id": "Run1.3.ADK",
+        "final_group": "good_duplicate",
+        "n_genes": 6045,
+        "n_genes_equal_to_release": 6045,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 5707311,
+        "n_mapped_reads_released": 5707311,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6045,
+          "median_abs_dtpm": 9.2263,
+          "pearson_log2_tpm": 0.97085
+        }
+      },
+      {
+        "isolate": "BBH",
+        "sample_id": "Run8.9.BBH",
+        "final_group": "good_duplicate",
+        "n_genes": 6039,
+        "n_genes_equal_to_release": 6039,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 1302665,
+        "n_mapped_reads_released": 1302665,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6039,
+          "median_abs_dtpm": 8.3393,
+          "pearson_log2_tpm": 0.93492
+        }
+      },
+      {
+        "isolate": "BCT",
+        "sample_id": "Run4.7.BCT",
+        "final_group": "good_duplicate",
+        "n_genes": 6038,
+        "n_genes_equal_to_release": 6038,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 2261503,
+        "n_mapped_reads_released": 2261503,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6038,
+          "median_abs_dtpm": 15.6055,
+          "pearson_log2_tpm": 0.86066
+        }
+      },
+      {
+        "isolate": "BDS",
+        "sample_id": "Run4.7.BDS",
+        "final_group": "good_duplicate",
+        "n_genes": 6023,
+        "n_genes_equal_to_release": 6023,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 1531612,
+        "n_mapped_reads_released": 1531612,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6023,
+          "median_abs_dtpm": 12.4613,
+          "pearson_log2_tpm": 0.93687
+        }
+      },
+      {
+        "isolate": "BEH",
+        "sample_id": "Run10.11.BLM",
+        "final_group": "good_duplicate",
+        "n_genes": 6035,
+        "n_genes_equal_to_release": 6035,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 7242244,
+        "n_mapped_reads_released": 7242244,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6035,
+          "median_abs_dtpm": 9.8262,
+          "pearson_log2_tpm": 0.93871
+        }
+      },
+      {
+        "isolate": "BQC",
+        "sample_id": "Run4.7.BQC",
+        "final_group": "good_duplicate",
+        "n_genes": 6044,
+        "n_genes_equal_to_release": 6044,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 2565975,
+        "n_mapped_reads_released": 2565975,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6044,
+          "median_abs_dtpm": 11.8249,
+          "pearson_log2_tpm": 0.92822
+        }
+      },
+      {
+        "isolate": "BRM",
+        "sample_id": "Run8.9.AFF",
+        "final_group": "good_duplicate",
+        "n_genes": 6024,
+        "n_genes_equal_to_release": 6024,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 1408225,
+        "n_mapped_reads_released": 1408225,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6024,
+          "median_abs_dtpm": 10.2728,
+          "pearson_log2_tpm": 0.93548
+        }
+      },
+      {
+        "isolate": "CBH",
+        "sample_id": "Run8.9.CBL",
+        "final_group": "good_duplicate",
+        "n_genes": 6079,
+        "n_genes_equal_to_release": 6079,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 5482974,
+        "n_mapped_reads_released": 5482974,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6079,
+          "median_abs_dtpm": 8.6875,
+          "pearson_log2_tpm": 0.93653
+        }
+      },
+      {
+        "isolate": "CBN",
+        "sample_id": "Run1.3.AEV",
+        "final_group": "good_duplicate",
+        "n_genes": 6068,
+        "n_genes_equal_to_release": 6068,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 8017295,
+        "n_mapped_reads_released": 8017295,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6068,
+          "median_abs_dtpm": 19.6289,
+          "pearson_log2_tpm": 0.91646
+        }
+      },
+      {
+        "isolate": "CCH",
+        "sample_id": "Run4.7.CCH",
+        "final_group": "good_duplicate",
+        "n_genes": 6073,
+        "n_genes_equal_to_release": 6073,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 2465002,
+        "n_mapped_reads_released": 2465002,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6073,
+          "median_abs_dtpm": 11.7204,
+          "pearson_log2_tpm": 0.94058
+        }
+      },
+      {
+        "isolate": "CDP",
+        "sample_id": "Run10.11.CAM",
+        "final_group": "good_duplicate",
+        "n_genes": 6055,
+        "n_genes_equal_to_release": 6055,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 8022649,
+        "n_mapped_reads_released": 8022649,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6055,
+          "median_abs_dtpm": 9.764,
+          "pearson_log2_tpm": 0.9334
+        }
+      },
+      {
+        "isolate": "CEI",
+        "sample_id": "Run12.13.AMR",
+        "final_group": "good_duplicate",
+        "n_genes": 6027,
+        "n_genes_equal_to_release": 6027,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 8593611,
+        "n_mapped_reads_released": 8593611,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6027,
+          "median_abs_dtpm": 8.9297,
+          "pearson_log2_tpm": 0.94835
+        }
+      },
+      {
+        "isolate": "CMH",
+        "sample_id": "Run4.7.CMH",
+        "final_group": "good_duplicate",
+        "n_genes": 6039,
+        "n_genes_equal_to_release": 6039,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 2521252,
+        "n_mapped_reads_released": 2521252,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6039,
+          "median_abs_dtpm": 14.6405,
+          "pearson_log2_tpm": 0.92561
+        }
+      },
+      {
+        "isolate": "CPS",
+        "sample_id": "Run12.13.CQA",
+        "final_group": "good_duplicate",
+        "n_genes": 6041,
+        "n_genes_equal_to_release": 6041,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 5299626,
+        "n_mapped_reads_released": 5299626,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6041,
+          "median_abs_dtpm": 11.9993,
+          "pearson_log2_tpm": 0.93777
+        }
+      },
+      {
+        "isolate": "SACE_YBW",
+        "sample_id": "Run4.7.BPC",
+        "final_group": "good_duplicate",
+        "n_genes": 6057,
+        "n_genes_equal_to_release": 6057,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 7096565,
+        "n_mapped_reads_released": 7096565,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6057,
+          "median_abs_dtpm": 4.2143,
+          "pearson_log2_tpm": 0.98589
+        }
+      },
+      {
+        "isolate": "SACE_YCH",
+        "sample_id": "Run8.9.SACE_YCH",
+        "final_group": "good_duplicate",
+        "n_genes": 6052,
+        "n_genes_equal_to_release": 6052,
+        "n_released_rows": 6456,
+        "n_mapped_reads": 1138273,
+        "n_mapped_reads_released": 1138273,
+        "expression_count_gap": [
+          "expression_count"
+        ],
+        "vs_datafile_1_culture": {
+          "n_genes": 6052,
+          "median_abs_dtpm": 11.3319,
+          "pearson_log2_tpm": 0.94151
+        }
+      }
+    ]
+  },
+  "final_set_is_the_datafile_1_culture": {
+    "n": 26,
+    "all_mapped_reads_library_run_equal_table_s1": true,
+    "pearson_range": [
+      0.99552,
+      0.99979
+    ],
+    "median_abs_dtpm_range": [
+      0.1184,
+      0.6231
+    ],
+    "per_isolate": [
+      {
+        "isolate": "AAG",
+        "sample_id": "Run12.13.AAG",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6017,
+          "median_abs_dtpm": 0.1184,
+          "pearson_log2_tpm": 0.99923
+        }
+      },
+      {
+        "isolate": "ACK",
+        "sample_id": "Run12.13.ACK",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6000,
+          "median_abs_dtpm": 0.2752,
+          "pearson_log2_tpm": 0.99918
+        }
+      },
+      {
+        "isolate": "ADE",
+        "sample_id": "Run1.3.ADE",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 5989,
+          "median_abs_dtpm": 0.4235,
+          "pearson_log2_tpm": 0.99979
+        }
+      },
+      {
+        "isolate": "AEA",
+        "sample_id": "Run12.13.AEA",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6036,
+          "median_abs_dtpm": 0.193,
+          "pearson_log2_tpm": 0.99937
+        }
+      },
+      {
+        "isolate": "AFD",
+        "sample_id": "Run4.7.AFD",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6011,
+          "median_abs_dtpm": 0.3825,
+          "pearson_log2_tpm": 0.99857
+        }
+      },
+      {
+        "isolate": "AIG",
+        "sample_id": "Run1.3.AIG",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6019,
+          "median_abs_dtpm": 0.3668,
+          "pearson_log2_tpm": 0.99916
+        }
+      },
+      {
+        "isolate": "AKB",
+        "sample_id": "Run10.11.AKB",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6048,
+          "median_abs_dtpm": 0.2116,
+          "pearson_log2_tpm": 0.99925
+        }
+      },
+      {
+        "isolate": "AKL",
+        "sample_id": "Run4.7.AKL",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6044,
+          "median_abs_dtpm": 0.2855,
+          "pearson_log2_tpm": 0.99885
+        }
+      },
+      {
+        "isolate": "AVQ",
+        "sample_id": "Run8.9.AVQ",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6036,
+          "median_abs_dtpm": 0.3669,
+          "pearson_log2_tpm": 0.99958
+        }
+      },
+      {
+        "isolate": "BAF",
+        "sample_id": "Run8.9.BAF",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6042,
+          "median_abs_dtpm": 0.5356,
+          "pearson_log2_tpm": 0.99945
+        }
+      },
+      {
+        "isolate": "BAQ",
+        "sample_id": "Run4.7.BAQ",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6045,
+          "median_abs_dtpm": 0.3554,
+          "pearson_log2_tpm": 0.99873
+        }
+      },
+      {
+        "isolate": "BBH",
+        "sample_id": "Run12.13.BBH",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6039,
+          "median_abs_dtpm": 0.1492,
+          "pearson_log2_tpm": 0.99965
+        }
+      },
+      {
+        "isolate": "BCT",
+        "sample_id": "Run10.11.BCT",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6038,
+          "median_abs_dtpm": 0.2768,
+          "pearson_log2_tpm": 0.99974
+        }
+      },
+      {
+        "isolate": "BDS",
+        "sample_id": "Run10.11.BDS",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6023,
+          "median_abs_dtpm": 0.4967,
+          "pearson_log2_tpm": 0.99918
+        }
+      },
+      {
+        "isolate": "BEH",
+        "sample_id": "Run4.7.BEH",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6035,
+          "median_abs_dtpm": 0.1487,
+          "pearson_log2_tpm": 0.99879
+        }
+      },
+      {
+        "isolate": "BQC",
+        "sample_id": "Run10.11.BQC",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6044,
+          "median_abs_dtpm": 0.3104,
+          "pearson_log2_tpm": 0.99969
+        }
+      },
+      {
+        "isolate": "BRM",
+        "sample_id": "Run12.13.BRM",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6024,
+          "median_abs_dtpm": 0.198,
+          "pearson_log2_tpm": 0.99929
+        }
+      },
+      {
+        "isolate": "CBH",
+        "sample_id": "Run1.3.CBH",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6079,
+          "median_abs_dtpm": 0.2266,
+          "pearson_log2_tpm": 0.9997
+        }
+      },
+      {
+        "isolate": "CBN",
+        "sample_id": "Run12.13.CBN",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6068,
+          "median_abs_dtpm": 0.2078,
+          "pearson_log2_tpm": 0.99828
+        }
+      },
+      {
+        "isolate": "CCH",
+        "sample_id": "Run10.11.CCH",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6073,
+          "median_abs_dtpm": 0.3784,
+          "pearson_log2_tpm": 0.99849
+        }
+      },
+      {
+        "isolate": "CDP",
+        "sample_id": "Run4.7.CDP",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6055,
+          "median_abs_dtpm": 0.1909,
+          "pearson_log2_tpm": 0.99891
+        }
+      },
+      {
+        "isolate": "CEI",
+        "sample_id": "Run4.7.CEI",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6027,
+          "median_abs_dtpm": 0.4833,
+          "pearson_log2_tpm": 0.99875
+        }
+      },
+      {
+        "isolate": "CMH",
+        "sample_id": "Run10.11.CMH",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6039,
+          "median_abs_dtpm": 0.6231,
+          "pearson_log2_tpm": 0.99552
+        }
+      },
+      {
+        "isolate": "CPS",
+        "sample_id": "Run10.11.CPS",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6041,
+          "median_abs_dtpm": 0.2742,
+          "pearson_log2_tpm": 0.99943
+        }
+      },
+      {
+        "isolate": "SACE_YBW",
+        "sample_id": "Run4.7.SACE_YBW",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6057,
+          "median_abs_dtpm": 0.1432,
+          "pearson_log2_tpm": 0.99931
+        }
+      },
+      {
+        "isolate": "SACE_YCH",
+        "sample_id": "Run12.13.SACE_YCH",
+        "final_group": "Final_set",
+        "mapped_reads_equal_table_s1": true,
+        "library_equal_table_s1": true,
+        "run_equal_table_s1": true,
+        "vs_datafile_1_culture": {
+          "n_genes": 6052,
+          "median_abs_dtpm": 0.2806,
+          "pearson_log2_tpm": 0.99976
+        }
+      }
+    ]
+  },
+  "mean_reproduction": {
+    "statistic": "max over genes of |mean over an isolate's records - previous value|",
+    "single_culture_isolates_max": 0.0,
+    "replicated_isolates_max": 30387.646882663117,
+    "replicated_isolates_median": 6200.406372476724,
+    "note": "the previous value is the Datafile 1 culture alone, not a mean, so the replicated isolates' group mean differs by design; the Datafile 1 record itself reproduces it (datafile_1_records.max_abs_diff_tpm)"
+  },
+  "reference": {
+    "n_distinct_scratch": 1,
+    "equal_to_previous": true
+  }
+}

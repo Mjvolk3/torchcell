@@ -1171,8 +1171,11 @@ def run_protein(data_root: str) -> bool:
 RNASEQ_DATASETS: dict[str, dict[str, Any]] = {
     "caudal_pantranscriptome2024": {
         "root": "data/torchcell/caudal_pantranscriptome2024",
-        "expected_count": 943,
-        # every record is one Peter 2018 isolate (torchcell.sequence.natural_isolate)
+        # one record per culture (#1178): 943 Datafile 1 isolates + 28 Datafile 2
+        # replicate cultures of 26 of them, told apart by replicate_id
+        "expected_count": 971,
+        # every record is one culture of a Peter 2018 isolate
+        # (torchcell.sequence.natural_isolate)
         "natural_isolates": True,
         "provenance": Provenance(
             source_uri="http://1002genomes.u-strasbg.fr/files/",
@@ -1768,7 +1771,10 @@ def verify_rnaseq_store(
     if spec.get("natural_isolates"):
         import pandas as pd
 
-        from torchcell.sequence.natural_isolate import NaturalIsolateGenotypes
+        from torchcell.sequence.natural_isolate import (
+            NaturalIsolateGenotypes,
+            genotype_isolate,
+        )
         from torchcell.verification.natural_isolate_genotype import IsolateGenotypeAudit
 
         strains = pd.read_csv(osp.join(abs_root, "preprocess", "data.csv"))
@@ -1781,8 +1787,18 @@ def verify_rnaseq_store(
             ),
             osp.join(data_root, "torchcell-library"),
         )
+        # One audit entry per DISTINCT genotype: the replicate cultures of an isolate
+        # share its genotype, so a repeat equal to the isolate's first is skipped and a
+        # differing one is added (and fails "an isolate has one genotype").
+        first: dict[str, Any] = {}
         for record in records:
-            audit.add(record["experiment"]["genotype"])
+            genotype = record["experiment"]["genotype"]
+            isolate = genotype_isolate(genotype)
+            if isolate is not None and first.get(isolate) == genotype:
+                continue
+            audit.add(genotype)
+            if isolate is not None:
+                first.setdefault(isolate, genotype)
         for result in audit.results():
             report.add(result)
     return report

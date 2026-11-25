@@ -1,0 +1,129 @@
+{
+  "release": {
+    "data_s1_rows": 501510,
+    "array_strains": 1181,
+    "array_strains_with_fitness": 1181,
+    "array_strains_with_varying_fitness": 0,
+    "digenic_query_strains": 364,
+    "digenic_query_strains_with_fitness": 361,
+    "digenic_query_strains_with_varying_fitness": 0,
+    "digenic_query_allele_names": 361,
+    "allele_names_with_two_strains": {
+      "mad2\u0394+ho\u0394": {
+        "YJL030W+YDL227C_tm3211": 0.9693,
+        "YJL030W+YDL227C_tm3288": 0.977
+      },
+      "set1\u0394+ho\u0394": {
+        "YHR119W+YDL227C_tm3287": 0.8105,
+        "YHR119W+YDL227C_tm3346": 0.8763
+      },
+      "srn2\u0394+ho\u0394": {
+        "YLR119W+YDL227C_tm3057": 0.8921,
+        "YLR119W+YDL227C_tm3122": 0.8911
+      }
+    }
+  },
+  "before_records": 1539,
+  "after_records": 1542,
+  "before_by_kind": {
+    "array_smf": 1181,
+    "query_smf": 358
+  },
+  "after_by_kind": {
+    "array_smf": 1181,
+    "query_smf": 361
+  },
+  "after_query_strains_distinct": 361,
+  "before_records_missing_from_after": 0,
+  "after_records_not_in_before": [
+    {
+      "strain_id": "YHR119W+YDL227C_tm3346",
+      "gene": "set1_delta",
+      "fitness": 0.8763,
+      "fitness_std": 0.0155,
+      "replicate_id": null
+    },
+    {
+      "strain_id": "YJL030W+YDL227C_tm3288",
+      "gene": "mad2_delta",
+      "fitness": 0.977,
+      "fitness_std": 0.016,
+      "replicate_id": null
+    },
+    {
+      "strain_id": "YLR119W+YDL227C_tm3122",
+      "gene": "srn2_delta",
+      "fitness": 0.8911,
+      "fitness_std": 0.0135,
+      "replicate_id": null
+    }
+  ],
+  "references_distinct_after": 1,
+  "references_equal_to_before": true,
+  "mean_reproduction": {
+    "by_genotype_with_strain_id": {
+      "groups_after": 1542,
+      "groups_after_not_in_before": 3,
+      "group_multiplicity_after": {
+        "1": 1542
+      },
+      "max_abs_diff": 0.0,
+      "groups_differing": []
+    },
+    "by_genotype_without_strain_id": {
+      "groups_after": 1416,
+      "groups_after_not_in_before": 0,
+      "group_multiplicity_after": {
+        "1": 1294,
+        "2": 118,
+        "3": 4
+      },
+      "max_abs_diff": 0.03289999999999993,
+      "groups_differing": [
+        {
+          "genes": [
+            "set1_delta"
+          ],
+          "after_values": [
+            0.8105,
+            0.8763
+          ],
+          "before_values": [
+            0.8105
+          ],
+          "abs_diff": 0.03289999999999993
+        },
+        {
+          "genes": [
+            "srn2_delta"
+          ],
+          "after_values": [
+            0.9002,
+            0.8921,
+            0.8911
+          ],
+          "before_values": [
+            0.9002,
+            0.8921
+          ],
+          "abs_diff": 0.00168333333333337
+        },
+        {
+          "genes": [
+            "mad2_delta"
+          ],
+          "after_values": [
+            0.9792,
+            0.9693,
+            0.977
+          ],
+          "before_values": [
+            0.9792,
+            0.9693
+          ],
+          "abs_diff": 0.0009166666666665657
+        }
+      ]
+    }
+  }
+}

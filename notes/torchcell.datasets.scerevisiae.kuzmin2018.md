@@ -437,3 +437,26 @@ L0-L4, read-only (`kg4_pre_build_verification_sweep.py`, slurm job 4334). `smf_k
 | L3 | `media_membership` | PASS | 410571 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
 | L4 | `gene_containment_sgd` | PASS | 1.000 of 1400 measured genes are S288C reference genes (>= 0.9) |
 | L4 | `current_genome_genes` | PASS | every one of the 1400 measured systematic names is a gene of the current genome |
+
+## 2026.11.24 - Smf keeps one record per query strain (#1176, per-replicate policy)
+
+`SmfKuzmin2018Dataset` keyed its digenic query records on `Query allele name`, so an allele name carried by two strains kept only the first strain. Three names do: `mad2Δ+hoΔ`, `set1Δ+hoΔ` and `srn2Δ+hoΔ`. The loader now keys on `Query strain ID` (and the array side on `Array strain ID`, which changes nothing there: 1,181 strains, 1,181 names). 1,539 -> 1,542 records.
+
+**What the two strains are.** Additional Data S3 (`Data File S3_Query strains and plasmids list.xlsx`, sha256 `bf81bfb62f56847878171ec13cebcde513c7544521345dd048724eecac1d3907`), sheet `Strains for triple mutant SGA`: each of the three genes is in two double-mutant queries, and each double-mutant query has its own single-mutant control strain (MAD2: TM2658 mad2-mad1 with TM3288, TM2581 mad2-slk19 with TM3211; SET1: TM2657 with TM3287, TM2716 with TM3346; SRN2: TM2492 with TM3122, TM2427 with TM3057). Sheet `Genotypes of all strains` gives each pair the same written genotype (e.g. "MATalpha mad2Δ::natMX4 hoΔ::KlURA3 can1Δ::STE2pr-Sp_his5 lyp1Δ0 his3Δ1 leu2Δ0 ura3Δ0 met15Δ0 LYS2+" for both TM3288 and TM3211). si1.md line 55 (sha256 `2ec80d05...`): "Single mutant control query strains were constructed equivalently, such that each strain carried a mutation of one member of the gene pair and the marker of the second mutation in the benign hoΔ locus." So they are two independently constructed strains of one genotype, each measured on its own: Data S1 repeats one fitness per strain on every row, Additional Data S4 gives each its own Fitness and St.dev.
+
+| Allele | Strain | Data S1 fitness | S4 St.dev. | Stored before |
+|---|---|---:|---:|---|
+| mad2Δ+hoΔ | tm3211 | 0.9693 | 0.011 | yes |
+| mad2Δ+hoΔ | tm3288 | 0.977 | 0.016 | no (new) |
+| set1Δ+hoΔ | tm3287 | 0.8105 | blank (typed gap) | yes |
+| set1Δ+hoΔ | tm3346 | 0.8763 | 0.0155 | no (new) |
+| srn2Δ+hoΔ | tm3057 | 0.8921 | 0.012 | yes |
+| srn2Δ+hoΔ | tm3122 | 0.8911 | 0.0135 | no (new) |
+
+**Each record is still an aggregate the source computed, so `replicate_id` stays None.** si1.md line 59: "bootstrapped means, instead of medians, across replicates were used in variance estimation and final fitness values. Each high-density array was screened in triplicate for a total of 6 replicates. Since the arrays were in 1536-colony format, there are 4 technical replicates of mutants on the array resulting in a total of between 12 and 24 colony measurements for each fitness estimate." The release gives one fitness per strain, never the screens or colonies, so the record keeps the source's own bootstrap SE (`n_samples` 12, `colony`, unchanged). The two strains of one gene are told apart by `strain_id` on the perturbation, which the L1 uniqueness key already holds. The array single-mutant fitness is not a Kuzmin measurement at all: si1.md line 63, "Estimates of the mean single mutant fitness of each array strain were taken from a previous study (7)", ref 7 being Costanzo 2016.
+
+**Small fixes in the same function.** A strain whose fitness differs between its rows is now refused by name (0 array and 0 query strains in Data S1), since one record per strain from its first row is only lossless while the value is constant. The final NaN filter now tests the value a record stores (array fitness for an array single) instead of the query fitness on the array strain's first row; on Data S1 this drops nothing either way (0 array first rows with a blank query fitness). The 3 digenic query strains with no fitness anywhere (tm2843, tm2967, tm3141; blank in both Data S1 and S4) still have no record.
+
+**Proof.** Built before (origin/main) and after into `$DATA_ROOT/tmp/scratch/per-replicate-kuzmin2018/{before,after}/smf_kuzmin2018`; `experiments/036-dataset-fixes-before-kg-build/scripts/kuzmin2018_per_replicate_counts.py` writes `results/kuzmin2018_per_replicate_counts.json`: 1,181 array + 361 query = 1,542; all 1,539 before-records are after-records byte for byte (0 missing), the 3 new ones are tm3346, tm3288, tm3122; the shared reference is unchanged. Grouped by (genotype, environment) the after-store reproduces every before value exactly (max abs diff 0.0, every group one record). With `strain_id` set aside, only set1, srn2 and mad2 differ (0.0329, 0.0017, 0.0009), because the before-store held the first strain's value, not a mean.
+
+Verifier on the after build (`run_fitness` restricted to `smf_kuzmin2018`, `expected_count` 1542): **PASS**, 14 rules; `pair_uniqueness` 1542 unique (strain, environment) records; `uncertainty_sanity` 342 labeled uncertainties (339 + the three new S4 SDs).

@@ -338,6 +338,26 @@ def _refuse_repeated_crosses(df_digenic: pd.DataFrame) -> None:
         )
 
 
+def _refuse_varying_strain_fitness(
+    df: pd.DataFrame, strain_column: str, fitness_column: str
+) -> None:
+    """Refuse a strain whose single-mutant fitness differs between its rows.
+
+    Data S1 repeats a strain's own fitness on every row the strain is on, so
+    SmfKuzmin2018Dataset stores one record per strain from its first row. That is only
+    a lossless reading while the value is the same on every row (blank included): 0 of
+    the 1,181 array strains and 0 of the 364 digenic query strains vary. A strain that
+    did would be two released values, and nothing records which one is right.
+    """
+    n_values = df.groupby(strain_column)[fitness_column].nunique(dropna=False)
+    varying = sorted(n_values.index[n_values > 1])
+    if varying:
+        raise ValueError(
+            f"Kuzmin 2018 Data S1 gives {len(varying)} strain(s) more than one "
+            f"{fitness_column!r}: {varying[:10]}"
+        )
+
+
 def _combined_mutant_uncertainty(std_val: Any) -> dict[str, Any]:
     """Ontology fields for a combined-mutant-fitness sample SD over colonies.
 
@@ -544,33 +564,37 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
             "Combined mutant fitness standard deviation"
         ].mean()
 
-        # array single mutants
-        unique_array_allele_names = df["Array allele name"].drop_duplicates()
-        df_array = df[
-            df["Array allele name"].isin(unique_array_allele_names)
-        ].drop_duplicates(subset=["Array allele name"])
+        # One record per STRAIN, never per allele name: a single-mutant fitness is a
+        # property of the strain measured, repeated on every row the strain is on.
+        # Array side: one record per array strain (1,181 strains, 1,181 names).
+        _refuse_varying_strain_fitness(
+            df, "Array strain ID", "Array single mutant fitness"
+        )
+        df_array = df.drop_duplicates(subset=["Array strain ID"]).copy()
         df_array["smf_type"] = "array_smf"
-        # query single mutants, trigenic is not smf
+        # Query side (trigenic is not smf): one record per digenic query strain. MAD2,
+        # SET1 and SRN2 each have TWO single-mutant control strains of one genotype,
+        # each built as the control of a different double-mutant query (Additional
+        # Data S3: tm3288 / tm3211, tm3287 / tm3346, tm3122 / tm3057) and each with its
+        # own fitness; keying on the allele name kept only the first (#1176).
         digenic_df = df[df["Combined mutant type"] == "digenic"]
-
-        # Get unique 'Query allele name' and find first instances
-        unique_query_allele_names = digenic_df[
-            "Query allele name no ho"
-        ].drop_duplicates()
-        df_query = digenic_df[
-            digenic_df["Query allele name no ho"].isin(unique_query_allele_names)
-        ].drop_duplicates(subset=["Query allele name"])
+        _refuse_varying_strain_fitness(
+            digenic_df, "Query strain ID", "Query single/double mutant fitness"
+        )
+        df_query = digenic_df.drop_duplicates(subset=["Query strain ID"]).copy()
         df_query["smf_type"] = "query_smf"
         df = pd.concat([df_array, df_query], axis=0)
         df = df.reset_index(drop=True)
         # replace delta symbol for neo4j import
         df = df.replace("'", "_prime", regex=True)
         df = df.replace("Δ", "_delta", regex=True)
-        df = (
-            df[~df["Query single/double mutant fitness"].isna()]
-            .copy()
-            .reset_index(drop=True)
+        # A strain with no released fitness has no record: keep a row on the value
+        # it stores (array fitness for an array single, query fitness for a query
+        # single). Data S1 leaves 3 digenic query strains blank and 0 array strains.
+        stored_value = df["Array single mutant fitness"].where(
+            df["smf_type"] == "array_smf", df["Query single/double mutant fitness"]
         )
+        df = df[stored_value.notna()].copy().reset_index(drop=True)
         return _attach_query_strain_sd(df, df_s4, df["smf_type"] == "query_smf")
 
     @staticmethod

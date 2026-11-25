@@ -2289,7 +2289,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         # (results/no_verifier_store_release_counts.json)
         "smf_costanzo2016": 20484,
         "dmf_costanzo2016": 20705612,
-        "smf_kuzmin2018": 1539,
+        "smf_kuzmin2018": 1542,
         "dmf_kuzmin2018": 410571,
         "tmf_kuzmin2018": 91111,
         "smf_kuzmin2020": 472,

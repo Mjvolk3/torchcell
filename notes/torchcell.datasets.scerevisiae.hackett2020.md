@@ -143,3 +143,56 @@ Store `induction_timecourse_hackett2020`: 1,752 records; build manifest commit `
 | L4 | induced_gene_containment | all 211 induced genes are S288C genes |
 
 The store built in 154 s on commit `7f67ede3e`; the manifest reads `torchcell_dirty: True` because the Puddu 2019 note was being edited in the same worktree during the array (notes only, no code). Every expression layer is keyed by the release names and the pinned induced-gene table verifies against them; no genome-reference finding.
+
+## 2026.11.24 - Per-replicate review: one record per culture and time, the three repeat t0 hybridizations accounted for
+
+Per-replicate policy of #1178 (Part of #1027; #1176, #1064). Records unchanged at 1,752; what changed is the evidence, the accounting, and a verifier rule. Numbers below come from `experiments/036-dataset-fixes-before-kg-build/scripts/hackett2020_repeat_t0_check.py` (`results/hackett2020_repeat_t0_check.json`), which reads only the sha256-pinned GEO series matrices and the tall table.
+
+### What a replicate is here
+
+- The biological unit is one chemostat culture of one strain, and the IDEA release carries each culture as one time course. Every array of a course is the same culture at a different time (`paper.md`, sha256 `78ec9f04...`, Methods "Growth conditions": "Cells were grown to steady state, as determined by culture density, prior to the addition of $1 ~ \mu \mathrm { M }$ $\beta$ -estradiol to the culture and subsequent sampling.").
+- Repeated cultures are separate courses, so separate records already: "Fifteen induction experiments were repeated at least once using the same induced gene to either capture late changes in some experiments, confirm similar expression response to two different induction systems [...], or to verify reproducibility (Appendix Fig S1A)." (`paper.md`, Results, first section). `timecourse_id` (strain, date, limitation, system) keeps them apart; the class has no `replicate_id` field and needs none for this release.
+- Technical level inside a record: "Each microarray has some number of spots (usually 2) for each gene." and "For each microarray, we aggregated the data across individual spots. Specifically, for each gene at a given time point within an experiment we aggregated the spot values and measured the minimum value, maximum value, median value, and standard deviation of the values." (`paper.md`, Methods "Datasets"). The released value is that aggregate; the per-spot files (`GSE142864_RAW.tar`) are raw instrument output, out of scope.
+- No sample withdrawn by the authors is stated anywhere in `paper.md`, `si/si1.md` (Appendix, sha256 `46dadc5e...`) or `si/si7.md` (review history, sha256 `a0aab81c...`); every synonym (replicate, triplicate, duplicate, biological, technical, independent, colony, isolate, culture, `n =`) was searched.
+
+### The three repeat t = 0 hybridizations (GEO GSE142864)
+
+GEO carries 1,768 samples (1,548 GPL16244, 220 GPL20785). Accounting, measured on the series-matrix headers: the 1,752 stored arrays map onto 1,744 GEO samples by strain and minutes (the release carries two SMY2207 RDS2 courses, 05/04/2016 and 08/23/2016, 16 arrays; GEO carries 8 SMY2207 samples, so 8 stored arrays share a GEO sample with the other course), 21 samples belong to the refused SMY10, SMY19, SMY22 courses, and 3 are a second hybridization at t = 0:
+
+| GSM | GEO title | GEO source name | platform | primary t0 |
+|---|---|---|---|---|
+| GSM4245040 | `SMY57_HAP1_t0_rep` | "SMY57 inducing HAP1 at t0 replicate" | GPL16244 | GSM4245039 (same slide 251632211067, positions 1_1 and 1_2) |
+| GSM4245184 | `SMY26_MSN2__rep_t0` | "SMY26 inducing MSN2 with estradiol at t0_2 minute timepoint" | GPL20785 | GSM4245183 |
+| GSM4245196 | `SMY27_MSN4_rep_t0` | "SMY27 inducing MSN4 with estradiol at t0_2 minute timepoint" | GPL20785 | GSM4245195 |
+
+Each course has one culture and one t = 0 sampling: "The t = 0 was taken (between 3 and 5 mL of culture) and vacuum filtered. Estradiol was then added the continuous culture and sampled at various timepoints." (GEO treatment protocol, both series matrices). So each repeat is the same culture at the same time as its course's t0 array: a technical repeat under policy rule 2, not a biological replicate.
+
+What the series-matrix VALUE is (open in the sweep). Each GSM column is keyed by 6,316 Agilent probe ids, not genes, and carries one number per probe, with no channel intensity. Pairing every probe with the IDEA gene whose log2(red / green) correlates best over the 1,438 GPL16244 arrays that match one IDEA array uniquely: 6,145 probes pair at r > 0.95, and VALUE regresses on the IDEA log2 ratio with slope 0.992 (intercept -0.0006, r 0.997). VALUE is a per-probe log2(sample / reference), not t0-subtracted, so it is none of the record's layers.
+
+Whether the released t0 is the first array (open in the sweep). Over the 5,307 genes paired with one probe at r > 0.99, the median |VALUE - IDEA log2(red / green)| of a GEO array against its own IDEA array is 0.00098 over 1,651 uniquely matched arrays (99th percentile 0.0089), and 0.0022 over the 208 other t0 arrays (99th percentile 0.0093, maximum 0.025, SMY2085 MBP1). For the three courses:
+
+| course | primary alone | repeat alone | mean of both | r(primary, repeat) |
+|---|---|---|---|---|
+| SMY57 HAP1 | 0.0935 | 0.0239 | 0.0515 | 0.927 |
+| SMY26 MSN2 | 0.0324 | 0.0492 | 0.0135 | 0.970 |
+| SMY27 MSN4 | 0.0226 | 0.0221 | 0.0126 | 0.982 |
+
+Neither hybridization alone reproduces the released t0 of its course to the precision every other array reproduces its own. For SMY26 and SMY27 the mean of both is closer than either; for SMY57 the repeat is closest. Consistent with the Methods' aggregation "for each gene at a given time point within an experiment", which pools the spots of both t0 hybridizations; the exact combining rule (median of the pooled spots per channel, or other) is unverified and needs the per-spot files.
+
+Disposition: the released t0 is the authors' value of that culture at t = 0 (policy rules 2 and 4) and stays the one record. The plan's action ("store the three replicate t0 arrays", 1,752 -> 1,755) is not done: they are technical repeats already inside the released t0, the series matrix does not release the record's layers for them (per-probe log2 ratio only, no gene key, no channel intensity, no cleaned layer), and the class has no `replicate_id` or technical-level field to tell a second t0 of one course apart.
+
+Needs owner decision (schema): policy rule 2 asks the record to say when technical measurements are combined inside it. `InductionTimecourseExpressionPhenotype` cannot: proposed shape, shared with the Sameith and Kemmeren microarray leaves, a field on the two-channel parent `technical_replicates: TechnicalReplication | None` with `TechnicalReplication(n: int, unit: Literal["array_hybridization", "spot"], accessions: list[str])`, filled `n=2, unit="array_hybridization", accessions=[primary GSM, repeat GSM]` on the three t0 records and `None` with a typed gap elsewhere.
+
+### Code
+
+- `hackett2020.py`: module docstring REPLICATES paragraph; `GeoRepeatT0` and `GEO_REPEAT_T0` (the three repeats with their primary t0); quotes `spot_aggregation` (paper Methods), `geo_repeat_t0_smy57` (GPL16244), `geo_repeat_t0_smy26`, `geo_repeat_t0_smy27` (GPL20785) in `SOURCED_VALUES`, so the verifier's `sourced_values` audit re-reads them.
+- `torchcell/verification/induction_timecourse.py`: L4 `geo_repeat_t0_accounted`. Every GEO sample is a stored array's (strain and minutes), a refused course's, or a repeat t0 of a stored course; GEO's repeat titles must be exactly `GEO_REPEAT_T0`.
+- Tests: the synthetic GEO gains a repeat and a refused-course sample; the rule's pass and both failure modes; the constants against the module's quotes; a `--data` test that builds the real release into `tmp_path` (1,752 records, 224 courses, one t0 each) and runs the rule on the real series matrices.
+
+### Not replicate-related, unchanged
+
+- 21 arrays of SMY10, SMY19, SMY22 stay refused (no Table EV1 genotype; #1064 row 198); outside this policy.
+
+### Build and verification (scratch store, 2026-11-24)
+
+Store `$DATA_ROOT/tmp/scratch/per-replicate-hackett2020/induction_timecourse_hackett2020`, built in 187 s from this branch: 1,752 records over 224 courses (arrays per course: 5 x 2, 6 x 12, 7 x 17, 8 x 190, 9 x 1, 11 x 2), exactly one t = 0 record per course. Verdict PASS over 25 rules; the new row: `L4 geo_repeat_t0_accounted: all 1768 GEO samples accounted for: stored arrays, 21 of refused courses, 3 repeat t0 hybridizations of stored courses (inside the authors' t0, not records)`; `sourced_values` now reads 50 quotes verbatim. All 1,752 records are byte-identical (pickled LMDB values) to the dev store `data/torchcell/induction_timecourse_hackett2020`, so grouping by genotype and environment reproduces the old stored values with max |diff| 0. `expected_count` in `runners.py` stays 1,752; the dataset is not in `build_time_projection.py`.

@@ -26,6 +26,7 @@ import gzip
 import hashlib
 import io
 import json
+import os
 import re
 import zipfile
 from datetime import datetime
@@ -217,8 +218,25 @@ def _geo(titles: list[str], strains: list[str]) -> bytes:
 
 
 GEO_IDEA = _geo(
-    ["SMY2049_ACA1_t0", "SMY2049_ACA1_t5", "SMY69_GEV_M_t0", "SMY69_GEV_M_t2.5"],
-    ["SMY2049", "SMY2049", "SMY69", "SMY69"],
+    [
+        "SMY2049_ACA1_t0",
+        "SMY2049_ACA1_t0_rep",
+        "SMY2049_ACA1_t5",
+        "SMY69_GEV_M_t0",
+        "SMY69_GEV_M_t2.5",
+        "SMY22_CBF1_t0",
+    ],
+    ["SMY2049", "SMY2049", "SMY2049", "SMY69", "SMY69", "SMY22"],
+)
+#: The synthetic GEO's one repeat t = 0 hybridization (of the stored SMY2049 course).
+GEO_REPEAT = h.GeoRepeatT0(
+    gsm="GSM0000002",
+    title="SMY2049_ACA1_t0_rep",
+    platform="GPL16244",
+    strain="SMY2049",
+    primary_gsm="GSM0000001",
+    primary_title="SMY2049_ACA1_t0",
+    quote_key="geo_repeat_t0_smy57",
 )
 GEO_VALIDATION = _geo(["SMY2605_HMX1_t0", "SMY2605_HMX1_t5"], ["SMY2605", "SMY2605"])
 TALL = _tall_zip()
@@ -263,6 +281,7 @@ def data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
         },
     )
     monkeypatch.setattr(h, "RELEASE_TF_TOKENS_WITHOUT_AN_ORF", SYSTEMATIC)
+    monkeypatch.setattr(h, "GEO_REPEAT_T0", (GEO_REPEAT,))
     library = root / "torchcell-library" / h.CITATION_KEY
     (library / "si").mkdir(parents=True)
     files = []
@@ -758,6 +777,107 @@ def test_verifier_passes_every_rule_but_the_unmirrored_quotes(
     assert set(by_name["sourced_values"].details["failed_sources"]) == {
         "paper.md",
         "si/si1.md",
+        f"{h.RAW_DIR_REL}/{h.GEO_GPL16244_REL}",
         f"{h.RAW_DIR_REL}/{h.GEO_GPL20785_REL}",
         f"{h.RAW_DIR_REL}/{h.SITE_JS_REL}",
     }
+    repeat = by_name["geo_repeat_t0_accounted"]
+    assert repeat.passed
+    assert repeat.details["repeat_titles"] == ["SMY2049_ACA1_t0_rep"]
+    assert repeat.details["n_refused_course_samples"] == 1
+
+
+def test_geo_repeat_rule_refuses_an_unlisted_repeat_and_an_unaccounted_sample(
+    dataset: h.InductionTimecourseHackett2020Dataset,
+    data_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The rule passes on the synthetic GEO (one repeat t0 of a stored course, one
+    sample of the refused SMY22 course) and fails when ``GEO_REPEAT_T0`` does not name
+    the repeat, or when a GEO sample's strain and minutes are no stored array's.
+    """
+    root = Path(dataset.root)
+    dataset.close_lmdb()
+    release = v.ReleaseIndex(root / "raw")
+    stored = {
+        key: 1 for key in release.blocks if release.course_strain.get(key[0]) != "SMY22"
+    }
+    ok = v._geo_repeat_result(stored, release, data_root)
+    assert ok.passed, ok.message
+    assert ok.details["n_refused_course_samples"] == 1
+    monkeypatch.setattr(h, "GEO_REPEAT_T0", ())
+    unlisted = v._geo_repeat_result(stored, release, data_root)
+    assert not unlisted.passed
+    assert unlisted.details["repeat_titles"] == ["SMY2049_ACA1_t0_rep"]
+    monkeypatch.setattr(h, "GEO_REPEAT_T0", (GEO_REPEAT,))
+    without_t5 = {
+        (tc, m): n
+        for (tc, m), n in stored.items()
+        if not (release.course_strain.get(tc) == "SMY2049" and m == 5.0)
+    }
+    missing = v._geo_repeat_result(without_t5, release, data_root)
+    assert not missing.passed
+    assert missing.details["unaccounted"] == ["SMY2049_ACA1_t5"]
+
+
+def test_geo_repeat_constants_are_the_three_series_matrix_repeats() -> None:
+    """Each repeat names its course's primary t0 and a quote the module cites."""
+    assert [r.title for r in h.GEO_REPEAT_T0] == [
+        "SMY57_HAP1_t0_rep",
+        "SMY26_MSN2__rep_t0",
+        "SMY27_MSN4_rep_t0",
+    ]
+    for repeat in h.GEO_REPEAT_T0:
+        assert v._GEO_REPEAT.search(repeat.title)
+        assert not v._GEO_REPEAT.search(repeat.primary_title)
+        assert repeat.primary_title.startswith(f"{repeat.strain}_")
+        assert repeat.gsm in str(h.SOURCED_VALUES[repeat.quote_key].value)
+
+
+# --------------------------------------------------------------------------- #
+# The real release (runs only with --data)
+# --------------------------------------------------------------------------- #
+_REAL_RAW = Path(os.environ.get("DATA_ROOT", "/nonexistent"), h.RAW_DIR_REL)
+
+
+@pytest.mark.data
+@pytest.mark.slow
+@pytest.mark.skipif(
+    not (_REAL_RAW / "manifest.json").exists(),
+    reason=f"requires the Hackett 2020 raw mirror at {_REAL_RAW}",
+)
+def test_the_real_release_is_one_record_per_array_and_the_repeats_are_accounted(
+    tmp_path: Path,
+) -> None:
+    """The pinned release builds 1,752 records over 224 courses (214 tall + 10 EV2),
+    one per (course, time) and exactly one t = 0 each; GEO's 1,768 samples are the
+    stored arrays, the 21 of the refused courses and the three repeat t0
+    hybridizations, which the stored t0 of SMY57, SMY26 and SMY27 carries.
+    """
+    built = h.InductionTimecourseHackett2020Dataset(root=str(tmp_path / "hackett"))
+    assert len(built) == 1752
+    ledger = h.ReleaseLedger.model_validate_json(
+        (Path(built.preprocess_dir) / "release_ledger.json").read_text()
+    )
+    assert ledger.n_served_timecourses == 224
+    assert ledger.n_refused_arrays == 21
+    assert sum(ledger.arrays_per_timecourse.values()) == 1752
+    root = Path(built.root)
+    built.close_lmdb()
+    t0_per_course: dict[str, int] = {}
+    for record in stream_records(str(root)):
+        phenotype = record["experiment"]["phenotype"]
+        course = phenotype["timecourse_id"]
+        t0_per_course.setdefault(course, 0)
+        if record["experiment"]["environment"]["duration_hours"] == 0.0:
+            t0_per_course[course] += 1
+    assert len(t0_per_course) == 224
+    assert set(t0_per_course.values()) == {1}
+    release = v.ReleaseIndex(root / "raw")
+    refused = {r.timecourse_id for r in ledger.refused}
+    stored = {key: 1 for key in release.blocks if key[0] not in refused}
+    assert len(stored) == 1752
+    result = v._geo_repeat_result(stored, release, _REAL_RAW.parent.parent)
+    assert result.passed, result.message
+    assert result.details["repeat_titles"] == sorted(r.title for r in h.GEO_REPEAT_T0)
+    assert result.details["n_refused_course_samples"] == 21

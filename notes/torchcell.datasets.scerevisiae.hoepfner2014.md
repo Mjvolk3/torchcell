@@ -519,3 +519,40 @@ Dev-store rebuild (slurm job 5082, `database/slurm/scripts/gilahyper_build_datas
 ## 2026.11.17 - Dryad retrieval on httpx
 
 `_dryad_get` takes an `httpx.Client` that follows redirects and returns an open streamed response (`client.send(..., stream=True)`); per-request timeouts stay 180 s for the file GET and 1800 s for the pass-challenge GET. `_fetch_from_dryad` streams with `iter_bytes(chunk_size=1 << 20)`; the empty-chunk guard is gone because `iter_bytes` never yields an empty chunk. A real call on 2026-11-17 cleared the Anubis challenge for `HIP_scores.txt` (pass-challenge 302, file stream 302, S3 200, `text/plain`); only the first 64 KiB were read.
+
+## 2026.11.24 - Per-replicate review: the Benomyl positive-control matrices are stored
+
+Second replicate sweep (#1178; tracking #1177, #1203 item 13). The question for this loader is what one stored record is and whether any released replicate is missing.
+
+### What a record is (unchanged)
+
+Each deposited column is one compound, dose and study. The paper combines the compound's two wells inside the column and releases no per-well score: "If a column name starts with “Ad.”, then the MADL score of each strain is adjusted for the variability between the two measurements of the two samples which are contained in the study for the given compound. In some cases only one of the two samples for a compound passed QC; in this case there is only one measurement and no adjustment for variability is made; this is indicated by the prefix “MADL”." (paper.md line 52, sha256 `a9877549...`). The wells are "tested at $n = 2$ within the same plate" (line 68). Under the policy this is an aggregate-only release for the well level, so the per-column score stays the stored unit, `replicate_id` stays None, and repeat studies of one compound and dose stay apart through `screen_id`. No compound record changes value.
+
+### What was missing: 191 Benomyl experiments, 983,141 records
+
+Every plate carried one Benomyl (CMB991) well ("Each plate contained two no drug controls, one positive control (Benomyl, CMB991), 10 experimental compounds in duplicates and one contamination control that received no cells.", line 68), and its scores are deposited apart: "The data matrices of the scores for the Benomyl HIP and HOP experiments are contained in the files HIP Benomyl-scores.txt and HOP Benomyl-scores.txt which can be downloaded from Drayd digital repository at: http://doi.org/ 10.5061/dryad.v5m8v." (line 48). The compound matrices hold 0 CMB991 columns, so these experiments were never stored. The paper calls them "97 independent benomyl HIP and HOP experiments" (line 113).
+
+Retrieval (2026-11-25). Dryad API v2 lists both files in version 1 (2014-11-19) and version 3 (2026-06-26) of doi:10.5061/dryad.v5m8v as `HIP_scores-benomyl.txt` (file 4834606, 20,631,871 bytes, MD5 `7a36f4a4c8368ffc74da80818ddeabad`) and `HOP_scores-benomyl.txt` (4834607, 16,893,627 bytes, MD5 `0e5681ccb5fee30e00af7f958ccb7032`). They were fetched through `_dryad_get` from `https://datadryad.org/downloads/file_stream/<id>`, the route the three mirrored files used; the bytes match the listed MD5, and sha256 `1692d6cf8f14d85920d037a702e37d0f575104286ded189f6c953915ba293aa7` / `2e219495ed2fecc8ffa0aaffea8ffcd1d040f95fbd92a526ba17fb6d281eb5a4` are pinned in `_DRYAD_FILES`. `deposit_raw_mirror` added both to `$DATA_ROOT/torchcell-raw/hoepfnerHighresolutionChemicalDissection2014/` with `retrieved_at` 2026-11-25; it now keeps an existing record (the 2026-07-10 retrievals) rather than redating it.
+
+Measured on the two matrices:
+
+| | HIP | HOP |
+|---|---|---|
+| sensitivity columns (all CMB991) | 94 (91 `Ad.`, 3 `MADL`) | 97 (96 `Ad.`, 1 `MADL`) |
+| studies | 92 | 95 |
+| study 0044 doses (pilot) | 26.84, 31.6, 37.8 uM | 26.84, 31.6, 37.8 uM |
+| rows (same 6,681 tokens as the compound matrix) | 6,681 | 6,681 |
+| rows with a score | 5,869 | 4,970 |
+| scored cells = stored records | 544,437 | 438,704 |
+
+The paper's 97 is the HOP count; the HIP matrix deposits 94. Every Benomyl study also appears in the compound matrix of its arm, so its records join that study's control-set reference ("All compound profiles of one study use the same set of control samples and are normalized together.", line 50). Benomyl resolves to the curated row (InChIKey `RIOXQFHNBCKOKP-UHFFFAOYSA-N`, ChEBI:3015, PubChem 28780). Table S1 lists its IC30 as 57.746 uM while the paper's Fig. 1A legend states 27 uM and the columns are dosed at 26.835 to 37.8 uM; the ledger lists the 187 columns at 26.835 or 26.84 uM (ratio 0.46) as outside 0.5x to 2x the Table S1 value; the four pilot columns at 31.6 and 37.8 uM are inside. Ten HIP strains are scored only in the Benomyl matrix, so the ledger's `hip_construction` rises from 5,859 to 5,869 stored HIP strains (one_entry 5,761 to 5,771), and the Table S5 flag file from 57,127 to 74,783 flagged HIP records.
+
+The loader streams the Benomyl matrices after the compound matrices (`_MATRICES`), so the 3,127,814 compound records keep their positions, and the ledger keys every count by deposited matrix (`HIP`, `HOP`, `HIP_benomyl`, `HOP_benomyl`). Records: 3,127,814 before, 4,110,955 after.
+
+### n = 1 uncertainty reason
+
+A `MADL` column is one sample, so its three uncertainty gaps now carry `not_applicable_single_measurement` (policy rule 5) instead of `not_reported_by_primary`; `Ad.` records and the reference keep `not_reported_by_primary`.
+
+### Not changed, for the owner
+
+`sample_unit=technical_replicate` labels the two wells of one plate. They are two cultures inoculated from one pool pre-culture; whether that is a technical or a biological replicate is the owner's call, and it changes no count.

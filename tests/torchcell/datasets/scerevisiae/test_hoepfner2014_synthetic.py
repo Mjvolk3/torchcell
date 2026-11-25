@@ -135,6 +135,21 @@ _HOP_ROWS: list[list[str]] = [
     ["YAL034C-B", "0.33"],
     ["YAL001C", "0.99", "", ""],
 ]
+# The Benomyl (CMB991) positive-control matrices, streamed after the compound matrices.
+_BENOMYL = "CCCCNC(=O)N2C(NC(=O)OC)=Nc1ccccc12"
+_HIP_BENOMYL_HEADER = [
+    "Systematic Name",
+    "Ad. scores for Exp. 991_26.835_HIP_0077",
+    "Ad. scores for Exp. 991_26.835_HIP_0077 z-score",
+    "MADL scores for Exp. 991_26.84_HIP_0018A",
+]
+_HIP_BENOMYL_ROWS: list[list[str]] = [
+    ["YAL001C", "-4.0", "-9.0", "1.5"],
+    ["YBR271W", "-2.0", "-5.0", ""],
+    ["YAL035C-A", "", "", ""],
+]
+_HOP_BENOMYL_HEADER = ["Systematic Name", "Ad. scores for Exp. 991_26.835_HOP_0078"]
+_HOP_BENOMYL_ROWS: list[list[str]] = [["YAL001C", "-0.5"], ["YBR271W", "0.25"]]
 
 
 def _quoted_matrix(header: list[str], rows: list[list[str]]) -> str:
@@ -153,6 +168,7 @@ def _write_table_s1(path: Path) -> None:
     known.append([None, "Nameless", 5])
     known.append([409, "Boromycin", 1.2])
     known.append([888, "Unreleased", 10])
+    known.append([991, "Benomyl", 27])
     novel = workbook.create_sheet("Substances novel MoA")
     novel.append(["CMB ID", "Common Name"])
     novel.append(["1234", None])
@@ -164,6 +180,7 @@ def _write_table_s1(path: Path) -> None:
     structures.append([777, _AMITRIPTYLINE])
     structures.append(["244, 1818", "CC(=O)O"])
     structures.append([555, None])
+    structures.append([991, _BENOMYL])
     workbook.save(path)
 
 
@@ -171,6 +188,12 @@ def _write_raw(raw: Path) -> None:
     raw.mkdir(parents=True, exist_ok=True)
     (raw / "HIP_scores.txt").write_text(_quoted_matrix(_HIP_HEADER, _HIP_ROWS))
     (raw / "HOP_scores.txt").write_text(_quoted_matrix(_HOP_HEADER, _HOP_ROWS))
+    (raw / "HIP_scores-benomyl.txt").write_text(
+        _quoted_matrix(_HIP_BENOMYL_HEADER, _HIP_BENOMYL_ROWS)
+    )
+    (raw / "HOP_scores-benomyl.txt").write_text(
+        _quoted_matrix(_HOP_BENOMYL_HEADER, _HOP_BENOMYL_ROWS)
+    )
     _write_table_s1(raw / "Table_S1.xls")
 
 
@@ -427,7 +450,7 @@ def _summary(
     return out
 
 
-def test_thirty_one_records_stream_hip_then_hop_in_row_then_column_order(
+def test_thirty_six_records_stream_compound_then_benomyl_matrices_in_order(
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
     """Stored HIP columns are header indices 1, 3, 4, 5, 6, so each HIP row yields up to
@@ -435,9 +458,13 @@ def test_thirty_one_records_stream_hip_then_hop_in_row_then_column_order(
     with their two columns; the ``MADL`` column stores n = 1, the ``Ad.`` columns n = 2.
     Every row is stored under its released spelling: the renamed ORF YAL035C-A, the
     pseudogene YCL074W, the gene R64 does not list (YHR999W) and the sparse row
-    YAL034C-B (1 of 5 columns). Only R0010W, not ORF-shaped, is held out.
+    YAL034C-B (1 of 5 columns). Only R0010W, not ORF-shaped, is held out. The Benomyl
+    matrices follow (records 31-35): each Benomyl column is one study's positive-control
+    experiment, stored like a compound column (HIP 0077 Ad. n = 2, HIP 0018A MADL n = 1,
+    HOP 0078); its z-score companion is skipped and the YAL035C-A row, scored nowhere,
+    carries no record.
     """
-    assert len(dataset) == 31
+    assert len(dataset) == 36
     hip, hop = "heterozygous_deletion", "barcoded_kanmx_deletion"
     ami, boro, c777, c888 = "amitriptyline", "Boromycin", "CMB777", "Unreleased"
 
@@ -469,6 +496,11 @@ def test_thirty_one_records_stream_hip_then_hop_in_row_then_column_order(
         (hop, "YBR271W", "YBR271W", ami, 50.0, -0.25, 2, "0077"),
         (hop, "YAL034C-B", "YAL034C-B", ami, 50.0, 0.33, 2, "0077"),
         (hop, "YAL001C", "YAL001C", ami, 50.0, 0.99, 2, "0077"),
+        (hip, "YAL001C", "YAL001C", "benomyl", 26.835, -4.0, 2, "0077"),
+        (hip, "YAL001C", "YAL001C", "benomyl", 26.84, 1.5, 1, "0018A"),
+        (hip, "YBR271W", "YBR271W", "benomyl", 26.835, -2.0, 2, "0077"),
+        (hop, "YAL001C", "YAL001C", "benomyl", 26.835, -0.5, 2, "0078"),
+        (hop, "YBR271W", "YBR271W", "benomyl", 26.835, 0.25, 2, "0078"),
     ]
 
 
@@ -573,16 +605,32 @@ def test_reference_index_has_one_entry_per_assay_and_study(
         ).read_text()
     )
     hip_0091 = [1, 9, 13, 18, 23]
+    # A study's Benomyl wells share its control samples, so the HIP 0077 Benomyl records
+    # (31, 33) join the HIP 0077 compound reference; 0018A and HOP 0078 are new studies.
     assert [entry["member_indices"] for entry in index] == [
-        [i for i in range(26) if i not in hip_0091],
+        [*(i for i in range(26) if i not in hip_0091), 31, 33],
         hip_0091,
         [26, 27, 28, 29, 30],
+        [32],
+        [34, 35],
     ]
     assert [entry["reference"] for entry in index] == [
         _reference("HIP", "0077"),
         _reference("HIP", "0091"),
         _reference("HOP", "0077"),
+        _reference("HIP", "0018A"),
+        _reference("HOP", "0078"),
     ]
+
+
+def _four(hip: int, hop: int, hip_benomyl: int, hop_benomyl: int) -> dict[str, int]:
+    """A per-matrix count, keyed by the four deposited-matrix labels in build order."""
+    return {
+        "HIP": hip,
+        "HOP": hop,
+        "HIP_benomyl": hip_benomyl,
+        "HOP_benomyl": hop_benomyl,
+    }
 
 
 def test_ledger_accounts_for_every_scored_cell(
@@ -594,7 +642,10 @@ def test_ledger_accounts_for_every_scored_cell(
     failure as the unresolved reason) and CMB 888 (no SMILES) are listed in
     ``compound_identity_gaps`` with their stored columns and records per arm; the
     CMB4019 exclusion has no column here; amitriptyline's 50 uM, Boromycin's 1.2 uM and
-    CMB 888's 10 uM equal their Table S1 IC30 (in range).
+    CMB 888's 10 uM equal their Table S1 IC30 (in range). Every count is keyed by the
+    deposited matrix: the Benomyl matrices add HIP_benomyl (3 scored cells, all stored;
+    the YAL035C-A row is scored nowhere) and HOP_benomyl (2), every column a positive
+    control; the HIP construction tally counts each strain once across both HIP matrices.
     """
     report = json.loads((Path(dataset.root) / "dropped_records.json").read_text())
     report.pop("created_at")
@@ -616,10 +667,10 @@ def test_ledger_accounts_for_every_scored_cell(
             "compound_has_no_released_name_or_structure_not_representable"
         ),
         "unidentified_compound_policy": m.UNIDENTIFIED_COMPOUND_POLICY,
-        "n_kept": 31,
+        "n_kept": 36,
         "n_dropped": 3,
-        "kept_by_assay": {"HIP": 26, "HOP": 5},
-        "dropped_by_assay": {"HIP": 1, "HOP": 2},
+        "kept_by_assay": {"HIP": 26, "HOP": 5, "HIP_benomyl": 3, "HOP_benomyl": 2},
+        "dropped_by_assay": {"HIP": 1, "HOP": 2, "HIP_benomyl": 0, "HOP_benomyl": 0},
         "accounting": {
             "HIP": {
                 "n_sensitivity_columns": 5,
@@ -641,17 +692,49 @@ def test_ledger_accounts_for_every_scored_cell(
                 "n_excluded_condition": 0,
                 "n_unidentified_compound": 2,
             },
+            "HIP_benomyl": {
+                "n_sensitivity_columns": 2,
+                "n_rows": 3,
+                "n_rows_without_any_score": 1,
+                "n_source_cells": 3,
+                "n_stored": 3,
+                "n_not_orf_shaped": 0,
+                "n_excluded_condition": 0,
+                "n_unidentified_compound": 0,
+            },
+            "HOP_benomyl": {
+                "n_sensitivity_columns": 1,
+                "n_rows": 2,
+                "n_rows_without_any_score": 0,
+                "n_source_cells": 2,
+                "n_stored": 2,
+                "n_not_orf_shaped": 0,
+                "n_excluded_condition": 0,
+                "n_unidentified_compound": 0,
+            },
         },
         "not_orf_shaped": {
             "HIP": [{"source_name": "R0010W", "n_records": 1}],
             "HOP": [],
+            "HIP_benomyl": [],
+            "HOP_benomyl": [],
         },
         "excluded_conditions": [
             {
                 "cmb_id": "4019",
                 "table_s1_name": "D-Glucose (starvation)",
-                "n_columns_by_assay": {"HIP": 0, "HOP": 0},
-                "n_records_by_assay": {"HIP": 0, "HOP": 0},
+                "n_columns_by_assay": {
+                    "HIP": 0,
+                    "HOP": 0,
+                    "HIP_benomyl": 0,
+                    "HOP_benomyl": 0,
+                },
+                "n_records_by_assay": {
+                    "HIP": 0,
+                    "HOP": 0,
+                    "HIP_benomyl": 0,
+                    "HOP_benomyl": 0,
+                },
             }
         ],
         "unidentified_compounds_held_out": [
@@ -667,18 +750,33 @@ def test_ledger_accounts_for_every_scored_cell(
                         "n_scored_cells": 2,
                     }
                 ],
-                "n_columns_by_assay": {"HIP": 0, "HOP": 1},
-                "n_records_by_assay": {"HIP": 0, "HOP": 2},
+                "n_columns_by_assay": {
+                    "HIP": 0,
+                    "HOP": 1,
+                    "HIP_benomyl": 0,
+                    "HOP_benomyl": 0,
+                },
+                "n_records_by_assay": {
+                    "HIP": 0,
+                    "HOP": 2,
+                    "HIP_benomyl": 0,
+                    "HOP_benomyl": 0,
+                },
             }
         ],
-        "n_cmb_ids_stored": 4,
-        "n_compounds_stored": 4,
-        "columns_by_assay": {"HIP": 5, "HOP": 2},
-        "positive_control": {"HIP": 0, "HOP": 0},
-        "solvent_gap_columns": {"HIP": 0, "HOP": 0},
-        "ph_gap_columns": {"HIP": 0, "HOP": 0},
+        "n_cmb_ids_stored": 5,
+        "n_compounds_stored": 5,
+        "columns_by_assay": {"HIP": 5, "HOP": 2, "HIP_benomyl": 2, "HOP_benomyl": 1},
+        "positive_control": {"HIP": 0, "HOP": 0, "HIP_benomyl": 2, "HOP_benomyl": 1},
+        "solvent_gap_columns": {"HIP": 0, "HOP": 0, "HIP_benomyl": 0, "HOP_benomyl": 0},
+        "ph_gap_columns": {"HIP": 0, "HOP": 0, "HIP_benomyl": 0, "HOP_benomyl": 0},
         "dose_outside_ic30_range": [],
-        "n_kept_columns_with_ic30": {"HIP": 4, "HOP": 2},
+        "n_kept_columns_with_ic30": {
+            "HIP": 4,
+            "HOP": 2,
+            "HIP_benomyl": 2,
+            "HOP_benomyl": 1,
+        },
         "hip_construction": {"one_entry": 5, "not_listed": 2},
     }
     assert [
@@ -691,8 +789,8 @@ def test_ledger_accounts_for_every_scored_cell(
         )
         for g in gaps
     ] == [
-        ("409", "Boromycin", _BOROMYCIN, {"HIP": 1, "HOP": 1}, {"HIP": 4, "HOP": 1}),
-        ("888", "Unreleased", None, {"HIP": 1, "HOP": 0}, {"HIP": 5, "HOP": 0}),
+        ("409", "Boromycin", _BOROMYCIN, _four(1, 1, 0, 0), _four(4, 1, 0, 0)),
+        ("888", "Unreleased", None, _four(1, 0, 0, 0), _four(5, 0, 0, 0)),
     ]
     assert gaps[0]["resolution_status"] == "UNRESOLVED_PUBLIC"
     assert gaps[0]["unresolved_reason"] == (
@@ -706,8 +804,9 @@ def test_ledger_accounts_for_every_scored_cell(
 def test_table_s5_flag_file_counts_kept_hip_records_per_listed_strain(
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
-    """Two flagged Table S5 strains appear in the HIP matrix: YBR271W (CL1, positional,
-    MUT, 5 stored records) and YLR074C (CL1+, not positional, MUT, 3); the HOP rows of
+    """Two flagged Table S5 strains appear in the HIP matrices: YBR271W (CL1, positional,
+    MUT, 5 compound records + 1 Benomyl record) and YLR074C (CL1+, not positional, MUT,
+    3); the HOP rows of
     YBR271W are not flagged. The file pins the regenerated 036 CSV and Table S5 by
     sha256 and carries the paper's cluster paragraph verbatim.
     """
@@ -732,8 +831,8 @@ def test_table_s5_flag_file_counts_kept_hip_records_per_listed_strain(
         "policy": m.TABLE_S5_POLICY,
         "n_strains": 2,
         "n_positional_strains": 1,
-        "n_records_flagged": 8,
-        "n_positional_records_flagged": 5,
+        "n_records_flagged": 9,
+        "n_positional_records_flagged": 6,
         "strains": [
             {
                 "systematic_gene_name": "YBR271W",
@@ -744,7 +843,7 @@ def test_table_s5_flag_file_counts_kept_hip_records_per_listed_strain(
                 "construction_lab": "Lab 14",
                 "construction_batch": "chr00_1",
                 "n_table_s5_entries": 1,
-                "n_records": 5,
+                "n_records": 6,
             },
             {
                 "systematic_gene_name": "YLR074C",
@@ -814,6 +913,8 @@ def test_sourced_values_file_and_gene_set(
     assert dataset.raw_file_names == [
         "HIP_scores.txt",
         "HOP_scores.txt",
+        "HIP_scores-benomyl.txt",
+        "HOP_scores-benomyl.txt",
         "Table_S1.xls",
     ]
     with pytest.raises(NotImplementedError):
@@ -841,6 +942,7 @@ def test_compound_meta_reads_names_and_structures_across_the_three_sheets(
         "244": {"common_name": None, "smiles": "CC(=O)O"},
         "1818": {"common_name": None, "smiles": "CC(=O)O"},
         "555": {"common_name": None, "smiles": None},
+        "991": {"common_name": "Benomyl", "smiles": _BENOMYL},
     }
 
 
@@ -858,7 +960,7 @@ def test_download_links_the_mirror_only_when_its_bytes_match_the_pinned_sha256(
     is not the pinned Dryad digest raises ``RawSha256MismatchError`` with both digests
     and links nothing; with the pins repointed at the fixture's digests each absent raw
     file is symlinked, a raw file already present (``Table_S1.xls``, a plain copy) is
-    left as it is, and the build runs to its 31 records under the real build-time
+    left as it is, and the build runs to its 36 records under the real build-time
     check.
     """
     monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
@@ -884,7 +986,7 @@ def test_download_links_the_mirror_only_when_its_bytes_match_the_pinned_sha256(
             mirror / name
         )
     assert not (raw / "Table_S1.xls").is_symlink()
-    assert len(dataset) == 31
+    assert len(dataset) == 36
 
 
 class _FakeResponse:
@@ -946,7 +1048,7 @@ def test_download_fetches_a_file_the_mirror_lacks_and_verifies_the_pin(
     hop = tmp_path / "b" / "raw" / "HOP_scores.txt"
     assert not hop.is_symlink() and hop.read_bytes() == hop_bytes
     assert (tmp_path / "b" / "raw" / "HIP_scores.txt").is_symlink()
-    assert len(dataset) == 31
+    assert len(dataset) == 36
 
 
 def test_deposit_raw_mirror_records_the_dryad_retrieval_per_file(
@@ -980,7 +1082,13 @@ def test_deposit_raw_mirror_records_the_dryad_retrieval_per_file(
     assert manifest.citation_key == _CITATION_KEY
     assert manifest.doi == _DOI
     assert manifest.si_data_sources == ["https://doi.org/10.5061/dryad.v5m8v"]
-    assert manifest.si_expected == ["HIP_scores.txt", "HOP_scores.txt", "Table_S1.xls"]
+    assert manifest.si_expected == [
+        "HIP_scores-benomyl.txt",
+        "HIP_scores.txt",
+        "HOP_scores-benomyl.txt",
+        "HOP_scores.txt",
+        "Table_S1.xls",
+    ]
     assert [(f.path, f.role, f.sha256, f.source) for f in manifest.files] == [
         (name, "raw_data", spec["sha256"], spec["url"])
         for name, spec in digests.items()
@@ -1026,7 +1134,7 @@ def test_an_unidentified_compound_is_absent_from_the_store_and_listed_in_the_led
         for perturbation in dataset[index]["experiment"]["environment"]["perturbations"]
     }
     assert "CMB5000" not in stored_compounds
-    assert len(dataset) == 31
+    assert len(dataset) == 36
     report = json.loads((Path(dataset.root) / "dropped_records.json").read_text())
     assert [c["cmb_id"] for c in report["unidentified_compounds_held_out"]] == ["5000"]
     assert "5000" not in {g["cmb_id"] for g in report["compound_identity_gaps"]}
@@ -1112,13 +1220,13 @@ def test_a_repeated_orf_row_is_stored_twice_under_one_genotype(
 def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Contract (issue #518's sweep): with the three Dryad files already in ``raw/`` PyG
+    """Contract (issue #518's sweep): with the five Dryad files already in ``raw/`` PyG
     skips ``download()``, so ``process()`` verifies each against ``_DRYAD_FILES`` first.
     ``HIP_scores.txt`` off its pin raises ``RawSha256MismatchError`` naming it and both
     digests before a row is read; no store is written and the file is left as found.
     """
     monkeypatch.delenv("TC_DATA_URL", raising=False)
-    staged = off_pin_raw(m, ["HIP_scores.txt", "HOP_scores.txt", "Table_S1.xls"])
+    staged = off_pin_raw(m, list(m._DRYAD_FILES))
     raw = staged.root / "raw" / "HIP_scores.txt"
     with pytest.raises(RawSha256MismatchError) as err:
         m.EnvChemgenHoepfner2014Dataset(root=str(staged.root))
@@ -1140,8 +1248,9 @@ def test_a_stored_dose_outside_the_ic30_band_is_listed_with_its_ratio(
 ) -> None:
     """``IC30_RATIO_RANGE`` is narrowed to (2.0, 4.0), so amitriptyline's 50 uM against
     its Table S1 IC30 of 50 uM (ratio 1.0, in range under the real (0.5, 2.0)) falls
-    outside, and so do Boromycin's 1.2 uM and CMB 888's 10 uM (each ratio 1.0). Every
-    stored column with an IC30 is listed, in assay then column order. CMB 777 has no
+    outside, and so do Boromycin's 1.2 uM and CMB 888's 10 uM (each ratio 1.0) and the
+    three Benomyl columns (26.835 or 26.84 uM against 27 uM). Every stored column with
+    an IC30 is listed, in matrix then column order. CMB 777 has no
     IC30 row (it is only in the structures sheet), so it is never checked.
     """
     monkeypatch.setattr(m, "IC30_RATIO_RANGE", (2.0, 4.0))
@@ -1158,15 +1267,123 @@ def test_a_stored_dose_outside_the_ic30_band_is_listed_with_its_ratio(
             "compound": compound,
             "study": study,
             "concentration_um": dose,
-            "ic30_um": dose,
-            "ratio": 1.0,
+            "ic30_um": ic30,
+            "ratio": dose / ic30,
         }
-        for assay, cmb, compound, study, dose in (
-            ("HIP", "3", "amitriptyline", "0077", 50.0),
-            ("HIP", "3", "amitriptyline", "0091", 50.0),
-            ("HIP", "409", "Boromycin", "0077", 1.2),
-            ("HIP", "888", "Unreleased", "0077", 10.0),
-            ("HOP", "3", "amitriptyline", "0077", 50.0),
-            ("HOP", "409", "Boromycin", "0077", 1.2),
+        for assay, cmb, compound, study, dose, ic30 in (
+            ("HIP", "3", "amitriptyline", "0077", 50.0, 50.0),
+            ("HIP", "3", "amitriptyline", "0091", 50.0, 50.0),
+            ("HIP", "409", "Boromycin", "0077", 1.2, 1.2),
+            ("HIP", "888", "Unreleased", "0077", 10.0, 10.0),
+            ("HOP", "3", "amitriptyline", "0077", 50.0, 50.0),
+            ("HOP", "409", "Boromycin", "0077", 1.2, 1.2),
+            ("HIP_benomyl", "991", "benomyl", "0077", 26.835, 27.0),
+            ("HIP_benomyl", "991", "benomyl", "0018A", 26.84, 27.0),
+            ("HOP_benomyl", "991", "benomyl", "0078", 26.835, 27.0),
         )
+    ]
+
+
+# 2026.11.25: the Benomyl matrices (#1177, #1203 item 13) and the n = 1 uncertainty gap
+
+
+def test_a_madl_column_is_one_sample_so_its_dispersion_is_not_applicable(
+    dataset: m.EnvChemgenHoepfner2014Dataset,
+) -> None:
+    """Record 1 (amitriptyline, the ``MADL`` column of study 0091) and record 32 (the
+    ``MADL`` Benomyl column of study 0018A) are ONE sample each, so their three
+    uncertainty fields carry ``not_applicable_single_measurement``; an ``Ad.`` record
+    (record 0, record 31) and the reference keep ``not_reported_by_primary``.
+    """
+    single = [
+        ProvenanceGap(
+            field=field,
+            reason=ProvenanceGapReason.not_applicable_single_measurement,
+            note=m._SINGLE_SAMPLE_GAP_NOTE,
+        ).model_dump()
+        for field in (
+            "environment_response_se",
+            "environment_response_uncertainty",
+            "environment_response_uncertainty_type",
+        )
+    ]
+    aggregate = [gap.model_dump() for gap in _uncertainty_gaps()]
+    for index, n_samples, gaps in (
+        (0, 2, aggregate),
+        (1, 1, single),
+        (31, 2, aggregate),
+        (32, 1, single),
+    ):
+        phenotype = dataset[index]["experiment"]["phenotype"]
+        assert (phenotype["n_samples"], phenotype["provenance_gaps"]) == (
+            n_samples,
+            gaps,
+        )
+    assert dataset[32]["reference"]["phenotype_reference"]["provenance_gaps"] == (
+        aggregate
+    )
+
+
+def test_benomyl_record_is_the_positive_control_at_its_header_dose(
+    dataset: m.EnvChemgenHoepfner2014Dataset,
+) -> None:
+    """Record 34: the first HOP Benomyl cell (YAL001C, -0.5) is a barcoded kanMX4
+    deletion in YPD with benomyl at the header's 26.835 uM in 2% DMSO, n = 2 in study
+    0078, referenced to the HOP control of that study.
+    """
+    stored = dataset[34]["experiment"]["environment"]["perturbations"][0]["compound"]
+    assert {k: stored[k] for k in ("name", "inchikey", "chebi_id", "pubchem_cid")} == {
+        "name": "benomyl",
+        "inchikey": "RIOXQFHNBCKOKP-UHFFFAOYSA-N",
+        "chebi_id": "CHEBI:3015",
+        "pubchem_cid": 28780,
+    }
+    assert (
+        dataset[34]["experiment"]
+        == StrainEnvironmentResponseExperiment(
+            dataset_name=_DATASET,
+            genotype=_hop_genotype("YAL001C"),
+            environment=_environment(
+                "HOP", _treated(Compound.model_validate(stored), 26.835)
+            ),
+            phenotype=_phenotype(-0.5, 2, "0078"),
+        ).model_dump()
+    )
+    assert dataset[34]["reference"] == _reference("HOP", "0078")
+
+
+def test_deposit_raw_mirror_keeps_an_existing_record_and_dates_only_new_files(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A second deposit after two files join ``_DRYAD_FILES`` keeps the three records
+    the first one wrote (their 2026-07-10 ``retrieved_at``) and dates only the two
+    Benomyl matrices it adds (2026-11-25).
+    """
+    source = tmp_path / "source"
+    _write_raw(source)
+    data_root = tmp_path / "data_root"
+    digests = _digests(source)
+    first = {
+        name: spec
+        for name, spec in digests.items()
+        if name in ("HIP_scores.txt", "HOP_scores.txt", "Table_S1.xls")
+    }
+    monkeypatch.setattr(m, "_DRYAD_FILES", first)
+    m.deposit_raw_mirror(
+        source_dir=source, retrieved_at="2026-07-10", data_root=str(data_root)
+    )
+    monkeypatch.setattr(m, "_DRYAD_FILES", digests)
+    m.deposit_raw_mirror(
+        source_dir=source, retrieved_at="2026-11-25", data_root=str(data_root)
+    )
+    manifest = m.load_manifest(str(data_root))
+    assert [
+        (f.path, f.retrieval.retrieved_at if f.retrieval else None)
+        for f in manifest.files
+    ] == [
+        ("HIP_scores.txt", "2026-07-10"),
+        ("HOP_scores.txt", "2026-07-10"),
+        ("Table_S1.xls", "2026-07-10"),
+        ("HIP_scores-benomyl.txt", "2026-11-25"),
+        ("HOP_scores-benomyl.txt", "2026-11-25"),
     ]

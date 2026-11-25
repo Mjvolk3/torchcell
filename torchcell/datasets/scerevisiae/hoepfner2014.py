@@ -66,6 +66,30 @@ Three rules hold cells out, each counted in ``<root>/dropped_records.json`` (who
 ``NOT_ORF_SHAPED_RULE`` (a released token the ``GenePerturbation`` pattern rejects;
 measured 0 scored cells, the four ``R00x0`` tokens and ``YBR160W_AS`` carry no score) and
 the CMB4019 exclusion (6 columns, HIP 17,397 + HOP 13,623 scored cells over every row).
+Those are the compound matrices; the Benomyl matrices below add 983,141 records.
+
+BENOMYL POSITIVE CONTROL (2026.11.25, #1177, #1203 item 13). Every plate carried one
+Benomyl (CMB991) well (*"Each plate contained two no drug controls, one positive control
+(Benomyl, CMB991), 10 experimental compounds in duplicates and one contamination control
+that received no cells."*, line 68), and its scores are deposited apart from the compound
+matrices: *"The data matrices of the scores for the Benomyl HIP and HOP experiments are
+contained in the files HIP Benomyl-scores.txt and HOP Benomyl-scores.txt"* (line 48;
+Dryad names them ``HIP_scores-benomyl.txt`` and ``HOP_scores-benomyl.txt``). They carry
+the compound matrices' header format and row set, one column per study: HIP 94 columns
+(91 ``Ad.``, 3 ``MADL``) over 92 studies and HOP 97 (96 ``Ad.``, 1 ``MADL``) over 95, the
+paper's *"97 independent benomyl HIP and HOP experiments"* (line 113). Each column is one
+independent experiment of the same unit as a compound column, so it is stored the same
+way: one record per scored cell, the study as ``screen_id``, the study's own control set
+as the reference, ``n_samples`` from the column prefix. The Benomyl matrices stream after
+the compound matrices, so the compound records keep their positions; the ledger keys
+every count by deposited matrix (``HIP``, ``HOP``, ``HIP_benomyl``, ``HOP_benomyl``).
+Measured on the retrieved matrices: HIP 544,437 + HOP 438,704 = 983,141 scored cells, all
+on ORF-shaped tokens, all stored, for 4,110,955 records in all. Table S1 gives Benomyl an
+IC30 of 57.746 uM while the columns are dosed at 26.835 to 37.8 uM (the paper's Fig. 1A
+states IC30 = 27 uM), so the 187 columns at 26.835 or 26.84 uM (ratio 0.46) are listed in
+``dose_outside_ic30_range``; the four pilot columns at 31.6 and 37.8 uM are inside the band.
+The 10 HIP strains scored only in the Benomyl matrix raise ``hip_construction`` from 5,859
+to 5,869 distinct stored HIP strains.
 
 SCREEN (study) IDENTITY -- ``EnvironmentResponsePhenotype.screen_id`` carries the
 deposited study number. It is a real batch covariate, *"<Study number>: an internal id
@@ -212,13 +236,23 @@ typed ``ProvenanceGap`` on the record:
 - No per-cell uncertainty is released: the replicate t-test p-value is folded into the
   adjusted score (line 84), so ``environment_response_se``,
   ``environment_response_uncertainty`` and ``environment_response_uncertainty_type`` are
-  typed ``ProvenanceGap``s on every phenotype, never silent Nones.
+  typed ``ProvenanceGap``s on every phenotype, never silent Nones. The reason is
+  ``not_reported_by_primary`` on an ``Ad.`` record and the reference (aggregates over
+  samples), and ``not_applicable_single_measurement`` on a ``MADL`` record, which is one
+  sample (per-replicate policy, #1178; 2026.11.25).
+- What one record is: the release combines a compound's two wells inside one column
+  (``Ad.``) and releases no per-well score, so the per-column score is the unit stored;
+  ``replicate_id`` stays None because the column is that aggregate, and two studies of
+  the same compound and dose are kept apart by ``screen_id``.
 
 DATA SOURCE (scriptable + sha256-pinned): Dryad doi:10.5061/dryad.v5m8v files
 ``HIP_scores.txt`` (644 MB) and ``HOP_scores.txt`` (505 MB) -- the deposited processed
 score matrices (rows = systematic ORF names, columns = per-experiment scores) -- and
 ``Table_S1.xls`` (compound IC30 + common name + SMILES for the reference/novel MoA
-compounds; the ~1641 proprietary CMB compounds have no released name and are held out).
+compounds; the ~1641 proprietary CMB compounds have no released name and are held out),
+plus the Benomyl matrices ``HIP_scores-benomyl.txt`` (20.6 MB) and
+``HOP_scores-benomyl.txt`` (16.9 MB), retrieved 2026-11-25 by the same ``_dryad_get``
+route (their bytes match the MD5 Dryad's API v2 lists for them).
 The canonical copy
 is the RAW MIRROR
 ``$DATA_ROOT/torchcell-raw/hoepfnerHighresolutionChemicalDissection2014/`` and its
@@ -383,9 +417,35 @@ _DRYAD_FILES: dict[str, dict[str, str]] = {
         "url": "https://datadryad.org/downloads/file_stream/4834600",
         "sha256": "115bb31cc5e696588d1ecb4ffa262475e05025e22347f7e004f77fd635898209",
     },
+    # The positive-control (Benomyl, CMB991) score matrices the paper lists beside the
+    # compound matrices (paper.md line 48), retrieved 2026-11-25 (#1177, #1203 item 13).
+    # Dryad API v2 lists them in version 1 (2014-11-19) and version 3 (2026-06-26) with
+    # MD5 7a36f4a4c8368ffc74da80818ddeabad / 0e5681ccb5fee30e00af7f958ccb7032, which
+    # the retrieved bytes match.
+    "HIP_scores-benomyl.txt": {
+        "url": "https://datadryad.org/downloads/file_stream/4834606",
+        "sha256": "1692d6cf8f14d85920d037a702e37d0f575104286ded189f6c953915ba293aa7",
+    },
+    "HOP_scores-benomyl.txt": {
+        "url": "https://datadryad.org/downloads/file_stream/4834607",
+        "sha256": "2e219495ed2fecc8ffa0aaffea8ffcd1d040f95fbd92a526ba17fb6d281eb5a4",
+    },
 }
 
+#: The two compound score matrices, one per arm (kept for the 036 inputs script).
 _ASSAYS = (("HIP_scores.txt", "HIP"), ("HOP_scores.txt", "HOP"))
+
+#: Every deposited score matrix the build streams, as (file, arm, ledger label), in
+#: record order. The Benomyl matrices come LAST so the compound records keep their
+#: positions. Each Benomyl column is one independent positive-control experiment (one
+#: study), the same unit as a compound column: *"Data for each strain from 97
+#: independent benomyl HIP and HOP experiments"* (paper.md line 113).
+_MATRICES: tuple[tuple[str, str, str], ...] = (
+    ("HIP_scores.txt", "HIP", "HIP"),
+    ("HOP_scores.txt", "HOP", "HOP"),
+    ("HIP_scores-benomyl.txt", "HIP", "HIP_benomyl"),
+    ("HOP_scores-benomyl.txt", "HOP", "HOP_benomyl"),
+)
 
 # Experiment column header: '(Ad.|MADL) scores for Exp. <CMB>_<conc>_<HIP|HOP>_<study>'
 # with an optional trailing ' z-score' (the companion gene-wise z-score column).
@@ -505,7 +565,8 @@ PH_AGENT_CONDITIONS: dict[str, str] = {
 #: A kept column's dose outside [low, high] x its Table S1 IC30 is listed in the ledger.
 IC30_RATIO_RANGE = (0.5, 2.0)
 
-#: The positive control on every plate; its scores are in separate Benomyl files.
+#: The positive control on every plate; its scores are in the two Benomyl matrices
+#: (``HIP_scores-benomyl.txt``, ``HOP_scores-benomyl.txt``), none in the compound ones.
 POSITIVE_CONTROL_CMB = "991"
 
 _UA = (
@@ -770,8 +831,28 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "Each plate contained two no drug controls, one positive control (Benomyl, "
         "CMB991), 10 experimental compounds in duplicates and one contamination control "
         "that received no cells.",
-        note="its scores are in the separate Benomyl score files (not in the raw mirror); "
-        "the build counts its columns in the two deposited matrices (ledger)",
+        note="its scores are in the separate Benomyl matrices (benomyl_matrices), stored "
+        "like any compound column; the ledger's positive_control counts its columns "
+        "per deposited matrix",
+    ),
+    "benomyl_matrices": _sv(
+        "HIP Benomyl-scores.txt, HOP Benomyl-scores.txt on Dryad doi:10.5061/dryad.v5m8v",
+        "The data matrices of the scores for the Benomyl HIP and HOP experiments are "
+        "contained in the files HIP Benomyl-scores.txt and HOP Benomyl-scores.txt which "
+        "can be downloaded from Drayd digital repository at: http://doi.org/ "
+        "10.5061/dryad.v5m8v.",
+        note="Dryad deposits them as HIP_scores-benomyl.txt (94 sensitivity columns) and "
+        "HOP_scores-benomyl.txt (97), the same row set and header format as the compound "
+        "matrices; the OCR'd names differ only in punctuation",
+    ),
+    "benomyl_experiments": _sv(
+        97,
+        "Using benomyl data from 97 independent experiments, a comparison of the mean of "
+        "either the sensitivity or $z \\cdot$ -scores of each strain, plotted against the "
+        "coefficient of variation for each strain for HIP and HOP assays (Fig. 1D)",
+        note="97 is the HOP matrix's column count; the HIP matrix deposits 94 (91 'Ad.', "
+        "3 'MADL'). Each column is one study's Benomyl experiment, stored as its own "
+        "record per strain with the study as screen_id",
     ),
     "proprietary_compounds": _sv(
         1641,
@@ -996,13 +1077,30 @@ _BACKGROUND_LOCI = frozenset(
 """Loci where the background carries an allele (the HIP ``replaced_allele`` gap)."""
 
 
-def _phenotype_gaps() -> list[ProvenanceGap]:
-    """The three uncertainty absences every Hoepfner phenotype declares."""
+_SINGLE_SAMPLE_GAP_NOTE = (
+    "a 'MADL' column is ONE sample: only one of the compound's two samples passed QC, so "
+    "no adjustment for variability is made (paper.md line 52) and the record has no "
+    "dispersion of its own"
+)
+
+
+def _phenotype_gaps(n_samples: int = 2) -> list[ProvenanceGap]:
+    """The three uncertainty absences every Hoepfner phenotype declares.
+
+    An aggregate over the two samples (an ``Ad.`` column, and the reference over its
+    control samples) states ``not_reported_by_primary``: the replicate t-test p-value is
+    folded into the score and no dispersion is released. A ``MADL`` column is one sample
+    (``n_samples`` 1), so the dispersion does not exist and the reason is
+    ``not_applicable_single_measurement`` (per-replicate policy, #1178).
+    """
+    single = n_samples == 1
     return [
         ProvenanceGap(
             field=field,
-            reason=ProvenanceGapReason.not_reported_by_primary,
-            note=_SE_GAP_NOTE,
+            reason=ProvenanceGapReason.not_applicable_single_measurement
+            if single
+            else ProvenanceGapReason.not_reported_by_primary,
+            note=_SINGLE_SAMPLE_GAP_NOTE if single else _SE_GAP_NOTE,
         )
         for field in _UNCERTAINTY_FIELDS
     ]
@@ -1025,9 +1123,14 @@ def deposit_raw_mirror(
     Run once by hand. Idempotent by sha256: a mirror file already carrying the pinned
     hash is left alone, one carrying a different hash raises rather than being silently
     overwritten. Every file's sha256 is verified against ``_DRYAD_FILES`` before it is
-    recorded, so the manifest can only ever describe the bytes the build consumed.
+    recorded, so the manifest can only ever describe the bytes the build consumed. A file
+    the existing manifest already records under the same sha256 keeps that record (its
+    own ``retrieved_at``); ``retrieved_at`` dates only the files this call adds.
     """
     root = raw_mirror_dir(data_root)
+    previous: dict[str, ArtifactRecord] = {}
+    if (root / "manifest.json").exists():
+        previous = {record.path: record for record in load_manifest(data_root).files}
     # Every file (the mirror copy when present, else the staged source) is verified
     # before anything is written, so a refusal leaves no mirror directory, no partial
     # deposit and no unverified bytes in the mirror.
@@ -1043,6 +1146,10 @@ def deposit_raw_mirror(
         if not dest.exists():
             shutil.copy2(Path(source_dir) / name, dest)
         digest = spec["sha256"]
+        kept = previous.get(name)
+        if kept is not None and kept.sha256 == digest:
+            files.append(kept)
+            continue
         files.append(
             ArtifactRecord(
                 path=name,
@@ -1200,8 +1307,11 @@ class DoseOutsideIc30(BaseModel):
 class DroppedRecordReport(BaseModel):
     """The build's ledger: what was stored, what is held out, and under which rule.
 
-    Every scored sensitivity cell is accounted for per arm: ``n_source_cells =
-    n_stored + n_not_orf_shaped + n_excluded_condition + n_unidentified_compound``.
+    Every scored sensitivity cell is accounted for per deposited matrix: ``n_source_cells
+    = n_stored + n_not_orf_shaped + n_excluded_condition + n_unidentified_compound``.
+    Every ``*_by_assay`` / ``accounting`` / ``positive_control`` key is a deposited-matrix
+    label of ``_MATRICES``: ``HIP`` and ``HOP`` (the compound matrices), ``HIP_benomyl``
+    and ``HOP_benomyl`` (the positive-control matrices, 2026.11.25).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -1246,9 +1356,9 @@ class DroppedRecordReport(BaseModel):
     )
     columns_by_assay: dict[str, int] = Field(description="stored sensitivity columns")
     positive_control: dict[str, int] = Field(
-        description="per assay, deposited sensitivity columns of the plate positive control "
-        "Benomyl (CMB991); its 97 experiments are in the separate Benomyl score files, "
-        "which are not in the raw mirror"
+        description="per deposited matrix, sensitivity columns of the plate positive "
+        "control Benomyl (CMB991): none in the compound matrices (HIP, HOP), every column "
+        "of the Benomyl matrices (HIP_benomyl, HOP_benomyl), all stored"
     )
     solvent_gap_columns: dict[str, int] = Field(
         description="per assay, stored columns dosed above 200 uM (solvent is a gap)"
@@ -1671,7 +1781,13 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
     @property
     def raw_file_names(self) -> list[str]:
         """The Dryad score matrices + compound table required before processing."""
-        return ["HIP_scores.txt", "HOP_scores.txt", "Table_S1.xls"]
+        return [
+            "HIP_scores.txt",
+            "HOP_scores.txt",
+            "HIP_scores-benomyl.txt",
+            "HOP_scores-benomyl.txt",
+            "Table_S1.xls",
+        ]
 
     # ---- retrieval ------------------------------------------------------------ #
     def download(self) -> None:
@@ -2025,15 +2141,16 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             conc = float(match.group("conc"))
             study = match.group("study")
             environment = self._environment(assay, self._treatment(cmb, compound, conc))
+            n_samples = 2 if match.group("prefix") == "Ad." else 1
             phenotype = EnvironmentResponsePhenotype(
                 measurement_type=MeasurementType.sensitivity_score,
                 assay_type=AssayType.pooled_competitive_growth_barcode,
                 environment_response=0.0,
-                n_samples=2 if match.group("prefix") == "Ad." else 1,
+                n_samples=n_samples,
                 sample_unit=SampleUnit.technical_replicate,
                 units=MEASUREMENT_UNITS,
                 screen_id=study,
-                provenance_gaps=_phenotype_gaps(),
+                provenance_gaps=_phenotype_gaps(n_samples),
             )
             # The template experiment is a real model dump; only the genotype, the score
             # and the interned environment pointer differ per record.
@@ -2124,8 +2241,16 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         strains: dict[str, list[TableS5Entry]],
         validate: Callable[[Any], object],
         census: _ColumnCensus,
+        matrix: str | None = None,
+        genotypes: dict[str, dict[str, Any]] | None = None,
     ) -> Iterator[bytes]:
         """Yield one pickled record per (row, stored column) scored cell.
+
+        ``matrix`` is the ledger label every count is keyed by (default: ``assay``, the
+        compound matrix of that arm; ``HIP_benomyl`` / ``HOP_benomyl`` for the Benomyl
+        matrices). ``genotypes`` is the arm's genotype cache, shared across the arm's
+        matrices so a strain's genotype is built, and its Table S5 construction match
+        counted, once per arm.
 
         The row's 'Systematic Name' is stored exactly as released: no genome lookup, no
         rename, no detection threshold. A row scored in no stored column carries no
@@ -2142,27 +2267,29 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         def filled(parts: list[str], index: int) -> bool:
             return index < len(parts) and parts[index].strip().strip('"') != ""
 
+        label = assay if matrix is None else matrix
+        if genotypes is None:
+            genotypes = {}
         not_orf_shaped: list[NotOrfShapedRow] = []
         validated: set[int] = set()
-        genotypes: dict[str, dict[str, Any]] = {}
         with open(path) as handle:
             handle.readline()
-            for line in tqdm(handle, desc=f"Hoepfner2014 {assay}"):
+            for line in tqdm(handle, desc=f"Hoepfner2014 {label}"):
                 parts = line.rstrip("\n").split("\t")
-                counts.rows[assay] += 1
+                counts.rows[label] += 1
                 orf = parts[0].strip().strip('"')
-                counts.source_cells[assay] += sum(
+                counts.source_cells[label] += sum(
                     1 for index in census.sensitivity if filled(parts, index)
                 )
                 for index, cmb in census.excluded:
                     if filled(parts, index):
-                        counts.excluded[(assay, cmb)] += 1
+                        counts.excluded[(label, cmb)] += 1
                 for index, *_ in census.unidentified:
                     if filled(parts, index):
-                        counts.unidentified[(assay, index)] += 1
+                        counts.unidentified[(label, index)] += 1
                 n_scored = sum(1 for col in columns if filled(parts, col.index))
                 if n_scored == 0:
-                    counts.empty_rows[assay] += 1
+                    counts.empty_rows[label] += 1
                     continue
                 if _ORF_SHAPED.match(orf) is None:
                     not_orf_shaped.append(
@@ -2205,7 +2332,7 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                         # if what a reader reconstructs still satisfies the schema.
                         validate({**experiment, "environment": col.env_dump})
                         validated.add(col.index)
-                    counts.kept[assay] += 1
+                    counts.kept[label] += 1
                     col.n_records += 1
                     if flagged:
                         counts.flagged[orf] += 1
@@ -2216,24 +2343,27 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                             "publication": pub_ref,
                         }
                     )
-        counts.not_orf_shaped[assay] = sorted(
+        counts.not_orf_shaped[label] = sorted(
             not_orf_shaped, key=lambda row: row.source_name
         )
         log.info(
             "Hoepfner2014 %s: wrote %d records from %d rows; %d rows scored nowhere; held "
             "out %d rows (%d cells) whose token is not ORF-shaped: %s",
-            assay,
-            counts.kept[assay],
-            counts.rows[assay],
-            counts.empty_rows[assay],
+            label,
+            counts.kept[label],
+            counts.rows[label],
+            counts.empty_rows[label],
             len(not_orf_shaped),
             sum(row.n_records for row in not_orf_shaped),
-            [row.source_name for row in counts.not_orf_shaped[assay]],
+            [row.source_name for row in counts.not_orf_shaped[label]],
         )
 
     @post_process
     def process(self) -> None:
-        """Stream both score matrices into the LMDB (one record per (ORF, experiment)).
+        """Stream the four score matrices into the LMDB (one record per (ORF, experiment)).
+
+        The two compound matrices first (HIP, HOP), then the two Benomyl
+        positive-control matrices (``_MATRICES``).
 
         The constant sub-objects are interned FIRST and their transaction committed before
         any record is written, so a crash can only ever leave orphan interned rows, never
@@ -2261,46 +2391,53 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         os.makedirs(self.processed_dir, exist_ok=True)
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
 
+        # Keyed by the deposited-matrix label of ``_MATRICES``; the reference stays keyed
+        # by (arm, study), because a study's Benomyl wells share its control samples.
         columns: dict[str, list[_ColumnMeta]] = {}
         censuses: dict[str, _ColumnCensus] = {}
         reference_refs: dict[tuple[str, str], Any] = {}
         with interned_env.begin(write=True) as itxn:
-            for filename, assay in _ASSAYS:
+            for filename, assay, label in _MATRICES:
                 header = self._read_header(filename)
                 kept = self._column_meta(header, assay, meta, itxn)
-                columns[assay] = kept
-                censuses[assay] = self._column_census(header, assay, meta)
+                columns[label] = kept
+                censuses[label] = self._column_census(header, assay, meta)
                 log.info(
                     "Hoepfner2014 %s: %d stored sensitivity experiments (%d with no "
                     "InChIKey, stored with the typed gap), %d excluded by rule, %d held "
                     "out as unidentified compounds",
-                    assay,
+                    label,
                     len(kept),
                     sum(1 for col in kept if col.inchikey is None),
-                    len(censuses[assay].excluded),
-                    len(censuses[assay].unidentified),
+                    len(censuses[label].excluded),
+                    len(censuses[label].unidentified),
                 )
                 for study in sorted({col.study for col in kept}):
+                    if (assay, study) in reference_refs:
+                        continue
                     reference_refs[(assay, study)] = self._intern_ref(
                         self._reference(assay, study), f"{assay}_{study}", itxn
                     )
             pub_ref = self._intern_ref(publication, DOI, itxn)
 
         counts = _BuildCounts()
+        genotypes: dict[str, dict[str, dict[str, Any]]] = {"HIP": {}, "HOP": {}}
         idx = 0
         batch_size = 500_000
         txn = env.begin(write=True)
-        for filename, assay in _ASSAYS:
+        for filename, assay, label in _MATRICES:
             for value in self._iter_records(
                 osp.join(self.raw_dir, filename),
                 assay,
-                columns[assay],
+                columns[label],
                 reference_refs,
                 pub_ref,
                 counts,
                 strains,
                 validate,
-                censuses[assay],
+                censuses[label],
+                matrix=label,
+                genotypes=genotypes[assay],
             ):
                 txn.put(f"{idx}".encode(), value)
                 idx += 1

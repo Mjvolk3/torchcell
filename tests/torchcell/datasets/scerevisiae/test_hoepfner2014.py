@@ -841,6 +841,85 @@ def test_real_hop_tokens_that_are_not_orf_shaped_carry_no_score() -> None:
     assert (n_rows, n_scored_rows) == (6681, 4970)
 
 
+def test_real_benomyl_matrices_are_one_column_per_positive_control_experiment() -> None:
+    """2026.11.25 (#1177, #1203 item 13): the two Benomyl matrices the paper lists
+    (paper.md line 48), retrieved from Dryad and pinned. Every sensitivity column is
+    CMB991 in one study (``screen_id``): HIP 94 columns (91 ``Ad.``, 3 ``MADL``) over 92
+    studies, HOP 97 (96 ``Ad.``, 1 ``MADL``) over 95 studies, the pilot study 0044
+    carrying three doses in each arm (26.84, 31.6, 37.8 uM), so no (dose, study) pair
+    repeats. Every column has its z-score companion, the row set is the compound
+    matrix's 6,681 tokens in the same order, and the scored cells (HIP 544,437 over
+    5,869 rows, HOP 438,704 over 4,970) are all on ORF-shaped tokens, so every one is a
+    stored record.
+    """
+    raw = _real_raw()
+    if not (raw / "HOP_scores-benomyl.txt").exists():
+        pytest.skip("the Hoepfner Benomyl matrices are not in this raw mirror")
+    for name in ("HIP_scores-benomyl.txt", "HOP_scores-benomyl.txt"):
+        digest = hashlib.sha256((raw / name).read_bytes()).hexdigest()
+        assert digest == module._DRYAD_FILES[name]["sha256"]
+    meta = module._load_compound_meta(str(raw / "Table_S1.xls"))
+    for filename, compound_file, assay, expected in (
+        (
+            "HIP_scores-benomyl.txt",
+            "HIP_scores.txt",
+            "HIP",
+            (94, 91, 3, 92, 544_437, 5_869),
+        ),
+        (
+            "HOP_scores-benomyl.txt",
+            "HOP_scores.txt",
+            "HOP",
+            (97, 96, 1, 95, 438_704, 4_970),
+        ),
+    ):
+        with open(raw / compound_file) as handle:
+            handle.readline()
+            compound_rows = [line.split("\t", 1)[0] for line in handle]
+        with open(raw / filename) as handle:
+            header = handle.readline().rstrip("\n").split("\t")
+            census = _dataset()._column_census(header, assay, meta)
+            assert census.positive_control == census.sensitivity
+            assert census.excluded == [] and census.unidentified == []
+            names = [header[index].strip().strip('"') for index in census.sensitivity]
+            matches = [module._COL_RE.match(name) for name in names]
+            assert all(match is not None for match in matches)
+            keys = [(m.group("conc"), m.group("study")) for m in matches if m]
+            assert len(set(keys)) == len(keys)
+            assert sorted(c for c, s in keys if s == "0044") == [
+                "26.84",
+                "31.6",
+                "37.8",
+            ]
+            z = {h.strip().strip('"') for h in header if "z-score" in h}
+            assert z == {f"{name} z-score" for name in names}
+            prefixes = [m.group("prefix") for m in matches if m]
+            rows: list[str] = []
+            n_cells = n_scored_rows = n_not_orf_cells = 0
+            for line in handle:
+                parts = line.rstrip("\n").split("\t")
+                rows.append(parts[0])
+                scored = sum(
+                    1
+                    for index in census.sensitivity
+                    if index < len(parts) and parts[index].strip().strip('"') != ""
+                )
+                n_cells += scored
+                n_scored_rows += scored > 0
+                if module._ORF_SHAPED.match(parts[0].strip().strip('"')) is None:
+                    n_not_orf_cells += scored
+        assert rows == compound_rows
+        assert (
+            len(names),
+            prefixes.count("Ad."),
+            prefixes.count("MADL"),
+            len({s for _, s in keys}),
+            n_cells,
+            n_scored_rows,
+        ) == expected
+        assert n_not_orf_cells == 0
+
+
 # ---- Dryad retrieval (no network) ------------------------------------------------ #
 _URL = "https://datadryad.org/downloads/file_stream/4834609"
 

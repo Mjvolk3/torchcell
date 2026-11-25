@@ -2277,7 +2277,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "env_chemgen_vanacloig2022": 492615,
         "env_chemgen_piotrowski2017": 3430343,
         "env_chemgen_mota2024": 1289,
-        "env_chemgen_hoepfner2014": 3127814,
+        "env_chemgen_hoepfner2014": 4110955,
         "env_chemgen_wildenhain2015": 448655,
         "env_chemgen_auesukaree2009": 525,
         "env_chemgen_smith2006": 14310,

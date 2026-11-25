@@ -34,12 +34,30 @@ kanamycin A, the wild type without. The media section of the Methods states 25 m
 kanamycin for the growth characterizations; the RNA-seq section and the GEO growth
 protocol state 50 mg/L for these libraries, and that is what is stored.
 
+REPLICATES (#1178 per-replicate policy, part of #1171). A record is one biological
+replicate: one culture tube, one RNA extraction, one sequenced library, its own GEO
+sample (``GSM3290757``-``GSM3290770``) and its own BioSample. The Methods: "The
+pre-cultures were split into two 17 mL tubes (biological duplicates) for each
+experimental condition." and "For each condition examined, biological duplicate samples
+were sequenced and analyzed." (``paper/PMC6296033.1.txt``, RNA sequencing section, line
+279 and line 281). The release prints the replicate label on every column (``wt_R1``,
+``wt_R2``, ``thrA_A1_F5_I1_R1``, ...), so ``replicate_id`` is that column label, verbatim;
+seven conditions x two libraries = 14 records, seven ``_R1`` and seven ``_R2``. No
+library is combined with another and none is withdrawn: the GEO series lists 14 samples
+and the matrix carries 14 columns. The release has no technical level (one library per
+tube) and the phenotype leaf has no dispersion field, so nothing about n is stored on a
+record. The two libraries of one condition share their genotype: Additional file 4
+releases one DNA sample per (experiment, flask, isolate), its ``R1`` column, and both
+RNA tubes were split from one pre-culture, so both records carry the same calls.
+
 REFERENCE. Wild-type BW25113 in M9 glucose without kanamycin, its TPM the mean of the
 two released wild-type libraries (the comparison the study's DESeq2 analysis makes),
-with ``expression_count`` a typed gap.
+with ``expression_count`` a typed gap and ``replicate_id=None`` (a summary over
+replicates). Both wild-type libraries are also stored as records of their own.
 
 NOT STORED: Additional file 4's calls for DNA samples that have no RNA library (the
-other strains and flasks), the 2-to-17-million read totals (a range, not per library),
+other strains and flasks), the per-library read totals (the Methods give only their
+mean, 9.8 million, and range, 6.8 to 17 million; none per library),
 and the DESeq2 log2 fold changes and adjusted p-values of Table 3 (a curated subset;
 the released matrix is the per-library measurement).
 """
@@ -56,6 +74,7 @@ import os
 import os.path as osp
 import re
 import shutil
+from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -255,6 +274,13 @@ SOURCED_VALUES: Final[dict[str, SourcedValue]] = {
         2,
         "For each condition examined, biological duplicate samples were sequenced and "
         "analyzed.",
+    ),
+    "duplicate_tubes": _paper(
+        "two culture tubes per condition, one library each",
+        "The pre-cultures were split into two 17 mL tubes (biological duplicates) for "
+        "each experimental condition.",
+        note="a replicate is one tube's culture; each library is one record, its "
+        "replicate_id the release's column label",
     ),
     "replicon": _paper(
         REPLICON,
@@ -596,20 +622,25 @@ def environment(*, kanamycin: bool) -> Environment:
     )
 
 
-def phenotype(tpm: Mapping[str, float]) -> RNASeqExpressionPhenotype:
-    """One released library's TPM, verbatim, with the count gap."""
+def phenotype(tpm: Mapping[str, float], replicate_id: str) -> RNASeqExpressionPhenotype:
+    """One released library's TPM, verbatim, with the count gap and its column label."""
     return RNASeqExpressionPhenotype(
         expression_tpm=dict(tpm),
         expression_count=None,
         measurement_type=MEASUREMENT_TYPE,
         provenance_gaps=[COUNT_GAP],
+        replicate_id=replicate_id,
     )
 
 
 def reference_phenotype(
     wild_type: Sequence[Mapping[str, float]],
 ) -> RNASeqExpressionPhenotype:
-    """The mean of the released wild-type libraries, with the count gap."""
+    """The mean of the released wild-type libraries, with the count gap.
+
+    A summary over replicates, so ``replicate_id`` stays None; each wild-type library is
+    also a record of its own.
+    """
     genes = wild_type[0].keys()
     return RNASeqExpressionPhenotype(
         expression_tpm={
@@ -618,6 +649,7 @@ def reference_phenotype(
         expression_count=None,
         measurement_type=MEASUREMENT_TYPE,
         provenance_gaps=[COUNT_GAP],
+        replicate_id=None,
     )
 
 
@@ -747,7 +779,7 @@ class RnaseqGuzman2018Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """One record per released library."""
+        """One record per released library, ``replicate_id`` its column label."""
         verify_raw_files(
             self.raw_dir, {r.name: r.sha256 for r in (MUTATIONS, TPM, SERIES_MATRIX)}
         )
@@ -777,7 +809,7 @@ class RnaseqGuzman2018Dataset(ExperimentDataset):
                     dataset_name=self.name,
                     genotype=genotype(lib, calls.get(lib.dna_sample or "", []), loci),
                     environment=environment(kanamycin=lib.gene is not None),
-                    phenotype=phenotype(tpm[lib.column]),
+                    phenotype=phenotype(tpm[lib.column], lib.column),
                 )
                 txn.put(
                     f"{index}".encode(),
@@ -862,6 +894,34 @@ def _l2_tpm_equals_release(
     )
 
 
+def _l1_replicate_ids(
+    records: Sequence[Record], tpm: Mapping[str, Mapping[str, float]]
+) -> LevelResult:
+    """L1: each record is one released library, named by its column label.
+
+    The stored ``replicate_id`` values are the release's columns, each exactly once, and
+    the TPM stored under each label is that column's own vector (a keyed check, stronger
+    than the multiset L2 rule).
+    """
+    phenotypes = [r["experiment"]["phenotype"] for r in records]
+    ids = [ph.get("replicate_id") for ph in phenotypes]
+    by_id = {ph.get("replicate_id"): ph["expression_tpm"] for ph in phenotypes}
+    exact = sorted(map(str, ids)) == sorted(tpm) and len(set(ids)) == len(ids)
+    keyed = exact and all(dict(by_id[c]) == dict(v) for c, v in tpm.items())
+    per_position = dict(sorted(Counter(str(i).rsplit("_", 1)[-1] for i in ids).items()))
+    return LevelResult(
+        level=Level.L1,
+        name="replicate_id_is_release_column",
+        passed=keyed,
+        message=f"{len(ids)} records keyed one-to-one on the {len(tpm)} released "
+        f"columns, per replicate position {per_position}"
+        if keyed
+        else f"replicate ids {sorted(map(str, ids))} do not match the released "
+        f"columns {sorted(tpm)} one-to-one with their own TPM",
+        details={"per_replicate_position": per_position},
+    )
+
+
 def _l3_genotypes(records: Sequence[Record]) -> LevelResult:
     kinds = sorted(len(r["experiment"]["genotype"]["perturbations"]) for r in records)
     n_wild = sum(k == 0 for k in kinds)
@@ -941,6 +1001,7 @@ def verify_build(dataset_root: str, data_root: str | None = None) -> Verificatio
         replicate_aware=True,
     )
     _, tpm = read_tpm(raw_mirror_dir(base) / TPM.relpath)
+    report.add(_l1_replicate_ids(records, tpm))
     report.add(_l2_tpm_equals_release(records, tpm))
     report.add(_l3_genotypes(records))
     for value in SOURCED_VALUES.values():

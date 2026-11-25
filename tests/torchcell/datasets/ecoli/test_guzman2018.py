@@ -13,6 +13,7 @@ import gzip
 import json
 import os
 import os.path as osp
+from collections import Counter
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -31,6 +32,7 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.ecoli import guzman2018 as m
 from torchcell.verification.report import Level, LevelResult
+from torchcell.verification.runners import load_records
 
 COLUMNS = ["wt_R1", "thrA_A1_F5_I1_R1", "thrA_A2_F1_I0_R1"]
 TPM_ROWS = [("BW25113_0001", [10.0, 20.0, 30.0]), ("BW25113_0349_1", [5.0, 0.0, 1.5])]
@@ -173,11 +175,13 @@ def test_mob_call_is_an_insertion_at_a_zero_length_interval() -> None:
 
 
 def test_phenotypes_gap_the_counts() -> None:
-    phenotype = m.phenotype({"a": 1.0})
+    phenotype = m.phenotype({"a": 1.0}, "wt_R2")
     assert phenotype.expression_count is None
     assert phenotype.gapped_fields() == {"expression_count"}
+    assert phenotype.replicate_id == "wt_R2"
     reference = m.reference_phenotype([{"a": 1.0}, {"a": 3.0}])
     assert reference.expression_tpm == {"a": 2.0}
+    assert reference.replicate_id is None
     with pytest.raises(ValueError, match="without a ProvenanceGap"):
         RNASeqExpressionPhenotype(expression_tpm={"a": 1.0}, expression_count=None)
 
@@ -261,6 +265,14 @@ def test_hermetic_deposit_build_and_verify(
     report = m.verify_build(str(root), str(data_root))
     names = {r.name: r.passed for r in report.results}
     assert names["tpm_fidelity_to_release"] is True
+    assert names["replicate_id_is_release_column"] is True
+    stored = {
+        r["experiment"]["phenotype"]["replicate_id"]: r["experiment"]["phenotype"][
+            "expression_tpm"
+        ]["BW25113_0001"]
+        for r in load_records(str(root))
+    }
+    assert stored == {"wt_R1": 10.0, "thrA_A1_F5_I1_R1": 20.0, "thrA_A2_F1_I0_R1": 30.0}
     assert names["genotype_shape"] is False  # one wild-type library here, two declared
 
 
@@ -280,12 +292,53 @@ def test_release_counts() -> None:
     assert len(libs) == 14
     assert sum(len(v) for v in calls.values()) == 12
     assert {len(v) for v in tpm.values()} == {4329}
+    # Seven conditions in biological duplicate, the replicate label on every column.
+    assert Counter(c.rsplit("_", 1)[1] for c in columns) == {"R1": 7, "R2": 7}
+    conditions = Counter(c.rsplit("_", 1)[0] for c in columns)
+    assert len(conditions) == 7
+    assert set(conditions.values()) == {2}
+    assert len({lib.gsm for lib in libs}) == 14
+
+
+def _replicate_store_root() -> str:
+    return os.environ.get(
+        "GUZMAN2018_STORE", osp.join(_data_root(), m.DATASET_ROOT_REL)
+    )
+
+
+@pytest.mark.data
+def test_store_holds_one_record_per_released_library() -> None:
+    """Each record is one released library; the reference is the mean of the two WT.
+
+    ``GUZMAN2018_STORE`` points at a scratch build; by default the dev store.
+    """
+    root = _replicate_store_root()
+    if not osp.isdir(osp.join(root, "processed")):
+        pytest.skip("rnaseq_guzman2018 store not built")
+    _, tpm = m.read_tpm(m.raw_mirror_dir(_data_root()) / m.TPM.relpath)
+    records = load_records(root)
+    ids = [r["experiment"]["phenotype"]["replicate_id"] for r in records]
+    assert len(records) == 14
+    assert sorted(ids) == sorted(tpm)
+    for rec in records:
+        phenotype = rec["experiment"]["phenotype"]
+        assert dict(phenotype["expression_tpm"]) == tpm[phenotype["replicate_id"]]
+    reference = records[0]["reference"]["phenotype_reference"]
+    assert reference["replicate_id"] is None
+    wild = [tpm["wt_R1"], tpm["wt_R2"]]
+    assert (
+        max(
+            abs(reference["expression_tpm"][g] - (wild[0][g] + wild[1][g]) / 2)
+            for g in wild[0]
+        )
+        < 1e-9
+    )
 
 
 @pytest.mark.data
 def test_dev_store_verifies() -> None:
-    root = osp.join(_data_root(), m.DATASET_ROOT_REL)
+    root = _replicate_store_root()
     if not osp.isdir(osp.join(root, "processed")):
-        pytest.skip("rnaseq_guzman2018 dev store not built")
+        pytest.skip("rnaseq_guzman2018 store not built")
     report = m.verify_build(root, _data_root())
     assert report.passed, report.summary()

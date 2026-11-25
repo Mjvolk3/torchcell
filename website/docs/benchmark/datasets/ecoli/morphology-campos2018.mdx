@@ -171,7 +171,7 @@ headline metric: pearson (mean over targets)
 
 A frozen representation of each deleted gene with a ridge regression on top, for every split of this task. The representations and the fitting procedure are described in the [overview](./index.mdx#linear-probe-baselines).
 
-<img src={require("./linear_probes_morphology-campos2018.png").default} alt="Linear-probe test Pearson for Cell shape and cell cycle (Campos 2018)" style={{width: "100%"}} />
+<img src={require("./linear_probes_morphology-campos2018.png").default} alt="Linear-probe test Pearson for Cell shape and cell cycle (Campos 2018)" style={{display: "block", width: "100%", maxWidth: "180mm", maxHeight: "170mm", height: "auto", objectFit: "contain"}} />
 
 **Test Pearson correlation of each linear probe on Cell shape and cell cycle (Campos 2018).** Each panel is one split family and each bar is one gene representation. A bar is the mean over the seeds of that family (five seeds for random splits and three for every other family) and its whisker is the sample standard deviation over those seeds. The correlation is computed on the test part at the ridge penalty chosen on validation, separately for each target, and then averaged over the targets. Random features carry no biology and mark the level a representation must exceed. A representation with no bar has an undefined correlation: one-hot features predict the training mean for a gene that was not in training. Panels to the right of Random hold out genes that are increasingly unlike the training genes or far from them on the chromosome.
 

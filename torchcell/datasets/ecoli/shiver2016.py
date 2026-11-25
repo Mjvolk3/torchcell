@@ -14,8 +14,9 @@ by 292 condition rows, of which 235 rows are Nichols et al. 2011 re-analyzed (ba
 and 57 are this study's own screen (batches 1 and 4). 3,975 x 57 = 226,575 released
 cells, and those 57 columns of work are what this loader serves.
 
-RECORD = one (deletion strain x screen condition)
-``EnvironmentResponseExperiment``:
+RECORD = one (released gene column x screen condition)
+``EnvironmentResponseExperiment``; a gene column is one array entry, so the 11 labels that
+head two columns give two records per condition, told apart by ``replicate_id``:
 
 - GENOTYPE: one perturbation against BW25113 (``ecoli_k12_bw25113_locus_tag``), because
   "The KEIO deletion library is derived from BW25113". The release labels its columns
@@ -161,20 +162,48 @@ column rule removes one column across all 57 conditions:
    policy's collision case.
 4. ``label_is_ambiguous_in_bw25113`` -- 2 labels (``rffT``, ``spr``), each matching more
    than one locus.
-5. ``label_has_two_columns_in_the_release`` -- 11 labels, 22 columns. Twelve labels head
-   two columns each; ``yfiO*`` is already dropped by rule 1. The two columns always
-   disagree where both are present (measured: 236 to 256 co-present cells per pair, zero
-   identical), so they are two independent measurements, and the release carries nothing
-   -- no plate, well, or allele id -- that tells the two strains apart. Keeping both
-   would put two records on one (strain, condition) key; keeping one would be an
-   arbitrary choice between two real measurements, so both go.
-6. ``cell_is_blank`` -- 8,224 cells. The strain has no fitness-score in that condition;
+5. ``cell_is_blank`` -- 8,266 cells. The strain has no fitness-score in that condition;
    the Methods state the filtering ("Unreliable measurements were removed ... each
    condition had a different number of measurements ... that passed analysis").
 
-Arithmetic: 3,975 columns - (8 + 49 + 48 + 2 + 22) = 3,846 kept columns, 3,720 of them
-precise deletions and 126 of them allele columns. 3,846 x 57 = 219,222 cells, minus the
-8,224 blanks = 210,998 records.
+Arithmetic: 3,975 columns - (8 + 49 + 48 + 2) = 3,868 kept columns, 3,742 of them
+precise deletions and 126 of them allele columns. 3,868 x 57 = 220,476 cells, minus the
+8,266 blanks = 212,210 records.
+
+THE TWELVE LABELS THAT HEAD TWO COLUMNS ARE BOTH STORED (#1176, 2026-11-24). Twelve
+labels head two columns each: ``ymjC mgrB yhfL dppA bamE ykgO gnsB ydgU ypfM yfiO*
+hokD ryfB``. ``yfiO*`` stays dropped by rule 1 (a point/indel allele); the other 11
+labels' 22 columns were dropped until 2026-11-24 by a rule
+(``label_has_two_columns_in_the_release``, 1,254 cells, 1,212 of them non-blank) on
+the grounds that two records could not share one (strain, condition) key. They now share
+it, told apart by ``replicate_id`` = ``S1 Dataset column <n>``, the 1-based field of the
+tab-separated release (column 1 is ``Condition``), exactly as Nichols 2011's loader keeps
+the same twelve labels as two Table S2 rows (``replicate_id`` = ``Table S2 row <n>``).
+Every other column keeps ``replicate_id=None``, so its records are unchanged.
+
+What the two columns ARE is not stated by the release, which carries no plate, well,
+clone or allele id beside the label. Measured (``experiments/036-dataset-fixes-before-
+kg-build/scripts/shiver2016_per_replicate_counts.py``): each of the 24 columns matches ONE
+of the two Table S2 rows Nichols 2011 releases under the same label, first column to
+first row and second to second, on Shiver's batch-0 re-analysis of Nichols's screens
+(Pearson r 0.41 to 0.95 with its own row, -0.29 to 0.64 with the other), while the two
+columns of one label agree poorly with each other over the 57 study conditions (r -0.38
+to 0.73). Nichols 2011 combines a strain's two clones INSIDE one score: "Two
+independently derived clones of each mutant strain were analyzed (for sRNA mutants, a
+single isolate was arrayed twice)" and "The independently derived or duplicate clones of
+each strain were arrayed side-by-side" (``torchcell-raw/
+nicholsPhenotypicLandscapeBacterial2011/si/mmc8.md``, sha256
+0fbf32478f0491b25b27a031b47f639e1d67cbba4b5311f42940673e5ab33e92, the article and its
+Extended Experimental Procedures), and this screen used "the same methodology as reported
+previously [8]". So each column is one separately scored array entry, and the two
+entries of one label are two independently constructed strains carrying the same named
+deletion. **Hypothesis (untested): the second column is a Hobbs 2010 small-protein or
+sRNA deletion, built in MG1655, beside the Keio deletion of the same gene**; every second
+column sits among the release's sRNA, small-protein and SPA columns (``rprA``, ``cyaR``,
+``dsrA``, ``gcvB``, ``lpxC-SPA``), and Nichols states "sRNA and small protein deletions
+were constructed in MG1655 (Hobbs et al., 2010) and used in that background". Neither
+release says which columns those are, so both records pin BW25113, as every other column
+does; the background is an owner question shared with Nichols 2011.
 
 THE ALLELE COLUMNS (#749 item 1). The arrayed library is not only Keio: it is "the
 previously screened library [8,10]", which carries Nichols 2011's essential-gene arrays
@@ -219,9 +248,19 @@ DATA SOURCE: S1 Dataset, ``pgen.1006124.s005.txt``, from the PMC Article Dataset
 ``$DATA_ROOT/torchcell-raw/shiverChemicalGenomicScreenNeglected2016/`` with a
 ``manifest.json``. Re-fetched 2026-10-07 and sha256-identical to the copy the literature
 mirror already held, so the retrieval is scriptable and reproducible. The Dryad deposit
-(doi:10.5061/dryad.f3kc0, mirrored on Zenodo) holds the plate images and Iris output
-behind the scoring pipeline; it is NOT needed, because S1 Dataset already releases the
-scored matrix, and it is not mirrored.
+(doi:10.5061/dryad.f3kc0) holds the plate images and Iris output behind the scoring
+pipeline and is not mirrored. The scored matrix is S1 Dataset; the per-colony Iris
+output (``irisfile.tar``, 65,116,160 bytes, md5 5d667cd4c20f79509b8e574a6175fc0d per the
+Dryad file API, "Tar ball of all Iris files generated in the current screen") is the
+only per-colony release, and it could NOT be retrieved on 2026-11-25: the Dryad API file
+download (``https://datadryad.org/api/v2/files/65520/download``, and the 849-byte
+README ``.../files/65519/download``) answers 401 "Unauthorized, must have current bearer
+token", the web route ``https://datadryad.org/downloads/file_stream/<id>`` answers 403,
+or with a browser user agent a JavaScript proof-of-work "Validating..." page, and the
+version zip (``/api/v2/versions/19373/download``) is refused as too large. The
+Data-Availability GitHub repository (``AnthonyShiverMicrobes/fitness_score``) holds
+MATLAB code only. Until a token-holding retrieval is recorded, every record stays the
+released fitness-score of one array entry, an aggregate over its colonies.
 """
 
 from __future__ import annotations
@@ -559,8 +598,9 @@ DATA_AVAILABILITY = _paper(
     "Raw data associated with colony size and GSEA analysis are available at Dryad "
     "(http://dx.doi. org/10.5061/dryad.f3kc0).",
     page="front matter, 'Data Availability Statement'",
-    note="the plate images and Iris output behind the scores; not needed, because S1 "
-    "Dataset releases the scored matrix, and not mirrored",
+    note="the plate images and Iris output behind the scores, the only per-colony "
+    "release; not mirrored, because its file downloads need a Dryad bearer token (API) "
+    "or a JavaScript proof-of-work page (web), tried 2026-11-25",
 )
 LIBRARY_IS_THE_PREVIOUS_ONE = _paper(
     "the previously screened library",
@@ -1365,13 +1405,20 @@ PHENOTYPE_GAPS: tuple[ProvenanceGap, ...] = (
 )
 
 
-def phenotype(value: float, spec: ConditionSpec) -> EnvironmentResponsePhenotype:
-    """One released fitness-score of one strain in one condition."""
+def phenotype(
+    value: float, spec: ConditionSpec, replicate_id: str | None = None
+) -> EnvironmentResponsePhenotype:
+    """One released fitness-score of one array entry in one condition.
+
+    ``replicate_id`` is set only on the 22 columns whose label heads two columns of the
+    release (``S1 Dataset column <n>``); see the module docstring.
+    """
     return EnvironmentResponsePhenotype(
         measurement_type=MeasurementType.z_score,
         assay_type=AssayType.colony_size_array,
         environment_response=value,
         screen_id=spec.label,
+        replicate_id=replicate_id,
         units=UNITS,
         provenance_gaps=list(PHENOTYPE_GAPS),
     )
@@ -1638,8 +1685,17 @@ DROP_POINT_MUTANT = "label_is_a_point_or_indel_mutant"
 DROP_NOT_IN_ANNOTATION = "label_is_not_in_the_bw25113_annotation"
 DROP_MERGED_LOCUS = "label_is_a_fragment_of_a_merged_bw25113_locus"
 DROP_AMBIGUOUS = "label_is_ambiguous_in_bw25113"
-DROP_DUPLICATE_COLUMN = "label_has_two_columns_in_the_release"
 DROP_BLANK_CELL = "cell_is_blank"
+
+#: The first gene label's 1-based field in the tab-separated release (field 1 is
+#: ``Condition``), so gene label ``i`` (0-based) is field ``i + FIRST_GENE_FIELD``.
+FIRST_GENE_FIELD = 2
+
+
+def column_replicate_id(index: int) -> str:
+    """The ``replicate_id`` of gene column ``index``: its field in the release."""
+    return f"S1 Dataset column {index + FIRST_GENE_FIELD}"
+
 
 #: Each column rule, in the order a column is tested against them, with the description
 #: the drop log carries.
@@ -1666,13 +1722,6 @@ COLUMN_RULES: tuple[tuple[str, str], ...] = (
         "one strain",
     ),
     (DROP_AMBIGUOUS, "the label matches more than one BW25113 locus"),
-    (
-        DROP_DUPLICATE_COLUMN,
-        "the label heads two columns of the release, whose values disagree wherever "
-        "both are present, so they are two independent measurements of two strains the "
-        "release gives nothing to tell apart; keeping both would put two records on one "
-        "(strain, condition) key and keeping one would be an arbitrary choice",
-    ),
 )
 
 
@@ -1699,6 +1748,9 @@ class StrainColumn(BaseModel):
     #: and ``lpxc-kan`` for one locus, and two spellings of one gene would split it into
     #: two common names, which the verifier's canonical-name rule flags.
     gene_name: str | None = None
+    #: ``S1 Dataset column <n>`` when the label heads two columns of the release, else
+    #: ``None``: the release's own position is the only thing telling the two apart.
+    replicate_id: str | None = None
 
     @model_validator(mode="after")
     def _check_allele(self) -> StrainColumn:
@@ -1766,7 +1818,7 @@ def canonical_symbol(genome: EcoliK12BW25113Genome, tag: str) -> str:
 def resolve_columns(
     gene_labels: tuple[str, ...], genome: EcoliK12BW25113Genome, *, label: str
 ) -> ColumnResolution:
-    """Map each gene column to a BW25113 locus tag, applying the five column rules.
+    """Map each gene column to a BW25113 locus tag, applying the four column rules.
 
     The retain-all reconciliation decides which labels resolve; this function decides
     which of the rest can be WRITTEN, because ``DeletionStrainPerturbation`` stores a
@@ -1824,11 +1876,7 @@ def resolve_columns(
         DROP_AMBIGUOUS: ambiguous,
     }
     counts = Counter(gene_labels)
-    claimed: set[str] = set().union(*by_rule.values())
-    by_rule[DROP_DUPLICATE_COLUMN] = {
-        name for name, count in counts.items() if count > 1 and name not in claimed
-    }
-    dropped = claimed | by_rule[DROP_DUPLICATE_COLUMN]
+    dropped: set[str] = set().union(*by_rule.values())
     kept = [
         StrainColumn(
             index=index,
@@ -1848,19 +1896,24 @@ def resolve_columns(
                 if name in alleles
                 else None
             ),
+            replicate_id=column_replicate_id(index) if counts[name] > 1 else None,
         )
         for index, name in enumerate(gene_labels)
         if name not in dropped
     ]
     # The identity, not the locus, is what must be unique: the arrays carry a deletion,
     # an SPA tag, a kan insertion and two different degrons of the SAME gene, which are
-    # distinct strains ('imp-DAS' and 'imp-DAS+4' both sit on BW25113_0054). Two columns
-    # producing the same (locus, kind, token) WOULD be one strain measured twice.
-    identities = Counter(column.identity for column in kept)
+    # distinct strains ('imp-DAS' and 'imp-DAS+4' both sit on BW25113_0054). Two
+    # DIFFERENT labels producing the same (locus, kind, token) would merge two strains.
+    # One label heading two columns is not a collision: it is two array entries of one
+    # named strain, kept apart by their release position (``replicate_id``).
+    labels_by_identity: dict[tuple[str, str, str], set[str]] = {}
+    for column in kept:
+        labels_by_identity.setdefault(column.identity, set()).add(column.source_label)
     collisions = sorted(
-        f"{tag} {kind} {token}".strip()
-        for (tag, kind, token), count in identities.items()
-        if count > 1
+        " ".join(part for part in identity if part)
+        for identity, labels in labels_by_identity.items()
+        if len(labels) > 1
     )
     if collisions:
         raise RuntimeError(
@@ -2028,7 +2081,7 @@ class EnvChemgenShiver2016Dataset(ExperimentDataset):
                         dataset_name=self.name,
                         genotype=genotype(column),
                         environment=environments[spec.label],
-                        phenotype=phenotype(float(cell), spec),
+                        phenotype=phenotype(float(cell), spec, column.replicate_id),
                     )
                     txn.put(
                         f"{idx}".encode(),
@@ -2109,6 +2162,9 @@ class EnvChemgenShiver2016Dataset(ExperimentDataset):
             "study_conditions": n_conditions,
             "kept_columns": len(columns.kept),
             "distinct_locus_tags": len({c.locus_tag for c in columns.kept}),
+            "kept_columns_with_replicate_id": {
+                c.replicate_id: c.source_label for c in columns.kept if c.replicate_id
+            },
             "kept_columns_by_allele_kind": dict(
                 sorted(Counter(c.allele_kind for c in columns.kept).items())
             ),
@@ -2148,11 +2204,14 @@ class EnvChemgenShiver2016Dataset(ExperimentDataset):
 # --------------------------------------------------------------------------- #
 # Verification (L0-L4) of a built tree
 # --------------------------------------------------------------------------- #
-#: Records of the full build: 3,846 kept columns x 57 conditions, minus the blanks.
-#: 3,720 of those columns are precise gene deletions and 126 are the essential-gene
-#: arrays' marked alleles and degrons, stored since #749 (114 ``-SPA`` tags, 7 ``-kan``
-#: insertions, 5 ``-DAS``/``-DAS+4`` degrons).
-EXPECTED_RECORDS = 210998
+#: Records of the full build: 3,868 kept columns x 57 conditions, minus the 8,266 blanks.
+#: 3,742 of those columns are precise gene deletions (22 of them the two columns of 11
+#: labels that head two, stored since 2026-11-24 with ``replicate_id``) and 126 are the
+#: essential-gene arrays' marked alleles and degrons, stored since #749 (114 ``-SPA``
+#: tags, 7 ``-kan`` insertions, 5 ``-DAS``/``-DAS+4`` degrons).
+EXPECTED_RECORDS = 212210
+#: Records carrying a ``replicate_id``: the 22 columns' 1,254 cells minus 42 blanks.
+EXPECTED_REPLICATE_ID_RECORDS = 1212
 #: Records whose strain is an allele column rather than a precise gene deletion.
 EXPECTED_ALLELE_RECORDS = 6965
 

@@ -788,17 +788,21 @@ def test_each_column_rule_claims_its_own_labels(
             c.allele_kind,
             c.allele_token,
             c.gene_name,
+            c.replicate_id,
         )
         for c in resolution.kept
     ] == [
-        (0, "thrA", "BW25113_0002", "deletion", None, None),
-        (1, "hokC", "BW25113_4412", "deletion", None, None),
-        (2, "yaaP", "BW25113_0004", "deletion", None, None),
-        (3, "yaaX", "BW25113_0008", "deletion", None, None),
-        (11, "thrA-SPA", "BW25113_0002", "tag", "SPA", "thrA"),
-        (12, "hokC-kan", "BW25113_4412", "marker", "kan", "hokC"),
-        (13, "yaaP-DAS", "BW25113_0004", "degron", "DAS", "yaaP"),
-        (14, "yaaP-DAS+4", "BW25113_0004", "degron", "DAS+4", "yaaP"),
+        (0, "thrA", "BW25113_0002", "deletion", None, None, None),
+        (1, "hokC", "BW25113_4412", "deletion", None, None, None),
+        (2, "yaaP", "BW25113_0004", "deletion", None, None, None),
+        (3, "yaaX", "BW25113_0008", "deletion", None, None, None),
+        # the label heading two columns keeps both, told apart by its release field
+        (4, "proB", "BW25113_0005", "deletion", None, None, "S1 Dataset column 6"),
+        (5, "proB", "BW25113_0005", "deletion", None, None, "S1 Dataset column 7"),
+        (11, "thrA-SPA", "BW25113_0002", "tag", "SPA", "thrA", None),
+        (12, "hokC-kan", "BW25113_4412", "marker", "kan", "hokC", None),
+        (13, "yaaP-DAS", "BW25113_0004", "degron", "DAS", "yaaP", None),
+        (14, "yaaP-DAS+4", "BW25113_0004", "degron", "DAS+4", "yaaP", None),
     ]
     # the allele columns' locus tags come from the SECOND pass, on the base symbol
     assert resolution.allele_resolutions == {
@@ -813,14 +817,12 @@ def test_each_column_rule_claims_its_own_labels(
         # 'thrL-SPA' inherits its base symbol's rule: thrL is a merged-locus fragment
         s.DROP_MERGED_LOCUS: ["ECK0001", "thrL", "thrL-SPA"],
         s.DROP_AMBIGUOUS: ["ECK0005"],
-        s.DROP_DUPLICATE_COLUMN: ["proB"],
     }
     assert resolution.dropped_columns == {
         s.DROP_POINT_MUTANT: 1,
         s.DROP_NOT_IN_ANNOTATION: 1,
         s.DROP_MERGED_LOCUS: 3,
         s.DROP_AMBIGUOUS: 1,
-        s.DROP_DUPLICATE_COLUMN: 2,
     }
     assert sum(resolution.dropped_columns.values()) + len(resolution.kept) == len(
         _SYNTHETIC_GENES
@@ -853,7 +855,6 @@ def test_every_column_rule_has_a_description_in_the_drop_log() -> None:
         s.DROP_NOT_IN_ANNOTATION,
         s.DROP_MERGED_LOCUS,
         s.DROP_AMBIGUOUS,
-        s.DROP_DUPLICATE_COLUMN,
     ]
     assert all(len(description) > 40 for description in rules.values())
 
@@ -938,10 +939,10 @@ def test_the_loader_is_registered_and_receives_the_bw25113_genome(
 
 
 # --------------------------------------------------------------------------- #
-# The whole loader, hermetic. Derived expectations for the synthetic frame: 8 of 16
-# columns are kept (the deletions thrA, hokC, yaaP, yaaX plus the allele columns
-# thrA-SPA, hokC-kan, yaaP-DAS and yaaP-DAS+4), 57 conditions, one blank cell, so
-# 8 x 57 - 1 = 455 records and 8 x 57 = 456 dropped by the column rules.
+# The whole loader, hermetic. Derived expectations for the synthetic frame: 10 of 16
+# columns are kept (the deletions thrA, hokC, yaaP, yaaX, the two proB columns, plus the
+# allele columns thrA-SPA, hokC-kan, yaaP-DAS and yaaP-DAS+4), 57 conditions, one blank
+# cell, so 10 x 57 - 1 = 569 records and 6 x 57 = 342 dropped by the column rules.
 # --------------------------------------------------------------------------- #
 def _pin(strain: EcoliK12StrainName) -> ReferenceGenome:
     assembly_set = BACTERIAL_ASSEMBLY_SETS[strain]
@@ -982,12 +983,13 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
 ) -> None:
     root = tmp_path / "dataset"
     dataset = s.EnvChemgenShiver2016Dataset(root=str(root))
-    assert len(dataset) == 455
+    assert len(dataset) == 569
     # the allele columns sit on loci the deletion columns already name, so the gene set
     # is unchanged by storing them: they are more STRAINS, not more genes
     assert sorted(dataset.gene_set) == [
         "BW25113_0002",
         "BW25113_0004",
+        "BW25113_0005",
         "BW25113_0008",
         "BW25113_4412",
     ]
@@ -1005,13 +1007,12 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
     assert dataset[0]["publication"]["doi"] == s.DOI
 
     drops = json.loads((root / "preprocess" / "dropped_records.json").read_text())
-    assert (drops["source_records"], drops["kept_records"]) == (912, 455)
+    assert (drops["source_records"], drops["kept_records"]) == (912, 569)
     assert {r["rule"]: (r["n_columns"], r["n_records"]) for r in drops["rules"]} == {
         s.DROP_POINT_MUTANT: (1, 57),
         s.DROP_NOT_IN_ANNOTATION: (1, 57),
         s.DROP_MERGED_LOCUS: (3, 171),
         s.DROP_AMBIGUOUS: (1, 57),
-        s.DROP_DUPLICATE_COLUMN: (2, 114),
         s.DROP_BLANK_CELL: (0, 1),
     }
 
@@ -1020,11 +1021,15 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
     )
     assert report["released_gene_columns"] == 16
     assert report["released_condition_rows"] == 57
-    # 8 kept columns on 4 loci: the four allele columns are more STRAINS, not more genes
-    assert (report["kept_columns"], report["distinct_locus_tags"]) == (8, 4)
+    # 10 kept columns on 5 loci: the four allele columns are more STRAINS, not more genes
+    assert (report["kept_columns"], report["distinct_locus_tags"]) == (10, 5)
+    assert report["kept_columns_with_replicate_id"] == {
+        "S1 Dataset column 6": "proB",
+        "S1 Dataset column 7": "proB",
+    }
     assert report["kept_columns_by_allele_kind"] == {
         "degron": 2,
-        "deletion": 4,
+        "deletion": 6,
         "marker": 1,
         "tag": 1,
     }
@@ -1042,6 +1047,39 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
     assert report["reconciliation"]["gene_namespace"] == ("ecoli_k12_bw25113_locus_tag")
     assert (root / "preprocess" / "build_manifest.json").is_file()
     assert (root / "raw" / s.DATA_FILENAME).is_file()
+
+
+def test_both_columns_of_a_label_heading_two_are_stored_apart_by_release_field(
+    tmp_path: Path, mirrored: Path
+) -> None:
+    """#1176: neither column of a doubled label is dropped, averaged or merged."""
+    root = tmp_path / "dataset"
+    dataset = s.EnvChemgenShiver2016Dataset(root=str(root))
+    by_replicate: dict[str | None, list[float]] = {}
+    for i in range(len(dataset)):
+        experiment = dataset[i]["experiment"]
+        replicate = experiment["phenotype"]["replicate_id"]
+        tag = experiment["genotype"]["perturbations"][0]["systematic_gene_name"]
+        assert (tag == "BW25113_0005") == (replicate is not None)
+        by_replicate.setdefault(replicate, []).append(
+            experiment["phenotype"]["environment_response"]
+        )
+    # one record per condition per column, each column's own released value
+    # (_release writes row_index + column / 100, and proB heads fields 6 and 7)
+    assert len(by_replicate["S1 Dataset column 6"]) == 57
+    assert len(by_replicate["S1 Dataset column 7"]) == 57
+    assert sorted(by_replicate["S1 Dataset column 6"])[:2] == [0.04, 1.04]
+    assert sorted(by_replicate["S1 Dataset column 7"])[:2] == [0.05, 1.05]
+    assert len(by_replicate[None]) == 569 - 114
+
+
+def test_the_phenotype_carries_the_replicate_id_it_is_given() -> None:
+    spec = s.CONDITIONS[0]
+    assert s.phenotype(1.0, spec).replicate_id is None
+    assert (
+        s.phenotype(1.0, spec, s.column_replicate_id(960)).replicate_id
+        == "S1 Dataset column 962"
+    )
 
 
 def test_a_direct_run_opens_the_bw25113_genome_itself(
@@ -1102,10 +1140,12 @@ def test_the_release_resolves_to_the_measured_column_counts() -> None:
     genome = bacterial_genome("ecoli", "BW25113")
     assert isinstance(genome, EcoliK12BW25113Genome)
     resolution = s.resolve_columns(matrix.gene_labels, genome, label="release")
-    # 3,720 deletion columns plus the 126 allele columns of #749
-    assert len(resolution.kept) == 3720 + 126
-    # the 126 allele columns add 118 loci no deletion column names
-    assert len({c.locus_tag for c in resolution.kept}) == 3838
+    # 3,742 deletion columns (22 of them the two columns of 11 labels that head two)
+    # plus the 126 allele columns of #749
+    assert len(resolution.kept) == 3742 + 126
+    # the 126 allele columns add 118 loci no deletion column names, and the 11 doubled
+    # labels add one locus each (no other column names them)
+    assert len({c.locus_tag for c in resolution.kept}) == 3838 + 11
     assert resolution.dropped_columns == {
         # 8, not 134: #749 stores the 126 tag / marker / degron columns, leaving only
         # the point and indel mutants here
@@ -1113,7 +1153,6 @@ def test_the_release_resolves_to_the_measured_column_counts() -> None:
         s.DROP_NOT_IN_ANNOTATION: 49,
         s.DROP_MERGED_LOCUS: 48,
         s.DROP_AMBIGUOUS: 2,
-        s.DROP_DUPLICATE_COLUMN: 22,
     }
     assert resolution.dropped_labels[s.DROP_AMBIGUOUS] == ["rffT", "spr"]
     histogram = {
@@ -1142,8 +1181,52 @@ def test_the_release_resolves_to_the_measured_column_counts() -> None:
         for column in resolution.kept
         if row[column.index] == ""
     )
-    assert blanks == 8224
-    assert len(resolution.kept) * 57 - blanks == s.EXPECTED_RECORDS == 210998
+    assert blanks == 8266
+    assert len(resolution.kept) * 57 - blanks == s.EXPECTED_RECORDS == 212210
+
+
+#: The 11 labels that head two columns (``yfiO*`` is the twelfth, dropped as a point
+#: allele), each column's release field and its non-blank cells over the 57 conditions.
+_DOUBLED_COLUMNS: dict[str, tuple[tuple[int, int], tuple[int, int]]] = {
+    "ymjC": ((595, 52), (3480, 56)),
+    "mgrB": ((963, 56), (3706, 56)),
+    "yhfL": ((1744, 57), (3300, 45)),
+    "dppA": ((1806, 51), (3793, 56)),
+    "bamE": ((2174, 55), (3838, 56)),
+    "ykgO": ((2964, 57), (3830, 56)),
+    "gnsB": ((3017, 57), (3652, 56)),
+    "ydgU": ((3308, 54), (3841, 56)),
+    "ypfM": ((3656, 56), (3929, 56)),
+    "hokD": ((3783, 56), (3807, 56)),
+    "ryfB": ((3848, 56), (3920, 56)),
+}
+
+
+@pytest.mark.data
+def test_the_doubled_labels_keep_both_columns_with_their_release_fields() -> None:
+    from torchcell.datasets.bacteria_common import bacterial_genome
+
+    matrix = s.read_fitness_matrix(osp.join(_data_root(), s.RAW_DIR_REL, s.DATA_REL))
+    genome = bacterial_genome("ecoli", "BW25113")
+    assert isinstance(genome, EcoliK12BW25113Genome)
+    resolution = s.resolve_columns(matrix.gene_labels, genome, label="release")
+    doubled = [c for c in resolution.kept if c.replicate_id is not None]
+    measured: dict[str, list[tuple[int, int]]] = {}
+    for column in doubled:
+        assert column.allele_kind == "deletion"
+        field = column.index + s.FIRST_GENE_FIELD
+        assert column.replicate_id == f"S1 Dataset column {field}"
+        cells = sum(1 for row in matrix.rows.values() if row[column.index] != "")
+        measured.setdefault(column.source_label, []).append((field, cells))
+    assert {label: tuple(v) for label, v in measured.items()} == _DOUBLED_COLUMNS
+    # both columns of one label resolve to one locus: one named strain, two entries
+    for label in _DOUBLED_COLUMNS:
+        assert len({c.locus_tag for c in doubled if c.source_label == label}) == 1
+    total = sum(n for pair in _DOUBLED_COLUMNS.values() for _, n in pair)
+    assert total == s.EXPECTED_REPLICATE_ID_RECORDS == 1212
+    assert 22 * 57 - total == 42
+    # the twelfth doubled label is the starred point allele, still dropped by rule 1
+    assert "yfiO*" in resolution.dropped_labels[s.DROP_POINT_MUTANT]
 
 
 _S1_TABLE_SCORES: dict[str, float] = {
@@ -1247,10 +1330,10 @@ def test_verify_build_passes_l0_to_l4_on_the_synthetic_build(
 ) -> None:
     root = tmp_path / "dataset"
     s.EnvChemgenShiver2016Dataset(root=str(root))
-    report = s.verify_build(str(root), genome=bw25113, expected_count=455)
+    report = s.verify_build(str(root), genome=bw25113, expected_count=569)
     assert report.passed, report.summary()
     rows = {result.name: result for result in report.results}
-    assert rows["count"].details["observed"] == 455
+    assert rows["count"].details["observed"] == 569
     assert rows["pair_uniqueness"].details["n_duplicated"] == 0
     assert rows["measurement_type_consistent"].details["measurement_types"] == [
         "z_score"

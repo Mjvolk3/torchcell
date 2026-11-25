@@ -646,3 +646,115 @@ Collins 2006 (#691) is what would settle it.
 verifier's strain signature now carries `tag`, `terminus`, `degron`, `cassette` and
 `insertion_site`, which is what keeps `imp-DAS` and `imp-DAS+4` (two strains on
 `BW25113_0054` differing only in their degron) from colliding on one key.
+
+## 2026.11.24 - Per-replicate review: both columns of the doubled labels are stored (#1176, #1177, #1172)
+
+Part of the per-replicate sweep (#1178). Owner policy: a record is one released replicate
+(culture, colony, isolate, lineage, library), and no released replicate is averaged,
+dropped or ignored.
+
+### What was dropped, and what is stored now
+
+Twelve labels of S1 Dataset head two gene columns each: `ymjC mgrB yhfL dppA bamE ykgO gnsB
+ydgU ypfM yfiO* hokD ryfB`. `yfiO*` stays dropped by `label_is_a_point_or_indel_mutant`. The
+other 11 labels' 22 columns were dropped by `label_has_two_columns_in_the_release` (1,254
+cells, 1,212 non-blank) because two records could not share a (strain, condition) key. That
+rule is gone: both columns are stored, told apart by `replicate_id` = `S1 Dataset column <n>`,
+the 1-based field of the tab-separated release (field 1 is `Condition`). Every other column
+keeps `replicate_id=None`. This is the same treatment Nichols 2011's loader gives the same
+twelve labels (`replicate_id` = `Table S2 row <n>`).
+
+| label | field, non-blank cells | field, non-blank cells |
+|---|---|---|
+| ymjC | 595, 52 | 3480, 56 |
+| mgrB | 963, 56 | 3706, 56 |
+| yhfL | 1744, 57 | 3300, 45 |
+| dppA | 1806, 51 | 3793, 56 |
+| bamE | 2174, 55 | 3838, 56 |
+| ykgO | 2964, 57 | 3830, 56 |
+| gnsB | 3017, 57 | 3652, 56 |
+| ydgU | 3308, 54 | 3841, 56 |
+| ypfM | 3656, 56 | 3929, 56 |
+| hokD | 3783, 56 | 3807, 56 |
+| ryfB | 3848, 56 | 3920, 56 |
+
+Arithmetic: 3,868 kept columns (3,742 deletions, 126 allele columns) x 57 = 220,476 cells,
+minus 8,266 blanks = 212,210 records (was 210,998; +1,212). The plan's 212,252 counted the
+22 columns' 42 blank cells.
+
+### What the two columns are
+
+The release says nothing beside the label (no plate, well, clone or allele id). Measured
+with `experiments/036-dataset-fixes-before-kg-build/scripts/shiver2016_per_replicate_counts.py`
+(results `experiments/036-dataset-fixes-before-kg-build/results/shiver2016_per_replicate_counts.json`):
+
+- Each of the 24 columns matches one of the two Nichols 2011 Table S2 rows released under the
+  same label, first to first and second to second, on Shiver's batch-0 re-analysis of
+  Nichols's screens: Pearson r 0.41 to 0.95 with its own row, -0.29 to 0.64 with the other
+  (199 to 231 cells per pair, conditions matched by the Nichols release checks).
+- The two columns of one label agree poorly with each other over the 57 study conditions
+  (r -0.38 to 0.73).
+
+Nichols 2011 combines a strain's two clones inside ONE score ("Two independently derived
+clones of each mutant strain were analyzed (for sRNA mutants, a single isolate was arrayed
+twice)"; "The independently derived or duplicate clones of each strain were arrayed
+side-by-side"; `torchcell-raw/nicholsPhenotypicLandscapeBacterial2011/si/mmc8.md`, sha256
+`0fbf32478f0491b25b27a031b47f639e1d67cbba4b5311f42940673e5ab33e92`), and Shiver used "the
+same methodology as reported previously [8]". So each column is one separately scored array
+entry, and the two entries of a label are two independently constructed strains with the same
+named deletion.
+
+Hypothesis (untested): the second column is a Hobbs 2010 small-protein or sRNA deletion built
+in MG1655, beside the Keio deletion of the same gene. Every second column sits among the
+release's sRNA, small-protein and SPA columns, and Nichols states "sRNA and small protein
+deletions were constructed in MG1655 (Hobbs et al., 2010) and used in that background".
+Neither release says which columns those are, so both records pin BW25113 as every other
+column does. Owner question, shared with Nichols 2011: whether those strains need an MG1655
+genome reference.
+
+### The Dryad per-colony output: blocked
+
+The Data Availability statement names Dryad doi:10.5061/dryad.f3kc0 for "Raw data
+associated with colony size". The Dryad file API lists `irisfile.tar` (65,116,160 bytes, md5
+`5d667cd4c20f79509b8e574a6175fc0d`, "Tar ball of all Iris files generated in the current
+screen"), `InputFiles.tar`, `ImageKeyFinal.xls`, `README_for_ImageKeyFinal.txt`, two GSEA
+inputs and `imagefile.tar` (10.46 GB plate images, out of scope). Tried on 2026.11.25:
+
+- `https://datadryad.org/api/v2/files/<id>/download` (65520, and the 849-byte README 65519):
+  HTTP 401, "Unauthorized, must have current bearer token".
+- `https://datadryad.org/downloads/file_stream/<id>` (and the `/stash/` form): HTTP 403; with
+  a browser user agent, a JavaScript proof-of-work "Validating..." page.
+- `https://datadryad.org/api/v2/versions/19373/download`: HTTP 405, "The dataset is too large
+  for zip file generation".
+- The Data Availability GitHub repository `AnthonyShiverMicrobes/fitness_score` holds MATLAB
+  code only.
+
+Nothing was substituted. The per-colony values, and how many colonies stand behind one
+fitness-score, stay unverified until a token-holding retrieval is recorded. Every stored
+record remains the released fitness-score of one array entry, an aggregate over its colonies
+as released, so its uncertainty gaps stay `not_reported_by_primary`.
+
+### Re-checked values
+
+- `n_samples` / `sample_unit` stay `deferred_pending_source_review` gaps. Nichols 2011 is now in
+  the RAW mirror (not the literature mirror) and states "four to six independent
+  measurements" per score, but Shiver's own screens ran "with few modifications" that the
+  paper does not list, so Nichols's count is not carried over. Changing the gap would also
+  change all 210,998 served records; left for the owner.
+- Units, measurement type and the uncertainty gaps are unchanged and still correct.
+
+### Builds and checks
+
+Scratch builds (never the shared dev tree):
+`$DATA_ROOT/tmp/scratch/per-replicate-shiver2016/before/ecoli_env_chemgen_shiver2016`
+(origin/main, 210,998) and
+`$DATA_ROOT/tmp/scratch/per-replicate-shiver2016/after/ecoli_env_chemgen_shiver2016` (212,210).
+
+- `verify_build` on the after store: PASS on all 17 checks; `pair_uniqueness` 212,210 unique
+  (the verifier key carries `replicate_id`); 3,849 systematic names.
+- Every one of the 210,998 before-records has an identical after-record (experiment and
+  reference dicts equal); the 1,212 new records all carry a `replicate_id`.
+- Mean reproduction: after-records grouped by (released label, condition) and averaged
+  reproduce every before-value exactly (max absolute difference 0.0 over 210,998 groups); the
+  623 new groups (11 labels x 57 conditions, minus 4 where both columns are blank) have no
+  before-value.

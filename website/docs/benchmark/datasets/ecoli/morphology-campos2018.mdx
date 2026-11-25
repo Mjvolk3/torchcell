@@ -17,6 +17,8 @@ The same imaging screen of the Keio collection measured the shape and the cell-c
 | Records of the dataset set aside | 91 (listed with a reason in `task.excluded`) |
 | Pinned splits | 14 |
 
+**Leaderboards for this task:** [random](/benchmark/leaderboard/?dataset=ecoli-morphology-campos2018-random-s0), [sequence identity 30 %](/benchmark/leaderboard/?dataset=ecoli-morphology-campos2018-seqid30-s0), [sequence identity 50 %](/benchmark/leaderboard/?dataset=ecoli-morphology-campos2018-seqid50-s0), [chromosome position](/benchmark/leaderboard/?dataset=ecoli-morphology-campos2018-position-s0).
+
 ## Load the task
 
 ```python
@@ -188,12 +190,12 @@ The table gives the same numbers: mean ± sample standard deviation of the test 
 
 The [leaderboard](../../leaderboard.mdx) has one board per split family of this task, on the seed-0 split. The linear probes above are its baseline rows. The other seeds are in the package for your own experiments and have no board.
 
-| Board | Split |
-| :-- | :-- |
-| `ecoli-morphology-campos2018-random-s0` | `random_s0` |
-| `ecoli-morphology-campos2018-seqid30-s0` | `seqid30_s0` |
-| `ecoli-morphology-campos2018-seqid50-s0` | `seqid50_s0` |
-| `ecoli-morphology-campos2018-position-s0` | `position_s0` |
+| Open the board | Board name | Split |
+| :-- | :-- | :-- |
+| [Random](/benchmark/leaderboard/?dataset=ecoli-morphology-campos2018-random-s0) | `ecoli-morphology-campos2018-random-s0` | `random_s0` |
+| [Sequence identity 30 %](/benchmark/leaderboard/?dataset=ecoli-morphology-campos2018-seqid30-s0) | `ecoli-morphology-campos2018-seqid30-s0` | `seqid30_s0` |
+| [Sequence identity 50 %](/benchmark/leaderboard/?dataset=ecoli-morphology-campos2018-seqid50-s0) | `ecoli-morphology-campos2018-seqid50-s0` | `seqid50_s0` |
+| [Chromosome position](/benchmark/leaderboard/?dataset=ecoli-morphology-campos2018-position-s0) | `ecoli-morphology-campos2018-position-s0` | `position_s0` |
 
 The board names a target with letters, digits and `_.:|+-` only, so a feature written `<L>` in the dataset is `mean_L` on the board, `<SA/V>` is `mean_SA_per_V` and `%2N` is `pct_2N`.
 

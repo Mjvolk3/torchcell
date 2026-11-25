@@ -4,7 +4,7 @@
 """``torchcell/adapters/campos2018_morphology_adapter.py``: the conf it loads, the
 gate's view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Campos 2018 Keio cell morphology: 3,664 deletion-strain records,
+Campos 2018 Keio cell morphology: 4,024 well records (240 of them wild type),
 MorphologyExperiment. One DeletionStrainPerturbation per record, served as
 `perturbation`, and the strain's 26-feature profile as
 `bacterial morphology phenotype`. The screen is one medium at one temperature with no

@@ -1,0 +1,64 @@
+{
+  "release": {
+    "released_rows": 4471,
+    "footer_rows": 4,
+    "wild_type_wells_by_label": {
+      "WT0511": 48,
+      "WT0813": 96,
+      "WT0815": 96
+    },
+    "wild_type_plates": [
+      "WT1",
+      "WT2",
+      "WT3"
+    ],
+    "mutant_rows": 4227,
+    "distinct_mutant_labels": 4163,
+    "repeated_label_histogram": {
+      "2": 50,
+      "3": 4,
+      "4": 2
+    }
+  },
+  "growth": {
+    "records_before": 3664,
+    "records_after": 4024,
+    "kinds_after": {
+      "wild_type_wells": 240,
+      "deletion_wells_single": 3664,
+      "deletion_wells_repeated": 120,
+      "repeated_loci": 56,
+      "total": 4024
+    },
+    "reference_alpha_max_min-1": 0.009736651560239014,
+    "before_reference_fitness": 1.0,
+    "per_position_max_abs_diff_ratio": 0.0,
+    "groups_after": 3721,
+    "groups_compared_with_before": 3664,
+    "groups_new_repeated_labels": 56,
+    "group_mean_max_abs_diff_ratio": 0.0,
+    "wild_type_wells": 240,
+    "wild_type_median_over_reference": 1.0,
+    "wild_type_mean_over_reference": 1.0052666600050635
+  },
+  "morphology": {
+    "records_before": 3664,
+    "records_after": 4024,
+    "kinds_after": {
+      "wild_type_wells": 240,
+      "deletion_wells_single": 3664,
+      "deletion_wells_repeated": 120,
+      "repeated_loci": 56,
+      "total": 4024
+    },
+    "per_position_values_compared": 93570,
+    "per_position_max_abs_diff": 0.0,
+    "group_mean_max_abs_diff": 0.0,
+    "reference_identical": true,
+    "reference_n_samples": 240,
+    "wild_type_median_vs_reference_max_abs_diff": 0.0,
+    "wild_type_mean_vs_reference_max_abs_diff": 0.023041719365595625,
+    "determined_values_after": 102881
+  },
+  "same_positions_in_both_stores": true
+}

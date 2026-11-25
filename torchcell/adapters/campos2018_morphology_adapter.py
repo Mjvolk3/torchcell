@@ -4,15 +4,16 @@
 # Test file: tests/torchcell/adapters/test_campos2018_morphology_adapter.py
 """BioCypher adapter exposing the Campos 2018 Keio cell-morphology screen.
 
-One record per deletion strain: a single ``DeletionStrainPerturbation`` served as a
-``perturbation`` node, and the strain's 26-feature profile as a
+One record per released well: a single ``DeletionStrainPerturbation`` served as a
+``perturbation`` node for a deletion well (the 240 wild-type wells carry the empty
+genotype), and the well's 26-feature profile as a
 ``bacterial morphology phenotype``. The screen is one medium at one temperature, so no
 environment perturbation is served.
 
 A separate module from ``campos2018_adapter`` because it serves a separate dataset of
-the same release: the growth-rate adapter emits ``fitness phenotype`` nodes and this one
-emits ``bacterial morphology phenotype`` nodes, and an adapter's enable-list is what
-decides which node methods run.
+the same release: the growth-rate adapter emits ``environment response phenotype``
+nodes and this one emits ``bacterial morphology phenotype`` nodes, and an adapter's
+enable-list is what decides which node methods run.
 """
 
 import os.path as osp

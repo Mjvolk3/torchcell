@@ -14,13 +14,14 @@ member), ``ECK0005`` sits on two loci (ambiguous), ``yaaP`` is a pseudogene locu
 The data tests (``--data``) audit every module-level ``SourcedValue`` against the
 sha256-pinned paper OCR and the pinned Dataset EV2 legend, read the real Dataset EV2
 from the raw mirror, pin the measured row and identifier histograms, and re-run the
-affine cross-check of the derived fitness against the released score.
+affine cross-check of the rate over the reference against the released score.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+from collections import Counter
 from pathlib import Path
 from typing import Any, cast
 
@@ -46,11 +47,13 @@ from torchcell.datamodels.morphology_features import (
 from torchcell.datamodels.schema import (
     ASSEMBLY_SET_ACCESSIONS,
     BACTERIAL_ASSEMBLY_SETS,
+    AssayType,
     ComponentDefinition,
     ConcentrationUnit,
     DeletionStrainPerturbation,
-    FitnessExperiment,
-    FitnessExperimentReference,
+    EnvironmentResponseExperiment,
+    EnvironmentResponseExperimentReference,
+    MeasurementType,
     MediaComponentRole,
     ReferenceGenome,
     SampleUnit,
@@ -225,27 +228,74 @@ def test_the_environment_is_one_unperturbed_medium_at_thirty_degrees() -> None:
 # --------------------------------------------------------------------------- #
 # Phenotype and genotype
 # --------------------------------------------------------------------------- #
-def test_the_phenotype_is_the_growth_rate_ratio_with_the_release_gapped() -> None:
-    phenotype = c.phenotype(0.0049, 0.0098)
-    assert phenotype.fitness == pytest.approx(0.5)
+def test_the_phenotype_is_the_released_absolute_rate_of_one_well() -> None:
+    """Per-replicate policy (#1178): the well's own value, n = 1, no dispersion."""
+    row = c.StrainRow(label="thrA", plate="3", well="B012", alpha_max=0.0049)
+    phenotype = c.growth_rate_phenotype(row)
+    assert phenotype.measurement_type is MeasurementType.growth_rate
+    assert phenotype.assay_type is AssayType.liquid_od_growth
+    assert phenotype.environment_response == 0.0049
+    assert phenotype.units == c.UNITS
+    assert phenotype.units.startswith("min^-1")
     assert phenotype.n_samples == 1
     assert phenotype.sample_unit is SampleUnit.biological_replicate
-    assert phenotype.fitness_uncertainty is None
-    assert phenotype.fitness_uncertainty_type is None
-    assert phenotype.fitness_se is None
+    assert phenotype.replicate_id == "3/B012"
+    assert phenotype.environment_response_uncertainty is None
+    assert phenotype.environment_response_uncertainty_type is None
+    assert phenotype.environment_response_se is None
     gaps = {gap.field: gap.reason for gap in phenotype.provenance_gaps}
     assert gaps == {
-        "fitness_uncertainty": ProvenanceGapReason.not_reported_by_primary,
-        "fitness_se": ProvenanceGapReason.not_reported_by_primary,
+        "environment_response_uncertainty": (
+            ProvenanceGapReason.not_applicable_single_measurement
+        ),
+        "environment_response_se": ProvenanceGapReason.not_applicable_single_measurement,
     }
 
 
-def test_the_reference_is_the_parent_at_one_over_its_released_replicates() -> None:
-    reference = c.reference_phenotype()
-    assert reference.fitness == 1.0
-    assert reference.n_samples == c.WILD_TYPE_ROWS == 240
+def test_the_reference_is_the_median_of_the_wild_type_wells_on_the_same_scale() -> None:
+    wells = [
+        c.StrainRow(label="WT0813", plate="WT1", well=f"A00{i}", alpha_max=value)
+        for i, value in enumerate((0.0100, 0.0098, 0.0102, 0.0300), start=1)
+    ]
+    reference = c.growth_rate_reference_phenotype(wells)
+    assert reference.measurement_type is MeasurementType.growth_rate
+    assert reference.environment_response == pytest.approx((0.0100 + 0.0102) / 2)
+    assert reference.units == c.UNITS
+    assert reference.n_samples == 4
     assert reference.sample_unit is SampleUnit.biological_replicate
-    assert c.reference_phenotype(7).n_samples == 7
+    assert reference.replicate_id is None
+    gaps = {gap.field: gap.reason for gap in reference.provenance_gaps}
+    assert gaps == {
+        "environment_response_uncertainty": ProvenanceGapReason.not_reported_by_primary,
+        "environment_response_se": ProvenanceGapReason.not_reported_by_primary,
+    }
+    with pytest.raises(ValueError, match="no growth-rate reference"):
+        c.growth_rate_reference_phenotype([])
+
+
+def test_the_replicate_id_is_the_released_keio_position() -> None:
+    assert c.StrainRow(label="flgM", plate="5", well="H012", alpha_max=1.0).replicate_id
+    assert (
+        c.StrainRow(label="flgM", plate="89", well="H012", alpha_max=1.0).replicate_id
+        == "89/H012"
+    )
+    assert (
+        c.StrainRow(
+            label="WT0813", plate="WT1", well="A001", alpha_max=1.0
+        ).replicate_id
+        == "WT1/A001"
+    )
+
+
+def test_a_wild_type_well_has_the_empty_genotype() -> None:
+    assert c.wild_type_genotype().perturbations == []
+
+
+def test_the_median_is_the_middle_value_or_the_midpoint() -> None:
+    assert c.median([3.0, 1.0, 2.0]) == 2.0
+    assert c.median([4.0, 1.0, 2.0, 3.0]) == 2.5
+    with pytest.raises(ValueError, match="median of no values"):
+        c.median([])
 
 
 def test_the_genotype_is_one_keio_deletion_with_its_cassette_and_well() -> None:
@@ -283,7 +333,8 @@ def test_a_locus_tag_of_another_strains_namespace_is_refused() -> None:
 # --------------------------------------------------------------------------- #
 # The reader
 # --------------------------------------------------------------------------- #
-#: The synthetic release: wild type, the four writable labels, then one row per rule.
+#: The synthetic release: wild type, the four writable labels, then one row per rule,
+#: then one label heading two rows at distinct positions.
 _SYNTHETIC_ROWS: tuple[tuple[str | None, str | None, str | None, float | None], ...] = (
     ("WT0001", "1", "A001", 0.0100),
     ("WT0001", "1", "A002", 0.0098),
@@ -304,7 +355,10 @@ _SYNTHETIC_ROWS: tuple[tuple[str | None, str | None, str | None, float | None], 
 )
 _SYNTHETIC_RELEASED = len(_SYNTHETIC_ROWS)
 _SYNTHETIC_WILD_TYPE = 3
-_SYNTHETIC_KEPT = 4
+#: Deletion wells written: the four labels heading one row plus proB's two rows.
+_SYNTHETIC_DELETION_KEPT = 6
+#: Records written: every kept deletion well plus every wild-type well.
+_SYNTHETIC_KEPT = _SYNTHETIC_DELETION_KEPT + _SYNTHETIC_WILD_TYPE
 #: The wild-type median of the three synthetic replicates.
 _SYNTHETIC_DENOMINATOR = 0.0100
 
@@ -453,14 +507,14 @@ def test_the_reader_refuses_a_wild_type_count_that_moved(
         c.read_normalized_table(_release(tmp_path / "ev2.xlsx"))
 
 
-def test_a_table_with_no_wild_type_row_has_no_fitness_denominator() -> None:
+def test_a_table_with_no_wild_type_row_has_no_growth_rate_reference() -> None:
     table = c.NormalizedTable(
         released_rows=1,
         footer_rows=0,
         wild_type=(),
         mutants=(c.StrainRow(label="thrA", plate="1", well="A001", alpha_max=0.0098),),
     )
-    with pytest.raises(ValueError, match="no fitness denominator"):
+    with pytest.raises(ValueError, match="no growth-rate reference"):
         _ = table.wild_type_median_alpha_max
 
 
@@ -490,25 +544,31 @@ def test_each_row_rule_claims_its_own_labels(
         ("hokC", "BW25113_4412"),
         ("yaaP", "BW25113_0004"),
         ("yaaX", "BW25113_0008"),
+        ("proB", "BW25113_0005"),
+        ("proB", "BW25113_0005"),
+    ]
+    assert [row.replicate_id for row in resolution.wild_type] == [
+        "1/A001",
+        "1/A002",
+        "1/A003",
     ]
     assert resolution.dropped_labels == {
         c.DROP_FOOTER: [],
-        c.DROP_WILD_TYPE: ["WT0001"],
         c.DROP_ANNOTATED: ["fabH°", "hfq*"],
         c.DROP_NOT_IN_ANNOTATION: ["nosuchgene"],
         c.DROP_MERGED_LOCUS: ["ECK0001", "thrL"],
         c.DROP_AMBIGUOUS: ["ECK0005"],
-        c.DROP_DUPLICATE_LABEL: ["proB"],
     }
     assert resolution.dropped_rows == {
         c.DROP_FOOTER: 1,
-        c.DROP_WILD_TYPE: 3,
         c.DROP_ANNOTATED: 2,
         c.DROP_NOT_IN_ANNOTATION: 1,
         c.DROP_MERGED_LOCUS: 2,
         c.DROP_AMBIGUOUS: 1,
-        c.DROP_DUPLICATE_LABEL: 2,
     }
+    # a label heading two rows keeps both, each at its own released position
+    assert resolution.repeated_labels == {"proB": ["1/A014", "2/A014"]}
+    assert resolution.records == _SYNTHETIC_KEPT
     assert (
         table.released_rows - sum(resolution.dropped_rows.values()) == _SYNTHETIC_KEPT
     )
@@ -558,18 +618,22 @@ def _stub_reconciler(tags: Any) -> Any:
     return _stub
 
 
-def test_two_kept_rows_claiming_one_locus_stop_the_build(
+def test_two_kept_labels_claiming_one_locus_stop_the_build(
     tmp_path: Path,
     shaped: None,
     bw25113: EcoliK12BW25113Genome,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The last line of defence: two kept rows on one locus tag is never written."""
+    """The last line of defence: two DIFFERENT labels on one locus tag is never written.
+
+    One label at two positions is two wells of one name and is kept (proB above); two
+    labels the reconciler did not flag landing on one locus would merge two names.
+    """
     table = c.read_normalized_table(_release(tmp_path / "ev2.xlsx"))
     monkeypatch.setattr(
         c, "reconcile_locus_tags", _stub_reconciler(lambda n: ["BW25113_0002"] * n)
     )
-    with pytest.raises(RuntimeError, match="claimed by more than one kept row"):
+    with pytest.raises(RuntimeError, match="claimed by more than one kept label"):
         c.resolve_rows(table, bw25113, label="synthetic")
 
 
@@ -614,13 +678,14 @@ def test_the_rule_table_lists_every_rule_once_with_a_description() -> None:
     rules = [rule for rule, _ in c.ROW_RULES]
     assert rules == [
         c.DROP_FOOTER,
-        c.DROP_WILD_TYPE,
         c.DROP_ANNOTATED,
         c.DROP_NOT_IN_ANNOTATION,
         c.DROP_MERGED_LOCUS,
         c.DROP_AMBIGUOUS,
-        c.DROP_DUPLICATE_LABEL,
     ]
+    # the two rules that dropped released wells until 2026-11-24 are gone
+    assert not hasattr(c, "DROP_WILD_TYPE")
+    assert not hasattr(c, "DROP_DUPLICATE_LABEL")
     assert len(set(rules)) == len(rules)
     assert all(len(description) > 40 for _, description in c.ROW_RULES)
 
@@ -749,10 +814,10 @@ def test_the_dataset_is_registered_and_takes_the_bw25113_genome_by_name(
     assert isinstance(kwargs["ecoli_genome"], FakeBW25113Genome)
 
 
-def test_the_loader_declares_the_bacterial_fitness_classes() -> None:
+def test_the_loader_declares_the_environment_response_classes() -> None:
     dataset = c.GrowthRateCampos2018Dataset.__new__(c.GrowthRateCampos2018Dataset)
-    assert dataset.experiment_class is FitnessExperiment
-    assert dataset.reference_class is FitnessExperimentReference
+    assert dataset.experiment_class is EnvironmentResponseExperiment
+    assert dataset.reference_class is EnvironmentResponseExperimentReference
     assert dataset.raw_file_names == [c.DATA_FILENAME]
     frame = object()
     assert dataset.preprocess_raw(frame) is frame
@@ -801,6 +866,7 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
     assert sorted(dataset.gene_set) == [
         "BW25113_0002",
         "BW25113_0004",
+        "BW25113_0005",
         "BW25113_0008",
         "BW25113_4412",
     ]
@@ -809,17 +875,40 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
     assert len(references) == 1
     first = dataset[0]
     experiment = first["experiment"]
-    assert experiment["phenotype"]["fitness"] == pytest.approx(0.49)
+    assert experiment["experiment_type"] == "environment_response"
+    assert experiment["phenotype"]["measurement_type"] == "growth_rate"
+    assert experiment["phenotype"]["environment_response"] == 0.0049
     assert experiment["phenotype"]["n_samples"] == 1
     assert experiment["phenotype"]["sample_unit"] == "biological_replicate"
+    assert experiment["phenotype"]["replicate_id"] == "1/A004"
     (perturbation,) = experiment["genotype"]["perturbations"]
     assert perturbation["systematic_gene_name"] == "BW25113_0002"
     assert perturbation["cassette"] == c.KEIO_CASSETTE
     assert experiment["environment"]["temperature"]["value"] == 30.0
     assert experiment["environment"]["perturbations"] == []
     reference = first["reference"]["phenotype_reference"]
-    assert reference["fitness"] == 1.0
+    assert reference["environment_response"] == pytest.approx(_SYNTHETIC_DENOMINATOR)
     assert reference["n_samples"] == _SYNTHETIC_WILD_TYPE
+    assert reference["replicate_id"] is None
+    # released order: the deletion wells, proB's two wells, then the wild-type wells
+    records = [dataset[i]["experiment"] for i in range(len(dataset))]
+    assert [r["phenotype"]["replicate_id"] for r in records] == [
+        "1/A004",
+        "1/A005",
+        "1/A006",
+        "1/A007",
+        "1/A014",
+        "2/A014",
+        "1/A001",
+        "1/A002",
+        "1/A003",
+    ]
+    assert [r["phenotype"]["environment_response"] for r in records[-3:]] == [
+        0.0100,
+        0.0098,
+        0.0102,
+    ]
+    assert all(r["genotype"]["perturbations"] == [] for r in records[-3:])
     assert first["publication"]["doi"] == c.DOI
     assert (root / "raw" / c.DATA_FILENAME).is_file()
     assert (root / "preprocess" / "build_manifest.json").is_file()
@@ -833,6 +922,12 @@ def test_the_build_writes_the_three_ledgers_with_the_arithmetic_closed(
     dropped = json.loads((root / "preprocess" / "dropped_records.json").read_text())
     assert dropped["released_rows"] == _SYNTHETIC_RELEASED
     assert dropped["kept_records"] == _SYNTHETIC_KEPT
+    assert dropped["records_by_kind"] == {
+        "deletion_wells": _SYNTHETIC_DELETION_KEPT,
+        "wild_type_wells": _SYNTHETIC_WILD_TYPE,
+    }
+    assert dropped["wild_type_wells_by_label"] == {"WT0001": _SYNTHETIC_WILD_TYPE}
+    assert dropped["labels_heading_more_than_one_row"] == {"proB": ["1/A014", "2/A014"]}
     assert (
         dropped["released_rows"] - dropped["dropped_records"]
         == (dropped["kept_records"])
@@ -855,7 +950,7 @@ def test_the_build_writes_the_three_ledgers_with_the_arithmetic_closed(
     )
 
 
-def test_the_released_score_is_an_affine_function_of_the_derived_fitness(
+def test_the_released_score_is_an_affine_function_of_the_rate_over_the_reference(
     tmp_path: Path, mirrored: Path
 ) -> None:
     """The docstring's cross-check, on the synthetic release built the same way."""
@@ -898,10 +993,15 @@ def test_download_refuses_a_mirror_whose_file_is_gone(mirrored: Path) -> None:
         dataset.download()
 
 
-def test_verify_build_runs_the_fitness_gate_on_the_fitness_store(
+def test_verify_build_runs_the_growth_rate_gate_on_the_growth_rate_store(
     tmp_path: Path, mirrored: Path, bw25113: EcoliK12BW25113Genome
 ) -> None:
-    """The store's directory name, the one ``build_dataset_lmdb`` hands over, picks it."""
+    """The store's directory name, the one ``build_dataset_lmdb`` hands over, picks it.
+
+    The growth-rate gate is the environment-response verifier's ABSOLUTE branch: the
+    reference states the wild-type median in min^-1, and every record sits in the one
+    unperturbed screen medium.
+    """
     root = tmp_path / "ecoli_growth_rate_campos2018"
     c.GrowthRateCampos2018Dataset(root=str(root))
     report = c.verify_build(str(root), genome=bw25113, expected_count=_SYNTHETIC_KEPT)
@@ -909,8 +1009,12 @@ def test_verify_build_runs_the_fitness_gate_on_the_fitness_store(
     assert report.dataset_name == "ecoli_growth_rate_campos2018"
     rows = {result.name: result for result in report.results}
     assert rows["count"].details["observed"] == _SYNTHETIC_KEPT
-    assert rows["pair_uniqueness"].details["n_duplicated"] == 0
-    assert rows["reference_one"].passed
+    # proB's two wells share a genotype signature and differ in replicate_id
+    assert rows["pair_uniqueness"].passed
+    assert rows["reference_zero"].passed
+    assert "absolute rule" in rows["reference_zero"].message
+    assert rows["environment_perturbed"].passed
+    assert "reference_one" not in rows
     assert "assay_coverage" not in rows
     assert (root / "preprocess" / "verification_report.json").exists()
 
@@ -990,7 +1094,7 @@ def test_every_paper_sourced_value_is_backed_by_its_verbatim_quote() -> None:
     module_values = [v for v in vars(c).values() if isinstance(v, SourcedValue)]
     # every module-level SourcedValue is in one of the three audited tuples
     assert {id(v) for v in module_values} == declared
-    assert len(c.SOURCED_VALUES) == 20
+    assert len(c.SOURCED_VALUES) == 23
     for value in c.SOURCED_VALUES:
         result = audit_sourced_value(value, root)
         assert result.passed, f"{value.value!r}: {result.message}"
@@ -1089,16 +1193,17 @@ def test_the_real_release_resolves_to_the_measured_row_counts() -> None:
     assert table.wild_type_median_alpha_max == pytest.approx(0.0097366516, abs=1e-10)
     genome = c._bw25113(data_root)
     resolution = c.resolve_rows(table, genome, label="campos2018")
-    assert len(resolution.kept) == c.EXPECTED_RECORDS == 3664
+    assert len(resolution.kept) == c.EXPECTED_DELETION_RECORDS == 3784
+    assert len(resolution.wild_type) == 240
+    assert resolution.records == c.EXPECTED_RECORDS == 4024
     assert resolution.dropped_rows == {
         c.DROP_FOOTER: 4,
-        c.DROP_WILD_TYPE: 240,
         c.DROP_ANNOTATED: 5,
         c.DROP_NOT_IN_ANNOTATION: 438,
         c.DROP_MERGED_LOCUS: 0,
         c.DROP_AMBIGUOUS: 0,
-        c.DROP_DUPLICATE_LABEL: 120,
     }
+    assert table.released_rows - sum(resolution.dropped_rows.values()) == 4024
     reconciliation = resolution.reconciliation
     assert reconciliation.unique_names == 4158
     assert reconciliation.resolved == 3720
@@ -1115,6 +1220,42 @@ def test_the_real_release_resolves_to_the_measured_row_counts() -> None:
     jw = {name for name in retired if name.startswith("JW")}
     assert len(jw) == 412
     assert len(retired - jw) == 26
+
+
+@pytest.mark.data
+def test_the_real_release_stores_every_well_once_per_replicate_position() -> None:
+    """#1178: one record per released well, the 240 parents and 120 repeats included."""
+    import os
+
+    data_root = os.environ["DATA_ROOT"]
+    table = c.read_normalized_table(c.raw_mirror_dir(data_root) / c.DATA_REL)
+    resolution = c.resolve_rows(table, c._bw25113(data_root), label="campos2018")
+    positions = [r.row.replicate_id for r in resolution.kept] + [
+        row.replicate_id for row in resolution.wild_type
+    ]
+    assert len(positions) == len(set(positions)) == 4024
+    by_label = Counter(row.label for row in resolution.wild_type)
+    assert by_label == {"WT0511": 48, "WT0813": 96, "WT0815": 96}
+    assert {row.label: row.plate for row in resolution.wild_type} == {
+        "WT0813": "WT1",
+        "WT0815": "WT2",
+        "WT0511": "WT3",
+    }
+    repeated = resolution.repeated_labels
+    assert len(repeated) == c.EXPECTED_REPEATED_LABELS == 56
+    assert sum(len(heads) for heads in repeated.values()) == (
+        c.EXPECTED_REPEATED_LABEL_ROWS
+    )
+    assert Counter(len(heads) for heads in repeated.values()) == {2: 50, 3: 4, 4: 2}
+    assert repeated["flgM"] == ["5/H012", "89/H012"]
+    assert repeated["ygaQ"] == ["5/E012", "11/C004", "69/F004", "79/D001"]
+    # every repeated label's rows sit on one locus tag, at distinct positions
+    tags: dict[str, set[str]] = {r.row.label: set() for r in resolution.kept}
+    for record in resolution.kept:
+        tags[record.row.label].add(record.locus_tag)
+    assert all(len(tags[name]) == 1 for name in repeated)
+    singles = len(resolution.kept) - c.EXPECTED_REPEATED_LABEL_ROWS
+    assert singles == 3664
 
 
 @pytest.mark.data
@@ -1138,9 +1279,12 @@ def test_none_of_the_released_jw_labels_is_a_synonym_of_the_pinned_annotation() 
 
 
 @pytest.mark.data
-def test_the_real_derived_fitness_is_an_exact_affine_map_of_the_released_score() -> (
-    None
-):
+def test_the_real_rate_over_the_reference_is_an_exact_affine_map_of_the_score() -> None:
+    """The reference median is the authors' anchor.
+
+    Over all 4,024 stored wells the released score is an exact affine function of
+    ``alpha_max / reference``.
+    """
     import os
 
     data_root = os.environ["DATA_ROOT"]
@@ -1149,20 +1293,19 @@ def test_the_real_derived_fitness_is_an_exact_affine_map_of_the_released_score()
     genome = c._bw25113(data_root)
     resolution = c.resolve_rows(table, genome, label="campos2018")
     scores = c.released_alpha_max_scores(path)
-    denominator = table.wild_type_median_alpha_max
-    fitness = np.array(
-        [record.row.alpha_max / denominator for record in resolution.kept]
-    )
-    released = np.array(
-        [scores[(record.row.plate, record.row.well)] for record in resolution.kept]
-    )
-    slope, intercept = np.polyfit(fitness, released, 1)
+    rows = [record.row for record in resolution.kept] + list(resolution.wild_type)
+    reference = c.growth_rate_reference_phenotype(resolution.wild_type)
+    assert reference.environment_response == pytest.approx(0.0097366516, abs=1e-10)
+    assert reference.n_samples == 240
+    ratio = np.array([row.alpha_max / table.wild_type_median_alpha_max for row in rows])
+    released = np.array([scores[(row.plate, row.well)] for row in rows])
+    slope, intercept = np.polyfit(ratio, released, 1)
     assert slope == pytest.approx(23.777071, abs=1e-5)
     assert intercept == pytest.approx(-slope, abs=1e-4)
-    assert float(np.abs(released - (slope * fitness + intercept)).max()) < 1e-9
-    assert float(fitness.min()) > 0.0
-    assert float(fitness.min()) == pytest.approx(0.121789, abs=1e-6)
-    assert float(fitness.max()) == pytest.approx(1.351417, abs=1e-6)
+    assert float(np.abs(released - (slope * ratio + intercept)).max()) < 1e-9
+    rates = np.array([row.alpha_max for row in rows])
+    assert float(rates.min()) == pytest.approx(0.00118581, abs=1e-8)
+    assert float(rates.max()) == pytest.approx(0.01315828, abs=1e-8)
 
 
 # --------------------------------------------------------------------------- #
@@ -1336,12 +1479,29 @@ def test_the_morphology_loader_builds_the_synthetic_release_end_to_end(
     assert sorted(dataset.gene_set) == [
         "BW25113_0002",
         "BW25113_0004",
+        "BW25113_0005",
         "BW25113_0008",
         "BW25113_4412",
     ]
     references = dataset.experiment_reference_index
     assert references is not None
     assert len(references) == 1
+    reference = dataset[0]["reference"]["phenotype_reference"]
+    assert reference["n_samples"] == _SYNTHETIC_WILD_TYPE
+    assert reference["replicate_id"] is None
+    records = [dataset[i]["experiment"] for i in range(len(dataset))]
+    assert [r["phenotype"]["replicate_id"] for r in records] == [
+        "1/A004",
+        "1/A005",
+        "1/A006",
+        "1/A007",
+        "1/A014",
+        "2/A014",
+        "1/A001",
+        "1/A002",
+        "1/A003",
+    ]
+    assert all(r["genotype"]["perturbations"] == [] for r in records[-3:])
     experiment = dataset[0]["experiment"]
     phenotype = experiment["phenotype"]
     assert experiment["experiment_type"] == "morphology"
@@ -1375,13 +1535,13 @@ def test_the_morphology_build_writes_the_per_feature_coverage_ledger(
     }
     by_feature = features["determined_values_by_feature"]
     assert set(by_feature) == set(c.MORPHOLOGY_FEATURES)
-    # 4 kept rows, 1 of them without the DAPI channel
+    # 9 records (6 deletion wells and 3 wild-type wells), 1 without the DAPI channel
     for symbol in c.MORPHOLOGY_REQUIRED_FEATURES:
         assert by_feature[symbol] == _SYNTHETIC_KEPT
     for symbol in c.MORPHOLOGY_DAPI_FEATURES:
         assert by_feature[symbol] == _SYNTHETIC_KEPT - 1
     assert features["determined_values"] == sum(by_feature.values())
-    assert features["determined_values"] == 19 * 4 + 7 * 3
+    assert features["determined_values"] == 19 * 9 + 7 * 8
     assert set(features["feature_units"]["<L>"]) == set("µm")
     assert features["feature_units"]["CV_L"] is None
     assert set(features["features_by_statistic"]) == {
@@ -1425,12 +1585,14 @@ def test_the_morphology_verifier_passes_on_the_synthetic_build(
     rows = {result.name: result for result in report.results}
     assert rows["count"].details["observed"] == _SYNTHETIC_KEPT
     assert rows["assay_coverage"].details["assay"] == "campos2018"
-    assert rows["assay_coverage"].details["coverage_strata"] == {"19": 1, "26": 3}
-    assert rows["value_fidelity"].details["n_values"] == 19 * 4 + 7 * 3
+    full = _SYNTHETIC_KEPT - 1
+    assert rows["assay_coverage"].details["coverage_strata"] == {"19": 1, "26": full}
+    assert rows["value_fidelity"].details["n_values"] == 19 * _SYNTHETIC_KEPT + 7 * full
     assert rows["value_fidelity"].details["n_features"] == 26
-    # 11 CVs on the three full rows and 10 on the row without the DAPI channel, whose
+    # 11 CVs on the full rows and 10 on the row without the DAPI channel, whose
     # missing CV_NA is one of the seven nucleoid-derived features
-    assert rows["cv_nonnegative"].details["n_values"] == 11 * 3 + 10
+    assert rows["cv_nonnegative"].details["n_values"] == 11 * full + 10
+    assert rows["pair_uniqueness"].passed
     assert rows["reference_populated"].passed
     assert (root / "preprocess" / "verification_report.json").exists()
 
@@ -1560,7 +1722,7 @@ def test_the_cli_builds_each_dataset_under_its_own_root(
 @pytest.mark.parametrize(
     ("command", "root_attr", "function"),
     [
-        ("verify", "DATASET_ROOT_REL", "verify_fitness_build"),
+        ("verify", "DATASET_ROOT_REL", "verify_growth_rate_build"),
         ("verify-morphology", "MORPHOLOGY_ROOT_REL", "verify_morphology_build"),
     ],
 )
@@ -1574,7 +1736,7 @@ def test_the_cli_verify_passes_its_own_root_and_returns_the_reports_verdict(
     """Each verify subcommand gates on its own dataset's report, not a constant.
 
     The verifier is replaced because the real one's record-count oracle is the released
-    3,664, which no synthetic build can meet; what is under test is which root the
+    4,024, which no synthetic build can meet; what is under test is which root the
     subcommand reads and that the exit code is the report's verdict.
     """
     from torchcell.verification.levels import l1_count

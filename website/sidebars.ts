@@ -104,6 +104,16 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'E. coli tasks',
+      items: [
+        'benchmark/ecoli/index',
+        'benchmark/ecoli/examples',
+        'benchmark/ecoli/processing',
+        'benchmark/ecoli/results',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Submitting',
       items: [
         'benchmark/submission-format',

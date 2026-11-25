@@ -84,7 +84,7 @@ import pickle
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import lmdb
 import numpy as np
@@ -1772,10 +1772,10 @@ class ProteomeTimecourseMuenzner2024Dataset(_MuenznerIsolateDataset):
         samples[["isolate", "replicate", "timepoint", "time_hours"]].to_csv(
             osp.join(self.preprocess_dir, "data.csv"), index=False
         )
-        grouped = {
-            (str(s), int(r), str(t)): block
-            for (s, r, t), block in frame.groupby(SAMPLE_KEYS)
-        }
+        grouped: dict[tuple[str, int, str], pd.DataFrame] = {}
+        for key, block in frame.groupby(SAMPLE_KEYS):
+            strain, replicate, timepoint = cast(tuple[Any, Any, Any], key)
+            grouped[(str(strain), int(replicate), str(timepoint))] = block
 
         def records() -> Iterator[tuple[Experiment, ExperimentReference]]:
             for row in samples.to_dict("records"):

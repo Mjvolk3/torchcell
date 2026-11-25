@@ -142,7 +142,10 @@ sourcing layer.
 - ``rachwalski2024`` -- ``CrispriCrossRachwalski2024Dataset``: the mobile CRISPRi
   collection's normalized colony growth, crossed into the lpp deletion and into the whole
   Keio collection, so a record can carry an essential-gene knockdown and a cataloged
-  deletion at once.
+  deletion at once. One record per REPLICATE: the Keio arm reads the Zenodo deposit's
+  per-replicate tables, whose two assay-plate replicates the released Table S4A cell is
+  the mean of, while the collection arm's two technical pinnings stay combined as the
+  release combined them.
 - ``price2018`` -- ``RbTnseqPrice2018EcoliDataset``: the RB-TnSeq fitness compendium,
   the loader that serves the experiments Wetmore 2015 first reported; and
   ``GeneEssentialityPrice2018EcoliDataset``, its Supplementary Table 1 likely-essential

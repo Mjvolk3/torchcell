@@ -199,6 +199,31 @@ def _l1_replicate_groups(records: Sequence[Record]) -> LevelResult:
     )
 
 
+def _l1_replicate_id_per_library(records: Sequence[Record]) -> LevelResult:
+    """L1 for a compendium whose records name their library (#1171, #1178).
+
+    Every record carries a ``replicate_id`` and no two records share one, so two
+    libraries of one condition are told apart by the release's own label rather than by
+    their values alone.
+    """
+    ids = [rec["experiment"]["phenotype"].get("replicate_id") for rec in records]
+    unlabelled = sum(1 for i in ids if i is None)
+    counts = Counter(str(i) for i in ids if i is not None)
+    sharing = sum(n for n in counts.values() if n > 1)
+    passed = unlabelled == 0 and sharing == 0
+    return LevelResult(
+        level=Level.L1,
+        name="replicate_id_per_library",
+        passed=passed,
+        message=(
+            f"{len(ids)} records each name their own library"
+            if passed
+            else f"{unlabelled} records name no library; {sharing} share a replicate_id"
+        ),
+        details={"n_unlabelled": unlabelled, "n_sharing": sharing},
+    )
+
+
 def _l3_measurement_type_consistent(records: Sequence[Record]) -> LevelResult:
     """L3: all records share a single measurement_type (no silent cross-assay mixing)."""
     types = {rec["experiment"]["phenotype"]["measurement_type"] for rec in records}
@@ -277,6 +302,7 @@ def verify_rnaseq_dataset(
     provenance: Provenance,
     expected_count: int,
     replicate_aware: bool = False,
+    replicate_id_per_library: bool = False,
     l0_validator: Validator | None = None,
 ) -> VerificationReport:
     """Run the L0-L3 record-level gate for an RNA-seq expression dataset.
@@ -287,6 +313,8 @@ def verify_rnaseq_dataset(
     one row per sequenced LIBRARY (PRECISE-1K, putidaPRECISE321), where the replicates of
     a condition legitimately share a genotype and an environment and carry no strain id;
     the group rule (:func:`_l1_replicate_groups`) is what those records can get wrong.
+    ``replicate_id_per_library`` (default False) adds :func:`_l1_replicate_id_per_library`
+    for a compendium whose records carry the release's library label (#1171).
 
     ``l0_validator`` is the L0 validator; ``None`` validates against the
     ``ExperimentType`` union. A natural-isolate store passes
@@ -314,6 +342,8 @@ def verify_rnaseq_dataset(
         if replicate_aware
         else _l1_strain_uniqueness(records)
     )
+    if replicate_id_per_library:
+        report.add(_l1_replicate_id_per_library(records))
 
     kind = _expr_map(records[0]["experiment"]["phenotype"])[1] if records else "tpm"
     expr_values = [

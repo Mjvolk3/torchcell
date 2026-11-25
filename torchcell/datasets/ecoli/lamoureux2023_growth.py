@@ -95,6 +95,26 @@ never states the design behind it, so nothing about that design is asserted:
   Unlike Schmidt 2016, where the assay IS stated and ``AssayType.other`` carries it, here
   the assay is not reported, so the field is a typed absence rather than ``other``.
 
+PER-REPLICATE REVIEW (#1171, #1178, 2026-11-24): NO RECORD CHANGES, AN OWNER QUESTION.
+A record is one released rate cell, one per sequencing library, and each library is one
+of the condition's "biological replicates" (Methods, QC; ``lamoureux2023.REPLICATE_QC``).
+The reference is the mean of 8 stored wild-type records, an aggregate summary over
+control replicates that are records themselves, which the policy allows. What the source
+does NOT settle is what one rate cell measures, and the release answers differently by
+project (``preprocess/rate_repetition.json``, :func:`rate_repetition`, measured): of the
+156 conditions with two or more libraries, every library repeats one identical rate in
+73 (146 rows; all of ``cra_crp``, ``efeU``, ``fps``, ``fur``, ``misc2``, ``nquinone``,
+``omics``, ``ompr``, ``oxidative``, ``pal``, ``pdhr_ale``, ``rpoB``, 12 of 13 ``ica``, 6
+of 14 ``ytf``), every library carries its own rate in 82 (all 27 ``hot_tale``, all 47
+``pcoli``, 8 ``ytf``), and ``ica:wt_glc`` repeats one rate within each of its three
+library pairs. If a repeated rate is one condition-level value copied onto each library,
+the store holds that one value 2 times per condition and the record would be one per
+condition (``replicate_id`` None, ``n_samples`` a gap); if it is each culture's own rate
+that happens to agree to the printed precision, the 354 records are right. No mirrored
+text says which, so the records stay as released and the question is the owner's; the
+``n_samples`` and uncertainty gaps keep ``not_reported_by_primary`` rather than
+``not_applicable_single_measurement``, since a single measurement is not established.
+
 A SEPARATE MODULE, measured. ``build_manifest`` keys a built store's staleness on the
 schema closure of the loader MODULE's own ``torchcell.datamodels`` imports
 (``provenance/schema_deps.py:loader_closure``). ``lamoureux2023.py``'s closure is 61
@@ -515,6 +535,78 @@ def base_aggregate(
     )
 
 
+class ProjectRepetition(BaseModel):
+    """One project's multi-library conditions, by how their libraries' rates relate."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    conditions: int = Field(description="conditions with two or more stored libraries")
+    all_identical: int = Field(description="every library releases one identical rate")
+    all_distinct: int = Field(description="every library releases its own rate")
+
+
+class RateRepetition(BaseModel):
+    """How the released rate repeats across the libraries of one condition (#1178).
+
+    The evidence behind the open owner question in the module docstring: whether a rate
+    repeated across a condition's libraries is one value per condition or per culture.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    conditions: int
+    single_library_conditions: int
+    multi_library_conditions: int
+    all_identical_conditions: int
+    all_identical_rows: int
+    all_distinct_conditions: int
+    rows_sharing_their_rate_within_condition: int
+    by_project: dict[str, ProjectRepetition]
+
+
+def rate_repetition(rows: Sequence[RateRow]) -> RateRepetition:
+    """Measure, per condition (``full_name``), whether its libraries repeat one rate."""
+    by_condition: dict[str, list[RateRow]] = {}
+    for row in rows:
+        by_condition.setdefault(row.full_name, []).append(row)
+    project_counts: dict[str, list[int]] = {}
+    identical_rows = 0
+    sharing = 0
+    single = 0
+    identical = 0
+    distinct = 0
+    for members in by_condition.values():
+        rates = [row.rate for row in members]
+        if len(members) == 1:
+            single += 1
+            continue
+        tally = project_counts.setdefault(members[0].project, [0, 0, 0])
+        tally[0] += 1
+        sharing += sum(1 for rate in rates if rates.count(rate) > 1)
+        if len(set(rates)) == 1:
+            identical += 1
+            identical_rows += len(members)
+            tally[1] += 1
+        if len(set(rates)) == len(rates):
+            distinct += 1
+            tally[2] += 1
+    return RateRepetition(
+        conditions=len(by_condition),
+        single_library_conditions=single,
+        multi_library_conditions=len(by_condition) - single,
+        all_identical_conditions=identical,
+        all_identical_rows=identical_rows,
+        all_distinct_conditions=distinct,
+        rows_sharing_their_rate_within_condition=sharing,
+        by_project={
+            project: ProjectRepetition(
+                conditions=n, all_identical=same, all_distinct=own
+            )
+            for project, (n, same, own) in sorted(project_counts.items())
+        },
+    )
+
+
 # --------------------------------------------------------------------------- #
 # Records
 # --------------------------------------------------------------------------- #
@@ -805,6 +897,9 @@ class GrowthRateLamoureux2023Dataset(ExperimentDataset):
                 },
                 indent=2,
             )
+        )
+        (out / "rate_repetition.json").write_text(
+            rate_repetition(rows).model_dump_json(indent=2)
         )
         (out / "record_samples.json").write_text(
             json.dumps([row.sample for row in rows], indent=2)

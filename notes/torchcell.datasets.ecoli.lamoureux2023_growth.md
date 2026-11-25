@@ -320,3 +320,10 @@ and asserts the two digests differ, that the two dumps differ in `replicate_id` 
 and that the sample id is therefore the whole difference; it failed on
 `assert digests[0] != digests[1]` before the change.
 `test_a_release_whose_sample_id_repeats_refuses_the_build` is the guard.
+
+## 2026.11.24 - Per-replicate review: no record change, the record unit is the owner's call (#1171, #1178)
+
+- **Records:** 354 before and after, byte-identical to the dev store. One record per released rate cell, i.e. per sequencing library; `replicate_id` is already the `sample_id`. The reference (mean of the 8 base-condition wild-type rates, each also a record) is an aggregate over control replicates, which the policy allows.
+- **New ledger** `preprocess/rate_repetition.json` (`rate_repetition`), measured on the release: 194 conditions, 38 with one library; of the 156 with two or more, 73 repeat one identical rate on every library (146 rows), 82 carry a rate per library, and `ica:wt_glc` repeats one rate per library pair (0.58, 0.58, 0.66, 0.66, 0.63, 0.63). By project: every multi-library condition of `cra_crp`, `efeU`, `fps`, `fur`, `misc2`, `nquinone`, `omics`, `ompr`, `oxidative`, `pal`, `pdhr_ale`, `rpoB` repeats one rate, as do 12 of 13 `ica` and 6 of 14 `ytf`; all 27 `hot_tale`, all 47 `pcoli` and 8 `ytf` carry one rate per library.
+- **Owner question:** where every library of a condition repeats one rate, is that one condition-level value copied onto each library (then one record per condition, `replicate_id` None, `n_samples` a gap) or each culture's own rate agreeing to the printed precision (then the 354 stand)? No mirrored text states what the column measures, so the records stay as released and the `n_samples` and uncertainty gaps keep `not_reported_by_primary`.
+- **Verifier:** the scratch build `$DATA_ROOT/tmp/scratch/per-replicate-lamoureux2023/growth_rate_lamoureux2023` passes `verify_build`; `canonical_gene_names` reports 19 names (report-class, not a gate).

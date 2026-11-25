@@ -630,7 +630,9 @@ def test_the_phenotype_inverts_log2_tpm_plus_one_exactly() -> None:
         ["b0001", "b0002"],
         np.array([0.0, math.log2(7.0)]),
         np.array([0, 12], dtype=np.int64),
+        "control__wt_glc__1",
     )
+    assert phenotype.replicate_id == "control__wt_glc__1"
     assert dict(phenotype.expression_tpm) == {"b0001": 0.0, "b0002": 6.0}
     assert phenotype.expression_count is not None
     assert dict(phenotype.expression_count) == {"b0001": 0, "b0002": 12}
@@ -686,6 +688,9 @@ def _metadata_rows() -> dict[str, dict[str, str]]:
             }
         )
         base.update(cells)
+        # the release's sample_id is <project>__<condition>__<rep_id>, unique per library
+        base[L.COL_SAMPLE] = f"{project}__{base[L.COL_CONDITION]}__{base[L.COL_REP]}"
+        base.setdefault(L.COL_SRX, "")
         return base
 
     mg = "Escherichia coli K-12 MG1655"
@@ -698,6 +703,7 @@ def _metadata_rows() -> dict[str, dict[str, str]]:
             **{
                 L.COL_DESCRIPTION: f"{mg} del_thrA",
                 L.COL_ANTIBIOTIC: "Kanamycin (50 ug/mL)",
+                L.COL_SRX: "SRX0000003",
             },
         ),
         "p1k_00004": row(
@@ -707,6 +713,7 @@ def _metadata_rows() -> dict[str, dict[str, str]]:
                 L.COL_DESCRIPTION: f"{mg} del_thrA",
                 L.COL_ANTIBIOTIC: "Kanamycin (50 ug/mL)",
                 L.COL_REP: "2",
+                L.COL_SRX: "SRX0000003",
             },
         ),
         "p1k_00005": row(
@@ -740,7 +747,11 @@ def _metadata_rows() -> dict[str, dict[str, str]]:
             "p1k_00010", "rpoB:e546v", **{L.COL_DESCRIPTION: f"{mg} rpoBE546V"}
         ),
         "p1k_00011": row("p1k_00011", "abx:camhb", **{L.COL_MEDIA: "CAMHB"}),
-        "p1k_00012": row("p1k_00012", "rpoB:wt_031", **{L.COL_CULTURE: "Chemostat"}),
+        "p1k_00012": row(
+            "p1k_00012",
+            "rpoB:wt_031",
+            **{L.COL_CULTURE: "Chemostat", L.COL_SRX: "SRX651939"},
+        ),
         "p1k_00013": row("p1k_00013", "minicoli:glc", **{L.COL_ACCEPTOR: ""}),
         "p1k_00014": row(
             "p1k_00014",
@@ -1116,6 +1127,48 @@ def test_replicates_share_an_environment_and_are_grouped_by_condition(
     assert anaerobic["perturbations"][3]["concentration"]["value"] == 20.0
 
 
+def test_each_record_names_its_library_and_the_reference_names_none(
+    built: L.RnaseqLamoureux2023Dataset,
+) -> None:
+    """#1171: replicate_id is the library's sample_id; the control mean names none."""
+    samples = _json(built, "record_samples.json")
+    rows = _metadata_rows()
+    for index, sample in enumerate(samples):
+        phenotype = built[index]["experiment"]["phenotype"]
+        assert phenotype["replicate_id"] == rows[sample][L.COL_SAMPLE]
+        assert built[index]["reference"]["phenotype_reference"]["replicate_id"] is None
+    assert built[0]["experiment"]["phenotype"]["replicate_id"] == "control__wt_glc__1"
+    assert built[1]["experiment"]["phenotype"]["replicate_id"] == "control__wt_glc__2"
+
+
+def test_the_release_account_counts_the_qc_exclusions_and_shared_experiments(
+    built: L.RnaseqLamoureux2023Dataset,
+) -> None:
+    """A count column outside the metadata is an author exclusion, never a record."""
+    account = _json(built, "release_account.json")
+    assert account == {
+        "count_columns": 18,
+        "compendium_samples": 17,
+        "author_qc_excluded": ["p1k_09999"],
+        "replicate_positions": {"1": 15, "2": 2},
+        "sra_experiments_with_several_records": {
+            "SRX0000003": ["p1k_00003", "p1k_00004"]
+        },
+    }
+
+
+def test_the_release_account_refuses_a_repeated_sample_id_or_a_missing_column() -> None:
+    rows = _metadata_rows()
+    metadata = pd.DataFrame.from_dict(rows, orient="index")
+    columns = sorted(rows)
+    repeated = metadata.copy()
+    repeated.loc["p1k_00002", L.COL_SAMPLE] = "control__wt_glc__1"
+    with pytest.raises(RuntimeError, match="sample_id repeats"):
+        L.release_account(repeated, columns)
+    with pytest.raises(RuntimeError, match="counts.csv lacks metadata samples"):
+        L.release_account(metadata, columns[1:])
+
+
 def test_the_build_refuses_a_control_pair_that_names_another_reference(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1150,7 +1203,7 @@ def test_every_sourced_value_is_a_verbatim_quote_in_the_pinned_mirror() -> None:
         for name in dir(L)
         if isinstance(getattr(L, name), SourcedValue)
     ]
-    assert len(values) == 14
+    assert len(values) == 15
     assert {v.provenance.source_uri for v in values} == {L.PAPER_MD, L.SI_MD}
     for value in values:
         result = audit_sourced_value(value, library)
@@ -1172,6 +1225,55 @@ def test_the_raw_mirror_pins_every_member_this_loader_consumes() -> None:
     for raw in L.RAW_FILES:
         digest = hashlib.sha256((root / raw.relpath).read_bytes()).hexdigest()
         assert digest == raw.sha256
+
+
+@pytest.mark.data
+def test_the_release_holds_one_column_per_library_and_the_authors_exclusions() -> None:
+    """Read from the raw mirror, not a build (#1171, #1178).
+
+    1,035 post-QC libraries, each a record with a unique ``sample_id``; 1,055 count
+    columns, the paper's candidates, so 20 are the authors' QC exclusions; four SRA
+    experiments (all GSE59377 ``rpoB``) are each named by two libraries with distinct
+    runs, the open owner question; and the replicate positions per ``rep_id``.
+    """
+    root = L.raw_mirror_dir(_data_root())
+    metadata = L.read_metadata(str(root / L.METADATA.relpath))
+    counts = pd.read_csv(root / L.COUNTS.relpath, index_col=0, nrows=1)
+    account = L.release_account(metadata, [str(c) for c in counts.columns])
+    assert (account.count_columns, account.compendium_samples) == (
+        L.CANDIDATES.value,
+        L.COMPENDIUM.value,
+    )
+    assert account.author_qc_excluded == [
+        "p1k_00013",
+        "p1k_00069",
+        "p1k_00076",
+        "p1k_00156",
+        "p1k_00560",
+        "p1k_00561",
+        "p1k_00580",
+        "p1k_00581",
+        "p1k_00720",
+        "p1k_00821",
+        "p1k_00822",
+        "p1k_00823",
+        "p1k_00824",
+        "p1k_00825",
+        "p1k_00856",
+        "p1k_00857",
+        "p1k_00886",
+        "p1k_00887",
+        "p1k_00888",
+        "p1k_00889",
+    ]
+    assert account.sra_experiments_with_several_records == {
+        "SRX651938": ["p1k_00094", "p1k_00095"],
+        "SRX651942": ["p1k_00098", "p1k_00099"],
+        "SRX651945": ["p1k_00101", "p1k_00102"],
+        "SRX651946": ["p1k_00103", "p1k_00104"],
+    }
+    assert sum(account.replicate_positions.values()) == 1035
+    assert metadata["Run"][metadata["Run"] != ""].is_unique
 
 
 def _built_root() -> Path:
@@ -1305,3 +1407,15 @@ def test_the_dev_tree_build_passes_the_record_rules_and_never_merges_two_conditi
         merged.setdefault(key, set()).add(cells[sample])
     assert (len(groups), len(merged)) == (121, 114)
     assert all(len(distinct) == 1 for distinct in merged.values())
+
+    # #1171: every record names its library by the release's sample_id; the reference,
+    # the control pair's mean, names none
+    metadata = L.read_metadata(str(L.raw_mirror_dir(_data_root()) / L.METADATA.relpath))
+    ids = [record["experiment"]["phenotype"]["replicate_id"] for record in records]
+    assert ids == [metadata.loc[sample, L.COL_SAMPLE] for sample in samples]
+    assert len(set(ids)) == 1035
+    assert {
+        record["reference"]["phenotype_reference"]["replicate_id"] for record in records
+    } == {None}
+    account = json.loads((root / "preprocess/release_account.json").read_text())
+    assert (len(account["author_qc_excluded"]), account["count_columns"]) == (20, 1055)

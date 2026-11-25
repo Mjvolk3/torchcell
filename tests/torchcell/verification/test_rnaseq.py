@@ -572,6 +572,49 @@ def test_replicate_groups_separates_conditions_and_reports_the_sizes() -> None:
     assert groups.details["group_size_histogram"] == {"1": 1, "3": 1}
 
 
+def test_replicate_id_per_library_passes_named_libraries_and_fails_a_shared_id() -> (
+    None
+):
+    """#1171: the opt-in rule wants one release label per record, none shared."""
+    first = _library({"b0001": 2.0}, {"b0001": 15})
+    second = _library({"b0001": 2.1}, {"b0001": 16})
+    first["experiment"]["phenotype"]["replicate_id"] = "a__x__1"
+    second["experiment"]["phenotype"]["replicate_id"] = "a__x__2"
+    report = verify_rnaseq_dataset(
+        [first, second],
+        dataset_name="rna",
+        provenance=PROV,
+        expected_count=2,
+        replicate_aware=True,
+        replicate_id_per_library=True,
+    )
+    assert [r.name for r in report.results][:4] == [
+        "structural",
+        "count",
+        "replicate_groups",
+        "replicate_id_per_library",
+    ]
+    rule = _result(report, "replicate_id_per_library")
+    assert (rule.level, rule.passed) == (Level.L1, True)
+    second["experiment"]["phenotype"]["replicate_id"] = "a__x__1"
+    third = _library({"b0001": 2.2}, {"b0001": 17})
+    report = verify_rnaseq_dataset(
+        [first, second, third],
+        dataset_name="rna",
+        provenance=PROV,
+        expected_count=3,
+        replicate_aware=True,
+        replicate_id_per_library=True,
+    )
+    rule = _result(report, "replicate_id_per_library")
+    assert rule.passed is False
+    assert rule.details == {"n_unlabelled": 1, "n_sharing": 2}
+    # off by default: the existing compendia keep their rule list
+    assert "replicate_id_per_library" not in [
+        r.name for r in _verify_replicate_aware([first, third]).results
+    ]
+
+
 # --------------------------------------------------------------------------- #
 # Issue #854: the count-less number-fraction family
 # --------------------------------------------------------------------------- #

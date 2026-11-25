@@ -2245,6 +2245,12 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "mrna_fraction_balakrishnan2022",
         "putida_precise321_lim2022",
     }
+    # #1171: the PRECISE-1K arms name each library by the release's sample_id
+    assert {
+        name
+        for name, spec in runners.RNASEQ_DATASETS.items()
+        if spec.get("replicate_id_per_library")
+    } == {"rnaseq_lamoureux2023", "rnaseq_public_k12_lamoureux2023"}
     assert {
         name: spec["min_containment"]
         for name, spec in runners.RNASEQ_DATASETS.items()

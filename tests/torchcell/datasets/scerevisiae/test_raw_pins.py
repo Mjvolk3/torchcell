@@ -164,9 +164,14 @@ def _pins_from_constants(
             m.CarotenoidOzaydin2013Dataset.si_filename: m._SI_SHA256
         },
         "FattyAcidSmith2006Dataset": lambda: {m.XLS_FILENAME: m.XLS_SHA256},
+        # Smith 2016 (#1178): the effect table, the guide table, the sequenced-sample
+        # sheet and the two per-replicate workbooks, each against its own constant.
         "CrispriChemgenSmith2016Dataset": lambda: {
             m.EFFECT_FILENAME: m.EFFECT_SHA256,
             m.GUIDE_FILENAME: m.GUIDE_SHA256,
+            m.SAMPLES_FILENAME: m.SAMPLES_SHA256,
+            m.DMSO_REPLICATES_FILENAME: m.DMSO_REPLICATES_SHA256,
+            m.FLUCONAZOLE_REPLICATES_FILENAME: m.FLUCONAZOLE_REPLICATES_SHA256,
         },
         "EnvChemgenVanacloig2022Dataset": lambda: {m.DATA_FILENAME: m.DATA_SHA256},
         "EnvChemgenPiotrowski2017Dataset": lambda: {
@@ -515,7 +520,7 @@ def test_the_recorder_checks_presence_and_records_without_hashing(
 
 
 #: The seven loaders whose ``download()`` used to take its pin from the manifest, plus
-#: Messner 2021, written that way from the start, one row per mirror file (13):
+#: Messner 2021, written that way from the start, one row per mirror file (16):
 #: ``(module, class, relpath constant, pin constant, files checked before it)``, each
 #: earlier file as ``(relpath, pin, raw file name)`` constants.
 MANIFEST_CHECKED_DOWNLOADS: list[
@@ -554,6 +559,43 @@ MANIFEST_CHECKED_DOWNLOADS: list[
         "GUIDE_REL",
         "GUIDE_SHA256",
         (("EFFECT_REL", "EFFECT_SHA256", "EFFECT_FILENAME"),),
+    ),
+    (
+        "smith2016",
+        "CrispriChemgenSmith2016Dataset",
+        "SAMPLES_REL",
+        "SAMPLES_SHA256",
+        (
+            ("EFFECT_REL", "EFFECT_SHA256", "EFFECT_FILENAME"),
+            ("GUIDE_REL", "GUIDE_SHA256", "GUIDE_FILENAME"),
+        ),
+    ),
+    (
+        "smith2016",
+        "CrispriChemgenSmith2016Dataset",
+        "DMSO_REPLICATES_REL",
+        "DMSO_REPLICATES_SHA256",
+        (
+            ("EFFECT_REL", "EFFECT_SHA256", "EFFECT_FILENAME"),
+            ("GUIDE_REL", "GUIDE_SHA256", "GUIDE_FILENAME"),
+            ("SAMPLES_REL", "SAMPLES_SHA256", "SAMPLES_FILENAME"),
+        ),
+    ),
+    (
+        "smith2016",
+        "CrispriChemgenSmith2016Dataset",
+        "FLUCONAZOLE_REPLICATES_REL",
+        "FLUCONAZOLE_REPLICATES_SHA256",
+        (
+            ("EFFECT_REL", "EFFECT_SHA256", "EFFECT_FILENAME"),
+            ("GUIDE_REL", "GUIDE_SHA256", "GUIDE_FILENAME"),
+            ("SAMPLES_REL", "SAMPLES_SHA256", "SAMPLES_FILENAME"),
+            (
+                "DMSO_REPLICATES_REL",
+                "DMSO_REPLICATES_SHA256",
+                "DMSO_REPLICATES_FILENAME",
+            ),
+        ),
     ),
     ("vanacloig2022", "EnvChemgenVanacloig2022Dataset", "DATA_REL", "DATA_SHA256", ()),
     (

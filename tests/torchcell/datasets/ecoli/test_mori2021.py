@@ -14,8 +14,8 @@ nothing reads ``$DATA_ROOT``.
 
 The ``@pytest.mark.data`` tests read the real mirrors and the dev-tree LMDB and pin the
 numbers the dendron note states: 4,342 released rows, 2,077 quantified in a loaded
-sample, 2,073 protein keys, 7 records from 66 released samples, the per-column key
-counts, the Dataset EV9 identity fault, the per-column normalization, and the Schmidt
+sample, 2,073 protein keys, 3 culture records from the 7 loaded columns of 66 released
+samples, the per-column and per-culture key counts, the Dataset EV9 identity fault, the per-column normalization, and the Schmidt
 2016 non-overlap (1,812 shared accessions, Pearson r 0.796 on log10 mass fraction, zero
 pairs agreeing to 1e-6).
 """
@@ -86,6 +86,24 @@ EV2_HEADERS = (
     "DDA file name",
     "SWATH file name",
 )
+#: The released Dataset EV3 ``Description`` cell of each loaded column, verbatim.
+LOADED_DESCRIPTIONS = {
+    **{
+        f"A1-{k}": "Same strain and growth condition as Li et al. 2014 "
+        f"(technical replicate #{k})"
+        for k in (1, 2, 3)
+    },
+    "C1": "Biological replicate of A1",
+    **{
+        f"F1-{k}": f"Biological replicate of A1 and C1 (technical replicate #{k})"
+        for k in (1, 2, 3)
+    },
+}
+#: The released growth rate of each loaded culture (Dataset EV3).
+CULTURE_GROWTH_RATES = {"A1": 0.69, "C1": 0.73, "F1": 0.71}
+#: C1's released SWATH file name, which its quoted row rendering carries.
+C1_SWATH = "CHLUDWIG_K151202_052_SW"
+
 EV3_HEADERS = (
     "Sample ID",
     "Group",
@@ -196,13 +214,20 @@ def write_ev3(path: Path) -> Path:
     for index, spec in enumerate(s for s in mo.SAMPLES if s.table == "EV9"):
         row: list[Any] = [None] * len(EV3_HEADERS)
         row[0] = spec.column
-        row[2] = 0.69 + 0.01 * index
+        # One culture's injections share its released growth rate, as in the release.
+        row[2] = (
+            CULTURE_GROWTH_RATES[spec.culture]
+            if spec.culture is not None
+            else 0.30 + 0.01 * index
+        )
         row[3] = spec.strain
         row[4] = spec.medium
         row[5] = mo.LOADED_CARBON_SOURCE if spec.drop is None else "0.2% glucose"
         row[6] = (
             mo.LOADED_NITROGEN_SOURCE if spec.drop is None else "11.34 mM (NH4)2SO4"
         )
+        row[8] = LOADED_DESCRIPTIONS.get(spec.column)
+        row[9] = C1_SWATH if spec.column == "C1" else None
         sheet.append(row)
     book.save(path)
     return path
@@ -259,14 +284,15 @@ def release(tmp_path: Path) -> dict[str, str]:
 # --------------------------------------------------------------------------- #
 # The declared sample set
 # --------------------------------------------------------------------------- #
-def test_the_sixty_six_released_samples_split_into_seven_records_and_three_rules() -> (
+def test_the_sixty_six_released_samples_split_into_three_cultures_and_three_rules() -> (
     None
 ):
     """The ledger arithmetic is a property of the declaration, not of the build."""
     assert len(mo.SAMPLES) == 66
     assert len([s for s in mo.SAMPLES if s.table == "EV8"]) == 30
     assert len([s for s in mo.SAMPLES if s.table == "EV9"]) == 36
-    assert len(mo.LOADED) == mo.EXPECTED_RECORDS == 7
+    assert len(mo.LOADED) == mo.EXPECTED_LOADED_COLUMNS == 7
+    assert len(mo.CULTURES) == mo.EXPECTED_RECORDS == 3
     counts = {
         reason.rule: len([s for s in mo.SAMPLES if s.drop == reason])
         for reason in (
@@ -458,6 +484,36 @@ def test_sample_metadata_refuses_a_loaded_sample_whose_ammonium_changed(
     book.save(path)
     with pytest.raises(RuntimeError, match="MOPS_MINIMAL is not its medium"):
         mo.check_sample_metadata(release[mo.EV2], str(path))
+
+
+def test_culture_structure_reads_the_technical_replicate_labels(
+    release: dict[str, str],
+) -> None:
+    assert mo.check_culture_structure(release[mo.EV3]) == {
+        "A1": ["A1-1", "A1-2", "A1-3"],
+        "C1": ["C1"],
+        "F1": ["F1-1", "F1-2", "F1-3"],
+    }
+
+
+@pytest.mark.parametrize(
+    ("row", "description", "match"),
+    [
+        (3, "Same strain (technical replicate #3)", "technical replicate #2 of A1"),
+        (2, "Same strain and growth condition", "technical replicate #1 of A1"),
+        (5, "Biological replicate of A1 (technical replicate #1)", "single-injection"),
+    ],
+)
+def test_culture_structure_refuses_a_relabeled_injection(
+    release: dict[str, str], tmp_path: Path, row: int, description: str, match: str
+) -> None:
+    """A1-2 relabeled #3, A1-1 unlabeled, and C1 labeled technical all stop the build."""
+    path = tmp_path / "ev3.xlsx"
+    book = openpyxl.load_workbook(release[mo.EV3])
+    book[mo.SHEET_EV3].cell(row=row, column=9).value = description
+    book.save(path)
+    with pytest.raises(RuntimeError, match=match):
+        mo.check_culture_structure(str(path))
 
 
 def test_growth_rates_are_read_for_every_ev3_sample(release: dict[str, str]) -> None:
@@ -657,19 +713,46 @@ def test_environment_is_neidhardt_mops_plus_the_released_carbon_source() -> None
     assert ammonium[0].concentration.value == pytest.approx(9.5)
 
 
-def test_phenotype_is_one_injection_with_no_replicate_and_no_error(
-    release: dict[str, str], patched_resolution: None
+@pytest.mark.parametrize(
+    ("culture", "keep_a", "keep_b"),
+    [("A1", 0.31, 0.39), ("C1", 0.33, 0.37), ("F1", 0.35, 0.35)],
+)
+def test_phenotype_is_one_culture_its_injections_averaged_with_a_typed_se_gap(
+    release: dict[str, str],
+    patched_resolution: None,
+    culture: str,
+    keep_a: float,
+    keep_b: float,
 ) -> None:
+    """A1 is the mean of columns 0..2 (0.30, 0.31, 0.32), C1 is column 3 verbatim."""
     rows = mo.read_mass_fractions(release[mo.EV9], [spec.column for spec in mo.LOADED])
     selection = mo.select_proteins(rows, FakeGenome(), label="test")  # type: ignore[arg-type]
-    phenotype = mo.build_phenotype(selection.kept, selection.locus_tag, "A1-2")
+    phenotype = mo.build_phenotype(selection.kept, selection.locus_tag, culture)
     assert phenotype.protein_abundance == {
-        "b0001": pytest.approx(0.31),
-        "b0002": pytest.approx(0.39),
+        "b0001": pytest.approx(keep_a),
+        "b0002": pytest.approx(keep_b),
     }
+    assert phenotype.replicate_id == culture
     assert phenotype.protein_abundance_se is None
     assert set(phenotype.n_replicates.values()) == {1}
     assert phenotype.measurement_type == mo.MEASUREMENT_TYPE
+    (gap,) = phenotype.provenance_gaps
+    assert gap.field == "protein_abundance_se"
+    assert gap.reason == "not_applicable_single_measurement"
+    assert f"{len(mo.CULTURES[culture])} LC-MS injection(s)" in (gap.note or "")
+
+
+def test_culture_mean_leaves_an_unquantified_injection_out() -> None:
+    """A released 0 is 'not quantified', so it does not pull the culture value down."""
+    row = mo.MassFractionRow(
+        row_number=2,
+        gene_name="g",
+        gene_locus="b0001",
+        protein_id=None,
+        mass_fraction={"A1-1": 0.2, "A1-2": 0.0, "A1-3": 0.4, "C1": 0.0},
+    )
+    assert mo.culture_mean(row, ("A1-1", "A1-2", "A1-3")) == pytest.approx(0.3)
+    assert mo.culture_mean(row, ("C1",)) is None
 
 
 def test_reference_is_the_mean_of_three_culture_means_with_an_exact_error(
@@ -850,7 +933,7 @@ def test_process_builds_one_record_per_loaded_sample(
         root=str(root),
         ecoli_genome=FakeGenome(),  # type: ignore[arg-type]
     )
-    assert len(dataset) == mo.EXPECTED_RECORDS
+    assert len(dataset) == mo.EXPECTED_RECORDS == 3
     assert dataset.gene_set == {"b0001", "b0002"}
 
     items = [dataset.transform_item(dataset[i]) for i in range(len(dataset))]
@@ -859,16 +942,19 @@ def test_process_builds_one_record_per_loaded_sample(
         mo.MEASUREMENT_TYPE
     }
     assert {i["experiment"].phenotype.protein_abundance_se for i in items} == {None}
+    assert sorted(i["experiment"].phenotype.replicate_id for i in items) == [
+        "A1",
+        "C1",
+        "F1",
+    ]
     assert {i["publication"].doi for i in items} == {mo.PAPER_DOI}
     assert {i["reference"].genome_reference.strain for i in items} == {
         mo.EQ353_BACKGROUND.name
     }
-    # The seven records are seven measurements of ONE condition.
+    # The three records are three biological cultures of ONE condition.
     assert len({i["experiment"].environment.model_dump_json() for i in items}) == 1
     stored = sorted(i["experiment"].phenotype.protein_abundance["b0001"] for i in items)
-    assert stored == [
-        pytest.approx(0.30 + 0.01 * index) for index in range(mo.EXPECTED_RECORDS)
-    ]
+    assert stored == [pytest.approx(0.31), pytest.approx(0.33), pytest.approx(0.35)]
     for item in items:
         reference = item["reference"].phenotype_reference
         assert set(reference.protein_abundance) == set(
@@ -880,12 +966,14 @@ def test_process_builds_one_record_per_loaded_sample(
     preprocess = Path(dataset.preprocess_dir)
     ledger = json.loads((preprocess / "dropped_records.json").read_text())
     assert ledger["source_samples"] == 66
+    assert ledger["loaded_columns"] == 7
     assert ledger["kept_records"] == mo.EXPECTED_RECORDS
     assert ledger["dropped_records"] == 59
     assert ledger["source_protein_rows"] == N_SOURCE_ROWS
     assert ledger["kept_protein_keys"] == len(KEPT_GENES)
     assert ledger["dropped_protein_rows"] == N_SOURCE_ROWS - len(KEPT_GENES)
     checks = json.loads((preprocess / "released_statistics_check.json").read_text())
+    assert checks["culture_structure"] == {k: list(v) for k, v in mo.CULTURES.items()}
     assert checks["ev9_identity_fault"]["n_supplied_by_ev8"] == len(
         mo.EV8_SUPPLIES_LOCUS
     )
@@ -898,9 +986,14 @@ def test_process_builds_one_record_per_loaded_sample(
     assert sourced["stored_quantity"]["value"] == "absolute protein mass fraction"
     identifiers = pd.read_csv(preprocess / "protein_identifiers.csv")
     assert list(identifiers["released_gene_name"]) == list(KEPT_GENES)
+    assert list(identifiers["n_injections_A1"]) == [3, 3]
+    assert list(identifiers["n_injections_C1"]) == [1, 1]
     samples = pd.read_csv(preprocess / "samples.csv")
     assert list(samples["column"]) == [spec.column for spec in mo.LOADED]
     assert set(samples["culture"]) == set(mo.CULTURES)
+    records = pd.read_csv(preprocess / "records.csv")
+    assert list(records["replicate_id"]) == ["A1", "C1", "F1"]
+    assert list(records["n_injections"]) == [3, 1, 3]
     assert (preprocess / "build_manifest.json").exists()
 
     report = mo.verify_build(
@@ -912,12 +1005,46 @@ def test_process_builds_one_record_per_loaded_sample(
     assert (preprocess / "verification_report.json").exists()
 
 
+def test_one_culture_rule_refuses_an_unlabeled_or_duplicated_record(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from torchcell.verification.runners import load_records
+
+    root = tmp_path / "proteome_mori2021"
+    paths = write_release(root / "raw")
+    monkeypatch.setattr(
+        mo, "DATA_SHA256", {n: file_sha256(p) for n, p in paths.items()}
+    )
+    monkeypatch.setattr(mo, "reconcile_locus_tags", _identity_reconciliation)
+    monkeypatch.setattr(mo, "MIN_RESOLVED_FRACTION", 0.5)
+    monkeypatch.setattr(mo, "EXPECTED_SOURCE_ROWS", N_SOURCE_ROWS)
+    monkeypatch.setattr(mo, "EXPECTED_PROTEIN_KEYS", len(KEPT_GENES))
+    monkeypatch.setattr(
+        mo, "assembly_reference", lambda strain, *, background=None: _reference_genome()
+    )
+    dataset = mo.ProteomeMori2021Dataset(root=str(root), ecoli_genome=FakeGenome())  # type: ignore[arg-type]
+    dataset.close_lmdb()
+    records = load_records(str(root))
+    assert mo.one_culture_per_record_rule(records).passed
+    assert mo.reference_is_mean_of_records_rule(records).passed
+    records[1]["experiment"]["phenotype"]["replicate_id"] = "A1"
+    assert not mo.one_culture_per_record_rule(records).passed
+    records[1]["experiment"]["phenotype"]["replicate_id"] = None
+    assert not mo.one_culture_per_record_rule(records).passed
+    records[1]["experiment"]["phenotype"]["replicate_id"] = "C1"
+    records[1]["experiment"]["phenotype"]["provenance_gaps"] = []
+    assert not mo.one_culture_per_record_rule(records).passed
+    records[0]["experiment"]["phenotype"]["protein_abundance"]["b0001"] = 0.9
+    assert not mo.reference_is_mean_of_records_rule(records).passed
+
+
 def test_drop_log_check_refuses_an_unaccounted_drop() -> None:
     reconciliation = _reconciliation(pd.Series(["b0001"]), "test")
     log_model = mo.DropLog(
         dataset="test",
         source_samples=66,
-        kept_records=7,
+        loaded_columns=7,
+        kept_records=3,
         dropped_records=59,
         source_protein_rows=10,
         kept_protein_keys=2,
@@ -951,6 +1078,9 @@ def test_drop_log_check_refuses_an_unaccounted_drop() -> None:
     short = fixed.model_copy(update={"kept_protein_keys": 5})
     with pytest.raises(RuntimeError, match="dropped rows !="):
         short.check()
+    more_records = fixed.model_copy(update={"kept_records": 8})
+    with pytest.raises(RuntimeError, match="8 records from 7 loaded columns"):
+        more_records.check()
 
 
 # --------------------------------------------------------------------------- #
@@ -1010,6 +1140,13 @@ def test_real_release_shape_and_the_row_rules() -> None:
         "n_samples": 89,
         "n_loaded": 7,
     }
+    # The 7 loaded columns are the injections of 3 biological cultures, read off the
+    # released Dataset EV3 Description cells.
+    assert mo.check_culture_structure(paths[mo.EV3]) == {
+        "A1": ["A1-1", "A1-2", "A1-3"],
+        "C1": ["C1"],
+        "F1": ["F1-1", "F1-2", "F1-3"],
+    }
     for table, name in (("EV8", mo.EV8), ("EV9", mo.EV9)):
         summary = mo.check_normalization(paths[name], table)
         assert summary["worst_abs_deviation"] < 3e-8
@@ -1068,14 +1205,20 @@ def test_built_lmdb_numbers() -> None:
     from torchcell.verification.runners import load_records
 
     records = load_records(root)
-    assert len(records) == mo.EXPECTED_RECORDS
-    keys = sorted(
-        len(r["experiment"]["phenotype"]["protein_abundance"]) for r in records
-    )
-    assert keys == [1879, 1896, 1897, 1911, 1914, 1930, 1931]
+    assert len(records) == mo.EXPECTED_RECORDS == 3
+    keys = {
+        r["experiment"]["phenotype"]["replicate_id"]: len(
+            r["experiment"]["phenotype"]["protein_abundance"]
+        )
+        for r in records
+    }
+    # A culture's keys are the union of its injections' (A1-1/2/3: 1,897, 1,879,
+    # 1,911; F1-1/2/3: 1,896, 1,931, 1,914; C1 is its one column).
+    assert keys == {"A1": 1999, "C1": 1930, "F1": 2011}
     ledger = json.loads(Path(root, "preprocess", "dropped_records.json").read_text())
     assert ledger["source_samples"] == 66
-    assert ledger["kept_records"] == 7
+    assert ledger["loaded_columns"] == 7
+    assert ledger["kept_records"] == 3
     assert ledger["dropped_records"] == 59
     assert ledger["source_protein_rows"] == 4342
     assert ledger["kept_protein_keys"] == 2073

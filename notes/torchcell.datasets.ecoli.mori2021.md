@@ -289,3 +289,104 @@ rather than resolved:
    Dataset EV9 (above). Using EV8's column would be a cross-sheet fallback, so it is not
    done; a future revision could key both sheets off one identity block if a sourced
    reason to prefer EV8's is found.
+
+## 2026.11.24 - One record per biological culture (#1178, part of #1176)
+
+The store now holds one `ProteinAbundanceExperiment` per biological replicate culture of
+the calibration condition: 3 records (`replicate_id` `A1`, `C1`, `F1`) where it held 7
+per-injection records. The 59 medium-gated samples are unchanged and wait on the owner
+(below).
+
+### What a replicate is, from the release
+
+| source | sha256 (first 16) | location | verbatim |
+|---|---|---|---|
+| `si4.xlsx` (Dataset EV3) | `3c13d83bc11996c0` | sheet `EV3-Samples-2`, rows 2-4, `Description` | "Same strain and growth condition as Li et al. 2014 (technical replicate #1)" (and #2, #3) for `A1-1`..`A1-3` |
+| `si4.xlsx` (Dataset EV3) | `3c13d83bc11996c0` | row 5 | "Biological replicate of A1" for `C1` |
+| `si4.xlsx` (Dataset EV3) | `3c13d83bc11996c0` | rows 6-8 | "Biological replicate of A1 and C1 (technical replicate #1)" (and #2, #3) for `F1-1`..`F1-3` |
+| `paper.md` | `c86b36d90657aceb` | Results, calibration paragraph (line 70) | "For two out of the three calibration samples (A1 and F1), we additionally performed three technical MS injection replicate measurements." |
+| `paper.md` | `c86b36d90657aceb` | Fig 2B legend (line 64) | "Two of the three biological replicates were injected 3 times, for a total of 7 proteomics “calibration” datasets." |
+| `si1.docx` (Appendix) | `3c9490d042c152bd` | Appendix Figure S1 legend | "The A1, C1 and F1 samples are three biological replicates of the same condition (glucose minimal media; see Dataset EV5). The A1 and F1 samples have been measured in technical triplicates, which are identified as A1-1/2/3 and F1-1/2/3." |
+| `si1.docx` (Appendix) | `3c9490d042c152bd` | Appendix Figure S1 legend | "(C) Same as panel (B), but for three biological replicates (A1-1, C1, F1-1)." |
+
+So a biological replicate is a culture (3), and `A1-*` and `F1-*` are repeat LC-MS
+injections of one culture's digest, each with its own SWATH file. `check_culture_structure`
+reads the Dataset EV3 `Description` cells at build time and refuses a column whose
+"(technical replicate #n)" label does not match the declared culture and position. No
+sample was withdrawn by the authors.
+
+### How the injections are combined
+
+The release never combines the injections. Where the authors compare biological replicates
+they take each culture's first injection (Appendix Figure S1C above, and Fig 2H "biological
+(samples A1-1 and F1-1)"), which would drop two released injections of A1 and of F1. The
+loader instead combines every injection inside the culture record: a protein's value is
+the arithmetic mean of the culture's injections that quantified it. A released 0 is "not
+quantified" (the column sums to 1 over its non-zero rows), so it is left out of the mean.
+`C1` has one injection, so its record is that column verbatim. This mean is a loader
+rule, not a released statistic, and it is the same culture mean the reference has used
+since the first build, so the reference is unchanged.
+
+Each record carries `n_replicates` 1 for every protein, `protein_abundance_se` None and a
+`ProvenanceGap(field="protein_abundance_se", reason=not_applicable_single_measurement)`
+whose note names the technical level (injection count and columns, and the combination
+rule). `ProteinAbundancePhenotype` has no field for the technical level, so the per-protein
+count of quantifying injections is in `preprocess/protein_identifiers.csv`
+(`n_injections_A1`, `n_injections_C1`, `n_injections_F1`):
+
+| culture | 0 injections | 1 | 2 | 3 | record keys |
+|---|---|---|---|---|---|
+| A1 | 74 | 107 | 96 | 1,796 | 1,999 |
+| C1 | 143 | 1,930 | | | 1,930 |
+| F1 | 62 | 88 | 116 | 1,807 | 2,011 |
+
+Because a mean over quantifying injections is not renormalized, a combined record does not
+sum exactly to 1: over the stored keys A1 sums to 1.00225, F1 to 1.00217 and C1 to 0.99815
+(C1 short of 1 by the mass of the four dropped no-locus rows).
+
+### Counts and checks
+
+Scratch build `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-mori2021/proteome_mori2021`:
+
+- records 7 -> 3; loaded columns 7 (unchanged); released sample columns 66; protein keys 2,073
+  (unchanged); stored values 13,358 -> 5,940.
+- Mean reproduction: grouping the old 7 per-injection records by culture and taking the mean
+  over the injections that carry each key reproduces the new record values (max abs
+  difference 0 over 5,940 values). Grouping the 3 new records by (genotype, environment),
+  which is one group, and taking the mean reproduces the old stored reference (2,073 keys,
+  max abs difference 0), and the new reference equals the old one exactly.
+- `verify_build`: `proteome_mori2021: PASS`. `one_injection_per_record` is replaced by
+  `one_culture_per_record` (every record labeled with a distinct culture of `CULTURES`, n 1,
+  no SE, the typed gap present), and a new `reference_is_mean_of_culture_records` row checks
+  the reference against the records (max abs difference 0). The shared
+  `replicate_id_names_one_replicate` row passes on 3 of 3 labeled records.
+- The dev store at `$DATA_ROOT/data/torchcell/proteome_mori2021` still holds the 7-record
+  build, so `test_built_lmdb_numbers` fails there until that store is rebuilt; it passes
+  against the scratch build.
+
+### Not done, for the owner
+
+The 59 medium-gated samples (52 + 2 + 5) are not restored. 13 of them are released
+biological replicates ("biological replicate of C4", "... of A2", and so on: C8, D6, D7,
+D8, F2-F8, H1, H5), and EV2 calls `Lib-22` "LB stationary (repeat of Lib-19)". Restoring
+them needs more than the five LB decisions:
+
+1. Media objects whose formulations the Appendix defers to papers that are not mirrored:
+   modified Record's MOPS (Chen et al. 1990), M9 (Kochanowski et al. 2013) and
+   phosphate-buffered N-C- (Csonka et al. 1994; Gutnick et al. 1969). Only the anaerobic
+   medium and the low-osmolarity MOPS are spelled out in the Appendix itself.
+2. The LB formulation for `Lib-12`, `Lib-19`..`Lib-22`, which no mirrored byte states.
+3. A genome reference for NCM3722 and its derivatives (NQ1243, NQ1390, NQ393, NQ1527,
+   NQ1431, EQ59) and for Nissle 1917: `EcoliK12StrainName` holds only MG1655 and BW25113,
+   so writing them needs either a schema change or a decision to state them as backgrounds
+   on the MG1655 assembly, as EQ353 is.
+4. Genotypes for the engineered constructs (Pu-ptsG titratable glucose uptake, Plac-GOGAT
+   in a GDH-null background, "fixed" rpoS, phnE+, constitutive GFP and non-motile).
+5. Conditions `Environment` has no slot for: growth phase and harvest OD (stationary, late
+   log), colony growth on agar, a transient H2O2 pulse, and 25 C or 42 C shifts.
+
+Two release inconsistencies seen while reading: Dataset EV3 gives `D8` (replicate of C6)
+the supplement "400 µg 3MBA" where C6 and F7 read "400 µM 3MBA"; Dataset EV2 gives
+`Lib-19` and `Lib-22` "Collected at OD600=3.34" where the Appendix says "OD600 ≈ 3.44
+(Lib-19 and Lib-22)", and the Appendix wording ("samples were collected along the way")
+does not say whether `Lib-22` is a second culture or a second sample of the same culture.

@@ -161,10 +161,31 @@
 <span class="sd">code is whatever both sources spell it, including the ``SACE_`` form (78 of the 943, e.g.</span>
 <span class="sd">``SACE_YAU``); see ``_isolate_and_symbol``.</span>
 
+<span class="sd">ONE RECORD PER CULTURE (2026-11-24, tracking issue #1178). The paper profiled 29 isolates</span>
+<span class="sd">in independent culture replicates (``REPLICATE_SOURCED_VALUES``), released as Datafile 2</span>
+<span class="sd">(``replicate_data_tpm_22042023.tab``: one row per (``SampleID``, ``ORF``), TPM only, and</span>
+<span class="sd">the sample's ``Final.Group``). ``Final_set`` is the culture Datafile 1 carries (one per</span>
+<span class="sd">isolate; its ``Number.of.clean.mapped.reads``, ``Library`` and ``Sequencing.run`` equal the</span>
+<span class="sd">isolate's Supplementary Table 1 row), and ``good_duplicate`` / ``good_duplicateBis`` are</span>
+<span class="sd">the other cultures. So every isolate keeps its Datafile 1 record unchanged, and each</span>
+<span class="sd">other culture of a built isolate is one more record: its Datafile 2 TPM verbatim, keyed by</span>
+<span class="sd">the Datafile 1 gene id of the same ORF in the same isolate (``r_make_names`` recovers</span>
+<span class="sd">Datafile 1's spelling), a blank-name ``absent`` ORF left out as for the Datafile 1 record,</span>
+<span class="sd">``expression_count = None`` with ``REPLICATE_COUNT_GAP`` (Datafile 2 releases no counts),</span>
+<span class="sd">``n_mapped_reads`` the sample's released clean mapped reads, and ``replicate_id`` the</span>
+<span class="sd">released ``SampleID``. A replicated isolate's Datafile 1 record carries its ``Final_set``</span>
+<span class="sd">``SampleID`` as ``replicate_id``; an isolate profiled once keeps ``replicate_id = None``.</span>
+<span class="sd">26 of the 29 replicated isolates are built, so the store is 943 + 28 = 971 records. Every</span>
+<span class="sd">Datafile 2 sample is accounted for in ``preprocess/replicate_culture_ledger.json``.</span>
+<span class="sd">The reference stays the Datafile 1 population mean over the 943 isolates.</span>
+
 <span class="sd">Sources (hash-pinned, local library mirror):</span>
 <span class="sd">  - Caudal expression: ``caudalPantranscriptomeRevealsLarge2024/data/</span>
 <span class="sd">    final_data_annotated_merged_04052022.tab.zip`` (comma-delimited, latin-1;</span>
 <span class="sd">    sha256 8b55ccd76e1d19476d8f5f718e9e061cb9e4693e343965114dd4cd65d5f8d26b).</span>
+<span class="sd">  - Caudal replicate cultures: ``caudalPantranscriptomeRevealsLarge2024/data/</span>
+<span class="sd">    replicate_data_tpm_22042023.tab`` (comma-delimited; sha256</span>
+<span class="sd">    6860fa5f7d42e7ae1d733f3db60b84d4cb45fb0d9757f7fb5c500a4b640cf900).</span>
 <span class="sd">  - Peter genome: the six files of the genomes tier set ``peter2018_1011_assemblies``</span>
 <span class="sd">    that ``natural_isolate.GENOTYPE_FILES`` names (the reference-gene tarball, the</span>
 <span class="sd">    presence and copy-number matrices, the two loss-of-function matrices and the</span>
@@ -250,8 +271,18 @@
 <span class="p">)</span>
 <span class="n">CAUDAL_ZIP_SHA256</span> <span class="o">=</span> <span class="s2">"8b55ccd76e1d19476d8f5f718e9e061cb9e4693e343965114dd4cd65d5f8d26b"</span>
 <span class="n">CAUDAL_ZIP_BASENAME</span> <span class="o">=</span> <span class="s2">"final_data_annotated_merged_04052022.tab.zip"</span>
-<span class="c1">#: The Caudal release plus the six Peter-tier files an isolate genotype is built from.</span>
-<span class="n">RAW_FILES</span> <span class="o">=</span> <span class="p">[</span><span class="n">CAUDAL_ZIP_BASENAME</span><span class="p">,</span> <span class="o">*</span><span class="n">GENOTYPE_FILES</span><span class="p">]</span>
+<span class="c1">#: Datafile 2, the per-sample TPM of the 29 isolates profiled in culture replicates</span>
+<span class="c1">#: (methods.md line 95). Library mirror, sha256 from its ``manifest.json``.</span>
+<span class="n">REPLICATE_TAB_REL</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"torchcell-library/caudalPantranscriptomeRevealsLarge2024/data/"</span>
+    <span class="s2">"replicate_data_tpm_22042023.tab"</span>
+<span class="p">)</span>
+<span class="n">REPLICATE_TAB_SHA256</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"6860fa5f7d42e7ae1d733f3db60b84d4cb45fb0d9757f7fb5c500a4b640cf900"</span>
+<span class="p">)</span>
+<span class="n">REPLICATE_TAB_BASENAME</span> <span class="o">=</span> <span class="s2">"replicate_data_tpm_22042023.tab"</span>
+<span class="c1">#: The two Caudal releases plus the six Peter-tier files an isolate genotype is built from.</span>
+<span class="n">RAW_FILES</span> <span class="o">=</span> <span class="p">[</span><span class="n">CAUDAL_ZIP_BASENAME</span><span class="p">,</span> <span class="n">REPLICATE_TAB_BASENAME</span><span class="p">,</span> <span class="o">*</span><span class="n">GENOTYPE_FILES</span><span class="p">]</span>
 <span class="c1">#: What the isolate genotypes of this build carry, counted (``natural_isolate``).</span>
 <span class="n">GENOTYPE_LEDGER</span> <span class="o">=</span> <span class="s2">"natural_isolate_genotype_ledger.json"</span>
 <span class="c1">#: The classes an isolate genotype holds, built in ``torchcell.sequence.natural_isolate``.</span>
@@ -705,6 +736,291 @@
     <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">named</span><span class="p">,</span> <span class="n">served</span><span class="p">]),</span> <span class="n">ledger</span>
 
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Datafile 2: the replicate cultures (issue #1178)</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1">#: Columns the loader consumes from Datafile 2.</span>
+<span class="n">REPLICATE_COLUMNS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"ORF"</span><span class="p">,</span>
+    <span class="s2">"SampleID"</span><span class="p">,</span>
+    <span class="s2">"tpm"</span><span class="p">,</span>
+    <span class="s2">"Standardized.name"</span><span class="p">,</span>
+    <span class="s2">"Final.Group"</span><span class="p">,</span>
+    <span class="s2">"Number.of.clean.mapped.reads"</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_paper_sv</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A SourcedValue pinned to the mirrored main text (``paper.md``)."""</span>
+    <span class="k">return</span> <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="s2">"paper.md"</span><span class="p">,</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">PAPER_MD_SHA256</span><span class="p">,</span>
+            <span class="n">page</span><span class="o">=</span><span class="sa">f</span><span class="s2">"paper.md line </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">quote</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="c1">#: What a Datafile 2 sample is, from the paper's own sentences.</span>
+<span class="n">REPLICATE_SOURCED_VALUES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"replicate_kind"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span>
+        <span class="s2">"independent culture (biological replicate)"</span><span class="p">,</span>
+        <span class="s2">"We performed independent culture replicates for 29 samples (Supplementary "</span>
+        <span class="s2">"Fig. 1b)."</span><span class="p">,</span>
+        <span class="mi">25</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"each Datafile 2 sample of an isolate is its own culture; Supplementary "</span>
+        <span class="s2">"Fig. 1c compares 66 replicate pairs, the ordered pairs of the 60 samples "</span>
+        <span class="s2">"(27 isolates x 2, 2 x 3), so the Final_set culture is one of the replicates"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"replicates_sequenced"</span><span class="p">:</span> <span class="n">_methods_sv</span><span class="p">(</span>
+        <span class="s2">"29 isolates sequenced in duplicate"</span><span class="p">,</span>
+        <span class="s2">"1,046 samples were sequenced, including duplicates for 29 of the isolates "</span>
+        <span class="s2">"(datafile 2)."</span><span class="p">,</span>
+        <span class="mi">19</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"Datafile 2 holds 60 samples of 29 isolates: 27 with 2, 2 (AFD, AKL) with 3"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"replicate_release"</span><span class="p">:</span> <span class="n">_methods_sv</span><span class="p">(</span>
+        <span class="s2">"Datafile 2: TPM and sample information, no counts"</span><span class="p">,</span>
+        <span class="s2">"datafile 2: normalized gene expression levels (TPM) and sample information "</span>
+        <span class="s2">"for 29 replicates (file name: replicate_data_tpm_22042023.tab)"</span><span class="p">,</span>
+        <span class="mi">95</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the file's columns are ORF, SampleID, tpm and per-sample information; "</span>
+        <span class="s2">"it carries no read counts"</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">REPLICATE_COUNT_GAP</span> <span class="o">=</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+    <span class="n">field</span><span class="o">=</span><span class="s2">"expression_count"</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+    <span class="n">looked_in</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+        <span class="n">source_uri</span><span class="o">=</span><span class="n">REPLICATE_TAB_REL</span><span class="p">,</span>
+        <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+        <span class="n">sha256</span><span class="o">=</span><span class="n">REPLICATE_TAB_SHA256</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"Datafile 2 releases TPM and sample information only (methods.md line 95); "</span>
+    <span class="s2">"the featureCounts read counts of the replicate cultures are not in it, and "</span>
+    <span class="s2">"Datafile 1 carries the counts of the Final_set culture alone"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ReplicateGroup</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Datafile 2's ``Final.Group``: which culture of an isolate a sample is."""</span>
+
+    <span class="n">final_set</span> <span class="o">=</span> <span class="s2">"Final_set"</span>
+    <span class="n">good_duplicate</span> <span class="o">=</span> <span class="s2">"good_duplicate"</span>
+    <span class="n">good_duplicate_bis</span> <span class="o">=</span> <span class="s2">"good_duplicateBis"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ReplicateTableError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Datafile 2 does not have the structure the loader reads it by."""</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">r_make_names</span><span class="p">(</span><span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""R ``make.names`` of a Datafile 2 ``ORF``: the spelling Datafile 1 gives it.</span>
+
+<span class="sd">    Every character outside ``[A-Za-z0-9._]`` becomes ``.`` and an ``X`` is prepended</span>
+<span class="sd">    unless the name starts with a letter or with a dot not followed by a digit:</span>
+<span class="sd">    ``1003-augustus_masked-YCM-7680`` -&gt; ``X1003.augustus_masked.YCM.7680``; an S288C</span>
+<span class="sd">    name is unchanged.</span>
+<span class="sd">    """</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[^A-Za-z0-9._]"</span><span class="p">,</span> <span class="s2">"."</span><span class="p">,</span> <span class="n">orf</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^([A-Za-z]|\.(?![0-9]))"</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s2">"X"</span> <span class="o">+</span> <span class="n">name</span>
+    <span class="k">return</span> <span class="n">name</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ReplicateCulture</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One Datafile 2 sample of a built isolate that Datafile 1 does not carry."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">sample_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">group</span><span class="p">:</span> <span class="n">ReplicateGroup</span>
+    <span class="n">n_mapped_reads</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">tpm</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ReplicateLedger</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Accounting for every Datafile 2 sample and row.</span>
+
+<span class="sd">    ``final_set_sample_ids`` names, per built replicated isolate, the sample that is its</span>
+<span class="sd">    Datafile 1 culture; ``samples`` lists every sample with its isolate, group and fate.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_strains</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">samples_by_group</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ReplicateGroup</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+    <span class="n">samples</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]</span>
+    <span class="n">strains_not_built</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">final_set_sample_ids</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+    <span class="n">n_culture_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_rows_culture_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_rows_absent_dropped</span><span class="p">:</span> <span class="nb">int</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">read_replicate_table</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read ``REPLICATE_COLUMNS`` of Datafile 2 (comma-delimited, a header row).</span>
+
+<span class="sd">    ``tpm`` is parsed round-trip exact (pandas' default parser misreads the last digit</span>
+<span class="sd">    of some released values, e.g. ``0.00832811287968815`` of ``Run4.7.CCH``),</span>
+<span class="sd">    ``SampleID`` and ``Standardized.name`` are text, the mapped-read count is read</span>
+<span class="sd">    from its thousands-separated text (``1,542,282``) to an integer, and every</span>
+<span class="sd">    ``Final.Group`` must be a ``ReplicateGroup``.</span>
+<span class="sd">    """</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="n">usecols</span><span class="o">=</span><span class="n">REPLICATE_COLUMNS</span><span class="p">,</span>
+        <span class="n">float_precision</span><span class="o">=</span><span class="s2">"round_trip"</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"SampleID"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="s2">"Standardized.name"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="s2">"Final.Group"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="s2">"Number.of.clean.mapped.reads"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="s2">"ORF"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="s2">"Number.of.clean.mapped.reads"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"Number.of.clean.mapped.reads"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">unknown</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"Final.Group"</span><span class="p">])</span> <span class="o">-</span> <span class="p">{</span><span class="n">g</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">ReplicateGroup</span><span class="p">})</span>
+    <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ReplicateTableError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Final.Group values no rule covers: </span><span class="si">{</span><span class="n">unknown</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">replicate_cultures</span><span class="p">(</span>
+    <span class="n">replicates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">built</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">kept</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ReplicateCulture</span><span class="p">],</span> <span class="n">ReplicateLedger</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The non-``Final_set`` cultures of built isolates, with every sample accounted for.</span>
+
+<span class="sd">    ``built`` is Datafile 1 restricted to the built isolates (``CAUDAL_COLUMNS``) and</span>
+<span class="sd">    ``kept`` its rows ``resolve_gene_ids`` kept, with ``gene_id``. A sample belongs to</span>
+<span class="sd">    one isolate, group and mapped-read count; a built isolate has exactly one</span>
+<span class="sd">    ``Final_set`` sample (its Datafile 1 culture). Each row of another sample takes the</span>
+<span class="sd">    ``gene_id`` of the Datafile 1 row of the same isolate and ``r_make_names(ORF)``; a</span>
+<span class="sd">    row whose Datafile 1 row was dropped (a blank-name ``absent`` ORF) is dropped and</span>
+<span class="sd">    counted, and a row with no Datafile 1 row, or a repeated (sample, gene), is refused.</span>
+<span class="sd">    """</span>
+    <span class="n">per_sample</span> <span class="o">=</span> <span class="n">replicates</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"SampleID"</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span>
+        <span class="n">strain</span><span class="o">=</span><span class="p">(</span><span class="s2">"Standardized.name"</span><span class="p">,</span> <span class="s2">"unique"</span><span class="p">),</span>
+        <span class="n">group</span><span class="o">=</span><span class="p">(</span><span class="s2">"Final.Group"</span><span class="p">,</span> <span class="s2">"unique"</span><span class="p">),</span>
+        <span class="n">reads</span><span class="o">=</span><span class="p">(</span><span class="s2">"Number.of.clean.mapped.reads"</span><span class="p">,</span> <span class="s2">"unique"</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">ambiguous</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">per_sample</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"group"</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"reads"</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">1</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">ambiguous</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ReplicateTableError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"samples with more than one isolate, group or mapped-read count: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">ambiguous</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="n">replicates</span><span class="o">.</span><span class="n">duplicated</span><span class="p">([</span><span class="s2">"SampleID"</span><span class="p">,</span> <span class="s2">"ORF"</span><span class="p">])</span><span class="o">.</span><span class="n">any</span><span class="p">()):</span>
+        <span class="k">raise</span> <span class="n">ReplicateTableError</span><span class="p">(</span><span class="s2">"Datafile 2 repeats a (SampleID, ORF) row"</span><span class="p">)</span>
+    <span class="n">sample_strain</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">):</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">per_sample</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()}</span>
+    <span class="n">sample_group</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">):</span> <span class="n">ReplicateGroup</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"group"</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">per_sample</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()</span>
+    <span class="p">}</span>
+    <span class="n">sample_reads</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">):</span> <span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"reads"</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">per_sample</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()}</span>
+    <span class="n">built_strains</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">built</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">])</span>
+
+    <span class="n">final_set</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">sample</span><span class="p">,</span> <span class="n">strain</span> <span class="ow">in</span> <span class="n">sample_strain</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">sample_group</span><span class="p">[</span><span class="n">sample</span><span class="p">]</span> <span class="ow">is</span> <span class="n">ReplicateGroup</span><span class="o">.</span><span class="n">final_set</span><span class="p">:</span>
+            <span class="n">final_set</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">strain</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+    <span class="n">replicated</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">sample_strain</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+    <span class="n">off</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">replicated</span> <span class="k">if</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">built_strains</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">final_set</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="p">[]))</span> <span class="o">!=</span> <span class="mi">1</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">off</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ReplicateTableError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"built isolates without exactly one Final_set sample: </span><span class="si">{</span><span class="n">off</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">replicates</span><span class="p">[</span>
+        <span class="n">replicates</span><span class="p">[</span><span class="s2">"Standardized.name"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">built_strains</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">replicates</span><span class="p">[</span><span class="s2">"Final.Group"</span><span class="p">]</span> <span class="o">!=</span> <span class="n">ReplicateGroup</span><span class="o">.</span><span class="n">final_set</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="p">]</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">ORF</span><span class="o">=</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">r_make_names</span><span class="p">))</span>
+    <span class="n">released</span> <span class="o">=</span> <span class="n">rows</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+        <span class="n">built</span><span class="p">[[</span><span class="s2">"Strain"</span><span class="p">,</span> <span class="s2">"ORF"</span><span class="p">]],</span>
+        <span class="n">left_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"Standardized.name"</span><span class="p">,</span> <span class="s2">"ORF"</span><span class="p">],</span>
+        <span class="n">right_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">,</span> <span class="s2">"ORF"</span><span class="p">],</span>
+        <span class="n">how</span><span class="o">=</span><span class="s2">"left"</span><span class="p">,</span>
+        <span class="n">indicator</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="n">released</span><span class="p">[</span><span class="n">released</span><span class="p">[</span><span class="s2">"_merge"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"left_only"</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ReplicateTableError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span><span class="si">}</span><span class="s2"> Datafile 2 rows name an ORF the isolate has no Datafile 1 "</span>
+            <span class="sa">f</span><span class="s2">"row for: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">missing</span><span class="p">[</span><span class="s1">'SampleID'</span><span class="p">],</span><span class="w"> </span><span class="n">missing</span><span class="p">[</span><span class="s1">'ORF'</span><span class="p">])))[:</span><span class="mi">10</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="n">keyed</span> <span class="o">=</span> <span class="n">rows</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+        <span class="n">kept</span><span class="p">[[</span><span class="s2">"Strain"</span><span class="p">,</span> <span class="s2">"ORF"</span><span class="p">,</span> <span class="s2">"gene_id"</span><span class="p">]],</span>
+        <span class="n">left_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"Standardized.name"</span><span class="p">,</span> <span class="s2">"ORF"</span><span class="p">],</span>
+        <span class="n">right_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">,</span> <span class="s2">"ORF"</span><span class="p">],</span>
+        <span class="n">how</span><span class="o">=</span><span class="s2">"inner"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="n">keyed</span><span class="o">.</span><span class="n">duplicated</span><span class="p">([</span><span class="s2">"SampleID"</span><span class="p">,</span> <span class="s2">"gene_id"</span><span class="p">])</span><span class="o">.</span><span class="n">any</span><span class="p">()):</span>
+        <span class="k">raise</span> <span class="n">ReplicateTableError</span><span class="p">(</span><span class="s2">"two Datafile 2 rows of one sample share a gene id"</span><span class="p">)</span>
+
+    <span class="n">cultures</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">ReplicateCulture</span><span class="p">(</span>
+            <span class="n">sample_id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">sample</span><span class="p">),</span>
+            <span class="n">strain</span><span class="o">=</span><span class="n">sample_strain</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">sample</span><span class="p">)],</span>
+            <span class="n">group</span><span class="o">=</span><span class="n">sample_group</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">sample</span><span class="p">)],</span>
+            <span class="n">n_mapped_reads</span><span class="o">=</span><span class="n">sample_reads</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">sample</span><span class="p">)],</span>
+            <span class="n">tpm</span><span class="o">=</span><span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">g</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sub</span><span class="p">[</span><span class="s2">"gene_id"</span><span class="p">],</span> <span class="n">sub</span><span class="p">[</span><span class="s2">"tpm"</span><span class="p">])},</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">sample</span><span class="p">,</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">keyed</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"SampleID"</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">cultures</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span>
+        <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">strain</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">ReplicateGroup</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">group</span><span class="p">),</span> <span class="n">c</span><span class="o">.</span><span class="n">sample_id</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fate</span><span class="p">(</span><span class="n">sample</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">sample_strain</span><span class="p">[</span><span class="n">sample</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">built_strains</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">"isolate_not_built"</span>
+        <span class="k">if</span> <span class="n">sample_group</span><span class="p">[</span><span class="n">sample</span><span class="p">]</span> <span class="ow">is</span> <span class="n">ReplicateGroup</span><span class="o">.</span><span class="n">final_set</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">"datafile_1_record"</span>
+        <span class="k">return</span> <span class="s2">"culture_record"</span>
+
+    <span class="n">ledger</span> <span class="o">=</span> <span class="n">ReplicateLedger</span><span class="p">(</span>
+        <span class="n">n_rows</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">replicates</span><span class="p">),</span>
+        <span class="n">n_samples</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">sample_strain</span><span class="p">),</span>
+        <span class="n">n_strains</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">replicated</span><span class="p">),</span>
+        <span class="n">samples_by_group</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">g</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">sample_group</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="n">g</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">ReplicateGroup</span>
+        <span class="p">},</span>
+        <span class="n">samples</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">"sample_id"</span><span class="p">:</span> <span class="n">s</span><span class="p">,</span>
+                <span class="s2">"strain"</span><span class="p">:</span> <span class="n">sample_strain</span><span class="p">[</span><span class="n">s</span><span class="p">],</span>
+                <span class="s2">"group"</span><span class="p">:</span> <span class="n">sample_group</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="s2">"n_mapped_reads"</span><span class="p">:</span> <span class="n">sample_reads</span><span class="p">[</span><span class="n">s</span><span class="p">],</span>
+                <span class="s2">"fate"</span><span class="p">:</span> <span class="n">fate</span><span class="p">(</span><span class="n">s</span><span class="p">),</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">sample_strain</span><span class="p">)</span>
+        <span class="p">],</span>
+        <span class="n">strains_not_built</span><span class="o">=</span><span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">replicated</span> <span class="k">if</span> <span class="n">s</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">built_strains</span><span class="p">],</span>
+        <span class="n">final_set_sample_ids</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">s</span><span class="p">:</span> <span class="n">final_set</span><span class="p">[</span><span class="n">s</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">replicated</span> <span class="k">if</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">built_strains</span>
+        <span class="p">},</span>
+        <span class="n">n_culture_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">cultures</span><span class="p">),</span>
+        <span class="n">n_rows_culture_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">keyed</span><span class="p">),</span>
+        <span class="n">n_rows_absent_dropped</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">keyed</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">cultures</span><span class="p">,</span> <span class="n">ledger</span>
+
+
 <div class="viewcode-block" id="CaudalPanTranscriptome2024Dataset">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.html#torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset">[docs]</a>
 <span class="nd">@register_dataset</span>
@@ -749,22 +1065,28 @@
 <div class="viewcode-block" id="CaudalPanTranscriptome2024Dataset.download">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.html#torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.download">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Symlink the Caudal zip and the six Peter-tier genotype files into ``raw_dir``.</span>
+<span class="w">        </span><span class="sd">"""Symlink the two Caudal files and the six Peter-tier files into ``raw_dir``.</span>
 
-<span class="sd">        Large artifacts are referenced in place (never copied). The Caudal zip is</span>
-<span class="sd">        hash-verified against its module pin; each Peter file against the genomes tier's</span>
-<span class="sd">        manifest (``natural_isolate.link_genotype_files``). ``process`` re-verifies all</span>
-<span class="sd">        seven in ``raw/`` before reading them.</span>
+<span class="sd">        Large artifacts are referenced in place (never copied). The Caudal zip and</span>
+<span class="sd">        Datafile 2 are hash-verified against their module pins; each Peter file against</span>
+<span class="sd">        the genomes tier's manifest (``natural_isolate.link_genotype_files``).</span>
+<span class="sd">        ``process`` re-verifies all eight in ``raw/`` before reading them.</span>
 <span class="sd">        """</span>
         <span class="n">data_root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_root</span><span class="p">()</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">source</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="n">CAUDAL_ZIP_REL</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"required raw artifact missing from mirror: </span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="n">verify_sha256</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">CAUDAL_ZIP_SHA256</span><span class="p">)</span>
-        <span class="n">dest</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">CAUDAL_ZIP_BASENAME</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">rel</span><span class="p">,</span> <span class="n">sha256</span><span class="p">,</span> <span class="n">basename</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">CAUDAL_ZIP_REL</span><span class="p">,</span> <span class="n">CAUDAL_ZIP_SHA256</span><span class="p">,</span> <span class="n">CAUDAL_ZIP_BASENAME</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">REPLICATE_TAB_REL</span><span class="p">,</span> <span class="n">REPLICATE_TAB_SHA256</span><span class="p">,</span> <span class="n">REPLICATE_TAB_BASENAME</span><span class="p">),</span>
+        <span class="p">):</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="n">rel</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"required raw artifact missing from mirror: </span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="n">verify_sha256</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sha256</span><span class="p">)</span>
+            <span class="n">dest</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">basename</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
         <span class="n">link_genotype_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">data_root</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Caudal/Peter raw files linked into </span><span class="si">%s</span><span class="s2"> (sha256 verified)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span>
@@ -775,13 +1097,15 @@
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.html#torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build the 943 per-isolate pan-transcriptome experiments and write LMDB.</span>
+<span class="w">        </span><span class="sd">"""Build one experiment per culture (943 isolates, 971 cultures) and write LMDB.</span>
 
-<span class="sd">        Every file in ``raw/`` is verified before a row is read: the Caudal zip against</span>
-<span class="sd">        this module's pin, the six Peter files against the genomes tier's manifest. A</span>
-<span class="sd">        mismatch raises ``RawSha256MismatchError``. Each isolate's genotype comes from</span>
-<span class="sd">        ``NaturalIsolateGenotypes``; what the genotypes carry is counted in</span>
-<span class="sd">        ``preprocess/natural_isolate_genotype_ledger.json``.</span>
+<span class="sd">        Every file in ``raw/`` is verified before a row is read: the two Caudal files</span>
+<span class="sd">        against this module's pins, the six Peter files against the genomes tier's</span>
+<span class="sd">        manifest. A mismatch raises ``RawSha256MismatchError``. Each isolate's genotype</span>
+<span class="sd">        comes from ``NaturalIsolateGenotypes``; what the genotypes carry is counted in</span>
+<span class="sd">        ``preprocess/natural_isolate_genotype_ledger.json``. An isolate's records are</span>
+<span class="sd">        its Datafile 1 culture, then its other Datafile 2 cultures in ``Final.Group``</span>
+<span class="sd">        and ``SampleID`` order.</span>
 <span class="sd">        """</span>
         <span class="n">data_root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_root</span><span class="p">()</span>
         <span class="n">peter</span> <span class="o">=</span> <span class="n">load_genome_manifest</span><span class="p">(</span><span class="n">PETER2018_1011</span><span class="p">,</span> <span class="n">data_root</span><span class="p">)</span>
@@ -789,15 +1113,19 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span>
             <span class="p">{</span>
                 <span class="n">CAUDAL_ZIP_BASENAME</span><span class="p">:</span> <span class="n">CAUDAL_ZIP_SHA256</span><span class="p">,</span>
+                <span class="n">REPLICATE_TAB_BASENAME</span><span class="p">:</span> <span class="n">REPLICATE_TAB_SHA256</span><span class="p">,</span>
                 <span class="o">**</span><span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">peter</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">sha256</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">GENOTYPE_FILES</span><span class="p">},</span>
             <span class="p">},</span>
         <span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="c1"># 1. Caudal expression -&gt; per-(strain, gene) tpm/count, restricted to the</span>
-        <span class="c1">#    isolates with a Peter genome; population-mean reference over those strains.</span>
+        <span class="c1">#    isolates with a Peter genome; population-mean reference over those strains;</span>
+        <span class="c1">#    the other cultures of the replicated isolates from Datafile 2.</span>
         <span class="n">panel</span> <span class="o">=</span> <span class="n">panel_isolates</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">)</span>
-        <span class="n">strains</span><span class="p">,</span> <span class="n">per_strain</span><span class="p">,</span> <span class="n">ref_tpm</span><span class="p">,</span> <span class="n">ref_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_caudal</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="n">panel</span><span class="p">)</span>
+        <span class="n">strains</span><span class="p">,</span> <span class="n">per_strain</span><span class="p">,</span> <span class="n">ref_tpm</span><span class="p">,</span> <span class="n">ref_count</span><span class="p">,</span> <span class="n">cultures</span><span class="p">,</span> <span class="n">final_set</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_caudal</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="n">panel</span><span class="p">)</span>
+        <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Matched isolates (Caudal ∩ Peter): </span><span class="si">%d</span><span class="s2">"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">strains</span><span class="p">))</span>
 
         <span class="c1"># 2. The isolate genotypes (allele diff cached in preprocess/).</span>
@@ -817,6 +1145,10 @@
             <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span>
         <span class="p">)</span>
 
+        <span class="n">by_strain</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReplicateCulture</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">culture</span> <span class="ow">in</span> <span class="n">cultures</span><span class="p">:</span>
+            <span class="n">by_strain</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">culture</span><span class="o">.</span><span class="n">strain</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">culture</span><span class="p">)</span>
+
         <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">2e11</span><span class="p">))</span>
         <span class="n">kinds</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
@@ -825,29 +1157,46 @@
                 <span class="n">genotype</span> <span class="o">=</span> <span class="n">genotypes</span><span class="o">.</span><span class="n">genotype</span><span class="p">(</span><span class="n">strain</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">genotype</span><span class="o">.</span><span class="n">perturbation_types</span><span class="p">:</span>
                     <span class="n">kinds</span><span class="p">[</span><span class="n">kind</span><span class="p">]</span> <span class="o">=</span> <span class="n">kinds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
-                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span>
+                <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
                     <span class="p">{</span>
                         <span class="s2">"genotype"</span><span class="p">:</span> <span class="n">genotype</span><span class="p">,</span>
                         <span class="s2">"expression_tpm"</span><span class="p">:</span> <span class="n">per_strain</span><span class="p">[</span><span class="n">strain</span><span class="p">][</span><span class="s2">"tpm"</span><span class="p">],</span>
                         <span class="s2">"expression_count"</span><span class="p">:</span> <span class="n">per_strain</span><span class="p">[</span><span class="n">strain</span><span class="p">][</span><span class="s2">"count"</span><span class="p">],</span>
+                        <span class="s2">"n_mapped_reads"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                        <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">final_set</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">strain</span><span class="p">),</span>
                     <span class="p">}</span>
-                <span class="p">)</span>
-                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
-                    <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
-                        <span class="p">{</span>
-                            <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
-                            <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
-                            <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
-                        <span class="p">}</span>
-                    <span class="p">),</span>
-                <span class="p">)</span>
-                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="p">]</span>
+                <span class="n">rows</span> <span class="o">+=</span> <span class="p">[</span>
+                    <span class="p">{</span>
+                        <span class="s2">"genotype"</span><span class="p">:</span> <span class="n">genotype</span><span class="p">,</span>
+                        <span class="s2">"expression_tpm"</span><span class="p">:</span> <span class="n">culture</span><span class="o">.</span><span class="n">tpm</span><span class="p">,</span>
+                        <span class="s2">"expression_count"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                        <span class="s2">"n_mapped_reads"</span><span class="p">:</span> <span class="n">culture</span><span class="o">.</span><span class="n">n_mapped_reads</span><span class="p">,</span>
+                        <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">culture</span><span class="o">.</span><span class="n">sample_id</span><span class="p">,</span>
+                    <span class="p">}</span>
+                    <span class="k">for</span> <span class="n">culture</span> <span class="ow">in</span> <span class="n">by_strain</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">strain</span><span class="p">,</span> <span class="p">[])</span>
+                <span class="p">]</span>
+                <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+                    <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+                    <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                        <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                            <span class="p">{</span>
+                                <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                                <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                                <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                            <span class="p">}</span>
+                        <span class="p">),</span>
+                    <span class="p">)</span>
+                    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-        <span class="n">n</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">strains</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> isolates. Per-isolate means: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> records (</span><span class="si">%d</span><span class="s2"> isolates, </span><span class="si">%d</span><span class="s2"> replicate cultures). Per-isolate "</span>
+            <span class="s2">"means: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
             <span class="n">idx</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">strains</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">cultures</span><span class="p">),</span>
             <span class="p">{</span><span class="n">kind</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">count</span> <span class="o">/</span> <span class="n">n</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">kind</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">kinds</span><span class="o">.</span><span class="n">items</span><span class="p">())},</span>
         <span class="p">)</span></div>
 
@@ -859,17 +1208,43 @@
         <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]],</span>
         <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
         <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+        <span class="nb">list</span><span class="p">[</span><span class="n">ReplicateCulture</span><span class="p">],</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
     <span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Aggregate Caudal expression per (strain, gene); return matched strains + ref.</span>
 
 <span class="sd">        Every row of the built isolates is accounted for by ``resolve_gene_ids``: named</span>
 <span class="sd">        rows keep their ``systematic_name``, blank-name rows are served or dropped by</span>
 <span class="sd">        their ledger class, and the ledger is written to</span>
-<span class="sd">        ``preprocess/blank_systematic_name_ledger.json`` (issue #598).</span>
+<span class="sd">        ``preprocess/blank_systematic_name_ledger.json`` (issue #598). Datafile 2's</span>
+<span class="sd">        other cultures of the built isolates and each replicated isolate's ``Final_set``</span>
+<span class="sd">        sample id are returned too, accounted for in</span>
+<span class="sd">        ``preprocess/replicate_culture_ledger.json``.</span>
 <span class="sd">        """</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">read_caudal_table</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">CAUDAL_ZIP_BASENAME</span><span class="p">))</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">restrict_to_built_isolates</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">peter_isolates</span><span class="p">)</span>
-        <span class="n">df</span><span class="p">,</span> <span class="n">ledger</span> <span class="o">=</span> <span class="n">resolve_gene_ids</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="n">built</span> <span class="o">=</span> <span class="n">restrict_to_built_isolates</span><span class="p">(</span>
+            <span class="n">read_caudal_table</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">CAUDAL_ZIP_BASENAME</span><span class="p">)),</span>
+            <span class="n">peter_isolates</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">df</span><span class="p">,</span> <span class="n">ledger</span> <span class="o">=</span> <span class="n">resolve_gene_ids</span><span class="p">(</span><span class="n">built</span><span class="p">)</span>
+        <span class="n">cultures</span><span class="p">,</span> <span class="n">replicate_ledger</span> <span class="o">=</span> <span class="n">replicate_cultures</span><span class="p">(</span>
+            <span class="n">read_replicate_table</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">REPLICATE_TAB_BASENAME</span><span class="p">)),</span>
+            <span class="n">built</span><span class="p">,</span>
+            <span class="n">df</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">replicate_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"replicate_culture_ledger.json"</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">replicate_path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">replicate_ledger</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Datafile 2: </span><span class="si">%d</span><span class="s2"> samples of </span><span class="si">%d</span><span class="s2"> isolates; </span><span class="si">%d</span><span class="s2"> culture records for built "</span>
+            <span class="s2">"isolates (</span><span class="si">%d</span><span class="s2"> rows, </span><span class="si">%d</span><span class="s2"> absent rows dropped); not built </span><span class="si">%s</span><span class="s2"> -&gt; </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">replicate_ledger</span><span class="o">.</span><span class="n">n_samples</span><span class="p">,</span>
+            <span class="n">replicate_ledger</span><span class="o">.</span><span class="n">n_strains</span><span class="p">,</span>
+            <span class="n">replicate_ledger</span><span class="o">.</span><span class="n">n_culture_records</span><span class="p">,</span>
+            <span class="n">replicate_ledger</span><span class="o">.</span><span class="n">n_rows_culture_records</span><span class="p">,</span>
+            <span class="n">replicate_ledger</span><span class="o">.</span><span class="n">n_rows_absent_dropped</span><span class="p">,</span>
+            <span class="n">replicate_ledger</span><span class="o">.</span><span class="n">strains_not_built</span><span class="p">,</span>
+            <span class="n">replicate_path</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">ledger_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"blank_systematic_name_ledger.json"</span><span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">ledger_path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ledger</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
@@ -906,7 +1281,14 @@
         <span class="n">ref_tpm</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">g</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">ref</span><span class="p">[</span><span class="s2">"tpm"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
         <span class="n">ref_count</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">g</span><span class="p">):</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="p">)))</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">ref</span><span class="p">[</span><span class="s2">"count"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
         <span class="n">strains</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">per_strain</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">strains</span><span class="p">,</span> <span class="n">per_strain</span><span class="p">,</span> <span class="n">ref_tpm</span><span class="p">,</span> <span class="n">ref_count</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">strains</span><span class="p">,</span>
+            <span class="n">per_strain</span><span class="p">,</span>
+            <span class="n">ref_tpm</span><span class="p">,</span>
+            <span class="n">ref_count</span><span class="p">,</span>
+            <span class="n">cultures</span><span class="p">,</span>
+            <span class="n">replicate_ledger</span><span class="o">.</span><span class="n">final_set_sample_ids</span><span class="p">,</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="CaudalPanTranscriptome2024Dataset.preprocess_raw">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.html#torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.preprocess_raw">[docs]</a>
@@ -924,7 +1306,11 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
         <span class="n">RNASeqExpressionExperiment</span><span class="p">,</span> <span class="n">RNASeqExpressionExperimentReference</span><span class="p">,</span> <span class="n">Publication</span>
     <span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Build the RNA-seq experiment/reference/publication for one isolate."""</span>
+<span class="w">        </span><span class="sd">"""Build the RNA-seq experiment/reference/publication for one culture.</span>
+
+<span class="sd">        ``row["expression_count"]`` None (a Datafile 2 culture) carries</span>
+<span class="sd">        ``REPLICATE_COUNT_GAP``.</span>
+<span class="sd">        """</span>
         <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
             <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
             <span class="n">strain</span><span class="o">=</span><span class="s2">"S288C"</span><span class="p">,</span>
@@ -938,7 +1324,11 @@
             <span class="n">expression_tpm</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"expression_tpm"</span><span class="p">],</span>
             <span class="n">expression_count</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"expression_count"</span><span class="p">],</span>
             <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
-            <span class="n">n_mapped_reads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">n_mapped_reads</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"n_mapped_reads"</span><span class="p">],</span>
+            <span class="n">replicate_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"replicate_id"</span><span class="p">],</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">REPLICATE_COUNT_GAP</span><span class="p">]</span> <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">"expression_count"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+            <span class="p">),</span>
         <span class="p">)</span>
         <span class="n">experiment</span> <span class="o">=</span> <span class="n">RNASeqExpressionExperiment</span><span class="p">(</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>

@@ -220,22 +220,24 @@ inheriting an organism it may not have.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.download">
 <span class="sig-name descname"><span class="pre">download</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/scerevisiae/caudal2024.html#CaudalPanTranscriptome2024Dataset.download"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.download" title="Link to this definition"></a></dt>
-<dd><p>Symlink the Caudal zip and the six Peter-tier genotype files into <code class="docutils literal notranslate"><span class="pre">raw_dir</span></code>.</p>
-<p>Large artifacts are referenced in place (never copied). The Caudal zip is
-hash-verified against its module pin; each Peter file against the genomes tier’s
-manifest (<code class="docutils literal notranslate"><span class="pre">natural_isolate.link_genotype_files</span></code>). <code class="docutils literal notranslate"><span class="pre">process</span></code> re-verifies all
-seven in <code class="docutils literal notranslate"><span class="pre">raw/</span></code> before reading them.</p>
+<dd><p>Symlink the two Caudal files and the six Peter-tier files into <code class="docutils literal notranslate"><span class="pre">raw_dir</span></code>.</p>
+<p>Large artifacts are referenced in place (never copied). The Caudal zip and
+Datafile 2 are hash-verified against their module pins; each Peter file against
+the genomes tier’s manifest (<code class="docutils literal notranslate"><span class="pre">natural_isolate.link_genotype_files</span></code>).
+<code class="docutils literal notranslate"><span class="pre">process</span></code> re-verifies all eight in <code class="docutils literal notranslate"><span class="pre">raw/</span></code> before reading them.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.process">
 <span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/scerevisiae/caudal2024.html#CaudalPanTranscriptome2024Dataset.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.process" title="Link to this definition"></a></dt>
-<dd><p>Build the 943 per-isolate pan-transcriptome experiments and write LMDB.</p>
-<p>Every file in <code class="docutils literal notranslate"><span class="pre">raw/</span></code> is verified before a row is read: the Caudal zip against
-this module’s pin, the six Peter files against the genomes tier’s manifest. A
-mismatch raises <code class="docutils literal notranslate"><span class="pre">RawSha256MismatchError</span></code>. Each isolate’s genotype comes from
-<code class="docutils literal notranslate"><span class="pre">NaturalIsolateGenotypes</span></code>; what the genotypes carry is counted in
-<code class="docutils literal notranslate"><span class="pre">preprocess/natural_isolate_genotype_ledger.json</span></code>.</p>
+<dd><p>Build one experiment per culture (943 isolates, 971 cultures) and write LMDB.</p>
+<p>Every file in <code class="docutils literal notranslate"><span class="pre">raw/</span></code> is verified before a row is read: the two Caudal files
+against this module’s pins, the six Peter files against the genomes tier’s
+manifest. A mismatch raises <code class="docutils literal notranslate"><span class="pre">RawSha256MismatchError</span></code>. Each isolate’s genotype
+comes from <code class="docutils literal notranslate"><span class="pre">NaturalIsolateGenotypes</span></code>; what the genotypes carry is counted in
+<code class="docutils literal notranslate"><span class="pre">preprocess/natural_isolate_genotype_ledger.json</span></code>. An isolate’s records are
+its Datafile 1 culture, then its other Datafile 2 cultures in <code class="docutils literal notranslate"><span class="pre">Final.Group</span></code>
+and <code class="docutils literal notranslate"><span class="pre">SampleID</span></code> order.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -247,7 +249,9 @@ mismatch raises <code class="docutils literal notranslate"><span class="pre">Raw
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.create_experiment">
 <span class="sig-name descname"><span class="pre">create_experiment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.15)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="torchcell.datamodels.schema.RNASeqExpressionExperiment.html#torchcell.datamodels.schema.RNASeqExpressionExperiment" title="torchcell.datamodels.schema.RNASeqExpressionExperiment"><span class="pre">RNASeqExpressionExperiment</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.RNASeqExpressionExperimentReference.html#torchcell.datamodels.schema.RNASeqExpressionExperimentReference" title="torchcell.datamodels.schema.RNASeqExpressionExperimentReference"><span class="pre">RNASeqExpressionExperimentReference</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="torchcell.datamodels.schema.Publication.html#torchcell.datamodels.schema.Publication" title="torchcell.datamodels.schema.Publication"><span class="pre">Publication</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/torchcell/datasets/scerevisiae/caudal2024.html#CaudalPanTranscriptome2024Dataset.create_experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.scerevisiae.caudal2024.CaudalPanTranscriptome2024Dataset.create_experiment" title="Link to this definition"></a></dt>
-<dd><p>Build the RNA-seq experiment/reference/publication for one isolate.</p>
+<dd><p>Build the RNA-seq experiment/reference/publication for one culture.</p>
+<p><code class="docutils literal notranslate"><span class="pre">row[&quot;expression_count&quot;]</span></code> None (a Datafile 2 culture) carries
+<code class="docutils literal notranslate"><span class="pre">REPLICATE_COUNT_GAP</span></code>.</p>
 </dd></dl>
 
 </dd></dl>

@@ -218,6 +218,7 @@ store asserts the arithmetic.
 
 from __future__ import annotations
 
+import csv
 import hashlib
 import json
 import logging
@@ -227,6 +228,7 @@ import os.path as osp
 import re
 import shutil
 import statistics
+import tempfile
 from collections import Counter, defaultdict
 from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
 from datetime import UTC, datetime
@@ -398,6 +400,122 @@ DRYAD_METADATA_REL = f"{DRYAD_DIR_REL}/{DRYAD_METADATA_FILENAME}"
 DRYAD_README_REL = f"{DRYAD_DIR_REL}/{DRYAD_README_FILENAME}"
 DRYAD_ZIP_REL = f"{DRYAD_DIR_REL}/{DRYAD_ZIP_FILENAME}"
 DRYAD_RETRIEVED_AT = "2026-10-09"
+
+# --------------------------------------------------------------------------- #
+# The authors' code release (Code availability, paper.md L224)
+#
+# "All code required to reproduce this study, including ART, automation workflows, and
+# figure generation, is provided as Jupyter Notebooks and can be accessed at
+# https://github.com/JBEI/Isoprenol_CRISPRi or https://doi.org/10.5281/zenodo.17178684".
+# It is a RELEASED artifact of this paper and it carries two things the Source Data
+# workbook does not: the UNIT of the overexpression panel's inducer dose
+# (:data:`INDUCER_UNIT`), and per-replicate proteome tables for cultures the Dryad
+# deposit omits. Retrieval is scriptable (a public repository at a pinned commit), so
+# these files are fetched by :func:`fetch_code_release` and recorded with the
+# ``git_repository`` method rather than deposited by hand like the Dryad files.
+# --------------------------------------------------------------------------- #
+CODE_REPO = "JBEI/Isoprenol_CRISPRi"
+#: The commit the Zenodo archive snapshots, pinned in full: a short sha is not a
+#: retrieval anchor, and ``git fetch --depth 1`` refuses one.
+CODE_COMMIT = "3ceecf8a6f70c84d088e34c0c68b991e27b0d117"
+CODE_ZENODO_DOI = "10.5281/zenodo.17178684"
+CODE_DIR_REL = "code"
+CODE_RETRIEVED_AT = "2026-11-25"
+#: The notebook that builds Supplementary Figure 12 from the two overexpression panels
+#: and is the only released statement of the inducer dose's unit.
+CODE_FIG_S12_NB = "Other Figures/Fig_S12.ipynb"
+CODE_FIG_S12_NB_SHA256 = (
+    "d8efdff5f1de6cbba476de890ceb15d8fee49221af9c2aad54727acb2b6ed4b4"
+)
+#: The four files that notebook reads: the titer and per-protein tables of the two
+#: overexpression labels, each a row-for-row re-export of a Source Data sheet
+#: (:func:`assert_overexpression_unit_source` proves it cell by cell).
+CODE_PSTABL_TITER: dict[str, str] = {
+    "pSTABL1": "Other Figures/Figure_Data/pSTABL1_GCFID.csv",
+    "pSTABL2": "Other Figures/Figure_Data/pSTABL2_GCFID.csv",
+}
+CODE_PSTABL_PROTEOME: dict[str, str] = {
+    "pSTABL1": "Other Figures/Figure_Data/pSTABL1_proteomics.csv",
+    "pSTABL2": "Other Figures/Figure_Data/pSTABL2_proteomics.csv",
+}
+#: The per-replicate proteome tables behind the DBTL figures and Figure 6b. They are
+#: mirrored but NOT read by any loader today; what each one holds beyond the Dryad
+#: deposit is measured in the dated note section and tracked in #1200.
+CODE_DBTL_PROTEOME: dict[int, str] = {
+    0: "DBTL Proteomics Analysis/Figure_Data/DBTL0.csv",
+    1: "DBTL Proteomics Analysis/Figure_Data/DBTL1.csv",
+}
+CODE_FIG6_PROTEOME: dict[str, str] = {
+    "target": "DBTL Proteomics Analysis/Figure_Data/Fig6_Targets.csv",
+    "non_target": "DBTL Proteomics Analysis/Figure_Data/Fig6_Nontargets.csv",
+}
+#: The five code-release files that state and anchor the inducer unit: the notebook and
+#: the four tables it reads. They are linked into ``raw/`` of both families that store
+#: the overexpression panel, so :func:`assert_overexpression_unit_source` runs against
+#: sha256-verified bytes at build time rather than against the mirror by path.
+#: ``path_in_repo -> (mirror relpath, role, sha256)`` of every deposited file.
+CODE_RELEASE_FILES: dict[str, tuple[str, str, str]] = {
+    CODE_FIG_S12_NB: (
+        f"{CODE_DIR_REL}/Fig_S12.ipynb",
+        ROLE_SI_DATA,
+        CODE_FIG_S12_NB_SHA256,
+    ),
+    CODE_PSTABL_TITER["pSTABL1"]: (
+        f"{CODE_DIR_REL}/pSTABL1_GCFID.csv",
+        ROLE_SI_DATA,
+        "96418c1d84c20a2d98d6755be4f684a67b6baa14434405a36a9bb5a00d8ac6ca",
+    ),
+    CODE_PSTABL_TITER["pSTABL2"]: (
+        f"{CODE_DIR_REL}/pSTABL2_GCFID.csv",
+        ROLE_SI_DATA,
+        "aad5d1daba67637c4b12747b286aee1eddf05dcf672319e3f9a6f22514d5fe62",
+    ),
+    CODE_PSTABL_PROTEOME["pSTABL1"]: (
+        f"{CODE_DIR_REL}/pSTABL1_proteomics.csv",
+        ROLE_SI_DATA,
+        "b0bb88cda1aaaf3452f0c33f38b0f389e2d653b493ef24b51c53e1563da80713",
+    ),
+    CODE_PSTABL_PROTEOME["pSTABL2"]: (
+        f"{CODE_DIR_REL}/pSTABL2_proteomics.csv",
+        ROLE_SI_DATA,
+        "33c7d4995e1608a1dc906f825cdba3012d17f056b54a9cb2a09d2639a1f1e48c",
+    ),
+    CODE_DBTL_PROTEOME[0]: (
+        f"{CODE_DIR_REL}/DBTL0.csv",
+        ROLE_RAW_DATA,
+        "bc4036c548890d6ed8301aed395ff676642167cbae6c77d9eb5c884abeb9f934",
+    ),
+    CODE_DBTL_PROTEOME[1]: (
+        f"{CODE_DIR_REL}/DBTL1.csv",
+        ROLE_RAW_DATA,
+        "75b4ed5d00ff544bd31f0fc7f731b628e8a3591ca888b3d32f9002a3a3dec35b",
+    ),
+    CODE_FIG6_PROTEOME["target"]: (
+        f"{CODE_DIR_REL}/Fig6_Targets.csv",
+        ROLE_RAW_DATA,
+        "3ad273bd1b3a2de3ac03a5be3157f2f246333aa470f22af1a02879f5d3539b31",
+    ),
+    CODE_FIG6_PROTEOME["non_target"]: (
+        f"{CODE_DIR_REL}/Fig6_Nontargets.csv",
+        ROLE_RAW_DATA,
+        "b24ddc8de91690977aede6bd5437426adb8b4973d164ffba23b663019e06f1d2",
+    ),
+}
+#: The code-release files the unit proof reads, as ``(mirror relpath, raw name, sha256)``
+#: pins for :func:`_link_mirror_files`, and the ``raw/`` names they take.
+UNIT_SOURCE_PINS: tuple[tuple[str, str, str], ...] = tuple(
+    (CODE_RELEASE_FILES[path_in_repo][0],)
+    + (
+        osp.basename(CODE_RELEASE_FILES[path_in_repo][0]),
+        CODE_RELEASE_FILES[path_in_repo][2],
+    )
+    for path_in_repo in (
+        CODE_FIG_S12_NB,
+        *CODE_PSTABL_TITER.values(),
+        *CODE_PSTABL_PROTEOME.values(),
+    )
+)
+UNIT_SOURCE_FILENAMES: tuple[str, ...] = tuple(name for _, name, _ in UNIT_SOURCE_PINS)
 #: The manual recipe, verbatim from the deposit's own ``DEPOSIT.md``, recorded as the
 #: ``retrieval_command`` of every Dryad file's ``manual_browser`` retrieval record. It
 #: is what a rebuild re-runs by hand before verifying the four sha256 digests above.
@@ -520,17 +638,22 @@ EXPECTED_CRISPRI_TITER_RECORDS = 1416
 #: seven of them the release cultured six times rather than three.
 EXPECTED_CRISPRI_STRAIN_CYCLES = 465
 EXPECTED_SIX_REPLICATE_STRAIN_CYCLES = 7
-#: The four Source Data panels below add 109 cultures: 36 + 12 + 55 + 6.
-EXPECTED_PANEL_TITER_RECORDS = 109
+#: The four Source Data panels below add 145 cultures: 36 + 12 + 55 + 42. The
+#: overexpression panel's 42 are its two labels' seven inducer levels in triplicate;
+#: before 2026-11-25 only the 6 uninduced ones were stored (see :data:`INDUCER_UNIT`).
+EXPECTED_PANEL_TITER_RECORDS = 145
 #: One record per released non-control culture the release states a full genotype and
 #: environment for.
 EXPECTED_TITER_RECORDS = EXPECTED_CRISPRI_TITER_RECORDS + EXPECTED_PANEL_TITER_RECORDS
 #: One record per released ``(sample, replicate)`` of ``SHEET_PROTEOME`` bar the three
 #: non-targeting reference replicates: 19 samples x 3.
 EXPECTED_PP0815_PROTEOME_RECORDS = 57
-#: ``SHEET_OVEREXPRESSION_PROTEOME``'s two uninduced samples x 3 replicates.
-EXPECTED_OVEREXPRESSION_PROTEOME_SAMPLES = 2
-EXPECTED_OVEREXPRESSION_PROTEOME_RECORDS = 6
+#: ``SHEET_OVEREXPRESSION_PROTEOME``'s 14 condition samples (two labels x seven inducer
+#: levels) x 3 replicates. Before 2026-11-25 only the two uninduced samples were stored,
+#: because the dose carried no unit until the code release supplied it
+#: (:data:`INDUCER_UNIT`); the two ``Control`` samples stay references.
+EXPECTED_OVEREXPRESSION_PROTEOME_SAMPLES = 14
+EXPECTED_OVEREXPRESSION_PROTEOME_RECORDS = 42
 EXPECTED_PROTEOME_RECORDS = (
     EXPECTED_PP0815_PROTEOME_RECORDS + EXPECTED_OVEREXPRESSION_PROTEOME_RECORDS
 )
@@ -617,8 +740,9 @@ OFFTARGET_TARGET_SHARED_CULTURES = 1
 
 #: ``Supplementary Figure 12bd`` / ``12ac`` label the RFP vector control ``Control``.
 OVEREXPRESSION_CONTROL_STRAIN = "Control"
-#: The released induction series. Only the 0 level is loaded: the inducer's UNIT is not
-#: released anywhere in the mirror (see :data:`INDUCER_UNIT_GAP`).
+#: The released induction series, in the unit the code release states for it
+#: (:data:`INDUCER_UNIT`): a two-fold dilution series of the inducer, plus the uninduced
+#: level, at which no inducer was added and no dose is recorded.
 OVEREXPRESSION_UNINDUCED_LEVEL = 0.0
 OVEREXPRESSION_INDUCED_LEVELS: tuple[float, ...] = (
     31.25,
@@ -627,6 +751,11 @@ OVEREXPRESSION_INDUCED_LEVELS: tuple[float, ...] = (
     250.0,
     500.0,
     1000.0,
+)
+#: Every released level, uninduced first: the sheet's own ``Inducer concentration`` set.
+OVEREXPRESSION_LEVELS: tuple[float, ...] = (
+    OVEREXPRESSION_UNINDUCED_LEVEL,
+    *OVEREXPRESSION_INDUCED_LEVELS,
 )
 #: ``Supplementary Figure 12ac``'s sample names: ``<label>_Condition_<n>`` / ``_Control``.
 OVEREXPRESSION_SAMPLE_RE = re.compile(
@@ -736,6 +865,34 @@ def _source_data(
             sha256=SOURCE_DATA_SHA256,
             method="published Source Data workbook (raw mirror)",
             page=page,
+        ),
+    )
+
+
+def _code_release(
+    value: Any, quote: str, *, path_in_repo: str, note: str | None = None
+) -> SourcedValue:
+    """Bind a value to a verbatim line of one mirrored file of the code release.
+
+    The provenance names the mirror path, that file's pinned sha256 and the repository
+    commit the bytes came from, so the quote is anchored to bytes a rebuild reproduces
+    by :func:`fetch_code_release` rather than to a branch that can move.
+    """
+    relpath, _, sha256 = CODE_RELEASE_FILES[path_in_repo]
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=relpath,
+            citation_key=CITATION_KEY,
+            sha256=sha256,
+            method=(
+                f"the authors' code release (raw mirror): git repository {CODE_REPO} "
+                f"at commit {CODE_COMMIT}, file {path_in_repo!r}, archived as "
+                f"{CODE_ZENODO_DOI}"
+            ),
+            page=path_in_repo,
         ),
     )
 
@@ -994,6 +1151,15 @@ _Q_SI_FIG12_PANELS = (
     "abundance of PP_2791-94 (levulinic acid degradation pathway LvaA-D) under various "
     "induction concentrations."
 )
+#: The verbatim line of the code release's Supplementary Figure 12 notebook that gives
+#: the inducer dose its unit. It occurs once in each of the notebook's four figure
+#: cells, which plot the titer and the per-protein table of each overexpression label.
+_Q_CODE_INDUCER_UM = (
+    'df["Strain_Conc"] = df["Strain"] + ": " + '
+    'df["Inducer concentration"].astype(str) + " µM"'
+)
+#: How many of the notebook's cells carry that line: one per published panel (12a-d).
+CODE_INDUCER_UM_CELLS = 4
 _Q_SI_FIG12_UNINDUCED = (
     "Uninduced expression, however, showed a $\\sim 1 0 \\%$ increase in titer "
     "compared to the RFP control."
@@ -1456,23 +1622,37 @@ OVEREXPRESSION_DURATION_GAP = _paper(
     "flower plate, the L-arabinose induction) the sentence leaves to the shared "
     "protocol and does not contradict",
 )
-INDUCER_UNIT_GAP = _paper(
-    OVEREXPRESSION_INDUCED_LEVELS,
+INDUCER_COMPOUND = _paper(
+    "salicylic acid",
     _Q_OVEREXPRESSION_SALICYLATE,
     page="Methods, 'Overexpression of candidate genes'",
-    note="why only the UNINDUCED arm of Supplementary Figure 12 is loaded. The inducer "
-    "is salicylic acid and its concentrations are released as bare numbers in the "
-    "'Inducer concentration' column with NO unit. Measured over the mirror: 'salicyl' "
-    "occurs once in paper.md (this sentence, with no dose), 'inducer' once in si1.md "
-    "(the Supplementary Fig. 12 caption's 'under various inducer concentrations', with "
-    "no unit), and the dose series appears nowhere else in paper.md, si1.md, si2.md, "
-    "si3.md or si8.md. The deferral was followed: Supplementary Data 3 refers the "
-    "NagR-pNagAa vector to Supplementary Reference 1 (Yunus et al., mirrored as "
-    "yunusPredictiveCRISPRmediatedGene2026), whose Methods state only an L-arabinose "
-    "dose and no salicylate dose. ConcentrationUnit admits no unitless member and a "
-    "Concentration needs a value WITH a unit, so the six induced levels cannot be "
-    "typed; collapsing them to one dose basis would assert that one condition yielded "
-    "six different titers. At level 0 no inducer was added and no unit is needed",
+    note="the inducer of the two overexpression vectors, as the Methods name it. It "
+    "resolves through the compound-identity table as the LABEL 'salicylic acid' with a "
+    "typed gap on its InChIKey: the table's nearest row is the anion 'salicylate', and "
+    "the acid and its conjugate base are not the same chemical entity, so no "
+    "identifier is asserted for the species the Methods name",
+)
+INDUCER_UNIT = _code_release(
+    ConcentrationUnit.micromolar,
+    _Q_CODE_INDUCER_UM,
+    path_in_repo=CODE_FIG_S12_NB,
+    note="the UNIT of Supplementary Figure 12's 'Inducer concentration' column, which "
+    "the Source Data releases as bare numbers (31.25 to 1000). The authors' own figure "
+    "code labels every tick of both panels with that column's value followed by ' "
+    f"µM', in four cells of {CODE_FIG_S12_NB}: one per published panel, reading "
+    f"{', '.join(sorted({*CODE_PSTABL_TITER.values(), *CODE_PSTABL_PROTEOME.values()}))}"
+    ". Those four tables are row-for-row re-exports of "
+    "the two Source Data sheets this loader reads, which "
+    ":func:`assert_overexpression_unit_source` proves cell by cell (48 and 144 rows), "
+    "so the unit belongs to the same numbers. BEFORE 2026-11-25 the six induced levels "
+    "of both panels were dropped by a rule named "
+    "``inducer_concentration_has_no_released_unit`` (#1064, #1200 item 3), because the "
+    "unit appears in no mirrored PDF or workbook: 'salicyl' occurs once in paper.md "
+    "(the Methods sentence, with no dose), 'inducer' once in si1.md (the Supplementary "
+    "Fig. 12 caption's 'under various inducer concentrations', with no unit), and the "
+    "dose series nowhere else in paper.md, si1.md, si2.md, si3.md or si8.md. The code "
+    "release is the released artifact that states it, so the dose is typed and the 36 "
+    "induced cultures of each panel are stored",
 )
 CONTROL_PROTEOME_DEFERRAL = _si(
     None,
@@ -1778,6 +1958,93 @@ def dryad_artifact_records(root: Path) -> list[ArtifactRecord]:
     return records
 
 
+def fetch_code_release(data_root: str | None = None) -> Path:
+    """Fetch the authors' code release into the raw mirror under ``code/``.
+
+    One clone of :data:`CODE_REPO` at :data:`CODE_COMMIT`, then one
+    ``git show <commit>:<path>`` per file, which is what
+    ``torchcell.literature.retrieve.git_repository`` does per file; doing the clone once
+    is the same retrieval without nine clones of a 795-file repository. Every file is
+    verified against its pinned sha256 after it is written, an existing file whose
+    digest matches is left alone, and a differing one raises rather than being
+    overwritten. Nothing is fetched when every file is already present and verified.
+    """
+    from torchcell.literature.retrieve import git_checkout, git_show
+
+    root = raw_mirror_dir(data_root)
+    missing = {
+        path_in_repo: deposit
+        for path_in_repo, deposit in CODE_RELEASE_FILES.items()
+        if not (root / deposit[0]).exists()
+    }
+    for path_in_repo, (relpath, _, expected) in CODE_RELEASE_FILES.items():
+        dest = root / relpath
+        if dest.exists() and _sha256(dest) != expected:
+            raise RuntimeError(f"{dest} exists with a different sha256; refusing")
+    if missing:
+        with tempfile.TemporaryDirectory(prefix="carruthers2025-code-") as scratch:
+            directory = osp.join(scratch, "repo")
+            git_checkout(CODE_REPO, CODE_COMMIT, directory)
+            for path_in_repo, (relpath, _, expected) in missing.items():
+                dest = root / relpath
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                payload = git_show(directory, CODE_COMMIT, path_in_repo)
+                dest.write_bytes(payload)
+                verify_sha256(dest, expected)
+    return root
+
+
+def code_release_artifact_records(root: Path) -> list[ArtifactRecord]:
+    """The nine code-release records, verified in place under ``root``.
+
+    Each one names the file's path INSIDE the repository as the retriever's
+    ``path_in_repo``, so re-running the recorded retrieval reproduces exactly these
+    bytes from the pinned commit. An absent file raises with the command that writes
+    it, which is :func:`fetch_code_release`.
+    """
+    records: list[ArtifactRecord] = []
+    for path_in_repo, (relpath, role, expected) in CODE_RELEASE_FILES.items():
+        path = root / relpath
+        if not path.exists():
+            raise RuntimeError(
+                f"{path} is missing; run "
+                f"torchcell.datasets.pputida.carruthers2025.fetch_code_release() to "
+                f"retrieve the code release at {CODE_COMMIT}"
+            )
+        verify_sha256(path, expected)
+        records.append(
+            ArtifactRecord(
+                path=relpath,
+                role=role,
+                bytes=path.stat().st_size,
+                sha256=expected,
+                source=f"https://github.com/{CODE_REPO}/blob/{CODE_COMMIT}/{path_in_repo}",
+                original_filename=path_in_repo,
+                retrieval=RetrievalRecord(
+                    method=RetrievalMethod.git_repository,
+                    source_url=f"https://github.com/{CODE_REPO}",
+                    retriever="torchcell.literature.retrieve.git_repository",
+                    params={
+                        "repo": CODE_REPO,
+                        "commit": CODE_COMMIT,
+                        "path_in_repo": path_in_repo,
+                        "archived_as": f"https://doi.org/{CODE_ZENODO_DOI}",
+                        "named_by": (
+                            "Code availability: 'All code required to reproduce this "
+                            "study, including ART, automation workflows, and figure "
+                            "generation, is provided as Jupyter Notebooks and can be "
+                            f"accessed at https://github.com/{CODE_REPO} or "
+                            f"https://doi.org/{CODE_ZENODO_DOI}'"
+                        ),
+                    },
+                    sha256=expected,
+                    retrieved_at=CODE_RETRIEVED_AT,
+                ),
+            )
+        )
+    return records
+
+
 def deposit_raw_mirror(
     *,
     source_data_path: str | Path,
@@ -1829,6 +2096,10 @@ def deposit_raw_mirror(
             )
         )
     files.extend(dryad_artifact_records(root))
+    # The code release is fetched by fetch_code_release(), as the Dryad files are
+    # deposited by hand: the deposit DESCRIBES bytes already in the mirror and never
+    # reaches the network itself.
+    files.extend(code_release_artifact_records(root))
     manifest = Manifest(
         citation_key=CITATION_KEY,
         doi=DOI,
@@ -1838,6 +2109,8 @@ def deposit_raw_mirror(
             f"https://pmc-oa-opendata.s3.amazonaws.com/{pmc_cloud_key(SOURCE_DATA_FILENAME)}",
             f"https://pmc-oa-opendata.s3.amazonaws.com/{pmc_cloud_key(TARGETS_FILENAME)}",
             f"https://doi.org/{DRYAD_DOI}",
+            f"https://github.com/{CODE_REPO}",
+            f"https://doi.org/{CODE_ZENODO_DOI}",
             *(
                 f"https://www.ebi.ac.uk/pride/archive/projects/{accession}"
                 for accession in PRIDE_ACCESSIONS.values()
@@ -1869,6 +2142,18 @@ def deposit_raw_mirror(
             "Top3 matrix and the metadata are what "
             "CampaignProteomeCarruthers2025Dataset consumes; the README is the "
             "authority for what one cell is",
+            f"the code release at github.com/{CODE_REPO} commit {CODE_COMMIT} "
+            f"(archived as {CODE_ZENODO_DOI}) -- DEPOSITED {CODE_RETRIEVED_AT} under "
+            f"{CODE_DIR_REL}/, nine files of the Code availability statement's "
+            f"repository. {CODE_FIG_S12_NB} is the only released statement of the "
+            "overexpression panel's inducer UNIT, which the Source Data column leaves "
+            f"bare (see INDUCER_UNIT); the four Figure_Data tables it reads are "
+            f"row-for-row re-exports of {SHEET_OVEREXPRESSION_TITER} and "
+            f"{SHEET_OVEREXPRESSION_PROTEOME}. DBTL0.csv, DBTL1.csv, Fig6_Targets.csv "
+            "and Fig6_Nontargets.csv are per-replicate proteome tables no loader reads "
+            "today: DBTL1.csv holds 9 '_Bat2' cultures and DBTL0.csv 27 cultures that "
+            "the Dryad matrix does not, and the two Fig6 tables hold 60 per-replicate "
+            "KO proteomes on a Counts_sum basis (#1200)",
             "the seven PRIDE projects "
             + ", ".join(f"{cycle} {acc}" for cycle, acc in PRIDE_ACCESSIONS.items())
             + " -- raw DIA mass-spectrometry files, enumerated above and not "
@@ -2158,8 +2443,10 @@ def production_environment() -> CultureEnvironment:
     )
 
 
-def overexpression_environment() -> CultureEnvironment:
-    """The overexpression panel's environment: the shared protocol, endpoint gapped.
+def overexpression_environment(
+    inducer_level: float = OVEREXPRESSION_UNINDUCED_LEVEL,
+) -> CultureEnvironment:
+    """The overexpression panel's environment at one released inducer level.
 
     The panel has its own one-sentence culturing statement, and it states the endpoint
     as "cultured for over 48 h" where the shared culturing Methods state "Following
@@ -2168,14 +2455,33 @@ def overexpression_environment() -> CultureEnvironment:
     24 C, the flower plate, the L-arabinose induction of pIY670 -- the sentence leaves
     to the shared protocol and does not contradict, so it is carried unchanged.
 
-    Only the UNINDUCED cultures reach this environment: the inducer's unit is not
-    released (:data:`INDUCER_UNIT_GAP`), and at level 0 no inducer was added, so the
-    environment carries no salicylate dose and none is invented.
+    An INDUCED level adds the salicylic-acid dose as a second
+    ``SmallMoleculePerturbation``, the released number in the unit the authors' own
+    figure code states for that column (:data:`INDUCER_UNIT`). At level 0 no inducer was
+    added, so the environment carries no salicylate dose and none is invented: that
+    environment is byte-identical to the one the uninduced cultures carried before the
+    induced arm was storable.
     """
     base = production_environment()
+    perturbations = list(base.perturbations)
+    if inducer_level != OVEREXPRESSION_UNINDUCED_LEVEL:
+        if inducer_level not in OVEREXPRESSION_INDUCED_LEVELS:
+            raise RuntimeError(
+                f"inducer level {inducer_level!r} is not one of the released "
+                f"{OVEREXPRESSION_INDUCED_LEVELS}"
+            )
+        perturbations.append(
+            SmallMoleculePerturbation(
+                compound=resolved_compound(str(INDUCER_COMPOUND.value)),
+                concentration=Concentration(
+                    value=inducer_level, unit=ConcentrationUnit(INDUCER_UNIT.value)
+                ),
+            )
+        )
     return base.model_copy(
         update={
             "duration_hours": None,
+            "perturbations": perturbations,
             "provenance_gaps": [
                 ProvenanceGap(
                     field="duration_hours",
@@ -3240,6 +3546,10 @@ class PanelTiterGroup(BaseModel):
     replicate_ids: tuple[str, ...]
     reference_key: str
     overexpression_environment: bool = False
+    #: The released inducer level these cultures were grown at, in the unit
+    #: :data:`INDUCER_UNIT` states. ``None`` for every panel but the overexpression one,
+    #: whose cultures carry the dose as an environment perturbation.
+    inducer_level: float | None = None
     note: str | None = None
 
     @model_validator(mode="after")
@@ -3629,17 +3939,20 @@ def _offtarget_groups(
 def _overexpression_titer_groups(
     rows: Sequence[OverexpressionTiterRow],
 ) -> tuple[list[PanelTiterGroup], PanelTiterReference, list[str], list[DropRule]]:
-    """``Supplementary Figure 12bd``: the UNINDUCED arm only.
+    """``Supplementary Figure 12bd``: every released culture, at all seven levels.
 
-    The six induced levels are released as bare numbers whose UNIT appears nowhere in
-    the mirror, so they cannot be typed as a dose and are dropped by a stated rule
-    (:data:`INDUCER_UNIT_GAP`). At level 0 no inducer was added, so those cultures need
-    no unit, and the uninduced arm is the one the paper's own claim rests on:
-    "Uninduced expression, however, showed a ~10% increase in titer compared to the RFP
-    control".
+    One group per ``(label, inducer level)``, so each group is a released triplicate at
+    one dose and each record carries that dose as an environment perturbation. The six
+    induced levels are released as bare numbers, and the authors' own figure code states
+    the unit they are in (:data:`INDUCER_UNIT`); until that code release was mirrored
+    they were dropped, which lost 36 cultures. At level 0 no inducer was added, and the
+    uninduced arm is the one the paper's own claim rests on: "Uninduced expression,
+    however, showed a ~10% increase in titer compared to the RFP control".
 
     This sheet prints a ``Replicate`` column, so a culture's ``replicate_id`` is
-    ``<Strain>/<Replicate>``, both cells verbatim. The ``Control`` group
+    ``<Strain>/<Inducer concentration>/<Replicate>``, all three cells verbatim: the
+    label alone repeats across the seven levels, and the level is what tells the seven
+    cultures of one replicate position apart. The ``Control`` group
     is the RFP vector control and stays a reference rather than becoming records
     (:data:`CONTROL_AS_RECORD`): the sheet releases it as six uninduced cultures in two
     blocks, which is why its replicate cells repeat.
@@ -3647,7 +3960,7 @@ def _overexpression_titer_groups(
     groups: dict[tuple[str, float], list[tuple[str, float]]] = defaultdict(list)
     for row in rows:
         groups[(row.strain, row.inducer_level)].append(
-            (f"{row.strain}/{row.replicate}", row.titer_mg_per_l)
+            (f"{row.strain}/{row.inducer_level:g}/{row.replicate}", row.titer_mg_per_l)
         )
     levels = {level for _, level in groups}
     expected = {OVEREXPRESSION_UNINDUCED_LEVEL, *OVEREXPRESSION_INDUCED_LEVELS}
@@ -3679,12 +3992,8 @@ def _overexpression_titer_groups(
         ),
     )
     records: list[PanelTiterGroup] = []
-    dropped: list[str] = []
     for (label, level), values in sorted(groups.items()):
         if label == OVEREXPRESSION_CONTROL_STRAIN:
-            continue
-        if level != OVEREXPRESSION_UNINDUCED_LEVEL:
-            dropped.extend(f"{rep} at inducer level {level:g}" for rep, _ in values)
             continue
         records.append(
             PanelTiterGroup(
@@ -3695,25 +4004,29 @@ def _overexpression_titer_groups(
                 replicate_ids=tuple(rep for rep, _ in values),
                 reference_key=reference.key,
                 overexpression_environment=True,
-                note=_Q_SI_FIG12_UNINDUCED,
+                inducer_level=level,
+                note=(
+                    _Q_SI_FIG12_UNINDUCED
+                    if level == OVEREXPRESSION_UNINDUCED_LEVEL
+                    else f"induced at {level:g} {INDUCER_UNIT.value} "
+                    f"{INDUCER_COMPOUND.value} ({INDUCER_UNIT.quote})"
+                ),
             )
         )
-    drops = [
-        DropRule(
-            rule="inducer_concentration_has_no_released_unit",
-            scope="culture",
-            description=str(INDUCER_UNIT_GAP.note),
-            n_records=len(dropped),
-            items=sorted(dropped),
-        )
-    ]
+    induced = sum(
+        len(record.titers_mg_per_l)
+        for record in records
+        if record.inducer_level != OVEREXPRESSION_UNINDUCED_LEVEL
+    )
+    drops: list[DropRule] = []
     proofs = [
         f"{SHEET_OVEREXPRESSION_TITER}: "
-        f"{sum(len(record.titers_mg_per_l) for record in records)} uninduced cultures "
-        f"kept as records, {len(dropped)} induced cultures dropped because the "
-        f"inducer's unit is not released anywhere in the mirror, and "
+        f"{sum(len(record.titers_mg_per_l) for record in records)} cultures kept as "
+        f"records over {len(records)} (label, inducer level) groups, of which "
+        f"{induced} are induced and carry the dose in "
+        f"{INDUCER_UNIT.value} ({INDUCER_UNIT.provenance.page}), and "
         f"{len(reference.titers_mg_per_l)} uninduced Control cultures are the "
-        "reference"
+        "reference; no culture of this panel is dropped"
     ]
     return records, reference, proofs, drops
 
@@ -3813,15 +4126,128 @@ def assert_overexpression_operons(
     return proofs
 
 
+def _comparable_cell(cell: Any) -> str:
+    """One cell in the form that compares a workbook value with a CSV export of it.
+
+    A cell that is a number on either side is rendered as ``repr`` of its float, so
+    ``1000`` in the workbook and ``1000`` in the CSV are the same cell while
+    ``249.62`` stays exact; anything else is compared as its own text.
+    """
+    if cell is None:
+        return ""
+    if isinstance(cell, int | float):
+        return repr(float(cell))
+    text = str(cell)
+    try:
+        return repr(float(text))
+    except ValueError:
+        return text
+
+
+def _code_table_rows(path: str) -> tuple[list[str], list[tuple[str, ...]]]:
+    """``(header, rows)`` of one mirrored code-release CSV, cells made comparable."""
+    with open(path, newline="", encoding="utf-8") as handle:
+        reader = csv.reader(handle)
+        header = [cell.strip("﻿") for cell in next(reader)]
+        rows = [
+            tuple(_comparable_cell(cell) for cell in row)
+            for row in reader
+            if any(cell != "" for cell in row)
+        ]
+    return header, rows
+
+
+def _sheet_cells_as_text(path: str, sheet: str) -> list[tuple[str, ...]]:
+    """One released sheet's rows in the same comparable form as a CSV export of it."""
+    _, body = _sheet_rows(path, sheet)
+    return [tuple(_comparable_cell(cell) for cell in row) for row in body]
+
+
+def assert_overexpression_unit_source(raw_dir: str) -> list[str]:
+    """Prove the inducer UNIT belongs to the numbers this loader stores.
+
+    Three statements, all measured on the pinned bytes:
+
+    1. the code release's Supplementary Figure 12 notebook carries the verbatim line
+       that labels the ``Inducer concentration`` column in micromolar, in each of its
+       four figure cells (:data:`CODE_INDUCER_UM_CELLS`);
+    2. ``pSTABL1_GCFID.csv`` + ``pSTABL2_GCFID.csv``, the two tables those cells plot,
+       are the 48 rows of ``SHEET_OVEREXPRESSION_TITER``, cell for cell;
+    3. ``pSTABL1_proteomics.csv`` + ``pSTABL2_proteomics.csv`` are the 144 rows of
+       ``SHEET_OVEREXPRESSION_PROTEOME``, cell for cell.
+
+    Together they are why a unit stated in the authors' figure code is a statement about
+    the Source Data column this loader reads, rather than about a different table.
+    """
+    notebook = json.loads(
+        Path(
+            osp.join(raw_dir, osp.basename(CODE_RELEASE_FILES[CODE_FIG_S12_NB][0]))
+        ).read_text(encoding="utf-8")
+    )
+    cells = [
+        "".join(cell.get("source", []))
+        for cell in notebook["cells"]
+        if cell.get("cell_type") == "code"
+    ]
+    carrying = [cell for cell in cells if _Q_CODE_INDUCER_UM in cell]
+    if len(carrying) != CODE_INDUCER_UM_CELLS:
+        raise RuntimeError(
+            f"{CODE_FIG_S12_NB} carries the unit line in {len(carrying)} of its "
+            f"{len(cells)} code cells; this loader was written against "
+            f"{CODE_INDUCER_UM_CELLS}"
+        )
+    proofs = [
+        f"{CODE_FIG_S12_NB}: {len(carrying)} of {len(cells)} code cells carry "
+        f"'{_Q_CODE_INDUCER_UM}', which is the only released statement of the "
+        f"{SHEET_OVEREXPRESSION_TITER} / {SHEET_OVEREXPRESSION_PROTEOME} inducer unit"
+    ]
+    source_data = osp.join(raw_dir, SOURCE_DATA_FILENAME)
+    for sheet, tables in (
+        (SHEET_OVEREXPRESSION_TITER, CODE_PSTABL_TITER),
+        (SHEET_OVEREXPRESSION_PROTEOME, CODE_PSTABL_PROTEOME),
+    ):
+        released = sorted(_sheet_cells_as_text(source_data, sheet))
+        exported: list[tuple[str, ...]] = []
+        for path_in_repo in tables.values():
+            relpath = CODE_RELEASE_FILES[path_in_repo][0]
+            header, rows = _code_table_rows(osp.join(raw_dir, osp.basename(relpath)))
+            sheet_header, _ = _sheet_rows(source_data, sheet)
+            if header != [str(cell) for cell in sheet_header]:
+                raise RuntimeError(
+                    f"{path_in_repo} heads {header}, which is not {sheet}'s "
+                    f"{list(sheet_header)}"
+                )
+            exported.extend(rows)
+        exported.sort()
+        if len(exported) != len(released):
+            raise RuntimeError(
+                f"{sheet} releases {len(released)} rows and the code release exports "
+                f"{len(exported)}"
+            )
+        differing = [(a, b) for a, b in zip(released, exported, strict=True) if a != b]
+        if differing:
+            raise RuntimeError(
+                f"{sheet} and its code-release export differ in "
+                f"{len(differing)} rows, e.g. {differing[0]}"
+            )
+        proofs.append(
+            f"{sheet}: all {len(released)} released rows are reproduced cell for cell "
+            f"by the code release's {', '.join(sorted(tables.values()))}, so the unit "
+            "that code states is a statement about these numbers"
+        )
+    return proofs
+
+
 def overexpression_proteome_samples(
     rows: Sequence[OverexpressionProteomeRow],
-) -> tuple[dict[str, str], list[str]]:
-    """``{record sample: its Control sample}`` for the UNINDUCED arm, plus its proofs.
+) -> tuple[dict[str, tuple[str, float]], list[str]]:
+    """``{record sample: (its Control sample, its inducer level)}``, plus its proofs.
 
-    One record per overexpression label, the uninduced condition, referenced against
-    that label's own ``Control``. The six induced conditions are dropped for the same
-    reason their titers are: the inducer's unit is not released
-    (:data:`INDUCER_UNIT_GAP`).
+    One record per released condition sample of each overexpression label, referenced
+    against that label's own ``Control``, which the sheet releases uninduced. The six
+    induced conditions of each label are stored with their dose: the authors' figure
+    code states the unit the sheet's bare ``Inducer concentration`` numbers are in
+    (:data:`INDUCER_UNIT`), where before it they were dropped.
     """
     levels: dict[str, float] = {}
     strains: dict[str, set[str]] = defaultdict(set)
@@ -3833,14 +4259,10 @@ def overexpression_proteome_samples(
             )
         levels[row.sample] = row.inducer_level
         strains[row.sample].add(row.strain)
-    pairs: dict[str, str] = {}
-    dropped: list[str] = []
+    pairs: dict[str, tuple[str, float]] = {}
     for sample, level in sorted(levels.items()):
         match = OVEREXPRESSION_SAMPLE_RE.match(sample)
         if match is None or match.group("condition") is None:
-            continue
-        if level != OVEREXPRESSION_UNINDUCED_LEVEL:
-            dropped.append(sample)
             continue
         control = f"{match.group('label')}_Control"
         if control not in levels:
@@ -3857,33 +4279,25 @@ def overexpression_proteome_samples(
                 f"{SHEET_OVEREXPRESSION_PROTEOME} control {control!r} is strain "
                 f"{sorted(strains[control])}, not {OVEREXPRESSION_CONTROL_STRAIN!r}"
             )
-        pairs[sample] = control
+        pairs[sample] = (control, level)
     if len(pairs) != EXPECTED_OVEREXPRESSION_PROTEOME_SAMPLES:
         raise RuntimeError(
-            f"{SHEET_OVEREXPRESSION_PROTEOME} yields {len(pairs)} uninduced samples; "
+            f"{SHEET_OVEREXPRESSION_PROTEOME} yields {len(pairs)} condition samples; "
             f"this loader was written against "
             f"{EXPECTED_OVEREXPRESSION_PROTEOME_SAMPLES}"
         )
+    induced = sorted(
+        sample
+        for sample, (_, level) in pairs.items()
+        if level != OVEREXPRESSION_UNINDUCED_LEVEL
+    )
     proofs = [
-        f"{SHEET_OVEREXPRESSION_PROTEOME}: {len(pairs)} uninduced samples "
-        f"({', '.join(sorted(pairs))}) each against its own Control sample; "
-        f"{len(dropped)} induced samples dropped because the inducer's unit is not "
-        "released anywhere in the mirror"
+        f"{SHEET_OVEREXPRESSION_PROTEOME}: {len(pairs)} condition samples "
+        f"({', '.join(sorted(pairs))}) each against its own Control sample, of which "
+        f"{len(induced)} are induced and carry the dose in {INDUCER_UNIT.value} "
+        f"({INDUCER_UNIT.provenance.page}); no sample of this panel is dropped"
     ]
     return pairs, proofs
-
-
-def _overexpression_induced_samples(
-    rows: Sequence[OverexpressionProteomeRow],
-) -> list[str]:
-    """``Supplementary Figure 12ac``'s induced samples, which carry an untypable dose."""
-    return sorted(
-        {
-            row.sample
-            for row in rows
-            if row.inducer_level != OVEREXPRESSION_UNINDUCED_LEVEL
-        }
-    )
 
 
 def _overexpression_cells(
@@ -4075,8 +4489,8 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
 
     @property
     def raw_file_names(self) -> list[str]:
-        """The Source Data workbook and Supplementary Data 1's target table."""
-        return [SOURCE_DATA_FILENAME, TARGETS_FILENAME]
+        """The Source Data workbook, Supplementary Data 1 and the unit's source files."""
+        return [SOURCE_DATA_FILENAME, TARGETS_FILENAME, *UNIT_SOURCE_FILENAMES]
 
     def download(self) -> None:
         """Link both mirror files into ``raw/`` after verifying each against its pin."""
@@ -4085,6 +4499,7 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
             (
                 (SOURCE_DATA_REL, SOURCE_DATA_FILENAME, SOURCE_DATA_SHA256),
                 (TARGETS_REL, TARGETS_FILENAME, TARGETS_SHA256),
+                *UNIT_SOURCE_PINS,
             ),
         )
         log.info("Carruthers 2025 titer artifacts linked into %s", self.raw_dir)
@@ -4103,8 +4518,10 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
             {
                 SOURCE_DATA_FILENAME: SOURCE_DATA_SHA256,
                 TARGETS_FILENAME: TARGETS_SHA256,
+                **{name: sha256 for _, name, sha256 in UNIT_SOURCE_PINS},
             },
         )
+        unit_proofs = assert_overexpression_unit_source(self.raw_dir)
         source_path = osp.join(self.raw_dir, SOURCE_DATA_FILENAME)
         rows = read_titer_rows(source_path)
         genome = self._genome()
@@ -4203,7 +4620,10 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
                 f"{SPECIES!r}; a native extra copy declaring {SPECIES!r} would be read "
                 "as a gene of another genome by the host-containment gate"
             )
-        overexpression = overexpression_environment()
+        overexpression_environments = {
+            level: overexpression_environment(level) for level in OVEREXPRESSION_LEVELS
+        }
+        overexpression = overexpression_environments[OVEREXPRESSION_UNINDUCED_LEVEL]
         panel_references: dict[str, ProductTiterExperimentReference] = {
             key: references[cycle] for key, cycle in plan.stored_cycle_reference.items()
         }
@@ -4287,15 +4707,20 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
                         ),
                     ]
                 )
+                record_environment = (
+                    overexpression_environments[
+                        record.inducer_level
+                        if record.inducer_level is not None
+                        else OVEREXPRESSION_UNINDUCED_LEVEL
+                    ]
+                    if record.overexpression_environment
+                    else environment
+                )
                 for replicate_id, titer in record.cultures():
                     experiment = ProductTiterExperiment(
                         dataset_name=self.name,
                         genotype=genotype,
-                        environment=(
-                            overexpression
-                            if record.overexpression_environment
-                            else environment
-                        ),
+                        environment=record_environment,
                         phenotype=titer_phenotype(titer, replicate_id),
                     )
                     txn.put(
@@ -4345,7 +4770,7 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
             ]
         ).to_csv(osp.join(self.preprocess_dir, "source_data_panels.csv"), index=False)
         Path(osp.join(self.preprocess_dir, "panel_proofs.json")).write_text(
-            json.dumps(plan.proofs, indent=2)
+            json.dumps([*unit_proofs, *plan.proofs], indent=2)
         )
         panel_control_cultures = sum(
             len(reference.titers_mg_per_l) for reference in plan.references
@@ -4396,6 +4821,12 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
                     "column is the only thing that keeps the repeated cultures of one "
                     f"genotype apart) and the released row position for {SHEET_KO_PANEL}, "
                     "which prints no replicate column",
+                    f"the {SHEET_OVEREXPRESSION_TITER} records carry the released "
+                    f"inducer dose in {INDUCER_UNIT.value}, from "
+                    f"{INDUCER_UNIT.provenance.page} of the code release; the 36 "
+                    "induced cultures it makes storable were dropped before 2026-11-25 "
+                    "(#1064, #1200 item 3)",
+                    *unit_proofs,
                     *plan.proofs,
                 ],
             ),
@@ -4549,13 +4980,17 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
 
     @property
     def raw_file_names(self) -> list[str]:
-        """The Source Data workbook, which holds the released abundance matrix."""
-        return [SOURCE_DATA_FILENAME]
+        """The Source Data workbook and the files that state the inducer's unit."""
+        return [SOURCE_DATA_FILENAME, *UNIT_SOURCE_FILENAMES]
 
     def download(self) -> None:
         """Link the Source Data workbook into ``raw/`` after verifying its pin."""
         _link_mirror_files(
-            self.raw_dir, ((SOURCE_DATA_REL, SOURCE_DATA_FILENAME, SOURCE_DATA_SHA256),)
+            self.raw_dir,
+            (
+                (SOURCE_DATA_REL, SOURCE_DATA_FILENAME, SOURCE_DATA_SHA256),
+                *UNIT_SOURCE_PINS,
+            ),
         )
         log.info("Carruthers 2025 proteome artifact linked into %s", self.raw_dir)
 
@@ -4648,7 +5083,14 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Build one record per released (sample, replicate); write LMDB."""
-        verify_raw_files(self.raw_dir, {SOURCE_DATA_FILENAME: SOURCE_DATA_SHA256})
+        verify_raw_files(
+            self.raw_dir,
+            {
+                SOURCE_DATA_FILENAME: SOURCE_DATA_SHA256,
+                **{name: sha256 for _, name, sha256 in UNIT_SOURCE_PINS},
+            },
+        )
+        unit_proofs = assert_overexpression_unit_source(self.raw_dir)
         rows = read_proteome_rows(osp.join(self.raw_dir, SOURCE_DATA_FILENAME))
         genome = self._genome()
 
@@ -4667,6 +5109,7 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
                 "two ways; the reconciliation must cover both sheets"
             )
         proofs = [
+            *unit_proofs,
             *assert_phn_crosswalk(overexpression_rows, stored_by_key),
             *assert_overexpression_operons(overexpression_rows, stored_by_key),
         ]
@@ -4796,11 +5239,16 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
                     )
                     idx += 1
             operons = dict(OVEREXPRESSION_OPERON_SOURCE.value)
-            overexpression = overexpression_environment()
-            for sample, control in tqdm(
+            overexpression_environments = {
+                level: overexpression_environment(level)
+                for level in OVEREXPRESSION_LEVELS
+            }
+            uninduced = overexpression_environments[OVEREXPRESSION_UNINDUCED_LEVEL]
+            for sample, (control, level) in tqdm(
                 sorted(overexpression_pairs.items()),
                 desc="carruthers2025-proteome-overexpression",
             ):
+                overexpression = overexpression_environments[level]
                 label = str(OVEREXPRESSION_SAMPLE_RE.match(sample).group("label"))  # type: ignore[union-attr]
                 control_abundance, control_se, control_n = self._aggregate(
                     _overexpression_cells(overexpression_rows, control, stored_by_key),
@@ -4818,7 +5266,10 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
                 control_reference = ProteinAbundanceExperimentReference(
                     dataset_name=self.name,
                     genome_reference=reference_genome,
-                    environment_reference=overexpression.model_copy(),
+                    # The reference is the label's own Control sample, which the sheet
+                    # releases UNINDUCED at every level, so its environment carries no
+                    # salicylate dose even where the record's does.
+                    environment_reference=uninduced.model_copy(),
                     phenotype_reference=ProteinAbundancePhenotype(
                         protein_abundance=control_abundance,
                         protein_abundance_se=control_se,
@@ -4850,6 +5301,8 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
                             "sample": sample,
                             "replicate_id": f"{sample}/{replicate}",
                             "n_proteins": len(levels),
+                            "inducer_level": level,
+                            "inducer_unit": str(INDUCER_UNIT.value),
                         }
                     )
                     idx += 1
@@ -4878,8 +5331,12 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
                 for key in dropped_keys
             ]
         ).to_csv(osp.join(self.preprocess_dir, "dropped_protein_keys.csv"), index=False)
-        induced_samples = _overexpression_induced_samples(overexpression_rows)
-        dropped_induced_cultures = sum(
+        induced_samples = sorted(
+            sample
+            for sample, (_, level) in overexpression_pairs.items()
+            if level != OVEREXPRESSION_UNINDUCED_LEVEL
+        )
+        induced_cultures = sum(
             len(
                 _overexpression_replicate_cells(
                     overexpression_rows, sample, stored_by_key
@@ -4895,18 +5352,18 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
                     overexpression_rows, control, stored_by_key
                 )
             )
-            for control in sorted(set(overexpression_pairs.values()))
+            for control in sorted(
+                {control for control, _ in overexpression_pairs.values()}
+            )
         )
         _write_accounting(
             BuildAccounting(
                 dataset=self.name,
                 source_rows=len(rows) + len(overexpression_rows),
                 control_rows=control_cultures,
-                candidate_records=panel_cultures
-                + overexpression_cultures
-                + dropped_induced_cultures,
+                candidate_records=panel_cultures + overexpression_cultures,
                 kept_records=idx,
-                dropped_records=dropped_induced_cultures,
+                dropped_records=0,
                 rules=[
                     DropRule(
                         rule="protein_key_is_not_a_locus_of_the_pinned_assembly",
@@ -4932,23 +5389,6 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
                         ),
                         n_records=0,
                         items=sorted(merged),
-                    ),
-                    DropRule(
-                        rule="inducer_concentration_has_no_released_unit",
-                        scope="culture",
-                        description=str(INDUCER_UNIT_GAP.note),
-                        n_records=dropped_induced_cultures,
-                        items=[
-                            f"{sample}/{replicate}"
-                            for sample in _overexpression_induced_samples(
-                                overexpression_rows
-                            )
-                            for replicate in sorted(
-                                _overexpression_replicate_cells(
-                                    overexpression_rows, sample, stored_by_key
-                                )
-                            )
-                        ],
                     ),
                 ],
                 reconciliation=report,
@@ -4977,6 +5417,15 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
                     "a released Top3 value of 0 is kept verbatim; the source floors the "
                     "companion percent-abundance column at 1e-05 for those cells, and "
                     "this loader imputes nothing",
+                    f"{induced_cultures} of the {overexpression_cultures} "
+                    f"{SHEET_OVEREXPRESSION_PROTEOME} records are INDUCED cultures, "
+                    f"stored since 2026-11-25: they carry the released "
+                    f"'Inducer concentration' as a {INDUCER_COMPOUND.value} dose in "
+                    f"{INDUCER_UNIT.value}, the unit the authors' own figure code "
+                    f"states for that column ({INDUCER_UNIT.provenance.page}). Before "
+                    f"that the mirror held no statement of the unit and all "
+                    f"{induced_cultures} were dropped by a rule named "
+                    "inducer_concentration_has_no_released_unit (#1064, #1200)",
                     f"{overexpression_cultures} further records come from "
                     f"{SHEET_OVEREXPRESSION_PROTEOME}, the second per-protein "
                     "per-replicate abundance matrix the Source Data carries. It reads "
@@ -4993,7 +5442,7 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
         log.info(
             "Carruthers2025 proteome: %d records = %d %s sample-replicates (%d samples "
             "x %d, plus the non-targeting reference's %d held as its aggregate) x %d "
-            "protein keys + %d uninduced %s sample-replicates; %d keys dropped "
+            "protein keys + %d %s sample-replicates; %d keys dropped "
             "(%d outside the namespace, %d merged accessions) from %d released cells",
             idx,
             panel_cultures,
@@ -6196,7 +6645,7 @@ PROTEOME_KEY_SET_SIZES: tuple[int, ...] = (
     *(
         len(operon)
         for operon in OVEREXPRESSION_OPERONS.values()
-        for _ in range(int(PROTEOME_N_REPLICATES.value))
+        for _ in range(len(OVEREXPRESSION_LEVELS) * int(PROTEOME_N_REPLICATES.value))
     ),
 )
 #: The Results text prints the KO-plus-array titers to integer mg/L, inconsistently
@@ -6221,8 +6670,11 @@ CAMPAIGN_REPLICATE_GROUP_SIZES: dict[int, int] = {3: 332, 6: 67, 9: 2}
 #: disagree and are both kept, :func:`_offtarget_groups`) and Δ PP_0812-15 + the PP_0815
 #: sgRNA (``Figure 6a``'s ``PP_0812-15`` Target arm and ``Figure 6d``'s
 #: ``PP_0812-15_KO with PP_0815`` line). The groups of 9 are ``PP_0977`` and ``PP_1638``,
-#: each released as three independent cultures of one genotype.
-PANEL_REPLICATE_GROUP_SIZES: dict[int, int] = {2: 2, 3: 25, 6: 2, 9: 2}
+#: each released as three independent cultures of one genotype. The two groups of 21 are
+#: the two overexpression labels: one genotype each, cultured in triplicate at each of
+#: the seven released inducer levels, which the records tell apart by their environment
+#: and their ``<Strain>/<level>/<Replicate>`` label rather than by their genotype.
+PANEL_REPLICATE_GROUP_SIZES: dict[int, int] = {2: 2, 3: 23, 6: 2, 9: 2, 21: 2}
 #: ``(genotype, replicate_id)`` keys that more than one record carries, measured on the
 #: pinned workbook. They are the campaign constructs screened in several DBTL cycles:
 #: the release prints ``R1``..``R3`` once per cycle and ``ProductTiterPhenotype`` has no
@@ -6254,7 +6706,7 @@ CAMPAIGN_ROW_SUM_TOL = 0.1
 #: ``PP_0977`` and ``PP_1638``, which it carries as three independent cultures each
 #: (:data:`PROTEOME_REPEATED_CULTURES`), over the 15 off-target genotypes plus the two
 #: overexpression ones.
-PROTEOME_REPLICATE_GROUP_SIZES: dict[int, int] = {3: 15, 9: 2}
+PROTEOME_REPLICATE_GROUP_SIZES: dict[int, int] = {3: 13, 9: 2, 21: 2}
 #: What the dropped accessions carry, measured 2026-10-09: 17.2% of the proteome on
 #: average over the 1,497 cultures, so a stored record sums to about 83%. The spread is
 #: WIDE and the reason is a sample-prep artifact rather than biology: the worst culture

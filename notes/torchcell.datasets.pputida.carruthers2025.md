@@ -1435,3 +1435,63 @@ Rebuilt into the throwaway root `$DATA_ROOT/tmp/scratch/per-replicate-carruthers
 | fold change | 16 | PASS | none on the experiment phenotypes |
 
 The synthetic-fixture test of the fabricated-SE titer battery now hands the dataset's LMDB handle back before `load_records` opens its own, since `len` had opened it and LMDB refuses a second open of one environment in a process (the CI failure on PR #1181).
+
+## 2026.11.25 - The code release is mirrored, and its stated inducer unit stores the 36 induced cultures
+
+The gaps PR #1181 left are tracked in #1200 and #1201. This section closes the two of them that need neither a schema change nor an owner decision: the authors' code release is now in the raw mirror with a retrieval record per file, and the unit it states for the overexpression panel's inducer dose makes the induced arm of both families storable.
+
+### The code release, mirrored under `code/`
+
+The Code availability statement names it: "All code required to reproduce this study, including ART, automation workflows, and figure generation, is provided as Jupyter Notebooks and can be accessed at https://github.com/JBEI/Isoprenol_CRISPRi or https://doi.org/10.5281/zenodo.1717868466" (`paper.md` L224; the trailing `66` is the reference marker). Retrieval is scriptable, so it carries the `git_repository` method rather than the Dryad deposit's `manual_browser`: `fetch_code_release()` clones `JBEI/Isoprenol_CRISPRi` at commit `3ceecf8a6f70c84d088e34c0c68b991e27b0d117` (the commit the Zenodo archive snapshots), reads each file out of that commit's tree and verifies it against its pinned sha256. Nine files, 132 MB:
+
+| mirror path | bytes | what it is |
+|---|---|---|
+| `code/Fig_S12.ipynb` | 163,729 | the notebook that builds Supplementary Figure 12, and the only released statement of the inducer unit |
+| `code/pSTABL1_GCFID.csv`, `code/pSTABL2_GCFID.csv` | 872, 873 | the titer tables it plots, together a row-for-row re-export of `Supplementary Figure 12bd` |
+| `code/pSTABL1_proteomics.csv`, `code/pSTABL2_proteomics.csv` | 5,430, 14,676 | the per-protein tables it plots, together a re-export of `Supplementary Figure 12ac` |
+| `code/DBTL0.csv` | 83,414,123 | DBTL0's per-replicate proteome, 414 sample-replicates |
+| `code/DBTL1.csv` | 37,834,106 | DBTL1's, 192 sample-replicates |
+| `code/Fig6_Targets.csv`, `code/Fig6_Nontargets.csv` | 5,233,005, 5,198,305 | 30 + 30 KO sample-replicates over 2,112 proteins on a `Counts_sum` basis |
+
+The five Figure S12 files are linked into `raw/` of both families that store the panel, so the unit is proven against sha256-verified bytes at build time, not against the mirror by path. The other four are mirrored and read by no loader yet; what they hold beyond the Dryad deposit is measured below.
+
+### The inducer unit: micromolar, from the authors' figure code
+
+`Supplementary Figure 12bd` and `12ac` release an `Inducer concentration` column of bare numbers (0, 31.25, 62.5, 125, 250, 500, 1000), and the Methods name the inducer without a dose: "The vector amplicons, designed for salicylic acid induction of the inserted genes, were digested with dpnI (Thermo Fisher Scientific), assembled (NEBuilder HiFi Assembly Cloning Kit, NEB), and, as before, cloned into XL-1-blue competent cells." On that evidence the six induced levels of both panels were dropped by a stated rule, `inducer_concentration_has_no_released_unit`, which cost 36 titer cultures and 36 proteome sample-replicates (#1064, #1200 item 3).
+
+The code release states the unit. Each of the four figure cells of `Fig_S12.ipynb` labels its x axis with that column's value and the unit, verbatim:
+
+```python
+df["Strain_Conc"] = df["Strain"] + ": " + df["Inducer concentration"].astype(str) + " µM"
+```
+
+`assert_overexpression_unit_source()` runs at build time in both families and proves the three statements that make this a statement about the numbers the loader stores:
+
+1. the line occurs in exactly 4 of the notebook's code cells, one per published panel;
+2. `pSTABL1_GCFID.csv` + `pSTABL2_GCFID.csv` are `Supplementary Figure 12bd`'s 48 rows, cell for cell (measured: 48 of 48, zero differing);
+3. `pSTABL1_proteomics.csv` + `pSTABL2_proteomics.csv` are `Supplementary Figure 12ac`'s 144 rows, cell for cell (144 of 144).
+
+So `INDUCER_UNIT` is `ConcentrationUnit.micromolar`, sourced to `code/Fig_S12.ipynb` with that file's sha256, and every induced culture of both panels is stored with a `SmallMoleculePerturbation` of salicylic acid at its released level. The inducer resolves through the compound-identity layer as the label `salicylic acid` with a typed gap on its InChIKey: the table's nearest row is the anion `salicylate` (InChIKey `YGSDEFSMJLZEOE-UHFFFAOYSA-M`), and the acid and its conjugate base are not one chemical entity, so no identifier is asserted for the species the Methods name. At level 0 no inducer was added and the environment carries no salicylate dose, so the uninduced environment is byte-identical to the one those cultures carried before.
+
+A culture's `replicate_id` in the titer family is now `<Strain>/<Inducer concentration>/<Replicate>`, all three cells verbatim: the sheet prints `R1`..`R3` once per level, so the label alone repeats seven times per strain and the level is what tells those cultures apart. The six uninduced records' labels change accordingly (`pSTABL1 (PP_2208-09)/R1` becomes `pSTABL1 (PP_2208-09)/0/R1`). The proteome family needs no change: its sample names (`pSTABL1_Condition_3`) already carry the condition. Each record's reference stays its own label's `Control` sample, which the sheet releases uninduced at every level, so a reference environment carries no dose even where its records' do.
+
+### Counts, built against the real mirror
+
+Built into `/bulk/torchcell-scratch-overflow/per-replicate/per-replicate-carruthers2025-gaps/` (the brief's `$DATA_ROOT/tmp/scratch` is on a nearly full disk), with `origin/main`'s loader built into the `before/` subdirectory of the same root for the comparison:
+
+| store | before | after | added | `verify_build` |
+|---|---|---|---|---|
+| titer | 1,525 | 1,561 | 36 induced overexpression cultures | PASS, 20 rules |
+| panel proteome | 63 | 99 | 36 induced sample-replicates | PASS, 12 rules |
+
+Measured on those two builds: every one of the 1,525 and 63 records before is still present with the same genotype, environment and value; 6 titer records changed their replicate label as described; nothing else changed. Grouping the 42 stored overexpression titer cultures by `(genotype, environment)` and taking the mean reproduces the sheet's own per-(label, level) mean with a maximum absolute difference of 0.0 over all 14 groups. The store's `(genotype, environment)` groups are 444 with sizes 2, 3, 6 and 9, so no group mixes two doses. The six `Control` cultures stay the panel's reference, not records (`CONTROL_AS_RECORD`). `build_accounting.json` now records `dropped_records` 0 for both families, and the drop rule `inducer_concentration_has_no_released_unit` is gone.
+
+### What the four unread code-release tables hold (#1200 item 4, measured here)
+
+The percent column of `DBTL0.csv` and `DBTL1.csv` is the same quantity the campaign store holds: over the 387 and 183 cultures those two files share with the Dryad matrix, all 1,022,112 percent cells are exactly equal (maximum absolute difference 0.0), and every accession they carry is in the Dryad matrix bar one contaminant (`O77727`, sheep keratin, in `DBTL1.csv` only). Beyond the matrix they hold:
+
+- **`DBTL1.csv`: 9 `_Bat2` cultures** of `PP_0814_PP_4192`, `PP_0814_PP_4862` and `PP_2137_PP_4189`. Those three constructs are exactly the three cycle-1 strain-cycles whose titer sheet releases six cultures (R1 to R6) while the Dryad proteome releases three, so they are a second batch of the same three strains. Whether `Bat2-R1` is the titer sheet's `R4` is NOT determined by any released column, and nothing needs it to be: they are 9 distinct cultures of stateable genotypes, storable with their own label as `replicate_id`. Not stored here, because the campaign family is the only consumer and a change to it rebuilds a 1,407-record store with its own crosswalk and percent-sum invariants; that is its own change.
+- **`DBTL0.csv`: 27 cultures** the Dryad matrix lacks: `PP_1607_NT1` R4 to R6, `PP_1607_NT2`, `PP_1607_NT3`, `PP_1607_NT4`, `PP_4194_NT3` (15 cultures), and `PP_1607_NT1_xylS_Pm` through `PP_1607_NT4_xylS_Pm` (12). Under the served reading of an `NT<n>` token (a non-targeting filler guide occupying an array position, `parse_construct`) the first 15 are the same genotypes the titer family already stores for `PP_1607_NT1` and `PP_4194_NT2`, so extending that reading to `NT2` to `NT4` is the owner's call rather than a measurement. The `xylS_Pm` token is defined in no mirrored file and in no file of the code release, so those 12 cultures have no stateable genotype. The matrix also holds 6 cultures (`PP_0812`, `PP_0813`) that `DBTL0.csv` does not, so the code file is not a superset.
+- **`Fig6_Targets.csv` and `Fig6_Nontargets.csv`: 60 sample-replicates** (10 samples x 3 replicates each) over 2,112 proteins, keyed `Counts_sum`. They are the inputs to Figure 6b, whose released log2 fold changes the fold-change family already stores. The 30 `Fig6_Nontargets.csv` cultures carry a non-targeting sgRNA, so they hit the same blocker as every other control (`CONTROL_AS_RECORD`); the 30 `Fig6_Targets.csv` cultures would need a new dataset class and a `Counts_sum` measurement type whose basis no mirrored statement defines.
+
+`Off-Target_Proteomics.csv` of the code release holds the same zero cells as `Supplementary Figure 13abc`, which is #1201's finding and is left alone by owner instruction: the censoring field is a schema decision.

@@ -59,8 +59,9 @@ PHENOTYPE, AND THE TWO THINGS IT CANNOT HOLD.
 ``n_samples`` / ``sample_unit`` is no longer one of them. The release states the
 replicate design exactly (``SOURCED_VALUES["replicate_design"]``) AND prints the
 per-cell colony measurements, so the count is MEASURED per record rather than assumed:
-258,364 of the stored records rest on the documented four colonies and the rest on 8 to
-182, over 2, 8 or 13 replicate screens. #793 added the quartet to the served
+268,814 of the stored records rest on the documented four colonies and the rest on 8 to
+260, over 2, 8 or 13 replicate screens (measured on the 314,769-record build,
+2026-11-25; the 258,364 and maximum of 182 written here before were stale). #793 added the quartet to the served
 ``GeneInteractionPhenotype``, so every record now stores its own measured count with
 ``sample_unit=colony``; the full distribution and the per-cell screen counts stay in
 ``preprocess/replicate_structure.json``.
@@ -442,9 +443,11 @@ DATA_SHA256: dict[str, str] = {raw.name: raw.sha256 for raw in RAW_FILES}
 NOT_LOADED = (
     "Supplementary Table 4 sheet 'Raw Colony Sizes' (si5.xls) and sheet 'Normalized "
     "Colony Sizes': the per-colony pixel areas and their plate-normalized medians. "
-    "Both are a colony-size fitness readout and torchcell has no colony-size phenotype "
-    "class, so neither can be typed; the raw sheet IS read, for the per-record "
-    "replicate count and for rule 2, but no value of it is stored. The normalized "
+    "The raw sheet is the release's only per-replicate content (one group per "
+    "biological replicate screen, RawColonySizeDesign); storing it waits on an owner "
+    "decision (#1176: the phenotype class, raw area vs instrument-level data, and the "
+    "colony-level record unit). The raw sheet IS read, for the per-record replicate "
+    "count and for rule 2, but no value of it is stored. The normalized "
     "sheet additionally carries sentinel values (-100000 and 0 among otherwise "
     "positive sizes) that the release never documents",
     "Supplementary Table 4 sheet 'Z scores': the per-cell |Z| statistic. "
@@ -653,6 +656,31 @@ _Q_KAN_25 = (
     ": 34 $\\mu \\mathrm { g / m l }$ and Kanamycin (Kan): $2 5 ~ \\mu \\mathrm { g / m "
     "l }$ ."
 )
+_Q_REPLICATE_SCREENS_BIOLOGICAL = (
+    "An example showing biological reproducibility between replicate experiments from "
+    "ΔsufA-cat genomewide screens."
+)
+_Q_COLONIES_BIOLOGICAL = (
+    "tion was performed on solid medium in a 384-spot configuration using four "
+    "biological replicate recipient colonies, two for each of isolate 1 and isolate 2."
+)
+_Q_DUPLICATE_PINNING = (
+    "On this day, two 384 colony density conjugation plates are combined in duplicate "
+    "onto a LB medium containing chloramphenicol and kanamycin antibiotics to create "
+    "1,536 colony density plate."
+)
+_Q_SCREENS_REPEATED = (
+    "Typically, this coefficient for replicate screens was 0.50.7 (Fig. 3a), and we "
+    "repeated and rescored screens with a coefficient $< 0 . 5$"
+)
+_Q_PLATES_FILTERED = (
+    "During the normalization process the plates containing bad colony sizes were also "
+    "filtered."
+)
+_Q_PLATE_CONTROLS = (
+    "In each plate, we included “donor specific control or DSC” and “recipient specific "
+    "control or RSC” as an internal quality controls."
+)
 
 SOURCED_VALUES: dict[str, SourcedValue] = {
     "recipient_array": _paper(
@@ -729,11 +757,10 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         page="Supplementary Table 4, sheet 'Raw Colony Sizes', footnote g",
         note="the DOCUMENTED design of one stored score: two colonies of this isolate "
         "in each of two replicate screens. It is not uniform -- the raw sheet prints "
-        "the colony measurements per cell and they range from 4 to 182 over 2, 8 or 13 "
+        "the colony measurements per cell and they range from 4 to 260 over 2, 8 or 13 "
         "replicate screens -- so the build counts each record's own colonies rather "
-        "than asserting four. GeneInteractionPhenotype has no n_samples field (issue "
-        "#793), so the measured distribution goes to "
-        "preprocess/replicate_structure.json",
+        "than asserting four, and stores the count as n_samples with sample_unit=colony "
+        "(#793). The full distribution goes to preprocess/replicate_structure.json",
     ),
     "isolate_is_a_strain": _workbook(
         ("Isolate 1", "Isolate 2"),
@@ -820,6 +847,64 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "ug/ml in the genome-wide one, and nothing at all for the genome-wide selection "
         "plates. A disagreement within one mirrored source is not a value, so the "
         "stored medium asserts no kanamycin dose",
+    ),
+    # ----------------------------------------------------------------------- #
+    # Per-replicate review (#1176, #1178 policy, 2026-11-24). What one replicate
+    # of this release is, quoted; the review changes no record (see
+    # RAW_COLONY_SIZE_DESIGN and the dated note section).
+    # ----------------------------------------------------------------------- #
+    "replicate_screens_are_biological": _paper(
+        "replicate screen",
+        _Q_REPLICATE_SCREENS_BIOLOGICAL,
+        page="Figure 3 legend, panel a",
+        note="the biological replicate of this release is the replicate SCREEN: the "
+        "raw sheet's group label '1:', '2:', ... names it (footnote g of sheet 'Raw "
+        "Colony Sizes'). Measured on the raw sheet: 2 screens per cell for 37 queries, "
+        "8 for sufC (b1682) and 13 for iscU (b2529). The S score is the authors' one "
+        "statistic over all of a cell's screens and stays one record",
+    ),
+    "colonies_called_biological_replicates": _paper(
+        4,
+        _Q_COLONIES_BIOLOGICAL,
+        page="Results, 'Development of a genome-wide assay and data normalization'",
+        note="the paper's own word for the four colonies of one recipient strain row in "
+        "one screen (two per isolate): 'biological replicate'. The Supplementary "
+        "Methods (colonies_pinned_in_duplicate) describe the same colonies as one "
+        "conjugation plate pinned in duplicate, which reads as technical. The two "
+        "statements disagree, so the colony level is NOT classified here; it is an "
+        "owner decision (#1176)",
+    ),
+    "colonies_pinned_in_duplicate": _methods(
+        2,
+        _Q_DUPLICATE_PINNING,
+        page="Supplementary Methods, genome-wide eSGA screening procedure, step (D)",
+        note="the protocol behind the two colonies of one isolate in one screen: one "
+        "384-density conjugation spot pinned twice onto the 1,536-density plate",
+    ),
+    "screens_repeated_below_r_0_5": _paper(
+        0.5,
+        _Q_SCREENS_REPEATED,
+        page="Results, 'Evaluation of data quality'",
+        note="a screen whose replicate correlation fell below 0.5 was repeated and "
+        "rescored. Whether the 8 sufC and 13 iscU screens of the raw sheet are such "
+        "repeats is NOT stated (unverified), and no screen is marked withdrawn: the "
+        "matrix is released 'without any filtering parameters'",
+    ),
+    "plates_filtered_in_normalization": _methods(
+        "bad plates filtered during normalization",
+        _Q_PLATES_FILTERED,
+        page="Supplementary Methods, quantitative image analysis",
+        note="the authors filtered plates inside their normalization; the raw sheet is "
+        "the unfiltered release, so no colony value is marked as withdrawn and none is "
+        "dropped by this loader",
+    ),
+    "plate_controls_not_released": _methods(
+        ("DSC", "RSC"),
+        _Q_PLATE_CONTROLS,
+        page="Supplementary Methods, arraying recipient strains",
+        note="each plate carried donor- and recipient-specific control spots. No "
+        "released sheet has a row for them (every row is 'Non-essential' or 'SPA-tag "
+        "essential', measured), so there is no control replicate to store",
     ),
 }
 
@@ -1262,12 +1347,61 @@ def score_block(matrix: Matrix) -> npt.NDArray[np.float64]:
 _COLONY_GROUP = re.compile(r"(\d+):\(([-\d,]+)\)")
 
 
+class RawColonySizeDesign(BaseModel):
+    """The per-replicate content of sheet 'Raw Colony Sizes', measured, and why none of
+    it is a record (per-replicate review, #1176 under the #1178 policy).
+
+    The biological replicate is the screen (``SOURCED_VALUES``
+    ``replicate_screens_are_biological``), and the S score each record stores is the
+    authors' one statistic over all of a cell's screens, so the score records are
+    already the release's own unit and keep ``replicate_id=None``. The per-screen colony
+    pixel areas are the only per-replicate values released. Storing them is an owner
+    decision with three open parts: which phenotype class holds a raw, pre-normalization
+    colony area of a double mutant in a genetic-interaction screen; whether such a value
+    is a released replicate measurement or instrument-level data (the same question
+    Baryshnikova 2010's Supplementary Data 4 raises); and the record unit, because the
+    paper calls the colonies of one isolate in one screen "biological replicate" while
+    the protocol pins one conjugation spot in duplicate, and 806 of the 8,073 recipient
+    rows carry 4 to 20 colonies per screen rather than 2, the same rows in every
+    two-screen query (``rows_with_more_than_two_colonies_per_screen``).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    cells: int
+    colonies: int
+    zero_colonies: int
+    screen_groups: int
+    screens_per_cell: dict[int, int]
+    queries_with_extra_screens: dict[str, int]
+    recipient_row_labels: dict[str, int]
+    rows_with_more_than_two_colonies_per_screen: int
+
+
+#: Measured on ``si5.xls`` sheet 'Raw Colony Sizes' with :func:`colony_counts`
+#: (2026-11-25). ``screen_groups`` is the per-screen-per-cell count, the record count a
+#: per-screen colony-size store would start from before its colony-level decision; the
+#: per-replicate plan's 1,845,086 colonies and 766,933 groups were each 4 and 2 short.
+RAW_COLONY_SIZE_DESIGN = RawColonySizeDesign(
+    cells=314847,
+    colonies=1845090,
+    zero_colonies=22407,
+    screen_groups=766935,
+    screens_per_cell={2: 298701, 8: 8073, 13: 8073},
+    queries_with_extra_screens={"b1682": 8, "b2529": 13},
+    recipient_row_labels={"Non-essential": 7924, "SPA-tag essential": 149},
+    rows_with_more_than_two_colonies_per_screen=806,
+)
+
+
 def colony_counts(matrix: Matrix) -> tuple[Any, Any, Any]:
     """Per cell of the raw sheet: colonies measured, colonies at zero, replicate screens.
 
     The raw sheet is read for these three counts and for nothing else: no colony size is
-    stored, because torchcell has no colony-size phenotype class. A cell that does not
-    parse raises, so a re-released sheet cannot silently produce a count of zero.
+    stored. The per-replicate review (:class:`RawColonySizeDesign`) left the colony
+    areas to an owner decision rather than typing them onto an existing class. A cell
+    that does not parse raises, so a re-released sheet cannot silently produce a count
+    of zero.
     """
     values = matrix.values
     total = np.zeros(values.shape, dtype=np.int32)
@@ -1564,12 +1698,13 @@ class DropLog(BaseModel):
 
 
 class ReplicateStructure(BaseModel):
-    """The replicate design the schema cannot store, measured per record.
+    """The replicate design of the stored records, measured per record.
 
-    ``GeneInteractionPhenotype`` has no ``n_samples`` / ``sample_unit`` field and adding
-    one would change a served graph class, so the design is recorded here (issue #793).
-    It is measured rather than asserted: the documented four colonies are the mode, not
-    the rule, and the raw sheet prints each cell's own colony measurements.
+    Each record stores its own colony count as ``n_samples`` (``sample_unit=colony``)
+    since #793; this ledger keeps what a per-record property cannot: the distribution,
+    the per-cell screen counts and the verbatim source. It is measured rather than
+    asserted: the documented four colonies are the mode, not the rule, and the raw sheet
+    prints each cell's own colony measurements.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -1827,13 +1962,14 @@ def phenotype(score: float, n_samples: int) -> GeneInteractionPhenotype:
 
     ``n_samples`` is counted off the raw colony-size sheet for this cell, never the
     documented four: the design is four colonies (``SOURCED_VALUES["replicate_design"]``)
-    and that is the MODE rather than the rule, so the released counts run 4 to 182 over
+    and that is the MODE rather than the rule, so the released counts run 4 to 260 over
     2, 8 or 13 replicate screens. Storing 4 for every record would overstate the
-    precision of 38,026 of them and understate it for none, which is the asymmetry the
+    precision of 45,955 of them and understate it for none, which is the asymmetry the
     conservative-lower-end rule exists to avoid; the measured count has no such bias
     because it is released per cell. The screen count stays in
     ``preprocess/replicate_structure.json``: the phenotype has one replicate axis, and
-    the colony is the unit the score is an average over.
+    the colony is the unit the release prints its measurements in. (How the score
+    combines them is Collins 2006's algorithm, which is not mirrored.)
     """
     return GeneInteractionPhenotype(
         gene_interaction=score,

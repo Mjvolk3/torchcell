@@ -126,9 +126,37 @@
 
 <span class="sd">Values are RAW per-strain CalMorph population averages, one 501-length vector per strain:</span>
 <span class="sd">281 base parameters (``CALMORPH_LABELS``: 220 mean + 61 ratio) + 220 coefficient-of-</span>
-<span class="sd">variation / noise parameters (``CALMORPH_STATISTICS``, prefixed CCV/ACV/DCV). The</span>
-<span class="sd">122-row wildtype matrix (122 independent ``his3`` WT replicate averages) is aggregated</span>
-<span class="sd">per-feature into a single mean-WT reference phenotype.</span>
+<span class="sd">variation / noise parameters (``CALMORPH_STATISTICS``, prefixed CCV/ACV/DCV).</span>
+
+<span class="sd">ONE RECORD PER RELEASED SAMPLE (per-replicate policy, #1178 / #1171; 2026.11.24). The</span>
+<span class="sd">store holds the 4718 mutant rows (indices 0..4717, unchanged) and then the 122 wild-type</span>
+<span class="sd">rows of ``wt122data.tsv`` (indices 4718..4839), 4840 records:</span>
+
+<span class="sd">- A mutant row is ONE culture's CalMorph population average, not a mean over cultures:</span>
+<span class="sd">  "Statistical tests are not applicable to our data set because we have only one set of</span>
+<span class="sd">  data for each deletion strain" (paper.md line 25). Mutant records carry</span>
+<span class="sd">  ``replicate_id = None`` and are byte-identical to the per-strain build.</span>
+<span class="sd">- Each wild-type row is ONE independent wild-type sample: "Data sets were obtained from</span>
+<span class="sd">  126 independent wild-type samples and compared with all data sets from the 4,718</span>
+<span class="sd">  mutant strains" (paper.md line 28, Fig. 1B). Each is its own record, with</span>
+<span class="sd">  ``replicate_id`` = the row's released ``NAME`` verbatim (``04his3-1`` ... ``his3old-5``,</span>
+<span class="sd">  0 duplicates).</span>
+<span class="sd">- The wild type is the collection's ``his3`` deletion strain, so a wild-type record's</span>
+<span class="sd">  genotype is ``KanMxDeletionPerturbation(YOR202W)``: every ``NAME`` is a ``his3`` label,</span>
+<span class="sd">  the Supporting Text calls the control "the control cells (his3 deletion strain)"</span>
+<span class="sd">  (si/si12.md line 59), and the same lab's later CalMorph platform names its wild type</span>
+<span class="sd">  "his3Δ (BY4741; MATa his3Δ1 leu2Δ0 met15Δ0 ura3Δ0 YOR202wΔ:: kanMX4)" from EUROSCARF</span>
+<span class="sd">  (Ohnuki 2022 paper.md line 128). The mutant matrix also carries one ``yor202w`` row; it</span>
+<span class="sd">  stays its own record (``replicate_id = None``).</span>
+<span class="sd">- ``phenotype_reference`` stays the per-feature mean over the 122 wild-type rows, a</span>
+<span class="sd">  summary with ``replicate_id = None``; the 122 samples it summarizes are records too.</span>
+<span class="sd">- Not stored: the paper imaged 126 wild-type samples but ``wt122data.tsv`` has 122 rows.</span>
+<span class="sd">  The SSBD repository ssbd-repos-000349 holds per-cell data for 126 wild-type</span>
+<span class="sd">  directories, and ``04his3-11``, ``04his3-20``, ``04his3-26`` and ``04his3-59`` have no</span>
+<span class="sd">  averaged row in the release. No averaged value exists for them to store (deriving one</span>
+<span class="sd">  from per-cell files is a recomputation, not a released value); hypothesis (untested):</span>
+<span class="sd">  they were removed by the quality control of the Suzuki 2018 re-analysis the SCMD2</span>
+<span class="sd">  datasheet page mentions.</span>
 
 <span class="sd">DATA PROVENANCE -- the 501-trait CalMorph matrices are Ohya 2005's OWN published data,</span>
 <span class="sd">distributed via the SCMD (Saccharomyces cerevisiae Morphological Database) portal. The</span>
@@ -141,8 +169,8 @@
 <span class="sd">hashes, never the live URL):</span>
 <span class="sd">- ``mt4718data.tsv`` (mutant matrix, 4718 strains x 501 features; ID column ``ORF``)</span>
 <span class="sd">  sha256 ``c4ba1e84b4ea6273f0162ef9230e15634933c8c0c4910dd7546a21c6293e0fc0``.</span>
-<span class="sd">- ``wt122data.tsv`` (122 WT ``his3`` replicate averages; ID column ``NAME``; feature</span>
-<span class="sd">  columns byte-compatible with the mutant file) sha256</span>
+<span class="sd">- ``wt122data.tsv`` (122 WT ``his3`` sample averages, one record each; ID column</span>
+<span class="sd">  ``NAME``; feature columns byte-compatible with the mutant file) sha256</span>
 <span class="sd">  ``ab2c31b5150b2a33c15b5d22f1bef8687719975223559a740ea233c1f67b27c3``.</span>
 <span class="sd">- Historical retrieval URLs (SCMD portal): ``http://www.yeast.ib.k.u-tokyo.ac.jp/SCMD/</span>
 <span class="sd">  download.php?path=mt4718data.tsv`` and ``...=wt122data.tsv`` (Box mirror fallbacks in</span>
@@ -166,7 +194,7 @@
 <span class="sd">merges, or has retired keeps its released name and its record; the previous build</span>
 <span class="sd">remapped the 17 to the current id. A strain with a blank CalMorph cell keeps every</span>
 <span class="sd">measured trait and the blank one is key-absent, never imputed (0 of 4718 rows). Net built</span>
-<span class="sd">records: 4718, 0 dropped.</span>
+<span class="sd">records: 4718 mutants + 122 wild-type samples = 4840, 0 dropped.</span>
 <span class="sd">"""</span>
 
 <span class="c1"># torchcell/datasets/scerevisiae/ohya2005</span>
@@ -277,6 +305,10 @@
 <span class="c1"># TCV parameter exists, #494); everything else is a base parameter.</span>
 <span class="n">_CV_PREFIXES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"CCV"</span><span class="p">,</span> <span class="s2">"ACV"</span><span class="p">,</span> <span class="s2">"DCV"</span><span class="p">)</span>
 
+<span class="c1"># The wild type is the deletion collection's his3 strain (YOR202W::kanMX4; sourced in the</span>
+<span class="c1"># module docstring), so every ``wt122data.tsv`` row is a record of this deletion.</span>
+<span class="n">_WT_DELETED_ORF</span> <span class="o">=</span> <span class="s2">"YOR202W"</span>
+
 <span class="c1"># sha256-pinned raw matrices in the library mirror ``data/`` directory.</span>
 <span class="n">_RAW_FILES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"mt4718data.tsv"</span><span class="p">:</span> <span class="p">{</span>
@@ -373,17 +405,26 @@
         <span class="n">df_wt</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="s2">"wt122data.tsv"</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_calmorph_data</span><span class="p">(</span><span class="n">df_mutant</span><span class="p">)</span>
+        <span class="n">df_wt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_wt_data</span><span class="p">(</span><span class="n">df_wt</span><span class="p">)</span>
 
-        <span class="c1"># Aggregate the 122 WT replicate averages into a single mean-WT reference.</span>
+        <span class="c1"># The reference is a summary: the per-feature mean over the 122 WT samples, each</span>
+        <span class="c1"># of which is also a record (written after the mutants, below).</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wt_reference_phenotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_wt_reference</span><span class="p">(</span><span class="n">df_wt</span><span class="p">)</span>
 
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Processing Ohya 2005 CalMorph morphology data..."</span><span class="p">)</span>
 
+        <span class="c1"># Mutant records first (their order and indices are unchanged from the</span>
+        <span class="c1"># per-strain build), then one record per released wild-type sample.</span>
         <span class="n">records</span> <span class="o">=</span> <span class="p">[</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">create_calmorph_experiment</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">wt_reference_phenotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">wt_reference_phenotype</span>
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="p">]</span> <span class="o">+</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_wt_calmorph_experiment</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">wt_reference_phenotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">wt_reference_phenotype</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df_wt</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()</span>
         <span class="p">]</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -467,13 +508,38 @@
         <span class="k">return</span> <span class="n">df_mutant</span></div>
 
 
+<div class="viewcode-block" id="ScmdOhya2005Dataset.preprocess_wt_data">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.html#torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.preprocess_wt_data">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_wt_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_wt</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Check the WT matrix names every sample once; each row becomes one record.</span>
+
+<span class="sd">        ``NAME`` is the sample's released label and its ``replicate_id``, so a blank</span>
+<span class="sd">        or repeated ``NAME`` is refused (0 blank, 0 repeated among the 122 pinned rows).</span>
+<span class="sd">        """</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="n">df_wt</span><span class="p">[</span><span class="s2">"NAME"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"string"</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">blank</span> <span class="o">=</span> <span class="n">names</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span> <span class="o">|</span> <span class="p">(</span><span class="n">names</span> <span class="o">==</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">blank</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Ohya 2005: </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">blank</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2"> wild-type row(s) with a blank NAME; "</span>
+                <span class="s2">"the NAME is the sample's replicate_id"</span>
+            <span class="p">)</span>
+        <span class="n">repeated</span> <span class="o">=</span> <span class="n">names</span><span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">duplicated</span><span class="p">(</span><span class="n">keep</span><span class="o">=</span><span class="kc">False</span><span class="p">)]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">repeated</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Ohya 2005: wild-type sample NAME(s) listed more than once: </span><span class="si">{</span><span class="n">repeated</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Ohya 2005: </span><span class="si">%d</span><span class="s2"> wild-type samples, one record each"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_wt</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">df_wt</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_wt_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_wt</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Aggregate the WT replicate averages into a per-feature mean reference."""</span>
+<span class="w">        </span><span class="sd">"""Summarize the WT samples as a per-feature mean (blank cells skipped)."""</span>
         <span class="n">info_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"NAME"</span><span class="p">,</span> <span class="s2">"ORF"</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df_wt</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
         <span class="n">morphology_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df_wt</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">info_columns</span><span class="p">]</span>
         <span class="n">wt_means</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">morphology_columns</span><span class="p">:</span>
-            <span class="n">numeric_values</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">df_wt</span><span class="p">[</span><span class="n">col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span>
+            <span class="c1"># A non-numeric cell refuses here, as it does in the sample's own record.</span>
+            <span class="n">numeric_values</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">df_wt</span><span class="p">[</span><span class="n">col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"raise"</span><span class="p">)</span>
             <span class="n">wt_means</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">numeric_values</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">wt_means</span>
 
@@ -486,39 +552,15 @@
         <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="ScmdOhya2005Dataset.create_calmorph_experiment">
-<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.html#torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.create_calmorph_experiment">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">create_calmorph_experiment</span><span class="p">(</span>
-        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">wt_reference_phenotype</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CalMorphExperiment</span><span class="p">,</span> <span class="n">CalMorphExperimentReference</span><span class="p">,</span> <span class="n">Publication</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Build a CalMorph experiment and reference pair from one data row."""</span>
-        <span class="c1"># Genome reference - haploid BY4741 (MATa his3D1 leu2D0 lys2D0 ura3D0).</span>
-        <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
-            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
-            <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span><span class="p">,</span>
-            <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
-            <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_split_traits</span><span class="p">(</span>
+        <span class="n">row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">info_columns</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CalMorphPhenotype</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Split one released row into base and CV traits; a blank cell is key-absent.</span>
 
-        <span class="c1"># Create genotype for the non-essential single-gene deletion mutant (kanMX4).</span>
-        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
-            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
-                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">],</span>
-                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"perturbed_gene_name"</span><span class="p">],</span>
-                <span class="p">)</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
-
-        <span class="c1"># Environment -- Ohya 2005 Methods: YPD, logarithmic-phase (liquid) culture.</span>
-        <span class="c1"># Temperature 25 C from the Ohya-lab CalMorph standard (see module docstring).</span>
-        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">media</span><span class="o">=</span><span class="n">OHYA_YPD</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">25</span><span class="p">))</span>
-        <span class="n">environment_reference</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">()</span>
-
-        <span class="c1"># Extract morphology measurements and separate base from CV parameters. A blank</span>
-        <span class="c1"># cell is key-absent (never imputed).</span>
-        <span class="n">info_columns</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"ORF"</span><span class="p">,</span> <span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="s2">"perturbed_gene_name"</span><span class="p">}</span>
+<span class="sd">        ``replicate_id`` is the released sample label of a wild-type row and None on a</span>
+<span class="sd">        mutant row (one culture per strain, the per-strain build's record).</span>
+<span class="sd">        """</span>
         <span class="n">base_measurements</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">cv_measurements</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
@@ -529,16 +571,37 @@
                 <span class="n">cv_measurements</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">float_value</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">base_measurements</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">float_value</span>
-
-        <span class="c1"># Create phenotype with separated base and CV measurements</span>
-        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">CalMorphPhenotype</span><span class="p">(</span>
+        <span class="k">return</span> <span class="n">CalMorphPhenotype</span><span class="p">(</span>
             <span class="n">calmorph</span><span class="o">=</span><span class="n">base_measurements</span><span class="p">,</span>
             <span class="n">calmorph_coefficient_of_variation</span><span class="o">=</span><span class="p">(</span>
                 <span class="n">cv_measurements</span> <span class="k">if</span> <span class="n">cv_measurements</span> <span class="k">else</span> <span class="kc">None</span>
             <span class="p">),</span>
+            <span class="n">replicate_id</span><span class="o">=</span><span class="n">replicate_id</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="c1"># Reference phenotype from the aggregated WT, split the same way.</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_record</span><span class="p">(</span>
+        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span><span class="p">,</span>
+        <span class="n">phenotype</span><span class="p">:</span> <span class="n">CalMorphPhenotype</span><span class="p">,</span>
+        <span class="n">wt_reference_phenotype</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CalMorphExperiment</span><span class="p">,</span> <span class="n">CalMorphExperimentReference</span><span class="p">,</span> <span class="n">Publication</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Pair one experiment with the shared WT-summary reference and publication."""</span>
+        <span class="c1"># Genome reference - haploid BY4741 (MATa his3D1 leu2D0 met15D0 ura3D0).</span>
+        <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+            <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4741"</span><span class="p">,</span>
+            <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
+            <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Environment -- Ohya 2005 Methods: YPD, logarithmic-phase (liquid) culture.</span>
+        <span class="c1"># Temperature 25 C from the Ohya-lab CalMorph standard (see module docstring).</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">media</span><span class="o">=</span><span class="n">OHYA_YPD</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">25</span><span class="p">))</span>
+        <span class="n">environment_reference</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">()</span>
+
+        <span class="c1"># Reference phenotype from the WT summary, split the same way; it states an</span>
+        <span class="c1"># aggregate over the WT samples, so it carries no replicate_id.</span>
         <span class="n">wt_base</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">wt_reference_phenotype</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
@@ -553,15 +616,12 @@
             <span class="n">calmorph</span><span class="o">=</span><span class="n">wt_base</span><span class="p">,</span> <span class="n">calmorph_coefficient_of_variation</span><span class="o">=</span><span class="n">wt_cv</span> <span class="k">if</span> <span class="n">wt_cv</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="p">)</span>
 
-        <span class="c1"># Create reference</span>
         <span class="n">reference</span> <span class="o">=</span> <span class="n">CalMorphExperimentReference</span><span class="p">(</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
             <span class="n">genome_reference</span><span class="o">=</span><span class="n">genome_reference</span><span class="p">,</span>
             <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment_reference</span><span class="p">,</span>
             <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">phenotype_reference</span><span class="p">,</span>
         <span class="p">)</span>
-
-        <span class="c1"># Create experiment</span>
         <span class="n">experiment</span> <span class="o">=</span> <span class="n">CalMorphExperiment</span><span class="p">(</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
             <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
@@ -577,7 +637,55 @@
             <span class="n">doi_url</span><span class="o">=</span><span class="s2">"https://www.pnas.org/doi/10.1073/pnas.0509436102"</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span></div>
+        <span class="k">return</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span>
+
+<div class="viewcode-block" id="ScmdOhya2005Dataset.create_calmorph_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.html#torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.create_calmorph_experiment">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_calmorph_experiment</span><span class="p">(</span>
+        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">wt_reference_phenotype</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CalMorphExperiment</span><span class="p">,</span> <span class="n">CalMorphExperimentReference</span><span class="p">,</span> <span class="n">Publication</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build the record of one mutant row (one culture; ``replicate_id`` None)."""</span>
+        <span class="c1"># Non-essential single-gene deletion mutant (kanMX4).</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">],</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"perturbed_gene_name"</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">ScmdOhya2005Dataset</span><span class="o">.</span><span class="n">_split_traits</span><span class="p">(</span>
+            <span class="n">row</span><span class="p">,</span> <span class="p">{</span><span class="s2">"ORF"</span><span class="p">,</span> <span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="s2">"perturbed_gene_name"</span><span class="p">},</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ScmdOhya2005Dataset</span><span class="o">.</span><span class="n">_build_record</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="p">,</span> <span class="n">genotype</span><span class="p">,</span> <span class="n">phenotype</span><span class="p">,</span> <span class="n">wt_reference_phenotype</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ScmdOhya2005Dataset.create_wt_calmorph_experiment">
+<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.html#torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.create_wt_calmorph_experiment">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_wt_calmorph_experiment</span><span class="p">(</span>
+        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">wt_reference_phenotype</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CalMorphExperiment</span><span class="p">,</span> <span class="n">CalMorphExperimentReference</span><span class="p">,</span> <span class="n">Publication</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build the record of one released wild-type sample.</span>
+
+<span class="sd">        The genotype is the collection's his3 deletion strain (``YOR202W``, kanMX4) and</span>
+<span class="sd">        ``replicate_id`` is the row's released ``NAME`` verbatim.</span>
+<span class="sd">        """</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">_WT_DELETED_ORF</span><span class="p">,</span>
+                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">_WT_DELETED_ORF</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">ScmdOhya2005Dataset</span><span class="o">.</span><span class="n">_split_traits</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="p">{</span><span class="s2">"NAME"</span><span class="p">},</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"NAME"</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">ScmdOhya2005Dataset</span><span class="o">.</span><span class="n">_build_record</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="p">,</span> <span class="n">genotype</span><span class="p">,</span> <span class="n">phenotype</span><span class="p">,</span> <span class="n">wt_reference_phenotype</span>
+        <span class="p">)</span></div>
 </div>
 
 

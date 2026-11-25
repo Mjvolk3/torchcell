@@ -136,18 +136,27 @@
 <span class="sd">4. L3 `vocabulary_parity` -- the label vocabulary is internally consistent</span>
 <span class="sd">   (281 + 220 == 501 == `CALMORPH_PARAMETERS`, base and CV disjoint), i.e. the</span>
 <span class="sd">   convention the records adhere to holds.</span>
+<span class="sd">5. L1 `record_uniqueness` -- one record per (genotype, environment, replicate_id), so</span>
+<span class="sd">   a strain stored twice is caught while the replicate records of one strain stay</span>
+<span class="sd">   distinct by their ``replicate_id``.</span>
+<span class="sd">6. L1 `replicate_records` -- the number of records carrying a ``replicate_id`` (the</span>
+<span class="sd">   released wild-type samples) is the count the loader declares, and their ids are</span>
+<span class="sd">   distinct.</span>
 
 <span class="sd">L4 (cross-source perturbed-gene overlap with the deletion expression datasets) is</span>
 <span class="sd">asserted by the caller across datasets, not here.</span>
 
-<span class="sd">NOTE on the WT: the 122 wildtype profiles are AGGREGATED into each record's reference</span>
-<span class="sd">phenotype (a single mean-WT baseline, itself carrying the full 281+220 vocabulary),</span>
-<span class="sd">not stored as 122 separate records. So the record-count oracle is the mutant count</span>
-<span class="sd">(4718; all strains retained, ORF names reconciled to R64); the WT is verified as a populated reference, not counted from records.</span>
+<span class="sd">NOTE on the WT (per-replicate policy, #1178 / #1171; 2026.11.24): every released</span>
+<span class="sd">wild-type sample is its own record carrying its ``replicate_id`` (Ohya 2005 122,</span>
+<span class="sd">Ohnuki 2018 114, Ohnuki 2022 749), and each record's reference phenotype is a summary</span>
+<span class="sd">(the per-feature mean over those samples, ``replicate_id`` None) carrying the full</span>
+<span class="sd">281+220 vocabulary. So the record-count oracle is mutants + wild-type samples (Ohya</span>
+<span class="sd">4718 + 122 = 4840), and ``replicate_records`` counts the wild-type part.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
@@ -231,8 +240,8 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_l1_reference_populated</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""L1: every record's WT reference phenotype carries the full vocabulary.</span>
 
-<span class="sd">    The 122 WT profiles are aggregated into this reference; verifying it is populated</span>
-<span class="sd">    is how the WT is accounted for (the 122 count is not record-recoverable).</span>
+<span class="sd">    The reference summarizes the released WT samples (each of which is also a record,</span>
+<span class="sd">    counted by ``replicate_records``); every record must carry it fully populated.</span>
 <span class="sd">    """</span>
     <span class="n">bad</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">rec</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">records</span><span class="p">):</span>
@@ -253,6 +262,75 @@
             <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bad</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">)</span><span class="si">}</span><span class="s2"> records have an under-populated WT reference"</span>
         <span class="p">),</span>
         <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_bad"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">bad</span><span class="p">),</span> <span class="s2">"bad"</span><span class="p">:</span> <span class="n">bad</span><span class="p">[:</span><span class="mi">20</span><span class="p">]},</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_l1_record_uniqueness</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L1: one record per (genotype, environment, replicate_id).</span>
+
+<span class="sd">    The genotype and environment are their whole stored objects, so two strains or two</span>
+<span class="sd">    conditions are never merged by a key that forgot a field. ``replicate_id`` joins the</span>
+<span class="sd">    key (read with ``.get``, empty when unset), so the wild-type sample records of one</span>
+<span class="sd">    strain stay distinct and a mutant stored once per strain keys as before.</span>
+<span class="sd">    """</span>
+    <span class="n">seen</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+        <span class="n">experiment</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span>
+        <span class="n">replicate_id</span> <span class="o">=</span> <span class="n">experiment</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"replicate_id"</span><span class="p">)</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">experiment</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">],</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">experiment</span><span class="p">[</span><span class="s2">"environment"</span><span class="p">],</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="s2">""</span> <span class="k">if</span> <span class="n">replicate_id</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">replicate_id</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">seen</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">seen</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">duplicated</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">n</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">seen</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L1</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"record_uniqueness"</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="ow">not</span> <span class="n">duplicated</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">seen</span><span class="p">)</span><span class="si">}</span><span class="s2"> unique (genotype, environment, replicate_id) records, one each"</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">duplicated</span>
+            <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">duplicated</span><span class="p">)</span><span class="si">}</span><span class="s2"> (genotype, environment, replicate_id) keys appear "</span>
+            <span class="s2">"in more than one record"</span>
+        <span class="p">),</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"n_keys"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">seen</span><span class="p">),</span>
+            <span class="s2">"n_duplicated"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">duplicated</span><span class="p">),</span>
+            <span class="s2">"n_genotypes"</span><span class="p">:</span> <span class="nb">len</span><span class="p">({</span><span class="n">genotype</span> <span class="k">for</span> <span class="n">genotype</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">}),</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_l1_replicate_records</span><span class="p">(</span>
+    <span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">],</span> <span class="n">expected_replicate_records</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L1: the records carrying a ``replicate_id`` are the declared count, all distinct.</span>
+
+<span class="sd">    In the SCMD family these are the released wild-type samples; a mutant row is one</span>
+<span class="sd">    culture per strain and carries none.</span>
+<span class="sd">    """</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"replicate_id"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span>
+        <span class="k">if</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"replicate_id"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">]</span>
+    <span class="n">distinct</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+    <span class="n">passed</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="o">==</span> <span class="n">expected_replicate_records</span> <span class="ow">and</span> <span class="n">distinct</span>
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L1</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"replicate_records"</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span><span class="si">}</span><span class="s2"> records carry a replicate_id (expected "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">expected_replicate_records</span><span class="si">}</span><span class="s2">), "</span>
+            <span class="o">+</span> <span class="p">(</span><span class="s2">"all distinct"</span> <span class="k">if</span> <span class="n">distinct</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span><span class="si">}</span><span class="s2"> repeated"</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"observed"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">),</span>
+            <span class="s2">"expected"</span><span class="p">:</span> <span class="n">expected_replicate_records</span><span class="p">,</span>
+            <span class="s2">"n_distinct"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">ids</span><span class="p">)),</span>
+        <span class="p">},</span>
     <span class="p">)</span>
 
 
@@ -285,6 +363,7 @@
     <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">provenance</span><span class="p">:</span> <span class="n">Provenance</span><span class="p">,</span>
     <span class="n">expected_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">expected_replicate_records</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">expected_incomplete</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VerificationReport</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Run the L0-L3 record-level gate for the Ohya2005 CalMorph dataset.</span>
@@ -293,7 +372,10 @@
 <span class="sd">        records: the per-LMDB-entry dicts (experiment/reference/publication).</span>
 <span class="sd">        dataset_name: dataset identity for the report.</span>
 <span class="sd">        provenance: where the records came from.</span>
-<span class="sd">        expected_count: the mutant record-count oracle (Ohya2005 = 4718).</span>
+<span class="sd">        expected_count: the record-count oracle, mutants plus released wild-type</span>
+<span class="sd">            samples (Ohya2005 = 4718 + 122 = 4840).</span>
+<span class="sd">        expected_replicate_records: how many records carry a ``replicate_id`` (the</span>
+<span class="sd">            released wild-type samples; Ohya2005 = 122).</span>
 <span class="sd">        expected_incomplete: how many records the loader declares short of the full</span>
 <span class="sd">            CalMorph vocabulary (Ohnuki 2022's HRD1 row, two blank cells key-absent).</span>
 
@@ -313,8 +395,11 @@
     <span class="c1"># enforces label-vocabulary membership + no-NaN via CalMorphPhenotype validators).</span>
     <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">l0_structural</span><span class="p">((</span><span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span> <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">records</span><span class="p">),</span> <span class="n">validate</span><span class="p">))</span>
 
-    <span class="c1"># L1: exact mutant count + full-vocabulary coverage + populated WT reference.</span>
+    <span class="c1"># L1: exact record count + one record per key + the declared replicate records +</span>
+    <span class="c1"># full-vocabulary coverage + populated WT reference.</span>
     <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">l1_count</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">),</span> <span class="n">expected_count</span><span class="p">))</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_l1_record_uniqueness</span><span class="p">(</span><span class="n">records</span><span class="p">))</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_l1_replicate_records</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">expected_replicate_records</span><span class="p">))</span>
     <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_l1_calmorph_completeness</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">expected_incomplete</span><span class="p">))</span>
     <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_l1_reference_populated</span><span class="p">(</span><span class="n">records</span><span class="p">))</span>
 

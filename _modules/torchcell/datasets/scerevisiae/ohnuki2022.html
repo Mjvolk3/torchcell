@@ -117,7 +117,7 @@
 <span class="c1"># [[torchcell.datasets.scerevisiae.ohnuki2022]]</span>
 <span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/ohnuki2022</span>
 <span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_ohnuki2022.py</span>
-<span class="sd">"""Ohnuki 2022 high-throughput CalMorph morphology of drug-hypersensitive deletions.</span>
+<span class="sa">r</span><span class="sd">"""Ohnuki 2022 high-throughput CalMorph morphology of drug-hypersensitive deletions.</span>
 
 <span class="sd">Ohnuki et al. 2022 (npj Syst Biol Appl 8:3, doi:10.1038/s41540-022-00212-1; PMID</span>
 <span class="sd">35087094) built a diagnostic set of 1982 haploid QUADRUPLE-deletion strains for</span>
@@ -132,8 +132,25 @@
 <span class="sd">per-strain CalMorph averages (n=1 measurement per mutant), NOT z-scores.</span>
 
 <span class="sd">The REFERENCE is the 3Delta PARENT (not true wild type): ``wt749data.tsv`` holds 749</span>
-<span class="sd">replicate CalMorph averages of the 3Delta strain, aggregated here into a single mean</span>
-<span class="sd">reference phenotype carrying the full 501-trait vocabulary.</span>
+<span class="sd">replicate CalMorph averages of the 3Delta strain, summarized here as a single mean</span>
+<span class="sd">reference phenotype carrying the full 501-trait vocabulary (``replicate_id = None``).</span>
+
+<span class="sd">ONE RECORD PER RELEASED SAMPLE (per-replicate policy, #1178 / #1171; 2026.11.24). The</span>
+<span class="sd">store holds the 1982 quadruple-mutant rows (indices 0..1981, unchanged) and then the 749</span>
+<span class="sd">3Delta rows of ``wt749data.tsv`` (indices 1982..2730), 2731 records:</span>
+
+<span class="sd">- A mutant row is ONE culture: "We obtained wild-type data 749 times and mutant data</span>
+<span class="sd">  once for each mutant." (paper.md line 97). Mutant records carry ``replicate_id = None``</span>
+<span class="sd">  and are byte-identical to the per-strain build.</span>
+<span class="sd">- Each 3Delta row is ONE culture of the parent, grown with the mutants of its day: "the</span>
+<span class="sd">  morphological data of the 1982 mutants were taken every time using the 749 replicates</span>
+<span class="sd">  of 3Δ over 152 days" (line 151); Fig. 4a shows the "749 replicates of $3 \Delta$</span>
+<span class="sd">  (orange, ordered by the date of data acquisition)" (line 59); the SCMD2 datasheet page</span>
+<span class="sd">  lists the file as "749 replicated wild-type (drug-hypersensitive strain)"</span>
+<span class="sd">  (``data/scmd_quadruple_summary.html`` line 44). Each is its own record whose genotype</span>
+<span class="sd">  is the 3Delta background alone (the three deletions every mutant record also carries)</span>
+<span class="sd">  and whose ``replicate_id`` is the row's released ``NAME`` verbatim (``Q140226E02`` ...;</span>
+<span class="sd">  date-prefixed, 0 duplicates).</span>
 
 <span class="sd">This loader builds ONLY the gene-deletion morphology matrix. The compound side of the</span>
 <span class="sd">paper (7 compounds) is not a released per-strain morphology matrix and is not buildable.</span>
@@ -267,7 +284,9 @@
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.ohnuki2022.ScmdOhnuki2022Dataset.html#torchcell.datasets.scerevisiae.ohnuki2022.ScmdOhnuki2022Dataset">[docs]</a>
 <span class="nd">@register_dataset</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ScmdOhnuki2022Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""CalMorph morphology for 1979 quadruple (target + 3Delta) deletion strains."""</span>
+<span class="w">    </span><span class="sd">"""CalMorph morphology of 1982 quadruple (target + 3Delta) deletion strains and the</span>
+<span class="sd">    749 released 3Delta parent replicates, one record each (2731 records).</span>
+<span class="sd">    """</span>
 
     <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
 
@@ -373,10 +392,8 @@
             <span class="p">)</span>
         <span class="n">df_mutant</span> <span class="o">=</span> <span class="n">df_mutant</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">df_mutant</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
         <span class="n">wt_reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_wt_reference</span><span class="p">(</span><span class="n">df_wt</span><span class="p">,</span> <span class="n">feature_cols</span><span class="p">)</span>
+        <span class="n">wt_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wt_replicate_names</span><span class="p">(</span><span class="n">df_wt</span><span class="p">)</span>
         <span class="n">background</span> <span class="o">=</span> <span class="n">_background_perturbations</span><span class="p">()</span>
         <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
             <span class="n">pubmed_id</span><span class="o">=</span><span class="s2">"35087094"</span><span class="p">,</span>
@@ -386,14 +403,31 @@
         <span class="p">)</span>
 
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Processing Ohnuki 2022 CalMorph morphology (</span><span class="si">%d</span><span class="s2"> strains)..."</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_mutant</span><span class="p">)</span>
+            <span class="s2">"Processing Ohnuki 2022 CalMorph morphology (</span><span class="si">%d</span><span class="s2"> strains, </span><span class="si">%d</span><span class="s2"> 3Delta "</span>
+            <span class="s2">"replicates)..."</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">df_mutant</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">df_wt</span><span class="p">),</span>
         <span class="p">)</span>
+        <span class="c1"># Mutant records first (order and indices unchanged from the per-strain build),</span>
+        <span class="c1"># then one record per released 3Delta replicate.</span>
+        <span class="n">records</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_build_experiment</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">feature_cols</span><span class="p">,</span> <span class="n">wt_reference</span><span class="p">,</span> <span class="n">background</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df_mutant</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="n">df_mutant</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="p">]</span> <span class="o">+</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_build_wt_experiment</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">feature_cols</span><span class="p">,</span> <span class="n">wt_reference</span><span class="p">,</span> <span class="n">background</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">wt_names</span><span class="p">,</span> <span class="n">df_wt</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="c1"># Every record is built (and so every refusal raised) before ``data.csv`` or the</span>
+        <span class="c1"># store is written.</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">df_mutant</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e12</span><span class="p">))</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df_mutant</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="n">df_mutant</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
-                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_experiment</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">feature_cols</span><span class="p">,</span> <span class="n">wt_reference</span><span class="p">,</span> <span class="n">background</span>
-                <span class="p">)</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">records</span><span class="p">):</span>
                 <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
                     <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
@@ -421,10 +455,32 @@
                 <span class="n">base</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
         <span class="k">return</span> <span class="n">base</span><span class="p">,</span> <span class="n">cv</span>
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_wt_replicate_names</span><span class="p">(</span><span class="n">df_wt</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The released ``NAME`` of every 3Delta row, its ``replicate_id``.</span>
+
+<span class="sd">        A blank or repeated ``NAME`` is refused (0 blank, 0 repeated among the 749</span>
+<span class="sd">        pinned rows).</span>
+<span class="sd">        """</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="n">df_wt</span><span class="p">[</span><span class="s2">"NAME"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"string"</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">blank</span> <span class="o">=</span> <span class="n">names</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span> <span class="o">|</span> <span class="p">(</span><span class="n">names</span> <span class="o">==</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">blank</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Ohnuki 2022 </span><span class="si">{</span><span class="n">WT_FILE</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">blank</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2"> row(s) with a blank NAME; "</span>
+                <span class="s2">"the NAME is the replicate's replicate_id"</span>
+            <span class="p">)</span>
+        <span class="n">repeated</span> <span class="o">=</span> <span class="n">names</span><span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">duplicated</span><span class="p">(</span><span class="n">keep</span><span class="o">=</span><span class="kc">False</span><span class="p">)]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">repeated</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Ohnuki 2022 </span><span class="si">{</span><span class="n">WT_FILE</span><span class="si">}</span><span class="s2"> lists 3Delta replicate NAME(s) more than once: "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">repeated</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">df_wt</span><span class="p">[</span><span class="s2">"NAME"</span><span class="p">]]</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_wt_reference</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">df_wt</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">feature_cols</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CalMorphPhenotype</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Aggregate the 749 replicate 3Delta profiles into one mean reference phenotype.</span>
+<span class="w">        </span><span class="sd">"""Summarize the 749 replicate 3Delta profiles as one mean reference phenotype.</span>
 
 <span class="sd">        A blank reference cell is refused, as a blank mutant cell drops its strain: the</span>
 <span class="sd">        reference mean is never taken over a subset of the replicates (0 blank cells in</span>
@@ -464,7 +520,37 @@
                 <span class="o">*</span><span class="n">background</span><span class="p">,</span>
             <span class="p">]</span>
         <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pair</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">genotype</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feature_cols</span><span class="p">,</span> <span class="n">wt_reference</span><span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_wt_experiment</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span>
+        <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">feature_cols</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">wt_reference</span><span class="p">:</span> <span class="n">CalMorphPhenotype</span><span class="p">,</span>
+        <span class="n">background</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CalMorphExperiment</span><span class="p">,</span> <span class="n">CalMorphExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Build the record of one released 3Delta replicate (the background alone)."""</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">background</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pair</span><span class="p">(</span>
+            <span class="n">dataset_name</span><span class="p">,</span> <span class="n">genotype</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">replicate_id</span><span class="p">,</span> <span class="n">feature_cols</span><span class="p">,</span> <span class="n">wt_reference</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_pair</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span><span class="p">,</span>
+        <span class="n">row</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span>
+        <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">feature_cols</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">wt_reference</span><span class="p">:</span> <span class="n">CalMorphPhenotype</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CalMorphExperiment</span><span class="p">,</span> <span class="n">CalMorphExperimentReference</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Pair one row's experiment with the shared 3Delta-summary reference.</span>
+
+<span class="sd">        ``replicate_id`` is the released ``NAME`` of a 3Delta row and None on a mutant</span>
+<span class="sd">        row (one culture per strain).</span>
+<span class="sd">        """</span>
         <span class="c1"># Liquid YPD at 25 C (paper Methods: "Yeast cell culture and harvest").</span>
         <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
             <span class="n">media</span><span class="o">=</span><span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"YPD"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
@@ -476,7 +562,9 @@
         <span class="p">}</span>
         <span class="n">base</span><span class="p">,</span> <span class="n">cv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_traits</span><span class="p">(</span><span class="n">measurements</span><span class="p">)</span>
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">CalMorphPhenotype</span><span class="p">(</span>
-            <span class="n">calmorph</span><span class="o">=</span><span class="n">base</span><span class="p">,</span> <span class="n">calmorph_coefficient_of_variation</span><span class="o">=</span><span class="n">cv</span> <span class="k">if</span> <span class="n">cv</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">calmorph</span><span class="o">=</span><span class="n">base</span><span class="p">,</span>
+            <span class="n">calmorph_coefficient_of_variation</span><span class="o">=</span><span class="n">cv</span> <span class="k">if</span> <span class="n">cv</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">replicate_id</span><span class="o">=</span><span class="n">replicate_id</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># Reference genome is a WT-only placeholder (ExperimentReference cannot carry the</span>

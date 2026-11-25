@@ -716,9 +716,10 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "metabolite_zelezniak2018": {
         "root": "data/torchcell/metabolite_zelezniak2018",
-        # One record per (strain, protocol) since issue #595: 95 protocol-1 + 18
-        # protocol-2 + 16 protocol-3 strains (scratch build of the pinned release).
-        "expected_count": 129,
+        # One record per (protocol, strain, released biological replicate) since #1173:
+        # protocol 1 95 + 1 WT, protocol 2 51 + 1 WT, protocol 3 41 + 3 WT (scratch
+        # build of the pinned release, 2026-11-24; 129 per-(strain, protocol) means before).
+        "expected_count": 192,
         "reference_centered": False,  # per-protocol WT baseline, not centered
         # Must equal the loader's ZELEZNIAK_METABOLITE_PROTOCOLS measurement_types
         # (pinned by tests/torchcell/datasets/scerevisiae/test_zelezniak2018.py).
@@ -732,7 +733,7 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
         "provenance": Provenance(
             source_uri="https://zenodo.org/api/records/1320289/files/metabolites_dataset.data_prep.tsv/content",
             citation_key="zelezniakMachineLearningPredicts2018",
-            method="LC-SRM targeted metabolomics, three protocols kept separate (Dataset 1 uncalibrated signal, Datasets 2/3 externally calibrated); per-(strain, protocol) mean over that protocol's replicates vs the same-protocol WT",
+            method="LC-SRM targeted metabolomics, three protocols kept separate (Dataset 1 uncalibrated signal, Datasets 2/3 externally calibrated); one record per released biological replicate, WT included, vs the same-protocol WT summary",
             page="Zenodo 10.5281/zenodo.1320288 metabolites_dataset.data_prep.tsv",
         ),
     },
@@ -1038,11 +1039,13 @@ def run_metabolite(data_root: str) -> bool:
 PROTEIN_DATASETS: dict[str, dict[str, Any]] = {
     "proteome_zelezniak2018": {
         "root": "data/torchcell/proteome_zelezniak2018",
-        "expected_count": 97,
+        # One record per released sample since #1174: 352 knockout + 12 WT (97
+        # per-strain means before).
+        "expected_count": 364,
         "provenance": Provenance(
             source_uri="https://zenodo.org/records/1320289/files/proteins_dataset.data_prep.tsv",
             citation_key="zelezniakMachineLearningPredicts2018",
-            method="SWATH-MS label-free protein signal, SVA batch-corrected; per-strain mean over replicates",
+            method="SWATH-MS label-free protein signal, SVA batch-corrected; one record per released sample, WT included, vs the WT summary",
             page="Zenodo 10.5281/zenodo.1320288 proteins_dataset.data_prep.tsv",
         ),
     },

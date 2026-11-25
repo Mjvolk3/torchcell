@@ -2169,7 +2169,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
     assert runners.OHNUKI2022_EXPECTED_INCOMPLETE == 1
     assert _oracles(runners.VISUAL_SCORE_DATASETS) == {"carotenoid_ozaydin2013": 4727}
     assert _oracles(runners.METABOLITE_DATASETS) == {
-        "betaxanthin_cachera2023": None,
+        "betaxanthin_cachera2023": 68834,
         "amino_acid_mulleder2016": 9731,
         "amino_acid_cooper2010": 4382,
         "metabolite_zelezniak2018": 192,
@@ -2195,7 +2195,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         name
         for name, spec in runners.METABOLITE_DATASETS.items()
         if spec.get("reference_centered", True)
-    } == {"betaxanthin_cachera2023"}
+    } == set()
     # The two bacterial metabolomes: their L4 universe comes from their own assembly
     # pin (BW25113 for Fuhrer, MG1655 for Rapp), not the Ohya yeast deletion collection.
     assert {

@@ -1,0 +1,52 @@
+{
+  "control_mean_minus_reference_level": 8.326672684688674e-17,
+  "control_se_minus_reference_se": 0.0,
+  "groups_whose_record_count_differs_from_old_n": 0,
+  "max_abs_mean_difference": 1.3322676295501878e-15,
+  "max_abs_se_difference": 4.440892098500626e-16,
+  "new_control_records": 12,
+  "new_groups": 4760,
+  "new_groups_without_an_old_record": [
+    "(control)"
+  ],
+  "new_records": 68834,
+  "new_records_per_repeat": {
+    "repeat1": 17074,
+    "repeat2": 18077,
+    "repeat4": 15256,
+    "repeat6": 18427
+  },
+  "old_records": 4759,
+  "old_records_without_a_matching_group": 0,
+  "records_per_group": {
+    "1": 39,
+    "10": 40,
+    "11": 77,
+    "12": 158,
+    "13": 402,
+    "14": 882,
+    "15": 1483,
+    "16": 1458,
+    "19": 3,
+    "2": 25,
+    "21": 1,
+    "24": 1,
+    "25": 2,
+    "26": 2,
+    "27": 1,
+    "28": 5,
+    "29": 11,
+    "3": 32,
+    "30": 7,
+    "31": 14,
+    "32": 7,
+    "4": 16,
+    "44": 1,
+    "5": 7,
+    "6": 15,
+    "7": 24,
+    "8": 23,
+    "9": 24
+  },
+  "reference_n": 12
+}

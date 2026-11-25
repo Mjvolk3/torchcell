@@ -673,11 +673,17 @@ def run_visual_score(data_root: str) -> bool:
 METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
     "betaxanthin_cachera2023": {
         "root": "data/torchcell/betaxanthin_cachera2023",
+        # One record per colony since #1177: 68,822 colonies of 4,759 gene tokens plus
+        # the 12 WT control colonies (scratch build of the pinned QD1_2_4_6.csv,
+        # 2026-11-24; 4,759 per-gene means before).
+        "expected_count": 68834,
+        # The reference is the authors' WT summary (GA1_2_4_6.csv WT row), not 0.
+        "reference_centered": False,
         "provenance": Provenance(
-            source_uri="https://raw.githubusercontent.com/pc2912/CRI-SPA_repo/main/GA1_2_4_6.csv",
+            source_uri="https://raw.githubusercontent.com/pc2912/CRI-SPA_repo/2c800ab7b9811456f353d325be75b24e938440c6/QD1_2_4_6.csv",
             citation_key="cacheraCRISPAHighthroughputMethod2023",
-            method="CRI-SPA corrected colony HSV yellowness score (24h) as betaxanthin proxy",
-            page="CRI-SPA GitHub GA1_2_4_6.csv (replicates 1/2/4/6)",
+            method="CRI-SPA corrected colony HSV yellowness score (24h) as betaxanthin proxy; one record per colony, WT control colonies included, vs the authors' WT summary",
+            page="CRI-SPA GitHub QD1_2_4_6.csv (screen repeats 1/2/4/6, per colony)",
         ),
     },
     "amino_acid_mulleder2016": {

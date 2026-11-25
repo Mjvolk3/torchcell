@@ -13,7 +13,9 @@ plus a raw-file pass that re-derives what the records claim:
 
 - L0 ``structural`` -- every experiment validates against ``ExperimentType`` (the
   segregant experiment pair is in the union).
-- L1 ``count``; ``pair_uniqueness`` on (segregant id, condition signature); ``id_bijection``
+- L1 ``count``; ``pair_uniqueness`` on (segregant id, condition signature, replicate id);
+  ``column_counts`` (each of the 40 released columns, the three YPD rounds included,
+  holds exactly one record per stored segregant); ``id_bijection``
   (every phenotype row id is in exactly one genotype file and every genotype row has a
   phenotype row); plus the shared rules from :mod:`torchcell.verification.common` -- the
   ``provenance_gaps`` census over every carrier, ``canonical_gene_names`` (vacuous here:
@@ -23,10 +25,11 @@ plus a raw-file pass that re-derives what the records claim:
   exactly); ``mosaic_round_trip`` (every segregant's blocks re-expanded at the cross's
   sorted marker positions equal its released row); ``block_invariants`` (ordered,
   non-overlapping, parents alternate, ``n_markers`` sums to the cross's marker count).
-- L3 ``measurement_partition`` (exactly 36 residual and 2 absolute conditions);
-  ``reference_zero``; ``conditions_documented`` (every environment is one of the 38 and
-  exactly two carry no environmental edit); ``sourced_values`` (the text anchors in the
-  raw mirror still hold their quotes, and the xls still carries each quoted cell).
+- L3 ``measurement_partition`` (exactly 36 residual and 4 absolute columns: YNB;;1 and
+  the three YPD rounds); ``reference_zero``; ``conditions_documented`` (every environment
+  is one of the 38 conditions, all 40 columns are seen, and exactly the four absolute
+  columns carry no environmental edit); ``sourced_values`` (the text anchors in the raw
+  mirror still hold their quotes, and the xls still carries each quoted cell).
 - L4 ``parents_pinned`` (every parent's Peter id is in the assembly member index);
   ``cross_pairs`` (xls parents match the README pairs); ``segregant_counts`` (per-cross
   counts equal the xls); ``marker_reference`` (a marker sample's ref allele equals the
@@ -125,6 +128,7 @@ def verify_segregant_growth_streaming(
 
     validate: Callable[[Any], object] = TypeAdapter(ExperimentType).validate_python
     conditions = b.build_conditions()
+    served = b.build_served_columns()
     phenotypes = pd.read_csv(
         osp.join(raw_dir, b.PHENOTYPES_NAME),
         sep="\t",
@@ -133,33 +137,36 @@ def verify_segregant_growth_streaming(
         float_precision="round_trip",
     )
     phenotypes.index = phenotypes.index.astype(str)
-    column_of_env: dict[tuple[Any, ...], str] = {}
+    # (environment signature, replicate id) -> released column: the three YPD rounds
+    # share one environment and differ only in replicate_id.
+    column_of_key: dict[tuple[tuple[Any, ...], str | None], str] = {}
     probe = b.Bloom2019Dataset.__new__(b.Bloom2019Dataset)
     probe.conditions = conditions
     signature_of_column: dict[str, tuple[Any, ...]] = {}
-    for col, spec in conditions.items():
+    for col, spec in served.items():
         env = probe._environment(spec).model_dump()
         signature_of_column[col] = _condition_signature({"environment": env})
-        column_of_env[signature_of_column[col]] = col
+        column_of_key[(signature_of_column[col], spec.replicate_id)] = col
     # A condition carries no environmental edit iff its environment equals its control
     # plate's environment; a carbon-source swap or a temperature shift is an edit even
     # with no perturbation object, and only the two control plates should qualify.
     unedited_columns = {
         col
-        for col, spec in conditions.items()
+        for col, spec in served.items()
         if signature_of_column[col]
         == signature_of_column[b.CONTROL_ENVIRONMENT_COLUMN[spec.control_column]]
     }
     absolute_columns = {
         c
-        for c, s in conditions.items()
+        for c, s in served.items()
         if s.measurement_type is MeasurementType.colony_size
     }
 
     # ---- record pass -----------------------------------------------------------
     n_records = 0
     l0_failures: list[dict[str, Any]] = []
-    pairs: set[tuple[str, tuple[Any, ...]]] = set()
+    pairs: set[tuple[str, tuple[Any, ...], str | None]] = set()
+    records_by_column: Counter[str] = Counter()
     n_dups = 0
     n_values = 0
     bad_values: list[dict[str, Any]] = []
@@ -191,10 +198,13 @@ def verify_segregant_growth_streaming(
         if seg_id not in blocks_by_segregant:
             blocks_by_segregant[seg_id] = genotype["blocks"]
         signature = _condition_signature(exp)
-        column: str | None = column_of_env.get(signature)
+        replicate_id = exp["phenotype"].get("replicate_id")
+        column: str | None = column_of_key.get((signature, replicate_id))
         if column is None:
             unknown_env += 1
-        key = (seg_id, signature)
+        else:
+            records_by_column[column] += 1
+        key = (seg_id, signature, replicate_id)
         if key in pairs:
             n_dups += 1
         else:
@@ -256,11 +266,32 @@ def verify_segregant_growth_streaming(
             Level.L1,
             "pair_uniqueness",
             n_dups == 0,
-            f"{len(pairs)} unique (segregant, condition) records, one each"
+            f"{len(pairs)} unique (segregant, condition, replicate) records, one each"
             if n_dups == 0
-            else f"{n_dups} records duplicate an existing (segregant, condition) pair",
+            else f"{n_dups} records duplicate an existing (segregant, condition, "
+            "replicate) key",
             n_pairs=len(pairs),
             n_duplicated=n_dups,
+        )
+    )
+    n_stored = len(seen_segregants)
+    off_columns = {
+        c: records_by_column.get(c, 0)
+        for c in served
+        if records_by_column.get(c, 0) != n_stored
+    }
+    report.add(
+        _result(
+            Level.L1,
+            "column_counts",
+            not off_columns and bool(n_stored),
+            f"each of the {len(served)} released columns holds one record per stored "
+            f"segregant ({n_stored})"
+            if not off_columns
+            else f"{len(off_columns)} columns do not hold one record per segregant",
+            n_segregants=n_stored,
+            records_by_column=dict(sorted(records_by_column.items())),
+            off_columns=off_columns,
         )
     )
 
@@ -399,7 +430,7 @@ def verify_segregant_growth_streaming(
             not mixed
             and len(residual_cols) == 36
             and absolute_cols == absolute_columns,
-            f"{len(residual_cols)} residual + {len(absolute_cols)} absolute conditions",
+            f"{len(residual_cols)} residual + {len(absolute_cols)} absolute columns",
             n_residual=len(residual_cols),
             n_absolute=len(absolute_cols),
             mixed=mixed,
@@ -422,13 +453,16 @@ def verify_segregant_growth_streaming(
             Level.L3,
             "conditions_documented",
             unknown_env == 0
-            and set(measurement_by_column) == set(conditions)
+            and set(measurement_by_column) == set(served)
+            and len({signature_of_column[c] for c in measurement_by_column})
+            == len(conditions)
             and no_edit_columns == absolute_columns,
-            f"{len(measurement_by_column)}/{len(conditions)} documented conditions seen; "
-            f"{unknown_env} records with an undocumented environment; "
+            f"{len(measurement_by_column)}/{len(served)} documented columns seen over "
+            f"{len(conditions)} conditions; "
+            f"{unknown_env} records with an undocumented environment or replicate id; "
             f"no-edit columns = {sorted(no_edit_columns)}",
             n_unknown=unknown_env,
-            missing_conditions=sorted(set(conditions) - set(measurement_by_column)),
+            missing_conditions=sorted(set(served) - set(measurement_by_column)),
             no_edit_columns=sorted(no_edit_columns),
         )
     )
@@ -507,6 +541,30 @@ def _l3_sourced_values(
                 ),
             ),
             quote=b.CALL_METHOD_QUOTE,
+        ),
+        # the authors call YPD;;2 / YPD;;3 replicates of YPD;;1 (the served replicates)
+        SourcedValue(
+            value=list(b.YPD_REPLICATE_COLUMNS),
+            provenance=Provenance(
+                source_uri="code/mapping.R",
+                citation_key=b.CITATION_KEY,
+                sha256=b.manifest_sha256(
+                    b.load_manifest(str(Path(raw_mirror).parents[1])), "code/mapping.R"
+                ),
+            ),
+            quote=b.YPD_REPLICATE_QUOTE,
+        ),
+        SourcedValue(
+            value=list(b.YPD_REPLICATE_COLUMNS),
+            provenance=Provenance(
+                source_uri="code/mapping_fx.R",
+                citation_key=b.CITATION_KEY,
+                sha256=b.manifest_sha256(
+                    b.load_manifest(str(Path(raw_mirror).parents[1])),
+                    "code/mapping_fx.R",
+                ),
+            ),
+            quote=b.YPD_REPLICATE_EXPERIMENTS_QUOTE,
         ),
     ]
     library_root = Path(raw_mirror).parent

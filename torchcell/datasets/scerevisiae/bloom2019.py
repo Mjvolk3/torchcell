@@ -37,22 +37,39 @@ xls writes strain 273614 as ``SACE_MAA`` while the assembly member index carries
 ``MAA``; the ``SACE_`` prefix is the same one that once dropped an isolate's variants
 (issue #73), so the mapping is explicit and a parent absent from the index raises.
 
-PHENOTYPE. ``phenotypes.tsv.gz`` has 13,950 rows x 40 trait columns; 38 are served.
-Trait names are ``Condition;Concentration;PermutationGroup`` (``rr_fx.R``); the
-trailing digit is the plate BATCH, not a replicate index. For 36 conditions the stored
+PHENOTYPE. ``phenotypes.tsv.gz`` has 13,950 rows x 40 trait columns, all 40 served:
+13,950 x 40 = 558,000 records over 38 conditions. Trait names are
+``Condition;Concentration;PermutationGroup`` (``rr_fx.R``); the trailing digit is the
+plate batch, which is the phenotyping round (``process_images.R`` reads
+``RR_Round1/2/3`` and sets ``PermutationGroup`` 1, 2, 3). For 36 conditions the stored
 value is ``residuals(lm(s.radius.mean ~ ctrl.s.radius.mean))`` against the same-cross,
 same-batch, same-layout YPD plate (or YNB plate for the YNB conditions;
 ``process_images.R``), served as ``MeasurementType.control_regression_residual``; for
-``YPD;;1`` and ``YNB;;1`` the value is the raw colony mean radius in image pixels
-(``MeasurementType.colony_size``). ``YPD;;2`` and ``YPD;;3`` are the batch-2 and
-batch-3 control plates: they are the regressors for those batches and are dropped from
-every analysis in the source (``mapping.R``: "remove the results from the two
-additional YPD replicates"), so they are not served as conditions. ``mapping.R`` averages
+``YPD;;1``, ``YPD;;2``, ``YPD;;3`` and ``YNB;;1`` the value is the raw colony mean radius
+in image pixels (``MeasurementType.colony_size``; ``process_images.R`` L302-305 copies
+``s.radius.mean`` unregressed for every ``YPD;;``/``YNB;;`` plate). ``mapping.R`` averages
 the duplicate plates and then mean-imputes missing cells per trait within a cross; the
 release carries no missingness mask, so imputed cells cannot be identified (a
 dataset-level limitation, not a per-record gap). The reference is 0 for every condition:
 exact by construction for a residual, and the scale's physical zero (no colony) with a
-``ProvenanceGap`` for the two absolute conditions, whose parental radii are not released.
+``ProvenanceGap`` for the absolute conditions, whose parental radii are not released.
+
+YPD REPLICATES (2026.11.24, one record per released replicate, #1176). ``YPD;;1``,
+``YPD;;2`` and ``YPD;;3`` are the same condition (YPD, 30 C, 48 h, solid) measured in
+the three phenotyping rounds: the authors call the last two "the two additional YPD
+replicates (very similar to rep 1)" (``mapping.R`` L139) and "the two extra YPD
+replicate experiments" (``mapping_fx.R`` L574). They are released for every segregant
+(0 NaN in 13,950 rows) and are served as three records of the one YPD condition, with
+``replicate_id`` = the batch digit the release prints (``"1"``, ``"2"``, ``"3"``); every
+other condition is measured in one round only and keeps ``replicate_id=None``. The
+source excludes rounds 2 and 3 from its QTL-count summaries; that is a reporting choice,
+not a withdrawal (the values are released and the R code still maps them), so they are
+stored. Before 2026.11.24 the loader dropped them (``NOT_SERVED``) and stored 530,100
+records. Within one round, each value is the authors' mean over the duplicate liquid
+plates ("Segregants were arrayed to 384-well liquid plates in duplicate"); the per-plate
+values (``NORMpheno.RData``, linked from the repository README on Google Drive) are not in
+the raw mirror and the link answered 404 on 2026-11-25, so the round mean is what is
+stored, with ``n_samples=2``.
 
 ENVIRONMENT. Temperature lives on ``Environment.temperature`` (15, 30, 37 C for the YPD
 temperature series); the 30 C of every other plate is a documented representative with a
@@ -208,7 +225,10 @@ EXPECTED_SEGREGANTS = {
 }  # fmt: skip
 N_SEGREGANTS = 13950
 N_CONDITIONS = 38
-EXPECTED_RECORDS = N_SEGREGANTS * N_CONDITIONS
+# The two additional YPD rounds are replicate columns of the YPD;;1 condition, so the
+# release's 40 columns are 38 conditions; every column is one record per segregant.
+N_COLUMNS = 40
+EXPECTED_RECORDS = N_SEGREGANTS * N_COLUMNS
 
 # README parent label -> Peter 2018 strain id (None = BY, the S288C reference). The xls
 # "Strain ID of Parent 1 in Peter et al. 2018" column supplies these; 273614 is written
@@ -272,7 +292,16 @@ INCUBATION_HOURS = 48.0
 # Documented representative: the Methods state the 48 h incubation but not its
 # temperature; 30 C is carried with a ProvenanceGap on every non-temperature plate.
 DEFAULT_TEMPERATURE_C = 30.0
-NOT_SERVED = {"YPD;;2", "YPD;;3"}
+# The YPD control plate of each phenotyping round, keyed by column: the replicate_id is
+# the batch digit the release prints. YPD;;2 and YPD;;3 are served as further replicates
+# of the YPD;;1 condition (same environment, measurement and reference).
+YPD_REPLICATE_IDS = {"YPD;;1": "1", "YPD;;2": "2", "YPD;;3": "3"}
+YPD_REPLICATE_COLUMNS = ("YPD;;2", "YPD;;3")
+YPD_REPLICATE_QUOTE = "# remove the results from the two additional YPD replicates (very similar to rep 1)"
+YPD_REPLICATE_EXPERIMENTS_QUOTE = (
+    "# by default remove indices 37 and 38 corresponding to the two extra YPD "
+    "replicate experiments"
+)
 # The control plate a residual was regressed on, by batch, and the served column that
 # carries that plate's ENVIRONMENT: the batch-2 and batch-3 YPD plates are the same
 # medium and temperature as the batch-1 plate (only the batch differs), so their
@@ -304,6 +333,9 @@ class ConditionSpec(BaseModel):
     measurement_type: MeasurementType
     control_column: str
     dose_quote: str | None = None
+    # the batch digit for the three YPD rounds (YPD_REPLICATE_IDS); None for every
+    # condition measured in one round only
+    replicate_id: str | None = None
 
 
 def _smp(name: str, value: float, unit: ConcentrationUnit) -> SmallMoleculePerturbation:
@@ -339,6 +371,7 @@ def _spec(
         measurement_type=measurement_type,
         control_column=control,
         dose_quote=dose_quote,
+        replicate_id=YPD_REPLICATE_IDS.get(column),
     )
 
 
@@ -399,6 +432,30 @@ def build_conditions() -> dict[str, ConditionSpec]:
     if n_residual != 36 or len(specs) - n_residual != 2:
         raise ValueError("expected exactly 36 residual and 2 absolute conditions")
     return conditions
+
+
+def build_served_columns() -> dict[str, ConditionSpec]:
+    """All 40 released columns, keyed by header: the 38 conditions, then the two
+    additional YPD rounds as replicates of the ``YPD;;1`` condition.
+
+    ``YPD;;2`` and ``YPD;;3`` take the ``YPD;;1`` spec (environment, measurement type,
+    reference) with their own column, control plate and ``replicate_id``, so a record's
+    (genotype, environment) is the YPD condition and ``replicate_id`` tells the rounds
+    apart.
+    """
+    served = build_conditions()
+    ypd = served["YPD;;1"]
+    for column in YPD_REPLICATE_COLUMNS:
+        served[column] = ypd.model_copy(
+            update={
+                "column": column,
+                "control_column": column,
+                "replicate_id": YPD_REPLICATE_IDS[column],
+            }
+        )
+    if len(served) != N_COLUMNS:
+        raise ValueError(f"expected {N_COLUMNS} served columns, built {len(served)}")
+    return served
 
 
 # --------------------------------------------------------------------------- #
@@ -867,7 +924,11 @@ def build_parent(
 # --------------------------------------------------------------------------- #
 @register_dataset
 class Bloom2019Dataset(ExperimentDataset):
-    """Bloom 2019: one record per (segregant, condition), 530,100 records."""
+    """Bloom 2019: one record per (segregant, released column), 558,000 records.
+
+    38 conditions; the YPD condition carries three records per segregant, one per
+    phenotyping round (``replicate_id`` "1", "2", "3").
+    """
 
     organism = Organism.scerevisiae
 
@@ -883,6 +944,7 @@ class Bloom2019Dataset(ExperimentDataset):
         """A genome is REQUIRED (the gene set is the genes the mosaics span)."""
         self.genome = genome
         self.conditions = build_conditions()
+        self.served_columns = build_served_columns()
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -960,6 +1022,7 @@ class Bloom2019Dataset(ExperimentDataset):
             n_samples=N_SAMPLES,
             sample_unit=SampleUnit.technical_replicate,
             units=self._units(spec),
+            replicate_id=spec.replicate_id,
             provenance_gaps=[
                 ProvenanceGap(
                     field="environment_response_se",
@@ -1049,7 +1112,7 @@ class Bloom2019Dataset(ExperimentDataset):
     # ---- build ----------------------------------------------------------------
     @post_process
     def process(self) -> None:
-        """Build 13,950 x 38 records, one cross at a time, interning each genotype."""
+        """Build 13,950 x 40 records, one cross at a time, interning each genotype."""
         import lmdb  # noqa: F401  (opened via _open_write_lmdb)
 
         data_root = _data_root()
@@ -1081,12 +1144,12 @@ class Bloom2019Dataset(ExperimentDataset):
         )
         phenotypes.index = phenotypes.index.astype(str)
         columns = [str(c) for c in phenotypes.columns]
-        unknown = set(columns) - set(self.conditions) - NOT_SERVED
+        unknown = set(columns) - set(self.served_columns)
         if unknown:
             raise ValueError(
                 f"phenotype columns not in the condition table: {sorted(unknown)}"
             )
-        missing = set(self.conditions) - set(columns)
+        missing = set(self.served_columns) - set(columns)
         if missing:
             raise ValueError(
                 f"condition table columns absent from the release: {sorted(missing)}"
@@ -1100,13 +1163,13 @@ class Bloom2019Dataset(ExperimentDataset):
         # by an id is a scalar for the type checker (a ``.loc`` row read is typed
         # ``Any | Series``), and the cell values are the same float64s.
         served: dict[str, pd.Series[float]] = {
-            col: phenotypes[col].astype("float64") for col in self.conditions
+            col: phenotypes[col].astype("float64") for col in self.served_columns
         }
         references = {
-            col: self._reference(spec) for col, spec in self.conditions.items()
+            col: self._reference(spec) for col, spec in self.served_columns.items()
         }
         environments = {
-            col: self._environment(spec) for col, spec in self.conditions.items()
+            col: self._environment(spec) for col, spec in self.served_columns.items()
         }
         publication = Publication(doi=PAPER_DOI, doi_url=f"https://doi.org/{PAPER_DOI}")
         self._markers: dict[str, list[Marker]] = {}
@@ -1129,7 +1192,7 @@ class Bloom2019Dataset(ExperimentDataset):
                         )
                     seen.add(seg_id)
                     counts.append(genotype.n_blocks)
-                    for col, spec in self.conditions.items():
+                    for col, spec in self.served_columns.items():
                         value = float(served[col][seg_id])
                         if np.isnan(value):
                             raise ValueError(f"{seg_id}/{col}: NaN in the release")

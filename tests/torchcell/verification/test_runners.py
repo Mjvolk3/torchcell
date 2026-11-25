@@ -2357,7 +2357,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "syn_leth_db_yeast": 14000,
         "syn_rescue_db_yeast": 6948,
     }
-    assert _oracles(runners.SEGREGANT_GROWTH_DATASETS) == {"bloom2019": 530100}
+    assert _oracles(runners.SEGREGANT_GROWTH_DATASETS) == {"bloom2019": 558000}
     assert _oracles(runners.NATURAL_ISOLATE_RESPONSE_DATASETS) == {
         "isolate_growth_peter2018": 33985
     }

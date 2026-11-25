@@ -100,7 +100,33 @@ def test_condition_table_partition_and_controls() -> None:
     sorbitol = conditions["Sorbitol;1.5M;2"].perturbations[0]
     assert isinstance(sorbitol, SmallMoleculePerturbation)
     assert sorbitol.compound.name == "sorbitol"
-    assert b.NOT_SERVED == {"YPD;;2", "YPD;;3"}
+    # only the YPD control carries a replicate id among the 38 conditions
+    assert {c: s.replicate_id for c, s in conditions.items() if s.replicate_id} == {
+        "YPD;;1": "1"
+    }
+
+
+def test_served_columns_add_the_two_ypd_rounds_as_replicates_of_ypd() -> None:
+    """40 served columns: the 38 conditions plus YPD;;2 and YPD;;3, which take the
+    YPD;;1 environment and measurement with their own batch digit as replicate id.
+    """
+    conditions = b.build_conditions()
+    served = b.build_served_columns()
+    assert len(served) == b.N_COLUMNS == 40
+    assert list(served)[:38] == list(conditions)
+    assert list(served)[38:] == ["YPD;;2", "YPD;;3"]
+    ypd = conditions["YPD;;1"]
+    for column, replicate in (("YPD;;1", "1"), ("YPD;;2", "2"), ("YPD;;3", "3")):
+        spec = served[column]
+        assert spec.replicate_id == replicate
+        assert spec.measurement_type is MeasurementType.colony_size
+        assert (spec.media, spec.temperature_c, spec.perturbations) == (
+            ypd.media,
+            ypd.temperature_c,
+            ypd.perturbations,
+        )
+        assert b.CONTROL_ENVIRONMENT_COLUMN[spec.control_column] == "YPD;;1"
+    assert b.EXPECTED_RECORDS == 13950 * 40 == 558000
 
 
 def test_every_stress_compound_resolves_to_a_structure_identifier() -> None:
@@ -164,6 +190,39 @@ def _mirror_root() -> str | None:
         return None
     root = osp.join(data_root, b.RAW_DIR_REL)
     return root if osp.exists(osp.join(root, "manifest.json")) else None
+
+
+@pytest.mark.skipif(_mirror_root() is None, reason="Bloom 2019 raw mirror not on disk")
+def test_release_holds_three_ypd_rounds_for_every_segregant() -> None:
+    """The pinned ``phenotypes.tsv.gz`` is 13,950 x 40 with no NaN, its header is the
+    served column set exactly, and the three YPD rounds are distinct measurements
+    (Pearson r 0.916 and 0.922 with round 1), so the store is 558,000 records. The
+    authors call rounds 2 and 3 YPD replicates in ``mapping.R`` and ``mapping_fx.R``.
+    """
+    import pandas as pd
+
+    root = _mirror_root()
+    assert root is not None
+    pheno = pd.read_csv(
+        osp.join(root, "data", b.PHENOTYPES_NAME),
+        sep="\t",
+        compression="gzip",
+        index_col=0,
+        float_precision="round_trip",
+    )
+    assert pheno.shape == (b.N_SEGREGANTS, b.N_COLUMNS)
+    assert set(pheno.columns) == set(b.build_served_columns())
+    assert int(pheno.isna().sum().sum()) == 0
+    assert pheno.shape[0] * pheno.shape[1] == b.EXPECTED_RECORDS == 558000
+    ypd = pheno[["YPD;;1", "YPD;;2", "YPD;;3"]]
+    corr = ypd.corr().to_numpy()
+    assert round(float(corr[0, 1]), 3) == 0.916
+    assert round(float(corr[0, 2]), 3) == 0.922
+    assert int((ypd["YPD;;1"] != ypd["YPD;;2"]).sum()) > 13000
+    with open(osp.join(root, "code", "mapping.R")) as fh:
+        assert b.YPD_REPLICATE_QUOTE in fh.read()
+    with open(osp.join(root, "code", "mapping_fx.R")) as fh:
+        assert b.YPD_REPLICATE_EXPERIMENTS_QUOTE in fh.read()
 
 
 @pytest.mark.skipif(_mirror_root() is None, reason="Bloom 2019 raw mirror not on disk")

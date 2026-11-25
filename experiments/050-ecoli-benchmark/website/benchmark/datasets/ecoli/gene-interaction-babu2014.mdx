@@ -1,0 +1,264 @@
+---
+title: "Genetic interaction score of double mutants (Babu 2014)"
+sidebar_label: "Genetic interactions (Babu 2014)"
+description: "1 target: eSGA S-score of the pair"
+---
+
+Babu and colleagues crossed *Escherichia coli* K-12 single-gene deletion strains pairwise by conjugation (eSGA) and scored the colony size of each double mutant against the expectation from its two single mutants. The label is the S-score of the pair: negative when the double mutant grows worse than expected, positive when it grows better. The released set holds the pairs that passed the paper's significance cut. A model receives the two deleted genes and predicts the S-score.
+
+| Property | Value |
+| :-- | :-- |
+| Task name | `ecoli-gene-interaction-babu2014` |
+| Dataset class | `torchcell.datasets.ecoli.babu2014.GeneInteractionBabu2014Dataset` |
+| Genome | `ecoli_K12_MG1655_ASM584v2` |
+| One sample is | a pair of deleted genes |
+| Label | 1 target: eSGA S-score of the pair |
+| Benchmark samples | 40,658 |
+| Records of the dataset set aside | 2,047 (listed with a reason in `task.excluded`) |
+| Pinned splits | 17 |
+
+## Load the task
+
+```python
+from torchcell.tasks import load_task
+
+task = load_task("ecoli-gene-interaction-babu2014")
+split = task.split("gene_holdout_s0")
+
+task.genes[split.train]  # locus tags of the deleted genes, shape (n, 2)
+task.y[split.train]      # labels, one column per target
+task.genome              # the genome: sequence, protein and annotation of each gene
+split.val                # row indices for model selection
+split.unlock_test(reason="final evaluation")  # test row indices, with a warning
+```
+
+A sample is a benchmark sample when every deleted gene resolves to one protein-coding gene of the genome. See the [overview](./index.mdx) for what a task object holds and how the test part is locked.
+
+## Splits
+
+Each family has several seeds. The name of a split is the family, `_s` and the seed.
+
+| Family | Split names | What is kept whole | Train | Validation | Test |
+| :-- | :-- | :-- | --: | --: | --: |
+| Random | `random_s0` to `random_s4` | Genes (or pairs) assigned at random. | 32,527 | 4,066 | 4,065 |
+| Gene holdout, random | `gene_holdout_s0` to `gene_holdout_s2` | Genes split at random; a pair follows its genes. | 25,669 to 26,149 | 6,289 to 8,642 | 6,168 to 8,220 |
+| Gene holdout, identity 30 % | `seqid30_gene_holdout_s0` to `seqid30_gene_holdout_s2` | Genes split by 30 % identity cluster; a pair follows its genes. | 24,969 to 25,549 | 6,336 to 9,347 | 6,342 to 8,773 |
+| Gene holdout, identity 50 % | `seqid50_gene_holdout_s0` to `seqid50_gene_holdout_s2` | Genes split by 50 % identity cluster; a pair follows its genes. | 23,607 to 25,589 | 6,822 to 9,060 | 7,377 to 8,582 |
+| Gene holdout, position | `position_gene_holdout_s0` to `position_gene_holdout_s2` | Genes split by chromosome block; a pair follows its genes. | 25,297 to 28,414 | 6,795 to 8,496 | 3,748 to 8,532 |
+
+## Example script
+
+[`ecoli_gene_interaction_babu2014.py`](https://github.com/Mjvolk3/torchcell/blob/main/examples/benchmark/ecoli_gene_interaction_babu2014.py) is a complete run in one file: it loads this task, builds 21 features from the protein of each deleted gene, fits a ridge regression, chooses the penalty on validation and scores the test part once. Replace `gene_features` and `ridge` with your model and keep the rest.
+
+```bash
+pip install "torchcell>=1.8.8"
+python ecoli_gene_interaction_babu2014.py
+```
+
+```python
+# examples/benchmark/ecoli_gene_interaction_babu2014.py
+"""Genetic interaction score of *E. coli* double mutants (Babu 2014), gene-holdout split.
+
+A complete benchmark run in one file: load the standardized task, describe each deleted
+gene by the composition of its protein, fit a ridge regression, choose the ridge
+penalty on the validation part, and score the test part once.
+
+Needs only ``pip install "torchcell>=1.8.8"``. Run it in an empty directory::
+
+    python ecoli_gene_interaction_babu2014.py
+
+The first run downloads the dataset store and the genome into the current directory.
+"""
+
+from __future__ import annotations
+
+import os
+from typing import Any
+
+import numpy as np
+
+from torchcell.endpoint_http import DEFAULT_URL
+from torchcell.tasks import load_task
+
+TASK = "ecoli-gene-interaction-babu2014"
+# Split names are <family>_s<seed>; task.split_names lists them all. gene_holdout splits
+# the genes first: a pair is test when either of its genes is a test gene.
+SPLIT = "gene_holdout_s0"
+AMINO_ACIDS = "ACDEFGHIKLMNPQRSTVWY"
+PENALTIES = (1e-1, 1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6)
+SELECT_ON = "mse"  # lower is better, and defined even when a prediction is constant
+
+
+def protein_features(genome: Any, locus_tag: str) -> np.ndarray:
+    """Fraction of each of the 20 amino acids plus log length: 21 numbers per gene."""
+    protein = str(genome[locus_tag].protein.seq)
+    fractions = [protein.count(letter) / len(protein) for letter in AMINO_ACIDS]
+    return np.array([*fractions, np.log(len(protein))])
+
+
+def fit_predict_ridge(
+    x_fit: np.ndarray, y_fit: np.ndarray, x_new: np.ndarray, penalty: float
+) -> np.ndarray:
+    """Fit one closed-form ridge per target on ``x_fit`` and predict ``x_new``.
+
+    Features are standardized with the fitting rows' mean and spread. Each target is
+    fit only on the rows where it was measured (``y_fit`` is ``nan`` elsewhere).
+    """
+    mean = x_fit.mean(axis=0)
+    spread = x_fit.std(axis=0)
+    spread[spread == 0] = 1.0  # a constant feature stays zero instead of dividing by 0
+    z_fit, z_new = (x_fit - mean) / spread, (x_new - mean) / spread
+    predictions = np.empty((len(x_new), y_fit.shape[1]))
+    for target in range(y_fit.shape[1]):
+        measured = ~np.isnan(y_fit[:, target])
+        z, y = z_fit[measured], y_fit[measured, target]
+        gram = z.T @ z + penalty * np.eye(z.shape[1])
+        weights = np.linalg.solve(gram, z.T @ (y - y.mean()))
+        predictions[:, target] = z_new @ weights + y.mean()
+    return predictions
+
+
+def rounded(metrics: dict[str, float]) -> dict[str, float]:
+    """Metrics rounded to four decimals for printing."""
+    return {name: round(value, 4) for name, value in metrics.items()}
+
+
+os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)  # unset, the store is built from raw
+os.environ.setdefault("DATA_ROOT", ".")  # the store and genome files go under here
+
+task = load_task(TASK)  # samples, deleted genes, labels, genome and the pinned splits
+split = task.split(SPLIT)
+print(f"{task.spec.title}: {len(task):,} samples, {len(task.targets):,} target(s)")
+print(f"split {SPLIT}: {split.sizes()}")
+
+# task.genes holds locus tags, one column per deleted gene (two for a gene-pair task).
+# A sample's features are the sum over its genes, which ignores the order of a pair.
+# A sum is additive in the two genes, so this baseline cannot express an interaction.
+by_gene = {tag: protein_features(task.genome, tag) for tag in np.unique(task.genes)}
+features = np.array([sum(by_gene[tag] for tag in tags) for tags in task.genes])
+labels = task.y  # (n_samples, n_targets); nan where a target was not measured
+
+# Model selection: fit on train, score on validation. The test part stays locked.
+x_train, y_train = features[split.train], labels[split.train]
+validation = {
+    penalty: task.score(
+        labels[split.val],
+        fit_predict_ridge(x_train, y_train, features[split.val], penalty),
+    )
+    for penalty in PENALTIES
+}
+best_penalty = min(PENALTIES, key=lambda penalty: validation[penalty][SELECT_ON])
+print(f"penalty chosen on validation {SELECT_ON}: {best_penalty:g}")
+print("validation", rounded(validation[best_penalty]))
+
+# One final evaluation of the chosen model; unlock_test warns by design.
+test = split.unlock_test(reason="final evaluation at the penalty chosen on validation")
+test_prediction = fit_predict_ridge(x_train, y_train, features[test], best_penalty)
+print("test      ", rounded(task.score(labels[test], test_prediction)))
+print(f"headline metric: {task.spec.headline_metric} (mean over targets)")
+```
+
+Output of one run:
+
+```text
+Genetic interaction score of double mutants (Babu 2014): 40,658 samples, 1 target(s)
+split gene_holdout_s0: {'train': 25848, 'val': 8642, 'test': 6168}
+penalty chosen on validation mse: 0.1
+validation {'pearson': 0.1168, 'spearman': 0.1195, 'r2': 0.0053, 'mse': 29.7949, 'mae': 4.8675}
+test       {'pearson': 0.0697, 'spearman': 0.0627, 'r2': 0.0033, 'mse': 29.7227, 'mae': 4.8552}
+headline metric: pearson (mean over targets)
+```
+
+## Linear-probe baselines
+
+A frozen representation of each deleted gene with a ridge regression on top, for every split of this task. The representations and the fitting procedure are described in the [overview](./index.mdx#linear-probe-baselines).
+
+<img src={require("./linear_probes_gene-interaction-babu2014.png").default} alt="Linear-probe test Pearson for Genetic interactions (Babu 2014)" style={{width: "100%"}} />
+
+**Test Pearson correlation of each linear probe on Genetic interactions (Babu 2014).** Each panel is one split family and each bar is one gene representation. A bar is the mean over the seeds of that family (five seeds for random splits and three for every other family) and its whisker is the sample standard deviation over those seeds. The correlation is computed on the test part at the ridge penalty chosen on validation. Random features carry no biology and mark the level a representation must exceed. Dark bars concatenate the representations of the two genes and light bars add them. Panels to the right of Random hold out genes that are increasingly unlike the training genes or far from them on the chromosome.
+
+The table gives the same numbers: mean ± sample standard deviation of the test Pearson correlation over the seeds of each split family. The highest mean of each row is in bold. `undefined` marks a constant prediction.
+
+Pair representation: the two genes concatenated (`concat`).
+
+| Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Random | 0.461 ± 0.009 | 0.449 ± 0.005 | 0.252 ± 0.013 | 0.437 ± 0.002 | 0.404 ± 0.008 | 0.459 ± 0.006 | **0.466 ± 0.007** | 0.448 ± 0.009 | 0.457 ± 0.008 | 0.445 ± 0.008 |
+| Gene holdout, random | 0.283 ± 0.028 | **0.295 ± 0.044** | 0.173 ± 0.014 | 0.243 ± 0.067 | 0.237 ± 0.041 | 0.245 ± 0.023 | 0.258 ± 0.018 | 0.142 ± 0.056 | 0.291 ± 0.035 | 0.290 ± 0.030 |
+| Gene holdout, identity 30 % | 0.260 ± 0.045 | **0.274 ± 0.014** | 0.155 ± 0.068 | 0.195 ± 0.004 | 0.191 ± 0.044 | 0.238 ± 0.041 | 0.252 ± 0.040 | 0.213 ± 0.016 | 0.243 ± 0.048 | 0.221 ± 0.019 |
+| Gene holdout, identity 50 % | 0.278 ± 0.010 | **0.288 ± 0.008** | 0.150 ± 0.034 | 0.192 ± 0.076 | 0.224 ± 0.015 | 0.228 ± 0.043 | 0.260 ± 0.014 | 0.221 ± 0.029 | 0.222 ± 0.049 | 0.215 ± 0.035 |
+| Gene holdout, position | 0.265 ± 0.059 | **0.297 ± 0.044** | 0.121 ± 0.023 | 0.193 ± 0.094 | 0.221 ± 0.072 | 0.240 ± 0.066 | 0.267 ± 0.047 | 0.244 ± 0.039 | 0.251 ± 0.074 | 0.214 ± 0.073 |
+
+Pair representation: the two genes summed (`sum`).
+
+| Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Random | 0.448 ± 0.011 | 0.458 ± 0.007 | 0.228 ± 0.015 | 0.430 ± 0.009 | 0.396 ± 0.011 | 0.455 ± 0.009 | **0.464 ± 0.008** | 0.440 ± 0.012 | 0.448 ± 0.010 | 0.430 ± 0.012 |
+| Gene holdout, random | 0.281 ± 0.028 | **0.308 ± 0.047** | 0.171 ± 0.030 | 0.235 ± 0.068 | 0.251 ± 0.064 | 0.244 ± 0.013 | 0.245 ± 0.053 | 0.154 ± 0.076 | 0.306 ± 0.042 | 0.298 ± 0.037 |
+| Gene holdout, identity 30 % | 0.252 ± 0.061 | **0.287 ± 0.017** | 0.144 ± 0.076 | 0.204 ± 0.011 | 0.180 ± 0.044 | 0.250 ± 0.048 | 0.236 ± 0.047 | 0.192 ± 0.029 | 0.244 ± 0.044 | 0.231 ± 0.032 |
+| Gene holdout, identity 50 % | 0.274 ± 0.012 | **0.301 ± 0.006** | 0.150 ± 0.034 | 0.185 ± 0.068 | 0.238 ± 0.053 | 0.235 ± 0.048 | 0.244 ± 0.031 | 0.210 ± 0.025 | 0.221 ± 0.051 | 0.228 ± 0.023 |
+| Gene holdout, position | 0.263 ± 0.081 | **0.321 ± 0.030** | 0.106 ± 0.035 | 0.228 ± 0.086 | 0.249 ± 0.070 | 0.258 ± 0.041 | 0.282 ± 0.039 | 0.277 ± 0.007 | 0.271 ± 0.057 | 0.204 ± 0.109 |
+
+### Test pairs by how many genes are new
+
+Under gene holdout a test pair has either one gene that was in no training pair or two. The table scores the two kinds separately.
+
+Pair representation: `concat`.
+
+Test pairs with one gene new:
+
+| Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Gene holdout, random | 0.313 ± 0.021 | **0.322 ± 0.046** | 0.187 ± 0.012 | 0.268 ± 0.059 | 0.263 ± 0.036 | 0.280 ± 0.020 | 0.285 ± 0.010 | 0.168 ± 0.060 | 0.317 ± 0.029 | 0.312 ± 0.028 |
+| Gene holdout, identity 30 % | 0.290 ± 0.043 | **0.303 ± 0.012** | 0.172 ± 0.067 | 0.228 ± 0.012 | 0.221 ± 0.048 | 0.267 ± 0.045 | 0.275 ± 0.037 | 0.242 ± 0.017 | 0.269 ± 0.053 | 0.249 ± 0.024 |
+| Gene holdout, identity 50 % | 0.313 ± 0.009 | **0.318 ± 0.006** | 0.170 ± 0.037 | 0.224 ± 0.074 | 0.257 ± 0.018 | 0.262 ± 0.043 | 0.299 ± 0.022 | 0.251 ± 0.029 | 0.256 ± 0.044 | 0.247 ± 0.031 |
+| Gene holdout, position | 0.292 ± 0.058 | **0.322 ± 0.043** | 0.136 ± 0.017 | 0.219 ± 0.089 | 0.237 ± 0.067 | 0.269 ± 0.062 | 0.297 ± 0.049 | 0.266 ± 0.034 | 0.280 ± 0.072 | 0.239 ± 0.070 |
+
+Test pairs with both genes new:
+
+| Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Gene holdout, random | 0.087 ± 0.098 | undefined | 0.092 ± 0.051 | 0.088 ± 0.133 | 0.077 ± 0.087 | 0.011 ± 0.035 | 0.081 ± 0.092 | -0.011 ± 0.067 | 0.129 ± 0.083 | **0.150 ± 0.072** |
+| Gene holdout, identity 30 % | 0.030 ± 0.106 | undefined | 0.071 ± 0.088 | 0.002 ± 0.028 | 0.030 ± 0.048 | 0.066 ± 0.047 | **0.114 ± 0.093** | 0.046 ± 0.035 | 0.104 ± 0.048 | 0.070 ± 0.024 |
+| Gene holdout, identity 50 % | -0.004 ± 0.025 | undefined | 0.041 ± 0.072 | 0.011 ± 0.093 | 0.045 ± 0.021 | 0.025 ± 0.026 | 0.022 ± 0.072 | **0.051 ± 0.018** | 0.026 ± 0.068 | 0.028 ± 0.062 |
+| Gene holdout, position | 0.010 ± 0.036 | undefined | 0.037 ± 0.032 | 0.022 ± 0.087 | **0.108 ± 0.063** | 0.033 ± 0.048 | 0.067 ± 0.066 | 0.094 ± 0.037 | 0.045 ± 0.052 | 0.032 ± 0.071 |
+
+Pair representation: `sum`.
+
+Test pairs with one gene new:
+
+| Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Gene holdout, random | 0.309 ± 0.018 | **0.336 ± 0.049** | 0.184 ± 0.025 | 0.260 ± 0.059 | 0.274 ± 0.061 | 0.278 ± 0.008 | 0.273 ± 0.048 | 0.181 ± 0.082 | 0.330 ± 0.036 | 0.320 ± 0.031 |
+| Gene holdout, identity 30 % | 0.283 ± 0.059 | **0.316 ± 0.014** | 0.163 ± 0.079 | 0.234 ± 0.010 | 0.208 ± 0.046 | 0.281 ± 0.054 | 0.260 ± 0.043 | 0.224 ± 0.019 | 0.270 ± 0.043 | 0.254 ± 0.034 |
+| Gene holdout, identity 50 % | 0.308 ± 0.012 | **0.332 ± 0.004** | 0.170 ± 0.039 | 0.215 ± 0.071 | 0.269 ± 0.054 | 0.270 ± 0.051 | 0.278 ± 0.035 | 0.242 ± 0.024 | 0.253 ± 0.047 | 0.259 ± 0.016 |
+| Gene holdout, position | 0.293 ± 0.078 | **0.348 ± 0.027** | 0.125 ± 0.036 | 0.258 ± 0.078 | 0.274 ± 0.067 | 0.286 ± 0.036 | 0.316 ± 0.036 | 0.300 ± 0.007 | 0.302 ± 0.056 | 0.232 ± 0.095 |
+
+Test pairs with both genes new:
+
+| Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Gene holdout, random | 0.111 ± 0.125 | undefined | 0.089 ± 0.083 | 0.088 ± 0.144 | 0.111 ± 0.102 | 0.021 ± 0.046 | 0.063 ± 0.106 | -0.018 ± 0.039 | **0.168 ± 0.090** | 0.155 ± 0.074 |
+| Gene holdout, identity 30 % | 0.042 ± 0.073 | undefined | 0.054 ± 0.077 | 0.024 ± 0.040 | 0.039 ± 0.044 | 0.069 ± 0.049 | 0.091 ± 0.112 | 0.016 ± 0.057 | 0.097 ± 0.074 | **0.105 ± 0.033** |
+| Gene holdout, identity 50 % | 0.012 ± 0.037 | undefined | 0.042 ± 0.065 | 0.023 ± 0.043 | **0.079 ± 0.056** | 0.037 ± 0.019 | 0.039 ± 0.037 | 0.037 ± 0.014 | 0.040 ± 0.077 | 0.042 ± 0.044 |
+| Gene holdout, position | -0.001 ± 0.056 | undefined | 0.012 ± 0.011 | 0.045 ± 0.104 | 0.096 ± 0.047 | 0.074 ± 0.036 | 0.059 ± 0.046 | **0.114 ± 0.045** | 0.068 ± 0.041 | 0.025 ± 0.167 |
+
+## Boards
+
+The [leaderboard](../../leaderboard.mdx) has one board per split family of this task, on the seed-0 split. The linear probes above are its baseline rows. The other seeds are in the package for your own experiments and have no board.
+
+| Board | Split |
+| :-- | :-- |
+| `ecoli-gene-interaction-babu2014-random-s0` | `random_s0` |
+| `ecoli-gene-interaction-babu2014-gene-holdout-s0` | `gene_holdout_s0` |
+| `ecoli-gene-interaction-babu2014-seqid30-gene-holdout-s0` | `seqid30_gene_holdout_s0` |
+| `ecoli-gene-interaction-babu2014-seqid50-gene-holdout-s0` | `seqid50_gene_holdout_s0` |
+| `ecoli-gene-interaction-babu2014-position-gene-holdout-s0` | `position_gene_holdout_s0` |
+
+### Reading these numbers
+
+- This task has 340 probe runs, one per split, representation and pair combination. In 8 of them the penalty chosen on validation is the largest value tried (1,000,000), which means the best linear model in that run is close to predicting the training mean.
+- Differences smaller than the standard deviations shown are not resolved by three to five seeds.
+- These are frozen, mean-pooled representations with a linear readout. They are a floor for models that are fine-tuned, nonlinear or use the cell graph, and they say nothing about what such models reach.
+
+Every run, with validation scores, the chosen penalty and four more metrics, is in [`linear_probes.csv`](https://github.com/Mjvolk3/torchcell/blob/main/experiments/050-ecoli-benchmark/results/linear_probes.csv).

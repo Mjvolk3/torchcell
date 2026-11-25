@@ -1,5 +1,6 @@
-ecoli-metabolome-fuhrer2017: 3,624 samples, 7,534 targets, split random_s0
-sizes {'train': 2900, 'val': 362, 'test': 362}
-penalty chosen on validation: 100000
+Metabolome of single-gene deletions (Fuhrer 2017): 3,624 samples, 7,534 target(s)
+split random_s0: {'train': 2900, 'val': 362, 'test': 362}
+penalty chosen on validation mse: 100000
 validation {'pearson': 0.0052, 'spearman': 0.0012, 'r2': -0.0036, 'mse': 0.994, 'mae': 0.7299}
 test       {'pearson': 0.0054, 'spearman': 0.0062, 'r2': -0.0029, 'mse': 0.993, 'mae': 0.7308}
+headline metric: pearson (mean over targets)

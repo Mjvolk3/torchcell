@@ -64,8 +64,7 @@ def main() -> int:
         (OUT / f"{script.stem}.out").write_text(done.stdout, encoding="utf-8")
         print(f"{script.name}: ok")
     (OUT / "versions.json").write_text(
-        json.dumps({"torchcell": version, "python": args.python}, indent=2) + "\n",
-        encoding="utf-8",
+        json.dumps({"torchcell": version}, indent=2) + "\n", encoding="utf-8"
     )
     return 0
 

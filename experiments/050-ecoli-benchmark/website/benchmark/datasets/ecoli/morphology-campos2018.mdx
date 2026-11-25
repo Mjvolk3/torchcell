@@ -1,0 +1,206 @@
+---
+title: "Cell shape and cell cycle of single-gene deletions (Campos 2018)"
+sidebar_label: "Cell shape and cell cycle (Campos 2018)"
+description: "15 targets: feature means; 6 are nan for strains imaged without a nucleoid channel"
+---
+
+The same imaging screen of the Keio collection measured the shape and the cell-cycle state of thousands of cells per strain. The label is 15 numbers per strain: population means of features such as cell length, width, area and, for strains imaged with a nucleoid stain, nucleoid and cell-cycle features. The six nucleoid and cell-cycle features are missing for strains imaged without that stain. A model receives the deleted gene and predicts all 15 features, and each feature is scored on the strains that measured it.
+
+| Property | Value |
+| :-- | :-- |
+| Task name | `ecoli-morphology-campos2018` |
+| Dataset class | `torchcell.datasets.ecoli.campos2018.MorphologyCampos2018Dataset` |
+| Genome | `ecoli_K12_BW25113_ASM75055v1` |
+| One sample is | one deleted gene |
+| Label | 15 targets: feature means; 6 are nan for strains imaged without a nucleoid channel |
+| Benchmark samples | 3,573 |
+| Records of the dataset set aside | 91 (listed with a reason in `task.excluded`) |
+| Pinned splits | 14 |
+
+## Load the task
+
+```python
+from torchcell.tasks import load_task
+
+task = load_task("ecoli-morphology-campos2018")
+split = task.split("seqid30_s0")
+
+task.genes[split.train]  # locus tags of the deleted genes, shape (n, 1)
+task.y[split.train]      # labels, one column per target
+task.genome              # the genome: sequence, protein and annotation of each gene
+split.val                # row indices for model selection
+split.unlock_test(reason="final evaluation")  # test row indices, with a warning
+```
+
+A sample is a benchmark sample when every deleted gene resolves to one protein-coding gene of the genome. See the [overview](./index.mdx) for what a task object holds and how the test part is locked.
+
+## Splits
+
+Each family has several seeds. The name of a split is the family, `_s` and the seed.
+
+| Family | Split names | What is kept whole | Train | Validation | Test |
+| :-- | :-- | :-- | --: | --: | --: |
+| Random | `random_s0` to `random_s4` | Genes (or pairs) assigned at random. | 2,859 | 357 | 357 |
+| Sequence identity 30 % | `seqid30_s0` to `seqid30_s2` | Whole protein clusters at 30 % sequence identity. | 2,859 to 2,864 | 352 to 358 | 355 to 357 |
+| Sequence identity 50 % | `seqid50_s0` to `seqid50_s2` | Whole protein clusters at 50 % sequence identity. | 2,859 | 357 | 357 |
+| Chromosome position | `position_s0` to `position_s2` | Whole chromosome blocks (40 contiguous blocks). | 2,859 to 2,948 | 268 to 445 | 269 to 357 |
+
+## Example script
+
+[`ecoli_morphology_campos2018.py`](https://github.com/Mjvolk3/torchcell/blob/main/examples/benchmark/ecoli_morphology_campos2018.py) is a complete run in one file: it loads this task, builds 21 features from the protein of each deleted gene, fits a ridge regression, chooses the penalty on validation and scores the test part once. Replace `gene_features` and `ridge` with your model and keep the rest.
+
+```bash
+pip install "torchcell>=1.8.8"
+python ecoli_morphology_campos2018.py
+```
+
+```python
+# examples/benchmark/ecoli_morphology_campos2018.py
+"""Cell shape and cell cycle of *E. coli* single-gene deletions (Campos 2018), 15 targets.
+
+A complete benchmark run in one file: load the standardized task, describe each deleted
+gene by the composition of its protein, fit a ridge regression, choose the ridge
+penalty on the validation part, and score the test part once.
+
+Needs only ``pip install "torchcell>=1.8.8"``. Run it in an empty directory::
+
+    python ecoli_morphology_campos2018.py
+
+The first run downloads the dataset store and the genome into the current directory.
+"""
+
+from __future__ import annotations
+
+import os
+from typing import Any
+
+import numpy as np
+
+from torchcell.endpoint_http import DEFAULT_URL
+from torchcell.tasks import load_task
+
+TASK = "ecoli-morphology-campos2018"
+# Split names are <family>_s<seed>; task.split_names lists them all. seqid30 keeps
+# each cluster of proteins at >= 30% identity whole, so no test gene has a train homolog.
+SPLIT = "seqid30_s0"
+AMINO_ACIDS = "ACDEFGHIKLMNPQRSTVWY"
+PENALTIES = (1e-1, 1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6)
+SELECT_ON = "mse"  # lower is better, and defined even when a prediction is constant
+
+
+def protein_features(genome: Any, locus_tag: str) -> np.ndarray:
+    """Fraction of each of the 20 amino acids plus log length: 21 numbers per gene."""
+    protein = str(genome[locus_tag].protein.seq)
+    fractions = [protein.count(letter) / len(protein) for letter in AMINO_ACIDS]
+    return np.array([*fractions, np.log(len(protein))])
+
+
+def fit_predict_ridge(
+    x_fit: np.ndarray, y_fit: np.ndarray, x_new: np.ndarray, penalty: float
+) -> np.ndarray:
+    """Fit one closed-form ridge per target on ``x_fit`` and predict ``x_new``.
+
+    Features are standardized with the fitting rows' mean and spread. Each target is
+    fit only on the rows where it was measured (``y_fit`` is ``nan`` elsewhere).
+    """
+    mean = x_fit.mean(axis=0)
+    spread = x_fit.std(axis=0)
+    spread[spread == 0] = 1.0  # a constant feature stays zero instead of dividing by 0
+    z_fit, z_new = (x_fit - mean) / spread, (x_new - mean) / spread
+    predictions = np.empty((len(x_new), y_fit.shape[1]))
+    for target in range(y_fit.shape[1]):
+        measured = ~np.isnan(y_fit[:, target])
+        z, y = z_fit[measured], y_fit[measured, target]
+        gram = z.T @ z + penalty * np.eye(z.shape[1])
+        weights = np.linalg.solve(gram, z.T @ (y - y.mean()))
+        predictions[:, target] = z_new @ weights + y.mean()
+    return predictions
+
+
+def rounded(metrics: dict[str, float]) -> dict[str, float]:
+    """Metrics rounded to four decimals for printing."""
+    return {name: round(value, 4) for name, value in metrics.items()}
+
+
+os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)  # unset, the store is built from raw
+os.environ.setdefault("DATA_ROOT", ".")  # the store and genome files go under here
+
+task = load_task(TASK)  # samples, deleted genes, labels, genome and the pinned splits
+split = task.split(SPLIT)
+print(f"{task.spec.title}: {len(task):,} samples, {len(task.targets):,} target(s)")
+print(f"split {SPLIT}: {split.sizes()}")
+
+# task.genes holds locus tags, one column per deleted gene (two for a gene-pair task).
+# A sample's features are the sum over its genes, which ignores the order of a pair.
+by_gene = {tag: protein_features(task.genome, tag) for tag in np.unique(task.genes)}
+features = np.array([sum(by_gene[tag] for tag in tags) for tags in task.genes])
+labels = task.y  # (n_samples, n_targets); nan where a target was not measured
+
+# Model selection: fit on train, score on validation. The test part stays locked.
+x_train, y_train = features[split.train], labels[split.train]
+validation = {
+    penalty: task.score(
+        labels[split.val],
+        fit_predict_ridge(x_train, y_train, features[split.val], penalty),
+    )
+    for penalty in PENALTIES
+}
+best_penalty = min(PENALTIES, key=lambda penalty: validation[penalty][SELECT_ON])
+print(f"penalty chosen on validation {SELECT_ON}: {best_penalty:g}")
+print("validation", rounded(validation[best_penalty]))
+
+# One final evaluation of the chosen model; unlock_test warns by design.
+test = split.unlock_test(reason="final evaluation at the penalty chosen on validation")
+test_prediction = fit_predict_ridge(x_train, y_train, features[test], best_penalty)
+print("test      ", rounded(task.score(labels[test], test_prediction)))
+print(f"headline metric: {task.spec.headline_metric} (mean over targets)")
+```
+
+Output of one run:
+
+```text
+Cell shape and cell cycle of single-gene deletions (Campos 2018): 3,573 samples, 15 target(s)
+split seqid30_s0: {'train': 2859, 'val': 357, 'test': 357}
+penalty chosen on validation mse: 1e+06
+validation {'pearson': -0.0401, 'spearman': -0.0379, 'r2': -0.0028, 'mse': 0.047, 'mae': 0.0935}
+test       {'pearson': 0.0097, 'spearman': -0.0041, 'r2': -0.0034, 'mse': 0.0331, 'mae': 0.0893}
+headline metric: pearson (mean over targets)
+```
+
+## Linear-probe baselines
+
+A frozen representation of each deleted gene with a ridge regression on top, for every split of this task. The representations and the fitting procedure are described in the [overview](./index.mdx#linear-probe-baselines).
+
+<img src={require("./linear_probes_morphology-campos2018.png").default} alt="Linear-probe test Pearson for Cell shape and cell cycle (Campos 2018)" style={{width: "100%"}} />
+
+**Test Pearson correlation of each linear probe on Cell shape and cell cycle (Campos 2018).** Each panel is one split family and each bar is one gene representation. A bar is the mean over the seeds of that family (five seeds for random splits and three for every other family) and its whisker is the sample standard deviation over those seeds. The correlation is computed on the test part at the ridge penalty chosen on validation, separately for each target, and then averaged over the targets. Random features carry no biology and mark the level a representation must exceed. A representation with no bar has an undefined correlation: one-hot features predict the training mean for a gene that was not in training. Panels to the right of Random hold out genes that are increasingly unlike the training genes or far from them on the chromosome.
+
+The table gives the same numbers: mean ± sample standard deviation of the test Pearson correlation over the seeds of each split family. The highest mean of each row is in bold. `undefined` marks a constant prediction.
+
+| Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| Random | 0.018 ± 0.015 | undefined | 0.030 ± 0.021 | 0.029 ± 0.034 | 0.033 ± 0.024 | 0.016 ± 0.019 | **0.036 ± 0.022** | 0.009 ± 0.035 | -0.004 ± 0.013 | 0.024 ± 0.028 |
+| Sequence identity 30 % | **0.035 ± 0.015** | undefined | -0.021 ± 0.020 | 0.003 ± 0.025 | 0.004 ± 0.030 | 0.006 ± 0.020 | 0.018 ± 0.029 | -0.018 ± 0.036 | -0.003 ± 0.010 | 0.014 ± 0.019 |
+| Sequence identity 50 % | 0.025 ± 0.003 | undefined | **0.047 ± 0.046** | 0.037 ± 0.027 | 0.014 ± 0.030 | 0.027 ± 0.006 | 0.044 ± 0.004 | 0.032 ± 0.027 | -0.008 ± 0.050 | 0.023 ± 0.046 |
+| Chromosome position | **0.023 ± 0.017** | undefined | -0.008 ± 0.046 | -0.011 ± 0.032 | 0.004 ± 0.039 | 0.001 ± 0.032 | -0.013 ± 0.030 | -0.025 ± 0.031 | 0.008 ± 0.027 | 0.018 ± 0.053 |
+
+## Boards
+
+The [leaderboard](../../leaderboard.mdx) has one board per split family of this task, on the seed-0 split. The linear probes above are its baseline rows. The other seeds are in the package for your own experiments and have no board.
+
+| Board | Split |
+| :-- | :-- |
+| `ecoli-morphology-campos2018-random-s0` | `random_s0` |
+| `ecoli-morphology-campos2018-seqid30-s0` | `seqid30_s0` |
+| `ecoli-morphology-campos2018-seqid50-s0` | `seqid50_s0` |
+| `ecoli-morphology-campos2018-position-s0` | `position_s0` |
+
+The board names a target with letters, digits and `_.:|+-` only, so a feature written `<L>` in the dataset is `mean_L` on the board, `<SA/V>` is `mean_SA_per_V` and `%2N` is `pct_2N`.
+
+### Reading these numbers
+
+- This task has 140 probe runs, one per split, representation. In 89 of them the penalty chosen on validation is the largest value tried (1,000,000), which means the best linear model in that run is close to predicting the training mean.
+- Differences smaller than the standard deviations shown are not resolved by three to five seeds.
+- These are frozen, mean-pooled representations with a linear readout. They are a floor for models that are fine-tuned, nonlinear or use the cell graph, and they say nothing about what such models reach.
+
+Every run, with validation scores, the chosen penalty and four more metrics, is in [`linear_probes.csv`](https://github.com/Mjvolk3/torchcell/blob/main/experiments/050-ecoli-benchmark/results/linear_probes.csv).

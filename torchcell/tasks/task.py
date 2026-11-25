@@ -33,7 +33,20 @@ class TestSplitWarning(UserWarning):
 
 
 class TaskSpec(BaseModel):
-    """What one benchmark task is: the dataset, the genome, the label and the metric."""
+    """What one benchmark task is: the dataset, the genome, the label and the metric.
+
+    Attributes:
+        name: The task name passed to ``load_task``.
+        title: A one-line title for people.
+        dataset_slug: Directory name of the dataset's store.
+        dataset_module: Module that defines the dataset class.
+        dataset_class: Name of the dataset class.
+        assembly_set: Id of the genome assembly the records are written against.
+        kind: ``single_gene`` (a sample deletes one gene) or ``gene_pair`` (two).
+        label: Field of a record's phenotype that holds the label.
+        n_targets_note: How many targets a sample has and what one target is.
+        headline_metric: The metric results are reported by.
+    """
 
     name: str
     title: str
@@ -57,7 +70,13 @@ class Split:
     """
 
     def __init__(self, task: str, name: str, parts: npt.NDArray[np.str_]) -> None:
-        """Hold the part of every sample of ``task`` under the split ``name``."""
+        """Hold the part of every sample under one split.
+
+        Args:
+            task: Name of the task (a string, not the task object).
+            name: Name of the split.
+            parts: ``"train"``, ``"val"`` or ``"test"`` for every sample of the task.
+        """
         self.task = task
         self.name = name
         self._parts = parts
@@ -91,6 +110,9 @@ class Split:
 
         Returns:
             Row indices of the test samples.
+
+        Raises:
+            ValueError: ``reason`` is empty.
         """
         if not reason.strip():
             raise ValueError("unlock_test needs a non-empty reason")
@@ -166,7 +188,18 @@ class BenchmarkTask:
         return Split(self.spec.name, name, self._splits[name].to_numpy(dtype=str))
 
     def score(self, y_true: FloatArray, y_pred: FloatArray) -> dict[str, float]:
-        """Mean over targets of each metric; see :func:`regression_metrics`."""
+        """Mean over targets of each metric; see :func:`regression_metrics`.
+
+        A target whose metric is ``nan`` (for example the correlation of a constant
+        prediction) is left out of that metric's mean.
+
+        Args:
+            y_true: True labels, ``(n_samples, n_targets)``.
+            y_pred: Predictions of the same shape.
+
+        Returns:
+            ``pearson``, ``spearman``, ``r2``, ``mse`` and ``mae``, each one number.
+        """
         return {
             k: float(np.nanmean(v))
             for k, v in regression_metrics(y_true, y_pred).items()
@@ -176,9 +209,10 @@ class BenchmarkTask:
 def regression_metrics(y_true: FloatArray, y_pred: FloatArray) -> dict[str, FloatArray]:
     """Pearson, Spearman, R2, MSE and MAE of each target column.
 
-    A sample whose true value is ``nan`` is left out of that target. A target with
-    fewer than three measured samples, or with no variance in truth or prediction,
-    gets ``nan`` for the correlations. A prediction is treated as constant when its
+    A sample whose true value is ``nan`` is left out of that target. A target with no
+    measured sample gets ``nan`` for every metric. A target whose true values do not
+    vary gets ``nan`` for R2 and the correlations, and a target with fewer than three
+    measured samples or a constant prediction gets ``nan`` for the correlations. A prediction is treated as constant when its
     standard deviation is below 1e-9 of its largest magnitude (or of 1), so the
     rounding noise of a constant model is not scored as a correlation.
 

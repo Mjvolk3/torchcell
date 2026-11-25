@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=050-ecoli-embed-gpu
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=16G
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=48G
 #SBATCH --gres=gpu:1
-#SBATCH --time=00:20:00
+#SBATCH --time=00:30:00
 #SBATCH --output=experiments/050-ecoli-benchmark/slurm/output/%j_%x.out
 #SBATCH --error=experiments/050-ecoli-benchmark/slurm/output/%j_%x.out
 #SBATCH --no-requeue

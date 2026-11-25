@@ -1,15 +1,19 @@
 # experiments/050-ecoli-benchmark/scripts/linear_probes.py
 # [[experiments.050-ecoli-benchmark.scripts.linear_probes]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/050-ecoli-benchmark/scripts/linear_probes
-"""Linear probes on the E. coli benchmark tasks: five gene representations, every split.
+"""Linear probes on the E. coli benchmark tasks: ten gene representations, every split.
 
 Representations of a gene (rows of a matrix over the task's genes):
 
 - ``random``: 1,280 standard-normal numbers per gene (seed 0), no biology.
 - ``one_hot``: the identity of the gene.
+- ``codon_frequency``: relative frequency of the 64 codons of the coding sequence.
+- ``calm``: mean-pooled CaLM codon embedding of the coding sequence (768).
+- ``genslm_25m``, ``genslm_250m``: mean-pooled GenSLM codon embeddings (512, 1,024).
+- ``nt_v1_2500m``, ``nt_v2_500m``: mean-pooled Nucleotide Transformer embeddings of the
+  coding sequence, v1 2.5B multi-species (2,560) and v2 500M multi-species (1,024).
 - ``esm2``: mean-pooled ESM-2 650M protein embedding (1,280).
 - ``prot_t5``: mean-pooled ProtT5-XL-UniRef50 protein embedding (1,024).
-- ``calm``: mean-pooled CaLM codon embedding of the coding sequence (768).
 
 A single-gene sample is its gene's row. A gene-pair sample is the two rows concatenated
 in stored order (``concat``) or added (``sum``). The probe is ridge regression on
@@ -18,7 +22,10 @@ task, split and representation, all targets at once. The penalty is the one of
 ``ALPHAS`` with the lowest validation mean squared error over all measured entries. The test part is unlocked
 once per split, after that choice, and scored at the chosen penalty only.
 
-Writes ``experiments/050-ecoli-benchmark/results/probes/<task>.<feature>.csv``.
+Writes ``experiments/050-ecoli-benchmark/results/probes/<task>.<feature>.csv``, and for
+the seed-0 split of each family the validation and test predictions at the chosen
+penalty under ``$DATA_ROOT/data/torchcell/experiments/050-ecoli-benchmark/predictions/``
+(the benchmark board's baseline rows are uploaded from those).
 
     python experiments/050-ecoli-benchmark/scripts/linear_probes.py --task <task> [--features ...]
 """
@@ -45,7 +52,20 @@ from torchcell.tasks import (
 )
 
 RESULTS = "experiments/050-ecoli-benchmark/results"
-FEATURES = ("random", "one_hot", "esm2", "prot_t5", "calm")
+FEATURES = (
+    "random",
+    "one_hot",
+    "codon_frequency",
+    "calm",
+    "genslm_25m",
+    "genslm_250m",
+    "nt_v1_2500m",
+    "nt_v2_500m",
+    "esm2",
+    "prot_t5",
+)
+PREDICTIONS = "data/torchcell/experiments/050-ecoli-benchmark/predictions"
+MAX_TARGETS_KEPT = 100  # predictions are kept for the leaderboard, not for 7,534 ions
 ALPHAS = (1e-1, 1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6)
 RANDOM_DIM = 1280
 Array = npt.NDArray[np.float64]
@@ -190,6 +210,19 @@ def main() -> None:
                     **mean_metrics(task.y[val], predictions[best][0], "val"),
                     **mean_metrics(task.y[test], predictions[best][1], "test"),
                 }
+                if seed == "0" and task.y.shape[1] <= MAX_TARGETS_KEPT:
+                    out_dir = osp.join(
+                        os.environ["DATA_ROOT"], PREDICTIONS, args.task, split_name
+                    )
+                    os.makedirs(out_dir, exist_ok=True)
+                    np.savez_compressed(
+                        osp.join(out_dir, f"{feature}.{combine}.npz"),
+                        val_index=val,
+                        test_index=test,
+                        val_prediction=predictions[best][0],
+                        test_prediction=predictions[best][1],
+                        alpha=ALPHAS[best],
+                    )
                 if task.genes.shape[1] == 2:
                     train_genes = set(task.genes[train].ravel())
                     novel = np.array(

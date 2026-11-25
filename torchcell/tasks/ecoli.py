@@ -3,8 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/tasks/ecoli.py
 """The four *E. coli* benchmark tasks and the helpers that match records to genes.
 
-A task is built in three steps, each a function here so the processing notebook and
-:func:`load_task` run the same code:
+A task is built in three steps, each a function here, so that a script which walks
+through them one at a time and :func:`load_task` run the same code:
 
 1. :func:`match_records` resolves every perturbed gene of every record against the
    genome the records name and says whether the record is a benchmark sample.
@@ -107,7 +107,11 @@ def dataset_root(slug: str) -> str:
 
 
 def open_dataset(spec: TaskSpec, root: str | None = None) -> Any:
-    """Open the task's dataset with its loader (downloaded when ``TC_DATA_URL`` is set)."""
+    """Open the task's dataset with its loader.
+
+    With ``TC_DATA_URL`` set the loader downloads the built store. Without it the
+    loader builds the store from the publisher's files, which is slow.
+    """
     loader = getattr(importlib.import_module(spec.dataset_module), spec.dataset_class)
     return loader(root=root or dataset_root(spec.dataset_slug))
 
@@ -205,7 +209,13 @@ def build_task(name: str, root: str | None = None) -> BenchmarkTask:
     Returns:
         The task with ``samples``, ``genes``, ``y``, ``targets``, ``excluded`` and
         ``genome`` set and no splits.
+
+    Raises:
+        KeyError: ``name`` is not a task; the message lists the task names.
+        ValueError: The records name another genome assembly than the task pins.
     """
+    if name not in ECOLI_TASKS:
+        raise KeyError(f"no task {name!r}; the tasks are {sorted(ECOLI_TASKS)}")
     spec = ECOLI_TASKS[name]
     dataset = open_dataset(spec, root)
     genome = genome_for(dataset)
@@ -263,8 +273,9 @@ def read_splits(name: str) -> pd.DataFrame:
 def load_task(name: str, root: str | None = None) -> BenchmarkTask:
     """The processed benchmark task ``name`` with its pinned splits.
 
-    Opens the dataset (downloading the built store when ``TC_DATA_URL`` is set), loads
-    the genome its records name (fetched when absent), matches records to genes, reads
+    Opens the dataset (downloading the built store when ``TC_DATA_URL`` is set, building
+    it from the publisher's files otherwise), loads the genome its records name (fetched
+    when absent), matches records to genes, reads
     the labels and attaches the pinned splits. The samples built here must equal the
     samples the split file was written for, row for row, or this raises.
 
@@ -275,6 +286,11 @@ def load_task(name: str, root: str | None = None) -> BenchmarkTask:
     Returns:
         The task; ``task.split(split_name)`` gives train and validation indices and a
         locked test part.
+
+    Raises:
+        KeyError: ``name`` is not a task.
+        ValueError: The pinned split file fails its sha256 check, or the samples built
+            here differ from the samples the split file was written for.
     """
     task = build_task(name, root)
     pinned = read_splits(name)

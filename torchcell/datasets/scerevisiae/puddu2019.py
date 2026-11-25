@@ -2,7 +2,7 @@
 # [[torchcell.datasets.scerevisiae.puddu2019]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/puddu2019
 # Test file: tests/torchcell/datasets/scerevisiae/test_puddu2019.py
-"""Puddu 2019: the realized genome architecture of 8,835 yeast knockout-collection colonies.
+"""Puddu 2019: the realized genome architecture of 8,843 sequenced yeast colonies.
 
 Puddu et al. 2019 (Nature 573:416, doi:10.1038/s41586-019-1549-9; citation key
 ``pudduGenomeArchitectureStability2019``) whole-genome-sequenced the homozygous diploid
@@ -41,27 +41,45 @@ fa369c18a3..., retrieved from the PMC Article Datasets bucket as
 - Table 6: 8,831 colonies with the barcodes actually detected in them plus the
   barcode-CONFIRMED deletion as a systematic name.
 
-RECORD. One ``GenomeArchitectureExperiment`` per sequenced knockout colony: 8,835
-records over 4,458 deletion strains and 4,437 released deletion names. The 8,835
-knockout colonies split by strain into 258 strains with 1 colony, 4,097 with 2, 30 with
-3, 72 with 4 and 1 with 5, which is the Extended Data Fig. 1c legend exactly, and every
-one of them is stored.
+RECORD. One ``GenomeArchitectureExperiment`` per sequenced colony of Table 3, in the
+release's row order: 8,843 records, the 8,835 knockout colonies (4,458 deletion strains,
+4,437 released deletion names) and the 8 wild-type BY4743 colonies. The 8,835 knockout
+colonies split by strain into 258 strains with 1 colony, 4,097 with 2, 30 with 3, 72 with
+4 and 1 with 5, which is the Extended Data Fig. 1c legend exactly, and every one of them
+is stored.
 Colonies are NOT averaged into strains: two colonies of one knockout are two
 independently isolated samples whose architectures differ, which is the paper's own unit
-of analysis.
+of analysis ("$n = 8$ biologically independent samples for wildtype strains; $n = 1$
+sample for 258 of the knockout strains; $n = 2$ biologically independent samples for
+4,097 of the knockout strains", Extended Data Fig. 1c legend). Each record is ONE
+colony: its released values verbatim, ``n_samples = 1``, ``sample_id`` = the colony id
+Table 3 prints (``SD5624b``), no dispersion, and a typed
+``not_applicable_single_measurement`` gap on ``genome_architecture_sd``.
 
-The 8 wild-type BY4743 colonies of Table 3 (strain labels ``Del4733_WT-1`` ...
-``Del4736_WT-4``) are not perturbation records; they are the REFERENCE. Table 2's
-published wild-type mean is their mean (re-derived from Table 3's bytes: rDNA 124.9905
-vs the published 124.99, CUP1 14.0340 vs 14.03, mtDNA 17.5041 vs 17.5) and its published
-SD is their n-denominator SD (rDNA 7.846 vs the published 7.85), so the reference carries
-Table 2's values with ``n_samples = 8`` and their per-colony rows go to
-``preprocess/wild_type_colonies.csv``.
+THE WILD-TYPE COLONIES ARE RECORDS TOO (2026-11-24, #1171). The 8 wild-type BY4743
+colonies of Table 3 (strain labels ``Del4733_WT-1`` ... ``Del4736_WT-4``, two colonies
+each) are stored as records with an EMPTY genotype on the BY4743 background the reference
+genome states; their strain label stays in ``preprocess/data.csv``, since an empty genotype
+has no perturbation to carry it. Before 2026-11-24 they went only to
+``preprocess/wild_type_colonies.csv`` (still written, as the reference's input ledger).
+The REFERENCE is unchanged and is the source's own statistic, not a loader mean: Table
+2's published wild-type mean and SD with ``n_samples = 8`` and ``sample_id = None``.
+That published mean is the mean of those 8 colonies (re-derived from Table 3's bytes:
+rDNA 124.9905 vs the published 124.99, CUP1 14.0340 vs 14.03, mtDNA 17.5041 vs 17.5) and
+its published SD is their n-denominator SD (rDNA 7.846 vs the published 7.85).
+
+What one record is, physically: one single colony isolated from the collection, grown in
+1.8 ml YPAD to saturation and sequenced once ("For each sequenced DNA sample
+(corresponding to one isolated colony)", Methods). Extended Data Fig. 2c re-sequenced 89
+of the DNA preparations as technical replicates ("$n = 2$ technical replicates derived
+from $n = 8 9$ biologically independent samples"); Table 3 releases one row per colony
+and does not say whether, or how, those repeats enter the released value, so no record
+claims a technical combination.
 
 GENOTYPE (designed) and ARCHITECTURE (realized). The designed edit is a homozygous
 kanMX whole-ORF deletion in BY4743, stored as ``BarcodedKanMxDeletionPerturbation``
 carrying the barcodes Table 6 DETECTED in that colony rather than the collection's
-expected tags, which is realized detail of its own: of 8,828 served colonies with a
+expected tags, which is realized detail of its own: of 8,828 knockout colonies with a
 Table 6 row, 5,115 carry an UPTAG matching the reference, 1,023 carry a different one,
 1,153 a heterozygous tag and 1,291 none at all. The deleted gene is the colony's own
 barcode-confirmed systematic name; for 7 colonies Table 6 has no row and the gene comes
@@ -90,8 +108,9 @@ supplementary tables carries a variant column (measured: Tables 1-6 hold 3, 6, 3
 and 9 columns, listed above), and the per-gene browser at ``sgv.gurdon.cam.ac.uk`` is a
 live URL, which is retrieval metadata and not a source. So no
 ``SequenceVariantPerturbation`` is emitted and the secondary point mutations of these
-strains stay unrecorded. The raw reads (9,015 ENA samples, study ERP109205) are not
-deposited; the accession travels on every record instead.
+strains stay unrecorded. The raw reads (9,015 ENA samples, study ERP109205) are
+deposited at ENA and not mirrored here (raw instrument files are out of scope); the
+accession travels on every record instead.
 
 NO GENOMES-TIER SET. The genomes tier holds sequence data (assemblies, FASTA panels,
 matrices). This release has none: its three publisher files are an SI guide
@@ -115,6 +134,7 @@ import os
 import os.path as osp
 import re
 import shutil
+from collections.abc import Hashable, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -232,18 +252,22 @@ N_ACCESSION_ROWS = 9014
 N_ACCESSION_STRAY_ROWS = 1
 N_COLONIES_RELEASED = 8843
 N_WILD_TYPE_COLONIES = 8
-#: Served records: every one of the 8,835 knockout colonies, under its released name.
-N_SERVED_RECORDS = 8835
+#: Served records: every one of the 8,843 Table 3 colonies, the 8,835 knockout colonies
+#: under their released deletion names and the 8 wild-type colonies with an empty
+#: genotype (one record per biological replicate, #1171 / #1178).
+N_SERVED_RECORDS = 8843
 N_KNOCKOUT_COLONIES = 8835
 N_GENE_ROWS = 4436
 N_BARCODE_ROWS = 8831
 #: Colonies per deletion strain, as the Extended Data Fig. 1c legend states them for the
 #: knockout strains. MEASURED on the 8,835 knockout colonies: exactly these five strata,
 #: 4,458 strains in all. Table 3's 4,462 strain ids are these plus the four wild-type
-#: strain ids, which carry two colonies each and are the reference. The served strata
-#: are these same five, since every knockout colony is stored.
+#: strain ids, which carry two colonies each (the legend's 8 wild-type samples). The
+#: served knockout strata are these same five, since every knockout colony is stored.
 COLONIES_PER_STRAIN_LEGEND = {1: 258, 2: 4097, 3: 30, 4: 72, 5: 1}
 N_KNOCKOUT_STRAINS = 4458
+#: The four wild-type strain ids of Table 3 and their two colonies each.
+WILD_TYPE_COLONIES_PER_STRAIN = {2: 4}
 
 #: The paper's own summary statistics, re-derived from Table 3 by this loader's ledger.
 PAPER_RHO0_COLONIES = 303
@@ -384,6 +408,15 @@ REPLICATE_QUOTE = (
     "knockout strains; $n = 4$ biologically independent samples for 72 of the knockout "
     "strains; and $n = 5$ biologically independent samples for 1 of the knockout strains."
 )
+SAMPLE_IS_ONE_COLONY_QUOTE = (
+    "For each sequenced DNA sample (corresponding to one isolated colony), sequencing "
+    "coverage across the open reading frame (ORF) expected to be deleted in that sample "
+    "was computed."
+)
+WILD_TYPE_SAMPLES_QUOTE = (
+    "by dividing the median of that lane by the median of the lane containing (among "
+    "other strains) the eight wild-type samples."
+)
 ANEUPLOIDY_FRACTION_QUOTE = (
     "Notably, about $5 2 \\%$ of the colonies that we sequenced displayed some "
     "deviation from $2 n$ ploidy"
@@ -507,6 +540,20 @@ PAPER_SOURCED_VALUES: dict[str, SourcedValue] = {
         "4,097 / 30 / 72 / 1 strains with 1 / 2 / 3 / 4 / 5 colonies, 4,458 strains); "
         "Table 3's 4,462 strain ids are these plus the four wild-type ids, which the "
         "legend counts separately as its 8 wild-type samples",
+    ),
+    "sample_is_one_colony": _sv(
+        "one sequenced DNA sample = one isolated colony",
+        SAMPLE_IS_ONE_COLONY_QUOTE,
+        page="Methods, 'Validation of gene knockout'",
+        note="the record unit: one Table 3 row is one colony, a biological replicate "
+        "of its strain, stored with n_samples = 1",
+    ),
+    "wild_type_samples": _sv(
+        N_WILD_TYPE_COLONIES,
+        WILD_TYPE_SAMPLES_QUOTE,
+        page="Methods, 'Correction of batch effects'",
+        note="the 8 wild-type colonies of Table 3, stored as 8 empty-genotype records; "
+        "Table 2's published mean and SD over them is the reference",
     ),
     "aneuploid_fraction": _sv(
         PAPER_ANEUPLOID_FRACTION,
@@ -1100,6 +1147,79 @@ def deletion_perturbation(
     )
 
 
+_SINGLE_COLONY_SD_NOTE = (
+    "one record is one sequenced colony (one biological replicate of its strain), so its "
+    "values are single measurements and carry no dispersion of their own; the spread "
+    "over a strain's colonies is a modeling-time derivation over its records, and the "
+    "wild-type SD the source publishes is on the reference"
+)
+
+
+def colony_phenotype(row: Mapping[Hashable, Any]) -> GenomeArchitecturePhenotype:
+    """One Table 3 row as one colony's phenotype: values verbatim, n = 1, no dispersion."""
+    return GenomeArchitecturePhenotype(
+        assay=ASSAY,
+        genome_architecture={
+            symbol: float(row[symbol]) for symbol in PUDDU2019_WGS_COVERAGE.by_symbol
+        },
+        genome_architecture_sd=None,
+        uncertainty_type=None,
+        n_samples=1,
+        sample_unit=SampleUnit.colony,
+        sample_id=str(row["SDname"]),
+        sample_accession=str(row["ERSno"]),
+        provenance_gaps=[
+            ProvenanceGap(
+                field="genome_architecture_sd",
+                reason=ProvenanceGapReason.not_applicable_single_measurement,
+                note=_SINGLE_COLONY_SD_NOTE,
+            )
+        ],
+    )
+
+
+def split_colonies(colonies: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Table 3 split into ``(knockout colonies, wild-type colonies)``, shapes checked.
+
+    Both halves are stored; the split decides only which genotype a record carries (the
+    released deletion, or the empty genotype of the BY4743 background).
+    """
+    is_wild_type = colonies["Deletion"].str.match(WILD_TYPE_LABEL)
+    wild_type = colonies[is_wild_type]
+    knockout = colonies[~is_wild_type].reset_index(drop=True)
+    if len(wild_type) != N_WILD_TYPE_COLONIES:
+        raise ReleaseShapeError(
+            f"{len(wild_type)} wild-type colonies in Table 3, expected "
+            f"{N_WILD_TYPE_COLONIES}"
+        )
+    wt_strata = wild_type["Deletion"].value_counts().value_counts().to_dict()
+    if {int(k): int(v) for k, v in wt_strata.items()} != WILD_TYPE_COLONIES_PER_STRAIN:
+        raise ReleaseShapeError(
+            f"wild-type colonies per strain id {wt_strata}, expected "
+            f"{WILD_TYPE_COLONIES_PER_STRAIN}"
+        )
+    if len(knockout) != N_KNOCKOUT_COLONIES:
+        raise ReleaseShapeError(
+            f"{len(knockout)} knockout colonies in Table 3, expected "
+            f"{N_KNOCKOUT_COLONIES}"
+        )
+    per_strain = knockout["Deletion"].value_counts().value_counts()
+    strata = dict(
+        zip(per_strain.index.astype(int).tolist(), per_strain.astype(int).tolist())
+    )
+    if strata != COLONIES_PER_STRAIN_LEGEND:
+        raise ReleaseShapeError(
+            f"colonies per knockout strain {sorted(strata.items())} differ from the "
+            f"Extended Data Fig. 1c legend {sorted(COLONIES_PER_STRAIN_LEGEND.items())}"
+        )
+    if knockout["Deletion"].nunique() != N_KNOCKOUT_STRAINS:
+        raise ReleaseShapeError(
+            f"{knockout['Deletion'].nunique()} knockout strains, expected "
+            f"{N_KNOCKOUT_STRAINS}"
+        )
+    return knockout, wild_type
+
+
 # --------------------------------------------------------------------------- #
 # Ledger
 # --------------------------------------------------------------------------- #
@@ -1112,11 +1232,12 @@ class ReleaseLedger(BaseModel):
     n_accession_rows: int
     n_colonies_released: int
     n_colonies_served: int
-    n_wild_type_colonies: int
+    n_knockout_colonies_served: int
+    n_wild_type_colonies_served: int
     n_barcode_rows: int
     n_gene_rows: int
-    n_strains_served: int
-    colonies_per_strain: dict[str, int]
+    n_knockout_strains_served: int
+    colonies_per_knockout_strain: dict[str, int]
     n_colonies_without_barcode_row: int
     n_colonies_gene_from_table4: int
     n_colonies_label_disagrees_with_barcode: int
@@ -1135,10 +1256,12 @@ class ReleaseLedger(BaseModel):
     @model_validator(mode="after")
     def _accounted(self) -> ReleaseLedger:
         if (
-            self.n_colonies_served + self.n_wild_type_colonies
-            != self.n_colonies_released
+            self.n_knockout_colonies_served + self.n_wild_type_colonies_served
+            != self.n_colonies_served
         ):
-            raise ValueError("served + wild type must equal released")
+            raise ValueError("knockout + wild type must equal served")
+        if self.n_colonies_served != self.n_colonies_released:
+            raise ValueError("every released colony is served")
         return self
 
 
@@ -1147,7 +1270,7 @@ class ReleaseLedger(BaseModel):
 # --------------------------------------------------------------------------- #
 @register_dataset
 class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
-    """Puddu 2019: one record per sequenced knockout colony, 8,835 records."""
+    """Puddu 2019: one record per sequenced colony, 8,843 records (8 wild type)."""
 
     organism = Organism.scerevisiae
 
@@ -1229,7 +1352,6 @@ class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
                 f"{len(disagree)} colonies have different accessions in Tables 1 and 3"
             )
 
-        symbols = list(PUDDU2019_WGS_COVERAGE.by_symbol)
         reference = GenomeArchitectureExperimentReference(
             dataset_name=self.name,
             genome_reference=reference_genome(),
@@ -1239,33 +1361,8 @@ class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
         environment = puddu_environment()
         pub = publication()
 
-        wild_type = colonies[colonies["Deletion"].str.match(WILD_TYPE_LABEL)]
-        if len(wild_type) != N_WILD_TYPE_COLONIES:
-            raise ReleaseShapeError(
-                f"{len(wild_type)} wild-type colonies in Table 3, expected "
-                f"{N_WILD_TYPE_COLONIES}"
-            )
-        served = colonies.drop(index=wild_type.index).reset_index(drop=True)
-        if len(served) != N_KNOCKOUT_COLONIES:
-            raise ReleaseShapeError(
-                f"{len(served)} knockout colonies in Table 3, expected "
-                f"{N_KNOCKOUT_COLONIES}"
-            )
-        per_strain = served["Deletion"].value_counts().value_counts()
-        strata = dict(
-            zip(per_strain.index.astype(int).tolist(), per_strain.astype(int).tolist())
-        )
-        if strata != COLONIES_PER_STRAIN_LEGEND:
-            raise ReleaseShapeError(
-                f"colonies per knockout strain {sorted(strata.items())} differ from the "
-                f"Extended Data Fig. 1c legend {sorted(COLONIES_PER_STRAIN_LEGEND.items())}"
-            )
-        if served["Deletion"].nunique() != N_KNOCKOUT_STRAINS:
-            raise ReleaseShapeError(
-                f"{served['Deletion'].nunique()} knockout strains, expected "
-                f"{N_KNOCKOUT_STRAINS}"
-            )
-
+        served, wild_type = split_colonies(colonies)
+        wild_type_ids = frozenset(wild_type["SDname"].astype(str))
         released_genes = self._released_gene_of_colony(served, barcodes, gene_of_common)
         common_of_gene = {
             systematic: common for common, systematic in gene_of_common.items()
@@ -1277,75 +1374,74 @@ class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
         rows: list[dict[str, Any]] = []
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         idx = 0
+        # Release row order: Table 3 lists the knockout colonies first and the 8
+        # wild-type colonies last, so record indices 0-8834 are the knockout colonies
+        # exactly as before 2026-11-24 and 8835-8842 are the wild type.
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for row in tqdm(
-                served.to_dict("records"), total=len(served), desc="colonies"
+                colonies.to_dict("records"), total=len(colonies), desc="colonies"
             ):
                 colony = str(row["SDname"])
                 strain_id = str(row["Deletion"])
                 label = self._strain_label(strain_id)
-                has_row = colony in barcodes.index
-                if has_row:
-                    gene = str(barcodes.loc[colony, "Confirmed_deletion"])
-                    uptag = _tags(barcodes.loc[colony, "UPTAG_seqs"])
-                    dntag = _tags(barcodes.loc[colony, "DNTAG_seqs"])
-                    if gene_of_common.get(label, gene) != gene:
-                        label_disagrees += 1
-                else:
-                    without_row += 1
-                    if label not in gene_of_common:
-                        raise ReleaseShapeError(
-                            f"colony {colony} has no Table 6 row and its label "
-                            f"{label!r} is not a Table 4 common name"
-                        )
-                    gene = gene_of_common[label]
-                    gene_from_table4 += 1
-                    uptag = None
-                    dntag = None
-                if released_genes[colony] != gene:
-                    raise ReleaseShapeError(
-                        f"colony {colony}: released deletion {gene!r} differs from "
-                        f"{released_genes[colony]!r}"
+                if colony in wild_type_ids:
+                    # The BY4743 background itself: an empty genotype, the background
+                    # being what the reference genome states.
+                    genotype = Genotype(perturbations=[])
+                    rows.append(
+                        {
+                            "colony_id": colony,
+                            "strain_id": strain_id,
+                            "systematic_gene_name": None,
+                            "perturbed_gene_name": None,
+                            "strain_label": label,
+                            "ena_sample_accession": str(row["ERSno"]),
+                            "barcode_row": colony in barcodes.index,
+                            "wild_type": True,
+                        }
                     )
-                perturbation = deletion_perturbation(
-                    systematic_gene_name=gene,
-                    perturbed_gene_name=common_of_gene.get(gene, gene),
-                    strain_id=strain_id,
-                    uptag=uptag,
-                    dntag=dntag,
-                    has_barcode_row=has_row,
-                )
-                gene_names.add(gene)
-                phenotype = GenomeArchitecturePhenotype(
-                    assay=ASSAY,
-                    genome_architecture={
-                        symbol: float(row[symbol]) for symbol in symbols
-                    },
-                    n_samples=1,
-                    sample_unit=SampleUnit.colony,
-                    sample_id=colony,
-                    sample_accession=str(row["ERSno"]),
-                )
+                else:
+                    genotype, gene, has_row = self._knockout_genotype(
+                        colony=colony,
+                        strain_id=strain_id,
+                        label=label,
+                        barcodes=barcodes,
+                        gene_of_common=gene_of_common,
+                        common_of_gene=common_of_gene,
+                    )
+                    if released_genes[colony] != gene:
+                        raise ReleaseShapeError(
+                            f"colony {colony}: released deletion {gene!r} differs from "
+                            f"{released_genes[colony]!r}"
+                        )
+                    if has_row:
+                        if gene_of_common.get(label, gene) != gene:
+                            label_disagrees += 1
+                    else:
+                        without_row += 1
+                        gene_from_table4 += 1
+                    gene_names.add(gene)
+                    rows.append(
+                        {
+                            "colony_id": colony,
+                            "strain_id": strain_id,
+                            "systematic_gene_name": gene,
+                            "perturbed_gene_name": common_of_gene.get(gene, gene),
+                            "strain_label": label,
+                            "ena_sample_accession": str(row["ERSno"]),
+                            "barcode_row": has_row,
+                            "wild_type": False,
+                        }
+                    )
                 experiment = GenomeArchitectureExperiment(
                     dataset_name=self.name,
-                    genotype=Genotype(perturbations=[perturbation]),
+                    genotype=genotype,
                     environment=environment,
-                    phenotype=phenotype,
+                    phenotype=colony_phenotype(row),
                 )
                 txn.put(
                     f"{idx}".encode(),
                     self._intern_record(experiment, reference, pub, itxn),
-                )
-                rows.append(
-                    {
-                        "colony_id": colony,
-                        "strain_id": strain_id,
-                        "systematic_gene_name": gene,
-                        "perturbed_gene_name": common_of_gene.get(gene, gene),
-                        "strain_label": label,
-                        "ena_sample_accession": str(row["ERSno"]),
-                        "barcode_row": has_row,
-                    }
                 )
                 idx += 1
         env.close()
@@ -1375,6 +1471,48 @@ class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
         log.info(
             "Wrote %d Puddu 2019 colony records over %d genes", idx, len(gene_names)
         )
+
+    @staticmethod
+    def _knockout_genotype(
+        *,
+        colony: str,
+        strain_id: str,
+        label: str,
+        barcodes: pd.DataFrame,
+        gene_of_common: dict[str, str],
+        common_of_gene: dict[str, str],
+    ) -> tuple[Genotype, str, bool]:
+        """``(genotype, released deletion, has a Table 6 row)`` for one knockout colony.
+
+        The colony's own Table 6 row names the deletion and its detected tags; a colony
+        with no row takes the systematic name Table 4 pairs with its strain label and a
+        typed gap on both tags.
+        """
+        has_row = colony in barcodes.index
+        uptag: str | None
+        dntag: str | None
+        if has_row:
+            gene = str(barcodes.loc[colony, "Confirmed_deletion"])
+            uptag = _tags(barcodes.loc[colony, "UPTAG_seqs"])
+            dntag = _tags(barcodes.loc[colony, "DNTAG_seqs"])
+        else:
+            if label not in gene_of_common:
+                raise ReleaseShapeError(
+                    f"colony {colony} has no Table 6 row and its label {label!r} is "
+                    "not a Table 4 common name"
+                )
+            gene = gene_of_common[label]
+            uptag = None
+            dntag = None
+        perturbation = deletion_perturbation(
+            systematic_gene_name=gene,
+            perturbed_gene_name=common_of_gene.get(gene, gene),
+            strain_id=strain_id,
+            uptag=uptag,
+            dntag=dntag,
+            has_barcode_row=has_row,
+        )
+        return Genotype(perturbations=[perturbation]), gene, has_row
 
     def _released_gene_of_colony(
         self,
@@ -1430,9 +1568,12 @@ class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
         served_rows: list[dict[str, Any]],
     ) -> None:
         """Account for every released row, and re-derive the paper's own statistics."""
-        per_strain = pd.Series([row["strain_id"] for row in served_rows]).value_counts()
+        knockout_rows = [row for row in served_rows if not row["wild_type"]]
+        per_strain = pd.Series(
+            [row["strain_id"] for row in knockout_rows]
+        ).value_counts()
         histogram = per_strain.value_counts().to_dict()
-        served_colonies = [str(row["colony_id"]) for row in served_rows]
+        served_colonies = [str(row["colony_id"]) for row in knockout_rows]
         notes = (
             barcodes["UPTAG_notes"]
             .reindex(barcodes.index.intersection(served_colonies))
@@ -1467,11 +1608,14 @@ class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
             n_accession_rows=N_ACCESSION_ROWS,
             n_colonies_released=len(colonies),
             n_colonies_served=len(served_rows),
-            n_wild_type_colonies=len(wild_type),
+            n_knockout_colonies_served=len(knockout_rows),
+            n_wild_type_colonies_served=len(served_rows) - len(knockout_rows),
             n_barcode_rows=len(barcodes),
             n_gene_rows=N_GENE_ROWS,
-            n_strains_served=int(per_strain.size),
-            colonies_per_strain={str(k): int(v) for k, v in sorted(histogram.items())},
+            n_knockout_strains_served=int(per_strain.size),
+            colonies_per_knockout_strain={
+                str(k): int(v) for k, v in sorted(histogram.items())
+            },
             n_colonies_without_barcode_row=without_row,
             n_colonies_gene_from_table4=gene_from_table4,
             n_colonies_label_disagrees_with_barcode=label_disagrees,

@@ -34,6 +34,9 @@ deviations it sums over):
 8. L4 ``paper_statistics`` -- the store reproduces the paper's own summary numbers: the
    count of rho0 colonies (mtDNA below one copy) and the fraction of colonies deviating
    from 2n.
+9. L4 ``reference_replicates`` (optional) -- when the reference's own samples are
+   stored as records (empty genotype, one per biological replicate), their count is the
+   reference's ``n_samples`` and their mean and SD reproduce the published reference.
 
 The family-agnostic rules (gap census, canonical gene names, uncertainty sanity,
 compound identity, media membership, the L4 gene universe) come from
@@ -378,9 +381,10 @@ def _l4_paper_statistics(
 ) -> LevelResult:
     """L4: the store reproduces the paper's own rho0 count and aneuploid fraction.
 
-    The paper's numbers are over all released colonies; the store serves the knockout
-    colonies, so the wild-type contribution is stated by the caller and added back
-    rather than hidden in a tolerance.
+    The paper's numbers are over all released colonies; a store that does not serve
+    some of them (a reference kept off the records) states their contribution through
+    ``wild_type_rho0``, which is added back rather than hidden in a tolerance. A store
+    that serves every released colony passes 0.
     """
     chromosomes = sorted(
         assay.symbols_with_basis(ArchitectureBasis.chromosome_copies_per_cell)
@@ -421,6 +425,74 @@ def _l4_paper_statistics(
     )
 
 
+def _l4_reference_replicates(
+    records: Sequence[Record], *, tol: float, sd_ddof: int
+) -> LevelResult:
+    """L4: the empty-genotype records are the replicates the published reference covers.
+
+    The reference is the SOURCE's statistic over its wild-type samples; when those
+    samples are records too (one per biological replicate), their count must be the
+    reference's ``n_samples`` and their mean and SD, per feature the reference states a
+    dispersion for, must reproduce the published numbers to the precision printed.
+    """
+    replicates = [
+        _profile(rec)
+        for rec in records
+        if not rec["experiment"]["genotype"]["perturbations"]
+    ]
+    reference = records[0]["reference"]["phenotype_reference"] if records else {}
+    n_reference = reference.get("n_samples")
+    dispersion = reference.get("genome_architecture_sd") or {}
+    worst: dict[str, dict[str, float]] = {}
+    off: list[str] = []
+    n = len(replicates)
+    for symbol, published_sd in sorted(dispersion.items()):
+        values = [float(profile[symbol]) for profile in replicates]
+        if n <= sd_ddof:
+            off.append(symbol)
+            continue
+        mean = sum(values) / n
+        sd = math.sqrt(sum((v - mean) ** 2 for v in values) / (n - sd_ddof))
+        published_mean = float(reference["genome_architecture"][symbol])
+        worst[symbol] = {
+            "mean": mean,
+            "published_mean": published_mean,
+            "sd": sd,
+            "published_sd": float(published_sd),
+        }
+        if abs(mean - published_mean) > tol or abs(sd - float(published_sd)) > tol:
+            off.append(symbol)
+    count_ok = n == n_reference
+    passed = count_ok and not off
+    max_mean = max(
+        (abs(v["mean"] - v["published_mean"]) for v in worst.values()), default=0.0
+    )
+    max_sd = max(
+        (abs(v["sd"] - v["published_sd"]) for v in worst.values()), default=0.0
+    )
+    return LevelResult(
+        level=Level.L4,
+        name="reference_replicates",
+        passed=passed,
+        message=(
+            f"{n} empty-genotype records (reference n_samples {n_reference}); over "
+            f"{len(dispersion)} published features their mean is within "
+            f"{max_mean:.4f} and their SD (ddof {sd_ddof}) within {max_sd:.4f} of the "
+            f"published reference (tolerance {tol})"
+        ),
+        details={
+            "n_replicate_records": n,
+            "reference_n_samples": n_reference,
+            "tolerance": tol,
+            "sd_ddof": sd_ddof,
+            "features_off": off,
+            "max_abs_mean_difference": max_mean,
+            "max_abs_sd_difference": max_sd,
+            "by_feature": worst,
+        },
+    )
+
+
 def verify_genome_architecture_records(
     records: Sequence[Record],
     *,
@@ -443,6 +515,8 @@ def verify_genome_architecture_records(
     gene_universe_label: str = "reference",
     resolve_gene_name: GeneNameResolver | None = None,
     min_containment: float = 0.90,
+    reference_replicate_tol: float | None = None,
+    reference_sd_ddof: int = 1,
 ) -> VerificationReport:
     """Run the L0-L4 gate for a ``GenomeArchitecturePhenotype`` dataset.
 
@@ -468,6 +542,10 @@ def verify_genome_architecture_records(
         gene_universe_label: what that universe is, for the L4 message.
         resolve_gene_name: the host's canonical-name resolver, for the L1 name rule.
         min_containment: the L4 containment floor.
+        reference_replicate_tol: when given, the L4 ``reference_replicates`` rule runs:
+            the empty-genotype records must number the reference's ``n_samples`` and
+            reproduce its published mean and SD to this tolerance.
+        reference_sd_ddof: the SD denominator the source used (0 = n, 1 = n - 1).
 
     Returns:
         A :class:`VerificationReport` carrying the L0-L4 results.
@@ -513,6 +591,12 @@ def verify_genome_architecture_records(
             wild_type_rho0=wild_type_rho0,
         )
     )
+    if reference_replicate_tol is not None:
+        report.add(
+            _l4_reference_replicates(
+                records, tol=reference_replicate_tol, sd_ddof=reference_sd_ddof
+            )
+        )
 
     shared = SharedRecordRules(
         resolve_gene_name=resolve_gene_name,

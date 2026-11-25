@@ -371,3 +371,69 @@ def test_a_required_feature_outside_the_assay_is_refused_outright(
             expected_rho0=0,
             expected_aneuploid_fraction=0.0,
         )
+
+
+def _wild_type_record(*, sample_id: str, rDNA: float) -> dict[str, Any]:
+    """One wild-type colony as a record: the empty genotype of the background."""
+    record = _record(sample_id=sample_id, rDNA=rDNA)
+    record["experiment"]["genotype"]["perturbations"] = []
+    return record
+
+
+def _run_with_reference_rule(
+    records: list[dict[str, Any]], tmp_path: Path, *, sd_ddof: int
+) -> Any:
+    return verify_genome_architecture_records(
+        records,
+        dataset_name="test",
+        provenance=PROVENANCE,
+        expected_count=len(records),
+        required_features=frozenset(SYMBOLS),
+        released=_released(records),
+        paper_values=[_quote(tmp_path)],
+        workbook_values=[],
+        library_root=tmp_path,
+        workbook_cells=frozenset(),
+        rho0_feature="mitochondria",
+        rho0_threshold=1.0,
+        expected_rho0=0,
+        expected_aneuploid_fraction=0.0,
+        reference_replicate_tol=0.005,
+        reference_sd_ddof=sd_ddof,
+    )
+
+
+def test_the_wild_type_records_reproduce_the_published_reference(
+    tmp_path: Path,
+) -> None:
+    """8 wild-type records whose mean is 124.99 and n-denominator SD is 7.85."""
+    deltas = [7.85, -7.85] * 4
+    records = [_record(sample_id="SD1b")] + [
+        _wild_type_record(sample_id=f"WT{i}", rDNA=124.99 + d)
+        for i, d in enumerate(deltas)
+    ]
+    report = _run_with_reference_rule(records, tmp_path, sd_ddof=0)
+    result = _result(report, "reference_replicates")
+    assert result.passed is True
+    assert result.details["n_replicate_records"] == 8
+    assert result.details["reference_n_samples"] == 8
+    assert result.details["max_abs_mean_difference"] == pytest.approx(0.0, abs=1e-9)
+    assert result.details["max_abs_sd_difference"] == pytest.approx(0.0, abs=1e-9)
+    # The same values read with an n - 1 denominator give SD 8.392, not 7.85.
+    sample_sd = _result(
+        _run_with_reference_rule(records, tmp_path, sd_ddof=1), "reference_replicates"
+    )
+    assert sample_sd.passed is False
+    assert sample_sd.details["features_off"] == ["rDNA"]
+
+
+def test_a_missing_wild_type_record_fails_the_reference_rule(tmp_path: Path) -> None:
+    records = [
+        _wild_type_record(sample_id=f"WT{i}", rDNA=124.99 + d)
+        for i, d in enumerate([7.85, -7.85] * 3 + [7.85])
+    ]
+    result = _result(
+        _run_with_reference_rule(records, tmp_path, sd_ddof=0), "reference_replicates"
+    )
+    assert result.passed is False
+    assert result.details["n_replicate_records"] == 7

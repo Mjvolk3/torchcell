@@ -3446,10 +3446,10 @@ GENOME_ARCHITECTURE_DATASETS: dict[str, dict[str, Any]] = {
     "genome_architecture_puddu2019": {
         "root": "data/torchcell/genome_architecture_puddu2019",
         "raw_mirror": "torchcell-raw/pudduGenomeArchitectureStability2019",
-        # 8,843 released colonies minus the 8 wild-type BY4743 colonies (the reference
-        # rather than perturbation records); every knockout colony is stored under its
-        # released deletion name, the 9 on ORFs R64 has since retired included.
-        "expected_count": 8835,
+        # Every one of the 8,843 released colonies (#1171): the 8,835 knockout colonies
+        # under their released deletion names, the 9 on ORFs R64 has since retired
+        # included, and the 8 wild-type BY4743 colonies with an empty genotype.
+        "expected_count": 8843,
         "provenance": Provenance(
             source_uri=(
                 "$DATA_ROOT/torchcell-raw/pudduGenomeArchitectureStability2019/"
@@ -3500,7 +3500,8 @@ def verify_genome_architecture_dataset(
         str(row["SDname"]): {symbol: float(row[symbol]) for symbol in symbols}
         for row in colonies.to_dict("records")
     }
-    wild_type = colonies[colonies["Deletion"].str.match(puddu.WILD_TYPE_LABEL)]
+    # The 8 wild-type colonies are records now, so the L4 rho0 count and aneuploid
+    # fraction are over the store itself, which is the paper's own 8,843 colonies.
     report = verify_genome_architecture_records(
         list(stream_records(root)),
         dataset_name=name,
@@ -3516,7 +3517,10 @@ def verify_genome_architecture_dataset(
         rho0_threshold=1.0,
         expected_rho0=puddu.PAPER_RHO0_COLONIES,
         expected_aneuploid_fraction=puddu.PAPER_ANEUPLOID_FRACTION,
-        wild_type_rho0=int((wild_type["mitochondria"] < 1.0).sum()),
+        # Table 2 prints the wild-type mean and SD to two decimals, and its SD is the
+        # n-denominator SD of the 8 wild-type colonies (puddu2019 WORKBOOK_SOURCED_VALUES).
+        reference_replicate_tol=0.005,
+        reference_sd_ddof=0,
         sgd_genes=_sgd_gene_set(data_root),
         gene_universe_label="SGD S288C R64-4-1",
         resolve_gene_name=_genome(data_root).resolve_gene_name,

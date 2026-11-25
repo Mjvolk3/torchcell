@@ -382,3 +382,13 @@ html.tc-sidebar-dragging {
 html.tc-sidebar-dragging .theme-doc-sidebar-container {
   transition: none;
 }
+
+/* A figure in a page is never shown larger than the Nature Biotechnology print maximum
+ * (180 mm wide, 170 mm tall), at any window width and in the wide layout too. A figure
+ * drawn at print size therefore keeps its type at the size it was set for. */
+.theme-doc-markdown img {
+  max-width: min(100%, 180mm);
+  max-height: 170mm;
+  height: auto;
+  object-fit: contain;
+}

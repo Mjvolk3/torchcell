@@ -2241,7 +2241,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
     }
     assert _oracles(runners.ENVIRONMENT_RESPONSE_DATASETS) == {
         "yeastphenome": 524682,
-        "env_chemgen_vanacloig2022": 164205,
+        "env_chemgen_vanacloig2022": 492615,
         "env_chemgen_piotrowski2017": 3430343,
         "env_chemgen_mota2024": 1289,
         "env_chemgen_hoepfner2014": 3127814,
@@ -2268,6 +2268,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         for name, spec in runners.ENVIRONMENT_RESPONSE_DATASETS.items()
         if spec.get("stream")
     } == {
+        "env_chemgen_vanacloig2022",
         "env_chemgen_piotrowski2017",
         "env_chemgen_hoepfner2014",
         "env_chemgen_wildenhain2015",

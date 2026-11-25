@@ -493,3 +493,43 @@ Expected stored records after rebuild: 3,649 rows x 45 conditions = 164,205 (ser
 ### Rebuild (slurm 4443_3, `--retire-existing --verify`)
 
 164,205 records in 124 s on commit `7f67ede3e` (`torchcell_dirty: False`), exactly the measured expectation: 164,295 cells minus the 90 cells of the two all-missing rows; `dropped_records.json` holds 0 dropped records, the two QUADRIS tokens under `compound_identity_gaps` (3,649 records each) and the 90 cells under `not_a_value`. The loader declares no per-dataset verifier; the environment-response family entry runs as slurm 4508 and its L0-L4 table goes in the docs follow-up after the landing.
+
+## 2026.11.24 - One record per biological replicate (#1175, #1178)
+
+Policy #1178: a record is ONE biological replicate as the source releases it, `n_samples=1`, no dispersion fields, `replicate_id` the source's own label; a statistic the loader computed from released replicates leaves the record.
+
+### Replicate evidence (read in full: `paper.md`, `si/si2.md`, the Dataset legends in `si/si1.zip`, the raw matrix)
+
+- What a replicate is. `paper.md` (sha256 `0b5d938b54b8424fa08203a4357bc8f7c7dfae3fbe1a6d07d422848b92f37ba3`), Methods, "Chemical genomic experiment", line 62: "Growth of the yeast deletion library in all inhibitory and control conditions were performed in independent biological triplicate." Results, line 103: "alongside a matched control grown in medium lacking inhibitors, in biological triplicate (Fig. 1A, see Methods)."
+- Where they are. `GSE186866_ChemGenomics_Raw_Counts_matrix.txt.gz` (sha256 `e29eb02769ce2180d632020dc612a7f3e14a124fc7f1e0e33f9d41b6f4e4a85a`): 3,651 library rows, 135 inhibitor columns `<token>_CG<batch>_rep<n>` (45 tokens x rep1-3) and 16 control columns `Control1-4_CG003` ... `Control1-4_CG006`. Each token's three replicates sit in three different CG batches, except MMS (CG005, CG006, CG006) and QUADRIS1/QUADRIS2 (all three in CG006).
+- How the authors combined them. Line 66: "using TMM normalization and glmQLFit comparing paired treatment to control samples, except with MMS and QUADRIS compounds, which were unpaired." Their per-compound logFC (`Dataset2_mclust_cdt`, "Fitness is shown as log2 values", 3,233 significant genes) is a source aggregate and is not loaded (unchanged).
+- Withdrawn samples: none. Searched `paper.md`, `si/si2.md` and the Dataset legends for replicate, triplicate, duplicate, biological, technical, independent, colony, isolate, culture, `n =`, exclud, remov, discard, outlier; the only hits are the two quotes above, the Fig 6 validation caption ("at least 3 independent biological replicates", doubling times released only as a figure) and "Acetamide was removed" from the medium recipe. The matrix's only missing counts are the two all-NaN rows (YBR208C, YGL234W).
+
+### Change
+
+Each (library row, inhibitor replicate column) is its own record: the value is that replicate's `log2((TMM-CPM + 1) / (mean TMM-CPM of its paired controls + 1))`, the number the old loader computed per replicate and then averaged. `n_samples=1`, `sample_unit=biological_replicate`, `replicate_id` = the GEO column label (`Benomyl_CG003_rep1`), and `environment_response_uncertainty`, `_uncertainty_type` and `_se` are None with typed `not_applicable_single_measurement` gaps. `phenotype_reference` stays the aggregate inhibitor-free reference with `replicate_id=None`. A missing count now drops only the replicate records that use it (rule `a_count_the_record_uses_is_missing`, items `<ORF>:<column>`); 0 in GSE186866. The ledger counts per (row, replicate column) and gains `stored_by_replicate`. The verifier entry streams (`"stream": True`), and its method text no longer describes the pre-2026.10.12 drops.
+
+### Counts and mean reproduction (scratch build)
+
+Built into `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-vanacloig2022/env_chemgen_vanacloig2022` (the pre-change loader into `.../per-replicate-vanacloig2022/old/env_chemgen_vanacloig2022` for the comparison; script `scratchpad/vanacloig/mean_check.py`, not committed).
+
+| | before | after |
+|---|---:|---:|
+| records | 164,205 | 492,615 |
+| source records in the ledger | 164,295 cells | 492,885 (3,651 x 135) |
+| not a value (2 all-NaN rows) | 90 | 270 |
+| dropped | 0 | 0 |
+| rep1 / rep2 / rep3 | | 164,205 each |
+| QUADRIS1, QUADRIS2 (`inchikey` gap) | 3,649 each | 10,947 each |
+
+Grouping the 492,615 records by (genotype, environment) gives 164,205 groups, every one of exactly 3 records with 3 distinct replicate labels; every old record has its group, and the group mean and sample SD equal the old stored response and uncertainty with max absolute difference 0.0 for both.
+
+### Not done: absolute per-culture values and the 16 control columns (owner decision)
+
+The plan entry asked for the absolute per-replicate value (log2 TMM-CPM) with the ratio over the control mean left to model time, and the 16 control columns stored as records. Neither is possible on the current schema, and the first is not well defined as stated:
+
+- No `MeasurementType` member is an absolute barcode abundance (`ABSOLUTE_MEASUREMENT_TYPES` holds growth_rate, colony_size, cell_yield and optical_density only), so a per-culture abundance record, inhibitor or control, has no measurement type. Proposed shape (needs the owner's sign-off and a schema-change record): an additive `MeasurementType.read_count` (the culture's raw up-tag reads for one barcode, verbatim, as GEO releases them) in `ABSOLUTE_MEASUREMENT_TYPES`, one `EnvironmentResponsePhenotype` per (row, column) for all 151 columns (3,649 x 151 = 550,999 records, 58,384 of them control cultures), `replicate_id` = the column label, `units` stating that the library size is the column total; TMM, CPM and the ratio over the paired controls become model-time steps. Smith 2016's second mutant-pool DMSO replicate asks for the same member.
+- "log2 TMM-CPM" is not a per-culture number under this loader: TMM factors are computed per condition over that condition's replicates and paired controls, so one control column is normalized differently in every condition (Control1_CG004's factor ranges 1.0101 to 1.4872 over the 45 conditions in `normalization_factors.json`). The raw count is the per-culture value the source releases.
+- A control-culture record also needs its environment: Methods line 62 says "All 24-well plates contained control samples with SynBase or SynBase $+ ~ 1 \%$ DMSO lacking any inhibitor for paired analysis (see below).", and nothing mirrored says which of Control1-4 carried the DMSO vehicle (the GEO sample records might; not fetched). The loader pairs every condition, DMSO-dissolved or not, with all four batch controls, and the reference environment states plain SynBase; that pairing is unchanged and is noted here as open.
+
+Until then the ratio's denominator remains the loader's mean over the batch's four control cultures (all 16 for MMS, QUADRIS1 and QUADRIS2).

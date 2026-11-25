@@ -60,7 +60,7 @@ from torchcell.datamodels.schema import (
     VariantType,
 )
 from torchcell.datasets.pputida.carruthers2025 import PATHWAY_GENES, PIY670_PARTS
-from torchcell.literature.manifest import ROLE_SI_DATA, RetrievalMethod
+from torchcell.literature.manifest import ROLE_RAW_DATA, ROLE_SI_DATA, RetrievalMethod
 
 ASSEMBLY_REPORT = """# Assembly name:  ASM756v2
 # Organism name:  Pseudomonas putida KT2440 (g-proteobacteria)
@@ -1033,7 +1033,7 @@ def _write_proteome(path: Path) -> None:
                         f"synthetic {key}",
                         strain,
                         condition,
-                        f"{strain}_{condition}",
+                        ds.PROTEOME_SAMPLE_LABELS[(strain, condition)],
                         1000.0 + index + len(strain) + len(condition),
                         30.0 + index,
                         pct_mean,
@@ -1053,6 +1053,25 @@ def _sha256_bytes(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _index_html(runs: dict[str, int]) -> str:
+    """A PRIDE-style directory index listing ``<sample>-R1..Rn.raw`` per sample."""
+    rows = [
+        f'<tr><td><a href="{sample}-R{k}.raw">{sample}-R{k}.raw</a></td></tr>'
+        for sample, n in runs.items()
+        for k in range(1, n + 1)
+    ]
+    rows.append(
+        f'<tr><td><a href="{ds.PRIDE_PRECURSOR_TABLE}">'
+        f"{ds.PRIDE_PRECURSOR_TABLE}</a></td></tr>"
+    )
+    return "<html><table>" + "\n".join(rows) + "</table></html>\n"
+
+
+def _write_pride_index(path: Path) -> None:
+    """The synthetic index: the real run counts, four for PT's two samples."""
+    path.write_text(_index_html(ds.PROTEOME_RUNS_PER_SAMPLE.value))
+
+
 @pytest.fixture
 def synthetic_mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """A raw mirror under ``tmp_path`` built by the module's own deposit function."""
@@ -1060,24 +1079,30 @@ def synthetic_mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     staging.mkdir()
     proteome = staging / ds.PROTEOME_FILENAME
     variants = staging / ds.VARIANTS_FILENAME
+    index = staging / ds.PRIDE_INDEX_FILENAME
     _write_proteome(proteome)
     _write_variants(variants)
+    _write_pride_index(index)
     monkeypatch.setattr(ds, "PROTEOME_SHA256", _sha256_bytes(proteome))
     monkeypatch.setattr(ds, "VARIANTS_SHA256", _sha256_bytes(variants))
+    monkeypatch.setattr(ds, "PRIDE_INDEX_SHA256", _sha256_bytes(index))
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     root = ds.deposit_raw_mirror(
-        proteome_path=proteome, variants_path=variants, data_root=str(data_root)
+        proteome_path=proteome,
+        variants_path=variants,
+        pride_index_path=index,
+        data_root=str(data_root),
     )
     assert root == ds.raw_mirror_dir(str(data_root))
     return data_root
 
 
 # --- the deposit itself ---------------------------------------------------- #
-def test_the_deposit_writes_both_files_and_a_manifest_that_pins_them(
+def test_the_deposit_writes_all_three_files_and_a_manifest_that_pins_them(
     synthetic_mirror: Path,
 ) -> None:
-    """Two ``si_data`` records, each with a re-runnable ``pmc_cloud`` retrieval."""
+    """Two ``si_data`` workbooks over ``pmc_cloud`` plus the PRIDE index over HTTPS."""
     manifest = ds.load_manifest(str(synthetic_mirror))
     assert manifest.citation_key == ds.CITATION_KEY
     assert manifest.doi == ds.DOI
@@ -1085,8 +1110,17 @@ def test_the_deposit_writes_both_files_and_a_manifest_that_pins_them(
     assert [record.path for record in manifest.files] == [
         ds.PROTEOME_REL,
         ds.VARIANTS_REL,
+        ds.PRIDE_INDEX_REL,
     ]
-    for record in manifest.files:
+    *workbooks, index = manifest.files
+    assert index.role == ROLE_RAW_DATA
+    assert index.retrieval is not None
+    assert index.retrieval.method is RetrievalMethod.direct_url
+    assert index.retrieval.retriever == "torchcell.literature.retrieve.direct_url"
+    assert index.retrieval.params == {"url": ds.PRIDE_INDEX_URL}
+    assert index.retrieval.retrieved_at == ds.PRIDE_INDEX_RETRIEVED_AT
+    assert ds.manifest_sha256(manifest, ds.PRIDE_INDEX_REL) == ds.PRIDE_INDEX_SHA256
+    for record in workbooks:
         assert record.role == ROLE_SI_DATA
         assert record.retrieval is not None
         assert record.retrieval.method is RetrievalMethod.pmc_cloud
@@ -1109,6 +1143,13 @@ def test_the_manifest_enumerates_the_deposits_it_deliberately_does_not_hold(
     assert ds.SRA_BIOPROJECT in expected
     assert ds.PRIDE_ACCESSION in expected
     assert "Fig. 3B and 3C" in expected
+    assert "raw spectra only" not in expected
+    precursor = [
+        line for line in manifest.si_expected if ds.PRIDE_PRECURSOR_TABLE in line
+    ]
+    assert len(precursor) == 1
+    assert "NOT deposited" in precursor[0]
+    assert "#1199" in precursor[0]
 
 
 def test_the_deposit_is_idempotent_by_sha256(
@@ -1120,6 +1161,7 @@ def test_the_deposit_is_idempotent_by_sha256(
     ds.deposit_raw_mirror(
         proteome_path=tmp_path / "staging" / ds.PROTEOME_FILENAME,
         variants_path=tmp_path / "staging" / ds.VARIANTS_FILENAME,
+        pride_index_path=tmp_path / "staging" / ds.PRIDE_INDEX_FILENAME,
         data_root=str(synthetic_mirror),
     )
     assert target.stat().st_mtime_ns == before
@@ -1135,6 +1177,7 @@ def test_the_deposit_refuses_a_mirror_file_whose_bytes_differ(
         ds.deposit_raw_mirror(
             proteome_path=tmp_path / "staging" / ds.PROTEOME_FILENAME,
             variants_path=tmp_path / "staging" / ds.VARIANTS_FILENAME,
+            pride_index_path=tmp_path / "staging" / ds.PRIDE_INDEX_FILENAME,
             data_root=str(synthetic_mirror),
         )
 
@@ -1145,12 +1188,15 @@ def test_the_deposit_refuses_a_source_file_off_its_pin(tmp_path: Path) -> None:
     staging.mkdir()
     proteome = staging / ds.PROTEOME_FILENAME
     variants = staging / ds.VARIANTS_FILENAME
+    index = staging / ds.PRIDE_INDEX_FILENAME
     _write_proteome(proteome)
     _write_variants(variants)
+    _write_pride_index(index)
     with pytest.raises(Exception):
         ds.deposit_raw_mirror(
             proteome_path=proteome,
             variants_path=variants,
+            pride_index_path=index,
             data_root=str(tmp_path / "out"),
         )
     assert not (tmp_path / "out").exists()
@@ -1364,22 +1410,96 @@ def test_the_proteome_records_drop_the_unresolvable_and_merged_keys(
     assert set(reference) == set(abundance)
 
 
-def test_the_proteome_se_is_the_released_sd_over_the_root_of_three(
+def test_the_proteome_se_is_the_released_sd_over_the_root_of_its_run_count(
     built_proteome: Any,
 ) -> None:
-    """The released column is a sample SD, so it is divided before being stored."""
-    record = built_proteome[0]
-    phenotype = record["experiment"]["phenotype"]
-    assert phenotype["measurement_type"] == ds.PROTEOME_MEASUREMENT_TYPE
-    assert set(phenotype["n_replicates"].values()) == {3}
-    for tag, se in phenotype["protein_abundance_se"].items():
-        assert se == pytest.approx(se)
-        assert se > 0
-        assert tag in phenotype["protein_abundance"]
+    """The released column is a ddof=1 SD over the sample's runs: 4 for PT, else 3."""
     index = PROTEOME_RESOLVING_TAGS.index("PP_0154")
-    assert phenotype["protein_abundance_se"]["PP_0154"] == pytest.approx(
-        (30.0 + index) / math.sqrt(3)
+    seen: dict[str, set[int]] = {}
+    for position in range(len(built_proteome)):
+        record = built_proteome[position]
+        strain = str(record["reference"]["genome_reference"]["strain"])
+        phenotype = record["experiment"]["phenotype"]
+        assert phenotype["measurement_type"] == ds.PROTEOME_MEASUREMENT_TYPE
+        assert phenotype["replicate_id"] is None
+        (n,) = set(phenotype["n_replicates"].values())
+        seen.setdefault(strain, set()).add(n)
+        for tag, se in phenotype["protein_abundance_se"].items():
+            assert se > 0
+            assert tag in phenotype["protein_abundance"]
+        assert phenotype["protein_abundance_se"]["PP_0154"] == pytest.approx(
+            (30.0 + index) / math.sqrt(n)
+        )
+        reference = record["reference"]["phenotype_reference"]
+        assert set(reference["n_replicates"].values()) == {3}
+    # PT's two samples are four-run means; WT and the isolates (strain KT2440 / PT
+    # backgrounds) are three-run. The genome_reference strain of an isolate is PT.
+    assert seen[ds.WT_STRAIN] == {3}
+    assert seen[ds.PT_STRAIN] == {3, 4}
+    fours = [
+        built_proteome[position]
+        for position in range(len(built_proteome))
+        if set(
+            built_proteome[position]["experiment"]["phenotype"]["n_replicates"].values()
+        )
+        == {4}
+    ]
+    assert len(fours) == 2
+    import pandas as pd
+
+    samples = pd.read_csv(Path(built_proteome.preprocess_dir, "samples.csv"))
+    assert dict(zip(samples["sample"], samples["n_replicates"], strict=True)) == {
+        label: ds.PROTEOME_RUNS_PER_SAMPLE.value[label]
+        for (strain, _), label in ds.PROTEOME_SAMPLE_LABELS.items()
+        if strain in ds.WRITABLE_STRAINS
+    }
+
+
+def test_the_run_counts_are_read_from_the_index_and_cover_every_released_sample() -> (
+    None
+):
+    """Every Data Set S1 label has a run count, and only PT's two are four-run."""
+    runs = ds.PROTEOME_RUNS_PER_SAMPLE.value
+    assert set(runs) == set(ds.PROTEOME_SAMPLE_LABELS.values())
+    assert len(runs) == 20
+    assert sum(runs.values()) == 62
+    assert {label for label, n in runs.items() if n == 4} == {"PreALE_ac", "PreALE_glu"}
+    assert ds.runs_per_sample(_index_html(runs)) == runs
+    assert (
+        ds.PROTEOME_SAMPLE_LABELS[(ds.PT_STRAIN, ds.CONDITION_ACETATE)] == "PreALE_ac"
     )
+    assert ds.PROTEOME_SAMPLE_LABELS[(ds.SIGMA_STRAINS[0], ds.CONDITION_MIXED)] == (
+        "2H_gluAc"
+    )
+
+
+def test_runs_per_sample_refuses_a_gap_in_the_run_numbers() -> None:
+    """R1 and R3 without R2 is not a clean count of three."""
+    html = '<a href="X_ac-R1.raw">X</a><a href="X_ac-R3.raw">X</a>'
+    with pytest.raises(RuntimeError, match="not numbered 1..2"):
+        ds.runs_per_sample(html)
+
+
+def test_runs_per_sample_refuses_an_index_with_no_run() -> None:
+    """An index that lists no run file states no count."""
+    with pytest.raises(RuntimeError, match="lists no"):
+        ds.runs_per_sample('<a href="other.csv">other.csv</a>')
+
+
+def test_the_proteome_build_refuses_a_sample_label_it_does_not_know(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The run count is keyed on the released label, so a relabeled sample stops."""
+    labels = dict(ds.PROTEOME_SAMPLE_LABELS)
+    labels[(ds.PT_STRAIN, ds.CONDITION_ACETATE)] = "PT_ac"
+    monkeypatch.setattr(ds, "PROTEOME_SAMPLE_LABELS", labels)
+    with pytest.raises(RuntimeError, match="is released as sample 'PreALE_ac'"):
+        ds.ProteomeDeSiqueira2025Dataset(
+            root=str(tmp_path / "b"), pputida_genome=synthetic_kt2440
+        )
 
 
 def test_each_normalization_class_stores_its_own_released_column(
@@ -1400,8 +1520,10 @@ def test_each_normalization_class_stores_its_own_released_column(
         phenotype = dataset[0]["experiment"]["phenotype"]
         assert phenotype["measurement_type"] == dataset.NORMALIZATION.measurement_type
         assert phenotype["protein_abundance"]["PP_0154"] == pytest.approx(expected_mean)
+        # record 0 is PT in acetate, a four-run sample (PRIDE PreALE_ac-R1..R4)
+        assert phenotype["n_replicates"]["PP_0154"] == 4
         assert phenotype["protein_abundance_se"]["PP_0154"] == pytest.approx(
-            expected_sd / math.sqrt(3)
+            expected_sd / math.sqrt(4)
         )
         reference = dataset[0]["reference"]["phenotype_reference"]
         assert reference["measurement_type"] == dataset.NORMALIZATION.measurement_type
@@ -1776,10 +1898,50 @@ def test_the_raw_mirror_records_the_digests_the_module_pins() -> None:
     manifest = ds.load_manifest()
     assert ds.manifest_sha256(manifest, ds.PROTEOME_REL) == ds.PROTEOME_SHA256
     assert ds.manifest_sha256(manifest, ds.VARIANTS_REL) == ds.VARIANTS_SHA256
+    assert ds.manifest_sha256(manifest, ds.PRIDE_INDEX_REL) == ds.PRIDE_INDEX_SHA256
     for record in manifest.files:
         assert hashlib.sha256((mirror / record.path).read_bytes()).hexdigest() == (
             record.sha256
         )
+
+
+@pytest.mark.data
+def test_the_mirrored_pride_index_states_the_run_count_of_every_sample() -> None:
+    """62 runs over the 20 released samples: four for PT's two, three for the rest.
+
+    Also pins the sample-to-record arithmetic of this release: 20 samples, 17 of a
+    writable strain, 2 of them (PT's) four-run, so 2 records per proteome class carry
+    n = 4 and 15 carry n = 3.
+    """
+    if "DATA_ROOT" not in os.environ:
+        pytest.skip("DATA_ROOT is not set")
+    index = ds.raw_mirror_dir() / ds.PRIDE_INDEX_REL
+    workbook = ds.raw_mirror_dir() / ds.PROTEOME_REL
+    if not (index.exists() and workbook.exists()):
+        pytest.skip("the de Siqueira 2025 raw mirror is not deposited on this machine")
+    assert hashlib.sha256(index.read_bytes()).hexdigest() == ds.PRIDE_INDEX_SHA256
+    html = index.read_text()
+    for quote in (ds._PRIDE_Q_PREALE_AC_R4, ds._PRIDE_Q_PREALE_GLU_R4):
+        assert quote in html
+    assert ds.PROTEOME_RUNS_PER_SAMPLE.quote in html
+    assert ds.PRIDE_PRECURSOR_TABLE in html
+    assert html.count('.raw">') == 62
+    assert ds.runs_per_sample(html) == ds.PROTEOME_RUNS_PER_SAMPLE.value
+
+    rows = ds.read_proteome_rows(str(workbook))
+    released = {(row.strain, row.condition): row.sample for row in rows}
+    assert released == ds.PROTEOME_SAMPLE_LABELS
+    writable = {
+        key: ds.PROTEOME_RUNS_PER_SAMPLE.value[label]
+        for key, label in released.items()
+        if key[0] in ds.WRITABLE_STRAINS
+    }
+    assert len(writable) == ds.EXPECTED_PROTEOME_RECORDS == 17
+    assert Counter(writable.values()) == {3: 15, 4: 2}
+    assert {key for key, n in writable.items() if n == 4} == {
+        (ds.PT_STRAIN, ds.CONDITION_ACETATE),
+        (ds.PT_STRAIN, ds.CONDITION_GLUCOSE),
+    }
 
 
 @pytest.mark.data

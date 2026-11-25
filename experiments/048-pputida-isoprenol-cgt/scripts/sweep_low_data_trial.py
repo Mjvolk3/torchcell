@@ -259,6 +259,21 @@ def main() -> None:
         required=True,
         help="local-time ISO timestamp after which no new run is launched",
     )
+    parser.add_argument(
+        "--grid-split",
+        default="design",
+        choices=("design", "cycle"),
+        help=(
+            "the split the configuration grid runs on. The cycle split is the "
+            "honest rank objective and the design split is not: measured on the "
+            "44-record design test set, ranking by DBTL cycle number alone "
+            "scores Spearman 0.807, beating every model, because titer rose "
+            "across the campaign and the design split mixes cycles across train "
+            "and test. Every cycle-split test record is cycle 6, so there the "
+            "chronology has zero variance and can carry no rank information. "
+            "See cycle_confound_audit.py"
+        ),
+    )
     parser.add_argument("--epochs", type=int, default=250)
     parser.add_argument("--patience", type=int, default=30)
     parser.add_argument("--wandb", action="store_true")
@@ -282,13 +297,16 @@ def main() -> None:
 
     with open(log_path, "a") as log_handle:
         grid = configurations()
-        print(f"stage 1: {len(grid)} configurations, seed {SEEDS_STAGE1[0]}")
+        print(
+            f"stage 1: {len(grid)} configurations on the {args.grid_split} "
+            f"split, seed {SEEDS_STAGE1[0]}"
+        )
         for config in grid:
             if not fits(config):
                 print(f"  skipping {config['tag']}, will not finish before deadline")
                 continue
             for seed in SEEDS_STAGE1:
-                report = run_one(config, seed, "design", args, log_handle)
+                report = run_one(config, seed, args.grid_split, args, log_handle)
                 if report is not None:
                     rows.append(cell_row(report))
         if rows:
@@ -313,20 +331,25 @@ def main() -> None:
                 if not fits(config):
                     print(f"  skipping {config['tag']} seed {seed}, out of time")
                     continue
-                report = run_one(config, seed, "design", args, log_handle)
+                report = run_one(config, seed, args.grid_split, args, log_handle)
                 if report is not None:
                     rows.append(cell_row(report))
         if rows:
             print(f"stage 2 summary -> {write_summary(rows)}")
 
+        # Stage 3 takes the winner to the OTHER split, whichever the grid did
+        # not use, so a pass always ends with the same configuration scored under
+        # both regimes. That pairing is the only way to say how much of a
+        # design-split score was the campaign's chronology.
+        other = "cycle" if args.grid_split == "design" else "design"
         if promoted:
             best = promoted[0]
-            print(f"stage 3: {best['tag']} on the cycle split")
+            print(f"stage 3: {best['tag']} on the {other} split")
             for seed in SEEDS_STAGE3:
                 if not fits(best):
-                    print(f"  skipping cycle seed {seed}, out of time")
+                    print(f"  skipping {other} seed {seed}, out of time")
                     continue
-                report = run_one(best, seed, "cycle", args, log_handle)
+                report = run_one(best, seed, other, args, log_handle)
                 if report is not None:
                     rows.append(cell_row(report))
 

@@ -1,0 +1,4 @@
+ranker,test_spearman,within_cycle_spearman,partial_spearman,contributing_cycles,contributing_records
+cycle number,0.8065833336156061,,0.007706610802503725,0,0
+guide count,0.7481609012527577,0.42571820248668163,0.1533306579575391,6,24
+control titer,-0.658730752354698,,-0.08038370758311415,0,0

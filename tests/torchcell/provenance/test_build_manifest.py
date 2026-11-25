@@ -1134,13 +1134,14 @@ def test_walk_store_counts_the_records_that_share_one_experiment_content_id(
     three = _fitness_record(gene="YBR001C")
     _write_store(slug_dir, [one, two, three, _copy(three), _copy(three)])
     walk = bm.walk_store(slug_dir)
-    assert walk.content_id_collisions == bm.ContentIdCollisions(
-        n_records=5,
-        n_distinct=2,
-        n_groups=2,
-        n_records_lost=3,
-        example_groups=[["0", "1"], ["2", "3", "4"]],
-    )
+    collisions = walk.content_id_collisions
+    # Groups come out in digest order, which moves whenever the record schema does
+    # (the replicate_id field changed every digest), so the groups are compared as a
+    # set; the order of the keys INSIDE a group is store-iteration order and is pinned.
+    assert collisions.model_copy(
+        update={"example_groups": []}
+    ) == bm.ContentIdCollisions(n_records=5, n_distinct=2, n_groups=2, n_records_lost=3)
+    assert sorted(collisions.example_groups) == [["0", "1"], ["2", "3", "4"]]
     assert walk.perturbation_leaves == bm.PerturbationLeaves(
         genotype=["KanMxDeletionPerturbation"], environment=[]
     )

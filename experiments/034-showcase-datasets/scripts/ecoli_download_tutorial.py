@@ -12,7 +12,8 @@ collapsed in the notebook and on the page. A cell that ends in a bare expression
 table) shows that table in a notebook and prints nothing when this file runs as a script.
 
 The script needs an installed ``torchcell`` and a network route to the public endpoint,
-nothing else: no repository checkout, no ``DATA_ROOT``, no key. Run it in an empty
+nothing else: no repository checkout and no key (the setup block points ``DATA_ROOT``,
+where genome files go, at the current directory). Run it in an empty
 directory::
 
     python ecoli_download_tutorial.py
@@ -567,7 +568,8 @@ def glance(dataset: Any) -> dict[str, str]:
     missing = cells - sum(x is not None and x == x for x in values)
     samples = [ph["n_samples"] for ph in phenotypes if ph.get("n_samples") is not None]
     media = [e["environment"]["media"] for e in experiments]
-    # A strain is a genotype: the set of perturbed genes, each with how it was perturbed.
+    symbols = {p["perturbed_gene_name"] for p in perturbations}
+    # A strain is a genotype: its perturbed genes, each with how it was perturbed.
     strains = {
         tuple(
             sorted(
@@ -607,7 +609,7 @@ def glance(dataset: Any) -> dict[str, str]:
             ]
         ),
         "Strain collection": tally([p.get("collection") for p in perturbations]),
-        "Distinct genes perturbed": f"{len({p['perturbed_gene_name'] for p in perturbations}):,}",
+        "Distinct gene symbols": f"{len(symbols):,}",
         "Gene identifier namespace": tally(
             [p["gene_namespace"] for p in perturbations]
         ),
@@ -703,9 +705,8 @@ for slug, dataset in loaded.items():
     ids = (experiment_id(dataset[i]) for i in range(len(dataset)))
     digest = content_sha256(ids)  # one hash over every record of the dataset
     served = client.select(slug).content_sha256  # what the release recorded
-    print(
-        f"{slug}  {digest}  {'matches' if digest == served else 'DIFFERS FROM'} the release"
-    )
+    verdict = "matches" if digest == served else "DIFFERS FROM"
+    print(f"{slug}  {digest}  {verdict} the release")
 # [/verify]
 
 timings_path = DATA / "ecoli_download_tutorial_timings.json"

@@ -9,7 +9,7 @@ Four built *Escherichia coli* K-12 datasets load with one constructor call each,
 ## Quick start
 
 ```bash
-pip install torchcell      # Python 3.13 or newer; or: uv pip install torchcell
+pip install torchcell  # Python 3.13 or newer; or: uv pip install torchcell
 ```
 
 ```python
@@ -22,13 +22,13 @@ os.environ.setdefault("TC_DATA_URL", DEFAULT_URL)  # download built stores
 from torchcell.datasets.ecoli.campos2018 import GrowthRateCampos2018Dataset
 
 growth = GrowthRateCampos2018Dataset(root="data/torchcell/ecoli_growth_rate_campos2018")
-print(len(growth))                                 # 3664
+print(len(growth))  # 3664
 print(growth[0]["experiment"]["phenotype"]["fitness"])
 ```
 
-The constructor downloads the store on first use and opens it from disk after that. Nothing else is needed: no repository checkout, no database, no `DATA_ROOT`. The four downloads together take seconds to a few tens of seconds ({doc}`download`).
+The constructor downloads the store on first use and opens it from disk after that. Nothing else is needed: no repository checkout and no database. Loading a genome as well needs `DATA_ROOT`, the folder its files go under, which the notebook sets to the current directory. The four downloads together take seconds to a few tens of seconds ({doc}`download`).
 
-This page says what each dataset holds and shows one figure of its values. The full walkthrough, with every record, table and plot, is a notebook:
+Each section below describes one dataset and shows one figure of its values. The full walkthrough, with every record, table and plot, is a notebook:
 
 - {doc}`notebook`: the notebook rendered here, with its outputs and the plotting code collapsed.
 - [Open it in Google Colab](https://colab.research.google.com/github/Mjvolk3/torchcell/blob/main/experiments/034-showcase-datasets/notebooks/ecoli_datasets.ipynb) to run it in the browser with nothing installed: the first cell installs `torchcell`.
@@ -102,7 +102,7 @@ Growth rate of the Keio strains in `GrowthRateCampos2018Dataset`. **a**, strains
 ```{include} _generated/tutorial/glance_ecoli_morphology_campos2018.md
 ```
 
-The same Keio strains from the same screen, imaged in phase contrast and, for most strains, with a DAPI nucleoid channel. A record summarizes the cells measured for one strain (the paper reports 291 ± 116 cells per strain), and its `n_samples` is that strain's number of cells. The features fall in two groups. The cell-shape features (length, width, area, volume, surface area, perimeter, circularity, aspect ratio, surface-to-volume ratio) are stored as a mean in `morphology` and as a coefficient of variation in `morphology_coefficient_of_variation`. The nucleoid and cell-cycle features (nucleoid area, the timing of constriction and of nucleoid separation, the fraction of cells with two nucleoids) exist only for strains imaged with a nucleoid channel, so a strain without one holds 9 mean features and not 15. Feature names are the symbols the paper gives them:
+The same Keio strains from the same screen, imaged in phase contrast and, for most strains, with a DAPI nucleoid channel. A record summarizes the cells measured for one strain (the paper reports 291 ± 116 cells per strain), and its `n_samples` is that strain's number of cells. The features fall in two groups. The cell-shape features (length, width, area, volume, surface area, perimeter, circularity, aspect ratio, surface-to-volume ratio) are stored as a mean in `morphology` and as a coefficient of variation in `morphology_coefficient_of_variation`. The nucleoid and cell-cycle features (nucleoid area, the correlation of nucleoid and cell constriction, the nucleoid constriction degree when cell constriction starts, the relative timing of cell constriction and of nucleoid separation, the fraction of cells with two nucleoids) exist only for strains imaged with a nucleoid channel, so a strain without one holds 9 mean features and not 15. Feature names are the symbols the paper gives them:
 
 ```{include} _generated/tutorial/output_morphology_features.md
 ```

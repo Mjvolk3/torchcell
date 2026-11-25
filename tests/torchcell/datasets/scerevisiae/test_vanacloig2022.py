@@ -27,40 +27,42 @@ equals the raw count (pinned by ``test_geo_fixture_tmm_factors_are_exactly_one``
 
 Expected values, with ``L(x) = log2(x + 1)``:
 
+One record per (library row, inhibitor replicate column), each value the replicate
+over the mean of its paired controls (#1178):
+
 - YAL001C / Furfural (paired): controls CG001 (3, 3) -> L = 2, CG002 (7, 7) -> L = 3;
-  replicates 15 (CG001), 63 (CG002), 63 (CG001) -> 4 - 2, 6 - 3, 6 - 2 = 2, 3, 4;
-  response 3.0, sample SD 1.0, SE 1/sqrt(3).
+  replicates 15 (CG001), 63 (CG002), 63 (CG001) -> 4 - 2, 6 - 3, 6 - 2 = 2, 3, 4,
+  three records whose mean, 3.0, is the earlier build's stored response.
 - YAL001C / MMS (pooled over all four controls, mean 5 -> log2 6): replicates 11, 23,
-  47 -> 1, 2, 3; response 2.0, SD 1.0.
+  47 -> 1, 2, 3.
 - DMSO, MBO and QUADRIS1 hold 5 reads in every replicate of every library row: YAL001C
-  -> paired DMSO and MBO L(5) - (2, 3, 2), response log2(6) - 7/3, SD sqrt(1/3);
-  QUADRIS1 is pooled (mean 5), response 0, SD 0. YAL002W (controls 0) -> log2(6), SD 0;
-  the three rows at 2 reads -> log2(6) - log2(3) = 1, SD 0; YBR002C (controls 1) ->
-  log2(6) - 1, SD 0.
-- YAL002W: Furfural 0, 1, 3 -> 0, 1, 2; response 1.0, SD 1.0. MMS and SodiumGlyoxylate
-  are all-zero cells against zero controls: response L(0) - L(0) = 0.0, SD exactly 0,
-  STORED.
-- Every other Furfural / MMS / SodiumGlyoxylate cell has replicates equal to its
-  controls: response 0.0, SD 0.
+  -> paired DMSO and MBO L(5) - (2, 3, 2); QUADRIS1 is pooled (mean 5), 0 each.
+  YAL002W (controls 0) -> log2(6); the rows at 2 reads -> log2(6) - log2(3) = 1;
+  YBR002C (controls 1) -> log2(6) - 1.
+- YAL002W: Furfural 0, 1, 3 -> 0, 1, 2. MMS and SodiumGlyoxylate are all-zero
+  replicates against zero controls: L(0) - L(0) = 0.0 each, STORED.
+- Every other Furfural / MMS / SodiumGlyoxylate replicate equals its controls: 0.0.
 
 Records, condition-major over every released token sorted (DMSO, Furfural, MBO, MMS,
 QUADRIS1, SodiumGlyoxylate), then the stored rows in matrix order (YAL001C, YAL002W,
-YAL003W, YPL999C, YGL013C, YBR002C): six records per condition, 36 in all. YBR001C is a
-stored library row, but its one missing count is a paired or pooled control of every
-condition, so all six of its cells are dropped under ``a_count_the_cell_uses_is_missing``.
-Ledger: source 68 rows x 6 tokens = 408; 61 non-ORF rows x 6 = 366 under
-``gene_column_is_not_a_systematic_orf``; YBR001C's six cells; so 372 dropped and 36
-stored; QUADRIS1 is the one ``compound_identity_gaps`` entry.
+YAL003W, YPL999C, YGL013C, YBR001C, YBR002C), then the replicate columns in release
+order. YBR001C's one missing count is Control1_CG001, so its CG001 replicates of the
+paired tokens and every replicate of the two pooled tokens are dropped under
+``a_count_the_record_uses_is_missing`` (14 records), while its CG002 replicate of each
+paired token is stored (4 records): 6 x 18 + 4 = 112 records. Ledger: source 68 rows x
+18 replicate columns = 1,224; 61 non-ORF rows x 18 = 1,098 under
+``gene_column_is_not_a_systematic_orf``; so 1,112 dropped; QUADRIS1 is the one
+``compound_identity_gaps`` entry.
 
 The genome-gate reversal (2026-10-12): no annotation renames, merges or refuses a row,
 so the renamed, retired and background-locus rows are stored under their released ORF
-and ``std_name``; an all-zero cell is stored with SD 0.0; the 11 Table-S1-only tokens are
+and ``std_name``; an all-zero replicate is stored; the 11 Table-S1-only tokens are
 stored at their Table S1 doses. Issue #501 pins kept: TMM equals edgeR's
 ``calcNormFactors`` (and a compositional takeover leaves no TMM offset); DMSO is a
 served condition dosed at Table S1's 2.50% v/v (#764); the background is the SGA MATa
 progeny with ONE perturbation per genotype (#500); MBO is 2-methyl-3-buten-2-ol, CID
 8257; ammonium sulfate is a SynBase dropout. Issue #524: a missing count drops only the
-cells that use it; a row with no barcode is stored with ``barcode None`` and
+records that use it; a row with no barcode is stored with ``barcode None`` and
 ``BARCODE_ABSENT_GAP``.
 """
 
@@ -105,11 +107,11 @@ from torchcell.datamodels.schema import (
     SmallMoleculePerturbation,
     StrainEnvironmentResponseExperiment,
     StrainEnvironmentResponseExperimentReference,
-    UncertaintyType,
 )
 from torchcell.datasets.scerevisiae import vanacloig2022 as v
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
+    ProvenanceGap,
     ProvenanceGapReason,
     SourcedValue,
     audit_sourced_value,
@@ -162,21 +164,22 @@ def built(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Any:
 
 
 def test_every_source_record_is_stored(built: Any) -> None:
-    """Four rows x three conditions, the renamed, the unannotated and the all-zero
-    Benomyl cell included: nothing is dropped and both rules are at 0.
+    """Four rows x three conditions x three replicates, the renamed, the unannotated and
+    the all-zero Benomyl row included: nothing is dropped and both rules are at 0.
     """
     log = v.DropLog.model_validate_json(
         open(osp.join(built.root, "preprocess", "dropped_records.json")).read()
     )
     assert [(r.rule, r.n_records) for r in log.rules] == [
         ("gene_column_is_not_a_systematic_orf", 0),
-        ("a_count_the_cell_uses_is_missing", 0),
+        ("a_count_the_record_uses_is_missing", 0),
     ]
     assert [(n.rule, n.n_cells) for n in log.not_a_value] == [
         ("every_count_of_the_row_is_missing", 0)
     ]
     assert log.compound_identity_gaps == []
-    assert (log.source_records, log.kept_records, log.dropped_records) == (12, 12, 0)
+    assert (log.source_records, log.kept_records, log.dropped_records) == (36, 36, 0)
+    assert log.stored_by_replicate == {"rep1": 12, "rep2": 12, "rep3": 12}
     assert len(built) == log.kept_records
     stored = {
         (
@@ -820,16 +823,30 @@ def geo_built(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     return _build(tmp_path, monkeypatch, _geo_matrix())
 
 
-def _phenotype(response: float, sd: float, units: str) -> EnvironmentResponsePhenotype:
+def _phenotype(
+    response: float, replicate_id: str, units: str
+) -> EnvironmentResponsePhenotype:
+    """One biological replicate's record: n = 1, no dispersion, three typed gaps."""
     return EnvironmentResponsePhenotype(
         measurement_type=MeasurementType.log2_ratio,
         assay_type=AssayType.pooled_competitive_growth_barcode,
         environment_response=response,
-        environment_response_uncertainty=sd,
-        environment_response_uncertainty_type=UncertaintyType.sample_sd,
-        n_samples=3,
+        n_samples=1,
         sample_unit=SampleUnit.biological_replicate,
+        replicate_id=replicate_id,
         units=units,
+        provenance_gaps=[
+            ProvenanceGap(
+                field=field,
+                reason=ProvenanceGapReason.not_applicable_single_measurement,
+                note=v._SINGLE_REPLICATE_NOTE,
+            )
+            for field in (
+                "environment_response_uncertainty",
+                "environment_response_uncertainty_type",
+                "environment_response_se",
+            )
+        ],
     )
 
 
@@ -870,66 +887,134 @@ def test_geo_fixture_tmm_factors_are_exactly_one(geo_built: Any) -> None:
     assert factors["Furfural"]["columns"] == sorted(_CONTROLS) + _replicates("Furfural")
 
 
+#: The fixture's stored rows in matrix order and the per-replicate closed forms
+#: (module docstring); ``None`` is a replicate whose record is dropped (a missing count).
+_ROWS = ["YAL001C", "YAL002W", "YAL003W", "YPL999C", "YGL013C", "YBR001C", "YBR002C"]
+_L6 = math.log2(6)
+_Replicates = dict[str, list[float | None]]
+_FILLED_PAIRED: _Replicates = {
+    "YAL001C": [_L6 - 2, _L6 - 3, _L6 - 2],
+    "YAL002W": [_L6] * 3,
+    "YAL003W": [1.0] * 3,
+    "YPL999C": [1.0] * 3,
+    "YGL013C": [1.0] * 3,
+    "YBR001C": [None, 1.0, None],
+    "YBR002C": [_L6 - 1] * 3,
+}
+_ZERO_PAIRED: _Replicates = {
+    **{row: [0.0, 0.0, 0.0] for row in _ROWS},
+    "YBR001C": [None, 0.0, None],
+}
+_ALL_ZERO: _Replicates = {row: [0.0, 0.0, 0.0] for row in _ROWS}
+_PER_REPLICATE: dict[str, tuple[str, _Replicates]] = {
+    "dimethyl sulfoxide": ("DMSO", _FILLED_PAIRED),
+    "furfural": (
+        "Furfural",
+        {**_ZERO_PAIRED, "YAL001C": [2.0, 3.0, 4.0], "YAL002W": [0.0, 1.0, 2.0]},
+    ),
+    "2-methyl-3-buten-2-ol": ("MBO", _FILLED_PAIRED),
+    "methyl methanesulfonate": (
+        "MMS",
+        {**_ALL_ZERO, "YAL001C": [1.0, 2.0, 3.0], "YBR001C": [None] * 3},
+    ),
+    "QUADRIS1": (
+        "QUADRIS1",
+        {**_FILLED_PAIRED, "YAL001C": [0.0, 0.0, 0.0], "YBR001C": [None] * 3},
+    ),
+    "sodium glyoxylate": ("SodiumGlyoxylate", _ZERO_PAIRED),
+}
+
+
+def _expected_records() -> list[tuple[str, str, str, float]]:
+    """(ORF, compound name, replicate_id, value) of every stored record, in order."""
+    return [
+        (row, name, column, value)
+        for name, (token, values) in _PER_REPLICATE.items()
+        for row in _ROWS
+        for column, value in zip(_replicates(token), values[row], strict=True)
+        if value is not None
+    ]
+
+
 def test_records_are_condition_major_with_the_closed_form_responses(
     geo_built: Any,
 ) -> None:
-    """(screened ORF, condition, response, SD) for all 36 records, in LMDB order."""
+    """(ORF, condition, replicate_id, value) for all 112 records, in LMDB order; every
+    record is one replicate with no dispersion.
+    """
     got = []
     for i in range(len(geo_built)):
         experiment = geo_built[i]["experiment"]
         compound = experiment["environment"]["perturbations"][0]["compound"]["name"]
         (screened,) = experiment["genotype"]["perturbations"]
+        phenotype = experiment["phenotype"]
+        assert (phenotype["n_samples"], phenotype["sample_unit"]) == (
+            1,
+            "biological_replicate",
+        )
+        assert phenotype["environment_response_uncertainty"] is None
+        assert phenotype["environment_response_uncertainty_type"] is None
+        assert phenotype["environment_response_se"] is None
         got.append(
             (
                 screened["systematic_gene_name"],
                 compound,
-                experiment["phenotype"]["environment_response"],
-                experiment["phenotype"]["environment_response_uncertainty"],
+                phenotype["replicate_id"],
+                phenotype["environment_response"],
             )
         )
-    l6 = math.log2(6)
-    rows = ["YAL001C", "YAL002W", "YAL003W", "YPL999C", "YGL013C", "YBR002C"]
-    filled_paired = [l6 - 7 / 3, l6, 1.0, 1.0, 1.0, l6 - 1]
-    filled_pooled = [0.0, l6, 1.0, 1.0, 1.0, l6 - 1]
-    by_condition = {
-        "dimethyl sulfoxide": filled_paired,
-        "furfural": [3.0, 1.0, 0.0, 0.0, 0.0, 0.0],
-        "2-methyl-3-buten-2-ol": filled_paired,
-        "methyl methanesulfonate": [2.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "QUADRIS1": filled_pooled,
-        "sodium glyoxylate": [0.0] * 6,
-    }
-    sds = {
-        "dimethyl sulfoxide": [math.sqrt(1 / 3)] + [0.0] * 5,
-        "furfural": [1.0, 1.0] + [0.0] * 4,
-        "2-methyl-3-buten-2-ol": [math.sqrt(1 / 3)] + [0.0] * 5,
-        "methyl methanesulfonate": [1.0] + [0.0] * 5,
-        "QUADRIS1": [0.0] * 6,
-        "sodium glyoxylate": [0.0] * 6,
-    }
-    expected = [
-        (row, name, by_condition[name][i], sds[name][i])
-        for name in by_condition
-        for i, row in enumerate(rows)
-    ]
-    assert [g[:2] for g in got] == [e[:2] for e in expected]
-    for (_, _, response, sd), (_, _, want_response, want_sd) in zip(
-        got, expected, strict=True
-    ):
-        assert response == pytest.approx(want_response, abs=1e-12)
-        assert sd == pytest.approx(want_sd, abs=1e-12)
+    expected = _expected_records()
+    assert len(got) == len(expected) == 112
+    assert [g[:3] for g in got] == [e[:3] for e in expected]
+    for (*_, value), (*_, want) in zip(got, expected, strict=True):
+        assert value == pytest.approx(want, abs=1e-12)
+
+
+def test_the_mean_of_a_strains_replicates_is_the_earlier_aggregate(
+    geo_built: Any,
+) -> None:
+    """Grouping the replicate records by (ORF, condition) and averaging gives the
+    response the earlier build stored for that cell (the closed forms of the
+    2026.10.12 docstring), so the per-replicate store loses nothing.
+    """
+    groups: dict[tuple[str, str], list[float]] = {}
+    for i in range(len(geo_built)):
+        experiment = geo_built[i]["experiment"]
+        key = (
+            experiment["genotype"]["perturbations"][0]["systematic_gene_name"],
+            experiment["environment"]["perturbations"][0]["compound"]["name"],
+        )
+        groups.setdefault(key, []).append(
+            experiment["phenotype"]["environment_response"]
+        )
+    assert groups[("YAL001C", "furfural")] == pytest.approx([2.0, 3.0, 4.0])
+    assert float(np.mean(groups[("YAL001C", "furfural")])) == pytest.approx(3.0)
+    assert float(np.mean(groups[("YAL001C", "methyl methanesulfonate")])) == (
+        pytest.approx(2.0)
+    )
+    assert float(np.mean(groups[("YAL001C", "dimethyl sulfoxide")])) == (
+        pytest.approx(_L6 - 7 / 3)
+    )
+    assert float(np.std(groups[("YAL001C", "furfural")], ddof=1)) == pytest.approx(1.0)
+    # YBR001C keeps the one replicate whose paired controls are all released.
+    assert groups[("YBR001C", "furfural")] == [0.0]
 
 
 def test_full_paired_record_equals_the_hand_built_experiment(geo_built: Any) -> None:
-    """Record 6, YAL001C / Furfural: TMM log2 ratio against its OWN batch's controls."""
-    record = geo_built[6]
+    """Record 20, YAL001C / Furfural replicate 2: TMM log2 ratio of that one culture
+    against its OWN batch's (CG002) controls.
+    """
+    record = geo_built[20]
     experiment = record["experiment"]
     assert experiment["experiment_type"] == "strain_environment_response"
     assert (
         experiment["genotype"] == _genotype("YAL001C", "TFC3", "AAAACCCC").model_dump()
     )
-    assert experiment["phenotype"] == _phenotype(3.0, 1.0, v._PAIRED_UNITS).model_dump()
-    assert experiment["phenotype"]["environment_response_se"] == 1.0 / math.sqrt(3)
+    assert (
+        experiment["phenotype"]
+        == _phenotype(3.0, "Furfural_CG002_rep2", v._PAIRED_UNITS).model_dump()
+    )
+    assert experiment["phenotype"]["environment_response_se"] is None
     environment = experiment["environment"]
     furfural = environment["perturbations"][0]
     assert furfural["compound"] == resolved_compound("Furfural").model_dump()
@@ -938,6 +1023,8 @@ def test_full_paired_record_equals_the_hand_built_experiment(geo_built: Any) -> 
     assert environment["culture_format"]["working_volume_ul"] == 1500.0
     reference = record["reference"]
     assert reference["phenotype_reference"]["units"] == v._PAIRED_UNITS
+    # the reference stays the aggregate inhibitor-free control, not one replicate
+    assert reference["phenotype_reference"]["replicate_id"] is None
     assert (
         StrainEnvironmentResponseExperimentReference.model_validate(
             reference
@@ -972,22 +1059,27 @@ def test_dmso_record_is_served_at_the_table_s1_percent(geo_built: Any) -> None:
 
 
 def test_pooled_mms_edge_record(geo_built: Any) -> None:
-    """Record 18, YAL001C / MMS: the pooled control and the fixed, basis-free percent."""
-    experiment = geo_built[18]["experiment"]
-    assert experiment["phenotype"] == _phenotype(2.0, 1.0, v._POOLED_UNITS).model_dump()
+    """Record 58, YAL001C / MMS replicate 2: the pooled control and the fixed,
+    basis-free percent.
+    """
+    experiment = geo_built[58]["experiment"]
+    assert (
+        experiment["phenotype"]
+        == _phenotype(2.0, "MMS_CG002_rep2", v._POOLED_UNITS).model_dump()
+    )
     mms = experiment["environment"]["perturbations"][0]
     assert mms["compound"]["name"] == "methyl methanesulfonate"
     assert mms["concentration"] == {"value": 0.01, "unit": "percent", "basis": "fixed"}
-    assert geo_built[18]["reference"]["phenotype_reference"]["units"] == v._POOLED_UNITS
+    assert geo_built[58]["reference"]["phenotype_reference"]["units"] == v._POOLED_UNITS
 
 
 def test_a_row_without_a_barcode_is_served_with_a_typed_absence(geo_built: Any) -> None:
     """#524: ``YBR002C`` has no ``_<barcode>`` suffix, so the barcode is absent from the
     release: ``barcode None`` with ``BARCODE_ABSENT_GAP``, never an empty string. Its
-    released std_name is the ORF itself. Record 11 is YBR002C / Furfural, whose equal
-    nonzero counts give SD exactly 0.
+    released std_name is the ORF itself. Record 35 is YBR002C / Furfural replicate 1,
+    whose count equals its controls' (value 0.0).
     """
-    experiment = geo_built[11]["experiment"]
+    experiment = geo_built[35]["experiment"]
     expected = _genotype("YBR002C", "YBR002C", None)
     (deletion,) = expected.perturbations
     assert isinstance(deletion, BarcodedKanMxDeletionPerturbation)
@@ -1005,15 +1097,19 @@ def test_a_row_without_a_barcode_is_served_with_a_typed_absence(geo_built: Any) 
             page="gene column ('<ORF>_<barcode>')",
         ),
     )
-    assert experiment["phenotype"] == _phenotype(0.0, 0.0, v._PAIRED_UNITS).model_dump()
+    assert (
+        experiment["phenotype"]
+        == _phenotype(0.0, "Furfural_CG001_rep1", v._PAIRED_UNITS).model_dump()
+    )
     # a barcoded record carries no gap
-    (barcoded,) = geo_built[6]["experiment"]["genotype"]["perturbations"]
+    (barcoded,) = geo_built[20]["experiment"]["genotype"]["perturbations"]
     assert barcoded["barcode"] == "AAAACCCC" and barcoded["provenance_gaps"] == []
 
 
 def test_drop_ledger_is_written_exactly(geo_built: Any) -> None:
-    """Every released cell accounted for: 36 stored, 366 non-ORF row cells, YBR001C's six
-    cells with a missing control count, and no row with every count missing.
+    """Every released (row, replicate column) accounted for: 112 stored, 1,098 non-ORF
+    row records, YBR001C's 14 replicates that use its missing control count, and no row
+    with every count missing.
     """
     log = json.loads(
         (Path(geo_built.preprocess_dir) / "dropped_records.json").read_text()
@@ -1021,24 +1117,33 @@ def test_drop_ledger_is_written_exactly(geo_built: Any) -> None:
     rules = [(r["rule"], r["scope"], r["n_records"], r["items"]) for r in log["rules"]]
     assert (log["dataset"], log["source_records"], log["kept_records"]) == (
         "EnvChemgenVanacloig2022Dataset",
-        68 * 6,
-        36,
+        68 * 18,
+        112,
     )
-    assert log["dropped_records"] == 372
+    assert log["dropped_records"] == 1112
+    assert log["stored_by_replicate"] == {"rep1": 36, "rep2": 40, "rep3": 36}
     non_orf = sorted([f"Const{i}_row" for i in range(_N_CONST)] + ["Filler_row"])
     assert rules == [
-        ("gene_column_is_not_a_systematic_orf", "library_row", 366, non_orf),
+        ("gene_column_is_not_a_systematic_orf", "library_row", 1098, non_orf),
         (
-            "a_count_the_cell_uses_is_missing",
+            "a_count_the_record_uses_is_missing",
             "cell",
-            6,
+            14,
             [
-                "YBR001C:DMSO",
-                "YBR001C:Furfural",
-                "YBR001C:MBO",
-                "YBR001C:MMS",
-                "YBR001C:QUADRIS1",
-                "YBR001C:SodiumGlyoxylate",
+                "YBR001C:DMSO_CG001_rep1",
+                "YBR001C:DMSO_CG001_rep3",
+                "YBR001C:Furfural_CG001_rep1",
+                "YBR001C:Furfural_CG001_rep3",
+                "YBR001C:MBO_CG001_rep1",
+                "YBR001C:MBO_CG001_rep3",
+                "YBR001C:MMS_CG001_rep1",
+                "YBR001C:MMS_CG002_rep2",
+                "YBR001C:MMS_CG002_rep3",
+                "YBR001C:QUADRIS1_CG001_rep1",
+                "YBR001C:QUADRIS1_CG002_rep2",
+                "YBR001C:QUADRIS1_CG001_rep3",
+                "YBR001C:SodiumGlyoxylate_CG001_rep1",
+                "YBR001C:SodiumGlyoxylate_CG001_rep3",
             ],
         ),
     ]
@@ -1046,12 +1151,12 @@ def test_drop_ledger_is_written_exactly(geo_built: Any) -> None:
         ("every_count_of_the_row_is_missing", 0, [])
     ]
     assert log["compound_identity_gaps"] == [
-        {"token": "QUADRIS1", "compound_name": "QUADRIS1", "n_records": 6}
+        {"token": "QUADRIS1", "compound_name": "QUADRIS1", "n_records": 18}
     ]
     assert "released-gene-name" in log["rules"][0]["description"]
     assert log["rules"][1]["description"].startswith(
-        "one of the counts this (strain, compound) cell is computed from, a replicate "
-        "or one of its paired controls, is a source NaN in the release"
+        "one of the counts this (strain, replicate column) record is computed from, "
+        "the replicate's own or one of its paired controls', is a source NaN"
     )
     assert log["source_records"] == (
         log["kept_records"]
@@ -1076,14 +1181,14 @@ def test_annotation_renamed_and_unannotated_orfs_are_stored_as_released(
 ) -> None:
     """YAL003W (folded into YAL002W by a later annotation) and YPL999C (in no
     annotation) are stored under their released ORF and std_name, one record per
-    condition, with no ConstructedOrf anywhere.
+    condition and replicate, with no ConstructedOrf anywhere.
     """
     for orf, name, barcode in (
         ("YAL003W", "YAL003W", "GGGGTTTT"),
         ("YPL999C", "NOPE", "TTTTAAAA"),
     ):
         records = _records_of(geo_built, orf)
-        assert len(records) == 6
+        assert len(records) == 18
         for experiment in records:
             assert experiment["genotype"] == _genotype(orf, name, barcode).model_dump()
     assert not hasattr(v, "LegacyOrfStrain")
@@ -1097,32 +1202,36 @@ def test_a_background_locus_row_is_stored_as_released(geo_built: Any) -> None:
     """
     assert v.library_background().functional_copies("YGL013C") == 0
     records = _records_of(geo_built, "YGL013C")
-    assert len(records) == 6
+    assert len(records) == 18
     assert (
         records[0]["genotype"] == _genotype("YGL013C", "PDR1", "ACGTACGT").model_dump()
     )
 
 
-def test_an_all_zero_cell_is_stored_with_sd_zero(geo_built: Any) -> None:
-    """Record 19, YAL002W / MMS: three replicate counts of 0 against zero controls.
-    The value is L(0) - L(0) = 0.0 and the sample SD is exactly 0, stored as 0.0.
+def test_an_all_zero_replicate_is_stored(geo_built: Any) -> None:
+    """Record 60, YAL002W / MMS replicate 1: a count of 0 against zero controls. The
+    value is L(0) - L(0) = 0.0, stored, with no dispersion field.
     """
-    experiment = geo_built[19]["experiment"]
+    experiment = geo_built[60]["experiment"]
     assert experiment["genotype"]["perturbations"][0]["systematic_gene_name"] == (
         "YAL002W"
     )
     assert experiment["environment"]["perturbations"][0]["compound"]["name"] == (
         "methyl methanesulfonate"
     )
-    assert experiment["phenotype"] == _phenotype(0.0, 0.0, v._POOLED_UNITS).model_dump()
-    assert experiment["phenotype"]["environment_response_uncertainty"] == 0.0
+    assert (
+        experiment["phenotype"]
+        == _phenotype(0.0, "MMS_CG001_rep1", v._POOLED_UNITS).model_dump()
+    )
+    assert experiment["phenotype"]["environment_response_uncertainty"] is None
 
 
-def test_a_missing_replicate_count_drops_only_that_cell(
+def test_a_missing_replicate_count_drops_only_that_replicate(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """#524: YBR001C's NaN moved from a control to one Furfural replicate drops ONLY its
-    Furfural cell; its other five cells are stored with all three replicates.
+    """#524: YBR001C's NaN moved from a control to one Furfural replicate drops ONLY that
+    replicate's record; its two sibling Furfural replicates and its other five
+    conditions are stored, one record per replicate.
     """
     frame = _geo_matrix()
     ybr001c = frame.index[frame["gene"] == "YBR001C_TTAATTAA"][0]
@@ -1136,22 +1245,24 @@ def test_a_missing_replicate_count_drops_only_that_cell(
         (Path(built.preprocess_dir) / "dropped_records.json").read_text()
     )
     rules = {rule.rule: rule for rule in log.rules}
-    assert rules["a_count_the_cell_uses_is_missing"].items == ["YBR001C:Furfural"]
-    assert rules["gene_column_is_not_a_systematic_orf"].n_records == 366
-    assert (log.kept_records, log.dropped_records) == (41, 367)
+    assert rules["a_count_the_record_uses_is_missing"].items == [
+        "YBR001C:Furfural_CG001_rep1"
+    ]
+    assert rules["gene_column_is_not_a_systematic_orf"].n_records == 1098
+    assert (log.kept_records, log.dropped_records) == (125, 1099)
     served = []
     for i in range(len(built)):
         experiment = built[i]["experiment"]
         (screened,) = experiment["genotype"]["perturbations"]
         if screened["systematic_gene_name"] == "YBR001C":
             compound = experiment["environment"]["perturbations"][0]["compound"]
-            served.append((compound["name"], experiment["phenotype"]["n_samples"]))
+            assert experiment["phenotype"]["n_samples"] == 1
+            served.append((compound["name"], experiment["phenotype"]["replicate_id"]))
     assert served == [
-        ("dimethyl sulfoxide", 3),
-        ("2-methyl-3-buten-2-ol", 3),
-        ("methyl methanesulfonate", 3),
-        ("QUADRIS1", 3),
-        ("sodium glyoxylate", 3),
+        (name, column)
+        for name, (token, _) in _PER_REPLICATE.items()
+        for column in _replicates(token)
+        if column != "Furfural_CG001_rep1"
     ]
 
 
@@ -1167,11 +1278,11 @@ def test_a_row_with_every_count_missing_is_not_a_value(
         (Path(built.preprocess_dir) / "dropped_records.json").read_text()
     )
     rules = {rule.rule: rule for rule in log.rules}
-    assert rules["gene_column_is_not_a_systematic_orf"].n_records == 366
-    assert rules["a_count_the_cell_uses_is_missing"].n_records == 0
+    assert rules["gene_column_is_not_a_systematic_orf"].n_records == 1098
+    assert rules["a_count_the_record_uses_is_missing"].n_records == 0
     (not_a_value,) = log.not_a_value
-    assert (not_a_value.n_cells, not_a_value.items) == (6, ["YBR001C_TTAATTAA"])
-    assert (log.kept_records, log.dropped_records) == (36, 366)
+    assert (not_a_value.n_cells, not_a_value.items) == (18, ["YBR001C_TTAATTAA"])
+    assert (log.kept_records, log.dropped_records) == (108, 1098)
 
 
 def test_a_barcodeless_row_and_a_barcoded_row_of_one_orf_are_both_stored(
@@ -1191,12 +1302,12 @@ def test_a_barcodeless_row_and_a_barcoded_row_of_one_orf_are_both_stored(
     log = v.DropLog.model_validate_json(
         (Path(built.preprocess_dir) / "dropped_records.json").read_text()
     )
-    assert log.source_records == 69 * 6 and log.kept_records == 42
+    assert log.source_records == 69 * 18 and log.kept_records == 130
     barcodes = [
         experiment["genotype"]["perturbations"][0]["barcode"]
         for experiment in _records_of(built, "YBR002C")
     ]
-    assert sorted(barcodes, key=str) == ["GGGGAAAA"] * 6 + [None] * 6
+    assert sorted(barcodes, key=str) == ["GGGGAAAA"] * 18 + [None] * 18
 
 
 def test_reference_index_splits_paired_from_pooled_and_the_gene_set(
@@ -1204,18 +1315,19 @@ def test_reference_index_splits_paired_from_pooled_and_the_gene_set(
 ) -> None:
     """The inhibitor-free reference is shared across paired conditions; MMS differs
     and QUADRIS1 differ only in their units string. The gene set is the screened genes
-    only: the background loci ride on the reference, not on the genotype.
+    only: the background loci ride on the reference, not on the genotype. YBR001C is in
+    it through the CG002 replicates its missing CG001 control count leaves intact.
     """
     index = geo_built.experiment_reference_index
     assert index is not None
     by_units = {e.reference.phenotype_reference.units: e.member_indices for e in index}
     assert by_units == {
-        v._PAIRED_UNITS: list(range(18)) + list(range(30, 36)),
-        v._POOLED_UNITS: list(range(18, 30)),
+        v._PAIRED_UNITS: list(range(57)) + list(range(93, 112)),
+        v._POOLED_UNITS: list(range(57, 93)),
     }
     assert json.loads(
         (Path(geo_built.preprocess_dir) / "gene_set.json").read_text()
-    ) == ["YAL001C", "YAL002W", "YAL003W", "YBR002C", "YGL013C", "YPL999C"]
+    ) == ["YAL001C", "YAL002W", "YAL003W", "YBR001C", "YBR002C", "YGL013C", "YPL999C"]
 
 
 def _with_columns(extra: dict[str, float], drop: list[str]) -> pd.DataFrame:
@@ -1615,3 +1727,50 @@ def test_tmm_reference_falls_back_to_the_largest_sqrt_sum_when_fractions_vanish(
     assert factors.library_sizes == [1e30, 1e30, 1e30]
     usual = v.tmm_factors(counts, np.array([1.0, 1.0, 1.0]), ["a", "b", "c"])
     assert usual.reference_column == "c"
+
+
+# --------------------------------------------------------------------------- #
+# 2026.11.24 (#1175, #1178): the real release holds 492,615 replicate records
+# --------------------------------------------------------------------------- #
+def test_the_pinned_release_holds_one_record_per_replicate_column() -> None:
+    """GSE186866 as pinned: 3,651 library rows, 45 tokens x 3 inhibitor replicate
+    columns (one per CG batch-replicate label) and 16 control columns (4 in each of
+    CG003-CG006). Two rows carry no count at all, so the build stores 3,649 x 135 =
+    492,615 records, 164,205 per replicate position, three times the 164,205 cells the
+    mean build stored. Skips when the raw mirror is not mounted.
+    """
+    data_root = os.environ.get("DATA_ROOT")
+    if data_root is None:
+        pytest.skip("DATA_ROOT not set")
+    path = v.raw_mirror_dir(data_root) / v.DATA_REL
+    if not path.exists():
+        pytest.skip("raw mirror not mounted")
+    assert v._sha256(path) == v.DATA_SHA256
+    with gzip.open(path, "rt") as handle:
+        frame = pd.read_csv(handle, sep="\t")
+    sample_cols = [c for c in frame.columns if c not in ("gene", "std_name")]
+    controls = [c for c in sample_cols if v._CONTROL_RE.match(c)]
+    replicates = [c for c in sample_cols if v._SAMPLE_RE.match(c)]
+    assert len(frame) == 3651
+    assert len(controls) == 16 and len(replicates) == 135
+    assert sorted(controls) == sorted(
+        f"Control{i}_CG00{b}" for b in (3, 4, 5, 6) for i in (1, 2, 3, 4)
+    )
+    by_token: dict[str, list[str]] = {}
+    for column in replicates:
+        match = v._SAMPLE_RE.match(column)
+        assert match is not None
+        by_token.setdefault(match["compound"], []).append(match["rep"])
+    assert len(by_token) == 45
+    assert all(sorted(reps) == ["1", "2", "3"] for reps in by_token.values())
+    library = v.released_library_rows(frame, sample_cols)
+    assert library.every_count_missing == [
+        "YBR208C_AGATCGAGGTTTAGCCATGT",
+        "YGL234W_TACTTACGGTGGGCACGCTT",
+    ]
+    assert library.not_an_orf == []
+    n_rows = sum(library.keep_mask)
+    assert n_rows == 3649
+    kept = frame.loc[library.keep_mask, sample_cols]
+    assert not kept.isna().any().any()  # no partly missing row: nothing else drops
+    assert n_rows * len(replicates) == 492_615 == 3 * 164_205

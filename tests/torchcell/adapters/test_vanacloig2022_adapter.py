@@ -251,7 +251,7 @@ def _adapter(dataset: Any) -> CellAdapter:
 
 
 def test_strain_resolved_records_emit_the_expected_nodes(tiny: Any) -> None:
-    assert len(tiny) == 4  # 2 genes x (DMSO, Furfural)
+    assert len(tiny) == 12  # 2 genes x (DMSO, Furfural) x 3 biological replicates
     adapter = _adapter(tiny)
     data = tiny.transform_item(tiny[0])
     experiment = data["experiment"]
@@ -292,6 +292,8 @@ def test_strain_resolved_records_emit_the_expected_nodes(tiny: Any) -> None:
         experiment.phenotype.environment_response
     )
     assert phenotype.get_properties()["measurement_type"] == "log2_ratio"
+    # one record per biological replicate: the release's column label reaches the node
+    assert phenotype.get_properties()["replicate_id"] == "DMSO_CG003_rep1"
 
     dmso = cast(Any, CellAdapter._environment_perturbation_node).__wrapped__(
         adapter, data, "environment perturbation (chunked)"

@@ -1862,10 +1862,13 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_vanacloig2022": {
         "root": "data/torchcell/env_chemgen_vanacloig2022",
-        # 3,649 library rows x 45 matrix tokens = 164,295 cells minus the 90 cells of
-        # the two all-missing rows; every row and every condition stored as released
-        # (2026.10.12). Rules + counts: preprocess/dropped_records.json.
-        "expected_count": 164205,
+        # One record per biological replicate (#1175, #1178): 3,651 library rows x 135
+        # inhibitor replicate columns (45 matrix tokens x 3) = 492,885, minus the 270
+        # cells of the two all-missing rows = 492,615 (164,205 rows x conditions x 3);
+        # every row, condition and replicate stored as released. Rules + counts:
+        # preprocess/dropped_records.json.
+        "expected_count": 492615,
+        "stream": True,
         # The sensitizing and reporter alleles ride on the reference's
         # StrainReferenceGenome background (#500), so the genotype holds only the
         # screened deletion and no background gene needs excluding.
@@ -1885,20 +1888,19 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
                 "replicates and paired control columns, then per gene "
                 "log2((TMM-CPM_rep+1)/(mean TMM-CPM of the SAME CG00n batch's "
                 "inhibitor-free control columns+1)) (the paper's paired design), "
-                "pooled over all 16 control columns for MMS only (analyzed unpaired); "
-                "response = mean of 3 biological replicates, uncertainty = their "
-                "sample SD (SE=SD/sqrt(3)); recomputed readout, NOT the paper's edgeR "
+                "pooled over all 16 control columns for MMS and the two QUADRIS doses "
+                "(analyzed unpaired); one record per inhibitor biological replicate "
+                "column (n_samples=1, replicate_id = the GEO column label, no "
+                "dispersion); recomputed readout, NOT the paper's edgeR "
                 "glmQLFit logFC. Anaerobic static SynBase (shared MEDIA_LIBRARY object) "
                 "at 30 C for 48 h / 6.5 doublings in 1.5 mL 24-well cultures, pH 5.0 "
-                "as an EnvironmentPhysicalPerturbation; the 34 Fig 1B conditions at "
-                "their IC30 basis (Table S1 molar values unavailable) except Benomyl "
-                "34.4 uM (Piotrowski 2017), MMS (fixed, unit unstated) and DMSO 1% "
-                "v/v; MBO adjudicated to 2-methyl-3-buten-2-ol. Strain background: "
-                "the SGA MATa progeny of Y13206 x the MATa kanMX array. Dropped: 11 "
-                "matrix tokens Fig 1B does not list, 2 all-NaN rows, 4 rows at a "
-                "selected background locus, 22 retired ORFs, 17 legacy ORF spellings "
-                "(typed ConstructedOrf ledger entries), and 3942 all-replicates-zero "
-                "cells"
+                "as an EnvironmentPhysicalPerturbation; all 45 matrix tokens at their "
+                "Table S1 doses (IC30, or fixed for Benomyl 34.4 uM per Piotrowski "
+                "2017, MMS 0.01% and the two QUADRIS doses; DMSO's own condition "
+                "2.5% v/v); MBO adjudicated to 2-methyl-3-buten-2-ol. Strain "
+                "background: the SGA MATa progeny of Y13206 x the MATa kanMX array. "
+                "Stored as released: no row, condition or replicate dropped; the 2 "
+                "all-NaN rows hold no value (preprocess/dropped_records.json)"
             ),
             page=(
                 "FEMS Yeast Res 2022 foac036; paper.md "

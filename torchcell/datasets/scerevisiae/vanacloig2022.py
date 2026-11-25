@@ -28,14 +28,30 @@ counts:
   columns it is paired with, as the paper's per-compound edgeR fit does. The library
   size each factor multiplies is the column total over EVERY released barcode, before
   any retention rule, so the stored value does not depend on this loader's gene policy.
-- per gene and replicate ``log2((TMM-CPM_rep + 1) / (mean TMM-CPM of the paired
-  controls + 1))``; the response is the mean of the three, the uncertainty their sample
-  SD (SE = SD/sqrt(3)). The pseudocount of 1 CPM is a loader choice the paper does not
-  state (``PSEUDOCOUNT_GAP``); cells whose control mean sits near it carry a large SD,
-  which is the low-count flag (no separate field).
+- per gene and inhibitor replicate column ``log2((TMM-CPM_rep + 1) / (mean TMM-CPM of
+  the paired controls + 1))``, stored as that replicate's own record. The pseudocount of
+  1 CPM is a loader choice the paper does not state (``PSEUDOCOUNT_GAP``); a record
+  whose control mean sits near it has a pseudocount-dominated denominator (no separate
+  field flags it).
 
 It is NOT the published edgeR logFC (no dispersion shrinkage, no prior count) and must
 not be treated as such; nothing mirrored carries the published numbers.
+
+ONE RECORD PER BIOLOGICAL REPLICATE (#1175, #1178). "Growth of the yeast deletion
+library in all inhibitory and control conditions were performed in independent
+biological triplicate" (``N_REPLICATES``), and the matrix releases each culture as its
+own count column, ``<token>_CG<batch>_rep<n>``. Each (library row, inhibitor column) is
+one record: ``n_samples=1``, ``sample_unit=biological_replicate``, ``replicate_id`` the
+release's own column label, and no dispersion fields (typed
+``not_applicable_single_measurement`` gaps, ``_single_replicate_gaps``). The loader no
+longer averages the three replicates or computes their SD; grouping the records by
+genotype and environment back to a mean is a model-time step. The mean of a strain's
+three records is exactly the value the earlier build stored for that (strain, condition)
+cell. Not converted (needs an owner decision, dataset note 2026.11.24): the denominator
+is still the loader's mean over the same batch's 4 control cultures (16 for the unpaired
+tokens), and the 16 control columns are not records, because storing each culture's
+absolute abundance (its count or CPM) needs an absolute ``MeasurementType`` member the
+schema does not have.
 
 CONTROL PAIRING. Each replicate is paired with the control columns of its OWN ``CG00n``
 batch, because the paper's design is paired and its comparison is "to the paired SynBase
@@ -74,9 +90,9 @@ the release spells it (``systematic_gene_name``), with ``perturbed_gene_name`` t
 release's own ``std_name`` for that row (the ORF again when the cell is empty). No
 annotation lookup renames, merges or refuses a row: the 22 ORFs a current R64 annotation
 no longer lists as genes and the 17 ORFs it folds into another library ORF are stored
-under their released names, each its own barcoded strain. Every (row, condition) cell is
-stored with the method's value; a cell whose three replicate counts are all 0 is stored
-as the log2 of the CPM prior ratio with its sample SD, exactly 0, stored as 0.0. A
+under their released names, each its own barcoded strain. Every (row, inhibitor
+replicate column) is stored with the method's value; a replicate whose count is 0 is
+stored as the log2 of the CPM prior over its control mean plus the prior. A
 compound whose curated identity row resolves no structure (the QUADRIS formulation) is
 stored with the ``inchikey`` gap ``resolved_compound`` attaches and is counted in the
 ledger's ``compound_identity_gaps``.
@@ -87,18 +103,20 @@ CAN1, YNL268W LYP1; ``library_background``). A kanMX deletion of a locus the bac
 already deleted contradicts the strain's own construction. The rows are stored as
 released, the contradiction is written in the dataset note, and it is not resolved here.
 
-LEDGER (``preprocess/dropped_records.json``). Source cells = released rows x released
-condition tokens = stored + not-a-value + dropped. ``not_a_value``: a row whose EVERY
-count column is missing (2 rows of GSE186866) has no value in any condition and is not a
-record. Rules: a row whose gene column is not ORF-shaped would need the released
-gene-name leaf (none in GSE186866); a cell one of whose counts (a replicate or a paired
-control) is a source NaN has no value the method defines (none in GSE186866).
+LEDGER (``preprocess/dropped_records.json``). Source records = released rows x released
+inhibitor replicate columns (45 tokens x 3) = stored + not-a-value + dropped, and
+``stored_by_replicate`` counts the stored records per replicate position. ``not_a_value``:
+a row whose EVERY count column is missing (2 rows of GSE186866) has no value in any
+column and is not a record. Rules: a row whose gene column is not ORF-shaped would need
+the released gene-name leaf (none in GSE186866); a replicate record one of whose counts
+(its own or a paired control's) is a source NaN has no value the method defines (none in
+GSE186866).
 
-MISSING COUNTS AND BARCODES (#524). A missing count removes only the cells that use it,
-never the strain's row: the paper's per-compound edgeR fit permits no NA count and its
-design is three replicates against the paired controls, so a cell with a missing member
-count has no value the method defines, while the strain's other cells are untouched. TMM
-for a condition runs over the rows complete in that condition's own columns. A row whose
+MISSING COUNTS AND BARCODES (#524). A missing count removes only the records that use it,
+never the strain's row and never a sibling replicate: a replicate's value is its own
+count over its paired controls, so a record with a missing member count has no value the
+method defines, while the strain's other replicates and conditions are untouched. TMM for
+a condition runs over the rows complete in that condition's own columns. A row whose
 gene column carries no ``_<barcode>`` suffix is stored with ``barcode=None`` and a typed
 ``ProvenanceGap`` (``BARCODE_ABSENT_GAP``), never an empty string. GSE186866 itself has
 no row with a partly missing count and no row without a barcode.
@@ -162,7 +180,6 @@ from torchcell.datamodels.schema import (
     StrainEnvironmentResponseExperimentReference,
     StrainReferenceGenome,
     Temperature,
-    UncertaintyType,
     Zygosity,
 )
 from torchcell.datamodels.strain_background import (
@@ -584,9 +601,33 @@ PSEUDOCOUNT_GAP = ProvenanceGap(
     ),
     note="the paper presents 'the log2 of the normalized read counts for "
     "inhibitor/control ratio' and states no pseudocount; the loader adds 1 CPM "
-    "(CPM_PRIOR) to both sides, a loader choice, so a cell whose control mean is near "
-    "1 CPM has a pseudocount-dominated denominator and a large replicate SD",
+    "(CPM_PRIOR) to both sides, a loader choice, so a record whose control mean is near "
+    "1 CPM has a pseudocount-dominated denominator",
 )
+
+#: Why a per-replicate record carries no dispersion (``_single_replicate_gaps``).
+_SINGLE_REPLICATE_NOTE = (
+    "one record is one biological replicate culture (one inhibitor count column of "
+    "GSE186866), a single measurement with no dispersion of its own; the dispersion "
+    "over a strain's three replicates is a model-time statistic over its three records"
+)
+
+
+def _single_replicate_gaps() -> list[ProvenanceGap]:
+    """The typed absence of every dispersion field on an n = 1 replicate record."""
+    return [
+        ProvenanceGap(
+            field=field,
+            reason=ProvenanceGapReason.not_applicable_single_measurement,
+            note=_SINGLE_REPLICATE_NOTE,
+        )
+        for field in (
+            "environment_response_uncertainty",
+            "environment_response_uncertainty_type",
+            "environment_response_se",
+        )
+    ]
+
 
 #: The typed absence a library row with no ``_<barcode>`` suffix is served with (#524):
 #: the GSE186866 gene column is the release's only barcode source.
@@ -1087,21 +1128,21 @@ def table_s1_solvent(token: str) -> Solvent | None:
 
 
 _PAIRED_UNITS = (
-    "log2((TMM-normalized CPM of the inhibitor replicate + 1) / (mean TMM-normalized "
-    "CPM of the SAME CG batch's inhibitor-free control columns + 1)), mean of 3 "
-    "biological replicates; TMM factors (edgeR 3.26.8 calcNormFactors defaults) "
-    "computed per condition over its replicates and paired controls; the 1 CPM "
-    "pseudocount is a loader choice the paper does not state; recomputed from the GEO "
-    "GSE186866 raw up-tag counts, NOT the paper's edgeR glmQLFit logFC"
+    "log2((TMM-normalized CPM of ONE inhibitor biological replicate + 1) / (mean "
+    "TMM-normalized CPM of the SAME CG batch's inhibitor-free control columns + 1)); "
+    "TMM factors (edgeR 3.26.8 calcNormFactors defaults) computed per condition over "
+    "its 3 replicates and their paired controls; the 1 CPM pseudocount is a loader "
+    "choice the paper does not state; recomputed from the GEO GSE186866 raw up-tag "
+    "counts, NOT the paper's edgeR glmQLFit logFC"
 )
 _POOLED_UNITS = (
-    "log2((TMM-normalized CPM of the inhibitor replicate + 1) / (mean TMM-normalized "
-    "CPM of all 16 inhibitor-free control columns + 1)), mean of 3 biological "
-    "replicates; pooled rather than batch-matched because the paper analyzed this "
-    "compound unpaired; TMM factors (edgeR 3.26.8 calcNormFactors defaults) computed "
-    "over its replicates and the 16 controls; the 1 CPM pseudocount is a loader choice "
-    "the paper does not state; recomputed from the GEO GSE186866 raw up-tag counts, NOT "
-    "the paper's edgeR glmQLFit logFC"
+    "log2((TMM-normalized CPM of ONE inhibitor biological replicate + 1) / (mean "
+    "TMM-normalized CPM of all 16 inhibitor-free control columns + 1)); pooled rather "
+    "than batch-matched because the paper analyzed this compound unpaired; TMM factors "
+    "(edgeR 3.26.8 calcNormFactors defaults) computed over its 3 replicates and the 16 "
+    "controls; the 1 CPM pseudocount is a loader choice the paper does not state; "
+    "recomputed from the GEO GSE186866 raw up-tag counts, NOT the paper's edgeR "
+    "glmQLFit logFC"
 )
 
 
@@ -1326,10 +1367,12 @@ class CompoundIdentityGap(BaseModel):
 
 
 class DropLog(BaseModel):
-    """Every released cell of a build: stored, not a value, or dropped by a rule.
+    """Every released (row, replicate column) of a build: stored, not a value, or dropped.
 
     ``source_records`` = ``kept_records`` + the ``not_a_value`` cells +
     ``dropped_records``, and ``dropped_records`` is the sum of the rules.
+    ``stored_by_replicate`` is the stored records per replicate position (the ``rep<n>``
+    of the column label), which sum to ``kept_records``.
     """
 
     dataset: str
@@ -1339,6 +1382,7 @@ class DropLog(BaseModel):
     rules: list[DropRule]
     not_a_value: list[NotAValue] = []
     compound_identity_gaps: list[CompoundIdentityGap] = []
+    stored_by_replicate: dict[str, int] = {}
 
 
 class LibraryRows(BaseModel):
@@ -1586,18 +1630,24 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         return _POOLED_UNITS if compound in UNPAIRED_COMPOUND_TOKENS else _PAIRED_UNITS
 
     def _phenotype(
-        self, compound: str, response: float, sd: float
+        self, compound: str, response: float, replicate_id: str
     ) -> EnvironmentResponsePhenotype:
-        """One log2-ratio response with its across-replicate sample SD."""
+        """One biological replicate's log2-ratio response, n = 1, no dispersion.
+
+        ``replicate_id`` is the release's own count-column label
+        (``<token>_CG<batch>_rep<n>``), which names the culture and its batch.
+        """
         return EnvironmentResponsePhenotype(
             measurement_type=READOUT.value,
             assay_type=ASSAY.value,
             environment_response=response,
-            environment_response_uncertainty=sd,
-            environment_response_uncertainty_type=UncertaintyType.sample_sd,
-            n_samples=N_REPLICATES.value,
+            environment_response_uncertainty=None,
+            environment_response_uncertainty_type=None,
+            n_samples=1,
             sample_unit=SampleUnit.biological_replicate,
+            replicate_id=replicate_id,
             units=self._units(compound),
+            provenance_gaps=_single_replicate_gaps(),
         )
 
     def _genotype(
@@ -1644,7 +1694,8 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
             raise RuntimeError("no ControlN_CG* columns found in GSE186866 matrix")
         controls = [c for cols in control_by_batch.values() for c in cols]
 
-        source_records = len(df) * len(compound_cols)
+        n_replicate_columns = sum(len(cols) for cols in compound_cols.values())
+        source_records = len(df) * n_replicate_columns
         compounds = sorted(compound_cols)
         undosed = sorted(set(compounds) - set(TABLE_S1_DOSES))
         if undosed:
@@ -1663,7 +1714,7 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
                     "systematic_gene_name a typed gap), which the schema does not have "
                     "yet. Items are the gene column as released"
                 ),
-                n_records=len(library.not_an_orf) * len(compounds),
+                n_records=len(library.not_an_orf) * n_replicate_columns,
                 items=library.not_an_orf,
             )
         ]
@@ -1672,10 +1723,11 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
                 rule="every_count_of_the_row_is_missing",
                 description=(
                     "every count column of this library row is missing (NaN) in the "
-                    "release, so the row holds no value in any condition; it is counted "
-                    "here and is not a record. Items are the gene column as released"
+                    "release, so the row holds no value in any replicate column; it is "
+                    "counted here (one cell per inhibitor replicate column) and is not "
+                    "a record. Items are the gene column as released"
                 ),
-                n_cells=len(library.every_count_missing) * len(compounds),
+                n_cells=len(library.every_count_missing) * n_replicate_columns,
                 items=library.every_count_missing,
             )
         ]
@@ -1712,8 +1764,9 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         os.makedirs(self.processed_dir, exist_ok=True)
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         idx = 0
-        missing_cells: list[str] = []
+        missing_records: list[str] = []
         stored_by_token: dict[str, int] = {}
+        stored_by_replicate: dict[str, int] = {}
         normalization: dict[str, TmmFactors] = {}
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for compound in tqdm(compounds, desc="Vanacloig conditions"):
@@ -1746,6 +1799,8 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
                 )
                 tmm_cpm = kept_counts[:, member_idx] / effective * 1e6
                 position = {column: i for i, column in enumerate(members)}
+                # One value per (row, inhibitor replicate column): the replicate's own
+                # TMM-CPM over the mean of its paired controls. Each is its own record.
                 log_rep = np.column_stack(
                     [
                         np.log2(tmm_cpm[:, position[c]] + CPM_PRIOR)
@@ -1756,57 +1811,71 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
                         for c in cols
                     ]
                 )
-                response = log_rep.mean(axis=1)
-                sd = log_rep.std(axis=1, ddof=1)
-                # A cell with a missing (source NaN) replicate or paired-control count
-                # has no value the method defines. A cell whose three replicate counts
-                # are all 0 is stored: its value is the log2 of the CPM prior ratio and
-                # its sample SD is exactly 0.
-                missing = np.isnan(kept_counts[:, member_idx]).any(axis=1)
-                missing_cells.extend(
-                    f"{library.systematic[row]}:{compound}"
-                    for row in np.flatnonzero(missing)
+                # A replicate record with a missing (source NaN) count of its own or of
+                # one of its paired controls has no value the method defines; its
+                # sibling replicates are stored.
+                missing = np.column_stack(
+                    [
+                        np.isnan(
+                            kept_counts[:, [col_idx[k] for k in [c, *paired[c]]]]
+                        ).any(axis=1)
+                        for c in cols
+                    ]
+                )
+                missing_records.extend(
+                    f"{library.systematic[row]}:{cols[j]}"
+                    for row, j in zip(*np.nonzero(missing), strict=True)
                 )
                 stored_by_token[compound] = int((~missing).sum())
+                replicate_position = {
+                    c: f"rep{_SAMPLE_RE.match(c).group('rep')}"  # type: ignore[union-attr]  # every column matched above
+                    for c in cols
+                }
                 environment = self._environment(compound)
                 reference = self._reference(compound)
                 for row in range(n_rows):
-                    if missing[row]:
-                        continue
-                    experiment = StrainEnvironmentResponseExperiment(
-                        dataset_name=self.name,
-                        genotype=self._genotype(
-                            library.systematic[row],
-                            library.perturbed[row],
-                            library.barcode[row],
-                        ),
-                        environment=environment,
-                        phenotype=self._phenotype(
-                            compound, float(response[row]), float(sd[row])
-                        ),
+                    genotype = self._genotype(
+                        library.systematic[row],
+                        library.perturbed[row],
+                        library.barcode[row],
                     )
-                    txn.put(
-                        f"{idx}".encode(),
-                        self._intern_record(experiment, reference, publication, itxn),
-                    )
-                    idx += 1
+                    for j, column in enumerate(cols):
+                        if missing[row, j]:
+                            continue
+                        experiment = StrainEnvironmentResponseExperiment(
+                            dataset_name=self.name,
+                            genotype=genotype,
+                            environment=environment,
+                            phenotype=self._phenotype(
+                                compound, float(log_rep[row, j]), column
+                            ),
+                        )
+                        txn.put(
+                            f"{idx}".encode(),
+                            self._intern_record(
+                                experiment, reference, publication, itxn
+                            ),
+                        )
+                        idx += 1
+                        rep = replicate_position[column]
+                        stored_by_replicate[rep] = stored_by_replicate.get(rep, 0) + 1
         env.close()
         interned_env.close()
 
         rules.append(
             DropRule(
-                rule="a_count_the_cell_uses_is_missing",
+                rule="a_count_the_record_uses_is_missing",
                 scope="cell",
                 description=(
-                    "one of the counts this (strain, compound) cell is computed from, a "
-                    "replicate or one of its paired controls, is a source NaN in the "
-                    "release; the paper's per-compound edgeR fit permits no NA count and "
-                    "its design is three replicates against the paired controls, so the "
-                    "cell has no value the method defines, while the strain's other "
-                    "cells are stored. Items are '<ORF>:<token>'"
+                    "one of the counts this (strain, replicate column) record is "
+                    "computed from, the replicate's own or one of its paired controls', "
+                    "is a source NaN in the release; edgeR permits no NA count and the "
+                    "value is the replicate over its paired controls, so the record has "
+                    "no value the method defines, while the strain's sibling replicates "
+                    "and other conditions are stored. Items are '<ORF>:<column>'"
                 ),
-                n_records=len(missing_cells),
-                items=missing_cells,
+                n_records=len(missing_records),
+                items=missing_records,
             )
         )
         n_not_a_value = sum(entry.n_cells for entry in not_a_value)
@@ -1821,6 +1890,7 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
                 gap.model_copy(update={"n_records": stored_by_token[gap.token]})
                 for gap in compound_identity_gaps
             ],
+            stored_by_replicate=dict(sorted(stored_by_replicate.items())),
         )
         with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as handle:
             handle.write(drop_log.model_dump_json(indent=2))

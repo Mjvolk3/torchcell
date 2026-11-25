@@ -123,7 +123,8 @@
 <span class="sd">the proteomes of the whole *S. cerevisiae* (S288C) haploid (MATa) gene-deletion</span>
 <span class="sd">collection with restored prototrophy, by an adapted microflow-SWATH-MS (DIA)</span>
 <span class="sd">approach. ``ProteomeMessner2023Dataset`` ingests the authors' processed protein</span>
-<span class="sd">matrix and maps each knockout strain to ``ProteinAbundancePhenotype`` (WS9).</span>
+<span class="sd">matrix and maps each knockout strain and each HIS3 control culture to</span>
+<span class="sd">``ProteinAbundancePhenotype`` (WS9).</span>
 
 <span class="sd">Data (mirror-once + hash-pin). The curated processed matrix is deposited ONLY on</span>
 <span class="sd">Mendeley Data (doi:10.17632/w8jtmnszd9.1); PRIDE/MassIVE holds only the 74.8 GB raw</span>
@@ -143,17 +144,41 @@
 
 <span class="sd">Structure sourced from the paper (STAR Methods, OCR'd mirror):</span>
 
-<span class="sd">- **Single-replicate KOs.** "Strains were not measured in replicates." Each of the</span>
-<span class="sd">  4,699 KO strains is ONE measurement, so per-strain ``n_replicates = 1`` and the</span>
-<span class="sd">  per-strain standard error is undefined (``protein_abundance_se = None``).</span>
-<span class="sd">- **388-replicate WT reference.** The control is the his3D::kanMX strain complemented</span>
-<span class="sd">  by heterologous HIS3 expression (``sampletype == "HIS3"``, ``ORF == YOR202W``),</span>
-<span class="sd">  measured 388 times across 57 batches. We aggregate those to a per-protein</span>
-<span class="sd">  mean + standard error (n = number of WT samples in which the protein was measured),</span>
-<span class="sd">  giving ONE shared reference profile whose SE IS defined.</span>
-<span class="sd">- **Duplicate strains kept per-instance.** 145 ORFs have &gt;1 deletion strain "of</span>
-<span class="sd">  different origins" (141 duplicated, 4 triplicated); the paper analyses each strain</span>
-<span class="sd">  independently, so we emit one experiment per KO SAMPLE (4,699 records), not per ORF.</span>
+<span class="sd">- **One record per released sample (per-replicate policy, #1178 / #1171).** Every</span>
+<span class="sd">  ``ko`` and every ``HIS3`` column of the matrix is ONE culture in its own well (0 of</span>
+<span class="sd">  the 5,087 share a plate and well), and each is its own record: 4,699 KO records then</span>
+<span class="sd">  388 control records, 5,087 in all. ``replicate_id`` is the column's ``Filename``</span>
+<span class="sd">  verbatim (the release's own sample label), ``n_replicates = 1`` per protein,</span>
+<span class="sd">  ``protein_abundance_se = None`` with a ``ProvenanceGap`` of reason</span>
+<span class="sd">  ``not_applicable_single_measurement``: one measurement has no dispersion.</span>
+<span class="sd">- **Single-replicate KOs.** "Strains were not measured in replicates." (paper.md L579.)</span>
+<span class="sd">- **The 388 HIS3 controls are biological replicates and are records.** "The control</span>
+<span class="sd">  strain (388 replicates) is the complemented his3D deletion strain, haploid from a</span>
+<span class="sd">  BY4741 prototrophic deletion collection. This control strain was introduced in 7</span>
+<span class="sd">  positions on each plate: A11, B8, C5, D2, F11, G8, H5." (paper.md L507); Figure 1D</span>
+<span class="sd">  calls them "the biological replicates of the wild-type strain" (L69). Their genotype</span>
+<span class="sd">  is the library's own ``his3D::kanMX4`` strain (metadata ``ORF == YOR202W``): Mulleder</span>
+<span class="sd">  2016 (this paper's ref 15) names "the complemented deletion strains his3D::kanMX4 and</span>
+<span class="sd">  met17D::kanMX4" (its paper.md L379), complemented by the library's "minichromosome</span>
+<span class="sd">  carrying the genes HIS3, LEU2, URA3 and MET17" (its L487), which every strain of the</span>
+<span class="sd">  collection carries. So a control record is ``KanMxDeletionPerturbation(YOR202W)``</span>
+<span class="sd">  under the same convention as every KO record (the minichromosome is modeled on no</span>
+<span class="sd">  record; see below); no ``ko`` sample deletes YOR202W.</span>
+<span class="sd">- **The reference is a summary, and it says so.** ``phenotype_reference`` is the</span>
+<span class="sd">  per-protein mean + sample-SD standard error over the 388 HIS3 columns (n = number of</span>
+<span class="sd">  HIS3 samples in which the protein was measured), restricted to the proteins the</span>
+<span class="sd">  record measured, with ``replicate_id = None``. The 388 cultures it summarizes are</span>
+<span class="sd">  themselves records.</span>
+<span class="sd">- **Duplicate strains kept per-instance.** The paper states "for 145 ORFs, more than one</span>
+<span class="sd">  strain exists in the library (these strains have different origins). 141 gene</span>
+<span class="sd">  deletions are duplicated and 4 triplicated" (L579), which is exactly the pinned</span>
+<span class="sd">  metadata read case-sensitively. Upper-cased, ``YML009C`` and ``YML009c`` (both</span>
+<span class="sd">  labeled MRPL39 in their Filenames) join, so 146 ORFs carry 2 or 3 KO samples</span>
+<span class="sd">  (142 x 2, 4 x 3) over 4,549 ORFs. Each strain is one record, told apart by its</span>
+<span class="sd">  ``replicate_id`` (the ``Filename``).</span>
+<span class="sd">- **Not records: the 389 ``qc`` columns.** They are repeat injections of a pooled digest</span>
+<span class="sd">  ("QC samples for repeat injections were prepared by pooling digested and cleaned-up</span>
+<span class="sd">  samples from 4 different 96-well plates", L525), a technical control of no strain.</span>
 <span class="sd">- **Protein keys are the released UniProt accessions.** ``protein_abundance`` is keyed</span>
 <span class="sd">  by the matrix's ``Protein.Group`` accession verbatim (``P00410``, the mito-encoded</span>
 <span class="sd">  COX2, included). No annotation is consulted (#1045, 2026.10.12): the previous build</span>
@@ -218,6 +243,7 @@
     <span class="n">SGD_S288C_R64</span><span class="p">,</span>
     <span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProvenanceGap</span><span class="p">,</span> <span class="n">ProvenanceGapReason</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -237,6 +263,14 @@
 <span class="c1"># Sample classes in yeast5k_metadata.csv "sampletype".</span>
 <span class="n">_KO</span> <span class="o">=</span> <span class="s2">"ko"</span>
 <span class="n">_WT</span> <span class="o">=</span> <span class="s2">"HIS3"</span>
+
+<span class="n">_SINGLE_SAMPLE_SE_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"a record is ONE released sample (one culture, one acquisition): 'Strains were not "</span>
+    <span class="s2">"measured in replicates.' (paper.md L579), and each of the 388 HIS3 controls is one "</span>
+    <span class="s2">"of 'the biological replicates of the wild-type strain' (L69). One measurement has "</span>
+    <span class="s2">"no dispersion of its own; the per-protein SE over the 388 controls is what "</span>
+    <span class="s2">"phenotype_reference carries"</span>
+<span class="p">)</span>
 
 <span class="c1"># Systematic ORF: nuclear (Y..) for KO deletions; protein ids also include mito</span>
 <span class="c1"># (Q\d{4}, e.g. COX2 = Q0250) after UniProt-&gt;ORF mapping.</span>
@@ -353,7 +387,9 @@
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset.html#torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset">[docs]</a>
 <span class="nd">@register_dataset</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ProteomeMessner2023Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Microflow-SWATH-MS proteome of the yeast gene-KO collection (4,699 strains)."""</span>
+<span class="w">    </span><span class="sd">"""Microflow-SWATH-MS proteome of the yeast gene-KO collection: one record per</span>
+<span class="sd">    released sample (4,699 KO strains and 388 HIS3 control cultures, 5,087 records).</span>
+<span class="sd">    """</span>
 
     <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
 
@@ -421,7 +457,7 @@
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset.html#torchcell.datasets.scerevisiae.messner2023.ProteomeMessner2023Dataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Aggregate the proteome matrix into per-strain experiments and write LMDB."""</span>
+<span class="w">        </span><span class="sd">"""Write one experiment per released KO and HIS3 sample column to LMDB."""</span>
         <span class="n">verify_raw_files</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span>
             <span class="p">{</span><span class="n">MATRIX_FILENAME</span><span class="p">:</span> <span class="n">MATRIX_SHA256</span><span class="p">,</span> <span class="n">METADATA_FILENAME</span><span class="p">:</span> <span class="n">METADATA_SHA256</span><span class="p">},</span>
@@ -447,7 +483,8 @@
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Messner matrix missing the HIS3 (WT) control columns"</span><span class="p">)</span>
 
         <span class="c1"># WT reference: per-protein mean / SE / n across the 388 WT replicates</span>
-        <span class="c1"># (non-NaN only). This one profile is shared by every KO record.</span>
+        <span class="c1"># (non-NaN only). This one summary is shared by every record; the 388 control</span>
+        <span class="c1"># cultures it summarizes are records too (written after the KOs, below).</span>
         <span class="n">wt</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">[</span><span class="n">wt_cols</span><span class="p">]</span>
         <span class="n">wt_mean</span> <span class="o">=</span> <span class="n">wt</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">wt_std</span> <span class="o">=</span> <span class="n">wt</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -469,34 +506,39 @@
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">released_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">ko_cols</span><span class="p">:</span>
-            <span class="c1"># Metadata ORF casing is inconsistent (e.g. "YML009c", "YAL043C-a");</span>
-            <span class="c1"># systematic names are uppercase -- normalize, never drop on case alone.</span>
-            <span class="n">deletion_orf</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">by_filename</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"ORF"</span><span class="p">])</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">_NUCLEAR_ORF_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">deletion_orf</span><span class="p">):</span>
-                <span class="c1"># no ORF form: the released-identifier leaf, verbatim (0 of 4,699)</span>
-                <span class="n">released_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">deletion_orf</span><span class="p">)</span>
-            <span class="n">series</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">[</span><span class="n">filename</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>  <span class="c1"># measured proteins only (noimpute)</span>
-            <span class="n">abundance</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">o</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">series</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-            <span class="n">no_wt</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">abundance</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">[</span><span class="s2">"abundance"</span><span class="p">]))</span>
-            <span class="k">if</span> <span class="n">no_wt</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">MissingWildTypeReferenceError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Messner: KO sample </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">deletion_orf</span><span class="si">}</span><span class="s2">) measured "</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">no_wt</span><span class="p">)</span><span class="si">}</span><span class="s2"> protein(s) no WT sample measured (e.g. </span><span class="si">{</span><span class="n">no_wt</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">); "</span>
-                    <span class="s2">"the reference has no value for them"</span>
+        <span class="c1"># One record per released sample: the KO strains first (their order and</span>
+        <span class="c1"># indices are unchanged from the per-strain build), then the HIS3 controls.</span>
+        <span class="k">for</span> <span class="n">sampletype</span><span class="p">,</span> <span class="n">filenames</span> <span class="ow">in</span> <span class="p">((</span><span class="n">_KO</span><span class="p">,</span> <span class="n">ko_cols</span><span class="p">),</span> <span class="p">(</span><span class="n">_WT</span><span class="p">,</span> <span class="n">wt_cols</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">:</span>
+                <span class="c1"># Metadata ORF casing is inconsistent (e.g. "YML009c", "YAL043C-a");</span>
+                <span class="c1"># systematic names are uppercase -- normalize, never drop on case alone.</span>
+                <span class="n">deletion_orf</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">by_filename</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"ORF"</span><span class="p">])</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">_NUCLEAR_ORF_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">deletion_orf</span><span class="p">):</span>
+                    <span class="c1"># no ORF form: the released-identifier leaf, verbatim (0 of 5,087)</span>
+                    <span class="n">released_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">deletion_orf</span><span class="p">)</span>
+                <span class="n">series</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">[</span><span class="n">filename</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>  <span class="c1"># measured proteins only (noimpute)</span>
+                <span class="n">abundance</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">o</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">series</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+                <span class="n">no_wt</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">abundance</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">[</span><span class="s2">"abundance"</span><span class="p">]))</span>
+                <span class="k">if</span> <span class="n">no_wt</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">MissingWildTypeReferenceError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"Messner: KO sample </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">deletion_orf</span><span class="si">}</span><span class="s2">) measured "</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">no_wt</span><span class="p">)</span><span class="si">}</span><span class="s2"> protein(s) no WT sample measured (e.g. "</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">no_wt</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">); the reference has no value for them"</span>
+                    <span class="p">)</span>
+                <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">"filename"</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>
+                        <span class="s2">"sampletype"</span><span class="p">:</span> <span class="n">sampletype</span><span class="p">,</span>
+                        <span class="s2">"orf"</span><span class="p">:</span> <span class="n">deletion_orf</span><span class="p">,</span>
+                        <span class="s2">"gene"</span><span class="p">:</span> <span class="n">deletion_orf</span><span class="p">,</span>
+                        <span class="s2">"abundance"</span><span class="p">:</span> <span class="n">abundance</span><span class="p">,</span>
+                    <span class="p">}</span>
                 <span class="p">)</span>
-            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">{</span>
-                    <span class="s2">"filename"</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>
-                    <span class="s2">"orf"</span><span class="p">:</span> <span class="n">deletion_orf</span><span class="p">,</span>
-                    <span class="s2">"gene"</span><span class="p">:</span> <span class="n">deletion_orf</span><span class="p">,</span>
-                    <span class="s2">"abundance"</span><span class="p">:</span> <span class="n">abundance</span><span class="p">,</span>
-                <span class="p">}</span>
-            <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Messner: </span><span class="si">%d</span><span class="s2"> KO strains, WT reference with </span><span class="si">%d</span><span class="s2"> proteins, </span><span class="si">%d</span><span class="s2"> KO ORFs on the "</span>
-            <span class="s2">"released-identifier leaf"</span><span class="p">,</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
+            <span class="s2">"Messner: </span><span class="si">%d</span><span class="s2"> KO strains and </span><span class="si">%d</span><span class="s2"> HIS3 control samples, WT reference with </span><span class="si">%d</span><span class="s2"> "</span>
+            <span class="s2">"proteins, </span><span class="si">%d</span><span class="s2"> ORFs on the released-identifier leaf"</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">ko_cols</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">wt_cols</span><span class="p">),</span>
             <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">[</span><span class="s2">"abundance"</span><span class="p">]),</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">released_names</span><span class="p">),</span>
         <span class="p">)</span>
@@ -504,6 +546,7 @@
             <span class="p">[</span>
                 <span class="p">{</span>
                     <span class="s2">"filename"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"filename"</span><span class="p">],</span>
+                    <span class="s2">"sampletype"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"sampletype"</span><span class="p">],</span>
                     <span class="s2">"orf"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span>
                     <span class="s2">"gene"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">],</span>
                     <span class="s2">"n_proteins"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"abundance"</span><span class="p">]),</span>
@@ -529,7 +572,7 @@
                 <span class="p">)</span>
                 <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Messner proteome experiments to LMDB"</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></div>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Messner proteome sample records to LMDB"</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ProteomeMessner2023Dataset.preprocess_raw">
@@ -548,7 +591,11 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
         <span class="n">ProteinAbundanceExperiment</span><span class="p">,</span> <span class="n">ProteinAbundanceExperimentReference</span><span class="p">,</span> <span class="n">Publication</span>
     <span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Build the ProteinAbundance experiment/reference/publication for one strain."""</span>
+<span class="w">        </span><span class="sd">"""Build the ProteinAbundance experiment/reference/publication for one sample.</span>
+
+<span class="sd">        ``row`` is one released ``ko`` or ``HIS3`` column; a control's ``orf`` is the</span>
+<span class="sd">        metadata ``YOR202W``, so its genotype is the library's his3D::kanMX4 deletion.</span>
+<span class="sd">        """</span>
         <span class="c1"># Background = S288C BY4741 MATa deletion collection with restored prototrophy</span>
         <span class="c1"># (Mulleder); the prototrophy-restoring marker is not yet modeled as a</span>
         <span class="c1"># GeneAddition here (as in the Mulleder loader).</span>
@@ -563,16 +610,24 @@
         <span class="c1"># amino acids + 2% glucose, restated by this paper and deferred by it to</span>
         <span class="c1"># Mulleder 2016 (its ref 15), both quoted on ``SM``.</span>
         <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">media</span><span class="o">=</span><span class="n">SM</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">))</span>
-        <span class="c1"># Single-replicate KO: n=1 per protein, per-strain SE undefined.</span>
+        <span class="c1"># One released sample: its own values, n = 1 per protein, no dispersion.</span>
         <span class="n">abundance</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"abundance"</span><span class="p">]</span>
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">ProteinAbundancePhenotype</span><span class="p">(</span>
             <span class="n">protein_abundance</span><span class="o">=</span><span class="n">abundance</span><span class="p">,</span>
             <span class="n">protein_abundance_se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">n_replicates</span><span class="o">=</span><span class="p">{</span><span class="n">orf</span><span class="p">:</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">abundance</span><span class="p">},</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">abundance</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
             <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+            <span class="n">replicate_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"filename"</span><span class="p">],</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">ProvenanceGap</span><span class="p">(</span>
+                    <span class="n">field</span><span class="o">=</span><span class="s2">"protein_abundance_se"</span><span class="p">,</span>
+                    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_applicable_single_measurement</span><span class="p">,</span>
+                    <span class="n">note</span><span class="o">=</span><span class="n">_SINGLE_SAMPLE_SE_NOTE</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">],</span>
         <span class="p">)</span>
-        <span class="c1"># Reference = the 388-replicate WT baseline RESTRICTED to the proteins this</span>
-        <span class="c1"># strain measured (as in the Zelezniak metabolite loader). Keeps reference keys</span>
+        <span class="c1"># Reference = the 388-replicate WT summary RESTRICTED to the proteins this</span>
+        <span class="c1"># sample measured (as in the Zelezniak metabolite loader). Keeps reference keys</span>
         <span class="c1"># a subset-equal of the experiment's and every reference value a real WT</span>
         <span class="c1"># measurement; all 1,850 proteins have WT coverage, so every exp key resolves.</span>
         <span class="n">ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span>
@@ -581,6 +636,7 @@
             <span class="n">protein_abundance_se</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">ref</span><span class="p">[</span><span class="s2">"se"</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">abundance</span><span class="p">},</span>
             <span class="n">n_replicates</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">ref</span><span class="p">[</span><span class="s2">"n"</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">abundance</span><span class="p">},</span>
             <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+            <span class="n">replicate_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">experiment</span> <span class="o">=</span> <span class="n">ProteinAbundanceExperiment</span><span class="p">(</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>

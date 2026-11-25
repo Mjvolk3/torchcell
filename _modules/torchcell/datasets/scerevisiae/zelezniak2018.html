@@ -125,16 +125,22 @@
 
 <span class="sd">- ``ProteomeZelezniak2018Dataset`` -- the quantitative PROTEOME of 97 kinase-deletion</span>
 <span class="sd">  strains (plus WT) by SWATH-MS (data-independent acquisition). We ingest the authors'</span>
-<span class="sd">  processed per-strain matrix (``proteins_dataset.data_prep.tsv``): a long-format table</span>
-<span class="sd">  of batch-corrected (SVA-adjusted) label-free protein signal per (protein, sample, KO</span>
-<span class="sd">  strain, replicate), covering 726 proteins. We aggregate the replicate samples of each</span>
-<span class="sd">  knockout strain to a per-protein mean + standard error, mapping to</span>
-<span class="sd">  ``ProteinAbundancePhenotype`` (WS9): ``protein_abundance = {protein_ORF -&gt; mean log</span>
-<span class="sd">  signal}`` with ``measurement_type = "swath_ms_label_free_log_signal_sva"``. The parent</span>
-<span class="sd">  **WT** strain (``KO_ORF == "WT"``) supplies the reference profile. Every protein has</span>
-<span class="sd">  &gt;=2 replicate samples per strain, so the standard error is always defined. A blank or</span>
-<span class="sd">  non-finite value or a repeated (protein, strain, replicate) row refuses the build (none</span>
-<span class="sd">  occurs in the pinned release), since each would make ``n``, the mean or the SE wrong.</span>
+<span class="sd">  processed matrix (``proteins_dataset.data_prep.tsv``): a long-format table of</span>
+<span class="sd">  batch-corrected (SVA-adjusted) label-free protein signal per (protein, sample, KO</span>
+<span class="sd">  strain, replicate), covering 726 proteins in each of 364 samples. ONE RECORD PER</span>
+<span class="sd">  RELEASED SAMPLE (issue #1174, policy #1178): each sample is its own</span>
+<span class="sd">  ``ProteinAbundancePhenotype`` (WS9) with ``protein_abundance = {protein_ORF -&gt; that</span>
+<span class="sd">  sample's log signal}`` verbatim, ``n_replicates = 1`` per protein, no SE map (a typed</span>
+<span class="sd">  ``not_applicable_single_measurement`` gap instead), ``replicate_id`` = the release's</span>
+<span class="sd">  own ``replicate`` label and ``measurement_type =</span>
+<span class="sd">  "swath_ms_label_free_log_signal_sva"``. 352 knockout samples over 97 strains plus the</span>
+<span class="sd">  12 parent **WT** samples (``KO_ORF == "WT"``), stored with an empty genotype. The</span>
+<span class="sd">  reference profile is the WT summary (mean, SD / sqrt(n), n over the 12 WT samples,</span>
+<span class="sd">  ``replicate_id=None``). Before 2026-11-24 the loader stored one mean + SE record per</span>
+<span class="sd">  knockout strain (97 records) and kept the WT samples only inside the reference. A</span>
+<span class="sd">  blank or non-finite value, a repeated (protein, strain, replicate) row, or a</span>
+<span class="sd">  (strain, replicate) label that names two samples refuses the build (none occurs in</span>
+<span class="sd">  the pinned release).</span>
 
 <span class="sd">- ``MetaboliteZelezniak2018Dataset`` -- the targeted central-carbon/amino-acid</span>
 <span class="sd">  METABOLOME of the same 95 kinase-KO strains (plus a measured WT) by LC-SRM. The file</span>
@@ -143,22 +149,40 @@
 <span class="sd">  three LC-SRM protocols (``ZELEZNIAK_METABOLITE_PROTOCOLS``) that do not share a unit:</span>
 <span class="sd">  Dataset 1 is an UNCALIBRATED batch-corrected SRM signal measured on the proteomics</span>
 <span class="sd">  cultures, Datasets 2 and 3 are externally calibrated values measured on separately</span>
-<span class="sd">  re-grown cultures with different chromatography. One record is written per (strain,</span>
-<span class="sd">  protocol): a per-metabolite mean + standard error over that protocol's replicates,</span>
-<span class="sd">  mapping to ``MetabolitePhenotype`` (WS9) with the protocol's own ``measurement_type``,</span>
-<span class="sd">  and the reference is the WT measured under the SAME protocol, so no record or</span>
-<span class="sd">  reference ever averages or compares values from two protocols (issue #595). This is</span>
-<span class="sd">  the first dataset to populate ``target_metabolite_ids`` (metabolite -&gt; Yeast9</span>
-<span class="sd">  ``s_NNNN``), sourced from ``YeastGEM`` (never invented), enabling constraint-based-model</span>
-<span class="sd">  linkage.</span>
+<span class="sd">  re-grown cultures with different chromatography. ONE RECORD PER (protocol, strain,</span>
+<span class="sd">  released biological replicate) (issue #1173, policy #1178): 187 knockout records and</span>
+<span class="sd">  5 WT records (protocol 1 x1, protocol 2 x1, protocol 3 x3), each the verbatim values</span>
+<span class="sd">  of one replicate, ``n_replicates = 1``, no SE map (typed gap), ``replicate_id`` = the</span>
+<span class="sd">  release's ``replicate`` label, with the protocol's own ``measurement_type``. The</span>
+<span class="sd">  reference is the summary of the WT measured under the SAME protocol, so no record or</span>
+<span class="sd">  reference ever averages or compares values from two protocols (issue #595). Before</span>
+<span class="sd">  2026-11-24 the loader stored one mean + SE record per (strain, protocol) (129</span>
+<span class="sd">  records). This is the first dataset to populate ``target_metabolite_ids`` (metabolite</span>
+<span class="sd">  -&gt; Yeast9 ``s_NNNN``), sourced from ``YeastGEM`` (never invented), enabling</span>
+<span class="sd">  constraint-based-model linkage.</span>
 <span class="sd">    - Columns (differ from the Zenodo README): ``metabolite_id, kegg_id, official_name,</span>
 <span class="sd">      dataset, genotype, replicate, value``. ``genotype`` is the strain (systematic</span>
 <span class="sd">      kinase ORF, or literal ``WT``); NOT a KO_ORF column. ``metabolite_id`` is a</span>
 <span class="sd">      BiGG-style id (50 total); ~5 are co-elution merges joined with ``;`` (e.g.</span>
 <span class="sd">      ``3pg;2pg``, ``ala-L;ala-B``, ``g6p;f6p;g6p-B``) which we KEEP verbatim as dict</span>
 <span class="sd">      keys (honest to source; resolved via the FIRST sub-id). ``dataset`` is the protocol</span>
-<span class="sd">      used for generation (1/2/3) and is part of the aggregation key, so</span>
-<span class="sd">      ``n_replicates`` counts one protocol's rows only.</span>
+<span class="sd">      used for generation (1/2/3) and is part of the record key.</span>
+
+<span class="sd">WHAT A REPLICATE IS. The Zenodo ``README.txt`` (raw mirror</span>
+<span class="sd">``torchcell-raw/zelezniakMachineLearningPredicts2018/data/zenodo/README.txt``, sha256</span>
+<span class="sd">``9e301a8b...``) defines the metabolome column as ``replicate - biological replicate``</span>
+<span class="sd">and the proteome columns as ``sample - sample name from the study`` and ``replicate -</span>
+<span class="sd">replicate``. The paper (``REPLICATE_SOURCED_VALUES``) states triplicate cultures per</span>
+<span class="sd">strain and "3 independent cultures" for metabolome Datasets 2 and 3. For the proteome,</span>
+<span class="sd">24 strains (and WT) release more than three samples, named with an ``_1`` / ``_2``</span>
+<span class="sd">suffix on a culture letter (``KL_Try_101_a`` and ``KL_Try_101_a_1``); the release and</span>
+<span class="sd">the paper do not say whether a suffixed sample is a re-grown culture or a re-injection.</span>
+<span class="sd">Measured on the pinned bytes, a suffixed sample is no closer to its same-letter sample</span>
+<span class="sd">than to a different-letter sample of the other suffix group (median Pearson r of the</span>
+<span class="sd">protein-centered profiles 0.228 over 59 same-letter pairs vs 0.259 over 137</span>
+<span class="sd">different-letter pairs), so the data give no sign that it is a repeat injection of one</span>
+<span class="sd">digest; every released sample is a record, and the open question is recorded in the</span>
+<span class="sd">dataset note.</span>
 
 <span class="sd">For both, the background is BY4741 made prototrophic by the pHLUM minichromosome. The</span>
 <span class="sd">proteome ``?download=1`` URL works, but it 403s for the metabolome file, which is fetched</span>
@@ -266,7 +290,12 @@
 <span class="n">ZENODO_CONCEPT_DOI_URL</span> <span class="o">=</span> <span class="s2">"https://doi.org/10.5281/zenodo.1320288"</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_paper_sv</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_paper_sv</span><span class="p">(</span>
+    <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">page</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"STAR Methods, Metabolomics"</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""A ``SourcedValue`` anchored to the mirrored ``paper.md`` by sha256."""</span>
     <span class="k">return</span> <span class="n">SourcedValue</span><span class="p">(</span>
         <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
@@ -275,11 +304,101 @@
             <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
             <span class="n">sha256</span><span class="o">=</span><span class="n">PAPER_MD_SHA256</span><span class="p">,</span>
             <span class="n">method</span><span class="o">=</span><span class="s2">"MinerU OCR of the publisher PDF (mirrored artifact)"</span><span class="p">,</span>
-            <span class="n">page</span><span class="o">=</span><span class="s2">"STAR Methods, Metabolomics"</span><span class="p">,</span>
+            <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="n">quote</span><span class="o">=</span><span class="n">quote</span><span class="p">,</span>
         <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
     <span class="p">)</span>
+
+
+<span class="c1"># The Zenodo record's README, in the RAW mirror</span>
+<span class="c1"># ($DATA_ROOT/torchcell-raw/&lt;citation_key&gt;/data/zenodo/README.txt), fetched 2026-11-24</span>
+<span class="c1"># from https://zenodo.org/api/records/1320289/files/README.txt/content (md5 matches the</span>
+<span class="c1"># record's listing, 31cc2d70...).</span>
+<span class="n">ZENODO_README</span> <span class="o">=</span> <span class="s2">"data/zenodo/README.txt"</span>
+<span class="n">ZENODO_README_SHA256</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"9e301a8bf7a4a46d15e1e57a121909a97bfe2fb011c998483fb28ec0dd39efbd"</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_readme_sv</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A ``SourcedValue`` anchored to the raw-mirrored Zenodo ``README.txt`` by sha256."""</span>
+    <span class="k">return</span> <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="n">ZENODO_README</span><span class="p">,</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">ZENODO_README_SHA256</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">"Zenodo record 1320289 README.txt, raw mirror"</span><span class="p">,</span>
+            <span class="n">page</span><span class="o">=</span><span class="s2">"README.txt column descriptions"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">quote</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="c1"># What one released replicate is, per modality (issues #1173, #1174; policy #1178).</span>
+<span class="c1"># Paper quotes audit against the literature mirror, README quotes against the raw mirror.</span>
+<span class="n">REPLICATE_SOURCED_VALUES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"proteome_cultures"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span>
+        <span class="s2">"three cultures per kinase-deletion strain"</span><span class="p">,</span>
+        <span class="s2">"97 of the strains grew in triplicates"</span><span class="p">,</span>
+        <span class="n">page</span><span class="o">=</span><span class="s2">"STAR Methods, Strains and Culture"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"proteome_sample_count"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span>
+        <span class="s2">"397 whole-proteome samples stated; 364 released"</span><span class="p">,</span>
+        <span class="s2">"The measurement of the 97 proteomes mounted to 397 whole-proteome samples "</span>
+        <span class="s2">"(triplicates plus controls)"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"the processed release holds 364 samples (352 knockout + 12 WT); the paper "</span>
+            <span class="s2">"does not identify the other 33, so none is recorded as withdrawn"</span>
+        <span class="p">),</span>
+        <span class="n">page</span><span class="o">=</span><span class="s2">"Results, Kinase Knockout Proteomes Are Dominated by Differential Enzyme "</span>
+        <span class="s2">"Expression"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"proteome_qc_samples"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span>
+        <span class="s2">"QC samples are a pooled digest, not a strain sample"</span><span class="p">,</span>
+        <span class="s2">"External standard quality control (QC) samples were prepared as a mixture of "</span>
+        <span class="s2">"all proteomes and were measured every 8-12 injections."</span><span class="p">,</span>
+        <span class="n">page</span><span class="o">=</span><span class="s2">"STAR Methods, Proteomics"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"dataset1_proteome_replicates_averaged_by_authors_for_modeling"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span>
+        <span class="s2">"the authors average proteome replicates only to pair them with Dataset 1"</span><span class="p">,</span>
+        <span class="s2">"For Dataset 1, replicates of proteomics experiments were averaged per genotype."</span><span class="p">,</span>
+        <span class="n">page</span><span class="o">=</span><span class="s2">"STAR Methods, Statistical Modelling Data Preparation"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"dataset23_biological_replicates"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span>
+        <span class="s2">"Datasets 2 and 3 hold biological replicates"</span><span class="p">,</span>
+        <span class="s2">"For Datasets 2 and 3, where multiple biological replicates were available"</span><span class="p">,</span>
+        <span class="n">page</span><span class="o">=</span><span class="s2">"STAR Methods, Statistical Modelling Data Preparation"</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">README_SOURCED_VALUES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"metabolome_replicate_column"</span><span class="p">:</span> <span class="n">_readme_sv</span><span class="p">(</span>
+        <span class="s2">"metabolome replicate = biological replicate"</span><span class="p">,</span>
+        <span class="s2">"replicate - biological replicate"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"proteome_sample_column"</span><span class="p">:</span> <span class="n">_readme_sv</span><span class="p">(</span>
+        <span class="s2">"proteome sample = the study's sample name"</span><span class="p">,</span>
+        <span class="s2">"sample - sample name from the study"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"proteome_replicate_column"</span><span class="p">:</span> <span class="n">_readme_sv</span><span class="p">(</span>
+        <span class="s2">"proteome replicate = the release's replicate label (kind unstated)"</span><span class="p">,</span>
+        <span class="s2">"replicate - replicate"</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">_SINGLE_REPLICATE_SE_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"a record is ONE released replicate (one proteome sample, or one metabolome "</span>
+    <span class="s2">"culture of one protocol), and one measurement has no dispersion of its own, so "</span>
+    <span class="s2">"there is no standard error to store; the per-strain mean and SE over the records "</span>
+    <span class="s2">"of one strain are a modeling-time derivation"</span>
+<span class="p">)</span>
+<span class="n">_SINGLE_REFERENCE_SE_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"the WT under this protocol is released as one replicate, so the reference summary "</span>
+    <span class="s2">"is that one measurement and has no dispersion"</span>
+<span class="p">)</span>
 
 
 <span class="n">METABOLITE_SOURCED_VALUES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
@@ -336,14 +455,18 @@
     <span class="n">resolve_with</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
         <span class="n">source_uri</span><span class="o">=</span><span class="n">ZENODO_CONCEPT_DOI_URL</span><span class="p">,</span>
         <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
-        <span class="n">method</span><span class="o">=</span><span class="s2">"Zenodo record 1320289 README (not mirrored) or the authors' "</span>
-        <span class="s2">"kinase_metabolism code (https://github.com/zelezniak-lab/kinase_metabolism)"</span><span class="p">,</span>
+        <span class="n">method</span><span class="o">=</span><span class="s2">"the authors' kinase_metabolism code "</span>
+        <span class="s2">"(https://github.com/zelezniak-lab/kinase_metabolism); the Zenodo record "</span>
+        <span class="s2">"1320289 README, raw-mirrored 2026-11-24 (sha256 9e301a8b...), was read and "</span>
+        <span class="s2">"states no unit"</span><span class="p">,</span>
     <span class="p">),</span>
     <span class="n">note</span><span class="o">=</span><span class="p">(</span>
         <span class="s2">"the calibration standards are stated (500 uM to 100 nM serial dilution) and a "</span>
         <span class="s2">"dilution + cell-volume conversion is described for Figures 4F-4H, but neither "</span>
         <span class="s2">"the paper nor metabolites_dataset.data_prep.tsv states the unit of the "</span>
-        <span class="s2">"deposited calibrated value, nor whether that conversion was applied to it"</span>
+        <span class="s2">"deposited calibrated value, nor whether that conversion was applied to it; "</span>
+        <span class="s2">"the Zenodo README describes the column only as 'metabolite signal obtained "</span>
+        <span class="s2">"from SRM-MS/MS experiment, corrected for batch effects'"</span>
     <span class="p">),</span>
 <span class="p">)</span>
 
@@ -441,7 +564,9 @@
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.zelezniak2018.ProteomeZelezniak2018Dataset.html#torchcell.datasets.scerevisiae.zelezniak2018.ProteomeZelezniak2018Dataset">[docs]</a>
 <span class="nd">@register_dataset</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ProteomeZelezniak2018Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""SWATH-MS proteome of the yeast kinase-knockout collection (97 strains)."""</span>
+<span class="w">    </span><span class="sd">"""SWATH-MS proteome of the yeast kinase-knockout collection, one record per released</span>
+<span class="sd">    sample (352 knockout samples over 97 strains plus 12 WT samples).</span>
+<span class="sd">    """</span>
 
     <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
 
@@ -488,16 +613,18 @@
 
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate</span><span class="p">(</span><span class="n">sub</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Aggregate one strain's replicate rows to per-protein mean/se/n dicts.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_rows</span><span class="p">(</span><span class="n">sub</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Refuse one strain's rows unless each is one distinct (protein, replicate) value.</span>
 
-<span class="sd">        ``n`` is the row count per protein, so every row must be one distinct replicate</span>
-<span class="sd">        with a value. A blank value (which pandas would leave out of ``n`` unrecorded)</span>
-<span class="sd">        and a repeated (protein, replicate) id (which would count as an extra replicate</span>
-<span class="sd">        and shrink the SE) both refuse, naming the strain, and so does a non-finite</span>
-<span class="sd">        value (``inf`` passes the blank check but has no mean or SE). Measured on the</span>
-<span class="sd">        pinned release (sha256 ``9ff81ecb...``): 0 blank, 0 non-finite and 0 repeated</span>
-<span class="sd">        (ORF, KO_ORF, replicate) rows of 264,264, so no refusal fires on the real file.</span>
+<span class="sd">        A blank value (which pandas would leave out of ``n`` unrecorded) and a repeated</span>
+<span class="sd">        (protein, replicate) id (which would count as an extra replicate, or put two</span>
+<span class="sd">        values under one replicate record) both refuse, naming the strain, and so does a</span>
+<span class="sd">        non-finite value (``inf`` passes the blank check but has no mean or SE). A</span>
+<span class="sd">        replicate label that names two released samples refuses too, since its record</span>
+<span class="sd">        would mix two samples. Measured on the pinned release (sha256 ``9ff81ecb...``):</span>
+<span class="sd">        0 blank, 0 non-finite and 0 repeated (ORF, KO_ORF, replicate) rows of 264,264,</span>
+<span class="sd">        and the 364 samples map one to one onto 364 (KO_ORF, replicate) labels, so no</span>
+<span class="sd">        refusal fires on the real file.</span>
 <span class="sd">        """</span>
         <span class="n">blank</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="n">sub</span><span class="p">[</span><span class="s2">"value"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">blank</span><span class="p">):</span>
@@ -522,6 +649,23 @@
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">repeated</span><span class="p">[</span><span class="s1">'replicate'</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">; a repeated replicate would count "</span>
                 <span class="s2">"as an extra replicate"</span>
             <span class="p">)</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"replicate"</span><span class="p">)[</span><span class="s2">"sample"</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
+        <span class="n">shared</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[</span><span class="n">samples</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shared</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Zelezniak proteome strain </span><span class="si">{</span><span class="n">strain</span><span class="si">}</span><span class="s2">: replicate </span><span class="si">{</span><span class="n">shared</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> names "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">shared</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2"> samples; one replicate record would mix them"</span>
+            <span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The per-protein mean / SE / n over one strain's samples.</span>
+
+<span class="sd">        This is the AGGREGATE the ``phenotype_reference`` states (the WT summary), not a</span>
+<span class="sd">        record. ``n`` is the row count per protein, so the rows pass ``_check_rows``</span>
+<span class="sd">        first.</span>
+<span class="sd">        """</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_check_rows</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="n">strain</span><span class="p">)</span>
         <span class="n">grp</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"ORF"</span><span class="p">)[</span><span class="s2">"value"</span><span class="p">]</span><span class="o">.</span><span class="n">agg</span><span class="p">([</span><span class="s2">"mean"</span><span class="p">,</span> <span class="s2">"std"</span><span class="p">,</span> <span class="s2">"count"</span><span class="p">])</span>
         <span class="n">abundance</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">se</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -533,16 +677,48 @@
             <span class="n">se</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">orf</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"std"</span><span class="p">])</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span><span class="s2">"abundance"</span><span class="p">:</span> <span class="n">abundance</span><span class="p">,</span> <span class="s2">"se"</span><span class="p">:</span> <span class="n">se</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">:</span> <span class="n">n_reps</span><span class="p">}</span>
 
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_replicate_profiles</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">"""``[(replicate_id, sample, {ORF: value})]`` for one strain, replicate order.</span>
+
+<span class="sd">        Each released sample is one record: its values verbatim, under the release's own</span>
+<span class="sd">        ``replicate`` label. The rows pass ``_check_rows`` first, so a label names one</span>
+<span class="sd">        sample and holds one value per protein.</span>
+<span class="sd">        """</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_check_rows</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="n">strain</span><span class="p">)</span>
+        <span class="n">profiles</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">replicate</span><span class="p">,</span> <span class="n">rep_rows</span> <span class="ow">in</span> <span class="n">sub</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"replicate"</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">profiles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="n">replicate</span><span class="p">),</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="n">rep_rows</span><span class="p">[</span><span class="s2">"sample"</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                    <span class="p">{</span>
+                        <span class="nb">str</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">orf</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">rep_rows</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">],</span> <span class="n">rep_rows</span><span class="p">[</span><span class="s2">"value"</span><span class="p">])</span>
+                    <span class="p">},</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">profiles</span>
+
 <div class="viewcode-block" id="ProteomeZelezniak2018Dataset.process">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.zelezniak2018.ProteomeZelezniak2018Dataset.html#torchcell.datasets.scerevisiae.zelezniak2018.ProteomeZelezniak2018Dataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Aggregate the proteome matrix into per-strain experiments and write LMDB."""</span>
+<span class="w">        </span><span class="sd">"""Write one ProteinAbundance experiment per released sample to LMDB."""</span>
         <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">DATA_FILENAME</span><span class="p">:</span> <span class="n">DATA_SHA256</span><span class="p">})</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">DATA_FILENAME</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">bad</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">_SYSTEMATIC_RE</span><span class="p">)]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bad</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"non-systematic protein ORF ids present: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bad</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"sample"</span><span class="p">)[[</span><span class="s2">"KO_ORF"</span><span class="p">,</span> <span class="s2">"replicate"</span><span class="p">]]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
+        <span class="n">relabeled</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[(</span><span class="n">labels</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">relabeled</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Zelezniak proteome sample </span><span class="si">{</span><span class="n">relabeled</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> carries more than one "</span>
+                <span class="s2">"(KO_ORF, replicate) label; it would be split across records"</span>
+            <span class="p">)</span>
 
         <span class="n">wt_rows</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"KO_ORF"</span><span class="p">]</span> <span class="o">==</span> <span class="n">_WT</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">wt_rows</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
@@ -552,29 +728,43 @@
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">released_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">ko_orf</span><span class="p">,</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"KO_ORF"</span><span class="p">]</span> <span class="o">!=</span> <span class="n">_WT</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"KO_ORF"</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">ko_orf</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">ko_orf</span><span class="p">,</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"KO_ORF"</span><span class="p">):</span>
+            <span class="n">strain</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">ko_orf</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">strain</span> <span class="o">!=</span> <span class="n">_WT</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">strain</span><span class="p">):</span>
                 <span class="c1"># a released strain id with no ORF form goes on the released-gene-name</span>
                 <span class="c1"># leaf verbatim (#1045; 0 of 97 released strains)</span>
-                <span class="n">released_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">ko_orf</span><span class="p">))</span>
+                <span class="n">released_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">strain</span><span class="p">)</span>
             <span class="n">gene</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">sub</span><span class="p">[</span><span class="s2">"KO_gene_name"</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">{</span>
-                    <span class="s2">"orf"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">ko_orf</span><span class="p">),</span>
-                    <span class="s2">"gene"</span><span class="p">:</span> <span class="n">gene</span><span class="p">,</span>
-                    <span class="s2">"agg"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">ko_orf</span><span class="p">)),</span>
-                <span class="p">}</span>
-            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">replicate_id</span><span class="p">,</span> <span class="n">sample</span><span class="p">,</span> <span class="n">profile</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_replicate_profiles</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="n">strain</span><span class="p">):</span>
+                <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">"orf"</span><span class="p">:</span> <span class="n">strain</span><span class="p">,</span>
+                        <span class="s2">"gene"</span><span class="p">:</span> <span class="n">gene</span><span class="p">,</span>
+                        <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">replicate_id</span><span class="p">,</span>
+                        <span class="s2">"sample"</span><span class="p">:</span> <span class="n">sample</span><span class="p">,</span>
+                        <span class="s2">"abundance"</span><span class="p">:</span> <span class="n">profile</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Zelezniak: </span><span class="si">%d</span><span class="s2"> knockout strains, WT reference with </span><span class="si">%d</span><span class="s2"> proteins, "</span>
-            <span class="s2">"</span><span class="si">%d</span><span class="s2"> strain ids on the released-identifier leaf"</span><span class="p">,</span>
+            <span class="s2">"Zelezniak: </span><span class="si">%d</span><span class="s2"> sample records (</span><span class="si">%d</span><span class="s2"> WT) over </span><span class="si">%d</span><span class="s2"> strains, WT reference with "</span>
+            <span class="s2">"</span><span class="si">%d</span><span class="s2"> proteins, </span><span class="si">%d</span><span class="s2"> strain ids on the released-identifier leaf"</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
+            <span class="nb">sum</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">]</span> <span class="o">==</span> <span class="n">_WT</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">),</span>
+            <span class="n">df</span><span class="p">[</span><span class="s2">"KO_ORF"</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span>
             <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">[</span><span class="s2">"abundance"</span><span class="p">]),</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">released_names</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([{</span><span class="s2">"orf"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span> <span class="s2">"gene"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]}</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">])</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
-            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span>
-        <span class="p">)</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">"orf"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span>
+                    <span class="s2">"gene"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">],</span>
+                    <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"replicate_id"</span><span class="p">],</span>
+                    <span class="s2">"sample"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"sample"</span><span class="p">],</span>
+                <span class="p">}</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span>
+            <span class="p">]</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
         <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
@@ -612,7 +802,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
         <span class="n">ProteinAbundanceExperiment</span><span class="p">,</span> <span class="n">ProteinAbundanceExperimentReference</span><span class="p">,</span> <span class="n">Publication</span>
     <span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Build the ProteinAbundance experiment/reference/publication for one strain."""</span>
+<span class="w">        </span><span class="sd">"""Build the ProteinAbundance experiment/reference/publication for one sample."""</span>
         <span class="c1"># Background = BY4741 kinase-deletion collection made prototrophic by the pHLUM</span>
         <span class="c1"># minichromosome (restores HIS3/LEU2/URA3/MET17); pHLUM not yet modeled here.</span>
         <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
@@ -621,18 +811,33 @@
             <span class="n">assembly_set</span><span class="o">=</span><span class="n">SGD_S288C_R64</span><span class="p">,</span>
             <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="p">[</span><span class="n">_released_deletion</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">])])</span>
+        <span class="c1"># A WT sample is the parent strain itself: the empty genotype on the background.</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">(</span>
+                <span class="p">[]</span>
+                <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">]</span> <span class="o">==</span> <span class="n">_WT</span>
+                <span class="k">else</span> <span class="p">[</span><span class="n">_released_deletion</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">])]</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
         <span class="c1"># SWATH-MS on cells in synthetic minimal (SM) liquid medium, 30 C. The</span>
         <span class="c1"># paper states NO recipe for that medium and sources both the strains and the</span>
         <span class="c1"># cultivation to Mulleder 2012, which is not mirrored, so ``SM_DEFERRED`` carries</span>
         <span class="c1"># the deferral rather than borrowing the Mulleder 2016 / Messner 2023 grams.</span>
         <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">media</span><span class="o">=</span><span class="n">SM_DEFERRED</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">))</span>
-        <span class="n">agg</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"agg"</span><span class="p">]</span>
+        <span class="n">abundance</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"abundance"</span><span class="p">])</span>
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">ProteinAbundancePhenotype</span><span class="p">(</span>
-            <span class="n">protein_abundance</span><span class="o">=</span><span class="n">agg</span><span class="p">[</span><span class="s2">"abundance"</span><span class="p">],</span>
-            <span class="n">protein_abundance_se</span><span class="o">=</span><span class="n">agg</span><span class="p">[</span><span class="s2">"se"</span><span class="p">],</span>
-            <span class="n">n_replicates</span><span class="o">=</span><span class="n">agg</span><span class="p">[</span><span class="s2">"n"</span><span class="p">],</span>
+            <span class="n">protein_abundance</span><span class="o">=</span><span class="n">abundance</span><span class="p">,</span>
+            <span class="n">protein_abundance_se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">abundance</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
             <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+            <span class="n">replicate_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"replicate_id"</span><span class="p">],</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">ProvenanceGap</span><span class="p">(</span>
+                    <span class="n">field</span><span class="o">=</span><span class="s2">"protein_abundance_se"</span><span class="p">,</span>
+                    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_applicable_single_measurement</span><span class="p">,</span>
+                    <span class="n">note</span><span class="o">=</span><span class="n">_SINGLE_REPLICATE_SE_NOTE</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">],</span>
         <span class="p">)</span>
         <span class="n">ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span>
         <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">ProteinAbundancePhenotype</span><span class="p">(</span>
@@ -714,7 +919,8 @@
 <span class="nd">@register_dataset</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MetaboliteZelezniak2018Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""LC-SRM targeted metabolome of the kinase-knockout collection, one record per</span>
-<span class="sd">    (strain, protocol); each record and its WT reference share one protocol.</span>
+<span class="sd">    (protocol, strain, released biological replicate), WT included; each record and its</span>
+<span class="sd">    WT reference share one protocol.</span>
 <span class="sd">    """</span>
 
     <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
@@ -764,16 +970,14 @@
 
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate</span><span class="p">(</span><span class="n">sub</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Aggregate one (strain, protocol) block of rows to per-metabolite mean/se/n dicts.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_rows</span><span class="p">(</span><span class="n">sub</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Refuse one (strain, protocol) block unless each row is one distinct value.</span>
 
-<span class="sd">        ``sub`` holds the rows of ONE protocol (one ``dataset`` value) for one strain, so</span>
-<span class="sd">        mean = mean over that protocol's replicates, SE = sample_SD * n**-0.5 when n&gt;1</span>
-<span class="sd">        else NaN, n = row count. Protocols are never pooled (issue #595): Dataset 1 is an</span>
-<span class="sd">        uncalibrated signal and Datasets 2/3 are calibrated values. ``n`` is the row</span>
-<span class="sd">        count, so a repeated (metabolite, replicate) id inside the block refuses, naming</span>
-<span class="sd">        the strain and protocol. Measured on the pinned release (sha256 ``c4429fd8...``):</span>
-<span class="sd">        0 repeated (dataset, metabolite, genotype, replicate) rows of 3,522.</span>
+<span class="sd">        A repeated (metabolite, replicate) id would put two values under one replicate</span>
+<span class="sd">        record (or count as an extra replicate in a summary), and a blank or non-finite</span>
+<span class="sd">        value is no measurement; each refuses, naming the strain and protocol. Measured</span>
+<span class="sd">        on the pinned release (sha256 ``c4429fd8...``): 0 repeated (dataset, metabolite,</span>
+<span class="sd">        genotype, replicate) rows and 0 blank or non-finite values of 3,522.</span>
 <span class="sd">        """</span>
         <span class="n">repeated</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="n">sub</span><span class="o">.</span><span class="n">duplicated</span><span class="p">([</span><span class="s2">"metabolite_id"</span><span class="p">,</span> <span class="s2">"replicate"</span><span class="p">],</span> <span class="n">keep</span><span class="o">=</span><span class="kc">False</span><span class="p">)]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">repeated</span><span class="p">):</span>
@@ -784,6 +988,27 @@
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">repeated</span><span class="p">[</span><span class="s1">'replicate'</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">; a repeated replicate would count as "</span>
                 <span class="s2">"an extra replicate"</span>
             <span class="p">)</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">sub</span><span class="p">[</span><span class="s2">"value"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">)</span>
+        <span class="n">not_finite</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">values</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">not_finite</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Zelezniak metabolome strain </span><span class="si">{</span><span class="n">strain</span><span class="si">}</span><span class="s2"> protocol </span><span class="si">{</span><span class="n">dataset</span><span class="si">}</span><span class="s2">: "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">not_finite</span><span class="p">)</span><span class="si">}</span><span class="s2"> blank or non-finite value(s), first "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">not_finite</span><span class="p">[</span><span class="s1">'metabolite_id'</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> replicate "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">not_finite</span><span class="p">[</span><span class="s1">'replicate'</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">sub</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The per-metabolite mean / SE / n over one (strain, protocol) block.</span>
+
+<span class="sd">        This is the AGGREGATE a ``phenotype_reference`` states (the same-protocol WT</span>
+<span class="sd">        summary), not a record. ``sub`` holds the rows of ONE protocol (one ``dataset``</span>
+<span class="sd">        value), so mean = mean over that protocol's replicates, SE = sample_SD * n**-0.5</span>
+<span class="sd">        when n&gt;1 else NaN, n = row count. Protocols are never pooled (issue #595):</span>
+<span class="sd">        Dataset 1 is an uncalibrated signal and Datasets 2/3 are calibrated values.</span>
+<span class="sd">        """</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_check_rows</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="n">strain</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
         <span class="n">grp</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"metabolite_id"</span><span class="p">)[</span><span class="s2">"value"</span><span class="p">]</span><span class="o">.</span><span class="n">agg</span><span class="p">([</span><span class="s2">"mean"</span><span class="p">,</span> <span class="s2">"std"</span><span class="p">,</span> <span class="s2">"count"</span><span class="p">])</span>
         <span class="n">level</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">se</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -801,7 +1026,7 @@
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.zelezniak2018.MetaboliteZelezniak2018Dataset.html#torchcell.datasets.scerevisiae.zelezniak2018.MetaboliteZelezniak2018Dataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Aggregate the metabolome into per-(strain, protocol) experiments and write LMDB."""</span>
+<span class="w">        </span><span class="sd">"""Write one Metabolite experiment per (protocol, strain, replicate) to LMDB."""</span>
         <span class="n">verify_raw_files</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">METABOLITE_DATA_FILENAME</span><span class="p">:</span> <span class="n">METABOLITE_DATA_SHA256</span><span class="p">}</span>
         <span class="p">)</span>
@@ -849,21 +1074,37 @@
                     <span class="sa">f</span><span class="s2">"Zelezniak metabolome protocol </span><span class="si">{</span><span class="n">protocol</span><span class="si">}</span><span class="s2"> has strain rows but no "</span>
                     <span class="s2">"WT rows; its records would have no same-protocol reference"</span>
                 <span class="p">)</span>
-        <span class="k">for</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">genotype</span><span class="p">),</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">strains</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s2">"dataset"</span><span class="p">,</span> <span class="s2">"genotype"</span><span class="p">]):</span>
+        <span class="c1"># One record per released biological replicate of every (protocol, strain), the</span>
+        <span class="c1"># WT replicates included (empty genotype). The WT summary above is the reference.</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">genotype</span><span class="p">),</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s2">"dataset"</span><span class="p">,</span> <span class="s2">"genotype"</span><span class="p">]):</span>
             <span class="n">protocol</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sub</span><span class="p">[</span><span class="s2">"dataset"</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="n">agg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">genotype</span><span class="p">),</span> <span class="n">protocol</span><span class="p">)</span>
-            <span class="n">shared</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">agg</span><span class="p">[</span><span class="s2">"level"</span><span class="p">])</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_references</span><span class="p">[</span><span class="n">protocol</span><span class="p">][</span><span class="s2">"level"</span><span class="p">])</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">shared</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Zelezniak metabolome strain </span><span class="si">{</span><span class="n">genotype</span><span class="si">}</span><span class="s2"> protocol </span><span class="si">{</span><span class="n">protocol</span><span class="si">}</span><span class="s2"> shares "</span>
-                    <span class="s2">"no metabolite with that protocol's WT; its reference would be empty"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_rows</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">genotype</span><span class="p">),</span> <span class="n">protocol</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">replicate</span><span class="p">,</span> <span class="n">rep_rows</span> <span class="ow">in</span> <span class="n">sub</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"replicate"</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                <span class="n">level</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="n">m</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">rep_rows</span><span class="p">[</span><span class="s2">"metabolite_id"</span><span class="p">],</span> <span class="n">rep_rows</span><span class="p">[</span><span class="s2">"value"</span><span class="p">])</span>
+                <span class="p">}</span>
+                <span class="n">shared</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">level</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_references</span><span class="p">[</span><span class="n">protocol</span><span class="p">][</span><span class="s2">"level"</span><span class="p">])</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">shared</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"Zelezniak metabolome strain </span><span class="si">{</span><span class="n">genotype</span><span class="si">}</span><span class="s2"> protocol </span><span class="si">{</span><span class="n">protocol</span><span class="si">}</span><span class="s2"> "</span>
+                        <span class="sa">f</span><span class="s2">"replicate </span><span class="si">{</span><span class="n">replicate</span><span class="si">}</span><span class="s2"> shares no metabolite with that "</span>
+                        <span class="s2">"protocol's WT; its reference would be empty"</span>
+                    <span class="p">)</span>
+                <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">"orf"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">genotype</span><span class="p">),</span>
+                        <span class="s2">"dataset"</span><span class="p">:</span> <span class="n">protocol</span><span class="p">,</span>
+                        <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">replicate</span><span class="p">),</span>
+                        <span class="s2">"level"</span><span class="p">:</span> <span class="n">level</span><span class="p">,</span>
+                    <span class="p">}</span>
                 <span class="p">)</span>
-            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"orf"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">genotype</span><span class="p">),</span> <span class="s2">"dataset"</span><span class="p">:</span> <span class="n">protocol</span><span class="p">,</span> <span class="s2">"agg"</span><span class="p">:</span> <span class="n">agg</span><span class="p">})</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Zelezniak metabolome: </span><span class="si">%d</span><span class="s2"> (strain, protocol) records over protocols </span><span class="si">%s</span><span class="s2">, WT "</span>
-            <span class="s2">"reference metabolites per protocol </span><span class="si">%s</span><span class="s2">, </span><span class="si">%d</span><span class="s2"> metabolite ids mapped to Yeast9 "</span>
-            <span class="s2">"s_NNNN"</span><span class="p">,</span>
+            <span class="s2">"Zelezniak metabolome: </span><span class="si">%d</span><span class="s2"> (protocol, strain, replicate) records (</span><span class="si">%d</span><span class="s2"> WT) over "</span>
+            <span class="s2">"protocols </span><span class="si">%s</span><span class="s2">, WT reference metabolites per protocol </span><span class="si">%s</span><span class="s2">, </span><span class="si">%d</span><span class="s2"> metabolite ids "</span>
+            <span class="s2">"mapped to Yeast9 s_NNNN"</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
+            <span class="nb">sum</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">]</span> <span class="o">==</span> <span class="n">_WT</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">),</span>
             <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_references</span><span class="p">),</span>
             <span class="p">{</span><span class="n">d</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"level"</span><span class="p">])</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_references</span><span class="o">.</span><span class="n">items</span><span class="p">())},</span>
             <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_s_id_map</span><span class="p">),</span>
@@ -873,7 +1114,8 @@
                 <span class="p">{</span>
                     <span class="s2">"orf"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span>
                     <span class="s2">"dataset"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"dataset"</span><span class="p">],</span>
-                    <span class="s2">"n_metabolites"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"agg"</span><span class="p">][</span><span class="s2">"level"</span><span class="p">]),</span>
+                    <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"replicate_id"</span><span class="p">],</span>
+                    <span class="s2">"n_metabolites"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"level"</span><span class="p">]),</span>
                 <span class="p">}</span>
                 <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span>
             <span class="p">]</span>
@@ -908,14 +1150,47 @@
         <span class="k">return</span> <span class="n">df</span></div>
 
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_replicate_phenotype</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">dataset</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetabolitePhenotype</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""One released replicate's values verbatim: n = 1 and no dispersion."""</span>
+        <span class="k">return</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
+            <span class="n">metabolite_level</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">level</span><span class="p">),</span>
+            <span class="n">metabolite_level_se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">measurement_type</span><span class="o">=</span><span class="n">ZELEZNIAK_METABOLITE_PROTOCOLS</span><span class="p">[</span><span class="n">dataset</span><span class="p">]</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
+            <span class="n">target_metabolite_ids</span><span class="o">=</span><span class="p">{</span><span class="n">m</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_s_id_map</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">level</span><span class="p">},</span>
+            <span class="n">replicate_id</span><span class="o">=</span><span class="n">replicate_id</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">ProvenanceGap</span><span class="p">(</span>
+                    <span class="n">field</span><span class="o">=</span><span class="s2">"metabolite_level_se"</span><span class="p">,</span>
+                    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_applicable_single_measurement</span><span class="p">,</span>
+                    <span class="n">note</span><span class="o">=</span><span class="n">_SINGLE_REPLICATE_SE_NOTE</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_phenotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">dataset</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetabolitePhenotype</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build a MetabolitePhenotype for one protocol's aggregated per-metabolite dict."""</span>
+<span class="w">        </span><span class="sd">"""The reference summary over one protocol's WT replicates (``replicate_id=None``).</span>
+
+<span class="sd">        When every key rests on one replicate the SE map is all NaN, so it is stored as</span>
+<span class="sd">        ``None`` with a typed ``not_applicable_single_measurement`` gap (protocols 1 and</span>
+<span class="sd">        2 release one WT replicate each).</span>
+<span class="sd">        """</span>
         <span class="n">level</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">agg</span><span class="p">[</span><span class="s2">"level"</span><span class="p">])</span>
         <span class="n">se</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">agg</span><span class="p">[</span><span class="s2">"se"</span><span class="p">])</span>
         <span class="c1"># SE keys must be a subset of level keys; the all-NaN case collapses to None.</span>
         <span class="n">level_se</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">se</span>
+        <span class="n">gaps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ProvenanceGap</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">se</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
             <span class="n">level_se</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">gaps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">ProvenanceGap</span><span class="p">(</span>
+                    <span class="n">field</span><span class="o">=</span><span class="s2">"metabolite_level_se"</span><span class="p">,</span>
+                    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_applicable_single_measurement</span><span class="p">,</span>
+                    <span class="n">note</span><span class="o">=</span><span class="n">_SINGLE_REFERENCE_SE_NOTE</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
         <span class="n">targets</span> <span class="o">=</span> <span class="p">{</span><span class="n">m</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_s_id_map</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">level</span><span class="p">}</span>
         <span class="k">return</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
             <span class="n">metabolite_level</span><span class="o">=</span><span class="n">level</span><span class="p">,</span>
@@ -923,6 +1198,7 @@
             <span class="n">n_replicates</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">agg</span><span class="p">[</span><span class="s2">"n"</span><span class="p">]),</span>
             <span class="n">measurement_type</span><span class="o">=</span><span class="n">ZELEZNIAK_METABOLITE_PROTOCOLS</span><span class="p">[</span><span class="n">dataset</span><span class="p">]</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
             <span class="n">target_metabolite_ids</span><span class="o">=</span><span class="n">targets</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="n">gaps</span><span class="p">,</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="MetaboliteZelezniak2018Dataset.create_experiment">
@@ -930,7 +1206,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">create_experiment</span><span class="p">(</span>  <span class="c1"># type: ignore[override]</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">MetaboliteExperiment</span><span class="p">,</span> <span class="n">MetaboliteExperimentReference</span><span class="p">,</span> <span class="n">Publication</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Build the Metabolite experiment/reference/publication for one (strain, protocol)."""</span>
+<span class="w">        </span><span class="sd">"""Build the Metabolite experiment/reference/publication for one replicate."""</span>
         <span class="c1"># Background = BY4741 kinase-deletion collection made prototrophic by the pHLUM</span>
         <span class="c1"># minichromosome (restores HIS3/LEU2/URA3/MET17); pHLUM not yet modeled here.</span>
         <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
@@ -940,27 +1216,34 @@
             <span class="n">assembly_accession</span><span class="o">=</span><span class="n">SGD_S288C_R64_GENBANK_ACCESSION</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="c1"># No gene-name column in the metabolome file (only the systematic ORF), so the</span>
-        <span class="c1"># systematic id is used for both names (as in the Mulleder loader).</span>
+        <span class="c1"># systematic id is used for both names (as in the Mulleder loader). A WT</span>
+        <span class="c1"># replicate is the parent strain itself: the empty genotype on the background.</span>
         <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
-            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
-                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">]</span>
-                <span class="p">)</span>
-            <span class="p">]</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="p">(</span>
+                <span class="p">[]</span>
+                <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">]</span> <span class="o">==</span> <span class="n">_WT</span>
+                <span class="k">else</span> <span class="p">[</span>
+                    <span class="n">KanMxDeletionPerturbation</span><span class="p">(</span>
+                        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">],</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
         <span class="p">)</span>
         <span class="c1"># SRM-MS/MS on cells in synthetic minimal (SM) liquid medium, 30 C (as proteome);</span>
         <span class="c1"># same unstated recipe, deferred to Mulleder 2012 on ``SM_DEFERRED``.</span>
         <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">media</span><span class="o">=</span><span class="n">SM_DEFERRED</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">))</span>
         <span class="n">dataset</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"dataset"</span><span class="p">])</span>
-        <span class="n">phenotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_phenotype</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"agg"</span><span class="p">],</span> <span class="n">dataset</span><span class="p">)</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_replicate_phenotype</span><span class="p">(</span>
+            <span class="n">row</span><span class="p">[</span><span class="s2">"level"</span><span class="p">],</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">row</span><span class="p">[</span><span class="s2">"replicate_id"</span><span class="p">]</span>
+        <span class="p">)</span>
         <span class="c1"># Reference = the WT measured by the SAME protocol, RESTRICTED to the metabolites</span>
-        <span class="c1"># this strain measured under it. Targeted-metabolomics coverage is sparse (the</span>
+        <span class="c1"># this replicate measured under it. Targeted-metabolomics coverage is sparse (the</span>
         <span class="c1"># protocol-1 WT measured 13 of that protocol's 17 ids, never adp/amp/atp/e4p), so</span>
         <span class="c1"># a strain can measure metabolites the WT lacks; those simply have no WT</span>
         <span class="c1"># baseline. Restricting keeps reference keys a subset of the experiment's and</span>
         <span class="c1"># every reference value a real same-protocol WT measurement (never invented);</span>
-        <span class="c1"># process() refuses a (strain, protocol) that shares no metabolite with its WT.</span>
-        <span class="n">exp_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"agg"</span><span class="p">][</span><span class="s2">"level"</span><span class="p">])</span>
+        <span class="c1"># process() refuses a replicate that shares no metabolite with its WT.</span>
+        <span class="n">exp_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"level"</span><span class="p">])</span>
         <span class="n">ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_references</span><span class="p">[</span><span class="n">dataset</span><span class="p">]</span>
         <span class="n">ref_agg</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"level"</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ref</span><span class="p">[</span><span class="s2">"level"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">exp_keys</span><span class="p">},</span>

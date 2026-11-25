@@ -128,7 +128,8 @@ SOURCED VALUES (module-level ``SourcedValue``s anchored to the sha256 of
 ``cuiCRISPRiScreenColi2018/paper.md``, or typed ``ProvenanceGap``s):
 
 - ``n_samples = 3``, ``sample_unit=biological_replicate`` for every record: "The phage
-  screen was performed in triplicates as follows".
+  screen was performed in triplicates as follows", and the authors' phage notebook,
+  "Paired analysis is performed between biological replicates." (#1178).
 - Uncertainty: a ``not_reported_by_primary`` gap on
   ``environment_response_uncertainty``. The released tables carry one log2FC per guide
   and screen; DESeq2's ``lfcSE`` is not among the released columns.
@@ -154,6 +155,25 @@ gene-level medians and model estimates derived from the three above, so they are
 consumed; S3 Table, S8 to S10 Tables and the ten SI figures carry no per-guide value. The
 ENA BioProject PRJEB28256 holds the raw reads the log2FC values were computed from and is
 recorded as the upstream accession, not mirrored.
+
+PER-REPLICATE RELEASE (#1178, 2026-11-24). Each stored log2FC is the authors' paired
+DESeq2 fit over THREE biological replicate pairs, so a record is a source statistic over
+three cultures (``n_samples=3``), not one culture. The repository the Data Availability
+Statement names (``RELEASED_CODE_AND_COUNTS``) releases the per-sample read counts behind
+every fit, ``Counts_table_essentiality.txt`` (``After_1..3``, ``Before_1..3``, 92,026
+guides) and ``Counts_table_phages.txt`` (18 columns: ``After_<arm>_1..3`` for lambda,
+T4, 186 and transduction, ``Before_Lambda_186_transduction_1..3`` and
+``Before_T4_1..3``). They are deposited in this raw mirror at the pinned commit with
+their analysis notebooks, and the build reads them, checks every stored guide is a row of
+its screen's table and every column is one of a screen's replicate pairs
+(``SCREEN_SAMPLES``), and writes the accounting to
+``preprocess/replicates_not_stored.json``. No count is a record: no ``MeasurementType``
+holds a read count, and a per-replicate log2 ratio would be a loader derivation that is
+undefined wherever a count is zero (``READ_COUNT_NOT_STORED``). Measured once
+(2026-11-24, not a build step): the mean over the three pairs of
+log2(After_i / Before_i) on the control-guide normalization agrees with S1 Table's
+log2FC to a median 0.0015 (Pearson 0.9998, the 58,317 guides with no zero count), which
+is the evidence that these tables are the counts the released fits were made from.
 """
 
 from __future__ import annotations
@@ -168,6 +188,7 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar, Literal
+from urllib.parse import quote as url_quote
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict
@@ -217,6 +238,7 @@ from torchcell.datasets.ecoli import cui2018
 from torchcell.literature.manifest import (
     ROLE_PAPER_TEXT,
     ROLE_RAW_DATA,
+    ROLE_SI_TEXT,
     ArtifactRecord,
     Manifest,
     RetrievalMethod,
@@ -302,14 +324,103 @@ TABLE_LABEL: dict[str, str] = {
     TRANSDUCTION_TABLE: "S6 Table",
 }
 
+#: The authors' repository, which the Data Availability Statement names ("The code and
+#: data tables used to perform the analyses are available at
+#: https://gitlab.pasteur.fr/dbikard/dCas9_genome_ wide_screen."), pinned at its HEAD
+#: commit of 2019-10-31 (``RELEASED_CODE_AND_COUNTS``). It releases the per-sample read
+#: counts every S1, S4 and S6 log2FC was fitted from, one column per (condition,
+#: replicate); #1178, retrieved 2026-11-24.
+GITLAB_HOST = "https://gitlab.pasteur.fr"
+GITLAB_PROJECT = "dbikard/dCas9_genome_wide_screen"
+GITLAB_COMMIT = "712b3b94c5457c75bcdb1dbc4ad7b9d270241bcc"
+GITLAB_RETRIEVED_AT = "2026-11-24"
+
+ESSENTIALITY_COUNTS = "Counts_table_essentiality.txt"
+PHAGE_COUNTS = "Counts_table_phages.txt"
+ESSENTIALITY_NOTEBOOK = "essentiality_screen_analysis.ipynb"
+PHAGE_NOTEBOOK = "phage_screens_analysis.ipynb"
+
+
+class RepositoryFile(BaseModel):
+    """One file of the authors' repository deposited in this raw mirror.
+
+    The two count tables are raw data the build reads; the two analysis notebooks are
+    the quote anchors for how the authors paired and normalized the replicates.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    filename: str
+    path_in_repo: str
+    mirror_rel: str
+    sha256: str
+    role: str
+
+
+#: The count tables sit twice in the repository, beside the notebook that writes them
+#: and beside the notebook that reads them; both copies have these bytes (measured
+#: 2026-11-24). The generating notebook's folder is the recorded path.
+REPOSITORY_FILES: tuple[RepositoryFile, ...] = (
+    RepositoryFile(
+        filename=ESSENTIALITY_COUNTS,
+        path_in_repo=f"Generating count tables from fastq files/{ESSENTIALITY_COUNTS}",
+        mirror_rel=f"data/{ESSENTIALITY_COUNTS}",
+        sha256="c36da89ef3f0506fc2003583b2581053b630ff064b6e2edfabb4b8e7a3e75be1",
+        role=ROLE_RAW_DATA,
+    ),
+    RepositoryFile(
+        filename=PHAGE_COUNTS,
+        path_in_repo=f"Generating count tables from fastq files/{PHAGE_COUNTS}",
+        mirror_rel=f"data/{PHAGE_COUNTS}",
+        sha256="11f58b0da5926238661288edd0aa169c595de25026516190163b6a87dc9ad21c",
+        role=ROLE_RAW_DATA,
+    ),
+    RepositoryFile(
+        filename=ESSENTIALITY_NOTEBOOK,
+        path_in_repo=f"Essentiality screen data analysis/{ESSENTIALITY_NOTEBOOK}",
+        mirror_rel=f"ref/{ESSENTIALITY_NOTEBOOK}",
+        sha256="6e87d2ee9c6189a4432095c208cfd238d30fae4b5c128535fa04edc0d4a0fe75",
+        role=ROLE_SI_TEXT,
+    ),
+    RepositoryFile(
+        filename=PHAGE_NOTEBOOK,
+        path_in_repo=f"Phages screens analysis/{PHAGE_NOTEBOOK}",
+        mirror_rel=f"ref/{PHAGE_NOTEBOOK}",
+        sha256="e3f36bcb28c12d8ab56aad9229d999346856c343bc9df026ce10766b22d0155d",
+        role=ROLE_SI_TEXT,
+    ),
+)
+REPOSITORY_FILE: dict[str, RepositoryFile] = {f.filename: f for f in REPOSITORY_FILES}
+
+#: The two count tables the build reads, with their pinned sha256.
+COUNT_TABLE_SHA256: dict[str, str] = {
+    name: REPOSITORY_FILE[name].sha256 for name in (ESSENTIALITY_COUNTS, PHAGE_COUNTS)
+}
+
+
+def gitlab_raw_url(path_in_repo: str) -> str:
+    """The GitLab API URL of one repository file's bytes at the pinned commit.
+
+    The API route, not the web ``/-/raw/`` route: the web route answers the retriever's
+    browser User-Agent with 403 (measured 2026-11-24), the API route serves the bytes.
+    """
+    encoded = url_quote(path_in_repo, safe="")
+    project = url_quote(GITLAB_PROJECT, safe="")
+    return (
+        f"{GITLAB_HOST}/api/v4/projects/{project}/repository/files/{encoded}"
+        f"/raw?ref={GITLAB_COMMIT}"
+    )
+
 
 def raw_sha256() -> dict[str, str]:
     """Every raw file the build consumes and verifies, with its pinned sha256.
 
-    Rousset's three tables. No other source's table is read (#905): the growth screen
-    is stored from S1 Table as released, never cross-referenced against Cui 2018's.
+    Rousset's three tables, and the authors' two per-sample count tables (#1178), read
+    to account for every released replicate the records do not store. No other source's
+    table is read (#905): the growth screen is stored from S1 Table as released, never
+    cross-referenced against Cui 2018's.
     """
-    return dict(TABLE_SHA256)
+    return {**TABLE_SHA256, **COUNT_TABLE_SHA256}
 
 
 def table_rel(filename: str) -> str:
@@ -454,8 +565,10 @@ PHAGE_SCREEN_TRIPLICATE = _paper(
     "$3 7 ^ { \\circ } \\mathrm { C }$ from 1 mL aliquots stored at "
     "$- 8 0 ~ ^ { \\circ } \\mathrm { C }$ into $5 0 0 ~ \\mathrm { m L }$ LB.",
     page=_SCREENS,
-    note="the three phage challenges and the transduction assay are arms of this one "
-    "triplicate series, so every record carries n_samples = 3",
+    note="each of the four phage-derived log2FC columns is one DESeq2 fit over three "
+    "biological replicate pairs, so every record carries n_samples = 3. The lambda, "
+    "186cIts and transduction arms share one set of three pre-infection samples and "
+    "T4 has its own (PHAGE_BEFORE_SAMPLES, the authors' phage notebook)",
 )
 PHAGE_SCREEN_TEMPERATURE = _paper(
     37.0,
@@ -607,6 +720,15 @@ RAW_READS_ACCESSION = _paper(
     "(https://www.ebi.ac. uk/ena) with the accession number PRJEB28256.",
     page=_ANALYSIS,
 )
+RELEASED_CODE_AND_COUNTS = _paper(
+    f"{GITLAB_HOST}/{GITLAB_PROJECT}",
+    "The code and data tables used to perform the analyses are available at "
+    "https://gitlab.pasteur.fr/dbikard/dCas9_genome_ wide_screen.",
+    page="Data Availability Statement",
+    note="the repository the per-sample count tables and the two analysis notebooks "
+    "are retrieved from, pinned at commit 712b3b94 (#1178); the OCR splits the URL "
+    "at 'genome_ wide'",
+)
 
 
 def _deseq2(
@@ -671,6 +793,76 @@ SOURCED_VALUES: tuple[SourcedValue, ...] = (
     RAW_READS_ACCESSION,
     GROWTH_SCREEN_REPLICATES,
     GROWTH_PADJ,
+    RELEASED_CODE_AND_COUNTS,
+)
+
+
+def _notebook(
+    filename: str, value: Any, quote: str, *, page: str, note: str | None = None
+) -> SourcedValue:
+    """Bind a value to a verbatim quote in one of the authors' deposited notebooks.
+
+    The notebooks are in this RAW mirror (``ref/``), not the literature mirror, so
+    their values are audited against ``$DATA_ROOT/torchcell-raw``.
+    """
+    record = REPOSITORY_FILE[filename]
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=record.mirror_rel,
+            citation_key=CITATION_KEY,
+            sha256=record.sha256,
+            method=f"the authors' analysis notebook ({record.path_in_repo}) at "
+            f"{GITLAB_PROJECT} commit {GITLAB_COMMIT}, deposited in this raw mirror",
+            page=page,
+        ),
+    )
+
+
+GROWTH_REPLICATE_PAIRING = _notebook(
+    ESSENTIALITY_NOTEBOOK,
+    (("After_1", "Before_1"), ("After_2", "Before_2"), ("After_3", "Before_3")),
+    "Paired analysis is performed between replicates.",
+    page="markdown cell 7, above the DESeq2 call",
+    note="the DESeq2 design is ~ generation + replicate with the replicate read from "
+    "the column suffix, so After_i is paired with Before_i; the size factors are the "
+    "non-targeting control guide's counts over their mean",
+)
+GROWTH_REPLICATE_COUNT = _notebook(
+    ESSENTIALITY_NOTEBOOK,
+    3,
+    "The screen was performed in 3 replicates.",
+    page="markdown cell 0",
+)
+PHAGE_REPLICATES_BIOLOGICAL = _notebook(
+    PHAGE_NOTEBOOK,
+    "biological_replicate",
+    "Paired analysis is performed between biological replicates.",
+    page="markdown cell 7, above the DESeq2 call",
+    note="the DESeq2 design is ~ condition + replicate, the replicate read from the "
+    "column suffix; this is the only statement that names the phage triplicates "
+    "biological",
+)
+PHAGE_BEFORE_SAMPLES = _notebook(
+    PHAGE_NOTEBOOK,
+    ("Before_Lambda_186_transduction", "Before_T4"),
+    "For technical reasons, the samples before infection are common between phages "
+    "lambda and 186 (Before_lambda_186_transduction samples 1-3) but distinct from "
+    "samples before T4 infection (Before_T4 samples 1-3).",
+    page="markdown cell 0",
+    note="the count table's header writes 'Lambda' where this sentence writes "
+    "'lambda'; the lambda transduction arm is contrasted against the same "
+    "Before_Lambda_186_transduction samples in the notebook's DESeq2 calls",
+)
+
+#: The sourced values anchored in the deposited notebooks (raw mirror ``ref/``).
+REPOSITORY_SOURCED_VALUES: tuple[SourcedValue, ...] = (
+    GROWTH_REPLICATE_PAIRING,
+    GROWTH_REPLICATE_COUNT,
+    PHAGE_REPLICATES_BIOLOGICAL,
+    PHAGE_BEFORE_SAMPLES,
 )
 
 
@@ -915,6 +1107,105 @@ TABLE_COLUMNS: dict[str, tuple[str, ...]] = {
         for table in (PHAGE_TABLE, TRANSDUCTION_TABLE)
     },
 }
+
+
+class ReplicatePair(BaseModel):
+    """One biological replicate of one screen: its after and its before sample column.
+
+    A released log2FC is the authors' paired DESeq2 fit over three such pairs
+    (``GROWTH_REPLICATE_PAIRING``, ``PHAGE_REPLICATES_BIOLOGICAL``). The pair label is the
+    column suffix the authors' own design reads the replicate from.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    replicate: str
+    after: str
+    before: str
+
+
+class ScreenSamples(BaseModel):
+    """The count table and the replicate pairs one screen's log2FC was fitted from."""
+
+    model_config = ConfigDict(frozen=True)
+
+    count_table: str
+    pairs: tuple[ReplicatePair, ...]
+
+
+def _pairs(after: str, before: str) -> tuple[ReplicatePair, ...]:
+    """The three replicate pairs ``<after>_i`` / ``<before>_i`` of one screen."""
+    return tuple(
+        ReplicatePair(replicate=i, after=f"{after}_{i}", before=f"{before}_{i}")
+        for i in ("1", "2", "3")
+    )
+
+
+#: Each stored screen's samples in the authors' count tables, as their notebooks
+#: contrast them. The lambda, 186cIts and transduction arms share the three
+#: ``Before_Lambda_186_transduction`` samples; T4 has its own (``PHAGE_BEFORE_SAMPLES``).
+SCREEN_SAMPLES: dict[str, ScreenSamples] = {
+    GROWTH_SCREEN_ID: ScreenSamples(
+        count_table=ESSENTIALITY_COUNTS, pairs=_pairs("After", "Before")
+    ),
+    "phage_lambda": ScreenSamples(
+        count_table=PHAGE_COUNTS,
+        pairs=_pairs("After_Lambda", "Before_Lambda_186_transduction"),
+    ),
+    "phage_T4": ScreenSamples(
+        count_table=PHAGE_COUNTS, pairs=_pairs("After_T4", "Before_T4")
+    ),
+    "phage_186cIts": ScreenSamples(
+        count_table=PHAGE_COUNTS,
+        pairs=_pairs("After_186", "Before_Lambda_186_transduction"),
+    ),
+    "lambda_transduction": ScreenSamples(
+        count_table=PHAGE_COUNTS,
+        pairs=_pairs("After_transduction", "Before_Lambda_186_transduction"),
+    ),
+}
+
+#: The header of each count table, verbatim and in release order (first column, the
+#: spacer, is unnamed in the release).
+COUNT_TABLE_HEADERS: dict[str, tuple[str, ...]] = {
+    ESSENTIALITY_COUNTS: (
+        "After_1",
+        "After_2",
+        "After_3",
+        "Before_1",
+        "Before_2",
+        "Before_3",
+    ),
+    PHAGE_COUNTS: (
+        "After_186_1",
+        "After_186_2",
+        "After_186_3",
+        "After_Lambda_1",
+        "After_Lambda_2",
+        "After_Lambda_3",
+        "After_T4_1",
+        "After_T4_2",
+        "After_T4_3",
+        "After_transduction_1",
+        "After_transduction_2",
+        "After_transduction_3",
+        "Before_Lambda_186_transduction_1",
+        "Before_Lambda_186_transduction_2",
+        "Before_Lambda_186_transduction_3",
+        "Before_T4_1",
+        "Before_T4_2",
+        "Before_T4_3",
+    ),
+}
+
+#: Why no released per-sample count is a record (#1178; owner decision pending).
+READ_COUNT_NOT_STORED = (
+    "the per-replicate value the authors release is a read count per guide and "
+    "sample; no MeasurementType holds a read count, and a per-replicate log2 ratio "
+    "would be a loader derivation (After_i over Before_i on the control-guide "
+    "normalization), undefined wherever a count is zero, so the released DESeq2 fit "
+    "over the three replicate pairs stays the stored value"
+)
 
 
 def phage_perturbation(name: str) -> PhagePerturbation:
@@ -1168,6 +1459,93 @@ def deposit_deseq2_reference(data_root: str | None = None) -> Path:
     return dest
 
 
+def repository_retrieval(record: RepositoryFile) -> RetrievalRecord:
+    """The recorded retrieval of one repository file: a GET of its pinned-commit URL."""
+    url = gitlab_raw_url(record.path_in_repo)
+    return RetrievalRecord(
+        method=RetrievalMethod.direct_url,
+        source_url=url,
+        retriever="torchcell.literature.retrieve.direct_url",
+        params={"url": url},
+        sha256=record.sha256,
+        retrieved_at=GITLAB_RETRIEVED_AT,
+    )
+
+
+def deposit_repository_files(data_root: str | None = None) -> Path:
+    """Deposit the authors' count tables and analysis notebooks into this raw mirror.
+
+    Runs each recorded ``direct_url`` retrieval against the pinned commit, refuses bytes
+    that are not the pin, and appends one manifest record per file without rewriting
+    the records already there (#1178). Idempotent: a present file with the pinned hash
+    and a present record are left alone; a present file with another hash raises.
+    """
+    from torchcell.literature.retrieve import direct_url
+
+    root = raw_mirror_dir(data_root)
+    manifest = load_manifest(data_root)
+    recorded = {record.path for record in manifest.files}
+    added: list[ArtifactRecord] = []
+    for record in REPOSITORY_FILES:
+        dest = root / record.mirror_rel
+        if not dest.exists():
+            payload = direct_url(gitlab_raw_url(record.path_in_repo))
+            got = hashlib.sha256(payload).hexdigest()
+            if got != record.sha256:
+                raise RuntimeError(
+                    f"{record.path_in_repo} at {GITLAB_COMMIT} yields {got}, the pin "
+                    f"is {record.sha256}"
+                )
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(payload)
+        if _sha256(dest) != record.sha256:
+            raise RuntimeError(f"{dest} exists with a different sha256; refusing")
+        if record.mirror_rel in recorded:
+            continue
+        added.append(
+            ArtifactRecord(
+                path=record.mirror_rel,
+                role=record.role,
+                bytes=dest.stat().st_size,
+                sha256=record.sha256,
+                source=f"{GITLAB_HOST}/{GITLAB_PROJECT} @ {GITLAB_COMMIT}: "
+                f"{record.path_in_repo}",
+                original_filename=record.filename,
+                retrieval=repository_retrieval(record),
+            )
+        )
+    if not added:
+        return root
+    expected = [
+        f"data/{ESSENTIALITY_COUNTS}: the authors' per-sample read counts of the growth "
+        "screen (After_1-3, Before_1-3), from the repository the Data Availability "
+        "Statement names (#1178)",
+        f"data/{PHAGE_COUNTS}: the authors' per-sample read counts of the three phage "
+        "screens and the transduction assay (18 columns), same repository (#1178)",
+        f"ref/{ESSENTIALITY_NOTEBOOK}, ref/{PHAGE_NOTEBOOK}: the authors' DESeq2 "
+        "notebooks, the quote anchors for the replicate pairing (#1178)",
+    ]
+    updated = manifest.model_copy(
+        update={
+            "files": [*manifest.files, *added],
+            "si_data_sources": [
+                *manifest.si_data_sources,
+                *(
+                    gitlab_raw_url(r.path_in_repo)
+                    for r in REPOSITORY_FILES
+                    if r.mirror_rel in {a.path for a in added}
+                ),
+            ],
+            "si_expected": [
+                *manifest.si_expected,
+                *(e for e in expected if e not in manifest.si_expected),
+            ],
+        }
+    )
+    (root / "manifest.json").write_text(updated.model_dump_json(indent=2))
+    return root
+
+
 def load_manifest(data_root: str | None = None) -> Manifest:
     """Read the raw mirror's ``manifest.json``."""
     return load_manifest_of(CITATION_KEY, data_root)
@@ -1289,6 +1667,30 @@ def coding_strand(frame: pd.DataFrame, filename: str) -> pd.Series:
     return derived
 
 
+def read_count_table(path: str | Path, filename: str) -> pd.DataFrame:
+    """Read one of the authors' count tables, indexed by spacer.
+
+    Refuses a header that is not the pinned one, a spacer that is not a distinct 20-nt
+    string, and a count that is missing, non-integer or negative.
+    """
+    frame = pd.read_csv(path, sep="\t", index_col=0)
+    expected = list(COUNT_TABLE_HEADERS[filename])
+    if list(frame.columns) != expected:
+        raise ValueError(f"{filename} header {list(frame.columns)} is not {expected}")
+    spacers = frame.index.astype(str)
+    if not (spacers.str.len() == 20).all():
+        raise ValueError(f"{filename}: every spacer must be 20 nt")
+    if not frame.index.is_unique:
+        raise ValueError(f"{filename} repeats a spacer")
+    if frame.isna().any().any():
+        raise ValueError(f"{filename} has an empty count")
+    if not all(pd.api.types.is_integer_dtype(t) for t in frame.dtypes):
+        raise ValueError(f"{filename}: every count must be an integer")
+    if (frame < 0).any().any():
+        raise ValueError(f"{filename} has a negative count")
+    return frame
+
+
 # --------------------------------------------------------------------------- #
 # Identifiers
 # --------------------------------------------------------------------------- #
@@ -1357,6 +1759,110 @@ class DropLog(BaseModel):
     rules: list[DropRule]
 
 
+class ScreenReplicateAccount(BaseModel):
+    """One screen's released per-replicate counts, for the guides it stores records of.
+
+    ``count_cells`` is stored guides x replicate pairs x 2 samples. A before sample the
+    lambda, 186cIts and transduction screens share is counted under each of them, which
+    is how each screen's fit consumed it.
+    """
+
+    screen_id: str
+    count_table: str
+    pairs: list[ReplicatePair]
+    stored_guides: int
+    count_cells: int
+    zero_count_cells: dict[str, int]
+
+
+class CountTableAccount(BaseModel):
+    """The shape of one released count table and the screens that read each column."""
+
+    count_table: str
+    guides: int
+    columns: list[str]
+    released_cells: int
+    screens_by_column: dict[str, list[str]]
+
+
+class ReplicateRelease(BaseModel):
+    """Every released per-replicate count, and why none of them is a record (#1178).
+
+    Written to ``preprocess/replicates_not_stored.json``. The stored records are the
+    authors' DESeq2 log2FC per (guide, screen), each a fit over three biological
+    replicate pairs; the pairs' own counts are released beside them and accounted here.
+    """
+
+    dataset: str
+    reason: str
+    count_tables: list[CountTableAccount]
+    screens: list[ScreenReplicateAccount]
+
+
+def replicate_release(
+    dataset: str,
+    stored_spacers: Mapping[str, Sequence[str]],
+    counts: Mapping[str, pd.DataFrame],
+) -> ReplicateRelease:
+    """Account for every released count column against the screens' stored guides.
+
+    Refuses a stored guide the count table of its screen does not hold, and a count
+    column no screen's pairs name (or a named column the table lacks), so a relabelled
+    or truncated release cannot pass silently.
+    """
+    by_column: dict[str, dict[str, list[str]]] = {name: {} for name in counts}
+    screens: list[ScreenReplicateAccount] = []
+    for condition in CONDITIONS:
+        samples = SCREEN_SAMPLES[condition.screen_id]
+        table = counts[samples.count_table]
+        spacers = list(stored_spacers[condition.screen_id])
+        missing = [s for s in spacers if s not in table.index]
+        if missing:
+            raise RuntimeError(
+                f"{condition.screen_id}: {len(missing)} stored guides are not rows of "
+                f"{samples.count_table}, e.g. {missing[:5]}"
+            )
+        columns = [c for pair in samples.pairs for c in (pair.after, pair.before)]
+        absent = [c for c in columns if c not in table.columns]
+        if absent:
+            raise RuntimeError(f"{samples.count_table} lacks the columns {absent}")
+        for column in columns:
+            by_column[samples.count_table].setdefault(column, []).append(
+                condition.screen_id
+            )
+        stored = table.loc[spacers, columns]
+        screens.append(
+            ScreenReplicateAccount(
+                screen_id=condition.screen_id,
+                count_table=samples.count_table,
+                pairs=list(samples.pairs),
+                stored_guides=len(spacers),
+                count_cells=int(stored.size),
+                zero_count_cells={c: int((stored[c] == 0).sum()) for c in columns},
+            )
+        )
+    tables: list[CountTableAccount] = []
+    for name, table in counts.items():
+        unread = [c for c in table.columns if c not in by_column[name]]
+        if unread:
+            raise RuntimeError(f"{name}: no screen's replicate pairs name {unread}")
+        tables.append(
+            CountTableAccount(
+                count_table=name,
+                guides=len(table),
+                columns=list(table.columns),
+                released_cells=int(table.size),
+                screens_by_column=by_column[name],
+            )
+        )
+    return ReplicateRelease(
+        dataset=dataset,
+        reason=READ_COUNT_NOT_STORED,
+        count_tables=tables,
+        screens=screens,
+    )
+
+
 class IdentifierReport(BaseModel):
     """What the records are keyed by, written to ``preprocess/``.
 
@@ -1405,7 +1911,7 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
 
     @property
     def raw_file_names(self) -> list[str]:
-        """Rousset's three SI tables."""
+        """Rousset's three SI tables and the authors' two per-sample count tables."""
         return list(raw_sha256())
 
     def download(self) -> None:
@@ -1432,13 +1938,18 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
                 mirror / table_rel(filename), osp.join(self.raw_dir, filename), sha256
             )
         log.info(
-            "Rousset 2018 S1/S4/S6 Tables linked into %s (sha256 verified)",
+            "Rousset 2018 S1/S4/S6 Tables and count tables linked into %s "
+            "(sha256 verified)",
             self.raw_dir,
         )
 
     @post_process
     def process(self) -> None:
-        """Parse the three tables into per-(guide, screen) records; write the LMDB."""
+        """Parse the three tables into per-(guide, screen) records; write the LMDB.
+
+        The two count tables are read to account for every released replicate sample
+        (``preprocess/replicates_not_stored.json``); none of them is a record (#1178).
+        """
         verify_raw_files(self.raw_dir, raw_sha256())
         tables = {
             filename: read_table(osp.join(self.raw_dir, filename), filename)
@@ -1448,6 +1959,22 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
             filename: coding_strand(frame, filename)
             for filename, frame in tables.items()
         }
+        # The authors' per-sample counts, checked against the stored guides BEFORE
+        # anything is written (#1178).
+        counts = {
+            filename: read_count_table(osp.join(self.raw_dir, filename), filename)
+            for filename in COUNT_TABLE_SHA256
+        }
+        release = replicate_release(
+            self.name,
+            {
+                c.screen_id: [
+                    str(s) for s in tables[c.table].loc[coding[c.table], "target"]
+                ]
+                for c in CONDITIONS
+            },
+            counts,
+        )
         record_tables = {c.table for c in CONDITIONS}
         symbols = sorted(
             {
@@ -1518,6 +2045,10 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
         interned_env.close()
 
         self._write_reports(tables, coding, symbols, idx)
+        with open(
+            osp.join(self.preprocess_dir, "replicates_not_stored.json"), "w"
+        ) as handle:
+            handle.write(release.model_dump_json(indent=2))
         log.info(
             "Rousset2018: wrote %d records over %d released symbols and %d screens",
             idx,

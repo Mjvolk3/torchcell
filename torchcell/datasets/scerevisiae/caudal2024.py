@@ -46,10 +46,31 @@ Peter genome and are EXCLUDED -- only isolates with a matched genome are built. 
 code is whatever both sources spell it, including the ``SACE_`` form (78 of the 943, e.g.
 ``SACE_YAU``); see ``_isolate_and_symbol``.
 
+ONE RECORD PER CULTURE (2026-11-24, tracking issue #1178). The paper profiled 29 isolates
+in independent culture replicates (``REPLICATE_SOURCED_VALUES``), released as Datafile 2
+(``replicate_data_tpm_22042023.tab``: one row per (``SampleID``, ``ORF``), TPM only, and
+the sample's ``Final.Group``). ``Final_set`` is the culture Datafile 1 carries (one per
+isolate; its ``Number.of.clean.mapped.reads``, ``Library`` and ``Sequencing.run`` equal the
+isolate's Supplementary Table 1 row), and ``good_duplicate`` / ``good_duplicateBis`` are
+the other cultures. So every isolate keeps its Datafile 1 record unchanged, and each
+other culture of a built isolate is one more record: its Datafile 2 TPM verbatim, keyed by
+the Datafile 1 gene id of the same ORF in the same isolate (``r_make_names`` recovers
+Datafile 1's spelling), a blank-name ``absent`` ORF left out as for the Datafile 1 record,
+``expression_count = None`` with ``REPLICATE_COUNT_GAP`` (Datafile 2 releases no counts),
+``n_mapped_reads`` the sample's released clean mapped reads, and ``replicate_id`` the
+released ``SampleID``. A replicated isolate's Datafile 1 record carries its ``Final_set``
+``SampleID`` as ``replicate_id``; an isolate profiled once keeps ``replicate_id = None``.
+26 of the 29 replicated isolates are built, so the store is 943 + 28 = 971 records. Every
+Datafile 2 sample is accounted for in ``preprocess/replicate_culture_ledger.json``.
+The reference stays the Datafile 1 population mean over the 943 isolates.
+
 Sources (hash-pinned, local library mirror):
   - Caudal expression: ``caudalPantranscriptomeRevealsLarge2024/data/
     final_data_annotated_merged_04052022.tab.zip`` (comma-delimited, latin-1;
     sha256 8b55ccd76e1d19476d8f5f718e9e061cb9e4693e343965114dd4cd65d5f8d26b).
+  - Caudal replicate cultures: ``caudalPantranscriptomeRevealsLarge2024/data/
+    replicate_data_tpm_22042023.tab`` (comma-delimited; sha256
+    6860fa5f7d42e7ae1d733f3db60b84d4cb45fb0d9757f7fb5c500a4b640cf900).
   - Peter genome: the six files of the genomes tier set ``peter2018_1011_assemblies``
     that ``natural_isolate.GENOTYPE_FILES`` names (the reference-gene tarball, the
     presence and copy-number matrices, the two loss-of-function matrices and the
@@ -135,8 +156,18 @@ CAUDAL_ZIP_REL = (
 )
 CAUDAL_ZIP_SHA256 = "8b55ccd76e1d19476d8f5f718e9e061cb9e4693e343965114dd4cd65d5f8d26b"
 CAUDAL_ZIP_BASENAME = "final_data_annotated_merged_04052022.tab.zip"
-#: The Caudal release plus the six Peter-tier files an isolate genotype is built from.
-RAW_FILES = [CAUDAL_ZIP_BASENAME, *GENOTYPE_FILES]
+#: Datafile 2, the per-sample TPM of the 29 isolates profiled in culture replicates
+#: (methods.md line 95). Library mirror, sha256 from its ``manifest.json``.
+REPLICATE_TAB_REL = (
+    "torchcell-library/caudalPantranscriptomeRevealsLarge2024/data/"
+    "replicate_data_tpm_22042023.tab"
+)
+REPLICATE_TAB_SHA256 = (
+    "6860fa5f7d42e7ae1d733f3db60b84d4cb45fb0d9757f7fb5c500a4b640cf900"
+)
+REPLICATE_TAB_BASENAME = "replicate_data_tpm_22042023.tab"
+#: The two Caudal releases plus the six Peter-tier files an isolate genotype is built from.
+RAW_FILES = [CAUDAL_ZIP_BASENAME, REPLICATE_TAB_BASENAME, *GENOTYPE_FILES]
 #: What the isolate genotypes of this build carry, counted (``natural_isolate``).
 GENOTYPE_LEDGER = "natural_isolate_genotype_ledger.json"
 #: The classes an isolate genotype holds, built in ``torchcell.sequence.natural_isolate``.
@@ -590,6 +621,291 @@ def resolve_gene_ids(df: pd.DataFrame) -> tuple[pd.DataFrame, BlankNameLedger]:
     return pd.concat([named, served]), ledger
 
 
+# --------------------------------------------------------------------------- #
+# Datafile 2: the replicate cultures (issue #1178)
+# --------------------------------------------------------------------------- #
+#: Columns the loader consumes from Datafile 2.
+REPLICATE_COLUMNS = [
+    "ORF",
+    "SampleID",
+    "tpm",
+    "Standardized.name",
+    "Final.Group",
+    "Number.of.clean.mapped.reads",
+]
+
+
+def _paper_sv(value: object, quote: str, line: int, note: str) -> SourcedValue:
+    """A SourcedValue pinned to the mirrored main text (``paper.md``)."""
+    return SourcedValue(
+        value=value,
+        provenance=Provenance(
+            source_uri="paper.md",
+            citation_key=CITATION_KEY,
+            sha256=PAPER_MD_SHA256,
+            page=f"paper.md line {line}",
+        ),
+        quote=quote,
+        note=note,
+    )
+
+
+#: What a Datafile 2 sample is, from the paper's own sentences.
+REPLICATE_SOURCED_VALUES: dict[str, SourcedValue] = {
+    "replicate_kind": _paper_sv(
+        "independent culture (biological replicate)",
+        "We performed independent culture replicates for 29 samples (Supplementary "
+        "Fig. 1b).",
+        25,
+        note="each Datafile 2 sample of an isolate is its own culture; Supplementary "
+        "Fig. 1c compares 66 replicate pairs, the ordered pairs of the 60 samples "
+        "(27 isolates x 2, 2 x 3), so the Final_set culture is one of the replicates",
+    ),
+    "replicates_sequenced": _methods_sv(
+        "29 isolates sequenced in duplicate",
+        "1,046 samples were sequenced, including duplicates for 29 of the isolates "
+        "(datafile 2).",
+        19,
+        note="Datafile 2 holds 60 samples of 29 isolates: 27 with 2, 2 (AFD, AKL) with 3",
+    ),
+    "replicate_release": _methods_sv(
+        "Datafile 2: TPM and sample information, no counts",
+        "datafile 2: normalized gene expression levels (TPM) and sample information "
+        "for 29 replicates (file name: replicate_data_tpm_22042023.tab)",
+        95,
+        note="the file's columns are ORF, SampleID, tpm and per-sample information; "
+        "it carries no read counts",
+    ),
+}
+
+REPLICATE_COUNT_GAP = ProvenanceGap(
+    field="expression_count",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=Provenance(
+        source_uri=REPLICATE_TAB_REL,
+        citation_key=CITATION_KEY,
+        sha256=REPLICATE_TAB_SHA256,
+    ),
+    note="Datafile 2 releases TPM and sample information only (methods.md line 95); "
+    "the featureCounts read counts of the replicate cultures are not in it, and "
+    "Datafile 1 carries the counts of the Final_set culture alone",
+)
+
+
+class ReplicateGroup(StrEnum):
+    """Datafile 2's ``Final.Group``: which culture of an isolate a sample is."""
+
+    final_set = "Final_set"
+    good_duplicate = "good_duplicate"
+    good_duplicate_bis = "good_duplicateBis"
+
+
+class ReplicateTableError(ValueError):
+    """Datafile 2 does not have the structure the loader reads it by."""
+
+
+def r_make_names(orf: str) -> str:
+    """R ``make.names`` of a Datafile 2 ``ORF``: the spelling Datafile 1 gives it.
+
+    Every character outside ``[A-Za-z0-9._]`` becomes ``.`` and an ``X`` is prepended
+    unless the name starts with a letter or with a dot not followed by a digit:
+    ``1003-augustus_masked-YCM-7680`` -> ``X1003.augustus_masked.YCM.7680``; an S288C
+    name is unchanged.
+    """
+    name = re.sub(r"[^A-Za-z0-9._]", ".", orf)
+    if not re.match(r"^([A-Za-z]|\.(?![0-9]))", name):
+        name = "X" + name
+    return name
+
+
+class ReplicateCulture(BaseModel):
+    """One Datafile 2 sample of a built isolate that Datafile 1 does not carry."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    sample_id: str
+    strain: str
+    group: ReplicateGroup
+    n_mapped_reads: int
+    tpm: dict[str, float]
+
+
+class ReplicateLedger(BaseModel):
+    """Accounting for every Datafile 2 sample and row.
+
+    ``final_set_sample_ids`` names, per built replicated isolate, the sample that is its
+    Datafile 1 culture; ``samples`` lists every sample with its isolate, group and fate.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    n_rows: int
+    n_samples: int
+    n_strains: int
+    samples_by_group: dict[ReplicateGroup, int]
+    samples: list[dict[str, str | int]]
+    strains_not_built: list[str]
+    final_set_sample_ids: dict[str, str]
+    n_culture_records: int
+    n_rows_culture_records: int
+    n_rows_absent_dropped: int
+
+
+def read_replicate_table(path: str) -> pd.DataFrame:
+    """Read ``REPLICATE_COLUMNS`` of Datafile 2 (comma-delimited, a header row).
+
+    ``tpm`` is parsed round-trip exact (pandas' default parser misreads the last digit
+    of some released values, e.g. ``0.00832811287968815`` of ``Run4.7.CCH``),
+    ``SampleID`` and ``Standardized.name`` are text, the mapped-read count is read
+    from its thousands-separated text (``1,542,282``) to an integer, and every
+    ``Final.Group`` must be a ``ReplicateGroup``.
+    """
+    df = pd.read_csv(
+        path,
+        usecols=REPLICATE_COLUMNS,
+        float_precision="round_trip",
+        dtype={
+            "SampleID": str,
+            "Standardized.name": str,
+            "Final.Group": str,
+            "Number.of.clean.mapped.reads": str,
+            "ORF": str,
+        },
+    )
+    df["Number.of.clean.mapped.reads"] = (
+        df["Number.of.clean.mapped.reads"].str.replace(",", "", regex=False).astype(int)
+    )
+    unknown = sorted(set(df["Final.Group"]) - {g.value for g in ReplicateGroup})
+    if unknown:
+        raise ReplicateTableError(f"Final.Group values no rule covers: {unknown}")
+    return df
+
+
+def replicate_cultures(
+    replicates: pd.DataFrame, built: pd.DataFrame, kept: pd.DataFrame
+) -> tuple[list[ReplicateCulture], ReplicateLedger]:
+    """The non-``Final_set`` cultures of built isolates, with every sample accounted for.
+
+    ``built`` is Datafile 1 restricted to the built isolates (``CAUDAL_COLUMNS``) and
+    ``kept`` its rows ``resolve_gene_ids`` kept, with ``gene_id``. A sample belongs to
+    one isolate, group and mapped-read count; a built isolate has exactly one
+    ``Final_set`` sample (its Datafile 1 culture). Each row of another sample takes the
+    ``gene_id`` of the Datafile 1 row of the same isolate and ``r_make_names(ORF)``; a
+    row whose Datafile 1 row was dropped (a blank-name ``absent`` ORF) is dropped and
+    counted, and a row with no Datafile 1 row, or a repeated (sample, gene), is refused.
+    """
+    per_sample = replicates.groupby("SampleID", sort=True).agg(
+        strain=("Standardized.name", "unique"),
+        group=("Final.Group", "unique"),
+        reads=("Number.of.clean.mapped.reads", "unique"),
+    )
+    ambiguous = [
+        str(s)
+        for s, row in per_sample.iterrows()
+        if len(row["strain"]) != 1 or len(row["group"]) != 1 or len(row["reads"]) != 1
+    ]
+    if ambiguous:
+        raise ReplicateTableError(
+            f"samples with more than one isolate, group or mapped-read count: "
+            f"{ambiguous}"
+        )
+    if bool(replicates.duplicated(["SampleID", "ORF"]).any()):
+        raise ReplicateTableError("Datafile 2 repeats a (SampleID, ORF) row")
+    sample_strain = {str(s): str(r["strain"][0]) for s, r in per_sample.iterrows()}
+    sample_group = {
+        str(s): ReplicateGroup(r["group"][0]) for s, r in per_sample.iterrows()
+    }
+    sample_reads = {str(s): int(r["reads"][0]) for s, r in per_sample.iterrows()}
+    built_strains = set(built["Strain"])
+
+    final_set: dict[str, list[str]] = {}
+    for sample, strain in sample_strain.items():
+        if sample_group[sample] is ReplicateGroup.final_set:
+            final_set.setdefault(strain, []).append(sample)
+    replicated = sorted(set(sample_strain.values()))
+    off = [
+        s for s in replicated if s in built_strains and len(final_set.get(s, [])) != 1
+    ]
+    if off:
+        raise ReplicateTableError(
+            f"built isolates without exactly one Final_set sample: {off}"
+        )
+
+    rows = replicates[
+        replicates["Standardized.name"].isin(built_strains)
+        & (replicates["Final.Group"] != ReplicateGroup.final_set.value)
+    ].assign(ORF=lambda f: f["ORF"].map(r_make_names))
+    released = rows.merge(
+        built[["Strain", "ORF"]],
+        left_on=["Standardized.name", "ORF"],
+        right_on=["Strain", "ORF"],
+        how="left",
+        indicator=True,
+    )
+    missing = released[released["_merge"] == "left_only"]
+    if len(missing):
+        raise ReplicateTableError(
+            f"{len(missing)} Datafile 2 rows name an ORF the isolate has no Datafile 1 "
+            f"row for: {sorted(set(zip(missing['SampleID'], missing['ORF'])))[:10]}"
+        )
+    keyed = rows.merge(
+        kept[["Strain", "ORF", "gene_id"]],
+        left_on=["Standardized.name", "ORF"],
+        right_on=["Strain", "ORF"],
+        how="inner",
+    )
+    if bool(keyed.duplicated(["SampleID", "gene_id"]).any()):
+        raise ReplicateTableError("two Datafile 2 rows of one sample share a gene id")
+
+    cultures = [
+        ReplicateCulture(
+            sample_id=str(sample),
+            strain=sample_strain[str(sample)],
+            group=sample_group[str(sample)],
+            n_mapped_reads=sample_reads[str(sample)],
+            tpm={str(g): float(t) for g, t in zip(sub["gene_id"], sub["tpm"])},
+        )
+        for sample, sub in keyed.groupby("SampleID", sort=True)
+    ]
+    cultures.sort(
+        key=lambda c: (c.strain, list(ReplicateGroup).index(c.group), c.sample_id)
+    )
+
+    def fate(sample: str) -> str:
+        if sample_strain[sample] not in built_strains:
+            return "isolate_not_built"
+        if sample_group[sample] is ReplicateGroup.final_set:
+            return "datafile_1_record"
+        return "culture_record"
+
+    ledger = ReplicateLedger(
+        n_rows=len(replicates),
+        n_samples=len(sample_strain),
+        n_strains=len(replicated),
+        samples_by_group={
+            g: sum(1 for v in sample_group.values() if v is g) for g in ReplicateGroup
+        },
+        samples=[
+            {
+                "sample_id": s,
+                "strain": sample_strain[s],
+                "group": sample_group[s].value,
+                "n_mapped_reads": sample_reads[s],
+                "fate": fate(s),
+            }
+            for s in sorted(sample_strain)
+        ],
+        strains_not_built=[s for s in replicated if s not in built_strains],
+        final_set_sample_ids={
+            s: final_set[s][0] for s in replicated if s in built_strains
+        },
+        n_culture_records=len(cultures),
+        n_rows_culture_records=len(keyed),
+        n_rows_absent_dropped=len(rows) - len(keyed),
+    )
+    return cultures, ledger
+
+
 @register_dataset
 class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
     """Natural-isolate pan-transcriptome: each isolate a perturbation set off S288C."""
@@ -630,22 +946,28 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         return os.environ["DATA_ROOT"]
 
     def download(self) -> None:
-        """Symlink the Caudal zip and the six Peter-tier genotype files into ``raw_dir``.
+        """Symlink the two Caudal files and the six Peter-tier files into ``raw_dir``.
 
-        Large artifacts are referenced in place (never copied). The Caudal zip is
-        hash-verified against its module pin; each Peter file against the genomes tier's
-        manifest (``natural_isolate.link_genotype_files``). ``process`` re-verifies all
-        seven in ``raw/`` before reading them.
+        Large artifacts are referenced in place (never copied). The Caudal zip and
+        Datafile 2 are hash-verified against their module pins; each Peter file against
+        the genomes tier's manifest (``natural_isolate.link_genotype_files``).
+        ``process`` re-verifies all eight in ``raw/`` before reading them.
         """
         data_root = self._data_root()
         os.makedirs(self.raw_dir, exist_ok=True)
-        source = osp.join(data_root, CAUDAL_ZIP_REL)
-        if not osp.exists(source):
-            raise RuntimeError(f"required raw artifact missing from mirror: {source}")
-        verify_sha256(source, CAUDAL_ZIP_SHA256)
-        dest = osp.join(self.raw_dir, CAUDAL_ZIP_BASENAME)
-        if not osp.exists(dest):
-            os.symlink(source, dest)
+        for rel, sha256, basename in (
+            (CAUDAL_ZIP_REL, CAUDAL_ZIP_SHA256, CAUDAL_ZIP_BASENAME),
+            (REPLICATE_TAB_REL, REPLICATE_TAB_SHA256, REPLICATE_TAB_BASENAME),
+        ):
+            source = osp.join(data_root, rel)
+            if not osp.exists(source):
+                raise RuntimeError(
+                    f"required raw artifact missing from mirror: {source}"
+                )
+            verify_sha256(source, sha256)
+            dest = osp.join(self.raw_dir, basename)
+            if not osp.exists(dest):
+                os.symlink(source, dest)
         link_genotype_files(self.raw_dir, data_root)
         log.info(
             "Caudal/Peter raw files linked into %s (sha256 verified)", self.raw_dir
@@ -653,13 +975,15 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Build the 943 per-isolate pan-transcriptome experiments and write LMDB.
+        """Build one experiment per culture (943 isolates, 971 cultures) and write LMDB.
 
-        Every file in ``raw/`` is verified before a row is read: the Caudal zip against
-        this module's pin, the six Peter files against the genomes tier's manifest. A
-        mismatch raises ``RawSha256MismatchError``. Each isolate's genotype comes from
-        ``NaturalIsolateGenotypes``; what the genotypes carry is counted in
-        ``preprocess/natural_isolate_genotype_ledger.json``.
+        Every file in ``raw/`` is verified before a row is read: the two Caudal files
+        against this module's pins, the six Peter files against the genomes tier's
+        manifest. A mismatch raises ``RawSha256MismatchError``. Each isolate's genotype
+        comes from ``NaturalIsolateGenotypes``; what the genotypes carry is counted in
+        ``preprocess/natural_isolate_genotype_ledger.json``. An isolate's records are
+        its Datafile 1 culture, then its other Datafile 2 cultures in ``Final.Group``
+        and ``SampleID`` order.
         """
         data_root = self._data_root()
         peter = load_genome_manifest(PETER2018_1011, data_root)
@@ -667,15 +991,19 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
             self.raw_dir,
             {
                 CAUDAL_ZIP_BASENAME: CAUDAL_ZIP_SHA256,
+                REPLICATE_TAB_BASENAME: REPLICATE_TAB_SHA256,
                 **{name: peter.record(name).sha256 for name in GENOTYPE_FILES},
             },
         )
         os.makedirs(self.preprocess_dir, exist_ok=True)
 
         # 1. Caudal expression -> per-(strain, gene) tpm/count, restricted to the
-        #    isolates with a Peter genome; population-mean reference over those strains.
+        #    isolates with a Peter genome; population-mean reference over those strains;
+        #    the other cultures of the replicated isolates from Datafile 2.
         panel = panel_isolates(self.raw_dir)
-        strains, per_strain, ref_tpm, ref_count = self._load_caudal(data_root, panel)
+        strains, per_strain, ref_tpm, ref_count, cultures, final_set = (
+            self._load_caudal(data_root, panel)
+        )
         log.info("Matched isolates (Caudal ∩ Peter): %d", len(strains))
 
         # 2. The isolate genotypes (allele diff cached in preprocess/).
@@ -695,6 +1023,10 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
             osp.join(self.preprocess_dir, "data.csv"), index=False
         )
 
+        by_strain: dict[str, list[ReplicateCulture]] = {}
+        for culture in cultures:
+            by_strain.setdefault(culture.strain, []).append(culture)
+
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(2e11))
         kinds: dict[str, int] = {}
         idx = 0
@@ -703,29 +1035,46 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
                 genotype = genotypes.genotype(strain)
                 for kind in genotype.perturbation_types:
                     kinds[kind] = kinds.get(kind, 0) + 1
-                experiment, reference, publication = self.create_experiment(
+                rows: list[dict[str, Any]] = [
                     {
                         "genotype": genotype,
                         "expression_tpm": per_strain[strain]["tpm"],
                         "expression_count": per_strain[strain]["count"],
+                        "n_mapped_reads": None,
+                        "replicate_id": final_set.get(strain),
                     }
-                )
-                txn.put(
-                    f"{idx}".encode(),
-                    pickle.dumps(
-                        {
-                            "experiment": experiment.model_dump(),
-                            "reference": reference.model_dump(),
-                            "publication": publication.model_dump(),
-                        }
-                    ),
-                )
-                idx += 1
+                ]
+                rows += [
+                    {
+                        "genotype": genotype,
+                        "expression_tpm": culture.tpm,
+                        "expression_count": None,
+                        "n_mapped_reads": culture.n_mapped_reads,
+                        "replicate_id": culture.sample_id,
+                    }
+                    for culture in by_strain.get(strain, [])
+                ]
+                for row in rows:
+                    experiment, reference, publication = self.create_experiment(row)
+                    txn.put(
+                        f"{idx}".encode(),
+                        pickle.dumps(
+                            {
+                                "experiment": experiment.model_dump(),
+                                "reference": reference.model_dump(),
+                                "publication": publication.model_dump(),
+                            }
+                        ),
+                    )
+                    idx += 1
         env.close()
-        n = max(idx, 1)
+        n = max(len(strains), 1)
         log.info(
-            "Wrote %d isolates. Per-isolate means: %s",
+            "Wrote %d records (%d isolates, %d replicate cultures). Per-isolate "
+            "means: %s",
             idx,
+            len(strains),
+            len(cultures),
             {kind: round(count / n, 2) for kind, count in sorted(kinds.items())},
         )
 
@@ -736,17 +1085,43 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         dict[str, dict[str, dict[str, Any]]],
         dict[str, float],
         dict[str, int],
+        list[ReplicateCulture],
+        dict[str, str],
     ]:
         """Aggregate Caudal expression per (strain, gene); return matched strains + ref.
 
         Every row of the built isolates is accounted for by ``resolve_gene_ids``: named
         rows keep their ``systematic_name``, blank-name rows are served or dropped by
         their ledger class, and the ledger is written to
-        ``preprocess/blank_systematic_name_ledger.json`` (issue #598).
+        ``preprocess/blank_systematic_name_ledger.json`` (issue #598). Datafile 2's
+        other cultures of the built isolates and each replicated isolate's ``Final_set``
+        sample id are returned too, accounted for in
+        ``preprocess/replicate_culture_ledger.json``.
         """
-        df = read_caudal_table(osp.join(self.raw_dir, CAUDAL_ZIP_BASENAME))
-        df = restrict_to_built_isolates(df, peter_isolates)
-        df, ledger = resolve_gene_ids(df)
+        built = restrict_to_built_isolates(
+            read_caudal_table(osp.join(self.raw_dir, CAUDAL_ZIP_BASENAME)),
+            peter_isolates,
+        )
+        df, ledger = resolve_gene_ids(built)
+        cultures, replicate_ledger = replicate_cultures(
+            read_replicate_table(osp.join(self.raw_dir, REPLICATE_TAB_BASENAME)),
+            built,
+            df,
+        )
+        replicate_path = osp.join(self.preprocess_dir, "replicate_culture_ledger.json")
+        with open(replicate_path, "w") as handle:
+            handle.write(replicate_ledger.model_dump_json(indent=2))
+        log.info(
+            "Datafile 2: %d samples of %d isolates; %d culture records for built "
+            "isolates (%d rows, %d absent rows dropped); not built %s -> %s",
+            replicate_ledger.n_samples,
+            replicate_ledger.n_strains,
+            replicate_ledger.n_culture_records,
+            replicate_ledger.n_rows_culture_records,
+            replicate_ledger.n_rows_absent_dropped,
+            replicate_ledger.strains_not_built,
+            replicate_path,
+        )
         ledger_path = osp.join(self.preprocess_dir, "blank_systematic_name_ledger.json")
         with open(ledger_path, "w") as handle:
             handle.write(ledger.model_dump_json(indent=2))
@@ -783,7 +1158,14 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         ref_tpm = {str(g): float(t) for g, t in ref["tpm"].items()}
         ref_count = {str(g): int(round(float(c))) for g, c in ref["count"].items()}
         strains = sorted(per_strain)
-        return strains, per_strain, ref_tpm, ref_count
+        return (
+            strains,
+            per_strain,
+            ref_tpm,
+            ref_count,
+            cultures,
+            replicate_ledger.final_set_sample_ids,
+        )
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
@@ -796,7 +1178,11 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
     ) -> tuple[
         RNASeqExpressionExperiment, RNASeqExpressionExperimentReference, Publication
     ]:
-        """Build the RNA-seq experiment/reference/publication for one isolate."""
+        """Build the RNA-seq experiment/reference/publication for one culture.
+
+        ``row["expression_count"]`` None (a Datafile 2 culture) carries
+        ``REPLICATE_COUNT_GAP``.
+        """
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae",
             strain="S288C",
@@ -810,7 +1196,11 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
             expression_tpm=row["expression_tpm"],
             expression_count=row["expression_count"],
             measurement_type=MEASUREMENT_TYPE,
-            n_mapped_reads=None,
+            n_mapped_reads=row["n_mapped_reads"],
+            replicate_id=row["replicate_id"],
+            provenance_gaps=(
+                [REPLICATE_COUNT_GAP] if row["expression_count"] is None else []
+            ),
         )
         experiment = RNASeqExpressionExperiment(
             dataset_name=self.name,

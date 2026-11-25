@@ -141,7 +141,7 @@ DATASET_FULL_RECORDS: dict[str, int] = {
     "MicroarrayKemmeren2014Dataset": 3061,
     "SmMicroarraySameith2015Dataset": 144,
     "DmMicroarraySameith2015Dataset": 143,
-    "CaudalPanTranscriptome2024Dataset": 943,
+    "CaudalPanTranscriptome2024Dataset": 971,
     "ScmdOhnuki2018Dataset": 1112,
     "ScmdOhnuki2022Dataset": 1979,
     "CarotenoidOzaydin2013Dataset": 4474,

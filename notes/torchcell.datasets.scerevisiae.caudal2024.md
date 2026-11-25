@@ -458,3 +458,70 @@ Owner rule of 2026-10-12, applied through the genome-gating sweep ([[database.ge
 - `BLANK_ROW_RULES[bad_annotation]` and `[unannotated]` are now `served` with the pangenome-id rule the present accessory ORFs use (`X<n>-<name>`), and each keeps its typed `ProvenanceGap` on the class definition (no mirrored source defines the class). The 16,031 `bad annotation` rows of the 943 built isolates carry 17 pangenome ids (X142-augustus_masked.1731.ATP_4 in all 943 built isolates, 944 rows of the released table, ...); 10,809 of the 16,048 released rows of that class have a TPM of 0, stored as the released 0. `unannotated` has 0 rows in the built isolates. `absent` rows (443,200) stay dropped as the paper does.
 - Record count unchanged: 943. The phenotypes gain the 17 keys in the isolates that carry them, so the store is rebuilt under slurm with `--retire-existing --verify` from a `git clone --shared` snapshot of the branch rebased onto `main` at `f85df69af5` (#1069 landed: genome rules report, never gate), slurm array 4451; the L0-L4 table is appended below when the job finishes. `test_the_released_table_ledger_matches_issue_598` (the real table) passes with 12 + 17 pangenome ids over 461 + 16,031 rows.
 - Still open, deferred to PR #1058: the 25 `XTRA_*` isolates and `FY4-6` (26 isolates, 169,442 released gene rows) have no Peter 2018 genome. Storing them needs a genotype that can state "no sequence-level genotype released" as a typed gap; `Genotype` on `main` has no gap slot, and #1058 adds `HashableProvenanceGapMixin` to it, so the 26 are served once that lands.
+
+## 2026.11.24 - One record per culture: Datafile 2 replicate cultures (#1178, #1176)
+
+Policy: one stored record per biological replicate the source releases (tracking issue #1178, owner decisions 2026-11-17 and 2026-11-24).
+
+### Before and after
+
+- Before: 943 records, one per built isolate, from Datafile 1 (`final_data_annotated_merged_04052022.tab.zip`). Datafile 2 (`replicate_data_tpm_22042023.tab`, library mirror, sha256 `6860fa5f7d42e7ae1d733f3db60b84d4cb45fb0d9757f7fb5c500a4b640cf900`) was mirrored and unread.
+- Now: 971 records. Every isolate keeps its Datafile 1 record, and each other culture of a built isolate in Datafile 2 is one more record (28). Records of an isolate are consecutive: the Datafile 1 culture, then the others in `Final.Group` (`good_duplicate`, `good_duplicateBis`) and `SampleID` order.
+- A culture record: Datafile 2 TPM verbatim (parsed round-trip exact), keyed by the Datafile 1 gene id of the same ORF in the same isolate (Datafile 2 writes ORFs in the release spelling `1003-augustus_masked-YCM-7680`; R `make.names` of it, `r_make_names`, is Datafile 1's `X1003.augustus_masked.YCM.7680`), a blank-name `absent` ORF left out as for the Datafile 1 record, `expression_count = None` with `REPLICATE_COUNT_GAP` (`not_reported_by_primary`, as Guzman 2018's TPM-only release), `n_mapped_reads` = the sample's `Number.of.clean.mapped.reads`, `replicate_id` = the released `SampleID` (e.g. `Run10.11.AAN`).
+- The Datafile 1 record of each of the 26 replicated built isolates now carries its `Final_set` `SampleID` as `replicate_id` (e.g. `Run12.13.AAG`); the 917 isolates profiled once keep `replicate_id = None` and are byte-identical to before.
+- The reference is unchanged: the Datafile 1 population mean over the 943 isolates.
+- No schema change: `replicate_id` exists since PR #1181, and `expression_count` has had its value-or-gap form since #964.
+
+### What a Datafile 2 sample is (sources)
+
+- `paper.md` (sha256 `652b3497bc7799fef9972db233a7046f2815742e17280270f5071c623f0ac8aa`) L25: "We performed independent culture replicates for 29 samples (Supplementary Fig. 1b)." Biological replicates.
+- `methods.md` (sha256 `10ccc3d0267ca337e4c3941ef3893ce39dfe393ebadbab83b6e9ff07a7e4f1e0`) L19: "1,046 samples were sequenced, including duplicates for 29 of the isolates (datafile 2)."
+- `methods.md` L95: "datafile 2: normalized gene expression levels (TPM) and sample information for 29 replicates (file name: replicate_data_tpm_22042023.tab)". No counts in the file.
+- SI PDF `si/41588_2024_1769_MOESM1_ESM.pdf` (sha256 `826a0c7c...`), Supplementary Fig. 1 legend: "b. Correlation between 29 samples with replicates. Correlations were calculated based on log2(tpm+1) across 6,445 genes. Data included in online datafile 2." Panel c compares "Replicates (66)" pairs: the ordered pairs of the 60 samples (27 x 2 + 2 x 3 gives 33 unordered pairs), so the `Final_set` culture is one of the compared replicates.
+- Measured on the file: 387,360 rows, 60 `SampleID`s, 29 isolates (`Final.Group`: 29 `Final_set`, 29 `good_duplicate`, 2 `good_duplicateBis`, for AFD and AKL), 6,456 ORFs per sample (Datafile 1 has 6,517; the 61 missing are pangenome ORFs), TPM summing to 1e6 per sample. Some samples were renamed by the authors' SNP validation (`Sample.name.before.reassignement` `AAN_Yes_14` -> isolate AAG, methods.md L27 "19 samples could be unambiguously reassigned to the top one ranking strain"); the record follows `Standardized.name`, the authors' final assignment.
+- `Final_set` is the Datafile 1 culture: for all 26 built replicated isolates its `Number.of.clean.mapped.reads`, `Library` and `Sequencing.run` equal the isolate's row of Caudal's Supplementary Table 1 (`si/41588_2024_1769_MOESM3_ESM.xlsx` sheet `Table S1`, sha256 `753e17d6...`), and its TPM sits at log2(TPM + 1) Pearson r 0.9955 to 0.9998 and median |dTPM| 0.12 to 0.62 from the stored Datafile 1 values, against r 0.814 to 0.986 and median |dTPM| 4.2 to 19.6 for the other cultures. It is not byte-equal to Datafile 1 (the TPM denominators differ by the 61 features, and the ratio is not one constant per sample; why, unverified), so it is not a second record of the same culture.
+- Withdrawn samples: none in Datafile 2. The 14 samples methods.md L27 discards ("14 of 1,046 samples could not be validated or reassigned and were discarded") are not in the file.
+- Not built: XTRA_DGR, XTRA_DGT, XTRA_DGU (one Final_set and one good_duplicate each, 6 samples). They have no Peter 2018 genome, the same exclusion as their Datafile 1 rows (2026.10.12 section, #1064); no change here.
+
+### Counts (`experiments/036-dataset-fixes-before-kg-build/scripts/caudal2024_per_replicate.py`, results `experiments/036-dataset-fixes-before-kg-build/results/caudal2024_per_replicate.json`)
+
+Scratch builds: `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-caudal2024/caudal_pantranscriptome2024` (this branch) and `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-caudal2024/baseline_origin_main/caudal_pantranscriptome2024` (`origin/main` loader, the before store).
+
+| quantity | value |
+|---|---|
+| records before / after | 943 / 971 |
+| isolates by culture count | 917 x 1, 24 x 2, 2 x 3 |
+| records by replicate position (k-th culture of an isolate) | 1st 943, 2nd 26, 3rd 2 |
+| Datafile 1 records: key paths differing from before | `/experiment/phenotype/replicate_id` on 26, nothing else |
+| Datafile 1 records: max abs TPM / count difference | 0.0 / 0.0 |
+| culture records: rows keyed / rows on `absent` ORFs left out | 169,036 / 11,732 (of 180,768 released rows) |
+| culture records: TPM equal to the release, mapped reads equal | all 28 |
+| shared reference | one, equal to before |
+
+Mean reproduction: grouping the records by (genotype, environment) and taking the per-gene mean gives back the previous value exactly (max abs difference 0.0) for the 917 isolates profiled once. For the 26 replicated isolates the group mean differs from the previous value (max abs difference 30,388 TPM, median over isolates of the per-isolate max 6,200 TPM), by design: the previous value is one culture (Datafile 1), not a mean of cultures, and that record is unchanged.
+
+### Verifier (`verify_build`, scratch store `preprocess/verification_report.json`)
+
+`runners.RNASEQ_DATASETS["caudal_pantranscriptome2024"]["expected_count"]` is now 971, and `verify_rnaseq_store` feeds the shared isolate audit one entry per DISTINCT genotype (a culture whose genotype equals its isolate's first is skipped; a differing one is added and fails "an isolate has one genotype"). All 12 rows pass:
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | 971 records validated |
+| L1 | count | observed 971, expected 971 |
+| L1 | strain_uniqueness | 971 unique (strain, condition) records over 943 strains (`replicate_id` in the key) |
+| L2 | tpm_value_fidelity | 5,871,367 values checked |
+| L2 | count_value_fidelity | 5,702,331 counts are non-negative integers (the 28 culture records carry the count gap) |
+| L3 | measurement_type_consistent | single measurement_type: 'rnaseq_tpm' |
+| L3 | reference_finite | reference expression finite for all 6,294,993 values |
+| L4 | gene_containment_sgd | 0.939 of 6,483 measured genes are S288C reference genes (>= 0.9) |
+| L1 | isolate_genotype_identity | 943 isolates, one genotype each |
+| L2 | isolate_genotype_round_trip | 943 stored genotypes equal their re-derivation |
+| L4 | isolate_descriptor_matches_table_s1 | 943 descriptors and 116 HO deletions equal Supplementary Table 1 |
+| L4 | loss_of_function_calls_match_release | over 943 isolates: nonsense_or_sift 223,947, homozygous_frameshift 137,677 |
+
+### Found along the way
+
+- pandas' default float parser misreads the last digit of some released values: Datafile 2 `Run4.7.CCH` YDR545W and YOR396W `0.00832811287968815` read as `0.0083281128796881`. Datafile 2 is now read with `float_precision="round_trip"`, and all 169,036 stored culture values equal Python's `float()` of the released text. Datafile 1 has the same defect: 68 of its 6,314,973 `tpm` cells differ from the round-trip value by at most 9.0e-17 (0 `count` cells). Not changed here, because it would alter served records outside the replicate change; open for a follow-up.
+- Datafile 1 has no repeated (Strain, gene id) after the ledger, so the per-(strain, gene) sum in `_load_caudal` sums nothing on the real table; Datafile 2 refuses a repeat instead.
+- Not done (outside the replicate policy, #1064): the 26 isolates with no Peter 2018 genome, three of which (XTRA_DGR, XTRA_DGT, XTRA_DGU) have 6 Datafile 2 cultures. Lifting that gate would add their 26 Datafile 1 records and the 3 non-Final_set cultures, 1,000 records in all (counted from the two files, not built).
+- Open for review: the 917 isolates profiled once keep `replicate_id = None`. Datafile 1 prints no sample label per isolate; Supplementary Table 1 gives `Library` and `Run`, which name the sequencing batch, not the culture.

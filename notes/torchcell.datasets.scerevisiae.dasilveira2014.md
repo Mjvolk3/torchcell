@@ -88,3 +88,44 @@ L0-L4 on the dev store (`run_metabolite`, narrowed to this store; report `data/t
 Owner, 2026-10-12: "the data is the data!!!! it is what they reported". A mutant row is stored under its `Systematic Name` cell (stripped and upper-cased, the case the perturbation schema's systematic-name format requires) and its `Standard Name` cell (the systematic name when blank). The loader no longer calls `gene_alias_resolution`, no longer drops a row whose ORF R64 does not know, no longer refuses an ambiguous standard name without a pin, and no longer takes a `genome`. Two rows naming one ORF are still refused (one strain, one record); a lipid no WT row measured and an all-blank mutant row are still refused.
 
 Measured 2026-10-12 against the built dev store (`$DATA_ROOT/data/torchcell/metabolite_dasilveira2014`): its 127 stored (systematic, standard) pairs equal the 127 released (`Systematic Name`, `Standard Name`) pairs of the pinned Table S4, so the change moves no stored record and the store is not rebuilt. Comparing those names with R64 is now the reported `canonical_gene_names` / `current_genome_genes` findings of its verification ([[torchcell.verification.report]]).
+
+## 2026.11.24 - Every Quant row is a record; the three wild types join the store (#1171, #1178)
+
+Per-replicate policy (#1178, owner 2026-11-17 and 2026-11-24), item 7: a control row the source releases is a record whenever its genotype is statable. Table S4's `Quant` sheet has three wild-type rows, `Y7092` (WT1), `Y7220` (WT2) and `BY4741` (WT3), which the loader read only into the reference. They are now three records with an EMPTY genotype, and each record's `genome_reference.strain` is the strain id its row gives (the mutants keep `BY4741`). 127 -> 130 records, stored in release row order: the wild types are records 116-118, and the 11 mutant rows after them move from 116-126 to 119-129.
+
+The three are three strains, not three replicates of one, so `replicate_id` is `None` on each, and each `Quant` value is the release's own aggregate over two cultures (below). `phenotype_reference` is unchanged: the per-lipid mean over the three wild-type rows, restricted to the lipids the record measured, `replicate_id = None`.
+
+### What a replicate is here (sources read in full)
+
+Mirror `paper.md` (sha256 `87b6e92b...`), line 31: "We analyzed the lipid profile of 129 yeast knockout strains and wild type in biological duplicates with up to six technical replicates per biological replicate." Line 176: "Two independent biological replicates were analyzed, each of which comprised up to six technical replicates."
+
+The Supplemental Information PDF was NOT in either mirror. It is listed in the article's supplementary material (PMC4196872 XML, `supp_E14-03-0851v1_CombinedSupMats.pdf`) and was fetched from the PMC Open Access AWS bucket: `curl -o supp_E14-03-0851v1_CombinedSupMats.pdf https://pmc-oa-opendata.s3.amazonaws.com/PMC4196872.1/supp_E14-03-0851v1_CombinedSupMats.pdf`, retrieved 2026-11-25T02:14:57Z, sha256 `f5b2afec39d23135b54a64e3a661ed618a063ab7bff4ad55abf0ca10b27fc4f4`. Verbatim (pdftotext -layout):
+
+- p. 36: "Knockout strains were plated in YPD plates and isolated colonies were used for the two independent cell cultures." A biological replicate is an independent culture.
+- p. 36: "The screening was conducted in 12 batches of lipid analysis. Each batch contained a wild-type strain and up to 23 mutants. For each biological replicate (BR), the MS analysis was done up to six sequential repetitions, herein called technical replicates (TR). ... From that, we computed the median of the values obtained in the TRs for each lipid in each sample." The technical level is a median inside each culture.
+- p. 37: "The corrected values are herein referred as “Quant”." (after the interplate correction).
+- p. 37: "A cutoff r=0.7 was established and two strains were excluded from the analysis (cla4Δ and ptc7Δ)."
+
+Table S4 releases one `Quant` value per strain x lipid; the per-culture (BR1, BR2) values are in no SI table. So the 127 mutant records and the 3 wild-type records are aggregate-only as released (policy item 8), `n_replicates = 2` per lipid, `metabolite_level_se = None`. For a wild-type row `n_replicates = 2` is the conservative lower end of an unstated count: a wild-type strain ran in every one of the 12 batches, and the three wild-type rows do not say how many cultures each pools.
+
+The 129-vs-127 discrepancy flagged since 2026.07.12 is resolved: Table S1 lists 129 mutants including CLA4 (YNL298W) and PTC7 (YHR076W), the two the authors excluded at the r = 0.7 QC, and Table S4 releases the other 127. Nothing is dropped by the loader.
+
+The SI tables the plan listed as unmirrored were fetched from the same bucket (`https://pmc-oa-opendata.s3.amazonaws.com/PMC4196872.1/<file>`, same timestamp). Journal file `s03`, `s04`, `s06` and `s10` are byte-identical to the mirrored Tables S1, S2, S4 and S10 (sha256 `c6a69801...`, `3c7d55f2...`, `91409229...`, `29a7ed0a...`). The others:
+
+| File | Table | sha256 | Content |
+|---|---|---|---|
+| `s05.xlsx` | S3 | `dd5eee82c8f6e14ef012389d60767c14ffb4ea650bf7420a63ac300e2bf9e62f` | per-lipid and per-category mean, quartiles, SD, thresholds over all strains |
+| `s07.xlsx` | S5 | `f2a1e379ad87d77d4c52950f33afb68dc5b99cae653f4ecc5f0fe337ccbbc180` | lipid categories, same 130 rows as S4, sheets HIT, Quant, Norm, log2, SSMD |
+| `s08.xlsx` | S6 | `ac097b7bf627e53b726d6b9e6de031b1ae0a7aa79c94b2501e046635646ef320` | hits and relative impact per strain |
+| `s09.xlsx` | S7 | `5cd16af9ba8884c7f76c3805b62e832ad82435fc40f2843d38dac3a8d514d3fb` | WT, kcs1, pho85, vip1 sphingolipids: Mean and SD only |
+| `s11.xlsx` | S11 | `f8cac929336abd93affd8b9b268cc1f16f24518571ad12b4b04826cc7fd6094c` | CED / PPA / snf1 follow-up (FY1679 background): `Detailed data set` sheet has one row per biological replicate, 18 rows = 6 strains x 3 (`WT-1` ... `PPA_snf1-3`), each labelled `Median` |
+
+None of S3, S5, S6, S7 is per-replicate screen data. S11 IS per-replicate, but it is a separate experiment (Fig. 5, six FY1679-background strains, three cultures each) that no loader reads; it is a candidate for a new dataset class, not part of this conversion. The fetched files stay outside the raw mirror, which holds only what the loader consumes.
+
+### Verification and the mean check
+
+Scratch build `$DATA_ROOT/tmp/scratch/per-replicate-dasilveira2014/metabolite_dasilveira2014` (pre-change build beside it, `before_metabolite_dasilveira2014`). `verify_metabolite_dataset` with the updated `runners.py` spec (`expected_count` 130): PASS, L0 130 records, L1 count 130 / 130, L1 `genotype_uniqueness` 130 unique keys, L2 `value_fidelity` 18,072 values, L3 `reference_finite` 18,072 values, L4 `gene_containment_scmd_ohya2005` 0.992 of 127 genes.
+
+The L1 uniqueness key in `torchcell/verification/metabolite.py` now carries the reference genome's `strain` (the #1057 precedent in `environment_response`), because three empty-genotype records are told apart only by the strain their reference names. A dataset with one reference strain keys as before.
+
+Grouping the 130 records by (genotype, environment) gives 128 groups: 127 single mutant groups whose value and reference equal the pre-change store record for record (max abs difference 0 over 17,638 values), and one group of the three wild types, whose per-lipid mean reproduces the old (and current) reference over all 147 lipids with max abs difference 7.3e-12 (float summation order).

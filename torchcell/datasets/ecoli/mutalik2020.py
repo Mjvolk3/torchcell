@@ -3277,6 +3277,12 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
             for frame, _ in tables.values()
             for name in fitness_columns(frame.columns)
         )
+        unreleased = sorted(name for name in released_columns if name not in released)
+        if unreleased:
+            raise RuntimeError(
+                f"{unreleased} carry a fitness column with no per-experiment metadata "
+                "row, so what the culture was cannot be stated"
+            )
         on_axis = {assay.exp_name for assay in axis.assays}
         time_zero_unlisted = [
             name

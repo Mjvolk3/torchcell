@@ -127,6 +127,44 @@ SCREEN_ID_PILOT = "kuzmin2020_s3_pilot_genome_wide_arrays"
 # Dmf double-mutant query-strain records read their value from it.
 SCREEN_ID_QUERY_FITNESS = "kuzmin2020_s5_query_fitness_array"
 
+# HO, the benign locus that carries the control marker of every single-mutant control
+# query strain (issue #1202). Verbatim, si/si1.md lines 29-31 (sha256 69179c57...):
+#   "Single mutant control strains (480 in total) deleted for one member of a paralog
+#   pair were constructed, such that each strain carried the deletion of one member of
+#   a paralog pair with the relevant control marker inserted at the benign $H O$ locus."
+# and line 91: "$H O$ is a benign control locus that houses the marker". Table S5 writes
+# each single mutant as a pair with YDL227C (HO) on either side: 240 of its 480 "Single
+# mutant" rows put HO in ORF1 and the gene in ORF2, 240 the reverse, 0 rows put HO on
+# both or neither side. The stored perturbation is the gene, never HO; HO is dropped as
+# the Dmf and Dmi digenic records here and SmfKuzmin2018Dataset drop it (their "no ho"
+# query columns), so a single-mutant control is named the same way everywhere.
+HO_SYSTEMATIC_NAME = "YDL227C"
+
+
+def _single_mutant_gene_side(df: pd.DataFrame) -> pd.DataFrame:
+    """Table S5 single-mutant rows with the paralog gene's ORF, name and allele.
+
+    Adds ``query_orf``, ``query_gene`` and ``query_allele`` from whichever of the two
+    sides (``ORF1/Gene1/Allele1`` or ``ORF2/Gene2/Allele2``) is not HO. A row whose
+    sides are both HO or neither HO names no single gene and is refused (0 of the 480
+    released rows).
+    """
+    ho_first = df["ORF1"] == HO_SYSTEMATIC_NAME
+    ho_second = df["ORF2"] == HO_SYSTEMATIC_NAME
+    unresolved = ho_first == ho_second
+    if unresolved.any():
+        raise ValueError(
+            f"Table S5 has {int(unresolved.sum())} 'Single mutant' row(s) without "
+            f"exactly one {HO_SYSTEMATIC_NAME} (HO) side: "
+            f"{df.loc[unresolved, 'Query Strain ID'].tolist()}"
+        )
+    df = df.copy()
+    for column in ("ORF", "Gene", "Allele"):
+        df[f"query_{column.lower()}"] = df[f"{column}2"].where(
+            ho_first, df[f"{column}1"]
+        )
+    return df
+
 
 def _combine_screens(df_s1: pd.DataFrame, df_s3: pd.DataFrame) -> pd.DataFrame:
     """Tables S1 then S3 in one frame, each row tagged with its ``screen_id``.
@@ -423,8 +461,8 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         interned_env.close()
 
     def preprocess_raw(self, df: pd.DataFrame) -> pd.DataFrame:  # type: ignore[override]  # dataset-specific signature
-        """Filter to single mutants and clean allele names for processing."""
-        df = df[df["Mutant type"] == "Single mutant"]
+        """Filter to single mutants, take the non-HO side, and clean allele names."""
+        df = _single_mutant_gene_side(df[df["Mutant type"] == "Single mutant"])
         df = df.replace("'", "_prime", regex=True)
         df = df.replace("Δ", "_delta", regex=True)
         df = df.dropna(subset=["Fitness"])
@@ -444,17 +482,19 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
             assembly_accession=SGD_S288C_R64_GENBANK_ACCESSION,
         )
 
+        # The gene side of the S5 pair (``_single_mutant_gene_side``), never HO: reading
+        # ORF1/Gene1 stored 238 of the 472 records as an HO deletion (#1202).
         perturbation: GenePerturbationType
-        if "delta" in row["Allele1"]:
+        if "delta" in row["query_allele"]:
             perturbation = SgaKanMxDeletionPerturbation(
-                systematic_gene_name=row["ORF1"],
-                perturbed_gene_name=row["Gene1"],
+                systematic_gene_name=row["query_orf"],
+                perturbed_gene_name=row["query_gene"],
                 strain_id=row["Query Strain ID"],
             )
         else:
             perturbation = SgaAllelePerturbation(
-                systematic_gene_name=row["ORF1"],
-                perturbed_gene_name=row["Gene1"],
+                systematic_gene_name=row["query_orf"],
+                perturbed_gene_name=row["query_gene"],
                 strain_id=row["Query Strain ID"],
             )
 

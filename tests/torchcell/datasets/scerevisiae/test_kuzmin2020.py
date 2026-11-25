@@ -25,12 +25,13 @@ S3     YBR160W+YDL227C_tsq508  cdc28-4+hoΔ      YAL048C_dma5203  dig   0.72  0.
 S3     YBR160W+YML107C_tm801   cdc28-4+pml39Δ   YAL048C_dma5203  tri   0.25  0.03   0.55   -0.1   0.01
 =====  ======================  ===============  ===============  ====  ====  =====  =====  =====  =====
 
-Table S5: single mutants CDC28 (``cdc28-4``, sn tsq508, 0.83, St.dev. blank) and GEM1
-(``delta``, sn200, 0.95 / 0.01), and the double mutant tm801 (0.5 / 0.006). Expected:
+Table S5: single mutants CDC28 (``cdc28-4``, sn tsq508, 0.83, St.dev. blank, HO in the
+second ORF) and GEM1 (``delta``, sn200, 0.95 / 0.01, HO in the FIRST ORF, as 240 of the
+480 released rows write it), and the double mutant tm801 (0.5 / 0.006). Expected:
 
-- Smf: CDC28 as an ``SgaAllelePerturbation`` (Gene1 verbatim, strain ``tsq508``) and GEM1
-  as a KanMX deletion (0.95 / 0.01, labeled ``sample_sd`` n 4, se 0.005); the reference
-  is fitness 1.0 with no SD.
+- Smf: CDC28 as an ``SgaAllelePerturbation`` (gene name verbatim, strain ``tsq508``) and
+  GEM1 as a KanMX deletion read off the second side, never HO (#1202; 0.95 / 0.01,
+  labeled ``bootstrap_se`` n 12, se 0.01); the reference is fitness 1.0 with no SD.
 - Dmf: the S1 then S3 digenic crosses, the allele query paired with the ts array
   ``YCR002C_tsa1`` at 0.61 with a blank SD (stored as ``fitness_std`` None, no
   uncertainty), and with gem1 at 0.72 / 0.05 (se 0.025); then ONE record for tm801
@@ -109,7 +110,7 @@ S13_COLUMNS = [
     "Adjusted genetic interaction score (epsilon or tau)",
     "P-value",
 ]
-S5_COLUMNS = ["Mutant type", "Allele1", "ORF1", "Gene1", "Query Strain ID", "Fitness", "St.dev."]  # fmt: skip
+S5_COLUMNS = ["Mutant type", "Allele1", "ORF1", "Gene1", "Query Strain ID", "Fitness", "St.dev.", "ORF2", "Gene2", "Allele2"]  # fmt: skip
 TSQ = "YBR160W+YDL227C_tsq508"
 MAIN = "kuzmin2020_s1_diagnostic_array"
 PILOT = "kuzmin2020_s3_pilot_genome_wide_arrays"
@@ -135,10 +136,36 @@ S5_DOUBLE: list[Any] = [
     "tm801",
     0.5,
     0.006,
+    "YML107C",
+    "PML39",
+    "delta",
 ]
 S5_ROWS: list[list[Any]] = [
-    ["Single mutant", "cdc28-4", "YBR160W", "CDC28", "tsq508", 0.83, None],
-    ["Single mutant", "delta", "YAL048C", "GEM1", "sn200", 0.95, 0.01],
+    [
+        "Single mutant",
+        "cdc28-4",
+        "YBR160W",
+        "CDC28",
+        "tsq508",
+        0.83,
+        None,
+        "YDL227C",
+        "HO",
+        "hoΔ",
+    ],
+    # HO on the FIRST side, as in 240 of the 480 released rows (#1202).
+    [
+        "Single mutant",
+        "hoΔ",
+        "YDL227C",
+        "HO",
+        "sn200",
+        0.95,
+        0.01,
+        "YAL048C",
+        "GEM1",
+        "delta",
+    ],
     S5_DOUBLE,
 ]
 
@@ -289,7 +316,7 @@ def stored(ds: Any, key: str) -> list[dict[str, Any]]:
 
 
 def test_smf_allele_single_and_blank_sd(tmp_path: Path) -> None:
-    """Smf: CDC28 (``Allele1`` "cdc28-4", no "delta") becomes an SGA allele, GEM1 a KanMX
+    """Smf: CDC28 (allele "cdc28-4", no "delta") becomes an SGA allele, GEM1 a KanMX
     deletion whose S5 SD is a ``bootstrap_se`` over 12 colonies, used as-is (se 0.01);
     the reference is fitness 1.0, no SD.
     CDC28's blank St.dev. is stored as ``fitness_std`` None with every uncertainty field
@@ -331,6 +358,20 @@ def test_smf_allele_single_and_blank_sd(tmp_path: Path) -> None:
     assert experiments == expected
     assert experiments[1]["phenotype"]["fitness_se"] == 0.01
     assert stored(ds, "reference") == [fitness_reference(name, None)] * 2
+
+
+def test_smf_refuses_a_single_mutant_without_one_ho_side(tmp_path: Path) -> None:
+    """A Table S5 "Single mutant" row naming HO on neither side (or on both) names no
+    single gene, so the Smf build refuses it rather than guess a side (0 of the 480
+    released rows; #1202).
+    """
+    neither = ["Single mutant", "delta", "YAL048C", "GEM1", "sn201", 0.9, 0.01, "YBR160W", "CDC28", "delta"]  # fmt: skip
+    with pytest.raises(ValueError) as info:
+        build(tmp_path, k.SmfKuzmin2020Dataset, s5_rows=[*S5_ROWS, neither])
+    assert str(info.value) == (
+        "Table S5 has 1 'Single mutant' row(s) without exactly one YDL227C (HO) "
+        "side: ['sn201']"
+    )
 
 
 def test_dmf_allele_query_ts_array_and_s5_disagreement(
@@ -391,7 +432,7 @@ def test_dmf_refuses_a_repeated_s5_double_mutant_row(tmp_path: Path) -> None:
     the left merge could fan the one strain out into two records, and no LMDB store is
     written.
     """
-    repeat = [*S5_DOUBLE[:5], 0.51, S5_DOUBLE[6]]
+    repeat = [*S5_DOUBLE[:5], 0.51, *S5_DOUBLE[6:]]
     with pytest.raises(ValueError) as info:
         build(tmp_path, k.DmfKuzmin2020Dataset, s5_rows=[*S5_ROWS, repeat])
     assert str(info.value) == (
@@ -1127,3 +1168,67 @@ def test_released_digenic_rows_per_screen_and_one_name_per_array(
     names = dmi_frame.groupby("Array strain ID")["Array allele name"].nunique()
     assert (names == 1).all()
     assert len(names) == 4_553
+
+
+# Issue #1202: Table S5 writes each single-mutant control query as a pair with HO
+# (YDL227C), HO in ORF1 for 240 of its 480 "Single mutant" rows and in ORF2 for the
+# other 240; Smf read ORF1/Gene1 only, so 238 of its 472 records stated an HO deletion.
+_S5_PATH = osp.join(_RAW_DIR, S5_NAME)
+_needs_s5 = pytest.mark.skipif(
+    not osp.exists(_S5_PATH), reason=f"requires the Kuzmin 2020 Table S5 at {_S5_PATH}"
+)
+
+
+@pytest.fixture(scope="module")
+def smf_frame() -> pd.DataFrame:
+    """The Smf preprocessed frame of the released Table S5."""
+    dataset = k.SmfKuzmin2020Dataset.__new__(k.SmfKuzmin2020Dataset)
+    return dataset.preprocess_raw(pd.read_excel(_S5_PATH, skiprows=1))
+
+
+@pytest.mark.data
+@_needs_s5
+def test_released_smf_records_name_the_gene_never_ho(smf_frame: pd.DataFrame) -> None:
+    """The 472 of 480 S5 single mutants that state a fitness give 472 records over 472
+    distinct genes, none of them HO; 238 genes are read off the second side (HO first)
+    and 234 off the first, and the per-row fitness is the released value unchanged.
+    """
+    experiments = [
+        k.SmfKuzmin2020Dataset.create_experiment("smf", row)[0]
+        for _, row in smf_frame.iterrows()
+    ]
+    genotypes = [e.genotype for e in experiments]
+    assert all(isinstance(g, Genotype) for g in genotypes)
+    genes = [
+        g.perturbations[0].systematic_gene_name
+        for g in genotypes
+        if isinstance(g, Genotype)
+    ]
+    assert len(experiments) == 472
+    assert len(set(genes)) == 472
+    assert k.HO_SYSTEMATIC_NAME not in genes
+    assert int((smf_frame["ORF1"] == k.HO_SYSTEMATIC_NAME).sum()) == 238
+    assert int((smf_frame["ORF2"] == k.HO_SYSTEMATIC_NAME).sum()) == 234
+    assert [e.phenotype.fitness for e in experiments] == smf_frame["Fitness"].tolist()
+
+
+@pytest.mark.data
+@_needs_s5
+def test_released_smf_ho_first_row_is_the_gene(smf_frame: pd.DataFrame) -> None:
+    """S5 row tm1090 is written ``YDL227C / YPR154W``, ``HO / PIN3``, ``hoΔ / pin3Δ``,
+    0.85654 / 0.0095: the record is the PIN3 deletion (it was an HO deletion before).
+    """
+    row = smf_frame[smf_frame["Query Strain ID"] == "tm1090"].iloc[0]
+    experiment = k.SmfKuzmin2020Dataset.create_experiment("smf", row)[0]
+    assert isinstance(experiment.genotype, Genotype)
+    assert experiment.genotype.perturbations == [
+        SgaKanMxDeletionPerturbation(
+            systematic_gene_name="YPR154W",
+            perturbed_gene_name="PIN3",
+            strain_id="tm1090",
+        )
+    ]
+    assert (experiment.phenotype.fitness, experiment.phenotype.fitness_std) == (
+        0.85654,
+        0.0095,
+    )

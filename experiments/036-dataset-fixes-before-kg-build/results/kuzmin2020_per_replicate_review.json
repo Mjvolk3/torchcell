@@ -1,0 +1,132 @@
+{
+  "files": {
+    "S1": {
+      "path": "/scratch/projects/torchcell-scratch/data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S1.xlsx",
+      "sha256": "4180577d53d5012c6c747227cbeca8a2d09f59bd8028d3bb2f5fd84601c77def"
+    },
+    "S3": {
+      "path": "/scratch/projects/torchcell-scratch/data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S3.xlsx",
+      "sha256": "625420bed5de3563c9f1b4f1909a627aa4d8dd1b629c3f8a3596eb99e132c54f"
+    },
+    "S5": {
+      "path": "/scratch/projects/torchcell-scratch/data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S5.xlsx",
+      "sha256": "632405396de8e78807c6e94023780344ff53b2bfe4579a2a7609a4309693c6c0"
+    },
+    "kuzmin2018_data_s1": {
+      "path": "/scratch/projects/torchcell-scratch/data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv",
+      "sha256": "c82b60f98590071fcb07b74b672958a5863b58e03b78631e6235cb664ee82afb"
+    },
+    "costanzo2016_smf": {
+      "path": "/scratch/projects/torchcell-scratch/data/torchcell/smf_costanzo2016/raw/strain_ids_and_single_mutant_fitness.xlsx",
+      "sha256": "3b9d3351cdde8ee90832797193a1e8838be3ce6778b3761a9e57db2d3a6a9ccc"
+    }
+  },
+  "table_s5_single_mutants": {
+    "single_mutant_rows": 480,
+    "ho_in_orf1": 240,
+    "ho_in_orf2": 240,
+    "ho_on_both_or_neither": 0,
+    "rows_with_fitness": 472,
+    "stored_rows_ho_in_orf1": 238,
+    "stored_rows_ho_in_orf2": 234,
+    "distinct_genes_of_stored_rows": 472
+  },
+  "array_single_mutant_fitness": {
+    "S1": {
+      "array_strains": 1172,
+      "strains_with_more_than_one_value": 0,
+      "blank_rows": 0
+    },
+    "S3": {
+      "array_strains": 4540,
+      "strains_with_more_than_one_value": 0,
+      "blank_rows": 0
+    },
+    "strains_in_both": 1159,
+    "S1_vs_S3": {
+      "shared_strains": 1159,
+      "max_abs_diff": 0.4097,
+      "n_differ_gt_1e-3": 1146,
+      "pearson_r": 0.879
+    },
+    "S1_vs_kuzmin2018_data_s1": {
+      "shared_strains": 1170,
+      "max_abs_diff": 0.4137,
+      "n_differ_gt_1e-3": 1158,
+      "pearson_r": 0.8724
+    },
+    "S1_vs_costanzo2016_26C": {
+      "shared_strains": 1170,
+      "max_abs_diff": 0.4097,
+      "n_differ_gt_1e-3": 1157,
+      "pearson_r": 0.8766
+    },
+    "S1_vs_costanzo2016_30C": {
+      "shared_strains": 1170,
+      "max_abs_diff": 0.5268,
+      "n_differ_gt_1e-3": 1157,
+      "pearson_r": 0.795
+    },
+    "S1_strains_absent_from_costanzo2016": 2,
+    "S1_strains_listed_with_blank_costanzo2016_26C": 0,
+    "S3_vs_kuzmin2018_data_s1": {
+      "shared_strains": 1165,
+      "max_abs_diff": 0.2014,
+      "n_differ_gt_1e-3": 1145,
+      "pearson_r": 0.9937
+    },
+    "S3_vs_costanzo2016_26C": {
+      "shared_strains": 4510,
+      "max_abs_diff": 0.0,
+      "n_differ_gt_1e-3": 0,
+      "pearson_r": 1.0
+    },
+    "S3_vs_costanzo2016_30C": {
+      "shared_strains": 4511,
+      "max_abs_diff": 0.5449,
+      "n_differ_gt_1e-3": 772,
+      "pearson_r": 0.9165
+    },
+    "S3_strains_absent_from_costanzo2016": 29,
+    "S3_strains_listed_with_blank_costanzo2016_26C": 1
+  },
+  "combined_mutant_n_backsolve": {
+    "S1": {
+      "rows": 537885,
+      "reported_median_p": 0.3742,
+      "median_p_gap_per_n": {
+        "2": 0.2041,
+        "4": 0.0576,
+        "6": 0.0385,
+        "8": 0.1079,
+        "12": 0.2008
+      },
+      "best_n": 6
+    },
+    "S3": {
+      "rows": 94864,
+      "reported_median_p": 0.3444,
+      "median_p_gap_per_n": {
+        "2": 0.1567,
+        "4": 0.003,
+        "6": 0.1005,
+        "8": 0.166,
+        "12": 0.245
+      },
+      "best_n": 4
+    }
+  },
+  "smf_store_before_vs_after": {
+    "records_before": 472,
+    "records_after": 472,
+    "genotypes_changed": 238,
+    "changed_genotypes_that_were_ho": 238,
+    "max_abs_fitness_diff": 0.0,
+    "other_differing_fields": {
+      "experiment.phenotype.replicate_id": 472,
+      "reference.phenotype_reference.replicate_id": 472
+    },
+    "distinct_genes_after": 472,
+    "ho_among_genes_after": false
+  }
+}

@@ -245,13 +245,16 @@ def run_expression_score(data_root: str) -> bool:
 # --------------------------------------------------------------------------- #
 OHYA_SOURCE_ROOT = "data/torchcell/scmd_ohya2005"
 OHYA_REPORT_ROOT = "data/torchcell/scmd_ohya2005"
-OHYA_EXPECTED_COUNT = (
-    4718  # all strains retained; ORF names reconciled to R64, 0 dropped
-)
+# 4718 mutant strains + 122 released his3 wild-type samples, one record each (#1178)
+OHYA_EXPECTED_COUNT = 4840
+OHYA_EXPECTED_REPLICATE_RECORDS = 122
 OHYA_PROVENANCE = Provenance(
     source_uri="http://www.yeast.ib.k.u-tokyo.ac.jp/SCMD/ (mt4718data.tsv, wt122data.tsv)",
     citation_key="ohyaHighdimensionalLargescalePhenotyping2005a",
-    method="SCMD CalMorph TSV (mt4718 mutants + wt122 wildtype)",
+    method=(
+        "SCMD CalMorph TSV (mt4718 mutants + wt122 wildtype); one record per mutant "
+        "strain and per wild-type sample (replicate_id = NAME)"
+    ),
     page="Ohya et al. 2005 PNAS; PMID 16365294",
 )
 # Ohnuki 2022 high-throughput CalMorph morphology (drug-hypersensitive 3Delta quadruple
@@ -261,7 +264,9 @@ OHYA_PROVENANCE = Provenance(
 OHNUKI2022_EXPECTED_INCOMPLETE = 1
 OHNUKI2022_SOURCE_ROOT = "data/torchcell/scmd_ohnuki2022"
 OHNUKI2022_REPORT_ROOT = "data/torchcell/scmd_ohnuki2022"
-OHNUKI2022_EXPECTED_COUNT = 1982
+# 1982 quadruple mutants + 749 released 3Delta replicates, one record each (#1178)
+OHNUKI2022_EXPECTED_COUNT = 2731
+OHNUKI2022_EXPECTED_REPLICATE_RECORDS = 749
 OHNUKI2022_PROVENANCE = Provenance(
     source_uri=(
         "http://www.yeast.ib.k.u-tokyo.ac.jp/SCMD/ "
@@ -269,8 +274,8 @@ OHNUKI2022_PROVENANCE = Provenance(
     ),
     citation_key="ohnukiHighthroughputPlatformYeast2022",
     method=(
-        "SCMD2 CalMorph quadruple-set TSV (quad1982 mutants + wt749 3Delta reference); "
-        "raw per-strain CalMorph averages; target KanMX deletion in the fixed 3Delta "
+        "SCMD2 CalMorph quadruple-set TSV (quad1982 mutants + wt749 3Delta replicates, "
+        "one record each, replicate_id = NAME); raw per-strain CalMorph averages; target KanMX deletion in the fixed 3Delta "
         "pdr1Delta::NATMX pdr3Delta::KlURA3 snq2Delta::KlLEU2 background (strain Y13206); "
         "liquid YPD, 25 C. quad1982data.tsv "
         "sha256=5a1d45005c1249a77b0608ee7e6678c045c14464cf67bfc149b24fcaeb4854c0, "
@@ -300,7 +305,9 @@ MIN_GENE_OVERLAP = 0.90
 # --------------------------------------------------------------------------- #
 OHNUKI_SOURCE_ROOT = "data/torchcell/scmd_ohnuki2018"
 OHNUKI_REPORT_ROOT = "data/torchcell/scmd_ohnuki2018"
-OHNUKI_EXPECTED_COUNT = 1112  # essential-gene het diploids; 114 WT aggregated into ref
+# 1112 essential-gene het diploids + 114 released BY4743 wild-type replicates (#1178)
+OHNUKI_EXPECTED_COUNT = 1226
+OHNUKI_EXPECTED_REPLICATE_RECORDS = 114
 OHNUKI_PROVENANCE = Provenance(
     source_uri=(
         "http://www.yeast.ib.k.u-tokyo.ac.jp/SCMD/ "
@@ -309,7 +316,8 @@ OHNUKI_PROVENANCE = Provenance(
     citation_key="ohnukiHighdimensionalSinglecellPhenotyping2018",
     method=(
         "SCMD2 CalMorph TSV (ess1112 essential-gene heterozygous BY4743 diploids + "
-        "wt114 WT replicate averages); optimal arm only (liquid YPD, 25 C); genotype = "
+        "wt114 WT replicate averages, one record each, replicate_id = NAME); "
+        "optimal arm only (liquid YPD, 25 C); genotype = "
         "EngineeredCopyNumberPerturbation(copy 1 of 2, KanMX); ORFs validated vs SGD R64"
     ),
     page=(
@@ -525,6 +533,7 @@ def run_morphology(data_root: str) -> bool:
         dataset_name="scmd_ohya2005",
         provenance=OHYA_PROVENANCE,
         expected_count=OHYA_EXPECTED_COUNT,
+        expected_replicate_records=OHYA_EXPECTED_REPLICATE_RECORDS,
     )
 
     ohya_genes = perturbed_gene_set(ohya_records)
@@ -558,6 +567,7 @@ def run_morphology_ohnuki(data_root: str) -> bool:
         dataset_name="scmd_ohnuki2018",
         provenance=OHNUKI_PROVENANCE,
         expected_count=OHNUKI_EXPECTED_COUNT,
+        expected_replicate_records=OHNUKI_EXPECTED_REPLICATE_RECORDS,
     )
     sgd_genes = _sgd_gene_set(data_root)
     report.add(
@@ -585,6 +595,7 @@ def run_ohnuki_morphology(data_root: str) -> bool:
         dataset_name="scmd_ohnuki2022",
         provenance=OHNUKI2022_PROVENANCE,
         expected_count=OHNUKI2022_EXPECTED_COUNT,
+        expected_replicate_records=OHNUKI2022_EXPECTED_REPLICATE_RECORDS,
         expected_incomplete=OHNUKI2022_EXPECTED_INCOMPLETE,
     )
     ohya_abs = osp.join(data_root, OHYA_SOURCE_ROOT)

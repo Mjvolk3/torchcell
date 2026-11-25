@@ -20,8 +20,15 @@ Features (4 of the 501): base ``A101_A``, ``C103_A1B``; CV ``ACV103_A1B``, ``CCV
     yfr001w  13.0  14.0  1.0    1.75     stripped and uppercased
 
 ``wt122data.tsv`` (NAME + the same features): wt1 1.0 3.0 0.25 0.5; wt2 3.0 5.0 0.75 1.0;
-wt3 5.0 7.0 n.d. 1.5. Means: A101_A 3.0, C103_A1B 5.0, ACV103_A1B (0.25 + 0.75) / 2 = 0.5
-with ``n.d.`` coerced to NaN and skipped, CCV103_A1B 1.0.
+wt3 5.0 7.0 (blank) 1.5. Means: A101_A 3.0, C103_A1B 5.0, ACV103_A1B (0.25 + 0.75) / 2 =
+0.5 with the blank cell skipped, CCV103_A1B 1.0.
+
+2026.11.24 (per-replicate policy, #1178 / #1171): each wild-type row is also its own
+record, after the seven mutant records (indices 7, 8, 9), on the his3 deletion strain's
+genotype (``KanMxDeletionPerturbation(YOR202W)``) with ``replicate_id`` = its ``NAME``;
+wt3's blank ACV103_A1B is key-absent in its record. The mutant records and the shared
+reference are unchanged. A blank or repeated ``NAME`` and a non-numeric wild-type cell
+are refused before the store opens.
 
 2026.09.30 (Phase 16): the same matrices, plus
 
@@ -63,8 +70,10 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import pickle
 import re
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -115,7 +124,7 @@ _MUTANT_ROWS = [
 _WT_ROWS = [
     ["wt1", "1.0", "3.0", "0.25", "0.5"],
     ["wt2", "3.0", "5.0", "0.75", "1.0"],
-    ["wt3", "5.0", "7.0", "n.d.", "1.5"],
+    ["wt3", "5.0", "7.0", "", "1.5"],
 ]
 
 
@@ -188,15 +197,22 @@ def _experiment(orf: str, values: list[float | None]) -> dict[str, Any]:
     ).model_dump()
 
 
+def _wt_experiment(name: str, values: list[float | None]) -> dict[str, Any]:
+    """One wild-type sample record: the his3 deletion strain, ``replicate_id`` = NAME."""
+    experiment = _experiment("YOR202W", values)
+    experiment["phenotype"]["replicate_id"] = name
+    return CalMorphExperiment.model_validate(experiment).model_dump()
+
+
 def test_seven_records_retain_every_released_name_and_the_blank_cell_row(
     dataset: m.ScmdOhya2005Dataset,
 ) -> None:
     """Every row is a record under its released name: YBR002C and YER002W (R64 renames)
     and YCR001W (retired) keep their names, yfr001w is upper-cased, and YDR001C (blank
     ACV103_A1B) is stored with that one cell key-absent. Base and CV traits are split
-    by prefix into the two phenotype dicts.
+    by prefix into the two phenotype dicts. The three wild-type records follow.
     """
-    assert len(dataset) == 7
+    assert len(dataset) == 10
     expected: list[tuple[str, list[float | None]]] = [
         ("YAL001C", [1.0, 2.0, 0.5, 0.25]),
         ("YBR002C", [3.0, 4.0, 0.25, 0.5]),
@@ -208,28 +224,63 @@ def test_seven_records_retain_every_released_name_and_the_blank_cell_row(
     ]
     for i, (orf, values) in enumerate(expected):
         assert dataset[i]["experiment"] == _experiment(orf, values)
+        assert dataset[i]["experiment"]["phenotype"]["replicate_id"] is None
         assert dataset[i]["reference"] == _REFERENCE
         assert dataset[i]["publication"] == _PUBLICATION
 
 
-def test_reference_is_the_wt_mean_with_non_numeric_cells_skipped(
+def test_each_wild_type_sample_is_a_record_on_the_his3_deletion_strain(
     dataset: m.ScmdOhya2005Dataset,
 ) -> None:
-    """One shared reference (index entry [0..6]) whose ACV103_A1B mean is 0.5 over the two
-    numeric WT cells, the ``n.d.`` cell having been coerced to NaN.
+    """#1178: wt1, wt2 and wt3 are records 7, 8 and 9 in release order, each the
+    YOR202W kanMX deletion with ``replicate_id`` its NAME and its own released values
+    (wt3's blank ACV103_A1B key-absent); they carry the same summary reference, whose
+    ``replicate_id`` is None, and the per-trait mean over the three records is it.
+    """
+    expected: list[tuple[str, list[float | None]]] = [
+        ("wt1", [1.0, 3.0, 0.25, 0.5]),
+        ("wt2", [3.0, 5.0, 0.75, 1.0]),
+        ("wt3", [5.0, 7.0, None, 1.5]),
+    ]
+    for offset, (name, values) in enumerate(expected):
+        record = dataset[7 + offset]
+        assert record["experiment"] == _wt_experiment(name, values)
+        assert record["reference"] == _REFERENCE
+        assert record["publication"] == _PUBLICATION
+    assert _REFERENCE["phenotype_reference"]["replicate_id"] is None
+    traits: dict[str, list[float]] = {}
+    for index in range(7, 10):
+        phenotype = dataset[index]["experiment"]["phenotype"]
+        for key, value in {
+            **phenotype["calmorph"],
+            **phenotype["calmorph_coefficient_of_variation"],
+        }.items():
+            traits.setdefault(key, []).append(value)
+    assert {k: sum(v) / len(v) for k, v in traits.items()} == {
+        **_WT_PHENOTYPE.calmorph,
+        **(_WT_PHENOTYPE.calmorph_coefficient_of_variation or {}),
+    }
+
+
+def test_reference_is_the_wt_mean_with_blank_cells_skipped(
+    dataset: m.ScmdOhya2005Dataset,
+) -> None:
+    """One shared reference (index entry [0..9]) whose ACV103_A1B mean is 0.5 over the two
+    WT cells that are not blank.
     """
     index = json.loads(
         (
             Path(dataset.root) / "preprocess" / "experiment_reference_index.json"
         ).read_text()
     )
-    assert [entry["member_indices"] for entry in index] == [list(range(7))]
+    assert [entry["member_indices"] for entry in index] == [list(range(10))]
     assert index[0]["reference"]["phenotype_reference"] == _WT_PHENOTYPE.model_dump()
 
 
 def test_side_files(dataset: m.ScmdOhya2005Dataset) -> None:
     """``data.csv`` is the whole mutant matrix with the source ORF spelling kept and
-    the two released-name columns appended; the gene set is the seven released names.
+    the two released-name columns appended; the gene set is the seven released names
+    plus YOR202W, the wild-type records' his3 deletion.
     """
     preprocess = Path(dataset.root) / "preprocess"
     assert (preprocess / "data.csv").read_text() == (
@@ -251,6 +302,7 @@ def test_side_files(dataset: m.ScmdOhya2005Dataset) -> None:
         "YER001W",
         "YER002W",
         "YFR001W",
+        "YOR202W",
     ]
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert manifest["dataset_name"] == "scmd_ohya2005"
@@ -298,7 +350,7 @@ def test_items_retype_through_the_calmorph_classes(
     149 to 157), dumping back to exactly the stored dictionaries. A fitness class would
     drop the ``calmorph`` traits and fail the round trip.
     """
-    for index in range(7):
+    for index in range(10):
         item = dataset[index]
         typed = dataset.transform_item(item)
         assert type(typed["experiment"]) is CalMorphExperiment
@@ -353,7 +405,7 @@ def test_drop_ledger_is_logged_before_the_strain_count(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
     """The YDR001C blank cell is named as a warning, then the seven strains, then the
-    processing line.
+    three wild-type samples, then the processing line.
     """
     with caplog.at_level(logging.INFO, logger=m.log.name):
         m.ScmdOhya2005Dataset(root=str(_root(tmp_path)))
@@ -366,6 +418,7 @@ def test_drop_ledger_is_logged_before_the_strain_count(
             "records",
         ),
         ("INFO", "Ohya 2005: 7 non-essential deletion strains (0 dropped for naming)"),
+        ("INFO", "Ohya 2005: 3 wild-type samples, one record each"),
         ("INFO", "Processing Ohya 2005 CalMorph morphology data..."),
     ]
 
@@ -424,6 +477,7 @@ def test_clean_matrix_logs_no_drop_and_shares_the_wt_mean_reference(
         dataset = m.ScmdOhya2005Dataset(root=str(root))
     assert [r.getMessage() for r in caplog.records if r.name == m.log.name] == [
         "Ohya 2005: 2 non-essential deletion strains (0 dropped for naming)",
+        "Ohya 2005: 2 wild-type samples, one record each",
         "Processing Ohya 2005 CalMorph morphology data...",
     ]
     reference = CalMorphExperimentReference(
@@ -461,6 +515,11 @@ def test_clean_matrix_logs_no_drop_and_shares_the_wt_mean_reference(
             ).model_dump()
         )
         assert dataset[index]["reference"] == reference
+    assert len(dataset) == 4
+    assert [dataset[i]["experiment"]["phenotype"]["replicate_id"] for i in (2, 3)] == [
+        "w1",
+        "w2",
+    ]
     dataset.close_lmdb()
 
 
@@ -513,9 +572,10 @@ def test_blank_orf_rows_are_dropped_with_a_counted_warning(
     ] == [
         ("WARNING", "Ohya 2005: dropping 2 mutant row(s) with a blank ORF"),
         ("INFO", "Ohya 2005: 1 non-essential deletion strains (0 dropped for naming)"),
+        ("INFO", "Ohya 2005: 1 wild-type samples, one record each"),
         ("INFO", "Processing Ohya 2005 CalMorph morphology data..."),
     ]
-    assert len(dataset) == 1
+    assert len(dataset) == 2
     assert dataset[0]["experiment"]["phenotype"]["calmorph"] == {"A101_A": 1.0}
     dataset.close_lmdb()
 
@@ -607,7 +667,7 @@ def test_download_copies_both_pinned_matrices_then_reverifies_in_place(
     dataset = m.ScmdOhya2005Dataset(root=str(tmp_path / "fresh"))
     raw = tmp_path / "fresh" / "raw"
     assert {name: (raw / name).read_bytes() for name in content} == content
-    assert len(dataset) == 7
+    assert len(dataset) == 10
     for name in content:
         (mirror / name).unlink()
     dataset.download()
@@ -637,8 +697,8 @@ def test_the_interned_store_resolves_to_exactly_the_inline_records(
     the shared environment (each >= 512 bytes of canonical JSON), and each record
     carries ``{"$ref": <sha256 of its canonical JSON>, "name": ...}`` in their place;
     the publication stays inline. The inline build's ``interned`` env is empty. Read
-    back through ``get_single_item`` the six records of the two stores are exactly
-    equal.
+    back through ``get_single_item`` the ten records (seven mutants, three wild-type
+    samples) of the two stores are exactly equal.
 
     2026.10.02 (issue #622): the environment now carries the sourced ``OHYA_YPD`` (three
     components, five SourcedValues) instead of a name-only stub, so it crosses the
@@ -664,8 +724,8 @@ def test_the_interned_store_resolves_to_exactly_the_inline_records(
     with monkeypatch.context() as patch:
         patch.setattr(m.ScmdOhya2005Dataset, "_intern_record", inline_record)
         inline = m.ScmdOhya2005Dataset(root=str(_root(tmp_path, "inline")))
-    assert len(interned) == len(inline) == 7
-    assert [interned[i] for i in range(7)] == [inline[i] for i in range(7)]
+    assert len(interned) == len(inline) == 10
+    assert [interned[i] for i in range(10)] == [inline[i] for i in range(10)]
     interned.close_lmdb()
     inline.close_lmdb()
 
@@ -680,14 +740,14 @@ def test_the_interned_store_resolves_to_exactly_the_inline_records(
     stored = _raw_records(tmp_path / "interned" / "processed")
     assert [r["reference"] for r in stored] == [
         {"$ref": digest, "name": "ScmdOhya2005Dataset"}
-    ] * 7
-    assert [r["publication"] for r in stored] == [_PUBLICATION] * 7
+    ] * 10
+    assert [r["publication"] for r in stored] == [_PUBLICATION] * 10
     env_digest = hashlib.sha256(
         json.dumps(_ENVIRONMENT.model_dump(mode="json"), sort_keys=True).encode()
     ).hexdigest()
     assert [r["experiment"]["environment"] for r in stored] == [
         {"$ref": env_digest, "name": m.OHYA_YPD.name}
-    ] * 7
+    ] * 10
     ienv = lmdb.open(
         str(tmp_path / "interned" / "processed" / "interned"), readonly=True, lock=False
     )
@@ -711,3 +771,149 @@ def test_the_interned_store_resolves_to_exactly_the_inline_records(
     assert _raw_records(tmp_path / "inline" / "processed")[0]["reference"] == (
         _REFERENCE
     )
+
+
+# --------------------------------------------------------------------------- #
+# 2026.11.24: one record per released wild-type sample (#1178 / #1171)
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize(
+    ("wt_rows", "message"),
+    [
+        (
+            [["w1", "1.0"], ["", "2.0"]],
+            "Ohya 2005: 1 wild-type row(s) with a blank NAME; the NAME is the "
+            "sample's replicate_id",
+        ),
+        (
+            [["w1", "1.0"], ["w1", "2.0"]],
+            "Ohya 2005: wild-type sample NAME(s) listed more than once: ['w1', 'w1']",
+        ),
+    ],
+)
+def test_a_blank_or_repeated_wild_type_name_is_refused_before_the_store_opens(
+    tmp_path: Path, wt_rows: list[list[str]], message: str
+) -> None:
+    """The NAME is the sample's ``replicate_id``, so a blank or repeated one refuses
+    (0 blank and 0 repeated among the 122 pinned rows) and nothing is written.
+    """
+    root = tmp_path / "bad_wt_name"
+    (root / "raw").mkdir(parents=True)
+    _write_tsv(root / "raw" / "mt4718data.tsv", ["ORF", "A101_A"], [["YAL001C", "1.0"]])
+    _write_tsv(root / "raw" / "wt122data.tsv", ["NAME", "A101_A"], wt_rows)
+    with pytest.raises(RuntimeError) as info:
+        m.ScmdOhya2005Dataset(root=str(root))
+    assert str(info.value) == message
+    assert not (root / "processed" / "lmdb").exists()
+    assert not (root / "preprocess" / "data.csv").exists()
+
+
+def test_a_non_numeric_wild_type_cell_refuses_before_the_store_opens(
+    tmp_path: Path,
+) -> None:
+    """A wild-type cell ``n.d.`` is no released value for that sample's record, so it
+    refuses as a non-numeric mutant cell does (the earlier per-strain build coerced it
+    to NaN inside the reference mean; the pinned matrix has 0 such cells).
+    """
+    root = tmp_path / "bad_wt_cell"
+    (root / "raw").mkdir(parents=True)
+    _write_tsv(root / "raw" / "mt4718data.tsv", ["ORF", "A101_A"], [["YAL001C", "1.0"]])
+    _write_tsv(
+        root / "raw" / "wt122data.tsv",
+        ["NAME", "A101_A"],
+        [["w1", "1.0"], ["w2", "n.d."]],
+    )
+    with pytest.raises(
+        ValueError, match=r'^Unable to parse string "n.d." at position 1$'
+    ):
+        m.ScmdOhya2005Dataset(root=str(root))
+    assert not (root / "processed" / "lmdb").exists()
+
+
+_MIRROR_DATA = Path(os.environ.get("DATA_ROOT", "/nonexistent"), m._MIRROR_DIR)
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not (_MIRROR_DATA / "wt122data.tsv").exists(),
+    reason=f"requires the Ohya 2005 mirror matrices under {_MIRROR_DATA}",
+)
+def test_the_pinned_release_holds_4718_mutants_and_122_named_wild_type_samples() -> (
+    None
+):
+    """The pinned matrices hold 4718 mutant rows (one ``yor202w``) and 122 wild-type rows
+    whose 122 NAMEs are distinct and all ``his3`` labels (83 ``04his3-<n>``, 12
+    ``04his3<n>``, 15 ``his3new``, 6 ``his3cnt``, 6 ``his3old``), 0 blank cells in
+    either. The paper's 126 samples: 4 (``04his3-11``, ``-20``, ``-26``, ``-59``) have no
+    row.
+    """
+    for name, spec in m._RAW_FILES.items():
+        digest = hashlib.sha256((_MIRROR_DATA / name).read_bytes()).hexdigest()
+        assert digest == spec["sha256"]
+    mutant = pd.read_csv(_MIRROR_DATA / "mt4718data.tsv", sep="\t")
+    wt = pd.read_csv(_MIRROR_DATA / "wt122data.tsv", sep="\t")
+    assert mutant.shape == (4718, 502)
+    assert wt.shape == (122, 502)
+    assert (mutant["ORF"].str.upper() == "YOR202W").sum() == 1
+    assert wt["NAME"].is_unique
+    assert wt["NAME"].str.contains("his3").all()
+    assert int(wt.isna().sum().sum()) == 0
+    assert int(mutant.isna().sum().sum()) == 0
+    prefixes = wt["NAME"].str.extract(r"^(04his3-|04his3|his3new|his3cnt|his3old)")[0]
+    assert prefixes.value_counts().to_dict() == {
+        "04his3-": 83,
+        "his3new": 15,
+        "04his3": 12,
+        "his3cnt": 6,
+        "his3old": 6,
+    }
+    assert not {"04his3-11", "04his3-20", "04his3-26", "04his3-59"} & set(wt["NAME"])
+
+
+@pytest.mark.slow
+@pytest.mark.data
+@pytest.mark.skipif(
+    not (_MIRROR_DATA / "wt122data.tsv").exists(),
+    reason=f"requires the Ohya 2005 mirror matrices under {_MIRROR_DATA}",
+)
+def test_the_full_build_stores_4840_records_and_the_wild_type_mean_is_the_reference(
+    tmp_path: Path,
+) -> None:
+    """The pinned release builds 4840 records: 4718 mutants (``replicate_id`` None) then
+    122 wild-type samples, each on the YOR202W kanMX leaf with its NAME as
+    ``replicate_id``; the per-trait mean over the 122 equals the shared reference to
+    1e-12 relative (summation order only).
+    """
+    root = tmp_path / "scmd_ohya2005"
+    (root / "raw").mkdir(parents=True)
+    for name in m._RAW_FILES:
+        shutil.copyfile(_MIRROR_DATA / name, root / "raw" / name)
+    built = m.ScmdOhya2005Dataset(root=str(root))
+    assert len(built) == 4840
+    names = pd.read_csv(root / "raw" / "wt122data.tsv", sep="\t")["NAME"].tolist()
+    assert all(
+        built[i]["experiment"]["phenotype"]["replicate_id"] is None for i in range(4718)
+    )
+    sums: dict[str, float] = {}
+    for offset in range(122):
+        experiment = built[4718 + offset]["experiment"]
+        (perturbation,) = experiment["genotype"]["perturbations"]
+        assert perturbation["systematic_gene_name"] == "YOR202W"
+        assert perturbation["perturbation_type"] == "kanmx_deletion"
+        assert experiment["phenotype"]["replicate_id"] == names[offset]
+        for key, value in {
+            **experiment["phenotype"]["calmorph"],
+            **experiment["phenotype"]["calmorph_coefficient_of_variation"],
+        }.items():
+            sums[key] = sums.get(key, 0.0) + value
+    reference = built[0]["reference"]["phenotype_reference"]
+    assert reference["replicate_id"] is None
+    summary = {
+        **reference["calmorph"],
+        **reference["calmorph_coefficient_of_variation"],
+    }
+    assert set(sums) == set(summary)
+    for key, value in summary.items():
+        assert sums[key] / 122 == pytest.approx(value, rel=1e-12)
+    built.close_lmdb()

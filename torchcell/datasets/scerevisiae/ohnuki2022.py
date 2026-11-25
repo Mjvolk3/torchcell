@@ -2,7 +2,7 @@
 # [[torchcell.datasets.scerevisiae.ohnuki2022]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/ohnuki2022
 # Test file: tests/torchcell/datasets/scerevisiae/test_ohnuki2022.py
-"""Ohnuki 2022 high-throughput CalMorph morphology of drug-hypersensitive deletions.
+r"""Ohnuki 2022 high-throughput CalMorph morphology of drug-hypersensitive deletions.
 
 Ohnuki et al. 2022 (npj Syst Biol Appl 8:3, doi:10.1038/s41540-022-00212-1; PMID
 35087094) built a diagnostic set of 1982 haploid QUADRUPLE-deletion strains for
@@ -17,8 +17,25 @@ into the SAME 501-trait vocabulary (281 base + 220 CV) as Ohya 2005. Values are 
 per-strain CalMorph averages (n=1 measurement per mutant), NOT z-scores.
 
 The REFERENCE is the 3Delta PARENT (not true wild type): ``wt749data.tsv`` holds 749
-replicate CalMorph averages of the 3Delta strain, aggregated here into a single mean
-reference phenotype carrying the full 501-trait vocabulary.
+replicate CalMorph averages of the 3Delta strain, summarized here as a single mean
+reference phenotype carrying the full 501-trait vocabulary (``replicate_id = None``).
+
+ONE RECORD PER RELEASED SAMPLE (per-replicate policy, #1178 / #1171; 2026.11.24). The
+store holds the 1982 quadruple-mutant rows (indices 0..1981, unchanged) and then the 749
+3Delta rows of ``wt749data.tsv`` (indices 1982..2730), 2731 records:
+
+- A mutant row is ONE culture: "We obtained wild-type data 749 times and mutant data
+  once for each mutant." (paper.md line 97). Mutant records carry ``replicate_id = None``
+  and are byte-identical to the per-strain build.
+- Each 3Delta row is ONE culture of the parent, grown with the mutants of its day: "the
+  morphological data of the 1982 mutants were taken every time using the 749 replicates
+  of 3Δ over 152 days" (line 151); Fig. 4a shows the "749 replicates of $3 \Delta$
+  (orange, ordered by the date of data acquisition)" (line 59); the SCMD2 datasheet page
+  lists the file as "749 replicated wild-type (drug-hypersensitive strain)"
+  (``data/scmd_quadruple_summary.html`` line 44). Each is its own record whose genotype
+  is the 3Delta background alone (the three deletions every mutant record also carries)
+  and whose ``replicate_id`` is the row's released ``NAME`` verbatim (``Q140226E02`` ...;
+  date-prefixed, 0 duplicates).
 
 This loader builds ONLY the gene-deletion morphology matrix. The compound side of the
 paper (7 compounds) is not a released per-strain morphology matrix and is not buildable.
@@ -150,7 +167,9 @@ def _background_perturbations() -> list[Any]:
 
 @register_dataset
 class ScmdOhnuki2022Dataset(ExperimentDataset):
-    """CalMorph morphology for 1979 quadruple (target + 3Delta) deletion strains."""
+    """CalMorph morphology of 1982 quadruple (target + 3Delta) deletion strains and the
+    749 released 3Delta parent replicates, one record each (2731 records).
+    """
 
     organism = Organism.scerevisiae
 
@@ -251,10 +270,8 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
             )
         df_mutant = df_mutant.reset_index(drop=True)
 
-        os.makedirs(self.preprocess_dir, exist_ok=True)
-        df_mutant.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
-
         wt_reference = self._calculate_wt_reference(df_wt, feature_cols)
+        wt_names = self._wt_replicate_names(df_wt)
         background = _background_perturbations()
         publication = Publication(
             pubmed_id="35087094",
@@ -264,14 +281,31 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
         )
 
         log.info(
-            "Processing Ohnuki 2022 CalMorph morphology (%d strains)...", len(df_mutant)
+            "Processing Ohnuki 2022 CalMorph morphology (%d strains, %d 3Delta "
+            "replicates)...",
+            len(df_mutant),
+            len(df_wt),
         )
+        # Mutant records first (order and indices unchanged from the per-strain build),
+        # then one record per released 3Delta replicate.
+        records = [
+            self._build_experiment(
+                self.name, row, feature_cols, wt_reference, background
+            )
+            for _, row in tqdm(df_mutant.iterrows(), total=df_mutant.shape[0])
+        ] + [
+            self._build_wt_experiment(
+                self.name, row, name, feature_cols, wt_reference, background
+            )
+            for name, (_, row) in zip(wt_names, df_wt.iterrows(), strict=True)
+        ]
+        # Every record is built (and so every refusal raised) before ``data.csv`` or the
+        # store is written.
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        df_mutant.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
         with env.begin(write=True) as txn:
-            for index, row in tqdm(df_mutant.iterrows(), total=df_mutant.shape[0]):
-                experiment, reference = self._build_experiment(
-                    self.name, row, feature_cols, wt_reference, background
-                )
+            for index, (experiment, reference) in enumerate(records):
                 txn.put(
                     f"{index}".encode(),
                     pickle.dumps(
@@ -298,10 +332,32 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
                 base[key] = value
         return base, cv
 
+    @staticmethod
+    def _wt_replicate_names(df_wt: pd.DataFrame) -> list[str]:
+        """The released ``NAME`` of every 3Delta row, its ``replicate_id``.
+
+        A blank or repeated ``NAME`` is refused (0 blank, 0 repeated among the 749
+        pinned rows).
+        """
+        names = df_wt["NAME"].astype("string").str.strip()
+        blank = names.isna() | (names == "")
+        if blank.any():
+            raise ValueError(
+                f"Ohnuki 2022 {WT_FILE} has {int(blank.sum())} row(s) with a blank NAME; "
+                "the NAME is the replicate's replicate_id"
+            )
+        repeated = names[names.duplicated(keep=False)].tolist()
+        if repeated:
+            raise ValueError(
+                f"Ohnuki 2022 {WT_FILE} lists 3Delta replicate NAME(s) more than once: "
+                f"{repeated}"
+            )
+        return [str(name) for name in df_wt["NAME"]]
+
     def _calculate_wt_reference(
         self, df_wt: pd.DataFrame, feature_cols: list[str]
     ) -> CalMorphPhenotype:
-        """Aggregate the 749 replicate 3Delta profiles into one mean reference phenotype.
+        """Summarize the 749 replicate 3Delta profiles as one mean reference phenotype.
 
         A blank reference cell is refused, as a blank mutant cell drops its strain: the
         reference mean is never taken over a subset of the replicates (0 blank cells in
@@ -341,7 +397,37 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
                 *background,
             ]
         )
+        return self._pair(dataset_name, genotype, row, None, feature_cols, wt_reference)
 
+    def _build_wt_experiment(
+        self,
+        dataset_name: str,
+        row: pd.Series,
+        replicate_id: str,
+        feature_cols: list[str],
+        wt_reference: CalMorphPhenotype,
+        background: list[Any],
+    ) -> tuple[CalMorphExperiment, CalMorphExperimentReference]:
+        """Build the record of one released 3Delta replicate (the background alone)."""
+        genotype = Genotype(perturbations=list(background))
+        return self._pair(
+            dataset_name, genotype, row, replicate_id, feature_cols, wt_reference
+        )
+
+    def _pair(
+        self,
+        dataset_name: str,
+        genotype: Genotype,
+        row: pd.Series,
+        replicate_id: str | None,
+        feature_cols: list[str],
+        wt_reference: CalMorphPhenotype,
+    ) -> tuple[CalMorphExperiment, CalMorphExperimentReference]:
+        """Pair one row's experiment with the shared 3Delta-summary reference.
+
+        ``replicate_id`` is the released ``NAME`` of a 3Delta row and None on a mutant
+        row (one culture per strain).
+        """
         # Liquid YPD at 25 C (paper Methods: "Yeast cell culture and harvest").
         environment = Environment(
             media=Media(name="YPD", state="liquid", is_synthetic=False),
@@ -353,7 +439,9 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
         }
         base, cv = self._split_traits(measurements)
         phenotype = CalMorphPhenotype(
-            calmorph=base, calmorph_coefficient_of_variation=cv if cv else None
+            calmorph=base,
+            calmorph_coefficient_of_variation=cv if cv else None,
+            replicate_id=replicate_id,
         )
 
         # Reference genome is a WT-only placeholder (ExperimentReference cannot carry the

@@ -75,3 +75,21 @@ The morphology runner still pinned the pre-#1045 count 1979 and the `calmorph_co
 | L2 | `cv_nonnegative` | gate | ok | 436038 values checked |
 | L3 | `vocabulary_parity` | gate | ok | CALMORPH_LABELS(281) + CALMORPH_STATISTICS(220) == CALMORPH_PARAMETERS(501), disjoint=True |
 | L4 | `gene_containment_scmd_ohnuki2022` | report | ok | 1.000 of scmd_ohnuki2022's 1983 deletion genes are in Ohya (>= 0.9) |
+
+## 2026.11.24 - One record per released 3Delta replicate (#1178, part of #1171)
+
+Per-replicate policy (#1178): the 749 rows of `wt749data.tsv` used to be folded into one plain per-feature mean; each is now its own record. The mutant records do not change.
+
+**Replicate evidence** (mirror `ohnukiHighthroughputPlatformYeast2022/`, `paper.md` sha256 `de2cad9b...`):
+
+- Mutants, one culture each: "We obtained wild-type data 749 times and mutant data once for each mutant." (line 97). `replicate_id = None`, records byte-identical.
+- 3Delta replicates: "the morphological data of the 1982 mutants were taken every time using the 749 replicates of 3Δ over 152 days" (line 151); Fig. 4a "749 replicates of $3 \Delta$ (orange, ordered by the date of data acquisition)" (line 59); the SCMD2 page lists "749 replicated wild-type (drug-hypersensitive strain)" (`data/scmd_quadruple_summary.html` line 44, sha256 `66a3df47...`). Each is a culture grown with that day's mutants (names `Q<yymmdd><well>`, 125 distinct dates). The authors combined them only into a date-aware null (one-way ANOVA with "an experimental date as an explanatory variable", line 151) used to normalize the mutants; the release carries the raw per-culture averages.
+- Genotype: the 3Delta background alone, the same three deletions every mutant record carries (Y13206, "snq2Δ:: KlLEU2 pdr3Δ:: KlURA3 pdr1Δ:: NATMX", line 128). Withdrawn samples: none quoted (749 in the paper, 749 rows).
+
+**Loader:** records 0..1981 mutants (unchanged), 1982..2730 the 3Delta replicates in release order, `replicate_id` = `NAME`. Reference unchanged (`replicate_id = None`). Blank or repeated `NAME` refuses; `data.csv` is now written after every record is built (it was written before the records, so a refusal could leave it behind).
+
+**Counts and mean reproduction** (same script and output as the Ohya 2005 section): 1,982 -> 2,731 records; first 1,982 identical; the 749 records equal the released cells; mutant groups max abs diff 0.0; 3Delta mean vs the old reference max abs 1.6e-11 (max rel 2.6e-15). `build_time_projection.DATASET_FULL_RECORDS` said 1,979 (stale since #1045 restored three rows); it is now 2,731.
+
+**Verifier** (`run_ohnuki_morphology`, oracle 2,731 and 749, 1 declared incomplete record) on `$DATA_ROOT/tmp/scratch/per-replicate-scmd-morphology/scmd_ohnuki2022`: PASS. L0 2731; L1 count 2731/2731, `record_uniqueness` 2731 keys, `replicate_records` 749 of 749 distinct, completeness 1 declared short (HRD1), reference full; L2 767,411 base and 600,818 CV values; L3 parity; L4 1.000 of 1983 genes in Ohya (report).
+
+**Not done, reported:** the environment is still the name-only stub `Media(name="YPD", state="liquid")` with no components or provenance (#622 pattern; the paper prints the 1/2/2% recipe at line 135). Changing it changes every record, so it is left for its own change.

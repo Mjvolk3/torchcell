@@ -20,6 +20,12 @@ Features (4 of the 501): base ``A101_A``, ``C103_A1B``; CV ``ACV103_A1B``, ``CCV
 ``wt749data.tsv`` (NAME + the same features): 1.0 3.0 0.25 0.5 and 3.0 5.0 0.75 1.0 ->
 means A101_A 2.0, C103_A1B 4.0, ACV103_A1B 0.5, CCV103_A1B 0.75.
 
+2026.11.24 (per-replicate policy, #1178 / #1171): each 3Delta row is also its own record,
+after the five mutant records (indices 5 and 6): the 3Delta background alone (PDR1 NatMX,
+PDR3 KlURA3, SNQ2 KlLEU2) with ``replicate_id`` = its ``NAME``. The mutant records and
+the shared reference are unchanged; ``data.csv`` is now written only after every record
+is built. A blank or repeated ``NAME`` is refused before anything is written.
+
 2026.09.30 (Phase 15): the same five-row matrix, plus
 
 - the drop ledger as logged (lines 241 to 258): one incomplete row, ``['YBR001C']``, and
@@ -52,6 +58,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import re
 import shutil
 from pathlib import Path
@@ -187,7 +194,7 @@ def test_five_quadruple_deletion_records(dataset: m.ScmdOhnuki2022Dataset) -> No
     KanMX deletion plus the constant PDR1/PDR3/SNQ2 background; the reference genome is
     the BY4741 placeholder with the 3Delta parent's measured means as phenotype.
     """
-    assert len(dataset) == 5
+    assert len(dataset) == 7
     assert dataset[0]["experiment"] == _experiment("YAL001C", [1.0, 2.0, 0.5, 0.25])
     assert dataset[1]["experiment"] == _experiment("YGL013C", [2.0, 3.0, 0.5, 0.5])
     assert dataset[2]["experiment"] == _experiment("YDR012W", [2.0, 3.0, 0.5, 0.5])
@@ -203,11 +210,51 @@ def test_five_quadruple_deletion_records(dataset: m.ScmdOhnuki2022Dataset) -> No
         "marker_deletion",
         "natmx_deletion",
     ]
+    assert all(
+        dataset[i]["experiment"]["phenotype"]["replicate_id"] is None for i in range(5)
+    )
+
+
+def test_each_3delta_replicate_is_a_background_only_record(
+    dataset: m.ScmdOhnuki2022Dataset,
+) -> None:
+    """#1178: wt1 and wt2 are records 5 and 6 in release order, each the 3Delta
+    background alone with ``replicate_id`` its NAME and its own released values; they
+    carry the shared reference (``replicate_id`` None), and the per-trait mean over the
+    two records is it.
+    """
+    traits: dict[str, list[float]] = {}
+    rows: list[tuple[str, list[float | None]]] = [
+        ("wt1", [1.0, 3.0, 0.25, 0.5]),
+        ("wt2", [3.0, 5.0, 0.75, 1.0]),
+    ]
+    for offset, (name, values) in enumerate(rows):
+        record = dataset[5 + offset]
+        expected = _experiment("YAL001C", values)
+        expected["genotype"] = Genotype(perturbations=_background()).model_dump()
+        expected["phenotype"]["replicate_id"] = name
+        assert record["experiment"] == (
+            CalMorphExperiment.model_validate(expected).model_dump()
+        )
+        assert record["reference"] == _REFERENCE
+        assert record["publication"] == _PUBLICATION
+        phenotype = record["experiment"]["phenotype"]
+        for key, value in {
+            **phenotype["calmorph"],
+            **phenotype["calmorph_coefficient_of_variation"],
+        }.items():
+            traits.setdefault(key, []).append(value)
+    assert _REFERENCE["phenotype_reference"]["replicate_id"] is None
+    assert {k: sum(v) / len(v) for k, v in traits.items()} == {
+        **_WT_PHENOTYPE.calmorph,
+        **(_WT_PHENOTYPE.calmorph_coefficient_of_variation or {}),
+    }
 
 
 def test_side_files(dataset: m.ScmdOhnuki2022Dataset) -> None:
     """``data.csv`` is the whole matrix (ORF column already stripped and uppercased)
-    with ``systematic_gene_name`` appended; one reference covers every record.
+    with ``systematic_gene_name`` appended; one reference covers every record, the two
+    3Delta replicate records included.
 
     The gene set includes the three background genes YBL005W, YDR011W and YGL013C
     next to the five targets, because ``compute_gene_set`` reads every perturbation of
@@ -232,7 +279,7 @@ def test_side_files(dataset: m.ScmdOhnuki2022Dataset) -> None:
         "YGL013C",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [[0, 1, 2, 3, 4]]
+    assert [entry["member_indices"] for entry in index] == [list(range(7))]
     assert index[0]["reference"]["phenotype_reference"] == _WT_PHENOTYPE.model_dump()
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert manifest["dataset_name"] == "scmd_ohnuki2022"
@@ -302,7 +349,7 @@ def test_items_retype_through_the_calmorph_classes(
     back to exactly the stored dictionaries. A fitness class here would drop the
     ``calmorph`` traits and fail the round trip.
     """
-    for index in range(5):
+    for index in range(7):
         item = dataset[index]
         typed = dataset.transform_item(item)
         assert type(typed["experiment"]) is CalMorphExperiment
@@ -342,7 +389,8 @@ def test_drop_ledger_is_logged_in_file_order(
         "cells key-absent: ['YBR001C']",
         "Ohnuki: 1 target row(s) also deleted in the 3Delta background, stored as "
         "released: ['YGL013C']",
-        "Processing Ohnuki 2022 CalMorph morphology (5 strains)...",
+        "Processing Ohnuki 2022 CalMorph morphology (5 strains, 2 3Delta "
+        "replicates)...",
     ]
 
 
@@ -371,8 +419,10 @@ def test_clean_base_only_matrix(
     with caplog.at_level(logging.INFO, logger=m.log.name):
         dataset = m.ScmdOhnuki2022Dataset(root=str(root))
     messages = [r.getMessage() for r in caplog.records if r.name == m.log.name]
-    assert messages == ["Processing Ohnuki 2022 CalMorph morphology (1 strains)..."]
-    assert len(dataset) == 1
+    assert messages == [
+        "Processing Ohnuki 2022 CalMorph morphology (1 strains, 2 3Delta replicates)..."
+    ]
+    assert len(dataset) == 3
     assert (
         dataset[0]["experiment"]
         == CalMorphExperiment(
@@ -488,7 +538,7 @@ def test_download_copies_verified_mirror_files_then_skips_verified_raw(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     """An empty root copies both tables from the mirror (logging each byte count), the
-    build then reads them (5 records), and a second ``download`` with the mirror removed
+    build then reads them (5 mutant + 2 3Delta records), and a second ``download`` with the mirror removed
     returns without error because both raw files already match their pins.
     """
     _, mirror, content = _pinned_to_synthetic(tmp_path, monkeypatch)
@@ -507,7 +557,7 @@ def test_download_copies_verified_mirror_files_then_skips_verified_raw(
         f"Copied {m.WT_FILE} from mirror ({len(content[m.WT_FILE])} bytes, "
         "sha256 verified)",
     ]
-    assert len(dataset) == 5
+    assert len(dataset) == 7
     shutil.rmtree(mirror)
     dataset.download()
     assert {name: (raw / name).read_bytes() for name in content} == content
@@ -579,3 +629,113 @@ def test_sha256_spans_more_than_one_mebibyte_chunk(tmp_path: Path) -> None:
     expected = "87fdbc9d8a44bce194d4cc22e90e6c21dd71179b6ecd0ac1c2af0b34b85e2e18"
     assert hashlib.sha256(data).hexdigest() == expected
     assert m._sha256(str(path)) == expected
+
+
+# --------------------------------------------------------------------------- #
+# 2026.11.24: one record per released 3Delta replicate (#1178 / #1171)
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize(
+    ("wt_rows", "message"),
+    [
+        (
+            [["wt1", "1.0", "3.0"], ["", "3.0", "5.0"]],
+            "Ohnuki 2022 wt749data.tsv has 1 row(s) with a blank NAME; the NAME is the "
+            "replicate's replicate_id",
+        ),
+        (
+            [["wt1", "1.0", "3.0"], ["wt1", "3.0", "5.0"]],
+            "Ohnuki 2022 wt749data.tsv lists 3Delta replicate NAME(s) more than once: "
+            "['wt1', 'wt1']",
+        ),
+    ],
+)
+def test_a_blank_or_repeated_3delta_name_is_refused_before_anything_is_written(
+    tmp_path: Path, wt_rows: list[list[str]], message: str
+) -> None:
+    """The NAME is the replicate's ``replicate_id``, so a blank or repeated one refuses
+    (0 blank and 0 repeated among the 749 pinned rows); neither ``data.csv`` nor the
+    store is written.
+    """
+    root = _base_only_root(tmp_path, [["YAL001C", "1.0", "2.0"]], wt_rows)
+    with pytest.raises(ValueError) as info:
+        m.ScmdOhnuki2022Dataset(root=str(root))
+    assert str(info.value) == message
+    assert not (root / "processed" / "lmdb").exists()
+    assert not (root / "preprocess" / "data.csv").exists()
+
+
+_MIRROR_DATA = Path(os.environ.get("DATA_ROOT", "/nonexistent"), m.MIRROR_SUBPATH)
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not (_MIRROR_DATA / m.WT_FILE).exists(),
+    reason=f"requires the Ohnuki 2022 mirror tables under {_MIRROR_DATA}",
+)
+def test_the_pinned_release_holds_1982_mutants_and_749_dated_3delta_replicates() -> (
+    None
+):
+    """The pinned tables hold 1982 mutant rows and 749 3Delta rows whose 749 NAMEs are
+    distinct ``Q<yymmdd><row><col>`` labels over 125 acquisition dates (the paper's "749
+    replicates of 3Δ over 152 days"), 0 blank cells in the 3Delta table.
+    """
+    for name, pin in ((m.MUTANT_FILE, m.MUTANT_SHA256), (m.WT_FILE, m.WT_SHA256)):
+        digest = hashlib.sha256((_MIRROR_DATA / name).read_bytes()).hexdigest()
+        assert digest == pin
+    mutant = pd.read_csv(_MIRROR_DATA / m.MUTANT_FILE, sep="\t")
+    wt = pd.read_csv(_MIRROR_DATA / m.WT_FILE, sep="\t")
+    assert mutant.shape == (1982, 502)
+    assert wt.shape == (749, 502)
+    assert wt["NAME"].is_unique
+    assert wt["NAME"].str.fullmatch(r"Q\d{6}[A-P]\d{2}").all()
+    assert wt["NAME"].str[1:7].nunique() == 125
+    assert int(wt.isna().sum().sum()) == 0
+
+
+@pytest.mark.slow
+@pytest.mark.data
+@pytest.mark.skipif(
+    not (_MIRROR_DATA / m.WT_FILE).exists(),
+    reason=f"requires the Ohnuki 2022 mirror tables under {_MIRROR_DATA}",
+)
+def test_the_full_build_stores_2731_records_and_the_3delta_mean_is_the_reference(
+    tmp_path: Path,
+) -> None:
+    """The pinned release builds 2731 records: 1982 mutants (``replicate_id`` None) then
+    749 background-only 3Delta replicates with their NAME as ``replicate_id``; the
+    per-trait mean over the 749 equals the shared reference to 1e-12 relative
+    (summation order only).
+    """
+    root = tmp_path / "scmd_ohnuki2022"
+    (root / "raw").mkdir(parents=True)
+    for name in (m.MUTANT_FILE, m.WT_FILE):
+        shutil.copyfile(_MIRROR_DATA / name, root / "raw" / name)
+    built = m.ScmdOhnuki2022Dataset(root=str(root))
+    assert len(built) == 2731
+    names = pd.read_csv(root / "raw" / m.WT_FILE, sep="\t")["NAME"].tolist()
+    assert all(
+        built[i]["experiment"]["phenotype"]["replicate_id"] is None for i in range(1982)
+    )
+    background = Genotype(perturbations=_background()).model_dump()
+    sums: dict[str, float] = {}
+    for offset in range(749):
+        experiment = built[1982 + offset]["experiment"]
+        assert experiment["genotype"] == background
+        assert experiment["phenotype"]["replicate_id"] == names[offset]
+        for key, value in {
+            **experiment["phenotype"]["calmorph"],
+            **experiment["phenotype"]["calmorph_coefficient_of_variation"],
+        }.items():
+            sums[key] = sums.get(key, 0.0) + value
+    reference = built[0]["reference"]["phenotype_reference"]
+    assert reference["replicate_id"] is None
+    summary = {
+        **reference["calmorph"],
+        **reference["calmorph_coefficient_of_variation"],
+    }
+    assert set(sums) == set(summary)
+    for key, value in summary.items():
+        assert sums[key] / 749 == pytest.approx(value, rel=1e-12)
+    built.close_lmdb()

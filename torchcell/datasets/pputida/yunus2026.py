@@ -91,20 +91,38 @@ That ``Control`` row is a real released control titer, which is what makes
 ``{docx,xlsx,pdf,zip,csv}`` were probed on ``ars.els-cdn.com`` on 2026-10-07 and only
 ``mmc1.docx`` exists (HTTP 206; every other combination 404).
 
-WHAT THE DEPOSITED ROW LABELS ARE, AND THE SIX ROWS THAT ARE DROPPED. The 132 row labels
-are CRISPRi TARGET labels, not strain names, and they are reconciled against what this
-loader already knows: Table S3's ``CRISPRi target gene`` labels and tags plus Tables S1
-and S2's locus tags. Measured 2026-10-09: 123 match a released target exactly, 6 more
-match after stripping a trailing ``" (S)"``, 2 more after also stripping a trailing
-``_NT<digit>``, and exactly one label matches nothing -- ``Control``, which is the
-reference. The ``_NT<digit>`` token is the guide VARIANT number Table S3 already uses
+WHAT THE DEPOSITED ROW LABELS ARE, AND THE SIX MARKED ROWS THAT ARE RECORDS TOO. The 132
+row labels are CRISPRi TARGET labels, not strain names, and they are reconciled against
+what this loader already knows: Table S3's ``CRISPRi target gene`` labels and tags plus
+Tables S1 and S2's locus tags. Measured 2026-10-09: 123 match a released target exactly,
+6 more match after stripping a trailing ``" (S)"``, 2 more after also stripping a
+trailing ``_NT<digit>``, and exactly one label matches nothing -- ``Control``, which is
+the reference. The ``_NT<digit>`` token is the guide VARIANT number Table S3 already uses
 (Table S7 gives ``PP_0339_NT1`` and ``PP_0339_NT2`` distinct spacers; Table S3 screens
 ``PP_1607_NT2`` and ``PP_1607_NT4`` as two strains), so it is matched as part of the
 guide key rather than read as a non-targeting filler; either reading names the same
 single perturbed locus. The ``" (S)"`` marker is DIFFERENT: no mirrored byte defines it
 (:data:`BENCHLING_MARKER_SEARCH` records the search), and each of those six labels also
-appears WITHOUT the marker as its own row, so the six marked rows are DROPPED by a named
-rule and no target is lost. Both families therefore store 125 records.
+appears WITHOUT the marker as its own row.
+
+Those six rows USED to be dropped by a named rule, and they are records now (the
+per-replicate policy of #1178: a released sample is never dropped, and the only allowed
+drop is one the authors themselves withdrew). Each marked row carries its own titer and
+its own full protein profile, measurably different from its unmarked twin's (``PP_0751``
+is 992.69 mg/L and ``PP_0751 (S)`` is 522.99 on the pinned bytes), so dropping one threw
+away a released measurement. What the marker MEANS is still unknown and nothing here
+guesses at it: both rows of such a pair are stored under the ONE genotype the release
+states (CRISPRi knockdown of that target in ``IY1452``), and the row label that tells
+them apart is carried differently by the two families, because their records say
+different things about their own replicate support. The PANEL record states one
+displayed value per (strain, protein), so it is one measurement and its ``replicate_id``
+is the deposit's OWN row label, verbatim and marker included; a target released once
+carries ``None``, because the deposit prints no label for it. The TITER record states a
+mean over the released 3 to 6 cultures, and ``replicate_id`` names which ONE replicate a
+record is, so an aggregate carries none: there the row label is a typed
+``ProvenanceGap`` on ``replicate_id`` instead. Either way nothing is dropped and nothing
+is invented, and both families store 131 records over 125 targets: 119 targets with one
+row and 6 with two.
 
 ONE CROSS-SOURCE AGREEMENT AND ONE MEASURED DISAGREEMENT, BOTH ASSERTED AT BUILD TIME.
 The deposit is an independent retrieval of the same campaign, so the two titers the
@@ -235,8 +253,41 @@ read and asserted as build oracles instead); Supplementary Table S6 (plasmids) a
 non-sgRNA rows of Table S7 (the three sequencing primers) are genotype metadata rather
 than measurements; Tables S1 and S2 are the target lists, carried in
 ``preprocess/target_lists.csv``; Fig. 5A's TCA metabolite concentrations, Fig. 3C/D's
-RFP and OD600, and Fig. 3F's growth curve are released as figures only; PRIDE
-``PXD062697`` holds the raw DIA spectra, which no loader here consumes.
+RFP and OD600, and Fig. 3F's growth curve are released as figures only; and PRIDE
+``PXD062697``, whose contents are stated exactly below.
+
+WHAT PRIDE ``PXD062697`` ACTUALLY HOLDS, AND WHY NONE OF IT IS LOADED YET. Earlier
+versions of this module said the deposit is raw spectra only, which is WRONG and is
+corrected here (issue #1203 item 5). Measured against the PRIDE / EBI file API and a
+ranged read of the first 20 kB of the one processed file on 2026-11-25
+(:data:`PRIDE_DEPOSIT_CONTENTS`): the project holds 312 files, 311 of them
+``RAW``-category ``.raw`` instrument files totalling 47.95 GB, and exactly ONE
+``SEARCH``-category processed table, ``Yunus_et_al_Proteomics.csv``, 39,141,911 bytes,
+published 2026-10-15T13:08 -- after this paper's raw mirror was built on 2026-10-07 to
+10-09, which is why the mirror does not hold it.
+
+That one processed table is a DIA-NN PRECURSOR matrix, not a protein table: its first
+ten columns are ``Protein.Group``, ``Protein.Ids``, ``Protein.Names``, ``Genes``,
+``First.Protein.Description``, ``Proteotypic``, ``Stripped.Sequence``,
+``Modified.Sequence``, ``Precursor.Charge`` and ``Precursor.Id``, so one row is one
+precursor, and the remaining 311 columns are one per MS run, named ``<strain>-R<n>``
+over 158 strains (153 with ``R1`` and ``R2``, and ``IY2054``-``IY2058`` with ``R2``
+only). Every one of Table S3's 125 strains is in it: 120 with two runs and those same 5
+with one. 33 deposit strains are in no released table, among them the chassis variants
+``IY1452a``, ``IY1452b`` and ``IY1452c`` and the strains ``IY2227``-``IY2244``.
+
+So the per-run values this module does NOT serve exist, and two owner decisions stand
+between them and a record (#1199, #1203 item 2). First, the released per-run quantity is
+precursor-level, and a protein-level per-run value would be a rollup WE compute rather
+than a value the source releases; which of the two is stored is not this loader's call.
+Second, the paper's Data Availability statement is "Data will be made available on
+request." and names no file, so the processed table is covered only by the Methods
+sentence that deposits "The generated mass spectrometry proteomics data", and whether an
+MS run of this screen is a biological or a technical replicate is stated nowhere: the
+``n_replicates = 1`` the two deposited families carry describes the DEPOSITED Benchling
+table (one displayed number per strain) and is not a claim about the runs behind it.
+Until those are settled, nothing here reads the precursor matrix and nothing computes a
+rollup from it.
 """
 
 from __future__ import annotations
@@ -390,8 +441,45 @@ CHASSIS_SOURCE_CITATION = (
     "production in Pseudomonas putida. Metab. Eng. 82, 157-170."
 )
 
-#: The ProteomeXchange / PRIDE deposit of the raw DIA spectra (not consumed).
+#: The paper's whole Data Availability statement, verbatim (``paper.md`` line 154, sha256
+#: ``32ab4cd3753a930c6ad983809e7083a06159b7b0feb6b5252ace180273bbe563``). It names no
+#: file and no repository, which is why every artifact this module reads is sourced from
+#: the publisher's supplementary component or from a hand deposit with its own record.
+DATA_AVAILABILITY_QUOTE = "Data will be made available on request."
+
+#: The ProteomeXchange / PRIDE deposit of this screen's mass spectrometry (not consumed).
 PRIDE_ACCESSION = "PXD062697"
+#: What that deposit holds, MEASURED against the PRIDE / EBI file API
+#: (``https://www.ebi.ac.uk/pride/ws/archive/v3/projects/PXD062697/files``, four pages of
+#: 100) and a ranged read of the first 20 kB of the one processed file
+#: (``https://ftp.pride.ebi.ac.uk/pride/data/archive/2026/10/PXD062697/``) on 2026-11-25.
+#: Recorded because this module used to say the deposit is raw spectra only, which it is
+#: not (issue #1203 item 5), and because the per-run values it holds are the subject of
+#: the open owner decision in #1199. The bytes themselves are NOT in the raw mirror: the
+#: processed table was published after the mirror was built, it is precursor-level rather
+#: than protein-level, and the paper's Data Availability statement names no file.
+PRIDE_DEPOSIT_CONTENTS = (
+    "PXD062697 holds 312 files: 311 RAW-category .raw instrument files (47.95 GB in "
+    "total) and exactly one SEARCH-category processed table, Yunus_et_al_Proteomics.csv "
+    "(39,141,911 bytes, submitted 2025-04-07T23:07, published 2026-10-15T13:08, after "
+    "this paper's raw mirror was built on 2026-10-07 to 10-09). That table is a DIA-NN "
+    "PRECURSOR matrix: its first ten columns are Protein.Group, Protein.Ids, "
+    "Protein.Names, Genes, First.Protein.Description, Proteotypic, Stripped.Sequence, "
+    "Modified.Sequence, Precursor.Charge and Precursor.Id, so one row is one precursor, "
+    "and its remaining 311 columns are one per MS run, named <strain>-R<n> over 158 "
+    "strains (153 with R1 and R2; IY2054-IY2058 with R2 only). All 125 Table S3 strains "
+    "are present, 120 with two runs and those 5 with one; 33 deposit strains appear in "
+    "no released table, among them IY1452a, IY1452b, IY1452c and IY2227-IY2244"
+)
+#: Measured run counts behind the 125 screened strains, from the same two reads. They are
+#: the evidence for the open question on the replicate support of a deposited number, and
+#: they are NOT the n_replicates of any record here: no mirrored byte says whether an MS
+#: run of this screen is a biological or a technical replicate, and no stored value was
+#: computed from these runs.
+PRIDE_RUNS = 311
+PRIDE_STRAINS = 158
+PRIDE_TWO_RUN_SCREEN_STRAINS = 120
+PRIDE_ONE_RUN_SCREEN_STRAINS = 5
 #: Supplementary Note 1's Benchling share pages: the Pearson analysis and its input
 #: table, the only released per-strain isoprenol numbers. Not scriptable (see docstring).
 BENCHLING_ANALYSIS_URL = "https://benchling.com/s/etr-mta4DgBAatF0hFYzy275"
@@ -480,7 +568,8 @@ BENCHLING_MARKER_LABELS = 6
 BENCHLING_VARIANT_LABELS = 2
 #: The 6 marked labels, verbatim. Their unmarked twins are ALL in the table as well
 #: (measured: every one of these six base tags also appears as a bare row), so the marker
-#: separates two rows for one target and dropping the marked one loses no gene.
+#: separates TWO released rows for one target. Both rows are stored, keyed apart by
+#: ``replicate_id`` (the verbatim row label); see :func:`benchling_replicate_ids`.
 BENCHLING_MARKED_LABELS: tuple[str, ...] = (
     "PP_0751 (S)",
     "PP_0815 (S)",
@@ -489,9 +578,10 @@ BENCHLING_MARKED_LABELS: tuple[str, ...] = (
     "PP_4191 (S)",
     "PP_4635 (S)",
 )
-#: What was searched for a definition of that marker, and what was found. Recorded as
-#: the drop rule's own evidence: a marker nothing defines cannot be read, and guessing
-#: at it would invent a second strain identity.
+#: What was searched for a definition of that marker, and what was found. Recorded on
+#: every record of such a pair: a marker nothing defines cannot be READ, so the two rows
+#: are stored under the one genotype the release states and told apart by the deposit's
+#: own row label, rather than by a second strain identity this paper never prints.
 BENCHLING_MARKER_SEARCH = (
     "searched for a definition of the ' (S)' marker on 2026-10-09 and found none: "
     "paper.md (sha256 32ab4cd3753a930c6ad983809e7083a06159b7b0feb6b5252ace180273bbe563) "
@@ -502,10 +592,15 @@ BENCHLING_MARKER_SEARCH = (
     "links and the Pearson script; and Supplementary Tables S6 and S7 carry each of the "
     "six tags as a plasmid or oligo name with no marker beside it"
 )
-#: Records written by each deposited family: the 132 rows less the control row and less
-#: the 6 marked rows. Both families key on the same strain rows, so the two counts agree
-#: by construction and the verifier asserts each.
-BENCHLING_RECORDS = 125
+#: Records written by each deposited family: the 132 released rows less the one control
+#: row, which is the ``phenotype_reference``. Both families key on the same strain rows,
+#: so the two counts agree by construction and the verifier asserts each. Before the
+#: per-replicate policy of #1178 this was 125, because the 6 marked rows were dropped.
+BENCHLING_RECORDS = 131
+#: Deposited targets, and how many of them the deposit releases twice. 119 targets have
+#: one row and 6 have two (the marked pair), which is 131 rows over 125 targets.
+BENCHLING_TARGETS = 125
+BENCHLING_REPLICATED_TARGETS = 6
 #: UniProt accessions of the deposited panel reaching exactly one KT2440 locus through
 #: the GOA proteome crosswalk: 207 of 253 (0.8182), measured 2026-10-09. 2 reach several
 #: (``Q877U6``, ``Q877V8``) and 44 reach none. The floor sits just below the measured
@@ -959,7 +1054,11 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "ProteomeXchange Consortium via the PRIDE partner repository with the dataset "
         "identifier PXD062697",
         page=_METHODS_PROTEOMICS,
-        note="raw DIA files; no loader here consumes raw spectra",
+        note="this sentence is the only place the paper names the deposit; its Data "
+        f"Availability statement is '{DATA_AVAILABILITY_QUOTE}' and names no file. The "
+        f"deposit is NOT raw spectra only, which this module used to say: "
+        f"{PRIDE_DEPOSIT_CONTENTS}. No loader here consumes any of it (see the module "
+        "docstring and issues #1199 and #1203)",
     ),
     "titer_quantification": _paper(
         "GC-FID",
@@ -1185,8 +1284,13 @@ NOT_LOADED: tuple[str, ...] = (
     "(IY77, IY169, IY425): genotype and method metadata, not measurements",
     "Fig. 5A (TCA metabolite concentrations at 24, 48 and 72 h), Fig. 3C/D (terminal "
     "OD600 and RFP fluorescence) and Fig. 3F (the PP_1607 growth curve): figures only",
-    f"PRIDE {PRIDE_ACCESSION}: the raw DIA mass-spectrometry files, which no loader "
-    "here consumes",
+    f"PRIDE {PRIDE_ACCESSION}, every file of it, and NOT raw spectra only, which this "
+    f"loader used to say (issue #1203 item 5): {PRIDE_DEPOSIT_CONTENTS}. The 311 raw "
+    "files are out of scope. The one processed table is per-run but PRECURSOR-level, a "
+    "protein-level per-run value would be a rollup WE compute, and the paper's Data "
+    f"Availability statement is '{DATA_AVAILABILITY_QUOTE}' and names no file, so "
+    "whether per-run records are stored at all, and on which level, is an open owner "
+    "decision (issue #1199) and nothing here reads those bytes",
     f"mmc2 and beyond do not exist: mmc1..mmc4 x docx/xlsx/pdf/zip/csv were probed on "
     f"ars.els-cdn.com for PII {PAPER_PII} on 2026-10-07 and only mmc1.docx answered "
     "(HTTP 206); every other combination answered 404",
@@ -2050,7 +2154,14 @@ def benchling_target(label: str) -> tuple[str, str | None]:
     spacers and Table S3 screens ``PP_1607_NT2`` and ``PP_1607_NT4`` as two strains, so
     it is matched as part of the key rather than read as a non-targeting filler. Either
     reading names the same single perturbed locus; only the spacer lookup differs.
+
+    A trailing ``" (S)"`` is stripped first. That marker is what tells two released rows
+    of one target apart and NOT what they target: the genotype either row states is the
+    knockdown of this tag, and the marker rides on ``replicate_id`` instead
+    (:func:`benchling_replicate_ids`).
     """
+    if label.endswith(BENCHLING_SOLID_MARKER):
+        label = label[: -len(BENCHLING_SOLID_MARKER)]
     match = S3_TARGET_RE.match(label)
     if match is None:
         raise TableExtractionError(
@@ -2058,6 +2169,30 @@ def benchling_target(label: str) -> tuple[str, str | None]:
             "_NT<digit> variant"
         )
     return match.group("tag"), match.group("variant")
+
+
+def benchling_replicate_ids(panel: BenchlingStrainTable) -> dict[str, str | None]:
+    """``row label -> replicate_id`` over every deposited strain row.
+
+    One stored record is one released row. A target the deposit releases TWICE (the six
+    ``" (S)"`` pairs) therefore writes two records under the one genotype the release
+    states, and they are kept distinct by the deposit's OWN row label, verbatim and
+    marker included, which is what ``replicate_id`` asks for. A target released once
+    carries ``None``, because the deposit prints no replicate label for it and inventing
+    a position would say that a second row exists.
+
+    The grouping key is ``(locus tag, guide variant)``, which is exactly what the stored
+    genotype is built from, so two rows share a ``replicate_id`` group if and only if
+    they would otherwise be two records of one indistinguishable genotype.
+    """
+    groups: dict[tuple[str, str | None], list[str]] = {}
+    for row in panel.strains:
+        groups.setdefault(benchling_target(row.label), []).append(row.label)
+    return {
+        label: (label if len(labels) > 1 else None)
+        for labels in groups.values()
+        for label in labels
+    }
 
 
 def reverse_complement(sequence: str) -> str:
@@ -2595,8 +2730,20 @@ def titer_environment() -> CultureEnvironment:
     )
 
 
-def isoprenol_titer_phenotype(value: float) -> ProductTiterPhenotype:
+def isoprenol_titer_phenotype(
+    value: float, *, released_row_label: str | None = None
+) -> ProductTiterPhenotype:
     """One deposited isoprenol number as a titer, stored verbatim.
+
+    ``replicate_id`` is ``None`` on EVERY record of this family, and that is the
+    convention rather than an omission: the deposited titer of one row is itself a mean
+    over the released 3-to-6 cultures (:data:`TITER_REPLICATES_SOURCE`), and
+    ``replicate_id`` states which ONE replicate a record is, so an aggregate carries
+    none (the shared titer gate asserts exactly that). ``released_row_label`` is passed
+    for the six targets the deposit releases TWICE: both rows are stored, and the label
+    that tells them apart is recorded as a typed gap on ``replicate_id`` instead of
+    being written into it, because the marker is not a replicate label and no mirrored
+    byte says what it is.
 
     The deposited column carries no unit of its own; the unit is the paper's, quoted in
     :data:`TITER_UNIT_SOURCE`. ``ConcentrationUnit`` has no ``mg/L`` member and 1 mg/L
@@ -2618,6 +2765,7 @@ def isoprenol_titer_phenotype(value: float) -> ProductTiterPhenotype:
         titer_uncertainty_type=None,
         n_samples=TITER_N_REPLICATES,
         sample_unit=SampleUnit.biological_replicate,
+        replicate_id=None,
         quantification_method=str(SOURCED_VALUES["titer_quantification"].value),
         provenance_gaps=[
             ProvenanceGap(
@@ -2643,11 +2791,32 @@ def isoprenol_titer_phenotype(value: float) -> ProductTiterPhenotype:
                 "productivity",
                 "productivity_unit",
             )
-        ],
+        ]
+        + (
+            [
+                ProvenanceGap(
+                    field="replicate_id",
+                    reason=ProvenanceGapReason.not_reported_by_primary,
+                    note="the deposit releases this target TWICE and both rows are "
+                    f"stored; this record is its {released_row_label!r} row. The only "
+                    "text that tells the two rows apart is the undefined "
+                    f"{BENCHLING_SOLID_MARKER!r} marker ({BENCHLING_MARKER_SEARCH}), "
+                    "which is not a replicate label, and the stored titer is itself a "
+                    f"mean over {TITER_N_REPLICATES} or more cultures "
+                    f"('{TITER_REPLICATES_SOURCE.quote}'), so replicate_id stays None "
+                    "and the released row label is recorded here and in "
+                    "preprocess/benchling_titers.csv",
+                )
+            ]
+            if released_row_label is not None
+            else []
+        ),
     )
 
 
-def panel_proteome_phenotype(values: Mapping[str, float]) -> ProteinAbundancePhenotype:
+def panel_proteome_phenotype(
+    values: Mapping[str, float], *, replicate_id: str | None = None
+) -> ProteinAbundancePhenotype:
     """One deposited strain's protein profile, keyed by locus tag.
 
     An ABSOLUTE per-strain Top3 signal, which is what ``ProteinAbundancePhenotype``
@@ -2655,10 +2824,17 @@ def panel_proteome_phenotype(values: Mapping[str, float]) -> ProteinAbundancePhe
     present measurement and is kept verbatim: nothing is imputed and no key is dropped
     for being zero.
 
-    ``n_replicates`` is 1 per key, which is the arithmetic of the deposit: one displayed
-    number per (strain, protein), no replicate column and no uncertainty, so one sample
-    is the support of one stored abundance. ``protein_abundance_se`` is a typed gap for
-    the same reason.
+    ``n_replicates`` is 1 per key, which is the arithmetic of the DEPOSITED table: one
+    displayed number per (strain, protein), no replicate column and no uncertainty, so
+    one displayed value is the support of one stored abundance. It is not a claim about
+    the MS runs behind that value: PRIDE ``PXD062697`` holds two runs for 120 of the 125
+    screened strains (:data:`PRIDE_DEPOSIT_CONTENTS`) and no mirrored byte says whether
+    such a run is a biological or a technical replicate, nor which rollup the page's
+    number came from, which is the open question of issues #1199 and #1203 item 2.
+    ``protein_abundance_se`` is a typed gap for the same reason.
+
+    ``replicate_id`` is the deposit's own row label on a target it releases twice and
+    ``None`` otherwise (:func:`benchling_replicate_ids`).
     """
     if not values:
         raise RuntimeError("a panel-proteome record needs at least one protein")
@@ -2670,6 +2846,7 @@ def panel_proteome_phenotype(values: Mapping[str, float]) -> ProteinAbundancePhe
         protein_abundance_se=None,
         n_replicates=dict.fromkeys(values, PANEL_N_REPLICATES),
         measurement_type=PANEL_PROTEOME_MEASUREMENT_TYPE,
+        replicate_id=replicate_id,
         provenance_gaps=[
             ProvenanceGap(
                 field="protein_abundance_se",
@@ -3071,23 +3248,34 @@ class _Yunus2026BenchlingDataset(_Yunus2026Dataset):
         return reconciliation
 
     @staticmethod
-    def _marker_drop_rule(panel: BenchlingStrainTable) -> DropRule:
-        """The rule that drops the rows carrying the undefined ``" (S)"`` marker."""
+    def _marker_retention_note(panel: BenchlingStrainTable) -> str:
+        """What the ``" (S)"`` marker does to a record, for the build's drop log.
+
+        It drops nothing. The marker separates two released rows of one target, both
+        rows are stored, and the marker rides on ``replicate_id`` rather than on a
+        genotype, because no mirrored byte says what it means.
+        """
+        replicate_ids = benchling_replicate_ids(panel)
         marked = [row.label for row in panel.strains if row.marked]
-        return DropRule(
-            rule="row_label_carries_an_undefined_marker",
-            scope="record",
-            description=(
-                f"the row label ends in {BENCHLING_SOLID_MARKER!r}, a marker NO "
-                f"mirrored byte defines: {BENCHLING_MARKER_SEARCH}. Each of these "
-                "labels also appears WITHOUT the marker as its own row, so the marker "
-                "separates two rows for one target and keeping the marked one would "
-                "store a second titer and a second proteome against a strain identity "
-                "this release never states. The unmarked twin is kept, so no target is "
-                "lost"
-            ),
-            n_records=len(marked),
-            items=marked,
+        labeled = sorted(label for label, rid in replicate_ids.items() if rid)
+        return (
+            f"NOTHING IS DROPPED: all {len(panel.strains)} released strain rows are "
+            f"records. {len(marked)} row labels end in {BENCHLING_SOLID_MARKER!r}, a "
+            f"marker NO mirrored byte defines: {BENCHLING_MARKER_SEARCH}. Each also "
+            "appears WITHOUT the marker as its own row, and the two rows of such a pair "
+            "carry different numbers, so the marker separates two released measurements "
+            "of one target rather than defining a second strain. Both are stored under "
+            "the ONE genotype the release states (CRISPRi knockdown of that target in "
+            f"{CHASSIS_STRAIN}), and the deposit's own row label is what tells them "
+            f"apart: {labeled}. The panel family carries that label in replicate_id, "
+            "since its record states one displayed value per (strain, protein); the "
+            "titer family carries it as a typed ProvenanceGap on replicate_id instead, "
+            "since its record states a mean over the released 3-to-6 cultures and "
+            "replicate_id names which ONE replicate a record is. The remaining "
+            f"{len(panel.strains) - len(labeled)} rows are the only released row for "
+            "their target. Earlier builds dropped the marked rows by a rule named "
+            "row_label_carries_an_undefined_marker, which threw away 6 released "
+            "measurements (issue #1178)"
         )
 
     def _reconciliation_rows(
@@ -3706,8 +3894,9 @@ class IsoprenolTiterYunus2026Dataset(_Yunus2026BenchlingDataset):
         library = build_guide_library(tables["S7"], genome)
         reconciliation = self._reconcile_rows(tables, panel)
 
-        candidates = [row for row in panel.strains if not row.marked]
-        marker_rule = self._marker_drop_rule(panel)
+        candidates = list(panel.strains)
+        replicate_ids = benchling_replicate_ids(panel)
+        marker_note = self._marker_retention_note(panel)
         tags = sorted({benchling_target(row.label)[0] for row in candidates})
         stored_by_tag, report = self._resolve_targets(genome, tags)
         common = standard_names(genome, stored_by_tag.values())
@@ -3737,7 +3926,10 @@ class IsoprenolTiterYunus2026Dataset(_Yunus2026BenchlingDataset):
                         ]
                     ),
                     environment=environment,
-                    phenotype=isoprenol_titer_phenotype(row.isoprenol_production),
+                    phenotype=isoprenol_titer_phenotype(
+                        row.isoprenol_production,
+                        released_row_label=replicate_ids[row.label],
+                    ),
                 )
                 reference = ProductTiterExperimentReference(
                     dataset_name=self.name,
@@ -3753,6 +3945,7 @@ class IsoprenolTiterYunus2026Dataset(_Yunus2026BenchlingDataset):
                     {
                         "record": idx,
                         "label": row.label,
+                        "replicate_id": replicate_ids[row.label],
                         "locus_tag": tag,
                         "variant": variant,
                         "gene_name": common[tag],
@@ -3786,10 +3979,11 @@ class IsoprenolTiterYunus2026Dataset(_Yunus2026BenchlingDataset):
                 source_rows=len(panel.rows),
                 candidate_records=len(panel.strains),
                 kept_records=idx,
-                dropped_records=marker_rule.n_records,
-                rules=[marker_rule],
+                dropped_records=0,
+                rules=[],
                 reconciliation=report,
                 notes=[
+                    marker_note,
                     f"one record per deposited strain row; the {BENCHLING_CONTROL_LABEL!r} "
                     f"row is the phenotype_reference at {panel.control.isoprenol_production} "
                     "mg/L and is not a record. It is a REAL released control titer, "
@@ -3827,11 +4021,12 @@ class IsoprenolTiterYunus2026Dataset(_Yunus2026BenchlingDataset):
             )
         )
         log.info(
-            "Yunus2026 titer: %d records from %d deposited rows (%d marked rows "
-            "dropped, 1 control row is the reference); reference titer %s mg/L",
+            "Yunus2026 titer: %d records from %d deposited rows (nothing dropped, "
+            "%d rows are one of a released pair, 1 control row is the reference); "
+            "reference titer %s mg/L",
             idx,
             len(panel.rows),
-            marker_rule.n_records,
+            sum(1 for rid in replicate_ids.values() if rid),
             panel.control.isoprenol_production,
         )
 
@@ -3924,8 +4119,9 @@ class CrispriPanelProteomeYunus2026Dataset(_Yunus2026BenchlingDataset):
         resolution, crosswalk = self._resolve_accessions(genome)
         locus_of = dict(resolution.resolved)
 
-        candidates = [row for row in panel.strains if not row.marked]
-        marker_rule = self._marker_drop_rule(panel)
+        candidates = list(panel.strains)
+        replicate_ids = benchling_replicate_ids(panel)
+        marker_note = self._marker_retention_note(panel)
         tags = sorted({benchling_target(row.label)[0] for row in candidates})
         stored_by_tag, report = self._resolve_targets(genome, tags)
         common = standard_names(genome, stored_by_tag.values())
@@ -3966,7 +4162,9 @@ class CrispriPanelProteomeYunus2026Dataset(_Yunus2026BenchlingDataset):
                         ]
                     ),
                     environment=environment,
-                    phenotype=panel_proteome_phenotype(values),
+                    phenotype=panel_proteome_phenotype(
+                        values, replicate_id=replicate_ids[row.label]
+                    ),
                 )
                 reference = ProteinAbundanceExperimentReference(
                     dataset_name=self.name,
@@ -3982,6 +4180,7 @@ class CrispriPanelProteomeYunus2026Dataset(_Yunus2026BenchlingDataset):
                     {
                         "record": idx,
                         "label": row.label,
+                        "replicate_id": replicate_ids[row.label],
                         "locus_tag": tag,
                         "variant": variant,
                         "gene_name": common[tag],
@@ -4026,9 +4225,8 @@ class CrispriPanelProteomeYunus2026Dataset(_Yunus2026BenchlingDataset):
                 source_rows=len(panel.rows),
                 candidate_records=len(panel.strains),
                 kept_records=idx,
-                dropped_records=marker_rule.n_records,
+                dropped_records=0,
                 rules=[
-                    marker_rule,
                     DropRule(
                         rule="no_locus_tag_in_the_goa_proteome_file",
                         scope="protein_accession",
@@ -4057,6 +4255,7 @@ class CrispriPanelProteomeYunus2026Dataset(_Yunus2026BenchlingDataset):
                 ],
                 reconciliation=report,
                 notes=[
+                    marker_note,
                     f"one record per deposited strain row over "
                     f"{len(reference_profile.protein_abundance)} of "
                     f"{len(panel.accessions)} accessions "
@@ -4080,8 +4279,13 @@ class CrispriPanelProteomeYunus2026Dataset(_Yunus2026BenchlingDataset):
                     "dataset",
                     f"n_replicates = {PANEL_N_REPLICATES} for every key: the deposit "
                     "renders one number per (strain, protein) with no replicate column "
-                    "and no uncertainty, so one sample is the support of one stored "
-                    "abundance",
+                    "and no uncertainty, so one displayed value is the support of one "
+                    "stored abundance. That is a statement about the DEPOSITED table, "
+                    f"not about the MS runs behind it: {PRIDE_DEPOSIT_CONTENTS}. No "
+                    "mirrored byte says whether a run of this screen is a biological or "
+                    "a technical replicate, nor which rollup the page's number came "
+                    "from, so nothing here reads the per-run table (issues #1199 and "
+                    "#1203 item 2)",
                     f"RetrievalMethod.manual_browser. {BENCHLING_PASTE_CAVEAT}",
                     *proofs,
                 ],
@@ -4089,13 +4293,14 @@ class CrispriPanelProteomeYunus2026Dataset(_Yunus2026BenchlingDataset):
         )
         log.info(
             "Yunus2026 panel proteome: %d records over %d of %d accessions "
-            "(%d unmapped, %d multi-locus); %d marked rows dropped",
+            "(%d unmapped, %d multi-locus); nothing dropped, %d rows carry a "
+            "replicate_id",
             idx,
             len(locus_of),
             len(panel.accessions),
             len(resolution.unmapped),
             len(resolution.multi_locus),
-            marker_rule.n_records,
+            sum(1 for rid in replicate_ids.values() if rid),
         )
 
 
@@ -4273,14 +4478,12 @@ def _l4_titers_are_the_deposited_column(
     """L4: the stored titers are exactly the deposited column, control excluded.
 
     Read back out of the sha256-verified deposit: the multiset of stored titers must
-    equal the multiset of deposited titers for the rows the drop rules kept, and the
-    reference must be the control row's own number. Nothing is rescaled, because 1 mg/L
+    equal the multiset of EVERY deposited strain row's titer, control excluded and
+    nothing dropped, and the reference must be the control row's own number. Nothing is rescaled, because 1 mg/L
     is exactly 1 ug/mL.
     """
     panel = _deposited_panel(data_root)
-    expected = sorted(
-        row.isoprenol_production for row in panel.strains if not row.marked
-    )
+    expected = sorted(row.isoprenol_production for row in panel.strains)
     stored = sorted(
         float(record["experiment"]["phenotype"]["titer"]) for record in records
     )
@@ -4404,7 +4607,6 @@ def _l4_panel_profiles_are_the_deposited_columns(
             sort_keys=True,
         )
         for row in panel.strains
-        if not row.marked
     )
     stored = sorted(
         json.dumps(

@@ -2386,7 +2386,16 @@ PANEL_ROWS: tuple[tuple[str, float], ...] = (
     ("Control", 845.73),
 )
 PANEL_MARKED = tuple(label for label, _ in PANEL_ROWS if label.endswith(" (S)"))
-PANEL_RECORDS = len(PANEL_ROWS) - 1 - len(PANEL_MARKED)
+#: Every released strain row is a record; only the control row is not one. A marked row
+#: and its bare twin are two records of one genotype, told apart by ``replicate_id``.
+PANEL_RECORDS = len(PANEL_ROWS) - 1
+PANEL_REPLICATE_LABELS = tuple(
+    sorted(
+        label
+        for label, _ in PANEL_ROWS
+        if label in PANEL_MARKED or f"{label} (S)" in PANEL_MARKED
+    )
+)
 #: The synthetic correlation table's rows.
 CORRELATION_ROWS: tuple[tuple[str, float, float], ...] = (
     ("UP_A00", -0.671135904, 1.30e-18),
@@ -2939,7 +2948,7 @@ def test_titer_dataset_builds_one_record_per_deposited_strain_row(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The control row is the reference and the marked rows are dropped by their rule."""
+    """The control row is the reference and every other released row is a record."""
     dataset = _build(
         y26.IsoprenolTiterYunus2026Dataset,
         tmp_path / "titer",
@@ -2951,21 +2960,72 @@ def test_titer_dataset_builds_one_record_per_deposited_strain_row(
     assert log["source_rows"] == len(PANEL_ROWS)
     assert log["candidate_records"] == len(PANEL_ROWS) - 1
     assert log["kept_records"] == PANEL_RECORDS
-    assert log["dropped_records"] == len(PANEL_MARKED)
-    assert [rule["rule"] for rule in log["rules"]] == [
-        "row_label_carries_an_undefined_marker"
-    ]
-    assert log["rules"][0]["items"] == list(PANEL_MARKED)
-    assert log["rules"][0]["scope"] == "record"
+    assert log["dropped_records"] == 0
+    assert log["rules"] == []
 
 
-def test_the_marker_drop_rule_names_the_search_that_found_no_definition(
+def test_a_marked_row_is_a_record_told_apart_by_its_own_row_label(
     synthetic_mirror: Path,
     synthetic_kt2440: Any,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A marker nothing defines is dropped WITH the evidence that nothing defines it."""
+    """A marked row is a record whose released row label is a typed gap, not a drop.
+
+    The titer of one row is a mean over the released 3-to-6 cultures, so no record of
+    this family carries a ``replicate_id``; the row label that tells the two rows of a
+    released pair apart is recorded as a gap on that field instead.
+    """
+    dataset = _build(
+        y26.IsoprenolTiterYunus2026Dataset,
+        tmp_path / "titer",
+        synthetic_kt2440,
+        monkeypatch,
+    )
+    titers = {}
+    for index in range(len(dataset)):
+        phenotype = _dump(dataset[index]["experiment"])["phenotype"]
+        assert phenotype["replicate_id"] is None
+        labels = [
+            gap["note"]
+            for gap in phenotype["provenance_gaps"]
+            if gap["field"] == "replicate_id"
+        ]
+        titers[phenotype["titer"]] = labels
+    assert titers[957.5] and "'PP_0100'" in titers[957.5][0]
+    assert titers[220.0] and "'PP_0100 (S)'" in titers[220.0][0]
+    assert titers[1400.0] == []
+
+
+def test_panel_record_of_a_released_pair_carries_its_own_row_label(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The panel states one displayed value per key, so its label is replicate_id."""
+    dataset = _build(
+        y26.CrispriPanelProteomeYunus2026Dataset,
+        tmp_path / "panel",
+        synthetic_kt2440,
+        monkeypatch,
+    )
+    labels = {
+        _dump(dataset[index]["experiment"])["phenotype"]["replicate_id"]
+        for index in range(len(dataset))
+    }
+    assert {"PP_0100", "PP_0100 (S)"} <= labels
+    assert None in labels
+    assert labels - {None} == set(PANEL_REPLICATE_LABELS)
+
+
+def test_the_marker_retention_note_names_the_search_that_found_no_definition(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A marker nothing defines is KEPT with the evidence that nothing defines it."""
     dataset = _build(
         y26.IsoprenolTiterYunus2026Dataset,
         tmp_path / "titer",
@@ -2973,9 +3033,10 @@ def test_the_marker_drop_rule_names_the_search_that_found_no_definition(
         monkeypatch,
     )
     log = json.loads(Path(dataset.preprocess_dir, "dropped_records.json").read_text())
-    description = log["rules"][0]["description"]
-    assert y26.BENCHLING_MARKER_SEARCH in description
-    assert "The unmarked twin is kept" in description
+    note = log["notes"][0]
+    assert y26.BENCHLING_MARKER_SEARCH in note
+    assert "NOTHING IS DROPPED" in note
+    assert "PP_0100 (S)" in note
 
 
 def test_titer_record_stores_the_deposited_number_against_the_control_row(
@@ -2995,11 +3056,7 @@ def test_titer_record_stores_the_deposited_number_against_the_control_row(
         _dump(dataset[index]["experiment"])["phenotype"]["titer"]
         for index in range(len(dataset))
     )
-    assert titers == sorted(
-        titer
-        for label, titer in PANEL_ROWS
-        if label != "Control" and not label.endswith(" (S)")
-    )
+    assert titers == sorted(titer for label, titer in PANEL_ROWS if label != "Control")
     reference = _dump(dataset[0]["reference"])
     assert reference["phenotype_reference"]["titer"] == 845.73
     assert reference["environment_reference"]["culture_format"]["shaking_rpm"] == 180.0
@@ -3020,9 +3077,7 @@ def test_titer_record_genotype_is_one_crispri_knockdown_of_its_label(
     )
     rows = pd.read_csv(Path(dataset.preprocess_dir, "benchling_titers.csv"))
     assert set(rows["locus_tag"]) == {
-        y26.benchling_target(label)[0]
-        for label, _ in PANEL_ROWS
-        if label != "Control" and not label.endswith(" (S)")
+        y26.benchling_target(label)[0] for label, _ in PANEL_ROWS if label != "Control"
     }
     for index in range(len(dataset)):
         genotype = _dump(dataset[index]["experiment"])["genotype"]
@@ -3481,8 +3536,13 @@ def test_real_results_text_join_agrees_on_pp_0168_and_differs_on_pp_4188() -> No
 
 
 @pytest.mark.data
-def test_real_deposited_stores_hold_125_records_each() -> None:
-    """Both built dev stores, measured: 132 rows less the control less the 6 marked."""
+def test_real_deposited_stores_hold_131_records_each() -> None:
+    """Both built dev stores, measured: the 132 released rows less the control row.
+
+    A store built before the per-replicate conversion holds 125, because the 6 marked
+    rows were dropped then; such a store is stale and this skips rather than asserting
+    against bytes an older build wrote.
+    """
     from torchcell.verification.runners import load_records
 
     data_root = _data_root_or_skip()
@@ -3491,7 +3551,52 @@ def test_real_deposited_stores_hold_125_records_each() -> None:
         if not osp.isdir(osp.join(root, "processed", "lmdb")):
             pytest.skip(f"{name} is not built under $DATA_ROOT")
         records = load_records(root)
-        assert len(records) == y26.BENCHLING_RECORDS == 125, name
+        if len(records) == 125:
+            pytest.skip(f"{name} predates the per-replicate conversion (125 records)")
+        assert len(records) == y26.BENCHLING_RECORDS == 131, name
+
+
+@pytest.mark.data
+def test_the_real_deposit_releases_six_targets_twice() -> None:
+    """The six marked rows are 6 of 131 records, not 6 dropped measurements."""
+    panel = y26.read_benchling_strain_table(
+        _deposit_or_skip() / y26.BENCHLING_TITER_REL
+    )
+    replicate_ids = y26.benchling_replicate_ids(panel)
+    assert len(replicate_ids) == y26.BENCHLING_RECORDS == 131
+    labeled = sorted(label for label, rid in replicate_ids.items() if rid)
+    assert len(labeled) == 2 * y26.BENCHLING_REPLICATED_TARGETS == 12
+    assert set(y26.BENCHLING_MARKED_LABELS) <= set(labeled)
+    assert (
+        len({y26.benchling_target(label) for label in replicate_ids})
+        == y26.BENCHLING_TARGETS
+        == 125
+    )
+    titers = panel.titer_by_label
+    assert titers["PP_0751"] == 992.685859
+    assert titers["PP_0751 (S)"] == 522.99423
+
+
+@pytest.mark.data
+def test_the_pride_deposit_contents_are_what_the_loader_states() -> None:
+    """The recorded deposit statement is internally consistent with its own counts."""
+    assert y26.PRIDE_RUNS == 311
+    assert y26.PRIDE_STRAINS == 158
+    assert (
+        y26.PRIDE_TWO_RUN_SCREEN_STRAINS + y26.PRIDE_ONE_RUN_SCREEN_STRAINS
+        == y26.BENCHLING_TARGETS
+        == 125
+    )
+    for fragment in (
+        "312 files",
+        "Yunus_et_al_Proteomics.csv",
+        "39,141,911 bytes",
+        "PRECURSOR matrix",
+        "Precursor.Id",
+        f"{y26.PRIDE_RUNS} columns",
+    ):
+        assert fragment in y26.PRIDE_DEPOSIT_CONTENTS, fragment
+    assert y26.DATA_AVAILABILITY_QUOTE == "Data will be made available on request."
 
 
 def test_read_benchling_strain_table_refuses_an_empty_file(tmp_path: Path) -> None:

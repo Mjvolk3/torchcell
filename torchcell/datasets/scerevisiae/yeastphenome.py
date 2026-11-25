@@ -88,6 +88,33 @@ WHAT CURATION DOES NOT CARRY -> typed ``ProvenanceGap`` (never guessed): the env
 ``n_samples`` / ``environment_response_uncertainty`` / ``sample_unit`` (the replicate
 design is not carried). All are ``not_carried_by_curation`` and anchored by ``looked_in``
 = the Zenodo record. A future per-paper SI comb would upgrade these to sourced values.
+
+REPLICATES (2026.11.24 per-replicate review, #1177 / #1178): the store already holds
+every value the curation releases, one record per (ORF, growth column) of
+``<stem>_valuez.txt`` (no repeated row id in any of the 47 pinned files), so no record
+changes. The curation releases one value per (ORF, screen) and no replicate level:
+Turco2023 ``paper.md`` L301 (sha256 ``b666d48f...``), "All Yeast Phenome data (NPVs and
+phenotypic similarities) are available for browsing, searching, and downloading at
+www.yeastphenome.org. The original phenotypic values, along with Python code for data
+extraction and processing, are available at https://github.com/yeastphenome/yp-data".
+The per-screen notebook ``Datasets/<pmid>/code.ipynb`` builds that one value BEFORE the
+NPV transform, by two merges:
+
+- a row-wise mean over replicate columns of the primary table, in six retained screens
+  (``CURATOR_AVERAGED_REPLICATE_COLUMNS`` lists the averaged labels verbatim);
+- ``groupby(original_data.index).mean()`` over repeated ids after alias translation, in
+  every screen (repeated strains, plate rows, and released ids the translation merges
+  into one ORF).
+
+The NPV is then ``z_transform_mode`` of ``Utils/yp_utils.py`` at the pin, ``(x - m) /
+sqrt(nanmean((x - m)**2))`` with ``m`` the KDE mode (bandwidth 0.25), applied to the
+merged value; no per-replicate NPV exists in the release. The replicate values exist only
+in the primary tables yp-data re-hosts under ``Datasets/<pmid>/raw_data/``, in each
+primary's own units, so storing them is an ingestion of that primary paper (its own
+loader), not of this curation; the curated aggregate stays as released (policy 8 of
+#1178). The ``units`` string's pointer "note S4" is wrong: Turco2023 note S4 is the list
+of analysis datasets and the formula is the code above (the stored string is left as
+is so no record changes; [[torchcell.datasets.scerevisiae.yeastphenome]] 2026.11.24).
 """
 
 import json
@@ -477,6 +504,58 @@ SCREENS: list[dict[str, str]] = [
         "valuez_sha256": "590b872331439342ab09c27fd9da9e534239540418d44a508abc4e2962b5d290",
     },
 ]
+
+
+# The six retained screens whose yp-data notebook (``Datasets/<pmid>/code.ipynb`` at
+# ``YP_PIN``) takes a row-wise mean over replicate columns of the primary table before the
+# NPV transform: PMID -> the averaged labels, verbatim, as the notebook groups them. The
+# store holds the curated mean as released; the per-column values are the primary's own
+# release (re-hosted under ``Datasets/<pmid>/raw_data/``), in the primary's units, and are
+# NOT stored by this loader (#1177; evidence and per-column counts in the dataset note,
+# 2026.11.24). Berry 2011 is summarized by the notebook's regex groups (each group is one
+# stored column; DTT/NaCl/HS/TM 1-3 are the primary's repeat experiments, UP/DN the two
+# barcodes of one culture).
+CURATOR_AVERAGED_REPLICATE_COLUMNS: dict[str, tuple[str, ...]] = {
+    # Doostzadeh 2007, kfl131supp.xls: three dated runs per agent (notebook cells 9, 15-16)
+    "17043098": (
+        "z_result_nq:04_10_28_19:mpp+:250:ug/ml::::20:hom_09_02",
+        "z_result_nq:04_10_28_25:mpp+:250:ug/ml::::20:hom_09_02",
+        "z_result_nq:04_11_04_06:mpp+:250:ug/ml::::20:hom_09_02",
+        "z_result_nq:04_10_28_21:paraquat:5000:uM::::20:hom_09_02",
+        "z_result_nq:04_10_28_27:paraquat:5000:uM::::20:hom_09_02",
+        "z_result_nq:04_11_04_08:paraquat:5000:uM::::20:hom_09_02",
+    ),
+    # Berry 2011, pgen.1002353.s009.xlsx 'Hom-Het COMPILATION' (notebook cells 18-19)
+    "22102822": (
+        "Sample1 vs Sample0 Array",
+        "Sample2 vs Sample1 Array",
+        "DTT[0-9] Sample3 vs Sample1 Array",
+        "NaCl[0-9] Sample3 vs Sample1 Array",
+        "HS[0-9] Sample3 vs Sample1 Array",
+        "DTT[0-9] Sample4[A-Z]? vs Sample3 Array",
+        "NaCl[0-9] Sample4[A-Z]? vs Sample3 Array",
+        "HS[0-9] Sample4[A-Z]? vs Sample3 Array",
+        "Sample1 vs Sample0 [(DN)(UP)]",
+        "Sample2 vs Sample1 [(DN)(UP)]",
+        "DTT[0-9] Sample3 vs Sample1 [(DN)(UP)]",
+        "NaCl[0-9] Sample3 vs Sample1 [(DN)(UP)]",
+        "HS[0-9] Sample3 vs Sample1 [(DN)(UP)]",
+        "TM[0-9] Sample3 vs Sample1 [(DN)(UP)]",
+        "DTT[0-9] Sample4[A-Z]? vs Sample3 [(DN)(UP)]",
+        "NaCl[0-9] Sample4[A-Z]? vs Sample3 [(DN)(UP)]",
+        "HS[0-9] Sample4[A-Z]? vs Sample3 [(DN)(UP)]",
+        "TM[0-9] Sample4[A-Z]? vs Sample3 [(DN)(UP)]",
+    ),
+    # Galardini 2019, Table_EV2_ko_scores.txt: S288C S-scores of one gene at 2 or 3
+    # library positions (notebook cell 9, groupby(['condition','gene'])['score'].mean())
+    "31885205": ("score (per library position)",),
+    # Jin 2021, 'original data.xlsx': header row 'replicate 1/2/3' (notebook cells 13-14)
+    "33924665": ("Score", "Score.1", "Score.2"),
+    # Jin 2021, Table S4 (notebook cell 13)
+    "34944020": ("Score1", "Score2", "Score3"),
+    # Cao 2022, Table 1 sheets (notebook cells 6-10)
+    "35495664": ("First screening", "Second screening", "Third screening"),
+}
 
 
 _METHOD_RE = re.compile(r"\((?P<method>[^)]+)\)")

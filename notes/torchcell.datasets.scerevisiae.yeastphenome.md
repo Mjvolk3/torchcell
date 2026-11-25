@@ -108,3 +108,41 @@ on an environment node reached from a second released medium, and 0 L1 duplicate
 `gene_essentiality_sgd`'s `YPD with 2% glucose` carried the same shape and is fixed in the
 same change. Reasoning, the per-token table, the cross-dataset scan and the growth-phase
 measurement: [[experiments.database.scripts.media_name_composition_scan]].
+
+## 2026.11.24 - Per-replicate review: the curation releases one value per screen (#1177, #1178)
+
+Reviewed under the per-replicate policy of #1178 (part of #1177). **No record changes**: the store already holds every value the curation releases, one record per (ORF, growth column) of `<stem>_valuez.txt`, 524,682 in all, and no row id repeats in any of the 47 pinned files (measured, `test_the_release_is_one_value_per_orf_and_growth_column`).
+
+**What the curation releases.** Turco 2023 `paper.md` L301 (sha256 `b666d48f699a69bb2d95ff0d8e5ffe9514fba9127096c0b559bbb6dd9301bf8a`): "All Yeast Phenome data (NPVs and phenotypic similarities) are available for browsing, searching, and downloading at www.yeastphenome.org. The original phenotypic values, along with Python code for data extraction and processing, are available at https://github.com/yeastphenome/yp-data". SI note S3 (`si/si1.pdf`, sha256 `12258e5763b61419c1991274a078a6b33e3fbf29da90491b1da11cc06ac8585b`) describes the `raw_data/` folders: "The unprocessed input data and processing code for each publication reporting heterozygous screens are provided in the yp-data Github repository". So yp-data holds three layers per screen: the primary's own table (`raw_data/`), the curator's per-ORF value (`<stem>_value.txt`) and its NPV (`<stem>_valuez.txt`). The curation's own product is one value per (ORF, screen); it has no replicate level.
+
+**Where the curation averages.** Each screen's notebook `Datasets/<pmid>/code.ipynb` (at `83e2917b`, the copies in the sweep scratch re-hashed against GitHub for two of them) merges before the NPV transform:
+
+- a row-wise mean over replicate columns of the primary table in six retained screens (`CURATOR_AVERAGED_REPLICATE_COLUMNS` in the loader). The ledger listed five; Galardini 2019 is the sixth (`groupby(['condition','gene'])['score'].mean()` over the library positions of one gene).
+- `groupby(original_data.index).mean()` over repeated ids after alias translation, in every screen. The notebooks' own recorded outputs show the size of it, e.g. Frohlich 2015 6,902 primary rows to 3,996 ORFs, Khozoie 2009 and Islahudin 2013 5,664 to 4,394 to 4,251, Bowie 2013 6,144 to 4,765. Which of these rows are repeat strains and which are blank or control rows is not measured.
+
+The NPV is `z_transform_mode` of `Utils/yp_utils.py` at the pin (sha256 `d8d8a813f257074cd77617ed51837695d5f9f322b745f0e5b187924382d20a98`): `(x - m) / sqrt(nanmean((x - m)**2))`, `m` the Gaussian KDE mode with bandwidth 0.25, applied to the merged value. No per-replicate NPV exists anywhere in the release.
+
+**Measured on the six screens** (primary tables fetched from the pin; scripts `reproduce.py`, `berry.py`, `galardini.py` in the session scratchpad `yp/`). Stored records against the released per-column values over the same stored columns, and whether the curator mean over those columns reproduces yp-data's own `value.txt`:
+
+| PMID | screen | stored records | released per-column values | what a column is (primary label) | mean reproduces `value.txt` |
+|---|---|---|---|---|---|
+| 17043098 | Doostzadeh 2007 | 9,388 | 28,608 (3 x 4,768 x 2 agents) | dated runs `z_result_nq:04_10_28_19`, `04_10_28_25`, `04_11_04_06` (MPP+); paraquat likewise | exact for 4,646 of 4,671 ORFs per agent |
+| 22102822 | Berry 2011 | 48,014 | 269,527 cells | 2 to 8 experiment series per column (`DTT1/2`, `NaCl1-3`, `HS1-3`, `TM1/2`); barseq columns also split `UP`/`DN` barcodes of one culture | exact for all but 23 to 25 ORFs per column |
+| 31885205 | Galardini 2019 | 179,477 | 202,186 S288C non-WT rows | one S-score per library position; 20,504 (condition, gene) groups hold 2 or 3 positions (41,312 rows) | 177,505 of 178,544 cells exact |
+| 33924665 | Jin 2021 | 4,061 | 12,380 | header row `replicate 1` / `replicate 2` / `replicate 3` | exact for 4,022 of 4,045 ORFs |
+| 34944020 | Jin 2021 | 4,060 | 12,343 | `Score1` / `Score2` / `Score3` | exact for 4,021 of 4,044 ORFs |
+| 35495664 | Cao 2022 | 4,057 | 12,358 | sheets `First screening` / `Second screening` / `Third screening` | exact for 4,018 of 4,041 ORFs |
+
+The ORFs that differ are ones the notebook's alias translation merges with a second released id; verified for one pair (Jin Table S4: the mean of YBR098W and YBR100W equals the `value.txt` entry of YBR098W), the rest attributed to the same step, unverified. Biological versus technical for these columns is unverified: no primary paper of the six is in the literature mirror. Each SGA "Score" (Jin, Cao) carries its own `Score stdev`, so each is itself a summary over colonies of one screen. In Cao 2022 the `First` and `Third screening` sheets have identical EXPERIMENT colony sizes in 50.0 % of rows (same row order), unexplained.
+
+**Why nothing is converted.** The replicate values exist only in the primary tables yp-data re-hosts, in each primary's own units (pool z-scores, log2 array ratios, SGA scores, S-scores), and the curation's normalization is applied to their mean. Storing them is an ingestion of each primary paper with its own loader and measurement type, not a record of this curation, so the curated aggregate stays as released (policy 8 of #1178). The six primaries are the candidates if the owner wants that: Doostzadeh 2007, Berry 2011, Galardini 2019, Jin 2021 (two), Cao 2022. Galardini 2019 also releases 19,369 S288C wild-type position rows that the curation drops as a non-ORF id.
+
+**Other findings, not fixed.**
+
+- The stored `units` string and `CURATION.method` say the exact formula is "deferred to Turco2023 note S4". Note S4 is the list of analysis datasets; the formula is the code above. The string is left as is because changing it rewrites every record; the module docstring now says so.
+- The loader has no raw mirror under `$DATA_ROOT/torchcell-raw/turcoGlobalAnalysisYeast2023/`; the 47 consumed `valuez` files live only in the dev build's `raw/` (sha256-pinned in `SCREENS`).
+- Three `--data` tests in `test_yeastphenome.py` were stale and are fixed: the medium is now the verbatim token `YPD + EtOH` (lane X), the near-replicate test indexed the perturbation of a `standard` column, and the off-pin test read the session-narrowed `SCREENS`.
+
+**Fetched for evidence only, not mirrored** (no loader consumes them): `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-yeastphenome/fetched_yp_data_83e2917b/`, 14 files from `https://raw.githubusercontent.com/yeastphenome/yp-data/83e2917bf86955ec6ba66dc70ff2ed0fe24ecbe8/`, each with `source_url`, `retrieval_method=direct_url`, `retrieval_command`, `sha256`, `retrieved_at` in `retrieval.json`.
+
+**Scratch build** of the unchanged loader: `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-yeastphenome/yeastphenome`, 524,682 records.

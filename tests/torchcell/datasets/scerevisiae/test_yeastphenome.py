@@ -166,7 +166,9 @@ def test_condition_and_media(dataset):
     env = _find(dataset, "19416971", "quinine")["experiment"]["environment"]
     assert env["perturbations"][0]["compound"]["name"] == "quinine"
     assert env["perturbations"][0]["concentration"]["value"] == 2.0
-    assert env["media"]["name"] == "YPD"
+    # the medium token is stored verbatim since lane X (2026.10.15); the vehicle is a
+    # typed component, not a truncated name
+    assert env["media"]["name"] == "YPD + EtOH"
 
 
 @pytest.mark.data
@@ -202,6 +204,8 @@ def test_near_replicate_screens_are_distinct_records(dataset):
         exp = dataset[i]["experiment"]
         if dataset[i]["publication"]["pubmed_id"] != "22102822":
             continue
+        if not exp["environment"]["perturbations"]:
+            continue  # the 'standard' columns carry no environmental edit
         p = exp["environment"]["perturbations"][0]
         gene = exp["genotype"]["perturbations"][0]["systematic_gene_name"]
         if (
@@ -385,6 +389,8 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     ``RawSha256MismatchError`` naming it and both digests; no store is written.
     """
     monkeypatch.delenv("TC_DATA_URL", raising=False)
+    # the --data module fixture narrows SCREENS for the session; pin the shipped list
+    monkeypatch.setattr(yp_mod, "SCREENS", _SHIPPED_SCREENS)
     staged = off_pin_raw(yp_mod, [_raw_name(s) for s in yp_mod.SCREENS])
     raw = staged.root / "raw" / _raw_name(yp_mod.SCREENS[0])
     with pytest.raises(RawSha256MismatchError) as err:
@@ -464,3 +470,68 @@ def test_main_builds_under_data_root_and_prints_the_first_item(
     yp_mod.main()
     assert calls == [{"root": f"{tmp_path}/data/torchcell/yeastphenome"}]
     assert capsys.readouterr().out == "len = 5\nitem[0]\n"
+
+
+def test_curator_averaged_screens_are_six_shipped_screens() -> None:
+    """#1177 per-replicate review: the six screens whose yp-data notebook averages
+    replicate columns before the NPV transform are all shipped screens, and each names
+    the averaged labels (Berry 2011 by the notebook's 18 regex groups, one per column).
+    """
+    averaged = yp_mod.CURATOR_AVERAGED_REPLICATE_COLUMNS
+    assert sorted(averaged) == [
+        "17043098",
+        "22102822",
+        "31885205",
+        "33924665",
+        "34944020",
+        "35495664",
+    ]
+    assert set(averaged) <= {s["pmid"] for s in _SHIPPED_SCREENS}
+    assert len(averaged["22102822"]) == 18
+    assert {len(averaged[p]) for p in ("33924665", "34944020", "35495664")} == {3}
+    assert len(averaged["17043098"]) == 6
+
+
+def _stored_cells(screen: dict[str, str]) -> tuple[int, int]:
+    """(cells the loader stores, repeated row ids) for one pinned ``valuez`` file."""
+    path = osp.join(_RAW_MIRROR, _raw_name(screen))
+    lines = Path(path).read_text(encoding="utf-8", errors="replace").splitlines()
+    header = lines[0].split("\t")
+    rows = [line.split("\t") for line in lines[1:] if line.strip()]
+    ids = [cells[0].strip() for cells in rows]
+    stored = 0
+    for col in range(1, len(header)):
+        meta = yp_mod._column_meta(header[col]) if header[col].strip() else None
+        if meta is None or "growth" not in (meta["phenotype"] or "").lower():
+            continue
+        if yp_mod._parse_conditions(meta["condition"] or "").unrepresentable:
+            continue
+        stored += sum(1 for cells in rows if col < len(cells) and cells[col].strip())
+    return stored, len(ids) - len(set(ids))
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not all(osp.exists(osp.join(_RAW_MIRROR, _raw_name(s))) for s in _SHIPPED_SCREENS),
+    reason="requires the 47 pinned YeastPhenome valuez files",
+)
+def test_the_release_is_one_value_per_orf_and_growth_column() -> None:
+    """#1177 per-replicate review, measured on the 47 pinned files.
+
+    The curation releases one NPV per (ORF, column) and no replicate level: no row id
+    repeats in any file, and the loader stores every cell of every representable growth
+    column, 524,682 in all. The six curator-averaged screens hold 249,057 of them; their
+    per-column values are the primaries' own release (yp-data ``raw_data/``), not stored.
+    """
+    counts = {s["pmid"]: _stored_cells(s) for s in _SHIPPED_SCREENS}
+    assert sum(repeated for _, repeated in counts.values()) == 0
+    assert sum(stored for stored, _ in counts.values()) == 524682
+    averaged = {p: counts[p][0] for p in yp_mod.CURATOR_AVERAGED_REPLICATE_COLUMNS}
+    assert averaged == {
+        "17043098": 9388,
+        "22102822": 48014,
+        "31885205": 179477,
+        "33924665": 4061,
+        "34944020": 4060,
+        "35495664": 4057,
+    }

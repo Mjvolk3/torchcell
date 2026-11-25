@@ -347,7 +347,8 @@ def test_smf_ts_allele_record_at_26c_matches_the_source_row(
     """Record 0 is ``YAL001C_tsa1`` at 26 C: fitness 0.85, bootstrap SE 0.02 used as-is.
 
     ``fitness_se == fitness_std == 0.02`` (bootstrap_se is never divided by sqrt n),
-    ``n_samples`` is the 17 control screens, and the reference is fitness 1.0 with the
+    ``n_samples`` is the 350 array control screens (an array strain with no query twin,
+    #1203), and the reference is fitness 1.0 with the
     26 C mean stddev 0.025 typed the same way. The whole experiment, reference, and
     publication are compared by ``model_dump`` equality.
     """
@@ -356,7 +357,7 @@ def test_smf_ts_allele_record_at_26c_matches_the_source_row(
         fitness_std=0.02,
         fitness_uncertainty=0.02,
         fitness_uncertainty_type=UncertaintyType.bootstrap_se,
-        n_samples=17,
+        n_samples=350,
         sample_unit=SampleUnit.screen,
     )
     expected = FitnessExperiment(
@@ -392,6 +393,7 @@ def test_smf_ts_allele_record_at_26c_matches_the_source_row(
     assert record["reference"] == expected_reference.model_dump()
     assert record["publication"] == _PUBLICATION.model_dump()
     assert c.N_SAMPLES_QUERY_SMF_SCREENS == 17
+    assert c.N_SAMPLES_ARRAY_SMF_SCREENS == 350
 
 
 @pytest.mark.parametrize(
@@ -445,7 +447,7 @@ def test_smf_reference_std_is_the_mean_stddev_of_each_temperature(
     assert ref_30["fitness_se"] == ref_30["fitness_std"]
     df = smf.df
     assert df is not None
-    assert df.shape == (9, 7)
+    assert df.shape == (9, 8)
     assert df.columns.tolist() == [
         "Strain ID",
         "Systematic gene name",
@@ -453,6 +455,7 @@ def test_smf_reference_std_is_the_mean_stddev_of_each_temperature(
         "Single mutant fitness",
         "Single mutant fitness stddev",
         "perturbation_type",
+        "array_only_estimate",
         "Temperature",
     ]
     std_26, std_30 = c.SmfCostanzo2016Dataset.compute_phenotype_reference_std(df)
@@ -913,7 +916,7 @@ def smf_twins(tmp_path_factory: pytest.TempPathFactory) -> c.SmfCostanzo2016Data
 
 
 def _smf_experiment(
-    perturbation: Any, temperature: int, fitness: float, std: float
+    perturbation: Any, temperature: int, fitness: float, std: float, n_samples: int
 ) -> FitnessExperiment:
     return FitnessExperiment(
         dataset_name="SmfCostanzo2016Dataset",
@@ -924,7 +927,7 @@ def _smf_experiment(
             fitness_std=std,
             fitness_uncertainty=std,
             fitness_uncertainty_type=UncertaintyType.bootstrap_se,
-            n_samples=17,
+            n_samples=n_samples,
             sample_unit=SampleUnit.screen,
         ),
     )
@@ -966,11 +969,11 @@ def test_smf_deletion_strain_is_emitted_as_26c_and_30c_twins_issue_410(
     """
     assert (
         smf_twins[0]["experiment"]
-        == _smf_experiment(_dma1(), 26, 0.95, 0.01).model_dump()
+        == _smf_experiment(_dma1(), 26, 0.95, 0.01, 350).model_dump()
     )
     assert (
         smf_twins[3]["experiment"]
-        == _smf_experiment(_dma1(), 30, 0.95, 0.01).model_dump()
+        == _smf_experiment(_dma1(), 30, 0.95, 0.01, 350).model_dump()
     )
     assert smf_twins[0]["reference"] == _smf_reference(26, 0.02).model_dump()
     assert smf_twins[3]["reference"] == _smf_reference(30, 0.0225).model_dump()
@@ -992,10 +995,12 @@ def test_smf_damp_twins_and_the_genuine_ts_pair(
         strain_id="YAL005C_damp1",
     )
     assert (
-        smf_twins[1]["experiment"] == _smf_experiment(damp, 26, 0.80, 0.03).model_dump()
+        smf_twins[1]["experiment"]
+        == _smf_experiment(damp, 26, 0.80, 0.03, 17).model_dump()
     )
     assert (
-        smf_twins[4]["experiment"] == _smf_experiment(damp, 30, 0.80, 0.03).model_dump()
+        smf_twins[4]["experiment"]
+        == _smf_experiment(damp, 30, 0.80, 0.03, 17).model_dump()
     )
     fitness = [
         (
@@ -1053,6 +1058,7 @@ def test_smf_temperature_other_than_26_or_30_is_refused_by_name() -> None:
             "Single mutant fitness": 0.95,
             "Single mutant fitness stddev": 0.01,
             "perturbation_type": "KanMX_deletion",
+            "array_only_estimate": True,
             "Temperature": 22,
         }
     )
@@ -1494,3 +1500,130 @@ def test_main_builds_the_seven_datasets_under_data_root(
         *["7", "DmfCostanzo2016Dataset[0]"] * 3,
         *["7", "DmiCostanzo2016Dataset[0]"] * 3,
     ]
+
+
+# --------------------------------------------------------------------------- #
+# 2026.11.24 (#1203 item 3): n_samples follows the collection of the estimate
+# --------------------------------------------------------------------------- #
+_SMF_COLLECTION_ROWS: list[tuple[Any, ...]] = [
+    # array/query twins of one deletion: one combined mean on both strains
+    ("YAL002W_dma1", "YAL002W", "VPS8", 0.95, 0.01, 0.95, 0.01),
+    ("YAL002W_sn1", "YAL002W", "VPS8", 0.95, 0.01, 0.95, 0.01),
+    # array/query pair of one deletion with separate estimates retained
+    ("YAL004W_dma2", "YAL004W", "YAL004W", 0.90, 0.02, 0.90, 0.02),
+    ("YAL004W_sn2", "YAL004W", "YAL004W", 0.80, 0.03, 0.80, 0.03),
+    # TS twins whose allele names differ by a -supp tag, paired by gene and value
+    ("YAL001C_tsa1", "YAL001C", "tfc3-1", 0.85, 0.02, 0.60, 0.04),
+    ("YAL001C_tsq1", "YAL001C", "tfc3-1-supp1", 0.85, 0.02, 0.60, 0.04),
+    # array strain alone, query strain alone, DAmP query strain
+    ("YAL005C_tsa2", "YAL005C", "ssa1-1", 0.70, 0.05, 0.50, 0.06),
+    ("YAL007C_sn3", "YAL007C", "ERP2", 0.99, 0.01, 0.99, 0.01),
+    ("YAL008W_damp1", "YAL008W", "fun14-damp", 0.75, 0.04, 0.75, 0.04),
+]
+
+
+def test_smf_n_samples_is_350_only_for_an_array_only_estimate() -> None:
+    """``array_only_estimate`` is True for an array strain (``dma``, ``tsa``) unless a
+    query strain of the same gene carries the identical four released cells (the mean
+    the SI assigns to both strains, si1.md line 96). The twins ``_dma1``/``_sn1`` and
+    ``_tsa1``/``_tsq1`` (allele names differ) are not array-only; ``_dma2`` (its
+    ``_sn2`` partner differs) and ``_tsa2`` (no partner) are. Records then carry 350
+    screens for array-only estimates and 17 for every other record, at both
+    temperatures.
+    """
+    frame = pd.DataFrame(_SMF_COLLECTION_ROWS, columns=_SMF_COLUMNS)
+    flags = c._smf_estimate_is_array_only(frame)
+    assert flags.tolist() == [
+        False,
+        False,
+        True,
+        False,
+        False,
+        False,
+        True,
+        False,
+        False,
+    ]
+    loader = c.SmfCostanzo2016Dataset.__new__(c.SmfCostanzo2016Dataset)
+    cleaned = loader.preprocess_raw(frame)
+    n_by_strain = {
+        (
+            row["Strain ID"],
+            row["Temperature"],
+        ): c.SmfCostanzo2016Dataset.create_experiment("x", row, 0.02, 0.03)[
+            0
+        ].phenotype.n_samples
+        for _, row in cleaned.iterrows()
+    }
+    expected = {
+        "YAL002W_dma1": 17,
+        "YAL002W_sn1": 17,
+        "YAL004W_dma2": 350,
+        "YAL004W_sn2": 17,
+        "YAL001C_tsa1": 17,
+        "YAL001C_tsq1": 17,
+        "YAL005C_tsa2": 350,
+        "YAL007C_sn3": 17,
+        "YAL008W_damp1": 17,
+    }
+    assert n_by_strain == {
+        (strain, temperature): n
+        for strain, n in expected.items()
+        for temperature in (26, 30)
+    }
+
+
+_RELEASED_SMF_XLSX = Path(
+    os.environ.get("DATA_ROOT", "/nonexistent"),
+    "data",
+    "torchcell",
+    "smf_costanzo2016",
+    "raw",
+    "strain_ids_and_single_mutant_fitness.xlsx",
+)
+_RELEASED_SMF_SHA256 = (
+    "3b9d3351cdde8ee90832797193a1e8838be3ce6778b3761a9e57db2d3a6a9ccc"
+)
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not _RELEASED_SMF_XLSX.exists(),
+    reason=f"requires the released SMF spreadsheet at {_RELEASED_SMF_XLSX}",
+)
+def test_the_released_smf_spreadsheet_gives_20484_records_and_1893_array_only() -> None:
+    """The pinned release (sha256 3b9d3351...) has 10,859 strain rows and 20,484
+    (strain, temperature) cells with a fitness and a stddev, each its own record and
+    each (strain, temperature) once. The release is aggregate-only, so no record count
+    changes in the per-replicate review. 3,114 _dma/_sn and 616 _tsa/_tsq strain pairs
+    share one combined value; the 779 _dma and 176 _tsa strains left are array-only
+    estimates, 1,893 records at 350 screens (1,541 + 352); every other record is at 17.
+    8,454 deletion and DAmP strains repeat one temperature-combined value in both
+    temperature columns (#410, open).
+    """
+    import hashlib
+
+    assert hashlib.sha256(_RELEASED_SMF_XLSX.read_bytes()).hexdigest() == (
+        _RELEASED_SMF_SHA256
+    )
+    raw = pd.read_excel(_RELEASED_SMF_XLSX)
+    assert raw.shape == (10859, 7)
+    suffix = (
+        raw["Strain ID"].str.split("_", expand=True)[1].str.extract(r"^([A-Za-z]+)")[0]
+    )
+    flags = c._smf_estimate_is_array_only(raw)
+    assert suffix[flags].value_counts().to_dict() == {"dma": 779, "tsa": 176}
+    assert (suffix.isin(["dma", "tsa"]) & ~flags).sum() == 3114 + 616
+    loader = c.SmfCostanzo2016Dataset.__new__(c.SmfCostanzo2016Dataset)
+    cleaned = loader.preprocess_raw(raw)
+    assert len(cleaned) == 20484
+    assert not cleaned.duplicated(["Strain ID", "Temperature"]).any()
+    assert int(cleaned["array_only_estimate"].sum()) == 1893
+    a, b = c.SMF_RELEASED_COLUMNS[0], c.SMF_RELEASED_COLUMNS[2]
+    sa, sb = c.SMF_RELEASED_COLUMNS[1], c.SMF_RELEASED_COLUMNS[3]
+    repeated = raw[a].notna() & (raw[a] == raw[b]) & (raw[sa] == raw[sb])
+    assert suffix[repeated].value_counts().to_dict() == {
+        "sn": 3845,
+        "dma": 3876,
+        "damp": 733,
+    }

@@ -2918,7 +2918,10 @@ FITNESS_DATASETS: dict[str, dict[str, Any]] = {
             method=(
                 "one record per (strain, temperature) cell of the single-mutant fitness "
                 "spreadsheet with a stated fitness and stddev at 26 or 30 C; uncertainty "
-                "= the released stddev as a bootstrap SE"
+                "= the released stddev as a bootstrap SE; aggregate-only release (the "
+                "authors' mean over control screens); n_samples = 350 screens for an "
+                "array strain whose estimate is the array collection's alone, 17 for "
+                "every other record (si1.md line 94, #1203)"
             ),
             page="Science 353:aaf1420, Data File S1 (strain ids and single mutant fitness)",
         ),

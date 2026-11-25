@@ -85,9 +85,48 @@ N_SAMPLES_QUERY_SMF_SCREENS = 17
 # Verified: SI-costanzoGlobalGeneticInteraction2016.pdf, Page 5,
 #           Section "Single mutant fitness standard"
 # Date extracted: 2026-01-20
-# Array-strain SMF uses 350 control screens (kept for provenance; the simplified
-# loader records the query-strain screen count for SMF).
+# 2026.11.24 (#1203 item 3): the loader used to stamp 17 on every SMF record. A
+# record's n_samples now follows the collection its released estimate came from
+# (see ``_smf_estimate_is_array_only``): 350 for an array strain (_dma, _tsa) whose
+# estimate is the array collection's alone, 17 for every other record.
 N_SAMPLES_ARRAY_SMF_SCREENS = 350
+
+# How the released SMF value of a strain was combined, verbatim (si1.md line 96,
+# sha256 1828703b0ff739fdf1c0d9232fe4fd81a3ce95a1b111780f55ef63bfa676880e):
+#   "we treated the fitness of most single mutant array and query strains for the
+#    same mutant as independent estimates and assigned the mean of the two estimates
+#    to each strain; a small number (~55) of query and array strains for the same
+#    mutant exhibited notably different colony sizes and thus separate fitness
+#    estimates were retained for these mutants."
+# The release shows the mean as an array strain and a query strain of one gene that
+# carry byte-identical values in all four SMF cells: 3,113 _dma/_sn pairs and 616
+# _tsa/_tsq pairs (strain_ids_and_single_mutant_fitness.xlsx, sha256
+# 3b9d3351cdde8ee90832797193a1e8838be3ce6778b3761a9e57db2d3a6a9ccc), while 12 _dma/_sn
+# and 45 _tsa/_tsq pairs of the same allele differ, the "~55" retained separately.
+# n_samples for each record, and why:
+# - array strain, no identical query twin: 350 (the array count above).
+# - query strain (_sn, _tsq), no identical array twin: 17 (the query count above).
+# - array/query twins (the mean of the two estimates): 17 on both strains. The source
+#   states no single count for a mean of an array estimate and a query estimate, and
+#   the conservative lower end (the query count) never overstates precision
+#   (CLAUDE.md range rule). Flagged for review.
+# - DAmP (_damp): 17. DAmP strains are query strains (si1.md line 76: "a set of query
+#   mutants carrying hypomorphic, Decreased Abundance by mRNA Perturbation (labeled
+#   _DAmP#) alleles"), but the SI's query count names "SGA deletion and TS query
+#   mutant strains" only, so 17 is a representative, not a sourced value. Flagged.
+# - TS strains are "computed separately at either 26 or 30" (line 96), while the
+#   350 / 17 screens were "performed at 26°C or 30°C"; how many of them a single
+#   temperature's TS estimate uses is not released, so 350 / 17 there is the SI's
+#   collection count, not a per-temperature count. Flagged.
+# n_samples is provenance only here: the stddev is a bootstrap SE used as-is.
+SMF_ARRAY_SUFFIXES = ("dma", "tsa")
+SMF_QUERY_SUFFIXES = ("sn", "tsq")
+SMF_RELEASED_COLUMNS = (
+    "Single mutant fitness (26°)",
+    "Single mutant fitness (26°) stddev",
+    "Single mutant fitness (30°)",
+    "Single mutant fitness (30°) stddev",
+)
 
 # Temperature-specific measurements (all use 4 technical replicates per screen)
 # Quote: "Double mutant selection plates involving a nonessential deletion
@@ -120,6 +159,32 @@ class BlankDoubleMutantFitnessError(ValueError):
     """
 
 
+def _smf_estimate_is_array_only(df: pd.DataFrame) -> pd.Series:
+    """Mark the SMF strains whose released estimate is the array collection's alone.
+
+    True for an array strain (suffix ``dma`` or ``tsa``) unless a query strain (suffix
+    ``sn`` or ``tsq``) of the same systematic gene carries byte-identical values in all
+    four released SMF cells, which is how the release shows the mean the authors
+    assigned to both strains (see the comment above ``SMF_ARRAY_SUFFIXES``). A blank
+    cell matches only a blank cell. Pairing is by gene and value, not allele name,
+    because four twins carry a ``-supp`` allele name on one side only
+    (``orm2-supp1`` / ``orm2``).
+    """
+    suffix_class = (
+        df["Strain ID"].str.split("_", expand=True)[1].str.extract(r"^([A-Za-z]+)")[0]
+    )
+    released = (
+        df[list(SMF_RELEASED_COLUMNS)]
+        .astype(object)
+        .where(df[list(SMF_RELEASED_COLUMNS)].notna(), "blank")
+    )
+    cells = released.astype(str).agg("|".join, axis=1)
+    keys = df["Systematic gene name"].astype(str) + "#" + cells
+    query_keys = set(keys[suffix_class.isin(SMF_QUERY_SUFFIXES)])
+    is_array = suffix_class.isin(SMF_ARRAY_SUFFIXES)
+    return is_array & ~keys.isin(query_keys)
+
+
 def _reference_std_at(temperature: Any, std_26: Any, std_30: Any, strain: str) -> Any:
     """Return the reference noise for ``temperature``, refusing any but 26 and 30 C."""
     if temperature == 26:
@@ -136,7 +201,21 @@ def _reference_std_at(temperature: Any, std_26: Any, std_30: Any, strain: str) -
 # Fitness
 @register_dataset
 class SmfCostanzo2016Dataset(ExperimentDataset):
-    """Single-mutant fitness dataset from Costanzo et al. 2016."""
+    """Single-mutant fitness dataset from Costanzo et al. 2016.
+
+    The release is aggregate-only: each SMF cell is the authors' bootstrapped mean over
+    replicate control screens (si1.md line 94, "based on an average of 350 replicate
+    control screens" for array strains and "17 replicate control screens" for query
+    strains), and no per-screen value is released. One record per (strain,
+    temperature) cell with a stated fitness and stddev: 20,484 records from 10,859
+    strain rows (2026.11.24 per-replicate review, #1178; no record count changes).
+
+    Open (#410, owner decision): for deletion and DAmP strains the 26 C and 30 C cells
+    carry one temperature-combined value (si1.md line 96, "we combined measurements
+    from different temperatures in the average for each deletion mutant"), so 8,454
+    strains yield a 26 C and a 30 C record with the same value. The loader still
+    emits both until the owner decides how a temperature-combined estimate is stated.
+    """
 
     organism = Organism.scerevisiae
 
@@ -255,6 +334,10 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
             )
         )
 
+        # #1203 item 3: which collection the released estimate came from decides the
+        # record's n_samples (350 array screens or 17 query screens).
+        df["array_only_estimate"] = _smf_estimate_is_array_only(df)
+
         # Create separate dataframes for the two temperatures
         df_26 = df[
             [
@@ -264,6 +347,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
                 "Single mutant fitness (26°)",
                 "Single mutant fitness (26°) stddev",
                 "perturbation_type",
+                "array_only_estimate",
             ]
         ].copy()
         df_26["Temperature"] = 26
@@ -276,6 +360,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
                 "Single mutant fitness (30°)",
                 "Single mutant fitness (30°) stddev",
                 "perturbation_type",
+                "array_only_estimate",
             ]
         ].copy()
         df_30["Temperature"] = 30
@@ -394,8 +479,9 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         # estimate (SOM: "bootstrapped means ... used in variance estimation and
         # final fitness values"), so it is already an SE -> used AS-IS, never
         # divided by sqrt(n). The bootstrap resampling unit is the control screen
-        # (17 for query strains); the 4 colonies per screen are averaged before
-        # resampling, so n is screens, not the 68 colony measurements. fitness_se
+        # (350 for an array-only estimate, 17 for every other record, see the
+        # comment above SMF_ARRAY_SUFFIXES); the 4 colonies per screen are averaged
+        # before resampling, so n is screens, not colony measurements. fitness_se
         # is auto-derived from (uncertainty, type). See
         # [[torchcell.datasets.scerevisiae.costanzo2016.noise-computation]].
         fitness_std_val = row[smf_std_key]
@@ -408,7 +494,11 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
             fitness_std=fitness_std_val,
             fitness_uncertainty=fitness_std_val,
             fitness_uncertainty_type=smf_unc_type,
-            n_samples=N_SAMPLES_QUERY_SMF_SCREENS,
+            n_samples=(
+                N_SAMPLES_ARRAY_SMF_SCREENS
+                if bool(row["array_only_estimate"])
+                else N_SAMPLES_QUERY_SMF_SCREENS
+            ),
             sample_unit=SampleUnit.screen,
         )
 

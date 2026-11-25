@@ -244,7 +244,7 @@ GENOME_REFERENCE_NAME_VOCABULARY: Final[tuple[str, ...]] = (
 #:
 #: - ``both_screens_are_balanced_and_strain_pinned`` (Cui 2018), ``table_s1_call_histogram_is_pinned``
 #:   (Gerdes 2003), ``per_medium_key_counts_are_the_pinned_ones`` (Li 2014),
-#:   ``per_condition_censored_and_interval_key_counts_are_the_pinned_ones`` (Gupta 2024),
+#:   ``per_replicate_censored_and_interval_key_counts_are_the_pinned_ones`` (Gupta 2024),
 #:   ``quantified_sites_per_sample_are_the_pinned_ones`` (Potel 2018): "pinned" here is a
 #:   count or a key set this repo pinned from the released file, not an assembly pin.
 #: - ``released_annotations`` (SGD essentiality): the annotations are the SOURCE's, and
@@ -260,7 +260,7 @@ DATA_FIDELITY_RULES_NAMED_LIKE_GENOME_RULES: Final[frozenset[str]] = frozenset(
     {
         "both_screens_are_balanced_and_strain_pinned",
         "fitness_companion_containment",
-        "per_condition_censored_and_interval_key_counts_are_the_pinned_ones",
+        "per_replicate_censored_and_interval_key_counts_are_the_pinned_ones",
         "per_medium_key_counts_are_the_pinned_ones",
         "quantified_sites_per_sample_are_the_pinned_ones",
         "released_annotations",

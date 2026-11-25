@@ -8,8 +8,27 @@ Gupta et al. 2024 (Nat Commun 15:5890, doi:10.1038/s41467-024-49920-8) switched 
 of a steady-state culture from light to 15N ammonium and followed the shift of the
 monoisotopic peak with TMTproC complement-reporter proteomics, fitting one turnover
 parameter per protein in each of 13 growth conditions. This module is the first consumer
-of ``ProteinTurnoverPhenotype``: one ``ProteinTurnoverExperiment`` per condition, keyed
-on MG1655 b-numbers.
+of ``ProteinTurnoverPhenotype``: one ``ProteinTurnoverExperiment`` per released
+BIOLOGICAL REPLICATE of each condition (26 records), keyed on MG1655 b-numbers.
+
+ONE RECORD PER BIOLOGICAL REPLICATE (#1174, #1178). The paper measured "13 different
+growth conditions, each with two biological replicates" (Results), and the Reporting
+Summary says what a replicate is: "Replication A in duplicates. These are biological
+replicates measures months apart." Supplementary Data 1 releases each replicate as its
+own column (``Half-life (hrs) in <condition>, replicate 1`` / ``..., replicate 2``) beside
+the authors' ``Average of half-lives (hrs) in <condition>``, so every replicate column is
+one record: ``replicate_id`` is the number the header prints (``"1"`` or ``"2"``), every
+``n_replicates`` value is 1, and ``degradation_rate_se`` is ``None`` with a typed
+``not_applicable_single_measurement`` gap. A replicate's number is ONE chemostat (or batch)
+time course: eight TMTpro-multiplexed time points and every quantified peptide are fitted
+together into one half-life, so the technical level (time points, peptides) is combined
+inside the record by the authors' own fit, which is what makes the value valid at all.
+The Reporting Summary states "No data was excluded from analyses.", so no replicate cell
+is withdrawn and none is dropped. The authors' mean is no longer a record: grouping the
+26 records by condition and averaging ``half_life`` reproduces it (the build asserts the
+mean column equals the replicate mean for every key), and it survives as the
+``phenotype_reference`` summary, the N-lim 6 h wild-type aggregate with
+``replicate_id=None``.
 
 WHAT THE SOURCE RELEASES, AND WHAT THE RECORD STORES. The released per-protein number is
 a TOTAL HALF-LIFE in hours, not a rate: Supplementary Data 1 is "Half-lives for 3262
@@ -18,8 +37,10 @@ turnover rate: the Supplementary Note fits "a free parameter $\\mathsf { k } _ {
 { D } } + \\mathsf { D } )$" and states the identity "Since $\\mathsf { k } _ { \\mathsf {
 t o t a l } } = \\ln 2 / \\mathrm { T } _ { 1 / 2 }$". So:
 
-- ``half_life`` holds the released "Average of half-lives (hrs)" cell VERBATIM, in hours.
-  That column is the one this loader consumes.
+- ``half_life`` holds the released replicate cell VERBATIM, in hours (the trailing ``*``
+  ceiling flag stripped into ``censoring``). The two replicate columns of each condition
+  are what this loader consumes; the "Average of half-lives (hrs)" column is read as the
+  oracle and for the reference.
 - ``degradation_rate`` is ``ln(2) / half_life``, per hour: an exact algebraic transform
   of the consumed cell through the Note's own identity, so the record is internally
   consistent (``degradation_rate == ln 2 / half_life`` for every key).
@@ -35,7 +56,9 @@ release is full of (that is what a stable protein looks like), and
 ``ProteinTurnoverPhenotype`` requires a non-negative rate. Clipping it at zero would
 manufacture a value the fit did not give.
 
-THE STANDARD ERROR IS THE PAPER'S OWN REPLICATE FORMULA. The Note's active-degradation
+THE REFERENCE'S STANDARD ERROR IS THE PAPER'S OWN REPLICATE FORMULA. (Since the
+per-replicate conversion this statistic lives only on the ``phenotype_reference``
+aggregate; a replicate record has none.) The Note's active-degradation
 test uses "$\\mathsf { t } = ( \\bar { \\mathsf { x } } - 6 ) / \\sqrt { \\frac { \\sigma
 ^ { 2 } } { 2 } }$ where $\\bar { \\mathsf X }$ is the sample mean and $\\sigma ^ { 2 }$
 is the sample variance calculated using the two replicates", i.e. sd / sqrt(n) with
@@ -58,11 +81,12 @@ The flag now travels on the record. ``censoring`` carries a ``Censoring`` for EV
 stored key of every record, which the source's own oracle makes honest: Supplementary
 Data 1's ``*`` and Supplementary Data 7's ``Undetermined`` agree on all 61,811 released
 cells (0 disagreements, asserted at build time), so the release resolves the question for
-every cell and absence would be the wrong answer rather than a cheaper one. A key is
-``right`` when ANY of its replicate cells is ceiling-flagged, because the authors' mean
-then has a capped value in it and the true mean half-life lies above the stored one;
-1,989 of the 33,187 stored keys are ``right`` (93 of them with both replicates capped)
-and the other 31,198 are ``uncensored``. The side is stated on the RELEASED quantity, the
+every cell and absence would be the wrong answer rather than a cheaper one. In a
+replicate record a key is ``right`` exactly when ITS cell is ceiling-flagged: 2,082 of
+the 61,787 stored replicate keys are ``right`` and 59,705 are ``uncensored``. (On the
+aggregate reference a key is ``right`` when ANY of its replicate cells is capped, because
+the authors' mean then has a capped value in it; over the 13 condition means that was
+1,989 of 33,187 keys, 93 of them with both replicates capped.) The side is stated on the RELEASED quantity, the
 total half-life ``half_life`` stores verbatim, which is what the cap was applied to;
 ``degradation_rate`` is ``ln 2`` over it, a decreasing map, so the same key bounds the
 rate from ABOVE. ``preprocess/ceiling_cells.csv`` is still written, because it carries
@@ -141,6 +165,16 @@ Supplementary Data 7 publishes a per-REPLICATE 95% confidence interval on the to
 half-life, from ``curve_fit``'s parameter variance times the t quantile at
 ``dof = i x 8 - 1`` with ``i`` the protein's peptide count.
 
+A replicate record's value IS that replicate's fitted half-life, so the released
+interval of the same replicate cell is the record's own interval, and every replicate
+record stores it for every determined cell: 59,621 bound pairs over the 26 records. The
+84 cells whose released upper half-life endpoint is zero or negative are refused (no
+finite non-negative rate bound exists; clamping would manufacture one) and listed in the
+build accounting, and the 2,082 ceiling cells carry ``Undetermined`` and no bound. This is
+a statistic the SOURCE releases (the fit's own uncertainty of one measurement), not a
+dispersion over replicates, so the per-replicate policy keeps it. The rules below still
+describe the aggregate ``phenotype_reference``:
+
 - A ONE-REPLICATE key's stored value IS that replicate's fitted half-life, so the
   released interval is the record's interval and is stored losslessly. 4,587 of the
   33,187 stored keys have one replicate; 292 of those are ceiling-flagged and their
@@ -166,8 +200,9 @@ each one for the keys the other cannot cover.
 WHAT IS STILL GAPPED RATHER THAN GUESSED. There is no per-protein uncertainty of the
 released MEAN for a two-replicate key, because ``i`` is unreleased and the interval does
 not invert back to the standard deviation it came from; and no per-protein synthesis rate
-exists at all, since the model fits one free parameter. The latter is the one typed
-``ProvenanceGap`` on the phenotype.
+exists at all, since the model fits one free parameter. The latter is a typed
+``ProvenanceGap`` on every phenotype; a replicate record carries a second one, on
+``degradation_rate_se``, with reason ``not_applicable_single_measurement``.
 """
 
 from __future__ import annotations
@@ -312,6 +347,9 @@ SI1_MD = "si/si1.md"
 SI1_MD_SHA256 = "5f913f0b846865ad0bcac57cfe7a9f1895d04dd2ec7b16db11bf28be10d1062a"
 SI3_MD = "si/si3.md"
 SI3_MD_SHA256 = "87a1760129b2feb312a009dbe1486e3fbbc75fe6fcdbe0711b52576bf28ddc14"
+#: The Nature Portfolio Reporting Summary (MOESM12), which says what a replicate is.
+SI12_MD = "si/si12.md"
+SI12_MD_SHA256 = "e7fd2a450b11d86d3fde4d55eb2ca4e2f7f7d8808baf506961194e6c89708582"
 
 MG1655_STRAIN: Literal["MG1655"] = "MG1655"
 MG1655_ASSEMBLY_SET: BacterialAssemblySet = "ecoli_K12_MG1655_ASM584v2"
@@ -322,8 +360,10 @@ MEASURED_STRAIN = "NCM3722"
 #: Released rows, and the two whose key is an alternative isoform of another row's.
 SOURCE_ROWS = 3262
 DROPPED_PROTEIN_KEYS = ("sp|P07363-2|CHEA_ECOLI", "sp|P63284-2|CLPB_ECOLI")
-#: Records: one per released growth condition.
-EXPECTED_RECORDS = 13
+#: Records: one per released biological replicate, two per growth condition.
+EXPECTED_RECORDS = 26
+#: The two replicate numbers each condition's column headers print ("..., replicate 1").
+REPLICATE_IDS: tuple[str, str] = ("1", "2")
 #: Measured on the pinned workbook: 3,260 of 3,262 released protein keys reach a
 #: b-number of the pinned assembly (0.99939). The threshold sits just below, because
 #: the two that do not are the isoform rows above; a real drop means the keying changed.
@@ -389,8 +429,32 @@ def _si_legend(
     )
 
 
+def _reporting_summary(
+    value: Any, quote: str, *, page: str, note: str | None = None
+) -> SourcedValue:
+    """Bind a value to a verbatim quote in the pinned Reporting Summary OCR (MOESM12)."""
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=SI12_MD,
+            citation_key=CITATION_KEY,
+            sha256=SI12_MD_SHA256,
+            method="MinerU OCR of the Reporting Summary PDF (mirror)",
+            page=page,
+        ),
+    )
+
+
 def _workbook(
-    value: Any, quote: str, *, relpath: str, sha256: str, note: str | None = None
+    value: Any,
+    quote: str,
+    *,
+    relpath: str,
+    sha256: str,
+    note: str | None = None,
+    page: str | None = None,
 ) -> SourcedValue:
     """Bind a value to a verbatim cell of one deposited supplementary workbook."""
     return SourcedValue(
@@ -402,7 +466,7 @@ def _workbook(
             citation_key=CITATION_KEY,
             sha256=sha256,
             method="published Supplementary Data workbook (raw mirror)",
-            page=f"{relpath} cell A2/A3",
+            page=page or f"{relpath} cell A2/A3",
         ),
     )
 
@@ -480,8 +544,37 @@ REPLICATES = _paper(
     2,
     "13 different growth conditions, each with two biological replicates",
     page=_PAGE_RESULTS,
-    note="the released matrix carries two replicate columns per condition, and a "
-    "protein quantified in only one of them has n_replicates 1 in that record",
+    note="the released matrix carries two replicate columns per condition; each "
+    "column is one record (replicate_id = the number its header prints), and a protein "
+    "quantified in only one of them is a key of that replicate's record only",
+)
+REPLICATES_ARE_BIOLOGICAL = _reporting_summary(
+    "biological",
+    "Replication A in duplicates. These are biological replicates measures months "
+    "apart.",
+    page="Reporting Summary, 'Life sciences study design', Replication",
+    note="[sic, OCR]; the two replicate columns are two independent cultures measured "
+    "months apart, not two injections of one culture, so each is its own record",
+)
+NO_DATA_EXCLUDED = _reporting_summary(
+    "none withdrawn",
+    "No data was excluded from analyses.",
+    page="Reporting Summary, 'Life sciences study design', Data exclusions",
+    note="no released replicate cell is a withdrawn sample, so none is dropped",
+)
+REPLICATE_COLUMNS = _workbook(
+    REPLICATE_IDS,
+    "Half-life (hrs) in minimal media batch, doubling time 42 mins, replicate 1",
+    relpath=HALF_LIVES_REL,
+    sha256=HALF_LIVES_SHA256,
+    note="the header row (row 4) prints the replicate number on each of the 26 "
+    "replicate columns; every Condition pins its two headers verbatim",
+    page=f"{HALF_LIVES_REL} sheet TableS1, header row 4, column D",
+)
+SINGLE_REPLICATE_SE_NOTE = (
+    "one record is one biological replicate's fitted half-life (one chemostat or batch "
+    "time course), so a standard error over replicates does not exist for it; the "
+    "paper's two-replicate sd / sqrt(2) is carried by the aggregate phenotype_reference"
 )
 REPLICATION_SCOPE = _paper(
     "every strain and condition",
@@ -766,6 +859,11 @@ class Condition(BaseModel):
     condition's two replicate columns. ``censored_keys`` and ``interval_keys`` are the
     measured per-condition counts of the two #753 maps, pinned the same way
     ``stored_proteins`` is, so a change in either is a build failure rather than a drift.
+    Those four describe the aggregate (the authors' mean, the ``phenotype_reference``).
+    ``replicate_proteins``, ``replicate_censored_keys`` and ``replicate_interval_keys``
+    pin the same three counts for each of the two replicate RECORDS, in replicate order,
+    measured on the pinned workbooks; the two replicates' key sets union to
+    ``stored_proteins``.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -780,6 +878,9 @@ class Condition(BaseModel):
     stored_proteins: int
     censored_keys: int
     interval_keys: int
+    replicate_proteins: tuple[int, int]
+    replicate_censored_keys: tuple[int, int]
+    replicate_interval_keys: tuple[int, int]
     table1_quote: str
     ceiling_hours: float
     header_replicate_1: str
@@ -824,6 +925,9 @@ CONDITIONS: tuple[Condition, ...] = (
         stored_proteins=2553,
         censored_keys=177,
         interval_keys=338,
+        replicate_proteins=(2414, 2328),
+        replicate_censored_keys=(75, 103),
+        replicate_interval_keys=(2324, 2206),
         table1_quote=(
             "<td>1.</td><td>Wild type</td><td>Minimal media</td><td>Batch</td>"
             "<td>42 min</td><td>2</td><td>2555</td>"
@@ -858,6 +962,9 @@ CONDITIONS: tuple[Condition, ...] = (
         stored_proteins=2664,
         censored_keys=240,
         interval_keys=302,
+        replicate_proteins=(2458, 2526),
+        replicate_censored_keys=(138, 122),
+        replicate_interval_keys=(2316, 2398),
         table1_quote=(
             "<td>2.</td><td>Wild type</td><td>C-lim</td><td>Chemostat</td><td>3h</td>"
             "<td>2</td><td>2665</td>"
@@ -892,6 +999,9 @@ CONDITIONS: tuple[Condition, ...] = (
         stored_proteins=2650,
         censored_keys=166,
         interval_keys=331,
+        replicate_proteins=(2531, 2420),
+        replicate_censored_keys=(55, 118),
+        replicate_interval_keys=(2474, 2300),
         table1_quote=(
             "<td>3.</td><td>Wild type</td><td>C-lim</td><td>Chemostat</td><td>6h</td>"
             "<td>2</td><td>2651</td>"
@@ -926,6 +1036,9 @@ CONDITIONS: tuple[Condition, ...] = (
         stored_proteins=2696,
         censored_keys=156,
         interval_keys=404,
+        replicate_proteins=(2400, 2550),
+        replicate_censored_keys=(99, 71),
+        replicate_interval_keys=(2298, 2470),
         table1_quote=(
             "<td>4.</td><td>Wild type</td><td>C-lim</td><td>Chemostat</td><td>12 h</td>"
             "<td>2</td><td>2697</td>"
@@ -960,6 +1073,9 @@ CONDITIONS: tuple[Condition, ...] = (
         stored_proteins=2468,
         censored_keys=62,
         interval_keys=357,
+        replicate_proteins=(2181, 2383),
+        replicate_censored_keys=(24, 40),
+        replicate_interval_keys=(2157, 2340),
         table1_quote=(
             "<td>5.</td><td>Wild type</td><td>P-lim</td><td>Chemostat</td><td>6h</td>"
             "<td>2</td><td>2469</td>"
@@ -994,6 +1110,9 @@ CONDITIONS: tuple[Condition, ...] = (
         stored_proteins=2618,
         censored_keys=156,
         interval_keys=248,
+        replicate_proteins=(2461, 2504),
+        replicate_censored_keys=(89, 79),
+        replicate_interval_keys=(2371, 2423),
         table1_quote=(
             "<td>6.</td><td>Wild type</td><td>P-lim</td><td>Chemostat</td><td>12h</td>"
             "<td>2</td><td>2619</td>"
@@ -1028,6 +1147,9 @@ CONDITIONS: tuple[Condition, ...] = (
         stored_proteins=2466,
         censored_keys=44,
         interval_keys=395,
+        replicate_proteins=(2177, 2347),
+        replicate_censored_keys=(15, 30),
+        replicate_interval_keys=(2161, 2317),
         table1_quote=(
             "<td>7.</td><td>Wild type</td><td>N-lim</td><td>Chemostat</td><td>6h</td>"
             "<td>2</td><td>2467</td>"
@@ -1062,6 +1184,9 @@ CONDITIONS: tuple[Condition, ...] = (
         stored_proteins=2459,
         censored_keys=98,
         interval_keys=367,
+        replicate_proteins=(2265, 2263),
+        replicate_censored_keys=(46, 61),
+        replicate_interval_keys=(2214, 2202),
         table1_quote=(
             "<td>8.</td><td>Wild type</td><td>N-lim</td><td>Chemostat</td><td>12 h</td>"
             "<td>2</td><td>2460</td>"
@@ -1096,6 +1221,9 @@ CONDITIONS: tuple[Condition, ...] = (
         stored_proteins=2490,
         censored_keys=221,
         interval_keys=367,
+        replicate_proteins=(2252, 2330),
+        replicate_censored_keys=(27, 198),
+        replicate_interval_keys=(2225, 2131),
         table1_quote=(
             "<td>11.</td><td>Δclp</td><td>N-lim</td><td>Chemostat</td><td>6h</td>"
             "<td>2</td><td>2491</td>"
@@ -1130,6 +1258,9 @@ CONDITIONS: tuple[Condition, ...] = (
         stored_proteins=2389,
         censored_keys=194,
         interval_keys=254,
+        replicate_proteins=(2266, 2236),
+        replicate_censored_keys=(141, 55),
+        replicate_interval_keys=(2124, 2181),
         table1_quote=(
             "<td>10.</td><td>Δ lon</td><td>N-lim</td><td>Chemostat</td><td>6h</td>"
             "<td>2</td><td>2390</td>"
@@ -1164,6 +1295,9 @@ CONDITIONS: tuple[Condition, ...] = (
         stored_proteins=2392,
         censored_keys=164,
         interval_keys=315,
+        replicate_proteins=(2263, 2183),
+        replicate_censored_keys=(109, 59),
+        replicate_interval_keys=(2153, 2123),
         table1_quote=(
             "<td>9.</td><td>Δ hslV</td><td>N-lim</td><td>Chemostat</td><td>6h</td>"
             "<td>2</td><td>2393</td>"
@@ -1198,6 +1332,9 @@ CONDITIONS: tuple[Condition, ...] = (
         stored_proteins=2808,
         censored_keys=254,
         interval_keys=355,
+        replicate_proteins=(2520, 2710),
+        replicate_censored_keys=(49, 215),
+        replicate_interval_keys=(2471, 2492),
         table1_quote=(
             "<td>12.</td><td>Δ hslV Δ lon Δ clpP</td><td>N-lim</td>"
             "<td>Chemostat</td><td>6h</td><td>2</td><td>2809</td>"
@@ -1235,6 +1372,9 @@ CONDITIONS: tuple[Condition, ...] = (
         stored_proteins=2534,
         censored_keys=57,
         interval_keys=237,
+        replicate_proteins=(2415, 2404),
+        replicate_censored_keys=(37, 27),
+        replicate_interval_keys=(2375, 2375),
         table1_quote=(
             "<td>13.</td><td>Δ smpB</td><td>N-lim</td><td>Chemostat</td><td>6h</td>"
             "<td>2</td><td>2535</td>"
@@ -1897,6 +2037,8 @@ class RefusedInterval(BaseModel):
     released_lower_hours: float
     released_upper_hours: float
     reason: str
+    #: The replicate record the refused cell belongs to; ``None`` for the aggregate.
+    replicate_id: str | None = None
 
 
 class ConditionValues(BaseModel):
@@ -2066,12 +2208,157 @@ def condition_values(
     )
 
 
+class ReplicateValues(BaseModel):
+    """One replicate column's per-protein label: one biological replicate's own fits.
+
+    Every map is keyed on the proteins this replicate quantified. ``censoring`` is
+    ``right`` exactly for this replicate's ceiling-flagged cells; the bound maps hold
+    every determined cell whose released interval inverts onto the rate scale.
+    """
+
+    replicate_id: str
+    half_life: dict[str, float]
+    degradation_rate: dict[str, float]
+    degradation_rate_lower: dict[str, float]
+    degradation_rate_upper: dict[str, float]
+    censoring: dict[str, Censoring]
+    refused_intervals: tuple[RefusedInterval, ...]
+
+    def drop(self, keys: set[str]) -> None:
+        """Remove the named protein keys from every map (the isoform rows)."""
+        for key in keys:
+            self.half_life.pop(key, None)
+            self.degradation_rate.pop(key, None)
+            self.degradation_rate_lower.pop(key, None)
+            self.degradation_rate_upper.pop(key, None)
+            self.censoring.pop(key, None)
+        self.refused_intervals = tuple(
+            refused
+            for refused in self.refused_intervals
+            if refused.locus_tag not in keys
+        )
+
+
+def replicate_values(
+    condition: Condition,
+    keys: Sequence[str],
+    cells: Sequence[HalfLifeCell | None],
+    intervals: Sequence[ConfidenceCell | None],
+    replicate_id: str,
+) -> ReplicateValues:
+    """Build one replicate RECORD's label maps from its half-life and interval columns.
+
+    ``cells`` and ``intervals`` are the flat per-row sequences :func:`read_half_lives`
+    and :func:`read_confidence_intervals` return; ``replicate_id`` (``"1"`` or ``"2"``)
+    picks the column. A row whose replicate cell is empty is not a key of this record:
+    the assay did not quantify that protein in this culture. The value is the released
+    cell verbatim, and the released interval of the SAME cell is this record's interval,
+    because the record's value is that one fit. A ceiling-flagged cell is ``right``
+    censored and must carry ``Undetermined``; a determined cell must carry an interval,
+    which is stored unless an endpoint is non-positive (then refused, never clamped).
+    """
+    number = REPLICATE_IDS.index(replicate_id)
+    half_life: dict[str, float] = {}
+    rate: dict[str, float] = {}
+    rate_lower: dict[str, float] = {}
+    rate_upper: dict[str, float] = {}
+    censoring: dict[str, Censoring] = {}
+    refused: list[RefusedInterval] = []
+    for row, key in enumerate(keys):
+        cell = cells[3 * row + number]
+        if cell is None:
+            continue
+        interval = intervals[2 * row + number]
+        half_life[key] = cell.hours
+        rate[key] = total_turnover_rate(cell.hours)
+        if cell.ceiling:
+            if interval is None or not interval.undetermined:
+                raise RuntimeError(
+                    f"{condition.key}/{key}: replicate {replicate_id} is "
+                    f"ceiling-flagged but its interval cell is {interval!r}, not "
+                    f"{UNDETERMINED_NOTE.value!r}; the two workbooks disagree"
+                )
+            censoring[key] = Censoring.right
+            continue
+        censoring[key] = Censoring.uncensored
+        if interval is None or interval.undetermined:
+            raise RuntimeError(
+                f"{condition.key}/{key}: replicate {replicate_id} is an estimate but "
+                f"its interval cell is {interval!r}; the release publishes an interval "
+                "for every determined fit"
+            )
+        released_lower, released_upper = interval.bounds_hours
+        if released_lower <= 0.0 or released_upper <= 0.0:
+            refused.append(
+                RefusedInterval(
+                    condition=condition.key,
+                    locus_tag=key,
+                    half_life_hours=cell.hours,
+                    released_lower_hours=released_lower,
+                    released_upper_hours=released_upper,
+                    reason="non_positive_released_half_life_endpoint",
+                    replicate_id=replicate_id,
+                )
+            )
+            continue
+        lower, upper = rate_bounds(released_lower, released_upper)
+        if not lower <= rate[key] <= upper:
+            raise RuntimeError(
+                f"{condition.key}/{key} replicate {replicate_id}: the released interval "
+                f"[{released_lower} {released_upper}] h inverts to [{lower} {upper}] "
+                f"per hour, which does not bracket the stored rate {rate[key]}"
+            )
+        rate_lower[key] = lower
+        rate_upper[key] = upper
+    return ReplicateValues(
+        replicate_id=replicate_id,
+        half_life=half_life,
+        degradation_rate=rate,
+        degradation_rate_lower=rate_lower,
+        degradation_rate_upper=rate_upper,
+        censoring=censoring,
+        refused_intervals=tuple(refused),
+    )
+
+
+def replicate_phenotype(values: ReplicateValues) -> ProteinTurnoverPhenotype:
+    """The protein-turnover phenotype of ONE biological replicate of one condition.
+
+    ``n_replicates`` is 1 for every key and ``degradation_rate_se`` is ``None`` with a
+    ``not_applicable_single_measurement`` gap: a single fit has no dispersion over
+    replicates. The released per-cell interval is the record's own and is stored.
+    """
+    return ProteinTurnoverPhenotype(
+        degradation_rate=values.degradation_rate,
+        degradation_rate_se=None,
+        degradation_rate_lower=values.degradation_rate_lower,
+        degradation_rate_upper=values.degradation_rate_upper,
+        confidence_level=CONFIDENCE_LEVEL,
+        interval_method=INTERVAL_METHOD,
+        censoring=values.censoring,
+        half_life=values.half_life,
+        n_replicates=dict.fromkeys(values.degradation_rate, 1),
+        measurement_type=MEASUREMENT_TYPE,
+        replicate_id=values.replicate_id,
+        provenance_gaps=[
+            SYNTHESIS_RATE_GAP,
+            ProvenanceGap(
+                field="degradation_rate_se",
+                reason=ProvenanceGapReason.not_applicable_single_measurement,
+                note=SINGLE_REPLICATE_SE_NOTE,
+            ),
+        ],
+    )
+
+
 def phenotype(
     condition: Condition, values: ConditionValues
 ) -> ProteinTurnoverPhenotype:
-    """The protein-turnover phenotype of one released condition.
+    """The AGGREGATE protein-turnover phenotype of one condition: the reference.
 
-    ``censoring`` is stated for every stored key; the bound maps are ragged and hold the
+    Built from the authors' released mean over the two replicates, with
+    ``replicate_id=None``; since the per-replicate conversion only the
+    ``phenotype_reference`` is built this way. ``censoring`` is stated for every stored key; the bound maps are ragged and hold the
     one-replicate keys whose published interval is the record's interval.
     ``measurement_type`` names the assay and its unit only, because the dilution regime
     is the environment's ``dilution_rate_per_hour``.
@@ -2109,7 +2396,15 @@ class DropRule(BaseModel):
 
 
 class BuildAccounting(BaseModel):
-    """What the build read, what it kept, and the arithmetic that ties the two."""
+    """What the build read, what it kept, and the arithmetic that ties the two.
+
+    The per-record maps are keyed ``<condition>/<replicate_id>``. ``censored_keys``,
+    ``uncensored_keys``, ``interval_keys`` and ``refused_intervals`` count over the 26
+    replicate records; ``per_condition_keys`` is the union of a condition's two records
+    and ``one_replicate_keys`` the condition-level proteins only one replicate
+    quantified. ``mean_reproduction_max_abs_diff_hours`` is the largest gap between the
+    mean of a key's replicate records and the authors' released mean column.
+    """
 
     dataset: str
     source_rows: int
@@ -2130,8 +2425,10 @@ class BuildAccounting(BaseModel):
     kept_protein_keys: int
     dropped_protein_keys: int
     per_condition_keys: dict[str, int]
-    per_condition_censored_keys: dict[str, int]
-    per_condition_interval_keys: dict[str, int]
+    per_record_keys: dict[str, int]
+    per_record_censored_keys: dict[str, int]
+    per_record_interval_keys: dict[str, int]
+    mean_reproduction_max_abs_diff_hours: float
     rules: list[DropRule]
     identifier_route: IdentifierRoute
     reconciliation: LocusTagReconciliation
@@ -2156,7 +2453,7 @@ class BuildAccounting(BaseModel):
 # --------------------------------------------------------------------------- #
 @register_dataset
 class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
-    """Gupta 2024 per-protein total turnover in 13 NCM3722 growth conditions."""
+    """Gupta 2024 per-protein total turnover: 13 NCM3722 conditions x 2 replicates."""
 
     organism = Organism.ecoli
 
@@ -2243,7 +2540,12 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Build one protein-turnover record per released condition; write LMDB."""
+        """Build one protein-turnover record per released biological replicate; write LMDB.
+
+        Each condition is read twice: once as the authors' mean column (the Table 1
+        oracle, the mean-equals-replicate-mean check and the reference), and once per
+        replicate column, which is what the records store.
+        """
         verify_raw_files(
             self.raw_dir,
             {
@@ -2292,6 +2594,8 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
         reference_genome = strain_reference()
         pub = publication()
         by_condition: dict[str, ConditionValues] = {}
+        by_replicate: dict[str, tuple[ReplicateValues, ...]] = {}
+        worst_mean_gap = 0.0
         for condition in CONDITIONS:
             values = condition_values(
                 condition, keys, cells[condition.key], intervals[condition.key]
@@ -2332,6 +2636,51 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
                     "the rate scale)"
                 )
             by_condition[condition.key] = values
+            replicates = tuple(
+                replicate_values(
+                    condition,
+                    keys,
+                    cells[condition.key],
+                    intervals[condition.key],
+                    replicate_id,
+                )
+                for replicate_id in REPLICATE_IDS
+            )
+            for number, replicate in enumerate(replicates):
+                replicate.drop(dropped)
+                pinned = (
+                    condition.replicate_proteins[number],
+                    condition.replicate_censored_keys[number],
+                    condition.replicate_interval_keys[number],
+                )
+                observed = (
+                    len(replicate.half_life),
+                    sum(
+                        1
+                        for state in replicate.censoring.values()
+                        if state is Censoring.right
+                    ),
+                    len(replicate.degradation_rate_lower),
+                )
+                if observed != pinned:
+                    raise RuntimeError(
+                        f"{condition.key} replicate {replicate.replicate_id}: (keys, "
+                        f"right-censored keys, interval keys) = {observed}, not the "
+                        f"pinned {pinned}"
+                    )
+            union = set().union(*(set(r.half_life) for r in replicates))
+            if union != set(values.half_life):
+                raise RuntimeError(
+                    f"{condition.key}: the two replicate records key "
+                    f"{len(union)} proteins, not the {len(values.half_life)} the "
+                    "released mean column keys"
+                )
+            for key, mean_hours in values.half_life.items():
+                own = [r.half_life[key] for r in replicates if key in r.half_life]
+                worst_mean_gap = max(
+                    worst_mean_gap, abs(statistics.fmean(own) - mean_hours)
+                )
+            by_replicate[condition.key] = replicates
 
         reference_values = by_condition[REFERENCE_CONDITION_KEY]
         reference_condition = next(
@@ -2350,18 +2699,18 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
         index = 0
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for condition in tqdm(CONDITIONS, desc="gupta2024-turnover"):
-                values = by_condition[condition.key]
-                experiment = ProteinTurnoverExperiment(
-                    dataset_name=self.name,
-                    genotype=self._genotype(condition, loci),
-                    environment=environment(condition),
-                    phenotype=phenotype(condition, values),
-                )
-                txn.put(
-                    f"{index}".encode(),
-                    self._intern_record(experiment, reference, pub, itxn),
-                )
-                index += 1
+                for replicate in by_replicate[condition.key]:
+                    experiment = ProteinTurnoverExperiment(
+                        dataset_name=self.name,
+                        genotype=self._genotype(condition, loci),
+                        environment=environment(condition),
+                        phenotype=replicate_phenotype(replicate),
+                    )
+                    txn.put(
+                        f"{index}".encode(),
+                        self._intern_record(experiment, reference, pub, itxn),
+                    )
+                    index += 1
         env.close()
         interned_env.close()
 
@@ -2371,18 +2720,22 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
             keys,
             mappings,
             by_condition,
+            by_replicate,
             route,
             reconciliation,
             index,
+            worst_mean_gap,
         )
         log.info(
-            "Gupta2024 turnover: %d records (one per released condition) x %d-%d "
-            "protein keys from %d released rows; %d keys dropped",
+            "Gupta2024 turnover: %d records (one per released biological replicate) x "
+            "%d-%d protein keys from %d released rows; %d keys dropped; the replicate "
+            "records reproduce the authors' mean column to %.3e h",
             index,
-            min(len(v.half_life) for v in by_condition.values()),
-            max(len(v.half_life) for v in by_condition.values()),
+            min(len(r.half_life) for rs in by_replicate.values() for r in rs),
+            max(len(r.half_life) for rs in by_replicate.values() for r in rs),
             len(protein_ids),
             len(dropped),
+            worst_mean_gap,
         )
 
     @staticmethod
@@ -2429,9 +2782,11 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
         keys: Sequence[str],
         mappings: Sequence[DerivedIdentifierMapping | None],
         by_condition: Mapping[str, ConditionValues],
+        by_replicate: Mapping[str, Sequence[ReplicateValues]],
         route: IdentifierRoute,
         reconciliation: LocusTagReconciliation,
         kept_records: int,
+        mean_gap_hours: float,
     ) -> None:
         """Write the identifier route, the ceiling ledger and the build accounting.
 
@@ -2507,19 +2862,22 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
             ceiling_cells=ceiling_cells,
             censored_keys=sum(
                 1
-                for condition in CONDITIONS
-                for state in by_condition[condition.key].censoring.values()
+                for replicates in by_replicate.values()
+                for replicate in replicates
+                for state in replicate.censoring.values()
                 if state is Censoring.right
             ),
             uncensored_keys=sum(
                 1
-                for condition in CONDITIONS
-                for state in by_condition[condition.key].censoring.values()
+                for replicates in by_replicate.values()
+                for replicate in replicates
+                for state in replicate.censoring.values()
                 if state is Censoring.uncensored
             ),
             interval_keys=sum(
-                len(by_condition[condition.key].degradation_rate_lower)
-                for condition in CONDITIONS
+                len(replicate.degradation_rate_lower)
+                for replicates in by_replicate.values()
+                for replicate in replicates
             ),
             one_replicate_keys=sum(
                 1
@@ -2530,8 +2888,8 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
             refused_intervals=[
                 refused
                 for condition in CONDITIONS
-                for refused in by_condition[condition.key].refused_intervals
-                if refused.locus_tag not in dropped
+                for replicate in by_replicate[condition.key]
+                for refused in replicate.refused_intervals
             ],
             confidence_level=CONFIDENCE_LEVEL,
             interval_method=INTERVAL_METHOD,
@@ -2540,27 +2898,37 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
                 condition.key: condition.dilution_rate_per_hour
                 for condition in CONDITIONS
             },
-            candidate_records=len(CONDITIONS),
+            candidate_records=len(CONDITIONS) * len(REPLICATE_IDS),
             kept_records=kept_records,
-            dropped_records=len(CONDITIONS) - kept_records,
+            dropped_records=len(CONDITIONS) * len(REPLICATE_IDS) - kept_records,
             kept_protein_keys=len(protein_ids) - len(dropped),
             dropped_protein_keys=len(dropped),
             per_condition_keys={
                 condition.key: len(by_condition[condition.key].half_life)
                 for condition in CONDITIONS
             },
-            per_condition_censored_keys={
-                condition.key: sum(
+            per_record_keys={
+                f"{condition.key}/{replicate.replicate_id}": len(replicate.half_life)
+                for condition in CONDITIONS
+                for replicate in by_replicate[condition.key]
+            },
+            per_record_censored_keys={
+                f"{condition.key}/{replicate.replicate_id}": sum(
                     1
-                    for state in by_condition[condition.key].censoring.values()
+                    for state in replicate.censoring.values()
                     if state is Censoring.right
                 )
                 for condition in CONDITIONS
+                for replicate in by_replicate[condition.key]
             },
-            per_condition_interval_keys={
-                condition.key: len(by_condition[condition.key].degradation_rate_lower)
+            per_record_interval_keys={
+                f"{condition.key}/{replicate.replicate_id}": len(
+                    replicate.degradation_rate_lower
+                )
                 for condition in CONDITIONS
+                for replicate in by_replicate[condition.key]
             },
+            mean_reproduction_max_abs_diff_hours=mean_gap_hours,
             rules=[
                 DropRule(
                     rule="protein_key_is_an_alternative_isoform_of_another_row",
@@ -2577,35 +2945,45 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
             identifier_route=route,
             reconciliation=reconciliation,
             notes=[
-                "no CONDITION is dropped: all 13 released conditions become records, "
-                "and the per-condition key counts reproduce Table 1 exactly",
-                "the consumed column is 'Average of half-lives (hrs) in <condition>'; "
-                "half_life stores it verbatim and degradation_rate is ln 2 over it, "
-                f"by the Supplementary Note's identity ({HALF_LIFE_IDENTITY.quote!r})",
+                "one record per released BIOLOGICAL replicate: each condition's two "
+                "'Half-life (hrs) in <condition>, replicate N' columns are two records "
+                f"with replicate_id '1' and '2' ({REPLICATES.quote!r}; "
+                f"{REPLICATES_ARE_BIOLOGICAL.quote!r}); no replicate cell is withdrawn "
+                f"({NO_DATA_EXCLUDED.quote!r}), so none is dropped",
+                "no CONDITION is dropped: all 13 released conditions become two "
+                "records each, and the union of each condition's two records reproduces "
+                "Table 1's per-condition protein count exactly",
+                "half_life stores the replicate cell verbatim and degradation_rate is "
+                "ln 2 over it, by the Supplementary Note's identity "
+                f"({HALF_LIFE_IDENTITY.quote!r}); every n_replicates value is 1 and "
+                "degradation_rate_se is None with a not_applicable_single_measurement "
+                "gap",
+                "the authors' 'Average of half-lives (hrs) in <condition>' column is "
+                "read as an oracle: it equals the mean of the replicate records for "
+                "every key (mean_reproduction_max_abs_diff_hours), and it is the "
+                "phenotype_reference (N-lim 6 h wild type, replicate_id None, with the "
+                "paper's two-replicate sd/sqrt(n) on the rate scale)",
+                "every determined replicate cell stores its own released 95% interval, "
+                "inverted onto the rate scale; a cell whose released upper endpoint is "
+                "non-positive is refused (refused_intervals), and a ceiling cell "
+                "carries Undetermined and no bound",
                 "degradation_rate is the TOTAL turnover rate (active degradation plus "
                 "dilution), per hour; the active rate k_D = k_total - D is not stored "
                 "because it is negative wherever the fitted half-life exceeds the "
                 "doubling time and the phenotype requires a non-negative rate",
-                "degradation_rate_se is the paper's own two-replicate sd/sqrt(n) on "
-                "the rate scale, and nan where a key has one replicate or a ceiling "
-                "cell; the point estimate is ln 2 over the arithmetic mean half-life "
-                "while the SE centers on the mean of the two rates, which differ by "
-                "the arithmetic-harmonic gap (measured median 0.0023 relative)",
+                "on the REFERENCE only, degradation_rate_se is the paper's own "
+                "two-replicate sd/sqrt(n) on the rate scale, nan where a key has one "
+                "replicate or a ceiling cell, and the reference's bounds are stored for "
+                "exactly its one-replicate keys (the interval of the mean of two fits "
+                "is not published)",
                 "ceiling-flagged cells are KEPT, as the authors keep them in their own "
-                "mean and in Table 1's counts, and the flag TRAVELS: censoring carries "
-                "a Censoring for every stored key, right where any replicate cell is "
+                "mean and in Table 1's counts, and the flag TRAVELS: in a replicate "
+                "record censoring is right exactly where that replicate's cell is "
                 f"capped ({CEILING_NOTE.quote!r}) and uncensored otherwise. The side is "
                 "stated on the released total half-life, which is what the cap was "
                 "applied to; degradation_rate is ln 2 over it, so the same key bounds "
-                "the rate from above. ceiling_cells.csv still carries what the record "
-                "does not: the replicate number and the condition's ceiling value",
-                "the per-replicate 95% confidence intervals of Supplementary Data 7 "
-                "are stored for exactly the one-replicate keys, whose stored value IS "
-                "that replicate's fit, inverted onto the rate scale by r = ln 2 / T; a "
-                "two-replicate key gets none, because the interval of the mean of two "
-                "fits is not published and combining them needs the unreleased "
-                "per-protein peptide count i. The bound maps are ragged by design, so "
-                "an absent key already means 'no interval is published for it'",
+                "the rate from above. ceiling_cells.csv still carries the condition's "
+                "ceiling value",
                 "the intervals are also the censoring oracle: every Undetermined cell "
                 "matches a ceiling-flagged cell and no other, over all 61,811 released "
                 "cells, which is what makes the per-key censoring map complete",
@@ -2686,23 +3064,35 @@ def _record_identity(record: Mapping[str, Any]) -> ConditionIdentity:
     )
 
 
+def _record_replicate(record: Mapping[str, Any]) -> str:
+    """The ``replicate_id`` a built record states, or ``""`` when it states none."""
+    replicate_id = record["experiment"]["phenotype"].get("replicate_id")
+    return "" if replicate_id is None else str(replicate_id)
+
+
 def _l1_condition_keys(records: Sequence[Mapping[str, Any]]) -> LevelResult:
-    """L1: each record keys the pinned count, Table 1's less its isoform rows.
+    """L1: each replicate record keys its pinned count, and each condition's two union
+    to Table 1's count less its isoform rows.
 
     Records are matched to conditions by (medium, labeling window, dilution rate,
-    deleted symbols), which is unique across the 13, because the LMDB returns its keys
-    in lexicographic order and positional matching would compare the wrong pairs.
+    deleted symbols), which is unique across the 13, plus ``replicate_id``, because the
+    LMDB returns its keys in lexicographic order and positional matching would compare
+    the wrong pairs.
     """
     expected = {
-        _condition_identity(condition): condition.stored_proteins
+        (_condition_identity(condition), replicate_id): condition.replicate_proteins[
+            number
+        ]
         for condition in CONDITIONS
+        for number, replicate_id in enumerate(REPLICATE_IDS)
     }
-    observed = {
-        _record_identity(record): len(
-            record["experiment"]["phenotype"]["degradation_rate"]
-        )
-        for record in records
-    }
+    observed: dict[tuple[ConditionIdentity, str], int] = {}
+    unions: dict[ConditionIdentity, set[str]] = {}
+    for record in records:
+        identity = _record_identity(record)
+        rates = record["experiment"]["phenotype"]["degradation_rate"]
+        observed[(identity, _record_replicate(record))] = len(rates)
+        unions.setdefault(identity, set()).update(rates)
     missing = sorted(str(key) for key in set(expected) - set(observed))
     extra = sorted(str(key) for key in set(observed) - set(expected))
     wrong = {
@@ -2710,18 +3100,34 @@ def _l1_condition_keys(records: Sequence[Mapping[str, Any]]) -> LevelResult:
         for key in sorted(set(expected) & set(observed), key=str)
         if observed[key] != expected[key]
     }
-    passed = not missing and not extra and not wrong and len(observed) == len(records)
+    union_wrong = {
+        str(_condition_identity(condition)): {
+            "observed": len(unions.get(_condition_identity(condition), set())),
+            "expected": condition.stored_proteins,
+        }
+        for condition in CONDITIONS
+        if len(unions.get(_condition_identity(condition), set()))
+        != condition.stored_proteins
+    }
+    passed = (
+        not missing
+        and not extra
+        and not wrong
+        and not union_wrong
+        and len(observed) == len(records)
+    )
     return LevelResult(
         level=Level.L1,
-        name="per_condition_protein_counts_match_table_1_less_isoform_rows",
+        name="per_replicate_protein_counts_and_their_union_match_table_1_less_isoforms",
         passed=passed,
         message=(
-            f"{len(records)} records matched to {len(expected)} conditions; "
-            f"{len(wrong)} count mismatch(es), {len(missing)} missing, "
-            f"{len(extra)} unexpected"
+            f"{len(records)} records matched to {len(expected)} (condition, replicate) "
+            f"pairs; {len(wrong)} count mismatch(es), {len(union_wrong)} condition "
+            f"union mismatch(es), {len(missing)} missing, {len(extra)} unexpected"
         ),
         details={
             "mismatches": wrong,
+            "union_mismatches": union_wrong,
             "missing": missing,
             "unexpected": extra,
             "table1": {
@@ -2742,7 +3148,7 @@ def _l1_key_alignment(records: Sequence[Mapping[str, Any]]) -> LevelResult:
     for index, record in enumerate(records):
         phenotype_dump = record["experiment"]["phenotype"]
         rates = set(phenotype_dump["degradation_rate"])
-        for field in ("degradation_rate_se", "half_life", "n_replicates", "censoring"):
+        for field in ("half_life", "n_replicates", "censoring"):
             if set(phenotype_dump[field] or {}) != rates:
                 misaligned.append({"record": index, "field": field})
     return LevelResult(
@@ -2754,19 +3160,70 @@ def _l1_key_alignment(records: Sequence[Mapping[str, Any]]) -> LevelResult:
     )
 
 
+def _l1_one_measurement_per_record(records: Sequence[Mapping[str, Any]]) -> LevelResult:
+    """L1: every record is ONE biological replicate, and each condition has both.
+
+    ``replicate_id`` is ``"1"`` or ``"2"``, every ``n_replicates`` value is 1,
+    ``degradation_rate_se`` is ``None`` and gapped as
+    ``not_applicable_single_measurement``, and every condition holds exactly the two
+    replicate records its headers print.
+    """
+    offenders: list[dict[str, Any]] = []
+    replicates: dict[ConditionIdentity, list[str]] = {}
+    for index, record in enumerate(records):
+        phenotype_dump = record["experiment"]["phenotype"]
+        replicate_id = _record_replicate(record)
+        replicates.setdefault(_record_identity(record), []).append(replicate_id)
+        if replicate_id not in REPLICATE_IDS:
+            offenders.append(
+                {"record": index, "reason": "replicate_id", "value": replicate_id}
+            )
+        if any(int(n) != 1 for n in phenotype_dump["n_replicates"].values()):
+            offenders.append({"record": index, "reason": "n_replicates is not 1"})
+        if phenotype_dump["degradation_rate_se"] is not None:
+            offenders.append({"record": index, "reason": "degradation_rate_se is set"})
+        gaps = {
+            str(gap["field"]): str(gap["reason"])
+            for gap in phenotype_dump.get("provenance_gaps") or []
+        }
+        if gaps.get("degradation_rate_se") != (
+            ProvenanceGapReason.not_applicable_single_measurement.value
+        ):
+            offenders.append(
+                {"record": index, "reason": "no single-measurement SE gap"}
+            )
+    incomplete = {
+        str(identity): sorted(ids)
+        for identity, ids in replicates.items()
+        if sorted(ids) != list(REPLICATE_IDS)
+    }
+    return LevelResult(
+        level=Level.L1,
+        name="every_record_is_one_biological_replicate_and_each_condition_has_both",
+        passed=not offenders and not incomplete,
+        message=(
+            f"{len(records)} records over {len(replicates)} conditions; "
+            f"{len(offenders)} offender(s), {len(incomplete)} condition(s) without "
+            "exactly replicates 1 and 2"
+        ),
+        details={"offenders": offenders[:20], "incomplete": incomplete},
+    )
+
+
 def _l1_censored_and_interval_counts(
     records: Sequence[Mapping[str, Any]],
 ) -> LevelResult:
-    """L1: each record's censored and interval key counts are the pinned ones."""
+    """L1: each replicate record's censored and interval key counts are the pinned ones."""
     expected = {
-        _condition_identity(condition): (
-            condition.censored_keys,
-            condition.interval_keys,
+        (_condition_identity(condition), replicate_id): (
+            condition.replicate_censored_keys[number],
+            condition.replicate_interval_keys[number],
         )
         for condition in CONDITIONS
+        for number, replicate_id in enumerate(REPLICATE_IDS)
     }
     observed = {
-        _record_identity(record): (
+        (_record_identity(record), _record_replicate(record)): (
             sum(
                 1
                 for state in record["experiment"]["phenotype"]["censoring"].values()
@@ -2788,7 +3245,7 @@ def _l1_censored_and_interval_counts(
     intervals = sum(count for _, count in observed.values())
     return LevelResult(
         level=Level.L1,
-        name="per_condition_censored_and_interval_key_counts_are_the_pinned_ones",
+        name="per_replicate_censored_and_interval_key_counts_are_the_pinned_ones",
         passed=passed,
         message=(
             f"{censored} right-censored key(s) and {intervals} key(s) with a stored "
@@ -2847,7 +3304,9 @@ def _l3_dilution_rate_is_ln2_over_the_doubling_time(
                 "observed": observed,
                 "expected": expected[identity],
             }
-    chemostats = sum(1 for c in CONDITIONS if c.reactor == "chemostat")
+    chemostats = len(REPLICATE_IDS) * sum(
+        1 for c in CONDITIONS if c.reactor == "chemostat"
+    )
     return l3_convention(
         "dilution_rate_per_hour_is_ln2_over_the_doubling_time",
         not wrong and continuous == chemostats,
@@ -2935,9 +3394,10 @@ def verify_build(
     ``verify_protein_dataset`` reads ``phenotype['protein_abundance']`` and cannot see a
     rate -- so the gate is composed here from the shared primitives in
     ``torchcell.verification.levels`` rather than forced through an unrelated family.
-    L2 checks the rates, their standard errors (NaN admitted, which is what a
-    one-replicate or ceiling-involved key stores) and that every stored interval
-    brackets its rate; L3 re-derives the half-life identity, the chemostat dilution rate
+    L1 also checks that every record is one biological replicate (``replicate_id`` 1 or
+    2, ``n_replicates`` 1, no standard error, the single-measurement gap) and that each
+    condition has both. L2 checks the rates and that every stored interval brackets its
+    rate; L3 re-derives the half-life identity, the chemostat dilution rate
     and the assembly pin; L4 contains every stored key in the pinned assembly's loci.
     """
     from pydantic import TypeAdapter
@@ -2958,12 +3418,13 @@ def verify_build(
             citation_key=CITATION_KEY,
             sha256=HALF_LIVES_SHA256,
             method=(
-                "Supplementary Data 1 'Average of half-lives (hrs)' per condition; one "
-                "ProteinTurnoverExperiment per released condition, degradation_rate = "
-                "ln 2 / released mean total half-life (per hour), "
-                f"n_samples={REPLICATES.value} biological replicates"
+                "Supplementary Data 1 'Half-life (hrs) in <condition>, replicate N' "
+                "per condition; one ProteinTurnoverExperiment per released biological "
+                f"replicate ({REPLICATES.value} per condition), degradation_rate = "
+                "ln 2 / that replicate's released total half-life (per hour), "
+                "n_replicates 1"
             ),
-            page="TableS1, columns 'Average of half-lives (hrs) in <condition>'",
+            page="TableS1, columns 'Half-life (hrs) in <condition>, replicate 1/2'",
             retrieved=RAW_RETRIEVED_AT,
         ),
     )
@@ -2971,6 +3432,7 @@ def verify_build(
     report.add(l1_count(len(records), expected_count))
     report.add(_l1_condition_keys(records))
     report.add(_l1_key_alignment(records))
+    report.add(_l1_one_measurement_per_record(records))
     report.add(_l1_censored_and_interval_counts(records))
     rates = [
         float(value)
@@ -2978,14 +3440,6 @@ def verify_build(
         for value in record["experiment"]["phenotype"]["degradation_rate"].values()
     ]
     report.add(l2_value_fidelity(rates, allow_nan=False, minimum=0.0))
-    standard_errors = [
-        float(value)
-        for record in records
-        for value in (
-            record["experiment"]["phenotype"]["degradation_rate_se"] or {}
-        ).values()
-    ]
-    report.add(l2_value_fidelity(standard_errors, allow_nan=True, minimum=0.0))
     report.add(_l2_bounds_bracket_the_rate(records))
     report.add(_l3_rate_is_ln2_over_half_life(records))
     report.add(_l3_dilution_rate_is_ln2_over_the_doubling_time(records))
@@ -3022,6 +3476,8 @@ def main() -> None:
                     "kept_protein_keys",
                     "dropped_protein_keys",
                     "per_condition_keys",
+                    "per_record_keys",
+                    "mean_reproduction_max_abs_diff_hours",
                 )
             },
             indent=2,

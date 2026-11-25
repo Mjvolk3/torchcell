@@ -5,10 +5,11 @@
 """BioCypher adapter exposing the Gupta 2024 protein-turnover panel as knowledge-graph
 nodes and edges.
 
-One record per released growth condition of *E. coli* NCM3722. Eight of the thirteen are
-the unperturbed strain and five carry protease or SsrA-pathway deletions, so
-``perturbation`` is served; every chemostat condition carries a controlled-pH
-``EnvironmentPhysicalPerturbation``, so the environment-perturbation pair is served too.
+One record per released biological replicate (two per growth condition, 26 records) of
+*E. coli* NCM3722. Eight of the thirteen conditions are the unperturbed strain and five
+carry protease or SsrA-pathway deletions, so ``perturbation`` is served; every chemostat
+condition carries a controlled-pH ``EnvironmentPhysicalPerturbation``, so the
+environment-perturbation pair is served too.
 """
 
 import os.path as osp

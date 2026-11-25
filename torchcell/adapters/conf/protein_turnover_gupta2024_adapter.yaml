@@ -3,7 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/conf/protein_turnover_gupta2024_adapter.yaml
 # Test file: tests/torchcell/adapters/test_gupta2024_adapter.py
 #
-# Gupta 2024 protein turnover: 13 NCM3722 growth conditions, ProteinTurnoverExperiment.
+# Gupta 2024 protein turnover: 13 NCM3722 growth conditions x 2 biological replicates
+# (26 records, one per replicate), ProteinTurnoverExperiment.
 # Five of the 13 genotypes carry protease or SsrA-pathway deletions (clpP, lon, hslV,
 # smpB; three leaves in the triple knockout) and eight are the unperturbed strain, so
 # `perturbation` and `perturbation to genotype` are enabled. The 12 chemostat conditions

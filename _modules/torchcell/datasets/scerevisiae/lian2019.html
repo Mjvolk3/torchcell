@@ -134,7 +134,7 @@
 <span class="sd">``Genotype``, so a round-2/3 record is a genuine 2-/3-perturbation mixed-modality combo,</span>
 <span class="sd">the strain actually in the tube.</span>
 
-<span class="sd">RECORD = one (guide x round) ``StrainEnvironmentResponseExperiment``:</span>
+<span class="sd">RECORD = one (guide x round x biological replicate) ``StrainEnvironmentResponseExperiment``:</span>
 
 <span class="sd">- GENOTYPE: the library member as a ``CrisprActivation`` / ``CrisprInterference`` /</span>
 <span class="sd">  ``CrisprDeletion`` perturbation (target gene, this guide's spacer, its effector), plus</span>
@@ -147,9 +147,38 @@
 <span class="sd">  the bAID host (``strain_background.baid_background()``): BY4742's four auxotrophies plus</span>
 <span class="sd">  bAID's Delta-site CRISPR-AID cassette, each element sourced or a typed gap.</span>
 <span class="sd">- PHENOTYPE: ``measurement_type=log2_ratio``,</span>
-<span class="sd">  ``assay_type=pooled_competitive_growth_barcode``, ``environment_response`` = mean</span>
-<span class="sd">  log2(after/before) over 3 biological triplicates, uncertainty = SD (``sample_sd``,</span>
-<span class="sd">  n=3 -&gt; SE = SD/sqrt(3)). Reference = no-enrichment baseline (log2FC 0) in the bAID host.</span>
+<span class="sd">  ``assay_type=pooled_competitive_growth_barcode``, ``environment_response`` = THAT</span>
+<span class="sd">  replicate's log2(furfural-after / untreated-before), ``n_samples=1``,</span>
+<span class="sd">  ``sample_unit=biological_replicate``, no dispersion (typed</span>
+<span class="sd">  ``not_applicable_single_measurement`` gaps on the two uncertainty fields and the derived</span>
+<span class="sd">  SE), ``replicate_id`` = the authors' own library-pair label (below). Reference =</span>
+<span class="sd">  no-enrichment baseline (log2FC 0) in the bAID host, which stays an aggregate summary</span>
+<span class="sd">  over the three replicates (``n_samples=3``, ``replicate_id=None``).</span>
+
+<span class="sd">ONE RECORD PER BIOLOGICAL REPLICATE (this build, 266,304 -&gt; 798,912 records). The screen is</span>
+<span class="sd">run in biological triplicate and the enrichment is defined per replicate, verbatim: "A</span>
+<span class="sd">threshold of one read in all six libraries (biological triplicates for untreated and</span>
+<span class="sd">furfural stressed libraries) and five-fold enrichment (normalized no. of guide in the</span>
+<span class="sd">furfural stressed library/normalized no. of guide in the untreated library) for each</span>
+<span class="sd">replicate was set to keep a guide sequence." Our reprocessing computed exactly that --</span>
+<span class="sd">per round, per replicate ``log2(CPM[after] / CPM[before])`` -- and then wrote only the mean</span>
+<span class="sd">and the SD over the three replicates, so the three measurements were lost at the loader's</span>
+<span class="sd">doorstep. ``experiments/016-lian-magic-reprocess/scripts/replicate_enrichment.py`` emits</span>
+<span class="sd">them (``guide_enrichment_replicates.tsv``, one column per (round, replicate)) and this</span>
+<span class="sd">build stores one record per (guide, round, replicate). The emitted columns reproduce the</span>
+<span class="sd">previous build's stored mean and SD for every guide and round (max absolute difference</span>
+<span class="sd">1.3e-15, asserted at &lt;= 1e-9 inside that script), so the mean a model wants is a</span>
+<span class="sd">grouping over these records rather than a number the loader precomputed.</span>
+
+<span class="sd">REPLICATE LABELS ARE THE AUTHORS' OWN, not positions. SRA ``PRJNA504483`` names each</span>
+<span class="sd">sequenced library: ``Ff1a`` / ``Ff1b`` ... ``3Ff3a`` / ``3Ff3b``, where the round-2 and</span>
+<span class="sd">round-3 libraries carry the prefixes ``2`` and ``3``, the digit is the replicate and ``a``</span>
+<span class="sd">/ ``b`` is the furfural-stressed / untreated library of that replicate pair. ``LibraryName``</span>
+<span class="sd">equals ``SampleName`` for all 21 runs of the project, and the pipeline's</span>
+<span class="sd">``run_manifest.tsv`` holds those names verbatim (21/21 agree with the SRA run report,</span>
+<span class="sd">mirrored as ``data/sra_runinfo_PRJNA504483.csv``). ``replicate_id`` is therefore the pair</span>
+<span class="sd">label, e.g. ``"2Ff1a/2Ff1b"``: one record IS the ratio of two libraries of one replicate,</span>
+<span class="sd">so naming a single library would misstate what the number is.</span>
 
 <span class="sd">THE MEDIUM IS SED-URA/G418, NOT SED/G418 (corrected this build, all records). Methods,</span>
 <span class="sd">verbatim: "The iMAGIC libraries in triplicates were inoculated into 50 mL SED-URA/G418</span>
@@ -193,9 +222,11 @@
 <span class="sd">  library, so it is unrecoverable from our inputs.</span>
 <span class="sd">- guides whose target gene does not resolve to a current R64 gene (ncRNA/rDNA features</span>
 <span class="sd">  absent from the ORF genome).</span>
-<span class="sd">- (guide, round) cells with no enrichment value, and the guide-round in which a guide</span>
-<span class="sd">  targets its OWN integrated background gene (redundant, and it would collapse to an empty</span>
-<span class="sd">  strain signature once the background is subtracted).</span>
+<span class="sd">- (guide, round, replicate) cells with no enrichment value, and the guide-round in which a</span>
+<span class="sd">  guide targets its OWN integrated background gene (redundant, and it would collapse to an</span>
+<span class="sd">  empty strain signature once the background is subtracted). A guide that the count matrix</span>
+<span class="sd">  holds at all carries all nine (round, replicate) values, so the undetected-guide drop is</span>
+<span class="sd">  per guide in practice: 9,264 of the 100,493 reference guides appear in no run.</span>
 <span class="sd">Nothing else is dropped. In particular, 150 groups of CRISPRd designs (318 records) share</span>
 <span class="sd">a resolved gene AND a 21 nt spacer, because the spacer maps to more than one site at a</span>
 <span class="sd">multicopy locus (tRNA genes, paralogs) and the designs differ only in their donor arms.</span>
@@ -241,11 +272,17 @@
 <span class="sd">were released; the Fig 2 profiles are excluded from Source Data). It is reprocessed from</span>
 <span class="sd">raw reads (NCBI SRA PRJNA504483, 21 runs) against the 100,493-guide reference by the</span>
 <span class="sd">versioned pipeline in ``experiments/016-lian-magic-reprocess/``, and validated against the</span>
-<span class="sd">paper's hits (PDR1i round-3 rank 1, SLX5i round-1 rank 1, SAP30d round-1 rank 2). The</span>
-<span class="sd">derived ``guide_enrichment_final.tsv`` and the published Supplementary Data 3 both live in</span>
-<span class="sd">the raw mirror ``$DATA_ROOT/torchcell-raw/lianMultifunctionalGenomewideCRISPR2019/`` with a</span>
-<span class="sd">``manifest.json`` recording the Springer ESM retrieval for the design file and the</span>
-<span class="sd">reprocessing chain (inputs + pipeline) for the derived table.</span>
+<span class="sd">paper's hits (PDR1i round-3 rank 1, SLX5i round-1 rank 1, SAP30d round-1 rank 2). This</span>
+<span class="sd">build consumes the per-replicate table ``data/guide_enrichment_replicates.tsv``; the mean</span>
+<span class="sd">table ``data/guide_enrichment_final.tsv`` that earlier builds read stays in the mirror as</span>
+<span class="sd">its ancestor, because it is where the ``is_control`` / ``corrupted_gene`` flags come from</span>
+<span class="sd">and the pinned numbers the per-replicate columns were checked against. Both of those, the</span>
+<span class="sd">SRA run report (``data/sra_runinfo_PRJNA504483.csv``, the replicate labels' source) and the</span>
+<span class="sd">published Supplementary Data 3 live in the raw mirror</span>
+<span class="sd">``$DATA_ROOT/torchcell-raw/lianMultifunctionalGenomewideCRISPR2019/`` with a</span>
+<span class="sd">``manifest.json`` recording the Springer ESM retrieval for the design file, the direct_url</span>
+<span class="sd">retrieval for the run report, and the reprocessing chain (inputs + pipeline) for the two</span>
+<span class="sd">derived tables.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -299,7 +336,6 @@
     <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">,</span>
     <span class="n">StrainReferenceGenome</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
-    <span class="n">UncertaintyType</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.strain_background</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BAID_CONSTRUCTION</span><span class="p">,</span>
@@ -343,6 +379,21 @@
 <span class="n">TSV_FILENAME</span> <span class="o">=</span> <span class="s2">"guide_enrichment_final.tsv"</span>
 <span class="n">TSV_REL</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"data/</span><span class="si">{</span><span class="n">TSV_FILENAME</span><span class="si">}</span><span class="s2">"</span>
 <span class="n">TSV_SHA256</span> <span class="o">=</span> <span class="s2">"f9af849f97a2d460c3a6d628308491ec3966c6cc2a7f6cad130848d2bad32647"</span>
+
+<span class="c1">#: The per-replicate enrichment table this build consumes: the same CPM log2(after/before)</span>
+<span class="c1">#: the mean table summarized, one column per (round, replicate), emitted by</span>
+<span class="c1">#: ``experiments/016-lian-magic-reprocess/scripts/replicate_enrichment.py``.</span>
+<span class="n">REPLICATES_TSV_FILENAME</span> <span class="o">=</span> <span class="s2">"guide_enrichment_replicates.tsv"</span>
+<span class="n">REPLICATES_TSV_REL</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"data/</span><span class="si">{</span><span class="n">REPLICATES_TSV_FILENAME</span><span class="si">}</span><span class="s2">"</span>
+<span class="n">REPLICATES_TSV_SHA256</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"46eaf7957ef410395177acf842ed0d36c12fd7c7f20ac5f5b2ee7dfd47d698ab"</span>
+<span class="p">)</span>
+<span class="c1">#: The SRA run report for PRJNA504483: where the authors' own library labels come from.</span>
+<span class="n">RUNINFO_FILENAME</span> <span class="o">=</span> <span class="s2">"sra_runinfo_PRJNA504483.csv"</span>
+<span class="n">RUNINFO_REL</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"data/</span><span class="si">{</span><span class="n">RUNINFO_FILENAME</span><span class="si">}</span><span class="s2">"</span>
+<span class="n">RUNINFO_SHA256</span> <span class="o">=</span> <span class="s2">"09e449b8d9e3490ea4772506774ebab88762c51230d1c718df28288fb8654b1e"</span>
+<span class="n">RUNINFO_URL</span> <span class="o">=</span> <span class="s2">"https://trace.ncbi.nlm.nih.gov/Traces/sra-db-be/runinfo?acc=PRJNA504483"</span>
+<span class="n">RUNINFO_RETRIEVED_AT</span> <span class="o">=</span> <span class="s2">"2026-11-24"</span>
 
 <span class="n">_ESM_BASE</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"https://static-content.springer.com/esm/art%3A10.1038</span><span class="si">%2F</span><span class="s2">s41467-019-13621-4/"</span>
@@ -419,8 +470,55 @@
 <span class="n">N_REPLICATES</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
     <span class="mi">3</span><span class="p">,</span>
     <span class="s2">"biological triplicates for untreated and furfural stressed libraries"</span><span class="p">,</span>
-    <span class="n">note</span><span class="o">=</span><span class="s2">"the triplicate untreated and furfural-stressed libraries; the stored SD is the "</span>
-    <span class="s2">"sample SD across them, so SE = SD/sqrt(3)"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the triplicate untreated and furfural-stressed libraries. Each replicate is a "</span>
+    <span class="s2">"record of its own (n_samples=1); n=3 now appears only on the aggregate reference, "</span>
+    <span class="s2">"which summarizes the three"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="c1">#: The enrichment is defined PER REPLICATE by the source, which is what makes a replicate</span>
+<span class="c1">#: the record: a ratio of that replicate's stressed library to its untreated library.</span>
+<span class="n">PER_REPLICATE_ENRICHMENT</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="s2">"log2(furfural stressed library / untreated library), per biological replicate"</span><span class="p">,</span>
+    <span class="s2">"A threshold of one read in all six libraries (biological triplicates for untreated "</span>
+    <span class="s2">"and furfural stressed libraries) and five-fold enrichment (normalized no. of guide "</span>
+    <span class="s2">"in the furfural stressed library/normalized no. of guide in the untreated library) "</span>
+    <span class="s2">"for each replicate was set to keep a guide sequence."</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the authors' own per-replicate definition. The five-fold / one-read threshold "</span>
+    <span class="s2">"is their HIT-SELECTION filter for choosing targets to verify, not a condition on the "</span>
+    <span class="s2">"measurement, so no record is dropped by it"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="c1">#: ``{round: {replicate: the authors' library-pair label}}``, from the SRA run report for</span>
+<span class="c1">#: PRJNA504483 (``LibraryName`` = ``SampleName`` for all 21 runs; the pipeline's</span>
+<span class="c1">#: ``run_manifest.tsv`` carries the same names, 21/21 agreeing). ``a`` is the</span>
+<span class="c1">#: furfural-stressed and ``b`` the untreated library of one replicate, and a record is the</span>
+<span class="c1">#: ratio of the two, so ``replicate_id`` names the pair.</span>
+<span class="n">REPLICATE_LIBRARY</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mi">1</span><span class="p">:</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="s2">"Ff1a/Ff1b"</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">"Ff2a/Ff2b"</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s2">"Ff3a/Ff3b"</span><span class="p">},</span>
+    <span class="mi">2</span><span class="p">:</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="s2">"2Ff1a/2Ff1b"</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">"2Ff2a/2Ff2b"</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s2">"2Ff3a/2Ff3b"</span><span class="p">},</span>
+    <span class="mi">3</span><span class="p">:</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="s2">"3Ff1a/3Ff1b"</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">"3Ff2a/3Ff2b"</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s2">"3Ff3a/3Ff3b"</span><span class="p">},</span>
+<span class="p">}</span>
+<span class="c1">#: The SRA runs behind each ``REPLICATE_LIBRARY`` pair, ``(stressed, untreated)``.</span>
+<span class="n">REPLICATE_RUNS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mi">1</span><span class="p">:</span> <span class="p">{</span>
+        <span class="mi">1</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SRR8293138"</span><span class="p">,</span> <span class="s2">"SRR8293135"</span><span class="p">),</span>
+        <span class="mi">2</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SRR8293131"</span><span class="p">,</span> <span class="s2">"SRR8293136"</span><span class="p">),</span>
+        <span class="mi">3</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SRR8293132"</span><span class="p">,</span> <span class="s2">"SRR8293137"</span><span class="p">),</span>
+    <span class="p">},</span>
+    <span class="mi">2</span><span class="p">:</span> <span class="p">{</span>
+        <span class="mi">1</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SRR8293130"</span><span class="p">,</span> <span class="s2">"SRR8293133"</span><span class="p">),</span>
+        <span class="mi">2</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SRR8293142"</span><span class="p">,</span> <span class="s2">"SRR8293134"</span><span class="p">),</span>
+        <span class="mi">3</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SRR8293143"</span><span class="p">,</span> <span class="s2">"SRR8293129"</span><span class="p">),</span>
+    <span class="p">},</span>
+    <span class="mi">3</span><span class="p">:</span> <span class="p">{</span>
+        <span class="mi">1</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SRR8293147"</span><span class="p">,</span> <span class="s2">"SRR8293144"</span><span class="p">),</span>
+        <span class="mi">2</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SRR8293148"</span><span class="p">,</span> <span class="s2">"SRR8293145"</span><span class="p">),</span>
+        <span class="mi">3</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SRR8293149"</span><span class="p">,</span> <span class="s2">"SRR8293146"</span><span class="p">),</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+
+<span class="n">_SINGLE_REPLICATE_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"one biological replicate's log2 enrichment, stored verbatim: a single measurement "</span>
+    <span class="s2">"has no dispersion. The sample SD over the three replicates of a (guide, round) is a "</span>
+    <span class="s2">"grouping over those three records, not a field of one of them"</span>
 <span class="p">)</span>
 <span class="n">ASSAY</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
     <span class="n">AssayType</span><span class="o">.</span><span class="n">pooled_competitive_growth_barcode</span><span class="p">,</span>
@@ -621,16 +719,21 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">enrichment_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">design_d_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">replicates_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">runinfo_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">retrieved_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">SI_RETRIEVED_AT</span><span class="p">,</span>
+    <span class="n">runinfo_retrieved_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">RUNINFO_RETRIEVED_AT</span><span class="p">,</span>
     <span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Write the raw mirror (derived enrichment + published CRISPRd design) + manifest.</span>
+<span class="w">    </span><span class="sd">"""Write the raw mirror (derived enrichment tables + design + run report) + manifest.</span>
 
 <span class="sd">    Idempotent by sha256. The design file is a directly scriptable Springer ESM whose</span>
-<span class="sd">    pinned hash was reproduced on 2026-09-12. The enrichment table is DERIVED, not</span>
-<span class="sd">    retrieved: its ``ProcessingRecord`` names the versioned reprocessing pipeline and the</span>
+<span class="sd">    pinned hash was reproduced on 2026-09-12. The two enrichment tables are DERIVED, not</span>
+<span class="sd">    retrieved: each ``ProcessingRecord`` names the versioned reprocessing pipeline and the</span>
 <span class="sd">    sha256 of its inputs (the Supplementary Data 4 guide reference and the raw SRA</span>
-<span class="sd">    project), so the rebuild chain is recorded rather than a fabricated download URL.</span>
+<span class="sd">    project, and for the per-replicate table the mean table it was checked against), so</span>
+<span class="sd">    the rebuild chain is recorded rather than a fabricated download URL. The SRA run</span>
+<span class="sd">    report is a scriptable direct_url retrieval and carries one.</span>
 <span class="sd">    """</span>
     <span class="n">root</span> <span class="o">=</span> <span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
     <span class="n">design_url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ESM_BASE</span><span class="si">}{</span><span class="n">DESIGN_D_FILENAME</span><span class="si">}</span><span class="s2">"</span>
@@ -638,6 +741,8 @@
     <span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArtifactRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">deposits</span> <span class="o">=</span> <span class="p">(</span>
         <span class="p">(</span><span class="n">enrichment_path</span><span class="p">,</span> <span class="n">TSV_REL</span><span class="p">,</span> <span class="n">TSV_SHA256</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">replicates_path</span><span class="p">,</span> <span class="n">REPLICATES_TSV_REL</span><span class="p">,</span> <span class="n">REPLICATES_TSV_SHA256</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">runinfo_path</span><span class="p">,</span> <span class="n">RUNINFO_REL</span><span class="p">,</span> <span class="n">RUNINFO_SHA256</span><span class="p">),</span>
         <span class="p">(</span><span class="n">design_d_path</span><span class="p">,</span> <span class="n">DESIGN_D_REL</span><span class="p">,</span> <span class="n">DESIGN_D_SHA256</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="c1"># Both sources are verified before anything is written, so a refusal leaves no</span>
@@ -680,6 +785,66 @@
     <span class="p">)</span>
     <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
         <span class="n">ArtifactRecord</span><span class="p">(</span>
+            <span class="n">path</span><span class="o">=</span><span class="n">REPLICATES_TSV_REL</span><span class="p">,</span>
+            <span class="n">role</span><span class="o">=</span><span class="n">ROLE_RAW_DATA</span><span class="p">,</span>
+            <span class="nb">bytes</span><span class="o">=</span><span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="n">REPLICATES_TSV_REL</span><span class="p">)</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">REPLICATES_TSV_SHA256</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">=</span><span class="s2">"derived: SRA PRJNA504483 reprocessing, per replicate"</span><span class="p">,</span>
+            <span class="n">processing</span><span class="o">=</span><span class="n">ProcessingRecord</span><span class="p">(</span>
+                <span class="n">processor</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">"experiments/016-lian-magic-reprocess/scripts/"</span>
+                    <span class="s2">"replicate_enrichment.py"</span>
+                <span class="p">),</span>
+                <span class="n">tool</span><span class="o">=</span><span class="s2">"torchcell lian-magic-reprocess pipeline"</span><span class="p">,</span>
+                <span class="n">version</span><span class="o">=</span><span class="s2">"2026-11-24"</span><span class="p">,</span>
+                <span class="n">params</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">"sra_project"</span><span class="p">:</span> <span class="s2">"PRJNA504483"</span><span class="p">,</span>
+                    <span class="s2">"n_runs"</span><span class="p">:</span> <span class="mi">21</span><span class="p">,</span>
+                    <span class="s2">"barcode_window"</span><span class="p">:</span> <span class="s2">"read[27:70] (43 bp activation) | read[27:71] "</span>
+                    <span class="s2">"(44 bp interference/deletion), forward, exact match"</span><span class="p">,</span>
+                    <span class="s2">"normalization"</span><span class="p">:</span> <span class="s2">"CPM(+1) per library; per round per replicate "</span>
+                    <span class="s2">"log2(furfural-after / untreated-before), one column per (round, "</span>
+                    <span class="s2">"replicate); NO mean and NO SD"</span><span class="p">,</span>
+                    <span class="s2">"replicate_pairing"</span><span class="p">:</span> <span class="s2">"the authors' library labels from the SRA run "</span>
+                    <span class="s2">"report, 'a' stressed over 'b' untreated of the same replicate "</span>
+                    <span class="s2">"(Ff1a/Ff1b ... 3Ff3a/3Ff3b)"</span><span class="p">,</span>
+                    <span class="s2">"verification"</span><span class="p">:</span> <span class="s2">"the mean and sample SD over the three emitted "</span>
+                    <span class="s2">"columns reproduce guide_enrichment_final.tsv's r</span><span class="si">{rnd}</span><span class="s2">_log2fc_mean "</span>
+                    <span class="s2">"/ _sd for all 91,229 detected guides in all three rounds; max "</span>
+                    <span class="s2">"absolute difference 1.3e-15, asserted at &lt;= 1e-9"</span><span class="p">,</span>
+                    <span class="s2">"flags"</span><span class="p">:</span> <span class="s2">"is_control / corrupted_gene carried over verbatim from "</span>
+                    <span class="s2">"guide_enrichment_final.tsv"</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="n">input_sha256</span><span class="o">=</span><span class="p">[</span><span class="n">REFERENCE_SHA256</span><span class="p">,</span> <span class="n">TSV_SHA256</span><span class="p">],</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">ArtifactRecord</span><span class="p">(</span>
+            <span class="n">path</span><span class="o">=</span><span class="n">RUNINFO_REL</span><span class="p">,</span>
+            <span class="n">role</span><span class="o">=</span><span class="n">ROLE_RAW_DATA</span><span class="p">,</span>
+            <span class="nb">bytes</span><span class="o">=</span><span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="n">RUNINFO_REL</span><span class="p">)</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">RUNINFO_SHA256</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">=</span><span class="n">RUNINFO_URL</span><span class="p">,</span>
+            <span class="n">retrieval</span><span class="o">=</span><span class="n">RetrievalRecord</span><span class="p">(</span>
+                <span class="n">method</span><span class="o">=</span><span class="n">RetrievalMethod</span><span class="o">.</span><span class="n">direct_url</span><span class="p">,</span>
+                <span class="n">source_url</span><span class="o">=</span><span class="n">RUNINFO_URL</span><span class="p">,</span>
+                <span class="n">retriever</span><span class="o">=</span><span class="s2">"curl"</span><span class="p">,</span>
+                <span class="n">params</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">"command"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"curl -s '</span><span class="si">{</span><span class="n">RUNINFO_URL</span><span class="si">}</span><span class="s2">' -o </span><span class="si">{</span><span class="n">RUNINFO_FILENAME</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="s2">"why"</span><span class="p">:</span> <span class="s2">"the authors' own library labels (LibraryName = SampleName) "</span>
+                    <span class="s2">"for the 21 runs, which is what replicate_id states. Named by the "</span>
+                    <span class="s2">"Data availability statement: 'The raw reads of the NGS data were "</span>
+                    <span class="s2">"deposited into the NCBI Sequence Read Archive (SRA) database "</span>
+                    <span class="s2">"(accession number: PRJNA504483)'"</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="n">sha256</span><span class="o">=</span><span class="n">RUNINFO_SHA256</span><span class="p">,</span>
+                <span class="n">retrieved_at</span><span class="o">=</span><span class="n">runinfo_retrieved_at</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">ArtifactRecord</span><span class="p">(</span>
             <span class="n">path</span><span class="o">=</span><span class="n">DESIGN_D_REL</span><span class="p">,</span>
             <span class="n">role</span><span class="o">=</span><span class="n">ROLE_SI_DATA</span><span class="p">,</span>
             <span class="nb">bytes</span><span class="o">=</span><span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="n">DESIGN_D_REL</span><span class="p">)</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span><span class="p">,</span>
@@ -714,10 +879,15 @@
             <span class="s2">"the archived lab design file, and the same holds for Supplementary Data 1 "</span>
             <span class="s2">"and 2 against the CRISPRa and CRISPRi lab files"</span><span class="p">,</span>
             <span class="s2">"Supplementary Data 4 (100,493-guide reference) -- an INPUT to the derived "</span>
-            <span class="s2">"enrichment table, recorded in its processing record rather than mirrored "</span>
+            <span class="s2">"enrichment tables, recorded in their processing records rather than mirrored "</span>
             <span class="s2">"here, since the loader does not read it"</span><span class="p">,</span>
             <span class="s2">"the per-guide furfural enrichment itself was NEVER released; it is "</span>
-            <span class="s2">"reprocessed from SRA PRJNA504483"</span><span class="p">,</span>
+            <span class="s2">"reprocessed from SRA PRJNA504483, per biological replicate"</span><span class="p">,</span>
+            <span class="s2">"the Source Data file (41467_2019_13621_MOESM8_ESM.xlsx) holds the "</span>
+            <span class="s2">"verification measurements of the INDIVIDUALLY constructed strains (relative "</span>
+            <span class="s2">"biomass accumulation, relative cellulase activity, qPCR Ct, reporter "</span>
+            <span class="s2">"fluorescence), three or more repeats each. No class reads them; see the "</span>
+            <span class="s2">"dataset note's 2026.11.24 section"</span><span class="p">,</span>
         <span class="p">],</span>
         <span class="n">provenance_complete</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">created_at</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
@@ -760,7 +930,7 @@
 <span class="w">    </span><span class="sd">"""One retention rule, the records it removed, and the items it removed them for."""</span>
 
     <span class="n">rule</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">scope</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"guide"</span><span class="p">,</span> <span class="s2">"guide_round"</span><span class="p">,</span> <span class="s2">"strain"</span><span class="p">]</span>
+    <span class="n">scope</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"guide"</span><span class="p">,</span> <span class="s2">"guide_round"</span><span class="p">,</span> <span class="s2">"guide_round_replicate"</span><span class="p">,</span> <span class="s2">"strain"</span><span class="p">]</span>
     <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -809,23 +979,23 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The derived enrichment table and the published CRISPRd design library."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">TSV_FILENAME</span><span class="p">,</span> <span class="n">DESIGN_D_FILENAME</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""The per-replicate enrichment table and the published CRISPRd design library."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">REPLICATES_TSV_FILENAME</span><span class="p">,</span> <span class="n">DESIGN_D_FILENAME</span><span class="p">]</span>
 
 <div class="viewcode-block" id="CrisprMagicLian2019Dataset.download">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.lian2019.CrisprMagicLian2019Dataset.html#torchcell.datasets.scerevisiae.lian2019.CrisprMagicLian2019Dataset.download">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Link the mirror files into ``raw/`` after verifying each against its pin.</span>
 
-<span class="sd">        ``TSV_SHA256`` and ``DESIGN_D_SHA256`` are the pins; the manifest is the</span>
-<span class="sd">        retrieval record and must carry the same digests, else</span>
+<span class="sd">        ``REPLICATES_TSV_SHA256`` and ``DESIGN_D_SHA256`` are the pins; the manifest is</span>
+<span class="sd">        the retrieval record and must carry the same digests, else</span>
 <span class="sd">        ``ManifestPinMismatchError`` names both.</span>
 <span class="sd">        """</span>
         <span class="n">data_root</span> <span class="o">=</span> <span class="n">_data_root</span><span class="p">()</span>
         <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">relpath</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">expected</span> <span class="ow">in</span> <span class="p">(</span>
-            <span class="p">(</span><span class="n">TSV_REL</span><span class="p">,</span> <span class="n">TSV_FILENAME</span><span class="p">,</span> <span class="n">TSV_SHA256</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">REPLICATES_TSV_REL</span><span class="p">,</span> <span class="n">REPLICATES_TSV_FILENAME</span><span class="p">,</span> <span class="n">REPLICATES_TSV_SHA256</span><span class="p">),</span>
             <span class="p">(</span><span class="n">DESIGN_D_REL</span><span class="p">,</span> <span class="n">DESIGN_D_FILENAME</span><span class="p">,</span> <span class="n">DESIGN_D_SHA256</span><span class="p">),</span>
         <span class="p">):</span>
             <span class="n">check_manifest_pin</span><span class="p">(</span><span class="n">relpath</span><span class="p">,</span> <span class="n">manifest_sha256</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">relpath</span><span class="p">),</span> <span class="n">expected</span><span class="p">)</span>
@@ -948,7 +1118,13 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_reference</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">:</span> <span class="n">CultureEnvironment</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""No-enrichment baseline: a guide that neither enriches nor depletes -&gt; log2FC 0."""</span>
+<span class="w">        </span><span class="sd">"""No-enrichment baseline: a guide that neither enriches nor depletes -&gt; log2FC 0.</span>
+
+<span class="sd">        It stays an AGGREGATE over the round's three replicates (``n_samples=3``,</span>
+<span class="sd">        ``replicate_id=None``) while every experiment record is one replicate: one</span>
+<span class="sd">        reference per record cannot hold three replicate baselines, and the baseline</span>
+<span class="sd">        itself is the same zero in each.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">(</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">genome_reference</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_genome_reference</span><span class="p">(),</span>
@@ -963,15 +1139,48 @@
             <span class="p">),</span>
         <span class="p">)</span>
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_replicate_phenotype</span><span class="p">(</span>
+        <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">rnd</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">replicate</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""ONE replicate's log2 enrichment: n = 1, no dispersion, the authors' label."""</span>
+        <span class="k">return</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
+            <span class="n">measurement_type</span><span class="o">=</span><span class="n">MeasurementType</span><span class="o">.</span><span class="n">log2_ratio</span><span class="p">,</span>
+            <span class="n">assay_type</span><span class="o">=</span><span class="n">ASSAY</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">environment_response</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">environment_response_uncertainty</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">environment_response_uncertainty_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">n_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">sample_unit</span><span class="o">=</span><span class="n">SampleUnit</span><span class="o">.</span><span class="n">biological_replicate</span><span class="p">,</span>
+            <span class="n">units</span><span class="o">=</span><span class="n">UNITS</span><span class="p">,</span>
+            <span class="n">replicate_id</span><span class="o">=</span><span class="n">REPLICATE_LIBRARY</span><span class="p">[</span><span class="n">rnd</span><span class="p">][</span><span class="n">replicate</span><span class="p">],</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">ProvenanceGap</span><span class="p">(</span>
+                    <span class="n">field</span><span class="o">=</span><span class="n">field</span><span class="p">,</span>
+                    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_applicable_single_measurement</span><span class="p">,</span>
+                    <span class="n">note</span><span class="o">=</span><span class="n">_SINGLE_REPLICATE_NOTE</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span>
+                    <span class="s2">"environment_response_uncertainty"</span><span class="p">,</span>
+                    <span class="s2">"environment_response_uncertainty_type"</span><span class="p">,</span>
+                    <span class="s2">"environment_response_se"</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+
 <div class="viewcode-block" id="CrisprMagicLian2019Dataset.process">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.lian2019.CrisprMagicLian2019Dataset.html#torchcell.datasets.scerevisiae.lian2019.CrisprMagicLian2019Dataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build one env x geno -&gt; log2-enrichment record per (guide, round); write LMDB."""</span>
+<span class="w">        </span><span class="sd">"""One record per (guide, round, biological replicate); write LMDB."""</span>
         <span class="n">verify_raw_files</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">TSV_FILENAME</span><span class="p">:</span> <span class="n">TSV_SHA256</span><span class="p">,</span> <span class="n">DESIGN_D_FILENAME</span><span class="p">:</span> <span class="n">DESIGN_D_SHA256</span><span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span>
+            <span class="p">{</span>
+                <span class="n">REPLICATES_TSV_FILENAME</span><span class="p">:</span> <span class="n">REPLICATES_TSV_SHA256</span><span class="p">,</span>
+                <span class="n">DESIGN_D_FILENAME</span><span class="p">:</span> <span class="n">DESIGN_D_SHA256</span><span class="p">,</span>
+            <span class="p">},</span>
         <span class="p">)</span>
-        <span class="n">table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">TSV_FILENAME</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">REPLICATES_TSV_FILENAME</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">resolve</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="p">()</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">canonical</span> <span class="o">=</span> <span class="n">canonical_common_names</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
@@ -994,6 +1203,8 @@
             <span class="n">rnd</span><span class="p">:</span> <span class="p">{</span><span class="n">orf</span> <span class="k">for</span> <span class="n">orf</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">ROUND_BACKGROUND</span><span class="p">[</span><span class="n">rnd</span><span class="p">]}</span> <span class="k">for</span> <span class="n">rnd</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
         <span class="p">}</span>
         <span class="n">rounds</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">replicates</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">records_per_guide</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">rounds</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">replicates</span><span class="p">)</span>
 
         <span class="c1"># --- pass 1: gene resolution -------------------------------------------- #</span>
         <span class="c1"># Two CRISPRd designs can share a gene AND a 21 nt spacer (multicopy loci where</span>
@@ -1056,51 +1267,40 @@
                 <span class="n">spacer</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"true_spacer"</span><span class="p">]</span>
                 <span class="n">donor</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"donor"</span><span class="p">]</span>
                 <span class="k">for</span> <span class="n">rnd</span> <span class="ow">in</span> <span class="n">rounds</span><span class="p">:</span>
-                    <span class="n">mean</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="sa">f</span><span class="s2">"r</span><span class="si">{</span><span class="n">rnd</span><span class="si">}</span><span class="s2">_log2fc_mean"</span><span class="p">]</span>
-                    <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">mean</span><span class="p">):</span>
-                        <span class="n">n_nan</span> <span class="o">+=</span> <span class="mi">1</span>
-                        <span class="k">continue</span>
                     <span class="k">if</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">background_orfs</span><span class="p">[</span><span class="n">rnd</span><span class="p">]:</span>
-                        <span class="n">n_bg_self</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="n">n_bg_self</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">replicates</span><span class="p">)</span>
                         <span class="k">continue</span>
-                    <span class="n">sd</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="sa">f</span><span class="s2">"r</span><span class="si">{</span><span class="n">rnd</span><span class="si">}</span><span class="s2">_log2fc_sd"</span><span class="p">]</span>
-                    <span class="n">has_sd</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">sd</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">sd</span><span class="p">))</span>
                     <span class="n">item</span> <span class="o">=</span> <span class="n">prepared</span><span class="p">[</span><span class="n">rnd</span><span class="p">]</span>
-                    <span class="n">experiment</span> <span class="o">=</span> <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">(</span>
-                        <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                        <span class="n">genotype</span><span class="o">=</span><span class="n">Genotype</span><span class="p">(</span>
-                            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
-                                <span class="n">crispr_perturbation</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">common</span><span class="p">,</span> <span class="n">mod</span><span class="p">,</span> <span class="n">spacer</span><span class="p">,</span> <span class="n">donor</span><span class="p">),</span>
-                                <span class="o">*</span><span class="n">item</span><span class="p">[</span><span class="s2">"background"</span><span class="p">],</span>
-                            <span class="p">]</span>
-                        <span class="p">),</span>
-                        <span class="n">environment</span><span class="o">=</span><span class="n">item</span><span class="p">[</span><span class="s2">"environment"</span><span class="p">],</span>
-                        <span class="n">phenotype</span><span class="o">=</span><span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
-                            <span class="n">measurement_type</span><span class="o">=</span><span class="n">MeasurementType</span><span class="o">.</span><span class="n">log2_ratio</span><span class="p">,</span>
-                            <span class="n">assay_type</span><span class="o">=</span><span class="n">ASSAY</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                            <span class="n">environment_response</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">mean</span><span class="p">),</span>
-                            <span class="n">environment_response_uncertainty</span><span class="o">=</span><span class="p">(</span>
-                                <span class="nb">float</span><span class="p">(</span><span class="n">sd</span><span class="p">)</span> <span class="k">if</span> <span class="n">has_sd</span> <span class="k">else</span> <span class="kc">None</span>
-                            <span class="p">),</span>
-                            <span class="n">environment_response_uncertainty_type</span><span class="o">=</span><span class="p">(</span>
-                                <span class="n">UncertaintyType</span><span class="o">.</span><span class="n">sample_sd</span> <span class="k">if</span> <span class="n">has_sd</span> <span class="k">else</span> <span class="kc">None</span>
-                            <span class="p">),</span>
-                            <span class="n">n_samples</span><span class="o">=</span><span class="n">N_REPLICATES</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                            <span class="n">sample_unit</span><span class="o">=</span><span class="n">SampleUnit</span><span class="o">.</span><span class="n">biological_replicate</span><span class="p">,</span>
-                            <span class="n">units</span><span class="o">=</span><span class="n">UNITS</span><span class="p">,</span>
-                        <span class="p">),</span>
+                    <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span>
+                        <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                            <span class="n">crispr_perturbation</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">common</span><span class="p">,</span> <span class="n">mod</span><span class="p">,</span> <span class="n">spacer</span><span class="p">,</span> <span class="n">donor</span><span class="p">),</span>
+                            <span class="o">*</span><span class="n">item</span><span class="p">[</span><span class="s2">"background"</span><span class="p">],</span>
+                        <span class="p">]</span>
                     <span class="p">)</span>
-                    <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">_intern_record</span><span class="p">(</span>
-                            <span class="n">experiment</span><span class="p">,</span> <span class="n">item</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">],</span> <span class="n">publication</span><span class="p">,</span> <span class="n">itxn</span>
-                        <span class="p">),</span>
-                    <span class="p">)</span>
-                    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">for</span> <span class="n">replicate</span> <span class="ow">in</span> <span class="n">replicates</span><span class="p">:</span>
+                        <span class="n">value</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="sa">f</span><span class="s2">"r</span><span class="si">{</span><span class="n">rnd</span><span class="si">}</span><span class="s2">_rep</span><span class="si">{</span><span class="n">replicate</span><span class="si">}</span><span class="s2">_log2fc"</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)):</span>
+                            <span class="n">n_nan</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="k">continue</span>
+                        <span class="n">experiment</span> <span class="o">=</span> <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">(</span>
+                            <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                            <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
+                            <span class="n">environment</span><span class="o">=</span><span class="n">item</span><span class="p">[</span><span class="s2">"environment"</span><span class="p">],</span>
+                            <span class="n">phenotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_replicate_phenotype</span><span class="p">(</span>
+                                <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">rnd</span><span class="p">,</span> <span class="n">replicate</span>
+                            <span class="p">),</span>
+                        <span class="p">)</span>
+                        <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_intern_record</span><span class="p">(</span>
+                                <span class="n">experiment</span><span class="p">,</span> <span class="n">item</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">],</span> <span class="n">publication</span><span class="p">,</span> <span class="n">itxn</span>
+                            <span class="p">),</span>
+                        <span class="p">)</span>
+                        <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="n">interned_env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
-        <span class="n">source_records</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">table</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">rounds</span><span class="p">)</span>
+        <span class="n">source_records</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">table</span><span class="p">)</span> <span class="o">*</span> <span class="n">records_per_guide</span>
         <span class="n">rules</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">DropRule</span><span class="p">(</span>
                 <span class="n">rule</span><span class="o">=</span><span class="s2">"random_negative_control_guide"</span><span class="p">,</span>
@@ -1109,7 +1309,7 @@
                     <span class="s2">"one of the 300 random negative-control guides (100 per library); it "</span>
                     <span class="s2">"targets no gene, so there is no genotype to key a record to"</span>
                 <span class="p">),</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="n">n_ctrl</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">rounds</span><span class="p">),</span>
+                <span class="n">n_records</span><span class="o">=</span><span class="n">n_ctrl</span> <span class="o">*</span> <span class="n">records_per_guide</span><span class="p">,</span>
                 <span class="n">items</span><span class="o">=</span><span class="p">[],</span>
             <span class="p">),</span>
             <span class="n">DropRule</span><span class="p">(</span>
@@ -1120,7 +1320,7 @@
                     <span class="s2">"in the released reference and the design library, so the target is "</span>
                     <span class="s2">"unrecoverable from our inputs"</span>
                 <span class="p">),</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="n">n_corrupt</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">rounds</span><span class="p">),</span>
+                <span class="n">n_records</span><span class="o">=</span><span class="n">n_corrupt</span> <span class="o">*</span> <span class="n">records_per_guide</span><span class="p">,</span>
                 <span class="n">items</span><span class="o">=</span><span class="p">[],</span>
             <span class="p">),</span>
             <span class="n">DropRule</span><span class="p">(</span>
@@ -1130,15 +1330,18 @@
                     <span class="s2">"the guide targets an ncRNA / rDNA feature or a name absent from the "</span>
                     <span class="s2">"current R64 ORF genome, so no gene entity exists to key the record to"</span>
                 <span class="p">),</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="n">n_unresolved</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">rounds</span><span class="p">),</span>
+                <span class="n">n_records</span><span class="o">=</span><span class="n">n_unresolved</span> <span class="o">*</span> <span class="n">records_per_guide</span><span class="p">,</span>
                 <span class="n">items</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unresolved_genes</span><span class="p">)[:</span><span class="mi">200</span><span class="p">],</span>
             <span class="p">),</span>
             <span class="n">DropRule</span><span class="p">(</span>
-                <span class="n">rule</span><span class="o">=</span><span class="s2">"guide_round_has_no_enrichment_value"</span><span class="p">,</span>
-                <span class="n">scope</span><span class="o">=</span><span class="s2">"guide_round"</span><span class="p">,</span>
+                <span class="n">rule</span><span class="o">=</span><span class="s2">"guide_round_replicate_has_no_enrichment_value"</span><span class="p">,</span>
+                <span class="n">scope</span><span class="o">=</span><span class="s2">"guide_round_replicate"</span><span class="p">,</span>
                 <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">"the guide was not detected in this round's before/after libraries, "</span>
-                    <span class="s2">"so the round has no log2 enrichment for it"</span>
+                    <span class="s2">"the guide was not detected in this replicate's before/after "</span>
+                    <span class="s2">"libraries, so that replicate has no finite log2 enrichment for it. "</span>
+                    <span class="s2">"A guide the count matrix holds at all carries all nine (round, "</span>
+                    <span class="s2">"replicate) values, so in practice this rule fires for the 9,264 "</span>
+                    <span class="s2">"reference guides that appear in no run"</span>
                 <span class="p">),</span>
                 <span class="n">n_records</span><span class="o">=</span><span class="n">n_nan</span><span class="p">,</span>
                 <span class="n">items</span><span class="o">=</span><span class="p">[],</span>
@@ -1150,7 +1353,8 @@
                     <span class="s2">"in this round the guide's target gene is already an integrated "</span>
                     <span class="s2">"background perturbation, so the foreground edit is redundant and the "</span>
                     <span class="s2">"strain signature would collapse to empty once the background is "</span>
-                    <span class="s2">"subtracted"</span>
+                    <span class="s2">"subtracted. Counted in records, which is three (one per replicate) "</span>
+                    <span class="s2">"per skipped (guide, round)"</span>
                 <span class="p">),</span>
                 <span class="n">n_records</span><span class="o">=</span><span class="n">n_bg_self</span><span class="p">,</span>
                 <span class="n">items</span><span class="o">=</span><span class="p">[],</span>
@@ -1172,9 +1376,10 @@
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span><span class="si">}</span><span class="s2"> records missing from the build"</span>
             <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Lian2019: wrote </span><span class="si">%d</span><span class="s2"> (guide x round) records; dropped </span><span class="si">%d</span><span class="s2"> control + </span><span class="si">%d</span><span class="s2"> "</span>
-            <span class="s2">"corrupted + </span><span class="si">%d</span><span class="s2"> unresolved-gene guides (</span><span class="si">%d</span><span class="s2"> distinct genes); </span><span class="si">%d</span><span class="s2"> guide-rounds "</span>
-            <span class="s2">"undetected; </span><span class="si">%d</span><span class="s2"> skipped (guide targets its own round background)"</span><span class="p">,</span>
+            <span class="s2">"Lian2019: wrote </span><span class="si">%d</span><span class="s2"> (guide x round x replicate) records; dropped </span><span class="si">%d</span><span class="s2"> control "</span>
+            <span class="s2">"+ </span><span class="si">%d</span><span class="s2"> corrupted + </span><span class="si">%d</span><span class="s2"> unresolved-gene guides (</span><span class="si">%d</span><span class="s2"> distinct genes); </span><span class="si">%d</span><span class="s2"> "</span>
+            <span class="s2">"guide-round-replicates undetected; </span><span class="si">%d</span><span class="s2"> skipped (guide targets its own round "</span>
+            <span class="s2">"background)"</span><span class="p">,</span>
             <span class="n">idx</span><span class="p">,</span>
             <span class="n">n_ctrl</span><span class="p">,</span>
             <span class="n">n_corrupt</span><span class="p">,</span>

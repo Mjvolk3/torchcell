@@ -1072,3 +1072,50 @@ Built with `build_dataset_lmdb --retire-existing --verify` in slurm array 4475 a
 | L3 | `reference_is_the_scales_neutral_value` | gate | pass | all 33268 reference values are their scale's neutral value and key-matched to the experiment |
 | L4 | `gene_containment_rel606` | report | pass | 4187 of 4187 measured loci are REL606 GenBank gene rows |
 | L4 | `protein_and_perturbed_locus_containment_assembly` | report | pass | 1.000 of 4187 measured genes are loci of ecoli_B_REL606_ASM1798v1 (>= 1.0) |
+
+## 2026.11.24 - Per-replicate review: one record per sample, now labeled (#1171, #1178)
+
+Branch `fix/per-replicate-caglar2017`. The RNA-seq and proteome stores already held one record per biological-replicate sample; this change gives each record the sample's own label in `replicate_id` and the protein records a typed SE absence. No record is added, dropped or changed in value.
+
+| store | records before | records after |
+|---|---|---|
+| `RnaseqCaglar2017Dataset` | 152 | 152 |
+| `ProteomeCaglar2017Dataset` | 105 | 105 |
+| `ProteinFoldChangeCaglar2017Dataset` | 8 | 8 (aggregate-only Table S8 contrasts, untouched) |
+
+### What a replicate is, from the sources
+
+Sources: `paper.md` (sha256 `0878d5e7d49bcea4570aa2db225318a8469f4755645f1ddf73563effe7b3109b`), `si/si1.md` (sha256 `1b7b8ed0f8b21c1909568f8a05d6a92d99bffaf851aa474a3a8673ebc2da4bdc`), raw `data/srep45303-s2.csv` = Table S1 (sha256 `1486290bf6a340ae64ee20c915435c0a00ff5eede489de1f56b62733b66f8940`), `srep45303-s3.csv` = Table S2, `srep45303-s4.csv` = Table S3.
+
+- Biological: "For each experimental condition, bacteria were grown in three biological replicates." and "Conditions that are listed multiple times represent independent replicates of those conditions." (Figure 1 legend); "Each of the three biological replicates was performed on a separate day." (Methods, Cell Growth).
+- Batch: "Batch numbers represent cultures grown at the same time, in parallel." (Results, Broad trends). Measured on Table S1: inside every (carbon source, Mg2+, Na+, collection time) group, no two RNA samples and no two protein samples share a `batchNumber`, so every column of Table S2 or S3 is a distinct culture.
+- Technical: Table S1 counts "number of RNA samples (technical replicates), number of protein samples (technical replicates)" (si1.md, List of Supplementary Tables). Measured: `RNA_Data_Freq` 1 for all 152; `Protein_Data_Freq` 1 for 93 and 2 for 12 (the lactate and gluconate samples MURI_085 to MURI_096). Table S3 still has one column per sample, so the release has already combined those runs. How is not stated in the mirror. Hypothesis (unverified): the runs were summed, since the median reconstructed library size of the 12 two-run samples is 121,518 against 61,899 for the 93 one-run samples (`record_samples.json` of the scratch build); an average of two runs would not show a two-fold depth.
+- The label: the paper names samples by their Table S1 `dataSet` value ("samples MURI_091 and MURI_130, Supplementary Table S1", Methods, Normalization), which is the column header of Tables S2 and S3. That value is `replicate_id`.
+- Withdrawn samples: none. "Because of this broad consistency among all samples for the same growth conditions, we keep all samples for subsequent analysis." The 15 Table S1 rows with no RNA or protein data (pilot cultures MURI_001 to MURI_006 and the `glucose_time_course (repeated between MURI 97- 105)` rows MURI_007 to MURI_015) have no released measurement, so there is nothing to store.
+
+Replicate structure, measured on Table S1 (pinned by `REPLICATE_STRUCTURE` in the test):
+
+| assay | samples | environment groups | group sizes | records at replicate position 1 / 2 / 3 / 4 / 5 / 6 |
+|---|---|---|---|---|
+| RNA (Table S2) | 152 | 57 | 1: 9, 2: 8, 3: 36, 4: 2, 5: 1, 6: 1 | 57 / 48 / 40 / 4 / 2 / 1 |
+| protein (Table S3) | 105 | 40 | 1: 5, 2: 7, 3: 26, 4: 2 | 40 / 35 / 28 / 2 |
+
+Groups of size 1 or 2 exist because exponential samples are taken at an optical density, so one condition's replicates can carry different collection times; groups of 4 to 6 are base conditions that several experiments repeat.
+
+### Changes
+
+- `rnaseq_phenotype` and `protein_phenotype` take the sample label and set `replicate_id`; both refuse an empty one. The references keep `replicate_id=None`, as aggregates over the phase's control libraries, which are records too.
+- A protein record carries `ProvenanceGap(field="protein_abundance_se", reason=not_applicable_single_measurement)` whose note names the sample's technical-run count (`single_culture_se_gap`). The class has no technical-level field (known gap, already reported to the owner).
+- New sourced values `REPLICATE_LABEL` and `BATCH_IS_A_CULTURE_SET`; both verifiers add the L1 rule `replicate_id_per_sample` (every record labeled, no label repeated, no reference labeled).
+- Other sourced values re-checked against the mirror: `BIOLOGICAL_REPLICATES`, `REPLICATE_DAYS`, `TECHNICAL_REPLICATE_COLUMNS` (its measured counts hold), `QC_FLAGGED_SAMPLES`, `ALL_SAMPLES_KEPT`. No correction needed.
+
+### Build and checks
+
+Scratch builds at `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-caglar2017/rnaseq_caglar2017` and `.../proteome_caglar2017` (script: scratchpad `build_and_compare.py`, not committed). Compared with the dev-tree stores under `$DATA_ROOT/data/torchcell/`:
+
+- per record, matched by sample: max absolute difference 0.0 on `expression_tpm`, `expression_count` and `protein_abundance`; environments identical; every other phenotype field identical except the new `replicate_id` and the protein SE gap.
+- grouped by (genotype, environment) and averaged: 57 RNA and 40 protein groups, max absolute difference 0.0 against the same grouping of the old store.
+- references identical once the new `replicate_id: None` key is removed (the dev store predates the field); each phase's reference equals the mean of its control records to 1.1e-11 (TPM) and 2.3e-13 (protein abundance).
+- verifiers: RNA-seq 70 rules, proteome 72 rules, all pass, including `replicate_id_per_sample` (152 and 105 distinct ids, 0 missing, 0 references labeled) and every `provenance_audit`. `pytest --data` on the test module and the two adapter tests pass with `DATA_ROOT` pointed at a symlink tree whose two Caglar stores are the scratch builds.
+
+The dev-tree stores are stale until rebuilt (records lack `replicate_id`), so `test_the_dev_tree_builds_pin_the_measured_counts_and_pass_l0_to_l4` fails on them until the rebuild.

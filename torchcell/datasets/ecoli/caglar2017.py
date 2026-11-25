@@ -68,6 +68,22 @@ Mg2+ concentrations", one per phase (``REFERENCE_CONDITIONS``). Each record's re
 is that condition in the record's phase (the late-stationary one applies the same rule to
 the third phase), with the phenotype averaged over the condition's samples.
 
+ONE RECORD PER BIOLOGICAL REPLICATE (#1171, #1178). A Table S2 or S3 column is one
+sample, and a sample is one biological-replicate culture at one collection time
+(``BIOLOGICAL_REPLICATES``, ``REPLICATE_DAYS``): within every (carbon source, Mg2+, Na+,
+collection time) group of Table S1 each sample carries its own ``batchNumber``, and a
+batch is "cultures grown at the same time, in parallel" (``BATCH_IS_A_CULTURE_SET``).
+Every record therefore stores that one culture's value with ``replicate_id`` set to the
+sample's own Table S1 label (``dataSet``, the column header of Tables S2 and S3, the
+label the paper itself uses: ``REPLICATE_LABEL``). The control libraries of each phase
+are records too; only ``phenotype_reference`` is an aggregate over them, with
+``replicate_id=None``. Technical measurements are already combined in the release: Table
+S1 counts "technical replicates" per sample (``TECHNICAL_REPLICATE_COLUMNS``), 1 for
+every RNA sample and 2 for 12 protein samples, and Table S3 still has one column per
+sample, so a protein record states one culture (``n_replicates`` 1) and its
+``protein_abundance_se`` gap names the technical-run count. How the two runs were
+combined is not stated in the mirror.
+
 PER-RECORD ATTRIBUTION (#771). 27 of the 152 mRNA samples and 27 of the 105 protein
 samples are not this paper's measurements: they are Houser 2015's glucose time course,
 released again here. Caglar says so three times, and each sentence is quoted from the
@@ -352,6 +368,22 @@ TECHNICAL_REPLICATE_COLUMNS = _si(
     note="the Table S1 columns that count technical replicates per sample; measured "
     "on the mirror: RNA 1 for all 152 RNA samples, protein 1 for 93 and 2 for 12 of "
     "the 105 protein samples",
+)
+REPLICATE_LABEL = _paper(
+    "Table S1 dataSet",
+    "samples MURI_091 and MURI_130, Supplementary\u00a0Table\u00a0S1",
+    page="Methods, Normalization and quality control of RNA and protein counts",
+    note="the paper names a sample by its Table S1 dataSet label, which is also the "
+    "column header of Tables S2 and S3; that label is each record's replicate_id. The "
+    "OCR separates the last three words with no-break spaces (U+00A0), kept verbatim",
+)
+BATCH_IS_A_CULTURE_SET = _paper(
+    "batchNumber",
+    "Batch numbers represent cultures grown at the same time, in parallel.",
+    page="Results, Broad trends of gene expression differ between mRNA and proteins",
+    note="measured on the mirror: within every (carbon source, Mg2+, Na+, collection "
+    "time) group of Table S1 no two RNA or protein samples share a batchNumber, so the "
+    "samples of a group are distinct biological-replicate cultures",
 )
 FLUX_REPLICATES = _paper(
     3,
@@ -1959,16 +1991,29 @@ def tpm(counts: FloatArray, lengths: FloatArray) -> FloatArray:
     return np.asarray(rate / rate.sum() * TPM_TOTAL, dtype=np.float64)
 
 
+def _require_replicate_id(replicate_id: str) -> None:
+    """A per-sample record carries the sample's own Table S1 label (``REPLICATE_LABEL``)."""
+    if not replicate_id:
+        raise RuntimeError("a per-sample record needs its Table S1 dataSet label")
+
+
 def rnaseq_phenotype(
-    genes: Sequence[str], counts: FloatArray, lengths: FloatArray
+    genes: Sequence[str], counts: FloatArray, lengths: FloatArray, replicate_id: str
 ) -> RNASeqExpressionPhenotype:
-    """One library's TPM and integer read counts over the stored genes."""
+    """One library's TPM and integer read counts, labeled by its Table S1 sample.
+
+    A library is one biological-replicate culture with one technical measurement (Table
+    S1 ``RNA_Data_Freq`` is 1 for all 152), and the family has no uncertainty field, so
+    the only per-replicate field is ``replicate_id``.
+    """
+    _require_replicate_id(replicate_id)
     return RNASeqExpressionPhenotype(
         expression_tpm=dict(
             zip(genes, (float(v) for v in tpm(counts, lengths)), strict=True)
         ),
         expression_count={g: int(c) for g, c in zip(genes, counts, strict=True)},
         measurement_type=RNA_MEASUREMENT_TYPE,
+        replicate_id=replicate_id,
         provenance_gaps=[MAPPED_READS_GAP],
     )
 
@@ -1990,16 +2035,46 @@ def rnaseq_reference_phenotype(
     )
 
 
+def single_culture_se_gap(technical_runs: int) -> ProvenanceGap:
+    """Why a per-sample protein record has no standard error: it is ONE culture.
+
+    The note names the sample's technical-run count (Table S1 ``Protein_Data_Freq``),
+    which the release has already combined into the sample's one column, because the
+    class has no field for a technical level.
+    """
+    if technical_runs < 1:
+        raise ValueError(f"a protein sample has {technical_runs} technical runs")
+    return ProvenanceGap(
+        field="protein_abundance_se",
+        reason=ProvenanceGapReason.not_applicable_single_measurement,
+        note="a record is ONE biological-replicate culture (one Table S3 column), and "
+        "one measurement has no dispersion of its own, so there is no standard error "
+        f"to store. Table S1 counts {technical_runs} technical LC-MS/MS run(s) for "
+        "this sample ('number of protein samples (technical replicates)'), already "
+        "combined in the release, which states how they were combined nowhere in the "
+        "mirror. The phase's reference carries the mean, SE and n over its control "
+        "cultures; any other per-condition mean or SE is a modeling-time derivation",
+    )
+
+
 def protein_phenotype(
-    proteins: Sequence[str], counts: FloatArray, size_factor: float
+    proteins: Sequence[str],
+    counts: FloatArray,
+    size_factor: float,
+    replicate_id: str,
+    technical_runs: int,
 ) -> ProteinAbundancePhenotype:
     """One sample's size-factor-normalized spectral counts; one culture, n = 1."""
+    _require_replicate_id(replicate_id)
     return ProteinAbundancePhenotype(
         protein_abundance={
             p: float(c) / size_factor for p, c in zip(proteins, counts, strict=True)
         },
+        protein_abundance_se=None,
         n_replicates=dict.fromkeys(proteins, 1),
         measurement_type=PROTEIN_MEASUREMENT_TYPE,
+        replicate_id=replicate_id,
+        provenance_gaps=[single_culture_se_gap(technical_runs)],
     )
 
 
@@ -2622,7 +2697,9 @@ class RnaseqCaglar2017Dataset(ExperimentDataset):
                     dataset_name=self.name,
                     genotype=genotype,
                     environment=environment_of(row),
-                    phenotype=rnaseq_phenotype(genes, counts[:, index], lengths),
+                    phenotype=rnaseq_phenotype(
+                        genes, counts[:, index], lengths, row.sample
+                    ),
                 )
                 txn.put(
                     f"{index}".encode(),
@@ -2676,6 +2753,10 @@ class RnaseqCaglar2017Dataset(ExperimentDataset):
                     "expression_tpm is computed here from it and the GenBank gene span",
                     "the reference of each record is its phase's glucose, base Mg2+ "
                     "and base Na+ condition, averaged over that condition's samples",
+                    "each record is one biological-replicate library; its replicate_id "
+                    "is the sample's Table S1 dataSet label, and the reference "
+                    "libraries are records too (the reference itself carries "
+                    "replicate_id None)",
                 ],
             ),
         )
@@ -2814,7 +2895,11 @@ class ProteomeCaglar2017Dataset(ExperimentDataset):
                     genotype=genotype,
                     environment=environment_of(row),
                     phenotype=protein_phenotype(
-                        proteins, counts[:, index], float(size_factors[index])
+                        proteins,
+                        counts[:, index],
+                        float(size_factors[index]),
+                        row.sample,
+                        row.protein_technical_replicates,
                     ),
                 )
                 txn.put(
@@ -2867,8 +2952,10 @@ class ProteomeCaglar2017Dataset(ExperimentDataset):
                     "protein_abundance is the back-solved integer spectral count over "
                     "the sample's DESeq2 size factor; an unobserved protein is the 0 "
                     "the authors wrote",
-                    "n_replicates is 1 per record (one biological culture); Table S1's "
-                    "technical-replicate count is in record_samples.json",
+                    "n_replicates is 1 per record (one biological culture) and "
+                    "replicate_id is the sample's Table S1 dataSet label; Table S1's "
+                    "technical-replicate count is in record_samples.json and in the "
+                    "note of each record's protein_abundance_se gap",
                     "the reference of each record is its phase's glucose, base Mg2+ "
                     "and base Na+ condition: mean, standard error and sample count",
                 ],
@@ -3826,6 +3913,32 @@ def _l1_distinct_profiles(
     )
 
 
+def _l1_replicate_ids(records: Sequence[Mapping[str, Any]]) -> LevelResult:
+    """L1 per replicate: every record names its own sample, no two the same, and every
+    reference (an aggregate over the control libraries) names none.
+    """
+    ids = [r["experiment"]["phenotype"]["replicate_id"] for r in records]
+    missing = sum(1 for i in ids if not i)
+    repeated = sum(n for n in Counter(i for i in ids if i).values() if n > 1)
+    labeled_references = sum(
+        1 for r in records if r["reference"]["phenotype_reference"]["replicate_id"]
+    )
+    return LevelResult(
+        level=Level.L1,
+        name="replicate_id_per_sample",
+        passed=missing == 0 and repeated == 0 and labeled_references == 0,
+        message=f"{len(set(ids) - {None})} distinct replicate ids over {len(records)} "
+        f"records; {missing} missing, {repeated} in repeated ids, "
+        f"{labeled_references} references carrying one",
+        details={
+            "n_records": len(records),
+            "n_missing": missing,
+            "n_in_repeated_ids": repeated,
+            "n_references_with_replicate_id": labeled_references,
+        },
+    )
+
+
 def _l3_assembly_pin(records: Sequence[Mapping[str, Any]]) -> LevelResult:
     pins = sorted(
         {
@@ -3885,7 +3998,8 @@ def verify_rnaseq_records(
 
     The family verifier keys L1 on one record per (strain, environment), which a
     replicate-level dataset breaks by design: the replicates of a condition share both.
-    L1 here is the count plus distinct count profiles.
+    L1 here is the count, distinct count profiles, and one distinct ``replicate_id``
+    per record (``_l1_replicate_ids``).
     """
     from pydantic import TypeAdapter
 
@@ -3898,6 +4012,7 @@ def verify_rnaseq_records(
     report.add(l0_structural((r["experiment"] for r in records), validate))
     report.add(l1_count(len(records), expected_count))
     report.add(_l1_distinct_profiles(records, "expression_count"))
+    report.add(_l1_replicate_ids(records))
     phenotypes = [r["experiment"]["phenotype"] for r in records]
     fidelity = l2_value_fidelity(
         (float(v) for p in phenotypes for v in p["expression_tpm"].values()),
@@ -3990,6 +4105,7 @@ def verify_proteome_records(
         expected_count=expected_count,
     )
     report.add(_l1_distinct_profiles(records, "protein_abundance"))
+    report.add(_l1_replicate_ids(records))
     floor = l2_value_fidelity(
         (
             float(v)

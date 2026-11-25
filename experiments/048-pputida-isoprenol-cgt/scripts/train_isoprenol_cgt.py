@@ -167,32 +167,58 @@ def guide_indicator(dataset: Any, indices: list[int]) -> np.ndarray:
 def lower_order_nulls(
     dataset: Any, splits: dict[str, list[int]], targets: dict[str, np.ndarray]
 ) -> dict[str, dict[str, float]]:
-    """Score the train-mean constant, ridge and boosted trees on the indicator."""
+    """Score the train-mean constant, ridge and boosted trees on the indicator.
+
+    Every null is scored with the same :func:`regression_metrics` the model is, so
+    the trial's objective (Spearman) is comparable across the whole table and not
+    only the MSE column. The constant predictor has no rank information at all, so
+    its Spearman and Pearson are undefined rather than zero: a zero would read as
+    "uncorrelated", and the truth is that the statistic does not exist for a
+    sequence with no variance. They come back as NaN.
+
+    The flat ``val``/``test``/``val_pearson``/``test_pearson`` keys are kept beside
+    the nested metric dicts because ``summarize_arms.py`` reads them, and the three
+    arm groups already measured wrote that shape.
+    """
     from sklearn.ensemble import HistGradientBoostingRegressor
     from sklearn.linear_model import Ridge
 
     features = {name: guide_indicator(dataset, idx) for name, idx in splits.items()}
-    out: dict[str, dict[str, float]] = {}
+    train_mean = float(targets["train"].mean())
+    train_sd = float(targets["train"].std())
+    out: dict[str, dict[str, Any]] = {}
 
-    mean = float(targets["train"].mean())
-    out["train_mean"] = {
-        split: float(np.mean((targets[split] - mean) ** 2)) for split in ("val", "test")
-    }
-    out["train_mean"].update({f"{s}_pearson": float("nan") for s in ("val", "test")})
+    def record(name: str, predictions: dict[str, np.ndarray]) -> None:
+        scores: dict[str, Any] = {}
+        for split, prediction in predictions.items():
+            if float(np.std(prediction)) == 0.0:
+                metrics = regression_metrics(
+                    targets[split], prediction, train_mean, train_sd
+                )
+                metrics["spearman"] = float("nan")
+                metrics["pearson"] = float("nan")
+            else:
+                metrics = regression_metrics(
+                    targets[split], prediction, train_mean, train_sd
+                )
+            scores[f"{split}_metrics"] = metrics
+            scores[split] = metrics["mse_raw"]
+            scores[f"{split}_pearson"] = metrics["pearson"]
+            scores[f"{split}_spearman"] = metrics["spearman"]
+        out[name] = scores
 
+    record(
+        "train_mean",
+        {split: np.full_like(targets[split], train_mean) for split in ("val", "test")},
+    )
     for name, model in (
         ("ridge", Ridge(alpha=1.0)),
         ("boosted_trees", HistGradientBoostingRegressor(max_iter=300, random_state=0)),
     ):
         model.fit(features["train"], targets["train"])
-        scores: dict[str, float] = {}
-        for split in ("val", "test"):
-            prediction = model.predict(features[split])
-            scores[split] = float(np.mean((targets[split] - prediction) ** 2))
-            scores[f"{split}_pearson"] = float(
-                pearsonr(targets[split], prediction).statistic
-            )
-        out[name] = scores
+        record(
+            name, {split: model.predict(features[split]) for split in ("val", "test")}
+        )
     return out
 
 
@@ -249,6 +275,53 @@ def build_flux_layer(
     return layer, precursors, info
 
 
+def graph_regularization(
+    dataset: Any, layer: int, lam: float, n_layers: int, n_heads: int
+) -> dict[str, Any]:
+    """One STRING channel per attention head, regularized on one block.
+
+    The KL term pulls head *k*'s gene-gene attention row toward the row-normalized
+    adjacency of channel *k*, so the six STRING channels and the six attention
+    heads line up one to one. That alignment is why ``--heads`` is pinned to the
+    channel count whenever this is on: a seventh channel would have no head and
+    would be silently dropped by the backbone, which skips a channel it cannot
+    place.
+
+    ``layer`` is 0-based and must not be 0. The regularizer can only shape
+    attention a later block still reads, and on a two-block stack block 0's
+    attention is what block 1 consumes, so regularizing block 0 constrains the
+    representation the model is still free to overwrite. Measured on the 031
+    campaign: every one-block cell reported ``graph_reg_loss`` exactly 0.0 at
+    every epoch, because the config named block 1 and the stack had only block 0.
+    This function refuses that configuration instead of reproducing it.
+    """
+    channels = [
+        rel
+        for src, rel, dst in dataset.cell_graph.edge_types
+        if src == "gene" and dst == "gene"
+    ]
+    if layer <= 0 or layer >= n_layers:
+        raise ValueError(
+            f"graph regularization asks for block {layer} of a {n_layers}-block "
+            f"stack; it needs a block index in 1..{n_layers - 1} so a later "
+            f"block reads the attention it shapes. Raise --layers or lower "
+            f"--graph-reg-layer."
+        )
+    if n_heads != len(channels):
+        raise ValueError(
+            f"graph regularization maps one STRING channel to one attention "
+            f"head, but this cell graph has {len(channels)} gene-gene channels "
+            f"and the model has {n_heads} heads. Set --heads {len(channels)}."
+        )
+    return {
+        "regularized_heads": {
+            channel: {"layer": [layer], "head": index, "lambda": lam}
+            for index, channel in enumerate(channels)
+        },
+        "row_sampling_rate": 1.0,
+    }
+
+
 def build_model(
     dataset: Any,
     hidden: int,
@@ -258,6 +331,8 @@ def build_model(
     device: torch.device,
     flux_layer: FluxLayer | None = None,
     precursor_indices: list[int] | None = None,
+    graph_reg_config: dict[str, Any] | None = None,
+    graph_reg_lambda: float = 0.0,
 ) -> CellGraphTransformerMetabolism:
     """Build the CGT with one scalar titer head.
 
@@ -297,7 +372,7 @@ def build_model(
             "use_pert_pool": True,
             "dropout": dropout,
         }
-    return CellGraphTransformerMetabolism(
+    model = CellGraphTransformerMetabolism(
         gene_num=int(dataset.cell_graph["gene"].num_nodes),
         hidden_channels=hidden,
         num_transformer_layers=layers,
@@ -309,7 +384,64 @@ def build_model(
         perturbation_head_config={"enabled": False},
         heads_config={HEAD_NAME: head_spec},
         flux_layer=flux_layer,
+        graph_regularization_config=graph_reg_config,
+        graph_reg_lambda=graph_reg_lambda,
     ).to(device)
+    if model.adjacency_matrices is not None:
+        # The backbone keeps the adjacencies in a plain dict, not as registered
+        # buffers, so they stay on the CPU and the loss copies every one of them
+        # to the GPU on every step. At 5,729 genes a single channel is a dense
+        # 5,729 x 5,729 float32, 131 MB, so six channels move 787 MB per step
+        # over PCIe for no reason. Moving them once, in place so the layers'
+        # shared reference follows, is the whole fix. In place also matters for
+        # correctness of the backbone's own edge normalizer, which reads the same
+        # dict.
+        for channel, matrix in model.adjacency_matrices.items():
+            model.adjacency_matrices[channel] = matrix.to(device)
+    return model
+
+
+def regression_metrics(
+    observed_raw: np.ndarray, predicted_raw: np.ndarray, mean: float, std: float
+) -> dict[str, float]:
+    """The full metric set, in raw ug/mL plus the standardized MSE.
+
+    Spearman is the objective of this trial, so it is first, but a rank
+    correlation alone cannot say whether the predictions are on the right scale:
+    an affine transform of the predictions leaves Spearman and Pearson untouched
+    and moves RMSE, MAE and NMSE. Both families are therefore reported together
+    on every split and every epoch.
+
+    ``mse`` stays in standardized units because that is the quantity the loss
+    minimizes and the one the lower-order nulls are reported in, so it is the
+    only metric here that is comparable to the printed null table. Everything
+    else is in ug/mL, the unit the campaign reports titer in.
+
+    ``nmse`` divides by the variance of the OBSERVED values of that split, so 1.0
+    is the score of predicting that split's own mean. It is not the same as
+    ``mse``, whose standardization uses the TRAIN mean and sd: a split whose
+    titers are more spread out than the train split's can have nmse below 1 and
+    standardized mse above it. ``r2`` is ``1 - nmse`` by construction and is kept
+    because it is what a reader expects to see; it is not a second measurement.
+    """
+    residual = observed_raw - predicted_raw
+    variance = float(np.var(observed_raw))
+    mse_raw = float(np.mean(residual**2))
+    standardized_observed = (observed_raw - mean) / std
+    standardized_predicted = (predicted_raw - mean) / std
+    return {
+        "spearman": float(spearmanr(observed_raw, predicted_raw).statistic),
+        "pearson": float(pearsonr(observed_raw, predicted_raw).statistic),
+        "mse": float(np.mean((standardized_observed - standardized_predicted) ** 2)),
+        "mse_raw": mse_raw,
+        "rmse": float(np.sqrt(mse_raw)),
+        "mae": float(np.mean(np.abs(residual))),
+        "nmse": mse_raw / variance,
+        "r2": 1.0 - mse_raw / variance,
+        "observed_sd": float(np.sqrt(variance)),
+        "predicted_sd": float(np.std(predicted_raw)),
+        "n": len(observed_raw),
+    }
 
 
 def evaluate(
@@ -320,7 +452,7 @@ def evaluate(
     mean: float,
     std: float,
 ) -> dict[str, float]:
-    """Return MSE in standardized units plus Pearson and Spearman in mg/L."""
+    """Run the model over a loader and score it with every metric."""
     model.eval()
     predictions: list[float] = []
     observed: list[float] = []
@@ -338,14 +470,7 @@ def evaluate(
             predictions.extend(prediction.view(-1).cpu().tolist())
             observed.extend(target.view(-1).cpu().tolist())
     predicted_raw = np.asarray(predictions) * std + mean
-    observed_raw = np.asarray(observed)
-    standardized = (observed_raw - mean) / std
-    return {
-        "mse": float(np.mean((standardized - np.asarray(predictions)) ** 2)),
-        "pearson": float(pearsonr(observed_raw, predicted_raw).statistic),
-        "spearman": float(spearmanr(observed_raw, predicted_raw).statistic),
-        "n": len(observed),
-    }
+    return regression_metrics(np.asarray(observed), predicted_raw, mean, std)
 
 
 def main() -> None:
@@ -373,10 +498,45 @@ def main() -> None:
     parser.add_argument("--print-data", action="store_true")
     parser.add_argument("--wandb", action="store_true")
     parser.add_argument("--tag", default="mvp")
+    parser.add_argument(
+        "--graph-reg-lambda",
+        type=float,
+        default=0.0,
+        help=(
+            "weight on the KL term that pulls each head's attention toward one "
+            "STRING channel's adjacency; 0 turns the regularizer off. The "
+            "backbone applies it once per channel and divides by that channel's "
+            "own edge density, so the value means the same thing whatever the "
+            "channel count"
+        ),
+    )
+    parser.add_argument("--graph-reg-layer", type=int, default=1)
+    parser.add_argument(
+        "--select-on",
+        choices=("val_mse", "val_spearman"),
+        default="val_mse",
+        help="the checkpoint selection rule; the trial's objective is Spearman",
+    )
+    parser.add_argument(
+        "--project",
+        default="torchcell_048-pputida-isoprenol-cgt",
+        help="wandb project; the low-data trial logs to its own project",
+    )
+    parser.add_argument("--group", default=None, help="wandb group for this sweep")
+    parser.add_argument(
+        "--results-subdir",
+        default=None,
+        help="write the report under results/<subdir>/ instead of results/",
+    )
     args = parser.parse_args()
+    results_dir = (
+        RESULTS
+        if args.results_subdir is None
+        else osp.join(RESULTS, args.results_subdir)
+    )
 
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    os.makedirs(RESULTS, exist_ok=True)
+    os.makedirs(results_dir, exist_ok=True)
     set_seed(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -420,6 +580,21 @@ def main() -> None:
             dataset, args.hidden, args.gem_model, device
         )
         log.info(f"flux layer: {flux_info}")
+    graph_reg_config = None
+    if args.graph_reg_lambda > 0.0:
+        graph_reg_config = graph_regularization(
+            dataset,
+            layer=args.graph_reg_layer,
+            lam=args.graph_reg_lambda,
+            n_layers=args.layers,
+            n_heads=args.heads,
+        )
+        log.info(
+            "graph regularization: block %d, lambda %g, channels %s",
+            args.graph_reg_layer,
+            args.graph_reg_lambda,
+            ", ".join(graph_reg_config["regularized_heads"]),
+        )
     model = build_model(
         dataset,
         args.hidden,
@@ -429,6 +604,8 @@ def main() -> None:
         device,
         flux_layer=flux_layer,
         precursor_indices=precursors,
+        graph_reg_config=graph_reg_config,
+        graph_reg_lambda=args.graph_reg_lambda,
     )
     n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
@@ -472,7 +649,8 @@ def main() -> None:
         import wandb
 
         run = wandb.init(
-            project="torchcell_048-pputida-isoprenol-cgt",
+            project=args.project,
+            group=args.group,
             name=f"{args.split}-{args.tag}-seed{args.seed}",
             config=vars(args)
             | {"n_params": n_params, "splits": {k: len(v) for k, v in splits.items()}},
@@ -483,14 +661,22 @@ def main() -> None:
     )
     loss_fn = nn.MSELoss()
 
-    best = {"val_mse": float("inf"), "epoch": -1}
+    # The selection rule, as a sign and a key, so the loop reads the same for
+    # both. Spearman is maximized and MSE is minimized, and the trial's stated
+    # objective is Spearman, so running it on MSE has to be an explicit choice.
+    select_key = "spearman" if args.select_on == "val_spearman" else "mse"
+    select_sign = -1.0 if args.select_on == "val_spearman" else 1.0
+
+    best = {"score": float("inf"), "epoch": -1}
     best_state: dict[str, Any] | None = None
     history: list[dict[str, float]] = []
+    graph_reg_seen = 0.0
     started = time.time()
 
     for epoch in range(args.epochs):
         model.train()
         total = 0.0
+        reg_total = 0.0
         seen = 0
         for batch in module.train_dataloader():
             batch = batch.to(device)
@@ -503,36 +689,49 @@ def main() -> None:
             target = (raw - mean) / std
             _, reps = model(cell_graph, batch)
             prediction = reps["head_outputs"][HEAD_NAME]
-            loss = loss_fn(prediction, target)
+            mse = loss_fn(prediction, target)
+            # The backbone already scaled the KL term by graph_reg_scale, so it
+            # is added as it comes back. It is reported separately from the MSE
+            # at every epoch because the two have no common unit and a
+            # regularizer that quietly dominates the objective looks, from the
+            # loss curve alone, exactly like a model that will not fit.
+            reg = reps["graph_reg_loss"]
+            loss = mse + reg
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            total += float(loss.detach()) * int(batch.num_graphs)
+            total += float(mse.detach()) * int(batch.num_graphs)
+            reg_total += float(reg.detach()) * int(batch.num_graphs)
             seen += int(batch.num_graphs)
 
         train_mse = total / max(seen, 1)
+        train_reg = reg_total / max(seen, 1)
+        graph_reg_seen = max(graph_reg_seen, abs(train_reg))
+        train = evaluate(
+            model, cell_graph, module.train_dataloader(), device, mean, std
+        )
         val = evaluate(model, cell_graph, module.val_dataloader(), device, mean, std)
         row = {
             "epoch": epoch,
             "train_mse": train_mse,
-            "val_mse": val["mse"],
-            "val_pearson": val["pearson"],
-            "val_spearman": val["spearman"],
+            "graph_reg_loss": train_reg,
+            **{f"train_{k}": v for k, v in train.items()},
+            **{f"val_{k}": v for k, v in val.items()},
         }
         history.append(row)
         if run is not None:
-            run.log(
-                {
-                    "epoch": epoch,
-                    "loss/train": train_mse,
-                    "loss/val": val["mse"],
-                    "val/pearson": val["pearson"],
-                    "val/spearman": val["spearman"],
-                },
-                step=epoch,
-            )
-        if val["mse"] < best["val_mse"]:
-            best = {"val_mse": val["mse"], "epoch": epoch, **val}
+            # train and val on one axis for every metric, which is the only way
+            # a 375-record fit shows its overfitting as it happens.
+            logged = {"epoch": epoch, "loss/train": train_mse, "loss/val": val["mse"]}
+            logged["loss/graph_reg"] = train_reg
+            for split_name, scores in (("train", train), ("val", val)):
+                for metric, value in scores.items():
+                    if metric != "n":
+                        logged[f"{split_name}/{metric}"] = value
+            run.log(logged, step=epoch)
+        score = select_sign * val[select_key]
+        if score < best["score"]:
+            best = {"score": score, "epoch": epoch, **val}
             best_state = {k: v.detach().clone() for k, v in model.state_dict().items()}
         if epoch - best["epoch"] >= args.patience:
             log.info(
@@ -542,8 +741,19 @@ def main() -> None:
         if epoch % 10 == 0:
             log.info(
                 f"epoch {epoch:>3}  train_mse {train_mse:.4f}  "
-                f"val_mse {val['mse']:.4f}  val_r {val['pearson']:+.3f}"
+                f"val_mse {val['mse']:.4f}  val_rho {val['spearman']:+.3f}  "
+                f"val_r {val['pearson']:+.3f}  reg {train_reg:.4f}"
             )
+
+    if args.graph_reg_lambda > 0.0 and graph_reg_seen == 0.0:
+        raise ValueError(
+            "graph regularization was switched on and graph_reg_loss was 0.0 at "
+            "every epoch, so no channel was ever regularized and the run would "
+            "have been reported as a graph-regularized result. This is exactly "
+            "how the 031 campaign recorded 378 unregularized cells as "
+            "regularized ones. Check that --graph-reg-layer names a block the "
+            "stack has."
+        )
 
     if best_state is not None:
         model.load_state_dict(best_state)
@@ -556,6 +766,17 @@ def main() -> None:
         "n_params": n_params,
         "model_label": model_label,
         "metabolism_role": metabolism_role,
+        "selection_rule": args.select_on,
+        "graph_reg": (
+            None
+            if graph_reg_config is None
+            else {
+                "lambda": args.graph_reg_lambda,
+                "layer": args.graph_reg_layer,
+                "channels": list(graph_reg_config["regularized_heads"]),
+                "max_epoch_loss": graph_reg_seen,
+            }
+        ),
         "val_is_selection_set": True,
         "mse_units": "standardized by the train split mean and sd",
         "flux": flux_info,
@@ -569,24 +790,33 @@ def main() -> None:
         "lower_order_nulls": nulls,
         "history": history,
     }
-    out = osp.join(RESULTS, f"train_{args.split}_{args.tag}_seed{args.seed}.json")
+    out = osp.join(results_dir, f"train_{args.split}_{args.tag}_seed{args.seed}.json")
     with open(out, "w") as handle:
         json.dump(report, handle, indent=2)
 
     print("\n=== result table ===")
-    print("MSE is in standardized units; val is the SELECTION set, not held out.")
-    print(f"{'model':<22}{'val MSE':>10}{'val r':>9}{'test MSE':>10}{'test r':>9}")
     print(
-        f"{model_label:<22}{val['mse']:>10.4f}{val['pearson']:>+9.3f}"
-        f"{test['mse']:>10.4f}{test['pearson']:>+9.3f}"
+        f"selection: {args.select_on}. MSE standardized; rho is Spearman, r is "
+        f"Pearson, RMSE and MAE in ug/mL. val is the SELECTION set, not held out."
     )
-    for name, scores in nulls.items():
-        val_r = scores.get("val_pearson", float("nan"))
-        test_r = scores.get("test_pearson", float("nan"))
+    header = (
+        f"{'model':<22}{'val rho':>9}{'val r':>8}{'val MSE':>9}"
+        f"{'test rho':>10}{'test r':>8}{'test MSE':>10}{'test RMSE':>10}"
+        f"{'test MAE':>9}{'test NMSE':>10}"
+    )
+    print(header)
+
+    def table_row(label: str, v: dict[str, float], t: dict[str, float]) -> None:
         print(
-            f"{name:<22}{scores['val'] / std**2:>10.4f}{val_r:>+9.3f}"
-            f"{scores['test'] / std**2:>10.4f}{test_r:>+9.3f}"
+            f"{label:<22}{v['spearman']:>+9.3f}{v['pearson']:>+8.3f}"
+            f"{v['mse']:>9.4f}{t['spearman']:>+10.3f}{t['pearson']:>+8.3f}"
+            f"{t['mse']:>10.4f}{t['rmse']:>10.1f}{t['mae']:>9.1f}"
+            f"{t['nmse']:>10.3f}"
         )
+
+    table_row(model_label, val, test)
+    for name, scores in nulls.items():
+        table_row(name, scores["val_metrics"], scores["test_metrics"])
     print(f"\nbest epoch {best['epoch']} of {len(history)} run")
     if run is not None:
         for split_name, scores in (("val", val), ("test", test)):

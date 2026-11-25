@@ -85,14 +85,14 @@ arm_cycle_flux () {
   for seed in $SEEDS; do run --split cycle --seed "$seed" --flux --tag cycle_flux; done
 }
 
-# Cycle 5 reported beside cycle 6, which the end criterion asks for and which a
-# val score on cycle 5 cannot supply: the selection set's own score is
-# optimistically biased. Testing on 5 while selecting on 4 gives a clean number.
-arm_cycle5 () {
-  for seed in $SEEDS; do
-    run --split cycle --seed "$seed" --holdout-cycle 5 --val-cycle 4 --tag cycle5
-  done
-}
+# A cycle-5 arm was here and is deliberately gone. Testing on cycle 5 while
+# selecting on cycle 4 leaves cycle 6's 59 records in no split, so the partition
+# check in `cycle_splits` refuses it, correctly: the arm as written asks for a
+# split that does not exist. Cycle 6 is the campaign's last cycle and belongs in
+# test, which is what `arm_cycle` already does, so the only ways to make a
+# cycle-5 arm valid are to drop cycle 6 (discarding released records to score a
+# redundant arm) or to train on it (which stops being extrapolation). Neither is
+# worth a card. Job 7612 is the 23-second failure this replaces.
 
 # Criterion 4: the fidelity tier, cycles 3 to 6 only. Note what this means under
 # the cycle split, where training is already capped below cycle 5: the tier
@@ -122,7 +122,7 @@ run_group design arm_design
 run_group design_flux arm_design_flux
 run_group cycle arm_cycle
 run_group cycle_flux arm_cycle_flux
-run_group cycle5 arm_cycle5
+
 run_group design_fidelity arm_design_fidelity
 run_group cycle_fidelity arm_cycle_fidelity
 run_group design_random arm_design_random

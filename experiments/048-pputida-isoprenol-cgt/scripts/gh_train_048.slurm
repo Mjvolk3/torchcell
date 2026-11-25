@@ -10,7 +10,7 @@
 #   sbatch --export=ALL,ARM=design experiments/048-pputida-isoprenol-cgt/scripts/gh_train_048.slurm
 #   sbatch --export=ALL,ARM=cycle  experiments/048-pputida-isoprenol-cgt/scripts/gh_train_048.slurm
 #
-# ARM is one of: design, design_flux, cycle, cycle_flux, cycle5,
+# ARM is one of: design, design_flux, cycle, cycle_flux,
 # design_fidelity, cycle_fidelity, design_random, all.
 # SEEDS, EPOCHS, PATIENCE and EMB override the defaults.
 #

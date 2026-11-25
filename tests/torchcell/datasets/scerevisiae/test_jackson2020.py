@@ -852,6 +852,39 @@ def test_the_raw_mirror_holds_the_pinned_release() -> None:
 
 @pytest.mark.data
 @pytest.mark.skipif(
+    not osp.isfile(osp.join(_MIRROR, j.MATRIX_REL)),
+    reason="Jackson 2020 raw mirror not on disk",
+)
+def test_the_release_is_one_well_per_strain_and_six_unstored_bulk_cultures() -> None:
+    """#1176 per-replicate review, measured on the mirror.
+
+    A strain is one array well (one independent construction), so one record per
+    (strain, condition) is one biological replicate per culture: 784 pairs hold a cell.
+    ``TRIZOL_BULK.tsv`` holds six separately grown wild-type cultures (paper.md L255)
+    that no class stores yet: no leaf holds bulk 3' UMI counts (needs owner decision).
+    """
+    meta = pd.read_csv(
+        Path(_MIRROR, j.MATRIX_REL), sep="\t", usecols=list(j.META_COLUMNS)
+    )
+    assert len(meta) == j.PAPER_CELLS
+    assert meta["Genotype"].nunique() == meta["Replicate"].nunique() == j.N_STRAINS
+    assert meta.groupby("Genotype")["Replicate"].nunique().max() == 1
+    assert meta.groupby("Replicate")["Genotype"].nunique().max() == 1
+    assert meta.groupby(["Genotype", "Condition"]).ngroups == 784
+    bulk = pd.read_csv(Path(_MIRROR, j.BULK_REL), sep="\t")
+    assert bulk.shape == (6, j.N_RELEASED_FEATURES)
+    assert bulk.sum(axis=1).tolist() == [
+        1143342,
+        1073961,
+        1560915,
+        1472013,
+        1437142,
+        1262969,
+    ]
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
     not osp.isfile(osp.join(_STORE, "preprocess", "release_ledger.json")),
     reason="Jackson 2020 dev store not built",
 )

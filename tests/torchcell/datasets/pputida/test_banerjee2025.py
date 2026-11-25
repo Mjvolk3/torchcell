@@ -971,6 +971,10 @@ def test_the_manifest_enumerates_what_it_deliberately_does_not_hold(
     assert "TITER_NOT_A_DATASET" in blob
     assert "GROWTH_NOT_A_DATASET" in blob
     assert "BIOLOG_NOT_A_DATASET" in blob
+    assert "PRIDE_PER_RUN_RELEASE" in blob
+    for released in ds.PRIDE_PROCESSED_FILES:
+        assert released.name in blob
+    assert "raw DIA mass-spectrometry files. NOT" not in blob
     assert ds.ARCHIVE_URL in manifest.si_data_sources
 
 
@@ -1347,6 +1351,49 @@ def test_stored_scale_refuses_a_value_that_is_not_a_released_cell(built: Any) ->
     assert ds.stored_scale_rule(records, built.raw_dir).passed is False
 
 
+def test_the_pride_runs_confirm_each_arms_replicate_count() -> None:
+    """Every stored group with PRIDE runs has exactly its arm's replicate count of them.
+
+    The promoter-arm control ``2370`` is the one stored group with no run in the deposit.
+    """
+    runs = ds.pride_runs_per_group()
+    without = []
+    for group in ds.PROTEOME_GROUPS:
+        if group.key not in runs:
+            without.append(group.key)
+            continue
+        assert runs[group.key] == ds.ARM_REPLICATES[group.arm], group.key
+    assert without == ["2370"]
+    assert sum(runs[g.key] for g in ds.PROTEOME_GROUPS if g.key in runs) == 17
+    assert sum(runs.values()) == ds.PRIDE_RAW_FILE_COUNT
+
+
+def test_the_pride_tables_hold_three_groups_the_si_never_analyzes() -> None:
+    stored = {group.key for group in ds.PROTEOME_GROUPS}
+    extra = {g: n for g, n in ds.pride_runs_per_group().items() if g not in stored}
+    assert extra == {
+        "2370_M9_alanine_malate": 3,
+        "2370_M9_alanine": 3,
+        "2487_M9_alanine": 3,
+    }
+
+
+def test_no_pride_file_is_a_per_run_protein_table() -> None:
+    """The deposit's processed tables are precursor matrices; that is the #1199 block."""
+    levels = {released.name: released.level for released in ds.PRIDE_PROCESSED_FILES}
+    assert set(levels.values()) == {"precursor", "sample_key"}
+    assert ds.PRIDE_PER_RUN_RELEASE.value == ds.pride_runs_per_group()
+
+
+def test_a_group_released_in_two_pride_tables_is_refused(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    twice = ds.PRIDE_PROCESSED_FILES + (ds.PRIDE_PROCESSED_FILES[1],)
+    monkeypatch.setattr(ds, "PRIDE_PROCESSED_FILES", twice)
+    with pytest.raises(RuntimeError, match="two PRIDE tables"):
+        ds.pride_runs_per_group()
+
+
 def test_the_provenance_names_the_released_artifact_and_the_two_counts() -> None:
     provenance = ds._provenance()
     assert provenance.citation_key == ds.CITATION_KEY
@@ -1383,6 +1430,7 @@ LIBRARY_QUOTE_FIELDS: tuple[str, ...] = (
     "CROSSFEED_REPLICATES",
     "AEROBICITY",
     "DATA_AVAILABILITY",
+    "PRIDE_PER_RUN_RELEASE",
     "TITER_NOT_A_DATASET",
     "GROWTH_NOT_A_DATASET",
     "BIOLOG_NOT_A_DATASET",
@@ -1436,3 +1484,39 @@ def test_the_built_store_passes_l0_to_l4() -> None:
         "gene_containment_kt2440",
         "stored_scale_is_the_released_log2_mean",
     } <= names
+
+
+#: ``(n_replicates, stored proteins)`` per record of the real build, in write order:
+#: three promoter-arm records at n = 4 over 2,248 proteins and three cross-feeding
+#: records at n = 3 over 2,223, 13,413 stored abundances in all. One record per released
+#: SI group, because the released per-run values are precursor tables (#1199).
+REAL_RECORD_COUNTS: tuple[tuple[int, int], ...] = (
+    (4, 2248),
+    (4, 2248),
+    (4, 2248),
+    (3, 2223),
+    (3, 2223),
+    (3, 2223),
+)
+
+
+@pytest.mark.data
+def test_the_built_store_holds_one_record_per_released_si_group() -> None:
+    data_root = os.environ["DATA_ROOT"]
+    root = osp.join(data_root, "data/torchcell/proteome_banerjee2025")
+    if not osp.exists(osp.join(root, "processed", "lmdb")):
+        pytest.skip(f"dev store absent: {root}")
+    from torchcell.verification.runners import load_records
+
+    records = load_records(root)
+    got = tuple(
+        (
+            set(record["experiment"]["phenotype"]["n_replicates"].values()).pop(),
+            len(record["experiment"]["phenotype"]["protein_abundance"]),
+        )
+        for record in records
+    )
+    assert got == REAL_RECORD_COUNTS
+    assert sum(n for _, n in got) == 13_413
+    for record in records:
+        assert len(set(record["experiment"]["phenotype"]["n_replicates"].values())) == 1

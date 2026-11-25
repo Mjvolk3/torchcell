@@ -88,6 +88,32 @@ label then goes through ``reconcile_locus_tags``, and a label that does not land
 locus of the pinned assembly is dropped with its reason, as in the sibling de Siqueira
 and Carruthers proteomes.
 
+THE PER-RUN VALUES ARE ON PRIDE, AT PRECURSOR LEVEL, AND ARE NOT INGESTED (#1199). The
+Supplementary Data S2 workbooks release a replicate mean and SD per group and no
+per-replicate column, but PRIDE PXD050285, which the Results call "the complete
+proteomics data", holds two processed SEARCH-category DIA-NN tables with one column per
+run (:data:`PRIDE_PROCESSED_FILES`): ``Banerjee_et_al_proteomics_set1.csv`` (18 runs, six
+groups at ``-R1..R3``) and ``Banerjee_et_al_Proteomics_set2.csv`` (8 runs, the two
+promoter strains at ``-R1..R4``). Both are PRECURSOR matrices (one row per
+``Precursor.Id``); no per-run protein-level table is deposited. The run counts confirm the
+arm replicate counts a third time (four per promoter strain, three per cross-feeding
+group). Converting to one record per run is blocked on an owner decision, because the
+released per-run quantity is a precursor and the stored one is a protein:
+
+- a per-run sum of precursors reproduces the cross-feeding arm's SI mean and SD only on
+  proteins whose every precursor is quantified in every run (113 of 113, 110 of 110 and
+  173 of 173 for the three groups, to 1e-14), not on the rest, so the authors'
+  missing-value rule is not recoverable from the table;
+- the promoter arm does not reproduce: set2 holds 2,288 protein groups against the
+  workbooks' 2,494, the complete-protein rollup matches only 73 of 108 (``pJ``) and 89 of
+  133 (``0415``), and the parental control ``2370`` has no run in either table (and no
+  raw file either), so its four replicates are absent from the deposit;
+- set1 also holds three groups the SI never analyzes (``2370_M9_alanine_malate``,
+  ``2370_M9_alanine``, ``2487_M9_alanine``, three runs each).
+
+Until the owner chooses precursor records as released, a protein rollup, or both, the six
+SI-mean records stay and the PRIDE tables are not mirrored (:data:`PRIDE_PER_RUN_RELEASE`).
+
 THREE QUANTITIES ARE IN THIS PAPER AND ONLY ONE IS A DATASET.
 
 - The PROTEOME is released as numbers, and is this dataset.
@@ -280,6 +306,16 @@ SI1_PDF_SHA256 = "e59a55234b50d5f64f5e941baa4d58c0e1f8fe8bb9ffe248a7594b55becb8e
 MINERU_VERSION = "2.7.6"
 
 PRIDE_ACCESSION = "PXD050285"
+#: The PRIDE FTP directory every PXD050285 file is served from.
+PRIDE_FTP_DIR = (
+    f"ftp://ftp.pride.ebi.ac.uk/pride/data/archive/2025/03/{PRIDE_ACCESSION}"
+)
+#: When the deposit's file list was read from the EBI PRIDE API
+#: (``https://www.ebi.ac.uk/pride/ws/archive/v2/projects/PXD050285/files``).
+PRIDE_LISTED_AT = "2026-11-25"
+#: RAW files in the deposit: one Thermo ``.raw`` per run of set1 and set2, and none for
+#: the promoter arm's parental control ``2370``.
+PRIDE_RAW_FILE_COUNT = 26
 
 KT2440_NAMESPACE: BacterialGeneNamespace = "pputida_kt2440_locus_tag"
 KT2440_ASSEMBLY_SET: BacterialAssemblySet = "pputida_KT2440_ASM756v2"
@@ -471,6 +507,80 @@ T_STATISTIC_TOL = 1e-8
 #: Measured on the pinned workbooks, exactly ``Pyrc`` and ``Ubid`` do this, and they are
 #: exactly the two labels the merge rule drops.
 MERGED_LABEL_REPLICATE_FACTOR = 2
+
+
+class PrideProcessedFile(BaseModel):
+    """One non-RAW file of PRIDE PXD050285, as the EBI API lists it and as read.
+
+    ``runs`` maps each released run-group label to its number of ``-R<k>`` columns.
+    ``sha256`` and the row counts were measured on a copy fetched from
+    :data:`PRIDE_FTP_DIR` on 2026-11-24 for the second replicate sweep (#1199); that copy
+    is NOT in the raw mirror, because no loader consumes it yet.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    name: str
+    category: Literal["SEARCH", "OTHER"]
+    bytes: int
+    sha256: str
+    level: Literal["precursor", "sample_key"]
+    rows: int
+    protein_groups: int
+    runs: dict[str, int]
+
+
+#: Every processed (non-RAW) file of PXD050285. No per-run PROTEIN-level table exists.
+PRIDE_PROCESSED_FILES: tuple[PrideProcessedFile, ...] = (
+    PrideProcessedFile(
+        name="Banerjee_et_al_proteomics_set1.csv",
+        category="SEARCH",
+        bytes=5_900_358,
+        sha256="999855a321cfec8b2b771623104ba16bfd0ea0a5c35dd8c615becc97fbbd1b2b",
+        level="precursor",
+        rows=27_004,
+        protein_groups=2_474,
+        runs={
+            "2370_M9_alanine_malate": 3,
+            "2370_M9_alanine": 3,
+            "2370_M9_pCA_alanine_malate": 3,
+            "2487_M9_alanine_malate": 3,
+            "2487_M9_alanine": 3,
+            "2487_M9_pCA_alanine_malate": 3,
+        },
+    ),
+    PrideProcessedFile(
+        name="Banerjee_et_al_Proteomics_set2.csv",
+        category="SEARCH",
+        bytes=3_351_857,
+        sha256="3b6887c149ebc34de0692b8e6186bb941d0698514f75711ba0e595396fbe0a55",
+        level="precursor",
+        rows=19_989,
+        protein_groups=2_288,
+        runs={"2370_0415pPP_0897": 4, "2370_pJ_PP_0897": 4},
+    ),
+    PrideProcessedFile(
+        name="LCMS_file_names_to_sample_names_in_publication.csv",
+        category="OTHER",
+        bytes=133,
+        sha256="ab4d93348f2204ecfa7a2f93d854c0cc29fa30906c37d9022c76b010b00bf2ad",
+        level="sample_key",
+        rows=4,
+        protein_groups=0,
+        runs={},
+    ),
+)
+
+
+def pride_runs_per_group() -> dict[str, int]:
+    """``run-group label -> runs`` over both PRIDE precursor tables."""
+    runs: dict[str, int] = {}
+    for released in PRIDE_PROCESSED_FILES:
+        for group, n in released.runs.items():
+            if group in runs:
+                raise RuntimeError(f"{group} is released in two PRIDE tables")
+            runs[group] = n
+    return runs
 
 
 # --------------------------------------------------------------------------- #
@@ -837,8 +947,31 @@ DATA_AVAILABILITY = _paper(
     PRIDE_ACCESSION,
     _Q_DATA_AVAILABILITY,
     page="Data availability",
-    note="the raw DIA files. No loader consumes raw spectra, so the accession is "
-    "retrieval metadata and Supplementary Data S2 is the released processed release",
+    note="the deposit holds 26 RAW DIA files AND two processed SEARCH-category DIA-NN "
+    "precursor tables with one column per run plus a sample-name key "
+    "(PRIDE_PROCESSED_FILES). The stored values come from Supplementary Data S2; the "
+    "per-run tables are not ingested yet (PRIDE_PER_RUN_RELEASE, #1199)",
+)
+_Q_COMPLETE_PROTEOMICS = (
+    "Additional comparisons are included in the Supplementary data file Data S2, and "
+    "the complete proteomics data have been deposited to the ProteomeXchange Consortium "
+    "via the PRIDE partner repository33 with the dataset identifier PXD050285."
+)
+#: Why the per-run PRIDE tables are described here and not yet ingested (#1199).
+PRIDE_PER_RUN_RELEASE = _paper(
+    pride_runs_per_group(),
+    _Q_COMPLETE_PROTEOMICS,
+    page=_RESULTS_CUTSET,
+    note="the paper calls PXD050285 the complete proteomics data, so its processed "
+    "per-run tables are in the release. They are PRECURSOR matrices: no per-run "
+    "protein-level table is deposited. Run counts confirm the arm replicate counts "
+    "(4 per promoter strain, 3 per cross-feeding group); the promoter arm's parental "
+    "control '2370' has no run in either table and no RAW file, and set1 holds three "
+    "groups the SI never analyzes. A per-run sum of precursors reproduces the SI mean "
+    "and SD only for cross-feeding proteins quantified at every precursor in every run "
+    "(113/113, 110/110, 173/173) and not for the promoter arm (73/108, 89/133; set2 "
+    "holds 2,288 protein groups against 2,494). Per-run records wait on the owner's "
+    "choice of precursor records as released, a protein rollup, or both",
 )
 
 #: Why no titer family is written, with the quote that makes the unit question moot.
@@ -1006,9 +1139,16 @@ def deposit_raw_mirror(
             f"Supplementary Information ({SI1_PDF}) -- NOT deposited here: it is a "
             "text PDF already mirrored and OCR'd in torchcell-library, and the values "
             "this loader takes from it are sourced constants quoting those bytes",
-            f"PRIDE {PRIDE_ACCESSION} -- the raw DIA mass-spectrometry files. NOT "
-            "deposited: no loader consumes raw spectra, and Supplementary Data S2 is "
-            "the released processed release",
+            f"PRIDE {PRIDE_ACCESSION} -- {PRIDE_RAW_FILE_COUNT} RAW DIA files plus "
+            "three processed files: "
+            + ", ".join(
+                f"{released.name} ({released.category}, {released.level}, "
+                f"{released.bytes} B)"
+                for released in PRIDE_PROCESSED_FILES
+            )
+            + ". NOT deposited: raw spectra are out of scope, and the precursor "
+            "tables wait on the owner's precursor-versus-protein decision (#1199); "
+            "see PRIDE_PER_RUN_RELEASE",
             "the indigoidine titers and the growth curves were never released as "
             "tables; see TITER_NOT_A_DATASET and GROWTH_NOT_A_DATASET",
             "Supplementary Table 4's BIOLOG OD595 grid is released, measured and not "
@@ -1983,6 +2123,8 @@ class ProteomeBanerjee2025Dataset(ExperimentDataset):
                     f"{BIOLOG_NOT_A_DATASET.note}",
                     "temperature is a typed gap on every record's environment: the "
                     "shotgun-proteomics Methods never state one",
+                    "the per-run values are released on PRIDE as precursor tables and "
+                    f"are not ingested (#1199): {PRIDE_PER_RUN_RELEASE.note}",
                 ],
             ),
             self.preprocess_dir,

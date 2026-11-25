@@ -1280,10 +1280,21 @@ def test_run_visual_score_count_oracle_is_the_record_count_and_labels_l4_as_ohya
     ``other_name="scmd_ohya2005"`` with the DATASET's own genes, so the L4 row is named
     ``gene_containment_scmd_ohya2005`` and its message reads "of scmd_ohya2005's N
     deletion genes are in Ohya" although the N genes are the visual-score dataset's.
-    The count oracle is ``len(records)``, so the L1 count row can never fail here.
+    The count oracle is the registry's ``expected_count`` (2026.11.24; it used to be
+    ``len(records)``, which could never fail), so an oracle one off fails the gate.
     """
-    monkeypatch.setattr(runners, "VISUAL_SCORE_DATASETS", {"vis": _spec("vis")})
+    monkeypatch.setattr(
+        runners, "VISUAL_SCORE_DATASETS", {"vis": _spec("vis", expected_count=4)}
+    )
     _write_lmdb(_root(tmp_path, "vis"), [_visual_record(g) for g in GENES])
+    assert runners.run_visual_score(str(tmp_path)) is False
+    assert _result(_read_report(_root(tmp_path, "vis")), "count")["details"] == {
+        "observed": 3,
+        "expected": 4,
+    }
+    monkeypatch.setattr(
+        runners, "VISUAL_SCORE_DATASETS", {"vis": _spec("vis", expected_count=3)}
+    )
     assert runners.run_visual_score(str(tmp_path)) is True
     without = _read_report(_root(tmp_path, "vis"))
     assert _names(without) == [
@@ -2156,7 +2167,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         runners.OHNUKI2022_EXPECTED_REPLICATE_RECORDS,
     ) == (122, 114, 749)
     assert runners.OHNUKI2022_EXPECTED_INCOMPLETE == 1
-    assert _oracles(runners.VISUAL_SCORE_DATASETS) == {"carotenoid_ozaydin2013": None}
+    assert _oracles(runners.VISUAL_SCORE_DATASETS) == {"carotenoid_ozaydin2013": 4727}
     assert _oracles(runners.METABOLITE_DATASETS) == {
         "betaxanthin_cachera2023": None,
         "amino_acid_mulleder2016": 9731,

@@ -229,3 +229,41 @@ Rejected: a positional index (asserts nothing, the synthetic key the constitutio
 Regression: `test_identical_scores_at_two_collection_positions_are_two_distinct_records` builds the real YAL049C pair (record 356, `01_1`, plate 1, B3; record 7729, `chr00_23`, plate 75, A1) and asserts the two digests differ; on the code before this change it fails with both digests `4820dec2874f832dd4243219e93a7c5918d55abac1eeaef7a8e8eaf51a607027`. The store is NOT rebuilt here (shared dev tree); the next build writes 4,607 records with 4,607 distinct ids.
 
 Open, not done here: the verbatim `Comment` cell is still reduced to its parsed flags (`comment_annotations`); the text itself (`papillation on -met`) is released data the record does not carry.
+
+## 2026.11.24 - Second round of transformation stored per replicate: 4,607 -> 4,727 (#1176, #1178)
+
+Per-replicate policy (#1178): a record is one biological replicate. The SI workbook (`si/1-s2.0-S109671761200081X-mmc1.xlsx`, sha256 `4818726e352ead3cb739fd9becf08a0c04d14b8a8761732184214344447507f0`, literature mirror `ozaydinCarotenoidbasedPhenotypicScreen2013a`; no raw mirror exists for this key, the loader pins the same bytes) has three sheets, and the loader read two of them. The third, `2ndRoundOfTransformations`, is a second, independent transformation of the selected strains.
+
+### Replicate evidence (paper.md, sha256 `df2f2b639331f3da4137ab61e2df2ba0899b164a85da48acafc30c55dcc699b8`)
+
+- Line 98, the selection: "Out of these gene deletions, we focused on 156 strains that showed significant color enhancement (scored 3, 4, or 5) (Supplementary File)."
+- Line 98, the second round: "They were screened again by transforming individually and scoring the colony color of the transformants to confirm the results from the first round of transformation."
+- Line 98, two rounds and no more: "Twenty-four of these strains with consistent and very strong carotenoid production (scoring 4 or 5 in both rounds of transformation) were selected for further evaluation."
+- Line 58, the scale anchor: "Each 96-well transformation plate included the parent wild-type strain. The color of the carotenoidexpressing, wild-type, parent strain was labeled as 0."
+- Line 36, the background: "The yeast strains used in this study were isogenic to BY4741".
+- No technical repeat of a score is described (searched: replicate, triplicate, duplicate, independent, colony, transformant, round, n =). Fig 3 absorbance ("Data are an average of two independent experiments", line 117) and the bisabolene titers ("average of 3 biological replicas") are not tabulated in the SI and stay out of scope.
+
+So one transformation of one strain, scored once, is one biological replicate. Sheet 1 is round 1 for every strain; each numeric `2nd Screen` cell is round 2 of its strain.
+
+### What the second-round sheet holds (measured, `ozaydin2013_per_replicate_counts.py`)
+
+Row 1 is a title line ("Deletions selected for further Bisabolene analysis are highlighted in red"), row 2 blank, row 3 the header `Systematic name, Gene Name, 1st Screen, 2nd Screen`, rows 4-160 data: 156 strain rows (155 under a systematic name and one, row 72, under the gene name `PDR11` alone, a second PDR11 row beside YIL013C) and the trailing `WT` row (0 and 0). 156 is the paper's count. `2nd Screen`: 120 numeric cells (119 strain rows plus WT; values -2 x3, -1 x6, 0 x6, 1 x25, 2 x9, 3 x14, 4 x28, 4.5 x3, 5 x26) and 37 text cells. Nine ORFs sit on 2-3 rows (YPL061W x3; YJL056C, YDL230W, YBR125C, YKL054C, YGR152C, YGR036C, YPL202C, YNL147W x2).
+
+### What changed
+
+- Each numeric `2nd Screen` cell is a record: 118 deletions on `KanMxDeletionPerturbation`, PDR11 (row 72) on `ReleasedIdentifierPerturbation` with `identifier_kind` "Gene Name column entry, as released (the Systematic name cell is blank)", and the WT row as the YB/I/BTS1 cassette with no deletion. All BY4741, n = 1, `comment_annotations` None (the sheet has no Comment column).
+- `replicate_id`: `round 1` on every Sheet 1 record (the collection position on `construction` still tells two strains of one ORF apart) and `round 2, 2ndRoundOfTransformations row N` on a second-round record, N the sheet row. Two second-round rows of YNL147W both scored 4 stay two records by this id alone.
+- The second-round sheet prints no collection position, so a second-round deletion has `construction` None. It is not copied from Sheet 1: ORFs with two Sheet 1 strains would make that a guess, and the note-10 rule forbids inferring what is not printed.
+- Every record carries a `not_applicable_single_measurement` gap on `visual_score_min`.
+- Environment: the one scoring protocol the paper prints (line 42, SC-URA agar, 30 C) for both rounds; the paper describes the second round as the same transformation and scoring, not a new protocol.
+- Ledger (`dropped_records.json`) gains two rules: `round_2_cell_is_text_not_a_score` (37 cells, verbatim, never split) and `round_2_first_screen_is_not_a_record` (157 rows, 14 listed where `1st Screen` is not among the Sheet 1 Color cells of that ORF).
+- Verifier registry: `expected_count` 4727 replaces `len(records)` (which could never fail); `build_time_projection` 4474 (stale since #1045) -> 4727.
+
+### Counts and checks
+
+Scratch builds: before (origin/main) `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-ozaydin2013/before/carotenoid_ozaydin2013` 4,607; after `/scratch/projects/torchcell-scratch/tmp/scratch/per-replicate-ozaydin2013/after/carotenoid_ozaydin2013` 4,727 (round 1: 4,607, round 2: 120). All 4,607 before-records equal the after-record at the same index once `replicate_id` and `provenance_gaps` are set aside; references unchanged. Mean by (genotype, environment): 4,724 groups, 4,607 match a before-group with max abs diff 0.0, 117 are new (a second-round genotype has no construction). Pooled by gene (construction set aside), the second round moves 95 gene means, by up to 5.0 (YDR056C, Sheet 1 -5, round 2 5). Verifier `run_visual_score`: PASS, L1 count 4727 of 4727, L4 gene containment 0.946 (report-class).
+
+### Open for the owner
+
+- Two scores in one cell (`5 and 0`, `Mixed 5 and 2`, `4/-1`, `4 and -2`; 22 cells), a number with a word (`2 tiny`, `3 tiny`, `4 tiny` x2, `4 tiny colonies`, `3 mixed`; 6 cells) and no score (`--`, `---`; 9 cells): two colonies, a mixed patch or a range? Is `4 tiny` a score or a count of tiny colonies? The paper does not say; the cells are ledgered verbatim.
+- The first-round value is released twice and disagrees with itself. The second-round `1st Screen` column differs from Sheet 1 for 11 ORFs (YDR056C 5 vs -5, YAR002W 3 vs 0, YBR244W 4 vs 0, ...), and the TOP200 sheet's `Color`, at the SAME (Plate, Row, Col) as Sheet 1, differs from Sheet 1 for 15 strains, all on collection plates 1, 10 and 24 (YDR056C 5 vs -5, YBR185C 5 vs 0, ...). Sheet 1 is stored unchanged; which value is the first-round score is a question for the owner, not a third replicate.

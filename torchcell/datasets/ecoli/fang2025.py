@@ -2489,6 +2489,25 @@ def _added_gene(addition: GeneAddition, bnumber: str) -> GeneAdditionPerturbatio
     )
 
 
+def _released_bnumber(
+    gene: str, symbol_to_bnumber: Mapping[str, set[str]], strain: str
+) -> str:
+    """The one b-number Wang 2018's cluster table releases for a gene symbol.
+
+    The addition and the deletion name their gene by symbol, as the plasmid and strain
+    tables write it, and the identifier comes from the same released table every
+    knockdown in this dataset is keyed by. A symbol with no b-number, or with two,
+    stops the build rather than being resolved by a rule the source never stated.
+    """
+    found = symbol_to_bnumber.get(gene.lower(), set())
+    if len(found) != 1:
+        raise RuntimeError(
+            f"{strain}: the released cluster table answers {gene!r} with "
+            f"{sorted(found)}, not with one b-number"
+        )
+    return next(iter(found))
+
+
 def _host_deletion(gene: str, bnumber: str) -> DeletionStrainPerturbation:
     """One lambda-RED deletion the host sentence states, beyond the background's fadE.
 
@@ -2666,10 +2685,14 @@ class FfaTiterFang2025Dataset(ExperimentDataset):
             token: tuple((member.bnumber, member.symbol) for member in cluster.members)
             for token, cluster in clusters.items()
         }
-        symbol_to_bnumber: dict[str, str] = {}
+        # the symbol -> b-number map an addition or a deletion is keyed by, over Wang
+        # 2018's whole released cluster table. It holds the SET, so a symbol two
+        # b-numbers answer to is refused where it is read rather than resolved to
+        # whichever row came first (measured: fadR, pcnB and acrD each answer to one).
+        symbol_to_bnumber: dict[str, set[str]] = {}
         for members in targets.values():
             for bnumber, symbol in members:
-                symbol_to_bnumber.setdefault(symbol.lower(), bnumber)
+                symbol_to_bnumber.setdefault(symbol.lower(), set()).add(bnumber)
 
         rows = read_titer_blocks(osp.join(self.raw_dir, SCREEN_FILE.filename))
         strains = read_strain_table(osp.join(self.raw_dir, STRAIN_FILE.filename))
@@ -2737,7 +2760,7 @@ class FfaTiterFang2025Dataset(ExperimentDataset):
         primers: Mapping[str, str],
         targets: Mapping[str, tuple[tuple[str, str], ...]],
         spacers: Mapping[str, str],
-        symbol_to_bnumber: Mapping[str, str],
+        symbol_to_bnumber: Mapping[str, set[str]],
     ) -> tuple[Genotype, list[str], list[str]]:
         """One strain's genotype, with the guide ids and primers it was proved by."""
         leaves: list[GenePerturbationType] = []
@@ -2754,18 +2777,18 @@ class FfaTiterFang2025Dataset(ExperimentDataset):
             for bnumber, symbol in targets[str(parsed.group("token"))]:
                 leaves.append(_knockdown(bnumber, symbol, spacer))
         for addition in spec.additions:
-            added = symbol_to_bnumber.get(addition.gene.lower())
-            if added is None:
-                raise RuntimeError(
-                    f"{spec.strain}: no released b-number for the added gene "
-                    f"{addition.gene!r}"
+            leaves.append(
+                _added_gene(
+                    addition,
+                    _released_bnumber(addition.gene, symbol_to_bnumber, spec.strain),
                 )
-            leaves.append(_added_gene(addition, added))
+            )
         for gene in spec.deletions:
-            deleted = symbol_to_bnumber.get(gene.lower())
-            if deleted is None:
-                raise RuntimeError(f"{spec.strain}: no released b-number for {gene!r}")
-            leaves.append(_host_deletion(gene, deleted))
+            leaves.append(
+                _host_deletion(
+                    gene, _released_bnumber(gene, symbol_to_bnumber, spec.strain)
+                )
+            )
         return Genotype(perturbations=leaves), guide_ids, matched
 
     def _write_records(
@@ -2776,7 +2799,7 @@ class FfaTiterFang2025Dataset(ExperimentDataset):
         primers: Mapping[str, str],
         targets: Mapping[str, tuple[tuple[str, str], ...]],
         spacers: Mapping[str, str],
-        symbol_to_bnumber: Mapping[str, str],
+        symbol_to_bnumber: Mapping[str, set[str]],
     ) -> tuple[list[TiterStrainRecord], dict[str, dict[str, float]]]:
         """Write every stored culture to LMDB and return the ledger and the references."""
         specs = {

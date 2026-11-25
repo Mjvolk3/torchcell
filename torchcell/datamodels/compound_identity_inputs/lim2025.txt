@@ -1,0 +1,8 @@
+# compound_identity_inputs/lim2025.txt
+# Source: per-replicate conversion of Lim 2025 (#1199 / #1178), the formaldehyde TALE arm
+# of Supplementary Table 3 ($DATA_ROOT/torchcell-raw/limEvolutionguidedToleranceEngineering2025/data/si1.docx,
+# sha256 7bc748853a07d23e2bc0712a33cfe74c68b7009ad91ff52b1d98e1f875fbc2d3, row group
+# 'HCHO TALE KT2440', ALE 13-16, starting concentration 1 mM). The paper names the
+# stressor "formaldehyde" (paper.md L78: "We also tolerized the WT strain against
+# formaldehyde stress as a control"). No row of the table held it on 2026-11-25.
+formaldehyde | canonical

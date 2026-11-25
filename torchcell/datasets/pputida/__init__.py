@@ -84,6 +84,7 @@ from .lim2025 import (
     IsoprenolToleranceLim2025Dataset as IsoprenolToleranceLim2025Dataset,
 )
 from .lim2025 import ProteomeLim2025Dataset as ProteomeLim2025Dataset
+from .lim2025 import TaleGrowthRateLim2025Dataset as TaleGrowthRateLim2025Dataset
 from .menasalvas2025 import (
     IsoprenolSelectionMenasalvas2025Dataset as IsoprenolSelectionMenasalvas2025Dataset,
 )

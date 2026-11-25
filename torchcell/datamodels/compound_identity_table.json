@@ -53747,6 +53747,19 @@
     },
     {
       "chebi_id": null,
+      "inchikey": "WSFSSNUMVMOOMR-UHFFFAOYSA-N",
+      "name": "formaldehyde",
+      "pubchem_cid": 712,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-11-25",
+      "smiles": "C=O",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/formaldehyde/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": null,
       "inchikey": "ZHNUHDYFZUAESO-UHFFFAOYSA-N",
       "name": "formamide",
       "pubchem_cid": 713,

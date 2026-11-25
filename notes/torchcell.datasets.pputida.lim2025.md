@@ -953,3 +953,57 @@ Report `verification_report.json` (written 2026-10-11 08:32 UTC):
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
 | L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+
+## 2026.11.24 - One record per TALE lineage, and the PRIDE proteome tables (#1178, #1199, #1203)
+
+Per-replicate conversion under the #1178 policy. The tolerance class stored two values that were loader statistics: IPL300 and IPL400 as log2 of each strain's mean over its four Supplementary Table 3 lineages, divided by KT2440's mean. Those lineages are released one number each, so they are records now, in a new class.
+
+### Replicate evidence
+
+| what | quote | where | sha256 |
+|---|---|---|---|
+| a lineage is a biological replicate | "Each TALE experiment was conducted with four independent biological replicates in one high-throughput evolution campaign" | `paper.md` L78 | `26b88d81...` |
+| one released number per lineage | "Initial growth rate (h-1)", one cell per ALE row, 16 rows | `si1.docx`, Supplementary Table 3 | `7bc74885...` |
+| what the number already combines | "Average growth rate, observed in the three first flasks of each experiment." | `si1.docx`, Table 3 footnote a | `7bc74885...` |
+| no withdrawal | ALE 8 "Has a lower passage than other lineages since the experiment was restarted from an early intermediate stock due to cross-contamination." | `si1.docx`, Table 3 footnote `*` | `7bc74885...` |
+| HCHO arm medium | "As a carbon source, $4 \ g / \mathrm { L }$ glucose was added to the minimal medium unless otherwise stated." | `paper.md` L39 | `26b88d81...` |
+
+The per-flask rates are not released, so the three first flasks stay combined inside the record, and the record's `units` says so.
+
+### Records
+
+| class | before | after | value |
+|---|---|---|---|
+| `TaleGrowthRateLim2025Dataset` (new) | 0 | 16 | released initial growth rate in h^-1, `MeasurementType.growth_rate`, `n_samples = 1`, `replicate_id = "ALE <n>"`, `not_applicable_single_measurement` gaps on both uncertainty fields |
+| `IsoprenolToleranceLim2025Dataset` | 3 | 1 | KT2440 dPP_3024, log2 of the Fig. 3A text's 1.6-fold (unchanged value) |
+| `ProteomeLim2025Dataset` | 3 | 3 | unchanged; provenance text corrected |
+| `ProteomeFoldChangeLim2025Dataset` | 4 | 4 | unchanged (released two-arm statistics) |
+
+The 16 records: KT2440 ALE 1-4, IPL300 ALE 5-8 and IPL400 ALE 9-12 at 4 g/L isoprenol, and KT2440 ALE 13-16 at 1 mM formaldehyde. The four formaldehyde lineages were dropped before by `hcho_arm_has_no_strain_other_than_the_reference`, a rule that existed only because the stored value was a ratio; that rule is gone. Formaldehyde had no compound-identity row, so one was curated (`compound_identity_inputs/lim2025.txt`, `experiments/036-dataset-fixes-before-kg-build/scripts/compound_curator_lim2025.py`, PubChem CID 712, InChIKey `WSFSSNUMVMOOMR-UHFFFAOYSA-N`; table 5,727 -> 5,728 rows, re-pinned `1cff4ddc...`). Each reference is KT2440's own four lineages in the same condition: mean, sample SD, n = 4, `replicate_id = None`. The 16 final growth rates stay refused (`final_growth_rate_is_an_evolved_population`, now counted per lineage: 32 candidates, 16 kept, 16 dropped).
+
+dPP_3024 is a separate class because the Fig. 3A text releases a ratio and no absolute rate, and one class holds one `measurement_type`. Its record now also carries the `PANEL_N_SAMPLES_GAP` it defined and never attached, and its reference no longer states `n_samples = 4` (that was the TALE arm's count, not Fig. 3A's).
+
+### Checks on the scratch build
+
+Built from the real mirror into `/bulk/torchcell-scratch-overflow/per-replicate/per-replicate-lim2025/data/torchcell/` (`tale_growth_rate_lim2025`, `isoprenol_tolerance_lim2025`).
+
+- Verifier: `TaleGrowthRateLim2025Dataset` PASS (L3 `reference_zero` on the absolute branch, 16 unique L1 keys because `replicate_id` joins the key), `IsoprenolToleranceLim2025Dataset` PASS.
+- Counts per replicate position: each of ALE 1-16 once; four records per (genotype, environment) group.
+- Mean reproduction against the dev store built before this change (`$DATA_ROOT/data/torchcell/isoprenol_tolerance_lim2025`, read only): log2(mean IPL300 / mean KT2440) = 0.7180447322689778 and log2(mean IPL400 / mean KT2440) = 0.970326081805897 equal the two stored values exactly; the dPP_3024 value 0.6780719051126377 is unchanged. Max abs difference 0.0.
+
+### PRIDE PXD054609 (#1199), not converted
+
+Measured through the EBI PRIDE API (`/ws/archive/v3/projects/PXD054609/files/all`) on 2026-11-25: 56 files, 54 `RAW` (7,962,034,896 bytes) and 2 `SEARCH`. Both SEARCH files were downloaded to the session scratchpad only, to read their shape:
+
+| file | bytes | sha256 | rows | run columns | key |
+|---|---|---|---|---|---|
+| `Lim_et_al_proteomics_set1.csv` | 6,466,417 | `41dd8cba71b4adda5359fed88e096152e3d1f58f8d63f6bb16732550061e85e4` | 23,241 | 27 | `Precursor.Id` (2,391 protein groups) |
+| `Lim_et_al_Proteomics_set2.csv` | 5,025,058 | `95dc33bba706418c96574ada27cc7b71b9b9136968c2fbc812f124f802dccf33` | 19,886 | 27 | `Precursor.Id` (2,427 protein groups) |
+
+Set1 holds the M9G and M9G+4IP arms: `HGL0500` (IPL400), `HGL0638` (A10_F63_I1) and `HGL0640` (A12_F53_I1) by the Sample Key sheet, 18 runs for the three loaded strains, plus `HGL0496_M9G[_4IP]-R1..R3` and `HGL_0834_M9G-R1..R3`, which the Sample Key does not name. Set2 holds the 27 pIY670 production runs. No per-run PROTEIN table is deposited, so nothing was added to the raw mirror: the owner has not chosen between precursor-level values as released and a protein rollup computed here. The paper's Data Availability, "All relevant data is available in the main text or the supplementary material or uploaded to the mentioned publicly available repositories." (`paper.md` L184), does cover the deposit. The PRIDE project's data-processing text says the search database was "S. cerevisiae latest Uniprot proteome", while the paper's Methods say P. putida KT2440; the CSV accessions are `_PSEPK`, so the PRIDE text looks like a copy error.
+
+One correction to the replicate evidence the loader quoted for the proteome: "Samples were analyzed as three independent biological replicates." closes Methods section 2.6 (`paper.md` L61), the pIY670 production cultures. Section 2.5, which covers the loaded M9G and M9G+4IP arms, states no replicate kind; n = 3 there rests on the Sample Key's `R1,R2,R3` and the Welch back-solve.
+
+### #1203 item 5
+
+The "PRIDE holds raw spectra only" text is corrected in the module docstring, the `pride_accession` sourced-value note and `NOT_MIRRORED` (which feeds the raw manifest's `si_expected`). The on-disk raw manifest keeps the old `si_expected` text until the next `deposit`; no mirror file changed.

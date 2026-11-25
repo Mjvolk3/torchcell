@@ -1,0 +1,238 @@
+{
+  "citation_key": "limEvolutionguidedToleranceEngineering2025",
+  "table": "bacteria",
+  "row_name": "Lim 2025 isoprenol TALE",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Tolerance / robustness', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: KT2440 -> pputida_KT2440_ASM756v2 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "4 file(s) in library+raw, 37082 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "pass",
+      "reason": "EnvironmentResponsePhenotype exists; compounds resolve",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "KT2440",
+        "assembly_set": "pputida_KT2440_ASM756v2",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "limEvolutionguidedToleranceEngineering2025",
+    "trees_read": [
+      "library",
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.docx",
+        "role": "si_data",
+        "bytes": 5492159,
+        "sha256_manifest": "7bc748853a07d23e2bc0712a33cfe74c68b7009ad91ff52b1d98e1f875fbc2d3",
+        "sha256_disk": "7bc748853a07d23e2bc0712a33cfe74c68b7009ad91ff52b1d98e1f875fbc2d3",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.xlsx",
+        "role": "si_data",
+        "bytes": 2769528,
+        "sha256_manifest": "a3cfd6014cc611b206af9c7e7c8770c23189ae96986d23981da0b11236721612",
+        "sha256_disk": "a3cfd6014cc611b206af9c7e7c8770c23189ae96986d23981da0b11236721612",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Fig 2B_Mutation List",
+            "rows": 998
+          },
+          {
+            "sheet": "Table S4_GeneList",
+            "rows": 1000
+          },
+          {
+            "sheet": "ProteomeXchange Sample Key",
+            "rows": 12
+          },
+          {
+            "sheet": "Proteome_A10F63I1vsIPL400_M9G",
+            "rows": 2368
+          },
+          {
+            "sheet": "Proteome_A10F63I1vsIPL400_G+4IP",
+            "rows": 2375
+          },
+          {
+            "sheet": "Proteome_A12F53I1vsIPL400_M9G",
+            "rows": 2368
+          },
+          {
+            "sheet": "Proteome_A12F53I1vsIPL400_G+4IP",
+            "rows": 2339
+          },
+          {
+            "sheet": "IPL400vsA10F63I1_pIY670_M9G_12h",
+            "rows": 2351
+          },
+          {
+            "sheet": "IPL400vsA10F63I1_pIY670_M9G_24h",
+            "rows": 2351
+          },
+          {
+            "sheet": "IPL400vsA10F63I1_pIY670_M9G_48h",
+            "rows": 2379
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "data/si1.docx",
+        "role": "raw_data",
+        "bytes": 5492159,
+        "sha256_manifest": "7bc748853a07d23e2bc0712a33cfe74c68b7009ad91ff52b1d98e1f875fbc2d3",
+        "sha256_disk": "7bc748853a07d23e2bc0712a33cfe74c68b7009ad91ff52b1d98e1f875fbc2d3",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/si2.xlsx",
+        "role": "raw_data",
+        "bytes": 2769528,
+        "sha256_manifest": "a3cfd6014cc611b206af9c7e7c8770c23189ae96986d23981da0b11236721612",
+        "sha256_disk": "a3cfd6014cc611b206af9c7e7c8770c23189ae96986d23981da0b11236721612",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Fig 2B_Mutation List",
+            "rows": 998
+          },
+          {
+            "sheet": "Table S4_GeneList",
+            "rows": 1000
+          },
+          {
+            "sheet": "ProteomeXchange Sample Key",
+            "rows": 12
+          },
+          {
+            "sheet": "Proteome_A10F63I1vsIPL400_M9G",
+            "rows": 2368
+          },
+          {
+            "sheet": "Proteome_A10F63I1vsIPL400_G+4IP",
+            "rows": 2375
+          },
+          {
+            "sheet": "Proteome_A12F53I1vsIPL400_M9G",
+            "rows": 2368
+          },
+          {
+            "sheet": "Proteome_A12F53I1vsIPL400_G+4IP",
+            "rows": 2339
+          },
+          {
+            "sheet": "IPL400vsA10F63I1_pIY670_M9G_12h",
+            "rows": 2351
+          },
+          {
+            "sheet": "IPL400vsA10F63I1_pIY670_M9G_24h",
+            "rows": 2351
+          },
+          {
+            "sheet": "IPL400vsA10F63I1_pIY670_M9G_48h",
+            "rows": 2379
+          }
+        ]
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1016/j.ymben.2025.05.007",
+    "pmid": null,
+    "accessions": [
+      "PXD054609"
+    ],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1016/j.ymben.2025.05.007",
+        "where": "torchcell/datasets/pputida/lim2025.py",
+        "relation": "own"
+      },
+      {
+        "key_kind": "accession",
+        "key": "PXD054609",
+        "where": "torchcell/datasets/pputida/lim2025.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "EnvironmentResponsePhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": null
+  },
+  "derived_from_compendium": null,
+  "decided_at": "2026-11-25",
+  "torchcell_commit": "8aa0120bb8373f2f8d4b9d48b893eca8ee43d67d"
+}

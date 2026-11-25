@@ -371,6 +371,11 @@ MODULE_ROUTES: dict[str, ModuleRoute] = {
         entry="run_tolerance_verification",
         positional=(DATA_ROOT,),
     ),
+    "TaleGrowthRateLim2025Dataset": ModuleRoute(
+        module="torchcell.datasets.pputida.lim2025",
+        entry="run_tale_growth_rate_verification",
+        positional=(DATA_ROOT,),
+    ),
     "IsoprenolSelectionMenasalvas2025Dataset": ModuleRoute(
         module="torchcell.datasets.pputida.menasalvas2025",
         entry="verify_build",

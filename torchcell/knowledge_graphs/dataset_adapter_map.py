@@ -197,6 +197,9 @@ from torchcell.adapters.carruthers2025_proteome_fold_change_adapter import (
 from torchcell.adapters.lim2025_proteome_fold_change_adapter import (
     ProteomeFoldChangeLim2025Adapter,
 )
+from torchcell.adapters.lim2025_tale_growth_rate_adapter import (
+    TaleGrowthRateLim2025Adapter,
+)
 from torchcell.adapters.ohya2005_adapter import ScmdOhya2005Adapter
 from torchcell.adapters.volk2021_inhibitor_bioscreen_adapter import (
     InhibitorBioscreenVolk2021Adapter,
@@ -344,6 +347,7 @@ from torchcell.datasets.pputida.lim2025 import (
     IsoprenolToleranceLim2025Dataset,
     ProteomeFoldChangeLim2025Dataset,
     ProteomeLim2025Dataset,
+    TaleGrowthRateLim2025Dataset,
 )
 from torchcell.datasets.pputida.menasalvas2025 import (
     IsoprenolSelectionMenasalvas2025Dataset,
@@ -650,6 +654,7 @@ dataset_adapter_map: dict[type, type] = {
     ValerolactamTiterThompson2019Dataset: ValerolactamTiterThompson2019Adapter,
     LactamGrowthRateThompson2019Dataset: LactamGrowthRateThompson2019Adapter,
     PutidaPrecise321Lim2022Dataset: PutidaPrecise321Lim2022Adapter,
+    TaleGrowthRateLim2025Dataset: TaleGrowthRateLim2025Adapter,
     IsoprenolToleranceLim2025Dataset: IsoprenolToleranceLim2025Adapter,
     ProteomeLim2025Dataset: ProteomeLim2025Adapter,
     ProteomeFoldChangeLim2025Dataset: ProteomeFoldChangeLim2025Adapter,

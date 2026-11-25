@@ -534,6 +534,7 @@ BACTERIAL_DATASETS = {
     "IsoprenolTiterDeSiqueira2025Dataset",
     "IsoprenolTiterYunus2026Dataset",
     "IsoprenolToleranceLim2025Dataset",
+    "TaleGrowthRateLim2025Dataset",
     "IsoprenolTiterBanerjee2024Dataset",
     "IsoprenylAcetateTiterKang2026Dataset",
     "LactamGrowthRateThompson2019Dataset",
@@ -688,6 +689,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         + 2  # #1175 Choe 2019 absolute growth rates and metabolites
         + 1  # #1178 Schmidt 2016 Table S8 per-culture intensities
         + 1  # #1176 Muenzner 2024 SI Table 13 time course
+        + 1  # #1178 Lim 2025 TALE lineages' initial growth rates
     )
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {

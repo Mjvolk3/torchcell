@@ -1,0 +1,28 @@
+{
+  "summary": {
+    "input_list": "torchcell/datamodels/compound_identity_inputs/lim2025.txt",
+    "input_list_sha256": "966ef1571debba4a9ab5853f05347d37fb23926e102005b51fce774fc9921d15",
+    "table_before": {
+      "sha256": "3042ca39de93cd381e1ef2b07494c3c575e75a05de820e757c8cb43487c09307",
+      "records": 5727
+    },
+    "table_after": {
+      "sha256": "1cff4ddc3bed82dffd23c9b65ec1c3819d7d0c70a71af0573e72ccdd40f6c017",
+      "records": 5728
+    },
+    "rows_added": 1,
+    "folds": [],
+    "table_written": true
+  },
+  "labels": [
+    {
+      "label": "formaldehyde",
+      "row_name": "formaldehyde",
+      "inchikey": "WSFSSNUMVMOOMR-UHFFFAOYSA-N",
+      "pubchem_cid": 712,
+      "chebi_id": null,
+      "resolution_status": "RESOLVED",
+      "smiles": "C=O"
+    }
+  ]
+}

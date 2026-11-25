@@ -390,3 +390,45 @@ Not answered: whether the graph prior helps. Lambda 1e-05 leads both pooled
 ladders on the cycle split, lambda 1e-04 led the design split, and the ladders
 are not monotone on either, so the ranking is not stable across splits and one
 seed per rung cannot separate an optimum from a draw.
+
+### 2026.11.25, later - the lambda ladder, extended to the range this repo sweeps
+
+The trial's ladder was 0, 1e-6, 1e-5, 1e-4. Owner pointed out that prior CGT
+configs here sweep higher: `experiments/006-kuzmin-tmi` uses 1e-3, and committed
+configs across the repo carry 2e-7, 2e-5, 3.4e-5, 6.5e-5, 1.6e-4, 2.2e-4, 1e-3
+and 1e-2. **The ladder was truncated two orders below the top of the swept
+range.** The missing rungs were run on the pooled readout, cycle split, three
+seeds each:
+
+| lambda | n | test rho | R-squared | RMSE | offset | best epoch |
+|---|---|---|---|---|---|---|
+| 0 | 1 | 0.601 | 0.386 | 155.5 | 35.3 | 61 |
+| 1e-06 | 3 | 0.514 ± 0.088 | 0.030 | 195.3 | 85.4 | 43 |
+| 1e-05 | 3 | 0.615 ± 0.062 | 0.378 | 155.8 | 29.1 | 42 |
+| 1e-04 | 1 | 0.547 | 0.101 | 188.1 | 79.8 | 42 |
+| 1e-03 | 3 | 0.600 ± 0.029 | 0.195 | 177.8 | 69.5 | 26 |
+| 1e-02 | 3 | 0.581 ± 0.063 | -0.005 | 197.9 | 107.2 | 27 |
+
+**The recommendation does not change: 1e-05 still leads every metric.** But the
+extension shows two things the truncated ladder could not.
+
+- **R-squared falls monotonically above 1e-05** (0.378, 0.101, 0.195, -0.005)
+  while Spearman stays flat between 0.55 and 0.62. Strong regularization costs
+  calibration, not ranking, which is the same rank-versus-scale dissociation the
+  metabolic module shows. 1e-03 has the TIGHTEST Spearman spread on the ladder
+  (± 0.029) and half the R-squared of 1e-05, so a Spearman-only read would have
+  picked it.
+- **The fit shortens at the top**, best epoch 61 to 42 to 26, with the offset
+  growing from 29 to 107 ug/mL.
+
+**The justification for truncating was wrong even though the conclusion
+survived.** It rested on one untrained-epoch reading, the KL term contributing
+33 against an MSE near 1 at lambda 1e-3, and the inference that 1e-3 was "the
+whole objective". It is not: 1e-3 trains to 0.600 Spearman, within noise of the
+best. A single-epoch loss magnitude does not predict where a trained model
+lands, and the established sweep range should have been run rather than argued
+away.
+
+**Figure 1a asymmetry.** The pooled readout line spans 0 to 1e-2; the metabolic
+module line stops at 1e-4, because the extension was run on the pooled readout
+only. The purple line ending early is missing data, not a measured collapse.

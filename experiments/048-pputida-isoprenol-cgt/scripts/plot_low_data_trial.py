@@ -68,7 +68,7 @@ TRIAL = osp.join(
 )
 
 FIG_WIDTH_MM = 179.0
-FIG_HEIGHT_MM = 62.0
+FIG_HEIGHT_MM = 66.0
 FS_AXIS = 6.0
 FS_TICK = 6.0
 FS_LEGEND = 5.0
@@ -118,8 +118,8 @@ def panel_objective(ax: plt.Axes, cells: pd.DataFrame) -> None:
     ladder = sorted(cycle.graph_reg_lambda.unique())
     position = {value: index for index, value in enumerate(ladder)}
     for flux, color, label in (
-        (False, POOLED_COLOR, "pooled head"),
-        (True, FLUX_COLOR, "flux metabolism"),
+        (False, POOLED_COLOR, "pooled readout"),
+        (True, FLUX_COLOR, "metabolic module"),
     ):
         subset = cycle[cycle.flux == flux]
         grouped = subset.groupby("graph_reg_lambda").test_spearman.agg(
@@ -218,7 +218,7 @@ def panel_rank_versus_scale(ax: plt.Axes, cells: pd.DataFrame) -> None:
             color=POOLED_COLOR,
             markeredgecolor="black",
             markeredgewidth=0.25,
-            label="pooled",
+            label="pooled readout",
         ),
         Line2D(
             [],
@@ -229,7 +229,7 @@ def panel_rank_versus_scale(ax: plt.Axes, cells: pd.DataFrame) -> None:
             color=FLUX_COLOR,
             markeredgecolor="black",
             markeredgewidth=0.25,
-            label="flux",
+            label="metabolic module",
         ),
         Line2D(
             [],
@@ -346,9 +346,13 @@ def panel_confound(ax: plt.Axes, cells: pd.DataFrame) -> None:
         fontsize=FS_LEGEND,
         frameon=False,
         loc="lower left",
-        bbox_to_anchor=(0.005, 0.005),
+        bbox_to_anchor=(0.0, 1.0),
+        ncol=3,
         handlelength=1.1,
         handleheight=0.9,
+        columnspacing=1.0,
+        borderpad=0.0,
+        borderaxespad=0.15,
     )
 
 
@@ -387,7 +391,7 @@ def main() -> None:
             fontweight="bold",
             va="bottom",
         )
-    fig.subplots_adjust(left=0.055, right=0.995, top=0.90, bottom=0.22)
+    fig.subplots_adjust(left=0.055, right=0.995, top=0.855, bottom=0.21)
 
     out_dir = osp.join(ASSET_IMAGES_DIR, "048-pputida-isoprenol-cgt")
     os.makedirs(out_dir, exist_ok=True)

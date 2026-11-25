@@ -200,9 +200,48 @@
 <span class="c1"># Verified: SI-costanzoGlobalGeneticInteraction2016.pdf, Page 5,</span>
 <span class="c1">#           Section "Single mutant fitness standard"</span>
 <span class="c1"># Date extracted: 2026-01-20</span>
-<span class="c1"># Array-strain SMF uses 350 control screens (kept for provenance; the simplified</span>
-<span class="c1"># loader records the query-strain screen count for SMF).</span>
+<span class="c1"># 2026.11.24 (#1203 item 3): the loader used to stamp 17 on every SMF record. A</span>
+<span class="c1"># record's n_samples now follows the collection its released estimate came from</span>
+<span class="c1"># (see ``_smf_estimate_is_array_only``): 350 for an array strain (_dma, _tsa) whose</span>
+<span class="c1"># estimate is the array collection's alone, 17 for every other record.</span>
 <span class="n">N_SAMPLES_ARRAY_SMF_SCREENS</span> <span class="o">=</span> <span class="mi">350</span>
+
+<span class="c1"># How the released SMF value of a strain was combined, verbatim (si1.md line 96,</span>
+<span class="c1"># sha256 1828703b0ff739fdf1c0d9232fe4fd81a3ce95a1b111780f55ef63bfa676880e):</span>
+<span class="c1">#   "we treated the fitness of most single mutant array and query strains for the</span>
+<span class="c1">#    same mutant as independent estimates and assigned the mean of the two estimates</span>
+<span class="c1">#    to each strain; a small number (~55) of query and array strains for the same</span>
+<span class="c1">#    mutant exhibited notably different colony sizes and thus separate fitness</span>
+<span class="c1">#    estimates were retained for these mutants."</span>
+<span class="c1"># The release shows the mean as an array strain and a query strain of one gene that</span>
+<span class="c1"># carry byte-identical values in all four SMF cells: 3,113 _dma/_sn pairs and 616</span>
+<span class="c1"># _tsa/_tsq pairs (strain_ids_and_single_mutant_fitness.xlsx, sha256</span>
+<span class="c1"># 3b9d3351cdde8ee90832797193a1e8838be3ce6778b3761a9e57db2d3a6a9ccc), while 12 _dma/_sn</span>
+<span class="c1"># and 45 _tsa/_tsq pairs of the same allele differ, the "~55" retained separately.</span>
+<span class="c1"># n_samples for each record, and why:</span>
+<span class="c1"># - array strain, no identical query twin: 350 (the array count above).</span>
+<span class="c1"># - query strain (_sn, _tsq), no identical array twin: 17 (the query count above).</span>
+<span class="c1"># - array/query twins (the mean of the two estimates): 17 on both strains. The source</span>
+<span class="c1">#   states no single count for a mean of an array estimate and a query estimate, and</span>
+<span class="c1">#   the conservative lower end (the query count) never overstates precision</span>
+<span class="c1">#   (CLAUDE.md range rule). Flagged for review.</span>
+<span class="c1"># - DAmP (_damp): 17. DAmP strains are query strains (si1.md line 76: "a set of query</span>
+<span class="c1">#   mutants carrying hypomorphic, Decreased Abundance by mRNA Perturbation (labeled</span>
+<span class="c1">#   _DAmP#) alleles"), but the SI's query count names "SGA deletion and TS query</span>
+<span class="c1">#   mutant strains" only, so 17 is a representative, not a sourced value. Flagged.</span>
+<span class="c1"># - TS strains are "computed separately at either 26 or 30" (line 96), while the</span>
+<span class="c1">#   350 / 17 screens were "performed at 26°C or 30°C"; how many of them a single</span>
+<span class="c1">#   temperature's TS estimate uses is not released, so 350 / 17 there is the SI's</span>
+<span class="c1">#   collection count, not a per-temperature count. Flagged.</span>
+<span class="c1"># n_samples is provenance only here: the stddev is a bootstrap SE used as-is.</span>
+<span class="n">SMF_ARRAY_SUFFIXES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"dma"</span><span class="p">,</span> <span class="s2">"tsa"</span><span class="p">)</span>
+<span class="n">SMF_QUERY_SUFFIXES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"sn"</span><span class="p">,</span> <span class="s2">"tsq"</span><span class="p">)</span>
+<span class="n">SMF_RELEASED_COLUMNS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Single mutant fitness (26°)"</span><span class="p">,</span>
+    <span class="s2">"Single mutant fitness (26°) stddev"</span><span class="p">,</span>
+    <span class="s2">"Single mutant fitness (30°)"</span><span class="p">,</span>
+    <span class="s2">"Single mutant fitness (30°) stddev"</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="c1"># Temperature-specific measurements (all use 4 technical replicates per screen)</span>
 <span class="c1"># Quote: "Double mutant selection plates involving a nonessential deletion</span>
@@ -235,6 +274,32 @@
 <span class="sd">    """</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_smf_estimate_is_array_only</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Mark the SMF strains whose released estimate is the array collection's alone.</span>
+
+<span class="sd">    True for an array strain (suffix ``dma`` or ``tsa``) unless a query strain (suffix</span>
+<span class="sd">    ``sn`` or ``tsq``) of the same systematic gene carries byte-identical values in all</span>
+<span class="sd">    four released SMF cells, which is how the release shows the mean the authors</span>
+<span class="sd">    assigned to both strains (see the comment above ``SMF_ARRAY_SUFFIXES``). A blank</span>
+<span class="sd">    cell matches only a blank cell. Pairing is by gene and value, not allele name,</span>
+<span class="sd">    because four twins carry a ``-supp`` allele name on one side only</span>
+<span class="sd">    (``orm2-supp1`` / ``orm2``).</span>
+<span class="sd">    """</span>
+    <span class="n">suffix_class</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"Strain ID"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^([A-Za-z]+)"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">released</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">df</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">SMF_RELEASED_COLUMNS</span><span class="p">)]</span>
+        <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">SMF_RELEASED_COLUMNS</span><span class="p">)]</span><span class="o">.</span><span class="n">notna</span><span class="p">(),</span> <span class="s2">"blank"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">cells</span> <span class="o">=</span> <span class="n">released</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="s2">"|"</span><span class="o">.</span><span class="n">join</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"Systematic gene name"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"#"</span> <span class="o">+</span> <span class="n">cells</span>
+    <span class="n">query_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">keys</span><span class="p">[</span><span class="n">suffix_class</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">SMF_QUERY_SUFFIXES</span><span class="p">)])</span>
+    <span class="n">is_array</span> <span class="o">=</span> <span class="n">suffix_class</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">SMF_ARRAY_SUFFIXES</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">is_array</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">keys</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">query_keys</span><span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_reference_std_at</span><span class="p">(</span><span class="n">temperature</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">std_26</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">std_30</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Return the reference noise for ``temperature``, refusing any but 26 and 30 C."""</span>
     <span class="k">if</span> <span class="n">temperature</span> <span class="o">==</span> <span class="mi">26</span><span class="p">:</span>
@@ -253,7 +318,21 @@
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset">[docs]</a>
 <span class="nd">@register_dataset</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SmfCostanzo2016Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Single-mutant fitness dataset from Costanzo et al. 2016."""</span>
+<span class="w">    </span><span class="sd">"""Single-mutant fitness dataset from Costanzo et al. 2016.</span>
+
+<span class="sd">    The release is aggregate-only: each SMF cell is the authors' bootstrapped mean over</span>
+<span class="sd">    replicate control screens (si1.md line 94, "based on an average of 350 replicate</span>
+<span class="sd">    control screens" for array strains and "17 replicate control screens" for query</span>
+<span class="sd">    strains), and no per-screen value is released. One record per (strain,</span>
+<span class="sd">    temperature) cell with a stated fitness and stddev: 20,484 records from 10,859</span>
+<span class="sd">    strain rows (2026.11.24 per-replicate review, #1178; no record count changes).</span>
+
+<span class="sd">    Open (#410, owner decision): for deletion and DAmP strains the 26 C and 30 C cells</span>
+<span class="sd">    carry one temperature-combined value (si1.md line 96, "we combined measurements</span>
+<span class="sd">    from different temperatures in the average for each deletion mutant"), so 8,454</span>
+<span class="sd">    strains yield a 26 C and a 30 C record with the same value. The loader still</span>
+<span class="sd">    emits both until the owner decides how a temperature-combined estimate is stated.</span>
+<span class="sd">    """</span>
 
     <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
 
@@ -380,6 +459,10 @@
             <span class="p">)</span>
         <span class="p">)</span>
 
+        <span class="c1"># #1203 item 3: which collection the released estimate came from decides the</span>
+        <span class="c1"># record's n_samples (350 array screens or 17 query screens).</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"array_only_estimate"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_smf_estimate_is_array_only</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
         <span class="c1"># Create separate dataframes for the two temperatures</span>
         <span class="n">df_26</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span>
             <span class="p">[</span>
@@ -389,6 +472,7 @@
                 <span class="s2">"Single mutant fitness (26°)"</span><span class="p">,</span>
                 <span class="s2">"Single mutant fitness (26°) stddev"</span><span class="p">,</span>
                 <span class="s2">"perturbation_type"</span><span class="p">,</span>
+                <span class="s2">"array_only_estimate"</span><span class="p">,</span>
             <span class="p">]</span>
         <span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">df_26</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">26</span>
@@ -401,6 +485,7 @@
                 <span class="s2">"Single mutant fitness (30°)"</span><span class="p">,</span>
                 <span class="s2">"Single mutant fitness (30°) stddev"</span><span class="p">,</span>
                 <span class="s2">"perturbation_type"</span><span class="p">,</span>
+                <span class="s2">"array_only_estimate"</span><span class="p">,</span>
             <span class="p">]</span>
         <span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">df_30</span><span class="p">[</span><span class="s2">"Temperature"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">30</span>
@@ -525,8 +610,9 @@
         <span class="c1"># estimate (SOM: "bootstrapped means ... used in variance estimation and</span>
         <span class="c1"># final fitness values"), so it is already an SE -&gt; used AS-IS, never</span>
         <span class="c1"># divided by sqrt(n). The bootstrap resampling unit is the control screen</span>
-        <span class="c1"># (17 for query strains); the 4 colonies per screen are averaged before</span>
-        <span class="c1"># resampling, so n is screens, not the 68 colony measurements. fitness_se</span>
+        <span class="c1"># (350 for an array-only estimate, 17 for every other record, see the</span>
+        <span class="c1"># comment above SMF_ARRAY_SUFFIXES); the 4 colonies per screen are averaged</span>
+        <span class="c1"># before resampling, so n is screens, not colony measurements. fitness_se</span>
         <span class="c1"># is auto-derived from (uncertainty, type). See</span>
         <span class="c1"># [[torchcell.datasets.scerevisiae.costanzo2016.noise-computation]].</span>
         <span class="n">fitness_std_val</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">smf_std_key</span><span class="p">]</span>
@@ -539,7 +625,11 @@
             <span class="n">fitness_std</span><span class="o">=</span><span class="n">fitness_std_val</span><span class="p">,</span>
             <span class="n">fitness_uncertainty</span><span class="o">=</span><span class="n">fitness_std_val</span><span class="p">,</span>
             <span class="n">fitness_uncertainty_type</span><span class="o">=</span><span class="n">smf_unc_type</span><span class="p">,</span>
-            <span class="n">n_samples</span><span class="o">=</span><span class="n">N_SAMPLES_QUERY_SMF_SCREENS</span><span class="p">,</span>
+            <span class="n">n_samples</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">N_SAMPLES_ARRAY_SMF_SCREENS</span>
+                <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"array_only_estimate"</span><span class="p">])</span>
+                <span class="k">else</span> <span class="n">N_SAMPLES_QUERY_SMF_SCREENS</span>
+            <span class="p">),</span>
             <span class="n">sample_unit</span><span class="o">=</span><span class="n">SampleUnit</span><span class="o">.</span><span class="n">screen</span><span class="p">,</span>
         <span class="p">)</span>
 

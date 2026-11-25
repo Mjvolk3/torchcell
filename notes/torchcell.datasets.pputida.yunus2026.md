@@ -1006,3 +1006,109 @@ Report `verification_report.json` (written 2026-10-11 06:13 UTC):
 | L3 | `panel_reference_is_a_measured_control` | pass | all 125 records reference one control profile of 188 distinct measured values |
 | L4 | `panel_profiles_are_the_deposited_columns` | pass | 125 stored profiles over 207 of 253 accessions are the deposited columns verbatim, 3703 released zeros kept |
 | L4 | `protein_and_perturbed_locus_containment_assembly` | pass | 1.000 of 317 measured genes are loci of pputida_KT2440_ASM756v2 (>= 1.0) |
+
+## 2026.11.25 - Per-replicate conversion: the six marked deposit rows become records, and what PRIDE PXD062697 really holds
+
+Part of the per-replicate sweep (#1178), with the #1203 items that name this manuscript
+(item 2's wrong replicate statement and item 5's wrong provenance text) and the #1199
+question about the per-run proteome table.
+
+### The six `" (S)"` rows are records now: 125 -> 131, in both deposited families
+
+The hand-deposited Benchling table releases 132 rows. Before this change the loader stored
+125: the control row became the `phenotype_reference` and six rows whose label ends in
+`" (S)"` were dropped by a rule named `row_label_carries_an_undefined_marker`. Each of
+those six rows carries its own titer and its own full 253-column protein profile, and they
+differ measurably from their unmarked twins' (`PP_0751` is 992.685859 mg/L and
+`PP_0751 (S)` is 522.99423 on the pinned bytes, sha256
+`4b5d70de2b858b93a5359a3d5f3c0c26db4c1b9387187cf39ec97456906c0838`), so the drop threw
+away six released measurements per family. Under the per-replicate policy a released
+sample is never dropped and the only allowed drop is one the authors themselves withdrew,
+so both families now store 131 records over 125 targets: 119 targets with one released row
+and 6 with two.
+
+What the marker MEANS is still undefined by every mirrored byte (the search is
+`BENCHLING_MARKER_SEARCH`, unchanged), so nothing infers a second strain identity. Both
+rows of a pair are stored under the one genotype the release states, a CRISPRi knockdown of
+that target in `IY1452`, and the deposit's own row label is what tells them apart. The two
+families carry that label differently, because their records state different replicate
+support:
+
+- `CrispriPanelProteomeYunus2026Dataset` states one displayed value per (strain, protein)
+  with `n_replicates = 1`, so the record is one measurement and `replicate_id` is the row
+  label verbatim, marker included (`PP_0751` and `PP_0751 (S)`). A target released once
+  carries `None`.
+- `IsoprenolTiterYunus2026Dataset` stores a number that is itself a mean over the released
+  3 to 6 cultures, and `replicate_id` states which ONE replicate a record is, so an
+  aggregate carries none (the shared titer gate asserts exactly that). There the row label
+  is a typed `ProvenanceGap` on `replicate_id` instead, quoting the label and the marker
+  search.
+
+### Build and verification
+
+Built outside the shared dev tree, into
+`/bulk/torchcell-scratch-overflow/per-replicate/per-replicate-yunus2026/`:
+
+| dataset | records before | records after | verdict |
+|---|---|---|---|
+| `IsoprenolTiterYunus2026Dataset` | 125 | 131 | PASS (13 rules) |
+| `CrispriPanelProteomeYunus2026Dataset` | 125 | 131 | PASS (11 rules) |
+
+Both L4 oracles were widened from "the rows the drop rules kept" to every released strain
+row, so `titers_are_the_deposited_column` now checks 131 titers against the deposit and
+`panel_profiles_are_the_deposited_columns` 131 profiles over the same 207 of 253
+accessions (3,911 released zeros kept, up from 3,703, which is the six added rows' zeros).
+
+Reconciliation against the dev store, read read-only: both stores hold 125
+(genotype, environment) groups before and after; every one of the 125 old values is present
+verbatim in the new store; 6 new values are not in the old store, which are the six marked
+rows. For the 119 singleton groups the group mean reproduces the old stored value exactly
+(max absolute difference 0.0). For the 6 groups that now hold two records the group mean
+differs from the old value by design, because the old store held only the unmarked row:
+the largest difference is 234.8458 mg/L on the titer and 59,261,585 on a panel signal.
+Taking a mean over the pair is NOT what the store says; the two records are two released
+measurements.
+
+### PRIDE PXD062697, measured, and the two decisions it waits on
+
+The loader used to say the deposit holds raw spectra only (#1203 item 5). Measured against
+the PRIDE / EBI file API and a ranged read of the first 20 kB of the one processed file on
+2026-11-25, now recorded as `PRIDE_DEPOSIT_CONTENTS`:
+
+- 312 files: 311 `RAW`-category `.raw` instrument files, 47.95 GB in all, and exactly one
+  `SEARCH`-category table, `Yunus_et_al_Proteomics.csv`, 39,141,911 bytes, submitted
+  2025-04-07T23:07 and published 2026-10-15T13:08, after this paper's raw mirror was built
+  on 2026-10-07 to 10-09.
+- That table is a DIA-NN PRECURSOR matrix: columns 1 to 10 are `Protein.Group`,
+  `Protein.Ids`, `Protein.Names`, `Genes`, `First.Protein.Description`, `Proteotypic`,
+  `Stripped.Sequence`, `Modified.Sequence`, `Precursor.Charge` and `Precursor.Id`, so one
+  row is one precursor, and its other 311 columns are one per MS run, named
+  `<strain>-R<n>` over 158 strains (153 with `R1` and `R2`; `IY2054`-`IY2058` with `R2`
+  only).
+- Joined to Table S3 by strain name: all 125 screened strains are in the deposit, 120 with
+  two runs and those 5 with one. 33 deposit strains appear in no released table, among them
+  the chassis variants `IY1452a`, `IY1452b` and `IY1452c` and the strains
+  `IY2227`-`IY2244`.
+
+The bytes are deliberately NOT in the raw mirror and nothing here reads them. The released
+per-run quantity is precursor-level, so a protein-level per-run value would be a rollup we
+compute rather than a value the source releases; the paper's Data Availability statement is
+"Data will be made available on request." (`paper.md` L154) and names no file, so the
+processed table is covered only by the Methods sentence that deposits "The generated mass
+spectrometry proteomics data"; and no mirrored byte says whether an MS run of this screen is
+a biological or a technical replicate. Those are the two owner decisions in #1199 and #1203
+item 2, and until they are settled `n_replicates = 1` on the panel and knockdown records
+stands as a statement about the DEPOSITED table (one displayed number per strain), not about
+the runs behind it, which the loader now says in those words.
+
+Supplementary Tables S8-S12 (the `CrispriArrayYunus2026Dataset` averaging of R1-R3) are
+untouched, because the record unit there, 75 or 153, is the other open owner decision: the
+release does not state whether `R1` in Table S8 is the same culture as `R1` in Table S9, and
+PRIDE holds no third run for any strain.
+
+### Corrections to the sweep's reading
+
+- `ProteinFoldChangePhenotype` DOES carry `replicate_id` on `main` after PR #1181; #1199
+  says it has none.
+- The deposit holds 311 runs over 158 strains, not 245 runs; 245 is the subset belonging to
+  the 125 Table S3 strains.

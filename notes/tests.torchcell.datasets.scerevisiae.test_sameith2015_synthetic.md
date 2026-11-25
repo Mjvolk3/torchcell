@@ -29,3 +29,11 @@ Findings:
 
 - `download` (sameith2015.py lines 155-185 and 928-960) records no sha256 and no retrieval record for either file (under the stub `raw/` holds just the pickle and the workbook; a real `get_GEO` also leaves `GSE42536_family.soft.gz`, likewise unrecorded).
 - `_extract_probe_to_gene_mapping` (lines 605-613 and 1631-1639): the three "validate" arms all store `gene_name.upper()`, so a control probe `Empty` becomes gene `EMPTY` and a `None` cell becomes gene `NONE`; only a float NaN is dropped. Those two never occur in the real platform, but the same path stores `SNR10`, a non-systematic name, in every served record (82 single-mutant, 72 double-mutant; audit 1).
+
+## 2026.11.24 - One record per array (#1174, #1178)
+
+- Fixtures unchanged; the expected records are now one per array (SM: S1, S2, S3, S9; DM: D1, D2, D3), each with its own values, `n_replicates` 1, no SE or variance, `replicate_id` the GSM name and the array's own refpool as reference. The three DM arrays share one all-ones BY4741 reference.
+- New: `combine_spots` (geometric channel means, mean spot log2; zero, negative and NaN signals raise), a two-probe YAL001C platform built end to end, and an extractor case with two spots of one gene.
+- Changed from skip to raise: a non-numeric or zero cell, and an array that yields no value (`_process_sequential`, `_process_batch`).
+- Removed with the code: the replicate-statistics tests.
+- `test_the_released_series_builds_one_record_per_array` (`--slow --data`): builds both classes from the dev-tree GSE42536 raw files, 144 / 143 records, 62 x 2 + 20 x 1 and 71 x 2 + 1 x 1, 287 distinct GSM ids, the one-array singles equal the SI "2 replicates" rows, and GSM636383's YAL001C value equals the mean of its two spot log2 ratios. Passed on 2026-11-24 (49 s).

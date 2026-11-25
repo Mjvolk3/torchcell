@@ -585,3 +585,45 @@ GEO sample titles of GSE42536 name the deleted genes by lower-case tokens (`dot6
 ### Rebuild (slurm 4443_7 and 4443_8, `--retire-existing --verify`)
 
 `sm_microarray_sameith2015`: 82 records in 83 s; `dm_microarray_sameith2015`: 72 records in 81 s; both on commit `7f67ede3e` (manifests read `torchcell_dirty: True` from a notes-only edit in the worktree during the array). Neither loader declares a per-dataset verifier; the expression family runner (`runners.run_expression`, slurm 4523, queued after the Kemmeren build) writes their `verification_report.json`, and its L0-L4 table goes in the docs follow-up after the landing.
+
+## 2026.11.24 - One record per array, spots combined inside it (#1174, #1172, #482, #481; tracking #1178)
+
+Both loaders now store one record per GSE42536 array. An array is one culture, so it is a biological replicate, and the two spots of a gene on that array are its technical level, combined inside the record.
+
+### What a replicate is (sources read in full)
+
+- Sameith 2015 `paper.md` (library mirror, sha256 `7064a1eb...6c9161`) L33: "With the exception of single mutants that behave like WT, each mutant was grown and profiled four times from two independent cultures." L119: "Full details of all gene expression profiling procedures have been described before [46]." and "Single mutants differing from WT as well as all double mutants were profiled another two times from an independently inoculated culture." Reference [46] is Kemmeren 2014 (L232).
+- Kemmeren 2014 `paper.md` (library mirror, sha256 `299eac4b...e4ad08d`) L307: "Two independent cultures were hybridized on two separate microarrays. For the first hybridization the Cy5 (red) labeled cRNA from the deletion mutant is hybridized together with the Cy3 (green) labeled cRNA from the common reference. For the replicate hybridization from the independent cultures, the labels are swapped. Each gene is represented twice on the microarray, resulting in four measurements per mutant." L390 cites limma "(Smyth et al., 2005)", which L481 names "Use of within-array replicate spots for assessing differential expression in microarray experiments".
+- `GSE42536_family.soft.gz` (sha256 `f8842af9...b85cc7d`) line 14, `!Series_overall_design`, states the same design for this series ("Two independent cultures were hybridized on two separate microarrays. [...] Each gene is represented twice on the microarray, resulting in four measurements per mutant.").
+- Additional file 1 (`12915_2015_222_MOESM1_ESM.xlsx`, sha256 `9521ad36...28ea49`), "Single mutants - info" `comments`: the 20 rows reading "2 replicates" are exactly the 20 one-array single mutants (measured, below), the WT-like singles of L33 profiled from one culture (1 array x 2 spots). The one-array pair cin5+yap6 is the one "Double mutants - info" row with that comment.
+- Withdrawn samples: the 18 double mutants that "failed quality control criteria even after remake. They were therefore excluded from further analyses." (L115) have no array in GSE42536 (0 arrays unmatched to a `passed` SI pair). Nothing else is withdrawn and nothing is dropped.
+
+So "four measurements" = 2 arrays (one per culture, dye orientation swapped between the cultures) x 2 spots. A two-array pair is two records, not one culture dye-swapped.
+
+### What changed in the loader
+
+- Records: one per array, `replicate_id` = the GSM accession, `n_replicates` 1 per gene, `expression_log2_ratio_se` and `_variance` `None` (the fields accept no `ProvenanceGap`, so the `not_applicable_single_measurement` gap cannot be stated). The reference is the refpool channel of the same array, `n_replicates` 1, `replicate_id` None; GSE42536 holds no WT-vs-refpool array, so no control replicate exists to store as a record.
+- Spots: `combine_spots` uses every spot the platform map gives a gene (2 for 6,157 ORFs, 4 for 12): geometric mean of each channel's `Signal Norm`, mean of the spot log2(mutant / refpool), which equals log2 of the ratio of the geometric means. Until today the probe map kept the last spot only.
+- Removed: `_calculate_replicate_statistics` (SM, DM) and `_calculate_replicate_statistics_static`, the three copies of the per-row extractor (now `extract_array_expression`), and the constants `N_EXPECTED_*` that described 4 arrays per mutant (#482). The DM sequential path writes what `_process_batch` returns, so the two paths cannot diverge. `_group_technical_replicates` is `_group_arrays_by_pair`.
+- A non-numeric or non-positive signal, or an array that yields no value, now raises instead of being skipped. GSE42536 has none (all 4,463,424 signals positive).
+- Comments corrected: the misattributed "Sameith 2015, Cell Reports" quotes (#481), the 132/127 `VALUE` header count (numerically 217 arrays are log2(Cy5/Cy3) and 70 log2(Cy3/Cy5), measured again today), the "a/b title suffix is the dye swap" comment, and the verifier provenance `page` ("BMC Biology 13:112 ... defers to Kemmeren 2014").
+
+### Counts, verifier and the mean-reproduction check
+
+Built into `$DATA_ROOT/tmp/scratch/per-replicate-sameith2015/{sm,dm}_microarray_sameith2015` from the dev-tree raw files (same three sha256 as the served build). The check script parsed the SOFT text directly (not the loader, not the pickle).
+
+| class | records before | records after | genotypes | arrays per genotype |
+|---|---|---|---|---|
+| `SmMicroarraySameith2015Dataset` | 82 | 144 | 82 | 62 x 2, 20 x 1 |
+| `DmMicroarraySameith2015Dataset` | 72 | 143 | 72 | 71 x 2, 1 x 1 (YDR259C+YOR028C) |
+
+- Verifier (`verify_expression_dataset`, `expected_count` 144 / 143, plus the L4 gene universe against the dev Kemmeren store): both PASS; 6,169 genes per record; median deleted-gene log2 -2.188 (SM, frac_neg 0.979, 143 genes) and -1.962 (DM, 0.972, 284 genes).
+- New record vs the independent spot-combined value of its array: max abs difference 2.2e-16 (SM log2), 4.4e-16 (DM log2); relative 2.0e-15 on both channels.
+- Old store vs the mean over the same arrays of the last-spot values: max abs difference 2.2e-16 (SM log2), 1.1e-16 (DM log2), 0.0 on both channels. The old records were exactly the mean over these arrays.
+- New records grouped by genotype (mean) vs the old store: log2 differs by median 0.013 / p99 0.076 / max 0.98 (SM, 505,858 values) and 0.013 / 0.062 / 1.51 (DM, 444,168 values). The whole difference is the spot rule (combined spots now, last spot before); with the last-spot values the grouped mean reproduces the old store to 2.2e-16 (previous bullet).
+
+### Not done
+
+- No field states the technical count (2 or 4 spots) or the array's dye orientation: `MicroarrayExpressionPhenotype` has neither, and adding one is a schema change for the owner. Proposed shape: `n_technical: dict[str, int]` with `technical_unit: SampleUnit = technical_replicate` (spot), and `sample_channel: Literal["Cy5", "Cy3"]`.
+- The Sameith raw files have no raw mirror under `$DATA_ROOT/torchcell-raw/` and `download()` records no sha256 (the earlier Finding stands).
+- 28 GSMs of GSE42536 are also in Kemmeren's GSE42527 / GSE42526; per-array conversion of both loaders holds those arrays twice (one record in each dataset). Not decided here.

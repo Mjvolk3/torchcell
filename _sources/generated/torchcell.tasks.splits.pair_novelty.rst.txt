@@ -1,0 +1,6 @@
+﻿torchcell.tasks.splits.pair\_novelty
+====================================
+
+.. currentmodule:: torchcell.tasks.splits
+
+.. autofunction:: pair_novelty

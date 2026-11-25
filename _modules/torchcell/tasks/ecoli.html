@@ -1,0 +1,458 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.tasks.ecoli &mdash; TorchCell 1.8.7 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e36e96bc" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-mark.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/tasks/ecoli.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=7e97f9bf"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Datasets</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../datasets/index.html">Datasets</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Benchmark</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../benchmark/index.html">Benchmark</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/tasks.html">torchcell.tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.tasks.ecoli</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.tasks.ecoli</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/tasks/ecoli.py</span>
+<span class="c1"># [[torchcell.tasks.ecoli]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/tasks/ecoli.py</span>
+<span class="sd">"""The four *E. coli* benchmark tasks and the helpers that match records to genes.</span>
+
+<span class="sd">A task is built in three steps, each a function here so the processing notebook and</span>
+<span class="sd">:func:`load_task` run the same code:</span>
+
+<span class="sd">1. :func:`match_records` resolves every perturbed gene of every record against the</span>
+<span class="sd">   genome the records name and says whether the record is a benchmark sample.</span>
+<span class="sd">2. :func:`build_task` keeps the samples, reads their labels and attaches the genome.</span>
+<span class="sd">3. :func:`load_task` adds the pinned splits shipped in ``torchcell/tasks/data`` after</span>
+<span class="sd">   checking the file's sha256 and that its sample keys equal the built samples.</span>
+
+<span class="sd">A record is a benchmark sample when it perturbs the number of genes the task is about</span>
+<span class="sd">(one, or two) and each of them resolves to a gene of the genome that has a protein</span>
+<span class="sd">sequence. Every other record is kept in ``task.excluded`` with its reason; the</span>
+<span class="sd">datasets themselves are never filtered.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">gzip</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">resources</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneNameStatus</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.standard</span><span class="w"> </span><span class="kn">import</span> <span class="n">genome_for</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.tasks.task</span><span class="w"> </span><span class="kn">import</span> <span class="n">BenchmarkTask</span><span class="p">,</span> <span class="n">TaskSpec</span>
+
+<span class="n">_ECOLI</span> <span class="o">=</span> <span class="s2">"torchcell.datasets.ecoli"</span>
+<span class="n">ECOLI_TASKS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TaskSpec</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">spec</span>
+    <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="n">TaskSpec</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"ecoli-growth-rate-campos2018"</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">"Growth rate of single-gene deletions (Campos 2018)"</span><span class="p">,</span>
+            <span class="n">dataset_slug</span><span class="o">=</span><span class="s2">"ecoli_growth_rate_campos2018"</span><span class="p">,</span>
+            <span class="n">dataset_module</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ECOLI</span><span class="si">}</span><span class="s2">.campos2018"</span><span class="p">,</span>
+            <span class="n">dataset_class</span><span class="o">=</span><span class="s2">"GrowthRateCampos2018Dataset"</span><span class="p">,</span>
+            <span class="n">assembly_set</span><span class="o">=</span><span class="s2">"ecoli_K12_BW25113_ASM75055v1"</span><span class="p">,</span>
+            <span class="n">kind</span><span class="o">=</span><span class="s2">"single_gene"</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"fitness"</span><span class="p">,</span>
+            <span class="n">n_targets_note</span><span class="o">=</span><span class="s2">"1 target: maximal growth rate relative to the parent strain"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">TaskSpec</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"ecoli-morphology-campos2018"</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">"Cell shape and cell cycle of single-gene deletions (Campos 2018)"</span><span class="p">,</span>
+            <span class="n">dataset_slug</span><span class="o">=</span><span class="s2">"ecoli_morphology_campos2018"</span><span class="p">,</span>
+            <span class="n">dataset_module</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ECOLI</span><span class="si">}</span><span class="s2">.campos2018"</span><span class="p">,</span>
+            <span class="n">dataset_class</span><span class="o">=</span><span class="s2">"MorphologyCampos2018Dataset"</span><span class="p">,</span>
+            <span class="n">assembly_set</span><span class="o">=</span><span class="s2">"ecoli_K12_BW25113_ASM75055v1"</span><span class="p">,</span>
+            <span class="n">kind</span><span class="o">=</span><span class="s2">"single_gene"</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"morphology"</span><span class="p">,</span>
+            <span class="n">n_targets_note</span><span class="o">=</span><span class="s2">"15 targets: feature means; 6 are nan for strains imaged "</span>
+            <span class="s2">"without a nucleoid channel"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">TaskSpec</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"ecoli-gene-interaction-babu2014"</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">"Genetic interaction score of double mutants (Babu 2014)"</span><span class="p">,</span>
+            <span class="n">dataset_slug</span><span class="o">=</span><span class="s2">"gene_interaction_babu2014"</span><span class="p">,</span>
+            <span class="n">dataset_module</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ECOLI</span><span class="si">}</span><span class="s2">.babu2014"</span><span class="p">,</span>
+            <span class="n">dataset_class</span><span class="o">=</span><span class="s2">"GeneInteractionBabu2014Dataset"</span><span class="p">,</span>
+            <span class="n">assembly_set</span><span class="o">=</span><span class="s2">"ecoli_K12_MG1655_ASM584v2"</span><span class="p">,</span>
+            <span class="n">kind</span><span class="o">=</span><span class="s2">"gene_pair"</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"gene_interaction"</span><span class="p">,</span>
+            <span class="n">n_targets_note</span><span class="o">=</span><span class="s2">"1 target: eSGA S-score of the pair"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">TaskSpec</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"ecoli-metabolome-fuhrer2017"</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">"Metabolome of single-gene deletions (Fuhrer 2017)"</span><span class="p">,</span>
+            <span class="n">dataset_slug</span><span class="o">=</span><span class="s2">"metabolome_fuhrer2017"</span><span class="p">,</span>
+            <span class="n">dataset_module</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ECOLI</span><span class="si">}</span><span class="s2">.fuhrer2017"</span><span class="p">,</span>
+            <span class="n">dataset_class</span><span class="o">=</span><span class="s2">"MetabolomeFuhrer2017Dataset"</span><span class="p">,</span>
+            <span class="n">assembly_set</span><span class="o">=</span><span class="s2">"ecoli_K12_BW25113_ASM75055v1"</span><span class="p">,</span>
+            <span class="n">kind</span><span class="o">=</span><span class="s2">"single_gene"</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"metabolite_level"</span><span class="p">,</span>
+            <span class="n">n_targets_note</span><span class="o">=</span><span class="s2">"7,534 targets: modified z-score of each detected ion"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">#: sha256 of each pinned split file in ``torchcell/tasks/data`` (the gzip bytes).</span>
+<span class="n">SPLIT_SHA256</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"ecoli-growth-rate-campos2018"</span><span class="p">:</span> <span class="s2">"610640d6bcc07d9ae386502c0e8da25c4e38400b29ff8901eba910c12da8f7ae"</span><span class="p">,</span>
+    <span class="s2">"ecoli-morphology-campos2018"</span><span class="p">:</span> <span class="s2">"610640d6bcc07d9ae386502c0e8da25c4e38400b29ff8901eba910c12da8f7ae"</span><span class="p">,</span>
+    <span class="s2">"ecoli-gene-interaction-babu2014"</span><span class="p">:</span> <span class="s2">"57f69cbc513b3b610e4cd620755df221d64ce53a84dee0db314df94279aaaa99"</span><span class="p">,</span>
+    <span class="s2">"ecoli-metabolome-fuhrer2017"</span><span class="p">:</span> <span class="s2">"eb984703fd287706f8160d5e2dc10267368ba018b9a711ac0f4521a4ed0dfe73"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1">#: Statuses under which a stored identifier names exactly one gene of the genome.</span>
+<span class="n">_RESOLVED</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">CURRENT</span><span class="p">,</span> <span class="n">GeneNameStatus</span><span class="o">.</span><span class="n">RENAMED</span><span class="p">})</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">dataset_root</span><span class="p">(</span><span class="n">slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Where the dataset's store is read from: ``$DATA_ROOT/data/torchcell/&lt;slug&gt;``."""</span>
+    <span class="k">return</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"DATA_ROOT"</span><span class="p">,</span> <span class="s2">"."</span><span class="p">),</span> <span class="s2">"data/torchcell"</span><span class="p">,</span> <span class="n">slug</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="open_dataset">
+<a class="viewcode-back" href="../../../generated/torchcell.tasks.ecoli.open_dataset.html#torchcell.tasks.ecoli.open_dataset">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">open_dataset</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">TaskSpec</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Open the task's dataset with its loader (downloaded when ``TC_DATA_URL`` is set)."""</span>
+    <span class="n">loader</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">dataset_module</span><span class="p">),</span> <span class="n">spec</span><span class="o">.</span><span class="n">dataset_class</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">loader</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">root</span> <span class="ow">or</span> <span class="n">dataset_root</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">dataset_slug</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="match_records">
+<a class="viewcode-back" href="../../../generated/torchcell.tasks.ecoli.match_records.html#torchcell.tasks.ecoli.match_records">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">match_records</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">genome</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">n_genes</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Match every record of ``dataset`` to genes of ``genome``.</span>
+
+<span class="sd">    Each perturbed gene is stored under the identifier its source released.</span>
+<span class="sd">    ``genome.resolve_gene_name`` maps it to a locus tag of the genome and reports how</span>
+<span class="sd">    (``current``, ``renamed``, ``non_gene_feature``, ``retired``, ``ambiguous``).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dataset: A loaded torchcell dataset.</span>
+<span class="sd">        genome: The genome its records name (``genome_for(dataset)``).</span>
+<span class="sd">        n_genes: Number of perturbed genes a benchmark sample has (1 or 2).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        One row per record: ``record_index``, ``n_perturbations``, and joined by ``|``</span>
+<span class="sd">        in perturbation order ``stored`` (identifiers as released), ``symbol``,</span>
+<span class="sd">        ``locus_tag`` (resolved), ``status``; then ``eligible`` and</span>
+<span class="sd">        ``exclusion_reason`` (empty when eligible).</span>
+<span class="sd">    """</span>
+    <span class="n">resolution</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">gene_set</span><span class="p">}</span>
+    <span class="n">has_protein</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)):</span>
+        <span class="n">perturbations</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]</span>
+        <span class="n">stored</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="s2">"systematic_gene_name"</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">perturbations</span><span class="p">]</span>
+        <span class="n">resolved</span> <span class="o">=</span> <span class="p">[</span><span class="n">resolution</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">stored</span><span class="p">]</span>
+        <span class="n">reason</span> <span class="o">=</span> <span class="s2">""</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">stored</span><span class="p">)</span> <span class="o">!=</span> <span class="n">n_genes</span><span class="p">:</span>
+            <span class="n">reason</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"perturbs </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">stored</span><span class="p">)</span><span class="si">}</span><span class="s2"> genes, the task is about </span><span class="si">{</span><span class="n">n_genes</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">elif</span> <span class="nb">any</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_RESOLVED</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">resolved</span><span class="p">):</span>
+            <span class="n">reason</span> <span class="o">=</span> <span class="s2">"a gene does not resolve to a gene of the genome"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">resolved</span><span class="p">:</span>
+                <span class="n">locus</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">locus</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">has_protein</span><span class="p">:</span>
+                    <span class="n">protein</span> <span class="o">=</span> <span class="n">genome</span><span class="p">[</span><span class="n">locus</span><span class="p">]</span><span class="o">.</span><span class="n">protein</span>
+                    <span class="n">has_protein</span><span class="p">[</span><span class="n">locus</span><span class="p">]</span> <span class="o">=</span> <span class="n">protein</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">protein</span><span class="o">.</span><span class="n">seq</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">has_protein</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">)]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">resolved</span><span class="p">):</span>
+                <span class="n">reason</span> <span class="o">=</span> <span class="s2">"a gene has no protein sequence in the genome"</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">({</span><span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">systematic_name</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">resolved</span><span class="p">})</span> <span class="o">!=</span> <span class="n">n_genes</span><span class="p">:</span>
+                <span class="n">reason</span> <span class="o">=</span> <span class="s2">"the perturbed genes resolve to the same gene"</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">"record_index"</span><span class="p">:</span> <span class="n">index</span><span class="p">,</span>
+                <span class="s2">"n_perturbations"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">stored</span><span class="p">),</span>
+                <span class="s2">"stored"</span><span class="p">:</span> <span class="s2">"|"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">stored</span><span class="p">),</span>
+                <span class="s2">"symbol"</span><span class="p">:</span> <span class="s2">"|"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s2">"perturbed_gene_name"</span><span class="p">])</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">perturbations</span>
+                <span class="p">),</span>
+                <span class="s2">"locus_tag"</span><span class="p">:</span> <span class="s2">"|"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">systematic_name</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">resolved</span><span class="p">),</span>
+                <span class="s2">"status"</span><span class="p">:</span> <span class="s2">"|"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">resolved</span><span class="p">),</span>
+                <span class="s2">"eligible"</span><span class="p">:</span> <span class="n">reason</span> <span class="o">==</span> <span class="s2">""</span><span class="p">,</span>
+                <span class="s2">"exclusion_reason"</span><span class="p">:</span> <span class="n">reason</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="read_labels">
+<a class="viewcode-back" href="../../../generated/torchcell.tasks.ecoli.read_labels.html#torchcell.tasks.ecoli.read_labels">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_labels</span><span class="p">(</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="n">TaskSpec</span><span class="p">,</span> <span class="n">record_index</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Labels of the given records as ``(n, n_targets)`` and the target names.</span>
+
+<span class="sd">    A scalar label is one column named after the label. A label that maps names to</span>
+<span class="sd">    values (morphology features, ion z-scores) is one column per name, in the order of</span>
+<span class="sd">    first appearance, with ``nan`` where a record does not hold that name.</span>
+<span class="sd">    """</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">dataset</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)][</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"phenotype"</span><span class="p">][</span><span class="n">spec</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">record_index</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">[</span><span class="n">spec</span><span class="o">.</span><span class="n">label</span><span class="p">]</span>
+    <span class="n">targets</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">targets</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets</span><span class="p">))</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">row</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">y</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">targets</span><span class="p">[</span><span class="n">name</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">y</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="build_task">
+<a class="viewcode-back" href="../../../generated/torchcell.tasks.ecoli.build_task.html#torchcell.tasks.ecoli.build_task">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_task</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BenchmarkTask</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build a task from its dataset and genome, without splits.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: A key of :data:`ECOLI_TASKS`.</span>
+<span class="sd">        root: Dataset root; default ``$DATA_ROOT/data/torchcell/&lt;slug&gt;``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The task with ``samples``, ``genes``, ``y``, ``targets``, ``excluded`` and</span>
+<span class="sd">        ``genome`` set and no splits.</span>
+<span class="sd">    """</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="n">ECOLI_TASKS</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">open_dataset</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
+    <span class="n">genome</span> <span class="o">=</span> <span class="n">genome_for</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">genome</span><span class="o">.</span><span class="n">ASSEMBLY_SET</span> <span class="o">!=</span> <span class="n">spec</span><span class="o">.</span><span class="n">assembly_set</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> records name </span><span class="si">{</span><span class="n">genome</span><span class="o">.</span><span class="n">ASSEMBLY_SET</span><span class="si">}</span><span class="s2">, the task pins </span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">assembly_set</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="n">n_genes</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"single_gene"</span> <span class="k">else</span> <span class="mi">2</span>
+    <span class="n">matched</span> <span class="o">=</span> <span class="n">match_records</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">genome</span><span class="p">,</span> <span class="n">n_genes</span><span class="p">)</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="n">matched</span><span class="p">[</span><span class="n">matched</span><span class="p">[</span><span class="s2">"eligible"</span><span class="p">]]</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span>
+        <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">"eligible"</span><span class="p">,</span> <span class="s2">"exclusion_reason"</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">samples</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">"key"</span><span class="p">,</span> <span class="n">samples</span><span class="p">[</span><span class="s2">"locus_tag"</span><span class="p">])</span>
+    <span class="n">excluded</span> <span class="o">=</span> <span class="n">matched</span><span class="p">[</span><span class="o">~</span><span class="n">matched</span><span class="p">[</span><span class="s2">"eligible"</span><span class="p">]]</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">"eligible"</span><span class="p">])</span>
+    <span class="n">genes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">tags</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"|"</span><span class="p">)</span> <span class="k">for</span> <span class="n">tags</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">[</span><span class="s2">"locus_tag"</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">y</span><span class="p">,</span> <span class="n">targets</span> <span class="o">=</span> <span class="n">read_labels</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">samples</span><span class="p">[</span><span class="s2">"record_index"</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">BenchmarkTask</span><span class="p">(</span>
+        <span class="n">spec</span><span class="p">,</span> <span class="n">samples</span><span class="p">,</span> <span class="n">genes</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">excluded</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">genome</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="write_splits">
+<a class="viewcode-back" href="../../../generated/torchcell.tasks.ecoli.write_splits.html#torchcell.tasks.ecoli.write_splits">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_splits</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">BenchmarkTask</span><span class="p">,</span> <span class="n">splits</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Write a split file (gzip CSV, byte-stable) and return its sha256.</span>
+
+<span class="sd">    The file has ``record_index``, ``key`` and one column per split holding ``train``,</span>
+<span class="sd">    ``val`` or ``test`` for every sample of ``task``.</span>
+<span class="sd">    """</span>
+    <span class="n">frame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">task</span><span class="o">.</span><span class="n">samples</span><span class="p">[[</span><span class="s2">"record_index"</span><span class="p">,</span> <span class="s2">"key"</span><span class="p">]],</span> <span class="n">splits</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">lineterminator</span><span class="o">=</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="n">buffer</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">gzip</span><span class="o">.</span><span class="n">GzipFile</span><span class="p">(</span><span class="n">fileobj</span><span class="o">=</span><span class="n">buffer</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"wb"</span><span class="p">,</span> <span class="n">mtime</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="read_splits">
+<a class="viewcode-back" href="../../../generated/torchcell.tasks.ecoli.read_splits.html#torchcell.tasks.ecoli.read_splits">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_splits</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The pinned split file of a task, verified against :data:`SPLIT_SHA256`."""</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="s2">"torchcell.tasks"</span><span class="p">)</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="sa">f</span><span class="s2">"data/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.splits.csv.gz"</span><span class="p">)</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">()</span>
+    <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">digest</span> <span class="o">!=</span> <span class="n">SPLIT_SHA256</span><span class="p">[</span><span class="n">name</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"split file of </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> has sha256 </span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s2">, pinned </span><span class="si">{</span><span class="n">SPLIT_SHA256</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">gzip</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">data</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="load_task">
+<a class="viewcode-back" href="../../../generated/torchcell.tasks.ecoli.load_task.html#torchcell.tasks.ecoli.load_task">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_task</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BenchmarkTask</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The processed benchmark task ``name`` with its pinned splits.</span>
+
+<span class="sd">    Opens the dataset (downloading the built store when ``TC_DATA_URL`` is set), loads</span>
+<span class="sd">    the genome its records name (fetched when absent), matches records to genes, reads</span>
+<span class="sd">    the labels and attaches the pinned splits. The samples built here must equal the</span>
+<span class="sd">    samples the split file was written for, row for row, or this raises.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: A key of :data:`ECOLI_TASKS`.</span>
+<span class="sd">        root: Dataset root; default ``$DATA_ROOT/data/torchcell/&lt;slug&gt;``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The task; ``task.split(split_name)`` gives train and validation indices and a</span>
+<span class="sd">        locked test part.</span>
+<span class="sd">    """</span>
+    <span class="n">task</span> <span class="o">=</span> <span class="n">build_task</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
+    <span class="n">pinned</span> <span class="o">=</span> <span class="n">read_splits</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">built</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">samples</span><span class="p">[[</span><span class="s2">"record_index"</span><span class="p">,</span> <span class="s2">"key"</span><span class="p">]]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">built</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">pinned</span><span class="p">[[</span><span class="s2">"record_index"</span><span class="p">,</span> <span class="s2">"key"</span><span class="p">]]):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"the samples built for </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> differ from the pinned split file's "</span>
+            <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">built</span><span class="p">)</span><span class="si">}</span><span class="s2"> built, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pinned</span><span class="p">)</span><span class="si">}</span><span class="s2"> pinned)"</span>
+        <span class="p">)</span>
+    <span class="n">task</span><span class="o">.</span><span class="n">_splits</span> <span class="o">=</span> <span class="n">pinned</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">"record_index"</span><span class="p">,</span> <span class="s2">"key"</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">task</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

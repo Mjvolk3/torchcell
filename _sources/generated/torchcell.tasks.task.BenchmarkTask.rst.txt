@@ -1,0 +1,8 @@
+﻿torchcell.tasks.task.BenchmarkTask
+==================================
+
+.. currentmodule:: torchcell.tasks.task
+
+.. autoclass:: BenchmarkTask
+   :show-inheritance:
+   :members:

@@ -1,0 +1,278 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.tasks &mdash; TorchCell 1.8.7 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=e36e96bc" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-mark.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/modules/tasks.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=7e97f9bf"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="torchcell.tasks.task.TaskSpec" href="../generated/torchcell.tasks.task.TaskSpec.html" />
+    <link rel="prev" title="torchcell.sga.zfactor" href="../generated/torchcell.sga.zfactor.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Datasets</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../datasets/index.html">Datasets</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Benchmark</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../benchmark/index.html">Benchmark</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sga.html">torchcell.sga</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.tasks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#task-and-split-objects">Task and split objects</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.task.TaskSpec.html">torchcell.tasks.task.TaskSpec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.task.BenchmarkTask.html">torchcell.tasks.task.BenchmarkTask</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.task.Split.html">torchcell.tasks.task.Split</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.task.TestSplitLocked.html">torchcell.tasks.task.TestSplitLocked</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.task.TestSplitWarning.html">torchcell.tasks.task.TestSplitWarning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.task.regression_metrics.html">torchcell.tasks.task.regression_metrics</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#e-coli-tasks">E. coli tasks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.ecoli.load_task.html">torchcell.tasks.ecoli.load_task</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.ecoli.build_task.html">torchcell.tasks.ecoli.build_task</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.ecoli.open_dataset.html">torchcell.tasks.ecoli.open_dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.ecoli.match_records.html">torchcell.tasks.ecoli.match_records</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.ecoli.read_labels.html">torchcell.tasks.ecoli.read_labels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.ecoli.write_splits.html">torchcell.tasks.ecoli.write_splits</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.ecoli.read_splits.html">torchcell.tasks.ecoli.read_splits</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#split-functions">Split functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.splits.assign_groups.html">torchcell.tasks.splits.assign_groups</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.splits.random_split.html">torchcell.tasks.splits.random_split</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.splits.block_groups.html">torchcell.tasks.splits.block_groups</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.splits.pair_parts.html">torchcell.tasks.splits.pair_parts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.splits.pair_novelty.html">torchcell.tasks.splits.pair_novelty</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../generated/torchcell.tasks.splits.part_sizes.html">torchcell.tasks.splits.part_sizes</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">torchcell.tasks</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/modules/tasks.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-torchcell.tasks">
+<span id="torchcell-tasks"></span><h1>torchcell.tasks<a class="headerlink" href="#module-torchcell.tasks" title="Link to this heading"></a></h1>
+<p>Standardized benchmark tasks. A task pins one dataset, the genome its records are written against, one label and a set of pinned train, validation and test splits. <a class="reference internal" href="../generated/torchcell.tasks.ecoli.load_task.html#torchcell.tasks.ecoli.load_task" title="torchcell.tasks.ecoli.load_task"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_task()</span></code></a> is the one import a benchmark script needs; the test part of every split is locked until <a class="reference internal" href="../generated/torchcell.tasks.task.Split.html#torchcell.tasks.task.Split.unlock_test" title="torchcell.tasks.task.Split.unlock_test"><code class="xref py py-meth docutils literal notranslate"><span class="pre">unlock_test()</span></code></a> is called. The overview is at <a class="reference internal" href="../benchmark/ecoli/index.html"><span class="doc">E. coli tasks</span></a>.</p>
+<nav class="contents local" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#task-and-split-objects" id="id1">Task and split objects</a></p></li>
+<li><p><a class="reference internal" href="#e-coli-tasks" id="id2">E. coli tasks</a></p></li>
+<li><p><a class="reference internal" href="#split-functions" id="id3">Split functions</a></p></li>
+</ul>
+</nav>
+<section id="task-and-split-objects">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Task and split objects</a><a class="headerlink" href="#task-and-split-objects" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.tasks.task.TaskSpec.html#torchcell.tasks.task.TaskSpec" title="torchcell.tasks.task.TaskSpec"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TaskSpec</span></code></a></p></td>
+<td><p>What one benchmark task is: the dataset, the genome, the label and the metric.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.tasks.task.BenchmarkTask.html#torchcell.tasks.task.BenchmarkTask" title="torchcell.tasks.task.BenchmarkTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BenchmarkTask</span></code></a></p></td>
+<td><p>A processed benchmark task: samples, genes, labels, genome and pinned splits.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.tasks.task.Split.html#torchcell.tasks.task.Split" title="torchcell.tasks.task.Split"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Split</span></code></a></p></td>
+<td><p>One named split of a task: row indices of train and validation, test locked.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.tasks.task.TestSplitLocked.html#torchcell.tasks.task.TestSplitLocked" title="torchcell.tasks.task.TestSplitLocked"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TestSplitLocked</span></code></a></p></td>
+<td><p>Raised when the test part of a split is read before it is unlocked.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.tasks.task.TestSplitWarning.html#torchcell.tasks.task.TestSplitWarning" title="torchcell.tasks.task.TestSplitWarning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TestSplitWarning</span></code></a></p></td>
+<td><p>Emitted every time the test part of a split is unlocked.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.tasks.task.regression_metrics.html#torchcell.tasks.task.regression_metrics" title="torchcell.tasks.task.regression_metrics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">regression_metrics</span></code></a></p></td>
+<td><p>Pearson, Spearman, R2, MSE and MAE of each target column.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="e-coli-tasks">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">E. coli tasks</a><a class="headerlink" href="#e-coli-tasks" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.tasks.ecoli.load_task.html#torchcell.tasks.ecoli.load_task" title="torchcell.tasks.ecoli.load_task"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_task</span></code></a></p></td>
+<td><p>The processed benchmark task <code class="docutils literal notranslate"><span class="pre">name</span></code> with its pinned splits.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.tasks.ecoli.build_task.html#torchcell.tasks.ecoli.build_task" title="torchcell.tasks.ecoli.build_task"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_task</span></code></a></p></td>
+<td><p>Build a task from its dataset and genome, without splits.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.tasks.ecoli.open_dataset.html#torchcell.tasks.ecoli.open_dataset" title="torchcell.tasks.ecoli.open_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">open_dataset</span></code></a></p></td>
+<td><p>Open the task's dataset with its loader (downloaded when <code class="docutils literal notranslate"><span class="pre">TC_DATA_URL</span></code> is set).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.tasks.ecoli.match_records.html#torchcell.tasks.ecoli.match_records" title="torchcell.tasks.ecoli.match_records"><code class="xref py py-obj docutils literal notranslate"><span class="pre">match_records</span></code></a></p></td>
+<td><p>Match every record of <code class="docutils literal notranslate"><span class="pre">dataset</span></code> to genes of <code class="docutils literal notranslate"><span class="pre">genome</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.tasks.ecoli.read_labels.html#torchcell.tasks.ecoli.read_labels" title="torchcell.tasks.ecoli.read_labels"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_labels</span></code></a></p></td>
+<td><p>Labels of the given records as <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">n_targets)</span></code> and the target names.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.tasks.ecoli.write_splits.html#torchcell.tasks.ecoli.write_splits" title="torchcell.tasks.ecoli.write_splits"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_splits</span></code></a></p></td>
+<td><p>Write a split file (gzip CSV, byte-stable) and return its sha256.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.tasks.ecoli.read_splits.html#torchcell.tasks.ecoli.read_splits" title="torchcell.tasks.ecoli.read_splits"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_splits</span></code></a></p></td>
+<td><p>The pinned split file of a task, verified against <code class="xref py py-data docutils literal notranslate"><span class="pre">SPLIT_SHA256</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="split-functions">
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Split functions</a><a class="headerlink" href="#split-functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.tasks.splits.assign_groups.html#torchcell.tasks.splits.assign_groups" title="torchcell.tasks.splits.assign_groups"><code class="xref py py-obj docutils literal notranslate"><span class="pre">assign_groups</span></code></a></p></td>
+<td><p>Assign every member to a part so that no group is divided.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.tasks.splits.random_split.html#torchcell.tasks.splits.random_split" title="torchcell.tasks.splits.random_split"><code class="xref py py-obj docutils literal notranslate"><span class="pre">random_split</span></code></a></p></td>
+<td><p>Random split in which members that share a key stay together.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.tasks.splits.block_groups.html#torchcell.tasks.splits.block_groups" title="torchcell.tasks.splits.block_groups"><code class="xref py py-obj docutils literal notranslate"><span class="pre">block_groups</span></code></a></p></td>
+<td><p>Group members into <code class="docutils literal notranslate"><span class="pre">n_blocks</span></code> contiguous blocks of equal count by position.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.tasks.splits.pair_parts.html#torchcell.tasks.splits.pair_parts" title="torchcell.tasks.splits.pair_parts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pair_parts</span></code></a></p></td>
+<td><p>Part of each gene pair from the parts of its two genes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.tasks.splits.pair_novelty.html#torchcell.tasks.splits.pair_novelty" title="torchcell.tasks.splits.pair_novelty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pair_novelty</span></code></a></p></td>
+<td><p>Number of genes of each pair (0, 1 or 2) that are not training genes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.tasks.splits.part_sizes.html#torchcell.tasks.splits.part_sizes" title="torchcell.tasks.splits.part_sizes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">part_sizes</span></code></a></p></td>
+<td><p>Number of members in each part.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../generated/torchcell.sga.zfactor.html" class="btn btn-neutral float-left" title="torchcell.sga.zfactor" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../generated/torchcell.tasks.task.TaskSpec.html" class="btn btn-neutral float-right" title="torchcell.tasks.task.TaskSpec" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

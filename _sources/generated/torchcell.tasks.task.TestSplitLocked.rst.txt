@@ -1,0 +1,8 @@
+﻿torchcell.tasks.task.TestSplitLocked
+====================================
+
+.. currentmodule:: torchcell.tasks.task
+
+.. autoclass:: TestSplitLocked
+   :show-inheritance:
+   :members:

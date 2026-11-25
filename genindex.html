@@ -57,6 +57,10 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="datasets/index.html">Datasets</a></li>
 </ul>
+<p class="caption" role="heading"><span class="caption-text">Benchmark</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="benchmark/index.html">Benchmark</a></li>
+</ul>
 <p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="modules/adapters.html">torchcell.adapters</a></li>
@@ -80,6 +84,7 @@
 <li class="toctree-l1"><a class="reference internal" href="modules/scheduler.html">torchcell.scheduler</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/sequence.html">torchcell.sequence</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/tasks.html">torchcell.tasks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/trainers.html">torchcell.trainers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/transforms.html">torchcell.transforms</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/utils.html">torchcell.utils</a></li>
@@ -214,10 +219,10 @@
         <li><a href="generated/torchcell.data.GenotypeAggregator.html#torchcell.data.GenotypeAggregator.aggregate_key_raw">(GenotypeAggregator method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="generated/torchcell.models.hetero_cell_bipartite_dango_gi.AggregationNormNotImplementedError.html#torchcell.models.hetero_cell_bipartite_dango_gi.AggregationNormNotImplementedError">AggregationNormNotImplementedError (class in torchcell.models.hetero_cell_bipartite_dango_gi)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="generated/torchcell.data.Aggregator.html#torchcell.data.Aggregator">Aggregator (class in torchcell.data)</a>
 </li>
       <li><a href="generated/torchcell.datamodules.CellDataModule.html#torchcell.datamodules.CellDataModule.all_dataloader">all_dataloader() (CellDataModule method)</a>
@@ -259,6 +264,8 @@
       <li><a href="generated/torchcell.datamodels.compound_identity_curate.assemble.html#torchcell.datamodels.compound_identity_curate.assemble">assemble() (in module torchcell.datamodels.compound_identity_curate)</a>
 </li>
       <li><a href="generated/torchcell.utils.asset_images_dir.html#torchcell.utils.asset_images_dir">asset_images_dir() (in module torchcell.utils)</a>
+</li>
+      <li><a href="generated/torchcell.tasks.splits.assign_groups.html#torchcell.tasks.splits.assign_groups">assign_groups() (in module torchcell.tasks.splits)</a>
 </li>
       <li><a href="generated/torchcell.models.hetero_cell_bipartite_dango.AttentionalGraphAggregation.html#torchcell.models.hetero_cell_bipartite_dango.AttentionalGraphAggregation">AttentionalGraphAggregation (class in torchcell.models.hetero_cell_bipartite_dango)</a>
 
@@ -318,6 +325,8 @@
 </li>
       <li><a href="generated/torchcell.knowledge_graphs.releases.behind_main.html#torchcell.knowledge_graphs.releases.behind_main">behind_main() (in module torchcell.knowledge_graphs.releases)</a>
 </li>
+      <li><a href="generated/torchcell.tasks.task.BenchmarkTask.html#torchcell.tasks.task.BenchmarkTask">BenchmarkTask (class in torchcell.tasks.task)</a>
+</li>
       <li><a href="generated/torchcell.metabolism.betaxanthin.betaxanthin_demand_ids.html#torchcell.metabolism.betaxanthin.betaxanthin_demand_ids">betaxanthin_demand_ids() (in module torchcell.metabolism.betaxanthin)</a>
 </li>
       <li><a href="generated/torchcell.adapters.BetaxanthinCachera2023Adapter.html#torchcell.adapters.BetaxanthinCachera2023Adapter">BetaxanthinCachera2023Adapter (class in torchcell.adapters)</a>
@@ -331,6 +340,8 @@
       <li><a href="generated/torchcell.metabolism.yeast_GEM.YeastGEM.html#torchcell.metabolism.yeast_GEM.YeastGEM.bipartite_graph">bipartite_graph (YeastGEM property)</a>
 </li>
       <li><a href="generated/torchcell.knowledge_graphs.supported_queries.cypher_deps.blank_literals.html#torchcell.knowledge_graphs.supported_queries.cypher_deps.blank_literals">blank_literals() (in module torchcell.knowledge_graphs.supported_queries.cypher_deps)</a>
+</li>
+      <li><a href="generated/torchcell.tasks.splits.block_groups.html#torchcell.tasks.splits.block_groups">block_groups() (in module torchcell.tasks.splits)</a>
 </li>
       <li><a href="generated/torchcell.adapters.Bloom2019Adapter.html#torchcell.adapters.Bloom2019Adapter">Bloom2019Adapter (class in torchcell.adapters)</a>
 </li>
@@ -393,6 +404,8 @@
       <li><a href="generated/torchcell.paper.ontology_graph.build_ontology_graph.html#torchcell.paper.ontology_graph.build_ontology_graph">build_ontology_graph() (in module torchcell.paper.ontology_graph)</a>
 </li>
       <li><a href="generated/torchcell.database.tcdb.build_parser.html#torchcell.database.tcdb.build_parser">build_parser() (in module torchcell.database.tcdb)</a>
+</li>
+      <li><a href="generated/torchcell.tasks.ecoli.build_task.html#torchcell.tasks.ecoli.build_task">build_task() (in module torchcell.tasks.ecoli)</a>
 </li>
       <li><a href="generated/torchcell.database.build_command.BuildCommand.html#torchcell.database.build_command.BuildCommand">BuildCommand (class in torchcell.database.build_command)</a>
 </li>
@@ -1408,6 +1421,8 @@
 </li>
       <li><a href="generated/torchcell.metabolism.media.ExchangeIndex.html#torchcell.metabolism.media.ExchangeIndex">ExchangeIndex (class in torchcell.metabolism.media)</a>
 </li>
+      <li><a href="generated/torchcell.tasks.task.BenchmarkTask.html#torchcell.tasks.task.BenchmarkTask.excluded">excluded (BenchmarkTask attribute)</a>
+</li>
       <li><a href="generated/torchcell.metabolism.media.MediaBounds.html#torchcell.metabolism.media.MediaBounds.excluded_names">excluded_names (MediaBounds property)</a>
 </li>
       <li><a href="generated/torchcell.knowledge_graphs.incremental_import.ExistingEdgeFilter.html#torchcell.knowledge_graphs.incremental_import.ExistingEdgeFilter">ExistingEdgeFilter (class in torchcell.knowledge_graphs.incremental_import)</a>
@@ -2036,7 +2051,11 @@
       </ul></li>
       <li><a href="generated/torchcell.models.gpu_edge_mask_generator.GPUEdgeMaskGenerator.html#torchcell.models.gpu_edge_mask_generator.GPUEdgeMaskGenerator.generate_single_mask">generate_single_mask() (GPUEdgeMaskGenerator method)</a>
 </li>
+      <li><a href="generated/torchcell.tasks.task.BenchmarkTask.html#torchcell.tasks.task.BenchmarkTask.genes">genes (BenchmarkTask attribute)</a>
+</li>
       <li><a href="generated/torchcell.sequence.GeneSet.html#torchcell.sequence.GeneSet">GeneSet (class in torchcell.sequence)</a>
+</li>
+      <li><a href="generated/torchcell.tasks.task.BenchmarkTask.html#torchcell.tasks.task.BenchmarkTask.genome">genome (BenchmarkTask attribute)</a>
 </li>
       <li><a href="generated/torchcell.sequence.Genome.html#torchcell.sequence.Genome">Genome (class in torchcell.sequence)</a>
 </li>
@@ -2516,6 +2535,8 @@
 </li>
       <li><a href="generated/torchcell.metabolism.parameters.load_swissprot.html#torchcell.metabolism.parameters.load_swissprot">load_swissprot() (in module torchcell.metabolism.parameters)</a>
 </li>
+      <li><a href="generated/torchcell.tasks.ecoli.load_task.html#torchcell.tasks.ecoli.load_task">load_task() (in module torchcell.tasks.ecoli)</a>
+</li>
       <li><a href="generated/torchcell.metabolism.constraints.load_thermo_table.html#torchcell.metabolism.constraints.load_thermo_table">load_thermo_table() (in module torchcell.metabolism.constraints)</a>
 </li>
       <li><a href="generated/torchcell.knowledge_graphs.build_time_projection.load_timings.html#torchcell.knowledge_graphs.build_time_projection.load_timings">load_timings() (in module torchcell.knowledge_graphs.build_time_projection)</a>
@@ -2571,6 +2592,8 @@
       <li><a href="generated/torchcell.nn.masked_gin_conv.MaskedGINConv.html#torchcell.nn.masked_gin_conv.MaskedGINConv">MaskedGINConv (class in torchcell.nn.masked_gin_conv)</a>
 </li>
       <li><a href="generated/torchcell.models.equivariant_cell_graph_transformer.MaskedMultitaskLoss.html#torchcell.models.equivariant_cell_graph_transformer.MaskedMultitaskLoss">MaskedMultitaskLoss (class in torchcell.models.equivariant_cell_graph_transformer)</a>
+</li>
+      <li><a href="generated/torchcell.tasks.ecoli.match_records.html#torchcell.tasks.ecoli.match_records">match_records() (in module torchcell.tasks.ecoli)</a>
 </li>
       <li><a href="generated/torchcell.knowledge_graphs.subset.RecordFilter.html#torchcell.knowledge_graphs.subset.RecordFilter.matches">matches() (RecordFilter method)</a>
 </li>
@@ -3151,6 +3174,8 @@
 </li>
         <li><a href="generated/torchcell.metabolism.constraints.TableCoverage.html#torchcell.metabolism.constraints.TableCoverage.model_config">(TableCoverage attribute)</a>
 </li>
+        <li><a href="generated/torchcell.tasks.task.TaskSpec.html#torchcell.tasks.task.TaskSpec.model_config">(TaskSpec attribute)</a>
+</li>
         <li><a href="generated/torchcell.datamodels.schema.Temperature.html#torchcell.datamodels.schema.Temperature.model_config">(Temperature attribute)</a>
 </li>
         <li><a href="generated/torchcell.metabolism.constraints.ThermoTable.html#torchcell.metabolism.constraints.ThermoTable.model_config">(ThermoTable attribute)</a>
@@ -3225,6 +3250,8 @@
         <li><a href="modules/sequence.html#module-torchcell.sequence">torchcell.sequence</a>
 </li>
         <li><a href="modules/sga.html#module-torchcell.sga">torchcell.sga</a>
+</li>
+        <li><a href="modules/tasks.html#module-torchcell.tasks">torchcell.tasks</a>
 </li>
         <li><a href="modules/trainers.html#module-torchcell.trainers">torchcell.trainers</a>
 </li>
@@ -3461,6 +3488,8 @@
 </li>
       <li><a href="generated/torchcell.paper.ontology_graph.OntologyGraph.html#torchcell.paper.ontology_graph.OntologyGraph">OntologyGraph (class in torchcell.paper.ontology_graph)</a>
 </li>
+      <li><a href="generated/torchcell.tasks.ecoli.open_dataset.html#torchcell.tasks.ecoli.open_dataset">open_dataset() (in module torchcell.tasks.ecoli)</a>
+</li>
       <li><a href="generated/torchcell.verification.VerificationReport.html#torchcell.verification.VerificationReport.open_findings">open_findings (VerificationReport property)</a>
 </li>
       <li><a href="generated/torchcell.datamodels.schema.Media.html#torchcell.datamodels.schema.Media.open_gaps">open_gaps (Media property)</a>
@@ -3601,7 +3630,11 @@
 </li>
       <li><a href="generated/torchcell.knowledge_graphs.kg_manifest.package_version_from_source.html#torchcell.knowledge_graphs.kg_manifest.package_version_from_source">package_version_from_source() (in module torchcell.knowledge_graphs.kg_manifest)</a>
 </li>
+      <li><a href="generated/torchcell.tasks.splits.pair_novelty.html#torchcell.tasks.splits.pair_novelty">pair_novelty() (in module torchcell.tasks.splits)</a>
+</li>
       <li><a href="generated/torchcell.knowledge_graphs.release_snapshot.pair_package_tag.html#torchcell.knowledge_graphs.release_snapshot.pair_package_tag">pair_package_tag() (in module torchcell.knowledge_graphs.release_snapshot)</a>
+</li>
+      <li><a href="generated/torchcell.tasks.splits.pair_parts.html#torchcell.tasks.splits.pair_parts">pair_parts() (in module torchcell.tasks.splits)</a>
 </li>
       <li><a href="generated/torchcell.knowledge_graphs.releases.ReleaseCompatibility.html#torchcell.knowledge_graphs.releases.ReleaseCompatibility.paired">paired (ReleaseCompatibility property)</a>
 </li>
@@ -3652,6 +3685,8 @@
       <li><a href="generated/torchcell.knowledge_graphs.kg_manifest.parse_n_experiments.html#torchcell.knowledge_graphs.kg_manifest.parse_n_experiments">parse_n_experiments() (in module torchcell.knowledge_graphs.kg_manifest)</a>
 </li>
       <li><a href="generated/torchcell.sequence.ParsedGenome.html#torchcell.sequence.ParsedGenome">ParsedGenome (class in torchcell.sequence)</a>
+</li>
+      <li><a href="generated/torchcell.tasks.splits.part_sizes.html#torchcell.tasks.splits.part_sizes">part_sizes() (in module torchcell.tasks.splits)</a>
 </li>
       <li><a href="generated/torchcell.datasets.CalmDataset.html#torchcell.datasets.CalmDataset.partial_path">partial_path (CalmDataset property)</a>
 
@@ -4159,6 +4194,8 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/torchcell.tasks.splits.random_split.html#torchcell.tasks.splits.random_split">random_split() (in module torchcell.tasks.splits)</a>
+</li>
       <li><a href="generated/torchcell.datasets.RandomEmbeddingDataset.html#torchcell.datasets.RandomEmbeddingDataset">RandomEmbeddingDataset (class in torchcell.datasets)</a>
 </li>
       <li><a href="generated/torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset.html#torchcell.datasets.scerevisiae.cooper2010.AminoAcidCooper2010Dataset.raw_file_names">raw_file_names (AminoAcidCooper2010Dataset property)</a>
@@ -4285,9 +4322,13 @@
 </li>
       <li><a href="generated/torchcell.utils.FileLockHelper.html#torchcell.utils.FileLockHelper.read_json_with_lock">read_json_with_lock() (FileLockHelper class method)</a>
 </li>
+      <li><a href="generated/torchcell.tasks.ecoli.read_labels.html#torchcell.tasks.ecoli.read_labels">read_labels() (in module torchcell.tasks.ecoli)</a>
+</li>
       <li><a href="generated/torchcell.datamodels.compound_identity_curate.read_name_list.html#torchcell.datamodels.compound_identity_curate.read_name_list">read_name_list() (in module torchcell.datamodels.compound_identity_curate)</a>
 </li>
       <li><a href="generated/torchcell.knowledge_graphs.releases.read_release.html#torchcell.knowledge_graphs.releases.read_release">read_release() (in module torchcell.knowledge_graphs.releases)</a>
+</li>
+      <li><a href="generated/torchcell.tasks.ecoli.read_splits.html#torchcell.tasks.ecoli.read_splits">read_splits() (in module torchcell.tasks.ecoli)</a>
 </li>
       <li><a href="generated/torchcell.sga.recommend_volume.html#torchcell.sga.recommend_volume">recommend_volume() (in module torchcell.sga)</a>
 </li>
@@ -4412,6 +4453,8 @@
       <li><a href="generated/torchcell.datasets.dataset_registry.register_dataset.html#torchcell.datasets.dataset_registry.register_dataset">register_dataset() (in module torchcell.datasets.dataset_registry)</a>
 </li>
       <li><a href="generated/torchcell.knowledge_graphs.supported_queries.registry.registry_path.html#torchcell.knowledge_graphs.supported_queries.registry.registry_path">registry_path() (in module torchcell.knowledge_graphs.supported_queries.registry)</a>
+</li>
+      <li><a href="generated/torchcell.tasks.task.regression_metrics.html#torchcell.tasks.task.regression_metrics">regression_metrics() (in module torchcell.tasks.task)</a>
 </li>
       <li><a href="generated/torchcell.trainers.int_dango.RegressionTask.html#torchcell.trainers.int_dango.RegressionTask">RegressionTask (class in torchcell.trainers.int_dango)</a>
 
@@ -4543,6 +4586,8 @@
         <li><a href="generated/torchcell.models.hetero_cell_bipartite_dango_diff_gi.LinearDecoder.html#torchcell.models.hetero_cell_bipartite_dango_diff_gi.LinearDecoder.sample">(LinearDecoder method)</a>
 </li>
       </ul></li>
+      <li><a href="generated/torchcell.tasks.task.BenchmarkTask.html#torchcell.tasks.task.BenchmarkTask.samples">samples (BenchmarkTask attribute)</a>
+</li>
       <li><a href="generated/torchcell.losses.distributional.DistHead.html#torchcell.losses.distributional.DistHead.samples">samples() (DistHead method)</a>
 </li>
       <li><a href="generated/torchcell.datamodels.schema.SampleUnit.html#torchcell.datamodels.schema.SampleUnit">SampleUnit (class in torchcell.datamodels.schema)</a>
@@ -4596,6 +4641,8 @@
       <li><a href="generated/torchcell.adapters.ScmdOhya2005Adapter.html#torchcell.adapters.ScmdOhya2005Adapter">ScmdOhya2005Adapter (class in torchcell.adapters)</a>
 </li>
       <li><a href="generated/torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset.html#torchcell.datasets.scerevisiae.ohya2005.ScmdOhya2005Dataset">ScmdOhya2005Dataset (class in torchcell.datasets.scerevisiae.ohya2005)</a>
+</li>
+      <li><a href="generated/torchcell.tasks.task.BenchmarkTask.html#torchcell.tasks.task.BenchmarkTask.score">score() (BenchmarkTask method)</a>
 </li>
       <li><a href="generated/torchcell.sga.score_plate.html#torchcell.sga.score_plate">score_plate() (in module torchcell.sga)</a>
 </li>
@@ -4689,6 +4736,8 @@
 </li>
       <li><a href="generated/torchcell.models.diffusion_decoder.SinusoidalTimeEmbedding.html#torchcell.models.diffusion_decoder.SinusoidalTimeEmbedding">SinusoidalTimeEmbedding (class in torchcell.models.diffusion_decoder)</a>
 </li>
+      <li><a href="generated/torchcell.tasks.task.Split.html#torchcell.tasks.task.Split.sizes">sizes() (Split method)</a>
+</li>
       <li><a href="generated/torchcell.datamodels.compound_identity_curate.CurationDirective.html#torchcell.datamodels.compound_identity_curate.CurationDirective.skip_lookup">skip_lookup (CurationDirective property)</a>
 </li>
       <li><a href="generated/torchcell.literature.BackfillReport.html#torchcell.literature.BackfillReport.skipped">skipped (BackfillReport property)</a>
@@ -4701,10 +4750,10 @@
 </li>
       <li><a href="generated/torchcell.adapters.SmfCostanzo2016Adapter.html#torchcell.adapters.SmfCostanzo2016Adapter">SmfCostanzo2016Adapter (class in torchcell.adapters)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="generated/torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset.html#torchcell.datasets.scerevisiae.costanzo2016.SmfCostanzo2016Dataset">SmfCostanzo2016Dataset (class in torchcell.datasets.scerevisiae.costanzo2016)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="generated/torchcell.adapters.SmfKuzmin2018Adapter.html#torchcell.adapters.SmfKuzmin2018Adapter">SmfKuzmin2018Adapter (class in torchcell.adapters)</a>
 </li>
       <li><a href="generated/torchcell.datasets.scerevisiae.kuzmin2018.SmfKuzmin2018Dataset.html#torchcell.datasets.scerevisiae.kuzmin2018.SmfKuzmin2018Dataset">SmfKuzmin2018Dataset (class in torchcell.datasets.scerevisiae.kuzmin2018)</a>
@@ -4749,11 +4798,19 @@
 </li>
       <li><a href="generated/torchcell.verification.SourcedValue.html#torchcell.verification.SourcedValue">SourcedValue (class in torchcell.verification)</a>
 </li>
+      <li><a href="generated/torchcell.tasks.task.BenchmarkTask.html#torchcell.tasks.task.BenchmarkTask.spec">spec (BenchmarkTask attribute)</a>
+</li>
+      <li><a href="generated/torchcell.tasks.task.Split.html#torchcell.tasks.task.Split">Split (class in torchcell.tasks.task)</a>
+</li>
+      <li><a href="generated/torchcell.tasks.task.BenchmarkTask.html#torchcell.tasks.task.BenchmarkTask.split">split() (BenchmarkTask method)</a>
+</li>
       <li><a href="generated/torchcell.knowledge_graphs.supported_queries.cypher_deps.split_blocks.html#torchcell.knowledge_graphs.supported_queries.cypher_deps.split_blocks">split_blocks() (in module torchcell.knowledge_graphs.supported_queries.cypher_deps)</a>
 </li>
       <li><a href="generated/torchcell.knowledge_graphs.kg_manifest.split_dataset_args.html#torchcell.knowledge_graphs.kg_manifest.split_dataset_args">split_dataset_args() (in module torchcell.knowledge_graphs.kg_manifest)</a>
 </li>
       <li><a href="generated/torchcell.datamodels.interned_constant.split_experiment_dump.html#torchcell.datamodels.interned_constant.split_experiment_dump">split_experiment_dump() (in module torchcell.datamodels.interned_constant)</a>
+</li>
+      <li><a href="generated/torchcell.tasks.task.BenchmarkTask.html#torchcell.tasks.task.BenchmarkTask.split_names">split_names (BenchmarkTask property)</a>
 </li>
       <li><a href="generated/torchcell.provenance.StaleResult.html#torchcell.provenance.StaleResult">StaleResult (class in torchcell.provenance)</a>
 </li>
@@ -4869,6 +4926,10 @@
 </li>
       <li><a href="generated/torchcell.database.build_command.BuildCommand.html#torchcell.database.build_command.BuildCommand.take_action">take_action() (BuildCommand method)</a>
 </li>
+      <li><a href="generated/torchcell.tasks.task.BenchmarkTask.html#torchcell.tasks.task.BenchmarkTask.targets">targets (BenchmarkTask attribute)</a>
+</li>
+      <li><a href="generated/torchcell.tasks.task.TaskSpec.html#torchcell.tasks.task.TaskSpec">TaskSpec (class in torchcell.tasks.task)</a>
+</li>
       <li><a href="generated/torchcell.losses.distributional.DistHead.html#torchcell.losses.distributional.DistHead.taus">taus (DistHead property)</a>
 </li>
       <li><a href="generated/torchcell.datamodels.schema.Temperature.html#torchcell.datamodels.schema.Temperature">Temperature (class in torchcell.datamodels.schema)</a>
@@ -4882,6 +4943,8 @@
 </li>
       </ul></li>
       <li><a href="generated/torchcell.datamodels.schema.TemperatureUnit.html#torchcell.datamodels.schema.TemperatureUnit">TemperatureUnit (class in torchcell.datamodels.schema)</a>
+</li>
+      <li><a href="generated/torchcell.tasks.task.Split.html#torchcell.tasks.task.Split.test">test (Split property)</a>
 </li>
       <li><a href="generated/torchcell.metabolism.yeast_GEM.test_bipartite_attributes.html#torchcell.metabolism.yeast_GEM.test_bipartite_attributes">test_bipartite_attributes() (in module torchcell.metabolism.yeast_GEM)</a>
 </li>
@@ -4897,6 +4960,10 @@
         <li><a href="generated/torchcell.trainers.simple_linear_regression.SimpleLinearRegressionTask.html#torchcell.trainers.simple_linear_regression.SimpleLinearRegressionTask.test_step">(SimpleLinearRegressionTask method)</a>
 </li>
       </ul></li>
+      <li><a href="generated/torchcell.tasks.task.TestSplitLocked.html#torchcell.tasks.task.TestSplitLocked">TestSplitLocked (class in torchcell.tasks.task)</a>
+</li>
+      <li><a href="generated/torchcell.tasks.task.TestSplitWarning.html#torchcell.tasks.task.TestSplitWarning">TestSplitWarning (class in torchcell.tasks.task)</a>
+</li>
       <li><a href="generated/torchcell.paper.tables.tex_escape.html#torchcell.paper.tables.tex_escape">tex_escape() (in module torchcell.paper.tables)</a>
 </li>
       <li><a href="generated/torchcell.paper.tables.Column.html#torchcell.paper.tables.Column.tex_spec">tex_spec() (Column method)</a>
@@ -4980,6 +5047,8 @@
         <li><a href="modules/graph.html#module-torchcell.graph">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     torchcell.knowledge_graphs
 
@@ -4987,8 +5056,6 @@
         <li><a href="modules/knowledge_graphs.html#module-torchcell.knowledge_graphs">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     torchcell.literature
 
@@ -5081,6 +5148,13 @@
 </li>
       </ul></li>
       <li>
+    torchcell.tasks
+
+      <ul>
+        <li><a href="modules/tasks.html#module-torchcell.tasks">module</a>
+</li>
+      </ul></li>
+      <li>
     torchcell.trainers
 
       <ul>
@@ -5115,6 +5189,8 @@
         <li><a href="modules/viz.html#module-torchcell.viz">module</a>
 </li>
       </ul></li>
+      <li><a href="generated/torchcell.tasks.task.Split.html#torchcell.tasks.task.Split.train">train (Split property)</a>
+</li>
       <li><a href="generated/torchcell.datamodules.CellDataModule.html#torchcell.datamodules.CellDataModule.train_dataloader">train_dataloader() (CellDataModule method)</a>
 </li>
       <li><a href="generated/torchcell.trainers.dcell_regression_slim.DCellRegressionSlimTask.html#torchcell.trainers.dcell_regression_slim.DCellRegressionSlimTask.training_step">training_step() (DCellRegressionSlimTask method)</a>
@@ -5147,6 +5223,8 @@
 </li>
       <li><a href="generated/torchcell.metabolism.enzyme_kinetics.OedKineticRecord.html#torchcell.metabolism.enzyme_kinetics.OedKineticRecord.unit_for">unit_for() (OedKineticRecord method)</a>
 </li>
+      <li><a href="generated/torchcell.tasks.task.Split.html#torchcell.tasks.task.Split.unlock_test">unlock_test() (Split method)</a>
+</li>
       <li><a href="generated/torchcell.data.Unperturbed.html#torchcell.data.Unperturbed">Unperturbed (class in torchcell.data)</a>
 </li>
       <li><a href="generated/torchcell.metabolism.media.MediaBounds.html#torchcell.metabolism.media.MediaBounds.unresolved_names">unresolved_names (MediaBounds property)</a>
@@ -5174,6 +5252,8 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="generated/torchcell.losses.distributional.DistHead.html#torchcell.losses.distributional.DistHead.v">v (DistHead property)</a>
+</li>
+      <li><a href="generated/torchcell.tasks.task.Split.html#torchcell.tasks.task.Split.val">val (Split property)</a>
 </li>
       <li><a href="generated/torchcell.datamodules.CellDataModule.html#torchcell.datamodules.CellDataModule.val_dataloader">val_dataloader() (CellDataModule method)</a>
 </li>
@@ -5259,10 +5339,10 @@
 </li>
       <li><a href="generated/torchcell.datamodels.schema.EnvironmentResponsePhenotype.html#torchcell.datamodels.schema.EnvironmentResponsePhenotype.validate_response">validate_response() (EnvironmentResponsePhenotype class method)</a>
 </li>
-      <li><a href="generated/torchcell.datamodels.schema.SOTerm.html#torchcell.datamodels.schema.SOTerm.validate_so_id">validate_so_id() (SOTerm class method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/torchcell.datamodels.schema.SOTerm.html#torchcell.datamodels.schema.SOTerm.validate_so_id">validate_so_id() (SOTerm class method)</a>
+</li>
       <li><a href="generated/torchcell.datamodels.schema.Media.html#torchcell.datamodels.schema.Media.validate_state">validate_state() (Media class method)</a>
 
       <ul>
@@ -5389,6 +5469,8 @@
 </li>
       <li><a href="generated/torchcell.knowledge_graphs.release_snapshot.write_snapshot.html#torchcell.knowledge_graphs.release_snapshot.write_snapshot">write_snapshot() (in module torchcell.knowledge_graphs.release_snapshot)</a>
 </li>
+      <li><a href="generated/torchcell.tasks.ecoli.write_splits.html#torchcell.tasks.ecoli.write_splits">write_splits() (in module torchcell.tasks.ecoli)</a>
+</li>
       <li><a href="generated/torchcell.data.write_verified.html#torchcell.data.write_verified">write_verified() (in module torchcell.data)</a>
 </li>
   </ul></td>
@@ -5397,10 +5479,12 @@
 <h2 id="Y">Y</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="generated/torchcell.metabolism.yeast_GEM.YeastGEM.html#torchcell.metabolism.yeast_GEM.YeastGEM">YeastGEM (class in torchcell.metabolism.yeast_GEM)</a>
+      <li><a href="generated/torchcell.tasks.task.BenchmarkTask.html#torchcell.tasks.task.BenchmarkTask.y">y (BenchmarkTask attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/torchcell.metabolism.yeast_GEM.YeastGEM.html#torchcell.metabolism.yeast_GEM.YeastGEM">YeastGEM (class in torchcell.metabolism.yeast_GEM)</a>
+</li>
       <li><a href="generated/torchcell.datasets.scerevisiae.yeastphenome.YeastPhenomeDataset.html#torchcell.datasets.scerevisiae.yeastphenome.YeastPhenomeDataset">YeastPhenomeDataset (class in torchcell.datasets.scerevisiae.yeastphenome)</a>
 </li>
   </ul></td>

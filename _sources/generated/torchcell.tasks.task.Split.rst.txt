@@ -1,0 +1,8 @@
+﻿torchcell.tasks.task.Split
+==========================
+
+.. currentmodule:: torchcell.tasks.task
+
+.. autoclass:: Split
+   :show-inheritance:
+   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.tasks.splits.random\_split
+====================================
+
+.. currentmodule:: torchcell.tasks.splits
+
+.. autofunction:: random_split

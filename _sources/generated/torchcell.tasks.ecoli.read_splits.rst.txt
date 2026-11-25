@@ -1,0 +1,6 @@
+﻿torchcell.tasks.ecoli.read\_splits
+==================================
+
+.. currentmodule:: torchcell.tasks.ecoli
+
+.. autofunction:: read_splits

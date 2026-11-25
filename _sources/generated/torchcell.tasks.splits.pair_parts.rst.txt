@@ -1,0 +1,6 @@
+﻿torchcell.tasks.splits.pair\_parts
+==================================
+
+.. currentmodule:: torchcell.tasks.splits
+
+.. autofunction:: pair_parts

@@ -1,0 +1,6 @@
+﻿torchcell.tasks.splits.assign\_groups
+=====================================
+
+.. currentmodule:: torchcell.tasks.splits
+
+.. autofunction:: assign_groups

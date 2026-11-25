@@ -1,0 +1,8 @@
+﻿torchcell.tasks.task.TestSplitWarning
+=====================================
+
+.. currentmodule:: torchcell.tasks.task
+
+.. autoclass:: TestSplitWarning
+   :show-inheritance:
+   :members:

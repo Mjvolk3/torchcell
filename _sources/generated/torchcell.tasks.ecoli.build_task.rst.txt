@@ -1,0 +1,6 @@
+﻿torchcell.tasks.ecoli.build\_task
+=================================
+
+.. currentmodule:: torchcell.tasks.ecoli
+
+.. autofunction:: build_task

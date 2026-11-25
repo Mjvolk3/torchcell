@@ -1,0 +1,6 @@
+﻿torchcell.tasks.splits.part\_sizes
+==================================
+
+.. currentmodule:: torchcell.tasks.splits
+
+.. autofunction:: part_sizes

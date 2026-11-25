@@ -1,0 +1,6 @@
+﻿torchcell.tasks.ecoli.write\_splits
+===================================
+
+.. currentmodule:: torchcell.tasks.ecoli
+
+.. autofunction:: write_splits

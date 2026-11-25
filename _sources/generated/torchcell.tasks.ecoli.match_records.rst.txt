@@ -1,0 +1,6 @@
+﻿torchcell.tasks.ecoli.match\_records
+====================================
+
+.. currentmodule:: torchcell.tasks.ecoli
+
+.. autofunction:: match_records

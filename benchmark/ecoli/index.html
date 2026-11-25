@@ -1,0 +1,403 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>E. coli tasks &mdash; TorchCell 1.8.7 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/mytheme.css?v=cf917480" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=e36e96bc" />
+
+  
+    <link rel="shortcut icon" href="../../_static/torchcell-mark.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/benchmark/ecoli/index.html" />
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=7e97f9bf"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Processing the E. coli benchmark tasks" href="processing.html" />
+    <link rel="prev" title="Benchmark" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html">
+            
+              <img src="../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Datasets</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../datasets/index.html">Datasets</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Benchmark</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Benchmark</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">E. coli tasks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="processing.html">Processing the <em>E. coli</em> benchmark tasks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="results.html">Linear-probe baselines</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-tasks">The tasks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-short-import">The short import</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-test-part-is-locked">The test part is locked</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-splits">The splits</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/tasks.html">torchcell.tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Benchmark</a></li>
+      <li class="breadcrumb-item active">E. coli tasks</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/benchmark/ecoli/index.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="e-coli-tasks">
+<h1>E. coli tasks<a class="headerlink" href="#e-coli-tasks" title="Link to this heading"></a></h1>
+<p>Four tasks from four built <em>Escherichia coli</em> K-12 datasets. Each one asks a model to predict a measured phenotype of a deletion strain from the genes that were deleted.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="processing.html">Processing the <em>E. coli</em> benchmark tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="results.html">Linear-probe baselines</a></li>
+</ul>
+</div>
+<section id="the-tasks">
+<h2>The tasks<a class="headerlink" href="#the-tasks" title="Link to this heading"></a></h2>
+<!-- Generated by experiments/050-ecoli-benchmark/scripts/results_page.py (run 2026-11-24T23:35:46Z). Do not edit by hand. -->
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Task</p></th>
+<th class="head text-right"><p>Dataset class</p></th>
+<th class="head text-right"><p>Genome</p></th>
+<th class="head text-right"><p>Unit</p></th>
+<th class="head text-right"><p>Label</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-growth-rate-campos2018</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">GrowthRateCampos2018Dataset</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">ecoli_K12_BW25113_ASM75055v1</span></code></p></td>
+<td class="text-right"><p>gene</p></td>
+<td class="text-right"><p>1 target: maximal growth rate relative to the parent strain</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-morphology-campos2018</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">MorphologyCampos2018Dataset</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">ecoli_K12_BW25113_ASM75055v1</span></code></p></td>
+<td class="text-right"><p>gene</p></td>
+<td class="text-right"><p>15 targets: feature means; 6 are nan for strains imaged without a nucleoid channel</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-gene-interaction-babu2014</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">GeneInteractionBabu2014Dataset</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">ecoli_K12_MG1655_ASM584v2</span></code></p></td>
+<td class="text-right"><p>gene pair</p></td>
+<td class="text-right"><p>1 target: eSGA S-score of the pair</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-metabolome-fuhrer2017</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">MetabolomeFuhrer2017Dataset</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">ecoli_K12_BW25113_ASM75055v1</span></code></p></td>
+<td class="text-right"><p>gene</p></td>
+<td class="text-right"><p>7,534 targets: modified z-score of each detected ion</p></td>
+</tr>
+</tbody>
+</table>
+<p>A record of a dataset is a benchmark sample when it perturbs the number of genes the task is about (one, or two for the pair task) and each of them resolves to one gene of the genome that has a protein sequence. The other records stay in <code class="docutils literal notranslate"><span class="pre">task.excluded</span></code>, each with its reason, and the datasets themselves are not filtered.</p>
+</section>
+<section id="the-short-import">
+<h2>The short import<a class="headerlink" href="#the-short-import" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_task</span>
+
+<span class="n">task</span> <span class="o">=</span> <span class="n">load_task</span><span class="p">(</span><span class="s2">"ecoli-growth-rate-campos2018"</span><span class="p">)</span>
+<span class="n">split</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"seqid30_s0"</span><span class="p">)</span>
+
+<span class="n">task</span><span class="o">.</span><span class="n">genes</span><span class="p">[</span><span class="n">split</span><span class="o">.</span><span class="n">train</span><span class="p">]</span>   <span class="c1"># locus tags of the deleted genes, (n, 1) or (n, 2)</span>
+<span class="n">task</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="n">split</span><span class="o">.</span><span class="n">train</span><span class="p">]</span>       <span class="c1"># labels, (n, n_targets); nan where a target was not measured</span>
+<span class="n">task</span><span class="o">.</span><span class="n">genome</span>               <span class="c1"># the genome: task.genome["BW25113_0002"].protein.seq</span>
+<span class="n">task</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="n">split</span><span class="o">.</span><span class="n">val</span><span class="p">],</span> <span class="n">prediction</span><span class="p">)</span>   <span class="c1"># Pearson, Spearman, R2, MSE, MAE</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">load_task</span></code> downloads the built dataset store when <code class="docutils literal notranslate"><span class="pre">TC_DATA_URL</span></code> is set, fetches the genome the records name when it is absent, matches records to genes, reads the labels and attaches the pinned splits. The split files ship inside the package and are checked against a sha256 recorded in the code, and the samples built on your machine must equal the samples the file was written for, row for row, or the call raises.</p>
+<p>Because every script reaches the processed task through this one import, a submitted script can be checked for it: a script that builds its own samples or splits does not contain <code class="docutils literal notranslate"><span class="pre">load_task</span></code>, and a script that reads the test part contains <code class="docutils literal notranslate"><span class="pre">unlock_test</span></code>.</p>
+</section>
+<section id="the-test-part-is-locked">
+<h2>The test part is locked<a class="headerlink" href="#the-test-part-is-locked" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">split.train</span></code> and <code class="docutils literal notranslate"><span class="pre">split.val</span></code> are plain index arrays. <code class="docutils literal notranslate"><span class="pre">split.test</span></code> raises <code class="docutils literal notranslate"><span class="pre">TestSplitLocked</span></code>. The test indices come from</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">test</span> <span class="o">=</span> <span class="n">split</span><span class="o">.</span><span class="n">unlock_test</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s2">"final evaluation of the model selected on validation"</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>which needs a reason and emits a <code class="docutils literal notranslate"><span class="pre">TestSplitWarning</span></code> on every call. Fit on train, choose the model and every hyperparameter on validation, and unlock the test part once for the final number.</p>
+</section>
+<section id="the-splits">
+<h2>The splits<a class="headerlink" href="#the-splits" title="Link to this heading"></a></h2>
+<p>Train, validation and test hold about 80 %, 10 % and 10 % of the unit that is split, and a unit is never divided. Each family has several seeds; the name of a split is the family, <code class="docutils literal notranslate"><span class="pre">_s</span></code> and the seed.</p>
+<ul class="simple">
+<li><p><strong>Random</strong>: genes at random. For pairs, pairs at random, with the two orders of a pair and repeated measurements of it kept together.</p></li>
+<li><p><strong>Sequence identity 30 % and 50 %</strong>: whole protein clusters. A cluster is a connected component of an all-against-all MMseqs2 search at that identity over 80 % of both sequences, so a test protein has no reported hit to a training protein at or above the threshold.</p></li>
+<li><p><strong>Chromosome position</strong>: whole chromosome blocks (40 contiguous blocks of equal gene count), so the genes of an operon stay on one side.</p></li>
+<li><p><strong>Gene holdout</strong> (pair task): the genes are split first, at random, by cluster or by block. A pair is test when either gene is a test gene, validation when neither is test and either is validation, and train when both are training genes.</p></li>
+</ul>
+<!-- Generated by experiments/050-ecoli-benchmark/scripts/results_page.py (run 2026-11-24T23:35:46Z). Do not edit by hand. -->
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Task</p></th>
+<th class="head text-right"><p>Splits</p></th>
+<th class="head text-right"><p>Seeds</p></th>
+<th class="head text-right"><p>Samples</p></th>
+<th class="head text-right"><p>Train</p></th>
+<th class="head text-right"><p>Validation</p></th>
+<th class="head text-right"><p>Test</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-growth-rate-campos2018</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">random_s0</span></code> to <code class="docutils literal notranslate"><span class="pre">random_s4</span></code></p></td>
+<td class="text-right"><p>5</p></td>
+<td class="text-right"><p>3,573</p></td>
+<td class="text-right"><p>2,859 to 2,859</p></td>
+<td class="text-right"><p>357 to 357</p></td>
+<td class="text-right"><p>357 to 357</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-growth-rate-campos2018</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">seqid30_s0</span></code> to <code class="docutils literal notranslate"><span class="pre">seqid30_s2</span></code></p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>3,573</p></td>
+<td class="text-right"><p>2,859 to 2,864</p></td>
+<td class="text-right"><p>352 to 358</p></td>
+<td class="text-right"><p>355 to 357</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-growth-rate-campos2018</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">seqid50_s0</span></code> to <code class="docutils literal notranslate"><span class="pre">seqid50_s2</span></code></p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>3,573</p></td>
+<td class="text-right"><p>2,859 to 2,859</p></td>
+<td class="text-right"><p>357 to 357</p></td>
+<td class="text-right"><p>357 to 357</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-growth-rate-campos2018</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">position_s0</span></code> to <code class="docutils literal notranslate"><span class="pre">position_s2</span></code></p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>3,573</p></td>
+<td class="text-right"><p>2,859 to 2,948</p></td>
+<td class="text-right"><p>268 to 445</p></td>
+<td class="text-right"><p>269 to 357</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-morphology-campos2018</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">random_s0</span></code> to <code class="docutils literal notranslate"><span class="pre">random_s4</span></code></p></td>
+<td class="text-right"><p>5</p></td>
+<td class="text-right"><p>3,573</p></td>
+<td class="text-right"><p>2,859 to 2,859</p></td>
+<td class="text-right"><p>357 to 357</p></td>
+<td class="text-right"><p>357 to 357</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-morphology-campos2018</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">seqid30_s0</span></code> to <code class="docutils literal notranslate"><span class="pre">seqid30_s2</span></code></p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>3,573</p></td>
+<td class="text-right"><p>2,859 to 2,864</p></td>
+<td class="text-right"><p>352 to 358</p></td>
+<td class="text-right"><p>355 to 357</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-morphology-campos2018</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">seqid50_s0</span></code> to <code class="docutils literal notranslate"><span class="pre">seqid50_s2</span></code></p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>3,573</p></td>
+<td class="text-right"><p>2,859 to 2,859</p></td>
+<td class="text-right"><p>357 to 357</p></td>
+<td class="text-right"><p>357 to 357</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-morphology-campos2018</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">position_s0</span></code> to <code class="docutils literal notranslate"><span class="pre">position_s2</span></code></p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>3,573</p></td>
+<td class="text-right"><p>2,859 to 2,948</p></td>
+<td class="text-right"><p>268 to 445</p></td>
+<td class="text-right"><p>269 to 357</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-gene-interaction-babu2014</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">random_s0</span></code> to <code class="docutils literal notranslate"><span class="pre">random_s4</span></code></p></td>
+<td class="text-right"><p>5</p></td>
+<td class="text-right"><p>40,658</p></td>
+<td class="text-right"><p>32,527 to 32,527</p></td>
+<td class="text-right"><p>4,066 to 4,066</p></td>
+<td class="text-right"><p>4,065 to 4,065</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-gene-interaction-babu2014</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">gene_holdout_s0</span></code> to <code class="docutils literal notranslate"><span class="pre">gene_holdout_s2</span></code></p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>40,658</p></td>
+<td class="text-right"><p>25,669 to 26,149</p></td>
+<td class="text-right"><p>6,289 to 8,642</p></td>
+<td class="text-right"><p>6,168 to 8,220</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-gene-interaction-babu2014</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">seqid30_gene_holdout_s0</span></code> to <code class="docutils literal notranslate"><span class="pre">seqid30_gene_holdout_s2</span></code></p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>40,658</p></td>
+<td class="text-right"><p>24,969 to 25,549</p></td>
+<td class="text-right"><p>6,336 to 9,347</p></td>
+<td class="text-right"><p>6,342 to 8,773</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-gene-interaction-babu2014</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">seqid50_gene_holdout_s0</span></code> to <code class="docutils literal notranslate"><span class="pre">seqid50_gene_holdout_s2</span></code></p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>40,658</p></td>
+<td class="text-right"><p>23,607 to 25,589</p></td>
+<td class="text-right"><p>6,822 to 9,060</p></td>
+<td class="text-right"><p>7,377 to 8,582</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-gene-interaction-babu2014</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">position_gene_holdout_s0</span></code> to <code class="docutils literal notranslate"><span class="pre">position_gene_holdout_s2</span></code></p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>40,658</p></td>
+<td class="text-right"><p>25,297 to 28,414</p></td>
+<td class="text-right"><p>6,795 to 8,496</p></td>
+<td class="text-right"><p>3,748 to 8,532</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-metabolome-fuhrer2017</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">random_s0</span></code> to <code class="docutils literal notranslate"><span class="pre">random_s4</span></code></p></td>
+<td class="text-right"><p>5</p></td>
+<td class="text-right"><p>3,624</p></td>
+<td class="text-right"><p>2,900 to 2,900</p></td>
+<td class="text-right"><p>362 to 362</p></td>
+<td class="text-right"><p>362 to 362</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-metabolome-fuhrer2017</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">seqid30_s0</span></code> to <code class="docutils literal notranslate"><span class="pre">seqid30_s2</span></code></p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>3,624</p></td>
+<td class="text-right"><p>2,900 to 2,903</p></td>
+<td class="text-right"><p>359 to 362</p></td>
+<td class="text-right"><p>362 to 362</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-metabolome-fuhrer2017</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">seqid50_s0</span></code> to <code class="docutils literal notranslate"><span class="pre">seqid50_s2</span></code></p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>3,624</p></td>
+<td class="text-right"><p>2,900 to 2,901</p></td>
+<td class="text-right"><p>361 to 362</p></td>
+<td class="text-right"><p>362 to 362</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ecoli-metabolome-fuhrer2017</span></code></p></td>
+<td class="text-right"><p><code class="docutils literal notranslate"><span class="pre">position_s0</span></code> to <code class="docutils literal notranslate"><span class="pre">position_s2</span></code></p></td>
+<td class="text-right"><p>3</p></td>
+<td class="text-right"><p>3,624</p></td>
+<td class="text-right"><p>2,900 to 2,988</p></td>
+<td class="text-right"><p>363 to 451</p></td>
+<td class="text-right"><p>273 to 273</p></td>
+</tr>
+</tbody>
+</table>
+<p>The growth-rate and imaging tasks hold the same strains and share one split file.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="Benchmark" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="processing.html" class="btn btn-neutral float-right" title="Processing the E. coli benchmark tasks" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

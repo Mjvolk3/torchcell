@@ -1,0 +1,6 @@
+﻿torchcell.tasks.ecoli.open\_dataset
+===================================
+
+.. currentmodule:: torchcell.tasks.ecoli
+
+.. autofunction:: open_dataset

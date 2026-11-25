@@ -1,0 +1,6 @@
+﻿torchcell.tasks.splits.block\_groups
+====================================
+
+.. currentmodule:: torchcell.tasks.splits
+
+.. autofunction:: block_groups

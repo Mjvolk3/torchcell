@@ -1,0 +1,6 @@
+﻿torchcell.tasks.ecoli.load\_task
+================================
+
+.. currentmodule:: torchcell.tasks.ecoli
+
+.. autofunction:: load_task

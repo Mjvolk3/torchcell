@@ -1,0 +1,6 @@
+﻿torchcell.tasks.ecoli.read\_labels
+==================================
+
+.. currentmodule:: torchcell.tasks.ecoli
+
+.. autofunction:: read_labels

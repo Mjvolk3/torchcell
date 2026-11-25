@@ -135,6 +135,7 @@ datasets:
   - IsoprenylAcetateTiterKang2026Dataset
   - IsoprenolTiterBanerjee2024Dataset
   - PutidaPrecise321Lim2022Dataset
+  - TaleGrowthRateLim2025Dataset
   - IsoprenolToleranceLim2025Dataset
   - ProteomeLim2025Dataset
   - ProteomeFoldChangeLim2025Dataset

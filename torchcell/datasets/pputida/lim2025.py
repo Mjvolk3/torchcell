@@ -8,13 +8,20 @@ Lim et al. 2025 (Metab. Eng., doi:10.1016/j.ymben.2025.05.007) ran a 16-lineage
 tolerization adaptive-laboratory-evolution (TALE) campaign on KT2440 and two stacked
 deletion strains, resequenced 46 evolved isolates, reverse-engineered seven deletion
 strains from the convergent targets, and profiled the parent and two evolved isolates by
-shotgun proteomics. Two dataset classes serve what is BOTH released as a number AND keyed
+shotgun proteomics. The dataset classes serve what is BOTH released as a number AND keyed
 to a strain this schema can write:
 
+- :class:`TaleGrowthRateLim2025Dataset` -- ``EnvironmentResponseExperiment`` with
+  ``MeasurementType.growth_rate``, sixteen records since 2026-11-24: one per
+  Supplementary Table 3 lineage, its released initial growth rate in h^-1 verbatim
+  (KT2440 ALE 1-4, IPL300 ALE 5-8 and IPL400 ALE 9-12 at 4 g/L isoprenol, KT2440 ALE
+  13-16 at 1 mM formaldehyde), ``n_samples = 1``, ``replicate_id = "ALE <n>"``.
 - :class:`IsoprenolToleranceLim2025Dataset` -- ``EnvironmentResponseExperiment``,
-  three records: IPL300 and IPL400 at the TALE starting dose of 4 g/L isoprenol
-  (Supplementary Table 3's initial growth rates), and KT2440 ``dPP_3024`` at 6 g/L
-  isoprenol (the one per-strain fold the Fig. 3A text states).
+  one record since 2026-11-24: KT2440 ``dPP_3024`` at 6 g/L isoprenol (the one
+  per-strain fold the Fig. 3A text states), as the log2 of the released ratio. Before
+  that date it also held IPL300 and IPL400 as log2 ratios of each strain's mean over
+  its four lineages to KT2440's mean, two loader-computed statistics that the per-lineage
+  records above replace.
 - :class:`ProteomeLim2025Dataset` -- ``ProteinAbundanceExperiment``, three
   records: the parent IPL400 and the two evolved isolates the release quantifies
   (A10_F63_I1, A12_F53_I1) under 4 g/L isoprenol, each strain's Top3 log2 protein
@@ -147,26 +154,30 @@ strain. The bacterial PERTURBATION axis has no partial-deletion leaf
   ``preprocess/genotype_gaps.json``. A bacterial truncation / partial-deletion
   perturbation leaf is the fourth item of the additive proposal.
 
-WHY A LOG2 RATIO AND NOT AN ABSOLUTE GROWTH RATE. ``MeasurementType.growth_rate`` exists,
-but ``torchcell.verification.environment_response``'s L3 ``reference_zero`` requires a
-numeric reference of exactly 0, which an absolute rate in h^-1 cannot be. Both released
-quantities are already comparisons of one strain to KT2440 in the SAME medium at the SAME
-isoprenol dose by the same liquid-OD assay, so ``log2_ratio`` is the faithful encoding and
-the reference is KT2440 at log2(1) = 0 -- the Wang 2015 pattern for this same compound.
-Raising the verifier to accept a declared non-zero numeric baseline is in the PR body.
+ONE RECORD PER TALE LINEAGE, AS AN ABSOLUTE RATE (2026-11-24, #1178). "Each TALE
+experiment was conducted with four independent biological replicates in one
+high-throughput evolution campaign" (paper.md L78), and Supplementary Table 3 releases
+one "Initial growth rate (h-1)" per lineage, so each lineage is one biological
+replicate and one record: the released rate verbatim, ``n_samples = 1``,
+``replicate_id = "ALE <n>"`` (the table's own ``ALE#``, without the ``*`` footnote mark
+on ALE 8), and ``not_applicable_single_measurement`` gaps on both uncertainty fields.
+The value is itself the authors' combination of serial readings of that one lineage,
+"Average growth rate, observed in the three first flasks of each experiment" (Table 3
+footnote a); the per-flask rates are not released, and the record's ``units`` says so.
+``MeasurementType.growth_rate`` is an ``ABSOLUTE_MEASUREMENT_TYPES`` member, so the
+verifier runs its absolute branch: each reference states KT2440's own lineages in the
+same condition (mean, sample SD, n = 4, ``replicate_id = None``), and those lineages are
+records too. The ratio the store used to hold, log2 of a strain's lineage mean over
+KT2440's, is model-time arithmetic on these records and reproduces the old values
+exactly (``tests/.../test_lim2025.py``). The four formaldehyde lineages, which the old
+ratio encoding dropped because their only strain was the reference, are records now.
 
-THE FOUR TALE LINEAGES PER STRAIN ARE REPLICATES, SO THEY AGGREGATE. "Each TALE experiment
-was conducted with four independent biological replicates in one high-throughput evolution
-campaign", so ALE 1-4 (WT), 5-8 (IPL300) and 9-12 (IPL400) are four measurements of one
-(strain, condition) and L1 requires them in one record with ``n_samples``. Each arm's
-value is the mean of its four lineages' Supplementary Table 3 initial growth rates;
-the per-lineage numbers stay in ``preprocess/table_s3.csv``.
-
-UNCERTAINTY IS A TYPED GAP ON THE TOLERANCE RECORDS. Supplementary Table 3 reports no
-dispersion for any lineage, and the stored value divides by the WT arm's mean, so a sample
-SD over the four numerators would propagate only one of the two arms. Both
-``environment_response_uncertainty`` and ``environment_response_se`` are typed gaps, as in
-Wang 2015; ``n_samples = 4`` biological replicates is recorded.
+THE dPP_3024 RECORD STAYS A LOG2 RATIO. The Fig. 3A text releases only a relative growth
+rate ("1.6-fold") for KT2440 ``dPP_3024`` at 6 g/L isoprenol, no absolute rate and no
+replicate count, so :class:`IsoprenolToleranceLim2025Dataset` keeps it as log2(1.6)
+against KT2440 at log2(1) = 0 -- the Wang 2015 pattern for this same compound. It is a
+separate class because one class holds one ``measurement_type``. Its uncertainty fields
+and ``n_samples`` are typed ``not_reported_by_primary`` gaps.
 
 THE PROTEOME'S n AND UNCERTAINTY TYPE ARE BACK-SOLVED, NOT ASSUMED. The sheets release a
 per-arm ``log2_mean`` and ``log2_std`` and a ``t-test_stat``. Taking the std as the SAMPLE
@@ -174,8 +185,24 @@ SD and n = 3 per arm reproduces Welch's t for every kept row to 1.1e-12 (worst o
 and 2,368 rows); taking it as a population SD misses by a median of 0.45 t units. The
 released ``log2_Fold_change_A/B`` equals the difference of the two means to 9.3e-15. So
 ``protein_abundance_se = log2_std / sqrt(3)`` and ``n_replicates = 3``, which agrees with
-the ProteomeXchange Sample Key's own ``R1,R2,R3`` and with "Samples were analyzed as three
-independent biological replicates". The Welch identity is asserted at build time.
+the ProteomeXchange Sample Key's own ``R1,R2,R3``. The Welch identity is asserted at build
+time. What KIND of replicate the three runs are is stated only for the pIY670 production
+cultures: "Samples were analyzed as three independent biological replicates." closes
+Methods section 2.6 (paper.md L61), whose 12, 24 and 48 h harvests are "for analysis of
+isoprenol, residual glucose and proteomics respectively"; section 2.5, which describes
+the M9G and M9G+4IP arms these records hold, states no replicate kind.
+
+THE PER-RUN PROTEOME IS RELEASED, AND IS NOT LOADED (#1199). PRIDE PXD054609 holds,
+besides 54 RAW files, two SEARCH-category DIA-NN precursor tables with one column per run:
+``Lim_et_al_proteomics_set1.csv`` (6,466,417 bytes, 27 run columns: the three loaded
+strains' M9G and M9G_4IP arms as ``HGL0500`` = IPL400, ``HGL0638`` = A10_F63_I1 and
+``HGL0640`` = A12_F53_I1 per the Sample Key, plus ``HGL0496_M9G[_4IP]-R1..R3`` and
+``HGL_0834_M9G-R1..R3``, which the Sample Key does not name) and
+``Lim_et_al_Proteomics_set2.csv`` (5,025,058 bytes, the 27 pIY670 production runs). Both
+are keyed by ``Precursor.Id``; no per-run PROTEIN table is deposited. Storing one record
+per run needs the owner's choice between precursor-level values as released and a
+protein rollup the loader would compute, so the records stay the Supplementary Data 1
+arm means, and neither file is in the raw mirror.
 
 THREE CROSS-SOURCE ASSERTIONS, all measured to hold on the pinned bytes:
 
@@ -214,10 +241,11 @@ DATA. Both consumed files are the publisher's Elsevier supplements, deposited un
 ``$DATA_ROOT/torchcell-raw/limEvolutionguidedToleranceEngineering2025/data/``:
 ``si1.docx`` (Supplementary Notes, Figures and Tables 1-7) and ``si2.xlsx``
 (Supplementary Data 1: the mutation matrix, the Table S4 gene lists, the ProteomeXchange
-sample key and seven proteome comparison sheets). The three sequencing deposits are
-RECORDED and not downloaded: SRA BioProject PRJNA1187681 (genome resequencing),
-GEO GSE281392 (transcriptome) and PRIDE PXD054609 (raw DIA spectra). No loader consumes
-reads or spectra.
+sample key and seven proteome comparison sheets). The three sequencing and proteomics
+deposits are RECORDED and not downloaded: SRA BioProject PRJNA1187681 (genome
+resequencing), GEO GSE281392 (transcriptome) and PRIDE PXD054609 (54 raw DIA files plus
+the two per-run precursor tables above). No loader consumes reads, spectra or the
+precursor tables.
 """
 
 from __future__ import annotations
@@ -293,6 +321,7 @@ from torchcell.datamodels.schema import (
     SpanDeletionCallPerturbation,
     StrainBackground,
     StrainConstruction,
+    UncertaintyType,
     VariantCallMode,
     VariantFrequencyBasis,
     VariantSiteKind,
@@ -344,6 +373,7 @@ PAPER_TITLE = (
 )
 RAW_DIR_REL = f"torchcell-raw/{CITATION_KEY}"
 TOLERANCE_ROOT_REL = "data/torchcell/isoprenol_tolerance_lim2025"
+TALE_GROWTH_RATE_ROOT_REL = "data/torchcell/tale_growth_rate_lim2025"
 PROTEOME_ROOT_REL = "data/torchcell/proteome_lim2025"
 PROTEOME_FOLD_CHANGE_ROOT_REL = "data/torchcell/proteome_fold_change_lim2025"
 
@@ -383,6 +413,11 @@ ISOPRENOL_PUBCHEM_CID = 12988
 #: Molar mass of formaldehyde (g/mol), used only to cross-check the HCHO arm's two
 #: released dose units against each other.
 FORMALDEHYDE_G_PER_MOL = 30.026
+#: Identity of the HCHO arm's stressor, pinned and checked against its
+#: ``compound_identity_table.json`` row (curated for this loader on 2026-11-25 by
+#: ``experiments/036-dataset-fixes-before-kg-build/scripts/compound_curator_lim2025.py``).
+FORMALDEHYDE_LABEL = "formaldehyde"
+FORMALDEHYDE_INCHIKEY = "WSFSSNUMVMOOMR-UHFFFAOYSA-N"
 
 KT2440_NAMESPACE: BacterialGeneNamespace = "pputida_kt2440_locus_tag"
 KT2440_ASSEMBLY_SET: BacterialAssemblySet = "pputida_KT2440_ASM756v2"
@@ -572,8 +607,11 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         4,
         "Each TALE experiment was conducted with four independent biological replicates "
         "in one high-throughput evolution campaign",
-        note="ALE 1-4 (WT), 5-8 (IPL300) and 9-12 (IPL400) are four measurements of one "
-        "(strain, condition), so they aggregate into one record with n_samples = 4",
+        note="ALE 1-4 (WT), 5-8 (IPL300) and 9-12 (IPL400) are four independent "
+        "lineages of one (strain, condition), and Supplementary Table 3 releases one "
+        "initial growth rate per lineage, so each lineage is its own record with "
+        "n_samples = 1 and replicate_id 'ALE <n>' (TaleGrowthRateLim2025Dataset). The "
+        "formaldehyde arm (ALE 13-16) is the same design on KT2440",
     ),
     "growth_rate_method": _paper(
         "liquid_od_growth",
@@ -581,6 +619,14 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "$\\scriptstyle { \\mathrm { ( O D } } _ { 6 0 0 } { \\mathrm { ) } }$ vs. time "
         "during exponential growth.",
         note="an OD600 growth curve, which is AssayType.liquid_od_growth",
+    ),
+    "tale_medium": _paper(
+        "M9_NREL_LIM2025",
+        "As a carbon source, $4 \\ g / \\mathrm { L }$ glucose was added to the minimal "
+        "medium unless otherwise stated.",
+        note="the medium of every TALE arm. The isoprenol arms are stated to run 'in "
+        "glucose M9 minimal medium' (Results 3.2); the formaldehyde arm is stated with "
+        "no other medium, so this default holds for it too",
     ),
     "pp3024_fold": _paper(
         1.6,
@@ -628,8 +674,13 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     "proteome_n_replicates": _paper(
         PROTEOME_N_REPLICATES,
         "Samples were analyzed as three independent biological replicates.",
-        note="corroborates the Sample Key sheet's own 'R1,R2,R3' for both loaded arms, "
-        "and the n = 3 that the Welch back-solve independently recovers",
+        note="the sentence closes Methods section 2.6 (isoprenol production), whose "
+        "12, 24 and 48 h harvests of the pIY670 cultures are 'for analysis of isoprenol, "
+        "residual glucose and proteomics respectively', so it states the replicate kind "
+        "of the production proteome; section 2.5, which covers the M9G and M9G+4IP arms "
+        "the loaded records hold, states none. For those arms n = 3 is sourced by the "
+        "Sample Key sheet's own 'R1,R2,R3' and by the Welch back-solve, which recovers "
+        "it independently",
     ),
     "proteome_search_database": _paper(
         "Uniprot P. putida KT2440 proteome",
@@ -685,8 +736,9 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         ("A13", "A16"),
         "We also tolerized the WT strain against formaldehyde stress as a control (HCHO, "
         "isolates A13-A16, Supplementary Table 3)",
-        note="the HCHO arm's only strain is the WT, which is this dataset's reference, so "
-        "the arm yields no record",
+        note="the HCHO arm's only strain is the WT; since 2026-11-24 its four lineages' "
+        "initial growth rates are records of TaleGrowthRateLim2025Dataset at the "
+        "Supplementary Table 3 starting dose of 1 mM formaldehyde",
     ),
     "isoprenol_generations_range": _paper(
         (143, 353),
@@ -758,8 +810,10 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         PRIDE_ACCESSION,
         "deposited to the ProteomeXchange Consortium via the PRIDE partner repository "
         f"with the dataset identifier {PRIDE_ACCESSION}",
-        note="raw DIA spectra; the loaded abundances are the processed Supplementary "
-        "Data 1 sheets, not the spectra",
+        note="54 raw DIA files plus two SEARCH-category DIA-NN precursor tables with one "
+        "column per run (Lim_et_al_proteomics_set1.csv, Lim_et_al_Proteomics_set2.csv; "
+        "#1199). The loaded abundances are the processed Supplementary Data 1 sheets; "
+        "neither the spectra nor the precursor tables are loaded",
     ),
     "piy670_production_medium": _paper(
         {"glucose_g_per_l": 20.0, "kanamycin_mg_per_l": 50.0, "arabinose_g_per_l": 2.0},
@@ -834,7 +888,7 @@ TALE_DURATION_GAP = ProvenanceGap(
     reason=ProvenanceGapReason.not_reported_by_primary,
     looked_in=_PAPER_LOOKED_IN,
     note="the TALE passaged 'once or twice a day', so no fixed per-flask duration exists; "
-    "the stored value is a mean over a lineage's three first flasks",
+    "the stored value is the authors' mean over a lineage's three first flasks",
 )
 PANEL_DURATION_GAP = ProvenanceGap(
     field="duration_hours",
@@ -850,15 +904,17 @@ PROTEOME_DURATION_GAP = ProvenanceGap(
     note="'Cultures at the exponential growth phase were harvested by centrifugation'; "
     "no hours are stated for the M9G and M9G+4IP proteome arms",
 )
-RESPONSE_UNCERTAINTY_GAPS: tuple[ProvenanceGap, ...] = tuple(
+#: A TALE record is one lineage's one released initial growth rate, so it has no
+#: dispersion of its own (#1178 policy 5).
+LINEAGE_UNCERTAINTY_GAPS: tuple[ProvenanceGap, ...] = tuple(
     ProvenanceGap(
         field=field,
-        reason=ProvenanceGapReason.not_reported_by_primary,
+        reason=ProvenanceGapReason.not_applicable_single_measurement,
         looked_in=_SI1_LOOKED_IN,
-        note="Supplementary Table 3 reports no dispersion for any lineage, and the stored "
-        "value divides by the WT arm's mean, so a sample SD over the four numerators "
-        "would propagate one arm only. The per-lineage numbers are in "
-        "preprocess/table_s3.csv",
+        note="one lineage, one released Supplementary Table 3 initial growth rate: a "
+        "single biological replicate has no dispersion of its own. The value is the "
+        "authors' average over the lineage's three first flasks, whose per-flask rates "
+        "are not released",
     )
     for field in ("environment_response_uncertainty", "environment_response_se")
 )
@@ -888,9 +944,14 @@ NOT_MIRRORED: tuple[str, ...] = (
     f"mutation analysis is also public as ALEdb project {ALEDB_PROJECT}",
     f"GEO {GEO_SERIES} (WT transcriptome on glucose vs isoprenol as sole carbon source): "
     "RECORDED, not downloaded. No record of this loader is an expression record",
-    f"PRIDE {PRIDE_ACCESSION} (raw DIA mass spectra of every proteome sample): RECORDED, "
-    "not downloaded. The loaded abundances are the processed sheets of "
-    f"{SI2_XLSX}; no loader consumes raw spectra",
+    f"PRIDE {PRIDE_ACCESSION} (54 raw DIA files, 7,962,034,896 bytes, plus two "
+    "SEARCH-category DIA-NN precursor tables with one column per run: "
+    "Lim_et_al_proteomics_set1.csv, 6,466,417 bytes, 27 runs of the M9G and M9G+4IP "
+    "arms; Lim_et_al_Proteomics_set2.csv, 5,025,058 bytes, 27 runs of the pIY670 "
+    "production cultures): RECORDED, not downloaded. No per-run protein table is "
+    "deposited; whether to store the precursor values or a computed protein rollup is an "
+    "open owner decision (#1199). The loaded abundances are the processed sheets of "
+    f"{SI2_XLSX}",
     "paper.pdf: not consumed. Every quote is anchored in the literature mirror's "
     "paper.md, and every number comes from one of the two deposited supplements",
 )
@@ -2176,62 +2237,68 @@ def range_checks(lineages: Sequence[TaleLineage]) -> list[RangeCheck]:
     return checks
 
 
-class ToleranceArm(BaseModel):
-    """One starting strain's aggregated tolerance measurement at one isoprenol dose."""
+class TaleArm(BaseModel):
+    """One Supplementary Table 3 row group: a starting strain under one stressor.
+
+    A grouping of released rows, never an aggregate: each of its lineages is one record
+    of :class:`TaleGrowthRateLim2025Dataset`. The arm states the starting dose every
+    lineage of the group shares, which is the condition of the initial growth rate.
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     strain: str
-    ale_labels: tuple[str, ...]
-    dose_g_per_l: float
-    growth_rates: tuple[float, ...]
-    mean_growth_rate: float
-    log2_ratio_to_wt: float
-    n_samples: int
+    stressor: str
+    dose: float
+    dose_unit: str
+    lineages: tuple[TaleLineage, ...]
 
 
-def tolerance_arms(
-    lineages: Sequence[TaleLineage],
-) -> tuple[ToleranceArm, list[ToleranceArm]]:
-    """``(reference arm, record arms)`` from Supplementary Table 3's isoprenol lineages.
+def tale_arms(lineages: Sequence[TaleLineage]) -> list[TaleArm]:
+    """Supplementary Table 3's four row groups, in the table's order, refusing drift.
 
-    KT2440's four lineages are the reference arm (log2(1) = 0); IPL300's and IPL400's are
-    the records. Each arm's four lineages are the biological replicates the Results
-    declare, so each becomes ONE record with ``n_samples = 4``.
+    Each group must hold :data:`N_TALE_REPLICATES` lineages (the Results' "four
+    independent biological replicates") at ONE starting dose, and the groups must be
+    exactly the four :data:`_S3_GROUPS` names.
     """
-    by_strain: dict[str, list[TaleLineage]] = {}
+    by_group: dict[tuple[str, str], list[TaleLineage]] = {}
     for row in lineages:
-        if row.stressor != "isoprenol":
-            continue
-        by_strain.setdefault(row.starting_strain, []).append(row)
-    counts = {strain: len(rows) for strain, rows in by_strain.items()}
-    if set(counts) != {"KT2440", "IPL300", "IPL400"} or set(counts.values()) != {
+        by_group.setdefault((row.starting_strain, row.stressor), []).append(row)
+    counts = {
+        f"{strain}/{stressor}": len(rows)
+        for (strain, stressor), rows in by_group.items()
+    }
+    if set(by_group) != set(_S3_GROUPS.values()) or set(counts.values()) != {
         N_TALE_REPLICATES
     }:
         raise CrossSourceError(
-            f"the isoprenol arm holds {counts}, not {N_TALE_REPLICATES} lineages for "
-            "each of KT2440, IPL300 and IPL400"
+            f"Supplementary Table 3 holds {counts}, not {N_TALE_REPLICATES} lineages for "
+            f"each of {sorted(_S3_GROUPS.values())}"
         )
-
-    def arm(strain: str, wt_mean: float | None) -> ToleranceArm:
-        rows = sorted(by_strain[strain], key=lambda row: row.ale_number)
-        rates = tuple(row.initial_growth_rate for row in rows)
-        mean = statistics.fmean(rates)
-        return ToleranceArm(
-            strain=strain,
-            ale_labels=tuple(row.ale_label for row in rows),
-            dose_g_per_l=TALE_DOSE_G_PER_L,
-            growth_rates=rates,
-            mean_growth_rate=mean,
-            log2_ratio_to_wt=0.0 if wt_mean is None else math.log2(mean / wt_mean),
-            n_samples=len(rates),
+    arms: list[TaleArm] = []
+    for strain, stressor in _S3_GROUPS.values():
+        rows = sorted(by_group[(strain, stressor)], key=lambda row: row.ale_number)
+        doses = {(row.starting_dose, row.starting_dose_unit) for row in rows}
+        if len(doses) != 1:
+            raise CrossSourceError(
+                f"the {strain}/{stressor} lineages start at {sorted(doses)}, not one dose"
+            )
+        ((dose, unit),) = doses
+        arms.append(
+            TaleArm(
+                strain=strain,
+                stressor=stressor,
+                dose=dose,
+                dose_unit=unit,
+                lineages=tuple(rows),
+            )
         )
+    return arms
 
-    reference = arm("KT2440", None)
-    records = [
-        arm(strain, reference.mean_growth_rate) for strain in ("IPL300", "IPL400")
-    ]
-    return reference, records
+
+def lineage_replicate_id(lineage: TaleLineage) -> str:
+    """``ALE <n>``: the table's own ``ALE#`` label, without its ``*`` footnote mark."""
+    return f"ALE {lineage.ale_number}"
 
 
 # --------------------------------------------------------------------------- #
@@ -2249,6 +2316,15 @@ RESPONSE_UNITS = (
 )
 MEASUREMENT_TYPE = MeasurementType.log2_ratio
 ASSAY_TYPE = AssayType.liquid_od_growth
+#: What one :class:`TaleGrowthRateLim2025Dataset` value is, including the technical
+#: combination the authors made inside it (#1178 policy 2: the record says so).
+TALE_UNITS = (
+    "h^-1: maximum specific growth rate (slope of ln(OD600) vs time during exponential "
+    "growth) of one TALE lineage at its Supplementary Table 3 starting concentration, as "
+    "released: the authors' 'Average growth rate, observed in the three first flasks of "
+    "each experiment' (3 serial flasks of the one lineage; per-flask rates not released)"
+)
+TALE_MEASUREMENT_TYPE = MeasurementType.growth_rate
 
 
 def isoprenol_compound() -> Compound:
@@ -2291,6 +2367,54 @@ def isoprenol_environment(
         duration_hours=None,
         provenance_gaps=[TEMPERATURE_GAP, duration_gap],
     )
+
+
+def formaldehyde_compound() -> Compound:
+    """Formaldehyde through the shared compound-identity layer, pinned like isoprenol."""
+    compound = resolved_compound(FORMALDEHYDE_LABEL)
+    if compound.inchikey != FORMALDEHYDE_INCHIKEY:
+        raise CompoundIdentityConflictError(
+            f"the compound-identity table resolves {FORMALDEHYDE_LABEL!r} to "
+            f"{compound.inchikey}, not {FORMALDEHYDE_INCHIKEY}"
+        )
+    return compound
+
+
+def tale_environment(arm: TaleArm) -> Environment:
+    """One Supplementary Table 3 arm's condition: the medium plus its starting stressor.
+
+    The isoprenol arms are :func:`isoprenol_environment` at the table's 4 g/L. The
+    formaldehyde arm is the same medium at the table's 1 mM; the paper names no other
+    carbon source for it, and "As a carbon source, 4 g/L glucose was added to the minimal
+    medium unless otherwise stated" (``SOURCED_VALUES['tale_medium']``).
+    """
+    if arm.stressor == "isoprenol":
+        if (arm.dose, arm.dose_unit) != (TALE_DOSE_G_PER_L, "g/L"):
+            raise CrossSourceError(
+                f"the {arm.strain} isoprenol arm starts at {arm.dose} {arm.dose_unit}"
+            )
+        return isoprenol_environment(arm.dose, TALE_DURATION_GAP)
+    if arm.stressor == "formaldehyde":
+        if (arm.dose, arm.dose_unit) != (HCHO_DOSE_RANGE_MM[0], "mM"):
+            raise CrossSourceError(
+                f"the formaldehyde arm starts at {arm.dose} {arm.dose_unit}, not "
+                f"{HCHO_DOSE_RANGE_MM[0]} mM"
+            )
+        return Environment(
+            media=M9_NREL_LIM2025,
+            temperature=None,
+            perturbations=[
+                SmallMoleculePerturbation(
+                    compound=formaldehyde_compound(),
+                    concentration=Concentration(
+                        value=arm.dose, unit=ConcentrationUnit.millimolar
+                    ),
+                )
+            ],
+            duration_hours=None,
+            provenance_gaps=[TEMPERATURE_GAP, TALE_DURATION_GAP],
+        )
+    raise ValueError(f"{arm.stressor!r} is not a stressor of this campaign")
 
 
 def unstressed_environment() -> Environment:
@@ -2445,6 +2569,43 @@ def response_phenotype(
         sample_unit=None if n_samples is None else SampleUnit.biological_replicate,
         units=RESPONSE_UNITS,
         provenance_gaps=list(gaps),
+    )
+
+
+def lineage_phenotype(lineage: TaleLineage) -> EnvironmentResponsePhenotype:
+    """One TALE lineage's released initial growth rate in h^-1, verbatim: n = 1."""
+    return EnvironmentResponsePhenotype(
+        measurement_type=TALE_MEASUREMENT_TYPE,
+        assay_type=ASSAY_TYPE,
+        environment_response=lineage.initial_growth_rate,
+        n_samples=1,
+        sample_unit=SampleUnit.biological_replicate,
+        replicate_id=lineage_replicate_id(lineage),
+        units=TALE_UNITS,
+        provenance_gaps=list(LINEAGE_UNCERTAINTY_GAPS),
+    )
+
+
+def arm_reference_phenotype(arm: TaleArm) -> EnvironmentResponsePhenotype:
+    """KT2440's own lineages in one condition, summarized: mean, sample SD and n.
+
+    The only aggregate the TALE class states (#1178 policy 7), with ``replicate_id``
+    None because no one lineage is what it reports; every lineage it summarizes is itself
+    a record. Supplementary Table 3 releases no mean, so this one is computed here.
+    """
+    if arm.strain != IsoprenolToleranceLim2025Dataset.REFERENCE_STRAIN:
+        raise ValueError(f"{arm.strain!r} is not the reference strain")
+    rates = [lineage.initial_growth_rate for lineage in arm.lineages]
+    return EnvironmentResponsePhenotype(
+        measurement_type=TALE_MEASUREMENT_TYPE,
+        assay_type=ASSAY_TYPE,
+        environment_response=statistics.fmean(rates),
+        environment_response_uncertainty=statistics.stdev(rates),
+        environment_response_uncertainty_type=UncertaintyType.sample_sd,
+        n_samples=len(rates),
+        sample_unit=SampleUnit.biological_replicate,
+        units=TALE_UNITS,
+        replicate_id=None,
     )
 
 
@@ -2779,11 +2940,154 @@ def genotype_gaps() -> list[GenotypeGap]:
 
 
 # --------------------------------------------------------------------------- #
-# Isoprenol tolerance of the writable strains
+# Shared Supplementary Table 3 extraction
+# --------------------------------------------------------------------------- #
+class TableS3Extraction(BaseModel):
+    """Supplementary Table 3 as both TALE-derived classes read it, with its checks."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    lineages: tuple[TaleLineage, ...]
+    digest: str
+    range_checks: tuple[RangeCheck, ...]
+
+
+def extract_table_s3(docx_path: str) -> TableS3Extraction:
+    """Assert every SI statement, parse Table 3, check its digest and stated ranges.
+
+    Refuses the build when a quoted SI statement has moved, when the parsed table's
+    digest is not :data:`TABLE_S3_SHA256`, or when a Results range disagrees with the
+    table's own columns.
+    """
+    text = docx_text(docx_path)
+    absent = sorted(name for name, quote in SI1_STATEMENTS.items() if quote not in text)
+    if absent:
+        raise TableExtractionError(
+            f"{SI1_DOCX} no longer states {absent}; the quotes this loader relies on "
+            "have moved and the build refuses rather than storing them"
+        )
+    lineages = parse_table_s3(docx_tables(docx_path))
+    digest = table_s3_digest(lineages)
+    if digest != TABLE_S3_SHA256:
+        raise TableExtractionError(
+            f"parsed Supplementary Table 3 sha256 {digest}, pinned {TABLE_S3_SHA256}"
+        )
+    return TableS3Extraction(
+        lineages=tuple(lineages),
+        digest=digest,
+        range_checks=tuple(range_checks(lineages)),
+    )
+
+
+def _extraction_json(extraction: TableS3Extraction) -> str:
+    """``preprocess/extraction.json``: the pinned inputs and the checks that passed."""
+    return json.dumps(
+        {
+            "si1_docx_sha256": SI1_DOCX_SHA256,
+            "si2_xlsx_sha256": SI2_XLSX_SHA256,
+            "table_s3_sha256": extraction.digest,
+            "range_checks": [check.model_dump() for check in extraction.range_checks],
+            "si1_statements": SI1_STATEMENTS,
+        },
+        indent=2,
+    )
+
+
+def _write_records(
+    dataset: ExperimentDataset,
+    records: Sequence[
+        tuple[
+            Genotype,
+            Environment,
+            EnvironmentResponsePhenotype,
+            EnvironmentResponsePhenotype,
+        ]
+    ],
+    *,
+    desc: str,
+) -> None:
+    """Write ``(genotype, environment, phenotype, reference phenotype)`` to the LMDB.
+
+    Every record's reference genome is the KT2440 assembly with no background: the
+    reference arm of every comparison in both classes is the wild type.
+    """
+    genome_reference = assembly_reference("KT2440")
+    os.makedirs(dataset.processed_dir, exist_ok=True)
+    env, interned_env = dataset._open_write_lmdb(
+        osp.join(dataset.processed_dir, "lmdb")
+    )
+    with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+        for index, (genotype, environment, phenotype, reference_phenotype) in enumerate(
+            tqdm(records, desc=desc)
+        ):
+            experiment = EnvironmentResponseExperiment(
+                dataset_name=dataset.name,
+                genotype=genotype,
+                environment=environment,
+                phenotype=phenotype,
+            )
+            reference = EnvironmentResponseExperimentReference(
+                dataset_name=dataset.name,
+                genome_reference=genome_reference,
+                environment_reference=environment.model_copy(),
+                phenotype_reference=reference_phenotype,
+            )
+            txn.put(
+                f"{index}".encode(),
+                dataset._intern_record(experiment, reference, PUBLICATION, itxn),
+            )
+    env.close()
+    interned_env.close()
+
+
+#: The figure-only readouts of the campaign, counted on the class whose record is the
+#: one per-strain number the figures' text releases.
+_FIGURE_ONLY_READOUTS = DropRule(
+    rule="released_only_as_a_figure",
+    scope="readout",
+    description="the rest of the phenotyping releases no numbers: "
+    "Fig. 2A (16 strains x 2 isoprenol doses), Fig. 3A (the other six "
+    "reverse-engineered strains), Fig. 3B and 5A/5D (isoprenol titers), "
+    "Fig. 5B/5E (residual glucose), Fig. 4D and S3B (isoprenol "
+    "degradation), Fig. S1C-F (growth curves). The six other deletion "
+    "strains and all eight pIY670 strains are writable with nothing "
+    "released to write about them",
+    n_items=14,
+    items=[
+        "KT2440 dgnuR",
+        "KT2440 dttgB",
+        "KT2440 dttgB_L (dPP_1385-1395)",
+        "KT2440 dPP_1395",
+        "KT2440 dPP_3024-dPP_5558",
+        "KT2440 dmxtR (PP_1695)",
+        "the seven deletion strains carrying pIY670",
+        "KT2440 + pIY670",
+    ],
+)
+_NO_TITER_PER_WRITABLE_STRAIN = DropRule(
+    rule="no_titer_is_released_per_writable_strain",
+    scope="readout",
+    description="the Results state isoprenol titers only as ranges over "
+    "several strains (60-70 mg/L for two evolved isolates, 280-400 mg/L "
+    "for 'their starting strain') or for derivatives of the evolved "
+    "isolate A10_F63_I1 (337 mg/L dfleQ, 370 mg/L dmvaB), so no "
+    "ProductTiterExperiment record is keyed to a writable strain",
+    n_items=0,
+)
+
+
+# --------------------------------------------------------------------------- #
+# Isoprenol tolerance: the one released relative rate (Fig. 3A text)
 # --------------------------------------------------------------------------- #
 @register_dataset
 class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
-    """Isoprenol tolerance of IPL300, IPL400 and KT2440 dPP_3024 (Lim 2025)."""
+    """Isoprenol tolerance of KT2440 dPP_3024 relative to KT2440 (Lim 2025).
+
+    One record since 2026-11-24: the Fig. 3A text's "1.6-fold" at 6 g/L isoprenol,
+    stored as log2(1.6) against KT2440 at log2(1) = 0. The IPL300 and IPL400 records it
+    held before were log2 ratios of loader-computed lineage means; the lineages are
+    records of :class:`TaleGrowthRateLim2025Dataset` now.
+    """
 
     organism = Organism.pputida
 
@@ -2834,13 +3138,176 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
             )
         return self.pputida_genome
 
+    def _drop_log(self, kept: int) -> DropLog:
+        """The one released relative rate, and every readout that carries none."""
+        return DropLog(
+            dataset=self.name,
+            source_rows=1,
+            reference_rows=[
+                "KT2440 at 6 g/L isoprenol (the log2(1) = 0 arm of Fig. 3A)"
+            ],
+            candidate_records=kept,
+            kept_records=kept,
+            dropped_records=0,
+            rules=[
+                _FIGURE_ONLY_READOUTS,
+                _NO_TITER_PER_WRITABLE_STRAIN,
+                DropRule(
+                    rule="tale_lineages_are_records_of_another_class",
+                    scope="readout",
+                    description="Supplementary Table 3's per-lineage initial growth "
+                    "rates are absolute rates in h^-1, one record per lineage, in "
+                    f"{TaleGrowthRateLim2025Dataset.__name__} since 2026-11-24 "
+                    "(#1178). Before that date this class held IPL300 and IPL400 as "
+                    "log2 of each strain's four-lineage mean over KT2440's, which "
+                    "model-time arithmetic on those records reproduces exactly",
+                    n_items=_S3_N_ROWS,
+                    items=[TaleGrowthRateLim2025Dataset.__name__],
+                ),
+            ],
+            notes=[
+                "the dPP_3024 record is the only phenotype keyed to one of the seven "
+                "reverse-engineered strains; the Fig. 3A text states it as a relative "
+                "rate and states no absolute rate and no replicate count, so it stays "
+                "the log2 of the released ratio with typed gaps on n_samples and on "
+                "both uncertainty fields"
+            ],
+        )
+
+    @post_process
+    def process(self) -> None:
+        """Check the SI statements and Table 3, build the one record, write the LMDB."""
+        verify_raw_files(self.raw_dir, DATA_SHA256)
+        extraction = extract_table_s3(osp.join(self.raw_dir, SI1_DOCX))
+
+        genome = self._genome()
+        symbols, report = reconcile_genotype_loci(genome, label=self.name)
+        log.info(
+            "Lim 2025 tolerance: genotype loci %s",
+            {status.value: n for status, n in report.status_histogram.items()},
+        )
+        gaps = (*PANEL_UNCERTAINTY_GAPS, PANEL_N_SAMPLES_GAP)
+        value = math.log2(PP3024_FOLD)
+        records = [
+            (
+                pp3024_genotype(symbols),
+                isoprenol_environment(PANEL_DOSE_G_PER_L, PANEL_DURATION_GAP),
+                response_phenotype(value, n_samples=None, gaps=gaps),
+                response_phenotype(0.0, n_samples=None, gaps=gaps),
+            )
+        ]
+        drop_log = self._drop_log(len(records))
+        drop_log.check()
+
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        _write_records(self, records, desc="lim2025-tolerance")
+
+        out = Path(self.preprocess_dir)
+        (out / "dropped_records.json").write_text(drop_log.model_dump_json(indent=2))
+        (out / "identifier_reconciliation.json").write_text(
+            report.model_dump_json(indent=2)
+        )
+        (out / "extraction.json").write_text(_extraction_json(extraction))
+        pd.DataFrame(
+            [
+                {
+                    "record": 0,
+                    "strain": f"KT2440 d{PP3024_LOCUS}",
+                    "strain_accession": PP3024_STRAIN_ACCESSION,
+                    "source": "Fig. 3A text, relative growth rate",
+                    "isoprenol_g_per_l": PANEL_DOSE_G_PER_L,
+                    "released_fold": PP3024_FOLD,
+                    "log2_ratio_to_wt": value,
+                }
+            ]
+        ).to_csv(out / "records.csv", index=False)
+        log.info(
+            "Lim 2025 tolerance: %d record (d%s at %g g/L isoprenol), reference KT2440 "
+            "= log2(1) = 0",
+            len(records),
+            PP3024_LOCUS,
+            PANEL_DOSE_G_PER_L,
+        )
+
+    def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
+        """Preprocessing is handled inside process() for this dataset."""
+        return df
+
+    def create_experiment(self) -> None:
+        """Experiment construction is handled inline in process() for this dataset."""
+        raise NotImplementedError
+
+
+# --------------------------------------------------------------------------- #
+# The TALE lineages' initial growth rates, one record per lineage
+# --------------------------------------------------------------------------- #
+@register_dataset
+class TaleGrowthRateLim2025Dataset(ExperimentDataset):
+    """Initial growth rate of each of the 16 Lim 2025 TALE lineages (Table S3).
+
+    One record per lineage, the released rate in h^-1 verbatim (#1178): KT2440 ALE 1-4,
+    IPL300 ALE 5-8 and IPL400 ALE 9-12 at 4 g/L isoprenol, and KT2440 ALE 13-16 at 1 mM
+    formaldehyde. Each reference is KT2440's own four lineages in the same condition
+    (mean, sample SD, n = 4). IPL300 and IPL400 carry their founder clone column's called
+    variants as #731 perturbations on top of their designed deletions.
+    """
+
+    organism = Organism.pputida
+
+    REFERENCE_STRAIN: ClassVar[str] = "KT2440"
+
+    def __init__(
+        self,
+        root: str = TALE_GROWTH_RATE_ROOT_REL,
+        io_workers: int = 0,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        pputida_genome: PPutidaKT2440Genome | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize; ``pputida_genome`` is injected by the build entry points."""
+        self.pputida_genome = pputida_genome
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
+
+    @property
+    def experiment_class(self) -> type[Experiment]:
+        """Experiment schema class produced by this dataset."""
+        return EnvironmentResponseExperiment
+
+    @property
+    def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference schema class produced by this dataset."""
+        return EnvironmentResponseExperimentReference
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        """Both consumed supplements, linked from the raw mirror."""
+        return [raw.name for raw in RAW_FILES]
+
+    def download(self) -> None:
+        """Link each mirror file into ``raw/`` after checking its manifest pin."""
+        _link_mirror_files(self.raw_dir, _data_root())
+        log.info("Lim 2025 raw files linked into %s (sha256 verified)", self.raw_dir)
+
+    def _genome(self) -> PPutidaKT2440Genome:
+        """The injected KT2440 genome, or the pinned assembly's default cache."""
+        if self.pputida_genome is None:
+            self.pputida_genome = bacterial_genome("pputida", "KT2440")
+        expected = BACTERIAL_ASSEMBLY_SETS["KT2440"]
+        if self.pputida_genome.ASSEMBLY_SET != expected:
+            raise ValueError(
+                f"{type(self).__name__} needs the {expected} genome, got "
+                f"{self.pputida_genome.ASSEMBLY_SET}"
+            )
+        return self.pputida_genome
+
     def _drop_log(
         self,
         matrix: MutationMatrix,
         kept: int,
         accounting: Sequence[CalledVariantAccounting],
     ) -> DropLog:
-        """Every row of Supplementary Table 3 and every figure-only readout, counted."""
+        """Every number of Supplementary Table 3's growth-rate columns, counted."""
         founder = ", ".join(
             f"{clone} ({n} calls)"
             for clone, n in sorted(matrix.founder_call_counts.items())
@@ -2848,20 +3315,15 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
         return DropLog(
             dataset=self.name,
             source_rows=_S3_N_ROWS,
-            reference_rows=[f"KT2440 ALE 1-{N_TALE_REPLICATES} (the log2(1) = 0 arm)"],
-            candidate_records=kept + 2,
+            reference_rows=[
+                "KT2440 ALE 1-4 at 4 g/L isoprenol and ALE 13-16 at 1 mM "
+                "formaldehyde: each condition's reference is the mean, sample SD and "
+                "n of its four KT2440 lineages, every one of which is also a record"
+            ],
+            candidate_records=kept + _S3_N_ROWS,
             kept_records=kept,
-            dropped_records=2,
+            dropped_records=_S3_N_ROWS,
             rules=[
-                DropRule(
-                    rule="hcho_arm_has_no_strain_other_than_the_reference",
-                    scope="record",
-                    description="the formaldehyde arm tolerized only the WT, which is "
-                    "this dataset's reference, so its aggregated initial growth rate "
-                    "would be the reference against itself",
-                    n_items=1,
-                    items=["KT2440 at 1 mM formaldehyde (ALE 13-16)"],
-                ),
                 DropRule(
                     rule="final_growth_rate_is_an_evolved_population",
                     scope="record",
@@ -2874,9 +3336,13 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
                     "population allele frequency for a flask, and a population genotype "
                     "would need a threshold on a frequency the release never gives for "
                     "one. This refusal is unchanged by the #731 leaves, which hold a "
-                    "CLONE's calls",
-                    n_items=1,
-                    items=[f"{_S3_N_ROWS} final growth rates (one per lineage)"],
+                    "CLONE's calls, and by the per-replicate conversion, which is about "
+                    "the initial rates",
+                    n_items=_S3_N_ROWS,
+                    items=[
+                        f"ALE {number} final growth rate"
+                        for number in range(1, _S3_N_ROWS + 1)
+                    ],
                 ),
                 DropRule(
                     rule="evolved_isolate_has_no_released_per_isolate_number",
@@ -2914,48 +3380,16 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
                         for row in accounting
                     ],
                 ),
-                DropRule(
-                    rule="released_only_as_a_figure",
-                    scope="readout",
-                    description="the rest of the phenotyping releases no numbers: "
-                    "Fig. 2A (16 strains x 2 isoprenol doses), Fig. 3A (the other six "
-                    "reverse-engineered strains), Fig. 3B and 5A/5D (isoprenol titers), "
-                    "Fig. 5B/5E (residual glucose), Fig. 4D and S3B (isoprenol "
-                    "degradation), Fig. S1C-F (growth curves). The six other deletion "
-                    "strains and all eight pIY670 strains are writable with nothing "
-                    "released to write about them",
-                    n_items=14,
-                    items=[
-                        "KT2440 dgnuR",
-                        "KT2440 dttgB",
-                        "KT2440 dttgB_L (dPP_1385-1395)",
-                        "KT2440 dPP_1395",
-                        "KT2440 dPP_3024-dPP_5558",
-                        "KT2440 dmxtR (PP_1695)",
-                        "the seven deletion strains carrying pIY670",
-                        "KT2440 + pIY670",
-                    ],
-                ),
-                DropRule(
-                    rule="no_titer_is_released_per_writable_strain",
-                    scope="readout",
-                    description="the Results state isoprenol titers only as ranges over "
-                    "several strains (60-70 mg/L for two evolved isolates, 280-400 mg/L "
-                    "for 'their starting strain') or for derivatives of the evolved "
-                    "isolate A10_F63_I1 (337 mg/L dfleQ, 370 mg/L dmvaB), so no "
-                    "ProductTiterExperiment record is keyed to a writable strain",
-                    n_items=0,
-                ),
             ],
             notes=[
-                "the three starting strains are KT2440, IPL300 and IPL400; KT2440 is the "
-                "reference arm, so two of the three carry records",
-                f"each record aggregates {N_TALE_REPLICATES} ALE lineages, which the "
-                "Results declare to be independent biological replicates; the "
-                "per-lineage numbers are in preprocess/table_s3.csv",
-                "the dPP_3024 record is the only phenotype keyed to one of the seven "
-                "reverse-engineered strains, and its 6 g/L dose makes it a different "
-                "condition from the two TALE-dose records",
+                "each record is one lineage, which the Results declare to be one of "
+                f"{N_TALE_REPLICATES} independent biological replicates per starting "
+                "strain; replicate_id is the table's ALE number",
+                "the released value is the authors' average over the lineage's three "
+                "first flasks (Table 3 footnote a); the per-flask rates are not released",
+                "ALE 8 is stored as released: its '*' footnote says the lineage was "
+                "restarted from an early intermediate stock after cross-contamination, "
+                "which shortens its passages and is not a withdrawal",
                 f"the released matrix holds {matrix.n_rows} rows on "
                 f"{matrix.n_distinct_positions} distinct positions while the Results "
                 "state 158 unique mutations in 73 regions; the disagreement is reported, "
@@ -2965,153 +3399,111 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Parse Supplementary Table 3, build the three records, write the LMDB."""
+        """Parse Supplementary Table 3, build one record per lineage, write the LMDB."""
         verify_raw_files(self.raw_dir, DATA_SHA256)
-        docx_path = osp.join(self.raw_dir, SI1_DOCX)
+        extraction = extract_table_s3(osp.join(self.raw_dir, SI1_DOCX))
+        arms = tale_arms(extraction.lineages)
         xlsx_path = osp.join(self.raw_dir, SI2_XLSX)
-
-        text = docx_text(docx_path)
-        absent = sorted(
-            name for name, quote in SI1_STATEMENTS.items() if quote not in text
-        )
-        if absent:
-            raise TableExtractionError(
-                f"{SI1_DOCX} no longer states {absent}; the quotes this loader relies on "
-                "have moved and the build refuses rather than storing them"
-            )
-        lineages = parse_table_s3(docx_tables(docx_path))
-        digest = table_s3_digest(lineages)
-        if digest != TABLE_S3_SHA256:
-            raise TableExtractionError(
-                f"parsed Supplementary Table 3 sha256 {digest}, pinned {TABLE_S3_SHA256}"
-            )
-        checks = range_checks(lineages)
-        reference_arm, record_arms = tolerance_arms(lineages)
         matrix = read_mutation_matrix(xlsx_path)
         variant_calls = read_variant_calls(xlsx_path)
         if len(variant_calls) != matrix.n_rows:
             raise SheetExtractionError(
                 f"{len(variant_calls)} typed calls over {matrix.n_rows} released rows"
             )
-
         founder_check = assert_founder_columns(variant_calls)
 
         genome = self._genome()
         symbols, report = reconcile_genotype_loci(genome, label=self.name)
         log.info(
-            "Lim 2025 tolerance: genotype loci %s",
+            "Lim 2025 TALE growth rate: genotype loci %s",
             {status.value: n for status, n in report.status_histogram.items()},
         )
-        founder_columns = [FOUNDER_CLONE_COLUMNS[arm.strain] for arm in record_arms]
+        strains = [
+            strain
+            for strain in FOUNDER_CLONE_COLUMNS
+            if strain in {a.strain for a in arms}
+        ]
         variant_loci, variant_report = resolve_variant_loci(
             genome,
-            clone_variant_tokens(variant_calls, founder_columns),
+            clone_variant_tokens(
+                variant_calls, [FOUNDER_CLONE_COLUMNS[strain] for strain in strains]
+            ),
             label=f"{self.name} called-variant loci",
         )
-        called: dict[str, list[GenePerturbationType]] = {}
+        genotypes: dict[str, Genotype] = {}
         accounting: list[CalledVariantAccounting] = []
-        for arm in record_arms:
+        for strain in strains:
             perturbations, row_accounting = called_variant_perturbations(
-                FOUNDER_CLONE_COLUMNS[arm.strain],
-                strain=arm.strain,
+                FOUNDER_CLONE_COLUMNS[strain],
+                strain=strain,
                 calls=variant_calls,
                 loci=variant_loci,
             )
-            called[arm.strain] = perturbations
+            genotypes[strain] = strain_genotype(strain, symbols, perturbations)
             accounting.append(row_accounting)
 
-        genome_reference = assembly_reference("KT2440")
-        tale_environment = isoprenol_environment(TALE_DOSE_G_PER_L, TALE_DURATION_GAP)
-        panel_environment = isoprenol_environment(
-            PANEL_DOSE_G_PER_L, PANEL_DURATION_GAP
-        )
-        rows: list[dict[str, Any]] = []
+        references = {
+            arm.stressor: arm for arm in arms if arm.strain == self.REFERENCE_STRAIN
+        }
         records: list[
-            tuple[Genotype, Environment, EnvironmentResponsePhenotype, dict[str, Any]]
+            tuple[
+                Genotype,
+                Environment,
+                EnvironmentResponsePhenotype,
+                EnvironmentResponsePhenotype,
+            ]
         ] = []
-        for arm in record_arms:
-            records.append(
-                (
-                    strain_genotype(arm.strain, symbols, called[arm.strain]),
-                    tale_environment,
-                    response_phenotype(
-                        arm.log2_ratio_to_wt,
-                        n_samples=arm.n_samples,
-                        gaps=RESPONSE_UNCERTAINTY_GAPS,
-                    ),
+        rows: list[dict[str, Any]] = []
+        reference_rows: list[dict[str, Any]] = []
+        for arm in arms:
+            environment = tale_environment(arm)
+            reference = arm_reference_phenotype(references[arm.stressor])
+            if arm.strain == self.REFERENCE_STRAIN:
+                reference_rows.append(
                     {
-                        "strain": arm.strain,
-                        "source": "Supplementary Table 3, initial growth rate",
-                        "isoprenol_g_per_l": arm.dose_g_per_l,
-                        "ale_labels": ";".join(arm.ale_labels),
-                        "growth_rates": ";".join(f"{v}" for v in arm.growth_rates),
-                        "mean_growth_rate": arm.mean_growth_rate,
-                        "wt_mean_growth_rate": reference_arm.mean_growth_rate,
-                        "log2_ratio_to_wt": arm.log2_ratio_to_wt,
-                        "n_samples": arm.n_samples,
-                        "clone_column": FOUNDER_CLONE_COLUMNS[arm.strain],
-                        "n_called_perturbations": len(called[arm.strain]),
-                    },
+                        "stressor": arm.stressor,
+                        "dose": arm.dose,
+                        "dose_unit": arm.dose_unit,
+                        "replicate_ids": ";".join(
+                            lineage_replicate_id(lineage) for lineage in arm.lineages
+                        ),
+                        "mean_growth_rate": reference.environment_response,
+                        "sd_growth_rate": reference.environment_response_uncertainty,
+                        "n_samples": reference.n_samples,
+                    }
                 )
-            )
-        records.append(
-            (
-                pp3024_genotype(symbols),
-                panel_environment,
-                response_phenotype(
-                    math.log2(PP3024_FOLD), n_samples=None, gaps=PANEL_UNCERTAINTY_GAPS
-                ),
-                {
-                    "strain": f"KT2440 d{PP3024_LOCUS}",
-                    "source": "Fig. 3A text, relative growth rate",
-                    "isoprenol_g_per_l": PANEL_DOSE_G_PER_L,
-                    "ale_labels": "",
-                    "growth_rates": "",
-                    "mean_growth_rate": None,
-                    "wt_mean_growth_rate": None,
-                    "log2_ratio_to_wt": math.log2(PP3024_FOLD),
-                    "n_samples": None,
-                    # Not one of the 49 clone columns: a reverse-engineered KT2440
-                    # deletion, never sequenced, so it has no called variants to carry.
-                    "clone_column": "",
-                    "n_called_perturbations": 0,
-                },
-            )
-        )
+            for lineage in arm.lineages:
+                rows.append(
+                    {
+                        "record": len(records),
+                        "replicate_id": lineage_replicate_id(lineage),
+                        "ale_label": lineage.ale_label,
+                        "strain": arm.strain,
+                        "stressor": arm.stressor,
+                        "dose": arm.dose,
+                        "dose_unit": arm.dose_unit,
+                        "initial_growth_rate": lineage.initial_growth_rate,
+                        "reference_mean_growth_rate": reference.environment_response,
+                        "clone_column": FOUNDER_CLONE_COLUMNS[arm.strain],
+                        "n_genotype_perturbations": len(
+                            genotypes[arm.strain].perturbations
+                        ),
+                    }
+                )
+                records.append(
+                    (
+                        genotypes[arm.strain],
+                        environment,
+                        lineage_phenotype(lineage),
+                        reference,
+                    )
+                )
 
         drop_log = self._drop_log(matrix, len(records), accounting)
         drop_log.check()
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
-        os.makedirs(self.processed_dir, exist_ok=True)
-        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
-        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for index, (genotype, environment, phenotype, row) in enumerate(
-                tqdm(records, desc="lim2025-tolerance")
-            ):
-                experiment = EnvironmentResponseExperiment(
-                    dataset_name=self.name,
-                    genotype=genotype,
-                    environment=environment,
-                    phenotype=phenotype,
-                )
-                reference = EnvironmentResponseExperimentReference(
-                    dataset_name=self.name,
-                    genome_reference=genome_reference,
-                    environment_reference=environment.model_copy(),
-                    phenotype_reference=response_phenotype(
-                        0.0,
-                        n_samples=reference_arm.n_samples,
-                        gaps=RESPONSE_UNCERTAINTY_GAPS,
-                    ),
-                )
-                txn.put(
-                    f"{index}".encode(),
-                    self._intern_record(experiment, reference, PUBLICATION, itxn),
-                )
-                rows.append({"record": index, **row})
-        env.close()
-        interned_env.close()
+        _write_records(self, records, desc="lim2025-tale-growth-rate")
 
         out = Path(self.preprocess_dir)
         (out / "dropped_records.json").write_text(drop_log.model_dump_json(indent=2))
@@ -3137,50 +3529,13 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
                 indent=2,
             )
         )
-        (out / "extraction.json").write_text(
-            json.dumps(
-                {
-                    "si1_docx_sha256": SI1_DOCX_SHA256,
-                    "si2_xlsx_sha256": SI2_XLSX_SHA256,
-                    "table_s3_sha256": digest,
-                    "range_checks": [check.model_dump() for check in checks],
-                    "si1_statements": SI1_STATEMENTS,
-                },
-                indent=2,
-            )
-        )
-        pd.DataFrame(
-            [
-                {
-                    "record": None,
-                    "strain": reference_arm.strain,
-                    "source": "Supplementary Table 3, initial growth rate",
-                    "isoprenol_g_per_l": reference_arm.dose_g_per_l,
-                    "ale_labels": ";".join(reference_arm.ale_labels),
-                    "growth_rates": ";".join(
-                        f"{v}" for v in reference_arm.growth_rates
-                    ),
-                    "mean_growth_rate": reference_arm.mean_growth_rate,
-                    "wt_mean_growth_rate": reference_arm.mean_growth_rate,
-                    "log2_ratio_to_wt": 0.0,
-                    "n_samples": reference_arm.n_samples,
-                    "clone_column": FOUNDER_CLONE_COLUMNS[reference_arm.strain],
-                    "n_called_perturbations": 0,
-                },
-                *rows,
-            ]
-        ).astype({"record": "Int64"}).to_csv(out / "table_s3.csv", index=False)
-        pd.DataFrame([row.model_dump() for row in lineages]).to_csv(
-            out / "tale_lineages.csv", index=False
-        )
+        (out / "extraction.json").write_text(_extraction_json(extraction))
+        pd.DataFrame(rows).to_csv(out / "tale_lineages.csv", index=False)
+        pd.DataFrame(reference_rows).to_csv(out / "references.csv", index=False)
         log.info(
-            "Lim 2025 tolerance: %d records (IPL300, IPL400 at %g g/L isoprenol; "
-            "d%s at %g g/L), reference KT2440 = log2(1) = 0; called variants written "
-            "%s",
+            "Lim 2025 TALE growth rate: %d records (one per Supplementary Table 3 "
+            "lineage), references KT2440 per condition; called variants written %s",
             len(records),
-            TALE_DOSE_G_PER_L,
-            PP3024_LOCUS,
-            PANEL_DOSE_G_PER_L,
             {row.strain: row.n_written for row in accounting},
         )
 
@@ -4060,11 +4415,20 @@ class ProteomeFoldChangeLim2025Dataset(ExperimentDataset):
 # Verification (L0-L4) of the built LMDBs
 # --------------------------------------------------------------------------- #
 TOLERANCE_PROVENANCE = Provenance(
-    source_uri=f"https://doi.org/{PAPER_DOI} (Supplementary Table 3; Fig. 3A)",
+    source_uri=f"https://doi.org/{PAPER_DOI} (Fig. 3A text)",
+    citation_key=CITATION_KEY,
+    sha256=PAPER_MD_SHA256,
+    method="log2 of the Fig. 3A text's 1.6-fold relative growth rate of KT2440 "
+    "dPP_3024 at 6 g/L isoprenol; reference = KT2440 (0)",
+    page="Metab. Eng. 2025, Section 3.4",
+)
+TALE_GROWTH_RATE_PROVENANCE = Provenance(
+    source_uri=f"https://doi.org/{PAPER_DOI} (Supplementary Table 3)",
     citation_key=CITATION_KEY,
     sha256=SI1_DOCX_SHA256,
-    method="log2 of each starting strain's mean initial TALE growth rate over KT2440's, "
-    "plus the Fig. 3A text's 1.6-fold for dPP_3024; reference = KT2440 (0)",
+    method="each TALE lineage's released initial growth rate (h^-1) verbatim, one "
+    "record per lineage; reference = KT2440's four lineages in the same condition "
+    "(mean, sample SD, n = 4)",
     page="Metab. Eng. 2025, Supplementary Table 3",
 )
 FOLD_CHANGE_PROVENANCE = Provenance(
@@ -4137,6 +4501,43 @@ def _audit_sourced_values(report: VerificationReport, data_root: str) -> None:
 
 def run_tolerance_verification(data_root: str | None = None) -> VerificationReport:
     """Run L0-L4 on the built tolerance LMDB and write its report."""
+    return _run_environment_response_verification(
+        data_root,
+        root_rel=TOLERANCE_ROOT_REL,
+        dataset_name=IsoprenolToleranceLim2025Dataset.__name__,
+        provenance=TOLERANCE_PROVENANCE,
+    )
+
+
+def run_tale_growth_rate_verification(
+    data_root: str | None = None,
+) -> VerificationReport:
+    """Run L0-L4 on the built TALE growth-rate LMDB and write its report.
+
+    The absolute branch of L3 ``reference_zero`` (``reference_centered=False``): every
+    record is ``MeasurementType.growth_rate`` and each reference states KT2440's own
+    measured rate in the same condition. L1 ``pair_uniqueness`` needs no declared
+    duplicates: the four lineages of one (strain, condition) differ by ``replicate_id``,
+    which the study key carries (#776).
+    """
+    return _run_environment_response_verification(
+        data_root,
+        root_rel=TALE_GROWTH_RATE_ROOT_REL,
+        dataset_name=TaleGrowthRateLim2025Dataset.__name__,
+        provenance=TALE_GROWTH_RATE_PROVENANCE,
+        reference_centered=False,
+    )
+
+
+def _run_environment_response_verification(
+    data_root: str | None,
+    *,
+    root_rel: str,
+    dataset_name: str,
+    provenance: Provenance,
+    reference_centered: bool = True,
+) -> VerificationReport:
+    """The shared L0-L4 run of both environment-response classes."""
     from torchcell.verification.environment_response import (
         environment_response_gene_set,
         verify_environment_response_dataset,
@@ -4149,7 +4550,7 @@ def run_tolerance_verification(data_root: str | None = None) -> VerificationRepo
     )
 
     base = data_root or _data_root()
-    abs_root = osp.join(base, TOLERANCE_ROOT_REL)
+    abs_root = osp.join(base, root_rel)
     records = load_records(abs_root)
     references = {
         json.dumps(rec["reference"]["genome_reference"], sort_keys=True)
@@ -4167,10 +4568,11 @@ def run_tolerance_verification(data_root: str | None = None) -> VerificationRepo
     # message to name the reference it was given is in the PR body.
     report = verify_environment_response_dataset(
         records,
-        dataset_name=IsoprenolToleranceLim2025Dataset.__name__,
-        provenance=TOLERANCE_PROVENANCE,
+        dataset_name=dataset_name,
+        provenance=provenance,
         expected_count=_expected_count(abs_root),
         resolve_gene_name=genome.resolve_gene_name,
+        reference_centered=reference_centered,
     )
     deleted = _assert_site_identifiers(
         report, environment_response_gene_set(records), name="deleted_loci"
@@ -4436,9 +4838,10 @@ def _l3_both_arms_share_one_condition(
 
 
 def run_verification(data_root: str | None = None) -> tuple[VerificationReport, ...]:
-    """Run L0-L4 on all three built LMDBs."""
+    """Run L0-L4 on all four built LMDBs."""
     base = data_root or _data_root()
     return (
+        run_tale_growth_rate_verification(base),
         run_tolerance_verification(base),
         run_proteome_verification(base),
         run_fold_change_verification(base),
@@ -4462,8 +4865,8 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="run the recorded Elsevier retriever into --download-dir first",
     )
-    sub.add_parser("build", help="build (or load) all three dev-tree LMDBs")
-    sub.add_parser("verify", help="run L0-L4 on all three built dev-tree LMDBs")
+    sub.add_parser("build", help="build (or load) all four dev-tree LMDBs")
+    sub.add_parser("verify", help="run L0-L4 on all four built dev-tree LMDBs")
     args = parser.parse_args(argv)
 
     load_dotenv()
@@ -4478,6 +4881,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "build":
         genome = bacterial_genome("pputida", "KT2440", data_root)
         for cls, rel in (
+            (TaleGrowthRateLim2025Dataset, TALE_GROWTH_RATE_ROOT_REL),
             (IsoprenolToleranceLim2025Dataset, TOLERANCE_ROOT_REL),
             (ProteomeLim2025Dataset, PROTEOME_ROOT_REL),
             (ProteomeFoldChangeLim2025Dataset, PROTEOME_FOLD_CHANGE_ROOT_REL),

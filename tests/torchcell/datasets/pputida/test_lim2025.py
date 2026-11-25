@@ -155,6 +155,7 @@ SOURCED_KEYS = {
     "ipl300_genotype",
     "ipl400_extra_deletion",
     "n_tale_replicates",
+    "tale_medium",
     "pp3024_fold",
     "proteome_n_replicates",
     "pp2675_construction",
@@ -221,6 +222,31 @@ def test_a_table_without_the_isoprenol_row_stops_the_build(
     monkeypatch.setattr(l25, "resolved_compound", lambda name: Compound(name=name))
     with pytest.raises(l25.CompoundIdentityConflictError, match="to None"):
         l25.isoprenol_compound()
+
+
+def test_the_formaldehyde_identity_comes_from_the_table_and_matches_the_pin() -> None:
+    """The row curated for the HCHO arm (2026-11-25) resolves with no gap."""
+    compound = l25.formaldehyde_compound()
+    assert compound.name == l25.FORMALDEHYDE_LABEL
+    assert compound.inchikey == l25.FORMALDEHYDE_INCHIKEY
+    assert compound.inchikey == "WSFSSNUMVMOOMR-UHFFFAOYSA-N"
+    assert compound.pubchem_cid == 712
+    assert compound.provenance_gaps == []
+
+
+def test_a_conflicting_formaldehyde_row_stops_the_build(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The HCHO arm's stressor is pinned the way isoprenol is."""
+    from torchcell.datamodels.schema import Compound
+
+    monkeypatch.setattr(
+        l25,
+        "resolved_compound",
+        lambda name: Compound(name=name, inchikey="AAAAAAAAAAAAAA-AAAAAAAAAA-A"),
+    )
+    with pytest.raises(l25.CompoundIdentityConflictError, match="not WSFSSNUMVMOOMR"):
+        l25.formaldehyde_compound()
 
 
 # --------------------------------------------------------------------------- #
@@ -351,13 +377,11 @@ def test_the_unstressed_environment_carries_no_perturbation() -> None:
 def test_the_response_phenotype_is_a_log2_ratio_by_liquid_od_growth() -> None:
     """The typed measurement and assay axes, with the uncertainty as a gap."""
     phenotype = l25.response_phenotype(
-        0.5, n_samples=4, gaps=l25.RESPONSE_UNCERTAINTY_GAPS
+        0.5, n_samples=None, gaps=l25.PANEL_UNCERTAINTY_GAPS
     )
     assert phenotype.measurement_type is MeasurementType.log2_ratio
     assert phenotype.assay_type is AssayType.liquid_od_growth
     assert phenotype.environment_response == 0.5
-    assert phenotype.n_samples == 4
-    assert phenotype.sample_unit is SampleUnit.biological_replicate
     assert phenotype.environment_response_uncertainty is None
     assert phenotype.environment_response_se is None
     assert {gap.field for gap in phenotype.provenance_gaps} == {
@@ -369,10 +393,100 @@ def test_the_response_phenotype_is_a_log2_ratio_by_liquid_od_growth() -> None:
 def test_a_phenotype_with_no_replicate_count_states_no_sample_unit() -> None:
     """The Fig. 3A record releases no n, so neither field is invented."""
     phenotype = l25.response_phenotype(
-        math.log2(1.6), n_samples=None, gaps=l25.PANEL_UNCERTAINTY_GAPS
+        math.log2(1.6),
+        n_samples=None,
+        gaps=(*l25.PANEL_UNCERTAINTY_GAPS, l25.PANEL_N_SAMPLES_GAP),
     )
     assert phenotype.n_samples is None
     assert phenotype.sample_unit is None
+    assert "n_samples" in {gap.field for gap in phenotype.provenance_gaps}
+
+
+def _tale_lineage(number: int, rate: float, **overrides: Any) -> l25.TaleLineage:
+    payload: dict[str, Any] = {
+        "ale_number": number,
+        "ale_label": f"{number}",
+        "starting_strain": "KT2440",
+        "stressor": "isoprenol",
+        "starting_dose": 4.0,
+        "starting_dose_unit": "g/L",
+        "initial_growth_rate": rate,
+        "ending_dose": 8.5,
+        "ending_dose_unit": "g/L",
+        "final_growth_rate": 0.1,
+        "passages": 60,
+        "generations": 300,
+        "ccd_1e12": 2.5,
+    }
+    payload.update(overrides)
+    return l25.TaleLineage(**payload)
+
+
+def test_a_lineage_record_is_its_released_rate_verbatim_with_n_one() -> None:
+    """One lineage, one absolute rate, no dispersion: gaps say not applicable."""
+    lineage = _tale_lineage(8, 0.252, ale_label="8*")
+    phenotype = l25.lineage_phenotype(lineage)
+    assert phenotype.measurement_type is MeasurementType.growth_rate
+    assert phenotype.assay_type is AssayType.liquid_od_growth
+    assert phenotype.environment_response == 0.252
+    assert phenotype.n_samples == 1
+    assert phenotype.sample_unit is SampleUnit.biological_replicate
+    assert phenotype.replicate_id == "ALE 8"
+    assert phenotype.environment_response_uncertainty is None
+    assert phenotype.units == l25.TALE_UNITS
+    assert "three first flasks" in (phenotype.units or "")
+    assert {(gap.field, gap.reason.value) for gap in phenotype.provenance_gaps} == {
+        ("environment_response_uncertainty", "not_applicable_single_measurement"),
+        ("environment_response_se", "not_applicable_single_measurement"),
+    }
+
+
+def test_the_tale_reference_summarizes_the_wild_type_lineages() -> None:
+    """Mean, sample SD and n of KT2440's lineages, with no replicate_id."""
+    lineages = tuple(
+        _tale_lineage(n, rate)
+        for n, rate in zip((1, 2, 3, 4), (0.152, 0.152, 0.153, 0.157), strict=True)
+    )
+    arm = l25.TaleArm(
+        strain="KT2440",
+        stressor="isoprenol",
+        dose=4.0,
+        dose_unit="g/L",
+        lineages=lineages,
+    )
+    reference = l25.arm_reference_phenotype(arm)
+    assert reference.environment_response == pytest.approx(0.1535)
+    assert reference.environment_response_uncertainty == pytest.approx(
+        0.0023804761428476
+    )
+    assert reference.n_samples == 4
+    assert reference.replicate_id is None
+    assert reference.measurement_type is MeasurementType.growth_rate
+    with pytest.raises(ValueError, match="not the reference strain"):
+        l25.arm_reference_phenotype(arm.model_copy(update={"strain": "IPL300"}))
+
+
+def test_the_formaldehyde_arm_environment_is_one_millimolar_on_the_same_medium() -> (
+    None
+):
+    """The HCHO arm's starting dose is Table 3's 1 mM, typed in mM."""
+    arm = l25.TaleArm(
+        strain="KT2440", stressor="formaldehyde", dose=1.0, dose_unit="mM", lineages=()
+    )
+    environment = l25.tale_environment(arm)
+    assert environment.media is M9_NREL_LIM2025
+    (edit,) = environment.perturbations
+    assert isinstance(edit, SmallMoleculePerturbation)
+    assert edit.compound.inchikey == l25.FORMALDEHYDE_INCHIKEY
+    assert edit.concentration is not None
+    assert (edit.concentration.value, edit.concentration.unit) == (
+        1.0,
+        ConcentrationUnit.millimolar,
+    )
+    with pytest.raises(l25.CrossSourceError, match="not 1.0 mM"):
+        l25.tale_environment(arm.model_copy(update={"dose": 2.0}))
+    with pytest.raises(ValueError, match="not a stressor"):
+        l25.tale_environment(arm.model_copy(update={"stressor": "ethanol"}))
 
 
 def test_the_abundance_phenotype_divides_the_sample_sd_by_root_three() -> None:
@@ -845,23 +959,35 @@ def test_the_pp3024_reading_is_corroborated_by_the_pair_mean(
         l25.range_checks(_lineages(tmp_path))
 
 
-def test_the_arms_aggregate_four_lineages_each_against_the_wild_type(
-    tmp_path: Path,
-) -> None:
-    """Two records and one reference arm, each a mean over four biological replicates."""
-    reference, records = l25.tolerance_arms(_lineages(tmp_path))
-    assert reference.strain == "KT2440"
-    assert reference.log2_ratio_to_wt == 0.0
-    assert reference.mean_growth_rate == pytest.approx(0.1535)
-    assert [arm.strain for arm in records] == ["IPL300", "IPL400"]
-    assert all(arm.n_samples == 4 for arm in records)
-    assert records[0].log2_ratio_to_wt == pytest.approx(
-        math.log2(0.2525 / 0.1535), rel=1e-12
-    )
-    assert records[1].log2_ratio_to_wt == pytest.approx(
-        math.log2(0.30075 / 0.1535), rel=1e-12
-    )
-    assert records[0].ale_labels == ("5", "6", "7", "8*")
+def test_the_arms_group_four_lineages_each_without_aggregating(tmp_path: Path) -> None:
+    """Four row groups in the table's order, four lineages each, one dose per group."""
+    arms = l25.tale_arms(_lineages(tmp_path))
+    assert [(arm.strain, arm.stressor) for arm in arms] == [
+        ("KT2440", "isoprenol"),
+        ("IPL300", "isoprenol"),
+        ("IPL400", "isoprenol"),
+        ("KT2440", "formaldehyde"),
+    ]
+    assert [(arm.dose, arm.dose_unit) for arm in arms] == [
+        (4.0, "g/L"),
+        (4.0, "g/L"),
+        (4.0, "g/L"),
+        (1.0, "mM"),
+    ]
+    assert all(len(arm.lineages) == l25.N_TALE_REPLICATES for arm in arms)
+    assert [lineage.ale_label for lineage in arms[1].lineages] == ["5", "6", "7", "8*"]
+    assert [l25.lineage_replicate_id(x) for x in arms[1].lineages] == [
+        "ALE 5",
+        "ALE 6",
+        "ALE 7",
+        "ALE 8",
+    ]
+    assert [x.initial_growth_rate for x in arms[0].lineages] == [
+        0.152,
+        0.152,
+        0.153,
+        0.157,
+    ]
 
 
 def test_an_arm_with_the_wrong_lineage_count_is_refused(tmp_path: Path) -> None:
@@ -870,7 +996,15 @@ def test_an_arm_with_the_wrong_lineage_count_is_refused(tmp_path: Path) -> None:
     rows = (*_LINEAGES[:3], moved, ("", "5", "", *_LINEAGES[4][3:]), *_LINEAGES[5:])
     lineages = l25.parse_table_s3(l25.docx_tables(_write(tmp_path, rows)))
     with pytest.raises(l25.CrossSourceError, match="not 4 lineages"):
-        l25.tolerance_arms(lineages)
+        l25.tale_arms(lineages)
+
+
+def test_an_arm_whose_lineages_start_at_two_doses_is_refused(tmp_path: Path) -> None:
+    """A row group shares one starting concentration, the condition of its records."""
+    lineages = list(_lineages(tmp_path))
+    lineages[1] = lineages[1].model_copy(update={"starting_dose": 5.0})
+    with pytest.raises(l25.CrossSourceError, match="not one dose"):
+        l25.tale_arms(lineages)
 
 
 def _write(tmp_path: Path, rows: tuple[tuple[str, ...], ...]) -> Path:
@@ -1678,6 +1812,14 @@ def built_tolerance(
 
 
 @pytest.fixture
+def built_tale(synthetic_mirror: Path, synthetic_kt2440: Any, tmp_path: Path) -> Any:
+    """The TALE growth-rate loader built from the synthetic mirror and assembly."""
+    return l25.TaleGrowthRateLim2025Dataset(
+        root=str(tmp_path / "build" / "tale"), pputida_genome=synthetic_kt2440
+    )
+
+
+@pytest.fixture
 def built_proteome(
     synthetic_mirror: Path, synthetic_kt2440: Any, tmp_path: Path
 ) -> Any:
@@ -1687,23 +1829,30 @@ def built_proteome(
     )
 
 
-def test_the_tolerance_loader_builds_three_records(built_tolerance: Any) -> None:
-    """IPL300 and IPL400 at 4 g/L, plus dPP_3024 at 6 g/L."""
-    assert len(built_tolerance) == 3
-
-
-def test_every_tolerance_record_is_a_log2_ratio_against_a_zero_reference(
+def test_the_tolerance_loader_builds_the_one_released_relative_rate(
     built_tolerance: Any,
 ) -> None:
-    """The reference arm is KT2440 at log2(1) = 0 in each record's own environment."""
-    for index in range(len(built_tolerance)):
-        item = built_tolerance[index]
-        assert item["experiment"]["phenotype"]["measurement_type"] == "log2_ratio"
-        assert item["experiment"]["phenotype"]["assay_type"] == "liquid_od_growth"
-        reference = item["reference"]
-        assert reference["phenotype_reference"]["environment_response"] == 0.0
-        assert "background" not in reference["genome_reference"]
-        assert reference["genome_reference"]["assembly_set"] == l25.KT2440_ASSEMBLY_SET
+    """dPP_3024 at 6 g/L, log2(1.6) against KT2440 at log2(1) = 0."""
+    assert len(built_tolerance) == 1
+    item = built_tolerance[0]
+    phenotype = item["experiment"]["phenotype"]
+    assert phenotype["measurement_type"] == "log2_ratio"
+    assert phenotype["assay_type"] == "liquid_od_growth"
+    assert phenotype["environment_response"] == pytest.approx(math.log2(1.6), rel=1e-12)
+    assert phenotype["n_samples"] is None
+    reference = item["reference"]
+    assert reference["phenotype_reference"]["environment_response"] == 0.0
+    assert reference["phenotype_reference"]["n_samples"] is None
+    assert {gap["field"] for gap in phenotype["provenance_gaps"]} == {
+        "environment_response_uncertainty",
+        "environment_response_se",
+        "n_samples",
+    }
+    assert "background" not in reference["genome_reference"]
+    assert reference["genome_reference"]["assembly_set"] == l25.KT2440_ASSEMBLY_SET
+    assert _designed_deletions(item) == frozenset({l25.PP3024_LOCUS})
+    (edit,) = item["experiment"]["environment"]["perturbations"]
+    assert edit["concentration"]["value"] == 6.0
 
 
 def _designed_deletions(record: dict[str, Any]) -> frozenset[str]:
@@ -1715,53 +1864,153 @@ def _designed_deletions(record: dict[str, Any]) -> frozenset[str]:
     )
 
 
-def test_the_tolerance_records_carry_the_three_expected_genotypes(
-    built_tolerance: Any,
+def test_the_tolerance_build_writes_its_ledger(built_tolerance: Any) -> None:
+    """One kept record, no drop, and the TALE lineages pointed at their own class."""
+    out = Path(built_tolerance.preprocess_dir)
+    for name in (
+        "dropped_records.json",
+        "identifier_reconciliation.json",
+        "extraction.json",
+        "records.csv",
+    ):
+        assert (out / name).exists(), name
+    drops = json.loads((out / "dropped_records.json").read_text())
+    assert (drops["kept_records"], drops["dropped_records"]) == (1, 0)
+    rules = {rule["rule"]: rule for rule in drops["rules"]}
+    assert set(rules) == {
+        "released_only_as_a_figure",
+        "no_titer_is_released_per_writable_strain",
+        "tale_lineages_are_records_of_another_class",
+    }
+    assert rules["tale_lineages_are_records_of_another_class"]["items"] == [
+        l25.TaleGrowthRateLim2025Dataset.__name__
+    ]
+    extraction = json.loads((out / "extraction.json").read_text())
+    assert len(extraction["range_checks"]) == 5
+
+
+def _tale_records(built: Any) -> list[dict[str, Any]]:
+    return [built[index] for index in range(len(built))]
+
+
+def test_the_tale_loader_builds_one_record_per_lineage(built_tale: Any) -> None:
+    """Sixteen records, ALE 1-16 in the table's order, each the released rate."""
+    records = _tale_records(built_tale)
+    assert len(records) == 16
+    ids = [record["experiment"]["phenotype"]["replicate_id"] for record in records]
+    assert ids == [f"ALE {number}" for number in range(1, 17)]
+    released = [float(row[3]) for row in _LINEAGES]
+    assert [
+        record["experiment"]["phenotype"]["environment_response"] for record in records
+    ] == released
+    for record in records:
+        phenotype = record["experiment"]["phenotype"]
+        assert phenotype["measurement_type"] == "growth_rate"
+        assert phenotype["n_samples"] == 1
+        assert phenotype["sample_unit"] == "biological_replicate"
+        assert phenotype["environment_response_uncertainty"] is None
+        assert {
+            (gap["field"], gap["reason"]) for gap in phenotype["provenance_gaps"]
+        } == {
+            ("environment_response_uncertainty", "not_applicable_single_measurement"),
+            ("environment_response_se", "not_applicable_single_measurement"),
+        }
+
+
+def test_the_tale_records_carry_each_arms_genotype_and_stressor(
+    built_tale: Any,
 ) -> None:
-    """Each strain's designed deletions plus the calls of its own founder column."""
-    sizes = {
-        _designed_deletions(built_tolerance[index]): len(
-            built_tolerance[index]["experiment"]["genotype"]["perturbations"]
+    """KT2440 empty on both stressors; IPL300 and IPL400 with their founder calls."""
+    records = _tale_records(built_tale)
+    by_group: dict[tuple[frozenset[str], str], list[int]] = {}
+    for record in records:
+        (edit,) = record["experiment"]["environment"]["perturbations"]
+        key = (_designed_deletions(record), str(edit["compound"]["name"]))
+        by_group.setdefault(key, []).append(
+            len(record["experiment"]["genotype"]["perturbations"])
         )
-        for index in range(len(built_tolerance))
-    }
-    assert sizes == {
-        frozenset(l25.IPL300_DELETIONS): 6 + CALLED_PER_CLONE[IPL300_FOUNDER][1],
-        frozenset(l25.designed_deletion_tags("IPL400")): (
-            7 + CALLED_PER_CLONE[IPL400_FOUNDER][1]
-        ),
-        frozenset({l25.PP3024_LOCUS}): 1,
-    }
-    namespaces = {
-        perturbation["gene_namespace"]
-        for index in range(len(built_tolerance))
-        for perturbation in built_tolerance[index]["experiment"]["genotype"][
-            "perturbations"
+    assert by_group == {
+        (frozenset(), "isoprenol"): [0, 0, 0, 0],
+        (frozenset(l25.IPL300_DELETIONS), "isoprenol"): [
+            6 + CALLED_PER_CLONE[IPL300_FOUNDER][1]
         ]
+        * 4,
+        (frozenset(l25.designed_deletion_tags("IPL400")), "isoprenol"): [
+            7 + CALLED_PER_CLONE[IPL400_FOUNDER][1]
+        ]
+        * 4,
+        (frozenset(), "formaldehyde"): [0, 0, 0, 0],
     }
-    assert namespaces == {l25.KT2440_NAMESPACE}
+    doses = {
+        (
+            str(edit["compound"]["name"]),
+            edit["concentration"]["value"],
+            edit["concentration"]["unit"],
+        )
+        for record in records
+        for edit in record["experiment"]["environment"]["perturbations"]
+    }
+    assert doses == {("isoprenol", 4.0, "g/L"), ("formaldehyde", 1.0, "mM")}
 
 
-def test_the_two_tale_records_reproduce_the_table_three_ratios(
-    built_tolerance: Any,
+def test_each_tale_reference_is_the_wild_type_lineages_in_its_condition(
+    built_tale: Any,
 ) -> None:
-    """Each arm's mean over four lineages, divided by the wild type's."""
-    values = {
-        _designed_deletions(built_tolerance[index]): built_tolerance[index][
-            "experiment"
-        ]["phenotype"]["environment_response"]
-        for index in range(len(built_tolerance))
+    """Mean, sample SD and n = 4 of KT2440's own lineages; replicate_id None."""
+    records = _tale_records(built_tale)
+    expected = {
+        "isoprenol": [0.152, 0.152, 0.153, 0.157],
+        "formaldehyde": [0.284, 0.247, 0.294, 0.288],
     }
-    ipl300 = values[frozenset(l25.IPL300_DELETIONS)]
-    assert ipl300 == pytest.approx(math.log2(0.2525 / 0.1535), rel=1e-12)
-    assert values[frozenset({l25.PP3024_LOCUS})] == pytest.approx(
-        math.log2(1.6), rel=1e-12
+    for record in records:
+        (edit,) = record["experiment"]["environment"]["perturbations"]
+        rates = expected[str(edit["compound"]["name"])]
+        reference = record["reference"]["phenotype_reference"]
+        assert reference["environment_response"] == pytest.approx(
+            sum(rates) / 4, rel=1e-12
+        )
+        assert reference["n_samples"] == 4
+        assert reference["replicate_id"] is None
+        assert reference["measurement_type"] == "growth_rate"
+        assert (
+            record["reference"]["environment_reference"]
+            == record["experiment"]["environment"]
+        )
+        assert "background" not in record["reference"]["genome_reference"]
+
+
+def test_the_tale_records_reproduce_the_old_stored_ratios(built_tale: Any) -> None:
+    """Grouping by (genotype, environment) and taking log2 of the means over KT2440's
+    reproduces the two values the tolerance class stored before 2026-11-24.
+    """
+    records = _tale_records(built_tale)
+    groups: dict[tuple[str, str], list[float]] = {}
+    for record in records:
+        key = (
+            json.dumps(record["experiment"]["genotype"], sort_keys=True),
+            json.dumps(record["experiment"]["environment"], sort_keys=True),
+        )
+        groups.setdefault(key, []).append(
+            record["experiment"]["phenotype"]["environment_response"]
+        )
+    assert sorted(len(rates) for rates in groups.values()) == [4, 4, 4, 4]
+    means = sorted(sum(rates) / len(rates) for rates in groups.values())
+    wild_type = 0.1535
+    assert means[0] == pytest.approx(wild_type, rel=1e-12)
+    assert math.log2(0.2525 / wild_type) == pytest.approx(0.7180447322689778, abs=1e-15)
+    assert math.log2(means[1] / wild_type) == pytest.approx(
+        0.7180447322689778, abs=1e-15
+    )
+    assert math.log2(means[3] / wild_type) == pytest.approx(
+        0.970326081805897, abs=1e-15
     )
 
 
-def test_the_tolerance_build_writes_every_ledger(built_tolerance: Any) -> None:
+def test_the_tale_build_writes_every_ledger(built_tale: Any) -> None:
     """The retention ledger, the identifier histogram and the typed call rows."""
-    out = Path(built_tolerance.preprocess_dir)
+    import pandas as pd
+
+    out = Path(built_tale.preprocess_dir)
     for name in (
         "dropped_records.json",
         "identifier_reconciliation.json",
@@ -1770,20 +2019,21 @@ def test_the_tolerance_build_writes_every_ledger(built_tolerance: Any) -> None:
         "called_variant_perturbations.json",
         "genotype_gaps.json",
         "extraction.json",
-        "table_s3.csv",
         "tale_lineages.csv",
+        "references.csv",
     ):
         assert (out / name).exists(), name
     drops = json.loads((out / "dropped_records.json").read_text())
-    assert drops["kept_records"] == 3
-    assert drops["dropped_records"] == 2
+    assert drops["kept_records"] == 16
+    assert drops["dropped_records"] == 16
+    assert drops["candidate_records"] == 32
     rules = {rule["rule"]: rule for rule in drops["rules"]}
-    assert "hcho_arm_has_no_strain_other_than_the_reference" in rules
-    assert "final_growth_rate_is_an_evolved_population" in rules
-    assert "evolved_isolate_has_no_released_per_isolate_number" in rules
-    assert "evolved_clone_genotype_is_not_representable" not in rules
-    assert "released_only_as_a_figure" in rules
-    assert "no_titer_is_released_per_writable_strain" in rules
+    assert set(rules) == {
+        "final_growth_rate_is_an_evolved_population",
+        "evolved_isolate_has_no_released_per_isolate_number",
+        "call_restates_a_designed_deletion",
+    }
+    assert rules["final_growth_rate_is_an_evolved_population"]["n_items"] == 16
     assert rules["call_restates_a_designed_deletion"]["n_items"] == (
         CALLED_PER_CLONE[IPL300_FOUNDER][2] + CALLED_PER_CLONE[IPL400_FOUNDER][2]
     )
@@ -1797,28 +2047,19 @@ def test_the_tolerance_build_writes_every_ledger(built_tolerance: Any) -> None:
         row["clone_column"]: (row["n_written"], row["n_restating_a_designed_deletion"])
         for row in perturbations["per_record"]
     } == {
-        column: (written, restated)
-        for column, (_, written, restated) in CALLED_PER_CLONE.items()
-        if column in (IPL300_FOUNDER, IPL400_FOUNDER)
+        WT_FOUNDER: (0, 0),
+        **{
+            column: (written, restated)
+            for column, (_, written, restated) in CALLED_PER_CLONE.items()
+            if column in (IPL300_FOUNDER, IPL400_FOUNDER)
+        },
     }
-    extraction = json.loads((out / "extraction.json").read_text())
-    assert len(extraction["range_checks"]) == 5
-    assert extraction["si1_statements"] == l25.SI1_STATEMENTS
-
-
-def test_the_tolerance_table_csv_carries_the_reference_arm_as_a_recordless_row(
-    built_tolerance: Any,
-) -> None:
-    """The wild-type arm's four lineages stay readable beside the two records."""
-    import pandas as pd
-
-    table = pd.read_csv(Path(built_tolerance.preprocess_dir) / "table_s3.csv")
-    assert len(table) == 4
-    reference = table[table["record"].isna()]
-    assert len(reference) == 1
-    assert reference.iloc[0]["strain"] == "KT2440"
-    assert reference.iloc[0]["log2_ratio_to_wt"] == 0.0
-    assert reference.iloc[0]["ale_labels"] == "1;2;3;4"
+    lineages = pd.read_csv(out / "tale_lineages.csv")
+    assert list(lineages["record"]) == list(range(16))
+    assert list(lineages["ale_label"].astype(str))[7] == "8*"
+    references = pd.read_csv(out / "references.csv")
+    assert list(references["stressor"]) == ["isoprenol", "formaldehyde"]
+    assert list(references["n_samples"]) == [4, 4]
 
 
 def test_the_proteome_loader_builds_one_record_per_strain_over_the_shared_loci(
@@ -2064,10 +2305,12 @@ def test_a_repinned_table_digest_stops_the_tolerance_build(
 ) -> None:
     """The parsed table is content-hashed, so a changed value refuses the build."""
     monkeypatch.setattr(l25, "TABLE_S3_SHA256", "0" * 64)
-    with pytest.raises(l25.TableExtractionError, match="pinned 0000"):
-        l25.IsoprenolToleranceLim2025Dataset(
-            root=str(tmp_path / "refused"), pputida_genome=synthetic_kt2440
-        )
+    for cls in (l25.IsoprenolToleranceLim2025Dataset, l25.TaleGrowthRateLim2025Dataset):
+        with pytest.raises(l25.TableExtractionError, match="pinned 0000"):
+            cls(
+                root=str(tmp_path / "refused" / cls.__name__),
+                pputida_genome=synthetic_kt2440,
+            )
 
 
 def test_a_mirror_file_off_its_pin_stops_the_build(
@@ -2120,7 +2363,7 @@ def _mirror_with(
 
 
 def test_both_loaders_declare_their_schema_classes_and_consumed_files(
-    built_tolerance: Any, built_proteome: Any
+    built_tolerance: Any, built_tale: Any, built_proteome: Any
 ) -> None:
     """The interface every registered dataset states."""
     from torchcell.datamodels.schema import (
@@ -2130,13 +2373,14 @@ def test_both_loaders_declare_their_schema_classes_and_consumed_files(
         ProteinAbundanceExperimentReference,
     )
 
-    assert built_tolerance.experiment_class is EnvironmentResponseExperiment
-    assert built_tolerance.reference_class is (EnvironmentResponseExperimentReference)
+    for built in (built_tolerance, built_tale):
+        assert built.experiment_class is EnvironmentResponseExperiment
+        assert built.reference_class is (EnvironmentResponseExperimentReference)
+        assert built.raw_file_names == [l25.SI1_DOCX, l25.SI2_XLSX]
     assert built_proteome.experiment_class is ProteinAbundanceExperiment
     assert built_proteome.reference_class is (ProteinAbundanceExperimentReference)
-    assert built_tolerance.raw_file_names == [l25.SI1_DOCX, l25.SI2_XLSX]
     assert built_proteome.raw_file_names == [l25.SI1_DOCX, l25.SI2_XLSX]
-    for dataset in (built_tolerance, built_proteome):
+    for dataset in (built_tolerance, built_tale, built_proteome):
         assert dataset.preprocess_raw("df") == "df"
         with pytest.raises(NotImplementedError):
             dataset.create_experiment()
@@ -2150,6 +2394,9 @@ def test_both_loaders_are_in_the_dataset_registry() -> None:
         l25.IsoprenolToleranceLim2025Dataset
     )
     assert dataset_registry["ProteomeLim2025Dataset"] is l25.ProteomeLim2025Dataset
+    assert dataset_registry["TaleGrowthRateLim2025Dataset"] is (
+        l25.TaleGrowthRateLim2025Dataset
+    )
 
 
 def test_a_genome_of_another_assembly_set_is_refused(
@@ -2160,7 +2407,11 @@ def test_a_genome_of_another_assembly_set_is_refused(
     class Wrong:
         ASSEMBLY_SET = "ecoli_K12_MG1655_ASM584v2"
 
-    for cls in (l25.IsoprenolToleranceLim2025Dataset, l25.ProteomeLim2025Dataset):
+    for cls in (
+        l25.IsoprenolToleranceLim2025Dataset,
+        l25.TaleGrowthRateLim2025Dataset,
+        l25.ProteomeLim2025Dataset,
+    ):
         dataset = cls.__new__(cls)
         dataset.pputida_genome = Wrong()
         with pytest.raises(
@@ -2308,11 +2559,22 @@ def test_the_real_table_three_parses_to_the_pinned_digest() -> None:
     lineages = l25.parse_table_s3(l25.docx_tables(docx))
     assert len(lineages) == 16
     assert l25.table_s3_digest(lineages) == l25.TABLE_S3_SHA256
-    reference, records = l25.tolerance_arms(lineages)
-    assert reference.mean_growth_rate == pytest.approx(0.1535)
-    assert [arm.mean_growth_rate for arm in records] == [
-        pytest.approx(0.2525),
-        pytest.approx(0.30075),
+    arms = l25.tale_arms(lineages)
+    rates = {
+        (arm.strain, arm.stressor): [x.initial_growth_rate for x in arm.lineages]
+        for arm in arms
+    }
+    assert rates == {
+        ("KT2440", "isoprenol"): [0.152, 0.152, 0.153, 0.157],
+        ("IPL300", "isoprenol"): [0.253, 0.253, 0.252, 0.252],
+        ("IPL400", "isoprenol"): [0.3, 0.3, 0.305, 0.298],
+        ("KT2440", "formaldehyde"): [0.284, 0.247, 0.294, 0.288],
+    }
+    assert [(arm.dose, arm.dose_unit) for arm in arms] == [
+        (4.0, "g/L"),
+        (4.0, "g/L"),
+        (4.0, "g/L"),
+        (1.0, "mM"),
     ]
 
 
@@ -2401,13 +2663,68 @@ def test_the_real_proteome_sheets_back_solve_to_three_sample_sd_replicates() -> 
 
 @pytest.mark.data
 @pytest.mark.skipif(not MIRROR_PRESENT, reason="the Lim 2025 raw mirror is not mounted")
+def test_a_real_build_stores_one_record_per_released_lineage(tmp_path: Path) -> None:
+    """The real mirror built into ``tmp_path``: 16 TALE records and 1 tolerance record.
+
+    Counts per replicate position (each ALE number once, four per row group), the
+    released rates verbatim, and the mean-reproduction check against the two values the
+    tolerance store held before 2026-11-24 (max abs difference 0.0 on these bytes).
+    """
+    from torchcell.datasets.bacteria_common import bacterial_genome
+
+    genome = bacterial_genome("pputida", "KT2440", DATA_ROOT)
+    tale = l25.TaleGrowthRateLim2025Dataset(
+        root=str(tmp_path / "tale"), pputida_genome=genome
+    )
+    tolerance = l25.IsoprenolToleranceLim2025Dataset(
+        root=str(tmp_path / "tolerance"), pputida_genome=genome
+    )
+    assert (len(tale), len(tolerance)) == (16, 1)
+    records = _tale_records(tale)
+    assert Counter(r["experiment"]["phenotype"]["replicate_id"] for r in records) == {
+        f"ALE {number}": 1 for number in range(1, 17)
+    }
+    groups: dict[tuple[int, str], list[float]] = {}
+    for record in records:
+        (edit,) = record["experiment"]["environment"]["perturbations"]
+        key = (
+            len(record["experiment"]["genotype"]["perturbations"]),
+            str(edit["compound"]["name"]),
+        )
+        groups.setdefault(key, []).append(
+            record["experiment"]["phenotype"]["environment_response"]
+        )
+    assert groups == {
+        (0, "isoprenol"): [0.152, 0.152, 0.153, 0.157],
+        (9, "isoprenol"): [0.253, 0.253, 0.252, 0.252],
+        (11, "isoprenol"): [0.3, 0.3, 0.305, 0.298],
+        (0, "formaldehyde"): [0.284, 0.247, 0.294, 0.288],
+    }
+    wild_type = sum(groups[(0, "isoprenol")]) / 4
+    assert math.log2(sum(groups[(9, "isoprenol")]) / 4 / wild_type) == pytest.approx(
+        0.7180447322689778, abs=1e-15
+    )
+    assert math.log2(sum(groups[(11, "isoprenol")]) / 4 / wild_type) == (
+        pytest.approx(0.970326081805897, abs=1e-15)
+    )
+    assert tolerance[0]["experiment"]["phenotype"]["environment_response"] == (
+        pytest.approx(0.6780719051126377, abs=1e-15)
+    )
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not MIRROR_PRESENT, reason="the Lim 2025 raw mirror is not mounted")
 def test_the_built_dev_stores_hold_the_records_and_genes_the_leaves_added() -> None:
-    """The counts the #731 leaves changed, read from the rebuilt dev-tree LMDBs."""
+    """The counts the #731 leaves and the 2026-11-24 per-lineage split set, read from
+    the rebuilt dev-tree LMDBs (a dev store built before 2026-11-24 holds 3 tolerance
+    records and no TALE store, and fails here until it is rebuilt).
+    """
     from torchcell.verification.runners import load_records
 
-    for relative, n_records, n_genes in (
-        (l25.TOLERANCE_ROOT_REL, 3, 12),
-        (l25.PROTEOME_ROOT_REL, 3, 28),
+    for relative, n_records, n_genes, n_genotypes in (
+        (l25.TALE_GROWTH_RATE_ROOT_REL, 16, 11, 3),
+        (l25.TOLERANCE_ROOT_REL, 1, 1, 1),
+        (l25.PROTEOME_ROOT_REL, 3, 28, 3),
     ):
         root = osp.join(DATA_ROOT or "", relative)
         if not osp.exists(osp.join(root, "processed", "lmdb")):
@@ -2421,7 +2738,7 @@ def test_the_built_dev_stores_hold_the_records_and_genes_the_leaves_added() -> N
             json.dumps(record["experiment"]["genotype"], sort_keys=True)
             for record in records
         }
-        assert len(genotypes) == n_records
+        assert len(genotypes) == n_genotypes
 
 
 # --------------------------------------------------------------------------- #
@@ -2472,12 +2789,17 @@ def test_the_cli_build_builds_both_datasets(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """``build`` resolves the genome once and builds both dev-tree stores."""
+    """``build`` resolves the genome once and builds every dev-tree store."""
     monkeypatch.setattr(l25, "bacterial_genome", lambda *a, **k: synthetic_kt2440)
+    monkeypatch.setattr(l25, "TALE_GROWTH_RATE_ROOT_REL", "cli/tale")
     monkeypatch.setattr(l25, "TOLERANCE_ROOT_REL", "cli/tolerance")
     monkeypatch.setattr(l25, "PROTEOME_ROOT_REL", "cli/proteome")
     assert l25.main(["build"]) == 0
-    for relative, expected in (("cli/tolerance", 3), ("cli/proteome", 3)):
+    for relative, expected in (
+        ("cli/tale", 16),
+        ("cli/tolerance", 1),
+        ("cli/proteome", 3),
+    ):
         drops = json.loads(
             (
                 synthetic_mirror / relative / "preprocess" / "dropped_records.json"
@@ -2490,10 +2812,10 @@ def test_the_count_oracle_is_the_ledger_the_build_wrote(
     synthetic_mirror: Path, built_tolerance: Any
 ) -> None:
     """L1's expected count comes from the build's own retention ledger."""
-    assert l25._expected_count(built_tolerance.root) == 3
+    assert l25._expected_count(built_tolerance.root) == 1
 
 
-def test_all_three_verification_runners_pass_on_the_synthetic_builds(
+def test_all_four_verification_runners_pass_on_the_synthetic_builds(
     synthetic_mirror: Path,
     synthetic_kt2440: Any,
     tmp_path: Path,
@@ -2503,6 +2825,7 @@ def test_all_three_verification_runners_pass_on_the_synthetic_builds(
     import torchcell.verification.runners as runners
 
     monkeypatch.setattr(l25, "bacterial_genome", lambda *a, **k: synthetic_kt2440)
+    monkeypatch.setattr(l25, "TALE_GROWTH_RATE_ROOT_REL", "verify/tale")
     monkeypatch.setattr(l25, "TOLERANCE_ROOT_REL", "verify/tolerance")
     monkeypatch.setattr(l25, "PROTEOME_ROOT_REL", "verify/proteome")
     monkeypatch.setattr(
@@ -2516,14 +2839,18 @@ def test_all_three_verification_runners_pass_on_the_synthetic_builds(
     monkeypatch.setattr(runners, "_gene_set_for_reference", lambda *a, **k: universe)
     monkeypatch.setattr(l25, "_audit_sourced_values", lambda report, data_root: None)
     reports = l25.run_verification(str(synthetic_mirror))
-    assert len(reports) == 3
+    assert len(reports) == 4
     for report in reports:
         assert report.passed, report.summary()
-    names = {result.name for result in reports[0].results}
+    tale = {result.name: result for result in reports[0].results}
+    assert tale["reference_zero"].details["rule"] == "absolute_reference"
+    assert tale["pair_uniqueness"].details["n_pairs"] == 16
+    assert tale["count"].passed
+    names = {result.name for result in reports[1].results}
     assert "gene_containment_kt2440_locus_tags" in names
-    proteome_names = {result.name for result in reports[1].results}
+    proteome_names = {result.name for result in reports[2].results}
     assert "gene_containment_kt2440_quantified_loci" in proteome_names
-    fold_change = {result.name: result for result in reports[2].results}
+    fold_change = {result.name: result for result in reports[3].results}
     assert fold_change["fold_change_equals_arm_a_minus_arm_b"].details["n_checked"] == (
         17
     )

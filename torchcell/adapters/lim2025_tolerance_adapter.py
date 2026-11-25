@@ -5,10 +5,11 @@
 """BioCypher adapter exposing the Lim 2025 isoprenol tolerance strains as
 knowledge-graph nodes and edges.
 
-One record per strain (IPL300, IPL400, KT2440 dPP_3024): its deletions as
-``DeletionStrainPerturbation`` leaves served as ``perturbation`` nodes,
-the tolerance as an ``EnvironmentResponsePhenotype``, and isoprenol as an environment
-perturbation.
+One record since 2026-11-24, KT2440 dPP_3024 at 6 g/L isoprenol: its deletion as a
+``DeletionStrainPerturbation`` leaf served as a ``perturbation`` node, the released
+relative growth rate as a log2 ``EnvironmentResponsePhenotype``, and isoprenol as an
+environment perturbation. The TALE lineages are served by
+``lim2025_tale_growth_rate_adapter``.
 """
 
 import os.path as osp

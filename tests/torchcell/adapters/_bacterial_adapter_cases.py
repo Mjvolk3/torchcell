@@ -158,6 +158,7 @@ from torchcell.adapters import (
     RnaseqGuzman2018Adapter,
     RnaseqLamoureux2023Adapter,
     RnaseqPublicK12Lamoureux2023Adapter,
+    TaleGrowthRateLim2025Adapter,
     TargetedMetabolomeRapp2026Adapter,
     TranscriptionFactorKnockoutChoe2019Adapter,
     ValerolactamTiterThompson2019Adapter,
@@ -300,6 +301,7 @@ from torchcell.datasets.pputida.lim2025 import (
     IsoprenolToleranceLim2025Dataset,
     ProteomeFoldChangeLim2025Dataset,
     ProteomeLim2025Dataset,
+    TaleGrowthRateLim2025Dataset,
 )
 from torchcell.datasets.pputida.menasalvas2025 import (
     IsoprenolSelectionMenasalvas2025Dataset,
@@ -1046,6 +1048,13 @@ BACTERIAL: list[Bacterial] = [
         "putida_precise321_lim2022",
         PutidaPrecise321Lim2022Dataset,
         RNASEQ,
+    ),
+    _case(
+        TaleGrowthRateLim2025Adapter,
+        "lim2025_tale_growth_rate",
+        "tale_growth_rate_lim2025",
+        TaleGrowthRateLim2025Dataset,
+        RESPONSE,
     ),
     _case(
         IsoprenolToleranceLim2025Adapter,

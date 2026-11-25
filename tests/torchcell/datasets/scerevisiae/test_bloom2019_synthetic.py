@@ -3,7 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_bloom2019_synthetic.py
 """Bloom 2019 segregant loader built end to end on two synthetic crosses.
 
-``process()`` is pinned to the release (16 crosses, 13,950 segregants, 530,100 records),
+``process()`` is pinned to the release (16 crosses, 13,950 segregants, 558,000 records),
 so the four release constants ``CROSSES``, ``EXPECTED_SEGREGANTS``, ``N_SEGREGANTS`` and
 ``EXPECTED_RECORDS`` are repointed with ``monkeypatch`` at a two-cross fixture (the
 YeastPhenome precedent). ``read_cross_table`` hardcodes ``engine="xlrd"`` (bloom2019.py
@@ -25,13 +25,15 @@ in the file order chrI_100, chrI_300, chrI_200, chrII_50, chrII_60, chrIII_10 (s
                                                           chrIII(10,10,p1,1)                       3 blocks
     A_seg1    markers chrI_150, chrIV_500; calls 1 2 -> chrI(150,150,p1,1) chrIV(500,500,p2,1)  2 blocks
 
-Phenotypes: 40 columns written as YPD;;2, the 38 served columns in ``build_conditions``
+Phenotypes: 40 columns written as YPD;;2, the 38 conditions in ``build_conditions``
 order, then YPD;;3; the value of segregant s (0, 1, 2 in file order) at written position
-p is ``s * 100 + p + 0.5``, so served column k of segregant s stores ``s * 100 + k + 1.5``
-(6-azauracil of 375_seg1 is 1.5, YPD;;1 (k = 34) of 375_seg1 is 35.5). Records are one
-per (segregant, served column) in that order: 3 x 38 = 114. References: residual on a
-YPD control (36 columns less YNB;ph3/ph8 = 34 columns), absolute YNB;;1, residual on the
-YNB control (2 columns), absolute YPD;;1, first seen at k = 0, 31, 32, 34.
+p is ``s * 100 + p + 0.5``. Served columns are the 38 conditions (k = 0..37) then YPD;;2
+(k = 38) and YPD;;3 (k = 39): condition k of segregant s stores ``s * 100 + k + 1.5``,
+YPD;;2 stores ``s * 100 + 0.5`` and YPD;;3 ``s * 100 + 39.5`` (6-azauracil of 375_seg1
+is 1.5, YPD;;1 (k = 34) of 375_seg1 is 35.5). Records are one per (segregant, served
+column) in that order: 3 x 40 = 120. References: residual on a YPD control (36 columns
+less YNB;ph3/ph8 = 34 columns), absolute YNB;;1, residual on the YNB control (2 columns),
+absolute YPD (the three rounds k = 34, 38, 39), first seen at k = 0, 31, 32, 34.
 
 Gene set: stub genes YAL001C chrI 120-180 and YBL001C chrII 55-58 overlap cross 375's
 spans, YDL001W chrIV 490-510 overlaps cross A's; YAL002W chrI 400-500 and YCL001W
@@ -303,7 +305,7 @@ def _write_genomes_tier(
 
 
 def _patch_release(
-    monkeypatch: pytest.MonkeyPatch, *, expected_records: int = 114
+    monkeypatch: pytest.MonkeyPatch, *, expected_records: int = 120
 ) -> None:
     monkeypatch.setattr(m, "CROSSES", list(_CROSSES))
     monkeypatch.setattr(m, "EXPECTED_SEGREGANTS", dict(_EXPECTED_SEGREGANTS))
@@ -482,7 +484,9 @@ def _residual_phenotype(value: float, control: str) -> EnvironmentResponsePhenot
     )
 
 
-def _absolute_phenotype(value: float) -> EnvironmentResponsePhenotype:
+def _absolute_phenotype(
+    value: float, replicate_id: str | None = None
+) -> EnvironmentResponsePhenotype:
     return EnvironmentResponsePhenotype(
         measurement_type=MeasurementType.colony_size,
         assay_type=AssayType.colony_size_array,
@@ -495,6 +499,7 @@ def _absolute_phenotype(value: float) -> EnvironmentResponsePhenotype:
             "per trait within a cross (mapping.R); the control plate of its batch"
         ),
         provenance_gaps=[_SE_GAP],
+        replicate_id=replicate_id,
     )
 
 
@@ -539,15 +544,24 @@ def _reference(media: Any, absolute: bool) -> dict[str, Any]:
     ).model_dump()
 
 
-def test_three_segregants_times_38_conditions_in_cross_then_column_order(
+def _served_value(s: int, k: int) -> float:
+    """Served column k of segregant s: the 38 conditions, then YPD;;2 and YPD;;3."""
+    if k == 38:
+        return s * 100 + 0.5
+    if k == 39:
+        return s * 100 + 39.5
+    return s * 100 + k + 1.5
+
+
+def test_three_segregants_times_40_columns_in_cross_then_column_order(
     dataset: m.Bloom2019Dataset,
 ) -> None:
-    """114 records; segregant s's served column k stores ``s * 100 + k + 1.5`` and
+    """120 records; segregant s's served column k stores ``_served_value(s, k)`` and
     every record of one segregant carries that segregant's mosaic (4, 3 and 2 blocks).
     """
-    assert len(dataset) == 114
+    assert len(dataset) == 120
     seen = []
-    for i in range(114):
+    for i in range(120):
         experiment = dataset[i]["experiment"]
         seen.append(
             (
@@ -557,12 +571,40 @@ def test_three_segregants_times_38_conditions_in_cross_then_column_order(
             )
         )
     assert seen == [
-        (seg, n_blocks, s * 100 + k + 1.5)
+        (seg, n_blocks, _served_value(s, k))
         for s, (seg, n_blocks) in enumerate(
             [("375_seg1", 4), ("375_seg2", 3), ("A_seg1", 2)]
         )
-        for k in range(38)
+        for k in range(40)
     ]
+
+
+def test_the_three_ypd_rounds_are_three_records_of_one_condition(
+    dataset: m.Bloom2019Dataset,
+) -> None:
+    """375_seg2 (records 40..79): YPD;;1 (k = 34), YPD;;2 (k = 38) and YPD;;3 (k = 39)
+    share the YPD environment, the absolute measurement and the absolute YPD reference,
+    and differ only in the released value and the batch digit as ``replicate_id``; every
+    other column carries ``replicate_id=None``.
+    """
+    genotype = _genotype(dataset, "375_seg2")
+    for k, value, replicate in ((34, 135.5, "1"), (38, 100.5, "2"), (39, 139.5, "3")):
+        assert (
+            dataset[40 + k]["experiment"]
+            == SegregantGrowthExperiment(
+                dataset_name="Bloom2019Dataset",
+                genotype=genotype,
+                environment=_environment(YPD, 30.0, []),
+                phenotype=_absolute_phenotype(value, replicate),
+            ).model_dump()
+        )
+        assert dataset[40 + k]["reference"] == _reference(YPD, absolute=True)
+    others = {
+        dataset[40 + k]["experiment"]["phenotype"]["replicate_id"]
+        for k in range(40)
+        if k not in (34, 38, 39)
+    }
+    assert others == {None}
 
 
 def test_first_record_is_6_azauracil_on_ypd_with_the_batch_3_control_reference(
@@ -609,7 +651,7 @@ def test_first_record_is_6_azauracil_on_ypd_with_the_batch_3_control_reference(
 def test_absolute_ph_temperature_and_carbon_source_conditions(
     dataset: m.Bloom2019Dataset,
 ) -> None:
-    """375_seg2 (records 38..75): YPD;;1 (k = 34) is an absolute colony size 135.5 with the
+    """375_seg2 (records 40..79): YPD;;1 (k = 34) is an absolute colony size 135.5 with the
     absolute YPD reference; YNB;ph3;1 (k = 32) is a pH 3 physical perturbation on the YNB
     plate with the YNB residual reference; YPD;15;1 (k = 35) puts 15 C on the environment
     with an empty gap list (the temperature is the sourced one); Galactose;;1 (k = 13) is
@@ -617,17 +659,17 @@ def test_absolute_ph_temperature_and_carbon_source_conditions(
     """
     genotype = _genotype(dataset, "375_seg2")
     assert (
-        dataset[38 + 34]["experiment"]
+        dataset[40 + 34]["experiment"]
         == SegregantGrowthExperiment(
             dataset_name="Bloom2019Dataset",
             genotype=genotype,
             environment=_environment(YPD, 30.0, []),
-            phenotype=_absolute_phenotype(135.5),
+            phenotype=_absolute_phenotype(135.5, "1"),
         ).model_dump()
     )
-    assert dataset[38 + 34]["reference"] == _reference(YPD, absolute=True)
+    assert dataset[40 + 34]["reference"] == _reference(YPD, absolute=True)
     assert (
-        dataset[38 + 32]["experiment"]
+        dataset[40 + 32]["experiment"]
         == SegregantGrowthExperiment(
             dataset_name="Bloom2019Dataset",
             genotype=genotype,
@@ -644,15 +686,15 @@ def test_absolute_ph_temperature_and_carbon_source_conditions(
             phenotype=_residual_phenotype(133.5, "YNB;;1"),
         ).model_dump()
     )
-    assert dataset[38 + 32]["reference"] == _reference(
+    assert dataset[40 + 32]["reference"] == _reference(
         YNB_GLUCOSE_SOLID, absolute=False
     )
     assert (
-        dataset[38 + 35]["experiment"]["environment"]
+        dataset[40 + 35]["experiment"]["environment"]
         == _environment(YPD, 15.0, []).model_dump()
     )
     assert (
-        dataset[38 + 13]["experiment"]["environment"]
+        dataset[40 + 13]["experiment"]["environment"]
         == _environment(YP_GALACTOSE, 30.0, []).model_dump()
     )
 
@@ -680,11 +722,11 @@ def test_cross_a_genotype_pins_the_rm_parent_to_its_assembly_member(
     dataset: m.Bloom2019Dataset,
 ) -> None:
     assert (
-        dataset[76]["experiment"]["genotype"]
+        dataset[80]["experiment"]["genotype"]
         == _genotype(dataset, "A_seg1").model_dump()
     )
     assert (
-        dataset[38]["experiment"]["genotype"]
+        dataset[40]["experiment"]["genotype"]
         == _genotype(dataset, "375_seg2").model_dump()
     )
 
@@ -693,7 +735,7 @@ def test_reference_index_has_four_entries_first_seen_at_k_0_31_32_34(
     dataset: m.Bloom2019Dataset,
 ) -> None:
     """Residual/YPD-control (34 columns per segregant), absolute YNB;;1, residual/YNB
-    control (YNB;ph3, YNB;ph8), absolute YPD;;1.
+    control (YNB;ph3, YNB;ph8), absolute YPD (YPD;;1, YPD;;2, YPD;;3 share it).
     """
     index = json.loads(
         (
@@ -701,17 +743,17 @@ def test_reference_index_has_four_entries_first_seen_at_k_0_31_32_34(
         ).read_text()
     )
     ynb_residual = {32, 33}
-    absolute = {31, 34}
+    absolute = {31, 34, 38, 39}
     assert [entry["member_indices"] for entry in index] == [
         [
-            s * 38 + k
+            s * 40 + k
             for s in range(3)
-            for k in range(38)
+            for k in range(40)
             if k not in ynb_residual | absolute
         ],
-        [s * 38 + 31 for s in range(3)],
-        [s * 38 + k for s in range(3) for k in sorted(ynb_residual)],
-        [s * 38 + 34 for s in range(3)],
+        [s * 40 + 31 for s in range(3)],
+        [s * 40 + k for s in range(3) for k in sorted(ynb_residual)],
+        [s * 40 + k for s in range(3) for k in (34, 38, 39)],
     ]
     assert [entry["reference"] for entry in index] == [
         _reference(YPD, absolute=False),
@@ -802,24 +844,24 @@ def test_one_mosaic_is_interned_per_segregant_not_per_condition(
     dataset: m.Bloom2019Dataset,
 ) -> None:
     """The raw LMDB record stores the genotype as a ``{"$ref", "name"}`` pointer named
-    by the segregant id: records 0..37 share 375_seg1's pointer, record 38 points at
-    375_seg2's, so three genotypes are interned for 114 records.
+    by the segregant id: records 0..39 share 375_seg1's pointer, record 40 points at
+    375_seg2's, so three genotypes are interned for 120 records.
     """
     dataset.close_lmdb()
     env = lmdb.open(
         str(Path(dataset.processed_dir) / "lmdb"), readonly=True, lock=False
     )
     with env.begin() as txn:
-        values = [txn.get(f"{i}".encode()) for i in range(39)]
+        values = [txn.get(f"{i}".encode()) for i in range(41)]
     env.close()
     assert all(value is not None for value in values)
     raw = [pickle.loads(value) for value in values if value is not None]
-    pointers = {r["experiment"]["genotype"]["name"] for r in raw[:38]}
+    pointers = {r["experiment"]["genotype"]["name"] for r in raw[:40]}
     assert pointers == {"375_seg1"}
-    assert len({r["experiment"]["genotype"]["$ref"] for r in raw[:38]}) == 1
-    assert raw[38]["experiment"]["genotype"]["name"] == "375_seg2"
+    assert len({r["experiment"]["genotype"]["$ref"] for r in raw[:40]}) == 1
+    assert raw[40]["experiment"]["genotype"]["name"] == "375_seg2"
     assert (
-        raw[38]["experiment"]["genotype"]["$ref"]
+        raw[40]["experiment"]["genotype"]["$ref"]
         != raw[0]["experiment"]["genotype"]["$ref"]
     )
     assert raw[0]["experiment"]["environment"]["name"] == YPD.name
@@ -945,7 +987,10 @@ def test_matrix_and_phenotype_release_checks(
         )
     with pytest.raises(
         ValueError,
-        match=r"condition table columns absent from the release: \['Zeocin;25ug/mL;3'\]",
+        match=(
+            r"condition table columns absent from the release: "
+            r"\['YPD;;3', 'Zeocin;25ug/mL;3'\]"
+        ),
     ):
         _build(tmp_path / "d", monkeypatch, phenotype_columns=_PHENOTYPE_COLUMNS[:-2])
     with pytest.raises(ValueError, match="4 phenotype rows, expected 3"):
@@ -981,7 +1026,7 @@ def test_record_count_oracle_raises_after_the_write(
     _write_data_files(root / "raw")
     _write_mirror_manifest(data_root, _raw_files(root / "raw"))
     _write_genomes_tier(data_root)
-    with pytest.raises(ValueError, match="wrote 114 records, expected 100"):
+    with pytest.raises(ValueError, match="wrote 120 records, expected 100"):
         m.Bloom2019Dataset(root=str(root), genome=_genome())
     assert (root / "processed" / "lmdb").is_dir()
 
@@ -1037,7 +1082,7 @@ def test_download_symlinks_every_raw_file_from_the_verified_mirror(
             continue
         link = raw / name
         assert link.is_symlink() and os.readlink(link) == str(mirror / "data" / name)
-    assert len(dataset) == 114
+    assert len(dataset) == 120
     assert dataset[0]["experiment"]["genotype"]["marker_matrix_sha256"] == _sha256(
         mirror / "data" / "genotype_375.tsv.gz"
     )

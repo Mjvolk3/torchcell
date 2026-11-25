@@ -3186,9 +3186,10 @@ SEGREGANT_GROWTH_DATASETS: dict[str, dict[str, Any]] = {
         "raw_mirror": "torchcell-raw/bloomRareVariantsContribute2019",
         # the member index is resolved from the genomes tier (Peter 2018 set)
         "assembly_index": "1011Assemblies.tar.gz.member_index.tsv",
-        # 13,950 segregants x 38 served conditions (YPD;;2 / YPD;;3 are regressors,
-        # not conditions; 4NQO was removed upstream).
-        "expected_count": 530100,
+        # 13,950 segregants x 40 released columns: 38 conditions, the YPD condition
+        # once per phenotyping round (YPD;;1/2/3, replicate_id 1/2/3); 4NQO was
+        # removed upstream.
+        "expected_count": 558000,
         "provenance": Provenance(
             source_uri="https://doi.org/10.7554/eLife.49212",
             citation_key="bloomRareVariantsContribute2019",
@@ -3198,7 +3199,8 @@ SEGREGANT_GROWTH_DATASETS: dict[str, dict[str, Any]] = {
                 "genotype_<cross>.tsv.gz, 1 = parent 1 / 2 = parent 2) and encoded as "
                 "haplotype-block mosaics; 38 end-point colony-growth conditions from "
                 "phenotypes.tsv.gz: 36 are residuals of colony mean radius regressed on "
-                "the same-batch control plate (process_images.R), 2 are absolute radii; "
+                "the same-batch control plate (process_images.R), 2 are absolute radii, "
+                "the YPD control stored once per phenotyping round (YPD;;1/2/3); "
                 "duplicate plates averaged, missing cells mean-imputed (mapping.R); "
                 "raw mirror torchcell-raw/bloomRareVariantsContribute2019 with manifest.json "
                 "(Dropbox share zip sha256 78ded0db..., xls sha256 990e7516..., eLife XML "

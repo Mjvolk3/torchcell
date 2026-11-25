@@ -28,6 +28,14 @@ chrII), all with reference base A, and ``marker_sample=5`` samples all five per 
   xls bytes the 50 xls audits fail on sha256 drift, with the pinned hash substituted they
   all pass, and one removed dose quote fails as "NOT found";
 - ``segregant_gene_set`` and the module's ``__main__`` (a no-op exit 0; Finding).
+
+2026.11.24 (one record per released replicate). The panel is now the 40 released columns
+of ``build_served_columns()``: the 38 conditions plus ``YPD;;2`` and ``YPD;;3``, the
+second and third YPD rounds stored as replicates of the YPD condition (``replicate_id``
+2 and 3). 17 * 40 = 680 records (640 with A01_02 dropped); a new L1 ``column_counts``
+rule; the absolute partition is four columns; and the sourced-value audit carries two
+more text anchors (the authors' YPD-replicate comments in ``mapping.R`` and
+``mapping_fx.R``), so 5 + 50 = 55 audits.
 """
 
 from __future__ import annotations
@@ -99,7 +107,7 @@ def _write_release(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str,
             fh.write("\t" + "\t".join(header) + "\n")
             for rid, calls in rows.items():
                 fh.write(rid + "\t" + "\t".join(map(str, calls)) + "\n")
-    conditions = b.build_conditions()
+    conditions = b.build_served_columns()
     cols = list(conditions)
     ids = [
         rid
@@ -236,7 +244,7 @@ def _run(
         records,
         dataset_name="bloom2019-test",
         provenance=PROV,
-        expected_count=kw.pop("expected_count", n_segregants * 38),
+        expected_count=kw.pop("expected_count", n_segregants * 40),
         raw_dir=setup["raw"],
         raw_mirror=tmp_path / "mirror" / b.CITATION_KEY,
         assembly_index_path=setup["index"],
@@ -269,6 +277,8 @@ def test_good_panel_passes_every_level(
     assert by_name["conditions_documented"].details["no_edit_columns"] == [
         "YNB;;1",
         "YPD;;1",
+        "YPD;;2",
+        "YPD;;3",
     ]
     assert by_name["marker_reference"].details["ratio"] == 1.0
     assert {r.level for r in report.results} == {
@@ -320,20 +330,24 @@ def test_duplicate_record_fails_uniqueness_and_count(
 
 
 OWN_MESSAGES = {
-    "structural": "646 records validated",
-    "count": "observed 646, expected 646",
-    "pair_uniqueness": "646 unique (segregant, condition) records, one each",
+    "structural": "680 records validated",
+    "count": "observed 680, expected 680",
+    "pair_uniqueness": "680 unique (segregant, condition, replicate) records, one each",
+    "column_counts": (
+        "each of the 40 released columns holds one record per stored segregant (17)"
+    ),
     "id_bijection": "17 phenotype ids <-> 17 genotype rows; 17 segregants in the store",
-    "value_fidelity": "646 values finite and equal to the released tsv cells",
+    "value_fidelity": "680 values finite and equal to the released tsv cells",
     "mosaic_round_trip": "17 mosaics re-expand to their released marker rows",
     "block_invariants": (
         "blocks ordered, non-overlapping, alternating, n_markers sums per cross"
     ),
-    "measurement_partition": "36 residual + 2 absolute conditions",
-    "reference_zero": "reference response == 0 for all 646 records",
+    "measurement_partition": "36 residual + 4 absolute columns",
+    "reference_zero": "reference response == 0 for all 680 records",
     "conditions_documented": (
-        "38/38 documented conditions seen; 0 records with an undocumented "
-        "environment; no-edit columns = ['YNB;;1', 'YPD;;1']"
+        "40/40 documented columns seen over 38 conditions; 0 records with an "
+        "undocumented environment or replicate id; no-edit columns = "
+        "['YNB;;1', 'YPD;;1', 'YPD;;2', 'YPD;;3']"
     ),
     "parents_pinned": (
         "15 parents resolve in the 1011 assembly member index; BY is the S288C reference"
@@ -351,6 +365,7 @@ ORDER = [
     (Level.L0, "structural"),
     (Level.L1, "count"),
     (Level.L1, "pair_uniqueness"),
+    (Level.L1, "column_counts"),
     (Level.L1, "id_bijection"),
     (Level.L1, "provenance_gaps"),
     (Level.L1, "canonical_gene_names"),
@@ -378,7 +393,7 @@ def _failed(report: Any) -> dict[str, Any]:
 def test_passing_panel_pins_every_message_and_the_result_order(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """17 segregants * 38 conditions = 646 records; 16 crosses * 5 markers = 80 checks."""
+    """17 segregants * 40 columns = 680 records; 16 crosses * 5 markers = 80 checks."""
     setup = _write_release(tmp_path, monkeypatch)
     report = _run(setup, _records(setup), tmp_path)
     assert [(r.level, r.name) for r in report.results] == ORDER
@@ -391,13 +406,13 @@ def test_passing_panel_pins_every_message_and_the_result_order(
 def test_schema_failure_is_reported_at_its_index(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A None ``dataset_name`` on record 5: L0 fails with 1/646, every other level passes."""
+    """A None ``dataset_name`` on record 5: L0 fails with 1/680, every other level passes."""
     setup = _write_release(tmp_path, monkeypatch)
     records = _records(setup)
     records[5]["experiment"]["dataset_name"] = None
     failed = _failed(_run(setup, records, tmp_path))
     assert list(failed) == ["structural"]
-    assert failed["structural"].message == "1/646 records failed schema validation"
+    assert failed["structural"].message == "1/680 records failed schema validation"
     assert failed["structural"].details["n_failures"] == 1
     assert failed["structural"].details["failures"][0]["index"] == 5
     assert len(failed["structural"].details["failures"][0]["error"]) == 500
@@ -406,17 +421,23 @@ def test_schema_failure_is_reported_at_its_index(
 def test_undocumented_environment_is_counted_and_not_value_checked(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Record 0 moved to 37 C: its signature matches no condition; only L3 fails."""
+    """Record 0 moved to 37 C: its signature matches no condition, so L3 fails and its
+    column (6-azauracil) holds 16 of 17 records in L1 ``column_counts``.
+    """
     setup = _write_release(tmp_path, monkeypatch)
     records = _records(setup)
     records[0]["experiment"]["environment"]["temperature"]["value"] = 37.0
     records[0]["experiment"]["phenotype"]["environment_response"] += 1.0
     failed = _failed(_run(setup, records, tmp_path))
     # the tampered value is not compared: an unknown environment has no released column
-    assert list(failed) == ["conditions_documented"]
+    assert list(failed) == ["column_counts", "conditions_documented"]
+    assert failed["column_counts"].details["off_columns"] == {
+        "6-azauracil;50ug/mL;3": 16
+    }
     assert failed["conditions_documented"].message == (
-        "38/38 documented conditions seen; 1 records with an undocumented "
-        "environment; no-edit columns = ['YNB;;1', 'YPD;;1']"
+        "40/40 documented columns seen over 38 conditions; 1 records with an "
+        "undocumented environment or replicate id; no-edit columns = "
+        "['YNB;;1', 'YPD;;1', 'YPD;;2', 'YPD;;3']"
     )
     assert failed["conditions_documented"].details["n_unknown"] == 1
 
@@ -461,7 +482,7 @@ def test_tampered_value_reports_the_mismatch_row(
 def test_reference_response_nonzero_and_missing(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """-0.25 fails with max|v| 0.25; a None reference is skipped (645 of 646 counted)."""
+    """-0.25 fails with max|v| 0.25; a None reference is skipped (679 of 680 counted)."""
     setup = _write_release(tmp_path, monkeypatch)
     records = _records(setup)
     nonzero = copy.deepcopy(records)
@@ -477,14 +498,14 @@ def test_reference_response_nonzero_and_missing(
     by_name = {r.name: r for r in report.results}
     assert by_name["reference_zero"].passed
     assert by_name["reference_zero"].message == (
-        "reference response == 0 for all 645 records"
+        "reference response == 0 for all 679 records"
     )
 
 
 def test_segregant_absent_from_the_store_breaks_the_bijection(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Dropping A01_02's 38 records: 608 observed; 17 ids against 16 stored segregants."""
+    """Dropping A01_02's 40 records: 640 observed; 17 ids against 16 stored segregants."""
     setup = _write_release(tmp_path, monkeypatch)
     records = [
         r
@@ -494,7 +515,7 @@ def test_segregant_absent_from_the_store_breaks_the_bijection(
     report = _run(setup, records, tmp_path)
     failed = _failed(report)
     assert sorted(failed) == ["count", "id_bijection"]
-    assert failed["count"].message == "observed 608, expected 646"
+    assert failed["count"].message == "observed 640, expected 680"
     assert failed["id_bijection"].message == (
         "17 phenotype ids <-> 17 genotype rows; 16 segregants in the store"
     )
@@ -534,7 +555,7 @@ def test_short_block_fails_the_sum_and_the_re_expansion(
 def test_mixed_measurement_column_fails_the_partition(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Record 0 (a residual column) relabeled colony_size: 35 residual + 2 absolute."""
+    """Record 0 (a residual column) relabeled colony_size: 35 residual + 4 absolute."""
     setup = _write_release(tmp_path, monkeypatch)
     records = _records(setup)
     records[0]["experiment"]["phenotype"]["measurement_type"] = "colony_size"
@@ -542,7 +563,7 @@ def test_mixed_measurement_column_fails_the_partition(
     failed = _failed(_run(setup, records, tmp_path))
     assert list(failed) == ["measurement_partition"]
     assert failed["measurement_partition"].message == (
-        "35 residual + 2 absolute conditions"
+        "35 residual + 4 absolute columns"
     )
     assert failed["measurement_partition"].details["mixed"] == {
         column: ["colony_size", "control_regression_residual"]
@@ -667,15 +688,19 @@ def _sha(data: bytes) -> str:
 
 
 def _write_mirror(tmp_path: Path) -> Path:
-    """``<data_root>/torchcell-raw/<key>/`` with the XML, mapping.R, the xls, a manifest."""
+    """``<data_root>/torchcell-raw/<key>/`` with the XML, mapping.R, mapping_fx.R, the
+    xls and a manifest.
+    """
     mirror = tmp_path / "dr" / b.RAW_DIR_REL
     (mirror / "paper").mkdir(parents=True)
     (mirror / "code").mkdir()
     (mirror / "data").mkdir()
     xml = f"<p>{b.DUPLICATE_QUOTE}</p><p>{b.INCUBATION_QUOTE}</p>".encode()
-    code = f"g=1\n{b.CALL_METHOD_QUOTE}\n".encode()
+    code = f"g=1\n{b.CALL_METHOD_QUOTE}\n{b.YPD_REPLICATE_QUOTE} \n".encode()
+    code_fx = f"{b.YPD_REPLICATE_EXPERIMENTS_QUOTE}\n".encode()
     (mirror / "paper" / b.XML_NAME).write_bytes(xml)
     (mirror / "code" / "mapping.R").write_bytes(code)
+    (mirror / "code" / "mapping_fx.R").write_bytes(code_fx)
     (mirror / "data" / b.XLS_NAME).write_bytes(b"synthetic xls")
     manifest = {
         "citation_key": b.CITATION_KEY,
@@ -691,6 +716,12 @@ def _write_mirror(tmp_path: Path) -> Path:
                 "role": "software",
                 "bytes": len(code),
                 "sha256": _sha(code),
+            },
+            {
+                "path": "code/mapping_fx.R",
+                "role": "software",
+                "bytes": len(code_fx),
+                "sha256": _sha(code_fx),
             },
         ],
     }
@@ -717,7 +748,7 @@ def _run_sourced(setup: dict[str, Any], tmp_path: Path, mirror: Path) -> Any:
         _records(setup),
         dataset_name="bloom2019-test",
         provenance=PROV,
-        expected_count=646,
+        expected_count=680,
         raw_dir=setup["raw"],
         raw_mirror=mirror,
         assembly_index_path=setup["index"],
@@ -732,14 +763,14 @@ def _run_sourced(setup: dict[str, Any], tmp_path: Path, mirror: Path) -> Any:
 def test_sourced_values_fail_on_xls_hash_drift(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """3 text anchors pass; the 26 + 24 = 50 xls audits see the synthetic bytes: 50/53."""
+    """5 text anchors pass; the 26 + 24 = 50 xls audits see the synthetic bytes: 50/55."""
     setup = _write_release(tmp_path, monkeypatch)
     quotes = _xls_quotes(setup["conditions"])
     assert len(quotes) == 50
     result = _run_sourced(setup, tmp_path, _write_mirror(tmp_path))
     assert not result.passed
-    assert result.message == "50/53 sourced values failed audit"
-    assert result.details["n_audited"] == 53
+    assert result.message == "50/55 sourced values failed audit"
+    assert result.details["n_audited"] == 55
     assert result.details["failures"] == [f"sha256 drift on {b.XLS_NAME}"] * 20
 
 
@@ -768,19 +799,19 @@ def _pin_xls(monkeypatch: pytest.MonkeyPatch, rows: list[str]) -> None:
 def test_sourced_values_pass_with_the_pinned_hash(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Every quote served as an xls row (cells joined by `` | ``): 53 audited, all pass."""
+    """Every quote served as an xls row (cells joined by `` | ``): 55 audited, all pass."""
     setup = _write_release(tmp_path, monkeypatch)
     _pin_xls(monkeypatch, _xls_quotes(setup["conditions"]))
     result = _run_sourced(setup, tmp_path, _write_mirror(tmp_path))
     assert result.passed
-    assert result.message == "53 sourced values audited against the raw mirror"
+    assert result.message == "55 sourced values audited against the raw mirror"
     assert result.details["failures"] == []
 
 
 def test_sourced_values_name_a_missing_quote(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The 6-azauracil dose row removed: 1/53, reported by its first 40 characters
+    """The 6-azauracil dose row removed: 1/55, reported by its first 40 characters
     (11 + 3 + 8 + 3 + 5 + 3 + 4 + 3, ending in the separator).
     """
     setup = _write_release(tmp_path, monkeypatch)
@@ -788,7 +819,7 @@ def test_sourced_values_name_a_missing_quote(
     missing = next(q for q in quotes if q.startswith("6-azauracil"))
     _pin_xls(monkeypatch, [q for q in quotes if q != missing])
     result = _run_sourced(setup, tmp_path, _write_mirror(tmp_path))
-    assert result.message == "1/53 sourced values failed audit"
+    assert result.message == "1/55 sourced values failed audit"
     assert result.details["failures"] == [
         "xls row NOT found for '6-azauracil | 10 mg/mL | 20 mL | DMSO | '"
     ]
@@ -797,17 +828,20 @@ def test_sourced_values_name_a_missing_quote(
 def test_sourced_values_flag_an_edited_text_anchor(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """mapping.R edited after the manifest pinned it: that one text audit drifts."""
+    """mapping.R edited after the manifest pinned it: its two text audits drift (the
+    call method and the YPD-replicate comment); mapping_fx.R's audit still passes.
+    """
     setup = _write_release(tmp_path, monkeypatch)
     _pin_xls(monkeypatch, _xls_quotes(setup["conditions"]))
     mirror = _write_mirror(tmp_path)
     with open(mirror / "code" / "mapping.R", "a") as fh:
         fh.write("# edited\n")
     result = _run_sourced(setup, tmp_path, mirror)
-    assert result.message == "1/53 sourced values failed audit"
-    assert result.details["failures"] == [
-        "sha256 drift: source re-OCR'd or edited (mapping.R)"
-    ]
+    assert result.message == "2/55 sourced values failed audit"
+    assert (
+        result.details["failures"]
+        == ["sha256 drift: source re-OCR'd or edited (mapping.R)"] * 2
+    )
 
 
 def test_segregant_gene_set_reads_the_preprocess_json(tmp_path: Path) -> None:

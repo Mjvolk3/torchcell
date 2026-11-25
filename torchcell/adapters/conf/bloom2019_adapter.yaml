@@ -1,4 +1,4 @@
-# Bloom 2019 segregant growth panel: 530,100 (segregant, condition) records.
+# Bloom 2019 segregant growth panel: 558,000 (segregant, released column) records.
 # The genotype is a haplotype mosaic served as a "segregant genotype" node; there is
 # deliberately NO "perturbation (chunked)" / "perturbation to genotype (chunked)" pair,
 # because a segregant carries no gene-keyed perturbation. Environment perturbations

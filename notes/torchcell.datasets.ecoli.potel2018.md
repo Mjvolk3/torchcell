@@ -107,3 +107,35 @@ Not stored, each with its count: the total `Intensity` column (2,129 cells); Sup
 
 1. The replicate unit (#922): the published Online Methods decide whether the twelve samples are biological replicates or technical triplicates of four conditions.
 2. The reference rule above (exponential sample of the same carbon source and replicate number) is a recommendation; the release names no denominator.
+
+## 2026.11.24 - Per-replicate review (#1178, part of #1172)
+
+### Verdict: already one record per released replicate; no record changes
+
+The store holds 12 records, one per Supplementary Table 2 sample column, and each column is one raw file: the jPOST listing and `mqpar.xml` of JPST000369 map the twelve `OR13_..._Ecoli_<carbon>_<phase>_2mg_IMAC_R<n>.raw` files one to one onto the twelve MaxQuant experiments `glucose_exp1` ... `glycerol_stat3` (read 2026-11-24, not deposited, since no loader reads them). Counts per replicate number: 4, 4, 4; per condition (carbon x phase): 3 each; total 12. The authors combine nothing across a condition's three: the Chapter V t-test runs on the three log2 values, and Supplementary Table 5 releases them per replicate.
+
+A rebuild of this branch into `$DATA_ROOT/tmp/scratch/per-replicate-potel2018/phosphosite_intensity_potel2018` is identical to the dev store (all 12 experiments and references equal as dicts), so grouping the records by genotype, medium and harvest phase and taking the per-site mean reproduces the old per-condition means with a max absolute difference of 0.0. Verifier: PASS, 38 quotes re-read.
+
+### The replicate unit: the evidence on each side
+
+On the biological side, two published SI legends (`si/41592_2018_BFnmeth4580_MOESM1_ESM.pdftotext.txt`, sha256 `4dee5c2a...`): "The same UV profiles were observed for the n=12 biological replicates." (Supplementary Figure 3, L36) and "profiles derive from the totality of the n=12 biological replicates." (Supplementary Figure 6, L87).
+
+On the technical side:
+
+- reporting summary (`si/..._MOESM2_ESM.pdftotext.txt`, sha256 `9951a1ac...`), item 1: "phosphorylation in 4 biological conditions. In order to compare those conditions" and "we made technical triplicates (after digestion, before enrichment) of each" (L19-20); item 3: "Results were reproduced under 4 biological conditions, each consisting of technical" (L30);
+- published Supplementary Figure 11 legend (L173): "(each replicate corresponding to a different enrichment and different LC-MS/MS injection)";
+- dissertation Chapter V (`paper/thesis/Potel.pdftotext.txt`, sha256 `05a50657...`): "Eluted peptides were split in 2 mg peptide aliquots and subsequently dried down" (L6040), "Fe3+-IMAC was performed in technical triplicates for each biological groups" (L6052), "The log2 scale of phosphosite intensity from technical" / "Fe3+-IMAC triplicates were subjected into a two tailed t-test" (L6147-6148), and its Figure S11 legend "peptides (pink) in 3 technical replicates were all above 0.93" (L6727);
+- the dissertation's reprints of the Figure S3 and S6 legends (L6473-6484, L6583-6588) carry no "n=12 biological replicates" sentence; the string "n=12" does not occur in the dissertation;
+- the Fig. 1 source data (`si/..._MOESM7_ESM.xlsx`, sha256 `61ff4b38...`) names the runs `OR13_20160922_CMP_Ecoli_glycerol_stat_2mg_IMAC_R1` to `_R3`, the replicate suffix on the IMAC step of one 2 mg sample.
+
+All eleven text statements are `REPLICATE_UNIT_EVIDENCE` in the loader and are re-read against the mirror bytes at L3. No sample is withdrawn: the reporting summary's item 2 reads "No data was excluded from the analysis".
+
+### Why the count is 12 under either reading
+
+If the three are technical, policy 2 of #1178 combines inside the record only measurements "that the design requires to be combined to give one valid value". Each enrichment here gives its own released value that the authors test as a replicate, and no combined value is released; folding three into one would need a loader-computed combination over intensities with `not_quantified` cells, plus a phenotype field for the technical n, which `PhosphositeIntensityPhenotype` does not have. So the plan's "4 if technical" estimate would need both a schema change and a computed statistic, and is not done.
+
+### Open, for the owner (#1172)
+
+1. Label: set `replicate_unit = SampleUnit.technical_replicate` on all 12 records (two SI legends against nine statements and the dissertation's own reprint), or keep the `deferred_pending_source_review` gap until the published Online Methods are read (#922). The records keep their count either way; only the label and the gap change.
+2. If the owner wants the technical triplicate folded into 4 records, that needs a schema shape first, for example a per-site `technical_intensities: dict[str, list[float | None]]` plus `technical_n` and `technical_unit` on `PhosphositeIntensityPhenotype`, with the per-enrichment values kept verbatim inside the record rather than averaged.
+3. The reference rule (exponential sample of the same carbon source and replicate number) pairs replicate numbers across two injection batches; under a technical reading the numbers pair nothing. It is a single released sample, not an aggregate over the condition's replicates, and the phenotype requires `replicate >= 1`, so a policy-7 aggregate reference would also need a schema decision.

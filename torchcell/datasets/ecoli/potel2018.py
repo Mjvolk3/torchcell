@@ -46,6 +46,20 @@ dissertation ("Fe3+-IMAC was performed in technical triplicates for each biologi
 groups") call each condition's three technical. The published Online Methods would
 decide it and are walled (#922), so the gap is ``deferred_pending_source_review``.
 
+PER-REPLICATE REVIEW (#1178, 2026-11-24). The store already holds one record per
+released replicate: each of the twelve columns is one ``..._2mg_IMAC_R<n>`` raw file
+(one Fe3+-IMAC enrichment and one injection), and the authors combine nothing across a
+condition's three (they t-test them; Table 5 repeats them per replicate). So the count
+is twelve under either reading of the unit. Folding a condition's three into one record
+would need a loader-computed combination of intensities with ``not_quantified`` cells,
+which no release provides, and a place on the phenotype for the technical n that the
+schema does not have. :data:`REPLICATE_UNIT_EVIDENCE` lists every statement the mirrored
+release makes about the unit: two SI legends say "biological"; nine statements place
+the triplicate at the enrichment step of one digest or call the four conditions the
+biological groups, and the dissertation's reprint of the two SI legends drops the
+"n=12 biological replicates" sentence. The label stays a gap until the owner rules
+(#1172).
+
 THE SOURCE OF THE METHODS. The paper is in neither mirror and in no PMC set (#922). The
 first author's open-access dissertation (Utrecht handle 1874/370166), whose Chapter V
 reprints this paper with its Materials and Methods, is deposited in the raw mirror with
@@ -380,6 +394,87 @@ TECHNICAL_TRIPLICATES_RS = _reporting_summary(
     "technical",
     "we made technical triplicates (after digestion, before enrichment) of each",
     page="1. Sample size",
+)
+
+# Per-replicate review (#1178, 2026-11-24): every statement the mirrored release makes
+# about what one of the three replicates per condition is. Two call the twelve samples
+# biological; the rest describe one digest per condition enriched three times. The
+# twelve records are one per released column either way (see the module docstring).
+BIOLOGICAL_REPLICATES_SI_FIG6 = _si(
+    "biological",
+    "profiles derive from the totality of the n=12 biological replicates.",
+    page="Supplementary Figure 6 legend",
+)
+FOUR_CONDITIONS_RS = _reporting_summary(
+    4,
+    "phosphorylation in 4 biological conditions. In order to compare those conditions",
+    page="1. Sample size",
+)
+REPLICATION_RS = _reporting_summary(
+    "technical",
+    "Results were reproduced under 4 biological conditions, each consisting of "
+    "technical",
+    page="3. Replication",
+)
+ENRICHMENT_REPLICATE_SI = _si(
+    "one enrichment and one injection per replicate",
+    "(each replicate corresponding to a different enrichment and different LC-MS/MS "
+    "injection)",
+    page="Supplementary Figure 11 legend",
+)
+PEPTIDE_ALIQUOTS_THESIS = _thesis(
+    2.0,
+    "Eluted peptides were split in 2 mg peptide aliquots and subsequently dried down",
+    page="Chapter V, Materials and Methods, 'Desalting protocol'",
+    note="the split comes after digestion and desalting, before Fe3+-IMAC",
+)
+TTEST_TECHNICAL_THESIS = _thesis(
+    "technical",
+    "The log2 scale of phosphosite intensity from technical\nFe3+-IMAC triplicates "
+    "were subjected into a two tailed t-test",
+    page=_CH5_ANALYSIS,
+)
+TECHNICAL_REPLICATES_THESIS_FIG_S11 = _thesis(
+    "technical",
+    "peptides (pink) in 3 technical replicates were all above 0.93",
+    page="Chapter V, Supplementary Figure S11 legend",
+    note="the published Supplementary Figure 11 legend reads 'in triplicate (each "
+    "replicate corresponding to a different enrichment and different LC-MS/MS "
+    "injection)' at this place",
+)
+THESIS_FIG_S3_WITHOUT_N12 = _thesis(
+    "no replicate count",
+    "resin decreases drastically. In terms of identifications, this translates into "
+    "a ≈ 10 fold increase of the number",
+    page="Chapter V, Supplementary Figure S3 legend",
+    note="the published Supplementary Figure 3 legend has 'The same UV profiles were "
+    "observed for the n=12 biological replicates.' between these two sentences; the "
+    "dissertation's reprint of the legend has no such sentence, and its Figure S6 "
+    "legend likewise has no 'n=12 biological replicates'",
+)
+#: Every replicate-unit statement of the mirrored release, for the record of #1172.
+REPLICATE_UNIT_EVIDENCE: tuple[SourcedValue, ...] = (
+    BIOLOGICAL_REPLICATES_SI,
+    BIOLOGICAL_REPLICATES_SI_FIG6,
+    FOUR_CONDITIONS_RS,
+    TECHNICAL_TRIPLICATES_RS,
+    REPLICATION_RS,
+    ENRICHMENT_REPLICATE_SI,
+    PEPTIDE_ALIQUOTS_THESIS,
+    TECHNICAL_TRIPLICATES_THESIS,
+    TTEST_TECHNICAL_THESIS,
+    TECHNICAL_REPLICATES_THESIS_FIG_S11,
+    THESIS_FIG_S3_WITHOUT_N12,
+)
+#: Fig. 1 source data names the optimized protocol's three glycerol stationary runs; the
+#: replicate suffix follows the IMAC step of one 2 mg sample (as every jPOST raw file of
+#: the twelve columns does: ``OR13_..._Ecoli_<carbon>_<phase>_2mg_IMAC_R<n>.raw``).
+FIG1_SOURCE_DATA_REL = "si/41592_2018_BFnmeth4580_MOESM7_ESM.xlsx"
+FIG1_SOURCE_DATA_SHA256 = (
+    "61ff4b381c5f53f24ee1609ad80c9fd6c42e7c738579bf781dd94e1b83e89589"
+)
+FIG1_OPTIMIZED_RUNS: tuple[str, ...] = tuple(
+    f"OR13_20160922_CMP_Ecoli_glycerol_stat_2mg_IMAC_R{n}" for n in (1, 2, 3)
 )
 INTENSITY_COLUMN = _legend(
     MEASUREMENT_TYPE,
@@ -1113,11 +1208,9 @@ TEXT_SOURCED_VALUES: tuple[SourcedValue, ...] = (
     TEMPERATURE_C,
     HARVEST_EXPONENTIAL,
     HARVEST_STATIONARY,
-    TECHNICAL_TRIPLICATES_THESIS,
     SEARCH_SOFTWARE,
     SEARCH_DATABASE,
-    BIOLOGICAL_REPLICATES_SI,
-    TECHNICAL_TRIPLICATES_RS,
+    *REPLICATE_UNIT_EVIDENCE,
     INTENSITY_COLUMN,
     TOTAL_INTENSITY_COLUMN,
     LOCALIZATION_COLUMN,

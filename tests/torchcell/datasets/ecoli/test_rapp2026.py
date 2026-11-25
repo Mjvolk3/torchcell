@@ -176,6 +176,20 @@ def expected_level(gene: str, key: str) -> float:
     return float(np.mean(row[2 * index : 2 * index + 2]))
 
 
+def plate_value(gene: str, replicate: int, key: str) -> float:
+    """``gene``'s released value for ``key`` on plate ``replicate`` (1 or 2)."""
+    index = [row[0] for row in STRAINS].index(gene)
+    row = feature_values()[feature_keys().index(key)]
+    assert row is not None
+    return row[2 * index + replicate - 1]
+
+
+def sample_id(gene: str, replicate: int) -> str:
+    """The synthetic Table S3 ``Sample ID`` of ``gene``'s plate ``replicate``."""
+    index = [row[0] for row in STRAINS].index(gene)
+    return f"{gene}_R{replicate}_msSYN{index:03d}_B1"
+
+
 def _write_table_s1(path: Path, guides: Sequence[tuple[str, str, str, str]]) -> None:
     workbook = openpyxl.Workbook()
     sheet = workbook.active
@@ -662,7 +676,40 @@ def test_group_samples_requires_two_plates_under_one_b_number(
 # --------------------------------------------------------------------------- #
 # Records
 # --------------------------------------------------------------------------- #
+def test_sample_phenotype_stores_one_extract_verbatim_with_its_gaps() -> None:
+    """#1178: one record per extract, n = 1, the SE a single-measurement gap."""
+    phenotype = m.sample_phenotype(
+        ["ppal[M+H]+", "ac-gcald[M-H]-"],
+        [0.5, 2.0],
+        {"ppal[M+H]+": "ppal"},
+        "thrA_R2_msAV933_B1",
+    )
+    assert phenotype.metabolite_level == {"ppal[M+H]+": 0.5, "ac-gcald[M-H]-": 2.0}
+    assert phenotype.metabolite_level_se is None
+    assert phenotype.n_replicates == {"ppal[M+H]+": 1, "ac-gcald[M-H]-": 1}
+    assert phenotype.replicate_id == "thrA_R2_msAV933_B1"
+    assert phenotype.measurement_type == (
+        "fi_ms_iml1515_feature_fold_change_vs_batch_median"
+    )
+    identity, se = phenotype.provenance_gaps
+    assert (identity.field, identity.keys) == (
+        "target_metabolite_ids",
+        ["ac-gcald[M-H]-"],
+    )
+    assert (se.field, se.reason, se.keys) == (
+        "metabolite_level_se",
+        "not_applicable_single_measurement",
+        [],
+    )
+    assert se.note == m.SINGLE_EXTRACT_SE_NOTE
+    with pytest.raises(ValueError, match="2 keys for 1 values"):
+        m.sample_phenotype(["a", "b"], [1.0], {}, "x_R1_msA_B1")
+    with pytest.raises(ValueError, match="needs the release's sample id"):
+        m.sample_phenotype(["a"], [1.0], {}, "")
+
+
 def test_metabolite_phenotype_stores_the_mean_its_se_and_the_known_identities() -> None:
+    """The reference's aggregate over the control extracts (``replicate_id`` None)."""
     phenotype = m.metabolite_phenotype(
         ["ppal[M+H]+", "ac-gcald[M-H]-"],
         [[0.5, 1.5], [2.0, 2.0]],
@@ -673,8 +720,9 @@ def test_metabolite_phenotype_stores_the_mean_its_se_and_the_known_identities() 
     assert phenotype.n_replicates == {"ppal[M+H]+": 2, "ac-gcald[M-H]-": 2}
     assert phenotype.target_metabolite_ids == {"ppal[M+H]+": "ppal"}
     assert phenotype.measurement_type == (
-        "fi_ms_iml1515_feature_fold_change_vs_batch_median_mean_of_2_plates"
+        "fi_ms_iml1515_feature_fold_change_vs_batch_median"
     )
+    assert phenotype.replicate_id is None
     (gap,) = phenotype.provenance_gaps
     assert gap.field == "target_metabolite_ids"
     assert gap.reason == "not_reported_by_primary"
@@ -787,23 +835,63 @@ def test_environment_is_the_induced_m9_glucose_culture() -> None:
 # --------------------------------------------------------------------------- #
 # Hermetic build
 # --------------------------------------------------------------------------- #
-def test_build_three_records_with_the_control_reference_and_ledgers(
+def test_build_one_record_per_extract_with_the_control_reference_and_ledgers(
     synthetic: Path,
     mg1655: EcoliK12MG1655Genome,
     presence_only_pins: list[Mapping[str, str]],
 ) -> None:
-    """ghostG, thrA and thrL are kept, in that (gene-sorted) order.
+    """ghostG, thrA and thrL are kept, in that (gene-sorted) order, each as its two
+    plates' extracts (#1178), then the two ctrl strains' four extracts.
 
     ghostG's b0099 is a b0005 synonym with ONE carrier, so it is kept on a
-    ``locus_tag_synonym`` mapping; oddS has no assigned target and is ledgered; the two
-    ctrl strains are the reference.
+    ``locus_tag_synonym`` mapping; oddS has no assigned target and its two extracts
+    are ledgered; the ctrl extracts are records AND the reference's aggregate.
     """
     dataset = m.MetabolomeRapp2026Dataset(root=str(synthetic), ecoli_genome=mg1655)
     assert presence_only_pins == [
         {name: m.DATA_SHA256[name] for name in dataset.raw_file_names}
     ]
-    assert len(dataset) == 3
+    assert len(dataset) == 10
     keys = ["ppal[M+H]+", "ppal[M-H]-", "ac-gcald[M+H]+", "didp[M+H]+", "didp[M-H]-"]
+    order = [
+        ("ghostG", 1),
+        ("ghostG", 2),
+        ("thrA", 1),
+        ("thrA", 2),
+        ("thrL", 1),
+        ("thrL", 2),
+        ("ctrl1", 1),
+        ("ctrl1", 2),
+        ("ctrl2", 1),
+        ("ctrl2", 2),
+    ]
+    for index, (gene, replicate) in enumerate(order):
+        phenotype = dataset[index]["experiment"]["phenotype"]
+        assert phenotype["replicate_id"] == sample_id(gene, replicate)
+        assert phenotype["metabolite_level"] == {
+            key: plate_value(gene, replicate, key) for key in keys
+        }
+        assert phenotype["n_replicates"] == dict.fromkeys(keys, 1)
+        assert phenotype["metabolite_level_se"] is None
+        assert [gap["field"] for gap in phenotype["provenance_gaps"]] == [
+            "target_metabolite_ids",
+            "metabolite_level_se",
+        ]
+        assert phenotype["provenance_gaps"][1]["reason"] == (
+            "not_applicable_single_measurement"
+        )
+    for index in range(6, 10):
+        assert dataset[index]["experiment"]["genotype"]["perturbations"] == []
+    # The mean of a strain's two records is the value the loader stored before #1178.
+    for gene, first in (("ghostG", 0), ("thrA", 2), ("thrL", 4)):
+        levels = [
+            dataset[first + offset]["experiment"]["phenotype"]["metabolite_level"]
+            for offset in (0, 1)
+        ]
+        for key in keys:
+            assert float(np.mean([level[key] for level in levels])) == (
+                expected_level(gene, key)
+            )
 
     recovered = dataset[0]["experiment"]
     (mapped,) = recovered["genotype"]["perturbations"]
@@ -813,27 +901,20 @@ def test_build_three_records_with_the_control_reference_and_ledgers(
         "source_identifier": "b0099",
         "route": "locus_tag_synonym",
     }
-    assert recovered["phenotype"]["metabolite_level"] == {
-        key: expected_level("ghostG", key) for key in keys
-    }
 
-    first = dataset[1]["experiment"]
+    first = dataset[2]["experiment"]
     (perturbation,) = first["genotype"]["perturbations"]
     assert perturbation["systematic_gene_name"] == "b0002"
     assert perturbation["perturbed_gene_name"] == "thrA"
     assert perturbation["identifier_mapping"] is None
     assert perturbation["crispr"]["guide_sequence"] == "TTTTCCCCGGGGAAAATTTT"
-    assert first["phenotype"]["metabolite_level"] == {
-        key: expected_level("thrA", key) for key in keys
-    }
-    assert first["phenotype"]["n_replicates"] == dict.fromkeys(keys, 2)
     assert first["phenotype"]["target_metabolite_ids"] == {
         "ppal[M+H]+": "ppal",
         "ppal[M-H]-": "ppal",
         "didp[M+H]+": "didp",
         "didp[M-H]-": "didp",
     }
-    (gap,) = first["phenotype"]["provenance_gaps"]
+    gap, _ = first["phenotype"]["provenance_gaps"]
     assert gap["field"] == "target_metabolite_ids"
     assert gap["reason"] == "not_reported_by_primary"
     assert gap["keys"] == ["ac-gcald[M+H]+"]
@@ -842,14 +923,13 @@ def test_build_three_records_with_the_control_reference_and_ledgers(
     assert gap["note"] == m.METABOLITE_IDENTITY_GAP_NOTE
     assert first["environment"] == m.environment().model_dump()
 
-    second = dataset[2]["experiment"]
+    second = dataset[4]["experiment"]
     assert second["genotype"]["perturbations"][0]["systematic_gene_name"] == "b0001"
-    assert second["phenotype"]["metabolite_level"] == {
-        key: expected_level("thrL", key) for key in keys
-    }
 
     reference = dataset[0]["reference"]
     assert reference["genome_reference"] == REFERENCE.model_dump()
+    assert dataset[7]["reference"] == reference
+    assert reference["phenotype_reference"]["replicate_id"] is None
     assert reference["phenotype_reference"]["n_replicates"] == dict.fromkeys(keys, 4)
     control = reference["phenotype_reference"]["metabolite_level"]
     assert control == {
@@ -866,15 +946,19 @@ def test_build_three_records_with_the_control_reference_and_ledgers(
         drops["strain_tokens"],
         drops["source_records"],
         drops["kept_records"],
+        drops["control_records"],
         drops["dropped_records"],
-    ) == (6, 4, 3, 1)
+    ) == (6, 12, 10, 4, 2)
     assert drops["reference_tokens"] == ["ctrl1", "ctrl2"]
-    assert [(rule["rule"], rule["items"]) for rule in drops["rules"]] == [
+    assert [
+        (rule["rule"], rule["n_records"], rule["items"]) for rule in drops["rules"]
+    ] == [
         (
             "no_target_gene_assigned",
+            2,
             ["oddS (b0000, plate 2 well C5): no Table S1 sgRNA"],
         ),
-        ("b_number_remapped_by_the_annotation", []),
+        ("b_number_remapped_by_the_annotation", 0, []),
     ]
     identity = json.loads((preprocess / "metabolite_identity.json").read_text())
     assert (identity["n_features"], identity["n_single_identity"]) == (5, 4)
@@ -903,6 +987,13 @@ def test_build_three_records_with_the_control_reference_and_ledgers(
         "2,thrL,b0001,b0001,thrL,,thrL #1,ACGTACGTACGTACGTACGT,1,A2,1,"
         "0.600000; 0.700000"
     )
+    records = (preprocess / "records.csv").read_text().splitlines()
+    assert records[0] == (
+        "record,replicate_id,gene,control,locus_tag,replicate,plate,well,batch,"
+        "optical_density"
+    )
+    assert records[1] == "0,ghostG_R1_msSYN002_B1,ghostG,False,b0005,1,2,B4,1,0.6"
+    assert records[10] == "9,ctrl2_R2_msSYN005_B1,ctrl2,True,,2,2,A1,1,0.7"
     metabolites = (preprocess / "metabolites.csv").read_text().splitlines()
     assert metabolites[1].startswith("ppal[M+H]+,ppal,[M+H]+,")
     assert metabolites[1].endswith(",C00479,ppal,1,ppal,Propanal")
@@ -1141,23 +1232,47 @@ def test_real_sourced_values_are_verbatim(key: str) -> None:
 
 
 @pytest.mark.data
-def test_real_build_counts_and_two_hand_checked_records() -> None:
-    """1,497 records (1,513 strain tokens - 15 controls - argR); aaeA and the paper's
-    IspB frdp accumulation are read off ``si5.xlsx`` independently, and ``phnE`` is the
-    one record stored on a ``locus_tag_synonym`` mapping.
+def test_real_release_holds_two_extracts_per_strain_token() -> None:
+    """#1178: Table S3 releases 3,026 extracts, two per strain token (``_R1`` / ``_R2``),
+    15 control tokens among the 1,513, so the per-extract store is 3,024 records once
+    ``argR``'s two extracts are ledgered.
+    """
+    rows = m.read_sample_rows(
+        m.raw_mirror_dir(_real_data_root()) / f"data/{m.TABLE_S3}"
+    )
+    per_token: dict[str, list[int]] = {}
+    for row in rows.values():
+        per_token.setdefault(row.sample.gene, []).append(row.sample.replicate)
+    assert len(rows) == 3026
+    assert len(per_token) == 1513
+    assert {tuple(sorted(reps)) for reps in per_token.values()} == {(1, 2)}
+    assert sum(1 for token in per_token if m.CONTROL_TOKEN_PATTERN.match(token)) == 15
+    assert sorted(
+        row.sample.column for row in rows.values() if row.sample.gene == "argR"
+    ) == ["argR_R1_msAV936_B2", "argR_R2_msAV937_B2"]
+
+
+@pytest.mark.data
+def test_real_build_counts_and_hand_checked_extracts() -> None:
+    """3,024 records: 1,497 strains x 2 extracts + 15 control wells x 2, with argR's two
+    extracts ledgered; aaeA's, ispB's and ctrl11's extracts are read off ``si5.xlsx``
+    independently, and ``phnE`` is the one strain stored on a ``locus_tag_synonym``
+    mapping.
     """
     from torchcell.verification.runners import load_records
 
     drops = json.loads(
         Path(_built_root(), "preprocess", "dropped_records.json").read_text()
     )
-    assert (drops["strain_tokens"], drops["source_records"], drops["kept_records"]) == (
-        1513,
-        1498,
-        1497,
-    )
+    assert (
+        drops["strain_tokens"],
+        drops["source_records"],
+        drops["kept_records"],
+        drops["control_records"],
+        drops["dropped_records"],
+    ) == (1513, 3026, 3024, 30, 2)
     assert [(rule["rule"], rule["n_records"]) for rule in drops["rules"]] == [
-        ("no_target_gene_assigned", 1),
+        ("no_target_gene_assigned", 2),
         ("b_number_remapped_by_the_annotation", 0),
     ]
     identifiers = json.loads(
@@ -1182,44 +1297,75 @@ def test_real_build_counts_and_two_hand_checked_records() -> None:
     assert (crosscheck["n_pairs"], crosscheck["max_abs_difference"]) == (1385, 0.0)
 
     records = load_records(_built_root())
-    assert len(records) == 1497
-    by_gene = {
-        record["experiment"]["genotype"]["perturbations"][0]["perturbed_gene_name"]: (
-            record
-        )
-        for record in records
+    assert len(records) == 3024
+    by_sample = {
+        record["experiment"]["phenotype"]["replicate_id"]: record for record in records
     }
-    for gene, b_number, expected in (
-        ("aaeA", "b3241", HAND_CHECKED_AAEA),
-        ("ispB", "b3187", HAND_CHECKED_ISPB),
+    assert len(by_sample) == 3024
+    positions = [sample.split("_R")[-1][0] for sample in by_sample]
+    assert (positions.count("1"), positions.count("2")) == (1512, 1512)
+    controls = [r for r in records if not r["experiment"]["genotype"]["perturbations"]]
+    assert len(controls) == 30
+    for sample, gene, b_number in (
+        ("aaeA_R1_msAV932_B1", "aaeA", "b3241"),
+        ("aaeA_R2_msAV933_B1", "aaeA", "b3241"),
+        ("ispB_R1_msAV930_B1", "ispB", "b3187"),
+        ("ispB_R2_msAV931_B1", "ispB", "b3187"),
     ):
-        record = by_gene[gene]
+        record = by_sample[sample]
         perturbation = record["experiment"]["genotype"]["perturbations"][0]
+        assert perturbation["perturbed_gene_name"] == gene
         assert perturbation["systematic_gene_name"] == b_number
         assert perturbation["gene_namespace"] == "ecoli_k12_mg1655_bnumber"
         assert len(perturbation["crispr"]["guide_sequence"]) == 20
-        phenotype = record["experiment"]["phenotype"]
+    for sample, expected in HAND_CHECKED_EXTRACTS.items():
+        phenotype = by_sample[sample]["experiment"]["phenotype"]
         assert len(phenotype["metabolite_level"]) == 1321
-        assert set(phenotype["n_replicates"].values()) == {2}
+        assert set(phenotype["n_replicates"].values()) == {1}
+        assert phenotype["metabolite_level_se"] is None
         assert len(phenotype["target_metabolite_ids"]) == 1077
-        (gap,) = phenotype["provenance_gaps"]
+        gap, se_gap = phenotype["provenance_gaps"]
         assert gap["field"] == "target_metabolite_ids"
         assert gap["reason"] == "not_reported_by_primary"
         assert len(gap["keys"]) == 244
         assert set(gap["keys"]).isdisjoint(phenotype["target_metabolite_ids"])
-        assert len(set(gap["keys"]) | set(phenotype["target_metabolite_ids"])) == 1321
-        for key, (level, se) in expected.items():
-            assert phenotype["metabolite_level"][key] == pytest.approx(level)
-            assert phenotype["metabolite_level_se"][key] == pytest.approx(se)
+        assert (se_gap["field"], se_gap["reason"]) == (
+            "metabolite_level_se",
+            "not_applicable_single_measurement",
+        )
+        for key, level in expected.items():
+            assert phenotype["metabolite_level"][key] == level
+    # The mean of a strain's two extracts is the value stored before #1178.
+    for gene, expected_mean in (
+        ("aaeA", HAND_CHECKED_AAEA),
+        ("ispB", HAND_CHECKED_ISPB),
+    ):
+        for key, (level, _) in expected_mean.items():
+            pair = [
+                by_sample[sample]["experiment"]["phenotype"]["metabolite_level"][key]
+                for sample in HAND_CHECKED_EXTRACTS
+                if sample.startswith(f"{gene}_")
+            ]
+            assert float(np.mean(pair)) == pytest.approx(level)
 
-    reference = by_gene["aaeA"]["reference"]
+    reference = by_sample["aaeA_R1_msAV932_B1"]["reference"]
     assert reference["genome_reference"]["assembly_set"] == m.MG1655_ASSEMBLY_SET
     assert reference["genome_reference"]["background"]["name"] == "YYdCas9"
+    assert reference["phenotype_reference"]["replicate_id"] is None
     assert set(reference["phenotype_reference"]["n_replicates"].values()) == {30}
     for key, level in HAND_CHECKED_CONTROL.items():
         assert reference["phenotype_reference"]["metabolite_level"][
             key
         ] == pytest.approx(level)
+        control_mean = float(
+            np.mean(
+                [
+                    r["experiment"]["phenotype"]["metabolite_level"][key]
+                    for r in controls
+                ]
+            )
+        )
+        assert control_mean == pytest.approx(level)
 
 
 @pytest.mark.data
@@ -1271,6 +1417,33 @@ HAND_CHECKED_AAEA: dict[str, tuple[float, float]] = {
 HAND_CHECKED_ISPB: dict[str, tuple[float, float]] = {
     "ppal[M+H]+": (1.2365701889592966, 0.02095107609750524),
     "frdp[M-H]-": (6.717757135164243, 0.2713381798599892),
+}
+#: ``{sample id: {feature key: released cell}}``, read off ``si5.xlsx`` with ``openpyxl``.
+HAND_CHECKED_EXTRACTS: dict[str, dict[str, float]] = {
+    "aaeA_R1_msAV932_B1": {
+        "ppal[M+H]+": 0.9670605697322601,
+        "frdp[M-H]-": 1.1421647819063006,
+    },
+    "aaeA_R2_msAV933_B1": {
+        "ppal[M+H]+": 1.056916138608209,
+        "frdp[M-H]-": 1.2976575121163167,
+    },
+    "ispB_R1_msAV930_B1": {
+        "ppal[M+H]+": 1.257521265056802,
+        "frdp[M-H]-": 6.989095315024232,
+    },
+    "ispB_R2_msAV931_B1": {
+        "ppal[M+H]+": 1.2156191128617915,
+        "frdp[M-H]-": 6.446418955304254,
+    },
+    "ctrl11_R1_msAV950_B4": {
+        "ppal[M+H]+": 2.04126699330619,
+        "frdp[M-H]-": 1.4510353417406197,
+    },
+    "ctrl11_R2_msAV951_B4": {
+        "ppal[M+H]+": 1.000207025050031,
+        "frdp[M-H]-": 0.8566090611863615,
+    },
 }
 #: The reference: the mean over the 30 ``ctrlN`` columns.
 HAND_CHECKED_CONTROL: dict[str, float] = {

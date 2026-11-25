@@ -234,3 +234,55 @@ none of them. `python -m torchcell.datasets.ecoli.rapp2026_platforms verify <fam
 65 passing with `--data`. The synthetic assembly files `b0099` on `b0005` alone (so the
 hermetic builds keep ghostG) and `b0098` on both `b0006` and the pseudogene `b0004`, the
 two-carrier case `resolve_genes` still drops.
+
+## 2026.11.24 - Accumulation families store one record per extract (#1178, #1173)
+
+### Evidence, measured on the pinned workbooks
+
+- Table S5 (`si6.xlsx`, sha256 `f3a03ddc...2c`): `R1_FC` and `R2_FC` equal Table S4's
+  cells of the strain's `_R1_` and `_R2_` Sample IDs on all 1,385 rows (max abs
+  difference 0), so `R1_Int` / `R2_Int` are the two independent plates' extracts. The
+  legend: "Intensity of annotated m/z-feature in replicate 1 (R1) and replicate 2 (R2)."
+- Table S6 (`si7.xlsx`, sha256 `c4957a1d...2de`): every `DataFile` carries a FI-MS run
+  code (`..._P2A1msAV950_neg.mzML`) that is in the Table S3 Sample ID of exactly ONE of
+  the strain's two extracts, on all 1,256 rows (1,036 replicate 1, 220 replicate 2). A run
+  code is shared by the 96 extracts of one library plate's one cultivation, so with the
+  strain it names the extract. 71 strains have pairs from both extracts, so the old
+  one-record-per-strain targeted record mixed two biological replicates. The reading that
+  the run code names the injected extract is an inference from the shared code, not a
+  sentence of the paper.
+- The control wells' own rows (ctrl4, ctrl7, ctrl8, ctrl11; 10 rows in each table) were
+  read and stored nowhere; they are now records with an empty genotype on `YYdCas9`.
+
+### Counts
+
+| family | records before | records after | values before | values after | control records |
+|---|---|---|---|---|---|
+| targeted (Table S6) | 407 | 482 | 1,246 | 1,256 | 5 |
+| intensity (Table S5) | 407 | 822 | 1,375 | 2,770 | 8 |
+| growth (Table S2) | 1,515 | 1,515 | | | 0 |
+
+Every accumulation record: `n_replicates` 1, `metabolite_level_se=None` with a
+`not_applicable_single_measurement` gap, `replicate_id` the Table S3 Sample ID. The
+intensity `measurement_type` lost its `_mean_of_2_plates` suffix. Per-record references
+are unchanged (1.0 for targeted; the back-solved batch median for intensity), with
+`replicate_id=None`. `preprocess/records.csv` replaces the accumulation `strains.csv`.
+
+Mean reproduction against the old dev stores: grouping the new records by genotype and
+environment and averaging per key reproduces all 1,246 targeted and all 1,375 intensity
+values with max abs difference 0.0.
+
+Built into `$DATA_ROOT/tmp/scratch/per-replicate-rapp2026/{targeted_metabolome,metabolite_intensity,growth_auc}_rapp2026`;
+all three verifiers PASS.
+
+### Growth stays one ratio per gene (owner decision)
+
+Table S2 releases 4,593 culture curves (1,515 genes x 3 + 16 control wells x 3; si1.md
+Figure S1 caption: "Growth curves show means from $\mathsf { n } { = } 3$ cultures").
+The policy would store each culture's ABSOLUTE AUC and leave the ratio over the
+48-culture control mean to model time, but no `MeasurementType` names an area under an
+OD600 curve (`growth_rate` is a rate, `optical_density` one end-point reading). Proposed
+shape: an additive `MeasurementType.growth_curve_auc` in `ABSOLUTE_MEASUREMENT_TYPES`,
+records as `EnvironmentResponseExperiment` (the Campos 2018 alpha_max precedent),
+4,545 strain cultures + 48 control cultures with `replicate_id` = `Replicate Nr.`, and
+the reference the 48-culture mean AUC. Until then the store is unchanged.

@@ -926,11 +926,10 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
     # control strains on the per-batch-median scale, so it is not centered on 0.
     "metabolome_rapp2026": {
         "root": "data/torchcell/metabolome_rapp2026",
-        # 1,513 Table S4 strain tokens - 15 control strains (the reference) - 1 strain
-        # with no assigned target (argR) = 1,497 kept records. phnE's b4104 is kept
-        # since #753: the annotation lists it as a /gene_synonym of exactly one locus,
-        # b4583, so the record stores b4583 on a locus_tag_synonym mapping.
-        "expected_count": 1497,
+        # One record per extract (#1178): 3,026 Table S3 samples - argR's 2 (no
+        # assigned target) = 3,024, i.e. 1,497 strains x 2 plates + the 15 control
+        # wells x 2. phnE's b4104 is kept since #753 on a locus_tag_synonym mapping.
+        "expected_count": 3024,
         "reference_centered": False,
         "provenance": Provenance(
             source_uri=("torchcell-raw/rappMetabolomeColiCRISPRi2026/data/si5.xlsx"),
@@ -938,10 +937,11 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
             sha256=("fdc5ac2c759ad82d5cfb5ee1bb3c59fea427a88279e1178ad8e894e072498b84"),
             method=(
                 "FI-MS fold changes of 1,321 annotated iML1515 m/z features relative "
-                "to the per-batch median, the mean of each strain's two independent "
-                "plates (exactly the paper's own Table S5 Mean_FC); reference = the 15 "
-                "empty-sgRNA control strains on the same scale. Strains are stored "
-                "under the iML1515 b-number Table S3 releases"
+                "to the per-batch median, one record per extract (two independent "
+                "plates per strain, the 30 control extracts included, replicate_id the "
+                "Table S3 Sample ID); reference = the mean over the 30 empty-sgRNA "
+                "control extracts. Strains are stored under the iML1515 b-number Table "
+                "S3 releases"
             ),
             page="Cell Syst 2026 Table S4 (mmc5.xlsx, sheet Table_S4)",
         ),
@@ -951,9 +951,10 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
     # reference is 1.0, the library median the released fold change divides by.
     "targeted_metabolome_rapp2026": {
         "root": "data/torchcell/targeted_metabolome_rapp2026",
-        # 411 Table S6 strain tokens - 4 control tokens (ctrl4, ctrl7, ctrl8, ctrl11)
-        # = 407 kept records (phnE kept on a locus_tag_synonym mapping since #753).
-        "expected_count": 407,
+        # One record per measured extract (#1178): the DataFile run code names the
+        # Table S3 sample, so 411 tokens give 482 records (71 strains measured from
+        # both plates), the 4 control wells' 5 included.
+        "expected_count": 482,
         "reference_centered": False,
         "provenance": Provenance(
             source_uri="torchcell-raw/rappMetabolomeColiCRISPRi2026/data/si7.xlsx",
@@ -962,7 +963,8 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
             method=(
                 "targeted LC-MS/MS EIC peak-height fold change against the library "
                 "median, one injection per strain-metabolite pair and no released "
-                "uncertainty; reference = 1.0, that median on the released scale. "
+                "uncertainty, one record per measured extract; reference = 1.0, that "
+                "median on the released scale. "
                 "MEASURED distinct from the stored FI-MS fold changes (Pearson r "
                 "0.6722, median absolute log2 difference 1.1649), so this is a second "
                 "platform rather than a copy"
@@ -975,9 +977,9 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
     # ratio to, back-solved as Mean_Int / Mean_FC.
     "metabolite_intensity_rapp2026": {
         "root": "data/torchcell/metabolite_intensity_rapp2026",
-        # 411 Table S5 strain tokens - 4 control tokens = 407 kept records (phnE kept
-        # on a locus_tag_synonym mapping since #753).
-        "expected_count": 407,
+        # One record per plate (#1178): 411 Table S5 tokens x R1_Int / R2_Int = 822,
+        # the 4 control wells' 8 included.
+        "expected_count": 822,
         "reference_centered": False,
         "provenance": Provenance(
             source_uri="torchcell-raw/rappMetabolomeColiCRISPRi2026/data/si6.xlsx",
@@ -985,8 +987,7 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
             sha256=("f3a03ddce7b413f5d10ed1ebe8ba4f20c0d32904acd29a1e08edd007893ad62c"),
             method=(
                 "absolute FI-MS intensity of each accumulating annotated m/z feature, "
-                "the mean of the strain's two plates (Mean_Int) with "
-                "|R1_Int - R2_Int| / 2 as its standard error; reference = the "
+                "one record per plate (R1_Int, R2_Int verbatim); reference = the "
                 "per-batch median intensity, MEASURED constant across the strains of a "
                 "batch"
             ),

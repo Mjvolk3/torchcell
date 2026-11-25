@@ -8,12 +8,15 @@ Rapp, Verhulsdonk, Garcke, Stadelmann, Farke, Trossmann, Kronenberger, Alvarado,
 Petras and Link 2026 (Cell Systems, doi:10.1016/j.cels.2025.101518) sorted a pooled
 CRISPRi library into an arrayed one covering all 1,515 genes of the iML1515 model,
 induced dCas9 with anhydrotetracycline, grew every strain on M9 glucose at 37 C and
-profiled 3,026 metabolite extracts by flow-injection mass spectrometry. Each strain's
+profiled 3,026 metabolite extracts by flow-injection mass spectrometry. Each extract's
 released value per feature is a LINEAR FOLD CHANGE relative to the per-batch median,
-and the stored value is the arithmetic mean of the strain's two plates. Measured at
-build time, that mean reproduces the paper's own ``Mean_FC`` column exactly for all
-1,385 accumulating strain-metabolite pairs of Table S5 (``mean_fc_crosscheck.json``),
-so the stored statistic is the paper's, not a re-derivation of it.
+and every extract is its own record (#1178, #1173): one record per Table S4 sample
+column, the value verbatim, ``n_replicates`` 1 and ``replicate_id`` the Table S3
+``Sample ID``. Each strain was "sampled twice from two independent plates", so a
+strain's two records are its two biological replicates; the mean of the two, which
+the loader stored before 2026-11-24, is left to model time. Measured at build time,
+that mean still reproduces the paper's own ``Mean_FC`` column exactly for all 1,385
+accumulating strain-metabolite pairs of Table S5 (``mean_fc_crosscheck.json``).
 
 DATA. The matrices are in the publisher SI, which the Elsevier CDN serves directly
 (``RetrievalMethod.direct_url`` through ``retrieve.elsevier_mmc``). ``RAW_FILES`` pins
@@ -58,10 +61,12 @@ route before building it).
 
 PHENOTYPE. ``MetabolitePhenotype`` keyed by Table S4's ``Abbr`` verbatim, which is the
 iML1515 isobaric group's abbreviation plus the adduct (``frdp[M-H]-``), so two adducts of
-one metabolite stay two measured features. ``n_replicates`` is 2 for every key (the two
-independent plates); ``metabolite_level_se`` is the standard error of that mean,
-``|r1 - r2| / 2``, derived from the two released replicate columns and in the same units
-as the value. ``target_metabolite_ids`` maps a key to its Table S9 **BiGG** id wherever
+one metabolite stay two measured features. ``n_replicates`` is 1 for every key (one
+extract), and ``metabolite_level_se`` is ``None`` with a
+``not_applicable_single_measurement`` gap: one extract has no dispersion of its own.
+The two FI-MS injections of an extract are its two polarities (different feature
+keys), not repeat measurements, so nothing is combined inside a record.
+``target_metabolite_ids`` maps a key to its Table S9 **BiGG** id wherever
 the feature's abbreviation names exactly ONE metabolite; a feature whose abbreviation is
 a MERGED isobaric set (FI-MS cannot separate equal masses) is absent from the map rather
 than assigned one of its candidates. Those uncovered keys now carry a typed per-key
@@ -70,7 +75,12 @@ than assigned one of its candidates. Those uncovered keys now carry a typed per-
 carries it. ``preprocess/metabolite_identity.json`` keeps the full candidate TUPLE of
 every such key, since a candidate set is not expressible on a ``ProvenanceGap``.
 The reference is the measured profile of the 15 control strains (empty sgRNA) on the
-same per-batch-median scale, with ``n_replicates`` 30.
+same per-batch-median scale, with ``n_replicates`` 30: an aggregate summary with
+``replicate_id=None``. The 30 control extracts it summarizes are ALSO records, each with
+an empty genotype on the ``YYdCas9`` background (the paper prints no genotype for the
+control strain beyond "expresses an empty sgRNA", and the schema has no plasmid-borne
+empty guide), so 3,026 released extracts give 3,024 records: 1,497 strains x 2 plus
+15 controls x 2, with ``argR``'s two extracts the one drop.
 """
 
 from __future__ import annotations
@@ -514,13 +524,15 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         15,
         _Q_CONTROL_COUNT,
         note="Table S4 carries exactly 15 'ctrlN' tokens (ctrl2 absent), each with two "
-        "replicate columns, so the reference averages 30 samples",
+        "replicate columns, so the reference averages 30 samples, and each of the 30 "
+        "is also stored as its own record with an empty genotype",
     ),
     "n_biological_replicates": _paper(
         2,
         _Q_REPLICATES,
-        note="two independent cultivation plates, so n_replicates counts plates; the "
-        "two FI-MS injections per extract are the two polarities, not replication",
+        note="two independent cultivation plates, so each strain carries two records, "
+        "one per plate (replicate_id = the Table S3 Sample ID); the two FI-MS "
+        "injections per extract are the two polarities, not replication",
     ),
     "od_filter": _paper(
         17,
@@ -616,9 +628,9 @@ GUIDES_PER_GENE: Final[int] = SOURCED_VALUES["guide_choice"].value
 HOST_STRAIN: Final[str] = SOURCED_VALUES["host_strain"].value
 HOST_GENOTYPE: Final[str] = SOURCED_VALUES["host_genotype"].value
 
-#: What the stored number is: the paper's own per-strain statistic (verified exactly
-#: against Table S5's ``Mean_FC`` at build time).
-MEASUREMENT_TYPE = "fi_ms_iml1515_feature_fold_change_vs_batch_median_mean_of_2_plates"
+#: What the stored number is: one extract's released fold change (Table S4 cell). The
+#: reference states the mean over the 30 control extracts on the same scale.
+MEASUREMENT_TYPE = "fi_ms_iml1515_feature_fold_change_vs_batch_median"
 
 #: The strain whose GenBank assembly the released b-numbers mean; the host YYdCas9 is a
 #: BW25993 derivative, and BW25993 has no deposited assembly set.
@@ -1499,13 +1511,21 @@ class DropRule(BaseModel):
 
 
 class DropLog(BaseModel):
-    """Every retention rule applied to a build, in the order they were applied."""
+    """Every retention rule applied to a build, in the order they were applied.
+
+    ``source_records`` counts the released measurements a record can be made of (one
+    per extract, culture or released row group, as the family defines its record), and
+    ``kept_records`` the records written, of which ``control_records`` are the control
+    strain's own (``reference_tokens``), stored with an empty genotype. A rule's
+    ``n_records`` counts records, so one dropped strain with two extracts is 2.
+    """
 
     dataset: str
     strain_tokens: int
     reference_tokens: list[str]
     source_records: int
     kept_records: int
+    control_records: int
     dropped_records: int
     rules: list[DropRule]
 
@@ -1650,7 +1670,8 @@ def resolve_strains(
 ) -> tuple[list[ResolvedStrain], list[DropRule], IdentifierLedger]:
     """Settle every non-control strain: its target, its locus tag and its guide.
 
-    Two retention rules, in order. ``no_target_gene_assigned`` drops a strain whose
+    Two retention rules, in order, each counting the RECORDS it removes (one per
+    extract of the strain). ``no_target_gene_assigned`` drops a strain whose
     Table S3 b-number is the controls' placeholder and for which Table S1 holds no
     sgRNA, so neither the knocked-down locus nor the guide spacer is released.
     ``b_number_remapped_by_the_annotation`` drops a strain whose released b-number the
@@ -1673,6 +1694,7 @@ def resolve_strains(
 
     kept: list[ResolvedStrain] = []
     remapped: list[str] = []
+    remapped_records = 0
     synonyms: list[str] = []
     disagreements: list[SymbolDisagreement] = []
     for strain, tag in zip(targeted, stored.tolist(), strict=True):
@@ -1685,6 +1707,7 @@ def resolve_strains(
                     f"{strain.gene} ({strain.b_number}): the annotation carries it as a "
                     f"{resolution.note}, so the record would store {tag}"
                 )
+                remapped_records += len(strain.columns)
                 continue
             synonyms.append(
                 f"{strain.gene} ({strain.b_number}): the annotation carries it as a "
@@ -1728,7 +1751,7 @@ def resolve_strains(
             f"{UNASSIGNED_B_NUMBER} placeholder instead of an iML1515 b-number and "
             "Table S1 holds no sgRNA for it, so neither the knocked-down locus nor the "
             "guide spacer is released",
-            n_records=len(unassigned),
+            n_records=sum(len(strain.columns) for strain in unassigned),
             items=[
                 f"{strain.gene} ({strain.b_number}, plate {strain.rows[0].plate} well "
                 f"{strain.rows[0].well}): no Table S1 sgRNA"
@@ -1744,7 +1767,7 @@ def resolve_strains(
             "dropped rather than remapped silently. A released b-number the annotation "
             "lists as a /gene_synonym of exactly one locus of the same namespace is "
             "kept instead, with a locus_tag_synonym mapping on its perturbation",
-            n_records=len(remapped),
+            n_records=remapped_records,
             items=remapped,
         ),
     ]
@@ -1755,6 +1778,39 @@ def resolve_strains(
         locus_tag_synonyms=synonyms,
     )
     return kept, rules, ledger
+
+
+class StoredExtract(BaseModel):
+    """One record to write: one Table S4 sample column of a kept strain or a control.
+
+    ``resolved`` is ``None`` for a control well's extract, which is stored with an
+    empty genotype (:func:`control_genotype`).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    resolved: ResolvedStrain | None
+    column: int
+    row: SampleRow
+
+
+def stored_extracts(
+    resolved: Sequence[ResolvedStrain], controls: Sequence[StrainSamples]
+) -> list[StoredExtract]:
+    """Every record of a build, in write order: each kept strain's extracts (replicate
+    1, then 2), then each control well's.
+    """
+    out = [
+        StoredExtract(resolved=item, column=column, row=row)
+        for item in resolved
+        for column, row in zip(item.strain.columns, item.strain.rows, strict=True)
+    ]
+    out.extend(
+        StoredExtract(resolved=None, column=column, row=row)
+        for strain in controls
+        for column, row in zip(strain.columns, strain.rows, strict=True)
+    )
+    return out
 
 
 # --------------------------------------------------------------------------- #
@@ -1852,18 +1908,68 @@ def metabolite_identity_gaps(
     ]
 
 
+#: Why an n = 1 record carries no standard error (#1178 policy 5).
+SINGLE_EXTRACT_SE_NOTE = (
+    "the record is one extract measured once (one biological replicate, replicate_id "
+    "names it), so no dispersion of its own exists; the dispersion between a strain's "
+    "replicate extracts is reproduced at model time from its records"
+)
+
+
+def single_extract_se_gap() -> ProvenanceGap:
+    """``not_applicable_single_measurement`` on ``metabolite_level_se``."""
+    return ProvenanceGap(
+        field="metabolite_level_se",
+        reason=ProvenanceGapReason.not_applicable_single_measurement,
+        note=SINGLE_EXTRACT_SE_NOTE,
+    )
+
+
+def sample_phenotype(
+    keys: Sequence[str],
+    values: Sequence[float],
+    target_metabolite_ids: Mapping[str, str],
+    replicate_id: str,
+) -> MetabolitePhenotype:
+    """One extract's released profile, verbatim: one value per key, ``n_replicates`` 1.
+
+    ``replicate_id`` is the Table S3 ``Sample ID`` of the extract. Every key
+    ``target_metabolite_ids`` omits is carried as a typed per-key ``ProvenanceGap``
+    (:func:`metabolite_identity_gaps`), and ``metabolite_level_se`` as a
+    ``not_applicable_single_measurement`` gap.
+    """
+    if len(keys) != len(values):
+        raise ValueError(f"{len(keys)} keys for {len(values)} values")
+    if not replicate_id:
+        raise ValueError("a per-extract record needs the release's sample id")
+    return MetabolitePhenotype(
+        metabolite_level={
+            key: float(value) for key, value in zip(keys, values, strict=True)
+        },
+        metabolite_level_se=None,
+        n_replicates=dict.fromkeys(keys, 1),
+        measurement_type=MEASUREMENT_TYPE,
+        target_metabolite_ids=dict(target_metabolite_ids),
+        replicate_id=replicate_id,
+        provenance_gaps=[
+            *metabolite_identity_gaps(keys, target_metabolite_ids),
+            single_extract_se_gap(),
+        ],
+    )
+
+
 def metabolite_phenotype(
     keys: Sequence[str],
     replicates: Sequence[Sequence[float]],
     target_metabolite_ids: Mapping[str, str],
 ) -> MetabolitePhenotype:
-    """One strain's profile: the mean of its plates, that mean's SE, and the identities.
+    """The control extracts summarized: their mean, its SE, and the identities.
 
-    ``replicates`` holds one list of plate values per key. The level is their
-    arithmetic mean, which is the paper's own ``Mean_FC``
-    (:func:`check_mean_fold_change`), and the statistic is the standard error of that
-    mean over the same plates. Every key ``target_metabolite_ids`` omits is carried as
-    a typed per-key ``ProvenanceGap`` (:func:`metabolite_identity_gaps`).
+    This is the ``phenotype_reference`` only (an aggregate, ``replicate_id=None``); the
+    extracts it summarizes are records of their own (:func:`sample_phenotype`).
+    ``replicates`` holds one list of extract values per key. Every key
+    ``target_metabolite_ids`` omits is carried as a typed per-key ``ProvenanceGap``
+    (:func:`metabolite_identity_gaps`).
     """
     if len(keys) != len(replicates):
         raise ValueError(f"{len(keys)} keys for {len(replicates)} replicate lists")
@@ -1906,20 +2012,31 @@ def crispri_genotype(resolved: ResolvedStrain) -> Genotype:
     )
 
 
+def control_genotype() -> Genotype:
+    """The control strain's genotype on the ``YYdCas9`` background: no perturbation.
+
+    The paper states only that the control "expresses an empty sgRNA"; it prints no
+    further genotype, and the schema has no member for a plasmid-borne empty guide, so
+    nothing is inferred (#1178 AGENT_NOTES 10).
+    """
+    return Genotype(perturbations=[])
+
+
 def build_experiment(
     dataset_name: str,
-    resolved: ResolvedStrain,
+    genotype: Genotype,
     keys: Sequence[str],
-    replicates: Sequence[Sequence[float]],
+    values: Sequence[float],
     target_metabolite_ids: Mapping[str, str],
     env: Environment,
+    replicate_id: str,
 ) -> MetaboliteExperiment:
-    """The record of one CRISPRi strain."""
+    """The record of one extract: a CRISPRi strain's or a control well's."""
     return MetaboliteExperiment(
         dataset_name=dataset_name,
-        genotype=crispri_genotype(resolved),
+        genotype=genotype,
         environment=env,
-        phenotype=metabolite_phenotype(keys, replicates, target_metabolite_ids),
+        phenotype=sample_phenotype(keys, values, target_metabolite_ids, replicate_id),
     )
 
 
@@ -2072,26 +2189,30 @@ class MetabolomeRapp2026Dataset(ExperimentDataset):
             guides,
             label=f"{self.name} iML1515 b-numbers",
         )
-        source_records = len(strains) - len(controls)
+        extracts = stored_extracts(resolved, controls)
+        source_records = sum(len(strain.columns) for strain in strains)
         drop_log = DropLog(
             dataset=self.name,
             strain_tokens=len(strains),
             reference_tokens=sorted(strain.gene for strain in controls),
             source_records=source_records,
-            kept_records=len(resolved),
-            dropped_records=source_records - len(resolved),
+            kept_records=len(extracts),
+            control_records=sum(1 for extract in extracts if extract.resolved is None),
+            dropped_records=source_records - len(extracts),
             rules=rules,
         )
         if sum(rule.n_records for rule in drop_log.rules) != drop_log.dropped_records:
-            raise RuntimeError("drop rules do not account for every dropped strain")
+            raise RuntimeError("drop rules do not account for every dropped record")
         log.info(
-            "Rapp 2026: %d strain tokens (%d control) -> %d records; drops %s; "
+            "Rapp 2026: %d strain tokens (%d control) -> %d extract records (%d "
+            "control); drops %s; "
             "b-number statuses %s; %d locus_tag_synonym mappings recorded; "
             "%d released symbols do not resolve to their "
             "b-number's locus; %d of %d stored features carry one BiGG id",
             len(strains),
             len(controls),
-            len(resolved),
+            drop_log.kept_records,
+            drop_log.control_records,
             {rule.rule: rule.n_records for rule in drop_log.rules},
             {
                 s.value: n
@@ -2114,6 +2235,7 @@ class MetabolomeRapp2026Dataset(ExperimentDataset):
             populated,
             stored,
             resolved,
+            extracts,
         )
 
         env = environment()
@@ -2130,14 +2252,19 @@ class MetabolomeRapp2026Dataset(ExperimentDataset):
             osp.join(self.processed_dir, "lmdb")
         )
         with env_out.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for idx, item in enumerate(tqdm(resolved, desc="rapp2026")):
+            for idx, extract in enumerate(tqdm(extracts, desc="rapp2026")):
                 experiment = build_experiment(
                     self.name,
-                    item,
+                    (
+                        control_genotype()
+                        if extract.resolved is None
+                        else crispri_genotype(extract.resolved)
+                    ),
                     keys,
-                    matrix[:, list(item.strain.columns)].tolist(),
+                    matrix[:, extract.column].tolist(),
                     target_ids,
                     env,
+                    extract.row.sample.column,
                 )
                 txn.put(
                     f"{idx}".encode(),
@@ -2145,7 +2272,7 @@ class MetabolomeRapp2026Dataset(ExperimentDataset):
                 )
         env_out.close()
         interned_env.close()
-        log.info("Wrote %d Rapp 2026 metabolome experiments to LMDB", len(resolved))
+        log.info("Wrote %d Rapp 2026 metabolome extracts to LMDB", len(extracts))
 
     def _write_ledgers(
         self,
@@ -2157,8 +2284,11 @@ class MetabolomeRapp2026Dataset(ExperimentDataset):
         populated: PopulatedFeatures,
         stored: Sequence[FeatureIdentity],
         resolved: Sequence[ResolvedStrain],
+        extracts: Sequence[StoredExtract],
     ) -> None:
-        """The drop log, identifier ledger, identity ledger and the two check records."""
+        """The drop log, identifier ledger, identity ledger, the two check records, and
+        the strain and per-record tables.
+        """
         out = Path(self.preprocess_dir)
         (out / "dropped_records.json").write_text(drop_log.model_dump_json(indent=2))
         (out / "identifier_reconciliation.json").write_text(
@@ -2221,6 +2351,25 @@ class MetabolomeRapp2026Dataset(ExperimentDataset):
                 for idx, item in enumerate(resolved)
             ]
         ).to_csv(out / "strains.csv", index=False)
+        pd.DataFrame(
+            [
+                {
+                    "record": idx,
+                    "replicate_id": extract.row.sample.column,
+                    "gene": extract.row.sample.gene,
+                    "control": extract.resolved is None,
+                    "locus_tag": (
+                        "" if extract.resolved is None else extract.resolved.locus_tag
+                    ),
+                    "replicate": extract.row.sample.replicate,
+                    "plate": extract.row.plate,
+                    "well": extract.row.well,
+                    "batch": extract.row.sample.batch,
+                    "optical_density": extract.row.optical_density,
+                }
+                for idx, extract in enumerate(extracts)
+            ]
+        ).to_csv(out / "records.csv", index=False)
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
@@ -2241,8 +2390,9 @@ VERIFIER_PROVENANCE = Provenance(
     source_uri=f"torchcell-raw/{CITATION_KEY}/data/{TABLE_S4}",
     citation_key=CITATION_KEY,
     sha256=DATA_SHA256[TABLE_S4],
-    method="FI-MS iML1515 feature fold changes relative to the per-batch median, mean "
-    "of the strain's two plates; reference = the 15 empty-sgRNA control strains",
+    method="FI-MS iML1515 feature fold changes relative to the per-batch median, one "
+    "record per released extract (two independent plates per strain, the 30 control "
+    "extracts included); reference = the mean over the 30 empty-sgRNA control extracts",
     page="Cell Syst 2026 Table S4 (mmc5.xlsx, sheet Table_S4)",
 )
 

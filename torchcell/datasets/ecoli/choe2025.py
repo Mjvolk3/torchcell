@@ -47,8 +47,9 @@ make the thirteenth, untreated condition a record with no environmental edit, wh
 environment-response verifier's L3 ``environment_perturbed`` rule correctly refuses.
 
 WHY ``EnvironmentResponsePhenotype`` AND NOT ``FitnessPhenotype``. The stored number is
-signed (234,744 of the 466,569 values are negative, 13,176 of them below -1; the minimum
-is -7.2275, the maximum +5.3219 and the median -0.0031) and its baseline is 0, not 1. ``FitnessPhenotype`` is a strictly positive
+signed (measured on the 470,502 stored values, 2026-11-24: 236,749 negative, 13,255
+below -1; minimum -7.2275, maximum +5.3219, median -0.0031) and its baseline is 0, not
+1. ``FitnessPhenotype`` is a strictly positive
 growth ratio that CLAMPS non-positive values and whose verifier requires a 1.0 reference,
 so it cannot carry a log2 fold change.
 
@@ -60,6 +61,34 @@ definition of an sgRNA's abundance ("its mean abundance (reads per million mappe
 from two replicate measurements under a given condition"); pairing replicate 1 of an
 antibiotic with replicate 1 of LB would assert a pairing the release never states, so the
 replicate count rides on ``n_samples = 2`` instead.
+
+REPLICATES (per-replicate policy, #1178 and #1175; reviewed 2026-11-24, records
+unchanged, the record unit waits on an owner decision). Table S1 releases every
+condition as two columns, ``<condition>_1`` and ``<condition>_2``, of reads per million
+mapped reads per guide, plus ``Lib1`` and ``Lib2`` for the initial library: 28 columns x
+39,580 guides = 1,108,240 released values, none missing. What one column IS is not
+settled by any mirrored text:
+
+- the paper's only words for it are "two replicate measurements under a given
+  condition" (``SOURCED_VALUES["abundance_definition"]``, STAR Methods, Quantification
+  of gene fitness), with no "biological", "technical", "independent" or "culture";
+- the Methods describe the screen culture in the singular, one re-inoculation "in 50 ml
+  LB medium or LB media with antibiotics" per condition
+  (``SOURCED_VALUES["condition_culture"]``), and name no duplicate culture;
+- the ENA study the Data availability statement names (PRJEB33267) deposits each column
+  as its own BioSample and run, titled e.g. "CRISPRi sgRNA Amplicon Seq LB Rep 1" and
+  "... LB Rep 2" (SAMEA5750191, SAMEA5750192), whose only attributes are organism and
+  checklist, so a separate sequencing library per column is shown, a separate culture is
+  not. The initial library has no ENA sample.
+
+Under the policy a separate culture is one record per column and a technical measurement
+is combined inside the record, so the unit is the owner's call (#1172). Either way the
+per-replicate record the policy names is the released absolute abundance, not a ratio
+over a loader mean of the LB columns, and no ``MeasurementType`` member names a
+normalized barcode abundance (reads per million), so that record also needs a schema
+addition. Until both are decided the records stay one log2 ratio of the two column
+means, which is the paper's own definition, with ``n_samples = 2`` and ``sample_unit`` a
+typed gap.
 
 ARITHMETIC CHECKS RUN AT BUILD TIME (``preprocess/extraction.json``), each of which
 stops the build; neither reads a genome:
@@ -506,7 +535,19 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         page=_QUANT,
         note="the two replicate columns a condition's abundance is the mean of, and the "
         "source of n_samples = 2. The paper does not say whether a replicate is "
-        "biological or technical, so sample_unit is a typed gap",
+        "biological or technical, so sample_unit is a typed gap. Re-read in full for "
+        "the per-replicate review of 2026-11-24 (#1178): no other sentence of paper.md "
+        "or si1.md names the replicate kind of the screen; the record unit is an "
+        "owner decision (#1172)",
+    ),
+    "condition_culture": _paper(
+        1,
+        _SCREEN_CULTURE_QUOTE,
+        page=_POPULATIONS,
+        note="the Methods describe one 50 ml culture per condition and name no "
+        "duplicate culture, which is why the two Table S1 columns of a condition are "
+        "not asserted to be two cultures. Not proof of one culture either: the "
+        "sentence is about the inoculation, not the replicate design",
     ),
     "enrichment_ratio_definition": _paper(
         "median",
@@ -852,9 +893,19 @@ REPORTED_LIBRARY_COVERAGE = int(SOURCED_VALUES["library_coverage"].value)
 #: value. Measured on the release: 5.0e-5, which is Table S2's 4-decimal rounding.
 ER_TOLERANCE = 1e-3
 
-#: The frozen record-count oracle: 38,966 kept guides x 12 antibiotics, minus the 1,023
+#: The frozen record-count oracle: 39,294 kept guides x 12 antibiotics, minus the 1,026
 #: (guide, antibiotic) cells whose antibiotic abundance is zero.
 EXPECTED_RECORDS = 470502
+
+#: Table S1's released replicate columns: two per condition (``<label>_1``, ``<label>_2``)
+#: over the untreated control and the twelve antibiotics, plus the two initial-library
+#: columns. Whether a column is a culture or a technical measurement is not stated
+#: (module docstring, REPLICATES), so these are counted, not yet stored one per record.
+REPLICATE_LABELS: tuple[str, str] = ("1", "2")
+RELEASED_GUIDE_ROWS = 39580
+RELEASED_VALUE_COLUMNS = len(LIBRARY_COLUMNS) + len(S1_CONDITION_LABELS) * len(
+    REPLICATE_LABELS
+)
 
 
 # --------------------------------------------------------------------------- #
@@ -1073,7 +1124,9 @@ def read_table_s1(path: str | Path) -> pd.DataFrame:
         identifiers[n_id : n_id + 1], [S1_VALUE_GROUP], "Table S1 value-group"
     )
     samples = [
-        f"{label}_{replicate}" for label in S1_CONDITION_LABELS for replicate in (1, 2)
+        f"{label}_{replicate}"
+        for label in S1_CONDITION_LABELS
+        for replicate in REPLICATE_LABELS
     ]
     _expect_header(samples_row[n_id:], [*LIBRARY_COLUMNS, *samples], "Table S1 sample")
     frame = raw.iloc[4:].reset_index(drop=True)
@@ -2052,7 +2105,7 @@ def run_verification(data_root: str | None = None) -> VerificationReport:
     """Run the environment-response family verifier (L0-L4) on the built dev LMDB.
 
     The gene universe and the resolver are MG1655's, the host the records are written
-    against; the dataset is streamed, so 466,569 records are never materialized. Three
+    against; the dataset is streamed, so 470,502 records are never materialized. Three
     supplementary rows are appended: the pseudogene-tolerant locus check, the
     spacer-against-window check on the pinned sequence (both genome-reference findings,
     #1069) and the provenance audit of every ``SOURCED_VALUES`` entry. The report is written to

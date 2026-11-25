@@ -1174,6 +1174,96 @@ def test_the_released_tables_hold_the_counts_the_paper_reports() -> None:
     assert coverage.n_present_in_library == m.REPORTED_LIBRARY_COVERAGE
 
 
+#: Zero cells per Table S1 replicate column, measured on the pinned mmc2.xlsx
+#: (2026-11-24 per-replicate review, #1178). Every other cell is a positive RPM.
+TABLE_S1_ZERO_CELLS = {
+    "Lib1": 26,
+    "Lib2": 22,
+    "LB_1": 624,
+    "LB_2": 485,
+    "CCCP_1": 506,
+    "CCCP_2": 480,
+    "Polymyxin B_1": 357,
+    "Polymyxin B_2": 410,
+    "Pyocyanine_1": 452,
+    "Pyocyanine_2": 501,
+    "Rifampicin_1": 377,
+    "Rifampicin_2": 390,
+    "Sulfamethizole_1": 378,
+    "Sulfamethizole_2": 420,
+    "Verapamil_1": 447,
+    "Verapamil_2": 472,
+    "Erythromycin_1": 515,
+    "Erythromycin_2": 496,
+    "Puromycin_1": 344,
+    "Puromycin_2": 273,
+    "Phleomycin_1": 352,
+    "Phleomycin_2": 373,
+    "Mitomycin C_1": 427,
+    "Mitomycin C_2": 350,
+    "MMS_1": 620,
+    "MMS_2": 590,
+    "Novobiocin_1": 335,
+    "Novobiocin_2": 339,
+}
+
+
+@pytest.mark.data
+def test_table_s1_releases_two_replicate_columns_per_condition() -> None:
+    """Pin the released replicate layout the per-replicate review (#1178) counted.
+
+    28 columns x 39,580 guides = 1,108,240 values, none missing: two per condition
+    (control plus twelve antibiotics) and two for the initial library.
+    """
+    directory = _mirror_data()
+    if directory is None:
+        pytest.skip("the Choe 2025 raw mirror is not on this host")
+    s1 = m.read_table_s1(directory / m.TABLE_S1_FILE)
+    value_columns = [c for c in s1.columns if c not in m.S1_ID_COLUMNS]
+    assert len(s1) == m.RELEASED_GUIDE_ROWS == 39580
+    assert len(value_columns) == m.RELEASED_VALUE_COLUMNS == 28
+    assert value_columns == [
+        *m.LIBRARY_COLUMNS,
+        *(
+            f"{label}_{rep}"
+            for label in m.S1_CONDITION_LABELS
+            for rep in m.REPLICATE_LABELS
+        ),
+    ]
+    values = s1[value_columns]
+    assert int(values.notna().sum().sum()) == 1108240
+    assert bool((values >= 0).all().all())
+    assert {c: int((s1[c] == 0).sum()) for c in value_columns} == TABLE_S1_ZERO_CELLS
+
+
+@pytest.mark.data
+def test_every_stored_value_is_the_log2_ratio_of_the_two_column_means() -> None:
+    """The record a guide x antibiotic gets is log2(mean(abx_1, abx_2) / mean(LB_1, LB_2)).
+
+    Recomputed straight from the released columns for every kept cell, and the kept
+    count is the frozen oracle: the per-replicate review changed no record.
+    """
+    directory = _mirror_data()
+    if directory is None:
+        pytest.skip("the Choe 2025 raw mirror is not on this host")
+    s1 = m.read_table_s1(directory / m.TABLE_S1_FILE)
+    s2 = m.read_table_s2(directory / m.TABLE_S2_FILE)
+    s6 = m.read_table_s6(directory / m.TABLE_S6_FILE)
+    result = m.select_guides(s1, m.spacer_by_window(s6), m.gene_identities(s2))
+    n_records = 0
+    worst = 0.0
+    for guide in result.kept:
+        row = s1.iloc[guide.row]
+        lb = (float(row["LB_1"]) + float(row["LB_2"])) / 2
+        for label in guide.antibiotic_abundance:
+            abx = (float(row[f"{label}_1"]) + float(row[f"{label}_2"])) / 2
+            worst = max(worst, abs(m.log2_response(guide, label) - math.log2(abx / lb)))
+            n_records += 1
+    assert n_records == m.EXPECTED_RECORDS == 470502
+    assert worst < 1e-12
+    assert m.N_REPLICATES == len(m.REPLICATE_LABELS)
+
+
 @pytest.mark.data
 def test_the_built_store_holds_the_expected_records() -> None:
     root = _data_root()

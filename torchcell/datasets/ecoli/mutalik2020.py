@@ -544,7 +544,10 @@ def sourced_values() -> dict[str, SourcedValue]:
             page="Results, 'RB-TnSeq identifies known receptors'",
             note="the released Keio_exps_used.tab carries 68 phage assays and TEN "
             "no-phage controls (one of them plain LB without SM buffer); the text says "
-            "nine, and read_experiment_axis reports what the file holds",
+            "nine, and read_experiment_axis reports what the file holds. The STORE holds "
+            "71 challenges, three more than this sentence states, because the S1 Table "
+            "publishes three experiments that file omits (see the module docstring); "
+            "this value stays what the paper says",
         ),
         "no_phage_control": NO_PHAGE_CONTROL,
         "replicate_unit": COMMON_PRECULTURE,

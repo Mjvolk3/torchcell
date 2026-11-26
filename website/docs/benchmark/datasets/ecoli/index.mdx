@@ -22,7 +22,7 @@ Four benchmark tasks built from four *Escherichia coli* K-12 datasets. Each asks
 - **Target.** One number a model predicts for a sample. A task has 1, 15 or 7,534 targets.
 - **Seed.** One random assignment of units to train, validation and test. A split family has three or five seeds.
 - **Representation.** A fixed vector of numbers that stands for a gene, for example a protein language model's output averaged over the positions of the sequence.
-- **Ridge regression.** A linear model with an L2 penalty on its weights. The penalty is its one hyperparameter (`alpha` in the results table).
+- **Ordinary least squares (OLS).** The linear model that minimizes the squared error on the training samples. It has no hyperparameter. When the features do not determine a unique fit, the minimum-norm solution is taken.
 
 ## Loading a task
 
@@ -87,22 +87,22 @@ Train, validation and test hold about 80%, 10% and 10% of the unit that is split
 
 ## Linear-probe baselines
 
-The first baselines are linear probes: a frozen representation of each deleted gene and a ridge regression on top. They measure how much of a label a linear readout of a gene representation recovers under each kind of split.
+The first baselines are linear probes: a frozen representation of each deleted gene and ordinary least squares on top. They measure how much of a label a linear readout of a gene representation recovers under each kind of split.
 
 | Representation | Reads | Model and pooling | Numbers per gene |
 | :-- | :-- | :-- | --: |
 | Random | nothing | 1,280 standard-normal numbers per gene, fixed seed | 1,280 |
-| One-hot | gene identity | one indicator per gene of the task | genes in task |
+| One-hot | gene identity | one indicator per gene of the task | one per gene of the task |
 | Codon frequency | coding sequence | relative frequency of the 64 codons | 64 |
 | CaLM | coding sequence, codons | CaLM (Outeiral and Deane 2024), last layer, mean over codons | 768 |
 | GenSLM 25M | coding sequence, codons | GenSLM 25M foundation model (Zvyagin 2023), last layer, mean over codons | 512 |
-| GenSLM 250M | coding sequence, codons | GenSLM 250M foundation model (Zvyagin 2023), last layer, mean over codons | 1,024 |
+| GenSLM 250M | coding sequence, codons | GenSLM 250M foundation model (Zvyagin 2023), last layer, mean over codons | 1,840 |
 | NT v1 2.5B | coding sequence, 6-mers | Nucleotide Transformer v1, 2.5B multi-species (`InstaDeepAI/nucleotide-transformer-2.5b-multi-species`), last layer, mean over tokens | 2,560 |
 | NT v2 500M | coding sequence, 6-mers | Nucleotide Transformer v2, 500M multi-species (`InstaDeepAI/nucleotide-transformer-v2-500m-multi-species`), last layer, mean over tokens | 1,024 |
 | ESM-2 650M | protein sequence | ESM-2 650M (`facebook/esm2_t33_650M_UR50D`), last layer, mean over residues | 1,280 |
 | ProtT5-XL | protein sequence | ProtT5-XL-UniRef50 encoder (`Rostlab/prot_t5_xl_uniref50`), last layer, mean over residues | 1,024 |
 
-A single-gene sample is its gene's representation. A gene-pair sample is the two representations concatenated in stored order, or summed. Features are standardized with the training mean and standard deviation, and one ridge regression is fit per task, split and representation, on all targets at once. The penalty is the one of eight values from 0.1 to 1,000,000 with the lowest validation mean squared error. The test part is unlocked once per split, after that choice. A sequence longer than a model's window is truncated from its end.
+A single-gene sample is its gene's representation. A gene-pair sample is the two representations concatenated in stored order, or summed. Features are standardized with the training mean and standard deviation, and one ordinary least squares model with an intercept is fit per task, split and representation, on all targets at once. There is no hyperparameter and no random step, so validation is reported but nothing is chosen on it, and the test part is unlocked once per split. When a representation has at least as many numbers as there are training samples, or collinear numbers, the minimum-norm solution is taken. A sequence longer than a model's window is truncated from its end.
 
 ### Metrics
 
@@ -114,20 +114,20 @@ The representation with the highest mean test Pearson correlation and the one wi
 
 | Task | Split family | Best by Pearson | Best by Spearman | Its Pearson | Its Spearman | Random features, Pearson |
 | :-- | :-- | :-- | :-- | --: | --: | --: |
-| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Random | CaLM | CaLM | 0.102 ± 0.067 | 0.069 ± 0.031 | 0.001 ± 0.057 |
-| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Sequence identity 30% | Codon frequency | ProtT5-XL | 0.095 ± 0.014 | 0.088 ± 0.050 | -0.048 ± 0.036 |
-| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Sequence identity 50% | CaLM | NT v1 2.5B | 0.120 ± 0.041 | 0.082 ± 0.052 | 0.017 ± 0.029 |
-| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Chromosome position | Codon frequency | Codon frequency | 0.097 ± 0.066 | 0.076 ± 0.063 | 0.020 ± 0.061 |
-| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Random | NT v1 2.5B | Random | 0.036 ± 0.022 | 0.023 ± 0.025 | 0.018 ± 0.015 |
-| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Sequence identity 30% | Random | Random | 0.035 ± 0.015 | 0.023 ± 0.009 | 0.035 ± 0.015 |
-| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Sequence identity 50% | Codon frequency | Codon frequency | 0.047 ± 0.046 | 0.028 ± 0.031 | 0.025 ± 0.003 |
-| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Chromosome position | Random | ProtT5-XL | 0.023 ± 0.017 | 0.018 ± 0.059 | 0.023 ± 0.017 |
-| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Random | NT v1 2.5B | NT v1 2.5B | 0.466 ± 0.007 | 0.458 ± 0.009 | 0.461 ± 0.009 |
-| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, random | One-hot | One-hot | 0.295 ± 0.044 | 0.283 ± 0.037 | 0.283 ± 0.028 |
-| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, identity 30% | One-hot | One-hot | 0.274 ± 0.014 | 0.275 ± 0.022 | 0.260 ± 0.045 |
-| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, identity 50% | One-hot | One-hot | 0.288 ± 0.008 | 0.281 ± 0.016 | 0.278 ± 0.010 |
-| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, position | One-hot | One-hot | 0.297 ± 0.044 | 0.292 ± 0.043 | 0.265 ± 0.059 |
-| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Random | ESM-2 650M | Codon frequency | 0.010 ± 0.006 | 0.008 ± 0.003 | -0.003 ± 0.001 |
-| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Sequence identity 30% | ESM-2 650M | Codon frequency | 0.010 ± 0.004 | 0.008 ± 0.000 | -0.004 ± 0.004 |
-| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Sequence identity 50% | GenSLM 25M | GenSLM 25M | 0.006 ± 0.004 | 0.005 ± 0.003 | -0.006 ± 0.003 |
-| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Chromosome position | Codon frequency | Codon frequency | 0.004 ± 0.004 | 0.002 ± 0.003 | -0.001 ± 0.006 |
+| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Random | CaLM | CaLM | 0.057 ± 0.031 | 0.057 ± 0.086 | -0.016 ± 0.033 |
+| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Sequence identity 30% | Codon frequency | NT v2 500M | 0.075 ± 0.034 | 0.068 ± 0.035 | -0.074 ± 0.010 |
+| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Sequence identity 50% | GenSLM 25M | ProtT5-XL | 0.053 ± 0.020 | 0.064 ± 0.066 | 0.006 ± 0.060 |
+| [Growth rate (Campos 2018)](./growth-rate-campos2018.mdx) | Chromosome position | Codon frequency | Codon frequency | 0.091 ± 0.052 | 0.080 ± 0.014 | 0.022 ± 0.056 |
+| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Random | ProtT5-XL | ProtT5-XL | 0.040 ± 0.021 | 0.029 ± 0.014 | 0.020 ± 0.018 |
+| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Sequence identity 30% | ProtT5-XL | Random | 0.038 ± 0.014 | 0.033 ± 0.008 | 0.024 ± 0.011 |
+| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Sequence identity 50% | ESM-2 650M | ESM-2 650M | 0.063 ± 0.007 | 0.040 ± 0.007 | 0.021 ± 0.017 |
+| [Cell shape and cell cycle (Campos 2018)](./morphology-campos2018.mdx) | Chromosome position | ProtT5-XL | ProtT5-XL | 0.033 ± 0.015 | 0.021 ± 0.018 | 0.020 ± 0.008 |
+| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Random | One-hot | One-hot | 0.452 ± 0.006 | 0.455 ± 0.004 | 0.444 ± 0.010 |
+| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, random | One-hot | One-hot | 0.293 ± 0.047 | 0.280 ± 0.041 | 0.224 ± 0.046 |
+| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, identity 30% | One-hot | One-hot | 0.273 ± 0.015 | 0.276 ± 0.023 | 0.177 ± 0.006 |
+| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, identity 50% | One-hot | One-hot | 0.285 ± 0.005 | 0.273 ± 0.011 | 0.128 ± 0.037 |
+| [Genetic interactions (Babu 2014)](./gene-interaction-babu2014.mdx) | Gene holdout, position | One-hot | One-hot | 0.296 ± 0.047 | 0.288 ± 0.043 | 0.113 ± 0.081 |
+| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Random | CaLM | Codon frequency | 0.009 ± 0.002 | 0.008 ± 0.006 | -0.000 ± 0.003 |
+| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Sequence identity 30% | Codon frequency | Codon frequency | 0.009 ± 0.003 | 0.009 ± 0.003 | 0.001 ± 0.004 |
+| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Sequence identity 50% | ESM-2 650M | ESM-2 650M | 0.007 ± 0.002 | 0.006 ± 0.003 | -0.005 ± 0.002 |
+| [Metabolome (Fuhrer 2017)](./metabolome-fuhrer2017.mdx) | Chromosome position | NT v1 2.5B | NT v1 2.5B | 0.007 ± 0.008 | 0.006 ± 0.006 | 0.003 ± 0.003 |

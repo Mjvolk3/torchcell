@@ -46,7 +46,7 @@ set +a
 BUILD_DIR="${TC_SITE_BUILD_DIR:-$REPO/website}"
 if [ "$BUILD_DIR" != "$REPO/website" ]; then
     mkdir -p "$BUILD_DIR"
-    rsync -a --exclude node_modules --exclude 'build*' --exclude .docusaurus \
+    rsync -a --delete --exclude node_modules --exclude 'build*' --exclude .docusaurus \
         "$REPO/website/" "$BUILD_DIR/"
 fi
 if [ ! -d "$BUILD_DIR/node_modules" ]; then

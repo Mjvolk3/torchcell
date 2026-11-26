@@ -1,0 +1,62 @@
+---
+title: Source dataset cards
+sidebar_label: Source dataset cards
+description: One standard card per source dataset, in a shared notation.
+---
+
+A **source dataset** is one published dataset as TorchCell stores it: the records of
+one loader, built from the files one publication released. A **source dataset card** is
+a one-screen description of what that dataset's experiment did. Every card has the same
+parts in the same order, so a reader who has seen one card can read any other.
+
+The cards explain the data. [Tutorials](/tutorials/) show how to use the library, and a
+[benchmark task](/benchmark/datasets/) is a source dataset with samples, splits and a
+board added.
+
+A card is as short as it can be while still letting someone in the field recognize
+the experiment.
+
+## Parts of a card
+
+| Part | Content |
+| :-- | :-- |
+| Header | What was measured, the source publication, the dataset slug, the loader class, the record count |
+| Diagram | A draw.io schematic of the experiment, exported as SVG |
+| Blurb | One short paragraph: what was perturbed, what was measured, how many records |
+| Notation | A few lines of LaTeX in the [unified notation](./notation.mdx) |
+| Experimental details | Strain, medium, replicates, units, each sourced from the publication |
+
+## Cards
+
+| Organism | Card | Records | State |
+| :-- | :-- | --: | :-- |
+| *Saccharomyces cerevisiae* | [Single-mutant fitness, Costanzo 2016](./smf-costanzo2016.mdx) | 20,484 | details <Todo /> |
+| *Saccharomyces cerevisiae* | [Amino acid levels, Mulleder 2016](./amino-acid-mulleder2016.mdx) | 4,678 | details <Todo /> |
+| *Saccharomyces cerevisiae* | [Betaxanthin production, Cachera 2023](./betaxanthin-cachera2023.mdx) | 4,719 | details <Todo /> |
+| *Escherichia coli* | [Growth rate of single-gene deletions, Campos 2018](./ecoli-growth-rate-campos2018.mdx) | 3,664 | details sourced |
+| *Escherichia coli* | [Cell shape and cell cycle, Campos 2018](./ecoli-morphology-campos2018.mdx) | 3,664 | details sourced |
+| *Escherichia coli* | [Genetic interactions, Babu 2014](./ecoli-gene-interaction-babu2014.mdx) | 42,705 | details sourced |
+| *Escherichia coli* | [Metabolome of single-gene deletions, Fuhrer 2017](./ecoli-metabolome-fuhrer2017.mdx) | 3,806 | details sourced |
+
+The diagrams of all seven cards are planned. A card never states an experimental detail
+that has not been sourced from the publication or its supplementary information (SI):
+the *E. coli* cards give the section each value was read from, and the yeast cards mark
+each detail <Todo /> until it has been sourced.
+
+## Adding a card
+
+1. Copy `docs/source-dataset-cards/_template.mdx` to
+   `docs/source-dataset-cards/<slug>.mdx`, where `<slug>` is the dataset slug.
+2. Fill the `DatasetCard` properties, the blurb, and the notation. Use only symbols
+   defined on the [notation page](./notation.mdx); add a symbol there first if one is
+   missing.
+3. Export the draw.io diagram as SVG to `static/img/dataset-cards/<slug>.svg` and set
+   `diagramSrc` and `diagramAlt`.
+4. Replace each <Todo /> with the sourced value and name its source.
+5. Add the card to the `datasetCards` sidebar in `sidebars.ts`, under its organism, and
+   to the table above.
+
+## Relation to the ontology
+
+The symbols of the notation name the top-level parts of the typed experiment, so a
+card can be read against the [ontology](/ontology/) term by term.

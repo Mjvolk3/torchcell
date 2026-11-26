@@ -6,6 +6,9 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 // entry in the sidebar is a link that opens a page.
 // The one exception is the organism groups under Benchmark > Datasets: they are
 // dropdowns that start closed, so a long list of tasks does not bury the top-level pages.
+// The sidebar is the one way to move inside a tab: a landing page does not repeat it as
+// a grid of cards (only the home page has cards, one per tab). A link that leaves the
+// site for the Sphinx docs sits under a group whose label says so.
 
 const SPHINX_URL = 'https://mjvolk3.github.io/torchcell/';
 const GITHUB_URL = 'https://github.com/Mjvolk3/torchcell';
@@ -41,6 +44,22 @@ const sidebars: SidebarsConfig = {
       label: 'Releases',
       items: ['database/releases'],
     },
+    {
+      type: 'category',
+      label: 'In the Sphinx docs',
+      items: [
+        {
+          type: 'link',
+          label: 'Dataset downloads',
+          href: `${SPHINX_URL}guide/downloads.html`,
+        },
+        {
+          type: 'link',
+          label: 'Compatibility table',
+          href: `${SPHINX_URL}database/compatibility.html`,
+        },
+      ],
+    },
   ],
 
   ontology: [
@@ -53,7 +72,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Related',
-      items: ['ontology/learn'],
+      items: ['ontology/dataset-cards'],
     },
   ],
 
@@ -70,7 +89,7 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Database pages',
+      label: 'Sphinx database pages',
       items: [
         {
           type: 'link',
@@ -187,16 +206,26 @@ const sidebars: SidebarsConfig = {
     },
   ],
 
-  learn: [
-    'learn/index',
-    'learn/notation',
+  datasetCards: [
+    'source-dataset-cards/index',
+    'source-dataset-cards/notation',
     {
       type: 'category',
-      label: 'Dataset cards',
+      label: 'Saccharomyces cerevisiae',
       items: [
-        'learn/cards/smf-costanzo2016',
-        'learn/cards/amino-acid-mulleder2016',
-        'learn/cards/betaxanthin-cachera2023',
+        'source-dataset-cards/smf-costanzo2016',
+        'source-dataset-cards/amino-acid-mulleder2016',
+        'source-dataset-cards/betaxanthin-cachera2023',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Escherichia coli',
+      items: [
+        'source-dataset-cards/ecoli-growth-rate-campos2018',
+        'source-dataset-cards/ecoli-morphology-campos2018',
+        'source-dataset-cards/ecoli-gene-interaction-babu2014',
+        'source-dataset-cards/ecoli-metabolome-fuhrer2017',
       ],
     },
   ],

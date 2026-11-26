@@ -47,9 +47,9 @@ const TABS: {title: string; href: string; body: string}[] = [
     body: 'Nine planned notebooks, most of them about datasets.',
   },
   {
-    title: 'Learn',
-    href: '/learn/',
-    body: 'One standard card per dataset: a diagram, a blurb, and a shared notation.',
+    title: 'Source dataset cards',
+    href: '/source-dataset-cards/',
+    body: 'One standard card per source dataset: a diagram, a blurb, and a shared notation.',
   },
   {
     title: 'Milestones',

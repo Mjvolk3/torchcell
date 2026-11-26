@@ -7,24 +7,12 @@ description: The served Neo4j knowledge graph and how to reach it.
 The TorchCell database is a Neo4j knowledge graph that stores the typed experiments of
 every dataset. At release <ReleaseCount field="releaseDate" /> the served graph holds <ReleaseCount field="nDatasets" /> datasets and <ReleaseCount field="nExperiments" /> experiment records over <ReleaseCount field="nGenotypeEnvironmentPairs" /> distinct genotype-environment combinations. The two counts differ because an interaction score derived from a fitness measurement is a second record on the same combination: a digenic or trigenic interaction record sits beside the double or triple mutant fitness record it was computed from.
 
-<LinkGrid>
-  <LinkCard title="Neo4j Browser" href="/database/browser">
-    Run Cypher queries against the served graph from a web page.
-  </LinkCard>
-  <LinkCard title="Bolt URI" href="/database/bolt">
-    Connect a Neo4j driver or client.
-  </LinkCard>
-  <LinkCard title="How a query works" href="/database/query">
-    What a query returns, how the library turns it into training data, and what the
-    graph alone does not hold.
-  </LinkCard>
-  <LinkCard title="Releases and compatibility" href="/database/releases">
-    Release ids, versions, and the compatibility check.
-  </LinkCard>
-  <LinkCard title="Dataset downloads" href="https://mjvolk3.github.io/torchcell/guide/downloads.html">
-    Built datasets as versioned archives, without querying the graph.
-  </LinkCard>
-</LinkGrid>
+There are two ways to get the data. Query the served graph, through the
+[Neo4j Browser](./browser.mdx) or a [Bolt](./bolt.mdx) client; [How a query works](./query.mdx)
+says what a query returns. Or download a built dataset as a versioned archive, without
+querying the graph: the
+[dataset downloads page](https://mjvolk3.github.io/torchcell/guide/downloads.html) has
+the instructions.
 
 Simplified query modes (by chemical similarity, gene similarity, and homologs) are
 planned and described under the [Query tab](/query/).

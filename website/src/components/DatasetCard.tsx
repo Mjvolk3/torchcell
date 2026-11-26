@@ -20,7 +20,7 @@ type CardProps = {
   docsUrl?: string;
   /**
    * Site-relative path of the exported draw.io diagram (SVG preferred), e.g.
-   * `/img/learn/smf-costanzo2016.svg`. Leave unset until the diagram exists; the
+   * `/img/dataset-cards/smf-costanzo2016.svg`. Leave unset until the diagram exists; the
    * card then shows an empty, labeled slot.
    */
   diagramSrc?: string;

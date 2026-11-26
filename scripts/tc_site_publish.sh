@@ -13,7 +13,8 @@
 #      TC_SITE_BUILD_DIR to a prepared copy that already holds node_modules; the website
 #      sources are rsynced into it first (node_modules, build outputs and .docusaurus
 #      excluded), as the scratch preview scripts do.
-#   2. `docusaurus build --out-dir build-<tier>` with the tier's env file exported.
+#   2. `docusaurus build --out-dir build-<tier>` with the tier's env file exported. The
+#      release counts are read from the snapshots on RELEASES_REF (default origin/main).
 #   3. A staging build must carry the noindex tag SITE_ENV=staging adds; the publish
 #      refuses otherwise, so a production-looking build cannot land on the staging host.
 #   4. rsync into SITE_PUBLISH_DIR with --delete, so removed pages disappear too.
@@ -54,9 +55,20 @@ if [ ! -d "$BUILD_DIR/node_modules" ]; then
 fi
 
 OUT="$BUILD_DIR/build-$TIER"
-# The site reads its counts from database/releases/ at build time; a build tree outside
-# the checkout has no copy, so point it at the checkout's.
-(cd "$BUILD_DIR" && RELEASES_DIR="$REPO/database/releases" nice -n 15 npx docusaurus build --out-dir "$OUT")
+# The site reads its counts from the newest release snapshot in database/releases/ at
+# build time. Snapshots are committed on main when a release is stamped, and a branch
+# that is behind main does not have the newest one, so they are read from RELEASES_REF
+# (default origin/main, fetched here) and not from this checkout. RELEASES_REF=HEAD
+# builds with the checkout's own snapshots.
+RELEASES_REF="${RELEASES_REF:-origin/main}"
+if [ "$RELEASES_REF" = "origin/main" ]; then
+    git -C "$REPO" fetch --quiet origin main
+fi
+RELEASES_TMP="$(mktemp -d /tmp/tc-site-releases.XXXXXX)"
+trap 'rm -rf "$RELEASES_TMP"' EXIT
+git -C "$REPO" archive "$RELEASES_REF" database/releases | tar -x -C "$RELEASES_TMP"
+echo "release snapshots from $RELEASES_REF ($(git -C "$REPO" rev-parse --short=9 "$RELEASES_REF"))"
+(cd "$BUILD_DIR" && RELEASES_DIR="$RELEASES_TMP/database/releases" nice -n 15 npx docusaurus build --out-dir "$OUT")
 test -s "$OUT/index.html"
 
 if [ "$TIER" = "staging" ] && ! grep -q 'noindex' "$OUT/index.html"; then

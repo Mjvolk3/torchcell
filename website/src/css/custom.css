@@ -334,6 +334,35 @@ html[data-layout='wide'] [class*='docItemCol'] {
   }
 }
 
+/* Where a link in page text goes. A link with no mark stays on this site. A link that
+ * leaves it carries an arrow, and a link into the Sphinx docs carries a labeled chip, so
+ * the reader knows before clicking that the page is in the library documentation. The
+ * sidebar and footer need neither: Docusaurus marks their external links itself and the
+ * Sphinx links there sit under a group that names them. */
+.markdown a[href^='http']:not(.tc-linkcard)::after {
+  content: '\2197';
+  margin-left: 0.15em;
+  font-size: 0.8em;
+  text-decoration: none;
+  display: inline-block;
+}
+.markdown a[href^='https://mjvolk3.github.io/torchcell/']:not(.tc-linkcard)::after {
+  content: 'Sphinx docs \2197';
+  margin-left: 0.35em;
+  padding: 0.05em 0.45em;
+  border: 1px solid var(--tc-border);
+  border-radius: 999px;
+  background: var(--tc-chip-planned-bg);
+  color: var(--tc-chip-planned-ink);
+  font-size: 0.72em;
+  font-weight: 600;
+  white-space: nowrap;
+  vertical-align: 0.1em;
+}
+.tc-linkcard[href^='http'] .tc-linkcard__title::after {
+  content: ' \2197';
+}
+
 
 /* Data scope chips on the boards: inductive, transductive, external data. */
 .tc-chip--scope-split_only {

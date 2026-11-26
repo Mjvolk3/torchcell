@@ -18,7 +18,7 @@ The final hosting location is undecided. The defaults below place the site under
 | `docs/benchmark/{leaderboard,submit,account,user}.mdx` | Thin pages that mount the interactive benchmark apps, so they keep the Benchmark sidebar |
 | `src/components/bench/` | The interactive benchmark apps (React, browser-only) |
 | `src/lib/benchApi.ts` | Typed client for the benchmark API |
-| `src/components/DatasetCard.tsx` | The dataset card; template in `docs/learn/cards/_template.mdx` |
+| `src/components/DatasetCard.tsx` | The dataset card; template in `docs/source-dataset-cards/_template.mdx` |
 | `src/theme/` | `MDXComponents` (components usable in MDX without an import) and `Root` (mock-data bar) |
 | `static/mock/` | Fixtures for mock mode, written by `scripts/gen_mock_fixtures.mjs` |
 
@@ -142,6 +142,14 @@ The site sets `trailingSlash: true`, so each page is written as
 `<path>/index.html` and its canonical URL ends in `/`. A link without the trailing
 slash, such as `/benchmark/account?verify=<token>`, depends on the host redirecting
 to the slashed path and keeping the query string.
+
+## Navigation
+
+The navbar picks a tab and that tab's sidebar is the one way to move inside it. A
+landing page does not repeat its sidebar as a grid of cards; only the home page has
+cards, one per tab. A link in page text that leaves the site carries an arrow, and a link
+into the Sphinx docs carries a "Sphinx docs" chip (`src/css/custom.css`); in a sidebar,
+Sphinx links sit under a group whose label says so.
 
 ## Writing rules
 

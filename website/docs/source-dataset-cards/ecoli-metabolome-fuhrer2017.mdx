@@ -1,0 +1,64 @@
+---
+title: Metabolome of single-gene deletions, Fuhrer 2017
+sidebar_label: Fuhrer 2017 metabolome
+description: Dataset card for ecoli-metabolome-fuhrer2017.
+---
+
+<DatasetCard
+  title="Metabolome of single-gene deletions"
+  slug="ecoli-metabolome-fuhrer2017"
+  citation="Fuhrer 2017"
+  loaderClass="MetabolomeFuhrer2017Dataset"
+  nRecords={3806}
+  docsUrl="https://mjvolk3.github.io/torchcell/datasets/ecoli/tutorial.html"
+>
+
+<CardBlurb>
+
+Each record is one strain of the Keio collection, *Escherichia coli* K-12 with one gene
+deleted. An extract of the growing culture was measured by flow-injection
+time-of-flight mass spectrometry, and each detected ion was scored against its level
+across all strains. The dataset holds 3,806 records.
+
+</CardBlurb>
+
+<CardNotation>
+
+$$
+g = \{\Delta i\}, \quad i \in \mathcal{G}
+\qquad\qquad
+(g, e) \mapsto y \in \mathbb{R}^{T}, \quad T = 7{,}534
+$$
+
+The genotype holds one deletion $\Delta i$. The environment $e$ is the same for every
+record. The phenotype $y$ is one modified z-score per ion: 3,169 ions of the negative
+ionization mode and 4,365 of the positive mode.
+
+</CardNotation>
+
+<CardDetails>
+
+Source: Fuhrer et al. 2017, *Mol Syst Biol* 13:907,
+[doi:10.15252/msb.20167150](https://doi.org/10.15252/msb.20167150). The per-strain
+values are deposited in BioStudies under accession S-BSST5.
+
+| Detail | Value | Read from |
+| :-- | :-- | :-- |
+| Strain collection | Keio knockout collection | Methods, "Biological samples" |
+| Reference strain | *E. coli* K-12 BW25113. Fuhrer 2017 does not name it; the cited collection paper does | Baba et al. 2006 |
+| Perturbation type | Single-gene deletion: the coding region replaced by a kanamycin cassette | Baba et al. 2006 |
+| Medium | Mineral salts medium with glucose and amino acids, liquid | Fuhrer 2017 |
+| Temperature | 37 °C | Fuhrer 2017 |
+| Culture | 1 ml in 96-deep-well plates, shaking at 300 rpm, harvested in mid-exponential growth | Fuhrer 2017 |
+| What $y$ is | Modified z-score of each ion: the ion's intensity minus its median, divided by its standard deviation, both over the whole dataset | Fuhrer 2017 |
+| Unit of $y$ | None. No internal standards were used, so there is no absolute concentration | Fuhrer 2017 |
+| Replicates | Two independent clones per strain, each extract measured twice, summarized into one score per strain | Methods, "Reproducibility between biological replicates"; BioStudies S-BSST5 |
+| Uncertainty reported | None per strain. Across the dataset, 99% of the variability between biological replicates is below a z-score of 2.765 | Fuhrer 2017, Figure EV2A |
+
+</CardDetails>
+
+</DatasetCard>
+
+This dataset is the source of the benchmark task
+[Metabolome (Fuhrer 2017)](/benchmark/datasets/ecoli/metabolome-fuhrer2017/), which
+uses 3,624 of the 3,806 records.

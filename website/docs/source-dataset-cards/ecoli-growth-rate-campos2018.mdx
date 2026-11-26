@@ -1,0 +1,62 @@
+---
+title: Growth rate of single-gene deletions, Campos 2018
+sidebar_label: Campos 2018 growth rate
+description: Dataset card for ecoli-growth-rate-campos2018.
+---
+
+<DatasetCard
+  title="Growth rate of single-gene deletions"
+  slug="ecoli-growth-rate-campos2018"
+  citation="Campos 2018"
+  loaderClass="GrowthRateCampos2018Dataset"
+  nRecords={3664}
+  docsUrl="https://mjvolk3.github.io/torchcell/datasets/ecoli/tutorial.html"
+>
+
+<CardBlurb>
+
+Each record is one strain of the Keio collection, *Escherichia coli* K-12 BW25113 with
+one gene deleted. The strain was grown in one medium in a plate reader, and its growth
+curve was fit for the maximal growth rate. The dataset holds 3,664 records.
+
+</CardBlurb>
+
+<CardNotation>
+
+$$
+g = \{\Delta i\}, \quad i \in \mathcal{G}
+\qquad\qquad
+(g, e) \mapsto y \in \mathbb{R}
+$$
+
+The genotype holds one deletion $\Delta i$. The environment $e$ is the same for every
+record. The phenotype $y$ is the maximal growth rate of the strain relative to the
+parent strain, one number per record, so $T = 1$.
+
+</CardNotation>
+
+<CardDetails>
+
+Source: Campos et al. 2018, *Mol Syst Biol* 14:e7573,
+[doi:10.15252/msb.20177573](https://doi.org/10.15252/msb.20177573).
+
+| Detail | Value | Read from |
+| :-- | :-- | :-- |
+| Reference strain | *E. coli* K-12 BW25113, the parent of the Keio collection | Results, "High-throughput imaging and growth measurements of the Keio collection" |
+| Perturbation type | Single-gene deletion: in-frame replacement of the gene by a kanamycin-resistance cassette | Results, "Genes, functions, and pathways associated with cell size and shape" |
+| Medium | M9 with 0.1% casamino acids and 0.2% glucose, liquid | Results, same section as the strain |
+| Temperature | 30 °C | Results, same section |
+| Culture | 150 µl in 96-well plates, continuous shaking in a plate reader | Materials and Methods, "Screening setup and microscopy" |
+| What $y$ is | Maximal growth rate from a Gompertz fit of the growth curve, divided by that of the parent strain | Results, same section; the ratio is how the served store holds it |
+| Unit of $y$ | None (a ratio). The publication releases the rate in min<sup>-1</sup> | Dataset EV2, column `alpha_max (min-1)` |
+| Replicates | One culture per record. The reference is 240 cultures of the parent strain | Results, same section; Figure 4 legend |
+| Uncertainty reported | None per strain | one culture per record |
+
+</CardDetails>
+
+</DatasetCard>
+
+The record count is the one the Sphinx dataset page reports for the served store. This
+dataset is the source of the benchmark task
+[Growth rate (Campos 2018)](/benchmark/datasets/ecoli/growth-rate-campos2018/), which
+uses 3,573 of the 3,664 records.

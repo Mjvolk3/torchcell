@@ -1,0 +1,66 @@
+---
+title: Genetic interactions of double mutants, Babu 2014
+sidebar_label: Babu 2014 genetic interactions
+description: Dataset card for ecoli-gene-interaction-babu2014.
+---
+
+<DatasetCard
+  title="Genetic interactions of double mutants"
+  slug="ecoli-gene-interaction-babu2014"
+  citation="Babu 2014"
+  loaderClass="GeneInteractionBabu2014Dataset"
+  nRecords={42705}
+  docsUrl="https://mjvolk3.github.io/torchcell/datasets/ecoli/tutorial.html"
+>
+
+<CardBlurb>
+
+Each record is one *Escherichia coli* K-12 double mutant, made by conjugation between a
+donor strain carrying one mutation and an arrayed recipient strain carrying another
+(eSGA). The colony size of the double mutant was scored against the expectation from
+its two single mutants. The dataset holds the 42,705 pairs the publication released,
+those that passed its significance cut.
+
+</CardBlurb>
+
+<CardNotation>
+
+$$
+g = \{p_i, p_j\}, \quad i, j \in \mathcal{G}
+\qquad\qquad
+(g, e) \mapsto y \in \mathbb{R}
+$$
+
+The genotype holds two perturbations: $p_i$ from the donor and $p_j$ from the
+recipient. Most are deletions; the perturbation of an essential gene is a hypomorphic
+allele. The phenotype $y$ is the interaction score (S-score) of the pair, one number
+per record, so $T = 1$. It is negative when the double mutant grows worse than
+expected and positive when it grows better.
+
+</CardNotation>
+
+<CardDetails>
+
+Source: Babu et al. 2014, *PLoS Genet* 10(2):e1004120,
+[doi:10.1371/journal.pgen.1004120](https://doi.org/10.1371/journal.pgen.1004120).
+
+| Detail | Value | Read from |
+| :-- | :-- | :-- |
+| Strains | Hfr Cavalli donor strains crossed into F- recipient strains of the Keio collection | main text; Protocol S16 |
+| Gene identifiers | *E. coli* K-12 MG1655 b-numbers | Table S2 |
+| Perturbation types | Donor: deletion marked with a chloramphenicol-resistance cassette, 163 query genes. Recipient: 3,968 single-gene deletions marked with a kanamycin-resistance cassette, and 149 hypomorphic strains with the marker in the 3'-UTR | main text |
+| Medium | Luria Broth with kanamycin and chloramphenicol, solid | main text |
+| Temperature | 32 °C, 36 h of outgrowth before imaging | main text |
+| What $y$ is | S-score of the pair, computed from double-mutant colony sizes | Protocol S2, which defers the definition to Butland et al. 2008 |
+| Unit of $y$ | None | a score, as defined in Butland et al. 2008 |
+| Released pairs | 25,239 with a score of -3 or lower and 17,466 with a score of +3 or higher | main text; Table S2 |
+| Replicates | Eight colony measurements per pair, averaged into one score | Protocol S2 |
+| Uncertainty reported | None per pair. The publication states P ≤ 0.05 for the released set as a whole | Protocol S2 |
+
+</CardDetails>
+
+</DatasetCard>
+
+This dataset is the source of the benchmark task
+[Genetic interactions (Babu 2014)](/benchmark/datasets/ecoli/gene-interaction-babu2014/),
+which uses 40,658 of the 42,705 records.

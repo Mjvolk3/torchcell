@@ -1,0 +1,64 @@
+---
+title: Cell shape and cell cycle of single-gene deletions, Campos 2018
+sidebar_label: Campos 2018 cell shape
+description: Dataset card for ecoli-morphology-campos2018.
+---
+
+<DatasetCard
+  title="Cell shape and cell cycle of single-gene deletions"
+  slug="ecoli-morphology-campos2018"
+  citation="Campos 2018"
+  loaderClass="MorphologyCampos2018Dataset"
+  nRecords={3664}
+  docsUrl="https://mjvolk3.github.io/torchcell/datasets/ecoli/tutorial.html"
+>
+
+<CardBlurb>
+
+Each record is one strain of the Keio collection, *Escherichia coli* K-12 BW25113 with
+one gene deleted. The cells of the strain were imaged, and their shape and cell-cycle
+state were measured and summarized over the cells. The dataset holds 3,664 records.
+
+</CardBlurb>
+
+<CardNotation>
+
+$$
+g = \{\Delta i\}, \quad i \in \mathcal{G}
+\qquad\qquad
+(g, e) \mapsto y \in \mathbb{R}^{T}, \quad T = 15
+$$
+
+The genotype holds one deletion $\Delta i$. The environment $e$ is the same for every
+record. The phenotype $y$ is one number per feature, the mean of that feature over the
+imaged cells of the strain. Six of the 15 are not determined for a strain imaged
+without a nucleoid channel.
+
+</CardNotation>
+
+<CardDetails>
+
+Source: Campos et al. 2018, *Mol Syst Biol* 14:e7573,
+[doi:10.15252/msb.20177573](https://doi.org/10.15252/msb.20177573).
+
+| Detail | Value | Read from |
+| :-- | :-- | :-- |
+| Reference strain | *E. coli* K-12 BW25113, the parent of the Keio collection | Results, "High-throughput imaging and growth measurements of the Keio collection" |
+| Perturbation type | Single-gene deletion: in-frame replacement of the gene by a kanamycin-resistance cassette | Results, "Genes, functions, and pathways associated with cell size and shape" |
+| Medium | M9 with 0.1% casamino acids and 0.2% glucose, liquid | Results, same section as the strain |
+| Temperature | 30 °C | Results, same section |
+| Strains imaged | 4,227 strains of the Keio collection | Results, same section |
+| Features in the publication | 19 morphological, 5 cell cycle and 2 growth features per strain | Results, "Quantification of cell morphological features across the genome" and "Quantification of growth and cell cycle features across the genome" |
+| What $y$ is | 15 feature means per strain | the served store, as the Sphinx dataset page reports it |
+| Unit of $y$ | One per feature, for example µm for mean cell length | Dataset EV2, legend sheet |
+| Replicates | Cells of one culture: 291 ± 116 cells per strain after curation | Results, same section as the strain |
+| Uncertainty reported | No standard error. The publication gives a coefficient of variation across cells for each dimension | Results, "Quantification of cell morphological features across the genome" |
+
+</CardDetails>
+
+</DatasetCard>
+
+The record count is the one the Sphinx dataset page reports for the served store. This
+dataset is the source of the benchmark task
+[Cell shape and cell cycle (Campos 2018)](/benchmark/datasets/ecoli/morphology-campos2018/),
+which uses 3,573 of the 3,664 records.

@@ -199,7 +199,12 @@ const config: Config = {
         {type: 'docSidebar', sidebarId: 'query', label: 'Query', position: 'left'},
         {type: 'docSidebar', sidebarId: 'docs', label: 'Docs', position: 'left'},
         {type: 'docSidebar', sidebarId: 'tutorials', label: 'Tutorials', position: 'left'},
-        {type: 'docSidebar', sidebarId: 'learn', label: 'Learn', position: 'left'},
+        {
+          type: 'docSidebar',
+          sidebarId: 'datasetCards',
+          label: 'Source dataset cards',
+          position: 'left',
+        },
         {type: 'docSidebar', sidebarId: 'milestones', label: 'Milestones', position: 'left'},
         {to: '/announcements', label: 'Announcements', position: 'right'},
         {type: 'custom-widthToggle', position: 'right'},

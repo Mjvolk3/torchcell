@@ -97,6 +97,34 @@ torchcell-database.ncsa.illinois.edu {
 		}
 	}
 
+	# SD108 genome browser (I. orientalis SD108): the collaborator-maintained site. Its
+	# source is the Genome_Browser/ folder of the collaborator's repository; that folder's
+	# update.sh (cron, 04:00 Central and at reboot) pulls main, builds the data and runs
+	# the `sd108-browser` container on loopback 8726 (its own server: static files with
+	# Range support plus /api/blast). See Genome_Browser/HOSTING.md there. The genome is
+	# unpublished, so both routes are behind basic auth; the user and bcrypt hash live in
+	# an untracked file beside the site roots, outside every served root.
+	#   /sd108/release/...   the unmodified release files (FASTA, GFF3, checksums), static
+	#   /sd108/...           the browser, BLAST page and API
+	redir /sd108 /sd108/ permanent
+	handle /sd108/release/* {
+		header X-Robots-Tag "noindex, nofollow"
+		basic_auth {
+			import /srv/tc-site/sd108-auth.caddy
+		}
+		uri strip_prefix /sd108
+		root * /srv/tc-site/sd108
+		file_server
+	}
+	handle /sd108/* {
+		header X-Robots-Tag "noindex, nofollow"
+		basic_auth {
+			import /srv/tc-site/sd108-auth.caddy
+		}
+		uri strip_prefix /sd108
+		reverse_proxy 127.0.0.1:8726
+	}
+
 	# Production API. The production website is on GitHub Pages.
 	handle /api/* {
 		reverse_proxy 127.0.0.1:9725

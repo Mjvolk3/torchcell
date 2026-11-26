@@ -712,11 +712,13 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
     "amino_acid_cooper2010": {
         "root": "data/torchcell/amino_acid_cooper2010",
         # Every one of the 4,382 Table 4 rows is a record (owner rule 2026-10-12: the
-        # 22 rows whose released ORF R64 no longer carries as a gene and the 47 replicate
-        # rows of a duplicated identifier are stored as released).
+        # 22 rows whose released ORF R64 no longer carries as a gene and the 48 second
+        # rows of a duplicated identifier are stored as released). Each row is the
+        # authors' average of two screening replicates; the per-replicate Tables 3A/3B
+        # could not be retrieved (2026-11-26, #1281).
         "expected_count": 4382,
-        # 46 identifiers head two rows and one heads three, with no released key that
-        # tells the replicate strains apart: the L1 collisions are a finding.
+        # 48 identifiers head two rows each, with no released key that tells the rows
+        # apart: the L1 collisions are a finding.
         "allow_duplicate_strains": True,
         # linear ratio to the plate mean, reference 1.0 per key; NOT centered on 0
         "reference_centered": False,

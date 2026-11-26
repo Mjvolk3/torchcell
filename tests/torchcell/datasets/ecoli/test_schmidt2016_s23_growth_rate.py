@@ -85,7 +85,7 @@ RELEASED: tuple[tuple[str, str, float, float], ...] = (
 #: The stationary-phase rows, the only ones the module drops.
 STATIONARY: tuple[str, ...] = ("Stationary phase 1 day", "Stationary phase 3 days")
 
-#: The 24 released (condition, strain) rows that become records, in sheet order.
+#: The 26 released (condition, strain) rows that become records, in sheet order.
 #: Every released row is a record since #1045 part 3 (the stationary rows included).
 KEPT_ROWS: tuple[tuple[str, str], ...] = tuple(
     (condition, strain) for condition, strain, _, _ in RELEASED
@@ -549,15 +549,15 @@ def test_real_table_s23_releases_the_26_rows_the_module_declares() -> None:
 
 
 @pytest.mark.data
-def test_real_partition_keeps_24_rows_and_drops_the_2_stationary_rows() -> None:
+def test_real_partition_keeps_all_26_released_rows() -> None:
     kept, ledger = s23.partition(s23.read_table_s23(_real_workbook()))
     assert [(row.condition, row.strain) for row in kept] == list(KEPT_ROWS)
-    assert (ledger.kept_records, ledger.dropped_rows) == (24, 2)
+    assert (ledger.kept_records, ledger.dropped_rows) == (26, 0)
     assert s23.reference_row(kept).growth_rate == 0.58
 
 
 @pytest.mark.data
-def test_real_dev_store_holds_24_records_and_its_declared_ledger() -> None:
+def test_real_dev_store_holds_26_records_and_its_declared_ledger() -> None:
     data_root = os.environ.get("DATA_ROOT")
     if data_root is None:
         pytest.skip("DATA_ROOT is not set")
@@ -567,4 +567,4 @@ def test_real_dev_store_holds_24_records_and_its_declared_ledger() -> None:
         pytest.skip(f"{root} is not built")
     ledger = json.loads(ledger_path.read_text())
     assert ledger["kept_records"] == s23.EXPECTED_RECORDS
-    assert ledger["dropped_records"] == 2
+    assert ledger["dropped_records"] == 0

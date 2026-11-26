@@ -1,0 +1,51 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_hosts_candidate_datasets_table.py
+\begin{table}[H]\centering
+\small
+\caption[]{Candidates by class and by host, split at the two wave lines.
+\emph{Genotypes}, \emph{Instances} and \emph{Meas.} sum the per-row axes over the whole
+pool; a row with no count contributes nothing, so every total is a lower bound.
+\emph{Meas.} is instances times phenotype dimensionality, which is why the per-host
+ordering of the measurement column does not follow the row counts: one yeast
+regulatory-DNA row carries more measurements than every pseudomonad row together.}
+\label{tab:counts}
+\begin{tabular}{@{}l r r r r r r@{}}
+\toprule
+ & Wave 1 & Wave 2 & Reserve & Genotypes & Instances & Meas. \\
+\midrule
+CRISPR library screen & 1 & 0 & 6 & 96,055 & $1.3\times 10^{5}$ & $1.3\times 10^{5}$ \\
+Deep mutational scan & 3 & 0 & 7 & 925,159 & $1.5\times 10^{6}$ & $1.5\times 10^{6}$ \\
+Engineering parts & 3 & 1 & 1 & 3,116 & $3.1\times 10^{3}$ & $3.1\times 10^{3}$ \\
+Essentiality & 0 & 0 & 7 & 7,385 & $2.3\times 10^{3}$ & $2.3\times 10^{3}$ \\
+Fitness / chemical genomics & 0 & 9 & 10 & 2,753,324 & $2.5\times 10^{7}$ & $3.2\times 10^{7}$ \\
+Metabolome / flux & 0 & 0 & 8 & 359 & $9.6\times 10^{3}$ & $1.9\times 10^{6}$ \\
+Modality / backbone & 0 & 1 & 2 & 14,247 & $1.4\times 10^{4}$ & $1.4\times 10^{4}$ \\
+Natural variation & 4 & 0 & 15 & 28,291 & $4.1\times 10^{5}$ & $4.2\times 10^{5}$ \\
+Production campaign & 0 & 5 & 26 & 471 & $1.5\times 10^{3}$ & $1.7\times 10^{3}$ \\
+Proteome & 1 & 1 & 13 & 4,028 & $5.8\times 10^{3}$ & $7.9\times 10^{5}$ \\
+Regulatory DNA & 27 & 1 & 0 & 166,789,446 & $1.7\times 10^{8}$ & $2.1\times 10^{8}$ \\
+Tolerance / robustness & 0 & 1 & 11 & 8,267 & $9.5\times 10^{3}$ & $2.0\times 10^{5}$ \\
+Transcriptome & 7 & 1 & 18 & 477 & $3.4\times 10^{3}$ & $1.6\times 10^{7}$ \\
+Transposon fitness & 4 & 0 & 7 & 105,459 & $3.4\times 10^{6}$ & $9.8\times 10^{6}$ \\
+\midrule
+\multicolumn{7}{@{}l}{\emph{The same rows, by host}}\\
+E. coli & 9 & 0 & 16 & 2,916,904 & $6.0\times 10^{6}$ & $5.5\times 10^{7}$ \\
+P. aeruginosa & 0 & 1 & 23 & 109,342 & $1.1\times 10^{5}$ & $2.6\times 10^{6}$ \\
+P. fluorescens & 0 & 4 & 1 & 100,000 & 745 & $3.4\times 10^{6}$ \\
+P. kudriavzevii & 8 & 10 & 21 & 391 & $9.9\times 10^{3}$ & $3.6\times 10^{5}$ \\
+P. putida & 8 & 0 & 41 & 10,341 & $5.5\times 10^{4}$ & $5.7\times 10^{6}$ \\
+P. simiae & 0 & 1 & 0 & 0 & 201 & $9.1\times 10^{5}$ \\
+P. syringae & 0 & 2 & 0 & 0 & 69 & $3.1\times 10^{5}$ \\
+S. cerevisiae & 25 & 1 & 29 & 167,599,106 & $1.9\times 10^{8}$ & $2.0\times 10^{8}$ \\
+S. stutzeri & 0 & 1 & 0 & 0 & 350 & $1.6\times 10^{6}$ \\
+\midrule
+\multicolumn{7}{@{}l}{\emph{The same rows, by band}}\\
+regulatory DNA & 34 & 1 & 0 & 166,797,405 & $1.7\times 10^{8}$ & $2.1\times 10^{8}$ \\
+cross-host fitness & 0 & 9 & 0 & 0 & $1.4\times 10^{3}$ & $6.2\times 10^{6}$ \\
+host bootstrap & 8 & 10 & 21 & 391 & $9.9\times 10^{3}$ & $3.6\times 10^{5}$ \\
+scale & 8 & 0 & 110 & 3,938,288 & $3.0\times 10^{7}$ & $5.5\times 10^{7}$ \\
+\midrule
+Total & 50 & 20 & 131 & 170,736,084 & $2.0\times 10^{8}$ & $2.7\times 10^{8}$ \\
+\bottomrule
+\end{tabular}
+\end{table}

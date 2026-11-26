@@ -1,0 +1,113 @@
+%% notes-tex/database/database-expansion-hosts/sections/fill.tex
+%% [[experiments.database.expansion-hosts]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-hosts/sections/fill.tex
+%% SOURCE: experiments/database/scripts/build_hosts_candidate_datasets_table.py
+
+\section{The fill pass\secstatus{todo}}\label{sec:fill}
+
+A ranking of 140 rows against a target of 200 was closed on 2026-11-24 by searching five
+named veins rather than by widening the existing ones. The pool now holds 201 candidates. Six
+sweeps ran: 3-hydroxypropionic acid in \org{P. kudriavzevii} and in \org{S. cerevisiae}, the
+LASER strain-engineering database for both of its organisms, and the unserved high-throughput
+literature of \org{S. cerevisiae} and \org{E. coli}. Each was given the 170 served datasets and
+the 443 rows the three earlier passes had already ranked, so every row below is new to all of
+them.
+
+\subsection{3-hydroxypropionic acid, and the structure of its literature\secstatus{todo}}\label{sec:fill-3hp}
+
+Thirteen rows came from one product line across two hosts, and the finding that matters is not
+any of them. Of roughly twenty \org{S. cerevisiae} 3-HP papers whose full text was read, four
+release machine-readable per-strain numbers and the rest release bar heights. Two independent
+sweeps of that literature reached the same count.
+
+The first row to build is Qin et al. 2024, 71 strains running \texttt{QLW1} through
+\texttt{QLW71} with no gaps, whose supplementary data carries per-replicate values and a
+cumulative genotype string for every strain. Two earlier passes missed it because its title
+says yeast rather than \org{Saccharomyces}. One parser trap travels with the row: strain
+\texttt{QLW2} is written \texttt{QLW2-HCO3-} in the file, so a strain name matched exactly
+rather than as a prefix drops records silently.
+
+Three rows record things the ranking could not absorb. Tong et al. 2021 is a THIRD 3-HP route,
+through oxaloacetate rather than beta-alanine or malonyl-CoA, so it needs its own schema leaf;
+it is indexed in neither PubMed nor Europe PMC, because its journal is in neither, which is how
+a whole pathway stayed invisible to two passes. Tan et al. 2026 in \org{P. kudriavzevii} is
+absent from both indexes for the same reason and surfaced only through a DOI registry, with its
+abstract null in two more, so nothing about its size is established. And three patents carry
+real per-strain tables, the largest giving 11 named strains with both titer and yield, which
+the served vocabulary cannot cite at all (Sec.~\ref{sec:pipeline}, Table~\ref{tab:schema}).
+
+Two corrections to the earlier ranking came out of the same pass. The Illinois Data Bank
+deposit this wave had ranked as the host's highest-yield 3-HP record is not a phenotype dataset:
+it holds a technoeconomic model and genome-scale model code, and the measurements belong to
+Tan et al. 2026, which is now ranked on its own identity. And this host has two production
+lineages rather than one, SD108 and NRRL~Y-27441, which no row had distinguished.
+
+\subsection{LASER is an index, not a store\secstatus{todo}}\label{sec:fill-laser}
+
+The named source for the fill contributed no rows of its own and three rows by pointing. LASER
+was counted from the bytes of its only live release: 456 curated papers, 638 designs, 441
+\org{E. coli} and 197 \org{S. cerevisiae}, every file dated 2016-04-27, and the web interface
+its paper names no longer resolves. Titer is populated on 181 of 197 yeast designs and yield on
+58, there is no rate field at all, and no replicates, no sample count, no uncertainty, no
+sequence-level edit and no strain accession. Its own total field sums to 3,472,162 strains built
+against 638 curated, because it keeps champion strains and discards the populations they came
+from. Every number in it is re-extracted from a primary paper, so it is excluded as a derivative
+and used the way its design invites, as a worklist.
+
+What it pointed at is worth more than it is. Kim et al. 2013 measured the anaerobic fermentation
+products of 472 single-gene knockouts across five compounds, roughly 2,360 values, behind which
+LASER curated seven strains; the table holding them is unlocated, because the publisher refuses
+automated fetch and no open copy exists. Valle et al. 2015 screened 150 knockouts in triplicate
+for hydrogen, ethanol and glycerol and tabulated all of it in three supplementary files, from
+which LASER kept the 12 confirmed hits.
+
+\subsection{What the two unserved-literature sweeps found\secstatus{todo}}\label{sec:fill-unserved}
+
+Forty-four rows came from sweeping the \org{S. cerevisiae} and \org{E. coli} literature for
+releases the database does not hold, with every count in the largest rows obtained by
+downloading the file and counting its rows rather than from an abstract.
+
+Four releases are larger than the papers that announce them. One \org{E. coli} promoter library
+ships 233,469 promoters against a headline of 112,955; another's deposited table carries four
+times the measurements its abstract reports; a metabolome time course releases roughly 240 times
+the figure its abstract gives, because the abstract counts injections and the release counts
+values; and one expression library's abstract reports only its converged subset rather than all
+29,249 constructs. Pinning the release rather than the paper is what makes these rows countable,
+and it is the reason the ranking quantity is measured and not quoted.
+
+The aggregators were checked and both failed, for opposite reasons. MaveDB holds 60 yeast-target
+score sets out of 3,005, and the largest block of them turns out to be in-vitro folding
+measurements on constructs optimized for a different organism's codon usage, so they are not
+perturbations of a yeast cell. ALEdb has grown to 3,721,969 mutation instances from 13,425
+isolates, roughly 94 times what its paper reported, and releases no phenotype number of any
+kind, so it is a genotype source. The large yeast variant-effect data lives in transposon
+saturation screens, barcoded lineage libraries and non-promoter reporter libraries deposited one
+paper at a time.
+
+One shape recurs often enough to be a schema question. Eleven of the twenty largest yeast rows
+carry no gene identifier anywhere in their bulk data, because the record key is a lineage
+barcode, a raw measured sequence, or a residue substitution. A barcoded lineage is the hardest
+of those: the perturbation is unknown by construction and is identified only by its tag, so the
+honest representation is a typed absence on the genotype and not a mapping to a gene the release
+never names (Table~\ref{tab:schema}).
+
+\subsection{What the fill cost the ranking\secstatus{todo}}\label{sec:fill-cost}
+
+Applying this document's own rule to the new rows moves every pseudomonad fitness row out of the
+recommended fifty. The \org{E. coli} libraries are regulatory DNA, so they enter the band that
+is applied before tier, and nine of them rank above the Fitness Browser rows on measurements.
+The recommended fifty is now 25 \org{S. cerevisiae}, 9 \org{E. coli}, 8 \org{P. kudriavzevii}
+and 8 \org{P. putida}, and \org{P. fluorescens}, \org{P. syringae}, \org{P. simiae},
+\org{S. stutzeri} and \org{P. aeruginosa} hold none of it.
+
+That outcome contradicts two things this document says. The row count is described as coming
+from the pseudomonads, and the per-host floor exists so that every host in the wave starts
+(Sec.~\ref{sec:floor}). It also leaves the regulatory-DNA band holding 34 of the 50, at which
+point the band no longer separates anything.
+
+The ordering is left as the rule produces it, and the three ways to resolve it are stated rather
+than chosen, because which one is right depends on what the wave is for and that is not a
+ranking question. The floor could extend to the four thin pseudomonad hosts at one row each,
+which keeps the reason the floor was written. The band could take a cap, which is a change to
+the selection rule and larger than a fill warrants. Or the ordering stands and four hosts wait
+for a later pass.

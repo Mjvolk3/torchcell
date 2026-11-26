@@ -1,0 +1,136 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_hosts_candidate_datasets_table.py
+\begingroup
+\footnotesize
+\begin{longtable}{@{}L{58mm} L{26mm} L{88mm}@{}}
+\caption[]{Considered and dropped. \emph{no-sequence} is the hard gate: without a route
+to the strain's genomic content there is no genotype to map a phenotype from.
+\emph{off-host} is a real dataset in an organism outside this wave's hosts.
+\emph{not-a-dataset} is a model, a design program, a review or a prior over the genome.
+\emph{no-per-record-data} is a real experiment whose released form is a figure or a
+summary rather than per-record values. \emph{already-built} is served, or already in the
+raw mirror, so it is an overlap rather than a candidate. \emph{derivative} re-serves or
+re-processes another dataset's values, so its records are not net new.}
+\label{tab:excluded}\\
+\toprule
+Dataset or group & Rule & Reason \\
+\midrule
+\endfirsthead
+\toprule
+Dataset or group & Rule & Reason \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Beltran 2025 aPCA domainome & off-host & 563,534 variants across 522 protein domains, measured in BY4741 yeast cells with a yeast growth readout, which is why it surfaced as a yeast candidate at all. 503 of those domains are HUMAN proteins. The cells are yeast and the genotype is not: the perturbed sequence is a human domain carried on a plasmid, keyed by UniProt accession and Pfam position, so ingesting it under this organism would file half a million human variants as S. cerevisiae genotypes. It is a strong dataset for a human-domain tier and a category error for this one \\
+\addlinespace[5pt]
+Erijman 2020 (random activation-domain peptides) & no-per-record-data & About a million random peptides scored for transcription activation, which would have ranked tenth by size. Two things block it. The release count is never stated, so the million is the paper's own figure rather than a counted release, and the processed tables are not reachable: the path returns a 1,817-byte challenge page rather than data, and the code repository holds model weights only. The reads are deposited, so the phenotype would have to be recomputed from them, which makes it a reanalysis and not an ingest \\
+\addlinespace[5pt]
+Li 2019 (Pareto fronts in trait space) & derivative & 259,357 barcode count rows and 3,717 clones scored across four serial-transfer conditions, fully retrievable and well deposited. It is dropped on OVERLAP rather than on quality: 3,048 of its 3,717 clones, which is 82 percent, come from a dataset already on this database's exclusion list, so most of what it would add is a second scoring of strains already accounted for. The four-condition fitness vector on the remaining 669 clones is the only net-new part, which is too thin to carry a row \\
+\addlinespace[5pt]
+Yeast fill-pass measured negatives (nine sources checked and unusable) & no-per-record-data & Recorded because each was checked and the result is a finding rather than an absence. Dudley 2005 releases a three-level ordinal phenotype in twelve PDF supplements, and its only data pointer is a dead host. Roy 2024 names no processed table and its BioProject returns zero experiments. Bakerlee 2022 has the right shape but every route to its fitness tables is refused and its deposit holds genotyping alone. Kryazhimskiy 2014, Jerison 2017 and Johnson 2021 are not barcoded at all, which was checked by searching their body text, and use flow-cytometry competition instead, so they are good fitness releases for a different wave. Collins 2007, Fiedler 2009 and Bodenmiller 2010 have no locatable data file or a dead host. Further negatives worth keeping: no yeast messenger-RNA-decay library exists, no yeast degron atlas exceeds 23,600 peptides because the large ones are human, and no genome-wide chemical or nutrient panel above roughly 300,000 records appeared for 2015 to 2026 beyond the 102-condition row ranked above \\
+\addlinespace[5pt]
+ALEdb (Phaneuf 2019), the adaptive-laboratory-evolution database & not-a-dataset & Checked live on 2026-11-24 because it was the one aggregator that could plausibly have closed this wave's row gap on its own, and it releases ZERO phenotype numbers. The site states 3,721,969 instances of 1,035,104 unique mutations from 13,425 isolates across 271 projects, roughly 94 times the 11,792 mutations its own 2019 paper reported, so it has grown enormously. But a grep for growth rate, fitness, inhibitory concentration and titer across every reachable page and export returned nothing: the exports carry mutations, media, temperature, strain and sequencing quality only. Retrieval is also degraded, with no API, an export route that errors even with a fresh token, and only 107 of the 271 projects browsable anonymously. It is a GENOTYPE source for evolved clones, which is how a later pass should use it, not a dataset. One naming trap: one of its project codes is a Plasmodium study, not E. coli \\
+\addlinespace[5pt]
+COLOMBOS v3, Bastkowski 2026, Yasir 2026, Reg-Seq, Good 2017 and Tenaillon 2016 & no-per-record-data & Six E. coli objects that each looked larger than anything ranked and released no per-record phenotype. COLOMBOS v3 would have been the biggest expression object in the wave at 4,077 condition contrasts, but its domain times out over both protocols, so it has no resolvable URL at all. Bastkowski 2026 deposits only raw reads for its 13 antibiotics at 4 concentrations, with no per-gene fitness table. Yasir 2026 is a 754-sample transposon compendium, the highest-count such object found, and gives no accession of any kind. Reg-Seq releases sequencing reads and information-footprint matrices rather than per-variant values. Good 2017 has 41,962 rows but no phenotype, and its genotype is a population allele frequency rather than a clone, which fails the definition this wave ranks on. Tenaillon 2016 releases no per-clone fitness, only a 791-byte summary file \\
+\addlinespace[5pt]
+Kosuri 2013, Goodman 2013 and Moradigaravand 2018 & derivative & Three sets reachable only by a route this database does not take. The first two are blocked at the publisher, and the copies that do answer are a third-party compilation and a re-inferred mirror, so ingesting either would store another analysis's numbers rather than the release. Moradigaravand 2018's only surfaced deposit route is Mendeley Data, which is ruled out as a live source. In all three cases the primary release, not the row, is what is missing \\
+\addlinespace[5pt]
+Kildegaard 2016 and Chen 2026 (figure-bound 3-HP panels) & no-per-record-data & Two real open-access S. cerevisiae 3-HP experiments with no per-strain numbers to read. Kildegaard 2016 (10.1186/s12934-016-0451-5) measured 14 strains and tabulated only the one fed-batch strain in Table 1. Chen 2026 (10.1038/s41467-026-76008-2) reports 48 colonies, and it DOES ship a Source Data file, which is why a first read called it ingestible, but the values in the fig4g sheet are negative, so they are a relative scale rather than titers and cannot be stored as a concentration. Digitizing a bar, or storing a relative value as though it were a measurement, would both invent precision the source never stated. Two passes over this literature agreed on the structural finding behind these rows: of roughly twenty yeast 3-HP papers whose full text was read, only four ship machine-readable per-strain numbers \\
+\addlinespace[5pt]
+3-HP in adjacent yeast hosts (O. polymorpha, K. phaffii, S. pombe, Y. lipolytica, R. toruloides, K. marxianus, D. hansenii) & off-host & Several reach titers no S. cerevisiae result matches, led by Ogataea polymorpha at 79.6 g/L and Debaryomyces hansenii at 62.4 g/L, the latter from a natural isolate plus ion mutagenesis rather than engineering. That last figure does NOT survive arithmetic: Li 2020 reports 62.42 g/L from 40 g/L of total substrate, which fails mass balance, so it is recorded as a flagged number and not as a target. They are recorded rather than dropped because the 3-HP product line is the reason this wave touched the chemistry at all, and these are the rows a later wave would add. Admitting any of them means seven new Organism members and seven reference releases pinned in the genomes tier, which is a scope decision for the owner and not a fill \\
+\addlinespace[5pt]
+Illinois Data Bank IDB-9063411 (high-yield 3-HP) & not-a-dataset & Ranked in this wave until the fill pass read it, and it is not a phenotype dataset at all: the deposit holds the technoeconomic model and the genome-scale model code, as two source repositories, not the strain table. The measurements the row was ranked for, 92 g/L at 0.7 g/g and 0.55 g/L/h, are in Tan 2026, which is now ranked on its own identity with the Source Data file behind it. Keeping both would have counted one experiment twice \\
+\addlinespace[5pt]
+LASER strain-engineering database (Winkler 2015, 2016) & derivative & Counted from the bytes of the only live release, on Bitbucket: 456 curated papers, 638 designs, 441 E. coli and 197 S. cerevisiae, frozen since 2016-04-27, and the web interface the paper names no longer resolves. Every number in it is re-extracted from a primary paper, so ingesting it would re-serve other datasets' values. It is also thinner than it looks: titer is populated on 181 of 197 yeast designs, yield on 58, there is no rate field at all, and no replicates, no n, no uncertainty, no sequence-level edit and no strain accession. Its own total field sums to 3,472,162 strains built against 638 curated, because it keeps champion strains and discards the screen populations. Its value is as an index onto primary papers, which is how the fill pass used it, and three of those papers are ranked above \\
+\addlinespace[5pt]
+Charusanti 2010 (pgi-deletion adaptive evolution) & no-per-record-data & The largest pure evolution entry the LASER index points at, with ten endpoint clones and nine resequenced genomes, so the GENOTYPES are released. The phenotype is not: the supplement holds a peroxidase assay and primers, and the per-clone growth rates exist only inside Figure 2A. A figure is not a released per-record value, and digitizing one would invent precision the source never stated \\
+\addlinespace[5pt]
+scYeast (Fan 2027) figshare deposit & derivative & A model and its training corpus rather than a new measurement. Its attention prior is built from the documented-targets subset of YEASTRACT+, about 170,000 pairs, which is a prior over the genome and not a genotype-by-environment record, and the expression it trains on is the built yeast compendia. Nothing in the deposit is a released per-record value this store does not already hold. \\
+\addlinespace[5pt]
+Shorkie induction RNA-seq tracks (gs://shorkie-paper/) & no-per-record-data & The 3,053 induction RNA-seq tracks generated at Calico are the one genuinely new measurement in the paper and they are distributed only as BigWig and TFRecord on a Google Cloud Storage bucket, with no GEO, SRA, Zenodo or Hugging Face accession anywhere in the paper. A sha256-pinned mirror is the only reproducible route and there is no archive fallback if the bucket moves, so the right action is the ask in Table 8, not a parse. \\
+\addlinespace[5pt]
+Zrimec 2020 (expression prediction from regulatory sequence) & derivative & A modeling paper over expression values already held: its records are the public compendia re-encoded as model inputs, so admitting it would re-serve measurements the store has rather than add any. \\
+\addlinespace[5pt]
+Gu 2025 & derivative & A model trained on the regulatory-DNA libraries this wave ranks, not a new measurement. Its contribution is an architecture and a benchmark score, so there is no per-record value to store that is not already in de Boer, Vaishnav or the DREAM release. \\
+\addlinespace[5pt]
+Lei 2025 & derivative & Same class as Gu 2025: a sequence-to-expression model scored on the existing libraries. The report ranks the libraries and not the models, because a model's output is a prediction and the substrate stores measurements. \\
+\addlinespace[5pt]
+Cheng 2025 & derivative & A model over the same corpus again. Named here rather than omitted so the boundary is explicit: a benchmark result on a held-out split of a dataset already in the pool is not a second dataset. \\
+\addlinespace[5pt]
+iIsor850 genome-scale model (Issatchenkia orientalis) & not-a-dataset & A reconstruction, not an experiment. Its 850 gene calls are model output, which is the only form essentiality exists in for this species, and that is exactly why it cannot stand in for a screen. The yeast pool already excludes it under the same rule and the exclusion stands on its own merits even though this wave widens the host axis. \\
+\addlinespace[5pt]
+Wetmore 2015 RB-TnSeq methodology release & already-built & 3,903 genome-wide fitness experiments over 96,024 non-essential genes in 25 bacteria, and already in the database. It is the method paper the cross-host fitness band's artifact comes from, so admitting it again would re-serve values the store holds. \\
+\addlinespace[5pt]
+Fitness Browser GW456-L13 (Aquipseudomonas jessenii) & off-host & A real row in the same artifact as the nine hosts this wave admits, at 106 experiments with 80 updated annotations, and its species has no member in this pool's declared Organism vocabulary. Folding it into a neighboring species would be a silent sequence-level error in a substrate whose claim is sequence-level genotype fidelity, so it waits on the Organism decision rather than being mislabeled. Admit it in the same change that adds the other nine. \\
+\addlinespace[5pt]
+Gong 2018 (48-strain microsatellite panel, 9 antifungals) & no-sequence & 432 potential susceptibility values against nine drugs, which is more than twice the drug breadth of the sequenced panel, and the genotype is a microsatellite marker fingerprint rather than a sequence. There is no route to the strain's genomic content, so it cannot be joined to a genome even in principle. \\
+\addlinespace[5pt]
+Wiehlmann 2015 (2,921-isolate 58-marker survey) & no-sequence & 2,921 isolates from 1,448 habitats in 323 clone types, and the 58-marker binary profile is a genotype fingerprint rather than a sequence or a measured phenotype. It must not be ingested as either. \\
+\addlinespace[5pt]
+PkAC-7, PkAC-8 and PkAC-9 acetic-acid evolved strains & no-sequence & Three strains from acetic acid stepped 7 to 9 g/L, with tolerance measured against six stresses, and no resequencing, no variant table and no accession in either search pass. The genotype is undefined, so there is nothing to map a phenotype from; the 70-gene expression panel on PkAC-9 inherits the same gap. \\
+\addlinespace[5pt]
+RWT glucose osmotic-stress evolved mutant & no-sequence & Two strains, tolerant to 35 percent glucose with best growth at 20 percent, and the mutations were never characterized. Same gap as the other evolved panels, and the osmotic axis is already covered by the 57-stressor isolate panel. \\
+\addlinespace[5pt]
+Candida glycerinogenes as an ingestible host & no-sequence & A proprietary, independently owned industrial strain with no public assembly, and the species name was folded into P. kudriavzevii by the population-genomics study that showed one species under four names. Its published values cannot be tied to a public genome. \\
+\addlinespace[5pt]
+Blazeck 2012 (modular UAS and core hybrid promoters) & no-per-record-data & A real S. cerevisiae regulatory-parts panel in two backgrounds with biological triplicate and standard deviations, and every value exists only as a bar height: the supplementary table is primers. Unusable as released, and worth re-checking only if the hybrid-promoter design becomes the question. \\
+\addlinespace[5pt]
+Nikel 2015 (EDEMP cycle flux) & no-per-record-data & Reports that about 90 percent of consumed sugar is converted to gluconate and about 10 percent of triose phosphates are recycled to hexose phosphates, and the numbers sit in paper figures. Flux is the layer where the provenance discipline bites hardest, so the honest outcome is that the values are not retrievable rather than a thin extraction. \\
+\addlinespace[5pt]
+Puchalka 2008 (legacy KT2440 model validation) & no-per-record-data & Validated a genome-scale model against continuous culture and substrate utilization assays, and the utilization matrix itself is not confirmed to be a downloadable table. The validation is a model result; the matrix is what would be ingestible and it was not located. \\
+\addlinespace[5pt]
+PA14 pooled essential-gene knockdown library (dissertation only) & no-per-record-data & A pooled library with one essential gene knocked down per strain, tested in a murine pneumonia model, described only in a dissertation. No deposited score table was confirmed, so it is a lead rather than a citable dataset. \\
+\addlinespace[5pt]
+Mobile-CRISPRi and P. aeruginosa CRISPRi optimization methods & not-a-dataset & Vector systems and tuning studies: conjugation-transferable integrating CRISPRi vectors, dCas9 expression tuned to avoid toxicity, and guide designs for common laboratory strains. Methods rather than screens, with no per-record score tables. \\
+\addlinespace[5pt]
+Ozer 2019 (739-genome population structure) & not-a-dataset & 739 isolate genomes with source metadata, reporting that one lineage is 99.4 percent exoS-positive and the other 95.2 percent exoU-positive. Genotype only, with no measured phenotype, so it belongs beside the reference genomes rather than in a phenotype table. \\
+\addlinespace[5pt]
+43-strain international reference panel (BCCM/LMG) & not-a-dataset & 43 strains spanning cystic fibrosis, other clinical and environmental sources, 33 of them sequenced alongside 7 reference genomes. It is an order-the-strains resource rather than a phenotype table, and the genome accessions were not confirmed. \\
+\addlinespace[5pt]
+Murepavadin 414-isolate panel & not-a-dataset & Reported as 414 cystic-fibrosis isolates against 14 antibiotics with 412 genomes, and the citation itself is unconfirmed. The isolate count coincides with the best-documented clinical panel's, which is reason to resolve the citation before treating it as a second dataset. \\
+\addlinespace[5pt]
+SBW25 barcoded populations & not-a-dataset & Chromosomal barcodes for lineage tracking, which the authors explicitly distinguish from transposon sequencing: nothing is mutagenized. A different assay, whose value would be evolution and lineage phenotypes rather than gene fitness. \\
+\addlinespace[5pt]
+Pseudomonas Genome DB and the Pseudomonas Ortholog Database & not-a-dataset & Community annotation and orthology over 14,229 genomes, with ortholog groups and batch downloads, and no evidence it serves a phenotype table at all. It is the mapping substrate for the alias layer, which is what the Bakta and PA-number rows need, not a phenotype source. \\
+\addlinespace[5pt]
+GSE139245 (data-integrity flag) & not-a-dataset & A 15-sample series whose index record carries a summary describing mammalian histone-modification profiling, inconsistent with both its own title and its taxon. Treated as suspect rather than ingested. \\
+\addlinespace[5pt]
+Illinois Data Bank IDB-2926789 (constraint-based organic-acid potential) & not-a-dataset & Predicted production potential for 22 organic acids from a genome-scale model, which is the same class as the model-derived essential-gene list: model output, not measurement. The growth-coupled knockout designs built on the same model fall under this too. \\
+\addlinespace[5pt]
+Mendeley Data methylotrophic-protein deposit & not-a-dataset & A P. kudriavzevii deposit for open production of methylotrophic protein. Project policy disallows this repository as a source, so the deposit is recorded and not recommended. \\
+\addlinespace[5pt]
+PXD044970 and PXD048012 & not-a-dataset & The first lists a different species entirely, Saccharomyces kudriavzevii, and the second lists P. kudriavzevii while its displayed abstract belongs to an unrelated glycolysis study, so it may be mislabeled. Both are suspect and neither may be used without a check. \\
+\addlinespace[5pt]
+Komagataella phaffii methanol cross-tolerance study & off-host & A different species. Named because it surfaced repeatedly in searches for this wave's low-data host and is not it. \\
+\addlinespace[5pt]
+681-member environmental yeast isolate collection & off-host & Multi-species rather than specific to this wave's host, so its records cannot be assigned to one organism without splitting the collection first. \\
+\addlinespace[5pt]
+FUN-PROSE expression-prediction preprint & derivative & A modeling paper in the same group's orbit as the host's expression work, not a dataset: its records are the matrices it trains on. \\
+\addlinespace[5pt]
+Karollus 2024 benchmark deposit & derivative & Model weights plus an unitemized supporting-data bundle. Every measured dataset behind it belongs to the terminator, promoter and 3' end rows this pool already ranks, so the right action is to take those. \\
+\addlinespace[5pt]
+Martinez-Carranza 2019 essentiality comparison & derivative & A comparison of published essentiality screens, reporting 336 essential in one reference strain and 434 in the other with 20 having no ortholog, and only 192 genes shared by all screens in one strain against 17 in the other. Those figures are the reason a call must carry its method, medium and strain; the comparison itself re-serves the five studies' calls. \\
+\addlinespace[5pt]
+Rossi 2021 ChIP-exo and ChIP-MNase track set & not-a-dataset & 1,229 datasets over 791 targets, 400 of them reproducible, and not a genotype-by-environment record at all: it is a molecular-layer track set. It belongs in the artifact tier as a feature source if anywhere, which is a features decision rather than a dataset admission. \\
+\addlinespace[5pt]
+mLife 2026 genome-editing system & not-a-dataset & A genome-editing system in a nonconventional yeast whose organism is not confirmed to be this wave's host, so the row cannot even be assigned a host. One record check resolves it. \\
+\addlinespace[5pt]
+Lactic-acid stress comparative transcriptomics & no-sequence & A fermented-grain isolate against a type strain under lactic-acid stress, with differential expression in pyruvate metabolism, transporters and amino acid biosynthesis. Comparative rather than evolved, and neither strain's assembly was located, so there is no route to either genotype. \\
+\addlinespace[5pt]
+Sc2.0 synthetic-genome program; CNGB CNP0002230 & no-per-record-data & The 2023 Cell papers' phenotype claims appear as figures, and CNP0002230 lists 231 samples across genome sequencing, proteome and transcriptome with no phenotype data type at all. A genome-engineering program is not gene-indexed perturbation-phenotype data, and there is no per-record value to ingest today. \\
+\addlinespace[5pt]
+Genome-wide KT2440 CRISPRi library (78,932 members) & no-per-record-data & The highest-value missing dataset in the survey and effectively request-only: 10 to 15 gRNAs per gene with 798 non-targeting controls, screened on glucose, acetate and p-coumarate at two concentrations, existing only as a Department of Energy abstract with no publication, no repository and no accession. It cannot be ranked against rows whose numbers were read off a file, so it is an ask rather than a row. \\
+\addlinespace[5pt]
+Werner 2023 and the engineered-strain product literature & no-per-record-data & Supplementary-table-only across the board. In Werner 2023, the one paper whose data-availability statement was read verbatim, every number is in sciadv.adj0053\_data\_s1.zip and the SI PDF, there is no repository of any kind, and the strains are request-only under a material transfer agreement. The tier is worth ingesting for its named genotypes, which is why those rows are in the pool, and not for record count. \\
+\addlinespace[5pt]
+Fitness Browser fitprivate instance (104 organisms, 989 KT2440 experiments) & not-a-dataset & A non-public instance whose counts disagree with the live public page's 74 organisms and 314 KT2440 experiments. The live public page supersedes every other count, and fitprivate numbers must never be mixed in, so the instance is named here to keep its figures out of any total. \\
+\addlinespace[5pt]
+Fitness Browser KBase mirror (48 organisms) and the June 2017 release & derivative & Stale mirrors of the same artifact. The bulk page itself says the 2018 release's sucrose and D-mannitol data should be disregarded in favor of fresh stock data, so an older copy is not an independent dataset and ingesting one would serve values the source has retracted. \\
+\addlinespace[5pt]
+Wheeldon genome-scale CRISPR libraries (Y. lipolytica, K. phaffii) & off-host & Real genome-scale resources, including a 6-fold-coverage K. phaffii library of 30,848 active guides covering more than 99 percent of the genome, and in neither case the host this wave bootstraps. Searched specifically because a Pichia screen would be the single most valuable row available; the platform has never been extended to P. kudriavzevii. \\
+\addlinespace[5pt]
+ProteomeCentral P. putida project pages & not-a-dataset & JavaScript-rendered, so a crawl returns nothing. This is a retrieval route and not a dataset: the same projects are reachable through the PRIDE v3 REST API, which is how the proteomics rows in the pool are counted. \\
+\addlinespace[5pt]
+\end{longtable}
+\endgroup

@@ -1,0 +1,115 @@
+%% notes-tex/database/database-expansion-hosts/sections/regdna.tex
+%% [[experiments.database.expansion-hosts]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-hosts/sections/regdna.tex
+%% SOURCE: hand-authored prose. Counts come from the triage report
+%% /scratch/projects/torchcell-scratch/tmp/deep-research/reports/Pk and next dataset wave triage.md
+%% and from .../research_notes/Pk and next dataset wave triage/scerevisiae_gene_level_readouts.md
+%% and .../yeast_expression_fm_corpus.md; the served Vaishnav figures are read from
+%% torchcell/datasets/scerevisiae/vaishnav2022.py.
+
+\section{Regulatory DNA\secstatus{todo}}\label{sec:regdna}
+
+The \term{sequence-to-readout} tier is the set of datasets whose perturbation is a specified
+DNA sequence, meaning a promoter, a 5' UTR, a core promoter, a transcription start site, a 3'
+end, a terminator, or an integration coordinate, and whose readout is a reporter level, a
+translation output, or the fitness of the strain carrying it. The served graph holds one such
+dataset at scale, \texttt{vaishnav2022.py} with 71,158 records, against 70 yeast datasets whose
+perturbation space is a gene list. The fitness and gene-interaction maps alone supply 67
+percent of all 65,889,109 yeast records, so adding to that axis adds to the two-thirds the
+corpus already has, while this tier's perturbation space is continuous rather than enumerable,
+which is the perturbation space a model of regulatory grammar is fitted on, and no deletion
+collection supplies it.
+
+\notesec{The de Boer and Vaishnav lineage} de Boer et al. 2020 measured the expression output
+of 102,371,025 promoter sequences across five experiments. The design is an 80 bp fully random
+insert at $-170$ to $-90$ relative to the transcription start site inside a fixed scaffold,
+driving YFP against a constitutive RFP on an episomal vector, with cells sorted into 18 uniform
+bins by the log ratio of the two reporters and the promoters in each bin sequenced, so the
+expression estimate is a read-weighted bin average. The media are complex and there are three
+of them, glucose, galactose, and glycerol, which makes the medium a genuine environment
+variable rather than a single condition. Vaishnav et al. 2022 ran the same platform with two
+training libraries, 30,722,376 random sequences in complex medium and 20,616,659 in defined
+medium, and the graph already serves the Vaishnav child of those two. The DREAM 2022 release is
+the third member at 6,739,258 training sequences plus 71,103 held out, and every published
+yeast expression model is scored on that held-out set.
+
+The per-record cost of the largest row is characterized only in aggregate and belongs in the
+record as such. Because each library's complexity exceeded the number of sorted cells, 78
+percent of de Boer's promoter sequences appear in only one bin, often as one read from one
+cell, which the authors assess as roughly 24 percent error in the expression estimate on
+held-out data. That is a typed gap or a read-count field rather than a reason to decline the
+row, and \texttt{vaishnav2022.py} already carries the same information as \texttt{read\_count}.
+Two provenance items are open: the paper names GEO GSE104903 and GSE104878 and never states
+which accession holds which library, and it never itemizes the five experiments that sum to
+102,371,025, so one GEO page check settles both.
+
+\notesec{The superset admission the existing loader already makes possible} The served
+Vaishnav store holds 71,158 records of \texttt{VariablePromoterReporterPerturbation} crossed
+with \texttt{PooledSortSeqExpressionPhenotype}, of which 71,054 carry an estimate and 104
+\texttt{seqID} groups carry a typed \texttt{ProvenanceGap} for verbatim \texttt{NA} cells. The
+two deferred training libraries are the complex-medium and defined-medium training files on
+Zenodo, 3.59 GB and 2.47 GB, plus a 0.67 GB table on GEO,
+and the loader's own docstring already calls them ``a size decision for the owner,
+not a schema or a provenance one.'' Admitting them is the superset case the incremental path
+was built for: the served records are a proven subset, so the admission check can prove the
+development store still produces every served experiment id plus more, and the increment
+matches served nodes by content id and adds only the new records. Admitting de Boer needs no
+new class either, since the same two classes serve its child. The DREAM release is the one
+member of the three that needs more than a download, because it is a curated slice of the same
+platform and therefore needs an \texttt{AggregationRecord} at G1 rather than entering as a
+primary measurement.
+
+\notesec{The 3' end and the position-effect rows} Shalem et al. 2015 measured 13,000 designed
+3' end sequences, 102 bp variable inside a 150 bp oligo, by FACS-seq into 16 bins of a
+two-reporter ratio, and the library sequences and their measured expression values sit together
+in one supplementary XLSX with no accession. It extends sequence-level coverage from the
+promoter to the terminator and sits among the eight benchmark tasks the species-aware DNA
+language model is scored on, so ingesting it serves a dataset a published model is measured
+against. Its only uncertainty figure is a library-wide technical relative standard deviation of
+13.2 percent rather than a per-construct error. The position-effect rows are the
+one-construct-many-loci shape, where the sequence variable is purely the integration
+coordinate. There are four of them: a 1,044-locus panel with a greater-than-13-fold expression
+range and location dominating promoter, reporter, and carbon source, a panel of about 250 loci
+each with a full transcriptome rather than one reporter value, a 482-locus panel from an
+earlier study, and a genome-wide scan reporting 428 high-expressed and 444 low-expressed
+sites. Not one of the four has a located accession, and the largest states that its table is
+available from the corresponding author on request, so the whole sub-tier is supplement-bound
+and two of its rows are asks.
+
+\notesec{What the rest of the tier holds} Four further rows carry $10^{4}$ measurements or
+more each and each needs exactly one new leaf. A Pol II MASTER library measures initiation
+efficiency at 1,000,000 transcription start sites, deposited at GEO GSE185290 and BioProject
+PRJNA766624, and its own preprint reported about 80,000 variants against the published
+1,000,000, so the release has to be pinned rather than the paper cited. A random 5' UTR library
+detected 489,348 of more than 500,000 designed variants upstream of \gene{HIS3}, read out by
+competitive growth rather than by sorting, which by the rule that a different technology is its
+own leaf makes it a separate phenotype class from a sort-seq bin average. A promoter-swap
+library places 130 synthetic promoters spanning a 500-fold range upstream of named native
+genes, giving about 10,000 strains with a per-strain pooled fitness, where the released gene
+count is reported as 81, 96, and about 100 in three places and has to be reconciled before a
+loader is written. And a natural-variant MPRA measures 5,832 variants in the promoters of 2,503
+genes with the tested 144 bp windows released, which is the only row found that pins a native
+variant to a measured cis effect on a named gene. The terminator panels are the weakest tier
+for machine readability: 100 terminators span 0.0613 to 1.8002 relative to the \gene{PGK1t}
+standard and a second study characterized over 3,000 genomic terminators, and no repository
+deposit was confirmed for any terminator panel, so all of them are supplement-only.
+
+\notesec{The expression foundation models are not the candidates, and the libraries under them are}
+Two 2025 yeast models assemble a corpus, and reading their corpora returns mostly data the
+graph already serves. The fungal DNA language model's supervised corpus is 5,215 tracks, of
+which 1,014 are the 1,000-isolate RNA-seq the graph serves as Caudal 2024, 1,128 ChIP-exo and
+20 ChIP-MNase tracks come from one 2021 deposit at GEO GSE147927, and 3,053 are new induction
+RNA-seq tracks generated at Calico. The single-cell model trains on expression matrices with no
+DNA sequence anywhere, and six of its named sources already have loaders. So the models supply
+a triage shortlist rather than a dataset, and their three non-served items are each retrievable
+on their own terms. The 3,053 new tracks are the exception that is worth an ask rather than a
+parse: they are distributed only as BigWig and TFRecord on a Google Cloud Storage bucket with
+no GEO, SRA, Zenodo, or Hugging Face accession anywhere in the paper, so a sha256-pinned mirror
+is the only reproducible route and there is no archive fallback if the bucket moves. Two
+further rows are dropped from this tier rather than ranked in it, and both are recorded in
+Table~\ref{tab:excluded}. The synthetic-chromosome phenotype claims appear as figures, and the
+matching deposit lists 231 samples across genome sequencing, proteome, and transcriptome with
+no phenotype data type at all. The aggregate deep-mutational-scanning route needs a live query
+before it can be counted, because the curated aggregate holds 217 assays over 186 proteins and
+its yeast-only subset has to be read off the live service after a second aggregate's search
+endpoint returned 404.

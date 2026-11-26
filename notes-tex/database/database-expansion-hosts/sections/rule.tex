@@ -1,0 +1,130 @@
+%% notes-tex/database/database-expansion-hosts/sections/rule.tex
+%% [[experiments.database.expansion-hosts]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-hosts/sections/rule.tex
+%% SOURCE: hand-authored prose. The rule, the rank quantity and the pool guard are read from
+%% experiments/database/scripts/build_candidate_datasets_table.py and
+%% experiments/database/scripts/build_bacteria_candidate_datasets_table.py; the per-row
+%% figures come from the triage report
+%% /scratch/projects/torchcell-scratch/tmp/deep-research/reports/Pk and next dataset wave triage.md
+
+\section{The selection rule\secstatus{todo}}\label{sec:rule}
+
+\subsection{Sequence reconstruction is the gate, not a preference\secstatus{todo}}\label{sec:gate}
+
+A phenotype is only trainable against a genotype that can be written down, so every row names a
+\term{sequence basis}, meaning the route by which the total genomic content of one strain would
+be reconstructed. The bases are named per host, because the reference differs per host and because
+a \texttt{PP\_} locus tag, a JGI \texttt{gNNNN} gene model, and a PA14 locus tag are different
+namespaces that must stay distinguishable rather than being merged into one string field.
+
+Two of the bases this pass needs do not exist in either pool today. The yeast
+\texttt{SeqBasis} literal holds 11 values and every one of them is S288C-relative or
+yeast-panel-relative, so \texttt{isolate-WGS} transfers to a \org{P. kudriavzevii} isolate
+panel unchanged while a designed edit in the SD108 background has no value to take. The
+bacterial literal is KT2440- and K-12-relative in the same way, so a transposon insertion in
+\org{Stutzerimonas stutzeri} RCH2 or a guide library in PAO1 needs its own basis rather than a
+borrowed one. Table~\ref{tab:schema} lists both additions with the policy each carries.
+
+What fails the gate is a strain whose genome is unknown even in principle. The three
+acetic-acid evolved \org{P. kudriavzevii} lines, PkAC-7, PkAC-8 and PkAC-9, land there: they
+are characterized phenotypically and transcriptionally across six stresses, and no
+resequencing, variant table, or accession surfaced in either search pass, so the genotype is
+undefined and the strains are usable only as named strains with stress phenotypes. Rows in
+that state are dropped in Table~\ref{tab:excluded} rather than ranked low, because no amount
+of phenotypic value substitutes for a missing genotype.
+
+\subsection{The rank quantity is measurements, not records\secstatus{todo}}\label{sec:measurements}
+
+Rows are ordered by \term{measurements}, meaning records times phenotype dimensionality,
+descending, which is the quantity \texttt{build\_candidate\_datasets\_table.py} already sorts
+on. \term{Records} is the number of genotype $\times$ environment $\times$ replicate rows a
+dataset can yield, and \term{dimensionality} counts the values each row carries. A scalar MIC
+panel of $n$ isolates against $k$ drugs contributes $nk$ numbers, and a transcriptome panel of
+$n$ isolates at 5,564 genes contributes $5.6\times10^{3}n$.
+
+Ranking on records alone gets the order visibly wrong here, and the two clearest cases are
+worth naming rather than asserting the rule. The 414-isolate clinical panel of Khaledi et al.
+2020 holds 414 records, which would rank it below a 5,459-mutant arrayed screen, and yet each
+of those records is a genome plus a transcriptome, so the row is roughly $2.4\times10^{6}$
+measurements, inferred from the panel shape. The nine new pseudomonad rows hold 1,479 fitness
+experiments, measured, against roughly $6.7\times10^{6}$ measurements, inferred, because each
+experiment is a per-gene vector. The product places both correctly, and the supported-datasets
+table applies that same normalization through its compressed-signal column.
+
+\subsection{Band comes before tier, and why\secstatus{todo}}\label{sec:band}
+
+Scale is the right default ordering and it is the wrong first question when a specific host is
+being brought up. Each row therefore carries a \term{band} applied before tier and before
+scale, and the composition by band is Table~\ref{tab:counts}.
+
+The reason is measured in this pass rather than argued. The three regulatory-DNA rows at
+$10^{8}$, $5.1\times10^{7}$ and $6.7\times10^{6}$ measured promoter sequences carry more
+measurements than every other row combined, and none of the three bears on a low-data host,
+because all three are \org{S. cerevisiae} and their perturbation is an 80 bp promoter insert in
+a fixed scaffold. Conversely the largest \org{P. kudriavzevii} phenotype resource is 9,177
+measurements, inferred, which is four orders of magnitude below the smallest pseudomonad
+fitness row, so a pure measurement order puts every row of the new host below any plausible
+cut. Both facts are consequences of what the hosts have been measured with rather than of what
+they are worth to a transfer experiment, and a band corrects for exactly that difference.
+
+\subsection{The per-host floor, and why a floor rather than a score bonus\secstatus{todo}}\label{sec:floor}
+
+The recommended set carries a floor of rows per host, applied after ranking and reported row by
+row, and every promotion it makes is printed in Table~\ref{tab:final} rather than folded into a
+score.
+
+A floor is the right instrument because the setup a new host needs is per host and is done
+once. An \texttt{Organism} member, a host token in \file{torchcell/candidates/gates.py}, and a
+reference release pinned in the genomes tier are each written the first time any row for that
+host is built and never again, so the setup for a host with one built row is the same as the
+setup for a host with twenty. A floor guarantees that every host in the wave starts, so that
+one-time setup yields served records in this pass rather than in the next one.
+
+A score bonus would do the same arithmetic and lose the audit. Folding a host weight into the
+rank quantity makes a promoted row indistinguishable from a row that earned its position, and
+the whole point of the measurement order is that a surprising position can be checked against
+two numbers. The pin mechanism of the bacterial pass is the precedent: a stakeholder priority
+is a real criterion, so it is applied and reported rather than absorbed into the score.
+
+\subsection{The owner pin\secstatus{todo}}\label{sec:pin}
+
+One row is placed by the owner and not by the rule. Douglass et al. 2018, 128 MIC values on 32
+sequenced \org{P. kudriavzevii} isolates, is pinned to rank 1 from rank 38, where the host
+bootstrap band and tier 3 had put it. The pin is applied after the floor and is reported as a
+move with both ranks, and Table~\ref{tab:final} marks the row \emph{pin}.
+
+A transfer test needs labels of the same kind at both ends. No \org{P. kudriavzevii} deletion or CRISPR fitness data exists
+(Sec.~\ref{sec:pk}), so a model trained on \org{S. cerevisiae} deletion fitness has no
+target in this host. Growth of natural isolates is measured in both yeasts, and the Douglass
+panel is the one \org{P. kudriavzevii} growth-type panel that can be fetched today with no
+ask. Fluconazole is the one compound measured on natural isolates in both hosts. Peter et al.
+2018 grew 971 \org{S. cerevisiae} isolates on YPD with fluconazole at 20~\textmu g/ml, and Bloom
+et al. 2019 grew 13,950 segregants at 100~\textmu M. The other three drugs are
+measured in \org{S. cerevisiae} only in deletion or CRISPRi chemogenomic screens, in Parsons
+et al. 2006, Hillenmeyer et al. 2008, and Piotrowski et al. 2017, so they test a transfer across genotype
+classes as well as across hosts.
+
+The like-for-like test is therefore 32 labels, one drug across 32 isolates, with a
+single-dose growth ratio on the \org{S. cerevisiae} side and an MIC on the other. That is
+enough to build the isolate-genotype route against a \org{P. kudriavzevii} reference and to
+run a cross-host prediction end to end, and it is too few isolates to separate models.
+
+\subsection{Where the lines fall\secstatus{todo}}\label{sec:lines}
+
+The long-run cut is 200 additions against the 170 datasets served, so the target is 370. The
+pool reaches 201 rows, 60 of them from the fill pass of 2026-11-24 (Sec.~\ref{sec:fill}), so
+the shortfall this document reported before that pass is closed. Reaching the count did not
+make every row reachable: 62 rows still need a by-hand fetch and 9 need a named request, which
+Table~\ref{tab:asks} lists with the owner of each. Table~\ref{tab:counts} gives the composition of the pool by class and by host, so the
+cost of the band order and of the floor is visible per host.
+
+\input{tables/counts}
+
+One line is set by the machinery rather than by judgment. The yeast pool holds 169
+\texttt{Candidate} literals, of which 154 are unbuilt and ranked, and its \texttt{main()}
+raises on a pool over 250 rows, so a 200-row wave cannot go into one pool at all. The guard
+forces the split by organism, and the gate needs the same split for its own reasons. The yeast
+\texttt{Candidate} model has no \texttt{organism} field at all, the bacterial one admits two
+values, and \texttt{verdict.CandidateTable} admits only the two strings
+\texttt{bacteria} and \texttt{yeast}, which is the \texttt{table} field of all 52 stored
+verdicts. Table~\ref{tab:schema} records each of those edits.

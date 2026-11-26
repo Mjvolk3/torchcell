@@ -1,0 +1,42 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_hosts_candidate_datasets_table.py
+\begingroup
+\footnotesize
+\begin{longtable}{@{}L{22mm} L{34mm} L{20mm} L{30mm} L{66mm}@{}}
+\caption[]{The gene-identifier namespaces this wave's released data speaks, per host.
+\emph{Carries} is the model or gene count the namespace itself holds and \emph{Joins} is
+what maps it to another namespace. One species in this wave has four live namespaces
+whose model counts differ by more than two thousand genes, so a released gene id is not
+a well-formed identifier until the namespace is named. A \emph{Joins} entry that says a
+crosswalk has to be built is saying no join exists today: it is not a pointer to one.}
+\label{tab:namespaces}\\
+\toprule
+Host & Namespace & Spelling & Carries & Joins \\
+\midrule
+\endfirsthead
+\toprule
+Host & Namespace & Spelling & Carries & Joins \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\org{P. kudriavzevii} & JGI Issorie2 gene models & \texttt{gNNNN} & 4,925 gene models & Nothing published. A crosswalk to the INSDC set has to be built by protein BLAST, and 119 of 130 scaffolds are predicted to be an alternate haplotype, so the gap is not only an identifier gap \\
+\addlinespace[5pt]
+\org{P. kudriavzevii} & MAESTRO gene spelling & \texttt{geneNNNN} & the same JGI model set under a different spelling & Assumed equal to the JGI spelling and not verified: g4260 must be checked against gene4260 rather than assumed equal, which is exactly the pair the MAESTRO CNV finding rests on \\
+\addlinespace[5pt]
+\org{P. kudriavzevii} & INSDC / Ensembl Fungi SD108 & \texttt{locus tag} & 7,107 coding genes & The 4,925-versus-7,107 gap is large enough that the two sets are not trivially inter-mappable. This is the set the genomes tier pins as pkudriavzevii\_SD108\_v1 \\
+\addlinespace[5pt]
+\org{P. kudriavzevii} & CBS573 / YGAP annotation & \texttt{YGAP id} & the clinical-isolate annotation & Used by the clinical work, including the MIC panel and the ERG11 and FKS1 variant calls, so a clinical row and an SD108 engineering row do not share a gene id at all \\
+\addlinespace[5pt]
+\org{P. putida} & KT2440 locus tags & \texttt{PP\_NNNN} & 5,729 genes in the served reference & Already served: the bacterial layer namespaces its five perturbation types by locus tag, so a PP\_ row writes the record type the schema holds \\
+\addlinespace[5pt]
+\org{P. putida} & Fitness Browser locusId & \texttt{orgId, locusId} & one row per gene per browser organism & refseq\_mapping.tsv maps org and locusId to a RefSeq accession and refseq\_assemblies maps orgId to an NCBI assembly, so the identifier bridge is supplied by the source rather than built \\
+\addlinespace[5pt]
+\org{P. aeruginosa} & PAO1 and PA14 reference numbers & \texttt{PA NNNN} & the two reference annotations the Tn-seq literature uses & GOLD\_84 carries PAO1 locus tags and GOLD\_115 is PA14 in LB, so the two gene lists are in different namespaces and must not be merged into one boolean \\
+\addlinespace[5pt]
+\org{P. aeruginosa} & Bakta de novo annotation & \texttt{per-isolate tag} & one annotation per newly sequenced isolate & Nothing maps a Bakta tag to a PA number, so an isolate survey annotated this way forces the alias layer rather than joining on a reference id \\
+\addlinespace[5pt]
+\org{S. cerevisiae} & SGD S288C R64-4-1 & \texttt{YALNNNC} & 6,607 genes in the shared vocabulary & The served namespace. A regulatory-DNA row is not gene-indexed at all: its identifier is the measured sequence, which is why those rows carry a reporter-locus or plasmid basis rather than a gene id \\
+\addlinespace[5pt]
+\end{longtable}
+\endgroup

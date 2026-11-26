@@ -1,0 +1,176 @@
+%% notes-tex/database/database-expansion-hosts/sections/pipeline.tex
+%% [[experiments.database.expansion-hosts]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-hosts/sections/pipeline.tex
+%% SOURCE: hand-authored prose. The mirror figures are measured by
+%% experiments/database/scripts/audit_provenance_mirror.py and printed in tables/mirror.tex; the
+%% quote, gap and schema-field counts come from
+%% /scratch/projects/torchcell-scratch/tmp/deep-research/research_notes/Pk and next dataset wave triage/mirror_storage_audit.md,
+%% and the API constraints and cost arithmetic from
+%% .../research_notes/Pk and next dataset wave triage/artifact_to_ontology_pipeline.md.
+
+\section{From artifact to ontology\secstatus{todo}}\label{sec:pipeline}
+
+\input{tables/mirror}
+
+Table~\ref{tab:mirror} measures what the two provenance mirrors store, and the measurement
+decides the order of work. In the library mirror 2.4 percent of 24,950 file records carry a
+retrieval record, 0 of 717 keys carry one on \texttt{paper.pdf}, whose entire provenance is the
+string \texttt{zotero:attachment:<key>}, and 15.7 percent of 715 \texttt{paper.md} files carry
+the parser version, arguments, and DPI that produced them. So for 84 percent of the corpus a
+re-parse would move every quote anchor with no recorded recipe to reproduce the text that was
+quoted. In the raw mirror 48.2 percent of the bytes, 16.84 GB across 19 keys, sit in no
+manifest at all, including the 10.2 GB fitness database of Sec.~\ref{sec:pseudo} and all 6.6 GB
+of one 2025 single-cell key, and three keys carry no manifest. Nothing re-verifies either tree:
+\texttt{last\_check} is set on none of the 599 library retrieval records and on 3.6 percent of
+the 472 raw ones, 17 of 1,071 in all, and while \texttt{verify\_artifact} and
+\texttt{check\_source} exist and are tested, no
+cron, slurm, or CI job calls either, the cron list being five jobs of which none hashes or
+re-fetches anything. \texttt{si\_expected}, the per-key completeness checklist, is 0 of 717 in
+the library, so no automated check can report that a supplementary item is missing rather than
+absent.
+
+What survived into the built stores is the other half of the measurement. Across all 180 built
+stores the entire quote corpus is 890 distinct triples of citation key, source sha256, and
+verbatim quote, over 95 citation keys and 139 pinned source hashes, against 334,083 typed
+\texttt{ProvenanceGap} instances. Absence is recorded at roughly 375 times the rate of
+evidence, which is correct policy under the typed-absence rule and is also the measure of how
+much of the ontology is unsourced. The reverse edge is thinner still: 1 of 133
+\texttt{Publication} constructions sets \texttt{identifier} with a sha256 and the other 132
+identify their paper by a DOI or PMID string, \texttt{ArtifactRef} appears in 5 of 123
+registered loader modules and reaches 6 of 181 built stores, and \texttt{build\_manifest.json}
+carries no mirror reference at all. A served record therefore cannot be resolved to the exact
+bytes it was derived from, and a mirror artifact cannot be queried for the records it produced.
+
+\subsection{The nine fields that may carry a sourced value\secstatus{todo}}\label{sec:pipeline-slot}
+
+The binding constraint is narrower and sharper than any of those figures. The schema check
+\texttt{sourced\_value\_fields()}, run live, reports exactly nine schema fields that can carry
+a \texttt{SourcedValue}, and each of the nine is the \texttt{provenance} field of one class:
+\texttt{Media}, \texttt{MediaComponent}, \texttt{PreCulture}, \texttt{CultureFormat},
+\texttt{StrainBackground}, \texttt{EukaryoticStrainBackground}, \texttt{BackgroundAllele},
+\texttt{IntegratedCassette}, and \texttt{EssentialityStatement}. All nine are media, strain
+background, culture format, or essentiality. Nothing on the phenotype value, the perturbation,
+or the experiment carries a quote.
+
+That is exactly the output an extraction pipeline produces. A sample count, an uncertainty type,
+a unit, and a threshold are the four values the dataset-addition rule requires to be sourced
+from the paper or supplement with a verbatim quote, a sha256, and a section or line, and all
+four remain loader literals whose justification never leaves the source file. The Kuzmin
+combined-mutant sample count is the worked case and it is still a bare literal, with the
+back-solve that produced it documented only in a Dendron note, while \texttt{StatDerivation},
+the model built for exactly that resolution, is used by 2 of 123 loaders. A pipeline whose
+whole value is producing those sourced values has nowhere typed to write them, so the first
+thing to build is the slot. A verbatim quote also reaches the LMDB experiment record in only 27
+of 181 stores, and for the other 154 it lives in the sibling
+\file{preprocess/experiment_reference_index.json}, which is not the served artifact.
+
+\subsection{The staged design\secstatus{todo}}\label{sec:pipeline-stages}
+
+The design that follows from that audit does the unglamorous work first and puts the model only
+where its output can be checked. Eight stages, two of them with no model in them at all:
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item \textbf{0. Integrity floor.} No model. Bring the 16.84 GB into the manifest, replace the
+    hand-rolled sidecars that no program reads, fix the seven retrieval records that cannot be
+    dispatched because their recorded retriever is a shell string, a prose sentence, a
+    loader-private function, or a class method, and install the missing re-verify job. A quote
+    written against unhashed bytes cannot be checked against anything.
+  \item \textbf{1. Parse and pin.} Record the parser name, version, arguments, DPI, and output
+    sha256 per artifact. The convention already exists and 112 of 715 keys use it. The parser is
+    a replaceable pinned stage rather than a choice, because the benchmark suites disagree with
+    each other and the headline figures are vendor-run.
+  \item \textbf{2. Grounded read.} A citations-enabled read of the mirrored markdown as a
+    \texttt{text/plain} document, emitting claims with character spans into the mirrored bytes.
+  \item \textbf{3. Schema-enforced structuring.} A second call that carries the schema, with the
+    pydantic surface behind a cache breakpoint.
+  \item \textbf{4. Ontology mapping.} A cheap lexical mapper first for recall, then a model
+    adjudicating its candidates against a retrieved ontology slice rather than a dumped one.
+  \item \textbf{5. Deterministic gate.} No model. Re-hash each cited span against the mirrored
+    bytes, and detect truncation, refusal, cache misconfiguration, and ungroundedness from the
+    response fields rather than from a judgment. This is \texttt{audit\_sourced\_value}, which
+    already exists, is called from 31 of 123 loader modules, and is skipped in CI by a sentinel
+    data root.
+  \item \textbf{6. Adjudication.} The expensive model, on the disagreements only, so its spend
+    stays proportional to the failure rate.
+  \item \textbf{7. Human review.} Unavoidable, and quantified below.
+\end{itemize}
+
+Three API constraints determine where those stage boundaries fall. Citations and structured
+outputs are mutually exclusive in one request and return a 400 together, so grounding and
+schema enforcement are two calls and not one. Native PDF input is vision plus per-page
+extracted text rather than an OCR service, and it cannot cite images in a PDF at all, so a
+figure-borne number cannot be grounded that way. Plain text chunks into sentences and yields
+character spans into bytes the mirror pins, where a PDF yields page spans into bytes the
+publisher controls. And the schema handed to the API is not the pydantic model verbatim,
+because recursive schemas, \texttt{oneOf}, \texttt{not}, numerical constraints, and
+string-length constraints each return a 400, so the SDK helpers strip the unsupported
+constraints and re-validate locally. A supplementary spreadsheet is rejected outright in a
+document block, so it becomes CSV text, which keeps the citation span, or an upload into code
+execution, which loses it.
+
+\subsection{The cost model, and its assumptions\secstatus{todo}}\label{sec:pipeline-cost}
+
+The figures below are arithmetic over the documented prices, and the assumptions are stated
+because the result moves with them:
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item 300 papers, each a 12-page main PDF plus a 20-page supplement plus about 30,000 tokens
+    of converted supplementary tables.
+  \item 3,500 tokens per page, the midpoint of the documented 1,500 to 3,000 text tokens plus
+    up to 1,568 visual tokens, which is about 150,000 input tokens of artifact per paper.
+  \item A 20,000-token schema prefix, cached.
+  \item Outputs of 8,000, 4,000, 2,000, and 15,000 tokens for the four model stages.
+  \item The adjudication stage firing on 20 percent of papers, and a 30 percent retry
+    overhead on everything.
+\end{itemize}
+
+On those assumptions 300 papers cost about \$120 to \$175 with a mid-tier worker and a
+top-tier adjudicator run in batch, and the planning figure is \$190 to \$250. Running every
+stage on the top-tier model synchronously at high effort costs about \$810 to \$1,000 for the
+same work, roughly four to five times as much. Input tokens on the artifact are 70 to 80
+percent of the bill in every variant, so one design detail is load-bearing. Caching the
+20,000-token schema prefix saves about \$0.02 per paper, while caching the 150,000-token
+document between stages saves about \$0.14, about a third of the total. The documentation states
+that an ephemeral cache entry written during batch processing would likely expire before the
+follow-up request runs, so a batch-based multi-pass design cannot count on cross-batch hits and
+either puts all passes for one paper in a single request or budgets the higher figure.
+Batch-first is a throughput choice before it is a cost one, since the batch API is documented
+as exempt from the ramp limits that return a 429 on a burst even while under the token limits,
+and cache reads do not count toward the input-token limit either.
+
+The accuracy regimes are the number worth planning against. Published pipelines of this shape
+land at 0.94 to 0.98 F1, with one entity and relation extraction at 0.96 and 0.94 and a
+protein-degradation workflow at record-level F1 0.98 with 92 percent and 82.5 percent of
+recovered records validated on expert review. A bare model on strict whole-record extraction
+lands at 55 to 60 percent, measured at 57 percent and 56 percent for two current general
+models on a nanocrystal-synthesis benchmark. At 300 papers and about 20 fields each, the good
+regime still implies 120 to 360 wrong fields, so the pipeline's value is in making a wrong
+field findable rather than in removing the review queue. The gap between the two regimes is the
+engineering and not the model.
+
+Two targeting decisions follow from the audit rather than from the API. The pipeline points at
+the raw tree and this wave's keys rather than at the library mirror, because 124 of 717 library
+keys are named anywhere in \file{torchcell/} source and only 95 are quoted by a built store,
+so roughly 554 keys and about 12 GB are reading material served through the literature API
+rather than substrate the ontology depends on, while 96 of 99 raw keys are named in code. And
+the cheapest genuinely useful first output is not new records: \texttt{ProvenanceGap.resolve\_with},
+the field that names the artifact which would close a deferred gap, is populated on 0.8 percent
+of gaps against 4,933 gaps typed \texttt{deferred\_pending\_source\_review}. Filling it needs
+no schema change, has a deterministic check, and turns an existing 4,933-item worklist into an
+actionable one.
+
+\subsection{What this wave needs changed\secstatus{todo}}\label{sec:pipeline-schema}
+
+Table~\ref{tab:schema} lists every change in the served vocabulary and the candidate machinery
+that the rows of this document require, with the policy each one carries. Two of them gate
+every row rather than one: a host token the gate can resolve, without which
+\texttt{hosts\_named()} raises on any \org{P. kudriavzevii} row so that G2 cannot even be
+measured, and an \texttt{Organism} member, without which no loader can declare the host and the
+adapter map can hold nothing for it. The most expensive entry is the slot of
+Sec.~\ref{sec:pipeline-slot}: extending \texttt{SourcedValue} to the phenotype value and the
+perturbation changes classes that many served closures hold, so its rebuild scope reads
+\texttt{full\_kg\_rebuild} and its record carries the \texttt{schema-breaking} label. Every
+other entry on the table is additive, meaning a new leaf or a new member that changes no record
+any served dataset already holds.
+
+\input{tables/schema}

@@ -1,0 +1,102 @@
+%% notes-tex/database/database-expansion-hosts/database-expansion-hosts.tex
+%% [[experiments.database.expansion-hosts]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-hosts/database-expansion-hosts.tex
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+
+\usepackage{pdflscape}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\title{\vspace{-1.5em}Adding 200 Datasets Across Hosts}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\noindent
+The served graph at release 4.0, dated 2026-10-17, holds 170 schematized and
+L0--L4-verified datasets over three organisms, 70 for \org{Saccharomyces cerevisiae}, 68 for
+\org{Escherichia coli} and 32 for \org{Pseudomonas putida}, and 73,146,575 genotype by
+environment records. The yeast corpus carries 65,889,109 of those records and the two
+bacteria carry 4,561,865 and 2,695,603.
+
+This pass continues the two rankings before it and adds four axes none of them had. The
+yeast pass ranked 154 candidates on one organism and the bacterial pass ranked 92 on two
+hosts, and every row of both sat inside the three-member organism vocabulary the served
+schema already holds. Here a second yeast enters, \org{Pichia kudriavzevii}. The pseudomonad
+axis widens from KT2440 alone to the eleven pseudomonad rows of one downloadable artifact plus
+\org{Pseudomonas aeruginosa}. \org{Escherichia coli} returns on a different axis from the one
+it was ranked on before, carrying 25 rows of regulatory-DNA libraries, deep mutational scans
+and clinical susceptibility rather than more fitness screens. And the pipeline question is
+taken up, meaning whether an automated route from paper artifact to provenance-pinned ontology
+record is the right thing to build next. What that section reaches is a prerequisite rather
+than a verdict: the served schema has no field that can hold the justification such a pipeline
+would produce (Sec.~\ref{sec:pipeline}).
+
+The new host's result is a measured negative and it comes first. No published genome-wide
+essentiality or fitness screen exists for \org{P. kudriavzevii} under any of its four species
+names, and the search surface behind that conclusion is reported with it: a species-name by
+screen-keyword query over Europe PMC returned 53 hits with 50 inspected, a sweep of 74
+preprints across five preprint servers found no screen, GEO queried by taxid 4909 returned 29
+records and four series, and lab-name searches covered the three groups that build such
+libraries in other yeasts (Sec.~\ref{sec:pk}). The whole ingestible mass of the host is roughly
+25 small rows. Its
+largest phenotype resource is a preprint matrix of 161 isolates against 57 stressors whose
+accession has not been retrieved, and its best fully public benchmark is 128 drug MIC values
+on 32 sequenced isolates.
+
+Measurements and rows come from different organisms in this pass, and that asymmetry sets its
+shape. The pool carries 271,956,923 \term{measurements}, meaning records times phenotype
+dimensionality (Sec.~\ref{sec:measurements}), and two \org{S. cerevisiae} regulatory-DNA rows
+account for 153,710,060 of them at 102,371,025 and 51,339,035 measured promoter sequences,
+both ingesting through a schema that already serves their sibling (Sec.~\ref{sec:regdna}).
+The next three are new here and none is yeast: 25,132,000 from one \org{E. coli} library of
+244,000 designed sequences read out five different ways, 14,947,704 from a yeast interactome
+scored across nine environments, and 9,207,422 from an \org{E. coli} expression compendium
+assembled out of 127 separate articles. The row count comes from the pseudomonads, where one
+10.4 GB \texttt{sqlite} file holds 1,793 genome-wide fitness experiments over 11 pseudomonad
+organisms under one schema and one condition vocabulary (Sec.~\ref{sec:pseudo}).
+
+The pool reaches 201 rows against a target of 200, and the last 60 of them were found in a
+single fill pass on 2026-11-24 (Sec.~\ref{sec:fill}). That pass is also where this document's
+rule cost it the most: ranking the new \org{E. coli} libraries by the stated rule moves every
+pseudomonad fitness row out of the recommended fifty, which is reported rather than corrected
+(Sec.~\ref{sec:fill-cost}).
+
+Table~\ref{tab:counts} gives the composition of the pool by class and by host.
+Table~\ref{tab:final} is the recommended set in rank order with ten extra rows, so a row that
+proves unreachable has a named replacement, and Table~\ref{tab:sources} gives each recommended
+row's citation, link, data location, and the reason for its position. Three tables hold the
+findings that sit outside the ranking: Table~\ref{tab:namespaces} records the four
+gene-identifier namespaces live for \org{P. kudriavzevii} and what would join them,
+Table~\ref{tab:mirror} measures what the two provenance mirrors store, and
+Table~\ref{tab:schema} lists every change this wave needs in the served vocabulary and the
+candidate machinery. Table~\ref{tab:asks} lists the asks and who each one goes to, and
+Table~\ref{tab:excluded} records what was considered and dropped. Sec.~\ref{sec:summary}
+closes with the summary statistics of Table~\ref{tab:summary}, and Sec.~\ref{sec:full} prints
+the whole pool as Table~\ref{tab:candidates}, with a source for every row in
+Table~\ref{tab:sources-all} and each row's candidate-gate verdict in
+Table~\ref{tab:verdicts}.
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/state}
+\input{sections/rule}
+\input{sections/pk}
+\input{sections/regdna}
+\input{sections/pseudomonads}
+\input{sections/fill}
+\input{sections/pipeline}
+\input{sections/final}
+\input{sections/caveats}
+\input{sections/summary}
+\input{sections/full}
+
+\end{document}

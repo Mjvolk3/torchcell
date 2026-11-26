@@ -1,0 +1,159 @@
+%% notes-tex/database/database-expansion-hosts/sections/pk.tex
+%% [[experiments.database.expansion-hosts]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-hosts/sections/pk.tex
+%% SOURCE: hand-authored prose. Every count comes from the triage report
+%% /scratch/projects/torchcell-scratch/tmp/deep-research/reports/Pk and next dataset wave triage.md
+%% and from the two search passes recorded in
+%% .../research_notes/Pk and next dataset wave triage/pichia_kudriavzevii.md, which carries the
+%% per-finding verified, snippet and inferred labels this section preserves.
+
+\section{Pichia kudriavzevii\secstatus{todo}}\label{sec:pk}
+
+No published genome-wide essentiality or fitness screen exists for this species. There is no
+Tn-seq, SATAY, Hermes, or piggyBac mutagenesis library, no genome-wide CRISPR knockout,
+interference, or activation screen, and no arrayed deletion collection, for
+\org{Pichia kudriavzevii}, \org{Issatchenkia orientalis}, \org{Candida krusei}, or
+\org{Candida glycerinogenes} across 2010 to 2026. Douglass et al. 2018 established that those
+four names are one species, with genomes collinear and 99.6 percent identical, so a search run
+under all four names is the complete search for the host.
+
+Each search axis is reported with its own counts, because a negative result is only citable
+through the surface that produced it. A Europe PMC query crossing both current species names against ``CRISPR screen'',
+``genome-wide screen'', ``essential genes'', ``transposon'', ``Tn-seq'', ``sgRNA library'',
+``ribosome profiling'' and ``overexpression library'' returned 53 hits, of which 50 were
+inspected at title level, with zero screens in this organism. A sweep of 74 preprints across
+bioRxiv, medRxiv, Research Square, Preprints.org and Authorea found no screen, library, or
+essentiality preprint. GEO DataSets queried by taxid 4909 returned 29 records and four series,
+none of them a screen, and taxid 573 must not be used for the clinical name because it returns
+1,328 unrelated records for a different genus. Lab-name searches established that Wheeldon's
+genome-scale CRISPR platform exists for \org{Yarrowia lipolytica} and \org{Komagataella
+phaffii} only, the latter as a six-fold-coverage library of 30,848 active guides covering more
+than 99 percent of that genome, and has never been extended to this host. Essentiality in this
+species exists only as output of the iIsor850 reconstruction over 850 genes, which the yeast
+pool already excludes under the rule \texttt{not-a-dataset} because a reconstruction is not an
+experiment.
+
+The consequence for what the host can be used for is a limit on the label rather than on the
+host. Gene-level fitness, essentiality, and genetic interaction are
+unavailable as held-out labels in this species, so a transfer claim of the form trained on
+yeast fitness and judged on \org{P. kudriavzevii} fitness has nothing to be judged against
+today. What is available is isolate-level stress tolerance, antifungal susceptibility,
+strain-level expression under acid stress, and per-locus integration fitness. Four axes remain
+unsearched and are therefore unmeasured rather than negative: Chinese-language indices,
+ArrayExpress and BioStudies, the Zenodo, Dryad, and figshare APIs, and the per-lab publication
+pages of Alper, Blenner, and Jeffries.
+
+\subsection{What does exist, led by the MAESTRO panel\secstatus{todo}}\label{sec:pk-have}
+
+\notesec{MAESTRO, 170 isolates sequenced and 161 phenotyped} MAESTRO is the machine-learning
+association method for small cohorts that the preprint is named for, and the panel it was run
+on is whole-genome sequencing of 170
+isolates with growth of 161 of them assessed across 57 stressors spanning heat, low pH,
+organic acids, lignocellulosic inhibitors, and antifungals across azoles, polyenes, and
+echinocandins, which is 9,177 growth measurements, inferred as the product of the two reported
+axes. Copy-number variation in under 3.5 percent of genes has pleiotropic effects on stress
+tolerance, a copy-number feature model reaches median $R^{2}$ 0.67 and median Pearson
+$r$ 0.92 across the 57 conditions, and deletion of the tandem paralog pair
+\gene{gene4260}/\gene{gene4261} produced effects across several stresses, which is the one
+CRISPR-validated arm in the host. The panel is a preprint of 2025-09-04, bioRxiv
+10.1101/2025.08.29.673034, corresponding author Ping-Hung Hsieh at LBNL. Its numbers conflict
+across DOE pages, which report 162 strains, 305,435 SNPs, and 58 conditions against the
+preprint's 170 strains and a project poster's 305,405 SNPs and 16,177 INDELs, so the figures
+carried here are the preprint's and the disagreement is recorded rather than averaged. The
+phenotype matrix itself has not been retrieved: bioRxiv returns 403 to every automated client
+and Europe PMC's full-text route returns 500 for the preprint identifier.
+
+\notesec{The low-pH expression atlas, 12 strains} Twelve isolates chosen for varying acid
+tolerance, six tolerant and six susceptible, profiled at control pH near 5.5 and at pH 1.5,
+sampled at 0 h and 1 h, with further arms testing 3-hydroxypropionate and citramalate, giving
+roughly $2.4\times10^{5}$ expression measurements, inferred. It is the one omics resource in
+the host built as a strain by condition matrix with a released processed count table, and the
+table sits at Illinois Data Bank DOI 10.13012/B2IDB-1336177\_V1, which returns 403 to every
+automated client.
+
+\notesec{Douglass 2018, the cleanest public benchmark} Thirty-two sequenced isolates, 20
+clinical and 12 environmental, with per-isolate MICs in mg/L for fluconazole, flucytosine,
+amphotericin B, and micafungin, which is 128 MIC values read in full from the paper's own
+table. Fluconazole MICs span 8 to 128 with a mode of 32. The same table gives ploidy, MAT
+genotype, Illumina coverage, \gene{ERG11} and \gene{FKS1} variants, and copy status across the
+\gene{ABC11}-\gene{ABC1} region per strain. Reads are at SRA SRP139299, the CBS573 annotated
+reference at GenBank CP028773 to CP028778, and the second type strain at CP028531 to CP028535,
+so this is the only row in the host that is fully public and fully provenanced today.
+The owner pins this row to rank 1 of the wave (Sec.~\ref{sec:pin}), because fluconazole is
+also measured on \org{S. cerevisiae} natural isolates in two served datasets and the row
+needs no ask.
+
+\notesec{The landing-pad screen, the only measured per-locus fitness} Forty-seven guide RNAs
+across 21 intergenic regions, each characterized for cutting efficiency, integration
+efficiency, cellular fitness, and GFP expression level, which is 188 readouts. Its artifacts
+are a 23 KB package on a lab-hosted Box URL plus a GitHub repository, with no DOI and no
+sequence accession, which is the retrieval risk Table~\ref{tab:asks} records.
+
+\notesec{Four GEO series and the SD108 product line} GSE202655 holds six samples on L-malate
+engineering and GSE159457 six samples on C4-dicarboxylate transporters in strain CY902 with raw
+reads at SRP287255. GSE262836 and GSE282019 are two Delhi neonatal-intensive-care outbreak
+series that together pair genome, expression, and fluconazole MIC across 10 RNA-seq samples.
+The engineering line on SD108 covers succinate, 3-hydroxypropionate, citramalate,
+glycolic acid, and xylose utilization, and its scale was overestimated on the first pass: Tran
+et al. 2023 contributes about 10 distinct genotypes countable from the body text, with
+Supplementary Table 5 unread and no sequence accession deposited at all, so the 100 to 250
+genotype figure for the whole lineage is an upper-range estimate and is labeled one. The parts
+panel of Cao et al. 2020 names 16 promoters and then ``and other tested promoters'', so its
+total is unstated, and its deposit is one of at least eight Illinois Data Bank records for the
+species, every one of which returned 403 on both passes.
+
+\subsection{Four gene-identifier namespaces for one species\secstatus{todo}}\label{sec:pk-ids}
+
+Four annotation namespaces are live for this one species, and the gap between the largest two
+is wide enough that they are not inter-mappable by inspection. Table~\ref{tab:namespaces}
+records each one with its gene count, the data that uses it, and the route that would join it
+to the others.
+
+The JGI MycoCosm assembly Issorie2, SD108 v2.0, is 21.69 Mbp over 130 scaffolds with 4,925
+gene models, and 119 of those 130 scaffolds are predicted to be an alternate haplotype, with
+separate primary and secondary allele gene-model tracks served. The whole engineering line
+writes its loci in that namespace's \texttt{gNNNN} form. The MAESTRO preprint writes
+\texttt{geneNNNN} instead, and whether \texttt{g4260} and \texttt{gene4260} are the same locus
+is unverified, which is the kind of silent mismatch that corrupts a join without failing a
+load. A third set is live in Ensembl Fungi for the same strain, assembly ASM76445v1, with 7,107
+coding genes and 328 non-coding genes imported from INSDC. The clinical work uses a fourth,
+the CBS573 reference annotated with YGAP by similarity and synteny to \org{S. cerevisiae},
+about 10.8 Mb over five nuclear chromosomes.
+
+The 4,925 against 7,107 difference is the reason a crosswalk has to be built from protein
+sequence rather than from identifier similarity, and the haplotype split is the reason a naive
+gene count in this species reads low against the 6,607 genes of the S288C reference. Cao et al.
+2020 itself uses 10.8 Mbp as the genome size in its copy-number calculation, the haploid figure
+rather than Issorie2's 21.69 Mbp, so two genome sizes already coexist in one lab's output. Under
+the rule that the data is the data, a loader stores the released name verbatim in whichever
+namespace the release used and records which namespace that is, and resolution across the four
+is a downstream utility rather than a load-time gate.
+
+\input{tables/namespaces}
+
+\subsection{The open leads\secstatus{todo}}\label{sec:pk-leads}
+
+Three leads are unresolved rather than negative, and the first is time-sensitive. NCBI holds
+713 BioProjects for this species and 357 of them match \texttt{resequencing}. Three sampled
+ones, PRJNA1464946, PRJNA1464947 and PRJNA1464948, are titled as \org{Issatchenkia
+orientalis} SD108 \texttt{IoSL10}, \texttt{IoSL16} and \texttt{IoSL19} resequencing,
+registered on 2026-05-11 by the DOE Joint Genome Institute with no publication attached. A
+series sequenced per isolate at that scale is either a mutagenized or an evolved SD108
+library, and if it carries phenotypes it is the genome-wide resource this host currently
+lacks. That is a hypothesis about an unopened deposit, not a finding.
+
+The per-isolate deposition route for the MAESTRO panel is the second lead and is inferred
+rather than verified. Three projects in the \texttt{IO\_NNN} naming exist, PRJNA571188 for
+IO\_179, PRJNA571352 for IO\_048, and PRJNA583207 for IO\_044 gene expression profiling, each
+registered as one BioProject per isolate rather than under an umbrella, which would explain
+why no single accession for the panel appears in any search. Enumerating the complete
+isolate-to-accession map needs either the preprint's data statement or a pass over all 357
+summaries.
+
+The third lead is a 69-condition expression matrix in this species, 5,140 genes by 69
+conditions, described in a senior thesis from the Sinha group at UIUC that carries no
+data-availability, code, deposition, or supplementary section of any kind. The provenance of
+the expression and transcription-factor concentration data is one sentence that cites nothing.
+So it is reachable by asking and by nothing else, and with a real provenance record a
+69-condition expression matrix in this host would be worth more to the host's program than
+anything else now public.

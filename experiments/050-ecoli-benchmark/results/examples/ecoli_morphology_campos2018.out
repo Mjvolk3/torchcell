@@ -1,6 +1,5 @@
 Cell shape and cell cycle of single-gene deletions (Campos 2018): 3,573 samples, 15 target(s)
 split seqid30_s0: {'train': 2859, 'val': 357, 'test': 357}
-penalty chosen on validation mse: 1e+06
-validation {'pearson': -0.0401, 'spearman': -0.0379, 'r2': -0.0028, 'mse': 0.047, 'mae': 0.0935}
-test       {'pearson': 0.0097, 'spearman': -0.0041, 'r2': -0.0034, 'mse': 0.0331, 'mae': 0.0893}
+validation {'pearson': -0.0331, 'spearman': -0.0227, 'r2': -0.0162, 'mse': 0.0476, 'mae': 0.0948}
+test       {'pearson': 0.0142, 'spearman': -0.0166, 'r2': -0.0104, 'mse': 0.0333, 'mae': 0.09}
 headline metric: pearson (mean over targets)

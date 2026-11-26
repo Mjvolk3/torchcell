@@ -2,8 +2,8 @@
 """Metabolome of *E. coli* single-gene deletions (Fuhrer 2017), seqid30 split.
 
 A complete benchmark run in one file: load the standardized task, describe each deleted
-gene by the composition of its protein, fit a ridge regression, choose the ridge
-penalty on the validation part, and score the test part once.
+gene by the composition of its protein, fit ordinary least squares on the training
+part, report the validation score, and score the test part once.
 
 Needs only ``pip install "torchcell>=1.8.8"``. Run it in an empty directory::
 
@@ -27,8 +27,6 @@ TASK = "ecoli-metabolome-fuhrer2017"
 # reported hit to a training protein at or above 30% identity.
 SPLIT = "seqid30_s0"  # <family>_s<seed>; task.split_names lists every split
 AMINO_ACIDS = "ACDEFGHIKLMNPQRSTVWY"
-PENALTIES = (1e-1, 1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6)
-SELECT_ON = "mse"  # lower is better, and defined even when a prediction is constant
 
 
 def protein_features(genome: Any, locus_tag: str) -> np.ndarray:
@@ -38,13 +36,14 @@ def protein_features(genome: Any, locus_tag: str) -> np.ndarray:
     return np.array([*fractions, np.log(len(protein))])
 
 
-def fit_predict_ridge(
-    x_fit: np.ndarray, y_fit: np.ndarray, x_new: np.ndarray, penalty: float
+def fit_predict_least_squares(
+    x_fit: np.ndarray, y_fit: np.ndarray, x_new: np.ndarray
 ) -> np.ndarray:
-    """Fit one closed-form ridge per target on ``x_fit`` and predict ``x_new``.
+    """Fit ordinary least squares per target on ``x_fit`` and predict ``x_new``.
 
-    Features are standardized with the fitting rows' mean and spread. Each target is
-    fit only on the rows where it was measured (``y_fit`` is ``nan`` elsewhere).
+    Features are standardized with the fitting rows' mean and spread, and the model has
+    an intercept. Each target is fit only on the rows where it was measured (``y_fit``
+    is ``nan`` elsewhere). There is no hyperparameter and no random step.
     """
     mean = x_fit.mean(axis=0)
     spread = x_fit.std(axis=0)
@@ -54,8 +53,7 @@ def fit_predict_ridge(
     for target in range(y_fit.shape[1]):
         measured = ~np.isnan(y_fit[:, target])
         z, y = z_fit[measured], y_fit[measured, target]
-        gram = z.T @ z + penalty * np.eye(z.shape[1])
-        weights = np.linalg.solve(gram, z.T @ (y - y.mean()))
+        weights = np.linalg.lstsq(z, y - y.mean(), rcond=None)[0]  # minimum norm
         predictions[:, target] = z_new @ weights + y.mean()
     return predictions
 
@@ -79,21 +77,14 @@ by_gene = {tag: protein_features(task.genome, tag) for tag in np.unique(task.gen
 features = np.array([sum(by_gene[tag] for tag in tags) for tags in task.genes])
 labels = task.y  # (n_samples, n_targets); nan where a target was not measured
 
-# Model selection: fit on train, score on validation. The test part stays locked.
+# Fit on train and score on validation. Least squares has nothing to tune; with a
+# model that does, choose it here, on validation, while the test part stays locked.
 x_train, y_train = features[split.train], labels[split.train]
-validation = {
-    penalty: task.score(
-        labels[split.val],
-        fit_predict_ridge(x_train, y_train, features[split.val], penalty),
-    )
-    for penalty in PENALTIES
-}
-best_penalty = min(PENALTIES, key=lambda penalty: validation[penalty][SELECT_ON])
-print(f"penalty chosen on validation {SELECT_ON}: {best_penalty:g}")
-print("validation", rounded(validation[best_penalty]))
+val_prediction = fit_predict_least_squares(x_train, y_train, features[split.val])
+print("validation", rounded(task.score(labels[split.val], val_prediction)))
 
-# One final evaluation of the chosen model; unlock_test warns by design.
-test = split.unlock_test(reason="final evaluation at the penalty chosen on validation")
-test_prediction = fit_predict_ridge(x_train, y_train, features[test], best_penalty)
+# One final evaluation; unlock_test warns by design.
+test = split.unlock_test(reason="final evaluation of the least-squares fit")
+test_prediction = fit_predict_least_squares(x_train, y_train, features[test])
 print("test      ", rounded(task.score(labels[test], test_prediction)))
 print(f"headline metric: {task.spec.headline_metric} (mean over targets)")

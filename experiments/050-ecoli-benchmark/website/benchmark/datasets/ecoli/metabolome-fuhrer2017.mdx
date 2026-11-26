@@ -53,7 +53,7 @@ Each family has several seeds. The name of a split is the family, `_s` and the s
 
 ## Example script
 
-[`ecoli_metabolome_fuhrer2017.py`](https://github.com/Mjvolk3/torchcell/blob/main/examples/benchmark/ecoli_metabolome_fuhrer2017.py) is a complete run in one file: it loads this task, builds 21 features from the protein of each deleted gene, fits a ridge regression (a linear model with an L2 penalty), chooses the penalty on validation and scores the test part once. Replace `protein_features` and `fit_predict_ridge` with your model and keep the rest.
+[`ecoli_metabolome_fuhrer2017.py`](https://github.com/Mjvolk3/torchcell/blob/main/examples/benchmark/ecoli_metabolome_fuhrer2017.py) is a complete run in one file: it loads this task, builds 21 features from the protein of each deleted gene, fits ordinary least squares, reports the validation score and scores the test part once. Replace `protein_features` and `fit_predict_least_squares` with your model and keep the rest.
 
 ```bash
 pip install "torchcell>=1.8.8"
@@ -65,8 +65,8 @@ python ecoli_metabolome_fuhrer2017.py
 """Metabolome of *E. coli* single-gene deletions (Fuhrer 2017), seqid30 split.
 
 A complete benchmark run in one file: load the standardized task, describe each deleted
-gene by the composition of its protein, fit a ridge regression, choose the ridge
-penalty on the validation part, and score the test part once.
+gene by the composition of its protein, fit ordinary least squares on the training
+part, report the validation score, and score the test part once.
 
 Needs only ``pip install "torchcell>=1.8.8"``. Run it in an empty directory::
 
@@ -90,8 +90,6 @@ TASK = "ecoli-metabolome-fuhrer2017"
 # reported hit to a training protein at or above 30% identity.
 SPLIT = "seqid30_s0"  # <family>_s<seed>; task.split_names lists every split
 AMINO_ACIDS = "ACDEFGHIKLMNPQRSTVWY"
-PENALTIES = (1e-1, 1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6)
-SELECT_ON = "mse"  # lower is better, and defined even when a prediction is constant
 
 
 def protein_features(genome: Any, locus_tag: str) -> np.ndarray:
@@ -101,13 +99,14 @@ def protein_features(genome: Any, locus_tag: str) -> np.ndarray:
     return np.array([*fractions, np.log(len(protein))])
 
 
-def fit_predict_ridge(
-    x_fit: np.ndarray, y_fit: np.ndarray, x_new: np.ndarray, penalty: float
+def fit_predict_least_squares(
+    x_fit: np.ndarray, y_fit: np.ndarray, x_new: np.ndarray
 ) -> np.ndarray:
-    """Fit one closed-form ridge per target on ``x_fit`` and predict ``x_new``.
+    """Fit ordinary least squares per target on ``x_fit`` and predict ``x_new``.
 
-    Features are standardized with the fitting rows' mean and spread. Each target is
-    fit only on the rows where it was measured (``y_fit`` is ``nan`` elsewhere).
+    Features are standardized with the fitting rows' mean and spread, and the model has
+    an intercept. Each target is fit only on the rows where it was measured (``y_fit``
+    is ``nan`` elsewhere). There is no hyperparameter and no random step.
     """
     mean = x_fit.mean(axis=0)
     spread = x_fit.std(axis=0)
@@ -117,8 +116,7 @@ def fit_predict_ridge(
     for target in range(y_fit.shape[1]):
         measured = ~np.isnan(y_fit[:, target])
         z, y = z_fit[measured], y_fit[measured, target]
-        gram = z.T @ z + penalty * np.eye(z.shape[1])
-        weights = np.linalg.solve(gram, z.T @ (y - y.mean()))
+        weights = np.linalg.lstsq(z, y - y.mean(), rcond=None)[0]  # minimum norm
         predictions[:, target] = z_new @ weights + y.mean()
     return predictions
 
@@ -142,22 +140,15 @@ by_gene = {tag: protein_features(task.genome, tag) for tag in np.unique(task.gen
 features = np.array([sum(by_gene[tag] for tag in tags) for tags in task.genes])
 labels = task.y  # (n_samples, n_targets); nan where a target was not measured
 
-# Model selection: fit on train, score on validation. The test part stays locked.
+# Fit on train and score on validation. Least squares has nothing to tune; with a
+# model that does, choose it here, on validation, while the test part stays locked.
 x_train, y_train = features[split.train], labels[split.train]
-validation = {
-    penalty: task.score(
-        labels[split.val],
-        fit_predict_ridge(x_train, y_train, features[split.val], penalty),
-    )
-    for penalty in PENALTIES
-}
-best_penalty = min(PENALTIES, key=lambda penalty: validation[penalty][SELECT_ON])
-print(f"penalty chosen on validation {SELECT_ON}: {best_penalty:g}")
-print("validation", rounded(validation[best_penalty]))
+val_prediction = fit_predict_least_squares(x_train, y_train, features[split.val])
+print("validation", rounded(task.score(labels[split.val], val_prediction)))
 
-# One final evaluation of the chosen model; unlock_test warns by design.
-test = split.unlock_test(reason="final evaluation at the penalty chosen on validation")
-test_prediction = fit_predict_ridge(x_train, y_train, features[test], best_penalty)
+# One final evaluation; unlock_test warns by design.
+test = split.unlock_test(reason="final evaluation of the least-squares fit")
+test_prediction = fit_predict_least_squares(x_train, y_train, features[test])
 print("test      ", rounded(task.score(labels[test], test_prediction)))
 print(f"headline metric: {task.spec.headline_metric} (mean over targets)")
 ```
@@ -167,45 +158,44 @@ Output of one run:
 ```text
 Metabolome of single-gene deletions (Fuhrer 2017): 3,624 samples, 7,534 target(s)
 split seqid30_s0: {'train': 2903, 'val': 359, 'test': 362}
-penalty chosen on validation mse: 100000
-validation {'pearson': 0.0029, 'spearman': 0.0018, 'r2': -0.0032, 'mse': 0.9624, 'mae': 0.7162}
-test       {'pearson': 0.0051, 'spearman': 0.0027, 'r2': -0.0038, 'mse': 0.9758, 'mae': 0.7309}
+validation {'pearson': 0.0029, 'spearman': 0.0015, 'r2': -0.013, 'mse': 0.97, 'mae': 0.7202}
+test       {'pearson': -0.0005, 'spearman': 0.0015, 'r2': -0.0171, 'mse': 0.9871, 'mae': 0.7359}
 headline metric: pearson (mean over targets)
 ```
 
 ## Linear-probe baselines
 
-A frozen representation of each deleted gene with a ridge regression on top, for every split of this task. The representations and the fitting procedure are described in the [overview](./index.mdx#linear-probe-baselines).
+A frozen representation of each deleted gene with ordinary least squares on top, for every split of this task. The representations and the fitting procedure are described in the [overview](./index.mdx#linear-probe-baselines).
 
 ### Pearson correlation
 
 <img src={require("./linear_probes_pearson_metabolome-fuhrer2017.png").default} alt="Linear-probe test Pearson correlation for Metabolome (Fuhrer 2017)" style={{display: "block", width: "100%", maxWidth: "180mm", maxHeight: "170mm", height: "auto", objectFit: "contain"}} />
 
-**Test Pearson correlation of each linear probe on Metabolome (Fuhrer 2017).** The Pearson correlation is the linear correlation between predicted and measured values. Each panel is one split family and each bar is one gene representation. A bar is the mean over the seeds of that family (five seeds for random splits and three for every other family) and its whisker is the sample standard deviation over those seeds. The correlation is computed on the test part at the ridge penalty chosen on validation, separately for each target, and then averaged over the targets. Random features carry no biology and mark the level a representation must exceed. A representation with no bar has an undefined correlation: one-hot features predict the training mean for a gene that was not in training. The other panels hold out whole protein clusters (30% identity is the stricter cut) or whole chromosome blocks.
+**Test Pearson correlation of each linear probe on Metabolome (Fuhrer 2017).** The Pearson correlation is the linear correlation between predicted and measured values. Each panel is one split family and each bar is one gene representation. A bar is the mean over the seeds of that family (five seeds for random splits and three for every other family) and its whisker is the sample standard deviation over those seeds. The correlation is computed on the test part from one least-squares fit on the training part, separately for each target, and then averaged over the targets. Random features carry no biology and mark the level a representation must exceed. A representation with no bar has an undefined correlation: one-hot features predict the training mean for a gene that was not in training. The other panels hold out whole protein clusters (30% identity is the stricter cut) or whole chromosome blocks.
 
 The table gives the same numbers: mean ± sample standard deviation of the test Pearson correlation over the seeds of each split family. The highest mean of each row is in bold. `undefined` marks a constant prediction.
 
 | Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| Random | -0.003 ± 0.001 | undefined | 0.010 ± 0.003 | 0.010 ± 0.002 | 0.005 ± 0.003 | 0.007 ± 0.002 | 0.007 ± 0.002 | 0.003 ± 0.004 | **0.010 ± 0.006** | 0.005 ± 0.005 |
-| Sequence identity 30% | -0.004 ± 0.004 | undefined | 0.010 ± 0.002 | 0.009 ± 0.008 | 0.009 ± 0.004 | 0.005 ± 0.001 | 0.002 ± 0.005 | 0.000 ± 0.004 | **0.010 ± 0.004** | 0.006 ± 0.004 |
-| Sequence identity 50% | -0.006 ± 0.003 | undefined | 0.002 ± 0.008 | 0.003 ± 0.003 | **0.006 ± 0.004** | 0.003 ± 0.005 | 0.002 ± 0.008 | 0.001 ± 0.005 | 0.005 ± 0.008 | 0.002 ± 0.006 |
-| Chromosome position | -0.001 ± 0.006 | undefined | **0.004 ± 0.004** | 0.002 ± 0.006 | 0.001 ± 0.006 | -0.001 ± 0.001 | 0.003 ± 0.003 | -0.000 ± 0.005 | -0.001 ± 0.005 | 0.000 ± 0.008 |
+| Random | -0.000 ± 0.003 | undefined | 0.008 ± 0.005 | **0.009 ± 0.002** | 0.002 ± 0.002 | 0.000 ± 0.003 | -0.002 ± 0.005 | 0.003 ± 0.004 | 0.005 ± 0.004 | 0.002 ± 0.006 |
+| Sequence identity 30% | 0.001 ± 0.004 | undefined | **0.009 ± 0.003** | 0.008 ± 0.007 | 0.001 ± 0.005 | -0.004 ± 0.011 | -0.003 ± 0.002 | -0.002 ± 0.003 | 0.005 ± 0.002 | 0.006 ± 0.003 |
+| Sequence identity 50% | -0.005 ± 0.002 | undefined | 0.003 ± 0.009 | 0.001 ± 0.002 | 0.003 ± 0.001 | 0.002 ± 0.003 | 0.000 ± 0.006 | -0.001 ± 0.005 | **0.007 ± 0.002** | 0.004 ± 0.003 |
+| Chromosome position | 0.003 ± 0.003 | undefined | 0.004 ± 0.004 | 0.000 ± 0.004 | -0.004 ± 0.004 | 0.000 ± 0.006 | **0.007 ± 0.008** | 0.000 ± 0.004 | 0.004 ± 0.003 | -0.005 ± 0.001 |
 
 ### Spearman correlation
 
 <img src={require("./linear_probes_spearman_metabolome-fuhrer2017.png").default} alt="Linear-probe test Spearman correlation for Metabolome (Fuhrer 2017)" style={{display: "block", width: "100%", maxWidth: "180mm", maxHeight: "170mm", height: "auto", objectFit: "contain"}} />
 
-**Test Spearman correlation of each linear probe on Metabolome (Fuhrer 2017).** The Spearman correlation is the correlation between the ranks of predicted and measured values, which does not depend on the scale of the predictions and is not moved by a few extreme strains. Each panel is one split family and each bar is one gene representation. A bar is the mean over the seeds of that family (five seeds for random splits and three for every other family) and its whisker is the sample standard deviation over those seeds. The correlation is computed on the test part at the ridge penalty chosen on validation, separately for each target, and then averaged over the targets. Random features carry no biology and mark the level a representation must exceed. A representation with no bar has an undefined correlation: one-hot features predict the training mean for a gene that was not in training. The other panels hold out whole protein clusters (30% identity is the stricter cut) or whole chromosome blocks.
+**Test Spearman correlation of each linear probe on Metabolome (Fuhrer 2017).** The Spearman correlation is the correlation between the ranks of predicted and measured values, which does not depend on the scale of the predictions and is not moved by a few extreme strains. Each panel is one split family and each bar is one gene representation. A bar is the mean over the seeds of that family (five seeds for random splits and three for every other family) and its whisker is the sample standard deviation over those seeds. The correlation is computed on the test part from one least-squares fit on the training part, separately for each target, and then averaged over the targets. Random features carry no biology and mark the level a representation must exceed. A representation with no bar has an undefined correlation: one-hot features predict the training mean for a gene that was not in training. The other panels hold out whole protein clusters (30% identity is the stricter cut) or whole chromosome blocks.
 
 The table gives the same numbers: mean ± sample standard deviation of the test Spearman correlation over the seeds of each split family. The highest mean of each row is in bold. `undefined` marks a constant prediction.
 
 | Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| Random | -0.003 ± 0.001 | undefined | **0.008 ± 0.003** | 0.006 ± 0.002 | 0.004 ± 0.002 | 0.004 ± 0.002 | 0.004 ± 0.002 | 0.000 ± 0.003 | 0.008 ± 0.005 | 0.003 ± 0.005 |
-| Sequence identity 30% | -0.002 ± 0.003 | undefined | **0.008 ± 0.000** | 0.005 ± 0.006 | 0.005 ± 0.002 | 0.003 ± 0.000 | 0.000 ± 0.004 | -0.003 ± 0.004 | 0.007 ± 0.004 | 0.004 ± 0.003 |
-| Sequence identity 50% | -0.005 ± 0.003 | undefined | 0.001 ± 0.006 | 0.000 ± 0.002 | **0.005 ± 0.003** | 0.001 ± 0.004 | -0.000 ± 0.005 | -0.001 ± 0.003 | 0.004 ± 0.006 | -0.000 ± 0.005 |
-| Chromosome position | -0.001 ± 0.007 | undefined | **0.002 ± 0.003** | -0.002 ± 0.004 | -0.003 ± 0.006 | -0.004 ± 0.002 | -0.000 ± 0.003 | -0.003 ± 0.005 | -0.003 ± 0.008 | -0.002 ± 0.008 |
+| Random | -0.001 ± 0.002 | undefined | **0.008 ± 0.006** | 0.007 ± 0.001 | 0.001 ± 0.002 | 0.001 ± 0.003 | -0.003 ± 0.004 | 0.002 ± 0.003 | 0.003 ± 0.005 | 0.001 ± 0.005 |
+| Sequence identity 30% | 0.001 ± 0.003 | undefined | **0.009 ± 0.003** | 0.006 ± 0.005 | 0.001 ± 0.005 | -0.003 ± 0.009 | -0.004 ± 0.000 | -0.003 ± 0.004 | 0.004 ± 0.001 | 0.005 ± 0.003 |
+| Sequence identity 50% | -0.004 ± 0.002 | undefined | 0.002 ± 0.008 | -0.000 ± 0.002 | 0.002 ± 0.000 | 0.002 ± 0.003 | -0.000 ± 0.004 | -0.001 ± 0.005 | **0.006 ± 0.003** | 0.003 ± 0.004 |
+| Chromosome position | 0.001 ± 0.004 | undefined | 0.004 ± 0.003 | -0.002 ± 0.004 | -0.006 ± 0.003 | -0.000 ± 0.007 | **0.006 ± 0.006** | -0.001 ± 0.004 | 0.003 ± 0.004 | -0.005 ± 0.001 |
 
 ### R2, MSE and MAE
 
@@ -216,10 +206,10 @@ The other three standard metrics (R2, mean squared error and mean absolute error
 
 | Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| Random | -0.003 ± 0.001 | -0.003 ± 0.001 | -0.003 ± 0.001 | **-0.003 ± 0.001** | -0.003 ± 0.001 | -0.003 ± 0.001 | -0.004 ± 0.001 | -0.004 ± 0.001 | -0.003 ± 0.001 | -0.003 ± 0.001 |
-| Sequence identity 30% | -0.004 ± 0.000 | -0.004 ± 0.000 | -0.003 ± 0.000 | -0.003 ± 0.000 | -0.003 ± 0.000 | -0.004 ± 0.000 | -0.004 ± 0.000 | -0.004 ± 0.000 | **-0.003 ± 0.000** | -0.003 ± 0.000 |
-| Sequence identity 50% | -0.004 ± 0.001 | **-0.004 ± 0.001** | -0.004 ± 0.001 | -0.004 ± 0.001 | -0.004 ± 0.001 | -0.004 ± 0.001 | -0.004 ± 0.001 | -0.004 ± 0.001 | -0.004 ± 0.001 | -0.004 ± 0.001 |
-| Chromosome position | -0.008 ± 0.005 | -0.008 ± 0.005 | **-0.008 ± 0.005** | -0.009 ± 0.005 | -0.009 ± 0.004 | -0.009 ± 0.005 | -0.009 ± 0.005 | -0.009 ± 0.005 | -0.009 ± 0.005 | -0.009 ± 0.005 |
+| Random | -0.927 ± 0.029 | **-0.003 ± 0.001** | -0.027 ± 0.003 | -0.482 ± 0.017 | -0.288 ± 0.031 | -2.400 ± 0.134 | -12.185 ± 0.506 | -0.664 ± 0.032 | -1.078 ± 0.053 | -0.809 ± 0.060 |
+| Sequence identity 30% | -1.009 ± 0.068 | **-0.004 ± 0.000** | -0.030 ± 0.005 | -0.579 ± 0.022 | -0.327 ± 0.027 | -2.645 ± 0.235 | -14.092 ± 1.602 | -0.756 ± 0.055 | -1.340 ± 0.097 | -1.038 ± 0.098 |
+| Sequence identity 50% | -0.979 ± 0.058 | **-0.004 ± 0.001** | -0.030 ± 0.005 | -0.545 ± 0.062 | -0.315 ± 0.035 | -2.525 ± 0.203 | -12.527 ± 0.785 | -0.702 ± 0.055 | -1.184 ± 0.115 | -0.863 ± 0.087 |
+| Chromosome position | -1.049 ± 0.025 | **-0.008 ± 0.005** | -0.038 ± 0.009 | -0.578 ± 0.021 | -0.353 ± 0.042 | -2.555 ± 0.165 | -12.402 ± 0.979 | -0.782 ± 0.066 | -1.215 ± 0.033 | -1.023 ± 0.096 |
 
 </details>
 
@@ -228,10 +218,10 @@ The other three standard metrics (R2, mean squared error and mean absolute error
 
 | Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| Random | 1.011 ± 0.017 | 1.011 ± 0.017 | 1.011 ± 0.017 | **1.011 ± 0.017** | 1.011 ± 0.017 | 1.011 ± 0.017 | 1.011 ± 0.017 | 1.011 ± 0.017 | 1.011 ± 0.017 | 1.011 ± 0.017 |
-| Sequence identity 30% | 0.987 ± 0.033 | 0.987 ± 0.033 | 0.987 ± 0.033 | 0.987 ± 0.033 | 0.987 ± 0.033 | 0.988 ± 0.033 | 0.988 ± 0.033 | 0.988 ± 0.033 | **0.987 ± 0.033** | 0.987 ± 0.033 |
-| Sequence identity 50% | 0.987 ± 0.019 | 0.987 ± 0.019 | 0.987 ± 0.019 | 0.987 ± 0.019 | 0.987 ± 0.019 | 0.987 ± 0.019 | 0.987 ± 0.019 | 0.987 ± 0.019 | **0.987 ± 0.019** | 0.987 ± 0.019 |
-| Chromosome position | 0.981 ± 0.020 | 0.981 ± 0.020 | **0.981 ± 0.020** | 0.981 ± 0.020 | 0.981 ± 0.021 | 0.981 ± 0.020 | 0.981 ± 0.020 | 0.981 ± 0.020 | 0.981 ± 0.020 | 0.981 ± 0.020 |
+| Random | 1.811 ± 0.017 | **1.011 ± 0.017** | 1.032 ± 0.014 | 1.420 ± 0.027 | 1.253 ± 0.020 | 3.095 ± 0.073 | 11.512 ± 0.263 | 1.582 ± 0.015 | 1.939 ± 0.042 | 1.712 ± 0.036 |
+| Sequence identity 30% | 1.781 ± 0.023 | **0.987 ± 0.033** | 1.009 ± 0.029 | 1.423 ± 0.032 | 1.234 ± 0.038 | 3.085 ± 0.054 | 11.953 ± 0.876 | 1.582 ± 0.024 | 2.018 ± 0.038 | 1.801 ± 0.055 |
+| Sequence identity 50% | 1.806 ± 0.021 | **0.987 ± 0.019** | 1.009 ± 0.015 | 1.435 ± 0.015 | 1.238 ± 0.013 | 3.098 ± 0.083 | 11.409 ± 0.351 | 1.569 ± 0.018 | 1.964 ± 0.047 | 1.704 ± 0.051 |
+| Chromosome position | 1.753 ± 0.040 | **0.981 ± 0.020** | 1.004 ± 0.018 | 1.383 ± 0.020 | 1.222 ± 0.036 | 2.863 ± 0.197 | 10.026 ± 0.970 | 1.548 ± 0.052 | 1.850 ± 0.044 | 1.711 ± 0.016 |
 
 </details>
 
@@ -240,20 +230,22 @@ The other three standard metrics (R2, mean squared error and mean absolute error
 
 | Split family | Random | One-hot | Codon frequency | CaLM | GenSLM 25M | GenSLM 250M | NT v1 2.5B | NT v2 500M | ESM-2 650M | ProtT5-XL |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| Random | 0.735 ± 0.005 | 0.735 ± 0.005 | **0.735 ± 0.005** | 0.735 ± 0.005 | 0.735 ± 0.005 | 0.735 ± 0.005 | 0.735 ± 0.005 | 0.735 ± 0.005 | 0.735 ± 0.005 | 0.735 ± 0.005 |
-| Sequence identity 30% | 0.730 ± 0.008 | 0.730 ± 0.008 | 0.730 ± 0.008 | **0.730 ± 0.008** | 0.730 ± 0.008 | 0.730 ± 0.008 | 0.730 ± 0.008 | 0.730 ± 0.008 | 0.730 ± 0.008 | 0.730 ± 0.008 |
-| Sequence identity 50% | 0.729 ± 0.004 | **0.729 ± 0.004** | 0.729 ± 0.004 | 0.729 ± 0.004 | 0.729 ± 0.004 | 0.730 ± 0.004 | 0.730 ± 0.004 | 0.730 ± 0.004 | 0.729 ± 0.004 | 0.729 ± 0.004 |
-| Chromosome position | 0.721 ± 0.012 | **0.721 ± 0.012** | 0.721 ± 0.012 | 0.721 ± 0.012 | 0.721 ± 0.011 | 0.721 ± 0.012 | 0.721 ± 0.012 | 0.721 ± 0.012 | 0.721 ± 0.012 | 0.721 ± 0.012 |
+| Random | 1.041 ± 0.003 | **0.735 ± 0.005** | 0.746 ± 0.004 | 0.901 ± 0.006 | 0.839 ± 0.007 | 1.364 ± 0.018 | 2.582 ± 0.037 | 0.964 ± 0.003 | 1.066 ± 0.012 | 0.988 ± 0.010 |
+| Sequence identity 30% | 1.035 ± 0.003 | **0.730 ± 0.008** | 0.741 ± 0.006 | 0.906 ± 0.008 | 0.835 ± 0.011 | 1.363 ± 0.014 | 2.622 ± 0.084 | 0.966 ± 0.006 | 1.094 ± 0.008 | 1.013 ± 0.009 |
+| Sequence identity 50% | 1.043 ± 0.006 | **0.729 ± 0.004** | 0.741 ± 0.003 | 0.908 ± 0.009 | 0.837 ± 0.006 | 1.367 ± 0.022 | 2.578 ± 0.049 | 0.962 ± 0.006 | 1.076 ± 0.019 | 0.990 ± 0.019 |
+| Chromosome position | 1.023 ± 0.008 | **0.721 ± 0.012** | 0.732 ± 0.011 | 0.886 ± 0.008 | 0.826 ± 0.001 | 1.308 ± 0.039 | 2.402 ± 0.099 | 0.949 ± 0.006 | 1.038 ± 0.007 | 0.978 ± 0.013 |
 
 </details>
 
 ### Reading these numbers
 
-- This task has 140 probe runs, one per split and representation. In 114 of them the penalty chosen on validation is the largest value tried (1,000,000), which means the best linear model in that run is close to predicting the training mean.
+- This task has 140 probe runs, one per split and representation. Each is one ordinary least squares fit, which has no hyperparameter and no random step, so a rerun gives the same numbers.
+- In 112 of them the features do not determine a unique fit (at least as many features as training samples, or collinear features), and the minimum-norm solution is used.
+- Least squares is not restrained when a representation is wide relative to the number of training samples, so a wide representation can score below a narrow one, or below random features, for that reason alone.
 - Differences smaller than the standard deviations shown are not resolved by three to five seeds.
 - These are frozen, mean-pooled representations with a linear readout. They are a floor for models that are fine-tuned, nonlinear or use the cell graph, and they say nothing about what such models reach.
 
-Every run, with validation scores, the chosen penalty and four more metrics, is in [`linear_probes.csv`](https://github.com/Mjvolk3/torchcell/blob/main/experiments/050-ecoli-benchmark/results/linear_probes.csv).
+Every run, with validation scores and all five metrics, is in [`linear_probes.csv`](https://github.com/Mjvolk3/torchcell/blob/main/experiments/050-ecoli-benchmark/results/linear_probes.csv).
 
 ## Boards
 

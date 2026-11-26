@@ -1,0 +1,56 @@
+
+ecoli-growth-rate-campos2018: Growth rate of single-gene deletions (Campos 2018)
+  samples  3,573 (91 records set aside)
+  genes    task.genes (3573, 1), first ['BW25113_1967']
+  labels   task.y (3573, 1), first targets ['fitness']
+  splits   14 in families ['position', 'random', 'seqid30', 'seqid50']
+  random_s0: sizes {'train': 2859, 'val': 357, 'test': 357}
+  train    genes (2859, 1), labels (2859, 1)
+  val      first rows [3, 6, 31, 41, 57]
+  genome   ecoli_K12_BW25113_ASM75055v1, 4,303 genes
+  BW25113_1967 hchA: DNA 852 bp, protein 283 aa
+    gene.seq[:30]          ATGACTGTTCAAACAAGTAAAAATCCGCAG
+    gene.cds.seq[:30]      ATGACTGTTCAAACAAGTAAAAATCCGCAG
+    gene.protein.seq[:30]  MTVQTSKNPQVDIAEDNAFFPSEYSLSQYT
+
+ecoli-morphology-campos2018: Cell shape and cell cycle of single-gene deletions (Campos 2018)
+  samples  3,573 (91 records set aside)
+  genes    task.genes (3573, 1), first ['BW25113_1967']
+  labels   task.y (3573, 15), first targets ['<L>', '<W>', '<A>']
+  splits   14 in families ['position', 'random', 'seqid30', 'seqid50']
+  random_s0: sizes {'train': 2859, 'val': 357, 'test': 357}
+  train    genes (2859, 1), labels (2859, 15)
+  val      first rows [3, 6, 31, 41, 57]
+  genome   ecoli_K12_BW25113_ASM75055v1, 4,303 genes
+  BW25113_1967 hchA: DNA 852 bp, protein 283 aa
+    gene.seq[:30]          ATGACTGTTCAAACAAGTAAAAATCCGCAG
+    gene.cds.seq[:30]      ATGACTGTTCAAACAAGTAAAAATCCGCAG
+    gene.protein.seq[:30]  MTVQTSKNPQVDIAEDNAFFPSEYSLSQYT
+
+ecoli-gene-interaction-babu2014: Genetic interaction score of double mutants (Babu 2014)
+  samples  40,658 (2,047 records set aside)
+  genes    task.genes (40658, 2), first ['b0002', 'b0015']
+  labels   task.y (40658, 1), first targets ['gene_interaction']
+  splits   17 in families ['gene_holdout', 'position_gene_holdout', 'random', 'seqid30_gene_holdout', 'seqid50_gene_holdout']
+  random_s0: sizes {'train': 32527, 'val': 4066, 'test': 4065}
+  train    genes (32527, 2), labels (32527, 1)
+  val      first rows [0, 15, 23, 31, 39]
+  genome   ecoli_K12_MG1655_ASM584v2, 4,506 genes
+  b0002 thrA: DNA 2,463 bp, protein 820 aa
+    gene.seq[:30]          ATGCGAGTGTTGAAGTTCGGCGGTACATCA
+    gene.cds.seq[:30]      ATGCGAGTGTTGAAGTTCGGCGGTACATCA
+    gene.protein.seq[:30]  MRVLKFGGTSVANAERFLRVADILESNARQ
+
+ecoli-metabolome-fuhrer2017: Metabolome of single-gene deletions (Fuhrer 2017)
+  samples  3,624 (182 records set aside)
+  genes    task.genes (3624, 1), first ['BW25113_3241']
+  labels   task.y (3624, 7534), first targets ['neg_0001', 'neg_0002', 'neg_0003']
+  splits   14 in families ['position', 'random', 'seqid30', 'seqid50']
+  random_s0: sizes {'train': 2900, 'val': 362, 'test': 362}
+  train    genes (2900, 1), labels (2900, 7534)
+  val      first rows [1, 26, 28, 32, 41]
+  genome   ecoli_K12_BW25113_ASM75055v1, 4,303 genes
+  BW25113_3241 aaeA: DNA 933 bp, protein 310 aa
+    gene.seq[:30]          GTGAAAACACTAATAAGAAAATTCTCCCGT
+    gene.cds.seq[:30]      GTGAAAACACTAATAAGAAAATTCTCCCGT
+    gene.protein.seq[:30]  MKTLIRKFSRTAITVVLVILAFIAIFNAWV

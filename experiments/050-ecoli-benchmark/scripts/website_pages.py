@@ -16,7 +16,7 @@ The website branch copies that directory into ``website/docs/benchmark/datasets/
 ``notebook_page.py`` writes ``processing.mdx`` into the same directory.
 
 The statistic in every table cell and bar is the test Pearson correlation, averaged
-over the targets of the task, at the ridge penalty chosen on validation; a cell is the
+over the targets of the task, from an ordinary least squares fit; a cell is the
 mean and sample standard deviation over the seeds of a split family.
 
     python experiments/050-ecoli-benchmark/scripts/website_pages.py
@@ -532,7 +532,7 @@ def task_page(
     page += [
         "## Example script",
         "",
-        f"[`{example}.py`]({GITHUB}/{EXAMPLES.as_posix()}/{example}.py) is a complete run in one file: it loads this task, builds 21 features from the protein of each deleted gene, fits a ridge regression (a linear model with an L2 penalty), chooses the penalty on validation and scores the test part once. Replace `protein_features` and `fit_predict_ridge` with your model and keep the rest.",
+        f"[`{example}.py`]({GITHUB}/{EXAMPLES.as_posix()}/{example}.py) is a complete run in one file: it loads this task, builds 21 features from the protein of each deleted gene, fits ordinary least squares, reports the validation score and scores the test part once. Replace `protein_features` and `fit_predict_least_squares` with your model and keep the rest.",
         "",
         "```bash",
         'pip install "torchcell>=1.8.8"',
@@ -553,7 +553,7 @@ def task_page(
         "",
         "## Linear-probe baselines",
         "",
-        "A frozen representation of each deleted gene with a ridge regression on top, for every split of this task. The representations and the fitting procedure are described in the [overview](./index.mdx#linear-probe-baselines).",
+        "A frozen representation of each deleted gene with ordinary least squares on top, for every split of this task. The representations and the fitting procedure are described in the [overview](./index.mdx#linear-probe-baselines).",
         "",
     ]
     seeds = "five seeds for random splits and three for every other family"
@@ -575,7 +575,7 @@ def task_page(
             )
             + ""
             f"A bar is the mean over the seeds of that family ({seeds}) and its whisker is the sample standard deviation over those seeds. "
-            "The correlation is computed on the test part at the ridge penalty chosen on validation"
+            "The correlation is computed on the test part from one least-squares fit on the training part"
             + per_target
             + "Random features carry no biology and mark the level a representation must exceed. "
             + (
@@ -665,17 +665,19 @@ def task_page(
                         for f in sub["family"].drop_duplicates()
                     ],
                 )
-    at_edge = int((group["alpha"] == group["alpha"].max()).sum())
+    rank_short = int((group["rank"] < group["n_features"]).sum())
     page += [
         "### Reading these numbers",
         "",
         f"- This task has {len(group):,} probe runs, one per split"
         + (", representation and pair combination" if pair else " and representation")
-        + f". In {at_edge:,} of them the penalty chosen on validation is the largest value tried (1,000,000), which means the best linear model in that run is close to predicting the training mean.",
+        + ". Each is one ordinary least squares fit, which has no hyperparameter and no random step, so a rerun gives the same numbers.",
+        f"- In {rank_short:,} of them the features do not determine a unique fit (at least as many features as training samples, or collinear features), and the minimum-norm solution is used.",
+        "- Least squares is not restrained when a representation is wide relative to the number of training samples, so a wide representation can score below a narrow one, or below random features, for that reason alone.",
         "- Differences smaller than the standard deviations shown are not resolved by three to five seeds.",
         "- These are frozen, mean-pooled representations with a linear readout. They are a floor for models that are fine-tuned, nonlinear or use the cell graph, and they say nothing about what such models reach.",
         "",
-        f"Every run, with validation scores, the chosen penalty and four more metrics, is in [`linear_probes.csv`]({GITHUB}/{RESULTS}/linear_probes.csv).",
+        f"Every run, with validation scores and all five metrics, is in [`linear_probes.csv`]({GITHUB}/{RESULTS}/linear_probes.csv).",
         "",
     ]
     page += ["## Boards", ""]
@@ -737,7 +739,7 @@ def overview(runs: pd.DataFrame, sizes: pd.DataFrame, features: list[str]) -> No
         "- **Target.** One number a model predicts for a sample. A task has 1, 15 or 7,534 targets.",
         "- **Seed.** One random assignment of units to train, validation and test. A split family has three or five seeds.",
         "- **Representation.** A fixed vector of numbers that stands for a gene, for example a protein language model's output averaged over the positions of the sequence.",
-        "- **Ridge regression.** A linear model with an L2 penalty on its weights. The penalty is its one hyperparameter (`alpha` in the results table).",
+        "- **Ordinary least squares (OLS).** The linear model that minimizes the squared error on the training samples. It has no hyperparameter. When the features do not determine a unique fit, the minimum-norm solution is taken.",
         "",
         "## Loading a task",
         "",
@@ -835,9 +837,16 @@ def overview(runs: pd.DataFrame, sizes: pd.DataFrame, features: list[str]) -> No
         "",
         "## Linear-probe baselines",
         "",
-        "The first baselines are linear probes: a frozen representation of each deleted gene and a ridge regression on top. They measure how much of a label a linear readout of a gene representation recovers under each kind of split.",
+        "The first baselines are linear probes: a frozen representation of each deleted gene and ordinary least squares on top. They measure how much of a label a linear readout of a gene representation recovers under each kind of split.",
         "",
     ]
+    single = runs[runs["combine"] == "single"]
+    widths = {
+        f: "one per gene of the task"
+        if f == "one_hot"
+        else f"{int(single.loc[single['feature'] == f, 'n_features'].iloc[0]):,}"
+        for f in features
+    }
     page += table(
         ["Representation", "Reads", "Model and pooling", "Numbers per gene"],
         [
@@ -845,14 +854,14 @@ def overview(runs: pd.DataFrame, sizes: pd.DataFrame, features: list[str]) -> No
                 REPRESENTATIONS[f][0],
                 REPRESENTATIONS[f][1],
                 REPRESENTATIONS[f][2],
-                REPRESENTATIONS[f][3],
+                widths[f],
             ]
             for f in features
         ],
         left=3,
     )
     page += [
-        "A single-gene sample is its gene's representation. A gene-pair sample is the two representations concatenated in stored order, or summed. Features are standardized with the training mean and standard deviation, and one ridge regression is fit per task, split and representation, on all targets at once. The penalty is the one of eight values from 0.1 to 1,000,000 with the lowest validation mean squared error. The test part is unlocked once per split, after that choice. A sequence longer than a model's window is truncated from its end.",
+        "A single-gene sample is its gene's representation. A gene-pair sample is the two representations concatenated in stored order, or summed. Features are standardized with the training mean and standard deviation, and one ordinary least squares model with an intercept is fit per task, split and representation, on all targets at once. There is no hyperparameter and no random step, so validation is reported but nothing is chosen on it, and the test part is unlocked once per split. When a representation has at least as many numbers as there are training samples, or collinear numbers, the minimum-norm solution is taken. A sequence longer than a model's window is truncated from its end.",
         "",
         "### Metrics",
         "",

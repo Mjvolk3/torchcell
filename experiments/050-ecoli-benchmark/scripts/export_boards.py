@@ -238,12 +238,12 @@ def main() -> None:
                     json.dump(
                         {
                             "method_name": f"Linear probe: {ENCODING[feature].split(',')[0].split(' (')[0]}{COMBINE[combine]}",
-                            "description": "Ridge regression on a frozen representation of each deleted gene, features standardized on train, penalty chosen on validation mean squared error, test scored once.",
-                            "model_family": "ridge",
+                            "description": "Ordinary least squares on a frozen representation of each deleted gene, features standardized on train, minimum-norm solution when the fit is not unique, no hyperparameter, test scored once.",
+                            "model_family": "ordinary least squares",
                             "encoding": ENCODING[feature] + COMBINE[combine],
                             "code_url": CODE,
                             "data_scope": "split_only",
-                            "hyperparameters": {"alpha": float(saved["alpha"])},
+                            "hyperparameters": {},
                         },
                         handle,
                         indent=2,

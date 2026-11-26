@@ -14,6 +14,7 @@ import {
   DATA_SCOPE_LABELS,
   DATA_SCOPE_TITLES,
   type LeaderboardRow,
+  type MetricInfo,
   type MetricName,
 } from '@site/src/lib/benchApi';
 import {useBenchApi} from '@site/src/lib/useBenchApi';
@@ -28,6 +29,8 @@ type RankedRow = LeaderboardRow & {
   rank: number;
   valValue: number | null;
   testValue: number | null;
+  /** The test value of every metric of the task, for the selected target. */
+  testValues: Partial<Record<MetricName, number | null>>;
 };
 
 type SortKey =
@@ -38,22 +41,31 @@ type SortKey =
   | 'family'
   | 'status'
   | 'val'
-  | 'test'
   | 'flags'
-  | 'date';
+  | 'date'
+  | `test:${MetricName}`;
 
 type SortState = {key: SortKey; ascending: boolean};
 
 /**
  * Ranks rows by the selected test metric, best first (highest for Pearson, Spearman,
- * and R2; lowest for MSE and MAE). Rows with no value for the selection rank last.
+ * and R2; lowest for RMSE, MSE and MAE). Rows with no value for the selection rank
+ * last. Every row also carries its test value of each metric in `metrics`.
  */
-export function rankRows(rows: LeaderboardRow[], metric: MetricName, target: string): RankedRow[] {
+export function rankRows(
+  rows: LeaderboardRow[],
+  metric: MetricName,
+  target: string,
+  metrics: readonly MetricInfo[] = [metricInfo(metric)],
+): RankedRow[] {
   const {higherIsBetter} = metricInfo(metric);
   const withValues = rows.map((row) => ({
     ...row,
     valValue: metricValue(row.val, metric, target),
     testValue: metricValue(row.test, metric, target),
+    testValues: Object.fromEntries(
+      metrics.map((m) => [m.key, metricValue(row.test, m.key, target)]),
+    ) as Partial<Record<MetricName, number | null>>,
   }));
   withValues.sort((a, b) => {
     if (a.testValue === null || b.testValue === null) {
@@ -87,13 +99,33 @@ function compareRows(a: RankedRow, b: RankedRow, key: SortKey): number {
       return a.status.localeCompare(b.status);
     case 'val':
       return compareNullable(a.valValue, b.valValue);
-    case 'test':
-      return compareNullable(a.testValue, b.testValue);
     case 'flags':
       return a.flags.length - b.flags.length;
     case 'date':
       return a.submitted_at.localeCompare(b.submitted_at);
+    default: {
+      const metric = key.slice('test:'.length) as MetricName;
+      return compareNullable(a.testValues[metric] ?? null, b.testValues[metric] ?? null);
+    }
   }
+}
+
+/** The best test value of each metric over the rows; null when no row has one. */
+export function bestTestValues(
+  rows: RankedRow[],
+  metrics: readonly MetricInfo[],
+): Partial<Record<MetricName, number | null>> {
+  return Object.fromEntries(
+    metrics.map((m) => {
+      const values = rows
+        .map((row) => row.testValues[m.key] ?? null)
+        .filter((v): v is number => v !== null);
+      if (values.length === 0) {
+        return [m.key, null];
+      }
+      return [m.key, m.higherIsBetter ? Math.max(...values) : Math.min(...values)];
+    }),
+  );
 }
 
 function userHref(userId: string): string {
@@ -311,17 +343,23 @@ function SortHeader({
   sort,
   onSort,
   numeric,
+  rowSpan,
+  title,
 }: {
   label: string;
   sortKey: SortKey;
   sort: SortState;
   onSort: (key: SortKey) => void;
   numeric?: boolean;
+  rowSpan?: number;
+  title?: string;
 }): ReactNode {
   const active = sort.key === sortKey;
   return (
     <th
       scope="col"
+      rowSpan={rowSpan}
+      title={title}
       className={clsx(numeric && styles.num)}
       aria-sort={active ? (sort.ascending ? 'ascending' : 'descending') : 'none'}>
       <button type="button" className={styles.sortButton} onClick={() => onSort(sortKey)}>
@@ -334,7 +372,22 @@ function SortHeader({
   );
 }
 
-export function BoardTable({rows, metricLabel}: {rows: RankedRow[]; metricLabel: string}): ReactNode {
+/**
+ * The board: one row per submission, with the test value of every metric of the task
+ * side by side and the validation value of the ranking metric. The best test value of
+ * each metric is bold.
+ */
+export function BoardTable({
+  rows,
+  metric,
+  metrics,
+}: {
+  rows: RankedRow[];
+  metric: MetricName;
+  metrics: readonly MetricInfo[];
+}): ReactNode {
+  const metricLabel = metricInfo(metric).label;
+  const best = useMemo(() => bestTestValues(rows, metrics), [rows, metrics]);
   const [sort, setSort] = useState<SortState>({key: 'rank', ascending: true});
   const onSort = (key: SortKey): void =>
     setSort((prev) => ({key, ascending: prev.key === key ? !prev.ascending : true}));
@@ -348,8 +401,16 @@ export function BoardTable({rows, metricLabel}: {rows: RankedRow[]; metricLabel:
     return copy;
   }, [rows, sort]);
 
+  // Every column outside the test group spans both header rows.
   const header = (label: string, key: SortKey, numeric?: boolean): ReactNode => (
-    <SortHeader label={label} sortKey={key} sort={sort} onSort={onSort} numeric={numeric} />
+    <SortHeader
+      label={label}
+      sortKey={key}
+      sort={sort}
+      onSort={onSort}
+      numeric={numeric}
+      rowSpan={2}
+    />
   );
 
   return (
@@ -359,16 +420,37 @@ export function BoardTable({rows, metricLabel}: {rows: RankedRow[]; metricLabel:
           <tr>
             {header('Rank', 'rank', true)}
             {header('Method', 'method')}
+            {header(`Val ${metricLabel}`, 'val', true)}
+            <th scope="colgroup" colSpan={metrics.length} className={styles.groupHead}>
+              Test
+            </th>
             {header('User', 'user')}
             {header('Encoding', 'encoding')}
             {header('Model family', 'family')}
             {header('Status', 'status')}
-            <th scope="col">Data</th>
-            {header(`Val ${metricLabel}`, 'val', true)}
-            {header(`Test ${metricLabel}`, 'test', true)}
+            <th scope="col" rowSpan={2}>
+              Data
+            </th>
             {header('Flags', 'flags')}
             {header('Date', 'date')}
-            <th scope="col">Code</th>
+            <th scope="col" rowSpan={2}>
+              Code
+            </th>
+          </tr>
+          <tr>
+            {metrics.map((m) => (
+              <SortHeader
+                key={m.key}
+                label={m.label}
+                sortKey={`test:${m.key}`}
+                sort={sort}
+                onSort={onSort}
+                numeric
+                title={`${m.higherIsBetter ? 'Higher' : 'Lower'} is better${
+                  m.key === metric ? '; the board is ranked by this metric' : ''
+                }`}
+              />
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -378,6 +460,21 @@ export function BoardTable({rows, metricLabel}: {rows: RankedRow[]; metricLabel:
               <td>
                 {row.method_name} {row.is_baseline ? <StatusBadge status="baseline" /> : null}
               </td>
+              <td className={styles.num}>{fmtMetric(row.valValue)}</td>
+              {metrics.map((m) => {
+                const value = row.testValues[m.key] ?? null;
+                return (
+                  <td
+                    key={m.key}
+                    className={clsx(
+                      styles.num,
+                      m.key === metric && styles.rankMetric,
+                      value !== null && value === best[m.key] && styles.bestValue,
+                    )}>
+                    {fmtMetric(value)}
+                  </td>
+                );
+              })}
               <td>
                 <Link to={userHref(row.user_id)} title={row.affiliation ?? undefined}>
                   {row.display_name}
@@ -402,8 +499,6 @@ export function BoardTable({rows, metricLabel}: {rows: RankedRow[]; metricLabel:
                   </span>
                 )}
               </td>
-              <td className={styles.num}>{fmtMetric(row.valValue)}</td>
-              <td className={styles.num}>{fmtMetric(row.testValue)}</td>
               <td>
                 <FlagChips flags={row.flags} />
               </td>
@@ -578,10 +673,16 @@ function Board({
             </div>
           );
         }
-        const ranked = rankRows(rows, metric, target);
+        const metrics = metricsFor(dataset.task);
+        const ranked = rankRows(rows, metric, target, metrics);
         return (
           <>
-            <BoardTable rows={ranked} metricLabel={metricLabel} />
+            <p className={styles.chartNote}>
+              Ranked by test {metricLabel}; the Rank by selector changes it
+              and the charts. Every test metric is shown, with the best value of each in
+              bold. Select a column heading to sort by it.
+            </p>
+            <BoardTable rows={ranked} metric={metric} metrics={metrics} />
             <div className={styles.charts}>
               <div className={styles.chart}>
                 <p className={styles.chartTitle}>Validation against test</p>
@@ -693,7 +794,7 @@ function Leaderboard(): ReactNode {
             <>
               <div className={styles.controls}>
                 <label className={styles.field}>
-                  <span className={styles.fieldLabel}>Metric</span>
+                  <span className={styles.fieldLabel}>Rank by</span>
                   <select
                     className={styles.select}
                     value={metric}

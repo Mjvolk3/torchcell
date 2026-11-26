@@ -11,6 +11,7 @@ MAE are 0.25; SS_tot is 5, so R2 is 1 - 1/5 = 0.8; the centered products give Pe
 """
 
 import math
+from typing import Any
 
 import numpy as np
 import pytest
@@ -22,11 +23,13 @@ from torchcell.benchmark.grading import (
     TASK_METRICS,
     BinaryMetricSet,
     MetricSet,
+    SplitScores,
     average_ranks,
     binary_metric_set,
     macro_average,
     metric_set,
     score,
+    with_rmse,
 )
 from torchcell.benchmark.submission import Split
 
@@ -34,11 +37,12 @@ TRUTH = np.array([1.0, 2.0, 3.0, 4.0])
 
 
 def test_metric_names_and_directions() -> None:
-    assert METRIC_NAMES == ("pearson", "spearman", "mse", "mae", "r2")
+    assert METRIC_NAMES == ("pearson", "spearman", "mse", "rmse", "mae", "r2")
     assert HIGHER_IS_BETTER == {
         "pearson": True,
         "spearman": True,
         "mse": False,
+        "rmse": False,
         "mae": False,
         "r2": True,
         "auroc": True,
@@ -59,7 +63,7 @@ def test_average_ranks_share_tied_positions() -> None:
 
 def test_perfect_prediction() -> None:
     assert metric_set(TRUTH.copy(), TRUTH) == MetricSet(
-        pearson=1.0, spearman=1.0, mse=0.0, mae=0.0, r2=1.0
+        pearson=1.0, spearman=1.0, mse=0.0, rmse=0.0, mae=0.0, r2=1.0
     )
 
 
@@ -68,6 +72,7 @@ def test_hand_worked_metrics() -> None:
     assert metrics.pearson == pytest.approx(6.5 / math.sqrt(8.75 * 5), abs=1e-12)
     assert metrics.spearman == pytest.approx(1.0, abs=1e-12)
     assert metrics.mse == 0.25
+    assert metrics.rmse == 0.5
     assert metrics.mae == 0.25
     assert metrics.r2 == pytest.approx(0.8, abs=1e-12)
 
@@ -81,6 +86,7 @@ def test_spearman_with_ties_and_negative_r2() -> None:
     # residuals -3, -1, 1, 3: SS_res 20 against SS_tot 5
     assert reversed_prediction.r2 == pytest.approx(-3.0, abs=1e-12)
     assert reversed_prediction.mse == 5.0
+    assert reversed_prediction.rmse == pytest.approx(math.sqrt(5.0), abs=1e-12)
 
 
 @pytest.mark.parametrize(
@@ -100,15 +106,43 @@ def test_metric_set_refuses_undefined_inputs(
 
 
 def test_macro_average_is_the_unweighted_mean() -> None:
-    a = MetricSet(pearson=1.0, spearman=0.5, mse=0.0, mae=0.2, r2=1.0)
-    b = MetricSet(pearson=0.0, spearman=1.0, mse=2.0, mae=0.4, r2=-1.0)
+    a = MetricSet(pearson=1.0, spearman=0.5, mse=0.0, rmse=0.0, mae=0.2, r2=1.0)
+    b = MetricSet(pearson=0.0, spearman=1.0, mse=2.0, rmse=1.0, mae=0.4, r2=-1.0)
     assert macro_average({"a": a, "b": b}).model_dump() == {
         "pearson": 0.5,
         "spearman": 0.75,
         "mse": 1.0,
+        # The mean of the per-target roots (0 and 1), not the root of the macro MSE.
+        "rmse": 0.5,
         "mae": pytest.approx(0.3),
         "r2": 0.0,
     }
+
+
+def test_with_rmse_backfills_stored_regression_scores() -> None:
+    stored: dict[str, Any] = {
+        "n_records": 4,
+        "macro": {"pearson": 0.5, "spearman": 0.5, "mse": 2.5, "mae": 1.0, "r2": 0.1},
+        "per_target": {
+            "a": {"pearson": 1.0, "spearman": 1.0, "mse": 1.0, "mae": 1.0, "r2": 0.2},
+            "b": {"pearson": 0.0, "spearman": 0.0, "mse": 4.0, "mae": 1.0, "r2": 0.0},
+        },
+    }
+    filled = with_rmse(stored)
+    assert filled["per_target"]["a"]["rmse"] == 1.0
+    assert filled["per_target"]["b"]["rmse"] == 2.0
+    assert filled["macro"]["rmse"] == 1.5
+    assert filled["n_records"] == 4
+    assert "rmse" not in stored["macro"]
+    # Already filled scores and binary scores come back as they are.
+    assert with_rmse(filled) == filled
+    binary = {
+        "n_records": 4,
+        "macro": {"auroc": 0.9, "auprc": 0.8},
+        "per_target": {"a": {"auroc": 0.9, "auprc": 0.8}},
+    }
+    assert with_rmse(binary) == binary
+    SplitScores.model_validate(filled)
 
 
 def test_score_splits_targets_and_counts_records() -> None:
@@ -148,7 +182,9 @@ def test_score_splits_targets_and_counts_records() -> None:
     assert per_target["y"]["mse"] == 1.0
     assert macro["mse"] == 0.5
     assert test.n_records == 2
-    assert test.macro == MetricSet(pearson=1.0, spearman=1.0, mse=0.0, mae=0.0, r2=1.0)
+    assert test.macro == MetricSet(
+        pearson=1.0, spearman=1.0, mse=0.0, rmse=0.0, mae=0.0, r2=1.0
+    )
 
 
 def test_score_requires_exact_coverage() -> None:
@@ -168,7 +204,7 @@ BINARY_TRUTH = np.array([1.0, 0.0, 1.0, 0.0])
 def test_binary_metric_names() -> None:
     assert BINARY_METRIC_NAMES == ("auroc", "auprc")
     assert TASK_METRICS == {
-        "regression": ("pearson", "spearman", "mse", "mae", "r2"),
+        "regression": ("pearson", "spearman", "mse", "rmse", "mae", "r2"),
         "binary": ("auroc", "auprc"),
     }
     assert HIGHER_IS_BETTER["auroc"] and HIGHER_IS_BETTER["auprc"]

@@ -28,17 +28,20 @@ const round = (x) => Math.round(x * 10000) / 10000;
 
 function metricSet(rand, quality) {
   const pearson = Math.min(0.99, Math.max(0.01, quality + (rand() - 0.5) * 0.04));
+  const spearman = round(pearson - 0.02 * rand());
+  const mse = round(1 - pearson * pearson + 0.05 * rand());
   return {
     pearson: round(pearson),
-    spearman: round(pearson - 0.02 * rand()),
-    mse: round(1 - pearson * pearson + 0.05 * rand()),
+    spearman,
+    mse,
+    rmse: round(Math.sqrt(mse)),
     mae: round(Math.sqrt(1 - pearson * pearson) * 0.8),
     r2: round(pearson * pearson - 0.03 * rand()),
   };
 }
 
 function macroOf(sets) {
-  const keys = ['pearson', 'spearman', 'mse', 'mae', 'r2'];
+  const keys = ['pearson', 'spearman', 'mse', 'rmse', 'mae', 'r2'];
   const out = {};
   for (const key of keys) {
     out[key] = round(sets.reduce((sum, s) => sum + s[key], 0) / sets.length);

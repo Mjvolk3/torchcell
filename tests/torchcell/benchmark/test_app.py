@@ -57,15 +57,22 @@ from tests.torchcell.benchmark._fake_idp import (
 )
 from torchcell.api_keys import ApiKeys
 from torchcell.benchmark import app as app_module
-from torchcell.benchmark.app import API_PREFIX, BenchServerConfig, create_app
+from torchcell.benchmark.app import (
+    API_PREFIX,
+    BenchServerConfig,
+    backfill_rmse,
+    create_app,
+)
 from torchcell.benchmark.db import (
     ApiToken,
     LoginCode,
     Submission,
     User,
     init_schema,
+    make_engine,
     make_session_factory,
 )
+from torchcell.benchmark.grading import SplitScores
 from torchcell.benchmark.oidc import CILOGON_METADATA_URL, OidcConfig
 from torchcell.benchmark.security import AccountPolicy
 
@@ -988,6 +995,7 @@ def test_scored_submission(bench: Bench, labels: Labels, to_csv: Csv) -> None:
             "pearson": pytest.approx(1.0),
             "spearman": pytest.approx(1.0),
             "mse": 0.0,
+            "rmse": 0.0,
             "mae": 0.0,
             "r2": 1.0,
         }
@@ -1631,3 +1639,55 @@ def test_owner_withdraws_a_submission_and_nobody_else_can(
     )
     assert refused.status_code == 409
     assert bench.client.post(url).status_code == 401
+
+
+def test_backfill_rmse_fills_rows_graded_before_the_metric() -> None:
+    old = {"pearson": 0.5, "spearman": 0.5, "mse": 4.0, "mae": 1.0, "r2": 0.1}
+    stored: dict[str, Any] = {
+        "n_records": 4,
+        "macro": old,
+        "per_target": {"fitness": old},
+    }
+    engine = make_engine("sqlite://")
+    init_schema(engine)
+    sessions = make_session_factory(engine)
+    with sessions() as session:
+        user = User(
+            email="a@example.org",
+            email_canonical="a@example.org",
+            display_name="A",
+            created_at=T0,
+        )
+        session.add(user)
+        session.flush()
+        rows: list[tuple[str, dict[str, Any] | None]] = [
+            ("provisional", stored),
+            ("rejected", None),
+        ]
+        for status, scores in rows:
+            session.add(
+                Submission(
+                    user_id=user.id,
+                    dataset_slug=SLUG,
+                    dataset_version="1",
+                    status=status,
+                    created_at=T0,
+                    method_name="m",
+                    val_scores=scores,
+                    test_scores=scores,
+                )
+            )
+        session.commit()
+
+    assert backfill_rmse(sessions) == 1
+    with sessions() as session:
+        graded = session.scalars(
+            select(Submission).where(Submission.status == "provisional")
+        ).one()
+        for filled in (graded.val_scores, graded.test_scores):
+            assert filled is not None
+            assert filled["macro"]["rmse"] == 2.0
+            assert filled["per_target"]["fitness"]["rmse"] == 2.0
+            SplitScores.model_validate(filled)
+    # A second pass finds nothing left to fill.
+    assert backfill_rmse(sessions) == 0

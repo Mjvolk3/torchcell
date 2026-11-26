@@ -230,6 +230,24 @@
   min-width: 14rem;
 }
 
+/* The label over the test metric columns of the board. */
+.table thead th.groupHead {
+  text-align: center;
+  border-bottom: 1px solid var(--tc-border);
+  border-left: 1px solid var(--tc-border);
+  border-right: 1px solid var(--tc-border);
+}
+
+/* The best test value of a metric column. */
+.table td.bestValue {
+  font-weight: 700;
+}
+
+/* The column the board is ranked by. */
+.table td.rankMetric {
+  background: var(--tc-surface-raised);
+}
+
 .num {
   text-align: right !important;
   font-variant-numeric: tabular-nums;

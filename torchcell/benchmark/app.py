@@ -127,7 +127,7 @@ from pydantic import (
     model_validator,
 )
 from sqlalchemy import URL, Engine, delete, func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 from starlette.datastructures import Headers
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
@@ -154,7 +154,7 @@ from torchcell.benchmark.db import (
     new_id,
     utcnow,
 )
-from torchcell.benchmark.grading import SplitScores, score
+from torchcell.benchmark.grading import SplitScores, score, with_rmse
 from torchcell.benchmark.integrity import IntegrityPolicy, flag_submission, oriented
 from torchcell.benchmark.oidc import (
     CILOGON_METADATA_URL,
@@ -1597,8 +1597,25 @@ def create_app_from_env() -> FastAPI:
     return create_app(BenchServerConfig.from_env())
 
 
+def backfill_rmse(session_factory: sessionmaker[Session]) -> int:
+    """Add RMSE to every stored score set that lacks it; the number of rows changed."""
+    updated = 0
+    with session_factory() as session:
+        for submission in session.scalars(select(Submission)).all():
+            if submission.val_scores is None or submission.test_scores is None:
+                continue
+            val = with_rmse(submission.val_scores)
+            test = with_rmse(submission.test_scores)
+            if val != submission.val_scores or test != submission.test_scores:
+                submission.val_scores = val
+                submission.test_scores = test
+                updated += 1
+        session.commit()
+    return updated
+
+
 def main() -> None:
-    """CLI: run the server, ``--init-db`` to create tables, ``--gen-admin-key NAME``."""
+    """CLI: run the server; ``--init-db``, ``--backfill-rmse``, ``--gen-admin-key NAME``."""
     import argparse
 
     load_dotenv()
@@ -1608,6 +1625,11 @@ def main() -> None:
     )
     parser.add_argument(
         "--init-db", action="store_true", help="Create the tables, exit."
+    )
+    parser.add_argument(
+        "--backfill-rmse",
+        action="store_true",
+        help="Add RMSE to stored scores graded before the metric existed, exit.",
     )
     parser.add_argument("--host", default=None, help="Override TC_BENCH_HOST.")
     parser.add_argument(
@@ -1623,6 +1645,11 @@ def main() -> None:
     if args.init_db:
         init_schema(make_engine(config.database_url.get_secret_value()))
         print(json.dumps({"initialized": True}))
+        return
+    if args.backfill_rmse:
+        engine = make_engine(config.database_url.get_secret_value())
+        updated = backfill_rmse(make_session_factory(engine))
+        print(json.dumps({"rows_updated": updated}))
         return
 
     host = args.host or config.host

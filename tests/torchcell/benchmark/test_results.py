@@ -29,7 +29,14 @@ REJECTED: dict[str, Any] = {
     "flags": [],
     "archive_sha256": None,
 }
-METRICS = {"pearson": 0.8, "spearman": 0.8, "mse": 0.5, "mae": 0.5, "r2": 0.6}
+METRICS = {
+    "pearson": 0.8,
+    "spearman": 0.8,
+    "mse": 0.5,
+    "rmse": 0.7,
+    "mae": 0.5,
+    "r2": 0.6,
+}
 SCORES = {"n_records": 4, "macro": METRICS, "per_target": {"fitness": METRICS}}
 
 

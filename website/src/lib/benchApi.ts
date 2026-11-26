@@ -15,11 +15,11 @@
 /** What a dataset asks for: real values, or a score for a 0/1 label. */
 export type Task = 'regression' | 'binary';
 
-export type RegressionMetricName = 'pearson' | 'spearman' | 'mse' | 'mae' | 'r2';
+export type RegressionMetricName = 'pearson' | 'spearman' | 'r2' | 'rmse' | 'mse' | 'mae';
 export type BinaryMetricName = 'auroc' | 'auprc';
 export type MetricName = RegressionMetricName | BinaryMetricName;
 
-/** The metrics of one task: the five regression metrics, or AUROC and AUPRC. */
+/** The metrics of one task: the six regression metrics, or AUROC and AUPRC. */
 export type MetricSet = Partial<Record<MetricName, number>>;
 
 export type SplitScores = {
@@ -440,9 +440,10 @@ export type MetricInfo = {
 export const METRICS: readonly MetricInfo[] = [
   {key: 'pearson', label: 'Pearson', higherIsBetter: true, task: 'regression'},
   {key: 'spearman', label: 'Spearman', higherIsBetter: true, task: 'regression'},
+  {key: 'r2', label: 'R2', higherIsBetter: true, task: 'regression'},
+  {key: 'rmse', label: 'RMSE', higherIsBetter: false, task: 'regression'},
   {key: 'mse', label: 'MSE', higherIsBetter: false, task: 'regression'},
   {key: 'mae', label: 'MAE', higherIsBetter: false, task: 'regression'},
-  {key: 'r2', label: 'R2', higherIsBetter: true, task: 'regression'},
   {key: 'auroc', label: 'AUROC', higherIsBetter: true, task: 'binary'},
   {key: 'auprc', label: 'AUPRC', higherIsBetter: true, task: 'binary'},
 ];

@@ -5,10 +5,11 @@
 
 """The grader: metrics computed from submitted predictions against the stored labels.
 
-Five metrics per target per split: Pearson r, Spearman rho (Pearson on average ranks,
-so ties share a rank), mean squared error, mean absolute error, and R2
+Six metrics per target per split: Pearson r, Spearman rho (Pearson on average ranks,
+so ties share a rank), mean squared error, its root, mean absolute error, and R2
 (``1 - SS_res / SS_tot``). A multi-target dataset reports the macro average (the
-unweighted mean of the per-target values) beside the per-target values. numpy only.
+unweighted mean of the per-target values) beside the per-target values, so the macro
+RMSE is the mean of the per-target roots, not the root of the macro MSE. numpy only.
 
 A dataset whose task is ``binary`` has 0/1 labels and is scored with two metrics
 instead: the area under the ROC curve (AUROC) and the area under the precision-recall
@@ -24,7 +25,7 @@ prediction vector before grading, and the bundle builder rejects constant labels
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Literal, get_args
+from typing import Any, Literal, get_args
 
 import numpy as np
 import numpy.typing as npt
@@ -33,7 +34,7 @@ from pydantic import BaseModel, ConfigDict
 from torchcell.benchmark.submission import SCORED_SPLITS, Split
 
 Task = Literal["regression", "binary"]
-RegressionMetricName = Literal["pearson", "spearman", "mse", "mae", "r2"]
+RegressionMetricName = Literal["pearson", "spearman", "mse", "rmse", "mae", "r2"]
 BinaryMetricName = Literal["auroc", "auprc"]
 MetricName = RegressionMetricName | BinaryMetricName
 METRIC_NAMES: tuple[MetricName, ...] = get_args(RegressionMetricName)
@@ -46,6 +47,7 @@ HIGHER_IS_BETTER: dict[MetricName, bool] = {
     "pearson": True,
     "spearman": True,
     "mse": False,
+    "rmse": False,
     "mae": False,
     "r2": True,
     "auroc": True,
@@ -57,13 +59,14 @@ FloatArray = npt.NDArray[np.float64]
 
 
 class MetricSet(BaseModel):
-    """The five regression metrics for one target on one split (or their macro average)."""
+    """The six regression metrics for one target on one split (or their macro average)."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     pearson: float
     spearman: float
     mse: float
+    rmse: float
     mae: float
     r2: float
 
@@ -116,7 +119,7 @@ def _pearson(x: FloatArray, y: FloatArray) -> float:
 
 
 def metric_set(prediction: FloatArray, truth: FloatArray) -> MetricSet:
-    """All five metrics for one prediction vector against its label vector."""
+    """All six metrics for one prediction vector against its label vector."""
     if prediction.shape != truth.shape or prediction.ndim != 1:
         raise ValueError("prediction and truth must be 1-D arrays of equal length")
     if len(truth) < 2:
@@ -130,6 +133,7 @@ def metric_set(prediction: FloatArray, truth: FloatArray) -> MetricSet:
         pearson=_pearson(prediction, truth),
         spearman=_pearson(average_ranks(prediction), average_ranks(truth)),
         mse=ss_res / len(truth),
+        rmse=float(np.sqrt(ss_res / len(truth))),
         mae=float(np.abs(residual).mean()),
         r2=1.0 - ss_res / float(centered @ centered),
     )
@@ -179,6 +183,24 @@ def macro_average[M: (MetricSet, BinaryMetricSet)](per_target: Mapping[str, M]) 
     )
 
 
+def with_rmse(scores: Mapping[str, Any]) -> dict[str, Any]:
+    """Stored regression scores of one split with RMSE added, for rows graded before it.
+
+    The per-target RMSE is the root of the stored per-target MSE, which is exact, and
+    the macro RMSE is the mean of those roots, the same rule :func:`macro_average`
+    applies. Scores that already hold RMSE, and binary scores, come back unchanged.
+    """
+    macro = dict(scores["macro"])
+    if "mse" not in macro or "rmse" in macro:
+        return dict(scores)
+    per_target = {
+        target: {**metrics, "rmse": float(np.sqrt(metrics["mse"]))}
+        for target, metrics in scores["per_target"].items()
+    }
+    macro["rmse"] = float(np.mean([m["rmse"] for m in per_target.values()]))
+    return {**scores, "macro": macro, "per_target": per_target}
+
+
 def score(
     predictions: Mapping[PairKey, float],
     labels: Mapping[PairKey, float],
@@ -189,7 +211,7 @@ def score(
 
     ``expected`` maps every (record_id, target) pair the dataset scores to its split;
     ``predictions`` and ``labels`` must hold exactly those pairs. ``task`` selects the
-    metrics: the five regression metrics, or AUROC and AUPRC for 0/1 labels.
+    metrics: the six regression metrics, or AUROC and AUPRC for 0/1 labels.
     """
     if predictions.keys() != expected.keys() or labels.keys() != expected.keys():
         raise ValueError("predictions and labels must cover exactly the expected pairs")

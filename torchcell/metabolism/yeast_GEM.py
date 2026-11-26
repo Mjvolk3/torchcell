@@ -19,6 +19,9 @@ import networkx as nx
 from dotenv import load_dotenv
 from matplotlib.patches import Patch
 
+from torchcell.metabolism.bipartite import (
+    MemberlessReactionError as _MemberlessReactionError,
+)
 from torchcell.sequence import GeneSet
 
 load_dotenv()
@@ -40,14 +43,15 @@ DEFAULT_YEAST_GEM_ROOT = osp.join(
 )
 
 
-class MemberlessReactionError(ValueError):
-    """A reaction with no metabolites, which neither graph view can represent.
-
-    hypernetx drops a hyperedge with no members, so such a reaction would vanish from
-    ``reaction_map`` while ``bipartite_graph`` kept it as an isolated node. Both views
-    refuse it instead, so they always agree on the reaction set. yeast-GEM 9.0.2 has
-    none of its 4,131 reactions in this state.
-    """
+# Re-exported from the organism-blind builder rather than defined twice: two
+# unrelated classes of the same name meant an ``except`` on one would not catch
+# the other, and ``cobra_bipartite_graph`` raises the shared one.
+#
+# hypernetx drops a hyperedge with no members, so a memberless reaction would
+# vanish from ``reaction_map`` while ``bipartite_graph`` kept it as an isolated
+# node. Both views refuse it instead, so they always agree on the reaction set.
+# yeast-GEM 9.0.2 has none of its 4,131 reactions in this state.
+MemberlessReactionError = _MemberlessReactionError
 
 
 @dataclass(slots=True)

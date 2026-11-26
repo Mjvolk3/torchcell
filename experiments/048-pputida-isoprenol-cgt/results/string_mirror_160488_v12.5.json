@@ -1,0 +1,144 @@
+{
+  "taxon": 160488,
+  "release": "12.5",
+  "dir": "/bulk/torchcell-string/v12.5/160488",
+  "n_files": 19,
+  "total_bytes": 36056470,
+  "verified": 19,
+  "mismatched": [],
+  "files": [
+    {
+      "path": "160488.protein.links.v12.5.txt.gz",
+      "asset": "protein.links",
+      "role": "network",
+      "bytes": 6325710,
+      "sha256": "60e0bebe1cd4e10fa270f885e6ced2f9daa26405045bc0cb82907d96591ebfb6"
+    },
+    {
+      "path": "160488.protein.links.detailed.v12.5.txt.gz",
+      "asset": "protein.links.detailed",
+      "role": "network",
+      "bytes": 10910971,
+      "sha256": "7ee1d5e891a0464f9aabb9b440b8d51d4cf9768b500c2374938f4d1b93e6ebf5"
+    },
+    {
+      "path": "160488.protein.links.full.v12.5.txt.gz",
+      "asset": "protein.links.full",
+      "role": "network",
+      "bytes": 11696210,
+      "sha256": "5bc1af9addc7d48b485af428e35a5e0f385392077ba9648bcb5e8b02d47afa52"
+    },
+    {
+      "path": "160488.protein.physical.links.v12.5.txt.gz",
+      "asset": "protein.physical.links",
+      "role": "network",
+      "bytes": 472272,
+      "sha256": "e46fd4614862d0bb2bc5d22e95edc438b232a4c75fd6e72b877dc9d5cc732b13"
+    },
+    {
+      "path": "160488.protein.physical.links.detailed.v12.5.txt.gz",
+      "asset": "protein.physical.links.detailed",
+      "role": "network",
+      "bytes": 595387,
+      "sha256": "9d06f4ffba6a4f993760cbc6f58ea159fa492f2661fae8ac8b591fbb2fc2dd5c"
+    },
+    {
+      "path": "160488.protein.physical.links.full.v12.5.txt.gz",
+      "asset": "protein.physical.links.full",
+      "role": "network",
+      "bytes": 618248,
+      "sha256": "d00ec9c47057a4c12c88bcf51c7858c5afef581895bc4d20af6f2d8a24838b33"
+    },
+    {
+      "path": "160488.protein.regulatory.links.v12.5.txt.gz",
+      "asset": "protein.regulatory.links",
+      "role": "network",
+      "bytes": 20253,
+      "sha256": "6952a5da9061b8a104afe65a4bd5fd4cd00453f092cd1e19770173a339fa18d4"
+    },
+    {
+      "path": "160488.protein.regulatory.links.detailed.v12.5.txt.gz",
+      "asset": "protein.regulatory.links.detailed",
+      "role": "network",
+      "bytes": 29210,
+      "sha256": "9d97d5a0565af7ce8bd7583872ea6f85bba9f41bc59871dc4d6efe1993c535e6"
+    },
+    {
+      "path": "160488.protein.regulatory.links.full.v12.5.txt.gz",
+      "asset": "protein.regulatory.links.full",
+      "role": "network",
+      "bytes": 30458,
+      "sha256": "908312ce0ed3b64fa566ed1edbaa3b2cc16ca593c1938d78be2a376b80f51af2"
+    },
+    {
+      "path": "160488.protein.regulatory.events.v12.5.txt.gz",
+      "asset": "protein.regulatory.events",
+      "role": "accessory",
+      "bytes": 1653,
+      "sha256": "06444ccab87f47bf890d09f5582cf98f0114c2f767f0e9d3ef37cf226593967c"
+    },
+    {
+      "path": "160488.protein.info.v12.5.txt.gz",
+      "asset": "protein.info",
+      "role": "accessory",
+      "bytes": 167573,
+      "sha256": "1daa3ff6143efba1c4888d2d1670b59c8f057401482840da2a1462b70ccd90bb"
+    },
+    {
+      "path": "160488.protein.aliases.v12.5.txt.gz",
+      "asset": "protein.aliases",
+      "role": "accessory",
+      "bytes": 621478,
+      "sha256": "b47fc2776a76fa490dca72fe2dac4a9c4b50768fe116ca05be75c4947349c864"
+    },
+    {
+      "path": "160488.protein.sequences.v12.5.fa.gz",
+      "asset": "protein.sequences",
+      "role": "accessory",
+      "bytes": 1099964,
+      "sha256": "530c66ff04badc9840a13f23399a4b8091c88db52f8532f3f4b95f5db82f92d3"
+    },
+    {
+      "path": "160488.protein.homology.v12.5.txt.gz",
+      "asset": "protein.homology",
+      "role": "accessory",
+      "bytes": 559602,
+      "sha256": "6d7e423ba2242234b2577ec4c01383356a4546b4ca79a545a00fd8eabd8d1019"
+    },
+    {
+      "path": "160488.protein.enrichment.terms.v12.5.txt.gz",
+      "asset": "protein.enrichment.terms",
+      "role": "accessory",
+      "bytes": 1870154,
+      "sha256": "51273bc3fb49ae57144e86d64ba049caece8536f97fe8ee50ea382c5fcea22eb"
+    },
+    {
+      "path": "160488.protein.orthology.v12.5.txt.gz",
+      "asset": "protein.orthology",
+      "role": "accessory",
+      "bytes": 250696,
+      "sha256": "5c395d16054bf5f6988a99f9fff8e6d6bc75abc6568b5100a926b79d5d0d1e69"
+    },
+    {
+      "path": "160488.clusters.proteins.v12.5.txt.gz",
+      "asset": "clusters.proteins",
+      "role": "accessory",
+      "bytes": 756386,
+      "sha256": "5486f4d60e9bd295339b2fdb4323b45f25bdd3f16e73b45305060077d8b50f0b"
+    },
+    {
+      "path": "160488.clusters.info.v12.5.txt.gz",
+      "asset": "clusters.info",
+      "role": "accessory",
+      "bytes": 24401,
+      "sha256": "1ea807ebb6a0a57921eae5b2e4a99b63e749b908f5fc31323d7eeb3732ac2c57"
+    },
+    {
+      "path": "160488.clusters.tree.v12.5.txt.gz",
+      "asset": "clusters.tree",
+      "role": "accessory",
+      "bytes": 5844,
+      "sha256": "2439d26c54e48c703fcf1118f54bbb220ca38ee13a753908f389b56ae25a9895"
+    }
+  ]
+}

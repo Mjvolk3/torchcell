@@ -1,0 +1,215 @@
+{
+  "shared_dir": "/tmp/screenshots/04_Data",
+  "mirror_key": "carruthersAutomationMachineLearning2025",
+  "campaign": {
+    "rows": 1506,
+    "cycles": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "distinct_designs": 402,
+    "distinct_targets": 121,
+    "design_cycle_cells": 472,
+    "replicate_counts": {
+      "3": 458,
+      "6": 7,
+      "12": 6,
+      "18": 1
+    },
+    "controls_per_cycle": {
+      "0": 18,
+      "1": 12,
+      "2": 12,
+      "3": 12,
+      "4": 12,
+      "5": 12,
+      "6": 12
+    },
+    "sgrna_counts_per_cycle": {
+      "c0_n0": 18,
+      "c0_n1": 375,
+      "c1_n0": 12,
+      "c1_n2": 90,
+      "c1_n3": 90,
+      "c2_n0": 12,
+      "c2_n2": 72,
+      "c2_n3": 90,
+      "c2_n4": 15,
+      "c3_n0": 12,
+      "c3_n1": 6,
+      "c3_n2": 75,
+      "c3_n3": 69,
+      "c3_n4": 12,
+      "c4_n0": 12,
+      "c4_n2": 75,
+      "c4_n3": 81,
+      "c4_n4": 15,
+      "c5_n0": 12,
+      "c5_n2": 75,
+      "c5_n3": 84,
+      "c5_n4": 15,
+      "c6_n0": 12,
+      "c6_n2": 30,
+      "c6_n3": 90,
+      "c6_n4": 57
+    }
+  },
+  "vector_swap_2_vs_3": {
+    "cycle_a": 2,
+    "cycle_b": 3,
+    "n_shared_designs": 50,
+    "pearson": 0.6700722244917888,
+    "spearman": 0.6678031212484994,
+    "pearson_fold_over_control": 0.6700722244917888,
+    "mean_a": 312.8672828333333,
+    "mean_b": 310.33934346666666,
+    "mean_paired_difference": -2.5279393666666707,
+    "mean_dcas9_a": 2634631.082883598,
+    "mean_dcas9_b": 4314839.096666667,
+    "control_mean_a": 156.73334166666666,
+    "control_mean_b": 168.83141666666668
+  },
+  "replicate_ceiling": [
+    {
+      "cycle": 2,
+      "reliability": 0.9456467017710359,
+      "ci90": [
+        0.9264017938401136,
+        0.9725064443350729
+      ],
+      "n_designs": 60,
+      "iters": 400
+    },
+    {
+      "cycle": 3,
+      "reliability": 0.9795919372180727,
+      "ci90": [
+        0.9742397240114379,
+        0.9845136925651634
+      ],
+      "n_designs": 55,
+      "iters": 400
+    }
+  ],
+  "si_titer_agreement": {
+    "si_file": "/scratch/projects/torchcell-scratch/torchcell-library/carruthersAutomationMachineLearning2025/si/si9.xlsx",
+    "si_rows": 3012,
+    "comparisons": 3012,
+    "unmatched_rows": 0,
+    "max_abs_diff": 0.0,
+    "mean_abs_diff": 0.0,
+    "exact_within_1e-6": 3012
+  },
+  "metabolic_model_diff": {
+    "base": {
+      "id": "iJN1463",
+      "reactions": 2927,
+      "metabolites": 2153,
+      "genes": 1462,
+      "objective": [
+        "BIOMASS_KT2440_WT3"
+      ]
+    },
+    "augmented": {
+      "id": "iJN1463",
+      "reactions": 2958,
+      "metabolites": 2178,
+      "genes": 1474,
+      "objective": [
+        "BIOMASS_KT2440_WT3"
+      ]
+    },
+    "reactions_added": [
+      "14BDAL",
+      "14BUTOL",
+      "43RYLKETO",
+      "4HPPTPP",
+      "5MTRtex",
+      "5MTRtpp",
+      "ACCOAAT",
+      "ACOAH",
+      "ACSUCC",
+      "APCS",
+      "APP",
+      "BUT1OATE",
+      "EX_5mtr_e",
+      "EX_btd_14_RR_e",
+      "EX_ip_e",
+      "GLYACE",
+      "GLYCOA",
+      "HBCOA",
+      "HBCROA",
+      "HBSUCC",
+      "HMGCOAR",
+      "HMGCOAS",
+      "HYBUAC",
+      "HYBUT",
+      "HYSUCC",
+      "IPtex",
+      "IPtpp",
+      "MEVKIN",
+      "MTAN",
+      "PMD",
+      "SPMPS",
+      "dpm_import",
+      "hemeD_synthesis"
+    ],
+    "reactions_removed": [
+      "ACALD",
+      "CAT23DOX"
+    ],
+    "metabolites_added": [
+      "34hbutcoa_c",
+      "3mbut3e1yp_c",
+      "4hbutal_c",
+      "4hbutal_p",
+      "4hbutcoa_c",
+      "4hbya_c",
+      "4hy3kbutcoa_c",
+      "4hycrocoa_c",
+      "5mta_c",
+      "5mtr_c",
+      "5mtr_e",
+      "5mtr_p",
+      "5pmva_c",
+      "ametam_c",
+      "btd_14_RR_e",
+      "btd_14_RR_p",
+      "dpm_c",
+      "glycoa_c",
+      "hemed_c",
+      "ip_c",
+      "ip_e",
+      "ip_p",
+      "mva_c",
+      "na15dap_c",
+      "succhyde_c"
+    ],
+    "genes_added": [
+      "MK",
+      "PMDHKQ",
+      "PP_1412",
+      "PP_1867",
+      "PP_1948",
+      "PP_2049",
+      "PP_3254",
+      "PP_3491",
+      "PP_5266",
+      "aphA",
+      "mvaE",
+      "mvaS"
+    ],
+    "heterologous_genes_added": [
+      "MK",
+      "PMDHKQ",
+      "aphA",
+      "mvaE",
+      "mvaS"
+    ]
+  }
+}

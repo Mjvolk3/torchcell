@@ -20,7 +20,11 @@ from .experiment_dataset import (
     verify_sha256,
     write_verified,
 )
-from .genotype_aggregate import DeletionKeyedGenotypeAggregator, GenotypeAggregator
+from .genotype_aggregate import (
+    DeletionKeyedGenotypeAggregator,
+    GenotypeAggregator,
+    ReferenceKeyedGenotypeAggregator,
+)
 from .graph_processor import (
     DCellGraphProcessor,
     IncidenceSubgraphRepresentation,
@@ -45,6 +49,7 @@ __all__ = [
     "Aggregator",
     "DeletionKeyedGenotypeAggregator",
     "GenotypeAggregator",
+    "ReferenceKeyedGenotypeAggregator",
     "ExperimentDataset",
     "Neo4jCellDataset",
     "compute_experiment_reference_index_sequential",

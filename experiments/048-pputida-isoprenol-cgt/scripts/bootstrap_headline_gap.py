@@ -55,7 +55,13 @@ TRIAL = osp.join(
     EXPERIMENT_ROOT, "048-pputida-isoprenol-cgt", "results", "low_data_trial"
 )
 
-NULLS = ("boosted_trees", "ridge")
+#: The baseline is OLS on the guide-target vector, program-wide, because it has
+#: no hyperparameter to tune and so the comparison cannot be argued with. Runs
+#: made before that was standardized carry ridge and boosted-trees nulls in
+#: their reports; `ols_baseline.py` scores the same splits with OLS and writes
+#: `ols_predictions.json`, which is read here so the whole trial reads against
+#: one baseline without retraining a single cell.
+NULLS = ("ols",)
 
 
 def load_predictions(
@@ -103,14 +109,47 @@ def load_predictions(
             )
         model_rows.append(np.asarray(report["test_predicted"], dtype=float))
         for name in NULLS:
-            null_rows[name].append(
-                np.asarray(
-                    report["lower_order_nulls"][name]["test_predictions"], dtype=float
+            stored = report["lower_order_nulls"].get(name)
+            if stored is not None and "test_predictions" in stored:
+                null_rows[name].append(
+                    np.asarray(stored["test_predictions"], dtype=float)
                 )
-            )
     assert observed is not None and indices is not None
     model = np.mean(np.vstack(model_rows), axis=0)
-    nulls = {name: np.mean(np.vstack(rows), axis=0) for name, rows in null_rows.items()}
+    nulls = {
+        name: np.mean(np.vstack(rows), axis=0)
+        for name, rows in null_rows.items()
+        if rows
+    }
+    if "ols" not in nulls:
+        # Cells trained before the baseline was standardized have no OLS null in
+        # their report. Score the same split from ols_baseline.py's saved
+        # predictions, matching on the test record ids rather than on position,
+        # so a reordered loader could never silently pair the wrong records.
+        path = osp.join(TRIAL, "ols_predictions.json")
+        if not osp.exists(path):
+            raise ValueError(
+                f"{path} is missing, so there is no OLS baseline to compare "
+                f"against. Run ols_baseline.py first; it scores the splits of "
+                f"runs made before OLS became the standard baseline."
+            )
+        with open(path) as handle:
+            saved = json.load(handle)
+        key = f"{split}_-1" if split == "cycle" else None
+        if key is None or key not in saved:
+            raise ValueError(
+                f"ols_predictions.json has no entry for the {split} split. The "
+                f"design split re-rolls per seed, so its OLS baseline is "
+                f"per-seed and a pooled comparison needs the matching seeds."
+            )
+        entry = saved[key]
+        if [int(i) for i in entry["test_indices"]] != indices:
+            raise ValueError(
+                "the OLS baseline scored different test records than these "
+                "runs, so the two cannot be paired. Re-run ols_baseline.py "
+                "against the current splits."
+            )
+        nulls["ols"] = np.asarray(entry["test_predicted"], dtype=float)
     return observed, model, nulls, indices
 
 

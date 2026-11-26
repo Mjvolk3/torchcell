@@ -291,8 +291,8 @@ L 148.859956 34.669488
     </g>
    </g>
    <g id="line2d_27">
-    <path d="M 27.907087 94.974014 
-L 148.859956 94.974014 
+    <path d="M 27.907087 115.208209 
+L 148.859956 115.208209 
 " clip-path="url(#pde526a1e6a)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #666666; stroke-width: 0.8"/>
    </g>
    <g id="patch_3">
@@ -462,7 +462,7 @@ L 40.407087 126.350769
 " style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #666666; stroke-width: 0.8"/>
     </g>
     <g id="text_15">
-     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="44.407087" y="128.100769" transform="rotate(-0 44.407087 128.100769)">boosted trees (0.51)</text>
+     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="44.407087" y="128.100769" transform="rotate(-0 44.407087 128.100769)">OLS baseline (0.43)</text>
     </g>
     <g id="LineCollection_3">
      <path d="M 36.407087 135.982019 
@@ -1411,13 +1411,13 @@ z
    <g id="patch_20">
     <path d="M 413.969926 147.798425 
 L 426.569183 147.798425 
-L 426.569183 64.173362 
-L 413.969926 64.173362 
+L 426.569183 76.650133 
+L 413.969926 76.650133 
 z
 " clip-path="url(#p502b41bd36)" style="fill: #d6b656; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="text_49">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="420.269554" y="60.944967" transform="rotate(-0 420.269554 60.944967)">0.75</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="420.269554" y="73.421737" transform="rotate(-0 420.269554 73.421737)">0.64</text>
    </g>
    <g id="patch_21">
     <path d="M 431.968865 147.798425 
@@ -1444,13 +1444,13 @@ z
    <g id="patch_23">
     <path d="M 467.966742 147.798425 
 L 480.565999 147.798425 
-L 480.565999 90.801224 
-L 467.966742 90.801224 
+L 480.565999 99.794199 
+L 467.966742 99.794199 
 z
 " clip-path="url(#p502b41bd36)" style="fill: #d6b656; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
    </g>
    <g id="text_52">
-    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="474.266371" y="87.572828" transform="rotate(-0 474.266371 87.572828)">0.51</text>
+    <text style="font-size: 5px; font-family: 'Arial'; text-anchor: middle" x="474.266371" y="96.565804" transform="rotate(-0 474.266371 96.565804)">0.43</text>
    </g>
    <g id="patch_24">
     <path d="M 485.965681 147.798425 
@@ -1474,37 +1474,37 @@ z
    </g>
    <g id="legend_3">
     <g id="patch_25">
-     <path d="M 354.423481 25.733809 
-L 359.923481 25.733809 
-L 359.923481 21.583809 
-L 354.423481 21.583809 
+     <path d="M 354.423481 25.675215 
+L 359.923481 25.675215 
+L 359.923481 21.525215 
+L 354.423481 21.525215 
 z
 " style="fill: #666666; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_57">
-     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="363.923481" y="25.383809" transform="rotate(-0 363.923481 25.383809)">trivial ranker</text>
+     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="363.923481" y="25.325215" transform="rotate(-0 363.923481 25.325215)">trivial ranker</text>
     </g>
     <g id="patch_26">
-     <path d="M 396.150824 25.733809 
-L 401.650824 25.733809 
-L 401.650824 21.583809 
-L 396.150824 21.583809 
+     <path d="M 396.150824 25.675215 
+L 401.650824 25.675215 
+L 401.650824 21.525215 
+L 396.150824 21.525215 
 z
 " style="fill: #d6b656; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_58">
-     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="405.650824" y="25.383809" transform="rotate(-0 405.650824 25.383809)">boosted trees</text>
+     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="405.650824" y="25.325215" transform="rotate(-0 405.650824 25.325215)">OLS on guide vector</text>
     </g>
     <g id="patch_27">
-     <path d="M 440.946137 25.733809 
-L 446.446137 25.733809 
-L 446.446137 21.583809 
-L 440.946137 21.583809 
+     <path d="M 456.231293 25.675215 
+L 461.731293 25.675215 
+L 461.731293 21.525215 
+L 456.231293 21.525215 
 z
 " style="fill: #d79b00; stroke: #000000; stroke-width: 0.4; stroke-linejoin: miter"/>
     </g>
     <g id="text_59">
-     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="450.446137" y="25.383809" transform="rotate(-0 450.446137 25.383809)">CGT, best cell</text>
+     <text style="font-size: 5px; font-family: 'Arial'; text-anchor: start" x="465.731293" y="25.325215" transform="rotate(-0 465.731293 25.325215)">CGT, best cell</text>
     </g>
    </g>
   </g>

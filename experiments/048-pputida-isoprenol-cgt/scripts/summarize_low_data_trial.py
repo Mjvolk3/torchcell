@@ -91,8 +91,9 @@ def cell_rows() -> pd.DataFrame:
                 "test_nmse": test["nmse"],
                 "test_r2": test["r2"],
                 "test_offset": offset(test),
-                "trees_test_spearman": nulls["boosted_trees"]["test_spearman"],
-                "ridge_test_spearman": nulls["ridge"]["test_spearman"],
+                "ols_test_spearman": (
+                    nulls["ols"]["test_spearman"] if "ols" in nulls else float("nan")
+                ),
                 "seconds": report["seconds"],
                 "has_predictions": "test_predicted" in report,
             }
@@ -103,6 +104,35 @@ def cell_rows() -> pd.DataFrame:
             f"cell and there is nothing to summarize"
         )
     return pd.DataFrame(rows)
+
+
+def attach_ols(cells: pd.DataFrame) -> pd.DataFrame:
+    """Fill the OLS baseline for cells trained before it was standardized.
+
+    OLS depends only on the split, not on the model, so scoring each split once
+    with `ols_baseline.py` gives every cell its baseline without retraining a
+    single one. The cycle split is deterministic and carries seed -1; the design
+    split re-rolls per seed and is matched on the seed.
+    """
+    path = osp.join(TRIAL, "ols_baseline.csv")
+    if not osp.exists(path):
+        return cells
+    baseline = pd.read_csv(path)[["split", "seed", "test_spearman"]]
+    baseline = baseline.rename(columns={"test_spearman": "_ols"})
+    cycle = baseline[baseline.split == "cycle"]["_ols"]
+    cycle_value = float(cycle.iloc[0]) if len(cycle) else float("nan")
+    design = baseline[baseline.split == "design"].set_index("seed")["_ols"].to_dict()
+
+    def lookup(row: pd.Series) -> float:
+        if not pd.isna(row["ols_test_spearman"]):
+            return float(row["ols_test_spearman"])
+        if row["split"] == "cycle":
+            return cycle_value
+        return float(design.get(int(row["seed"]), float("nan")))
+
+    cells = cells.copy()
+    cells["ols_test_spearman"] = cells.apply(lookup, axis=1)
+    return cells
 
 
 def configuration_rows(cells: pd.DataFrame) -> pd.DataFrame:
@@ -132,12 +162,11 @@ def configuration_rows(cells: pd.DataFrame) -> pd.DataFrame:
         test_offset_mean=("test_offset", "mean"),
         test_offset_sd=("test_offset", "std"),
         val_spearman_mean=("val_spearman", "mean"),
-        trees_mean=("trees_test_spearman", "mean"),
-        ridge_mean=("ridge_test_spearman", "mean"),
+        ols_mean=("ols_test_spearman", "mean"),
         best_epoch_min=("best_epoch", "min"),
         best_epoch_max=("best_epoch", "max"),
     )
-    grouped["gap_over_trees"] = grouped["test_spearman_mean"] - grouped["trees_mean"]
+    grouped["gap_over_ols"] = grouped["test_spearman_mean"] - grouped["ols_mean"]
     return grouped.sort_values(["split", "val_spearman_mean"], ascending=[True, False])
 
 
@@ -191,9 +220,9 @@ def pooled_rows(cells: pd.DataFrame) -> pd.DataFrame:
         test_r2_mean=("test_r2", "mean"),
         test_r2_sd=("test_r2", "std"),
         test_offset_mean=("test_offset", "mean"),
-        trees_mean=("trees_test_spearman", "mean"),
+        ols_mean=("ols_test_spearman", "mean"),
     )
-    grouped["gap_over_trees"] = grouped["test_spearman_mean"] - grouped["trees_mean"]
+    grouped["gap_over_ols"] = grouped["test_spearman_mean"] - grouped["ols_mean"]
     return grouped.sort_values(["split", "test_spearman_mean"], ascending=[True, False])
 
 
@@ -208,7 +237,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    cells = cell_rows()
+    cells = attach_ols(cell_rows())
     configurations = configuration_rows(cells)
     pooled = pooled_rows(cells)
     cells.to_csv(osp.join(TRIAL, "trial_cells.csv"), index=False)
@@ -228,7 +257,7 @@ def main() -> None:
             "test_nmse_mean",
             "test_r2_mean",
             "test_offset_mean",
-            "gap_over_trees",
+            "gap_over_ols",
         ]
         print(f"{len(cells)} cells, {len(pooled)} distinct configurations")
         print(shown[columns].head(args.top).to_string(index=False, float_format="%.3f"))
@@ -250,7 +279,7 @@ def main() -> None:
         "test_nmse_mean",
         "test_r2_mean",
         "test_offset_mean",
-        "gap_over_trees",
+        "gap_over_ols",
     ]
     print(f"{len(cells)} cells, {len(configurations)} split-configuration pairs")
     print(shown[columns].head(args.top).to_string(index=False, float_format="%.3f"))

@@ -432,3 +432,47 @@ away.
 **Figure 1a asymmetry.** The pooled readout line spans 0 to 1e-2; the metabolic
 module line stops at 1e-4, because the extension was run on the pooled readout
 only. The purple line ending early is missing data, not a measured collapse.
+
+### 2026.11.25 - OLS is the standard baseline, replacing ridge and boosted trees
+
+Owner's call, and the reason is the right one: ridge carries `alpha`, a tree
+ensemble carries depth and an iteration count, and both were set by whoever
+wrote the script. Every model comparison then invites the question of whether
+the baseline was tuned as hard as the model, and on a 465-record campaign that
+question has no cheap answer. **Ordinary least squares on the multi-hot
+guide-target vector has no hyperparameter**, so the comparison is identical
+across experiments and nobody has to defend a baseline's configuration.
+
+One implementation point that is a correctness matter, not a knob. The indicator
+spans all 5,729 genes but only the campaign's CRISPRi targets are ever nonzero,
+so the raw matrix has 5,729 columns against 347 training rows and OLS is
+underdetermined; `lstsq` would return a minimum-norm solution, which is ridge by
+the back door and exactly what OLS was chosen to avoid. Columns constant across
+the training rows carry no information, so they are dropped, leaving 100 to 121
+depending on the split.
+
+| split | OLS rho | OLS R-squared | OLS RMSE | features / train / test |
+|---|---|---|---|---|
+| cycle | 0.430 | -0.139 | 211.7 | 121 / 347 / 59 |
+| design, 5 seeds | 0.575 to 0.683 | 0.225 to 0.430 | ~115 | 100 to 112 / ~372 / 44 to 52 |
+
+**Say plainly what this does to the headline.** OLS is a WEAKER baseline than the
+tuned boosted trees it replaces, 0.430 against 0.510 on the cycle split, so the
+model's measured advantage grows. The paired record bootstrap:
+
+| baseline | CGT | baseline | gap | 95 percent interval | reversal rate |
+|---|---|---|---|---|---|
+| OLS | 0.625 | 0.430 | +0.196 | [+0.054, +0.335] | 0.4 percent |
+| boosted trees | 0.625 | 0.510 | +0.115 | [-0.038, +0.279] | 7.6 percent |
+
+Against OLS the lead is established; against the trees it was not. **The choice
+of baseline changes the verdict, and standardizing on the one without
+hyperparameters happens to favor us.** That is a defensible choice for the
+reason given, and it has to be stated rather than quietly banked. A report that
+claims the model beats its baseline should say which baseline, and the honest
+companion sentence is that a tuned tree ensemble on the same features closes
+most of the gap.
+
+`ols_baseline.py` scores the splits of every run made before the change, so the
+whole trial reads against one baseline without retraining a cell. New runs
+compute it inline.

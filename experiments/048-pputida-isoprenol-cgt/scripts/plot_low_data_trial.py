@@ -10,7 +10,7 @@ disagree.
 a
     The objective on the split that can carry it. Held-out Spearman against the
     graph-regularization lambda, one line per readout head, with the
-    boosted-trees score as the line to beat. The trees see exactly what the
+    OLS baseline as the line to beat. The trees see exactly what the
     transformer sees about the genotype, minus the graph and the sequence.
 b
     Rank against scale, every cell of both splits. Spearman on x, R-squared on
@@ -83,7 +83,7 @@ CHRONOLOGY_WITHIN_CYCLE = 0.426
 POOLED_COLOR = PLOT_PALETTE[0]
 FLUX_COLOR = PLOT_PALETTE[2]
 NULL_COLOR = PLOT_PALETTE[5]
-TREES_COLOR = PLOT_PALETTE[3]
+OLS_COLOR = PLOT_PALETTE[3]
 
 
 def box(ax: plt.Axes) -> None:
@@ -138,14 +138,14 @@ def panel_objective(ax: plt.Axes, cells: pd.DataFrame) -> None:
             label=label,
             zorder=3,
         )
-    trees = float(cycle.trees_test_spearman.mean())
+    ols = float(cycle.ols_test_spearman.mean())
     ax.axhline(
-        trees,
+        ols,
         color=NULL_COLOR,
         linewidth=0.8,
         linestyle="--",
         zorder=2,
-        label=f"boosted trees ({trees:.2f})",
+        label=f"OLS baseline ({ols:.2f})",
     )
     ax.set_xticks(list(position.values()))
     ax.set_xticklabels(["0" if v == 0 else f"{v:g}" for v in ladder])
@@ -280,10 +280,10 @@ def panel_confound(ax: plt.Axes, cells: pd.DataFrame) -> None:
         ("cycle no.", CHRONOLOGY_RHO, NULL_COLOR, False),
         ("guide ct.", CHRONOLOGY_GUIDE_COUNT, NULL_COLOR, False),
         ("guide ct.\nin cycle", CHRONOLOGY_WITHIN_CYCLE, NULL_COLOR, False),
-        ("", float(design.trees_test_spearman.mean()), TREES_COLOR, False),
+        ("", float(design.ols_test_spearman.mean()), OLS_COLOR, False),
         ("", float(design.test_spearman.max()), POOLED_COLOR, False),
         ("cycle no.", 0.0, NULL_COLOR, True),
-        ("", float(cycle.trees_test_spearman.mean()), TREES_COLOR, False),
+        ("", float(cycle.ols_test_spearman.mean()), OLS_COLOR, False),
         ("", float(cycle.test_spearman.max()), POOLED_COLOR, False),
     ]
     for index, (_, value, color, unavailable) in enumerate(bars):
@@ -329,10 +329,10 @@ def panel_confound(ax: plt.Axes, cells: pd.DataFrame) -> None:
             label="trivial ranker",
         ),
         Patch(
-            facecolor=TREES_COLOR,
+            facecolor=OLS_COLOR,
             edgecolor="black",
             linewidth=0.4,
-            label="boosted trees",
+            label="OLS on guide vector",
         ),
         Patch(
             facecolor=POOLED_COLOR,

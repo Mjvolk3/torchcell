@@ -30,10 +30,14 @@ their own models after DBTL3 were trained only on post-repair data. Whether that
 restriction helps us is a measurement, not an assumption, so it is an arm.
 
 Every run reports the lower-order nulls on the same table as the model: the
-train-mean constant, ridge on the guide indicator, and gradient-boosted trees on
-the same indicator. On a 465-record campaign with 401 designs, a transformer that
-does not beat boosted trees on a multi-hot guide vector has not earned its
-parameters. That has happened before on this stack.
+train-mean constant and ORDINARY LEAST SQUARES on the multi-hot guide vector.
+OLS is the standard baseline across this program's experiments because it has no
+hyperparameter: ridge's alpha and a tree ensemble's depth and iteration count are
+choices somebody makes, so a model that beats them invites the question of
+whether the baseline was tuned as hard as the model. OLS removes the question.
+On a 465-record campaign with 401 designs, a transformer that does not beat a
+linear fit on the guide identity has not earned its parameters, and that has
+happened before on this stack.
 """
 
 from __future__ import annotations
@@ -167,7 +171,26 @@ def guide_indicator(dataset: Any, indices: list[int]) -> np.ndarray:
 def lower_order_nulls(
     dataset: Any, splits: dict[str, list[int]], targets: dict[str, np.ndarray]
 ) -> dict[str, dict[str, float]]:
-    """Score the train-mean constant, ridge and boosted trees on the indicator.
+    """Score the train-mean constant and ORDINARY LEAST SQUARES on the indicator.
+
+    **The baseline is OLS and nothing else, on purpose.** Ridge and
+    gradient-boosted trees used to be here, and both carry settings somebody
+    chose: ridge's ``alpha`` and the trees' ``max_iter`` and depth. Every model
+    comparison then invites the question of whether the baseline was tuned as
+    hard as the model, and on a 465-record campaign that question has no cheap
+    answer. OLS has no hyperparameter at all, so the comparison is the same
+    comparison in every experiment and nobody has to defend a baseline's
+    configuration.
+
+    **The indicator is restricted to the columns that vary in training.** It is
+    built over all 5,729 genes, of which only the campaign's ~121 CRISPRi
+    targets are ever nonzero, so the full matrix has 5,729 columns against 347
+    training rows and OLS is underdetermined: ``lstsq`` would return a
+    minimum-norm solution, which is a regularizer by the back door and exactly
+    the thing OLS was chosen to avoid. A column that is constant across the
+    training rows carries no information about the fit, so dropping it changes
+    no prediction and makes the problem well posed. The surviving count is
+    reported so a reader can see the design matrix's shape.
 
     Every null is scored with the same :func:`regression_metrics` the model is, so
     the trial's objective (Spearman) is comparable across the whole table and not
@@ -180,10 +203,11 @@ def lower_order_nulls(
     the nested metric dicts because ``summarize_arms.py`` reads them, and the three
     arm groups already measured wrote that shape.
     """
-    from sklearn.ensemble import HistGradientBoostingRegressor
-    from sklearn.linear_model import Ridge
+    from sklearn.linear_model import LinearRegression
 
     features = {name: guide_indicator(dataset, idx) for name, idx in splits.items()}
+    informative = features["train"].std(axis=0) > 0.0
+    features = {name: matrix[:, informative] for name, matrix in features.items()}
     train_mean = float(targets["train"].mean())
     train_sd = float(targets["train"].std())
     out: dict[str, dict[str, Any]] = {}
@@ -213,14 +237,11 @@ def lower_order_nulls(
         "train_mean",
         {split: np.full_like(targets[split], train_mean) for split in ("val", "test")},
     )
-    for name, model in (
-        ("ridge", Ridge(alpha=1.0)),
-        ("boosted_trees", HistGradientBoostingRegressor(max_iter=300, random_state=0)),
-    ):
-        model.fit(features["train"], targets["train"])
-        record(
-            name, {split: model.predict(features[split]) for split in ("val", "test")}
-        )
+    model = LinearRegression()
+    model.fit(features["train"], targets["train"])
+    record("ols", {split: model.predict(features[split]) for split in ("val", "test")})
+    out["ols"]["n_features"] = int(informative.sum())
+    out["ols"]["n_train"] = int(len(targets["train"]))
     return out
 
 

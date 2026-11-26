@@ -6991,10 +6991,11 @@ content of one strain would be reconstructed; a row with no such route is exclud
 than ranked (Table~\ref{tab:excluded}). """
         + LEGEND
         + r""" \emph{Link} resolves to the source and is clickable; the full citation, the
-reason for the position and the data location are in Table~\ref{tab:sources-all}. Rows
-1--"""
+reason for the position and the data location are in Table~\ref{tab:sources-all}. The
+RECOMMENDED set is the fifty of Table~\ref{tab:final} and its ten spares, not this table:
+rows 1--"""
         + str(min(CUT, len(rows)))
-        + r""" are the recommended set"""
+        + r""" here are the rows above the cut, meaning the additions this wave targets"""
         + (
             r"; the pool holds "
             + str(len(rows))

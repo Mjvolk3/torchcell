@@ -346,7 +346,7 @@ html[data-layout='wide'] [class*='docItemCol'] {
   text-decoration: none;
   display: inline-block;
 }
-.markdown a[href^='https://mjvolk3.github.io/torchcell/']:not(.tc-linkcard)::after {
+.markdown a[href^='https://mjvolk3.github.io/torchcell/']:not([href^='https://mjvolk3.github.io/torchcell/ontology']):not(.tc-linkcard)::after {
   content: 'Sphinx docs \2197';
   margin-left: 0.35em;
   padding: 0.05em 0.45em;

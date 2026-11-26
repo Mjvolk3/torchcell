@@ -51,13 +51,27 @@ carries exactly the keys its row has (``MetabolitePhenotype`` forbids NaN and re
 matching ``n_replicates`` keys), and its reference carries the same keys at 1.0.
 ``n_replicates`` is the conservative lower end 1 for every key: strains were screened in
 duplicate and the two replicates averaged, but *"In the case where only one quality
-trace was collected, those data were used alone."* and no per-row replicate count is
-released. Supplemental Tables 3A/3B list the integrated peaks of the first and second
-collection, but they are not a per-row join (two Table 4 rows are in neither after
-identifier normalization, 46 duplicated identifiers cannot be paired row to row, and
-membership counts collected traces rather than traces that passed the 0.35 template
-correlation cut), so they are not consumed. ``metabolite_level_se`` is a typed
-``ProvenanceGap`` on every phenotype.
+trace was collected, those data were used alone."* and Table 4 releases no per-row
+replicate count. ``metabolite_level_se`` is a typed ``ProvenanceGap`` on every phenotype.
+
+REPLICATES (per-replicate policy #1178; retrieval re-attempted 2026-11-26, #1281). A
+replicate is biological: *"Strains were screened in duplicate, starting from fresh yeast
+colonies."* (paper.md L26), each its own overnight culture, extract and CE trace. Table 4
+is the authors' average of the two: *"An average of the two replicates was calculated
+(Supplemental Table 4)."* (L149). The only per-replicate release is Supplemental Tables
+3A/3B (``REPLICATE_TABLES_LEGEND``), which the publisher's supplement page lists as
+``SupplementalTable3A-peaks.txt`` and ``SupplementalTable3B-peaks.txt``
+(``DC1_LISTING_CAPTURE``). They are NOT in the raw mirror: on 2026-11-26 the publisher
+answered every URL with a Cloudflare browser challenge, the Wayback Machine holds no copy
+of either file, and neither PMC nor Europe PMC carries a supplement for the article
+(``TABLE3_ATTEMPTS``). The store therefore keeps one averaged record per Table 4 row and
+the build ledger names the unretrieved release (``PER_REPLICATE_RELEASE``). Per the
+legend a 3A/3B row is one trace's list of integrated peaks (height, % total height, area,
+% total area per identified peak) as exported from 32Karat (L129), with no amino-acid
+label; a per-replicate value would also need the authors' peak-to-amino-acid assignment
+(dynamic programming plus manual adjustment, L145) and each trace's plate. Whether either
+is released is unverified: ``ClusterInNorm.zip`` is listed on the same page and was not
+read.
 
 RETENTION RULES (every count written to ``preprocess/dropped_records.json``). The data is
 the data (owner rule, 2026-10-12): every Table 4 row is a record under the identifier the
@@ -72,9 +86,12 @@ authors released, and no genome, annotation or other store is consulted at load 
   such as the pseudogene YCL074W, 9 retired names such as YCL006C) are stored under the
   released name like every other row. Whether a released name is a current gene is a
   question for the genome layer at modeling time, never for the loader.
-- Duplicate identifiers: 46 identifiers occur twice and one three times (94 rows), the
-  replicate strains of the collection with different values. Every row is a record; the
-  rows that share an identifier are listed in the ``duplicate_identifiers`` ledger. The
+- Duplicate identifiers: 48 identifiers occur on exactly two rows each (96 rows) with
+  different values: 46 are repeated verbatim in the release and two pairs form after
+  normalization (``YML009C``/``YML009c``, ``YML048W-A``/``YML048WA-``); measured
+  2026-11-26, correcting the earlier "46 twice and one three times". Every row is a
+  record; the rows that share an identifier are listed in the ``duplicate_identifiers``
+  ledger. They are not the two screening replicates, which Table 4 averages. The
   release carries no plate, well or clone key, so the records of one identifier differ
   only in their values; the metabolite verifier reports the collisions as a finding
   (``allow_duplicate_strains``) rather than refusing the store.
@@ -105,7 +122,10 @@ institutional login (every scripted attempt returned 429/403/404 on 2026-09-15),
 retrieval record is a genuine ``manual_browser`` recipe and the canonical copy is the RAW
 MIRROR ``$DATA_ROOT/torchcell-raw/cooperHighthroughputProfilingAmino2010/`` with its
 ``manifest.json``. ``download()`` symlinks and sha256-verifies from the mirror and has
-NO network path: when the mirror is absent it raises with the recipe.
+NO network path: when the mirror is absent it raises with the recipe. Re-measured
+2026-11-26: genome.cshlp.org answers the article, the supplement page and every file URL
+with HTTP 403 and ``cf-mitigated: challenge`` (a Cloudflare browser challenge; whether a
+subscription is also needed behind it was not reached).
 """
 
 import csv
@@ -190,6 +210,20 @@ SHA256SUMS_NAME = "SHA256SUMS.txt"
 ARTICLE_URL = "https://genome.cshlp.org/content/20/9/1288"
 DC1_URL = "http://genome.cshlp.org/content/suppl/2010/07/07/gr.105825.110.DC1"
 RETRIEVED_AT = "2026-09-15"
+
+#: The per-replicate tables the supplement page lists; never retrieved (TABLE3_ATTEMPTS).
+TABLE3A_NAME = "SupplementalTable3A-peaks.txt"
+TABLE3B_NAME = "SupplementalTable3B-peaks.txt"
+#: The only surviving copy of the supplement page's file list: the Wayback capture of
+#: the publisher's DC1 page, whose 11 links include both 3A/3B files and Table 4. The
+#: sha256 is of the capture's raw bytes (``id_`` form, 23,235 B, fetched 2026-11-26).
+DC1_LISTING_CAPTURE = (
+    "https://web.archive.org/web/20170710141614id_/"
+    "http://genome.cshlp.org/content/20/9/1288/suppl/DC1"
+)
+DC1_LISTING_CAPTURE_SHA256 = (
+    "9942f5ef212e31e07abd534d44459c1148606883ee785e9e963d4b9d59f147dc"
+)
 
 #: The manual recipe that produced the deposited bytes, recorded as the
 #: ``retrieval_command`` of a typed ``manual_browser`` record: un-scriptable, but not
@@ -298,8 +332,16 @@ EXCLUSION_RULE = (
 REPLICATE_RULE = (
     "n_replicates = 1 for every key (conservative lower end): strains were screened in "
     "duplicate and averaged, but a strain with only one quality trace was used alone and "
-    "no per-row replicate count is released; Supplemental Tables 3A/3B do not join row "
-    "to row and count collected rather than quality traces"
+    "Table 4 releases no per-row replicate count"
+)
+PER_REPLICATE_RELEASE = (
+    "one record per Table 4 row, the authors' average of two biological replicates "
+    "(duplicate screens from fresh colonies); the per-replicate release, Supplemental "
+    "Tables 3A/3B (SupplementalTable3A-peaks.txt, SupplementalTable3B-peaks.txt, listed "
+    "on the publisher's DC1 page), is not in the raw mirror: every retrieval route was "
+    "blocked or empty on 2026-11-26 (per_replicate_release_attempts), so no per-replicate "
+    "record is stored and nothing is substituted; a 3A/3B row holds unassigned "
+    "integrated peaks of one trace, not amino-acid values"
 )
 LEGEND_CONTRADICTION = (
     "the deposited legend and the Methods call Table 4 log2-transformed ratios; the "
@@ -497,12 +539,35 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         note="the paper's own description of Table 4's transform, contradicted by the "
         "released values",
     ),
+    "replicate_tables_content": _sv(
+        "Supplemental Tables 3A,B: 32Karat integration data per trace",
+        "for each trace and integration data (migration time, percentage area, height and "
+        "width for each peak) (Supplemental Tables 2A,B, 3A,B).",
+        note="the per-replicate release; peaks carry no amino-acid label, which the "
+        "authors assigned afterwards (peak_assignment_algorithm); not mirrored "
+        "(TABLE3_ATTEMPTS)",
+    ),
+    "peak_assignment_algorithm": _sv(
+        "dynamic programming against a manual template, then manual adjustment",
+        "To assign each peak in the trace to an amino acid peak we implemented a dynamic "
+        "programming algorithm that assigns sample peaks to a manually generated template "
+        "based on a composite of peaks observed in the whole data set.",
+        note="the step between a 3A/3B peak list and a Table 4 amino-acid value; no "
+        "assignment table is named anywhere in the paper or the legends",
+    ),
 }
 
 #: The one quote taken from the deposited legend rather than from paper.md.
 LEGEND_QUOTE = (
     "Supplemental Table 4. Log2 transformed ratios representing fold change compared to "
     "average for each identified amino acid in each of nearly 4500 samples."
+)
+#: The legend of the per-replicate tables (verbatim, double spaces included).
+REPLICATE_TABLES_LEGEND = (
+    "Supplemental Tables 3A and 3B. Integrated peak information for first (3A) and "
+    "second (3B) replicate data collection.  For each row, the number of peaks "
+    "identified is listed in column 3. The next four sets of columns correspond to "
+    "height, %total height, area and %total area of each identified peak."
 )
 LEGEND_SOURCED_VALUES: dict[str, SourcedValue] = {
     "table4_legend": SourcedValue(
@@ -516,8 +581,110 @@ LEGEND_SOURCED_VALUES: dict[str, SourcedValue] = {
         ),
         quote=LEGEND_QUOTE,
         note=LEGEND_CONTRADICTION,
-    )
+    ),
+    "replicate_tables_legend": SourcedValue(
+        value="Supplemental Tables 3A/3B: integrated peaks of replicate 1 and 2",
+        provenance=Provenance(
+            source_uri=_RAW_FILES[LEGENDS_NAME]["relpath"],
+            citation_key=CITATION_KEY,
+            sha256=LEGENDS_SHA256,
+            method="manual browser deposit of the Genome Research supplement; the legend "
+            "text is 8-bit in the Word binary",
+        ),
+        quote=REPLICATE_TABLES_LEGEND,
+        note=PER_REPLICATE_RELEASE,
+    ),
 }
+
+
+class RetrievalAttempt(BaseModel):
+    """One request for a released file that did not yield the file."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    url: str
+    observed: str
+    checked_at: str
+
+
+#: Every route tried for Supplemental Tables 3A/3B on 2026-11-26 (scripted, generic user
+#: agent unless stated). No route yielded either file, so nothing was deposited or
+#: substituted. The routes are the ones the paper names (the Genome Research supplement)
+#: plus the PMC and Europe PMC records of the article; the paper and legends name no
+#: other repository.
+TABLE3_ATTEMPTS: tuple[RetrievalAttempt, ...] = (
+    RetrievalAttempt(
+        url="https://genome.cshlp.org/content/suppl/2010/07/07/gr.105825.110.DC1/"
+        f"{TABLE3A_NAME}",
+        observed="HTTP 403, cf-mitigated: challenge (Cloudflare 'Just a moment...' page); "
+        "the same with a browser user agent",
+        checked_at="2026-11-26",
+    ),
+    RetrievalAttempt(
+        url="https://genome.cshlp.org/content/suppl/2010/07/07/gr.105825.110.DC1/"
+        f"{TABLE3B_NAME}",
+        observed="HTTP 403, cf-mitigated: challenge",
+        checked_at="2026-11-26",
+    ),
+    RetrievalAttempt(
+        url="https://genome.cshlp.org/content/suppl/2010/07/07/gr.105825.110.DC1",
+        observed="HTTP 403, cf-mitigated: challenge; so do "
+        "https://genome.cshlp.org/content/20/9/1288, .../1288/suppl/DC1, the doi.org "
+        "redirect target and the legacy www.genome.org paths (redirected to cshlp)",
+        checked_at="2026-11-26",
+    ),
+    RetrievalAttempt(
+        url="https://web.archive.org/cdx/search/cdx?url=genome.cshlp.org/content/suppl/"
+        "2010/07/07/gr.105825.110.DC1/<file>",
+        observed="no capture of SupplementalTable3A-peaks.txt, SupplementalTable3B-peaks.txt"
+        ", ClusterInNorm.zip, SupplementalTable4.txt or any other DC1 file; the only "
+        "capture is the page listing (DC1_LISTING_CAPTURE)",
+        checked_at="2026-11-26",
+    ),
+    RetrievalAttempt(
+        url="https://pmc.ncbi.nlm.nih.gov/articles/PMC2928507/",
+        observed="HTTP 200; no supplementary-material section, only the pointer to "
+        "http://www.genome.org",
+        checked_at="2026-11-26",
+    ),
+    RetrievalAttempt(
+        url="https://pmc-oa-opendata.s3.amazonaws.com/?list-type=2&prefix=PMC2928507",
+        observed="HTTP 200, KeyCount 0 (also for the oa_comm, oa_noncomm and "
+        "author_manuscript prefixes): the article is not in the PMC open-access set",
+        checked_at="2026-11-26",
+    ),
+    RetrievalAttempt(
+        url="https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id=PMC2928507",
+        observed="HTTP 404 (the endpoint answers 404 for a known open-access article too)",
+        checked_at="2026-11-26",
+    ),
+    RetrievalAttempt(
+        url="https://www.ebi.ac.uk/europepmc/webservices/rest/PMC2928507/"
+        "supplementaryFiles",
+        observed="HTTP 200 errorBean 'Article with id PMC2928507 is not open access one'"
+        "; the core record reads isOpenAccess N, hasSuppl N",
+        checked_at="2026-11-26",
+    ),
+)
+
+#: What the publisher's supplement page lists (DC1_LISTING_CAPTURE), and what became of
+#: each file. Written to the raw mirror's ``manifest.json`` as ``si_expected``.
+SI_EXPECTED: tuple[str, ...] = (
+    "Supplemental Figure 1 (k562Suppl.pdf; K-562 RPS19 knockdown; not mirrored)",
+    "Supplemental Table 1 (SupplementalTable1.xls; growth-rate effects; not mirrored)",
+    "Supplemental Tables 2A,B (SupplementalTable2A-raw.txt, SupplementalTable2B-raw.txt; "
+    "raw electropherograms per replicate, raw instrument traces, out of scope; not "
+    "mirrored)",
+    f"Supplemental Tables 3A,B ({TABLE3A_NAME}, {TABLE3B_NAME}; integrated peaks per "
+    "replicate; listed on the DC1 page, NOT mirrored: Cloudflare browser challenge and no "
+    "archived copy on 2026-11-26, see TABLE3_ATTEMPTS in the loader)",
+    f"Supplemental Table 4 ({TABLE4_NAME}; consumed)",
+    f"Supplemental Table Legends ({LEGENDS_NAME}; consumed for the Table 4 legend)",
+    "ClusterInNorm.zip (Cluster software input; listed on the DC1 page, not read, not "
+    "mirrored)",
+    "Theberge017574_SuppFig1.jpg, Theberge017574_SuppFig2.jpg (listed on the DC1 page "
+    "under another manuscript's file names; not mirrored)",
+)
 
 _TEMPERATURE_GAP = ProvenanceGap(
     field="temperature",
@@ -675,13 +842,7 @@ def deposit_raw_mirror(
         ),
         files=files,
         si_data_sources=[DC1_URL],
-        si_expected=[
-            "Supplemental Table 1 (SupplementalTable1.xls; growth-rate effects)",
-            "Supplemental Tables 2A,B (raw electropherograms; not deposited)",
-            "Supplemental Tables 3A,B (integrated peaks per replicate; not deposited)",
-            f"Supplemental Table 4 ({TABLE4_NAME}; consumed)",
-            f"Supplemental Table Legends ({LEGENDS_NAME}; consumed for the Table 4 legend)",
-        ],
+        si_expected=list(SI_EXPECTED),
         provenance_complete=True,
         created_at=datetime.now(UTC).isoformat(),
     )
@@ -765,6 +926,10 @@ class BuildLedger(BaseModel):
     duplicate_rule: str
     exclusion_rule: str
     replicate_rule: str
+    per_replicate_release: str
+    per_replicate_release_attempts: list[RetrievalAttempt] = Field(
+        description="every route tried for Supplemental Tables 3A/3B; none yielded a file"
+    )
     legend_contradiction: str
     n_source_rows: int
     n_kept: int
@@ -892,6 +1057,8 @@ def retain_rows(
         duplicate_rule=DUPLICATE_RULE,
         exclusion_rule=EXCLUSION_RULE,
         replicate_rule=REPLICATE_RULE,
+        per_replicate_release=PER_REPLICATE_RELEASE,
+        per_replicate_release_attempts=list(TABLE3_ATTEMPTS),
         legend_contradiction=LEGEND_CONTRADICTION,
         n_source_rows=len(rows),
         n_kept=len(kept),

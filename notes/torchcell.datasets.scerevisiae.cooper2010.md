@@ -202,3 +202,54 @@ Owner rule of 2026-10-12 (the data is the data; the genome is a separate layer),
 - The load-time join against the local `gene_essentiality_sgd` store is gone (a cross-reference the rule forbids). The 21 ORFs it used to flag (ATG1, ATG2, ATG3, ATG5, ATG7, ATG8, ATG9, ATG10, ATG12, ATG15, ATG16, ATG17, ATG18, ERG24, HHT2, PLC1, RPS28A, SAC1, SPC72, VPS30, YMR185W) are viable deletion-collection strains whose SGD "inviable" annotation is conditional; they are stored as the release reports them, a deletion each.
 - Expected records: 4,382 (every row; was 4,313). Values kept: the sum over all rows of their present peaks. The dev store is rebuilt under slurm with `--retire-existing --verify` from a `git clone --shared` snapshot of the branch rebased onto `main` at `f85df69af5` (#1069 landed: genome rules report, never gate), slurm array 4451; the L0-L4 table is appended below when the job finishes.
 - Tests: `test_cooper2010.py` drives `read_table4` / `retain_rows` with no fake genome; the pseudogene, the retired name and the renamed name are kept under their released names, the second GAL1 row is record 2, and the ledger has no `dropped_orfs`, `renamed_orfs` or `essentiality_flagged` lists.
+
+## 2026.11.24 - Per-replicate audit: Tables 3A/3B are released but could not be retrieved
+
+Per-replicate policy (tracking #1178, follow-up #1281; #1203 item 9). Branch `fix/per-replicate-cooper2010`. No record changes: the store keeps one record per Table 4 row.
+
+### What a replicate is (sourced)
+
+- Biological: "Strains were screened in duplicate, starting from fresh yeast colonies." (`paper.md` L26, sha256 `b7739b1e...`). Each screen is its own overnight culture, extract and CE trace.
+- Table 4 is the authors' average: "An average of the two replicates was calculated (Supplemental Table 4). In the case where only one quality trace was collected, those data were used alone." (L149).
+- The per-replicate release is Supplemental Tables 3A/3B. Legend (`Supplemental_Table_Legends.doc`, sha256 `ca4983cd...`): "Supplemental Tables 3A and 3B. Integrated peak information for first (3A) and second (3B) replicate data collection.  For each row, the number of peaks identified is listed in column 3. The next four sets of columns correspond to height, %total height, area and %total area of each identified peak." The Methods call these the 32Karat integration export (L129). A row is one trace's peak list with no amino-acid label; the assignment is the authors' dynamic programming plus manual adjustment (L145), and no assignment table is named in the paper or legends.
+- No withdrawn sample is quoted anywhere.
+
+### Retrieval log, 2026-11-26 (generic user agent unless stated)
+
+| URL | response |
+|---|---|
+| `https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles/?ids=10.1101/gr.105825.110&format=json` | 200: PMC2928507, PMID 20610602 |
+| `https://doi.org/10.1101/gr.105825.110` | 302 to `http://genome.cshlp.org/lookup/doi/10.1101/gr.105825.110` |
+| `https://genome.cshlp.org/content/20/9/1288` | 403, `cf-mitigated: challenge` (Cloudflare "Just a moment...") |
+| `https://genome.cshlp.org/content/suppl/2010/07/07/gr.105825.110.DC1` (and the `http://` form, 301 to it) | 403, `cf-mitigated: challenge` |
+| `https://genome.cshlp.org/content/20/9/1288/suppl/DC1` | 403, `cf-mitigated: challenge` |
+| `.../gr.105825.110.DC1/SupplementalTable3A-peaks.txt`, `3B-peaks.txt`, `ClusterInNorm.zip`, `SupplementalTable4.txt` | 403, `cf-mitigated: challenge` each; 3A also with a browser user agent |
+| `http://www.genome.org/content/suppl/.../SupplementalTable3A-peaks.txt`, `http://www.genome.org/cgi/content/full/gr.105825.110/DC1` | two redirects to cshlp, then 403 challenge |
+| Wayback CDX for every DC1 file name (3A, 3B, ClusterInNorm, Table 4, legends, Table 1, 2A) | no capture of any file |
+| Wayback CDX `genome.cshlp.org/content/20/9/1288/suppl/DC1` | one capture, 20170710141614: the supplement page itself |
+| `https://web.archive.org/web/20170710141614id_/http://genome.cshlp.org/content/20/9/1288/suppl/DC1` | 200, 23,235 B, sha256 `9942f5ef212e31e07abd534d44459c1148606883ee785e9e963d4b9d59f147dc`; lists 11 files: `k562Suppl.pdf`, `SupplementalTable1.xls`, `SupplementalTable2A-raw.txt`, `SupplementalTable2B-raw.txt`, `SupplementalTable3A-peaks.txt`, `SupplementalTable3B-peaks.txt`, `SupplementalTable4.txt`, `Supplemental_Table_Legends.doc`, `Theberge017574_SuppFig1.jpg`, `Theberge017574_SuppFig2.jpg`, `ClusterInNorm.zip` |
+| `https://pmc.ncbi.nlm.nih.gov/articles/PMC2928507/` | 200; no supplementary-material section, only the pointer to `http://www.genome.org` |
+| `https://pmc-oa-opendata.s3.amazonaws.com/?list-type=2&prefix=PMC2928507` (and `PMC2928507.1/`, `oa_comm/xml/all/`, `oa_noncomm/xml/all/`, `author_manuscript/xml/all/`, `metadata/`) | 200, KeyCount 0; the same listing returns 15 keys for PMC10832289 (Rachwalski 2024), so the route works and the article is not in the set |
+| `https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id=PMC2928507` | 404 (also 404 for PMC10832289: the endpoint is gone) |
+| `https://www.ebi.ac.uk/europepmc/webservices/rest/PMC2928507/supplementaryFiles` | 200 errorBean "Article with id PMC2928507 is not open access one" |
+| `https://www.ebi.ac.uk/europepmc/webservices/rest/PMC2928507/fullTextXML` | 500 |
+| Europe PMC core search `PMCID:PMC2928507` | isOpenAccess N, hasSuppl N |
+
+The paper and legends name no other repository. Local copies: the user's 2026-09-15 browser download held the whole supplement, staged at `/tmp/screenshots/AA_data/` and in a session scratchpad (`.../c9adb0ba-.../scratchpad/cooper2010/deposit/`, plan note 2026.09.15). Both are gone (the first is empty, the second does not exist), and neither graveyard (`/scratch/projects/deprecated`, `/bulk/deprecated`, `/bulk/torchcell-deprecated`) nor `/bulk/torchcell-raw`, `/bulk/torchcell-library` or `/bulk/zotero-library` holds a 3A/3B, 2A or `ClusterInNorm` file.
+
+Outcome: blocked. Nothing was deposited and nothing substituted. The manual route that produced Table 4 (a browser session past the challenge, institutional login if asked) would also reach both files; that is the owner's call under #1281.
+
+### Corrections
+
+- **The raw manifest said "not deposited" for Tables 2A/2B and 3A/3B. Wrong:** the publisher lists all four. `SI_EXPECTED` in the loader now names every file on the page and its fate, and the raw mirror's `manifest.json` `si_expected` was rewritten to it (files and retrieval records untouched; manifest sha256 `c98694f7...` -> `91855806...`).
+- **The 3A/3B join statistics are withdrawn** (#1203 item 9). The 2026.09.15 section's "4,123 Table 4 rows ... in both 3A and 3B, 99 only in 3A, 158 only in 3B, and 2 ... in neither", and "the 46 duplicated identifiers have the same multiplicity in 3A/3B for 43 of them", were measured on the staged copy, which was never mirrored, has no retrieval record and no longer exists. They cannot be reproduced and are removed from the loader docstring and `REPLICATE_RULE`; the old section stays as history.
+- **Duplicate identifiers:** 48 identifiers sit on exactly two rows each (96 rows, 48 second rows), not "46 twice and one three times". 46 are verbatim repeats; `YML009C`/`YML009c` and `YML048W-A`/`YML048WA-` pair up after normalization (`YJL038C ` has no partner). The docstring and the runner comment are corrected; the ledger always counted 48.
+
+### Code
+
+- `cooper2010.py`: docstring `REPLICATES` paragraph; `TABLE3A_NAME`, `TABLE3B_NAME`, `DC1_LISTING_CAPTURE(_SHA256)`, `RetrievalAttempt`, `TABLE3_ATTEMPTS` (8 attempts), `SI_EXPECTED`, `PER_REPLICATE_RELEASE`, `REPLICATE_TABLES_LEGEND`; two new paper quotes (`replicate_tables_content` L129, `peak_assignment_algorithm` L145) and one legend quote (`replicate_tables_legend`); the build ledger gains `per_replicate_release` and `per_replicate_release_attempts`.
+- Tests: the ledger and sourced-values tests take the new keys; the legend test checks both legend quotes; the deposit test checks `si_expected`; new `test_replicate_tables_are_named_in_si_expected_and_every_attempt` and `@pytest.mark.data test_real_table4_counts_and_raw_mirror_manifest` (4,382 rows, 4,382 records, 5 normalizations, 48 duplicate identifiers, 4,334 distinct, 68,202 values, 0 excluded).
+
+### Build and verification
+
+Scratch build `/bulk/torchcell-scratch-overflow/per-replicate/per-replicate-cooper2010/amino_acid_cooper2010`: 4,382 records. Metabolite verifier PASS: L0 4,382 validated; L1 count 4,382 = expected; L1 genotype_uniqueness 48 deletion sets in more than one record (finding); L2 68,202 values; L3 reference finite, one measurement type; L4 0.981 of the 4,334 genes in Ohya. Against the dev store (built 2026-10-16, read only): 4,382 of 4,382 records identical once the `replicate_id: null` field added by PR #1181 is set aside; max absolute value difference 0.0.

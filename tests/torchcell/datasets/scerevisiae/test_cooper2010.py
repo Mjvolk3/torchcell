@@ -310,9 +310,14 @@ def test_legend_quote_is_verbatim_in_the_deposited_legends_file() -> None:
     if not legends.exists():
         pytest.skip("the raw mirror is not deposited on this machine")
     text = legends.read_bytes().decode("latin-1")
-    sourced = LEGEND_SOURCED_VALUES["table4_legend"]
-    assert sourced.quote in text
-    assert sourced.provenance.sha256 == module.LEGENDS_SHA256
+    assert list(LEGEND_SOURCED_VALUES) == ["table4_legend", "replicate_tables_legend"]
+    for sourced in LEGEND_SOURCED_VALUES.values():
+        assert sourced.quote in text
+        assert sourced.provenance.sha256 == module.LEGENDS_SHA256
+    assert (
+        LEGEND_SOURCED_VALUES["replicate_tables_legend"].quote
+        == module.REPLICATE_TABLES_LEGEND
+    )
 
 
 def test_deposit_refuses_a_hash_mismatch(tmp_path: Path) -> None:
@@ -555,6 +560,10 @@ def test_ledger_json_records_every_rule_exactly(
         "duplicate_rule": module.DUPLICATE_RULE,
         "exclusion_rule": module.EXCLUSION_RULE,
         "replicate_rule": module.REPLICATE_RULE,
+        "per_replicate_release": module.PER_REPLICATE_RELEASE,
+        "per_replicate_release_attempts": [
+            attempt.model_dump(mode="json") for attempt in module.TABLE3_ATTEMPTS
+        ],
         "legend_contradiction": module.LEGEND_CONTRADICTION,
         "n_source_rows": 8,
         "n_kept": 7,
@@ -651,7 +660,7 @@ def test_side_files_gene_set_reference_index_and_sourced_values(
     assert [entry["member_indices"] for entry in index] == [[0, 2, 3, 4, 5, 6], [1]]
     sourced = json.loads((preprocess / "sourced_values.json").read_text())
     assert list(sourced) == [
-        *sorted([*module.SOURCED_VALUES, "table4_legend"]),
+        *sorted([*module.SOURCED_VALUES, "table4_legend", "replicate_tables_legend"]),
         "peak_notes",
     ]
     assert sourced["n_samples"]["value"] == 4382
@@ -831,6 +840,7 @@ def test_deposit_copies_both_files_and_writes_a_typed_manifest(
     assert manifest.citation_key == "cooperHighthroughputProfilingAmino2010"
     assert manifest.doi == "10.1101/gr.105825.110"
     assert manifest.provenance_complete is True
+    assert manifest.si_expected == list(module.SI_EXPECTED)
     assert [
         (f.path, f.role, f.bytes, f.sha256, f.source) for f in manifest.files
     ] == [
@@ -905,3 +915,63 @@ def test_class_surface(built: AminoAcidCooper2010Dataset) -> None:
     assert built.raw_file_names == [module.TABLE4_NAME]
     frame = object()
     assert built.preprocess_raw(frame) is frame
+
+
+# ---- 2026.11.24 (per-replicate policy, #1178 / #1281): the unretrieved replicate tables #
+def test_replicate_tables_are_named_in_si_expected_and_every_attempt() -> None:
+    """Supplemental Tables 3A/3B are the per-replicate release: ``SI_EXPECTED`` names both
+    files as listed and not mirrored, the two file URLs are the first two attempts, and
+    every attempt is dated the day the routes were tried.
+    """
+    tables = [entry for entry in module.SI_EXPECTED if "3A,B" in entry]
+    assert tables == [
+        "Supplemental Tables 3A,B (SupplementalTable3A-peaks.txt, "
+        "SupplementalTable3B-peaks.txt; integrated peaks per replicate; listed on the "
+        "DC1 page, NOT mirrored: Cloudflare browser challenge and no archived copy on "
+        "2026-11-26, see TABLE3_ATTEMPTS in the loader)"
+    ]
+    assert [a.url.rsplit("/", 1)[-1] for a in module.TABLE3_ATTEMPTS[:2]] == [
+        module.TABLE3A_NAME,
+        module.TABLE3B_NAME,
+    ]
+    assert {a.checked_at for a in module.TABLE3_ATTEMPTS} == {"2026-11-26"}
+    assert len(module.TABLE3_ATTEMPTS) == 8
+    assert module.TABLE3A_NAME in module.PER_REPLICATE_RELEASE
+    assert module.TABLE3B_NAME in module.PER_REPLICATE_RELEASE
+
+
+@pytest.mark.data
+def test_real_table4_counts_and_raw_mirror_manifest() -> None:
+    """The deposited Table 4 (sha256-pinned) gives 4,382 rows and 4,382 records: one per
+    row, the authors' average of the two screening replicates. 48 identifiers head two
+    rows each (46 verbatim, plus YML009C and YML048W-A after normalization), 4,334
+    distinct identifiers, 68,202 values, five normalizations, no exclusion. The raw
+    mirror's manifest holds Table 4 and the legends only, and its ``si_expected`` is
+    ``SI_EXPECTED``: no 3A/3B file entry exists because none was retrieved.
+    """
+    data_root = os.environ["DATA_ROOT"]
+    table = module.raw_mirror_dir(data_root) / "data" / module.TABLE4_NAME
+    assert hashlib.sha256(table.read_bytes()).hexdigest() == module.TABLE4_SHA256
+    kept, ledger = module.retain_rows(
+        module.read_table4(table), dataset_name="AminoAcidCooper2010Dataset"
+    )
+    assert (
+        ledger.n_source_rows,
+        ledger.n_kept,
+        ledger.n_normalized,
+        ledger.n_duplicate_identifiers,
+        ledger.n_duplicate_rows,
+        ledger.n_excluded_non_deletion,
+        ledger.n_values_kept,
+    ) == (4382, 4382, 5, 48, 48, 0, 68202)
+    assert {len(d.row_indices) for d in ledger.duplicate_identifiers} == {2}
+    assert len({row.systematic_gene_name for row in kept}) == 4334
+    assert {"YML009C", "YML048W-A"} <= {
+        d.normalized_name for d in ledger.duplicate_identifiers
+    }
+    manifest = module.load_manifest(data_root)
+    assert [f.path for f in manifest.files] == [
+        "data/SupplementalTable4.txt",
+        "data/Supplemental_Table_Legends.doc",
+    ]
+    assert manifest.si_expected == list(module.SI_EXPECTED)

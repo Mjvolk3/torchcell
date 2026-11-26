@@ -1,0 +1,115 @@
+---
+title: "Genomes"
+sidebar_label: "Genomes"
+description: "The genomes the datasets are written against, the reconstructed genomes, and how to download them."
+---
+
+Every record in TorchCell names the genome assembly its gene identifiers are written against. The genomes are stored as files with a manifest that pins each file by sha256, and they are served separately from the knowledge graph.
+
+## Reconstructed genomes
+
+Genomes assembled and annotated by the project, as opposed to reference genomes taken from a public archive.
+
+:::info[*Issatchenkia orientalis* (*Pichia kudriavzevii*) SD108, reference genome v1]
+
+A reference genome and gene annotation of strain SD108, reconstructed from existing SD108 sequencing data. It is unpublished, so the browser and the files are behind a login; ask the project for the credentials.
+
+- **Genome browser:** [https://torchcell-database.ncsa.illinois.edu/sd108/](https://torchcell-database.ncsa.illinois.edu/sd108/) (browse chromosomes, genes and tracks; BLAST against the genome).
+- **Release files:** `https://torchcell-database.ncsa.illinois.edu/sd108/release/v1/` holds the genome FASTA and its index, the annotation, the second haplotype and checksum files.
+- **In TorchCell:** assembly set `pkudriavzevii_SD108_v1`, read by `PKudriavzeviiSD108Genome`. It is not on the public download endpoint.
+
+```bash
+# Download the genome and check it; curl asks for the password.
+curl -u sd108 -O https://torchcell-database.ncsa.illinois.edu/sd108/release/v1/SD108_genome_v1.fasta
+curl -u sd108 -O https://torchcell-database.ncsa.illinois.edu/sd108/release/v1/SHA256SUMS
+sha256sum --check --ignore-missing SHA256SUMS
+```
+
+:::
+
+## Reference genomes by species
+
+Each row is one assembly set on the public endpoint. The gene count is the number of genes the loader class reads from the annotation.
+
+### *Escherichia coli*
+
+| Strain | Assembly set | Source and release | Genes | Files | Size (MB) | Loader class | Benchmark tasks |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| B REL606 | `ecoli_B_REL606_ASM1798v1` | NCBI, ASM1798v1 | 4,316 | 9 | 10.0 | `EcoliBREL606Genome` |  |
+| K-12 BW25113 | `ecoli_K12_BW25113_ASM75055v1` | NCBI, ASM75055v1 | 4,303 | 9 | 10.3 | `EcoliK12BW25113Genome` | growth rate, cell shape and cell cycle, metabolome |
+| K-12 MG1655 | `ecoli_K12_MG1655_ASM584v2` | NCBI, ASM584v2 | 4,506 | 9 | 11.0 | `EcoliK12MG1655Genome` | genetic interactions |
+| K-12 W3110 | `ecoli_K12_W3110_ASM1024v1` | NCBI, ASM1024v1 | 4,346 | 10 | 10.1 | `EcoliK12W3110Genome` |  |
+
+### *Pseudomonas putida*
+
+| Strain | Assembly set | Source and release | Genes | Files | Size (MB) | Loader class | Benchmark tasks |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| KT2440 | `pputida_KT2440_ASM756v2` | NCBI, ASM756v2 | 5,729 | 10 | 17.6 | `PPutidaKT2440Genome` |  |
+
+### *Saccharomyces cerevisiae*
+
+| Strain | Assembly set | Source and release | Genes | Files | Size (MB) | Loader class | Benchmark tasks |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| CEN.PK113-7D | `scerevisiae_CENPK113-7D_ASM257140v2` | NCBI GenBank (ASM257140v2), 2017-10 (GCA_002571405.2) | 6,171 | 5 | 13.8 | `CenPk1137DGenome` |  |
+| S288C | `sgd_S288C_R64-4-1_20230830` | SGD, R64-4-1_20230830 | 6,607 | 9 | 119.0 | `SCerevisiaeGenome` |  |
+
+### Other pinned reference files
+
+Served from the same endpoint and pinned the same way, but not a single reference genome.
+
+| Set | What it is | Files | Size (MB) |
+| :-- | :-- | :-- | :-- |
+| `go_release_2024-01-17` | Gene Ontology release 2024-01-17 (`go.obo`), read by the S288C genome class. | 1 | 34.4 |
+| `go_release_2026-08-05` | Gene Ontology release 2026-08-05 (`go.obo`), read by the bacterial and CEN.PK genome classes. | 1 | 32.2 |
+| `hale2024_322134S_variants` | A table of variants of the 3S parent strain against S288C (Hale 2024), not an assembly. | 1 | 0.9 |
+| `peter2018_1011_assemblies` | A panel of 1,011 natural isolate assemblies and the pangenome matrices (Peter 2018), not one reference. | 9 | 4,167.7 |
+
+## Download a genome
+
+### In Python
+
+Install with `pip install "torchcell>=1.8.8"`. `load_genome` fetches the files of an assembly set when they are absent and returns the genome object. Each file is taken from its original source when the bytes there still match the recorded sha256, and from the TorchCell mirror otherwise.
+
+```python
+import os
+
+from torchcell.sequence.genome.standard import load_genome, standard_genomes
+
+os.environ.setdefault("DATA_ROOT", ".")  # files go to ./torchcell-genomes/
+
+for row in standard_genomes():  # every genome that loads by its assembly set
+    print(row.assembly_set, row.organism, row.strain)
+
+genome = load_genome("ecoli_K12_MG1655_ASM584v2")
+gene = genome["b0002"]
+gene.seq          # DNA of the gene
+gene.cds.seq      # coding sequence
+gene.protein.seq  # protein
+```
+
+To get the genome a dataset is written against, without naming it: `genome_for(dataset)` from the same module.
+
+To download the files without building the object:
+
+```python
+from torchcell.sequence.genome.standard import fetch_assembly_set
+
+fetch_assembly_set("ecoli_K12_MG1655_ASM584v2")  # into $DATA_ROOT/torchcell-genomes/
+```
+
+### Over HTTP
+
+The public endpoint is `http://torchcell-database.ncsa.illinois.edu:8724`. It needs no key.
+
+| Request | Returns |
+| :-- | :-- |
+| `GET /genomes` | The names of the assembly sets. |
+| `GET /genomes/<assembly_set>/manifest` | Organism, strain, source, release, and every file with its size, sha256 and original URL. |
+| `GET /genomes/<assembly_set>/files` | The files of the set with their download paths. |
+
+```bash
+curl http://torchcell-database.ncsa.illinois.edu:8724/genomes
+curl http://torchcell-database.ncsa.illinois.edu:8724/genomes/ecoli_K12_MG1655_ASM584v2/manifest
+```
+
+Check every downloaded file against the sha256 in the manifest. The Python client does that for you (`DatasetClient().download_genome_file`).

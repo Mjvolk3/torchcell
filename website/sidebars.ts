@@ -230,6 +230,8 @@ const sidebars: SidebarsConfig = {
     },
   ],
 
+  genomes: ['genomes/index'],
+
   query: [
     'query/index',
     {

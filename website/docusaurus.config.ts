@@ -196,6 +196,7 @@ const config: Config = {
         {type: 'docSidebar', sidebarId: 'benchmark', label: 'Benchmark', position: 'left'},
         {type: 'docSidebar', sidebarId: 'ontology', label: 'Ontology', position: 'left'},
         {type: 'docSidebar', sidebarId: 'database', label: 'Database', position: 'left'},
+        {type: 'docSidebar', sidebarId: 'genomes', label: 'Genomes', position: 'left'},
         {type: 'docSidebar', sidebarId: 'query', label: 'Query', position: 'left'},
         {type: 'docSidebar', sidebarId: 'docs', label: 'Docs', position: 'left'},
         {type: 'docSidebar', sidebarId: 'tutorials', label: 'Tutorials', position: 'left'},
